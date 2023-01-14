@@ -877,6 +877,10 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   lives_proc_thread_t self = THREADVAR(proc_thread);
   int fd = fbuff->fd;
   off_t fsize, bufsize = smedbytes, res;
+  boolean *cntrl;
+
+  g_print("GETTING in %p, value\n", self);
+  lives_nanosleep_until_nonzero((cntrl = (boolean *)weed_get_voidptr_value(self, "_control", NULL)));
 
   fbuff->orig_size = get_file_size(fd, TRUE);
   fsize = fbuff->orig_size - ABS(skip);
@@ -913,7 +917,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
         fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
         lseek(fd, offs, SEEK_SET);
         mlock(fbuff->buffer, fsize);
-        lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), SYNC_ANNOUNCE_HOOK);
+        *cntrl = TRUE;
         //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
         //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
         while (fsize > 0) {
@@ -952,7 +956,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), SYNC_ANNOUNCE_HOOK);
+    *cntrl = TRUE;
   }
   fbuff->fd = -1;
   IGN_RET(close(fd));
@@ -992,12 +996,10 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
     fbuff->flags |= FB_FLAG_BG_OP;
     fbuff->bytes = fbuff->offset = 0;
-    lives_proc_thread_add_hook_full(lpt, SYNC_ANNOUNCE_HOOK, HOOK_OPT_ONESHOT,
-                                    (lives_funcptr_t)slurp_starting, 0,  "v", (void *)&is_ready);
     pthread_mutex_lock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    lives_nanosleep_while_false(is_ready);
     pthread_mutex_unlock(&fbuff->sync_mutex);
+    thread_wait_loop(lpt, FALSE, &is_ready);
     return TRUE;
   }
   return FALSE;

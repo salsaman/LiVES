@@ -2045,6 +2045,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                                         || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
           lives_alarm_clear(alarm_handle);
           if (!xtimeout) {
+            g_print("needed natsize for %p\n", layer);
             break_me("timed out getting natural size");
             continue;
           }
@@ -2715,11 +2716,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // copy laer -> channel --> run effect --> nullify channel
     // as opposed to: copy layer -> in_channel -> nullify layer --> run fx
     // --> free in_chnnel -> copy out_channel -> layer ---> nullify out_chan
+
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
       continue;
     }
-    if (!inplace) weed_layer_nullify_pixel_data(layer);
+
     if (!resized) {
       if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
         mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
@@ -2775,6 +2777,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &num_palettes);
           palette = weed_channel_get_palette(def_channel);
           if (best_palette_match(palettes, num_palettes, palette) == palette) {
+            //
+            // out_channel[0] shares pixel_data with in_channel[0]
             if (!weed_layer_copy(channel, def_channel)) {
               retval = FILTER_ERROR_COPYING_FAILED;
               goto done_video;
@@ -2818,6 +2822,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         lives_freep((void **)&palettes);
       }
 
+      g_print("33 maybe del natsize for %p\n", layer);
       if (num_inc == 1)
         weed_leaf_copy_or_delete(channel, WEED_LEAF_NATURAL_SIZE, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_CLAMPING, def_channel);
@@ -2943,9 +2948,18 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         else weed_layer_nullify_pixel_data(layer);
       }
     }
+    // in_channel pixel_data was shared from the layers
+    // below we either free layer pixdata, or leave it (inplace)
+    else weed_layer_nullify_pixel_data(channel);
   }
 
   // now we write our out channels back to layers, leaving the palettes and sizes unchanged
+
+  // for inplace, in and out channel share the same pixel_data. and since layer
+  // shares pixel_data with in_channel, then we just nullify the in and out channels
+
+  // otherwise, we should nullify the in_channel, free the layer pixdata, then copy
+  // (shallow) out_channel to layer, then nullify out_channel
 
   for (i = k = 0; k < num_out_tracks + num_out_alpha; k++) {
     channel = get_enabled_channel(inst, k, FALSE);
@@ -2955,8 +2969,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     weed_set_boolean_value(layer, "letterboxed", letterbox);
 
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL) == WEED_TRUE) {
-      // for inplace, the pixel_data is still in the layer, so we just need to nullify this copy
+      weed_plant_t *in_channel = get_enabled_channel(inst, k, TRUE);
+      // layer and in_channel alwyas share pixdata, so we need to nullify this
+      weed_layer_nullify_pixel_data(in_channel);
+      // for inplace, the in_channel also shares pixdata with out_channel, hence
+      // it also shares with layer
       weed_layer_nullify_pixel_data(channel);
+      // reset this for next time round
+      weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
       continue;
     }
 
@@ -2968,7 +2988,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (retval == FILTER_ERROR_BUSY && num_in_tracks == 1 && num_out_tracks == 1) {
       // filter busy, we will free out_channel data, set values from in_channel instead
       weed_plant_t *in_channel = get_enabled_channel(inst, k, TRUE);
+
       weed_layer_pixel_data_free(channel);
+
       if (!weed_layer_copy(layer, in_channel)) {
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
@@ -3230,7 +3252,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     chantmpl = weed_channel_get_template(channel);
     channel_flags = weed_chantmpl_get_flags(chantmpl);
 
-    /// set up the audio data for each out channel. IF we can inplace then we use the audio_data from the corresponding in_channel
+    /// set up the audio data for each out channel.
+    // IF we can inplace then we use the audio_data from the corresponding in_channel
     /// otherwise we allocate it
     if ((channel_flags & WEED_CHANNEL_CAN_DO_INPLACE)
         && weed_channel_get_audio_rate(channel) == weed_channel_get_audio_rate(inchan)
@@ -11967,8 +11990,11 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
           continue;
         }
       }
-      if (pixdata_nullify_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
-      else if (sterilize && no_copy_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
+      if (pixdata_nullify_leaf(leaves[i])) {
+        weed_leaf_delete(plant, leaves[i]);
+        if (!lives_strcmp(leaves[i], WEED_LEAF_NATURAL_SIZE))
+          g_print("sanitize natsize for %p\n", plant);
+      } else if (sterilize && no_copy_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
       lives_free(leaves[i]);
     }
     lives_free(leaves);

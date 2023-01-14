@@ -276,8 +276,17 @@ void smallblock_init(void);
 
 void bigblock_init(void);
 void *alloc_bigblock(size_t s);
+
+//#define DEBUG_BBLOCKS 1
+#ifdef DEBUG_BBLOCKS
+void *_calloc_bigblock(size_t s);
+void *_free_bigblock(void *bstart);
+#define calloc_bigblock(s) FN_ALLOC_TARGET(_calloc_bigblock,s)
+#define free_bigblock(p) FN_FREE_TARGET(_free_bigblock,p)
+#else
 void *calloc_bigblock(size_t s);
 void *free_bigblock(void *bstart);
+#endif
 
 void *lives_malloc_medium(size_t msize);
 void *lives_calloc_medium(size_t msize);

@@ -12835,19 +12835,21 @@ void lives_layer_set_opaque(weed_layer_t *layer) {
 
 
 boolean compact_rowstrides(weed_layer_t *layer) {
-  // remove any extra padding after the image data
+  // remove any extra padding after each image row, ie. rowstride becomes just width_in_mpixels * mpixel_size
+  // method: copy layer to old_layer, create new pixel data for layer with compact rowstrides
+  // row by row copy from old_layer to layer, with copy length == compact length
+  // free old_layer (unless it holds pixel_data copy from mainw->frame_layer)
+  // return layer with new pixel_data
+  // - functions works for all packed and planar palette types
   weed_layer_t *old_layer;
   void **pixel_data, **new_pixel_data;
   int *rowstrides = weed_layer_get_rowstrides(layer, NULL), *orows;
   int pal = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
-  int height = weed_layer_get_height(layer);
-  int xheight;
+  int height = weed_layer_get_height(layer), xheight;
   int crow = width * weed_palette_get_bits_per_macropixel(pal) / 8;
-  int cxrow;
-  int nplanes;
+  int cxrow, nplanes, i, j;
   boolean needs_change = FALSE;
-  int i, j;
 
   pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
 
@@ -12869,6 +12871,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   if (!old_layer) return FALSE;
   if (!weed_layer_copy(old_layer, layer)) return FALSE;
 
+  // special value to indicate "compact rowstrides"
   THREADVAR(rowstride_alignment_hint) = -1;
 
   weed_layer_nullify_pixel_data(layer);
@@ -13309,6 +13312,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
             weed_palette_get_name_full(xopal_hint, oclamp_hint, 0), ipixfmt, opixfmt);
 #endif
 #if USE_THREADS
+    // TODO - we should do this in 2 passes (maybe depending on pb_quality)
+    // - for the second pass, we should resize just a few rows immediaely above and below the divisions
+    // from pass 1, so that we eliminate any artifacts caused by splitting the image
     ctxblock = sws_getblock(nthrds, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
@@ -13352,20 +13358,18 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
         for (i = 0; i < 4; i++) {
-          if (i < inplanes)
-            /* opd[i] + (size_t)(sl * orw[i] * height */
-            swparams[sl].ipd[i] = ipd[i];
-          /* ipd[i] + (size_t)(sl * irw[i] * iheight */
-          /*                   * weed_palette_get_plane_ratio_vertical(palette, i)); */
-          else
-            swparams[sl].ipd[i] = NULL;
+          // each thread gets a slice of the input / output images
+          if (i < inplanes) {
+            swparams[sl].ipd[i] =
+              ipd[i] + (size_t)(sl * irw[i] * iheight
+                                * weed_palette_get_plane_ratio_vertical(palette, i));
+            swparams[sl].opd[i] =
+              opd[i] + (size_t)(sl * orw[i] * height
+                                * weed_palette_get_plane_ratio_vertical(opal_hint, i));
 
-          if (i < oplanes)
-            swparams[sl].opd[i] = opd[i];
-          /* opd[i] + (size_t)(sl * orw[i] * height */
-          /*                   * weed_palette_get_plane_ratio_vertical(opal_hint, i)); */
-          else
-            swparams[sl].opd[i] = NULL;
+          } else {
+            swparams[sl].ipd[i] = swparams[sl].opd[i] = NULL;
+          }
         }
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
@@ -13528,6 +13532,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     if (!resize_layer(layer, width, height, interp, tpal, tclamp)) return FALSE;
 
     pal = weed_layer_get_palette(layer);
+
     lwidth = weed_layer_get_width_pixels(layer);
     lheight = weed_layer_get_height(layer);
   }
@@ -14218,9 +14223,12 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
    this function should always be used to free WEED_LEAF_PIXEL_DATA */
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
   void **pixel_data;
-  int pd_elements;
+  int nplanes;
 
   if (!layer) return;
+
+  pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
+  if (!pixel_data || !nplanes) return;
 
   if (weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE)
     return;
@@ -14230,48 +14238,47 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-
+  g_print("22del natsize for %p\n", layer);
+  if (mainw->debug) break_me("delpix");
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   /* if (weed_plant_has_leaf(layer, LIVES_LEAF_MD5SUM)) { */
   /*   lives_free(weed_get_voidptr_value(layer, LIVES_LEAF_MD5SUM, NULL)); */
   /*   weed_leaf_delete(layer, LIVES_LEAF_MD5SUM); */
   /*  } */
+
   if (weed_get_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, NULL) == WEED_TRUE) {
     free_bigblock(weed_layer_get_pixel_data(layer));
   } else {
-    if ((pixel_data = weed_layer_get_pixel_data_planar(layer, &pd_elements)) != NULL) {
-      if (pd_elements > 0) {
-        if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC)) {
-          LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
-          if (pixbuf) lives_widget_object_unref(pixbuf);
-        } else {
-          if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
-            lives_painter_surface_t *surface = (lives_painter_surface_t *)weed_get_voidptr_value(layer,
-                                               LIVES_LEAF_SURFACE_SRC, NULL);
-            if (surface) {
-              // this is where most surfaces die, as we convert from BGRA -> RGB
-              uint8_t *pdata = lives_painter_image_surface_get_data(surface);
+    if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC)) {
+      LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
+      if (pixbuf) lives_widget_object_unref(pixbuf);
+    } else {
+      if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
+        lives_painter_surface_t *surface = (lives_painter_surface_t *)weed_get_voidptr_value(layer,
+                                           LIVES_LEAF_SURFACE_SRC, NULL);
+        if (surface) {
+          // this is where most surfaces die, as we convert from BGRA -> RGB
+          uint8_t *pdata = lives_painter_image_surface_get_data(surface);
 #ifdef DEBUG_CAIRO_SURFACE
-              g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
+          g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
 #endif
-              // call twice to remove our extra ref.
-              lives_painter_surface_destroy(surface);
-              lives_painter_surface_destroy(surface);
-              lives_free(pdata);
-            }
-          } else {
-            if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
-              pd_elements = 1;
-            }
-            for (int i = 0; i < pd_elements; i++) {
-              if (pixel_data[i]) lives_free(pixel_data[i]);
-            }
-	    // *INDENT-OFF*
-          }}
-        lives_free(pixel_data);
-      }}}
-  // *INDENT-ON*
+          // call twice to remove our extra ref.
+          lives_painter_surface_destroy(surface);
+          lives_painter_surface_destroy(surface);
+          lives_free(pdata);
+        }
+      } else {
+        if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
+          nplanes = 1;
+        }
+        for (int i = 0; i < nplanes; i++) {
+          if (pixel_data[i]) lives_free(pixel_data[i]);
+        }
+      }
+    }
+    lives_free(pixel_data);
+  }
   weed_layer_nullify_pixel_data(layer);
 }
 

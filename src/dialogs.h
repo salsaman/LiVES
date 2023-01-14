@@ -67,6 +67,7 @@ void threaded_dialog_pop(void);
 void threaded_dialog_auto_spin(void);
 
 boolean do_auto_dialog(const char *text, int type);
+lives_proc_thread_t do_auto_dialog_async(const char *text, int type);
 
 void do_splash_progress(void);
 

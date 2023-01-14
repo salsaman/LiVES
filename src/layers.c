@@ -477,9 +477,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 
 int weed_layer_unref(weed_layer_t *layer) {
   // g_print("unref layer %p\n", layer);
-  if (layer == mainw->debug_ptr) break_me("unref ofl");
   int refs = weed_refcount_dec(layer);
   if (!refs) {
+    if (mainw->debug_ptr == layer) mainw->debug_ptr = NULL;
     weed_layer_pixel_data_free(layer);
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     weed_plant_free(layer);

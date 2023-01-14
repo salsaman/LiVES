@@ -2216,6 +2216,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   // cr dat, mod date
 
   filtresp = LIVES_RESPONSE_NONE;
+  g_main_context_acquire(g_main_context_default());
 
   dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
   lives_widget_set_maximum_size(dialog, winsize_h, winsize_v);
@@ -2431,6 +2432,7 @@ harlem_shuffle:
   // *INDENT-ON*
   lives_widget_destroy(dialog);
   //lives_widget_context_update();
+  g_main_context_release(g_main_context_default());
   return filtresp;
 }
 
@@ -7900,7 +7902,7 @@ void run_diskspace_dialog(const char *target) {
     char *wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
     if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
     lives_dialog_run(LIVES_DIALOG(dialog));
-  } else lives_idle_add_simple(update_dsu, NULL);
+  } else lives_idle_add(update_dsu, NULL);
   if (mainw->cs_manage && mainw->num_sets) {
     mainw->cs_manage = FALSE;
     manclips_cb(NULL, dialog);

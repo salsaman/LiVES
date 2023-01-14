@@ -2084,7 +2084,7 @@ void rec_desk(void *args) {
   if (sfile->frames > 0 && prefs->crash_recovery) add_to_recovery_file(sfile->handle);
   recargs->lpt = lpt;
   lives_widget_set_sensitive(mainw->desk_rec, FALSE);
-  lives_idle_add_simple(rec_desk_done, recargs);
+  lives_idle_add(rec_desk_done, recargs);
 }
 
 #endif

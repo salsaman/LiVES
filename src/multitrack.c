@@ -616,7 +616,7 @@ uint32_t mt_idle_add(lives_mt *mt) {
   set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
   // TODO: last param is a destroy notify, so we can check if something re-adds it or removes it when it shouldn't
-  retval = lives_timer_add_simple(1001, mt_auto_backup, mt);
+  retval = lives_timer_add(1001, mt_auto_backup, mt);
 
   if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
 
@@ -1847,18 +1847,18 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
     nb_ignore = FALSE;
     // apply to block
     mt->putative_block = NULL;
-    lives_timer_add_simple(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
+    lives_timer_add(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
   } else if (nins == 2) {
     // transition
     if (lives_list_length(mt->selected_tracks) == 2 && mt->region_start != mt->region_end) {
       // apply to region
-      lives_timer_add_simple(0, mt_add_region_effect_idle, mt);
+      lives_timer_add(0, mt_add_region_effect_idle, mt);
     }
   } else if (nins >= 1000000) {
     // compositor
     if (mt->selected_tracks && mt->region_start != mt->region_end) {
       // apply to region
-      lives_timer_add_simple(0, mt_add_region_effect_idle, mt);
+      lives_timer_add(0, mt_add_region_effect_idle, mt);
     }
   }
 
@@ -7259,7 +7259,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   if (prefs->show_msg_area) {
     prefs->msg_textsize = future_prefs->msg_textsize;
     if (mainw->idlemax == 0)
-      lives_idle_add_simple(resize_message_area, NULL);
+      lives_idle_add(resize_message_area, NULL);
     mainw->idlemax = DEF_IDLE_MAX;
   }
 
@@ -8368,7 +8368,7 @@ static boolean fx_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * event
     // double click
     mt->moving_fx = NULL;
     if (!LIVES_IS_PLAYING) {
-      lives_timer_add_simple(0, mt_fx_edit_idle, mt); // work around issue in gtk+
+      lives_timer_add(0, mt_fx_edit_idle, mt); // work around issue in gtk+
     }
     return FALSE;
   }
@@ -9050,11 +9050,11 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0)
-      lives_idle_add_simple(resize_message_area, NULL);
+      lives_idle_add(resize_message_area, NULL);
     mainw->idlemax = DEF_IDLE_MAX;
   }
 
-  lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)multi);
+  lives_idle_add(mt_idle_show_current_frame, (livespointer)multi);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (prefs->show_gui && prefs->open_maximised) {
@@ -9859,7 +9859,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
       //
       // if the spinbutton is changed again we we reset the timer
       // after any backup we put the normal idlefunc back again
-      mt->idlefunc = lives_timer_add_simple(MT_INOUT_TIME, mt_auto_backup, mt);
+      mt->idlefunc = lives_timer_add(MT_INOUT_TIME, mt_auto_backup, mt);
     } else {
       mt->idlefunc = mt_idle_add(mt);
     }
@@ -10194,7 +10194,7 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
       //
       // if the spinbutton is changed again we we reset the timer
       // after any backup we put the normal idlefunc back again
-      mt->idlefunc = lives_timer_add_simple(MT_INOUT_TIME, mt_auto_backup, mt);
+      mt->idlefunc = lives_timer_add(MT_INOUT_TIME, mt_auto_backup, mt);
     } else {
       mt->idlefunc = mt_idle_add(mt);
     }
@@ -10665,7 +10665,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     if (!block || block->ordered) {
       lives_widget_show(mt->in_hbox);
       lives_widget_show(mt->out_hbox);
-      lives_idle_add_simple(show_in_out_images, (livespointer)mt);
+      lives_idle_add(show_in_out_images, (livespointer)mt);
     } else {
       lives_widget_hide(mt->in_hbox);
       lives_widget_hide(mt->out_hbox);

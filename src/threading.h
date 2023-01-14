@@ -32,16 +32,17 @@ typedef struct {
   uint64_t var_uid;
   int var_idx;
   LiVESWidgetContext *var_guictx;
+  LiVESWidgetLoop *var_guiloop;
+  LiVESWidgetSource *var_guisource;
   lives_obj_attr_t **var_attributes;
-  pthread_t var_self;
-  //
+
+  char var_origin[128];
+
   lives_proc_thread_t var_proc_thread;
-  lives_thread_data_t *var_mydata;
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
   uint64_t var_random_seed;
   ticks_t var_event_ticks;
   LiVESList *var_func_stack;
-
   lives_intentcap_t var_intentcap;
 
   int var_write_failed, var_read_failed;
@@ -79,7 +80,7 @@ typedef struct {
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
-  pthread_t self;
+  pthread_t thrd_self;
   int64_t idx; // thread index
   lives_threadvars_t vars;
   boolean exited;
@@ -180,11 +181,15 @@ lives_threadvars_t *get_threadvars(void);
 lives_threadvars_t *get_threadvars_bg_only(void);
 lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
-lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
+///lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
+//lives_thread_data_t *lives_thread_data_create(void *pidx);
+void *lives_thread_data_create(void *pidx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
 #define BG_THREADVAR(var) (get_threadvars_bg_only()->var_##var)
+
+#define THREAD_CTX THREADVAR(guictx)
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -293,6 +298,9 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
 // can be set to prevent state change hooks from being triggered
 #define THRD_BLOCK_HOOKS	(1ull << 60)
+
+// flags thread as externally created / controlled
+#define THRD_STATE_EXTERN	(1ull << 63)
 
 char *lives_proc_thread_get_funcname(lives_proc_thread_t lpt);
 uint32_t lives_proc_thread_get_rtype(lives_proc_thread_t lpt);

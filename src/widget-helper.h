@@ -766,7 +766,6 @@ LiVESWidget *lives_widget_get_toplevel(LiVESWidget *);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *);
 boolean lives_xwindow_set_keep_above(LiVESXWindow *, boolean setting);
-boolean lives_xwindow_invalidate_rect(LiVESXWindow *, lives_rect_t *, boolean inv_childs);
 
 boolean lives_widget_set_can_focus(LiVESWidget *, boolean state);
 boolean lives_widget_set_can_default(LiVESWidget *, boolean state);
@@ -1056,12 +1055,10 @@ boolean lives_scrolled_window_set_min_content_width(LiVESScrolledWindow *, int w
 boolean lives_xwindow_raise(LiVESXWindow *);
 boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 
-boolean lives_timer_remove(uint32_t timer);
-
-uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
+LiVESWidgetSource *lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 uint32_t lives_timer_immediate(LiVESWidgetSourceFunc function, livespointer data);
 
-uint32_t lives_thrd_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
+LiVESWidgetSource *lives_thrd_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 
 int ctx_mutex_lock(void);
 int ctx_mutex_unlock(void);
@@ -1075,7 +1072,10 @@ int ctx_mutex_unlock(void);
 #endif
 
 boolean lives_source_remove(uint32_t handle);
-boolean lives_source_set_priority(GSource *source, int32_t prio);
+boolean lives_source_attach(LiVESWidgetSource *, LiVESWidgetContext *);
+boolean lives_source_set_priority(LiVESWidgetSource *, int32_t prio);
+boolean lives_source_set_callback(LiVESWidgetSource *, LiVESWidgetSourceFunc func,
+                                  livespointer data);
 
 uint32_t lives_accelerator_get_default_mod_mask();
 

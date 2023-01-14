@@ -2951,8 +2951,8 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_export_theme_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->import_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_import_theme_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cleardisk_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_cleardisk_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_quit_activate), LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_save_set), LIVES_WIDGET_ACTIVATE_SIGNAL,

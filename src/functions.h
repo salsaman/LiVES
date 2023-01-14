@@ -164,7 +164,9 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
 #define FUNCSIG_INT_VOIDP_INT64 		        		0X000001D5
 #define FUNCSIG_INT_INT_BOOL	 		        		0X00000113
+#define FUNCSIG_STRING_INT_BOOL	 		        		0X00000413
 #define FUNCSIG_INT_INT64_VOIDP			        		0X0000015D
+
 // 4p
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
 #define FUNCSIG_STRING_DOUBLE_INT_STRING       				0X00004214
@@ -207,6 +209,8 @@ typedef uint64_t funcsig_t;
 #define FUNC_CATEGORY_HOOK_SYNC 	(N_STD_FUNC_CATEGORIES + 101)
 #define FUNC_CATEGORY_HOOK_GUI	 	(N_STD_FUNC_CATEGORIES + 102)
 
+/// tracing / debugging tools //
+
 #ifdef __FILE__
 #define _FILE_REF_ __FILE__
 #else
@@ -218,20 +222,43 @@ typedef uint64_t funcsig_t;
 #define _LINE_REF_ 0
 #endif
 
+typedef
+enum {
+  // enum   // va_args for add_fn_note
+  _FN_FREE, // fundef, ptr
+  _FN_ALLOC, // fundef, ptr
+} fn_type_t;
+
+#define _FUNCREF(fn,f,l)((void *)(create_funcdef(#fn,(lives_funcptr_t)fn,0,0,f,l,0)))
+#define ADD_NOTE(ftype,fname,...)					\
+  (add_fn_note(ftype,_FUNCREF(fname,_FILE_REF_,_LINE_REF_),fname(__VA_ARGS__)))
+#define DO_ADD_NOTE(ftype,fname,...) do{(void)ADD_NOTE(ftype,fname,__VA_ARGS__);}while(0)
+
+#define FN_ALLOC_TARGET(fname,...) ADD_NOTE(_FN_ALLOC,fname,__VA_ARGS__)
+#define FN_FREE_TARGET(fname,...) DO_ADD_NOTE(_FN_FREE,fname,__VA_ARGS__)
+
+// add a note to to ftrace_store, va_args depend on fn_type
+void *add_fn_note(fn_type_t, ...);
+// dump notes (traces) from ftrace_store
+void dump_fn_notes(void);
+
 #define FN_DEBUG_OUT(func) g_print("Thread %d in func %s at %s, line %d\n", \
 				   THREADVAR(idx), #func, _FILE_REF_, _LINE_REF_)
+
 #define FN_DEBUG_EXIT_OUT g_print("Thread %d exiting func at %s, line %d\n", \
 				  THREADVAR(idx), _FILE_REF_, _LINE_REF_)
 
-#define ____FUNC_ENTRY____(func, rettype, args_fmt) \
-  do {THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack),	 #func); \
-    FN_DEBUG_OUT(func);							\
-    add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), 0, rettype, args_fmt, \
-		  _FILE_REF_, _LINE_REF_);} while (0);
+// macro to be placed near start of "major" functions. It will prepend funcname to
+// a thread's 'func_stack', print out a debug line (optional), and also add fn lookup
+// to fn_store, e.g:   ____FUNC_ENTRY____(transcode_clip, "b", "iibs");
+#define ____FUNC_ENTRY____(func, rettype, args_fmt)			\
+  do {THREADVAR(func_stack)=lives_list_prepend(THREADVAR(func_stack),#func);FN_DEBUG_OUT(func);	\
+    add_fn_lookup((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_, _LINE_REF_);}while (0);
 
-#define ____FUNC_EXIT____ do {LiVESList *list = THREADVAR(func_stack);		\
-    FN_DEBUG_EXIT_OUT;							\
-    THREADVAR(func_stack) = list->next; list->next = NULL; lives_list_free(list);} while (0);
+// macro to be placed near start of "major" functions, counterpart to ___FUNC_ENTRY___
+// It will remove top entry from a thread's 'func_stack', and print out a debug line (optional)
+#define ____FUNC_EXIT____ do {LiVESList *list=THREADVAR(func_stack);FN_DEBUG_EXIT_OUT; \
+    THREADVAR(func_stack)=list->next;list->next=NULL;lives_list_free(list);} while (0);
 
 // calls (void)func(args), and before or after calling it, adds a fn note with a ptr / file / line
 // if ptr is already noted then will remove it
@@ -241,42 +268,18 @@ typedef uint64_t funcsig_t;
 // will call myfunc(args), then on return cast the return from get_ptr() to void * and add or remove a note
 // - can be used to trace allocs / frees by tracing the same pointer, e.g malloc / post_expn == returned ptr
 // free / pre_expn == ptr to be freed...dump_fn_notes will then list all non-freed calls to malloc by file / lineno
-#define _FN_ALLOC 1
-#define _FN_FREE 0
 
-#define _FN_ALLOC_TRACE(fname) do {THREADVAR(fn_alloc_trace) = #fname;} while (0);
-#define _FN_FREE_TRACE(fname) do {THREADVAR(fn_free_trace) = #fname;} while (0);
+/* #define _FN_ALLOC_TRACE(fname) do {THREADVAR(fn_alloc_trace) = #fname;} while (0); */
+/* #define _FN_FREE_TRACE(fname) do {THREADVAR(fn_free_trace) = #fname;} while (0); */
 
-#define _FN_ALLOC_TRACE_END do {THREADVAR(fn_alloc_trace) = NULL;} while (0);
-#define _FN_FREE_TRACE_END do {THREADVAR(fn_free_trace) = NULL;} while (0);
+/* #define _FN_ALLOC_TRACE_END do {THREADVAR(fn_alloc_trace) = NULL;} while (0); */
+/* #define _FN_FREE_TRACE_END do {THREADVAR(fn_free_trace) = NULL;} while (0); */
 
-#define _FUNCREF(fn, f, l)((void *)(create_funcdef(#fn, (lives_funcptr_t)fn, 0, NULL, f, l, NULL)))
 
 // append func / file / line to THREADVAR(func_stack)
 #define ADD_TO_FN_STACK(fn)						\
   (!!(THREADVAR(func_stack) =						\
       lives_list_append(THREADVAR(func_stack), _FUNCREF(fn, _FILE_REF_, _LINE_REF_))))
-
-// example that appends to func_stack
-/* #define create_empty_pixel_data(...) \ */
-/*   (ADD_TO_FN_STACK(_create_empty_pixel_data) ? _create_empty_pixel_data(__VA_ARGS__) : _create_empty_pixel_data(__VA_ARGS__)) */
-
-// macro for alloc func, after allocating p
-// will add p, funcname, func_stack name, file, line
-#define FN_ALLOC_TARGET(fname, p) do {					\
-    if (!lives_strcmp(THREADVAR(fn_alloc_trace), #fname)) {		\
-      add_fn_note(_FN_ALLOC, p, THREADVAR(func_stack) ? THREADVAR(func_stack)->data : \
-		  _FUNCREF(fname, _FILE_REF_, _LINE_REF_));		\
-      lives_list_free(THREADVAR(func_stack)); THREADVAR(func_stack) = NULL; \
-    }} while (0);
-
-// place in free func, will remove entry with p
-#define FN_FREE_TARGET(fname, p) do {					\
-    if (!lives_strcmp(THREADVAR(fn_free_trace), #fname)) {		\
-      add_fn_note(_FN_FREE, p, THREADVAR(func_stack) ? THREADVAR(func_stack)->data : \
-		  _FUNCREF(fname, _FILE_REF_, _LINE_REF_));		\
-      lives_list_free(THREADVAR(func_stack)); THREADVAR(func_stack) = NULL; \
-    }} while (0);
 
 //////////
 
@@ -657,9 +660,5 @@ int get_funcsig_nparms(funcsig_t sig);
 const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
 char *get_argstring_for_func(lives_funcptr_t func);
 char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
-
-void add_fn_note(int in_out, void *ptr, ...);
-
-void dump_fn_notes(void);
 
 #endif

@@ -1473,6 +1473,8 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
       int nsize[2];
       // set "natural_size" in case a filter needs it
+      //g_print("setnatsize %p\n", layer);
+      if (mainw->rte) mainw->debug = TRUE;
       nsize[0] = xwidth;
       nsize[1] = xheight;
       weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
@@ -2056,6 +2058,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   if (weed_plant_has_leaf(layer, LIVES_LEAF_PROC_THREAD)) is_thread = TRUE;
 
+  g_print("del natsize for %p\n", layer);
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   sfile = RETURN_VALID_CLIP(clip);
@@ -2959,7 +2962,7 @@ int close_current_file(int file_to_switch_to) {
     load_end_image(0);
     if (prefs->show_msg_area && !mainw->only_close) {
       if (mainw->idlemax == 0) {
-        lives_idle_add_simple(resize_message_area, NULL);
+        lives_idle_add(resize_message_area, NULL);
       }
       mainw->idlemax = DEF_IDLE_MAX;
     }
@@ -3154,7 +3157,7 @@ void switch_to_file(int old_file, int new_file) {
     if (prefs->show_msg_area && !mainw->only_close) {
       reset_message_area(); // necessary
       if (mainw->idlemax == 0) {
-        lives_idle_add_simple(resize_message_area, NULL);
+        lives_idle_add(resize_message_area, NULL);
       }
       mainw->idlemax = DEF_IDLE_MAX;
     }

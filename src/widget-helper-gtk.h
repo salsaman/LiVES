@@ -119,6 +119,8 @@ typedef gconstpointer                     livesconstpointer;
 typedef GClosure                          LiVESWidgetClosure;
 typedef GCClosure                         LiVESWidgetCClosure;
 
+typedef GSource                          LiVESWidgetSource;
+
 //typedef GObject LiVESWidgetObject;
 typedef GObject LiVESWidgetObject;
 
@@ -189,12 +191,14 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_widget_context_pending(ctx) g_main_context_pending(ctx)
 #define lives_widgets_get_current_event() gtk_get_current_event()
 
-#define lives_idle_add_simple(func, data) g_idle_add(func, data)
+#define lives_idle_source_new() g_idle_source_new()
+
+#define lives_idle_add(func, data) g_idle_add(func, data)
 #if GTK_CHECK_VERSION(3, 0, 0)
-#define lives_timer_add_simple(interval, func, data) (interval < 1000 ? g_timeout_add(interval, func, data) \
+#define lives_timer_add(interval, func, data) (interval < 1000 ? g_timeout_add(interval, func, data) \
 						      : g_timeout_add_seconds(interval / 1000., func, data))
 #else
-#define lives_timer_add_simple(interval, func, data) g_timeout_add(interval, func, data)
+#define lives_timer_add(interval, func, data) g_timeout_add(interval, func, data)
 #endif
 
 #define lives_markup_escape_text(a, b) g_markup_escape_text(a, b)

@@ -24,6 +24,7 @@
 #include "clip_load_save.h"
 
 static boolean _start_playback(int play_type) {
+  GSource *source;
   int new_file, old_file;
   lives_proc_thread_t lpt;
   boolean flag = FALSE;
@@ -37,8 +38,9 @@ static boolean _start_playback(int play_type) {
     if (play_type == 0) flag = TRUE;
     lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                                    play_all, 0, "b", flag);
-
-    lives_thrd_idle_priority((LiVESWidgetSourceFunc)call_funcsig, lpt);
+    source = lives_thrd_idle_priority((LiVESWidgetSourceFunc)call_funcsig, lpt);
+    g_main_context_iteration(THREAD_CTX, TRUE);
+    g_source_unref(source);
 
     /* play_all(play_type == 8); */
     if (play_type == 6) {
@@ -1601,14 +1603,14 @@ void play_file(void) {
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0) {
-      lives_idle_add_simple(resize_message_area, NULL);
+      lives_idle_add(resize_message_area, NULL);
     }
     mainw->idlemax = DEF_IDLE_MAX;
   }
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record) {
-    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(FALSE));
+    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(FALSE));
   }
 
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;

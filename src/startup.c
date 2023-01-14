@@ -466,7 +466,7 @@ static boolean pre_init(void) {
   int i;
 
   /// create context data for main thread; must be called before get_capabilities()
-  lives_thread_data_create(0);
+  lives_thread_data_create(LIVES_INT_TO_POINTER(0));
   mainw->global_hook_stacks = THREADVAR(hook_stacks);
 
 #ifdef VALGRIND_ON
@@ -1795,7 +1795,7 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
-  lives_idle_add_simple(lives_startup2, NULL);
+  lives_idle_add(lives_startup2, NULL);
   return FALSE;
 }
 
@@ -1840,8 +1840,7 @@ static boolean lives_startup2(livespointer data) {
 
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
-  mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
-  mainw->fg_service_source = g_main_context_find_source_by_id(NULL, mainw->fg_service_handle);
+  mainw->fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
 
   if (prefs->show_gui) {
     switch_clip(1, mainw->current_file, TRUE);
@@ -1882,7 +1881,7 @@ static boolean lives_startup2(livespointer data) {
   }
 
 #ifdef HAVE_YUV4MPEG
-  if (*prefs->yuvin) lives_idle_add_simple(open_yuv4m_startup, NULL);
+  if (*prefs->yuvin) lives_idle_add(open_yuv4m_startup, NULL);
 #endif
 
   if (prefs->startup_phase == 100) prefs->startup_phase = 0;
@@ -1923,7 +1922,7 @@ static boolean lives_startup2(livespointer data) {
   }
 
   if (mainw->multitrack) {
-    lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
+    lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
     if (mainw->multitrack->idlefunc == 0) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
@@ -1940,7 +1939,7 @@ static boolean lives_startup2(livespointer data) {
     /* if (wid) activate_x11_window(wid); */
   }
   if (mainw->recording_recovered) {
-    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
+    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
   if (!prefs->vj_mode && !prefs->startup_phase) {
@@ -1951,7 +1950,7 @@ static boolean lives_startup2(livespointer data) {
 
   // TODO *** check if still working
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
-  mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
+  mainw->kb_timer = lives_timer_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   mainw->lazy_starter =
     lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
@@ -1984,6 +1983,8 @@ static boolean lives_startup2(livespointer data) {
 #ifndef DUMPMSGS
   dump_messages(NULL);
 #endif
+
+  lives_widget_queue_draw_and_update(mainw->LiVES);
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
@@ -2912,7 +2913,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
-  lives_idle_add_simple(lives_startup, NULL);
+  lives_idle_add(lives_startup, NULL);
 
 #ifdef GUI_GTK
   if (!gtk_thread) {

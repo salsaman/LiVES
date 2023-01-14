@@ -1429,6 +1429,7 @@ static boolean accelerators_swapped;
 boolean get_accels_swapped(void) {return accelerators_swapped;}
 
 void cancel_process(boolean visible) {
+  if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
   if (visible) {
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
         && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
@@ -1513,7 +1514,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       on_cancel_keep_button_clicked(NULL, NULL);
       if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = cancelled;
       d_print_cancelled();
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      cancel_process(visible);
       return FALSE;
     }
   }
@@ -1615,7 +1616,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     end_threaded_dialog();
     mainw->proc_ptr = NULL;
     if (mainw->cancelled != CANCEL_NONE) {
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      cancel_process(visible);
       return FALSE;
     }
   }
@@ -1638,7 +1639,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
       end_threaded_dialog();
       if (mainw->cancelled != CANCEL_NONE) {
-        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+        cancel_process(visible);
         return FALSE;
       }
     }
@@ -1651,13 +1652,16 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   /////////////////////////
   if (!reset_timebase()) {
     mainw->cancelled = CANCEL_INTERNAL_ERROR;
+    cancel_process(visible);
     return FALSE;
   }
   //////////////////////////
 
   if (mainw->record_starting) {
-    if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL)))
+    if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL))) {
+      cancel_process(visible);
       return FALSE;
+    }
   }
 
   //if (mainw->disk_mon & MONITOR_GROWTH) disk_monitor_start(mainw->monitor_dir);
@@ -1695,7 +1699,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
       && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      cancel_process(visible);
       return FALSE;
     }
 
@@ -1714,7 +1718,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
       handle_audio_timeout();
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      cancel_process(visible);
       return FALSE;
     }
 
@@ -1785,7 +1789,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           gdk_frame_clock_end_updating(gclock);
         }
 #endif
-        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+        cancel_process(visible);
         return FALSE;
       }
 
@@ -1964,8 +1968,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           gdk_frame_clock_end_updating(gclock);
         }
 #endif
-        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
         if (visible) mainw->noswitch = FALSE;
+        cancel_process(visible);
         return FALSE;
       }
 
@@ -2006,8 +2010,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
 
 finish:
-  if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
-
   //play/operation ended
   cancel_process(visible);
 
@@ -2040,10 +2042,11 @@ finish:
 
 #define MIN_FLASH_TIME MILLIONS(100)
 
-boolean do_auto_dialog(const char *text, int type) {
+static boolean _do_auto_dialog(const char *text, int type, boolean is_fg) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
+  GET_PROC_THREAD_SELF(self);
 
   FILE *infofile = NULL;
 
@@ -2055,7 +2058,7 @@ boolean do_auto_dialog(const char *text, int type) {
   double time_rem, last_time_rem = 10000000.;
   lives_alarm_t alarm_handle = 0;
 
-  mainw->cancelled = CANCEL_NONE;
+  if (is_fg) g_main_context_acquire(g_main_context_default());
 
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
@@ -2103,7 +2106,8 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
+  while (mainw->cancelled == CANCEL_NONE && (!self || !lives_proc_thread_get_cancel_requested(self))
+         && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     lives_widget_context_update();
     lives_usleep(prefs->sleep_time);
@@ -2125,7 +2129,7 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  if (!mainw->cancelled) {
+  if (!mainw->cancelled && (!self || !lives_proc_thread_get_cancel_requested(self))) {
     if (infofile) {
       if (type == 0 || type == 2) {
         size_t bread;
@@ -2149,6 +2153,8 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
+  if (self && !lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+
   if (mainw->proc_ptr) {
     if (mainw->proc_ptr->processing)
       lives_widget_destroy(mainw->proc_ptr->processing);
@@ -2159,6 +2165,9 @@ boolean do_auto_dialog(const char *text, int type) {
 
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+
+  if (is_fg) g_main_context_release(g_main_context_default());
+
   if (mainw->cancelled) return FALSE;
 
   // get error message (if any)
@@ -2172,6 +2181,35 @@ boolean do_auto_dialog(const char *text, int type) {
   return TRUE;
 }
 
+
+// start up an auto dialog - processing dialog running in bg thread
+// there are two ways to use this
+// - launch it before running a backend, then call lives_proc_thread_join on the returned proc_thread
+//	it will check for .status file from backend and return when this is present
+//
+// - launch it, do some processing, then call lives_proc_thread_cancel on the returned proc_thread
+//    after calling cancel, again wait for lives_proc_thread_join to return
+//
+// while the auto dialog is running, it takes control of the main widget context, thus in effect the main thread becomes
+//
+boolean do_auto_dialog(const char *text, int type) {
+  // blocking types
+  // type 0 = normal auto_dialog
+  // type 1 = countdown dialog for audio recording
+  // type 2 = normal with cancel
+  return _do_auto_dialog(text, type, is_fg_thread());
+}
+
+
+lives_proc_thread_t do_auto_dialog_async(const char *text, int type) {
+  // blocking types
+  // type 0 = normal auto_dialog
+  // type 1 = countdown dialog for audio recording
+  // type 2 = normal with cancel
+  lives_proc_thread_t lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_do_auto_dialog,
+                            WEED_SEED_BOOLEAN, "sib", text, type, is_fg_thread());
+  return lpt;
+}
 
 ///// TODO: end processing.c /////
 

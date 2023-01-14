@@ -272,38 +272,6 @@ static boolean check_for_overlay_text(weed_layer_t *layer) {
 }
 
 
-static boolean do_cleanup(weed_layer_t *layer, int success) {
-  /// cleanup any resources after showing a frame. This run as a thread,
-  /// so the main thread can return to the player
-  /// if we return FALSE, this indicates that mainw->frame_layer has refs still
-  lives_clip_t *sfile = NULL;
-  int clip = -1;
-  double fps = DEF_FPS;
-  frames_t frame = 0;
-
-  if (layer) {
-    clip = lives_layer_get_clip(layer);
-    frame = lives_layer_get_frame(layer);
-    if (IS_VALID_CLIP(clip)) {
-      sfile = mainw->files[clip];
-      fps = sfile->pb_fps;
-    }
-  }
-
-  if (success) {
-    char *tmp;
-    // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)
-                 (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|",
-                                            (double)mainw->currticks / TICKS_PER_SECOND_DBL,
-                                            clip, frame, fps)));
-    lives_free(tmp);
-  }
-
-  return TRUE;
-}
-
-
 boolean record_setup(ticks_t actual_ticks) {
   if (mainw->record_starting) {
     if (!mainw->event_list) {
@@ -616,8 +584,6 @@ recheck:
           if (mainw->ext_layer) {
             mainw->frame_layer = weed_layer_copy(NULL, mainw->ext_layer);
           } else {
-
-
             // then check if we a have preloaded (cached) frame
             // there are two ways we an get a preload - either normal playback when we have spare cycles
             // or when we are lagging and trying to jump ahead
@@ -665,6 +631,7 @@ recheck:
                   // +ve value...make a deep copy, e.g we got the frame too early
                   // and we may need to reshow it several times
                   if (mainw->frame_layer) {
+
                     weed_layer_pixel_data_free(mainw->frame_layer);
                   }
                   if (delta_r > 0)  {
@@ -769,14 +736,18 @@ recheck:
 }
 
 
-boolean load_frame_image(frames_t frame) {
+weed_layer_t *load_frame_image(frames_t frame) {
   // this is where we do the actual load/record of a playback frame
   // it is called (ideally) every 1/fps from do_progress_dialog() via process_one()
+  // frame is the (default) frame to be played in the 'foreground' clip
+  // this may differ from the actual frame displayed / returned, due to preload caching and other factors
+  // the resulting layer will be post effects / palette conversion / resize or letteboxing, and gamma correction
 
-  // for the multitrack window we set mainw->frame_image; this is used to display the
+  // for the multitrack window we can use thr return value; this is used to display the
   // preview image
-
-  // if mainw->frame_layer still hokds refs, we return FALSE, caller should unref and set to NULL
+  //
+  // returned layer is guaranteed not to be unreffed until at least any subsequent call to load_frame_image
+  // (or until playback ends)
 
   void **pd_array = NULL, **retdata = NULL;
   LiVESPixbuf *pixbuf = NULL;
@@ -791,7 +762,6 @@ boolean load_frame_image(frames_t frame) {
   boolean success = FALSE;
   boolean size_ok = TRUE;
   boolean player_v2 = FALSE;
-  boolean unreffed;
 
   int layer_palette, cpal;
   int retval;
@@ -838,7 +808,7 @@ boolean load_frame_image(frames_t frame) {
     }
     if (!mainw->fs && !mainw->faded) get_play_times();
 
-    return TRUE;
+    return NULL;
   }
 
   if (!mainw->foreign) {
@@ -1583,9 +1553,6 @@ boolean load_frame_image(frames_t frame) {
 
     g_print("NXXasdsaddidX EW pixdata %p %p\n", mainw->frame_layer, weed_layer_get_pixel_data(mainw->frame_layer));
 
-
-
-
     ////////////////////////////////////////
 
     /// special value to compact the rowstrides
@@ -1695,7 +1662,7 @@ boolean load_frame_image(frames_t frame) {
     LiVESError *gerror = NULL;
     lives_painter_t *cr = lives_painter_create_from_surface(mainw->play_surface);
 
-    if (!cr) return TRUE;
+    if (!cr) return NULL;
 
     if (mainw->rec_vid_frames == -1) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d", frame)));
@@ -1703,7 +1670,7 @@ boolean load_frame_image(frames_t frame) {
       if (frame > mainw->rec_vid_frames) {
         mainw->cancelled = CANCEL_KEEP;
         if (CURRENT_CLIP_HAS_VIDEO) cfile->frames = mainw->rec_vid_frames;
-        return TRUE;
+        return NULL;
       }
 
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d / %9d",
@@ -1750,7 +1717,7 @@ boolean load_frame_image(frames_t frame) {
   if (frame > mainw->rec_vid_frames && mainw->rec_vid_frames > -1)
     mainw->cancelled = CANCEL_KEEP;
   lives_freep((void **)&framecount);
-  return TRUE;
+  return NULL;
 }
 
 lfi_done:
@@ -1776,8 +1743,6 @@ if (framecount) {
   }
 }
 
-unreffed =  do_cleanup(mainw->frame_layer, success);
-
 THREADVAR(rowstride_alignment_hint) = 0;
 lives_freep((void **)&framecount);
 if (success) {
@@ -1793,19 +1758,35 @@ if (success) {
 }
 
 if (old_frame_layer) {
-  int refs;
-  //g_print("OFL 1 is %p %p\n", old_frame_layer, weed_layer_get_pixel_data(old_frame_layer));
-  do {
-    refs = weed_layer_count_refs(old_frame_layer);
-    if (refs > 1) g_print("OFL had %d refs\n", refs);
-    if (refs)
-      refs = weed_layer_unref(old_frame_layer);
-  } while (refs);
+  int refs = weed_layer_count_refs(old_frame_layer);
+  if (refs != 1) g_print("OFL had %d refs\n", refs);
+  while (refs > 0) {
+    refs = weed_layer_unref(old_frame_layer);
+  }
 }
-old_frame_layer = mainw->frame_layer;
-//g_print("OFL 2 is %p %p\n", old_frame_layer, weed_layer_get_pixel_data(old_frame_layer));
 
-return unreffed;
+if (success && mainw->frame_layer) {
+  // format is (int64_t)tc|(int32_t)nclips|(int32_t)clip|(int64_t)frame|.....|(double)pb_fps
+  char *tmp, *msg;
+  double pb_fps = 0.;
+  int clip = mainw->clip_index[0];
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
+  if (sfile) pb_fps = sfile->pb_fps;
+  tmp = lives_strdup_printf("%.8f|%d|", (double)mainw->currticks / TICKS_PER_SECOND_DBL, mainw->num_tracks);
+  for (int i = 0; i < mainw->num_tracks; i++) {
+    tmp = lives_strdup_concat(tmp, "|", "%d|%ld", mainw->clip_index[i], mainw->frame_index[i]);
+  }
+  msg = lives_strdup_printf("%s|%.3f", tmp, pb_fps);
+  lives_free(tmp);
+  lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)msg);
+  lives_free(msg);
+}
+
+old_frame_layer = mainw->frame_layer;
+mainw->debug_ptr = mainw->frame_layer;
+
+// TODO - set mainw->frame_layer = NULL
+return old_frame_layer;
 }
 
 
@@ -2506,11 +2487,9 @@ static boolean update_gui(void) {
   /*     lives_widget_queue_draw_and_update(mainw->play_image); */
   /*   } */
   /* y */
-  g_print("UPD 1\n");
   mainw->debug = TRUE;
   g_main_context_iteration(g_main_context_default(), FALSE);
   mainw->debug = FALSE;
-  g_print("UPD 2\n");
   return TRUE;
 }
 

@@ -4497,8 +4497,8 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   // now we need to add to the effects menu and set a callback
-  for (rfx = mainw->rendered_fx[(plugin_idx = 1)];
-       plugin_idx < rfx_list_length; rfx = mainw->rendered_fx[++plugin_idx]) {
+  for (plugin_idx = 1; plugin_idx < rfx_list_length; plugin_idx++) {
+    rfx = mainw->rendered_fx[plugin_idx];
 
     if (status != RFX_STATUS_ANY && rfx->status != status) continue;
     if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);

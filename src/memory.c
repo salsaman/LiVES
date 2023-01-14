@@ -731,7 +731,11 @@ void *alloc_bigblock(size_t sizeb) {
   return NULL;
 }
 
+#ifdef DEBUG_BBLOCKS
+void *_calloc_bigblock(size_t xsize) {
+#else
 void *calloc_bigblock(size_t xsize) {
+#endif
   void *start;
   if (xsize > bmemsize) {
     if (prefs->show_dev_opts) g_print("size req %lu > %lu, "
@@ -766,12 +770,21 @@ void *calloc_bigblock(size_t xsize) {
   return NULL;
 }
 
+#ifdef DEBUG_BBLOCKS
+void *_free_bigblock(void *bstart) {
+#else
 void *free_bigblock(void *bstart) {
+#endif
   for (int i = 0; i < NBBLOCKS; i++) {
     if ((char *)bstart >= (char *)bigblocks[i]
         && (char *)bstart - (char *)bigblocks[i] < bmemsize + EXTRA_BYTES) {
       //FN_FREE_TARGET(free_bigblock, bigblocks[i]);
-      if (used[i] == -1) lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
+      if (used[i] == -1) {
+        g_print("\n\n");
+        dump_fn_notes();
+        g_print("\n\n");
+        lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
+      }
       used[i] = -1;
 #ifdef BBL_TEST
       pthread_mutex_lock(&bigblock_mutex);
@@ -780,7 +793,7 @@ void *free_bigblock(void *bstart) {
       pthread_mutex_unlock(&bigblock_mutex);
 #endif
       //g_print("FREEBIG %p %d\n", bigblocks[i], i);
-      return NULL;
+      return bstart;
     }
   }
   lives_abort("Attempt to free() invalid bigblock - aborting due to internal memory errors");

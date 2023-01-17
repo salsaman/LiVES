@@ -174,20 +174,20 @@ static weed_error_t ripple_init(weed_plant_t *inst) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->vtable = (signed char *)weed_calloc(map_h * map_w, 2 * sizeof(signed char));
-  if (sdata->vtable == NULL) {
+  if (!sdata->vtable) {
     weed_free(sdata->map);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->background = (short *)weed_calloc(map_h * map_w, sizeof(short));
-  if (sdata->background == NULL) {
+  if (!sdata->background) {
     weed_free(sdata->vtable);
     weed_free(sdata->map);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->diff = (unsigned char *)weed_calloc(map_h * map_w, 4 * sizeof(unsigned char));
-  if (sdata->diff == NULL) {
+  if (!sdata->diff) {
     weed_free(sdata->background);
     weed_free(sdata->vtable);
     weed_free(sdata->map);
@@ -353,7 +353,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
   signed char *vp;
   int dx, dy, h, v, width, height, irowstride, orowstride, orowstridex;
   int mode;
-  register int x, y, i;
+  int x, y, i;
 
   mode = 0;
 
@@ -413,7 +413,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
     /* low pass filter */
     p = sdata->map3 + width + 1;
     q = sdata->map2 + width + 1;
-    for (y = height - 2; y > 0; y--) {
+    for (y = height - 2; y > 1; y--) {
       for (x = width - 2; x > 0; x--) {
         h = *(p - width) + *(p - 1) + *(p + 1) + *(p + width) + (*p) * 60;
         *q = h >> 6;

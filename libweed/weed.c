@@ -13,9 +13,10 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
    Weed is developed by:
+
    Gabriel "Salsaman" Finch - http://lives-video.com
 
-   partly based on LiViDO, which is developed by:
+   partly based on LiViDO, which was developed by:
    Niels Elburg - http://veejay.sf.net
    Denis "Jaromil" Rojo - http://freej.dyne.org
    Tom Schouten - http://zwizwa.fartit.com
@@ -636,7 +637,7 @@ static inline weed_data_t **weed_data_append(weed_leaf_t *leaf,
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, weed_hash_t *hash_ret,
 					  weed_leaf_t **refnode) {
-  weed_hash_t hash = WEED_MAGIC_HASH;
+  weed_hash_t hash = 0;
   weed_leaf_t *leaf = plant, *chain_leaf = NULL;
   int is_writer = 1, checkmode = 0;
 
@@ -658,7 +659,8 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
       // this counts the number of readers running in non-check mode
       if (!checkmode) reader_count_add(plant);
     }
-    hash = weed_hash(key);
+    if (hash_ret) hash = *hash_ret;
+    if (!hash) hash = weed_hash(key);
     if (!checkmode && !refnode) {
       while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key)))
 	if (!(leaf = leaf->next)) break;
@@ -701,7 +703,10 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
       if (!checkmode) reader_count_sub(plant);
     }
   }
-  else data_lock_readlock(leaf);
+  else {
+    hash = WEED_MAGIC_HASH;
+    data_lock_readlock(leaf);
+  }
   if (hash_ret) *hash_ret = hash;
   return leaf;
 }

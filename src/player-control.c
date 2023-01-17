@@ -26,29 +26,17 @@
 static boolean _start_playback(int play_type) {
   GSource *source;
   int new_file, old_file;
-  lives_proc_thread_t lpt;
   boolean flag = FALSE;
 
   if (play_type != 8 && mainw->noswitch) return TRUE;
   player_desensitize();
+  set_ign_idlefuncs(TRUE);
 
   switch (play_type) {
   case 8: case 6: case 0:
     /// normal play
     if (play_type == 0) flag = TRUE;
-    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                   play_all, 0, "b", flag);
-    source = lives_thrd_idle_priority((LiVESWidgetSourceFunc)call_funcsig, lpt);
-    g_main_context_iteration(THREAD_CTX, TRUE);
-    g_source_unref(source);
-
-    /* play_all(play_type == 8); */
-    if (play_type == 6) {
-      /// triggered by generator
-      // need to set this after playback ends; this stops the key from being activated (again) in effects.c
-      // also stops the (now defunct instance being unreffed)
-      mainw->gen_started_play = TRUE;
-    }
+    play_all(flag);
     break;
   case 1:
     /// play selection
@@ -109,32 +97,30 @@ static boolean _start_playback(int play_type) {
     break;
   }
 
-  if (mainw->player_proc) {
-    mainw->player_proc = NULL;
-  }
+  if (mainw->player_proc) mainw->player_proc = NULL;
+  set_ign_idlefuncs(FALSE);
 
   return FALSE;
 }
 
 
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {
+  // block until playback stops
+  lives_proc_thread_t lpt;
   if (!is_fg_thread()) {
     mainw->player_proc = THREADVAR(proc_thread);
-    break_me("PPROC1");
     return _start_playback(type);
   }
-  start_playback_async(type);
+  mainw->player_proc = lpt = lives_proc_thread_create(0, _start_playback, -1, "i", type);
+  // the main thread will block here, waiting for playback to end.
+  // during this time, it will service only bg requests set via fg_service_call
+  lives_proc_thread_join(lpt);
   return FALSE;
 }
 
 
 void start_playback_async(int type) {
   mainw->player_proc = lives_proc_thread_create(0, _start_playback, 0, "i", type);
-  /* lives_sigdata_t *sigdata; */
-  /* mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC, */
-  /*                      _start_playback, 0, "i", type); */
-  /* sigdata = lives_sigdata_new(mainw->player_proc, FALSE); */
-  /* lives_idle_priority(governor_loop, sigdata); */
 }
 
 
@@ -240,10 +226,8 @@ static void post_playback(void) {
   }
 
   if (mainw->new_vpp) {
-    mainw->noswitch = FALSE;
     mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
     mainw->new_vpp = NULL;
-    mainw->noswitch = TRUE;
   }
 
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
@@ -443,14 +427,12 @@ void play_file(void) {
     lives_proc_thread_ref(mainw->lazy_starter);
     if (mainw->lazy_starter) {
       lives_proc_thread_request_pause(mainw->lazy_starter);
-      lives_proc_thread_unref(mainw->lazy_starter);
       lazy_start = TRUE;
     }
 
     lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
-      lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
       lazy_rfx = TRUE;
     }
   }
@@ -1564,7 +1546,6 @@ void play_file(void) {
     }
   }
 
-
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
@@ -1587,14 +1568,12 @@ void play_file(void) {
   }
 
   if (lazy_start) {
-    lives_proc_thread_ref(mainw->lazy_starter);
     if (mainw->lazy_starter) {
       lives_proc_thread_request_resume(mainw->lazy_starter);
       lives_proc_thread_unref(mainw->lazy_starter);
     }
   }
   if (lazy_rfx) {
-    lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       lives_proc_thread_request_resume(mainw->helper_procthreads[PT_LAZY_RFX]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);

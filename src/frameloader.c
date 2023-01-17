@@ -2058,7 +2058,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   if (weed_plant_has_leaf(layer, LIVES_LEAF_PROC_THREAD)) is_thread = TRUE;
 
-  g_print("del natsize for %p\n", layer);
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   sfile = RETURN_VALID_CLIP(clip);
@@ -2344,7 +2343,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       filter_mutex_lock(key);
       if (!IS_VALID_CLIP(clip)) {
-        g_print("INVVVVVVVVVVVVVVVVVVVVVVVVVV\n");
         // gen was switched off
         create_blank_layer(layer, image_ext, width, height, target_palette);
       } else {
@@ -2549,11 +2547,12 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
   weed_layer_pixel_data_free(layer);
   weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
   weed_layer_set_size(layer, width, height);
+  //
   lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
-                                 | LIVES_THRDATTR_WAIT_SYNC, (lives_funcptr_t)pft_thread,
+                                 | LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)pft_thread,
                                  WEED_SEED_BOOLEAN, "vs", layer, img_ext);
   weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
-  lives_proc_thread_sync_ready(lpt);
+  lives_proc_thread_queue(lpt, 0);
 #endif
 }
 

@@ -1947,7 +1947,7 @@ ulong restore_file(const char *file_name) {
   if (cfile->achans) {
     cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
                                  (cfile->asampsize / 8));
-    g_print("HHHHHH %d %f and %ld\n", cfile->frameno, cfile->real_pointer_time, cfile->aseek_pos);
+    //g_print("HHHHHH %d %f and %ld\n", cfile->frameno, cfile->real_pointer_time, cfile->aseek_pos);
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
     cfile->async_delta = 0;
   }
@@ -2782,7 +2782,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
                                    (cfile->asampsize >> 3));
       if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
-      g_print("HHHHHH 222 %d %f and %ld\n", cfile->frameno, cfile->real_pointer_time, cfile->aseek_pos);
+      //g_print("HHHHHH 222 %d %f and %ld\n", cfile->frameno, cfile->real_pointer_time, cfile->aseek_pos);
       cfile->async_delta = 0;
     }
 
@@ -3001,6 +3001,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     com = lives_strdup_printf("%s get_recovery_file %d %d %s %s %d",
                               prefs->backend_sync, luid, lgid,
                               capable->myname, recfname4, capable->mainpid);
+
     lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
     lives_free(com); lives_free(recfname4);
 
@@ -3022,6 +3023,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
     lives_free(recfname);
     if (!no_recover) retval = recover_files(recovery_file, auto_recover);
+
     else lives_rm(recovery_file);
     lives_free(recovery_file);
   }

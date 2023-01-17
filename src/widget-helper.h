@@ -1308,6 +1308,8 @@ boolean lives_cursor_unref(LiVESXCursor *);
 
 boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, LiVESTreeIter *existing, LiVESTreeIter *newiter);
 
+boolean set_ign_idlefuncs(boolean val);
+
 boolean lives_widget_context_update(void);
 boolean lives_widget_context_iteration(LiVESWidgetContext *, boolean may_block);
 

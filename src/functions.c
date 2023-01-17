@@ -348,8 +348,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
 #define DO_CALL(n, ...) do {if (ret_type) XCALL_##n(lpt, ret_type, thefunc, __VA_ARGS__); \
     else CALL_VOID_##n(lpt, __VA_ARGS__);} while (0);
 
-  if (!weed_plant_has_leaf(lpt, "type")) abort();
-
   if (attrs & LIVES_THRDATTR_NOTE_TIMINGS)
     weed_set_int64_value(lpt, LIVES_LEAF_START_TICKS, lives_get_current_ticks());
 
@@ -1265,14 +1263,6 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   }
 
   do {
-    // since it would affect performance to hold the mutex lock across callbacks,
-    // we release the lock whilst running them. This implies that entries can be removed or added
-    // during this time. To account for this, after each callback we reparse the list from the start
-    // skipping over anything already actioned, or which was not present on entry
-    // other threads may add or remove items from the stack (the current callback is flagged as RUNNING,
-    // so it cannot be removed, instead it will be flagged as REMOVE). However only one thread ata a time may
-    // trigger any specific hook stack, - this avoids confusion with the ACTIONED flags
-    //
     retval = FALSE;
     if (!hmulocked) {
       if (type == LIVES_GUI_HOOK && is_fg_thread()) {
@@ -1293,7 +1283,6 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!(closure->flags & HOOK_STATUS_ACTIONED)) continue;
       if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_RUNNING)) continue;
 
-      if (!weed_plant_has_leaf(closure->proc_thread, "type")) abort();
       lives_proc_thread_ref(closure->proc_thread);
       lpt = closure->proc_thread;
       if (!lpt) continue;
@@ -1448,6 +1437,62 @@ trigdone:
 }
 
 
+void lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
+  lives_proc_thread_t lpt;
+  LiVESList *list, *listnext;
+  lives_closure_t *closure;
+  pthread_mutex_t *hmutex;
+
+  if (!hstacks) {
+    // test should be HOOK_TYPE_SELF
+    if (type == SYNC_WAIT_HOOK) hstacks = THREADVAR(hook_stacks);
+    else {
+      GET_PROC_THREAD_SELF(self);
+      if (!self) return;
+      hstacks = lives_proc_thread_get_hook_stacks(self);
+      if (!hstacks) return;
+    }
+  }
+
+  hmutex = hstacks[type]->mutex;
+
+  if (!hstacks[type]->stack) {
+    PTMUH;
+    return;
+  }
+
+  list = (LiVESList *)hstacks[type]->stack;
+
+  for (; list; list = listnext) {
+    listnext = list->next;
+    closure = (lives_closure_t *)list->data;
+
+    if (!closure || !closure->proc_thread) continue;
+    if (closure->flags & HOOK_STATUS_BLOCKED) continue;
+
+    lives_proc_thread_ref(closure->proc_thread);
+    lpt = closure->proc_thread;
+    if (!lpt) continue;
+
+    if (closure->flags & HOOK_STATUS_REMOVE) {
+      hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, list, FALSE);
+      lives_proc_thread_unref(lpt);
+      lives_closure_free(closure);
+      continue;
+    }
+
+    lives_proc_thread_include_states(lpt, THRD_STATE_STACKED);
+
+    lives_proc_thread_exclude_states(lpt, THRD_STATE_IDLING | THRD_STATE_UNQUEUED
+                                     | THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
+                                     | THRD_STATE_FINISHED | THRD_STATE_DEFERRED);
+
+    lives_proc_thread_queue(lpt, 0);
+  }
+  PTMUH;
+}
+
+
 boolean lives_proc_thread_trigger_hooks(lives_proc_thread_t lpt, int type) {
   if (lpt) {
     return lives_hooks_trigger(lives_proc_thread_get_hook_stacks(lpt), type);
@@ -1489,30 +1534,6 @@ lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_hook_stack_t **hs
   lives_proc_thread_set_cancellable(poller);
   lives_proc_thread_sync_ready(poller);
   return poller;
-}
-
-
-void lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
-  LiVESList *listnext;
-  lives_proc_thread_t lpt;
-  lives_closure_t *closure;
-  lives_hook_stack_t *hstack = hstacks[type];
-  pthread_mutex_t *hmutex = hstack->mutex;
-  PTMLH;
-  for (LiVESList *list = (LiVESList *)hstacks[type]->stack; list; list = listnext) {
-    listnext = list->next;
-    closure = (lives_closure_t *)list->data;
-    if (!closure) continue;
-    if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_REMOVE)) {
-      // TODO - remove on REMOVE
-      continue;
-    }
-    lpt = closure->proc_thread;
-    if (!lpt) continue;
-    if (lives_proc_thread_check_finished(lpt)) continue;
-    lives_proc_thread_queue(lpt, 0);
-  }
-  PTMUH;
 }
 
 

@@ -348,7 +348,8 @@ static bool resize_buffer(_sdata *sd) {
     } else align = 2;
   }
   if (sd->fbuffer) weed_free(sd->fbuffer);
-  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * scrheight / align, align);
+  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride
+				       * scrheight / align + align - 1, align);
   if (!sd->fbuffer) return false;
   return true;
 }
@@ -1044,8 +1045,10 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (sd->die) return WEED_ERROR_REINIT_NEEDED;
 
-  if (sd->busy) goto copytodest;
-
+  if (sd->busy) {
+    fprintf(stderr, "BUSY\n");
+    goto copytodest;
+  }
   //std::cerr << "pm size " << width << " X " << height << std::endl;
 
   while (!sd->worker_active) {
@@ -1151,16 +1154,18 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
         if (sd->audio) weed_free(sd->audio);
         sd->audio = (float *)weed_calloc(adlen, 4);
         if (!sd->audio) {
+	  sd->abufsize = 0;
           sd->error = WEED_ERROR_MEMORY_ALLOCATION;
           pthread_mutex_unlock(&sd->pcm_mutex);
           projectM_deinit(inst);
           return WEED_ERROR_MEMORY_ALLOCATION;
         }
+	sd->abufsize = adlen;
       }
-      sd->abufsize = adlen;
       weed_memcpy(sd->audio, adata[0], adlen * 4);
     } else adlen = 0;
 
+    fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 1] : 0., adata[0] ? adata[0][adlen >>1] : 0., adlen);
     sd->audio_frames = adlen;
     sd->audio_offs = 0;
     pthread_mutex_unlock(&sd->pcm_mutex);

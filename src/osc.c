@@ -39,9 +39,8 @@ static boolean via_shortcut = FALSE;
 // TODO: replace mainw->osc_block with filter_mutex_lock()
 
 static boolean osc_init_generator(livespointer data) {
-  // do this via an idle function, as it will trigger playback and hang
   mainw->osc_auto = 1; ///< request notifiction of success
-  rte_key_toggle(LIVES_POINTER_TO_INT(data));
+  rte_on_off_callback_fg(NULL, data);
   mainw->osc_auto = 0;
   return FALSE;
 }

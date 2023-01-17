@@ -1177,7 +1177,7 @@ typedef struct {
 
   uint32_t kb_timer;
 
-  volatile boolean clutch;
+  volatile boolean service_calls;
   /// (GUI) function pointers
   ulong config_func;
   ulong pb_fps_func;

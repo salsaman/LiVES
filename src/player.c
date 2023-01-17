@@ -766,12 +766,15 @@ weed_layer_t *load_frame_image(frames_t frame) {
   int layer_palette, cpal;
   int retval;
 
-  static int old_pwidth = 0, old_pheight = 0;
+  static int old_pwidth = 0, old_pheight = 0, oseq = -1;
   int pwidth, pheight;
   int lb_width = 0, lb_height = 0;
   int fg_file = mainw->playing_file;
   int tgamma = WEED_GAMMA_UNKNOWN;
   boolean was_letterboxed = FALSE;
+
+  if (mainw->play_sequence != oseq) old_frame_layer = NULL;
+  oseq = mainw->play_sequence;
 
   framecount = NULL;
   fname_next = info_file = NULL;
@@ -1105,6 +1108,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       } else {
         frame_layer = mainw->frame_layer;
+        /// BE CAREFUL what we do with frame_layer
         //weed_layer_nullify_pixel_data(mainw->frame_layer);
       }
 
@@ -1263,7 +1267,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) goto lfi_done;
       // DONE for vpp with resize
     }
-    g_print("ZOOO %p %p\n", mainw->frame_layer, weed_layer_get_pixel_data(mainw->frame_layer));
 
     get_player_size(&mainw->pwidth, &mainw->pheight);
 
@@ -1336,6 +1339,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
           if (!(mainw->vpp->capabilities & VPP_CAN_LETTERBOX)) {
             if (frame_layer == mainw->frame_layer) {
               if (layer_palette != mainw->vpp->palette && (pwidth > lb_width || pheight > lb_height)) {
+                weed_layer_nullify_pixel_data(frame_layer);
                 frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
                 if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
                 if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
@@ -1386,12 +1390,13 @@ weed_layer_t *load_frame_image(frames_t frame) {
         // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
         // so copy layer and convert, retaining original
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
+        weed_layer_nullify_pixel_data(frame_layer);
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
       layer_palette = weed_layer_get_palette(frame_layer);
 
-      pwidth = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
+      pwidth = weed_layer_get_width_pixels(frame_layer);
       pheight = weed_layer_get_height(frame_layer);
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
@@ -1551,7 +1556,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
       goto lfi_done;
     }
 
-    g_print("NXXasdsaddidX EW pixdata %p %p\n", mainw->frame_layer, weed_layer_get_pixel_data(mainw->frame_layer));
+    g_print("NXXasdsaddidX EW pixdata %p %p\n", mainw->frame_layer,
+            weed_layer_get_pixel_data(mainw->frame_layer));
 
     ////////////////////////////////////////
 
@@ -2477,18 +2483,11 @@ static void widget_ct_upd(void) {
 
 // player will create this as
 static boolean update_gui(void) {
-  static lives_proc_thread_t lpt = NULL;
-
-  if (!lpt) lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, widget_ct_upd,
-                    -1, "", NULL);
-  /*   if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) { */
-  /*     lives_widget_queue_draw_and_update(mainw->preview_image); */
-  /*   } else { */
-  /*     lives_widget_queue_draw_and_update(mainw->play_image); */
-  /*   } */
-  /* y */
   mainw->debug = TRUE;
-  g_main_context_iteration(g_main_context_default(), FALSE);
+  ctx_mutex_lock();
+  while (g_main_context_iteration(NULL, FALSE));
+  //lives_widget_context_update();
+  ctx_mutex_unlock();
   mainw->debug = FALSE;
   return TRUE;
 }
@@ -2972,12 +2971,17 @@ switch_point:
       }
     }
 
-    if (lives_proc_thread_is_unqueued(gui_lpt)) {
-      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+    if (!lives_proc_thread_is_unqueued(gui_lpt)) {
+      lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
+    }
+
+    set_ign_idlefuncs(FALSE);
+    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+    set_ign_idlefuncs(TRUE);
+
+    if (!lives_proc_thread_is_idling(gui_lpt)) {
       lives_proc_thread_queue(gui_lpt, 0);
     } else {
-      lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
-      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
       lives_proc_thread_request_resume(gui_lpt);
     }
 
@@ -2985,9 +2989,9 @@ switch_point:
 
     if (!lives_proc_thread_is_unqueued(gui_lpt)) {
       lives_proc_thread_request_cancel(gui_lpt, FALSE);
-      lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
-      lives_proc_thread_request_resume(gui_lpt);
+      lives_proc_thread_join_boolean(gui_lpt);
     }
+    lives_proc_thread_unref(gui_lpt);
     gui_lpt = NULL;
 
     retval = mainw->cancelled;
@@ -3877,15 +3881,40 @@ proc_dialog:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      if (lives_proc_thread_is_unqueued(gui_lpt)) {
-        lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-        lives_proc_thread_queue(gui_lpt, 0);
-      } else {
-        lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
-        lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-        lives_proc_thread_request_resume(gui_lpt);
+      // check if gui_lpt is NOT unqueued, i.e. running
+      // if so, wait for it to become idle
+      if (!lives_proc_thread_is_unqueued(gui_lpt)) {
+        lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
       }
 
+      set_ign_idlefuncs(FALSE);
+      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+      THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
+      main_thread_execute_void(lives_widget_context_update, 0);
+      THREADVAR(hook_hints) = 0;
+      set_ign_idlefuncs(TRUE);
+
+      // if lpt was !unqueued, it was either running or idling
+      // if it was idling, we waited for it to become so
+      // it is not possible for unqueued -> idling without passing through playing
+      // so if idling now either it was !unqueued (running) and we waited, or it was unqueued,
+      // ran and became idle
+      // thus it must have been queued atr some point
+      //
+      // if !idling now, either it was unqueued, and got queued, which is not possible
+      // so if !idling, it must need queuing for initial run
+
+      //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt));
+
+      if (!lives_proc_thread_is_idling(gui_lpt)) {
+        lives_proc_thread_queue(gui_lpt, 0);
+        // so gui_lpt will not become unqueued until it finishes
+      } else {
+        // gui_lpt was idling, so either we waited for that, or it became unqueued / idling
+        // just now
+        // if it was idling, ask it to resum
+        lives_proc_thread_request_resume(gui_lpt);
+      }
       //#define LOAD_ANALYSE_TICKS MILLIONS(10)
 
       /* if (mainw->currticks - last_ana_ticks > LOAD_ANALYSE_TICKS) { */
@@ -3901,33 +3930,29 @@ proc_dialog:
       }
     }
     if (mainw->cancelled != CANCEL_NONE) {
-      if (!lives_proc_thread_is_unqueued(gui_lpt)) {
-        lives_proc_thread_request_cancel(gui_lpt, FALSE);
-        lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
-        lives_proc_thread_request_resume(gui_lpt);
-      }
-      gui_lpt = NULL;
       retval = ONE_MILLION + mainw->cancelled;
-      goto err_end;
     }
-    return 0;
+    goto err_end;
   }
 
   if (LIVES_IS_PLAYING) {
     mainw->jack_can_stop = FALSE;
   }
 
-  if (!lives_proc_thread_is_unqueued(gui_lpt)) {
-    lives_proc_thread_request_cancel(gui_lpt, FALSE);
-    lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
-    lives_proc_thread_request_resume(gui_lpt);
-  }
-  gui_lpt = NULL;
-
   retval = MILLIONS(2) + mainw->cancelled;
   goto err_end;
 
 err_end:
+  if (retval) {
+    if (gui_lpt) {
+      if (!lives_proc_thread_is_unqueued(gui_lpt)) {
+        lives_proc_thread_request_cancel(gui_lpt, FALSE);
+        lives_proc_thread_join_boolean(gui_lpt);
+      }
+      lives_proc_thread_unref(gui_lpt);
+      gui_lpt = NULL;
+    }
+  }
   return retval;
 }
 

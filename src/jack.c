@@ -549,10 +549,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
         lives_text_buffer_insert_markup_at_end(textbuf, logmsg);
       lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
       if (is_fg_thread()) lives_widget_queue_draw(tstwin->dialog);
-      if (jackd != mainw->jackd_read)
-        mainw->clutch = FALSE;
-      else
-        lives_widget_context_update();
+      lives_widget_context_update();
       for (int tt = 0; tt < 1000; tt++) {
         lives_nanosleep(LIVES_SHORT_SLEEP);
       }
@@ -589,7 +586,6 @@ static void add_test_textwin(jack_driver_t *jackd) {
   lives_widget_set_sensitive(tstwin->button, FALSE);
   lives_widget_show_all(tstwin->dialog);
   if (mainw->is_ready) pop_to_front(tstwin->dialog, NULL);
-  mainw->clutch = FALSE;
   logmsg = lives_strdup(_("Testing jack configuration..."));
   jack_log_errmsg(jackd, logmsg);
   lives_free(logmsg);

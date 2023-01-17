@@ -13522,17 +13522,12 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     return TRUE;
   }
 
-  pal = weed_layer_get_palette(layer);
   lwidth = weed_layer_get_width_pixels(layer);
   lheight = weed_layer_get_height(layer);
 
   if (lwidth != width || lheight != height) {
     /// resize the inner rectangle
-
     if (!resize_layer(layer, width, height, interp, tpal, tclamp)) return FALSE;
-
-    pal = weed_layer_get_palette(layer);
-
     lwidth = weed_layer_get_width_pixels(layer);
     lheight = weed_layer_get_height(layer);
   }
@@ -13546,6 +13541,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
 
   width = lwidth;
   height = lheight;
+  pal = weed_layer_get_palette(layer);
   irowstrides = weed_layer_get_rowstrides(layer, NULL);
 
   /// create the outer rectangle in layer
@@ -13565,7 +13561,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     goto memfail2;
   }
 
-  offs_x = (nwidth - width + 1) >> 1;
+  offs_x = (nwidth - width  + 1) >> 1;
   offs_y = (nheight - height + 1) >> 1;
 
   rowstrides = weed_layer_get_rowstrides(layer, NULL);
@@ -13771,7 +13767,7 @@ memfail2:
    @brief turn a (Gdk)Pixbuf into a Weed layer
 
    return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should only be freed via
-   lives_layer_pixel_data_free() or lives_layer_free()
+   weed_layer_pixel_data_free() or weed_layer_free()
    see code example.
 
    code example:
@@ -14222,6 +14218,7 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 
    this function should always be used to free WEED_LEAF_PIXEL_DATA */
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
+  lives_proc_thread_t lpt;
   void **pixel_data;
   int nplanes;
 
@@ -14238,8 +14235,12 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-  g_print("22del natsize for %p\n", layer);
-  if (mainw->debug) break_me("delpix");
+  lpt = weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, 0);
+  if (lpt) {
+    lives_proc_thread_cancel(lpt);
+    lives_proc_thread_join_boolean(lpt);
+  }
+
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   /* if (weed_plant_has_leaf(layer, LIVES_LEAF_MD5SUM)) { */

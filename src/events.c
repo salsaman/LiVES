@@ -3469,9 +3469,9 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         if (new_file != mainw->scrap_file) {
           // switch to a new file
           // will reset ->next_event for old_file
-          mainw->noswitch = FALSE;
+          mainw->can_switch_clips = TRUE;
           do_quick_switch(new_file);
-          mainw->noswitch = TRUE;
+          mainw->can_switch_clips = FALSE;
           cfile->next_event = return_event;
         } else {
           /// load a frame from the scrap file
@@ -5706,7 +5706,7 @@ void event_list_add_end_events(weed_event_list_t *event_list, boolean is_final) 
 }
 
 
-boolean deal_with_render_choice(boolean add_deinit) {
+static boolean _deal_with_render_choice(boolean add_deinit) {
   // this is called from saveplay.c after record/playback ends
   // here we deal with the user's wishes as to how to deal with the recorded events
 
@@ -5969,6 +5969,12 @@ boolean deal_with_render_choice(boolean add_deinit) {
   check_storage_space(mainw->current_file, FALSE);
 
   return new_clip;
+}
+
+
+boolean deal_with_render_choice(boolean add_deinit) {
+  lives_proc_thread_create(0, _deal_with_render_choice, 0, NULL, "b", add_deinit);
+  return FALSE;
 }
 
 

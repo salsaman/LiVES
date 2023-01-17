@@ -175,11 +175,13 @@ static size_t arena_write(void *dst, void *src, size_t offset, size_t nsamples, 
   size_t space = ABUF_ARENA_SIZE - offset;
   if (space > nsamples) space = nsamples;
   lives_memcpy(dst + offset * sampsize, src, space * sampsize);
+  offset += nsamples;
   if (nsamples > space) {
     nsamples -= space;
     lives_memcpy(dst, src + space * sampsize, nsamples * sampsize);
-  } else nsamples += offset;
-  return nsamples;
+    offset = nsamples;
+  }
+  return offset;
 }
 
 
@@ -301,9 +303,9 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
 
   write_offset = arena_write(abuf->buffer16[0], src, abuf->write_pos, nsamples, 2);
   abuf->write_pos = write_offset;
-
+#define DEBUG_AFB
 #ifdef DEBUG_AFB
-  g_print("append16 to afb %p and %p %d\n", abuf, abuf->buffer16, ((short *)src)[0]);
+  g_print("append16 %lu to afb %p and %p %d %lu\n", nsamples, abuf, abuf->buffer16, ((short *)src)[0], write_offset);
 #endif
 }
 
@@ -4814,10 +4816,14 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         abuf->start_sample += samps;
         if (abuf->start_sample >= ABUF_ARENA_SIZE) abuf->start_sample -= ABUF_ARENA_SIZE;
       }
-      write_pos = abuf->write_pos + samps;
-      if (write_pos >= ABUF_ARENA_SIZE) write_pos -= ABUF_ARENA_SIZE;
-      abuf->write_pos = write_pos;
-      if ((ssize_t)write_pos < 0) lives_abort("Error writing to audio arena");
+
+
+
+
+      /* write_pos = abuf->write_pos + samps; */
+      /* if (write_pos >= ABUF_ARENA_SIZE) write_pos -= ABUF_ARENA_SIZE; */
+      /* abuf->write_pos = write_pos; */
+      /* if ((ssize_t)write_pos < 0) lives_abort("Error writing to audio arena"); */
       abuf->out_interleaf = FALSE;
     }
   }
@@ -4828,7 +4834,6 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   // push to achan "audio_data", taking into account "audio_data_length" and "audio_channels"
 
   olen = alen = samps;
-
   if (abuf->arate != trate) {
     scale = (double)trate / (double)abuf->arate;
     olen = (size_t)(fabs(((double)alen * scale)) + .49999);
@@ -4853,11 +4858,13 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
           olen = sample_move_float_float_arena(dst[i], src, abuf->vclient_readpos, alen, scale, 1, 1., 0);
         else
           olen = sample_move_float_float_arena(dst[i], src, abuf->aclient_readpos, alen, scale, 1, 1., 0);
+
       }
     } else dst[i] = NULL;
   }
 
   // set channel values
+  g_print("SET achan %p from %p %d %d %lu\n", achan, dst, trate, tchans, olen);
   weed_channel_set_audio_data(achan, dst, trate, tchans, olen);
   lives_free(dst);
   return TRUE;

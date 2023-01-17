@@ -4791,7 +4791,7 @@ void play_all(boolean from_menu) {
 
 void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (menuitem && mainw->go_away) return;
-  start_playback(menuitem ? 8 : 0);
+  start_playback_async(menuitem ? 8 : 0);
 }
 
 
@@ -4835,7 +4835,7 @@ void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
   if (LIVES_POINTER_TO_INT(user_data)) play_file();
-  else start_playback(1);
+  else start_playback_async(1);
 }
 
 
@@ -4861,7 +4861,7 @@ void on_playclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   lives_rm(cfile->info_file);
 
-  start_playback(5);
+  start_playback_async(5);
 }
 
 
@@ -9489,7 +9489,7 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 
 
 /// generic func. to create surfaces
-static boolean _all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
+boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
   static boolean no_recurse = FALSE;
   if (mainw->no_configs) return TRUE;
@@ -9544,15 +9544,15 @@ static boolean _all_config(LiVESWidget * widget, LiVESXEventConfigure * event, l
 }
 
 
-boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
-  boolean bret;
-  BG_THREADVAR(hook_match_nparams) = 1;
-  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  main_thread_execute(_all_config, WEED_SEED_BOOLEAN, &bret, "vvv", widget, event, ppsurf);
-  BG_THREADVAR(hook_hints) = 0;
-  BG_THREADVAR(hook_match_nparams) = 0;
-  return bret;
-}
+/* boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) { */
+/*   boolean bret; */
+/*   BG_THREADVAR(hook_match_nparams) = 1; */
+/*   BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCK | HOOK_CB_PRIORITY; */
+/*   main_thread_execute(_all_config, WEED_SEED_BOOLEAN, &bret, "vvv", widget, event, ppsurf); */
+/*   BG_THREADVAR(hook_hints) = 0; */
+/*   BG_THREADVAR(hook_match_nparams) = 0; */
+/*   return bret; */
+/* } */
 
 
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
@@ -9852,7 +9852,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     //resize(1);
 
     // play the clip
-    //on_playsel_activate(NULL, LIVES_INT_TO_POINTER(1));
+    start_playback(1);
 
     on_playsel_activate(NULL, LIVES_INT_TO_POINTER(0));
 

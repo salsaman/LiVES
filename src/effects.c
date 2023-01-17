@@ -1208,14 +1208,25 @@ boolean grabkeys_callback_hook(LiVESToggleButton * button, livespointer user_dat
   return TRUE;
 }
 
+// modes
 
-boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                         livespointer user_data) {
-  int dirn = LIVES_POINTER_TO_INT(user_data);
-  // "m" mode key
+static boolean _rtemode_callback(int dirn) {
   if (mainw->rte_keys == -1) return TRUE;
   rte_key_setmode(0, dirn == PREV_MODE_CYCLE ? -2 : -1);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
+  return TRUE;
+}
+
+
+boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
+                         uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  // "m" mode key
+  int dirn = LIVES_POINTER_TO_INT(user_data);
+  if (!LIVES_IS_PLAYING) return _rtemode_callback(dirn);
+  if (mainw->rte_keys == -1) return TRUE;
+  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                  _rtemode_callback, WEED_SEED_BOOLEAN, "i", dirn);
   return TRUE;
 }
 
@@ -1225,20 +1236,22 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
   int modes = rte_getmodespk();
   int key = (int)(key_mode / modes);
   int mode = key_mode - key * modes;
-
   if (!lives_toggle_button_get_active(button)) return TRUE;
 
-  rte_key_setmode(key + 1, mode);
+  if (!LIVES_IS_PLAYING) rte_key_setmode(key + 1, mode);
+  else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+                                         HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                         rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
   return TRUE;
 }
 
 
-boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                            livespointer user_data) {
+static boolean _swap_fg_bg_callback(void) {
   int blend_file = mainw->blend_file;
 
   if (mainw->playing_file < 1 || !mainw->num_tr_applied || !IS_VALID_CLIP(blend_file)
-      || blend_file == mainw->current_file || mainw->preview || (mainw->is_processing && cfile->is_loaded)) {
+      || blend_file == mainw->current_file || mainw->preview
+      || (mainw->is_processing && cfile->is_loaded)) {
     return TRUE;
   }
 
@@ -1251,17 +1264,24 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   } else mainw->swapped_clip = -1;
 
   mainw->new_clip = blend_file;
-
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
     ce_thumbs_highlight_current_clip();
-
   //mainw->blend_palette = WEED_PALETTE_END;
 
   return TRUE;
-
   // **TODO - for weed, invert all transition parameters for any active effects
 }
+
+boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
+                            uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  if (!LIVES_IS_PLAYING) return _swap_fg_bg_callback();
+  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                  _swap_fg_bg_callback, WEED_SEED_BOOLEAN, "", NULL);
+  return TRUE;
+}
+
 
 //////////////////////////////////////////////////////////////
 

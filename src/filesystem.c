@@ -878,14 +878,24 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   int fd = fbuff->fd;
   off_t fsize, bufsize = smedbytes, res;
   boolean *cntrl;
+  boolean retval = TRUE;
 
-  g_print("GETTING in %p, value\n", self);
-  lives_nanosleep_until_nonzero((cntrl = (boolean *)weed_get_voidptr_value(self, "_control", NULL)));
+  lives_nanosleep_until_nonzero(lives_proc_thread_get_cancel_requested(self) ||
+                                (cntrl = weed_get_voidptr_value(self, "_control", NULL)));
+
+  if (lives_proc_thread_get_cancel_requested(self)) {
+    // if caller gets cancelled, then it will send a cancel_request to this thread
+    // then wait for us to return with retval
+    lives_proc_thread_cancel(self);
+    retval = FALSE;
+    goto finished;
+  }
 
   fbuff->orig_size = get_file_size(fd, TRUE);
   fsize = fbuff->orig_size - ABS(skip);
 
   if (fsize > 0) {
+    if (cntrl) *cntrl = TRUE;
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -917,7 +927,6 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
         fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
         lseek(fd, offs, SEEK_SET);
         mlock(fbuff->buffer, fsize);
-        *cntrl = TRUE;
         //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
         //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
         while (fsize > 0) {
@@ -930,11 +939,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
           //g_printerr("slurp for %d, %s with "
           // "size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize)
           if (res < 0) {
-            pthread_mutex_lock(&fbuff->sync_mutex);
-            fbuff->flags |= FB_FLAG_INVALID;
-            fbuff->flags &= ~FB_FLAG_BG_OP;
-            pthread_mutex_unlock(&fbuff->sync_mutex);
-            return FALSE;
+            retval = FALSE;
+            break;
           }
           if (res > fsize) res = fsize;
           fbuff->bytes += res;
@@ -952,29 +958,29 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #ifdef TEST_MMAP
     }
 #endif
-    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), DATA_PREVIEW_HOOK);
+    if (retval)
+      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), DATA_PREVIEW_HOOK);
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    *cntrl = TRUE;
+    if (cntrl) *cntrl = TRUE;
   }
+
+finished:
   fbuff->fd = -1;
   IGN_RET(close(fd));
   pthread_mutex_lock(&fbuff->sync_mutex);
+  if (!retval) fbuff->flags |= FB_FLAG_INVALID;
   fbuff->flags &= ~FB_FLAG_BG_OP;
   pthread_mutex_unlock(&fbuff->sync_mutex);
-  return TRUE;
+  return retval;
 }
 
 
 boolean lives_buffered_rdonly_is_slurping(int fd) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype != BUFF_SIZE_READ_SLURP) return FALSE;
-  return (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP;
-}
-
-static void slurp_starting(void *var) {
-  *(boolean *)var = TRUE;
+  return !!(fbuff->flags & FB_FLAG_BG_OP);
 }
 
 
@@ -983,23 +989,26 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return NULL;
   lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                 (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "VI", fbuff, skip);
-  if (lpt) weed_set_voidptr_value(lpt, "_filebuff", (void *)fbuff);
+                                 (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
+  if (lpt) {
+    weed_set_voidptr_value(lpt, "_filebuff", (void *)fbuff);
+    lives_proc_thread_set_cancellable(lpt);
+  }
   return lpt;
 }
 
 
 boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
   if (lpt) {
-    volatile boolean is_ready = FALSE;
-    lives_file_buffer_t *fbuff = (lives_file_buffer_t *)weed_get_voidptr_value(lpt, "_filebuff", NULL);
+    lives_file_buffer_t *fbuff =
+      (lives_file_buffer_t *)weed_get_voidptr_value(lpt, "_filebuff", NULL);
+    pthread_mutex_lock(&fbuff->sync_mutex);
     fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
     fbuff->flags |= FB_FLAG_BG_OP;
     fbuff->bytes = fbuff->offset = 0;
-    pthread_mutex_lock(&fbuff->sync_mutex);
-    lives_proc_thread_queue(lpt, 0);
     pthread_mutex_unlock(&fbuff->sync_mutex);
-    thread_wait_loop(lpt, FALSE, &is_ready);
+    lives_proc_thread_queue(lpt, 0);
+    thread_wait_loop(lpt, FALSE, NULL);
     return TRUE;
   }
   return FALSE;

@@ -1,6 +1,6 @@
 // pulse.c
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman+lives@gmail.com> 2005 - 2020
+// (c) G. Finch <salsaman+lives@gmail.com> 2005 - 2023
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -708,6 +708,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
               if (!alock_mixer || !prefs->pogo_mode) {
                 if (!pulsed->mute) {
+                  if (!pulsed->aPlayPtr->data)
+                    pulsed->aPlayPtr->data = lives_calloc_safety(in_bytes / 4 + 1, 4);
                   if (pad_bytes) lives_memset((void *)pulsed->aPlayPtr->data, 0, pad_bytes);
                   pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
                                            (in_bytes  - pad_bytes), TRUE) + pad_bytes;
@@ -847,7 +849,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   if (pulsed->aPlayPtr->size < in_bytes) {
 
                     //g_print("SEEKING NOW %ld\n", pulsed->seek_pos);
-
                     // here seek to pulsed->seek_pos
                     pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
                     if (!alock_mixer || !prefs->pogo_mode) {
@@ -1107,7 +1108,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             ticks_t tc = mainw->currticks;
             if (has_audio_filters(AF_TYPE_ANY)) {
               weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-              weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
+              weed_layer_set_audio_data(layer, fltbuf,
+                                        pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
               weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
               lives_free(fltbuf);
               fltbuf = weed_layer_get_audio_data(layer, NULL);

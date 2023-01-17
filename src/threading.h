@@ -98,6 +98,7 @@ typedef struct {
   uint64_t caller;
   volatile uint64_t busy;
   volatile uint64_t done;
+  volatile boolean skipped;
   volatile boolean sync_ready;
   lives_hook_stack_t *hook_stacks[N_HOOK_POINTS];
   pthread_mutex_t *pause_mutex;
@@ -148,6 +149,7 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 #define LIVES_THRDFLAG_RUNNING		(1ull << 2)
 #define LIVES_THRDFLAG_FINISHED		(1ull << 3)
 #define LIVES_THRDFLAG_TIMEOUT		(1ull << 4)
+#define LIVES_THRDFLAG_COND_WAITING	(1ull << 5)
 
 #define LIVES_THRDFLAG_AUTODELETE	(1ull << 8)
 #define LIVES_THRDFLAG_DETACH		(1ull << 9)
@@ -157,6 +159,7 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 #define LIVES_THRDFLAG_TUNING		(1ull << 13)
 #define LIVES_THRDFLAG_IGNORE_SYNCPTS	(1ull << 14)
 #define LIVES_THRDFLAG_NOFREE_LIST	(1ull << 15)
+#define LIVES_THRDFLAG_SKIP_EXEC	(1ull << 16)
 
 #define LIVES_THRDFLAG_NOTE_TIMINGS	(1ull << 32)
 
@@ -393,6 +396,10 @@ ticks_t lives_proc_thread_get_timing_info(lives_proc_thread_t lpt, int info_type
 #define lives_proc_thread_set_work(lpt, work)				\
   weed_set_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, (work))
 
+// attrs
+void lives_proc_thread_set_attrs(lives_proc_thread_t, uint64_t attrs);
+uint64_t lives_proc_thread_get_attrs(lives_proc_thread_t);
+
 // ---> get timing info
 ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
@@ -478,8 +485,8 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
   do {MAIN_THREAD_EXECUTE_VOID(func, return_type);} while (0)
 
 boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc);
-// see also: void fg_service_call(lives_proc_thread_t lpt, void *retval);
-void lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t);
+
+boolean lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t);
 
 int lives_proc_thread_ref(lives_proc_thread_t);
 boolean lives_proc_thread_unref(lives_proc_thread_t);
@@ -514,6 +521,9 @@ boolean lives_proc_thread_exited(lives_proc_thread_t);
 
 // this test is ONLY valid inside the COMPLETED hook callbacks
 boolean lives_proc_thread_will_destroy(lives_proc_thread_t);
+
+// test for cancelled AND cancel_requested
+boolean lives_proc_thread_should_cancel(lives_proc_thread_t);
 
 //test if lpt is wating for sync_ready()
 boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);

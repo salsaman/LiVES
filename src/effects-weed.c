@@ -1588,38 +1588,48 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
   return FILTER_SUCCESS;
 }
 
+/* get in_tracks and out_tracks from the init_event; these map filter_instance channels to layers */
+/* clear WEED_LEAF_DISABLED if we have non-zero frame and there is no WEED_LEAF_DISABLED in template */
+/* if we have a zero (NULL) frame, set WEED_LEAF_DISABLED if WEED_LEAF_OPTIONAL, otherwise we cannot apply the filter */
+/* set channel timecodes */
+/* set the fps (data) in the instance */
+/* pull pixel_data or wait for threads to complete for all input layers (unless it is there already) */
 
 /**
    @brief process a single video filter instance
 
-   get in_tracks and out_tracks from the init_event; these map filter_instance channels to layers
+   we start with a filter instance and an array of layers. The layers correspond to video tracks
+   in the player, and we will map these to in and out Channels for the filter
 
-   clear WEED_LEAF_DISABLED if we have non-zero frame and there is no WEED_LEAF_DISABLED in template
-   if we have a zero (NULL) frame, set WEED_LEAF_DISABLED if WEED_LEAF_OPTIONAL, otherwise we cannot apply the filter
+   we try to match the channels as closely as possible to the layers (frame size and palette)
+   however we also want to minimise the number of reinits
 
-   set channel timecodes
+   we start by calculating the output channel size. This can vary depending on quality
+   level but will use som ekind of  min / max formula taking into account
+   all input sizes and the player output size
 
-   set the fps (data) in the instance
+   we then try to set the sizes for all channels to the calculated value
+   (unless channle sizes may vary, then we just use current layer size)
 
-   pull pixel_data or wait for threads to complete for all input layers (unless it is there already)
+   using the layers as a guide, particulatrly layer[0], we then try to adjust channel
+   values to the calculated values
+   After applying any restrictions:
 
-   set each channel width, height to match largest (or smallest depending on quality level - TODO)
-   of in layers (unless the plugin allows differing sizes)
+   - if width and height differ between layer and channel, resize in the layer
+   - if palette differs, first we try to change the channel palette,
+  -  if not possible we convert palette in the layer
+  - additionally we may need to do gamma conversion of layers
+  - in some cases we use letterboxing when resizing to maintain the aspect ratio of a layer
 
-   if width and height are wrong, resize in the layer
+   if filter does not support inplace, we must create new pixel_data for output channels
+   this will later replace the original data in the layer
 
-   if palette is wrong, first we try to change the plugin channel palette,
-   if not possible we convert palette in the layer
+   apply the effect
 
-   apply the effect, put result in output layer, set layer palette, width, height, rowstrides
-
-   if filter does not support inplace, we must create a new pixel_data; this will then replace the original layer
-   (this is passed to the plugin as the output, so we just copy by reference)
+   update output layer from output channel
 
    for in/out alpha channels, there is no matching layer. These channels are passed around like data
    using mainw->cconx as a guide. We will simply free any in alpha channels after processing (unless inplace was used)
-
-   WARNING: output layer may need resizing, and its palette may need adjusting - should be checked by the caller
 
    opwidth and opheight limit the maximum frame size, they can either be set to 0,0 or to max display size;
    however if all sources are smaller than this
@@ -1881,9 +1891,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (prefs->dev_show_timing)
       g_printerr("fx clr pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-    //!!!!!!!!!!!!!!!!!!!!!!11
-    check_layer_ready(layer);
-
     if (prefs->dev_show_timing)
       g_printerr("fx clr post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
@@ -1987,42 +1994,29 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   for (i = 0; i < num_in_tracks; i++) {
     lives_clip_t *sfile = NULL;
-    if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[i]))) continue;
-    if (weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
-        weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
+    channel = in_channels[i];
+    palette = weed_channel_get_palette(channel);
+    if (weed_palette_is_alpha(palette)) continue;
+    if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
+        weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
       continue;
     }
     layer = layers[in_tracks[i]];
     clip = lives_layer_get_clip(layer);
     if (IS_VALID_CLIP(clip)) sfile = mainw->files[clip];
 
-    if (!weed_layer_get_pixel_data(layer)) {
-      //check_layer_ready(layer);
-      /* /// wait for thread to pull layer pixel_data */
-      if (!is_layer_ready(layer)) {
-#define FX_WAIT_LIM 10000 // microseconds * 10
-        if (prefs->dev_show_timing)
-          g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-        for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
-          lives_nanosleep(10000);
-        }
-        if (prefs->dev_show_timing)
-          g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-        if (!is_layer_ready(layer)) {
-          retval = FILTER_ERROR_MISSING_FRAME;
-          goto done_video;
-        }
-        if (!weed_layer_get_pixel_data(layer)) {
-          retval = FILTER_ERROR_MISSING_FRAME;
-          goto done_video;
-        }
-      }
-    }
     // we apply only transitions and compositors to the scrap file
     if (clip == mainw->scrap_file && num_in_tracks <= 1 && num_out_tracks <= 1) {
       retval = FILTER_ERROR_IS_SCRAP_FILE;
       goto done_video;
     }
+
+    // store current values so we can know when to reinit
+    inwidth = weed_channel_get_width_pixels(channel);
+    weed_set_int_value(channel, "orig_width", inwidth);
+    weed_leaf_copy(channel, "orig_height", channel, WEED_LEAF_HEIGHT);
+    weed_set_int_value(channel, "orig_palette", palette);
+    weed_leaf_copy(channel, "orig_rowstrides", channel, WEED_LEAF_ROWSTRIDES);
 
     if (letterbox) {
       if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && !prefs->no_lb_gens) continue;
@@ -2253,19 +2247,22 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     cpalette = weed_channel_get_palette(channel);
-    width /= weed_palette_get_pixels_per_macropixel(cpalette); // convert width to channel macropixels
 
     /// check if the plugin needs reinit
-    owidth = weed_channel_get_width(channel);
+    owidth = weed_channel_get_width_pixels(channel);
     oheight = weed_channel_get_height(channel);
 
     chantmpl = weed_channel_get_template(channel);
     channel_flags = weed_chantmpl_get_flags(chantmpl);
 
     if (owidth != width || oheight != height) {
+      // convert width to channel macropixels
+      width /= weed_palette_get_pixels_per_macropixel(cpalette);
       set_channel_size(filter, channel, width, height);
       width = weed_channel_get_width_pixels(channel);
       height = weed_channel_get_height(channel);
+      owidth = weed_get_int_value(channel, "orig_width", NULL);
+      oheight = weed_get_int_value(channel, "orig_height", NULL);
       if (width != owidth || height != oheight) {
         if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
           needs_reinit = TRUE;
@@ -2335,8 +2332,30 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (prefs->dev_show_timing)
       g_printerr("clrfx pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
+    if (!weed_layer_get_pixel_data(layer)) {
+      /* /// wait for thread to pull layer pixel_data */
+      if (!is_layer_ready(layer)) {
+#define FX_WAIT_LIM 10000 // microseconds * 10
+        if (prefs->dev_show_timing)
+          g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-    //check_layer_ready(layer);
+        check_layer_ready(layer);
+
+        for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
+          lives_nanosleep(10000);
+        }
+        if (prefs->dev_show_timing)
+          g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (!is_layer_ready(layer)) {
+          retval = FILTER_ERROR_MISSING_FRAME;
+          goto done_video;
+        }
+        if (!weed_layer_get_pixel_data(layer)) {
+          retval = FILTER_ERROR_MISSING_FRAME;
+          goto done_video;
+        }
+      }
+    }
 
     if (prefs->dev_show_timing)
       g_printerr("clrfx post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -2506,7 +2525,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     check_layer_ready(layer);
 
-
     xwidth = inwidth = weed_layer_get_width_pixels(layer);
     xheight = inheight = weed_layer_get_height(layer);
 
@@ -2589,7 +2607,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     weed_set_plantptr_value(layer, "lpt", lpt);
   }
 
-  for (i = 0; i <= num_in_tracks; i++) {
+  for (i = 0; i < num_in_tracks; i++) {
     channel = get_enabled_channel(inst, i, TRUE);
     inpalette = weed_channel_get_palette(channel);
     if (weed_palette_is_alpha(inpalette)) continue;
@@ -2686,7 +2704,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (retval == FILTER_ERROR_INVALID_PALETTE_CONVERSION) goto done_video;
 
-
   for (i = 0; i < num_in_tracks; i++) {
     channel = get_enabled_channel(inst, i, TRUE);
     inpalette = weed_channel_get_palette(channel);
@@ -2720,6 +2737,17 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
       continue;
+    }
+
+    width = weed_channel_get_width_pixels(channel);
+    height = weed_channel_get_height(channel);
+    inwidth = weed_get_int_value(channel, "orig_width", NULL);
+    inheight = weed_get_int_value(channel, "orig_height", NULL);
+
+    if (width != inwidth || height != inheight) {
+      if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
+        needs_reinit = TRUE;
+      }
     }
 
     if (!resized) {
@@ -2800,9 +2828,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     if (!inplace) {
-      // if not inplace then we need to nullify the layer that sharedp pixel_data with the in_channel
       layer = layers[in_tracks[i]];
-      weed_layer_nullify_pixel_data(layer);
 
       /// try to match palettes with first enabled in channel
       /// According to the spec, if the plugin permits we can match out channel n with in channel n
@@ -2822,7 +2848,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         lives_freep((void **)&palettes);
       }
 
-      g_print("33 maybe del natsize for %p\n", layer);
       if (num_inc == 1)
         weed_leaf_copy_or_delete(channel, WEED_LEAF_NATURAL_SIZE, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_CLAMPING, def_channel);
@@ -2850,8 +2875,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
 
-      // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
-      // and update width and height if necessary
+      // if not running inplace, then we create new pixel_data for the out channel(s)
+      // after running the process function, layer pixdata will be unreffed,
+      // and  then the out channel pixdata copied back to the corresponding layer
       if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
         retval = FILTER_ERROR_MEMORY_ERROR;
         goto done_video;
@@ -2883,7 +2909,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if ((rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))) {
       needs_reinit = TRUE;
     }
-    if ((outwidth != width || outheight != height) && (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)) {
+    if ((outwidth != width || outheight != height)
+        && (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)) {
       needs_reinit = TRUE;
     }
 
@@ -2915,11 +2942,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
-  //...finally we are ready to apply the filter
+  if (prefs->dev_show_timing)
+    g_printerr("run fx pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
   // TODO - better error handling
   //...finally we are ready to apply the filter
   retval = run_process_func(inst, tc);
+
+  g_printerr("run fx post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
   /// do gamma correction of any integer RGB(A) parameters
   /// convert in and out parameters to SRGB
@@ -2962,6 +2992,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   // (shallow) out_channel to layer, then nullify out_channel
 
   for (i = k = 0; k < num_out_tracks + num_out_alpha; k++) {
+    weed_plant_t *in_channel = get_enabled_channel(inst, k, TRUE);
     channel = get_enabled_channel(inst, k, FALSE);
     if (!channel) break; // compound fx
 
@@ -2987,8 +3018,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (retval == FILTER_ERROR_BUSY && num_in_tracks == 1 && num_out_tracks == 1) {
       // filter busy, we will free out_channel data, set values from in_channel instead
-      weed_plant_t *in_channel = get_enabled_channel(inst, k, TRUE);
-
       weed_layer_pixel_data_free(channel);
 
       if (!weed_layer_copy(layer, in_channel)) {
@@ -2997,6 +3026,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
       weed_layer_nullify_pixel_data(in_channel);
     } else {
+      weed_layer_nullify_pixel_data(in_channel);
       // free any existing pixel_data, we will replace it with the channel data
       weed_layer_pixel_data_free(layer);
       if (!weed_layer_copy(layer, channel)) {
@@ -8024,7 +8054,6 @@ boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan, boolean is
   // this is for filter instances with mixed audio / video inputs/outputs
   // uneffected audio is buffered by the audio thread; here we copy / convert it to a video effect's audio channel
   // purely audio filters run in the audio thread
-
   // now used also to pass loopback audio from reader to writer
   lives_audio_buf_t *audbuf;
   if (!achan) return TRUE;
@@ -8842,13 +8871,8 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     }
     mainw->gen_started_play = TRUE;
 
-    if (!mainw->osc_auto) start_playback_async(6);
-    else {
-      on_playall_activate(NULL, NULL);
-      // need to set this after playback ends; this stops the key from being activated (again) in effects.c
-      // also stops the (now defunct) instance being unreffed
-      mainw->gen_started_play = TRUE;
-    }
+    mainw->gen_started_play = TRUE;
+    start_playback_async(6);
     return -1;
   } else {
     // already playing
@@ -11484,7 +11508,6 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
     lives_free(xhashname);
     return NULL;
   }
-
   //g_print("added filter %s\n",hashname);
   return hashname;
 }
@@ -11992,8 +12015,6 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
       }
       if (pixdata_nullify_leaf(leaves[i])) {
         weed_leaf_delete(plant, leaves[i]);
-        if (!lives_strcmp(leaves[i], WEED_LEAF_NATURAL_SIZE))
-          g_print("sanitize natsize for %p\n", plant);
       } else if (sterilize && no_copy_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
       lives_free(leaves[i]);
     }

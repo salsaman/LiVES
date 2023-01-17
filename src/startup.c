@@ -2143,7 +2143,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->memok = TRUE;
   mainw->go_away = TRUE;
   mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;
-  mainw->clutch = TRUE;
   mainw->max_textsize = N_TEXT_SIZES;
 
   pthread_mutexattr_init(&mattr);

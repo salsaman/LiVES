@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -9222,17 +9222,17 @@ msgstr "Kirjoittaminen ei onnistu: %s"
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr "Kirjoittaminen ei onnistu: %s"
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Kirjoittaminen ei onnistu: %s"
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Kirjoittaminen ei onnistu: %s"
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -12353,7 +12353,7 @@ msgstr "Nykyinen"
 msgid "Rate (Hz) "
 msgstr "Taajuus (Hz) "
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 #, fuzzy
 msgid "Channels"
 msgstr "Kanava  "
@@ -12363,7 +12363,7 @@ msgstr "Kanava  "
 msgid "Sample Size "
 msgstr "Uusi koko (pikseliä)"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 msgid "Signed"
 msgstr ""
 
@@ -14799,22 +14799,22 @@ msgstr ""
 "Voit myös käynnistää LiVESin uudelleen ja valita jonkun toisen "
 "äänisoittimen.\n"
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 #, fuzzy
 msgid "Pulse audio player details"
 msgstr "Virheellinen musiikkisoitin %s\n"
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 #, fuzzy
 msgid "Pulse audio reader details"
 msgstr "Äänen soitto_komento"
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Käynnistetään pulse audio -palvelin..."
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 #, fuzzy
 msgid ""
 "\n"
@@ -16174,30 +16174,30 @@ msgstr ""
 "LiVES ei pystynyt kaappaamaan tätä kuvaa\n"
 "\n"
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "Lähde: %s"
 
-#: src/player.c:3984
+#: src/player.c:3994
 #, fuzzy
 msgid "Rate Hz"
 msgstr "Taajuus (Hz) "
 
-#: src/player.c:3988
+#: src/player.c:3998
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "Uusi koko (pikseliä)"
 
-#: src/player.c:3993
+#: src/player.c:4003
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 #, fuzzy
 msgid "Interleaved"
 msgstr "- sisäinen -"

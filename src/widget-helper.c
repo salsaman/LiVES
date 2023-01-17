@@ -1069,19 +1069,21 @@ boolean fg_service_fulfill_cb(void *dummy) {
   do {
     if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
       fg_service_fulfill();
-      if (!is_idle) {
-        if (prio == LIVES_WIDGET_PRIORITY_DEFAULT_IDLE) {
-          prio = LIVES_WIDGET_PRIORITY_HIGH;
-          lives_source_set_priority(mainw->fg_service_source, prio);
-        }
-        g_main_context_iteration(NULL, FALSE);
-      }
-      misses = 0;
 #if USE_RPMALLOC
-      if (rpmalloc_is_thread_initialized()) {
-        rpmalloc_thread_collect();
+      if (!is_idle) {
+        if (rpmalloc_is_thread_initialized()) {
+          rpmalloc_thread_collect();
+        }
       }
 #endif
+    }
+    if (!is_idle) {
+      if (prio == LIVES_WIDGET_PRIORITY_DEFAULT_IDLE) {
+        prio = LIVES_WIDGET_PRIORITY_HIGH;
+        lives_source_set_priority(mainw->fg_service_source, prio);
+      }
+      //g_main_context_iteration(NULL, FALSE);
+      misses = 0;
     } else {
       if (ign_idlefuncs) {
         /* pthread_mutex_lock(&ctx_mutex); */

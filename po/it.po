@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2020-10-20 07:17+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -9156,17 +9156,17 @@ msgstr "Fallito l'avvio del generatore %s, (%s)\n"
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr "Fallito l'avvio del generatore %s (%s)\n"
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Fallito l'avvio del generatore %s (%s)\n"
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Fallito l'avvio del generatore %s, (%s)\n"
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s [instabile]"
@@ -12267,7 +12267,7 @@ msgstr "Corrente"
 msgid "Rate (Hz) "
 msgstr "Rapporto (Hz) "
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 msgid "Channels"
 msgstr "Canali"
 
@@ -12275,7 +12275,7 @@ msgstr "Canali"
 msgid "Sample Size "
 msgstr "Dimensione campione "
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 msgid "Signed"
 msgstr "Firmato"
 
@@ -14645,21 +14645,21 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES uscirà e potrai scegliere un altro lettore audio.\n"
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 #, fuzzy
 msgid "Pulse audio player details"
 msgstr "Lettore audio %s non valido"
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 #, fuzzy
 msgid "Pulse audio reader details"
 msgstr "Mostra/nascondi i dettagli dell'audio"
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 msgid "Resetting pulseaudio connection..."
 msgstr "Azzeramento della connessione pulseaudio in corso..."
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"
@@ -16021,30 +16021,30 @@ msgstr ""
 "LiVES non è stato in grado di catturare questa immagine\n"
 "\n"
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "Sorgente: %s"
 
-#: src/player.c:3984
+#: src/player.c:3994
 #, fuzzy
 msgid "Rate Hz"
 msgstr "Rapporto (Hz) "
 
-#: src/player.c:3988
+#: src/player.c:3998
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "Dimensione campione "
 
-#: src/player.c:3993
+#: src/player.c:4003
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 #, fuzzy
 msgid "Interleaved"
 msgstr "Deinterlaccia"

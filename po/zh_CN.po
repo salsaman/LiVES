@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -9132,7 +9132,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
@@ -9142,7 +9142,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
@@ -9152,7 +9152,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -12214,7 +12214,7 @@ msgstr "当前"
 msgid "Rate (Hz) "
 msgstr "速率/尺寸"
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 #, fuzzy
 msgid "Channels"
 msgstr "通道  "
@@ -12224,7 +12224,7 @@ msgstr "通道  "
 msgid "Sample Size "
 msgstr "单倍尺寸 (d)"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 msgid "Signed"
 msgstr "有符号"
 
@@ -14660,22 +14660,22 @@ msgstr "无法连接 JACK 服务器\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 #, fuzzy
 msgid "Pulse audio player details"
 msgstr "无效的音频播放器 %s\n"
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 #, fuzzy
 msgid "Pulse audio reader details"
 msgstr "显示/隐藏音频细节"
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "正在开启 pulse 音频服务..."
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 #, fuzzy
 msgid ""
 "\n"
@@ -15996,31 +15996,31 @@ msgstr ""
 "LiVES 无法捕获此图片\n"
 "\n"
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "源：%s"
 
-#: src/player.c:3984
+#: src/player.c:3994
 #, fuzzy
 msgid "Rate Hz"
 msgstr "速率/尺寸"
 
-#: src/player.c:3988
+#: src/player.c:3998
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "单倍尺寸 (d)"
 
-#: src/player.c:3993
+#: src/player.c:4003
 #, fuzzy
 msgid "Endian"
 msgstr "大端"
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 #, fuzzy
 msgid "Interleaved"
 msgstr "指针(_P)"

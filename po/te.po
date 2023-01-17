@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Telugu <indlinux-telugu@lists.sourceforge.net>\n"
@@ -8639,17 +8639,17 @@ msgstr ""
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr ""
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -11560,7 +11560,7 @@ msgstr "ప్రస్తుత"
 msgid "Rate (Hz) "
 msgstr ""
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 msgid "Channels"
 msgstr ""
 
@@ -11569,7 +11569,7 @@ msgstr ""
 msgid "Sample Size "
 msgstr "ఎత్తు (_H)"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 #, fuzzy
 msgid "Signed"
 msgstr "అన్ సైన్డు"
@@ -13863,19 +13863,19 @@ msgstr "అప్రమేయం (_D): "
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 msgid "Pulse audio player details"
 msgstr ""
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 msgid "Pulse audio reader details"
 msgstr ""
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 msgid "Resetting pulseaudio connection..."
 msgstr ""
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"
@@ -15148,28 +15148,28 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "_ప్రారంభం"
 
-#: src/player.c:3984
+#: src/player.c:3994
 msgid "Rate Hz"
 msgstr ""
 
-#: src/player.c:3988
+#: src/player.c:3998
 msgid "Sample size (bits)"
 msgstr ""
 
-#: src/player.c:3993
+#: src/player.c:4003
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 msgid "Interleaved"
 msgstr ""
 

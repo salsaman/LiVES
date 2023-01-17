@@ -6869,10 +6869,9 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
     if (!(ifile = fopen(fsp_info_file, "r")) && mainw->fs_preview_running && lives_dialog_get_response(dlg)
         == LIVES_RESPONSE_INVALID) {
       lives_nanosleep(LIVES_QUICK_NAP);
-
       // cannot run this in bg since it gets called from within lives_dialog_run
       // thus we need to update widget state ourselves, otherwise we don't receive button clicks
-      lives_widget_context_iteration(NULL, FALSE);
+      g_main_context_iteration(NULL, FALSE);
       continue;
     }
 

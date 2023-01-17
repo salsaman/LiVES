@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2020-07-18 10:07+0000\n"
 "Last-Translator: Stephan Woidowski <swoidowski@t-online.de>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -8791,17 +8791,17 @@ msgstr ""
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr ""
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -11712,7 +11712,7 @@ msgstr ""
 msgid "Rate (Hz) "
 msgstr "Rate/Größe"
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 #, fuzzy
 msgid "Channels"
 msgstr "Kanal  "
@@ -11722,7 +11722,7 @@ msgstr "Kanal  "
 msgid "Sample Size "
 msgstr "Bildgröße"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 msgid "Signed"
 msgstr ""
 
@@ -14003,22 +14003,22 @@ msgstr "Standardwert"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 #, fuzzy
 msgid "Pulse audio player details"
 msgstr "Ungültiger Audio-Player %s"
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 #, fuzzy
 msgid "Pulse audio reader details"
 msgstr "Ungültiger Audio-Player %s"
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Starte pulseaudio server"
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 #, fuzzy
 msgid ""
 "\n"
@@ -15305,30 +15305,30 @@ msgstr ""
 "LiVES konnte das Bild nicht aufnehmen\n"
 "\n"
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "Hintergrund"
 
-#: src/player.c:3984
+#: src/player.c:3994
 #, fuzzy
 msgid "Rate Hz"
 msgstr "Rate/Größe"
 
-#: src/player.c:3988
+#: src/player.c:3998
 msgid "Sample size (bits)"
 msgstr ""
 
-#: src/player.c:3993
+#: src/player.c:4003
 #, fuzzy
 msgid "Endian"
 msgstr "Big Endian"
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 #, fuzzy
 msgid "Interleaved"
 msgstr "_Deinterlace anwenden"

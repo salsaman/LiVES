@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2020-10-08 01:06+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -9008,17 +9008,17 @@ msgstr ""
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr ""
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -12009,7 +12009,7 @@ msgstr "Текущий"
 msgid "Rate (Hz) "
 msgstr "Поток/размер"
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 #, fuzzy
 msgid "Channels"
 msgstr "Канал  "
@@ -12019,7 +12019,7 @@ msgstr "Канал  "
 msgid "Sample Size "
 msgstr "Двойной размер (d)"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 #, fuzzy
 msgid "Signed"
 msgstr "подписан"
@@ -14366,20 +14366,20 @@ msgstr ""
 "Также вы можете перезапустить LiVES и выбрать другой музыкальный "
 "проигрыватель.\n"
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 msgid "Pulse audio player details"
 msgstr ""
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 msgid "Pulse audio reader details"
 msgstr ""
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Изменение входящего звука"
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 #, fuzzy
 msgid ""
 "\n"
@@ -15682,31 +15682,31 @@ msgstr ""
 "LiVES не может загрузить это изображение\n"
 "\n"
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "Источник: %s"
 
-#: src/player.c:3984
+#: src/player.c:3994
 #, fuzzy
 msgid "Rate Hz"
 msgstr "Поток/размер"
 
-#: src/player.c:3988
+#: src/player.c:3998
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "Двойной размер (d)"
 
-#: src/player.c:3993
+#: src/player.c:4003
 #, fuzzy
 msgid "Endian"
 msgstr "big-endian"
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 msgid "Interleaved"
 msgstr ""
 

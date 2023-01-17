@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-16 11:26-0300\n"
+"POT-Creation-Date: 2023-01-17 08:22-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Danish <da@li.org>\n"
@@ -8731,7 +8731,7 @@ msgstr ""
 "%s\n"
 "Fejlkode %d\n"
 
-#: src/effects-weed.c:9132
+#: src/effects-weed.c:9131
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
@@ -8741,7 +8741,7 @@ msgstr ""
 "%s\n"
 "Fejlkode %d\n"
 
-#: src/effects-weed.c:9251
+#: src/effects-weed.c:9250
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
@@ -8751,7 +8751,7 @@ msgstr ""
 "%s\n"
 "Fejlkode %d\n"
 
-#: src/effects-weed.c:10170
+#: src/effects-weed.c:10169
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -11720,7 +11720,7 @@ msgstr "Aktuel"
 msgid "Rate (Hz) "
 msgstr ""
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3986
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3996
 msgid "Channels"
 msgstr ""
 
@@ -11729,7 +11729,7 @@ msgstr ""
 msgid "Sample Size "
 msgstr "Ny størrelse (pixels)"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3991
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4001
 msgid "Signed"
 msgstr ""
 
@@ -14058,22 +14058,22 @@ msgstr "Kunne ikke oprette forbindelse til JACK server\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1870
+#: src/pulse.c:1871
 #, fuzzy
 msgid "Pulse audio player details"
 msgstr "Lyd codeks"
 
-#: src/pulse.c:1872
+#: src/pulse.c:1873
 #, fuzzy
 msgid "Pulse audio reader details"
 msgstr "Ny lyd"
 
-#: src/pulse.c:2151
+#: src/pulse.c:2152
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "_Slet denne effekt"
 
-#: src/pulse.c:2178
+#: src/pulse.c:2179
 #, fuzzy
 msgid ""
 "\n"
@@ -15371,29 +15371,29 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/player.c:3976
+#: src/player.c:3986
 #, fuzzy
 msgid "Source"
 msgstr "Kilde: %s"
 
-#: src/player.c:3984
+#: src/player.c:3994
 msgid "Rate Hz"
 msgstr ""
 
-#: src/player.c:3988
+#: src/player.c:3998
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "Ny størrelse (pixels)"
 
-#: src/player.c:3993
+#: src/player.c:4003
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:4001
+#: src/player.c:4011
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4003
+#: src/player.c:4013
 #, fuzzy
 msgid "Interleaved"
 msgstr "- internt -"

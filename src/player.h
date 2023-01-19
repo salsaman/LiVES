@@ -74,6 +74,9 @@ boolean record_setup(ticks_t actual_ticks);
 
 weed_layer_t *load_frame_image(frames_t frame);
 
+weed_layer_t *get_old_frame_layer(void);
+void reset_old_frame_layer(void);
+
 void reset_playback_clock(void);
 ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
 frames_t calc_new_playback_position(int fileno, boolean is_fg, ticks_t otc, ticks_t *ntc);

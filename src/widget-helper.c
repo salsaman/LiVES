@@ -10,8 +10,6 @@
 #include "startup.h"
 #include "functions.h"
 
-#define MISS_PRIO_THRESH 100
-
 // max number of GUI events we process per update loop: 64 - 256 seems about right
 #define EV_LIM 64
 
@@ -955,18 +953,17 @@ boolean set_ign_idlefuncs(boolean val) {
 
 
 LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *ctx, boolean may_block) {
+  boolean xign = TRUE;
   if (mainw->service_calls && !is_fg_thread()) return FALSE;
 
   if (!pthread_mutex_trylock(&ctx_mutex)) {
-    boolean ret, need_service_handle = FALSE;
+    boolean ret = FALSE;
     if (!ign_idlefuncs) {
-      need_service_handle = TRUE;
+      xign = FALSE;
       ign_idlefuncs = TRUE;
     }
-
     ret = g_main_context_iteration(ctx, may_block);
-
-    if (need_service_handle) {
+    if (!xign) {
       ign_idlefuncs = FALSE;
     }
     pthread_mutex_unlock(&ctx_mutex);
@@ -1060,15 +1057,46 @@ boolean fg_service_fulfill(void) {
   return FALSE;
 }
 
+
+#define MISS_PRIO_THRESH 100
+#define PRIO_HIGH LIVES_WIDGET_PRIORITY_HIGH
+#define PRIO_LOW LIVES_WIDGET_PRIORITY_LOW
+
 boolean fg_service_fulfill_cb(void *dummy) {
   static int misses = 0;
-  static int prio = LIVES_WIDGET_PRIORITY_HIGH;
+  static int prio =  PRIO_HIGH;
+  static int oign = -1;
+  static boolean was_idle;
+
+  if (oign != ign_idlefuncs) {
+    if (ign_idlefuncs) {
+      if (prio != PRIO_HIGH) {
+        lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH);
+      }
+      if (g_main_depth() > 1) return TRUE;
+    } else if (prio != PRIO_HIGH) {
+      lives_source_set_priority(mainw->fg_service_source, PRIO_LOW);
+    }
+    oign = ign_idlefuncs ? 1 : 0;
+    misses = 1;
+  }
 
   if (ign_idlefuncs && g_main_depth() > 1) return TRUE;
 
+  if (!pthread_mutex_trylock(&ctx_mutex)) {
+    if (!ign_idlefuncs) {
+      ign_idlefuncs = TRUE;
+      g_main_context_iteration(NULL, FALSE);
+      ign_idlefuncs = FALSE;
+    }
+    pthread_mutex_unlock(&ctx_mutex);
+  }
   do {
+    was_idle = is_idle;
+    is_idle = FALSE;
     if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
       fg_service_fulfill();
+      lives_widget_context_iteration(NULL, FALSE);
 #if USE_RPMALLOC
       if (!is_idle) {
         if (rpmalloc_is_thread_initialized()) {
@@ -1077,33 +1105,28 @@ boolean fg_service_fulfill_cb(void *dummy) {
       }
 #endif
     }
+
     if (!is_idle) {
-      if (prio == LIVES_WIDGET_PRIORITY_DEFAULT_IDLE) {
-        prio = LIVES_WIDGET_PRIORITY_HIGH;
+      if (prio != PRIO_HIGH) {
+        prio = PRIO_HIGH;
         lives_source_set_priority(mainw->fg_service_source, prio);
       }
-      //g_main_context_iteration(NULL, FALSE);
-      misses = 0;
+      if (was_idle) misses = 0;
     } else {
-      if (ign_idlefuncs) {
-        /* pthread_mutex_lock(&ctx_mutex); */
-        /* g_main_context_iteration(NULL, FALSE); */
-        /* pthread_mutex_unlock(&ctx_mutex); */
-      } else if (misses == MISS_PRIO_THRESH + 1000) {
-        pthread_mutex_lock(&ctx_mutex);
-        g_main_context_iteration(NULL, FALSE);
-        misses = MISS_PRIO_THRESH;
-        pthread_mutex_unlock(&ctx_mutex);
+      if (++misses >= MISS_PRIO_THRESH) {
+        if (prio == PRIO_HIGH) {
+          prio = PRIO_LOW;
+          if (!ign_idlefuncs)
+            lives_source_set_priority(mainw->fg_service_source, prio);
+        }
+        if (ign_idlefuncs && prio == PRIO_LOW) {
+          pthread_yield();
+          lives_nanosleep(NSLEEP_TIME);
+        }
       }
-
-      if (++misses >= MISS_PRIO_THRESH && prio == LIVES_WIDGET_PRIORITY_HIGH) {
-        /* prio = LIVES_WIDGET_PRIORITY_DEFAULT_IDLE; */
-        /* lives_source_set_priority(mainw->fg_service_source, prio); */
-      }
-      pthread_yield();
-      lives_nanosleep(NSLEEP_TIME);
     }
-  } while (ign_idlefuncs && g_main_depth() == 1);
+    was_idle = is_idle;
+  } while (ign_idlefuncs);
   return TRUE;
 }
 
@@ -1559,6 +1582,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_now(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
   // run in main thread as it seems to give a smoother result
   boolean ret;
+  if (is_fg_thread()) return _lives_widget_show_now(widget);
   BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
   main_thread_execute(_lives_widget_show_now, WEED_SEED_BOOLEAN, &ret, "v", widget);
   BG_THREADVAR(hook_hints) = 0;
@@ -1918,9 +1942,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
   LiVESResponseType resp = LIVES_RESPONSE_INVALID;
 #ifdef GUI_GTK
   //resp = gtk_dialog_run(dialog);
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
-  BG_THREADVAR(hook_hints) = 0;
+  if (is_fg_thread()) {
+    resp = _dialog_run(dialog);
+  } else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   g_print("DLG RESP %d\n", resp);
 #endif
   return resp;
@@ -13057,6 +13085,7 @@ static boolean _lives_widget_context_update(void) {
   boolean need_service_handle = FALSE;
   boolean is_fg_service = FALSE;
   int count = 0;
+  int limit = EV_LIM;
 
   if (THREADVAR(fg_service)) {
     is_fg_service = TRUE;
@@ -13067,22 +13096,20 @@ static boolean _lives_widget_context_update(void) {
     ign_idlefuncs = TRUE;
   }
 
-  while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
-    if (mainw->debug) {
-      LiVESXEvent *ev = lives_widgets_get_current_event();
-      if (ev) g_print("ev was %d\n", ev->type);
-      else {
-        g_print("NULL event\n");
-        //break;
-      }
-    }
+  if (mainw->gui_much_events) limit >>= 2;
 
+  while (count++ < limit && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
     g_main_context_iteration(NULL, FALSE);
     pthread_yield();
     lives_nanosleep(NSLEEP_TIME);
   }
 
-  if (count > 10) g_print("count 16 is %d\n", count);
+  if (count > limit) {
+    g_print("NEVENTS %d\n", count);
+    break_me("bigcount");
+    //limit *= 2;
+  }
+
   if (!is_fg_service) THREADVAR(fg_service) = FALSE;
   if (need_service_handle) {
     ign_idlefuncs = FALSE;
@@ -13126,12 +13153,9 @@ boolean lives_widget_context_update(void) {
 
     return TRUE;
   } else {
-    boolean is_fg_service = FALSE;
-    //if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
     do_some_things();
     ret = _lives_widget_context_update();
     do_more_stuff();
-    // pthread_mutex_unlock(&ctx_mutex);
   }
   return ret;
 }

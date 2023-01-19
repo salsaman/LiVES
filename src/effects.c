@@ -664,13 +664,13 @@ lives_render_error_t realfx_progress(boolean reset) {
       if (weed_palette_has_alpha(layer_palette)) {
         if (!convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0)) {
           prefs->pb_quality = pbq;
-          weed_layer_free(layer);
+          weed_layer_unref(layer);
           return LIVES_RENDER_ERROR_MEMORY;
         }
       } else {
         if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
           prefs->pb_quality = pbq;
-          weed_layer_free(layer);
+          weed_layer_unref(layer);
           return LIVES_RENDER_ERROR_MEMORY;
         }
       }
@@ -708,7 +708,7 @@ lives_render_error_t realfx_progress(boolean reset) {
       if (!intimg)
         lives_widget_object_unref(pixbuf);
       else
-        weed_layer_free(layer);
+        weed_layer_unref(layer);
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         pthread_mutex_lock(&cfile->frame_index_mutex);
@@ -957,7 +957,7 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   for (int i = 0; layers[i]; i++) {
     if (layers[i] != retlayer) {
       check_layer_ready(layers[i]);
-      weed_layer_free(layers[i]);
+      weed_layer_unref(layers[i]);
     }
   }
   lives_free(layers);

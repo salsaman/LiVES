@@ -553,7 +553,7 @@ recheck:
                                   cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
             if (mainw->frame_layer) {
               weed_layer_unref(mainw->frame_layer);
-              weed_layer_free(mainw->frame_layer);
+              weed_layer_unref(mainw->frame_layer);
               mainw->frame_layer = NULL;
             }
 
@@ -735,6 +735,10 @@ recheck:
   return 0;
 }
 
+static weed_layer_t *old_frame_layer = NULL;
+
+weed_layer_t *get_old_frame_layer(void) {return old_frame_layer;}
+void reset_old_frame_layer(void) {old_frame_layer = NULL;}
 
 weed_layer_t *load_frame_image(frames_t frame) {
   // this is where we do the actual load/record of a playback frame
@@ -752,7 +756,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
   void **pd_array = NULL, **retdata = NULL;
   LiVESPixbuf *pixbuf = NULL;
   weed_layer_t *frame_layer = NULL;
-  static weed_layer_t *old_frame_layer = NULL;
 
   LiVESInterpType interp;
   char *tmp;
@@ -1239,7 +1242,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
               mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params))) {
         //vid_playback_plugin_exit();
         if (return_layer) {
-          weed_layer_free(return_layer);
+          weed_layer_unref(return_layer);
           lives_free(retdata);
           return_layer = NULL;
         }
@@ -1259,7 +1262,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
       if (return_layer) {
         save_to_scrap_file(return_layer);
-        weed_layer_free(return_layer);
+        weed_layer_unref(return_layer);
         lives_free(retdata);
         return_layer = NULL;
       }
@@ -1496,7 +1499,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
               mainw->vpp->play_params))) {
         //vid_playback_plugin_exit();
         if (return_layer) {
-          weed_layer_free(return_layer);
+          weed_layer_unref(return_layer);
           lives_free(retdata);
           return_layer = NULL;
         }
@@ -1520,7 +1523,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
           lives_freep((void **)&framecount);
         }
         lives_free(retdata);
-        weed_layer_free(return_layer);
+        weed_layer_unref(return_layer);
         return_layer = NULL;
       }
 
@@ -1764,11 +1767,7 @@ if (success) {
 }
 
 if (old_frame_layer) {
-  int refs = weed_layer_count_refs(old_frame_layer);
-  if (refs != 1) g_print("OFL had %d refs\n", refs);
-  while (refs > 0) {
-    refs = weed_layer_unref(old_frame_layer);
-  }
+  weed_layer_free(old_frame_layer);
 }
 
 if (success && mainw->frame_layer) {
@@ -2484,10 +2483,7 @@ static void widget_ct_upd(void) {
 // player will create this as
 static boolean update_gui(void) {
   mainw->debug = TRUE;
-  ctx_mutex_lock();
-  while (g_main_context_iteration(NULL, FALSE));
-  //lives_widget_context_update();
-  ctx_mutex_unlock();
+  lives_widget_context_update();
   mainw->debug = FALSE;
   return TRUE;
 }
@@ -2771,7 +2767,7 @@ switch_point:
     if (IS_VALID_CLIP(mainw->playing_file)) {
       if (mainw->frame_layer_preload) {
         check_layer_ready(mainw->frame_layer_preload);
-        weed_layer_free(mainw->frame_layer_preload);
+        weed_layer_unref(mainw->frame_layer_preload);
         mainw->frame_layer_preload = NULL;
         mainw->pred_frame = 0;
         mainw->pred_clip = 0;
@@ -2976,6 +2972,9 @@ switch_point:
     }
 
     set_ign_idlefuncs(FALSE);
+    // events like fullscreen on / off are not acted on directly, instead these are stacked
+    // for execution at this point. The callbacks are triggered and will pass requests to the main
+    // thread. We must allow idlefunc(s) to run during this time
     lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
     set_ign_idlefuncs(TRUE);
 
@@ -3225,7 +3224,7 @@ switch_point:
         mainw->pred_frame = 0;
         if (mainw->frame_layer_preload && is_layer_ready(mainw->frame_layer_preload)) {
           check_layer_ready(mainw->frame_layer_preload);
-          weed_layer_free(mainw->frame_layer_preload);
+          weed_layer_unref(mainw->frame_layer_preload);
           mainw->frame_layer_preload = NULL;
           cleanup_preload = FALSE;
           mainw->pred_clip = -1;
@@ -3592,7 +3591,7 @@ play_frame:
           }
           if (mainw->pred_clip > 0) {
             check_layer_ready(mainw->frame_layer_preload);
-            weed_layer_free(mainw->frame_layer_preload);
+            weed_layer_unref(mainw->frame_layer_preload);
           }
           mainw->frame_layer_preload = NULL;
           mainw->pred_frame = 0;
@@ -3665,7 +3664,7 @@ play_frame:
 
           if (mainw->frame_layer_preload) {
             check_layer_ready(mainw->frame_layer_preload);
-            weed_layer_free(mainw->frame_layer_preload);
+            weed_layer_unref(mainw->frame_layer_preload);
             mainw->frame_layer_preload = NULL;
             mainw->pred_frame = 0;
             mainw->pred_clip = 0;
@@ -3888,40 +3887,37 @@ proc_dialog:
       }
 
       set_ign_idlefuncs(FALSE);
+      // events like fullscreen on / off are not acted on directly, instead these are stacked
+      // for execution at this point. The callbacks are triggered and will pass requests to the main
+      // thread. We must allow idlefunc(s) to run during this time
       lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-      THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
-      main_thread_execute_void(lives_widget_context_update, 0);
-      THREADVAR(hook_hints) = 0;
       set_ign_idlefuncs(TRUE);
 
-      // if lpt was !unqueued, it was either running or idling
-      // if it was idling, we waited for it to become so
+      // if lpt was NOT unqueued, it was either running or idling (pre queue)
+      // if it was not idling, we waited for it to become so
       // it is not possible for unqueued -> idling without passing through playing
+      // this is assured by sync signals between this thread and the gui_lpt thread)
+      //
       // so if idling now either it was !unqueued (running) and we waited, or it was unqueued,
       // ran and became idle
-      // thus it must have been queued atr some point
+      // thus it must have been queued at some point
       //
       // if !idling now, either it was unqueued, and got queued, which is not possible
+      // (since we do this manually)
       // so if !idling, it must need queuing for initial run
 
       //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt));
 
       if (!lives_proc_thread_is_idling(gui_lpt)) {
         lives_proc_thread_queue(gui_lpt, 0);
-        // so gui_lpt will not become unqueued until it finishes
       } else {
-        // gui_lpt was idling, so either we waited for that, or it became unqueued / idling
-        // just now
-        // if it was idling, ask it to resum
+        // gui_lpt was idling, so either we waited for that,
+        // or it already finished and became unqueued / idling
+        // for this type of proc_thread, we just ask it to resume
         lives_proc_thread_request_resume(gui_lpt);
       }
-      //#define LOAD_ANALYSE_TICKS MILLIONS(10)
 
-      /* if (mainw->currticks - last_ana_ticks > LOAD_ANALYSE_TICKS) { */
-      /*   cpu_pressure = analyse_cpu_stats(); */
-      /*   last_ana_ticks = mainw->currticks; */
-      /* } */
-
+      // check for something ???
       if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
 
       if (!CURRENT_CLIP_IS_VALID) {
@@ -3942,13 +3938,13 @@ proc_dialog:
   retval = MILLIONS(2) + mainw->cancelled;
   goto err_end;
 
+  ////
+
 err_end:
   if (retval) {
     if (gui_lpt) {
-      if (!lives_proc_thread_is_unqueued(gui_lpt)) {
-        lives_proc_thread_request_cancel(gui_lpt, FALSE);
-        lives_proc_thread_join_boolean(gui_lpt);
-      }
+      lives_proc_thread_request_cancel(gui_lpt, FALSE);
+      lives_proc_thread_join_boolean(gui_lpt);
       lives_proc_thread_unref(gui_lpt);
       gui_lpt = NULL;
     }

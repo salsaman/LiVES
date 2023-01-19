@@ -12386,12 +12386,12 @@ memfail:
     if (no_free_orig) {
       weed_layer_nullify_pixel_data(orig_layer);
     }
-    weed_layer_free(orig_layer);
+    weed_layer_unref(orig_layer);
   }  if (orig_layer) {
     if (no_free_orig) {
       weed_layer_nullify_pixel_data(orig_layer);
     }
-    weed_layer_free(orig_layer);
+    weed_layer_unref(orig_layer);
   }
   return FALSE;
 }
@@ -12670,7 +12670,7 @@ LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int t
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
   // create a gdkpixbuf from a weed layer
   // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
-  // layer may safely be passed to weed_layer_free() since if the pixel data is shared then it will be set to NULL in the layer.
+  // layer may safely be passed to weed_layer_unref() since if the pixel data is shared then it will be set to NULL in the layer.
   // pixbuf should be unreffed after use as per normal
 
   LiVESPixbuf *pixbuf;
@@ -12878,7 +12878,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     weed_layer_copy(layer, old_layer);
     weed_layer_nullify_pixel_data(old_layer);
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     lives_free(pixel_data);
     lives_free(rowstrides);
     return FALSE;
@@ -12889,7 +12889,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   if (!new_pixel_data) {
     weed_layer_copy(layer, old_layer);
     weed_layer_nullify_pixel_data(old_layer);
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     lives_free(pixel_data);
     lives_free(rowstrides);
     return FALSE;
@@ -12909,7 +12909,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   if (nplanes > 1) weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
 
   // pixel_data in layer was replaced, so we are safe to free old_layer without nullifying
-  weed_layer_free(old_layer);
+  weed_layer_unref(old_layer);
   lives_free(pixel_data);
   lives_free(new_pixel_data);
   lives_free(rowstrides);
@@ -13242,7 +13242,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
       weed_layer_nullify_pixel_data(old_layer);
-      weed_layer_free(old_layer);
+      weed_layer_unref(old_layer);
       return FALSE;
     }
 
@@ -13426,7 +13426,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     old_layer = NULL;
 
     lives_free(out_pixel_data);
@@ -13744,7 +13744,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   }
 
   /// otherwise do not nullify, as we want to free old pixel_data
-  weed_layer_free(old_layer);
+  weed_layer_unref(old_layer);
 
   lives_free(pixel_data);
   lives_free(new_pixel_data);
@@ -13756,7 +13756,7 @@ memfail2:
   weed_layer_pixel_data_free(layer);
   weed_layer_copy(layer, old_layer);
   weed_layer_nullify_pixel_data(old_layer);
-  weed_layer_free(old_layer);
+  weed_layer_unref(old_layer);
   lives_free(pixel_data);
   lives_free(irowstrides);
   return FALSE;
@@ -13767,7 +13767,7 @@ memfail2:
    @brief turn a (Gdk)Pixbuf into a Weed layer
 
    return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should only be freed via
-   weed_layer_pixel_data_free() or weed_layer_free()
+   weed_layer_pixel_data_free() or weed_layer_unref()
    see code example.
 
    code example:
@@ -13782,7 +13782,7 @@ memfail2:
 
    weed_layer_pixel_data_free(layer); unrefs the pixbuf
    or
-   weed_layer_free(layer); also unrefs the pixbuf
+   weed_layer_unref(layer); also unrefs the pixbuf
 
 */
 boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
@@ -14114,20 +14114,20 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
 
     if (weed_layer_get_width(layer) == width
         && weed_layer_get_height(layer) == height) {
-      weed_layer_free(layer);
+      weed_layer_unref(layer);
       lives_free(fname);
       continue;
     }
 
     if (!resize_layer(layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END,
                       WEED_YUV_CLAMPING_UNCLAMPED)) {
-      weed_layer_free(layer);
+      weed_layer_unref(layer);
       lives_free(fname);
       continue;
     }
     if (!intimg) {
       pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
-      weed_layer_free(layer);
+      weed_layer_unref(layer);
     }
     if (intimg || pixbuf) {
       if (do_back) {
@@ -14140,7 +14140,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
         lives_widget_object_unref(pixbuf);
       } else {
         save_to_png(layer, fname, 100 - prefs->ocp);
-        weed_layer_free(layer);
+        weed_layer_unref(layer);
       }
       if (error || THREADVAR(write_failed)) {
         THREADVAR(write_failed) = 0;
@@ -14190,13 +14190,13 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
         for (int i = 0; i < height; i++) {
           if (crows) {
             if (crows[i] != lives_bin_hash(&pd[row * i], width)) {
-              weed_layer_free(layer);
+              weed_layer_unref(layer);
               return NULL;
             }
           } else hashes[i] = lives_bin_hash(&pd[row * i], width);
         }
       }
-      if (layer) weed_layer_free(layer);
+      if (layer) weed_layer_unref(layer);
       if (!crows) return hashes;
       return crows;
     }

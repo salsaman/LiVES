@@ -1144,7 +1144,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
           if (retval != LIVES_RESPONSE_RETRY) {
             pthread_mutex_unlock(&sfile->frame_index_mutex);
             if (intimg) {
-              if (saveargs->layer) weed_layer_free(saveargs->layer);
+              if (saveargs->layer) weed_layer_unref(saveargs->layer);
             } else {
               if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
               if (pixbuf) lives_widget_object_unref(pixbuf);
@@ -1161,7 +1161,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
         }
 
         if (intimg) {
-          if (saveargs->layer) weed_layer_free(saveargs->layer);
+          if (saveargs->layer) weed_layer_unref(saveargs->layer);
           saveargs->layer = NULL;
         } else {
           if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
@@ -1209,7 +1209,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
     lives_thread_join(saver_thread, NULL);
     if (intimg) {
       if (saveargs->layer != layer)
-        weed_layer_free(saveargs->layer);
+        weed_layer_unref(saveargs->layer);
     } else {
       if (saveargs->pixbuf && saveargs->pixbuf != pixbuf && (!pbr || *pbr != saveargs->pixbuf)) {
         lives_widget_object_unref(saveargs->pixbuf);
@@ -1239,7 +1239,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
     if (pixbuf && (!pbr || *pbr != pixbuf)) {
       lives_widget_object_unref(pixbuf);
     }
-  } else if (layer) weed_layer_free(layer);
+  } else if (layer) weed_layer_unref(layer);
 
   if (lives_proc_thread_get_cancel_requested(sfile->pumper))
     lives_proc_thread_cancel(sfile->pumper);

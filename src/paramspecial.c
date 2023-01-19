@@ -675,10 +675,10 @@ boolean special_cleanup(boolean is_ok) {
     mainw->framedraw = mainw->framedraw_reset = NULL;
     mainw->framedraw_spinbutton = NULL;
 
-    if (mainw->fd_layer) weed_layer_free(mainw->fd_layer);
+    if (mainw->fd_layer) weed_layer_unref(mainw->fd_layer);
     mainw->fd_layer = NULL;
 
-    if (mainw->fd_layer_orig) weed_layer_free(mainw->fd_layer_orig);
+    if (mainw->fd_layer_orig) weed_layer_unref(mainw->fd_layer_orig);
     mainw->fd_layer_orig = NULL;
 
     mainw->framedraw_preview = NULL;

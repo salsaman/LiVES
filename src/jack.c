@@ -2619,7 +2619,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       }
       lives_free(xfltbuf);
       weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-      weed_layer_free(layer);
+      weed_layer_unref(layer);
     }
     if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY) {
       float auxmix[2] = {0.5, 0.5};
@@ -3066,7 +3066,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 }
                 lives_free(xfltbuf);
                 weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-                weed_layer_free(layer);
+                weed_layer_unref(layer);
               }
 
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -3155,7 +3155,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                   }
                   lives_free(xfltbuf);
                   weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-                  weed_layer_free(layer);
+                  weed_layer_unref(layer);
                 }
 
                 // BAD - non realtime

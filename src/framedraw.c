@@ -475,18 +475,18 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       weed_plant_free(layer);
       return NULL;
     }
-    if (mainw->fd_layer_orig) weed_layer_free(mainw->fd_layer_orig);
+    if (mainw->fd_layer_orig) weed_layer_unref(mainw->fd_layer_orig);
     mainw->fd_layer_orig = layer;
   } else {
     if (mainw->fd_layer_orig && mainw->fd_layer_orig != layer) {
-      weed_layer_free(mainw->fd_layer_orig);
+      weed_layer_unref(mainw->fd_layer_orig);
       mainw->fd_layer_orig = layer;
     }
   }
 
   // copy orig layer to new layer
   if (mainw->fd_layer) {
-    weed_layer_free(mainw->fd_layer);
+    weed_layer_unref(mainw->fd_layer);
     mainw->fd_layer = NULL;
   }
 
@@ -650,7 +650,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
     convert_layer_palette(mainw->fd_layer, palette, 0);
     pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE, TRUE);
     weed_layer_nullify_pixel_data(mainw->fd_layer);
-    weed_layer_free(mainw->fd_layer);
+    weed_layer_unref(mainw->fd_layer);
     mainw->fd_layer = NULL;
     if (pixbuf) {
       if (mainw->multitrack->frame_pixbuf != mainw->imframe) {
@@ -799,9 +799,9 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     weed_plant_free(layer);
   } else {
     if (mainw->fd_layer_orig && mainw->fd_layer_orig != layer)
-      weed_layer_free(mainw->fd_layer_orig);
+      weed_layer_unref(mainw->fd_layer_orig);
     mainw->fd_layer_orig = layer;
-    if (mainw->fd_layer) weed_layer_free(mainw->fd_layer);
+    if (mainw->fd_layer) weed_layer_unref(mainw->fd_layer);
     mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
     redraw_framedraw_image(mainw->fd_layer);
     if (!mainw->multitrack) lives_widget_queue_draw(mainw->framedraw);

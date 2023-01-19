@@ -2460,7 +2460,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
       mt->idlefunc = mt_idle_add(mt);
     }
-    weed_layer_free(mainw->frame_layer);
+    weed_layer_unref(mainw->frame_layer);
     if (frame_layer) {
       mainw->frame_layer = frame_layer;
       weed_layer_unref(mainw->frame_layer);
@@ -2624,7 +2624,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height,
                              LIVES_INTERP_BEST, cpal, 0)) {
           if (frame_layer) {
-            if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+            if (mainw->frame_layer) weed_layer_unref(mainw->frame_layer);
             mainw->frame_layer = frame_layer;
             weed_layer_unref(mainw->frame_layer);
             weed_layer_unref(mainw->frame_layer);
@@ -2683,7 +2683,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
   /// restore original mainw->frame_layer
   if (frame_layer) {
-    if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+    if (mainw->frame_layer) weed_layer_unref(mainw->frame_layer);
     mainw->frame_layer = frame_layer;
     weed_layer_unref(mainw->frame_layer);
     weed_layer_unref(mainw->frame_layer);

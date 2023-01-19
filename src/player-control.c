@@ -24,13 +24,22 @@
 #include "clip_load_save.h"
 
 static boolean _start_playback(int play_type) {
-  GSource *source;
+  // play types: (some are no longer valid)
+  //  0 - normal
+  //  1 - normal, selection only (inc. preview)
+  // 3 - osc_playall
+  // 4 osc_playsel
+  //  6 - generator start
+  // 8 playall from menu
   int new_file, old_file;
   boolean flag = FALSE;
 
+  if (play_type != 6) {
+    mainw->pre_play_file = mainw->current_file;
+  }
+
   if (play_type != 8 && mainw->noswitch) return TRUE;
   player_desensitize();
-  set_ign_idlefuncs(TRUE);
 
   switch (play_type) {
   case 8: case 6: case 0:
@@ -39,7 +48,7 @@ static boolean _start_playback(int play_type) {
     play_all(flag);
     break;
   case 1:
-    /// play selection
+    /// play selection, including play preview
     if (!mainw->multitrack) play_sel();
     else multitrack_play_sel(NULL, mainw->multitrack);
     break;
@@ -98,16 +107,34 @@ static boolean _start_playback(int play_type) {
   }
 
   if (mainw->player_proc) mainw->player_proc = NULL;
-  set_ign_idlefuncs(FALSE);
 
   return FALSE;
 }
 
 
+// These are now the entry points for clip playback
+// start_playback (blocking) and start_playback_async (nonblocking)
+
+// calling play_file() directly is no longer permitted
+
+// only a single instance of player is allowed at any particular time
+// during playback, mainw->current_clip must not be changed directly
+// this should be done by setting mainw->new_clip, similarly we can set mainw->new_blen_file
+// and mainw->close_this_clip
+// (check for mainw->noswitch == TRUE)
+// playback will only stop when mainw->cancelled
+// is set to a value other than CANCEL_NONE.
+//
+// realtime effects, ie. mainw->rte may not be altered, instead rte_on_off_callback must be called
+// player output cahnges - sepwin / fullsize / double etc. must be done by setting a hook
+// callback for mainw->player_proc's SYNC_ANNOUNCE_HOOK (see keyboard.c for examples)
+//
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {
-  // block until playback stops
+  // BLOCKING playback
+  // - block until playback stops
   lives_proc_thread_t lpt;
   if (!is_fg_thread()) {
+    // if called by bg thread, thread itself becomes player, and will block until play finishes
     mainw->player_proc = THREADVAR(proc_thread);
     return _start_playback(type);
   }
@@ -120,6 +147,8 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 
 
 void start_playback_async(int type) {
+  // nonblocking playback, player is launcehd in a pool thread, and this thread returns
+  // immediately
   mainw->player_proc = lives_proc_thread_create(0, _start_playback, 0, "i", type);
 }
 
@@ -219,6 +248,130 @@ static double fps_med = 0.;
 
 static void post_playback(void) {
   g_print("POSTPB\n");
+  if (!mainw->multitrack) {
+    if (mainw->faded || mainw->fs) {
+      main_thread_execute_void(unfade_background, 0);
+      //unfade_background();
+    }
+
+    if (mainw->sep_win) add_to_playframe();
+
+    if (CURRENT_CLIP_HAS_VIDEO) {
+      //resize(1.);
+      lives_widget_show_all(mainw->playframe);
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
+    }
+
+    if (palette->style & STYLE_1) {
+      lives_widget_show(mainw->sep_image);
+    }
+
+    if (prefs->show_msg_area && !mainw->multitrack) {
+      lives_widget_show_all(mainw->message_box);
+      reset_message_area(); ///< necessary
+    }
+
+    lives_widget_show(mainw->frame1);
+    lives_widget_show(mainw->frame2);
+    lives_widget_show(mainw->eventbox3);
+    lives_widget_show(mainw->eventbox4);
+    lives_widget_show(mainw->sep_image);
+
+    if (!prefs->hide_framebar && !prefs->hfbwnp) {
+      lives_widget_show(mainw->framebar);
+    }
+  }
+
+  if (!mainw->foreign) {
+    unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
+  }
+
+  /// kill the separate play window
+  if (mainw->play_window) {
+    if (mainw->fs) {
+      mainw->ignore_screen_size = TRUE;
+      if (!mainw->multitrack || !mainw->fs
+          || (mainw->cancelled != CANCEL_USER_PAUSED
+              && !((mainw->cancelled == CANCEL_NONE
+                    || mainw->cancelled == CANCEL_NO_MORE_PREVIEW)))) {
+      }
+      if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+          && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE)
+          && capable->wm_caps.pan_res & RESTYPE_ACTION) {
+        show_desktop_panel();
+      }
+      lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    }
+    if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
+      kill_play_window();
+    } else {
+      /// or resize it back to single size
+      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering
+          && (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
+        if (mainw->preview_controls) {
+          /// create the preview in the sepwin
+          if (prefs->show_gui) {
+            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+            lives_widget_show_all(mainw->preview_box);
+            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+          }
+        }
+        if (mainw->current_file != mainw->pre_play_file) {
+          // now we have to guess how to center the play window
+          mainw->opwx = mainw->opwy = -1;
+          mainw->preview_frame = 0;
+        }
+      }
+
+      if (!mainw->multitrack) {
+        //
+        mainw->playing_file = -2;
+        if (mainw->fs) mainw->ignore_screen_size = TRUE;
+        resize_play_window();
+        mainw->playing_file = -1;
+        lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+
+        if (!mainw->preview_box) {
+          // create the preview box that shows frames
+          make_preview_box();
+        }
+        // and add it to the play window
+        if (!lives_widget_get_parent(mainw->preview_box)
+            && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
+          if (mainw->play_window) {
+            lives_widget_queue_draw(mainw->play_window);
+            lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+            play_window_set_title();
+          }
+        }
+
+        if (mainw->play_window) {
+          if (prefs->show_playwin) {
+            lives_window_present(LIVES_WINDOW(mainw->play_window));
+            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+            unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
+            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+            // need to recheck mainw->play_window after this
+            lives_widget_show_all(mainw->preview_box);
+
+            lives_widget_grab_focus(mainw->preview_spinbutton);
+
+            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+            if (mainw->play_window) {
+
+
+              lives_widget_process_updates(mainw->play_window);
+              // need to recheck after calling process_updates
+              if (mainw->play_window) {
+                lives_window_center(LIVES_WINDOW(mainw->play_window));
+                clear_widget_bg(mainw->play_image, mainw->play_surface);
+                load_preview_image(FALSE);
+              }
+            }
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
+
   if (prefs->show_player_stats && mainw->fps_measure > 0) {
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
             (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
@@ -292,9 +445,175 @@ static void post_playback(void) {
     showclipimgs();
   }
 
+  if (CURRENT_CLIP_IS_VALID) {
+    if (!mainw->multitrack) {
+      lives_ce_update_timeline(0, cfile->real_pointer_time);
+      if (CURRENT_CLIP_IS_VALID) {
+        mainw->ptrtime = cfile->real_pointer_time;
+      }
+      lives_widget_queue_draw(mainw->eventbox2);
+    }
+  }
+
   player_sensitize();
   break_me("end ppb");
   g_print("DONE POSTPB\n");
+}
+
+
+static void pre_playback(void) {
+  short audio_player = prefs->audio_player;
+
+  if (!mainw->preview || !cfile->opening) {
+    enable_record();
+    desensitize();
+#ifdef ENABLE_JACK
+    if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
+      lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
+#endif
+  }
+
+  if (!mainw->multitrack) {
+    /// blank the background if asked to
+    if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
+         || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
+             mainw->foreign)) {
+      fade_background();
+    }
+
+    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
+        && (cfile->frames > 0 || mainw->preview_rendering || mainw->foreign)) {
+      /// show the frame in the main window
+      lives_widget_set_opacity(mainw->playframe, 1.);
+      lives_widget_show_all(mainw->playframe);
+    }
+
+    // NB make sure playframe is mapped
+    if (!mainw->preview) {
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Play"));
+    } else {
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
+    }
+
+    if (palette->style & STYLE_1) {
+      lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)),
+                                LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+
+    if (mainw->foreign) {
+      lives_widget_show_all(mainw->top_vbox);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    }
+
+    add_to_playframe();
+
+    if (CURRENT_CLIP_HAS_VIDEO) {
+      lives_widget_set_frozen(mainw->spinbutton_start, TRUE, 0.);
+      lives_widget_set_frozen(mainw->spinbutton_end, TRUE, 0.);
+    }
+    if (mainw->play_window) {
+      lives_widget_hide(mainw->preview_controls);
+      if (prefs->pb_hide_gui) hide_main_gui();
+    }
+
+    if (prefs->msgs_nopbdis || (prefs->show_msg_area && mainw->double_size)) {
+      lives_widget_hide(mainw->message_box);
+    }
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), !mainw->double_size);
+  }
+
+#ifdef ENABLE_JACK
+  if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+        && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
+#endif
+    lives_widget_set_sensitive(mainw->stop, TRUE);
+
+  else if (!cfile->opening) {
+    if (!mainw->is_processing) mt_swap_play_pause(mainw->multitrack, TRUE);
+    else {
+      lives_widget_set_sensitive(mainw->multitrack->playall, FALSE);
+      lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
+    }
+  }
+
+  lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
+  lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
+  lives_widget_set_sensitive(mainw->m_mutebutton, is_realtime_aplayer(audio_player) || mainw->multitrack);
+  lives_widget_set_sensitive(mainw->m_loopbutton, (!cfile->achans || mainw->mute || mainw->multitrack ||
+                             mainw->loop_cont || is_realtime_aplayer(audio_player))
+                             && mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->loop_continue, (!cfile->achans || mainw->mute || mainw->loop_cont ||
+                             is_realtime_aplayer(audio_player))
+                             && mainw->current_file > 0);
+
+  if (cfile->frames == 0) {
+    if (mainw->preview_box && lives_widget_get_parent(mainw->preview_box)) {
+
+      lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+
+      mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
+                              LIVES_GUI_CALLBACK(on_mouse_scroll), NULL);
+    }
+  } else {
+    if (mainw->sep_win) {
+      /// create a separate window for the internal player if requested
+      if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
+        make_play_window();
+      } else {
+        if (!mainw->multitrack || mainw->fs) {
+          resize_play_window();
+        }
+
+        /// needed
+        if (!mainw->multitrack) {
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+        } else {
+          /// this doesn't get called if we don't call resize_play_window()
+          if (mainw->play_window && prefs->show_playwin) {
+            lives_window_present(LIVES_WINDOW(mainw->play_window));
+            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
+
+    if (mainw->play_window) {
+      hide_cursor(lives_widget_get_xwindow(mainw->play_window));
+      lives_widget_set_app_paintable(mainw->play_window, TRUE);
+      play_window_set_title();
+    }
+
+    if (!mainw->foreign && !mainw->sep_win) {
+      hide_cursor(lives_widget_get_xwindow(mainw->playarea));
+    }
+
+    if (!mainw->sep_win && !mainw->foreign) {
+      if (mainw->double_size) resize(2.);
+    }
+
+    if (mainw->fs && !mainw->sep_win && cfile->frames > 0) {
+      fullscreen_internal();
+    }
+  }
+
+  if (!mainw->multitrack) {
+    lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
+    lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+
+    mainw->last_blend_file = -1;
+
+    // show the framebar
+    if (!mainw->multitrack && !mainw->faded
+        && (!prefs->hide_framebar &&
+            (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0
+                            && capable->nmonitors > 1 && mainw->sep_win)
+             || (mainw->vpp && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
+            && ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
+      lives_widget_show(mainw->framebar);
+    }
+  }
+  lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
 }
 
 
@@ -336,6 +655,7 @@ void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
   LiVESList *cliplist;
   weed_plant_t *pb_start_event = NULL;
+  weed_layer_t *old_flayer;
 
   char *stopcom = NULL;
   char *stfile;
@@ -364,17 +684,6 @@ void play_file(void) {
   int audio_end = 0;
 
   ____FUNC_ENTRY____(play_file, "", "");
-
-
-  if (!mainw->preview || !cfile->opening) {
-    enable_record();
-    desensitize();
-#ifdef ENABLE_JACK
-    if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-          && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
-      lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
-#endif
-  }
 
   /// from now on we can only switch at the designated SWITCH POINT
   mainw->noswitch = TRUE;
@@ -437,7 +746,6 @@ void play_file(void) {
     }
   }
 
-
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
@@ -462,11 +770,6 @@ void play_file(void) {
   }
   /// set performance at right place
   else if (mainw->event_list) cfile->next_event = get_first_event(mainw->event_list);
-
-  if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
-    lives_widget_set_frozen(mainw->spinbutton_start, TRUE, 0.);
-    lives_widget_set_frozen(mainw->spinbutton_end, TRUE, 0.);
-  }
 
   if (!mainw->multitrack) {
 #ifdef ENABLE_JACK_TRANSPORT
@@ -519,45 +822,17 @@ void play_file(void) {
     audio_end = mainw->audio_end;
   }
 
-  if (!mainw->multitrack) {
-    /// blank the background if asked to
-    if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
-         || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
-             mainw->foreign)) {
-      main_thread_execute_void(fade_background, 0);
-      //fade_background();
-    }
-
-    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
-        && (cfile->frames > 0 || mainw->preview_rendering || mainw->foreign)) {
-      /// show the frame in the main window
-      lives_widget_set_opacity(mainw->playframe, 1.);
-      lives_widget_show_all(mainw->playframe);
-    }
-
-
-    // NB make sure playframe is mapped
-    if (!mainw->preview) {
-      lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Play"));
-    } else {
-      lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
-    }
-
-    if (palette->style & STYLE_1) {
-      lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)),
-                                LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    }
-
-    if (mainw->foreign) {
-      lives_widget_show_all(mainw->top_vbox);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-    }
-
-    /// plug the plug into the playframe socket if we need to
-    add_to_playframe();
+  if (prefs->stop_screensaver) {
+    lives_disable_screensaver();
   }
 
-  //lives_widget_context_update();
+  main_thread_execute_void(pre_playback, 0);
+
+  ctx_mutex_lock();
+  // setting this forces the main thread to block in a loop and only update
+  // ths gui context on request (via update_gui in player.c)
+  set_ign_idlefuncs(TRUE);
+  ctx_mutex_unlock();
 
   arate = cfile->arate;
 
@@ -593,117 +868,12 @@ void play_file(void) {
     mainw->blend_file = -1;
   }
 
-  lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
   mainw->playing_file = mainw->current_file;
 
   if (mainw->record) {
     if (mainw->event_list) event_list_free(mainw->event_list);
     mainw->event_list = NULL;
     mainw->record_starting = TRUE;
-  }
-
-  if (!mainw->multitrack && (prefs->msgs_nopbdis || (prefs->show_msg_area && mainw->double_size))) {
-    lives_widget_hide(mainw->message_box);
-  }
-
-#ifdef ENABLE_JACK
-  if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-        && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
-#endif
-    lives_widget_set_sensitive(mainw->stop, TRUE);
-
-  if (!mainw->multitrack) lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
-  else if (!cfile->opening) {
-    if (!mainw->is_processing) mt_swap_play_pause(mainw->multitrack, TRUE);
-    else {
-      lives_widget_set_sensitive(mainw->multitrack->playall, FALSE);
-      lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
-    }
-  }
-
-  lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), !mainw->double_size);
-
-  lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
-  lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
-  lives_widget_set_sensitive(mainw->m_mutebutton, is_realtime_aplayer(audio_player) || mainw->multitrack);
-
-  lives_widget_set_sensitive(mainw->m_loopbutton, (!cfile->achans || mainw->mute || mainw->multitrack ||
-                             mainw->loop_cont || is_realtime_aplayer(audio_player))
-                             && mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->loop_continue, (!cfile->achans || mainw->mute || mainw->loop_cont ||
-                             is_realtime_aplayer(audio_player))
-                             && mainw->current_file > 0);
-
-  if (cfile->frames == 0 && !mainw->multitrack) {
-    if (mainw->preview_box && lives_widget_get_parent(mainw->preview_box)) {
-
-      lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-
-      mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
-                              LIVES_GUI_CALLBACK(on_mouse_scroll), NULL);
-    }
-  } else {
-    if (mainw->sep_win) {
-      /// create a separate window for the internal player if requested
-      if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-        make_play_window();
-      } else {
-        if (!mainw->multitrack || mainw->fs) {
-          resize_play_window();
-        }
-
-        /// needed
-        if (!mainw->multitrack) {
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-        } else {
-          /// this doesn't get called if we don't call resize_play_window()
-          if (mainw->play_window && prefs->show_playwin) {
-            lives_window_present(LIVES_WINDOW(mainw->play_window));
-            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-	      // *INDENT-OFF*
-	  }}}}
-    // *INDENT-ON*
-
-    if (mainw->play_window) {
-      hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-      lives_widget_set_app_paintable(mainw->play_window, TRUE);
-      play_window_set_title();
-    }
-
-    if (!mainw->foreign && !mainw->sep_win) {
-      hide_cursor(lives_widget_get_xwindow(mainw->playarea));
-    }
-
-    if (!mainw->sep_win && !mainw->foreign) {
-      if (mainw->double_size) resize(2.);
-      //else resize(1); // add_to_playframe does this
-    }
-
-    if (mainw->fs && !mainw->sep_win && cfile->frames > 0) {
-      fullscreen_internal();
-    }
-  }
-
-  if (prefs->stop_screensaver) {
-    lives_disable_screensaver();
-  }
-
-  if (!mainw->multitrack) {
-    lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
-    lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-
-    mainw->last_blend_file = -1;
-
-    // show the framebar
-    if (!mainw->multitrack && !mainw->faded
-        && (!prefs->hide_framebar &&
-            (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0
-                            && capable->nmonitors > 1 && mainw->sep_win)
-             || (mainw->vpp && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
-            && ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
-      lives_widget_show(mainw->framebar);
-    }
   }
 
   cfile->play_paused = FALSE;
@@ -728,10 +898,6 @@ void play_file(void) {
     lives_free(com3);
   }
 
-  if (mainw->play_window && !mainw->multitrack) {
-    lives_widget_hide(mainw->preview_controls);
-    if (prefs->pb_hide_gui) hide_main_gui();
-  }
   // if recording, refrain from writing audio until we are ready
   if (mainw->record) mainw->record_paused = TRUE;
 
@@ -834,8 +1000,8 @@ void play_file(void) {
 
     lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_START_HOOK);
 
-    //lives_widget_context_update();
-    //play until stopped or a stream finishes
+    //////////// PLAYBACK START ////////////////
+
     do {
       mainw->cancelled = CANCEL_NONE;
       mainw->play_sequence++;
@@ -989,7 +1155,8 @@ void play_file(void) {
              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
   }
 
-  // signal to governor loop that it can now exit
+  // PLAYBACK END /////////////////////
+
   lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_END_HOOK);
 
   mainw->osc_block = TRUE;
@@ -1285,135 +1452,29 @@ void play_file(void) {
 
   lives_hooks_trigger(NULL, COMPLETED_HOOK);
 
-  if (!mainw->multitrack) {
-    if (mainw->faded || mainw->fs) {
-      main_thread_execute_void(unfade_background, 0);
-      //unfade_background();
-    }
-
-    if (mainw->sep_win) add_to_playframe();
-
-    if (CURRENT_CLIP_HAS_VIDEO) {
-      //resize(1.);
-      lives_widget_show_all(mainw->playframe);
-      lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
-    }
-
-    if (palette->style & STYLE_1) {
-      lives_widget_show(mainw->sep_image);
-    }
-
-    if (prefs->show_msg_area && !mainw->multitrack) {
-      lives_widget_show_all(mainw->message_box);
-      reset_message_area(); ///< necessary
-    }
-
-    lives_widget_show(mainw->frame1);
-    lives_widget_show(mainw->frame2);
-    lives_widget_show(mainw->eventbox3);
-    lives_widget_show(mainw->eventbox4);
-    lives_widget_show(mainw->sep_image);
-
-    if (!prefs->hide_framebar && !prefs->hfbwnp) {
-      lives_widget_show(mainw->framebar);
-    }
-  }
-
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
 
-  /// kill the separate play window
-  if (mainw->play_window) {
-    if (mainw->fs) {
-      mainw->ignore_screen_size = TRUE;
-      if (!mainw->multitrack || !mainw->fs
-          || (mainw->cancelled != CANCEL_USER_PAUSED
-              && !((mainw->cancelled == CANCEL_NONE
-                    || mainw->cancelled == CANCEL_NO_MORE_PREVIEW)))) {
-      }
-      if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-          && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE)
-          && capable->wm_caps.pan_res & RESTYPE_ACTION) {
-        show_desktop_panel();
-      }
-      lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-    }
-    if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-      kill_play_window();
-    } else {
-      /// or resize it back to single size
-      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering
-          && (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
-        if (mainw->preview_controls) {
-          /// create the preview in the sepwin
-          if (prefs->show_gui) {
-            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-            lives_widget_show_all(mainw->preview_box);
-            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-          }
-        }
-        if (mainw->current_file != current_file) {
-          // now we have to guess how to center the play window
-          mainw->opwx = mainw->opwy = -1;
-          mainw->preview_frame = 0;
-        }
-      }
-
-      if (!mainw->multitrack) {
-        mainw->playing_file = -2;
-        if (mainw->fs) mainw->ignore_screen_size = TRUE;
-        resize_play_window();
-        mainw->playing_file = -1;
-        lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-
-        if (!mainw->preview_box) {
-          // create the preview box that shows frames
-          make_preview_box();
-        }
-        // and add it to the play window
-        if (!lives_widget_get_parent(mainw->preview_box)
-            && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
-          if (mainw->play_window) {
-            lives_widget_queue_draw(mainw->play_window);
-            lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-            play_window_set_title();
-          }
-        }
-
-        if (mainw->play_window) {
-          if (prefs->show_playwin) {
-            lives_window_present(LIVES_WINDOW(mainw->play_window));
-            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-            unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
-            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-            // need to recheck mainw->play_window after this
-            lives_widget_show_all(mainw->preview_box);
-
-            lives_widget_grab_focus(mainw->preview_spinbutton);
-
-            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-            if (mainw->play_window) {
-              lives_widget_process_updates(mainw->play_window);
-              // need to recheck after calling process_updates
-              if (mainw->play_window) {
-                lives_window_center(LIVES_WINDOW(mainw->play_window));
-                clear_widget_bg(mainw->play_image, mainw->play_surface);
-                load_preview_image(FALSE);
-              }
-            }
-	    // *INDENT-OFF*
-	  }}}}}
-  // *INDENT-ON*
-
   /// free the last frame image(s)
+  old_flayer = get_old_frame_layer();
+  if (old_flayer && old_flayer != mainw->frame_layer_preload && old_flayer != mainw->blend_layer) {
+    if (old_flayer == mainw->frame_layer) mainw->frame_layer = NULL;
+    weed_layer_free(old_flayer);
+    reset_old_frame_layer();
+  }
+
   if (mainw->frame_layer) {
     check_layer_ready(mainw->frame_layer);
-    weed_layer_unref(mainw->frame_layer);
+    weed_layer_free(mainw->frame_layer);
+    if (mainw->frame_layer == mainw->frame_layer_preload)
+      mainw->frame_layer_preload = NULL;
+    if (mainw->frame_layer == mainw->blend_layer)
+      mainw->blend_layer = NULL;
     mainw->frame_layer = NULL;
   }
 
   if (mainw->blend_layer) {
     check_layer_ready(mainw->blend_layer);
-    weed_layer_unref(mainw->blend_layer);
+    weed_layer_free(mainw->blend_layer);
     mainw->blend_layer = NULL;
   }
 
@@ -1428,10 +1489,6 @@ void play_file(void) {
 
   // join any threads created for this
   if (mainw->scrap_file > -1) flush_scrap_file();
-
-  if (!mainw->foreign) {
-    unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
-  }
 
   if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
 
@@ -1546,6 +1603,11 @@ void play_file(void) {
     }
   }
 
+  ctx_mutex_lock();
+  // allow the main thread to exit from its blocking loop, it will resume normal operations
+  set_ign_idlefuncs(FALSE);
+  ctx_mutex_unlock();
+
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
@@ -1556,16 +1618,6 @@ void play_file(void) {
   BG_THREADVAR(hook_hints) = 0;
 
   if (!mainw->multitrack) redraw_timeline(mainw->current_file);
-
-  if (CURRENT_CLIP_IS_VALID) {
-    if (!mainw->multitrack) {
-      lives_ce_update_timeline(0, cfile->real_pointer_time);
-      if (CURRENT_CLIP_IS_VALID) {
-        mainw->ptrtime = cfile->real_pointer_time;
-      }
-      lives_widget_queue_draw(mainw->eventbox2);
-    }
-  }
 
   if (lazy_start) {
     if (mainw->lazy_starter) {

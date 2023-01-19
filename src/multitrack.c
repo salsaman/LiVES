@@ -8757,7 +8757,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   ptaud = prefs->mt_pertrack_audio;
   btaud = prefs->mt_backaudio;
 
-  if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+  if (mainw->frame_layer) weed_layer_unref(mainw->frame_layer);
   mainw->frame_layer = NULL;
 
   if (prefs->mt_enter_prompt && !mainw->stored_event_list && prefs->show_gui && !(mainw->recoverable_layout &&

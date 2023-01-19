@@ -1867,9 +1867,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     if (mainw->preview_req) {
       mainw->preview_req = FALSE;
-      mainw->noswitch = FALSE;
+      if (visible) mainw->noswitch = FALSE;
       if (mainw->proc_ptr) on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
-      mainw->noswitch = TRUE;
+      if (visible) mainw->noswitch = TRUE;
     }
 
     //    #define DEBUG
@@ -2042,7 +2042,7 @@ finish:
 
 #define MIN_FLASH_TIME MILLIONS(100)
 
-static boolean _do_auto_dialog(const char *text, int type, boolean is_fg) {
+static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
@@ -2058,7 +2058,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_fg) {
   double time_rem, last_time_rem = 10000000.;
   lives_alarm_t alarm_handle = 0;
 
-  if (is_fg) g_main_context_acquire(g_main_context_default());
+  if (is_async) g_main_context_acquire(g_main_context_default());
 
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
@@ -2166,7 +2166,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_fg) {
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (is_fg) g_main_context_release(g_main_context_default());
+  if (is_async) g_main_context_release(g_main_context_default());
 
   if (mainw->cancelled) return FALSE;
 
@@ -2197,7 +2197,7 @@ boolean do_auto_dialog(const char *text, int type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
-  return _do_auto_dialog(text, type, is_fg_thread());
+  return _do_auto_dialog(text, type, FALSE);
 }
 
 
@@ -2207,7 +2207,7 @@ lives_proc_thread_t do_auto_dialog_async(const char *text, int type) {
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
   lives_proc_thread_t lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_do_auto_dialog,
-                            WEED_SEED_BOOLEAN, "sib", text, type, is_fg_thread());
+                            WEED_SEED_BOOLEAN, "sib", text, type, TRUE);
   return lpt;
 }
 

@@ -1913,7 +1913,7 @@ static boolean drag_start(LiVESWidget * widget, LiVESXEventButton * event, LiVES
                                &col_black, &col_black, TRUE, FALSE, 0.1);
 
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
-  weed_layer_free(layer);
+  weed_layer_unref(layer);
 
   cursor = lives_cursor_new_from_pixbuf(disp, pixbuf, 0, cheight >> 1);
   lives_xwindow_set_cursor(lives_widget_get_xwindow(topl), cursor);

@@ -772,7 +772,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
-    weed_layer_free(test_layer);
+    weed_layer_unref(test_layer);
 
     /// if possible just render the slice which contains the text
     // temporarily set the layer pixel_data and height to the slice, then copy it,
@@ -855,7 +855,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       } else weed_layer_nullify_pixel_data(layer_slice);
 
       weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
-      weed_layer_free(layer_slice);
+      weed_layer_unref(layer_slice);
 
       if (rbswapped) {
         // reverse out fake palette if needed

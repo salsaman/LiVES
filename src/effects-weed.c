@@ -3057,7 +3057,7 @@ done_video:
     check_layer_ready(layer);
     dupe = weed_get_plantptr_value(layer, WEED_LEAF_DUPLICATE, NULL);
     if (dupe) {
-      weed_layer_free(dupe);
+      weed_layer_unref(dupe);
       weed_leaf_delete(layer, WEED_LEAF_DUPLICATE);
     }
   }
@@ -6541,7 +6541,7 @@ static void weed_in_channels_free(weed_plant_t *inst) {
   if (num_channels > 0) {
     for (int i = 0; i < num_channels; i++) {
       if (channels[i]) {
-        if (weed_palette_is_alpha(weed_channel_get_palette(channels[i]))) weed_layer_free((weed_layer_t *)channels[i]);
+        if (weed_palette_is_alpha(weed_channel_get_palette(channels[i]))) weed_layer_unref((weed_layer_t *)channels[i]);
         else weed_plant_free(channels[i]);
       }
     }
@@ -6556,7 +6556,7 @@ static void weed_out_channels_free(weed_plant_t *inst) {
   if (num_channels > 0) {
     for (int i = 0; i < num_channels; i++) {
       if (channels[i]) {
-        if (weed_palette_is_alpha(weed_channel_get_palette(channels[i]))) weed_layer_free((weed_layer_t *)channels[i]);
+        if (weed_palette_is_alpha(weed_channel_get_palette(channels[i]))) weed_layer_unref((weed_layer_t *)channels[i]);
         else weed_plant_free(channels[i]);
       }
     }
@@ -8678,7 +8678,7 @@ procfunc1:
       weed_layer_copy(channel, newl);
       weed_set_int_array(channel, WEED_LEAF_NATURAL_SIZE, 2, nats);
       weed_layer_nullify_pixel_data(newl);
-      weed_layer_free(newl);
+      weed_layer_unref(newl);
     }
   }
 
@@ -8865,12 +8865,9 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       // otherwise, remove any which are not "pinned"
       if (!THREADVAR(fx_is_auto)) ce_thumbs_add_param_box(key, TRUE);
     }
-
     if (mainw->play_window) {
       lives_widget_queue_draw(mainw->play_window);
     }
-    mainw->gen_started_play = TRUE;
-
     mainw->gen_started_play = TRUE;
     start_playback_async(6);
     return -1;

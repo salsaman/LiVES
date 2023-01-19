@@ -4049,7 +4049,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               if (mainw->scrap_layer) {
                 if (mainw->scrap_layer != mainw->transrend_layer &&
                     (!saveargs || mainw->scrap_layer != saveargs->layer))
-                  weed_layer_free(mainw->scrap_layer);
+                  weed_layer_unref(mainw->scrap_layer);
                 mainw->scrap_layer = NULL;
               }
               if (mainw->scrap_pixbuf) {
@@ -4065,7 +4065,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
                                                      offs);
                 if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
-                  weed_layer_free(layer);
+                  weed_layer_unref(layer);
                   layer = NULL;
                 }
               }
@@ -4146,7 +4146,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               weed_layer_unref(layers[i]);
               if (layer != layers[i]) {
                 check_layer_ready(layers[i]);
-                weed_layer_free(layers[i]);
+                weed_layer_unref(layers[i]);
               }
             }
             lives_free(layers);
@@ -4191,7 +4191,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 lives_proc_thread_sync_continue(mainw->transrend_proc);
                 g_print("trans processed\n");
                 if (mainw->transrend_layer != mainw->scrap_layer)
-                  weed_layer_free((weed_layer_t *)mainw->transrend_layer);
+                  weed_layer_unref((weed_layer_t *)mainw->transrend_layer);
                 mainw->transrend_layer = NULL;
               }
 
@@ -4290,7 +4290,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             }
             if (!intimg) {
               pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
-              weed_layer_free(layer);
+              weed_layer_unref(layer);
               layer = NULL;
             }
           }
@@ -4471,7 +4471,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
         if (saveargs->layer && saveargs->layer != layer) {
           if (saveargs->layer != mainw->scrap_layer)
-            weed_layer_free(saveargs->layer);
+            weed_layer_unref(saveargs->layer);
           saveargs->layer = NULL;
         }
         if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
@@ -4520,7 +4520,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           }
         } else {
           if (mainw->scrap_layer) {
-            weed_layer_free(mainw->scrap_layer);
+            weed_layer_unref(mainw->scrap_layer);
             mainw->scrap_layer = NULL;
           }
           if (mainw->scrap_pixbuf) {
@@ -4740,7 +4740,7 @@ filterinit2:
         }
       }
       if (saveargs->layer && saveargs->layer != mainw->transrend_layer) {
-        weed_layer_free(saveargs->layer);
+        weed_layer_unref(saveargs->layer);
         if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
       }
       if (saveargs->pixbuf) {
@@ -4756,7 +4756,7 @@ filterinit2:
 #endif
 
     if (mainw->transrend_layer) {
-      weed_layer_free((weed_layer_t *)mainw->transrend_layer);
+      weed_layer_unref((weed_layer_t *)mainw->transrend_layer);
       mainw->transrend_layer = NULL;
     }
 
@@ -5423,7 +5423,7 @@ boolean render_to_clip(boolean new_clip) {
       mainw->event_list = NULL;
     }
     if (mainw->scrap_layer) {
-      weed_layer_free(mainw->scrap_layer);
+      weed_layer_unref(mainw->scrap_layer);
       mainw->scrap_layer = NULL;
     }
     if (mainw->scrap_pixbuf) {
@@ -5707,7 +5707,12 @@ void event_list_add_end_events(weed_event_list_t *event_list, boolean is_final) 
 
 
 static boolean _deal_with_render_choice(boolean add_deinit) {
-  // this is called from saveplay.c after record/playback ends
+  // this is called indirectly from plaayer-control.c
+  // as well as via an idelfunc on startup (crash recovery)
+  // this is run in a bg thread, fg thread must not block as it needs to operate
+  // the dialog and return the response code, as well as service the player
+  // during previews
+  //
   // here we deal with the user's wishes as to how to deal with the recorded events
 
   // mainw->osc_block should be TRUE during all of this, so we don't have to contend with
@@ -5973,6 +5978,8 @@ static boolean _deal_with_render_choice(boolean add_deinit) {
 
 
 boolean deal_with_render_choice(boolean add_deinit) {
+  // needs to be run in background, fg thread will operate the dialog, service the player
+  // during previews, etc
   lives_proc_thread_create(0, _deal_with_render_choice, 0, NULL, "b", add_deinit);
   return FALSE;
 }

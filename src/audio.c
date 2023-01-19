@@ -2148,7 +2148,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
               }
               lives_free(adata);
               weed_layer_set_audio_data(layers[x], NULL, 0, 0, 0);
-              weed_layer_free(layers[x]);
+              weed_layer_unref(layers[x]);
             }
             lives_freep((void **)&layers);
           }
@@ -2888,7 +2888,7 @@ static boolean analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
     weed_layer_set_audio_data(layer, in_buffer, in_arate, in_achans, nframes);
     weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
     weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-    weed_layer_free(layer);
+    weed_layer_unref(layer);
 
     if (!is_float) {
       for (int i = 0; i < in_achans; i++) {
@@ -4630,7 +4630,7 @@ boolean apply_rte_audio(int64_t nframes) {
   lives_free(fltbuf);
   fltbuf = weed_layer_get_audio_data(layer, NULL);
   weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-  weed_layer_free(layer);
+  weed_layer_unref(layer);
 
   if (!(has_audio_filters(AF_TYPE_NONA) || mainw->agen_key != 0)) {
     // analysers only - no need to save (just render as normal)

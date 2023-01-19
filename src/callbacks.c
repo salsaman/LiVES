@@ -483,7 +483,7 @@ void lives_exit(int signum) {
 #ifdef VALGRIND_ON
     if (mainw->frame_layer) {
       check_layer_ready(mainw->frame_layer);
-      weed_layer_free(mainw->frame_layer);
+      weed_layer_unref(mainw->frame_layer);
       mainw->frame_layer = NULL;
     }
 #endif
@@ -9848,12 +9848,11 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       lives_sync(3);
     }
     current_file = mainw->current_file;
+
     //resize(1);
 
-    // play the clip
+    // play the clip - should block this thread until pb finishes
     start_playback(1);
-
-    on_playsel_activate(NULL, LIVES_INT_TO_POINTER(0));
 
     if (current_file != mainw->current_file) {
       if (mainw->is_rendering) {

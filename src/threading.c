@@ -1417,10 +1417,12 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_pauseable(lives_proc_thread_t 
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t lpt, boolean dontcare) {
-  if (!lpt || !lives_proc_thread_get_cancellable(lpt)) return FALSE;
-  if (lives_proc_thread_is_done(lpt)) return FALSE;
+  if (!lpt || (!lives_proc_thread_get_cancellable(lpt)
+               && !lives_proc_thread_has_states(lpt, THRD_OPT_IDLEFUNC))) return FALSE;
+  if (lives_proc_thread_is_done(lpt) && !lives_proc_thread_is_idling(lpt)) return FALSE;
   if (dontcare) if (!lives_proc_thread_dontcare(lpt)) return FALSE;
   lives_proc_thread_include_states(lpt, THRD_STATE_CANCEL_REQUESTED);
+  if (lives_proc_thread_is_paused(lpt)) lives_proc_thread_request_resume(lpt);
   return TRUE;
 }
 
@@ -1443,8 +1445,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_resume(lives_proc_thread_t
   // and wait for paused state to go away.
   // - target thread wakes, removes paused state, but waits for resume_req. to be cleared
   // once paused is cleared, remove resume_req, allowing target to unblock
-  if (!lpt || !lives_proc_thread_is_paused(lpt))
-    return FALSE;
+  if (!lpt || !lives_proc_thread_is_paused(lpt)) return FALSE;
   lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
   _lives_proc_thread_cond_signal(lpt);
   lives_nanosleep_while_true(lives_proc_thread_is_paused(lpt));
@@ -1465,6 +1466,10 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_resume(lives_proc_thread_t self) {
     lives_proc_thread_exclude_states(self, THRD_STATE_PAUSED | THRD_STATE_UNQUEUED |
                                      THRD_STATE_IDLING);
     lives_nanosleep_while_true(lives_proc_thread_get_state(self) & THRD_STATE_RESUME_REQUESTED);
+    if (lives_proc_thread_get_cancel_requested(self)) {
+      lives_proc_thread_cancel(self);
+      return FALSE;
+    }
   }
   return TRUE;
 }
@@ -1622,7 +1627,9 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t lpt) {
 }
 
 #define _join(lpt, stype) lives_proc_thread_wait_done(lpt, 0.);	\
-  if (!lives_proc_thread_is_invalid(lpt)) {				\
+  if (!lives_proc_thread_is_invalid(lpt) && !lives_proc_thread_get_cancelled(lpt) \
+				     && !(lives_proc_thread_is_unqueued(lpt)\
+					  && lives_proc_thread_should_cancel(lpt))) { \
     if (lives_proc_thread_is_queued(lpt)) check_pool_threads();		\
     lives_nanosleep_while_false(weed_plant_has_leaf(lpt, _RV_) == WEED_TRUE);} \
   return weed_get_##stype##_value(lpt, _RV_, NULL);
@@ -1724,7 +1731,7 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
   if (!is_fg_thread())
     prepend_all_to_fg_deferral_stack();
 
-  if (state & THRD_OPT_IDLEFUNC) {
+  if ((state & THRD_OPT_IDLEFUNC) && !lives_proc_thread_should_cancel(lpt)) {
     if (weed_get_boolean_value(lpt, _RV_, 0)) {
       lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES);
       // will trigger IDLE hook
@@ -1786,14 +1793,17 @@ static void *proc_thread_worker_func(void *args) {
 
     lives_proc_thread_set_final_state(lpt);
     if (!lives_proc_thread_idle_paused(lpt)) break;
+
     lives_proc_thread_wait();
 
     // another thread must call lives_proc_thread_request_resume()
     // but we can also be cancelled
     lives_proc_thread_resume(lpt);
 
-    if (lives_proc_thread_get_cancel_requested(lpt)) {
-      lives_proc_thread_exclude_states(lpt, THRD_OPT_IDLEFUNC | THRD_OPT_IDLE_PAUSE);
+    if (lives_proc_thread_should_cancel(lpt)) {
+      lives_proc_thread_exclude_states(lpt, THRD_OPT_IDLEFUNC |
+                                       THRD_OPT_IDLE_PAUSE | THRD_STATE_CANCEL_REQUESTED);
+      lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
       lives_proc_thread_set_final_state(lpt);
       break;
     }
@@ -1811,6 +1821,7 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
 
   if (!lpt || lives_proc_thread_is_invalid(lpt)) return FALSE;
   if (lives_proc_thread_is_done(lpt)) return TRUE;
+
   if (lives_proc_thread_is_running(lpt)) return FALSE;
 
   if (!lives_proc_thread_get_cancel_requested(lpt)) {
@@ -1827,8 +1838,6 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
     lives_proc_thread_cancel(lpt);
     bret = FALSE;
   }
-
-
 
   lives_proc_thread_set_final_state(lpt);
 
@@ -2370,7 +2379,7 @@ skip_over:
 }
 
 
-#define POOL_TIMEOUT_SEC 120
+#define POOL_TIMEOUT_SEC 300
 
 // to allow more flexibility w.r.t the gui loop. this is added as an idle func in the thread's
 // gui context

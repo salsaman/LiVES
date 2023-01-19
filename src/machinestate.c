@@ -2029,7 +2029,7 @@ void rec_desk(void *args) {
       if (!resize_layer(layer, (double)w * recargs->scale, (double)h * recargs->scale,
 			LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
 	lives_alarm_clear(fps_alarm);
-	weed_layer_free(layer);
+	weed_layer_unref(layer);
 	break;
       }
     }

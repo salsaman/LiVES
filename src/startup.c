@@ -1635,10 +1635,12 @@ static boolean lives_startup(livespointer data) {
   }
 
   // needed to avoid priv->pulse2 > priv->pulse1 gtk error
-  lives_widget_context_update();
+  /* mainw->gui_much_events = TRUE; */
+  /* lives_widget_context_update(); */
+  /* mainw->gui_much_events = FALSE; */
 
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-  lives_widget_context_update();
+  //lives_widget_context_update();
 
   if (theme_error && !mainw->foreign) {
     // non-fatal errors
@@ -1836,10 +1838,10 @@ static boolean lives_startup2(livespointer data) {
   /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
   /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
 
-  //lives_widget_context_update();
-
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
+  // this can only be added AFTER calling check_for_recovery_files, otherwise we get stuck
+  // showing the query dialog
   mainw->fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
 
   if (prefs->show_gui) {

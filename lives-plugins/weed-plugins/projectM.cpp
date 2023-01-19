@@ -165,6 +165,7 @@ typedef struct {
   volatile bool rendering;
   volatile bool needs_update;
   bool set_update;
+  bool did_update;
   bool got_first;
 #ifdef HAVE_SDL2
   SDL_Window *win;
@@ -373,13 +374,23 @@ static int render_frame(_sdata *sd) {
 
   if (sd->needs_update || !sd->got_first) {
     if (sd->needs_update) {
+      // signal to render thrd, we have noticed needs_update
       pthread_mutex_lock(&cond_mutex);
       sd->needs_update = false;
       pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&cond_mutex);
+      // signal to render thrd, we have noticed needs_update
+      // other thread will now set the new details, and set sd->set_update
+      // when done
+      pthread_mutex_lock(&cond_mutex);
       while (!sd->set_update) {
         pthread_cond_wait(&cond, &cond_mutex);
       }
       pthread_mutex_unlock(&cond_mutex);
+
+      // render thread will wait again until the buffer is resized
+
+      // reset set_update
       sd->set_update = false;
       if (sd->update_size) {
         glFlush();
@@ -399,6 +410,13 @@ static int render_frame(_sdata *sd) {
         }
       }
     }
+
+    // render thread can continue
+    pthread_mutex_lock(&cond_mutex);
+    sd->did_update = true;
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+
     if (sd->update_psize || !sd->got_first) {
       sd->update_psize = false;
       // define how we will map screen to sd->fbuffer
@@ -972,7 +990,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->update_psize = false;
     sd->needs_more = false;
     sd->needs_update = false;
-    sd->set_update = false;
+    sd->set_update = sd->did_update = false;
     sd->audio_frames = MAX_AUDLEN;
     sd->audio_offs = 0;
     pcount = count = 0;
@@ -1045,17 +1063,14 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (sd->die) return WEED_ERROR_REINIT_NEEDED;
 
-  if (sd->busy) {
-    fprintf(stderr, "BUSY\n");
-    goto copytodest;
-  }
   //std::cerr << "pm size " << width << " X " << height << std::endl;
 
-  while (!sd->worker_active) {
+  if (!sd->worker_active) {
     sd->rendering = true;
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
+    goto retnull;
   }
 
   //std::cerr << scrwidth << " X " << scrheight << " and " << width << " X " << height << std::endl;
@@ -1067,13 +1082,21 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     //           << " featuring " << xrowstride << " against " << sd->rowstride
     //           << " and also " << sd->psize << " vs " << psize << " with " << sd->palette << " for " << palette << std::endl;
     /// we must update size / pal, this has to be done before reading the buffer
+    if (sd->busy) {
+      fprintf(stderr, "BUSY\n");
+      goto retnull;
+    }
     pthread_mutex_lock(&cond_mutex);
     sd->needs_update = true;
-    /// wait for worker thread to aknowledge the update request
+    /// wait for worker thread to acknowledge the update request
+    // this is fine since we only need to ensure that it has noticed before writing to the buffer
     while (sd->needs_update) {
       pthread_cond_wait(&cond, &cond_mutex);
     }
     pthread_mutex_unlock(&cond_mutex);
+
+    // so, worker thread has seen needs_update and reset it, and cond_signalled
+
     //sd->updating = true;
     /// now we can set new values
     if (sd->rowstride != xrowstride) {
@@ -1093,9 +1116,20 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     sd->needs_more = true;
     pthread_mutex_lock(&cond_mutex);
     sd->set_update = true;
+    sd->did_update = false;
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
     did_update = true;
+  }
+  else {
+    if (sd->busy) {
+      fprintf(stderr, "BUSY\n");
+      goto copytodest;
+    }
+  }
+  if (sd->busy) {
+    fprintf(stderr, "BUSY\n");
+    goto retnull;
   }
 
   /// get the program number:
@@ -1176,7 +1210,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     /// if we updated we MUST wait for the buffer resize to finish before reading
     /// (optionally we could return WEED_ERROR_NOT_READY)
     pthread_mutex_lock(&cond_mutex);
-    while (sd->needs_more) pthread_cond_wait(&cond, &cond_mutex);
+    while (!sd->did_update) pthread_cond_wait(&cond, &cond_mutex);
     pthread_mutex_unlock(&cond_mutex);
   }
 
@@ -1218,6 +1252,9 @@ copytodest:
   }
 
   return WEED_SUCCESS;
+
+ retnull:
+  return WEED_ERROR_NOT_READY;
 }
 
 
@@ -1275,8 +1312,8 @@ static void finalise(void) {
     }
     if (statsd->bad_programs) weed_free(statsd->bad_programs);
     if (statsd->good_programs) weed_free(statsd->good_programs);
-    pthread_mutex_destroy(&statsd->mutex);
-    pthread_mutex_destroy(&statsd->pcm_mutex);
+    // pthread_mutex_destroy(&statsd->mutex);
+    // pthread_mutex_destroy(&statsd->pcm_mutex);
     weed_free(statsd);
     statsd = NULL;
   }

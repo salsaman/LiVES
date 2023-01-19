@@ -50,7 +50,7 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
     }
   }
 
-  weed_layer_free(layer);
+  weed_layer_unref(layer);
   return error;
 }
 
@@ -494,7 +494,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
               lives_free(fltbuf);
               fltbuf = (float **)weed_layer_get_audio_data(layer, NULL);
               weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-              weed_layer_free(layer);
+              weed_layer_unref(layer);
             }
           }
         }
@@ -623,7 +623,7 @@ tr_err2:
   lives_free(pname);
   lives_freep((void **)&msg);
 
-  if (!internal && frame_layer) weed_layer_free(frame_layer);
+  if (!internal && frame_layer) weed_layer_unref(frame_layer);
 
   if (fd >= 0) lives_close_buffered(fd);
 

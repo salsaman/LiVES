@@ -1884,6 +1884,7 @@ typedef struct {
   LiVESPixbuf *scrap_pixbuf; ///< cached image for speeding up rendering
   weed_layer_t *scrap_layer; ///< cached image for speeding up rendering
 
+  boolean gui_much_events;
   boolean no_context_update; ///< may be set temporarily to block wodget context updates
 
   weed_plant_t *msg_list;

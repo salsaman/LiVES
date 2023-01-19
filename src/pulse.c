@@ -1047,7 +1047,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 lives_free(fltbuf);
                 fltbuf = weed_layer_get_audio_data(layer, NULL);
                 weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-                weed_layer_free(layer);
+                weed_layer_unref(layer);
               }
 
               if (!alock_mixer) {
@@ -1114,7 +1114,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               lives_free(fltbuf);
               fltbuf = weed_layer_get_audio_data(layer, NULL);
               weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-              weed_layer_free(layer);
+              weed_layer_unref(layer);
             }
 
             // streaming - we can push float audio to the playback plugin

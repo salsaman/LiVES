@@ -4688,7 +4688,8 @@ void resize_play_window(void) {
     }
   } else {
     // not playing
-    if (mainw->fs && mainw->playing_file == -2 && mainw->sep_win && prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
+    if (mainw->fs && mainw->playing_file == -2 && mainw->sep_win
+        && prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
       if (mainw->ce_thumbs) {
         end_ce_thumb_mode();
       }
@@ -4726,6 +4727,8 @@ void resize_play_window(void) {
     if (pmonitor == 0 || !LIVES_IS_PLAYING) {
       while (nwidth > GUI_SCREEN_WIDTH - scr_width_safety ||
              nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
+        g_print("VALUES: %d %d and %d : %d %d and %d\n", nwidth, GUI_SCREEN_WIDTH, scr_width_safety,
+                nheight, GUI_SCREEN_HEIGHT, scr_height);
         nheight <<= 3;
         nheight /= 10;
         nwidth <<= 3;
@@ -5140,7 +5143,9 @@ void splash_init(void) {
     if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
       lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
-    lives_widget_context_update();
+    /* mainw->gui_much_events = TRUE; */
+    /* lives_widget_context_update(); */
+    /* mainw->gui_much_events = FALSE; */
     lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);
   } else {
     lives_widget_destroy(mainw->splash_window);
@@ -5157,7 +5162,7 @@ void splash_msg(const char *msg, double pct) {
     char *tmp = lives_strdup(msg);
     lives_chomp(tmp, TRUE);
     THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;
-    lives_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp);
+    gtk_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp);
     THREADVAR(perm_hook_hints) = 0;
     lives_free(tmp);
   }
@@ -5180,11 +5185,14 @@ void splash_msg(const char *msg, double pct) {
 
   lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress), pct);
 
-  lives_widget_queue_draw(mainw->splash_window);
+  lives_widget_show_all(mainw->splash_label);
+  lives_widget_queue_draw_and_update(mainw->splash_window);
   if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
     lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
-  lives_widget_context_update();
+  /* mainw->gui_much_events = TRUE; */
+  /* lives_widget_context_update(); */
+  /* mainw->gui_much_events = FALSE; */
 }
 
 

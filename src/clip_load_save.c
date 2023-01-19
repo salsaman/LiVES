@@ -1591,7 +1591,7 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
 
     prefs->pb_quality = pbq;
 
-    if (internal) weed_layer_free(layer);
+    if (internal) weed_layer_unref(layer);
     else weed_plant_free(layer);
 
     if (pixbuf) lives_widget_object_unref(pixbuf);

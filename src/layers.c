@@ -296,7 +296,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   if (!pixel_data || !pixel_data[0]) {
     if (newdata) {
       weed_layer_nullify_pixel_data(old_layer);
-      weed_layer_free(old_layer);
+      weed_layer_unref(old_layer);
     }
     return FALSE;
   }
@@ -315,7 +315,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     if (newdata) {
       weed_layer_copy(layer, old_layer);
       weed_layer_nullify_pixel_data(old_layer);
-      weed_layer_free(old_layer);
+      weed_layer_unref(old_layer);
     }
     return FALSE;
   }
@@ -349,7 +349,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
       /// retain orig pixel_data if it belongs to mainw->frame_layer
       weed_layer_nullify_pixel_data(old_layer);
     }
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
   }
   lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
@@ -392,7 +392,7 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
    for an existing dlayer, we copy pixel_data by reference.
    all the other relevant attributes are also copied
 
-   For shallow copy, both layers share the same pixel_data. Thus we must be careful NOT to call weed_layer_free
+   For shallow copy, both layers share the same pixel_data. Thus we must be careful NOT to call weed_layer_unref
    on both layers without first nullifying the pixel_data of one or other of the copies,
    or replacing its pixel_data via a call to create_rmpty_pixel_data
 */
@@ -471,7 +471,12 @@ LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  if (layer) weed_layer_unref(layer);
+  if (layer) {
+    if (mainw->debug_ptr == layer) mainw->debug_ptr = NULL;
+    weed_layer_pixel_data_free(layer);
+    //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
+    weed_plant_free(layer);
+  }
   return NULL;
 }
 
@@ -479,10 +484,7 @@ int weed_layer_unref(weed_layer_t *layer) {
   // g_print("unref layer %p\n", layer);
   int refs = weed_refcount_dec(layer);
   if (!refs) {
-    if (mainw->debug_ptr == layer) mainw->debug_ptr = NULL;
-    weed_layer_pixel_data_free(layer);
-    //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
-    weed_plant_free(layer);
+    weed_layer_free(layer);
   }
   return refs;
 }

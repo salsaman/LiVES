@@ -4264,7 +4264,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 }
 
 
-static void _make_play_window(void) {
+void make_play_window(void) {
   //  separate window
   pb_added = FALSE;
 
@@ -4352,7 +4352,7 @@ static void _make_play_window(void) {
   //lives_grab_add(mainw->play_window);
 }
 
-void make_play_window(void) {main_thread_execute_void(_make_play_window, 0);}
+//void make_play_window(void) {main_thread_execute_void(_make_play_window, 0);}
 
 
 LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
@@ -4414,8 +4414,6 @@ void resize_play_window(void) {
 #endif
 
   if (!mainw->play_window) return;
-
-  //THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
@@ -4556,7 +4554,7 @@ void resize_play_window(void) {
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
 
-        lives_widget_queue_resize(mainw->play_window);
+        lives_widget_queue_draw_and_update(mainw->play_window);
       }
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
@@ -4727,8 +4725,8 @@ void resize_play_window(void) {
     if (pmonitor == 0 || !LIVES_IS_PLAYING) {
       while (nwidth > GUI_SCREEN_WIDTH - scr_width_safety ||
              nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
-        g_print("VALUES: %d %d and %d : %d %d and %d\n", nwidth, GUI_SCREEN_WIDTH, scr_width_safety,
-                nheight, GUI_SCREEN_HEIGHT, scr_height);
+        /* g_print("VALUES: %d %d and %d : %d %d and %d\n", nwidth, GUI_SCREEN_WIDTH, scr_width_safety, */
+        /*         nheight, GUI_SCREEN_HEIGHT, scr_height); */
         nheight <<= 3;
         nheight /= 10;
         nwidth <<= 3;
@@ -4770,7 +4768,6 @@ void resize_play_window(void) {
       lives_widget_hide(mainw->play_window);
     }
 
-
     lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
 
     if (!rte_window_hidden()) {
@@ -4796,7 +4793,7 @@ void resize_play_window(void) {
 
 
 
-static void _kill_play_window(void) {
+void kill_play_window(void) {
   // plug our player back into internal window
 
   if (mainw->ce_thumbs) {
@@ -4831,7 +4828,7 @@ static void _kill_play_window(void) {
 }
 
 
-void kill_play_window(void) {main_thread_execute_void(_kill_play_window, 0);}
+//void kill_play_window(void) {main_thread_execute_void(_kill_play_window, 0);}
 
 
 #define ASPECT_DIFF_LMT 0.01625f  // (fabs) ratio differences in aspect ratios within this limit considered irrelevant

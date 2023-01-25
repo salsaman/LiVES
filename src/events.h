@@ -252,7 +252,8 @@ LiVESWidget *events_rec_dialog(void);
 #define RENDER_CHOICE_EVENT_LIST 6
 #define RENDER_CHOICE_TRANSCODE 7
 
-boolean deal_with_render_choice(boolean add_deinit);
+boolean render_choice_idle(livespointer data);
+boolean deal_with_render_choice(boolean is_recovery);
 
 // *experimental - not all opts impleted / may change*
 #define EL_OPTS_SHOWALL			0 ///< show all

@@ -2635,6 +2635,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       lpt = lives_proc_thread_create(0, convert_layer_palette_full, WEED_SEED_BOOLEAN,
                                      "Piiii", layer, opalette, oclamping, osampling, osubspace, tgamma);
     }
+    lives_proc_thread_ref(lpt);
     weed_set_plantptr_value(layer, "lpt", lpt);
   }
 
@@ -2658,6 +2659,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (lpt) {
       boolean bret = lives_proc_thread_join_boolean(lpt);
+      lives_proc_thread_unref(lpt);
+      lives_proc_thread_unref(lpt);
       if (!bret) retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
     }
 
@@ -2693,9 +2696,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         lpt = lives_proc_thread_create(0, gamma_convert_sub_layer, WEED_SEED_BOOLEAN, "idPiiiib",
                                        tgamma, 1.0, layer, (width - xwidth) / 2, (height - xheight) / 2,
                                        xwidth, xheight, TRUE);
-      } else
+      } else {
         lpt = lives_proc_thread_create(0, gamma_convert_layer, WEED_SEED_BOOLEAN, "iP", tgamma, layer);
-
+        lives_proc_thread_ref(lpt);
+      }
       if (prefs->dev_show_timing)
         g_printerr("gamma1 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     }
@@ -2714,6 +2718,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (lpt) {
       boolean bret = lives_proc_thread_join_boolean(lpt);
+      lives_proc_thread_unref(lpt);
+      lives_proc_thread_unref(lpt);
       if (!bret) retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
     }
 
@@ -4753,6 +4759,10 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 // Weed function overrides /////////////////
 
 boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
+  // free data pointed to by leaves flagged as autofree
+  // the leaf is not actually deleted, only the data
+  // the undeletable flag bit must be cleared before calling this,
+  // and here we also clear ht autodelte biy
   boolean bret = TRUE;
   if (plant && weed_plant_has_leaf(plant, key)) {
     int flags = weed_leaf_get_flags(plant, key);
@@ -4792,6 +4802,8 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
 
 
 void  weed_plant_autofree(weed_plant_t *plant) {
+  // if weed_plant_free fails becaus some leaves are undeletable
+  // mark them as deletable, and autofree any flagged accordingly
   if (!plant) return;
   else {
     char **leaves = weed_plant_list_leaves(plant, NULL);
@@ -4808,7 +4820,9 @@ void  weed_plant_autofree(weed_plant_t *plant) {
 
 
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, const char *key, boolean state) {
-  if (state) return weed_leaf_set_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+  // a leaf can be set to autofree, this can be done for a plantptr ot voidptr, array or scalar
+  if (state)
+    return weed_leaf_set_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
   return weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
 }
 
@@ -4842,7 +4856,9 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_delete(plant, key);
   if (err == WEED_ERROR_UNDELETABLE) {
+    // *** check this - there may be leaves that absolutly MUST be undeletable
     weed_leaf_set_undeletable(plant, key, WEED_FALSE);
+    // check
     weed_leaf_autofree(plant, key);
     err = _weed_leaf_delete(plant, key);
     if (err != WEED_SUCCESS) {
@@ -4857,13 +4873,15 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type,
                                 weed_size_t num_elems, void *values) {
   // change even immutable leaves
+  // check in case we hvave some really must be immutable leaves
+  // then we could set host_readonly as well
   weed_error_t err;
 
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   if (err == WEED_ERROR_IMMUTABLE) {
     int32_t flags = weed_leaf_get_flags(plant, key);
-    flags ^= WEED_FLAG_IMMUTABLE;
+    flags &= ~WEED_FLAG_IMMUTABLE;
     weed_leaf_set_flags(plant, key, flags);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
     flags |= WEED_FLAG_IMMUTABLE;

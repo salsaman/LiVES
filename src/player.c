@@ -1708,7 +1708,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     do {
       // TODO ***: add a timeout here
       if (gerror) lives_error_free(gerror);
-      lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &gerror);
+      pixbuf_to_png(pixbuf, fname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &gerror);
     } while (gerror);
 
     lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
@@ -1750,10 +1750,12 @@ if (framecount) {
       && !prefs->hide_framebar) {
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
   }
+  lives_free(framecount);
+  framecount = NULL;
 }
 
 THREADVAR(rowstride_alignment_hint) = 0;
-lives_freep((void **)&framecount);
+
 if (success) {
   if (!mainw->multitrack &&
       !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor
@@ -2482,9 +2484,12 @@ static void widget_ct_upd(void) {
 
 // player will create this as
 static boolean update_gui(void) {
-  mainw->debug = TRUE;
-  lives_widget_context_update();
-  mainw->debug = FALSE;
+  //mainw->debug = TRUE;
+  mainw->gui_much_events = TRUE;
+  mainw->do_ctx_update = TRUE;
+  lives_nanosleep_while_true(mainw->do_ctx_update);
+  mainw->gui_much_events = FALSE;
+  //mainw->debug = FALSE;
   return TRUE;
 }
 
@@ -2541,7 +2546,7 @@ int process_one(boolean visible) {
 
   // current video playback direction
   lives_direction_t dir = LIVES_DIRECTION_NONE;
-
+  lives_hook_stack_t **phstacks = lives_proc_thread_get_hook_stacks(mainw->player_proc);
   old_current_file = mainw->current_file;
 
   if (visible) goto proc_dialog;
@@ -2975,14 +2980,14 @@ switch_point:
     // events like fullscreen on / off are not acted on directly, instead these are stacked
     // for execution at this point. The callbacks are triggered and will pass requests to the main
     // thread. We must allow idlefunc(s) to run during this time
-    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-    set_ign_idlefuncs(TRUE);
-
+    lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
     if (!lives_proc_thread_is_idling(gui_lpt)) {
       lives_proc_thread_queue(gui_lpt, 0);
     } else {
       lives_proc_thread_request_resume(gui_lpt);
     }
+    lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
+    set_ign_idlefuncs(TRUE);
 
     if (mainw->cancelled == CANCEL_NONE) return 0;
 
@@ -3880,42 +3885,26 @@ proc_dialog:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      // check if gui_lpt is NOT unqueued, i.e. running
-      // if so, wait for it to become idle
-      if (!lives_proc_thread_is_unqueued(gui_lpt)) {
-        lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
-      }
+      /* if (!lives_proc_thread_is_unqueued(gui_lpt)) { */
+      /* 	lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt)); */
+      /* } */
+      /* set_ign_idlefuncs(FALSE); */
+      /* // events like fullscreen on / off are not acted on directly, instead these are stacked */
+      /* // for execution at this point. The callbacks are triggered and will pass requests to the main */
+      /* // thread. We must allow idlefunc(s) to run during this time */
+      /* lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK); */
+      /* //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt)); */
 
-      set_ign_idlefuncs(FALSE);
-      // events like fullscreen on / off are not acted on directly, instead these are stacked
-      // for execution at this point. The callbacks are triggered and will pass requests to the main
-      // thread. We must allow idlefunc(s) to run during this time
-      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-      set_ign_idlefuncs(TRUE);
-
-      // if lpt was NOT unqueued, it was either running or idling (pre queue)
-      // if it was not idling, we waited for it to become so
-      // it is not possible for unqueued -> idling without passing through playing
-      // this is assured by sync signals between this thread and the gui_lpt thread)
-      //
-      // so if idling now either it was !unqueued (running) and we waited, or it was unqueued,
-      // ran and became idle
-      // thus it must have been queued at some point
-      //
-      // if !idling now, either it was unqueued, and got queued, which is not possible
-      // (since we do this manually)
-      // so if !idling, it must need queuing for initial run
-
-      //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt));
-
-      if (!lives_proc_thread_is_idling(gui_lpt)) {
-        lives_proc_thread_queue(gui_lpt, 0);
-      } else {
-        // gui_lpt was idling, so either we waited for that,
-        // or it already finished and became unqueued / idling
-        // for this type of proc_thread, we just ask it to resume
-        lives_proc_thread_request_resume(gui_lpt);
-      }
+      /* if (!lives_proc_thread_is_idling(gui_lpt)) { */
+      /* 	lives_proc_thread_queue(gui_lpt, 0); */
+      /* } else { */
+      /* 	// gui_lpt was idling, so either we waited for that, */
+      /* 	// or it already finished and became unqueued / idling */
+      /* 	// for this type of proc_thread, we just ask it to resume */
+      /* 	lives_proc_thread_request_resume(gui_lpt); */
+      /* } */
+      /* lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK); */
+      /* set_ign_idlefuncs(TRUE); */
 
       // check for something ???
       if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
@@ -3925,6 +3914,7 @@ proc_dialog:
         mainw->cancelled = CANCEL_INTERNAL_ERROR;
       }
     }
+    //else proc_file = THREADVAR(proc_file) = mainw->playing_file;
     if (mainw->cancelled != CANCEL_NONE) {
       retval = ONE_MILLION + mainw->cancelled;
     }

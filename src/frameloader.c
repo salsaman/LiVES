@@ -15,10 +15,8 @@
 #include "startup.h"
 #include "ce_thumbs.h"
 
-#ifdef USE_LIBPNG
 #include <png.h>
 #include <setjmp.h>
-#endif
 
 static int xxwidth = 0, xxheight = 0;
 
@@ -75,12 +73,12 @@ LIVES_GLOBAL_INLINE char *make_image_short_name(lives_clip_t *sfile, frames_t fr
 
 
 /** @brief check number of frames is correct
-  for files of type CLIP_TYPE_DISK
-  - check the image files (e.g. jpeg or png)
+    for files of type CLIP_TYPE_DISK
+    - check the image files (e.g. jpeg or png)
 
-  use a "goldilocks" algorithm (just the right frames, not too few and not too many)
+    use a "goldilocks" algorithm (just the right frames, not too few and not too many)
 
-  ignores gaps */
+    ignores gaps */
 boolean check_frame_count(int idx, boolean last_checked) {
   /// make sure nth frame is there...
   char *frame;
@@ -116,9 +114,9 @@ boolean check_frame_count(int idx, boolean last_checked) {
 
 /** @brief sets mainw->files[idx]->frames with current framecount
 
-   calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
-   for CLIP_TYPE_DISK only
-   (CLIP_TYPE_FILE should use the decoder plugin frame count) */
+    calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
+    for CLIP_TYPE_DISK only
+    (CLIP_TYPE_FILE should use the decoder plugin frame count) */
 frames_t get_frame_count(int idx, int start) {
   ssize_t bytes;
   char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
@@ -518,11 +516,11 @@ check_stcache:
         if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
           set_md5_for_frame(mainw->current_file, frame, layer);
         }
-	// *INDENT-OFF*
-      }}
-    lives_layer_set_frame(layer, xpf);
-    lives_layer_set_clip(layer, mainw->current_file);
-  }
+      // *INDENT-OFF*
+    }}
+  lives_layer_set_frame(layer, xpf);
+  lives_layer_set_clip(layer, mainw->current_file);
+ }
 // *INDENT-ON*
 }
 
@@ -591,7 +589,6 @@ void load_end_image(frames_t frame) {
       if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
       lives_free(tmp); lives_free(fname);
     }
-
     set_drawing_area_from_pixbuf(mainw->end_image, mainw->camframe, mainw->ei_surface);
     return;
   }
@@ -817,11 +814,11 @@ check_encache:
           if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
             set_md5_for_frame(mainw->current_file, frame, layer);
           }
-	  // *INDENT-OFF*
-	}}
-      lives_layer_set_frame(layer, xpf);
-      lives_layer_set_clip(layer, mainw->current_file);
-    }
+	// *INDENT-OFF*
+      }}
+    lives_layer_set_frame(layer, xpf);
+    lives_layer_set_clip(layer, mainw->current_file);
+  }
   // *INDENT-ON*
   }
 
@@ -930,7 +927,7 @@ check_prcache:
             if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
               layer = set_if_md5_valid(mainw->current_file, mainw->preview_frame, mainw->pr_fcache);
 	    // *INDENT-OFF*
-	    }}}}
+	  }}}}
     // *INDENT-ON*
       if (!layer) {
         if (mainw->pr_fcache) {
@@ -1153,6 +1150,7 @@ check_prcache:
     //int flags = O_WRONLY | O_CREAT | O_TRUNC;
     int fd;
 
+    weed_layer_ref(layer);
     if (!scrapfile->ext_src) {
       char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
 
@@ -1169,6 +1167,7 @@ check_prcache:
 
       if (fd < 0) {
         weed_layer_unref(layer);
+        weed_layer_unref(layer);
         return scrapfile->f_size;
       }
 
@@ -1183,6 +1182,7 @@ check_prcache:
     // serialise entire frame to scrap file
     pdata_size = weed_plant_serialise(fd, layer, NULL);
 
+    weed_layer_unref(layer);
     weed_layer_unref(layer);
 
     // check free space every 2048 frames or after SCRAP_CHECK seconds (whichever comes first)
@@ -1201,16 +1201,22 @@ check_prcache:
     return pdata_size;
   }
 
-  static lives_proc_thread_t scrap_file_procthrd = NULL;
 
   int save_to_scrap_file(weed_layer_t *layer) {
-    weed_layer_t *orig_layer;
-    lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
-    char *framecount;
+    static weed_layer_t *orig_layer = NULL;
     static boolean checked_disk = FALSE;
 
+    lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
+    char *framecount;
+
     if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
-    if (!layer) return scrapfile->frames;
+    if (!layer) {
+      if (!scrapfile->frames) {
+        orig_layer = NULL;
+        checked_disk = FALSE;
+      }
+      return scrapfile->frames;
+    }
 
     if ((scrapfile->frames & 0x3F) == 0x3F && !checked_disk) {
       /// check every 64 frames for quota overrun
@@ -1218,46 +1224,44 @@ check_prcache:
       if (!check_for_disk_space(TRUE)) return scrapfile->frames;
     }
 
+    if (!mainw->scrap_file_proc) {
+      mainw->scrap_file_proc =
+        lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
+                                 (lives_funcptr_t)_save_to_scrap_file,
+                                 WEED_SEED_INT64, "v", &orig_layer);
+    }
+
     checked_disk = FALSE;
     check_for_disk_space(FALSE);
 
-    if (scrap_file_procthrd) {
-      // skip saving if still handling the previous one
-      if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
-        if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
-      }
+    if (!lives_proc_thread_is_unqueued(mainw->scrap_file_proc)) {
+      return scrapfile->frames;
     }
 
     orig_layer = weed_layer_copy(NULL, layer);
-    if (scrap_file_procthrd) {
-      scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
-      lives_proc_thread_unref(scrap_file_procthrd);
-      scrap_file_procthrd = NULL;
-      if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
-          && !prefs->hide_framebar &&
-          !mainw->faded) {
-        double scrap_mb = (double)scrapfile->f_size / 1000000.;
-        if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
-          // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-          framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
-        } else {
-          // warn if scrap_file > 3/4 of free space
-          // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
-          if (sf_writeable)
-            framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
-          else
-            // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-            framecount = (_("rec ?? MB"));
-        }
-        lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
-        lives_free(framecount);
+    scrapfile->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
+    lives_proc_thread_queue(mainw->scrap_file_proc, 0);
+
+    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
+        && !prefs->hide_framebar && !mainw->faded) {
+      double scrap_mb = (double)scrapfile->f_size / (double)ONE_MILLION;
+      if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
+        // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
+        framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
+      } else {
+        // warn if scrap_file > 3/4 of free space
+        // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
+        if (sf_writeable)
+          framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
+        else
+          // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
+          framecount = (_("rec ?? MB"));
       }
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
+      lives_free(framecount);
     }
 
     mainw->scrap_file_size = scrapfile->f_size;
-
-    scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY,
-                          (lives_funcptr_t)_save_to_scrap_file, WEED_SEED_INT64, "P", orig_layer);
 
     return ++scrapfile->frames;
   }
@@ -1265,10 +1269,10 @@ check_prcache:
 
   LIVES_GLOBAL_INLINE boolean flush_scrap_file(void) {
     if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
-    if (scrap_file_procthrd) {
-      mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
-      lives_proc_thread_unref(scrap_file_procthrd);
-      scrap_file_procthrd = NULL;
+    if (mainw->scrap_file_proc) {
+      mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
+      lives_proc_thread_unref(mainw->scrap_file_proc);
+      mainw->scrap_file_proc = NULL;
     }
     return TRUE;
   }
@@ -1288,7 +1292,6 @@ check_prcache:
 
 #endif
 
-#ifdef USE_LIBPNG
 #ifdef PNG_ASSEMBLER_CODE_SUPPORTED
   static png_uint_32 png_flags;
 #endif
@@ -1707,7 +1710,7 @@ check_prcache:
   }
 #endif
 
-  static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
+  static boolean layer_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
     // comp is 0 (none) - 9 (full)
     png_structp png_ptr;
     png_infop info_ptr;
@@ -1825,24 +1828,18 @@ check_prcache:
     return TRUE;
   }
 
-  boolean save_to_png(weed_layer_t *layer, const char *fname, int comp) {
+  boolean layer_to_png(weed_layer_t *layer, const char *fname, int comp) {
     //int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
     FILE *fp = fopen(fname, "wb");
-    boolean ret = save_to_png_inner(fp, layer, comp);
-    //lives_close_buffered(fd);
+    boolean ret = layer_to_png_inner(fp, layer, comp);
     fclose(fp);
     return ret;
   }
 
-  void *save_to_png_threaded(void *args) {
-    savethread_priv_t *saveargs = (savethread_priv_t *)args;
-    saveargs->success = save_to_png(saveargs->layer, saveargs->fname, saveargs->compression);
-    return saveargs;
+
+  boolean layer_to_png_threaded(savethread_priv_t *saveargs) {
+    return layer_to_png(saveargs->layer, saveargs->fname, saveargs->compression);
   }
-
-#endif // USE_LIBPNG
-
-
 
 
   boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *fname, int width,
@@ -1893,15 +1890,9 @@ check_prcache:
     xxheight = height;
 
     if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) {
-#ifdef USE_LIBPNG
       tpalette = weed_layer_get_palette(layer);
       ret = layer_from_png(fd, layer, width, height, tpalette, TRUE);
       goto fndone;
-#endif
-
-#ifdef GUI_GTK
-      pbload = gdk_pixbuf_loader_new_with_type(LIVES_IMAGE_TYPE_PNG, &gerror);
-#endif
     }
 #ifdef GUI_GTK
     else if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) pbload = gdk_pixbuf_loader_new_with_type(LIVES_IMAGE_TYPE_JPEG, &gerror);
@@ -1933,14 +1924,11 @@ check_prcache:
 #endif
 
 # else //PROG_LOAD
-
-#ifdef USE_LIBPNG
     {
 #ifdef PNG_BIO
       fd = lives_open_buffered_rdonly(fname);
 #else
       fd = lives_open2(fname, O_RDONLY);
-#endif
 
       if (fd < 0) return FALSE;
 
@@ -1955,7 +1943,7 @@ check_prcache:
     }
 #endif
 
-    pixbuf = lives_pixbuf_new_from_file_at_scale(fname, width > 0 ? width : -1, height > 0 ? height : -1, FALSE, gerror);
+      pixbuf = lives_pixbuf_new_from_file_at_scale(fname, width > 0 ? width : -1, height > 0 ? height : -1, FALSE, gerror);
 #endif
 
     if (gerror) {
@@ -2611,8 +2599,8 @@ fail:
   /**
      @brief Save a pixbuf to a file using the specified imgtype and the specified quality/compression value
   */
-  boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t imgtype, int quality, int width, int height,
-                            LiVESError **gerrorptr) {
+  boolean pixbuf_to_png(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t imgtype, int quality, int width, int height,
+                        LiVESError **gerrorptr) {
     ticks_t timeout;
     lives_alarm_t alarm_handle;
     boolean retval = TRUE;
@@ -2653,9 +2641,6 @@ fail:
 #ifdef GUI_GTK
         gdk_pixbuf_save(pixbuf, fname, LIVES_IMAGE_TYPE_PNG, gerrorptr, "compression", cstr, NULL);
 #endif
-#ifdef GUI_QT
-        qt_png_save(pixbuf, fname, gerrorptr, (int)((100. - (double)quality + 5.) / 10.));
-#endif
       } else retval = FALSE;
       lives_free(cstr);
     } else {
@@ -2668,16 +2653,9 @@ fail:
   }
 
 
-  /**
-     @brief save frame to pixbuf in a thread.
-     The renderer uses this now so that it can be saving the current output frame
-     at the same time as it prepares the following frame
-  */
-  void *lives_pixbuf_save_threaded(void *args) {
-    savethread_priv_t *saveargs = (savethread_priv_t *)args;
-    lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, saveargs->width,
-                      saveargs->height, &saveargs->error);
-    return saveargs;
+  boolean pixbuf_to_png_threaded(savethread_priv_t *saveargs) {
+    return pixbuf_to_png(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                         saveargs->width, saveargs->height, saveargs->error);
   }
 
 
@@ -3044,36 +3022,24 @@ fail:
         mainw->drawsrc = mainw->current_file;
       }
       if (old_file != 0 && new_file != 0) mainw->preview_frame = 0;
-      if (1) {
-        // TODO - indicate "opening" in clipmenu
-
-        //      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
-        //  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
-        //char menutext[32768];
-        //get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
-
-        //lives_menu_item_set_text(mainw->files[old_file]->menuentry,menutext,FALSE);
-        //}
-        lives_widget_set_sensitive(mainw->select_new, (cfile->insert_start > 0));
-        lives_widget_set_sensitive(mainw->select_last, (cfile->undo_start > 0));
-        if ((cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
-          lives_widget_set_sensitive(mainw->select_invert, TRUE);
-        } else {
-          lives_widget_set_sensitive(mainw->select_invert, FALSE);
-        }
-        if (IS_VALID_CLIP(old_file) && mainw->files[old_file]->opening) {
-          // switch while opening - come out of processing dialog
-          if (mainw->proc_ptr) {
-            lives_widget_destroy(mainw->proc_ptr->processing);
-            lives_freep((void **)&mainw->proc_ptr->text);
-            lives_freep((void **)&mainw->proc_ptr);
-	  // *INDENT-OFF*
-	}}}}
+      lives_widget_set_sensitive(mainw->select_new, (cfile->insert_start > 0));
+      lives_widget_set_sensitive(mainw->select_last, (cfile->undo_start > 0));
+      if ((cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
+        lives_widget_set_sensitive(mainw->select_invert, TRUE);
+      } else {
+        lives_widget_set_sensitive(mainw->select_invert, FALSE);
+      }
+      if (IS_VALID_CLIP(old_file) && mainw->files[old_file]->opening) {
+        // switch while opening - come out of processing dialog
+        if (mainw->proc_ptr) {
+          lives_widget_destroy(mainw->proc_ptr->processing);
+          lives_freep((void **)&mainw->proc_ptr->text);
+          lives_freep((void **)&mainw->proc_ptr);
+	// *INDENT-OFF*
+      }}}
   // *INDENT-ON*
 
     if (mainw->play_window && cfile->is_loaded && orig_file != new_file) {
-      resize_play_window();
-
       // if the clip is loaded
       if (!mainw->preview_box) {
         // create the preview box that shows frames...
@@ -3086,11 +3052,14 @@ fail:
       }
 
       lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-      lives_widget_show_all(mainw->preview_box);
+      lives_widget_show_now(mainw->preview_box);
+      lives_widget_context_update();
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 
       // and resize it
       lives_widget_grab_focus(mainw->preview_spinbutton);
+
+      resize_play_window();
       load_preview_image(FALSE);
     }
 

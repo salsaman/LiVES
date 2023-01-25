@@ -2161,9 +2161,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
       lives_widget_set_sensitive(resaudw->rb_littleend, FALSE);
       lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
     }
-
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->entry_asamps), LIVES_WIDGET_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_resaudw_asamps_changed), NULL);
   }
 
   if (type == 4) {
@@ -2260,7 +2257,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                                     LIVES_INT_TO_POINTER(1));
         }
       }
-
       lives_widget_show_all(resaudw->dialog);
     }
   } else {
@@ -2269,11 +2265,19 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                                       LIVES_WIDGET_TOGGLED_SIGNAL,
                                       LIVES_GUI_CALLBACK(on_resaudw_achans_changed),
                                       (livespointer)resaudw);
-      on_resaudw_achans_changed(resaudw->aud_checkbutton, (livespointer)resaudw);
     }
   }
 
-  lives_widget_show_all(vboxx);
+  break_me("doshowall");
+  lives_widget_show_now(vboxx);
+
+  // has to be called AFTER show_all !
+  if (type == 3 || type == 4)
+    on_resaudw_achans_changed(resaudw->aud_checkbutton, (livespointer)resaudw);
+
+  if (type != 10)
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->entry_asamps), LIVES_WIDGET_CHANGED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_resaudw_asamps_changed), NULL);
 
   lives_list_free(channels);
   lives_list_free(sampsize);

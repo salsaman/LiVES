@@ -160,6 +160,7 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 #define LIVES_THRDFLAG_IGNORE_SYNCPTS	(1ull << 14)
 #define LIVES_THRDFLAG_NOFREE_LIST	(1ull << 15)
 #define LIVES_THRDFLAG_SKIP_EXEC	(1ull << 16)
+#define LIVES_THRDFLAG_SKIP_EXEC	(1ull << 16)
 
 #define LIVES_THRDFLAG_NOTE_TIMINGS	(1ull << 32)
 
@@ -337,6 +338,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_DESTRUCT_RWLOCK "destruct_rwlock" ///< ensures destruct is accessed atomically
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
+#define LIVES_LEAF_EXT_CB_LIST "ext_cb_list"
 #define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread
 
 #define LIVES_THRDATTR_NONE			0
@@ -353,15 +355,16 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_IDLEFUNC   		(1ull << 7)
 #define LIVES_THRDATTR_IDLE_PAUSE   		(1ull << 8)
 #define LIVES_THRDATTR_DETACHED   		(1ull << 9)
+#define LIVES_THRDATTR_CREATE_REFFED   		(1ull << 10)
 
 // create a proc thread for the gui thread to run
 // instead of being pushed to the poolthread queue, it will be pushed to
 // the main thread's stack
-#define LIVES_THRDATTR_FG_THREAD   		(1ull << 9)
+#define LIVES_THRDATTR_FG_THREAD   		(1ull << 11)
 
 // light - indicates a trivial request, such as updating a spinbutton which can be carried out quickly
 // this will block and get executed as soon as possible
-#define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 10)
+#define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 12)
 
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 16)

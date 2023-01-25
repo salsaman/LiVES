@@ -247,11 +247,10 @@ static char *prep_audio_player(frames_t audio_end, int arate, int asigned, int a
 static double fps_med = 0.;
 
 static void post_playback(void) {
-  g_print("POSTPB\n");
+  g_print("IN POST\n");
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
-      main_thread_execute_void(unfade_background, 0);
-      //unfade_background();
+      unfade_background();
     }
 
     if (mainw->sep_win) add_to_playframe();
@@ -339,7 +338,7 @@ static void post_playback(void) {
         if (!lives_widget_get_parent(mainw->preview_box)
             && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
           if (mainw->play_window) {
-            lives_widget_queue_draw(mainw->play_window);
+            //lives_widget_queue_draw(mainw->play_window);
             lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
             play_window_set_title();
           }
@@ -347,20 +346,16 @@ static void post_playback(void) {
 
         if (mainw->play_window) {
           if (prefs->show_playwin) {
-            lives_window_present(LIVES_WINDOW(mainw->play_window));
-            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+            //lives_window_present(LIVES_WINDOW(mainw->play_window));
+            //lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             // need to recheck mainw->play_window after this
             lives_widget_show_all(mainw->preview_box);
-
             lives_widget_grab_focus(mainw->preview_spinbutton);
-
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             if (mainw->play_window) {
-
-
-              lives_widget_process_updates(mainw->play_window);
+              //lives_widget_process_updates(mainw->play_window);
               // need to recheck after calling process_updates
               if (mainw->play_window) {
                 lives_window_center(LIVES_WINDOW(mainw->play_window));
@@ -429,6 +424,7 @@ static void post_playback(void) {
     }
     set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
     lives_widget_set_opacity(mainw->play_image, 0.);
+    lives_widget_set_opacity(mainw->playframe, 0.);
   }
 
   if (!mainw->multitrack) mainw->osc_block = FALSE;
@@ -456,8 +452,6 @@ static void post_playback(void) {
   }
 
   player_sensitize();
-  break_me("end ppb");
-  g_print("DONE POSTPB\n");
 }
 
 
@@ -733,14 +727,12 @@ void play_file(void) {
 
   if (!mainw->foreign) {
     // this is like a safe addrref
-    lives_proc_thread_ref(mainw->lazy_starter);
-    if (mainw->lazy_starter) {
+    if (lives_proc_thread_ref(mainw->lazy_starter) > 0) {
       lives_proc_thread_request_pause(mainw->lazy_starter);
       lazy_start = TRUE;
     }
 
-    lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
-    if (mainw->helper_procthreads[PT_LAZY_RFX]) {
+    if (lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]) > 0) {
       lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
       lazy_rfx = TRUE;
     }
@@ -826,16 +818,15 @@ void play_file(void) {
     lives_disable_screensaver();
   }
 
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);
+  BG_THREADVAR(hook_hints) = 0;
 
-  ctx_mutex_lock();
   // setting this forces the main thread to block in a loop and only update
   // ths gui context on request (via update_gui in player.c)
   set_ign_idlefuncs(TRUE);
-  ctx_mutex_unlock();
 
   arate = cfile->arate;
-
   mute = mainw->mute;
 
   if (!is_realtime_aplayer(audio_player)) {
@@ -929,7 +920,6 @@ void play_file(void) {
             if (AUD_SRC_EXTERNAL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
             else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
           }
-          //mainw->jackd->in_use = TRUE;
         }
       }
       if (AUD_SRC_EXTERNAL && mainw->jackd_read) {
@@ -954,7 +944,6 @@ void play_file(void) {
             else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
           }
         }
-        //mainw->pulsed->in_use = TRUE;
       }
       if (AUD_SRC_EXTERNAL && mainw->pulsed_read) {
         mainw->pulsed_read->in_achans = mainw->pulsed_read->out_achans = PA_ACHANS;
@@ -1056,7 +1045,6 @@ void play_file(void) {
             mainw->pulsed->abufs[0]->out_asamps = mainw->pulsed->out_asamps;
 
             fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
-
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = cfile->arate;
               else mainw->pulsed->abufs[i]->arate = mainw->pulsed->out_arate;
@@ -1068,9 +1056,6 @@ void play_file(void) {
             mainw->pulsed->read_abuf = 0;
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
-            /* if (mainw->event_list) { */
-            /*   mainw->pulsed->in_use = TRUE; */
-            /* } */
           }
 #endif
         }
@@ -1134,7 +1119,6 @@ void play_file(void) {
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
-
         // realtime effects off (for multitrack and event_list preview)
         deinit_render_effects();
 
@@ -1266,10 +1250,8 @@ void play_file(void) {
       ticks_t timeout = 0;
       if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
         lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
-          sched_yield(); // wait for seek
-          lives_usleep(prefs->sleep_time);
-        }
+        lives_nanosleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0
+                                   && jack_get_msgq(mainw->jackd));
         lives_alarm_clear(alarm_handle);
       }
       if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
@@ -1277,7 +1259,7 @@ void play_file(void) {
       jack_message.data = NULL;
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
-      if (timeout == 0) handle_audio_timeout();
+      if (!timeout) handle_audio_timeout();
       else lives_nanosleep_while_true(mainw->jackd->playing_file > -1);
     }
   } else {
@@ -1316,7 +1298,6 @@ void play_file(void) {
             lives_nanosleep_while_true((mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0));
           }
         }
-
         // MAKE SURE TO UNCORK THIS LATER
         pulse_driver_cork(mainw->pulsed);
       }
@@ -1543,6 +1524,8 @@ void play_file(void) {
   if (prefs->volume != (double)future_prefs->volume)
     pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
 
+
+
   // TODO - ????
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
       && cfile->frames == 0 && mainw->record_perf) {
@@ -1603,21 +1586,19 @@ void play_file(void) {
     }
   }
 
-  ctx_mutex_lock();
+  if (!mainw->multitrack) redraw_timeline(mainw->current_file);
+
   // allow the main thread to exit from its blocking loop, it will resume normal operations
   set_ign_idlefuncs(FALSE);
-  ctx_mutex_unlock();
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  g_print("\n\n\nwant to run post_play\n");
+  mainw->debug = TRUE;
   main_thread_execute_void(post_playback, 0);
-  g_print("ran post_play\n\n\n");
+  mainw->debug = TRUE;
   BG_THREADVAR(hook_hints) = 0;
-
-  if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
   if (lazy_start) {
     if (mainw->lazy_starter) {
@@ -1640,8 +1621,8 @@ void play_file(void) {
   }
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
-  if (mainw->record) {
-    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(FALSE));
+  if (mainw->record || mainw->record_paused) {
+    deal_with_render_choice(FALSE);
   }
 
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;

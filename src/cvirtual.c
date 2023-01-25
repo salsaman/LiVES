@@ -206,6 +206,7 @@ boolean save_frame_index(int fileno) {
   return TRUE;
 }
 
+
 // load frame_index from disk
 // returns -1 (error)
 // or maxframe pointed to in clip
@@ -998,7 +999,7 @@ static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolea
   oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
   do {
     retval = LIVES_RESPONSE_NONE;
-    retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
+    retb = pixbuf_to_png(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
     if (error && !silent) {
       retval = do_write_failed_error_s_with_retry(oname, error->message);
       lives_error_free(error);
@@ -1035,10 +1036,11 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   // return index of last frame decoded, (negaive value on error)
 
+  lives_proc_thread_t saver_procthread;
   lives_clip_t *sfile;
   LiVESPixbuf *pixbuf = NULL;
   weed_layer_t *layer = NULL;
-  lives_proc_thread_t tinfo = THREADVAR(proc_thread);
+  GET_PROC_THREAD_SELF(self);
   savethread_priv_t *saveargs = NULL;
   lives_thread_t *saver_thread = NULL;
   int progress = 1, count = 0;
@@ -1047,8 +1049,8 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   boolean intimg = FALSE;
   short pbq = prefs->pb_quality;
 
-  if (!IS_PHYSICAL_CLIP(sfileno)) return -1;
-  sfile = mainw->files[sfileno];
+  sfile = RETURN_PHYSICAL_CLIP(sfileno);
+  if (!sfile) return -1;
 
   if (sframe > eframe) {
     frames_t tmp = sframe;
@@ -1068,17 +1070,31 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
     return eframe;
   }
 
-  if (tinfo) lives_proc_thread_set_cancellable(tinfo);
+  if (self) lives_proc_thread_set_cancellable(self);
 
   prefs->pb_quality = PB_QUALITY_BEST;
 
-#ifdef USE_LIBPNG
   // use internal image saver if we can
   if (sfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
-#endif
+
+  saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
+  saveargs->img_type = sfile->img_type;
+  saveargs->compression = 100 - prefs->ocp;
+  saveargs->width = sfile->hsize;
+  saveargs->height = sfile->vsize;
+
+  if (intimg) {
+    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
+                       layer_to_png_threaded, WEED_SEED_BOOLEAN, NULL,
+                       "v", saveargs);
+  } else {
+    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
+                       pixbuf_to_png_threaded, WEED_SEED_BOOLEAN, NULL,
+                       "v", saveargs);
+  }
 
   for (i = sframe; i <= eframe; i++) {
-    if (lives_proc_thread_get_cancel_requested(tinfo)) break;
+    if (lives_proc_thread_get_cancel_requested(self)) break;
 
     retval = i;
 
@@ -1123,45 +1139,38 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
           break;
         }
       }
-      if (!saver_thread) {
-        saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
-        saveargs->img_type = sfile->img_type;
-        saveargs->compression = 100 - prefs->ocp;
-        saveargs->width = sfile->hsize;
-        saveargs->height = sfile->vsize;
-        saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
-      } else {
-        lives_thread_join(saver_thread, NULL);
-        while (saveargs->error || THREADVAR(write_failed)) {
-          THREADVAR(write_failed) = 0;
-          check_storage_space(-1, TRUE);
-          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error ? saveargs->error->message
-                   : NULL);
-          if (saveargs->error) {
-            lives_error_free(saveargs->error);
-            saveargs->error = NULL;
-          }
-          if (retval != LIVES_RESPONSE_RETRY) {
-            pthread_mutex_unlock(&sfile->frame_index_mutex);
-            if (intimg) {
-              if (saveargs->layer) weed_layer_unref(saveargs->layer);
-            } else {
-              if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
-              if (pixbuf) lives_widget_object_unref(pixbuf);
-            }
-            lives_free(saveargs->fname);
-            lives_free(saveargs);
-            return -(i - 1);
-          }
-          if (intimg)
-            save_to_png(saveargs->layer, saveargs->fname, 100 - prefs->ocp);
-          else
-            lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-                              saveargs->width, saveargs->height, &saveargs->error);
+      if (!lives_proc_thread_is_idling(saver_procthread)) {
+        if (lives_proc_thread_is_unqueued(saver_procthread)) {
+          // queue it
+          goto queue_lpt;
         }
+        lives_nanosleep_while_false(lives_proc_thread_is_idling(saver_procthread));
+      }
 
+      if (saveargs->error || THREADVAR(write_failed)) {
+        THREADVAR(write_failed) = 0;
+        check_storage_space(-1, TRUE);
+        retval = do_write_failed_error_s_with_retry(saveargs->fname,
+                 saveargs->error ? saveargs->error->message
+                 : NULL);
+        if (saveargs->error) {
+          lives_error_free(saveargs->error);
+          saveargs->error = NULL;
+        }
+        if (retval != LIVES_RESPONSE_RETRY) {
+          pthread_mutex_unlock(&sfile->frame_index_mutex);
+          if (intimg) {
+            if (saveargs->layer) weed_layer_free(saveargs->layer);
+          } else {
+            if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
+            if (pixbuf) lives_widget_object_unref(pixbuf);
+          }
+          lives_free(saveargs->fname);
+          lives_free(saveargs);
+          return -(i - 1);
+        }
         if (intimg) {
-          if (saveargs->layer) weed_layer_unref(saveargs->layer);
+          if (saveargs->layer) weed_layer_free(saveargs->layer);
           saveargs->layer = NULL;
         } else {
           if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
@@ -1173,14 +1182,14 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
         saveargs->fname = NULL;
       }
 
+queue_lpt:
       saveargs->fname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
       if (intimg) {
         saveargs->layer = layer;
-        lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
       } else {
         saveargs->pixbuf = pixbuf;
-        lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
       }
+      lives_proc_thread_queue(saver_procthread, 0);
 
       if (++count == STRG_CHECK) {
         if (!check_storage_space(-1, TRUE)) break;
@@ -1206,7 +1215,6 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   pthread_mutex_unlock(&sfile->frame_index_mutex);
 
   if (saver_thread) {
-    lives_thread_join(saver_thread, NULL);
     if (intimg) {
       if (saveargs->layer != layer)
         weed_layer_unref(saveargs->layer);
@@ -1661,7 +1669,7 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
     lives_snprintf(oname, PATH_MAX, "%s", tmp);
     lives_free(tmp);
     if (!blankp) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
-    lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
+    pixbuf_to_png(blankp, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
     if (error) {
       char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"),
                                       sfile->hsize, sfile->vsize, oname);

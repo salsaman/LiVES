@@ -54,10 +54,9 @@ uint64_t test_opts = 0;//TEST_WEED | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
 #endif
-#ifdef USE_LIBPNG
+
 #include <png.h>
 #include <setjmp.h>
-#endif
 
 /* #ifdef HAVE_PRCTL */
 /* #include <sys/prctl.h> */
@@ -1301,34 +1300,6 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 ///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
-boolean render_choice_idle(livespointer data) {
-  static boolean norecurse = FALSE;
-  boolean rec_recovered = FALSE;
-  boolean is_recovery = LIVES_POINTER_TO_INT(data);
-  if (norecurse) return FALSE;
-  if (mainw->noswitch) return TRUE;
-  //if (mainw->pre_src_file >= 0) return TRUE;
-  norecurse = TRUE;
-  if (!is_recovery || mt_load_recovery_layout(NULL)) {
-    if (mainw->event_list) {
-      if (mainw->multitrack) {
-        /// exit multitrack, backup mainw->event_as it will get set to NULL
-        weed_plant_t *backup_elist = mainw->event_list;
-        multitrack_delete(mainw->multitrack, FALSE);
-        mainw->event_list = backup_elist;
-      }
-
-      main_thread_execute_rvoid(deal_with_render_choice, 0, "b", is_recovery);
-      //deal_with_render_choice(is_recovery);
-      if (is_recovery && mainw->multitrack) rec_recovered = TRUE;
-    }
-  }
-  if (is_recovery) mainw->recording_recovered = rec_recovered;
-  norecurse = FALSE;
-  return FALSE;
-}
-
-
 boolean lazy_startup_checks(void) {
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
@@ -1941,7 +1912,7 @@ static boolean lives_startup2(livespointer data) {
     /* if (wid) activate_x11_window(wid); */
   }
   if (mainw->recording_recovered) {
-    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
+    lives_idle_priority(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
   if (!prefs->vj_mode && !prefs->startup_phase) {
@@ -4407,7 +4378,6 @@ static void set_toolkit_theme(int prefer) {
 
 #ifndef VALGRIND_ON
 static void set_extra_colours(void) {
-  g_print("SETX\n");
   if (!mainw->debug && prefs->extra_colours && mainw->pretty_colours) {
     char *colref, *tmp;
     colref = gdk_rgba_to_string(&palette->nice1);
@@ -4431,7 +4401,6 @@ static void set_extra_colours(void) {
     lives_free(tmp);
     lives_free(colref);
   }
-  g_print("SETX done\n");
 }
 
 

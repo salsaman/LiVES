@@ -14072,10 +14072,8 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
   sfile = mainw->files[fileno];
   prefs->pb_quality = PB_QUALITY_BEST;
 
-#ifdef USE_LIBPNG
   // use internal image saver if we can
   if (sfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
-#endif
 
   pthread_mutex_lock(&sfile->frame_index_mutex);
   for (int i = 0; i < sfile->frames; i++) {
@@ -14136,10 +14134,10 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
         lives_mv(fname, fname_bak);
       }
       if (!intimg) {
-        lives_pixbuf_save(pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
+        pixbuf_to_png(pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
         lives_widget_object_unref(pixbuf);
       } else {
-        save_to_png(layer, fname, 100 - prefs->ocp);
+        layer_to_png(layer, fname, 100 - prefs->ocp);
         weed_layer_unref(layer);
       }
       if (error || THREADVAR(write_failed)) {

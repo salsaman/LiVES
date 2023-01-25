@@ -653,10 +653,9 @@ lives_render_error_t realfx_progress(boolean reset) {
 
     if (!has_video_filters(TRUE) || resize_instance) {
       boolean intimg = FALSE;
-#ifdef USE_LIBPNG
+
       // use internal image saver if we can
       if (cfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
-#endif
 
       layer_palette = weed_layer_get_palette(layer);
 
@@ -690,9 +689,9 @@ lives_render_error_t realfx_progress(boolean reset) {
         retval = LIVES_RESPONSE_NONE;
 
         if (!intimg)
-          lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
+          pixbuf_to_png(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
         else
-          save_to_png(layer, oname, 100 - prefs->ocp);
+          layer_to_png(layer, oname, 100 - prefs->ocp);
 
         if (error || THREADVAR(write_failed)) {
           THREADVAR(write_failed) = 0;

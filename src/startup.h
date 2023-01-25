@@ -40,8 +40,6 @@ boolean check_snap(const char *prog);
 boolean resize_message_area(livespointer data);
 
 boolean lazy_startup_checks(void);
-
-boolean render_choice_idle(livespointer data);
 //
 void replace_with_delegates(void);
 

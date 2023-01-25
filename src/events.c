@@ -3770,7 +3770,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 #define SAVE_THREAD
 #ifdef SAVE_THREAD
   static savethread_priv_t *saveargs = NULL;
-  static lives_thread_t *saver_thread = NULL;
+  static lives_proc_thread_t saver_lpt = NULL;
 #else
   char oname[PATH_MAX];
   char *tmp;
@@ -3941,11 +3941,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
-#ifdef USE_LIBPNG
   if (r_video)
     // use internal image saver if we can
     if (cfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
-#endif
 
   if (event && !r_video && r_audio && !mainw->flush_audio_tc) {
     while (event && !(WEED_EVENT_IS_MARKER(event) || WEED_EVENT_IS_AUDIO_FRAME(event))) {
@@ -4427,7 +4425,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       do {
         retval = LIVES_RESPONSE_NONE;
-        lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, cfile->hsize, cfile->vsize, NULL);
+        pixbuf_to_png(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, cfile->hsize, cfile->vsize, NULL);
 
         if (error) {
           retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
@@ -4438,18 +4436,17 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       } while (retval == LIVES_RESPONSE_RETRY);
 
 #else
-
-      if (!saver_thread) {
+      // TODO - use idle proc_thread (cf. cvirtual.c)
+      if (!saver_lpt) {
         if (THREAD_INTENTION == OBJ_INTENTION_RENDER) {
           saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
           saveargs->img_type = cfile->img_type;
           saveargs->compression = 100 - prefs->ocp;
           saveargs->width = cfile->hsize;
           saveargs->height = cfile->vsize;
-          saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
         }
       } else {
-        lives_thread_join(saver_thread, NULL);
+        lives_proc_thread_join(saver_lpt);
         while (saveargs->error || THREADVAR(write_failed)) {
           if (saveargs->error) {
             retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
@@ -4463,10 +4460,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
             break;
           }
-          if (intimg) save_to_png_threaded((void *)saveargs);
+          if (intimg) layer_to_png_threaded((void *)saveargs);
           else {
-            lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-                              saveargs->width, saveargs->height, &saveargs->error);
+            pixbuf_to_png(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                          saveargs->width, saveargs->height, &saveargs->error);
           }
         }
         if (saveargs->layer && saveargs->layer != layer) {
@@ -4486,15 +4483,18 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         if (cfile->old_frames > 0) {
           saveargs->fname = make_image_file_name(cfile, out_frame, LIVES_FILE_EXT_MGK);
         } else {
-          saveargs->fname = make_image_file_name(cfile, out_frame, get_image_ext_for_type(cfile->img_type));
+          saveargs->fname = make_image_file_name(cfile, out_frame,
+                                                 get_image_ext_for_type(cfile->img_type));
         }
 
         if (intimg) {
           saveargs->layer = layer;
-          lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+          saver_lpt = lives_proc_thread_create(0, layer_to_png_threaded, WEED_SEED_BOOLEAN,
+                                               "v", saveargs);
         } else {
           saveargs->pixbuf = pixbuf;
-          lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+          saver_lpt = lives_proc_thread_create(0, pixbuf_to_png_threaded, WEED_SEED_BOOLEAN,
+                                               "v", saveargs);
         }
       }
 #endif
@@ -4724,18 +4724,18 @@ filterinit2:
   } else {
     /// no more events or audio to flush, rendering complete
 #ifdef SAVE_THREAD
-    if (saver_thread) {
-      lives_thread_join(saver_thread, NULL);
+    if (saver_lpt) {
+      lives_proc_thread_join(saver_lpt);
       while (saveargs->error) {
         retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
         lives_error_free(saveargs->error);
         saveargs->error = NULL;
         if (retval != LIVES_RESPONSE_RETRY) read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
         else {
-          if (intimg) save_to_png_threaded((void *)saveargs);
+          if (intimg) layer_to_png_threaded((void *)saveargs);
           else {
-            lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-                              saveargs->width, saveargs->height, &saveargs->error);
+            pixbuf_to_png(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                          saveargs->width, saveargs->height, &saveargs->error);
           }
         }
       }
@@ -4749,8 +4749,8 @@ filterinit2:
       }
       lives_freep((void **)&saveargs->fname);
       lives_free(saveargs);
-      lives_free(saver_thread);
-      saver_thread = NULL;
+      lives_proc_thread_unref(saver_lpt);
+      saver_lpt = NULL;
       saveargs = NULL;
     }
 #endif
@@ -4877,11 +4877,11 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   }
 
   // play back the file as fast as possible, each time calling render_events()
-  if ((!do_progress_dialog(TRUE, TRUE, render_vid ? (THREAD_INTENTION == OBJ_INTENTION_RENDER ? _("Rendering")
-                           : _("Transcoding")) : _("Pre-rendering audio"))
-       && mainw->cancelled != CANCEL_KEEP) || mainw->error ||
-      mainw->render_error >= LIVES_RENDER_ERROR
-     ) {
+  if ((!do_progress_dialog(TRUE, TRUE, render_vid
+                           ? (THREAD_INTENTION == OBJ_INTENTION_RENDER
+                              ? _("Rendering") : _("Transcoding")) : _("Pre-rendering audio"))
+       && mainw->cancelled != CANCEL_KEEP) || mainw->error
+      || mainw->render_error >= LIVES_RENDER_ERROR) {
     mainw->disk_mon = 0;
     mainw->cancel_type = CANCEL_KILL;
     mainw->cancelled = CANCEL_NONE;
@@ -5042,10 +5042,15 @@ boolean render_to_clip(boolean new_clip) {
 
   prefs->pb_quality = PB_QUALITY_HIGH;
 
+  set_ign_idlefuncs(TRUE);
+
   if (new_clip) {
     if (prefs->render_prompt) {
       //set file details
-      rdet = create_render_details(THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? 5 : 2);
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      main_thread_execute(create_render_details, WEED_SEED_VOIDPTR, &rdet, "i",
+                          (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? 5 : 2));
+      BG_THREADVAR(hook_hints) = 0;
       if (!has_audio_frame(mainw->event_list)) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), FALSE);
         lives_widget_set_sensitive(resaudw->aud_checkbutton, FALSE);
@@ -5106,6 +5111,7 @@ boolean render_to_clip(boolean new_clip) {
         lives_freep((void **)&resaudw);
         prefs->pb_quality = pbq;
         prefs->enc_letterbox = enc_lb;
+        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     } else {
@@ -5136,6 +5142,7 @@ boolean render_to_clip(boolean new_clip) {
       lives_free(clipname);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
+      set_ign_idlefuncs(FALSE);
       return FALSE; // show dialog again
     }
 
@@ -5202,6 +5209,7 @@ boolean render_to_clip(boolean new_clip) {
       if (THREADVAR(com_failed)) {
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
+        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     } else {
@@ -5245,6 +5253,7 @@ boolean render_to_clip(boolean new_clip) {
         close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     } else {
       lives_contract_t *contract;
@@ -5298,6 +5307,7 @@ boolean render_to_clip(boolean new_clip) {
         if (!mainw->multitrack) close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
+        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
 
@@ -5373,6 +5383,7 @@ boolean render_to_clip(boolean new_clip) {
   if (mainw->multitrack && !rendaud && !mainw->multitrack->opts.render_vidp) {
     prefs->enc_letterbox = enc_lb;
     prefs->pb_quality = pbq;
+    set_ign_idlefuncs(FALSE);
     return FALSE;
   }
 
@@ -5525,6 +5536,7 @@ boolean render_to_clip(boolean new_clip) {
           } else pthread_mutex_unlock(&cfile->frame_index_mutex);
           prefs->enc_letterbox = enc_lb;
           prefs->pb_quality = pbq;
+          set_ign_idlefuncs(FALSE);
           return FALSE; /// will reshow the dialog
         }
 
@@ -5567,6 +5579,7 @@ rtc_done:
   mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
   prefs->pb_quality = pbq;
   prefs->enc_letterbox = enc_lb;
+  set_ign_idlefuncs(FALSE);
   return retval;
 }
 
@@ -5642,7 +5655,9 @@ static LiVESResponseType _show_rc_dlg(void) {
 
 static LiVESResponseType show_rc_dlg(void) {
   LiVESResponseType resp, *presp = &resp;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_pvoid(_show_rc_dlg, WEED_SEED_INT, presp);
+  BG_THREADVAR(hook_hints) = 0;
   return resp;
 }
 
@@ -5706,7 +5721,7 @@ void event_list_add_end_events(weed_event_list_t *event_list, boolean is_final) 
 }
 
 
-static boolean _deal_with_render_choice(boolean add_deinit) {
+static boolean _deal_with_render_choice(void) {
   // this is called indirectly from plaayer-control.c
   // as well as via an idelfunc on startup (crash recovery)
   // this is run in a bg thread, fg thread must not block as it needs to operate
@@ -5728,7 +5743,7 @@ static boolean _deal_with_render_choice(boolean add_deinit) {
 
   char *esave_file = NULL, *asave_file = NULL;
 
-  boolean new_clip = FALSE;
+  boolean new_clip = FALSE, bret;
 
   int dh, dw, dar, das, dac, dse;
   frames_t oplay_start = 1;
@@ -5789,7 +5804,9 @@ static boolean _deal_with_render_choice(boolean add_deinit) {
                                     (lives_funcptr_t)backup_recording, -1, "vv",
                                     &esave_file, &asave_file);
   }
+
   mainw->no_interp = TRUE;
+  set_ign_idlefuncs(TRUE);
   do {
     prefs->event_window_show_frame_events = TRUE;
     if (render_choice == RENDER_CHOICE_NONE || render_choice == RENDER_CHOICE_PREVIEW)
@@ -5856,9 +5873,17 @@ static boolean _deal_with_render_choice(boolean add_deinit) {
         info = NULL;
       }
 
-      if (!render_to_clip(TRUE) || render_choice == RENDER_CHOICE_TRANSCODE)
+      //BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      set_ign_idlefuncs(FALSE);
+      /* main_thread_execute(render_to_clip, WEED_SEED_BOOLEAN, &bret, "b", TRUE); */
+      /* set_ign_idlefuncs(TRUE); */
+      /* BG_THREADVAR(hook_hints) = 0; */
+
+      if (!render_to_clip(TRUE) || render_choice == RENDER_CHOICE_TRANSCODE) {
+        set_ign_idlefuncs(TRUE);
         render_choice = RENDER_CHOICE_PREVIEW;
-      else {
+      } else {
+        set_ign_idlefuncs(TRUE);
         close_scrap_file(TRUE);
         close_ascrap_file(TRUE);
         prefs->mt_def_width = dw;
@@ -5950,6 +5975,7 @@ static boolean _deal_with_render_choice(boolean add_deinit) {
     }
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
+  set_ign_idlefuncs(FALSE);
   mainw->no_interp = FALSE;
 
   if (info) {
@@ -5977,10 +6003,28 @@ static boolean _deal_with_render_choice(boolean add_deinit) {
 }
 
 
-boolean deal_with_render_choice(boolean add_deinit) {
-  // needs to be run in background, fg thread will operate the dialog, service the player
-  // during previews, etc
-  lives_proc_thread_create(0, _deal_with_render_choice, 0, NULL, "b", add_deinit);
+// background only function
+boolean deal_with_render_choice(boolean is_recovery) {
+  boolean rec_recovered = FALSE;
+  if (!is_recovery || mt_load_recovery_layout(NULL)) {
+    if (mainw->event_list) {
+      if (mainw->multitrack) {
+        /// exit multitrack, backup mainw->event_as it will get set to NULL
+        weed_plant_t *backup_elist = mainw->event_list;
+        multitrack_delete(mainw->multitrack, FALSE);
+        mainw->event_list = backup_elist;
+      }
+      _deal_with_render_choice();
+      if (is_recovery && mainw->multitrack) rec_recovered = TRUE;
+    }
+  }
+  if (is_recovery) mainw->recording_recovered = rec_recovered;
+  return FALSE;
+}
+
+
+boolean render_choice_idle(void *data) {
+  lives_proc_thread_create(0, deal_with_render_choice, -1, "i", (LIVES_POINTER_TO_INT(data)));
   return FALSE;
 }
 

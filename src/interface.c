@@ -322,12 +322,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   if (mainw->current_file != fileno
       || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
-  if (!self) {
-    if (pthread_mutex_trylock(&mainw->tlthread_mutex)) goto bail;
-  } else pthread_mutex_lock(&mainw->tlthread_mutex);
-
-  mutex_locked = TRUE;
-
   // draw timer bars
   // first them background
   clear_tbar_bgs(posx, posy, width, height, which);
@@ -687,8 +681,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
   mainw->current_file = current_file;
 
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
-
   if (which == 0 || which == 1)
     lives_widget_queue_draw_if_visible(mainw->video_draw);
   if (which == 0 || which == 2)
@@ -708,8 +700,6 @@ bail:
       lives_proc_thread_cancel(self);
     }
   }
-  if (mutex_locked)
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
 
   return FALSE;
 }
@@ -3618,10 +3608,11 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 
 
 void cancel_tl_redraw(void) {
-  lives_proc_thread_ref(mainw->drawtl_thread);
-  if (mainw->drawtl_thread) {
+  if (lives_proc_thread_ref(mainw->drawtl_thread) > 0) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      pthread_mutex_lock(&mainw->tlthread_mutex);
       lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
+      pthread_mutex_unlock(&mainw->tlthread_mutex);
       lives_proc_thread_wait_done(mainw->drawtl_thread, 0.);
     }
     lives_proc_thread_unref(mainw->drawtl_thread);
@@ -3688,7 +3679,11 @@ void redraw_timeline(int clipno) {
   } else {
     if (is_fg_thread()) {
       // if this the fg thread, kick off a bg thread to actually run this
+      g_print("ctlr\n");
+      g_print("ktlrX %p %s\n", mainw->drawtl_thread,
+              mainw->drawtl_thread ? lpt_desc_state(mainw->drawtl_thread) : "none");
       cancel_tl_redraw();
+      g_print("ctlrc\n");
 
       if (mainw->multitrack || mainw->reconfig) {
         RECURSE_GUARD_END;
@@ -3696,11 +3691,14 @@ void redraw_timeline(int clipno) {
       }
 
       pthread_mutex_lock(&mainw->tlthread_mutex);
+      g_print("mktlr\n");
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
                              (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
       lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
       lives_proc_thread_set_cancellable(mainw->drawtl_thread);
       lives_proc_thread_sync_ready(mainw->drawtl_thread);
+      g_print("XXktlrX %p %s\n", mainw->drawtl_thread,
+              mainw->drawtl_thread ? lpt_desc_state(mainw->drawtl_thread) : "none");
       RECURSE_GUARD_END;
       pthread_mutex_unlock(&mainw->tlthread_mutex);
       return;

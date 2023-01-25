@@ -42,9 +42,6 @@ LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks
 boolean weed_layer_create_from_file_progressive(weed_layer_t *, const char *fname, int width,
     int height, int tpalette, const char *img_ext);
 
-boolean lives_pixbuf_save(LiVESPixbuf *, char *fname, lives_img_type_t imgtype, int quality,
-                          int width, int height, LiVESError **gerrorptr);
-
 void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *, lives_painter_surface_t *);
 
 void load_start_image(frames_t frame);
@@ -80,15 +77,16 @@ typedef struct {
   weed_layer_t *layer;
   boolean success;
 
+  // for png this is 'quality' (TODO - use union)
   int compression;
 } savethread_priv_t;
 
-void *lives_pixbuf_save_threaded(void *saveargs);
+boolean pixbuf_to_png(LiVESPixbuf *pixbuf, char *fname, lives_img_type_t imgtype,
+                      int quality, int width, int height, LiVESError **gerrorptr);
+boolean pixbuf_to_png_threaded(savethread_priv_t *); // deprecated
 
-#ifdef USE_LIBPNG
 boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
-boolean save_to_png(weed_layer_t *layer, const char *fname, int comp);
-void *save_to_png_threaded(void *args);
-#endif
+boolean layer_to_png(weed_layer_t *layer, const char *fname, int comp);
+boolean layer_to_png_threaded(savethread_priv_t *); // deprecated
 
 #endif// _FRAME_LOADER_H

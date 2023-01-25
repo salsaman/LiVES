@@ -761,12 +761,14 @@ typedef struct {
 #define PT_LAZY_STARTUP 19
 #define PT_PERF_MANAGER 32
 #define PT_PLAYER 64
+#define PT_SCRAPFILE_SAVER 128
 
 #define lazy_starter helper_procthreads[PT_LAZY_STARTUP]
 #define drawtl_thread helper_procthreads[PT_DRAWTL]
 #define transrend_proc helper_procthreads[PT_TRANSREND]
 #define dlg_spin_thread helper_procthreads[PT_DLG_SPINNER]
 #define player_proc helper_procthreads[PT_PLAYER]
+#define scrap_file_proc helper_procthreads[PT_SCRAPFILE_SAVER]
 
 typedef struct {
   char *name;
@@ -1177,7 +1179,6 @@ typedef struct {
 
   uint32_t kb_timer;
 
-  volatile boolean service_calls;
   /// (GUI) function pointers
   ulong config_func;
   ulong pb_fps_func;
@@ -1885,6 +1886,7 @@ typedef struct {
   weed_layer_t *scrap_layer; ///< cached image for speeding up rendering
 
   boolean gui_much_events;
+  volatile boolean do_ctx_update;
   boolean no_context_update; ///< may be set temporarily to block wodget context updates
 
   weed_plant_t *msg_list;

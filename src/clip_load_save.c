@@ -1557,9 +1557,7 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
     short pbq = prefs->pb_quality;
     boolean internal = FALSE;
 
-#ifdef USE_LIBPNG
     if (sfile->img_type == IMG_TYPE_PNG) internal = TRUE;
-#endif
 
     prefs->pb_quality = PB_QUALITY_BEST;
 
@@ -1573,13 +1571,13 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
     do {
       retval = LIVES_RESPONSE_NONE;
       if (internal) {
-        save_to_png(layer, tmp, 100 - prefs->ocp);
+        layer_to_png(layer, tmp, 100 - prefs->ocp);
         if (THREADVAR(write_failed)) {
           THREADVAR(write_failed) = 0;
           retval = do_write_failed_error_s_with_retry(full_file_name, NULL);
         }
       } else {
-        lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, sfile->hsize, sfile->vsize, &gerr);
+        pixbuf_to_png(pixbuf, tmp, IMG_TYPE_JPEG, 100, sfile->hsize, sfile->vsize, &gerr);
         if (gerr) {
           retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message);
           lives_error_free(gerr);
@@ -2023,6 +2021,9 @@ boolean open_scrap_file(void) {
   mainw->current_file = current_file;
   mainw->scrap_file_size = -1;
   lscrap_check = -1;
+
+  // reset static vars
+  save_to_scrap_file(NULL);
 
   if (mainw->ascrap_file == -1) ascrap_mb = 0.;
 

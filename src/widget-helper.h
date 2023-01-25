@@ -1060,9 +1060,6 @@ uint32_t lives_timer_immediate(LiVESWidgetSourceFunc function, livespointer data
 
 LiVESWidgetSource *lives_thrd_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 
-int ctx_mutex_lock(void);
-int ctx_mutex_unlock(void);
-
 //uint32_t lives_idle_priority_longrun(LiVESWidgetSourceFunc function, livespointer data);
 
 #ifdef GUI_GTK
@@ -1309,6 +1306,7 @@ boolean lives_cursor_unref(LiVESXCursor *);
 boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, LiVESTreeIter *existing, LiVESTreeIter *newiter);
 
 boolean set_ign_idlefuncs(boolean val);
+boolean set_ign_idlefuncs_nolock(boolean val);
 
 boolean lives_widget_context_update(void);
 boolean lives_widget_context_iteration(LiVESWidgetContext *, boolean may_block);

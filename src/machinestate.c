@@ -2044,7 +2044,7 @@ void rec_desk(void *args) {
     if (saveargs->fname) lives_free(saveargs->fname);
     saveargs->fname = imname;
 
-    lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+    lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, layer_to_png_threaded, saveargs);
 
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))

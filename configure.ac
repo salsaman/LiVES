@@ -181,6 +181,19 @@ if test x$PKG_CONFIG = xno; then
    AC_MSG_ERROR([Cannot find pkg-config, make sure it is installed and in your PATH])
 fi
 
+dnl check for libpng
+
+HAVE_LIBPNG=false
+PKG_CHECK_MODULES(PNG,libpng > 1.2.0,HAVE_LIBPNG=true,HAVE_LIBPNG=false)
+if test "$HAVE_LIBPNG" != "true" ; then
+AC_MSG_ERROR("Unable to find libpng > 1.2.0, please install this first, then try again.")
+fi
+
+AC_SUBST(PNG_CFLAGS)
+AC_SUBST(PNG_LIBS)
+
+AM_CONDITIONAL(HAVE_LIBPNG,$HAVE_LIBPNG)
+
 dnl Check for doxygen
 
 AC_ARG_ENABLE(doxygen, [  --disable-doxygen     Disable doxygen documentation.] , disable_doxygen=yes)
@@ -766,18 +779,6 @@ AC_SUBST(MJPEGTOOLS_CFLAGS)
 AC_SUBST(MJPEGTOOLS_LIBS)
 
 AM_CONDITIONAL(HAVE_MJPEGTOOLS,$HAVE_MJPEGTOOLS)
-
-dnl check for libpng
-HAVE_LIBPNG=false
-AC_ARG_ENABLE(libpng, [  --disable-libpng    Disable direct libpng support.] , disable_libpng=yes)
-if test "x$disable_libpng" != "xyes" ; then
-PKG_CHECK_MODULES(PNG,libpng > 1.2.0,HAVE_LIBPNG=true,HAVE_LIBPNG=false)
-fi
-
-AC_SUBST(PNG_CFLAGS)
-AC_SUBST(PNG_LIBS)
-
-AM_CONDITIONAL(HAVE_LIBPNG,$HAVE_LIBPNG)
 
 HAVE_ZLIB=false
 AC_ARG_ENABLE(libz, [  --disable-libz    Disable libz support.] , disable_libz=yes)

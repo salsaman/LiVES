@@ -156,6 +156,7 @@ extern const lookup_tab crossrefs[];
 // 3p
 #define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
 #define FUNCSIG_VOIDP_STRING_STRING 		        		0X00000D44
+#define FUNCSIG_VOIDP_STRING_INT 		        		0X00000D41
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
 #define FUNCSIG_VOIDP_VOIDP_BOOL 		        		0X00000DD3
 #define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD
@@ -182,6 +183,8 @@ extern const lookup_tab crossrefs[];
 // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 #define FUNCSIG_PLANTP_INT_INT_INT_INT_INT	       			0X00E11111
+//7p
+#define FUNCSIG_VOIDPP_STRING_STRING_INT_INT_INT_VOIDP  		0X0D44111D
 // 8p
 #define FUNCSIG_PLANTP_INT_INT_INT_INT_INT_INT_INT     			0XE1111111
 #define FUNCSIG_INT_DOUBLE_PLANTP_INT_INT_INT_INT_BOOL			0X12E11113
@@ -443,7 +446,9 @@ typedef struct {
 
   // proc_thread intially in unqueued state - either supplied directly
   // or created from param args / hook_type
-  lives_proc_thread_t proc_thread;
+  // adder is used so we can trace back to lpt which added the callback, and if freed,
+  // remove it from other proc_thread's hook_cb_list
+  lives_proc_thread_t proc_thread, adder;
   // func def describing hook cb, this can be created from the lpt
   // or it can be a pointer to a static funcdef
   // once registered, then we can simply add hooks using funcname, params

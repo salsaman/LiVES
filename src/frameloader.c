@@ -1137,17 +1137,16 @@ check_prcache:
 
   static boolean sf_writeable = TRUE;
 
-  static int64_t _save_to_scrap_file(weed_layer_t *layer) {
+  static int64_t _save_to_scrap_file(weed_layer_t **layerptr) {
     // returns frame number
     // dump the raw layer (frame) data to disk
 
     // TODO: run as bg thread
 
     size_t pdata_size;
-
+    weed_layer_t *layer = *layerptr;
     lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
 
-    //int flags = O_WRONLY | O_CREAT | O_TRUNC;
     int fd;
 
     weed_layer_ref(layer);
@@ -1238,8 +1237,9 @@ check_prcache:
       return scrapfile->frames;
     }
 
+    if (lives_proc_thread_is_idling(mainw->scrap_file_proc))
+      scrapfile->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
     orig_layer = weed_layer_copy(NULL, layer);
-    scrapfile->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
     lives_proc_thread_queue(mainw->scrap_file_proc, 0);
 
     if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
@@ -2036,6 +2036,7 @@ fndone:
     // if we pull from a decoder plugin, then we may also deinterlace
     weed_layer_t *vlayer, *xlayer = NULL;
     lives_clip_t *sfile = NULL;
+    int nsize[2] = {width, height};
     int clip;
     frames_t frame;
     int clip_type;
@@ -2055,8 +2056,6 @@ fndone:
 
     if (weed_plant_has_leaf(layer, LIVES_LEAF_PROC_THREAD)) is_thread = TRUE;
 
-    weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
-
     sfile = RETURN_VALID_CLIP(clip);
 
     if (!sfile) {
@@ -2068,23 +2067,22 @@ fndone:
 
     switch (clip_type) {
     case CLIP_TYPE_NULL_VIDEO:
-      create_blank_layer(layer, image_ext, width, height, target_palette);
-      goto success;
+      goto fail;
     case CLIP_TYPE_DISK:
     case CLIP_TYPE_FILE:
       // frame number can be 0 during rendering
       if (frame == 0) {
-        create_blank_layer(layer, image_ext, width, height, target_palette);
-        goto success;
+        goto fail;
       } else if (clip == mainw->scrap_file) {
         boolean res = load_from_scrap_file(layer, frame);
         if (!res) goto fail;
-        weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
-        weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
+        /* weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC); */
+        /* weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC); */
         // clip width and height may vary dynamically
         if (LIVES_IS_PLAYING) {
-          sfile->hsize = weed_layer_get_width(layer);
-          sfile->vsize = weed_layer_get_height(layer);
+          nsize[0] = sfile->hsize = weed_layer_get_width(layer);
+          nsize[1] = sfile->vsize = weed_layer_get_height(layer);
+          weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
         }
         // realign
         copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
@@ -2097,8 +2095,14 @@ fndone:
           if (prefs->vj_mode && mainw->loop_locked && mainw->ping_pong && sfile->pb_fps >= 0. && !norecurse) {
             lives_proc_thread_t tinfo = THREADVAR(proc_thread);
             LiVESPixbuf *pixbuf = NULL;
-            THREADVAR(proc_thread) = NULL;
             norecurse = TRUE;
+
+            nsize[0] = width;
+            nsize[1] = height;
+            weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
+
+            THREADVAR(proc_thread) = NULL;
+
             virtual_to_images(clip, frame, frame, FALSE, &pixbuf);
             pthread_mutex_unlock(&sfile->frame_index_mutex);
             need_unlock = FALSE;
@@ -2149,6 +2153,10 @@ fndone:
 
             width = dplug->cdata->width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
             height = dplug->cdata->height;
+
+            nsize[0] = width;
+            nsize[1] = height;
+            weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
 
             weed_layer_set_size(layer, width, height);
 
@@ -2309,6 +2317,9 @@ fndone:
 
 #ifdef HAVE_YUV4MPEG
     case CLIP_TYPE_YUV4MPEG:
+      nsize[0] = width;
+      nsize[1] = height;
+      weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
       weed_layer_set_from_yuv4m(layer, sfile);
       if (sfile->deinterlace) {
         if (!is_thread) {
@@ -2319,6 +2330,9 @@ fndone:
 #endif
 #ifdef HAVE_UNICAP
     case CLIP_TYPE_VIDEODEV:
+      nsize[0] = width;
+      nsize[1] = height;
+      weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
       weed_layer_set_from_lvdev(layer, sfile, 4. / cfile->pb_fps);
       if (sfile->deinterlace) {
         if (!is_thread) {
@@ -2328,6 +2342,9 @@ fndone:
       goto success;
 #endif
     case CLIP_TYPE_LIVES2LIVES:
+      nsize[0] = width;
+      nsize[1] = height;
+      weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
       weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)sfile->ext_src);
       goto success;
     case CLIP_TYPE_GENERATOR: {
@@ -2335,13 +2352,16 @@ fndone:
       // Note: vlayer is actually the out channel of the generator, so we should
       // never free it !
       weed_plant_t *inst;
+      nsize[0] = width;
+      nsize[1] = height;
+      weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
       weed_instance_ref((inst = (weed_plant_t *)sfile->ext_src));
       if (inst) {
         int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
         filter_mutex_lock(key);
         if (!IS_VALID_CLIP(clip)) {
           // gen was switched off
-          create_blank_layer(layer, image_ext, width, height, target_palette);
+          goto fail;
         } else {
           vlayer = weed_layer_create_from_generator(inst, tc, clip);
           weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
@@ -2374,6 +2394,9 @@ success:
 
 fail:
     weed_layer_pixel_data_free(layer);
+    nsize[0] = width * weed_palette_get_pixels_per_macropixel(target_palette);
+    nsize[1] = height;
+    weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
     create_blank_layer(layer, image_ext, width, height, target_palette);
     weed_layer_unref(layer);
     return FALSE;
@@ -2655,7 +2678,7 @@ fail:
 
   boolean pixbuf_to_png_threaded(savethread_priv_t *saveargs) {
     return pixbuf_to_png(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-                         saveargs->width, saveargs->height, saveargs->error);
+                         saveargs->width, saveargs->height, &saveargs->error);
   }
 
 
@@ -2889,6 +2912,7 @@ fail:
             d_print("");
           } else {
             if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
+            else mainw->current_file = file_to_switch_to;
           }
         } else if (old_file != mainw->multitrack->render_file) {
           mt_clip_select(mainw->multitrack, TRUE);

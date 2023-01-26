@@ -428,6 +428,12 @@ typedef struct {
   void *data; // optional data, may be NULL
 } lives_funcdef_t;
 
+// denotes a static funcdef - do not free during runtime
+#define FDEF_FLAG_STATIC		(1ull << 0)
+
+// denotes a line inside a function (i.e maybe far from entry point)
+#define FDEF_FLAG_INSIDE		(1ull << 1)
+
 // when adding a hook callback, there are several methods
 // use a registered funcname, in this case the funcdef_t is looed up from funcname, and
 // we create a lpt using funcdef as a template, and including the function va_args
@@ -460,9 +466,6 @@ typedef struct {
   int nmatch_params;
   void *retloc; // pointer to a var to store return val in
 } lives_closure_t;
-
-#define LIVES_FDEF_STATIC		(1ull << 0)
-
 
 /* lives_closure_t *lives_hook_closure_new(lives_funcptr_t func, const char *fname, uint64_t flags, */
 /* 					int hook_type, void *data); */
@@ -552,11 +555,13 @@ typedef struct {
 #define DTYPE_NOADD 		(1ull << 2) // remove others only, no add
 #define DTYPE_HAVE_LOCK 	(1ull << 8) // mutex already locked
 
+void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
+
 // all dtypes
-lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, livespointer data, uint64_t dtype);
+lives_proc_thread_t lives_hook_add(lives_hook_stack_t **, int type, uint64_t flags, livespointer data, uint64_t dtype);
 
 // lpt like
-lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, lives_funcptr_t func,
+lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **, int type, uint64_t flags, lives_funcptr_t func,
                                         const char *fname, int return_type, const char *args_fmt, ...);
 
 // fixed cb type
@@ -589,31 +594,25 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, ui
 
 ////////////////////////////
 
-void lives_hook_remove(lives_hook_stack_t **, int type, lives_proc_thread_t lpt);
+void lives_hook_remove(lives_proc_thread_t lpt);
 
 void lives_hook_remove_by_data(lives_hook_stack_t **, int type, lives_funcptr_t func, void *data);
-
-void lives_hook_remove_by_lpt(lives_hook_stack_t **, int type, lives_proc_thread_t cblpt);
-
-#define lives_proc_thread_remove_hook(lpt, type, cb_lpt) \
-  lives_hook_remove(lives_proc_thread_get_hook_stacks(lpt), type, cb_lpt)
 
 #define lives_proc_thread_remove_hook_by_data(lpt, type, func, data)	\
   lives_hook_remove_by_data(lives_proc_thread_get_hook_stacks(lpt), type, (lives_funcptr_t)func, data)
 
-#define lives_proc_thread_remove_hook_by_lpt(lpt, type, cblpt)	\
-  lives_hook_remove_by_lpt(lives_proc_thread_get_hook_stacks(lpt), type, cblpt)
-
 void lives_proc_thread_remove_nullify(lives_proc_thread_t lpt, void **ptr);
 
-void lives_hooks_clear(lives_hook_stack_t **hooks, int type);
-void lives_hooks_clear_all(lives_hook_stack_t **hooks, int ntypes);
+void flush_cb_list(lives_proc_thread_t self);
 
-boolean lives_hooks_trigger(lives_hook_stack_t **hooks, int type);
+void lives_hooks_clear(lives_hook_stack_t **, int type);
+void lives_hooks_clear_all(lives_hook_stack_t **, int ntypes);
+
+boolean lives_hooks_trigger(lives_hook_stack_t **, int type);
 
 boolean lives_proc_thread_trigger_hooks(lives_proc_thread_t, int type);
 
-void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
+void lives_hooks_trigger_async(lives_hook_stack_t **, int type);
 
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_hook_stack_t **hstacks, int type, hook_funcptr_t finfunc,
     void *findata);
@@ -634,8 +633,21 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 uint32_t return_type,  const char *args_fmt, const char *file, int line,
                                 void *data);
 
+// can be used to link a file / line as being "inside" a function
+#define create_funcdef_here(func) create_funcdef(#func, func, 0, NULL, _FILE_REF_, -(_LINE_REF_), NULL)
+
+// for future use - we can "steal" the funcdef from a proc_thread, stor it in a hash store
+// then later do things like create a funcinst from a funcdef and params, then create a proc_thread from the funcinst
+// so it then becomes like a template for factory producing proc_threads
+// or, we could make a funcinst (snapshot) from a proc_thread, then use that to produce clones with the same param values
+// as well as file / line ref of function (if known)
+lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thread_t);
+
 void free_funcdef(lives_funcdef_t *);
 
+
+// a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters
+// plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt
 lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...);
 void free_funcinst(lives_funcinst_t *);
 

@@ -1085,12 +1085,10 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   if (intimg) {
     saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
-                       layer_to_png_threaded, WEED_SEED_BOOLEAN, NULL,
-                       "v", saveargs);
+                       layer_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   } else {
     saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
-                       pixbuf_to_png_threaded, WEED_SEED_BOOLEAN, NULL,
-                       "v", saveargs);
+                       pixbuf_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   }
 
   for (i = sframe; i <= eframe; i++) {

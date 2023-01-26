@@ -751,7 +751,7 @@ typedef struct {
 } lives_permmgr_t;
 
 /// helper proc_threads
-#define N_HLP_PROCTHREADS 128
+#define N_HLP_PROCTHREADS 256
 #define PT_DRAWTL 1
 #define PT_TRANSREND 2
 #define PT_DLG_SPINNER 3

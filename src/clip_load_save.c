@@ -2601,11 +2601,12 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         break;
       }
 
-      /* if (is_scrap || is_ascrap) { */
-      /*   pthread_mutex_lock(&mainw->clip_list_mutex); */
-      /*   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file)); */
-      /*   pthread_mutex_unlock(&mainw->clip_list_mutex); */
-      /* } */
+      if (is_scrap || is_ascrap) {
+        // need this for rewrite recovery
+        pthread_mutex_lock(&mainw->clip_list_mutex);
+        mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+        pthread_mutex_unlock(&mainw->clip_list_mutex);
+      }
 
       if (is_scrap) {
         mainw->scrap_file = mainw->current_file;
@@ -2797,6 +2798,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   ngoodclips = lives_list_length(mainw->cliplist);
   if (mainw->scrap_file != -1) ngoodclips--;
+  if (mainw->ascrap_file != -1) ngoodclips--;
   if (!ngoodclips) {
     d_print(_("No clips were recovered.\n"));
   } else
@@ -3191,7 +3193,7 @@ cleanse:
 
   if (THREADVAR(com_failed) && prefs->crash_recovery && !no_recover) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, rewrite_recovery_lpt);
+    lives_hook_remove(rewrite_recovery_lpt);
     return FALSE;
   }
 
@@ -3242,8 +3244,7 @@ cleanse:
 
   if (prefs->crash_recovery) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK,
-                      rewrite_recovery_lpt);
+    lives_hook_remove(rewrite_recovery_lpt);
   }
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {

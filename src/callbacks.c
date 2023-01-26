@@ -9543,17 +9543,6 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
 }
 
 
-/* boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) { */
-/*   boolean bret; */
-/*   BG_THREADVAR(hook_match_nparams) = 1; */
-/*   BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCK | HOOK_CB_PRIORITY; */
-/*   main_thread_execute(_all_config, WEED_SEED_BOOLEAN, &bret, "vvv", widget, event, ppsurf); */
-/*   BG_THREADVAR(hook_hints) = 0; */
-/*   BG_THREADVAR(hook_match_nparams) = 0; */
-/*   return bret; */
-/* } */
-
-
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   if (!mainw->configured) {
     mainw->configured = TRUE;

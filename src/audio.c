@@ -2556,7 +2556,7 @@ void jack_rec_audio_end(boolean close_fd) {
     lives_object_instance_t *aplayer = NULL;
     if (mainw->jackd_read) aplayer = mainw->jackd_read->inst;
     if (aplayer)
-      lives_hook_remove(aplayer->hook_stacks, DATA_READY_HOOK, write_aud_lpt);
+      lives_hook_remove(write_aud_lpt);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2697,7 +2697,7 @@ void pulse_rec_audio_end(boolean close_fd) {
     lives_object_instance_t *aplayer = NULL;
     if (mainw->pulsed_read) aplayer = mainw->pulsed_read->inst;
     if (aplayer)
-      lives_hook_remove(aplayer->hook_stacks, DATA_READY_HOOK, write_aud_lpt);
+      lives_hook_remove(write_aud_lpt);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2920,9 +2920,8 @@ void audio_analyser_start(int source) {
 
 void audio_analyser_end(int source) {
   if (source == AUDIO_SRC_EXT) {
-    lives_object_instance_t *aplayer = get_aplayer_instance(source);
     if (aud_ext_analyse_dets) {
-      lives_hook_remove(aplayer->hook_stacks, DATA_READY_HOOK, ana_lpt);
+      lives_hook_remove(ana_lpt);
       if (aud_ext_analyse_dets->bad_aud_file) lives_free(aud_ext_analyse_dets->bad_aud_file);
       lives_free(aud_ext_analyse_dets);
       aud_ext_analyse_dets = NULL;
@@ -4788,9 +4787,6 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     // try convert S16 -> float
     if (abuf->buffer16) {
       size_t sampstart = abuf->start_sample;
-      //size_t samps = abuf->samples_filled;
-      size_t write_pos;
-      //abuf->samples_filled = 0;
       if (!abuf->in_interleaf) samps /= abuf->in_achans;
       if (!abuf->bufferf) {
         abuf->bufferf = (float **)lives_calloc(abuf->out_achans, sizeof(float *));

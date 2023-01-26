@@ -3368,6 +3368,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       next_tc = get_event_timecode(next_frame_event);
       // drop frame if it is too far behind
       if (LIVES_IS_PLAYING && next_tc <= curr_tc) {
+        g_print("Times %ld and %ld\n", next_tc, curr_tc);
         if (prefs->pbq_adaptive) dframes++;
         if (!prefs->noframedrop) break;
       }
@@ -3502,6 +3503,9 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
   case WEED_EVENT_TYPE_FILTER_INIT:
     // effect init
     //  bind the weed_fx to next free key/0
+
+    // skip if deint_tc < curr_tc && !noframedrop
+
     filter_name = weed_get_string_value(next_event, WEED_LEAF_FILTER, NULL);
     idx = weed_get_idx_for_hashname(filter_name, TRUE);
     lives_free(filter_name);
@@ -3512,6 +3516,16 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       if (!process_audio && is_pure_audio(filter, FALSE)) {
         //if (weed_plant_has_leaf(next_event, WEED_LEAF_HOST_TAG)) weed_leaf_delete(next_event, WEED_LEAF_HOST_TAG);
         break; // audio effects are processed in the audio renderer
+      }
+
+      if (!process_audio) {
+        weed_event_t *deinit_event = weed_get_plantptr_value(next_event, WEED_LEAF_DEINIT_EVENT, NULL);
+        next_tc = get_event_timecode(deinit_event);
+        if (next_tc < curr_tc) {
+          if (weed_plant_has_leaf(next_event, WEED_LEAF_HOST_TAG))
+            weed_leaf_delete(next_event, WEED_LEAF_HOST_TAG);
+          break;
+        }
       }
 
       if (process_audio && !is_pure_audio(filter, FALSE)) break;
@@ -4177,16 +4191,19 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               if (mainw->transrend_layer) {
 
                 // transcoder processed frame, now we can prep the next
+
                 g_print("wait for transcoder proc\n");
-                lives_nanosleep_while_false(mainw->transrend_waiting
-                                            || lives_proc_thread_check_states(mainw->transrend_proc,
-                                                THRD_STATE_INVALID)
-                                            || lives_proc_thread_check_finished(mainw->transrend_proc));
+                sync_point("wait for transcoder proc");
+
                 if (lives_proc_thread_check_finished(mainw->transrend_proc)
                     || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                   return LIVES_RENDER_ERROR;
+
+                lives_nanosleep_while_false(lives_proc_thread_is_paused(mainw->transrend_proc));
+
                 mainw->transrend_waiting = FALSE;
-                lives_proc_thread_sync_continue(mainw->transrend_proc);
+                lives_proc_thread_sync_ready(mainw->transrend_proc);
+
                 g_print("trans processed\n");
                 if (mainw->transrend_layer != mainw->scrap_layer)
                   weed_layer_unref((weed_layer_t *)mainw->transrend_layer);
@@ -4227,18 +4244,20 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   lives_free(texto);
                 }
               }
+
               g_print("set layer and wait for syncpoint\n");
               mainw->transrend_layer = layer;
-              // transcoder will wait for the next frame
-              lives_nanosleep_while_false(mainw->transrend_waiting
-                                          || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID)
-                                          || lives_proc_thread_check_finished(mainw->transrend_proc));
+              sync_point("set layer and wait for syncpoint");
+
               if (lives_proc_thread_check_finished(mainw->transrend_proc)
                   || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                 return LIVES_RENDER_ERROR;
 
+              // transcoder will be waiting, so send sync_ready
+
               mainw->transrend_waiting = FALSE;
-              lives_proc_thread_sync_continue(mainw->transrend_proc);
+
+              lives_proc_thread_sync_ready(mainw->transrend_proc);
               g_print("sent syn\n");
 
               // sig_progress...
@@ -5743,7 +5762,7 @@ static boolean _deal_with_render_choice(void) {
 
   char *esave_file = NULL, *asave_file = NULL;
 
-  boolean new_clip = FALSE, bret;
+  boolean new_clip = FALSE;
 
   int dh, dw, dar, das, dac, dse;
   frames_t oplay_start = 1;

@@ -2718,24 +2718,23 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     }
 
     ////////////
-    /* mainw->crash_possible = 16; */
-    /* defer_sigint_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0, */
-    /*                                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible)); */
+    mainw->crash_possible = 16;
+    defer_sigint_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0,
+                                         defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
-    /* set_signal_handlers((SignalHandlerPointer)defer_sigint); */
+    set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
-    /* /// may crash */
-    /* mainw->err_funcdef = ____FUNC_ENTRY____(try_decoder_plugins, "v", "svv"); */
+    /// may crash
+    mainw->err_funcdef = create_funcdef_here(try_decoder_plugins);
 
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
     ////
 
-    /* lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_sigint_lpt); */
+    lives_hook_remove(defer_sigint_lpt);
 
-    /* set_signal_handlers((SignalHandlerPointer)catch_sigint); */
-    /* mainw->crash_possible = 0; */
+    set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    mainw->crash_possible = 0;
 
-    //    ____FUNC_EXIT____
     ////////////////
 
     if (fake_cdata) {
@@ -2857,10 +2856,11 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *
     }
   }
 
-  // check each decoder turn, use a background thread so we can animate the progress bar
+  // check each decoder in turn, use a background thread so we can animate the progress bar
+  // TODO - use auto_dialog
   info = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                   (lives_funcptr_t)try_decoder_plugins,
-                                  WEED_SEED_VOIDPTR, "sVV", (!fake_cdata || !use_fake_cdata) ? sfile->file_name
+                                  WEED_SEED_VOIDPTR, "svv", (!fake_cdata || !use_fake_cdata) ? sfile->file_name
                                   : NULL, xdisabled, use_fake_cdata ? fake_cdata : NULL);
 
   while (!lives_proc_thread_check_finished(info)) {

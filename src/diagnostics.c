@@ -649,6 +649,7 @@ int run_weed_startup_tests(void) {
   void *ptr;;//, *ptr2;
   void *ptra[4];
   char *s[4];
+  char *text;
   int n;
   weed_size_t nleaves;
 
@@ -1147,9 +1148,12 @@ int run_weed_startup_tests(void) {
   fprintf(stderr, "set leaf Test2 immutable, returned %d\n", werr);
   werr_expl(werr);
 
-  werr = weed_set_string_value(plant, "Test2", "hello");
+  text = strdup("hello");
+
+  werr = _weed_leaf_set(plant, "Test2", WEED_SEED_STRING, 1, &text);
   fprintf(stderr, "setting value returned %d\n", werr);
   werr_expl(werr);
+  free(text);
 
   str = weed_get_string_value(plant, "Test2", &werr);
 
@@ -1277,6 +1281,23 @@ int run_weed_startup_tests(void) {
     n++;
   }
   free(keys);
+
+
+  werr = weed_set_voidptr_value(plant, "nulldel",  NULL);
+  fprintf(stderr, "Xset null void * returned %d\n", werr);
+  werr_expl(werr);
+
+  werr = weed_leaf_delete(plant, "nulldel");
+  fprintf(stderr, "delete null void * returned %d\n", werr);
+  werr_expl(werr);
+
+  werr = weed_leaf_delete(plant, "nulldel");
+  fprintf(stderr, "delete already void * returned %d\n", werr);
+  werr_expl(werr);
+
+  werr = weed_leaf_delete(plant, "foo");
+  fprintf(stderr, "delete non-existent leaf returned %d\n", werr);
+  werr_expl(werr);
 
   werr = weed_set_voidptr_value(plant, "nullptr",  NULL);
   fprintf(stderr, "set null void * returned %d\n", werr);
@@ -1461,6 +1482,7 @@ int run_weed_startup_tests(void) {
 
   show_timer_info();
 
+#ifdef CONCURRENCY_TST
   THREADVAR(timerinfo) = lives_get_current_ticks();
   fprintf(stderr, "test random reads, writes and deletes\n");
   plant = _weed_plant_new(123);
@@ -1494,17 +1516,8 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
   _weed_plant_free(plant);
+#endif
 
-  /// will crash on freed plant
-
-  /* keys = weed_plant_list_leaves(plant, &nleaves); */
-  /* n = 0; */
-  /* while (keys[n] != NULL) { */
-  /*   fprintf(stderr, "key %d is %s\n", n, keys[n]); */
-  /*   free(keys[n]); */
-  /*   n++; */
-  /* } */
-  /* free(keys); */
 
 #define BPLANT_LEAVES 100000
 #define CYCLES 1000

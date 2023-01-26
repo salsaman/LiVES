@@ -693,7 +693,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   update_rect.height = rheight;
 
   if (!LIVES_IS_XWINDOW(xwin)) return;
-  gdk_window_invalidate_rect(xwin, &update_rect, FALSE);
+  gdk_window_invalidate_rect(xwin, (GdkRectangle *)&update_rect, FALSE);
 }
 
 

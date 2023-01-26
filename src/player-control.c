@@ -400,6 +400,8 @@ static void post_playback(void) {
     }
   }
 
+  if (!mainw->multitrack) redraw_timeline(mainw->current_file);
+
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
     sensitize();
   }
@@ -452,6 +454,7 @@ static void post_playback(void) {
   }
 
   player_sensitize();
+  g_print("POST DONE\n");
 }
 
 
@@ -1586,18 +1589,15 @@ void play_file(void) {
     }
   }
 
-  if (!mainw->multitrack) redraw_timeline(mainw->current_file);
-
   // allow the main thread to exit from its blocking loop, it will resume normal operations
+  lives_nanosleep_while_true(mainw->do_ctx_update);
   set_ign_idlefuncs(FALSE);
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  mainw->debug = TRUE;
   main_thread_execute_void(post_playback, 0);
-  mainw->debug = TRUE;
   BG_THREADVAR(hook_hints) = 0;
 
   if (lazy_start) {
@@ -1622,9 +1622,9 @@ void play_file(void) {
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record || mainw->record_paused) {
+    mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
     deal_with_render_choice(FALSE);
   }
-
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
 
   mainw->ignore_screen_size = FALSE;

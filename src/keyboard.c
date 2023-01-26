@@ -452,7 +452,7 @@ boolean fullscreen_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
                                HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
                                on_sepwin_pressed, NULL);
   else on_sepwin_pressed(NULL, NULL);
@@ -511,7 +511,11 @@ boolean loop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t k
 
 boolean dblsize_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data) {
-  on_double_size_pressed(NULL, NULL);
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               on_double_size_pressed, NULL);
+  else on_double_size_pressed(NULL, NULL);
   return TRUE;
 }
 

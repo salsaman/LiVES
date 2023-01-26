@@ -173,8 +173,8 @@ uint64_t gen_unique_id(void) {
 
 
 static void check_random(void) {
-  uint64_t rnum = 0, xrnum, last_rnum = 0;
-  uint64_t inrbits, maxbits = 0, rbits;
+  uint64_t rnum = 0, last_rnum = 0;
+  uint64_t inrbits, maxbits = 0;
   uint64_t tdifs = 0;
   char *tmp;
   int i;
@@ -1909,7 +1909,7 @@ void rec_desk(void *args) {
   // experimental
   // TODO - start disk space monitor
   savethread_priv_t *saveargs = NULL;
-  lives_thread_t *saver_thread = NULL;
+  lives_proc_thread_t saver_lpt = NULL;
   lives_painter_surface_t *csurf = NULL;
   lives_proc_thread_t lpt = THREADVAR(proc_thread);
   rec_args *recargs = (rec_args *)args;
@@ -1981,8 +1981,10 @@ void rec_desk(void *args) {
 
     fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
 
-    if (saver_thread) {
-      lives_thread_join(saver_thread, NULL);
+    // TODO - use idle proc_thread
+    if (saver_lpt) {
+      lives_proc_thread_join(saver_lpt);
+      saver_lpt = NULL;
       if (saveargs->error
 	  || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
 	      || (lpt && lives_proc_thread_get_cancel_requested(lpt)))) {
@@ -2044,7 +2046,8 @@ void rec_desk(void *args) {
     if (saveargs->fname) lives_free(saveargs->fname);
     saveargs->fname = imname;
 
-    lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, layer_to_png_threaded, saveargs);
+    saver_lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, layer_to_png_threaded,
+					     WEED_SEED_BOOLEAN, NULL, "v", saveargs);
 
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
@@ -2063,7 +2066,7 @@ void rec_desk(void *args) {
   mainw->ext_layer = NULL;
 #endif
 
-  if (saver_thread) lives_thread_join(saver_thread, NULL);
+  if (saver_lpt) lives_proc_thread_join(saver_lpt);
 
   if (saveargs) {
     if (saveargs->layer) weed_layer_unref(saveargs->layer);
@@ -2196,7 +2199,7 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
-  lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, enable_ss_lpt);
+  lives_hook_remove(enable_ss_lpt);
 
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -2478,7 +2481,7 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
-    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, show_dpanel_lpt);
+    lives_hook_remove(show_dpanel_lpt);
   }
 #endif
   return ret;
@@ -2872,12 +2875,18 @@ void get_monitors(boolean reset) {
 
   widget_opts_rescale(prefs->screen_scale);
 
-  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT >= MIN_MSG_AREA_SCRNHEIGHT) {
+  if (prefs->show_dev_opts) g_print("Can show msg_area if %d >= %d - calculated as %d + %d - %f; result is ",
+				    GUI_SCREEN_HEIGHT, (int)MIN_MSG_AREA_SCRNHEIGHT, DEF_FRAME_VSIZE_GUI, CE_TIMELINE_VSPACE,
+				    MIN_MSGBAR_HEIGHT);
+
+  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT > (int)MIN_MSG_AREA_SCRNHEIGHT) {
     capable->can_show_msg_area = TRUE;
     if (future_prefs->show_msg_area) prefs->show_msg_area = TRUE;
+    if (prefs->show_dev_opts) g_print("YES\n");
   } else {
     prefs->show_msg_area = FALSE;
     capable->can_show_msg_area = FALSE;
+    if (prefs->show_dev_opts) g_print("NO\n");
   }
 }
 

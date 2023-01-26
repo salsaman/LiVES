@@ -115,7 +115,6 @@ typedef struct {
   unsigned long funcid;
   char *detsig;
   lives_proc_thread_t proc;
-  lives_proc_thread_t compl_cb;
   lives_alarm_t alarm_handle;
   int depth; // governor_loop depth when added
   volatile int state;
@@ -127,8 +126,6 @@ typedef struct {
 #define SIGDATA_STATE_POSTPONED	4
 #define SIGDATA_STATE_FINISHED	5
 #define SIGDATA_STATE_DESTROYED 6
-
-lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 
 #define LIVES_LEAF_THREADFUNC "tfunction"
 #define LIVES_LEAF_PTHREAD_SELF "pthread_self"
@@ -206,30 +203,35 @@ void *lives_thread_data_create(void *pidx);
 // lives_proc_thread state flags
 #define THRD_STATE_NONE		0
 
-#define THRD_STATE_UNQUEUED 	(1ull << 0) // intial state for all proc_threads
-#define THRD_STATE_DEFERRED 	(1ull << 3) // will be run later due to resource limitations
-#define THRD_STATE_QUEUED 	(1ull << 2) // queued for execution (eithr in worker ppol, or as fg reequst)
-#define THRD_STATE_PREPARING 	(1ull << 4) // has been assigned from queue, but not yet running
-#define THRD_STATE_RUNNING 	(1ull << 5) // thread is processing
+// 'transient' states (lower set)
 
-// final states
+#define THRD_STATE_UNQUEUED 	(1ull << 0) // intial state for all proc_threads
+#define THRD_STATE_DEFERRED 	(1ull << 1) // will be run later due to resource limitations
+#define THRD_STATE_QUEUED 	(1ull << 2) // queued for execution (eithr in worker ppol, or as fg reequst)
+#define THRD_STATE_PREPARING 	(1ull << 3) // has been assigned from queue, but not yet running
+#define THRD_STATE_RUNNING 	(1ull << 4) // thread is processing
+
+// (semi) final states
 // for IDLEFUNCS, combined with unqueued implies the proc_thread can be requued
 // combined instead with paused means the thread can be resumed rather than requeud
-#define THRD_STATE_IDLING 	(1ull << 1)
+// may be combined with PAUSED, and always combined with UNQUEUED
+#define THRD_STATE_IDLING 	(1ull << 5)
 
-#define THRD_STATE_COMPLETED 	(1ull << 8) // processing finished
+// fixed states
+// completed is combined with FINISHED after 'completed' hook cbs have all returned
+#define THRD_STATE_COMPLETED 	(1ull << 8) // processing complete, not idling
 #define THRD_STATE_DESTROYING 	(1ull << 9) // proc_thread will be destroyed as soon as all refs are removed
 
+// permanent states
 #define THRD_STATE_FINISHED 	(1ull << 10) // processing finished and all hooks have been triggered
 #define THRD_STATE_DESTROYED 	(1ull << 11) // proc_thread is about to be freed; must not be reffed or unreffed
-
-// permanet state
-#define THRD_STATE_STACKED 	(1ull << 14) // is held in a hook stack
+#define THRD_STATE_STACKED 	(1ull << 12) // is held in a hook stack
 
 // destroyed is also a final state, but it should not be checked for, the correct way is to add a callback
 // to the DESTRUCTION_HOOK. If the state is IDLING, the proc_thread mya be requeued
 #define THRD_FINAL_STATES (THRD_STATE_IDLING | THRD_STATE_FINISHED)
 
+// this state only exists while running completed hook cbs
 #define THRD_STATE_WILL_DESTROY (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
 
 // temporary states (with PREPARING or RUNNING)
@@ -242,16 +244,18 @@ void *lives_thread_data_create(void *pidx);
 // requested states
 // request to pause - ignored for non pauseable threads
 #define THRD_STATE_PAUSE_REQUESTED 	(1ull << 19)
-// paused by request
-#define THRD_STATE_PAUSED 	(1ull << 20)
-// request to pause - ignored for non pauseable threads
+// paused by request, or due to idling
+#define THRD_STATE_PAUSED 		(1ull << 20)
+// request to pause - ignored for non pauseable threads (unless they are paused / idling)
 #define THRD_STATE_RESUME_REQUESTED 	(1ull << 21)
 // request to pause - ignored for non pauseable threads
 #define THRD_STATE_CANCEL_REQUESTED 	(1ull << 22)
-// paused by request
+
+// cancelled by request, this is not a final state until acompanied by completed
 #define THRD_STATE_CANCELLED 	(1ull << 32)
 
-#define THRD_TRANSIENT_STATES  0X7F003F
+// bits 0,1,2,3,4,5 and 16,17,18,19,20,21,22
+#define THRD_TRANSIENT_STATES  0X007F003F
 
 // for proc_threads created with attr IDLEFUNC: after processing and returning TRUE
 // the proc_thread will be returned in state UNQUEUED | IDLING

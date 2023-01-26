@@ -9053,10 +9053,11 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   if (is_bg) {
-    mainw->pre_src_file = mainw->current_file;
     if (mainw->noswitch) {
-      mainw->new_clip = mainw->blend_file;
+      mainw->close_this_clip = mainw->blend_file;
+      // mainw->new_blend_file = -1;
     } else {
+      mainw->pre_src_file = mainw->current_file;
       mainw->current_file = mainw->blend_file;
       if (mainw->blend_file != mainw->new_blend_file) {
         track_decoder_free(1, mainw->blend_file);
@@ -9066,7 +9067,6 @@ void weed_generator_end(weed_plant_t *inst) {
       mainw->current_file = current_file;
       mainw->pre_src_file = pre_src_file;
       mainw->whentostop = wts;
-
     }
   } else {
     // close generator file and switch to original file if possible

@@ -851,8 +851,8 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->xdelete);
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
 
-  lives_widget_add_accelerator(mainw->xdelete, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_d, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
+  /* lives_widget_add_accelerator(mainw->xdelete, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
+  /*                              LIVES_KEY_d, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE); */
 
   mainw->trim_video = lives_standard_image_menu_item_new_with_label(_("Trim to Selection"));
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->trim_video);
@@ -1094,8 +1094,8 @@ void create_LiVES(void) {
   mainw->dsize = lives_standard_check_menu_item_new_with_label(_("_Double Size"), FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->dsize);
 
-  lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_d, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
+  /* lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
+  /*                              LIVES_KEY_d, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
 
   mainw->sepwin = lives_standard_check_menu_item_new_with_label(_("Play in _Separate Window"), FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->sepwin);
@@ -3325,8 +3325,6 @@ void create_LiVES(void) {
   lives_widget_set_can_focus(mainw->spinbutton_start, FALSE);
   lives_widget_set_can_focus(mainw->spinbutton_end, FALSE);
 
-  detach_accels(FALSE);
-
   if (RFX_LOADED) {
     if (mainw->ldg_menuitem) {
       lives_widget_destroy(mainw->ldg_menuitem);
@@ -3552,6 +3550,7 @@ void set_interactive(boolean interactive) {
   if (mainw->sense_state & LIVES_SENSE_STATE_PROC_INSENSITIZED) {
     procw_desensitize();
   }
+  detach_accels(FALSE);
 }
 
 
@@ -3617,9 +3616,9 @@ void detach_accels(boolean connect) {
       /* lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
       /*                              LIVES_KEY_s, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
 
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), dblsize_closure);
-      lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_d, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
+      //lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), dblsize_closure);
+      /* lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
+      /*                              LIVES_KEY_d, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
 
       lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fade_closure);
       lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -3668,7 +3667,7 @@ void detach_accels(boolean connect) {
         lives_widget_remove_accelerator(mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (LiVESXModifierType)0);
         lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_z, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                   (mute_audio_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(mute_audio_callback), NULL, NULL)));
-        lives_widget_remove_accelerator(mainw->dsize, mainw->accel_group, LIVES_KEY_d, (LiVESXModifierType)0);
+        //lives_widget_remove_accelerator(mainw->dsize, mainw->accel_group, LIVES_KEY_d, (LiVESXModifierType)0);
         lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_d, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                   (dblsize_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(dblsize_callback), NULL, NULL)));
         lives_widget_remove_accelerator(mainw->fade, mainw->accel_group, LIVES_KEY_b, (LiVESXModifierType)0);
@@ -3829,8 +3828,6 @@ void fullscreen_internal(void) {
 
     if (prefs->open_maximised) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      /* lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET); */
-      /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); */
     }
 
     // try to get exact inner size of the main window

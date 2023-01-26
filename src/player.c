@@ -20,7 +20,7 @@
 
 LIVES_GLOBAL_INLINE int lives_set_status(int status) {
   mainw->status |= status;
-  return status;
+  return mainw->status;
 }
 
 LIVES_GLOBAL_INLINE int lives_unset_status(int status) {
@@ -327,17 +327,17 @@ static char *fname_next = NULL, *info_file = NULL;
 static int opwidth = 0, opheight = 0;
 static const char *img_ext = NULL;
 static boolean unlock_trcount = FALSE;
-static boolean rndr = FALSE;
 static weed_layer_t **layers = NULL;
 
 
-static void map_sources_to_tracks(void) {
+static void map_sources_to_tracks(boolean rndr) {
   int oclip, nclip, i;
 
   if (!mainw->multitrack) {
     lives_freep((void **)&mainw->clip_index);
     lives_freep((void **)&mainw->frame_index);
-    if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) {
+    if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)
+        && (mainw->blend_file != mainw->playing_file || prefs->tr_self)) {
       mainw->num_tracks = 2;
       mainw->clip_index = (int *)lives_calloc(2, sizint);
       mainw->frame_index = (frames64_t *)lives_calloc(2, sizeof(frames64_t));
@@ -448,6 +448,7 @@ static void map_sources_to_tracks(void) {
 static int render_frame(frames_t frame) {
   weed_timecode_t tc = 0;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
+  boolean rndr = FALSE;
   int bad_frame_count = 0;
   int retval;
 
@@ -509,7 +510,7 @@ static int render_frame(frames_t frame) {
 
 recheck:
 
-    map_sources_to_tracks();
+    map_sources_to_tracks(rndr);
 
     if (rndr) {
       layers[mainw->num_tracks] = NULL;
@@ -568,8 +569,8 @@ recheck:
           }
         } else {
           if ((mainw->rte || (mainw->is_rendering && !mainw->event_list))
-              && (mainw->current_file != mainw->scrap_file) && !mainw->multitrack
-              && IS_VALID_CLIP(mainw->blend_file)) {
+              && (mainw->current_file != mainw->scrap_file) && (mainw->blend_file != mainw->playing_file
+                  || prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) {
             /// will set mainw->blend_layer
             if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n",
                                                      lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -1790,7 +1791,6 @@ if (success && mainw->frame_layer) {
 }
 
 old_frame_layer = mainw->frame_layer;
-mainw->debug_ptr = mainw->frame_layer;
 
 // TODO - set mainw->frame_layer = NULL
 return old_frame_layer;
@@ -2478,21 +2478,6 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 #define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 16
 
-static void widget_ct_upd(void) {
-  while (g_main_context_iteration(NULL, FALSE));
-}
-
-// player will create this as
-static boolean update_gui(void) {
-  //mainw->debug = TRUE;
-  mainw->gui_much_events = TRUE;
-  mainw->do_ctx_update = TRUE;
-  lives_nanosleep_while_true(mainw->do_ctx_update);
-  mainw->gui_much_events = FALSE;
-  //mainw->debug = FALSE;
-  return TRUE;
-}
-
 int process_one(boolean visible) {
   // INTERNAL PLAYER
   // here we handle playback, as well as the "processing dialog"
@@ -2514,7 +2499,7 @@ int process_one(boolean visible) {
   /*   static off_t last_aplay_offset = 0; */
   /* #endif */
   volatile float *cpuload;
-  static lives_proc_thread_t gui_lpt = NULL;
+  //static lives_proc_thread_t gui_lpt = NULL;
   //double cpu_pressure;
   lives_clip_t *sfile = cfile;
   _vid_playback_plugin *old_vpp;
@@ -2591,8 +2576,8 @@ int process_one(boolean visible) {
 
   // here we create and "idlefunc" proc_thread, the proc_thread is queued, runs once, and then can be
   // triggered later simp[y by requeeuing it
-  if (!gui_lpt) gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_IDLE_PAUSE
-                            | LIVES_THRDATTR_START_UNQUEUED, update_gui, WEED_SEED_BOOLEAN, "", NULL);
+  /* if (!gui_lpt) gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_IDLE_PAUSE */
+  /*                           | LIVES_THRDATTR_START_UNQUEUED, update_gui, WEED_SEED_BOOLEAN, "", NULL); */
 
   // time is obtained as follows:
   // -  if there is an external transport or clock active, we take our time from that
@@ -2758,8 +2743,10 @@ switch_point:
         retval = ONE_MILLION + mainw->cancelled;
         goto err_end;
       }
-      if (mainw->new_clip == mainw->playing_file || !IS_VALID_CLIP(mainw->new_clip))
+      if (mainw->new_clip == mainw->playing_file) {
+        mainw->current_file = mainw->playing_file;
         mainw->new_clip = -1;
+      }
       mainw->close_this_clip = -1;
     }
   }
@@ -2833,6 +2820,8 @@ switch_point:
       mainw->new_clip = close_current_file(mainw->new_clip);
       mainw->can_switch_clips = FALSE;
     }
+
+    lives_nanosleep_while_true(mainw->do_ctx_update);
 
     mainw->can_switch_clips = TRUE;
     do_quick_switch(mainw->new_clip);
@@ -2938,7 +2927,7 @@ switch_point:
 
   // playing back an event_list
   // here we need to add mainw->offsetticks, to get the correct position when playing back in multitrack
-  if (!mainw->proc_ptr && sfile->next_event) {
+  if (!mainw->proc_ptr && cfile->next_event) {
     // playing an event_list
     if (0) {
       // TODO -retest
@@ -2963,40 +2952,19 @@ switch_point:
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
           weed_event_t *next_event;
-          next_event = process_events(sfile->next_event, FALSE, currticks);
-          // need to get this agains, as process_events can switch the current clip
-          sfile = RETURN_VALID_CLIP(mainw->current_file);
-          sfile->next_event = next_event;
-          if (!sfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
+          next_event = process_events(cfile->next_event, FALSE, currticks);
+          // need to get this again, as process_events can switch the current clip
+          cfile->next_event = next_event;
+          if (!cfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
         }
       }
     }
 
-    if (!lives_proc_thread_is_unqueued(gui_lpt)) {
-      lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
-    }
-
-    set_ign_idlefuncs(FALSE);
-    // events like fullscreen on / off are not acted on directly, instead these are stacked
-    // for execution at this point. The callbacks are triggered and will pass requests to the main
-    // thread. We must allow idlefunc(s) to run during this time
+    mainw->gui_much_events = TRUE;
+    mainw->do_ctx_update = TRUE;
     lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
-    if (!lives_proc_thread_is_idling(gui_lpt)) {
-      lives_proc_thread_queue(gui_lpt, 0);
-    } else {
-      lives_proc_thread_request_resume(gui_lpt);
-    }
-    lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
-    set_ign_idlefuncs(TRUE);
 
     if (mainw->cancelled == CANCEL_NONE) return 0;
-
-    if (!lives_proc_thread_is_unqueued(gui_lpt)) {
-      lives_proc_thread_request_cancel(gui_lpt, FALSE);
-      lives_proc_thread_join_boolean(gui_lpt);
-    }
-    lives_proc_thread_unref(gui_lpt);
-    gui_lpt = NULL;
 
     retval = mainw->cancelled;
     goto err_end;
@@ -3888,12 +3856,14 @@ proc_dialog:
       /* if (!lives_proc_thread_is_unqueued(gui_lpt)) { */
       /* 	lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt)); */
       /* } */
-      /* set_ign_idlefuncs(FALSE); */
-      /* // events like fullscreen on / off are not acted on directly, instead these are stacked */
-      /* // for execution at this point. The callbacks are triggered and will pass requests to the main */
-      /* // thread. We must allow idlefunc(s) to run during this time */
-      /* lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK); */
-      /* //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt)); */
+
+      // events like fullscreen on / off are not acted on directly, instead these are stacked
+      // for execution at this point. The callbacks are triggered and will pass requests to the main
+      // thread. We must allow idlefunc(s) to run during this time
+      mainw->gui_much_events = TRUE;
+      mainw->do_ctx_update = TRUE;
+      lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
+      //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt));
 
       /* if (!lives_proc_thread_is_idling(gui_lpt)) { */
       /* 	lives_proc_thread_queue(gui_lpt, 0); */
@@ -3904,7 +3874,6 @@ proc_dialog:
       /* 	lives_proc_thread_request_resume(gui_lpt); */
       /* } */
       /* lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK); */
-      /* set_ign_idlefuncs(TRUE); */
 
       // check for something ???
       if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
@@ -3931,14 +3900,14 @@ proc_dialog:
   ////
 
 err_end:
-  if (retval) {
-    if (gui_lpt) {
-      lives_proc_thread_request_cancel(gui_lpt, FALSE);
-      lives_proc_thread_join_boolean(gui_lpt);
-      lives_proc_thread_unref(gui_lpt);
-      gui_lpt = NULL;
-    }
-  }
+  /* if (retval) { */
+  /*   if (gui_lpt) { */
+  /*     lives_proc_thread_request_cancel(gui_lpt, FALSE); */
+  /*     lives_proc_thread_join_boolean(gui_lpt); */
+  /*     lives_proc_thread_unref(gui_lpt); */
+  /*     gui_lpt = NULL; */
+  /*   } */
+  /* } */
   return retval;
 }
 

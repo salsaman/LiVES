@@ -2058,7 +2058,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   double time_rem, last_time_rem = 10000000.;
   lives_alarm_t alarm_handle = 0;
 
-  if (is_async) g_main_context_acquire(g_main_context_default());
+  //if (is_async) g_main_context_acquire(g_main_context_default());
 
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
@@ -2140,9 +2140,13 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
         if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
         if (alarm_handle > 0) {
           ticks_t tl;
+          int count = 0;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-            lives_widget_process_updates(mainw->proc_ptr->processing);
+            if (count++ == 100) {
+              count = 0;
+              lives_widget_process_updates(mainw->proc_ptr->processing);
+            }
             // need to recheck after calling process_updates
             if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
             lives_usleep(prefs->sleep_time);
@@ -2152,8 +2156,6 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
       } else fclose(infofile);
     }
   }
-
-  if (self && !lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
 
   if (mainw->proc_ptr) {
     if (mainw->proc_ptr->processing)
@@ -2166,7 +2168,13 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (is_async) g_main_context_release(g_main_context_default());
+  //if (is_async) g_main_context_release(g_main_context_default());
+
+
+  if (self && !lives_proc_thread_get_cancel_requested(self)) {
+    lives_proc_thread_cancel(self);
+    return FALSE;
+  }
 
   if (mainw->cancelled) return FALSE;
 
@@ -3614,6 +3622,8 @@ static void _thdlg_auto_spin(void) {
       lives_nanosleep(10000);
     }
   }
+  if (lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread))
+    lives_proc_thread_cancel(mainw->dlg_spin_thread);
 }
 
 

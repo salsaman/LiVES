@@ -6,7 +6,11 @@
 #include "main.h"
 #include "cvirtual.h"
 #include "startup.h"
-
+#include "callbacks.h"
+#include "interface.h"
+#include "effects-weed.h"
+#include "effects.h"
+#include "ce_thumbs.h"
 
 LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
   int clipno = -1;
@@ -23,21 +27,33 @@ LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
 
 
 char *get_staging_dir_for(int index, const lives_intentcap_t *icaps) {
-  // optionally we can stage the clip open in an alt directory
-  lives_clip_t *sfile = RETURN_NORMAL_CLIP(index);
-  if (sfile) {
-    char *shm_path = NULL;
-    lives_object_instance_t *obj;
-    make_object_for_clip(index, (lives_intentcap_t *)icaps);
-    obj = sfile->instance;
+  // get staging_dir, this will eventually become an optional attibute for the import transform
+  // for medi object instances
+  // we will register this function as an Oracle providing the data for that attribute
+  // and the function will be consulted during the negotiation stage for the import transform
+  // however at this point we don't have anything to represent and unloaded clip,
+  // so we have to fake things a bit
 
-    if (obj) {
-      weed_param_t *adir_param =
-        weed_param_from_attribute(obj, CLIP_ATTR_STAGING_DIR);
-      if (adir_param) shm_path = weed_param_get_value_string(adir_param);
-      weed_plant_free(adir_param);
-    }
-    return shm_path;
+  lives_intention intent = icaps->intent;
+  lives_clip_t *sfile;
+
+  if (intent != OBJ_INTENTION_IMPORT) return NULL;
+
+  sfile = RETURN_VALID_CLIP(index);
+
+  if (lives_has_capacity(icaps->capacities, CAP_LOCAL)) {
+    if (prefs->startup_phase != 0) return NULL;
+    if (capable->writeable_shmdir == MISSING) return NULL;
+    //if (obj->state == CLIP_STATE_READY) {
+    if (sfile && sfile->staging_dir) return lives_strdup(sfile->staging_dir);
+    get_shmdir();
+    return lives_strdup(capable->shmdir_path);
+  } else if (lives_has_capacity(icaps->capacities, CAP_REMOTE)) {
+    char *uidstr, *tmpdir;
+    uidstr = lives_strdup_printf("ytdl-%lu", gen_unique_id());
+    tmpdir = get_systmp(uidstr, TRUE);
+    lives_free(uidstr);
+    return tmpdir;
   }
   return NULL;
 }
@@ -45,8 +61,8 @@ char *get_staging_dir_for(int index, const lives_intentcap_t *icaps) {
 
 LIVES_GLOBAL_INLINE
 char *use_staging_dir_for(int clipno) {
-  if (clipno > 0 && IS_VALID_CLIP(clipno)) {
-    lives_clip_t *sfile = mainw->files[clipno];
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  if (sfile) {
     char *clipdir = get_clip_dir(clipno);
     char *stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
     lives_free(clipdir);
@@ -59,6 +75,7 @@ char *use_staging_dir_for(int clipno) {
   }
   return lives_strdup(prefs->backend_sync);
 }
+
 
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   char *key = NULL;
@@ -1707,6 +1724,7 @@ rhd_failed:
     char *clip_stdir = lives_build_path(stdir, sfile->handle, NULL);
     if (lives_file_test(clip_stdir, LIVES_FILE_TEST_IS_DIR)) {
       char *clipdir = get_clip_dir(fileno);
+      lives_free(stdir);
       //break_me("ready");
       lives_cp_noclobber(clip_stdir, clipdir);
       lives_rmdir(clip_stdir, TRUE);
@@ -1715,8 +1733,8 @@ rhd_failed:
       lives_free(clipdir);
       goto frombak;
     }
+    lives_free(stdir);
   }
-  lives_free(stdir);
 
   // header file (lives_header) missing or damaged -- see if we can recover ///////////////
   if (fileno == mainw->current_file) {
@@ -1810,10 +1828,8 @@ LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
   if (sfile) {
     if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP
         || sfile->clip_type == CLIP_TYPE_VIDEODEV) {
-      if (*sfile->staging_dir) {
+      if (*sfile->staging_dir)
         return lives_build_path(sfile->staging_dir, sfile->handle, NULL);
-      }
-      return lives_build_path(prefs->workdir, sfile->handle, NULL);
     }
     return lives_build_path(prefs->workdir, sfile->handle, NULL);
   }
@@ -1927,89 +1943,6 @@ void set_redoable(const char *what, boolean sensitive) {
   lives_widget_set_sensitive(mainw->redo, sensitive);
 }
 
-///////////////////////////// intents ////////////////////////
-typedef struct {
-  int idx;
-  lives_clip_t *sfile;
-} clip_priv_data_t;
-
-
-LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t *obj,
-    lives_intentcap_t *icaps) {
-  // here we would check the object state, and if it is external, then the icap
-  // intention should be import, caps will have local or remote, and we set up the attributes
-  // these will eventually form part of the import transform, which will convert the state to
-  // normal and create a new set of attributes
-
-  lives_intention intent = icaps->intent;
-  clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
-
-  icap_copy(&obj->icap, icaps);
-
-  if (intent != OBJ_INTENTION_IMPORT) return;
-
-  if (lives_has_capacity(icaps->capacities, CAP_LOCAL)) {
-    lives_obj_attr_t *attr;
-
-    if (prefs->startup_phase != 0) return;
-    if (capable->writeable_shmdir == MISSING) return;
-    if (obj->state == CLIP_STATE_READY) {
-      if (!*priv->sfile->staging_dir) return;
-    } else get_shmdir();
-
-    attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
-
-    // TODO - need to mark
-    if (obj->state == CLIP_STATE_READY) {
-      lives_object_set_attr_value(obj, attr, priv->sfile->staging_dir);
-    } else {
-      lives_object_set_attr_value(obj, attr, capable->shmdir_path);
-    }
-  } else if (lives_has_capacity(icaps->capacities, CAP_REMOTE)) {
-    char *uidstr, *tmpdir;
-    lives_obj_attr_t *attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
-    // eventually 'ytdl' should come from an optional req CLIP_ATTR_STAGING_PARAM
-    // to perform the IMPORT transformation, which would resolve to open_file_sel for LiVES
-    // and get_clip_data for the clip
-
-    uidstr = lives_strdup_printf("ytdl-%lu", gen_unique_id());
-    tmpdir = get_systmp(uidstr, TRUE);
-
-    lives_object_set_attr_value(obj, attr, capable->shmdir_path);
-    lives_free(tmpdir);
-  }
-}
-
-
-// placeholder function, until we have proper objects for clips
-void make_object_for_clip(int clipno, lives_intentcap_t *icaps) {
-  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
-  if (sfile) {
-    lives_object_instance_t *obj;
-    clip_priv_data_t *priv;
-    if (!sfile->instance) {
-      sfile->instance = lives_object_instance_create(OBJECT_TYPE_CLIP, NO_SUBTYPE);
-    }
-
-    obj = sfile->instance;
-    priv = obj->priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
-    priv->idx = clipno;
-
-    if (!IS_VALID_CLIP(clipno) || mainw->recovering_files) {
-      // TODO - update state when loaded
-      priv->sfile = NULL;
-      obj->state = CLIP_STATE_NOT_LOADED;
-    } else {
-      priv->sfile = mainw->files[clipno];
-      obj->state = CLIP_STATE_READY;
-    }
-    //add_attributes_for_icaps(obj, icaps);
-    if (icaps) add_attributes_for_clip_instance(obj, icaps);
-
-    lives_free(priv);
-    obj->priv = NULL;
-  }
-}
 
 #define BINFMT_CHECK_CHARS "LiVESXXX"
 
@@ -2181,3 +2114,618 @@ double get_ratio_fps(const char *string) {
   return fps;
 }
 
+////
+
+int find_next_clip(int index, int old_file) {
+  // when a clip becomes invalid, find another clip to switch to
+  if (IS_VALID_CLIP(index)) {
+    if (mainw->multitrack) {
+      if (old_file != mainw->multitrack->render_file) {
+        mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+        mt_clip_select(mainw->multitrack, TRUE);
+      }
+      return mainw->current_file;
+    }
+    if (!mainw->noswitch) {
+      switch_clip(1, index, TRUE);
+      if (mainw->blend_file == old_file)
+        switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+      d_print("");
+    }
+    return index;
+  }
+
+  if (mainw->clips_available > 0) {
+    for (int i = mainw->current_file; --i;) {
+      if (mainw->files[i]) {
+        if (!mainw->noswitch) {
+          switch_clip(1, i, TRUE);
+          if (mainw->blend_file == old_file)
+            switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+          d_print("");
+        }
+        return i;
+      }
+    }
+
+    for (int i = 1; i < MAX_FILES; i++) {
+      if (mainw->files[i]) {
+        if (!mainw->noswitch) {
+          switch_clip(1, i, TRUE);
+          if (mainw->blend_file == old_file)
+            switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+          d_print("");
+        }
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+
+void switch_to_file(int old_file, int new_file) {
+  // this function is used for full clip switching (during non-playback or non fs)
+
+  // calling this function directly is now deprecated in favour of switch_clip()
+
+  int orig_file = mainw->current_file;
+
+  // should use close_current_file
+  if (!IS_VALID_CLIP(new_file)) {
+    char *msg = lives_strdup_printf("attempt to switch to invalid clip %d", new_file);
+    LIVES_WARN(msg);
+    lives_free(msg);
+    return;
+  }
+
+  if (!LIVES_IS_PLAYING) {
+    if (old_file != new_file) {
+      if (CURRENT_CLIP_IS_VALID) {
+        mainw->laudio_drawable = cfile->laudio_drawable;
+        mainw->raudio_drawable = cfile->raudio_drawable;
+        mainw->drawsrc = mainw->current_file;
+      }
+    }
+  }
+
+  if (mainw->multitrack) return;
+
+  if (mainw->noswitch) {
+    mainw->new_clip = new_file;
+    return;
+  }
+
+  mainw->current_file = new_file;
+
+  if (old_file != new_file) {
+    if (CURRENT_CLIP_IS_VALID) {
+      mainw->laudio_drawable = cfile->laudio_drawable;
+      mainw->raudio_drawable = cfile->raudio_drawable;
+      mainw->drawsrc = mainw->current_file;
+    }
+    if (old_file != 0 && new_file != 0) mainw->preview_frame = 0;
+    lives_widget_set_sensitive(mainw->select_new, (cfile->insert_start > 0));
+    lives_widget_set_sensitive(mainw->select_last, (cfile->undo_start > 0));
+    if ((cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
+      lives_widget_set_sensitive(mainw->select_invert, TRUE);
+    } else {
+      lives_widget_set_sensitive(mainw->select_invert, FALSE);
+    }
+    if (IS_VALID_CLIP(old_file) && mainw->files[old_file]->opening) {
+      // switch while opening - come out of processing dialog
+      if (mainw->proc_ptr) {
+        lives_widget_destroy(mainw->proc_ptr->processing);
+        lives_freep((void **)&mainw->proc_ptr->text);
+        lives_freep((void **)&mainw->proc_ptr);
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+
+  if (mainw->play_window && cfile->is_loaded && orig_file != new_file) {
+    // if the clip is loaded
+    if (!mainw->preview_box) {
+      // create the preview box that shows frames...
+      make_preview_box();
+    }
+    // add it the play window...
+    if (!lives_widget_get_parent(mainw->preview_box)) {
+      lives_widget_queue_draw(mainw->play_window);
+      lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+    }
+
+    lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+    lives_widget_show_now(mainw->preview_box);
+    lives_widget_context_update();
+    lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+
+    // and resize it
+    lives_widget_grab_focus(mainw->preview_spinbutton);
+
+    resize_play_window();
+    load_preview_image(FALSE);
+  }
+
+  if (!mainw->go_away && CURRENT_CLIP_IS_NORMAL) {
+    mainw->no_context_update = TRUE;
+    reget_afilesize(mainw->current_file);
+    mainw->no_context_update = FALSE;
+  }
+
+  if (!CURRENT_CLIP_IS_VALID) return;
+  //chill_decoder_plugin(mainw->current_file);
+
+  if (!CURRENT_CLIP_IS_NORMAL || cfile->opening) {
+    lives_widget_set_sensitive(mainw->rename, FALSE);
+  }
+
+  if (cfile->menuentry) {
+    reset_clipmenu();
+  }
+
+  if (!mainw->clip_switched && !cfile->opening) sensitize();
+
+  lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+  lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
+
+  set_sel_label(mainw->sel_label);
+
+  if (mainw->eventbox5) lives_widget_show(mainw->eventbox5);
+  lives_widget_show(mainw->hruler);
+  lives_widget_show(mainw->vidbar);
+  lives_widget_show(mainw->laudbar);
+
+  if (cfile->achans < 2) {
+    lives_widget_hide(mainw->raudbar);
+  } else {
+    lives_widget_show(mainw->raudbar);
+  }
+
+  if (cfile->redoable) {
+    lives_widget_show(mainw->redo);
+    lives_widget_hide(mainw->undo);
+  } else {
+    lives_widget_hide(mainw->redo);
+    lives_widget_show(mainw->undo);
+  }
+
+  if (new_file > 0) {
+    if (cfile->menuentry) {
+      set_main_title(cfile->name, 0);
+    } else set_main_title(cfile->file_name, 0);
+  }
+
+  set_start_end_spins(mainw->current_file);
+
+  resize(1);
+  if (!mainw->go_away) {
+    get_play_times();
+  }
+
+  // if the file was opening, continue...
+  if (cfile->opening) {
+    open_file(cfile->file_name);
+  } else {
+    showclipimgs();
+    //lives_widget_context_update();
+    lives_ce_update_timeline(0, cfile->pointer_time);
+    mainw->ptrtime = cfile->pointer_time;
+    lives_widget_queue_draw(mainw->eventbox2);
+  }
+
+  if (!mainw->multitrack && !mainw->reconfig) {
+    if (prefs->show_msg_area && !mainw->only_close) {
+      reset_message_area(); // necessary
+      if (mainw->idlemax == 0) {
+        lives_idle_add(resize_message_area, NULL);
+      }
+      mainw->idlemax = DEF_IDLE_MAX;
+    }
+    redraw_timeline(mainw->current_file);
+  }
+}
+
+
+boolean switch_audio_clip(int new_file, boolean activate) {
+  //ticks_t cticks;
+  lives_clip_t *sfile;
+  int aplay_file;
+
+  if (AUD_SRC_EXTERNAL) return FALSE;
+
+  aplay_file = get_aplay_clipno();
+
+  if ((aplay_file == new_file && (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+                                  || !CLIP_HAS_AUDIO(aplay_file)))
+      || (aplay_file != new_file && !(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS))) {
+    return FALSE;
+  }
+
+  sfile = RETURN_VALID_CLIP(new_file);
+  if (!sfile) return FALSE;
+
+  if (new_file == aplay_file) {
+    if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.))
+      sfile->adirection = LIVES_DIRECTION_FORWARD;
+    else sfile->adirection = LIVES_DIRECTION_REVERSE;
+  } else if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
+    mainw->scratch = SCRATCH_JUMP;
+  }
+
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd) {
+      if (!activate) mainw->jackd->in_use = FALSE;
+
+      if (new_file != aplay_file) {
+        if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+          mainw->cancelled = handle_audio_timeout();
+          return FALSE;
+        }
+        if (mainw->jackd->playing_file > 0) {
+          if (!CLIP_HAS_AUDIO(new_file)) {
+            jack_get_rec_avals(mainw->jackd);
+            mainw->rec_avel = 0.;
+          }
+          jack_message.command = ASERVER_CMD_FILE_CLOSE;
+          jack_message.data = NULL;
+          jack_message.next = NULL;
+          mainw->jackd->msgq = &jack_message;
+
+          if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+            mainw->cancelled = handle_audio_timeout();
+            return FALSE;
+          }
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+
+    if (!IS_VALID_CLIP(new_file)) {
+      mainw->jackd->in_use = FALSE;
+      return FALSE;
+    }
+
+    if (new_file == aplay_file) return TRUE;
+
+    if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+      // tell jack server to open audio file and start playing it
+
+      jack_message.command = ASERVER_CMD_FILE_OPEN;
+
+      jack_message.data = lives_strdup_printf("%d", new_file);
+
+      jack_message2.command = ASERVER_CMD_FILE_SEEK;
+
+      jack_message.next = &jack_message2;
+      jack_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
+      jack_message2.next = NULL;
+
+      mainw->jackd->msgq = &jack_message;
+
+      mainw->jackd->in_use = TRUE;
+
+      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+        mainw->cancelled = handle_audio_timeout();
+        return FALSE;
+      }
+
+      //jack_time_reset(mainw->jackd, 0);
+
+      mainw->jackd->is_paused = sfile->play_paused;
+      mainw->jackd->is_silent = FALSE;
+    } else {
+      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+    }
+#endif
+  }
+
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed) {
+      if (!activate) mainw->pulsed->in_use = FALSE;
+
+      if (new_file != aplay_file) {
+        if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+          mainw->cancelled = handle_audio_timeout();
+          return FALSE;
+        }
+
+        if (IS_PHYSICAL_CLIP(aplay_file)) {
+          lives_clip_t *afile = mainw->files[aplay_file];
+          if (!CLIP_HAS_AUDIO(new_file)) {
+            pulse_get_rec_avals(mainw->pulsed);
+            mainw->rec_avel = 0.;
+          }
+          pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data = NULL;
+          pulse_message.next = NULL;
+          mainw->pulsed->msgq = &pulse_message;
+
+          if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+            mainw->cancelled = handle_audio_timeout();
+            return FALSE;
+          }
+
+          afile->sync_delta = lives_pulse_get_time(mainw->pulsed) - mainw->startticks;
+          afile->aseek_pos = mainw->pulsed->seek_pos;
+        }
+
+        if (!IS_VALID_CLIP(new_file)) {
+          mainw->pulsed->in_use = FALSE;
+          return FALSE;
+        }
+
+        if (new_file == aplay_file) return TRUE;
+
+        if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+          // tell pulse server to open audio file and start playing it
+
+          mainw->video_seek_ready = FALSE;
+
+          // have to set this, else the msgs are not acted on
+          pulse_driver_uncork(mainw->pulsed);
+
+          pulse_message.command = ASERVER_CMD_FILE_OPEN;
+          pulse_message.data = lives_strdup_printf("%d", new_file);
+
+          pulse_message2.command = ASERVER_CMD_FILE_SEEK;
+          /* if (LIVES_IS_PLAYING && !mainw->preview) { */
+          /*   pulse_message2.tc = cticks; */
+          /*   pulse_message2.command = ASERVER_CMD_FILE_SEEK_ADJUST; */
+          /* } */
+          pulse_message.next = &pulse_message2;
+          pulse_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
+          pulse_message2.next = NULL;
+
+          mainw->pulsed->msgq = &pulse_message;
+
+          mainw->pulsed->is_paused = sfile->play_paused;
+
+          //pa_time_reset(mainw->pulsed, 0);
+        } else {
+          mainw->video_seek_ready = TRUE;
+          video_sync_ready();
+        }
+      }
+    }
+#endif
+  }
+
+#if 0
+
+  if (prefs->audio_player == AUD_PLAYER_NONE) {
+    if (!IS_VALID_CLIP(new_file)) {
+      mainw->nullaudio_playing_file = -1;
+      return FALSE;
+    }
+    if (mainw->nullaudio->playing_file == new_file) return FALSE;
+    nullaudio_clip_set(new_file);
+    if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+      if (!sfile->play_paused)
+        nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
+      else nullaudio_arate_set(sfile->arate * sfile->freeze_fps / sfile->fps);
+    } else nullaudio_arate_set(sfile->arate);
+    nullaudio_seek_set(sfile->aseek_pos);
+    if (CLIP_HAS_AUDIO(new_file)) {
+      nullaudio_get_rec_avals();
+    } else {
+      nullaudio_get_rec_avals();
+      mainw->rec_avel = 0.;
+    }
+  }
+#endif
+
+  return TRUE;
+}
+
+
+void do_quick_switch(int new_file) {
+  // handle clip switching during playback
+  // calling this function directly is now deprecated in favour of switch_clip()
+  lives_clip_t *sfile = NULL;
+  boolean osc_block;
+  int old_file = mainw->playing_file;
+
+  if (!LIVES_IS_PLAYING) {
+    switch_to_file(mainw->current_file, new_file);
+    return;
+  }
+
+  if (old_file == new_file || old_file < 1 || !IS_VALID_CLIP(new_file)) return;
+
+  if (mainw->multitrack
+      || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
+      mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
+
+  if (mainw->noswitch && !mainw->can_switch_clips) {
+    mainw->new_clip = new_file;
+    return;
+  }
+
+  if (IS_VALID_CLIP(old_file)) sfile = mainw->files[old_file];
+
+  mainw->whentostop = NEVER_STOP;
+  mainw->blend_palette = WEED_PALETTE_END;
+
+  if (old_file != mainw->blend_file && !mainw->is_rendering) {
+    if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && sfile->ext_src) {
+      if (new_file != mainw->blend_file) {
+        // switched from generator to another clip, end the generator
+        weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
+        mainw->gen_started_play = FALSE;
+        weed_generator_end(inst);
+      } else {
+        // switch fg to bg
+        rte_swap_fg_bg();
+      }
+    }
+
+    if (new_file == mainw->blend_file && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR
+        && mainw->files[mainw->blend_file]->ext_src) {
+      // switch bg to fg
+      rte_swap_fg_bg();
+    }
+  }
+
+  osc_block = mainw->osc_block;
+  mainw->osc_block = TRUE;
+
+  if (mainw->loop_locked) {
+    unlock_loop_lock();
+  }
+
+  mainw->clip_switched = TRUE;
+
+  if (mainw->frame_layer_preload && mainw->frame_layer_preload != mainw->frame_layer) {
+    check_layer_ready(mainw->frame_layer_preload);
+    weed_layer_unref(mainw->frame_layer_preload);
+    mainw->frame_layer_preload = NULL;
+    mainw->pred_clip = -1;
+    mainw->pred_frame = 0;
+  }
+
+  mainw->drawsrc = mainw->playing_file = mainw->current_file = new_file;
+  mainw->laudio_drawable = cfile->laudio_drawable;
+  mainw->raudio_drawable = cfile->raudio_drawable;
+
+  lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), mainw->files[new_file]->pb_fps);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps));
+  lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+
+  // switch audio clip
+  if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
+    if (APLAYER_REALTIME && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+        && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
+      switch_audio_clip(new_file, TRUE);
+    }
+  }
+
+  set_main_title(cfile->name, 0);
+
+  if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
+
+  if (CURRENT_CLIP_IS_NORMAL) {
+    char *tmp;
+    tmp = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
+    lives_snprintf(cfile->info_file, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+  }
+
+  if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list && !mainw->record))
+    mainw->play_end = INT_MAX;
+
+  // act like we are not playing a selection (but we will try to keep to
+  // selection bounds)
+  mainw->playing_sel = FALSE;
+
+  if (cfile->last_play_sequence != mainw->play_sequence) {
+    cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  }
+
+  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
+
+  cfile->next_event = NULL;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+  if (LIVES_IS_PLAYING && !mainw->play_window && (!IS_VALID_CLIP(old_file)
+      || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
+      || cfile->vsize != mainw->files[old_file]->vsize)) {
+    clear_widget_bg(mainw->play_image, mainw->play_surface);
+  }
+#endif
+
+  if (CURRENT_CLIP_HAS_VIDEO) {
+    if (!mainw->fs && !mainw->faded) {
+      set_start_end_spins(mainw->current_file);
+      if (!mainw->play_window && mainw->double_size) {
+        //frame_size_update();
+        resize(2.);
+      } else resize(1);
+    }
+  } else resize(1);
+
+  if (!mainw->fs && !mainw->faded) showclipimgs();
+
+  if (new_file == mainw->blend_file || old_file == mainw->blend_file) {
+    if (mainw->blend_layer) {
+      check_layer_ready(mainw->blend_layer);
+      weed_layer_unref(mainw->blend_layer);
+      mainw->blend_layer = NULL;
+    }
+    track_decoder_free(1, mainw->blend_file);
+    if (new_file == mainw->blend_file)
+      mainw->blend_file = old_file;
+  }
+
+  if (mainw->play_window && prefs->show_playwin) {
+    lives_window_present(LIVES_WINDOW(mainw->play_window));
+    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+  }
+
+  mainw->osc_block = osc_block;
+  lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+
+  redraw_timeline(mainw->current_file);
+}
+
+
+void switch_clip(int type, int newclip, boolean force) {
+  // generic switch clip callback
+
+  // This is the new single entry function for switching clips.
+  // It should eventually replace switch_to_file() and do_quick_switch()
+
+  // type = auto : if we are playing and a transition is active, this will change the background clip
+  // type = foreground fg only
+  // type = background bg only
+
+  if (!IS_VALID_CLIP(newclip)) return;
+  if (!LIVES_IS_PLAYING && !force && newclip == mainw->current_file) return;
+
+  if (mainw->current_file < 1 || mainw->multitrack || mainw->preview || mainw->internal_messaging ||
+      (mainw->is_processing && cfile && cfile->is_loaded) || !mainw->cliplist) return;
+
+  if (type == SCREEN_AREA_BACKGROUND || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0
+                                         && type != SCREEN_AREA_FOREGROUND
+                                         && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file)
+                                             && mainw->blend_file != mainw->playing_file))) {
+    if (mainw->num_tr_applied < 1 || newclip == mainw->blend_file) return;
+
+    // switch bg clip
+    if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+        && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+      if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
+      weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
+      if (inst) {
+        if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
+          int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+          rte_key_on_off(key + 1, FALSE);
+        }
+      }
+      //chill_decoder_plugin(mainw->blend_file);
+    }
+
+    track_decoder_free(1, mainw->blend_file);
+
+    mainw->blend_file = newclip;
+    mainw->whentostop = NEVER_STOP;
+    if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
+      ce_thumbs_highlight_current_clip();
+    }
+    mainw->blend_palette = WEED_PALETTE_END;
+    return;
+  }
+
+  // switch fg clip
+
+  if (LIVES_IS_PLAYING) {
+    mainw->new_clip = newclip;
+  } else {
+    int current_file = mainw->current_file;
+    if (cfile && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+    if (!CURRENT_CLIP_IS_VALID || (force && newclip == mainw->current_file)) current_file = -1;
+    switch_to_file(current_file, newclip);
+  }
+}

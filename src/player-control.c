@@ -5,15 +5,12 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 /*
-  This file contains API functions for running and cleannig up beofre and after the
+  This file contains API functions for running and cleannig up before and after the
   actual playback  (accessed via calls to do_progress_dualog()
   Here we handle playback of various types - clip editor, multitrack,
   as well as showing previews ion the loader window.
-  This code is pretty ancient and crufty - there is still support for non-realtime audio players
-  (sox) which will be phased out in favour of the nullaudio player.
   The same functon will also play processing previews.
-  All of this has to be run in a background thread so as not to block the gtk+ main loop, which adds complications
-  some post rocessing has to be done via idlefuncs. */
+*/
 
 #include "main.h"
 #include "startup.h"
@@ -80,6 +77,7 @@ static boolean _start_playback(int play_type) {
     if (mainw->pre_play_file > 0) {
       switch_to_file(0, mainw->pre_play_file);
     } else {
+      // TODO - want to switch to clip -1,and avoid swithcing to clipboard
       mainw->current_file = -1;
       close_current_file(0);
     }
@@ -153,12 +151,7 @@ void start_playback_async(int type) {
 }
 
 
-static char *prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian) {
-  char *stfile = NULL;
-  char *stopcom = NULL, *com;
-  short audio_player = prefs->audio_player;
-  int loop = 0;
-
+static void prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian) {
   if (!mainw->preview && cfile->achans > 0) {
     cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * (double)cfile->arate) * cfile->achans * (cfile->asampsize / 8);
     if (mainw->playing_sel) {
@@ -172,82 +165,16 @@ static char *prep_audio_player(frames_t audio_end, int arate, int asigned, int a
 
   if (CURRENT_CLIP_HAS_AUDIO) {
     // start up our audio player (jack or pulse)
-    if (audio_player == AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-      if (mainw->jackd) jack_aud_pb_ready(mainw->jackd, mainw->current_file);
-      return NULL;
-#endif
-    } else if (audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed) pulse_aud_pb_ready(mainw->pulsed, mainw->current_file);
-      return NULL;
-#endif
-    }
+    IF_APLAYER_JACK(jack_aud_pb_ready(mainw->jackd, mainw->current_file));
+    IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file));
   }
-
-  // deprecated
-
-  else if (audio_player != AUD_PLAYER_NONE) {
-    // sox or mplayer audio - run as background process
-    char *clipdir;
-    char *com3 = NULL;
-
-    if (mainw->loop_cont) {
-      // tell audio to loop forever
-      loop = -1;
-    }
-
-    clipdir = get_clip_dir(mainw->current_file);
-    stfile = lives_build_filename(clipdir, ".stoploop", NULL);
-    lives_free(clipdir);
-    lives_rm(stfile);
-
-    if (cfile->achans > 0 || (!cfile->is_loaded && !mainw->is_generating)) {
-      if (loop) {
-        com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd,
-                                   stfile, prefs->cmd_log);
-      }
-
-      if (cfile->achans > 0) {
-        char *com2 = lives_strdup_printf("%s stop_audio %s", prefs->backend_sync, cfile->handle);
-        if (com3) stopcom = lives_strconcat(com3, com2, NULL);
-      } else stopcom = com3;
-    }
-
-    lives_freep((void **)&stfile);
-
-    clipdir = get_clip_dir(mainw->current_file);
-    stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME".play", NULL);
-    lives_free(clipdir);
-
-    lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
-    lives_free(stfile);
-    if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-
-    // PLAY
-
-    if (cfile->clip_type == CLIP_TYPE_DISK && cfile->opening) {
-      com = lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",
-                                prefs->backend,
-                                cfile->handle, cfile->fps, mainw->audio_start, audio_end, 0,
-                                arate, cfile->achans, cfile->asampsize, asigned, aendian);
-    } else {
-      // this is only used now for the sox (fallback) audio player  sox
-      com = lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d",
-                                prefs->backend, cfile->handle,
-                                cfile->fps, mainw->audio_start, audio_end, loop,
-                                arate, cfile->achans, cfile->asampsize, asigned, aendian);
-    }
-    if (!mainw->multitrack && com) lives_system(com, FALSE);
-  }
-  return stopcom;
 }
 
 
 static double fps_med = 0.;
 
 static void post_playback(void) {
-  g_print("IN POST\n");
+  // gui thread only
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
       unfade_background();
@@ -256,7 +183,6 @@ static void post_playback(void) {
     if (mainw->sep_win) add_to_playframe();
 
     if (CURRENT_CLIP_HAS_VIDEO) {
-      //resize(1.);
       lives_widget_show_all(mainw->playframe);
       lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
     }
@@ -338,7 +264,6 @@ static void post_playback(void) {
         if (!lives_widget_get_parent(mainw->preview_box)
             && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
           if (mainw->play_window) {
-            //lives_widget_queue_draw(mainw->play_window);
             lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
             play_window_set_title();
           }
@@ -346,8 +271,6 @@ static void post_playback(void) {
 
         if (mainw->play_window) {
           if (prefs->show_playwin) {
-            //lives_window_present(LIVES_WINDOW(mainw->play_window));
-            //lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             // need to recheck mainw->play_window after this
@@ -355,8 +278,6 @@ static void post_playback(void) {
             lives_widget_grab_focus(mainw->preview_spinbutton);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             if (mainw->play_window) {
-              //lives_widget_process_updates(mainw->play_window);
-              // need to recheck after calling process_updates
               if (mainw->play_window) {
                 lives_window_center(LIVES_WINDOW(mainw->play_window));
                 clear_widget_bg(mainw->play_image, mainw->play_surface);
@@ -421,9 +342,7 @@ static void post_playback(void) {
 
   if (!mainw->multitrack) {
     /// update screen for internal players
-    if (prefs->hfbwnp) {
-      lives_widget_hide(mainw->framebar);
-    }
+    if (prefs->hfbwnp) lives_widget_hide(mainw->framebar);
     set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
     lives_widget_set_opacity(mainw->play_image, 0.);
     lives_widget_set_opacity(mainw->playframe, 0.);
@@ -454,11 +373,11 @@ static void post_playback(void) {
   }
 
   player_sensitize();
-  g_print("POST DONE\n");
 }
 
 
 static void pre_playback(void) {
+  // gui thread only
   short audio_player = prefs->audio_player;
 
   if (!mainw->preview || !cfile->opening) {
@@ -614,48 +533,12 @@ static void pre_playback(void) {
 }
 
 
-/* This is only used in the case that the audio player is sox,
-   which is only there as a fallback option is pulse or jack cannot be installed fro whatever reason
-   This is gradually being phased out in favour of the nullaudio playaer.
-*/
-static void wait_for_audio_stop(const char *stop_command) {
-  FILE *infofile;
-
-# define SECOND_STOP_TIME 0.1
-# define STOP_GIVE_UP_TIME 1.0
-
-  double time_waited = 0.;
-  boolean sent_second_stop = FALSE;
-
-  // send another stop if necessary
-  while (!(infofile = fopen(cfile->info_file, "r"))) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-    lives_usleep(prefs->sleep_time);
-    time_waited += 1000000. / prefs->sleep_time;
-    if (time_waited > SECOND_STOP_TIME && !sent_second_stop) {
-      lives_system(stop_command, TRUE);
-      sent_second_stop = TRUE;
-    }
-
-    if (time_waited > STOP_GIVE_UP_TIME) {
-      // give up waiting, but send a last try...
-      lives_system(stop_command, TRUE);
-      break;
-    }
-  }
-  if (infofile) fclose(infofile);
-}
-
-
 /// play the current clip from 'mainw->play_start' to 'mainw->play_end'
 void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
   LiVESList *cliplist;
   weed_plant_t *pb_start_event = NULL;
   weed_layer_t *old_flayer;
-
-  char *stopcom = NULL;
-  char *stfile;
 
   double pointer_time = cfile->pointer_time;
   double real_pointer_time = cfile->real_pointer_time;
@@ -676,18 +559,20 @@ void play_file(void) {
   int arate;
 
   int asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
-  int aendian = !(cfile->signed_endian & AFORM_BIG_ENDIAN);
   int current_file = mainw->current_file;
   int audio_end = 0;
 
   ____FUNC_ENTRY____(play_file, "", "");
 
   /// from now on we can only switch at the designated SWITCH POINT
+  // this applies to bg and fg frames
+  // as well as - jumping frames, changing the fx map (mainw->rte). deiniting fx. changing the track count
+  // closing current clip, (since this also involves switching clips)
+  // changing player size, switching to / from sepwin
   mainw->noswitch = TRUE;
   mainw->cancelled = CANCEL_NONE;
 
   asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
-  aendian = !(cfile->signed_endian & AFORM_BIG_ENDIAN);
   current_file = mainw->current_file;
   if (mainw->pre_play_file == -1) mainw->pre_play_file = current_file;
 
@@ -699,8 +584,6 @@ void play_file(void) {
   mainw->rec_aclip = -1;
 
   init_conversions(OBJ_INTENTION_PLAY);
-
-  //lives_hooks_trigger(NULL, PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -729,13 +612,12 @@ void play_file(void) {
   mainw->clip_switched = FALSE;
 
   if (!mainw->foreign) {
-    // this is like a safe addrref
-    if (lives_proc_thread_ref(mainw->lazy_starter) > 0) {
+    if (lives_proc_thread_ref(mainw->lazy_starter) > 1) {
       lives_proc_thread_request_pause(mainw->lazy_starter);
       lazy_start = TRUE;
     }
 
-    if (lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]) > 0) {
+    if (lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]) > 1) {
       lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
       lazy_rfx = TRUE;
     }
@@ -781,30 +663,28 @@ void play_file(void) {
 #endif
   }
 
-  /// these values are only relevant for non-realtime audio players (e.g. sox)
-  mainw->audio_start = mainw->audio_end = 0;
-
   if (cfile->achans > 0) {
-    if (mainw->event_list &&
-        !(mainw->preview && mainw->is_rendering) &&
-        !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering)) {
-      /// play performance data
-      if (event_list_get_end_secs(mainw->event_list) > cfile->frames
-          / cfile->fps && !mainw->playing_sel) {
-        mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.)
-                           * cfile->arate / cfile->arps;
-      }
-    }
+    /* if (mainw->event_list && */
+    /*     !(mainw->preview && mainw->is_rendering) && */
+    /*     !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering)) { */
+    /// play performance data
+    /* if (event_list_get_end_secs(mainw->event_list) > cfile->frames */
+    /*     / cfile->fps && !mainw->playing_sel) { */
+    /*   mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) */
+    /*                      * cfile->arate / cfile->arps; */
+    /* } */
+    //}
 
-    if (mainw->audio_end == 0) {
-      // values in FRAMES
-      mainw->audio_start = calc_time_from_frame(mainw->current_file,
-                           mainw->play_start) * cfile->fps + 1.;
-      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
-      if (!mainw->playing_sel) {
-        mainw->audio_end = 0;
-      }
-    }
+    /* if (mainw->audio_end == 0) { */
+    /*   // values in FRAMES */
+    /*   mainw->audio_start = calc_time_from_frame(mainw->current_file, */
+    /*                        mainw->play_start) * cfile->fps + 1.; */
+    /*   mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.; */
+    /*   if (!mainw->playing_sel) { */
+    /*     mainw->audio_end = 0; */
+    /*   } */
+    /* } */
+
     cfile->aseek_pos = (off_t)((double)(mainw->audio_start - 1.)
                                * cfile->fps * (double)cfile->arate)
                        * cfile->achans * (cfile->asampsize >> 3);
@@ -879,12 +759,6 @@ void play_file(void) {
 
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
-
-  if (!mainw->foreign && (!(AUD_SRC_EXTERNAL &&
-                            (audio_player == AUD_PLAYER_JACK ||
-                             audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-    stopcom = prep_audio_player(audio_end, arate, asigned, aendian);
-  }
 
   if (!mainw->foreign && prefs->midisynch && !mainw->preview) {
     char *com3 = lives_strdup(EXEC_MIDISTART);
@@ -1370,15 +1244,6 @@ void play_file(void) {
   // we could have started by playing a generator, which could've been closed
   if (!mainw->files[current_file]) current_file = mainw->current_file;
 
-  if (!APLAYER_REALTIME && stopcom) {
-    lives_cancel_t cancelled = mainw->cancelled;
-    // kill sound (if still playing)
-    wait_for_audio_stop(stopcom);
-    mainw->aud_file_to_kill = -1;
-    lives_free(stopcom);
-    mainw->cancelled = cancelled;
-  }
-
   if (IS_VALID_CLIP(mainw->close_this_clip)) {
     // need to keep blend_file around until we check if it is a generator to close
     int blend_file = mainw->blend_file;
@@ -1395,15 +1260,6 @@ void play_file(void) {
   }
 
   mainw->close_this_clip = mainw->new_clip = -1;
-
-  if (CURRENT_CLIP_IS_NORMAL) {
-    char *clipdir = get_clip_dir(mainw->current_file);
-    stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
-    lives_free(clipdir);
-    lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
-    lives_free(stfile);
-    cfile->last_play_sequence = mainw->play_sequence;
-  }
 
   if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src) {
     lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src));
@@ -1440,8 +1296,10 @@ void play_file(void) {
 
   /// free the last frame image(s)
   old_flayer = get_old_frame_layer();
-  if (old_flayer && old_flayer != mainw->frame_layer_preload && old_flayer != mainw->blend_layer) {
+  if (old_flayer) {
     if (old_flayer == mainw->frame_layer) mainw->frame_layer = NULL;
+    if (old_flayer == mainw->frame_layer_preload) mainw->frame_layer_preload = NULL;
+    if (old_flayer == mainw->blend_layer) mainw->blend_layer = NULL;
     weed_layer_free(old_flayer);
     reset_old_frame_layer();
   }
@@ -1455,6 +1313,15 @@ void play_file(void) {
       mainw->blend_layer = NULL;
     mainw->frame_layer = NULL;
   }
+
+  /// free any pre-cached frame
+  if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
+    check_layer_ready(mainw->frame_layer_preload);
+    weed_layer_free(mainw->frame_layer_preload);
+    if (mainw->frame_layer_preload == mainw->blend_layer)
+      mainw->blend_layer = NULL;
+  }
+  mainw->frame_layer_preload = NULL;
 
   if (mainw->blend_layer) {
     check_layer_ready(mainw->blend_layer);
@@ -1477,8 +1344,7 @@ void play_file(void) {
   if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
 
   if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
-      && mainw->files[mainw->blend_file] &&
-      mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+      && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     current_file = mainw->current_file;
     mainw->can_switch_clips = TRUE;
     weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
@@ -1493,13 +1359,6 @@ void play_file(void) {
   lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), bg_freeze_closure);
 
   if (needsadone) d_print_done();
-
-  /// free any pre-cached frame
-  if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
-    check_layer_ready(mainw->frame_layer_preload);
-    weed_layer_free(mainw->frame_layer_preload);
-  }
-  mainw->frame_layer_preload = NULL;
 
   if (!prefs->vj_mode) {
     /// pop up error dialog if badly sized frames were detected
@@ -1527,11 +1386,10 @@ void play_file(void) {
   if (prefs->volume != (double)future_prefs->volume)
     pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
 
-
-
-  // TODO - ????
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
       && cfile->frames == 0 && mainw->record_perf) {
+    // I beleive this is needed in the case where a video generator was recorded using audio
+    // from a clip with no video frames
     lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
     lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
@@ -1580,6 +1438,8 @@ void play_file(void) {
   }
 
   for (int i = 0; i < MAX_FILES; i++) {
+    // if we have open files which have been used to load in clip audio
+    // we should close them. The audio ought to have been buffered by now
     if (IS_VALID_CLIP(i)) {
       lives_clip_t *sfile = mainw->files[i];
       if (sfile->aplay_fd > -1) {
@@ -1596,10 +1456,13 @@ void play_file(void) {
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
+  // clean up the interface, this has to be executed by the main (gui) thread
+  // due to restrictions in gtk+
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(post_playback, 0);
   BG_THREADVAR(hook_hints) = 0;
 
+  // and startup helpers which were paused during playback may now resume
   if (lazy_start) {
     if (mainw->lazy_starter) {
       lives_proc_thread_request_resume(mainw->lazy_starter);
@@ -1620,11 +1483,15 @@ void play_file(void) {
     mainw->idlemax = DEF_IDLE_MAX;
   }
 
-  /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
+  /// need to do this here, in case we want to preview with only
+  // a generator and no other clips (which will soon close to -1)
   if (mainw->record || mainw->record_paused) {
     mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
+    // if we recorded anything, show the dialog and lete the user select
+    // what to do with the reording (render it, transcode it, discard it)
     deal_with_render_choice(FALSE);
   }
+
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
 
   mainw->ignore_screen_size = FALSE;

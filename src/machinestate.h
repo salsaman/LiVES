@@ -117,13 +117,13 @@ char *get_current_timestamp(void);
 #define LIVES_FORTY_WINKS 40000000. // 40 mSec
 #define LIVES_WAIT_A_SEC 1000000000. // 1 second
 
-#define lives_nanosleep(nanosec) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
-    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (clock_nanosleep(CLOCK_REALTIME, 0, &ts, &ts) == -1 && \
-								     errno != ETIMEDOUT) pthread_yield();} while (0);
+#define lives_nanosleep(nanosec)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
+    ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION;while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
+							       &&errno!=ETIMEDOUT)pthread_yield();}while(0);
 
-#define lives_nanosleep_times(nanosec, times) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
-    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (clock_nanosleep(CLOCK_REALTIME, 0, &ts, &ts) == -1 && \
-								     errno != ETIMEDOUT) pthread_yield();} while (0);
+#define lives_nanosleep_times(nanosec, times)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
+    ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
+							       &&errno!=ETIMEDOUT)pthread_yield();}while(0);
 
 // sleep for 1 msec, regardless of the value returned, sets euqal to cond
 #define _nsleep1(cond) (usleep(1000) ? (cond) :  (cond))
@@ -132,28 +132,28 @@ char *get_current_timestamp(void);
 // sleep for up to 2 msec, if cons still TRUE, sleep for up to 2 more  msec and return cond, else return cond
 #define _nsleep4(cond) _nsleep2(cond) ? _nsleep2(cond) : (cond)
 // etc
-#define _nsleep8(cond) _nsleep4(cond) ? _nsleep4(cond) : (cond)
-#define _nsleep16(cond) _nsleep8(cond) ? _nsleep8(cond) : (cond)
-#define _nsleep32(cond) _nsleep16(cond) ? _nsleep16(cond) : (cond) // 5
-#define _nsleep64(cond) _nsleep32(cond) ? _nsleep32(cond) : (cond)
-#define _nsleep128(cond) _nsleep64(cond) ? _nsleep64(cond) : (cond)
-#define _nsleep256(cond) _nsleep128(cond) ? _nsleep128(cond) : (cond)
-#define _nsleep512(cond) _nsleep256(cond) ? _nsleep256(cond) : (cond)
-#define _nsleep1024(cond) _nsleep512(cond) ? _nsleep512(cond) : (cond) // bit 10
-#define _nsleep2048(cond) _nsleep1024(cond) ? _nsleep1024(cond) : (cond)
-#define _nsleep4096(cond) _nsleep2048(cond) ? _nsleep2048(cond) : (cond) // 12
-#define _nsleep8192(cond) _nsleep4096(cond) ? _nsleep4096(cond) : (cond)
-#define _nsleep16384(cond) _nsleep8192(cond) ? _nsleep8192(cond) : (cond) // 14
-#define _nsleep32768(cond) _nsleep16384(cond) ? _nsleep16384(cond) : (cond)
+#define _nsleep8(cond)_nsleep4(cond)?_nsleep4(cond):(cond)
+#define _nsleep16(cond)_nsleep8(cond)?_nsleep8(cond):(cond)
+#define _nsleep32(cond)_nsleep16(cond)?_nsleep16(cond):(cond)//5
+#define _nsleep64(cond)_nsleep32(cond)?_nsleep32(cond):(cond)
+#define _nsleep128(cond)_nsleep64(cond)?_nsleep64(cond):(cond)
+#define _nsleep256(cond)_nsleep128(cond)?_nsleep128(cond):(cond)
+#define _nsleep512(cond)_nsleep256(cond)?_nsleep256(cond):(cond)
+#define _nsleep1024(cond)_nsleep512(cond)?_nsleep512(cond):(cond)//bit 10
+#define _nsleep2048(cond)_nsleep1024(cond)?_nsleep1024(cond):(cond)
+#define _nsleep4096(cond)_nsleep2048(cond)?_nsleep2048(cond):(cond) //12
+#define _nsleep8192(cond)_nsleep4096(cond)?_nsleep4096(cond):(cond)
+#define _nsleep16384(cond)_nsleep8192(cond)?_nsleep8192(cond):(cond)// 14
+#define _nsleep32768(cond)_nsleep16384(cond)?_nsleep16384(cond):(cond)
 
 // sleep for up to 5 seconds whil cond is TRUE
 // -- construction of value 5000 in binary digits
-#define lives_five_second_check(cond) _nsleep4096(cond) ? _nsleep512(cond) ? _nsleep256(cond) ? _nsleep128(cond) ? \
-    _nsleep8(cond) : (cond) : (cond) : (cond) : (cond)
+#define lives_five_second_check(cond)_nsleep4096(cond)?_nsleep512(cond)?_nsleep256(cond)?_nsleep128(cond)?\
+    _nsleep8(cond):(cond):(cond):(cond):(cond)
 
 // bits 14, 13, 12, 10, 8, 5, 4
-#define lives_thirty_second_check(cond) _nsleep16384(cond) ? _nsleep8192(cond) ? _nsleep4096(cond) ? _nsleep1024(cond) ? \
-     _nsleep256(cond) ?  _nsleep32(cond) ?  _nsleep16(cond) : (cond) : (cond) : (cond) : (cond) : (cond) : (cond)
+#define lives_thirty_second_check(cond)_nsleep16384(cond)?_nsleep8192(cond)?_nsleep4096(cond)?_nsleep1024(cond)?\
+    _nsleep256(cond)?_nsleep32(cond)?_nsleep16(cond):(cond):(cond):(cond):(cond):(cond):(cond)
 
 // cancelation point for threads with deferred cancel type
 #define lives_cancel_point pthread_testcancel();

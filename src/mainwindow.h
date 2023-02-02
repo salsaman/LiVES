@@ -9,10 +9,6 @@
 
 #include <pthread.h>
 
-#include "effects-data.h"
-
-#include "audio.h"
-
 #ifdef ALSA_MIDI
 #include <alsa/asoundlib.h>
 #endif
@@ -20,6 +16,10 @@
 #ifdef HAVE_PULSE_AUDIO
 #include "pulse.h"
 #endif
+
+#include "effects-data.h"
+#include "audio.h"
+#include "clip_load_save.h"
 
 #define BILLIONS(n) (n##000000000l)
 #define ONE_BILLION BILLIONS(1)
@@ -593,11 +593,6 @@ enum {
 
 #define HEADER_LITERAL "header"
 #define AHEADER_LITERAL "aheader"
-
-#define SCRAP_LITERAL "scrap"
-#define SCRAP_LITERAL_LEN 5
-#define ASCRAP_LITERAL "ascrap"
-#define ASCRAP_LITERAL_LEN 6
 
 #define THEME_LITERAL "theme"
 #define THEME_SEP_IMG_LITERAL "main"
@@ -1676,12 +1671,8 @@ typedef struct {
 
   pthread_mutex_t fx_key_mutex[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
-  int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
+  uint64_t fx_mutex_tuid[FX_KEYS_MAX_VIRTUAL];
 
-  /*
-    volatile int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
-    int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
-  */
   ///< set for param window updates from OSC or data connections, notifies main thread to do visual updates
   volatile lives_rfx_t *vrfx_update;
 

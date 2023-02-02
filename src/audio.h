@@ -59,19 +59,17 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
 #ifdef HAVE_PULSE_AUDIO
 #define IF_APLAYER_PULSE(code) \
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) { \
-    code								\
-      }
+    do {code;} while (0);}
 #else
-#define IF_APLAYER_PULSE(code) ;
+#define IF_APLAYER_PULSE(code) if (0);
 #endif
 
 #ifdef ENABLE_JACK
 #define IF_APLAYER_JACK(code) \
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) { \
-    code								\
-      }
+    do {code;} while(0);}
 #else
-#define IF_APLAYER_JACK(code) ;
+#define IF_APLAYER_JACK(code) if (0);
 #endif
 
 #define SAMPLE_MAX_16BIT_P  32767.4999999f

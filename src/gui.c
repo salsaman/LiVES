@@ -359,6 +359,67 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 }
 
 
+static void make_accels(void) {
+  // if connect, then we attch accels to widgets, else we attach them to accel group
+  static LiVESWidgetClosure *stop_closure = NULL;
+  static LiVESWidgetClosure *fullscreen_closure = NULL;
+  static LiVESWidgetClosure *dblsize_closure = NULL;
+  static LiVESWidgetClosure *sepwin_closure = NULL;
+  static LiVESWidgetClosure *loop_closure = NULL;
+  static LiVESWidgetClosure *loop_cont_closure = NULL;
+  static LiVESWidgetClosure *fade_closure = NULL;
+  static LiVESWidgetClosure *showfct_closure = NULL;
+  static LiVESWidgetClosure *rec_closure = NULL;
+  static LiVESWidgetClosure *mute_audio_closure = NULL;
+  static LiVESWidgetClosure *ping_pong_closure = NULL;
+
+  if (!stop_closure) {
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_q, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                              (stop_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(stop_callback), NULL, NULL)));
+    if (!mainw->foreign) {
+      // TODO - eliminate
+      lives_widget_remove_accelerator(mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (LiVESXModifierType)0);
+      lives_widget_remove_accelerator(mainw->loop_ping_pong, mainw->accel_group, LIVES_KEY_g, (LiVESXModifierType)0);
+      lives_widget_remove_accelerator(mainw->loop_continue, mainw->accel_group, LIVES_KEY_o, (LiVESXModifierType)0);
+      lives_widget_remove_accelerator(mainw->record_perf, mainw->accel_group, LIVES_KEY_r, (LiVESXModifierType)0);
+      lives_widget_remove_accelerator(mainw->showfct, mainw->accel_group, LIVES_KEY_h, (LiVESXModifierType)0);
+      //
+
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_r, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (rec_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(rec_callback), NULL, NULL)));
+
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_f, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (fullscreen_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(fullscreen_callback), NULL, NULL)));
+
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_h, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (showfct_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(showfct_callback), NULL, NULL)));
+
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_s, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (sepwin_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(sepwin_callback), NULL, NULL)));
+
+      if (!CURRENT_CLIP_HAS_AUDIO || mainw->mute || mainw->loop_cont || is_realtime_aplayer(prefs->audio_player)) {
+        lives_widget_remove_accelerator(mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (LiVESXModifierType)0);
+
+        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_l, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                  (loop_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(loop_callback), NULL, NULL)));
+
+        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_o, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                  (loop_cont_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(loop_cont_callback), NULL, NULL)));
+
+      }
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_g, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (ping_pong_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(ping_pong_callback), NULL, NULL)));
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_z, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (mute_audio_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(mute_audio_callback), NULL, NULL)));
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_d, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (dblsize_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(dblsize_callback), NULL, NULL)));
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_b, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                (fade_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(fade_callback), NULL, NULL)));
+    }
+  }
+}
+
+
 static void asrc_toggle_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
                                  LiVESXModifierType mod, livespointer user_data) {
   if (!LIVES_IS_PLAYING && !mainw->multitrack)
@@ -442,8 +503,6 @@ void create_LiVES(void) {
   ////////////////////////////////////
 
   mainw->double_size = mainw->sep_win = FALSE;
-
-  mainw->current_file = -1;
 
   if (!mainw->preview_box) mainw->preview_image = NULL;
   mainw->sep_image = lives_image_new_from_pixbuf(NULL);
@@ -1088,20 +1147,11 @@ void create_LiVES(void) {
   mainw->full_screen = lives_standard_check_menu_item_new_with_label(_("_Full Screen"), FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->full_screen);
 
-  /* lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-  /*                              LIVES_KEY_f, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
   mainw->dsize = lives_standard_check_menu_item_new_with_label(_("_Double Size"), FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->dsize);
 
-  /* lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-  /*                              LIVES_KEY_d, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
   mainw->sepwin = lives_standard_check_menu_item_new_with_label(_("Play in _Separate Window"), FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->sepwin);
-
-  /* lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-  /*                              LIVES_KEY_s, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
 
   mainw->fade = lives_standard_check_menu_item_new_with_label(_("_Blank Background"), FALSE);
 
@@ -3550,132 +3600,7 @@ void set_interactive(boolean interactive) {
   if (mainw->sense_state & LIVES_SENSE_STATE_PROC_INSENSITIZED) {
     procw_desensitize();
   }
-  detach_accels(FALSE);
-}
-
-
-void detach_accels(boolean connect) {
-  // if connect, then we attch accels to widgets, else we attach them to accel group
-  static LiVESWidgetClosure *stop_closure = NULL;
-  static LiVESWidgetClosure *fullscreen_closure = NULL;
-  static LiVESWidgetClosure *dblsize_closure = NULL;
-  static LiVESWidgetClosure *sepwin_closure = NULL;
-  static LiVESWidgetClosure *loop_closure = NULL;
-  static LiVESWidgetClosure *loop_cont_closure = NULL;
-  static LiVESWidgetClosure *fade_closure = NULL;
-  static LiVESWidgetClosure *showfct_closure = NULL;
-  static LiVESWidgetClosure *showsubs_closure = NULL;
-  static LiVESWidgetClosure *rec_closure = NULL;
-  static LiVESWidgetClosure *mute_audio_closure = NULL;
-  static LiVESWidgetClosure *ping_pong_closure = NULL;
-
-  if (connect) {
-    if (stop_closure) {
-      /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), stop_closure); */
-      /* lives_widget_add_accelerator(mainw->stop, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-      /*                              LIVES_KEY_q, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), rec_closure);
-      lives_widget_add_accelerator(mainw->record_perf, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_r, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-
-      /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fullscreen_closure); */
-      /* lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-      /*                              LIVES_KEY_f, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
-      /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), play_closure); */
-      /* lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-      /*                              LIVES_KEY_p, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), mute_audio_closure);
-      lives_widget_add_accelerator(mainw->mute_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_z, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), ping_pong_closure);
-      lives_widget_add_accelerator(mainw->loop_ping_pong, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_g, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-
-      if (!CURRENT_CLIP_HAS_AUDIO || mainw->mute || mainw->loop_cont || is_realtime_aplayer(prefs->audio_player)) {
-        lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), loop_closure);
-        lives_widget_add_accelerator(mainw->loop_video, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                     LIVES_KEY_l, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-
-        lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), loop_cont_closure);
-        lives_widget_add_accelerator(mainw->loop_continue, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                     LIVES_KEY_o, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-        lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), showfct_closure);
-      }
-      lives_widget_add_accelerator(mainw->showfct, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_h, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), showsubs_closure);
-      lives_widget_add_accelerator(mainw->showsubs, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_v, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-
-      /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), sepwin_closure); */
-      /* lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-      /*                              LIVES_KEY_s, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
-      //lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), dblsize_closure);
-      /* lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
-      /*                              LIVES_KEY_d, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
-
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fade_closure);
-      lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_b, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-    }
-    stop_closure = fullscreen_closure = dblsize_closure = sepwin_closure = loop_closure =
-                                          loop_cont_closure = fade_closure = showfct_closure = showsubs_closure =
-                                              rec_closure = mute_audio_closure = ping_pong_closure = NULL;
-  } else {
-    if (!stop_closure) {
-      //lives_widget_remove_accelerator(mainw->stop, mainw->accel_group, LIVES_KEY_q, (LiVESXModifierType)0);
-      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_q, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                (stop_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(stop_callback), NULL, NULL)));
-      if (!mainw->foreign) {
-        lives_widget_remove_accelerator(mainw->record_perf, mainw->accel_group, LIVES_KEY_r, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_r, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (rec_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(rec_callback), NULL, NULL)));
-
-        //lives_widget_remove_accelerator(mainw->full_screen, mainw->accel_group, LIVES_KEY_f, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_f, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (fullscreen_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(fullscreen_callback), NULL, NULL)));
-
-        lives_widget_remove_accelerator(mainw->showfct, mainw->accel_group, LIVES_KEY_h, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_h, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (showfct_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(showfct_callback), NULL, NULL)));
-
-        //lives_widget_remove_accelerator(mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_s, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (sepwin_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(sepwin_callback), NULL, NULL)));
-
-        //lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-
-        if (!CURRENT_CLIP_HAS_AUDIO || mainw->mute || mainw->loop_cont || is_realtime_aplayer(prefs->audio_player)) {
-          lives_widget_remove_accelerator(mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (LiVESXModifierType)0);
-          lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_l, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                    (loop_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(loop_callback), NULL, NULL)));
-
-          lives_widget_remove_accelerator(mainw->loop_continue, mainw->accel_group, LIVES_KEY_o, (LiVESXModifierType)0);
-          lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_o, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                    (loop_cont_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(loop_cont_callback), NULL, NULL)));
-
-        }
-        lives_widget_remove_accelerator(mainw->loop_ping_pong, mainw->accel_group, LIVES_KEY_g, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_g, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (ping_pong_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(ping_pong_callback), NULL, NULL)));
-        lives_widget_remove_accelerator(mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_z, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (mute_audio_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(mute_audio_callback), NULL, NULL)));
-        //lives_widget_remove_accelerator(mainw->dsize, mainw->accel_group, LIVES_KEY_d, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_d, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (dblsize_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(dblsize_callback), NULL, NULL)));
-        lives_widget_remove_accelerator(mainw->fade, mainw->accel_group, LIVES_KEY_b, (LiVESXModifierType)0);
-        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_b, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                  (fade_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(fade_callback), NULL, NULL)));
-      }
-    }
-  }
+  make_accels();
 }
 
 
@@ -3732,10 +3657,6 @@ void fade_background(void) {
     lives_widget_show(mainw->t_sepwin);
   }
 
-  // since the hidden menu buttons are not activatable on some window managers
-  // we need to remove the accelerators and add accelerator keys instead
-  //detach_accels(FALSE);
-
   lives_widget_queue_draw(mainw->top_vbox);
   lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -3791,8 +3712,6 @@ void unfade_background(void) {
     lives_widget_show_all(mainw->playframe);
     lives_widget_set_opacity(mainw->playframe, 1.);
   }
-
-  //if (prefs->show_gui) detach_accels(TRUE);
 
   if (mainw->double_size && !mainw->play_window) resize(2.);
   else resize(1.);
@@ -4071,7 +3990,6 @@ void make_preview_box(void) {
 
 
 LIVES_GLOBAL_INLINE void hide_main_gui(void) {
-  //detach_accels(FALSE);
   if (mainw->play_window) {
 #ifdef GUI_GTK
     gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
@@ -4085,7 +4003,6 @@ LIVES_GLOBAL_INLINE void hide_main_gui(void) {
 
 LIVES_GLOBAL_INLINE void unhide_main_gui(void) {
   char *wid = NULL;
-  //detach_accels(TRUE);
   if (mainw->play_window) {
 #ifdef GUI_GTK
     gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
@@ -4656,7 +4573,6 @@ void resize_play_window(void) {
           /*   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
           /*   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
           /*   lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL); */
-          /*   detach_accels(FALSE); */
           /*   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
           /* } */
         } else if (mainw->vpp->init_screen) {
@@ -4678,6 +4594,7 @@ void resize_play_window(void) {
         lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
     }
     if (prefs->show_playwin) {
+
       lives_window_present(LIVES_WINDOW(mainw->play_window));
       lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
     }

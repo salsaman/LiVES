@@ -1426,63 +1426,6 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
 }
 
 
-boolean switch_aud_to_sox(boolean set_in_prefs) {
-  if (!capable->has_sox_play) return FALSE; // TODO - show error
-
-  prefs->audio_player = AUD_PLAYER_SOX;
-  if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
-  lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-  //set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
-
-  if (mainw->is_ready) {
-    /* //ubuntu / Unity has a hissy fit if you hide things in the menu !
-      lives_widget_hide(mainw->vol_toolitem);
-      if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
-    */
-    lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
-    lives_widget_hide(mainw->recaudio_submenu);
-
-    if (mainw->vpp && mainw->vpp->get_audio_fmts)
-      mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
-
-    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
-
-    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
-    lives_widget_set_sensitive(mainw->mute_audio, TRUE);
-    lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
-    lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
-  }
-
-#ifdef ENABLE_JACK
-  if (mainw->jackd_read) {
-    jack_close_client(mainw->jackd_read);
-    mainw->jackd_read = NULL;
-  }
-
-  if (mainw->jackd) {
-    jack_close_client(mainw->jackd);
-    mainw->jackd = NULL;
-  }
-  lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read) {
-    pulse_close_client(mainw->pulsed_read);
-    mainw->pulsed_read = NULL;
-  }
-
-  if (mainw->pulsed) {
-    pulse_close_client(mainw->pulsed);
-    mainw->pulsed = NULL;
-    pulse_shutdown();
-  }
-#endif
-  return TRUE;
-}
-
-
 void switch_aud_to_none(boolean set_in_prefs) {
   prefs->audio_player = AUD_PLAYER_NONE;
   if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);

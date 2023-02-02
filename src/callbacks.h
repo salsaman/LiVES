@@ -29,8 +29,6 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
 
 void popup_lmap_errors(LiVESMenuItem *, livespointer);
 
-void switch_clip(int type, int newclip, boolean force);
-
 void switch_clip_activate(LiVESMenuItem *, livespointer);
 
 void on_details_button_clicked(void);
@@ -150,22 +148,15 @@ void on_save_textview_clicked(LiVESButton *, livespointer);
 void on_filechooser_cancel_clicked(LiVESWidget *);
 
 void on_full_screen_pressed(LiVESButton *, livespointer);
-
 void on_full_screen_activate(LiVESMenuItem *, livespointer);
 
-// internal version
-void _on_full_screen_activate(LiVESMenuItem *, livespointer);
-
 void on_double_size_pressed(LiVESButton *, livespointer);
-
 void on_double_size_activate(LiVESMenuItem *, livespointer);
 
 void on_sepwin_pressed(LiVESButton *, livespointer);
-
 void on_sepwin_activate(LiVESMenuItem *, livespointer);
 
 void on_fade_pressed(LiVESButton *, livespointer);
-
 void on_fade_activate(LiVESMenuItem *, livespointer);
 
 void on_loop_video_activate(LiVESMenuItem *, livespointer);

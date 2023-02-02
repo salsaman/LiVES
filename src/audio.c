@@ -303,7 +303,7 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
 
   write_offset = arena_write(abuf->buffer16[0], src, abuf->write_pos, nsamples, 2);
   abuf->write_pos = write_offset;
-#define DEBUG_AFB
+  //#define DEBUG_AFB
 #ifdef DEBUG_AFB
   g_print("append16 %lu to afb %p and %p %d %lu\n", nsamples, abuf, abuf->buffer16, ((short *)src)[0], write_offset);
 #endif

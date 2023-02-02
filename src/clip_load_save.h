@@ -16,6 +16,14 @@ void set_default_comment(lives_clip_t *sfile, const char *extract);
 void wait_for_bg_audio_sync(int fileno);
 
 // crash recovery
+
+#define RECORDED_LITERAL "recorded"
+#define SCRAP_LITERAL "scrap"
+#define SCRAP_LITERAL_LEN 5
+#define ASCRAP_LITERAL "ascrap"
+#define ASCRAP_LITERAL_LEN 6
+#define RECORDED_LITERAL "recorded"
+
 boolean check_for_recovery_files(boolean auto_recover, boolean no_recover);
 boolean recover_files(char *recovery_file, boolean auto_recover);
 
@@ -28,6 +36,9 @@ ulong open_file(const char *filename);
 ulong open_file_sel(const char *file_name, double start_time, int frames);
 void open_fw_device(void); // TOTDO - move
 boolean reload_clip(int fileno, frames_t maxframe);
+
+// clip close
+int close_current_file(int file_to_switch_to);
 
 // low level API
 boolean get_new_handle(int index, const char *name);

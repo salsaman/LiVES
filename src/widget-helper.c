@@ -11,18 +11,21 @@
 #include "functions.h"
 
 // max number of GUI events we process per update loop: 64 - 256 seems about right
-#define EV_LIM 64
+#define EV_LIM 128
 
 //#define NSLEEP_TIME 500 // nanosec to wait in loops - a value of about 500 seems to be optimal
-#define NSLEEP_TIME 5000 // nanosec to wait in loops - a value of about 500 seems to be optimal
+#define NSLEEP_TIME 500 // nanosec to wait in loops - a value of about 500 seems to be optimal
 
-static boolean ign_idlefuncs = FALSE;
+static volatile boolean ign_idlefuncs = FALSE;
+
+// this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
+static volatile boolean skip_idlefuncs = FALSE;
 static pthread_mutex_t lpt_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
 static volatile boolean is_idle = FALSE;
 static volatile lives_proc_thread_t lpttorun = NULL;
 
 static boolean _lives_widget_context_update(void);
+static boolean _lives_widget_process_updates(LiVESWidget *widget);
 
 boolean is_fg_busy(void) {return !is_idle;}
 
@@ -634,9 +637,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_fill_rule(lives_painter_t 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_flush(lives_painter_surface_t *surf) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_flush(surf);
-  /* BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT; */
-  /* MAIN_THREAD_EXECUTE_RVOID(cairo_surface_flush, 0, "v", surf); */
-  /* BG_THREADVAR(hook_hints) = 0; */
   return TRUE;
 #endif
   return FALSE;
@@ -646,9 +646,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_flush(lives_painter_su
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_mark_dirty(lives_painter_surface_t *surf) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_mark_dirty(surf);
-  /* BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT; */
-  /* MAIN_THREAD_EXECUTE_RVOID(cairo_surface_mark_dirty, 0, "v", surf); */
-  /* BG_THREADVAR(hook_hints) = 0; */
   return TRUE;
 #endif
   return FALSE;
@@ -939,31 +936,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 
 
 boolean set_ign_idlefuncs(boolean val) {
-  pthread_mutex_lock(&ctx_mutex);
-  ign_idlefuncs = val;
-  pthread_mutex_unlock(&ctx_mutex);
-  return TRUE;
-}
-
-boolean set_ign_idlefuncs_nolock(boolean val) {
   ign_idlefuncs = val;
   return TRUE;
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *ctx, boolean may_block) {
-  boolean xign = TRUE;
-  if (!pthread_mutex_trylock(&ctx_mutex)) {
+  if (!is_fg_thread()) {
+    if (!ign_idlefuncs) mainw->do_ctx_update = TRUE;
+    return FALSE;
+  } else {
     boolean ret = FALSE;
-    if (!ign_idlefuncs) {
-      xign = FALSE;
-      ign_idlefuncs = TRUE;
-    }
+    boolean skip_id = skip_idlefuncs;
+    skip_idlefuncs = TRUE;
     ret = g_main_context_iteration(ctx, may_block);
-    if (!xign) {
-      ign_idlefuncs = FALSE;
-    }
-    pthread_mutex_unlock(&ctx_mutex);
+    skip_idlefuncs = skip_id;
     return ret;
   }
   return FALSE;
@@ -977,15 +964,17 @@ boolean fg_service_fulfill(void) {
   lptr = lpttorun;
 
   if (lptr && lives_proc_thread_ref(lptr) > 0) {
-    //if (ign_idlefuncs || (do_unlock = !pthread_mutex_trylock(&ctx_mutex))) {
-    if (lptr && mainw->debug) {
-      g_print("fulfill %s\n", lives_proc_thread_show_func_call(lptr));
+    if (mainw->debug) {
+      char *fcall = lives_proc_thread_show_func_call(lptr);
+      g_print("fulfill %s\n", fcall);
+      lives_free(fcall);
     }
-    if (lptr && !lives_proc_thread_is_queued(lptr)) {
-      if (!lives_proc_thread_is_invalid(lptr)) {
-        g_print("IGNoring non queued lpt %s\n%s\n",
-                lives_proc_thread_show_func_call(lptr), lpt_desc_state(lptr));
-      }
+    if (!lives_proc_thread_is_queued(lptr)) {
+      /* if (!lives_proc_thread_is_invalid(lptr)) { */
+      /*   g_print("IGNoring non queued lpt %s\n%s\n", */
+      /*           lives_proc_thread_show_func_call(lptr), lpt_desc_state(lptr)); */
+
+      /* } */
       lives_proc_thread_unref(lptr);
       lptr = NULL;
     }
@@ -999,11 +988,16 @@ boolean fg_service_fulfill(void) {
       if (!pthread_mutex_trylock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
         if (mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
           pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+          if (THREADVAR(fg_service)) {
+            is_fg_service = TRUE;
+          } else THREADVAR(fg_service) = TRUE;
           // for the GUI hook, return value of TRUE indicates that a callback was run
           if (lives_hooks_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK))
             is_idle = FALSE;
           else is_idle = TRUE;
+          if (!is_fg_service) THREADVAR(fg_service) = FALSE;
           return !is_idle;
+
         }
         pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
         is_idle = TRUE;
@@ -1036,7 +1030,7 @@ boolean fg_service_fulfill(void) {
 #endif
     retval = weed_get_voidptr_value(lptr, "retloc", NULL);
     lives_proc_thread_execute(lptr, retval);
-    g_main_context_iteration(NULL, FALSE);
+
     if (!is_fg_service) THREADVAR(fg_service) = FALSE;
     if (!pthread_mutex_trylock(&lpt_mutex)) {
       if (lpttorun == lptr) lpttorun = NULL;
@@ -1054,80 +1048,94 @@ boolean fg_service_fulfill(void) {
 }
 
 
-#define MISS_PRIO_THRESH 100
+#define MISS_PRIO_THRESH 10000
 #define PRIO_HIGH LIVES_WIDGET_PRIORITY_HIGH
 #define PRIO_LOW LIVES_WIDGET_PRIORITY_LOW
 
+static volatile int cprio = PRIO_HIGH;
+static volatile int misses = 0;
+
 boolean fg_service_fulfill_cb(void *dummy) {
-  static int misses = 0;
   static int prio =  PRIO_HIGH;
   static int oign = -1;
-  static boolean was_idle;
+  boolean is_fg_service = FALSE;
 
-  /* if (pthread_mutex_trylock(&ctx_mutex)) return TRUE; */
-  /* pthread_mutex_unlock(&ctx_mutex); */
-
-  if (oign != ign_idlefuncs) {
-    if (ign_idlefuncs) {
-      if (prio != PRIO_HIGH) {
-        lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH);
+  if (skip_idlefuncs) {
+    // callbacks here are blocked
+    if (cprio != PRIO_LOW) {
+      cprio = PRIO_LOW;
+      if (prio != cprio) {
+        // chenge cprio, but not prio
+        lives_source_set_priority(mainw->fg_service_source, cprio);
       }
-      if (g_main_depth() > 1) return TRUE;
-    } else if (prio != PRIO_HIGH) {
-      lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH);
-      prio = PRIO_HIGH;
-      //lives_source_set_priority(mainw->fg_service_source, PRIO_LOW);
     }
+    return TRUE;
+  }
+
+  if (oign != ign_idlefuncs || cprio != prio) {
+    cprio = PRIO_HIGH;
+    lives_source_set_priority(mainw->fg_service_source, cprio);
+    prio = cprio;
+    if (ign_idlefuncs && g_main_depth() > 1) return TRUE;
     oign = ign_idlefuncs ? 1 : 0;
-    misses = 1;
+    misses = 0;
+    cprio = prio;
   }
 
   if (ign_idlefuncs && g_main_depth() > 1) return TRUE;
 
   do {
-    was_idle = is_idle;
     is_idle = TRUE;
-    if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
+    if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
       fg_service_fulfill();
-      if (!is_idle) lives_widget_context_iteration(NULL, FALSE);
-
-#if USE_RPMALLOC
-      if (!is_idle) {
-        if (rpmalloc_is_thread_initialized()) {
-          rpmalloc_thread_collect();
-        }
-      }
-#endif
-    }
-
     if (!is_idle) {
+      cprio = PRIO_HIGH;
+      lives_widget_context_iteration(NULL, FALSE);
       if (prio != PRIO_HIGH) {
-        prio = PRIO_HIGH;
-        if (!ign_idlefuncs)
-          lives_source_set_priority(mainw->fg_service_source, prio);
+        g_print("PRIO HIGH\n");
+        lives_source_set_priority(mainw->fg_service_source, cprio);
+        prio = cprio;
       }
-      if (was_idle) misses = 0;
-    } else {
+      misses = 0;
+    } else if (misses >= 0 && cprio == PRIO_HIGH) {
       if (++misses >= MISS_PRIO_THRESH) {
-        if (prio == PRIO_HIGH) {
-          prio = PRIO_LOW;
-          if (!ign_idlefuncs)
-            lives_source_set_priority(mainw->fg_service_source, prio);
-        }
-        if (ign_idlefuncs && prio == PRIO_LOW) {
-          pthread_yield();
-          lives_nanosleep(NSLEEP_TIME);
+        g_print("PRIO LOW\n");
+        cprio = PRIO_LOW;
+        if (!ign_idlefuncs) {
+          lives_source_set_priority(mainw->fg_service_source, cprio);
+          prio = cprio;
         }
       }
     }
-    was_idle = is_idle;
+    if (!ign_idlefuncs) break;
+
     if (mainw->do_ctx_update) {
       _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
+    } else {
+      if (cprio == PRIO_LOW) {
+        pthread_yield();
+        lives_nanosleep(NSLEEP_TIME << 3);
+      }
+      lives_nanosleep(NSLEEP_TIME);
     }
   } while (ign_idlefuncs);
-  g_main_context_iteration(NULL, FALSE);
+  if (mainw->do_ctx_update) {
+    if (THREADVAR(fg_service)) {
+      is_fg_service = TRUE;
+    } else THREADVAR(fg_service) = TRUE;
+    _lives_widget_context_update();
+    mainw->do_ctx_update = FALSE;
+    if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+  } else if (!ign_idlefuncs) lives_widget_context_iteration(NULL, FALSE);
   return TRUE;
+}
+
+
+void fg_service_wake(void) {
+  cprio = PRIO_HIGH;
+  // signal to keep high prio until something is run
+  misses = -99999;
 }
 
 
@@ -1499,7 +1507,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
   if (!LIVES_IS_WIDGET(widget)) break_me("non widget in set_sensitive");
   if (1 || is_fg_thread()) _lives_widget_set_sensitive(widget, state);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_set_sensitive, 0, "vb",	widget, state);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -1529,7 +1537,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_hide(widget);
-  //MAIN_THREAD_EXECUTE_RVOID(gtk_widget_hide, 0, "v", widget);
   return TRUE;
 #endif
   return FALSE;
@@ -1570,9 +1577,28 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 }
 
 
+static boolean _lives_widget_queue_draw_and_update(LiVESWidget *widget) {
+  gtk_widget_queue_draw(widget);
+  _lives_widget_process_updates(widget);
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget *widget) {
+  if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
+    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+  return FALSE;
+}
+
+
 WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_now(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_now(widget);
+  _lives_widget_queue_draw_and_update(widget);
   return TRUE;
 #endif
   return FALSE;
@@ -1595,7 +1621,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
   if (LIVES_IS_WIDGET(widget)) {
     if (mainw && mainw->is_ready) {
       BG_THREADVAR(hook_match_nparams) = 1;
-      BG_THREADVAR(hook_hints) = HOOK_REMOVE_DATA | HOOK_OPT_MATCH_CHILD;
+      BG_THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD;
       MAIN_THREAD_EXECUTE_RVOID(gtk_widget_destroy, 0, "v", widget);
       BG_THREADVAR(hook_hints) = 0;
       BG_THREADVAR(hook_match_nparams) = 0;
@@ -1615,12 +1641,7 @@ static boolean _lives_widget_realize(LiVESWidget *widget) {
     LIVES_WARN("Realize invalid widget");
     return FALSE;
   }
-  if (1 || is_fg_thread()) gtk_widget_realize(widget);
-  else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_realize, 0, "v", widget);
-    BG_THREADVAR(hook_hints) = 0;
-  }
+  gtk_widget_realize(widget);
   return TRUE;
 #endif
   return FALSE;
@@ -1635,6 +1656,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_realize(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (!LIVES_IS_WIDGET(widget)) {
+    abort();
     LIVES_WARN("Draw queue invalid widget");
     return FALSE;
   }
@@ -1729,37 +1751,49 @@ static boolean lptdone(lives_obj_t *obj, void *data) {
 static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   lives_proc_thread_t compl_lpt = NULL;
   volatile boolean bvar = FALSE;
-
-  lives_proc_thread_ref(lpt);
+  boolean do_cancel = FALSE;
 
   // must set this, so we get tyoed return value from finished action
   weed_set_voidptr_value(lpt, "retloc", retval);
 
   compl_lpt = lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
 
-  // setting this, we trigger the main thread to run lpt (eitherin governor_loop, or fg_service_fulfill)
-  if (lpt) lpttorun = lpt;
-  lives_nanosleep_until_nonzero(bvar || (lives_proc_thread_get_state(lpt) & THRD_STATE_PREPARING));
+  // setting this, we trigger the main thread to run lpt in fg_service_fulfill)
+  lpttorun = lpt;
+
+  // wait for main thread to pick it up and set PREPARING state
+  lives_nanosleep_until_nonzero(bvar || (do_cancel = lives_proc_thread_should_cancel(lpt))
+                                || lives_proc_thread_is_preparing(lpt)
+                                || lives_proc_thread_is_running(lpt)
+                                || lives_proc_thread_is_done(lpt));
+
+  // once we unlock this, a) main thread can compltet lpttorun and nullify lpttorun
+  // this is fine since it would have triggered lptdone and hence bvar will be TRUE now
+  // and b) another bg thread can now grab lpt_mutex, and it will set lpttorun to NULL, then to its lpt
+  // this is also fine, it will block waiting for PREAPRING, with mutex locked
   pthread_mutex_unlock(&lpt_mutex);
 
-  if (!bvar) {
+  if (!bvar && !do_cancel && !lives_proc_thread_is_done(lpt)) {
     // wait for bvar to set to TRUE (via lptdone) or for self to get a cancel request
     thread_wait_loop(lpt, FALSE, &bvar);
   }
 
-  if (lpt) {
-    if (!pthread_mutex_trylock(&lpt_mutex)) {
-      if (lpttorun == lpt) lpttorun = NULL;
-      pthread_mutex_unlock(&lpt_mutex);
-    }
-    // need to remove this hook, in case it has not triggered, since bvar is about to go out of scope
-    lives_hook_remove(compl_lpt);
-    lives_proc_thread_unref(lpt);
+
+  // if another bg thread is waiting it will have changed lpttorun, so only NULLify if ours and with mutex locked
+  //     (so it cannot change while we check)
+  // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
+  if (!pthread_mutex_trylock(&lpt_mutex)) {
+    if (lpttorun == lpt) lpttorun = NULL;
+    pthread_mutex_unlock(&lpt_mutex);
   }
+
+  // need to remove this hook, in case it has not triggered, since bvar is about to go out of scope
+  if (!lives_proc_thread_is_done(lpt))
+    lives_hook_remove(compl_lpt);
 }
 
 
-static  boolean _lives_widget_process_updates(LiVESWidget *widget) {
+static boolean _lives_widget_process_updates(LiVESWidget *widget) {
 #ifdef GUI_GTK
   LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
@@ -1785,20 +1819,32 @@ static  boolean _lives_widget_process_updates(LiVESWidget *widget) {
 }
 
 
-static boolean _lives_widget_queue_draw_and_update(LiVESWidget *widget) {
-  gtk_widget_queue_draw(widget);
-  _lives_widget_process_updates(widget);
-  return TRUE;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (!LIVES_IS_WIDGET(widget)) {
     LIVES_WARN("Draw queue invalid widget");
     return FALSE;
   }
-  BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+  if (is_fg_thread()) gtk_widget_queue_draw(widget);
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_update_noblock(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  if (!LIVES_IS_WIDGET(widget)) {
+    LIVES_WARN("Draw queue invalid widget");
+    return FALSE;
+  }
+  if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
+  BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY;
   MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
   BG_THREADVAR(hook_hints) = 0;
   return TRUE;
@@ -1910,24 +1956,21 @@ static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
                                          LIVES_GUI_CALLBACK(_dialog_resp_set), NULL);
   ulong dfunc = lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
                                           LIVES_GUI_CALLBACK(lives_dialog_destroyed), NULL);
-  boolean dest, ig_id;
+  boolean dest;
+
   lives_widget_object_ref(dialog);
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   _lives_widget_show_all(LIVES_WIDGET(dialog));
 
   if (!mainw->is_ready) pop_to_front(LIVES_WIDGET(dialog), NULL);
 
-  ig_id = ign_idlefuncs;
-  ign_idlefuncs = TRUE;
-
   do {
-    g_main_context_iteration(NULL, FALSE);
+    fg_service_fulfill();
+    lives_widget_context_iteration(NULL, FALSE);
     pthread_yield();
     lives_nanosleep(NSLEEP_TIME);
     resp = GET_INT_DATA(dialog, RESPONSE_KEY);
   } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
-
-  ign_idlefuncs = ig_id;
 
   if (!dest) {
     if (dialog) lives_signal_handler_disconnect(dialog, dfunc);
@@ -1946,9 +1989,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 #ifdef GUI_GTK
   //resp = gtk_dialog_run(dialog);
   if (is_fg_thread()) {
-    gtk_widget_show_all(dialog);
+    gtk_widget_show_all(GTK_WIDGET(dialog));
+    _lives_widget_context_update();
     resp = gtk_dialog_run(dialog);
-    //resp = _dialog_run(dialog);
   } else {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
     main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
@@ -1974,7 +2017,9 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
     lives_proc_thread_unref(lpt);
   } else {
     GET_PROC_THREAD_SELF(self);
-
+    // wait here until we get the mutex - this means any thread ahead of us has waited
+    // its lpt has passed at least to prepared, or it is locke transiently while lpttorun is nullified
+    fg_service_wake();
     while (pthread_mutex_trylock(&lpt_mutex)) {
       if (lives_proc_thread_get_cancel_requested(lpt)
           || lives_proc_thread_get_cancel_requested(self)) {
@@ -1982,25 +2027,25 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
         lives_proc_thread_unref(lpt);
         return;
       }
-      lives_nanosleep(LIVES_SHORT_SLEEP);
+      lives_nanosleep(LIVES_QUICK_NAP);
     }
+    // once we have lock, no other thread can reset lpttotrun so we will do that here
+    // then in wati_for_fg_response, we will set lpttorun to our lpt, and block until
+    // state is at least PREPENDING (or CANCELLED !)
 
-    if (lives_proc_thread_get_cancel_requested(lpt)
-        || lives_proc_thread_get_cancel_requested(self)) {
-      lives_proc_thread_cancel(lpt);
+    // resetting this avoids main_thread rechecking the completed request
+    lpttorun = NULL;
+
+    if (lives_proc_thread_should_cancel(lpt)) {
+      /* if (!lives_proc_thread_was_cancelled) */
+      /* 	lives_proc_thread_cancel(lpt); */
       lives_proc_thread_unref(lpt);
       pthread_mutex_unlock(&lpt_mutex);
       return;
     }
 
-    //pthread_mutex_unlock(&lpt_mutex);
-
     wait_for_fg_response(lpt, retval);
 
-    // ensure main thread has processed this before unreffing
-    // (or if lpttorun was cancelled, we would have cleared it
-
-    lives_nanosleep_until_zero(lpttorun);
     lives_proc_thread_unref(lpt);
   }
 }
@@ -5127,7 +5172,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_is_realized(LiVESWidget *widget
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_add(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
-  if (1 || is_fg_thread())
+  if (!ign_idlefuncs || is_fg_thread())
     gtk_container_add(container, widget);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
@@ -5142,7 +5187,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_add(LiVESContainer *containe
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
-  gtk_container_remove(container, widget);
+  if (is_fg_thread())
+    gtk_container_remove(container, widget);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_container_remove, 0, "vv", container, widget);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -5328,12 +5379,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton 
       value = lives_spin_button_get_snapval(button, value);
   }
 #ifdef GUI_GTK
-  if (1 || is_fg_thread()) gtk_spin_button_set_value(button, value);
+  if (!ign_idlefuncs || is_fg_thread()) gtk_spin_button_set_value(button, value);
   else {
-    BG_THREADVAR(hook_hints) |= HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_REPLACE;
-    BG_THREADVAR(hook_match_nparams) = 1;
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
     MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_value, 0, "vd", button, value);
-    BG_THREADVAR(hook_match_nparams) = 0;
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -5344,7 +5393,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_range(LiVESSpinButton *button, double min, double max) {
 #ifdef GUI_GTK
-  gtk_spin_button_set_range(button, min, max);
+  if (!ign_idlefuncs || is_fg_thread()) gtk_spin_button_set_range(button, min, max);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_range, 0, "vdd", button, min, max);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -6352,15 +6406,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, cons
   } else {
     gtk_label_set_text(label, text);
   }
-  /* BG_THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE; */
-  /* BG_THREADVAR(hook_match_nparams) = 1; */
-  /* if (widget_opts.mnemonic_label) { */
-  /*   MAIN_THREAD_EXECUTE_RVOID(gtk_label_set_text_with_mnemonic, 0, "vs", label, text); */
-  /* } else { */
-  /*   MAIN_THREAD_EXECUTE_RVOID(gtk_label_set_text, 0, "vs", label, text); */
-  /* } */
-  /* BG_THREADVAR(hook_match_nparams) = 0; */
-  /* BG_THREADVAR(hook_hints) = 0; */
   return TRUE;
 #endif
   return FALSE;
@@ -6509,12 +6554,13 @@ boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
       .justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
   if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
-  //gtk_entry_set_text(entry, text);
-  BG_THREADVAR(hook_match_nparams) = 1;
-  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE;
-  MAIN_THREAD_EXECUTE_RVOID(gtk_entry_set_text, 0, "vs", entry, text);
-  BG_THREADVAR(hook_hints) = 0;
-  BG_THREADVAR(hook_match_nparams) = 0;
+  if (!ign_idlefuncs || is_fg_thread()) {
+    gtk_entry_set_text(entry, text);
+  } else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_entry_set_text, 0, "vs", entry, text);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -7219,10 +7265,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_frame_set_label_widget(LiVESFrame *fra
     LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_frame_set_label_widget(frame, widget);
-
-  /* BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT; */
-  /* MAIN_THREAD_EXECUTE_RVOID(gtk_frame_set_label_widget, 0, "vv", frame, widget); */
-  /* BG_THREADVAR(hook_hints) = 0; */
   return TRUE;
 #endif
   return FALSE;
@@ -7746,6 +7788,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetSource *lives_thrd_idle_priority(LiVESWid
   return source;
 }
 
+// priority her is  nothing to do with gui callback priority
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetSource *lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data) {
   LiVESWidgetSource *source = lives_idle_source_new();
   lives_source_set_callback(source, function, data);
@@ -11883,17 +11926,6 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_widget_queue_draw_if_visible(LiVESWidget 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget * widget) {
-  if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
-  else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
-    BG_THREADVAR(hook_hints) = 0;
-  }
-  return FALSE;
-}
-
-
 int lives_utf8_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
   // do not inline !
   int ret;
@@ -13080,7 +13112,6 @@ static void do_some_things(void) {
 
 
 static boolean _lives_widget_context_update(void) {
-  boolean need_service_handle = FALSE;
   boolean is_fg_service = FALSE;
   int limit = EV_LIM;
   int count = 0;
@@ -13089,26 +13120,19 @@ static boolean _lives_widget_context_update(void) {
     is_fg_service = TRUE;
   } else THREADVAR(fg_service) = TRUE;
 
-  if (!ign_idlefuncs) {
-    need_service_handle = TRUE;
-    ign_idlefuncs = TRUE;
-  }
-
   if (mainw->gui_much_events) {
     mainw->gui_much_events = FALSE;
     limit <<= 1;
   }
 
   while (count++ < limit && !mainw->is_exiting) {
-    g_main_context_iteration(NULL, FALSE);
+    lives_widget_context_iteration(NULL, FALSE);
     if (!lives_widget_context_pending(NULL)) break;
     pthread_yield();
     lives_nanosleep(NSLEEP_TIME);
   }
 
   if (!is_fg_service) THREADVAR(fg_service) = FALSE;
-  if (need_service_handle) ign_idlefuncs = FALSE;
-
   return FALSE;
 }
 
@@ -13126,17 +13150,19 @@ boolean lives_widget_context_update(void) {
   if (!is_fg_thread()) {
     GET_PROC_THREAD_SELF(self);
     lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(self);
-    if (lpt_hooks[LIVES_GUI_HOOK]->stack) {
-      pthread_mutex_lock(&mainw->all_hstacks_mutex);
-      mainw->all_hstacks =
-        lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
-      pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-      lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
+    if (ign_idlefuncs) return FALSE;
+    fg_service_wake();
+    if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) {
+      if (lpt_hooks[LIVES_GUI_HOOK]->stack) {
+        pthread_mutex_lock(&mainw->all_hstacks_mutex);
+        mainw->all_hstacks =
+          lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
+        pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+        lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
+      }
     }
-    BG_THREADVAR(hook_hints) |= HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_void(lives_widget_context_update, 0);
-    BG_THREADVAR(hook_hints) = 0;
-    //_lives_widget_context_update();
+    mainw->do_ctx_update = TRUE;
+    lives_nanosleep_while_true(mainw->do_ctx_update);
     return TRUE;
   }
   do_some_things();

@@ -4768,7 +4768,6 @@ filterinit2:
       }
       lives_freep((void **)&saveargs->fname);
       lives_free(saveargs);
-      lives_proc_thread_unref(saver_lpt);
       saver_lpt = NULL;
       saveargs = NULL;
     }
@@ -5044,7 +5043,6 @@ boolean render_to_clip(boolean new_clip) {
   char *com, *tmp, *clipname = NULL;
   double old_fps = 0.;
   double afade_in_secs = 0., afade_out_secs = 0.;
-  thrd_work_t *work;
 #ifdef VFADE_RENDER
   double vfade_in_secs = 0., vfade_out_secs = 0.;
   LiVESWidgetColor fadecol;
@@ -5061,7 +5059,7 @@ boolean render_to_clip(boolean new_clip) {
 
   prefs->pb_quality = PB_QUALITY_HIGH;
 
-  set_ign_idlefuncs(TRUE);
+  //set_ign_idlefuncs(TRUE);
 
   if (new_clip) {
     if (prefs->render_prompt) {
@@ -5130,7 +5128,7 @@ boolean render_to_clip(boolean new_clip) {
         lives_freep((void **)&resaudw);
         prefs->pb_quality = pbq;
         prefs->enc_letterbox = enc_lb;
-        set_ign_idlefuncs(FALSE);
+        //set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     } else {
@@ -5161,7 +5159,7 @@ boolean render_to_clip(boolean new_clip) {
       lives_free(clipname);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
-      set_ign_idlefuncs(FALSE);
+      //set_ign_idlefuncs(FALSE);
       return FALSE; // show dialog again
     }
 
@@ -5228,7 +5226,7 @@ boolean render_to_clip(boolean new_clip) {
       if (THREADVAR(com_failed)) {
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
-        set_ign_idlefuncs(FALSE);
+        //set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     } else {
@@ -5272,7 +5270,7 @@ boolean render_to_clip(boolean new_clip) {
         close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
-      set_ign_idlefuncs(FALSE);
+      //set_ign_idlefuncs(FALSE);
       return FALSE;
     } else {
       lives_contract_t *contract;
@@ -5326,7 +5324,7 @@ boolean render_to_clip(boolean new_clip) {
         if (!mainw->multitrack) close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
-        set_ign_idlefuncs(FALSE);
+        //set_ign_idlefuncs(FALSE);
         return FALSE;
       }
 
@@ -5402,7 +5400,7 @@ boolean render_to_clip(boolean new_clip) {
   if (mainw->multitrack && !rendaud && !mainw->multitrack->opts.render_vidp) {
     prefs->enc_letterbox = enc_lb;
     prefs->pb_quality = pbq;
-    set_ign_idlefuncs(FALSE);
+    //set_ign_idlefuncs(FALSE);
     return FALSE;
   }
 
@@ -5416,8 +5414,7 @@ boolean render_to_clip(boolean new_clip) {
       = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC, transcode_clip,
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
-    work = lives_proc_thread_get_work(mainw->transrend_proc);
-    lives_hook_append(work->hook_stacks, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
+    lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
     lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     g_print("wait for transcoder ready\n");
@@ -5555,7 +5552,7 @@ boolean render_to_clip(boolean new_clip) {
           } else pthread_mutex_unlock(&cfile->frame_index_mutex);
           prefs->enc_letterbox = enc_lb;
           prefs->pb_quality = pbq;
-          set_ign_idlefuncs(FALSE);
+          //set_ign_idlefuncs(FALSE);
           return FALSE; /// will reshow the dialog
         }
 
@@ -5598,12 +5595,10 @@ rtc_done:
   mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
   prefs->pb_quality = pbq;
   prefs->enc_letterbox = enc_lb;
-  set_ign_idlefuncs(FALSE);
+  //set_ign_idlefuncs(FALSE);
   return retval;
 }
 
-
-LIVES_INLINE void dprint_recneg(void) {d_print(_("nothing recorded.\n"));}
 
 boolean backup_recording(char **esave_file, char **asave_file) {
   char *x, *y;
@@ -5614,8 +5609,9 @@ boolean backup_recording(char **esave_file, char **asave_file) {
   if (!esave_file) esave_file = &x;
   if (!asave_file) asave_file = &y;
 
-  *esave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
-                                    capable->mainpid, LIVES_FILE_EXT_LAYOUT);
+  *esave_file = lives_strdup_printf("%s/%s-%s.%d.%d.%d.%s", prefs->workdir, RECORDED_LITERAL,
+                                    LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid,
+                                    LIVES_FILE_EXT_LAYOUT);
   THREADVAR(write_failed) = FALSE;
   fd = lives_create_buffered(*esave_file, DEF_FILE_PERMS);
   if (fd >= 0) {
@@ -5630,8 +5626,8 @@ boolean backup_recording(char **esave_file, char **asave_file) {
     return FALSE;
   }
 
-  *asave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(),
-                                    lives_getgid(),
+  *asave_file = lives_strdup_printf("%s/%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL,
+                                    LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                     capable->mainpid);
 
   fd = lives_create_buffered(*asave_file, DEF_FILE_PERMS);
@@ -5793,7 +5789,7 @@ static boolean _deal_with_render_choice(void) {
   if (!mainw->event_list) {
     close_scrap_file(TRUE);
     close_ascrap_file(TRUE);
-    dprint_recneg();
+    d_print(_("nothing recorded.\n"));
     return FALSE;
   }
 
@@ -5825,7 +5821,7 @@ static boolean _deal_with_render_choice(void) {
   }
 
   mainw->no_interp = TRUE;
-  set_ign_idlefuncs(TRUE);
+  //set_ign_idlefuncs(TRUE);
   do {
     prefs->event_window_show_frame_events = TRUE;
     if (render_choice == RENDER_CHOICE_NONE || render_choice == RENDER_CHOICE_PREVIEW)
@@ -5892,17 +5888,13 @@ static boolean _deal_with_render_choice(void) {
         info = NULL;
       }
 
-      //BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-      set_ign_idlefuncs(FALSE);
-      /* main_thread_execute(render_to_clip, WEED_SEED_BOOLEAN, &bret, "b", TRUE); */
-      /* set_ign_idlefuncs(TRUE); */
-      /* BG_THREADVAR(hook_hints) = 0; */
+      //set_ign_idlefuncs(FALSE);
 
       if (!render_to_clip(TRUE) || render_choice == RENDER_CHOICE_TRANSCODE) {
-        set_ign_idlefuncs(TRUE);
+        //set_ign_idlefuncs(TRUE);
         render_choice = RENDER_CHOICE_PREVIEW;
       } else {
-        set_ign_idlefuncs(TRUE);
+        //set_ign_idlefuncs(TRUE);
         close_scrap_file(TRUE);
         close_ascrap_file(TRUE);
         prefs->mt_def_width = dw;
@@ -5994,7 +5986,7 @@ static boolean _deal_with_render_choice(void) {
     }
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
-  set_ign_idlefuncs(FALSE);
+  //set_ign_idlefuncs(FALSE);
   mainw->no_interp = FALSE;
 
   if (info) {

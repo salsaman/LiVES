@@ -4400,7 +4400,6 @@ boolean jack_interop_cleanup(lives_obj_t *obj, void *data) {
       gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
       gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
     }
-    detach_accels(TRUE);
     lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     need_clnup = FALSE;
   }
@@ -4489,7 +4488,6 @@ retry:
       gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
       gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL);
-      detach_accels(FALSE);
       lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 #ifdef GDK_WINDOWING_X11
       if (capable->has_xdotool != MISSING || capable->has_wmctrl != MISSING) {

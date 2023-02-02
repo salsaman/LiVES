@@ -1790,6 +1790,7 @@ if (success && mainw->frame_layer) {
   lives_free(msg);
 }
 
+weed_layer_ref(mainw->frame_layer);
 old_frame_layer = mainw->frame_layer;
 
 // TODO - set mainw->frame_layer = NULL
@@ -2428,8 +2429,10 @@ frames_t reachable_frame(int clipno, lives_decoder_t *dplug, frames_t stframe, f
 }
 
 
-#define CATCHUP_LIMIT .9
 
+
+
+#define CATCHUP_LIMIT .9
 
 
 static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int64_t jumplim, lives_direction_t dir) {
@@ -2540,9 +2543,6 @@ int process_one(boolean visible) {
 
   sfile = mainw->files[mainw->playing_file];
 
-  old_playing_file = mainw->playing_file;
-  old_vpp = mainw->vpp;
-
 #ifdef ENABLE_JACK
   if (init_timers) {
     if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
@@ -2573,11 +2573,9 @@ int process_one(boolean visible) {
                                               (LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton))));
   }
 #endif
-
-  // here we create and "idlefunc" proc_thread, the proc_thread is queued, runs once, and then can be
-  // triggered later simp[y by requeeuing it
-  /* if (!gui_lpt) gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_IDLE_PAUSE */
-  /*                           | LIVES_THRDATTR_START_UNQUEUED, update_gui, WEED_SEED_BOOLEAN, "", NULL); */
+player_loop:
+  old_playing_file = mainw->playing_file;
+  old_vpp = mainw->vpp;
 
   // time is obtained as follows:
   // -  if there is an external transport or clock active, we take our time from that
@@ -2712,7 +2710,8 @@ int process_one(boolean visible) {
 
   // we allow an exception only when starting or stopping a generator
 
-  if (mainw->current_file != old_current_file || mainw->playing_file != old_playing_file || mainw->vpp != old_vpp) {
+  if (mainw->current_file != old_current_file || mainw->playing_file != old_playing_file
+      || mainw->vpp != old_vpp) {
     mainw->cancelled = CANCEL_INTERNAL_ERROR;
     retval = mainw->cancelled;
     goto err_end;
@@ -2960,9 +2959,11 @@ switch_point:
       }
     }
 
+    // screen update during event playback
     mainw->gui_much_events = TRUE;
     mainw->do_ctx_update = TRUE;
     lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
+    lives_nanosleep_while_true(mainw->do_ctx_update);
 
     if (mainw->cancelled == CANCEL_NONE) return 0;
 
@@ -3843,50 +3844,33 @@ proc_dialog:
     if (proc_file != mainw->current_file) return 0;
     else {
       lives_rfx_t *xrfx;
+      if (!visible) {
+        if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
+          // the audio thread wants to update the parameter window
+          mainw->vrfx_update = NULL;
+          update_visual_params(xrfx, FALSE);
+        }
 
-      if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
-        // the audio thread wants to update the parameter window
-        mainw->vrfx_update = NULL;
-        update_visual_params(xrfx, FALSE);
-      }
+        // the audio thread wants to update the parameter scroll(s)
+        if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      // the audio thread wants to update the parameter scroll(s)
-      if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
+        // events like fullscreen on / off are not acted on directly, instead these are stacked
+        // for execution at this point. The callbacks are triggered and will pass requests to the main
+        // thread. We must allow idlefunc(s) to run during this time
+        lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
+        mainw->gui_much_events = TRUE;
+        mainw->do_ctx_update = TRUE;
 
-      /* if (!lives_proc_thread_is_unqueued(gui_lpt)) { */
-      /* 	lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt)); */
-      /* } */
-
-      // events like fullscreen on / off are not acted on directly, instead these are stacked
-      // for execution at this point. The callbacks are triggered and will pass requests to the main
-      // thread. We must allow idlefunc(s) to run during this time
-      mainw->gui_much_events = TRUE;
-      mainw->do_ctx_update = TRUE;
-      lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
-      //g_print("gui_lpt state: %s\n", lpt_desc_state(gui_lpt));
-
-      /* if (!lives_proc_thread_is_idling(gui_lpt)) { */
-      /* 	lives_proc_thread_queue(gui_lpt, 0); */
-      /* } else { */
-      /* 	// gui_lpt was idling, so either we waited for that, */
-      /* 	// or it already finished and became unqueued / idling */
-      /* 	// for this type of proc_thread, we just ask it to resume */
-      /* 	lives_proc_thread_request_resume(gui_lpt); */
-      /* } */
-      /* lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK); */
-
-      // check for something ???
-      if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
-
-      if (!CURRENT_CLIP_IS_VALID) {
-        if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
-        mainw->cancelled = CANCEL_INTERNAL_ERROR;
+        if (!CURRENT_CLIP_IS_VALID) {
+          if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
+          mainw->cancelled = CANCEL_INTERNAL_ERROR;
+        }
       }
     }
     //else proc_file = THREADVAR(proc_file) = mainw->playing_file;
     if (mainw->cancelled != CANCEL_NONE) {
       retval = ONE_MILLION + mainw->cancelled;
-    }
+    } else if (!visible) goto player_loop;
     goto err_end;
   }
 

@@ -1311,6 +1311,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, doub
       if (!mainw->is_rendering) progress_speed = 2.;
     }
   }
+
   lives_widget_context_update();
 }
 
@@ -1365,7 +1366,7 @@ void update_progress(boolean visible, int clipno) {
     }
     shown_paused_frames = mainw->effects_paused;
   } else {
-    lives_usleep(prefs->sleep_time);
+    lives_nanosleep(LIVES_FORTY_WINKS);
   }
 }
 
@@ -1439,10 +1440,9 @@ void cancel_process(boolean visible) {
     if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p,
+      if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button,
+            mainw->accel_group, LIVES_KEY_p,
             (LiVESXModifierType)0);
-      /* lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p, */
-      /*                              (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
       accelerators_swapped = FALSE;
     }
 
@@ -1465,6 +1465,8 @@ void cancel_process(boolean visible) {
         lives_hooks_trigger(NULL, COMPLETED_HOOK);
         lives_freep((void **)&mainw->proc_ptr->text);
         lives_widget_destroy(mainw->proc_ptr->processing);
+        mainw->proc_ptr->processing = NULL;;
+        lives_widget_context_update();
       }
       lives_free(mainw->proc_ptr);
       mainw->proc_ptr = NULL;
@@ -1495,6 +1497,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   boolean got_err = FALSE;
   boolean markup = widget_opts.use_markup;
 
+  set_ign_idlefuncs(TRUE);
   widget_opts.use_markup = FALSE;
 
   if (*cfile->staging_dir && lives_strncmp(cfile->info_file, cfile->staging_dir,
@@ -1515,6 +1518,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = cancelled;
       d_print_cancelled();
       cancel_process(visible);
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -1581,11 +1585,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
     }
 
-    if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) ||
+    if (cfile->opening && ((prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) ||
                            (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed)) && !LIVES_IS_PLAYING) {
       if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
       lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
-      //lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
       lives_widget_add_accelerator(mainw->proc_ptr->preview_button,
                                    LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
                                    (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -1596,7 +1599,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // mainw->origsecs, mainw->orignsecs is our base for quantising
   // (and is constant for each playback session)
 
-  // firstticks is to do with the audio "frame" for sox, mplayer
   // startticks is the ticks value of the last frame played
 
   last_open_check_ticks = mainw->offsetticks = mainw->deltaticks = mainw->adjticks = 0;
@@ -1617,6 +1619,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     mainw->proc_ptr = NULL;
     if (mainw->cancelled != CANCEL_NONE) {
       cancel_process(visible);
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -1640,6 +1643,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       end_threaded_dialog();
       if (mainw->cancelled != CANCEL_NONE) {
         cancel_process(visible);
+        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     }
@@ -1653,6 +1657,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (!reset_timebase()) {
     mainw->cancelled = CANCEL_INTERNAL_ERROR;
     cancel_process(visible);
+    set_ign_idlefuncs(FALSE);
     return FALSE;
   }
   //////////////////////////
@@ -1660,6 +1665,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (mainw->record_starting) {
     if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL))) {
       cancel_process(visible);
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -1700,6 +1706,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
       cancel_process(visible);
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
 
@@ -1719,6 +1726,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
       handle_audio_timeout();
       cancel_process(visible);
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
 
@@ -1790,6 +1798,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         }
 #endif
         cancel_process(visible);
+        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
 
@@ -1862,7 +1871,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           progress_speed = 1000000.;
           progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
         }
-      } else lives_widget_context_update();
+      } //else lives_widget_context_update();
     }
 
     if (mainw->preview_req) {
@@ -1970,6 +1979,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
         if (visible) mainw->noswitch = FALSE;
         cancel_process(visible);
+        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
 
@@ -2019,11 +2029,13 @@ finish:
     handle_backend_errors(FALSE);
     if (mainw->cancelled || mainw->error) {
       if (visible) mainw->noswitch = FALSE;
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   } else {
     if (!check_storage_space(mainw->current_file, FALSE)) {
       if (visible) mainw->noswitch = FALSE;
+      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -2038,6 +2050,19 @@ finish:
   if (visible) mainw->noswitch = FALSE;
   return TRUE;
 }
+
+
+/* boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text) { */
+/*   if (set_ign_idlefuncs(TRUE)) { */
+/*     lives_proc_thread_t dpd_lpt = */
+/*       lives_proc_thread_create(0, _do_progress_dialog, WEED_SEED_BOOLEAN, "bbs", visible, cancellable, text); */
+/*     boolean ret = lives_proc_thread_join_boolean(dpd_lpt); */
+/*     lives_proc_thread_unref(dpd_lpt); */
+/*     set_ign_idlefuncs(FALSE); */
+/*     return ret; */
+/*   } */
+/*   return FALSE; */
+/* } */
 
 
 #define MIN_FLASH_TIME MILLIONS(100)
@@ -2085,8 +2110,6 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->proc_ptr->processing);
-
-  //lives_widget_context_update();
 
   if (type == 0 || type == 2) {
     clear_mainw_msg();
@@ -2140,16 +2163,12 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
         if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
         if (alarm_handle > 0) {
           ticks_t tl;
-          int count = 0;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-            if (count++ == 100) {
-              count = 0;
-              lives_widget_process_updates(mainw->proc_ptr->processing);
-            }
+            lives_widget_process_updates(mainw->proc_ptr->processing);
             // need to recheck after calling process_updates
             if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
-            lives_usleep(prefs->sleep_time);
+            lives_nanosleep(LIVES_FORTY_WINKS);
           }
           lives_alarm_clear(alarm_handle);
         }
@@ -2168,10 +2187,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  //if (is_async) g_main_context_release(g_main_context_default());
-
-
-  if (self && !lives_proc_thread_get_cancel_requested(self)) {
+  if (self && lives_proc_thread_get_cancel_requested(self)) {
     lives_proc_thread_cancel(self);
     return FALSE;
   }
@@ -2197,8 +2213,6 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
 //
 // - launch it, do some processing, then call lives_proc_thread_cancel on the returned proc_thread
 //    after calling cancel, again wait for lives_proc_thread_join to return
-//
-// while the auto dialog is running, it takes control of the main widget context, thus in effect the main thread becomes
 //
 boolean do_auto_dialog(const char *text, int type) {
   // blocking types
@@ -2559,7 +2573,9 @@ LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
   text_window *textwindow;
   char *text = _dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
+  set_ign_idlefuncs(TRUE);
   textwindow = create_text_window(_("Message History"), text, NULL, TRUE);
+  set_ign_idlefuncs(FALSE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_free(text);
   if (is_startup) {
@@ -2575,6 +2591,7 @@ LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
   }
   lives_widget_context_update();
   lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(textwindow->scrolledwindow), LIVES_POS_BOTTOM);
+  lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
 }
 
 
@@ -3545,6 +3562,21 @@ void threaded_dialog_pop(void) {
   }
 }
 
+
+// "threaded" (not really threaded !) dialog is similar to auto dialog, but it shows progress percentage
+// and it may also have a "Cancel" button
+//
+// after calling do_threaded_dialog(), the progress can be updated manually by calling threaded_dialog_spin(fract)
+// if fract is > 0. it is used to set the progress percent (frac * 100)
+// if frac is 0., then progress is read from a file produced by the back end
+// threaded_dialog_auto_spin can be called in this case the progress will updat automatically without
+// needing to call threaded_dialog_spin(), threaded_dialog_stop_spin() goes back to manual mode
+// end_threaded_dialog calls this autmaitically
+//
+// threaded dialog push() and threaded_dialog_pop() allow nesting of threaded_dialogs, eg.
+// do_threaded_dialog(...); threaded_dialog_push()l; do_threaded_dialog(..);
+// threaded_dialog_pop(); end_threaded_dialog()
+
 static double xfraction = 0.;
 
 static void _threaded_dialog_spin(double fraction) {
@@ -3608,6 +3640,17 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 }
 
 
+void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
+  if (!prefs->show_gui) return;
+  if (mainw->threaded_dialog || mainw->dlg_spin_thread) return;
+  if (!mainw->is_exiting) {
+    if (!!is_fg_thread()) {
+      main_thread_execute_rvoid(_do_threaded_dialog, 0, "sb", trans_text, has_cancel);
+    } else _do_threaded_dialog(trans_text, has_cancel);
+  }
+}
+
+
 static void _thdlg_auto_spin(void) {
   lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
   while (mainw->threaded_dialog
@@ -3630,31 +3673,18 @@ static void _thdlg_auto_spin(void) {
 void threaded_dialog_auto_spin(void) {
   if (!prefs->show_gui) return;
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
-  if (!is_fg_thread()) {
-    main_thread_execute_void(threaded_dialog_auto_spin, 0);
-  } else {
-    mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                             (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
-  }
+  mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                           (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
 }
 
 
 void threaded_dialog_stop_spin(void) {
-  if (mainw->dlg_spin_thread && is_fg_thread()) {
+  if (mainw->dlg_spin_thread) {
     lives_proc_thread_request_cancel(mainw->dlg_spin_thread, FALSE);
     lives_proc_thread_wait_done(mainw->dlg_spin_thread, 0);
     lives_proc_thread_join(mainw->dlg_spin_thread);
     mainw->dlg_spin_thread = NULL;
   }
-}
-
-
-void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
-  if (!prefs->show_gui) return;
-  if (mainw->threaded_dialog || mainw->dlg_spin_thread) return;
-  if (!mainw->is_exiting && !is_fg_thread()) {
-    main_thread_execute_rvoid(_do_threaded_dialog, 0, "sb", trans_text, has_cancel);
-  } else _do_threaded_dialog(trans_text, has_cancel);
 }
 
 
@@ -3667,6 +3697,8 @@ static void _end_threaded_dialog(void) {
 
   if (mainw->proc_ptr && mainw->proc_ptr->processing) {
     lives_widget_destroy(mainw->proc_ptr->processing);
+    mainw->proc_ptr->processing = NULL;
+    lives_widget_context_update();
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
@@ -3690,9 +3722,11 @@ static void _end_threaded_dialog(void) {
 void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
   if (!mainw->threaded_dialog) return;
-  if (!mainw->is_exiting && !is_fg_thread())
+  if (!mainw->is_exiting && !is_fg_thread()) {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
     main_thread_execute_void(_end_threaded_dialog, 0);
-  else _end_threaded_dialog();
+    BG_THREADVAR(hook_hints) = 0;
+  } else _end_threaded_dialog();
 }
 
 

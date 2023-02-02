@@ -19,7 +19,6 @@ void enable_record(void);
 void toggle_record(void);
 void disable_record(void);
 void make_custom_submenus(void);
-void detach_accels(boolean connect);
 void fade_background(void);
 void unfade_background(void);
 void fullscreen_internal(void);

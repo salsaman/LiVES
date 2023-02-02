@@ -455,9 +455,9 @@ static boolean pre_init(void) {
 #ifdef GUI_GTK
   LiVESPixbuf *iconpix;
 #endif
-
+  lives_proc_thread_t dummy_lpt;
   pthread_mutexattr_t mattr;
-
+  lives_hook_stack_t **lpt_hooks;
   char *msg, *tmp, *tmp2, *cfgdir, *old_libdir = NULL;
 
   boolean needs_update = FALSE;
@@ -465,8 +465,19 @@ static boolean pre_init(void) {
   int i;
 
   /// create context data for main thread; must be called before get_capabilities()
-  lives_thread_data_create(LIVES_INT_TO_POINTER(0));
+  lives_thread_data_create(LIVES_INT_TO_POINTER(-1));
   mainw->global_hook_stacks = THREADVAR(hook_stacks);
+
+  // create a proc_thread for the main_thread. Since it is not running any background tasks, create
+  // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
+  // linked to the proc_thread currently being actioned
+  dummy_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
+  lpt_hooks = lives_proc_thread_get_hook_stacks(dummy_lpt);
+  lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
+  lives_free(lpt_hooks);
+  weed_set_voidptr_value(dummy_lpt, LIVES_LEAF_HOOK_STACKS, mainw->global_hook_stacks);
+
+  THREADVAR(proc_thread) = dummy_lpt;
 
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 8;
@@ -781,8 +792,8 @@ static boolean pre_init(void) {
   prefs->sepwin_type = future_prefs->sepwin_type = get_int_prefd(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY);
 
   if (!ign_opts.ign_aplayer) {
-    prefs->audio_player = AUD_PLAYER_SOX;
-    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
+    prefs->audio_player = AUD_PLAYER_NONE;
+    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
   }
 
   prefs->open_decorated = TRUE;
@@ -1244,7 +1255,6 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
   outp_help(textbuf, ", "); // comma after pulse
 #endif
   outp_help(textbuf, "'%s'", AUDIO_PLAYER_JACK);
-  if (capable->has_sox_play) lives_printerr(", '%s'", AUDIO_PLAYER_SOX); // comma after jack
   outp_help(textbuf, " or '%s')\n", AUDIO_PLAYER_NONE);
   outp_help(textbuf, "%s",
             _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options\n"
@@ -1267,12 +1277,7 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
   lives_free(tmp);
 
 #else // no jack
-  if (capable->has_sox_play) {
-#ifdef HAVE_PULSE_AUDIO
-    outp_help(textbuf, ", "); // comma after pulse
-#endif
-    outp_help(textbuf, _("'%s' or "), AUDIO_PLAYER_SOX);
-  }
+
 #ifdef HAVE_PULSE_AUDIO
   else outp_help(textbuf, "%s", _(" or ")); // no sox, 'or' after pulse
 #endif
@@ -1301,6 +1306,7 @@ static boolean open_yuv4m_startup(livespointer data) {
 ///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
 boolean lazy_startup_checks(void) {
+  GET_PROC_THREAD_SELF(self);
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
   static boolean dqshown = FALSE;
@@ -1310,7 +1316,15 @@ boolean lazy_startup_checks(void) {
 
   if (LIVES_IS_PLAYING) {
     dqshown = mwshown = tlshown = TRUE;
+    lives_proc_thread_cancel(self);
     return FALSE;
+  }
+
+  if (!mwshown) {
+    mwshown = TRUE;
+    if (prefs->show_msgs_on_startup) {
+      do_messages_window(TRUE);
+    }
   }
 
   if (is_first) {
@@ -1319,14 +1333,6 @@ boolean lazy_startup_checks(void) {
     is_first = FALSE;
     return TRUE;
   }
-
-  if (!tlshown) {
-    //g_print("val is $d\n", check_snap("youtube-dl"));
-    if (!mainw->multitrack) redraw_timeline(mainw->current_file);
-    tlshown = TRUE;
-    return TRUE;
-  }
-
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
@@ -1338,6 +1344,7 @@ boolean lazy_startup_checks(void) {
       }
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
+    lives_proc_thread_cancel(self);
     return FALSE;
   }
 
@@ -1388,11 +1395,6 @@ boolean lazy_startup_checks(void) {
     }
   }
 
-  if (!mwshown) {
-    mwshown = TRUE;
-    if (prefs->show_msgs_on_startup) do_messages_window(TRUE);
-  }
-
   if (!extra_caps) {
     extra_caps = TRUE;
     capable->boot_time = get_cpu_load(-1);
@@ -1422,6 +1424,7 @@ boolean lazy_startup_checks(void) {
       }
     }
   }
+  lives_proc_thread_cancel(self);
   return FALSE;
 }
 
@@ -1538,9 +1541,6 @@ static boolean lives_startup(livespointer data) {
     if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
       prefs->audio_player = AUD_PLAYER_NONE;  ///< experimental
       lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
-    } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
-      prefs->audio_player = AUD_PLAYER_SOX;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
     } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
       prefs->audio_player = AUD_PLAYER_JACK;
       lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
@@ -1760,9 +1760,6 @@ static boolean lives_startup(livespointer data) {
 
   if (!mainw->lives_shown) show_lives();
 
-  if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
-    switch_aud_to_sox(FALSE);
-  }
   if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
     // still experimental
     switch_aud_to_none(FALSE);
@@ -1794,6 +1791,7 @@ static boolean lives_startup2(livespointer data) {
         / TICKS_PER_SECOND_DBL * .9;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
+      g_print("cccc state is %s\n", lpt_desc_state(mainw->helper_procthreads[PT_CUSTOM_COLOURS]));
       lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
       lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
@@ -1926,12 +1924,13 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   mainw->lazy_starter =
-    lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
+    lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE | LIVES_THRDATTR_WAIT_SYNC,
                              lazy_startup_checks, WEED_SEED_BOOLEAN, "", NULL);
 
   lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **) & (mainw->lazy_starter));
 
   lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE);
+
   lives_proc_thread_sync_ready(mainw->lazy_starter);
 
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
@@ -1957,7 +1956,7 @@ static boolean lives_startup2(livespointer data) {
   dump_messages(NULL);
 #endif
 
-  lives_widget_queue_draw_and_update(mainw->LiVES);
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
@@ -2115,6 +2114,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
   mainw->memok = TRUE;
   mainw->go_away = TRUE;
+  mainw->current_file = -1;
   mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;
   mainw->max_textsize = N_TEXT_SIZES;
 
@@ -2203,10 +2203,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_EXT;
       ign_opts.ign_asource = TRUE;
     } else if (!strcmp(xargv[1], "-help") || !strcmp(xargv[1], "--help")) {
-      char string[256];
-      get_location(EXEC_PLAY, string, 256);
-      if (*string) capable->has_sox_play = TRUE;
-
       capable->myname_full = lives_find_program_in_path(xargv[0]);
 
       if ((mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX)) != -1) {
@@ -2579,12 +2575,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           lives_snprintf(buff, 256, "%s", optarg);
           // override aplayer default
-          if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
-            prefs->audio_player = AUD_PLAYER_SOX;
-            lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-            apl_valid = TRUE;
-          }
-
           if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
             // still experimental
             prefs->audio_player = AUD_PLAYER_NONE;
@@ -4405,6 +4395,7 @@ static void set_extra_colours(void) {
 
 
 static double pick_custom_colours(double var, double timer) {
+  GET_PROC_THREAD_SELF(self);
   ticks_t xtimerinfo, timerinfo, timeout;
   double lmin, lmax;
   uint8_t ncr, ncg, ncb;
@@ -4425,8 +4416,8 @@ retry:
   ncb = palette->menu_and_bars.blue * 255.;
   prefs->pb_quality = PB_QUALITY_HIGH;
 
-  if (mainw->helper_procthreads[PT_CUSTOM_COLOURS])
-    lives_proc_thread_set_cancellable(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+  if (self)
+    lives_proc_thread_set_cancellable(self);
 
   timeout = (ticks_t)(timer * TICKS_PER_SECOND_DBL);
   xtimerinfo = lives_get_current_ticks();
@@ -4451,8 +4442,8 @@ retry:
 
     ncols++;
 
-    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS] &&
-        lives_proc_thread_get_cancel_requested(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
+    if (self &&
+        lives_proc_thread_get_cancel_requested(self)) goto windup;
 
     if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
@@ -4470,8 +4461,8 @@ retry:
       mainw->pretty_colours = TRUE;
       ncols++;
 
-      if (mainw->helper_procthreads[PT_CUSTOM_COLOURS] &&
-          lives_proc_thread_get_cancel_requested(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
+      if (self &&
+          lives_proc_thread_get_cancel_requested(self)) goto windup;
 
       if (!(palette->style & STYLE_LIGHT)) {
         lmin = .6; lmax = .8;
@@ -4501,6 +4492,7 @@ retry:
       goto retry;
     } else lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
   }
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   return var;
 
 windup:
@@ -4509,6 +4501,7 @@ windup:
   palette->nice3.green = palette->nice2.green;
   palette->nice3.blue = palette->nice2.blue;
   palette->nice3.alpha = 1.;
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   return var;
 }
 #endif
@@ -4837,6 +4830,7 @@ boolean set_palette_colours(boolean force_reload) {
     double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
     if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
+    break_me("prcthrd");
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
       = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, (lives_funcptr_t)pick_custom_colours,
                                  WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);

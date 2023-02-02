@@ -10689,13 +10689,13 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   // since there is an optimisation to keep the same memory block
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(orig_layer, layer);
-  g_print("COPIED %p TO %p %d\n", layer, orig_layer, weed_layer_count_refs(orig_layer));
+  //g_print("COPIED %p TO %p %d\n", layer, orig_layer, weed_layer_count_refs(orig_layer));
 
   if (mainw->frame_layer && layer != mainw->frame_layer
       && weed_layer_get_pixel_data(mainw->frame_layer) ==
       weed_layer_get_pixel_data(orig_layer)) {
     /// retain orig pixel_data if it belongs to mainw->frame_layer
-    g_print("RETAIN %p\n", orig_layer);
+    //g_print("RETAIN %p\n", orig_layer);
     no_free_orig = TRUE;
   }
 

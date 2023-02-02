@@ -2902,9 +2902,9 @@ void get_monitors(boolean reset) {
 // amount of processing devoted to each thread, using
 
 
-void set_thread_loveliness(uint64_t tid, double howmuch) {
+void set_thread_loveliness(uint64_t tuid, double howmuch) {
   // set the loveliness for a thread, a prettier one can run faster than a more homely instance
-  lives_thread_data_t *tdata = get_thread_data_by_idx(tid);
+  lives_thread_data_t *tdata = get_thread_data_by_uid(tuid);
   if (tdata) tdata->vars.var_loveliness = howmuch;
 }
 
@@ -3358,9 +3358,10 @@ static void show_info(void) {
 
 
 #define THE_TIMEY_WIMEY_KIND 1
-static int do_nothing(int what_type_of_nothing_did_you_expect, ticks_t the_start_of_nothing,
+// check when nothing happens
+static uint64_t do_nothing(int what_type_of_nothing_did_you_expect, ticks_t the_start_of_nothing,
 			  ticks_t **when_nothing_will_end) {
-  int from_whence_you_came = THREADVAR(idx);
+  uint64_t from_whence_you_came = THREADVAR(uid);
   if (what_type_of_nothing_did_you_expect == THE_TIMEY_WIMEY_KIND) {
     THREADVAR(ticks_to_activate) = lives_get_current_ticks() - the_start_of_nothing;
   *when_nothing_will_end = &THREADVAR(round_trip_ticks);

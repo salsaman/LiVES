@@ -188,25 +188,28 @@ extern const lookup_tab crossrefs[];
 // 8p
 #define FUNCSIG_PLANTP_INT_INT_INT_INT_INT_INT_INT     			0XE1111111
 #define FUNCSIG_INT_DOUBLE_PLANTP_INT_INT_INT_INT_BOOL			0X12E11113
-typedef weed_plant_t lives_funcinst_t;
+
+typedef uint64_t funcsig_t;
 
 weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
 boolean call_funcsig(lives_proc_thread_t);
 
-typedef uint64_t funcsig_t;
+// funcinst (future use)
 
+typedef weed_plant_t lives_funcinst_t;
 #define LIVES_LEAF_TEMPLATE "_template"
 #define LIVES_LEAF_FUNCSIG "_funcsig"
 #define LIVES_LEAF_FUNC_NAME "_funcname"
-#define LIVES_LEAF_CLOSURE "_closure"
 #define LIVES_LEAF_FUNCDEF "_funcdef"
 #define LIVES_LEAF_REPLACEMENT "_replacement"
+
+#define LIVES_WEED_SUBTYPE_FUNCINST 150
+
+#define LIVES_LEAF_CLOSURE "_closure"
 
 #define LIVES_LEAF_XLIST_STACKS "xlist_stacks"
 #define LIVES_LEAF_XLIST_TYPE "xlist_type"
 #define LIVES_LEAF_XLIST_LIST "xlist_list"
-
-#define LIVES_WEED_SUBTYPE_FUNCINST 150
 
 #define FUNC_CATEGORY_HOOK_COMMON 	(N_STD_FUNC_CATEGORIES + 100)
 #define FUNC_CATEGORY_HOOK_SYNC 	(N_STD_FUNC_CATEGORIES + 101)
@@ -245,11 +248,11 @@ void *add_fn_note(fn_type_t, ...);
 // dump notes (traces) from ftrace_store
 void dump_fn_notes(void);
 
-#define FN_DEBUG_OUT(func) g_print("Thread %d in func %s at %s, line %d\n", \
-				   THREADVAR(idx), #func, _FILE_REF_, _LINE_REF_)
+#define FN_DEBUG_OUT(func) g_print("Thread %ld in func %s at %s, line %d\n", \
+				   THREADVAR(uid), #func, _FILE_REF_, _LINE_REF_)
 
-#define FN_DEBUG_EXIT_OUT g_print("Thread %d exiting func at %s, line %d\n", \
-				  THREADVAR(idx), _FILE_REF_, _LINE_REF_)
+#define FN_DEBUG_EXIT_OUT g_print("Thread %ld exiting func at %s, line %d\n", \
+				  THREADVAR(uid), _FILE_REF_, _LINE_REF_)
 
 // macro to be placed near start of "major" functions. It will prepend funcname to
 // a thread's 'func_stack', print out a debug line (optional), and also add fn lookup
@@ -352,45 +355,39 @@ void dump_fn_notes(void);
 // NOTEs:
 //
 // 1) when prepending, for uniqueness purposes, the prepended callback can replace (and remove) others already in the stack
-// including in linked stacks
 //
 // 2) when appending unique_func and/or unique_data to the main GUI stack,
 // the new callback can be blocked or added
-// Regardless, all matching callbacks must be replaced (but not removed) in linked stacks,
-// as if the callback were being prepended to them.
+// If blocked, all subsequent matching callbacks must be replaced / removed in the stack
+// as if the blocking callback had just been prepended to the stack.
 //
-// If the replaced callback is subsequently to be appended to fg stack it should be removed instead
-// if to be prepended, the replacment marker is removed, and the callback is prepended as normal
+// 3) if a TRIGGERED callback has invalidate data, we should replace (or remove)
+// any other callbacks in ALL stacks (fg and bg) with matching data, as if the callback were being prepended to those
+// stacks.
 //
-// 1) if a TRIGGERED callback has uniqueness flags, we can replace (and remove)
-// callbacks in the fg_thread stack, + linked stacks, in an equivalent manner to if the callback was prepended
-//
-// 4) when replacing a callback, check if it was added with HOOK_CB_BLOCK
-// if so, it cannot be removed directly, instead we must add a reference to the new callback, on behalf of the blocked thread
-// and set a leaf LIVES_LEAF_REPLACEMENT in the proc thread being replaced, pointing the newly added callback
-// we also add
+// 4) before removing a callback, check if it was added with HOOK_CB_BLOCK
+// if so, the proc_thread must not be unreffed as a thread will be waiting on it,
+// instead set a leaf LIVES_LEAF_REPLACEMENT in the proc thread being replaced, pointing the newly added callback
 // the blocked thread should detect this, unref the original blocker, and continue waiting instead for the new callback
-// the replacement callback can also be replaced, so the sequence must be followed until reaching a non replaced cb, or one which has
-// completed / been destroyed
-// - replace (remove) means replace the proc_thread and remove the closure form the stack
-// - replace (no remove) means mark the proc_thread as replaced, but leave in the stack
+// the replacement callback can also be replaced, so the sequence must be followed until reaching a non replaced cb,
+// or one which has. The proc_thread which is the repalcement msut get an added reference, as the blocked thread will
+// unref it once it completes.
 //
 
-// when prepended to a stack, it will eliminate any entries with mayching data
-// when appended then anything appended after it with matching data will be barred
-// - this is designed for functions which free DATA, they can be added to a stack with
-// this flag, and until triggered will eliminate all other entries
-// this can be especially useful when the matching entries are not flagged as PRIORITY
-// as they may be triggered after this
+// when prepended to a stack, it will eliminate any entries with matching data
+// when triggered, it will eliminate matching data from all thread hook_stacks
+// NB. it is important to specify the number of matching data params, otherwise ALL params will be matched
+// - this is designed for functions which free DATA
 
 #define HOOK_INVALIDATE_DATA			(1ull << 18)
 
-// should only be used in this combination
-#define HOOK_REMOVE_DATA       	(HOOK_INVALIDATE_DATA | HOOK_CB_BLOCK)
-
-// this is a special modifier for INVALIDATE_DATA for the GUI,
-// if set then data will also match child widgets
+// this is a special modifier for INVALIDATE_DATA
+// if set then data will also match "child" data (for some deifnition of "child")
 #define HOOK_OPT_MATCH_CHILD			(1ull << 19)
+
+// similar to unique_function, however, if the function is already in the stack we also remove it
+// and do not add.
+#define HOOK_TOGGLE_FUNC			(1ull << 24)
 
 ///////////////////
 
@@ -474,7 +471,9 @@ lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt, uint64_
 
 void lives_closure_free(lives_closure_t *closure);
 
-#define LIVES_GUI_HOOK INTERNAL_HOOK_0
+#define LIVES_GUI_HOOK		INTERNAL_HOOK_0
+#define LIVES_PRE_HOOK		INTERNAL_HOOK_1
+#define LIVES_POST_HOOK		INTERNAL_HOOK_2
 
 typedef struct _hstack_t {
   volatile LiVESList *stack;
@@ -515,7 +514,7 @@ typedef struct {
 
 // the return type of the callbacks must be be boolean,
 // any which return FALSE will be blocked (ignored)
-// blocked callbacks can then either be reomved, or unblocked
+// blocked callbacks can then either be removed, or unblocked
 #define HOOK_DTL_BLOCK_FALSE      	(1ull < 2)
 
 // the return type of the callbacks must be boolean,
@@ -601,7 +600,9 @@ void lives_hook_remove_by_data(lives_hook_stack_t **, int type, lives_funcptr_t 
 #define lives_proc_thread_remove_hook_by_data(lpt, type, func, data)	\
   lives_hook_remove_by_data(lives_proc_thread_get_hook_stacks(lpt), type, (lives_funcptr_t)func, data)
 
-void lives_proc_thread_remove_nullify(lives_proc_thread_t lpt, void **ptr);
+void lives_proc_thread_remove_nullify(lives_proc_thread_t, void **ptr);
+
+lives_closure_t *lives_proc_thread_get_closure(lives_proc_thread_t);
 
 void flush_cb_list(lives_proc_thread_t self);
 
@@ -634,7 +635,7 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 void *data);
 
 // can be used to link a file / line as being "inside" a function
-#define create_funcdef_here(func) create_funcdef(#func, func, 0, NULL, _FILE_REF_, -(_LINE_REF_), NULL)
+#define create_funcdef_here(func) create_funcdef(#func, (lives_funcptr_t)func, 0, NULL, _FILE_REF_, -(_LINE_REF_), NULL)
 
 // for future use - we can "steal" the funcdef from a proc_thread, stor it in a hash store
 // then later do things like create a funcinst from a funcdef and params, then create a proc_thread from the funcinst

@@ -446,8 +446,9 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
     // ensure file layouts are updated
     upd_layout_maps(NULL);
   } else {
-    aload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
-                                     lives_getuid(), lives_getgid(), capable->mainpid);
+    aload_file = lives_strdup_printf("%s/%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL,
+                                     LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid);
   }
 
   fd = lives_open_buffered_rdonly(aload_file);
@@ -682,13 +683,13 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
   } else {
     // recover recording
     int fd;
-    fname = lives_strdup_printf("recorded-%s.%d.%d.%d", LAYOUT_NUMBERING_FILENAME, lives_getuid(),
-                                lives_getgid(), capable->mainpid);
+    fname = lives_strdup_printf("%s-%s.%d.%d.%d", LAYOUT_NUMBERING_FILENAME, RECORDED_LITERAL,
+                                lives_getuid(), lives_getgid(), capable->mainpid);
     aload_file =  lives_build_filename(prefs->workdir, fname, NULL);
     lives_free(fname);
 
-    fname = lives_strdup_printf("recorded-%s.%d.%d.%d.%s",  LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
-                                capable->mainpid, LIVES_FILE_EXT_LAYOUT);
+    fname = lives_strdup_printf("%s-%s.%d.%d.%d.%s",  LAYOUT_FILENAME, RECORDED_LITERAL,
+                                lives_getuid(), lives_getgid(), capable->mainpid, LIVES_FILE_EXT_LAYOUT);
     eload_file =  lives_build_filename(prefs->workdir, fname, NULL);
     lives_free(fname);
 

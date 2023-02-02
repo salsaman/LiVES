@@ -1260,7 +1260,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   LiVESSList *radiobutton_group = NULL;
 
-  char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *txt7, *msg;
+  char *txt0, *txt1, *txt2, *txt3, *txt4, *txt7, *msg;
   char *recstr;
 
   LiVESResponseType response;
@@ -1304,24 +1304,14 @@ reloop:
   }
 #endif
 
-  txt5 = (_("<big><b>SOX</b></big> may be used if neither of the preceding players work, "));
-
-  if (capable->has_sox_play) {
-    txt6 = (_("but many audio features will be disabled.\n\n"));
-  } else {
-    txt6 = (_("but you do not have sox installed.\n"
-              "If you wish to use sox, you should Cancel and install it before running LiVES.\n\n"));
-  }
-
   txt7 = (_("<big><b>NONE</b></big> If you are not intending to use LiVES at all for audio, you may select this option\n"
             "However, be aware this feature is somewhat experimental and should be used with caution\n"
             "as it may give rise to occasional buggy behaviour"));
 
-  msg = lives_strdup_printf("%s%s%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt5, txt6, txt7);
+  msg = lives_strdup_printf("%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt7);
 
   lives_free(txt0); lives_free(txt1); lives_free(txt2);
-  lives_free(txt3); lives_free(txt4); lives_free(txt5);
-  lives_free(txt6); lives_free(txt7);
+  lives_free(txt3); lives_free(txt4); lives_free(txt7);
 
   dialog = lives_standard_dialog_new(_("Choose the initial audio player"), FALSE, -1, -1);
 
@@ -1379,20 +1369,6 @@ reloop:
 #endif
 
   lives_free(recstr);
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  widget_opts.use_markup = TRUE;
-  radiobutton2 = lives_standard_radio_button_new(_("Use _<b>sox</b> audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-  widget_opts.use_markup = FALSE;
-
-#ifdef RT_AUDIO
-  msg = _("NOT recommended");
-  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
-  lives_free(msg);
-#endif
-
-  if (capable->has_sox_play) {
-    if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_SOX;
-  } else lives_widget_set_sensitive(radiobutton2, FALSE);
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE || (capable->has_pulse_audio && prefs->audio_player == -1)) {
@@ -1408,16 +1384,11 @@ reloop:
     set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
   }
 #endif
-  if (capable->has_sox_play) {
-    if (prefs->audio_player == AUD_PLAYER_SOX || prefs->audio_player == -1) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2), TRUE);
-      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
-    }
-  }
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_opts.use_markup = TRUE;
-  radiobutton3 = lives_standard_radio_button_new(_("Use _<b>none</b> audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton3 = lives_standard_radio_button_new(_("Use _<b>none</b> audio player"),
+                 &radiobutton_group, LIVES_BOX(hbox), NULL);
   widget_opts.use_markup = FALSE;
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
@@ -1434,12 +1405,6 @@ reloop:
                             LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
 #endif
 
-  if (capable->has_sox_play) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                              LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
-  }
-
   lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                             LIVES_INT_TO_POINTER(AUD_PLAYER_NONE));
@@ -1455,14 +1420,8 @@ reloop:
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
              LIVES_STOCK_GO_FORWARD, LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_OK);
 
-  if (prefs->audio_player == -1) {
-    do_no_mplayer_sox_error();
-    return FALSE;
-  }
-
   lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_SPREAD);
   lives_button_grab_default_special(okbutton);
-  //lives_widget_grab_focus(okbutton);
 
   pop_to_front(dialog, NULL);
 
@@ -1501,9 +1460,6 @@ reloop:
       }
       set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
       lives_widget_set_sensitive(mainw->show_jackmsgs, TRUE);
-      break;
-    case AUD_PLAYER_SOX:
-      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
       break;
     default:
       set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);

@@ -429,33 +429,21 @@ boolean clip_voldown_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, ui
 
 boolean stop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                       livespointer user_data) {
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               on_stop_activate, NULL);
-  else on_stop_activate(NULL, NULL);
+  on_stop_activate(NULL, NULL);
   return TRUE;
 }
 
 
 boolean fullscreen_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                               HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               _on_full_screen_activate, NULL);
-  else on_full_screen_pressed(NULL, NULL);
+  on_full_screen_pressed(NULL, NULL);
   return TRUE;
 }
 
 
 boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               on_sepwin_pressed, NULL);
-  else on_sepwin_pressed(NULL, NULL);
+  on_sepwin_pressed(NULL, NULL);
   return TRUE;
 }
 
@@ -511,11 +499,7 @@ boolean loop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t k
 
 boolean dblsize_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data) {
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               on_double_size_pressed, NULL);
-  else on_double_size_pressed(NULL, NULL);
+  on_double_size_pressed(NULL, NULL);
   return TRUE;
 }
 

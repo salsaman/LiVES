@@ -1084,10 +1084,10 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   saveargs->height = sfile->vsize;
 
   if (intimg) {
-    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
+    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                        layer_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   } else {
-    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
+    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                        pixbuf_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   }
 
@@ -1137,12 +1137,13 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
           break;
         }
       }
-      if (!lives_proc_thread_is_idling(saver_procthread)) {
-        if (lives_proc_thread_is_unqueued(saver_procthread)) {
-          // queue it
-          goto queue_lpt;
-        }
-        lives_nanosleep_while_false(lives_proc_thread_is_idling(saver_procthread));
+      if (lives_proc_thread_is_unqueued(saver_procthread)) {
+        // queue it
+        goto queue_lpt;
+      }
+
+      if (!lives_proc_thread_check_finished(saver_procthread)) {
+        lives_nanosleep_while_false(lives_proc_thread_check_finished(saver_procthread));
       }
 
       if (saveargs->error || THREADVAR(write_failed)) {

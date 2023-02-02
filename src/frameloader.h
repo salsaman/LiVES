@@ -52,14 +52,6 @@ void showclipimgs(void);
 
 void load_preview_image(boolean update_always);
 
-int close_current_file(int file_to_switch_to);
-
-void switch_to_file(int old_file, int new_file);
-
-void do_quick_switch(int new_file);
-
-boolean switch_audio_clip(int new_file, boolean activate);
-
 void resize(double scale);
 
 void set_record(void);

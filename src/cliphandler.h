@@ -441,7 +441,17 @@ typedef struct {
   // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
 } lives_remote_clip_request_t;
 
+// mid level API
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
+void switch_clip(int type, int newclip, boolean force);
+int find_next_clip(int index, int old_file);
+
+// low level API
+
+void switch_to_file(int old_file, int new_file);
+void do_quick_switch(int new_file);
+boolean switch_audio_clip(int new_file, boolean activate);
+
 int create_nullvideo_clip(const char *handle);
 char *get_untitled_name(int number);
 

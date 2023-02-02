@@ -2858,6 +2858,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *
 
   // check each decoder in turn, use a background thread so we can animate the progress bar
   // TODO - use auto_dialog
+
   info = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                   (lives_funcptr_t)try_decoder_plugins,
                                   WEED_SEED_VOIDPTR, "svv", (!fake_cdata || !use_fake_cdata) ? sfile->file_name

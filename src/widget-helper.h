@@ -69,6 +69,8 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval);
 boolean fg_service_fulfill(void);
 boolean fg_service_fulfill_cb(void *dummy);
 
+void fg_service_wake(void);
+
 boolean is_fg_busy(void);
 
 ////////////////////////////////////////
@@ -401,6 +403,7 @@ boolean lives_widget_realize(LiVESWidget *);
 
 boolean lives_widget_queue_draw(LiVESWidget *);
 boolean lives_widget_queue_draw_noblock(LiVESWidget *);
+boolean lives_widget_queue_draw_update_noblock(LiVESWidget *);
 boolean lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int height);
 boolean lives_widget_queue_resize(LiVESWidget *);
 boolean lives_widget_set_size_request(LiVESWidget *, int width, int height);
@@ -1306,7 +1309,6 @@ boolean lives_cursor_unref(LiVESXCursor *);
 boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, LiVESTreeIter *existing, LiVESTreeIter *newiter);
 
 boolean set_ign_idlefuncs(boolean val);
-boolean set_ign_idlefuncs_nolock(boolean val);
 
 boolean lives_widget_context_update(void);
 boolean lives_widget_context_iteration(LiVESWidgetContext *, boolean may_block);

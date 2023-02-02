@@ -86,7 +86,6 @@ void find_when_to_stop(void);
 ////////////// audio players /////
 
 void switch_aud_to_none(boolean set_pref);
-boolean switch_aud_to_sox(boolean set_pref);
 boolean switch_aud_to_jack(boolean set_pref);
 boolean switch_aud_to_pulse(boolean set_pref);
 

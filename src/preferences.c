@@ -903,15 +903,6 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 #endif
       update_all_host_info(); // let fx plugins know about the change
       goto success1;
-    } else if (!(lives_strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
-      // switch to sox
-      if (switch_aud_to_sox(permanent)) goto success1;
-      // revert text
-      if (prefsw) {
-        lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-        lives_widget_process_updates(prefsw->prefs_dialog);
-      }
-      goto fail1;
     }
 
 #ifdef ENABLE_JACK
@@ -2443,7 +2434,6 @@ boolean apply_prefs(boolean skip_warn) {
       !strncmp(audp, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
                strlen(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_NONE);
   else if (!strncmp(audp, AUDIO_PLAYER_JACK, strlen(AUDIO_PLAYER_JACK))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_JACK);
-  else if (!strncmp(audp, AUDIO_PLAYER_SOX, strlen(AUDIO_PLAYER_SOX))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_SOX);
   else if (!strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, strlen(AUDIO_PLAYER_PULSE_AUDIO))) lives_snprintf(audio_player, 256,
         AUDIO_PLAYER_PULSE);
 
@@ -5095,12 +5085,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   has_ap_rec = TRUE;
 #endif
 
-  if (capable->has_sox_play) {
-    if (has_ap_rec) audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_SOX));
-    else audp = lives_list_append(audp, lives_strdup_printf("%s (%s)", AUDIO_PLAYER_SOX,
-                                    mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
-  }
-
   layout = lives_layout_new(LIVES_BOX(vbox));
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -5136,12 +5120,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   }
   has_ap_rec = TRUE;
 #endif
-
-  if (prefs->audio_player == AUD_PLAYER_SOX) {
-    if (!has_ap_rec) prefsw->audp_name = lives_strdup_printf("%s (%s)", AUDIO_PLAYER_SOX,
-                                           mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
-    else prefsw->audp_name = lives_strdup_printf(AUDIO_PLAYER_SOX);
-  }
 
   if (prefsw->audp_name)
     lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->audp_name);

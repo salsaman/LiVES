@@ -99,13 +99,16 @@ typedef struct {
 
   short audio_player;
 #define AUD_PLAYER_NONE 0
-#define AUD_PLAYER_SOX 1
 #define AUD_PLAYER_JACK 2
 #define AUD_PLAYER_PULSE 3
 
+  ///////// deprecated ////
+#define AUDIO_PLAYER_SOX "sox"
+#define AUD_PLAYER_SOX 1
+  //////////////////////
+
   // string forms
 #define AUDIO_PLAYER_NONE "none"
-#define AUDIO_PLAYER_SOX "sox"
 #define AUDIO_PLAYER_JACK "jack"
 
 #define AUDIO_PLAYER_PULSE "pulse" ///< used in pref and for external players (e.g -ao pulse, -aplayer pulse)

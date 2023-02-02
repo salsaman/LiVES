@@ -91,8 +91,8 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, 
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
     pthread_mutex_lock(&mainw->fx_key_mutex[key]);
-    if (mainw->fx_mutex_tid[key] == -1) {
-      mainw->fx_mutex_tid[key] = THREADVAR(idx);
+    if (mainw->fx_mutex_tuid[key] == 0) {
+      mainw->fx_mutex_tuid[key] = THREADVAR(uid);
       mainw->fx_mutex_nlocks[key] = 0;
     }
     mainw->fx_mutex_nlocks[key]++;
@@ -118,11 +118,11 @@ LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 
 LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
-    if (mainw->fx_mutex_tid[key] == THREADVAR(idx)
+    if (mainw->fx_mutex_tuid[key] == THREADVAR(uid)
         && mainw->fx_mutex_nlocks[key]) {
       mainw->fx_mutex_nlocks[key]--;
       if (!mainw->fx_mutex_nlocks[key]) {
-        mainw->fx_mutex_tid[key] = -1;
+        mainw->fx_mutex_tuid[key] = 0;
       }
       pthread_mutex_unlock(&mainw->fx_key_mutex[key]);
       return 0;
@@ -464,9 +464,6 @@ static char *weed_filter_get_type(weed_plant_t *filter, boolean getsub, boolean 
 void update_host_info(weed_plant_t *hinfo) {
   // set "host_audio_plugin" in the host_info
   switch (prefs->audio_player) {
-  case AUD_PLAYER_SOX:
-    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
-    break;
   case AUD_PLAYER_JACK:
     weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
     break;
@@ -2329,31 +2326,26 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     inpalette = weed_channel_get_palette(channel);
     if (weed_palette_is_alpha(inpalette)) continue;
 
-    if (prefs->dev_show_timing)
-      g_printerr("clrfx pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
-    if (!weed_layer_get_pixel_data(layer)) {
-      /* /// wait for thread to pull layer pixel_data */
-      if (!is_layer_ready(layer)) {
+    if (!is_layer_ready(layer)) {
 #define FX_WAIT_LIM 10000 // microseconds * 10
-        if (prefs->dev_show_timing)
-          g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+      if (prefs->dev_show_timing)
+        g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-        check_layer_ready(layer);
+      // see if we can do this later, maybe we only need the palette and size
+      check_layer_ready(layer);
 
-        for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
-          lives_nanosleep(10000);
-        }
-        if (prefs->dev_show_timing)
-          g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-        if (!is_layer_ready(layer)) {
-          retval = FILTER_ERROR_MISSING_FRAME;
-          goto done_video;
-        }
-        if (!weed_layer_get_pixel_data(layer)) {
-          retval = FILTER_ERROR_MISSING_FRAME;
-          goto done_video;
-        }
+      for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
+        lives_nanosleep(10000);
+      }
+      if (prefs->dev_show_timing)
+        g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+      if (!is_layer_ready(layer)) {
+        retval = FILTER_ERROR_MISSING_FRAME;
+        goto done_video;
+      }
+      if (!weed_layer_get_pixel_data(layer)) {
+        retval = FILTER_ERROR_MISSING_FRAME;
+        goto done_video;
       }
     }
 
@@ -5627,7 +5619,6 @@ void weed_load_all(void) {
     if (i < FX_KEYS_MAX_VIRTUAL) {
       key_defaults[i] = (weed_plant_t ***)lives_calloc(max_modes, sizeof(weed_plant_t **));
       pthread_mutex_init(&mainw->fx_key_mutex[i], &mattr);
-      mainw->fx_mutex_tid[i] = -1;
     }
     key_modes[i] = 0; // current active mode of each key
     effects_map[i] = NULL; // maps effects in order of application for multitrack rendering
@@ -7260,6 +7251,7 @@ boolean weed_init_effect(int hotkey) {
         if (CURRENT_CLIP_IS_VALID && (cfile->achans == 0 || cfile->frames > 0)) {
           // in case we switched to bg clip, and bg clip was gen
           // otherwise we will get killed in generator_start
+          // TODO - DO NOT DO THIS !
           mainw->current_file = -1;
 	  // *INDENT-OFF*
         }}}

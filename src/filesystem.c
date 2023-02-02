@@ -880,9 +880,6 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   boolean *cntrl;
   boolean retval = TRUE;
 
-  lives_nanosleep_until_nonzero(lives_proc_thread_get_cancel_requested(self) ||
-                                (cntrl = weed_get_voidptr_value(self, "_control", NULL)));
-
   if (lives_proc_thread_get_cancel_requested(self)) {
     // if caller gets cancelled, then it will send a cancel_request to this thread
     // then wait for us to return with retval
@@ -895,7 +892,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   fsize = fbuff->orig_size - ABS(skip);
 
   if (fsize > 0) {
-    if (cntrl) *cntrl = TRUE;
+    // caller will wait until this thread goes to WAITING state, then do a sny_ready() and continue
+    sync_point("wait for caller");
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -963,7 +961,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    if (cntrl) *cntrl = TRUE;
+    sync_point("wait for caller");
   }
 
 finished:
@@ -1008,7 +1006,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bytes = fbuff->offset = 0;
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    thread_wait_loop(lpt, FALSE, NULL);
+    lives_proc_thread_sync_continue(lpt);
     return TRUE;
   }
   return FALSE;

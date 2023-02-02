@@ -12,7 +12,9 @@
 #include "resample.h"
 #include "effects.h"
 #include "audio.h"
+#include "cliphandler.h"
 #include "htmsocket.h"
+#include "videodev.h"
 #include "cvirtual.h"
 #include "interface.h"
 #include "multitrack-gui.h"
@@ -65,9 +67,8 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
 boolean get_handle_from_info_file(int index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
-  char *com, *shm_path;
-
-  shm_path = get_staging_dir_for(index, ICAP(LOAD));
+  char *com;
+  char *shm_path = get_staging_dir_for(index, ICAP(LOAD));
 
   if (shm_path)
     com = lives_strdup_printf("%s new \"%s\"", prefs->backend_sync, shm_path);
@@ -2401,6 +2402,281 @@ manual_locate:
 }
 
 
+// return the new current_file - if the player is active then we do not switch, but let the player do that
+int close_current_file(int file_to_switch_to) {
+  // close the current file, and free the file struct and all sub storage
+  LiVESList *list_index;
+  char *com;
+  boolean need_new_blend_file = FALSE;
+  boolean noswitch = mainw->noswitch;
+  int index = -1;
+  int old_file = mainw->current_file;
+  int i;
+
+  if (mainw->close_this_clip == mainw->current_file) mainw->close_this_clip = -1;
+
+  if (!CURRENT_CLIP_IS_VALID) return -1;
+
+  if (cfile->clip_type == CLIP_TYPE_TEMP) {
+    close_temp_handle(file_to_switch_to);
+    return file_to_switch_to;
+  }
+
+  if (mainw->noswitch && !mainw->can_switch_clips) {
+    mainw->new_clip = file_to_switch_to;
+    mainw->close_this_clip = mainw->current_file;
+    return mainw->new_clip;
+  }
+
+  if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
+      mainw->current_file != mainw->ascrap_file && mainw->current_file != 0 &&
+      (!mainw->multitrack || mainw->current_file != mainw->multitrack->render_file)) {
+    d_print(_("Closed clip %s\n"), cfile->file_name);
+    lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");
+  }
+
+  cfile->hsize = mainw->def_width;
+  cfile->vsize = mainw->def_height;
+
+  if (cfile->laudio_drawable) {
+    if (mainw->laudio_drawable == cfile->laudio_drawable
+        || mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
+    if (cairo_surface_get_reference_count(cfile->laudio_drawable))
+      lives_painter_surface_destroy(cfile->laudio_drawable);
+    cfile->laudio_drawable = NULL;
+  }
+  if (cfile->raudio_drawable) {
+    if (mainw->raudio_drawable == cfile->raudio_drawable
+        || mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
+    if (cairo_surface_get_reference_count(cfile->raudio_drawable))
+      lives_painter_surface_destroy(cfile->raudio_drawable);
+    cfile->raudio_drawable = NULL;
+  }
+  if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
+
+  if (mainw->st_fcache) {
+    if (mainw->en_fcache == mainw->st_fcache) mainw->en_fcache = NULL;
+    if (mainw->pr_fcache == mainw->st_fcache) mainw->pr_fcache = NULL;
+    weed_layer_unref(mainw->st_fcache);
+    mainw->st_fcache = NULL;
+  }
+  if (mainw->en_fcache) {
+    if (mainw->pr_fcache == mainw->en_fcache) mainw->pr_fcache = NULL;
+    weed_layer_unref(mainw->en_fcache);
+    mainw->en_fcache = NULL;
+  }
+  if (mainw->pr_fcache) {
+    weed_layer_unref(mainw->pr_fcache);
+    mainw->pr_fcache = NULL;
+  }
+
+  for (i = 0; i < FN_KEYS - 1; i++) {
+    if (mainw->clipstore[i][0] == mainw->current_file) mainw->clipstore[i][0] = -1;
+  }
+
+  // this must all be done last...
+  if (cfile->menuentry) {
+    // c.f. on_prevclip_activate
+    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+    do {
+      if (!(list_index = lives_list_previous(list_index))) list_index = lives_list_last(mainw->cliplist);
+      index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
+    } while ((mainw->files[index] || mainw->files[index]->opening || mainw->files[index]->restoring ||
+              (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1)
+              || (mainw->files[index]->frames == 0 &&
+                  LIVES_IS_PLAYING)) &&
+             index != mainw->current_file);
+    if (index == mainw->current_file) index = -1;
+    if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
+  }
+
+  if (mainw->blend_file == mainw->current_file) {
+    // set blend_file to -1. This is in case the file is a generator - we need to distinguish between the cases where
+    // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
+    // in the former case the generator is killed off, in the latter it survives
+    need_new_blend_file = TRUE;
+    track_decoder_free(1, mainw->blend_file);
+    mainw->blend_file = -1;
+    weed_layer_unref(mainw->blend_layer);
+    mainw->blend_layer = NULL;
+  }
+
+  if (CURRENT_CLIP_IS_PHYSICAL && (cfile->ext_src || cfile->old_ext_src)) {
+    if (!cfile->ext_src && cfile->old_ext_src_type == LIVES_EXT_SRC_DECODER) {
+      cfile->ext_src = cfile->old_ext_src;
+      cfile->ext_src_type = cfile->old_ext_src_type;
+    }
+    if (cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+      close_clip_decoder(mainw->current_file);
+    }
+  }
+  free_thumb_cache(mainw->current_file, 0);
+  lives_freep((void **)&cfile->frame_index);
+  lives_freep((void **)&cfile->frame_index_back);
+
+  if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
+    char *clipd = get_clip_dir(mainw->current_file);
+    if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
+      // as a safety feature we create a special file which allows the back end to delete the directory
+      char *temp_backend;
+      char *permitname = lives_build_filename(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+      lives_touch(permitname);
+      lives_free(permitname);
+      temp_backend = use_staging_dir_for(mainw->current_file);
+      com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
+      lives_free(temp_backend);
+      lives_system(com, TRUE);
+      lives_free(com);
+      temp_backend = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, cfile->handle, NULL);
+      if (!lives_file_test(temp_backend, LIVES_FILE_TEST_IS_DIR)) {
+        lives_rmdir_with_parents(temp_backend);
+      }
+      lives_free(temp_backend);
+    }
+    lives_free(clipd);
+    if (cfile->event_list_back) event_list_free(cfile->event_list_back);
+    if (cfile->event_list) event_list_free(cfile->event_list);
+
+    lives_list_free_all(&cfile->layout_map);
+  }
+
+  if (cfile->subt) subtitles_free(cfile);
+
+  if (cfile->clip_type == CLIP_TYPE_YUV4MPEG) {
+#ifdef HAVE_YUV4MPEG
+    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
+    lives_free(cfile->ext_src);
+#endif
+  }
+
+  if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
+#ifdef HAVE_UNICAP
+    if (cfile->ext_src) lives_vdev_free((lives_vdev_t *)cfile->ext_src);
+#endif
+  }
+
+  if (cfile->audio_waveform) {
+    cancel_tl_redraw();
+    for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
+    lives_freep((void **)&cfile->audio_waveform);
+    lives_freep((void **)&cfile->aw_sizes);
+    cfile->aw_sizes = NULL;
+  }
+
+  if (mainw->files[mainw->current_file]) {
+    lives_free(mainw->files[mainw->current_file]);
+    mainw->files[mainw->current_file] = NULL;
+  }
+
+  if (mainw->multitrack && mainw->current_file != mainw->multitrack->render_file) {
+    mt_delete_clips(mainw->multitrack, mainw->current_file);
+  }
+
+  if ((mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file) && mainw->current_file > 0)
+    mainw->first_free_file = mainw->current_file;
+
+  if (!mainw->only_close) {
+    if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
+      if (!mainw->multitrack) {
+        if (!mainw->noswitch) {
+          mainw->current_file = file_to_switch_to;
+          switch_clip(1, file_to_switch_to, TRUE);
+          d_print("");
+        } else {
+          if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
+          else mainw->current_file = file_to_switch_to;
+        }
+      } else if (old_file != mainw->multitrack->render_file) {
+        mt_clip_select(mainw->multitrack, TRUE);
+      }
+      return file_to_switch_to;
+    }
+  }
+  // file we were asked to switch to is invalid, thus we must find one
+
+  //if (mainw->only_close) mainw->noswitch = TRUE;
+
+  file_to_switch_to = find_next_clip(index, old_file);
+
+  if (mainw->noswitch) {
+    mainw->noswitch = noswitch;
+    return file_to_switch_to;
+  }
+
+  if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+
+  if (CURRENT_CLIP_IS_VALID) return mainw->current_file;
+
+  // no other clips
+  mainw->preview_frame = 0;
+  mainw->current_file = mainw->blend_file = -1;
+  set_main_title(NULL, 0);
+
+  if (mainw->play_window) {
+    lives_widget_hide(mainw->preview_controls);
+    load_preview_image(FALSE);
+    resize_play_window();
+  }
+  lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
+  lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+  lives_widget_set_sensitive(mainw->export_proj, FALSE);
+  lives_widget_set_sensitive(mainw->import_proj, FALSE);
+
+  if (mainw->multitrack && old_file != mainw->multitrack->render_file)
+    lives_widget_set_sensitive(mainw->multitrack->load_set, TRUE);
+
+  // can't use set_undoable, as we don't have a cfile
+  lives_menu_item_set_text(mainw->undo, _("_Undo"), TRUE);
+  lives_menu_item_set_text(mainw->redo, _("_Redo"), TRUE);
+  lives_widget_hide(mainw->redo);
+  lives_widget_show(mainw->undo);
+  lives_widget_set_sensitive(mainw->undo, FALSE);
+
+  if (!mainw->is_ready || mainw->recovering_files) return -1;
+
+  if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_GENERATOR_END;
+
+  if (!mainw->multitrack) {
+    //resize(1);
+    lives_widget_set_opacity(mainw->playframe, 0.);
+    //lives_widget_hide(mainw->playframe);
+    load_start_image(0);
+    load_end_image(0);
+    if (prefs->show_msg_area && !mainw->only_close) {
+      if (mainw->idlemax == 0) {
+        lives_idle_add(resize_message_area, NULL);
+      }
+      mainw->idlemax = DEF_IDLE_MAX;
+    }
+  }
+
+  set_sel_label(mainw->sel_label);
+
+  zero_spinbuttons();
+  show_playbar_labels(-1);
+
+  if (!mainw->only_close) {
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    if (!LIVES_IS_PLAYING) d_print("");
+
+    if (mainw->multitrack) {
+      if (old_file != mainw->multitrack->render_file) {
+        mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+        mt_clip_select(mainw->multitrack, TRUE);
+      }
+    }
+  }
+  if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
+    if (mainw->multitrack) {
+      if (old_file != mainw->multitrack->render_file) {
+        mt_sensitise(mainw->multitrack);
+      }
+    } else sensitize();
+  }
+  return mainw->current_file;
+}
+
+
 boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile = NULL;
 
@@ -2999,7 +3275,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   recpid = atoi(mainw->msg);
   if (recpid == 0) {
-    recfname4 = lives_strdup_printf("recorded-%s", LAYOUT_NUMBERING_FILENAME);
+    recfname4 = lives_strdup_printf("%s-%s", RECORDED_LITERAL, LAYOUT_NUMBERING_FILENAME);
 
     com = lives_strdup_printf("%s get_recovery_file %d %d %s %s %d",
                               prefs->backend_sync, luid, lgid,
@@ -3073,12 +3349,13 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
   recovery_numbering_file = lives_build_filename(prefs->workdir, recfname2, NULL);
   if (!no_recover) lives_free(recfname2);
 
-  recfname3 = lives_strdup_printf("recorded-%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,
+  recfname3 = lives_strdup_printf("%s-%s.%d.%d.%d.%s", RECORDED_LITERAL, LAYOUT_FILENAME, luid, lgid, recpid,
                                   LIVES_FILE_EXT_LAYOUT);
   recording_file = lives_build_filename(prefs->workdir, recfname3, NULL);
   if (!no_recover) lives_free(recfname3);
 
-  recfname4 = lives_strdup_printf("recorded-%s.%d.%d.%d", LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
+  recfname4 = lives_strdup_printf("%s-%s.%d.%d.%d", RECORDED_LITERAL, LAYOUT_NUMBERING_FILENAME,
+                                  luid, lgid, recpid);
   recording_numbering_file = lives_build_filename(prefs->workdir, recfname4, NULL);
   if (!no_recover) lives_free(recfname4);
 
@@ -3155,10 +3432,12 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     if (prefs->rr_crash && lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
       if (lives_file_test(recording_numbering_file, LIVES_FILE_TEST_EXISTS)) {
         found_recording = TRUE;
-        xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+        xfile = lives_strdup_printf("%s/keep_%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL,
+                                    LAYOUT_FILENAME, luid, lgid, lpid);
         lives_mv(recording_file, xfile);
         lives_free(xfile);
-        xfile = lives_strdup_printf("%s/keep_recorded-layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+        xfile = lives_strdup_printf("%s/keep_%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL,
+                                    LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
         lives_mv(recording_numbering_file, xfile);
         lives_free(xfile);
         mainw->recording_recovered = TRUE;
@@ -3168,10 +3447,11 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   if (found) {
     // move files temporarily to stop them being cleansed
-    xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid);
     lives_mv(recovery_file, xfile);
     lives_free(xfile);
-    xfile = lives_strdup_printf("%s/keep_layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
+                                luid, lgid, lpid);
     lives_mv(recovery_numbering_file, xfile);
     lives_free(xfile);
     mainw->recoverable_layout = TRUE;
@@ -3214,25 +3494,28 @@ cleanse:
 
   if (mainw->recoverable_layout) {
     // move files back
-    xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid);
     lives_mv(xfile, recovery_file);
     lives_free(xfile);
-    xfile = lives_strdup_printf("%s/keep_layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
+                                luid, lgid, lpid);
     lives_mv(xfile, recovery_numbering_file);
     lives_free(xfile);
   }
 
-  recording_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid,
-                                       LIVES_FILE_EXT_LAYOUT);
-  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid,
-                             lpid);
+  recording_file = lives_strdup_printf("%s/%s-%s.%d.%d.%d.%s", prefs->workdir, RECORDED_LITERAL,
+                                       LAYOUT_FILENAME, luid, lgid, lpid, LIVES_FILE_EXT_LAYOUT);
+  recording_numbering_file = lives_strdup_printf("%s/%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL,
+                             LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
 
   if (mainw->recording_recovered) {
-    xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL, LAYOUT_FILENAME,
+                                luid, lgid, lpid);
     /// may fail -> abort
     lives_mv(xfile, recording_file);
     lives_free(xfile);
-    xfile = lives_strdup_printf("%s/keep_recorded-layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_%s-%s.%d.%d.%d", prefs->workdir, RECORDED_LITERAL,
+                                LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
     lives_mv(xfile, recording_numbering_file);
     lives_free(xfile);
   }
@@ -3445,7 +3728,6 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
         if (!frames) {
           frames = cfile->frames - st_frame;
-          break_me("fr calc\n");
         } else {
           if (st_frame + frames >= cfile->frames) frames = cfile->frames - st_frame;
         }
@@ -3694,6 +3976,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             }
             lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
             lives_widget_context_update();
+            sensitize();
             return 0;
           }
           lives_free(fsize_ds);
@@ -3841,6 +4124,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         if (!mainw->multitrack)
           redraw_timeline(mainw->current_file);
         showclipimgs();
+        sensitize();
         return 0;
       }
       mainw->disk_mon = 0;
@@ -3878,6 +4162,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     lives_freep((void **)&mainw->file_open_params);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     lives_widget_context_update();
+    sensitize();
     return 0;
   }
 
@@ -3961,6 +4246,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       lives_freep((void **)&mainw->file_open_params);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       lives_widget_context_update();
+      sensitize();
       return 0;
     }
     cfile->frames = 0;
@@ -4037,6 +4323,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             lives_freep((void **)&mainw->file_open_params);
             lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
             lives_widget_context_update();
+            sensitize();
             return 0;
           }
           mainw->fx3_val = cfile->asampsize ? cfile->asampsize : DEFAULT_AUDIO_SAMPS;
@@ -4128,6 +4415,7 @@ img_load:
 
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       lives_widget_context_update();
+      sensitize();
       return 0;
     }
   }
@@ -4136,6 +4424,7 @@ img_load:
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
     lives_widget_context_update();
+    sensitize();
     return 0;
   }
 
@@ -4172,6 +4461,7 @@ load_done:
   lives_widget_context_update();
   check_storage_space(-1, FALSE);
 
+  sensitize();
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
   return clip_uid;
 }

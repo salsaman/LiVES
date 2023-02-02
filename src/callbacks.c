@@ -152,18 +152,6 @@ void lives_exit(int signum) {
         stop_audio_stream();
         mainw->stream_ticks = -1;
       }
-
-      // tell non-realtime audio players (sox or mplayer) to stop
-      if (!is_realtime_aplayer(prefs->audio_player) && mainw->aud_file_to_kill > -1 &&
-          mainw->files[mainw->aud_file_to_kill]) {
-        char *lsname = lives_build_filename(prefs->workdir, mainw->files[mainw->aud_file_to_kill]->handle, NULL);
-        lives_touch(lsname);
-        lives_free(lsname);
-        com = lives_strdup_printf("%s stop_audio \"%s\"", prefs->backend,
-                                  mainw->files[mainw->aud_file_to_kill]->handle);
-        lives_system(com, TRUE);
-        lives_free(com);
-      }
     }
 #endif
     // stop any background processing for the current clip
@@ -976,6 +964,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
           if (resp == LIVES_RESPONSE_CANCEL) utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
         }
       } while (resp == LIVES_RESPONSE_RETRY);
+      lives_snprintf(cfile->staging_dir, PATH_MAX, "%s", ddir);
     }
   } else ddir = req->save_dir;
 
@@ -1027,7 +1016,6 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
     utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
   }
 
-  migrate_from_staging(mainw->current_file);
   req->duration = -1.;
 
   while (1) {
@@ -1196,6 +1184,9 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         }
       }
     }
+
+    migrate_from_staging(mainw->current_file);
+    lives_snprintf(cfile->staging_dir, PATH_MAX, "%s", ddir);
   }
 
   // do more intensive diskspace checking
@@ -4782,8 +4773,10 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
       main_thread_execute_rvoid(switch_clip, 0, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
+      BG_THREADVAR(hook_hints) = 0;
     }
   }
 }
@@ -4950,7 +4943,7 @@ void on_rewind_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+static void _on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // stop during playback
 
   if (mainw->multitrack && mainw->multitrack->is_paused && !LIVES_IS_PLAYING) {
@@ -4972,6 +4965,16 @@ boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event,
     on_sepwin_pressed(NULL, NULL);
   }
   return TRUE;
+}
+
+
+void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_stop_activate, user_data);
+  else _on_stop_activate(menuitem, user_data);
 }
 
 
@@ -6397,65 +6400,6 @@ void on_show_clipboard_info_activate(LiVESMenuItem * menuitem, livespointer user
 }
 
 
-void switch_clip(int type, int newclip, boolean force) {
-  // generic switch clip callback
-
-  // This is the new single entry function for switching clips.
-  // It should eventually replace switch_to_file() and do_quick_switch()
-
-  // type = auto : if we are playing and a transition is active, this will change the background clip
-  // type = foreground fg only
-  // type = background bg only
-
-  if (!IS_VALID_CLIP(newclip)) return;
-  if (!LIVES_IS_PLAYING && !force && newclip == mainw->current_file) return;
-
-  if (mainw->current_file < 1 || mainw->multitrack || mainw->preview || mainw->internal_messaging ||
-      (mainw->is_processing && cfile && cfile->is_loaded) || !mainw->cliplist) return;
-
-  if (type == SCREEN_AREA_BACKGROUND || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0
-                                         && type != SCREEN_AREA_FOREGROUND
-                                         && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file)
-                                             && mainw->blend_file != mainw->playing_file))) {
-    if (mainw->num_tr_applied < 1 || newclip == mainw->blend_file) return;
-
-    // switch bg clip
-    if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
-        && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-      if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
-      weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
-      if (inst) {
-        if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-          int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
-          rte_key_on_off(key + 1, FALSE);
-        }
-      }
-      //chill_decoder_plugin(mainw->blend_file);
-    }
-
-    track_decoder_free(1, mainw->blend_file);
-
-    mainw->blend_file = newclip;
-    mainw->whentostop = NEVER_STOP;
-    if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
-      ce_thumbs_highlight_current_clip();
-    }
-    mainw->blend_palette = WEED_PALETTE_END;
-    return;
-  }
-
-  // switch fg clip
-
-  if (LIVES_IS_PLAYING) {
-    mainw->new_clip = newclip;
-  } else {
-    if (cfile && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
-    if (!cfile || (force && newclip == mainw->current_file)) mainw->current_file = -1;
-    switch_to_file(mainw->current_file, newclip);
-  }
-}
-
-
 void switch_clip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // switch clips from the clips menu
   if (!CLIPSWITCH_BLOCKED) switch_clip(0, GET_INT_DATA(menuitem, "clipno"), FALSE);
@@ -7306,7 +7250,7 @@ void on_details_button_clicked(void) {
 }
 
 
-void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
+static void _on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (full screen)
   // ignore if audio only clip
   if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && !mainw->multitrack) return;
@@ -7314,7 +7258,17 @@ void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
 }
 
 
-void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_full_screen_pressed, user_data);
+  else _on_full_screen_pressed(button, user_data);
+}
+
+
+static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // ignore if audio only clip
   if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && LIVES_IS_PLAYING && !mainw->multitrack) return;
 
@@ -7463,16 +7417,32 @@ void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
 
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  _on_full_screen_activate(menuitem, user_data);
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_full_screen_activate, user_data);
+  else _on_full_screen_activate(menuitem, user_data);
 }
 
-void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
+
+static void _on_double_size_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (separate window)
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->dsize), !mainw->double_size);
 }
 
 
-void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_double_size_pressed, user_data);
+  else _on_double_size_pressed(button, user_data);
+}
+
+
+static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->multitrack || (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && !user_data)) return;
 
   if (!user_data) {
@@ -7517,9 +7487,17 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
+void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_double_size_activate, user_data);
+  else _on_double_size_activate(menuitem, user_data);
+}
 
+
+static void _on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (separate window)
   if (mainw->multitrack) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->sepwin), !mainw->sep_win);
@@ -7528,10 +7506,17 @@ void on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
 }
 
 
-void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-
+void on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
   if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_sepwin_pressed, user_data);
+  else _on_sepwin_pressed(button, user_data);
+}
 
+
+static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->sep_win = !mainw->sep_win;
   mainw->blend_palette = WEED_PALETTE_END;
 
@@ -7690,6 +7675,16 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
+void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_sepwin_activate, user_data);
+  else _on_sepwin_activate(menuitem, user_data);
+}
+
+
 void on_showfct_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   prefs->hide_framebar = !prefs->hide_framebar;
   if (!mainw->fs || (prefs->play_monitor != widget_opts.monitor && mainw->play_window && capable->nmonitors > 1)) {
@@ -7716,7 +7711,7 @@ void on_sticky_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_fade_pressed(LiVESButton * button, livespointer user_data) {
+static void _on_fade_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (unblank background)
   if (mainw->fs && (!mainw->play_window || (prefs->play_monitor == widget_opts.monitor || capable->nmonitors == 1)))
     return;
@@ -7724,7 +7719,17 @@ void on_fade_pressed(LiVESButton * button, livespointer user_data) {
 }
 
 
-void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_fade_pressed(LiVESButton * button, livespointer user_data) {
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_fade_pressed, user_data);
+  else _on_fade_pressed(button, user_data);
+}
+
+
+static void _on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->faded = !mainw->faded;
   if (LIVES_IS_PLAYING && (!mainw->fs || (prefs->play_monitor != widget_opts.monitor && mainw->play_window &&
                                           capable->nmonitors > 1))) {
@@ -7746,6 +7751,16 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
+}
+
+
+void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (mainw->go_away) return;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               _on_fade_activate, user_data);
+  else _on_fade_activate(menuitem, user_data);
 }
 
 
@@ -9926,7 +9941,9 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
   if (mainw->multitrack) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
     main_thread_execute_rvoid(mt_post_playback, -1, "v", mainw->multitrack);
+    BG_THREADVAR(hook_hints) = 0;
     mainw->current_file = current_file;
   }
 

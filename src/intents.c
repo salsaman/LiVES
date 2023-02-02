@@ -1073,7 +1073,7 @@ LIVES_GLOBAL_INLINE boolean lives_has_capacity(lives_capacities_t *caps, const c
   boolean ret = FALSE;
   if (caps) {
     char *capname = MAKE_CAPNAME(key);
-    ret = weed_plant_has_leaf(caps, key);
+    ret = weed_plant_has_leaf(caps, capname);
     lives_free(capname);
   }
   return ret;
@@ -1301,9 +1301,12 @@ lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void
 #define MK_ATTR_P(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(ctype), \
 				       (void *)tdata->vars.var_##name), 1)
 
+#define MK_ATTR_META(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(tdata->name), \
+					  (void *)&(tdata->name), 1)
+
 void make_thrdattrs(lives_thread_data_t *tdata) {
-  MK_ATTR(uint64_t, uid);
-  MK_ATTR(int, idx);
+  MK_ATTR_META(uint64_t, uid);
+  MK_ATTR_META(int, slot_id);
   MK_ATTR(lives_proc_thread_t, proc_thread);
   MK_ATTR(lives_intentcap_t, intentcap);
   MK_ATTR(int, core_id);

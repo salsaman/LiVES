@@ -1497,7 +1497,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   boolean got_err = FALSE;
   boolean markup = widget_opts.use_markup;
 
-  set_ign_idlefuncs(TRUE);
   widget_opts.use_markup = FALSE;
 
   if (*cfile->staging_dir && lives_strncmp(cfile->info_file, cfile->staging_dir,
@@ -1518,7 +1517,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = cancelled;
       d_print_cancelled();
       cancel_process(visible);
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -1619,7 +1617,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     mainw->proc_ptr = NULL;
     if (mainw->cancelled != CANCEL_NONE) {
       cancel_process(visible);
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -1643,7 +1640,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       end_threaded_dialog();
       if (mainw->cancelled != CANCEL_NONE) {
         cancel_process(visible);
-        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     }
@@ -1657,7 +1653,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (!reset_timebase()) {
     mainw->cancelled = CANCEL_INTERNAL_ERROR;
     cancel_process(visible);
-    set_ign_idlefuncs(FALSE);
     return FALSE;
   }
   //////////////////////////
@@ -1665,7 +1660,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (mainw->record_starting) {
     if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL))) {
       cancel_process(visible);
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -1706,7 +1700,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
       cancel_process(visible);
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
 
@@ -1726,7 +1719,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
       handle_audio_timeout();
       cancel_process(visible);
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
 
@@ -1798,7 +1790,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         }
 #endif
         cancel_process(visible);
-        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
 
@@ -1970,7 +1961,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // *INDENT-ON*
 
       // do a processing pass
+      if (!visible) pthread_mutex_lock(&mainw->trcount_mutex);
       if (process_one(visible)) {
+        if (!visible) pthread_mutex_unlock(&mainw->trcount_mutex);
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 #ifdef USE_GDK_FRAME_CLOCK
         if (using_gdk_frame_clock) {
@@ -1979,9 +1972,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
         if (visible) mainw->noswitch = FALSE;
         cancel_process(visible);
-        set_ign_idlefuncs(FALSE);
         return FALSE;
       }
+      if (!visible) pthread_mutex_unlock(&mainw->trcount_mutex);
 
       if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
         int64_t dsused = disk_monitor_check_result(prefs->workdir);
@@ -2029,13 +2022,11 @@ finish:
     handle_backend_errors(FALSE);
     if (mainw->cancelled || mainw->error) {
       if (visible) mainw->noswitch = FALSE;
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   } else {
     if (!check_storage_space(mainw->current_file, FALSE)) {
       if (visible) mainw->noswitch = FALSE;
-      set_ign_idlefuncs(FALSE);
       return FALSE;
     }
   }
@@ -2050,19 +2041,6 @@ finish:
   if (visible) mainw->noswitch = FALSE;
   return TRUE;
 }
-
-
-/* boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text) { */
-/*   if (set_ign_idlefuncs(TRUE)) { */
-/*     lives_proc_thread_t dpd_lpt = */
-/*       lives_proc_thread_create(0, _do_progress_dialog, WEED_SEED_BOOLEAN, "bbs", visible, cancellable, text); */
-/*     boolean ret = lives_proc_thread_join_boolean(dpd_lpt); */
-/*     lives_proc_thread_unref(dpd_lpt); */
-/*     set_ign_idlefuncs(FALSE); */
-/*     return ret; */
-/*   } */
-/*   return FALSE; */
-/* } */
 
 
 #define MIN_FLASH_TIME MILLIONS(100)
@@ -2573,9 +2551,7 @@ LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
   text_window *textwindow;
   char *text = _dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  set_ign_idlefuncs(TRUE);
   textwindow = create_text_window(_("Message History"), text, NULL, TRUE);
-  set_ign_idlefuncs(FALSE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_free(text);
   if (is_startup) {
@@ -2778,7 +2754,7 @@ void do_audio_import_error(void) {
 
   char *filt[] = LIVES_AUDIO_LOAD_FILTER;
 
-  register int i = 0;
+  int i = 0;
 
   while (filt[i]) {
     if (filt[i + 1]) {
@@ -4221,7 +4197,7 @@ void do_invalid_subs_error(void) {
 
   char *filt[] = LIVES_SUBS_FILTER;
 
-  register int i = 0;
+  int i = 0;
 
   while (filt[i]) {
     if (!filt[i + 1]) {

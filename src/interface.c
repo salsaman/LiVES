@@ -3460,7 +3460,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     LiVESList *olist = NULL;
     char const *str;
     char *tvcardtypes[] = LIVES_TV_CARD_TYPES;
-    register int i;
+    int i;
 
     tvcardw = (lives_tvcardw_t *)lives_malloc(sizeof(lives_tvcardw_t));
     tvcardw->use_advanced = FALSE;

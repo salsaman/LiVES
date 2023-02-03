@@ -4860,7 +4860,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   }
 
   // set channel values
-  g_print("SET achan %p from %p %d %d %lu\n", achan, dst, trate, tchans, olen);
+  //  g_print("SET achan %p from %p %d %d %lu\n", achan, dst, trate, tchans, olen);
   weed_channel_set_audio_data(achan, dst, trate, tchans, olen);
   lives_free(dst);
   return TRUE;

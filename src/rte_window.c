@@ -60,7 +60,7 @@ boolean rte_window_hidden(void) {
 
 
 void rte_window_set_interactive(boolean interactive) {
-  register int i, j;
+  int i, j;
   int modes = rte_getmodespk();
   int idx;
 
@@ -96,7 +96,7 @@ void rte_window_set_interactive(boolean interactive) {
 
 void rtew_set_key_check_state(void) {
   // set (delayed) keycheck state
-  register int i;
+  int i;
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
     lives_signal_handler_block(key_checks[i], ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
@@ -134,7 +134,7 @@ void type_label_set_text(int key, int mode) {
 
 boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
   int modes = rte_getmodespk();
-  register int i, j;
+  int i, j;
 
   ca_canc = FALSE;
 
@@ -230,7 +230,7 @@ static boolean save_keymap3_file(char *kfname) {
   int retval;
   int count = 0, totcons, nconns;
 
-  register int i, j;
+  int i, j;
 
   do {
     retval = 0;
@@ -1740,7 +1740,7 @@ void on_clear_clicked(LiVESButton * button, livespointer user_data) {
 
   int newmode;
 
-  register int i;
+  int i;
 
   weed_delete_effectkey(key, mode);
 

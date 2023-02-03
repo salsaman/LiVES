@@ -127,9 +127,9 @@ char *get_current_timestamp(void);
 
 // sleep for 1 msec, regardless of the value returned, sets euqal to cond
 #define _nsleep1(cond) (usleep(1000) ? (cond) :  (cond))
-// sleep for 1 msec, if cons still TRUE, sleep for another 1 msec and return cond, else return cond
+// sleep for 2 msec, if cons still TRUE, sleep for another 1 msec and return cond, else return cond
 #define _nsleep2(cond) _nsleep1(cond) ? _nsleep1(cond) : (cond)
-// sleep for up to 2 msec, if cons still TRUE, sleep for up to 2 more  msec and return cond, else return cond
+// sleep for up to 4 msec, if cons still TRUE, sleep for up to 2 more  msec and return cond, else return cond
 #define _nsleep4(cond) _nsleep2(cond) ? _nsleep2(cond) : (cond)
 // etc
 #define _nsleep8(cond)_nsleep4(cond)?_nsleep4(cond):(cond)

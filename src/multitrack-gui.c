@@ -2551,7 +2551,10 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       init_track_decoders();
 
       // render one frame
+      // will call load_frame_image, and we take mainw->frame_layer
       process_events(mt->pb_start_event, FALSE, 0);
+      //
+      reset_old_frame_layer();
       free_track_decoders();
       mt->preview_layer = -100000;
       mt->solo_inst = NULL;
@@ -2576,7 +2579,9 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
       mt->idlefunc = mt_idle_add(mt);
     }
+
     layer = mainw->frame_layer;
+
     if (frame_layer) {
       mainw->frame_layer = frame_layer;
       weed_layer_unref(mainw->frame_layer);

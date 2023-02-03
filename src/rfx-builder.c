@@ -531,7 +531,7 @@ static void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
-  register int i;
+  int i;
 
   if (button == LIVES_BUTTON(rfxbuilder->requirements_button)) {
     rfxbuilder->table_type = RFX_TABLE_TYPE_REQUIREMENTS;
@@ -806,7 +806,7 @@ static void on_params_ok(LiVESButton *button, livespointer user_data) {
 static void on_params_cancel(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
-  for (register int i = 0; i < rfxbuilder->num_params; i++) {
+  for (int i = 0; i < rfxbuilder->num_params; i++) {
     // this is the only place these should be freed
     lives_free(rfxbuilder->copy_params[i].name);
     lives_free(rfxbuilder->copy_params[i].label);
@@ -826,7 +826,7 @@ static void on_params_cancel(LiVESButton *button, livespointer user_data) {
 static void on_param_window_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
-  register int i;
+  int i;
 
   for (i = 0; i < rfxbuilder->onum_paramw_hints; i++) {
     lives_free(rfxbuilder->paramw_hints[i]);
@@ -887,7 +887,7 @@ static void on_code_ok(LiVESButton *button, livespointer user_data) {
       lives_list_free(rfxbuilder->copy_params[rfxbuilder->edit_param].list);
       rfxbuilder->copy_params[rfxbuilder->edit_param].list = NULL;
     }
-    for (register int i = 0; i < numlines; i++) {
+    for (int i = 0; i < numlines; i++) {
       if (i < numlines - 1 || strlen(lines[i])) {
         rfxbuilder->copy_params[rfxbuilder->edit_param].list = lives_list_append
             (rfxbuilder->copy_params[rfxbuilder->edit_param].list, lives_strdup(lines[i]));
@@ -1049,7 +1049,7 @@ static void on_properties_clicked(LiVESButton * button, livespointer user_data) 
 
 
 static void table_select_row(rfx_build_window_t *rfxbuilder, int row) {
-  for (register int i = 0; i < rfxbuilder->table_rows; i++) {
+  for (int i = 0; i < rfxbuilder->table_rows; i++) {
     if (i == row) {
       lives_widget_set_sensitive(rfxbuilder->edit_entry_button, TRUE);
       lives_widget_set_sensitive(rfxbuilder->remove_entry_button, TRUE);
@@ -1085,7 +1085,7 @@ static boolean on_entry_click(LiVESWidget * widget, LiVESXEventButton * event, l
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   widget = lives_bin_get_child(LIVES_BIN(widget));
-  for (register int i = 0; i < rfxbuilder->table_rows; i++) {
+  for (int i = 0; i < rfxbuilder->table_rows; i++) {
     if (widget == rfxbuilder->entry[i] || widget == rfxbuilder->entry2[i] || widget == rfxbuilder->entry3[i]) {
       table_select_row(rfxbuilder, i);
 
@@ -1109,7 +1109,7 @@ static void on_table_add_row(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   lives_param_t *param = NULL;
 
-  register int i;
+  int i;
 
   char *tmpx;
   const char *ctext;
@@ -1641,7 +1641,7 @@ static void on_table_swap_row(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int found = -1;
 
-  for (register int i = 0; i < rfxbuilder->table_rows && found == -1; i++) {
+  for (int i = 0; i < rfxbuilder->table_rows && found == -1; i++) {
     if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
       found = i;
       break;
@@ -1694,7 +1694,7 @@ static void on_table_delete_row(LiVESButton * button, livespointer user_data) {
   int move = 0;
   boolean triggers_adjusted = FALSE;
 
-  register int i;
+  int i;
 
   switch (rfxbuilder->table_type) {
   case RFX_TABLE_TYPE_REQUIREMENTS:
@@ -2571,7 +2571,7 @@ static void paramw_set_splabel(LiVESLabel * label, int npars) {
     tmpx = (_("Linked parameter:    "));
   } else {
     char example[256] = "0";
-    for (register int i = 1; i < npars; i++) {
+    for (int i = 1; i < npars; i++) {
       char *xnew = lives_strdup_printf("|%d", i);
       lives_strappend(example, 256, xnew);
       lives_free(xnew);
@@ -2789,7 +2789,7 @@ static void on_code_clicked(LiVESButton * button, livespointer user_data) {
     } else {
       LiVESTextIter start_iter;
       char *string = lives_strdup(""), *string_new;
-      register int i;
+      int i;
 
       rfxbuilder->codetype = RFX_CODE_TYPE_STRING_LIST;
       lives_window_set_title(LIVES_WINDOW(dialog), (tmpx = (_("Enter values, one per line"))));
@@ -2845,7 +2845,7 @@ static void on_rfxbuilder_cancel(LiVESButton * button, livespointer user_data) {
 
 
 static void rfxbuilder_destroy(rfx_build_window_t *rfxbuilder) {
-  register int i;
+  int i;
 
   for (i = 0; i < rfxbuilder->num_reqs; i++) {
     lives_free(rfxbuilder->reqs[i]);
@@ -2951,7 +2951,7 @@ boolean perform_rfxbuilder_checks(rfx_build_window_t *rfxbuilder) {
 
 
 boolean perform_param_checks(rfx_build_window_t *rfxbuilder, int index, int rows) {
-  register int i;
+  int i;
 
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->param_name_entry)))) {
     do_error_dialog(_("\n\nParameter name must not be blank.\n"));
@@ -3310,7 +3310,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   int filled_triggers = 0;
   int len;
 
-  register int i, j;
+  int i, j;
 
   rfxbuilder->type = RFX_BUILD_TYPE_EFFECT1;
   if (!(list = get_script_section("define", script_file, TRUE))) {
@@ -4225,7 +4225,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   // 4) copy sorted list -> mainw->rendered_fx
 
   // 5) recreate menus (add_rfx_effects2)
-  lives_proc_thread_t self;
+  GET_PROC_THREAD_SELF(self);
   LiVESList *rfx_builtin_list = NULL, *rfx_custom_list = NULL, *rfx_test_list = NULL;
   LiVESList *list;
   lives_rfx_t *rfx = NULL;
@@ -4238,8 +4238,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   int rfx_builtin_list_length, rfx_custom_list_length, rfx_test_list_length;
   int rfx_list_length, old_list_length;
 
-  if (mainw->helper_procthreads[PT_LAZY_RFX] != NULL
-      && (self = THREADVAR(proc_thread)) == mainw->helper_procthreads[PT_LAZY_RFX]) {
+  if (self && self == mainw->helper_procthreads[PT_LAZY_RFX]) {
     is_startup = TRUE;
     lives_proc_thread_set_pauseable(self, TRUE);
   }
@@ -4528,10 +4527,17 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
 
 
 void add_rfx_effects2(lives_rfx_status_t status) {
+  GET_PROC_THREAD_SELF(self);
   LiVESWidget *menuitem;
   lives_rfx_t *rfx;
   char txt[64]; // menu text
+  boolean is_startup = FALSE;
   int plugin_idx, tool_posn = RFX_TOOL_MENU_POSN;
+
+  if (self && self == mainw->helper_procthreads[PT_LAZY_RFX]) {
+    is_startup = TRUE;
+    lives_proc_thread_set_pauseable(self, TRUE);
+  }
 
   if (status == RFX_STATUS_ANY) {
     // recreate effects menu
@@ -4619,6 +4625,9 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   if (rfx_slot_count) {
     char *tmp;
     for (plugin_idx = 1; plugin_idx <= rfx_slot_count; plugin_idx++) {
+      if (is_startup && lives_proc_thread_get_pause_requested(self))
+	lives_proc_thread_pause(self);
+
       rfx = mainw->rendered_fx[plugin_idx];
       if (status == RFX_STATUS_TEST && rfx->status == RFX_STATUS_BUILTIN) continue;
 
@@ -4730,12 +4739,19 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
+  if (is_startup && lives_proc_thread_get_pause_requested(self))
+    lives_proc_thread_pause(self);
+
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   update_rfx_menus();
+  BG_THREADVAR(hook_hints) = 0;
 
   if (status != RFX_STATUS_ANY) {
     threaded_dialog_spin(0.);
-    if (CURRENT_CLIP_IS_VALID && !LIVES_IS_PLAYING) {
+    if (CURRENT_CLIP_IS_VALID) {
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
       main_thread_execute_void(sensitize_rfx, 0);
+      BG_THREADVAR(hook_hints) = 0;
     }
     threaded_dialog_spin(0.);
   }

@@ -66,6 +66,10 @@ uint64_t test_opts = 0;//TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS
 #include <glib-unix.h>
 #endif
 
+_prefs *prefs;
+_future_prefs *future_prefs;
+_prefsw *prefsw;
+
 static boolean lives_init(_ign_opts *ign_opts);
 static void do_start_messages(void);
 
@@ -1313,9 +1317,10 @@ boolean lazy_startup_checks(void) {
   static boolean tlshown = FALSE;
   static boolean extra_caps = FALSE;
   static boolean is_first = TRUE;
+  static boolean red_tim = FALSE;
 
   if (LIVES_IS_PLAYING) {
-    dqshown = mwshown = tlshown = TRUE;
+    dqshown = mwshown = tlshown = red_tim = TRUE;
     lives_proc_thread_cancel(self);
     return FALSE;
   }
@@ -1333,6 +1338,7 @@ boolean lazy_startup_checks(void) {
     is_first = FALSE;
     return TRUE;
   }
+
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
@@ -1346,6 +1352,12 @@ boolean lazy_startup_checks(void) {
     }
     lives_proc_thread_cancel(self);
     return FALSE;
+  }
+
+  if (!red_tim && CURRENT_CLIP_IS_VALID) {
+    redraw_timeline(mainw->current_file);
+    red_tim = TRUE;
+    return TRUE;
   }
 
   if (mainw->dsu_widget) return TRUE;
@@ -1390,7 +1402,7 @@ boolean lazy_startup_checks(void) {
       }
     }
     if (do_show_quota) {
-      run_diskspace_dialog(NULL);
+      main_thread_execute_rvoid(run_diskspace_dialog, 0, "v", NULL);
       return TRUE;
     }
   }

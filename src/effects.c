@@ -1016,12 +1016,9 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
   uint64_t new_rte;
-  g_print("RTExxx\n");
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
-
-  g_print("RTE\n");
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1261,12 +1258,18 @@ static boolean _swap_fg_bg_callback(void) {
 
   if (mainw->swapped_clip == -1) {
     // this is to avoid an annoying situation in VJ playback, where the cliplist position
-    // can keep getting reset each time we swap the fg and bg
+    // can keep changind each time we swap the fg and bg
+    // with a transition active, nxt/pre
+    // if the clips are being actioned in sequence, then swapping fg / bg breaks the sequence
+    // instead we would like to continue from whatever was the fg clip at the time we swapped
+    // when we swap the first time, we store fg clip, then this value is only reset when the trans.
+    // is deactivated, and prev/nst clip actioned.
     if (CURRENT_CLIP_IS_NORMAL)
       mainw->swapped_clip = mainw->current_file;
     else mainw->swapped_clip = mainw->pre_src_file;
   } else mainw->swapped_clip = -1;
 
+  mainw->new_blend_file = mainw->current_file;
   mainw->new_clip = blend_file;
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))

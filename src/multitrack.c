@@ -159,7 +159,7 @@ int mt_file_from_clip(lives_mt *mt, int clip) {
 
 
 LIVES_INLINE int mt_clip_from_file(lives_mt *mt, int file) {
-  register int i;
+  int i;
   for (i = 0; i < MAX_FILES; i++) {
     if (clips_to_files[i] == file) return i;
   }
@@ -882,7 +882,7 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
   int *carray = NULL;
   int nc = 0, rpts, ntracks;
 
-  register int i;
+  int i;
 
   in_tracks = weed_get_int_array_counted(ievent, WEED_LEAF_IN_TRACKS, &ntracks);
   if (ntracks == 0) return -1;
@@ -1091,7 +1091,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
   LiVESList *lmap;
   char **array;
   int rnc;
-  register int i;
+  int i;
 
   // ensure file layouts are updated
   upd_layout_maps(event_list);
@@ -1622,7 +1622,7 @@ void set_poly_tab(lives_mt * mt, uint32_t tab) {
 }
 
 
-static void select_block(lives_mt * mt) {
+static void _select_block(lives_mt * mt) {
   track_rect *block = mt->putative_block;
   int track;
   int filenum;
@@ -1674,6 +1674,16 @@ static void select_block(lives_mt * mt) {
   }
 
   mt->context_time = -1.;
+}
+
+
+static void select_block(lives_mt * mt) {
+  if (is_fg_thread()) _select_block(mt);
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    main_thread_execute_rvoid(_select_block, 0, "v", mt);
+    BG_THREADVAR(hook_hints) = 0;
+  }
 }
 
 
@@ -1912,7 +1922,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
   int nfilts = rte_get_numfilters();
   int nins;
 
-  register int i, j;
+  int i, j;
 
   if (mt->fx_list_scroll) lives_widget_destroy(mt->fx_list_scroll);
   mt->fx_list_scroll = lives_scrolled_window_new();
@@ -3565,7 +3575,7 @@ void remove_current_from_affected_layouts(lives_mt * mt) {
 
 
 void stored_event_list_free_all(boolean wiped) {
-  register int i;
+  int i;
 
   for (i = 0; i < MAX_FILES; i++) {
     if (mainw->files[i]) {
@@ -4718,8 +4728,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mt->play_menu);
 
   mt->playall = lives_standard_image_menu_item_new_with_label(_("_Play from Timeline Position"));
-  lives_widget_add_accelerator(mt->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                               LIVES_KEY_p, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
+  /* lives_widget_add_accelerator(mt->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group, */
+  /*                              LIVES_KEY_p, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
   lives_widget_set_sensitive(mt->playall, FALSE);
 
   lives_container_add(LIVES_CONTAINER(mt->play_menu), mt->playall);
@@ -5282,8 +5292,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->seldesel_menuitem = lives_standard_menu_item_new_with_label(_("Select/Deselect Block at Current Track/Time"));
   lives_container_add(LIVES_CONTAINER(mt->selection_menu), mt->seldesel_menuitem);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->seldesel_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(mt_selblock), (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->seldesel_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(mt_selblock), (livespointer)mt);
 
   lives_widget_add_accelerator(mt->seldesel_menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                                LIVES_KEY_Return, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
@@ -8760,6 +8770,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   if (mainw->frame_layer) weed_layer_unref(mainw->frame_layer);
   mainw->frame_layer = NULL;
+  reset_old_frame_layer();
 
   if (prefs->mt_enter_prompt && !mainw->stored_event_list && prefs->show_gui && !(mainw->recoverable_layout &&
       prefs->startup_interface == STARTUP_CE)) {
@@ -11224,7 +11235,7 @@ static void mouse_select_move(LiVESWidget * widget, LiVESXEventMotion * event, l
   int rel_x, rel_y, min_x;
   int offs_y_start, offs_y_end, xheight;
 
-  register int i;
+  int i;
 
   if (!LIVES_IS_INTERACTIVE) return;
 
@@ -11360,8 +11371,8 @@ void do_block_context(lives_mt * mt, LiVESXEventButton * event, track_rect * blo
   selblock = lives_standard_menu_item_new_with_label(_("_Select this Block"));
   lives_container_add(LIVES_CONTAINER(menu), selblock);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(selblock), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(selblock_cb), (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(selblock), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(selblock_cb), (livespointer)mt);
 
   if (block->ordered) { // TODO
     split_here = lives_standard_menu_item_new_with_label(_("_Split Block At Cursor"));
@@ -11511,7 +11522,7 @@ boolean on_track_release(LiVESWidget * eventbox, LiVESXEventButton * event, live
   int win_x, win_y;
   int old_track = mt->current_track;
 
-  register int i;
+  int i;
 
   if (!LIVES_IS_INTERACTIVE) return FALSE;
 
@@ -16560,7 +16571,7 @@ void on_del_node_clicked(LiVESWidget * button, livespointer user_data) {
 
   int num_params = num_in_params((weed_plant_t *)mt->current_rfx->source, FALSE, FALSE);
 
-  register int i;
+  int i;
 
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);

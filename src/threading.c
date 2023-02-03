@@ -432,7 +432,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_proc_thread_get_data(lives_proc_thread_t
 LIVES_GLOBAL_INLINE weed_plant_t *lives_proc_thread_steal_data(lives_proc_thread_t lpt) {
   if (lpt) {
     weed_plant_t *data = lives_proc_thread_get_data(lpt);
-    lives_proc_thread_set_plantptr_value(lpt, LIVES_LEAF_LPT_DATA, NULL);
+    lives_proc_thread_set_data(lpt, NULL);
     return data;
   }
   return NULL;
@@ -866,11 +866,14 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
         // make sure the proc_thread is not in the work queue
         if (lives_proc_thread_get_work(lpt)) {
           // try to remove from pool, but we may be too late
-          // however we also lock twork_list, and worker threads should five up is DESTROYING is set
+          // however we also lock twork_list, and worker threads should give up if DESTROYING is set
           lpt_remove_from_pool(lpt);
         }
 
         flush_cb_list(lpt);
+
+        // action any deffered updates
+        lives_proc_thread_trigger_hooks(lpt, LIVES_GUI_HOOK);
 
         if (weed_plant_has_leaf(lpt, LIVES_LEAF_CLOSURE)) break_me("free lpt with closure !");
         state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
@@ -1416,6 +1419,21 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_waiting(lives_proc_thread_t lpt
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_had_error(lives_proc_thread_t lpt) {
+  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_ERROR)));
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_errnum(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_ERRNUM, NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_proc_thread_get_errmsg(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_string_value(lpt, LIVES_LEAF_ERRMSG, NULL) : NULL;
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_signalled(lives_proc_thread_t lpt) {
   return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_SIGNALLED)));
 }
@@ -1495,6 +1513,24 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t self) {
   if (self) {
     lives_proc_thread_include_states(self, THRD_STATE_CANCELLED);
     lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
+  }
+  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_error(lives_proc_thread_t self, int errnum, const char *fmt, ...) {
+  if (self) {
+    weed_set_int_value(self, LIVES_LEAF_ERRNUM, errnum);
+    if (fmt && *fmt) {
+      char *errmsg;
+      va_list vargs;
+      va_start(vargs, fmt);
+      errmsg = lives_strdup_vprintf(fmt, vargs);
+      va_end(vargs);
+      weed_set_string_value(self, LIVES_LEAF_ERRMSG, errmsg);
+      lives_free(errmsg);
+    }
+    lives_proc_thread_include_states(self, THRD_STATE_ERROR);
   }
   return TRUE;
 }
@@ -1837,12 +1873,6 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
 
   state = lives_proc_thread_get_state(lpt);
 
-  // push any deferred GUI updates to fg thread
-  if (!is_fg_thread()) {
-    prepend_all_to_fg_deferral_stack();
-    fg_service_wake();
-  }
-
   // for idlefunc proc_threads - these will always finish in state unqueued / idling
   // unless idle_pause was also set (then they will end up as paused / idling, unless cancelled)
   //  if cancelled then idle pause threads will not pause but will act like normal idlefuncs
@@ -1879,6 +1909,23 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
 }
 
 
+// could separate - auto_requue -, maybe nor needed if we have a nxtlpt
+// auto_pause = pause on completion
+// - reequeue - do nxtlpt
+// want - q next -> ok
+// ret to start or finish
+//
+// if nxtlpt - queue it (def)
+// or run it (immed)
+
+// else - reloop, (auto_requeue)
+// pause (auto_pause), return (def)
+//
+// auto_retart - if nxtlpt is null, go back to olpt
+// nxt_immediate - run nxtlpt immediately, bo queue
+//
+// pause
+
 static void *proc_thread_worker_func(void *args) {
   // this is the function which worker threads run when executing a llives_proc_thread which
   // has been queued
@@ -1908,13 +1955,31 @@ static void *proc_thread_worker_func(void *args) {
 
       state = lives_proc_thread_get_state(lpt);
 
-      if ((state & (THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) break;
+      if ((state & (THRD_STATE_ERROR | THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) {
+        if (lpt != olpt) {
+          if (state & THRD_STATE_ERROR) {
+            char *errmsg = weed_get_string_value(lpt, LIVES_LEAF_ERRMSG, 0);
+            lives_proc_thread_error(olpt, lives_proc_thread_get_errnum(lpt),
+                                    "%s", errmsg);
+            lives_free(errmsg);
+          }
+          if ((state & (THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) {
+            lives_proc_thread_cancel(olpt);
+          }
+        }
+        break;
+      }
+
+      nxtlpt = NULL;
 
       if ((state & (THRD_OPT_AUTO_REQUEUE | THRD_OPT_AUTO_PAUSE)) != 0) {
         nxtlpt = weed_get_plantptr_value(lpt, LIVES_LEAF_FOLLOWUP, NULL);
+        if (lpt == olpt && !nxtlpt) nxtlpt = lpt;
+        if (lives_proc_thread_ref(nxtlpt) < 2) nxtlpt = NULL;
       }
 
       if (nxtlpt == lpt) {
+        lives_proc_thread_unref(nxtlpt);
         lives_proc_thread_include_states(lpt, THRD_STATE_IDLING);
         if (!lives_proc_thread_has_states(lpt, THRD_OPT_AUTO_PAUSE)) break;
       }
@@ -1929,11 +1994,17 @@ static void *proc_thread_worker_func(void *args) {
       }
       // another thread must call lives_proc_thread_request_resume()
       // but we can also be cancelled while paused
-      if ((state & (THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) break;
-      if (nxtlpt) lpt = nxtlpt;
+      if ((state & (THRD_STATE_ERROR | THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) break;
+      if (nxtlpt) {
+        if (lpt != olpt) lives_proc_thread_unref(lpt);
+        lpt = nxtlpt;
+      }
+      g_print("run nxt %p %p\n", olpt, lpt);
     }
 
-    if ((state & (THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) {
+    state = lives_proc_thread_get_state(lpt);
+
+    if ((state & (THRD_STATE_ERROR | THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) != 0) {
       nxtlpt = NULL;
       lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
       if (lpt != olpt) {
@@ -1941,17 +2012,17 @@ static void *proc_thread_worker_func(void *args) {
       }
     }
 
-    lpt = olpt;
-    lives_proc_thread_set_final_state(lpt);
+    lives_proc_thread_set_final_state(olpt);
 
     if (nxtlpt) {
       lives_proc_thread_set_data(nxtlpt, data);
       lives_proc_thread_queue(nxtlpt, 0);
-    } else lives_proc_thread_set_data(lpt, data);
+      if (nxtlpt != olpt) lives_proc_thread_unref(nxtlpt);
+    } else lives_proc_thread_set_data(olpt, data);
 
-    lives_proc_thread_unref(lpt);
+    lives_proc_thread_unref(olpt);
   }
-  return lpt;
+  return olpt;
 }
 
 
@@ -2537,7 +2608,6 @@ skip_over:
       lives_proc_thread_cancel(lpt);
     if (was_skipped)
       lives_proc_thread_set_final_state(lpt);
-    //lives_proc_thread_unref(lpt);
   }
 
   // clear all hook stacks for the thread (self hooks)
@@ -2677,6 +2747,7 @@ LIVES_GLOBAL_INLINE void lives_thread_free(lives_thread_t *thread) {
   if (thread) {
     thrd_work_t *work = (thrd_work_t *)thread->data;
     uint64_t flags = work->flags;
+    thread->data = NULL;
     lives_free(work);
     if (!(flags & LIVES_THRDFLAG_NOFREE_LIST))
       lives_list_free(thread);
@@ -2838,6 +2909,7 @@ uint64_t lives_thread_join(lives_thread_t *thread, void **retval) {
 
 LIVES_GLOBAL_INLINE uint64_t lives_thread_done(lives_thread_t *thrd) {
   thrd_work_t *task = (thrd_work_t *)thrd->data;
+  if (!task) return TRUE;
   return task->done;
 }
 

@@ -47,7 +47,10 @@ static boolean _start_playback(int play_type) {
   case 1:
     /// play selection, including play preview
     if (!mainw->multitrack) play_sel();
-    else multitrack_play_sel(NULL, mainw->multitrack);
+    else {
+      play_file();
+      //multitrack_play_sel(NULL, mainw->multitrack);
+    }
     break;
   case 2:
     /// play stream
@@ -131,11 +134,11 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   // BLOCKING playback
   // - block until playback stops
   lives_proc_thread_t lpt;
-  if (!is_fg_thread()) {
-    // if called by bg thread, thread itself becomes player, and will block until play finishes
-    mainw->player_proc = THREADVAR(proc_thread);
-    return _start_playback(type);
-  }
+  /* if (!is_fg_thread()) { */
+  /*   // if called by bg thread, thread itself becomes player, and will block until play finishes */
+  /*   mainw->player_proc = THREADVAR(proc_thread); */
+  /*   return _start_playback(type); */
+  /* } */
   mainw->player_proc = lpt = lives_proc_thread_create(0, _start_playback, -1, "i", type);
   // the main thread will block here, waiting for playback to end.
   // during this time, it will service only bg requests set via fg_service_call
@@ -151,6 +154,7 @@ void start_playback_async(int type) {
 }
 
 
+#if 0
 static void prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian) {
   if (!mainw->preview && cfile->achans > 0) {
     cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * (double)cfile->arate) * cfile->achans * (cfile->asampsize / 8);
@@ -169,7 +173,7 @@ static void prep_audio_player(frames_t audio_end, int arate, int asigned, int ae
     IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file));
   }
 }
-
+#endif
 
 static double fps_med = 0.;
 
@@ -558,9 +562,7 @@ void play_file(void) {
 
   int arate;
 
-  int asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
   int current_file = mainw->current_file;
-  int audio_end = 0;
 
   ____FUNC_ENTRY____(play_file, "", "");
 
@@ -572,7 +574,6 @@ void play_file(void) {
   mainw->noswitch = TRUE;
   mainw->cancelled = CANCEL_NONE;
 
-  asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
   current_file = mainw->current_file;
   if (mainw->pre_play_file == -1) mainw->pre_play_file = current_file;
 
@@ -691,11 +692,11 @@ void play_file(void) {
     cfile->async_delta = 0;
   }
 
-  if (!cfile->opening_audio && !mainw->loop) {
-    /** if we are opening audio or looping we just play to the end of audio,
-      otherwise...*/
-    audio_end = mainw->audio_end;
-  }
+  /* if (!cfile->opening_audio && !mainw->loop) { */
+  /*   /\** if we are opening audio or looping we just play to the end of audio, */
+  /*     otherwise...*\/ */
+  /*   audio_end = mainw->audio_end; */
+  /* } */
 
   if (prefs->stop_screensaver) {
     lives_disable_screensaver();
@@ -707,7 +708,7 @@ void play_file(void) {
 
   // setting this forces the main thread to block in a loop and only update
   // ths gui context on request (via update_gui in player.c)
-  set_ign_idlefuncs(TRUE);
+  set_gui_loop_tight(TRUE);
 
   arate = cfile->arate;
   mute = mainw->mute;
@@ -869,6 +870,8 @@ void play_file(void) {
     //////////// PLAYBACK START ////////////////
 
     do {
+      reset_old_frame_layer();
+
       mainw->cancelled = CANCEL_NONE;
       mainw->play_sequence++;
       mainw->fps_measure = 0;
@@ -1451,7 +1454,7 @@ void play_file(void) {
 
   // allow the main thread to exit from its blocking loop, it will resume normal operations
   lives_nanosleep_while_true(mainw->do_ctx_update);
-  set_ign_idlefuncs(FALSE);
+  set_gui_loop_tight(FALSE);
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;

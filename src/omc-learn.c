@@ -584,7 +584,7 @@ LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
   // remove elements after nelems
 
   char *retval = lives_strdup(string);
-  register int i;
+  int i;
   size_t slen = strlen(string);
 
   if (nelems < 0) return retval;
@@ -1692,7 +1692,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
 
   // neither string may end in a space
 
-  register int i;
+  int i;
 
   int match = 0;
   int stlen = MIN(strlen(string1), strlen(string2));
@@ -1766,7 +1766,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
 
 
 static int *omclearn_get_values(const char *string, int nfixed) {
-  register int i, j;
+  int i, j;
   size_t slen, tslen;
   int *retvals, count = 0, nvars;
 
@@ -2509,7 +2509,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   int fd;
   int new_midi_rcv_channel = prefs->midi_rcv_channel;
 
-  register int i, j;
+  int i, j;
 
 #ifdef OMC_MIDI_IMPL
   size_t blen;

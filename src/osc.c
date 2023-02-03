@@ -4322,7 +4322,7 @@ boolean lives_osc_cb_pgui_getchoice(void *context, int arglen, const void *vargs
     int nc = weed_leaf_num_elements(ptmpl, WEED_LEAF_CHOICES);
     if (cc < nc) {
       char **choices = weed_get_string_array(ptmpl, WEED_LEAF_CHOICES, NULL);
-      register int i;
+      int i;
       for (i = 0; i < nc; i++) {
         if (i == cc) {
           lives_free(retval);
@@ -6988,7 +6988,7 @@ static struct {
 
 int lives_osc_build_cont(lives_osc * o) {
   /* Create containers /video , /clip, /chain and /tag */
-  register int i;
+  int i;
   for (i = 0; osc_cont[i].name ; i++) {
     if (osc_cont[i].it == 0) {
       o->cqinfo.comment = osc_cont[i].comment;
@@ -7013,7 +7013,7 @@ int lives_osc_build_cont(lives_osc * o) {
       char comment[50];
       int n = osc_cont[i].it;
       int base = osc_cont[i].leave;
-      register int j;
+      int j;
 
       for (j = 0; j < n ; j++) {
         sprintf(name, "N%d", j);

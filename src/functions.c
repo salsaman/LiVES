@@ -406,25 +406,17 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
 
   case 2:
     switch (sig) {
-    case FUNCSIG_PLANTP_VOIDP: {
-      weed_plant_t *p0; void *p1;
-      DO_CALL(2, plantptr, voidptr);
-    } break;
-    case FUNCSIG_INT_INT64: {
-      int p0; int64_t p1;
-      DO_CALL(2, int, int64);
+    case FUNCSIG_INT_INT: {
+      int p0, p1;
+      DO_CALL(2, int, int);
     } break;
     case FUNCSIG_BOOL_INT: {
-      int p0; int64_t p1;
-      DO_CALL(2, boolean, int);
+      int p0, p1;
+      DO_CALL(2, int, int);
     } break;
     case FUNCSIG_INT_VOIDP: {
       int p0; void *p1;
       DO_CALL(2, int, voidptr);
-    } break;
-    case FUNCSIG_INT_PLANTP: {
-      int p0; weed_plant_t *p1;
-      DO_CALL(2, int, plantptr);
     } break;
     case FUNCSIG_STRING_INT: {
       char *p0 = NULL; int p1;
@@ -461,10 +453,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       DO_CALL(2, voidptr, string);
       if (p1) lives_free(p1);
     } break;
-    case FUNCSIG_PLANTP_BOOL: {
-      weed_plant_t *p0; int p1;
-      DO_CALL(2, plantptr, boolean);
-    } break;
     // undefined funcsig
     default: goto funcerr;
     }
@@ -489,29 +477,13 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       void *p0; double p1; int p2;
       DO_CALL(3, voidptr, double, int);
     } break;
-    case FUNCSIG_VOIDP_STRING_STRING: {
-      void *p0; char *p1 = NULL, *p2 = NULL;
-      DO_CALL(3, voidptr, string, string);
-      if (p1) lives_free(p1);
-      if (p2) lives_free(p2);
-    } break;
-    case FUNCSIG_VOIDP_STRING_INT: {
-      void *p0; char *p1 = NULL; int p2;
-      DO_CALL(3, voidptr, string, int);
-      if (p1) lives_free(p1);
-    } break;
-    case FUNCSIG_BOOL_BOOL_STRING: {
-      int p0, p1; char *p2 = NULL;
-      DO_CALL(3, boolean, boolean, string);
-      if (p2) lives_free(p2);
+    case FUNCSIG_VOIDP_DOUBLE_DOUBLE: {
+      void *p0; double p1, p2;
+      DO_CALL(3, voidptr, double, double);
     } break;
     case FUNCSIG_PLANTP_VOIDP_INT64: {
       weed_plant_t *p0; void *p1; int64_t p2;
       DO_CALL(3, plantptr, voidptr, int64);
-    } break;
-    case FUNCSIG_INT_VOIDP_INT64: {
-      int p0; void *p1; int64_t p2;
-      DO_CALL(3, int, voidptr, int64);
     } break;
     case FUNCSIG_INT_INT_BOOL: {
       int p0, p1, p2;
@@ -533,12 +505,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
 
   case 4:
     switch (sig) {
-    case FUNCSIG_STRING_STRING_VOIDP_INT: {
-      char *p0 = NULL, *p1 = NULL; void *p2; int p3;
-      DO_CALL(4, string, string, voidptr, int);
-      if (p0) lives_free(p0);
-      if (p1) lives_free(p1);
-    } break;
     case FUNCSIG_STRING_DOUBLE_INT_STRING: {
       char *p0 = NULL, *p3 = NULL; double p1; int p2;
       DO_CALL(4, string, double, int, string);
@@ -552,10 +518,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
     case FUNCSIG_VOIDP_INT_FUNCP_VOIDP: {
       void *p0, *p3; int p1; weed_funcptr_t p2;
       DO_CALL(4, voidptr, int, funcptr, voidptr);
-    } break;
-    case FUNCSIG_VOIDP_VOIDP_VOIDP_VOIDP: {
-      void *p0, *p1, *p2, *p3;
-      DO_CALL(4, voidptr, voidptr, voidptr, voidptr);
     } break;
     // undefined funcsig
     default: goto funcerr;
@@ -582,10 +544,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       void *p0, *p1; int p2, p3, p4;
       DO_CALL(5, voidptr, voidptr, boolean, boolean, int);
     } break;
-    case FUNCSIG_PLANTP_INT_INT_INT_INT: {
-      weed_plant_t *p0; int p1, p2, p3, p4;
-      DO_CALL(5, plantptr, int, int, int, int);
-    } break;
     /*   // undefined funcsig */
     default: goto funcerr;
     }
@@ -593,10 +551,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
 
   case 6:
     switch (sig) {
-    case FUNCSIG_PLANTP_INT_INT_INT_INT_INT: {
-      weed_plant_t *p0; int p1, p2, p3, p4, p5;
-      DO_CALL(6, plantptr, int, int, int, int, int);
-    } break;
     case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP: {
       char *p0 = NULL, *p1 = NULL, *p4 = NULL; void *p2, *p5; int p3;
       DO_CALL(6, string, string, voidptr, int, string, voidptr);
@@ -605,21 +559,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       if (p4) lives_free(p4);
     } break;
     // undefined funcsig
-    default: goto funcerr;
-    }
-    break;
-
-  case 8:
-    switch (sig) {
-    case FUNCSIG_PLANTP_INT_INT_INT_INT_INT_INT_INT: {
-      weed_plant_t *p0; int p1, p2, p3, p4, p5, p6, p7;
-      DO_CALL(8, plantptr, int, int, int, int, int, int, int);
-    } break;
-    case FUNCSIG_INT_DOUBLE_PLANTP_INT_INT_INT_INT_BOOL: {
-      int p0, p3, p4, p5, p6; double p1; weed_plant_t *p2; boolean p7;
-      DO_CALL(8, int, double, plantptr, int, int, int, int, boolean);
-    } break;
-    /*   // undefined funcsig */
     default: goto funcerr;
     }
     break;
@@ -690,7 +629,6 @@ funcerr:
 
 funcerr2:
 
-
   if (lives_proc_thread_get_cancel_requested(lpt))
     lives_proc_thread_cancel(lpt);
 
@@ -699,10 +637,10 @@ funcerr2:
     msg = lives_strdup_printf("Got error %d running function with type 0x%016lX (%lu)", err, sig, sig);
   }
 
-  //LIVES_FATAL(msg);
-  LIVES_ERROR(msg);
-  lives_free(msg);
-  lives_proc_thread_unref(lpt);
+  LIVES_FATAL(msg);
+  /* LIVES_ERROR(msg); */
+  /* lives_free(msg); */
+  /* lives_proc_thread_unref(lpt); */
   return FALSE;
 }
 
@@ -1483,7 +1421,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         lives_proc_thread_unref(lpt);
         if (closure->flags & HOOK_CB_BLOCK) closure->proc_thread = NULL;
         remove_from_hstack(hstack, list);
-        continue;
+        break;
       }
 
       closure->flags &= ~HOOK_STATUS_RUNNING;

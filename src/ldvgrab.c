@@ -109,7 +109,7 @@ s_cam *camready(void) {
 
   int n_ports;
 
-  register int i, j;
+  int i, j;
 
   cam->device = -1;
 
@@ -213,7 +213,7 @@ char *find_free_camfile(int format) {
   char *filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
   char *fname, *tmp = NULL, *tmp2, *tmp3;
 
-  register int i;
+  int i;
 
   if (format == CAM_FORMAT_HDV) {
     for (i = 1; i < 10000; i++) {

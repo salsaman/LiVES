@@ -344,6 +344,8 @@ void *lives_thread_data_create(void *pidx);
 // thread will pause on completion, can then be resumed and it will run again.
 #define THRD_OPT_AUTO_PAUSE	(1ull << 53)
 
+#define THRD_OPT_NXT_IMMEDIATE (THRD_OPT_AUTO_PAUSE | THRD_OPT_AUTO_JOIN)
+
 // can be set to prevent state change hooks from being triggered
 #define THRD_BLOCK_HOOKS	(1ull << 60)
 
@@ -403,6 +405,9 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_FOLLOWUP "followup"  // proc_thread to be run after this one (for AUTO_REQUEUE)
 #define LIVES_LEAF_LPT_DATA "lpt_data" // scratch data area for proc_threads
 
+#define LIVES_LEAF_ERRNUM "errnum"
+#define LIVES_LEAF_ERRMSG "errmsg"
+
 #define LIVES_THRDATTR_NONE			0
 
 // worker flagbits (can be set when queueing)
@@ -423,6 +428,9 @@ uint64_t get_worker_status(uint64_t tid);
 // after completion, thread will pause, can be resumed
 // when combined with auto requeue, the thread will pause  until joined
 #define LIVES_THRDATTR_AUTO_PAUSE   		(1ull << 18)
+
+
+#define LIVES_THRDATTR_RUN_NXT_IMMEDIATE (LIVES_THRDATTR_AUTO_REQUEUE | LIVES_THRDATTR_AUTO_PAUSE)
 
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 32)
@@ -577,38 +585,59 @@ weed_plant_t *lives_proc_thread_steal_data(lives_proc_thread_t);
 #define lives_proc_thread_make_static(lpt, name)	\
   weed_leaf_set_flags(lpt, name, WEED_FLAG_UNDELETABLE)
 
-#define lives_proc_thread_set_int_value(lpt, name, val)			\
-  weed_set_int_value(lives_proc_thread_get_data(lpt), name, val)
+#define SET_SELF_VALUE(type, name, val)		\
+  weed_set_##type##_value(lives_proc_thread_get_data(self), name, val)
+#define SET_SELF_ARRAY(type, name, nvals, valsptr)				\
+  weed_set_##type##_array(lives_proc_thread_get_data(self), name, nvals, valsptr)
+#define GET_SELF_VALUE(type, name)		\
+  lives_proc_thread_get_##type##_value(self, name)
+#define GET_SELF_ARRAY(type, name, nvals)				\
+  lives_proc_thread_get_##type##_array(self, name, nvals)
+
+#define SET_LPT_VALUE(lpt, type, name, val)				\
+  lives_proc_thread_make_static(lpt, name);				\
+  weed_set_##type##_value(lives_proc_thread_get_data(lpt), name, val)
+#define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr)			\
+  lives_proc_thread_make_static(lpt, name);				\
+  weed_set_##type##_array(lives_proc_thread_get_data(lpt), name, nvals, valsptr))
+#define GET_LPT_VALUE(lpt, type, name)			\
+  lives_proc_thread_get_##type##_value(lpt, name)
+#define GET_LPT_ARRAY(lpt, type, name, nvals)			\
+  lives_proc_thread_get_##type##_array(lpt, name, nvals)
+
 #define lives_proc_thread_get_int_value(lpt, name)			\
   (weed_get_int_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_boolean_value(lpt, name, val)		\
-  weed_set_boolean_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_boolean_value(lpt, name)			\
   (weed_get_boolean_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_double_value(lpt, name, val)		\
-  weed_set_double_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_double_value(lpt, name)			\
   (weed_get_double_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_string_value(lpt, name, val)		\
-  weed_set_string_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_string_value(lpt, name)			\
   (weed_get_string_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_int64_value(lpt, name, val)		\
-  weed_set_int64_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_int64_value(lpt, name)			\
   (weed_get_int64_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_funcptr_value(lpt, name, val)		\
-  weed_set_funcptr_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_funcptr_value(lpt, name)			\
   (weed_get_funcptr_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_voidptr_value(lpt, name, val)		\
-  weed_set_voidptr_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_voidptr_value(lpt, name)			\
   (weed_get_voidptr_value(lives_proc_thread_get_data(lpt), name, NULL))
-#define lives_proc_thread_set_plantptr_value(lpt, name, val)		\
-  weed_set_plantptr_value(lives_proc_thread_get_data(lpt), name, val)
 #define lives_proc_thread_get_plantptr_value(lpt, name)			\
   (weed_get_plantptr_value(lives_proc_thread_get_data(lpt), name, NULL))
+
+#define lives_proc_thread_get_int_array(lpt, name, nvals)			\
+  (weed_get_int_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_boolean_array(lpt, name, nvals)			\
+  (weed_get_boolean_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_double_array(lpt, name, nvals)			\
+  (weed_get_double_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_string_array(lpt, name, nvals)			\
+  (weed_get_string_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_int64_array(lpt, name, nvals)			\
+  (weed_get_int64_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_funcptr_array(lpt, name, nvals)			\
+  (weed_get_funcptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_voidptr_array(lpt, name, nvals)			\
+  (weed_get_voidptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+#define lives_proc_thread_get_plantptr_array(lpt, name, nvals)			\
+  (weed_get_plantptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
 
 // test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);
@@ -624,6 +653,13 @@ boolean lives_proc_thread_is_paused(lives_proc_thread_t);
 boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_idle_paused(lives_proc_thread_t);
 boolean lives_proc_thread_was_cancelled(lives_proc_thread_t);
+
+// error handling
+boolean lives_proc_thread_error(lives_proc_thread_t self, int errnum, const char *fmt, ...);
+boolean lives_proc_thread_had_error(lives_proc_thread_t);
+int lives_proc_thread_get_errnum(lives_proc_thread_t);
+char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
+
 // test if lpt is in a hook stack
 boolean lives_proc_thread_is_stacked(lives_proc_thread_t);
 boolean lives_proc_thread_is_invalid(lives_proc_thread_t);

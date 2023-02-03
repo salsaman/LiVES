@@ -1718,7 +1718,7 @@ void reset_clipmenu(void) {
 
   if (mainw->current_file > 0 && cfile && cfile->menuentry) {
 #ifdef GTK_RADIO_MENU_BUG
-    register int i;
+    int i;
     for (i = 1; i < MAX_FILES; i++) {
       if (i != mainw->current_file && mainw->files[i] && mainw->files[i]->menuentry) {
         lives_signal_handler_block(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);

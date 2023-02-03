@@ -36,6 +36,8 @@
 #include "ldvgrab.h"
 #endif
 
+static void _resize_play_window(void);
+
 static boolean pb_added = FALSE;
 
 LIVES_GLOBAL_INLINE int get_vspace(void) {
@@ -734,7 +736,7 @@ void create_LiVES(void) {
     char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
     get_utf8_pref(prefname, buff, PATH_MAX * 2);
     lives_free(prefname);
-    for (register int j = 0; buff[j]; j++) {
+    for (int j = 0; buff[j]; j++) {
       if (buff[j] == '\n') {
         buff[j] = 0;
         break;
@@ -4178,7 +4180,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 }
 
 
-void make_play_window(void) {
+static void _make_play_window(void) {
   //  separate window
   pb_added = FALSE;
 
@@ -4217,7 +4219,7 @@ void make_play_window(void) {
     if (!(mainw->fs && LIVES_IS_PLAYING && mainw->vpp)) {
       lives_widget_show_all(mainw->play_window);
     }
-    resize_play_window();
+    _resize_play_window();
   }
 
   if (!mainw->play_window) return;
@@ -4246,9 +4248,9 @@ void make_play_window(void) {
       lives_widget_show_all(mainw->preview_box);
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
     }
-    THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
     load_preview_image(FALSE);
-    THREADVAR(hook_hints) = 0;
+    BG_THREADVAR(hook_hints) = 0;
   }
 
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide Play Window"));
@@ -4266,7 +4268,14 @@ void make_play_window(void) {
   //lives_grab_add(mainw->play_window);
 }
 
-//void make_play_window(void) {main_thread_execute_void(_make_play_window, 0);}
+void make_play_window(void) {
+  if (is_fg_thread()) _make_play_window();
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    main_thread_execute_void(_make_play_window, 0);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+}
 
 
 LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
@@ -4303,7 +4312,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 
 #define TEST_CE_THUMBS 0
 
-void resize_play_window(void) {
+static void _resize_play_window(void) {
   int opwx, opwy, pmonitor = prefs->play_monitor;
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
@@ -4705,9 +4714,17 @@ void resize_play_window(void) {
   clear_widget_bg(mainw->play_image, mainw->play_surface);
 }
 
+void resize_play_window(void) {
+  if (is_fg_thread()) _resize_play_window();
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    main_thread_execute_void(_resize_play_window, 0);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+}
 
 
-void kill_play_window(void) {
+static void _kill_play_window(void) {
   // plug our player back into internal window
 
   if (mainw->ce_thumbs) {
@@ -4741,8 +4758,14 @@ void kill_play_window(void) {
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
 }
 
-
-//void kill_play_window(void) {main_thread_execute_void(_kill_play_window, 0);}
+void kill_play_window(void) {
+  if (is_fg_thread()) _kill_play_window();
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    main_thread_execute_void(_kill_play_window, 0);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+}
 
 
 #define ASPECT_DIFF_LMT 0.01625f  // (fabs) ratio differences in aspect ratios within this limit considered irrelevant

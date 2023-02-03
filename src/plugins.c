@@ -1246,7 +1246,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
 
 void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
-  register int i;
+  int i;
 
   if (vpp) {
     if (vpp == mainw->vpp) {
@@ -1292,7 +1292,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 
 
 const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx) {
-  register int i = 0;
+  int i = 0;
   while (pparams[i]) {
     if (WEED_PLANT_IS_PARAMETER(pparams[i])) {
       if (--idx < 0) return pparams[i];
@@ -1304,7 +1304,7 @@ const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx) {
 
 
 const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx) {
-  register int i = 0;
+  int i = 0;
   while (pparams[i]) {
     if (WEED_PLANT_IS_CHANNEL(pparams[i])) {
       if (--idx < 0) return pparams[i];
@@ -1541,12 +1541,12 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (future_prefs->vpp_argv) {
     vpp->extra_argc = future_prefs->vpp_argc;
     vpp->extra_argv = (char **)lives_calloc((vpp->extra_argc + 1), (sizeof(char *)));
-    for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(future_prefs->vpp_argv[i]);
+    for (int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(future_prefs->vpp_argv[i]);
   } else {
     if (!in_use && mainw->vpp && !(lives_strcmp(name, mainw->vpp->soname))) {
       vpp->extra_argc = mainw->vpp->extra_argc;
       vpp->extra_argv = (char **)lives_calloc((mainw->vpp->extra_argc + 1), (sizeof(char *)));
-      for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(mainw->vpp->extra_argv[i]);
+      for (int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(mainw->vpp->extra_argv[i]);
     } else {
       vpp->extra_argc = 0;
       vpp->extra_argv = (char **)lives_malloc(sizeof(char *));
@@ -1596,7 +1596,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   // create vpp->play_params
   if (vpp->play_paramtmpls) {
-    register int i;
+    int i;
     weed_plant_t *ptmpl;
     for (i = 0; (ptmpl = (weed_plant_t *)vpp->play_paramtmpls[i]); i++) {
       vpp->play_params = (weed_plant_t **)lives_realloc(vpp->play_params, (i + 2) * sizeof(weed_plant_t *));
@@ -2259,7 +2259,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
   LiVESList *list = encoders, *listnext;
   int caps;
 
-  register int i;
+  int i;
 
   char *blacklist[] = {
     NULL,

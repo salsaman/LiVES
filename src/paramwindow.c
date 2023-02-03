@@ -471,7 +471,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
   int def_height = 0, max_height, height_step;
   int wopw = widget_opts.packing_width;
 
-  register int i;
+  int i;
 
   if (chk_params) {
     if (add_fps) return TRUE;
@@ -3432,7 +3432,7 @@ char **param_marshall_to_argv(lives_rfx_t *rfx) {
 
   char *tmp;
 
-  register int i;
+  int i;
 
   for (i = 0; i < rfx->num_params; i++) {
     switch (rfx->params[i].type) {

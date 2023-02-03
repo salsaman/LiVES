@@ -571,7 +571,7 @@ void remove_end_blank_frames(weed_event_list_t *event_list, boolean remove_filte
 
 weed_timecode_t get_next_paramchange(void **pchange_next, weed_timecode_t end_tc) {
   weed_timecode_t min_tc = end_tc;
-  register int i = 0;
+  int i = 0;
   if (!pchange_next) return end_tc;
   for (; pchange_next[i]; i++) if (get_event_timecode((weed_plant_t *)pchange_next[i]) < min_tc)
       min_tc = get_event_timecode((weed_plant_t *)pchange_next[i]);
@@ -581,7 +581,7 @@ weed_timecode_t get_next_paramchange(void **pchange_next, weed_timecode_t end_tc
 
 weed_timecode_t get_prev_paramchange(void **pchange_prev, weed_timecode_t start_tc) {
   weed_timecode_t min_tc = start_tc;
-  register int i = 0;
+  int i = 0;
   if (!pchange_prev) return start_tc;
   for (; pchange_prev[i]; i++) if (get_event_timecode((weed_plant_t *)pchange_prev[i]) < min_tc)
       min_tc = get_event_timecode((weed_plant_t *)pchange_prev[i]);
@@ -941,7 +941,7 @@ weed_event_t **get_init_events_before(weed_event_t *event, weed_event_t *init_ev
   // find previous FILTER_MAP event, and append or delete new init_event
   weed_event_t **init_events = NULL, **new_init_events;
   int error, num_init_events = 0;
-  register int i, j = 0;
+  int i, j = 0;
 
   while (event) {
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
@@ -1728,7 +1728,7 @@ void rescale_param_changes(weed_event_list_t *event_list, weed_event_t *init_eve
 
 
 static boolean is_in_hints(weed_event_t *event, void **hints) {
-  register int i;
+  int i;
   if (!hints) return FALSE;
   for (i = 0; hints[i]; i++) {
     if (hints[i] == event) return TRUE;
@@ -5059,8 +5059,6 @@ boolean render_to_clip(boolean new_clip) {
 
   prefs->pb_quality = PB_QUALITY_HIGH;
 
-  //set_ign_idlefuncs(TRUE);
-
   if (new_clip) {
     if (prefs->render_prompt) {
       //set file details
@@ -5128,7 +5126,6 @@ boolean render_to_clip(boolean new_clip) {
         lives_freep((void **)&resaudw);
         prefs->pb_quality = pbq;
         prefs->enc_letterbox = enc_lb;
-        //set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     } else {
@@ -5159,7 +5156,6 @@ boolean render_to_clip(boolean new_clip) {
       lives_free(clipname);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
-      //set_ign_idlefuncs(FALSE);
       return FALSE; // show dialog again
     }
 
@@ -5226,7 +5222,6 @@ boolean render_to_clip(boolean new_clip) {
       if (THREADVAR(com_failed)) {
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
-        //set_ign_idlefuncs(FALSE);
         return FALSE;
       }
     } else {
@@ -5270,7 +5265,6 @@ boolean render_to_clip(boolean new_clip) {
         close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
-      //set_ign_idlefuncs(FALSE);
       return FALSE;
     } else {
       lives_contract_t *contract;
@@ -5324,7 +5318,6 @@ boolean render_to_clip(boolean new_clip) {
         if (!mainw->multitrack) close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
-        //set_ign_idlefuncs(FALSE);
         return FALSE;
       }
 
@@ -5400,7 +5393,6 @@ boolean render_to_clip(boolean new_clip) {
   if (mainw->multitrack && !rendaud && !mainw->multitrack->opts.render_vidp) {
     prefs->enc_letterbox = enc_lb;
     prefs->pb_quality = pbq;
-    //set_ign_idlefuncs(FALSE);
     return FALSE;
   }
 
@@ -5552,7 +5544,6 @@ boolean render_to_clip(boolean new_clip) {
           } else pthread_mutex_unlock(&cfile->frame_index_mutex);
           prefs->enc_letterbox = enc_lb;
           prefs->pb_quality = pbq;
-          //set_ign_idlefuncs(FALSE);
           return FALSE; /// will reshow the dialog
         }
 
@@ -5595,7 +5586,6 @@ rtc_done:
   mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
   prefs->pb_quality = pbq;
   prefs->enc_letterbox = enc_lb;
-  //set_ign_idlefuncs(FALSE);
   return retval;
 }
 
@@ -5821,7 +5811,6 @@ static boolean _deal_with_render_choice(void) {
   }
 
   mainw->no_interp = TRUE;
-  //set_ign_idlefuncs(TRUE);
   do {
     prefs->event_window_show_frame_events = TRUE;
     if (render_choice == RENDER_CHOICE_NONE || render_choice == RENDER_CHOICE_PREVIEW)
@@ -5888,13 +5877,9 @@ static boolean _deal_with_render_choice(void) {
         info = NULL;
       }
 
-      //set_ign_idlefuncs(FALSE);
-
       if (!render_to_clip(TRUE) || render_choice == RENDER_CHOICE_TRANSCODE) {
-        //set_ign_idlefuncs(TRUE);
         render_choice = RENDER_CHOICE_PREVIEW;
       } else {
-        //set_ign_idlefuncs(TRUE);
         close_scrap_file(TRUE);
         close_ascrap_file(TRUE);
         prefs->mt_def_width = dw;
@@ -5986,7 +5971,6 @@ static boolean _deal_with_render_choice(void) {
     }
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
-  //set_ign_idlefuncs(FALSE);
   mainw->no_interp = FALSE;
 
   if (info) {

@@ -1246,7 +1246,7 @@ static void on_init_aplayer_toggled(LiVESToggleButton * tbutton, livespointer us
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
-  LiVESWidget *dialog, *dialog_vbox, *radiobutton2 = NULL, *radiobutton3, *label;
+  LiVESWidget *dialog, *dialog_vbox, *radiobutton3, *label;
   LiVESWidget *okbutton, *cancelbutton;
   LiVESWidget *hbox, *layout;
 

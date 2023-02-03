@@ -1088,9 +1088,9 @@ typedef struct {
   char *def_fontstring; ///< preview of capable->def_fontstring
 } _future_prefs;
 
-_prefs *prefs;
-_future_prefs *future_prefs;
-_prefsw *prefsw;
+extern _prefs *prefs;
+extern _future_prefs *future_prefs;
+extern _prefsw *prefsw;
 
 void set_acodec_list_from_allowed(_prefsw *, render_details *);
 void  rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data);

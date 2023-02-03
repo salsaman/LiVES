@@ -3302,7 +3302,7 @@ void after_vpp_changed(LiVESWidget * vpp_combo, livespointer advbutton) {
   lives_snprintf(future_prefs->vpp_name, 64, "%s", newvpp);
 
   if (future_prefs->vpp_argv) {
-    register int i;
+    int i;
     for (i = 0; future_prefs->vpp_argv[i]; lives_free(future_prefs->vpp_argv[i++]));
     lives_free(future_prefs->vpp_argv);
     future_prefs->vpp_argv = NULL;
@@ -7857,7 +7857,7 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw * prefsw) {
 
 void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *saved_dialog;
-  register int i;
+  int i;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_process_updates(prefsw->prefs_dialog);

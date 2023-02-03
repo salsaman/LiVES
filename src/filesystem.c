@@ -877,7 +877,6 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   lives_proc_thread_t self = THREADVAR(proc_thread);
   int fd = fbuff->fd;
   off_t fsize, bufsize = smedbytes, res;
-  boolean *cntrl;
   boolean retval = TRUE;
 
   if (lives_proc_thread_get_cancel_requested(self)) {
@@ -1121,7 +1120,7 @@ ssize_t lives_close_buffered(int fd) {
   if (fbuff->buffer) {
 #ifdef TEST_MMAP
     if (fbuff->flags & FB_FLAG_MMAP)
-      munmap(fbuff->buffer, fsize);
+      munmap(fbuff->buffer, fbuff->bytes);
     else {
 #endif
       lives_free(fbuff->buffer);

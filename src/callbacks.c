@@ -9856,7 +9856,8 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     //resize(1);
 
     // play the clip - should block this thread until pb finishes
-    start_playback(1);
+    if (mainw->multitrack) start_playback(2);
+    else start_playback(1);
 
     if (current_file != mainw->current_file) {
       if (mainw->is_rendering) {

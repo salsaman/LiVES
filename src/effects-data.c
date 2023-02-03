@@ -414,7 +414,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 void pconx_remap_mode(int key, int omode, int nmode) {
   lives_pconnect_t *pconx = mainw->pconx;
 
-  register int i, j, totcons;
+  int i, j, totcons;
 
   while (pconx) {
     if (pconx->okey == key && pconx->omode == omode) {
@@ -1681,7 +1681,7 @@ static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
 
   int totcons = 0;
 
-  register int i, j = 0;
+  int i, j = 0;
 
   while (scconx) {
     dcconx = cconx_new(scconx->okey, scconx->omode);
@@ -1753,7 +1753,7 @@ char *cconx_list(int okey, int omode, int ocnum) {
 void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
   lives_cconnect_t *cconx = mainw->cconx, *cconx_next, *cconx_prev = NULL;
 
-  register int i, j = 0, k;
+  int i, j = 0, k;
 
   int totcons = 0, maxcons = 0;
 
@@ -1834,7 +1834,7 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 void cconx_remap_mode(int key, int omode, int nmode) {
   lives_cconnect_t *cconx = mainw->cconx;
 
-  register int i, j, totcons;
+  int i, j, totcons;
 
   while (cconx) {
     if (cconx->okey == key && cconx->omode == omode) {
@@ -1885,7 +1885,7 @@ static int cconx_get_numcons(lives_conx_w * conxwp, int cnum) {
   // get displayed number
   int totcons = 0;
 
-  register int j;
+  int j;
 
   if (cnum != FX_DATA_WILDCARD) return conxwp->dispc[cnum];
 
@@ -2393,7 +2393,7 @@ static void disconbutton_clicked(LiVESButton * button, livespointer user_data) {
   int totparams, totchans;
   int pidx, pidx_last, cidx, cidx_last;
 
-  register int i;
+  int i;
 
   totparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -2963,7 +2963,7 @@ static void cadd_clicked(LiVESWidget * button, livespointer user_data) {
   int totparams, totchans;
   int ours = -1, cidx;
 
-  register int i;
+  int i;
 
   totparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -3084,7 +3084,7 @@ static void cdel_clicked(LiVESWidget * button, livespointer user_data) {
   int cidx_next;
 #endif
 
-  register int i;
+  int i;
 
   totparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);

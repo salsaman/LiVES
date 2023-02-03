@@ -177,12 +177,12 @@ static char *rewrap_text(char *text) {
   char *jtext, *tmp;
 #ifdef REFLOW_TEXT
   char *first, *second;
-  register int j;
+  int j;
 #endif
   size_t ll;
   boolean needs_nl = FALSE;
   int numlines, maxline = -1;
-  register int i;
+  int i;
 
   if (!text || !(*text)) return NULL;
 
@@ -530,7 +530,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
 
 char **get_font_list(void) {
-  register int i;
+  int i;
   char **font_list = NULL;
 #ifdef GUI_GTK
   PangoContext *ctx;

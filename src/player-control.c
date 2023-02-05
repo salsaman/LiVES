@@ -665,26 +665,10 @@ void play_file(void) {
   }
 
   if (cfile->achans > 0) {
-    /* if (mainw->event_list && */
-    /*     !(mainw->preview && mainw->is_rendering) && */
-    /*     !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering)) { */
-    /// play performance data
-    /* if (event_list_get_end_secs(mainw->event_list) > cfile->frames */
-    /*     / cfile->fps && !mainw->playing_sel) { */
-    /*   mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) */
-    /*                      * cfile->arate / cfile->arps; */
-    /* } */
-    //}
-
-    /* if (mainw->audio_end == 0) { */
-    /*   // values in FRAMES */
-    /*   mainw->audio_start = calc_time_from_frame(mainw->current_file, */
-    /*                        mainw->play_start) * cfile->fps + 1.; */
-    /*   mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.; */
-    /*   if (!mainw->playing_sel) { */
-    /*     mainw->audio_end = 0; */
-    /*   } */
-    /* } */
+    mainw->audio_start = calc_time_from_frame(mainw->current_file,
+                         mainw->play_start) * cfile->fps + 1.;
+    mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
+    if (!mainw->playing_sel) mainw->audio_end = 0;
 
     cfile->aseek_pos = (off_t)((double)(mainw->audio_start - 1.)
                                * cfile->fps * (double)cfile->arate)
@@ -692,15 +676,11 @@ void play_file(void) {
     cfile->async_delta = 0;
   }
 
-  /* if (!cfile->opening_audio && !mainw->loop) { */
-  /*   /\** if we are opening audio or looping we just play to the end of audio, */
-  /*     otherwise...*\/ */
-  /*   audio_end = mainw->audio_end; */
-  /* } */
-
   if (prefs->stop_screensaver) {
     lives_disable_screensaver();
   }
+
+  mainw->playing_file = mainw->current_file;
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);
@@ -742,8 +722,6 @@ void play_file(void) {
     track_decoder_free(1, mainw->blend_file);
     mainw->blend_file = -1;
   }
-
-  mainw->playing_file = mainw->current_file;
 
   if (mainw->record) {
     if (mainw->event_list) event_list_free(mainw->event_list);

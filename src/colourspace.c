@@ -14224,6 +14224,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
   if (!pixel_data || !nplanes) return;
+  lives_free(pixel_data);
 
   if (weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE)
     return;
@@ -14271,13 +14272,15 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
         if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
           nplanes = 1;
         }
+        pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
         for (int i = 0; i < nplanes; i++) {
           if (pixel_data[i]) lives_free(pixel_data[i]);
         }
+        lives_free(pixel_data);
       }
     }
-    lives_free(pixel_data);
   }
+
   weed_layer_nullify_pixel_data(layer);
 }
 

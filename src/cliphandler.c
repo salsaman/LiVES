@@ -2693,28 +2693,32 @@ void switch_clip(int type, int newclip, boolean force) {
                                              && mainw->blend_file != mainw->playing_file))) {
     if (mainw->num_tr_applied < 1 || newclip == mainw->blend_file) return;
 
-    // switch bg clip
-    if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
-        && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-      if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
-      weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
-      if (inst) {
-        if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-          int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
-          rte_key_on_off(key + 1, FALSE);
+    if (LIVES_IS_PLAYING) {
+      mainw->new_blend_file = newclip;
+    } else {
+      // switch bg clip
+      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+          && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+        if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
+        weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
+        if (inst) {
+          if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
+            int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+            rte_key_on_off(key + 1, FALSE);
+          }
         }
+        //chill_decoder_plugin(mainw->blend_file);
       }
-      //chill_decoder_plugin(mainw->blend_file);
-    }
 
-    track_decoder_free(1, mainw->blend_file);
+      track_decoder_free(1, mainw->blend_file);
 
-    mainw->blend_file = newclip;
-    mainw->whentostop = NEVER_STOP;
-    if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
-      ce_thumbs_highlight_current_clip();
+      mainw->blend_file = newclip;
+      mainw->whentostop = NEVER_STOP;
+      if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
+        ce_thumbs_highlight_current_clip();
+      }
+      mainw->blend_palette = WEED_PALETTE_END;
     }
-    mainw->blend_palette = WEED_PALETTE_END;
     return;
   }
 

@@ -293,7 +293,7 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
   const lives_funcdef_t *funcdef;
 #endif
 
-  if (lives_proc_thread_ref(lpt) <= 0 || !lpt) {
+  if (!lpt || lives_proc_thread_ref(lpt) < 2) {
     LIVES_CRITICAL("call_funcsig was supplied a NULL / invalid proc_thread");
     return FALSE;
   }
@@ -823,7 +823,7 @@ lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt,
     uint64_t flags, int hook_type) {
   // we will adda ref to lpt, then when the closure is freed (which may be deferred)
   // we will remove this ref
-  if (lpt && lives_proc_thread_ref(lpt) > 0) {
+  if (lpt && lives_proc_thread_ref(lpt) > 1) {
     lives_closure_t *closure  = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
     closure->fdef = lives_proc_thread_make_funcdef(lpt);
     ((lives_funcdef_t *)closure->fdef)->category
@@ -846,13 +846,19 @@ LIVES_GLOBAL_INLINE lives_closure_t *lives_proc_thread_get_closure(lives_proc_th
 
 static void _remove_ext_cb(lives_proc_thread_t lpt,
                            lives_closure_t *cl) {
-  LiVESList *xlist = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL), *list;
-  if (xlist)
-    for (list = xlist; list; list = list->next)
-      if (cl == (lives_closure_t *)list->data) {
-        weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, lives_list_remove_node(xlist, list, FALSE));
-        break;
-      }
+  LiVESList *xlist, *list;
+  pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+  if (state_mutex) {
+    pthread_mutex_lock(state_mutex);
+    xlist = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL), *list;
+    if (xlist)
+      for (list = xlist; list; list = list->next)
+        if (cl == (lives_closure_t *)list->data) {
+          weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, lives_list_remove_node(xlist, list, FALSE));
+          break;
+        }
+    pthread_mutex_unlock(state_mutex);
+  }
 }
 
 
@@ -860,7 +866,7 @@ static void remove_ext_cb(lives_closure_t *cl) {
   // when freeing a closure, remove the pointer to it from the adder
   if (cl) {
     lives_proc_thread_t lpt = cl->adder;
-    if (lpt && lives_proc_thread_ref(lpt) > 0) {
+    if (lpt && lives_proc_thread_ref(lpt) > 1) {
       _remove_ext_cb(lpt, cl);
       lives_proc_thread_unref(lpt);
     }
@@ -872,7 +878,7 @@ LIVES_GLOBAL_INLINE void lives_closure_free(lives_closure_t *closure) {
   if (closure) {
     lives_proc_thread_t lpt = closure->proc_thread;
     closure->proc_thread = NULL;
-    if (lpt && lives_proc_thread_ref(lpt) > 0) {
+    if (lpt && lives_proc_thread_ref(lpt) > 1) {
       if (weed_plant_has_leaf(lpt, LIVES_LEAF_CLOSURE))
         weed_leaf_delete(lpt, LIVES_LEAF_CLOSURE);
       lives_proc_thread_unref(lpt);
@@ -946,13 +952,17 @@ static boolean fn_data_replace(lives_proc_thread_t dst, lives_proc_thread_t src)
 
 static void add_to_cb_list(lives_proc_thread_t self, lives_closure_t *closure) {
   // when adding a hook cb to another hook stack, keep a pointert to it
-  LiVESList *ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
-  weed_set_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, lives_list_prepend(ext_cbs, (void *)closure));
+  pthread_mutex_t *state_mutex = weed_get_voidptr_value(self, LIVES_LEAF_STATE_MUTEX, NULL);
+  if (state_mutex && !pthread_mutex_lock(state_mutex)) {
+    LiVESList *ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
+    weed_set_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, lives_list_prepend(ext_cbs, (void *)closure));
+    pthread_mutex_unlock(state_mutex);
+  }
 }
 
 
 void flush_cb_list(lives_proc_thread_t self) {
-  // when freeing a proc_threead, remove all added hook cbs from other proc_threads / thread stacks
+  // when freeing a proc_thread, remove all added hook cbs from other proc_threads / thread stacks
   LiVESList *xlist = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL), *list;
   if (xlist) {
     for (list = xlist; list; list = list->next) {
@@ -973,7 +983,7 @@ void remove_from_hstack(lives_hook_stack_t *hstack, LiVESList *list) {
   // remove list from htack, free the closure (which will unref the proc_thread in it)
   lives_closure_t *closure = (lives_closure_t *)list->data;
   lives_proc_thread_t lpt = closure->proc_thread;
-  if (lpt && lives_proc_thread_ref(lpt) > 0) {
+  if (lpt && lives_proc_thread_ref(lpt) > 1) {
     weed_set_voidptr_value(lpt, LIVES_LEAF_CLOSURE, NULL);
     lives_proc_thread_unref(lpt);
   }
@@ -1346,12 +1356,13 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!(closure->flags & HOOK_STATUS_ACTIONED)) continue;
 
       lpt = closure->proc_thread;
-      if (!lpt || lives_proc_thread_ref(closure->proc_thread) <= 0) continue;
+      if (!lpt || lives_proc_thread_ref(closure->proc_thread) < 2) continue;
 
       if ((closure->flags & HOOK_OPT_ONESHOT) && lives_proc_thread_was_cancelled(lpt)) {
         closure->flags |= HOOK_STATUS_REMOVE;
         lives_proc_thread_set_state(lpt, (THRD_STATE_INVALID | THRD_STATE_CANCELLED | THRD_STATE_DESTROYING |
                                           THRD_STATE_STACKED));
+
         remove_ext_cb(closure);
         remove_from_hstack(hstack, list);
         lives_proc_thread_unref(lpt);
@@ -1420,6 +1431,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         // remove our added ref UNLESS this is a blocking call, then blocked thrread will do that
         lives_proc_thread_unref(lpt);
         if (closure->flags & HOOK_CB_BLOCK) closure->proc_thread = NULL;
+        if (!(closure->flags & HOOK_STATUS_REMOVE))
+          remove_ext_cb(closure);
         remove_from_hstack(hstack, list);
         break;
       }
@@ -1537,7 +1550,7 @@ void lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
     }
 
     lpt = closure->proc_thread;
-    if (!lpt || lives_proc_thread_ref(lpt) <= 0) continue;
+    if (!lpt || lives_proc_thread_ref(lpt) < 2) continue;
 
     lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
                                      | THRD_STATE_FINISHED);

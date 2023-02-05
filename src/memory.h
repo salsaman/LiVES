@@ -246,7 +246,7 @@ void *lives_free_and_return(void *p);
 
 boolean lives_freep(void **ptr);
 
-void *lives_slice_alloc(size_t sz);
+void *lives_slice_alloc0(size_t sz);
 void lives_slice_unalloc(size_t sz, void *);
 
 #if GLIB_CHECK_VERSION(2, 14, 0)

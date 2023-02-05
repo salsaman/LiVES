@@ -2010,7 +2010,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   static ticks_t syncticks = 0;
   static double ratio = 1.;
   int64_t usec;
-  ticks_t retval;
+  ticks_t retval = -1;
 
   msg = pulsed->msgq;
 
@@ -2020,9 +2020,14 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     if (THREADVAR(fx_is_audio)) return mainw->currticks;
     if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) return -1;
   }
-  if (lives_five_second_check(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec)) < 0 || usec == 0)
-    retval = -1;
-  else {
+  for (int z = 0; z < 5000; z++) {
+    if (!(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0 || usec == 0)) {
+      retval = 0;
+      break;
+    }
+    lives_millisleep;
+  }
+  if (retval == 0) {
     retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
     if (retval < 0) retval = 0;
     if (retval < last_retval) last_retval = -1;

@@ -7250,24 +7250,6 @@ void on_details_button_clicked(void) {
 }
 
 
-static void _on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
-  // toolbar button (full screen)
-  // ignore if audio only clip
-  if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && !mainw->multitrack) return;
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen), !mainw->fs);
-}
-
-
-void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
-  if (mainw->go_away) return;
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               _on_full_screen_pressed, user_data);
-  else _on_full_screen_pressed(button, user_data);
-}
-
-
 static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // ignore if audio only clip
   if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && LIVES_IS_PLAYING && !mainw->multitrack) return;
@@ -7296,6 +7278,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         //fade_background();
       }
       if (mainw->sep_win) {
+        mainw->ignore_screen_size = TRUE;
         resize_play_window();
         if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
           lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
@@ -7338,7 +7321,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 
         //unfade_background();
         if (!mainw->faded) unfade_background();
-
+        mainw->ignore_screen_size = TRUE;
         resize_play_window();
 
         if (!mainw->multitrack && mainw->opwx > -1) {
@@ -7426,19 +7409,13 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-static void _on_double_size_pressed(LiVESButton * button, livespointer user_data) {
-  // toolbar button (separate window)
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->dsize), !mainw->double_size);
-}
-
-
-void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
-  if (mainw->go_away) return;
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               _on_double_size_pressed, user_data);
-  else _on_double_size_pressed(button, user_data);
+void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
+  // toolbar button (full screen)
+  // ignore if audio only clip
+  if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && !mainw->multitrack) return;
+  if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen)) == mainw->fs)
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen), !mainw->fs);
+  else on_full_screen_activate(NULL, NULL);
 }
 
 
@@ -7497,22 +7474,11 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-static void _on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
+void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (separate window)
-  if (mainw->multitrack) {
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->sepwin), !mainw->sep_win);
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sepwin), mainw->sep_win);
-  } else lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sepwin), !mainw->sep_win);
-}
-
-
-void on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
-  if (mainw->go_away) return;
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               _on_sepwin_pressed, user_data);
-  else _on_sepwin_pressed(button, user_data);
+  if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->dsize)) == mainw->double_size)
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->dsize), !mainw->double_size);
+  else on_double_size_activate(NULL, NULL);
 }
 
 
@@ -7602,6 +7568,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
             unfade_background();
           }
           resize(1.);
+          if (mainw->fs) mainw->ignore_screen_size = TRUE;
           resize_play_window();
         }
 
@@ -7682,6 +7649,18 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                                HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
                                _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
+}
+
+
+void on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
+  // toolbar button (separate window)
+  if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->sepwin)) == mainw->sep_win) {
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sepwin), !mainw->sep_win);
+    lives_widget_process_updates(mainw->sepwin);
+  } else on_sepwin_activate(NULL, NULL);
+  if (mainw->multitrack) {
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->sepwin), mainw->sep_win);
+  }
 }
 
 
@@ -9323,14 +9302,15 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
     lives_painter_set_source_surface(cr, *surf, 0., 0.);
     lives_painter_paint(cr);
   }
+  mainw->drawing = FALSE;
   return TRUE;
 }
 
 
-boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
+static boolean _all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
   /// quick and dirty copy / paste
 
-  // draw the cursors dure CE playback
+  // draw the cursors during CE playback
   if (mainw->go_away) return FALSE;
   if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
@@ -9417,8 +9397,20 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
 }
 
 
+boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
+  if (!LIVES_IS_PLAYING) return _all_expose_overlay(widget, creb, psurf);
+  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                  _all_expose_overlay, WEED_SEED_BOOLEAN, "vvv", widget, creb, psurf);
+  return TRUE;
+}
+
+
 boolean all_expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
-  if (LIVES_IS_PLAYING) all_expose(widget, cr, psurf);
+  if (LIVES_IS_PLAYING)// all_expose(widget, cr, psurf);
+    lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                    HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                    all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
   return TRUE;
 }
 

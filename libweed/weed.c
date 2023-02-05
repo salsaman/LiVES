@@ -307,8 +307,8 @@ EXPORTED int32_t libweed_get_abi_min_supported(void) GNU_CONST;
 EXPORTED void libweed_print_init_opts(FILE *);
 
 EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
-EXPORTED int libweed_set_memory_funcs(weed_malloc_f, weed_free_f);
-EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
+EXPORTED int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
+EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
 
 #if WEED_ABI_CHECK_VERSION(202)
 EXPORTED size_t weed_leaf_get_byte_size(weed_plant_t *, const char *key);
@@ -358,26 +358,51 @@ static inline int weed_strcmp(const char *, const char *) GNU_HOT;
 static inline weed_size_t weed_strlen(const char *) GNU_PURE;
 static inline weed_hash_t weed_hash(const char *) GNU_PURE;
 
+/* memfuncs */
+
+#ifndef _weed_malloc
 #define _weed_malloc malloc
-#define _weed_unmalloc_and_copy(size, ptr) free(ptr)
-
-static weed_malloc_f weed_malloc = _weed_malloc;
-
-static void *def_malloc_and_copy(size_t sz,  void *p) {return memcpy(weed_malloc(sz), p, sz);}
-
-#ifndef _weed_malloc_and_copy
-#define _weed_malloc_and_copy(size, src) def_malloc_and_copy(size, src)
 #endif
 
-static void _weed_unmalloc_and_copy_(size_t s, void *p) {_weed_unmalloc_and_copy(s, p);}
-static void *_weed_malloc_and_copy_(size_t s, void *p) {return _weed_malloc_and_copy(s, p);}
+#ifndef _weed_calloc
+#define _weed_calloc calloc
+#endif
 
-static weed_free_f weed_free = NULL;
-static libweed_unmalloc_and_copy_f weed_unmalloc_and_copy = _weed_unmalloc_and_copy_;
-static libweed_slab_alloc_and_copy_f weed_malloc_and_copy = _weed_malloc_and_copy_;
+#ifndef _weed_free
+#define _weed_free free
+#endif
 
-#define weed_malloc_sizeof(t) weed_malloc(sizeof(t))
-#define weed_unmalloc_sizeof(t, ptr) weed_unmalloc_and_copy(sizeof(t), ptr)
+static weed_malloc_f weed_malloc = _weed_malloc;
+static weed_calloc_f weed_calloc = _weed_calloc;
+static weed_free_f weed_free = _weed_free;
+
+#ifndef weed_memcpy
+#define weed_memcpy memcpy
+#endif
+#ifndef weed_memset
+#define weed_memset memset
+#endif
+
+#ifndef _weed_malloc0
+static void *_weed_malloc0(size_t sz) {void *p = weed_malloc(sz); if (p) weed_memset(p, 0, sz); return p;}
+#endif
+static weed_malloc_f weed_malloc0 = _weed_malloc0;
+static void *_malloc0_product(size_t ne, size_t sz) {return weed_malloc0(ne * sz);}
+
+#ifndef _weed_malloc_copy
+static void *_weed_malloc_copy(size_t sz, void *p) {return weed_memcpy(weed_malloc(sz), p, sz);}
+#endif
+static libweed_slab_alloc_and_copy_f weed_malloc_and_copy = _weed_malloc_copy;
+
+#ifndef _weed_unmalloc_copy
+static void _weed_unmalloc_copy(size_t sz, void *ptr) {weed_free(ptr);}
+#endif
+static libweed_unmalloc_and_copy_f weed_unmalloc_and_copy = _weed_unmalloc_copy;
+
+#define weed_calloc_sizeof(t) weed_calloc(1, sizeof(t))
+#define weed_uncalloc_sizeof(t, ptr) weed_unmalloc_and_copy(sizeof(t), ptr)
+
+/* end memfuncs */
 
 #define KEY_IN_SIZE (_WEED_PADBYTES_ ? _WEED_PADBYTES_ + sizeof(char *) : 0)
 
@@ -385,23 +410,22 @@ static libweed_slab_alloc_and_copy_f weed_malloc_and_copy = _weed_malloc_and_cop
 				 ? leaf->key : (const char *)leaf->padding)
 
 #define weed_leaf_set_key(leaf, key, size) \
-  (size < KEY_IN_SIZE ? memcpy((void *)leaf->padding, key, size + 1)	\
+  (size < KEY_IN_SIZE ? weed_memcpy((void *)leaf->padding, key, size + 1)	\
    : ((leaf->key = weed_malloc_and_copy(size + 1, (void *)key)))	\
    ? leaf->key : NULL)
 
-static void free_no_size(size_t s, void *p) {weed_free(p);}
-
-EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free) {
+EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free, weed_calloc_f my_calloc) {
   weed_malloc = my_malloc;
+  if (my_calloc) weed_calloc = my_calloc;
+  else my_calloc = _malloc0_product;
   weed_free = my_free;
-  weed_unmalloc_and_copy = free_no_size;
-  weed_malloc_and_copy = def_malloc_and_copy;
   return 0;
 }
 
-EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_f my_slab_alloc, libweed_slab_unalloc_f my_slab_unalloc,
+EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_clear_f my_slab_alloc0, libweed_slab_unalloc_f my_slab_unalloc,
 				 libweed_slab_alloc_and_copy_f my_slab_alloc_and_copy) {
-  weed_malloc = my_slab_alloc;
+  weed_malloc0 = my_slab_alloc0;
+  weed_calloc = _malloc0_product;
   weed_unmalloc_and_copy = my_slab_unalloc;
   if (my_slab_alloc_and_copy) weed_malloc_and_copy = my_slab_alloc_and_copy;
   return 0;
@@ -570,7 +594,7 @@ static weed_hash_t weed_hash(const char *key) {
   for (weed_size_t i = 0; i < num_valid_elems; i++) {
     if (is_nonptr && data[i]->size > minsize && data[i]->value.voidptr)
       weed_unmalloc_and_copy(data[i]->size - xnullv, data[i]->value.voidptr);
-    weed_unmalloc_sizeof(weed_data_t, data[i]);
+    weed_uncalloc_sizeof(weed_data_t, data[i]);
   }
   weed_unmalloc_and_copy(num_elems * sizeof(weed_data_t *), data);
   return NULL;
@@ -580,14 +604,14 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
 					  weed_voidptr_t values) {
   weed_data_t **data;
   if (!num_elems) return NULL;
-  if (!(data = (weed_data_t **)weed_malloc(num_elems * sizeof(weed_data_t *)))) return NULL;
+  if (!(data = (weed_data_t **)weed_calloc(num_elems, sizeof(weed_data_t *)))) return NULL;
   else {
     char **valuec = (char **)values;
     weed_voidptr_t *valuep = (weed_voidptr_t *)values;
     weed_funcptr_t *valuef = (weed_funcptr_t *)values;
     int is_ptr = (weed_seed_is_ptr(seed_type));
     for (int i = 0; i < num_elems; i++) {
-      if (!(data[i] = weed_malloc_sizeof(weed_data_t)))
+      if (!(data[i] = weed_calloc_sizeof(weed_data_t)))
 	return weed_data_free(data, --i, num_elems, seed_type);
       if (seed_type == WEED_SEED_STRING) {
 	data[i]->value.voidptr = valuec ?
@@ -599,7 +623,7 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
 	data[i]->value.funcptr = valuef ? valuef[i] : NULL; continue;}
       if (is_ptr) {data[i]->value.voidptr = valuep ? valuep[i] : NULL; continue;}
       if (data[i]->size <= WEED_VOIDPTR_SIZE) {
-	memcpy(&data[i]->value.voidptr, (char *)values + i * data[i]->size, data[i]->size); continue;}
+	weed_memcpy(&data[i]->value.voidptr, (char *)values + i * data[i]->size, data[i]->size); continue;}
       data[i]->value.voidptr =
 	(weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + i * data[i]->size));
       if (!is_ptr && !data[i]->value.voidptr && data[i]->size > nullv) //memory error
@@ -611,7 +635,7 @@ static inline weed_data_t **weed_data_append(weed_leaf_t *leaf,
   weed_data_t **data;
   if (!new_elems) return leaf->data;;
   new_elems += leaf->num_elements;
-  if (!(data = (weed_data_t **)weed_malloc(new_elems * sizeof(weed_data_t *)))) return NULL;
+  if (!(data = (weed_data_t **)weed_calloc(new_elems, sizeof(weed_data_t *)))) return NULL;
   else {
     char **valuec = (char **)values;
     weed_voidptr_t *valuep = (weed_voidptr_t *)values;
@@ -621,7 +645,7 @@ static inline weed_data_t **weed_data_append(weed_leaf_t *leaf,
     int j = 0;
     for (int i = 0; i < leaf->num_elements; i++) data[i] = leaf->data[i];
     for (int i = leaf->num_elements; i < new_elems; i++) {
-      if (!(data[i] = weed_malloc_sizeof(weed_data_t)))
+      if (!(data[i] = weed_calloc_sizeof(weed_data_t)))
 	return weed_data_free(data, --i, new_elems, seed_type);
       if (seed_type == WEED_SEED_STRING) {
 	data[i]->value.voidptr = valuec ?
@@ -633,7 +657,7 @@ static inline weed_data_t **weed_data_append(weed_leaf_t *leaf,
 	data[i]->value.funcptr = valuef ? valuef[j] : NULL; continue;}
       if (is_ptr) {data[i]->value.voidptr = valuep ? valuep[j] : NULL; continue;}
       if (data[i]->size <= WEED_VOIDPTR_SIZE) {
-	memcpy(&data[i]->value.voidptr, (char *)values + j * data[i]->size, data[i]->size); continue;}
+	weed_memcpy(&data[i]->value.voidptr, (char *)values + j * data[i]->size, data[i]->size); continue;}
       data[i]->value.voidptr =
 	(weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + j * data[i]->size));
       if (!is_ptr && !data[i]->value.voidptr && data[i]->size > nullv) //memory error
@@ -734,13 +758,13 @@ static inline void *weed_leaf_free(weed_leaf_t *leaf) {
 
     if (is_plant(leaf)) {
       plant_priv_data_t *pdata = (plant_priv_data_t *)leaf->private_data;
-      weed_unmalloc_sizeof(plant_priv_data_t, pdata);
+      weed_uncalloc_sizeof(plant_priv_data_t, pdata);
     }
     else {
       leaf_priv_data_t *ldata = (leaf_priv_data_t *)leaf->private_data;
-      weed_unmalloc_sizeof(leaf_priv_data_t, ldata);
+      weed_uncalloc_sizeof(leaf_priv_data_t, ldata);
     }
-    weed_unmalloc_sizeof(weed_leaf_t, leaf);
+    weed_uncalloc_sizeof(weed_leaf_t, leaf);
   }
   return NULL;
 }
@@ -751,11 +775,11 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
   pthread_rwlockattr_t rwattr;
 #endif
   const char *xkey;
-  weed_leaf_t *leaf = weed_malloc_sizeof(weed_leaf_t);
+  weed_leaf_t *leaf = weed_calloc_sizeof(weed_leaf_t);
   if (!leaf) return NULL;
   leaf->padding[0] = 0;
   xkey = weed_leaf_set_key(leaf, key, strlen(key));
-  if (!xkey) {weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
+  if (!xkey) {weed_uncalloc_sizeof(weed_leaf_t, leaf); return NULL;}
   leaf->key_hash = hash;
   leaf->next = NULL;
   leaf->num_elements = 0;
@@ -769,11 +793,11 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
 #endif
 
   if (is_plant(leaf)) {
-    plant_priv_data_t *pdata = weed_malloc_sizeof(plant_priv_data_t);
+    plant_priv_data_t *pdata = weed_calloc_sizeof(plant_priv_data_t);
     if (!pdata) {
       if (weed_leaf_get_key(leaf) != leaf->padding)
 	weed_unmalloc_and_copy(strlen(leaf->key + 1), (void *)leaf->key);
-      weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
+      weed_uncalloc_sizeof(weed_leaf_t, leaf); return NULL;}
     pthread_rwlock_init(&pdata->ldata.chain_lock, rwattrp);
     pthread_rwlock_init(&pdata->ldata.data_lock, rwattrp);
     pthread_mutex_init(&pdata->ldata.data_mutex, NULL);
@@ -783,11 +807,11 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
     leaf->private_data = (void *)pdata;
   }
   else {
-    leaf_priv_data_t *ldata = weed_malloc_sizeof(leaf_priv_data_t);
+    leaf_priv_data_t *ldata = weed_calloc_sizeof(leaf_priv_data_t);
     if (!ldata) {
       if (weed_leaf_get_key(leaf) != leaf->padding)
 	weed_unmalloc_and_copy(strlen(leaf->key + 1), (void *)leaf->key);
-      weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
+      weed_uncalloc_sizeof(weed_leaf_t, leaf); return NULL;}
 
     pthread_rwlock_init(&ldata->chain_lock, rwattrp);
     pthread_rwlock_init(&ldata->data_lock, rwattrp);
@@ -1188,10 +1212,10 @@ static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, weed_si
 	if (nullv && data[idx]->size < nullv) *valuecharptrptr = NULL;
 	else {
 	  size -= nullv;
-	  if (size > 0) memcpy(*valuecharptrptr, data[idx]->value.voidptr, size);
+	  if (size > 0) weed_memcpy(*valuecharptrptr, data[idx]->value.voidptr, size);
 	  (*valuecharptrptr)[size] = 0;
 	}}
-      else memcpy(value, &(data[idx]->value.voidptr), leaf->data[idx]->size);
+      else weed_memcpy(value, &(data[idx]->value.voidptr), leaf->data[idx]->size);
     }}
   return_unlock(leaf, WEED_SUCCESS);
 }

@@ -156,7 +156,7 @@ static boolean _thrd_cond_wait(lives_proc_thread_t self) {
 
 // unpause
 static boolean _lives_proc_thread_cond_signal(lives_proc_thread_t lpt) {
-  if (lives_proc_thread_ref(lpt) > 0) {
+  if (lives_proc_thread_ref(lpt) > 1) {
     thrd_work_t *work = lives_proc_thread_get_work(lpt);
     if (work) {
       uint64_t tuid = work->busy;
@@ -271,7 +271,7 @@ boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, volatile bo
       return TRUE;
   }
 
-  if (lives_proc_thread_ref(lpt) <= 0) lpt = NULL;
+  if (lives_proc_thread_ref(lpt) < 2) lpt = NULL;
 
   weed_set_voidptr_value(lpt, "_control", (void *)control);
 
@@ -507,7 +507,13 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_remove_nullify(lives_proc_thread_t lp
 
 
 LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(const char *fname, lives_thread_attr_t *attrs) {
-  lives_proc_thread_t lpt = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
+  lives_proc_thread_t lpt;
+#if USE_RPMALLOC
+  // free up some thread memory before allocating more
+  if (rpmalloc_is_thread_initialized())
+    rpmalloc_thread_collect();
+#endif
+  lpt = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
   if (lpt) add_garnish(lpt, fname, attrs);
   return lpt;
 }
@@ -870,13 +876,15 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
           lpt_remove_from_pool(lpt);
         }
 
-        flush_cb_list(lpt);
-
-        // action any deffered updates
+        // action any deferred updates
         lives_proc_thread_trigger_hooks(lpt, LIVES_GUI_HOOK);
 
         if (weed_plant_has_leaf(lpt, LIVES_LEAF_CLOSURE)) break_me("free lpt with closure !");
         state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+
+        pthread_mutex_lock(state_mutex);
+        flush_cb_list(lpt);
+        pthread_mutex_unlock(state_mutex);
 
         lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
         lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
@@ -1219,7 +1227,7 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
       // if new state includes DESTROYED, refccount will be zero
       // so we do not want to ref it and unref it, else this would cause recursion when refcount
       // goes back to zero
-      boolean do_refs = lives_proc_thread_count_refs(lpt) > 0;
+      boolean do_refs = lives_proc_thread_count_refs(lpt) > 1;
 
       if (do_refs) lives_proc_thread_ref(lpt);
 
@@ -1297,7 +1305,7 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 
 
 uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
-  if (lives_proc_thread_ref(lpt) > 0) {
+  if (lives_proc_thread_ref(lpt) > 1) {
     uint64_t new_state = THRD_STATE_INVALID;
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
     if (state_mutex) {
@@ -1721,7 +1729,7 @@ boolean lives_proc_threads_sync_at(lives_proc_thread_t lpt, const char *motive) 
 // this function is safe to call even in case
 // timeout is in seconds
 int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
-  if (lives_proc_thread_ref(lpt) > 0) {
+  if (lives_proc_thread_ref(lpt) > 1) {
     ticks_t slptime = LIVES_QUICK_NAP * 10;
     if (timeout) timeout *= ONE_BILLION;
     if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt))
@@ -1752,7 +1760,7 @@ int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
 
 LIVES_LOCAL_INLINE void _lives_proc_thread_join(lives_proc_thread_t lpt, double timeout) {
   // version without a return value will free lpt
-  if (lives_proc_thread_ref(lpt) > 0) {
+  if (lives_proc_thread_ref(lpt) > 1) {
     lives_proc_thread_wait_done(lpt, timeout);
 
     // caller should ref the proc_thread if it wants to avoid this
@@ -2028,7 +2036,7 @@ static void *proc_thread_worker_func(void *args) {
 
 boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
   boolean bret = TRUE;
-  if (lives_proc_thread_ref(lpt) <= 0) return FALSE;
+  if (lives_proc_thread_ref(lpt) < 2) return FALSE;
 
   if (lives_proc_thread_is_done(lpt)) {
     lives_proc_thread_unref(lpt);
@@ -2326,8 +2334,6 @@ static void lives_thread_data_destroy(void *data) {
     g_main_context_unref(tdata->vars.var_guictx);
   if (tdata->vars.var_guisource) g_source_unref(tdata->vars.var_guisource);
 
-  //lives_free(tdata);
-
 #if USE_RPMALLOC
   if (rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_finalize();
@@ -2344,14 +2350,11 @@ static void make_pth_key(void) {
   (void)pthread_key_create(&tdata_key, lives_thread_data_destroy);
 }
 
-//lives_thread_data_t *lives_thread_data_create(void *pidx) {
-void *lives_thread_data_create(void *pidx) {
+void *lives_thread_data_create(void *pslot_id) {
   lives_thread_data_t *tdata;
-  int idx = LIVES_POINTER_TO_INT(pidx);
+  int slot_id = LIVES_POINTER_TO_INT(pslot_id);
 
-  // could use a pthread_once here
   pthread_once(&do_once, make_pth_key);
-
   tdata = pthread_getspecific(tdata_key);
 
   if (!tdata) {
@@ -2368,14 +2371,14 @@ void *lives_thread_data_create(void *pidx) {
 
     tdata->uid = tdata->vars.var_uid = gen_unique_id();
 
-    if (idx < 0) {
+    if (slot_id < 0) {
       if (pthread_equal(pthread_self(), capable->main_thread)) {
         tdata->thrd_type = THRD_TYPE_MAIN;
         global_tdata = tdata;
       } else tdata->thrd_type = THRD_TYPE_EXTERN;
     } else tdata->thrd_type = THRD_TYPE_WORKER;
 
-    tdata->slot_id = idx;
+    tdata->slot_id = slot_id;
 
     pthread_rwlock_wrlock(&allctx_rwlock);
     allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
@@ -2532,7 +2535,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
     return FALSE;
   }
 
-  if (lives_proc_thread_ref((lpt = mywork->lpt)) <= 0) lpt = NULL;
+  if (lives_proc_thread_ref((lpt = mywork->lpt)) < 2) lpt = NULL;
 
   pthread_mutex_unlock(&twork_mutex);
 
@@ -2633,11 +2636,7 @@ skip_over:
 }
 
 
-#define POOL_TIMEOUT_SEC 300
-
-// to allow more flexibility w.r.t the gui loop. this is added as an idle func in the thread's
-// gui context
-// - this means we can be handed the main context, push it as thread default, and in eefct become the new main thread
+#define POOL_TIMEOUT_SEC 120
 
 static boolean thrdpool(void *arg) {
   boolean skip_wait = TRUE;
@@ -2647,22 +2646,30 @@ static boolean thrdpool(void *arg) {
 
   while (!threads_die) {
     if (!skip_wait) {
+      int lifetime = POOL_TIMEOUT_SEC + fastrand_int(60);
       clock_gettime(CLOCK_REALTIME, &ts);
       // add random factor so we dont get multiple threads all timing out at once
-      ts.tv_sec += POOL_TIMEOUT_SEC + fastrand_int(60);
+      ts.tv_sec += lifetime;
       pthread_mutex_lock(&tcond_mutex);
       //g_print("thrd %d (0x%lx) WAITING : %d\n", tid, pself, tid);
+      // there is no predicate here, since spurious wakeups are not a problem
+      // they will just mean that the thread wont age this time
       rc = pthread_cond_timedwait(&tcond, &tcond_mutex, &ts);
       pthread_mutex_unlock(&tcond_mutex);
       //g_print("thrd %d (0x%lx) woke\n", tid, pself);
       if (rc == ETIMEDOUT) {
-        // if the thread is waiting around doing nothing, exit, maybe free up some resources
-        //g_print("thrd %d (0x%lx) aged\n", tid, pself);
+        // if the thread is waiting around doing nothing, and there are no tasks waitng,
+        // exit, maybe free up some resources
+        g_print("thrd %d (0x%lx) expired, idled for %d sec.\n", tdata->slot_id, pthread_self(), lifetime);
         if (!pthread_mutex_trylock(&pool_mutex)) {
           if (!pthread_mutex_trylock(&twork_mutex)) {
             if (ntasks < npoolthreads) {
               //g_print("thrd %d (0x%lx) leaving\n", tid, pself);
+              pthread_t *myslot = poolthrds[tdata->slot_id];
+              poolthrds[tdata->slot_id] = NULL;
+              // slot can now be reused
               npoolthreads--;
+              lives_free(myslot);
               tdata->exited = TRUE;
               pthread_mutex_unlock(&twork_mutex);
               pthread_mutex_unlock(&pool_mutex);
@@ -2723,15 +2730,11 @@ void lives_threadpool_finish(void) {
   pthread_mutex_unlock(&tcond_mutex);
   for (int i = 0; i < rnpoolthreads; i++) {
     lives_thread_data_t *tdata = get_thread_data_by_slot_id(i);
-    if (tdata && !tdata->exited) {
+    if (tdata) {
       pthread_mutex_lock(&tcond_mutex);
       pthread_cond_broadcast(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
       pthread_join(*(poolthrds[i]), NULL);
-      if (tdata->vars.var_guictx && tdata->vars.var_guictx != lives_widget_context_default())
-        lives_widget_context_unref(tdata->vars.var_guictx);
-      lives_free(tdata);
-      lives_free(poolthrds[i]);
     }
   }
   lives_free(poolthrds);
@@ -2759,31 +2762,27 @@ void check_pool_threads(void) {
   pthread_mutex_lock(&pool_mutex);
   pthread_mutex_lock(&twork_mutex);
 
-  // check if any threads aged (exited), and if necessary re-create enough to handle ntasks
-  if (rnpoolthreads && npoolthreads < rnpoolthreads) {
+  while (ntasks >= npoolthreads && npoolthreads < rnpoolthreads) {
     for (int i = 0; i < rnpoolthreads; i++) {
-      if (poolthrds[i]) {
-        lives_thread_data_t *tdata = get_thread_data_by_slot_id(i);
-        if (!tdata) {
-          lives_free(poolthrds[i]);
-          poolthrds[i] = NULL;
-        }
-      }
+      if (poolthrds[i]) continue;
       // relaunch thread, npoolthreads ---> rnpoolthreads
-      if (npoolthreads < ntasks && !poolthrds[i]) {
-        poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
-        pthread_create(poolthrds[i], NULL, lives_thread_data_create, LIVES_INT_TO_POINTER(i));
-        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-        pthread_mutex_lock(&tcond_mutex);
-        pthread_cond_signal(&tcond);
-        pthread_mutex_unlock(&tcond_mutex);
-        npoolthreads++;
-      }
+      poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
+      npoolthreads++;
+      pthread_mutex_unlock(&twork_mutex);
+      pthread_mutex_unlock(&pool_mutex);
+      pthread_create(poolthrds[i], NULL, lives_thread_data_create, LIVES_INT_TO_POINTER(i));
+      pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+      pthread_mutex_lock(&tcond_mutex);
+      pthread_cond_signal(&tcond);
+      pthread_mutex_unlock(&tcond_mutex);
+      pthread_mutex_lock(&pool_mutex);
+      pthread_mutex_lock(&twork_mutex);
+      break;
     }
   }
 
   if (ntasks <= rnpoolthreads) {
-    for (int i = 0; i < ntasks; i++) {
+    for (int i = 0; i < ntasks && i < rnpoolthreads; i++) {
       pthread_mutex_lock(&tcond_mutex);
       pthread_cond_signal(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
@@ -2799,6 +2798,9 @@ void check_pool_threads(void) {
     }
     rnpoolthreads += extrs;
     npoolthreads = rnpoolthreads;
+    pthread_mutex_lock(&tcond_mutex);
+    pthread_cond_broadcast(&tcond);
+    pthread_mutex_unlock(&tcond_mutex);
   }
   pthread_mutex_unlock(&twork_mutex);
   pthread_mutex_unlock(&pool_mutex);

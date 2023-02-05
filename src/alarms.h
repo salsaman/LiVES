@@ -9,6 +9,10 @@
 
 typedef int lives_alarm_t;
 
+boolean lives_timer_create(uint64_t freq);
+boolean lives_timer_block(void);
+boolean lives_timer_unblock(void);
+
 /// lives_alarms
 #define LIVES_NO_ALARM 0
 #define LIVES_MAX_ALARMS 1024

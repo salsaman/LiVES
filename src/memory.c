@@ -64,9 +64,12 @@ void dump_memstats(void) {
   g_print("Total allocated: %lu, total freed %lu\n", totalloc, totfree);
 }
 
-void *lives_slice_alloc(size_t sz) {
+void *lives_slice_alloc0(size_t sz) {
   totalloc += sz;
-  return g_slice_alloc(sz);
+#if GLIB_CHECK_VERSION(2, 10, 0)
+  return g_slice_alloc0(sz);
+#endif
+  return lives_memset(g_slice_alloc(sz), 0, sz);
 }
 
 void lives_slice_unalloc(size_t sz, void *p) {
@@ -775,6 +778,9 @@ void *_free_bigblock(void *bstart) {
 #else
 void *free_bigblock(void *bstart) {
 #endif
+  if (bstart == mainw->debug_ptr) {
+    break_me("badfree");
+  }
   for (int i = 0; i < NBBLOCKS; i++) {
     if ((char *)bstart >= (char *)bigblocks[i]
         && (char *)bstart - (char *)bigblocks[i] < bmemsize + EXTRA_BYTES) {

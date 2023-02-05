@@ -21,7 +21,7 @@
 // gui_tight mode
 #define sLO_FACTOR 8
 // usec per cycle in low prio mode, absolute, gui slack mode
-#define LO_WAIT _nsleep2048
+#define LO_WAIT usleep(2048);
 // EV_LIM multipler when expecing large updates
 #define MUCH_EV_MPY 2.
 
@@ -973,7 +973,7 @@ boolean fg_service_fulfill(void) {
 
   lptr = lpttorun;
 
-  if (lptr && lives_proc_thread_ref(lptr) > 0) {
+  if (lptr && lives_proc_thread_ref(lptr) > 1) {
     if (mainw->debug) {
       char *fcall = lives_proc_thread_show_func_call(lptr);
       g_print("fulfill %s\n", fcall);
@@ -1007,12 +1007,6 @@ boolean fg_service_fulfill(void) {
       // if we cannot get a lock on the hook_stack, we assume it is busy
       return TRUE;
     }
-    return FALSE;
-  }
-
-  //g_print("main thr run: %s\n", lives_proc_thread_show_func_call(lptr));
-  if (lives_proc_thread_is_done(lptr)) {
-    lives_proc_thread_unref(lptr);
     return FALSE;
   }
 
@@ -1126,8 +1120,10 @@ boolean fg_service_fulfill_cb(void *dummy) {
   } else if (!gui_loop_tight) {
     if (prio == PRIO_HIGH)
       lives_widget_context_iteration(NULL, FALSE);
-    else
-      LO_WAIT(cprio == PRIO_LOW);
+    else {
+      for (int zz = 0; zz < 2048 && cprio == PRIO_LOW; zz++)
+        lives_microsleep;
+    }
   }
 
   return TRUE;
@@ -1791,80 +1787,11 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   }
 
   // need to remove this hook, in case it has not triggered, since bvar is about to go out of scope
-  if (!lives_proc_thread_is_done(lpt))
-    lives_hook_remove(compl_lpt);
-}
-
-
-static boolean _lives_widget_process_updates(LiVESWidget *widget) {
-#ifdef GUI_GTK
-  LiVESWindow *win, *modalold = modalw;
-  boolean was_modal = TRUE;
-
-  if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
-  else if (LIVES_IS_WIDGET(widget))
-    win = lives_widget_get_window(widget);
-  else return FALSE;
-  if (win && LIVES_IS_WINDOW(win)) {
-    was_modal = lives_window_get_modal(win);
-    if (!was_modal) lives_window_set_modal(win, TRUE);
-  }
-
-  _lives_widget_context_update();
-
-  if (!was_modal) {
-    if (win) lives_window_set_modal(win, FALSE);
-    if (modalold) lives_window_set_modal(modalold, TRUE);
-  }
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget *widget) {
-#ifdef GUI_GTK
-  if (!LIVES_IS_WIDGET(widget)) {
-    LIVES_WARN("Draw queue invalid widget");
-    return FALSE;
-  }
-  if (is_fg_thread()) gtk_widget_queue_draw(widget);
-  else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
-    BG_THREADVAR(hook_hints) = 0;
-  }
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_update_noblock(LiVESWidget *widget) {
-#ifdef GUI_GTK
-  if (!LIVES_IS_WIDGET(widget)) {
-    LIVES_WARN("Draw queue invalid widget");
-    return FALSE;
-  }
-  if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
-  else {
-    BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
-    BG_THREADVAR(hook_hints) = 0;
-  }
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget) {
-  boolean ret;
-  if (is_fg_thread()) return _lives_widget_process_updates(widget);
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_DATA;
-  main_thread_execute(_lives_widget_process_updates, WEED_SEED_BOOLEAN, &ret, "v", widget);
-  BG_THREADVAR(hook_hints) = 0;
-  return ret;
+  // BUT - could be in process of triggering - reading bvar will crash
+  //
+  lives_nanosleep_while_false(bvar);
+  /* if (!lives_proc_thread_is_done(lpt)) */
+  /*   lives_hook_remove(compl_lpt); */
 }
 
 
@@ -2020,6 +1947,7 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
     // should not happend, but just in case
     lives_proc_thread_execute(lpt, retval);
     lives_proc_thread_unref(lpt);
+    return;
   } else {
     GET_PROC_THREAD_SELF(self);
     // wait here until we get the mutex - this means any thread ahead of us has waited
@@ -2153,7 +2081,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     provider = gtk_css_provider_new();
 
     // setting context provider for screen is VERY slow, so this should be used sparingly
-    prio = GTK_STYLE_PROVIDER_PRIOITY_USER;
+    prio = GTK_STYLE_PROVIDER_PRIORITY_USER;
     gtk_style_context_add_provider_for_screen(mainw->mgeom[widget_opts.monitor].screen, GTK_STYLE_PROVIDER
         (provider), prio);
   } else {
@@ -2912,7 +2840,7 @@ static boolean moddelete(LiVESWindow *win, LiVESXEvent *event, livespointer data
   return TRUE;
 }
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_modal(LiVESWindow *window, boolean modal) {
+static boolean _lives_window_set_modal(LiVESWindow *window, boolean modal, boolean no_slack) {
   if (modal) {
     if (modalw) return FALSE;
     lives_signal_sync_connect(window, LIVES_WIDGET_DELETE_EVENT,
@@ -2929,7 +2857,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_modal(LiVESWindow *window, 
     lives_signal_handlers_sync_disconnect_by_func(LIVES_GUI_OBJECT(modalw), LIVES_GUI_CALLBACK(moddelete), NULL);
     lives_signal_handlers_sync_disconnect_by_func(LIVES_GUI_OBJECT(modalw), LIVES_GUI_CALLBACK(modunmap), NULL);
     modalw = NULL;
-    set_gui_loop_tight(FALSE);
+    if (!no_slack) set_gui_loop_tight(FALSE);
   }
 
 #ifdef GUI_GTK
@@ -2937,6 +2865,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_modal(LiVESWindow *window, 
   return TRUE;
 #endif
   return FALSE;
+}
+
+
+boolean lives_window_set_modal(LiVESWindow *window, boolean modal) {
+  return _lives_window_set_modal(window, modal, FALSE);
 }
 
 
@@ -3168,6 +3101,85 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_window_get_focus(LiVESWindow *win
   return gtk_window_get_focus(window);
 #endif
   return NULL;
+}
+
+
+static boolean _lives_widget_process_updates(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  LiVESWindow *win, *modalold = modalw;
+  boolean was_modal = TRUE;
+  boolean no_slack = FALSE;
+
+  if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
+  else if (LIVES_IS_WIDGET(widget))
+    win = lives_widget_get_window(widget);
+  else return FALSE;
+  if (win && LIVES_IS_WINDOW(win)) {
+    was_modal = lives_window_get_modal(win);
+    if (!was_modal) {
+      no_slack = gui_loop_tight;
+      lives_window_set_modal(win, TRUE);
+    }
+  }
+
+  _lives_widget_context_update();
+
+  if (!was_modal) {
+    if (win) {
+      _lives_window_set_modal(win, FALSE, no_slack);
+    }
+    if (modalold) lives_window_set_modal(modalold, TRUE);
+  }
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  if (!LIVES_IS_WIDGET(widget)) {
+    LIVES_WARN("Draw queue invalid widget");
+    return FALSE;
+  }
+  if (is_fg_thread()) gtk_widget_queue_draw(widget);
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
+    BG_THREADVAR(hook_hints) = 0;
+    mainw->drawing = TRUE;
+  }
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_update_noblock(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  if (!LIVES_IS_WIDGET(widget)) {
+    LIVES_WARN("Draw queue invalid widget");
+    return FALSE;
+  }
+  if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY;
+    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget) {
+  boolean ret;
+  if (is_fg_thread()) return _lives_widget_process_updates(widget);
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_DATA;
+  main_thread_execute(_lives_widget_process_updates, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  BG_THREADVAR(hook_hints) = 0;
+  return ret;
 }
 
 
@@ -7803,6 +7815,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetSource *lives_idle_priority(LiVESWidgetSo
   lives_source_set_callback(source, function, data);
   lives_source_set_priority(source, LIVES_WIDGET_PRIORITY_HIGH);
   lives_source_attach(source, g_main_context_default());
+  g_source_set_can_recurse(source, FALSE);
   return source;
 }
 

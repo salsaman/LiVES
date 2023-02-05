@@ -1773,7 +1773,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     int opwidth, int opheight, weed_timecode_t tc) {
 
   void *pdata;
-  lives_proc_thread_t lpt, lpt2, lpt3;
+  lives_proc_thread_t lpt = NULL, lpt2 = NULL, lpt3 = NULL;
 
   weed_plant_t **in_channels = NULL, **out_channels = NULL, *channel, *chantmpl;
   weed_plant_t **in_ctmpls;
@@ -2162,8 +2162,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         if (!weed_plant_has_leaf(layer, WEED_LEAF_HOST_WIDTH)) {
           lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
           ticks_t xtimeout;
-          lives_nanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
-                                        || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+          lives_Xnanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
+                                         || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
           lives_alarm_clear(alarm_handle);
           if (!xtimeout) {
             g_print("needed natsize for %p\n", layer);
@@ -2650,6 +2650,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// check if we need to resize the layer
     /// get the pixel widths to compare
     /// the channel has the sizes we set in pass1
+    lpt = lpt2 = lpt3 = NULL;
 
     check_layer_ready(layer);
 
@@ -2729,7 +2730,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = lives_proc_thread_get_errnum(lpt);
       if (!needs_reinit) needs_reinit = GET_LPT_VALUE(lpt, boolean, "needs_reinit");
       lives_proc_thread_unref(lpt);
-      lives_proc_thread_unref(lpt);
+      if (lpt2) lives_proc_thread_unref(lpt2);
+      if (lpt3) lives_proc_thread_unref(lpt3);
+      lpt = lpt2 = lpt3 = NULL;
     }
 
     weed_set_plantptr_value(layer, "lpt", NULL);
@@ -2761,7 +2764,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // however, for inplace operation, provided there is resize, we can do:
     // copy laer -> channel --> run effect --> nullify channel
     // as opposed to: copy layer -> in_channel -> nullify layer --> run fx
-    // --> free in_chnnel -> copy out_channel -> layer ---> nullify out_chan
+    // --> free in_channel -> copy out_channel -> layer ---> nullify out_chan
+
+    // should have been done already, but seems to not always happen
+    weed_layer_nullify_pixel_data(channel);
 
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
@@ -2831,6 +2837,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           if (best_palette_match(palettes, num_palettes, palette) == palette) {
             //
             // out_channel[0] shares pixel_data with in_channel[0]
+            weed_layer_nullify_pixel_data(channel);
             if (!weed_layer_copy(channel, def_channel)) {
               retval = FILTER_ERROR_COPYING_FAILED;
               goto done_video;
@@ -3044,7 +3051,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (retval == FILTER_ERROR_BUSY && num_in_tracks == 1 && num_out_tracks == 1) {
       // filter busy, we will free out_channel data, set values from in_channel instead
       weed_layer_pixel_data_free(channel);
-
+      weed_layer_nullify_pixel_data(layer);
       if (!weed_layer_copy(layer, in_channel)) {
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
@@ -3901,7 +3908,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   else {
     weed_plant_t *gui;
     int myeaseval = -1;
-    pthread_rwlock_wrlock(&mainw->rte_rwlock);
 
     for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (orig_inst) weed_instance_unref(orig_inst);
@@ -4028,7 +4034,6 @@ apply_inst3:
         }}}
     // *INDENT-ON*
     if (orig_inst) weed_instance_unref(orig_inst);
-    pthread_rwlock_unlock(&mainw->rte_rwlock);
   }
 
   // TODO - set mainw->vpp->play_params from connected out params and out alphas

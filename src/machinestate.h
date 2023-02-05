@@ -112,6 +112,9 @@ char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);
 
+// cancelation point for threads with deferred cancel type
+#define lives_cancel_point pthread_testcancel();
+
 #define LIVES_QUICK_NAP 1000. // 1 uSec
 #define LIVES_SHORT_SLEEP 1000000. // 1 mSec
 #define LIVES_FORTY_WINKS 40000000. // 40 mSec
@@ -119,56 +122,34 @@ char *get_current_timestamp(void);
 
 #define lives_nanosleep(nanosec)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
     ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION;while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
-							       &&errno!=ETIMEDOUT)pthread_yield();}while(0);
+							       &&errno!=ETIMEDOUT);}while(0);
 
 #define lives_nanosleep_times(nanosec, times)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
     ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
-							       &&errno!=ETIMEDOUT)pthread_yield();}while(0);
+							       &&errno!=ETIMEDOUT);}while(0);
+#define lives_usleep(a) lives_nanosleep(1000*(a))
 
-// sleep for 1 msec, regardless of the value returned, sets euqal to cond
-#define _nsleep1(cond) (usleep(1000) ? (cond) :  (cond))
-// sleep for 2 msec, if cons still TRUE, sleep for another 1 msec and return cond, else return cond
-#define _nsleep2(cond) _nsleep1(cond) ? _nsleep1(cond) : (cond)
-// sleep for up to 4 msec, if cons still TRUE, sleep for up to 2 more  msec and return cond, else return cond
-#define _nsleep4(cond) _nsleep2(cond) ? _nsleep2(cond) : (cond)
-// etc
-#define _nsleep8(cond)_nsleep4(cond)?_nsleep4(cond):(cond)
-#define _nsleep16(cond)_nsleep8(cond)?_nsleep8(cond):(cond)
-#define _nsleep32(cond)_nsleep16(cond)?_nsleep16(cond):(cond)//5
-#define _nsleep64(cond)_nsleep32(cond)?_nsleep32(cond):(cond)
-#define _nsleep128(cond)_nsleep64(cond)?_nsleep64(cond):(cond)
-#define _nsleep256(cond)_nsleep128(cond)?_nsleep128(cond):(cond)
-#define _nsleep512(cond)_nsleep256(cond)?_nsleep256(cond):(cond)
-#define _nsleep1024(cond)_nsleep512(cond)?_nsleep512(cond):(cond)//bit 10
-#define _nsleep2048(cond)_nsleep1024(cond)?_nsleep1024(cond):(cond)
-#define _nsleep4096(cond)_nsleep2048(cond)?_nsleep2048(cond):(cond) //12
-#define _nsleep8192(cond)_nsleep4096(cond)?_nsleep4096(cond):(cond)
-#define _nsleep16384(cond)_nsleep8192(cond)?_nsleep8192(cond):(cond)// 14
-#define _nsleep32768(cond)_nsleep16384(cond)?_nsleep16384(cond):(cond)
+#define lives_microsleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=1000; \
+    while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1&&errno!=ETIMEDOUT);}while(0);
 
-// sleep for up to 5 seconds whil cond is TRUE
-// -- construction of value 5000 in binary digits
-#define lives_five_second_check(cond)_nsleep4096(cond)?_nsleep512(cond)?_nsleep256(cond)?_nsleep128(cond)?\
-    _nsleep8(cond):(cond):(cond):(cond):(cond)
+#define lives_millisleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=ONE_MILLION; \
+    while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1&&errno!=ETIMEDOUT);}while(0);
 
-// bits 14, 13, 12, 10, 8, 5, 4
-#define lives_thirty_second_check(cond)_nsleep16384(cond)?_nsleep8192(cond)?_nsleep4096(cond)?_nsleep1024(cond)?\
-    _nsleep256(cond)?_nsleep32(cond)?_nsleep16(cond):(cond):(cond):(cond):(cond):(cond):(cond)
+#define lives_millisleep_while(msec, cond)do{int cnt=msec;while((cond)&&cnt--)lives_millisleep;}while(0);
 
-// cancelation point for threads with deferred cancel type
-#define lives_cancel_point pthread_testcancel();
-
-// sleep fo 1usec
-#define lives_nanosleep_until_nonzero(condition) \
+// sleep for 1usec
+#define lives_Xnanosleep_until_nonzero(condition) \
   {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+
+// sleep for 1msec
+#define lives_nanosleep_until_nonzero(condition)		\
+  {while (!(condition)) lives_nanosleep(LIVES_SHORT_SLEEP);}
 #define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
 #define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
 
 #define lives_nanosleep_until_nonzero_timeout(condition) \
   {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
-
-#define lives_usleep(a) lives_nanosleep(1000 * (a))
 
 int check_dev_busy(char *devstr);
 

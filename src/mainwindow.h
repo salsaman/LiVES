@@ -1043,7 +1043,7 @@ typedef struct {
   // for jack transport
   boolean jack_can_stop, jack_can_start, lives_can_stop, jack_master;
 
-  pthread_rwlock_t rte_rwlock;
+  boolean drawing;
 
   // a/v seek synchronisation
   pthread_cond_t avseek_cond;

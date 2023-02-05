@@ -745,6 +745,21 @@ weed_layer_t *load_frame_image(frames_t frame) {
   // returned layer is guaranteed not to be unreffed until at least any subsequent call to load_frame_image
   // (or until playback ends)
 
+  // the function works in stages - first we check if the layer to b eplayed is loaded (e.g. cached)
+  // if not we start threads to fetch it
+  //
+  // if effects are active we call a function to apply them - the function will return an effected frame
+  // otherwise we wait if the frame is not loaded
+  //
+  // following this we prepare the frame for display / streaming
+  // - if the frame is in RGB format and the target isnt, we apply any gamma correction
+  //  plus overlays
+  // - convert the palette to the target, if target is RGB then we try to do gamma correction simultaneously
+  // - check gamma to be sure
+  // - resize or letterbox
+  //     check palette again as resize can alter this
+  // - , apply overlays if we didnt before
+
   void **pd_array = NULL, **retdata = NULL;
   LiVESPixbuf *pixbuf = NULL;
   weed_layer_t *frame_layer = NULL;
@@ -757,6 +772,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
   boolean success = FALSE;
   boolean size_ok = TRUE;
   boolean player_v2 = FALSE;
+  boolean conv_done = FALSE;
 
   int layer_palette, cpal;
   int retval;
@@ -765,7 +781,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
   int pwidth, pheight;
   int lb_width = 0, lb_height = 0;
   int fg_file = mainw->playing_file;
-  int tgamma = WEED_GAMMA_UNKNOWN;
+  int tgt_gamma = WEED_GAMMA_UNKNOWN;
   boolean was_letterboxed = FALSE;
 
   if (mainw->play_sequence != oseq) old_frame_layer = NULL;
@@ -1065,9 +1081,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
       // in plugins.c
       //
       // some plugins can resize and letterbox, otherwise we need to add borders and then let it resize
-
       int lwidth, lheight;
-      int ovpppalette = mainw->vpp->palette;
       weed_layer_t *return_layer = NULL;
 
       /// check if function exists - it accepts rowstrides
@@ -1097,32 +1111,43 @@ weed_layer_t *load_frame_image(frames_t frame) {
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       } else {
         frame_layer = mainw->frame_layer;
-        /// BE CAREFUL what we do with frame_layer
-        //weed_layer_nullify_pixel_data(mainw->frame_layer);
       }
-
-      if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)
-        // render the timecode for multitrack playback
-        if (!check_for_overlay_text(frame_layer))
-          if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode)
-            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
 
       if (prefs->apply_gamma) {
         // gamma correction
+        tgt_gamma = WEED_GAMMA_SRGB;
         if (weed_palette_is_rgb(mainw->vpp->palette)) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             // some playback plugins may prefer linear gamma
-            tgamma = WEED_GAMMA_LINEAR;
-          else {
-            tgamma = WEED_GAMMA_SRGB;
+            tgt_gamma = WEED_GAMMA_LINEAR;
+        }
+      }
+
+      if (weed_palette_is_rgb(layer_palette)
+          && !weed_palette_is_rgb(mainw->vpp->palette)) {
+        // TODO - delay this if by chance we are downscaling
+        if (tgt_gamma != WEED_GAMMA_UNKNOWN)
+          gamma_convert_layer(tgt_gamma, frame_layer);
+
+        if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+          // render the timecode for multitrack playback
+          if (!check_for_overlay_text(frame_layer))
+            if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode)
+              frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
+
+          if (tgt_gamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+            if (frame_layer == mainw->frame_layer)
+              frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+            gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
           }
         }
+        conv_done = TRUE;
       }
 
       // final palette conversion to whatever the playback plugin needs
       if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
       if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
-                                      mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
+                                      mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgt_gamma)) {
         goto lfi_done;
       }
       if (prefs->dev_show_timing)
@@ -1130,7 +1155,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
                 lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
       if (!player_v2) {
-        // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+        // vid plugin v1 expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         if (!compact_rowstrides(frame_layer)) {
           goto lfi_done;
         }
@@ -1139,15 +1164,36 @@ weed_layer_t *load_frame_image(frames_t frame) {
         g_print("comp rs done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
+      if (!conv_done && weed_palette_is_rgb(mainw->vpp->palette)) {
+        if (tgt_gamma != WEED_GAMMA_UNKNOWN)
+          gamma_convert_layer(tgt_gamma, frame_layer);
+
+        if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+          // render the timecode for multitrack playback
+          if (!check_for_overlay_text(frame_layer))
+            if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode)
+              frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
+
+          if (tgt_gamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+            if (frame_layer == mainw->frame_layer)
+              frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+            gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
+          }
+        }
+      }
+
+      if (prefs->dev_show_timing)
+        g_print("gamma conv done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+
       if (rec_after_pb) {
         // record output from playback plugin
 
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
 
-        return_layer = weed_layer_create(retwidth, retheight, NULL, ovpppalette);
+        return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
-        if (weed_palette_is_yuv(ovpppalette)) {
+        if (weed_palette_is_yuv(mainw->vpp->palette)) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_CLAMPING, mainw->vpp->YUV_clamping);
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SUBSPACE, mainw->vpp->YUV_subspace);
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SAMPLING, mainw->vpp->YUV_sampling);
@@ -1169,13 +1215,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (mainw->cconx) cconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
       }
 
-      if (prefs->apply_gamma) {
-        // gamma correction
-        gamma_convert_layer(tgamma, frame_layer);
-      }
-      if (prefs->dev_show_timing)
-        g_print("gamma conv done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
       if (return_layer) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
       lb_width = lwidth = weed_layer_get_width(frame_layer);
       lb_height = lheight = weed_layer_get_height(frame_layer);
@@ -1187,6 +1226,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
       // lb_width / pwidth, lb_height / pheight --> original unscaled image, centered in output
       // 1, 1 ---> image will be stretched to fill all window
       // get_letterbox_sizes ---> lb_width / pwidth , lb_height / pheight -> letterboxed
+      if (player_v2) {
+        // no letterboxing -> stretch it to fill window
+        weed_set_double_value(frame_layer, "x_range", 1.0);
+        weed_set_double_value(frame_layer, "y_range", 1.0);
+      }
 
       if ((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) {
         // plugin can resize but may not be able to letterbox...
@@ -1203,25 +1247,17 @@ weed_layer_t *load_frame_image(frames_t frame) {
           // (if the image is larger than the screen however, we will shrink it to fit)
           interp = get_interp_value(prefs->pb_quality, TRUE);
           get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, TRUE);
+          if (frame_layer == mainw->frame_layer)
+            frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           if (!letterbox_layer(frame_layer, pwidth, pheight, lb_width, lb_height, interp,
                                mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
+          was_letterboxed = TRUE;
         }
-      } else {
-        if (player_v2) {
-          // no letterboxing -> stretch it to fill window
-          weed_set_double_value(frame_layer, "x_range", 1.0);
-          weed_set_double_value(frame_layer, "y_range", 1.0);
-        }
-      }
-
-      lwidth = weed_layer_get_width(frame_layer);
-      if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
-        // TODO - do conversion before letterboxing
-        gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
       }
 
       // RENDER VIA PLUGIN
       //g_print("PLAY PT 1\n");
+      lwidth = weed_layer_get_width(frame_layer);
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
       if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
           || (!player_v2 && !(*mainw->vpp->render_frame)(lwidth, weed_layer_get_height(frame_layer),
@@ -1269,7 +1305,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       // both dimensions are in pixels,
       weed_plant_t *frame_layer = NULL;
       weed_plant_t *return_layer = NULL;
-      int ovpppalette = mainw->vpp->palette;
       boolean needs_lb = FALSE;
 
       /// check if function exists - it accepts rowstrides
@@ -1293,14 +1328,14 @@ weed_layer_t *load_frame_image(frames_t frame) {
         mainw->vpp->fheight = mainw->pheight;
       }
 
+      frame_layer = mainw->frame_layer;
+
       if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && !(mainw->vpp->capabilities & VPP_CAN_RESIZE) &&
           ((mainw->vpp->fwidth  < mainw->pwidth || mainw->vpp->fheight < mainw->pheight))) {
         // mainw->frame_layer will be downsized for the plugin but upsized for screen
         // so copy layer and convert, retaining original
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-      } else {
-        frame_layer = mainw->frame_layer;
       }
 
       if (frame_layer == mainw->frame_layer && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
@@ -1318,27 +1353,59 @@ weed_layer_t *load_frame_image(frames_t frame) {
       pwidth = mainw->vpp->fwidth;
       pheight = mainw->vpp->fheight;
 
+      if (prefs->apply_gamma) {
+        // gamma correction
+        tgt_gamma = WEED_GAMMA_SRGB;
+        if (weed_palette_is_rgb(mainw->vpp->palette)) {
+          if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
+            // some playback plugins may prefer linear gamma
+            tgt_gamma = WEED_GAMMA_LINEAR;
+        }
+      }
+
+      if (weed_palette_is_rgb(layer_palette)) {
+        // TODO - delay this if by chance we are downscaling
+        if (tgt_gamma != WEED_GAMMA_UNKNOWN)
+          gamma_convert_layer(tgt_gamma, frame_layer);
+
+        if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+          // render the timecode for multitrack playback
+          if (!check_for_overlay_text(frame_layer))
+            if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode)
+              frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
+
+          if (tgt_gamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+            if (frame_layer == mainw->frame_layer)
+              frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+            gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
+          }
+        }
+        conv_done = TRUE;
+      }
+
+      if (player_v2) {
+        weed_set_double_value(frame_layer, "x_range", 1.0);
+        weed_set_double_value(frame_layer, "y_range", 1.0);
+      }
+
+      was_letterboxed = FALSE;
+
       if ((mainw->multitrack && prefs->letterbox_mt) || (!mainw->multitrack && prefs->letterbox)) {
         /// letterbox external
         lb_width = weed_layer_get_width_pixels(mainw->frame_layer);
         lb_height = weed_layer_get_height(mainw->frame_layer);
-        get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0);
+        get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, FALSE);
         if (pwidth != lb_width || pheight != lb_height) {
           needs_lb = TRUE;
           if (!(mainw->vpp->capabilities & VPP_CAN_LETTERBOX)) {
             if (frame_layer == mainw->frame_layer) {
-              if (layer_palette != mainw->vpp->palette && (pwidth > lb_width || pheight > lb_height)) {
-                weed_layer_nullify_pixel_data(frame_layer);
-                frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-                if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
-                if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
-                                                mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
-                  goto lfi_done;
-                }
-              } else {
-                /* frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO); */
-                /* weed_layer_copy(frame_layer, mainw->frame_layer); */
-                frame_layer = mainw->frame_layer;
+              frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+            }
+            if (layer_palette != mainw->vpp->palette && (pwidth > lb_width || pheight > lb_height)) {
+              if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
+              if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
+                                              mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgt_gamma)) {
+                goto lfi_done;
               }
             }
             //g_print("LB to %d X %d and from %d X %d\n", pwidth, pheight, lb_width, lb_height);
@@ -1347,6 +1414,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                  mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
             was_letterboxed = TRUE;
           } else {
+            // plugin cannot resize, but it can letterbox, so just resize to lb size
+            // and let the plugin centre it
             weed_set_double_value(frame_layer, "x_range", (double)lb_width / (double)pwidth);
             weed_set_double_value(frame_layer, "y_range", (double)lb_height / (double)pheight);
 	    // *INDENT-OFF*
@@ -1379,7 +1448,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
         // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
         // so copy layer and convert, retaining original
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
-        weed_layer_nullify_pixel_data(frame_layer);
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
@@ -1388,29 +1456,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
       pwidth = weed_layer_get_width_pixels(frame_layer);
       pheight = weed_layer_get_height(frame_layer);
 
-      if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
-        if (!check_for_overlay_text(frame_layer)) {
-          if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
-            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
-          }
-        }
-      }
-
-      if (prefs->apply_gamma) {
-        // gamma correction
-        if (weed_palette_is_rgb(mainw->vpp->palette)) {
-          if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
-            tgamma = WEED_GAMMA_LINEAR;
-          else {
-            tgamma = WEED_GAMMA_SRGB;
-          }
-        }
-      }
       //g_print("clp start %d %d   %d %d @\n", weed_layer_get_palette(frame_layer),
-      //mainw->vpp->palette, weed_layer_get_gamma(frame_layer), tgamma);
+      //mainw->vpp->palette, weed_layer_get_gamma(frame_layer), tgt_gamma);
       if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
       if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
-                                      mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
+                                      mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgt_gamma)) {
         goto lfi_done;
       }
 
@@ -1425,13 +1475,41 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (prefs->dev_show_timing)
           g_printerr("c rows done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       }
+
+      if (!conv_done && weed_palette_is_rgb(mainw->vpp->palette)) {
+        if (tgt_gamma != WEED_GAMMA_UNKNOWN) {
+          if (was_letterboxed)
+            gamma_convert_sub_layer(tgt_gamma, 1.0, frame_layer, (pwidth - lb_width) >> 1,
+                                    (pheight - lb_height) >> 1, lb_width, lb_height, TRUE);
+          else
+            gamma_convert_layer(tgt_gamma, frame_layer);
+        }
+
+        if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+          // render the timecode for multitrack playback
+          if (!check_for_overlay_text(frame_layer))
+            if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode)
+              frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
+
+          if (tgt_gamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+            if (frame_layer == mainw->frame_layer)
+              frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+            if (was_letterboxed)
+              gamma_convert_sub_layer(tgt_gamma, 1.0, frame_layer, (pwidth - lb_width) >> 1,
+                                      (pheight - lb_height) >> 1, lb_width, lb_height, TRUE);
+            else
+              gamma_convert_layer(tgt_gamma, frame_layer);
+          }
+        }
+      }
+
       if (rec_after_pb) {
         // record output from playback plugin
         int retwidth = mainw->vpp->fwidth;
         int retheight = mainw->vpp->fheight;
 
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
-        return_layer = weed_layer_create(retwidth, retheight, NULL, ovpppalette);
+        return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
         if (weed_palette_is_yuv(mainw->vpp->palette)) {
           weed_layer_set_yuv_clamping(return_layer, mainw->vpp->YUV_clamping);
@@ -1454,26 +1532,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (mainw->cconx) cconx_chain_data(-2, 0);
       }
 
-      if (tgamma != WEED_GAMMA_UNKNOWN) {
-        if (!was_letterboxed) {
-          gamma_convert_layer(tgamma, frame_layer);
-        } else {
-          gamma_convert_sub_layer(tgamma, 1.0, frame_layer, (pwidth - lb_width) / 2, (pheight - lb_height) / 2,
-                                  lb_width, lb_height, TRUE);
-        }
-      }
-
+      // gamma of any returned layer will be the same
       if (return_layer) weed_layer_set_gamma(return_layer, weed_layer_get_gamma(frame_layer));
-
-      if (player_v2) {
-        weed_set_double_value(frame_layer, "x_range", 1.0);
-        weed_set_double_value(frame_layer, "y_range", 1.0);
-      }
-
-      if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
-        // TODO - do conversion before letterboxing
-        gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
-      }
 
       //g_print("PLAY PT 2\n");
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
@@ -1500,10 +1560,12 @@ weed_layer_t *load_frame_image(frames_t frame) {
                         weed_layer_get_width_pixels(return_layer));
         int height = MIN(weed_layer_get_height(mainw->frame_layer),
                          weed_layer_get_height(return_layer));
+
         if (resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
-          if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+          if (tgt_gamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+            // return layer will have WEED_GAMMA_MONITOR
             // TODO - save w. screen_gamma
-            gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
+            gamma_convert_layer(WEED_GAMMA_SRGB, return_layer);
           }
           save_to_scrap_file(return_layer);
           lives_freep((void **)&framecount);
@@ -1531,6 +1593,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
     if (prefs->dev_show_timing)
       g_printerr("clr @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
+    if (prefs->apply_gamma) tgt_gamma = WEED_GAMMA_SRGB;
+
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
     //g_print("FLL is %p %p\n", mainw->frame_layer, weed_layer_get_pixel_data(mainw->frame_layer));;
 
@@ -1544,9 +1608,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       success = TRUE;
       goto lfi_done;
     }
-
-    g_print("NXXasdsaddidX EW pixdata %p %p\n", mainw->frame_layer,
-            weed_layer_get_pixel_data(mainw->frame_layer));
 
     ////////////////////////////////////////
 
@@ -1572,11 +1633,19 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     pwidth = (int)(pwidth >> 3) << 3;
 
+    if (weed_palette_is_rgb(layer_palette)) {
+      // TODO - delay this if by chance we are downscaling
+      if (tgt_gamma != WEED_GAMMA_UNKNOWN)
+        gamma_convert_layer(tgt_gamma, frame_layer);
+      conv_done = TRUE;
+    }
+
     if (prefs->dev_show_timing)
       g_printerr("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
     lb_width = weed_layer_get_width_pixels(mainw->frame_layer);
     lb_height = weed_layer_get_height(mainw->frame_layer);
+    was_letterboxed = FALSE;
 
     if ((lb_width != pwidth || lb_height != pheight)
         || weed_get_boolean_value(mainw->frame_layer, "letterboxed", NULL) == WEED_FALSE) {
@@ -1603,11 +1672,15 @@ weed_layer_t *load_frame_image(frames_t frame) {
     if (prefs->dev_show_timing)
       g_printerr("res end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-    // can unref mainw->frame_layer !!
-    if (!convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0, WEED_GAMMA_SRGB)) goto lfi_done;
+    if (!convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0, tgt_gamma)) goto lfi_done;
+
+
+
+
 
     if (prefs->dev_show_timing)
       g_printerr("clp end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+
     if (LIVES_IS_PLAYING) {
       if (!check_for_overlay_text(mainw->frame_layer)) {
         if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
@@ -1616,12 +1689,26 @@ weed_layer_t *load_frame_image(frames_t frame) {
       }
     }
 
+    frame_layer = mainw->frame_layer;
+
+    if (tgt_gamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+      frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+      if (was_letterboxed)
+        gamma_convert_sub_layer(WEED_GAMMA_MONITOR, 1.0, frame_layer, (pwidth - lb_width) >> 1,
+                                (pheight - lb_height) >> 1, lb_width, lb_height, TRUE);
+      else
+        gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
+    }
+
     //////////////////////////////////
 
     if (prefs->dev_show_timing)
       g_printerr("l2p start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-    pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
+    pixbuf = layer_to_pixbuf(frame_layer, TRUE, TRUE);
+
+    if (frame_layer != mainw->frame_layer) weed_layer_free(frame_layer);
+    frame_layer = NULL;
 
     if (prefs->dev_show_timing)
       g_printerr("l2p @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -1756,10 +1843,6 @@ lfi_done:
     if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
   }
 
-  if (old_frame_layer) {
-    weed_layer_free(old_frame_layer);
-  }
-
   if (success && mainw->frame_layer) {
     // format is (int64_t)tc|(int32_t)nclips|(int32_t)clip|(int64_t)frame|.....|(double)pb_fps
     char *tmp, *msg;
@@ -1778,7 +1861,15 @@ lfi_done:
   }
 
   weed_layer_ref(mainw->frame_layer);
+
+  if (old_frame_layer) {
+    weed_layer_free(old_frame_layer);
+  }
+
   old_frame_layer = mainw->frame_layer;
+
+  if (!mainw->multitrack && !mainw->is_rendering)
+    mainw->frame_layer = NULL;
 
   // TODO - set mainw->frame_layer = NULL
   return old_frame_layer;
@@ -2807,7 +2898,13 @@ switch_point:
       mainw->can_switch_clips = FALSE;
     }
 
+
     lives_nanosleep_while_true(mainw->do_ctx_update);
+
+    lives_widget_queue_draw_and_update(mainw->LiVES);
+    lives_widget_context_update();
+
+    lives_nanosleep_while_true(mainw->do_ctx_update || mainw->drawing);
 
     mainw->can_switch_clips = TRUE;
     do_quick_switch(mainw->new_clip);
@@ -2938,9 +3035,7 @@ switch_point:
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
           weed_event_t *next_event;
-          pthread_mutex_unlock(&mainw->trcount_mutex);
           next_event = process_events(cfile->next_event, FALSE, currticks);
-          pthread_mutex_lock(&mainw->trcount_mutex);
           // need to get this again, as process_events can switch the current clip
           cfile->next_event = next_event;
           if (!cfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
@@ -3850,9 +3945,7 @@ proc_dialog:
         // thread. We must allow idlefunc(s) to run during this time
 
         if (!mainw->do_ctx_update) {
-          pthread_mutex_unlock(&mainw->trcount_mutex);
           lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
-          pthread_mutex_lock(&mainw->trcount_mutex);
           mainw->gui_much_events = TRUE;
           mainw->do_ctx_update = TRUE;
         }

@@ -426,6 +426,10 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     }
   } else {
     /// shallow copy
+    if (weed_layer_get_pixel_data(layer)) {
+      break_me("evisc");
+      abort();
+    }
     weed_layer_pixel_data_free(layer);
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
@@ -472,7 +476,10 @@ LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
-    if (mainw->debug_ptr == layer) mainw->debug_ptr = NULL;
+    if (mainw->debug_ptr == layer) {
+      break_me("free dbg");
+      mainw->debug_ptr = NULL;
+    }
     weed_layer_pixel_data_free(layer);
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     weed_plant_free(layer);
@@ -481,7 +488,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 }
 
 int weed_layer_unref(weed_layer_t *layer) {
-  // g_print("unref layer %p\n", layer);
+  if (layer == mainw->debug_ptr) break_me("unref ofl");
   int refs = weed_refcount_dec(layer);
   if (!refs) {
     weed_layer_free(layer);

@@ -245,14 +245,14 @@ extern "C"
   void libweed_print_init_opts(FILE *);
 
   weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
-  int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free);
+  int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
 
-  typedef void *(*libweed_slab_alloc_f)(size_t);
+  typedef void *(*libweed_slab_alloc_clear_f)(size_t);
   typedef void *(*libweed_slab_alloc_and_copy_f)(size_t, void *);
   typedef void (*libweed_slab_unalloc_f)(size_t, void *);
   typedef void (*libweed_unmalloc_and_copy_f)(size_t, void *);
 
-  int libweed_set_slab_funcs(libweed_slab_alloc_f, libweed_slab_unalloc_f,
+  int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f,
 			     libweed_slab_alloc_and_copy_f);
 
 #ifdef __LIBWEED__

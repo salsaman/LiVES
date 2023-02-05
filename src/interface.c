@@ -430,7 +430,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 0, sfile->achans) * 2.;
         }
-        //lives_close_buffered(afd);
       }
 
       if (mainw->current_file != fileno
@@ -687,7 +686,12 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   return TRUE;
 
 bail:
-  if (cr) lives_painter_destroy(cr);
+  if (cr) {
+    lives_painter_surface_t *surface = lives_painter_get_target(cr);
+    lives_painter_surface_flush(surface);
+    cairo_surface_finish(surface);
+    lives_painter_destroy(cr);
+  }
   if (afd >= 0) lives_close_buffered(afd);
   if (mainw->current_file == fileno && fileno != current_file)
     mainw->current_file = current_file;
@@ -723,7 +727,6 @@ void redraw_timer_bars(double oldx, double newx, int which) {
     update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
   }
 }
-
 
 
 static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
@@ -3606,16 +3609,16 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 
 void cancel_tl_redraw(void) {
   lives_proc_thread_t lpt = mainw->drawtl_thread;
-  mainw->drawtl_thread = NULL;
-  if (lives_proc_thread_ref(lpt) > 0) {
+  if (lives_proc_thread_ref(lpt) > 1) {
     if (!lives_proc_thread_check_finished(lpt)) {
       pthread_mutex_lock(&mainw->tlthread_mutex);
       lives_proc_thread_request_cancel(lpt, FALSE);
       pthread_mutex_unlock(&mainw->tlthread_mutex);
-      lives_proc_thread_wait_done(lpt, 0.);
+      lives_proc_thread_join(lpt);
     }
     lives_proc_thread_unref(lpt);
   }
+  mainw->drawtl_thread = NULL;
 }
 
 
@@ -3686,7 +3689,9 @@ void redraw_timeline(int clipno) {
       pthread_mutex_lock(&mainw->tlthread_mutex);
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
                              (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
+
       lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
+
       lives_proc_thread_set_cancellable(mainw->drawtl_thread);
       lives_proc_thread_sync_ready(mainw->drawtl_thread);
       RECURSE_GUARD_END;

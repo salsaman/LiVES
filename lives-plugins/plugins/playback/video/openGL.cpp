@@ -116,8 +116,6 @@ static pthread_mutex_t cond_mutex;
 
 static void *render_thread_func(void *data);
 
-static boolean ready = false;
-
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
@@ -666,14 +664,10 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   if (!playing || (rc == ETIMEDOUT && !rthread_ready)) {
     std::cerr << "openGL plugin error: Failed to start render thread" << std::endl;
+    exit_screen(0, 0);
     return FALSE;
   }
 
-  if (!ready) {
-    ready = true;
-    exit_screen(0, 0);
-    init_screen(width, height, fullscreen, window_id, argc, argv);
-  }
   return TRUE;
 }
 

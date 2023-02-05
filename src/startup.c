@@ -751,8 +751,6 @@ static boolean pre_init(void) {
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
 
-  pthread_rwlock_init(&mainw->rte_rwlock, NULL);
-
   if (prefs->vj_mode)
     prefs->load_rfx_builtin = FALSE;
   else
@@ -2019,16 +2017,16 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
-  libweed_set_memory_funcs(rpmalloc, rpfree);
+  libweed_set_memory_funcs(rpmalloc, rpfree, rpcalloc);
 #else
 #ifndef DISABLE_GSLICE
 #if GLIB_CHECK_VERSION(2, 14, 0)
-  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, lives_slice_alloc_and_copy);
+  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, lives_slice_alloc_and_copy);
 #else
-  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
+  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL);
 #endif
 #else
-  libweed_set_memory_funcs(_lives_malloc, _lives_free);
+  libweed_set_memory_funcs(_lives_calloc, _lives_free);
 #endif // DISABLE_GSLICE
 #endif // USE_RPMALLOC
   weed_utils_set_custom_memfuncs(_lives_malloc, _lives_calloc, _lives_memcpy, NULL, _lives_free);
@@ -4842,7 +4840,6 @@ boolean set_palette_colours(boolean force_reload) {
     double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
     if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
-    break_me("prcthrd");
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
       = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, (lives_funcptr_t)pick_custom_colours,
                                  WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);

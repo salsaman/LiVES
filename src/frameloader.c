@@ -1985,7 +1985,6 @@ fndone:
   }
 
 
-
   static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, weed_layer_t *layer) {
     // render subtitles from whatever (.srt or .sub) file
     // uses default values for colours, fonts, size, etc.
@@ -2792,11 +2791,14 @@ fail:
       lives_widget_set_size_request(mainw->play_image, hsize, vsize);
       xwin = lives_widget_get_xwindow(mainw->play_image);
       if (LIVES_IS_XWINDOW(xwin)) {
-        if (mainw->play_surface) lives_painter_surface_destroy(mainw->play_surface);
-        mainw->play_surface =
-          lives_xwindow_create_similar_surface(xwin, LIVES_PAINTER_CONTENT_COLOR,
-                                               hsize, vsize);
-        clear_widget_bg(mainw->play_image, mainw->play_surface);
+        if (hsize != lives_painter_image_surface_get_width(mainw->play_surface)
+            || vsize != lives_painter_image_surface_get_height(mainw->play_surface)) {
+          if (mainw->play_surface) lives_painter_surface_destroy(mainw->play_surface);
+          mainw->play_surface =
+            lives_xwindow_create_similar_surface(xwin, LIVES_PAINTER_CONTENT_COLOR,
+                                                 hsize, vsize);
+          clear_widget_bg(mainw->play_image, mainw->play_surface);
+        }
       }
     } else {
       // capture window size

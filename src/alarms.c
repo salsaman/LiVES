@@ -137,3 +137,81 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
   return TRUE;
 }
 
+#if 0
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <time.h>
+
+#define CLOCKID CLOCK_REALTIME
+#define SIG SIGRTMIN
+
+static void print_siginfo(siginfo_t *si) {
+  timer_t *tidp;
+  int or;
+  tidp = si->si_value.sival_ptr;
+  g_print("    sival_ptr = %p; ", si->si_value.sival_ptr);
+  g_print("    *sival_ptr = 0x%lx\n", (long) *tidp);
+  or = timer_getoverrun(*tidp);
+  g_print("    overrun count = %d\n", or);
+}
+
+
+static void handler(int sig, siginfo_t *si, void *uc) {
+  g_print("Caught signal %d\n", sig);
+  //signal(sig, SIG_DFL);
+}
+
+
+boolean lives_timer_create(uint64_t freq) {
+  static sigset_t mask;
+  static sigset_t mask;
+  timer_t timerid;
+  struct sigevent sev;
+  struct itimerspec its;
+  long long freq_nanosecs;
+  struct sigaction sa;
+
+  // set up handler
+  //sa.sa_flags = SA_SIGINFO;
+  sa.sa_sigaction = handler;
+  sigemptyset(&sa.sa_mask);
+  if (sigaction(SIG, &sa, NULL) == -1) return FALSE;
+
+  // create timer
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = SIG;
+  sev.sigev_value.sival_ptr = &timerid;
+  if (timer_create(CLOCKID, &sev, &timerid) == -1)
+    return FALSE;
+
+  printf("timer ID is 0x%lx\n", (long) timerid);
+
+  // set the frequency (nanoseconds)
+  freq_nanosecs = freq;
+  its.it_value.tv_sec = freq_nanosecs / 1000000000;
+  its.it_value.tv_nsec = freq_nanosecs % 1000000000;
+  its.it_interval.tv_sec = its.it_value.tv_sec;
+  its.it_interval.tv_nsec = its.it_value.tv_nsec;
+  if (timer_settime(timerid, 0, &its, NULL) == -1) abort();
+
+  sleep(100);
+
+  return TRUE;
+}
+
+
+boolean lives_timer_unblock(void) {
+  if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) return FALSE;
+  return TRUE;
+}
+
+
+boolean lives_timer_block(void) {
+  sigemptyset(&mask);
+  sigaddset(&mask, SIG);
+  if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) return FALSE;
+  return TRUE;
+}
+#endif

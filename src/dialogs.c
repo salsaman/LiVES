@@ -1961,9 +1961,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // *INDENT-ON*
 
       // do a processing pass
-      if (!visible) pthread_mutex_lock(&mainw->trcount_mutex);
       if (process_one(visible)) {
-        if (!visible) pthread_mutex_unlock(&mainw->trcount_mutex);
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 #ifdef USE_GDK_FRAME_CLOCK
         if (using_gdk_frame_clock) {
@@ -1974,7 +1972,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         cancel_process(visible);
         return FALSE;
       }
-      if (!visible) pthread_mutex_unlock(&mainw->trcount_mutex);
 
       if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
         int64_t dsused = disk_monitor_check_result(prefs->workdir);

@@ -206,8 +206,6 @@ lives_threadvars_t *get_threadvars(void);
 lives_threadvars_t *get_threadvars_bg_only(void);
 lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
-///lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
-//lives_thread_data_t *lives_thread_data_create(void *pidx);
 void *lives_thread_data_create(void *pidx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)

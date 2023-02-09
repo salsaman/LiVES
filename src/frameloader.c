@@ -2520,7 +2520,7 @@ fail:
     if (mainw->blend_file != -1 && mainw->blend_palette != WEED_PALETTE_END
         && LIVES_IS_PLAYING && !mainw->multitrack && mainw->blend_file != mainw->current_file
         && weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {
-      int tgamma = WEED_GAMMA_UNKNOWN;
+      int tgt_gamma = WEED_GAMMA_UNKNOWN;
       short interp = get_interp_value(prefs->pb_quality, TRUE);
       pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
       if (lives_proc_thread_get_cancel_requested(lpt)) return FALSE;
@@ -2531,17 +2531,17 @@ fail:
       if (lives_proc_thread_get_cancel_requested(lpt)) return FALSE;
       if (mainw->blend_palette != WEED_PALETTE_END) {
         if (weed_palette_is_rgb(mainw->blend_palette))
-          tgamma = mainw->blend_gamma;
+          tgt_gamma = mainw->blend_gamma;
       }
       if (mainw->blend_palette != WEED_PALETTE_END) {
         if (is_layer_ready(layer) && weed_layer_get_width(layer) == mainw->blend_width
             && weed_layer_get_height(layer) == mainw->blend_height) {
           convert_layer_palette_full(layer, mainw->blend_palette, mainw->blend_clamping, mainw->blend_sampling,
-                                     mainw->blend_subspace, tgamma);
+                                     mainw->blend_subspace, tgt_gamma);
         }
       }
       if (lives_proc_thread_get_cancel_requested(lpt)) return FALSE;
-      if (tgamma != WEED_GAMMA_UNKNOWN && is_layer_ready(layer)
+      if (tgt_gamma != WEED_GAMMA_UNKNOWN && is_layer_ready(layer)
           && weed_layer_get_width(layer) == mainw->blend_width
           && weed_layer_get_height(layer) == mainw->blend_height
           && weed_layer_get_palette(layer) == mainw->blend_palette)
@@ -2682,7 +2682,7 @@ fail:
   }
 
 
-  void resize(double scale) {
+  static void _resize(double scale) {
     // resize the frame widgets
     // set scale < 0. to _force_ the playback frame to expand (for external capture)
     LiVESXWindow *xwin;
@@ -2793,11 +2793,13 @@ fail:
       if (LIVES_IS_XWINDOW(xwin)) {
         if (hsize != lives_painter_image_surface_get_width(mainw->play_surface)
             || vsize != lives_painter_image_surface_get_height(mainw->play_surface)) {
+          pthread_mutex_lock(&mainw->play_surface_mutex);
           if (mainw->play_surface) lives_painter_surface_destroy(mainw->play_surface);
           mainw->play_surface =
             lives_xwindow_create_similar_surface(xwin, LIVES_PAINTER_CONTENT_COLOR,
                                                  hsize, vsize);
           clear_widget_bg(mainw->play_image, mainw->play_surface);
+          pthread_mutex_unlock(&mainw->play_surface_mutex);
         }
       }
     } else {
@@ -2827,16 +2829,26 @@ fail:
     //  update_sel_menu();
 
     if (scale != oscale) {
-      lives_widget_context_update();
-      if (prefs->open_maximised)
-        lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      else if (w > scr_width - bx || h > scr_height - by) {
-        w = scr_width - bx;
-        h = scr_height - by;
-        lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-        lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      if (!LIVES_IS_PLAYING) {
+        lives_widget_context_update();
+        if (prefs->open_maximised)
+          lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+        else if (w > scr_width - bx || h > scr_height - by) {
+          w = scr_width - bx;
+          h = scr_height - by;
+          lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+          lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+        }
       }
     }
   }
 
 
+  void resize(double scale) {
+    if (is_fg_thread()) _resize(scale);
+    else {
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      main_thread_execute_rvoid(_resize, 0, "d", scale);
+      BG_THREADVAR(hook_hints) = 0;
+    }
+  }

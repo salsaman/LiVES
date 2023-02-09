@@ -97,8 +97,14 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->trcount_mutex);
     pthread_mutex_trylock(&mainw->alock_mutex);
     pthread_mutex_unlock(&mainw->alock_mutex);
+    pthread_mutex_trylock(&mainw->tlthread_mutex);
     pthread_mutex_unlock(&mainw->tlthread_mutex);
+    pthread_mutex_trylock(&mainw->all_hstacks_mutex);
     pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+    pthread_mutex_trylock(&mainw->play_surface_mutex);
+    pthread_mutex_unlock(&mainw->play_surface_mutex);
+    pthread_mutex_trylock(&mainw->pwin_surface_mutex);
+    pthread_mutex_unlock(&mainw->pwin_surface_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
@@ -5346,9 +5352,8 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                           livespointer user_data) {
   LiVESList *list_index;
   lives_clip_t *sfile;
-  int i = 0;
+  int i = 0, type = 0, blend_file = mainw->blend_file;
   int num_tried = 0, num_clips;
-  int type = 0;
 
   // prev clip
   // type = 0 : if the effect is a transition, this will change the background clip
@@ -5366,11 +5371,13 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
                     && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
-    if (!IS_VALID_CLIP(mainw->blend_file)) return TRUE;
-    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
+    if (blend_file == -1) blend_file = mainw->playing_file;
+    if (!IS_VALID_CLIP(blend_file)) return TRUE;
+    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist,
-                                 LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
+                                 LIVES_INT_TO_POINTER(mainw->swapped_clip == -1
+                                     ? mainw->current_file : mainw->swapped_clip));
   }
   mainw->swapped_clip = -1;
 
@@ -5380,10 +5387,10 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
     i = LIVES_POINTER_TO_INT(list_index->data);
-    sfile = mainw->files[i];
+    sfile = RETURN_VALID_CLIP(i);
   } while (!sfile || sfile->hidden || sfile->opening || sfile->restoring || i == mainw->scrap_file ||
            i == mainw->ascrap_file || (LIVES_IS_PLAYING
-                                       && (!sfile->frames || i == mainw->blend_file || i == mainw->playing_file)));
+                                       && (!sfile->frames || i == blend_file || i == mainw->playing_file)));
 
   if (user_data) {
     if (prefs->autotrans_key > 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
@@ -5401,10 +5408,8 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                           livespointer user_data) {
   LiVESList *list_index;
   lives_clip_t *sfile;
-  int i;
+  int i = 0, type = 0, blend_file = mainw->blend_file;
   int num_tried = 0, num_clips;
-
-  int type = 0; ///< auto (switch bg if a transition is active, otherwise foreground)
 
   if (!LIVES_IS_INTERACTIVE) return TRUE;
   if (mainw->go_away) return TRUE;
@@ -5419,8 +5424,10 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
                     && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
-    if (!IS_VALID_CLIP(mainw->blend_file)) return TRUE;
-    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
+    blend_file = mainw->blend_file;
+    if (blend_file == -1) blend_file = mainw->playing_file;
+    if (!IS_VALID_CLIP(blend_file)) return TRUE;
+    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist,
                                  LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
@@ -5433,10 +5440,10 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
     i = LIVES_POINTER_TO_INT(list_index->data);
-    sfile = mainw->files[i];
+    sfile = RETURN_VALID_CLIP(i);
   } while (!sfile || sfile->hidden || sfile->opening || sfile->restoring || i == mainw->scrap_file ||
            i == mainw->ascrap_file || (LIVES_IS_PLAYING
-                                       && (!sfile->frames || i == mainw->blend_file || i == mainw->playing_file)));
+                                       && (!sfile->frames || i == blend_file || i == mainw->playing_file)));
 
   if (user_data) {
     if (prefs->autotrans_key > 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
@@ -9299,10 +9306,13 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
 boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_surface_t **surf = (lives_painter_surface_t **)psurf;
   if (surf && *surf) {
+    pthread_mutex_t *mlocked = NULL;
+    if (*surf == mainw->play_surface) mlocked = &mainw->play_surface_mutex;
+    if (mlocked) pthread_mutex_lock(mlocked);
     lives_painter_set_source_surface(cr, *surf, 0., 0.);
     lives_painter_paint(cr);
+    if (mlocked) pthread_mutex_unlock(mlocked);
   }
-  mainw->drawing = FALSE;
   return TRUE;
 }
 

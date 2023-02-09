@@ -101,14 +101,31 @@ WEED_GLOBAL_INLINE uint32_t weed_leaf_clear_flagbits(weed_plant_t *plant, const 
   return flags;
 }
 
+WEED_GLOBAL_INLINE weed_error_t weed_plant_set_undeletable(weed_plant_t *plant, int undeletable) {
+  weed_error_t err = WEED_ERROR_NOSUCH_PLANT;
+  if (plant) {
+    uint32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
+    if (undeletable) err = weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags | WEED_FLAG_UNDELETABLE);
+    else err = weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~WEED_FLAG_UNDELETABLE);
+  }
+  return err;
+}
+
+WEED_GLOBAL_INLINE int weed_plant_is_undeletable(weed_plant_t *plant) {
+  return plant && (weed_leaf_get_flags(plant, WEED_LEAF_TYPE) & WEED_FLAG_UNDELETABLE)
+    ? WEED_TRUE : WEED_FALSE;
+}
+
 void weed_add_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
   if (!plant) return;
   else {
     size_t ign_prefix_len = 0;
     char **leaves = weed_plant_list_leaves(plant, NULL);
     if (leaves) {
+      free(leaves[0]);
       if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
-      for (int i = 0; leaves[i]; i++) {
+      // ignore the "type" leaf
+      for (int i = 1; leaves[i]; i++) {
         if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
           weed_leaf_set_flagbits(plant, leaves[i], flags);
         }
@@ -126,7 +143,8 @@ void weed_clear_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign
     char **leaves = weed_plant_list_leaves(plant, NULL);
     if (leaves) {
       if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
-      for (int i = 0; leaves[i]; i++) {
+      // ignore the "type" leaf
+      for (int i = 1; leaves[i]; i++) {
         if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
           weed_leaf_clear_flagbits(plant, leaves[i], flags);
         }

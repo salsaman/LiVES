@@ -432,7 +432,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
-  cairo_stroke(cr);
+  if (1 || is_fg_thread()) cairo_stroke(cr);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(cairo_stroke, 0, "v", cr);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -488,7 +493,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
 }
 
 
-LIVES_LOCAL_INLINE void lives_painter_lozenge(lives_painter_t *cr, double offs_x, double offs_y, double width, double height,
+WIDGET_HELPER_LOCAL_INLINE void lives_painter_lozenge(lives_painter_t *cr, double offs_x, double offs_y, double width,
+    double height,
     double rad) {
   width += offs_x * 2;
   height += offs_y * 2;
@@ -950,7 +956,7 @@ boolean set_gui_loop_tight(boolean val) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *ctx, boolean may_block) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *ctx, boolean may_block) {
   if (!is_fg_thread()) {
     if (!gui_loop_tight) mainw->do_ctx_update = TRUE;
     return FALSE;
@@ -1045,6 +1051,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
   static int prio =  PRIO_HIGH;
   static boolean omode = -1;
   boolean is_fg_service = FALSE;
+  boolean is_active;
 
   if (skip_idlefuncs) {
     // callback can be blocked to prevent it triggering whilst we are updating the GUI only
@@ -1072,12 +1079,13 @@ boolean fg_service_fulfill_cb(void *dummy) {
   if (gui_loop_tight && g_main_depth() > 1) return TRUE;
 
   do {
-    boolean is_active = FALSE;
+    is_active = FALSE;
     if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
       is_active = fg_service_fulfill();
     if (is_active) {
       cprio = PRIO_HIGH;
-      if (gui_loop_tight && !mainw->do_ctx_update)
+      if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
+          && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
         lives_widget_context_iteration(NULL, FALSE);
       if (prio != PRIO_HIGH) {
         lives_source_set_priority(mainw->fg_service_source, cprio);
@@ -1095,7 +1103,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (!gui_loop_tight) break;
 
     if (mainw->do_ctx_update) {
-      _lives_widget_context_update();
+      if (!is_active) _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
     } else {
       lives_nanosleep(NSLEEP_TIME);
@@ -1110,7 +1118,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
     }
   } while (gui_loop_tight);
 
-  if (mainw->do_ctx_update) {
+  if (mainw->do_ctx_update && !is_active) {
     if (THREADVAR(fg_service)) {
       is_fg_service = TRUE;
     } else THREADVAR(fg_service) = TRUE;
@@ -1125,7 +1133,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
         lives_microsleep;
     }
   }
-
+  mainw->do_ctx_update = FALSE;
   return TRUE;
 }
 
@@ -1134,6 +1142,21 @@ void fg_service_wake(void) {
   cprio = PRIO_HIGH;
   // signal to keep high prio until something is run
   misses = 0;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void fg_stack_wait(void) {
+  // test fo nonzero-ness: if the trylock fails we try again
+  // when trylock succeeds and returns 0, then we proceed to the next part of the &&
+  // we negate the next part, if the (anti)condition is FALSE, the other part of the || is irrelevant
+  // (the mutex unlock) and the loop finshes, then we just need to ensure the mutex unlock happens
+  // if the (anti)condition is TRUE, then the other part of the || is checked
+  // - the mutex unlock should always return 0, then negated this becomes 1, so we loop again
+  lives_nanosleep_until_zero(pthread_mutex_trylock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)
+                             && !((mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack != NULL
+                                   && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) ||
+                                  pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)));
+  pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 }
 
 
@@ -1506,7 +1529,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
   if (1 || is_fg_thread()) _lives_widget_set_sensitive(widget, state);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_set_sensitive, 0, "vb",	widget, state);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_set_sensitive, 0, "vb", widget, state);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -1748,14 +1771,13 @@ static boolean lptdone(lives_obj_t *obj, void *data) {
 
 
 static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
-  lives_proc_thread_t compl_lpt = NULL;
   volatile boolean bvar = FALSE;
   boolean do_cancel = FALSE;
 
   // must set this, so we get tyoed return value from finished action
   weed_set_voidptr_value(lpt, "retloc", retval);
 
-  compl_lpt = lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
+  lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
 
   // setting this, we trigger the main thread to run lpt in fg_service_fulfill)
   lpttorun = lpt;
@@ -3147,7 +3169,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
     BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
     MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
-    mainw->drawing = TRUE;
   }
   return TRUE;
 #endif
@@ -3436,7 +3457,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_reorder_child(LiVESBox *box, LiVES
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_box_set_child_packing(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_set_child_packing(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
     uint32_t padding, LiVESPackType pack_type) {
 #ifdef GUI_GTK
   gtk_box_set_child_packing(box, child, expand, fill, padding, pack_type);
@@ -4027,7 +4048,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
 }
 
 
-LIVES_GLOBAL_INLINE int lives_combo_get_n_entries(LiVESCombo *combo) {
+WIDGET_HELPER_GLOBAL_INLINE int lives_combo_get_n_entries(LiVESCombo *combo) {
   int nnodes = -1;
 #ifdef GUI_GTK
   LiVESTreeModel *tmodel = lives_combo_get_model(combo);
@@ -4404,7 +4425,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char 
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *button,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *button,
     const char *stock_id) {
   boolean can_show = FALSE, always_show = FALSE;
 #ifdef USE_SPECIAL_BUTTONS
@@ -9320,7 +9341,7 @@ LiVESWidget *lives_standard_formatted_label_new(const char *text) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_label_chomp(LiVESLabel * label) {
+WIDGET_HELPER_GLOBAL_INLINE void lives_label_chomp(LiVESLabel * label) {
   char *txt = lives_strdup(lives_label_get_text(label));
   lives_chomp(txt, TRUE);
   lives_label_set_text(label, txt);
@@ -10893,7 +10914,7 @@ LiVESWidget *lives_standard_font_chooser_new(const char *fontname) {
 }
 
 
-LIVES_GLOBAL_INLINE
+WIDGET_HELPER_GLOBAL_INLINE
 boolean lives_standard_font_chooser_set_size(LiVESFontChooser * fchoo, int fsize) {
   LingoFontDesc *lfd = lives_font_chooser_get_font_desc(fchoo);
   lingo_fontdesc_set_size(lfd, fsize * LINGO_SCALE);

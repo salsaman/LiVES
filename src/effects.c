@@ -1247,16 +1247,15 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
 }
 
 
-static boolean _swap_fg_bg_callback(void) {
-  int blend_file = mainw->blend_file;
-
-  if (mainw->playing_file < 1 || !mainw->num_tr_applied || !IS_VALID_CLIP(blend_file)
-      || blend_file == mainw->current_file || mainw->preview
-      || (mainw->is_processing && cfile->is_loaded)) {
+boolean swap_fg_bg_callback(LiVESAccelGroup * acc, LiVESWidgetObject * o, uint32_t i,
+                            LiVESXModifierType m, livespointer user_data) {
+  if (mainw->playing_file < 1 || !mainw->num_tr_applied || !IS_VALID_CLIP(mainw->blend_file)
+      || mainw->blend_file == mainw->playing_file || mainw->preview
+      || (mainw->is_processing && (!CURRENT_CLIP_IS_VALID || cfile->is_loaded))) {
     return TRUE;
   }
 
-  if (mainw->swapped_clip == -1) {
+  if (!IS_VALID_CLIP(mainw->swapped_clip)) {
     // this is to avoid an annoying situation in VJ playback, where the cliplist position
     // can keep changind each time we swap the fg and bg
     // with a transition active, nxt/pre
@@ -1264,29 +1263,20 @@ static boolean _swap_fg_bg_callback(void) {
     // instead we would like to continue from whatever was the fg clip at the time we swapped
     // when we swap the first time, we store fg clip, then this value is only reset when the trans.
     // is deactivated, and prev/nst clip actioned.
-    if (CURRENT_CLIP_IS_NORMAL)
-      mainw->swapped_clip = mainw->current_file;
+    if (IS_NORMAL_CLIP(mainw->playing_file))
+      mainw->swapped_clip = mainw->playing_file;
     else mainw->swapped_clip = mainw->pre_src_file;
   } else mainw->swapped_clip = -1;
 
-  mainw->new_blend_file = mainw->current_file;
-  mainw->new_clip = blend_file;
+  mainw->new_blend_file = mainw->playing_file;
+  mainw->new_clip = mainw->blend_file;
+
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
     ce_thumbs_highlight_current_clip();
-  //mainw->blend_palette = WEED_PALETTE_END;
 
   return TRUE;
   // **TODO - for weed, invert all transition parameters for any active effects
-}
-
-boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
-                            uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
-  if (!LIVES_IS_PLAYING) return _swap_fg_bg_callback();
-  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
-                                  _swap_fg_bg_callback, WEED_SEED_BOOLEAN, "", NULL);
-  return TRUE;
 }
 
 

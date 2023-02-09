@@ -240,7 +240,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   int nsamps;
   int interp = LIVES_INTERP_FAST; /// TODO - get quality setting
   int width, height, pwidth, pheight;
-  int tgamma = WEED_GAMMA_SRGB;
+  int tgt_gamma = WEED_GAMMA_SRGB;
   int count = 0;
   int pbq = prefs->pb_quality;
 
@@ -529,14 +529,14 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
     if (weed_palette_is_rgb(mainw->vpp->palette)) {
       if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
-        tgamma = WEED_GAMMA_LINEAR;
+        tgt_gamma = WEED_GAMMA_LINEAR;
     } else {
       if (vpp->YUV_subspace == WEED_YUV_SUBSPACE_BT709)
-        tgamma = WEED_GAMMA_BT709;
+        tgt_gamma = WEED_GAMMA_BT709;
     }
 
-    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace, tgamma);
-    gamma_convert_layer(tgamma, frame_layer);
+    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace, tgt_gamma);
+    gamma_convert_layer(tgt_gamma, frame_layer);
 
     if (coder) {
       error = lives_proc_thread_join_boolean(coder);

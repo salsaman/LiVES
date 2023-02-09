@@ -3134,7 +3134,7 @@ static void *convert_yuva8888_to_argb_frame_thread(void *data) {
 static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
     int orowstride,
     uint8_t *dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 3;
@@ -3149,8 +3149,8 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
   if (thread_id == -1) {
 #endif
     set_conversion_arrays(clamping, subspace);
-    if (tgamma) {
-      gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
+    if (tgt_gamma) {
+      gamma_lut = create_gamma_lut(1.0, gamma, tgt_gamma);
     }
 #if USE_THREADS
   }
@@ -3312,7 +3312,7 @@ static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
 static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
     int orowstride,
     uint8_t *dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 3;
@@ -3328,7 +3328,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
 #endif
     /// TODO: this is NOT threadsafe !!!!
     set_conversion_arrays(clamping, subspace);
-    if (tgamma) gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
+    if (tgt_gamma) gamma_lut = create_gamma_lut(1.0, gamma, tgt_gamma);
 #if USE_THREADS
   }
 #endif
@@ -3491,7 +3491,7 @@ static void *convert_yuv420p_to_bgr_frame_thread(void *data) {
 static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
     int orowstride,
     uint8_t *dest, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 4;
@@ -3507,7 +3507,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
 #endif
     /// TODO: this is NOT threadsafe !!!!
     set_conversion_arrays(clamping, subspace);
-    if (tgamma) gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
+    if (tgt_gamma) gamma_lut = create_gamma_lut(1.0, gamma, tgt_gamma);
 #if USE_THREADS
   }
 #endif
@@ -10524,7 +10524,7 @@ LIVES_LOCAL_INLINE boolean can_inline_gamma(int inpl, int opal) {
    - RGB float palettes not yet implemented
 
 */
-boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping, int osampling, int osubspace, int tgamma) {
+boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping, int osampling, int osubspace, int tgt_gamma) {
   // TODO: allow plugin candidates/delegates
   weed_layer_t *orig_layer;
   uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest = NULL, **gudest_array = NULL, *tmp;
@@ -10643,8 +10643,8 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     // gamma correction
     gamma_type = weed_layer_get_gamma(layer);
     if (gamma_type != WEED_GAMMA_UNKNOWN) {
-      if (tgamma != WEED_GAMMA_UNKNOWN) {
-        new_gamma_type = tgamma;
+      if (tgt_gamma != WEED_GAMMA_UNKNOWN) {
+        new_gamma_type = tgt_gamma;
       } else {
         if (weed_palette_is_rgb(inpl) && !weed_palette_is_rgb(outpl)) {
           // gamma correction
@@ -12659,11 +12659,11 @@ LIVES_GLOBAL_INLINE boolean gamma_convert_layer(int gamma_type, weed_layer_t *la
 }
 
 
-LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int tgamma, weed_layer_t *layer) {
+LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int tgt_gamma, weed_layer_t *layer) {
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
   weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
-  return gamma_convert_sub_layer(tgamma, file_gamma, layer, 0, 0, width, height, TRUE);
+  return gamma_convert_sub_layer(tgt_gamma, file_gamma, layer, 0, 0, width, height, TRUE);
 }
 
 

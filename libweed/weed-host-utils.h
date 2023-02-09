@@ -115,6 +115,10 @@ void weed_clear_plant_flags(weed_plant_t *t, uint32_t flags, const char *ign_pre
 uint32_t weed_leaf_set_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< value ORed with flags
 uint32_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< ~value ANDed with flags
 
+// make a whole plant deletable / undeletable
+weed_error_t weed_plant_set_undeletable(weed_plant_t *, int undeletable);
+int weed_plant_is_undeletable(weed_plant_t *);
+
 /* HOST_INFO functions */
 int weed_host_info_get_flags(weed_plant_t *host_info);
 void weed_host_info_set_flags(weed_plant_t *host_info, int flags);

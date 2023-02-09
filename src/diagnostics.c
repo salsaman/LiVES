@@ -578,7 +578,7 @@ static inline void  werr_expl(weed_error_t werr) {
 }
 
 
-static void list_leaves(weed_plant_t *plant) {
+void list_leaves(weed_plant_t *plant) {
   weed_size_t nleaves;
   char **keys = _weed_plant_list_leaves(plant, &nleaves);
   fprintf(stderr, "Plant %p has %d leaves\n", plant, nleaves);
@@ -602,9 +602,9 @@ static void list_leaves(weed_plant_t *plant) {
   }
 }
 
-#define CONCYC 100000
-#define MAXLVS 10000
-#define NCTHRD 8
+#define CONCYC 10000
+#define MAXLVS 1000
+#define NCTHRD 64
 
 static void weed_concurrency_test(weed_plant_t *plant) {
   weed_error_t werr;
@@ -628,6 +628,7 @@ static void weed_concurrency_test(weed_plant_t *plant) {
     }
     lives_free(key);
     if (++count == 10000) {
+      g_print(".");
 #if USE_RPMALLOC
       rpmalloc_thread_collect();
 #endif
@@ -1047,7 +1048,8 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-  werr = weed_set_int_value(plant, "type", 99);
+  type = 99;
+  werr = _weed_leaf_set(plant, "type", WEED_SEED_INT, 1, &type);
   fprintf(stderr, "set type returned %d, should de WEED_ERROR_IMMUTABLE\n", werr);
   werr_expl(werr);
 
@@ -1086,7 +1088,8 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-  werr = weed_set_int_value(plant, "type", 123);
+  type = 123;
+  werr = _weed_leaf_set(plant, "type", WEED_SEED_INT, 1, &type);
   fprintf(stderr, "set type returned %d, should now be WEED_SUCCESS\n", werr);
 
   fprintf(stderr, "\n");
@@ -1112,7 +1115,8 @@ int run_weed_startup_tests(void) {
   fprintf(stderr, "type set flags to IMMUTABLE again - error was  %d\n", werr);
   werr_expl(werr);
 
-  werr = weed_set_int_value(plant, "type", 200);
+  type = 200;
+  werr = _weed_leaf_set(plant, "type", WEED_SEED_INT, 1, &type);
   fprintf(stderr, "set type returned %d, should be WEED_ERROR_IMMUTABLE\n", werr);
   werr_expl(werr);
 
@@ -1263,14 +1267,12 @@ int run_weed_startup_tests(void) {
 
   werr = _weed_leaf_set_flags(plant, "Test2", WEED_FLAG_UNDELETABLE);
 
-  flags = _weed_leaf_get_flags(plant, "string2");
+  flags = _weed_leaf_get_flags(plant, "Test2");
   fprintf(stderr, "get flags returned %d\n", flags);
 
   werr = _weed_plant_free(plant);
   fprintf(stderr, "wpf returned %d\n", werr);
   werr_expl(werr);
-
-  /// will crash
 
   keys = _weed_plant_list_leaves(plant, &nleaves);
   fprintf(stderr, "Plant has %d leaves\n", nleaves);
@@ -1282,6 +1284,9 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
+  str = weed_get_string_value(plant, "Test2", &werr);
+  fprintf(stderr, "Get undel. val %s from undel plant, returned %d\n", str, werr);
+  werr_expl(werr);
 
   werr = weed_set_voidptr_value(plant, "nulldel",  NULL);
   fprintf(stderr, "Xset null void * returned %d\n", werr);
@@ -1482,7 +1487,7 @@ int run_weed_startup_tests(void) {
 
   show_timer_info();
 
-#ifdef CONCURRENCY_TST
+#ifndef CONCURRENCY_TST
   THREADVAR(timerinfo) = lives_get_current_ticks();
   fprintf(stderr, "test random reads, writes and deletes\n");
   plant = _weed_plant_new(123);

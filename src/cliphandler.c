@@ -2542,7 +2542,7 @@ void do_quick_switch(int new_file) {
     return;
   }
 
-  if (IS_VALID_CLIP(old_file)) sfile = mainw->files[old_file];
+  sfile = RETURN_VALID_CLIP(old_file);
 
   mainw->whentostop = NEVER_STOP;
   mainw->blend_palette = WEED_PALETTE_END;
@@ -2585,6 +2585,7 @@ void do_quick_switch(int new_file) {
   }
 
   mainw->drawsrc = mainw->playing_file = mainw->current_file = new_file;
+
   mainw->laudio_drawable = cfile->laudio_drawable;
   mainw->raudio_drawable = cfile->raudio_drawable;
 
@@ -2620,8 +2621,10 @@ void do_quick_switch(int new_file) {
   // selection bounds)
   mainw->playing_sel = FALSE;
 
-  if (cfile->last_play_sequence != mainw->play_sequence) {
-    cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (CURRENT_CLIP_IS_NORMAL) {
+    if (cfile->last_play_sequence != mainw->play_sequence) {
+      cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+    }
   }
 
   changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
@@ -2629,9 +2632,10 @@ void do_quick_switch(int new_file) {
   cfile->next_event = NULL;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  if (LIVES_IS_PLAYING && !mainw->play_window && (!IS_VALID_CLIP(old_file)
-      || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
-      || cfile->vsize != mainw->files[old_file]->vsize)) {
+  if (LIVES_IS_PLAYING && !mainw->play_window
+      && (!CURRENT_CLIP_IS_VALID
+          || (sfile && (cfile->hsize != sfile->hsize
+                        || cfile->vsize != sfile->vsize)))) {
     clear_widget_bg(mainw->play_image, mainw->play_surface);
   }
 #endif
@@ -2655,18 +2659,22 @@ void do_quick_switch(int new_file) {
       mainw->blend_layer = NULL;
     }
     track_decoder_free(1, mainw->blend_file);
-    if (new_file == mainw->blend_file)
+    if (IS_VALID_CLIP(mainw->new_blend_file))
+      mainw->blend_file = mainw->new_blend_file;
+    else
       mainw->blend_file = old_file;
+    if (!IS_VALID_CLIP(mainw->blend_file))
+      mainw->blend_file = -1;
+    mainw->new_blend_file = -1;
   }
 
-  if (mainw->play_window && prefs->show_playwin) {
-    lives_window_present(LIVES_WINDOW(mainw->play_window));
-    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-  }
+  /* if (mainw->play_window && prefs->show_playwin) { */
+  /*   lives_window_present(LIVES_WINDOW(mainw->play_window)); */
+  /*   lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window)); */
+  /* } */
 
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
-
   redraw_timeline(mainw->current_file);
 }
 
@@ -2691,12 +2699,12 @@ void switch_clip(int type, int newclip, boolean force) {
                                          && type != SCREEN_AREA_FOREGROUND
                                          && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file)
                                              && mainw->blend_file != mainw->playing_file))) {
-    if (mainw->num_tr_applied < 1 || newclip == mainw->blend_file) return;
+    if (mainw->num_tr_applied < 1 || (newclip == mainw->blend_file && !prefs->tr_self)) return;
 
+    // switch bg clip
     if (LIVES_IS_PLAYING) {
       mainw->new_blend_file = newclip;
     } else {
-      // switch bg clip
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
           && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
         if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);

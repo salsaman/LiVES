@@ -123,10 +123,6 @@ char *get_current_timestamp(void);
 #define lives_nanosleep(nanosec)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
     ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION;while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
 							       &&errno!=ETIMEDOUT);}while(0);
-
-#define lives_nanosleep_times(nanosec, times)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
-    ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
-							       &&errno!=ETIMEDOUT);}while(0);
 #define lives_usleep(a) lives_nanosleep(1000*(a))
 
 #define lives_microsleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=1000; \
@@ -135,21 +131,21 @@ char *get_current_timestamp(void);
 #define lives_millisleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=ONE_MILLION; \
     while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1&&errno!=ETIMEDOUT);}while(0);
 
-#define lives_millisleep_while(msec, cond)do{int cnt=msec;while((cond)&&cnt--)lives_millisleep;}while(0);
-
-// sleep for 1usec
+// sleep for 1usec (lives_micro_sleep_...)
 #define lives_Xnanosleep_until_nonzero(condition) \
-  {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+  {while (!(condition))lives_microleep;}
 
-// sleep for 1msec
+// sleep for 1msec (should really be lives_millisleep_)
 #define lives_nanosleep_until_nonzero(condition)		\
-  {while (!(condition)) lives_nanosleep(LIVES_SHORT_SLEEP);}
-#define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+  {while(!(condition))lives_millisleep;}
+#define lives_nanosleep_until_zero(condition) {while((condition))lives_millisleep;}
 #define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
 #define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
 
-#define lives_nanosleep_until_nonzero_timeout(condition) \
-  {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+#define lives_microsleep_until_nonzero_timeout(condition, timeout)	\
+  {while(!(condition) && timeout--)lives_microsleep;}
+#define lives_millisleep_until_nonzero_timeout(condition, timeout)	\
+  {while(!(condition) && timeout--)lives_millisleep;}
 
 int check_dev_busy(char *devstr);
 

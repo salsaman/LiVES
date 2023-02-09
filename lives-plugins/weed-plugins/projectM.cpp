@@ -526,19 +526,18 @@ static int render_frame(_sdata *sd) {
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
 
 #define BLANK_LIM 8
+#define ALPHA_MASK 0XFFFFFF00FFFFFF00
+
     if (sd->pidx == -1 && sd->checkforblanks) {
       /// check for blank frames: if the first BLANK_LIM frames from a new program are all blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
-      int i = 0;
       ssize_t frmsize = sd->rowstride * imgheight;
-      if (sd->psize == 4) {
-        for (i = 0; i < frmsize; i += sd->psize)
-          if ((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) && sd->fbuffer[i + 3]) break;
-      } else {
-        while (i < frmsize && !sd->fbuffer[i++]);
-      }
-      if (i >= frmsize) blanks++;
+      uint64_t *p = (uint64_t *)sd->fbuffer;
+      int i = frmsize >> 3;
+      if (sd->psize == 4) while (--i && !(*p & ALPHA_MASK)) p++;
+      else while (--i && !*p) p++;
+      if (!i) blanks++;
       else {
         blanks = 0;
         sd->checkforblanks = false;
@@ -1199,7 +1198,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       weed_memcpy(sd->audio, adata[0], adlen * 4);
     } else adlen = 0;
 
-    fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 1] : 0., adata[0] ? adata[0][adlen >>1] : 0., adlen);
+    // fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 1] : 0.,
+    // 	    adata[0] ? adata[0][adlen >>1] : 0., adlen);
     sd->audio_frames = adlen;
     sd->audio_offs = 0;
     pthread_mutex_unlock(&sd->pcm_mutex);

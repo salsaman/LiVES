@@ -1721,11 +1721,13 @@ weed_layer_t *load_frame_image(frames_t frame) {
     } else {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
       pheight = lives_widget_get_allocation_height(mainw->play_image);
+      pthread_mutex_lock(&mainw->play_surface_mutex);
       if (pwidth < old_pwidth || pheight < old_pheight)
         clear_widget_bg(mainw->play_image, mainw->play_surface);
       old_pwidth = pwidth;
       old_pheight = pheight;
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
+      pthread_mutex_unlock(&mainw->play_surface_mutex);
       lives_widget_queue_draw_noblock(mainw->play_image);
     }
 
@@ -2559,10 +2561,14 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 #define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 16
 
+// TODO - needs some rewriting, in particular: getahead, test_getahead, check_getahead, recalc_bungle_frames
+// fixed_frame, can_realign, sync_delta, SCRATH_JUMP, SCRATCH_JUMP_NORESYNC, SCRATCH_REALIGN
+// also xhexk if some external globals like switch_during_pb are still needed
 int process_one(boolean visible) {
   // INTERNAL PLAYER
   // here we handle playback, as well as the "processing dialog"
   // visible == FALSE                         visible == TRUE
+  //
   // for the player, the important variables are:
   // mainw->actual_frame - the last frame number shown
   // sfile->frameno == requested_frame - calculated from sfile->last_frameno and mainw->currticks - mainw->startticks
@@ -2570,11 +2576,37 @@ int process_one(boolean visible) {
   // --
   // we increment (or decrement) mainw->actual_frame each time
   // and compare with requested_frame - if we fall too far behind, we try to jump ahead and "land" on requested_frame
-  // (predictive caching)
-  // the prediction is set in mainw->pred_frame (the value will be negative, until played, then set to positive)
-  // if pred_frame is early we just show and then maybe jump again (bad)
+  // (predictive caching) plus a few extra frames (slack)
+  // there is a complex set of rules to try to predict the target frame based on the previous jump time
+  // possibly adjusted by estimates gathered by the decoder plugin itself
+  //
+  // the prediction is set in mainw->pred_frame, and we start loading this in an alternate decoder context
+  // - until this is loaded, we continue with the previous frame. So that the eventual frame doe not cause too
+  // much of a jump, we may drop alternate frames to get closer to the timecode.
+  //
+  // once loaded, we swith decoder contexts and check the predicted frame vs. the actual frame
+  // - the delta is used to try to adjust the next prediction more accurately
+  //
+  // if pred_frame is earlier than the timecode,  we just show it (if it is ahead of actual_frame)
+  // and then maybe jump again (bad)
   // if it is too far ahead, we keep the frame around and reshow it until requested_frame or pred_frame is ahead and loaded
-  // if there is no jumping, we just set pred_frame to actual_frame + 1 (or -1)
+  // this is also bad as the video will pause.
+  //
+  // if there is little lag and we have spare cycles, pred frame, may be used to cache a future frame
+  //
+  // NOTES: currently caching only operates for the foreground frame, any background frame is loaded on demand
+  // for reverse playback, the method is the same, but the deltas / directions are reveresed
+  // in this case we should rely more on estimates from the decoder, since it will be faster to decode frames
+  // just after a keyframe, as opposed to theose further away
+  // Decoder estimates are only available for certain decoders, the values are based on observed values such
+  // as the seek time, byte loading time, time to decode a keyframe, time to decode an i frame and number of
+  // iframes from keyframe to target. The estimates are not always accurate, so we make a first guess based
+  // on recnt history, then use the estimations to adjust within a range.
+  //
+  // To keep things orderly, other threads may not action config changes (e.g going to / from fullscreen)
+  // or clip switches at any time. Instead these are set as variables. or queued and actioned at "safe points"
+  // The same holds for adding or removing effects, this actions are also deferred.
+  //
   static frames_t last_req_frame = 0;
   /* #if defined HAVE_PULSE_AUDIO || defined ENABLE_JACK */
   /*   static off_t last_aplay_offset = 0; */
@@ -2614,6 +2646,7 @@ int process_one(boolean visible) {
   lives_direction_t dir = LIVES_DIRECTION_NONE;
   lives_hook_stack_t **phstacks = lives_proc_thread_get_hook_stacks(mainw->player_proc);
   old_current_file = mainw->current_file;
+  old_playing_file = mainw->playing_file;
 
   if (visible) goto proc_dialog;
 
@@ -2828,7 +2861,7 @@ switch_point:
     }
   }
 
-  if (IS_VALID_CLIP(mainw->new_clip) && mainw->new_clip != mainw->playing_file) {
+  if (mainw->new_clip != mainw->playing_file && IS_VALID_CLIP(mainw->new_clip)) {
     if (AV_CLIPS_EQUAL && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
       sfile->frameno = sfile->last_frameno = requested_frame;
     }
@@ -2842,14 +2875,6 @@ switch_point:
         mainw->pred_clip = 0;
         cleanup_preload = FALSE;
       }
-    }
-
-    if (IS_VALID_CLIP(mainw->new_blend_file)
-        || (mainw->blend_file != -1 && !IS_VALID_CLIP(mainw->blend_file))) {
-      if (IS_VALID_CLIP(mainw->new_blend_file))
-        track_decoder_free(1, mainw->blend_file);
-      mainw->blend_file = mainw->new_blend_file;
-      if (!IS_VALID_CLIP(mainw->blend_file)) mainw->blend_file = -1;
     }
 
 #ifdef ENABLE_JACK
@@ -2898,20 +2923,21 @@ switch_point:
       mainw->can_switch_clips = FALSE;
     }
 
-
     lives_nanosleep_while_true(mainw->do_ctx_update);
-
-    lives_widget_queue_draw_and_update(mainw->LiVES);
-    lives_widget_context_update();
-
-    lives_nanosleep_while_true(mainw->do_ctx_update || mainw->drawing);
+    mainw->gui_much_events = TRUE;
+    fg_stack_wait();
+    lives_nanosleep_while_true(mainw->do_ctx_update);
 
     mainw->can_switch_clips = TRUE;
     do_quick_switch(mainw->new_clip);
     mainw->can_switch_clips = FALSE;
 
+    fg_stack_wait();
+    lives_nanosleep_while_true(mainw->do_ctx_update);
+
     did_switch = TRUE;
 
+    // TODO - make sure we are resetting correctly with audio lock on
     if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
         && (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP)
         && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
@@ -2929,13 +2955,17 @@ switch_point:
 
     mainw->actual_frame = sfile->frameno;
 
+    mainw->force_show = TRUE;
+    fixed_frame = TRUE;
+
     lagged = dropped = skipped = 0;
-    getahead = 0;
-    test_getahead = -1;
     check_getahead = FALSE;
     bungle_frames = 0;
     recalc_bungle_frames = 0;
     mainw->deltaticks = 0;
+
+    getahead = 0;
+    test_getahead = -1;
 
     cdata = get_clip_cdata(mainw->playing_file);
     if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
@@ -3006,6 +3036,23 @@ switch_point:
     //g_print("SWITCH %d %d %d %d\n", sfile->frameno, requested_frame, sfile->last_frameno, mainw->actual_frame);
   }
 
+  if (IS_VALID_CLIP(mainw->new_blend_file)) {
+    if (mainw->blend_layer) {
+      check_layer_ready(mainw->blend_layer);
+      weed_layer_unref(mainw->blend_layer);
+      mainw->blend_layer = NULL;
+    }
+    track_decoder_free(1, mainw->blend_file);
+    if (IS_VALID_CLIP(mainw->new_blend_file))
+      mainw->blend_file = mainw->new_blend_file;
+    else
+      mainw->blend_file = old_playing_file;
+    if (!IS_VALID_CLIP(mainw->blend_file))
+      mainw->blend_file = -1;
+    mainw->new_blend_file = -1;
+    mainw->blend_palette = WEED_PALETTE_END;
+  }
+
   /// end SWITCH POINT
 
   // playing back an event_list
@@ -3048,7 +3095,6 @@ switch_point:
       mainw->gui_much_events = TRUE;
       mainw->do_ctx_update = TRUE;
       lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
-      //lives_nanosleep_while_true(mainw->do_ctx_update);
     }
 
     if (mainw->cancelled == CANCEL_NONE) return 0;

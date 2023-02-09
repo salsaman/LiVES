@@ -34,6 +34,7 @@ void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 
 void run_diagnostic(LiVESWidget *, const char *testname);
 
+void list_leaves(weed_plant_t *);
 
 char *get_stats_msg(boolean calc_only);
 double get_inst_fps(boolean get_msg);

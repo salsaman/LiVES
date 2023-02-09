@@ -430,7 +430,7 @@ typedef struct {
   // which hook stacks it is added to, and which hook_type
   lives_hook_stack_t **hook_stacks;
   int hook_type;
-
+  pthread_mutex_t mutex;
   // proc_thread intially in unqueued state - either supplied directly
   // or created from param args / hook_type
   // adder is used so we can trace back to lpt which added the callback, and if freed,
@@ -467,9 +467,10 @@ typedef struct _hstack_t {
 
 // hook_stack_flags
 
+// stack is for native thread
+#define STACK_NATIVE			(1ull < 0)
 // callbacks are running now - used to prevnet multiple trigger instances
-#define STACK_TRIGGERING		(1ull < 0)
-
+#define STACK_TRIGGERING		(1ull < 1)
 
 // HOOK DETAILS - each hook stack TYPE (by enumeration) can have a hook details flag,
 // describing the operation of that hook_type

@@ -13,7 +13,6 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
    Weed is developed by:
-
    Gabriel "Salsaman" Finch - http://lives-video.com
 
    partly based on LiViDO, which was developed by:
@@ -111,6 +110,33 @@
 
 #include <pthread.h>
 
+/* explanation of locks and mutexes
+   structure_mutex - plant only, locking this prevents leaves from being added or deleted
+	except by the lock owner. Used by deletion threads and writer threads running in pass2.
+	Some functions which operate on the entire plant (e.g weed_plant-list-leaves) will
+	also lock this.
+
+   reader_count - plant only, readers in non-checkmode (see below) increment this before
+	traversing the list, and decrement it afterwards. Used by deletion threads to
+	ensure all readers are running in checkmode.
+
+   chain_lock - plant and leaves, this rwlock acts like an advisory, readers in checkmode
+	will stop before entering a leaf with chain lock writelock. This is used by deletion
+	threads to stop readers / writers from entering a leaf which is to be deleted.
+	Used by deletion threads, affects readers and writers running in pass1.
+
+   data_lock - threads which want to read the value of a leaf must obtain a data_lock readlock,
+	those wanting to change the data must obtain a writelock. Used by reader and writer threads.
+	Functions which read or write other values from leaves (e.g. weed_leaf_seed_type) also use this
+	- functions which update values, eg. weed_leaf_set_flags, must have a writelock.
+
+   data_mutex - this is locked when a thread wants to obtain the data_writelock. It will already have a
+	readlock. It will lock the mutex, drop the readlock, and obtain the writelock.
+	The purpose is to avoid the leaf being deleted in the interval between dropping the readlock
+	and obtaining the writelock. Used by writer threads, and as a check by deletion threads.
+*/
+
+
 typedef struct {
   pthread_rwlock_t	chain_lock;
   pthread_rwlock_t	data_lock;
@@ -122,6 +148,50 @@ typedef struct {
   pthread_rwlock_t	reader_count;
   pthread_mutex_t	structure_mutex;
 } plant_priv_data_t;
+
+#ifndef HAVE_WEED_HASHFUNC
+
+/* this must be the hash value for WEED_LEAF_TYPE */
+#define WEED_MAGIC_HASH 0xB82E802F
+
+#define get16bits(d) (*((const uint16_t *) (d)))
+
+#define HASHROOT 5381
+// fast hash from: http://www.azillionmonkeys.com/qed/hash.html
+// (c) Paul Hsieh
+
+static weed_hash_t def_weed_hash(const char *key) {
+  if (key && *key) {
+    size_t len = strlen(key), rem = len & 3;
+    uint32_t hash = len + HASHROOT, tmp;
+    for (len >>= 2; len; len--) {
+      hash += get16bits (key);
+      tmp = (get16bits (key + 2) << 11) ^ hash;
+      hash = (hash << 16) ^ tmp; hash += hash >> 11;
+      key += 4;
+    }
+    switch (rem) {
+    case 3: hash += get16bits (key);
+      hash ^= hash << 16; hash ^= ((int8_t)key[2]) << 18;
+      hash += hash >> 11; break;
+    case 2: hash += get16bits (key);
+      hash ^= hash << 11; hash += hash >> 17; break;
+    case 1: hash += (int8_t)*key;
+      hash ^= hash << 10; hash += hash >> 1; break;
+    default: break;
+    }
+    hash ^= hash << 3; hash += hash >> 5; hash ^= hash << 4;
+    hash += hash >> 17; hash ^= hash << 25; hash += hash >> 6;
+    return hash;
+  }
+  return 0;
+}
+
+#ifndef weed_hash
+#define weed_hash def_weed_hash
+#endif
+
+#endif
 
 #define is_plant(leaf) (leaf->key_hash == WEED_MAGIC_HASH)
 
@@ -139,8 +209,15 @@ typedef struct {
 
 #define get_structure_mutex(plant) (&(((plant_priv_data_t *)((plant)->private_data))->structure_mutex))
 
-
 #define get_count_lock(plant) (&(((plant_priv_data_t *)((plant)->private_data))->reader_count))
+
+#define data_mutex_trylock(obj) ((obj) ? pthread_mutex_trylock(get_data_mutex((obj))) : -1)
+
+#define data_mutex_lock(obj) do {					\
+    if ((obj)) pthread_mutex_lock(get_data_mutex((obj)));} while (0)
+
+#define data_mutex_unlock(obj) do {					\
+    if ((obj)) pthread_mutex_unlock(get_data_mutex((obj)));} while (0)
 
 #define data_lock_unlock(obj) do {					\
     if ((obj)) pthread_rwlock_unlock(get_data_lock((obj)));} while (0)
@@ -160,11 +237,11 @@ typedef struct {
 #define chain_lock_readlock(obj) do {					\
     if ((obj)) pthread_rwlock_rdlock(get_chain_lock((obj)));} while (0)
 
-#define chain_lock_try_writelock(obj) (pthread_rwlock_trywrlock(get_chain_lock((obj))))
+#define chain_lock_try_writelock(obj) ((obj) ? pthread_rwlock_trywrlock(get_chain_lock((obj))) : -1)
 
-#define chain_lock_try_readlock(obj) (pthread_rwlock_tryrdlock(get_chain_lock((obj))))
+#define chain_lock_try_readlock(obj) ((obj) ? pthread_rwlock_tryrdlock(get_chain_lock((obj))) : -1)
 
-#define structure_mutex_trylock(obj) (pthread_mutex_trylock(get_structure_mutex((obj))))
+#define structure_mutex_trylock(obj) ((obj) ? pthread_mutex_trylock(get_structure_mutex((obj))) : -1)
 
 #define structure_mutex_lock(obj) do {					\
     if ((obj)) pthread_mutex_lock(get_structure_mutex((obj)));} while (0)
@@ -192,27 +269,25 @@ static int data_lock_upgrade(weed_leaf_t *leaf, int block) {
   // thread holding the mutex is waiting fro a writelock
   // otherwise if we get the mutex right away we drop the readlock after doing so
   // then with the data_mutex locked, we wait to get the writelock and unlock the mutex
-  // lock is set then if we fail to get the mutex we just exit with nozero
-  // exit of zero implies the writelock was botained
+  // if block is not set, then if we fail to get the mutex we just exit with nozero
+  // exit of zero implies the writelock was obtained
   if (leaf) {
     // try to grab the mutex
-    int ret = pthread_mutex_trylock(get_data_mutex(leaf));
-    if (ret) {
-      // if we fail and !block, return with data readlock held
-      if (!block) return ret;
-      // otherwise, drop the data readlock in case a writer is blocked
+    if (data_mutex_trylock(leaf)) {
+      // if we fail and !block, return with data readlock still held
+      if (!block) return 1;
+      // otherwise, drop the data readlock in case another writer is blocked
       // then block until we do get data mutex
       data_lock_unlock(leaf);
-      pthread_mutex_lock(get_data_mutex(leaf));
+      data_mutex_lock(leaf);
     }
+    else data_lock_unlock(leaf);
     // now we can wait for the writelock and then unlock mutex
     // subsequent writers will drop their readlocks and block on the mutex
-    if (!ret) data_lock_unlock(leaf);
     data_lock_writelock(leaf);
-    pthread_mutex_unlock(get_data_mutex(leaf));
-    return 0;
+    data_mutex_unlock(leaf);
   }
-  return 1;
+  return 0;
 }
 
 static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
@@ -252,7 +327,7 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
   // by getting a chain lock write lock on a leaf
   // the comments below explain this
   //
-  // return value: always 9
+  // return value: always 0
   if (leaf) {
     if (have_rdlock) chain_lock_unlock(leaf);
     else structure_mutex_lock(leaf);
@@ -274,7 +349,8 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
 
     // check mode adds only a minute overhead, and we make the assumption the deleting leaves will occur relatively rarely
 
-    chain_lock_writelock(leaf); /// a crash here is indicative of a double weed_plant_free()
+    // a segfault here is a sure sign of an application error
+    chain_lock_writelock(leaf);
 
     // if it is a SET, then we release the mutex; the next writer
     // will block on writelock; subsequent writeers will block on the mutex
@@ -356,7 +432,7 @@ static weed_size_t pptrsize = WEED_PLANTPTR_SIZE;
 
 static inline int weed_strcmp(const char *, const char *) GNU_HOT;
 static inline weed_size_t weed_strlen(const char *) GNU_PURE;
-static inline weed_hash_t weed_hash(const char *) GNU_PURE;
+//static inline weed_hash_t weed_hash(const char *) GNU_PURE;
 
 /* memfuncs */
 
@@ -458,7 +534,6 @@ EXPORTED void libweed_print_init_opts(FILE *out) {
   fprintf(out, "%s\t%s\n","BIT 33: Skip errchecks		", "Optimise performance by skipping unnecessary edge case eror checks.");
 }
 
-
 EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
   // this is called by the host in order for it to set its version of the functions
 
@@ -525,45 +600,6 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
 
 #define weed_strlen(s) ((s) ? strlen((s)) + nullv : 0)
 #define weed_strcmp(s1, s2) ((!(s1) || !(s2)) ? (s1 != s2) : strcmp(s1, s2))
-
-#define get16bits(d) (*((const uint16_t *) (d)))
-
-#define HASHROOT 5381
-// fast hash from: http://www.azillionmonkeys.com/qed/hash.html
-// (c) Paul Hsieh
-
-static weed_hash_t weed_hash(const char *key) {
-  if (key && *key) {
-    size_t len = strlen(key), rem = len & 3;
-    uint32_t hash = len + HASHROOT, tmp;
-    len >>= 2;
-    for (; len > 0; len--) {
-      hash  += get16bits (key);
-      tmp = (get16bits (key + 2) << 11) ^ hash;
-      hash = (hash << 16) ^ tmp;
-      key += 4;
-      hash += hash >> 11;
-    }
-    switch (rem) {
-    case 3: hash += get16bits (key);
-      hash ^= hash << 16;
-      hash ^= ((int8_t)key[2]) << 18;
-      hash += hash >> 11;
-      break;
-    case 2: hash += get16bits (key);
-      hash ^= hash << 11; hash += hash >> 17;
-      break;
-    case 1: hash += (int8_t)*key;
-      hash ^= hash << 10; hash += hash >> 1;
-      break;
-    default: break;
-    }
-    hash ^= hash << 3; hash += hash >> 5; hash ^= hash << 4;
-    hash += hash >> 17; hash ^= hash << 25; hash += hash >> 6;
-    return hash;
-  }
-  return 0;
-}
 
 #define weed_seed_is_ptr(seed_type) ((seed_type) >= WEED_SEED_FIRST_PTR_TYPE ? 1 : 0)
 
@@ -694,21 +730,16 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     }
     if (hash_ret) hash = *hash_ret;
     if (!hash) hash = weed_hash(key);
-
     if (!checkmode && !refnode) {
       while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key)))
 	if (!(leaf = leaf->next)) break;
     }
     else {
       while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
+	if (!(leaf = leaf->next)) break;
 	if (refnode) {
-	  if (leaf == plant) {
-	    if (!(leaf = leaf->next)) break;
-	    continue;
-	  }
 	  if (*refnode) {
 	    if (leaf == *refnode) return NULL;
-	    if (!(leaf = leaf->next)) break;
 	    continue;
 	  }
 	  *refnode = leaf;
@@ -725,9 +756,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 	  chain_lock_readlock(leaf);
 	  chain_lock_unlock(chain_leaf); // does nothing if chain_leaf is NULL
 	  chain_leaf = leaf;
-	}
-	if (!(leaf = leaf->next)) break;
-      }
+	}}
     }
 
     if (leaf) data_lock_readlock(leaf);
@@ -746,26 +775,24 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 }
 
 static inline void *weed_leaf_free(weed_leaf_t *leaf) {
-  if (leaf) {
-    if (leaf->data)
-      weed_data_free((void *)leaf->data, leaf->num_elements, leaf->num_elements, leaf->seed_type);
-    if (!_WEED_PADBYTES_ || !*leaf->padding)
-      weed_unmalloc_and_copy(strlen(leaf->key) + 1, (void *)leaf->key);
-    data_lock_unlock(leaf);
-    data_lock_readlock(leaf);
-    data_lock_upgrade(leaf, 1);
-    data_lock_unlock(leaf);
+  if (leaf->data)
+    weed_data_free((void *)leaf->data, leaf->num_elements, leaf->num_elements, leaf->seed_type);
+  if (!_WEED_PADBYTES_ || !*leaf->padding)
+    weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
+  data_lock_unlock(leaf);
+  data_lock_readlock(leaf);
+  data_lock_upgrade(leaf, 1);
+  data_lock_unlock(leaf);
 
-    if (is_plant(leaf)) {
-      plant_priv_data_t *pdata = (plant_priv_data_t *)leaf->private_data;
-      weed_uncalloc_sizeof(plant_priv_data_t, pdata);
-    }
-    else {
-      leaf_priv_data_t *ldata = (leaf_priv_data_t *)leaf->private_data;
-      weed_uncalloc_sizeof(leaf_priv_data_t, ldata);
-    }
-    weed_uncalloc_sizeof(weed_leaf_t, leaf);
+  if (is_plant(leaf)) {
+    plant_priv_data_t *pdata = (plant_priv_data_t *)leaf->private_data;
+    weed_uncalloc_sizeof(plant_priv_data_t, pdata);
   }
+  else {
+    leaf_priv_data_t *ldata = (leaf_priv_data_t *)leaf->private_data;
+    weed_uncalloc_sizeof(leaf_priv_data_t, ldata);
+  }
+  weed_uncalloc_sizeof(weed_leaf_t, leaf);
   return NULL;
 }
 
@@ -796,7 +823,7 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
     plant_priv_data_t *pdata = weed_calloc_sizeof(plant_priv_data_t);
     if (!pdata) {
       if (weed_leaf_get_key(leaf) != leaf->padding)
-	weed_unmalloc_and_copy(strlen(leaf->key + 1), (void *)leaf->key);
+	weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
       weed_uncalloc_sizeof(weed_leaf_t, leaf); return NULL;}
     pthread_rwlock_init(&pdata->ldata.chain_lock, rwattrp);
     pthread_rwlock_init(&pdata->ldata.data_lock, rwattrp);
@@ -810,7 +837,7 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
     leaf_priv_data_t *ldata = weed_calloc_sizeof(leaf_priv_data_t);
     if (!ldata) {
       if (weed_leaf_get_key(leaf) != leaf->padding)
-	weed_unmalloc_and_copy(strlen(leaf->key + 1), (void *)leaf->key);
+	weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
       weed_uncalloc_sizeof(weed_leaf_t, leaf); return NULL;}
 
     pthread_rwlock_init(&ldata->chain_lock, rwattrp);
@@ -834,7 +861,7 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
   if (plant->flags & WEED_FLAG_UNDELETABLE) return WEED_ERROR_UNDELETABLE;
 
   // see: weed_leaf_delete
-  chain_lock_upgrade(plant, 0, 0);
+  chain_lock_upgrade(plant, 0, 1);
   // structure mutex is locked
 
   reader_count_wait(plant);
@@ -843,13 +870,12 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
   leafnext = plant->next;
   while ((leaf = leafnext)) {
     leafnext = leaf->next;
+    chain_lock_writelock(leaf);
     if (leaf->flags & WEED_FLAG_UNDELETABLE) leafprev = leaf;
     else {
       leafprev->next = leafnext;
-      chain_lock_readlock(leaf);
-      chain_lock_upgrade(leaf, 1, 0);
-      chain_lock_unlock(leaf);
       data_lock_writelock(leaf);
+      chain_lock_unlock(leaf);
       weed_leaf_free(leaf);
     }
   }
@@ -860,7 +886,6 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
     structure_mutex_unlock(plant);
 
     chain_lock_upgrade(plant, 0, 1);
-    // structure_mutex locked
     reader_count_wait(plant);
     chain_lock_unlock(plant);
     structure_mutex_unlock(plant);
@@ -871,7 +896,9 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
     return WEED_SUCCESS;
   }
   plant->flags &= ~WEED_FLAG_OP_DELETE;
-  chain_lock_unlock(plant);
+  for (leaf = plant; leaf; leaf = leaf->next) {
+    chain_lock_unlock(leaf);
+  }
   structure_mutex_unlock(plant);
   return WEED_ERROR_UNDELETABLE;
 }
@@ -881,43 +908,35 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   weed_hash_t hash = weed_hash(key);
   weed_error_t err = WEED_SUCCESS;
 
-  // lock out all other deleters, setters
-  ///
-  /// why do we do this ?
-  /// - we lock out other deleters because otherwise it becomes too complex
-  /// another deleter may delete our prev. node or our target
-  /// - we lock out setters to avoid the possibility that we are deleting the leaf following
-  /// TODO:
-  /// once we have passed the first leaf we can then allow setters again. There is the chance
-  /// that a setter will set the value of a leaf, and then we delete it.
-  /// It is thus up to the calling application to handle this possibility.
+  // First we obtain the structure mutex lock. This prevents any leaves from being added or deleted.
+  // Then we get a chainlock writelock on the plant, temporarily blocking readers.
+  // We set WEED_FLAG_OP_DELETE, for the plant, forcing new readers to run in checkmode,
+  // and release the writelock.
+  // In checkmode, readers will obtain a chain_lock readlock on each leaf before reading its next pointer,
+  // unlocking the chain locks behind them as they traverse the list.
+  //
+  // readers which are still running in non-checkmode will be counted in reader count
+  // so before doing any updates we will first wait for reader count to reach zero, ensuring that all readers
+  // are now running in checkmode.
+  //
+  // In the meantime we traverse the list, looking for the target leaf. As we go, we retain a chain lock
+  // writelock on the previous leaf, in essence this acts like a roadblock for readers running in checkmode.
+  // If we find the target, we exit the loop with chain writelocks on the target and the previous leaf.
+  // Thus we can be sure that no readers will enter the previous leaf, nor can they enter the target leaf
+  // However there could still be readers or writers on either leaf, so for each leaf we first obtain
+  // a data readlock, then a data writelock, then drop the writelocks.
+  //
+  // we can now repoint the next pointer of prev node and unlock the prev node chain writelock
+  // allowing readers / writers to continue. Finally, we drop the structure mutex, and free the target leaf.
+  // Locks held:
+  // deleters and writers running in pass 2 are blocked for the duration of the operation
+  // readers entering after the operation begins are forced to run in checkmode, which may slow them slightly
+  // due to the requirement of checking the chain lock for each leaf.
+  // readers will be blocked before entering the leaf prior to the target.
+  //
+  // The duration is (the longer of either: time taken to find target or time for all non checkmode readers
+  // to exit), plus the time waiting for readers / writers to exit prev leaf and target leaf.
 
-  // we will grab the mutex, forcing other rivals to drop their readlocks
-  // (which actually none of them will have in the present implementation)
-  // and then block.
-  // and temporarily stop the flow of new readers
-  // then we get writelock, and release the mutex. This allows new readers in
-  // prior to this, we set
-  // WEED_FLAG_OP_DELETE, forcing new readers to run in checkmode, locking
-  // and unlocking the travel rwlock as they go
-  // readers which are running in non-check mode will be counted in count lock
-  // so before doing any updates we will first wait for count to reach zero
-
-  // Before deleting the target, we will witelock the prev node travel mutex.
-  // Since readers are now in checkmode, they will be blocked there.
-  // once we get that writelock, we know that there can be no readers on prev node
-  // this is to guard against edge cases where a reader has read next link from the previous
-  /// node but has not yet locked the the travel rwlock on the target node/
-  // we can now repoint the prev node and unlock the prev node travel writelock
-  // knowing that further readers will now be routed past the leaf to be deleted
-  // We can also unlock the plant, since new readers no longer need to run in check mode.
-  // finally, before deleting leaf, we must ensure there are no reamaining readers on it
-  // we do this by first obtaining a travel rwlock write lock on it, then obtaining a normal
-  // data writelock (there sholdnt be any writers anyway, since we locked out new writers at the
-  /// start, and waited for count to reach zero)
-  // we then know it is safe to delete leaf !
-
-  // grab chain lock writelock on plant
   chain_lock_upgrade(plant, 0, 1);
   // because we are deleting, we keep structure_mutex locked
 
@@ -991,14 +1010,12 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, u
   // strip any reserved bits from flags
   if (!(leaf = weed_find_leaf(plant, key, NULL, NULL))) return WEED_ERROR_NOSUCH_LEAF;
 #ifdef ENABLE_PROXIES
-  leaf->flags & WEED_FLAG_PROXY return_unlock(leaf, WEED_EEROR_IMMUTABLE);
+  if (leaf->flags & WEED_FLAG_PROXY) return_unlock(leaf, WEED_EEROR_IMMUTABLE);
 #endif
   // block here, flags are important
   data_lock_upgrade(leaf, 1);
-
   leaf->flags = (leaf->flags & (WEED_FLAGBITS_RESERVED | WEED_FLAG_PROXY))
     | (flags & ~(WEED_FLAGBITS_RESERVED | WEED_FLAG_PROXY));
-
   return_unlock(leaf, WEED_SUCCESS);
 }
 
@@ -1064,48 +1081,51 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
 
   if (!WEED_SEED_IS_VALID(seed_type)) return WEED_ERROR_WRONG_SEED_TYPE;
 
-  if (!append) {
-    // prepare the data first, so that locking is as brief as possible
-    if (num_elems) {
-      data = (weed_data_t **)weed_data_new(seed_type, num_elems, values);
-      if (!data) return WEED_ERROR_MEMORY_ALLOCATION;
-    }
-  }
+  // prepare the data first, so that locking is as brief as possible
+  if (!append && num_elems && !(data = (weed_data_t **)weed_data_new(seed_type, num_elems, values)))
+    return WEED_ERROR_MEMORY_ALLOCATION;
+
   // To keep locking as brief as possble, we check in 2 passes. pass 1 we scan the chain like a reader,
-  // (refleaf == NULL)
-  // but make a note of the leaf directly after the plant (refleasf).
-  // If we find the target we will have a data readlock
-  // on the leaf which we will upgrade to a writelock. Since we hold the data lock on it, it cannot be deleted
-  // while we wait.
-  // If the leaf is not found on the first pass, we then obtain s write lock on the plant which
-  // prevents new leaves from being added. We need only scan as far as the reference node, since if the leaf
-  // were adding during the first pass, it would have been inserted between the plant and the reference leaf.
-  // If on pass one, there was only the plant, this is set in refleaf, and since we only check for refleaf AFTER the plant
-  // we willscan all leaves (shich must hav been appended since we checked).
+  // (refleaf == NULL), no locks held, but make a note of the leaf directly after the plant (refleasf).
+  // If we find the target we will have a data readlock on the leaf which we will upgrade to a writelock.
+  // Since we hold the data lock on the target, it cannot be deleted while we wait for the writelock.
   //
-  // If we find the leaf on the second pass we will again, have a data readlock on it
-  // and we unlock the plant, then proceed as
-  // normal to get a data writelock. If we do not find it on pass 2, then since we already hold a write lock on
+  // If the leaf is not found on the first pass, we then obtain s write lock on the plant which
+  // prevents new leaves from being added. We need only scan as far as the reference node, since if the target leaf
+  // were adding during the first pass, it would have been inserted between the plant and the reference leaf.
+  // (If on pass one, there was only the plant, this is set in refleaf, and since we only check for
+  // refleaf from the leaf following the plant we will scan all leaves
+  //  - which by definition must have been appended since we checked).
+  //
+  // If we find the leaf on the second pass we will, again, have a data readlock on it
+  // and we unlock the plant, then proceed as normal to get a data writelock.
+  // If we do not find it on pass 2, then since we already hold a write lock on
   // the plant, we simply append the new leaf after the plant, and release the plant lock.
+  //
+  // To optimise further, the data to be swapped or inserted is prepared before we start scanning
+  // further reducing the time any locks are held. Any old data can be freed after all locks are released.
   //
   // Thus we only lock out readers on the leaf which we are about to update, OR we lock out other writers
   // only during the brief time it takes to do the second scan (from plant to refleaf).
-  // There is a small possibility that a deletion thread is wating to delete our reference node,
-  // and by the time we obtain the plant write lock it will no longer be present.
-  // This means simply that we will scan the entire chain with writelock held, however this is no worse
-  // than if we held the writelock from the start, and cannot be avoided without causing potential deadlocks
-  // with deletion threads.
-  // Since the chance of this is smaller than 1., this is still an improvmeent.
-  // This could be avoided by keeping a data readlock on the reference leaf, but this could end up
-  // prejudicing deletion threads in the case where the chain is long and there are many writers.
+  // There is a possibility that the the reference leaf is deleted, this is a worst case scenario.
+  // The alternative would be to maintain a data readlock of refleaf during both passes, which could make it
+  // impossible to delete.
   //
-  // To further optimise, the new data is prepared before we even start the first scan. We either switch it with
-  // the old data, or else insert it.
-  leaf = weed_find_leaf(plant, key, &hash, &refleaf);
-  if (!leaf) {
+  // Since the chance of this is smaller than 1., this can still be considered superior to thenaive case where we would
+  // scan the entire chain each time with a writelock held.
+  //
+  // In addition, we only hash the key on the first scan, we can get a tiny optimisation by storing the hash and
+  // reusing it on the second scan as well as when creating a new leaf.
+  //
+  // pass 1, with structure unlocked, search for leaf, if found then we will return with a readlock
+  // otherwise, NULL is returned and refleaf will point to the leaf following the "type" at the start of the search
+  if (!(leaf = weed_find_leaf(plant, key, &hash, &refleaf))) {
+    // leaf will be set if we found target, otherwise NULL
+    // refleaf will be leaf after plant, or NULL
     if (!refleaf) refleaf = plant;
     chain_lock_upgrade(plant, 0, 0);
-    // search only until we reach refnode (if refleaf is plant, we check all)
+    // pass 2, with writelock on plant, search again, stopping if we reach refleaf
+    // or target leaf, whichever happens first
     if (!(leaf = weed_find_leaf(plant, key, &hash, &refleaf))) {
       if (!(leaf = weed_leaf_new(key, seed_type, hash))) {
 	chain_lock_unlock(plant);
@@ -1116,8 +1136,7 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
       if (append) {
 	append = 0;
 	if (num_elems) {
-	  data = (weed_data_t **)weed_data_new(seed_type, num_elems, values);
-	  if (!data) {
+	  if (!(data = (weed_data_t **)weed_data_new(seed_type, num_elems, values))) {
 	    chain_lock_unlock(plant);
 	    return WEED_ERROR_MEMORY_ALLOCATION;
 	  }
@@ -1145,6 +1164,9 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
       return_unlock(leaf, WEED_ERROR_IMMUTABLE);
     }
 
+    old_num_elems = leaf->num_elements;
+    old_data = leaf->data;
+
     if (leaf == plant && (append || num_elems != 1)) {
       if (data) weed_data_free(data, num_elems, num_elems, seed_type);
       return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
@@ -1154,8 +1176,6 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
       if (data) weed_data_free(data, num_elems, num_elems, seed_type);
       return_unlock(leaf, WEED_ERROR_CONCURRENCY);
     }
-    old_data = leaf->data;
-    old_num_elems = leaf->num_elements;
   }
   if (append) {
     data = (weed_data_t **)weed_data_append(leaf, num_elems, values);

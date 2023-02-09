@@ -260,12 +260,12 @@ void alpha_unpremult(weed_layer_t *, boolean un);
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
-boolean gamma_convert_layer_variant(double file_gamma, int tgamma, weed_layer_t *);
+boolean gamma_convert_layer_variant(double file_gamma, int tgt_gamma, weed_layer_t *);
 boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *, int x, int y,
                                 int width, int height, boolean may_thread);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
-boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);
+boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgt_gamma);
 boolean weed_layer_clear_pixel_data(weed_layer_t *);
 
 void lives_layer_set_opaque(weed_layer_t *);

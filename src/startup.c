@@ -747,6 +747,8 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->alock_mutex, &mattr);
   pthread_mutex_init(&mainw->tlthread_mutex, &mattr);
   pthread_mutex_init(&mainw->all_hstacks_mutex, &mattr);
+  pthread_mutex_init(&mainw->play_surface_mutex, &mattr);
+  pthread_mutex_init(&mainw->pwin_surface_mutex, &mattr);
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);

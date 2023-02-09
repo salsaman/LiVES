@@ -29,7 +29,15 @@
    Carlo Prelz - http://www2.fluido.as:8080/
 */
 
-/* (C) G. Finch, 2005 - 2022 */
+/* (C) G. Finch, 2005 - 2023 */
+
+/* Optional #defines:
+#define HAVE_WEED_PLANT_T : allows alternate definition for weed_plant_t (default: weed_leaf_t)
+#define HAVE_WEED_LEAF_T : allows alternate definition for weed_leaf_t
+#define HAVE_WEED_DATA_T : allows alternate definition for weed_data_t (componet of default  weed_leaf_t)
+#define HAVE_WEED_HASH_T : allows use of alterntate types (default uint32_t)
+#define _CACHELINE_SIZE_ : hardware cacheline size in bytes  (default 64)
+#define WITHOUT_LIBWEED  : avoid specifics for the default libweed implementation
 
 ///////////////// host applications should #include weed-host.h before this header /////////////////////////
 
@@ -80,10 +88,6 @@ extern "C"
   typedef void * weed_voidptr_t;
   typedef void (*weed_funcptr_t)();
 
-#ifndef HAVE_HASHFUNC
-  typedef uint32_t weed_hash_t;
-#endif
-
   typedef uint32_t weed_seed_t;
 
 #define weed_seed_type weed_seed_t;
@@ -104,15 +108,22 @@ extern "C"
     } value;
   };
 #endif
-#endif
 
 #ifndef  HAVE_WEED_LEAF_T
 #define HAVE_WEED_LEAF_T
   typedef struct _weed_leaf weed_leaf_t;
-#ifdef __LIBWEED__
-#define _CACHE_SIZE_ 64 /// altering _CACHE_SIZE_ requires recompiling libweed
+#ifndef HAVE_WEED_HASH_T
+  typedef uint32_t weed_hash_t;
+#endif
 
-  struct _weed_leaf_nopadding {
+typedef weed_hash_t (*weed_hash_f)(const char *key, ...);
+
+#ifdef __LIBWEED__
+#ifndef _CACHELINE_SIZE_
+#define _CACHELINE_SIZE_ 64 /// altering _CACHELINE_SIZE_ requires recompiling libweed
+#endif
+
+struct _weed_leaf_nopadding {
     weed_hash_t	key_hash;
     weed_size_t num_elements;
     weed_leaf_t *next;
@@ -123,10 +134,7 @@ extern "C"
     const char *key;
   };
 
-  /* N.B. padbytes are not wasted, they may be used to store key names provided they fit */
-  /* as of 202, key is moved to before padding, so the key can be stored in the char *
-     + padding */
-#define _WEED_PADBYTES_ ((_CACHE_SIZE_-(int)(sizeof(struct _weed_leaf_nopadding)))%_CACHE_SIZE_)
+#define _WEED_PADBYTES_ ((_CACHELINE_SIZE_-(int)(sizeof(struct _weed_leaf_nopadding)))%_CACHELINE_SIZE_)
 
   struct _weed_leaf {
     weed_hash_t	key_hash;
@@ -403,7 +411,7 @@ extern "C"
   /* flag bits */
 #define WEED_FLAG_UNDELETABLE		(1 << 0)  // leaf value may be altered but it cannot be deleted
 #define WEED_FLAG_IMMUTABLE		(1 << 1)  // leaf value may not be changed, but it may be deleted
-#define WEED_FLAG_PROXY			(1 << 2)  // ussed for extended func weed_ext_attach_leaf
+#define WEED_FLAG_PROXY			(1 << 2)  // used for extended func weed_ext_attach_leaf
 
 #define WEED_FLAG_FIRST_RESERVED       	(1 << 3)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_11		(1 << 4)  // reserved for future use by Weed
@@ -418,8 +426,8 @@ extern "C"
 #define WEED_FLAG_RESERVED_2	 	(1 << 13) // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_1	 	(1 << 14) // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_0	 	(1 << 15) // reserved for future use by Weed
-#define WEED_FLAGBITS_RESERVED ((WEED_FLAG_FIRST_CUSTOM - 1) ^ (WEED_FLAG_FIRST_RESERVED - 1))
 #define WEED_FLAG_FIRST_CUSTOM	(1 << 16) // bits 16 - 31 left for custom use
+#define WEED_FLAGBITS_RESERVED ((WEED_FLAG_FIRST_CUSTOM - 1) ^ (WEED_FLAG_FIRST_RESERVED - 1))
 
   /* mandatory leaf for all WEED_PLANTs, WEED_SEED_INT */
 #define WEED_LEAF_TYPE		       	"type"

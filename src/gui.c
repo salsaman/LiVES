@@ -1922,21 +1922,6 @@ void create_LiVES(void) {
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-  // insert audio src buttons
-  if (prefs->lamp_buttons) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->lock_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-                              LIVES_GUI_CALLBACK(draw_cool_toggle), NULL);
-
-    lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->lock_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(lives_cool_toggled), NULL);
-    lives_cool_toggled(mainw->lock_audio_checkbutton, NULL);
-  }
-#endif
-
   SET_INT_DATA(mainw->lock_audio_checkbutton, WIDTH_KEY, 16);
 
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->lock_audio_checkbutton), -1);

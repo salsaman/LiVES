@@ -1043,8 +1043,6 @@ typedef struct {
   // for jack transport
   boolean jack_can_stop, jack_can_start, lives_can_stop, jack_master;
 
-  boolean drawing;
-
   // a/v seek synchronisation
   pthread_cond_t avseek_cond;
   pthread_mutex_t avseek_mutex;
@@ -1062,7 +1060,9 @@ typedef struct {
   weed_plant_t *ext_layer; // can feed a layer to play
 
   lives_painter_surface_t *play_surface;
+  pthread_mutex_t play_surface_mutex;
   lives_painter_surface_t *pwin_surface;
+  pthread_mutex_t pwin_surface_mutex;
 
   /// predictive caching apparatus
   weed_plant_t *frame_layer_preload;

@@ -62,7 +62,7 @@ typedef struct {
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
-boolean governor_loop(livespointer data) LIVES_RETURNS_TWICE;
+// fg service calls //
 
 void fg_service_call(lives_proc_thread_t lpt, void *retval);
 
@@ -71,7 +71,9 @@ boolean fg_service_fulfill_cb(void *dummy);
 
 void fg_service_wake(void);
 
-boolean is_fg_busy(void);
+void fg_stack_wait(void);
+
+boolean set_gui_loop_tight(boolean val);
 
 ////////////////////////////////////////
 
@@ -1307,8 +1309,6 @@ boolean global_recent_manager_add(const char *file_name);
 boolean lives_cursor_unref(LiVESXCursor *);
 
 boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, LiVESTreeIter *existing, LiVESTreeIter *newiter);
-
-boolean set_gui_loop_tight(boolean val);
 
 boolean lives_widget_context_update(void);
 boolean lives_widget_context_iteration(LiVESWidgetContext *, boolean may_block);

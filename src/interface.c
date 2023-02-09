@@ -3679,8 +3679,13 @@ void redraw_timeline(int clipno) {
     }
   } else {
     if (is_fg_thread()) {
+      lives_proc_thread_t tlthread = mainw->drawtl_thread;
       // if this the fg thread, kick off a bg thread to actually run this
-      cancel_tl_redraw();
+      if (tlthread) {
+        if (lives_proc_thread_ref(tlthread) > 1)
+          cancel_tl_redraw();
+        lives_proc_thread_unref(tlthread);
+      }
       if (mainw->multitrack || mainw->reconfig) {
         RECURSE_GUARD_END;
         return;
@@ -3690,7 +3695,7 @@ void redraw_timeline(int clipno) {
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
                              (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
 
-      lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
+      //lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
 
       lives_proc_thread_set_cancellable(mainw->drawtl_thread);
       lives_proc_thread_sync_ready(mainw->drawtl_thread);

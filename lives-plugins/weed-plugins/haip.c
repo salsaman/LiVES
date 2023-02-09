@@ -33,7 +33,7 @@ static int package_version = 1; // version of this package
 #define CLAMP255(x) ((uint8_t)((x) > 255 ? 255 : (x)))
 #define CLAMP255f(x) ((uint8_t)((x) > 255. ? 255. : (x) + .5))
 
-#define WMULT 128
+#define WMULT 1
 #define WLEN 32
 
 /////////////////////////////////////////////////////////////

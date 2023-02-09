@@ -1596,10 +1596,10 @@ static lives_filter_error_t palconv(void) {
   weed_layer_t *layer = GET_SELF_VALUE(plantptr, "layer");
   _prefs *prefs = (_prefs *)GET_SELF_VALUE(voidptr, "prefs");
   int tgt_gamma = GET_SELF_VALUE(int, "tgt_gamma");
-  int opalette = GET_SELF_VALUE(int, "opalette");
-  int oclamping = GET_SELF_VALUE(int, "oclamping");
   int osampling = GET_SELF_VALUE(int, "osampling");
   int osubspace = GET_SELF_VALUE(int, "osubspace");
+  int oclamping = GET_SELF_VALUE(int, "oclamping");
+  int opalette = GET_SELF_VALUE(int, "opalette");
   int cpalette;
 
   lives_filter_error_t retval = FILTER_SUCCESS;
@@ -1658,9 +1658,9 @@ static lives_filter_error_t res_or_lbox(int type, int i) {
   int height = GET_SELF_VALUE(int, "height");
   int xwidth = GET_SELF_VALUE(int, "xwidth");
   int xheight = GET_SELF_VALUE(int, "xheight");
-  int interp = GET_SELF_VALUE(int, "interp");
   int opalette = GET_SELF_VALUE(int, "opalette");
   int oclamping = GET_SELF_VALUE(int, "oclamping");
+  int interp = GET_SELF_VALUE(int, "interp");
 
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean resized = FALSE;
@@ -1693,8 +1693,8 @@ static lives_filter_error_t res_or_lbox(int type, int i) {
       weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
     if (type == 0) {
       bret = resize_layer(layer, width, height, interp, opalette, oclamping);
-      SET_SELF_VALUE(int, "width", width);
-      SET_SELF_VALUE(int, "height", height);
+      SET_SELF_VALUE(int, "xwidth", width);
+      SET_SELF_VALUE(int, "xheight", height);
       if (!mainw->is_rendering && !mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
         mainw->blend_width = width;
         mainw->blend_height = height;
@@ -1706,6 +1706,8 @@ static lives_filter_error_t res_or_lbox(int type, int i) {
       mainw->blend_height = weed_layer_get_height(layer);
     }
   }
+
+  lives_proc_thread_make_static(self, "letterboxed");
 
   if (!bret) {
     retval = FILTER_ERROR_UNABLE_TO_RESIZE;
@@ -1729,17 +1731,30 @@ static lives_filter_error_t res_or_lbox(int type, int i) {
    @brief process a single video filter instance
 
    we start with a filter instance and an array of layers. The layers correspond to video tracks
-   in the player, and we will map these to in and out Channels for the filter
+   in the player, and we will map these to in and out Channels for the filte, enabling or disabling
+   any optional channels as necessary.
 
-   we try to match the channels as closely as possible to the layers (frame size and palette)
-   however we also want to minimise the number of reinits
+   Having done this, we then try to match the channels as closely as possible to the layers (frame size and palette)
+   however we also want to minimise the number of reinits, so we may end up adusting the layer to fit the channel.
+
+   (Reinits can happen for filter that specify any of the following - reinint on size change,
+   reinit_on_rowstrides_change, reinit_on_palette_change). A reinit can cause delays, reset the filter state,
+   and possibly casue visual changes, so we try to aviod this if possible.
 
    we start by calculating the output channel size. This can vary depending on quality
-   level but will use som ekind of  min / max formula taking into account
-   all input sizes and the player output size
+   level but will use some kind of min / max formula taking into account
+   all input sizes and the 'player' output size. If letterboxing is active, then we must aldo consider the
+   aspect ratios of all the frames. We want to avoid a situation of "crossed" ratios, so we pick one
+   layer as the "container" and all other frames will lettrbox inside this. Some layers (such as generators)
+   may have adjustable ascpect ratios, so in this case they are set to follow the aspect ratio of the output
+   and all other layers will then letterbox inside them. If a layer has a dynamic size, then we set this large enough
+   to envelop the smallest other layer (low q), the lesser of display size and max layer size (med), or the
+   greater of layes sizes / display size (high q).
+   Layers also have a "natural" size, the size before any reszing. This may be used for fized size elements
+   (for example when rndering fixed size subtitles)
 
    we then try to set the sizes for all channels to the calculated value
-   (unless channle sizes may vary, then we just use current layer size)
+   (unless channel sizes may vary, then we just use current layer size)
 
    using the layers as a guide, particulatrly layer[0], we then try to adjust channel
    values to the calculated values
@@ -1751,29 +1766,39 @@ static lives_filter_error_t res_or_lbox(int type, int i) {
   - additionally we may need to do gamma conversion of layers
   - in some cases we use letterboxing when resizing to maintain the aspect ratio of a layer
 
+  having set up the channels, we then try to adjust the layers to match
+  if an input layer needs resizing, that is doen first; in some cases resizing and palette conversion can be combined
+  then we convert the palette for the layer, if possible, we correct gamma at the saem time
+  finally if the gamma still needs correction, then this is done. In case the frame was letterboxed, at this point
+   only the central portion is changed.
+
+   after this we recheck layer sizes, rowstrides and palettes. If this does not match with the channel,
+   we may need to do a reinit. Since we are doing this, we may take the opportunity to make other adjustments
+   to the channel size and palette.
+
+   The pixel data from the layers is then shared (nocopy) to the channels.
+
    if filter does not support inplace, we must create new pixel_data for output channels
    this will later replace the original data in the layer
 
-   apply the effect
+   We may then apply the effect.
 
-   update output layer from output channel
+   If the filter was not Inplace then we need to copy the output channel back to the layer.
+   Otherwise, the pixel data is already shared, so we can simply nullify it in the channel.
 
    for in/out alpha channels, there is no matching layer. These channels are passed around like data
    using mainw->cconx as a guide. We will simply free any in alpha channels after processing (unless inplace was used)
 
-   opwidth and opheight limit the maximum frame size, they can either be set to 0,0 or to max display size;
-   however if all sources are smaller than this
-   then the output will be smaller also and need resizing by the caller
-
    for purely audio filters, these are handled in weed_apply_audio_instance()
 
-   for filters with mixed video / audio inputs (currently only generators) audio is added
+   for filters with mixed video / audio inputs (currently only generators) audio is colleccted and pushed via
+   a separate audio channel
 */
 lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
     int opwidth, int opheight, weed_timecode_t tc) {
 
   void *pdata;
-  lives_proc_thread_t lpt = NULL, lpt2 = NULL, lpt3 = NULL;
+  lives_proc_thread_t lpt = NULL;
 
   weed_plant_t **in_channels = NULL, **out_channels = NULL, *channel, *chantmpl;
   weed_plant_t **in_ctmpls;
@@ -2070,7 +2095,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   lives_freep((void **)&in_ctmpls);
   lives_freep((void **)&mand);
 
-  /// that is it for in_channels, now we move on to out_channels
+  /// that is it for in_channels setup, now we move on to out_channels
 
   num_outc = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS);
 
@@ -2162,8 +2187,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         if (!weed_plant_has_leaf(layer, WEED_LEAF_HOST_WIDTH)) {
           lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
           ticks_t xtimeout;
-          lives_Xnanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
-                                         || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+          lives_nanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
+                                        || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
           lives_alarm_clear(alarm_handle);
           if (!xtimeout) {
             g_print("needed natsize for %p\n", layer);
@@ -2463,28 +2488,32 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     inpalette = weed_channel_get_palette(channel);
     if (weed_palette_is_alpha(inpalette)) continue;
 
-    if (!is_layer_ready(layer)) {
-#define FX_WAIT_LIM 10000 // microseconds * 10
-      if (prefs->dev_show_timing)
-        g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+    //
 
-      // see if we can do this later, maybe we only need the palette and size
-      check_layer_ready(layer);
 
-      for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
-        lives_nanosleep(10000);
-      }
-      if (prefs->dev_show_timing)
-        g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-      if (!is_layer_ready(layer)) {
-        retval = FILTER_ERROR_MISSING_FRAME;
-        goto done_video;
-      }
-      if (!weed_layer_get_pixel_data(layer)) {
-        retval = FILTER_ERROR_MISSING_FRAME;
-        goto done_video;
-      }
-    }
+
+    /*     if (!is_layer_ready(layer)) { */
+    /* #define FX_WAIT_LIM 10000 // microseconds * 10 */
+    /*       if (prefs->dev_show_timing) */
+    /*         g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL); */
+
+    /*       // see if we can do this later, maybe we only need the palette and size */
+    /*       check_layer_ready(layer); */
+
+    /*       for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) { */
+    /*         lives_nanosleep(10000); */
+    /*       } */
+    /*       if (prefs->dev_show_timing) */
+    /*         g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL); */
+    /*       if (!is_layer_ready(layer)) { */
+    /*         retval = FILTER_ERROR_MISSING_FRAME; */
+    /*         goto done_video; */
+    /*       } */
+    /*       if (!weed_layer_get_pixel_data(layer)) { */
+    /*         retval = FILTER_ERROR_MISSING_FRAME; */
+    /*         goto done_video; */
+    /*       } */
+    /*     } */
 
     if (prefs->dev_show_timing)
       g_printerr("clrfx post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -2650,7 +2679,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// check if we need to resize the layer
     /// get the pixel widths to compare
     /// the channel has the sizes we set in pass1
-    lpt = lpt2 = lpt3 = NULL;
 
     check_layer_ready(layer);
 
@@ -2679,42 +2707,34 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           runtype = 1;
         }
       }
-    } else {
-      runtype = 2;
-    }
-    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED | LIVES_THRDATTR_RUN_NXT_IMMEDIATE,
-                                   res_or_lbox, WEED_SEED_INT, "ii", runtype, i);
-    lpt2 = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED | LIVES_THRDATTR_RUN_NXT_IMMEDIATE,
-                                    palconv, WEED_SEED_INT, "", NULL);
-    weed_set_plantptr_value(lpt, LIVES_LEAF_FOLLOWUP, lpt2);
-    if (tgt_gamma != WEED_GAMMA_UNKNOWN) {
-      lpt3 = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, gamma_conv, WEED_SEED_INT, "", NULL);
-      weed_set_plantptr_value(lpt2, LIVES_LEAF_FOLLOWUP, lpt3);
-    }
+    } else runtype = 2;
 
-    weed_set_plantptr_value(layer, "lpt", lpt);
+    lpt = lives_proc_thread_chain(NULL, res_or_lbox, WEED_SEED_INT, "ii", runtype, i,
+                                  palconv, WEED_SEED_INT, NULL, NULL);
+
+    if (tgt_gamma != WEED_GAMMA_UNKNOWN) {
+      lives_proc_thread_chain(lpt, gamma_conv, WEED_SEED_INT, NULL, NULL);
+    }
 
     SET_LPT_VALUE(lpt, boolean, "letterbox", letterbox);
-    SET_LPT_VALUE(lpt, int, "opwidth", opwidth);
-    SET_LPT_VALUE(lpt, int, "opheight", opheight);
     SET_LPT_VALUE(lpt, int, "width", width);
     SET_LPT_VALUE(lpt, int, "height", height);
     SET_LPT_VALUE(lpt, int, "xwidth", xwidth);
     SET_LPT_VALUE(lpt, int, "xheight", xheight);
+    SET_LPT_VALUE(lpt, int, "interp", get_interp_value(pb_quality, TRUE));
     SET_LPT_VALUE(lpt, plantptr, "layer", layer);
     SET_LPT_VALUE(lpt, plantptr, "channel", channel);
     SET_LPT_VALUE(lpt, voidptr, "prefs", (void *)prefs);
     SET_LPT_VALUE(lpt, int, "tgt_gamma", tgt_gamma);
-    SET_LPT_VALUE(lpt, int, "opalette", opalette);
-    SET_LPT_VALUE(lpt, int, "oclamping", oclamping);
-    SET_LPT_VALUE(lpt, int, "osampling", osampling);
     SET_LPT_VALUE(lpt, int, "osubspace", osubspace);
-    SET_LPT_VALUE(lpt, int, "interp", get_interp_value(pb_quality, TRUE));
+    SET_LPT_VALUE(lpt, int, "opalette", opalette);
+    SET_LPT_VALUE(lpt, int, "osampling", osampling);
+    SET_LPT_VALUE(lpt, int, "oclamping", oclamping);
+
+    weed_set_plantptr_value(layer, LIVES_LEAF_PRIME_LPT, lpt);
 
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
   }
-
-  if (retval != FILTER_SUCCESS) goto done_video;;
 
   for (i = 0; i < num_in_tracks; i++) {
     channel = get_enabled_channel(inst, i, TRUE);
@@ -2722,20 +2742,15 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (weed_palette_is_alpha(inpalette)) continue;
 
     layer = layers[in_tracks[i]];
-    lpt = weed_get_plantptr_value(layer, "lpt", NULL);
-
+    lpt = weed_get_plantptr_value(layer, LIVES_LEAF_PRIME_LPT, NULL);
     if (lpt) {
       retval = lives_proc_thread_join_int(lpt);
       if (lives_proc_thread_had_error(lpt))
         retval = lives_proc_thread_get_errnum(lpt);
-      if (!needs_reinit) needs_reinit = GET_LPT_VALUE(lpt, boolean, "needs_reinit");
+      mainw->debug_ptr = NULL;
       lives_proc_thread_unref(lpt);
-      if (lpt2) lives_proc_thread_unref(lpt2);
-      if (lpt3) lives_proc_thread_unref(lpt3);
-      lpt = lpt2 = lpt3 = NULL;
     }
 
-    weed_set_plantptr_value(layer, "lpt", NULL);
     if (retval != FILTER_SUCCESS) goto done_video;
 
     /// check if the plugin needs reinit
@@ -2771,11 +2786,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
-      continue;
+      goto done_video;
     }
 
     width = weed_channel_get_width_pixels(channel);
     height = weed_channel_get_height(channel);
+
     inwidth = weed_get_int_value(channel, "orig_width", NULL);
     inheight = weed_get_int_value(channel, "orig_height", NULL);
 
@@ -8608,6 +8624,11 @@ recheck:
   if (palette_list) {
     lives_free(palette_list);
     palette_list = NULL;
+  }
+
+  if (is_bg) {
+    mainw->blend_width = xwidth;
+    mainw->blend_height = xheight;
   }
 
   if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)

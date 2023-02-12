@@ -62,7 +62,7 @@
 #define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
 
 #define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
-			       && mainw->files[mainw->ascrap_file]->ext_src_type != LIVES_EXT_SRC_RECORDER)
+			       && mainw->files[mainw->ascrap_file]->primary_src_type != LIVES_EXT_SRC_RECORDER)
 
 #define CLIPSWITCH_BLOCKED (!mainw || mainw->go_away || LIVES_MODE_MT || !CURRENT_CLIP_IS_VALID || mainw->preview \
 			    || (LIVES_IS_PLAYING && mainw->event_list && !(mainw->record || mainw->record_paused)) \
@@ -92,6 +92,89 @@ typedef enum {
   CLIP_TYPE_VIDEODEV,  ///< frames from video device
 } lives_clip_type_t;
 
+// src types
+#define LIVES_EXT_SRC_UNKNOWN		-1
+#define LIVES_EXT_SRC_NONE		0
+#define LIVES_EXT_SRC_DECODER		1
+#define LIVES_EXT_SRC_FILTER		2
+#define LIVES_EXT_SRC_FIFO		3
+#define LIVES_EXT_SRC_STREAM		4
+#define LIVES_EXT_SRC_DEVICE		5
+#define LIVES_EXT_SRC_FILE_BUFF		6
+
+#define LIVES_EXT_SRC_RECORDER		1024
+
+// layer has no source
+#define SRC_STATUS_NOT_SET		-1
+// target clip / frame not set
+#define SRC_STATUS_NO_TARGET		0
+// target set, but on standby
+#define SRC_STATUS_IDLE			1
+// source is queued, initialising
+#define SRC_STATUS_PREPARING		2
+// source target has at least width, heihght, palette
+//#define SRC_STATUS_HAS_METADATA		3
+// source is reading data
+#define SRC_STATUS_LOADING		4
+// target is fully readt
+#define SRC_STATUS_READY		5
+// target is blank layer
+#define SRC_STATUS_BLANK		16
+
+// target is out of date
+#define SRC_STATUS_EXPIRED		32
+
+// source cannot read any data
+#define SRC_STATUS_UNAVAILABLE		64
+// bad metadata supplied
+#define SRC_STATUS_EINVAL		65
+// source can retry getting data
+#define SRC_STATUS_EAGAIN		66
+// source provider is busy
+#define SRC_STATUS_EBUSY		67
+// source invalid, do not use
+#define SRC_STATUS_INVALID		1025
+// error encountered while loading
+#define SRC_STATUS_ERROR		1026
+// source provider has been removed
+#define SRC_STATUS_DELETED		1027
+// source cannot operate correctly, do not use
+#define SRC_STATUS_BROKEN		1028
+
+#define SRC_PURPOSE_ANY		     	-1
+
+// primary source for the clip, the default
+#define SRC_PURPOSE_PRIMARY		0
+// clone source for multitracks
+#define SRC_PURPOSE_TRACK		1
+//
+#define SRC_PURPOSE_TRACK_OR_PRIMARY	2
+// clone source for pre caching frames, can be switched with primary / track
+#define SRC_PURPOSE_PRECACHE		3
+// source used for creating thumbnail images
+#define SRC_PURPOSE_THUMBNAIL		4
+
+#define SRC_FLAG_NOFREE			(1ull < 0)
+#define SRC_FLAG_INACTIVE		(1ull < 1)
+
+typedef struct {
+  uint64_t uid;
+  void *source; // pointer to src itself
+  int src_type;
+  int src_type_detail;
+  int track; // track number the source outputs to
+  int purpose; // the source purpose, for locating it
+  int status; // src status
+  uint64_t flags;
+  weed_layer_t *layer; // current output layer for source
+  void *priv; // private data for the source
+} lives_clip_src_t;
+
+typedef union {
+  char md5sum[MD5_SIZE];
+  char cert[64];
+} fingerprint_t;
+
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
   binval binfmt_check, binfmt_version, binfmt_bytes;
@@ -99,7 +182,8 @@ typedef struct _lives_clip_t {
   uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
   char handle[256];
 
-  char md5sum[64];
+  fingerprint_t ext_id;  // external id for clip source (e.g md4sum, cert)
+
   char type[64];
 
   lives_clip_type_t clip_type;
@@ -241,6 +325,8 @@ typedef struct _lives_clip_t {
   double freeze_fps; ///< pb_fps for paused / frozen clips
   volatile boolean play_paused;
 
+  double fps_scale; // scale factor for transitory adjustments to pb_fps during playback (default is 1.0)
+
   lives_direction_t adirection; ///< audio play direction during playback, FORWARD or REVERSE.
 
   /// don't show preview/pause buttons on processing
@@ -272,24 +358,17 @@ typedef struct _lives_clip_t {
   double lmap_fix_apad;
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  void *ext_src, *old_ext_src; ///< points to opaque source for non-disk types
+  pthread_mutex_t source_mutex;
+  lives_clip_src_t **sources;
+  int n_sources;
 
-#define LIVES_EXT_SRC_UNKNOWN -1
-#define LIVES_EXT_SRC_NONE 0
-#define LIVES_EXT_SRC_DECODER 1
-#define LIVES_EXT_SRC_FILTER 2
-#define LIVES_EXT_SRC_FIFO 3
-#define LIVES_EXT_SRC_STREAM 4
-#define LIVES_EXT_SRC_DEVICE 5
-#define LIVES_EXT_SRC_FILE_BUFF 6
+  // dup of sources[n]->source
+  void *primary_src;
+  void *old_primary_src;
 
-#define LIVES_EXT_SRC_RECORDER 1024
-
-  int ext_src_type, old_ext_src_type;
-
-  int n_altsrcs;
-  void **alt_srcs;
-  int *alt_src_types;
+  // copy of sources[n]->source_type
+  int primary_src_type;
+  int old_primary_src_type;
 
   uint64_t *cache_objects; ///< for future use
 
@@ -447,7 +526,6 @@ void switch_clip(int type, int newclip, boolean force);
 int find_next_clip(int index, int old_file);
 
 // low level API
-
 void switch_to_file(int old_file, int new_file);
 void do_quick_switch(int new_file);
 boolean switch_audio_clip(int new_file, boolean activate);
@@ -457,6 +535,14 @@ char *get_untitled_name(int number);
 
 #define LIVES_LITERAL_EVENT "event"
 #define LIVES_LITERAL_FRAMES "frames"
+
+// clip sources
+lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source,
+                                  int src_type);
+lives_clip_src_t *get_clip_source(int nclip, int track, int purpose);
+void clip_source_free(int nclip, int track, int purpose);
+void clip_sources_free_all(int nclip);
+boolean swap_clip_sources(int nclip, int track, int opurpose, int npurpose);
 
 int find_clip_by_uid(uint64_t uid);
 

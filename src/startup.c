@@ -405,11 +405,7 @@ retry_configfile:
 
   check_for_executable(&capable->has_du, EXEC_DU);
 
-#if USE_INTERNAL_MD5SUM
   capable->has_md5sum = INTERNAL;
-#else
-  check_for_executable(&capable->has_md5sum, EXEC_MD5SUM);
-#endif
 
   check_for_executable(&capable->has_ffprobe, EXEC_FFPROBE);
   check_for_executable(&capable->has_sox_play, EXEC_PLAY);
@@ -4301,7 +4297,6 @@ static void do_start_messages(void) {
   SHOWDET_EXEC(composite, COMPOSITE);
   SHOWDET_EXEC(ffprobe, FFPROBE);
   SHOWDET_EXEC(gzip, GZIP);
-  SHOWDET_EXEC(md5sum, MD5SUM);
   SHOWDET_ALTS(youtube_dl, YOUTUBE_DL, youtube_dlc, YOUTUBE_DLC);
 
   d_print(_("\n\nChecking OPTIONAL dependencies: "));

@@ -863,30 +863,38 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
+  lives_clip_src_t *dsource = NULL;
 
   if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
   blend_file = mainw->files[mainw->blend_file];
-
-  if (mainw->blend_file != mainw->last_blend_file) {
-    // mainw->last_blend_file is set to -1 on playback start
-    mainw->last_blend_file = mainw->blend_file;
-    blend_file->last_frameno = blend_file->frameno;
-    blend_tc = tc;
-  } else {
-    if (!cfile->play_paused) {
-      frames_t frameno = calc_new_playback_position(mainw->blend_file, FALSE, blend_tc, (ticks_t *)&ntc);
-      blend_file->last_frameno = blend_file->frameno = frameno;
-      blend_tc = ntc;
+  if (!IS_NORMAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = 1;
+  else {
+    if (mainw->blend_file != mainw->last_blend_file) {
+      // mainw->last_blend_file is set to -1 on playback start
+      mainw->last_blend_file = mainw->blend_file;
+      blend_file->last_frameno = blend_file->frameno;
+      blend_tc = tc;
+    } else {
+      if (!cfile->play_paused) {
+        frames_t frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+        frameno = clamp_frame(mainw->blend_file, frameno);
+        blend_file->last_frameno = blend_file->frameno = frameno;
+        blend_tc = ntc;
+      }
     }
   }
 
   mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   if (mainw->blend_file == mainw->playing_file) {
     if (blend_file->clip_type == CLIP_TYPE_FILE) {
-      lives_decoder_t *dplug = get_decoder_clone(mainw->blend_file);
-      if (!dplug) dplug = add_decoder_clone(mainw->blend_file);
-      if (dplug) weed_set_voidptr_value(mainw->blend_layer, WEED_LEAF_HOST_DECODER, dplug);
+      // TODO: should do this through track decoders
+      lives_clip_src_t *dsource = get_clip_source(mainw->blend_file, 1, SRC_PURPOSE_TRACK);
+      if (!dsource) {
+        add_decoder_clone(mainw->blend_file, 1, SRC_PURPOSE_TRACK);
+        dsource = get_clip_source(mainw->blend_file, 1, SRC_PURPOSE_TRACK);
+      } else dsource = get_clip_source(mainw->blend_file, -1, SRC_PURPOSE_PRIMARY);
     }
+    lives_layer_set_source(mainw->blend_layer, dsource);
   }
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
@@ -903,7 +911,7 @@ boolean get_blend_layer(weed_timecode_t tc) {
         !mainw->files[mainw->blend_file]->is_loaded))) {
     // invalid blend file
     if (mainw->blend_file != mainw->playing_file) {
-      track_decoder_free(1, mainw->blend_file);
+      track_source_free(1, mainw->blend_file);
       mainw->blend_file = mainw->playing_file;
       return FALSE;
     }
@@ -912,6 +920,7 @@ boolean get_blend_layer(weed_timecode_t tc) {
 
   if (mainw->num_tr_applied && (prefs->tr_self || mainw->blend_file != mainw->playing_file) &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
+    weed_layer_set_invalid(mainw->blend_layer, FALSE);
     get_blend_layer_inner(tc);
   }
   return TRUE;

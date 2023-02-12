@@ -3626,6 +3626,8 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
 static void _thdlg_auto_spin(void) {
   lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
+  g_print("state is %s\n", lpt_desc_state(mainw->dlg_spin_thread));
+  lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher());
   while (mainw->threaded_dialog
          && !lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
     int count = 10000;
@@ -3635,11 +3637,13 @@ static void _thdlg_auto_spin(void) {
         threaded_dialog_spin(xfraction);
         spun = TRUE;
       }
-      lives_nanosleep(10000);
+      lives_nanosleep(100000);
+      //g_print("ah %d", lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread));
     }
   }
-  if (lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread))
+  if (lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
     lives_proc_thread_cancel(mainw->dlg_spin_thread);
+  }
 }
 
 
@@ -3648,6 +3652,7 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                            (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
+  lives_proc_thread_sync_with(mainw->dlg_spin_thread);
 }
 
 

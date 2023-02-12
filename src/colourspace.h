@@ -274,6 +274,7 @@ void lives_layer_set_opaque(weed_layer_t *);
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 boolean letterbox_layer(weed_layer_t *, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,
                         int tclamp);
+boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int top, int bottom, int left, int right);
 
 boolean compact_rowstrides(weed_layer_t *);
 void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in);

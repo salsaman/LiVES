@@ -400,16 +400,14 @@ LIVES_LOCAL_INLINE void lives_md5_start(md5priv *priv) {
 
 // puts the final value in ret (a 16 byte array of uint8_t - (here cast to uint32_[4])
 LIVES_LOCAL_INLINE void *lives_md5_read(md5priv *priv, void *ret) {
-  ((uint32_t *) ret)[0] = priv->A; ((uint32_t *) ret)[1] = priv->B;
-  ((uint32_t *) ret)[2] = priv->C; ((uint32_t *) ret)[3] = priv->D;
+  ((uint32_t *)ret)[0] = priv->A; ((uint32_t *)ret)[1] = priv->B;
+  ((uint32_t *)ret)[2] = priv->C; ((uint32_t *)ret)[3] = priv->D;
   return ret;
 }
 
 static LIVES_HOT void lives_md5_proc(const void *p, size_t len, md5priv *priv) {
-  // process one block of data, values are placed in priv->A / B / C / D
   size_t nw = len / sizeof(uint32_t);
   const uint32_t *w = p, *e = w + nw;
-  // backup current values of A, B, C, D - will be resotred after
   uint32_t X[MD5_SIZE], A = priv->A, B = priv->B, C = priv->C, D = priv->D;
   priv->t[0] += len;
   if (priv->t[0] < len) priv->t[1]++;
@@ -417,18 +415,12 @@ static LIVES_HOT void lives_md5_proc(const void *p, size_t len, md5priv *priv) {
     uint32_t *_X = X, _A_ = A, _B_ = B, _C_ = C, _D_ = D;
     BX(0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee)BX(0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501);
     BX(0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be)BX(0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821);
-    CW(1, 0xf61e2562, 6, 0xc040b340, 11, 0x265e5a51, 0, 0xe9b6c7aa) CW(5, 0xd62f105d, 10, 0x02441453, 15, 0xd8a1e681, 4,
-        0xe7d3fbc8);
-    CW(9, 0x21e1cde6, 14, 0xc33707d6, 3, 0xf4d50d87, 8, 0x455a14ed) CW(13, 0xa9e3e905, 2, 0xfcefa3f8, 7, 0x676f02d9, 12,
-        0x8d2a4c8a);
-    CX(5, 0xfffa3942, 8, 0x8771f681, 11, 0x6d9d6122, 14, 0xfde5380c) CX(1, 0xa4beea44, 4, 0x4bdecfa9, 7, 0xf6bb4b60, 10,
-        0xbebfbc70);
-    CX(13, 0x289b7ec6, 0, 0xeaa127fa, 3, 0xd4ef3085, 6, 0x04881d05) CX(9, 0xd9d4d039, 12, 0xe6db99e5, 15, 0x1fa27cf8, 2,
-        0xc4ac5665);
-    CY(0, 0xf4292244, 7, 0x432aff97, 14, 0xab9423a7, 5, 0xfc93a039) CY(12, 0x655b59c3, 3, 0x8f0ccc92, 10, 0xffeff47d, 1,
-        0x85845dd1);
-    CY(8, 0x6fa87e4f, 15, 0xfe2ce6e0, 6, 0xa3014314, 13, 0x4e0811a1) CY(4, 0xf7537e82, 11, 0xbd3af235, 2, 0x2ad7d2bb, 9,
-        0xeb86d391);
+    CW(1, 0xf61e2562, 6, 0xc040b340, 11, 0x265e5a51, 0, 0xe9b6c7aa)CW(5, 0xd62f105d, 10, 0x02441453, 15, 0xd8a1e681, 4, 0xe7d3fbc8);
+    CW(9, 0x21e1cde6, 14, 0xc33707d6, 3, 0xf4d50d87, 8, 0x455a14ed)CW(13, 0xa9e3e905, 2, 0xfcefa3f8, 7, 0x676f02d9, 12, 0x8d2a4c8a);
+    CX(5, 0xfffa3942, 8, 0x8771f681, 11, 0x6d9d6122, 14, 0xfde5380c)CX(1, 0xa4beea44, 4, 0x4bdecfa9, 7, 0xf6bb4b60, 10, 0xbebfbc70);
+    CX(13, 0x289b7ec6, 0, 0xeaa127fa, 3, 0xd4ef3085, 6, 0x04881d05)CX(9, 0xd9d4d039, 12, 0xe6db99e5, 15, 0x1fa27cf8, 2, 0xc4ac5665);
+    CY(0, 0xf4292244, 7, 0x432aff97, 14, 0xab9423a7, 5, 0xfc93a039)CY(12, 0x655b59c3, 3, 0x8f0ccc92, 10, 0xffeff47d, 1, 0x85845dd1);
+    CY(8, 0x6fa87e4f, 15, 0xfe2ce6e0, 6, 0xa3014314, 13, 0x4e0811a1)CY(4, 0xf7537e82, 11, 0xbd3af235, 2, 0x2ad7d2bb, 9, 0xeb86d391);
     A += _A_; B += _B_; C += _C_; D += _D_;
   }
   priv->A = A; priv->B = B; priv->C = C; priv->D = D;
@@ -445,16 +437,14 @@ static void lives_md5_calc(const void *p, size_t len, md5priv *priv) {
       lives_memcpy(priv->buf, &priv->buf[rem & ~63], rem & 63);
       priv->bl = rem & 63;
     }
-    p = (const char *) p + extra;
+    p = (const char *)p + extra;
     len -= extra;
   }
-
   if (len > 64) {
     lives_md5_proc(p, len & ~63, priv);
     p = (const char *)p + (len & ~63);
     len &= 63;
   }
-
   if (len > 0) {
     lives_memcpy(priv->buf, p, len);
     priv->bl = len;
@@ -463,7 +453,7 @@ static void lives_md5_calc(const void *p, size_t len, md5priv *priv) {
 
 static void *lives_md5_end(md5priv *priv, void *ret) {
   uint32_t dlen = priv->bl;
-  size_t padsize = dlen >= 56 ? 64 + 56 - dlen : 56 - dlen;
+  size_t padsize = dlen >= 56 ? 120 - dlen : 56 - dlen;
   priv->t[0] += dlen;
   if (priv->t[0] < dlen) priv->t[1]++;
   lives_memcpy(&priv->buf[dlen], padding, padsize);

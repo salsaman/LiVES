@@ -18,6 +18,7 @@
 
 typedef struct _param_t lives_param_t;
 typedef weed_plant_t weed_param_t;
+typedef weed_plant_t weed_layer_t;
 
 #include "intents.h"
 
@@ -470,23 +471,23 @@ typedef struct {
   lives_relation_t relations;
 } lives_decoder_t;
 
-const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *fake_cdata);
+const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *fake_cdata);
 
 lives_clip_data_t *get_clip_cdata(int clipno);
 void load_decoders(void);
-boolean chill_decoder_plugin(int fileno);
+boolean chill_decoder_plugin(int clipno);
 void close_decoder_plugin(lives_decoder_sys_t *);
 void close_clip_decoder(int clipno);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
-void clip_decoder_free(lives_decoder_t *);
 
-lives_decoder_t *clone_decoder(int fileno);
-lives_decoder_t *add_decoder_clone(int nclip);
-lives_decoder_t *get_decoder_clone(int nclip);
-boolean swap_decoder_clone(int nclip, lives_decoder_t *);
-boolean free_decoder_clone(int nclip, lives_decoder_t *);
+void clip_decoder_free(int clipno, lives_decoder_t *);
+
+lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose);
+
+#define get_decoder_clone(nclip, track, purpose)		\
+  (lives_decoder_t *)get_clip_source(nclip, track, purpose)
 
 void propogate_timing_data(lives_decoder_t *);
 
@@ -913,5 +914,6 @@ extern const char *const anames[AUDIO_CODEC_MAX];
 lives_rfx_t *obj_attrs_to_rfx(lives_object_t *, boolean readonly);
 
 #define LIVES_LEAF_RPAR "host_rpar"
+#define LIVES_LEAF_SOURCE "clip_source"
 
 #endif

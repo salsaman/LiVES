@@ -730,8 +730,8 @@ void init_clipboard(void) {
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         lives_freep((void **)&cfile->frame_index);
-        if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
-          close_clip_decoder(CLIPBOARD_FILE);
+        if (cfile->primary_src && cfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
+          clip_source_free(CLIPBOARD_FILE, -1, SRC_PURPOSE_PRIMARY);
         }
         cfile->clip_type = CLIP_TYPE_DISK;
       }
@@ -1193,6 +1193,7 @@ void find_when_to_stop(void) {
   // v>a    stop on video end    stop on video end           no stop
   // generator start - not playing : stop on vid_end, unless pure audio;
   if (mainw->alives_pid > 0) mainw->whentostop = NEVER_STOP;
+  else if (mainw->clip_switched) mainw->whentostop = NEVER_STOP;
   else if (mainw->aud_rec_fd != -1 &&
            mainw->ascrap_file == -1) mainw->whentostop = STOP_ON_VID_END;
   else if (mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) mainw->whentostop = STOP_ON_VID_END;
@@ -1205,9 +1206,10 @@ void find_when_to_stop(void) {
   else if (!CURRENT_CLIP_HAS_VIDEO || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering
                                        && (mainw->audio_end / cfile->fps)
                                        < MAX(cfile->laudio_time, cfile->raudio_time) &&
-                                       calc_time_from_frame(mainw->current_file, mainw->play_start) < cfile->laudio_time))
+                                       calc_time_from_frame(mainw->current_file, mainw->play_start)
+                                       < cfile->laudio_time))
     mainw->whentostop = STOP_ON_AUD_END;
-  else mainw->whentostop = STOP_ON_VID_END; // tada...
+  else mainw->whentostop = STOP_ON_VID_END;
 }
 
 

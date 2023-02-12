@@ -3657,7 +3657,7 @@ void redraw_timeline(int clipno) {
   GET_PROC_THREAD_SELF(self);
   lives_clip_t *sfile;
 
-  RETURN_RECURSION();
+  RETURN_IF_RECURSED;
 
   if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
       || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
@@ -5266,7 +5266,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
 #ifdef GTK_TEXT_VIEW_DRAW_BUG
 
-static ulong expt;
+static ulong expt = 0;
 
 static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   LiVESWidgetColor fgcol, bgcol;
@@ -5278,7 +5278,7 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
   int offsx = 0;
   int height = lives_widget_get_allocation_height(widget);
 
-  lives_signal_handler_block(widget, expt);
+  if (expt) lives_signal_handler_block(widget, expt);
 
   surface = lives_painter_get_target(cr);
   lives_painter_surface_flush(surface);
@@ -5305,7 +5305,7 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
 
   //lives_painter_fill(cr);
 
-  lives_signal_handler_unblock(widget, expt);
+  if (expt) lives_signal_handler_unblock(widget, expt);
 
   return FALSE;
 }

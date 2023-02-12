@@ -1851,7 +1851,7 @@ static boolean rec_desk_done(livespointer data) {
     if (!IS_VALID_CLIP(recargs->clipno)) goto ohnoes2;
     sfile = mainw->files[recargs->clipno];
     sfile->is_loaded = TRUE;
-    sfile->ext_src_type = LIVES_EXT_SRC_NONE;
+    sfile->primary_src_type = LIVES_EXT_SRC_NONE;
     sfile->cb_src = -1;
 
     if (sfile->frames <= 0) goto ohnoes;
@@ -1968,7 +1968,7 @@ void rec_desk(void *args) {
       jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
     })
 
-  sfile->ext_src_type = LIVES_EXT_SRC_RECORDER;
+  sfile->primary_src_type = LIVES_EXT_SRC_RECORDER;
 
   mainw->rec_samples = -1; // record unlimited
   //

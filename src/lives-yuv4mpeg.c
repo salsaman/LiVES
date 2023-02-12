@@ -105,7 +105,7 @@ static void *y4frame_thread(void *arg) {
 static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   double ofps = sfile->fps;
 
-  lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *)sfile->ext_src;
+  lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *)sfile->primary_src;
 
   pthread_t y4thread;
 
@@ -250,7 +250,7 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
 
 
 void weed_layer_set_from_yuv4m(weed_layer_t *layer, lives_clip_t *sfile) {
-  lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *)(sfile->ext_src);
+  lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *)(sfile->primary_src);
 
   y4data thread_data;
 
@@ -327,8 +327,8 @@ static boolean open_yuv4m_inner(const char *filename, const char *fname, int new
   yuv4mpeg->type = type;
   yuv4mpeg->cardno = cardno;
 
-  cfile->ext_src = yuv4mpeg;
-  cfile->ext_src_type = LIVES_EXT_SRC_FIFO;
+  cfile->primary_src = yuv4mpeg;
+  cfile->primary_src_type = LIVES_EXT_SRC_FIFO;
 
   cfile->bpp = 12;
 

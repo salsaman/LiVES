@@ -892,7 +892,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 
   if (fsize > 0) {
     // caller will wait until this thread goes to WAITING state, then do a sny_ready() and continue
-    sync_point("wait for caller");
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher());
+    //sync_point("wait for caller");
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -960,7 +961,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    sync_point("wait for caller");
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher());
+    //sync_point("wait for caller");
   }
 
 finished:
@@ -1005,7 +1007,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bytes = fbuff->offset = 0;
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    lives_proc_thread_sync_continue(lpt);
+    lives_proc_thread_sync_with(lpt);
     return TRUE;
   }
   return FALSE;
@@ -1061,8 +1063,8 @@ ssize_t lives_close_buffered(int fd) {
   ssize_t ret = 0;
   boolean should_close = TRUE;
 
-  /* if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src && */
-  /*     fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src)); */
+  /* if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->primary_src && */
+  /*     fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src)); */
 
   if (fd < 0) {
     should_close = FALSE;

@@ -45,9 +45,16 @@ void lives_layer_set_frame(weed_layer_t *, frames_t frame);
 int lives_layer_get_clip(weed_layer_t *);
 frames_t lives_layer_get_frame(weed_layer_t *);
 
+void lives_layer_set_source(weed_layer_t *, lives_clip_src_t *);
+lives_clip_src_t *lives_layer_get_source(weed_layer_t *layer);
+
+boolean weed_layer_check_valid(weed_layer_t *);
+void weed_layer_set_invalid(weed_layer_t *, boolean);
+
 /// private flags
-#define LIVES_LAYER_LOAD_IF_NEEDS_RESIZE 1
-#define LIVES_LAYER_GET_SIZE_ONLY 2
+#define LIVES_LAYER_LOAD_IF_NEEDS_RESIZE	1
+#define LIVES_LAYER_GET_SIZE_ONLY		2
+#define LIVES_LAYER_INVALID			4
 
 // layer info
 int weed_layer_is_video(weed_layer_t *);

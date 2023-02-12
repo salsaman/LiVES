@@ -151,8 +151,6 @@ static char *explain_missing(const char *exe) {
   else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = (_("Required for many rendered effects in the clip editor.\n\n"));
   else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = (_("Enables clip merging in the clip editor.\n\n"));
   else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = (_("Allows use of some additional encoder plugins\n\n"));
-  else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = (_("Allows checking for file changes, "
-        "enabling additional files to be cached in memory.\n\n"));
   else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = (_("Enables download and import of files from "
         "Youtube and other sites.\n\n"));
   else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
@@ -245,7 +243,6 @@ void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   ADD_TO_TEXT(file, EXEC_FILE);
   ADD_TO_TEXT(du, EXEC_DU);
   ADD_TO_TEXT(identify, EXEC_IDENTIFY);
-  ADD_TO_TEXT(md5sum, EXEC_MD5SUM);
   ADD_TO_TEXT(ffprobe, EXEC_FFPROBE);
   ADD_TO_TEXT(convert, EXEC_CONVERT);
   ADD_TO_TEXT(composite, EXEC_COMPOSITE);

@@ -51,6 +51,7 @@ extern boolean bundle_has_item(NIRVA_BUNDLEPTR_T, const char *item);
 
 #define IMPL_FUNC_HAS_ITEM bundle_has_item
 
+#include "lists.h"
 #include "object-constants.h"
 
 #if defined (_BASE_DEFS_ONLY_) || !defined (HAS_LIVES_INTENTS_H_BASE_DEFS)

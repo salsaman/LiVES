@@ -38,11 +38,11 @@
 #define B_(g,h,i,j,s,T)do{g+=_A(h,i,j)+(*_X++=*w)+T;++w;A_(g,s);g+=h;}while(0)
 #define BX(W,X,Y,Z)B_(A,B,C,D,7,W);B_(B,C,D,A,22,X);B_(C,D,A,B,17,Y);B_(D,A,B,X,12,Z);
 #define C_(f,k,s,T,g,h,i,j)do{g+=f(h,i,j)+X[k]+T;A_(g,s);g+=h;}while(0)
-#define CA_(M,w,W,x,X,y,Y,z,Z,g,h,i,j)C_(M,w,g,W,A,B,C,D);C_(M,x,h,X,D,A,B,C);C_(M,y,i,Y,C,D,A,B);C_(M,z,j,Z,B,C,D,A);
-#define CW(w,W,x,X,y,Y,z,Z)CA_(_B,w,W,x,W,y,Y,z,Z,5,9,14,20)
-#define CX(w,W,x,X,y,Y,z,Z)CA_(_C,w,W,x,W,y,Y,z,Z,4,11,16,23)
-#define CY(w,W,x,X,y,Y,z,Z)CA_(_D,w,W,x,W,y,Y,z,Z,6,10,15,21)
-
+#define CA_(M,w,W,x,X,y,Y,z,Z,g,h,i,j)C_(M,w,g,W,A,B,C,D);\
+  C_(M,x,h,X,D,A,B,C);C_(M,y,i,Y,C,D,A,B);C_(M,z,j,Z,B,C,D,A);
+#define CW(...)CA_(_B,__VA_ARGS__,5,9,14,20)
+#define CX(...)CA_(_C,__VA_ARGS__,4,11,16,23)
+#define CY(...)CA_(_D,__VA_ARGS__,6,10,15,21)
 typedef struct {uint32_t A, B, C, D, t[2], bl; char buf[128];} md5priv;
 
 #define MD5_SIZE 16

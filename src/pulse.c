@@ -864,7 +864,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 	  // *INDENT-ON*
 
           if (pulsed->aPlayPtr->size < in_bytes) {
-            /// if we are a few bytes short, pad with silence. If playing fwd we pad at the end, backwards we pad the beginning
+            /// if we are a few bytes short, pad with silence.
+            // If playing fwd we pad at the end, backwards we pad the beginning
             /// (since the buffer will be reversed)
 
             // NOTE: this is on the Input side - shortfalls in the output side after conversion
@@ -1284,7 +1285,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             rec_output = TRUE;
           }
         } else if (IS_VALID_CLIP(mainw->ascrap_file)
-                   && mainw->files[mainw->ascrap_file]->ext_src_type == LIVES_EXT_SRC_RECORDER) {
+                   && mainw->files[mainw->ascrap_file]->primary_src_type == LIVES_EXT_SRC_RECORDER) {
           // here we are recrding for the desktop grabber
           rec_output = TRUE;
         }

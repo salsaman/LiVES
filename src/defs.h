@@ -47,6 +47,9 @@
 #define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
 		      : DEF_ALIGN)
 
+/* #include <bits/wordsize.h> */
+/* #ifdef  __WORDSIZE32_SIZE_ULONG */
+
 #if defined( _WIN32 ) || defined( __WIN32__ ) || defined( _WIN64 )	\
   || defined (__CYGWIN__) || defined (IS_MINGW)
 #define LIVES_IS_WINDOWS TRUE
@@ -472,8 +475,6 @@ typedef enum {
 
 #define STD_STRINGFUNCS 1
 
-#define USE_INTERNAL_MD5SUM 1
-
 #define AUTOTUNE_FILEBUFF_SIZES 1
 #define AUTOTUNE_MALLOC_SIZES 1
 
@@ -494,9 +495,12 @@ typedef enum {
 #endif
 #endif
 
-#define RECURSE_GUARD_START static volatile boolean norecurse = FALSE
-#define RETURN_RECURSION(val) do {if (is_recurse(&norecurse)) return val;} while (0);
-#define RECURSE_GUARD_END norecurse = FALSE
+#define RECURSE_GUARD_START static pthread_mutex_t recursion_mutex=PTHREAD_MUTEX_INITIALIZER;
+#define RETURN_IF_RECURSED do{if(pthread_mutex_trylock(&recursion_mutex))return;}while (0);
+#define RETURN_VAL_IF_RECURSED(val)do{if(pthread_mutex_trylock(&recursion_mutex))return val;\
+    pthread_mutex_unlock(&recursion_mutex);}while (0);
+#define RECURSE_GUARD_LOCK do{pthread_mutex_lock(&recursion_mutex);}while(0);
+#define RECURSE_GUARD_END do{pthread_mutex_trylock(&recursion_mutex);pthread_mutex_unlock(&recursion_mutex);}while(0);
 
 /// global (shared) definiitions
 

@@ -1080,9 +1080,9 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
     uint64_t attrs;
     if (THREADVAR(perm_hook_hints))
       hook_hints = THREADVAR(perm_hook_hints);
-    else {
+    else
       hook_hints = THREADVAR(hook_hints);
-    }
+
     THREADVAR(hook_hints) = 0;
 
     attrs = lives_proc_thread_get_attrs(lpt);
@@ -1094,7 +1094,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
       // call this just so it can set the correct STATE
       lives_proc_thread_queue(lpt, attrs | LIVES_THRDATTR_FG_LIGHT | LIVES_THRDATTR_NO_UNREF);
 
-      // must unref, as it was never really in a hook_stack
+      // must unref, as it would be a ONESHOT and  never actually in a hook_stack
       lives_proc_thread_unref(lpt);
       goto mte_done;
     }
@@ -1106,6 +1106,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
     if (!is_fg_service || (hook_hints & HOOK_CB_BLOCK) || (hook_hints & HOOK_CB_PRIORITY)) {
       // first level service call
       if (!(hook_hints & HOOK_CB_PRIORITY) && FG_THREADVAR(fg_service)) {
+
         // call is not priority,  and main thread is already performing
         // a service call - in this case we will add the request to main thread's deferral stack
         if (hook_hints & HOOK_CB_BLOCK) lives_proc_thread_ref(lpt);
@@ -1113,13 +1114,19 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
         lpt2 = what_to_wait_for(lpt, hook_hints);
 
         if (lpt2 != lpt) {
+          // if we get back a different proc_thread, that means that this one was blocked from
+          // the stack (due to uniqueness restrictions for example)
+          // if we are not blocking, we can just unref it
+          // if blocking, then we reffed it above, so this only undoes that
           lives_proc_thread_unref(lpt);
         }
+
         if (!(hook_hints & HOOK_CB_BLOCK)) {
           retval = FALSE;
           goto mte_done;
         }
         if (lpt2 != lpt) {
+          // if blocking on lpt, this means either it was
           lives_proc_thread_unref(lpt);
           lpt = lpt2;
         }
@@ -1589,7 +1596,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t
 
   if (lives_proc_thread_sync_waiting(lpt)) {
     if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt);
-    else lives_proc_thread_sync_continue(lpt);
+    else lives_proc_thread_sync_with(lpt);
   }
 
   if (lives_proc_thread_is_paused(lpt)) lives_proc_thread_request_resume(lpt);
@@ -1646,6 +1653,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_resume(lives_proc_thread_t
 
   lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
   _lives_proc_thread_cond_signal(lpt);
+  lives_proc_thread_sync_ready(lpt);
   return TRUE;
 }
 
@@ -1812,30 +1820,88 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_sync_ready(lives_proc_thread_t lpt) {
   // by preference, use this function to unlbock proc_threads with wait_sync
   // returns FALSE if lpt was cancelled / cancel_requested
+  GET_PROC_THREAD_SELF(self);
   if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt))
     check_pool_threads();
-  lives_nanosleep_while_false(lives_proc_thread_is_preparing(lpt)
-                              || lives_proc_thread_should_cancel(lpt));
-  //if (lives_proc_thread_should_cancel(lpt)) return FALSE;
-  _lives_proc_thread_cond_signal(lpt);
-  return TRUE;
+
+  lives_nanosleep_while_true(lives_proc_thread_is_queued(lpt) && !lives_proc_thread_should_cancel(lpt)
+                             && !lives_proc_thread_should_cancel(self));
+  if (lives_proc_thread_should_cancel(self) || lives_proc_thread_should_cancel(lpt)
+      || lives_proc_thread_is_done(lpt)) return FALSE;
+
+  while (1) {
+    if (lives_proc_thread_sync_waiting(lpt) && lives_proc_thread_is_preparing(lpt)) {
+      _lives_proc_thread_cond_signal(lpt);
+      //lives_proc_thread_sync_ready(lpt);
+      lives_nanosleep_while_true(lives_proc_thread_sync_waiting(lpt) && lives_proc_thread_is_preparing(lpt))
+      continue;
+    }
+    if (lives_proc_thread_is_running(lpt) || lives_proc_thread_should_cancel(lpt)
+        || lives_proc_thread_sync_waiting(lpt) || lives_proc_thread_is_done(lpt)
+        || lives_proc_thread_should_cancel(self)) {
+      if (lives_proc_thread_should_cancel(self) || lives_proc_thread_should_cancel(lpt)
+          || lives_proc_thread_is_done(lpt)) return FALSE;
+      if (lives_proc_thread_sync_waiting(lpt) && !lives_proc_thread_is_preparing(lpt)) {
+        _lives_proc_thread_cond_signal(lpt);
+        //lives_proc_thread_sync_ready(lpt);
+        lives_proc_thread_wait(self);
+        _lives_proc_thread_cond_signal(lpt);
+        //lives_proc_thread_sync_ready(lpt);
+        return TRUE;
+      }
+    }
+    lives_millisleep;
+  }
+  return FALSE;
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_sync_continue(lives_proc_thread_t lpt) {
+LIVES_GLOBAL_INLINE lives_proc_thread_t lives_proc_thread_get_dispatcher(void) {
+  GET_PROC_THREAD_SELF(self);
+  return weed_get_plantptr_value(self, LIVES_LEAF_DISPATCHER, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_sync_with(lives_proc_thread_t lpt) {
   // by preference, use this function to unblock proc_threads at sync_points
   // but to be sure, it will also first unblock those with wait_sync, if not sync_readied
-  lives_nanosleep_while_false(lives_proc_thread_sync_waiting(lpt)
-                              || lives_proc_thread_should_cancel(lpt));
-
-  if (lives_proc_thread_has_states(lpt, THRD_STATE_PREPARING | THRD_STATE_SYNC_WAITING))
-    lives_proc_thread_sync_ready(lpt);
-
-  lives_nanosleep_while_false(lives_proc_thread_has_states(lpt, THRD_STATE_RUNNING | THRD_STATE_SYNC_WAITING)
-                              || lives_proc_thread_should_cancel(lpt));
-
-  _lives_proc_thread_cond_signal(lpt);
-  return TRUE;
+  if (lives_proc_thread_ref(lpt) > 1)  {
+    GET_PROC_THREAD_SELF(self);
+    lives_nanosleep_while_true(lives_proc_thread_is_queued(lpt));
+    while (lives_proc_thread_is_preparing(lpt)) {
+      if (lives_proc_thread_sync_waiting(lpt)) {
+        _lives_proc_thread_cond_signal(lpt);
+        lives_nanosleep_while_true(lives_proc_thread_is_preparing(lpt));
+        break;
+      }
+      lives_millisleep;
+    }
+    lives_proc_thread_include_states(self, THRD_STATE_SYNC_WAITING);
+    lives_nanosleep_while_false(lives_proc_thread_sync_waiting(lpt));
+    do {
+      /* && !(lives_proc_thread_should_cancel(lpt) */
+      /* 	|| lives_proc_thread_should_cancel(self) */
+      /* 	|| lives_proc_thread_is_done(lpt))) { */
+      lives_proc_thread_exclude_states(lpt, THRD_STATE_SYNC_WAITING);
+      /* if (lives_proc_thread_should_cancel(lpt) */
+      /* 	  || lives_proc_thread_should_cancel(self) */
+      /* 	  || lives_proc_thread_is_done(lpt)) { */
+      /* 	lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING); */
+      /* 	lives_proc_thread_unref(lpt); */
+      /* 	return FALSE; */
+      /* } */
+      lives_millisleep;
+    } while (lives_proc_thread_sync_waiting(self));
+    if (lives_proc_thread_should_cancel(lpt)
+        || lives_proc_thread_should_cancel(self)
+        || lives_proc_thread_is_done(lpt)) {
+      lives_proc_thread_unref(lpt);
+      return FALSE;
+    }
+    lives_proc_thread_unref(lpt);
+    return TRUE;
+  }
+  return FALSE;
 }
 
 
@@ -2264,11 +2330,14 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
 // others amend the work flags (for the worker thread)
 // additionally, some attrs only take effect when the proc_thread is created
 boolean lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t attrs) {
-  uint64_t lpt_attrs = lives_proc_thread_get_attrs(lpt);
+  GET_PROC_THREAD_SELF(self);
   thrd_work_t *mywork;
+  uint64_t lpt_attrs = lives_proc_thread_get_attrs(lpt);
   uint64_t state = lives_proc_thread_get_state(lpt);
 
   lpt_attrs |= attrs;
+
+  weed_set_plantptr_value(lpt, LIVES_LEAF_DISPATCHER, self);
 
   /// tell the thread to clean up after itself [but it won't delete lpt]
 
@@ -2724,6 +2793,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
 
   // STATE chenge - queued - queued / preparing
   if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_PREPARING);
+  if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_QUEUED);
 
   mywork->flags &= ~(LIVES_THRDFLAG_WAIT_START | LIVES_THRDFLAG_QUEUED_WAITING);
 
@@ -2815,9 +2885,9 @@ skip_over:
 #define POOL_TIMEOUT_SEC 120
 
 static boolean thrdpool(void *arg) {
-  boolean skip_wait = TRUE;
   static struct timespec ts;
-  int rc = 0;
+  boolean skip_wait = TRUE;
+  int rc;
   lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
 
   while (!threads_die) {

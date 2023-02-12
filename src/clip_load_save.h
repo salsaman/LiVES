@@ -31,9 +31,9 @@ void add_to_recovery_file(const char *handle);
 boolean rewrite_recovery_file(void);
 
 // clip loading
-ulong deduce_file(const char *filename, double start_time, int end);
-ulong open_file(const char *filename);
-ulong open_file_sel(const char *file_name, double start_time, int frames);
+uint64_t deduce_file(const char *filename, double start_time, int end);
+uint64_t open_file(const char *filename);
+uint64_t open_file_sel(const char *file_name, double start_time, int frames);
 void open_fw_device(void); // TOTDO - move
 boolean reload_clip(int fileno, frames_t maxframe);
 
@@ -59,7 +59,7 @@ void reload_subs(int fileno);
 void pad_with_silence(int clipno, boolean at_start, boolean is_auto);
 
 void backup_file(int clip, int start, int end, const char *filename);
-ulong restore_file(const char *filename);
+uint64_t restore_file(const char *filename);
 
 // scrapfiles
 boolean open_scrap_file(void);

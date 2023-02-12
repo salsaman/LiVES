@@ -13,6 +13,8 @@
 #ifndef _THREADING_H_
 #define _THREADING_H_
 
+#include "alarms.h"
+
 typedef void *(*lives_thread_func_t)(void *);
 typedef struct _lives_thread_data_t lives_thread_data_t;
 typedef weed_plantptr_t lives_proc_thread_t;
@@ -405,6 +407,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_LPT_CCHAIN "lpt_cchain"  // active lpt for chained proc_threads
 #define LIVES_LEAF_PRIME_LPT "prime_lpt"  // prime lpt for chained followups
 #define LIVES_LEAF_LPT_DATA "lpt_data" // scratch data area for proc_threads
+#define LIVES_LEAF_DISPATCHER "dispatcher" // proc_thread which queued the proc_thread
 
 #define LIVES_LEAF_ERRNUM "errnum"
 #define LIVES_LEAF_ERRMSG "errmsg"
@@ -641,6 +644,8 @@ weed_plant_t *lives_proc_thread_deliver_data(lives_proc_thread_t dst,
 #define lives_proc_thread_get_plantptr_array(lpt, name, nvals)			\
   (weed_get_plantptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
 
+lives_proc_thread_t lives_proc_thread_get_dispatcher(void);
+
 // test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);
 // this is not the same as !queueu
@@ -648,6 +653,7 @@ boolean lives_proc_thread_is_unqueued(lives_proc_thread_t);
 boolean lives_proc_thread_is_preparing(lives_proc_thread_t);
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 //test if lpt is wating for sync_ready()
+boolean lives_proc_thread_sync_with(lives_proc_thread_t other);
 boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
 //test if lpt is wating for self condition(s)
 boolean lives_proc_thread_is_waiting(lives_proc_thread_t);
@@ -762,7 +768,7 @@ boolean sync_point(const char *motive);
 boolean lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 // block until lpt is sync_waiting, then both threads continue
-boolean lives_proc_thread_sync_continue(lives_proc_thread_t);
+boolean lives_proc_thread_sync_and_continue(lives_proc_thread_t);
 // ditto, but will zoom past sytn_points until motives are euqal
 boolean lives_proc_threads_sync_at(lives_proc_thread_t, const char *motive);
 

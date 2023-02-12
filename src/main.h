@@ -280,18 +280,16 @@ typedef struct {
 #endif
 
 #include "functions.h"
-
-#include "layers.h"
-
-#include "colourspace.h"
-
-#include "frameloader.h"
-
-#include "machinestate.h"
-
-#include "lists.h"
+#include "plugins.h"
 #include "alarms.h"
-
+#include "lists.h"
+#include "intents.h"
+#include "maths.h"
+#include "cliphandler.h"
+#include "layers.h"
+#include "colourspace.h"
+#include "frameloader.h"
+#include "machinestate.h"
 #include "lsd-tab.h"
 
 boolean weed_threadsafe;
@@ -316,7 +314,7 @@ typedef enum {
 /// cancel reason
 typedef enum {
   /// no cancel
-  CANCEL_NONE = FALSE,
+  CANCEL_NONE,
 
   /// user pressed stop
   CANCEL_USER,
@@ -370,7 +368,7 @@ typedef enum {
   CANCEL_INTERNAL_ERROR,
 
   /// special cancel for TV toy
-  CANCEL_KEEP_LOOPING = CANCEL_NONE + 100
+  CANCEL_KEEP_LOOPING,
 } lives_cancel_t;
 
 typedef enum {
@@ -387,7 +385,6 @@ extern const char *NO_COPY_LEAVES[];
 
 #define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
 #define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
-#define WEED_LEAF_HOST_DECODER "host_decoder" // pointer to decoder for a layer
 
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
 
@@ -399,10 +396,9 @@ extern const char *NO_COPY_LEAVES[];
 #define HAS_EXTERNAL_PLAYER (capable->has_mplayer || capable->has_mplayer2 || capable->has_mpv)
 
 // common defs for mainwindow (retain this order)
-#include "plugins.h"
+//#include "plugins.h"
 
-#include "intents.h"
-#include "maths.h"
+//#include "intents.h"
 #include "threading.h"
 
 #ifdef ENABLE_JACK
@@ -423,7 +419,6 @@ extern mainwindow *mainw;
 #include "clip_load_save.h"
 
 #include "player.h"
-#include "cliphandler.h"
 #include "sethandler.h"
 #include "messaging.h"
 

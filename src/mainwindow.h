@@ -231,17 +231,22 @@ typedef enum {
 } lives_time_source_t;
 
 #define LIVES_DIRECTION_FWD_OR_REV(dir) ((dir) == LIVES_DIRECTION_BACKWARD ? LIVES_DIRECTION_REVERSE : (dir))
-#define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig((dir)))  /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
-#define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((dir) & 1)) /// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
 
-#define LIVES_DIRECTION_OPPOSITE(dir1, dir2) (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED) \
-					      ? (dir2) == LIVES_DIR_FORWARD : \
-					      ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED) \
-					      ? (dir1) == LIVES_DIR_FORWARD : (dir1) == LIVES_DIR_LEFT ? (dir2) == LIVES_DIR_RIGHT \
-					      : (dir1) == LIVES_DIR_RIGHT ? (dir2) == LIVES_DIR_LEFT : (dir1) == LIVES_DIR_UP \
-					      ? (dir2) == LIVES_DIR_DOWN : (dir1) == LIVES_DIR_DOWN ? (dir2) == LIVES_DIR_UP \
-					      : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
-					      ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
+/// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig((dir)))
+
+/// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((abs(dir)) & 1))
+
+#define LIVES_DIRECTION_CONTRARY(dir1, dir2)				\
+  (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED)	\
+   ? (dir2) == LIVES_DIR_FORWARD :					\
+   ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED)	\
+   ? (dir1) == LIVES_DIR_FORWARD : (dir1) == LIVES_DIR_LEFT ? (dir2) == LIVES_DIR_RIGHT \
+   : (dir1) == LIVES_DIR_RIGHT ? (dir2) == LIVES_DIR_LEFT : (dir1) == LIVES_DIR_UP \
+   ? (dir2) == LIVES_DIR_DOWN : (dir1) == LIVES_DIR_DOWN ? (dir2) == LIVES_DIR_UP \
+   : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
+   ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
 
 /// toy types
 typedef enum {
@@ -441,11 +446,6 @@ enum {
 // at least one of these, depending on perl version
 #define EXEC_PIP "pip"
 #define EXEC_PIP3 "pip3"
-#ifdef IS_FREEBSD
-#define EXEC_MD5SUM "md5"
-#else
-#define EXEC_MD5SUM "md5sum"
-#endif
 #define EXEC_GZIP "gzip"
 #define EXEC_DU "du"
 #define EXEC_DF "df"
@@ -1839,8 +1839,8 @@ typedef struct {
   lives_screen_area_t *screen_areas; // array of screen areas
 
   int active_track_list[MAX_TRACKS];
-  boolean ext_src_used[MAX_FILES];
-  lives_decoder_t *track_decoders[MAX_TRACKS];
+  boolean primary_src_used[MAX_FILES];
+  lives_clip_src_t *track_sources[MAX_TRACKS];
   int old_active_track_list[MAX_TRACKS];
 
   boolean gen_started_play;

@@ -54,6 +54,25 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_new_for_frame(int clip, frames_t f
 }
 
 
+LIVES_GLOBAL_INLINE void lives_layer_set_source(weed_layer_t *layer, lives_clip_src_t *source) {
+  if (layer) weed_set_voidptr_value(layer, LIVES_LEAF_SOURCE, source);
+  if (source) source->layer = layer;
+}
+
+
+LIVES_GLOBAL_INLINE lives_clip_src_t *lives_layer_get_source(weed_layer_t *layer) {
+  return layer ?  weed_get_voidptr_value(layer, LIVES_LEAF_SOURCE, NULL) : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_layer_source_set_status(weed_layer_t *layer, int status) {
+  if (layer) {
+    lives_clip_src_t *source = lives_layer_get_source(layer);
+    if (source) return source->status;
+  }
+}
+
+
 /**
    @brief fills layer with default values.
 
@@ -426,10 +445,6 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     }
   } else {
     /// shallow copy
-    if (weed_layer_get_pixel_data(layer)) {
-      break_me("evisc");
-      abort();
-    }
     weed_layer_pixel_data_free(layer);
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
@@ -466,6 +481,21 @@ LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
   return weed_refcount_query(layer);
 }
 
+
+LIVES_GLOBAL_INLINE void weed_layer_set_invalid(weed_layer_t *layer, boolean is) {
+  if (layer) {
+    if (is)
+      (weed_layer_set_flags(layer, weed_layer_get_flags(layer) | LIVES_LAYER_INVALID));
+    else
+      (weed_layer_set_flags(layer, weed_layer_get_flags(layer) & ~LIVES_LAYER_INVALID));
+
+  }
+}
+
+
+LIVES_GLOBAL_INLINE boolean weed_layer_check_valid(weed_layer_t *layer) {
+  return layer ? !(weed_layer_get_flags(layer) & LIVES_LAYER_INVALID) : FALSE;
+}
 
 /**
    @brief frees pixel_data for a layer, then the layer itself

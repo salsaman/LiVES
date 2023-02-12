@@ -3390,8 +3390,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
           int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, NULL);
-          lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
-          if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
+          lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src), offs);
+          if (!mainw->files[mainw->scrap_file]->primary_src) load_from_scrap_file(NULL, -1);
         }
       }
     }
@@ -3433,12 +3433,12 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
     } else {
       if (mainw->num_tracks > 1) {
         if (mainw->blend_file != mainw->clip_index[1]) {
-          track_decoder_free(1, mainw->blend_file);
+          track_source_free(1, mainw->blend_file);
           mainw->blend_file = mainw->clip_index[1];
         }
         if (IS_VALID_CLIP(mainw->blend_file)) mainw->files[mainw->blend_file]->frameno = mainw->frame_index[1];
       } else {
-        track_decoder_free(1, mainw->blend_file);
+        track_source_free(1, mainw->blend_file);
         mainw->blend_file = -1;
       }
       new_file = -1;
@@ -3446,7 +3446,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         new_file = mainw->clip_index[i];
       }
       if (i == 2) {
-        track_decoder_free(1, mainw->blend_file);
+        track_source_free(1, mainw->blend_file);
         mainw->blend_file = -1;
       }
 
@@ -4072,10 +4072,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], old_scrap_frame);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
-              if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
+              if (!mainw->files[mainw->scrap_file]->primary_src) load_from_scrap_file(NULL, -1);
               else {
-                lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
-                                                     offs);
+                lives_lseek_buffered_rdonly_absolute
+                (LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->primary_src), offs);
                 if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                   weed_layer_unref(layer);
                   layer = NULL;
@@ -4085,7 +4085,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           } else {
             int oclip, nclip;
             layers = (weed_plant_t **)lives_malloc((mainw->num_tracks + 1) * sizeof(weed_plant_t *));
-            lives_memset(mainw->ext_src_used, 0, MAX_FILES * sizint);
+            lives_memset(mainw->primary_src_used, 0, MAX_FILES * sizint);
 
             // get list of active tracks from mainw->filter map
             get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
@@ -4093,9 +4093,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             for (i = 0; i < mainw->num_tracks; i++) {
               oclip = mainw->old_active_track_list[i];
               if (oclip > 0 && oclip == (nclip = mainw->active_track_list[i])) {
-                // check if ext_src survives old->new
-                if (mainw->track_decoders[i] == mainw->files[oclip]->ext_src) {
-                  mainw->ext_src_used[oclip] = TRUE;
+                // check if primary_src survives old->new
+                if (mainw->track_sources[i] == mainw->files[oclip]->primary_src) {
+                  mainw->primary_src_used[oclip] = TRUE;
                 }
               }
             }
@@ -4118,28 +4118,29 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 // create clones of the decoder plugin
                 // this is to prevent constant seeking between different frames in the clip
 
-                // check if ext_src survives old->new
+                // check if primary_src survives old->new
 
                 ////
-                if (mainw->track_decoders[i]) track_decoder_free(i, oclip);
+                if (mainw->track_sources[i]) track_source_free(i, oclip);
 
                 if (IS_VALID_CLIP(nclip)) {
                   lives_clip_t *sfile = mainw->files[nclip];
                   if (sfile->clip_type == CLIP_TYPE_FILE) {
-                    if (!mainw->ext_src_used[nclip]) {
-                      mainw->track_decoders[i] = (lives_decoder_t *)sfile->ext_src;
+                    if (!mainw->primary_src_used[nclip]) {
+                      mainw->track_sources[i] = sfile->primary_src;
                     }
-                    if (mainw->track_decoders[i] == (lives_decoder_t *)sfile->ext_src) {
-                      mainw->ext_src_used[nclip] = TRUE;
+                    if (mainw->track_sources[i] == sfile->primary_src) {
+                      mainw->primary_src_used[nclip] = TRUE;
                     } else {
                       // add new clone for nclip
-                      if (!sfile->n_altsrcs) add_decoder_clone(nclip);
-                      mainw->track_decoders[i] = sfile->alt_srcs[0];
+                      mainw->track_sources[i] = get_clip_source(nclip, i, SRC_PURPOSE_TRACK);
+                      if (!mainw->track_sources[i])
+                        add_decoder_clone(nclip, i, SRC_PURPOSE_TRACK);
+                      mainw->track_sources[i] = get_clip_source(nclip, i, SRC_PURPOSE_TRACK);
                     }
                   }
                   // set alt src in layer
-                  weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER,
-                                         (void *)mainw->track_decoders[i]);
+                  lives_layer_set_source(layers[i], (void *)mainw->track_sources[i]);
                 } else weed_layer_pixel_data_free(layers[i]);
                 mainw->old_active_track_list[i] = mainw->active_track_list[i];
               }
@@ -4311,7 +4312,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               layer = NULL;
             }
           }
-          track_decoder_free(1, mainw->blend_file);
+          track_source_free(1, mainw->blend_file);
           mainw->blend_file = blend_file;
         }
         next_frame_event = get_next_frame_event(event);
@@ -5407,12 +5408,12 @@ boolean render_to_clip(boolean new_clip) {
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
     lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
-    lives_proc_thread_sync_continue(mainw->transrend_proc);
+    //lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     g_print("wait for transcoder ready\n");
 
     lives_nanosleep_while_false(mainw->transrend_waiting);
-    lives_proc_thread_sync_continue(mainw->transrend_proc);
+    //lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     mainw->transrend_waiting = FALSE;
 
@@ -5420,7 +5421,7 @@ boolean render_to_clip(boolean new_clip) {
   }
 
   // set all current track -> clips to 0
-  init_track_decoders();
+  init_track_sources();
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     cfile->progress_start = 0;
@@ -5580,7 +5581,7 @@ rtc_done:
   }
 
   mainw->effects_paused = FALSE;
-  free_track_decoders();
+  free_track_sources();
   deinit_render_effects();
   audio_free_fnames();
   mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
@@ -5838,7 +5839,7 @@ static boolean _deal_with_render_choice(void) {
       if (future_prefs->audio_src == AUDIO_SRC_EXT) {
         pref_factory_bool(PREF_REC_EXT_AUDIO, TRUE, FALSE);
       }
-      free_track_decoders();
+      free_track_sources();
       deinit_render_effects();
       mainw->preview_rendering = FALSE;
       mainw->is_processing = mainw->is_rendering = FALSE;
@@ -5966,8 +5967,8 @@ static boolean _deal_with_render_choice(void) {
 
     if (IS_VALID_CLIP(mainw->scrap_file)) {
       // rewind scrap file to beginning
-      if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
-      lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), 0);
+      if (!mainw->files[mainw->scrap_file]->primary_src) load_from_scrap_file(NULL, -1);
+      lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src), 0);
     }
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 

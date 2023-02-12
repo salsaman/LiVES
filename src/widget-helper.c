@@ -6589,18 +6589,23 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) 
 }
 
 
-boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
+static void _lives_entry_set_text(LiVESEntry *entry, const char *text) {
 #ifdef GUI_GTK
-  if (!GTK_IS_ENTRY(entry)) return FALSE;
-  if (widget_opts
-      .justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
+  if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
-  if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
+  else if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
+#endif
+}
+
+
+boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
+  if (!LIVES_IS_ENTRY(entry)) return FALSE;
+#ifdef GUI_GTK
   if (!gui_loop_tight || is_fg_thread()) {
-    gtk_entry_set_text(entry, text);
+    _lives_entry_set_text(entry, text);
   } else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_entry_set_text, 0, "vs", entry, text);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_entry_set_text, 0, "vs", entry, text);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;

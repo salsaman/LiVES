@@ -95,7 +95,6 @@ static LiVESWidget *mainw_message_box;
 static LiVESWidget *mainw_msg_area;
 static LiVESWidget *mainw_msg_scrollbar;
 static LiVESAdjustment *mainw_msg_adj;
-//static ulong mainw_sw_func;
 
 ////////////////////////////
 
@@ -7306,7 +7305,7 @@ static void locate_avol_init_event(lives_mt * mt, weed_plant_t *event_list, int 
 
 static track_rect *add_block_start_point(LiVESWidget * eventbox, weed_timecode_t tc, int filenum,
     weed_timecode_t offset_start, weed_plant_t *event, boolean ordered) {
-  // each mt->video_draw (eventbox) has a ulong data which points to a linked list of track_rect
+  // each mt->video_draw (eventbox) has a uint64_t data which points to a linked list of track_rect
   // here we create a new linked list item and set the start timecode in the timeline,
   // offset in the source file, and start event
   // then append it to our list
@@ -8861,7 +8860,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     // shouldn't be playing, so OK to just call this
-    weed_generator_end((weed_plant_t *)cfile->ext_src);
+    weed_generator_end((weed_plant_t *)cfile->primary_src);
   }
 
   // create new file for rendering to
@@ -9157,7 +9156,7 @@ track_rect *move_block(lives_mt * mt, track_rect * block, double timesecs, int o
   weed_timecode_t new_start_tc, end_tc;
   weed_timecode_t start_tc = get_event_timecode(block->start_event);
 
-  ulong uid = block->uid;
+  uint64_t uid = block->uid;
 
   LiVESWidget *eventbox, *oeventbox;
 
@@ -11797,7 +11796,7 @@ boolean on_track_click(LiVESWidget * eventbox, LiVESXEventButton * event, livesp
                                          mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
               if (track >= 0 && !mt->aud_track_selected) {
                 if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
-                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
+                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->primary_src)->cdata;
                   if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
                     mt_set_cursor_style(mt, LIVES_CURSOR_VIDEO_BLOCK, width, height, filenum, 0, height / 2);
                   } else {
@@ -19989,7 +19988,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
 
   // remote API helpers
 
-  track_rect *find_block_by_uid(lives_mt * mt, ulong uid) {
+  track_rect *find_block_by_uid(lives_mt * mt, uint64_t uid) {
     LiVESList *list;
     track_rect *block;
 
@@ -20031,7 +20030,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
   }
 
 
-  ulong mt_get_last_block_uid(lives_mt * mt) {
+  uint64_t mt_get_last_block_uid(lives_mt * mt) {
     int track = mt->current_track;
     track_rect *lastblock;
     LiVESWidget *eventbox = get_eventbox_for_track(mt, track);

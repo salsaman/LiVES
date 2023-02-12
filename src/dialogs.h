@@ -62,6 +62,7 @@ void update_progress(boolean visible, int clipno);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin(double fraction);
+void threaded_dialog_stop_spin(void);
 void threaded_dialog_push(void);
 void threaded_dialog_pop(void);
 void threaded_dialog_auto_spin(void);

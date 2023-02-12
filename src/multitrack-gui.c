@@ -388,7 +388,7 @@ LiVESPixbuf *mt_make_thumb(lives_mt *mt, int file, int width, int height, frames
     if (sfile->frames > 0) {
       weed_timecode_t tc = (frame - 1.) / sfile->fps * TICKS_PER_SECOND;
       if (sfile->frames > 0 && sfile->clip_type == CLIP_TYPE_FILE) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->primary_src)->cdata;
         if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
             is_virtual_frame(file, frame)) {
           virtual_to_images(file, frame, frame, FALSE, NULL);
@@ -735,7 +735,7 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
               }
               if (!(thumbnail = get_from_thumb_cache(filenum, framenum, range))) {
                 if (mainw->files[filenum]->frames > 0 && mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
-                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
+                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->primary_src)->cdata;
                   if (cdata && !((cdata->seek_flag & LIVES_SEEK_FAST) &&
                                  is_virtual_frame(filenum, framenum))) {
                     thumbnail = make_thumb_fast_between(mt, filenum, width, height,
@@ -2548,14 +2548,14 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       mainw->last_display_ticks = 0;
 
       // start decoder plugins, one per track
-      init_track_decoders();
+      init_track_sources();
 
       // render one frame
       // will call load_frame_image, and we take mainw->frame_layer
       process_events(mt->pb_start_event, FALSE, 0);
       //
       reset_old_frame_layer();
-      free_track_decoders();
+      free_track_sources();
       mt->preview_layer = -100000;
       mt->solo_inst = NULL;
       mainw->internal_messaging = internal_messaging;

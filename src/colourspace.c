@@ -10445,9 +10445,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
 
   if (!un) flags |= WEED_LAYER_ALPHA_PREMULT;
   else if (flags & WEED_LAYER_ALPHA_PREMULT) flags ^= WEED_LAYER_ALPHA_PREMULT;
-
-  if (flags == 0) weed_leaf_delete(layer, LIVES_LEAF_HOST_FLAGS);
-  else weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
+  weed_layer_set_flags(layer, flags);
 }
 
 
@@ -10623,14 +10621,13 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   } else {
     if (!weed_palette_has_alpha(inpl) && weed_palette_has_alpha(outpl)) {
       flags |= WEED_LAYER_ALPHA_PREMULT;
-      weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
+      weed_layer_set_flags(layer, flags);
     }
   }
 
   if (weed_palette_has_alpha(inpl) && !(weed_palette_has_alpha(outpl)) && (flags & WEED_LAYER_ALPHA_PREMULT)) {
     flags ^= WEED_LAYER_ALPHA_PREMULT;
-    if (flags == 0) weed_leaf_delete(layer, LIVES_LEAF_HOST_FLAGS);
-    else weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
+    weed_layer_set_flags(layer, flags);
   }
 
   if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE)
@@ -13497,6 +13494,70 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 }
 
 
+boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int top, int bottom, int left, int right) {
+  // remove border from layer using offsets provided, then resize result to width X height
+  // if either width or height is 0 then it will be set to the inner size;
+  // if either is -1, then it will be set to the outer size
+  //
+  // negative values for top, bottom, left or right will be set to zero
+  //
+  // currently only for planar palettes
+
+  weed_layer_t *newl;
+  int width, height, xwidth, xheight;
+  int pal, psize, irow, orow;
+  uint8_t *ipd, *opd;
+  if (!layer) return FALSE;
+  if (top < 0) top = 0;
+  if (bottom < 0) bottom = 0;
+  if (left < 0) left = 0;
+  if (right < 0) right = 0;
+  width = weed_layer_get_width_pixels(layer);
+  height = weed_layer_get_height(layer);
+  xwidth = width - left - right;
+  xheight = height - top - bottom;
+  if ((xwidth == width && xheight == height) || xwidth <= 0 || xheight <= 0) return TRUE;
+  newl = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  if (!weed_layer_copy(newl, layer)) {
+    weed_layer_nullify_pixel_data(newl);
+    weed_layer_unref(newl);
+    return FALSE;
+  }
+  weed_layer_nullify_pixel_data(layer);
+  weed_layer_set_size(layer, xwidth, xheight);
+  if (!create_empty_pixel_data(layer, TRUE, TRUE)) {
+    weed_layer_copy(layer, newl);
+    weed_layer_nullify_pixel_data(newl);
+    weed_layer_unref(newl);
+    return FALSE;
+  }
+  pal = weed_channel_get_palette(layer);
+  psize = pixel_size(pal);
+  orow = weed_channel_get_rowstride(layer);
+  irow = weed_layer_get_rowstride(newl);
+  ipd = weed_layer_get_pixel_data(newl) + irow * top + left * psize;
+  opd = weed_layer_get_pixel_data(layer);
+
+  for (int i = 0; i < xheight; i++) {
+    lives_memcpy(&opd[orow * i], &ipd[irow * i], xwidth);
+  }
+
+  //nats = weed_get_int_array(channel, WEED_LEAF_NATURAL_SIZE, NULL);
+  if (mainw->frame_layer && layer != mainw->frame_layer
+      && weed_layer_get_pixel_data(newl) == weed_layer_get_pixel_data(mainw->frame_layer))
+    weed_layer_nullify_pixel_data(newl);
+  weed_layer_unref(newl);
+
+  if (opwidth == -1) opwidth = width;
+  else if (!opwidth) opwidth = xwidth;
+  if (opheight == -1) opheight = height;
+  else if (!opheight) opheight = xheight;
+
+  return resize_layer(layer, opwidth, opheight, LIVES_INTERP_BEST, WEED_PALETTE_END,
+                      WEED_YUV_CLAMPING_UNCLAMPED);
+}
+
+
 boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width, int height,
                         LiVESInterpType interp, int tpal, int tclamp) {
   // stretch or shrink layer to width/height, then overlay it in a black rectangle size nwidth/nheight
@@ -13961,12 +14022,12 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     }
 
     if (weed_palette_has_alpha(pal)) {
-      int flags = weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
+      int flags = weed_layer_get_flags(layer);
       if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
         // if we have post-multiplied alpha, pre multiply
         alpha_unpremult(layer, FALSE);
         flags |= WEED_LAYER_ALPHA_PREMULT;
-        weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
+        weed_layer_set_flags(layer, flags);
       }
     }
     surf = lives_painter_image_surface_create_for_data(pixel_data, cform, width, height, orowstride);
@@ -14102,7 +14163,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
       } else bad++;
     }
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-    weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, LIVES_LAYER_LOAD_IF_NEEDS_RESIZE);
+    weed_layer_set_flags(layer, LIVES_LAYER_LOAD_IF_NEEDS_RESIZE);
     if (!weed_layer_create_from_file_progressive(layer, fname, width, height, WEED_PALETTE_END,
         get_image_ext_for_type(ximgtype))) {
       lives_free(fname);

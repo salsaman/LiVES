@@ -1068,7 +1068,8 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
       if (!hstacks) return NULL;
       is_self = TRUE;
     }
-  }
+  } else if (hstacks == lives_proc_thread_get_hook_stacks(self))
+    is_self = TRUE;
 
   if (dtype & DTYPE_CLOSURE) is_close = TRUE;
 
@@ -1143,6 +1144,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
       if (!lpt2) break_me("null procthread in closure\n");
       if (!lpt2 || lpt2 == lpt) continue;
 
+      // check uniqueness restrictions when adding a new callback
       if (is_append) {
         cfinv = closure->flags & (HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD);
         if (!(cfinv & HOOK_INVALIDATE_DATA)) cfinv = 0;
@@ -1156,35 +1158,55 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         if (!(hstacks[type]->flags & STACK_TRIGGERING)) {
           // unique_func -> maintain only 1st fn match
           // with unique replace -> also replace 1st with our data
-          if (!ret_closure) {
-            if (xflags & HOOK_UNIQUE_DATA) {
-              if (!fn_data_match(lpt2, lpt, maxp)) continue;
-              if (xflags & HOOK_TOGGLE_FUNC) {
-                lives_proc_thread_set_state(lpt2, (THRD_STATE_INVALID | THRD_STATE_DESTROYING |
-                                                   THRD_STATE_STACKED));
-                closure->flags |= HOOK_STATUS_REMOVE;
-              } else if (maxp != 0 && !fn_data_match(lpt2, lpt, 0))
-                fn_data_replace(lpt2, lpt);
+          if (xflags & HOOK_UNIQUE_DATA) {
+            // for unique func / unique data, if we are appending, we check if the match part
+            // of the params is equal, and if so, we replace the data
+            if (!fn_data_match(lpt2, lpt, maxp)) continue;
+            if (!ret_closure) {
+              ret_closure = closure;
+              if (!(xflags & HOOK_TOGGLE_FUNC)) {
+                if (!fn_data_match(lpt2, lpt, 0)) {
+                  fn_data_replace(lpt2, lpt);
+                }
+                continue;
+              }
             }
-            ret_closure = closure;
-            continue;
-          } else {
-            if (closure->flags & HOOK_CB_BLOCK) {
-              // if replacing a closure with BLOCK flagged:
-              // ref lpt2 - to stop it being freed when triggered and removed
-              // nullify closuer->proc_thread - thread waiting on lpt will unref lpt and switch to lpt2
-              //  so we do not want to unref lpt again when we eventually free the closure
-              // add flagbit BLOCK to ret_closure - thread will now be waiting on this
-              // mark lpt2 as repleced (by lpt)
-              lives_proc_thread_ref(lpt2);
-              closure->proc_thread = NULL;
-              ret_closure->flags |= HOOK_CB_BLOCK;
-              weed_set_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, ret_closure->proc_thread);
-              lives_proc_thread_set_state(lpt2, (THRD_STATE_INVALID | THRD_STATE_DESTROYING |
-                                                 THRD_STATE_STACKED));
-            }
-            closure->flags |= HOOK_STATUS_REMOVE;
           }
+          // if we reach here, it means that we got a matching funtion,
+          // and either we got a data match and must remove the node
+          // or else unique_data was not flagged
+          if (!ret_closure) {
+            // if unique_func (without unique_data), and this is the first match,
+            // simply note it to prvent the new cllaback being added
+            ret_closure = closure;
+            if (!(xflags & HOOK_TOGGLE_FUNC)) continue;
+          }
+          // here we have established that the closure must be removed
+          // since we already found a match, or we will prepend, or it is a "toggle" function
+          if (closure->flags & HOOK_CB_BLOCK) {
+            // if replacing a closure with BLOCKing flagged, we need to get the blocked threads to wait on
+            // the closure which replaced theirs. We will return a pointer the the replacement
+            // and we also need to add a ref to lpt2, since the waiter will unref it,
+            // and it will also be unreffed when the closure is freed
+            // we will also add a ref to ret_closure->proc_thread, for similar reasons
+            lives_proc_thread_ref(lpt2);
+            if (ret_closure->proc_thread != lpt)
+              lives_proc_thread_ref(ret_closure->proc_thread);
+            // add flagbit BLOCK to ret_closure - thread will now be waiting on this
+            ret_closure->flags |= HOOK_CB_BLOCK;
+            // mark the replaced proc_thread  as "replaced"
+            weed_set_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, ret_closure->proc_thread);
+
+            // for toggle func, this closure will be removed, and new lpt will be rejected
+            // so neither will be replaced, but marking the proc_threads as "invalid" we force the waiters to give  up
+            // but we will return lpt2 (we need to return somehting different)
+            // but we will flag it as invalid,
+            ret_closure = closure;
+            lives_proc_thread_set_state(ret_closure->proc_thread, (THRD_STATE_INVALID | THRD_STATE_DESTROYING |
+                                        THRD_STATE_STACKED));
+            lives_proc_thread_ref(ret_closure->proc_thread);
+          }
+          closure->flags |= HOOK_STATUS_REMOVE;
         }
         continue;
       }
@@ -1200,7 +1222,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 
       // if we reach here it means that xflags == HOOK_UNIQUE_DATA, or closure->flags
       // had INVALIDATE_DATA, and we found a match
-      // so we will not add
+      // we wont remove anything, but we will reject an append
       ret_closure = closure;
       break;
     }
@@ -1238,10 +1260,10 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 
   if (!closure) {
     closure = lives_hook_closure_new_for_lpt(lpt, flags, type);
-    if (!is_self) {
-      closure->adder = self;
-      add_to_cb_list(self, closure);
-    }
+  }
+  if (!is_self) {
+    closure->adder = self;
+    add_to_cb_list(self, closure);
   }
 
   if (is_append) hstacks[type]->stack = lives_list_append((LiVESList *)hstacks[type]->stack, closure);

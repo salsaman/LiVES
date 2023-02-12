@@ -1737,8 +1737,8 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
 
   if (clipno == mainw->current_file && old_fps && clipno > 0) set_undoable(_("Resample"), TRUE);
 
-  if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+  if (sfile->clip_type == CLIP_TYPE_FILE && sfile->primary_src) {
+    lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->primary_src)->cdata;
     double dfps = (double)cdata->fps;
     if (!save_clip_value(clipno, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     if (!save_clip_value(clipno, CLIP_DETAILS_PB_FPS, &sfile->fps)) bad_header = TRUE;
@@ -2378,8 +2378,8 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
 
   cfile->ratio_fps = FALSE;
 
-  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
+    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
     double dfps = (double)cdata->fps;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;

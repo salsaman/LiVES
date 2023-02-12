@@ -1259,7 +1259,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     // user pressed "enough"
     // just in case last frame is damaged, we delete it (physically,
     // otherwise it will get dragged in when the file is opened)
-    if (!cfile->ext_src) {
+    if (!cfile->primary_src) {
       cfile->frames = get_frame_count(mainw->current_file, cfile->opening_frames);
       if (cfile->frames > 1) {
         com = lives_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
@@ -1765,7 +1765,7 @@ void reload_subs(int fileno) {
 }
 
 
-ulong restore_file(const char *file_name) {
+uint64_t restore_file(const char *file_name) {
   char *com = lives_strdup("dummy");
   char *mesg, *mesg1, *tmp;
   boolean is_OK = TRUE;
@@ -2124,10 +2124,10 @@ void close_scrap_file(boolean remove) {
 
   if (flush_scrap_file()) {
     mainw->current_file = mainw->scrap_file;
-    if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_FILE_BUFF)
-      lives_close_buffered(LIVES_POINTER_TO_INT(cfile->ext_src));
-    cfile->ext_src = NULL;
-    cfile->ext_src_type = LIVES_EXT_SRC_NONE;
+    if (cfile->primary_src && cfile->primary_src_type == LIVES_EXT_SRC_FILE_BUFF)
+      lives_close_buffered(LIVES_POINTER_TO_INT(cfile->primary_src));
+    cfile->primary_src = NULL;
+    cfile->primary_src_type = LIVES_EXT_SRC_NONE;
 
     if (remove) close_temp_handle(current_file);
     else mainw->current_file = current_file;
@@ -2367,7 +2367,7 @@ manual_locate:
 
   // we will set correct value in check_clip_integrity() if there are any real images
 
-  if (sfile->ext_src) {
+  if (sfile->primary_src) {
     boolean bad_header = FALSE;
     boolean correct = TRUE;
     if (!was_renamed) {
@@ -2378,7 +2378,7 @@ manual_locate:
     if (!correct) {
       if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
     } else {
-      lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
+      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src;
       if (dplug) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
         sfile->decoder_uid = dpsys->id->uid;
@@ -2495,21 +2495,14 @@ int close_current_file(int file_to_switch_to) {
     // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
     // in the former case the generator is killed off, in the latter it survives
     need_new_blend_file = TRUE;
-    track_decoder_free(1, mainw->blend_file);
+    track_source_free(1, mainw->blend_file);
     mainw->blend_file = -1;
     weed_layer_unref(mainw->blend_layer);
     mainw->blend_layer = NULL;
   }
 
-  if (CURRENT_CLIP_IS_PHYSICAL && (cfile->ext_src || cfile->old_ext_src)) {
-    if (!cfile->ext_src && cfile->old_ext_src_type == LIVES_EXT_SRC_DECODER) {
-      cfile->ext_src = cfile->old_ext_src;
-      cfile->ext_src_type = cfile->old_ext_src_type;
-    }
-    if (cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
-      close_clip_decoder(mainw->current_file);
-    }
-  }
+  clip_sources_free_all(mainw->current_file);
+
   free_thumb_cache(mainw->current_file, 0);
   lives_freep((void **)&cfile->frame_index);
   lives_freep((void **)&cfile->frame_index_back);
@@ -2544,14 +2537,14 @@ int close_current_file(int file_to_switch_to) {
 
   if (cfile->clip_type == CLIP_TYPE_YUV4MPEG) {
 #ifdef HAVE_YUV4MPEG
-    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
-    lives_free(cfile->ext_src);
+    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->primary_src);
+    lives_free(cfile->primary_src);
 #endif
   }
 
   if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
 #ifdef HAVE_UNICAP
-    if (cfile->ext_src) lives_vdev_free((lives_vdev_t *)cfile->ext_src);
+    if (cfile->primary_src) lives_vdev_free((lives_vdev_t *)cfile->primary_src);
 #endif
   }
 
@@ -2928,7 +2921,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
         if (cfile->needs_update || cfile->img_type == IMG_TYPE_UNKNOWN) {
-          lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+          lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
           if (cfile->needs_update || count_virtual_frames(cfile->frame_index, 1, cfile->frames)
               < cfile->frames) {
             if (!cfile->checked && !check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
@@ -2960,7 +2953,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       }
       if (!recovery_file && !cfile->checked) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
         }
@@ -2991,7 +2984,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (cfile->video_time < cfile->laudio_time) {
       if (!cfile->checked) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
         }
@@ -3542,11 +3535,11 @@ cleanse:
 
 
 
-ulong deduce_file(const char *file_name, double start, int end) {
+uint64_t deduce_file(const char *file_name, double start, int end) {
   // this is a utility function to deduce whether we are dealing with a file,
   // a selection, a backup, or a location
   char short_file_name[PATH_MAX];
-  ulong uid;
+  uint64_t uid;
   mainw->img_concat_clip = -1;
 
   if (lives_strrstr(file_name, "://") && strncmp(file_name, "dvd://", 6)) {
@@ -3565,7 +3558,7 @@ ulong deduce_file(const char *file_name, double start, int end) {
 }
 
 
-ulong open_file(const char *file_name) {
+uint64_t open_file(const char *file_name) {
   // this function should be called to open a whole file
   return open_file_sel(file_name, 0., 0);
 }
@@ -3599,11 +3592,15 @@ void pad_with_silence(int clipno, boolean at_start, boolean is_auto) {
 }
 
 
-ulong open_file_sel(const char *file_name, double start, frames_t frames) {
+#define GET_MD5
+uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
   const lives_clip_data_t *cdata;
   weed_plant_t *mt_pb_start_event = NULL;
 
   char msg[256], loc[PATH_MAX];
+#ifdef GET_MD5
+  void *md5sum;
+#endif
   char *tmp = NULL;
   char *isubfname = NULL;
   char *msgstr;
@@ -3714,7 +3711,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       lives_free(cwd);
 
       if (cdata) {
-        //lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
+        //lives_decoder_t *dplug = (lives_decoder_t *)cfile->primary_src;
         frames_t st_frame = cdata->fps * start;
         if (cfile->frames > cdata->nframes && cfile->frames != 123456789) {
           extra_frames = cfile->frames - cdata->nframes;
@@ -3945,7 +3942,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       } else lives_free(msgstr);
     } else lives_free(msgstr);
 
-    if (cfile->ext_src) {
+    if (cfile->primary_src) {
       if (mainw->open_deint) {
         // override what the plugin says
         cfile->deinterlace = TRUE;
@@ -4028,7 +4025,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
     mainw->effects_paused = FALSE;
 
-    if (!cfile->ext_src) {
+    if (!cfile->primary_src) {
       migrate_from_staging(mainw->current_file);
 
       if (!mainw->file_open_params) mainw->file_open_params = lives_strdup("");
@@ -4086,7 +4083,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     // (also check for cancel)
     msgstr = lives_strdup_printf(_("Opening %s"), file_name);
 
-    if (!cfile->ext_src && mainw->toy_type != LIVES_TOY_TV) {
+    if (!cfile->primary_src && mainw->toy_type != LIVES_TOY_TV) {
       end_threaded_dialog();
       mainw->disk_mon = MONITOR_QUOTA;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
@@ -4132,7 +4129,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     lives_free(msgstr);
   }
 
-  if (cfile->ext_src && cfile->achans > 0) {
+  if (cfile->primary_src && cfile->achans > 0) {
     char *afile = get_audio_file_name(mainw->current_file, TRUE);
     char *ofile = get_audio_file_name(mainw->current_file, FALSE);
     rename(afile, ofile);
@@ -4205,7 +4202,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
   }
 
   // now file should be loaded...get full details
-  if (!cfile->ext_src) add_file_info(cfile->handle, FALSE);
+  if (!cfile->primary_src) add_file_info(cfile->handle, FALSE);
 
   cfile->is_loaded = TRUE;
 
@@ -4252,7 +4249,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     cfile->frames = 0;
   }
 
-  if (!cfile->ext_src) {
+  if (!cfile->primary_src) {
     extra_frames = cfile->frames;
     add_file_info(cfile->handle, FALSE);
     extra_frames -= cfile->frames;
@@ -4267,7 +4264,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     }
   }
 
-  if (!cfile->ext_src) {
+  if (!cfile->primary_src) {
     reget_afilesize(mainw->current_file);
     if (prefs->auto_trim_audio || prefs->keep_all_audio) {
       if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
@@ -4350,9 +4347,12 @@ img_load:
   current_file = mainw->current_file;
 #define GET_MD5
 #ifdef GET_MD5
+  md5sum = get_md5sum(file_name);
+  lives_memcpy(cfile->ext_id.md5sum, md5sum, MD5_SIZE);
   g_print("md5sum is: ");
-  md5_print(get_md5sum(file_name));
+  md5_print(md5sum);
   g_print("\n");
+  lives_free(md5sum);
 #endif
 
   // TODO - prompt for copy to origs (unless it is already there)

@@ -329,11 +329,11 @@ void dump_fn_notes(void);
 // when appending, the callback will be blocked or added)
 #define HOOK_UNIQUE_DATA		(1ull << 17) // do not add if func / data already in hooks (UNIQUE_FUNC assumed)
 
-// change data of first func of same type but leave func inplace,
+// change data of first func of same type, with n_match_params equal,  but leave func inplace,
 // (after adding, there will be only one copy of FUNC, with our data)
 // * copies of the func in linked_stacks must also be removed
 // (when prepending, this always succeeds to add, and acts identically to unique_func,
-// when appending, the callback will replace data and be blocked or else appended)
+// when appending, the callback will replace data and be rejected, or if no match is found, appended)
 #define HOOK_UNIQUE_REPLACE		(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA)
 
 // NOTEs:

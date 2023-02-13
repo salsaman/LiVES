@@ -2474,8 +2474,8 @@ LIVES_GLOBAL_INLINE lives_clip_data_t *get_clip_cdata(int clipno) {
   lives_clip_t *sfile;
   if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type == CLIP_TYPE_FILE
       && !pthread_mutex_lock(&sfile->source_mutex)
-      && sfile->primary_src && sfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-    lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src;
+      && sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
+    lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
     pthread_mutex_unlock(&sfile->source_mutex);
     if (dplug) return dplug->cdata;
   }
@@ -2498,11 +2498,11 @@ static lives_decoder_t *clone_decoder(int clipno) {
 
   if (!(sfile = RETURN_PHYSICAL_CLIP(clipno))
       || (!pthread_mutex_lock(&sfile->source_mutex)
-          && (!sfile->primary_src || sfile->primary_src_type != LIVES_EXT_SRC_DECODER))) {
+          && (!sfile->primary_src || sfile->primary_src->src_type != LIVES_SRC_TYPE_DECODER))) {
     pthread_mutex_unlock(&sfile->source_mutex);
     return NULL;
   }
-  dplug = (lives_decoder_t *)mainw->files[clipno]->primary_src;
+  dplug = (lives_decoder_t *)mainw->files[clipno]->primary_src->source;
   pthread_mutex_unlock(&sfile->source_mutex);
 
   if (dplug) {
@@ -2524,7 +2524,7 @@ static lives_decoder_t *clone_decoder(int clipno) {
 }
 
 
-// called from clip_source_free for this decoder source_type
+// called from clip_source_remove for this decoder source_type
 void clip_decoder_free(int nclip, lives_decoder_t *decoder) {
   lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
   if (sfile && decoder && !pthread_mutex_lock(&decoder->mutex)) {
@@ -2614,7 +2614,18 @@ lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose) {
   // we ned to be able to specify the purpose - track main, track precache, thumbnailer
   if (IS_NORMAL_CLIP(nclip)) {
     lives_decoder_t *dec = clone_decoder(nclip);
-    if (dec) add_clip_source(nclip, track, purpose, (void *)dec, LIVES_EXT_SRC_DECODER);
+    if (dec) add_clip_source(nclip, track, purpose, (void *)dec, LIVES_SRC_TYPE_DECODER);
+    return dec;
+  }
+  return NULL;
+}
+
+
+lives_decoder_t *add_ext_decoder_clone(int dclip, int sclip, int track, int purpose) {
+  // we ned to be able to specify the purpose - track main, track precache, thumbnailer
+  if (IS_NORMAL_CLIP(sclip)) {
+    lives_decoder_t *dec = clone_decoder(sclip);
+    if (dec) add_clip_source(dclip, track, purpose, (void *)dec, LIVES_SRC_TYPE_DECODER);
     return dec;
   }
   return NULL;
@@ -2721,17 +2732,25 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
 
 const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *fake_cdata) {
-  // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
-  // the file
+  // pass the clip  to each decoder plugin in turn, until we find one that can parse
+  // the URI for the clip
   // NULL is returned if no decoder plugin recognises the file - then we
   // fall back to other methods
 
-  // otherwise we return data for the clip as supplied by the decoder plugin
+  // otherwise we set sfile->primary_src to point to a newly created decoder_plugin_t
+  // and return cdata for the clip as provided by the decoder plugin
 
-  // If the file does not exist, we set mainw->error=TRUE and return NULL
-
-  // If we find a plugin we also set sfile->primary_src to point to a newly created decoder_plugin_t
-
+  // If the URI does not exist, we set mainw->error = TRUE and return NULL
+  //
+  // fake_cdata maybe used when reloading a previously opened file, frame size, fps, nframes can
+  // be set to speed up opening, in this case, the previously used decoder is set first in the list
+  // if it does not succeed then we discard fake_cdata and continue with the remaining plugins
+  //
+  // some decoders can be disabled, either by user preference or by the application. These will be skipped over.
+  // the remaining plugins are tested in list ored. If a plugin succeeds in opening / parsing a clip, that plugin is
+  // moved to the head of the list, as it is quite possible that the next clip to be opened will be of the same type
+  // The default ordering initially is to begin with more specialized plugins and work up to the more generic ones
+  //  the idea being that more specific decoders are optimised for a specific subset.
   lives_proc_thread_t lpt;
   lives_decoder_t *dplug;
   lives_clip_t *sfile = mainw->files[clipno];
@@ -2747,13 +2766,10 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
     return NULL;
   }
 
-  lives_memset(decplugname, 0, 1);
+  *decplugname =  0;
 
   // check sfile->file_name against each decoder plugin,
   // until we get non-NULL cdata
-
-  sfile->primary_src = NULL;
-  sfile->primary_src_type = LIVES_EXT_SRC_NONE;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
@@ -2813,10 +2829,10 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (dplug && dplug->dpsys && dplug->dpsys->id) {
+    lives_clip_src_t *dsource = add_clip_source(clipno, -1, SRC_PURPOSE_PRIMARY,
+                                (void *)dplug, LIVES_SRC_TYPE_DECODER);
     sfile->decoder_uid = dplug->dpsys->id->uid;
-    sfile->primary_src = dplug;
-    sfile->primary_src_type = LIVES_EXT_SRC_DECODER;
-    add_clip_source(clipno, -1, SRC_PURPOSE_PRIMARY, (void *)dplug, LIVES_EXT_SRC_DECODER);
+    sfile->primary_src = dsource;
     return dplug->cdata;
   }
 
@@ -2825,7 +2841,9 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
 
 
 void close_clip_decoder(int clipno) {
-  clip_source_free(clipno, -1, SRC_PURPOSE_PRIMARY);
+  lives_clip_src_t *dsource = get_clip_source(clipno, -1, SRC_PURPOSE_PRIMARY);
+  dsource->flags &= ~SRC_FLAG_NOFREE;
+  clip_source_remove(clipno, -1, SRC_PURPOSE_PRIMARY);
 }
 
 
@@ -2857,7 +2875,7 @@ boolean chill_decoder_plugin(int clipno) {
   if (sfile) {
     pthread_mutex_lock(&sfile->source_mutex);
     if (sfile->clip_type == CLIP_TYPE_FILE && sfile->primary_src) {
-      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src;
+      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
       lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
       lives_clip_data_t *cdata = dplug->cdata;
       pthread_mutex_unlock(&sfile->source_mutex);

@@ -7293,7 +7293,7 @@ boolean weed_init_effect(int hotkey) {
         mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR && !is_audio_gen) {
       /////////////////////////////////////// if blend_file is a generator we should finish it
       if (bg_gen_to_start == -1) {
-        weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src);
+        weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src->source);
       }
 
       bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
@@ -7313,7 +7313,7 @@ boolean weed_init_effect(int hotkey) {
       } else {
         if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
         //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
-        weed_generator_end((weed_plant_t *)cfile->primary_src);
+        weed_generator_end((weed_plant_t *)cfile->primary_src->source);
         fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
         if (CURRENT_CLIP_IS_VALID && (cfile->achans == 0 || cfile->frames > 0)) {
           // in case we switched to bg clip, and bg clip was gen
@@ -8071,7 +8071,7 @@ void weed_deinit_all(boolean shutdown) {
     if ((rte_key_is_enabled(i, FALSE))) {
       if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
         weed_instance_unref(instance);
-        if (shutdown || !LIVES_IS_PLAYING || mainw->current_file == -1 || cfile->primary_src != instance) {
+        if (shutdown || !LIVES_IS_PLAYING || mainw->current_file == -1 || cfile->primary_src->source != (void *)instance) {
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
           if (rte_window) rtew_set_keych(i, FALSE);
@@ -8816,7 +8816,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       mainw->num_tr_applied > 0 && mainw->files[mainw->blend_file] &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     ////////////////////////// switching background generator: stop the old one first
-    weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src);
+    weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src->source);
     mainw->new_clip = mainw->blend_file;
   }
 
@@ -8853,8 +8853,8 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   }
 
   new_file = mainw->current_file;
-  cfile->primary_src = inst;
-  cfile->primary_src_type = LIVES_EXT_SRC_FILTER;
+  cfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
+                                       LIVES_SRC_TYPE_FILTER);
 
   if (is_bg) {
     if (mainw->blend_file != mainw->current_file) {
@@ -8876,16 +8876,16 @@ int weed_generator_start(weed_plant_t *inst, int key) {
 
   out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
   if (num_channels == 0) {
+    clip_source_free(mainw->current_file, cfile->primary_src);
     cfile->primary_src = NULL;
-    cfile->primary_src_type = LIVES_EXT_SRC_NONE;
     close_current_file(mainw->pre_src_file);
     return 4;
   }
 
   if (!(channel = get_enabled_channel(inst, 0, FALSE))) {
     lives_free(out_channels);
+    clip_source_free(mainw->current_file, cfile->primary_src);
     cfile->primary_src = NULL;
-    cfile->primary_src_type = LIVES_EXT_SRC_NONE;
     close_current_file(mainw->pre_src_file);
     return 5;
   }
@@ -9036,7 +9036,7 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   if (mainw->blend_file != -1 && mainw->blend_file != current_file && mainw->files[mainw->blend_file] &&
-      mainw->files[mainw->blend_file]->primary_src == inst) is_bg = TRUE;
+      mainw->files[mainw->blend_file]->primary_src->source == (void *)inst) is_bg = TRUE;
   else mainw->new_blend_file = mainw->blend_file;
 
   if ((!is_bg && fg_generator_key == -1) || (is_bg && bg_generator_key == -1)) return;
@@ -9109,8 +9109,8 @@ void weed_generator_end(weed_plant_t *inst) {
   if (!is_bg && cfile->achans > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     // we started playing from an audio clip
     cfile->frames = cfile->start = cfile->end = 0;
+    clip_source_free(mainw->current_file, cfile->primary_src);
     cfile->primary_src = NULL;
-    cfile->primary_src_type = LIVES_EXT_SRC_NONE;
     cfile->clip_type = CLIP_TYPE_DISK;
     cfile->hsize = cfile->vsize = 0;
     cfile->pb_fps = cfile->fps = prefs->default_fps;
@@ -9146,8 +9146,8 @@ void weed_generator_end(weed_plant_t *inst) {
           mainw->new_clip = mainw->pre_src_file;
           mainw->close_this_clip = mainw->current_file;
         } else {
+          clip_source_free(mainw->current_file, cfile->primary_src);
           cfile->primary_src = NULL;
-          cfile->primary_src_type = LIVES_EXT_SRC_NONE;
           close_current_file(mainw->pre_src_file);
           if (mainw->current_file == current_file) {
             mainw->clip_switched = clip_switched;
@@ -9228,8 +9228,8 @@ deinit4:
           }
 
           fg_gen_to_start = -1;
+          clip_source_free(mainw->current_file, cfile->primary_src);
           cfile->primary_src = NULL;
-          cfile->primary_src_type = LIVES_EXT_SRC_NONE;
           return FALSE;
         }
 
@@ -9256,8 +9256,8 @@ deinit4:
 
         mainw->clip_switched = TRUE;
         mainw->playing_sel = FALSE;
-        cfile->primary_src = inst;
-        cfile->primary_src_type = LIVES_EXT_SRC_FILTER;
+        cfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
+                                             LIVES_SRC_TYPE_FILTER);
         weed_instance_unref(inst);
       }
     }
@@ -9379,8 +9379,8 @@ deinit5:
         cfile->start = cfile->end = cfile->frames = 1;
         track_source_free(1, mainw->blend_file);
         mainw->blend_file = mainw->current_file;
-        mainw->files[mainw->blend_file]->primary_src = inst;
-        mainw->files[mainw->blend_file]->primary_src_type = LIVES_EXT_SRC_FILTER;
+        cfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
+                                             LIVES_SRC_TYPE_FILTER);
         mainw->current_file = current_file;
       }
     }

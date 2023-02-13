@@ -2124,10 +2124,8 @@ void close_scrap_file(boolean remove) {
 
   if (flush_scrap_file()) {
     mainw->current_file = mainw->scrap_file;
-    if (cfile->primary_src && cfile->primary_src_type == LIVES_EXT_SRC_FILE_BUFF)
-      lives_close_buffered(LIVES_POINTER_TO_INT(cfile->primary_src));
+    clip_source_free(mainw->current_file, cfile->primary_src);
     cfile->primary_src = NULL;
-    cfile->primary_src_type = LIVES_EXT_SRC_NONE;
 
     if (remove) close_temp_handle(current_file);
     else mainw->current_file = current_file;
@@ -2378,7 +2376,7 @@ manual_locate:
     if (!correct) {
       if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
     } else {
-      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src;
+      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
       if (dplug) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
         sfile->decoder_uid = dpsys->id->uid;
@@ -2537,14 +2535,14 @@ int close_current_file(int file_to_switch_to) {
 
   if (cfile->clip_type == CLIP_TYPE_YUV4MPEG) {
 #ifdef HAVE_YUV4MPEG
-    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->primary_src);
-    lives_free(cfile->primary_src);
+    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->primary_src->source);
+    lives_free(cfile->primary_src->source);
 #endif
   }
 
   if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
 #ifdef HAVE_UNICAP
-    if (cfile->primary_src) lives_vdev_free((lives_vdev_t *)cfile->primary_src);
+    if (cfile->primary_src) lives_vdev_free((lives_vdev_t *)cfile->primary_src->source);
 #endif
   }
 
@@ -2921,7 +2919,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
         if (cfile->needs_update || cfile->img_type == IMG_TYPE_UNKNOWN) {
-          lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+          lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
           if (cfile->needs_update || count_virtual_frames(cfile->frame_index, 1, cfile->frames)
               < cfile->frames) {
             if (!cfile->checked && !check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
@@ -2953,7 +2951,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       }
       if (!recovery_file && !cfile->checked) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
         }
@@ -2984,7 +2982,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (cfile->video_time < cfile->laudio_time) {
       if (!cfile->checked) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
         }
@@ -3711,7 +3709,6 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
       lives_free(cwd);
 
       if (cdata) {
-        //lives_decoder_t *dplug = (lives_decoder_t *)cfile->primary_src;
         frames_t st_frame = cdata->fps * start;
         if (cfile->frames > cdata->nframes && cfile->frames != 123456789) {
           extra_frames = cfile->frames - cdata->nframes;

@@ -62,7 +62,7 @@
 #define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
 
 #define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
-			       && mainw->files[mainw->ascrap_file]->primary_src_type != LIVES_EXT_SRC_RECORDER)
+			       && mainw->files[mainw->ascrap_file]->primary_src->src_type != LIVES_SRC_TYPE_RECORDER)
 
 #define CLIPSWITCH_BLOCKED (!mainw || mainw->go_away || LIVES_MODE_MT || !CURRENT_CLIP_IS_VALID || mainw->preview \
 			    || (LIVES_IS_PLAYING && mainw->event_list && !(mainw->record || mainw->record_paused)) \
@@ -93,16 +93,34 @@ typedef enum {
 } lives_clip_type_t;
 
 // src types
-#define LIVES_EXT_SRC_UNKNOWN		-1
-#define LIVES_EXT_SRC_NONE		0
-#define LIVES_EXT_SRC_DECODER		1
-#define LIVES_EXT_SRC_FILTER		2
-#define LIVES_EXT_SRC_FIFO		3
-#define LIVES_EXT_SRC_STREAM		4
-#define LIVES_EXT_SRC_DEVICE		5
-#define LIVES_EXT_SRC_FILE_BUFF		6
+// source type not recognised
+#define LIVES_SRC_TYPE_UNKNOWN		-1
 
-#define LIVES_EXT_SRC_RECORDER		1024
+// no source
+#define LIVES_SRC_TYPE_NONE		0
+
+// frame source for still images (sequences)
+// (currently not set)
+#define LIVES_SRC_TYPE_IMAGE		1
+// frame source is a video clip
+#define LIVES_SRC_TYPE_DECODER		2
+// frame src is a filter plugin (generator)
+#define LIVES_SRC_TYPE_FILTER		3
+
+// frame src is a fifo file
+#define LIVES_SRC_TYPE_FIFO		8
+// frame src is a socket / network connection
+#define LIVES_SRC_TYPE_STREAM		9
+// frame source is a hardware device (e.g webcam)
+#define LIVES_SRC_TYPE_DEVICE		10
+// frame src is a file buffer containing multiple frames
+// e.g a dump or raw frame data (scrap file)
+#define LIVES_SRC_TYPE_FILE_BUFF	11
+// frame src is internal (e.g test pattern or nullvideo)
+#define LIVES_SRC_TYPE_INTERNAL		256
+
+// grabbed frames, eg from the desktop
+#define LIVES_SRC_TYPE_RECORDER		1024
 
 // layer has no source
 #define SRC_STATUS_NOT_SET		-1
@@ -149,10 +167,11 @@ typedef enum {
 #define SRC_PURPOSE_TRACK		1
 //
 #define SRC_PURPOSE_TRACK_OR_PRIMARY	2
+
 // clone source for pre caching frames, can be switched with primary / track
-#define SRC_PURPOSE_PRECACHE		3
+#define SRC_PURPOSE_PRECACHE		8
 // source used for creating thumbnail images
-#define SRC_PURPOSE_THUMBNAIL		4
+#define SRC_PURPOSE_THUMBNAIL		9
 
 #define SRC_FLAG_NOFREE			(1ull < 0)
 #define SRC_FLAG_INACTIVE		(1ull < 1)
@@ -360,15 +379,8 @@ typedef struct _lives_clip_t {
 
   pthread_mutex_t source_mutex;
   lives_clip_src_t **sources;
+  lives_clip_src_t *primary_src;
   int n_sources;
-
-  // dup of sources[n]->source
-  void *primary_src;
-  void *old_primary_src;
-
-  // copy of sources[n]->source_type
-  int primary_src_type;
-  int old_primary_src_type;
 
   uint64_t *cache_objects; ///< for future use
 
@@ -540,7 +552,8 @@ char *get_untitled_name(int number);
 lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source,
                                   int src_type);
 lives_clip_src_t *get_clip_source(int nclip, int track, int purpose);
-void clip_source_free(int nclip, int track, int purpose);
+void clip_source_remove(int nclip, int track, int purpose);
+void clip_source_free(int nclip, lives_clip_src_t *);
 void clip_sources_free_all(int nclip);
 boolean swap_clip_sources(int nclip, int track, int opurpose, int npurpose);
 

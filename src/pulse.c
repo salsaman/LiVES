@@ -1285,7 +1285,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             rec_output = TRUE;
           }
         } else if (IS_VALID_CLIP(mainw->ascrap_file)
-                   && mainw->files[mainw->ascrap_file]->primary_src_type == LIVES_EXT_SRC_RECORDER) {
+                   && mainw->files[mainw->ascrap_file]->primary_src->src_type == LIVES_SRC_TYPE_RECORDER) {
           // here we are recrding for the desktop grabber
           rec_output = TRUE;
         }

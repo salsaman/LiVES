@@ -1119,11 +1119,12 @@ boolean reload_set(const char *set_name) {
         and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
 
       if (!cfile->checked && cfile->img_type == IMG_TYPE_UNKNOWN) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
         int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
         /** if there are some decoded frames then we have a problem.
           Since the img type was not found it means that the final decoded
-            frame was missing. So we check backwards to find where the last actual decoded frame is and the frame count is set to
+            frame was missing. So we check backwards to find where the last actual decoded frame is
+          and the frame count is set to
             final decoded frame + any virtual frames immediately following, and warn the user.
             If other frames are missing then the clip is corrupt, but we'll continue as best we can. */
         if (fvirt < cfile->frames) check_clip_integrity(mainw->current_file, cdata, cfile->frames);

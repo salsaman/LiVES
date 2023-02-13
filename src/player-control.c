@@ -310,7 +310,7 @@ static void post_playback(void) {
 
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
-    weed_generator_end((weed_plant_t *)cfile->primary_src);
+    weed_generator_end((weed_plant_t *)cfile->primary_src->source);
     mainw->osc_block = FALSE;
   }
 
@@ -1243,9 +1243,9 @@ void play_file(void) {
   mainw->close_this_clip = mainw->new_clip = -1;
 
   if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->primary_src) {
-    lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src));
+    lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src->source));
+    clip_source_free(mainw->scrap_file, mainw->files[mainw->scrap_file]->primary_src);
     mainw->files[mainw->scrap_file]->primary_src = NULL;
-    mainw->files[mainw->scrap_file]->primary_src_type = LIVES_EXT_SRC_NONE;
   }
 
   if (mainw->foreign) {
@@ -1328,7 +1328,7 @@ void play_file(void) {
       && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     current_file = mainw->current_file;
     mainw->can_switch_clips = TRUE;
-    weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src);
+    weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src->source);
     mainw->can_switch_clips = FALSE;
     if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
   }

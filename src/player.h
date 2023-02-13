@@ -72,6 +72,8 @@ void track_source_free(int i, int oclip);
 
 boolean record_setup(ticks_t actual_ticks);
 
+weed_layer_t **map_sources_to_tracks(boolean rndr);
+
 weed_layer_t *load_frame_image(frames_t frame);
 
 weed_layer_t *get_old_frame_layer(void);

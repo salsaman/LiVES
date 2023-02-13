@@ -272,17 +272,10 @@ void lives_exit(int signum) {
           }
           if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
-          if (IS_PHYSICAL_CLIP(i) && (sfile->primary_src || sfile->old_primary_src)) {
-            if (sfile->old_primary_src && sfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-              sfile->primary_src = sfile->old_primary_src;
-              sfile->primary_src_type = sfile->old_primary_src_type;
-            }
-            if (sfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-              // must do this before we move it
-              clip_source_free(i, -1, SRC_PURPOSE_PRIMARY);
-              threaded_dialog_spin(0.);
-            }
-          }
+          // must do this before we move it
+          clip_sources_free_all(i);
+          threaded_dialog_spin(0.);
+
           lives_freep((void **)&sfile->frame_index);
           sfile->layout_map = NULL;
         }
@@ -2552,7 +2545,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
     cfile->fps = cfile->undo1_dbl;
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -2740,7 +2733,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     /// DON'T ! we only save the pb_fps now, since otherwise we may lose the orig. clip fps
     /* save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps); */
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -2775,7 +2768,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -3064,8 +3057,7 @@ void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     clipboard->frames = end - start + 1;
     check_if_non_virtual(0, 1, clipboard->frames);
     if (clipboard->clip_type == CLIP_TYPE_FILE) {
-      clipboard->primary_src = get_decoder_clone(mainw->current_file, -1, SRC_PURPOSE_PRIMARY);
-      clipboard->primary_src_type = LIVES_EXT_SRC_DECODER;
+      clipboard->primary_src = add_ext_decoder_clone(CLIPBOARD_FILE, mainw->current_file, -1, SRC_PURPOSE_PRIMARY);
       end = -end; // allow missing frames
       lives_snprintf(clipboard->file_name, PATH_MAX, "%s", cfile->file_name);
     }
@@ -3428,7 +3420,7 @@ void on_insert_activate(LiVESButton * button, _insertw * insertw) {
 
   // if it is an insert into the original file, and we can do fast seek, we can insert virtual frames
   if (button && mainw->current_file == clipboard->cb_src && !check_if_non_virtual(0, 1, clipboard->frames)) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
     if (cdata->seek_flag & LIVES_SEEK_FAST) {
       virtual_ins = TRUE;
       if (count_virtual_frames(clipboard->frame_index, 1, clipboard->frames) == clipboard->frames) all_virtual = TRUE;
@@ -4018,7 +4010,7 @@ void on_insert_activate(LiVESButton * button, _insertw * insertw) {
                          (void *)image_ext_to_lives_image_type(get_image_ext_for_type(cfile->img_type))))
       bad_header = TRUE;
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -4420,20 +4412,9 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   if (cfile->clip_type == CLIP_TYPE_FILE) {
-    // check if we now have only non-virtual frames
-    if (cfile->primary_src && cfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-      // make sure we dont actually close the decoder yet, in case we later undo the deletion
-      cfile->old_primary_src = cfile->primary_src;
-      cfile->old_primary_src_type = cfile->primary_src_type;
+    if (check_if_non_virtual(mainw->current_file, 1, cfile->frames)) {
+      // do not free, in case we need to undo
       cfile->primary_src = NULL;
-      cfile->primary_src_type = LIVES_EXT_SRC_NONE;
-    }
-    if (!check_if_non_virtual(mainw->current_file, 1, cfile->frames)) {
-      // there are still virtual frames, so restore the old values
-      cfile->primary_src = cfile->old_primary_src;
-      cfile->primary_src_type = cfile->old_primary_src_type;
-      cfile->old_primary_src = NULL;
-      cfile->old_primary_src_type = LIVES_EXT_SRC_NONE;
     }
   }
 
@@ -6296,7 +6277,7 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     lives_free(tmp);
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
-      lives_decoder_t *dplug = (lives_decoder_t *)cfile->primary_src;
+      lives_decoder_t *dplug = (lives_decoder_t *)cfile->primary_src->source;
       lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
       char *decname = lives_strdup_printf("%s plugin v %d.%d", dpsys->id->name,
                                           dpsys->id->pl_version_major, dpsys->id->pl_version_minor);
@@ -8020,7 +8001,7 @@ void on_rev_clipboard_activate(LiVESMenuItem * menuitem, livespointer user_data)
   mainw->current_file = 0;
 
   if (!check_if_non_virtual(0, 1, cfile->frames)) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
     char *msg = (_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
       if (realize_all_frames(0, msg, FALSE, 1, 0) <= 0) {
@@ -10814,14 +10795,14 @@ char *get_palette_name_for_clip(int clipno) {
   sfile = mainw->files[clipno];
   if (IS_NORMAL_CLIP(clipno)) {
     if (is_virtual_frame(clipno, sfile->frameno)) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->primary_src->source)->cdata;
       palname = lives_strdup(weed_palette_get_name_full(cdata->current_palette, cdata->YUV_clamping, cdata->YUV_subspace));
     } else {
       palname = lives_strdup(weed_palette_get_name((sfile->bpp == 24 ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32)));
     }
   } else switch (sfile->clip_type) {
     case CLIP_TYPE_GENERATOR: {
-      weed_plant_t *inst = (weed_plant_t *)sfile->primary_src;
+      weed_plant_t *inst = (weed_plant_t *)sfile->primary_src->source;
       if (inst) {
         weed_plant_t *channel = get_enabled_channel(inst, 0, FALSE);
         if (channel) {
@@ -10834,7 +10815,7 @@ char *get_palette_name_for_clip(int clipno) {
     break;
     case CLIP_TYPE_VIDEODEV: {
 #ifdef HAVE_UNICAP
-      lives_vdev_t *ldev = (lives_vdev_t *)sfile->primary_src;
+      lives_vdev_t *ldev = (lives_vdev_t *)sfile->primary_src->source;
       palname = lives_strdup(weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, 0));
 #endif
     }

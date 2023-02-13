@@ -730,8 +730,8 @@ void init_clipboard(void) {
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         lives_freep((void **)&cfile->frame_index);
-        if (cfile->primary_src && cfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-          clip_source_free(CLIPBOARD_FILE, -1, SRC_PURPOSE_PRIMARY);
+        if (cfile->primary_src && cfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
+          clip_source_remove(CLIPBOARD_FILE, -1, SRC_PURPOSE_PRIMARY);
         }
         cfile->clip_type = CLIP_TYPE_DISK;
       }

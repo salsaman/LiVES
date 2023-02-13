@@ -188,36 +188,37 @@ void player_sensitize(void) {
 
 
 void track_source_free(int i, int oclip) {
-  if (i >= 0) {
-    if (mainw->old_active_track_list[i] == oclip) {
-      if (mainw->track_sources[i]) {
-        if (!mainw->multitrack || mainw->active_track_list[i] > 0)  {
-          if (IS_VALID_CLIP(oclip)) {
-            lives_clip_src_t *dsource = mainw->track_sources[i];
-            weed_layer_t *layer = dsource->layer;
-            if (layer) weed_layer_set_invalid(layer, TRUE);
-            if (dsource->purpose == SRC_PURPOSE_TRACK) {
-              clip_source_free(oclip, i, SRC_PURPOSE_TRACK);
-              if (!mainw->multitrack) {
-                chill_decoder_plugin(oclip); /// free buffers to relesae memory
-              }
-            } else if (mainw->multitrack) {
-              clip_source_free(oclip, i, SRC_PURPOSE_TRACK);
-            }
-	    // *INDENT-OFF*
-	  }}
-	mainw->track_sources[i] = NULL;
-      }}
-    // *INDENT-ON*
-    mainw->old_active_track_list[i] = mainw->active_track_list[i] = 0;
+  if (i >= 0 && i < MAX_TRACKS) {
+    if (mainw->track_sources[i] && (oclip == 0 || mainw->active_track_list[i] == oclip
+                                    || (mainw->old_active_track_list[i] == oclip
+                                        && mainw->active_track_list[i] != oclip))) {
+      if (!oclip) oclip = mainw->old_active_track_list[i];
+      if (IS_VALID_CLIP(oclip)) {
+        lives_clip_src_t *dsource = mainw->track_sources[i];
+        // need to set current layer if possible
+        weed_layer_t *layer = dsource->layer;
+        if (layer) weed_layer_set_invalid(layer, TRUE);
+        if (dsource->purpose == SRC_PURPOSE_TRACK)
+          clip_source_remove(oclip, i, SRC_PURPOSE_TRACK);
+        else {
+          dsource->flags |= SRC_FLAG_INACTIVE;
+          if (!mainw->multitrack) {
+            chill_decoder_plugin(oclip); /// free buffers to relesae memory
+          }
+        }
+      }
+      mainw->track_sources[i] = NULL;
+    }
+    if (mainw->active_track_list[i] == mainw->old_active_track_list[i])
+      mainw->active_track_list[i] = 0;
+    mainw->old_active_track_list[i] = 0;
   }
 }
 
 
 
 LIVES_GLOBAL_INLINE void init_track_sources(void) {
-  int i;
-  for (i = 0; i < MAX_TRACKS; i++) {
+  for (int i = 0; i < MAX_TRACKS; i++) {
     mainw->track_sources[i] = NULL;
     mainw->old_active_track_list[i] = mainw->active_track_list[i] = 0;
   }
@@ -227,7 +228,7 @@ LIVES_GLOBAL_INLINE void init_track_sources(void) {
 LIVES_GLOBAL_INLINE void free_track_sources(void) {
   for (int i = 0; i < MAX_TRACKS; i++) {
     if (mainw->track_sources[i]) {
-      mainw->old_active_track_list[i] = mainw->active_track_list[i];
+      mainw->old_active_track_list[i] = 0;
       track_source_free(i, mainw->active_track_list[i]);
     }
   }
@@ -328,47 +329,49 @@ static char *framecount = NULL;
 static char *fname_next = NULL, *info_file = NULL;
 static int opwidth = 0, opheight = 0;
 static const char *img_ext = NULL;
-static weed_layer_t **layers = NULL;
 
-
-static void map_sources_to_tracks(boolean rndr) {
+weed_layer_t **map_sources_to_tracks(boolean rndr) {
+  weed_layer_t **layers = NULL;
   int oclip, nclip, i;
 
-  if (!mainw->multitrack) {
-    lives_freep((void **)&mainw->clip_index);
-    lives_freep((void **)&mainw->frame_index);
-    if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)
-        && (mainw->blend_file != mainw->playing_file || prefs->tr_self)) {
-      mainw->num_tracks = 2;
-      mainw->clip_index = (int *)lives_calloc(2, sizint);
-      mainw->frame_index = (frames64_t *)lives_calloc(2, sizeof(frames64_t));
-      mainw->active_track_list[1] = mainw->blend_file;
-      mainw->clip_index[1] = mainw->blend_file;
-      mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
+  if (!rndr) {
+    if (!mainw->multitrack) {
+      layers =
+        (weed_layer_t **)lives_calloc(3, sizeof(weed_layer_t *));
+      lives_freep((void **)&mainw->clip_index);
+      lives_freep((void **)&mainw->frame_index);
+      if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)
+          && (mainw->blend_file != mainw->playing_file || prefs->tr_self)) {
+        mainw->num_tracks = 2;
+        mainw->clip_index = (int *)lives_calloc(2, sizint);
+        mainw->frame_index = (frames64_t *)lives_calloc(2, sizeof(frames64_t));
+        mainw->active_track_list[1] = mainw->blend_file;
+        mainw->clip_index[1] = mainw->blend_file;
+        mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
+      } else {
+        mainw->num_tracks = 1;
+        mainw->clip_index = (int *)lives_calloc(1, sizint);
+        mainw->frame_index = (frames64_t *)lives_calloc(1, sizeof(frames64_t));
+      }
+      mainw->active_track_list[0] = mainw->playing_file;
+      mainw->clip_index[0] = mainw->playing_file;
+      mainw->frame_index[0] = mainw->actual_frame;
     } else {
-      mainw->num_tracks = 1;
-      mainw->clip_index = (int *)lives_calloc(1, sizint);
-      mainw->frame_index = (frames64_t *)lives_calloc(1, sizeof(frames64_t));
-    }
-    mainw->active_track_list[0] = mainw->playing_file;
-    mainw->clip_index[0] = mainw->playing_file;
-    mainw->frame_index[0] = mainw->actual_frame;
-  }
-  if (rndr) {
-    // layers here will be an array corresponding to the frame layers in the player
-    // for Clip Editor we may have 1 or 2 (if transitions are active)
-    // in multitrack mode, we can have any number 0 -> MAX_TRACKS
-    // we can also separated backing audio tracks, but these are not represented her
-    layers =
-      (weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
+      // layers here will be an array corresponding to the frame layers in the player
+      // for Clip Editor we may have 1 or 2 (if transitions are active)
+      // in multitrack mode, we can have any number 0 -> MAX_TRACKS
+      // we can also separated backing audio tracks, but these are not represented her
+      layers =
+        (weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
 
-    // get list of active tracks from mainw->filter map
-    // for multitrack, the most recent filter_map defines how the layers are combined;
-    // if there is no active filter map then we only see the frontmost layer
-    // The mapping of clips / frames at the current playback time is held in clip_index / frame_index
-    // these are set from Frame events
-    if (mainw->multitrack)
-      get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
+      // get list of active tracks from mainw->filter map
+      // for multitrack, the most recent filter_map defines how the layers are combined;
+      // if there is no active filter map then we only see the frontmost layer
+      // The mapping of clips / frames at the current playback time is held in clip_index / frame_index
+      // these are set from Frame events
+      if (mainw->multitrack)
+        get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
+    }
   }
 
   // here we compare the mapping of clips -> tracks with the previous values
@@ -377,46 +380,26 @@ static void map_sources_to_tracks(boolean rndr) {
   // otherwise we would end up jumping back and forth in the same decoder
   // first we check if the primary decoder (primary_src) is in use
 
-  lives_memset(mainw->primary_src_used, 0, MAX_FILES * sizint);
-
-  for (i = 0; i < mainw->num_tracks; i++) {
-    oclip = mainw->old_active_track_list[i];
-    if (oclip > 0 && oclip == (nclip = mainw->active_track_list[i])) {
-      // check if primary_src survives old->new
-      if (mainw->track_sources[i] == mainw->files[oclip]->primary_src)
-        mainw->primary_src_used[oclip] = TRUE;
-    }
-  }
-
   for (i = 0; i < mainw->num_tracks; i++) {
     if (rndr && layers) {
       layers[i] = lives_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
       weed_layer_ref(layers[i]);
-      weed_set_int_value(layers[i], WEED_LEAF_CURRENT_PALETTE, (mainw->clip_index[i] == -1 ||
-                         mainw->files[mainw->clip_index[i]]->img_type ==
-                         IMG_TYPE_JPEG) ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32);
+      weed_layer_set_palette(layers[i], (mainw->clip_index[i] == -1 ||
+                                         mainw->files[mainw->clip_index[i]]->img_type ==
+                                         IMG_TYPE_JPEG) ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32);
     }
 
     // if the clip mapping changed for a track, then we need to check if its primary_src is in use
     // if not we may use that, otherwise we have to add an additional decoder
     if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
       if (mainw->track_sources[i]) track_source_free(i, oclip);
-
       if (nclip > 0) {
         if (mainw->files[nclip]->clip_type == CLIP_TYPE_FILE) {
-          //if ((!mainw->multitrack) || !mainw->primary_src_used[nclip]) {
-          if (!mainw->primary_src_used[nclip]) {
+          if (mainw->files[nclip]->primary_src->flags & SRC_FLAG_INACTIVE) {
             mainw->track_sources[i] = mainw->files[nclip]->primary_src;
-          }
-
-          mainw->old_active_track_list[i] = mainw->active_track_list[i] = nclip;
-
-          if (!mainw->multitrack) continue;
-
-          if (mainw->track_sources[i] == mainw->files[nclip]->primary_src) {
-            mainw->primary_src_used[nclip] = TRUE;
+            mainw->files[nclip]->primary_src->flags &= ~SRC_FLAG_INACTIVE;
           } else {
-            mainw->track_sources[i] = get_clip_source(mainw->blend_file, i, SRC_PURPOSE_TRACK);
+            mainw->track_sources[i] = get_clip_source(nclip, i, SRC_PURPOSE_TRACK);
             if (!mainw->track_sources[i]) {
               //g_print("CLONING\n");
               //reset_timer_info();
@@ -425,31 +408,34 @@ static void map_sources_to_tracks(boolean rndr) {
               //show_timer_info();
             }
           }
+          mainw->old_active_track_list[i] = mainw->active_track_list[i] = nclip;
+          if (rndr) {
+            if (nclip > 0)
+              // set alt src in layer
+              lives_layer_set_source(layers[i], mainw->track_sources[i]);
+            else weed_layer_pixel_data_free(layers[i]);
+          }
         }
-      }
-      // *INDENT-ON*
-      else mainw->old_active_track_list[i] = mainw->active_track_list[i] = nclip;
-
-      if (i == 1 && !mainw->multitrack && mainw->track_sources[0] == mainw->track_sources[1]) {
-        mainw->track_sources[i] = get_clip_source(mainw->blend_file, i, SRC_PURPOSE_TRACK);
-        if (!mainw->track_sources[i])
-          add_decoder_clone(mainw->blend_file, i, SRC_PURPOSE_TRACK);
-        mainw->track_sources[i] = get_clip_source(mainw->blend_file, i, SRC_PURPOSE_TRACK);
-      }
-
-      if (rndr) {
-        if (nclip > 0)
-          // set alt src in layer
-          lives_layer_set_source(layers[i], mainw->track_sources[i]);
-        else weed_layer_pixel_data_free(layers[i]);
       }
     }
   }
+  layers[i] = NULL;
+
+  if (!mainw->multitrack) {
+    // in clip edit mode, we can sometimes end up with fg clip being a track decoder and bg
+    // clip being the primary
+    if (mainw->track_sources[0] != mainw->files[mainw->playing_file]->primary_src
+        && mainw->track_sources[1] == mainw->files[mainw->playing_file]->primary_src) {
+      swap_clip_sources(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, SRC_PURPOSE_TRACK);
+    }
+  }
+  return layers;
 }
 
 
 // retval 1 == goto lfi_done
 static int render_frame(frames_t frame) {
+  weed_layer_t **layers = NULL;
   weed_timecode_t tc = 0;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
   boolean rndr = FALSE;
@@ -469,9 +455,8 @@ static int render_frame(frames_t frame) {
     lives_clip_src_t *dsource;
     mainw->frame_layer = lives_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
     weed_layer_ref(mainw->frame_layer);
-    dsource = get_clip_source(mainw->clip_index[0], 0, SRC_PURPOSE_PRIMARY);
+    dsource = get_clip_source(mainw->clip_index[0], -1, SRC_PURPOSE_PRIMARY);
     lives_layer_set_source(mainw->frame_layer, dsource);
-    weed_layer_set_invalid(mainw->frame_layer, FALSE);
     pull_frame_threaded(mainw->frame_layer, NULL, (weed_timecode_t)mainw->currticks, 0, 0);
   } else {
     // here we are rendering / playing and we can have any number of clips in a stack
@@ -499,7 +484,8 @@ static int render_frame(frames_t frame) {
     //
     // mainw->track_sources points to the decoder for each track, this can either be NULL, the original decoder, or the clone
     //
-    // in clip editor (VJ) mode, this is only necessary if self transitions are enabled - then we must do some additional management
+    // in clip editor (VJ) mode, this is only necessary if self transitions are enabled
+
     // if blend_file == playing_file, then the blend_file ONLY must get a clone
     // e.g if playing_file is switched to equal blend_file - without this, blend_file would maintain the original,
     //         playing_file would get the clone - in this case we swap the track decoders, so blend_file gets the clone, and
@@ -508,10 +494,9 @@ static int render_frame(frames_t frame) {
     //     can reqlinquish the clone and get the original, we must also take care that if all transitions are switched off,
     //   blend_file releases its clone before evaporating
 
-    map_sources_to_tracks(rndr);
+    layers = map_sources_to_tracks(rndr);
 
     if (rndr) {
-      layers[mainw->num_tracks] = NULL;
       mainw->frame_layer = weed_apply_effects(layers, mainw->filter_map,
                                               tc, opwidth, opheight, mainw->pchains);
       for (int i = 0; layers[i]; i++) {
@@ -2540,7 +2525,9 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
     else {
       double targ_time = 1. / fabs(sfile->pb_fps);
       double tconf = 0.5;
-      best_frame = reachable_frame(mainw->playing_file, (lives_decoder_t *)sfile->primary_src,
+
+      best_frame = reachable_frame(mainw->playing_file, sfile->primary_src
+                                   ? (lives_decoder_t *)sfile->primary_src->source : NULL,
                                    mainw->actual_frame + dir, best_frame, &targ_time, &tconf);
       if (targ_time < 0. || targ_time > 1. / fabs(sfile->pb_fps)) best_frame = mainw->actual_frame + dir;
     }
@@ -3022,7 +3009,7 @@ switch_point:
     mainw->new_clip = -1;
     mainw->close_this_clip = -1;
 
-    if (prefs->pbq_adaptive) reset_effort();
+    //if (prefs->pbq_adaptive) reset_effort();
     // TODO: add a few to bungle_frames in case of decoder unchilling
 
     if (mainw->record && !mainw->record_paused) mainw->rec_aclip = mainw->current_file;
@@ -3377,8 +3364,8 @@ update_effort:
         if (requested_frame != last_req_frame || sfile->frames == 1) {
           if (sfile->frames == 1) {
             if (!spare_cycles) {
-              //if (sfile->primary_src_type == LIVES_EXT_SRC_FILTER) {
-              //weed_plant_t *inst = (weed_plant_t *)sfile->primary_src;
+              //if (sfile->primary_src->src_type == LIVES_SRC_TYPE_FILTER) {
+              //weed_plant_t *inst = (weed_plant_t *)sfile->primary_src->source;
               double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
               if (target_fps) {
                 if (scratch == SCRATCH_NONE && mainw->inst_fps < target_fps) {
@@ -3508,6 +3495,7 @@ play_frame:
              ) {
 
             //g_print("lfi in  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+            lives_nanosleep_while_true(mainw->do_ctx_update);
             load_frame_image(sfile->frameno);
             //g_print("lfi out  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -3808,6 +3796,7 @@ play_frame:
             mainw->pred_frame = 0;
             mainw->pred_clip = 0;
           }
+
           dplug = get_decoder_clone(mainw->playing_file, 0, SRC_PURPOSE_PRECACHE);
           if (!dplug)
             dplug = add_decoder_clone(mainw->playing_file, 0, SRC_PURPOSE_PRECACHE);

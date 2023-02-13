@@ -349,7 +349,7 @@ check_stcache:
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       if (cdata && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, &start_pixbuf);
         cache_it = FALSE;
@@ -377,7 +377,7 @@ check_stcache:
           return;
         }
       } else if (dsource) {
-	clip_source_free(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
+	clip_source_remove(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
 	weed_layer_set_invalid(layer, TRUE);
       }
     }
@@ -427,7 +427,7 @@ check_stcache:
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       if (cdata && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         // TODO: make background thread
         virtual_to_images(mainw->current_file, frame, frame, FALSE, &start_pixbuf);
@@ -455,7 +455,7 @@ check_stcache:
           return;
         }
       } else if (dsource) {
-        clip_source_free(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
+        clip_source_remove(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
         weed_layer_set_invalid(layer, TRUE);
       }
     }
@@ -638,7 +638,7 @@ check_encache:
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       if (cdata && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, &end_pixbuf);
         cache_it = FALSE;
@@ -666,7 +666,7 @@ check_encache:
           return;
         }
       } else if (dsource) {
-        clip_source_free(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
+        clip_source_remove(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
         weed_layer_set_invalid(layer, TRUE);
       }
     }
@@ -715,7 +715,7 @@ check_encache:
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
       if (cdata && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, &end_pixbuf);
         cache_it = FALSE;
@@ -742,7 +742,7 @@ check_encache:
           return;
         }
       } else if (dsource) {
-        clip_source_free(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
+        clip_source_remove(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
         weed_layer_set_invalid(layer, TRUE);
       }
     }
@@ -939,7 +939,7 @@ check_prcache:
       if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE &&
           is_virtual_frame(mainw->current_file, mainw->preview_frame) &&
           cfile->primary_src) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src)->cdata;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
         if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
           virtual_to_images(mainw->current_file, mainw->preview_frame, mainw->preview_frame, FALSE, &pixbuf);
           cache_it = FALSE;
@@ -979,7 +979,7 @@ check_prcache:
             return;
           }
         } else if (dsource) {
-          clip_source_free(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
+          clip_source_remove(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
           weed_layer_set_invalid(layer, TRUE);
         }
       }
@@ -1112,9 +1112,9 @@ check_prcache:
 #ifdef HAVE_POSIX_FADVISE
       posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
-      scrapfile->primary_src = LIVES_INT_TO_POINTER(fd);
-      scrapfile->primary_src_type = LIVES_EXT_SRC_FILE_BUFF;
-    } else fd = LIVES_POINTER_TO_INT(scrapfile->primary_src);
+      scrapfile->primary_src = add_clip_source(mainw->scrap_file, -1, SRC_PURPOSE_PRIMARY,
+                               LIVES_INT_TO_POINTER(fd), LIVES_SRC_TYPE_FILE_BUFF);
+    } else fd = LIVES_POINTER_TO_INT(scrapfile->primary_src->source);
 
     if (frame < 0 || !layer) return TRUE; /// just open fd
 
@@ -1161,13 +1161,13 @@ check_prcache:
         return scrapfile->f_size;
       }
 
-      scrapfile->primary_src = LIVES_INT_TO_POINTER(fd);
-      scrapfile->primary_src_type = LIVES_EXT_SRC_FILE_BUFF;
+      scrapfile->primary_src = add_clip_source(mainw->scrap_file, -1, SRC_PURPOSE_PRIMARY,
+                               LIVES_INT_TO_POINTER(fd), LIVES_SRC_TYPE_FILE_BUFF);
 
 #ifdef HAVE_POSIX_FADVISE
       posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
-    } else fd = LIVES_POINTER_TO_INT(scrapfile->primary_src);
+    } else fd = LIVES_POINTER_TO_INT(scrapfile->primary_src->source);
 
     // serialise entire frame to scrap file
     pdata_size = weed_plant_serialise(fd, layer, NULL);
@@ -2127,7 +2127,7 @@ fndone:
             }
             dsource = lives_layer_get_source(layer);
             if (dsource) dplug = (lives_decoder_t *)dsource->source;
-            if (!dplug) dplug = (lives_decoder_t *)sfile->primary_src;
+            if (!dplug) dplug = (lives_decoder_t *)sfile->primary_src->source;
             iframe = get_indexed_frame(clip, frame);
             if (!dplug || !dplug->cdata || iframe >= dplug->cdata->nframes) {
               if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
@@ -2343,7 +2343,7 @@ fndone:
       nsize[0] = width;
       nsize[1] = height;
       weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
-      weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)sfile->primary_src);
+      weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)sfile->primary_src->source);
       goto success;
     case CLIP_TYPE_GENERATOR: {
       // special handling for clips where host controls size
@@ -2351,7 +2351,7 @@ fndone:
       // never free it !
       weed_plant_t *inst;
       if (!weed_layer_check_valid(layer)) goto fail;
-      weed_instance_ref((inst = (weed_plant_t *)sfile->primary_src));
+      weed_instance_ref((inst = (weed_plant_t *)sfile->primary_src->source));
       if (inst) {
         int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
         filter_mutex_lock(key);

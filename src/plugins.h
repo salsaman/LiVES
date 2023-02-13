@@ -485,6 +485,7 @@ void unload_decoder_plugins(void);
 void clip_decoder_free(int clipno, lives_decoder_t *);
 
 lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose);
+lives_decoder_t *add_ext_decoder_clone(int dclip, int sclip, int track, int purpose);
 
 #define get_decoder_clone(nclip, track, purpose)		\
   (lives_decoder_t *)get_clip_source(nclip, track, purpose)

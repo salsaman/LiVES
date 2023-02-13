@@ -596,8 +596,8 @@ void lives2lives_read_stream(const char *host, int port) {
   cfile->hsize = lstream->hsize;
   cfile->vsize = lstream->vsize;
 
-  cfile->primary_src = lstream;
-  cfile->primary_src_type = LIVES_EXT_SRC_STREAM;
+  cfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)lstream,
+                                       LIVES_SRC_TYPE_STREAM);
 
   switch_to_file((mainw->current_file = old_file), new_file);
   set_main_title(cfile->file_name, 0);
@@ -663,9 +663,8 @@ void lives2lives_read_stream(const char *host, int port) {
 #ifdef USE_STRMBUF
   lives_free(lstream->buffer);
 #endif
-  lives_free(cfile->primary_src);
+  clip_source_free(mainw->current_file, cfile->primary_src);
   cfile->primary_src = NULL;
-  cfile->primary_src_type = LIVES_EXT_SRC_NONE;
 
   close_current_file(old_file);
   lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);

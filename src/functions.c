@@ -1135,7 +1135,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
       lpt2 = closure->proc_thread;
       if (weed_plant_has_leaf(lpt2, LIVES_LEAF_REPLACEMENT)) {
         while (weed_plant_has_leaf(lpt2, LIVES_LEAF_REPLACEMENT)) {
-          lpt2 =  weed_get_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, 0);
+          lpt2 = weed_get_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, 0);
         }
         closure = lives_proc_thread_get_closure(lpt2);
         if (!closure) continue;
@@ -1189,23 +1189,25 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
             // and we also need to add a ref to lpt2, since the waiter will unref it,
             // and it will also be unreffed when the closure is freed
             // we will also add a ref to ret_closure->proc_thread, for similar reasons
-            lives_proc_thread_ref(lpt2);
-            if (ret_closure->proc_thread != lpt)
-              lives_proc_thread_ref(ret_closure->proc_thread);
-            // add flagbit BLOCK to ret_closure - thread will now be waiting on this
-            ret_closure->flags |= HOOK_CB_BLOCK;
-            // mark the replaced proc_thread  as "replaced"
-            weed_set_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, ret_closure->proc_thread);
+            if (ret_closure != closure) {
+              lives_proc_thread_ref(lpt2);
+              if (ret_closure->proc_thread != lpt)
+                lives_proc_thread_ref(ret_closure->proc_thread);
+              // add flagbit BLOCK to ret_closure - thread will now be waiting on this
+              ret_closure->flags |= HOOK_CB_BLOCK;
+              // mark the replaced proc_thread  as "replaced"
+              weed_set_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, ret_closure->proc_thread);
 
-            // for toggle func, this closure will be removed, and new lpt will be rejected
-            // so neither will be replaced, but marking the proc_threads as "invalid" we force the waiters to give  up
-            // but we will return lpt2 (we need to return somehting different)
-            // but we will flag it as invalid,
-            ret_closure = closure;
+              // for toggle func, this closure will be removed, and new lpt will be rejected
+              // so neither will be replaced, but marking the proc_threads as "invalid" we force the waiters to give  up
+              // but we will return lpt2 (we need to return somehting different)
+              // but we will flag it as invalid,
+              ret_closure = closure;
+            }
             lives_proc_thread_set_state(ret_closure->proc_thread, (THRD_STATE_INVALID | THRD_STATE_DESTROYING |
                                         THRD_STATE_STACKED));
-            lives_proc_thread_ref(ret_closure->proc_thread);
           }
+          lives_proc_thread_ref(ret_closure->proc_thread);
           closure->flags |= HOOK_STATUS_REMOVE;
         }
         continue;

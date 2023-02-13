@@ -93,8 +93,8 @@ boolean repair_frame_index(int clipno, frames_t offs) {
   if (IS_PHYSICAL_CLIP(clipno)) {
     lives_clip_data_t *cdata = NULL;
     lives_clip_t *sfile = mainw->files[clipno];
-    if (sfile->primary_src && sfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-      cdata = ((lives_decoder_t *)sfile->primary_src)->cdata;
+    if (sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
+      cdata = ((lives_decoder_t *)sfile->primary_src->source)->cdata;
     }
     if (extend_frame_index(clipno, sfile->old_frames, sfile->frames,
                            cdata ? cdata->nframes : 0, offs, sfile->img_type) == sfile->frames) {
@@ -108,7 +108,7 @@ boolean repair_frame_index(int clipno, frames_t offs) {
 void repair_findex_cb(LiVESMenuItem *menuitem, livespointer offsp) {
   frames_t oldf = cfile->old_frames;
   if (menuitem) cfile->old_frames = 0;
-  if (cfile->primary_src && cfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
+  if (cfile->primary_src && cfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
     // force full reload of decoder so we can check again
 
     ///< retain original order to restore for freshly opened clips
@@ -119,7 +119,7 @@ void repair_findex_cb(LiVESMenuItem *menuitem, livespointer offsp) {
     char *clipdir = get_clip_dir(clipno);
     char *cwd = lives_get_current_dir();
 
-    clip_source_free(clipno, -1, SRC_PURPOSE_PRIMARY);
+    clip_source_remove(clipno, -1, SRC_PURPOSE_PRIMARY);
 
     lives_chdir(clipdir, FALSE);
     lives_free(clipdir);
@@ -961,8 +961,8 @@ boolean check_if_non_virtual(int clipno, frames_t start, frames_t end) {
 
   sfile->clip_type = CLIP_TYPE_DISK;
 
-  if (sfile->primary_src && sfile->primary_src_type == LIVES_EXT_SRC_DECODER) {
-    clip_source_free(clipno, -1, SRC_PURPOSE_PRIMARY);
+  if (sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
+    clip_source_remove(clipno, -1, SRC_PURPOSE_PRIMARY);
   }
 
   sfile->old_dec_uid = 0;
@@ -1526,15 +1526,13 @@ void restore_frame_index_back(int sclipno) {
           bad_header = TRUE;
       }
       if (!bad_header) {
-        if (sfile->old_dec_uid && sfile->old_primary_src && sfile->old_primary_src_type == LIVES_EXT_SRC_DECODER) {
+        lives_clip_src_t *dsource = get_clip_source(sclipno, -1, SRC_PURPOSE_PRIMARY);
+        if (dsource && sfile->old_dec_uid) {
           lives_decoder_t *dplug;
           sfile->decoder_uid = sfile->old_dec_uid;
           sfile->old_dec_uid = 0;
-          sfile->primary_src = sfile->old_primary_src;
-          sfile->old_primary_src = NULL;
-          sfile->primary_src_type = sfile->old_primary_src_type;
-          sfile->old_primary_src_type = LIVES_EXT_SRC_NONE;
-          dplug = (lives_decoder_t *)sfile->primary_src;
+          sfile->primary_src = dsource;
+          dplug = (lives_decoder_t *)dsource->source;
           if (dplug) {
             lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
             if (!save_clip_value(sclipno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) bad_header = TRUE;

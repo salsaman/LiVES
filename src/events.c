@@ -4087,59 +4087,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               }
             }
           } else {
-            /* int oclip, nclip; */
-            /* layers = (weed_plant_t **)lives_malloc((mainw->num_tracks + 1) * sizeof(weed_plant_t *)); */
+            for (i = 0; i < mainw->num_tracks; i++) {
+              if (mainw->clip_index[i] > 0 && mainw->frame_index[i] > 0 && mainw->multitrack)
+                is_blank = FALSE;
+            }
 
-            /* // get list of active tracks from mainw->filter map */
-            /* get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map); */
-
-            /* for (i = 0; i < mainw->num_tracks; i++) { */
-            /*   if (mainw->clip_index[i] > 0 && mainw->frame_index[i] > 0 && mainw->multitrack) { */
-            /*     is_blank = FALSE; */
-            /*   } */
-            /*   layers[i] = lives_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]); */
-            /*   weed_layer_ref(layers[i]); */
-            /*   weed_layer_set_palette(layers[i], (mainw->clip_index[i] == -1 || */
-            /* 					 mainw->files[mainw->clip_index[i]]->img_type == */
-            /* 					 IMG_TYPE_JPEG) ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32); */
-
-            /*   if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) { */
-            /*     // now using threading, we want to start pulling all pixel_data for all active layers here */
-            /*     // however, we may have more than one copy of the same clip - in this case we want to */
-            /*     // create clones of the decoder plugin */
-            /*     // this is to prevent constant seeking between different frames in the clip */
-
-            /*     // check if primary_src survives old->new */
-
-            /*     //// */
-            /*     if (mainw->track_sources[i]) track_source_free(i, oclip); */
-
-            /*     if (IS_VALID_CLIP(nclip)) { */
-            /*       lives_clip_t *sfile = mainw->files[nclip]; */
-            /*       if (sfile->clip_type == CLIP_TYPE_FILE) { */
-            /*         if (!mainw->primary_src_used[nclip]) { */
-            /*           mainw->track_sources[i] = sfile->primary_src; */
-            /*         } */
-            /*         if (mainw->track_sources[i] == sfile->primary_src) { */
-            /*           mainw->primary_src_used[nclip] = TRUE; */
-            /*         } else { */
-            /*           // add new clone for nclip */
-            /*           mainw->track_sources[i] = get_clip_source(nclip, i, SRC_PURPOSE_TRACK); */
-            /*           if (!mainw->track_sources[i]) */
-            /*             add_decoder_clone(nclip, i, SRC_PURPOSE_TRACK); */
-            /*           mainw->track_sources[i] = get_clip_source(nclip, i, SRC_PURPOSE_TRACK); */
-            /*         } */
-            /*       } */
-            /*       // set alt src in layer */
-            /*       lives_layer_set_source(layers[i], (void *)mainw->track_sources[i]); */
-            /*     } else weed_layer_pixel_data_free(layers[i]); */
-            /*     mainw->old_active_track_list[i] = mainw->active_track_list[i]; */
-            /*   } */
-            /* } */
-
-            /* layers[i] = NULL; */
-
-            map_sources_to_tracks(TRUE);
+            layers = map_sources_to_tracks(TRUE);
 
             if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC))
               ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);

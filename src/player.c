@@ -336,8 +336,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr) {
 
   if (!rndr) {
     if (!mainw->multitrack) {
-      layers =
-        (weed_layer_t **)lives_calloc(3, sizeof(weed_layer_t *));
+      layers = (weed_layer_t **)lives_calloc(3, sizeof(weed_layer_t *));
       lives_freep((void **)&mainw->clip_index);
       lives_freep((void **)&mainw->frame_index);
       if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)
@@ -361,18 +360,16 @@ weed_layer_t **map_sources_to_tracks(boolean rndr) {
       // for Clip Editor we may have 1 or 2 (if transitions are active)
       // in multitrack mode, we can have any number 0 -> MAX_TRACKS
       // we can also separated backing audio tracks, but these are not represented her
-      layers =
-        (weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
+      layers = (weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
 
       // get list of active tracks from mainw->filter map
       // for multitrack, the most recent filter_map defines how the layers are combined;
       // if there is no active filter map then we only see the frontmost layer
       // The mapping of clips / frames at the current playback time is held in clip_index / frame_index
       // these are set from Frame events
-      if (mainw->multitrack)
-        get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
+      get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
     }
-  }
+  } else layers = (weed_layer_t **)lives_calloc(mainw->num_tracks + 1, sizeof(weed_layer_t *));
 
   // here we compare the mapping of clips -> tracks with the previous values
   // if the clip mapping for a track has changed we have to note this
@@ -381,7 +378,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr) {
   // first we check if the primary decoder (primary_src) is in use
 
   for (i = 0; i < mainw->num_tracks; i++) {
-    if (rndr && layers) {
+    if (rndr) {
       layers[i] = lives_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
       weed_layer_ref(layers[i]);
       weed_layer_set_palette(layers[i], (mainw->clip_index[i] == -1 ||
@@ -414,14 +411,12 @@ weed_layer_t **map_sources_to_tracks(boolean rndr) {
               // set alt src in layer
               lives_layer_set_source(layers[i], mainw->track_sources[i]);
             else weed_layer_pixel_data_free(layers[i]);
-          }
-        }
-      }
-    }
-  }
+	      // *INDENT-OFF*
+	    }}}}}
+  // *INDENT-ON*
   layers[i] = NULL;
 
-  if (!mainw->multitrack) {
+  if (!rndr && !mainw->multitrack) {
     // in clip edit mode, we can sometimes end up with fg clip being a track decoder and bg
     // clip being the primary
     if (mainw->track_sources[0] != mainw->files[mainw->playing_file]->primary_src

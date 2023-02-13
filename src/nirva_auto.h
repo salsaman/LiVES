@@ -1,2797 +1,5271 @@
+// object-constants.h
 // LiVES
 // (c) G. Finch 2022 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
+
+
+// PROJECT N.I.R.V.A
+// bootstrap:
+//// The macros and defintions here are just sufficient to bootstrap the system
+// - facilitate the creation bundle defintions for all the defualt types, and enumerate them
+//
+// - provide default versions of "Implementation functions"
+//
+// - define language specific macros for creating generic functions and macros
+//
+// - ensure the bootstrap process has all of the funcitonality required
+//
+// - provide an application function call, nirva_init() which will begin the bootstrap process
+//
+// - provide sufficient supporting framework to reach the point where we can construct the first
+// 		object template - TYPE == STRUCTURAL, reffered to as STRUCTURE_PRIME
+//
+//  - provide minimal infrastructure for dynamically loading the body of the STRUCTURE_PRIME
+//
+//  - once this is done, call the gateway function in STRUCTURE_PRIME
+//
+//  - STRUCTURE_PRIME will now continue the initialisation, if we get to this point,
+//      our task is complete
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-// ATTR_MAPS, CONDITIONS, CALLBACKS, CONDLOGIC
-
-//#define DEBUG_BUNDLE_MAKER
-
-// the implementation should define its own NIRVA_BUNDLE_T before this header
-#ifndef NIRVA_BUNDLEPTR_T
-#error NIRVA_BUNDLEPTR_T MUST BE DEFINED
-#endif
-
-#ifdef IS_BUNDLE_MAKER
-#ifndef _HAS_OBJC_MAKER
-#ifdef OBJECT_CONSTANTS_H
-#undef OBJECT_CONSTANTS_H
-#define SKIP_MAIN
-#endif
-#endif
-#endif
-
 #ifndef OBJECT_CONSTANTS_H
-#define OBJECT_CONSTANTS_H
-
-#ifdef NIRVA_IMPL_STYLE_DEFAULT_CPP
-#undef NIRVA_IMPL_STYLE_DEFAULT_CPP
+#include "object-constants.h"
 #endif
-#define NIRVA_IMPL_STYLE_DEFAULT_CPP 10001
 
-#ifdef NIRVA_IMPL_STYLE_DEFAULT_C
-#undef NIRVA_IMPL_STYLE_DEFAULT_C
-#endif
-#define NIRVA_IMPL_STYLE_DEFAULT_C 10002
+// functionality is split by "generation", correspondiong to bootstrap phases
+// we start in generation 0, when nirva_setup() is called, we go immediately to gen1
+// then when all bundle defintions are created from macros, and validated, we move to gen2
+// when we have created bluprint bundles for each bundle type, we move to gen3
+// in gen3, the bundle defintions are transfered to factory instances of the blueprint
+// object, once these are all available, we move to gen4
 
-#ifndef NIRVA_IMPL_STYLE
-#ifdef __cplusplus
-#define NIRVA_IMPL_STYLE NIRVA_IMPL_STYLE_DEFAULT_CPP
+static int NIRVA_FUNC_GENERATION = 0;
+
+#define NIRVA_DEF_ICAPI OBJ_INTENTION_CREATE_BUNDLE
+#define NIRVA_DEF_ICAPC CAP_OBJECT_TYPE(STRUCTURAL)
+
+/* #define NIRVA_MAKE_INTENTCAP(name,ICAP) NIRVA_GRIND_INTENTCAP(name,NIRVA_ROAST_INTENTCAP(ICAP)) */
+/* #define NIRVA_DEF_INTENTCAP NIRVA_MAKE_INTENTCAP("default",_NIRVA_DEF_ICAP) */
+
+/////////////////////////// bundles //
+
+// priorities for Oracular data sources
+#define NIRVA_PRIORITY_FALLBACK 1
+#define NIRVA_PRIORITY_LOW 10
+#define NIRVA_PRIORITY_DEFAULT 20
+#define NIRVA_PRIORITY_HIGH 50
+#define NIRVA_PRIORITY_TOP 100
+
+#define SEGMENT_END NIRVA_NULL
+
+// DIRECTIVES
+// these are instructions that can be embedded in bundledef
+// in gen1 and gen2 functions thes should simply be copied
+// in gen3, they are converted to automations
+
+#define DIRECTIVE_BEGIN "@BEGIN "
+#define DIRECTIVE_END "@END "
+
+#define DIR_START(dirnm)  			DIRECTIVE_BEGIN #dirnm
+#define DIR_FINISH(dirnm) 			DIRECTIVE_END #dirnm
+
+// thes directives are only added in gen3
+// see notes in documentation
+
+#define DIRECTIVE_ADD_HOOK_AUTO          	DIR_START(add_hook_auto)
+// automation script
+#define DIRECTIVE_ADD_HOOK_AUTO_END  	  	DIR_FINISH(add_hook_auto)
+
+// hook automations are basically self callbacks, but in the form of
+// a script
+
+// AUTOMATIONS - can also be stored in scriptlets just as conditions can be
+
+// commands may require priv checks to perform, except for some self
+// automations + cascade_hooks
+#define NIRVA_AUTO_CMD_1 "SET_STRAND_VALUE" // strand name, strand_val
+#define NIRVA_AUTO_CMD_2 "CASCADE_HOOKS" // causes a follow on hook_number to be calculated and called
+#define NIRVA_AUTO_CMD_3 "ADD_STRAND_TO" // holder, strand_name, type, value
+#define NIRVA_AUTO_CMD_4 "REMOVE_STRAND_FROM" // container, strand name
+#define NIRVA_AUTO_CMD_5 "ADD_HOOK_CB" // obj, item, hook_number, cb, data
+#define NIRVA_AUTO_CMD_6 "REMOVE_HOOK_CB" // bj, item, hook_number, cb, data
+#define NIRVA_AUTO_CMD_7 "APPEND_TO_ARRAY" // strand, vakue
+#define NIRVA_AUTO_CMD_8 "REMOVE_FROM_ARRAY" // strand, value
+// add a HOoK automation in a sub bundle. followed by the sub bundle, then the rest is
+// added as if the hook automation were added at the sub bundle level
+#define NIRVA_AUTO_CMD_9 "ADD_HOOK_AUTO" // sub bundle, strand_name, hook_number, cond_type, args
+// this is for STRAND bundle...when STRAND_TYPE or ATTR_TYPE is set, set type for default, val, nd
+#define NIRVA_AUTO_CMD_10 "SET_STRAND_TYPE" // strand_name, strand_type
+#define NIRVA_AUTO_CMD_11 "REF_BUNDLE" // ptr to bundle...if target has no refcounter, does nothing
+#define NIRVA_AUTO_CMD_12 "UNREF_BUNDLE" // unrefs, if target has no refcounter or rc is -1, frees
+
+#define HOOK_AUTO_BEGIN(strand_name, hook_number, cond, ...)		\
+  MSTY("%s", DIRECTIVE_ADD_HOOK_AUTOMATION, "%s", #strand_name, "%d", hook_number##_HOOK, cond, __VA_ARGS__)
+
+#define HOOK_AUTO_ADD_HOOK_AUTO(sub, strand_name, hook_number, cond, ...) \
+  MSTY("%s", "ADD_HOOK_AUTO", "%s", sub, "%s", #strand_name, "%d", hook_number##_HOOK, cond, __VA_ARGS__)
+
+#define HOOK_AUTO_SET_STRAND_VALUE(strand_name, val_as_string)		\
+  MS("SET_STRAND_VALUE", #strand_name, val_as_string, DIRECTIVE_ADD_HOOK_AUTO_FINISH)
+
+#define HOOK_AUTO_ADD_STRAND_TO(sub, strand_name, strand_type, val_as_string) \
+  MSTY("%s", "ADD_STRAND_TO", "%s", sub, "%s", #strand_name, "%u", strand_type, "%s", val_as_string, \
+       "%s", DIRECTIVE_ADD_HOOK_AUTO_FINISH)
+
+#define HOOK_AUTO_DELETE_STRAND_FROM(sub, strand_name)			\
+  MSTY("%s", "DELETE_STRAND_FROM", "%s", sub, "%s", #strand_name, DIRECTIVE_ADD_HOOK_AUTO_FINISH)
+
+// the following substitutions may be used in conditions, automations and so on
+// in place of a value
+
+// for pre-data changes, the current value to be updated, removed or deleted
+// for post-data, the value of the strand before updating
+// for attributes, this refers to the attribute "data"
+#define NIRVA_STRAND_REF_OLD_VAL 			"@OLD_VAL"
+
+// for post-data changes, the current value,
+// for pre-data, the new value to be set, appended or added
+// for attributes, this refers to the attribute "data"
+#define NIRVA_STRAND_REF_NEW_VAL 			"@NEW_VAL"
+
+// followed by a strand name, refers to the value held in the strand
+#define NIRVA_STRAND_REF_ANY				"@*"
+
+// strand 2
+
+// gen1 flag bits
+// other than "optional" which is set in strand1
+// there are 3 mutually exclusive values which can be set in strand2
+
+// flag bits, decimal value in strand1
+#define STRAND2_FLAG_ARRAY				1
+
+// gen 2 flag bits
+
+// for the time being only one of these can be set at once
+#define STRAND2_FLAG_READONLY				2
+
+#define STRAND2_FLAG_TEMPLATE				4
+
+#define STRAND2_FLAG_RDONLY_SUB				6
+
+#define STRAND2_FLAG_KEYED				8
+
+//	FLAGS FOR blueprint bundles (some of these correspond to bdef flags, but they
+// are not identical)
+
+// when recreating the bundledef as a blueprint, the following
+// flag bits can be set in the strand_def. Aside from marking a strand_def
+// as a comment, there are just 4 values:
+
+// info bits:
+
+// functional flags
+
+// strand can be created at any time
+#define BLUEPRINT_FLAG_OPTIONAL 		(1ull << 1)
+
+// value MUST be set at creation, then becomes readonly
+// used for uid, bundle_type, name, strand_type
+// (this is different from readonly ATTRIBUTEs, which may be created with or without
+// a default value, and have the "real" readonly value set later)
+// NOTE: if the OPTIONAL bit is also set, this turns it into an INDEX strand_def
+#define BLUEPRINT_FLAG_READONLY 	       	(1ull << 2)
+
+// KEYED_ARRAY - the DATA will hold an array of bundleptr or const bundleptr
+// (limited by STRAND_TYPE and RESTRICTIONS)
+// Unlike normal arrays, items must be appended one by one to the array, and each time a unique string key is supplied
+
+// items can later be read, updated or removed using the key reference
+// the usual array functions (nirva_get_array_bundleptr. nirva_array_get_size,
+// nirva_array_clear. nirva_array_append (single value at a time) and nirva_array_set functions work as per usual
+//
+// in addition, for keyed arrays, one can use nirva_get_value_by_keyy, nirva_update_value_by_key,
+// nirva_remove_value_by_key, and nirva_has_value_for_key
+//
+// if the implementation does not define its own versions of the key_array functions, then the automation will
+// add and maintain an index bundle,
+// the automation will intercept calls and intervene to add / remove  a reference (copy of the data, always as const_bundleptr) in index
+#define BLUEPRINT_FLAG_KEYED_ARRAY 		(1ull << 4)
+
+// declares that when a sub bundle is set / appended in this strand,
+// all strands in the sub bundle must be marked readonly
+#define BLUEPRINT_FLAG_RDONLY_SUB 		(1ull << 5)
+
+// marks a comment in blueprint. Strands should not be created from this
+#define BLUEPRINT_FLAG_COMMENT 			(1ull << 6)
+
+// ispecial value which can be used when describing a strand_name
+#define $CONTAINER "$CONTAINER" // e.g @CONTAINER.STRaND_TYPE
+
+// built in restrictions
+#define _RESTRICT_BUNDLE_TYPE(btype)			\
+  _COND_VAL_EQUALS, VAR_STRAND_VAL, "BLUEPRINT/BUNDLE_TYPE",	\
+    _CONST_UINT64_VAL, btype##_BUNDLE_TYPE
+
+#define RESTRICT_BUNDLE_TYPE(btype) MSTY(_COND_START, _RESTRICT_BUNDLE_TYPE(btype), _COND_END)
+
+#define RESTRICT_TO_OBJECT MSTY(_COND_START, COND_P_OPEN, RESTRICT_BUNDLE_TYPE(OBJECT_TEMPLATE), COND_LOGIC_OR, \
+				_RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE), _COND_P_CLOSE, _COND_END)
+
+#define RESTRICT_OBJECT_TEMPLATE(type) MSTY(_RESTRICT_BUNDLE_TYPE(OBJECT_TEMPLATE), \
+					    COND_LOGIC_AND,		\
+					    _COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE", \
+					    _CONST_UINT64_VAL, OBJECT_TYPE_##type, _COND_END)
+
+#define RESTRICT_OBJECT_INSTANCE(type) MSTY(_RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE), \
+					    COND_LOGIC_AND,		\
+					    _COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE", \
+					    _CONST_UINT64_VAL, OBJECT_TYPE_##type, _COND_END)
+
+#define RESTRICT_INSTANCE_TYPE_SUBTYPE(type, subtype)		\
+  MSTY(_RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE),			\
+       COND_LOGIC_AND,						\
+       _COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE",	\
+       _CONST_UINT64_VAL OBJECT_TYPE_##type,			\
+       COND_LOGIC_AND,						\
+       _COND_VAL_EQUALS, VAR_STRAND_VAL, "SUBTYPE",	\
+       _CONST_UINT64_VAL, OBJECT_SUBTYPE_##subtype, _COND_END	\
+       )
+NIRVA_ENUM(ANY_RESTRICTION,
+           BLUEPRINT_RESTRICTION,
+           ATTRIBUTE_RESTRICTION,
+           SEGMENT_RESTRICTION,
+           CONDLOGIC_NODE_RESTRICTION,
+           CASCMATRIX_NODE_RESTRICTION,
+           CASCADE_RESTRICTION,
+           OBJECT_RESTRICTION,
+           HOOK_DETAILS_RESTRICTION,
+           OBJECT_INSTANCE_RESTRICTION,
+           ATTR_GROUP_RESTRICTION,
+           CONTRACT_RESTRICTION,
+           SCRIPTLET_RESTRICTION,
+           OBJECT_TEMPLATE_RESTRICTION,
+           STRAND_DEF_RESTRICTION,
+           HOOK_STACK_RESTRICTION,
+           VALUE_RESTRICTION,
+           SELECTOR_RESTRICTION,
+           INDEX_RESTRICTION,
+           ATTR_CONNECTION_RESTRICTION,
+           REFCOUNTER_RESTRICTION,
+           DEF_RESTRICTION,
+           TRAJECTORY_RESTRICTION,
+           VALUE_CHANGE_RESTRICTION,
+           ATTR_DEF_GROUP_RESTRICTION,
+           LOCATOR_RESTRICTION,
+           FUNC_DATA_RESTRICTION,
+           EMISSION_RESTRICTION,
+           ICAP_RESTRICTION,
+           TRANSFORM_RESTRICTION,
+           THREAD_INSTANCE_RESTRICTION,
+           ATTR_DEF_RESTRICTION,
+           CAPS_RESTRICTION,
+           ATTR_MAP_RESTRICTION,
+           HOOK_CB_FUNC_RESTRICTION,
+           FUNCTIONAL_RESTRICTION
+          )
+
+#define NIRVA_RESTRICTION_0 MSTY(_COND_ALWAYS)
+#define NIRVA_RESTRICTION_1  RESTRICT_BUNDLE_TYPE(BLUEPRINT)
+#define NIRVA_RESTRICTION_2  RESTRICT_BUNDLE_TYPE(ATTRIBUTE)
+#define NIRVA_RESTRICTION_3  RESTRICT_BUNDLE_TYPE(SEGMENT)
+#define NIRVA_RESTRICTION_4  RESTRICT_BUNDLE_TYPE(CONDLOGIC_NODE)
+#define NIRVA_RESTRICTION_5  RESTRICT_BUNDLE_TYPE(CASCMATRIX_NODE)
+#define NIRVA_RESTRICTION_6  RESTRICT_BUNDLE_TYPE(CASCADE)
+#define NIRVA_RESTRICTION_7  RESTRICT_TO_OBJECT
+#define NIRVA_RESTRICTION_8  RESTRICT_BUNDLE_TYPE(HOOK_DETAILS)
+#define NIRVA_RESTRICTION_9  RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE)
+#define NIRVA_RESTRICTION_10 RESTRICT_BUNDLE_TYPE(ATTR_GROUP)
+#define NIRVA_RESTRICTION_11 RESTRICT_BUNDLE_TYPE(CONTRACT)
+#define NIRVA_RESTRICTION_12 RESTRICT_BUNDLE_TYPE(SCRIPTLET)
+#define NIRVA_RESTRICTION_13 RESTRICT_BUNDLE_TYPE(OBJECT_TEMPLATE)
+#define NIRVA_RESTRICTION_14 RESTRICT_BUNDLE_TYPE(STRAND_DEF)
+#define NIRVA_RESTRICTION_15 RESTRICT_BUNDLE_TYPE(HOOK_STACK)
+#define NIRVA_RESTRICTION_16 RESTRICT_BUNDLE_TYPE(VALUE)
+#define NIRVA_RESTRICTION_17 RESTRICT_BUNDLE_TYPE(SELECTOR)
+#define NIRVA_RESTRICTION_18 RESTRICT_BUNDLE_TYPE(INDEX)
+#define NIRVA_RESTRICTION_19 RESTRICT_BUNDLE_TYPE(ATTR_CONNECTION)
+#define NIRVA_RESTRICTION_20 RESTRICT_BUNDLE_TYPE(REFCOUNTER)
+#define NIRVA_RESTRICTION_21 RESTRICT_BUNDLE_TYPE(DEF)
+#define NIRVA_RESTRICTION_22 RESTRICT_BUNDLE_TYPE(TRAJECTORY)
+#define NIRVA_RESTRICTION_23 RESTRICT_BUNDLE_TYPE(VALUE_CHANGE)
+#define NIRVA_RESTRICTION_24 RESTRICT_BUNDLE_TYPE(ATTR_DEF_GROUP)
+#define NIRVA_RESTRICTION_25 RESTRICT_BUNDLE_TYPE(LOCATOR)
+#define NIRVA_RESTRICTION_26 RESTRICT_BUNDLE_TYPE(FUNC_DATA)
+#define NIRVA_RESTRICTION_27 RESTRICT_BUNDLE_TYPE(EMISSION)
+#define NIRVA_RESTRICTION_28 RESTRICT_BUNDLE_TYPE(ICAP)
+#define NIRVA_RESTRICTION_29 RESTRICT_BUNDLE_TYPE(TRANSFORM)
+#define NIRVA_RESTRICTION_30 RESTRICT_OBJECT_INSTANCE(THREAD)
+#define NIRVA_RESTRICTION_31 RESTRICT_BUNDLE_TYPE(ATTR_DEF)
+#define NIRVA_RESTRICTION_32 RESTRICT_BUNDLE_TYPE(CAPS)
+#define NIRVA_RESTRICTION_33 RESTRICT_BUNDLE_TYPE(ATTR_MAP)
+#define NIRVA_RESTRICTION_34 RESTRICT_BUNDLE_TYPE(HOOK_CB_FUNC)
+#define NIRVA_RESTRICTION_35 RESTRICT_BUNDLE_TYPE(FUNCTIONAL)
+
+#define N_REST_TYPES 36
+
+#define GET_STRAND_TYPE(xdomain, xitem) _CALL(_GET_STYPE, STRAND_##xdomain##_##xitem##_TYPE)
+
+#define _GET_TYPE(a, b) _STRAND_TYPE_##a
+#define _GET_STYPE(a, b) STRAND_TYPE_##a
+#define _GET_BUNDLE_TYPE(a, b) a##_BUNDLE_TYPE
+#define _GET_DEFAULT(a, b) #b
+#define _GET_REST(a, b) a##_RESTRICTION
+
+#define GET_STRD_TYPE(xdomain, xitem) _CALL(_GET_TYPE, STRAND_##xdomain##_##xitem##_TYPE)
+#define GET_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, STRAND_##xdomain##_##xitem##_TYPE)
+#define GET_RESTRICTION(xdomain, xitem) _CALL(_GET_REST, BUNDLE_##xdomain##_##xitem##_TYPE)
+#define GET_BUNDLE_TYPE(xdomain, xitem) _CALL(_GET_BUNDLE_TYPE, BUNDLE_##xdomain##_##xitem##_TYPE)
+#define GET_BUNDLE_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, BUNDLE_##xdomain##_##xitem##_TYPE)
+//mach1n3
+#define JOIN(a, b) GET_STRD_TYPE(a, b) #b
+#define JOIN2(a, b, c) GET_STRD_TYPE(a, b) #c
+#define JOIN3(a, b, c, d, e) "%s", GET_STRD_TYPE(a, b)#e " ", "%u", c
+
+#define PJOIN3(a, b, c, d) GET_STRD_TYPE(a, b) #d
+#define BJOIN3(a, b, r, n) GET_STRD_TYPE(a, b) #n " ", "%u",  r
+
+#define _ADD_STRAND(domain, item) JOIN(domain, item)
+#define _ADD_STRANDn(domain, item, name) JOIN2(domain, item, name)
+
+#define _ADD_NAMED_BSTRAND(xd, xi, rest, name) BJOIN3(xd, xi, rest, name)
+#define _ADD_NAMED_OPT_BSTRAND(xd, xi, rest, name) "?" BJOIN3(xd, xi, rest, name)
+
+#define _ADD_NAMED_PSTRAND(xd, xi, name) PJOIN3(xd, xi, name)
+#define _ADD_NAMED_OPT_PSTRAND(xd, xi, name) PJOIN3(xd, xi, name)
+
+#define _ADD_KSTRAND(xd, xi, btype, name) JOIN3(xd, xi, btype, domain, item)
+#define _ADD_OPT_STRAND(domain, item) "?" JOIN(domain, item)
+#define _ADD_OPT_ANON_STRAND(domain, item) "?" JOIN2(domain, item,)
+#define _ADD_VARIABLE_STRAND(domain, item) ":" JOIN(domain, item)
+#define _ADD_OPT_STRANDn(domain, item, name) "?" JOIN2(domain, item, name)
+
+#define MS(...)make_strands("", __VA_ARGS__, NULL)
+#define MSTY(...)make_strands(__VA_ARGS__, NULL)
+
+// local ptrs, scalar and array
+#ifdef DESCRIPTIVE_BDEFS
+#define _ADD_STRAND2(domain, item) "DEFAULT: "GET_DEFAULT(domain, item)
+#define _ADD_STRAND2a(domain, item) "FLAGS: ARRAY, DEFAULT: "GET_DEFAULT(domain, item)
 #else
-#define NIRVA_IMPL_STYLE NIRVA_IMPL_STYLE_DEFAULT_C
-#endif
-#endif
-
-#define NIRVA_IMPL_IS(style) (NIRVA_IMPL_STYLE == NIRVA_IMPL_STYLE_##style)
-
-#if NIRVA_IMPL_IS(DEFAULT_CPP) || NIRVA_IMPL_IS(DEFAULT_C)
-#define NIRVA_X_IMPL_C_CPP
+#define _ADD_STRAND2(domain, item) "0 " GET_DEFAULT(domain, item)
+#define _ADD_STRAND2a(domain, item) "1 " GET_DEFAULT(domain, item)
 #endif
 
-#ifndef SKIP_MAIN
-
-#if NIRVA_IMPL_IS(DEFAULT_C)
-#ifndef NO_STD_INCLUDES
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <inttypes.h>
+// add readonly strand, default is ignored, value must be set
+#ifdef DESCRIPTIVE_BDEFS
+#define _ADD_STRAND2ro "FLAGS: READONLY"
+#define _ADD_STRAND2ro "FLAGS: READONLY, ARRAY"
+#define _ADD_STRAND2idx "FLAGS: TEMPLATE"
+#define _ADD_STRAND2rob "FLAGS: READONLY_BUNDLE"
+#define _ADD_STRAND2akey "FLAGS: ARRAY, KEYED"
+#else
+#define _ADD_STRAND2ro "2 none"
+#define _ADD_STRAND2roa "3 none"
+#define _ADD_STRAND2idx "4 none"
+#define _ADD_STRAND2rob "6 none"
+#define _ADD_STRAND2akey "9 none"
 #endif
 
-#define __IMPL_TYPEDEF__ typedef
-#define __IMPL_LINE_END__ ;
-#define __IMPL_ENUM__ enum
-#define __IMPL_EXTERN__ extern
-#define __IMPL_NULL__ NULL
-#define __IMPL_VARIADIC__ ...
-#define __IMPL_CONST__ const
-#define __IMPL_INLINE__ inline
-#define __IMPL_FN_STATIC__ static
-#define __IMPL_FILE_STATIC__ static
-#define __IMPL_STATIC_INLINE__ __IMPL_FN_STATIC__ __IMPL_INLINE__
-#define __IMPL_NO_VAL__ void
-#define __IMPL_BLOCK_START__ {
-#define __IMPL_BLOCK_END__ }
+#define INC_CUN(td, ti, r, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", r,	\
+				   "%s", _ADD_STRAND2(td, ti))
+#define INC_CUNO(td, ti, r, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", r, \
+				    "%s", _ADD_STRAND2(td, ti))
+#define INC_CARR(td, ti, r, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", r,	\
+				    "%s", _ADD_STRAND2a(td, ti))
+#define INC_CARRO(td, ti, r, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", r, \
+				     "%s", _ADD_STRAND2a(td, ti))
+#define INC_CARROKEY(td, ti, r, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", r, \
+					"%s", _ADD_STRAND2akey)
 
-#define NIRVA_XENUM(...)__IMPL_ENUM__ __IMPL_BLOCK_START__ __VA_ARGS__, __IMPL_BLOCK_END__
+#define INC_BUN(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+				      "%s", _ADD_STRAND2(td, ti))
+#define INC_BUNR(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+				       "%s", _ADD_STRAND2rob)
+#define INC_BUNO(td, ti, d, i, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+				       "%s", _ADD_STRAND2(td, ti))
+#define INC_BUNOR(td, ti, d, i) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #i " %u", GET_RESTRICTION(d,i), \
+				     "%s", _ADD_STRAND2rob)
 
-#define NIRVA_CMD(a)a __IMPL_LINE_END__
-#define NIRVA_TYPED(a,...)__IMPL_TYPEDEF__ a __VA_ARGS__
-#define NIRVA_TYPEDEF(a,...)NIRVA_CMD(NIRVA_TYPED(a,__VA_ARGS__))
-#define NIRVA_TYPEDEF_ENUM(typename,...)NIRVA_CMD(__IMPL_TYPEDEF__ NIRVA_XENUM(__VA_ARGS__) typename)
+#define INC_BARR(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+				       "%s", _ADD_STRAND2a(td, ti))
 
-#define __IMPL_GENPTR__ void *
-#define __IMPL_DEF_ARRAY_OF__(a)a*
+#define INC_BARRO(td, ti, d, i, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+					"%s", _ADD_STRAND2a(td, ti))
 
-NIRVA_TYPEDEF(__IMPL_GENPTR__, NIRVA_GENPTR)
+#define INC_BARRKEY(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+					  "%s", _ADD_STRAND2akey)
+#define INC_BARROKEY(td, ti, d, i, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
+					   "%s", _ADD_STRAND2akey)
 
-#ifndef NIRVA_BOOLEAN
-#define NIRVA_BOOLEAN int
-#endif
-#define NIRVA_SIZE size_t
-#define NIRVA_INT int
-#define NIRVA_UINT uint32_t
-#define NIRVA_INT64 int64_t
-#define NIRVA_UINT64 uint64_t
-#define NIRVA_STRING_T char *
-NIRVA_TYPEDEF(NIRVA_STRING_T, NIRVA_STRING)
-#define NIRVA_DOUBLE double
-#define NIRVA_FLOAT float
-#define NIRVA_VOIDPTR_T void *
-NIRVA_TYPEDEF(NIRVA_VOIDPTR_T, NIRVA_VOIDPTR)
-#define NIRVA_VARIADIC ...
-#define NIRVA_VA_LIST va_list
-#define NIRVA_VA_START(a,b)NIRVA_CMD(__IMPL_VA_START__(a,b))
-#define NIRVA_VA_END(a)NIRVA_CMD(__IMPL_VA_END__(a))
-#define NIRVA_VA_ARG(a,b)__IMPL_VA_ARG__(a,b)
-#define NIRVA_NULL __IMPL_NULL__
-#define NIRVA_ENUM(...)NIRVA_CMD(NIRVA_XENUM(__VA_ARGS__))
-#define NIRVA_CONST __IMPL_CONST__
-#define NIRVA_STATIC __IMPL_FN_STATIC__
-#define NIRVA_STATIC_INLINE __IMPL_STATIC_INLINE__
-#define NIRVA_EXTERN __IMPL_EXTERN__
-#define NIRVA_NO_RETURN __IMPL_NO_VAL__
-#define NIRVA_VOID __IMPL_NO_VAL__
+////////////////////////// BUNDLEDEF "DIRECTIVES" ////////////////////////////////////////
+#define ADD_STRAND(d, i)	       	 	    	MS(_ADD_STRAND(d,i),_ADD_STRAND2(d,i))
+#define ADD_NAMED_STRAND(d, i, n)      	       	    	MS(_ADD_STRANDn(d,i,n),_ADD_STRAND2(d,i))
+#define ADD_ARRAY(d, i) 			    	MS(_ADD_STRAND(d,i),_ADD_STRAND2a(d,i))
+#define ADD_NAMED_ARRAY(d, i, n) 	       	    	MS(_ADD_STRANDn(d,i,n),_ADD_STRAND2a(d,i))
 
-#define NIRVA_EQUAL(a,b)(a==b)
-#define NIRVA_FUNC_TYPE_DEF(ret_type,funcname,...)NIRVA_CMD(__IMPL_TYPEDEF__ ret_type \
-							    (* funcname)(__VA_ARGS__))
+#define ADD_READONLY_STRAND(d, i) 		       	MS(_ADD_STRAND(d,i),_ADD_STRAND2ro)
 
-#define NIRVA_ARRAY_OF __IMPL_DEF_ARRAY_OF__
-#define NIRVA_PTR_TO __IMPL_PTR_TO_TYPE__
+#define ADD_OPT_STRAND(d, i) 				MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2(d,i))
+#define ADD_OPT_READONLY_STRAND(d, i) 		       	MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2ro)
+#define ADD_OPT_READONLY_ARRAY(d, i) 		       	MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2roa)
 
-NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_native_function_t,)
-#define NIRVA_NATIVE_FUNC nirva_native_function_t
+#define ADD_TEMPLATE_STRAND(d, i) 	 	      	MS(_ADD_OPT_ANON_STRAND(d,i),_ADD_STRAND2idx)
 
-#endif // C style
+#define ADD_NAMED_OPT_STRAND(d, i, n)          	    	MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2(d,i))
+#define ADD_NAMED_OPT_READONLY_STRAND(d, i, n) 	    	MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2ro)
 
-////// function return codes ////
-// one or more call parameters was invalid
-#define NIRVA_RESULT_PARAM_INVALID	-3
-// invalid function or macro call
-#define NIRVA_RESULT_CALL_INVALID	-2
-// error occurred whilst evaluating
-#define NIRVA_RESULT_ERROR 		-1
-#define NIRVA_RESULT_FAIL 		0
-#define NIRVA_RESULT_SUCCESS 		1
+#define ADD_OPT_NAMED_STRAND(d, i, n) 			ADD_NAMED_OPT_STRAND(d,i,n)
+#define ADD_OPT_ARRAY(d, i) 				MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2a(d,i))
+#define ADD_NAMED_OPT_ARRAY(d, i, n) 	       		MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2a(d,i))
+#define ADD_OPT_NAMED_ARRAY(d, i, n)			ADD_NAMED_OPT_ARRAY(d,i,n)
 
-// values for NIRVA_BOOLEAN
-#define NIRVA_FALSE 0
-#define NIRVA_TRUE 1
+//#define ADD_COMMENT(text)				MS("#" text)
 
-// condition_check results
+// include all strands from bundle directly
+#define EXTEND_BUNDLE(BNAME) 				GET_BDEF(BNAME##_BUNDLE_TYPE)
+#define EXTENDS_BUNDLE(BNAME)				EXTEND_BUNDLE(BNAME)
 
-// indicates an invalid / empty cond
-#define NIRVA_COND_INVALID		-2
-// error occured while evalutaing a condition
-#define NIRVA_COND_ERROR		-1
-// condition failed
-#define NIRVA_COND_FAIL			0
-// condition succeeded
-#define NIRVA_COND_SUCCESS		1
-// request to give more time and retry. If no other conditions fail then cond_once may
-// emulate cond_retry
-#define NIRVA_COND_WAIT_RETRY		2
+// ptr to bundle and array of ptrs
+#define INCLUDE_BUNDLES(domain, item)		     	INC_BARR(VALUE, BUNDLEPTR, domain, item, item)
+#define INCLUDES_BUNDLES(domain, item)			INCLUDE_BUNDLES(domain, item)
+#define INCLUDE_NAMED_BUNDLES(domain, item, name)      	INC_BARR(VALUE, BUNDLEPTR, domain, item, name)
+#define INCLUDES_NAMED_BUNDLES(domain, item, name)    	INCLUDE_NAMED_BUNDLES(domain, item, name)
 
-// these values should only be returned from system callbacks
-// force conditions to succeed, even if some others would fail
-// takes precedence over all other return codes, including NIRV_COND_ERROR
-//exit and return NIRVA_COND_SUCCESS
-#define NIRVA_COND_FORCE		16
-// force condition fail, exit and do not retry
-#define NIRVA_COND_ABANDON		17
+#define INCLUDE_KEYED_BUNDLES(domain, item, name)      	INC_BARRKEY(VALUE, BUNDLEPTR, domain, item, name)
+
+#define INCLUDE_OPT_BUNDLES(domain, item)	     	INC_BARRO(VALUE, BUNDLEPTR, domain, item, item)
+#define INCLUDES_OPT_BUNDLES(domain, item)		INCLUDE_OPT_BUNDLES(domain, item)
+
+#define INCLUDE_OPT_KEYED_BUNDLES(domain, item, name)	INC_BARROKEY(VALUE, BUNDLEPTR, domain, item, name)
+
+#define INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)  	INC_BARRO(VALUE, BUNDLEPTR, domain, item, name)
+#define INCLUDES_OPT_NAMED_BUNDLES(domain, item, name) 	INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)
+#define INCLUDE_NAMED_OPT_BUNDLES(domain, item, name)  	INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)
+#define INCLUDES_NAMED_OPT_BUNDLES(domain, item, name) 	INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)
+
+#define INCLUDE_BUNDLE(domain, item)  		    	INC_BUN(VALUE, BUNDLEPTR, domain, item, item)
+#define INCLUDES_BUNDLE(domain, item)			INCLUDE_BUNDLE(domain, item)
+
+#define INCLUDE_READONLY_BUNDLE(domain, item)  	      	INC_BUNR(VALUE, BUNDLEPTR, domain, item, item)
+
+#define INCLUDE_OPT_BUNDLE(domain, item)  	      	INC_BUNO(VALUE, BUNDLEPTR, domain, item, item)
+#define INCLUDES_OPT_BUNDLE(domain, item)	       	INCLUDE_OPT_BUNDLE(domain, item)
+
+#define INCLUDE_NAMED_READONLY_BUNDLE(domain,item,name) INC_BUNR(VALUE,BUNDLEPTR,domain,item,name)
+
+#define INCLUDE_NAMED_BUNDLE(domain, item, name)      	INC_BUN(VALUE, BUNDLEPTR, domain, item, name)
+#define INCLUDES_NAMED_BUNDLE(domain, item, name)      	INCLUDE_NAMED_BUNDLE(domain, item, name)
+
+#define INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)	\
+  INC_BUNO(VALUE, BUNDLEPTR, domain, item, name)
+#define INCLUDES_OPT_NAMED_BUNDLE(domain, item, name)	\
+  INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)
+#define INCLUDE_NAMED_OPT_BUNDLE(domain, item, name)	\
+    INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)
+#define INCLUDES_NAMED_OPT_BUNDLE(domain, item, name)	\
+    INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)
+
+#define INCLUDE_OPT_READONLY_BUNDLE(domain, item)	\
+    INC_BUNOR(VALUE, BUNDLEPTR, domain, item)
+
+// IMPORTANT !!!
+// INCLUDE_BUNDLE(s) and ADD_CONST_BUNDLEPTRs
+// are different.
+// THE DIFFERENCE BETWEEN INCLUDE_BUNDLE(s) AND ADD_CONST_BUNDLEPTR(s) is that with INCLUDE_BUNDLE,
+// the sub-bundle will be "owned", that is, when the containing bundle is freed, the sub-bundle
+// should also be freed (unreffed).
+// This is done simply by creating a strand in the bundle with type bundleptr (array)
+// creating sub bundles then appending to the array strand
+//
+// With ADD_CONST_BUNDLEPTR, the pointers are void *
+// to external bundles. (referred to as CONST_BUNDELPTR)These MUST NOT be unreffed / freed
+// thus the implementation needs to differentiate these two types.
+//
+// as a cross-check, included bundles MUST set a CONST_BUNDLEPTR
+// to the container when being included. Thus when unreffing a sub bundle one can
+// check the value of "container" to make sure it points to the correct bundle
+
+#define ADD_CONST_BUNDLEPTR(domain, item, rest) INC_CUN(VALUE, CONST_BUNDLEPTR, \
+							rest##_RESTRICTION, item)
+#define ADD_OPT_CONST_BUNDLEPTR(domain, item, rest) INC_CUNO(VALUE, CONST_BUNDLEPTR, \
+							     rest##_RESTRICTION, item)
+// this is an array of pointers to remote bundles...
+#define ADD_CONST_BUNDLEPTRS(domain, item, rest) INC_CARR(VALUE, CONST_BUNDLEPTR, \
+							  rest##_RESTRICTION, item)
+#define ADD_OPT_CONST_BUNDLEPTRS(domain, item, rest) INC_CARRO(VALUE, CONST_BUNDLEPTR, \
+							       rest##_RESTRICTION, item)
+
+#define ADD_OPT_KEYED_BUNDLEPTRS(domain, item, rest) INC_CARROKEY(VALUE, CONST_BUNDLEPTR, \
+								  rest##_RESTRICTION, item)
+
+//// PREDEFINED BUNDLEDEFS //////////////
+
+// this bundle falls outside the general rules, it is solely used to store info during the
+// bootstrap process, it doesnt have a bundle_type, the bundledef is created separately
+// data can be created as strand bundless, a top level strand can have a bundleptr to
+// a storage bundle, which can hold sub strands
+//
+#define _BOOTER_BUNDLE INCLUDE_NAMED_BUNDLES(STANDARD, STRAND_REPLACEMENT, STORAGE)
+
+// ALL bundles with the exception of INTERFACE bundles (solely designed to be extended)
+// MUST extend this, either directly or indirectly by extension
+// MANDATORY for all bundles which extend this are
+// UID - a readonly randomly generated 64 bit identifier, must be set when the bundle is created
+// BLUEPRINT - a pointer to the (static) blueprint bundle used as a template for this bundle
+// - the BUNDLE_TYPE cna be found in the blueprint
+// CONTAINER - a pointer to the bundle containing this one
+//  - the default is NULL, implying that the bundle is contained in a structure object
+// if this points to the bundle itself, this implies that the bundle is a "static" bundle
+// otherwise, when the container is freed, the bundle will be unreffed (and possibly also freed)
+// CONTAINER_STRAND - the name of the strand in container which contains this bundle
+//  - the strand must have strand_type STRAND_TYPE_BUNDLEPTR (directly or proxied), and must contain a pointer
+// to this bundle
+// default is NULL, if "container" is also NULL, then this is ignored, the real strand name will be something like "STATIC_BUNDLES"
+// if "container" is self, "container_strand" is ignored
+
+#define _DEF_BUNDLE							\
+    ADD_READONLY_STRAND(GENERIC, UID),					\
+      ADD_CONST_BUNDLEPTR(INTROSPECTION, BLUEPRINT, BLUEPRINT),		\
+      ADD_STRAND(FRAMEWORK, CONTAINER),					\
+      ADD_STRAND(FRAMEWORK, CONTAINER_STRAND),				\
+									\
+      ADD_OPT_READONLY_STRAND(SPEC, VERSION),				\
+      ADD_OPT_STRAND(GENERIC, DESCRIPTION)
+
+
+
+/* INCLUDE_NAMED_OPT_BUNDLES(STANDARD, HOOK_STACK, HOOK_STACKS),	 */
+/* INCLUDE_OPT_BUNDLE(INTROSPECTION, REFCOUNTER),			 */
+/* ADD_OPT_STRAND(DATETIME, CREATION_DATE) */
+
+// BUNDLE_TYPE denotes the enumerated bundle_type which the blueprint is a template for
+// MULTI is a special optional STRAND_DEF, if present, then as many copies of this as desired may be
+// created, provided each has a unique (for the bundle), name
+// Optionally, the strand_def contained in "MULTI" may have a name set to a Prefix, which can be prepended
+// to the start of the NAMEs of all strands created from it.
+// the remining strand_defs for the created bundles are contained in STRAND_DEFs
+// AUTOMATIONS can contain various SCRIPTLETs, including hook_automations
+#define _BLUEPRINT_BUNDLE EXTEND_BUNDLE(DEF),  ADD_READONLY_STRAND(BLUEPRINT, BUNDLE_TYPE), \
+    INCLUDE_OPT_NAMED_BUNDLE(STANDARD, STRAND_DEF, MULTI),		\
+    INCLUDE_KEYED_BUNDLES(STANDARD, STRAND_DEF, STRAND_DEFS),		\
+    ADD_OPT_CONST_BUNDLEPTRS(BLUEPRINT, AUTOMATIONS, SCRIPTLET)
+
+// holds a single data value, exposing the strand_type
+// NEXT and PREV can be used to make singly and doubly linked lists
+//
+// the DATA here is a pointer to an implemetation defined data tuple, with name "DATA" and the TYPE being defined
+// by the value held in STRAND_TYPE
+//
+// NATIVE_TYPE and NATIVE_SIZE can optionally be used to record these details
+// allowing implementations to store native data types
+//
+// VALUE is extended by attribute
+#define _VALUE_BUNDLE ADD_OPT_READONLY_STRAND(VALUE, STRAND_TYPE), ADD_OPT_STRAND(VALUE, DATA), \
+    ADD_OPT_READONLY_STRAND(AUTOMATION, RESTRICTIONS),			\
+    ADD_OPT_STRAND(INTROSPECTION, NATIVE_TYPE),	ADD_OPT_STRAND(INTROSPECTION, NATIVE_SIZE), \
+    ADD_NAMED_OPT_STRAND(VALUE, ARRAY_SIZE, MAX_SIZE), INCLUDE_OPT_BUNDLE(VALUE, NEXT), \
+    ADD_OPT_CONST_BUNDLEPTR(VALUE, PREV, VALUE)
+
+// STRAND_DEF is a bundle designed to be included in BLUEPRINT bundles
+
+// RESTRICTIONS is a conditional which defines the conditions to allow data to be accepted, for example
+// restricting to certain values, for bundleptrs, it can define
+// the bundle_type (and for objects, type , subtype, state)
+// allowed, hook automations will be added to automate this if appropriate
+//
+// for variable strands, the strand type will be set to STRAND_TYPE_PROXIED,
+// and TYPE_PROXY which then becomes mandatory, is set to the name
+// of a second strand in the bundle whose UINT value defines the actual strand_type
+// of this strand, normally "STRAND_TYPE",
+// and an optional third strand may hold the restrictions, the name of this strand is held in  "RESTRICT_PROXY"
+// NAME is mandatory for strand_defs, unless it is created as a TEMPLATE strand_def
+// setting type_proxy or restrictions_proxy effectively adds these strands as optional, readonly strands to the blueprint
+// for the bundle_type
+#define _STRAND_DEF_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(GENERIC, FLAGS), \
+      ADD_OPT_STRAND(GENERIC, NAME),					\
+      ADD_STRAND(VALUE, STRAND_TYPE),  ADD_OPT_STRAND(STDEF, TYPE_PROXY), \
+      ADD_OPT_READONLY_STRAND(AUTOMATION, RESTRICTIONS), ADD_OPT_STRAND(STDEF, RESTRICT_PROXY), \
+      ADD_OPT_STRAND(VALUE, DEFAULT), ADD_NAMED_OPT_STRAND(VALUE, ARRAY_SIZE, MAX_SIZE)
+
+// may point to "before" and "after" values for data_hook, as well as being useful for
+// comparison functions
+// CONST or NON CONST
+#define _VALUE_CHANGE_BUNDLE ADD_OPT_CONST_BUNDLEPTR(VALUE, OLD, VALUE), \
+    ADD_OPT_CONST_BUNDLEPTR(VALUE, NEW, VALUE)
+
+// TODO
+#define _ERROR_BUNDLE EXTEND_BUNDLE(DEF), ADD_CONST_BUNDLEPTR(ERROR, SOURCE, SEGMENT)
+
+// to utilize a CONDLOGIC node, the PROCESSOR scriptlet shall be actioned,
+// the sctipt takes a single parameter, a bunlde which is defined elsewhere
+// and returns a CONDLOGIC node, or NULL. If NULL is returned then the output is the DEFAULT
+// (defined elsewhere), otherwise the next CONDLOGIC node shall be examined. If
+// it contains a VALUE strand, this is the output, other the next processor sript shall be run
+// again with the input bundle as parameter
+// the format of the SCRIPT is next_node =  NIRVA_SCRIPT_EXECUTE(<PROCESSOR>, <input_bundle>)
+#define _CONDLOGIC_NODE_BUNDLE EXTEND_BUNDLE(DEF),		\
+    ADD_CONST_BUNDLEPTR(INPUT, PROCESSOR, SCRIPTLET),		\
+    ADD_NAMED_OPT_STRAND(CONDLOGIC, WEIGHTING, WEIGHT),		\
+    ADD_OPT_STRAND(LOGIC, OP), ADD_OPT_STRAND(CASCADE, VALUE)
+
+//always CONST ?
+#define _CASCMATRIX_NODE_BUNDLE EXTEND_BUNDLE(DEF),			\
+      ADD_CONST_BUNDLEPTR(CASCMATRIX, OTHER_IDX, CASCMATRIX_NODE),	\
+      ADD_CONST_BUNDLEPTR(CASCMATRIX, ON_SUCCESS, CASCMATRIX_NODE),	\
+      ADD_CONST_BUNDLEPTR(CASCMATRIX, ON_FAIL, CASCMATRIX_NODE),	\
+      ADD_STRAND(CASCMATRIX, OP_SUCCESS),				\
+      ADD_STRAND(CASCMATRIX, OP_FAIL)
+
+#define _MATRIX_2D_BUNDLE EXTEND_BUNDLE(DEF), ADD_NAMED_ARRAY(VALUE, BUNDLEPTR, VALUES)
+
+// CASCADE is a kind of multi purpose logic processor
+// the IN_TEMPLATE will a mutated BLUEPRINT. The cascade will take a nromal blueprint,
+// and make alterations to it. Some optional strands may be marked as non optional and vice versa
+// some may be marked as readonly
+// the caller should use this in_template and create a bundle from it. The non optional strands
+// any non optional strands will be set to default. Any strands not flagged as readonly may have their values
+// altered.
+// for example, the in_template could be a blueprint for an ICAP_BUNDLE with a readonly intent
+// and read / write CAPS, or it cold be a TRANSFORM bundle blueprint with all strands defined except for CAPS
+// Sometimes the caller may already have a bundle which matches the theoretical one whcih would be created from the blueprint
+// including missing values, in this case this can be used as input
+// the cascade will have a const bundleptr pointing to a contract. This is to be use as
+#define _CASCADE_BUNDLE EXTEND_BUNDLE(DEF),				\
+      INCLUDE_NAMED_BUNDLE(STANDARD, BLUEPRINT, IN_TEMPLATE),		\
+      INCLUDE_NAMED_BUNDLE(STANDARD, STRAND_DEF, VALUE_DEF),		\
+      INCLUDE_OPT_BUNDLES(CASCADE, CONDLOGIC),				\
+      ADD_CONST_BUNDLEPTR(CASCADE, CURRENT_NODE, CONDLOGIC_NODE)
+
+// selector can be used to process a set of candidates and divide them into matches and non
+// matches, alternately, given 2 sets, can try to find the criteria itself
+#define _SELECTOR_BUNDLE EXTEND_BUNDLE(DEF),			\
+    INCLUDE_NAMED_BUNDLE(STANDARD, CASCADE, CRITERIA),		\
+    ADD_NAMED_OPT_ARRAY(VALUE, CONST_BUNDLEPTR, CURRENT),	\
+    ADD_NAMED_OPT_ARRAY(VALUE, CONST_BUNDLEPTR, MATCHES),	\
+    ADD_NAMED_OPT_ARRAY(VALUE, CONST_BUNDLEPTR, NON-MATCHES),	\
+    ADD_NAMED_OPT_ARRAY(VALUE, CONST_BUNDLEPTR, CANDIDATES)
+
+// this bundle is the counterpart for keyed_arrays
+// or can be used separately
+// DEF exists only for the bundle_type + the template strand is stored
+// is stored in MULTI, and has strand_type_proxy. Thus, strand_type and restrictions define the type
+// of data, with a multi strand, we can add any number of strands with unique names.
+#define _INDEX_BUNDLE EXTEND_BUNDLE(DEF), ADD_TEMPLATE_STRAND(VALUE, ANY), \
+    ADD_STRAND(VALUE, STRAND_TYPE), ADD_OPT_READONLY_STRAND(AUTOMATION, RESTRICTIONS)
+
+#define KEYED_ARRAY_AUTOMATIONS						\
+    ADD_HOOK_AUTO_START(ARRAY, ITEM_APPENDED, _COND_ALWAYS),		\
+      HOOK_AUTO_ADD_HOOK_AUTO(@NEW_VAL, DATA, ITEM_APPENDED, _COND_ALWAYS), \
+      HOOK_AUTO_ADD_STRAND_TO(INDEX, @NEW_VAL.@*KEY_NAME, STRAND_TYPE_DEFAULT, @NEW_VALUE), \
+									\
+      ADD_HOOK_AUTO_START(ARRAY, ITEM_APPENDED, _COND_ALWAYS),		\
+      HOOK_AUTO_ADD_HOOK_AUTO(@NEW_VAL, DATA, ITEM_REMOVED, _COND_ALWAYS), \
+      HOOK_AUTO_DELETE_STRAND_FROM(INDEX, @OLD_VAL.@*KEY_NAME),		\
+    									\
+      ADD_HOOK_AUTO_START(ARRAY, ITEM_REMOVED, _COND_ALWAYS),		\
+      HOOK_AUTO_DELETE_STRAND_FROM(INDEX, OLD_VALUE.OWNER_UID)
+
+// this bundle describes an attribute, but is "inert" - has no value or connections
+// some attribute types map to strand types and vice versa  but the values are not the same
+// when constructed, we have up to three value "types" - "attr_type", "strand_type", and "native_type"
+// DEFAULT is ignored if the attr_def is marked readonly
+//
+// similar to strand def, array size, max_values  is 0 (implied, default)
+// for scalars or -1 for unlimited arrays
+// a non zero positive  value implies a fixed array size
+// RESTRICTIONS is used to restrict acceptable values for ATTR_TYPE_BUNDLEPTR
+// this is copied to the ATTRIBUTE_BUNDLE, and may be adjusted there
+// STRAND_TYPE must be set to the value corresponding to ATTR_TYPE
+// this is intended to be type_proxy for default and new_default, and must be copied to attributes
+// created from this template, since it is also the type_proxy for data
+// restrictions is an optional strand that serves a similar purpose for restrict_proxy
+// and must also be copied to attributes
+#define _ATTR_DEF_BUNDLE EXTEND_BUNDLE(DEF), ADD_READONLY_STRAND(GENERIC, FLAGS), \
+    ADD_READONLY_STRAND(GENERIC, NAME), ADD_READONLY_STRAND(ATTRIBUTE, ATTR_TYPE), \
+    ADD_READONLY_STRAND(VALUE, STRAND_TYPE),				\
+    ADD_OPT_STRAND(VALUE, MAX_VALUES), INCLUDE_OPT_READONLY_BUNDLE(ATTRIBUTE, DEFAULT), \
+    ADD_OPT_STRAND(ATTRIBUTE, NEW_DEFAULT), ADD_OPT_READONLY_STRAND(AUTOMATION, RESTRICTIONS)
+
+// all data which is not bundle_strands, is held in attributes. They come in a wide variety
+// of types, can map underlying values, as well as be connected remotely to other attributes
+// they can map to and from function parameters, can hold sacalar values or arrays,
+// contain sub-bundles or point to external bundles. They can be readonly, read/write,
+// volatile, const, optional, mandatory. They usually come attr_groups,
+// and can be constructed from attr_defs or attr_def_groups
+// when an attribute is created from a template attr_def, NAME, FLAGS and ATTR_TYPE must be copied over
+//
+// objects may have their own internal attributes, trajectories also have input and output attr_groups.
+// These are passed to each functional along the trajectory.
+// Scripts and conditions may also have a referenced attr bundle.
+// CONDITIONS can be set and FLAGS adjusted as part of a contract negotiation
+//
+// BLOB is used when passing attributes to native functions in a transform. The DATA is read always as an array
+// the pointer returned is then stored in BLOB, cast to genptr.
+// then when the native function is called, this is cast to a pointer of the correct type, and if scalar, dereferenced.
+// BLOB_ARRAY_SIZE holds the size whilst the DATA is in BLOB. Native functions which output arrays which are either strings of arrays,
+// or extern outputs from the transform orneed to provide a means to find the
+// array size after return. If this is not done, the BLOB_ARRAY_SIZE strand will not be created and the BLOB will not be copied
+// to the ATTRIBUTE, trying to read the array size whilst BLOB exists and ARRAY_SIZE does not will produce an error,
+// as will ouput of a string array with no blob_size.
+//
+// If a following functional is also a native function, we pass it the same BLOBs, which avoids having to keep writing and
+// reading from attr DATA. READING directly from the attribute, causes BLOB to be copied back, and when the tx ends we also copy back.
+#define _ATTRIBUTE_BUNDLE EXTEND_BUNDLE(DEF), EXTEND_BUNDLE(VALUE), ADD_STRAND(GENERIC, FLAGS),	\
+    ADD_READONLY_STRAND(GENERIC, NAME), ADD_READONLY_STRAND(ATTRIBUTE, ATTR_TYPE), \
+    INCLUDE_OPT_NAMED_BUNDLE(ATTRIBUTE, CONNECTION, CONNECTION_OUT),	\
+    ADD_NAMED_OPT_ARRAY(VALUE, GENPTR, BLOB), ADD_NAMED_OPT_STRAND(VALUE, UINT, BLOB_SIZE), \
+    ADD_OPT_CONST_BUNDLEPTR(ATTRIBUTE, TEMPLATE, ATTR_DEF)
+
+// NB: for connected attrs
+// when reading the data from the local attribute, first lock remote, then if non-null,
+// lock remote.connection, then read "data", unlock remote.connection, then unlock remote
+
+#define _COND_GEN_002 _COND_FUNC_RET NIRVA_MAKE_REQUEST, ATTACH, _COND_ATTR_VAL(NEW_VAL)
+
+// read / write connections are possible but require an attach request
+// the hook stack here is for the detaching hook, which connectors may use to
+// detatch their end, these callbacks should be called if the attribute is about to be deleted
+#define _ATTR_CONNECTION_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(GENERIC, FLAGS), \
+    ADD_CONST_BUNDLEPTR(REMOTE, CONNECTION, ATTRIBUTE)
+
+// source bundle / item is the subject of the functional (which may be derived from the segment, trajectory,
+// or transform enclosing it)
+//, target is the object (in the grammatical
+// sense). For example when checking conditions to see if an object can be added to an array
+// the target_bundle would be the bundle / attribute, target_item would be the strand, eg. "DATA"
+// and "new_value" in the func_data value_change would hold the value to be added
+// CALLER is the UID of the entity actioning the request / transform
+#define _EMISSION_BUNDLE ADD_OPT_STRAND(EMISSION, CALLER_UID),	\
+    ADD_OPT_CONST_BUNDLEPTR(EMISSION, SOURCE_BUNDLE, ANY),	\
+    ADD_OPT_STRAND(EMISSION, SOURCE_ITEM),			\
+    ADD_OPT_CONST_BUNDLEPTR(EMISSION, TARGET_BUNDLE, ANY),	\
+    ADD_OPT_STRAND(EMISSION, TARGET_ITEM),			\
+    ADD_NAMED_OPT_STRAND(DATETIME, TIMESTAMP, TRANSMIT_TIME)
+
+// for standard_functions, this bundle is passed as the sole paramter to the function
+// (for native functions, some of the attributes are mapped to / from parameters,
+// and those are passed in instead, for scripts, the attrs are available as variables)
+// TRAJECTORY allows for the input to be passed to several segments in sequence,
+//  //
+// whilst hook_details and value_change are extra components specifically used in hook callbacks
+// and cascade can be used in cases where the function requires one
+//
+// RETURN_VALUE is for quick responses from helper functionals,
+// RESPONSES is an array for return values from condtionals, this can be used to discover which conditions
+// failed and which succeeded
+//
+// TRANSFORM is a pointer to the transform which this is attatched to
+// SEG_ATTRS holds attrs which are internal to a segment, these are destroyed after the segment completes
+#define _FUNC_DATA_BUNDLE EXTEND_BUNDLE(DEF),				\
+    ADD_CONST_BUNDLEPTR(LINKED, TRANSFORM, TRANSFORM),			\
+    INCLUDE_OPT_NAMED_BUNDLE(STANDARD, ATTR_GROUP, SEG_ATTRS),		\
+    ADD_CONST_BUNDLEPTR(TRANSFORM, CURRENT_SEGMENT, SEGMENT),		\
+    ADD_OPT_NAMED_STRAND(VALUE, GENPTR, RETURN_VALUE),			\
+    ADD_STRAND(TRANSFORM, STATUS),					\
+    ADD_OPT_CONST_BUNDLEPTR(FUNCTIONAL, CASCADE, CASCADE),		\
+    ADD_OPT_ARRAY(FUNCTIONAL, RESPONSES),				\
+    ADD_OPT_CONST_BUNDLEPTRS(TRANSFORM, THREADS, OBJECT_INSTANCE)
+
+#define _LOCATOR_BUNDLE EXTEND_BUNDLE(DEF),				\
+    ADD_OPT_STRAND(LOCATOR, UNIT), ADD_OPT_STRAND(LOCATOR, SUB_UNIT),	\
+    ADD_OPT_STRAND(LOCATOR, INDEX), ADD_OPT_STRAND(LOCATOR, SUB_INDEX)
+
+// i.e    MAKE_EXCLUSIVE("@SCRIPTLET", "@STANDARD_FUNCTION", "@NATIVE_FUNCTION")
+// always CONST
+//
+// bundle which describes and wraps a function (standard, native, or script)
+//  "NAME" should be the function name
+// ATTR_MAPS map attr_defs in the SEGMENT to parameters for native functions
+//
+/// if added to a segment, then the output attributes can be fed to another functional in the segment,
+// so as to avoid making these inputs to the trajectory/transform, if these attributes are not mapped
+// EXTERN, then they will be destroyed when the final functon in the segment returns
+
+#define _FUNCTIONAL_BUNDLE EXTEND_BUNDLE(DEF),			\
+    ADD_STRAND(GENERIC, NAME),					\
+    ADD_STRAND(FUNCTIONAL, CATEGORY),				\
+    ADD_NAMED_OPT_STRAND(VALUE, UINT64, EXT_ID),		\
+    ADD_READONLY_STRAND(FUNCTIONAL, FUNC_TYPE),			\
+    ADD_OPT_CONST_BUNDLEPTR(STANDARD, SCRIPT_FUNC, SCRIPTLET),	\
+    ADD_NAMED_OPT_STRAND(VALUE, FUNCPTR, STANDARD_FUNCTION),	\
+    INCLUDE_OPT_BUNDLES(FUNCTIONAL, ATTR_MAPS),			\
+    ADD_NAMED_OPT_STRAND(VALUE, FUNCPTR, NATIVE_FUNCTION),	\
+    INCLUDE_OPT_NAMED_BUNDLE(STANDARD, LOCATOR, CODE_REF)
+
+// for functionals - attr_defs are added firstly to the segment; it is necessary to define any that are
+// mapped to native paramters / return values, plus any which are EXTERN (imported or exported from the segment)
+/// non-extern attributes are created within the segment, and destroyed when the segment ends
+// the latter only need to be declared in cases where they also map to native param inputs or return values
+// when attribute values are first read within a transform, the value is copied to a memory area and passed around
+// as zero copy. The memory values are copied back to attrs when the trajectory completes.
+// CONDITIONS are for optional external outputs - this is for information
+// for extern param in_out and return values which are arrays, we need to know the array size, so eventually this can be mapped
+// back to an attribute. In this case, if the array size is a constant, it can be set in ARRAY_SIZE, or if it needs
+// calculating, then we can create a special ARRAY_SIZE_FUNC functional, and insert this in the same segment, These functionals
+// will be skipped over when the segmetn is executed. The functional can have mapping like any other functional
+// or we can use a predefined one, NIRVA_NULL_TERMINATED, which will count up to a 0 value. The functional must return a UINT
+// "number_of_elements". This can be 0 or any postive value. We can also specifiy whether the calculation should be run
+// before or after using the NIRVA_ATTR_MAP_CALC_FIRST flag bit in MAPPING
+#define _ATTR_MAP_BUNDLE ADD_CONST_BUNDLEPTR(ATTRMAP, ATTR_DEF, ATTR_DEF), ADD_STRAND(ATTRMAP, MAPPING), \
+    ADD_NAMED_OPT_STRAND(VALUE, UINT, ARRAY_SIZE), ADD_NAMED_OPT_STRAND(VALUE, STRING, ARRAY_SIZE_FUNC), \
+    ADD_NAMED_OPT_STRAND(VALUE, STRING, CONDITIONS)
+
+// the attr maps here are only for EXPORTED attributes
+// when the segment is appended to a trajectory, these mappings are collated for all segments
+// into the TRAJECTORY maps, at this level we have the set of all exported ins / outs from all the segments
+// if a segment is only run conditionally, its unique ins / outs become become optional ins / outs
+// whenever there is a trajectory sequence which can complete without that attr being defined.
+// Likewise the segment outputs beoome optional, the conditions for producing them include
+// all conditons to arrive at the segment as well as having values for optional inputs to the segment.
+// All the condtions for this are ANDED. There may be additional conditions for producing the output which
+// functional can add in the output att_def. These are ANDED as well, if there are alternate paths through
+// the trajecotry which produce the outputs, the corresponding conditions are OR ed.
+#define _SEGMENT_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_NAMED_BUNDLES(STANDARD, FUNCTIONAL, FUNCTIONALS), \
+    INCLUDE_NAMED_BUNDLE(STANDARD, ATTR_DEF_GROUP, ATTR_DEFS), INCLUDE_OPT_BUNDLES(FUNCTIONAL, ATTR_MAPS)
+
+// scriptlet is an array of strings with pseudocode to be parsed at runtime
+// the types here are function categories
+// - condition, selector, automation, callback
+// PMAPS is an optional array of STRAND_DEFs, this acts like a mini blueprint, when the script is run
+// we construct ant empty bundle, then the PMAPS are used to create strands in the bundle
+// the script can then access the data in these strands, using the temp bundle
+#define _SCRIPTLET_BUNDLE EXTEND_BUNDLE(DEF), ADD_READONLY_STRAND(FUNCTIONAL, CATEGORY), \
+    ADD_OPT_STRAND(SCRIPTLET, MATURITY), ADD_NAMED_OPT_STRAND(THREADS, NATIVE_MUTEX, REORG_MUTEX), \
+    INCLUDE_OPT_NAMED_BUNDLES(STANDARD, STRAND_DEF, PMAPS), ADD_ARRAY(SCRIPTLET, STRINGS)
+
+// each of the following has different "restrictions" which are set in STRAND_DEF for
+// keyed_array. these are added in gen3 only
+//
+// hook callbacks nay be added here instead of for
+// individual attributes
+// the changes will be "bunched" together and only VALUE_UPDATED triggered
+// in addition there will be stacks for appended, removed
+// "OWNER" here is not the same as a bundle 'Owner' (toplevel container), but denotes which agents are allowed to
+// add / remove and change flags for attributes in the group, for transforms, this is initially set to the contract owner
+// but once the transform is actioned, this is changed to the uid of the caller object
+#define _ATTR_GROUP_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_OPT_KEYED_BUNDLES(STANDARD, ATTRIBUTE, ATTRIBUTES), \
+    ADD_OPT_STRAND(FRAMEWORK, OWNER)
+
+// container for an array of ATTR_DEF
+// can contain EITHER an array of ATTR_DEF, OR a sub group (another ATTR_DEF_GROUP)
+// if a sub group, then MAX_REPEATS can define the allowed repetitions, -1 == unlimited
+// >= 1 max number, 0 / not defined means optional
+/// e.g we can have an attr_def_group for a video effect, this can have sub groups for in and out channels
+#define _ATTR_DEF_GROUP_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_NAMED_BUNDLES(STANDARD, ATTR_DEF, ATTR_DEFS), \
+    INCLUDE_NAMED_BUNDLES(STANDARD, ATTR_DEF_GROUP, SUB_GROUPS), ADD_NAMED_OPT_STRAND(VALUE, INT, MAX_REPEATS)
+
+// restrict to OBJECT_RESTRICTION, STRAND_TYPE_CONST_BUNDLEPTR, key is derived from UID
+#define _OBJECT_HOLDER_BUNDLE EXTEND_BUNDLE(DEF), ADD_OPT_KEYED_BUNDLEPTRS(HOLDER, OBJECTS, OBJECT)
+
+// restrict to SCRIPTLET_RESTRICTION, STRAND_TYPE_CONST_BUNDLEPTR, key is derived from UID
+#define _SCRIPTLET_HOLDER_BUNDLE EXTEND_BUNDLE(DEF), ADD_OPT_KEYED_BUNDLEPTRS(HOLDER, SCRIPTLETS, SCRIPTLET)
+
+// each function will be called in the manner depending on the flags in the corresponding stack_header
+// for native_funcs, PMAP also comes from the hook stack header
+// timestamp may be set when the added to the queue
+#define _HOOK_CB_FUNC_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(HOOK, HANDLE), \
+    INCLUDE_BUNDLE(STANDARD, EMISSION), INCLUDE_BUNDLE(FUNCTIONAL, FUNC_DATA)
+
+// details defined at setup for each  hook number
+// these are placed in a cascade so conditions translate to hook number
+#define _HOOK_DETAILS_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(HOOK, MODEL), ADD_STRAND(HOOK, NUMBER), \
+    ADD_STRAND(GENERIC, FLAGS), INCLUDE_OPT_BUNDLES(SEGMENT, ATTR_MAPS), \
+    INCLUDE_OPT_BUNDLES(AUTOMATION, CONDITIONS)
+
+#define _HOOK_STACK_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(HOOK, NUMBER), \
+    ADD_STRAND(EMISSION, TARGET_ITEM), INCLUDE_OPT_BUNDLES(HOOK, CALLBACKS), \
+    ADD_CONST_BUNDLEPTR(AUTOMATION, SCRIPT, SCRIPTLET)
+
+// templates have no subtypes (SUBTYPE_NONE), but they do have a type and a state
+// hook stacks should be created when an item is added for data_change of any strand
+// (before and after) plus init and free,
+// plus destroy_hook
+// contracts actioned by templates are
+// "static transforms"
+#define _OBJECT_TEMPLATE_BUNDLE EXTEND_BUNDLE(DEF),			\
+      ADD_OPT_STRAND(INTROSPECTION, COMMENT),				\
+      ADD_OPT_STRAND(INTROSPECTION, PRIVATE_DATA),			\
+      ADD_READONLY_STRAND(OBJECT, TYPE), ADD_STRAND(OBJECT, STATE),	\
+      INCLUDE_OPT_NAMED_BUNDLE(STANDARD, ATTR_GROUP, ATTRIBUTES),	\
+      INCLUDE_BUNDLES(OBJECT, CONTRACTS),				\
+      INCLUDE_OPT_NAMED_BUNDLES(OBJECT, ACTIVE_TRANSFORMS, TRANSFORMS),	\
+      ADD_STRAND(GENERIC, FLAGS),					\
+      INCLUDE_OPT_NAMED_BUNDLES(THREADS, INSTANCE, THREAD_INSTANCE)
+
+// blueprint template will add these to blueprint object instances
+#define _BLUEPRINT_ATTR_PACK MAKE_ATTR_PACK(ATTR_BLUEPRINT_STRAND_DEFS, ATTR_BLUEPRINT_BUNDLE_TYPE)
+
+// this bundle is included in object_instance and attribute
+// refcount value starts at 0, and can be increased or decreased by triggering
+// ref_request and unref_request hooks. For passive (no thread_instance) object instances
+// when refcount goes below 0, the object instance will be zombified (see below)
+// if the app enables RECYCLER then it will respond to DESTRUCTION_HOOKs
+// for full garbage collection, the object strands will be reset to default values
+// if the bundle is active, and the ref goes below zero, the effects depend on the status
+// if the status is running, then a destroy_request will be triggered, this is a self hook
+// it is up to the thread how to handle the destroy request. either it will cancel the transform
+// or finish it and then
+// generic_uid is a cross check to enure only objects which added a ref can remove one
+// when a ref is added, the caller uid should be added to the array, and on unref, a uid should
+// be removed. If a caller tries to unref withou addind a ref first, this may be reported
+// to the adjudicator who can take appropriate action, including zombifying or recycling
+
+#define _REFCOUNTER_BUNDLE ADD_STRAND(INTROSPECTION, REFCOUNT),		\
+    ADD_NAMED_STRAND(THREADS, NATIVE_MUTEX, COUNTER_MUTEX),		\
+    ADD_NAMED_STRAND(VALUE, BOOLEAN, SHOULD_FREE),			\
+    ADD_NAMED_STRAND(THREADS, NATIVE_MUTEX, DESTRUCT_MUTEX), ADD_NAMED_ARRAY(GENERIC, UID, ADDERS)
+
+// base bundle for object instances
+// these bundles should not be created directly, a template object should do that via a
+// CREATE_INSTANCE intent
+// or an instance may create a copy of itself via the CREATE_INSTANCE intent.
+#define _OBJECT_INSTANCE_BUNDLE EXTEND_BUNDLE(OBJECT_TEMPLATE),	\
+      ADD_CONST_BUNDLEPTR(OBJECT, TEMPLATE, OBJECT_TEMPLATE),	\
+      ADD_STRAND(INSTANCE, SUBTYPE)
+
+/* // intent / capacities bundle */
+// index entries are strings (some caps are selections), and names of strands are just the CAP names
+#define _CAPS_BUNDLE EXTEND_BUNDLE(DEF), ADD_TEMPLATE_STRAND(VALUE, STRING)
+
+#define _ICAP_BUNDLE ADD_READONLY_STRAND(ICAP, INTENTION), INCLUDE_BUNDLE(ICAP, CAPS)
+
+// when a segment is added to the trajectory, all of its in and out attr_defs are checked
+
+// ATTR_MAPS point to ATTR_DEFS in SEGMENTS, the mapping is analogous to functional ATTR_MAPS
+//
+// SEGMENT_SELECTOR can be used to select the next segment, FUNC_DATA is used as input for this,
+// if not present, segments will be called in array order
+#define _TRAJECTORY_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(GENERIC, FLAGS), \
+    ADD_READONLY_STRAND(FUNCTIONAL, CATEGORY),				\
+    ADD_READONLY_STRAND(FUNCTIONAL, WRAPPING_TYPE),			\
+    INCLUDE_OPT_BUNDLES(FUNCTIONAL, ATTR_MAPS),				\
+    INCLUDE_BUNDLES(TRAJECTORY, SEGMENTS),				\
+    INCLUDE_NAMED_OPT_BUNDLE(STANDARD, SELECTOR, SEGMENT_SELECTOR)
+
+// this is the definition part of contracts, ICAP will have intention, plus union of all possible CAPs
+// VALID_CAPS is a CONDTION string which  will define the valid sets of CAPs
+// from this template we can make a TRANSFORM
+#define _CONTRACT_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(GENERIC, FLAGS), \
+      EXTEND_BUNDLE(ICAP), ADD_OPT_READONLY_ARRAY(CONTRACT, VALID_CAPS), \
+      INCLUDE_NAMED_OPT_BUNDLE(STANDARD, CASCADE, TRAJECTORY_CHOOSER),	\
+      ADD_STRAND(FRAMEWORK, OWNER)
+
+// @SET_DEFS("FLAGS", TX_FLAG_NO_NEGOTIATE, "TRAJECTORY_CHOOSER", "(", CASCADE, "DEFAULT", "(", VALUE, "STRAND_TYPE",
+// STRAND_TYPE_CONST_BUNDLEPTR, "DATA", "$trajectory", ")", "OWNER", "$owner)"
+
+// for negotiated transforms:
+// EXTRA_CONDITIONS permits the defining of condtions other than "all mandatory input attrs must have a value"
+// and "if they are sequential they must be connected"
+//
+// ATTRIBUTES - see documentation
+//
+// TX_RESULT will reflect the final status when the transform completes
+
+// for the KEYED_ARRAY, data is NIRVA_STRING, key is derived from the CAP name
+// Transforms can be actioned multiple times, provided each instance has its own FUNC_DATA
+#define _TRANSFORM_BUNDLE EXTEND_BUNDLE(DEF),				\
+    EXTEND_BUNDLE(EMISSION),						\
+    ADD_CONST_BUNDLEPTR(CONTRACT, TEMPLATE, CONTRACT),			\
+    ADD_STRAND(GENERIC, FLAGS), ADD_NAMED_ARRAY(VALUE, STRING, CAPS),	\
+    ADD_CONST_BUNDLEPTR(TRANSFORM, TRAJECTORY, TRAJECTORY),		\
+    INCLUDE_OPT_NAMED_BUNDLE(STANDARD, ATTR_GROUP, ATTRIBUTES),		\
+    INCLUDE_OPT_BUNDLE(FUNCTIONAL, FUNC_DATA),				\
+    INCLUDE_OPT_NAMED_BUNDLES(AUTOMATION, CONDITIONS, EXTRA_CONDITIONS), \
+    ADD_OPT_STRAND(TRANSFORM, TX_RESULT)
+
+// automations will be included in blueprint instances, depending on the bundle_type
+// they produce - if the bundle has its own hook stacks, the automations will be transferred
+// otherwise they will be added to the blueprint instance hook stacks
+// when reaching a hook trigger point, if a bundle does not have hook stacks (for smaller bundles
+// like value), then the blueprint should be used as a proxy
+
+// automations for blueprint instances, per bundle_type not sure how these will be assigned yet
+// will be transferred to instance hooks
+
+/* #define AUTOMATION_DEFAULT_001 ADD_HOOK_AUTOMATION(ADDING_STRAND, !*, _COND_CHECK_RESULT, \ */
+/* 						   BLUEPRINT_HAS_STRAND, !NEW_VAL.NAME, \ */
+/* 						   COND_LOGIC_OR, _COND_PRIV_CHECK, PRIV_STRUCTURE, \ */
+/* 						   100, _COND_END) */
+
+/* #define AUTOMATION_DEFAULT_002 ADD_HOOK_AUTOMATION(DELETIING_STRAND, !*, _COND_CHECK_RESULT, \ */
+/* 						   BLUEPRINT_STRAND_OPT, !OLD_VAL.NAME, \ */
+/* 						   COND_LOGIC_OR, _COND_PRIV_CHECK, PRIV_STRUCTURE, \ */
+/* 						   100, _COND_END) */
+
+/* #define AUTOMATION_DEFAULT_003 ADD_HOOK_AUTOMATION(DESTRUCTION_REQUEST, !* , _COND_CHECK_RESULT, \ */
+/* 						   _COND_VAL_EQUALS, !SOURCE_OBJECT, \ */
+/* 						   !TARGET_OBJECT,	\ */
+/* 						   COND_LOGIC_OR, _COND_PRIV_CHECK, PRIV_STRUCTURE, \ */
+/* 						   500, _COND_END) */
+
+/* #define AUTOMATION_DEFAULT_004 ADD_HOOK_AUTOMATION(DESTRUCTION, !* , _COND_SELECT, _COND_VAL_EQUALS, \ */
+/* 						   STRAND_TYPE, CONST_UINT_VAL STRAND_TYPE_BUNDLEPTR, \ */
+/* 						   _COND_END, UNREF_BUNDLE,\ */
+/* 						   STRAND_BUNDLEPTR_VAL *!SELECTOR) */
+
+
+/* #define TRANSFORM_AUTOMATIONS ADD_HOOK_AUTOMATION(STATUS, VALUE_UPDATED, _COND_ALWAYS, CASCADE_HOOKS), \ */
+/*     ADD_HOOK_AUTOMATION(STATUS, UPDATING_VALUE, _COND_ALWAYS, CASCADE_HOOKS) */
+
+/* #define STRAND_DEF_AUTOMATIONS						\ */
+/*   ADD_HOOK_AUTOMATION(*, ADDING_STRAND, STRAND_VALUE_DEFAULT,		\ */
+/* 		      SET_STRAND_TYPE, STRAND_VALUE_DEFAULT,		\ */
+/* 		      STRAND_UINT_VAL STRAND_VALUE_STRAND_TYPE),	\ */
+/*     ADD_HOOK_AUTOMATION(STRAND_STRAND_TEMPLATE, VALUE_UPDATED, _COND_ALWAYS, COPY_STRAND_VALUE, \ */
+/* 			STRAND_GENERIC_NAME, *!SELF.STRAND_GENERIC_NAME), \ */
+/*     ADD_HOOK_AUTOMATION(STRAND_STRAND_TEMPLATE, VALUE_UPDATED, _COND_ALWAYS, COPY_STRAND_VALUE, \ */
+/* 			STRAND_VALUE_STRAND_TYPE, *!SELF.STRAND_VALUE_STRAND_TYPE), \ */
+/*     ADD_HOOK_AUTOMATION(STRAND_STRAND_TEMPLATE, VALUE_UPDATED, _COND_ALWAYS, COPY_STRAND_VALUE, \ */
+/* 			STRAND_VALUE_DATA, *!SELF.STRAND_VALUE_DEFAULT) */
+
+/* #define VALUE_AUTOMATIONS */
+
+/* #define OBJECT_INSTANCE_AUTO ADD_HOOK_AUTOMATION(SUBTYPE, VALUE_UPDATED, _COND_ALWAYS, CASCADE_HOOKS), \ */
+/*     ADD_HOOK_AUTOMATION(STATE, VALUE_UPDATED, _COND_ALWAYS, CASCADE_HOOKS), \ */
+/*     ADD_HOOK_AUTOMATION(SUBTYPE, UPDATING_VALUE, _COND_ALWAYS, CASCADE_HOOKS), \ */
+/*     ADD_HOOK_AUTOMATION(STATE, UPDATING_VALUE, _COND_ALWAYS, CASCADE_HOOKS) */
+
+/* #define REFCOUNTER_AUTO \ */
+/*   ADD_HOOK_AUTOMATION(REFCOUNT, UPDATING_VALUE, _COND_CHECK, NIRVA_VAL_LT, \ */
+/* 		      STRAND_INT_VAL STRAND_INTROSPECTION_REFCOUNT, CONST_INT_VAL 0, \ */
+/* 		      NIRVA_OP_FIN, SET_STRAND_VALUE, SHOULD_FREE, _COND_INT_VAL 1) */
+
+/* #define ATTR_CONNECTION_AUTO \ */
+/*   ADD_HOOK_AUTOMATION(CONNECTION, UPDATING_VALUE, _COND_ALWAYS, CASCADE_HOOKS), \ */
+/*     ADD_HOOK_AUTOMATION(CONNECTION, UPDATING_VALUE, _COND_ALWAYS, REMOVE_HOOK_CB, \ */
+/* 			OLD_VALUE, DESTRUCTION),			\ */
+/*     ADD_HOOK_AUTOMATION(CONNECTION, UPDATING_VALUE, _COND_CHECK_RETURN, _COND_GEN_002), \ */
+/*     ADD_HOOK_AUTOMATION(CONNECTION, VALUE_UPDATED, _COND_ALWAYS,	\ */
+/*     			ADD_HOOK_CB, NEW_VALUE, DESTRUCTION,		\ */
+/*     			SET_STRAND_VALUE, _COND_ALWAYS, CONNECTION, NIRVA_NULL) */
+
 /////
 
-// responses to nirva_request hooks
-
-#define NIRVA_REQUEST_INVALID		NIRVA_COND_INVALID
-#define NIRVA_REQUEST_ERROR		NIRVA_COND_ERROR
-
-#define NIRVA_REQUEST_NO		NIRVA_COND_FAIL
-#define NIRVA_REQUEST_YES		NIRVA_COND_SUCCESS
-// cannot be responded to immediately, response will be received via hook callback
-#define NIRVA_REQUEST_WAIT		NIRVA_COND_WAIT_RETRY
-// security check failed, request is denied
-#define NIRVA_REQUEST_NEEDS_PRIVELEGE  	NIRVA_COND_ABANDON
-
-// return values for non-conditional hook cbs
-#define NIRVA_HOOK_CB_LAST		NIRVA_COND_FAIL
-#define NIRVA_HOOK_CB_AGAIN		NIRVA_COND_SUCCESS
-
-#define ashift(v0, v1) ((uint64_t)(((v0) << 8) | (v1)))
-#define ashift4(a, b, c, d) ((uint64_t)(((ashift((a), (b)) << 16) | (ashift((c), (d))))))
-#define ashift8(a, b, c, d, e, f, g, h) ((uint64_t)(((ashift4((a), (b), (c), (d))) << 32) | \
-						    ashift4((e), (f), (g), (h))))
-#define IMkType(str) ((const uint64_t)(ashift8((str)[0], (str)[1], (str)[2], (str)[3], \
-					       (str)[4], (str)[5], (str)[6], (str)[7])))
-
-// example predefined object TYPES
-
-#define OBJECT_TYPE_STRUCTURAL		IMkType("obj.STUC")
-// instances are programmed to produce one specific bundle_type
-// (except for object_templates, which are produced by plugins, and object_instances, which are produced by object_templates)
-// so to produce a new bundle, find its producer, and action the contract, attributes will correspond to mand / opt strands
-// and output is a shiny new bundle. Some factories can produce a stream of bundles (sequential output)
-#define OBJECT_TYPE_BUNDLEMAKER		IMkType("obj.BMKR")
-//
-#define OBJECT_TYPE_CLIP		IMkType("obj.CLIP") // media clip
-#define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG")
-#define OBJECT_TYPE_WIDGET		IMkType("obj.WDGT")
-#define OBJECT_TYPE_THREAD		IMkType("obj.THRD")
-#define OBJECT_TYPE_DICTIONARY		IMkType("obj.DICT")
-
-#define OBJECT_TYPE_UNDEFNED 0
-#define OBJECT_TYPE_ANY 0
-
-#define OBJECT_SUBTYPE_UNDEFINED 0
-#define OBJECT_SUBTYPE_ANY 0
-#define OBJECT_SUBTYPE_NONE 0
-
-#define NO_SUBTYPE 0
-
-#define OBJ_INTENTION_NONE 0
-
-// INTENTIONS
-NIRVA_ENUM
-(
-  // some common intentions
-  // internal or (possibly) non-functional types
-  OBJ_INTENTION_UNKNOWN,
-
-  // application types
-  OBJ_INTENTION_NOTHING = OBJ_INTENTION_NONE,
-
-  // passive intents
-
-  // transform which creates a new bundle.
-  // - Find an object of type blueprint_factory, subtype according to bundle type
-  // get the contract, then action it.
-  // For object instances, will require input of an object template of same type (CREATE_INSTANCE)
-  // or another instance of same type / subtype (COPY_INSTANCE)
-  //
-  // (will trigger init_hook on the new instance)
-  OBJ_INTENTION_CREATE_BUNDLE = 0x00000100, // create instance of type / subtype
-
-  // there is a single passive intent for instances - actioning this
-  // no negotiate, mandatory intent will trigger the corresponding request hook
-  // in the target. This may be called for a strand, or for an object attribute
-  // (target determined by CAPS)
-  OBJ_INTENTION_REQUEST_UPDATE,
-
-  // active intents - there is only 1 active intent, which can be further deliniated by
-  // the hoks required / provided:
-  // the CAPS and atributes futher delineate these
-
-  // a transform which takes data input and produces data output
-  OBJ_INTENTION_PROCESS,
-
-  //
-  // the following are "synthetic" intents formed by a combination of factors
-
-  // transform which changes the state of an instance (either self or another instance)
-  // will trigger object state change hook- This is simply request_update called with target "STATE"
-  OBJ_INTENTION_CHANGE_STATE,
-
-  // transform which changes the subtype of an instance (either self or another instance)
-  // will trigger object config_changed hook. This is simply request_update called with target "SUBTYPE.
-  OBJ_INTENTION_CHANGE_SUBTYPE,
-
-  // an intention which takes one or more sequential attributes and produces output
-  // either as another sequential attribute or the same one
-  // - PLAY is based on this, with CAP realtime
-  //  (this is INTENTION_PROCESS with input and output sequential attrs)
-  OBJ_INTENTION_MANIPULATE_SEQUENCE,
-
-  // an intent which takes sequential input and produces array output
-  OBJ_INTENTION_RECORD,  // record
-
-  // intent INTENTION_PROCESS takes array input
-  // and produces an object instance of a different type
-  // (c.f create instance, used to create objects of the SAME type)
-  //
-  OBJ_INTENTION_RENDER,
-
-  // an INTENT_PROCESS intention which takes one or more array attributes and produces altered array output
-  OBJ_INTENTION_EDIT_DATA,
-
-  // derived intentions
-
-  // variety of manipulate_stream
-  // an intent which has a data in hook, and data out hooks
-  OBJ_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
-
-  // like play, but with the REMOTE capacity (can also be an attachment to PLAY)
-  OBJ_INTENTION_STREAM,  // encode / data in -> remote stream
-
-  // alias for encode but with a weed_layer (frame ?) requirement
-  // rather than a clip object (could also be an attachment to PLAY
-  // with realtime == FALSE and display == FALSE caps)
-  // media_output is created with state EXTERNAL
-  OBJ_INTENTION_TRANSCODE,
-
-  // an intent which creates a new clip object with STATE EXTERNAL
-  // alias for EXPORT for clip objects ?
-  // actually this can just be PLAY but with icaps non-realtime and non-display (like transcode)
-  // and with icap remote for streaming
-  OBJ_INTENTION_ENCODE = 0x00000899,
-
-  // these may be specialised for clip objects
-
-  // creates an object with CAP "backup"
-  OBJ_INTENTION_BACKUP, // internal clip -> restorable object
-
-  OBJ_INTENTION_RESTORE, // restore from object -> internal clip
-
-  // an intent which converts an object's STATE from EXTERNAL to NORMAL
-  // caps define LOCAL or REMOTE source
-  OBJ_INTENTION_IMPORT = 0x00000C00,
-
-  // an intent which takes an instance in state INTERNAL and creates an object in state EXTERNAL
-  // with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
-  // with REMOTE - export raw format to online location, e.g. export audio, save frame
-  OBJ_INTENTION_EXPORT,
-
-  // decoders
-  // this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
-  // media_src with realtime / non-realtime CAPS
-  OBJ_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
-
-  // use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
-  // this is a transform of base type MANIPULATE_STREAM, which can be attached to a data_prepared hook of
-  // a stream manipulation transform, altering the input stream
-  OBJ_INTENTION_EFFECT = 0x00001400,
-
-  // specialized effect intents
-  OBJ_INTENTION_ANALYSE,
-  OBJ_INTENTION_CONVERT,
-  OBJ_INTENTION_MIX,
-  OBJ_INTENTION_SPLIT,
-  OBJ_INTENTION_DUPLICATE,
-
-  // - this is now OBJ_INTENTION_REQUEST_UPDATE / dest == taraget_object.refcoucnt.refcount,
-  // value == -1
-  //#define  OBJ_INTENTION_DESTROY_INSTANCE OBJ_INTENTION_UNREF
-#define  OBJ_INTENTION_DESTROY_INSTANCE 0x00002000
-
-  OBJ_INTENTION_FIRST_CUSTOM = 0x80000000,
-  OBJ_INTENTION_MAX = 0xFFFFFFFF)
-
-// aliases (depending on context, intentions can be used to signify a choice amongst various alternatives)
-#define OBJ_INTENTION_IGNORE OBJ_INTENTION_NOTHING
-#define OBJ_INTENTION_LEAVE OBJ_INTENTION_NOTHING
-#define OBJ_INTENTION_SKIP OBJ_INTENTION_NOTHING
-
-// in context with capacity "local" set
-#define OBJ_INTENTION_MOVE OBJ_INTENTION_EXPORT
-
-//#define OBJ_INTENTION_MOVE x(OBJ_INTENTION_EXPORT, CAP_AND(HAS_CAP(LOCAL), HAS_NOT_CAP(RENOTE)))
-
-// in context with capacity "remote" set
-#define OBJ_INTENTION_UPLOAD OBJ_INTENTION_EXPORT
-
-//#define OBJ_INTENTION_UPLOAD x(OBJ_INTENTION_EXPORT, CAP_AND(HAS_CAP(LOCAL), HAS_NOT_CAP(RENOTE)))
-
-//#define OBJ_INTENTION_DOWNLOAD OBJ_INTENTION_IMPORT_REMOTE
-
-#define OBJ_INTENTION_DELETE OBJ_INTENTION_DESTROY_INSTANCE
-
-#define OBJ_INTENTION_UPDATE OBJ_INTENTION_REQUEST_UPDATE
-
-#define OBJ_INTENTION_REPLACE OBJ_INTENTION_DELETE
-
-// object flags
-// object is static. It is always safe to reference via a pointer to it
-// can apply to templates as well as instances
-#define NIRVA_OBJ_FLAG_STATIC 			(1ull < 0)
-
-// object instance should only be created once as it has some application wide globals
-// this implies either it is a template which produces no instances
-// or else it is an instance created by a template and only a single instance may be instantiated
-// at any one time
-#define NIRVA_OBJ_FLAG_SINGLETON 		(1ull < 1)
-
-// do not create an object template, instead instances should be created directly
-// this is for trivial objects that dont need tracking by the broker
-// in this case the object can built directly from an object_instance bundle
-// there will be an attr bundle supplied in the template which should be created in each instance
-#define NIRVA_OBJ_FLAG_INSTANCES_ONLY 	       	(1ull < 2)
-
-// indicates that a (native) thread should be assigned to run the instance
-// responding to hook callbacks
-// communicatuon is via request hooks and status change hooks
-#define NIRVA_OBJ_FLAG_ACTIVE 	     	  		(1ull < 4)
-
-// indicates that the object has been destroyed, (DESTRUCTION_HOOK has been triggerd),
-// but the 'shell' is left due to being ref counted
-
-// see Developer Docs for more details
-
-
-/// object STATES
-
-// this state cannot be altered, but instances can be created in state NORMAL or NOT_READY
-// via the CREATE_INSTNACE intent
-
-#define OBJECT_STATE_UNDEFINED		0
-// generic STATES which can be altered by *transforms*
-//
-// neutral state - if the instance has no "active" transforms then it will remain in this state
-// such isntances support only object life cycle hooks, and data update hooks
-#define OBJECT_STATE_READY		1
-#define OBJECT_STATE_NORMAL		1
-#define OBJECT_STATE_DORMANT		1
-
-// some instantces may be born in this state and will need a transform to bring them to state normal
-// preprared
-#define OBJECT_STATE_NOT_READY		2
-
-// some instances may need to be in a prepared state to run a transform
-#define OBJECT_STATE_PREPARED		3
-
-//// active states
-// thread is "live", ie has a thread instance assigned to it, but is not current running any transform
-#define OBJECT_STATE_ACTIVE_IDLE		4
-
-// object is updating its internal state
-#define OBJECT_STATE_UPDATING		5
-
-// some async transformss may cause the state to change to this temporarily
-// an object may spontaneously change to this if doing internal updates / reads etc.
-#define OBJECT_STATE_BUSY		6
-
-#define OBJECT_STATE_ZOMBIE 	       	32
-
-//  IMPORT intent is a CHANGE_STATE intent which can alter or copy an object's state from external to not_ready / normal
-// the EXPORT intent is a CHANGE_STATE intent which can create an object in this state
-#define OBJECT_STATE_EXTERNAL		64
-
-//////////////
-
-// generic capacities, type specific ones may also exist in another header
-// values can either be present or absent
-
-#define CAP_END			NULL // marks end of caps list for vargs
-
-// either / or
-#define CAP_LOCAL		"local"  // inputs from or outputs to local hardwares
-#define CAP_REMOTE		"remote" // inputs from or outputs to remote hardwares
-
-#define CAP_REALTIME		"realtime" // operates in realtime and has a "clock" attribute / hook
-#define CAP_DISPLAY		"display" // data output is to a screen
-
-#define CAP_VIDEO		"video" // data input / output is video frames
-#define CAP_AUDIO		"audio" // data input / output is audio data
-#define CAP_TEXT		"text" // data input / output is text
-
-#define CAP_DATA		"data" // data input / output is some other non specified type
-
-#define CAP_BACKUP		"backup" // internal format which can be restored
-
-#define CAP_LOSSY		"lossy" // some reduction of data quality may occur between input and output
-#define CAP_LOSSLESS		"lossless" // no reduction of data quality
-
-#define CAP_SELECTOR(cname) "%s", "CAP_SELECT", "%s", #cname, _COND_START
-#define CAP_SELECTOR_END _COND_END
-
-#define NIRVA_ROAST_INTENTCAP(intent, ...) make_bundledef(0,0,MSTY("%d",intent),MS( __VA_ARGS__))
-
-// these are almost identical to strand value restrictions, however the start and
-// end keywords differ
-#define _CAP_BUNDLE_TYPE(btype) COND_VAL_EQUALS, VAR_STRAND_VAL, "BLUEPRINT/BUNDLE_TYPE", \
-    _CONST_UINT64_VAL, btype##_BUNDLE_TYPE
-#define CAP_BUNDLE_TYPE(btype) MSTY(CAP_SELECTOR(bundle_type), _CAP_BUNDLE_TYPE(btype), CAP_SELECTOR_END)
-
-#define _CAP_OBJECT_TYPE(otype) _CAP_BUNDLE_TYPE(OBJECT_TEMPLATE), COND_LOGIC_AND, \
-    COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE",  _CONST_UINT64_VAL, OBJECT_TYPE_##otype
-#define CAP_OBJECT_TYPE(otype) MSTY(CAP_SELECTOR(object_type), _CAP_OBJECT_TYPE(otype), CAP_SELECTOR_END)
-
-#define _CAP_INSTANCE_TYPE_SUBTYPE(itype, isubtype) _CAP_BUNDLE_TYPE(OBJECT_INSTANCE), COND_LOGIC_AND, \
-    COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE", _CONST_UINT64_VAL, OBJECT_TYPE_##itype, \
-    COND_LOGIC_AND, COND_VAL_EQUALS, VAR_STRAND_VAL, "SUBTYPE", \
-    _CONST_UINT64_VAL, OBJECT_SUBTYPE_##isubtype
-#define CAP_INSTANCE_TYPE_SUBTYPE(itype, isubtype) \
-  MSTY(CAP_SELECTOR(instance_type_subtype), _CAP_INSTANCE_TYPE_SUBTYPE(itype, isubtype), CAP_SELECTOR_END)
-
-#define CAPS_AND(a, b) ((a) && (b))
-#define CAPS_OR(a, b) ((a) || (b))
-#define CAPS_XOR(a, b) (CAPS_AND(CAPS_OR(a, b) && !CAPS_AND(a, b)))
-
-// composite icaps (TBD)
-NIRVA_ENUM(_ICAP_IDLE = 0, _ICAP_DOWNLOAD, _ICAP_LOAD, N_STD_ICAPS)
-
-////// standard ITEMS ////
-
-/// flags and types start with an "_" so as not to conflict with strand names
-
-// we define types and flags once as string "a", and again as char 'a'
-// when constructing the strands, we make use of automatic string concatenation, and
-// the string versions have to be used.
-// in all other places, the type is a uint32_t, so we use (uint32_t)'a'
-// ATTR_TYPE_* uses a different set of values. This is done deliberately to highlight the
-// fact that strand types represent a single data value, whereas ATTR_TYPE is linked to the data
-// type of the "VALUE", "DEFAULT" and "NEW_DEFAULT" strands inside the attribute bundle
-// as well as to make the strand types easier to read
-
-// a variable strand - there is no built in default for this strand. In the STRAND_DEF, the strand_type will be set to PROXIED
-// and there will be a strand name for the proxy holding the value
-#define _STRAND_TYPE_VARIABLE		       		"*"
-
-// standard types for the first letter of strand0
-#define _STRAND_TYPE_INT		       		"i"
-#define _STRAND_TYPE_DOUBLE				"d"
-#define _STRAND_TYPE_BOOLEAN				"b"
-#define _STRAND_TYPE_STRING				"s"
-#define _STRAND_TYPE_INT64	       			"I"
-#define _STRAND_TYPE_UINT		       		"u"
-#define _STRAND_TYPE_UINT64				"U"
-
-#define _STRAND_TYPE_VOIDPTR				"V"
-
-#define _STRAND_TYPE_FUNCPTR				"F"
-
-// internal (sub)bundle, should be unreffed / freed with the parent container
-#define _STRAND_TYPE_BUNDLEPTR	       			"B"
-
-// this is an implementation defined type, eg. it can be a  void * or void * array,
-// or it can be euqal to a bundleptr (as defined in the implementation)
-// for external bundle(s), should NOT be unreffed / freed
-// when the bundle containing this pointer is freed
-// other than the (virtual) type, the difference in this case is that "CONTAINER" does not point to the parent bundle
-#define _STRAND_TYPE_CONST_BUNDLEPTR	       		"C"
-
-// can be set to either "B" or "C"
-// this is STRAND_TYPE_PROXY,
-#define _STRAND_TYPE_BUNDLEPTR_OPT_CONST	 	"O"
-
-// type flags
-
-// 0 or 1 of these flag values can precede the type letter
-#define _STRAND_TYPE_FLAG_COMMENT	       		"#"
-#define _STRAND_TYPE_FLAG_DIRECTIVE	       		"@"
-#define _STRAND_TYPE_FLAG_OPTIONAL	       		"?"
-
-////////////////////////////
-
-///////// strand types ////////
-
-// non-standard types
-#define STRAND_TYPE_NONE	       			(uint32_t)0
-#define STRAND_TYPE_UNDEFINED	       			(uint32_t)'X' // proxied, but not defined
-#define STRAND_TYPE_DEFAULT	       			(uint32_t)'-'	// use default strand_type
-#define STRAND_TYPE_INVALID	       			(uint32_t)'!'	// invalid
-
-#define STRAND_TYPE_PROXIED	       			(uint32_t)'P'	// strand_type is held in proxy strand
-#define STRAND_TYPE_VARIABLE				STRAND_TYPE_PROXIED
-
-// flag bits
-#define STRAND_TYPE_FLAG_OPTIONAL      	      		(uint32_t)'?'	// optional strand
-#define STRAND_TYPE_FLAG_COMMENT       	      		(uint32_t)'#'	// comment
-#define STRAND_TYPE_FLAG_DIRECTIVE			(uint32_t)'@'	// directive
-
-#define STRAND_TYPE_INT					(uint32_t)'i'	// 4 byte int
-#define STRAND_TYPE_DOUBLE				(uint32_t)'d'	// 8 byte float
-#define STRAND_TYPE_BOOLEAN				(uint32_t)'b'	// 1 - 4 byte int
-
-#define STRAND_TYPE_STRING				(uint32_t)'s'	// \0 terminated string
-#define STRAND_TYPE_CONST_STRING	       		(uint32_t)'S'	// this is only used as a return type from nat. fn
-
-#define STRAND_TYPE_INT64              		     	(uint32_t)'I'	// 8 byte int
-#define STRAND_TYPE_UINT	       			(uint32_t)'u'	// 4 byte int
-#define STRAND_TYPE_UINT64				(uint32_t)'U'	// 8 byte int
-
-#define STRAND_TYPE_VOIDPTR				(uint32_t)'V'	// void *
-#define STRAND_TYPE_FUNCPTR				(uint32_t)'F'	// pointer to function
-
-// void * aliases
-#define STRAND_TYPE_BUNDLEPTR	       			(uint32_t)'B' // pointer to included sub bundle
-#define STRAND_TYPE_CONST_BUNDLEPTR           		(uint32_t)'C' // implementation type for extern bundleptr
-#define STRAND_TYPE_BUNDLEPTR_OPT_CONST        		(uint32_t)'O' // can be set to either 'C' or 'B'
-
 #if NIRVA_IMPL_IS(DEFAULT_C)
-#define STRAND_TYPE_GENPTR STRAND_TYPE_VOIDPTR
+
+#define DEBUG_BUNDLE_MAKER
+#ifdef DEBUG_BUNDLE_MAKER
+#define p_debug(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define p_debug(...)
 #endif
 
-#ifndef STRAND_TYPE_FUNC_RETURN
-#define STRAND_TYPE_FUNC_RETURN STRAND_TYPE_INT64
+// incremental macros, we can define a macros like:
+//#define do_macro(a) var[##a##] = CONST_##a;
+//#define do_macro2(num) var == num ? CONST_##a :
+//
+// then: NIRVA_DO_nn_times(4,2,do_macro) // expand do_macro for all values from 0 to 42
+// and: NIRVA_DO_n_times(7,do_macro2) // expands to do_macro2 for all values from 0 to 7
+// furthermore, CONST_0, CONST_1, etc can themselves be macros, provided there is no recursion, this can go several levels deep
+#define NIRVA_DO_n_times(n,m) NIRVA_DO_FOR_##n(m)
+#define NIRVA_DO_FOR_0(m)m(0)
+#define NIRVA_DO_FOR_1(m)m(0) m(1)
+#define NIRVA_DO_FOR_2(m)m(0) m(1) m(2)
+#define NIRVA_DO_FOR_3(m)NIRVA_DO_FOR_2(m) m(3)
+#define NIRVA_DO_FOR_4(m)NIRVA_DO_FOR_3(m) m(4)
+#define NIRVA_DO_FOR_5(m)NIRVA_DO_FOR_4(m) m(5)
+#define NIRVA_DO_FOR_6(m)NIRVA_DO_FOR_5(m) m(6)
+#define NIRVA_DO_FOR_7(m)NIRVA_DO_FOR_6(m) m(7)
+#define NIRVA_DO_FOR_8(m)NIRVA_DO_FOR_7(m) m(8)
+#define NIRVA_DO_FOR_9(m)NIRVA_DO_FOR_8(m) m(9)
+
+#define NIRVA_DO_FOR_x0(x,m)m(x##0)
+#define NIRVA_DO_FOR_x1(x,m)NIRVA_DO_FOR_x0(x,m) m(x##1)
+#define NIRVA_DO_FOR_x2(x,m)NIRVA_DO_FOR_x1(x,m) m(x##2)
+#define NIRVA_DO_FOR_x3(x,m)NIRVA_DO_FOR_x2(x,m) m(x##3)
+#define NIRVA_DO_FOR_x4(x,m)NIRVA_DO_FOR_x3(x,m) m(x##4)
+#define NIRVA_DO_FOR_x5(x,m)NIRVA_DO_FOR_x4(x,m) m(x##5)
+#define NIRVA_DO_FOR_x6(x,m)NIRVA_DO_FOR_x5(x,m) m(x##6)
+#define NIRVA_DO_FOR_x7(x,m)NIRVA_DO_FOR_x6(x,m) m(x##7)
+#define NIRVA_DO_FOR_x8(x,m)NIRVA_DO_FOR_x7(x,m) m(x##8)
+#define NIRVA_DO_FOR_x9(x,m)NIRVA_DO_FOR_x8(x,m) m(x##9)
+
+#define NIRVA_DO_FOR_x(a,b,m)NIRVA_DO_FOR_x##b(a,m)
+#define NIRVA_DO_FOR_xx1(b,m)NIRVA_DO_n_times(9,m) NIRVA_DO_FOR_x(1,9,m)
+#define NIRVA_DO_FOR_xx2(b,m)NIRVA_DO_FOR_xx1(9,m) NIRVA_DO_FOR_x(2,b,m)
+#define NIRVA_DO_FOR_xx3(b,m)NIRVA_DO_FOR_xx2(9,m) NIRVA_DO_FOR_x(3,b,m)
+#define NIRVA_DO_FOR_xx4(b,m)NIRVA_DO_FOR_xx3(9,m) NIRVA_DO_FOR_x(4,b,m)
+#define NIRVA_DO_FOR_xx5(b,m)NIRVA_DO_FOR_xx4(9,m) NIRVA_DO_FOR_x(5,b,m)
+#define NIRVA_DO_FOR_xx6(b,m)NIRVA_DO_FOR_xx5(9,m) NIRVA_DO_FOR_x(6,b,m)
+#define NIRVA_DO_FOR_xx7(b,m)NIRVA_DO_FOR_xx6(9,m) NIRVA_DO_FOR_x(7,b,m)
+#define NIRVA_DO_FOR_xx8(b,m)NIRVA_DO_FOR_xx7(9,m) NIRVA_DO_FOR_x(8,b,m)
+#define NIRVA_DO_FOR_xx9(b,m)NIRVA_DO_FOR_xx8(9,m) NIRVA_DO_FOR_x(9,b,m)
+#define NIRVA_DO_nn_times(a,b,m) NIRVA_DO_FOR_xx##a(b,m)
+
+//
+
+#define __IMPL_SET__ =
+#define __IMPL_EQUIVALENT__ ==
+
+#define __IMPL_OR__ ||
+#define __IMPL_AND__ &&
+#define __IMPL_NOT__ !
+#define __IMPL_TEST__ __IMPL_NOT__ ___IMPL_NOT__
+
+#define __IMPL_SET_BIT__ |=
+#define __IMPL_UNSET_BIT__(a,bit) &= ~
+#define __IMPL_AND_BITS__ &
+#define __IMPL_OR_BITS__ |
+#define __IMPL_XOR_BITS__ ^
+#define __IMPL_COMPL_BITS__ ~
+
+#define __IMPL_PARENS_OPEN__ (
+#define __IMPL_PARENS_CLOSE__ )
+#define __IMPL_WS_INDENT__
+
+#define __IMPL_WHILE__ while
+#define __IMPL_DO__ do
+#define __IMPL_IF__ if
+#define __IMPL_FOR__ for
+#define __IMPL_LOOP_LAST__ break
+#define __IMPL_LOOP_NEXT__ continue
+
+#define __IMPL_RETURN__(r)return r
+#define __IMPL_SIZEOF__(a)sizeof(a)
+#define __IMPL_TYPEOF__(a)typeof(a)
+
+#define __IMPL_SIZE_TYPE__ size_t
+
+#define __IMPL_BASIC_ALLOC__(size)malloc((size))
+#define __IMPL_BASIC_UNALLOC__(ptr)free(ptr)
+
+#define __IMPL_STRING_BUFF__ snprintf
+#define __IMPL_STRING_DUPLICATE__(str)strdup(str)
+#define __IMPL_STRING_COMPARE__(str1,str2)strcmp(str1, str2)
+#define __IMPL_STRING_LENGTH__(str)strlen((str))
+#define __IMPL_STRING_LENGTH_COMPARE__(str1,str2)strncmp(str1, str2, __IMPL_STRING_LENGTH__(str2))
+#define __IMPL_STRING_LENGTH_TYPE__ __IMPL_SIZE_TYPE__
+
+#define __IMPL_CHAR_NONE__ '\0'
+#define __IMPL_PTR_NONE__ NULL
+#define __IMPL_INT_NONE__ 0
+
+#define __IMPL_DECL_AS_TYPE__(xtype,a)xtype a
+#define __IMPL_DECL_ARRAY_VARSIZE__(a)a[]
+#define __IMPL_DECL_ARRAY_NSIZE__(a,n)a[n]
+#define __IMPL_POINTER_TO__(a)*a
+#define __IMPL_POINTER_TO_TYPE__(xtype)xtype *
+#define __IMPL_BYREF__(a)(&(a))
+#define __IMPL_DEREF__(a)(*(a))
+#define __IMPL_DECL__(a,...)__IMPL_DECL_AS_TYPE__(a,__VA_ARGS__)
+
+#define __IMPL_PTR_TO_TYPE__(a) a *
+#define __IMPL_DECLARE_AS_TYPE_MULTI__(xtype,...) xtype __VA_ARGS__
+
+#define __IMPL_CAST_TO_TYPE__(atype,a)((atype) (a))
+#define __IMPL_CAST_TO_TYPE_PTR__(xtype,ptr)__IMPL_CAST_TO_TYPE__(__IMPL_PTR_TO_TYPE__(xtype),ptr)
+#define __IMPL_CAST_TO_GENPTR__(p)__IMPL_CAST_TO_TYPE__(__IMPL_GENPTR__,p)
+#define __IMPL_VAR_FROM_GENPTR__(xtype,ptr)__IMPL_DEREF__(__IMPL_CAST_TO_TYPE_PTR__(xtype,ptr))
+#define __IMPL_ARRAY_CAST__(xtype)(xtype*)
+#define __IMPL_ARRAY_IDX__(a,idx)a[(idx)]
+
+#define __IMPL_ASSIGN__(a,b)a __IMPL_SET__  b
+#define __IMPL_ALLOC__(a)__IMPL_BASIC_ALLOC__(a)
+#define __IMPL_ALLOC_SIZEOF__(xtype)__IMPL_ALLOC__(__IMPL_SIZEOF__(xtype))
+#define __IMPL_NEW__(xtype,a)__IMPL_ASSIGN__(__IMPL_DECL__(xtype,a),	\
+					     __IMPL_ALLOC_SIZEOF__(xtype))
+#define __IMPL_ASSIGN_INT__(a,b)__IMPL_ASSIGN__(a,b)
+#define __IMPL_ASSIGN_FLOAT__(a,b)__IMPL_ASSIGN__(a,b)
+#define __IMPL_ASSIGN_PTR__(a,b)__IMPL_ASSIGN__(a,b)
+#define __IMPL_ASSIGN_STRING__(a,b)__IMPL_ASSIGN_PTR__(a,b)
+#define __IMPL_COPY_STRING__(dst,src)__IMPL_ASSIGN_STRING__(dst,__IMPL_STRING_DUPLICATE__(src))
+#define __IMPL_HAS_BIT__(a,bit) (((a)__IMPL_AND_BITS__ (bit))	\
+				 __IMPL_EQUIVALENT__ (bit))
+#define __IMPL_JOIN_BIT_(b)__IMPL_OR_BITS__ (b)
+#define __IMPL_JOIN_BITS_1__(a)__IMPL_PARENS_OPEN__ (a)__IMPL_PARENS_CLOSE__
+#define __IMPL_JOIN_BITS_2__(a,b)__IMPL_PARENS_OPEN__ (a)	\
+      __IMPL_JOIN_BIT__(b)__IMPL_PARENS_CLOSE__
+
+#define __IMPL_TEST_EQUAL__(a,b) ((a)__IMPL_EQUIVALENT__(b))
+#define __IMPL_TEST_PTR_EQUAL__(a,b)__IMPL_TEST_EQUAL__(a,b)
+#define __IMPL_TEST_INT_EQUAL__(a,b)__IMPL_TEST_EQUAL__(a,b)
+#define __IMPL_TEST_FLOAT_EQUAL__(a,b)__IMPL_TEST_EQUAL__(a,b)
+#define __IMPL_SET_PTR_UNDEF__(a)__IMPL_ASSIGN_PTR_(a,__IMPL_PTR_NONE__)
+#define __IMPL_TEST_PTR_UNDEF__(a)__IMPL_TEST_PTR_EQUAL__(a,__IMPL_PTR_NONE__)
+#define __IMPL_SET_INT_UNDEF__ __IMPL_ASSIGN_INT__(a,__IMPL_INT_NONE__)
+#define __IMPL_TEST_INT_UNDEF__(a)__IMPL_TEST_INT_EQUAL__(a,__IMPL_INT_NONE__)
+#define __IMPL_TEST_STRING_EQUAL__(a,b)__IMPL_NOT__(__IMPL_STRING_COMPARE__(a,b))
+#define __IMPL_TEST_STRLEN_EQUAL__(a,b)(__IMPL_STRING_LENGTH__(a)>=__IMPL_STRING_LENGTH__(b) \
+					?__IMPL_NOT__(__IMPL_STRING_LENGTH_COMPARE__(a,b)):0)
+#define __IMPL_TEST_CHAR_EQUAL__(a,b)__IMPL_TEST_EQUAL__(a,b)
+#define __IMPL_NTH_CHAR__(str,n)__IMPL_ARRAY_IDX__(str,n)
+#define __IMPL_IS_FINAL_CHAR__(c)(__IMPL_CHAR_EQUAL__(c,__IMPL_CHAR_NONE__))
+#define __IMPL_IS_EMPTY_STRING__(str)__IMPL_PTR_EQUAL__(a,__IMPL_PTR_NONE__)
+
+#define __IMPL_INLINE_IF_ELSE__(a,b)(a)?(b):
+
+#define __IMPL_CALL_FUNCPTR__(func,...)(*func)(__VA_ARGS__)
+#define __IMPL_POST_INC__(c)(c++)
+#define __IMPL_PRE_INC__(c)(++c)
+#define __IMPL_POST_DEC__(c)(c--)
+#define __IMPL_PRE_DEC__(c)(--c)
+
+#define __IMPL_VA_START__(a,b)va_start(a,b)
+#define __IMPL_VA_END__(a)va_end(a)
+#define __IMPL_VA_ARG__(a,b)va_arg(a,b)
+
+#define NIRVA_MAX_RETVALS 1
+
+#define NIRVA_TYPE_PTR(xtype)__IMPL_POINTER_TO_TYPE__(xtype)
+
+#define NIRVA_CAST_TO(xtype,a)__IMPL_CAST_TO_TYPE__(xtype,a)
+#define NIRVA_CAST_TO_PTR(xtype,a)__IMPL_CAST_TO_TYPE_PTR__(xtype,a)
+
+#define NIRVA_GENPTR_CAST(var) NIRVA_CAST_TO(NIRVA_GENPTR,var)
+#define NIRVA_VAR_FROM_GENPTR(xtype,ptr)__IMPL_VAR_FROM_GENPTR__(xtype,ptr)
+
+#define NIRVA_NOT __IMPL_NOT__
+#define NIRVA_SNPRINTF __IMPL_STRING_BUFF__
+
+#define NIRVA_STRDUP_OFFS(str,offs)__IMPL_STRING_DUPLICATE__(str + offs)
+
+#define NIRVA_FMT(buff,bsize,...)NIRVA_CMD((NIRVA_SNPRINTF(buff,bsize,__VA_ARGS__)))
+
+#define NIRVA_FMT_STRING "%s"
+#define NIRVA_FMT_2STRING "%s%s"
+#define NIRVA_FMT_INT "%d"
+#define NIRVA_FMT_INT3 "%03d"
+
+#define NIRVA_POST_INC(c)__IMPL_POST_INC__(c)
+#define NIRVA_PRE_INC(c)__IMPL_PRE_INC__(c)
+#define NIRVA_POST_DEC(c)__IMPL_POST_DEC__(c)
+#define NIRVA_PRE_DEC(c)__IMPL_PRE_DEC__(c)
+
+#define _CALL_n(macro,n,...)macro_##n(__VA_ARGS__)
+
+#define NIRVA_HAS_FLAG(flags, flagbit)__IMPL_HAS_BIT__(flags,flagbit)
+
+#define NIRVA_PARENS(a)__IMPL_PARENS_OPEN__ a __IMPL_PARENS_CLOSE__
+
+#define NIRVA_BLOCK_START __IMPL_BLOCK_START__
+#define NIRVA_BLOCK_END __IMPL_BLOCK_END__
+
+#define NIRVA_FUNC_END NIRVA_BLOCK_END
+
+#define NIRVA_BREAK NIRVA_CMD(__IMPL_LOOP_LAST__)
+#define NIRVA_CONTINUE NIRVA_CMD(__IMPL_LOOP_NEXT__)
+
+#define NIRVA_MALLOC(xsize)__IMPL_BASIC_ALLOC__(xsize)
+#define NIRVA_FREE(ptr)NIRVA_CMD(__IMPL_BASIC_UNALLOC__(ptr))
+#define NIRVA_STRING_FREE(str)NIRVA_FREE(str)
+#define NIRVA_MALLOC_SIZEOF(xtype)__IMPL_ALLOC_SIZEOF__(xtype)
+#define NIRVA_MALLOC_ARRAY(xtype,nvals)NIRVA_CAST_TO(NIRVA_PTR_TO(xtype), \
+						     NIRVA_MALLOC((nvals) * __IMPL_SIZEOF__(xtype)))
+
+#define NIRVA_STRING_LENGTH(str)__IMPL_STRING_LENGTH__(str)
+
+#define NIRVA_DEREF(a)__IMPL_DEREF__(a)
+
+#define NIRVA_SET(var,val)__IMPL_ASSIGN__(var,val)
+#define NIRVA_EQUALS(var,val)__IMPL_TEST_EQUAL__(var,val)
+#define NIRVA_ASSIGN(var,val,...)NIRVA_CMD(NIRVA_SET(var,val))
+#define NIRVA_ASSIGN_RET(a,b)__IMPL_INLINE_IF_ELSE__((a=b)==a,a) a
+
+#define NIRVA_RETURN(res)NIRVA_CMD(__IMPL_RETURN__(res))
+
+#define NIRVA_STRING_ALLOC(str,stlen)					\
+  NIRVA_ASSIGN(str,NIRVA_CAST_TO(NIRVA_STRING,NIRVA_MALLOC(stlen + 1)))
+
+#define NIRVA_RETURN_SUCCESS NIRVA_RETURN(NIRVA_RESULT_SUCCESS)
+#define NIRVA_RETURN_FAIL NIRVA_RETURN(NIRVA_RESULT_FAIL)
+#define NIRVA_RETURN_ERROR NIRVA_RETURN(NIRVA_RESULT_ERROR)
+
+#define NIRVA_END_RETURN(res)NIRVA_RETURN(res) NIRVA_FUNC_END
+#define NIRVA_END_SUCCESS NIRVA_END_RETURN(NIRVA_RESULT_SUCCESS)
+
+#define NIRVA_RETURN_RESULT(func,...)NIRVA_CMD(__IMPL_RETURN__(_CALL(func,__VA_ARGS__)))
+#define NIRVA_END_RESULT(func,...)NIRVA_RETURN_RESULT(func, __VA_ARGS__) NIRVA_FUNC_END
+
+#define NIRVA_ARRAY_NTH(array,idx)__IMPL_ARRAY_IDX__(array,idx)
+#define NIRVA_ASSIGN_FROM_ARRAY(val,array,idx)NIRVA_ASSIGN(val,NIRVA_ARRAY_NTH(array,idx))
+
+#define NIRVA_DEF_VARS(xtype, ...)NIRVA_CMD(__IMPL_DECLARE_AS_TYPE_MULTI__(xtype,__VA_ARGS__))
+#define NIRVA_STATIC_VARS(xtype, ...)NIRVA_STATIC NIRVA_DEF_VARS(xtype, __VA_ARGS__)
+#define NIRVA_DEF_ARRAY_SIZE(xtype,var,xsize) NIRVA_CMD(xtype  __IMPL_DECL_ARRAY_NSIZE__(var,xsize))
+
+#define NIRVA_DEF_SET(xtype,var,val)NIRVA_DEF_VARS(xtype,NIRVA_SET(var,val))
+
+#define _CALL(MACRO,...) MACRO(__VA_ARGS__)
+#define INLINE_FUNC_CALL(name,...)_INLINE_INTERNAL_##name(__VA_ARGS__)
+
+#define NIRVA_IMPL_ASSIGN(var,name,...)NIRVA_CMD((var)__IMPL_SET__	\
+						 __IMPL_CALL_FUNCPTR__(impl_func_##name, __VA_ARGS__))
+
+#define NIRVA_RESULT(fname,...)fname(__VA_ARGS__)
+#define NIRVA_CALL(fname,...)NIRVA_CMD(fname(__VA_ARGS__))
+#define NIRVA_CALL_ASSIGN(var,fname,...)NIRVA_CMD(var=fname(__VA_ARGS__))
+#define NIRVA_ASSIGN_CALL(var,fname,...)NIRVA_CALL_ASSIGN(var,fname,__VA_ARGS__)
+#define NIRVA_DEF_ASSIGN(xtype,var,fname,...)NIRVA_DEF_VARS(xtype,var) NIRVA_CALL_ASSIGN(var,fname,__VA_ARGS__)
+#define NIRVA_OP(op,a,b)_CALL(op,a,b)
+
+#define NIRVA_ARRAY_FREE(array)NIRVA_FREE(array);
+#define _NIRVA_WHILE(...)__IMPL_WHILE__(__VA_ARGS__)
+#define _NIRVA_DO __IMPL_DO__
+#define NIRVA_LOOP_WHILE(...)__IMPL_WHILE__(__VA_ARGS__) NIRVA_BLOCK_START
+#define NIRVA_LOOP_END NIRVA_BLOCK_END
+#define NIRVA_LOOP_POST_INC(var, start, end)__IMPL_FOR__ __IMPL_PARENS_OPEN__ \
+  NIRVA_CMD(NIRVA_SET(var,start))NIRVA_CMD(COND_TEST_LT(var,end))NIRVA_POST_INC(var) \
+    __IMPL_PARENS_CLOSE__ NIRVA_BLOCK_START
+#define NIRVA_AUTO_FOR(var, start, end)__IMPL_FOR__ __IMPL_PARENS_OPEN__ \
+  NIRVA_DEF_SET(NIRVA_INT, var, start)NIRVA_CMD(COND_TEST_LT(var,end))NIRVA_POST_INC(var) \
+    __IMPL_PARENS_CLOSE__ NIRVA_BLOCK_START
+#define NIRVA_ENDIF NIRVA_BLOCK_END
+#define NIRVA_DO __IMPL_DO__ NIRVA_BLOCK_START
+#define NIRVA_DO_A_THING(...)__IMPL_DO__ NIRVA_BLOCK_START __VA_ARGS__
+#define NIRVA_WHILE(x)NIRVA_BLOCK_END __IMPL_WHILE__ NIRVA_PARENS(x)__IMPL_LINE_END__
+#define NIRVA_ONCE NIRVA_WHILE(0)
+#define NIRVA_INLINE(...)NIRVA_DO_A_THING(__VA_ARGS__)NIRVA_ONCE
+#define NIRVA_IF(a)__IMPL_IF__ NIRVA_PARENS(a)
+#define NIRVA_IF_NOT(a)__IMPL_IF__ NIRVA_PARENS(NIRVA_NOT(a))
+#define NIRVA_IF_THEN(a,...)NIRVA_IF(a) NIRVA_BLOCK_START __VA_ARGS__ __IMPL_LINE_END__  NIRVA_BLOCK_END
+#define NIRVA_IF_NOT_THEN(a,...)NIRVA_IF_NOT(a) NIRVA_BLOCK_START __VA_ARGS__ __IMPL_LINE_END__ \
+    NIRVA_BLOCK_END
+#define NIRVA_IF_OP(op,a,b,...)NIRVA_IF_THEN(NIRVA_OP(op,a,b),__VA_ARGS__)
+#define NIRVA_OP_NOT(op,a,b)NIRVA_NOT(NIRVA_OP(op,a,b))
+#define NIRVA_UNLESS_OP(op,a,b,...)NIRVA_IF_THEN(NIRVA_OP_NOT(op,a,b),__VA_ARGS__)
+#define NIRVA_IF_EQUAL(a,b,...)NIRVA_IF_OP(NIRVA_EQUAL,a,b,__VA_ARGS__)
+#define NIRVA_IF_NOT_EQUAL(a,b,...)NIRVA_UNLESS_OP(NIRVA_EQUAL,a,b,__VA_ARGS__)
+
+#define NIRVA_CONTINUE_IF(op,a,b) NIRVA_IF_OP(op,a,b,NIRVA_CONTINUE)
+#define NIRVA_BREAK_IF(op,a,b) NIRVA_IF_OP(op,a,b,NIRVA_BREAK)
+
+#define NIRVA_STRING_EQUAL(a,b)__IMPL_TEST_STRING_EQUAL__(a,b)
+#define NIRVA_STRLEN_EQUAL(a,b)__IMPL_TEST_STRLEN_EQUAL__(a,b)
+
+#define NIRVA_MACRO_CALL(macro,...) _CALL(macro,__VA_ARGS__)
+#define NIRVA_CALL_IF(op,a,b,macro,...)NIRVA_IF_OP(op,a,b,NIRVA_MACRO_CALL(macro,__VA_ARGS__))
+#define NIRVA_CALL_UNLESS(op,a,b,macro,...)NIRVA_UNLESS_OP(op,a,b,NIRVA_MACRO_CALL(macro, \
+										   __VA_ARGS__)
+#define NIRVA_CALL_IF_EQUAL(a,b,macro,...)NIRVA_IF_EQUAL(a,b,NIRVA_MACRO_CALL(macro,__VA_ARGS__))
+
+#define NIRVA_CALL_FUNC_IF_EQUAL(a,b,func,...)NIRVA_IF_EQUAL(a,b,NIRVA_CALL(func,__VA_ARGS__))
+#define NIRVA_CALL_IF_NOT_EQUAL(a,b,macro,...)NIRVA_IF_NOT_EQUAL(a,b,	\
+								 NIRVA_MACRO_CALL(macro,__VA_ARGS__))
+#define NIRVA_ASSERT(val,func,...)NIRVA_IF_NOT_THEN(val,func(__VA_ARGS__))
+#define NIRVA_ASSERT_NULL(val,func,...)NIRVA_IF_NOT_EQUAL(val,NIRVA_NULL,func(__VA_ARGS__))
+#define NIRVA_STRING_BUFF(var,size) char var[size];
+
+#endif // end cstyle
+
+#define _SIX_PARAMS 	6
+#define _FIVE_PARAMS 	5
+#define _FOUR_PARAMS 	4
+#define _THREE_PARAMS	3
+#define _TWO_PARAMS 	2
+#define _ONE_PARAM 	1
+#define _NO_PARAMS 	0
+
+#ifndef NIRVA_FUNC_RETURN
+#define NIRVA_FUNC_RETURN NIRVA_INT64
 #endif
 
-#ifdef VERSION
-#undef VERSION
+#define NIRVA_REQUEST_REPSONSE NIRVA_FUNC_RETURN
+#define NIRVA_COND_RESULT NIRVA_FUNC_RETURN
+
+NIRVA_FUNC_TYPE_DEF(NIRVA_FUNC_RETURN, nirva_function_t, NIRVA_BUNDLEPTR func_data)
+
+NIRVA_FUNC_TYPE_DEF(NIRVA_FUNC_RETURN, nirva_function_t, NIRVA_BUNDLEPTR func_data)
+NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_wrapper_function_t, NIRVA_GENPTR_ARRAY ivals, NIRVA_GENPTR_ARRAY ovals)
+
+NIRVA_TYPEDEF(nirva_function_t, nirva_condfunc_t)
+NIRVA_TYPEDEF(nirva_function_t, nirva_callback_t)
+
+#define NIRVA_WRAPPER_FUNC nirva_wrapper_function_t
+#define NIRVA_STANDARD_FUNC nirva_function_t
+
+// define a function for export
+#define NIRVA_DEF_FUNC(RET_TYPE, fname, ...)NIRVA_STATIC RET_TYPE fname(__VA_ARGS__) {
+
+#define NIRVA_DECL_FUNC(RET_TYPE, fname, ...)NIRVA_CMD(NIRVA_STATIC RET_TYPE fname(__VA_ARGS__))
+
+#define NIRVA_INTERNAL(fname) NIRVA_INTERNAL_##fname
+
+// define an internal function
+#define NIRVA_DEF_FUNC_INTERNAL(ret_type,fname,...)NIRVA_STATIC_INLINE ret_type NIRVA_INTERNAL(fname)(__VA_ARGS__) {
+
+#define NIRVA_DECL_FUNC_INTERNAL(ret_type,fname,...)NIRVA_CMD(NIRVA_STATIC_INLINE ret_type \
+							       NIRVA_INTERNAL(fname)(__VA_ARGS__))
+
+// point func_ptr to NIRVA_IMPL_FUNC_
+#define NIRVA_ADD_IMPL_FUNC(fname) NIRVA_CMD(nirva_##fname##_f _nirva_##fname = NIRVA_IMPL_FUNC_##fname)
+
+// point func_ptr to NIRVA_EXPORTS_
+#define NIRVA_EXPORTS(fname)NIRVA_CMD(nirva_##fname##_f _nirva_##fname = NIRVA_EXPORTED_##fname)
+
+// use NIRVA_MACRO_
+#define NIRVA_EXPORTS_NOFUNC(fname)NIRVA_CMD(nirva_##fname##_f _nirva_##fname = NIRVA_NULL)
+
+// if nirva_init is called with no args (the default)
+// then this is like NIRVA_AUTO_SEMI, excpet that individual aspect automations
+// may be adjusted, giving rise to more or fewer impl funcs.
+// with NIRVA_AUTO_FULL
+//      none of these functions need to be defined
+// if called with NIRVA_AUTO_SEMI,
+//  then the mandatory functions + aspect functions need to be defined
+// if called with NIRVA_AUTO_MANUAL,
+//     then only one function is required, nirva_advise
+// if called with NIRVA_AUTO_NONE,
+// then no functions need be defined
+// these are functions which must be defined, but can wait until after nirva_init
+#define NIRVA_NEEDS(fname,rt,...)					\
+  NIRVA_FUNC_TYPE_DEF(rt, nirva_##fname##_f,__VA_ARGS__); NIRVA_EXTERN nirva_##fname##_f _nirva_##fname
+#define NIRVA_NEEDS_IMPL_FUNC6(fname,rt,pt0,p0,pt1,p1,pt2,p2,pt3,p3,pt4,p4,pt5,p5,...) \
+  NIRVA_NEEDS(fname,rt,pt0,pt1,pt2,pt3,pt4,pt5)
+#define NIRVA_NEEDS_IMPL_FUNC5(fname,rt,pt0,p0,pt1,p1,pt2,p2,pt3,p3,pt4,p4,...) \
+  NIRVA_NEEDS(fname,rt,pt0,pt1,pt2,pt3,pt4)
+#define NIRVA_NEEDS_IMPL_FUNC4(fname,rt,pt0,p0,pt1,p1,pt2,p2,pt3,p3,...) \
+    NIRVA_NEEDS(fname,rt,pt0,pt1,pt2,pt3)
+#define NIRVA_NEEDS_IMPL_FUNC3(fname,rt,pt0,p0,pt1,p1,pt2,p2,...)	\
+  NIRVA_NEEDS(fname,rt,pt0,pt1,pt2)
+#define NIRVA_NEEDS_IMPL_FUNC2(fname,rt,pt0,p0,pt1,p1,...)NIRVA_NEEDS(fname,rt,pt0,pt1)
+#define NIRVA_NEEDS_IMPL_FUNC1(fname,rt,pt0,p0,...)NIRVA_NEEDS(fname,rt,pt0)
+#define NIRVA_NEEDS_IMPL_FUNC0(fname,rt,x) NIRVA_NEEDS(fname,rt,)
+
+#define NIRVA_NEEDS_IMPL_FUNC(fname, desc, ret_type, rt_desc, nparams, ...) \
+    NIRVA_NEEDS_IMPL_FUNC##nparams(fname, ret_type, __VA_ARGS__)
+
+#define NIRVA_DEF_OPT_FUNC(funcname, desc, ret_type, rt_desc, nparams, ...) \
+  NIRVA_NEEDS_IMPL_FUNC##nparams(funcname, ret_type,__VA_ARGS__) = IMPL_FUNC_##funcname;
+
+#define NIRVA_NEEDS_EXT_COND_FUNC(funcname, desc, cond, ret_type, rt_desc, nparams, ...) \
+    NIRVA_NEEDS_IMPL_FUNC##nparams(funcname, ret_type,__VA_ARGS__);
+
+#define NIRVA_MANDFUNC(nnn)NIRVA_CMD(_CALL(NIRVA_NEEDS_IMPL_FUNC,NIRVA_MAND_FUNC_##nnn))
+
+///list of functions which the implementation must define////
+
+// TODO - nirva_create_bundle : create an empty bundle (no strands)
+#define NIRVA_MAND_FUNC_001 create_bundle_by_type,"create and return a bundle given a bundle_type and" \
+    " 'item_name','value' pairs",NIRVA_BUNDLEPTR,new_bundle,2, NIRVA_UINT64, \
+    bundle_type, NIRVA_VARIADIC,...
+
+NIRVA_MANDFUNC(001)
+
+#ifdef NIRVA_IMPL_FUNC_create_bundle_by_type
+NIRVA_ADD_IMPL_FUNC(create_bundle_by_type)
+#else
+#define NEED_NIRVA_CREATE_BUNDLE_BY_TYPE
 #endif
 
-#define STRAND_NAME(a, b) STRAND_NAMEU(a, b)
+#define create_bundle_by_type _nirva_create_bundle_by_type
 
-////////////// standard strands ///
-#define MACROZ(what, va) MACRO(what __##va##__)
-#define MACROX(what) MACROZ(what, VA_ARGS)
+#define NIRVA_MAND_FUNC_002 create_bundle_from_bdef,"create and return a bundle given a bundledef" \
+    "only needed during bootstrap",NIRVA_BUNDLEPTR,new_bundle, 1, NIRVA_STRING_ARRAY, bdef
 
-/* #define FOR_ALL_DOMAINS(MACRO, ...) MACRO(BASE __VA_ARGS__) MACRO(GENERIC __VA_ARGS__) MACRO(STRAND __VA_ARGS__) MACRO(VALUE __VA_ARGS__) MACRO(ATTRIBUTE __VA_ARGS__) MACRO(FUNCTION __VA_ARGS__) \ */
-/*     MACRO(THREADS __VA_ARGS__) MACRO(INTROSPECTION __VA_ARGS__) MACRO(ICAP __VA_ARGS__) MACRO(OBJECT __VA_ARGS__) MACRO(HOOK __VA_ARGS__) MACRO(CONTRACT __VA_ARGS__) MACRO(TRANSFORM __VA_ARGS__) \ */
-/*     MACRO(ATTRBUNDLE __VA_ARGS__) MACRO(CONDITION __VA_ARGS__) MACRO(LOGIC __VA_ARGS__) */
+NIRVA_MANDFUNC(002)
 
-/* #define FOR_ALL_DOMAINS(MACROX, ...) MACROX(BASE) MACROX(GENERIC) MACROX(STRAND) MACROX(VALUE) MACROX(ATTRIBUTE) \ */
-/*     MACROX(FUNCTION) MACROX(THREADS) MACROX(INTROSPECTION) MACROX(ICAP) MACROX(OBJECT) MACROX(HOOK) MACROX(CONTRACT) \ */
-/*     MACROX(TRANSFORM) MACROX(ATTRBUNDLE) MACROX(CONDITION) MACROX(LOGIC) */
+#ifdef NIRVA_IMPL_FUNC_create_bundle_from_bdef
+NIRVA_ADD_IMPL_FUNC(create_bundle_from_bdef)
+#else
+#define NEED_NIRVA_CREATE_BUNDLE_FROM_BDEF
+#endif
 
-#define FOR_ALL_DOMAINS(MACROX, ...) MACROX(GENERIC), MACROX(INTROSPECTION)
-// domain SPEC
-#define STRAND_SPEC_VERSION				STRAND_NAME("SPEC", "VERSION")
-#define STRAND_SPEC_VERSION_TYPE              		INT, 100
+#define NIRVA_MAND_FUNC_003 array_append,"append items to an array strand. " \
+    "The return value is the size of the array after the new items have been " \
+    "appended, or in case of error, a negative value must be returned.",	\
+    NIRVA_INT,new_size,5,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name, \
+    NIRVA_UINT,strand_type,NIRVA_UINT,nitems,NIRVA_VARIADIC,...
 
-#define ALL_STRANDS_SPEC "VERSION"
-#define ALL_BUNDLES_SPEC
+NIRVA_MANDFUNC(003)
 
-// domain BLUEPRINT
+#ifdef NIRVA_IMPL_FUNC_array_append
+NIRVA_ADD_IMPL_FUNC(array_append)
+#else
+#define NEED_NIRVA_ARRAY_APPEND
+#endif
 
-#define BUNDLE_BLUEPRINT_AUTOMATIONS		      	STRAND_NAME("BLUEPRINT", "AUTOMATIONS")
-#define BUNDLE_BLUEPRINT_AUTOMATIONS_TYPE      	       	SCRIPTLET, NULL
+#define NIRVA_MAND_FUNC_004 array_clear,"remove all values from an array, resetting it to size 0, " \
+    "Removing the strand itself is optional.",				\
+    NIRVA_NO_RETURN,,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
 
-#define STRAND_BLUEPRINT_BUNDLE_TYPE	       		STRAND_NAME("BLUEPRINT", "BUNDLE_TYPE")
-#define STRAND_BLUEPRINT_BUNDLE_TYPE_TYPE      	       	UINT64, NULL
+NIRVA_MANDFUNC(004)
 
-#define STRAND_BLUEPRINT_CREATES_TYPE	       		STRAND_NAME("BLUEPRINT", "CREATES_TYPE")
-#define STRAND_BLUEPRINT_CREATES_TYPE_TYPE            	UINT64, NULL
+#ifdef NIRVA_IMPL_FUNC_array_clear
+NIRVA_ADD_IMPL_FUNC(array_clear)
+#else
+#define NEED_NIRVA_ARRAY_CLEAR
+#endif
 
-#define BUNDLE_BLUEPRINT_STRAND_DEFS		      	STRAND_NAME("BLUEPRINT", "STRAND_DEFS")
-#define BUNDLE_BLUEPRINT_STRAND_DEFS_TYPE      	       	STRAND_DEF, NULL
+#define NIRVA_MAND_FUNC_005 strand_delete,"remove a strand from a bundle, but do not free the data", \
+    NIRVA_NO_RETURN,,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
 
-// domain GENERIC
+NIRVA_MANDFUNC(005)
 
-// readonly
-#define STRAND_GENERIC_NAME				STRAND_NAME("GENERIC", "NAME")
-#define STRAND_GENERIC_NAME_TYPE              		STRING, NULL
+#ifdef NIRVA_IMPL_FUNC_strand_delete
+NIRVA_ADD_IMPL_FUNC(strand_delete)
+#else
+#define NEED_NIRVA_STRAND_DELETE
+#endif
 
-#define STRAND_GENERIC_FLAGS				STRAND_NAME("GENERIC", "FLAGS")
-#define STRAND_GENERIC_FLAGS_TYPE              		UINT64, 0
+#define NIRVA_MAND_FUNC_006 bundle_free,"free an empty bundle after all strands "	\
+    "have been removed", NIRVA_NO_RETURN,,1,NIRVA_BUNDLEPTR,bundle
 
-// readonly
-#define STRAND_GENERIC_UID				STRAND_NAME("GENERIC", "UID")
-#define STRAND_GENERIC_UID_TYPE				UINT64, 0
+NIRVA_MANDFUNC(006)
 
-#define STRAND_GENERIC_DESCRIPTION			STRAND_NAME("GENERIC", "DESCRIPTION")
-#define STRAND_GENERIC_DESCRIPTION_TYPE              	STRING, NULL
+#ifdef NIRVA_IMPL_FUNC_bundle_free
+NIRVA_ADD_IMPL_FUNC(bundle_free)
+#else
+#define NEED_NIRVA_BUNDLE_FREE
+#endif
 
-#define ALL_STRANDS_GENERIC "UID", "DESCRIPTION", "FLAGS", "NAME"
-#define ALL_BUNDLES_GENERIC
+#define NIRVA_MAND_FUNC_007 array_get_size,"return count of items in the data of a strand. " \
+    "A return value of zero means either the array is empty or the strand does not exist", \
+    NIRVA_UINT,array_size,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
 
-//// domain FRAMEWORK
-#define STRAND_FRAMEWORK_OWNER				STRAND_NAME("FRAMEWORK", "OWNER")
-#define STRAND_FRAMEWORK_OWNER_TYPE			UINT64, 0
+NIRVA_MANDFUNC(007)
 
-#define STRAND_FRAMEWORK_CONTAINER			STRAND_NAME("FRAMEWORK", "CONTAINER")
-#define STRAND_FRAMEWORK_CONTAINER_TYPE			CONST_BUNDLEPTR, NULL
+#ifdef NIRVA_IMPL_FUNC_array_get_size
+NIRVA_ADD_IMPL_FUNC(array_get_size)
+#else
+#define NEED_NIRVA_ARRAY_GET_SIZE
+#endif
 
-#define STRAND_FRAMEWORK_CONTAINER_STRAND		STRAND_NAME("FRAMEWORK", "CONTAINER_STRAND")
-#define STRAND_FRAMEWORK_CONTAINER_STRAND_TYPE	       	STRING, NULL
+#define NIRVA_MAND_FUNC_008 bundle_list_strands,"return a NULL terminated array of existing " \
+    "strand names in the given bundle. The caller will free each of the strings and the array itself", \
+    NIRVA_STRING_ARRAY,allocated_array_of_names,1,NIRVA_BUNDLEPTR,bundle
 
-//// domain STANDARD - some standard bundle types
+NIRVA_MANDFUNC(008)
 
-#define BUNDLE_STANDARD_BLUEPRINT			STRAND_NAME("STANDARD", "BLUEPRINT")
-#define BUNDLE_STANDARD_BLUEPRINT_TYPE       		BLUEPRINT, NULL
+#ifdef NIRVA_IMPL_FUNC_bundle_list_strands
+NIRVA_ADD_IMPL_FUNC(bundle_list_strands)
+#else
+#define NEED_NIRVA_BUNDLE_LIST_STRANDS
+#endif
 
-#define BUNDLE_STANDARD_STRAND_DEF	       		STRAND_NAME("STANDARD", "STRAND_DEF")
-#define BUNDLE_STANDARD_STRAND_DEF_TYPE			STRAND_DEF, NULL
-
-#define BUNDLE_STANDARD_ATTRIBUTE	       		STRAND_NAME("STANDARD", "ATTRIBUTE")
-#define BUNDLE_STANDARD_ATTRIBUTE_TYPE			ATTRIBUTE, NULL
-
-#define BUNDLE_STANDARD_ATTR_GROUP			STRAND_NAME("STANDARD", "ATTR_GROUP")
-#define BUNDLE_STANDARD_ATTR_GROUP_TYPE            	ATTR_GROUP, NULL
-
-#define BUNDLE_STANDARD_ATTR_DEF	       		STRAND_NAME("STANDARD", "ATTR_DEF")
-#define BUNDLE_STANDARD_ATTR_DEF_TYPE			ATTR_DEF, NULL
-
-#define BUNDLE_STANDARD_ATTR_DEF_GROUP			STRAND_NAME("STANDARD", "ATTR_DEF_GROUP")
-#define BUNDLE_STANDARD_ATTR_DEF_GROUP_TYPE            	ATTR_DEF_GROUP, NULL
-
-#define BUNDLE_STANDARD_ERROR				STRAND_NAME("STANDARD", "ERROR")
-#define BUNDLE_STANDARD_ERROR_TYPE       		ERROR, NULL
-
-#define BUNDLE_STANDARD_EMISSION			STRAND_NAME("STANDARD", "EMISSION")
-#define BUNDLE_STANDARD_EMISSION_TYPE       		EMISSION, NULL
-
-#define BUNDLE_STANDARD_SCRIPTLET		       	STRAND_NAME("STANDARD", "SCRIPTLET")
-#define BUNDLE_STANDARD_SCRIPTLET_TYPE       		SCRIPTLET, NULL
-
-#define BUNDLE_STANDARD_CONDLOGIC_NODE	       		STRAND_NAME("STANDARD", "CONDLOGIC_NODE")
-#define BUNDLE_STANDARD_CONDLOGIC_NODE_TYPE	       	CONDLOGIC_NODE, NULL
-
-#define BUNDLE_STANDARD_SELECTOR             		STRAND_NAME("STANDARD", "SELECTOR")
-#define BUNDLE_STANDARD_SELECTOR_TYPE			SELECTOR, NULL
-
-#define BUNDLE_STANDARD_LOCATOR             		STRAND_NAME("STANDARD", "LOCATOR")
-#define BUNDLE_STANDARD_LOCATOR_TYPE			LOCATOR, NULL
-
-#define BUNDLE_STANDARD_TRAJECTORY             		STRAND_NAME("STANDARD", "TRAJECTORY")
-#define BUNDLE_STANDARD_TRAJECTORY_TYPE			TRAJECTORY, NULL
-
-#define BUNDLE_STANDARD_CASCADE             		STRAND_NAME("STANDARD", "CASCADE")
-#define BUNDLE_STANDARD_CASCADE_TYPE			CASCADE, NULL
-
-#define BUNDLE_STANDARD_REQUEST             		STRAND_NAME("STANDARD", "REQUEST")
-#define BUNDLE_STANDARD_REQUEST_TYPE			REQUEST, NULL
-
-#define BUNDLE_STANDARD_INDEX             		STRAND_NAME("STANDARD", "INDEX")
-#define BUNDLE_STANDARD_INDEX_TYPE			INDEX, NULL
-
-#define BUNDLE_STANDARD_TRANSFORM             		STRAND_NAME("STANDARD", "TRANSFORM")
-#define BUNDLE_STANDARD_TRANSFORM_TYPE			TRANSFORM, NULL
-
-#define BUNDLE_STANDARD_SEGMENT             		STRAND_NAME("STANDARD", "SEGMENT")
-#define BUNDLE_STANDARD_SEGMENT_TYPE			SEGMENT, NULL
-
-#define BUNDLE_STANDARD_ATTRIBUTE             		STRAND_NAME("STANDARD", "ATTRIBUTE")
-#define BUNDLE_STANDARD_ATTRIBUTE_TYPE			ATTRIBUTE, NULL
-
-#define BUNDLE_STANDARD_FUNCTIONAL             		STRAND_NAME("STANDARD", "FUNCTIONAL")
-#define BUNDLE_STANDARD_FUNCTIONAL_TYPE			FUNCTIONAL, NULL
-
-#define BUNDLE_STANDARD_HOOK_STACK             		STRAND_NAME("STANDARD", "HOOK_STACK")
-#define BUNDLE_STANDARD_HOOK_STACK_TYPE			HOOK_STACK, NULL
-
-#define BUNDLE_STANDARD_VALUE_CHANGE           		STRAND_NAME("STANDARD", "VALUE_CHANGE")
-#define BUNDLE_STANDARD_VALUE_CHANGE_TYPE		VALUE_CHANGE, NULL
-
-#define BUNDLE_STANDARD_MATRIX_2D             		STRAND_NAME("STANDARD", "MATRIX_2D")
-#define BUNDLE_STANDARD_MATRIX_2D_TYPE			MATRIX_2D, NULL
-
-/// domain VALUE - values are common to both attributes and strands
-
-#define STRAND_VALUE_DATA	               	       	STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_DATA_TYPE	      			VARIABLE,
-
-#define STRAND_VALUE_ANY				STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_ANY_TYPE			       	VARIABLE,
-
-#define BUNDLE_VALUE_ANY_BUNDLE				STRAND_NAME("VALUE", "ANY_BUNDLE")
-#define BUNDLE_VALUE_ANY_BNDLTE_TYPE			ANY,
-
-#define BUNDLE_VALUE_PREV				STRAND_NAME("VALUE", "PREV")
-#define BUNDLE_VALUE_PREV_TYPE				VALUE, NULL
-
-#define BUNDLE_VALUE_NEXT				STRAND_NAME("VALUE", "NEXT")
-#define BUNDLE_VALUE_NEXT_TYPE				VALUE, NULL
-
-// readonly
-#define STRAND_VALUE_STRAND_TYPE      			STRAND_NAME("VALUE", "STRAND_TYPE")
-#define STRAND_VALUE_STRAND_TYPE_TYPE          		UINT, STRAND_TYPE_NONE
-
-#define STRAND_VALUE_DEFAULT	      			STRAND_NAME("VALUE", "DEFAULT")
-#define STRAND_VALUE_DEFAULT_TYPE      			VARIABLE,
-
-#define STRAND_VALUE_INTEGER				STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_INTEGER_TYPE		       	INT, 0
-
-#define STRAND_VALUE_INT				STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_INT_TYPE			       	INT, 0
-
-#define STRAND_VALUE_UINT				STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_UINT_TYPE			       	UINT, 0
-
-#define STRAND_VALUE_DOUBLE				STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_DOUBLE_TYPE		       	DOUBLE, 0.
-
-#define STRAND_VALUE_BOOLEAN	      			STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_BOOLEAN_TYPE   	  	       	BOOLEAN, FALSE
-
-#define STRAND_VALUE_STRING	      			STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_STRING_TYPE   	  	       	STRING, NULL
-
-#define STRAND_VALUE_INT64		       		STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_INT64_TYPE			       	INT64, 0
-
-#define STRAND_VALUE_UINT64		       		STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_UINT64_TYPE		       	UINT64, 0
-
-#define STRAND_VALUE_VOIDPTR      			STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_VOIDPTR_TYPE 	    	       	VOIDPTR, NULL
-
-#define STRAND_VALUE_GENPTR 				STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_GENPTR_TYPE 	    	       	VOIDPTR, NULL
-
-#define STRAND_VALUE_FUNCPTR      			STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_FUNCPTR_TYPE 	    	       	FUNCPTR, NULL
-
-#define STRAND_VALUE_BUNDLEPTR      			STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_BUNDLEPTR_TYPE 	    	       	BUNDLEPTR, NULL
-
-#define STRAND_VALUE_CONST_BUNDLEPTR     		STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_CONST_BUNDLEPTR_TYPE   	       	CONST_BUNDLEPTR, NULL
-
-#define STRAND_VALUE_BUNDLEPTR_OPT_CONST      	       	STRAND_NAME("VALUE", "DATA")
-#define STRAND_VALUE_BUNDLEPTR_OPT_CONST_TYPE 	       	OPT_CONST_BUNDLEPTR, NULL
+#define NIRVA_MAND_FUNC_009 get_array_int,"get an int32 array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_INT),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(009)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_int
+NIRVA_ADD_IMPL_FUNC(get_array_int)
+#else
+#define NEED_NIRVA_GET_ARRAY_INT
+#endif
+
+#define NIRVA_MAND_FUNC_010 get_array_boolean,"get a boolean array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_BOOLEAN),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(010)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_boolean
+NIRVA_ADD_IMPL_FUNC(get_array_boolean)
+#else
+#define NEED_NIRVA_GET_ARRAY_BOOLEAN
+#endif
+
+#define NIRVA_MAND_FUNC_011 get_array_double,"get a double array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_DOUBLE),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(011)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_double
+NIRVA_ADD_IMPL_FUNC(get_array_double)
+#else
+#define NEED_NIRVA_GET_ARRAY_DOUBLE
+#endif
+
+#define NIRVA_MAND_FUNC_012 get_array_string,"get a string array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_STRING),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(012)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_string
+NIRVA_ADD_IMPL_FUNC(get_array_string)
+#else
+#define NEED_NIRVA_GET_ARRAY_STRING
+#endif
+
+#define NIRVA_MAND_FUNC_013 get_array_int64,"get an int64 array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_INT64),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(013)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_int64
+NIRVA_ADD_IMPL_FUNC(get_array_int64)
+#else
+#define NEED_NIRVA_GET_ARRAY_INT64
+#endif
+
+#define NIRVA_MAND_FUNC_014 get_array_voidptr,"get a void * array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_VOIDPTR),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(014)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_voidptr
+NIRVA_ADD_IMPL_FUNC(get_array_voidptr)
+#else
+#define NEED_NIRVA_GET_ARRAY_VOIDPTR
+#endif
+
+#define NIRVA_MAND_FUNC_015 get_array_funcptr,"get a function pointer array from data " \
+    "of a strand", NIRVA_ARRAY_OF(NIRVA_NATIVE_FUNC),array,2,NIRVA_BUNDLEPTR, \
+    bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(015)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_funcptr
+NIRVA_ADD_IMPL_FUNC(get_array_funcptr)
+#else
+#define NEED_NIRVA_GET_ARRAY_FUNCPTR
+#endif
+
+#define NIRVA_MAND_FUNC_016 get_array_bundleptr,"get a bundleptr array from data of a strand", \
+    NIRVA_ARRAY_OF(NIRVA_BUNDLEPTR),array,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_MANDFUNC(016)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_bundleptr
+NIRVA_ADD_IMPL_FUNC(get_array_bundleptr)
+#else
+#define NEED_NIRVA_GET_ARRAY_BUNDLEPTR
+#endif
+
+#define NIRVA_PRFUNC_0		(__STD_INPS__,)	      	_CALL(MACRO,_STD_PARAMS__,__PARAMS_0__)
+#define NIRVA_PRFUNC_1(__STD_INPS__,__PARAMS_IN_1__)  	_CALL(MACRO,_STD_PARAMS__,__PARAMS_1__)
+#define NIRVA_PRFUNC_2(__STD_INPS__,__PARAMS_IN_2__)  	_CALL(MACRO,_STD_PARAMS__,__PARAMS_2__)
+#define NIRVA_PRFUNC_3(__STD_INPS__,__PARAMS_IN_3__)   	_CALL(MACRO,_STD_PARAMS__,__PARAMS_3__)
+#define NIRVA_PRFUNC_4(__STD_INPS__,__PARAMS_IN_4__)  	_CALL(MACRO,_STD_PARAMS__,__PARAMS_4__)
+#define NIRVA_PRFUNC_5(__STD_INPS__,__PARAMS_IN_5__)  	_CALL(MACRO,_STD_PARAMS__,__PARAMS_5__)
+#define NIRVA_PRFUNC_6(__STD_INPS__,__PARAMS_IN_6__)  	_CALL(MACRO,_STD_PARAMS__,__PARAMS_6__)
+#define __PARMS_IN_4__	  	     p0,p1,p2,p3
+#define __PARMS_IN_5__			p0,p1,p2,p3,p4
+#define __PARMS_IN_6__			p0,p1,p2,p3,p4,p5
+#define  __STD_INPS__	      	 MACRO,funcname,funcdesc,ret_type
+#define __STD_PARAMS__	  	 #funcname,funcdesc,  #ret_type
+#define __PARAMS_6__	       	     6,#p0,#p1,#p2,#p3,#p4,#p5
+#define __PARAMS_5__			5,#p0,#p1,#p2,#p3,#p4/*~~~*/
+#define __PARAMS_4__		  4,#p0,#p1,#p2,#p3
+#define __PARAMS_3__		3,#p0,#p1,#p2
+#define __PARAMS_2__		2,#p0,#p1
+#define __PARMS_IN_3__	       	p0,p1,p2
+#define __PARMS_IN_2__	       	p0,p1
+#define __PARAMS_1__		1,#p0
+#define __PARMS_IN_1_		p0
+#define __PARAMS_0__		0
+#define NIRVA_PRFUNC(fname, fdesc, rt, np, ...)			\
+  NIRVA_PRFUNC_##np(funcname, funcdesc, rt, np, __VA_ARGS__)
+
+#define _MAKE_IMPL_FUNC_DESC(n)						\
+  (n == 1 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_001) :	n == 2 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_002) : \
+   n == 3 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_003) : n == 4 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_004) : \
+   n == 5 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_005) : n == 6 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_006) : \
+   n == 7 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_007) : n == 8 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_008) : \
+   n == 9 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_009) : n == 10 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_010) : \
+   n == 11 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_011) : n == 12 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_012) : \
+   n == 13 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_013) : n == 14 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_014) : \
+   n == 15 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_015) : n == 16 ? NIRVA_PRFUNC(NIRVA_MAND_FUNC_016) : \
+   NULL)
+
+static void add_func_desc(nirva_native_function_t func, const char *fname, const char *fdesc,
+                          const char *p0, const char *p1) {
+}
+
+#define NIRVA_FSTRING(nnn, m)_CALL(PRFUNC_##m,NIRVA_MAND_FUNC_##nnn))
+
+#define NIRVA_OPT_IMPL_FUNC(funcname, desc, ret_type, ...)	\
+  NIRVA_EXTERN ret_type impl_func_##funcname(__VA_ARGS__);
+
+#define NIRVA_REC_IMPL_FUNC(funcname, desc, ret_type, ...)	\
+  NIRVA_EXTERN ret_type impl_func_##funcname(__VA_ARGS__);
+
+#define NIRVA_REC_FUNC(nnn) NIRVA_CMD(_CALL(NIRVA_NEEDS_EXT_COND_FUNC, NIRVA_REC_FUNC_##nnn))
+#define NIRVA_ADD_OPT_FUNC(nnn) NIRVA_CMD(_CALL(NIRVA_NEEDS_IMPL_FUNC, NIRVA_OPT_FUNC_##nnn))
+
+// opt / conditional core funcs - COND defines the conditions that make it mandatory
+
+// if built according to the suggestions, each bundle will have either a copy
+// of its blueprint (a strand_def_bundle defining it)
+// if such can be returned, then it removes the need to implement several other functions
+// listed below. The blueprint will not be altered,
+
+// changes after nirva_prepare() require PRIV_STRUCT > 50
+// adding after nirva_prepare() requires PRIV_STRUCT > 30
+
+#define NIRVA_REC_FUNC_001 bundle_has_strand,"return TRUE (1) if strand_name currently " \
+    "exists in bundle, otherewise 0.  If not defined, the strands will be listed and checked one by one",_COND_NEVER, \
+    NIRVA_BOOLEAN,exists,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_REC_FUNC(001)
+
+#ifdef NIRVA_IMPL_FUNC_bundle_has_strand
+NIRVA_ADD_IMPL_FUNC(bundle_has_strand)
+#else
+#define NEED_NIRVA_BUNDLE_HAS_STRAND
+#endif
+
+#define NIRVA_REC_FUNC_002 strand_copy,"copy by value, data from one strand to another of " \
+    "the same type, Returns a value >=1 on success",_COND_NEVER,NIRVA_FUNC_RETURN,,4, \
+    NIRVA_BUNDLEPTR,dest_bundle,NIRVA_CONST_STRING,dest_strand_name,NIRVA_CONST_BUNDLEPTR, \
+    src_bundle,NIRVA_CONST_STRING,src_strand_name
+
+NIRVA_REC_FUNC(002)
+
+#ifdef NIRVA_IMPL_FUNC_strand_copy
+NIRVA_ADD_IMPL_FUNC(strand_copy)
+#else
+#define NEED_NIRVA_STRAND_COPY
+#endif
+
+#define NIRVA_REC_FUNC_003 get_array_uint,"get a uint32 array from data of a strand." \
+      "If not defined, int32 will be used instead and cast to uint",_COND_NEVER, \
+      NIRVA_ARRAY_OF(NIRVA_UINT),data,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_REC_FUNC(003)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_uint
+NIRVA_ADD_IMPL_FUNC(get_array_uint)
+#else
+#define NEED_NIRVA_GET_ARRAY_UINT
+#endif
+
+#define NIRVA_REC_FUNC_004 get_array_uint64,"get a uint64 array from data of a strand." \
+    "If not defined, int64 will be used instead and cast to uint64",_COND_NEVER, \
+    NIRVA_ARRAY_OF(NIRVA_UINT64),data,2,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,strand_name
+
+NIRVA_REC_FUNC(004)
+
+#ifdef NIRVA_IMPL_FUNC_get_array_uint64
+NIRVA_ADD_IMPL_FUNC(get_array_uint64)
+#else
+#define NEED_NIRVA_GET_ARRAY_UINT64
+#endif
+
+#define _MAKE_IMPL_REC_FUNC_DESC(n)					\
+  (n == 1 ? NIRVA_PRFUNC(NIRVA_REC_FUNC_001) : n == 2 ? NIRVA_PRFUNC(NIRVA_REC_FUNC_002) : \
+   n == 3 ? NIRVA_PRFUNC(NIRVA_REC_FUNC_003) : n == 4 ? NIRVA_PRFUNC(NIRVA_REC_FUNC_004) : \
+   NIRVA_NULL)
+
+/////// optional overrides ///////
+// optional impl_functions are those which use IMPL_FUNCs but are not fundamental
+// these can be changed at any point even at runtime.
+// changes after nirva_prepare() require PRIV_STRUCT > 20
+
+#define NIRVA_OPT_FUNC_001 nirva_action, "run a static transform via a function wrapper", \
+    NIRVA_FUNC_RETURN,response,2,NIRVA_CONST_STRING,transform_name, NIRVA_VARIADIC,...
+
+#ifdef NIRVA_IMPL_FUNC_action_ret
+NIRVA_ADD_IMPL_FUNC(action_ret)
+#else
+#define NEED_NIRVA_ACTION_RET
+#endif
+
+NIRVA_ADD_OPT_FUNC(001)
+
+#define NIRVA_OPT_FUNC_002 atoi,"convert a string value to int",NIRVA_INT,int_value,1, \
+    NIRVA_CONST_STRING,strval
+
+#ifndef IMPL_FUNC_atoi
+#if NIRVA_IMPL_IS(DEFAULT_C)
+#define IMPL_FUNC_atoi atoi
+#endif
+#endif
+
+NIRVA_ADD_OPT_FUNC(002)
+
+#define NIRVA_OPT_FUNC_003 atol, "convert a string value to int64",	\
+    NIRVA_INT64,int64_value,1,NIRVA_CONST_STRING,strval
+
+#ifndef IMPL_FUNC_atol
+#if NIRVA_IMPL_IS(DEFAULT_C)
+#define IMPL_FUNC_atol atol
+#endif
+#endif
+
+NIRVA_ADD_OPT_FUNC(003)
+
+#define NIRVA_OPT_FUNC_004 nirva_wait_retry, "sleep for a short time, e.g 1 usec, 1 msec", \
+    NIRVA_NO_RETURN,,0
+
+#ifndef IMPL_FUNC_nirva_wait_retry
+#define IMPL_FUNC_nirva_wait_retry _def_nirva_wait_retry
+#define NEED_WAIT_RETRY
+#endif
+
+#define NIRVA_WAIT_RETRY(...)NIRVA_CALL(nirva_wait_retry, __VA_ARGS__)
+
+NIRVA_ADD_OPT_FUNC(004)
+
+#define NIRVA_OPT_FUNC_005 recycle, "recycle and free resources used by "	\
+    "a no longer required bundle.", NIRVA_UINT,attr_type,1,NIRVA_BUNDLEPTR,bun
+
+NIRVA_ADD_OPT_FUNC(005)
+
+#ifdef NIRVA_IMPL_FUNC_recycle
+NIRVA_ADD_IMPL_FUNC(recycle)
+#else
+#define NEED_NIRVA_RECYCLE
+#endif
+
+#define NIRVA_OPT_FUNC_006 add_value_by_key,"append an item to a keyed_array, using keyval as an index to locate it. " \
+      "if defined, then the array get functions should have an extra parameter, keyval" \
+      "and the fucntions nirva_remove_value_by_key, nirva_get_value_by_key, and nirva_has_value_for_key must be defined", \
+      NIRVA_FUNC_RETURN,retval,5,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,stname,NIRVA_CONST_STRING, keyval, NIRVA_UINT, strand_type, \
+      NIRVA_VARIADIC,...
+
+NIRVA_ADD_OPT_FUNC(006)
+
+#define NIRVA_OPT_FUNC_007 remove_value_by_key,"remove an item from a keyed_array, " \
+    "using keyval as an index to locate it. ",				\
+    NIRVA_FUNC_RETURN,retval,3,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING,stname,NIRVA_CONST_STRING,keyval
+
+NIRVA_ADD_OPT_FUNC(007)
+
+#define NIRVA_OPT_FUNC_008 get_value_by_key,"return a bundleptr, using the keyval as reference", \
+      NIRVA_BUNDLEPTR,found_value,3,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING, stname, NIRVA_CONST_STRING, keyval
+
+NIRVA_ADD_OPT_FUNC(008)
+
+#define NIRVA_OPT_FUNC_009 has_value_for_key,"check if a keyed_array contains an item with the specified keyval",	\
+    NIRVA_BOOLEAN,found_value,3,NIRVA_BUNDLEPTR,bundle,NIRVA_CONST_STRING, stname, NIRVA_CONST_STRING, keyval
+
+NIRVA_ADD_OPT_FUNC(009)
+
+#if defined(NIRVA_IMPL_FUNC_get_value_by_key) && defined(NIRVA_IMPL_FUNC_add_value_by_key)  \
+  && defined(NIRVA_IMPL_FUNC_remove_value_by_key) && defined(NIRVA_IMPL_FUNC_has_value_for_key)
+NIRVA_ADD_IMPL_FUNC(get_value_by_key) NIRVA_ADD_IMPL_FUNC(add_value_by_key)
+NIRVA_ADD_IMPL_FUNC(remove_value_by_key) NIRVA_ADD_IMPL_FUNC(has_value_for_key)
+#else
+
+#ifdef NIRVA_IMPL_FUNC_get_value_by_key
+#undef NIRVA_IMPL_FUNC_get_value_by_key
+#endif
+#ifdef NIRVA_IMPL_FUNC_add_value_by_key
+#undef NIRVA_IMPL_FUNC_add_value_by_key
+#endif
+#ifdef NIRVA_IMPL_FUNC_remove_value_by_key
+#undef NIRVA_IMPL_FUNC_remove_value_by_key
+#endif
+#ifdef NIRVA_IMPL_FUNC_has_value_for_key
+#undef NIRVA_IMPL_FUNC_has_value_for_key
+#endif
+
+#define NEED_NIRVA_KEYED_ARRAYS
+#endif
+
+#define _MAKE_IMPL_OPT_FUNC_DESC(n)					\
+  (n == 1 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_001) : n == 2 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_002) : \
+   n == 3 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_003) : n == 4 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_004) : \
+   n == 5 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_005) : n == 6 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_006) : \
+   n == 7 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_007) : n == 8 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_008) : \
+   n == 9 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_009) : NIRVA_NULL)
 
 /////////////
-
-#define STRAND_VALUE_ARRAY_SIZE                		STRAND_NAME("VALUE", "ARRAY_SIZE")
-#define STRAND_VALUE_ARRAY_SIZE_TYPE                  	INT, 0
-
-#define STRAND_VALUE_MAX_VALUES                		STRAND_NAME("VALUE", "MAX_VALUES")
-#define STRAND_VALUE_MAX_VALUES_TYPE                  	INT, 0
-
-// domain STDEF
-#define STRAND_STDEF_TYPE_PROXY                		STRAND_NAME("STDEF", "TYPE_PROXY")
-#define STRAND_STDEF_TYPE_PROXY_TYPE			STRING, STRAND_TYPE
-
-#define STRAND_STDEF_RESTRICT_PROXY       		STRAND_NAME("STDEF", "RESTRICT_PROXY")
-#define STRAND_STDEF_RESTRICT_PROXY_TYPE		STRING, RESTRICTIONS
-
-// domain AUTOMATION
-
-#define BUNDLE_AUTOMATION_CONDITIONS  	             	STRAND_NAME("AUTOMATION", "CONDITIONS")
-#define BUNDLE_AUTOMATION_CONDITIONS_TYPE      		SCRIPTLET, NULL
-
-#define STRAND_AUTOMATION_RESTRICTIONS                 	STRAND_NAME("AUTOMATION", "RESTRICTIONS")
-#define STRAND_AUTOMATION_RESTRICTIONS_TYPE   		STRING, NULL
-
-#define BUNDLE_AUTOMATION_SCRIPT                   	STRAND_NAME("AUTOMATION", "SCRIPT")
-#define BUNDLE_AUTOMATION_SCRIPT_TYPE      		SCRIPTLET, NULL
-
-// domain SRIPTLET
-
-#define STRAND_SCRIPTLET_CATEGORY	      		STRAND_NAME("SCRIPTLET", "CATEGORY")
-#define STRAND_SCRIPTLET_CATEGORY_TYPE	      		INT, 0
-
-#define STRAND_SCRIPTLET_STRINGS	      		STRAND_NAME("SCRIPTLET", "STRINGS")
-#define STRAND_SCRIPTLET_STRINGS_TYPE	      		STRING, NULL
-
-#define STRAND_SCRIPTLET_MATURITY	      		STRAND_NAME("SCRIPTLET", "MATURITY")
-#define STRAND_SCRIPTLET_MATURITY_TYPE	      		INT, SCRIPT_MATURITY_UNCHECKED
-
-// domain LOCATOR
-
-#define STRAND_LOCATOR_UNIT    		               	STRAND_NAME("LOCATOR", "UNIT")
-#define STRAND_LOCATOR_UNIT_TYPE      			STRING, NULL
-
-#define STRAND_LOCATOR_SUB_UNIT    	               	STRAND_NAME("LOCATOR", "SUB_UNIT")
-#define STRAND_LOCATOR_SUB_UNIT_TYPE           		STRING, NULL
-
-#define STRAND_LOCATOR_INDEX           	               	STRAND_NAME("LOCATOR", "INDEX")
-#define STRAND_LOCATOR_INDEX_TYPE      			INT64, NULL
-
-#define STRAND_LOCATOR_SUB_INDEX    	               	STRAND_NAME("LOCATOR", "SUB_INDEX")
-#define STRAND_LOCATOR_SUB_INDEX_TYPE          		INT64, NULL
-
-// domain datetime
-
-#define STRAND_DATETIME_TIMESTAMP                   	STRAND_NAME("DATETIME", "TIMESTAMP")
-#define STRAND_DATETIME_TIMESTAMP_TYPE      		INT64, NULL
-
-#define STRAND_DATETIME_DELTA 	                  	STRAND_NAME("DATETIME", "DELTA")
-#define STRAND_DATETIME_DELTA_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_START  	                 	STRAND_NAME("DATETIME", "START")
-#define STRAND_DATETIME_START_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_END  	                 	STRAND_NAME("DATETIME", "END")
-#define STRAND_DATETIME_END_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_CURENT                        	STRAND_NAME("DATETIME", "CURRENT")
-#define STRAND_DATETIME_CURRENT_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_FIRST                        	STRAND_NAME("DATETIME", "FIRST")
-#define STRAND_DATETIME_FIRST_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_LAST                        	STRAND_NAME("DATETIME", "LAST")
-#define STRAND_DATETIME_LAST_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_DEADLINE                      	STRAND_NAME("DATETIME", "DEADLINE")
-#define STRAND_DATETIME_DEADLINE_TYPE 	     		INT64, NULL
-
-#define STRAND_DATETIME_CREATION_DATE                  	STRAND_NAME("DATETIME", "CREATION_DATE")
-#define STRAND_DATETIME_CREATION_DATE_TYPE     		INT64, NULL
-
-// domain CASCADE
-
-#define STRAND_CASCADE_VALUE				STRAND_NAME("CASCADE", "VALUE")
-#define STRAND_CASCADE_VALUE_TYPE    	      		VARIABLE,
-
-#define STRAND_CASCADE_CATEGORY				STRAND_NAME("CASCADE", "CATEGORY")
-#define STRAND_CASCADE_CATEGORY_TYPE   	      		INT, FUNC_CATEGORY_SELECTOR
-
-#define STRAND_CASCADE_PROC_FUNC	       		STRAND_NAME("CASCADE", "PROC_FUNC")
-#define STRAND_CASCADE_PROC_FUNC_TYPE          		STRING, NULL
-
-#define BUNDLE_CASCADE_MATRIX_NODE			STRAND_NAME("CASCADE", "MATRIX_NODE")
-#define BUNDLE_CASCADE_MATRIX_NODE_TYPE	      		CASCMATRIX_NODE, NULL
-
-#define BUNDLE_CASCADE_MATRIX				STRAND_NAME("CASCADE", "MATRIX")
-#define BUNDLE_CASCADE_MATRIX_TYPE	      		MATRIX_2D, NULL
-
-#define BUNDLE_CASCADE_CONDLOGIC			STRAND_NAME("CASCADE", "CONDLOGIC")
-#define BUNDLE_CASCADE_CONDLOGIC_TYPE			CONDLOGIC_NODE, NULL
-
-#define STRAND_CONDLOGIC_WEIGHTING			STRAND_NAME("CONDLOGIC", "WEIGHTING")
-#define STRAND_CONDLOGIC_WEIGHTING_TYPE			DOUBLE, 1.
-
-// domain CASCMATRIX
-
-#define BUNDLE_CASCMATRIX_ON_SUCCESS			STRAND_NAME("CASCMATRIX", "ON_SCUCCESS")
-#define BUNDLE_CASCMATRIX_ON_SUCCESS_TYPE		CASCMATRIX_NDOE, NULL
-
-#define BUNDLE_CASCMATRIX_ON_FAIL			STRAND_NAME("CASCMATRIX", "ON_FAIL")
-#define BUNDLE_CASCMATRIX_ON_FAIL_TYPE			CASCMATRIX_NDOE, NULL
-
-#define STRAND_CASCMATRIX_OP_SUCCESS			STRAND_NAME("CASCMATRIX", "OP_SUCCESS")
-#define STRAND_CASCMATRIX_OP_SUCCESS_TYPE      		INT, CASC_MATRIX_NOOP
-
-#define STRAND_CASCMATRIX_OP_FAIL	       		STRAND_NAME("CASCMATRIX", "OP_FAIL")
-#define STRAND_CASCMATRIX_OP_FAIL_TYPE			INT, CASC_MATRIX_NOOP
-
-#define STRAND_CASCMATRIX_P_SUCESS			STRAND_NAME("CASCMATRIX", "P_SUCCESS")
-#define STRAND_CASCMATRIX_P_SUCESS_TYPE       		DOUBLE, 0.
-
-#define STRAND_CASCMATRIX_P_FAIL			STRAND_NAME("CASCMATRIX", "P_FAIL")
-#define STRAND_CASCMATRIX_P_FAIL_TYPE       		DOUBLE, 0.
-
-#define STRAND_CASCMATRIX_WEIGHT			STRAND_NAME("CASCMATRIX", "WEIGHT")
-#define STRAND_CASCMATRIX_WEIGHT_TYPE       		DOUBLE, 0.
-
-#define STRAND_CASCMATRIX_NRUNS				STRAND_NAME("CASCMATRIX", "NRUNS")
-#define STRAND_CASCMATRIX_NRUNS_TYPE       		INT, 0.
-
-#define STRAND_CASCMATRIX_OTHER_IDX			STRAND_NAME("CASCMATRIX", "OTHER_IDX")
-#define STRAND_CASCMATRIX_OTHER_IDX_TYPE       		INT, -1
-
-// domain MATRIX
-
-#define BUNDLE_MATRIX_ROW				STRAND_NAME("MATRIX", "ROW")
-#define BUNDLE_MATRIX_ROW_TYPE				MATRIX_ROW, NULL
-
-// domain CONDVAL
-#define STRAND_CONDVAL_CURRENT				STRAND_NAME("CONDVAL", "CURRENT")
-#define STRAND_CONDVAL_CURRENT_TYPE	       		CONDMAP_NODE, NULL
-
-// domain LOGIC
-#define STRAND_LOGIC_OP					STRAND_NAME("LOCIC", "OP")
-#define STRAND_LOGIC_OP_TYPE				INT, LOGIC_LAST
-
-#define STRAND_LOGIC_FITNESS       			STRAND_NAME("LOCIC", "FITNESS")
-#define STRAND_LOGIC_FITNESS_TYPE	       	       	DOUBLE, 0.
-
-#define STRAND_LOGIC_CORRELATION       			STRAND_NAME("LOCIC", "CORRELATION")
-#define STRAND_LOGIC_CORRELATION_TYPE	       	       	DOUBLE, 0.
-
-#define STRAND_LOGIC_WEIGHTING       			STRAND_NAME("LOCIC", "WEIGHTING")
-#define STRAND_LOGIC_WEIGHTING_TYPE	       	       	DOUBLE, 1.
-
-#define STRAND_LOGIC_PROBABILIY       			STRAND_NAME("LOCIC", "PROBABILITY")
-#define STRAND_LOGIC_PROBABILITY_TYPE	       	       	DOUBLE, 0.
-
-#define STRAND_LOGIC_CONFIDENCE       			STRAND_NAME("LOCIC", "CONFIDENCE")
-#define STRAND_LOGIC_CONFIDENCE_TYPE	       	       	DOUBLE, 0.
-
-#define BUNDLE_LOGIC_DECISION_NODE			STRAND_NAME("LOGIC", "DECISION_NODE")
-#define BUNDLE_LOGIC_DECISION_NODE_TYPE      		CONDLOGIC_NODE, NULL
-
-/// domain ATTRIBUTE
-
-#define STRAND_ATTRIBUTE_MAX_VALUES			STRAND_NAME("ATTRIBUTE", "MAX_VALUES")
-#define STRAND_ATTRIBUTE_MAX_VALUES_TYPE     	       	INT, -1
-
-#define BUNDLE_ATTRIBUTE_DEFAULT   			STRAND_NAME("ATTRIBUTE", "DEFAULT")
-#define BUNDLE_ATTRIBUTE_DEFAULT_TYPE     	       	VALUE, NULL
-
-#define STRAND_ATTRIBUTE_NEW_DEFAULT   			STRAND_NAME("ATTRIBUTE", "NEW_DEFAULT")
-#define STRAND_ATTRIBUTE_NEW_DEFAULT_TYPE     	       	VARIABLE,
-
-#define STRAND_ATTRIBUTE_ATTR_TYPE	       		STRAND_NAME("ATTRIBUTE", "ATTR_TYPE")
-#define STRAND_ATTRIBUTE_ATTR_TYPE_TYPE  		UINT, ATTR_TYPE_NONE
-
-#define BUNDLE_ATTRIBUTE_CONNECTION	       		STRAND_NAME("ATTRIBUTE", "CONNECTION")
-#define BUNDLE_ATTRIBUTE_CONNECTION_TYPE  		ATTR_CONNECTION, NULL
-
-#define BUNDLE_ATTRIBUTE_HOOK_STACKS	       		STRAND_NAME("ATTRIBUTE", "HOOK_STACKS")
-#define BUNDLE_ATTRIBUTE_HOOK_STACKS_TYPE  		HOOK_STACK, NULL
-
-#define BUNDLE_ATTRMAP_ATTR_DEF		       		STRAND_NAME("ATTRMAP", "ATTR_DEF")
-#define BUNDLE_ATTRMAP_ATTR_DEF_TYPE  			ATTR_DEF, NULL
-
-#define STRAND_ATTRMAP_MAPPING		       		STRAND_NAME("ATTRMAP", "MAPPING")
-#define STRAND_ATTRMAP_MAPPING_TYPE  			UINT64, NIRVA_ATTR_MAP_UNDEFINED
-
-// domain REQUEST
-
-#define STRAND_REQUEST_DETAILS         			STRAND_NAME("REQUEST", "DETAILS")
-#define STRAND_REQUEST_DETAILS_TYPE		       	CONST_BUNDLEPTR, NULL
-
-// domain EMISSION
-
-#define STRAND_EMISSION_CALLER_UID	      		STRAND_NAME("EMISSION", "CALLER_UID")
-#define STRAND_EMISSION_CALLER_UID_TYPE	    	   	UINT64, 0
-
-#define STRAND_EMISSION_SOURCE_ITEM           		STRAND_NAME("EMISSION", "SOURCE_ITEM")
-#define STRAND_EMISSION_SOURCE_ITEM_TYPE	       	STRING, NULL
-
-#define STRAND_EMISSION_TARGET_ITEM	       		STRAND_NAME("EMISSION", "TARGET_ITEM")
-#define STRAND_EMISSION_TARGET_ITEM_TYPE	      	STRING, NULL
-
-// domain FUNCTIONAL
-
-#define STRAND_FUNCTIONAL_CATEGORY	      		STRAND_NAME("FUNCTIONAL", "CATEGORY")
-#define STRAND_FUNCTIONAL_CATEGORY_TYPE	      		INT, 0
-
-#define STRAND_FUNCTIONAL_RESPONSES	       		STRAND_NAME("FUNCTIONAL", "RESPONSES")
-#define STRAND_FUNCTIONAL_RESPONSES_TYPE       		INT64, 0
-
-#define STRAND_FUNCTIONAL_FUNC_TYPE	      		STRAND_NAME("FUNCTIONAL", "FUNC_TYPE")
-#define STRAND_FUNCTIONAL_FUNC_TYPE_TYPE   		INT, 0
-
-#define STRAND_FUNCTIONAL_WRAPPING_TYPE	      		STRAND_NAME("FUNCTIONAL", "WRAPPING_TYPE")
-#define STRAND_FUNCTIONAL_WRAPPING_TYPE_TYPE   		INT, 0
-
-#define BUNDLE_FUNCTIONAL_FUNC_DATA	      		STRAND_NAME("FUNCTIONAL", "FUNC_DATA")
-#define BUNDLE_FUNCTIONAL_FUNC_DATA_TYPE   		FUNC_DATA, NULL
-
-#define BUNDLE_FUNCTIONAL_ATTR_MAPS	      		STRAND_NAME("FUNCTIONAL", "ATTR_MAPS")
-#define BUNDLE_FUNCTIONAL_ATTR_MAPS_TYPE   		ATTR_MAP, NULL
-
-#define BUNDLE_SEGMENT_ATTR_MAPS	      		STRAND_NAME("SEGMENT", "ATTR_MAPS")
-#define BUNDLE_SEGMENT_ATTR_MAPS_TYPE   		ATTR_MAP, NULL
-
-// domain THREADS
-#define STRAND_THREADS_NATIVE_MUTEX	       		STRAND_NAME("THREADS", "NATIVE_MUTEX")
-#define STRAND_THREADS_NATIVE_MUTEX_TYPE       		VOIDPTR, NULL
-
-#define BUNDLE_THREADS_INSTANCE		       		STRAND_NAME("THREADS", "INSTANCE")
-#define BUNDLE_THREADS_INSTANCE_TYPE       		OBJECT_INSTANCE, NULL
-
-// domain INTROSPECTION
-// item which should be added to every bundldef, it is designed to allow
-// the bundle creator to store the pared down strands used to construct the bundle
-
-// as an alternative this can be used instead to point to a static copy of the strands
-#define BUNDLE_INTROSPECTION_REFCOUNTER       	       	STRAND_NAME("INTROSPECTION", "REFCOUNTER")
-#define BUNDLE_INTROSPECTION_REFCOUNTER_TYPE		REFCOUNTER, NULL
-
-#define STRAND_INTROSPECTION_REFCOUNT       	       	STRAND_NAME("INTROSPECTION", "REFCOUNT")
-#define STRAND_INTROSPECTION_REFCOUNT_TYPE		INT, 0
-
-#define STRAND_INTROSPECTION_COMMENT    	       	STRAND_NAME("INTROSPECTION", "COMMENT")
-#define STRAND_INTROSPECTION_COMMENT_TYPE      	       	STRING, NULL
-
-#define STRAND_INTROSPECTION_PRIVATE_DATA	       	STRAND_NAME("INTROSPECTION", "PRIVATE_DATA")
-#define STRAND_INTROSPECTION_PRIVATE_DATA_TYPE		VOIDPTR, NULL
-
-#define STRAND_INTROSPECTION_NATIVE_TYPE 	       	STRAND_NAME("INTROSPECTION", "NATIVE_TYPE")
-#define STRAND_INTROSPECTION_NATIVE_TYPE_TYPE 	       	INT, 0
-
-#define STRAND_INTROSPECTION_NATIVE_SIZE      	       	STRAND_NAME("INTROSPECTION", "NATIVE_SIZE")
-#define STRAND_INTROSPECTION_NATIVE_SIZE_TYPE		UINT64, 0
-
-#define ALL_STRANDS_INTROSPECTION "BLUEPRINT", "BLUEPRINT_PTR", "COMMENT", "REFCOUNTER", "PRIVATE_DATA", \
-	  "NATIVE_PTR", "NATIVE_SIZE", "NATIVE_TYPE"
-#define ALL_BUNDLES_INTROSPECTION "REFCOUNTER", "BLUEPRINT"
-
-//////////// BUNDLE SPECIFIC STRANDS /////
-
-#define STRAND_CONTRACT_VALID_CAPS			STRAND_NAME("CONTRACT", "VALID_CAPS")
-#define STRAND_CONTRACT_VALID_CAPS_TYPE        		STRING, NULL
-
-///// domain ICAP
-
-#define STRAND_ICAP_INTENTION				STRAND_NAME("ICAP", "INTENTION")
-#define STRAND_ICAP_INTENTION_TYPE             		INT, OBJ_INTENTION_NONE
-
-#define BUNDLE_ICAP_CAPS				STRAND_NAME("ICAP", "CAPS")
-#define BUNDLE_ICAP_CAPS_TYPE             		CAPS, NULL
-
-////////// domain OBJECT
-
-#define STRAND_OBJECT_TYPE				STRAND_NAME("OBJECT", "TYPE")
-#define STRAND_OBJECT_TYPE_TYPE				UINT64, OBJECT_TYPE_UNDEFINED
-
-#define BUNDLE_OBJECT_ACTIVE_TRANSFORMS	       		STRAND_NAME("OBJECT", "ACTIVE_TRANSFORMS")
-#define BUNDLE_OBJECT_ACTIVE_TRANSFORMS_TYPE	       	OBJECT_INSTANCE, NULL
-
-#define BUNDLE_OBJECT_ATTRIBUTES	       		STRAND_NAME("OBJECT", "ATTRIBUTES")
-#define BUNDLE_OBJECT_ATTRIBUTES_TYPE	  	     	ATTR_GROUP, NULL
-
-#define STRAND_OBJECT_STATE				STRAND_NAME("OBJECT", "STATE")
-#define STRAND_OBJECT_STATE_TYPE	       		UINT64, OBJECT_STATE_UNDEFINED
-
-#define BUNDLE_OBJECT_CONTRACTS	 	      		STRAND_NAME("OBJECT", "CONTRACTS")
-#define BUNDLE_OBJECT_CONTRACTS_TYPE			CONTRACT, NULL
-
-#define BUNDLE_OBJECT_HOOK_STACKS	               	STRAND_NAME("OBJECT", "HOOK_STACKS")
-#define BUNDLE_OBJECT_HOOK_STACKS_TYPE      		HOOK_STACK, NULL
-
-#define STRAND_INSTANCE_SUBTYPE				STRAND_NAME("INSTANCE", "SUBTYPE")
-#define STRAND_INSTANCE_SUBTYPE_TYPE	       		UINT64, NO_SUBTYPE
-
-///// domain HOOK
-
-// this is one of the four basic patterns
-#define STRAND_HOOK_MODEL		       		STRAND_NAME("HOOK", "MODEL")
-#define STRAND_HOOK_MODEL_TYPE				INT, 0
-
-#define BUNDLE_HOOK_CALLBACKS		       		STRAND_NAME("HOOK", "CALLBACKS")
-#define BUNDLE_HOOK_CALLBACKS_TYPE			HOOK_CB_FUNC, NULL
-
-// after the template callback modified by flags is called
-// the value is cascaded by automation, resulting in a differentiatied value
-// the second value is then triggered either during or after the first
-// custom hooks can be added by adding new cascade conditions mapping to a new value
-// depending on the basic pattern the new hook number must be attached to a
-// specific strand or attribute value (for data hook) or else must map to an update value
-// intent (for request hooks), or for spntaneous hooks, this must map to a structure transform
-// in include in an existing or custom structure subtype
-#define STRAND_HOOK_NUMBER	       			STRAND_NAME("HOOK", "NUMBER")
-#define STRAND_HOOK_NUMBER_TYPE				INT, 0
-
-#define STRAND_HOOK_HANDLE				STRAND_NAME("HOOK", "HANDLE")
-#define STRAND_HOOK_HANDLE_TYPE				UINT64, 0
-
-#define STRAND_HOOK_FLAGS		       		STRAND_NAME("HOOK", "FLAGS")
-#define STRAND_HOOK_FLAGS_TYPE				UINT64, 0
-
-#define STRAND_HOOK_COND_STATE				STRAND_NAME("HOOK", "COND_STATE")
-#define STRAND_HOOK_COND_STATE_TYPE	       		INT, NIRVA_COND_SUCCESS
-
-#define BUNDLE_HOOK_DETAILS		       		STRAND_NAME("HOOK", "DETAILS")
-#define BUNDLE_HOOK_DETAILS_TYPE			HOOK_DETAILS, NULL
-
-// domain TRAJECTORY
-
-#define BUNDLE_TRAJECTORY_SEGMENTS	       		STRAND_NAME("TRAJECTORY", "SEGMENTS")
-#define BUNDLE_TRAJECTORY_SEGMENTS_TYPE	       		SEGMENT, NULL
-
-// domain TRANSFORM
-
-#define STRAND_TRANSFORM_STATUS		       		STRAND_NAME("TRANSFORM", "STATUS")
-#define STRAND_TRANSFORM_STATUS_TYPE	       		INT64, TRANSFORM_STATUS_NONE
-
-#define STRAND_TRANSFORM_TX_RESULT	       		STRAND_NAME("TRANSFORM", "TX_RESULT")
-#define STRAND_TRANSFORM_TX_RESULT_TYPE	       		INT64, TX_RESULT_NONE
-
-#define BUNDLE_TRANSFORM_CURRENT_SEGMENT     		STRAND_NAME("TRANSFORM", "CURRENT_SEGMENT")
-#define BUNDLE_TRANSFORM_CURRENT_SEGMENT_TYPE		SEGMENT, NULL
-
-////////////////////////////////////////////////////////////////////////////////////
-
-// whereas STRANDS generally pertain to the internal state of a bundle, ATTRIBUTES
-// (more precisely, instances of the ATTRIBUTE bundle)
-// are desinged for passing and sharing data between
-// bundles.
-// The main differences:
-//- STRANDS have type, name and data, although these are internal to the strand
-// - ATTRIBUTES have strands for DATA, NAME and TYPE
-// - ATTRIBUTES are bundles composed of several strands, whereas strands are not bundles -
-// they are the building blocks for bundles.
-// - Strands cna be scalar values or arrays of unlimited size.
-// Attributes may have "max_elements", ie. the value can be
-// limited to a certain number of data values (i.e. bounded arrays).
-//  Attributes have a default value which must be set in the "default" strand.
-// - Attributes have flags and an optional description. Attributes can also be refcounted.
-// just as strands may be produced, from strand_defs (i.e. a blueprint)
-// attributes can be produced using an attr_def
-//
-
-#define ATTR_TYPE_NONE					(uint32_t)'0'	// invalid type
-
-#define ATTR_TYPE_INT					1	// 4 byte int
-#define ATTR_TYPE_DOUBLE				2	// 8 byte float
-#define ATTR_TYPE_BOOLEAN				3	// 1 - 4 byte int
-#define ATTR_TYPE_STRING				4	// \0 terminated string
-#define ATTR_TYPE_INT64	       			     	5	// 8 byte int
-#define ATTR_TYPE_UINT					6	// 4 byte int
-#define ATTR_TYPE_UINT64				7	// 8 byte int
-#define ATTR_TYPE_FLOAT	       				8	// 4 or 8 byte float
-
-#define ATTR_TYPE_VOIDPTR				64	// void *
-#define ATTR_TYPE_FUNCPTR				65	// funcptr
-
-// void * alias
-#define ATTR_TYPE_BUNDLEPTR	       			80 // strand_type may be STRAND_TYPE_BUNDLEPTR or
-//							STRAND_TYPE_CONST_BUNDLEPTR
-
-// used for variadic function  maps
-// the "VALUE" will be a bundleptr -> sup mapping
-#define ATTR_TYPE_VA_ARGS	       			128 // void * to other bundle
-
-///////// n.b there is no STRAND_TYPE_FLOAT, this is stored internally as
-#define _NIRVA_ATTR_TYPE_TO_STRAND_TYPE_(at) \
-    (at == ATTR_TYPE_INT ? STRAND_TYPE_INT :	\
-      at == ATTR_TYPE_UINT ? STRAND_TYPE_UINT :		\
-      at == ATTR_TYPE_BOOLEAN ? STRAND_TYPE_BOOLEAN :	\
-      at == ATTR_TYPE_DOUBLE ? STRAND_TYPE_DOUBLE :	\
-      at == ATTR_TYPE_FLOAT ? STRAND_TYPE_DOUBLE :	\
-      at == ATTR_TYPE_STRING ? STRAND_TYPE_STRING :	\
-      at == ATTR_TYPE_INT64 ? STRAND_TYPE_INT64 :	\
-      at == ATTR_TYPE_UINT64 ? STRAND_TYPE_UINT64 :	\
-      at == ATTR_TYPE_VOIDPTR ? STRAND_TYPE_VOIDPTR :	\
-      at == ATTR_TYPE_FUNCPTR ? STRAND_TYPE_FUNCPTR :	\
-      at == ATTR_TYPE_BUNDLEPTR ? STRAND_TYPE_BUNDLEPTR_OPT_CONST :		\
-      STRAND_TYPE_INVALID)
-
-#define ATTR_NAMEU(a, b) "ATTR_" a "_" b
-#define ATTR_NAME(a, b) ATTR_NAMEU(a, b)
-
-//////////////////////////
-
-// domain STRUCTURAL
-#define ATTR_STRUCTURAL_SUBTYPES			ATTR_NAME("STRUCTURAL", "SUBTYPES")
-#define ATTR_STRUCTURAL_SUBTYPES_TYPE			BUNDLEPTR, OBJECT_INSTANCE
-
-#define ATTR_STRUCTURAL_BLUEPRINT			ATTR_NAME("STRUCTURAL", "BLUEPRINTS")
-#define ATTR_STRUCTURAL_BLUEPRINT_TYPE			BUNDLEPTR, BLUEPRINT
-
-// domain SELF - atributes for thread_instances
-#define ATTR_SELF_THREAD_ID				ATTR_NAME("SELF", "THREAD_ID")
-#define ATTR_SELF_THREAD_ID_TYPE	       	       	UINT64, 0
-
-#define ATTR_SELF_STATUS				ATTR_NAME("SELF", "STATUS")
-#define ATTR_SELF_STATUS_TYPE		       	       	UINT64, 0
-
-#define ATTR_SELF_FLAGS					ATTR_NAME("SELF", "FLAGS")
-#define ATTR_SELF_FLAGS_TYPE	 	      	       	UINT64, 0
-
-#define ATTR_SELF_NATIVE_THREAD				ATTR_NAME("SELF", "NATIVE_THREAD")
-#define ATTR_SELF_NATIVE_THREAD_TYPE		       	NATIVE_PTR, NULL
-
-#define ATTR_SELF_PRIVS					ATTR_NAME("SELF", "PRIVS")
-#define ATTR_SELF_PRIVS_TYPE		       		INT, NULL
-
-#define ATTR_SELF_MANTLE	       			ATTR_NAME("SELF", "MANTLE")
-#define ATTR_SELF_MANTLE_TYPE		       		BUNDLEPTR, OBJECT
-
-#define ATTR_SELF_TRAJECTORY	       			ATTR_NAME("SELF", "TRAJECTORY")
-#define ATTR_SELF_TRAJECTORY_TYPE		       	BUNDLEPTR, TRAJECTORY
-
-///
-
-// TODO - attributes should moeve to type specific headers
-
-/// domain URI
-#define ATTR_URI_FILENAME				ATTR_NAME("URI", "FILENAME")
-#define ATTR_URI_FILENAME_TYPE 				STRING, NULL
-
-///// domain UI
-#define ATTR_UI_TEMPLATE 				ATTR_NAME("UI", "TEMPLATE")
-#define ATTR_UI_TEMPLATE_TYPE 				STRING, NULL
-
-// audio (TODO)
-#define ATTR_AUDIO_SOURCE				"audio_source"
-#define ATTR_AUDIO_RATE 				"audio_rate"
-#define ATTR_AUDIO_CHANNELS				"audio_channels"
-#define ATTR_AUDIO_SAMPSIZE				"audio_sampsize"
-#define ATTR_AUDIO_SIGNED				"audio_signed"
-#define ATTR_AUDIO_ENDIAN				"audio_endian"
-#define ATTR_AUDIO_FLOAT				"audio_is_float"
-#define ATTR_AUDIO_STATUS 				"current_status"
-#define ATTR_AUDIO_INTERLEAVED 				"audio_interleaf"
-#define ATTR_AUDIO_DATA					"audio_data"
-#define ATTR_AUDIO_DATA_LENGTH				"audio_data_length"
-
-///// domain VIDEO (incomplete)
-#define ATTR_VIDEO_FRAME_RATE	       			STRAND_NAME(VIDEO, FRAME_RATE)
-#define ATTR_VIDEO_FRAME_RATE_TYPE    			DOUBLE, 0.
-
-#define ATTR_VIDEO_DISPLAY_WIDTH  	       		STRAND_NAME(VIDEO, DISPLAY_WIDTH)
-#define ATTR_VIDEO_DISPLAY_WIDTH_TYPE    	 	UINT64, 0
-
-#define ATTR_VIDEO_DISPLAY_HEIGHT  	       		STRAND_NAME(VIDEO, DISPLAY_HEIGHT)
-#define ATTR_VIDEO_DISPLAY_HEIGHT_TYPE    	 	UINT64, 0
-
-#define ATTR_VIDEO_PIXEL_WIDTH  	       		STRAND_NAME(VIDEO, PIXEL_WIDTH)
-#define ATTR_VIDEO_PIXEL_WIDTH_TYPE 	   	 	UINT64, 0
-
-#define ATTR_VIDEO_PIXEL_HEIGHT  	       		STRAND_NAME(VIDEO, PIXEL_HEIGHT)
-#define ATTR_VIDEO_PIXEL_HEIGHT_TYPE    	 	UINT64, 0
-
-#define ATTR_VIDEO_COLOR_SPACE  	       		STRAND_NAME(VIDEO, COLOR_SPACE)
-#define ATTR_VIDEO_COLOR_SPACE_TYPE 	   	 	INT, 0
-
-#define ATTR_VIDEO_STEREO_MODE  	       		STRAND_NAME(VIDEO, STEREO_MODE)
-#define ATTR_VIDEO_STEREO_MODE_TYPE 	   	 	UINT64, 0
-
-#define ATTR_VIDEO_FLAG_INTERLACED  	       		STRAND_NAME(VIDEO, FLAG_INTERLACED)
-#define ATTR_VIDEO_FLAG_INTERLACED_TYPE    	 	UINT64, 0
-
-// attr_mapping types
-// there are three levels (layers) of mapping - trajectory level - maps in / out for transform
-// segment - maps in / out for segment
-// functional - maps in / out for functional
-
-#define NIRVA_ATTR_MAP_UNDEFINED       		0x00
-#define NIRVA_ATTR_MAP_IN       		0x01 // input to functional / segment -> trajectory
-#define NIRVA_ATTR_MAP_OUT       		0x02 // internal output within segment
-
-// for in or in / out, maps to param, for out, maps retval
-// for trajectory, can be used in native wrapping, and indicates reverse mapping - params to attrs
-#define NIRVA_ATTR_MAP_PARAM       		0x08
-
-// defines the attribute as input / output for the entire trajectory
-#define NIRVA_ATTR_MAP_EXTERN			0x10
-
-// declares opt attr, at functional level, combined with in | param, implies va_arg,
-// cannot be combined with out + param
-#define NIRVA_ATTR_MAP_OPT			0x20
-
-// this is a specific flag bit for attributes mapped from native functions where the return value is an array
-// it tells us that the functional to calculate the size must be called before the main functional
-// this may be due to the fact that the size has to be calculated from attribute (param) values which may be altered
-// when the main function runs
-#define NIRVA_ATTR_MAP_PRE_CALC_SIZE		0x100
-
-// combinations
-
-// these do not need mapping for functionals / segments but are used for trajectories
-// without EXTERN, info values set by contract owner durign negotiations
-#define NIRVA_ATTR_MAP_IN_INFO		       	NIRVA_ATTR_MAP_IN
-#define NIRVA_ATTR_MAP_OPT_IN_INFO             	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OPT
-
-// ditto, - attributes created from these mappings should intially be readonly at that level
-/* #define NIRVA_ATTR_MAP_IN_OUT_INFO	       	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT */
-/* #define NIRVA_ATTR_MAP_OPT_IN_OUT_INFO         	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_OPT */
-
-//
-
-#define NIRVA_ATTR_MAP_EXTERN_INPUT	       	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_EXTERN
-#define NIRVA_ATTR_MAP_OPT_EXTERN_INPUT        	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OPT | NIRVA_ATTR_MAP_EXTERN
-
-#define NIRVA_ATTR_MAP_IN_PARAM		       	NIRVA_ATTR_MAP_IN |  NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_OPT_IN_PARAM            	NIRVA_ATTR_MAP_IN |  NIRVA_ATTR_MAP_OPT  | NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_EXTERN_IN_PARAM	       	NIRVA_ATTR_MAP_IN |  NIRVA_ATTR_MAP_EXTERN | NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_OPT_EXTERN_IN_PARAM     	NIRVA_ATTR_MAP_IN |  NIRVA_ATTR_MAP_OPT \
-  | NIRVA_ATTR_MAP_EXTERN | NIRVA_ATTR_MAP_PARAM
-
-#define NIRVA_ATTR_MAP_EXTERN_IN_OUT	       	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_EXTERN
-#define NIRVA_ATTR_MAP_OPT_EXTERN_IN_OUT       	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_OPT | \
-  NIRVA_ATTR_MAP_EXTERN
-
-#define NIRVA_ATTR_MAP_IN_OUT_PARAM	       	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_OPT_IN_OUT_PARAM        	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_OPT \
-  | NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_EXTERN_IN_OUT_PARAM     	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_EXTERN \
-  | NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_OPT_EXTERN_IN_OUT_PARAM 	NIRVA_ATTR_MAP_IN | NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_OPT \
-  | NIRVA_ATTR_MAP_EXTERN | NIRVA_ATTR_MAP_PARAM
-
-// only needs mapping if it connects to IN_PARAM without extern
-#define NIRVA_ATTR_MAP_OUTPUT		       	NIRVA_ATTR_MAP_OUT
-
-// only needs mapping if it connects to OPT_IN_PARAM without extern
-#define NIRVA_ATTR_MAP_OPT_OUTPUT              	NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_OPT
-
-#define NIRVA_ATTR_MAP_EXTERN_OUTPUT	       	NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_EXTERN
-#define NIRVA_ATTR_MAP_OPT_EXTERN_OUTPUT       	NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_OPT | NIRVA_ATTR_MAP_EXTERN
-
-#define NIRVA_ATTR_MAP_RETVAL		       	NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_PARAM
-#define NIRVA_ATTR_MAP_EXTERN_RETVAL	       	NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_PARAM | NIRVA_ATTR_MAP_EXTERN
-
-#define NIRVA_ATTR_MAP_ANON_RETVAL	       	NIRVA_ATTR_MAP_OUT | NIRVA_ATTR_MAP_PARAM | NIRVA_ATTR_MAP_OPT
-
-// all levels
-#define NIRVA_ATTR_MAP_INVALID_1(map)	       	(!(map & NIRVA_ATTR_MAP_OUT) && !(map & NIRVA_ATTR_MAP_IN))
-
-// valid only for HELPER functionals
-#define NIRVA_ATTR_MAP_INVALID_2(map)	       	((map & NIRVA_ATTR_MAP_OUT) && (map & NIRVA_ATTR_MAP_PARAM) \
-						 && (map & NIRVA_ATTR_MAP_OPT))
-// also invalid: mapping same attr as IN_OUT and OUT in same functional
-// also invalid: mapping same attr as IN_OUT and IN_OUT in same functional
-// functionals may not map input or in_out without external
-// functionals may map output without external, this is necessary if they later
-// inputs are mapped first as in / param / extern or in_out / param / extern
-// outputs can be mapped as
-// out - attr is available as param input and param in out
-// out and extern  - attr is available as param input and param in out, and is exported
-// out and opt  - attr is available as opt param input or opt param in out
-// out and opt and exported  - attr is available as opt param input or opt param in out and may be exported
-// out and param - return val, usable as param input and param in out
-// out and param and extern - return val for export, usable as param input and param in out
-
-#define NIRVA_ATTR_MAP_VALID(map) (!NIRVA_ATTR_MAP_INVALID_0(map) && !NIRVA_ATTR_MAP_INVALID_1(map) \
-				   && !NIRVA_ATTR_MAP_INVALID_2(map)
-
-// attribute flag bits (defined in attr_def)//
-
-// this is only valid for attrs with EXTERN mapping
-// - for inputs, if not OPT,  it creates a condition that the caller must connect it to a provider,
-// who agrees to respond to the data request trigger
-//
-// if not flagged RO, indicates an edit stream - DATA is pulled sequentially, possibly altered
-// then pushed back
-//
-
-// For outputs it indicates that the value is updated as part of the transform
-// and there will be data_ready and possibly data_prep hooks
-// if the attribute
-// this bit must set in the attr_def template, and may not be altered
-#define NIRVA_ATTR_FLAG_SEQUENTIAL 	   	0x01
-
-// attribute flag bits - set in attribute
-
-// the attribute owner may set this for an in / out or output attribute
-// this will prevent the atribute DATA from being altered
-// in addition, during negotiations, the owner can set this to "lock" the value of an attibute
-#define NIRVA_ATTR_FLAG_READONLY 	   	0x04
-
-// indicates an optional attr. i.e. it is not necessary to set the "DATA" to action a transform
-// This is set by default for attrs created from optional in / out
-// for a trajectory, however the attr owner may alter this during negotiations
-#define NIRVA_ATTR_FLAG_OPTIONAL 	   	0x08
-
-// this flag bit must be set (usually automatically) when an attribute is connected to another
-#define NIRVA_ATTR_FLAG_CONNECTED 	   	0x10
-
-// this is for SEQUENTIAL attributes,
-// indicates that new data may take some time to process
-// if this is connected
-// during negotiations, if a connectionis to be made with ASYNC_UPDATES flag
-// the structure may interpose and connect the producer and receiver via a BUFFER instance
-// - the buffer will request data as fast as possible from the producer, and pass this to the receiver on demand
-#define NIRVA_ATTR_FLAG_ASYNC_RECEIVER    	0x20
-
-// the following are informational and maybe set by the attribute owner
-// (valid for object attrs)
-
-// indicates that the DATA in the attribute is not a normal data strand,
-// but rather a pointer to a variable. NATIVE_TYPE and NATIVE_SIZE may be used
-// to indicate the variable type and data size.
-#define NIRVA_ATTR_FLAG_NATIVE       		0x40
-
-// indicates that the value may update spontaneously without it being possible to trigger
-// data hooks
-#define NIRVA_ATTR_FLAG_VOLATILE	 	0x80
-
-// the following are for information
-
-// indicates the value is known to be out of date, but a a transform is needed to
-// update it
-#define NIRVA_ATTR_FLAG_NOT_CURRENT      	0x100
-
-// indicates the value is a "best guess", the actual value of whatever it represents may differ
-#define NIRVA_ATTR_FLAG_ESTIMATE       		0x200
-
-// combinations
-// IN | EXTERN | SEQUENTIAL | OPT | RO indicates an optional input data stream
-// IN | EXTERN | SEQUENTIAL | RO creates an input data condition
-
-// IN | EXTERN | SEQUENTIAL | OPT indicates an optional input data stream
-// IN | EXTERN | SEQUENTIAL | creates an input data condition
-
-// OUT | EXTERN | SEQUENTIAL | RO indicates an output stream with readonly values
-// OUT | EXTERN | SEQUENTIAL 	indicates an editable output stream, may be connected to an EDITOR
-
-// OUT | EXTERN | SEQUENTIAL | RO | OPT indicates a conditional output stream with readonly values
-// OUT | EXTERN | SEQUENTIAL | OPT	indicates a conditional editable output stream, may be connected to an EDITOR
-
-// if a transform has both input and output streams then INTENT_PROCESS becomes
-//
-// if a transform has input streams only then INTENT_PROCESS becomes
-// INTENTION_RECORD,  // record
-
-// if a transform has input streams only, and they are not mapped RO (i.e IN_OUT) then INTENT_PROCESS becomes
-// INTENTION_EDIT,  // edit - some kinf of inplace data change
-// adding CAP_REALTIME produces INTENTION_FILTER
-
-// if a transform has input streams and output streams, then INTENT_PROCESS becomes
-// INTENTION_CONVERT,  // convert - creates an ouput stream from an input stream
-// adding CAP_REALTIME produces INTENTION_PLAY
-// adding CAP_REMOTE produces INTENTION_STREAM, etc.
-
-// if a transform has output streams only, then INTENT_PROCESS becomes
-// INTENTION_RENDER,
-
-// ATTR CONNECTION flags
-#define CONNECTION_FLAG_COPY_ON_DISCONNECT (1ull << 0)
-
-// for optional attributes, indicates the when the connection is broken, the local attribute
-// should be removed from the bundle rather than left in place
-// in this case any attributes connected to this one will be disconnected first
-#define CONNECTION_FLAG_DESTROY_ON_DISCONNECT (1ull << 1)
-
-// normally when a local attribute is connected to a remote one, the local attr becomes readonly,
-// the local attribute returns the data value from the remote one
-// when an attr is connected, the owner of the remote attr may set this, which allowes writes to teh local attr
-// to be forwarded to the remote one
-// the automation handles this by adding callbacks to the value_updated hook for the attr "data"
-#define CONNECTION_FLAG_READ_WRITE (1ull << 2)
-
-// this is for attributes connected as part of a transform
-// indicates that data_request may return REQUEST_WAIT_RETRY from data_request hook
-// if the attribute is flagged realtime,
-// the data_request should be done as early as possible
-// so that it will be ready when actually needed
-
-#define CONNECTION_FLAG_ASYNC_UPDATES (1ull << 3)
-
-// Transform flags
-
-// this flag bit indicates that the transform can be actioned "at will"
-// note that the caps still need to be valid, all mandatory attrs set
-// any extra_conditions met
-#define TX_FLAG_NO_NEGOTIATE				1
-
-// the transform does not return immediately
-// depending on threading automation level, the caller should either provide a thread instance
-// to action it, or ask the automation to supply one
-// if caller chooses to action it using seld thread then the instance will be flagged as busy
-#define TX_FLAG_ASYNC
-
-// indicates that multiple simultaneous copies of the transform can be actioned, however
-// some segemnts may be single threaded - other copies will be queued temporarily
-#define TX_FLAG_QUEUED					2
-
-// indicates that multiple copies of the transform can be actioned simultaneously, with no
-// additional performance costs
-#define TX_FLAG_THREADSAFE				3
-
-// indicates that the transform can benefit from having multiple threads assigned to it
-#define TX_FLAG_PARALLEL				4
-
-// indicates that actioning the transform usilises system resources to an extend that it should
-// be actioned only when strictly necessary
-#define TX_FLAG_COSTLY					5
-
-// may be set if a problem is detected running the transform - e.g missing in / out attrs
-#define TX_FLAG_BROKEN					16
-
-// function wrappings
-
-// the underlying fn type, can only be one of these
-#define FUNC_TYPE_UNDEFINED		0 // placeholder
-#define FUNC_TYPE_STANDARD 		1 // nirva_function_t format available
-#define FUNC_TYPE_NATIVE 		2 // native format available, params mapped to / from attrs
-#define FUNC_TYPE_SCRIPT 		3 // script format available - parsed at runtime
-
-// wrapping refers to how a trajectory as a whole is presented
-// real refers to the individual functionals in the trajectory
-/// there maybe one type or a mixture
-// for NATIVE wrapping, we have a choice, - either va_list params can be mapped to attrs
-// or else the attrs can be set directly
-
-// for standard wrapping, there is no mapping from params to attrs at teh trajectory level
-//
-// info about the type, we can have segment, structural, automation, external,
-// callback, conditional, placeholder, synthetic
-// some functionals may fit in > 1 category, in which case, the most specific
-// less generic option should be used, takiing into consideration the internded purpose of the functional
-
-NIRVA_ENUM(
-  FUNC_CATEGORY_GENERAL,	// uncategorised
-  FUNC_CATEGORY_CORE,	// marks an IMPL function
-  FUNC_CATEGORY_TX_SEGMENT,	// function contained in a transform. segment
-  FUNC_CATEGORY_HELPER,	// a helper function in a segment, whoch should not be run in the sequence (e.g calc_array_size)
-  // represents "static" transform in structurals, this means:
-  // - the contract is not held in an object, but in the static lookup table
-  // - the contract is referenced by name rather than by icaps
-  // - the default CAPs are always valid, and are not adjusted
-  // - the contract is flagged "no-negotiate"
-  // - there are no optional input / output attributes
-  // - the trajectory corresponding to the transform is native wrapped
-  // - there is a single non optional output attribute, which can be returned from the native wrapper
-  FUNC_CATEGORY_STRUCTURAL,
-  FUNC_CATEGORY_TRANSFORM,	// "function" is a trajectory which can action a transform
-  FUNC_CATEGORY_AUTOMATION,	// any kind of auto script
-  FUNC_CATEGORY_CALLBACK,	// function added to a hook cb stack
-  // functional which divides a set of candidates into subsets, discrete (either or) or by affinity (-1. to + 1.)
-  FUNC_CATEGORY_CLASSIFIER,
-  // a subtype of classifier, which divides candidates into two discrete subsets, valid and invalid for example
-  FUNC_CATEGORY_SELECTOR,
-  // a subtype of selector which operates on a single candidate at a time
-  FUNC_CATEGORY_CONDITIONAL,
-  // a subtype of classifier which assigns candidate affinities to two subsets, positive and negative
-  FUNC_CATEGORY_RANKING,
-  FUNC_CATEGORY_SYNTHETIC,	// "functions" that wrap around non functions - e.g macros
-  FUNC_CATEGORY_INTERNAL,	// internal utility
-  FUNC_CATEGORY_WRAPPER,	// a function shell, interface to other fuctions
-  FUNC_CATEGORY_EXTERNAL,	// an external "native" function which can be called directly or indirectly
-  FUNC_CATEGORY_UTIL, 		// for small general fuctions . macros which do not fit in any other category
-  FUNC_CATEGORY_OUTSIDE,	// falls outside of nirva, eg. library or system call
-  FUNC_CATEGORY_PLACEHOLDER,// for reference / info only - do not call
-  FUNC_CATEGORY_NATIVE_TEXT,// textual transcription of native code
-  FUNC_CATEGORY_ORACLE,	// an oracle function
-  N_STD_FUNC_CATEGORIES 	// values above this may be used for custom categories
-)
-
-#define SCRIPT_MATURITY_INVALID			0
-#define SCRIPT_MATURITY_UNCHEKED		1
-#define SCRIPT_MATURITY_FIRST_PASS     		2
-#define SCRIPT_MATURITY_PARSED			3
-#define SCRIPT_MATURITY_OPTIMISED	       	4
-
-///////////// error codes ///////////////
-
-#define OBJ_ERROR_NULL_OBJECT			1
-#define OBJ_ERROR_NULL_ATTRIBUTE		2
-#define OBJ_ERROR_INVALID_ARGUMENTS		3
-#define OBJ_ERROR_NOSUCH_ATTRIBUTE		4
-#define OBJ_ERROR_ATTRIBUTE_INVALID		5
-#define OBJ_ERROR_ATTRIBUTE_READONLY		6
-#define OBJ_ERROR_NULL_ICAP			7
-#define OBJ_ERROR_NULL_CAP			8
-#define OBJ_ERROR_NOT_OWNER			9
-
-// transform status (int64)
-#define TRANSFORM_ERROR_REQ -1 // not all requirements to run the transform have been satisfied
-#define TRANSFORM_STATUS_NONE 0
-
-// transform is being configured / created
-#define TRANSFORM_STATUS_CONFIGURING 	1
-
-// CAPS have been checked and subset is valid
-#define TRANSFORM_STATUS_CAPS_VALID 	2
-
-// transform is being negotiated
-#define TRANSFORM_STATUS_NEGOTIATING 	3
-
-// transform is ready to be actioned
-#define TRANSFORM_STATUS_READY	 	4
-
-// inital statuses
-// transform has been actioned and is queued for trajectory_runner
-#define TRANSFORM_STATUS_QUEUED 	8
-
-// transform is preparing for execution
-#define TRANSFORM_STATUS_PREPARING 	9
-
-// runtime statuses
-#define TRANSFORM_STATUS_RUNNING 	16 ///< transform is "running" and the state cannot be changed
-#define TRANSFORM_STATUS_WAITING 	17	///< transform is waiting for conditions to be satisfied
-#define TRANSFORM_STATUS_PAUSED	 	18///< transform has been paused, via a call to the pause_hook
-
-// transaction is blocked, action may be needed to return it to running status
-#define TRANSFORM_STATUS_BLOCKED 	19///< transform is waiting and has passed the blocked time limit
-
-// final statuses
-#define TRANSFORM_STATUS_SUCCESS 	32	///< normal / success
-#define TRANSFORM_STATUS_CANCELLED 	33  ///< transform was cancelled via a call to the cancel_hook
-#define TRANSFORM_STATUS_ERROR  	34	///< transform encountered an error during running
-#define TRANSFORM_STATUS_TIMED_OUT 	35	///< timed out waiting for data / sync
-
-// results returned from actioning a transform
-// in the transform RESULTS item
-// negative values indicate error statuses
-#define TX_RESULT_ERROR        		-1
-#define TX_RESULT_CANCELLED 		-2
-#define TX_RESULT_DATA_TIMED_OUT 	-3
-#define TX_RESULT_SYNC_TIMED_OUT 	-4
-
-// segment was missing some data which should have been specified in the contract
-// the contract should be adjusted to avoid this
-// an ADJUDICATOR object may flag the contract as invalid until updated
-#define TX_RESULT_CONTRACT_WAS_WRONG 	-5
-
-// a data connection was broken and not replaced
-#define TX_RESULT_CONTRACT_BROKEN 	-6
-
-// not all of the promised output attributes were created
-#define TX_RESULT_UNFULFILLED 		-7
-
-// SEGMENT_END was not listed as a possible next segment
-// and no conditions were met for any next segment
-// the trajectory or contract should be adjusted to avoid this
-// an ADJUDICATOR object may flag the contract as invalid until updated
-#define TX_RESULT_TRAJECTORY_INVALID 	-8
-
-#define TX_RESULT_INVALID 		-8
-
-#define TX_RESULT_NONE 			0
-
-#define TX_RESULT_SUCCESS 		1
-
-// failed, but not with error
-#define TX_RESULT_FAILED 		2
-
-// transform is idling and may be continued by trigering the RESUME_REQUEST_HOOK
-#define TX_RESULT_IDLING 		3
-
-//  cascade matrix node values
-
-#define CASC_MATRIX_NOOP		0
-#define CASC_MATRIX_REMOVE		1
-#define CASC_MATRIX_SET_OP		2
-
-// HOOK types
-//  there are 4 hook "models"
-
-NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_HOOK_MODEL_CONFIG,	\
-                   NIRVA_HOOK_MODEL_DATA, NIRVA_HOOK_MODEL_REQUEST,	\
-                   NIRVA_HOOK_MODEL_SPONTANEOUS, NIRVA_N_HOOK_MODELS);
-
-// the model combined with HOOK_FLAGS defines the hook_type
-// bundles can have one HOOK_STACK per hook_type, however these are only created on demand
-
-// this flag bit indicates that the hook should be triggered just prior to the triggering event (data change,
-// config update, spontaneous event, or request handling)
-#define NIRVA_HOOK_FLAG_BEFORE		(1ull << 0)
-
-// for CONFIG mpdel
-#define NIRVA_HOOK_FLAG_DELETE		(1ull << 1) // ??
-
-// depending on the details of the triggering event, these basic hook_types can then be "cascaded"
-// to produce further finely divided "hook_numbers"
-
-// these flags - hook_details, describe properties of the cascaded values
-
-#define NIRVA_HOOK_DTL_SELF			(1ull << 0) // only the object istself may add callbacks
-
-// hook caller will continue to retry conditions until they succeed
-// or the hook times out
-#define NIRVA_HOOK_DTL_COND_RETRY		(1ull << 1)
-
-// conditions will be checked once only, on fail the operation triggering the hook
-// will be abandoned. For request hooks, REQUEST_NO will be returned
-#define NIRVA_HOOK_DTL_COND_ONCE		(1ull << 2)
-
-// spontaneous
-
-// hook was triggered by some underlying condition, eg. a native signal rather than being
-// generated by the application
-#define NIRVA_HOOK_DTL_NATIVE         	(1ull << 7)
-
-NIRVA_TYPEDEF_ENUM(nirva_hook_number,
-                   NO_HOOK = 0,
-                   /// CONFIG hook model
-                   // config hooks - these are based on other models, but given an omportant significance
-
-                   // transform suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
-                   // hook_stack specifc to structure_app
-                   FATAL_HOOK,
-
-                   // state changing from normal -> not ready, i.e. restarting
-                   // this is specific to structure_app
-                   RESETTING_HOOK,  // object state / before
-
-                   // bundle is about to be freed
-                   // THIS IS A VERY IMPORTANT HOOK POINT, anything that wants to be informed when
-                   // a bundle is about to be freed should add a callback here
-                   // this is actually the HOOK_CB_REMOVED hook for the stack
-                   // - all callbacks are force removed when an object is about to be recycled
-                   // hook_stack is created on demand when a callback is added
-                   DESTRUCTION_HOOK, // hook_cb_remove, bundle_type == object_instance
-
-                   // thread running the transform received a fatal signal
-                   // DTL_NATIVE
-                   THREAD_EXIT_HOOK,
-
-                   // for an APPLICATION instance, these are GLOBAL HOOKS
-                   N_GLOBAL_HOOKS,// 4
-
-                   // The following are the standard hook points in the system
-                   // all DATA_HOOKS must return "immedaitely"
-
-                   // OBJECT STATE and SUBTYPE HOOKS
-                   // these passive hooks, provided the system has semi or full hook automation
-                   // the structure will call them on behalf of a thread instance
-
-                   // these are spontaneous hooks, triggered when a transform with intent
-                   // create bundle or copy bundle complete susccesfully and create a bundle
-                   // of type object_template or object_instance
-
-                   // the hook_stacks for these are in the structure, adding removing, triggering
-                   // is done via a structure transform
-                   OBJECT_CREATED_HOOK, // object state / after
-
-                   INSTANCE_COPIED_HOOK,
-
-                   // these hooks are specific to bundle_type object_template, object_instance
-                   // they are data hooks for specific strands
-                   // hook_stacks are contained in the bundle
-                   MODIFYING_SUBTYPE_HOOK,
-                   // object subtype changed
-                   SUBTYPE_MODIFIED_HOOK,
-                   ALTERING_STATE_HOOK,
-                   STATE_ALTERED_HOOK,
-
-                   // add strand is triggered when data is to be appended to a non existent strand, ie old value is absent
-                   // delete strand is triggered from delete_strand, ie. new_value is absent
-
-                   ADDING_STRAND_HOOK, // 10
-
-                   DELETING_STRAND_HOOK,
-
-                   STRAND_ADDED_HOOK,
-
-                   STRAND_DELETED_HOOK,
-
-                   // DATA_HOOK model
-
-                   // for ARRAYs
-
-                   APPENDING_ITEM_HOOK,
-
-                   REMOVING_ITEM_HOOK,
-
-                   CLEARING_ITEMS_HOOK,
-
-                   ITEMS_CLEARED_HOOK,
-
-                   ITEM_APPENDED_HOOK,
-
-                   ITEM_REMOVED_HOOK,
-
-                   // for SCALAR values
-                   UPDATING_VALUE_HOOK,
-
-                   VALUE_UPDATED_HOOK, //21,
-
-                   // TRANSFORM lifecycle hooks
-                   // these are triggered by transform state changes
-                   // transforms begin in state UNQUEUED,
-                   // once actioned they may go into state QUEUED
-                   // or straight to PREPARING -> PREPARED -> TX_START
-                   // after this we will have a sequence of one or more SEGMENT_START, SEGMENT_END
-                   // DATA_READY indicates a sequential out or in . out sttr has been updated
-                   // the state may also change to PAUSED -> RESUMING
-                   // the state may also change to SYNC_WAIT -> TX_BLOCKED -> TIMED_OUT
-                   // the state may also change to WAITING -> TX_BLOCKED -> TIMED_OUT
-                   // ERROR, CANCELLED, TIMED_OUT (data),CONTRACT_BREACHED, SYNC_ANNOUNCE can be set spontaneously
-                   // then we can have ATTRS_UPDATED
-                   // finally, COMPLETED
-                   // after this, the transform will be returned to the caller with TX_RESULT updated
-
-                   // these hook stacks are created on demand when a callback is added to a transform bundle
-
-                   PREPARING_HOOK,  /// none or queued -> prepare
-
-                   PREPARED_HOOK,  /// prepare -> running
-
-                   TX_START_HOOK, /// any -> running //25
-
-                   ///
-                   PAUSED_HOOK, ///< transform was paused via pause_hook
-
-                   ///< transform was resumed via resume hook (if it exists),
-                   // and / or all paused hook callbacks returning
-                   RESUMING_HOOK,
-
-                   COMPLETED_HOOK,   /// 27 running -> finished
-
-                   /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
-                   // and mey be actioned again
-                   IDLE_HOOK,
-
-                   TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
-
-                   ///< error occured during the transform
-                   // if the object has a transform to change the status
-                   // back to running this should be actioned
-                   // when the FINISHED_HOOK is called
-                   // otherwise if there is a transform to return the status to normal
-                   // this should be actioned instead
-                   // and TX_RESULT_ERROR returned
-                   // otherwise do nothing, and let the transform return TX_RESULT_ERROR
-                   ERROR_HOOK,
-
-                   CANCELLED_HOOK, ///< tx cancelled via cancel_hook, transform will return TX_RESULT_CANCELLED
-
-                   // transform is waiting for some external event. If it reamins in this state too long it
-                   // may become BLOCKED and then eventually TIMED_OUT
-                   TX_WAITING_HOOK,
-
-                   ///< tx is blocked, may be triggered after waiting has surpassed a limit
-                   // but hasnt yet TIMED_OUT
-                   // indicates that some external action may be needed to allow the transform to continue
-                   //
-                   // to any hooks with callbacks - callbacks shoudl return quickly
-                   // but especilly important for hooks with cb type COND_RETRY
-
-                   // an ARBITRATOR object can attempt to remedy the situation,
-                   // for SYNC_WAIT this implies finding which Conditions are delaying and attempting
-                   // to remedy this
-                   // for DATA_REQUEST this implies cheking why the data provider is delaying,
-                   // and possibly finding
-                   // a replacement
-                   // for SEGMENT, the arbitrator may force the Transform to resume,
-                   // if multiple next segments are causing the
-                   // delay it may select which one to follow next, preferring segment_end
-                   // if avaialble, to complete the transform
-
-                   TX_BLOCKED_HOOK,
-
-                   //
-
-                   // SPONTANEOUS HOOK model
-                   //
-                   // spontaneous hooks are not triggered by data changes, but rather as a response to
-                   // events, or at fixed points in a transform.
-                   //
-                   //
-
-                   // this hook is triggered whenever some contract condition is found to be broken
-                   // for example, an attr connectin being broken, a missing input attribute
-                   // if ARBITRATOR is enabled, then it will handle callbacks for this hook
-                   // if due to mising attrs, then the transform will end with reeult TX_RESULT_CONTRACT_WAS_WRONG
-                   // this is a spntaneous hook, the stack is held in the structure, adding, removing or
-                   // triggering is done via structural transform, triggering requires priveleges
-                   // attributes include the transform bundle, and details of the breach
-                   CONTRACT_BREACHED_HOOK,
-
-                   //
-                   // this is a "self hook" meaning the object running the transform only should append to this
-                   // the calling thread will block until either: all callbacks return TRUE, or a "control variable" is set to TRUE
-                   // callbacks for this hook number must return boolean
-                   // hook_stack is in the thread instance, as it is a self hook, callbacks are added via functional code
-                   // and triggered by functional code
-                   SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until
-
-                   // functionals may trigger sync announcements at key points during their processing
-                   // other threads can add callbacks for this and be advised when such a point is reached
-                   // hook_stack is in the thread instance
-                   // hook is triggered by functional code
-                   SYNC_ANNOUNCE_HOOK, ///< synchronisation point, transform is waitng until
-
-                   /// tx transition from one trajectory segment to the next
-                   // after this hook returns. a cascade will be run to decide the next segment
-                   // this hook provides an opportunity to affect the choice
-                   // trajectory may have a next segment which can be overwritten
-                   // setting this will require PRIV_TRANSFORMS > 10
-                   // hook_stack is in the transform bundle
-                   SEGMENT_END_HOOK,
-
-                   // this is triggered when a new trajectory segment is about to begin
-                   // for the inital segment, TX_START is triggered instead
-                   // for segment end, FINISHED_HOOK runs instead
-                   // hook_stack is in the transform bundle
-                   SEGMENT_START_HOOK, // 40
-
-                   // this hook may be triggered after a transform completes
-                   // it will highlight any IN_OUT attrs which have been altered
-                   // and any OUTPUT attrs which may have been created
-                   // i.e it collates any hook_callbacks for the array in TX_ATTRS
-                   // for the FUNC_DATA bundle
-                   // hook_stack is in the attr_group bundle
-                   ATTRS_UPDATED_HOOK,
-
-                   // calbacks for the following two hooks are allowed to block "briefly"
-                   // so that data can be copied
-                   // or edited. The hook callback will receive a "max_time_target" in input, the value depends
-                   // on the caller and for data prep this is divided depending on the number
-                   // of callbacks remaing
-                   // to run. The chronometer may help with the calculation.
-                   // objects which delay for too long may be penalized, if they persistently do so
-
-                   // tx hooks not associated with status change
-                   // if the data is readonly then DATA_PREVIEW_HOOK is cal
-                   // DATA_READY + BEFORE
-                   // this hook_stack is held in the transform bundle
-                   DATA_PREVIEW_HOOK,
-
-                   // data in its "final" state is ready
-                   // data is readonly. The Transform will call all callbacks in parallel and will not block
-                   // however it will wait for all callbacks to return before freeing / altering the data
-                   // this hook_stack is held in the transform bundle
-                   DATA_READY_HOOK,
-
-                   // adding a callback here will cause it to be called when a callback is removed (detached) from
-                   // a hook stack in the same bundle, the target_hook_type can be specified ot can be all
-                   HOOK_CB_DETACHING_HOOK,
-
-                   // this is called automatically when a callback is added to any hook_stack
-                   // all request hooks are cascaded versions of this, depending on the stack
-                   // added to, e.g add a callback (request) to the data request queue
-                   // this triggers hook attached callback
-                   // there is an automation callback (run last),
-                   // which when triggered, cascades the trigger using the
-                   // hook_stack parameter, and triggers a follow on trigger "data_request"
-                   //
-                   // which is a virutal hook, that in turn toggles a flag bit for the attribute
-                   // thus the thread actioning the transform can add a callback to the hook_cb_attached hook
-                   // a.k.a REQUEST_HOOK, specifying the request_type (e.g. data_request), target_item (attribute_name)
-                   // and respond directly, otherwise, the structure will repsond on the thread's behalf
-                   // the request will remain in the data_request hook_stack. At some later point, the thread
-                   // can trigger data_ready, and all appropriate cllbacks in the data_request stack are actioned
-                   // in this way, threads can be notified instantly of requests, or async via
-                   HOOK_CB_ATTACHED_HOOK,
-
-                   // this can be used for debugging, in a function put NIRVA_CALL(trace, "Reason")
-                   // the hook stack will be held in one or other structural subtypes
-                   TRACE_HOOK, //47
-
-                   // REQUEST HOOK model -certain objects will provide request hook stacks, and requests
-                   // can be added to these
-                   // sometimes requests will be responded to immediatel with YES, NO, or NEEDS_PRIVELEGE
-                   // otherwise WAIT will be returned and the request result will be provided asyn via a
-                   // callback function supplie with the hook request
-                   //
-                   // if the target object is not active, or is busy, the automation may
-                   // step in and action the transform itself
-                   //
-                   // the callback function added is designed to receive the request response
-                   // if the reequest is responded to YES or NO immediately, the callback is not added
-                   // if the response is wait or proxy, then the callback will be added and triggered on YES or NO
-
-                   // these are similar to no negotiate contracts, however requests can be made even whilst
-                   // another transform is already running, and there are no requirement to try to
-                   // add a callback (although the request may be rejected, and some requests require PRIV levels)
-
-                   // requests are cascade values of the HOOK_ATTACHED_HOOK
-                   // a request is made by adding a request_bundle to the target's request hook
-                   // the result is to trigger a hook_attached_hook. If this is not reponded to (ie. no callbacks exist),
-                   // then wait_retry
-                   // will be returned. The object thread will at some later point, check the request stacks,
-                   // and respond by changing transform state, or triggering another hook (e.g. data_ready)
-                   // at that point, any requests in the request stacks will be responded to (request_yes)
-                   // thus when making a request, the requester can provide a callback function - if the response is
-                   // wait_retry or proxied, the caller can do something else until the callback is triggered
-                   // this is simailar to adding a callback except that the automation will ensure only the most recent
-                   // request for a particular emmision is retained in the request stack. In addition the running thread
-                   // will know to trigger something becuase there are callbacks in a request stack
-
-                   DATA_REQUEST_HOOK,
-
-                   // this is called by autopmation in response to refcount reaching (explicitly or implicitly) zero
-                   // objects can add callbacks here, if request_yes is returned, the bundle will be recycled
-                   // it is possible to return request_no (all object templates will return this, as well as structural instances)
-                   // in this case a privelege is required to recycle the bundle
-                   // the responder can also return request_wait_retry if the object / bundle needs to free resources for example
-                   // the recycler will then wait and try at a later time
-                   DESTRUCT_REQUEST_HOOK,
-
-                   // target is transform "status", value is cancelled
-                   CANCEL_REQUEST_HOOK, // an input hook which can be called to cancel a running tx
-                   //
-                   // ask the transform to pause processing. May not happen immediately (or ever,
-                   // so add a callback
-                   // for the PAUSED hook)
-                   // will wait for all callbacks to return, and for unpause hook (if it exists) to be called
-                   // target is transform "status", value is pausedd
-                   PAUSE_REQUEST_HOOK,
-
-                   // if this hook exists, then to unpause a paused transform this must be called
-                   // and all paused
-                   // callbacks must have returned (may be called before the functions return)
-                   // after this, the unpaused callbacks will be called and processing will only continue
-                   // once all of those have returned. Calling this  when the tx is not paused or
-                   // running unpaused
-                   // hooks will have no effect
-                   // target is transform "status", value is resuming
-                   RESUME_REQUEST_HOOK, //61
-
-                   // normally, sub bundles cannot be reparented from one bundle to another;
-                   // UNLESS they are contained in attribute owned by the caller
-                   // or in a KEYED_ARRAY owned by the caller (essentially the same thing)
-                   // sending this request to an attribute owner, if allowed, will result in the attribute
-                   // ownership being transferred to the caller and the attribute will be reparented
-                   //
-                   TRANSFER_REQUEST_HOOK,
-
-                   // if the transform exposes this hook, then this request can be triggered after or
-                   // during a transform. If accepted, the target
-                   // will reverse the pervious data update either for the attribute of for
-                   // the previous transform
-                   // target / value TBD. If the transform cannot be undone further,
-                   // NIRVA_REPSONE_NO should be returned
-                   // target is a transform with completed status
-                   UNDO_REQUEST_HOOK,
-
-                   // if the transform exposes this hook, then this request can be triggered after or
-                   // during a transform. If accepted, the target
-                   // will reverse the pervious data undo either for the attribute of
-                   // for the previous transform
-                   // target / value TBD. If the transform cannot be redone further,
-                   // NIRVA_REPSONE_NO should be returned
-                   // target is a transform with completed status
-                   REDO_REQUEST_HOOK,
-
-                   // this request may be made before or after connect a local attribute to a remote one
-                   // when an attribute is connected, it becomes readonly by default
-                   // in case the object connecting wants write access, it must call this with a callback as data
-                   // if the request is accepted, the callback is added to to the data_preview hook
-                   // whenevr data is ready for editing, the callback will be triggered with the attribute
-                   // marked rw. The target_dest is an attr_group which the attribute is part of,
-
-                   ATTR_CONNECT_RW_REQUEST,
-
-                   //
-                   // if the app has an arbitrator, an object bound to a contract may tigger this, and on
-                   // COND_SUCCESSm the attribute will be disconnected with no penalties
-                   // target is local attribute "value", value is NULL
-                   SUBSTITUTE_REQUEST_HOOK,
-                   //
-                   //
-                   // hooks reserved for internal use by instances
-                   INTERNAL_HOOK_0,
-                   INTERNAL_HOOK_1,
-                   INTERNAL_HOOK_2,
-                   INTERNAL_HOOK_3,
-                   ///
-                   N_HOOK_POINTS
-                  )
-
-#define RESTART_HOOK RESETTING_HOOK
-
-// for some hook callbacks a value of true returned means the hook callback will stay in the
-// callback stack. Setting this ensures that it is removed after the first call, even if
-// true is returned
-#define HOOK_CB_FLAG_ONE_SHOT			(1 << 1)
-
-// abstraction levels - these may be used to denote the level that some fucntion operates at
-
-NIRVA_ENUM(
-  NIRVA_ABSTRACTION_DATA_NODES, // level dealing with individual pieces of data: naem, type, value, array_size
-  NIRVA_ABSTRACTION_STRANDS, // data plus and abstract definition (strand_def in blueprint)
-  NIRVA_ABSTRACTION_BUNDLES, // grouping of strands, defined in a blueprint
-  NIRVA_ABSTRACTION_BUNDLE_TYPES, // differentiation of bundles, assignment to specific roles
-  NIRVA_ABSTRACTION_OPERATIONAL, // hook triggers and callbacks, attributes, functional threads
-  NIRVA_ABSTRACTION_TRAJECTORY, // abstract thread instances, states, segments, differentiation of hook types
-  NIRVA_ABSTRACTION_TRANSFORMS, // input data, output data, transform results, specific for intent / caps
-  NIRVA_ABSTRACTION_CONTRACTS, // linking of intentcaps to specific transforms, requirements, negotiation
-  NIRVA_ABSTRACTION_INTENTCAPS, // level dealing with intentcaps, mapping of these to contracts or sequences
-  NIRVA_ABSTRACTION_APPLICATION, // a mechanism for satisfying intentcaps, includes standalone and plugin extensions
-  NIRVA_ABSTRACTION_UNIVERSE // the entire set of known applications / plugins
-)
-
-//#define NIRVA_BUNDLE_TYPE bundle_type
-#define NIRVA_BUNDLE_TYPE NIRVA_UINT64
-#define NIRVA_BUNDLEPTR_ARRAY NIRVA_ARRAY_OF(NIRVA_BUNDLEPTR)
-#define NIRVA_CONST_STRING_T NIRVA_CONST NIRVA_STRING_T
-NIRVA_TYPEDEF(NIRVA_CONST_STRING_T, NIRVA_CONST_STRING)
-#define NIRVA_STRING_ARRAY NIRVA_ARRAY_OF(NIRVA_STRING_T)
-#define NIRVA_CONST_STRING_ARRAY NIRVA_CONST NIRVA_STRING_ARRAY
-#define NIRVA_GENPTR_ARRAY NIRVA_ARRAY_OF(NIRVA_GENPTR)
-
-NIRVA_TYPEDEF(NIRVA_BUNDLEPTR_T, NIRVA_BUNDLEPTR)
-
-#ifndef NIRVA_CONST_BUNDLEPTR_T
-#define NIRVA_CONST_BUNDLEPTR_T NIRVA_BUNDLEPTR_T
+NIRVA_EXTERN NIRVA_BUNDLEPTR STRUCTURE_PRIME;
+NIRVA_EXTERN NIRVA_BUNDLEPTR STRUCTURE_APP;
+NIRVA_CMD(NIRVA_STATIC NIRVA_BUNDLEPTR _TMP_STORAGE_BUNDLE)
+/////////////
+
+#ifdef HAVE_MAKE_STRANDS_FUNC
+#define _NIRVA_DEPLOY_MAKE_STRANDS_FUNC
+#else
+#define HAVE_MAKE_STRANDS_FUNC
+#define _NIRVA_DEPLOY_MAKE_STRANDS_FUNC static char *make_strand(const char *fmt,va_list ap){ \
+      va_list vc;							\
+      char *st;size_t strsz;						\
+      va_copy(vc, ap);							\
+      strsz=vsnprintf(0,0,fmt,vc);					\
+      va_end(vc);							\
+      st=malloc(++strsz);vsnprintf(st,strsz,fmt,ap);return st;}		\
+    NIRVA_CONST_STRING_ARRAY make_strands(NIRVA_CONST_STRING fmt,...){			\
+      p_debug("\nGenerating bundle definition\n");			\
+      const char**sts=0,*xfmt,*str;int ns=0;va_list ap;va_start(ap,fmt); \
+      while(1) {if (*fmt) {if (!(xfmt=va_arg(ap,char*))) break; vsnprintf(0,0,xfmt,ap);} \
+	else {if (!(str = va_arg(ap, char *))) break; p_debug("got %s\n", str);}  ns++;} va_end(ap); \
+      p_debug("\nCounted %d atoms\n", ns);				\
+      sts=malloc((ns+1)*sizeof(char*));va_start(ap,fmt);		\
+      if (*fmt) xfmt = fmt;						\
+      else xfmt = "%s";							\
+      p_debug("\nAllocated %d atoms\n", ns+1);				\
+      for(int i = 0; i < ns; i++) {					\
+	p_debug("\nproceesing %d of %d\n", i, ns);			\
+	if (i > 0) xfmt=(*fmt?va_arg(ap,char*):"%s");			\
+	sts[i]=make_strand(xfmt,ap);					\
+	p_debug("\nproceesed %d of %d\n", i, ns);			\
+      }									\
+      va_end(ap);sts[ns]=0;return sts;}
 #endif
 
-NIRVA_TYPEDEF(NIRVA_CONST_BUNDLEPTR_T, NIRVA_CONST_BUNDLEPTR)
-
+// this function should be called with a bundle name, followed by a sequence of char **
+// each char ** array must be NULL terminated
+// the final parameter must be NULL
+// the result will be a const char ** which joins all the other arrays into 1, ignoring te final NULLS
+// if name is not NULL, a comment #name will be prepended
+// and in every case, a terminating NULL string will be appended to the final array
+// and the amalgamated array returned
+// thus it is possible to call, for example:
+// 	const char **bdef = make_bundledef("main bundledef", make_strands(a, b, NULL),
+//	 make_bundledef("sub bundledef", make_strands(c, d, NULL), NULL), NULL);
+// this would return an array {"#main bundledef", a, b, "#sub bundledef", c, d, NULL}
+// in this manner it is possible to nest bundldefs (macro EXTEND_BUNDLE works like this)
+// In the latest version the second param can be NULL or a prefix
+#ifdef HAVE_MAKE_BUNDLEDEF_FUNC
+#define _NIRVA_DEPLOY_MAKE_BUNDLEDEF_FUNC
+#else
+#define HAVE_MAKE_BUNDLEDEF_FUNC
+#define _NIRVA_DEPLOY_MAKE_BUNDLEDEF_FUNC				\
+  const char **make_bundledef(const char*n,const char*pfx,...){		\
+    char**sT=0,*str;int nsT=0;va_list ap;if(n&&*n){size_t Cln=strlen(n)+1; \
+      if(n){p_debug("\nGenerating bundle definition for %s\n",n);str=malloc(++Cln); \
+	snprintf(str,Cln,"#%s",n);sT=(char**)MS("",str,0);nsT++;}	\
+      else str=malloc(Cln);va_start(ap,pfx);while(1){int nC=0;char**newsT=va_arg(ap,char**); \
+	if(!newsT)break;while(newsT[++nC]);sT=realloc(sT,(nsT+nC+1)*sizeof(char*)); \
+	for(nC=0;newsT[nC];nC++){size_t strsz=snprintf(0,0,"%s%s",pfx?pfx:"",newsT[nC]); \
+	  p_debug("Adding strand:\t%s\n",newsT[nC]);if(strsz){sT[nsT]=malloc(++strsz); \
+	    snprintf(sT[nsT++],strsz,"%s%s",pfx?pfx:"",newsT[nC]);}}}va_end(ap); \
+      p_debug("Bundledef complete\n\n");sT[nsT]=0;return(const char**)sT;}return 0;}
 #endif
-#ifndef NIRVA_CONST_BUNDLEPTR_ARRAY
-#define NIRVA_CONST_BUNDLEPTR_ARRAY NIRVA_ARRAY_OF(NIRVA_CONST_BUNDLEPTR)
+
+#define COND_NARGS_VARIABLE _1
+#define COND_NARGS_INVALID -999
+
+#define FMT_COND_KWORD(cond)NIRVA_FMT_STRING,#cond
+#define FMT_COND_LOGIC(cond)NIRVA_FMT_INT,cond
+#define FMT_COND_OP(cond)NIRVA_FMT_INT,cond
+#define FMT_COND_VAL(cond)NIRVA_FMT_INT,cond
+
+// all values are stored as string, e.g. int -> "%d" ->
+#define COND_START		"COND_START"
+#define _COND_START		FMT_COND_KWORD(COND_START)
+
+#define COND_END		"COND_END"
+#define _COND_END		FMT_COND_KWORD(COND_END)
+
+#define COND_NOT		"COND_NOT"
+#define _COND_NOT		FMT_COND_KWORD(COND_NOT)
+
+#define COND_LIST_END		"COND_LIST_END"
+#define _COND_LIST_END		FMT_COND_KWORD(COND_LIST_END)
+
+#define COND_P_OPEN		"("
+#define _COND_P_OPEN		FMT_COND_KWORD(()
+
+#define COND_P_CLOSE		"}"
+#define _COND_P_CLOSE		FMT_COND_KWORD(})
+
+/// condfuncs //
+#define COND_NOOP					0
+// two args
+#define COND_LOGIC_NOT					1
+#define _COND_LOGIC_NOT					_CALL(FMT_COND_LOGIC,COND_LOGIC_NOT)
+
+#define COND_LOGIC_AND					2
+#define _COND_LOGIC_AND					_CALL(FMT_COND_LOGIC,COND_LOGIC_AND)
+
+#define COND_LOGIC_OR					3
+#define _COND_LOGIC_OR					_CALL(FMT_COND_LOGIC,COND_LOGIC_OR)
+
+#define COND_LOGIC_XOR					4
+#define _COND_LOGIC_XOR					_CALL(FMT_COND_LOGIC,COND_LOGIC_XOR)
+//
+// operations - for RANKING
+#define COND_OP_ADD					8
+#define _COND_OP_ADD					_CALL(FMT_COND_OP,COND_OP_ADD)
+// value operations
+#define COND_OP_SUBTRACT				9
+#define _COND_OP_SUBTRACT				_CALL(FMT_COND_OP,COND_OP_SUBTRACT)
+// value operations
+#define COND_OP_MULTIPLY				10
+#define _COND_OP_MULTIPLY				_CALL(FMT_COND_OP,COND_OP_MULTIPLY)
+// value operations
+#define COND_OP_CLAMP					11
+#define _COND_OP_CLAMP					_CALL(FMT_COND_OP,COND_OP_CLAMP)
+// value operations
+#define COND_OP_ABS					12
+#define _COND_OP_ABS					_CALL(FMT_COND_OP,COND_OP_ABS)
+// value operations
+// value
+// if n is 0, push and pop (LIFO)
+// 1 arg (n)  s[n] = next op
+// with two values (-n, uid) will store as static
+#define COND_OP_STORE	      				13 // s[n] = val //
+#define _COND_OP_STORE					_CALL(FMT_COND_OP,COND_OP_STORE)
+#define COND_OP_FETCH       				14 // val = s[n] //
+#define _COND_OP_FETCH					_CALL(FMT_COND_OP,COND_OP_FETCH)
+
+#define COND_LOGIC_LAST					14
+
+#define COND_TRUE				    	NIRVA_TRUE
+#define _COND_TRUE				    	_CALL(FMT_COND_VAL,COND_TRUE)
+#define COND_FALSE				    	NIRVA_FALSE
+#define _COND_FALSE				    	_CALL(FMT_COND_VAL,COND_FALSE)
+
+// note leading _
+// zero args
+#define COND_VAL_FIRST					15
+
+#define COND_VAL_TRUE					15
+#define _COND_VAL_TRUE				    	_CALL(FMT_COND_VAL,COND_VAL_TRUE)
+#define COND_15_NARGS					0
+#define COND_15_TEST(...)			    	1
+#define COND_VAL_FALSE					16
+#define _COND_VAL_FALSE				    	_CALL(FMT_COND_VAL,COND_VAL_FALSE)
+#define COND_16_NARGS					0
+#define COND_16_TEST(...)			    	0
+//
+#define COND_VAL_EVAL					17
+#define _COND_VAL_EVAL				    	_CALL(FMT_COND_VAL,COND_VAL_EVAL)
+#define COND_17_TEST(a,...)			    	(!!(a))
+#define COND_17_NARGS					1
+#define COND_TEST_EVAL(a)				COND_TEST(VAL_EVAL,a)
+//
+#define COND_VAL_EQUALS					18
+#define _COND_VAL_EQUALS			    	_CALL(FMT_COND_VAL,COND_VAL_EQUALS)
+#define COND_18_NARGS					2
+#define COND_18_TEST(a,b,...)			    	((a)==(b))
+#define COND_TEST_EQUALS(a,b)				COND_TEST(VAL_EQUALS,a,b)
+#define COND_VAL_GT					19
+#define _COND_VAL_GT				    	_CALL(FMT_COND_VAL,COND_VAL_GT)
+#define COND_19_NARGS					2
+#define COND_19_TEST(a,b,...) 	   			((a)>(b))
+#define COND_TEST_GT(a,b)	       			COND_TEST(VAL_GT,a,b)
+#define COND_VAL_LT					20
+#define _COND_VAL_LT				    	_CALL(FMT_COND_VAL,COND_VAL_LT)
+#define COND_20_NARGS					2
+#define COND_20_TEST(a,b,...)  	 			((a)<(b))
+
+#define COND_TEST_LT(a,b)	       			COND_TEST(VAL_LT,a,b)
+#define COND_VAL_GTE					21
+#define _COND_VAL_GTE				    	_CALL(FMT_COND_VAL,COND_VAL_GTE)
+#define COND_21_NARGS					2
+#define COND_21_TEST(a,b)		    		((a)>=(b))
+#define COND_TEST_GTE(a,b)	       			COND_TEST(VAL_GTE,a,b)
+#define COND_VAL_LTE					22
+#define _COND_VAL_LTE				    	_CALL(FMT_COND_VAL,COND_VAL_LTE)
+#define COND_22_NARGS					2
+#define COND_22_TEST(a,b) 	   			((a)<=(b))
+#define COND_TEST_LTE(a,b)	       			COND_TEST(VAL_LTE,a,b)
+//
+#define COND_STR_MATCH					23
+#define _COND_STR_MATCH				    	_CALL(FMT_COND_VAL,COND_STR_MATCH)
+#define COND_23_NARGS					2
+#define COND_23_TEST(a,b)      			    	__IMPL_TEST_STRING_EQUAL__(#a,#b)
+#define COND_TEST_STR_MATCH(a,b)			COND_TEST(STR_MATCH,a,b)
+#define COND_BIT_ON					24
+#define _COND_VAL_BIT_ON			    	_CALL(FMT_COND_VAL,COND_VAL_BIT_ON)
+#define COND_24_NARGS					2
+#define COND_24_TEST(v,b)      				(((v)&(b))==(b))
+#define COND_TEST_BIT_ON(v,b)				COND_TEST(BIT_ON,v,b)
+#define COND_BIT_OFF					25
+#define _COND_VAL_BIT_OFF			    	_CALL(FMT_COND_VAL,COND_VAL_BIT_OFF)
+#define COND_25_NARGS					2
+#define COND_25_TEST(v,b)      				(!((v)&(b)))
+#define COND_TEST_BIT_OFF(v,b)				COND_TEST(BIT_OFF,v,b)
+#define COND_PROB_PERCENT			       	26
+#define _COND_VAL_PROB_PERCENT			    	_CALL(FMT_COND_VAL,COND_VAL_PROB_PERCENT)
+#define COND_26_NARGS					2
+#define COND_26_TEST(p,s)	       			((p)<=NIRVA_RAND_BAD(s))
+#define COND_TEST_PROB_PERCENT(p,a)			COND_TEST(PROB_PERCENT,p,a)
+//
+// -1 args
+#define COND_VAL_IN					27
+#define _COND_VAL_VAL_IN			    	_CALL(FMT_COND_VAL,COND_VAL_IN)
+#define COND_27_NARGS					COND_NARGS_VARIABLE
+#define COND_27_TEST(v,...)	       			nirva_cond_in_set(p, __VA_ARGS__)
+#define COND_TEST_VAL_IN(v,...)				COND_TEST(VAL_IN,__VA_ARGS__)
+
+/* #define COND_HAS_STRAND					32 */
+/* #define COND_32_TEST(b,n)	       			bundle_has_strand(b,n) */
+
+/* #define COND_HAS_ATTR					33 */
+/* #define COND_33_TEST(g,a)	       			attr_group_has_attr(b,n) */
+
+#define COND_VAL_LAST					27
+
+#define _COND_TEST(opnum,...) COND_##opnum##_TEST(__VA_ARGS__)
+#define COND_TEST(op,...) _CALL(_COND_TEST,COND_##op,__VA_ARGS__)
+
+#define NIRVA_COND_RESPONSE(r)((r)?NIRVA_COND_SUCCESS:NIRVA_COND_FAIL)
+
+#define NIRVA_COND_SUCCEEDED(r)((r)==NIRVA_COND_SUCCESS)
+#define NIRVA_COND_FAILED(r)((r)==NIRVA_COND_FAIL)
+
+#define NIRVA_COND_CHECK_SUCCEEDED(r)(NIRVA_COND_SUCCEEDED(NIRVA_COND_RESPONSE(r)))
+#define NIRVA_COND_CHECK_FAILED(r)(NIRVA_COND_FAILED(NIRVA_COND_RESPONSE(r)))
+
+#define NIRVA_RAND_BAD1(a)(((a) + .83147) * .727953)
+#define NIRVA_RAND_BAD2(a)NIRVA_RAND_BAD1(a) > 1.3846 ? NIRVA_RAND_BAD1(a) - 1.1836 : \
+    NIRVA_RAND_BAD1(a)
+#define NIRVA_RAND_BAD3(a)NIRVA_RAND_BAD1(a) > 1. ? NIRVA_RAND_BAD1(a) - 1. : \
+    NIRVA_RAND_BAD1(a)
+#define NIRVA_RAND_BAD(a)(NIRVA_RAND_BAD3(NIRVA_RAND_BAD2(NIRVA_RAND_BAD2(NIRVA_RAND_BAD2(a)))))
+
+#define COND_ALWAYS		COND_START, COND_VAL_TRUE, COND_END
+#define COND_NEVER		COND_START, COND_VAL_FALSE, COND_END
+
+#define _COND_ALWAYS		_COND_START, "%d", COND_TRUE, _COND_END
+#define _COND_NEVER		_COND_START, "%d", COND_FALSE, _COND_END
+
+#define COND_ONCE		"COND_ONCE"
+#define _COND_ONCE		FMT_CONDCHECK(COND_ONCE)
+#define COND_CHECK		"COND_CHECK"
+#define _COND_CHECK		FMT_CONDCHECK(COND_CHECK)
+#define COND_CHECK_RETURN	"COND_CHECK_RETURN"
+#define _COND_CHECK_RETURN	FMT_CONDCHECK(COND_CHECK_RETURN)
+
+// condition automation //
+#define NIRVA_COND_TEST_1(cnum,...)COND_##cnum##_TEST(__VA_ARGS__)
+#define NIRVA_COND_TEST2(cnum,p0,p1,dummy)COND_##cnum##_TEST(p0,p1)
+#define NIRVA_COND_TEST1(cnum,p0,dummy)COND_##cnum##_TEST(p0)
+#define NIRVA_COND_TEST0(cnum,dummy)COND_##cnum##_VAL
+
+#define TEST_CONDCHECK(cnum,nargs,...)NIRVA_COND_TEST##nargs(cnum,__VA_ARGS__)
+
+#define N_OP_ARGS(cnum)(cnum==15?COND_15_NARGS:cnum==16?COND_16_NARGS: \
+			cnum==17?COND_17_NARGS:cnum==18?COND_18_NARGS:	\
+			cnum==19?COND_19_NARGS:cnum==20?COND_20_NARGS:-999)
+
+#define NIRVA_TEST_COND(op,...) \
+    NIRVA_INLINE(if (op == 15 ? COND_15_TEST(__VA_ARGS__) : op == 16 ? COND_16_TEST(__VA_ARGS__) : op == 17 ? COND_17_TEST(__VA_ARGS__) : \
+		     op == 18 ? COND_18_TEST(__VA_ARGS__) : op == 19 ? COND_19_TEST(__VA_ARGS__) : op == 20 ? COND_20_TEST(__VA_ARGS__)	\
+		     : 1) NIRVA_RETURN(NIRVA_COND_SUCCESS))
+
+#define _CALLER_UID "!CALLER_UID"
+#define _TARGET_ITEM "!TARGET_ITEM"
+#define _SOURCE_ITEM "!SOURCE_ITEM"
+#define _TARGET_BUNDLE(strand) "!TARGET_BUNDLE.%s", #strand
+#define _SOURCE_BUNDLE(strand) "!SOURCE_BUNDLE.%s", #strand
+
+#define _TARGET_BUNDLE_UID "!TARGET_BUNDLE.UID"
+#define _TARGET_BUNDLE_BUNDLE_TYPE "!TARGET_BUNDLE.BUNDLE_TYPE"
+
+// if target bundle is an object, then the following are valid
+#define _TARGET_OBJECT_UID _TARGET_BUNDLE_UID
+#define _TARGET_OBJECT_TYPE "!TARGET_OBJECT.TYPE"
+#define _TARGET_OBJECT_STATE "!TARGET_OBJECT.STATE"
+#define _TARGET_INSTANCE_SUBTYPE "!TARGET_INSTANCE.SUBTYPE"
+
+#define _SOURCE_BUNDLE_UID "!SOURCE_BUNDLE.UID"
+#define _SOURCE_BUNDLE_BUNDLE_TYPE "!SOURCE_BUNDLE.BUNDLE_TYPE"
+
+#define _SOURCE_OBJECT_UID  _SOURCE_BUNDLE_UID
+#define _SOURCE_OBJECT_TYPE "!SOURCE_OBJECT.TYPE"
+#define _SOURCE_OBJECT_STATE "!SOURCE_OBJECT.STATE"
+#define _SOURCE_INSTANCE_SUBTYPE "!SOURCE_INSTANCE.SUBTYPE"
+
+#define _SOURCE_OBJECTL "SOURCE_OBJECT"
+#define _TARGET_OBJECT "TARGET_OBJECT: "
+
+#define _SOURCE_STRAND_VAL _SOURCE_VAL"%s",
+#define _TARGET_STRAND_VAL _TARGET_VAL"%s",
+
+#define _SOURCE_BUNDLE_TYPE _SOURCE_VAL"BUNDLE_TYPE",
+#define _TARGET_BUNDLE_TYPE _TARGET_VAL"BUNDLE_TYPE",
+
+#define _VAR_ARRAY_SIZE "ARRAY_SIZE: %s"
+
+#define _VAR_SYMBOLIC_VAL "SYMBOLIC: %s"
+
+#define _CONST_STRING_VAL "CONST_STRING: %s"
+#define _CONST_BOOL_VAL "CONST_BOOL: %d"
+#define _CONST_INT_VAL "CONST_INT: %d"
+#define _CONST_UINT_VAL "CONST_UINT: %u"
+#define _CONST_INT64_VAL "CONST_INT64: %"PRId64
+#define _CONST_UINT64_VAL "CONST_UINT64: %"PRIu64
+#define _CONST_DOUBLE_VAL "CONST_DOUBLE: %f"
+#define _CONST_FLOAT_VAL "CONST_FLOAT: %f"
+#define _CONST_VOIDPTR_VAL "CONST_VOIDPTR: %p"
+#define _CONST_GENPTR_VAL CONST_VOIDPTR_VAL
+#define _CONST_BUNDLEPTR_VAL "CONST_BUNDLEPTR: %p"
+
+#define VAR_STRAND_VAL "STRAND_VAL: %s"
+#define VAR_ATTR_VAL "ATTR_VAL: %s",
+
+#define VAR_STRAND_TYPE "STRAND_TYPE: %s"
+#define VAR_ATTR_TYPE "ATTR_TYPE: %s"
+#define VAR_ATTR_STRAND_TYPE "ATTR_STRAND_TYPE: %s"
+
+#define ATTR_HAS_VALUE "ATTR_HAS_VAL: %s"
+#define ATTR_EXISTS "ATTR_EXISTS: %s"
+
+// attr_has_mapping, attr_name, mappping
+#define ATTR_HAS_MAPPING "ATTR_HAS_MAPPING: %s %u"
+#define ATTR_HAS_NOT_MAPPING "ATTR_HAS_NOT_MAPPING: %s %u"
+#define ATTR_MAPPING_IS "ATTR_MAPPING_IS: %s %u"
+
+#define HAS_CAP "HAS_CAP: %s"
+#define HAS_NOT_CAP "HAS_NOT_CAP: %s"
+
+// eg _STRAND_ALLOWS, stname, CONS_BUNDLEPTR_VAL, some_bundleptr, ...
+#define STRAND_ALLOWS "STRAND_ALLOWS: %s"
+
+#define NIRVA_ERROR(...) abort();
+#define NIRVA_FAIL(...) abort();
+#define NIRVA_FATAL(...) abort();
+
+///////////////
+////////////// mini API ///
+
+
+// core MACROS
+/// fallbacks for optional overrides
+
+#ifdef NEED_NIRVA_GET_ARRAY_UINT
+#define NIRVA_MACRO_get_array_uint(bundle,strand)			\
+  NIRVA_CAST_TO_PTR(NIRVA_UINT,_NIRVA_RESULT_DEF(get_array_int,bundle,strand))
+NIRVA_EXPORTS_NOFUNC(get_array_uint)
 #endif
 
-#define NIRVA_INT_ARRAY NIRVA_ARRAY_OF(NIRVA_INT)
-#define NIRVA_UINT_ARRAY NIRVA_ARRAY_OF(NIRVA_UINT)
-#define NIRVA_INT64_ARRAY NIRVA_ARRAY_OF(NIRVA_INT64)
-#define NIRVA_UINT64_ARRAY NIRVA_ARRAY_OF(NIRVA_UINT64)
-#define NIRVA_DOUBLE_ARRAY NIRVA_ARRAY_OF(NIRVA_DOUBLE)
-#define NIRVA_FUNCPTR_ARRAY NIRVA_ARRAY_OF(NIRVA_FUNCPTR))
+#ifdef NIRVA_MACRO_get_array_uint
+#define _NIRVA_MACRO_get_array_uint(...)NIRVA_MACRO_get_array_uint(__VA_ARGS__)
+#else
+#define _NIRVA_MACRO_get_array_uint(...)NIRVA_NULL
+#endif
 
-NIRVA_TYPEDEF(NIRVA_CONST_STRING, NIRVA_STRAND)
-NIRVA_TYPEDEF(NIRVA_STRING_ARRAY, NIRVA_BUNDLEDEF)
+#ifdef NEED_NIRVA_GET_ARRAY_UINT64
+#define NIRVA_MACRO_get_array_uint64(bundle,strand)			\
+  NIRVA_CAST_TO_PTR(NIRVA_UINT64,_NIRVA_RESULT_DEF(get_array_int64,bundle,strand))
+NIRVA_EXPORTS_NOFUNC(get_array_uint64)
+#endif
 
-#endif // !SKIP_MAIN
+#ifdef NIRVA_MACRO_get_array_uint64
+#define _NIRVA_MACRO_get_array_uint64 NIRVA_MACRO_get_array_uint64
+#else
+#define _NIRVA_MACRO_get_array_uint64(...)NIRVA_NULL
+#endif
 
-//
-#define BDEF_REST_CONCAT(BNAME, PRE, EXTRA)
-#define BDEF_DEF_CONCAT(BNAME, PRE, EXTRA) PRE BNAME##EXTRA,
-#define ATTR_BDEF_DEF_CONCAT(ATTR_BNAME, PRE, EXTRA) PRE ATTR_BNAME##EXTRA,
+// functions with no builtin replacements
 
-#define BUNLISTx(BDEF_DEFx_, BDEF_DEF_, pre, extra)			\
-  BDEF_DEF_(DEF, pre, extra)						\
-    BDEF_DEF_(STRAND_DEF, pre, extra) BDEF_DEF_(VALUE, pre, extra)	\
-    BDEF_DEF_(BLUEPRINT, pre, extra) BDEF_DEF_(VALUE_CHANGE, pre, extra) \
-    BDEF_DEF_(ATTR_DEF, pre, extra) BDEF_DEF_(SEGMENT, pre, extra)	\
-    BDEF_DEF_(REFCOUNTER, pre, extra) BDEF_DEF_(ATTRIBUTE, pre, extra)	\
-    BDEF_DEF_(FUNCTIONAL, pre, extra) BDEF_DEF_(ATTR_MAP, pre, extra)	\
-    BDEF_DEF_(ATTR_CONNECTION, pre, extra) BDEF_DEF_(EMISSION, pre, extra) \
-    BDEF_DEF_(ATTR_GROUP, pre, extra) BDEF_DEF_(CAPS, pre, extra)	\
-    BDEF_DEF_(INDEX, pre, extra) BDEF_DEF_(SCRIPTLET_HOLDER, pre, extra) \
-    BDEF_DEF_(ERROR, pre, extra) BDEF_DEF_(ICAP, pre, extra)		\
-    BDEF_DEF_(HOOK_DETAILS, pre, extra) BDEF_DEF_(HOOK_STACK, pre, extra) \
-    BDEF_DEF_(HOOK_CB_FUNC, pre, extra) BDEF_DEF_(LOCATOR, pre, extra)	\
-    BDEF_DEF_(OBJECT_TEMPLATE, pre, extra) BDEF_DEF_(OBJECT_INSTANCE, pre, extra) \
-    BDEF_DEF_(MATRIX_2D, pre, extra) BDEF_DEF_(CASCMATRIX_NODE, pre, extra) \
-    BDEF_DEF_(CONDLOGIC_NODE, pre, extra) BDEF_DEF_(CASCADE, pre, extra) \
-    BDEF_DEF_(SELECTOR, pre, extra) BDEF_DEF_(FUNC_DATA, pre, extra)	\
-    BDEF_DEF_(SCRIPTLET, pre, extra) BDEF_DEF_(TRAJECTORY, pre, extra)	\
-    BDEF_DEF_(CONTRACT, pre, extra) BDEF_DEF_(TRANSFORM, pre, extra)	\
-    BDEF_DEF_(ATTR_DEF_GROUP, pre, extra) BDEF_DEF_(OBJECT_HOLDER, pre, extra)
+#ifdef NIRVA_MACRO_get_array_int
+#define _NIRVA_MACRO_get_array_int NIRVA_MACRO_get_array_int
+#else
+#define _NIRVA_MACRO_get_array_int(...)NIRVA_NULL
+#endif
 
-#define ABUNLISTx(ABDEF_DEFx_, ABDEF_DEF_, pre, extra) ABDEF_DEF_(ASPECT_THREADS, pre, extra)
+#ifdef NIRVA_MACRO_get_array_boolean
+#define _NIRVA_MACRO_get_array_boolean NIRVA_MACRO_get_array_boolean
+#else
+#define _NIRVA_MACRO_get_array_boolean(...)NIRVA_NULL
+#endif
 
-#define BUNLIST(BDEF_DEF, pre, extra) BUNLISTx(BDEF_DEF, BDEF_DEF, pre, extra)
-#define ABUNLIST(ABDEF_DEF, pre, extra) ABUNLISTx(ABDEF_DEF, ABDEF_DEF, pre, extra)
+#ifdef NIRVA_MACRO_get_array_int64
+#define _NIRVA_MACRO_get_array_int64 NIRVA_MACRO_get_array_int64
+#else
+#define _NIRVA_MACRO_get_array_int64(...)NIRVA_NULL
+#endif
 
-#ifdef IS_BUNDLE_MAKER
+#ifdef NIRVA_MACRO_get_array_double
+#define _NIRVA_MACRO_get_array_double NIRVA_MACRO_get_array_double
+#else
+#define _NIRVA_MACRO_get_array_double(...)NIRVA_NULL
+#endif
 
-#include "nirva_auto.h"
+#ifdef NIRVA_MACRO_get_array_string
+#define _NIRVA_MACRO_get_array_string NIRVA_MACRO_get_array_string
+#else
+#define _NIRVA_MACRO_get_array_string(...)NIRVA_NULL
+#endif
 
-// attribute MACROS
-#define _GET_ATYPE(a, b) _ATTR_TYPE_##a
+#ifdef NIRVA_MACRO_get_array_voidptr
+#define _NIRVA_MACRO_get_array_voidptr NIRVA_MACRO_get_array_voidptr
+#else
+#define _NIRVA_MACRO_get_array_voidptr(...)NIRVA_NULL
+#endif
 
-#define GET_ATTR_TYPE(xdomain, xitem) _CALL(_GET_ATYPE, ATTR_##xdomain##_##xitem)
+#ifdef NIRVA_MACRO_get_array_funcptr
+#define _NIRVA_MACRO_get_array_funcptr NIRVA_MACRO_get_array_funcptr
+#else
+#define _NIRVA_MACRO_get_array_funcptr(...)NIRVA_NULL
+#endif
 
-#define AJOIN(a, b) GET_ATTR_TYPE(a, b) ATTR_##a##_##b  //STRAND_NAMEU(#a, #b)
-#define AJOIN2(a, b, c) GET_ATTR_TYPE(a, b) ATTR_NAMEU(#a, #c)
+#ifdef NIRVA_MACRO_get_array_bundleptr
+#define _NIRVA_MACRO_get_array_bundleptr NIRVA_MACRO_get_array_bundleptr
+#else
+#define _NIRVA_MACRO_get_array_bundleptr(...)NIRVA_NULL
+#endif
 
-#define _ADD_ASTRAND(domain, item) AJOIN(domain, item)
-#define _ADD_OPT_ASTRAND(domain, item) "?" AJOIN(domain, item)
+#ifdef NIRVA_MACRO_bundle_list_strands
+#define _NIRVA_MACRO_bundle_list_strands NIRVA_MACRO_bundle_list_strands
+#else
+#define _NIRVA_MACRO_bundle_list_strands(...)NIRVA_NULL
+#endif
 
-#define ADD_ATTR(d, i) 	 	    	MS(_ADD_ASTRAND(d,i),_ADD_ASTRAND2(d,i))
-#define ADD_OPT_ATTR(d, i) 	      	MS(_ADD_OPT_ASTRAND(d,i),_ADD_ASTRAND2(d,i))
-#define ADD_COND_ATTR(d, i, ...)	MS(_ADD_ASTRAND(d,i),_ADD_ASTRAND2(d,i)), \
-    NIRVA_COND_CREATE(__VA_ARGS__)
+#ifdef NIRVA_MACRO_array_get_size
+#define _NIRVA_MACRO_array_get_size NIRVA_MACRO_array_get_size
+#else
+#define _NIRVA_MACRO_array_get_size(...)0
+#endif
 
-#else // ! BUNDLE_MAKER
-#define NIRVA_CALL_DEF(fname,...) NIRVA_CMD(_nirva_##fname?(*_nirva_##fname)(__VA_ARGS__):_NIRVA_MACRO_##fname(__VA_ARGS__))
-#define NIRVA_RESULT_DEF(fname,...) (_nirva_##fname?(*_nirva_##fname)(__VA_ARGS__):_NIRVA_MACRO_##fname(__VA_ARGS__))
-#define _NIRVA_RESULT_DEF(fname,...) (_nirva_##fname?(*_nirva_##fname)(__VA_ARGS__):_NIRVA_MACRO_##fname(__VA_ARGS__))
-#define NIRVA_EXPORTED(fname) NIRVA_EXPORTED_##fname
+#ifdef NIRVA_MACRO_bundle_free
+#define _NIRVA_MACRO_bundle_free NIRVA_MACRO_bundle_free
+#else
+#define _NIRVA_MACRO_bundle_free(...)0
+#endif
 
-// direct calls = only used in wrappers internally
-#define _NIRVA_ARRAY_APPEND(...)NIRVA_RESULT_DEF(array_append, __VA_ARGS__)
-#define _NIRVA_ARRAY_APPENDx(...)NIRVA_CALL_DEF(array_append, __VA_ARGS__)
-#define _NIRVA_ARRAY_CLEAR(...)NIRVA_CALL_DEF(array_clear, __VA_ARGS__)
-#define _NIRVA_STRAND_DELETE(...)NIRVA_CALL_DEF(strand_delete, __VA_ARGS__)
+#ifdef NIRVA_MACRO_array_append
+#define _NIRVA_MACRO_array_append NIRVA_MACRO_array_append
+#else
+#define _NIRVA_MACRO_array_append(...)NIRVA_RESULT_CALL_INVALID
+#endif
 
-// low level API
-// wrappers for MANDATORY IMPLementation funcs - if not defined, the fallback inmplementation (libweed) will be used
-// redefining any of these may require a full restart
-#define NIRVA_CREATE_BUNDLE(blueprint) NIRVA_CALL(nirva_create_bundle, blueprint)
-#define NIRVA_BUNDLE_LIST_STRANDS(...)NIRVA_RESULT_DEF(bundle_list_strands, __VA_ARGS__)
-#define NIRVA_BUNDLE_FREE(...)NIRVA_CALL_DEF(bundle_free, __VA_ARGS__)
-#define NIRVA_ARRAY_GET_SIZE(...)NIRVA_RESULT_DEF(array_get_size, __VA_ARGS__)
+#ifdef NIRVA_MACRO_array_clear
+#define _NIRVA_MACRO_array_clear NIRVA_MACRO_array_clear
+#else
+#define _NIRVA_MACRO_array_clear(...)NIRVA_RESULT_CALL_INVALID
+#endif
 
-// indirect calls
-#define NIRVA_STRAND_DELETE(...)NIRVA_CMD(NIRVA_EXPORTED(strand_delete(__VA_ARGS__)))
-#define NIRVA_ARRAY_APPEND NIRVA_EXPORTED(array_append)
-#define NIRVA_ARRAY_CLEAR(...)NIRVA_CMD(NIRVA_EXPORTED(array_clear(__VA_ARGS__)))
+#ifdef NIRVA_MACRO_strand_delete
+#define _NIRVA_MACRO_strand_delete NIRVA_MACRO_strand_delete
+#else
+#define _NIRVA_MACRO_strand_delete(...)NIRVA_RESULT_CALL_INVALID
+#endif
 
-// direct calls
-#define NIRVA_GET_ARRAY_INT(...)NIRVA_RESULT_DEF(get_array_int, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_INT64(...)NIRVA_RESULT_DEF(get_array_int64, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_BOOLEAN(...)NIRVA_RESULT_DEF(get_array_boolean, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_DOUBLE(...)NIRVA_RESULT_DEF(get_array_double, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_STRING(...)NIRVA_RESULT_DEF(get_array_string, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_VOIDPTR(...)NIRVA_RESULT_DEF(get_array_voidptr, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_FUNCPTR(...)NIRVA_RESULT_DEF(get_array_funcptr, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_BUNDLEPTR(...)NIRVA_RESULT_DEF(get_array_bundleptr, __VA_ARGS__)
+#ifdef NEED_NIRVA_BUNDLE_HAS_STRAND
+NIRVA_DEF_FUNC(NIRVA_BOOLEAN, NIRVA_EXPORTED_bundle_has_strand, NIRVA_BUNDLEPTR bun, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_STRING_ARRAY, allnames)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_FALSE)
+NIRVA_ASSERT(stname, NIRVA_RETURN, NIRVA_FALSE)
+NIRVA_ASSIGN(allnames, NIRVA_BUNDLE_LIST_STRANDS(bun))
+for (i = 0; allnames[i]; i++) {
+  if (NIRVA_STRING_EQUAL(stname, allnames[i])) {
+    while (allnames[i]) NIRVA_STRING_FREE(allnames[i++]);
+    NIRVA_ARRAY_FREE(allnames)
+    NIRVA_RETURN(NIRVA_TRUE)
+  }
+  NIRVA_STRING_FREE(allnames[i])
+}
+if (allnames) NIRVA_ARRAY_FREE(allnames);
+NIRVA_END_RETURN(NIRVA_FALSE)
+NIRVA_EXPORTS(bundle_has_strand)
+#endif
 
-// direct or indirect
-#define NIRVA_BUNDLE_HAS_STRAND(...)NIRVA_RESULT_DEF(bundle_has_strand, __VA_ARGS__)
-#define NIRVA_STRAND_COPY(...)NIRVA_CALL_DEF(strand_copy, __VA_ARGS__)
+#ifdef NIRVA_MACRO_bundle_has_strand
+#define _NIRVA_MACRO_bundle_has_strand NIRVA_MACRO_bundle_has_strand
+#else
+#define _NIRVA_MACRO_bundle_has_strand(...)NIRVA_FALSE
+#endif
 
-#define NIRVA_ADD_VALUE_BY_KEY(...)NIRVA_CALL_DEF(add_value_by_key, __VA_ARGS__)
-#define NIRVA_REMOVE_VALUE_BY_KEY(...)NIRVA_CALL_DEF(remove_value_by_key, __VA_ARGS__)
-#define NIRVA_GET_VALUE_BY_KEY(...)NIRVA_RESULT_DEF(get_value_by_key, __VA_ARGS__)
-#define NIRVA_HAS_VALUE_FOR_KEY(...)NIRVA_RESULT_DEF(has_value_for_key, __VA_ARGS__)
+// make sure we have at least 1 value set in stname
+#define _NIRVA_CHECK_VALUES(bun, stname)				\
+    (bun?NIRVA_BUNDLE_HAS_STRAND(bun,stname)?NIRVA_ARRAY_GET_SIZE(bun,stname)>0?NIRVA_TRUE:NIRVA_FALSE:NIRVA_FALSE:NIRVA_FALSE)
 
-#define NIRVA_GET_ARRAY_UINT(...)NIRVA_RESULT_DEF(get_array_uint, __VA_ARGS__)
-#define NIRVA_GET_ARRAY_UINT64(...)NIRVA_RESULT_DEF(get_array_uint64, __VA_ARGS__)
+NIRVA_DEF_FUNC(NIRVA_BUNDLEPTR, NIRVA_EXPORTED_get_value_bundleptr, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_BUNDLEPTR), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_BUNDLEPTR(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
 
-// constructed funcs - these functions are compounds of the IMPL funcs - can optionally be overloaded
-#define NIRVA_GET_VALUE_INT NIRVA_EXPORTED(get_value_int)
-#define NIRVA_GET_VALUE_UINT NIRVA_EXPORTED(get_value_uint)
-#define NIRVA_GET_VALUE_INT64 NIRVA_EXPORTED(get_value_int64)
-#define NIRVA_GET_VALUE_UINT64 NIRVA_EXPORTED(get_value_uint64)
-#define NIRVA_GET_VALUE_BOOLEAN NIRVA_EXPORTED(get_value_boolean)
-#define NIRVA_GET_VALUE_DOUBLE NIRVA_EXPORTED(get_value_double)
-#define NIRVA_GET_VALUE_STRING NIRVA_EXPORTED(get_value_string)
-#define NIRVA_GET_VALUE_VOIDPTR NIRVA_EXPORTED(get_value_voidptr)
-#define NIRVA_GET_VALUE_FUNCPTR NIRVA_EXPORTED(get_value_funcptr)
-#define NIRVA_GET_VALUE_BUNDLEPTR NIRVA_EXPORTED(get_value_bundleptr)
-//
-#define NIRVA_GET_VALUE_int  NIRVA_GET_VALUE_INT
-#define NIRVA_GET_VALUE_uint  NIRVA_GET_VALUE_UINT
-#define NIRVA_GET_VALUE_int64  NIRVA_GET_VALUE_INT64
-#define NIRVA_GET_VALUE_uint64  NIRVA_GET_VALUE_UINT64
-#define NIRVA_GET_VALUE_boolean  NIRVA_GET_VALUE_BOOLEAN
-#define NIRVA_GET_VALUE_double  NIRVA_GET_VALUE_DOUBLE
-#define NIRVA_GET_VALUE_string  NIRVA_GET_VALUE_STRING
-#define NIRVA_GET_VALUE_voidptr  NIRVA_GET_VALUE_VOIDPTR
-#define NIRVA_GET_VALUE_funcptr  NIRVA_GET_VALUE_FUNCPTR
-#define NIRVA_GET_VALUE_bundleptr  NIRVA_GET_VALUE_BUNDLEPTR
+#define NIRVA_MACRO_bundle_get_blueprint(bundle) NIRVA_GET_VALUE_BUNDLEPTR(bundle, "BLUEPRINT")
+#define NIRVA_BUNDLE_GET_BLUEPRINT(b) NIRVA_MACRO_bundle_get_blueprint(b)
 
-//
-#define NIRVA_VALUE_SET(...)NIRVA_CMD(NIRVA_INTERNAL_set_value(__VA_ARGS__))
-#define NIRVA_ARRAY_SET(...)NIRVA_CMD(NIRVA_INTERNAL_array_replace(__VA_ARGS__))
+NIRVA_DEF_FUNC(NIRVA_UINT, NIRVA_EXPORTED_get_value_uint, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_UINT, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_UINT), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_UINT(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
 
+NIRVA_DEF_FUNC(NIRVA_STRING, NIRVA_EXPORTED(get_value_string), NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_STRING, var)
+NIRVA_DEF_VARS(NIRVA_UINT, nsize)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_STRING), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_STRING(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ASSIGN(nsize, NIRVA_ARRAY_GET_SIZE(bundle, stname))
+for (i = 0; i < nsize; i++) NIRVA_STRING_FREE(vals[i]);
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+#define _NIRVA_BUNDLE_GET_STRAND_TYPE NIRVA_MACRO_nirva_bundle_get_strand_type
+#define NIRVA_MACRO_nirva_bundle_get_strand_type(bundle)		\
+    (bundle?NIRVA_GET_VALUE_UINT(bundle,"STRAND_TYPE"):STRAND_TYPE_NONE)
+
+// check blueprint to see if there is a strand_def in "MULTI"
+#define _NIRVA_GET_TEMPLATE_STRAND_DEF NIRVA_INTERNAL(get_template_strand_def)
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, get_template_strand_def, NIRVA_BUNDLEPTR blueprint)
+/* NIRVA_ASSERT(blueprint, NIRVA_RETURN, NIRVA_NULL) */
+/* NIRVA_ASSERT(NIRVA_BUNDLE_HAS_STRAND(blueprint, "MULTI"), NIRVA_RETURN, NIRVA_NULL)  */
+NIRVA_END_RETURN(NIRVA_GET_VALUE_BUNDLEPTR(blueprint, "MULTI"))
+
+NIRVA_DEF_FUNC(NIRVA_UINT64, NIRVA_EXPORTED_get_value_uint64, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_UINT64, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_UINT64), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_UINT64(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+
+#define NIRVA_MACRO_stdef_get_flags(stdef) NIRVA_GET_VALUE_UINT64(stdef, "FLAGS")
+#define _NIRVA_STDEF_GET_FLAGS  NIRVA_MACRO_stdef_get_flags
+
+#define NIRVA_CALL_METHOD_nirva_stflags_is_value MACRO
+#define NIRVA_MACRO_stflags_is_value(stflags)(!(stflags & BLUEPRINT_FLAG_COMMENT))
+
+#define NIRVA_CALL_METHOD_nirva_stdef_is_template MACRO
+#define NIRVA_MACRO_stdef_is_template(stdef, blueprint)	\
+    (stdef?blueprint?_NIRVA_GET_TEMPLATE_STRAND_DEF(blueprint)	\
+     ==stdef?NIRVA_TRUE:NIRVA_FALSE:NIRVA_FALSE:NIRVA_FALSE)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_UINT, attr_type_to_sttype, NIRVA_UINT atype)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_ASSIGN(sttype, _NIRVA_ATTR_TYPE_TO_STRAND_TYPE_(atype))
+NIRVA_END_RETURN(sttype)
+
+#define NIRVA_MACRO_attr_get_strand_type(attr)				\
+  ((attr)?NIRVA_BUNDLE_HAS_STRAND(attr, "STRAND_TYPE")?NIRVA_GET_VALUE_UINT(attr,"STRAND_TYPE"): \
+   NIRVA_INTERNAL(attr_type_to_sttype)(NIRVA_GET_VALUE_UINT(attr,"ATTR_TYPE")):ATTR_TYPE_NONE)
+#define _NIRVA_ATTR_GET_STRAND_TYPE NIRVA_MACRO_attr_get_strand_type
+#define _NIRVA_ATTR_DEF_GET_STRAND_TYPE _NIRVA_ATTR_GET_STRAND_TYPE
+
+#define _NIRVA_STDEF_GET_TYPE NIRVA_INTERNAL(stdef_get_type)
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_UINT, stdef_get_type, NIRVA_BUNDLEPTR stdef, NIRVA_BUNDLEPTR bundle)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_ASSERT(stdef, NIRVA_RETURN, STRAND_TYPE_NONE);
+NIRVA_ASSIGN(sttype, _NIRVA_BUNDLE_GET_STRAND_TYPE(stdef))
+if (sttype == STRAND_TYPE_PROXIED) {
+  NIRVA_DEF_VARS(NIRVA_STRING, stname)
+  NIRVA_ASSERT(bundle, NIRVA_RETURN, STRAND_TYPE_NONE)
+  NIRVA_ASSIGN(stname, NIRVA_GET_VALUE_STRING(stdef, "TYPE_PROXY"))
+  if (!NIRVA_BUNDLE_HAS_STRAND(bundle, stname)) {
+    NIRVA_ASSIGN(sttype, NIRVA_GET_VALUE_UINT(bundle, stname));
+  }
+  NIRVA_STRING_FREE(stname)
+  if (sttype == STRAND_TYPE_PROXIED) {
+    NIRVA_ASSIGN(sttype, STRAND_TYPE_UNDEFINED)
+  }
+}
+NIRVA_END_RETURN(sttype)
+
+#define MY_ROLE_IS(role) 0
+
+#ifndef NEED_WAIT_RETRY
+#define _NIRVA_DEPLOY_def_nirva_wait_retry
+#else
 #if NIRVA_IMPL_IS(DEFAULT_C)
-#define NIRVA_GET_VALUE_GENPTR NIRVA_GET_VALUE_VOIDPTR
-#define NIRVA_GET_ARRAY_GENPTR NIRVA_GET_ARRAY_VOIDPTR
+#undef NEED_WAIT_RETRY
+#define _NIRVA_DEPLOY_def_nirva_wait_retry				\
+  NIRVA_DEF_FUNC(NIRVA_NO_RETURN, _def_nirva_wait_retry, NIRVA_VOID)	\
+    NIRVA_DEF_VARS(struct timespec, ts)					\
+    ts.tv_sec = 0;							\
+  ts.tv_nsec = 50000;							\
+  while (nanosleep(&ts, &ts) == -1 &&  errno != ETIMEDOUT);		\
+  NIRVA_FUNC_END
+#endif
 #endif
 
-// mid level API - may be overridden to alter functionality, changing may require an APPlication restart
-#define NIRVA_RECYCLE(...) NIRVA_CMD(NIRVA_EXPORTED_recycle(__VA_ARGS__))
+static void NIRVA_ERR_CHK(NIRVA_BUNDLEPTR *b, ...) {
+}
 
-#define NIRVA_ACTION(funcname,...)(void)def_nirva_action(funcname, __VA_ARGS__)
-#define NIRVA_ACTION_RET_STRING(funcname,...)def_nirva_action_ret_string(funcname,__VA_ARGS__)
-#define NIRVA_ACTION_RET_BUNDLEPTR(funcname,...)def_nirva_action_ret_bundleptr(funcname, STRAND___VA_ARGS__)
+NIRVA_DECL_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_strand_delete, NIRVA_BUNDLEPTR, NIRVA_CONST_STRING)
 
-// high level API
-// these are wrappers around NIRVA_ACTION* calls
-// can be changed by subsituting contracts
-#define NIRVA_CREATE_BUNDLE_BY_TYPE(btype,...) create_bundle_by_type(btype,__VA_ARGS__)
-
-#undef NIRVA_DEF_FUNC
+#ifdef NEED_NIRVA_RECYCLE
+NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_recycle, NIRVA_BUNDLEPTR bun)
+NIRVA_DEF_VARS(NIRVA_STRING_ARRAY, stnames)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+//NIRVA_ASSIGN(refs, _NIRVA_BUNDLE_UNREF(bun))
+//if (refs > 0) {NIRVA_RETURN_FAIL}
+NIRVA_ASSIGN(stnames, NIRVA_BUNDLE_LIST_STRANDS(bun))
+for (i = 0; stnames[i]; i++) {
+  NIRVA_STRAND_DELETE(bun, stnames[i])
+  NIRVA_STRING_FREE(stnames[i])
+}
+NIRVA_ARRAY_FREE(stnames)
+NIRVA_BUNDLE_FREE(bun)
+NIRVA_END_SUCCESS
 #endif
 
-#ifndef HAVE_NIRVA_BTYPE
-#define HAVE_NIRVA_BTYPE
-NIRVA_TYPEDEF_ENUM(bundle_type, BUNLIST(BDEF_DEF_CONCAT,, _BUNDLE_TYPE) n_builtin_bundledefs)
-NIRVA_TYPEDEF_ENUM(attr_bundle_type, ABUNLIST(ATTR_BDEF_DEF_CONCAT,, _ATTR_GROUP_TYPE) \
-                   n_builtin_attr_bundles)
+#ifndef NIRVA_IDX_PREFIX
+#define NIRVA_IDX_PREFIX "IDX_"
 #endif
-#ifdef BDEF_DEF
-#undef BDEF_DEF
+#define _NIRVA_PREFIX_KNAME NIRVA_INTERNAL(prefix_kname)
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_STRING, prefix_kname, NIRVA_CONST_STRING keyval, NIRVA_CONST_STRING prefix)
+NIRVA_DEF_VARS(NIRVA_STRING, kname)
+NIRVA_DEF_VARS(NIRVA_SIZE, stlen, pfxlen)
+NIRVA_ASSIGN(stlen, NIRVA_STRING_LENGTH(keyval))
+NIRVA_ASSIGN(pfxlen, NIRVA_STRING_LENGTH(prefix))
+NIRVA_STRING_ALLOC(kname, stlen + pfxlen + 100)
+NIRVA_FMT(kname, stlen + pfxlen + 1, NIRVA_FMT_2STRING, prefix, keyval)
+NIRVA_END_RETURN(kname)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BOOLEAN, idx_has_key, NIRVA_BUNDLEPTR idx, NIRVA_CONST_STRING keyval, NIRVA_CONST_STRING prefix)
+NIRVA_DEF_ASSIGN(NIRVA_STRING, kname, _NIRVA_PREFIX_KNAME, keyval, prefix)
+if (!NIRVA_BUNDLE_HAS_STRAND(idx, kname)) {
+  NIRVA_STRING_FREE(kname)
+  NIRVA_RETURN(NIRVA_FALSE)
+}
+NIRVA_STRING_FREE(kname)
+NIRVA_END_RETURN(NIRVA_TRUE)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, get_idx_value_bundleptr, NIRVA_BUNDLEPTR idx,
+                        NIRVA_CONST_STRING keyval, NIRVA_CONST_STRING prefix)
+NIRVA_DEF_ASSIGN(NIRVA_STRING, kname, _NIRVA_PREFIX_KNAME, keyval, prefix)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, bun)
+if (!NIRVA_BUNDLE_HAS_STRAND(idx, kname)) {
+  NIRVA_STRING_FREE(kname)
+  NIRVA_RETURN(NIRVA_NULL)
+}
+NIRVA_CALL_ASSIGN(bun, NIRVA_GET_VALUE_BUNDLEPTR, idx, kname)
+NIRVA_STRING_FREE(kname)
+NIRVA_END_RETURN(bun)
+
+#ifdef NEED_NIRVA_KEYED_ARRAYS
+// in case of error or non-existent keyval, we return NIRVA_NULL, however beware, since this is also a valid return value
+NIRVA_DEF_FUNC(NIRVA_BUNDLEPTR, NIRVA_EXPORTED_get_value_by_key, NIRVA_BUNDLEPTR bun,
+               NIRVA_CONST_STRING stname, NIRVA_CONST_STRING keyval)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, xbun, idx)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_NULL)
+//if (!NIRVA_IS_KEYED(bun, stname)) NIRVA_RETURN(NIRVA_NULL);
+NIRVA_ASSERT(keyval, NIRVA_RETURN, NIRVA_NULL)
+NIRVA_CALL_ASSIGN(idx, NIRVA_GET_VALUE_BUNDLEPTR, bun, "INDEX")
+NIRVA_ASSERT(idx, NIRVA_RETURN, NIRVA_NULL)
+NIRVA_CALL_ASSIGN(xbun, NIRVA_INTERNAL(get_idx_value_bundleptr), idx, keyval, NIRVA_IDX_PREFIX)
+NIRVA_END_RETURN(xbun)
+NIRVA_EXPORTS(get_value_by_key)
 #endif
-#ifdef ABDEF_DEF
-#undef ABDEF_DEF
 
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY all_def_strands;
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_strands(NIRVA_CONST_STRING fmt, ...);
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name,	\
-    NIRVA_CONST_STRING pfx, ...);
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY maker_get_bundledef(bundle_type btype);
-
+#ifdef NIRVA_MACRO_get_value_by_key
+#define _NIRVA_MACRO_get_value_by_key NIRVA_MACRO_get_value_by_key
+#else
+#define _NIRVA_MACRO_get_value_by_key(...)NIRVA_NULL
 #endif
 
-#define GET_BDEF(btype) maker_get_bundledef(btype)
+#define _NIRVA_GET_STRAND_DEF NIRVA_INTERNAL(get_strand_def)
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, get_strand_def, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING name)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef, blueprint)
+NIRVA_ASSIGN(blueprint, NIRVA_BUNDLE_GET_BLUEPRINT(bundle))
+NIRVA_ASSERT(blueprint, NIRVA_FAIL, NIRVA_NULL);
+NIRVA_ASSIGN(stdef, NIRVA_GET_VALUE_BY_KEY(blueprint, "STRAND_DEFS", name))
+if (!stdef) {
+  NIRVA_ASSIGN(stdef, _NIRVA_GET_TEMPLATE_STRAND_DEF(blueprint))
+  // if we have and index stdef, return that
+}
+NIRVA_END_RETURN(stdef)
 
-#ifndef MB
-#define MB(name, pfx, ...) make_bundledef(name, pfx, __VA_ARGS__, NULL)
+#define _NIRVA_IS_KEYED_ARRAY NIRVA_INTERNAL(is_keyed_array)
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BOOLEAN, is_keyed_array, NIRVA_BUNDLEPTR bun, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef)
+NIRVA_DEF_VARS(NIRVA_UINT64, flags)
+
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_FALSE)
+
+NIRVA_ASSERT(stname, NIRVA_RETURN, NIRVA_FALSE)
+NIRVA_ASSIGN(stdef, _NIRVA_GET_STRAND_DEF(bun, stname))
+NIRVA_ASSIGN(flags, _NIRVA_STDEF_GET_FLAGS(stdef))
+if (NIRVA_HAS_FLAG(flags, BLUEPRINT_FLAG_KEYED_ARRAY)) NIRVA_RETURN(NIRVA_TRUE);
+NIRVA_END_RETURN(NIRVA_FALSE)
+
+NIRVA_DECL_FUNC_INTERNAL(NIRVA_FUNC_RETURN, set_proxy_strand_type, NIRVA_BUNDLEPTR, NIRVA_BUNDLEPTR, NIRVA_UINT)
+
+#define _NIRVA_STRAND_GET_TYPE NIRVA_INTERNAL_strand_get_type
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_UINT, strand_get_type, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef)
+NIRVA_ASSERT(bundle, NIRVA_RETURN, STRAND_TYPE_INVALID)
+NIRVA_ASSIGN(stdef, _NIRVA_GET_STRAND_DEF(bundle, stname))
+NIRVA_ASSERT(stdef, NIRVA_RETURN, STRAND_TYPE_INVALID)
+NIRVA_END_RETURN(_NIRVA_STDEF_GET_TYPE(stdef, bundle))
+
+NIRVA_DECL_FUNC_INTERNAL(NIRVA_FUNC_RETURN, append_sub_bundles, NIRVA_BUNDLEPTR,
+                         NIRVA_CONST_STRING, NIRVA_UINT, NIRVA_VA_LIST)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_INT, array_append_va, NIRVA_BUNDLEPTR bun,
+                        NIRVA_CONST_STRING stname, NIRVA_UINT sttype, NIRVA_UINT ne, NIRVA_VA_LIST v)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef)
+NIRVA_DEF_VARS(NIRVA_UINT, xtype)
+NIRVA_DEF_SET(NIRVA_INT, ns, -1)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, retval)
+if (sttype == STRAND_TYPE_BUNDLEPTR || sttype == STRAND_TYPE_CONST_BUNDLEPTR) {
+  // for keyed_arrays, we must add_value_by_key
+  if (_NIRVA_IS_KEYED_ARRAY(bun, stname)) NIRVA_RETURN_ERROR;
+}
+NIRVA_ASSIGN(stdef, _NIRVA_GET_STRAND_DEF(bun, stname))
+NIRVA_ASSIGN(xtype, _NIRVA_STDEF_GET_TYPE(stdef, bun))
+if (xtype == STRAND_TYPE_UNDEFINED) {
+  NIRVA_ASSIGN(retval, NIRVA_INTERNAL(set_proxy_strand_type)(stdef, bun, sttype))
+  if (retval != NIRVA_RESULT_SUCCESS) NIRVA_RETURN(retval);
+  NIRVA_ASSIGN(xtype, sttype)
+}
+
+if (xtype != sttype) {
+  // TODO - in gen 1,2,3 -
+  // if we have a bundleptr / const_bundleptr mismatch
+  // - if the array is empty, we are allowed to change strand_type from bundleptr to const_bundleptr
+  // - however we need to delete the strand, delete type_proxy (if proxied), reset proxy type
+  // - then append without furtehr checking
+
+  // after gen3, either we would fail, or if the owner, we would reparent the bundles instead
+
+  NIRVA_RETURN_FAIL
+}
+
+switch (sttype) {
+case STRAND_TYPE_BUNDLEPTR: {
+  NIRVA_ASSIGN(ns, NIRVA_INTERNAL(append_sub_bundles)(bun, stname, ne, v))
+} break;
+case STRAND_TYPE_INT: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_INT), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_INT)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_UINT: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_UINT), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_UINT)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_BOOLEAN: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_BOOLEAN), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_BOOLEAN)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_DOUBLE: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_DOUBLE), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_DOUBLE)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_INT64: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_INT64), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_INT64)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_UINT64: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_UINT64), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_UINT64)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_STRING: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_STRING), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_STRING)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_VOIDPTR: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_VOIDPTR), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_VOIDPTR)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_FUNCPTR: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_NATIVE_FUNC), ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_NATIVE_FUNC)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+case STRAND_TYPE_CONST_BUNDLEPTR: {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, xbun, NIRVA_GET_VALUE_BUNDLEPTR(bun, stname))
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_CONST_BUNDLEPTR), ival)
+  if (xbun) {
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR, con, NIRVA_GET_VALUE_BUNDLEPTR(xbun, "CONTAINER"))
+    if (con == bun) {
+      NIRVA_DEF_SET(NIRVA_STRING, constr, NIRVA_GET_VALUE_STRING(xbun, "CONTAINER_STRAND"))
+      if (NIRVA_STRING_EQUAL(constr, stname)) {
+        NIRVA_STRING_FREE(constr)
+        NIRVA_RETURN(-1)
+      }
+      NIRVA_STRING_FREE(constr)
+    }
+  }
+  NIRVA_ASSIGN(ival, NIRVA_VA_ARG(v, NIRVA_TYPE_PTR(NIRVA_CONST_BUNDLEPTR)))
+  NIRVA_ASSIGN(ns, _NIRVA_ARRAY_APPEND(bun, stname, sttype, ne, ival))
+} break;
+default: break;
+}
+NIRVA_END_RETURN(ns)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, add_idx_value, NIRVA_BUNDLEPTR idx, NIRVA_CONST_STRING keyval,
+                        NIRVA_CONST_STRING prefix,
+                        NIRVA_UINT sttype, NIRVA_VA_LIST var)
+NIRVA_DEF_ASSIGN(NIRVA_STRING, kname, _NIRVA_PREFIX_KNAME, keyval, prefix)
+NIRVA_DEF_VARS(NIRVA_INT, ne)
+if (NIRVA_BUNDLE_HAS_STRAND(idx, kname)) {
+  NIRVA_STRING_FREE(kname)
+  NIRVA_RETURN_FAIL
+}
+NIRVA_CALL_ASSIGN(ne, NIRVA_INTERNAL(array_append_va), idx, kname, sttype, 1, var)
+NIRVA_STRING_FREE(kname)
+if (ne != 1) {NIRVA_RETURN_ERROR}
+NIRVA_END_SUCCESS
+
+NIRVA_DEF_FUNC(NIRVA_INT, NIRVA_EXPORTED_array_append, NIRVA_BUNDLEPTR bun,
+               NIRVA_CONST_STRING item, NIRVA_UINT xtype, NIRVA_UINT ne, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, v)
+NIRVA_VA_START(v, ne)
+NIRVA_ASSIGN(ne, NIRVA_INTERNAL(array_append_va)(bun, item, xtype, ne, v))
+NIRVA_VA_END(v)
+NIRVA_END_RETURN(ne)
+
+// clear array - WARNING, this version may free included sub bundles
+// it will also remove the strand
+
+NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_array_clear, NIRVA_BUNDLEPTR bun,
+               NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_UINT, stype)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, subs)
+NIRVA_ASSERT(bun, NIRVA_FAIL, NIRVA_NULL)
+if (!NIRVA_BUNDLE_HAS_STRAND(bun, stname)) {NIRVA_RETURN_ERROR}
+// if ASPECT_BUNDLES is set to NIRVA_AUtOMATION_FULL
+// clear should do this
+NIRVA_ASSIGN(stype, _NIRVA_STRAND_GET_TYPE(bun, stname))
+if (stype == STRAND_TYPE_BUNDLEPTR) {
+  NIRVA_DEF_VARS(NIRVA_INT, i)
+  NIRVA_DEF_VARS(NIRVA_UINT, asize)
+  if (NIRVA_FUNC_GENERATION >= 3) {
+    // TODO
+    // check if caller is owner of array
+  }
+  NIRVA_ASSIGN(subs, NIRVA_GET_ARRAY_BUNDLEPTR(bun, stname))
+  NIRVA_ASSIGN(asize, NIRVA_ARRAY_GET_SIZE(bun, stname))
+  for (i = 0; i < asize; i++) {
+    NIRVA_RECYCLE(subs[i])
+  }
+  NIRVA_ARRAY_FREE(subs)
+}
+_NIRVA_ARRAY_CLEAR(bun, stname)
+
+#ifdef NIRVA_NEEDS_KEYED_ARRAYS
+if (_NIRVA_IS_KEYED_ARRAY(bun, stname)) {NIRVA_STRAND_DELETE(bun, "INDEX")}
 #endif
-#ifndef MBX
-#define MBX(name) MB(#name, NULL, _##name##_BUNDLE)
+/* if (NIRVA_BUNDLE_HAS_STRAND(bun, stname)) */
+/*   NIRVA_STRAND_DELETE(bun, stname) */
+NIRVA_END_SUCCESS;
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_INT, array_replace, NIRVA_BUNDLEPTR bun,
+                        NIRVA_CONST_STRING stname, NIRVA_UINT sttype, NIRVA_UINT ne, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, vars)
+NIRVA_DEF_VARS(NIRVA_INT, ns)
+NIRVA_DEF_SET(NIRVA_FUNC_RETURN, res, NIRVA_ARRAY_CLEAR(bun, stname))
+if (res != NIRVA_RESULT_SUCCESS) {NIRVA_RETURN(res)}
+NIRVA_VA_START(vars, ne)
+NIRVA_ASSIGN(ns, NIRVA_INTERNAL(array_append_va)(bun, stname, sttype, ne, vars))
+NIRVA_VA_END(vars)
+NIRVA_END_RETURN(ns)
+
+// TODO - call hooks
+NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_strand_delete, NIRVA_BUNDLEPTR bun, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_RESULT_PARAM_INVALID)
+NIRVA_ASSIGN(sttype, _NIRVA_STRAND_GET_TYPE(bun, stname))
+if (sttype == STRAND_TYPE_BUNDLEPTR) {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, xbun, NIRVA_GET_VALUE_BUNDLEPTR(bun, stname))
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, con, NIRVA_GET_VALUE_BUNDLEPTR(xbun, "CONTAINER"))
+  if (con == bun) {
+    NIRVA_DEF_SET(NIRVA_STRING, constr, NIRVA_GET_VALUE_STRING(xbun, "CONTAINER_STRAND"))
+    if (NIRVA_STRING_EQUAL(constr, stname)) {
+      NIRVA_RECYCLE(xbun)
+    }
+    NIRVA_STRING_FREE(constr)
+  }
+}
+_NIRVA_STRAND_DELETE(bun, stname)
+NIRVA_END_SUCCESS
+
+#ifdef NEED_NIRVA_STRAND_COPY
+NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_strand_copy, NIRVA_BUNDLEPTR dest, NIRVA_CONST_STRING dstrand,
+               NIRVA_BUNDLEPTR src, NIRVA_CONST_STRING sstrand)
+NIRVA_DEF_VARS(NIRVA_UINT, asize, sttype)
+NIRVA_DEF_SET(NIRVA_FUNC_RETURN, res, NIRVA_RESULT_ERROR)
+NIRVA_ASSERT(src, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSERT(dest, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSERT(NIRVA_BUNDLE_HAS_STRAND(src, sstrand), NIRVA_RETURN, NIRVA_RESULT_FAIL)
+NIRVA_ASSIGN(asize, NIRVA_ARRAY_GET_SIZE(src, sstrand))
+NIRVA_ASSERT(asize, NIRVA_RETURN, NIRVA_RESULT_FAIL)
+NIRVA_ASSIGN(sttype, _NIRVA_STRAND_GET_TYPE(src, sstrand))
+switch (sttype) {
+case STRAND_TYPE_INT: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_INT), intp, NIRVA_GET_ARRAY_INT(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, intp))
+  NIRVA_ARRAY_FREE(intp)
+} break;
+case STRAND_TYPE_UINT: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_UINT), uintp, NIRVA_GET_ARRAY_UINT(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, uintp))
+  NIRVA_ARRAY_FREE(uintp)
+} break;
+case STRAND_TYPE_INT64: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_INT64), int64p, NIRVA_GET_ARRAY_INT64(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, int64p))
+  NIRVA_ARRAY_FREE(int64p)
+} break;
+case STRAND_TYPE_UINT64: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_UINT64), uint64p, NIRVA_GET_ARRAY_UINT64(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, uint64p))
+  NIRVA_ARRAY_FREE(uint64p)
+} break;
+case STRAND_TYPE_BOOLEAN: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_BOOLEAN), booleanp, NIRVA_GET_ARRAY_BOOLEAN(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, booleanp))
+  NIRVA_ARRAY_FREE(booleanp)
+} break;
+case STRAND_TYPE_DOUBLE: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_DOUBLE), doublep, NIRVA_GET_ARRAY_DOUBLE(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, doublep))
+  NIRVA_ARRAY_FREE(doublep)
+} break;
+case STRAND_TYPE_STRING: {
+  NIRVA_DEF_VARS(NIRVA_INT, i)
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_STRING), stringp, NIRVA_GET_ARRAY_STRING(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, stringp))
+  for (i = 0; i < asize; i++) {
+    if (stringp[i]) NIRVA_STRING_FREE(stringp[i]);
+  }
+  NIRVA_ARRAY_FREE(stringp)
+} break;
+case STRAND_TYPE_VOIDPTR: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_VOIDPTR), voidptrp, NIRVA_GET_ARRAY_VOIDPTR(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, voidptrp))
+  NIRVA_ARRAY_FREE(voidptrp)
+} break;
+case STRAND_TYPE_FUNCPTR: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_NATIVE_FUNC), funcptrp, NIRVA_GET_ARRAY_FUNCPTR(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, sttype, asize, funcptrp))
+  NIRVA_ARRAY_FREE(funcptrp)
+} break;
+case STRAND_TYPE_BUNDLEPTR: {
+  NIRVA_DEF_SET(NIRVA_TYPE_PTR(NIRVA_BUNDLEPTR), bundleptrp, NIRVA_GET_ARRAY_BUNDLEPTR(src, sstrand))
+  NIRVA_ASSIGN(res, NIRVA_ARRAY_SET(dest, dstrand, STRAND_TYPE_CONST_BUNDLEPTR, asize, bundleptrp))
+  NIRVA_ARRAY_FREE(bundleptrp)
+} break;
+default:
+  NIRVA_FAIL("unknown strand_type")
+  break;
+}
+NIRVA_END_RETURN(res)
+NIRVA_EXPORTS(strand_copy)
 #endif
-#ifndef MABX
-#define MABX(name) MB(#name, NULL, _##name##_ATTR_GROUP)
+
+#ifdef NIRVA_MACRO_strand_copy
+#define _NIRVA_MACRO_strand_copy(...)NIRVA_MACRO_strand_copy(__VA_ARGS__)
+#else
+#define _NIRVA_MACRO_strand_copy(...)0
 #endif
-#define BDEF_DEFINE(BNAME) NIRVA_CONST_STRING_ARRAY BNAME##_BUNDLEDEF
-
-// these values may be adjusted during inial bootstrap - see the documentation for more details
-// values here define the level of automation for each "aspect"
-#define NIRVA_AUTOMATION_NONE 			0
-#define NIRVA_AUTOMATION_MANUAL 	       	1
-#define NIRVA_AUTOMATION_SEMI 			2
-#define NIRVA_AUTOMATION_FULL 			3
-
-#define NIRVA_AUTOMATION_DEFAULT 		NIRVA_AUTOMATION_SEMI
-
-// NIRVA_ASPECT_NEGOTIATING
-// NIRVA_ASPECT_FUNCTION_BENDING
-// NIRVA_ASPECT_OPTIMISATION
-// NIRVA_ASPECT_SELF_ORGANISATION
-
-#define NIRVA_ASPECT(m) NIRVA_ASPECT_NAME_##n
-
-// automation for these "aspects"
-#define NIRVA_ASPECT_NONE			0
-
-#define NIRVA_ASPECT_BUNDLES			1
-#define NIRVA_ASPECT_NAME_1 "BUNDLES"
-// if set to NIRVA_AUTOMATION_FULL then automation will control:
-// - including sub bundles, - setting "container"
-// - adding const bundleptrs
-// - checking restrictions for added / included bundles
-// - managing KEYED_ARRAYs and INDEXES
-// - updating "ARRAY_SIZE" for arrays, getting array size
-
-
-// if set to NIRVA_AUTOMATION_SEMI then automation will control:
-// - including sub bundles, - setting "container"
-// - adding const bundleptrs
-// - checking restrictions for added / included bundles
-// - managing KEYED_ARRAYs and INDEXES, but only if any of find_array_item_by_key, add_array_item_by_key,
-//    remove_array_item_by_key are missing (undefined)
-// - updating "ARRAY_SIZE" for arrays, getting array size, but only if
-
-#define NIRVA_ASPECT_THREADS			2
-#define NIRVA_ASPECT_NAME_2 "THREADS"
-// attributes created intially in STRUCTURE_PRIME
-// preferred subtypes: THREAD_HERDER
-// the attributes are transfered to preferred subtypes in order of preference
-// changing these after structure_app is in PREPARED state requires PRIV_STRUCTURE > 100
-
-// AUTOMATION LEVELS
-// for med. and occasionally for manual thread aspects,
-// should be defined to something which returns a void * to a Native Thread,
-
-#define ATTR_AUTOLEVEL_THREADS				ATTR_NAME("AUTOLEVEL", "THREADS")
-#define ATTR_AUTOLEVEL_THREADS_TYPE 		       	INT, NIRVA_AUTOMATION_DEFAULT
-
-// other atttributes //////////////////
-
-#define ATTR_THREADS_MODEL				ATTR_NAME("THREADS", "MODEL")
-#define ATTR_THREADS_MODEL_TYPE				INT, NIRVA_THREAD_MODEL_NONE
-
-// no model - this is the default for autmoation levels none and manual
-#define NIRVA_THREAD_MODEL_NONE				0
-
-// this is the default for semi and full, threads are in a pool and assigned as needed
-// to negotiaite, run transforms and monitor timeouts
-#define _NIRVA_THREAD_MODEL_ON_DEMAND		       	1
-
-// a thread is assigned to each instance with active transforms
-// the thread remains bound to the instance but will idle while the instance is "dormant"
-// the thread will be destroyed when the instance is recycled
-// this is best for applications with a small number of active instances which need to interact
-// with each other at all times
-#define NIRVA_THREAD_MODEL_ONE_PER_INSTANCE    	       	2
-
-// implementation functions (NEED defining)
-// for automation level semi, these funcitons need to be defined externally
-// for thread model ON_DEMAND
-// these functions should return a native thread from a pool, and then return them later
-// thread must not be passed again until it returns
-// the amount of time the Thread will be borrowed for cannot be detrmined
-// in some cases it will never be returned. in other cases it will be returned almost imemdiately
-#define ATTR_IMPLFUNC_BORROW_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "BORROW_NATIVE_THREAD")
-#define ATTR_IMPLFUNC_BORROW_NATIVE_THREAD_TYPE       FUNCPTR, NULL
-
-#define ATTR_IMPLFUNC_RETURN_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "RETURN_NATIVE_THREAD")
-#define ATTR_IMPLFUNC_RETURN_NATIVE_THREAD_TYPE       FUNCPTR, NULL
-
-// for FULL automation, the structure will handle all aspects of thread management itself
-
-#define ATTR_IMPLFUNC_CREATE_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "CREATE_NATIVE_THREAD")
-#define ATTR_IMPLFUNC_CREATE_NATIVE_THREAD_TYPE       FUNCPTR, NULL
-
-#define ATTR_IMPLFUNC_DESTROY_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "DESTROY_NATIVE_THREAD")
-#define ATTR_IMPLFUNC_DESTROY_NATIVE_THREAD_TYPE      FUNCPTR, NULL
-
-// this is a condition to be checked, on NIRV_COND_SUCCESS, the atribute becomes mandatory
-#define __COND_THREADS_1 _COND_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
-    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI), _COND_VAL_EQUALS,		\
-    _COND_ATTR_VAL(ATTR_THREADS_MODEL), _COND_INT_VAL(NIRVA_THREAD_MODEL_ON_DEMAND))
-
-// this is a condition to be checked, on NIRV_COND_SUCCESS, the attribute becomes mandatory
-#define __COND_THREADS_2 _COND_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
-      _COND_INT_VAL(NIRVA_AUTOMATION_SEMI), _COND_VAL_EQUALS,		\
-      _COND_ATTR_VAL(ATTR_THREADS_MODEL),				\
-      _COND_INT_VAL(NIRVA_THREAD_MODEL_INSTANCE_PER_THREAD),		\
-      NIRVA_OP_OR, _COND_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
-      _COND_INT_VAL(NIRVA_AUTOMATION_FULL))
-
-#define _ASPECT_THREADS_ATTRBUNDLE #THREADS_ASPECT, ADD_ATTR(AUTOLEVEL, THREADS), \
-    ADD_ATTR(THREADS, MODEL), ADD_COND_ATTR(IMPLFUNC, 201, NIRVA_EQUALS, \
-					    ATTR_AUTOLEVEL_THREADS, NIRVA_AUTOMATION_SEMI, \
-					    NIRVA_EQUALS, ATTR_THREADS_MODEL, \
-					    NIRVA_THREAD_MODEL_ON_DEMAND), \
-    ADD_COND_ATTR(IMPLFUNC, 202, ADD_COND_ATTR(IMPLFUNC, 203, _COND(THREADS, 2)), \
-    ADD_COND_ATTR(IMPLFUNC, 204, _COND(THREADS, 2))
-
-#define NIRVA_OPT_FUNC_201 borrow_native_thread,			\
-      "request a native thread from application thread pool",RETURN_NATIVE_THREAD,0
-#define NIRVA_OPT_FUNC_202 return_native_thread,"return a native thread to  application thread pool", \
-    NIRVA_NO_RETURN,1,NIRVA_NATIVE_THREAD,thread
-
-#define _MAKE_IMPL_COND_FUNC_2_DESC(n)					\
-  (n == 201 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_201) : n == 202 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_202) : \
-   n == 203 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_203) : n == 204 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_204) : NULL)
-
-////////////////////////////////////////////////
-
-#define NIRVA_ASPECT_HOOKS			3
-#define NIRVA_ASPECT_NAME_3 "HOOKS"
-
-// attributes created intially in STRUCTURE_APP
-// preferred subtypes: AUTOMATION
-// the attributes are transfered to preferred subtypes in order of preference
-// changing these after structure_app is in PREPARED state requires PRIV_STRUCTURE > 100
-
-// level of automation for hooks
-//  - full, the structure will manage every aspect,including calling user callbcaks
-//  - semi - system hooks will run automatically, but the application will run user_callbacks
-//  - manual - the automation will signal when to trigger hooks and wait for return, but nothing more
-
-// this is a condition to be checked, on NIRV_COND_SUCCESS, the atribute becomes mandatory
-#define __COND_HOOKS_1 _COND_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_HOOKS), \
-    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI)
-#define __COND_HOOKS_2 COND_VAL_NOT_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
-    _COND_INT_VAL(NIRVA_AUTOMATION_FULL)
-
-#define ATTR_AUTOLEVEL_HOOKS				ATTR_NAME("AUTOLEVEL", "HOOKS")
-#define ATTR_AUTOLEVEL_HOOKS_TYPE 		       	INT, NIRVA_AUTOMATION_DEFAULT
-
-#define _ASPECT_HOOKS_ATTRBUNDLE #HOOKS_ASPECT, ADD_ATTR(AUTOLEVEL, HOOKS), \
-    ADD_COND_ATTR(IMPLFUNC, 301,_COND(HOOKS, 1)),			\
-    ADD_COND_ATTR(IMPLFUNC, 302,_COND(HOOKS, 1)),			\
-    ADD_COND_ATTR(IMPLFUNC, 303,_COND(HOOKS, 1)),			\
-    ADD_COND_ATTR(IMPLFUNC, 304,_COND(HOOKS, 1)),			\
-    ADD_COND_ATTR(IMPLFUNC, 305,_COND(HOOKS, 1)),			\
-    ADD_COND_ATTR(IMPLFUNC, 306,_COND(HOOKS, 1)),			\
-    ADD_COND_ATTR(IMPLFUNC, 307,_COND(HOOKS, 1), _COND_(HOOKS, 2)),	\
-    ADD_COND_ATTR(IMPLFUNC, 308,_COND(HOOKS, 1), _COND_(HOOKS, 2)),	\
-    ADD_COND_ATTR(IMPLFUNC, 309,_COND(HOOKS, 1), _COND(HOOKS, 2))
-
-#define NIRVA_OPT_FUNC_301 add_hook_callback // etc
-#define NIRVA_OPT_FUNC_302 remove_hook_callback // etc
-#define NIRVA_OPT_FUNC_303 trigger_hook_callback // etc
-#define NIRVA_OPT_FUNC_304 clear_hook_stackk // etc
-#define NIRVA_OPT_FUNC_305 clear_all_stacks // etc
-#define NIRVA_OPT_FUNC_306 list_hook_stacks // etc
-#define NIRVA_OPT_FUNC_307 join_async_hooks // etc
-#define NIRVA_OPT_FUNC_308 run_hooks_async // etc
-#define NIRVA_OPT_FUNC_309 run_hooks_aync_seq
-
-
-#define _MAKE_IMPL_COND_FUNC_3_DESC(n)				\
-    (n == 301 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_301) :		\
-     n == 302 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_302) :		\
-     n == 303 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_303) :		\
-     n == 304 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_304) :		\
-     n == 305 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_305) :		\
-     n == 306 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_306) :		\
-     n == 307 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_307) :		\
-     n == 308 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_308) :		\
-     n == 309 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_309) : NULL)
-
-////////////////////////////////////////////////
-
-#define NIRVA_ASPECT_REFCOUNTING		4
-#define NIRVA_ASPECT_NAME_4 "REFCOUNTING"
-
-// level of automation for refcounting
-//  - full, the structure will manage every aspect,including freeing bundles when refcount reaches -1
-//  - semi - the structure will manage reffing and unreffing, but will only indicate when a bundle
-//		should be free
-//  - manual - the automation will signal when to ref / =unref somthing
-
-#define ATTR_AUTOLEVEL_REFCOUNTING	       		ATTR_NAME("AUTOLEVEL", "REFCOUNTING")
-#define ATTR_AUTOLEVEL_REFCOUNTING_TYPE        	       	INT, NIRVA_AUTOMATION_DEFAULT
-
-#define __COND_REFCOUNTING_1 _COND_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_REFCOUNTING), \
-    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI)
-
-#define _ASPECT_REFCOUNTING_ATTRBUNDLE #REFCOUNTING_ASPECT, ADD_ATTR(AUTOLEVEL, REFCOUNTING, \
-    ADD_COND_ATTR(IMPLFUNC, REF_BUNDLE_401,_COND(REFCOUNTING, 1)),	\
-    ADD_COND_ATTR(IMPLFUNC, UNREF_BUNDLE_402,_COND(REFCOUNTING, 1))
-
-// add mutex_trylock, mutex_unlock
-
-#define _MAKE_IMPL_COND_FUNC_4_DESC(n)			\
-    (n == 401 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_401) :	\
-     NULL)
-////////////////////////////////
-
-#define NIRVA_ASPECT_RECYCLING			5
-#define NIRVA_ASPECT_NAME_5 "RECYCLING"
-
-// level of automation for bundle recycling bundle memory and connectiosn
-//  - full, the structure will manage every aspect, including recycling bundles as instructed
-// by refcounter
-//  - semi - the structure will handke automated activites like disconnecting atributes, detaching hooks
-//		but will leave freeing to the applicaiton
-//  - manual - the automation will signal when to recycle bundledefs
-
-#define ATTR_AUTOLEVEL_RECYCLING	       		ATTR_NAME("AUTOLEVEL", "RECYCLING")
-#define ATTR_AUTOLEVEL_RECYCLING_TYPE        	       	INT, NIRVA_AUTOMATION_DEFAULT
-
-#define __COND_RECYCLINGING_1 _COND_VAL_EQUALS, _COND_ATTR_VAL ATTR_AUTOLEVEL_RECYCLING, \
-    _CONST_INT_VAL NIRVA_AUTOMATION_SEMI
-
-#define _ASPECT_RECYCLING_ATTRBUNDLE #RECYCLING_ASPECT, ADD_ATTR(AUTOLEVEL, RECYCLING),	\
-    ADD_COND_ATTR(IMPLFUNC, FREE_BUNDLE_501,_COND(RECYCLING, 1))
-
-#define _MAKE_IMPL_COND_FUNC_5_DESC(n)			\
-  (n == 501 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_501) : NULL)
-
-////////////////////////////////
-
-#define NIRVA_ASPECT_TRANSFORMS			6
-#define NIRVA_ASPECT_NAME_6 "TRANSFORMS"
-
-// level of automation for running monitoring transforms
-//  - full, the structure will manage every aspect, including transform trajectories
-// by refcounter
-//  - semi - the structure will handle automated activities like running structure functions
-// 		thre applications will be able ot particpate in the process
-//  - manual - the automation will signal which functions to run but the application will run them
-
-#define ATTR_AUTOLEVEL_TRANSFORMS	       		ATTR_NAME("AUTOLEVEL", "TRANSFORMS")
-#define ATTR_AUTOLEVEL_TRANSFORMS_TYPE        	       	INT, NIRVA_AUTOMATION_DEFAULT
-
-#define _ASPECT_TRANSFORMS_ATTRBUNDLE #TRANSFORMS_ASPECT, ADD_ATTR(AUTOLEVEL, TRANSFORMS)
-
-////////////////////////
-// list of structural subtypes
-// in nirva_init(), object_template STRUCTURE_PRIME should be created
-// STRUCTURE_PRIME should then create an instance of itself with subtyoe APP
-// STRUCTURE_APP, which should be returned.
-
-// STRUCTURE_APP will initially be in state NOT_READY, the first goal should be
-// to get it to state running. This involves first getting it to state prepared
-// the transform for this will cause Prime to instantiate any other subtypes
-// as defined by APPs attributes. Following this, Prime can distribute APPs attribute bundles
-// to their preferred subtypes (in order of preference). When doing so a condition is added
-// to the VALUE_UPDATING hook of each one.
-// The condition is NIRVA_GT(NIRVA_GET_INT_VALUE,SELF_ATTRS,PRIV_STRUCTURE,100)
-// Prime can also distribute the contracts for all "structural transforms", depending on the subtypes
-// available. Subtypes can later be started ot stopped, this will casue Prime to reallocate
-// attributes and contracts accordingly.
-
-// the minimal recommended is THREAD_HERDER this is on by default
-// GUI is necessary if the APP wants to use interface automation
-// BROKER is also reommended
-
-// for medium sized apps it is recommended to add LIFECYCLE, ARIBTRATOR and ADJUDICATOR.
-
-// for larger apps, ARCHIVER and NEGOTIATOR may be added
-
-// for real time apps, it can be useful to add CHRONOMETRY and OPTIMISER
-
-// for apps with a lot of thread interactions, SECURITY can be added to help
-// with PRIV checks
-
-// for highly interactive apps, HARMONY and BEHAVIOUR can be useful additions
-
-///
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_NO_RETURN, nirva_strands_copy, NIRVA_BUNDLEPTR dst,
+                        NIRVA_BUNDLEPTR src, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, va)
+NIRVA_VA_START(va, src)
+while (1) {
+  NIRVA_DEF_SET(NIRVA_STRING, stname, NIRVA_VA_ARG(va, NIRVA_STRING))
+  if (!stname) break;
+  NIRVA_STRAND_COPY(dst, stname, src, stname)
+};
+NIRVA_VA_END(va)
+NIRVA_FUNC_END
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, check_can_add_va, NIRVA_BUNDLEPTR bun, NIRVA_CONST_STRING stname,
+                        NIRVA_UINT sttype, NIRVA_VA_LIST va)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef)
+NIRVA_DEF_VARS(NIRVA_UINT, xtype)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_NULL)
+// check - strand type, restrictions, max_size
+NIRVA_ASSIGN(stdef, _NIRVA_GET_STRAND_DEF(bun, stname))
+NIRVA_ASSERT(stdef, NIRVA_RETURN, NIRVA_NULL)
+NIRVA_ASSIGN(xtype, _NIRVA_STDEF_GET_TYPE(stdef, bun))
+if (sttype != xtype && xtype != STRAND_TYPE_UNDEFINED) {
+  NIRVA_RETURN(NIRVA_NULL)
+}
+NIRVA_END_RETURN(stdef)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, check_can_add, NIRVA_BUNDLEPTR bun, NIRVA_CONST_STRING stname,
+                        NIRVA_UINT sttype, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, va)
+NIRVA_VA_START(va, sttype)
+NIRVA_ASSIGN(stdef, NIRVA_INTERNAL(check_can_add_va)(bun, stname, sttype, va))
+NIRVA_VA_END(va)
+NIRVA_END_RETURN(stdef)
+
+NIRVA_DECL_FUNC_INTERNAL(NIRVA_FUNC_RETURN, include_sub_bundle, NIRVA_BUNDLEPTR,
+                         NIRVA_CONST_STRING, NIRVA_VA_LIST)
+#define _NIRVA_INCLUDE_SUB_BUNDLE(...) NIRVA_CMD(NIRVA_INTERNAL(include_sub_bundle)(__VA_ARGS__))
+
+// this is equivalent to nirva_array_replace, except we take the address of var, and append as a single element
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, set_value, NIRVA_BUNDLEPTR bundle,
+                        NIRVA_CONST_STRING stname, NIRVA_UINT sttype, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, var)
+NIRVA_DEF_VARS(NIRVA_UINT, xtype)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, retval)
+
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, stdef, NIRVA_INTERNAL(check_can_add_va)(bundle, stname, sttype, var))
+// TODO - if we failed due to bundleptr / const_bundleptr mismatch, we
+NIRVA_ASSERT(stdef, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSIGN(xtype, _NIRVA_STDEF_GET_TYPE(stdef, bundle))
+
+if (xtype == STRAND_TYPE_UNDEFINED) {
+  NIRVA_ASSIGN(retval, NIRVA_INTERNAL(set_proxy_strand_type)(stdef, bundle, sttype))
+  if (retval != NIRVA_RESULT_SUCCESS) NIRVA_RETURN(retval);
+  NIRVA_ASSIGN(xtype, sttype)
+}
+
+// TODO - check if we have data_hook(s) for bundle, stname
+// if so, we need to create new_val
+// NIRVA_CALL_ASSIGN(new_val, NIRVA_CREATE_BUNDLE_BY_TYPE, VALUE_BUNDLE_TYPE, "STRAND_TYPE", sttype, NIRVA_NULL)
+
+if (!NIRVA_BUNDLE_HAS_STRAND(bundle, stname)) {
+  // TODO - check if there is config_change hook for bundle
+} else {
+  // TODO - check if we have data_hook(s) for bundle, stname
+  /* NIRVA_CALL_ASSIGN(old_val, NIRVA_CREATE_BUNDLE_BY_TYPE, VALUE_BUNDLE_TYPE, "STRAND_TYPE", xtype, NIRVA_NULL)  */
+  /*   NIRVA_CALL(nirva_strand_copy, old_val, "DATA", bundle, stname) */
+  /*NIRVA_HOOK_TRIGGER(bundle,stname, old_val, new_val)) {*/
+  NIRVA_ASSIGN(retval, NIRVA_ARRAY_CLEAR(bundle, stname))
+  if (retval != NIRVA_RESULT_SUCCESS) NIRVA_RETURN(retval);
+}
+
+NIRVA_VA_START(var, sttype)
+// call array_append, but we only add a single item
+
+switch (sttype) {
+case STRAND_TYPE_BUNDLEPTR: {
+  _NIRVA_INCLUDE_SUB_BUNDLE(bundle, stname, var)
+} break;
+case STRAND_TYPE_INT: {
+  NIRVA_DEF_SET(NIRVA_INT, ival, NIRVA_VA_ARG(var, NIRVA_INT))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_UINT: {
+  NIRVA_DEF_SET(NIRVA_UINT, ival, NIRVA_VA_ARG(var, NIRVA_UINT))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_BOOLEAN: {
+  NIRVA_DEF_SET(NIRVA_BOOLEAN, ival, NIRVA_VA_ARG(var, NIRVA_BOOLEAN))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_DOUBLE: {
+  NIRVA_DEF_SET(NIRVA_DOUBLE, ival, NIRVA_VA_ARG(var, NIRVA_DOUBLE))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_INT64: {
+  NIRVA_DEF_SET(NIRVA_INT64, ival, NIRVA_VA_ARG(var, NIRVA_INT64))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_UINT64: {
+  NIRVA_DEF_SET(NIRVA_UINT64, ival, NIRVA_VA_ARG(var, NIRVA_UINT64))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_STRING: {
+  NIRVA_DEF_SET(NIRVA_STRING, ival, NIRVA_VA_ARG(var, NIRVA_STRING))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_VOIDPTR: {
+  NIRVA_DEF_SET(NIRVA_VOIDPTR, ival, NIRVA_VA_ARG(var, NIRVA_VOIDPTR))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_FUNCPTR: {
+  NIRVA_DEF_SET(NIRVA_NATIVE_FUNC, ival, NIRVA_VA_ARG(var, NIRVA_NATIVE_FUNC))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+case STRAND_TYPE_CONST_BUNDLEPTR: {
+  NIRVA_DEF_SET(NIRVA_CONST_BUNDLEPTR, ival, NIRVA_VA_ARG(var, NIRVA_CONST_BUNDLEPTR))
+  _NIRVA_ARRAY_APPENDx(bundle, stname, sttype, 1, &ival)
+} break;
+default: break;
+}
+
+// TODO - check if we have data_hook(s) for bundle, stname
+// call after hook
+
+// TODO - check if we need to call after_strand_added hook
+
+NIRVA_VA_END(var)
+NIRVA_END_SUCCESS
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, set_proxy_strand_type, NIRVA_BUNDLEPTR stdef, NIRVA_BUNDLEPTR bundle,
+                        NIRVA_UINT sttype)
+NIRVA_DEF_VARS(NIRVA_UINT, xtype)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, res)
+NIRVA_DEF_VARS(NIRVA_STRING, type_proxy)
+NIRVA_ASSERT(stdef, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSERT(bundle, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSIGN(xtype, _NIRVA_STDEF_GET_TYPE(stdef, bundle))
+if (xtype != STRAND_TYPE_UNDEFINED) {
+  NIRVA_RETURN_FAIL
+}
+NIRVA_ASSIGN(type_proxy, NIRVA_GET_VALUE_STRING(stdef, "TYPE_PROXY"))
+NIRVA_ASSERT(type_proxy, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSIGN(res, NIRVA_VALUE_SET(bundle, type_proxy, STRAND_TYPE_UINT, sttype))
+NIRVA_STRING_FREE(type_proxy)
+NIRVA_END_RETURN(res)
+
+NIRVA_DEF_FUNC(NIRVA_INT, NIRVA_EXPORTED_get_value_int, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_INT, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_INT), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_INT(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+NIRVA_DEF_FUNC(NIRVA_INT64, NIRVA_EXPORTED_get_value_int64, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_INT64, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_INT64), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_INT64(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+NIRVA_DEF_FUNC(NIRVA_BOOLEAN, NIRVA_EXPORTED_get_value_boolean, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_BOOLEAN, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_BOOLEAN), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_BOOLEAN(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+NIRVA_DEF_FUNC(NIRVA_DOUBLE, NIRVA_EXPORTED_get_value_double, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_DOUBLE, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_DOUBLE), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_DOUBLE(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+NIRVA_DEF_FUNC(NIRVA_VOIDPTR, NIRVA_EXPORTED_get_value_voidptr, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_VOIDPTR, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_VOIDPTR), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_VOIDPTR(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+NIRVA_DEF_FUNC(NIRVA_NATIVE_FUNC, NIRVA_EXPORTED_get_value_funcptr, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
+NIRVA_DEF_VARS(NIRVA_NATIVE_FUNC, var)
+NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_NATIVE_FUNC), vals)
+if (!_NIRVA_CHECK_VALUES(bundle, stname)) NIRVA_FAIL(NIRVA_NULL);
+NIRVA_ASSIGN(vals, NIRVA_GET_ARRAY_FUNCPTR(bundle, stname))
+NIRVA_ASSIGN(var, vals[0])
+NIRVA_ARRAY_FREE(vals)
+NIRVA_END_RETURN(var)
+
+#define NIRVA_CALL_METHOD_assert_range INLINE
+#define NIRVA_ASSERT_RANGE(var, min, mx, onfail, ...) INLINE_FUNC_CALL(assert_range, __VA_ARGS__)
+#define _INLINE_INTERNAL_assert_range(var, min, mx, onfail, ...) NIRVA_INLINE \
+  (if (var < min || var > mx) onfail(__VA_ARGS__);)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, append_sub_bundles, NIRVA_BUNDLEPTR bundle,
+                        NIRVA_CONST_STRING sname, NIRVA_UINT ns, NIRVA_VA_LIST va)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, stdef, container)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, subs)
+NIRVA_ASSERT(bundle, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSIGN(subs, NIRVA_VA_ARG(va, NIRVA_BUNDLEPTR_ARRAY))
+for (i = 0; i < ns; i++) {
+  NIRVA_ASSIGN(stdef, NIRVA_INTERNAL(check_can_add)(bundle, sname, STRAND_TYPE_BUNDLEPTR, subs[i]))
+  NIRVA_ASSERT(stdef, NIRVA_RETURN, NIRVA_RESULT_FAIL)
+  NIRVA_ASSIGN(sttype, _NIRVA_STDEF_GET_TYPE(stdef, bundle))
+  if (sttype == STRAND_TYPE_CONST_BUNDLEPTR) {
+    NIRVA_RETURN(NIRVA_ARRAY_APPEND(bundle, sname, STRAND_TYPE_CONST_BUNDLEPTR, ns, subs))
+  }
+  NIRVA_ASSIGN(container, NIRVA_GET_VALUE_BUNDLEPTR(subs[i], "CONTAINER"))
+  if (container && container != bundle) {
+    if (NIRVA_FUNC_GENERATION < 3) {
+      // until generation 3, we are still in early bootstrap, so we can freely reparent sub bundles
+      // - provided: ALL bundles have "container" == self
+      if (container != subs[i]) {
+        NIRVA_RETURN(NIRVA_ARRAY_APPEND(bundle, sname, STRAND_TYPE_CONST_BUNDLEPTR, ns, subs))
+      }
+    } else {
+      //this is permitted IF the container has a strand "OWNER" and the value is equal
+      // or if container UID == caller uid
+      NIRVA_RETURN(NIRVA_ARRAY_APPEND(bundle, sname, STRAND_TYPE_CONST_BUNDLEPTR, ns, subs))
+    }
+  }
+}
+for (int i = 0; i < ns; i++) {
+  NIRVA_VALUE_SET(subs[i], "CONTAINER", STRAND_TYPE_CONST_BUNDLEPTR, bundle)
+  NIRVA_VALUE_SET(subs[i], "CONTAINER_STRAND", STRAND_TYPE_STRING, sname)
+}
+NIRVA_END_RETURN(_NIRVA_ARRAY_APPEND(bundle, sname, STRAND_TYPE_BUNDLEPTR, ns, va))
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, include_sub_bundle_redir, NIRVA_BUNDLEPTR bundle,
+                        NIRVA_CONST_STRING sname, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, var)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, res)
+NIRVA_VA_START(var, sname)
+NIRVA_ASSIGN(res, NIRVA_INTERNAL(append_sub_bundles)(bundle, sname, 1, var))
+NIRVA_VA_END(var)
+NIRVA_END_RETURN(res)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, include_sub_bundle, NIRVA_BUNDLEPTR bundle,
+                        NIRVA_CONST_STRING sname, NIRVA_VA_LIST va)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, xbun, NIRVA_VA_ARG(va, NIRVA_BUNDLEPTR))
+NIRVA_END_RETURN(NIRVA_INTERNAL(include_sub_bundle_redir)(bundle, sname, &xbun))
+
+#ifdef NEED_NIRVA_KEYED_ARRAYS
+NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_add_value_by_key, NIRVA_BUNDLEPTR bun,
+               NIRVA_CONST_STRING stname, NIRVA_CONST_STRING keyval, NIRVA_UINT sttype, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, idx)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, res)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, var)
+NIRVA_DEF_VARS(NIRVA_UINT, ne)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+if (sttype != STRAND_TYPE_BUNDLEPTR && sttype != STRAND_TYPE_CONST_BUNDLEPTR) {NIRVA_RETURN_ERROR}
+NIRVA_ASSERT(stname, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+if (NIRVA_FUNC_GENERATION >= 3) {if (!_NIRVA_IS_KEYED_ARRAY(bun, stname)) NIRVA_RETURN_ERROR;}
+NIRVA_ASSERT(keyval, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_CALL_ASSIGN(idx, NIRVA_GET_VALUE_BUNDLEPTR, bun, "INDEX")
+if (idx) {
+  if (NIRVA_RESULT(NIRVA_INTERNAL(idx_has_key), idx, keyval, NIRVA_IDX_PREFIX))
+    NIRVA_RETURN_FAIL
+  }
+NIRVA_VA_START(var, sttype)
+NIRVA_CALL_ASSIGN(ne, NIRVA_INTERNAL(array_append_va), bun, stname, sttype, 1, var)
+NIRVA_VA_END(var)
+if (ne < 0) {NIRVA_RETURN_ERROR}
+if (!idx) {
+  NIRVA_ASSIGN(idx, create_bundle_by_type(INDEX_BUNDLE_TYPE, "STRAND_TYPE", sttype, NIRVA_NULL))
+  NIRVA_ASSERT(idx, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+}
+
+NIRVA_VA_START(var, sttype)
+NIRVA_CALL_ASSIGN(res, NIRVA_INTERNAL(add_idx_value), idx, keyval, NIRVA_IDX_PREFIX, sttype, var)
+NIRVA_VA_END(var)
+NIRVA_END_RETURN(res)
+
+NIRVA_DEF_FUNC(NIRVA_BOOLEAN, NIRVA_EXPORTED_has_value_for_key, NIRVA_BUNDLEPTR bun,
+               NIRVA_CONST_STRING stname, NIRVA_CONST_STRING keyval)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, idx)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_FALSE)
+NIRVA_ASSERT(stname, NIRVA_RETURN, NIRVA_FALSE)
+//if (!_NIRVA_IS_KEYED_ARRAY(bun, stname)) {NIRVA_RETURN(NIRVA_FALSE);}
+NIRVA_ASSERT(keyval, NIRVA_RETURN, NIRVA_FALSE)
+NIRVA_ASSIGN(idx, NIRVA_GET_VALUE_BUNDLEPTR(bun, "INDEX"))
+NIRVA_ASSERT(idx, NIRVA_RETURN, NIRVA_FALSE)
+NIRVA_END_RESULT(NIRVA_INTERNAL(idx_has_key), idx, keyval, NIRVA_IDX_PREFIX)
+
+NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, NIRVA_EXPORTED_remove_value_by_key, NIRVA_BUNDLEPTR bun,
+               NIRVA_CONST_STRING stname, NIRVA_CONST_STRING keyval)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, remval, idx)
+NIRVA_DEF_VARS(NIRVA_STRING, kname)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype, nitems)
+NIRVA_DEF_VARS(NIRVA_INT, i, j)
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSERT(stname, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+if (!_NIRVA_IS_KEYED_ARRAY(bun, stname)) {NIRVA_RETURN_ERROR;}
+NIRVA_ASSERT(keyval, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSIGN(idx, NIRVA_GET_VALUE_BUNDLEPTR(bun, "INDEX"))
+NIRVA_ASSERT(idx, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_ASSIGN(kname, _NIRVA_PREFIX_KNAME(keyval, NIRVA_IDX_PREFIX))
+if (!NIRVA_BUNDLE_HAS_STRAND(idx, kname)) {
+  NIRVA_STRING_FREE(kname)
+  NIRVA_RETURN(NIRVA_RESULT_ERROR)
+}
+NIRVA_ASSIGN(remval, NIRVA_GET_VALUE_BUNDLEPTR(idx, kname))
+NIRVA_STRAND_DELETE(idx, kname)
+NIRVA_STRING_FREE(kname)
+NIRVA_ASSIGN(nitems, NIRVA_ARRAY_GET_SIZE(bun, stname))
+NIRVA_ASSIGN(sttype, _NIRVA_STRAND_GET_TYPE(bun, stname))
+if (nitems > 1) {
+  if (sttype == STRAND_TYPE_BUNDLEPTR) {
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR_ARRAY, array, NIRVA_GET_ARRAY_BUNDLEPTR(bun, stname))
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR_ARRAY, xarray, NIRVA_MALLOC_ARRAY(NIRVA_BUNDLEPTR, nitems - 1))
+    NIRVA_ASSIGN(j, 0)
+    for (i = 0; i < nitems; i++) {
+      if (array[i] == remval) continue;
+      NIRVA_ASSIGN(xarray[j++], array[i])
+    }
+    NIRVA_ARRAY_FREE(array)
+
+    // must be careful here not to free the sub bundles, and not to remove INDEX  when clearing array
+    _NIRVA_ARRAY_CLEAR(bun, stname)
+
+    // "container" is already set to bun, so we should have no problems here
+    NIRVA_CALL(NIRVA_ARRAY_APPEND, bun, stname, STRAND_TYPE_BUNDLEPTR, nitems - 1, xarray)
+    NIRVA_ARRAY_FREE(xarray)
+    NIRVA_RECYCLE(remval)
+  } else {
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR_ARRAY, array, NIRVA_GET_ARRAY_BUNDLEPTR(bun, stname))
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR_ARRAY, xarray, NIRVA_MALLOC_ARRAY(NIRVA_BUNDLEPTR, nitems - 1))
+    NIRVA_ASSIGN(j, 0)
+    for (i = 0; i < nitems; i++) {
+      if (array[i] == remval) continue;
+      NIRVA_ASSIGN(xarray[j++], array[i])
+    }
+    NIRVA_ARRAY_FREE(array)
+    NIRVA_ARRAY_CLEAR(bun, stname)
+    // "container" is already set to bun, so we should have no problems here
+    NIRVA_CALL(NIRVA_ARRAY_APPEND, bun, stname, STRAND_TYPE_CONST_BUNDLEPTR, nitems - 1, xarray)
+    NIRVA_ARRAY_FREE(xarray)
+  }
+} else {
+  NIRVA_ARRAY_CLEAR(bun, stname)
+}
+NIRVA_END_SUCCESS
+
+NIRVA_EXPORTS(add_value_by_key)
+NIRVA_EXPORTS(remove_value_by_key)
+NIRVA_EXPORTS(has_value_for_key)
+#endif
+#ifdef NIRVA_MACRO_add_value_by_key
+#define _NIRVA_MACRO_add_value_by_key(...)NIRVA_MACRO_add_value_by_key(__VA_ARGS__)
+#else
+#define _NIRVA_MACRO_add_value_by_key(...)NIRVA_RESULT_CALL_INVALID
+#endif
+#ifdef NIRVA_MACRO_remove_value_by_key
+#define _NIRVA_MACRO_remove_value_by_key(...)NIRVA_MACRO_remove_value_by_key(__VA_ARGS__)
+#else
+#define _NIRVA_MACRO_remove_value_by_key(...)NIRVA_RESULT_CALL_INVALID
+#endif
+#ifdef NIRVA_MACRO_has_value_for_key
+#define _NIRVA_MACRO_has_value_for_key(...)NIRVA_MACRO_has_value_for_key(__VA_ARGS__)
+#else
+#define _NIRVA_MACRO_has_value_for_key(...)NIRVA_FALSE
+#endif
+
+#define NIRVA_ATTR_DEF_IS_SCALAR(adef)					\
+  (!adef || !NIRVA_BUNDLE_HAS_STRAND(adef, "MAX_VALUES") || NIRVA_GET_VALUE_INT(adef, "MAX_VALUES") == 0)
+
+#define NIRVA_ATTR_DEF_IS_ARRAY(adef) !NIRVA_ATTR_DEF_IS_SCALAR(adef)
+
+#define NIRVA_MACRO_get_attr_by_name(attr_group, attr_name)	\
+  NIRVA_GET_VALUE_BY_KEY(attr_group, "ATTRIBUTES", attr_name)
+#define NIRVA_ATTR_GET NIRVA_MACRO_get_attr_by_name
+
+#define NIRVA_MACRO_remove_attr_by_name(attr_group, attr_name)	\
+  NIRVA_REMOVE_VALUE_BY_KEY(attr_group, "ATTRIBUTES", attr_name)
+#define NIRVA_ATTR_DELETE NIRVA_MACRO_remove_attr_by_name
+
+#define NIRVA_MACRO_add_attr_by_name(attr_group, aname, attr)NIRVA_ADD_VALUE_BY_KEY(attr_group,"ATTRIBUTES", \
+										    aname,STRAND_TYPE_BUNDLEPTR,attr)
+#define NIRVA_ATTR_APPEND NIRVA_MACRO_add_attr_by_name
+
+#define NIRVA_MACRO_get_attr_value_known_type(xtype, attr)NIRVA_GET_VALUE_##xtype(attr, "DATA")
+
+#define NIRVA_MACRO_attr_get_type(attr)					\
+  ((attr)?NIRVA_GET_VALUE_UINT(attr,"ATTR_TYPE"):ATTR_TYPE_NONE)
+#define NIRVA_ATTR_GET_TYPE NIRVA_MACRO_attr_get_type
+
+// check a single condition, e.g a == b
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, check_condition, NIRVA_INT64 op, NIRVA_INT n_op_args, NIRVA_STRING_ARRAY strings,
+                        NIRVA_INT i, NIRVA_BUNDLEPTR fdata)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr)
+NIRVA_DEF_SET(NIRVA_STRING, str0, strings[i + 1])
+NIRVA_DEF_SET(NIRVA_STRING, str1, strings[i + 2])
+// this gives us the from type - it could be a value as string
+// or it could be attribute name,
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attrs, NIRVA_GET_VALUE_BUNDLEPTR(fdata, "SEG_ATTRS"))
+char tcode0 = *str0, tcode1;
+if (tcode0 == 'A') {
+  uint32_t t0;
+  char *attr_name = str0 + 1;
+  NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+  NIRVA_ASSIGN(t0, NIRVA_ATTR_GET_TYPE(attr))
+  if (t0 == ATTR_TYPE_BOOLEAN) {
+    boolean p0 = 0;
+    NIRVA_ASSIGN(p0, NIRVA_MACRO_get_attr_value_known_type(boolean, attr));
+    if (op == COND_LOGIC_NOT) {
+      NIRVA_RETURN(NIRVA_COND_RESPONSE(NIRVA_NOT(p0)));
+    }
+    tcode1 = *str1;
+    if (tcode1 == 'A') {
+      uint32_t t1 = 0;
+      char *attr_name = str1 + 1;
+      NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+      NIRVA_ASSIGN(t1, NIRVA_ATTR_GET_TYPE(attr))
+      if (t1 == ATTR_TYPE_BOOLEAN) {
+        int p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      } else if (t1 == ATTR_TYPE_INT) {
+        int p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      } else if (t1 == ATTR_TYPE_INT64) {
+        int64_t p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      }
+      NIRVA_RETURN(NIRVA_COND_FAIL);
+    }
+    if (tcode1 == 'i' || tcode1 == 'b') {
+      int p1 = 0;
+      NIRVA_CALL_ASSIGN(p1, atoi, str1 + 1);
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    if (tcode1 == 'I') {
+      int64_t p1 = 0;
+      NIRVA_CALL_ASSIGN(p1, atol, str1 + 1);
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    NIRVA_RETURN(NIRVA_COND_FAIL);
+  } else if (t0 == ATTR_TYPE_INT) {
+    int p0 = 0;
+    NIRVA_ASSIGN(p0, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+    if (op == COND_LOGIC_NOT) {
+      NIRVA_RETURN(NIRVA_COND_RESPONSE(NIRVA_NOT(p0)));
+    }
+    tcode1 = *str1;
+    if (tcode1 == 'A') {
+      uint32_t t1 = 0;
+      char *attr_name = str1 + 1;
+      NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+      NIRVA_ASSIGN(t1, NIRVA_ATTR_GET_TYPE(attr))
+      if (t1 == ATTR_TYPE_BOOLEAN) {
+        int p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(boolean, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      } else if (t1 == ATTR_TYPE_INT) {
+        int p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      } else if (t1 == ATTR_TYPE_INT64) {
+        int64_t p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      }
+      NIRVA_RETURN(NIRVA_COND_FAIL);
+    }
+    if (tcode1 == 'i' || tcode1 == 'b') {
+      int p1 = 0;
+      NIRVA_CALL_ASSIGN(p1, atoi, str1 + 1);
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    if (tcode1 == 'I') {
+      int64_t p1 = 0;
+      NIRVA_CALL_ASSIGN(p1, atol, str1 + 1);
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    NIRVA_RETURN(NIRVA_COND_FAIL);
+  } else if (t0 == ATTR_TYPE_INT64) {
+    int64_t p0 = 0;
+    NIRVA_ASSIGN(p0, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+    if (op == COND_LOGIC_NOT) {
+      NIRVA_RETURN(NIRVA_COND_RESPONSE(NIRVA_NOT(p0)));
+    }
+    tcode1 = *str1;
+    if (tcode1 == 'A') {
+      uint32_t t1;
+      char *attr_name = str1 + 1;
+      NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+      NIRVA_ASSIGN(t1, NIRVA_ATTR_GET_TYPE(attr));
+      if (t1 == ATTR_TYPE_BOOLEAN) {
+        int p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(boolean, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      } else if (t1 == ATTR_TYPE_INT) {
+        int p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      } else if (t1 == ATTR_TYPE_INT64) {
+        int64_t p1 = 0;
+        NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+        NIRVA_TEST_COND(op, p0, p1);
+      }
+      NIRVA_RETURN(NIRVA_COND_FAIL);
+    }
+    if (tcode1 == 'i' || tcode1 == 'b') {
+      int p1 = 0;
+      NIRVA_CALL_ASSIGN(p1, atoi, str1 + 1);
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    if (tcode1 == 'I') {
+      int64_t p1 = 0;
+      NIRVA_CALL_ASSIGN(p1, atol, str1 + 1);
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    NIRVA_RETURN(NIRVA_COND_FAIL);
+  }
+}
+if (tcode0 == 'b') {
+  int p0 = 0;
+  NIRVA_CALL_ASSIGN(p0, atoi, str0 + 1);
+  if (op == COND_LOGIC_NOT) {
+    NIRVA_RETURN(NIRVA_COND_RESPONSE(NIRVA_NOT(p0)));
+  }
+  tcode1 = *str1;
+  if (tcode1 == 'A') {
+    uint32_t t1;
+    char *attr_name = str1 + 1;
+    NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+    NIRVA_ASSIGN(t1, NIRVA_ATTR_GET_TYPE(attr));
+    if (t1 == ATTR_TYPE_BOOLEAN) {
+      int p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(boolean, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    } else if (t1 == ATTR_TYPE_INT) {
+      int p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    } else if (t1 == ATTR_TYPE_INT64) {
+      int64_t p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    NIRVA_RETURN(NIRVA_COND_FAIL);
+  }
+  if (tcode1 == 'i' || tcode1 == 'b') {
+    int p1 = 0;
+    NIRVA_CALL_ASSIGN(p1, atoi, str1 + 1);
+    NIRVA_TEST_COND(op, p0, p1);
+  }
+  if (tcode1 == 'I') {
+    int64_t p1 = 0;
+    NIRVA_CALL_ASSIGN(p1, atol, str1 + 1);
+    NIRVA_TEST_COND(op, p0, p1);
+  }
+  NIRVA_RETURN(NIRVA_COND_FAIL);
+} else if (tcode0 == 'i') {
+  int p0 = 0;
+  NIRVA_CALL_ASSIGN(p0, atoi, str0 + 1);
+  if (op == COND_LOGIC_NOT) {
+    NIRVA_RETURN(NIRVA_COND_RESPONSE(NIRVA_NOT(p0)));
+  }
+  tcode1 = *str1;
+  if (tcode1 == 'A') {
+    uint32_t t1;
+    char *attr_name = str1 + 1;
+    NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+    NIRVA_ASSIGN(t1, NIRVA_ATTR_GET_TYPE(attr));
+    if (t1 == ATTR_TYPE_BOOLEAN) {
+      int p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(boolean, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    } else if (t1 == ATTR_TYPE_INT) {
+      int p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    } else if (t1 == ATTR_TYPE_INT64) {
+      int64_t p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    NIRVA_RETURN(NIRVA_COND_FAIL);
+  }
+  if (tcode1 == 'i' || tcode1 == 'b') {
+    int p1 = 0;
+    NIRVA_CALL_ASSIGN(p1, atoi, str1 + 1);
+    NIRVA_TEST_COND(op, p0, p1);
+  }
+  if (tcode1 == 'I') {
+    int64_t p1 = 0;
+    NIRVA_CALL_ASSIGN(p1, atol, str1 + 1);
+    NIRVA_TEST_COND(op, p0, p1);
+  }
+  NIRVA_RETURN(NIRVA_COND_FAIL);
+} else if (tcode0 == 'I') {
+  int64_t p0 = 0;
+  NIRVA_CALL_ASSIGN(p0, atol, str0 + 1);
+  if (op == COND_LOGIC_NOT) {
+    NIRVA_RETURN(NIRVA_COND_RESPONSE(NIRVA_NOT(p0)));
+  }
+  tcode1 = *str1;
+  if (tcode1 == 'A') {
+    uint32_t t1;
+    char *attr_name = str1 + 1;
+    NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, attr_name))
+    NIRVA_ASSIGN(t1, NIRVA_ATTR_GET_TYPE(attr));
+    if (t1 == ATTR_TYPE_BOOLEAN) {
+      int p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(boolean, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    } else if (t1 == ATTR_TYPE_INT) {
+      int p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    } else if (t1 == ATTR_TYPE_INT64) {
+      int64_t p1 = 0;
+      NIRVA_ASSIGN(p1, NIRVA_MACRO_get_attr_value_known_type(int64, attr));
+      NIRVA_TEST_COND(op, p0, p1);
+    }
+    NIRVA_RETURN(NIRVA_COND_FAIL);
+  }
+  if (tcode1 == 'i' || tcode1 == 'b') {
+    int p1 = 0;
+    NIRVA_CALL_ASSIGN(p1, atoi, str1 + 1);
+    NIRVA_TEST_COND(op, p0, p1);
+  }
+  if (tcode1 == 'I') {
+    int64_t p1 = 0;
+    NIRVA_CALL_ASSIGN(p1, atol, str1 + 1);
+    NIRVA_TEST_COND(op, p0, p1);
+  }
+}
+NIRVA_END_RETURN(NIRVA_COND_FAIL);
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, update_gcondres, NIRVA_INT logic_op,
+                        NIRVA_INT64 gcondres,  NIRVA_INT64 condres)
+if (condres == NIRVA_COND_FORCE || condres == NIRVA_COND_ABANDON) NIRVA_RETURN(condres);
+if (gcondres != NIRVA_COND_INVALID && gcondres != NIRVA_COND_SUCCESS
+    && gcondres != NIRVA_COND_FAIL) NIRVA_RETURN(gcondres);
+
+if (condres == NIRVA_COND_FAIL) {
+  // COND_FAIL
+  if (logic_op == COND_LOGIC_OR || logic_op == COND_LOGIC_XOR)
+    return gcondres;
+} else {
+  // COND_SUCCESS
+  if (logic_op == COND_LOGIC_XOR && gcondres == NIRVA_COND_SUCCESS) {
+    return NIRVA_COND_FAIL;
+  }
+}
+NIRVA_END_RETURN(condres);
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, push_int, NIRVA_BUNDLEPTR stack, NIRVA_INT val)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, node, old_end)
+if (!stack) NIRVA_CALL_ASSIGN(stack, create_bundle_by_type, VALUE_BUNDLE_TYPE, NIRVA_NULL);
+NIRVA_CALL_ASSIGN(node, create_bundle_by_type, VALUE_BUNDLE_TYPE, "STRAND_TYPE", STRAND_TYPE_INT, NIRVA_NULL)
+NIRVA_VALUE_SET(node, "DATA", STRAND_TYPE_INT, val)
+NIRVA_ASSIGN(old_end, NIRVA_GET_VALUE_BUNDLEPTR(stack, "PREV"))
+if (old_end) {
+  NIRVA_VALUE_SET(node, "PREV", STRAND_TYPE_CONST_BUNDLEPTR, old_end)
+  NIRVA_VALUE_SET(old_end, "NEXT", STRAND_TYPE_BUNDLEPTR, node)
+} else {
+  NIRVA_VALUE_SET(stack, "NEXT", STRAND_TYPE_BUNDLEPTR, node)
+}
+NIRVA_VALUE_SET(stack, "PREV", STRAND_TYPE_CONST_BUNDLEPTR, node)
+NIRVA_END_RETURN(stack)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_INT, pop_int, NIRVA_BUNDLEPTR stack)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, old_end, NIRVA_GET_VALUE_BUNDLEPTR(stack, "PREV"))
+NIRVA_DEF_SET(NIRVA_INT, val, NIRVA_GET_VALUE_INT(old_end, "DATA"))
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, old_prev, NIRVA_GET_VALUE_BUNDLEPTR(old_end, "PREV"))
+if (old_prev) {
+  NIRVA_VALUE_SET(stack, "PREV", STRAND_TYPE_CONST_BUNDLEPTR, old_prev)
+  NIRVA_STRAND_DELETE(old_prev, "NEXT")
+} else {
+  NIRVA_STRAND_DELETE(stack, "NEXT")
+  NIRVA_STRAND_DELETE(stack, "PREV")
+}
+NIRVA_END_RETURN(val)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_INT, pop_parens, NIRVA_BUNDLEPTR stack, NIRVA_INT64 gcondres)
+NIRVA_DEF_VARS(NIRVA_INT, notval, logic_op, condres)
+NIRVA_ASSIGN(notval, 0)
+NIRVA_CALL_ASSIGN(logic_op, NIRVA_INTERNAL(pop_int), stack)
+if (logic_op == COND_LOGIC_NOT) {
+  NIRVA_ASSIGN(notval, 1)
+  NIRVA_CALL_ASSIGN(logic_op, NIRVA_INTERNAL(pop_int), stack)
+}
+if (logic_op != COND_NOOP) NIRVA_CALL_ASSIGN(condres, NIRVA_INTERNAL(pop_int), stack)
+  if (notval) {
+    if (gcondres == NIRVA_COND_FAIL) NIRVA_ASSIGN(gcondres, NIRVA_COND_SUCCESS)
+      else if (gcondres == NIRVA_COND_SUCCESS) NIRVA_ASSIGN(gcondres, NIRVA_COND_FAIL)
+        NIRVA_ASSIGN(notval, 0)
+      }
+NIRVA_END_RESULT(NIRVA_INTERNAL(update_gcondres), logic_op, gcondres, condres)
+
+// Scripts: these are an array of string. We read 0 or more NOT
+// NOT (0 or more) ( op, aval, bval) logic_op
+
+// each sting should exactly 1 symbol, for example:
+
+// s[0] : COND_START			: "COND_START"
+// s[1] : COND_VAL_EQUALS		: "18"
+// s[2] : VAR_
+
+// run through conditions in scriptlet strings (array pf const string)
+// strins
+
+#define N_SYNTAX_SYMS 5
+#define NIRVA_CALL_METHOD_check_cond_script INTERN
+// almost STANDARD FUNC
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, check_cond_script, NIRVA_BUNDLEPTR scriptlet, NIRVA_BUNDLEPTR func_data)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, pstack, NIRVA_NULL)
+NIRVA_DEF_VARS(NIRVA_INT64, condres, gcondres)
+NIRVA_DEF_VARS(NIRVA_INT, plevel, notval, j, k)
+NIRVA_DEF_VARS(NIRVA_STRING_ARRAY, strings)
+NIRVA_DEF_VARS(NIRVA_INT, logic_op, value_op, syn_start, syn_end, n_op_args)
+NIRVA_DEF_ARRAY_SIZE(NIRVA_STRING, syntax, N_SYNTAX_SYMS)
+NIRVA_ASSIGN(syntax[0], COND_START)
+NIRVA_ASSIGN(syntax[1], COND_P_CLOSE)
+NIRVA_ASSIGN(syntax[2], COND_END)
+NIRVA_ASSIGN(syntax[3], COND_NOT)
+NIRVA_ASSIGN(syntax[4], COND_P_OPEN)
+NIRVA_ASSIGN(gcondres, NIRVA_COND_INVALID)
+NIRVA_ASSIGN(plevel, 0)
+NIRVA_ASSIGN(notval, 0)
+NIRVA_ASSIGN(strings, NIRVA_GET_ARRAY_STRING(scriptlet, "STRINGS"))
+if (!strings) NIRVA_RETURN(NIRVA_COND_INVALID);
+
+// TODO - get syntax from a cascade
+NIRVA_ASSIGN(logic_op, COND_NOOP)
+NIRVA_ASSIGN(syn_start, 0)
+NIRVA_ASSIGN(syn_end, N_SYNTAX_SYMS)
+for (int i = 0; strings[i]; i++) {
+  for (j = syn_start; j < syn_end; j++) {
+    if (NIRVA_STRLEN_EQUAL(strings[i], syntax[j])) break;
+  }
+  if (!i) {
+    // MUST have exactly 1 COND_START to begin
+    if (j != 0) {
+      NIRVA_ERROR(NULL);
+      NIRVA_RETURN(NIRVA_COND_INVALID)
+    }
+    i++;
+  } else {
+    if (j == 3) {
+      // NOT
+      if (++notval == 2) {
+        for (k = i - 1; strings[k + 2]; k++) strings[k] = strings[k + 2];
+        i -= 2;
+        notval = 0;
+      }
+      continue;
+    } else if (j != syn_end) {
+      NIRVA_ERROR(NIRVA_NULL);
+      NIRVA_RETURN(NIRVA_COND_INVALID)
+    }
+
+    // next we have value op
+    value_op = atoi(strings[i]);
+    n_op_args = N_OP_ARGS(value_op);
+    if (n_op_args == COND_NARGS_INVALID) {
+      NIRVA_ERROR(NIRVA_NULL);
+      NIRVA_RETURN(NIRVA_COND_INVALID)
+    }
+    i++;
+
+    NIRVA_CALL_ASSIGN(condres, NIRVA_INTERNAL(check_condition), value_op, n_op_args, strings, i, func_data);
+
+    NIRVA_CALL(NIRVA_ARRAY_APPEND, func_data, "RESPONSES",
+               _NIRVA_STRAND_GET_TYPE(func_data, "RESPONSES"), 1, &condres)
+    NIRVA_CALL_IF_EQUAL(gcondres, NIRVA_COND_FORCE, NIRVA_RETURN, gcondres)
+    NIRVA_CALL_IF_EQUAL(gcondres, NIRVA_COND_ABANDON, NIRVA_RETURN, gcondres)
+    i += n_op_args;
+    // after evaluating, we apply
+    // not (if appropriate)
+    if (notval) {
+      if (condres == NIRVA_COND_FAIL) {condres = NIRVA_COND_SUCCESS;}
+      else if (gcondres == NIRVA_COND_SUCCESS) gcondres = NIRVA_COND_FAIL;
+      notval = 0;
+    }
+
+    // we then update gcondress depending on logic_op
+    NIRVA_CALL_ASSIGN(gcondres,  NIRVA_INTERNAL(update_gcondres), logic_op, gcondres, condres)
+
+    // next we can have - parens close (up to plevel times), and / or COND_END
+    do {
+      for (j = syn_start; j < syn_end; j++) {
+        if (NIRVA_STRLEN_EQUAL(strings[i], syntax[j])) break;
+      }
+      if (j == 2) {
+        // COND_END
+        while (plevel--) {
+          // strictly speaking this is a syntax error, but we will close parens
+          NIRVA_CALL_ASSIGN(gcondres, NIRVA_INTERNAL(pop_parens), pstack, gcondres);
+        }
+        return gcondres;
+      }
+      if (j == 1) {
+        // CLOSE PARENS
+        if (--plevel < 0) {
+          NIRVA_ERROR(NULL);
+          NIRVA_RETURN(NIRVA_COND_INVALID)
+        }
+        i++;
+        plevel--;
+        NIRVA_CALL_ASSIGN(gcondres, NIRVA_INTERNAL(pop_parens), pstack, gcondres);
+      } else if (j != syn_end) {
+        NIRVA_ERROR(NULL);
+        NIRVA_RETURN(NIRVA_COND_INVALID)
+      }
+    } while (1);
+
+    // NEXT LOGIC OP
+    logic_op = atoi(strings[i]);
+    notval = 0;
+  } while (1);
+
+  // xi lets us peek ahead to see if we have [NOT] P_OPEN
+  // otherwuse we have reached the next condition
+  for (int xi = i + 1; strings[xi]; xi++) {
+    for (j = syn_start; j < syn_end; j++) {
+      if (NIRVA_STRLEN_EQUAL(strings[xi], syntax[j])) break;
+    }
+    if (j == 3) {
+      // NOT
+      if (++notval == 2) {
+        for (k = xi - 1; strings[k + 2]; k++) strings[k] = strings[k + 2];
+        xi -= 2;
+        notval = 0;
+      }
+      continue;
+    }
+    if (j == 4) {
+      // parens open
+      plevel++;
+      i = xi;
+      if (logic_op != COND_NOOP) {
+        NIRVA_CALL_ASSIGN(pstack, NIRVA_INTERNAL(push_int), pstack, gcondres);
+        NIRVA_CALL(NIRVA_INTERNAL(push_int), pstack, logic_op);
+        if (notval) NIRVA_CALL(NIRVA_INTERNAL(push_int), pstack, COND_LOGIC_NOT);
+        logic_op = COND_NOOP;
+        notval = 0;
+      } else NIRVA_CALL(NIRVA_INTERNAL(push_int), pstack, logic_op);
+      continue;
+    }
+    break;
+  }
+  notval = 0;
+}
+// we reached the end with no COND_END
+// this is a syntax error, but we can skip it
+NIRVA_END_RETURN(gcondres)
+
+// run a cascade node, then depending on result, go to next node
+// STANDARD FUNC
+#define NIRVA_CALL_METHOD_nirva_condcheck INTERN
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, nirva_condcheck, NIRVA_BUNDLEPTR conds,
+                        NIRVA_BUNDLEPTR  func_data)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, condval)
+NIRVA_DEF_VARS(NIRVA_UINT64, gcondres)
+//NIRVA_DEF_VARS(NIRVA_INT, logic_macro = COND_LOGIC_AND)
+NIRVA_ASSIGN(gcondres, NIRVA_COND_SUCCESS)
+do {
+  NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, val)
+  NIRVA_ASSIGN(val, NIRVA_GET_VALUE_BUNDLEPTR(condval, "VALUE"))
+  if (val) {
+    NIRVA_VALUE_SET(func_data, "VALUE", STRAND_TYPE_CONST_BUNDLEPTR, val)
+    NIRVA_RETURN(gcondres)
+  }
+} while (0);
+NIRVA_FUNC_END
+
+// once a transform has been assigned a trajectory, this function can be called
+// to create the func_data in the transform
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, create_func_data, NIRVA_BUNDLEPTR transform)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, fdata)
+NIRVA_ASSERT(transform, NIRVA_FAIL, NIRVA_NULL)
+NIRVA_CALL_ASSIGN(fdata, create_bundle_by_type, FUNC_DATA_BUNDLE_TYPE, "TRANSFORM", transform, NIRVA_NULL)
+NIRVA_VALUE_SET(transform, "FUNC_DATA", STRAND_TYPE_BUNDLEPTR, fdata)
+NIRVA_END_SUCCESS
+
+// cascades are always accompanied by a transform. All of the strands in the transform are avaialable for perusal
+// generally including - emission data (source / target), contract, flags, caps, attributes
+// for an 'active' transform, we would also have a func_data bundle,
+// with its seg_attrs, transform status,  and for helper functions, return_value
+// and at the end of a transform action, TX_RESULT
+// get first condlogic_node value
+// action it, it will follow nodes and return a COND value or if
+// STANDARD FUNC
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, cascade, NIRVA_BUNDLEPTR cascade, NIRVA_BUNDLEPTR transform, NIRVA_GENPTR retloc)
+/*   NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr, cascade) */
+/*   NIRVA_DEF_VARS(NIRVA_STRING, procfunc) */
+/*   NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, retval) */
+
+/*   NIRVA_ASSIGN(cascade, NIRVA_GET_VALUE_BUNDLEPTR(func_data, "CASCADE")) */
+/*   NIRVA__ASSIGN(procfunc, NIRVA_GET_VALUE_STRING(cascade, "PROCESSOR")) */
+
+/*   if (!procfunc) { */
+/*     NIRVA_DEF_VARS(NIRVA_BUNDLEPTR func_casc) */
+/*       NIRVA_DEF_VARS(NIRVA_INT, cat) */
+/*       NIRVA_ASSIGN(cat, NIRVA_GET_VALUE_INT(cascade, "CATEGORY")) */
+/*       NIRVA_ASSIGN(func_casc, NIRVA_GET_VALUE_INT(cascade, "FUNC_CHOOSER")) */
+/*       NIRVA_ASSIGN(procfunc, NIRVA_ACTION_RET_STRING, nirva_cascade, func_casc)) */
+/*       } */
+
+/* NIRVA_CALL_ASSIGN(retval, NIRVA_ACTION_RET, procfunc, func_data)  */
+/* // call the processing func in the cascade, return the value (only valid if numeric) */
+/* // otherwise results are in func_data */
+/*   NIRVA_STRING_FREE(procfunc) */
+/* // */
+//NIRVA_END_RETURN(retval)
+NIRVA_END_SUCCESS
+
+#define NIRVA_CALL_METHOD_declare_oracle INTERNAL
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, nirva_declare_oracle, NIRVA_INT prio, NIRVA_VARIADIC)
+if (NIRVA_FUNC_GENERATION < 3) {
+  // if generation is < 3, we will store in storage bundle
+  // we will make a strand of type bundleptr array
+  // this will be an array of strand_replacement - func, category, cond, prio and pmap
+  // prio, categ will be int, cond string array, func, funcptr,
+  // and pmap array of pmap_def
+  // try to put the most relevant info first, in this case the funcptr and category
+  //NIRVA_STATIC_VARS(NIRVA_INT, NIRVA_SET(count, 0))
+  /* NIRVA_STRING_BUFF(buff, 512) */
+  /* NIRVA_DEF_VARS(nirva_bundle_t, *st0, *pmap, *sts[5]) */
+  /* NIRVA_DEF_VARS(NIRVA_INT, np, i) */
+  /* NIRVA_DEF_VARS(NIRVA_STRING, str) */
+  /* NIRVA_DEF_VARS(NIRVA_UINT, rt, pt) */
+  /* NIRVA_DEF_VARS(nirva_native_function_t, func) */
+  /* NIRVA_DEF_VARS(NIRVA_VA_LIST, va) */
+  /* NIRVA_ASSERT(_TMP_STORAGE_BUNDLE,NIRVA_CALL,_make_tmp_store,NIRVA_NIRVA_NULL) */
+  /* NIRVA_ASSERT(_TMP_STORAGE_BUNDLE,NIRVA_FAIL,NIRVA_NIRVA_NULL) */
+  /* NIRVA_FMT(buff, 512, NIRVA_FMT_STRING  NIRVA_FMT_INT3, "ORAC_", */
+  /* 		NIRVA_POST_INC(count)) */
+  /* NIRVA_CALL_ASSIGN(st0, create_bundle_by_type, STRAND_REPLACEMENT_BUNDLE_TYPE, "NAME", buff, */
+  /* 			"STRAND_TYPE",STRAND_TYPE_BUNDLEPTR, "ARRAY_SIZE", 5, NIRVA_NULL) */
+  /* NIRVA_VA_START(va, prio) */
+
+  /* NIRVA_CALL_ASSIGN(sts[1], create_bundle_by_type, */
+  /* 			STRAND_REPLACEMENT_BUNDLE_TYPE,"NAME","category", */
+  /* 			"STRAND_TYPE", STRAND_TYPE_INT, */
+  /* 			"DATA", FUNC_CATEGORY_ORACLE, NIRVA_NULL) */
+
+  /* NIRVA_CALL_ASSIGN(sts[2], create_bundle_by_type, */
+  /* 			STRAND_REPLACEMENT_BUNDLE_TYPE,"NAME", "conditions" */
+  /* 			"STRAND_TYPE", STRAND_TYPE_STRING, */
+  /* 			"ARRAY_SIZE", -1, NIRVA_NULL) */
+
+  /* NIRVA_LOOP_WHILE(NIRVA_ASSIGN_RET(str,NIRVA_VA_ARG(va, NIRVA_STRING))) */
+  /* NIRVA_ARRAY_SET(sts[2], "DATA", STRAND_TYPE_STRING, 1, str) */
+  /* NIRVA_BREAK_IF(NIRVA_STRING_EQUAL,str,COND_END) */
+  /* NIRVA_LOOP_END */
+
+  /* NIRVA_ASSIGN(rt, NIRVA_VA_ARG(va, NIRVA_UINT)) */
+  /* NIRVA_ASSIGN(func, NIRVA_VA_ARG(va, nirva_native_function_t)) */
+
+  /* NIRVA_CALL_ASSIGN(sts[0], create_bundle_by_type, */
+  /* 			STRAND_REPLACEMENT_BUNDLE_TYPE,"NAME","function" */
+  /* 			"STRAND_TYPE", STRAND_TYPE_FUNCPTR, "DATA", func, NIRVA_NULL) */
+
+  /* NIRVA_CALL_ASSIGN(sts[3], create_bundle_by_type, */
+  /* 			STRAND_REPLACEMENT_BUNDLE_TYPE,"NAME","priority" */
+  /* 			"STRAND_TYPE", STRAND_TYPE_INT, "DATA", prio, NIRVA_NULL) */
+
+  /* NIRVA_CALL_ASSIGN(sts[4], create_bundle_by_type, */
+  /* 			STRAND_REPLACEMENT_BUNDLE_TYPE,"NAME","pmappings" */
+  /* 			"STRAND_TYPE", STRAND_TYPE_BUNDLEPTR, */
+  /* 			"ARRAY_SIZE", -1, NIRVA_NULL) */
+
+  /* NIRVA_CALL_ASSIGN(pmap, create_bundle_by_type, */
+  /* 			PMAP_BUNDLE_TYPE, "ATTR_TYPE", rt, */
+  /* 			"PARAM_NUM", 0, NIRVA_NULL) */
+
+  /* NIRVA_ARRAY_SET(sts[4], "DATA", STRAND_TYPE_BUNDLEPTR, 1, pmap) */
+  /* NIRVA_LOOP_WHILE(NIRVA_TEST_GT(NIRVA_POST_DEC(np), 0)) */
+  /* NIRVA_ASSIGN(pt, NIRVA_VA_ARG(va, NIRVA_UINT)) */
+  /* NIRVA_CALL_ASSIGN(pmap, create_bundle_by_type, */
+  /* 			PMAP_BUNDLE_TYPE,"ATTR_TYPE", pt, */
+  /* 			"PARAM_NUM", NIRVA_PRE_INC(i), NIRVA_NULL) */
+  /* NIRVA_ARRAY_SET(st5, "DATA", STRAND_TYPE_BUNDLEPTR, 1, pmap) */
+  /* NIRVA_LOOP_END */
+  /* NIRVA_VA_END(va) */
+
+  /* NIRVA_ARRAY_SET(st0, "DATA", STRAND_TYPE_BUNDLEPTR, 5, sts) */
+  /* NIRVA_ARRAY_APPEND(_TMP_STORAGE_BUNDLE, BUNDLE_STANDARD_STORAGE, STRAND_TYPE_BUNDLEPTR, 1, &stdef) */
+  /* } */
+
+  // so first we create the object_template itself
+  // we assume that all bundledefs have already been set up, we can just create this from the
+  // bundledef
+
+}
+NIRVA_END_SUCCESS;
+
+// we can set these in attr_def (templates)
+// or in attributes (runtime)
+// in attr_def, the we dont have a value, we can only set the default.
+// we will be passed an attr_des with defaul type bundleptr,  ptr to bundle type func_desc
+// so what we actually want to do is set values inside the func_def.
+// there we find name, uid, category, pmap array, and function
+// name we set to th function nama, and point function at it. the uid will be set already
+// category depends on fn type but for native impl funcs it would be:
+// FUNC_PURPOSE_IMPL | FUNC_CATEGORY_NATIVE
+// for structure funcs, these are standard funcs, wrapped as native and the category value is
+// FUNC_PURPOSE_STRUCTURAL | FUNC_CATEGORY_STANDARD | FUNC_WRAPPER_NATIVE
+// having set these data, finally we need to set pmap strands, for impl_funcs this is a forward
+// mapping -> attributes to func params, for strucutral, it is a reverse mapping, func params
+// -> attributes. So we just call make_pmap(-1, ret_type, 0, p0_type, ... NULL)
+// the types are ATTR_TYPE, and the returned pmap is the set in attr_desc..
+// changing the value in attribute is similar but generally we would only alter the defaut on
+// attr desc, since changing a function while in use is risky.
 //
-/// STARTUP and enabling / disabling subsytems
-// to bootstrap the NIRVA structure, call:
 
-// NIRVA_BNUNDLE_T structure_app = nirva_init();
+/* #define NIRVA_SET_IMPLFUNC(substruct, name)			\ */
+/*   NIRVA_IMPL_FUNC(set_attr_funcptr, substruct,			\ */
+/* 		 ATTR_NAME(NIRVA_IMPL_FUNC, #name), func) */
 
-// after this,
+/* #define NIRVA_DEF_STRUCTURE_FUNC(substruct)			\ */
+/*   NIRVA_IMPL_FUNC(set_attr_funcptr, substruct,			\ */
+/* 		 ATTR_NAME(NIRVA_STRUCT_FUNC, #name), NULL) */
 
-// NIRVA_CALL(enable_subsystem, STRUCTURE_SUBTYPE_BROKER);
+/* #define NIRVA_SET_STRUCTURE_FUNC(substruct, name)		\ */
+/*   NIRVA_IMPL_FUNC(set_attr_funcptr, substruct,			\ */
+/* 		 ATTR_NAME(NIRVA_STRUCT_FUNC, #name), name) */
 
-// this should return (NIRVA_REQUEST_RESPONSE)  NIRVA_REQUEST_YES
+////////////////////////////////////////////////////////////////
+// during bootstrap, init will first create sufficient infrastructure to support creating
+// attr_desc and func_desc, this wil be done using the #define values
+// once this is done,
+// prime will search for Oracles to define the inital values. This function will present itself as
+// a proxy oracle and if there are no higher priotity Oracles, the processng will come here.
+// the values of any already used functions will be set as defaults, if we find any fivergence we
+// need to flag an warning.
+// - pass in an attr_desc_bundle and here this will be filled with all
+// impl funcs, madatory and optional, as well as the structure transforms
+// if any funciions which were previously used had been redefined, the old infrastructure will
+// be torn down using the old functions, leaving only the functions attr_desc_bundle
+// this will be used to re-bootstrap the system until it can once again build attr_desc bundles
+// the process will be repeated, this time any changes will trigger a fatal error.
+// finally the structure_app instance
 
-// a subsystem can be disabled with NIRVA_CALL(disable_subsystem, STRUCTURE_SUBTYPE_BROKER);
+// here we take a attr_def_group and return an attr
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, create_attr_from_def, NIRVA_BUNDLEPTR atdef)
+NIRVA_DEF_SET(NIRVA_UINT64, flags, NIRVA_GET_VALUE_UINT64(atdef, "FLAGS"))
+NIRVA_DEF_SET(NIRVA_STRING, aname, NIRVA_GET_VALUE_STRING(atdef, "NAME"))
+NIRVA_DEF_SET(NIRVA_UINT, attr_type, NIRVA_ATTR_GET_TYPE(atdef))
+NIRVA_DEF_ASSIGN(NIRVA_UINT, sttype, NIRVA_GET_VALUE_UINT, atdef, "STRAND_TYPE")
+NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR, attr, create_bundle_by_type, ATTRIBUTE_BUNDLE_TYPE,
+                 "TEMPLATE", atdef, "FLAGS", flags, "NAME", aname, "ATTR_TYPE", attr_type,
+                 "STRAND_TYPE", sttype, NIRVA_NULL)
+if (NIRVA_BUNDLE_HAS_STRAND(atdef, "RESTRCITIONS")) {
+  NIRVA_DEF_ASSIGN(NIRVA_STRING, rests, NIRVA_GET_VALUE_STRING, atdef, "RESTRICTIONS")
+  NIRVA_VALUE_SET(attr, "RESTRICTIONS", STRAND_TYPE_STRING, rests)
+  NIRVA_STRING_FREE(rests)
+}
+// max_size ?
+if (!(flags &NIRVA_ATTR_FLAG_OPTIONAL)) {
+  if (NIRVA_BUNDLE_HAS_STRAND(atdef, "DEFAULT")) {
+    NIRVA_STRAND_COPY(attr, "DATA", atdef, "DEFAULT")
+  }
+}
+NIRVA_STRING_FREE(aname)
+NIRVA_END_RETURN(attr)
 
-// then:
-// NIRVA_CALL(satisfy_intent, NIRVA_INTENT_UPDATE_VALUE, structure_app,
-//		STRAND_OBJECT_STATE, NIRVA_OBJ_STATE_PREPARED);
-// or just simply:
-// NIRVA_CALL(change_object_state, structure_app, NIRVA_OBJ_STATE_PREPARED);
+// create a CONTRACT bundle with default values
+// variables are: owner - ptr to object "owning" the contract, and trajectory
+// FLAGS will be set to TX_FLAG_NO_NEGOTIATE
+// INTENT set to NONE, CAPS to NULL,
+// a simple CASCADE will be created and included,
+// with DEFAULT set to trajectory, and category to FUNC_CATEGORY_WRAPPER
+// (n.b the trajectory "wrapper" can narrow the category, e.g FUNC_CATEGORY_STRUCTURAL
+// CONDLOGIC, CURRENT_NODE will be set to NULL, and other strands (e.g PROC_FUNC) not set.
+// this is a temporay hack, we pass trajectory (1) directly, which is set in VALUE and added as default to cascade
+// really we should make the cascade, inserting one or more trajectories, and constions to select one
+// we also, for now dont set intent or caps
+#define NIRVA_CALL_METHOD_nirva_create_contract INTERN
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, nirva_create_contract, NIRVA_BUNDLEPTR owner, NIRVA_UINT flags,
+                        NIRVA_INT intent, NIRVA_VARIADIC)
+//NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR, caps, nirva_create_bundle_caps)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, caps, NIRVA_NULL)
+NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR, ctract, create_bundle_by_type, CONTRACT_BUNDLE_TYPE, "FLAGS", flags, "INTENT", intent,
+                 "CAPS", caps, "OWNER", owner, NIRVA_NULL)
+NIRVA_END_RETURN(ctract)
 
-#define _ASPECT_AFFINITY(n) ASPECT_AFFINITY_##n
-#define _SUBSYS_NAME(n) SUBSYS_NAME_##n
-#define _SUBSYS_DESC(n) SUBSYS_DESC_##n
-#define _SUBSYS_REQUIRES(n) SUBSYS_REQUIRES_##n
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, contract_add_trajectory, NIRVA_BUNDLEPTR ctract, NIRVA_BUNDLEPTR traj,
+                        NIRVA_CONST_STRING caps_cond)
+NIRVA_END_SUCCESS
 
-#define ASPECT_AFFINITY(n) _ASPECT_AFFINITY(STRUCTURE_SUBTYPE_##n)
-#define SUBSYS_NAME(n) _SUBSYS_NAME(STRUCTURE_SUBTYPE_##n)
-#define SUBSYS_DESC(n) _SUBSYS_DESC(STRUCTURE_SUBTYPE_##n)
-#define SUBSYS_REQUIRES(n) _SUBSYS_REQUIRES(STRUCTURE_SUBTYPE_##n)
+// this function can be called for any bundle which extends, or is, VALUE bundle.
+// if the caller is the "owner" of the bundle (attr_group owner, transform "source_bundle")
+// then reparenting the bundle is permitted. this function causes the bundles to be included by newp
+// if newp is NIRVA_NULL, then they will be reparented to structure_app, if that exists
+// so they will not be unreffed until the app exits
+// if structure_app has not yet been created, the container will be set to self (e.g substructure bundles,
+// blueprint bundles)
+//
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, bundle_reparent, NIRVA_BUNDLEPTR self, NIRVA_BUNDLEPTR bun,
+                        NIRVA_CONST_STRING stname, NIRVA_BUNDLEPTR newp, NIRVA_CONST_STRING newname, NIRVA_BOOLEAN append)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, container)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+NIRVA_DEF_VARS(NIRVA_UINT, nitems)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, subs)
+if (newp != NIRVA_NULL) {
+  NIRVA_ASSERT(self, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+}
+NIRVA_ASSERT(bun, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+/* // TODO - check owner is caller, check container of bun - for attr this will be attr_group, */
+/* // for return_values, it will be transform, for strand_repl, it will be bundle */
 
-#define	STRUCTURE_SUBTYPE_PRIME 		0
-#define ASPECT_AFFINITY_0 ASPECT_HOOKS, 1, ASPECT_REFCOUNTING, 11, \
-      ASPECT_RECYCLING, 1, ASPECT_TRANSFORMS, 1, ASPECT_NONE
-#define SUBSYS_NAME_0 "PRIME"
-#define SUBSYS_DESC_0 "This object represents the structure itself, and is the first object created." \
-  "It performs the structure bootstrap operations and is the template used to create all the other " \
-  "structure subtypes. It oversees the activites of all other subsystems, fullfilling the role of " \
-  "administrator. Destroying this object requires PRIV_STRUCTURE > 1000, and will result in " \
-  "an immediate abort of the application."				\
-  "Prime is also responsible for running automations - the subsystem may trigger hooks, " \
-  "run hook automations, and mange reference counting."
+/* if (NIRVA_GET_OWNER(bun) != self) { */
+/*   // check priveleges */
 
-#define	STRUCTURE_SUBTYPE_APP 			1
-#define ASPECT_AFFINITY_1 ASPECT_THREADS, 2, ASPECT_HOOKS, 2, ASPECT_TRANSFORMS, 2, ASPECT_NONE
-#define SUBSYS_NAME_1 "APP"
-#define SUBSYS_DESC_1 "Structure subtype which represents an application - ie process. Its state " \
-    "reflects the state of the application overall, and it can be used to manage and control the " \
-  "application process itself. It can also assist Prime with automations, for example managing "\
-  "app specific hook callbacks"
-#define SUBSYS_REQUIRES_1 STRUCTURE_SUBTYPE_PRIME
+/*  } */
 
-#define STRUCTURE_SUBTYPE_GUI			2
-#define ASPECT_AFFINITY_2 ASPECT_NONE
-#define SUBSYS_REQUIRES_2 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_2 "GUI"
-#define SUBSYS_DESC_2 "GUI is an expert system designed to manage the user interface elements, " \
-  "essential for any application which has a graphical front end."
+/* if (newp && NIRVA_GET_OWNER(newp) != self) { */
+/*   // check priveleges */
 
-#define	STRUCTURE_SUBTYPE_THREAD_HERDER		3
-#define ASPECT_AFFINITY_3 ASPECT_THREADS, 100, ASPECT_NONE
-#define SUBSYS_REQUIRES_3 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_3 "THREAD_HERDER"
-#define SUBSYS_DESC_3 "Thread_herder is an expert subsytem designed to, depending on its " \
-  "level of automation, manage and monitor native threads and thread instances created from these," \
-  "as well as interfacing thread_instances with transform status, trajectory segments, " \
-  "hook triggers and callbacks, in short acting as liason between threads and the rest of the " \
-  "structure. It will also be responsible for assigning threads to other loaded subsystems. " \
-  "It will coordinate with OPTIMISER if that subsystem is loaded."
+/*  } */
 
-#define	STRUCTURE_SUBTYPE_BROKER		4
-#define ASPECT_AFFINITY_4 ASPECT_TRANSFORMS, 40, ASPECT_NONE
-#define SUBSYS_REQUIRES_4 STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, \
-    STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_4 "BROKER"
-#define SUBSYS_DESC_4 "Broker is an expert system designed to match intentcaps and requirements with " \
-  "contracts, and thus with the objects holding those contracts. Broker will thus maintain a " \
-  "an index of all contracts, the intencaps they satisfy, their side effects. Iin addition it will " \
-  "keep a database of the attributes of each object type / subtype. Given an intentcap to satisfy, " \
-  "broker will map out sequences of transforms to be actioned, possibly providing multiple solutions" \
-  "In the case where no solution can be found, broker may indicate the missing steps, as well as " \
-  "providing the the nearest alternative resolutions"
+NIRVA_ASSIGN(nitems, NIRVA_ARRAY_GET_SIZE(bun, stname))
+NIRVA_ASSERT(nitems, NIRVA_RETURN, NIRVA_RESULT_FAIL)
+NIRVA_ASSIGN(subs, NIRVA_GET_ARRAY_BUNDLEPTR(bun, stname))
+if (newp) {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, stdef, NIRVA_INTERNAL(check_can_add)(newp, newname,
+                STRAND_TYPE_BUNDLEPTR, subs[0]))
+  if (!stdef) {
+    NIRVA_ARRAY_FREE(subs)
+    NIRVA_RETURN_FAIL
+  }
+}
+NIRVA_ASSIGN(container, NIRVA_GET_VALUE_BUNDLEPTR(subs[0], "CONTAINER"))
+if (container != bun && (container != subs[0] || STRUCTURE_APP != NULL))  {
+  NIRVA_ARRAY_FREE(subs)
+  NIRVA_RETURN_FAIL
+}
 
-#define STRUCTURE_SUBTYPE_LIFECYCLE		5
-#define ASPECT_AFFINITY_5 ASPECT_RECYCLING, 100, ASPECT_REFCOUNTING, 100, ASPECT_NONE
-#define SUBSYS_REQUIRES_5 STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, \
-    STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_5 "LIFECYCLE"
-#define SUBSYS_DESC_5 "This will be an expert system designed to track and monitor the states "	\
-  "of objects from the moment they are created until they are no longer required. Objects which " \
-  "idle for too long may be recycled and their threads redeployed. Objects which lock up system " \
-  "resources unnecessarily may be flagged. Runaway objects which create too many instances or " \
-  "use up thereads unnecesarily will be flagged and blocked if necessary. If arbitrator or " \
-  "adjudicator are present, they will take over some of these roles, and lifecycle will " \
-  "relieve Prime of the refcounting role"
+if (newp == NIRVA_NULL) {
+  for (i = 0; i < nitems; i++) {
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR, sub, subs[i])
+    NIRVA_STRAND_DELETE(sub, "CONTAINER")
+    NIRVA_STRAND_DELETE(sub, "CONTAINER_STRAND")
+    if (STRUCTURE_APP) {
+      NIRVA_CALL(NIRVA_ARRAY_APPEND, STRUCTURE_APP, "STATIC_BUNDLES", STRAND_TYPE_BUNDLEPTR, nitems, subs)
+    } else {
+      NIRVA_VALUE_SET(sub, "CONTAINER", STRAND_TYPE_CONST_BUNDLEPTR, sub)
+    }
+  }
+} else {
+  if (append) {
+    NIRVA_DEF_SET(NIRVA_UINT, ns, NIRVA_ARRAY_GET_SIZE(newp, newname))
+    if (ns > 0) {
+      NIRVA_DEF_VARS(NIRVA_STRING, constr)
+      NIRVA_DEF_SET(NIRVA_BUNDLEPTR, xist, NIRVA_GET_VALUE_BUNDLEPTR(newp, newname))
+      NIRVA_DEF_SET(NIRVA_BUNDLEPTR, container, NIRVA_GET_VALUE_BUNDLEPTR(xist, "CONTAINER"))
+      if (container != newp) {
+        NIRVA_ARRAY_FREE(subs)
+        NIRVA_RETURN_FAIL
+      }
+      NIRVA_ASSIGN(constr, NIRVA_GET_VALUE_STRING(xist, "CONTAINER_STRAND"))
+      if (!NIRVA_STRING_EQUAL(constr, newname)) {
+        NIRVA_STRING_FREE(constr)
+        NIRVA_ARRAY_FREE(subs)
+        NIRVA_RETURN_FAIL
+      }
+      NIRVA_STRING_FREE(constr)
+    }
+    NIRVA_CALL(NIRVA_ARRAY_APPEND, newp, newname, STRAND_TYPE_BUNDLEPTR, nitems, subs)
+  } else {
+    NIRVA_ARRAY_SET(newp, newname, STRAND_TYPE_BUNDLEPTR, nitems, subs)
+  }
+}
+_NIRVA_STRAND_DELETE(bun, stname)
+NIRVA_ARRAY_SET(bun, stname, STRAND_TYPE_CONST_BUNDLEPTR, nitems, subs)
+NIRVA_ARRAY_FREE(subs)
+NIRVA_END_SUCCESS
 
-#define	STRUCTURE_SUBTYPE_ARBITRATOR		6
-#define ASPECT_AFFINITY_6 ASPECT_NONE
-#define SUBSYS_REQUIRES_6 STRUCTURE_SUBTYPE_THREAD_HERDER, \
-    STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_6 "ARBITRATOR"
-#define SUBSYS_DESC_6 "Arbitrator will be an expert system specifally designed fo resolving " \
-  "failed condition checks. It will use a vareity of methods depending on the nature of the " \
-  "check, as well as the condition itself. For example if the check is rqueirements check " \
-  "for a contract, this may be passed on to NEGOTIATOR to resolve."
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, bundle_make_static, NIRVA_BUNDLEPTR self, NIRVA_BUNDLEPTR bun,
+                        NIRVA_CONST_STRING stname)
+NIRVA_END_RESULT(NIRVA_INTERNAL(bundle_reparent), self, bun, stname, NIRVA_NULL, NIRVA_NULL, NIRVA_TRUE)
 
-#define	STRUCTURE_SUBTYPE_ADJUDICATOR		7
-#define ASPECT_AFFINITY_7 ASPECT_RECYCLING, 20, ASPECT_NONE
-#define SUBSYS_REQUIRES_7 STRUCTURE_SUBTYPE_ARBITRATOR, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_7 "ADJUDICATOR"
-#define SUBSYS_DESC_7 "Adjudicator will be an expert system designed to flag and possibly remove " \
-  "anything from the application which may cause errors or timeouts."
+// for developers building contracts, the sequence is this:
+// - create the barebones trajectory N?IRVA_CREATE_TRAJECTORY
+// - create one or more segments - NIRVA_CREATE_SEGMENT
+// - add attr_defs for the first functional, inputs will be segment inpts, outputs may be segment outputs
+// or internal
+// create a functional, wrapping a native, standar func, or script
+// append the functional to the segment
+// set pointers for in attrs for the functional
+// set pointers for out attrs for the functional
+// if desired, more functionals can be added to the segment. This is necessary if one functional produces
+// internal attributes which are inputs to a later functional
+// once all functionals have been added, the segment can be appended to the trajectory. If the trajectory
+// already holds other segments, then conditions should be created for
+// traversing from a previous segment to this one. There can be paths from multiple previous segments.
+// if desired, a condition can be added for traversing from this segment to a previous one
+// after all segments have been added, append SEGMENT_END
+// it is not necessary to add conditions to traverse to segment end, as this is the default if no other conditions
+// succeed
+// once all segments are added to the trajectory, the trajectory must be vaslidated
+// input attrbutes to all segments will be collated and added to trajectory inputs. If there are branching paths
+// and only some require the attributes, then they will be marked as optional, and conditions added has_attribute
+// if the in attributes are in / out in a segment, they will be flagged in / out in the trajectory
+//
+// any attributes may be selected as trajectory outputs. if optional inputs are selected,
+// the corresponding output will also be optional If the segment producing an output attribute
+// has condtions then all conditions along the pathe will be collated (AND vertically, OR horizontally)
+// and it will be marekd optional
+// attributes marked as internal cannot be outputs as they are destroyed once the segment has completed
+// multiple segments can produce the same outputs, provide they are on exclusive paths
+// a segment attemping to output an already existing attribute will trigger an error condition.
+//
+// At a minimum, the trajectory MUST produce the output attributes required to satisfy the INTENTCAP it purports
+// these are defined in the documentation
+//
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_UINT, count_attr_maps, NIRVA_UINT nmaps,
+                        NIRVA_BUNDLEPTR_ARRAY attr_maps, NIRVA_UINT64 xmapping)
+NIRVA_DEF_SET(NIRVA_UINT, count, 0)
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+if ((mapping &xmapping) == xmapping) count++;
+NIRVA_LOOP_END
+NIRVA_END_RETURN(count)
 
-#define	STRUCTURE_SUBTYPE_NEGOTIATOR		8
-#define ASPECT_AFFINITY_8 ASPECT_TRANSFORMS, 100, ASPECT_NONE
-#define SUBSYS_REQUIRES_8 STRUCTURE_SUBTYPE_ARBITRATOR, STRUCTURE_SUBTYPE_BROKER, \
-    STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_8 "NEGOTIATOR"
-#define SUBSYS_DESC_8 "Negotiator will be an expert system specifially designed to resolve " \
-  "failed conditions checks realting to a contract. Depending on the particular condition it may " \
-  "search for a means to provide missing attributes, to run parallel transforms to supply streamed " \
-  "data, or action pre-transforms to bring objectsto the correct state / subtype"
+// create a trajectory. We can set FLAGS and CATEGORY
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, create_trajectory, NIRVA_UINT64 flags, NIRVA_INT category)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, traj)
+NIRVA_CALL_ASSIGN(traj, create_bundle_by_type, TRAJECTORY_BUNDLE_TYPE, "FLAGS", flags, "CATEGORY", category,
+                  NIRVA_NULL)
+NIRVA_END_RETURN(traj)
 
-#define STRUCTURE_SUBTYPE_CHRONOMETRY			9
-#define ASPECT_AFFINITY_9 ASPECT_HOOKS 50
-#define SUBSYS_REQUIRES_9 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_9 "CHRONOMETRY"
-#define SUBSYS_DESC_9 "Chronometry will be an expert system desinged to handle features such as " \
-  "high precision timeing, thread synchronisation, time realted instrumentation, as well as " \
-  "mainatinaing queues for actioning events at specific intervals or absolute times. In additiion " \
-  "it can also assist with automations, triggering hooks when called for"
+#define NIRVA_CALL_METHOD_nirva_add_wrapping INTERN
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, nirva_add_wrapping, NIRVA_BUNDLEPTR thing,
+                        NIRVA_BUNDLEPTR func_type, NIRVA_INT num_pmap_attrs, NIRVA_BUNDLEPTR_ARRAY pmap_attrs,
+                        NIRVA_INT num_pmaps_out, NIRVA_INT_ARRAY pmaps_out)
+NIRVA_END_SUCCESS
 
-#define	STRUCTURE_SUBTYPE_ARCHIVER		10
-#define ASPECT_AFFINITY_10 ASPECT_NONE
-#define SUBSYS_REQUIRES_10 STRUCTURE_SUBTYPE_LIFECYCLE, STRUCTURE_SUBTYPE_BROKER, \
-    STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_10 "ARCHIVER"
-#define SUBSYS_DESC_10 "Archiver will be an expert subsystem designed specifially for rapid data " \
-  "storage, indexing and retrieval. It will have features for dealing with arrays, lists, " \
-  "hash tables, lookup tables as well as managing offline stroage, backups and restores, " \
-  "crash recovery and so on"
+// after building a "barebones" trajectory, we can then proceed to add segements to it
+// segments must first be created from functionals
+// once this is done, we need to call validate_trajectory, which will amalgamate all the segments
+// and create attributes as inputs and internals
+// follwoing this it is necessary to declare the output attributes for the trajectory,
+// these MUST be already included either in inputs or in internal, otherwise they will be added as input attributes
+// if they are in inputs, they become in / out attributes, if the input or internal is optional,
+// they become optional outputs
 
-#define	STRUCTURE_SUBTYPE_OPTIMISER 		11
-#define ASPECT_AFFINITY_11 ASPECT_THREADS 20, ASPECT_NONE
-#define SUBSYS_REQUIRES_11 STRUCTURE_SUBTYPE_CHRONOMETRY, STRUCTURE_SUBTYPE_THREAD_HERDER, \
-    STRUCTURE_SUBTYPE_BROKER, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_11 "OPTIMISER"
-#define SUBSYS_DESC_11 "This will be an expert system designed to montor the application and " \
-  "overall system state, optimising performance"
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, nirva_trajectory_add_segment, NIRVA_BUNDLEPTR traj,
+                        NIRVA_BUNDLEPTR seg,  NIRVA_CONST_STRING cond)
+//NIRVA_BUNDLPTR_ARRAY segments, NIRVA_BUNDLEPTR seg_selector)
+NIRVA_END_SUCCESS
 
-#define	STRUCTURE_SUBTYPE_SECURITY		12
-#define ASPECT_AFFINITY_12 ASPECT_NONE
-#define SUBSYS_REQUIRES_12 STRUCTURE_SUBTYPE_ADJUDICATOR, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_12 "SECURITY"
-#define SUBSYS_DESC_12 "This subsystem will be an expert system designed to manage credentials and " \
-  "privilege levels to ensure the integrity of the application and the environment it runs in"
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, nirva_create_attr_def, NIRVA_CONST_STRING aname, NIRVA_UINT64 flags,
+                        NIRVA_UINT attr_type, NIRVA_INT max_values, NIRVA_BUNDLEPTR restrictions)
+NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR, atdef, create_bundle_by_type, ATTR_DEF_BUNDLE_TYPE, "NAME", aname, "FLAGS", flags,
+                 "ATTR_TYPE", attr_type, "MAX_VALUES", max_values, "RESTRICTIONS", restrictions, NIRVA_NULL)
+// "DEFAULT" and "NEW_DEFAULT" can be set separately, as they each need a va_list
+NIRVA_END_RETURN(atdef)
 
-#define	STRUCTURE_SUBTYPE_HARMONY		13
-#define ASPECT_AFFINITY_13 ASPECT_NONE
-#define SUBSYS_REQUIRES_13 STRUCTURE_SUBTYPE_ADJUDICATOR, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_13 "HARMONY"
-#define SUBSYS_DESC_13 "This is an expert system designed to interface harmoniously " \
-  "with external objects such as operating systems, other applications and Oracles"
+// std_func
+#define _NIRVA_CREATE_FUNCTIONAL_1(fname, cat, ext_id, ftype, dummy)	\
+    NIRVA_ACTION_RET_BUNDLEPTR(nirva_create_functional, #fname, cat, ext_id, ftype, fname)
+
+// native_func
+#define _NIRVA_CREATE_FUNCTIONAL_2(fname, cat, ext_id, ftype, dummy)	\
+    NIRVA_ACTION_RET_BUNDLEPTR(nirva_create_functional, #fname, cat, ext_id, ftype, nirva_fname##_wrapper)
+
+// script
+#define _NIRVA_CREATE_FUNCTIONAL_3(script_name, cat, ext_id, ftype, scriptlet) \
+    NIRVA_ACTION_RET_BUNDLEPTR(nirva_create_functional, #script_name, cat, ext_id, ftype, scriptlet)
+
+#define _NIRVA_CREATE_FUNCTIONAL(fname, cat, ext_id, ftype, param)	\
+    _NIRVA_CREATE_FUNCTIONAL_##ftype(fname, cat, ext_id, ftype, param)
+
+#define NIRVA_CREATE_FUNCTIONAL(fname, cat, ext_id, ...)		\
+  _NIRVA_CREATE_FUNCTIONAL_##ftype(fname, cat, ext_id, __VA_ARGS__, dummy)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, nirva_create_functional, NIRVA_STRING funcname, NIRVA_INT cat,
+                        NIRVA_UINT64 ext_id, NIRVA_INT func_type,  NIRVA_VARIADIC)
+NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR, func, create_bundle_by_type, FUNCTIONAL_BUNDLE_TYPE, "NAME", funcname,
+                 "CATEGORY", cat, "EXT_ID", ext_id, "FUNC_TYPE", func_type, NIRVA_NULL)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, va)
+NIRVA_VA_START(va, func_type)
+switch (func_type) {
+case FUNC_TYPE_STANDARD:
+  NIRVA_VALUE_SET(func, "STANDARD_FUNCTION", STRAND_TYPE_FUNCPTR, NIRVA_VA_ARG(va, NIRVA_STANDARD_FUNC))
+  break;
+case FUNC_TYPE_NATIVE:
+  NIRVA_VALUE_SET(func, "NATIVE_FUNCTION", STRAND_TYPE_FUNCPTR, NIRVA_VA_ARG(va, NIRVA_WRAPPER_FUNC))
+  break;
+case FUNC_TYPE_SCRIPT:
+  NIRVA_VALUE_SET(func, "SCRIPTLET", STRAND_TYPE_CONST_BUNDLEPTR, NIRVA_VA_ARG(va, NIRVA_CONST_BUNDLEPTR))
+  break;
+default: NIRVA_ASSIGN(func, NIRVA_NULL);
+  break;
+}
+NIRVA_VA_END(va)
+NIRVA_ASSERT(func, NIRVA_FAIL, NIRVA_NULL)
+NIRVA_END_RETURN(func)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, nirva_segment_add_attr_def, NIRVA_BUNDLEPTR functional,
+                        NIRVA_CONST_STRING aname, NIRVA_UINT64 flags,
+                        NIRVA_UINT attr_type, NIRVA_INT max_values, NIRVA_BUNDLEPTR restrictions)
+NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR, attr_def, create_bundle_by_type, ATTR_DEF_BUNDLE_TYPE, "NAME", aname,
+                 "FLAGS", flags, "ATTR_TYPE", attr_type, "MAX_VALUES", max_values, "RESTRICTIONS",
+                 restrictions, NIRVA_NULL)
+NIRVA_CALL(NIRVA_ARRAY_APPEND, functional, "ATTR_DEFS", STRAND_TYPE_BUNDLEPTR, 1, attr_def)
+NIRVA_END_RETURN(attr_def)
+
+#define NIRVA_CAP_PREFIX "CAP_"
+
+#define NIRVA_GRIND_INTENTCAP NIRVA_INTERNAL(grind_intentcap)
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, grind_intentcap,
+                        NIRVA_CONST_STRING name, NIRVA_CONST_STRING_ARRAY bdeficap)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, icap, caps)
+NIRVA_DEF_VARS(NIRVA_INT, intent, i)
+NIRVA_CALL_ASSIGN(caps, create_bundle_by_type, CAPS_BUNDLE_TYPE, NIRVA_NULL)
+NIRVA_CALL_ASSIGN(intent, atoi, bdeficap[0])
+
+NIRVA_VALUE_SET(icap, "CAPS", STRAND_TYPE_BUNDLEPTR, caps)
+
+NIRVA_CALL_ASSIGN(icap, create_bundle_by_type, ICAP_BUNDLE_TYPE, "INTENTION",
+                  intent, "NAME", name, "CAPS", caps, NIRVA_NULL)
+
+for (i = 1; bdeficap[i]; i++) {
+  NIRVA_CALL(NIRVA_ARRAY_APPEND, caps, "DATA", STRAND_TYPE_STRING, 1, &bdeficap[i])
+}
+NIRVA_END_RETURN(icap)
+
+// takes a CAPS bundle and writes only the cap NAMES to a string array
+// the resulting array is created in target/stname
+#define _NIRVA_CAPS_DISTILL(...)NIRVA_CMD(NIRVA_INTERNAL(caps_distill)(__VA_ARGS__))
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, caps_distill, NIRVA_BUNDLEPTR caps,
+                        NIRVA_BUNDLEPTR target, NIRVA_CONST_STRING stname)
+NIRVA_DEF_SET(NIRVA_INT, ncaps, 0)
+NIRVA_DEF_SET(NIRVA_INT, j, 0)
+NIRVA_DEF_VARS(NIRVA_STRING_ARRAY, capnames)
+NIRVA_DEF_VARS(NIRVA_SIZE, pfxlen)
+NIRVA_ASSERT(caps, NIRVA_FAIL, NIRVA_NULL)
+NIRVA_ASSERT(target, NIRVA_FAIL, NIRVA_NULL)
+// get idx prefix, this is in the NAME strand of the template (MULTI) strand_def in the blueprint
+// default is "CAP_"
+NIRVA_ASSIGN(pfxlen, NIRVA_STRING_LENGTH(NIRVA_CAP_PREFIX))
+NIRVA_ASSIGN(capnames, NIRVA_BUNDLE_LIST_STRANDS(caps))
+while (capnames[ncaps++]);
+if (ncaps > 0) {
+  NIRVA_DEF_SET(NIRVA_STRING_ARRAY, outnames, NIRVA_MALLOC_ARRAY(NIRVA_STRING, ncaps))
+  NIRVA_ASSIGN(ncaps, 0)
+  while (capnames[ncaps]) {
+    if (NIRVA_STRLEN_EQUAL(capnames[ncaps], NIRVA_CAP_PREFIX)) {
+      NIRVA_ASSIGN(outnames[j++], NIRVA_STRDUP_OFFS(capnames[ncaps], pfxlen));
+    }
+    NIRVA_STRING_FREE(capnames[ncaps])
+    ncaps++;
+  }
+  NIRVA_ARRAY_FREE(capnames)
+  NIRVA_ARRAY_SET(target, stname, STRAND_TYPE_STRING, j, outnames)
+  for (ncaps = 0; ncaps < j; ncaps++) {
+    NIRVA_STRING_FREE(outnames[ncaps])
+  }
+  NIRVA_ARRAY_FREE(outnames)
+} else {
+  // should we not create, or set to NULL ?
+  NIRVA_ARRAY_CLEAR(target, stname)
+}
+NIRVA_END_SUCCESS
+
+// takes a CONTRACT bundle template and returns a TRANSFORM bundle
+// first we copy some strands over: FLAGS, CAPS - names only
+// add a pointer to contract, set status to not ready or something
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, create_transform, NIRVA_BUNDLEPTR contract)
+NIRVA_DEF_VARS(NIRVA_UINT64, flags)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, ccaps, transform)
+NIRVA_ASSERT(contract, NIRVA_FAIL, "NULL contract")
+NIRVA_ASSIGN(flags, NIRVA_GET_VALUE_UINT64(contract, "FLAGS"))
+NIRVA_ASSIGN(ccaps, NIRVA_GET_VALUE_BUNDLEPTR(contract, "CAPS"))
+// CAPS bundle is a template bundle, so we need to list the strands in it, and check for those which start with the prefix
+// we will skip over prefix and the rest is the CAPS name, this is returned as a NIRVA_STRING_ARRAY
+NIRVA_CALL_ASSIGN(transform, create_bundle_by_type, TRANSFORM_BUNDLE_TYPE,
+                  "FLAGS", flags, "TEMPLATE", contract, "STATUS", TRANSFORM_STATUS_CONFIGURING, NIRVA_NULL)
+NIRVA_CALL(_NIRVA_CAPS_DISTILL, ccaps, transform, "CAPS")
+NIRVA_END_RETURN(transform)
+
+// check a CAPS set is valide for a contract
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, validate_caps, NIRVA_BUNDLEPTR contract, NIRVA_UINT ncaps,
+                        NIRVA_STRING_ARRAY caps)
+#ifdef NIRVASCRIPT_CHECK_CAPSVALID
+NIRVA_DEF_SET(NIRVA_STRING_ARRAY, vcaps, NIRVA_GET_ARRAY_STRING(contract, "VALID_CAPS"))
+NIRVA_DEF_SET(NIRVA_UINT, nvcaps, NIRVA_ARRAY_GET_SIZE(contract, "VALID_CAPS"))
+if (nvcaps) {
+  NIRVA_DEF_VARS(NIRVA_COND_RESULT, result)
+  NIRVA_DEF_VARS(NIRVA_INT, i)
+  for (i = 0; i < nvcaps; i++) {
+    // vcaps[i] is a cond string, caps is a NULL terminated array of caps
+    NIRVA_CALL_ASSIGN(result, NIRVA_INTERNAL(check_cond_script), NIRVASCRIPT_CHECK_CAPSVALID, vcaps[i], caps)
+    if (result == NIRVA_COND_SUCCESS) break;
+  }
+  if (i == nvcaps) NIRVA_RETURN_FAIL;
+}
+#endif
+NIRVA_END_SUCCESS
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, create_in_attrs, NIRVA_BUNDLEPTR attr_group, NIRVA_INT nmaps,
+                        NIRVA_BUNDLEPTR_ARRAY attr_maps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr, attr_def)
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN)) continue;
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_OPT)) continue;
+NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+//
+NIRVA_CALL_ASSIGN(attr, NIRVA_INTERNAL(create_attr_from_def), attr_def)
+NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr, "NAME"))
+NIRVA_ATTR_APPEND(attr_group, aname, attr)
+NIRVA_STRING_FREE(aname)
+}
+NIRVA_END_SUCCESS
+
+// here we get the trajectory for a valid TRANSFORM
+// first we check the CAPS set passes the RESTRICTIONS in the contract pointed to
+// we can then call the SELECTOR in the CONTRACT which will return a pointer to TRAJECTORY
+// the TRANSFORM adds a CONST_BUNDLEPTR to this
+// the TRAJECTORY will have a WRAPPER (func_def), either this will have a single MAPPING (functional)
+// or else we get the MAP_SELECTOR and pass in the almost complete transform to get the MAPPING
+// and finally this is referenced by the transform
+// indivudual functionals
+#define NIRVA_CALL_METHOD_nirva_find_trajectory INTERN
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, find_trajectory, NIRVA_BUNDLEPTR transform)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, cascade, trajectory, attr_group)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_VARS(NIRVA_STRING_ARRAY, caps)
+NIRVA_DEF_VARS(NIRVA_INT, ncaps, nmaps)
+NIRVA_DEF_VARS(NIRVA_UINT64, owner_uid)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, res)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, contract, NIRVA_GET_VALUE_BUNDLEPTR(transform, "TEMPLATE"))
+NIRVA_ASSERT(contract, NIRVA_FAIL, "NULL contract")
+NIRVA_ASSIGN(ncaps, NIRVA_ARRAY_GET_SIZE(transform, "CAPS"))
+if (ncaps > 0) {
+  NIRVA_ASSIGN(caps, NIRVA_GET_ARRAY_STRING(transform, "CAPS"))
+} else NIRVA_ASSIGN(caps, NIRVA_NULL);
+NIRVA_CALL_ASSIGN(res, NIRVA_INTERNAL(validate_caps), contract, ncaps, caps)
+
+NIRVA_AUTO_FOR(i, 0, ncaps)
+NIRVA_STRING_FREE(caps[i])
+NIRVA_LOOP_END
+if (caps) {NIRVA_ARRAY_FREE(caps)}
+if (res != NIRVA_RESULT_SUCCESS) {
+  NIRVA_FAIL("Invalid CAPs subset for transform, please adjust and retry")
+}
+
+NIRVA_ASSIGN(cascade, NIRVA_GET_VALUE_BUNDLEPTR(contract, "TRAJECTORY_CHOOSER"))
+NIRVA_CALL(NIRVA_INTERNAL(cascade), cascade, transform, &trajectory)
+
+NIRVA_ASSERT(trajectory, NIRVA_FAIL, "NULL trajectory")
+NIRVA_VALUE_SET(transform, "TRAJECTORY", STRAND_TYPE_CONST_BUNDLEPTR, trajectory)
+
+NIRVA_ASSIGN(owner_uid, NIRVA_GET_VALUE_UINT64(contract, "OWNER"))
+NIRVA_CALL_ASSIGN(attr_group, create_bundle_by_type, ATTR_GROUP_BUNDLE_TYPE, "OWNER", owner_uid, NIRVA_NULL)
+NIRVA_ASSERT(attr_group, NIRVA_FAIL, "NULL attr_group")
+
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "ATTR_MAPS")
+NIRVA_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE(trajectory, "ATTR_MAPS"))
+NIRVA_CALL(NIRVA_INTERNAL(create_in_attrs), attr_group, nmaps, attr_maps)
+NIRVA_VALUE_SET(transform, "ATTRIBUTES", STRAND_TYPE_BUNDLEPTR, attr_group)
+
+if (NIRVA_RESULT(NIRVA_INTERNAL(create_func_data), transform) != NIRVA_RESULT_SUCCESS) {
+  NIRVA_RECYCLE(trajectory)
+  NIRVA_RECYCLE(attr_group)
+  NIRVA_FAIL("func_data could not be created for transform")
+}
+NIRVA_END_RETURN(trajectory)
+
+// free the BLOB data in an attribute. This done - after remapping the blob back to DATA, before deleting the attr,
+// and before overwriting the blob (if it is output only)
+// if sttype is STRING, then we get the array size, and free all strings before freeing BLOB itself
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, attr_blob_free, NIRVA_BUNDLEPTR attr, NIRVA_UINT sttype)
+NIRVA_DEF_VARS(NIRVA_GENPTR, blob)
+NIRVA_DEF_VARS(NIRVA_UINT, asize)
+NIRVA_ASSERT(attr, NIRVA_FAIL, NIRVA_NULL)
+if (NIRVA_BUNDLE_HAS_STRAND(attr, "BLOB")) {
+  NIRVA_CALL_ASSIGN(blob, NIRVA_GET_VALUE_GENPTR, attr, "BLOB")
+  if (!NIRVA_BUNDLE_HAS_STRAND(attr, "BLOB_SIZE")) {NIRVA_ASSIGN(asize, 0);}
+  else  NIRVA_ASSIGN(asize, NIRVA_GET_VALUE_UINT(attr, "BLOB_SIZE"));
+  if (asize > 0) {
+    if (sttype == STRAND_TYPE_STRING) {
+      NIRVA_DEF_SET(NIRVA_STRING_ARRAY, starray, NIRVA_VAR_FROM_GENPTR(NIRVA_STRING_ARRAY, blob))
+      NIRVA_DEF_VARS(NIRVA_INT, i)
+      for (i = 0; i < asize; i++) NIRVA_STRING_FREE(starray[i]);
+    }
+    NIRVA_ARRAY_FREE(blob)
+  } else {
+    if (sttype == STRAND_TYPE_STRING) {
+      NIRVA_STRING_FREE(blob)
+    } else {
+      NIRVA_FREE(blob)
+    }
+  }
+  NIRVA_STRAND_DELETE(attr, "BLOB")
+}
+if (NIRVA_BUNDLE_HAS_STRAND(attr, "BLOB_SIZE")) NIRVA_STRAND_DELETE(attr, "BLOB_SIZE");
+NIRVA_END_SUCCESS
+
+// here we take an attr_group, and a ATTR_MAP array
+// for each matching mapping, we locate the attribute either in tx_attrs or seg_attrs
+// if the attr has no BLOB, we allocate it, then copy attr DATA into it
+// the pointer to BLOB is then set in vals array
+// for out attrs, we do the same except we only create the BLOB, the DATA value is not copied
+
+// the array is passed to the native wrapper, which will cast the void * back to typed ptrs, dereferencing
+// for input values, the DATA from the attribute is copied, for output (func return) values,
+// we just allocate the memory; when the (native) function returns the return_values will be copied into the array
+// then from the array, either to attr DATA,  or else to RETURN_VALUES
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, map_from_attrs, NIRVA_BUNDLEPTR tx_attrs, NIRVA_BUNDLEPTR seg_attrs,
+                        NIRVA_INT nmaps, NIRVA_BUNDLEPTR_ARRAY attr_maps, NIRVA_BUNDLEPTR func_data,
+                        NIRVA_UINT64 maptype, NIRVA_GENPTR_ARRAY vals)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr, attr_def)
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+NIRVA_DEF_SET(NIRVA_BOOLEAN, anon_out, NIRVA_FALSE)
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr_map, attr_maps[i])
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_map, "MAPPING"))
+// check mapping matches
+if (maptype == NIRVA_ATTR_MAP_IN) {
+  if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN_PARAM)) continue;
+} else if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN) || !NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_RETVAL)) continue;
+NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_map, "ATTR_DEF"))
+if (maptype == NIRVA_ATTR_MAP_OUT && NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_OPT)) {
+  // this is only allowed for specific func_categories
+  // and means that the return value will be mapped anonymously to
+  // "RETURN_VALUE" in func_data
+  anon_out = NIRVA_TRUE;
+  NIRVA_CALL_ASSIGN(sttype, _NIRVA_ATTR_DEF_GET_STRAND_TYPE, attr_def)
+}
+NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+// for ext, map from tx_attrs / seg_attrs, else from seg_attrs
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN)) {
+  NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(tx_attrs, aname));
+} else {
+  NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(seg_attrs, aname));
+}
+NIRVA_STRING_FREE(aname)
+if (!attr) {
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_OPT)) continue;
+    // we have a missing in attr. This is a breach of contract.
+    //NIRVA_HOOK_TRIGGER(CONTRACT_BREACHED_HOOK)
+    NIRVA_RETURN_ERROR
+  }
+  // if output, we create in tx_attrs or seg_attrs
+  NIRVA_CALL_ASSIGN(attr, NIRVA_INTERNAL(create_attr_from_def), attr_def)
+  if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN)) {
+    // create in tx_attrs
+    NIRVA_ATTR_APPEND(tx_attrs, aname, attr)
+  } else {
+    NIRVA_ATTR_APPEND(seg_attrs, aname, attr)
+  }
+  NIRVA_CALL_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE, attr)
+} else {
+  if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN)) {
+    NIRVA_CALL_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE, attr)
+    NIRVA_CALL(NIRVA_INTERNAL(attr_blob_free), attr, sttype);
+  } else {
+    if (NIRVA_BUNDLE_HAS_STRAND(attr, "BLOB")) continue;
+    NIRVA_CALL_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE, attr);
+    if (NIRVA_ATTR_DEF_IS_ARRAY(attr)) {
+      NIRVA_VALUE_SET(attr, "BLOB_SIZE", STRAND_TYPE_UINT, NIRVA_ARRAY_GET_SIZE(attr, "DATA"))
+    } else {
+      NIRVA_STRAND_DELETE(attr, "BLOB_SIZE")
+    }
+  }
+}
+// for return arrays, we will just copy the pointer
+if (maptype == NIRVA_ATTR_MAP_OUT && NIRVA_ATTR_DEF_IS_ARRAY(attr_def)) continue;
+
+switch (sttype) {
+case STRAND_TYPE_INT: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_INT), intp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(intp, NIRVA_GET_ARRAY_INT, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(intp, NIRVA_MALLOC_SIZEOF(NIRVA_INT))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(intp))
+} break;
+case STRAND_TYPE_UINT: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_UINT), uintp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_ASSIGN(uintp, NIRVA_GET_ARRAY_UINT(attr, "DATA"))
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(uintp, NIRVA_MALLOC_SIZEOF(NIRVA_UINT))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(uintp))
+} break;
+case STRAND_TYPE_INT64: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_INT64), int64p)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(int64p, NIRVA_GET_ARRAY_INT64, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(int64p, NIRVA_MALLOC_SIZEOF(NIRVA_INT64))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(int64p))
+} break;
+case STRAND_TYPE_UINT64: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_UINT64), uint64p)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_ASSIGN(uint64p, NIRVA_GET_ARRAY_UINT64(attr, "DATA"))
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(uint64p, NIRVA_MALLOC_SIZEOF(NIRVA_UINT64))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(uint64p))
+} break;
+case STRAND_TYPE_BOOLEAN: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_BOOLEAN), booleanp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(booleanp, NIRVA_GET_ARRAY_BOOLEAN, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(booleanp, NIRVA_MALLOC_SIZEOF(NIRVA_BOOLEAN))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(booleanp))
+} break;
+case STRAND_TYPE_DOUBLE: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_DOUBLE), doublep)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(doublep, NIRVA_GET_ARRAY_DOUBLE, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(doublep, NIRVA_MALLOC_SIZEOF(NIRVA_DOUBLE))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(doublep))
+} break;
+case STRAND_TYPE_STRING: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_STRING), stringp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_ASSIGN(stringp, NIRVA_GET_ARRAY_STRING(attr, "DATA"))
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(stringp, NIRVA_MALLOC_SIZEOF(NIRVA_STRING))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(stringp))
+} break;
+#ifdef NIRVA_USE_FLOAT
+case STRAND_TYPE_FLOAT: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_FLOAT), floatp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(floatp, NIRVA_GET_ARRAY_FLOAT, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(floatp, NIRVA_MALLOC_SIZEOF(NIRVA_FLOAT))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(floatp))
+} break;
+#endif
+case STRAND_TYPE_VOIDPTR: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_VOIDPTR), voidptrp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(voidptrp, NIRVA_GET_ARRAY_VOIDPTR, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(voidptrp, NIRVA_MALLOC_SIZEOF(NIRVA_VOIDPTR))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(voidptrp))
+} break;
+case STRAND_TYPE_FUNCPTR: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_NATIVE_FUNC), funcptrp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(funcptrp, NIRVA_GET_ARRAY_FUNCPTR, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(funcptrp, NIRVA_MALLOC_SIZEOF(NIRVA_NATIVE_FUNC))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(funcptrp))
+} break;
+case STRAND_TYPE_BUNDLEPTR: {
+  NIRVA_DEF_VARS(NIRVA_TYPE_PTR(NIRVA_BUNDLEPTR), bundleptrp)
+  if (maptype == NIRVA_ATTR_MAP_IN) {
+    NIRVA_CALL_ASSIGN(bundleptrp, NIRVA_GET_ARRAY_BUNDLEPTR, attr, "DATA")
+  } else {
+    // for scalar return value - allocate memory, the native wrapper will copy the return value here
+    NIRVA_ASSIGN(bundleptrp, NIRVA_MALLOC_SIZEOF(NIRVA_BUNDLEPTR))
+  }
+  NIRVA_ASSIGN(vals[i], NIRVA_GENPTR_CAST(bundleptrp))
+  /*   if (NIRVA_REQUEST(attr, TRANSFER) != NIRVA_REQUEST_YES) */
+  /* NIRVA_RETURN(NIRVA_RESULT_FAIL) */
+  /*   NIRVA_CALL(nirva_bundle_unlock, attr) */
+} break;
+default:
+  NIRVA_FAIL("unknown attr_type")
+  break;
+}
+if (anon_out) {
+  NIRVA_VALUE_SET(func_data, "RETURN_VALUE", STRAND_TYPE_GENPTR, vals[i])
+} else {
+  NIRVA_VALUE_SET(attr, "BLOB", STRAND_TYPE_GENPTR, vals[i])
+}
+}
+NIRVA_END_SUCCESS
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, map_to_attrs, NIRVA_BUNDLEPTR attrs,  NIRVA_UINT nmaps,
+                        NIRVA_BUNDLEPTR_ARRAY attr_maps, NIRVA_VA_LIST va)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr, attr_def)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_DEF_VARS(NIRVA_UINT64, mapping, flags)
+// valid maptypes:
+//  NIRVA_ATTR_MAP_IN_PARAM  (AND)
+//  NIRVA_ATTR_MAP_IN_OUT_PARAM as above, but we skip over any with RO
+//  NIRVA_ATTR_MAP_RETVAL (skip RO)
+
+for (i = 0; i < nmaps; i++) {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr_map, attr_maps[i])
+  NIRVA_ASSIGN(mapping, NIRVA_GET_VALUE_UINT64(attr_map, "MAPPING"))
+  if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN_IN_PARAM)) continue;
+  NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_map, "ATTR_DEF"))
+  NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+  NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, aname))
+  NIRVA_STRING_FREE(aname)
+  NIRVA_ASSIGN(flags, NIRVA_GET_VALUE_UINT64(attr, "FLAGS"))
+  if (NIRVA_HAS_FLAG(flags, NIRVA_ATTR_FLAG_READONLY)) continue;
+
+  NIRVA_CALL_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE, attr)
+  NIRVA_VALUE_SET(attr, "DATA", sttype, va)
+}
+NIRVA_END_SUCCESS
+
+// delete any attrs not mapped as EXTERN
+// - first we will free any "BLOB" data
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, clear_local_attrs, NIRVA_BUNDLEPTR attr_group, NIRVA_UINT nmaps,
+                        NIRVA_BUNDLEPTR_ARRAY attr_maps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr_def, attr)
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+NIRVA_DEF_VARS(NIRVA_UINT, sttype)
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN)) continue;
+NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attr_group, aname))
+NIRVA_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE(attr))
+NIRVA_CALL(NIRVA_INTERNAL(attr_blob_free), attr, sttype);
+NIRVA_ATTR_DELETE(attr_group, aname)
+NIRVA_STRING_FREE(aname)
+NIRVA_LOOP_END
+NIRVA_END_SUCCESS
+
+// data from BLOB is copied back to attr DATA
+// this is for attrs which are output from trajectory, as well as any attr in a transform when we read or
+// write the value directly
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, remap_attrs, NIRVA_BUNDLEPTR attr_group, NIRVA_UINT nmaps,
+                        NIRVA_BUNDLEPTR_ARRAY attr_maps)
+NIRVA_DEF_VARS(NIRVA_GENPTR, blob)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr, attr_def)
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+NIRVA_DEF_VARS(NIRVA_UINT, asize, sttype)
+NIRVA_DEF_VARS(NIRVA_INT, i)
+for (i = 0; i < nmaps; i++) {
+  // get attr, sttype, blob, blob_size
+  // then simply set attr DATA as array of size blob_type, strand_type, sttype
+  // blob is either an array pointer, or a pointer to alloced value
+  // so thsi should work
+  // the we free blob, delete "blob" and "blob_size"
+  NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+  if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN_OUTPUT)) continue;
+  NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+  NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+  NIRVA_CALL_ASSIGN(attr, NIRVA_ATTR_GET, attr_group, aname)
+  NIRVA_STRING_FREE(aname)
+  if (!attr) {
+    // raise contract breached
+    NIRVA_FAIL(NIRVA_NULL)
+  }
+  if (!NIRVA_BUNDLE_HAS_STRAND(attr, "BLOB")) continue;
+  NIRVA_CALL_ASSIGN(blob, NIRVA_GET_VALUE_GENPTR, attr, "BLOB")
+  NIRVA_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE(attr))
+  if (!NIRVA_BUNDLE_HAS_STRAND(attr, "BLOB_SIZE")) {NIRVA_ASSIGN(asize, 1);}
+  else  NIRVA_ASSIGN(asize, NIRVA_GET_VALUE_UINT(attr, "BLOB_SIZE"));
+  NIRVA_ARRAY_SET(attr, "DATA", sttype, asize, blob)
+  NIRVA_CALL(NIRVA_INTERNAL(attr_blob_free), attr, sttype);
+}
+NIRVA_END_SUCCESS
+
+NIRVA_DECL_FUNC_INTERNAL(NIRVA_FUNC_RETURN, native_call, NIRVA_BUNDLEPTR functional, NIRVA_BUNDLEPTR func_data)
+
+// for native functionals, if a returned value is an array, and either it is designated for return from the segment (EXTERN)
+// or if a functional in the segment will read / write to it directly,
+// or if it is a non-const string array, we need to know the size. For extern values, we need this so we can remap
+// the data back to attributes, the same holds for attrs for direct access.
+// for non-const string, we need this information, so we know how many strings to free
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, calc_array_size, NIRVA_BUNDLEPTR attr_map, NIRVA_BUNDLEPTR attrs,
+                        NIRVA_BUNDLEPTR func_data)
+// maooing may be CONST, then we just set the value
+// else we may have to calulate it by calling a (native wrapped) helper functional in th segment
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr_def, attr)
+NIRVA_DEF_VARS(NIRVA_STRING, aname, xname)
+NIRVA_DEF_SET(NIRVA_UINT, asize, 0)
+if (NIRVA_BUNDLE_HAS_STRAND(attr_map, "ARRAY_SIZE")) {
+  NIRVA_ASSIGN(asize, NIRVA_GET_VALUE_UINT(attr_map, "ARRAY_SIZE"))
+} else if (NIRVA_BUNDLE_HAS_STRAND(attr_map, "ARRAY_SIZE_FUNC")) {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, segment, NIRVA_GET_VALUE_BUNDLEPTR(func_data, "CURRENT_SEGMENT"))
+  NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR_ARRAY, functionals, NIRVA_GET_ARRAY_BUNDLEPTR, segment, "FUNCTIONALS")
+  NIRVA_DEF_SET(NIRVA_UINT, nfuncs, NIRVA_ARRAY_GET_SIZE(segment, "FUNCTIONALS"))
+  NIRVA_DEF_VARS(NIRVA_INT, i)
+  NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_map, "ARRAY_SIZE_FUNC"))
+  for (i = 0; i < nfuncs; i++) {
+    NIRVA_DEF_SET(NIRVA_BUNDLEPTR, func, functionals[i])
+    NIRVA_DEF_SET(NIRVA_INT, categ, NIRVA_GET_VALUE_INT(func, "CATEGORY"))
+    if (categ != FUNC_CATEGORY_HELPER) continue;
+    NIRVA_ASSIGN(xname, NIRVA_GET_VALUE_STRING(func, "NAME"))
+    if (NIRVA_STRING_EQUAL(aname, xname)) {
+      NIRVA_DEF_VARS(NIRVA_GENPTR, retval)
+      NIRVA_CALL(NIRVA_INTERNAL(native_call), func, func_data)
+      NIRVA_ASSIGN(retval, NIRVA_GET_VALUE_GENPTR(func_data, "RETURN_VALUE"))
+      NIRVA_STRAND_DELETE(func_data, "RETURN_VALUE")
+      NIRVA_ASSIGN(asize, NIRVA_VAR_FROM_GENPTR(NIRVA_UINT, retval))
+      NIRVA_FREE(retval)
+    }
+    NIRVA_STRING_FREE(xname)
+  }
+  NIRVA_STRING_FREE(aname)
+} else NIRVA_RETURN_FAIL;
+if (asize == 0) NIRVA_RETURN_SUCCESS;
+NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_map, "ATTR_DEF"))
+NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+NIRVA_CALL_ASSIGN(attr, NIRVA_ATTR_GET, attrs, aname)
+NIRVA_STRING_FREE(aname)
+NIRVA_ASSERT(attr, NIRVA_RETURN, NIRVA_RESULT_ERROR)
+NIRVA_VALUE_SET(attr, "BLOB_SIZE", asize)
+NIRVA_END_SUCCESS
+
+// go through attr_maps, skip any which dont have mapflags, skip any which are not outputs,
+// skip any without ARRAY_SIZE or ARRAY_SIZE_FUNC
+// for the remainder, we will call nirva_calc_array_size
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, calc_array_sizes, NIRVA_BUNDLEPTR tx_attrs, NIRVA_BUNDLEPTR seg_attrs,
+                        NIRVA_UINT nmaps, NIRVA_BUNDLEPTR_ARRAY attr_maps, NIRVA_BUNDLEPTR func_data, NIRVA_UINT64 mapflags)
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_ASSIGN(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64, attr_maps[i], "MAPPING")
+if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_OUT)) continue;
+if (mapflags && !NIRVA_HAS_FLAG(mapping, mapflags)) continue;
+if (NIRVA_BUNDLE_HAS_STRAND(attr_maps[i], "ARRAY_SIZE") || NIRVA_BUNDLE_HAS_STRAND(attr_maps[i], "ARRAY_SIZE_FUNC")) {
+  if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN)) {
+    NIRVA_CALL(NIRVA_INTERNAL(calc_array_size), tx_attrs, attr_maps[i], func_data)
+  } else {
+    NIRVA_CALL(NIRVA_INTERNAL(calc_array_size), seg_attrs, attr_maps[i], func_data)
+  }
+}
+NIRVA_LOOP_END
+NIRVA_END_SUCCESS
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, copy_to_blobs, NIRVA_BUNDLEPTR tx_attrs, NIRVA_BUNDLEPTR seg_attrs,
+                        NIRVA_UINT nmaps, NIRVA_BUNDLEPTR_ARRAY attr_maps, NIRVA_GENPTR_ARRAY ovals)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr_def, attr)
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_RETVAL)) continue;
+NIRVA_ASSIGN(attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+if (NIRVA_ATTR_DEF_IS_SCALAR(attr_def)) {continue;}
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN)) {
+  NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(tx_attrs, aname))
+} else {
+  NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(seg_attrs, aname))
+}
+NIRVA_STRING_FREE(aname)
+if (!attr) {
+  // TODO - complain
+  continue;
+}
+NIRVA_VALUE_SET(attr, "BLOB", STRAND_TYPE_GENPTR, ovals[i])
+}
+NIRVA_END_SUCCESS
 
 
-#define	STRUCTURE_SUBTYPE_BEHAVIOUR		14
-#define ASPECT_AFFINITY_14 ASPECT_NONE
-#define SUBSYS_REQUIRES_14 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_14 "BEHAVIOUR"
-#define SUBSYS_DESC_14 "Behaviour is an expert system which attempts to fulfill the role of a proxy " \
-  "Oracle, supplying best guess and predicitons for mising data, based on observing past responses " \
-  "pattern matching, probabilities, correlations and so on"
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, native_call, NIRVA_BUNDLEPTR functional, NIRVA_BUNDLEPTR func_data)
+// we will create two arrays, the first will be the attribute values to be mapped to IN/OUT parameters
+// the array will contain pointers to allocated memory containing copies of the data in the referenced atttribute
 
+// the second will be for return values, in this case we simply create an array of pointers,
+// when the target function returns, its return value(s) will be assigned to these locations
+//
+// both arrays are passed to the wrapper function which calls the real function, casting the in array values
+// to pointers of the correct types and dereferencing, whilst the return value is copied into ovals[0]
+//
+// NB, scripts and standard functions just read from and write to in / out attributes directly
 
-/* #define _CONDANAL_BUNDLE  INCLUDE_BUNDLE(AUTOMATION, CONDITION),	\ */
-/*       ADD_NAMED_OPT_STRAND(VALUE, COUNT, N_TRIALS),			\ */
-/*       ADD_NAMED_OPT_STRAND(VALUE, COUNT, N_FAIL),			\ */
-/*       ADD_NAMED_OPT_STRAND(VALUE, COUNT, N_SUCCESS),			\ */
-/*       ADD_OPT_NAMED_ARRAY(CONDITION, RESPONSE, WINDOW),			\ */
-/*       ADD_NAMED_OPT_STRAND(VALUE, COUNT, WINDOW_SIZE),			\ */
-/*       ADD_NAMED_OPT_STRAND(VALUE, MAX_VALUES, MAX_WINDOW_SIZE),		\ */
-/*       ADD_NAMED_OPT_STRAND(LOGIC, PROBABILITY, P_FAIL),			\ */
-/*       ADD_NAMED_OPT_STRAND(LOGIC, PROBABILITY, P_SUCCESS),		\ */
-/*       INCLUDE_NAMED_BUNDLES(STANDARD, CORRELATION, CORRELATIONS) */
+// when the segment completes, any attibutes not mapped as extern are freed, along with their tempstores
 
+NIRVA_DEF_VARS(NIRVA_GENPTR_ARRAY, ivals, ovals)
+NIRVA_DEF_VARS(NIRVA_UINT, nmaps, n_in_maps, n_out_maps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, transform, tx_attrs, seg_attrs)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_VARS(NIRVA_WRAPPER_FUNC, func)
 
-#define	N_STRUCTURE_SUBTYPES 15
+NIRVA_ASSIGN(transform, NIRVA_GET_VALUE_BUNDLEPTR(func_data, "TRANSFORM"))
+NIRVA_ASSIGN(tx_attrs, NIRVA_GET_VALUE_BUNDLEPTR(transform, "ATTRIBUTES"))
+NIRVA_ASSIGN(seg_attrs, NIRVA_GET_VALUE_BUNDLEPTR(func_data, "SEG_ATTRS"))
 
-// this subtype cannot be created but can be discovered. An Oracle is able
-// to supply the values of specific data types. Oracles have a set of data they can provide
-// (selection), conditions under which they can supply it, and a priority.
-// higher priority Oracles are consulted before lower priority ones.
-// Sometimes there is an object type / subtype, which mediates for an Oracle,
-// for example, the GUI subtype can act as a mediator for the USER subtype of Oracle
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, functional, "ATTR_MAPS")
+NIRVA_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE(functional, "ATTR_MAPS"))
 
-#define STRUCTURE_SUBTYPE_ORACLE 128
-#define ASPECT_AFFINITY_128 ASPECT_NONE
-#define SUBSYS_REQUIRES_128 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
-#define SUBSYS_NAME_128 "ORACLE"
-#define SUBSYS_DESC_128 "If you are reading this, this is you."
+NIRVA_CALL_ASSIGN(n_in_maps, NIRVA_INTERNAL(count_attr_maps), nmaps, attr_maps, NIRVA_ATTR_MAP_IN_PARAM)
+// count return values
+NIRVA_CALL_ASSIGN(n_out_maps, NIRVA_INTERNAL(count_attr_maps), nmaps, attr_maps, NIRVA_ATTR_MAP_RETVAL)
 
-//#endif
+if (n_in_maps > 0) {
+  NIRVA_ASSIGN(ivals, NIRVA_MALLOC_ARRAY(NIRVA_GENPTR, n_in_maps))
+  NIRVA_ASSERT(ivals, NIRVA_FAIL, NIRVA_NULL)
+  // we read the DATA from attrs, and put this in "blob" data (if not already)
+  // then arrange the "blob"s into ivals
+  NIRVA_CALL(NIRVA_INTERNAL(map_from_attrs), tx_attrs, seg_attrs, nmaps, attr_maps, func_data, NIRVA_ATTR_MAP_IN, ivals)
+} else {NIRVA_ASSIGN(ivals, NIRVA_NULL)}
+
+if (n_out_maps > 0) {
+  NIRVA_ASSIGN(ovals, NIRVA_MALLOC_ARRAY(NIRVA_GENPTR, n_out_maps))
+  NIRVA_ASSERT(ovals, NIRVA_FAIL, NIRVA_NULL)
+
+  // if output is scalar, as before we create BLOB data, but now the attr data is not copied
+  NIRVA_CALL(NIRVA_INTERNAL(map_from_attrs), tx_attrs, seg_attrs, nmaps, attr_maps, func_data, NIRVA_ATTR_MAP_OUT, ovals)
+} else NIRVA_ASSIGN(ovals, NIRVA_NULL);
+
+// for any attr_maps that map EXTERN out or in / out, if they are arrays, and ARE mapped PRE_CALC_SIZE,
+// if the array_size is non-const, we calculate it
+NIRVA_CALL(NIRVA_INTERNAL(calc_array_sizes), tx_attrs, seg_attrs, nmaps, attr_maps, func_data, NIRVA_ATTR_MAP_PRE_CALC_SIZE)
+
+NIRVA_CALL_ASSIGN(func, NIRVA_GET_VALUE_FUNCPTR, functional, "NATIVE_FUNCTION")
+
+(*func)(ivals, ovals);
+
+NIRVA_ARRAY_FREE(ivals)
+
+// for out params which are arrays, we wont have allocated blob, so we set blob equal to ovals[n]
+NIRVA_CALL(NIRVA_INTERNAL(copy_to_blobs), tx_attrs, seg_attrs, nmaps, attr_maps, ovals)
+NIRVA_ARRAY_FREE(ovals)
+
+// for any attr_maps that map EXTERN out or in / out, if they are arrays, and not mapped PRE_CALC_SIZE,
+// if the array_size is non-const, we calculate it
+NIRVA_CALL(NIRVA_INTERNAL(calc_array_sizes), tx_attrs, seg_attrs, nmaps, attr_maps, func_data, 0)
+
+NIRVA_END_SUCCESS
+
+#define NIRVA_FUNC_WRAPx(rt,fn,np,...)NIRVA_FUNC_WRAP_##np(rt,fn,__VA_ARGS__)
+#define NIRVA_FUNC_WRAP(ret_type,funcname,...)NIRVA_FUNC_WRAPx(ret_type,funcname,__VA_ARGS__,dummy)
+#define NIRVA_FUNC_WRAP_0(rt,fn,dd)static void fn##_wrapper(rt*rv,void**vv){*(t*)vv[0]=fn();}
+#define NIRVA_FUNC_WRAP_1(rt,fn,t0,dd)static void fn##_wrapper(void**vv){*(rt*)vv[0]=fn(*(t0*)vv[1]);}
+#define NIRVA_FUNC_WRAP_2(rt,fn,t0,t1,dd)static void fn##_wrapper(void**vv){*(rt*)vv[0])=fn(*(t0*)vv[1],*(t1*)vv[2]);}
+#define NIRVA_FUNC_WRAP_3(rt,fn,t0,t1,t2dd)static void fn##_wrapper(rt*rv,void**vv) \
+  {*(rt*)vv[0]=fn(*(t0*)vv[1],*(t1*)vv[2],*(t2*)vv[3]);}
+#define NIRVA_FUNC_WRAP_4(rt,fn,t0,t1,t2,t3,dd)static void fn##_wrapper(rt*rv,void**vv) \
+  {*(rt*)vv[0]=fn(*(t0*)vv[1],*(t1*)vv[2],*(t2*)vv[3]),*(t3*)vv[4]);}
+#define NIRVA_FUNC_WRAP_5(rt,fn,t0,t1,t2,t3,t4,dd)static void fn##_wrapper(rt*rv,void**vv) \
+  {*(rt*)vv[0]=fn(*(t0*)vv[1],*(t1*)vv[2],*(t2*)vv[3]),*(t3*)vv[4]);}
+
+#define NIRVA_NR_FUNC_WRAPx(fn,np,...)NIRVA_NR_FUNC_WRAP_##np(fn,__VA_ARGS__)
+#define NIRVA_FUNC_WRAP_VOID(funcname,...)NIRVA_NR_FUNC_WRAPx(funcname,__VA_ARGS__,dummy)
+#define NIRVA_NR_FUNC_WRAP_0(fn,dd)static void fn##_wrapper(void**vv){fn();}
+#define NIRVA_NR_FUNC_WRAP_1(fn,t0,dd)static void fn##_wrapper(void**vv){fn(*(t0*)vv[0]);}
+#define NIRVA_NR_FUNC_WRAP_2(fn,t0,t1,dd)static void fn##_wrapper(void**vv){fn(*(t0*)vv[0],*(t1*)vv[1]);}
+#define NIRVA_NR_FUNC_WRAP_3(fn,t0,t1,t2dd)static void fn##_wrapper(void**vv) \
+  {fn(*(t0*)vv[0],*(t1*)vv[1],*(t2*)vv[2]);}
+#define NIRVA_NR_FUNC_WRAP_4(fn,t0,t1,t2,t3,dd)static void fn##_wrapper(void**vv) \
+  {fn(*(t0*)vv[0],*(t1*)vv[1],*(t2*)vv[2],*(t3*)vv[3]);}
+#define NIRVA_NR_FUNC_WRAP_5(fn,t0,t1,t2,t3,t4,dd)static void fn##_wrapper(void**vv) \
+  {fn(*(t0*)vv[0],*(t1*)vv[1],*(t2*)vv[2],*(t3*)vv[3],*(t4*),vv[4]);}
+
+#define NIRVA_MACRO_get_value_std_funcptr(bun, stname)			\
+  (nirva_function_t)(NIRVA_RESULT(NIRVA_GET_VALUE_FUNCPTR, bun, stname))
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, run_functional, NIRVA_BUNDLEPTR functional,
+                        NIRVA_BUNDLEPTR func_data)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, result)
+NIRVA_DEF_SET(NIRVA_INT, func_type, NIRVA_GET_VALUE_INT(functional, "FUNC_TYPE"))
+if (NIRVA_EQUALS(func_type, FUNC_TYPE_SCRIPT)) {
+  //NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, scriptlet)
+  //NIRVA_ASSIGN(scriptlet, NIRVA_GET_VALUE_BUNDLEPTR(functional, "SCRIPTLET"))
+  // depends on cat..
+  //NIRVA_CALL_ASSIGN(result, nirva_run_scriptlet, scriptlet, func_data)
+} else if (NIRVA_EQUALS(func_type, FUNC_TYPE_STANDARD)) {
+  NIRVA_DEF_VARS(nirva_function_t, func)
+  NIRVA_CALL_ASSIGN(func, NIRVA_MACRO_get_value_std_funcptr, functional, "STANDARD_FUNCTION")
+  NIRVA_ASSIGN(result, (*func)(func_data))
+} else if (NIRVA_EQUALS(func_type, FUNC_TYPE_NATIVE)) {
+  NIRVA_CALL_ASSIGN(result, NIRVA_INTERNAL(native_call), functional, func_data)
+}
+NIRVA_END_RETURN(result)
+
+// run a SEGMENT, this is a sequence of 1 or more FUNCTIONALS. The components are called in array sequence,
+// and we maintain a temporary storage bundle to hold attributes which are created that are iinternal to the segment.
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, run_segment, NIRVA_BUNDLEPTR segment,
+                        NIRVA_BUNDLEPTR func_data)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, seg_attrs)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attrs)
+NIRVA_DEF_VARS(NIRVA_UINT, n_attrs, sttype)
+NIRVA_DEF_ASSIGN(NIRVA_BUNDLEPTR_ARRAY, functionals, NIRVA_GET_ARRAY_BUNDLEPTR, segment, "FUNCTIONALS")
+NIRVA_DEF_SET(NIRVA_UINT, n_funcs, NIRVA_ARRAY_GET_SIZE(segment, "FUNCTIONALS"))
+NIRVA_AUTO_FOR(i, 0, n_funcs)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, functional, functionals[i])
+NIRVA_DEF_SET(NIRVA_INT, cat, NIRVA_GET_VALUE_INT(functional, "CATEGORY"))
+if (cat != FUNC_CATEGORY_TX_SEGMENT) continue;
+NIRVA_CALL(NIRVA_INTERNAL(run_functional), functionals[i], func_data)
+NIRVA_LOOP_END
+NIRVA_ARRAY_FREE(functionals)
+
+// clear (delete) any attributes in SEG_ATTRS
+NIRVA_ASSIGN(seg_attrs, NIRVA_GET_VALUE_BUNDLEPTR(func_data, "SEG_ATTRS"))
+NIRVA_CALL_ASSIGN(attrs, NIRVA_GET_ARRAY_BUNDLEPTR, seg_attrs, "ATTRIBUTES")
+NIRVA_ASSIGN(n_attrs, NIRVA_ARRAY_GET_SIZE(seg_attrs, "ATTRIBUTES"))
+NIRVA_AUTO_FOR(i, 0, n_attrs)
+NIRVA_ASSIGN(sttype, _NIRVA_ATTR_GET_STRAND_TYPE(attrs[i]))
+NIRVA_CALL(NIRVA_INTERNAL(attr_blob_free), attrs[i], sttype);
+NIRVA_LOOP_END
+NIRVA_ARRAY_FREE(attrs)
+NIRVA_ARRAY_CLEAR(seg_attrs, "ATTRIBUTES")
+NIRVA_STRAND_DELETE(func_data, "SEG_ATTRS")
+NIRVA_END_SUCCESS
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, run_trajectory, NIRVA_BUNDLEPTR transform)
+NIRVA_DEF_SET(NIRVA_FUNC_RETURN, result, TX_RESULT_TRAJECTORY_INVALID)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, trajectory, next_segment, func_data)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, attr_grp)
+NIRVA_DEF_VARS(NIRVA_UINT, nmaps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR_ARRAY, segments, NIRVA_NULL)
+NIRVA_DEF_SET(NIRVA_INT, i, 0)
+// run a selector to get next segment
+// make a bundle in for selector with selector and segments
+NIRVA_ASSIGN(trajectory, NIRVA_GET_VALUE_BUNDLEPTR(transform, "TRAJECTORY"))
+NIRVA_ASSERT(trajectory, NIRVA_ERROR, ERR_IS_NULL, transform, "TRAJECTORY", NIRVA_NULL)
+NIRVA_ASSIGN(func_data, NIRVA_GET_VALUE_BUNDLEPTR(transform, "FUNC_DATA"))
+NIRVA_ASSERT(func_data, NIRVA_ERROR, ERR_IS_NULL, transform, "FUNC_DATA", NIRVA_NULL)
+//  NIRVA_ASSIGN(selector, NIRVA_GET_VALUE_BUNDLEPTR(trajectory, "SEGMENT_SELECTOR"))
+// TODO: trigger tx_start hook
+// we cannot always have a selector for segments, otherwise the selector would
+// also have a selector, which would also have a select, ad infinitum
+// so if there is none, we just run the segments in array order
+//
+//  if (selector) NIRVA_CALL_ASSIGN(next_segment, NIRVA_SELECT, STRAND_TYPE_BUNDLEPTR, selector, transform)
+if (0);
+else {
+  NIRVA_CALL_ASSIGN(segments, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "SEGMENTS")
+  NIRVA_ASSIGN(next_segment, segments[0])
+}
+NIRVA_VALUE_SET(func_data, "CURRENT_SEGMENT", STRAND_TYPE_CONST_BUNDLEPTR, next_segment)
+while (next_segment != SEGMENT_END) {
+  // call segment start hooks. If arbitrator is present it will check next segements
+  // it may return COND_PROXY, then we should exit
+  // if ajudicator is present it may mark the tx and return cond_abandon
+  NIRVA_CALL_ASSIGN(result, NIRVA_INTERNAL(run_segment), next_segment, func_data)
+  // TODO: check response for errors, cancel, idle, etc
+  // TODO: trigger segment end hooks
+  //
+  //if (selector) NIRVA_CALL_ASSIGN(next_segment, NIRVA_SELECT, STRAND_TYPE_BUNDLEPTR, selector, transform)
+  if (0);
+  else NIRVA_ASSIGN(next_segment, segments[i++]);
+
+  NIRVA_VALUE_SET(func_data, "CURRENT_SEGMENT", STRAND_TYPE_CONST_BUNDLEPTR, next_segment)
+}
+if (segments) NIRVA_ARRAY_FREE(segments);
+
+// clear (delete) any attributes in ATTRIBUTES not mapped es EXTERN
+NIRVA_ASSIGN(attr_grp, NIRVA_GET_VALUE_BUNDLEPTR(transform, "ATTRIBUTES"))
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "ATTR_MAPS")
+NIRVA_CALL_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE, trajectory, "ATTR_MAPS")
+NIRVA_CALL(NIRVA_INTERNAL(clear_local_attrs), attr_grp, nmaps, attr_maps)
+// for any remaining attrs in ATTRIBUTES, if they are mapped as in / out or out from the trajectory, we copy
+// tmpstore back to attr data now
+NIRVA_CALL(NIRVA_INTERNAL(remap_attrs), attr_grp, nmaps, attr_maps)
+NIRVA_ARRAY_FREE(attr_maps)
+NIRVA_END_RETURN(result)
+
+// here we are supplied a transform which has been created from a contract
+// first we check the CAPs are valid, using RESTRICTIONS in the contract
+// if these are valid, then we check the EXTRA_CONDITIONS, using the ATTR_POOL as fodder
+// if this succeeds, then we run the trajectory_chooser in the contract, passing in the transform itself
+// this will return a TRAJECTORY, which we add a pointer to in TRAJECTORY
+// then we call the trajectory runner, which will run each segment in turn, updating the STATUS
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_FUNC_RETURN, action_transform, NIRVA_BUNDLEPTR transform)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, conds, trajectory, func_data, attr, attrs)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, result)
+//NIRVA_DEF_VARS(NIRVA_INT64, status)
+NIRVA_DEF_VARS(NIRVA_UINT64, flags)
+NIRVA_DEF_VARS(NIRVA_INT, nmaps)
+NIRVA_ASSERT(transform, NIRVA_FAIL, NIRVA_NULL)
+NIRVA_ASSIGN(trajectory, NIRVA_GET_VALUE_BUNDLEPTR(transform, "TRAJECTORY"))
+NIRVA_ASSERT(trajectory, NIRVA_FAIL, NIRVA_NULL)
+NIRVA_ASSIGN(func_data, NIRVA_GET_VALUE_BUNDLEPTR(transform, "FUNC_DATA"))
+NIRVA_ASSERT(func_data, NIRVA_FAIL, NIRVA_NULL)
+
+NIRVA_ASSIGN(conds, NIRVA_GET_VALUE_BUNDLEPTR(transform, "EXTRA_CONDITIONS"))
+if (conds) {
+  NIRVA_CALL_ASSIGN(result, NIRVA_INTERNAL(check_cond_script), conds, transform)
+  if (result != NIRVA_COND_SUCCESS)
+    NIRVA_RETURN_FAIL;
+}
+
+// check all mand. inputs have value set
+// or if sequential,, have a connection
+// set all input attrs readonly, unless they are also out
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "ATTR_MAPS")
+NIRVA_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE(trajectory, "ATTR_MAPS"))
+NIRVA_ASSIGN(attrs, NIRVA_GET_VALUE_BUNDLEPTR(transform, "ATTRIBUTES"))
+// clear OWNER for attr_group
+NIRVA_STRAND_DELETE(attrs, "OWNER")
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+NIRVA_DEF_VARS(NIRVA_STRING, aname)
+if (!NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN)) continue;
+NIRVA_ASSIGN(aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+NIRVA_ASSIGN(attr, NIRVA_ATTR_GET(attrs, aname))
+NIRVA_STRING_FREE(aname)
+if (!attr || !NIRVA_BUNDLE_HAS_STRAND(attr, "DATA")) {
+  if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_OPT)) continue;
+  // missing attr
+  NIRVA_ARRAY_FREE(attr_maps)
+  NIRVA_RETURN_FAIL;
+}
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_OUT)) continue;
+NIRVA_ASSIGN(flags, NIRVA_GET_VALUE_UINT64(attr, "FLAGS"))
+NIRVA_VALUE_SET(attr, "FLAGS", STRAND_TYPE_UINT64, flags | NIRVA_ATTR_FLAG_READONLY)
+NIRVA_LOOP_END
+NIRVA_ARRAY_FREE(attr_maps)
+//NIRVA_VALUE_SET(attrs, "OWNER", myuid)
+
+NIRVA_CALL_ASSIGN(result, NIRVA_INTERNAL(run_trajectory), transform)
+if (!NIRVA_BUNDLE_HAS_STRAND(transform, "TX_RESULT")) {
+  NIRVA_DEF_SET(NIRVA_INT64, tx_result, TX_RESULT_SUCCESS)
+  NIRVA_DEF_SET(NIRVA_INT64, status, NIRVA_GET_VALUE_INT64(func_data, "STATUS"))
+  if (status < 32) {
+    if (result != NIRVA_RESULT_SUCCESS) {
+      NIRVA_ASSIGN(tx_result, TX_RESULT_ERROR)
+    }
+  } else {
+    if (status == TRANSFORM_STATUS_CANCELLED) {
+      NIRVA_ASSIGN(tx_result, TX_RESULT_CANCELLED)
+    }
+    if (status == TRANSFORM_STATUS_ERROR) {
+      NIRVA_ASSIGN(tx_result, TX_RESULT_ERROR)
+    }
+    if (status == TRANSFORM_STATUS_TIMED_OUT) {
+      NIRVA_ASSIGN(tx_result, TX_RESULT_SYNC_TIMED_OUT)
+    }
+  }
+  NIRVA_VALUE_SET(transform, "TX_RESULT", STRAND_TYPE_INT64, tx_result)
+}
+NIRVA_END_SUCCESS
+
+#define NIRVA_STATIC_TRANSFORMS NIRVA_NULL
+
+// in bootstrap gens 1,2 and 3 we lookup the contracts in keyed_array NIRVA_STATIC_TRANSFORMS
+// during bootstrap transition from gen 3 to gen 4, the keyed_array is handed over to the structure
+// which then manages this
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, find_structure_contract, NIRVA_CONST_STRING action_name)
+if (NIRVA_FUNC_GENERATION < 4) {
+  NIRVA_RETURN_RESULT(NIRVA_INTERNAL(get_idx_value_bundleptr), NIRVA_STATIC_TRANSFORMS, "CONTRACTS", NIRVA_IDX_PREFIX)
+}
+// do something else
+NIRVA_END_RETURN(NIRVA_NULL)
+
+#ifdef NEED_NIRVA_ACTION_RET
+// this is the internal API call for "structure transforms", a.k.a ACTIONS
+// these are referred to by "action_name", which can be used to look up a contract owned by the structure
+// these contracts all have the properties, that they need no negotiation, have fixed CAPs, have a single trajectory
+// option which has a native_wrapper, all input attributes are non optional and mapped from parameters
+// and there is a single non optional output attribute
+//
+// externally,this is not called directly, but instead depending on the return type, it will be called via a wrapper function
+// which in turn can be enclosed in a macro call.
+// the simplest wrapper is NIRVA_ACTION, which does not return a value, NIRVA_ACTION_RET, which returns NIRVA_RETURN_TYPE
+// there is also NIRVA_ACTION_STRING and NIRVA_ACTION_BUNDLEPTR.
+//
+// the first step is to get a CONTRACT; this is done by looking up the "action_name"
+// the contract is then passed to nirva_create_transform, which returns a transform
+// since these are STRUCTURAL transforms, there is no CAPs negotiation to be done,
+// so we simply call nirva_find_trajectory, passing in the transform
+// after this we can create func_data for the traansform, using the trajectory attr_maps to convert the va_list to
+// attribute data
+//
+// after return from nirva_action_transform, the finished transform is returned to the caller.
+// the wrapper will then do the reverse - map an output attribute to the function return
+// The wrapper will also recycle the transform bundle, to avoid leaking memory.
+//
+// adding new structure transforms can be done at any time, it simply requires creating a new contract
+// and then appending this to the structure transforms lookup index.
+
+// in the default setup, nirva_action_ret is a FIXED API function, and can be overriden at compile time by defining
+// NIRVA_IMPL_FUNC_action_ret
+// or dynamically by changing the value of function pointer _nirva_actio_ret
+
+//#define _NIRVA_DEPLOY_def_nirva_action_ret
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, action_ret, NIRVA_CONST_STRING action_name, NIRVA_VA_LIST vargs)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, contract, transform, trajectory, attrs)
+NIRVA_DEF_VARS(NIRVA_UINT64, flags)
+NIRVA_DEF_VARS(NIRVA_INT, wrapping)
+NIRVA_DEF_VARS(NIRVA_UINT, nmaps)
+NIRVA_CALL_ASSIGN(contract, NIRVA_INTERNAL(find_structure_contract), action_name)
+NIRVA_ASSERT(contract, NIRVA_FAIL, "no contract found")
+// check the contract, if it isnt flagged TX_FLAG_NO_NEGOTIATE, we cant call it from here
+
+NIRVA_ASSIGN(flags, NIRVA_GET_VALUE_UINT64(contract, "FLAGS"))
+if (!NIRVA_HAS_FLAG(flags, TX_FLAG_NO_NEGOTIATE)) NIRVA_FAIL("contract needs negotiation");
+
+NIRVA_CALL_ASSIGN(transform, NIRVA_INTERNAL(create_transform), contract)
+NIRVA_ASSERT(transform, NIRVA_FAIL, "unable to make transform")
+
+NIRVA_CALL_ASSIGN(trajectory, NIRVA_INTERNAL(find_trajectory), transform)	;
+
+if (trajectory == NIRVA_NULL) {
+  NIRVA_RECYCLE(transform)
+  NIRVA_FAIL("no trajectory found")
+}
+
+NIRVA_ASSIGN(wrapping, NIRVA_GET_VALUE_INT(trajectory, "WRAPPING"))
+
+if (wrapping != FUNC_TYPE_NATIVE) {
+  NIRVA_RECYCLE(transform)
+  NIRVA_FAIL("nirva_Action_ret - trajectory wrapping must be 'native'")
+}
+
+// the input attributes should have been created in ATTRIBUTES in transform
+// now since the trajectory has to be native_wrapped, this means that all the input attrs are mapped from params
+
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "ATTR_MAPS")
+NIRVA_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE(trajectory, "ATTR_MAPS"))
+
+NIRVA_ASSIGN(attrs, NIRVA_GET_VALUE_BUNDLEPTR(transform, "ATTRIBUTES"))
+
+NIRVA_CALL(NIRVA_INTERNAL(map_to_attrs), attrs, nmaps, attr_maps, vargs);
+NIRVA_ARRAY_FREE(attr_maps)
+NIRVA_CALL(NIRVA_INTERNAL(action_transform), transform)
+NIRVA_END_RETURN(transform)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_NO_RETURN, action, NIRVA_CONST_STRING funcname, NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, transform)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, vargs)
+NIRVA_VA_START(vargs, funcname)
+NIRVA_CALL_ASSIGN(transform, NIRVA_INTERNAL(action_ret), funcname, vargs)
+NIRVA_VA_END(vargs)
+NIRVA_ASSERT(transform, NIRVA_FAIL, "Error running transform", NIRVA_NULL)
+NIRVA_RECYCLE(transform)
+NIRVA_FUNC_END
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_STRING, action_ret_string, NIRVA_CONST_STRING funcname,
+                        NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, transform, trajectory, attrs)
+NIRVA_DEF_VARS(NIRVA_STRING, ret)
+NIRVA_DEF_VARS(NIRVA_UINT, nmaps)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, vargs)
+NIRVA_VA_START(vargs, funcname)
+NIRVA_CALL_ASSIGN(transform, NIRVA_INTERNAL(action_ret), funcname, vargs)
+NIRVA_VA_END(vargs)
+NIRVA_ASSERT(transform, NIRVA_FAIL, NIRVA_NULL)
+// find the attr_map in trajectory which maps with OUT | PARAM | EXTERN and not IN
+// get the STRING value in DATA and return it
+NIRVA_ASSIGN(attrs, NIRVA_GET_VALUE_BUNDLEPTR(transform, "ATTRIBUTES"))
+NIRVA_ASSIGN(trajectory, NIRVA_GET_VALUE_BUNDLEPTR(transform, "TRAJECTORY"))
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "ATTR_MAPS")
+NIRVA_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE(trajectory, "ATTR_MAPS"))
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN_RETVAL) && !NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN)) {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+  NIRVA_DEF_SET(NIRVA_STRING, aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr, NIRVA_ATTR_GET(attrs, aname))
+  NIRVA_STRING_FREE(aname)
+  if (attr) {
+    NIRVA_ASSIGN(ret, NIRVA_GET_VALUE_STRING(attr, "DATA"))
+    break;
+  }
+}
+NIRVA_LOOP_END
+NIRVA_ARRAY_FREE(attr_maps)
+NIRVA_RECYCLE(transform)
+NIRVA_END_RETURN(ret)
+
+NIRVA_DEF_FUNC_INTERNAL(NIRVA_BUNDLEPTR, action_ret_bundleptr, NIRVA_CONST_STRING funcname,
+                        NIRVA_VARIADIC)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attr_maps)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, transform, trajectory, attrs)
+NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, ret)
+NIRVA_DEF_VARS(NIRVA_VA_LIST, vargs)
+NIRVA_DEF_VARS(NIRVA_UINT, nmaps)
+NIRVA_VA_START(vargs, funcname)
+NIRVA_CALL_ASSIGN(transform, NIRVA_INTERNAL(action_ret), funcname, vargs)
+NIRVA_VA_END(vargs)
+NIRVA_ASSERT(transform, NIRVA_FAIL, NIRVA_NULL)
+NIRVA_ASSIGN(attrs, NIRVA_GET_VALUE_BUNDLEPTR(transform, "ATTRIBUTES"))
+NIRVA_ASSIGN(trajectory, NIRVA_GET_VALUE_BUNDLEPTR(transform, "TRAJECTORY"))
+NIRVA_CALL_ASSIGN(attr_maps, NIRVA_GET_ARRAY_BUNDLEPTR, trajectory, "ATTR_MAPS")
+NIRVA_ASSIGN(nmaps, NIRVA_ARRAY_GET_SIZE(trajectory, "ATTR_MAPS"))
+NIRVA_AUTO_FOR(i, 0, nmaps)
+NIRVA_DEF_SET(NIRVA_UINT64, mapping, NIRVA_GET_VALUE_UINT64(attr_maps[i], "MAPPING"))
+if (NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_EXTERN_RETVAL) && !NIRVA_HAS_FLAG(mapping, NIRVA_ATTR_MAP_IN)) {
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr_def, NIRVA_GET_VALUE_BUNDLEPTR(attr_maps[i], "ATTR_DEF"))
+  NIRVA_DEF_SET(NIRVA_STRING, aname, NIRVA_GET_VALUE_STRING(attr_def, "NAME"))
+  NIRVA_DEF_SET(NIRVA_BUNDLEPTR, attr, NIRVA_ATTR_GET(attrs, aname))
+  NIRVA_STRING_FREE(aname)
+  if (attr) {
+    NIRVA_ASSIGN(ret, NIRVA_GET_VALUE_BUNDLEPTR(attr, "DATA"))
+    NIRVA_CALL(NIRVA_INTERNAL(bundle_reparent), 0, attr, "DATA", NIRVA_NULL, NIRVA_NULL, 1)
+    break;
+  }
+}
+NIRVA_LOOP_END
+NIRVA_ARRAY_FREE(attr_maps)
+NIRVA_RECYCLE(transform)
+NIRVA_END_RETURN(ret)
+
+#endif
+
+//
+#define NIRVA_COND_CHECK(conds,...)NIRVA_INTERNAL(cond_check_script)(conds, __VA_ARGS__)
+#define NIRVA_SATISFY(intent, caps)NIRVA_INTERNAL(action_ret_bundleptr)("nirva_satisfy", intent, caps)
+//
+
+#define ADDC(text) "#" text
+#define ADDS(text) ADDC(#text)
+#define XMB(name, pfx,  ...) make_bundledef(name, pfx,"" __VA_ARGS__)
+#define XMBX(name) XMB(#name, NULL, _##name##_BUNDLE)
+
+#define REG_ALL_ITEMS(DOMAIN)						\
+  make_bundledef(NULL, "STRAND_" #DOMAIN "_", MS("" ALL_STRANDS_##DOMAIN), NULL), \
+    make_bundledef(NULL, "BUNDLE_" #DOMAIN "_", MS("" ALL_BUNDLES_##DOMAIN), NULL)
+
+#define CONCAT_DOMAINS(MACRO) make_bundledef(NULL, NULL, FOR_ALL_DOMAINS(MACRO), NULL)
+
+#define REG_ALL CONCAT_DOMAINS(REG_ALL_ITEMS)
+
+#define _NIRVA_MAKE_BUNDLEDEFS BUNLISTx(BDEF_IGN,BDEF_INIT,,) all_def_strands = REG_ALL;
+#define _NIRVA_DEF_REST(n) nirva_restrictions[n] = NIRVA_RESTRICTION_##n;
+#define _NIRVA_MAKE_RESTRICTIONS(a,b) NIRVA_DO_nn_times(a,b,_NIRVA_DEF_REST)
+
+//#define INIT_CORE_ATTRDEF_PACKS ABUNLISTx(BDEF_IGN,ATTR_BDEF_INIT,,) all_attrdef_packs = REG_ALL_ATTRS;
+#define NIRVA_INIT_CORE _NIRVA_MAKE_BUNDLEDEFS _NIRVA_MAKE_RESTRICTIONS(3,5)						\
+//  _NIRVA_DEPLOY_def_nirva_action;
+
+#define NIRVA_CORE_DEFS							\
+  NIRVA_BUNDLEPTR STRUCTURE_PRIME;					\
+  NIRVA_BUNDLEPTR STRUCTURE_APP;					\
+  NIRVA_CONST_STRING_ARRAY maker_get_bundledef(bundle_type btype);	\
+  _NIRVA_DEPLOY_MAKE_STRANDS_FUNC;					\
+  _NIRVA_DEPLOY_MAKE_BUNDLEDEF_FUNC;					\
+  _NIRVA_DEPLOY_def_nirva_wait_retry;					\
+  const char **all_def_strands, BUNLIST(BDEF_DEF_CONCAT,**,_BUNDLEDEF = NULL) \
+    **LAST_BUNDLEDEF = NULL;						\
+const char **all_attr_packs, ABUNLIST(ATTR_BDEF_DEF_CONCAT,**,_ATTR_GROUP = NULL) \
+    **LAST_ATTR_GROUP = NULL;						\
+const char **nirva_restrictions[N_REST_TYPES];						\
+const char ***builtin_bundledefs[] = {BUNLIST(BDEF_DEF_CONCAT, &,_BUNDLEDEF) NULL}; \
+const char ***builtin_attr_bundles[] = {ABUNLIST(ATTR_BDEF_DEF_CONCAT, &,_ATTR_GROUP) NULL}; \
+NIRVA_CONST_STRING_ARRAY maker_get_bundledef(bundle_type btype)	\
+{return (btype >= 0 && btype < n_builtin_bundledefs ? *builtin_bundledefs[btype] : NULL);} \
+const char **maker_get_attr_bundle(attr_bundle_type abtype)		\
+{return (abtype >= 0 && abtype < n_builtin_attr_bundles ? *builtin_attr_bundles[abtype] : NULL);}
+
+#define BDEF_IGN(a,b,c)
+
+// make BNAME_BUNDLEDEF
+#define BDEF_INIT(BNAME, PRE, EXTRA) BNAME##_BUNDLEDEF = MBX(BNAME);
+
+// make ATTR_BNAME_ATTR_GROUP
+// e.g. ASPECT_THREAD_ATTR_GROUP
+#define ATTR_BDEF_INIT(ATTR_BNAME, PRE, EXTRA) ATTR_BNAME##_ATTR_GROUP = MABX(ATTR_BNAME);
+
+#define _MAKE_IMPL_COND_FUNC_DESC(m, nnn) _CALL(_MAKE_IMPL_COND_FUNC_##n##_DESC, nnn)
+
+#define DEFINE_CORE_BUNDLES _DEFINE_CORE_BUNDLES
+#define INIT_CORE_BUNDLES _INIT_CORE_BUNDLES
+
+#ifdef _HAVE_LSD_
+NIRVA_FILE_STATIC NIRVA_NO_RETURN nirva_null_cb(void *none) {};
+#define NIRVA_LSD_CREATE_P(lsd,type) NIRVA_INLINE			\
+  (NIRVA_DEF_VARS(const lsd_struct_def_t*,lsd) NIRVA_DEF_VARS(type*,ts) NIRVA_NEW(ts,type) \
+   NIRVA_CALL_ASSIGN(lsd,lsd_create_p,#type,ts,NIRVA_SIZEOF(type),&ts->lsd) \
+   NIRVA_CALL(nirva_add_flds(#type,ts)) NIRVA_FREE(ts))
+#define ADD_SPCL_FIELD_NO_CBS(ts,f,fl,ds) NIRVA_CALL		\
+  (nirva_add_special_field,ts->lsd,#f,fl,&ts->##f,ds,ts)
+#define ADD_SPCL_FIELD_CBS(ts,f,fl,ds,icb,ccb,fcb) NIRVA_CALL		\
+  (nirva_add_special_field,ts->lsd,#f,fl,&ts->##f,ds,ts,__VA_ARGS__)
+#endif
+
+// Exactly one file per application needs to be designated as "Bundle Maker"
+// this file will act as a "home" for the structure definitions and functions and
+// so on. It will also be the place where custom bundles can be built
+//
+// the designated file must #include this header
+//
+// Depending on what level of "automation" chosen to be the default, there may be some
+// additional setup requirements before including the header. See the documentation for details.
+//
+//
+/* MACROS: The two macros which the bundle maker may call */
+
+//		NIRVA_CORE_DEFS
+// This macro will create the default enums and so on
+// as well as "deploying" helper functions required for the bootstrap
+
+//		NIRVA_INIT_CORE
+// This should be placed inside a function
+// The macro will set up the runtime dependent definitions
+
+// there are a few steps needed to bootstrap the structure. These can be done
+// from the same function which includes INIT_CORE_BUNDLES or elsewhere
+// See the documentation for details.
+//
+// The first time the application is run with NIRVA inside, nirvascope will open,
+// and the procedure for migrating existing code and for building / customising
+// will be available.
+//////////////
+////////////
+
+#undef create_bundle_by_type
 
 #ifdef __cplusplus
 }

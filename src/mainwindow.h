@@ -1598,6 +1598,9 @@ typedef struct {
   ulong pw_scroll_func;
   boolean msg_area_configed;
 
+  lives_proc_thread_t aud_rec_lpt;
+
+  lives_proc_thread_t def_lpt;
   lives_hook_stack_t **global_hook_stacks;
   LiVESList *all_hstacks;
 

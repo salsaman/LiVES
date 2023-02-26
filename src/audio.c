@@ -10,6 +10,7 @@
 #include "callbacks.h"
 #include "effects.h"
 #include "resample.h"
+#include "threading.h"
 
 static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
@@ -18,10 +19,6 @@ static const int std_arates[] =
 {8000, 11025, 22050, 32000, 44100, 48000, 88200, 96000, 128000, 256000, 0};
 
 static arec_details *rec_ext_dets = NULL;
-static arec_details *aud_ext_analyse_dets = NULL;
-
-static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets);
-
 
 #if HAVE_SWRESAMPLE
 #include <libswresample/swresample.h>
@@ -63,8 +60,8 @@ void sw_resample(void) {
 #endif
 
 
-LIVES_GLOBAL_INLINE lives_object_instance_t *get_aplayer_instance(int source) {
-  lives_object_instance_t *aplayer = NULL;
+LIVES_GLOBAL_INLINE lives_obj_instance_t *get_aplayer_instance(int source) {
+  lives_obj_instance_t *aplayer = NULL;
   if (source == AUDIO_SRC_EXT) {
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
@@ -2435,11 +2432,10 @@ LIVES_GLOBAL_INLINE boolean adjust_clip_volume(int fileno, float newvol, boolean
   return TRUE;
 }
 
-static lives_proc_thread_t write_aud_lpt;
 
+// open a new audio file for writing to
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
-  // open audio file for writing
   lives_clip_t *outfile;
   LiVESResponseType retval;
 
@@ -2551,12 +2547,11 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
 void jack_rec_audio_end(boolean close_fd) {
   // recording ended
-
-  if (rec_ext_dets) {
-    lives_object_instance_t *aplayer = NULL;
-    if (mainw->jackd_read) aplayer = mainw->jackd_read->inst;
-    if (aplayer)
-      lives_hook_remove(write_aud_lpt);
+  if (mainw->aud_rec_lpt) {
+    lives_proc_thread_request_cancel(mainw->aud_rec_lpt, FALSE);
+    lives_proc_thread_wait_done(mainw->aud_rec_lpt, 0.);
+    lives_proc_thread_unref(mainw->aud_rec_lpt);
+    mainw->aud_rec_lpt = NULL;
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2577,13 +2572,14 @@ void jack_rec_audio_end(boolean close_fd) {
 #endif
 
 
+// open a new audio file for writing to
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
+void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   lives_clip_t *outfile;
   int retval;
 
-  if (fileno == -1) {
+  if (clipno == -1) {
     // just activate the reader
     if (!mainw->pulsed_read) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
@@ -2596,10 +2592,10 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     return;
   }
 
-  outfile = mainw->files[fileno];
+  outfile = mainw->files[clipno];
 
   if (mainw->aud_rec_fd == -1) {
-    char *outfilename = lives_get_audio_file_name(fileno);
+    char *outfilename = lives_get_audio_file_name(clipno);
     do {
       retval = 0;
       mainw->aud_rec_fd = lives_create_buffered_nosync(outfilename, DEF_FILE_PERMS);
@@ -2612,17 +2608,17 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       }
     } while (retval == LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
-    if (fileno == mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
+    if (clipno == mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
     //lives_write_buffered_set_custom_size(mainw->aud_rec_fd, AREC_BUF_SIZE);
     lives_write_buffered_set_ringmode(mainw->aud_rec_fd);
   }
 
   if (rec_type == RECA_GENERATED) {
-    mainw->pulsed->playing_file = fileno;
+    mainw->pulsed->playing_file = clipno;
   } else {
     if (rec_type == RECA_EXTERNAL) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
-      mainw->pulsed_read->playing_file = fileno;
+      mainw->pulsed_read->playing_file = clipno;
       mainw->pulsed_read->frames_written = 0;
     }
   }
@@ -2651,7 +2647,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       outfile->signed_endian = get_signed_endian(mainw->pulsed->out_signed != AFORM_UNSIGNED,
                                mainw->pulsed->out_endian != AFORM_BIG_ENDIAN);
     }
-    save_clip_audio_values(fileno);
+    save_clip_audio_values(clipno);
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
@@ -2692,12 +2688,11 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 
 void pulse_rec_audio_end(boolean close_fd) {
   // recording ended
-
-  if (rec_ext_dets) {
-    lives_object_instance_t *aplayer = NULL;
-    if (mainw->pulsed_read) aplayer = mainw->pulsed_read->inst;
-    if (aplayer)
-      lives_hook_remove(write_aud_lpt);
+  if (mainw->aud_rec_lpt) {
+    lives_proc_thread_request_cancel(mainw->aud_rec_lpt, FALSE);
+    lives_proc_thread_wait_done(mainw->aud_rec_lpt, 0.);
+    lives_proc_thread_unref(mainw->aud_rec_lpt);
+    mainw->aud_rec_lpt = NULL;
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2710,7 +2705,7 @@ void pulse_rec_audio_end(boolean close_fd) {
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
   }
 
-  if (mainw->aud_rec_fd != -1 && close_fd) {
+  if (close_fd && mainw->aud_rec_fd != -1) {
     // close file
     lives_close_buffered(mainw->aud_rec_fd);
     mainw->aud_rec_fd = -1;
@@ -2720,8 +2715,16 @@ void pulse_rec_audio_end(boolean close_fd) {
 #endif
 
 
-static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
+boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
+  // this function is similar to pus_audio_to_channel, except that it pushes to a file,
+  // and it runs during the audio cycle
+  // this can be added as a callback for a player's DATA_READY_HOOK, so it can be run in parallel
+  // with data analysis, and will not hold up the audio player, since these callbacks are run async / parallel
+  // dets->fd is a FILE * to the file being written to
+  // generally we would write to the ascrap_file
+
   arec_details *dets = (arec_details *)xdets;
+  GET_PROC_THREAD_SELF(self);
   lives_clip_t *ofile;
   void *holding_buff = NULL, *out_buff;
   size_t nframes, frames_out, target_bytes, rbytes;
@@ -2736,16 +2739,18 @@ static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   boolean out_unsigned, in_unsigned;
   boolean rev_endian = FALSE;
 
-  if (dets->rec_type == RECA_EXTERNAL &&
-      (lives_aplayer_get_source(aplayer) != AUDIO_SRC_EXT
-       || mainw->record_paused))
-    return FALSE;
+  lives_proc_thread_set_cancellable(self);
+
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
 
   if (dets->bad_aud_file) return FALSE;
   if (dets->rec_samples == 0) return FALSE;
   if (!IS_VALID_CLIP(dets->clipno)) return FALSE;
+
+  if (mainw->record_paused) return TRUE;
+
   nframes = lives_aplayer_get_data_len(aplayer);
-  if (nframes == 0) return FALSE;
+  if (!nframes) return FALSE;
 
   in_float = lives_aplayer_get_float(aplayer);
   in_achans = lives_aplayer_get_achans(aplayer);
@@ -2755,6 +2760,7 @@ static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   in_interleaved = lives_aplayer_get_interleaved(aplayer);
 
   ofile = mainw->files[dets->clipno];
+
   out_sampsize = ofile->asampsize >> 3;
   out_achans = ofile->achans;
   out_arate = ofile->arate;
@@ -2837,29 +2843,41 @@ static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
     lives_free(holding_buff);
   lives_free(out_buff);
 
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   //return actual_bytes;
   return TRUE;
 }
 
 
-static boolean analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
-  arec_details *dets = (arec_details *)xdets;
+static boolean analyse_audio_rt(lives_obj_t *aplayer) {
+  // this function may be added as a callback to an audio_player's DATA_READY hook stack
+  // followin this, it will be triggered async each time a new packet of data has been read / written
+  // here we do two things - for mixed a / v filters, the audio is appended to the arena store, to be read
+  // during the video fx cycle
+  // for filters with only audio in, and nothing else we push the new audio directly to them
+  // since they should be running in the audio cycle
+  GET_PROC_THREAD_SELF(self);
   size_t nframes;
   int in_arate, in_achans;
   boolean is_float;
+  lives_proc_thread_set_cancellable(self);
 
-  if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) return FALSE;
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
 
-  if (dets->rec_type == RECA_EXTERNAL
-      && (!AUD_SRC_EXTERNAL || lives_aplayer_get_source(aplayer) != AUDIO_SRC_EXT))
+  if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) {
     return FALSE;
+  }
 
   nframes = lives_aplayer_get_data_len(aplayer);
-  if (nframes == 0) return FALSE;
-
+  if (nframes == 0) {
+    if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+    return FALSE;
+  }
   in_achans = lives_aplayer_get_achans(aplayer);
   in_arate = lives_aplayer_get_arate(aplayer);
   is_float = lives_aplayer_get_float(aplayer);
+
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
 
   if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no audio channels out)
     ticks_t tc = mainw->currticks;
@@ -2897,22 +2915,20 @@ static boolean analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
       lives_free(in_buffer);
     }
   }
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   return TRUE;
 }
 
-static lives_proc_thread_t ana_lpt;
+static lives_proc_thread_t ana_lpt = NULL;
 
 void audio_analyser_start(int source) {
   if (source == AUDIO_SRC_EXT) {
-    if (!aud_ext_analyse_dets) {
-      arec_details *dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
-      lives_object_instance_t *aplayer = get_aplayer_instance(source);
-      dets->rec_type = RECA_EXTERNAL;
-      dets->clipno = -1;
-      dets->fd = -1;
-      dets->rec_samples = -1;
-      aud_ext_analyse_dets = dets;
-      ana_lpt = lives_hook_append(aplayer->hook_stacks, DATA_READY_HOOK, 0, (hook_funcptr_t)analyse_audio_rt, dets);
+    if (!ana_lpt) {
+      lives_obj_instance_t *aplayer = get_aplayer_instance(source);
+      ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
+                WEED_SEED_BOOLEAN, "p", aplayer);
+      // this ensures ana_lpt is not freed as soon as we cancel it
+      lives_proc_thread_ref(ana_lpt);
     }
   }
 }
@@ -2920,115 +2936,106 @@ void audio_analyser_start(int source) {
 
 void audio_analyser_end(int source) {
   if (source == AUDIO_SRC_EXT) {
-    if (aud_ext_analyse_dets) {
-      lives_hook_remove(ana_lpt);
-      if (aud_ext_analyse_dets->bad_aud_file) lives_free(aud_ext_analyse_dets->bad_aud_file);
-      lives_free(aud_ext_analyse_dets);
-      aud_ext_analyse_dets = NULL;
+    if (ana_lpt) {
+      // all we need do here is request the proc_thread to cancel itself
+      // once it processes the request, it will cancel itself
+      // and then be removed from the hook_stack either when triggered or joined
+      // whichever happens next
+      lives_proc_thread_request_cancel(ana_lpt, FALSE);
+      lives_proc_thread_wait_done(ana_lpt, 0.);
+      lives_proc_thread_unref(ana_lpt);
+      ana_lpt = NULL;
     }
   }
 }
 
 
-void start_audio_rec(void) {
+lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   // if the user activates recording during playback, prepare to start recording audio
-  if (mainw->ascrap_file == -1) {
-    open_ascrap_file(-1);
-  }
+  //  in this case we record only if the audio source is external, or an audio generator is running
+  //
+  // this is also used when recording overlay audio to a clip
+  // in the current iteration, we simply add the real recording function to the DATA_READY hook
+  // for the audio reader or writer
+  // as a result we can be writing the data at the same time as it is being passed to analysers and video effects
+  // with audio channels
+  // - in theory we could record to any file, but in all cases we will write to the ascrap_file
+  // which is intended solely for this purpose
+  //
+  // if the global audio source is internal, we record from the audio writer, if the source is external
+  // we record from the reader
+  lives_proc_thread_t lpt;
+  arec_details *dets;
+  char *lives_header;
+  int aud_src;
+
+  if (!aplayer) return NULL;
+  aud_src = lives_aplayer_get_source(aplayer);
+
+  if (mainw->ascrap_file == -1) open_ascrap_file(-1);
+
   if (mainw->ascrap_file != -1) {
+    // set values so this event can be recorded in the event_list
     mainw->rec_samples = -1; // record unlimited
     mainw->rec_aclip = mainw->ascrap_file;
     mainw->rec_avel = 1.;
     mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
                        (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
                                 mainw->files[mainw->ascrap_file]->asampsize >> 3);
-
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
-      char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
-                           LIVES_ACLIP_HEADER, NULL);
-      mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
-      lives_free(lives_header);
-
-      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-        if (AUD_SRC_EXTERNAL) {
-          jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-          mainw->jackd_read->is_paused = FALSE;
-          mainw->jackd_read->in_use = TRUE;
-        } else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
-      } else {
-        if (mainw->jackd) {
-          jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-        }
-      }
-      if (mainw->clip_header) fclose(mainw->clip_header);
-      mainw->clip_header = NULL;
-    }
-
-
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
-                           LIVES_ACLIP_HEADER, NULL);
-      mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
-      lives_free(lives_header);
-
-      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-        if (AUD_SRC_EXTERNAL) {
-          pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-          mainw->pulsed_read->is_paused = FALSE;
-          mainw->pulsed_read->in_use = TRUE;
-        } else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
-      } else {
-        if (mainw->pulsed) {
-          pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-        }
-      }
-      if (mainw->clip_header) fclose(mainw->clip_header);
-      mainw->clip_header = NULL;
-    }
-#endif
   }
 
-  if (AUD_SRC_INTERNAL) {
+  lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
+                                      LIVES_ACLIP_HEADER, NULL);
+  mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
+  lives_free(lives_header);
+
+  IF_APLAYER_JACK
+  (
+  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+  if (aud_src == AUD_SRC_EXTERNAL) {
+      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+      mainw->jackd_read->is_paused = FALSE;
+      mainw->jackd_read->in_use = TRUE;
+    } else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
+  } else {
+    if (mainw->jackd) {
+      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+    }
+  });
+
+  IF_APLAYER_PULSE
+  (
+  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+  if (aud_src == AUD_SRC_EXTERNAL) {
+      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+      mainw->pulsed_read->is_paused = FALSE;
+      mainw->pulsed_read->in_use = TRUE;
+    } else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
+  } else {
+    if (mainw->pulsed) {
+      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+    }
+  });
+
+  if (mainw->clip_header) fclose(mainw->clip_header);
+  mainw->clip_header = NULL;
+
+  if (aud_src == AUD_SRC_INTERNAL) {
     if (prefs->rec_opts & REC_AUDIO) {
       // recording INTERNAL audio
-#ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-        jack_get_rec_avals(mainw->jackd);
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-        pulse_get_rec_avals(mainw->pulsed);
-      }
-#endif
+      IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd););
+      IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed););
     }
   }
-  if (AUD_SRC_EXTERNAL) {
-    lives_object_instance_t *aplayer = NULL;
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
-      aplayer = mainw->pulsed_read->inst;
-#endif
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
-      aplayer = mainw->jackd_read->inst;
-#endif
-    if (aplayer) {
-      arec_details *dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
-      dets->rec_type = RECA_EXTERNAL;
-      dets->clipno = mainw->ascrap_file;
-      dets->fd = mainw->aud_rec_fd;
-      dets->rec_samples = -1;
-      rec_ext_dets = dets;
-      write_aud_lpt = lives_hook_append(aplayer->hook_stacks, DATA_READY_HOOK, 0, (hook_funcptr_t)write_aud_data_cb, dets);
-    }
-  }
+
+  dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
+  rec_ext_dets = dets;
+  lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
+                                        WEED_SEED_BOOLEAN, "pv", aplayer, dets);
+  return lpt;
 }
 
 
-#endif
 /////////////////////////////////////////////////////////////////
 
 // playback via memory buffers (e.g. in multitrack)
@@ -3257,6 +3264,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   // all we really do here is set from_files, aseeks and avels arrays and call render_audio_segment
   // effects are ignored here; they are applied in smaller chunks in render_audio_segment, so that parameter interpolation can be done
+
+  // this is called repeatedly from cache_my_audio(), as well as once from player-control.c to preload the buffers for playback
 
   lives_audio_track_state_t *atstate = NULL;
   double chvols[MAX_AUDIO_TRACKS]; // TODO - use list
@@ -4686,17 +4695,25 @@ boolean apply_rte_audio(int64_t nframes) {
 
 /**
    @brief fill the audio channel(s) for effects with mixed audio / video
+   This is called from fill_audio_channel(filter, achan, is_vid) [is_vid may be unnecessary ?]
+   The client (filter) must first register with register_audio_client(is_vid) to ensure that all clients
+   are serviced before the offet is advanced.
 
-   push audio from abuf into an audio channel
-   audio will be formatted to the channel requested format
+   when we have clients registered, the audio arena is constantly filled from the audio thread
 
-   when we have audio effects running, the buffer is constantly fiiled from the audio thread (we have two buffers so that
-   we dont hang the player during read). When the first client reads, the buffers are swapped.
+   This is necessary since the audio readers / writers run with a different cycle to the video player, thus we need to buffer one video frame's
+   worth of audio data, but without holding up the audio cycles. The arean should be suffiicently large so that the audio readers/writers can continue
+   writing without looping back whilst the already written data is passed to all video filters.
+
+   When audio data is requested by a video filter, we pull the latest data from the arena and fill the audio channel with this
+   all registered clients will get this same buffer and we only advance it after clients have read. This ensures that no client
+   has skipped data.. The buffer size can vary from frame to frame, it is up to each client to handle this
 
    if player is jack, we will have non-interleaved float, if player is pulse, we will have interleaved S16 so we have to convert to float and
    then back again.
 
-   (this is currently only used to push audio to generators, since there are currently no filters which allow both video and audio input)
+   (this is currently only used to push audio to generators,
+   since there are currently no filters which allow both video and audio input)
 */
 boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf, boolean is_vid) {
   float **dst, *src;
@@ -4812,14 +4829,6 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         abuf->start_sample += samps;
         if (abuf->start_sample >= ABUF_ARENA_SIZE) abuf->start_sample -= ABUF_ARENA_SIZE;
       }
-
-
-
-
-      /* write_pos = abuf->write_pos + samps; */
-      /* if (write_pos >= ABUF_ARENA_SIZE) write_pos -= ABUF_ARENA_SIZE; */
-      /* abuf->write_pos = write_pos; */
-      /* if ((ssize_t)write_pos < 0) lives_abort("Error writing to audio arena"); */
       abuf->out_interleaf = FALSE;
     }
   }
@@ -5135,95 +5144,96 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
 
 //////////// objects / intents //////
 
-int lives_aplayer_get_source(lives_object_t *aplayer) {
+int lives_aplayer_get_source(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SOURCE);
-  return weed_param_get_value_int(param);
+  return lives_attribute_get_value_int(param);
 }
 
-weed_error_t lives_aplayer_set_source(lives_object_t *aplayer, int source) {
+weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source) {
+  mainw->debug = TRUE;
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SOURCE, source);
 }
 
-int lives_aplayer_get_arate(lives_object_t *aplayer) {
+int lives_aplayer_get_arate(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_RATE);
-  return weed_param_get_value_int(param);
+  return lives_attribute_get_value_int(param);
 }
 
-weed_error_t lives_aplayer_set_arate(lives_object_t *aplayer, int arate) {
+weed_error_t lives_aplayer_set_arate(lives_obj_t *aplayer, int arate) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_RATE, arate);
 }
 
-int lives_aplayer_get_achans(lives_object_t *aplayer) {
+int lives_aplayer_get_achans(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_CHANNELS);
-  return weed_param_get_value_int(param);
+  return lives_attribute_get_value_int(param);
 }
 
-weed_error_t lives_aplayer_set_achans(lives_object_t *aplayer, int achans) {
+weed_error_t lives_aplayer_set_achans(lives_obj_t *aplayer, int achans) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_CHANNELS, achans);
 }
 
-int lives_aplayer_get_sampsize(lives_object_t *aplayer) {
+int lives_aplayer_get_sampsize(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SAMPSIZE);
-  return weed_param_get_value_int(param);
+  return lives_attribute_get_value_int(param);
 }
 
-weed_error_t lives_aplayer_set_sampsize(lives_object_t *aplayer, int asamps) {
+weed_error_t lives_aplayer_set_sampsize(lives_obj_t *aplayer, int asamps) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SAMPSIZE, asamps);
 }
 
-boolean lives_aplayer_get_signed(lives_object_t *aplayer) {
+boolean lives_aplayer_get_signed(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SIGNED);
-  return weed_param_get_value_boolean(param);
+  return lives_attribute_get_value_boolean(param);
 }
 
-weed_error_t lives_aplayer_set_signed(lives_object_t *aplayer, boolean asigned) {
+weed_error_t lives_aplayer_set_signed(lives_obj_t *aplayer, boolean asigned) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SIGNED, asigned);
 }
 
-int lives_aplayer_get_endian(lives_object_t *aplayer) {
+int lives_aplayer_get_endian(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_ENDIAN);
-  return weed_param_get_value_int(param);
+  return lives_attribute_get_value_int(param);
 }
 
-weed_error_t lives_aplayer_set_endian(lives_object_t *aplayer, int aendian) {
+weed_error_t lives_aplayer_set_endian(lives_obj_t *aplayer, int aendian) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_ENDIAN, aendian);
 }
 
-boolean lives_aplayer_get_float(lives_object_t *aplayer) {
+boolean lives_aplayer_get_float(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_FLOAT);
-  return weed_param_get_value_boolean(param);
+  return lives_attribute_get_value_boolean(param);
 }
 
-weed_error_t lives_aplayer_set_float(lives_object_t *aplayer, boolean is_float) {
+weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_FLOAT, is_float);
 }
 
-int64_t lives_aplayer_get_data_len(lives_object_t *aplayer) {
+int64_t lives_aplayer_get_data_len(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA_LENGTH);
-  return weed_param_get_value_int64(param);
+  return lives_attribute_get_value_int64(param);
 }
 
-weed_error_t lives_aplayer_set_data_len(lives_object_t *aplayer, int64_t alength) {
+weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int64_t alength) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_DATA_LENGTH, alength);
 }
 
-boolean lives_aplayer_get_interleaved(lives_object_t *aplayer) {
+boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer) {
   weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_INTERLEAVED);
-  return weed_param_get_value_boolean(param);
+  return lives_attribute_get_value_boolean(param);
 }
 
-weed_error_t lives_aplayer_set_interleaved(lives_object_t *aplayer, boolean ainter) {
+weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter) {
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_INTERLEAVED, ainter);
 }
 
-void *lives_aplayer_get_data(lives_object_t *aplayer) {
+void *lives_aplayer_get_data(lives_obj_t *aplayer) {
   boolean inter = lives_aplayer_get_interleaved(aplayer);
   weed_param_t *paramd = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA);
   if (inter) return weed_get_voidptr_value(paramd, WEED_LEAF_VALUE, NULL);
   return weed_get_voidptr_array(paramd, WEED_LEAF_VALUE, NULL);
 }
 
-weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data) {
+weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data) {
   int nchans = lives_aplayer_get_achans(aplayer);
   if (nchans) {
     boolean inter = lives_aplayer_get_interleaved(aplayer);

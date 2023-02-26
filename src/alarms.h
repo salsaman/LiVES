@@ -9,10 +9,6 @@
 
 typedef int lives_alarm_t;
 
-boolean lives_timer_create(uint64_t freq);
-boolean lives_timer_block(void);
-boolean lives_timer_unblock(void);
-
 /// lives_alarms
 #define LIVES_NO_ALARM 0
 #define LIVES_MAX_ALARMS 1024
@@ -31,11 +27,24 @@ boolean lives_timer_unblock(void);
 typedef struct {
   ticks_t tleft;
   volatile ticks_t lastcheck;
+
+  // sys timers
+  volatile timer_t *tidp;
+  volatile boolean triggered;
 } lives_timeout_t;
 
 lives_alarm_t lives_alarm_set(ticks_t ticks);
 ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
 boolean lives_alarm_clear(lives_alarm_t alarm_handle);
 lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks);
+
+#define LIVES_TIMER_SIG SIGRTMIN+8
+
+typedef lives_timeout_t lives_timer_t;
+
+void timer_handler(int sig, siginfo_t *si, void *uc);
+
+lives_timer_t *lives_timer_create(uint64_t delay);
+void lives_timer_free(lives_timer_t *);
 
 #endif

@@ -763,7 +763,7 @@ NIRVA_ENUM(ANY_RESTRICTION,
 // TRANSFORM is a pointer to the transform which this is attatched to
 // SEG_ATTRS holds attrs which are internal to a segment, these are destroyed after the segment completes
 #define _FUNC_DATA_BUNDLE EXTEND_BUNDLE(DEF),				\
-    ADD_CONST_BUNDLEPTR(LINKED, TRANSFORM, TRANSFORM),			\
+    ADD_OPT_CONST_BUNDLEPTR(LINKED, TRANSFORM, TRANSFORM),			\
     INCLUDE_OPT_NAMED_BUNDLE(STANDARD, ATTR_GROUP, SEG_ATTRS),		\
     ADD_CONST_BUNDLEPTR(TRANSFORM, CURRENT_SEGMENT, SEGMENT),		\
     ADD_OPT_NAMED_STRAND(VALUE, GENPTR, RETURN_VALUE),			\
@@ -869,8 +869,10 @@ NIRVA_ENUM(ANY_RESTRICTION,
 // each function will be called in the manner depending on the flags in the corresponding stack_header
 // for native_funcs, PMAP also comes from the hook stack header
 // timestamp may be set when the added to the queue
-#define _HOOK_CB_FUNC_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(HOOK, HANDLE), \
-    INCLUDE_BUNDLE(STANDARD, EMISSION), INCLUDE_BUNDLE(FUNCTIONAL, FUNC_DATA)
+#define _HOOK_CB_FUNC_BUNDLE EXTEND_BUNDLE(DEF), ADD_STRAND(HOOK, NUMBER), \
+    ADD_STRAND(HOOK, HANDLE), ADD_STRAND(GENERIC, FLAGS),		\
+    INCLUDE_BUNDLE(STANDARD, EMISSION), INCLUDE_BUNDLE(FUNCTIONAL, FUNC_DATA), \
+    ADD_OPT_NAMED_STRAND(VALUE, INT, NMATCH_PARAMS)
 
 // details defined at setup for each  hook number
 // these are placed in a cascade so conditions translate to hook number

@@ -153,8 +153,8 @@ enum {
   MATH_INTENTION_DEV_FROM_MEAN
 };
 
-const lives_object_instance_t *maths_object_with_subtype(uint64_t subtype);
-lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent);
+const lives_obj_instance_t *maths_object_with_subtype(uint64_t subtype);
+lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent);
 
 // to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
 // the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.

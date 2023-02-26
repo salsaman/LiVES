@@ -38,6 +38,7 @@
 #define HAVE_WEED_HASH_T : allows use of alterntate types (default uint32_t)
 #define _CACHELINE_SIZE_ : hardware cacheline size in bytes  (default 64)
 #define WITHOUT_LIBWEED  : avoid specifics for the default libweed implementation
+*/
 
 ///////////////// host applications should #include weed-host.h before this header /////////////////////////
 
@@ -107,6 +108,7 @@ extern "C"
       char storage[WEED_VOIDPTR_SIZE];
     } value;
   };
+#endif
 #endif
 
 #ifndef  HAVE_WEED_LEAF_T
@@ -253,15 +255,27 @@ struct _weed_leaf_nopadding {
   void libweed_print_init_opts(FILE *);
 
   weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
-  int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
+
+int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
+/* int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f); */
+/*   int libweed_set_memory_funcs(weed_calloc_f, weed_free_f, weed_memcpy_f); */
 
   typedef void *(*libweed_slab_alloc_clear_f)(size_t);
   typedef void *(*libweed_slab_alloc_and_copy_f)(size_t, void *);
   typedef void (*libweed_slab_unalloc_f)(size_t, void *);
   typedef void (*libweed_unmalloc_and_copy_f)(size_t, void *);
 
-  int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f,
-			     libweed_slab_alloc_and_copy_f);
+int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
+  /* int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, */
+  /* 			     libweed_slab_alloc_and_copy_f, weed_memcpy_f); */
+
+  /* deprecated versions - do not use in newly written code */
+  int weed_set_memory_funcs(weed_malloc_f, weed_free_f);
+
+  typedef void *(*libweed_slab_alloc_f)(size_t);
+  int weed_set_slab_funcs(libweed_slab_alloc_f, libweed_slab_unalloc_f,
+			  libweed_slab_alloc_and_copy_f);
+  //
 
 #ifdef __LIBWEED__
   // for plugin bootstrap, only relevent for libweed

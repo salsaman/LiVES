@@ -33,6 +33,8 @@
 #include <sched.h>
 #endif
 
+#include <time.h>
+
 #include <sys/statvfs.h>
 #include "main.h"
 #include "callbacks.h"
@@ -104,28 +106,40 @@ LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
 static boolean rng32 = FALSE;
 static int strikes = 0;
 
+
+static void badrand(uint64_t last_rnum, uint64_t rnum) {
+  char *msg = lives_strdup_printf("Insufficient entropy for RNG (%ld and %ld), cannot continue", last_rnum, rnum);
+  lives_abort(msg);
+}
+
+static uint64_t nrcalls = 0;
+
+#define RNG_MINDIFF BILLIONS(1)
+// the random range is approximately 18 quintillion. The probability
+// of getting two sequential numbers with delta < 1 billion is thus 1 in a 18 billion
+// the probability of this happening twice should be 1 in 3 quadrillion
+// if the randomness wre only 40 bits, the range wold be about 1 trillion, p would be about 1000, thus
+// p twice would be about 1 / 1 million
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   static uint64_t last_rnum = 0;
-  uint64_t rnum;
-
-  rnum = random();
-
-  if (rng32) {
+  uint64_t rnum = random();
+  nrcalls++;
+  while (rng32) {
     rnum = (rnum << 22) ^ (random() << 39) ^ random();
-  }
-
-  if (labs(rnum - last_rnum) < BILLIONS(1000)) strikes++;
-
-  if (!rng32) strikes = 0;
-
-  if (strikes > 1) {
-    char *msg = lives_strdup_printf("Insufficient entropy for RNG (last numbers were %ld and %ld), cannot continue.\n"
-                                    "Please fix your Random Number Generator\n", last_rnum, rnum);
-    lives_abort(msg);
+    nrcalls += 2;
+    if (labs(rnum - last_rnum) < RNG_MINDIFF) {
+      if (++strikes > 2) badrand(last_rnum, rnum);
+    } else break;
+    rnum = random();
   }
 
   last_rnum = rnum;
   return rnum;
+}
+
+
+void show_nrcalls(void) {
+  g_print("nrcalls == %lu\n", nrcalls);
 }
 
 
@@ -134,12 +148,6 @@ void lives_get_randbytes(void *ptr, size_t size) {
     uint64_t rbytes = gen_unique_id();
     lives_memcpy(ptr, &rbytes, size);
   }
-}
-
-
-static void badrand(uint64_t last_rnum, uint64_t rnum) {
-  char *msg = lives_strdup_printf("Insufficient entropy for RNG (%ld and %ld), cannot continue", last_rnum, rnum);
-  lives_abort(msg);
 }
 
 
@@ -160,13 +168,14 @@ uint64_t gen_unique_id(void) {
   }
 
   /// if we have a genuine RNG for 64 bits, then the probability of generating
-  // two sequential numbers with difference < 1 trillion is approx. 2 ^ 40 / 2 ^ 64 or about 1 chance in 17 billion
-  // and the probability of it happening twice is < 0.000000000000000000001
+  // two sequential numbers with difference < 1 trillion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 billion
+  // and the probability of it happening twice is < 0.000000000000000001
   // this is checked in lives_random(), but we will check here to ensure the uid algo is sound
 
-  if (get_log2_64(rnum ^ last_rnum) < 40) {
-    if (strikes++) badrand(last_rnum, rnum);
+  while (get_log2_64(rnum ^ last_rnum) < 30) {
+    if (++strikes > 2) badrand(last_rnum, rnum);
   }
+
   last_rnum = rnum;
   return rnum;
 }
@@ -1675,12 +1684,13 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
       size_t llen = lives_strlen(tmp), tlen;
       while (1) {
 	wline = subst(tmp, "  ", " ");
-	if ((tlen = lives_strlen(wline)) == llen) break;
 	lives_free(tmp);
+	if ((tlen = lives_strlen(wline)) == llen) break;
 	tmp = wline;
 	llen = tlen;
       }
       //lives_free(tmp);
+
 
       if (*wline && get_token_count(wline, ' ') >= minpieces) {
 	words = lives_strsplit(wline, " ", npieces);
@@ -2935,14 +2945,14 @@ int get_num_cpus(void) {
 
 
 boolean get_machine_dets(void) {
-#ifdef IS_FREEBSD
+  struct timespec res;
+ #ifdef IS_FREEBSD
   char *com = lives_strdup("sysctl -n hw.model");
 #else
   char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | "
 				  "%s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
 				  capable->grep_cmd, capable->sed_cmd);
 #endif
-  // TODO - clock_getres()
 
   capable->hw.cpu_name = mini_popen(com);
 
@@ -2968,6 +2978,9 @@ boolean get_machine_dets(void) {
 
   com = lives_strdup("whoami");
   capable->username = mini_popen(com);
+
+  if (!clock_getres(CLOCK_REALTIME, &res))
+    capable->hw.clock_res = res.tv_sec * ONE_BILLION + res.tv_nsec;
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
@@ -3290,7 +3303,7 @@ double analyse_cpu_stats(void) {
   // in future in might be nice to analyse the CPU / disk / memory load and respond accordingly
   // also looking for repeating / cyclic patterns we could take measures to minimise contention
 #if 0
-  static lives_object_instance_t *statsinst = NULL;
+  static lives_obj_instance_t *statsinst = NULL;
   volatile float *cpuvals = vals[0];
   weed_param_t *param;
   lives_object_transform_t *tx;
@@ -3298,7 +3311,7 @@ double analyse_cpu_stats(void) {
 
   // we should either create or update statsinst
   if (!statsinst) {
-    const lives_object_t *math_obj = lives_object_template_for_type(OBJECT_TYPE_MATH,
+    const lives_obj_t *math_obj = lives_object_template_for_type(OBJECT_TYPE_MATH,
 								    MATH_OBJECT_SUBTYPE_STATS);
     // get the math.stats template
     // we want to know how to get an instantc of it, we can look for the transform for

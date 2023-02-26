@@ -136,12 +136,21 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
       case 0:
         // chroma blend
         if (psize == 4) {
-          float alpha = (float)src2[irowstride2 * i + j + 3] / 255.;
-          dst[orowstride * i + j] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j] * alpha)][src1[irowstride1 * i + j]];
-          dst[orowstride * i + j + 1] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j + 1] * alpha)][src1[irowstride1 * i + j +
-                                        1]];
-          dst[orowstride * i + j + 2] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j + 2] * alpha)][src1[irowstride1 * i + j +
-                                        2]];
+	  if (src2[irowstride2 * i + j + 3] == 255) {
+	    dst[orowstride * i + j] = sdata->blend[src2[irowstride2 * i + j]][src1[irowstride1 * i + j]];
+	    dst[orowstride * i + j + 1] = sdata->blend[src2[irowstride2 * i + j + 1]][src1[irowstride1 * i + j + 1]];
+	    dst[orowstride * i + j + 2] = sdata->blend[src2[irowstride2 * i + j + 2]][src1[irowstride1 * i + j + 2]];
+	  }
+	  else {
+	    // this should be alpha blend
+	    float alpha = (float)src2[irowstride2 * i + j + 3] / 255., inv_alpha = 1. - alpha;
+	    dst[orowstride * i + j] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j] * alpha)]
+	      [(uint8_t)((float)src1[irowstride1 * i + j] * inv_alpha)];
+	    dst[orowstride * i + j + 1] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j + 1] * alpha)]
+	      [(uint8_t)((float)src1[irowstride1 * i + j + 1] * inv_alpha)];
+	    dst[orowstride * i + j + 2] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j + 2] * alpha)]
+	      [(uint8_t)((float)src1[irowstride1 * i + j + 2] * inv_alpha)];
+	  }
         } else {
           dst[orowstride * i + j] = sdata->blend[src2[irowstride2 * i + j]][src1[irowstride1 * i + j]];
           dst[orowstride * i + j + 1] = sdata->blend[src2[irowstride2 * i + j + 1]][src1[irowstride1 * i + j + 1]];

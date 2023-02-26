@@ -626,7 +626,7 @@ LIVES_LOCAL_INLINE  void lives_sha512_calc(uint64_t H[8], uint8 const data[SHA2_
   }
 
 
-  lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent) {
+  lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent) {
     return NULL;
   }
 

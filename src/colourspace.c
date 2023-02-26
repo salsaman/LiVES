@@ -12650,17 +12650,30 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
 
 
 LIVES_GLOBAL_INLINE boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
-  int width = weed_layer_get_width(layer);
-  int height = weed_layer_get_height(layer);
-  return gamma_convert_sub_layer(gamma_type, 1.0, layer, 0, 0, width, height, TRUE);
+  if (layer) {
+    if (weed_layer_get_pixel_data(layer)) {
+      int width = weed_layer_get_width(layer);
+      int height = weed_layer_get_height(layer);
+      if (width && height)
+        return gamma_convert_sub_layer(gamma_type, 1.0, layer, 0, 0, width, height, TRUE);
+    }
+  }
+  return FALSE;
 }
 
 
 LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int tgt_gamma, weed_layer_t *layer) {
-  int width = weed_layer_get_width(layer);
-  int height = weed_layer_get_height(layer);
-  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
-  return gamma_convert_sub_layer(tgt_gamma, file_gamma, layer, 0, 0, width, height, TRUE);
+  if (layer) {
+    if (weed_layer_get_pixel_data(layer)) {
+      int width = weed_layer_get_width(layer);
+      int height = weed_layer_get_height(layer);
+      if (width && height) {
+        weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+        return gamma_convert_sub_layer(tgt_gamma, file_gamma, layer, 0, 0, width, height, TRUE);
+      }
+    }
+  }
+  return FALSE;
 }
 
 

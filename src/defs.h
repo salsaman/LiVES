@@ -8,10 +8,19 @@
 #define _DEFS_H 1
 
 //// The aim of this file is to have,, whrere practical,  all #defines in one location
-/// Also there good arguments to be made for using #if as opposed to #ifdef to having a central point of refernce will
-// help to ensure this
+/// Also there good arguments to be made for using #if as opposed to #ifdef
+// so having a central point of reference will, help secure this
 
-// first some general purpose macros
+// debugging
+//#define DEBUG_PLANTS 1 // weed_plant_new_host / weed_plant_free_host
+//#define DEBUG_FILTER_MUTEXES
+//#define DEBUG_REFCOUNT // weed_instance refcounting
+//#define DEBUG_LPT_REFS // lives_proc_threa refs / unrefs
+//#define DEBUG_WEED
+
+//
+
+// general purpose macros
 # define EMPTY(...)
 # define DEFER(...) __VA_ARGS__ EMPTY()
 # define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()

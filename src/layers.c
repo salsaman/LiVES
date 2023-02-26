@@ -25,6 +25,7 @@
 
 #include "main.h"
 #include "effects-weed.h"
+#include "cvirtual.h"
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
@@ -55,8 +56,21 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_new_for_frame(int clip, frames_t f
 
 
 LIVES_GLOBAL_INLINE void lives_layer_set_source(weed_layer_t *layer, lives_clip_src_t *source) {
-  if (layer) weed_set_voidptr_value(layer, LIVES_LEAF_SOURCE, source);
-  if (source) source->layer = layer;
+  if (layer) {
+    weed_set_voidptr_value(layer, LIVES_LEAF_SOURCE, source);
+    if (source) source->layer = layer;
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void lives_layer_unset_source(weed_layer_t *layer) {
+  if (layer) {
+    lives_clip_src_t *source = weed_get_voidptr_value(layer, LIVES_LEAF_SOURCE, NULL);
+    if (source) {
+      source->layer = NULL;
+      weed_set_voidptr_value(layer, LIVES_LEAF_SOURCE, NULL);
+    }
+  }
 }
 
 
@@ -73,6 +87,65 @@ LIVES_GLOBAL_INLINE boolean lives_layer_source_set_status(weed_layer_t *layer, i
 }
 
 
+LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame) {
+  // create a layer and try to set natural_size and palette
+  weed_layer_t *layer;
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  lives_clip_src_t *dsource;
+  int width = 0, height = 0, pal = 0;
+  if (!sfile) return NULL;
+  dsource  = sfile->primary_src;
+  layer = lives_layer_new_for_frame(clipno, frame);
+  switch (sfile->clip_type) {
+  case CLIP_TYPE_FILE:
+    if (is_virtual_frame(clipno, frame)) {
+      lives_clip_data_t *cdata = get_clip_cdata(clipno);
+      pal = cdata->current_palette;
+      // layer width is always measured in MACROpixels
+      width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
+      height = cdata->height;
+      break;
+    }
+  // for non virtual frames, fall through
+  case CLIP_TYPE_DISK:
+    width = sfile->hsize;
+    height = sfile->vsize;
+    if (sfile->bpp == 24) pal = WEED_PALETTE_RGB24;
+    else pal = WEED_PALETTE_RGBA32;
+    break;
+  case CLIP_TYPE_GENERATOR:
+    if (dsource) {
+      weed_instance_t *inst = (weed_instance_t *)dsource->source;
+      if (inst) {
+        weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
+        pal = weed_channel_get_palette(channel);
+        width = weed_channel_get_width_pixels(channel);
+        height = weed_channel_get_height(channel);
+      }
+    }
+    if (!width || !height) {
+      width = sfile->hsize;
+      height = sfile->vsize;
+    }
+    break;
+  default: break;
+  }
+
+  if (width && height) {
+    int nsize[2];
+    weed_layer_set_size(layer, width, height);
+    nsize[0] = width;
+    nsize[1] = height;
+    weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
+  }
+
+  if (pal) weed_layer_set_palette(layer, pal);
+
+  return layer;
+}
+
+
+
 /**
    @brief fills layer with default values.
 
@@ -82,8 +155,8 @@ LIVES_GLOBAL_INLINE boolean lives_layer_source_set_status(weed_layer_t *layer, i
    if targette palette is WEED_PALETTE_NONE then default will be set depending on image_ext
    if this is "jpg" then it will be RGB24, otherwise RGBA32
    finally we create the pixel data for layer */
-weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
-                                 int width, int height, int target_palette) {
+static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_ext,
+    int width, int height, int *rowstrides, int tgt_gamma, int target_palette) {
   if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   else {
     if (!width) width = weed_layer_get_width(layer);
@@ -107,15 +180,38 @@ weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
       else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
     }
   }
+
+  if (rowstrides) {
+    int nplanes = weed_palette_get_nplanes(target_palette);
+    weed_layer_set_rowstrides(layer, rowstrides, nplanes);
+    weed_leaf_set_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+  }
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) weed_layer_nullify_pixel_data(layer);
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
+  weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+
+  if (prefs->apply_gamma && tgt_gamma != WEED_GAMMA_UNKNOWN) {
+    weed_layer_set_gamma(layer, tgt_gamma);
+  }
+
+  return layer;
+}
+
+
+weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
+                                 int width, int height, int target_palette) {
+  int tgt_gamma = WEED_GAMMA_UNKNOWN;
+  if (layer && !weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
     int clip = lives_layer_get_clip(layer);
     if (clip && IS_VALID_CLIP(clip))
-      weed_layer_set_gamma(layer, mainw->files[clip]->gamma_type);
-    else
-      weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
+      tgt_gamma = mainw->files[clip]->gamma_type;
+    else tgt_gamma = WEED_GAMMA_SRGB;
   }
-  return layer;
+  return _create_blank_layer(layer, image_ext, width, height, NULL, tgt_gamma, target_palette);
+}
+
+
+weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides, int tgt_gamma, int target_palette) {
+  return _create_blank_layer(NULL, NULL,  width, height, rowstrides, tgt_gamma, target_palette);
 }
 
 
@@ -484,11 +580,11 @@ LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE void weed_layer_set_invalid(weed_layer_t *layer, boolean is) {
   if (layer) {
-    if (is)
+    if (is) {
       (weed_layer_set_flags(layer, weed_layer_get_flags(layer) | LIVES_LAYER_INVALID));
-    else
-      (weed_layer_set_flags(layer, weed_layer_get_flags(layer) & ~LIVES_LAYER_INVALID));
-
+      lives_layer_unset_source(layer);
+    } else
+      weed_layer_set_flags(layer, weed_layer_get_flags(layer) & ~LIVES_LAYER_INVALID);
   }
 }
 

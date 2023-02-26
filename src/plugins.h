@@ -17,8 +17,6 @@
 #include <stdlib.h>
 
 typedef struct _param_t lives_param_t;
-typedef weed_plant_t weed_param_t;
-typedef weed_plant_t weed_layer_t;
 
 #include "intents.h"
 
@@ -477,7 +475,6 @@ lives_clip_data_t *get_clip_cdata(int clipno);
 void load_decoders(void);
 boolean chill_decoder_plugin(int clipno);
 void close_decoder_plugin(lives_decoder_sys_t *);
-void close_clip_decoder(int clipno);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
@@ -485,10 +482,10 @@ void unload_decoder_plugins(void);
 void clip_decoder_free(int clipno, lives_decoder_t *);
 
 lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose);
-lives_decoder_t *add_ext_decoder_clone(int dclip, int sclip, int track, int purpose);
+lives_clip_src_t *add_ext_decoder_clone(int dclip, int sclip, int track, int purpose);
 
 #define get_decoder_clone(nclip, track, purpose)		\
-  (lives_decoder_t *)get_clip_source(nclip, track, purpose)
+  (lives_decoder_t *)(get_clip_source(nclip, track, purpose) ? get_clip_source(nclip, track, purpose)->source : NULL)
 
 void propogate_timing_data(lives_decoder_t *);
 
@@ -912,7 +909,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 // defined in plugins.c for the whole app
 extern const char *const anames[AUDIO_CODEC_MAX];
 
-lives_rfx_t *obj_attrs_to_rfx(lives_object_t *, boolean readonly);
+lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *, boolean readonly);
 
 #define LIVES_LEAF_RPAR "host_rpar"
 #define LIVES_LEAF_SOURCE "clip_source"

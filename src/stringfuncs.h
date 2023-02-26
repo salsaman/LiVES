@@ -36,6 +36,8 @@ char *lives_strstop(char *, const char term);
 boolean lives_strcmp(const char *, const char *);
 boolean lives_strncmp(const char *, const char *, size_t len);
 
+boolean lives_strcmp_free(char *, const char *);
+
 int lives_strcmp_ordered(const char *, const char *);
 
 char *lives_chomp(char *, boolean multi);

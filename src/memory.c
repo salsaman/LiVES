@@ -187,6 +187,15 @@ LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   return FALSE;
 }
 
+
+LIVES_GLOBAL_INLINE boolean lives_free_if_non_null(void *p) {
+  if (p) {
+    lives_free(p);
+    return TRUE;
+  }
+  return FALSE;
+}
+
 // functions with fixed pointers that we can pass to plugins ///
 
 void *_ext_malloc(size_t n) {
@@ -682,7 +691,7 @@ static volatile int used[NBIGBLOCKS];
 static int NBBLOCKS = 0;
 
 #define NBAD_LIM 8
-#define BBL_TEST
+//#define BBL_TEST
 #ifdef BBL_TEST
 static int bbused = 0;
 #endif
@@ -734,6 +743,7 @@ void *alloc_bigblock(size_t sizeb) {
   return NULL;
 }
 
+//#define BBL_TEST
 #ifdef DEBUG_BBLOCKS
 void *_calloc_bigblock(size_t xsize) {
 #else
@@ -752,6 +762,7 @@ void *calloc_bigblock(size_t xsize) {
       used[i] = 0;
 #ifdef BBL_TEST
       bbused++;
+      g_print("bigblocks in use after calloc %d\n", bbused);
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
       //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
@@ -794,9 +805,9 @@ void *free_bigblock(void *bstart) {
       used[i] = -1;
 #ifdef BBL_TEST
       pthread_mutex_lock(&bigblock_mutex);
-      //if (prefs->show_dev_opts) g_print("bblocks in use: %d\n", bbused);
       bbused--;
       pthread_mutex_unlock(&bigblock_mutex);
+      g_print("bigblocks in use after free %d\n", bbused);
 #endif
       //g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return bstart;

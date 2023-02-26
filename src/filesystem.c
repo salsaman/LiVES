@@ -424,13 +424,13 @@ boolean ensure_isdir(char *fname) {
       tmp = tmp2;
       tlen = tlen2;
     } else {
-      //lives_free(tmp2);
+      if (tmp2 && tmp2 != tmp) lives_free(tmp2);
       break;
     }
   }
 
   if (ret) lives_snprintf(fname, PATH_MAX, "%s", tmp);
-  //lives_free(tmp);
+  if (tmp) lives_free(tmp);
 
   slen = tlen - 1;
   offs = slen;
@@ -852,10 +852,6 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
   return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
 }
 
-//#define TEST_MMAP
-#ifdef TEST_MMAP
-#include <sys/mman.h>
-#endif
 
 static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t skip) {
   // slurped files: start reading in from posn skip (bytes), done in a dedicated worker thread
@@ -892,8 +888,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 
   if (fsize > 0) {
     // caller will wait until this thread goes to WAITING state, then do a sny_ready() and continue
-    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher());
-    //sync_point("wait for caller");
+    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(), NULL));
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -903,66 +898,43 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
     fbuff->skip = skip;
     if (1) {
       off_t offs = skip > 0 ? skip : 0;
-#ifdef TEST_MMAP
-      void *p;
-      boolean mmap_ok = FALSE;
-      // offs must be a multiple of capable->hw_pagesize
-      if (capable && capable->hw.pagesize) {
-        offs = (off_t)(offs / capable->hw.pagesize) * capable->hw.pagesize;
-        p = mmap(NULL, fsize, PROT_READ, MAP_LOCKED, fd, offs);
-        if (p != MAP_FAILED) {
-          mlock(fbuff->buffer, fsize);
-          fbuff->ptr = fbuff->buffer = p;
-          fbuff->bytes = fsize;
-          fbuff->flags |= FB_FLAG_MMAP;
-          mmap_ok = TRUE;
-        } else {
-          LIVES_WARN("memory map failed when background loading file (experimental)");
+      fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
+      lseek(fd, offs, SEEK_SET);
+      mlock(fbuff->buffer, fsize);
+      //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
+      //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
+      while (fsize > 0) {
+        if (fbuff->flags & FB_FLAG_INVALID) {
+          fbuff->flags &= ~FB_FLAG_INVALID;
+          break; // file was closed
         }
-      }
-      if (!mmap_ok) {
-#endif
-        fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
-        lseek(fd, offs, SEEK_SET);
-        mlock(fbuff->buffer, fsize);
-        //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
-        //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
-        while (fsize > 0) {
-          if (fbuff->flags & FB_FLAG_INVALID) {
-            fbuff->flags &= ~FB_FLAG_INVALID;
-            break; // file was closed
-          }
-          if (bufsize > fsize) bufsize = fsize;
-          res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
-          //g_printerr("slurp for %d, %s with "
-          // "size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize)
-          if (res < 0) {
-            retval = FALSE;
-            break;
-          }
-          if (res > fsize) res = fsize;
-          fbuff->bytes += res;
-          fsize -= res;
-          if (fsize >= bigbytes && bufsize >= medbytes) bufsize = bigbytes;
-          else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
-          else if (fsize >= smedbytes) bufsize = smedbytes;
-          //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
-          //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
-#ifdef __linux__
-          readahead(fd, fbuff->bytes + skip, bufsize * 4);
-#endif
+        if (bufsize > fsize) bufsize = fsize;
+        res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
+        //g_printerr("slurp for %d, %s with "
+        // "size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize)
+        if (res < 0) {
+          retval = FALSE;
+          break;
         }
+        if (res > fsize) res = fsize;
+        fbuff->bytes += res;
+        fsize -= res;
+        if (fsize >= bigbytes && bufsize >= medbytes) bufsize = bigbytes;
+        else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
+        else if (fsize >= smedbytes) bufsize = smedbytes;
+        //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
+        //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
+#ifdef _IS_LINUX_GNU
+        readahead(fd, fbuff->bytes + skip, bufsize * 4);
+#endif
       }
-#ifdef TEST_MMAP
     }
-#endif
     if (retval)
       lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), DATA_PREVIEW_HOOK);
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher());
-    //sync_point("wait for caller");
+    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(), NULL));
   }
 
 finished:
@@ -1007,7 +979,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bytes = fbuff->offset = 0;
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    lives_proc_thread_sync_with(lpt);
+    lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL));
     return TRUE;
   }
   return FALSE;
@@ -1291,13 +1263,13 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   if (res < bufsize) fbuff->flags |= FB_FLAG_EOF;
   else fbuff->flags &= ~FB_FLAG_EOF;
 
-#if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && defined __linux__)
+#if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && defined IS_LINUX_GNU)
   if (reversed) {
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fbuff->fd, 0, fbuff->offset - (bufsize >> 2) * 3, POSIX_FADV_RANDOM);
     posix_fadvise(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize, POSIX_FADV_WILLNEED);
 #endif
-#ifdef __linux__
+#ifdef IS_LINUX_GNU
     readahead(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize);
 #endif
   } else {
@@ -1305,7 +1277,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
     posix_fadvise(fbuff->fd, fbuff->offset, bufsize, POSIX_FADV_WILLNEED);
 #endif
-#ifdef __linux__
+#ifdef IS_LINUX_GNU
     readahead(fbuff->fd, fbuff->offset, bufsize);
 #endif
   }

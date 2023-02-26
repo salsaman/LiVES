@@ -242,9 +242,11 @@ boolean init_memfuncs(int stage);
 // xvpp is cast from void **
 boolean lives_nullify_ptr_cb(void *dummy, void *xvpp);
 
-void *lives_free_and_return(void *p);
+void *lives_free_and_return(void *);
 
-boolean lives_freep(void **ptr);
+boolean lives_freep(void **);
+
+boolean lives_free_if_non_null(void *);
 
 void *lives_slice_alloc0(size_t sz);
 void lives_slice_unalloc(size_t sz, void *);

@@ -146,6 +146,7 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_STRING_BOOL 			      			0X00000043
 #define FUNCSIG_VOIDP_BOOL 				       		0X000000D3
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
+#define FUNCSIG_PLANTP_VOIDP						0X000000ED
 #define FUNCSIG_VOIDP_STRING 				       		0X000000D4
 #define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
 #define FUNCSIG_VOIDP_INT64 				       		0X000000D5
@@ -174,6 +175,8 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 
 typedef uint64_t funcsig_t;
+
+#define LIVES_LEAF_LONGJMP "_longjmp_env_ptr"
 
 weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
 boolean call_funcsig(lives_proc_thread_t);
@@ -217,22 +220,34 @@ enum {
   // enum   // va_args for add_fn_note
   _FN_FREE, // fundef, ptr
   _FN_ALLOC, // fundef, ptr
+  _FN_REF, // fundef, ptr - returns (int)func(ptr)
+  _FN_UNREF, // fundef, ptr
 } fn_type_t;
 
 #define _FUNCREF(fn,f,l)((void *)(create_funcdef(#fn,(lives_funcptr_t)fn,0,0,f,l,0)))
+
 #define ADD_NOTE(ftype,fname,...)					\
   (add_fn_note(ftype,_FUNCREF(fname,_FILE_REF_,_LINE_REF_),fname(__VA_ARGS__)))
+
+#define ADD_NOTEI(ftype,fname,ptr)					\
+  (add_fn_note(ftype,_FUNCREF(fname,_FILE_REF_,_LINE_REF_),(ptr))?fname(ptr):fname(ptr))
+
 #define DO_ADD_NOTE(ftype,fname,...) do{(void)ADD_NOTE(ftype,fname,__VA_ARGS__);}while(0)
 
 #define FN_ALLOC_TARGET(fname,...) ADD_NOTE(_FN_ALLOC,fname,__VA_ARGS__)
+#define FN_UNALLOC_TARGET(fname,...) ADD_NOTE(_FN_FREE,fname,__VA_ARGS__)
 #define FN_FREE_TARGET(fname,...) DO_ADD_NOTE(_FN_FREE,fname,__VA_ARGS__)
+
+#define FN_REF_TARGET(fname,...) (ADD_NOTEI(_FN_REF,fname,__VA_ARGS__))
+#define FN_UNREF_TARGET(fname,...) (ADD_NOTEI(_FN_UNREF,fname,__VA_ARGS__))
 
 // add a note to to ftrace_store, va_args depend on fn_type
 void *add_fn_note(fn_type_t, ...);
+
 // dump notes (traces) from ftrace_store
 void dump_fn_notes(void);
 
-#define FN_DEBUG_OUT(func) g_print("Thread %ld in func %s at %s, line %d\n", \
+#define FN_DEBUG_OUT(func) g_print("Thread 0x%lx in func %s at %s, line %d\n", \
 				   THREADVAR(uid), #func, _FILE_REF_, _LINE_REF_)
 
 #define FN_DEBUG_EXIT_OUT g_print("Thread %ld exiting func at %s, line %d\n", \
@@ -276,8 +291,6 @@ void dump_fn_notes(void);
 /// HOOK FUNCTIONS ///////
 
 #define LIVES_LEAF_HOOK_STACKS "hook_stacks"
-
-#define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
 // some flag bits operate when adding the callback, others operate when the callback is triggered
 // some operate in both actions
@@ -463,6 +476,7 @@ typedef struct _hstack_t {
   volatile LiVESList *stack;
   pthread_mutex_t *mutex;
   volatile uint64_t flags;
+  lives_proc_thread_t owner;
 } lives_hook_stack_t;
 
 // hook_stack_flags
@@ -598,12 +612,12 @@ boolean lives_hooks_trigger(lives_hook_stack_t **, int type);
 
 boolean lives_proc_thread_trigger_hooks(lives_proc_thread_t, int type);
 
-void lives_hooks_trigger_async(lives_hook_stack_t **, int type);
+int lives_hooks_trigger_async(lives_hook_stack_t **, int type);
 
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_hook_stack_t **hstacks, int type, hook_funcptr_t finfunc,
     void *findata);
 
-void lives_hooks_async_join(lives_hook_stack_t *);
+void lives_hooks_async_join(lives_hook_stack_t **, int htype);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 

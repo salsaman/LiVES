@@ -1801,7 +1801,6 @@ void show_struct_sizes(void) {
   show_size(lives_cc_params);
   //show_size(lives_sw_params);
   show_size(lives_sigdata_t);
-  show_size(lives_object_t);
   g_print("weed data size is %ld\n", weed_get_data_t_size());
   g_print("weed leaf size is %ld\n", weed_get_leaf_t_size());
 }

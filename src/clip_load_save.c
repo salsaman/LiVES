@@ -2034,6 +2034,7 @@ boolean open_scrap_file(void) {
 
 boolean open_ascrap_file(int clipno) {
   // create a scrap file for recording audio
+  // we don't actually open the audio file here, that is done later
   lives_clip_t *sfile;
   char *dir, *handle, *ascrap_handle;
   int current_file = mainw->current_file;
@@ -2070,34 +2071,32 @@ boolean open_ascrap_file(int clipno) {
   sfile->asampsize = 16;
   sfile->signed_endian = 0; // the audio player will set this
 
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (prefs->audio_src == AUDIO_SRC_EXT) {
-      if (mainw->pulsed_read) {
-        sfile->arate = sfile->arps = mainw->pulsed_read->in_arate;
-      }
-    } else {
-      if (mainw->pulsed) {
-        sfile->arate = sfile->arps = mainw->pulsed->out_arate;
-      }
+  IF_APLAYER_PULSE
+  (
+  if (prefs->audio_src == AUDIO_SRC_EXT) {
+  if (mainw->pulsed_read) {
+      sfile->arate = sfile->arps = mainw->pulsed_read->in_arate;
     }
-  }
-#endif
+  } else {
+    if (mainw->pulsed) {
+      sfile->arate = sfile->arps = mainw->pulsed->out_arate;
+    }
+  })
 
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (prefs->audio_src == AUDIO_SRC_EXT) {
-      if (mainw->jackd_read) {
-        sfile->arate = sfile->arps = mainw->jackd_read->sample_in_rate;
-        sfile->asampsize = 32;
-      }
-    } else {
-      if (mainw->jackd) {
-        sfile->arate = sfile->arps = mainw->jackd->sample_out_rate;
-      }
+
+  IF_APLAYER_JACK
+  (
+  if (prefs->audio_src == AUDIO_SRC_EXT) {
+  if (mainw->jackd_read) {
+      sfile->arate = sfile->arps = mainw->jackd_read->sample_in_rate;
+      sfile->asampsize = 32;
     }
-  }
-#endif
+  } else {
+    if (mainw->jackd) {
+      sfile->arate = sfile->arps = mainw->jackd->sample_out_rate;
+    }
+  })
+
   if (new_clip) {
     ascrap_handle = lives_strdup_printf(ASCRAP_LITERAL "|%s", sfile->handle);
     if (prefs->crash_recovery) add_to_recovery_file(ascrap_handle);
@@ -2406,7 +2405,6 @@ int close_current_file(int file_to_switch_to) {
   LiVESList *list_index;
   char *com;
   boolean need_new_blend_file = FALSE;
-  boolean noswitch = mainw->noswitch;
   int index = -1;
   int old_file = mainw->current_file;
   int i;
@@ -2493,10 +2491,14 @@ int close_current_file(int file_to_switch_to) {
     // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
     // in the former case the generator is killed off, in the latter it survives
     need_new_blend_file = TRUE;
-    track_source_free(1, mainw->blend_file);
-    mainw->blend_file = -1;
-    weed_layer_unref(mainw->blend_layer);
-    mainw->blend_layer = NULL;
+    if (!LIVES_IS_PLAYING) {
+      track_source_free(1, mainw->blend_file);
+      mainw->blend_file = -1;
+      if (mainw->blend_layer) {
+        weed_layer_unref(mainw->blend_layer);
+        mainw->blend_layer = NULL;
+      }
+    }
   }
 
   clip_sources_free_all(mainw->current_file);
@@ -2574,8 +2576,13 @@ int close_current_file(int file_to_switch_to) {
           switch_clip(1, file_to_switch_to, TRUE);
           d_print("");
         } else {
-          if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
-          else mainw->current_file = file_to_switch_to;
+          if (file_to_switch_to != mainw->playing_file) {
+            mainw->new_clip = file_to_switch_to;
+            if (need_new_blend_file) {
+              weed_layer_set_invalid(mainw->blend_layer, TRUE);
+              mainw->new_blend_file = file_to_switch_to;
+            }
+          } else mainw->current_file = file_to_switch_to;
         }
       } else if (old_file != mainw->multitrack->render_file) {
         mt_clip_select(mainw->multitrack, TRUE);
@@ -2590,11 +2597,8 @@ int close_current_file(int file_to_switch_to) {
   file_to_switch_to = find_next_clip(index, old_file);
 
   if (mainw->noswitch) {
-    mainw->noswitch = noswitch;
     return file_to_switch_to;
   }
-
-  if (need_new_blend_file) mainw->blend_file = mainw->current_file;
 
   if (CURRENT_CLIP_IS_VALID) return mainw->current_file;
 

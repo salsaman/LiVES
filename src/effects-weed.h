@@ -385,7 +385,7 @@ void update_all_host_info(void);
 /// add default filler values to a parameter or pchange.
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
 
-//#define DEBUG_FILTER_MUTEXES
+
 #ifdef DEBUG_FILTER_MUTEXES
 #define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); \
   if (key >= 0 && key < FX_KEYS_MAX) {if (pthread_mutex_trylock(&mainw->fx_mutex[key])) { \
@@ -398,7 +398,6 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 
 int check_ninstrefs(void);
 
-//#define DEBUG_REFCOUNT
 #ifdef DEBUG_REFCOUNT
 #define weed_instance_ref(a) {g_print ("ref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_ref(a);}
 #define weed_instance_unref(a) {g_print ("unref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_unref(a);}
@@ -419,6 +418,12 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *value);
 weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key);
+
+#if DEBUG_PLANTS
+#define weed_plant_new(type) FN_REF_TARGET(Xweed_plant_new,type)
+#define weed_plant_free(plant) FN_UNREF_TARGET(Xweed_plant_free,plant)
+#endif
+
 weed_error_t weed_plant_free_host(weed_plant_t *plant);
 weed_plant_t *weed_plant_new_host(int type);
 //weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value);

@@ -4140,7 +4140,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 // transcoder processed frame, now we can prep the next
 
                 g_print("wait for transcoder proc\n");
-                sync_point("wait for transcoder proc");
+                //sync_point("wait for transcoder proc");
 
                 if (lives_proc_thread_check_finished(mainw->transrend_proc)
                     || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
@@ -4194,7 +4194,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               g_print("set layer and wait for syncpoint\n");
               mainw->transrend_layer = layer;
-              sync_point("set layer and wait for syncpoint");
+              //sync_point("set layer and wait for syncpoint");
 
               if (lives_proc_thread_check_finished(mainw->transrend_proc)
                   || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))

@@ -13,6 +13,7 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
    Weed is developed by:
+
    Gabriel "Salsaman" Finch - http://lives-video.com
 
    partly based on LiViDO, which is developed by:

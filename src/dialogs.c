@@ -1431,7 +1431,7 @@ boolean get_accels_swapped(void) {return accelerators_swapped;}
 
 void cancel_process(boolean visible) {
   if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
-  if (visible) {
+  if (!visible) {
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
         && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
              && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
@@ -1481,7 +1481,7 @@ void cancel_process(boolean visible) {
       // should manually call sensitize() after operation
       sensitize();
     }
-  } else mainw->is_processing = TRUE; // ???
+  } else mainw->is_processing = mainw->preview;
 }
 
 
@@ -1626,6 +1626,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // start audio recording now
   if (prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE) {
     if (mainw->pulsed_read) {
+      // valgrind - something undefined here
       pulse_driver_uncork(mainw->pulsed_read);
     }
 
@@ -1649,14 +1650,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (mainw->iochan && mainw->proc_ptr) lives_widget_show_all(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
 
-  /////////////////////////
-  if (!reset_timebase()) {
-    mainw->cancelled = CANCEL_INTERNAL_ERROR;
-    cancel_process(visible);
-    return FALSE;
+  if (LIVES_IS_PLAYING) {
+    /////////////////////////
+    if (!reset_timebase()) {
+      mainw->cancelled = CANCEL_INTERNAL_ERROR;
+      cancel_process(visible);
+      return FALSE;
+    }
+    //////////////////////////
   }
-  //////////////////////////
-
   if (mainw->record_starting) {
     if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL))) {
       cancel_process(visible);
@@ -2057,8 +2059,6 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
 
   double time_rem, last_time_rem = 10000000.;
   lives_alarm_t alarm_handle = 0;
-
-  //if (is_async) g_main_context_acquire(g_main_context_default());
 
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
@@ -3627,7 +3627,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 static void _thdlg_auto_spin(void) {
   lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
   g_print("state is %s\n", lpt_desc_state(mainw->dlg_spin_thread));
-  lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher());
+  lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(), NULL));
   while (mainw->threaded_dialog
          && !lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
     int count = 10000;
@@ -3652,7 +3652,7 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                            (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
-  lives_proc_thread_sync_with(mainw->dlg_spin_thread);
+  lives_free_if_non_null(lives_proc_thread_sync_with(mainw->dlg_spin_thread, NULL));
 }
 
 

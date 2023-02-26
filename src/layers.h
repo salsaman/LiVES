@@ -9,7 +9,6 @@
 #ifndef HAS_LIVES_LAYERS_H
 #define HAS_LIVES_LAYERS_H
 
-typedef weed_plant_t weed_layer_t;
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
 #define WEED_PLANT_LAYER 128
@@ -27,9 +26,12 @@ typedef weed_plant_t weed_layer_t;
 weed_layer_t *weed_layer_new(int layer_type);
 int weed_layer_get_type(weed_layer_t *);
 weed_layer_t *create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
+weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides, int tgt_gamma, int target_palette);
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
+weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame);
+
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);
 int weed_layer_unref(weed_layer_t *);
@@ -46,7 +48,8 @@ int lives_layer_get_clip(weed_layer_t *);
 frames_t lives_layer_get_frame(weed_layer_t *);
 
 void lives_layer_set_source(weed_layer_t *, lives_clip_src_t *);
-lives_clip_src_t *lives_layer_get_source(weed_layer_t *layer);
+lives_clip_src_t *lives_layer_get_source(weed_layer_t *);
+void lives_layer_unset_source(weed_layer_t *);
 
 boolean weed_layer_check_valid(weed_layer_t *);
 void weed_layer_set_invalid(weed_layer_t *, boolean);

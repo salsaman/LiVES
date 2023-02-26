@@ -186,18 +186,16 @@ LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
   else {
     return strcmp(st1, st2);
   }
-  /*   charbytes d1, d2, *ip1 = (charbytes *)st1, *ip2 = (charbytes *)st2; */
-  /*   int x = 0; */
-  /*   while (!(x = (hasNulByte((d1 = *(ip++)).u))) && d1.u == (d2 = *(ip2++)).u); */
-  /*   if (!x) return TRUE; */
-  /*   g_print("%s and %s 0x%016lX 0x%016lx %s %s\n", st1, st2, d1.u, d2.u, d1.c, d2.c); */
-  /*   for (int i = 0; i < 8; i++) { */
-  /*     if (d1.c[i] != d2.c[i]) return TRUE; */
-  /*     if (!d1.c[i]) return FALSE; */
-  /*   } */
-  /* } */
-  /* return TRUE; */
 }
+
+
+// like strcmp, but frees the first param
+LIVES_GLOBAL_INLINE boolean lives_strcmp_free(char *st1, const char *st2) {
+  boolean bret = lives_strcmp((const char *)st1, st2);
+  lives_free(st1);
+  return bret;
+}
+
 
 LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
@@ -256,20 +254,6 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
 LIVES_GLOBAL_INLINE boolean lives_str_starts_with(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 == st2);
   else {
-    /* boolean hnb = FALSE; */
-    /* uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2; */
-    /* while (1) { */
-    /*   if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) { */
-    /*     do { */
-    /*       d1 = *(ip1++); */
-    /*       d2 = *(ip2++); */
-    /*     } while (d1 == d2 && !(hnb = hasNulByte(d2))); */
-    /*     if (!hnb) return FALSE; */
-    /*     st1 = (void *)ip1; st2 = (void *)ip2; */
-    /*   } */
-    /*   if (*(st1++) != *st2) return FALSE; */
-    /*   if (!(*(st2++))) return TRUE; */
-
     size_t srchlen = lives_strlen(st2);
     if (!lives_strncmp(st1, st2, srchlen)) return TRUE;
     return FALSE;

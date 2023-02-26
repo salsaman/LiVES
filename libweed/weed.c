@@ -309,8 +309,8 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
   //					on plant. Should they fail, and the deletion bit is set in flags for plant,
   //				-- failing the readlock and reading the delete flag bit causes a reader thread to
   //					enter a special "checking mode"
-  // 
-  
+  //
+
   // have_readlock == TRUE
   // this is only called with leaf != plant, the leaf must have a chainlock readlock
   // this means if threads are checking ahead by trying to obtain a chainlock readlock
@@ -490,11 +490,19 @@ static libweed_unmalloc_and_copy_f weed_unmalloc_and_copy = _weed_unmalloc_copy;
    : ((leaf->key = weed_malloc_and_copy(size + 1, (void *)key)))	\
    ? leaf->key : NULL)
 
+// wee need the following:
+// weed_calloc - used for allocatin leaves (plants), leaf data rray and array elements, and priv data
+// if not defined, ma
+// weed_free - used only to free leaf data
+// weed_malloc_and_copy
+// weed_unmalloc_and_copy
+
 EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free, weed_calloc_f my_calloc) {
   weed_malloc = my_malloc;
   if (my_calloc) weed_calloc = my_calloc;
   else my_calloc = _malloc0_product;
   weed_free = my_free;
+  weed_malloc_and_copy = _weed_malloc_copy;
   return 0;
 }
 
@@ -502,8 +510,10 @@ EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_clear_f my_slab_alloc0, l
 				 libweed_slab_alloc_and_copy_f my_slab_alloc_and_copy) {
   weed_malloc0 = my_slab_alloc0;
   weed_calloc = _malloc0_product;
-  weed_unmalloc_and_copy = my_slab_unalloc;
   if (my_slab_alloc_and_copy) weed_malloc_and_copy = my_slab_alloc_and_copy;
+  else weed_malloc_and_copy = _weed_malloc_copy;
+  weed_unmalloc_and_copy = my_slab_unalloc;
+  weed_free = _weed_free;
   return 0;
 }
 
@@ -880,7 +890,7 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
     }
   }
 
-  if (!plant->next) {
+  if (leafprev != plant) {
     // remove lock temporarily just in case other threads were trying to grab a read lock
     chain_lock_unlock(plant);
     structure_mutex_unlock(plant);
@@ -1196,7 +1206,7 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
 
   return WEED_SUCCESS;
 }
-  
+
 static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key,
 				   uint32_t seed_type, weed_size_t num_elements,
                                    weed_voidptr_t values) {

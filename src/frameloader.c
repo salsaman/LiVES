@@ -16,7 +16,6 @@
 #include "ce_thumbs.h"
 
 #include <png.h>
-#include <setjmp.h>
 
 static int xxwidth = 0, xxheight = 0;
 
@@ -971,8 +970,6 @@ check_prcache:
         tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
         if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
           check_layer_ready(layer);
-
-
           if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
               !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
             weed_layer_unref(layer);
@@ -2233,6 +2230,32 @@ fndone:
               need_unlock = FALSE;
               propogate_timing_data(dplug);
 
+              if (!sfile->frame_md5s) {
+                weed_layer_t *blayer = create_blank_layer_precise(width, height, rowstrides,
+                                       WEED_GAMMA_UNKNOWN, dplug->cdata->current_palette);
+                size_t mxframes = MAX(sfile->frames, dplug->cdata->nframes) + 1;
+                size_t pd_size = rowstrides[0] * height;
+                void *pdata = weed_layer_get_pixel_data(blayer);
+                void *md5sum = (void *)tinymd5(pdata, pd_size);
+                lives_memcpy(sfile->blank_md5s[0], md5sum, MD5_SIZE);
+                lives_free(md5sum);
+                weed_layer_free(blayer);
+                sfile->frame_md5s = lives_calloc(mxframes, sizeof(char *));
+                for (int i = 0; i < mxframes; i++) sfile->frame_md5s[i] = lives_calloc(1, MD5_SIZE);
+              }
+              if (!*sfile->frame_md5s[get_indexed_frame(clip, frame)]) {
+                size_t pd_size = rowstrides[0] * height;
+                void *pdata = weed_layer_get_pixel_data(layer);
+                void *md5sum = (void *)tinymd5(pdata, pd_size);
+                md5_print(md5sum);
+                md5_print(sfile->blank_md5s[0]);
+
+                if (!memcmp(sfile->blank_md5s[0], md5sum, MD5_SIZE))
+                  g_print("BLANK_FRAME !\n");
+                lives_memcpy(sfile->frame_md5s[get_indexed_frame(clip, frame)], md5sum, MD5_SIZE);
+                lives_free(md5sum);
+              }
+
               if (est > 0.) {
                 xtimex = lives_get_current_ticks() / TICKS_PER_SECOND_DBL;
                 timex = xtimex - timex;
@@ -2243,7 +2266,7 @@ fndone:
             }
 
             //g_print("ACT %f EST %f\n",  (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL, est_time);
-
+            lives_layer_unset_source(layer);
             lives_free(pixel_data);
             lives_free(rowstrides);
             if (res) {
@@ -2350,7 +2373,7 @@ fndone:
       // Note: vlayer is actually the out channel of the generator, so we should
       // never free it !
       weed_plant_t *inst;
-      if (!weed_layer_check_valid(layer)) goto fail;
+      if (!weed_layer_check_valid(layer) || !sfile->primary_src) goto fail;
       weed_instance_ref((inst = (weed_plant_t *)sfile->primary_src->source));
       if (inst) {
         int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
@@ -2364,8 +2387,10 @@ fndone:
           weed_layer_nullify_pixel_data(vlayer);
         }
         filter_mutex_unlock(key);
+        lives_layer_unset_source(layer);
         weed_instance_unref(inst);
       } else {
+        lives_layer_unset_source(layer);
         create_blank_layer(layer, image_ext, width, height, target_palette);
       }
     }
@@ -2384,11 +2409,13 @@ fndone:
     }
 
 success:
+    lives_layer_unset_source(layer);
     weed_layer_unref(layer);
     if (xlayer) layer = xlayer;
     return TRUE;
 
 fail:
+    lives_layer_unset_source(layer);
     weed_layer_pixel_data_free(layer);
     nsize[0] = width * weed_palette_get_pixels_per_macropixel(target_palette);
     nsize[1] = height;
@@ -2521,7 +2548,6 @@ fail:
       pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
       if (lives_proc_thread_get_cancel_requested(self)) {
         lives_proc_thread_cancel(self);
-        //weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
         return FALSE;
       }
       if (is_layer_ready(layer)) {
@@ -2530,7 +2556,6 @@ fail:
       }
       if (lives_proc_thread_get_cancel_requested(self))  {
         lives_proc_thread_cancel(self);
-        //weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
         return FALSE;
       }
       if (mainw->blend_palette != WEED_PALETTE_END) {
@@ -2546,7 +2571,6 @@ fail:
       }
       if (lives_proc_thread_get_cancel_requested(self))  {
         lives_proc_thread_cancel(self);
-        //weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
         return FALSE;
       }
       if (tgt_gamma != WEED_GAMMA_UNKNOWN && is_layer_ready(layer)
@@ -2557,7 +2581,6 @@ fail:
     } else {
       pull_frame_at_size(layer, img_ext, tc, width, height, WEED_PALETTE_END);
     }
-    //weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
     return TRUE;
   }
 

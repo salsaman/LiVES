@@ -3613,8 +3613,9 @@ void cancel_tl_redraw(void) {
     if (!lives_proc_thread_check_finished(lpt)) {
       pthread_mutex_lock(&mainw->tlthread_mutex);
       lives_proc_thread_request_cancel(lpt, FALSE);
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
       lives_proc_thread_join(lpt);
+      mainw->drawtl_thread = NULL;
+      pthread_mutex_unlock(&mainw->tlthread_mutex);
     }
     lives_proc_thread_unref(lpt);
   }
@@ -3679,11 +3680,10 @@ void redraw_timeline(int clipno) {
     }
   } else {
     if (is_fg_thread()) {
-      lives_proc_thread_t tlthread = mainw->drawtl_thread;
       // if this the fg thread, kick off a bg thread to actually run this
-      if (tlthread) {
-        if (lives_proc_thread_ref(tlthread) > 1)
-          cancel_tl_redraw();
+      if (lives_proc_thread_ref(mainw->drawtl_thread) > 1) {
+        lives_proc_thread_t tlthread = mainw->drawtl_thread;
+        cancel_tl_redraw();
         lives_proc_thread_unref(tlthread);
       }
       if (mainw->multitrack || mainw->reconfig) {
@@ -3693,7 +3693,7 @@ void redraw_timeline(int clipno) {
 
       pthread_mutex_lock(&mainw->tlthread_mutex);
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-                             (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
+                             (lives_funcptr_t)redraw_timeline, -1, "i", clipno);
 
       //lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
 

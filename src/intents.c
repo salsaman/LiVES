@@ -47,11 +47,37 @@ void dump_plantdesc(lives_dicto_t *dicto) {
 }
 
 
+
+LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(lives_obj_t *obj) {
+  return obj ? weed_get_int64_value(obj, "obj_type", NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_object_get_state(lives_obj_t *obj) {
+  return obj ? weed_get_int_value(obj, "state", NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(lives_obj_t *obj) {
+  return obj ? weed_get_int64_value(obj, "subtype", NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE uint64_t lives_object_get_uid(lives_obj_t *obj) {
+  return obj ? weed_get_int64_value(obj, LIVES_LEAF_UID, NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE weed_plant_t **lives_object_get_attrs(lives_obj_t *obj) {
+  return obj ? weed_get_plantptr_array(obj, "attrs", NULL) : 0;
+}
+
+
 char *interpret_uid(uint64_t uid) {
   char *info = NULL;
   lives_dicto_t *dicto = lookup_entry(uid);
   if (dicto) {
-    uint64_t sub = dicto->subtype;
+    uint64_t sub = lives_object_get_subtype(dicto);
     if (sub == DICT_SUBTYPE_OBJECT || sub == DICT_SUBTYPE_WEED_PLANT) {
       //if (sub == DICT_SUBTYPE_WEED_PLANT) dump_plantdesc(dicto);
       //else dump_obdesc(dicto);
@@ -67,11 +93,12 @@ char *interpret_uid(uint64_t uid) {
 
 
 lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
-                            lives_object_t *obj, va_list xargs) {
+                            lives_obj_t *obj, va_list xargs) {
   // dict entry, object with any type of attributes but no transforms
   // copy specified attributes from obj into the dictionary
   // if intent is OBJ_INTENTION_UPDATE then we only overwrite, otherwise we replace all
 
+  lives_obj_attr_t **attrs;
   char *aname;
   int count = 0;
   uint32_t st;
@@ -80,16 +107,17 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
   // replace - delete old add new
 
   if (!dicto) dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_OBJECT);
-  else if (intent == OBJ_INTENTION_REPLACE && dicto->attributes) {
+  else if (intent == OBJ_INTENTION_REPLACE && weed_plant_has_leaf(dicto, "attrs")) {
     lives_object_attributes_unref_all(dicto);
   }
+  attrs = lives_object_get_attrs(dicto);
   while (1) {
     lives_obj_attr_t *attr = NULL, *xattr = NULL;
     if (xargs) {
       aname = va_arg(xargs, char *);
       if (aname) attr = lives_object_get_attribute(obj, aname);
     } else {
-      attr = obj->attributes[count++];
+      attr = attrs[count++];
       if (attr) aname = weed_get_string_value(attr, WEED_LEAF_NAME, NULL);
     }
     if (!attr) break;
@@ -110,11 +138,12 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
     }
     if (!xargs) lives_free(aname);
   }
+  if (attrs) lives_free(attrs);
   return dicto;
 }
 
 
-lives_dicto_t  *replace_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
+lives_dicto_t  *replace_dicto(lives_dicto_t *dicto, lives_obj_t *obj, ...) {
   // replace attributes if already there
   va_list xargs;
   va_start(xargs, obj);
@@ -124,7 +153,7 @@ lives_dicto_t  *replace_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
 }
 
 
-lives_dicto_t  *update_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
+lives_dicto_t  *update_dicto(lives_dicto_t *dicto, lives_obj_t *obj, ...) {
   // update a subset of attributes if already there
   va_list xargs;
   va_start(xargs, obj);
@@ -155,18 +184,18 @@ static lives_objstore_t *update_dictionary(lives_objstore_t *objstore, uint64_t 
 }
 
 
-uint64_t add_object_to_objstore(lives_object_t *obj) {
+uint64_t add_object_to_objstore(lives_obj_t *obj) {
   lives_dicto_t *dicto = _make_dicto(NULL, 0, obj, NULL);
-  main_objstore = add_to_objstore(main_objstore, obj->uid, dicto);
+  main_objstore = add_to_objstore(main_objstore, lives_object_get_uid(obj), dicto);
   dict_size += weigh_object(obj);
   return dict_size;
 }
 
 
-uint64_t update_object_in_objstore(lives_object_t *obj) {
+uint64_t update_object_in_objstore(lives_obj_t *obj) {
   // add or update
   lives_dicto_t *dicto = _make_dicto(NULL, 0, obj, NULL);
-  main_objstore = update_dictionary(main_objstore, obj->uid, dicto);
+  main_objstore = update_dictionary(main_objstore, lives_object_get_uid(obj), dicto);
   //dict_size += weigh_object(obj);
   return dict_size;
 }
@@ -220,6 +249,7 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
 // otherwise we create a new fdef, register it as static, and return the new entry
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rttype,
                                      const char *args_fmt, char *file, int line) {
+
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
@@ -252,7 +282,7 @@ boolean add_fdef_lookup(lives_funcdef_t *fdef) {
 
 static boolean fdef_funcmatch(void *data, void *pfunc) {
   lives_dicto_t *dicto = (lives_dicto_t *)data;
-  if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
+  if (dicto && lives_object_get_subtype(dicto) == DICT_SUBTYPE_FUNCDEF) {
     lives_funcptr_t func = *(lives_funcptr_t *)pfunc;
     lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
     lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
@@ -267,7 +297,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
   void *data = get_from_hash_store_cbfunc(fn_objstore, fdef_funcmatch, (void *)(lives_funcptr_t *)&func);
   if (data) {
     lives_dicto_t *dicto = (lives_dicto_t *)data;
-    if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
+    if (dicto && lives_object_get_subtype(dicto) == DICT_SUBTYPE_FUNCDEF) {
       lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
       fdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
     }
@@ -278,7 +308,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
 
 const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
   lives_dicto_t *dicto = lookup_entry(uid);
-  if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
+  if (dicto && lives_object_get_subtype(dicto) == DICT_SUBTYPE_FUNCDEF) {
     lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
     return weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
   }
@@ -304,108 +334,69 @@ LIVES_GLOBAL_INLINE void lives_thread_set_intentcap(const lives_intentcap_t *ica
 
 
 LIVES_GLOBAL_INLINE int lives_attribute_get_value_int(lives_obj_attr_t *attr) {
-  if (attr) {
-    weed_param_t *param = weed_param_from_attr(attr);
-    int val = weed_param_get_value_int(param);
-    weed_plant_free(param);
-    return val;
-  }
-  return 0;
+  return weed_get_int_value(attr, WEED_LEAF_VALUE, NULL);
 }
 
+LIVES_GLOBAL_INLINE int lives_attribute_get_value_boolean(lives_obj_attr_t *attr) {
+  return weed_get_boolean_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE double lives_attribute_get_value_double(lives_obj_attr_t *attr) {
+  return weed_get_double_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE float lives_attribute_get_value_float(lives_obj_attr_t *attr) {
+  return weed_get_double_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE int64_t lives_attribute_get_value_int64(lives_obj_attr_t *attr) {
+  return weed_get_int64_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *attr) {
+  return weed_get_uint64_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE char *lives_attribute_get_value_string(lives_obj_attr_t *attr) {
+  if (weed_leaf_num_elements(attr, WEED_LEAF_VALUE) == 0) return NULL;
+  return weed_get_string_value(attr, WEED_LEAF_VALUE, NULL);
+}
 
 /// refcounting
 
-static void lives_object_instance_free(lives_obj_instance_t *obj) {
-  // TODO - use some other name, EXIT for processes
-  lives_hook_stack_t **hook_stacks = (lives_hook_stack_t **)weed_get_voidptr_array(obj, LIVES_LEAF_HOOK_STACKS, NULL);
-  lives_hooks_trigger(hook_stacks, DESTRUCTION_HOOK);
-
-  // invalidate hooks
-  for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_POINTS; type++) {
-    lives_hooks_clear(hook_stacks, type);
-  }
-
-  // unref attributes
-  //  lives_object_attributes_unref_all(obj);
-
-  // TODO - call destructor
-  //if (obj->priv) lives_free(obj->priv);
-  weed_plant_free(obj);
-}
-
-
 LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_obj_instance_t *obj) {
-  int count;
-  if (!(count = weed_refcount_dec(obj))) {
-    lives_object_instance_free(obj);
-  }
-  return count;
+  return lives_proc_thread_unref(obj);
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_obj_instance_destroy(lives_obj_instance_t *obj) {
+LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_obj_instance_t *obj) {
   // return FALSE if destroyed
   return (lives_object_instance_unref(obj) > 0);
 }
 
-LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_object_instance_t *obj) {
-  lives_free(obj);
-  return FALSE;
+
+LIVES_GLOBAL_INLINE int lives_object_instance_ref(lives_obj_instance_t *obj) {
+  return lives_proc_thread_ref(obj);
 }
 
 
-LIVES_GLOBAL_INLINE int lives_object_instance_ref(lives_object_instance_t *obj) {
-  return refcount_inc(&obj->refcounter);
-}
-
-
-size_t weigh_object(lives_object_instance_t *obj) {
-  size_t tot = 0;
-  tot += sizeof(lives_object_instance_t);
-  if (obj->attributes) {
-    for (int i = 0; obj->attributes[i]; i++) tot += weed_plant_weigh(obj->attributes[i]);
-  }
+size_t weigh_object(lives_obj_instance_t *obj) {
+  lives_obj_attr_t **attrs = lives_object_get_attrs(obj);
+  size_t tot = weed_plant_weigh(obj);
+  for (int i = 0; attrs[i]; i++) tot += weed_plant_weigh(attrs[i]);
+  lives_free(attrs);
   return tot;
 }
 
-LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
-  uint64_t otype = 0;
-  if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ".type", NULL);
-    otype = (uint64_t)weed_get_uint64_value(vb, ".data", NULL);
-  }
-  return otype;
-}
 
-
-LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
-  uint64_t osubtype = 0;
-  if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ".subtype", NULL);
-    osubtype = (uint64_t)weed_get_int64_value(vb, ".data", NULL);
-  }
-  return osubtype;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_object_get_state(weed_plant_t *obj) {
-  int ostate = 0;
-  if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ".state", NULL);
-    ostate = (uint64_t)weed_get_int64_value(vb, ".data", NULL);
-  }
-  return ostate;
-}
-
-LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
-  lives_object_instance_t *obj_inst = lives_calloc(1, sizeof(lives_object_instance_t));
-  obj_inst->uid = gen_unique_id();
-  obj_inst->type = type;
-  obj_inst->subtype = subtype;
-  obj_inst->state = OBJECT_STATE_UNDEFINED;
-  check_refcnt_init(&obj_inst->refcounter);
-  return obj_inst;
+LIVES_GLOBAL_INLINE lives_obj_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
+  // this is a stopgap until eventually we transition to Nirva object instances
+  // for now object instances can be treated exaclty like live_proc_htreads, except that they will
+  // not have a pool thread assigned, not a target function
+  // however, things like hook_stacks and
+  lives_obj_instance_t *oinst = lives_plant_new(LIVES_WEED_SUBTYPE_OBJECT);
+  add_garnish(oinst, NULL, 0);
+  return oinst;
 }
 
 
@@ -417,28 +408,27 @@ LIVES_GLOBAL_INLINE char *lives_attr_get_name(lives_obj_attr_t *attr) {
 }
 
 
-static void lives_object_attribute_free(lives_object_t *obj, lives_obj_attr_t *attr) {
+static void lives_object_attribute_free(lives_obj_t *obj, lives_obj_attr_t *attr) {
   // TODO - free rfx_param
   lives_obj_attr_t **attrs;
   int i;
-  if (obj) attrs = obj->attributes;
+  if (obj) attrs = lives_object_get_attrs(obj);
   else attrs = THREADVAR(attributes);
   for (i = 0; attrs[i]; i++) if (attrs[i] == attr) break;
-
-  weed_plant_free(attr);
-
   if (attrs[i] == attr) {
     for (; attrs[i]; i++) {
       attrs[i] = attrs[i + 1];
     }
-    attrs = lives_realloc(attrs, (i + 1) * sizeof(lives_obj_attr_t *));
-    if (obj) obj->attributes = attrs;
-    else THREADVAR(attributes)  = attrs;
+    attrs = lives_realloc(attrs, ++i * sizeof(lives_obj_attr_t *));
+    if (obj) {
+      weed_set_plantptr_array(obj, "attrs", i, attrs);
+      lives_free(attrs);
+    } else THREADVAR(attributes)  = attrs;
   }
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_object_attribute_unref(lives_object_t *obj, lives_obj_attr_t *attr) {
+LIVES_GLOBAL_INLINE boolean lives_object_attribute_unref(lives_obj_t *obj, lives_obj_attr_t *attr) {
   int refs = weed_refcount_dec(attr);
   if (refs > 0) return TRUE;
   lives_object_attribute_free(obj, attr);
@@ -446,13 +436,13 @@ LIVES_GLOBAL_INLINE boolean lives_object_attribute_unref(lives_object_t *obj, li
 }
 
 
-LIVES_GLOBAL_INLINE void lives_object_attributes_unref_all(lives_object_t *obj) {
-  lives_obj_attr_t **attrs = obj->attributes;
+LIVES_GLOBAL_INLINE void lives_object_attributes_unref_all(lives_obj_t *obj) {
+  lives_obj_attr_t **attrs = lives_object_get_attrs(obj);
   if (attrs) {
     for (int count = 0; attrs[count]; count++) {
       lives_object_attribute_unref(obj, attrs[count]);
     }
-    obj->attributes = NULL;
+    weed_set_plantptr_value(obj, "attrs", NULL);
   }
 }
 
@@ -504,7 +494,7 @@ weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, 
 }
 
 
-weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *name, ...) {
+weed_error_t lives_object_set_attribute_value(lives_obj_t *obj, const char *name, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (name && *name) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
@@ -514,6 +504,9 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
       va_start(xargs, name);
       err = _set_obj_attribute_vargs(attr, WEED_LEAF_VALUE,  1, xargs);
       va_end(xargs);
+      if (mainw->debug) {
+        mainw->debug = FALSE;
+      }
     }
     if (err == WEED_SUCCESS) {
       //lives_hooks_triggero(obj, obj ? obj->hook_closures
@@ -524,7 +517,7 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
 }
 
 
-weed_error_t lives_object_set_attr_value(lives_object_t *obj, lives_obj_attr_t *attr, ...) {
+weed_error_t lives_object_set_attr_value(lives_obj_t *obj, lives_obj_attr_t *attr, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (attr) {
     va_list xargs;
@@ -539,7 +532,7 @@ weed_error_t lives_object_set_attr_value(lives_object_t *obj, lives_obj_attr_t *
 }
 
 
-weed_error_t lives_object_set_attr_default(lives_object_t *obj, lives_obj_attr_t *attr, ...) {
+weed_error_t lives_object_set_attr_default(lives_obj_t *obj, lives_obj_attr_t *attr, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (attr) {
     va_list xargs;
@@ -554,7 +547,7 @@ weed_error_t lives_object_set_attr_default(lives_object_t *obj, lives_obj_attr_t
 }
 
 
-weed_error_t lives_object_set_attribute_array(lives_object_t *obj, const char *name, weed_size_t ne, ...) {
+weed_error_t lives_object_set_attribute_array(lives_obj_t *obj, const char *name, weed_size_t ne, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (name && *name && ne > 0) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
@@ -573,7 +566,7 @@ weed_error_t lives_object_set_attribute_array(lives_object_t *obj, const char *n
 }
 
 
-weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj,
+weed_error_t lives_object_set_attribute_def_array(lives_obj_t *obj,
     const char *name, weed_size_t ne, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (name && *name && ne > 0) {
@@ -593,7 +586,7 @@ weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj,
 }
 
 
-weed_error_t lives_object_set_attr_array(lives_object_t *obj, lives_obj_attr_t *attr, weed_size_t ne,  ...) {
+weed_error_t lives_object_set_attr_array(lives_obj_t *obj, lives_obj_attr_t *attr, weed_size_t ne,  ...) {
   weed_error_t err = WEED_SUCCESS;
   if (attr) {
     va_list xargs;
@@ -608,7 +601,7 @@ weed_error_t lives_object_set_attr_array(lives_object_t *obj, lives_obj_attr_t *
 }
 
 
-weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr_t *attr, weed_size_t ne,  ...) {
+weed_error_t lives_object_set_attr_def_array(lives_obj_t *obj, lives_obj_attr_t *attr, weed_size_t ne,  ...) {
   weed_error_t err = WEED_SUCCESS;
   if (attr) {
     va_list xargs;
@@ -623,17 +616,20 @@ weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr
 }
 
 
-lives_obj_attr_t *lives_object_get_attribute(lives_object_t *obj, const char *name) {
+lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *obj, const char *name) {
   if (name && *name) {
-    lives_obj_attr_t **attrs;
-    if (obj) attrs = obj->attributes;
+    lives_obj_attr_t **attrs, *attr;
+    char *pname;
+    if (obj) attrs = lives_object_get_attrs(obj);
     else attrs = THREADVAR(attributes);
     if (attrs) {
       for (int count = 0; attrs[count]; count++) {
-        char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
+        attr = attrs[count];
+        pname = lives_attr_get_name(attr);
         if (!lives_strcmp(name, pname)) {
           lives_free(pname);
-          return attrs[count];
+          if (obj) lives_free(attrs);
+          return attr;
         }
         lives_free(pname);
       }
@@ -643,17 +639,20 @@ lives_obj_attr_t *lives_object_get_attribute(lives_object_t *obj, const char *na
 }
 
 
-int lives_object_get_num_attributes(lives_object_t *obj) {
+int lives_object_get_num_attributes(lives_obj_t *obj) {
   int count = 0;
   lives_obj_attr_t **attrs;
-  if (obj) attrs = obj->attributes;
+  if (obj) attrs = lives_object_get_attrs(obj);
   else attrs = THREADVAR(attributes);
-  if (attrs) while (attrs[count++]);
+  if (attrs) {
+    while (attrs[count++]);
+    lives_free(attrs);
+  }
   return count;
 }
 
 
-char *lives_object_dump_attributes(lives_object_t *obj) {
+char *lives_object_dump_attributes(lives_obj_t *obj) {
   lives_obj_attr_t **attrs;
   //lives_obj_attr_t *attr;
   char *out = lives_strdup(""), *tmp;
@@ -662,15 +661,16 @@ char *lives_object_dump_attributes(lives_object_t *obj) {
   int count = 0;
   if (obj) {
     //lives_strdup_concat(out, NULL, "\n", obtag);
-    attrs = obj->attributes;
-    if (obj->type == OBJECT_TYPE_DICTIONARY && obj->subtype == DICT_SUBTYPE_WEED_PLANT) {
+    attrs = lives_object_get_attrs(obj);
+    if (lives_object_get_type(obj) == OBJECT_TYPE_DICTIONARY
+        && lives_object_get_subtype(obj) == DICT_SUBTYPE_WEED_PLANT) {
       thing = "Weed plant";
       what = "leaves";
     } else {
       thing = "Object";
       what = "attributes";
     }
-    uid = obj->uid;
+    uid = lives_object_get_uid(obj);
   } else {
     attrs = THREADVAR(attributes);
     thing = "Thread";
@@ -740,13 +740,13 @@ void weed_plant_take_snapshot(weed_plant_t *plant) {
 }
 
 
-lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *obj, const char *name, uint32_t st) {
+lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st) {
   lives_obj_attr_t *attr;
   lives_obj_attr_t **attrs;
   uint64_t uid;
   int count = 0;
   if (obj) {
-    attrs = obj->attributes;
+    attrs = weed_get_plantptr_array(obj, "attrs", NULL);
     uid = capable->uid;
   } else {
     attrs = THREADVAR(attributes);
@@ -777,12 +777,13 @@ lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *obj, const char
 
   if (obj) weed_add_plant_flags(attr, WEED_FLAG_UNDELETABLE, NULL);
 
-  attrs[count] = attr;
-  attrs[count + 1] = NULL;
+  attrs[count++] = attr;
+  attrs[count++] = NULL;
 
-  if (obj) obj->attributes = attrs;
-  else THREADVAR(attributes) = attrs;
-
+  if (obj) {
+    weed_set_plantptr_array(obj, "attrs", count, attrs);
+    lives_free(attrs);
+  } else THREADVAR(attributes) = attrs;
   return attr;
 }
 
@@ -814,7 +815,7 @@ LIVES_GLOBAL_INLINE uint64_t contract_attr_get_owner(lives_obj_attr_t *attr) {
 /* } */
 
 
-/* LIVES_GLOBAL_INLINE boolean contract_attribute_is_mine(lives_object_t *obj, const char *name) { */
+/* LIVES_GLOBAL_INLINE boolean contract_attribute_is_mine(lives_obj_t *obj, const char *name) { */
 /*   if (obj) return contract_attr_is_mine(lives_object_get_attribute(obj, name)); */
 /*   return FALSE; */
 /* } */
@@ -853,7 +854,7 @@ char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_
 /* } */
 
 
-/* LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_leaf_readonly(lives_object_t *obj, const char *name, */
+/* LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_leaf_readonly(lives_obj_t *obj, const char *name, */
 /*     const char *key, boolean state) { */
 /*   if (obj) { */
 /*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
@@ -863,7 +864,7 @@ char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_
 /* } */
 
 
-/* LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_readonly(lives_object_t *obj, const char *name, */
+/* LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_readonly(lives_obj_t *obj, const char *name, */
 /*     boolean state) { */
 /*   if (obj) { */
 /*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
@@ -895,7 +896,7 @@ char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_
 /*   return FALSE; */
 /* } */
 
-/* LIVES_GLOBAL_INLINE boolean lives_attribute_is_leaf_readonly(lives_object_t *obj, const char *name, const char *key) { */
+/* LIVES_GLOBAL_INLINE boolean lives_attribute_is_leaf_readonly(lives_obj_t *obj, const char *name, const char *key) { */
 /*   if (obj) { */
 /*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
 /*     if (attr) return lives_attr_is_leaf_readonly(attr, key); */
@@ -904,7 +905,7 @@ char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_
 /* } */
 
 
-/* LIVES_GLOBAL_INLINE boolean lives_attribute_is_readonly(lives_object_t *obj, const char *name) { */
+/* LIVES_GLOBAL_INLINE boolean lives_attribute_is_readonly(lives_obj_t *obj, const char *name) { */
 /*   if (obj) { */
 /*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
 /*     if (attr) return lives_attr_is_readonly(attr); */
@@ -914,7 +915,7 @@ char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_
 
 ///////////////////////////////
 
-LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_object_t *obj, const char *name,
+LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_obj_t *obj, const char *name,
     const char *label, int ptype) {
   if (obj) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
@@ -929,7 +930,7 @@ LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_object_t *
 }
 
 
-LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_object_t *obj, const char *name) {
+LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_obj_t *obj, const char *name) {
   if (obj) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
     if (attr) return weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL);
@@ -1447,7 +1448,7 @@ weed_param_t *weed_param_from_attr(lives_obj_attr_t *attr) {
   return NULL;
 }
 
-weed_param_t *weed_param_from_attribute(lives_object_instance_t *obj, const char *name) {
+weed_param_t *weed_param_from_attribute(lives_obj_instance_t *obj, const char *name) {
   // find param by NAME, if it lacks a VALUE, set it from default
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
   // other functions to use the weed_parameter_get_*_value() functions etc.
@@ -1471,8 +1472,8 @@ boolean lives_transform_status_free(lives_transform_status_t *st) {
 }
 
 
-lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcap_t *icaps) {
-  uint64_t type = obj->type;
+lives_object_transform_t *find_transform_for_intentcaps(lives_obj_t *obj, lives_intentcap_t *icaps) {
+  uint64_t type = lives_object_get_type(obj);
   if (type == OBJECT_TYPE_MATH) {
     return math_transform_for_intent(obj, icaps->intent);
   }

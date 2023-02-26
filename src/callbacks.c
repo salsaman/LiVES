@@ -4866,7 +4866,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       }
       if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL || ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
                                             && AUD_SRC_REALTIME)))
-        start_audio_rec();
+        mainw->aud_rec_lpt = start_audio_rec(get_aplayer_instance(AUD_SRC_EXTERNAL));
     } else {
       // end record during playback
       event_list_add_end_events(mainw->event_list, FALSE);
@@ -5563,16 +5563,25 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   com = lives_strdup_printf("%s disk_check %s %u %s", temp_backend, cfile->handle,
                             prefs->clear_disk_opts | extra_opts, trashdir);
 
-  g_main_context_release(g_main_context_default());
   lpt = do_auto_dialog_async(_("Analysing Disk"), 0);
+  g_print("lpt has1 %d refs\n", lives_proc_thread_count_refs(lpt));
+  mainw->debug_ptr = lpt;
 
   lives_popen(com, TRUE, (char *)tbuff, 0);
   lives_free(com);
 
+  g_print("lpt has2 %d refs\n", lives_proc_thread_count_refs(lpt));
   lives_proc_thread_cancel(lpt);
+  g_print("lpt has3 %d refs\n", lives_proc_thread_count_refs(lpt));
+
+  lives_proc_thread_wait_done(lpt, 0.);
+  if (lpt != mainw->debug_ptr) abort();
+  g_print("lpt has4 %d refs\n", lives_proc_thread_count_refs(lpt));
+  mainw->debug_ptr = lpt;
   lives_proc_thread_join(lpt);
 
-  g_main_context_acquire(g_main_context_default());
+  lives_widget_context_update();
+
   return tbuff;
 }
 
@@ -5853,19 +5862,17 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   com = lives_strdup_printf("%s empty_trash %s general %s", temp_backend, cfile->handle,
                             TRASH_NAME);
 
-  g_main_context_release(g_main_context_default());
-  lpt = do_auto_dialog_async(_("Removing general trash"), 0);
-
+  if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
   THREADVAR(com_failed) = FALSE;
 
   use_staging_dir_for(0);
 
-  if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
+  lpt = do_auto_dialog_async(_("Removing general trash"), 0);
+
   lives_system(com, FALSE);
   lives_free(com);
 
   lives_proc_thread_join(lpt);
-  g_main_context_acquire(g_main_context_default());
 
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
 
@@ -6082,7 +6089,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
       if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
 
-      g_main_context_release(g_main_context_default());
       lpt = do_auto_dialog_async(_("Clearing Disk"), 0);
 
       tbuff = lives_text_buffer_new();
@@ -6095,7 +6101,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       lives_popen(com, TRUE, (char *)tbuff, 0);
       lives_free(com);
       lives_proc_thread_join(lpt);
-      g_main_context_acquire(g_main_context_default());
 
       if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
     }
@@ -9391,19 +9396,24 @@ static boolean _all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, 
 
 
 boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
+  lives_proc_thread_t lpt;
   if (!LIVES_IS_PLAYING) return _all_expose_overlay(widget, creb, psurf);
-  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
-                                  _all_expose_overlay, WEED_SEED_BOOLEAN, "vvv", widget, creb, psurf);
+  lpt = lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                        HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                        _all_expose_overlay, WEED_SEED_BOOLEAN, "vvv", widget, creb, psurf);
+  lives_proc_thread_unref(lpt);
   return TRUE;
 }
 
 
 boolean all_expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
-  if (LIVES_IS_PLAYING)// all_expose(widget, cr, psurf);
-    lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                    HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
-                                    all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
+  if (LIVES_IS_PLAYING) {
+    // all_expose(widget, cr, psurf);
+    lives_proc_thread_t lpt = lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                              HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                              all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
+    lives_proc_thread_unref(lpt);
+  }
   return TRUE;
 }
 
@@ -10802,7 +10812,8 @@ char *get_palette_name_for_clip(int clipno) {
     }
   } else switch (sfile->clip_type) {
     case CLIP_TYPE_GENERATOR: {
-      weed_plant_t *inst = (weed_plant_t *)sfile->primary_src->source;
+      weed_plant_t *inst = NULL;
+      if (sfile->primary_src) inst = (weed_plant_t *)sfile->primary_src->source;
       if (inst) {
         weed_plant_t *channel = get_enabled_channel(inst, 0, FALSE);
         if (channel) {

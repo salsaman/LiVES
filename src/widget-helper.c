@@ -31,7 +31,8 @@
 static volatile boolean gui_loop_tight = FALSE;
 
 // this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
-static volatile boolean skip_idlefuncs = FALSE;
+static volatile int cprio = PRIO_HIGH;
+static volatile boolean no_service_loop = FALSE;
 static pthread_mutex_t lpt_mutex = PTHREAD_MUTEX_INITIALIZER;
 static volatile lives_proc_thread_t lpttorun = NULL;
 
@@ -962,11 +963,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
     return FALSE;
   } else {
     boolean ret = FALSE;
-    boolean skip_id = skip_idlefuncs;
-    skip_idlefuncs = TRUE;
-    ret = g_main_context_iteration(ctx, may_block);
-    skip_idlefuncs = skip_id;
-    return ret;
+    if (mainw && mainw->fg_service_source) {
+      boolean skip_id = no_service_loop;
+      no_service_loop = TRUE;
+      /* if (cprio == PRIO_HIGH) */
+      /* 	lives_source_set_priority(mainw->fg_service_source, PRIO_LOW); */
+      ret = g_main_context_iteration(ctx, may_block);
+      no_service_loop = skip_id;
+      /* if (cprio == PRIO_HIGH) */
+      /* 	lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH); */
+      return ret;
+    }
   }
   return FALSE;
 }
@@ -989,7 +996,7 @@ boolean fg_service_fulfill(void) {
       lives_proc_thread_unref(lptr);
       lptr = NULL;
     }
-  }
+  } else lptr = NULL;
 
   if (!lptr || lives_proc_thread_is_running(lptr)
       || lives_proc_thread_is_done(lptr)) {
@@ -1034,7 +1041,6 @@ boolean fg_service_fulfill(void) {
 }
 
 
-static volatile int cprio = PRIO_HIGH;
 static volatile int misses = 0;
 
 boolean fg_service_fulfill_cb(void *dummy) {
@@ -1047,22 +1053,15 @@ boolean fg_service_fulfill_cb(void *dummy) {
   // in high priority, the loop runs as fast as it can to be super responsive
   // after a set number of cycles with no activity, we will switch to low priority
   // to reduce the CPU load. Before pushing requests, background threads can force a kick from low to high prio
-  // in advance,
+  // in advance,no_se
   static int prio =  PRIO_HIGH;
   static boolean omode = -1;
   boolean is_fg_service = FALSE;
   boolean is_active;
 
-  if (skip_idlefuncs) {
-    // callback can be blocked to prevent it triggering whilst we are updating the GUI only
-    // as well as prevnting recursive calls
-    if (cprio != PRIO_LOW) {
-      cprio = PRIO_LOW;
-      if (prio != cprio) {
-        // chenge cprio, but not prio
-        lives_source_set_priority(mainw->fg_service_source, cprio);
-      }
-    }
+  if (no_service_loop) {
+    // callback has to be disabled during calls to g_main_context_iteration,
+    // to prevent that function from blocking
     return TRUE;
   }
 
@@ -1637,6 +1636,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
 }
 
 
+static void _lives_widget_destroy(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  if (widget == mainw->debug_ptr) break_me("wdestroy");
+  gtk_widget_destroy(widget);
+#endif
+}
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (LIVES_IS_WIDGET(widget)) {
@@ -1644,7 +1650,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
       THREADVAR(hook_match_nparams) = 1;
       THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD;
       // do this even for main thread so we can invalidate data for other threads
-      MAIN_THREAD_EXECUTE_RVOID(gtk_widget_destroy, 0, "v", widget);
+      MAIN_THREAD_EXECUTE_RVOID(_lives_widget_destroy, 0, "v", widget);
       THREADVAR(hook_hints) = 0;
       THREADVAR(hook_match_nparams) = 0;
       return TRUE;
@@ -1770,6 +1776,13 @@ static boolean lptdone(lives_obj_t *obj, void *data) {
 }
 
 
+void unlock_lpt(lives_proc_thread_t lpt) {
+  if (!pthread_mutex_trylock(&lpt_mutex)) {
+    if (lpttorun == lpt) lpttorun = NULL;
+    pthread_mutex_unlock(&lpt_mutex);
+  }
+}
+
 static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   volatile boolean bvar = FALSE;
   boolean do_cancel = FALSE;
@@ -1803,10 +1816,7 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   // if another bg thread is waiting it will have changed lpttorun, so only NULLify if ours and with mutex locked
   //     (so it cannot change while we check)
   // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
-  if (!pthread_mutex_trylock(&lpt_mutex)) {
-    if (lpttorun == lpt) lpttorun = NULL;
-    pthread_mutex_unlock(&lpt_mutex);
-  }
+  if (lpt) unlock_lpt(lpt);
 
   // need to remove this hook, in case it has not triggered, since bvar is about to go out of scope
   // BUT - could be in process of triggering - reading bvar will crash
@@ -13197,25 +13207,29 @@ boolean lives_widget_context_update(void) {
   if (mainw->no_context_update) return FALSE;
 
   if (!is_fg_thread()) {
-    GET_PROC_THREAD_SELF(self);
-    lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(self);
-    if (gui_loop_tight) return FALSE;
-    // trip gui loop to high prio
-    fg_service_wake();
-    if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) {
-      // action any deferred updates first
-      if (lpt_hooks[LIVES_GUI_HOOK]->stack) {
-        pthread_mutex_lock(&mainw->all_hstacks_mutex);
-        mainw->all_hstacks =
-          lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
-        pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-        lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
+    if (gui_loop_tight) {
+      mainw->do_ctx_update = TRUE;
+      return FALSE;
+    } else {
+      GET_PROC_THREAD_SELF(self);
+      lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(self);
+      // trip gui loop to high prio
+      fg_service_wake();
+      if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) {
+        // action any deferred updates first
+        if (lpt_hooks[LIVES_GUI_HOOK]->stack) {
+          pthread_mutex_lock(&mainw->all_hstacks_mutex);
+          mainw->all_hstacks =
+            lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
+          pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+          lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
+        }
       }
+      // trigger gui loop update
+      mainw->do_ctx_update = TRUE;
+      lives_nanosleep_while_true(mainw->do_ctx_update);
+      return TRUE;
     }
-    // trigger gui loop update
-    mainw->do_ctx_update = TRUE;
-    lives_nanosleep_while_true(mainw->do_ctx_update);
-    return TRUE;
   }
   do_some_things();
   ret = _lives_widget_context_update();

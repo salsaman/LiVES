@@ -73,6 +73,8 @@ void init_random(void);
 void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
 
+void show_nrcalls(void);
+
 uint64_t fastrand(void) LIVES_HOT;
 void fastrand_add(uint64_t entropy);
 double fastrand_dbl(double range);
@@ -133,7 +135,7 @@ char *get_current_timestamp(void);
 
 // sleep for 1usec (lives_micro_sleep_...)
 #define lives_Xnanosleep_until_nonzero(condition) \
-  {while (!(condition))lives_microleep;}
+  {while (!(condition))lives_microsleep;}
 
 // sleep for 1msec (should really be lives_millisleep_)
 #define lives_nanosleep_until_nonzero(condition)		\
@@ -142,10 +144,13 @@ char *get_current_timestamp(void);
 #define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
 #define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
 
-#define lives_microsleep_until_nonzero_timeout(condition, timeout)	\
-  {while(!(condition) && timeout--)lives_microsleep;}
-#define lives_millisleep_until_nonzero_timeout(condition, timeout)	\
-  {while(!(condition) && timeout--)lives_millisleep;}
+/* #define lives_microsleep_until_nonzero_timeout(p_err, condition, timeout) do { \ */
+/*     uint64_t tmout = timeout; {while(!(condition) && tmout--)lives_microsleep;}	\ */
+/*     if (p_err != NULL) *p_err = (condition);} while (0); */
+
+/* #define lives_millisleep_until_nonzero_timeout(p_err, condition, timeout) do { \ */
+/*     uint64_t tmout = timeout; while(!(condition) && tmout--)lives_millisleep; \ */
+/*     if (p_err != NULL) *p_err = (condition);} while (0); */
 
 int check_dev_busy(char *devstr);
 

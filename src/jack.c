@@ -535,10 +535,10 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
     tstamp = get_current_timestamp();
     if (!textwindow) tstwin = NULL;
     if (tstwin) {
-      lives_proc_thread_t lpt = THREADVAR(proc_thread);
+      GET_PROC_THREAD_SELF(self);
       char *logmsg;
       uint64_t ostate = 0;
-      if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+      if (self) ostate = lives_proc_thread_include_states(self, THRD_STATE_BUSY);
       if (*errmsg == '#') logmsg = lives_strdup(errmsg + 1);
       else logmsg = lives_strdup_printf("%s:%s %s\n", tstamp, isjack, errmsg);
       if (!widget_opts.use_markup) {
@@ -554,7 +554,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
         lives_nanosleep(LIVES_SHORT_SLEEP);
       }
       lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
-      if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+      if (self && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
     } else {
       if (*errmsg == '#') {
         lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s\n", errmsg + 1);
@@ -568,11 +568,11 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
 
 
 static void add_test_textwin(jack_driver_t *jackd) {
+  GET_PROC_THREAD_SELF(self);
   char *logmsg;
-  lives_proc_thread_t lpt = THREADVAR(proc_thread);
   char *title = lives_strdup(_("Jack configuration test"));
   uint64_t ostate = 0;
-  if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+  if (self) ostate = lives_proc_thread_include_states(self, THRD_STATE_BUSY);
   textbuf = lives_text_buffer_new();
   tstwin = create_text_window(title, NULL, textbuf, FALSE);
   lives_free(title);
@@ -592,7 +592,7 @@ static void add_test_textwin(jack_driver_t *jackd) {
   ts_running = as_running = NULL;
   twins = as_started = ts_started = FALSE;
   jackserver = NULL;
-  if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+  if (self && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
 }
 
 
@@ -1276,7 +1276,7 @@ static void finish_test(jack_driver_t *jackd, boolean success, boolean is_trans,
 // -- resolutions: on fatal error, restore previous (working). abort
 // --              on less sever errors, allow choice of reverting settings or altering current ones
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd) {
-  lives_proc_thread_t lpt = THREADVAR(proc_thread);
+  GET_PROC_THREAD_SELF(self);
   lives_proc_thread_t defer_lpt;
   jack_options_t options = JackNullOption |  JackServerName;
   jack_status_t status;
@@ -1601,7 +1601,7 @@ retry_connect:
     // using a config file. We will run it via fork() and then try to connect
     // for this to work we need to parse the config file and try to extract the server name
     script_tried = TRUE;
-    if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+    if (self) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
     if (is_trans) {
       scrfile = future_prefs->jack_tserver_cfg;
     } else {
@@ -1647,13 +1647,13 @@ retry_connect:
       lives_free(logmsg);
 
       if (!pidchk) {
-        if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+        if (self) lives_proc_thread_include_states(self, THRD_STATE_BUSY);
         if (con_attempts > 1) {
           lives_nanosleep(LIVES_WAIT_A_SEC);
-          if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+          if (self) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
         }
 
-        //if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        //if (self) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
         goto retry_connect;
       }
     } else {
@@ -1743,7 +1743,7 @@ retry_connect:
     if (!lives_strcmp(asname, tsname)) all_equal = TRUE;
     if (is_trans && !all_equal && !prefs->jack_srv_dup) {
       uint64_t ostate = 0;
-      if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+      if (self) ostate = lives_proc_thread_include_states(self, THRD_STATE_BUSY);
       main_thread_execute(get_def_drivers,
                           WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, 4);
       if (!new_driver) {
@@ -1753,8 +1753,8 @@ retry_connect:
           lives_free(logmsg);
           goto ret_failed;
         }
-        if (!lpt) goto ret_failed;
-        if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        if (!self) goto ret_failed;
+        if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
         goto retry_connect;
       }
       future_prefs->jack_tdriver = lives_strdup(jackctl_driver_get_name(new_driver));
@@ -1763,7 +1763,7 @@ retry_connect:
       future_prefs->jack_tslaves = slist;
     } else {
       uint64_t ostate = 0;
-      if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+      if (self) ostate = lives_proc_thread_include_states(self, THRD_STATE_BUSY);
       main_thread_execute(get_def_drivers,
                           WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, is_trans ? 4 : 5);
       if (!new_driver) {
@@ -1773,11 +1773,11 @@ retry_connect:
           lives_free(logmsg);
           goto ret_failed;
         }
-        if (!lpt) goto ret_failed;
-        if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        if (!self) goto ret_failed;
+        if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
         goto retry_connect;
       }
-      if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+      if (self && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
       future_prefs->jack_adriver = lives_strdup_free(future_prefs->jack_adriver, jackctl_driver_get_name(new_driver));
       if (future_prefs->jack_aslaves && future_prefs->jack_aslaves != future_prefs->jack_tslaves)
         lives_list_free(future_prefs->jack_aslaves);
@@ -1833,7 +1833,7 @@ retry_connect:
     needs_sigs = TRUE;
   }
 
-  if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+  if (self) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
 
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -2467,6 +2467,7 @@ static volatile boolean in_ap = FALSE;
 
 static int audio_process(jack_nframes_t nframes, void *arg) {
   // JACK calls this periodically to get the next audio buffer
+  GET_PROC_THREAD_SELF(self);
   float *out_buffer[JACK_MAX_PORTS];
   jack_driver_t *jackd = (jack_driver_t *)arg;
   jack_position_t pos;
@@ -2483,6 +2484,25 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
   int i;
 
   in_ap = TRUE;
+
+  static lives_thread_data_t *tdata = NULL;
+
+  if (!tdata) {
+    tdata = get_thread_data();
+    // pulsed->inst will be our aplayer object instance
+    // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
+    // in the sense that it runs this function, but by being "queued" by an external entity
+    self = jackd->inst;
+
+    tdata->vars.var_proc_thread = self;
+
+    lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
+    lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
+  }
+
+  lives_proc_thread_include_states(self, THRD_STATE_RUNNING);
+  lives_proc_thread_exclude_states(self, THRD_STATE_IDLING);
+
   nch = jackd->num_output_channels;
 
   //#define DEBUG_AJACK
@@ -2490,6 +2510,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
   if (!mainw->is_ready || !jackd || (!LIVES_IS_PLAYING && jackd->is_silent && !jackd->msgq)) {
     in_ap = FALSE;
     reset_buffers = TRUE;
+    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     return 0;
   }
 
@@ -2525,6 +2547,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
         output_silence(0, nframes, jackd, out_buffer);
         jackd->is_silent = TRUE;
       }
+      lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+      lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
       in_ap = FALSE;
       return 0;
     }
@@ -2625,6 +2649,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       float auxmix[2] = {0.5, 0.5};
       mixdown_aux(jackd, out_buffer, auxmix, nframes);
     }
+    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     in_ap = FALSE;
     return 0;
   }
@@ -2634,6 +2660,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       output_silence(0, nframes, jackd, out_buffer);
       jackd->is_silent = TRUE;
     }
+    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     in_ap = FALSE;
     return 0;
   }
@@ -2697,6 +2725,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       output_silence(0, nframes, jackd, out_buffer);
       jackd->is_silent = TRUE;
     }
+    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     in_ap = FALSE;
     return 0;
   }
@@ -2710,6 +2740,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       output_silence(0, nframes, jackd, out_buffer);
       jackd->is_silent = TRUE;
     }
+    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     in_ap = FALSE;
     return 0;
   }
@@ -2727,6 +2759,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
           output_silence(0, nframes, jackd, out_buffer);
           jackd->is_silent = TRUE;
         }
+        lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+        lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
         in_ap = FALSE;
         return 0;
       }
@@ -2752,6 +2786,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       }
       if (mainw->audio_seek_ready) {
         //mainw->xrun_active = TRUE;
+        lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+        lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
         in_ap = FALSE;
         return 0;
       }
@@ -2801,6 +2837,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
         output_silence(0, nframes, jackd, out_buffer);
         jackd->is_silent = TRUE;
       }
+      lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+      lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
       in_ap = FALSE;
       return 0;
     }
@@ -2837,6 +2875,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
             jackd->frames_written += nframes;
           }
           mainw->xrun_active = FALSE;
+          lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+          lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
           in_ap = FALSE;
           return 0;
         }
@@ -2956,6 +2996,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
           }
           output_silence(0, nframes, jackd, out_buffer);
           if (jackd->playing_file >= 0) afile->aseek_pos = jackd->seek_pos;
+          lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+          lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
           in_ap = FALSE;
           return 0;
         } else {
@@ -2977,6 +3019,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
             jackd->seek_pos += (double)(jackd->sample_in_rate / jackd->sample_out_rate)
                                * nframes * xfile->achans * xfile->asampsize / 8;
           }
+          lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+          lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
           in_ap = FALSE;
           return 0;
         }
@@ -3211,6 +3255,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                     rbytes = numFramesToWrite * nch * 2;
                     if (check_zero_buff(rbytes))
                       audio_stream(zero_buff, rbytes, jackd->astream_fd);
+                    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+                    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
                     in_ap = FALSE;
                     return 0;
                   }
@@ -3263,6 +3309,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 xbuf = (unsigned char *)lives_calloc(nbytes, 1);
                 if (!xbuf) {
                   output_silence(0, numFramesToWrite, jackd, out_buffer);
+                  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+                  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
                   in_ap = FALSE;
                   return 0;
                 }
@@ -3343,6 +3391,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
   lives_printerr("done\n");
 #endif
 
+  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
   in_ap = FALSE;
   return 0;
 }
@@ -3535,6 +3585,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   // or a normal file (for voiceovers), or -1 (just listening)
 
   // TODO - get abs_maxvol_heard
+  GET_PROC_THREAD_SELF(self);
   jack_driver_t *jackd = (jack_driver_t *)arg;
   float *in_buffer[jackd->num_input_channels];
   float tval = 0;
@@ -3542,15 +3593,32 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   int nch = jackd->num_input_channels;
   int i;
 
-  lives_hooks_async_join(jackd->inst->hook_stacks[DATA_READY_HOOK]);
+  static lives_thread_data_t *tdata = NULL;
 
-  if (!jackd->in_use) return 0;
+  if (!tdata) {
+    tdata = get_thread_data();
+    // pulsed->inst will be our aplayer object instance
+    // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
+    // in the sense that it runs this function, but by being "queued" by an external entity
+    self = jackd->inst;
 
-  if (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) return 0;
+    tdata->vars.var_proc_thread = self;
 
-  if (mainw->effects_paused) return 0; // pause during record
+    lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
+    lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
+  }
 
-  if (mainw->rec_samples == 0) return 0; // wrote enough already, return until main thread stop
+  lives_proc_thread_include_states(self, THRD_STATE_RUNNING);
+  lives_proc_thread_exclude_states(self, THRD_STATE_IDLING);
+
+  lives_hooks_async_join(NULL, DATA_READY_HOOK);
+
+  if (!jackd->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT)
+      || mainw->effects_paused || mainw->rec_samples == 0) {
+    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    return 0;
+  }
 
   // deal with aux first; we need to be either recording or monitoring it
   if (((prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
@@ -3589,13 +3657,15 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   lives_aplayer_set_data_len(jackd->inst, nframes);
   lives_aplayer_set_data(jackd->inst, (void *)back_buff);
 
-  lives_hooks_trigger(jackd->inst->hook_stacks, DATA_READY_HOOK);
+  lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), DATA_READY_HOOK);
 
   rbytes = nframes * jackd->num_input_channels * 4;
   jackd->seek_pos += rbytes;
 
   if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE)
     mainw->cancelled = CANCEL_KEEP; // we wrote the required #
+  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
 
   return 0;
 }
@@ -3634,7 +3704,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   // - obtain the mointoring thread (THREADVAR(proc_thread)), include the THRD_STATE_BUSY state
   // lives_proc_thread_include_states(). This will have the effect of causing the timout to be continuously reset
   // After return, clear the BUSY state with lives_proc_thread_exclude_states(), which will retstart the timer
-  lives_proc_thread_t lpt;
+  GET_PROC_THREAD_SELF(self);
   char portname[32];
   char *logmsg;
   boolean is_test = FALSE;
@@ -3670,8 +3740,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
     }
   }
 
-  lpt = THREADVAR(proc_thread);
-  if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+  if (self) lives_proc_thread_include_states(self, THRD_STATE_BUSY);
 
   for (int i = 0; i < nch; i++) {
     if (!i) {
@@ -3737,7 +3806,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
 
 boolean jack_create_client_reader(jack_driver_t *jackd) {
   // open a device to read audio from jack
-  lives_proc_thread_t lpt;
+  GET_PROC_THREAD_SELF(self);
   char portname[32];
   int nch = jackd->num_input_channels;
   boolean is_test = FALSE;
@@ -3766,8 +3835,7 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
     if (!res) return FALSE;
   }
 
-  lpt = THREADVAR(proc_thread);
-  if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+  if (self) lives_proc_thread_include_states(self, THRD_STATE_BUSY);
 
   jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
   //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));

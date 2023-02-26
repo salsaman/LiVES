@@ -639,9 +639,11 @@ lives_render_error_t realfx_progress(boolean reset) {
   prefs->pb_quality = PB_QUALITY_BEST;
 
   if (has_video_filters(FALSE) || resize_instance) {
+    weed_layer_t *layers[2];
+    layer = layers[0] = lives_layer_new_for_frame(mainw->current_file, i);
+    layers[1] = NULL;
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
     //THREADVAR(rowstride_alignment_hint) = 4;
-    layer = lives_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "error|missing image %d", i);
@@ -649,7 +651,15 @@ lives_render_error_t realfx_progress(boolean reset) {
       return LIVES_RENDER_WARNING_READ_FRAME;
     }
 
-    layer = on_rte_apply(layer, 0, 0, (weed_timecode_t)frameticks);
+    layer = on_rte_apply(layers, 0, 0, (weed_timecode_t)frameticks);
+
+    for (int i = 0; layers[i]; i++) {
+      if (layers[i] != layer) {
+        check_layer_ready(layers[i]);
+        weed_layer_unref(layers[i]);
+      }
+    }
+    lives_free(layers);
 
     if (!has_video_filters(TRUE) || resize_instance) {
       boolean intimg = FALSE;
@@ -865,13 +875,12 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   weed_timecode_t ntc = tc;
   lives_clip_src_t *dsource = NULL;
 
-  if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
-  blend_file = mainw->files[mainw->blend_file];
+  blend_file = RETURN_VALID_CLIP(mainw->blend_file);
+  if (!blend_file) return NULL;
   if (!IS_NORMAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = 1;
   else {
     if (mainw->blend_file != mainw->last_blend_file) {
       // mainw->last_blend_file is set to -1 on playback start
-      mainw->last_blend_file = mainw->blend_file;
       blend_file->last_frameno = blend_file->frameno;
       blend_tc = tc;
     } else {
@@ -884,7 +893,11 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     }
   }
 
-  mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+  mainw->last_blend_file = mainw->blend_file;
+
+  if (!mainw->blend_layer)
+    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+  else lives_layer_set_frame(mainw->blend_layer, blend_file->frameno);
   if (mainw->blend_file == mainw->playing_file) {
     if (blend_file->clip_type == CLIP_TYPE_FILE) {
       // TODO: should do this through track decoders
@@ -896,6 +909,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     }
     lives_layer_set_source(mainw->blend_layer, dsource);
   }
+  weed_layer_set_invalid(mainw->blend_layer, FALSE);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }
@@ -920,56 +934,35 @@ boolean get_blend_layer(weed_timecode_t tc) {
 
   if (mainw->num_tr_applied && (prefs->tr_self || mainw->blend_file != mainw->playing_file) &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
-    weed_layer_set_invalid(mainw->blend_layer, FALSE);
+    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, 0);
     get_blend_layer_inner(tc);
   }
   return TRUE;
 }
 
 
-weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
-  // apply realtime effects to a layer
-  // mainw->filter_map is used as a guide
+weed_plant_t *on_rte_apply(weed_layer_t **layers, int opwidth, int opheight, weed_timecode_t tc) {
+  // apply realtime effects to an array (stack) of layers, with the array in "track" order
+  // (from map_sources_to_tracks() for playback, from render_events() for tendering
+  // mainw->filter_map is used as a guide showing which filter instances are active
   // mainw->pchains holds the parameter values for interpolation
-  // creates a temporary mix layer from mainw->blend_file (correcting its value if necessary)
 
-  // returns the effected layer
-
-  weed_plant_t **layers, *retlayer;
+  // returns the effected layer (this is always layer[0], for now)
 
   if (mainw->foreign) return NULL;
-
-  layers = (weed_plant_t **)lives_malloc(3 * sizeof(weed_plant_t *));
-  layers[0] = layer;
-  if (mainw->num_tracks > 1) {
-    layers[1] = mainw->blend_layer;
-    layers[2] = NULL;
-  } else layers[1] = layers[2] = NULL;
 
   if (resize_instance) {
     lives_filter_error_t ret;
     weed_plant_t *init_event = weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
     weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
-
     (void)(ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc));
-
-    retlayer = layers[0];
     weed_plant_free(init_event);
   } else {
-    retlayer = weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains);
-    if (!retlayer) retlayer = layers[0];
+    weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains);
   }
 
-  // all our pixel_data should have been free'd already
-  for (int i = 0; layers[i]; i++) {
-    if (layers[i] != retlayer) {
-      check_layer_ready(layers[i]);
-      weed_layer_unref(layers[i]);
-    }
-  }
-  lives_free(layers);
-  return retlayer;
+  return layers[0];
 }
 
 
@@ -1279,6 +1272,9 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * acc, LiVESWidgetObject * o, uint32
 
   mainw->new_blend_file = mainw->playing_file;
   mainw->new_clip = mainw->blend_file;
+
+  mainw->active_track_list[0] = mainw->new_clip;
+  mainw->active_track_list[1] = mainw->new_blend_file;
 
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))

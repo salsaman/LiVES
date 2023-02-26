@@ -19,7 +19,6 @@ typedef int64_t ssize64_t;
 #define AFORM_UNKNOWN 65536
 
 typedef struct {
-  int rec_type;
   int clipno;
   int fd;
   ssize_t rec_samples;
@@ -28,28 +27,28 @@ typedef struct {
 
 #define LIVES_LEAF_AUDIO_SOURCE "audio_source"
 
-lives_object_instance_t *get_aplayer_instance(int source);
+lives_obj_instance_t *get_aplayer_instance(int source);
 
-int lives_aplayer_get_source(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_source(lives_object_t *aplayer, int source);
-int lives_aplayer_get_arate(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_arate(lives_object_t *aplayer, int arate);
-int lives_aplayer_get_achans(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_achans(lives_object_t *aplayer, int achans);
-int lives_aplayer_get_sampsize(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_sampsize(lives_object_t *aplayer, int asamps);
-boolean lives_aplayer_get_signed(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_signed(lives_object_t *aplayer, boolean asigned);
-int lives_aplayer_get_endian(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_endian(lives_object_t *aplayer, int aendian);
-boolean lives_aplayer_get_float(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_float(lives_object_t *aplayer, boolean is_float);
-int64_t lives_aplayer_get_data_len(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_data_len(lives_object_t *aplayer, int64_t alength);
-boolean lives_aplayer_get_interleaved(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_interleaved(lives_object_t *aplayer, boolean ainter);
-void *lives_aplayer_get_data(lives_object_t *aplayer);
-weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
+int lives_aplayer_get_source(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source);
+int lives_aplayer_get_arate(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_arate(lives_obj_t *aplayer, int arate);
+int lives_aplayer_get_achans(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_achans(lives_obj_t *aplayer, int achans);
+int lives_aplayer_get_sampsize(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_sampsize(lives_obj_t *aplayer, int asamps);
+boolean lives_aplayer_get_signed(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_signed(lives_obj_t *aplayer, boolean asigned);
+int lives_aplayer_get_endian(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_endian(lives_obj_t *aplayer, int aendian);
+boolean lives_aplayer_get_float(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float);
+int64_t lives_aplayer_get_data_len(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int64_t alength);
+boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter);
+void *lives_aplayer_get_data(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
 
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
@@ -66,7 +65,7 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
 
 #ifdef ENABLE_JACK
 #define IF_APLAYER_JACK(code) \
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) { \
+  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) { \
     do {code;} while(0);}
 #else
 #define IF_APLAYER_JACK(code) if (0);
@@ -325,7 +324,9 @@ void pulse_rec_audio_to_clip(int fileno, int oldfileno,
 void pulse_rec_audio_end(boolean close_fd);
 #endif
 
-void start_audio_rec(void);
+lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer);
+
+boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets);
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list,
                        weed_plant_t *st_event, boolean exact);

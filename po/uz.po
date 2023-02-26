@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-02-13 20:27-0300\n"
+"POT-Creation-Date: 2023-02-26 13:32-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Uzbek <uz@li.org>\n"
@@ -95,12 +95,12 @@ msgstr ""
 msgid "Preserving set.\n"
 msgstr "Йиғилганларни сақлаш\n"
 
-#: src/startup.c:343 src/startup.c:2312
+#: src/startup.c:340 src/startup.c:2321
 #, fuzzy
 msgid "working directory"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:520
+#: src/startup.c:521
 msgid ""
 "\n"
 "Perl must be installed and in your path.\n"
@@ -111,7 +111,7 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/startup.c:526
+#: src/startup.c:527
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -120,7 +120,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/startup.c:532
+#: src/startup.c:533
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -131,7 +131,7 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/startup.c:539
+#: src/startup.c:540
 #, c-format
 msgid ""
 "\n"
@@ -141,7 +141,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/startup.c:548
+#: src/startup.c:549
 #, c-format
 msgid ""
 "\n"
@@ -152,7 +152,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/startup.c:560
+#: src/startup.c:561
 msgid ""
 "Please try restarting lives with the -workdir <path_to_workdir> commandline "
 "option\n"
@@ -161,7 +161,7 @@ msgid ""
 "Directories"
 msgstr ""
 
-#: src/startup.c:565
+#: src/startup.c:566
 #, c-format
 msgid ""
 "\n"
@@ -171,7 +171,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/startup.c:571
+#: src/startup.c:572
 #, c-format
 msgid ""
 "\n"
@@ -180,63 +180,63 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/startup.c:581
+#: src/startup.c:582
 msgid "Any"
 msgstr "Исталган"
 
 #. TRANSLATORS: text saying "Default", (as in "*Default* value")
-#: src/startup.c:583
+#: src/startup.c:584
 msgid "Default"
 msgstr ""
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/startup.c:585
+#: src/startup.c:586
 msgid "None"
 msgstr "Йўқ"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/startup.c:587
+#: src/startup.c:588
 msgid "recommended"
 msgstr "тавсия қилинди"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/startup.c:589
+#: src/startup.c:590
 msgid "disabled !"
 msgstr "ўчирилди !"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/startup.c:591
+#: src/startup.c:592
 msgid "**The current layout**"
 msgstr "**Жорий қатлам**"
 
 #. TRANSLATORS: adjective for "Built in" type effects
-#: src/startup.c:593
+#: src/startup.c:594
 msgid "Builtin"
 msgstr ""
 
 #. TRANSLATORS: adjective for "Custom" type effects
-#: src/startup.c:595
+#: src/startup.c:596
 msgid "Custom"
 msgstr "Бошқа"
 
 #. TRANSLATORS: adjective for "Test" type effects
-#: src/startup.c:597
+#: src/startup.c:598
 msgid "Test"
 msgstr "Синаш"
 
-#: src/startup.c:909
+#: src/startup.c:910
 #, fuzzy
 msgid "Starting...\n"
 msgstr "Сўниш"
 
-#: src/startup.c:1189
+#: src/startup.c:1190
 #, c-format
 msgid ""
 "\n"
 "Startup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"
 msgstr ""
 
-#: src/startup.c:1191
+#: src/startup.c:1192
 #, c-format
 msgid ""
 "\n"
@@ -248,180 +248,180 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/startup.c:1195
+#: src/startup.c:1196
 msgid ""
 "filename is the name of a media file or backup file to import at startup\n"
 msgstr ""
 
-#: src/startup.c:1196
+#: src/startup.c:1197
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 
-#: src/startup.c:1197
+#: src/startup.c:1198
 msgid "frames : maximum number of frames to open\n"
 msgstr ""
 
-#: src/startup.c:1199
+#: src/startup.c:1200
 msgid "OPTS can be:\n"
 msgstr ""
 
-#: src/startup.c:1200
+#: src/startup.c:1201
 msgid "-help | --help \t\t\t: print this help text on stderr and exit\n"
 msgstr ""
 
-#: src/startup.c:1201
+#: src/startup.c:1202
 msgid "-version | --version\t\t: print the LiVES version on stderr and exit\n"
 msgstr ""
 
-#: src/startup.c:1202
+#: src/startup.c:1203
 msgid ""
 "-workdir <workdir>\t\t: specify the working directory for the session, "
 "overriding any value set in preferences\n"
 msgstr ""
 
-#: src/startup.c:1204
+#: src/startup.c:1205
 msgid "\t\t\t\t\t(disables any disk quota checking)\n"
 msgstr ""
 
-#: src/startup.c:1205
+#: src/startup.c:1206
 msgid ""
 "-configfile <path_to_file>\t: override the default configuration file for "
 "the session\n"
 msgstr ""
 
-#: src/startup.c:1207
+#: src/startup.c:1208
 #, c-format
 msgid "\t\t\t\t\t(default is %s)\n"
 msgstr ""
 
-#: src/startup.c:1211
+#: src/startup.c:1212
 msgid ""
 "-configdatadir <dir>\t\t: override the default configuration data directory "
 "for the session\n"
 msgstr ""
 
-#: src/startup.c:1212
+#: src/startup.c:1213
 #, c-format
 msgid "\t\t\t\t\t(default is %s\n"
 msgstr ""
 
-#: src/startup.c:1216
+#: src/startup.c:1217
 msgid ""
 "-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level "
 "for workdir to <bytes>\n"
 msgstr ""
 
-#: src/startup.c:1217
+#: src/startup.c:1218
 msgid ""
 "\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
 "<= 0 disables checks)\n"
 msgstr ""
 
-#: src/startup.c:1219
+#: src/startup.c:1220
 msgid "-set <setname>\t\t\t: autoload clip set <setname>\n"
 msgstr ""
 
-#: src/startup.c:1220
+#: src/startup.c:1221
 msgid ""
 "-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"
 msgstr ""
 
-#: src/startup.c:1221
+#: src/startup.c:1222
 msgid ""
 "-layout <layout_name>\t\t: autoload multitrack layout <layout_name> (if "
 "successful, overrides -startup-ce)\n"
 msgstr ""
 
-#: src/startup.c:1223
+#: src/startup.c:1224
 msgid ""
 "-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -"
 "layout)\n"
 msgstr ""
 
-#: src/startup.c:1225
+#: src/startup.c:1226
 msgid ""
 "-norecover | -noautorecover\t: inhibits loading of crash recovery files "
 "(overrides -recover / -autorecover)\n"
 msgstr ""
 
-#: src/startup.c:1227
+#: src/startup.c:1228
 msgid ""
 "-recover | -autorecover\t\t: force reloading of any crash recovery files "
 "(may override -noset and -nolayout)\n"
 msgstr ""
 
-#: src/startup.c:1228
+#: src/startup.c:1229
 msgid ""
 "-nogui\t\t\t\t: do not show the gui (still shows the play window when "
 "active)\n"
 msgstr ""
 
-#: src/startup.c:1229
+#: src/startup.c:1230
 msgid "-nosplash\t\t\t: do not show the splash window\n"
 msgstr ""
 
-#: src/startup.c:1231
+#: src/startup.c:1232
 msgid ""
 "-noplaywin\t\t\t: do not show the play window (still shows the internal "
 "player; intended for remote streaming)\n"
 msgstr ""
 
-#: src/startup.c:1233
+#: src/startup.c:1234
 msgid ""
 "-noninteractive\t\t\t: disable menu interactivity (intended for scripting "
 "applications, e.g liblives)\n"
 msgstr ""
 
-#: src/startup.c:1234
+#: src/startup.c:1235
 msgid "-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"
 msgstr ""
 
-#: src/startup.c:1235
+#: src/startup.c:1236
 msgid "-startup-mt\t\t\t: start in multitrack mode\n"
 msgstr ""
 
-#: src/startup.c:1236
+#: src/startup.c:1237
 msgid ""
 "-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover -"
 "nolayout -asource external)\n"
 msgstr ""
 
-#: src/startup.c:1239
+#: src/startup.c:1240
 #, c-format
 msgid ""
 "-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value "
 "set in preferences); range 1 - %x)\n"
 msgstr ""
 
-#: src/startup.c:1242
+#: src/startup.c:1243
 #, c-format
 msgid ""
 "-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"
 msgstr ""
 
-#: src/startup.c:1244
+#: src/startup.c:1245
 msgid ""
 "-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in "
 "preferences)\n"
 msgstr ""
 
-#: src/startup.c:1247
+#: src/startup.c:1248
 msgid ""
 "-asource <source>\t\t: set the initial audio source (<source> can be "
 "'internal' or 'external')\n"
 msgstr ""
 
-#: src/startup.c:1248
+#: src/startup.c:1249
 #, fuzzy, c-format
 msgid "\t\t\t\t\t(only valid for %s and %s players)\n"
 msgstr "                                                            "
 
-#: src/startup.c:1249
+#: src/startup.c:1250
 msgid ""
 "-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "
 msgstr ""
 
-#: src/startup.c:1260
+#: src/startup.c:1261
 msgid ""
 "\n"
 "-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options\n"
@@ -436,13 +436,13 @@ msgid ""
 "\t\t\t\t\t\t\t\tif it fails to connect,\n"
 msgstr ""
 
-#: src/startup.c:1269
+#: src/startup.c:1270
 msgid ""
 "-jackserver <server_name>\t: temporarily sets the jackd server for all "
 "connection / startup attemps\n"
 msgstr ""
 
-#: src/startup.c:1270
+#: src/startup.c:1271
 #, c-format
 msgid ""
 "\t\t\t\t\tif <server_name> is ommitted then LiVES will use the default "
@@ -452,55 +452,55 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/startup.c:1274
+#: src/startup.c:1275
 msgid ""
 "-jackscript <script_file>\t: temporarily sets the path to the jack script "
 "file to run if a connection attempt fails\n"
 msgstr ""
 
-#: src/startup.c:1276
+#: src/startup.c:1277
 #, c-format
 msgid ""
 "\t\t\t\t\tE.g: -jackscript %s\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1282
+#: src/startup.c:1283
 msgid " or "
 msgstr ""
 
-#: src/startup.c:1286
+#: src/startup.c:1287
 msgid ""
 "-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick "
 "control)\n"
 msgstr ""
 
-#: src/startup.c:1287
+#: src/startup.c:1288
 msgid ""
 "-vppdefaults <file>\t\t: load defaults for video playback plugin from "
 "<file>\n"
 "\t\t\t\t\t(Note: only affects the plugin settings, not the plugin type)\n"
 msgstr ""
 
-#: src/startup.c:1290
+#: src/startup.c:1291
 msgid "-yuvin <fifo>\t\t\t: autoplay yuv4mpeg from stream <fifo> on startup\n"
 msgstr ""
 
-#: src/startup.c:1291
+#: src/startup.c:1292
 #, fuzzy
 msgid "\t\t\t\t\t(only valid in clip edit startup mode)\n"
 msgstr "                                                            "
 
-#: src/startup.c:1293
+#: src/startup.c:1294
 msgid "-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"
 msgstr ""
 
-#: src/startup.c:1601 src/gui.c:1280
+#: src/startup.c:1604 src/gui.c:1280
 #, fuzzy
 msgid "Starting GUI..."
 msgstr "Сўниш"
 
-#: src/startup.c:1629
+#: src/startup.c:1632
 #, c-format
 msgid ""
 "\n"
@@ -510,40 +510,40 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/startup.c:1656
+#: src/startup.c:1659
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. You may wish to "
 "install one of these to use LiVES more fully.\n"
 msgstr ""
 
-#: src/startup.c:1662
+#: src/startup.c:1665
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
 
-#: src/startup.c:1669
+#: src/startup.c:1672
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 
-#: src/startup.c:1676
+#: src/startup.c:1679
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/startup.c:1830
+#: src/startup.c:1833
 #, c-format
 msgid "Autoloading set %s..."
 msgstr ""
 
-#: src/startup.c:1892
+#: src/startup.c:1895
 #, c-format
 msgid ""
 "\n"
@@ -551,182 +551,182 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: localised name may be used here
-#: src/startup.c:2100
+#: src/startup.c:2109
 msgid "LiVES"
 msgstr ""
 
-#: src/startup.c:2288
+#: src/startup.c:2297
 #, c-format
 msgid "Invalid option %s on commandline\n"
 msgstr ""
 
-#: src/startup.c:2348
+#: src/startup.c:2357
 #, fuzzy
 msgid "plugins lib directory"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:2379
+#: src/startup.c:2388
 #, fuzzy
 msgid "config data directory"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:2402
+#: src/startup.c:2411
 #, fuzzy
 msgid "configuration file"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:2447
+#: src/startup.c:2456
 msgid "Must have mjpegtools installed for -yuvin to work"
 msgstr ""
 
-#: src/startup.c:2490
+#: src/startup.c:2499
 msgid "Abort and retry or continue ?"
 msgstr ""
 
-#: src/startup.c:2610
+#: src/startup.c:2619
 #, c-format
 msgid "Invalid audio player %s"
 msgstr ""
 
-#: src/startup.c:2629
+#: src/startup.c:2638
 msgid "external"
 msgstr ""
 
-#: src/startup.c:2632
+#: src/startup.c:2641
 msgid "internal"
 msgstr ""
 
-#: src/startup.c:2633
+#: src/startup.c:2642
 #, c-format
 msgid "Invalid audio source %s\n"
 msgstr ""
 
-#: src/startup.c:3094
+#: src/startup.c:3105
 #, fuzzy
 msgid "Foreground"
 msgstr "Сўниш"
 
-#: src/startup.c:3095
+#: src/startup.c:3106
 #, fuzzy
 msgid "Background"
 msgstr "Сўниш"
 
-#: src/startup.c:3626
+#: src/startup.c:3637
 msgid "Loading realtime effect plugins..."
 msgstr "Реал вақт эффект плагинлари юкланмоқда..."
 
-#: src/startup.c:3646
+#: src/startup.c:3657
 #, c-format
 msgid "System default transition (%s from package %s by %s) not found."
 msgstr ""
 
-#: src/startup.c:3662
+#: src/startup.c:3673
 #, c-format
 msgid "User default transition (%s from package %s by %s) not found."
 msgstr ""
 
-#: src/startup.c:3717
+#: src/startup.c:3728
 #, fuzzy
 msgid "Connecting to jack transport server..."
 msgstr "Jack транспорт серверига уланмоқда..."
 
-#: src/startup.c:3805
+#: src/startup.c:3816
 #, fuzzy
 msgid "Connecting to jack audio server..."
 msgstr "Jack транспорт серверига уланмоқда..."
 
-#: src/startup.c:3990
+#: src/startup.c:4001
 #, fuzzy
 msgid "Starting pulseaudio server..."
 msgstr "Аудио сервер пульси ишга туширилмоқда..."
 
-#: src/startup.c:4079
+#: src/startup.c:4090
 #, fuzzy, c-format
 msgid "%s...detected... "
 msgstr "mplayer...аниқланди..."
 
-#: src/startup.c:4080
+#: src/startup.c:4091
 #, fuzzy, c-format
 msgid "%s...NOT DETECTED... "
 msgstr "mplayer...АНИҚЛАНМАДИ..."
 
-#: src/startup.c:4095
+#: src/startup.c:4106
 msgid "Starting in VJ MODE: Skipping most startup checks\n"
 msgstr ""
 
-#: src/startup.c:4105
+#: src/startup.c:4116
 msgid ""
 "\n"
 "Machine details:\n"
 msgstr ""
 
-#: src/startup.c:4107
+#: src/startup.c:4118
 #, fuzzy, c-format
 msgid "OS is %s %s, running on %s\n"
 msgstr "%s очилмоқда"
 
-#: src/startup.c:4108 src/dialogs.c:1217 src/effects.c:120 src/plugins.c:2974
-#: src/plugins.c:2988
+#: src/startup.c:4119 src/dialogs.c:1217 src/effects.c:120 src/plugins.c:2968
+#: src/plugins.c:2982
 msgid "unknown"
 msgstr "номаълум"
 
-#: src/startup.c:4113
+#: src/startup.c:4124
 #, c-format
 msgid " (VendorID: %s)"
 msgstr ""
 
-#: src/startup.c:4116
+#: src/startup.c:4127
 #, c-format
 msgid "CPU type is %s%s"
 msgstr ""
 
-#: src/startup.c:4120 src/multitrack.c:3187
+#: src/startup.c:4131 src/multitrack.c:3187
 msgid "little endian"
 msgstr ""
 
-#: src/startup.c:4121 src/multitrack.c:3186
+#: src/startup.c:4132 src/multitrack.c:3186
 #, fuzzy
 msgid "big endian"
 msgstr "Сўниш"
 
-#: src/startup.c:4122
+#: src/startup.c:4133
 #, c-format
 msgid "%d bits, %s)\n"
 msgstr ""
 
-#: src/startup.c:4126
+#: src/startup.c:4137
 #, fuzzy
 msgid "CPU features detected:"
 msgstr "mplayer...аниқланди..."
 
-#: src/startup.c:4132
+#: src/startup.c:4143
 #, c-format
 msgid "Cacheline size is %d bytes.\n"
 msgstr ""
 
-#: src/startup.c:4135
+#: src/startup.c:4146
 #, c-format
 msgid "Machine name is '%s'\n"
 msgstr ""
 
-#: src/startup.c:4137
+#: src/startup.c:4148
 #, fuzzy, c-format
 msgid "Number of monitors detected: %d: "
 msgstr "мониторлар миқдори аниқланди: %d\n"
 
-#: src/startup.c:4139
+#: src/startup.c:4150
 #, c-format
 msgid ""
 "GUI screen size is %d X %d (usable: %d X %d); %d dpi.\n"
 "Widget scaling has been set to %.3f.\n"
 msgstr ""
 
-#: src/startup.c:4146
+#: src/startup.c:4157
 #, c-format
 msgid "Actual usable size appears to be %d X %d\n"
 msgstr ""
 
-#: src/startup.c:4151
+#: src/startup.c:4162
 #, fuzzy, c-format
 msgid "Window manager reports as \"%s\" (%s)"
 msgstr ""
@@ -734,175 +734,175 @@ msgstr ""
 "\n"
 "Ойна бошқарувчиси \"%s\"сифатида маълумот берди; "
 
-#: src/startup.c:4152
+#: src/startup.c:4163
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/startup.c:4156
+#: src/startup.c:4167
 #, fuzzy, c-format
 msgid ", running on %s"
 msgstr "%s очилмоқда"
 
-#: src/startup.c:4158
+#: src/startup.c:4169
 #, c-format
 msgid "; compositing is %s.\n"
 msgstr ""
 
-#: src/startup.c:4158
+#: src/startup.c:4169
 msgid "supported"
 msgstr ""
 
-#: src/startup.c:4158
+#: src/startup.c:4169
 msgid "not supported"
 msgstr ""
 
-#: src/startup.c:4165
+#: src/startup.c:4176
 #, fuzzy, c-format
 msgid "Distro is %s %s %s\n"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:4169
+#: src/startup.c:4180
 msgid "GUI type is: "
 msgstr ""
 
-#: src/startup.c:4173
+#: src/startup.c:4184
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr ""
 
-#: src/startup.c:4180
+#: src/startup.c:4191
 #, c-format
 msgid "GTK+ (compiled with %d.%d.%d)"
 msgstr ""
 
-#: src/startup.c:4186
+#: src/startup.c:4197
 msgid ", with cairo support\n"
 msgstr ""
 
-#: src/startup.c:4188
+#: src/startup.c:4199
 msgid "\n"
 msgstr ""
 
-#: src/startup.c:4201
+#: src/startup.c:4212
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulseaudio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
 
-#: src/startup.c:4205
+#: src/startup.c:4216
 msgid "Compiled with jack support, good !\n"
 msgstr ""
 
-#: src/startup.c:4208
+#: src/startup.c:4219
 msgid "Compiled with pulseaudio support, wonderful !\n"
 msgstr ""
 
-#: src/startup.c:4213
+#: src/startup.c:4224
 msgid "set via -configfile commandline option"
 msgstr ""
 
-#: src/startup.c:4215
+#: src/startup.c:4226
 #, fuzzy
 msgid "default value"
 msgstr "Jack аудио сервер ишга туширилмоқда..."
 
-#: src/startup.c:4217
+#: src/startup.c:4228
 #, fuzzy, c-format
 msgid ""
 "\n"
 "Config file is %s (%s)\n"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:4222
+#: src/startup.c:4233
 #, c-format
 msgid ", contained in volume %s"
 msgstr ""
 
-#: src/startup.c:4225
+#: src/startup.c:4236
 #, fuzzy, c-format
 msgid ""
 "\n"
 "Working directory is %s%s\n"
 msgstr "Temp директорияси: %s\n"
 
-#: src/startup.c:4229
+#: src/startup.c:4240
 msgid "(Set by -workdir commandline option)\n"
-msgstr ""
-
-#: src/startup.c:4236
-#, c-format
-msgid "(Retrieved from %s, version %s)\n"
-msgstr ""
-
-#: src/startup.c:4238
-msgid "(Set by user during setup phase)\n"
-msgstr ""
-
-#: src/startup.c:4244
-msgid "STARTUP ERROR OCCURRED - FORCED REINSTALL"
 msgstr ""
 
 #: src/startup.c:4247
 #, c-format
-msgid "upgrade from version %s. Welcome !"
+msgid "(Retrieved from %s, version %s)\n"
 msgstr ""
 
 #: src/startup.c:4249
+msgid "(Set by user during setup phase)\n"
+msgstr ""
+
+#: src/startup.c:4255
+msgid "STARTUP ERROR OCCURRED - FORCED REINSTALL"
+msgstr ""
+
+#: src/startup.c:4258
+#, c-format
+msgid "upgrade from version %s. Welcome !"
+msgstr ""
+
+#: src/startup.c:4260
 #, c-format
 msgid "downgrade from version %s !"
 msgstr ""
 
-#: src/startup.c:4254
+#: src/startup.c:4265
 msgid "REINSTALL AFTER FAILED RECOVERY"
 msgstr ""
 
-#: src/startup.c:4257
+#: src/startup.c:4268
 #, c-format
 msgid "%s; check %s for possible errors before re-running LiVES"
 msgstr ""
 
-#: src/startup.c:4264
+#: src/startup.c:4275
 msgid "fresh install. Welcome !"
 msgstr ""
 
-#: src/startup.c:4267
+#: src/startup.c:4278
 msgid "continue with installation"
 msgstr ""
 
-#: src/startup.c:4269
+#: src/startup.c:4280
 #, fuzzy
 msgid "normal startup"
 msgstr "Сўниш"
 
-#: src/startup.c:4270
+#: src/startup.c:4281
 #, c-format
 msgid "Initial startup phase was %d: (%s)\n"
 msgstr ""
 
-#: src/startup.c:4277
+#: src/startup.c:4288
 #, c-format
 msgid "%s WAS POSSIBLY RECOVERED FROM %s.\n"
 msgstr ""
 
-#: src/startup.c:4285
+#: src/startup.c:4296
 msgid ""
 "\n"
 "Checking RECOMMENDED dependencies: "
 msgstr ""
 
-#: src/startup.c:4302
+#: src/startup.c:4313
 msgid ""
 "\n"
 "\n"
 "Checking OPTIONAL dependencies: "
 msgstr ""
 
-#: src/startup.c:4894
+#: src/startup.c:4905
 msgid "Resizing"
 msgstr "Ҳажми ўзгартирилмоқда"
 
-#: src/startup.c:4901
+#: src/startup.c:4912
 #, fuzzy
 msgid "_Resize All Frames..."
 msgstr "Барча кадрларнинг _ҳажмини ўзгартириш"
@@ -1191,7 +1191,7 @@ msgid ""
 "Enabling this option for multiple client types may produce undesired results"
 msgstr ""
 
-#: src/setup.c:941 src/dialogs.c:3026 src/dialogs.c:3036 src/dialogs.c:3039
+#: src/setup.c:941 src/dialogs.c:3027 src/dialogs.c:3037 src/dialogs.c:3040
 #: src/effects.c:101 src/effects.c:104 src/multitrack.c:16884 src/jack.c:444
 #: src/jack.c:694 src/jack.c:727
 #, fuzzy
@@ -1245,7 +1245,7 @@ msgstr ""
 msgid "jack server '%s'"
 msgstr "Jack аудио сервер ишга туширилмоқда..."
 
-#: src/setup.c:1191 src/dialogs.c:3003
+#: src/setup.c:1191 src/dialogs.c:3004
 #, fuzzy
 msgid "the default jack server"
 msgstr "Jack аудио сервер ишга туширилмоқда..."
@@ -1599,7 +1599,7 @@ msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 
-#: src/setup.c:2503 src/videodev.c:779
+#: src/setup.c:2503 src/videodev.c:778
 #, fuzzy
 msgid "Options"
 msgstr "Кодлаш усули"
@@ -1688,9 +1688,9 @@ msgstr ""
 msgid "(No audio)"
 msgstr "Нормаллаштириш"
 
-#: src/interface.c:765 src/callbacks.c:9879 src/callbacks.c:9901
-#: src/callbacks.c:9902 src/gui.c:3666 src/gui.c:4222 src/dialogs.c:1588
-#: src/dialogs.c:1589 src/dialogs.c:1909 src/dialogs.c:1910 src/framedraw.c:321
+#: src/interface.c:765 src/callbacks.c:9889 src/callbacks.c:9911
+#: src/callbacks.c:9912 src/gui.c:3666 src/gui.c:4222 src/dialogs.c:1589
+#: src/dialogs.c:1590 src/dialogs.c:1912 src/dialogs.c:1913 src/framedraw.c:321
 #: src/framedraw.c:384 src/multitrack.c:6024 src/player-control.c:416
 msgid "Preview"
 msgstr "Олдиндан кўриш"
@@ -1744,12 +1744,12 @@ msgstr ""
 msgid "Hide Details"
 msgstr "Oʻtishlar"
 
-#: src/interface.c:1115 src/callbacks.c:9598 src/callbacks.c:9660
+#: src/interface.c:1115 src/callbacks.c:9608 src/callbacks.c:9670
 #, fuzzy
 msgid "Paus_e"
 msgstr "Вақтинча тўхтатиш"
 
-#: src/interface.c:1116 src/callbacks.c:9659
+#: src/interface.c:1116 src/callbacks.c:9669
 msgid "Pause/_Enough"
 msgstr ""
 
@@ -1800,7 +1800,7 @@ msgstr "Ўлчамини ўзгартириш"
 msgid "Total time"
 msgstr ""
 
-#: src/interface.c:1420 src/interface.c:1592 src/callbacks.c:12742
+#: src/interface.c:1420 src/interface.c:1592 src/callbacks.c:12753
 #: src/paramwindow.c:938 src/preferences.c:3953 src/rte_window.c:1709
 #: src/jack.c:584 src/omc-learn.c:1335
 msgid "_Close Window"
@@ -1836,11 +1836,11 @@ msgstr "тавсия қилинди"
 msgid "_Save to file"
 msgstr ""
 
-#: src/interface.c:1632 src/callbacks.c:5617 src/callbacks.c:5677
+#: src/interface.c:1632 src/callbacks.c:5626 src/callbacks.c:5686
 msgid "Show _Log"
 msgstr ""
 
-#: src/interface.c:1632 src/callbacks.c:5617 src/callbacks.c:5677
+#: src/interface.c:1632 src/callbacks.c:5626 src/callbacks.c:5686
 #, fuzzy
 msgid "Hide _Log"
 msgstr "Кодлаш усули"
@@ -3355,7 +3355,7 @@ msgstr ""
 msgid "_Directory to save to: "
 msgstr ""
 
-#: src/interface.c:6194 src/videodev.c:783
+#: src/interface.c:6194 src/videodev.c:782
 #, fuzzy
 msgid "Desired frame size:"
 msgstr "Freymlar"
@@ -4124,7 +4124,7 @@ msgstr ""
 msgid "Restore %s File"
 msgstr ""
 
-#: src/callbacks.c:2263 src/callbacks.c:12428 src/resample.c:1850
+#: src/callbacks.c:2263 src/callbacks.c:12439 src/resample.c:1850
 #, fuzzy
 msgid "Insert Silence"
 msgstr "тиқ"
@@ -4188,7 +4188,7 @@ msgstr "Буриш"
 msgid "Cut"
 msgstr "Кесиш"
 
-#: src/callbacks.c:3240 src/callbacks.c:3688 src/callbacks.c:8005
+#: src/callbacks.c:3240 src/callbacks.c:3688 src/callbacks.c:8010
 #: src/merge.c:477
 #, fuzzy
 msgid "Pulling frames from clipboard..."
@@ -4276,9 +4276,9 @@ msgstr ""
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr ""
 
-#: src/callbacks.c:3864 src/callbacks.c:8365 src/callbacks.c:8418
-#: src/callbacks.c:8630 src/callbacks.c:8667 src/callbacks.c:8708
-#: src/callbacks.c:11575
+#: src/callbacks.c:3864 src/callbacks.c:8370 src/callbacks.c:8423
+#: src/callbacks.c:8635 src/callbacks.c:8672 src/callbacks.c:8713
+#: src/callbacks.c:11586
 #, fuzzy
 msgid "Cancelling"
 msgstr "Бекор қилиш"
@@ -4318,7 +4318,7 @@ msgid ""
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:4344 src/callbacks.c:11662
+#: src/callbacks.c:4344 src/callbacks.c:11673
 #, fuzzy
 msgid "Deletion"
 msgstr "Ўчирилмоқда"
@@ -4407,15 +4407,15 @@ msgstr "Olib tashlash"
 msgid "Move them"
 msgstr "Olib tashlash"
 
-#: src/callbacks.c:5567
+#: src/callbacks.c:5566
 msgid "Analysing Disk"
 msgstr ""
 
-#: src/callbacks.c:5588
+#: src/callbacks.c:5597
 msgid "Disk Analysis Log"
 msgstr ""
 
-#: src/callbacks.c:5595
+#: src/callbacks.c:5604
 #, c-format
 msgid ""
 "\n"
@@ -4423,39 +4423,39 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:5605
+#: src/callbacks.c:5614
 msgid "No items to be removed or recovered were detected.\n"
 msgstr ""
 
-#: src/callbacks.c:5633
+#: src/callbacks.c:5642
 msgid "_Check and Filter Results"
 msgstr ""
 
-#: src/callbacks.c:5634
+#: src/callbacks.c:5643
 msgid "Show Results"
 msgstr ""
 
-#: src/callbacks.c:5660
+#: src/callbacks.c:5669
 #, c-format
 msgid "<big><b>%s</b></big> of disk space was recovered.\n"
 msgstr ""
 
-#: src/callbacks.c:5685
+#: src/callbacks.c:5694
 msgid ""
 "Some files and directories may be removed manually if desired.\n"
 "Click for details:\n"
 msgstr ""
 
-#: src/callbacks.c:5705
+#: src/callbacks.c:5714
 msgid "Show _Remaining Items"
 msgstr ""
 
-#: src/callbacks.c:5705
+#: src/callbacks.c:5714
 #, fuzzy
 msgid "Hide Items"
 msgstr "Oʻtishlar"
 
-#: src/callbacks.c:5760
+#: src/callbacks.c:5769
 msgid ""
 "\n"
 "\n"
@@ -4467,7 +4467,7 @@ msgid ""
 "be removed before continuing.</b>\n"
 msgstr ""
 
-#: src/callbacks.c:5768
+#: src/callbacks.c:5777
 #, c-format
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
@@ -4478,104 +4478,104 @@ msgid ""
 "Click OK to proceed.\n"
 msgstr ""
 
-#: src/callbacks.c:5785
+#: src/callbacks.c:5794
 msgid "Cleaning up disk space..."
 msgstr ""
 
-#: src/callbacks.c:5857
+#: src/callbacks.c:5870
 msgid "Removing general trash"
 msgstr ""
 
-#: src/callbacks.c:6086
+#: src/callbacks.c:6092
 msgid "Clearing Disk"
 msgstr ""
 
-#: src/callbacks.c:6136
+#: src/callbacks.c:6141
 #, fuzzy, c-format
 msgid "removing directory %s..."
 msgstr "Temp директорияси: %s\n"
 
-#: src/callbacks.c:6208
+#: src/callbacks.c:6213
 msgid "Pre-decoding all frames in this clip..."
 msgstr ""
 
-#: src/callbacks.c:6231
+#: src/callbacks.c:6236
 msgid "Resetting frame rates and frame values..."
 msgstr ""
 
-#: src/callbacks.c:6272
+#: src/callbacks.c:6277
 #, c-format
 msgid ""
 "External: %s\n"
 "Internal: %s (%d bpp) / %s"
 msgstr ""
 
-#: src/callbacks.c:6274
+#: src/callbacks.c:6279
 msgid "buffered"
 msgstr ""
 
-#: src/callbacks.c:6285
+#: src/callbacks.c:6290
 #, c-format
 msgid ""
 "\n"
 "decoder: %s"
 msgstr ""
 
-#: src/callbacks.c:6298 src/callbacks.c:6316 src/callbacks.c:6334
-#: src/callbacks.c:6369
+#: src/callbacks.c:6303 src/callbacks.c:6321 src/callbacks.c:6339
+#: src/callbacks.c:6374
 #, fuzzy
 msgid "  Opening..."
 msgstr "%s очилмоқда"
 
-#: src/callbacks.c:6304
+#: src/callbacks.c:6309
 #, c-format
 msgid ""
 "\n"
 "(%d virtual)"
 msgstr ""
 
-#: src/callbacks.c:6307
+#: src/callbacks.c:6312
 #, c-format
 msgid ""
 "\n"
 "(%d decoded)"
 msgstr ""
 
-#: src/callbacks.c:6319 src/callbacks.c:6337 src/callbacks.c:6372
+#: src/callbacks.c:6324 src/callbacks.c:6342 src/callbacks.c:6377
 #: src/multitrack.c:8217
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/callbacks.c:6328
+#: src/callbacks.c:6333
 #, fuzzy
 msgid "  Unknown"
 msgstr "Номаълум"
 
-#: src/callbacks.c:6342 src/callbacks.c:6356
+#: src/callbacks.c:6347 src/callbacks.c:6361
 msgid "unsigned"
 msgstr ""
 
-#: src/callbacks.c:6343 src/callbacks.c:6357
+#: src/callbacks.c:6348 src/callbacks.c:6362
 msgid "signed"
 msgstr ""
 
-#: src/callbacks.c:6345 src/callbacks.c:6359
+#: src/callbacks.c:6350 src/callbacks.c:6364
 msgid "big-endian"
 msgstr ""
 
-#: src/callbacks.c:6346 src/callbacks.c:6360
+#: src/callbacks.c:6351 src/callbacks.c:6365
 msgid "little-endian"
 msgstr ""
 
-#: src/callbacks.c:6348 src/callbacks.c:6362
+#: src/callbacks.c:6353 src/callbacks.c:6367
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
 
-#: src/callbacks.c:6404
+#: src/callbacks.c:6409
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -4592,22 +4592,22 @@ msgid ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 msgstr ""
 
-#: src/callbacks.c:6418
+#: src/callbacks.c:6423
 msgid "A video editor and VJ program."
 msgstr ""
 
-#: src/callbacks.c:6419
+#: src/callbacks.c:6424
 msgid "About LiVES"
 msgstr ""
 
-#: src/callbacks.c:6421
+#: src/callbacks.c:6426
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
 "  Akmal Xushvaqov https://launchpad.net/~uzadmin\n"
 "  Guybrush88 https://launchpad.net/~guybrush"
 
-#: src/callbacks.c:6454
+#: src/callbacks.c:6459
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -4621,7 +4621,7 @@ msgid ""
 "Homepage: %s"
 msgstr ""
 
-#: src/callbacks.c:6666
+#: src/callbacks.c:6671
 #, c-format
 msgid ""
 "\n"
@@ -4629,7 +4629,7 @@ msgid ""
 "You need to install %s, %s or %s to be able to preview this file.\n"
 msgstr ""
 
-#: src/callbacks.c:6669
+#: src/callbacks.c:6674
 #, c-format
 msgid ""
 "\n"
@@ -4638,165 +4638,165 @@ msgid ""
 "file.\n"
 msgstr ""
 
-#: src/callbacks.c:6788
+#: src/callbacks.c:6793
 #, fuzzy
 msgid "Stop Preview"
 msgstr "Олдиндан кўриш"
 
-#: src/callbacks.c:7071
+#: src/callbacks.c:7076
 #, c-format
 msgid ""
 "Text was saved as\n"
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:7236
+#: src/callbacks.c:7241
 msgid "Encoder Debug Output"
 msgstr ""
 
-#: src/callbacks.c:7254 src/gui.c:2143
+#: src/callbacks.c:7259 src/gui.c:2143
 msgid "Fullscreen playback (f)"
 msgstr ""
 
-#: src/callbacks.c:7257
+#: src/callbacks.c:7262
 msgid "Fullscreen playback off (f)"
 msgstr ""
 
-#: src/callbacks.c:7619 src/callbacks.c:7620
+#: src/callbacks.c:7624 src/callbacks.c:7625
 msgid "Hide the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:7624 src/gui.c:1855
+#: src/callbacks.c:7629 src/gui.c:1855
 msgid "Show the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:7625 src/gui.c:2135
+#: src/callbacks.c:7630 src/gui.c:2135
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:7790
+#: src/callbacks.c:7795
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:7793 src/gui.c:1895
+#: src/callbacks.c:7798 src/gui.c:1895
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
-#: src/callbacks.c:7903 src/callbacks.c:7904 src/gui.c:3938
+#: src/callbacks.c:7908 src/callbacks.c:7909 src/gui.c:3938
 msgid "Unmute the audio (z)"
 msgstr ""
 
-#: src/callbacks.c:7933 src/callbacks.c:7934 src/gui.c:1903 src/gui.c:3935
+#: src/callbacks.c:7938 src/callbacks.c:7939 src/gui.c:1903 src/gui.c:3935
 #, fuzzy
 msgid "Mute the audio (z)"
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:8017
+#: src/callbacks.c:8022
 msgid "Reversing clipboard..."
 msgstr ""
 
-#: src/callbacks.c:8030
+#: src/callbacks.c:8035
 msgid "Reversing clipboard"
 msgstr ""
 
-#: src/callbacks.c:8061
+#: src/callbacks.c:8066
 msgid "Load Subtitles"
 msgstr ""
 
-#: src/callbacks.c:8120 src/clip_load_save.c:4300
+#: src/callbacks.c:8125 src/clip_load_save.c:4305
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
 
-#: src/callbacks.c:8180
+#: src/callbacks.c:8185
 msgid "Subtitles were erased.\n"
 msgstr ""
 
-#: src/callbacks.c:8202
+#: src/callbacks.c:8207
 #, fuzzy
 msgid "Select Audio File"
 msgstr "Сўниш"
 
-#: src/callbacks.c:8238 src/callbacks.c:8565
+#: src/callbacks.c:8243 src/callbacks.c:8570
 #, fuzzy
 msgid "Loading new audio"
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:8324
+#: src/callbacks.c:8329
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr ""
 
-#: src/callbacks.c:8357 src/clip_load_save.c:3818
+#: src/callbacks.c:8362 src/clip_load_save.c:3823
 #, fuzzy
 msgid "Opening audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:8470 src/callbacks.c:8749 src/callbacks.c:11614
-#: src/callbacks.c:12208
+#: src/callbacks.c:8475 src/callbacks.c:8754 src/callbacks.c:11625
+#: src/callbacks.c:12219
 #, fuzzy
 msgid "Committing audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:8486 src/callbacks.c:8773
+#: src/callbacks.c:8491 src/callbacks.c:8778
 #, fuzzy
 msgid "New Audio"
 msgstr "Аудио"
 
-#: src/callbacks.c:8574
+#: src/callbacks.c:8579
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr ""
 
-#: src/callbacks.c:8577
+#: src/callbacks.c:8582
 #, c-format
 msgid "CD track %d"
 msgstr ""
 
-#: src/callbacks.c:8618
+#: src/callbacks.c:8623
 #, fuzzy
 msgid "Opening CD track..."
 msgstr "%s очилмоқда"
 
-#: src/callbacks.c:8655 src/callbacks.c:8698
+#: src/callbacks.c:8660 src/callbacks.c:8703
 msgid "Error loading CD track\n"
 msgstr ""
 
-#: src/callbacks.c:9590 src/callbacks.c:9612
+#: src/callbacks.c:9600 src/callbacks.c:9622
 msgid "Resume"
 msgstr "Давом этиш"
 
-#: src/callbacks.c:9591
+#: src/callbacks.c:9601
 msgid ""
 "\n"
 "Paused\n"
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:9592 src/callbacks.c:9643
+#: src/callbacks.c:9602 src/callbacks.c:9653
 msgid "paused..."
 msgstr ""
 
-#: src/callbacks.c:9599 src/callbacks.c:9664
+#: src/callbacks.c:9609 src/callbacks.c:9674
 msgid ""
 "\n"
 "Please Wait"
 msgstr ""
 
-#: src/callbacks.c:9600 src/callbacks.c:9665
+#: src/callbacks.c:9610 src/callbacks.c:9675
 #, fuzzy
 msgid "resumed..."
 msgstr "Давом этиш"
 
-#: src/callbacks.c:9617
+#: src/callbacks.c:9627
 msgid "Keep"
 msgstr "Шундай қолдириш"
 
-#: src/callbacks.c:9619
+#: src/callbacks.c:9629
 msgid "Enough"
 msgstr ""
 
-#: src/callbacks.c:9626
+#: src/callbacks.c:9636
 #, c-format
 msgid ""
 "\n"
@@ -4805,16 +4805,16 @@ msgid ""
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:9661
+#: src/callbacks.c:9671
 msgid "Cancel"
 msgstr "Бекор қилиш"
 
-#: src/callbacks.c:9816
+#: src/callbacks.c:9826
 #, fuzzy
 msgid "Stop"
 msgstr "_Тўхтатиш"
 
-#: src/callbacks.c:9942
+#: src/callbacks.c:9952
 msgid ""
 "VJ Mode is specifically designed to make LiVES ready for realtime "
 "presentation.\n"
@@ -4845,22 +4845,22 @@ msgid ""
 " - Continuous looping of video will be enabled automatically on startup"
 msgstr ""
 
-#: src/callbacks.c:10413 src/multitrack.c:11448
+#: src/callbacks.c:10423 src/multitrack.c:11448
 #, fuzzy
 msgid "Selected Frame"
 msgstr "Сўниш"
 
-#: src/callbacks.c:10421
+#: src/callbacks.c:10431
 #, fuzzy
 msgid "_Save Frame as..."
 msgstr "Сўниш"
 
-#: src/callbacks.c:10838
+#: src/callbacks.c:10849
 #, c-format
 msgid "Playing frame %d / %d, at fps %.3f\n"
 msgstr ""
 
-#: src/callbacks.c:10993
+#: src/callbacks.c:11004
 msgid ""
 "\n"
 "\n"
@@ -4869,7 +4869,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10999
+#: src/callbacks.c:11010
 msgid ""
 "\n"
 "\n"
@@ -4877,13 +4877,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:11073 src/callbacks.c:12125
+#: src/callbacks.c:11084 src/callbacks.c:12136
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
 msgstr ""
 
-#: src/callbacks.c:11089
+#: src/callbacks.c:11100
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -4892,11 +4892,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:11095
+#: src/callbacks.c:11106
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:11138
+#: src/callbacks.c:11149
 msgid ""
 "Click on any desktop window to capture it\n"
 "When a blank LiVES window appears behind it, then it is being recorded.\n"
@@ -4905,7 +4905,7 @@ msgid ""
 "and press the 'q' key.</big></b>\n"
 msgstr ""
 
-#: src/callbacks.c:11178
+#: src/callbacks.c:11189
 #, c-format
 msgid ""
 "\n"
@@ -4915,197 +4915,197 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:11205
+#: src/callbacks.c:11216
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 
-#: src/callbacks.c:11355
+#: src/callbacks.c:11366
 #, fuzzy
 msgid "Export Selected Audio as..."
 msgstr "_Тескарисига танлаш"
 
-#: src/callbacks.c:11358
+#: src/callbacks.c:11369
 msgid "Export Audio as..."
 msgstr ""
 
-#: src/callbacks.c:11371
+#: src/callbacks.c:11382
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr ""
 
-#: src/callbacks.c:11375
+#: src/callbacks.c:11386
 #, fuzzy, c-format
 msgid "Exporting audio as %s..."
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11396
+#: src/callbacks.c:11407
 #, fuzzy
 msgid "Exporting audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:11417
+#: src/callbacks.c:11428
 #, fuzzy
 msgid "Normalising audio..."
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11420
+#: src/callbacks.c:11431
 #, fuzzy
 msgid "Normalizing audio..."
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11460
+#: src/callbacks.c:11471
 #, fuzzy
 msgid "Normalise audio"
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11494
+#: src/callbacks.c:11505
 #, fuzzy
 msgid "Append Audio File"
 msgstr "Сўниш"
 
-#: src/callbacks.c:11549
+#: src/callbacks.c:11560
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:11566
+#: src/callbacks.c:11577
 #, fuzzy
 msgid "Appending audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:11630
+#: src/callbacks.c:11641
 #, fuzzy
 msgid "Append Audio"
 msgstr "Сўниш"
 
-#: src/callbacks.c:11672
+#: src/callbacks.c:11683
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11674
+#: src/callbacks.c:11685
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11695
+#: src/callbacks.c:11706
 #, fuzzy
 msgid "Trimming/Padding audio"
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11705
+#: src/callbacks.c:11716
 #, fuzzy
 msgid "Trim/Pad Audio"
 msgstr "Видео"
 
-#: src/callbacks.c:11777
+#: src/callbacks.c:11788
 #, fuzzy
 msgid "Fading audio in"
 msgstr "Сўниш"
 
-#: src/callbacks.c:11778
+#: src/callbacks.c:11789
 #, fuzzy
 msgid "Fade audio in"
 msgstr "Сўниш"
 
-#: src/callbacks.c:11782
+#: src/callbacks.c:11793
 #, fuzzy
 msgid "Fading audio out"
 msgstr "Сўниш"
 
-#: src/callbacks.c:11783
+#: src/callbacks.c:11794
 #, fuzzy
 msgid "Fade audio out"
 msgstr "Сўниш"
 
-#: src/callbacks.c:11795
+#: src/callbacks.c:11806
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11797
+#: src/callbacks.c:11808
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11804
+#: src/callbacks.c:11815
 #, fuzzy
 msgid "Fading audio..."
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11874
+#: src/callbacks.c:11885
 #, fuzzy
 msgid "Deleting all audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:11883
+#: src/callbacks.c:11894
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:11887
+#: src/callbacks.c:11898
 #, fuzzy
 msgid "Deleting all audio..."
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:11898
+#: src/callbacks.c:11909
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11902
+#: src/callbacks.c:11913
 #, fuzzy
 msgid "Deleting audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:11940
+#: src/callbacks.c:11951
 #, fuzzy
 msgid "Trimming Audio"
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:11941
+#: src/callbacks.c:11952
 #, fuzzy
 msgid "Deleting Audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:11951
+#: src/callbacks.c:11962
 #, fuzzy
 msgid "Trim Audio"
 msgstr "Видео"
 
-#: src/callbacks.c:11952
+#: src/callbacks.c:11963
 #, fuzzy
 msgid "Delete Audio"
 msgstr "Ўчирилмоқда"
 
-#: src/callbacks.c:12290
+#: src/callbacks.c:12301
 #, fuzzy
 msgid "Record new audio"
 msgstr "Сўниш"
 
-#: src/callbacks.c:12364
+#: src/callbacks.c:12375
 #, fuzzy
 msgid "Inserting silence"
 msgstr "тиқ"
 
-#: src/callbacks.c:12377
+#: src/callbacks.c:12388
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:12410
+#: src/callbacks.c:12421
 #, fuzzy
 msgid "Inserting Silence"
 msgstr "тиқ"
 
-#: src/callbacks.c:12581
+#: src/callbacks.c:12592
 #, fuzzy
 msgid "Fix Missing Audio ?"
 msgstr "Нормаллаштириш"
 
-#: src/callbacks.c:12582
+#: src/callbacks.c:12593
 #, c-format
 msgid ""
 "It may be possible to work around missing audio for the clip\n"
@@ -5115,49 +5115,49 @@ msgid ""
 "What would you like to do ?"
 msgstr ""
 
-#: src/callbacks.c:12585
+#: src/callbacks.c:12596
 msgid "by padding to the end with silence."
 msgstr ""
 
-#: src/callbacks.c:12593
+#: src/callbacks.c:12604
 msgid "Restore audio from backup"
 msgstr ""
 
-#: src/callbacks.c:12597
+#: src/callbacks.c:12608
 #, fuzzy
 msgid "Undo clip speed change"
 msgstr "Oʻtishlar"
 
-#: src/callbacks.c:12602
+#: src/callbacks.c:12613
 msgid "Pad audio with silence"
 msgstr ""
 
-#: src/callbacks.c:12610
+#: src/callbacks.c:12621
 msgid "Do the same for all clips"
 msgstr ""
 
-#: src/callbacks.c:12613
+#: src/callbacks.c:12624
 msgid "Try workaround"
 msgstr ""
 
-#: src/callbacks.c:12618
+#: src/callbacks.c:12629
 #, fuzzy
 msgid "Ignore this error"
 msgstr "$error"
 
-#: src/callbacks.c:12710
+#: src/callbacks.c:12721
 msgid "Show layout warnings when reloading a set"
 msgstr ""
 
-#: src/callbacks.c:12724
+#: src/callbacks.c:12735
 msgid "Layout Errors"
 msgstr ""
 
-#: src/callbacks.c:12733
+#: src/callbacks.c:12744
 msgid "_Delete affected layouts"
 msgstr ""
 
-#: src/callbacks.c:12738
+#: src/callbacks.c:12749
 msgid "_Try to _Fix Errors"
 msgstr ""
 
@@ -5366,14 +5366,14 @@ msgid "_Edit"
 msgstr "_Таҳрирлаш"
 
 #: src/gui.c:832 src/multitrack.c:2800 src/multitrack.c:4585
-#: src/cliphandler.c:1903 src/cliphandler.c:1934 src/cliphandler.c:2050
-#: src/clip_load_save.c:2620
+#: src/cliphandler.c:1901 src/cliphandler.c:1932 src/cliphandler.c:2048
+#: src/clip_load_save.c:2625
 msgid "_Undo"
 msgstr "_Бекор қилиш"
 
 #: src/gui.c:847 src/multitrack.c:2819 src/multitrack.c:4608
-#: src/cliphandler.c:1904 src/cliphandler.c:1935 src/cliphandler.c:2051
-#: src/clip_load_save.c:2621
+#: src/cliphandler.c:1902 src/cliphandler.c:1933 src/cliphandler.c:2049
+#: src/clip_load_save.c:2626
 msgid "_Redo"
 msgstr "_Қайтариш"
 
@@ -6154,7 +6154,7 @@ msgstr ""
 msgid "First Frame"
 msgstr "Freymlar"
 
-#: src/gui.c:2291 src/gui.c:3664 src/player.c:687 src/player.c:688
+#: src/gui.c:2291 src/gui.c:3664 src/player.c:711 src/player.c:712
 #: src/player-control.c:414
 msgid "Play"
 msgstr "Ўйнаш"
@@ -6314,23 +6314,23 @@ msgid ""
 "Overwrite ?\n"
 msgstr ""
 
-#: src/filesystem.c:2049
+#: src/filesystem.c:2021
 msgid "FREE DISK SPACE"
 msgstr ""
 
-#: src/filesystem.c:2050
+#: src/filesystem.c:2022
 msgid "BELOW"
 msgstr ""
 
-#: src/filesystem.c:2052
+#: src/filesystem.c:2024
 msgid "DISK SPACE USED"
 msgstr ""
 
-#: src/filesystem.c:2053
+#: src/filesystem.c:2025
 msgid "ABOVE"
 msgstr ""
 
-#: src/filesystem.c:2055
+#: src/filesystem.c:2027
 #, c-format
 msgid ""
 "\n"
@@ -6338,7 +6338,7 @@ msgid ""
 "Diskspace limits can be set in Preferences / Misc.\n"
 msgstr ""
 
-#: src/filesystem.c:2059
+#: src/filesystem.c:2031
 msgid "RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"
 msgstr ""
 
@@ -6506,13 +6506,13 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: h(ours) min(utes)
-#: src/stringfuncs.c:679
+#: src/stringfuncs.c:663
 #, c-format
 msgid "%d h %d min"
 msgstr ""
 
 #. TRANSLATORS: min(utes)
-#: src/stringfuncs.c:686
+#: src/stringfuncs.c:670
 #, c-format
 msgid "%d min"
 msgstr ""
@@ -6742,18 +6742,18 @@ msgid ""
 "%d frames opened.\n"
 msgstr ""
 
-#: src/dialogs.c:1610 src/dialogs.c:1634
+#: src/dialogs.c:1611 src/dialogs.c:1636
 msgid "Waiting for external audio"
 msgstr ""
 
-#: src/dialogs.c:2121
+#: src/dialogs.c:2122
 #, fuzzy, c-format
 msgid ""
 "\n"
 "%s"
 msgstr " %s"
 
-#: src/dialogs.c:2214
+#: src/dialogs.c:2215
 #, c-format
 msgid ""
 "\n"
@@ -6761,7 +6761,7 @@ msgid ""
 "Please close a file and then try again."
 msgstr ""
 
-#: src/dialogs.c:2220
+#: src/dialogs.c:2221
 #, c-format
 msgid ""
 "LiVES was unable to write to its working directory.\n"
@@ -6773,41 +6773,41 @@ msgid ""
 "Please make sure you can write to this directory."
 msgstr ""
 
-#: src/dialogs.c:2232
+#: src/dialogs.c:2233
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
 "Please install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:2239
+#: src/dialogs.c:2240
 msgid ""
 "\n"
 "This function requires either mplayer or mplayer2 to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:2246
+#: src/dialogs.c:2247
 msgid ""
 "\n"
 "This function requires either mplayer, mplayer2 or mpv to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:2252
+#: src/dialogs.c:2253
 msgid ""
 "Audio was not loaded; please install mplayer or mplayer2 if you expected "
 "audio for this clip.\n"
 msgstr ""
 
-#: src/dialogs.c:2258
+#: src/dialogs.c:2259
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
 "Or switch to another encoder format in Tools | Preferences | Encoding\n"
 msgstr ""
 
-#: src/dialogs.c:2265
+#: src/dialogs.c:2266
 msgid ""
 "\n"
 "\n"
@@ -6815,19 +6815,19 @@ msgid ""
 "Please set the audio codec in Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/dialogs.c:2272
+#: src/dialogs.c:2273
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
 
-#: src/dialogs.c:2278
+#: src/dialogs.c:2279
 msgid ""
 "This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
 
-#: src/dialogs.c:2286 src/dialogs.c:2369
+#: src/dialogs.c:2287 src/dialogs.c:2370
 #, c-format
 msgid ""
 "\n"
@@ -6835,83 +6835,83 @@ msgid ""
 "Due to restrictions in the %s format\n"
 msgstr ""
 
-#: src/dialogs.c:2302
+#: src/dialogs.c:2303
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2308 src/dialogs.c:2400 src/resample.c:1516
+#: src/dialogs.c:2309 src/dialogs.c:2401 src/resample.c:1516
 msgid ", signed"
 msgstr ""
 
-#: src/dialogs.c:2309 src/dialogs.c:2401 src/resample.c:1518
+#: src/dialogs.c:2310 src/dialogs.c:2402 src/resample.c:1518
 msgid ", unsigned"
 msgstr ""
 
-#: src/dialogs.c:2313 src/dialogs.c:2405 src/resample.c:1523
+#: src/dialogs.c:2314 src/dialogs.c:2406 src/resample.c:1523
 msgid ", little-endian"
 msgstr ""
 
-#: src/dialogs.c:2314 src/dialogs.c:2406 src/resample.c:1525
+#: src/dialogs.c:2315 src/dialogs.c:2407 src/resample.c:1525
 msgid ", big-endian"
 msgstr ""
 
-#: src/dialogs.c:2319
+#: src/dialogs.c:2320
 #, c-format
 msgid "Use an audio rate of %d Hz%s%s\n"
 msgstr ""
 
-#: src/dialogs.c:2327
+#: src/dialogs.c:2328
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:2330
+#: src/dialogs.c:2331
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:2335 src/dialogs.c:2433
+#: src/dialogs.c:2336 src/dialogs.c:2434
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr ""
 
-#: src/dialogs.c:2343 src/dialogs.c:2432
+#: src/dialogs.c:2344 src/dialogs.c:2433
 msgid ""
 "\n"
 "You may wish to:\n"
 msgstr ""
 
-#: src/dialogs.c:2346 src/dialogs.c:2424
+#: src/dialogs.c:2347 src/dialogs.c:2425
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr ""
 
-#: src/dialogs.c:2350
+#: src/dialogs.c:2351
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr ""
 
-#: src/dialogs.c:2396
+#: src/dialogs.c:2397
 msgid "LiVES must:\n"
 msgstr ""
 
-#: src/dialogs.c:2410
+#: src/dialogs.c:2411
 #, c-format
 msgid "resample audio to %d Hz%s%s\n"
 msgstr ""
 
-#: src/dialogs.c:2417
+#: src/dialogs.c:2418
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:2420
+#: src/dialogs.c:2421
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr ""
 
-#: src/dialogs.c:2439
+#: src/dialogs.c:2440
 #, c-format
 msgid ""
 "\n"
@@ -6921,14 +6921,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2442
+#: src/dialogs.c:2443
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2457
+#: src/dialogs.c:2458
 msgid ""
 "\n"
 "\n"
@@ -6937,7 +6937,7 @@ msgid ""
 "Try recording for just a selection of the file."
 msgstr ""
 
-#: src/dialogs.c:2467
+#: src/dialogs.c:2468
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -6948,7 +6948,7 @@ msgid ""
 "Please press Cancel to abort the insert, or OK to continue."
 msgstr ""
 
-#: src/dialogs.c:2475
+#: src/dialogs.c:2476
 #, c-format
 msgid ""
 "I can attempt to restore the frame index from a backup.\n"
@@ -6956,7 +6956,7 @@ msgid ""
 "Shall I try ?\n"
 msgstr ""
 
-#: src/dialogs.c:2490
+#: src/dialogs.c:2491
 #, c-format
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file, and then "
@@ -6968,29 +6968,29 @@ msgid ""
 "click %s."
 msgstr ""
 
-#: src/dialogs.c:2551
+#: src/dialogs.c:2552
 msgid "Message History"
 msgstr ""
 
-#: src/dialogs.c:2557
+#: src/dialogs.c:2558
 msgid "Show messages on startup"
 msgstr ""
 
-#: src/dialogs.c:2573
+#: src/dialogs.c:2574
 msgid ""
 "\n"
 "LiVES was unable to find any encoder plugins.\n"
 "You will not be able to 'Save' (encode) clips without them.\n"
 msgstr ""
 
-#: src/dialogs.c:2578
+#: src/dialogs.c:2579
 msgid ""
 "\n"
 "LiVES was unable to find any decoder plugins.\n"
 "The 'Instant Open' feature cannnot operate without them.\n"
 msgstr ""
 
-#: src/dialogs.c:2583
+#: src/dialogs.c:2584
 msgid ""
 "\n"
 "LiVES was unable to find any rendered effect plugins.\n"
@@ -6998,7 +6998,7 @@ msgid ""
 "will be limited to realtime effects only\n"
 msgstr ""
 
-#: src/dialogs.c:2589
+#: src/dialogs.c:2590
 msgid ""
 "\n"
 "LiVES was unable to find any video player plugins.\n"
@@ -7006,7 +7006,7 @@ msgid ""
 "streaming features may not be usable without them\n"
 msgstr ""
 
-#: src/dialogs.c:2612
+#: src/dialogs.c:2613
 #, c-format
 msgid ""
 "LiVES was unable to find some of its standard plugins within the plugin "
@@ -7015,29 +7015,29 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2616
+#: src/dialogs.c:2617
 msgid ""
 "<big><b>All of the plugin subdirectories appear to be absent, including:</"
 "b></big>\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2618
+#: src/dialogs.c:2619
 msgid ""
 "The following directories could not be found:\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2633 src/dialogs.c:2706
+#: src/dialogs.c:2634 src/dialogs.c:2707
 #, c-format
 msgid "Click %s to exit immediately from LiVES"
 msgstr ""
 
-#: src/dialogs.c:2635 src/dialogs.c:2708
+#: src/dialogs.c:2636 src/dialogs.c:2709
 msgid "Click 'Exit Setup' to quit from LiVES setup"
 msgstr ""
 
-#: src/dialogs.c:2637
+#: src/dialogs.c:2638
 #, c-format
 msgid ""
 "%s%s%s\n"
@@ -7047,7 +7047,7 @@ msgid ""
 "subdirectory inside 'lives')"
 msgstr ""
 
-#: src/dialogs.c:2690
+#: src/dialogs.c:2691
 #, c-format
 msgid ""
 "LiVES was unable to find some extra components within:\n"
@@ -7055,14 +7055,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2692
+#: src/dialogs.c:2693
 msgid ""
 "<big><b>For example, the following subdirectories appear to be absent:</b></"
 "big>\n"
 "\n"
 msgstr ""
 
-#: src/dialogs.c:2710
+#: src/dialogs.c:2711
 #, c-format
 msgid ""
 "%s%s%s\n"
@@ -7070,18 +7070,18 @@ msgid ""
 "or %s to locate the prefix directory, E.g /usr/local"
 msgstr ""
 
-#: src/dialogs.c:2749
+#: src/dialogs.c:2750
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
 " (Filenames must end in"
 msgstr ""
 
-#: src/dialogs.c:2771
+#: src/dialogs.c:2772
 msgid "failed (unknown type)\n"
 msgstr ""
 
-#: src/dialogs.c:2777
+#: src/dialogs.c:2778
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -7089,7 +7089,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:2784
+#: src/dialogs.c:2785
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -7097,7 +7097,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:2791
+#: src/dialogs.c:2792
 #, c-format
 msgid ""
 "This clip is saved with a gamma type of %s\n"
@@ -7106,27 +7106,27 @@ msgid ""
 "Do you wish to continue ?"
 msgstr ""
 
-#: src/dialogs.c:2805
+#: src/dialogs.c:2806
 #, fuzzy
 msgid "enable"
 msgstr "ўчирилди !"
 
-#: src/dialogs.c:2806
+#: src/dialogs.c:2807
 #, fuzzy
 msgid "enabled"
 msgstr "ўчирилди !"
 
-#: src/dialogs.c:2808
+#: src/dialogs.c:2809
 #, fuzzy
 msgid "disable"
 msgstr "ўчирилди !"
 
-#: src/dialogs.c:2809
+#: src/dialogs.c:2810
 #, fuzzy
 msgid "disabled"
 msgstr "ўчирилди !"
 
-#: src/dialogs.c:2811
+#: src/dialogs.c:2812
 #, c-format
 msgid ""
 "This layout was saved with letterboxing %s\n"
@@ -7139,31 +7139,31 @@ msgid ""
 "via the menu option 'Tools' / 'Change Width, Height and Audio Values')\n"
 msgstr ""
 
-#: src/dialogs.c:2834
+#: src/dialogs.c:2835
 #, fuzzy
 msgid "The file"
 msgstr "$file"
 
-#: src/dialogs.c:2836 src/dialogs.c:2841
+#: src/dialogs.c:2837 src/dialogs.c:2842
 msgid "could not be found."
 msgstr ""
 
-#: src/dialogs.c:2837
+#: src/dialogs.c:2838
 #, fuzzy
 msgid "this file"
 msgstr "qiymat"
 
-#: src/dialogs.c:2840
+#: src/dialogs.c:2841
 #, fuzzy
 msgid "The directory"
 msgstr "Temp директорияси: %s\n"
 
-#: src/dialogs.c:2843
+#: src/dialogs.c:2844
 #, fuzzy
 msgid "this directory"
 msgstr "Temp директорияси: %s\n"
 
-#: src/dialogs.c:2845
+#: src/dialogs.c:2846
 #, c-format
 msgid ""
 "\n"
@@ -7174,7 +7174,7 @@ msgid ""
 "otherwise click %s to skip loading %s.\n"
 msgstr ""
 
-#: src/dialogs.c:2871
+#: src/dialogs.c:2872
 #, c-format
 msgid ""
 "\n"
@@ -7188,7 +7188,7 @@ msgid ""
 "Marked Ignore' enabled."
 msgstr ""
 
-#: src/dialogs.c:2880
+#: src/dialogs.c:2881
 #, c-format
 msgid ""
 "\n"
@@ -7198,7 +7198,7 @@ msgid ""
 "Could not be found.\n"
 msgstr ""
 
-#: src/dialogs.c:2925
+#: src/dialogs.c:2926
 #, c-format
 msgid ""
 "\n"
@@ -7208,7 +7208,7 @@ msgid ""
 "(to avoid use of jack audio altogether)"
 msgstr ""
 
-#: src/dialogs.c:2972
+#: src/dialogs.c:2973
 #, c-format
 msgid ""
 "\n"
@@ -7216,46 +7216,46 @@ msgid ""
 "Perhaps the server name should be set to '%s' ?\n"
 msgstr ""
 
-#: src/dialogs.c:2976
+#: src/dialogs.c:2977
 #, fuzzy, c-format
 msgid ""
 "jackd using the configuration file\n"
 "%s%s"
 msgstr "Temp директорияси: %s\n"
 
-#: src/dialogs.c:2983 src/dialogs.c:2989 src/dialogs.c:3004
+#: src/dialogs.c:2984 src/dialogs.c:2990 src/dialogs.c:3005
 msgid "it"
 msgstr ""
 
-#: src/dialogs.c:2984 src/dialogs.c:2990
+#: src/dialogs.c:2985 src/dialogs.c:2991
 #, fuzzy, c-format
 msgid "the jack server '%s'."
 msgstr "Jack аудио сервер ишга туширилмоқда..."
 
-#: src/dialogs.c:2997 src/dialogs.c:3000
+#: src/dialogs.c:2998 src/dialogs.c:3001
 #, fuzzy, c-format
 msgid "the jack server '%s'"
 msgstr "Jack аудио сервер ишга туширилмоқда..."
 
-#: src/dialogs.c:3007
+#: src/dialogs.c:3008
 #, fuzzy
 msgid "the default jack server."
 msgstr "Jack аудио сервер ишга туширилмоқда..."
 
-#: src/dialogs.c:3010
+#: src/dialogs.c:3011
 msgid ""
 "\n"
 "Restarting LiVES will allow you to adjust the settings\n"
 "or select another audio player.\n"
 msgstr ""
 
-#: src/dialogs.c:3020
+#: src/dialogs.c:3021
 msgid ""
 "Automatic jack startup will be disabled for now.\n"
 "If you have not done so already, try restarting LiVES."
 msgstr ""
 
-#: src/dialogs.c:3024
+#: src/dialogs.c:3025
 #, c-format
 msgid ""
 "LiVES failed to connect the %s client to %s,\n"
@@ -7263,11 +7263,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:3026 src/jack.c:444 src/jack.c:694 src/jack.c:727
+#: src/dialogs.c:3027 src/jack.c:444 src/jack.c:694 src/jack.c:727
 msgid "transport"
 msgstr ""
 
-#: src/dialogs.c:3027
+#: src/dialogs.c:3028
 #, c-format
 msgid ""
 "%sPlease ensure that %s is set up correctly on your machine\n"
@@ -7280,46 +7280,46 @@ msgid ""
 "%s%s"
 msgstr ""
 
-#: src/dialogs.c:3053 src/dialogs.c:3195
+#: src/dialogs.c:3054 src/dialogs.c:3196
 msgid "JACK Startup Error"
 msgstr ""
 
-#: src/dialogs.c:3064 src/dialogs.c:3207 src/jack.c:871
+#: src/dialogs.c:3065 src/dialogs.c:3208 src/jack.c:871
 msgid "View Status _Log"
 msgstr ""
 
-#: src/dialogs.c:3072
+#: src/dialogs.c:3073
 msgid "_Driver Settings"
 msgstr ""
 
-#: src/dialogs.c:3078 src/dialogs.c:3212
+#: src/dialogs.c:3079 src/dialogs.c:3213
 msgid "Jack _Server Setup"
 msgstr ""
 
-#: src/dialogs.c:3084
+#: src/dialogs.c:3085
 #, fuzzy
 msgid "Troubleshooting Options"
 msgstr "Oʻtishlar"
 
-#: src/dialogs.c:3089 src/dialogs.c:3214
+#: src/dialogs.c:3090 src/dialogs.c:3215
 msgid "_Exit / Restart LiVES"
 msgstr ""
 
-#: src/dialogs.c:3128
+#: src/dialogs.c:3129
 #, c-format
 msgid ""
 "\n"
 "There may be a problem with the <b>'%s'</b> driver"
 msgstr ""
 
-#: src/dialogs.c:3134
+#: src/dialogs.c:3135
 #, c-format
 msgid ""
 "\n"
 "There may be a problem with the <b>'%s'</b> driver."
 msgstr ""
 
-#: src/dialogs.c:3150
+#: src/dialogs.c:3151
 msgid ""
 "<b>Something really bad happened with jack...</b>\n"
 "\n"
@@ -7328,14 +7328,14 @@ msgid ""
 "restarting it manually."
 msgstr ""
 
-#: src/dialogs.c:3168
+#: src/dialogs.c:3169
 #, c-format
 msgid ""
 "<big><b>Please try starting the jack server before restarting LiVES%s</b></"
 "big>"
 msgstr ""
 
-#: src/dialogs.c:3169
+#: src/dialogs.c:3170
 msgid ""
 "\n"
 "Jack transport features will be disabled for now, 'Preferences / Jack "
@@ -7343,19 +7343,19 @@ msgid ""
 "may be selected in order to re-enable them"
 msgstr ""
 
-#: src/dialogs.c:3172
+#: src/dialogs.c:3173
 msgid ", or use the button below to redefine the server setup"
 msgstr ""
 
-#: src/dialogs.c:3174
+#: src/dialogs.c:3175
 msgid "Please ensure the server is running before trying again"
 msgstr ""
 
-#: src/dialogs.c:3176
+#: src/dialogs.c:3177
 msgid "or else adjust the jack configuration settings"
 msgstr ""
 
-#: src/dialogs.c:3181
+#: src/dialogs.c:3182
 #, c-format
 msgid ""
 "\n"
@@ -7365,17 +7365,17 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3183
+#: src/dialogs.c:3184
 #, fuzzy
 msgid "a transport client connection"
 msgstr "Аудио сервер пульси ишга туширилмоқда..."
 
-#: src/dialogs.c:3183
+#: src/dialogs.c:3184
 #, fuzzy
 msgid "an audio connection"
 msgstr "Аудио сервер пульси ишга туширилмоқда..."
 
-#: src/dialogs.c:3255
+#: src/dialogs.c:3256
 #, c-format
 msgid ""
 "\n"
@@ -7385,7 +7385,7 @@ msgid ""
 "It is recommended to increase it to at least %d MB"
 msgstr ""
 
-#: src/dialogs.c:3265
+#: src/dialogs.c:3266
 #, c-format
 msgid ""
 "\n"
@@ -7397,7 +7397,7 @@ msgid ""
 "Do you wish to do so ?\n"
 msgstr ""
 
-#: src/dialogs.c:3274
+#: src/dialogs.c:3275
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -7405,7 +7405,7 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:3281
+#: src/dialogs.c:3282
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -7413,75 +7413,75 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:3287
+#: src/dialogs.c:3288
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
 msgstr ""
 
-#: src/dialogs.c:3289
+#: src/dialogs.c:3290
 msgid "or enter a smaller value.\n"
 msgstr ""
 
-#: src/dialogs.c:3291
+#: src/dialogs.c:3292
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:3292
+#: src/dialogs.c:3293
 msgid "Try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:3301
+#: src/dialogs.c:3302
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
 msgstr ""
 
-#: src/dialogs.c:3307
+#: src/dialogs.c:3308
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 
-#: src/dialogs.c:3313
+#: src/dialogs.c:3314
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulseaudio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
 
-#: src/dialogs.c:3320
+#: src/dialogs.c:3321
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 msgstr ""
 
-#: src/dialogs.c:3327
+#: src/dialogs.c:3328
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
 msgstr ""
 
-#: src/dialogs.c:3332
+#: src/dialogs.c:3333
 #, c-format
 msgid ""
 "The program %s is required to use this feature.\n"
 "Please install it and try again."
 msgstr ""
 
-#: src/dialogs.c:3338
+#: src/dialogs.c:3339
 msgid ""
 "LiVES currently requires composite from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
 
-#: src/dialogs.c:3345
+#: src/dialogs.c:3346
 msgid ""
 "LiVES currently requires convert from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
 
-#: src/dialogs.c:3355
+#: src/dialogs.c:3356
 msgid ""
 "\n"
 "\n"
@@ -7489,7 +7489,7 @@ msgid ""
 "a local user copy of the program.\n"
 msgstr ""
 
-#: src/dialogs.c:3375
+#: src/dialogs.c:3376
 #, c-format
 msgid ""
 "\n"
@@ -7499,15 +7499,15 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3377
+#: src/dialogs.c:3378
 msgid "one of those packages"
 msgstr ""
 
-#: src/dialogs.c:3377
+#: src/dialogs.c:3378
 msgid "the package"
 msgstr ""
 
-#: src/dialogs.c:3386
+#: src/dialogs.c:3387
 #, c-format
 msgid ""
 "Either '%s' or '%s' must be installed for this feature to work.\n"
@@ -7515,22 +7515,22 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3390
+#: src/dialogs.c:3391
 #, c-format
 msgid ""
 "%s '%s' is necessary for this feature to work.\n"
 "If possible, kindly install %s before continuing.%s"
 msgstr ""
 
-#: src/dialogs.c:3402
+#: src/dialogs.c:3403
 msgid "Cancel / Install Manually"
 msgstr ""
 
-#: src/dialogs.c:3405
+#: src/dialogs.c:3406
 msgid "Continue and Install Local Copy"
 msgstr ""
 
-#: src/dialogs.c:3416
+#: src/dialogs.c:3417
 #, c-format
 msgid ""
 "IMPORTANT !\n"
@@ -7538,29 +7538,29 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3430
+#: src/dialogs.c:3431
 #, c-format
 msgid ""
 "Either '%s' or '%s' must be installed for this feature to work.\n"
 "If possible, kindly install one or other of these before continuing\n"
 msgstr ""
 
-#: src/dialogs.c:3438
+#: src/dialogs.c:3439
 msgid ""
 "\n"
 "\n"
 "Audio rate must be greater than 0.\n"
 msgstr ""
 
-#: src/dialogs.c:3447
+#: src/dialogs.c:3448
 msgid "Show all FRAME events (unselecting thsi may reduce the size)"
 msgstr ""
 
-#: src/dialogs.c:3449
+#: src/dialogs.c:3450
 msgid "Uncheck this to avoid showing all frames and reduce the event list size"
 msgstr ""
 
-#: src/dialogs.c:3453
+#: src/dialogs.c:3454
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -7568,14 +7568,14 @@ msgid ""
 "Are you sure you wish to view it ?\n"
 msgstr ""
 
-#: src/dialogs.c:3459
+#: src/dialogs.c:3460
 msgid ""
 "\n"
 "\n"
 "You must install 'dvgrab' to use this function.\n"
 msgstr ""
 
-#: src/dialogs.c:3465
+#: src/dialogs.c:3466
 msgid ""
 "\n"
 "\n"
@@ -7584,32 +7584,32 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:3472
+#: src/dialogs.c:3473
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:3477
+#: src/dialogs.c:3478
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:3482
+#: src/dialogs.c:3483
 msgid "Unable to set framerate of video plugin\n"
 msgstr ""
 
-#: src/dialogs.c:3488
+#: src/dialogs.c:3489
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:3494
+#: src/dialogs.c:3495
 msgid ""
 "Invalid clips were detected during reload.\n"
 "It is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:3501
+#: src/dialogs.c:3502
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -7618,25 +7618,25 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:3746 src/dialogs.c:3828 src/dialogs.c:3861
+#: src/dialogs.c:3747 src/dialogs.c:3829 src/dialogs.c:3862
 #, c-format
 msgid "Additional info: %s\n"
 msgstr ""
 
-#: src/dialogs.c:3749
+#: src/dialogs.c:3750
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr ""
 
-#: src/dialogs.c:3754
+#: src/dialogs.c:3755
 msgid "before clicking 'Retry'"
 msgstr ""
 
-#: src/dialogs.c:3755
+#: src/dialogs.c:3756
 msgid "before retrying the operation"
 msgstr ""
 
-#: src/dialogs.c:3757
+#: src/dialogs.c:3758
 #, c-format
 msgid ""
 "\n"
@@ -7646,7 +7646,7 @@ msgid ""
 "from the commandline %s"
 msgstr ""
 
-#: src/dialogs.c:3767
+#: src/dialogs.c:3768
 #, c-format
 msgid ""
 "\n"
@@ -7656,7 +7656,7 @@ msgid ""
 "%s%s%s"
 msgstr ""
 
-#: src/dialogs.c:3836 src/dialogs.c:3915
+#: src/dialogs.c:3837 src/dialogs.c:3916
 #, c-format
 msgid ""
 "\n"
@@ -7666,7 +7666,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3864
+#: src/dialogs.c:3865
 #, c-format
 msgid ""
 "\n"
@@ -7676,7 +7676,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3920
+#: src/dialogs.c:3921
 #, c-format
 msgid ""
 "\n"
@@ -7687,7 +7687,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3954
+#: src/dialogs.c:3955
 #, c-format
 msgid ""
 "\n"
@@ -7696,7 +7696,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3958
+#: src/dialogs.c:3959
 #, c-format
 msgid ""
 "\n"
@@ -7706,12 +7706,12 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:4027
+#: src/dialogs.c:4028
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr ""
 
-#: src/dialogs.c:4042
+#: src/dialogs.c:4043
 #, c-format
 msgid ""
 "\n"
@@ -7720,12 +7720,12 @@ msgid ""
 "Please check your system for errors.\n"
 msgstr ""
 
-#: src/dialogs.c:4054
+#: src/dialogs.c:4055
 #, c-format
 msgid ", click %s to continue regardless,\n"
 msgstr ""
 
-#: src/dialogs.c:4059
+#: src/dialogs.c:4060
 #, c-format
 msgid ""
 "\n"
@@ -7735,12 +7735,12 @@ msgid ""
 "LiVES"
 msgstr ""
 
-#: src/dialogs.c:4076
+#: src/dialogs.c:4077
 #, c-format
 msgid "click %s to continue regardless, "
 msgstr ""
 
-#: src/dialogs.c:4081
+#: src/dialogs.c:4082
 #, c-format
 msgid ""
 "\n"
@@ -7750,7 +7750,7 @@ msgid ""
 "%sor click %s to exit from LiVES"
 msgstr ""
 
-#: src/dialogs.c:4098
+#: src/dialogs.c:4099
 #, c-format
 msgid ""
 "\n"
@@ -7758,62 +7758,62 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:4110
+#: src/dialogs.c:4111
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:4112
+#: src/dialogs.c:4113
 msgid ""
 "\n"
 "Are are you sure you would like to exit from LiVES setup ?\n"
 msgstr ""
 
-#: src/dialogs.c:4119
+#: src/dialogs.c:4120
 #, c-format
 msgid "The following options will be appended to the commandline: %s\n"
 msgstr ""
 
-#: src/dialogs.c:4125
+#: src/dialogs.c:4126
 msgid "Would you like to exit from LiVES or attempt to restart it ?"
 msgstr ""
 
-#: src/dialogs.c:4148
+#: src/dialogs.c:4149
 msgid ""
 ",\n"
 "and "
 msgstr ""
 
-#: src/dialogs.c:4151
+#: src/dialogs.c:4152
 #, c-format
 msgid "%d effect key slots (current setting is %d)%s"
 msgstr ""
 
-#: src/dialogs.c:4157
+#: src/dialogs.c:4158
 #, c-format
 msgid "%d modes per key (current setting is %d)"
 msgstr ""
 
-#: src/dialogs.c:4161
+#: src/dialogs.c:4162
 #, c-format
 msgid ""
 "The effect keymap could not be completely loaded as it requires %s%s\n"
 "Should I update %s in Preferences and try again ?\n"
 msgstr ""
 
-#: src/dialogs.c:4163
+#: src/dialogs.c:4164
 #, fuzzy
 msgid "these values"
 msgstr "Сўниш"
 
-#: src/dialogs.c:4164
+#: src/dialogs.c:4165
 #, fuzzy
 msgid "this value"
 msgstr "qiymat"
 
-#: src/dialogs.c:4171
+#: src/dialogs.c:4172
 #, c-format
 msgid ""
 "\n"
@@ -7821,13 +7821,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:4178
+#: src/dialogs.c:4179
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:4183
+#: src/dialogs.c:4184
 #, c-format
 msgid ""
 "\n"
@@ -7837,27 +7837,27 @@ msgid ""
 "- Check if the device actually exists.\n"
 msgstr ""
 
-#: src/dialogs.c:4191
+#: src/dialogs.c:4192
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 msgstr ""
 
-#: src/dialogs.c:4197
+#: src/dialogs.c:4198
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type"
 msgstr ""
 
-#: src/dialogs.c:4223
+#: src/dialogs.c:4224
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:4230
+#: src/dialogs.c:4231
 #, c-format
 msgid ""
 "\n"
@@ -7866,7 +7866,7 @@ msgid ""
 "or %s to continue and save as type \"%s\"\n"
 msgstr ""
 
-#: src/dialogs.c:4240
+#: src/dialogs.c:4241
 #, c-format
 msgid ""
 "\n"
@@ -7879,43 +7879,43 @@ msgid ""
 "prior to transferring them ?"
 msgstr ""
 
-#: src/dialogs.c:4249
+#: src/dialogs.c:4250
 msgid ""
 "You must choose an action in order to change to the new work directory.\n"
 "Do you still want to proceed with the directory change ?\n"
 msgstr ""
 
-#: src/dialogs.c:4255
+#: src/dialogs.c:4256
 msgid ""
 "Possible lost clips were detected within the LiVES working directory.\n"
 "What would you like me to do with them ?\n"
 msgstr ""
 
-#: src/dialogs.c:4257
+#: src/dialogs.c:4258
 msgid "Missing Clips Detected"
 msgstr ""
 
-#: src/dialogs.c:4263
+#: src/dialogs.c:4264
 msgid "Maybe later"
 msgstr ""
 
-#: src/dialogs.c:4265
+#: src/dialogs.c:4266
 msgid "Try to recover them"
 msgstr ""
 
-#: src/dialogs.c:4278
+#: src/dialogs.c:4279
 msgid ""
 "\n"
 "No video input devices could be found.\n"
 msgstr ""
 
-#: src/dialogs.c:4283
+#: src/dialogs.c:4284
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 
-#: src/dialogs.c:4288
+#: src/dialogs.c:4289
 msgid ""
 "\n"
 "\n"
@@ -7923,7 +7923,7 @@ msgid ""
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 msgstr ""
 
-#: src/dialogs.c:4298
+#: src/dialogs.c:4299
 #, c-format
 msgid ""
 "Some frames in this clip may be wrongly sized.\n"
@@ -7931,23 +7931,23 @@ msgid ""
 "What would you like to do ?"
 msgstr ""
 
-#: src/dialogs.c:4302 src/dialogs.c:4334 src/dialogs.c:4547
+#: src/dialogs.c:4303 src/dialogs.c:4335 src/dialogs.c:4548
 msgid "Problem Detected"
 msgstr ""
 
-#: src/dialogs.c:4307 src/dialogs.c:4339
+#: src/dialogs.c:4308 src/dialogs.c:4340
 msgid "Continue anyway"
 msgstr ""
 
-#: src/dialogs.c:4310
+#: src/dialogs.c:4311
 msgid "Use the image size"
 msgstr ""
 
-#: src/dialogs.c:4314
+#: src/dialogs.c:4315
 msgid "Resize images to clip size"
 msgstr ""
 
-#: src/dialogs.c:4329
+#: src/dialogs.c:4330
 #, c-format
 msgid ""
 "Some frames in this clip have the wrong image format.\n"
@@ -7955,11 +7955,11 @@ msgid ""
 "What would you like to do ?"
 msgstr ""
 
-#: src/dialogs.c:4342
+#: src/dialogs.c:4343
 msgid "Correct the images"
 msgstr ""
 
-#: src/dialogs.c:4353
+#: src/dialogs.c:4354
 #, c-format
 msgid ""
 "\n"
@@ -7968,7 +7968,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:4361
+#: src/dialogs.c:4362
 #, c-format
 msgid ""
 "\n"
@@ -7979,7 +7979,7 @@ msgid ""
 "Files -> Clean up Diskspace\n"
 msgstr ""
 
-#: src/dialogs.c:4369
+#: src/dialogs.c:4370
 #, c-format
 msgid ""
 "\n"
@@ -7987,7 +7987,7 @@ msgid ""
 "Consult your package distributor.\n"
 msgstr ""
 
-#: src/dialogs.c:4377
+#: src/dialogs.c:4378
 #, c-format
 msgid ""
 "\n"
@@ -7996,31 +7996,31 @@ msgid ""
 "Please check this program is in your path and executable.\n"
 msgstr ""
 
-#: src/dialogs.c:4384
+#: src/dialogs.c:4385
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this feature.\n"
 msgstr ""
 
-#: src/dialogs.c:4389
+#: src/dialogs.c:4390
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:4396
+#: src/dialogs.c:4397
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:4402
+#: src/dialogs.c:4403
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 
-#: src/dialogs.c:4407
+#: src/dialogs.c:4408
 #, c-format
 msgid ""
 "\n"
@@ -8029,14 +8029,14 @@ msgid ""
 "(Theme name not found).\n"
 msgstr ""
 
-#: src/dialogs.c:4414
+#: src/dialogs.c:4415
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
 "Really close it ?"
 msgstr ""
 
-#: src/dialogs.c:4420
+#: src/dialogs.c:4421
 #, c-format
 msgid ""
 "All files will be irrevocably deleted from the working directory\n"
@@ -8045,7 +8045,7 @@ msgid ""
 "Click 3 times on the 'Yes' button to confirm you understand\n"
 msgstr ""
 
-#: src/dialogs.c:4428
+#: src/dialogs.c:4429
 msgid ""
 "<big>You have chosen to change the working directory.\n"
 "<b>Please make sure you have no other copies of LiVES open before proceeding."
@@ -8057,7 +8057,7 @@ msgid ""
 "or clicking on Cancel to leave the current value unchanged.</big>"
 msgstr ""
 
-#: src/dialogs.c:4438
+#: src/dialogs.c:4439
 #, c-format
 msgid ""
 "\n"
@@ -8066,7 +8066,7 @@ msgid ""
 "Click %s to continue.\n"
 msgstr ""
 
-#: src/dialogs.c:4444
+#: src/dialogs.c:4445
 #, c-format
 msgid ""
 "\n"
@@ -8075,7 +8075,7 @@ msgid ""
 "already exists. Would you like to overwrite it ?\n"
 msgstr ""
 
-#: src/dialogs.c:4457
+#: src/dialogs.c:4458
 msgid ""
 "\n"
 "\n"
@@ -8088,7 +8088,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:4475
+#: src/dialogs.c:4476
 #, c-format
 msgid ""
 "\n"
@@ -8097,7 +8097,7 @@ msgid ""
 "Do you wish to allow this (for this session only) ?\n"
 msgstr ""
 
-#: src/dialogs.c:4512
+#: src/dialogs.c:4513
 #, c-format
 msgid ""
 "Alternately, you can try running\n"
@@ -8105,7 +8105,7 @@ msgid ""
 " from a commandline terminal\n"
 msgstr ""
 
-#: src/dialogs.c:4523
+#: src/dialogs.c:4524
 #, c-format
 msgid ""
 "The following error occurred when running %s:\n"
@@ -8114,29 +8114,29 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:4526
+#: src/dialogs.c:4527
 #, c-format
 msgid "LiVES was not able to run the programe %s\n"
 msgstr ""
 
-#: src/dialogs.c:4531
+#: src/dialogs.c:4532
 msgid "download"
 msgstr ""
 
-#: src/dialogs.c:4532
+#: src/dialogs.c:4533
 msgid "by downloading"
 msgstr ""
 
-#: src/dialogs.c:4534
+#: src/dialogs.c:4535
 msgid "local installation"
 msgstr ""
 
-#: src/dialogs.c:4535
+#: src/dialogs.c:4536
 #, fuzzy
 msgid "by creating"
 msgstr "Буриш"
 
-#: src/dialogs.c:4538
+#: src/dialogs.c:4539
 #, c-format
 msgid ""
 "%sYou may need to reinstall or update %s\n"
@@ -8147,19 +8147,19 @@ msgid ""
 "Please consider the options and then decide how to proceed.\n"
 msgstr ""
 
-#: src/dialogs.c:4559
+#: src/dialogs.c:4560
 #, c-format
 msgid "Proceed with %s"
 msgstr ""
 
-#: src/dialogs.c:4582
+#: src/dialogs.c:4583
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
 "Would you like to try and recover it ?\n"
 msgstr ""
 
-#: src/dialogs.c:4599
+#: src/dialogs.c:4600
 #, c-format
 msgid ""
 "No Sets could be found in the directory\n"
@@ -8170,16 +8170,16 @@ msgid ""
 " - restart lives with the -workdir switch to set it temporarily"
 msgstr ""
 
-#: src/dialogs.c:4617
+#: src/dialogs.c:4618
 msgid "The audio playback speed has been altered for this clip.\n"
 msgstr ""
 
-#: src/dialogs.c:4620
+#: src/dialogs.c:4621
 #, c-format
 msgid "The current audio rate (%d) uses a non-standard value\n"
 msgstr ""
 
-#: src/dialogs.c:4625
+#: src/dialogs.c:4626
 #, c-format
 msgid ""
 "\n"
@@ -8188,17 +8188,17 @@ msgid ""
 "What would you like to do ?"
 msgstr ""
 
-#: src/dialogs.c:4641
+#: src/dialogs.c:4642
 #, c-format
 msgid "Use original rate (%d Hz)"
 msgstr ""
 
-#: src/dialogs.c:4645
+#: src/dialogs.c:4646
 #, c-format
 msgid "Use adjusted rate (%d Hz)"
 msgstr ""
 
-#: src/dialogs.c:4660 src/dialogs.c:4669
+#: src/dialogs.c:4661 src/dialogs.c:4670
 #, c-format
 msgid "Resample to standard rate (%d Hz)"
 msgstr ""
@@ -8430,215 +8430,215 @@ msgid ""
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:5278
+#: src/effects-weed.c:5288
 #, c-format
 msgid ""
 "Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5284
+#: src/effects-weed.c:5294
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:5317
+#: src/effects-weed.c:5327
 #, c-format
 msgid ""
 "No usable filters found in plugin:\n"
 "%s\n"
 msgstr ""
 
-#: src/effects-weed.c:5403
+#: src/effects-weed.c:5413
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr ""
 
-#: src/effects-weed.c:5433
+#: src/effects-weed.c:5443
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5462
+#: src/effects-weed.c:5472
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:5495
+#: src/effects-weed.c:5505
 #, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:5518 src/effects-weed.c:6607
+#: src/effects-weed.c:5528 src/effects-weed.c:6617
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Temp директорияси: %s\n"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5576 src/rte_window.c:2089
+#: src/effects-weed.c:5586 src/rte_window.c:2089
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:5773
+#: src/effects-weed.c:5783
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5893
+#: src/effects-weed.c:5903
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:5913
+#: src/effects-weed.c:5923
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5930
+#: src/effects-weed.c:5940
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:6051
+#: src/effects-weed.c:6061
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6073
+#: src/effects-weed.c:6083
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6091
+#: src/effects-weed.c:6101
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6104
+#: src/effects-weed.c:6114
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6121
+#: src/effects-weed.c:6131
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6151
+#: src/effects-weed.c:6161
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6188
+#: src/effects-weed.c:6198
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6222
+#: src/effects-weed.c:6232
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6236
+#: src/effects-weed.c:6246
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6257
+#: src/effects-weed.c:6267
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6272
+#: src/effects-weed.c:6282
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:6285
+#: src/effects-weed.c:6295
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6302
+#: src/effects-weed.c:6312
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6334
+#: src/effects-weed.c:6344
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6348
+#: src/effects-weed.c:6358
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:6369
+#: src/effects-weed.c:6379
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6382
+#: src/effects-weed.c:6392
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6403
+#: src/effects-weed.c:6413
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6441
+#: src/effects-weed.c:6451
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:6503
+#: src/effects-weed.c:6513
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:7259
+#: src/effects-weed.c:7269
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:7439
+#: src/effects-weed.c:7447
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:7523
+#: src/effects-weed.c:7531
 #, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr ""
 
-#: src/effects-weed.c:9213
+#: src/effects-weed.c:9233
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9333
+#: src/effects-weed.c:9352
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:10252
+#: src/effects-weed.c:10272
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -9094,7 +9094,7 @@ msgid ""
 "No decoders found in %s !\n"
 msgstr ""
 
-#: src/plugins.c:2801
+#: src/plugins.c:2802
 #, c-format
 msgid ""
 "The %s decoder has been disabled, but was used earlier to open the clip\n"
@@ -9102,7 +9102,7 @@ msgid ""
 "Do you want to use the disabled edecoder to reopen it ?"
 msgstr ""
 
-#: src/plugins.c:2913
+#: src/plugins.c:2907
 #, c-format
 msgid ""
 "\n"
@@ -9111,7 +9111,7 @@ msgid ""
 "Error was %s\n"
 msgstr ""
 
-#: src/plugins.c:2936
+#: src/plugins.c:2930
 #, c-format
 msgid ""
 "\n"
@@ -9121,52 +9121,52 @@ msgid ""
 "Unable to use it.\n"
 msgstr ""
 
-#: src/plugins.c:2979
+#: src/plugins.c:2973
 #, fuzzy
 msgid "/unknown"
 msgstr "номаълум"
 
-#: src/plugins.c:3030
+#: src/plugins.c:3024
 #, fuzzy
 msgid "normal"
 msgstr "Нормаллаштириш"
 
-#: src/plugins.c:3033
+#: src/plugins.c:3027
 #, fuzzy
 msgid "testing"
 msgstr "Буриш"
 
-#: src/plugins.c:3034
+#: src/plugins.c:3028
 msgid "may be unstable"
 msgstr ""
 
-#: src/plugins.c:3035
+#: src/plugins.c:3029
 msgid "BROKEN !"
 msgstr ""
 
-#: src/plugins.c:3036
+#: src/plugins.c:3030
 msgid "You should not be seeing this..."
 msgstr ""
 
-#: src/plugins.c:3037
+#: src/plugins.c:3031
 #, fuzzy
 msgid "custom"
 msgstr "Бошқа"
 
-#: src/plugins.c:3063
+#: src/plugins.c:3057
 msgid "Decoder Plugins"
 msgstr ""
 
-#: src/plugins.c:3067
+#: src/plugins.c:3061
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr ""
 
-#: src/plugins.c:3146
+#: src/plugins.c:3140
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:4441
+#: src/plugins.c:4435
 #, c-format
 msgid "%s advanced settings"
 msgstr ""
@@ -11533,7 +11533,7 @@ msgstr "Жорий"
 msgid "Rate (Hz) "
 msgstr ""
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:4085
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:4178
 msgid "Channels"
 msgstr ""
 
@@ -11542,7 +11542,7 @@ msgstr ""
 msgid "Sample Size "
 msgstr "Freymlar"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:4090
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4183
 msgid "Signed"
 msgstr ""
 
@@ -12339,12 +12339,12 @@ msgstr ""
 msgid "Effect order change"
 msgstr ""
 
-#: src/multitrack.c:2794 src/cliphandler.c:1897 src/cliphandler.c:1928
+#: src/multitrack.c:2794 src/cliphandler.c:1895 src/cliphandler.c:1926
 #, fuzzy, c-format
 msgid "_Undo %s"
 msgstr "_Бекор қилиш"
 
-#: src/multitrack.c:2814 src/cliphandler.c:1898 src/cliphandler.c:1929
+#: src/multitrack.c:2814 src/cliphandler.c:1896 src/cliphandler.c:1927
 #, fuzzy, c-format
 msgid "_Redo %s"
 msgstr "_Қайтариш"
@@ -13793,22 +13793,22 @@ msgstr ""
 msgid "jackctl : failed adding slave %s to server named '%s'"
 msgstr ""
 
-#: src/jack.c:3927
+#: src/jack.c:3995
 msgid "Started jack audio subsystem.\n"
 msgstr ""
 
-#: src/jack.c:4025
+#: src/jack.c:4093
 msgid "Started jack audio reader.\n"
 msgstr ""
 
-#: src/jack.c:4276
+#: src/jack.c:4344
 #, fuzzy
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
 msgstr "Jack транспорт серверига уланмоқда..."
 
-#: src/pulse.c:153
+#: src/pulse.c:155
 msgid ""
 "\n"
 "Unable to connect to the pulseaudio server.\n"
@@ -13817,38 +13817,38 @@ msgid ""
 "Audio settings can be updated in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/pulse.c:164
+#: src/pulse.c:166
 #, fuzzy
 msgid ""
 "\n"
 "Unable to connect to the pulseaudio server.\n"
 msgstr "Jack транспорт серверига уланмоқда..."
 
-#: src/pulse.c:169
+#: src/pulse.c:171
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1872
+#: src/pulse.c:1866
 msgid "Pulse audio player details"
 msgstr ""
 
-#: src/pulse.c:1874
+#: src/pulse.c:1868
 msgid "Pulse audio reader details"
 msgstr ""
 
-#: src/pulse.c:2158
+#: src/pulse.c:2159
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Аудио сервер пульси ишга туширилмоқда..."
 
-#: src/pulse.c:2185
+#: src/pulse.c:2186
 #, fuzzy
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"
 msgstr "Jack транспорт серверига уланмоқда..."
 
-#: src/cvirtual.c:276 src/clip_load_save.c:3742
+#: src/cvirtual.c:276 src/clip_load_save.c:3747
 msgid "creating the frame index for the clip"
 msgstr ""
 
@@ -14279,38 +14279,38 @@ msgstr "Бўяш"
 msgid "Webcam Settings"
 msgstr ""
 
-#: src/videodev.c:776
+#: src/videodev.c:775
 msgid "Adjust Settings"
 msgstr ""
 
-#: src/videodev.c:779
+#: src/videodev.c:778
 #, fuzzy
 msgid "Hide options"
 msgstr "Oʻtishlar"
 
-#: src/videodev.c:846
+#: src/videodev.c:845
 #, c-format
 msgid "Unable to open device %s\n"
 msgstr ""
 
-#: src/videodev.c:861
+#: src/videodev.c:860
 #, c-format
 msgid "Opened device %s\n"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/frameloader.c:1243
+#: src/frameloader.c:1240
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/frameloader.c:1248
+#: src/frameloader.c:1245
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/frameloader.c:1251
+#: src/frameloader.c:1248
 msgid "rec ?? MB"
 msgstr ""
 
@@ -14328,7 +14328,7 @@ msgstr ""
 msgid "<No File>"
 msgstr ""
 
-#: src/machinestate.c:214
+#: src/machinestate.c:224
 #, c-format
 msgid ""
 "RNG seems to be %d bit only, injecting extra randomness...\n"
@@ -14336,85 +14336,85 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: Exabytes
-#: src/machinestate.c:505
+#: src/machinestate.c:515
 #, c-format
 msgid "%.2f EB"
 msgstr ""
 
 #. TRANSLATORS: Petabytes
-#: src/machinestate.c:508
+#: src/machinestate.c:518
 #, c-format
 msgid "%.2f PB"
 msgstr ""
 
 #. TRANSLATORS: Terabytes
-#: src/machinestate.c:511
+#: src/machinestate.c:521
 #, c-format
 msgid "%.2f TB"
 msgstr ""
 
 #. TRANSLATORS: Gigabytes
-#: src/machinestate.c:514
+#: src/machinestate.c:524
 #, c-format
 msgid "%.2f GB"
 msgstr ""
 
 #. TRANSLATORS: Megabytes
-#: src/machinestate.c:517
+#: src/machinestate.c:527
 #, c-format
 msgid "%.2f MB"
 msgstr ""
 
 #. TRANSLATORS: Kilobytes (1024 bytes)
-#: src/machinestate.c:520
+#: src/machinestate.c:530
 #, c-format
 msgid "%.2f KiB"
 msgstr ""
 
-#: src/machinestate.c:522
+#: src/machinestate.c:532
 #, c-format
 msgid "%d bytes"
 msgstr ""
 
-#: src/machinestate.c:662
+#: src/machinestate.c:672
 msgid "Processing has been paused."
 msgstr ""
 
-#: src/machinestate.c:815
+#: src/machinestate.c:825
 #, c-format
 msgid "Today %s"
 msgstr ""
 
-#: src/machinestate.c:817
+#: src/machinestate.c:827
 #, c-format
 msgid "Yesterday %s"
 msgstr ""
 
-#: src/machinestate.c:1148
+#: src/machinestate.c:1158
 msgid "(empty)"
 msgstr ""
 
-#: src/machinestate.c:1175
+#: src/machinestate.c:1185
 #, c-format
 msgid "Header version %d (%s)"
 msgstr ""
 
-#: src/machinestate.c:1178
+#: src/machinestate.c:1188
 #, fuzzy
 msgid "Same as current"
 msgstr "сония"
 
-#: src/machinestate.c:1180
+#: src/machinestate.c:1190
 #, fuzzy, c-format
 msgid "Current is %d"
 msgstr "Жорий"
 
-#: src/machinestate.c:1182
+#: src/machinestate.c:1192
 #, c-format
 msgid "Current is %d; consider updating before loading"
 msgstr ""
 
-#: src/machinestate.c:1189
+#: src/machinestate.c:1199
 #, c-format
 msgid ""
 "Source: %s\n"
@@ -14422,80 +14422,80 @@ msgid ""
 "Frames: %d, size: %d X %d, fps: %.3f"
 msgstr ""
 
-#: src/machinestate.c:1226
+#: src/machinestate.c:1236
 msgid "(ABSENT)"
 msgstr ""
 
-#: src/machinestate.c:1750
+#: src/machinestate.c:1761
 #, c-format
 msgid "%s was not found\n"
 msgstr ""
 
-#: src/machinestate.c:1788 src/machinestate.c:1793
+#: src/machinestate.c:1799 src/machinestate.c:1804
 #, c-format
 msgid "Could not write to %s\n"
 msgstr ""
 
-#: src/machinestate.c:1816
+#: src/machinestate.c:1827
 #, c-format
 msgid ""
 "LiVES was unable to send the item to trash.\n"
 "%s"
 msgstr ""
 
-#: src/machinestate.c:1859
+#: src/machinestate.c:1870
 #, c-format
 msgid "Grabbed %d frames in %s (average %.3f fps)"
 msgstr ""
 
-#: src/machinestate.c:1900
+#: src/machinestate.c:1911
 msgid "Screen grab failed"
 msgstr ""
 
-#: src/cliphandler.c:835
+#: src/cliphandler.c:833
 msgid "Unable to restore this clip"
 msgstr ""
 
-#: src/cliphandler.c:992
+#: src/cliphandler.c:990
 msgid "creating the frame index for resampling "
 msgstr ""
 
-#: src/cliphandler.c:1208
+#: src/cliphandler.c:1206
 #, fuzzy
 msgid "Cleanup options"
 msgstr "Oʻtishlar"
 
-#: src/cliphandler.c:1208
+#: src/cliphandler.c:1206
 msgid ""
 "LiVES was unable to load a clip which seems to be damaged beyond repair\n"
 "This clip can be deleted or marked as unopenable and ignored\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/cliphandler.c:1215
+#: src/cliphandler.c:1213
 msgid "Leave it and mark as 'unopenable'"
 msgstr ""
 
-#: src/cliphandler.c:1218
+#: src/cliphandler.c:1216
 msgid "Delete LiVES' copy of the clip"
 msgstr ""
 
-#: src/cliphandler.c:1222
+#: src/cliphandler.c:1220
 msgid "Always do this for unopenable clips"
 msgstr ""
 
-#: src/cliphandler.c:1245
+#: src/cliphandler.c:1243
 msgid ""
 "LiVES was unable to find the data header for a clip to be reloaded.\n"
 "Recovery from backup sources can be attempted. Click Yes to try this,\n"
 "or No to skip this and delete it or mark it as ignored\n"
 msgstr ""
 
-#: src/cliphandler.c:2020
+#: src/cliphandler.c:2018
 msgid "Unknown"
 msgstr "Номаълум"
 
-#: src/cliphandler.c:2066
+#: src/cliphandler.c:2064
 #, c-format
 msgid "Untitled%d"
 msgstr ""
@@ -14649,7 +14649,7 @@ msgstr "Сўниш"
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/clip_load_save.c:1651 src/clip_load_save.c:3643
+#: src/clip_load_save.c:1651 src/clip_load_save.c:3648
 msgid " without sound"
 msgstr ""
 
@@ -14684,97 +14684,97 @@ msgstr ""
 msgid "Restoring"
 msgstr ""
 
-#: src/clip_load_save.c:2166
+#: src/clip_load_save.c:2165
 #, fuzzy
 msgid "The original file"
 msgstr "$file"
 
-#: src/clip_load_save.c:2432
+#: src/clip_load_save.c:2430
 #, c-format
 msgid "Closed clip %s\n"
 msgstr ""
 
-#: src/clip_load_save.c:2716
+#: src/clip_load_save.c:2721
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/clip_load_save.c:2737
+#: src/clip_load_save.c:2742
 msgid "Recovering files"
 msgstr ""
 
-#: src/clip_load_save.c:2738
+#: src/clip_load_save.c:2743
 msgid ""
 "\n"
 "Recovering files..."
 msgstr ""
 
-#: src/clip_load_save.c:2788
+#: src/clip_load_save.c:2793
 msgid ""
 "Click Abort to exit LiVES immediately, Retry to try again, or Cancel to "
 "continue without reloading the set.\n"
 msgstr ""
 
-#: src/clip_load_save.c:3070
+#: src/clip_load_save.c:3075
 msgid "No clips were recovered.\n"
 msgstr ""
 
-#: src/clip_load_save.c:3075
+#: src/clip_load_save.c:3080
 msgid "from the previous session.\n"
 msgstr ""
 
-#: src/clip_load_save.c:3077
+#: src/clip_load_save.c:3082
 msgid "from previous sessions.\n"
 msgstr ""
 
-#: src/clip_load_save.c:3585
+#: src/clip_load_save.c:3590
 #, c-format
 msgid "Padding %s with %.4f seconds of silence..."
 msgstr ""
 
-#: src/clip_load_save.c:3585
+#: src/clip_load_save.c:3590
 #, fuzzy
 msgid "start"
 msgstr "Сўниш"
 
-#: src/clip_load_save.c:3585
+#: src/clip_load_save.c:3590
 #, fuzzy
 msgid "end"
 msgstr "Орқага"
 
-#: src/clip_load_save.c:3637 src/clip_load_save.c:4081
+#: src/clip_load_save.c:3642 src/clip_load_save.c:4086
 #, c-format
 msgid "Opening %s"
 msgstr "%s очилмоқда"
 
-#: src/clip_load_save.c:3639
+#: src/clip_load_save.c:3644
 #, c-format
 msgid " from time %.2f"
 msgstr ""
 
-#: src/clip_load_save.c:3640
+#: src/clip_load_save.c:3645
 #, c-format
 msgid " max. frames %d"
 msgstr ""
 
-#: src/clip_load_save.c:3788 src/clip_load_save.c:4036
+#: src/clip_load_save.c:3793 src/clip_load_save.c:4041
 #, c-format
 msgid "Forcing audio channels to %d\n"
 msgstr ""
 
-#: src/clip_load_save.c:3899
+#: src/clip_load_save.c:3904
 #, c-format
 msgid "Auto trimming %.4f seconds of audio at start..."
 msgstr ""
 
-#: src/clip_load_save.c:3910
+#: src/clip_load_save.c:3915
 #, c-format
 msgid "Auto trimming %.4f seconds of audio at end..."
 msgstr ""
 
-#: src/clip_load_save.c:3962
+#: src/clip_load_save.c:3967
 #, c-format
 msgid ""
 "\n"
@@ -14783,11 +14783,11 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 
-#: src/clip_load_save.c:3977
+#: src/clip_load_save.c:3982
 msgid " - please be patient."
 msgstr ""
 
-#: src/clip_load_save.c:4210
+#: src/clip_load_save.c:4215
 msgid ""
 "\n"
 "\n"
@@ -14795,14 +14795,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/clip_load_save.c:4214
+#: src/clip_load_save.c:4219
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer, mplayer2 or mpv to open this file.\n"
 msgstr ""
 
-#: src/clip_load_save.c:4226
+#: src/clip_load_save.c:4231
 msgid ""
 "\n"
 "\n"
@@ -14810,18 +14810,18 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/clip_load_save.c:4269
+#: src/clip_load_save.c:4274
 #, c-format
 msgid "Auto trimming %.2f seconds of audio at end..."
 msgstr ""
 
-#: src/clip_load_save.c:4312
+#: src/clip_load_save.c:4317
 msgid ""
 "This clip may have damaged audio.\n"
 "Should I attempt to load it anyway ?\n"
 msgstr ""
 
-#: src/clip_load_save.c:4397
+#: src/clip_load_save.c:4402
 msgid "Adding image..."
 msgstr ""
 
@@ -15094,45 +15094,45 @@ msgid "error in file. Failed.\n"
 msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/player.c:879
+#: src/player.c:904
 #, c-format
 msgid "rec %9d / %d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/player.c:885
+#: src/player.c:910
 #, c-format
 msgid "!rec %9d / %d"
 msgstr ""
 
-#: src/player.c:1787
+#: src/player.c:1818
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/player.c:4075
+#: src/player.c:4168
 #, fuzzy
 msgid "Source"
 msgstr "Сўниш"
 
-#: src/player.c:4083
+#: src/player.c:4176
 msgid "Rate Hz"
 msgstr ""
 
-#: src/player.c:4087
+#: src/player.c:4180
 msgid "Sample size (bits)"
 msgstr ""
 
-#: src/player.c:4092
+#: src/player.c:4185
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:4100
+#: src/player.c:4193
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4102
+#: src/player.c:4195
 msgid "Interleaved"
 msgstr ""
 
@@ -15266,7 +15266,7 @@ msgstr ""
 msgid "Recording performance..."
 msgstr ""
 
-#: src/player-control.c:1349
+#: src/player-control.c:1338
 #, c-format
 msgid ""
 "\n"
@@ -15491,772 +15491,1608 @@ msgid ""
 "located in your $PATH before restarting LiVES"
 msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid " _Top  "
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "!FADE VIDEO IN OR OUT"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "180 _degrees             "
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Anticlockwise"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Clockwise    "
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Active _animation"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Add _Border"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Add noise"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjust contrast"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjusting contrast of"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Adjusting noise on"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "Applying GMIC"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Applying charcoal to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Applying forward skip to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
+msgid "Applying photomosaic to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Applying sepia to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W Threshold"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W thresholding"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "Blank _Colour"
-#~ msgstr "Сўниш"
+msgid "Blank _Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "Blank frames"
-#~ msgstr "кадрлар"
+msgid "Blank frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "Blanking"
-#~ msgstr "Диск тозаланмоқда"
+msgid "Blanking"
+msgstr "Диск тозаланмоқда"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Block _height"
-#~ msgstr "_Ўнг томонга"
+msgid "Block _height"
+msgstr "_Ўнг томонга"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Block _width"
-#~ msgstr "_Ўнг томонга"
+msgid "Block _width"
+msgstr "_Ўнг томонга"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Blur"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Bluring"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "Border _Colour"
-#~ msgstr "Сўниш"
+msgid "Border _Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness _end"
-#~ msgstr "Oʻtishlar"
+msgid "Brightness _end"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness _start"
-#~ msgstr "Oʻtishlar"
+msgid "Brightness _start"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness change"
-#~ msgstr "Oʻtishlar"
+msgid "Brightness change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Brightness end"
-#~ msgstr "Oʻtishlar"
+msgid "Brightness end"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Brightness start"
-#~ msgstr "Oʻtishlar"
+msgid "Brightness start"
+msgstr "Oʻtishlar"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Centre _X"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Centre _Y"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Changing brightness of"
-#~ msgstr "Temp директорияси: %s\n"
+msgid "Changing brightness of"
+msgstr "Temp директорияси: %s\n"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Changing gamma of"
-#~ msgstr "Temp директорияси: %s\n"
+msgid "Changing gamma of"
+msgstr "Temp директорияси: %s\n"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Changing hue of"
-#~ msgstr "Temp директорияси: %s\n"
+msgid "Changing hue of"
+msgstr "Temp директорияси: %s\n"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Changing saturation of"
-#~ msgstr "Temp директорияси: %s\n"
+msgid "Changing saturation of"
+msgstr "Temp директорияси: %s\n"
 
-#~ msgid "Charcoal"
-#~ msgstr "Қора қалам"
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Charcoal"
+msgstr "Қора қалам"
 
-#~ msgid "Checkerboard"
-#~ msgstr "Shaxmat taxtasi"
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboard"
+msgstr "Shaxmat taxtasi"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "Checkerboarding"
-#~ msgstr "Shaxmat taxtasi"
+msgid "Checkerboarding"
+msgstr "Shaxmat taxtasi"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Clipboard _over selection"
-#~ msgstr "_Тескарисига танлаш"
+msgid "Clipboard _over selection"
+msgstr "_Тескарисига танлаш"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Clipboard _under selection"
-#~ msgstr "_Тескарисига танлаш"
+msgid "Clipboard _under selection"
+msgstr "_Тескарисига танлаш"
+
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
+msgid "Collage _mode"
+msgstr ""
 
-#~ msgid "Colorize"
-#~ msgstr "Бўяш"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorize"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "Colorizing"
-#~ msgstr "Бўяш"
+msgid "Colorizing"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Colour cycle"
-#~ msgstr "Бўяш"
+msgid "Colour cycle"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Colour cycling"
-#~ msgstr "Бўяш"
+msgid "Colour cycling"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "Colour filter"
-#~ msgstr "Бўяш"
+msgid "Colour filter"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "Colour filtering"
-#~ msgstr "Бўяш"
+msgid "Colour filtering"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "Colour replace"
-#~ msgstr "Бўяш"
+msgid "Colour replace"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Constant noise level"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Cycle _Step"
-#~ msgstr "Сўниш"
+msgid "Cycle _Step"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlace"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlacing"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckle"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckling"
+msgstr ""
 
-#~ msgid "Dream"
-#~ msgstr "Дрим"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dream"
+msgstr "Дрим"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
-#~ msgid "Dreamifying"
-#~ msgstr "Дрим"
+msgid "Dreamifying"
+msgstr "Дрим"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "E_nd %"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "Edge detect"
-#~ msgstr "mplayer...аниқланди..."
+msgid "Edge detect"
+msgstr "mplayer...аниқланди..."
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "Edge detecting"
-#~ msgstr "mplayer...аниқланди..."
+msgid "Edge detecting"
+msgstr "mplayer...аниқланди..."
 
-#~ msgid "Emboss"
-#~ msgstr "Қавариқ"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Emboss"
+msgstr "Қавариқ"
 
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #, fuzzy
-#~ msgid "Embossing"
-#~ msgstr "Қавариқ"
+msgid "Embossing"
+msgstr "Қавариқ"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "End X"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "End Y"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End _Alpha:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_X:"
+msgstr ""
 
-#~ msgid "Enhance"
-#~ msgstr "Яхшилаш"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_Y:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhance"
+msgstr "Яхшилаш"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-#~ msgid "Enhancing"
-#~ msgstr "Яхшилаш"
+msgid "Enhancing"
+msgstr "Яхшилаш"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Envelope length"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _colour"
-#~ msgstr "Сўниш"
+msgid "Fade _colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "Fade _end"
-#~ msgstr "Сўниш"
+msgid "Fade _end"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _in"
-#~ msgstr "Сўниш"
+msgid "Fade _in"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _out"
-#~ msgstr "Сўниш"
+msgid "Fade _out"
+msgstr "Сўниш"
 
-#~ msgid "Fade"
-#~ msgstr "Сўниш"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fade"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fading video"
-#~ msgstr "Сўниш"
+msgid "Fading video"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-#~ msgid "Fading"
-#~ msgstr "Сўниш"
+msgid "Fading"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "Fina_l frame"
-#~ msgstr "кадрлар"
+msgid "Fina_l frame"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "Flash _colour"
-#~ msgstr "Сўниш"
+msgid "Flash _colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Flip vertically"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Flop horizontally"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "Frame Calculator"
-#~ msgstr "Сўниш"
+msgid "Frame Calculator"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Frame _Colour"
-#~ msgstr "Сўниш"
+msgid "Frame _Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-#~ msgid "Frame _in frame position of clipboard..."
-#~ msgstr "кадрлар"
+msgid "Frame _in frame position of clipboard..."
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Frame _in frame position of top frame..."
-#~ msgstr "кадрлар"
+msgid "Frame _in frame position of top frame..."
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "Frames _per second (FPS)"
-#~ msgstr "сония"
+msgid "Frames _per second (FPS)"
+msgstr "сония"
+
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "GMIC generic"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma _end"
-#~ msgstr "Сўниш"
+msgid "Gamma _end"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma _start"
-#~ msgstr "Сўниш"
+msgid "Gamma _start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma change"
-#~ msgstr "Oʻtishlar"
+msgid "Gamma change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "Generate blank frames"
-#~ msgstr "кадрлар"
+msgid "Generate blank frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "Generate clip from image"
-#~ msgstr "кадрлар"
+msgid "Generate clip from image"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Generate coloured frames"
-#~ msgstr "кадрлар"
+msgid "Generate coloured frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Generate title frames"
-#~ msgstr "кадрлар"
+msgid "Generate title frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "Generating blank frames"
-#~ msgstr "кадрлар"
+msgid "Generating blank frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "Generating clip from image"
-#~ msgstr "кадрлар"
+msgid "Generating clip from image"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Generating coloured frames"
-#~ msgstr "кадрлар"
+msgid "Generating coloured frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Generating title frames"
-#~ msgstr "кадрлар"
+msgid "Generating title frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Horizontal flopping"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Horizontal shifting"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue _end"
-#~ msgstr "Сўниш"
+msgid "Hue _end"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue _start"
-#~ msgstr "Сўниш"
+msgid "Hue _start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue change"
-#~ msgstr "Oʻtishlar"
+msgid "Hue change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Hue end"
-#~ msgstr "Сўниш"
+msgid "Hue end"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Hue start"
-#~ msgstr "Сўниш"
+msgid "Hue start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "Image overlay"
-#~ msgstr "Сўниш"
+msgid "Image overlay"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init _Alpha:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_X:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumble"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumbling"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "Keep _Centered"
-#~ msgstr "Ctrl-%d"
+msgid "Keep _Centered"
+msgstr "Ctrl-%d"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Keep image aspect _ratio"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "L_eft"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
-#~ msgid "Making monochrome"
-#~ msgstr "Монохром"
+msgid "Making monochrome"
+msgstr "Монохром"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Modulate (BSH)"
-#~ msgstr "Буриш"
+msgid "Modulate (BSH)"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Modulating"
-#~ msgstr "Буриш"
+msgid "Modulating"
+msgstr "Буриш"
 
-#~ msgid "Monochrome"
-#~ msgstr "Монохром"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Monochrome"
+msgstr "Монохром"
 
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-#~ msgid "Negate"
-#~ msgstr "Буриш"
+msgid "Negate"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-#~ msgid "Negating"
-#~ msgstr "Буриш"
+msgid "Negating"
+msgstr "Буриш"
 
-#~ msgid "Normalize"
-#~ msgstr "Нормаллаштириш"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noise type"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noisify"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalize"
+msgstr "Нормаллаштириш"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
-#~ msgid "Normalizing"
-#~ msgstr "Нормаллаштириш"
+msgid "Normalizing"
+msgstr "Нормаллаштириш"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Overlaying an image onto video"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Overlaying text on"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Photo/still"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
+msgid "Photomosaic"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilate"
-#~ msgstr "Буриш"
+msgid "Pixilate"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilating"
-#~ msgstr "Буриш"
+msgid "Pixilating"
+msgstr "Буриш"
 
-#~ msgid "Posterize"
-#~ msgstr "Plakat"
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterize"
+msgstr "Plakat"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "Posterizing"
-#~ msgstr "Plakat"
+msgid "Posterizing"
+msgstr "Plakat"
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zoom"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zooming"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduce noise"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduction radius"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Replacing colours in"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
-#~ msgid "Resize All Frames"
-#~ msgstr "Барча кадрларнинг _ҳажмини ўзгартириш"
+msgid "Resize All Frames"
+msgstr "Барча кадрларнинг _ҳажмини ўзгартириш"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-#~ msgid "Rotate Clip"
-#~ msgstr "Буриш"
+msgid "Rotate Clip"
+msgstr "Буриш"
 
-#~ msgid "Rotating"
-#~ msgstr "Буриш"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotating"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "S_tart %"
-#~ msgstr "Сўниш"
+msgid "S_tart %"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation _end"
-#~ msgstr "Oʻtishlar"
+msgid "Saturation _end"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation _start"
-#~ msgstr "Oʻtishlar"
+msgid "Saturation _start"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation change"
-#~ msgstr "Oʻtishlar"
+msgid "Saturation change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Saturation end"
-#~ msgstr "Oʻtishlar"
+msgid "Saturation end"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Saturation start"
-#~ msgstr "Oʻtishlar"
+msgid "Saturation start"
+msgstr "Oʻtishlar"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Sepia"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Shift horizontally"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Shift vertically"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrink/Expand"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrinking/Expanding"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "Skip forward"
-#~ msgstr "_Ўтказиб юбориш"
+msgid "Skip forward"
+msgstr "_Ўтказиб юбориш"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Solarize"
-#~ msgstr "Бўяш"
+msgid "Solarize"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Solarizing"
-#~ msgstr "Бўяш"
+msgid "Solarizing"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
 #, fuzzy
-#~ msgid "Source frames from whole _clip"
-#~ msgstr "кадрлар"
+msgid "Source frames from whole _clip"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
 #, fuzzy
-#~ msgid "Source frames only from _selection"
-#~ msgstr "кадрлар"
+msgid "Source frames only from _selection"
+msgstr "кадрлар"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spin"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spinning"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splice"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splicing"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "Spread"
-#~ msgstr "Олдиндан кўриш"
+msgid "Spread"
+msgstr "Олдиндан кўриш"
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "Spreading"
-#~ msgstr "Олдиндан кўриш"
+msgid "Spreading"
+msgstr "Олдиндан кўриш"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "Start X"
-#~ msgstr "Сўниш"
+msgid "Start X"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "Start Y"
-#~ msgstr "Сўниш"
+msgid "Start Y"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Step _Value"
-#~ msgstr "Сўниш"
+msgid "Step _Value"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "Step per _Frame"
-#~ msgstr "Сўниш"
+msgid "Step per _Frame"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl _start"
-#~ msgstr "Сўниш"
+msgid "Swirl _start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl s_tep"
-#~ msgstr "Сўниш"
+msgid "Swirl s_tep"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl"
-#~ msgstr "Сўниш"
+msgid "Swirl"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirling"
-#~ msgstr "Сўниш"
+msgid "Swirling"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "Text Overlay"
-#~ msgstr "Сўниш"
+msgid "Text Overlay"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Thres_hold"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
 #, fuzzy
-#~ msgid "Tile _height"
-#~ msgstr "_Ўнг томонга"
+msgid "Tile _height"
+msgstr "_Ўнг томонга"
 
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
 #, fuzzy
-#~ msgid "Tile _width"
-#~ msgstr "_Ўнг томонга"
+msgid "Tile _width"
+msgstr "_Ўнг томонга"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trim frames/Add Border"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "Trimming"
-#~ msgstr "Нормаллаштириш"
+msgid "Trimming"
+msgstr "Нормаллаштириш"
 
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "Tunnel"
-#~ msgstr "Бекор қилиш"
+msgid "Tunnel"
+msgstr "Бекор қилиш"
 
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "Tunneling"
-#~ msgstr "Бекор қилиш"
+msgid "Tunneling"
+msgstr "Бекор қилиш"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Use _Natural Size"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Use _Natural image size"
+msgstr ""
 
-#~ msgid "Wave"
-#~ msgstr "Тўлқин"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Use _Trimmed Size"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Vertical flipping"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Vertical shifting"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Wave"
+msgstr "Тўлқин"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Waving"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-#~ msgid "_Background Colour"
-#~ msgstr "Сўниш"
+msgid "_Background Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "_Background colour"
-#~ msgstr "Сўниш"
+msgid "_Background colour"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Black and white camera"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "_Black is transparent"
-#~ msgstr "Jack транспорт сервери ишга туширилмоқда..."
+msgid "_Black is transparent"
+msgstr "Jack транспорт сервери ишга туширилмоқда..."
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Bottom"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "_Calculate"
-#~ msgstr "Сўниш"
+msgid "_Calculate"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "_Command to be applied"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "_Cycle Start"
-#~ msgstr "Сўниш"
+msgid "_Cycle Start"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Decrease Contrast"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Diffmax"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_End Colour"
-#~ msgstr "Сўниш"
+msgid "_End Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size X:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "_End amount"
-#~ msgstr "Сўниш"
+msgid "_End amount"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "_Fade level"
-#~ msgstr "Сўниш"
+msgid "_Fade level"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "_Fade start"
-#~ msgstr "Сўниш"
+msgid "_Fade start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "_Fill colour"
-#~ msgstr "Сўниш"
+msgid "_Fill colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_First frame"
-#~ msgstr "Freymlar"
+msgid "_First frame"
+msgstr "Freymlar"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "_Flash for"
-#~ msgstr "Сўниш"
+msgid "_Flash for"
+msgstr "Сўниш"
 
-#~ msgid "_Font"
-#~ msgstr "_Шрифт"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Font"
+msgstr "_Шрифт"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "_Frames"
-#~ msgstr "Freymlar"
+msgid "_Frames"
+msgstr "Freymlar"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "_Hold for"
-#~ msgstr "Сўниш"
+msgid "_Hold for"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Horizontal segments"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "_Image File"
-#~ msgstr "_Файл"
+msgid "_Image File"
+msgstr "_Файл"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "_Image"
-#~ msgstr "_Файл"
+msgid "_Image"
+msgstr "_Файл"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Increase Contrast"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size X:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "_Levels"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Link start and end colours"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Maintain Original Size"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "_Max zoom x 10"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Middle"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "_Midtone"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-#~ msgid "_Negate"
-#~ msgstr "Буриш"
+msgid "_Negate"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset X"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset Y"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_Other Center"
-#~ msgstr "Ctrl-%d"
+msgid "_Other Center"
+msgstr "Ctrl-%d"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-#~ msgid "_Other"
-#~ msgstr "Ctrl-%d"
+msgid "_Other"
+msgstr "Ctrl-%d"
+
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
+msgid "_Overlay amount (original)"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Point size"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Radius end"
-#~ msgstr "Сўниш"
+msgid "_Radius end"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Radius start"
-#~ msgstr "Сўниш"
+msgid "_Radius start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "_Radius"
-#~ msgstr "Сўниш"
+msgid "_Radius"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_Random colour each frame"
-#~ msgstr "кадрлар"
+msgid "_Random colour each frame"
+msgstr "кадрлар"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Randomness"
+msgstr ""
 
-#~ msgid "_Right"
-#~ msgstr "_Ўнг томонга"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Right"
+msgstr "_Ўнг томонга"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
-#~ msgid "_Rotate Selection by"
-#~ msgstr "_Тескарисига танлаш"
+msgid "_Rotate Selection by"
+msgstr "_Тескарисига танлаш"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Shrink rotated window to fit frame size"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Sigma end"
-#~ msgstr "Сўниш"
+msgid "_Sigma end"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Sigma start"
-#~ msgstr "Сўниш"
+msgid "_Sigma start"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "_Skip ahead"
-#~ msgstr "_Ўтказиб юбориш"
+msgid "_Skip ahead"
+msgstr "_Ўтказиб юбориш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "_Source Colour"
-#~ msgstr "Сўниш"
+msgid "_Source Colour"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_Splice"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_Start Colour"
-#~ msgstr "Сўниш"
+msgid "_Start Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "_Start Value"
-#~ msgstr "Сўниш"
+msgid "_Start Value"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "_Start amount"
-#~ msgstr "Сўниш"
+msgid "_Start amount"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "_Stroke colour"
-#~ msgstr "Сўниш"
+msgid "_Stroke colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "_Target Colour"
-#~ msgstr "Сўниш"
+msgid "_Target Colour"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Text"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "_Time (seconds)"
-#~ msgstr "сония"
+msgid "_Time (seconds)"
+msgstr "сония"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Top left is clipboard"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Vertical segments"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
-#~ msgid "_Wavemax"
-#~ msgstr "Тўлқин"
+msgid "_Wavemax"
+msgstr "Тўлқин"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "_White is transparent"
-#~ msgstr "Jack транспорт сервери ишга туширилмоқда..."
+msgid "_White is transparent"
+msgstr "Jack транспорт сервери ишга туширилмоқда..."
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "_Wrap Around"
-#~ msgstr "сония"
+msgid "_Wrap Around"
+msgstr "сония"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_X Center"
-#~ msgstr "Ctrl-%d"
+msgid "_X Center"
+msgstr "Ctrl-%d"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X End"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_X Start"
-#~ msgstr "Сўниш"
+msgid "_X Start"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_X offset"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_Y Center"
-#~ msgstr "Ctrl-%d"
+msgid "_Y Center"
+msgstr "Ctrl-%d"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y End"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_Y Start"
-#~ msgstr "Сўниш"
+msgid "_Y Start"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Y offset"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_degrees"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_then"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "blank_frames"
-#~ msgstr "кадрлар"
+msgid "blank_frames"
+msgstr "кадрлар"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "blur"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "brightness_change"
-#~ msgstr "Oʻtishlar"
+msgid "brightness_change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #, fuzzy
-#~ msgid "charcoal"
-#~ msgstr "Қора қалам"
+msgid "charcoal"
+msgstr "Қора қалам"
 
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "colorize"
-#~ msgstr "Бўяш"
+msgid "colorize"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "colour_filter"
-#~ msgstr "Бўяш"
+msgid "colour_filter"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "colour_replace"
-#~ msgstr "Бўяш"
+msgid "colour_replace"
+msgstr "Бўяш"
 
-#~ msgid "cycle"
-#~ msgstr "Cycle"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "contrast"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "cycle"
+msgstr "Cycle"
+
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "deinterlace"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "despeckle"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
-#~ msgid "dream"
-#~ msgstr "Дрим"
+msgid "dream"
+msgstr "Дрим"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "edge_detect"
-#~ msgstr "mplayer...аниқланди..."
+msgid "edge_detect"
+msgstr "mplayer...аниқланди..."
 
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #, fuzzy
-#~ msgid "emboss"
-#~ msgstr "Қавариқ"
+msgid "emboss"
+msgstr "Қавариқ"
 
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-#~ msgid "enhance"
-#~ msgstr "Яхшилаш"
+msgid "enhance"
+msgstr "Яхшилаш"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 #, fuzzy
-#~ msgid "every"
-#~ msgstr "har"
+msgid "every"
+msgstr "har"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "fade_in_out"
-#~ msgstr "Сўниш"
+msgid "fade_in_out"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "fc"
+msgstr "fc"
+
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "flip"
+msgstr ""
 
-#~ msgid "fc"
-#~ msgstr "fc"
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "flop"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "frame_calculator"
-#~ msgstr "Сўниш"
+msgid "frame_calculator"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "gamma_change"
-#~ msgstr "Oʻtishlar"
+msgid "gamma_change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "gen_blank_frames"
-#~ msgstr "кадрлар"
+msgid "gen_blank_frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "gen_clip_from_image"
-#~ msgstr "кадрлар"
+msgid "gen_clip_from_image"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "gen_coloured_frames"
-#~ msgstr "кадрлар"
+msgid "gen_coloured_frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "gen_text"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "gmic"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "hue_change"
-#~ msgstr "Oʻtishlar"
+msgid "hue_change"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "image_overlay"
-#~ msgstr "Сўниш"
+msgid "image_overlay"
+msgstr "Сўниш"
 
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "jumble"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "modulate"
-#~ msgstr "Буриш"
+msgid "modulate"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
-#~ msgid "monochrome"
-#~ msgstr "Монохром"
+msgid "monochrome"
+msgstr "Монохром"
 
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-#~ msgid "negate"
-#~ msgstr "Буриш"
+msgid "negate"
+msgstr "Буриш"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "noisify"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
-#~ msgid "normalize"
-#~ msgstr "Нормаллаштириш"
+msgid "normalize"
+msgstr "Нормаллаштириш"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "photo_still"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
+msgid "photomosaic"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "pixilate"
-#~ msgstr "Буриш"
+msgid "pixilate"
+msgstr "Буриш"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "posterize"
-#~ msgstr "Plakat"
+msgid "posterize"
+msgstr "Plakat"
 
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "randomzoom"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
-#~ msgid "resize"
-#~ msgstr "Ўлчамини ўзгартириш"
+msgid "resize"
+msgstr "Ўлчамини ўзгартириш"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "rotate"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "saturation_change"
-#~ msgstr "Oʻtishlar"
+msgid "saturation_change"
+msgstr "Oʻtishlar"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "sepia"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "shift_horizontal"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "shift_vertical"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "shrink_expand"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "skip_forwards"
-#~ msgstr "_Ўтказиб юбориш"
+msgid "skip_forwards"
+msgstr "_Ўтказиб юбориш"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "solarize"
-#~ msgstr "Бўяш"
+msgid "solarize"
+msgstr "Бўяш"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "spin"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "spread"
-#~ msgstr "Олдиндан кўриш"
+msgid "spread"
+msgstr "Олдиндан кўриш"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "swirl"
-#~ msgstr "Сўниш"
+msgid "swirl"
+msgstr "Сўниш"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "textover"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "transition_bwthresh"
-#~ msgstr "Oʻtishlar"
+msgid "transition_bwthresh"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "transition_checkerboard"
-#~ msgstr "Shaxmat taxtasi"
+msgid "transition_checkerboard"
+msgstr "Shaxmat taxtasi"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-#~ msgid "transition_fade2"
-#~ msgstr "Oʻtishlar"
+msgid "transition_fade2"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
-#~ msgid "transition_splice"
-#~ msgstr "Oʻtishlar"
+msgid "transition_splice"
+msgstr "Oʻtishlar"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "trim_frames"
-#~ msgstr "кадрлар"
+msgid "trim_frames"
+msgstr "кадрлар"
 
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "tunnel"
-#~ msgstr "Бекор қилиш"
+msgid "tunnel"
+msgstr "Бекор қилиш"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "wave"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Unable to open output file !"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "LiVES could not write to $nfile."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Unable to locate the program $rfx_builder_multi"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "bad trash pattern $pat"
+msgstr ""
 
-#~ msgid "$file"
-#~ msgstr "$file"
+#: /usr/bin/smogrify:0
+msgid "bad deftrash $DEFTRASH"
+msgstr ""
 
+#: /usr/bin/smogrify:0
+msgid "Invalid value passed to empty_trash"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "bad trashdir $ARGV[3]"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "$file"
+msgstr "$file"
+
+#: /usr/bin/smogrify:0
+msgid "could not be found"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "LiVES was unable to open it."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "This file does not appear to be a valid video, audio "
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Your version of mplayer/ffmpeg may be broken. "
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid video or image file"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Error creating new backup."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid backup file"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "LiVES was not able to open the file"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "LiVES audio error."
+msgstr ""
+
+#: /usr/bin/smogrify:0
 #, fuzzy
-#~ msgid "Unknown error"
-#~ msgstr "Номаълум"
+msgid "Unknown error"
+msgstr "Номаълум"
+
+#: /usr/bin/smogrify:0
+msgid "The requested URL"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "could not be opened with the desired format."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Could not remove existing file $xdfile"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "cdda2wav or icedax is required for this function."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Please install it first."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "You must set the CD device first in Preferences."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "$plugin_name failed:"
+msgstr ""
 
+#: /usr/bin/smogrify:0
 #, fuzzy
-#~ msgid "Bad default trashdir"
-#~ msgstr "Jack аудио сервер ишга туширилмоқда..."
+msgid "Bad default trashdir"
+msgstr "Jack аудио сервер ишга туширилмоқда..."
 
 #, fuzzy
 #~ msgid "NOT recommended"

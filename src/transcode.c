@@ -423,15 +423,15 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)currticks, cfile->hsize, cfile->vsize);
 
       if (mainw->fx1_bool) {
-        frame_layer = on_rte_apply(frame_layer, vpp->fwidth, vpp->fheight, (weed_timecode_t)currticks);
+        //frame_layer = on_rte_apply(frame_layer, vpp->fwidth, vpp->fheight, (weed_timecode_t)currticks);
       }
     } else {
-      sync_point("transcode: waiting for frame");
+      //sync_point("transcode: waiting for frame");
       if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) goto tr_err;
       if (mainw->cancelled != CANCEL_NONE) break;
       frame_layer = (weed_layer_t *)mainw->transrend_layer;
       weed_layer_ref(frame_layer);
-      sync_point("transcode: processed frame");
+      //sync_point("transcode: processed frame");
       if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) break;
     }
 

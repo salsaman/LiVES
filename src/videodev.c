@@ -19,7 +19,7 @@
 
 static lives_proc_thread_t ldev_free_lpt = NULL;
 
-static lives_object_instance_t *lives_videodev_inst_create(uint64_t subtype);
+static lives_obj_instance_t *lives_videodev_inst_create(uint64_t subtype);
 
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
@@ -411,24 +411,24 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
 }
 
 
-static void set_palette_desc(lives_object_t *obj, lives_obj_attr_t *attr) {
-  lives_param_t *rpar;
-  lives_vdev_t *ldev = (lives_vdev_t *)obj->priv;
-  char *palname = weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace);
-  weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL);
-  if (!gui) {
-    gui = weed_plant_new(WEED_PLANT_GUI);
-    weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
-  }
-  weed_set_string_value(gui, LIVES_LEAF_DISPVAL, palname);
-  rpar = weed_get_voidptr_value(gui, LIVES_LEAF_RPAR, NULL);
-  if (rpar && rpar->widgets && rpar->widgets[0] && LIVES_IS_LABEL(rpar->widgets[0]))
-    lives_label_set_text(LIVES_LABEL(rpar->widgets[0]), palname);
-  if (palname) lives_free(palname);
-}
+/* static void set_palette_desc(lives_obj_t *obj, lives_obj_attr_t *attr) { */
+/*   lives_param_t *rpar; */
+/*   lives_vdev_t *ldev = (lives_vdev_t *)weed_get_voidptr_value(obj, "priv", NULL); */
+/*   char *palname = weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace); */
+/*   weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL); */
+/*   if (!gui) { */
+/*     gui = weed_plant_new(WEED_PLANT_GUI); */
+/*     weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui); */
+/*   } */
+/*   weed_set_string_value(gui, LIVES_LEAF_DISPVAL, palname); */
+/*   rpar = weed_get_voidptr_value(gui, LIVES_LEAF_RPAR, NULL); */
+/*   if (rpar && rpar->widgets && rpar->widgets[0] && LIVES_IS_LABEL(rpar->widgets[0])) */
+/*     lives_label_set_text(LIVES_LABEL(rpar->widgets[0]), palname); */
+/*   if (palname) lives_free(palname); */
+/* } */
 
 
-static void *lives_ldev_free_cb(lives_object_t *obj, void *data) {
+static void *lives_ldev_free_cb(lives_obj_t *obj, void *data) {
   if (data) {
     lives_vdev_t **pldev = (lives_vdev_t **)data;
     lives_vdev_free(*pldev);
@@ -446,7 +446,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   lives_vdev_t *ldev = (lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
   unicap_property_t props[MAX_PROPS];
-  lives_object_t *obj;
+  lives_obj_t *obj;
   lives_rfx_t *rfx;
   double cpbytes;
   int prop_count, nprops;
@@ -545,7 +545,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   cfile->vsize = ldev->format->size.height;
 
   obj = ldev->object = lives_videodev_inst_create(VIDEO_DEV_UNICAP);
-  obj->priv = (void *)ldev;
+  weed_set_voidptr_value(obj, "priv", (void *)ldev);
 
   lives_object_set_attribute_value(obj, VDEV_PROP_WIDTH, cfile->hsize);
   //lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
@@ -708,7 +708,6 @@ void lives_vdev_free(lives_vdev_t *ldev) {
     lives_free(ldev->buffer2.data);
     ldev->buffer2.data = NULL;
   }
-  ldev->object->priv = NULL;
   lives_object_instance_destroy(ldev->object);
   lives_free(ldev);
 }
@@ -869,9 +868,9 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
 
 
 /// objects / intents etc
-static lives_object_instance_t *lives_videodev_inst_create(uint64_t subtype) {
-  lives_object_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_MEDIA_SOURCE, subtype);
-  inst->state = OBJECT_STATE_NORMAL;
+static lives_obj_instance_t *lives_videodev_inst_create(uint64_t subtype) {
+  lives_obj_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_MEDIA_SOURCE, subtype);
+  weed_set_int_value(inst, "state", OBJECT_STATE_NORMAL);
   lives_object_declare_attribute(inst, VDEV_PROP_WIDTH, WEED_SEED_INT);
   lives_object_declare_attribute(inst, VDEV_PROP_HEIGHT, WEED_SEED_INT);
   lives_object_declare_attribute(inst, VDEV_PROP_PALETTE, WEED_SEED_INT);

@@ -668,9 +668,7 @@ off_t reget_afilesize_inner(int fileno) {
   lives_sync(1);
   filesize = sget_file_size(afile);
   lives_free(afile);
-  if (filesize < 0) {
-    filesize = 0;
-  }
+  if (filesize < 0) filesize = 0;
   return filesize;
 }
 
@@ -2520,6 +2518,12 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 void do_quick_switch(int new_file) {
   // handle clip switching during playback
   // calling this function directly is now deprecated in favour of switch_clip()
+  // the only place it should be called directly is from the player
+  //
+  // when swapping fg and bg clips, we get first a new fg_clip (the old bg clip)
+  // then a new bg clip (the old fg) clip
+  // thus when changeing to / from a generator for exemple, we need to check whether
+  // it swaps to the other track or not
   lives_clip_t *sfile = NULL;
   boolean osc_block;
   int old_file = mainw->playing_file;
@@ -2564,7 +2568,8 @@ void do_quick_switch(int new_file) {
   }
 
   if (old_file != mainw->blend_file && !mainw->is_rendering) {
-    if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && sfile->primary_src) {
+    if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && sfile->primary_src
+        && sfile->primary_src->source) {
       if (new_file != mainw->blend_file) {
         // switched from generator to another clip, end the generator
         weed_plant_t *inst = (weed_plant_t *)sfile->primary_src->source;
@@ -2578,7 +2583,7 @@ void do_quick_switch(int new_file) {
 
     if (new_file == mainw->blend_file
         && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR
-        && mainw->files[mainw->blend_file]->primary_src) {
+        && mainw->files[mainw->blend_file]->primary_src && mainw->files[mainw->blend_file]->primary_src) {
       // switch bg to fg
       rte_swap_fg_bg();
     }
@@ -2598,7 +2603,9 @@ void do_quick_switch(int new_file) {
   mainw->playing_sel = FALSE;
   find_when_to_stop();
 
+  // HERE we do the actual switchover
   mainw->drawsrc = mainw->playing_file = mainw->current_file = new_file;
+  ///
 
   mainw->laudio_drawable = cfile->laudio_drawable;
   mainw->raudio_drawable = cfile->raudio_drawable;
@@ -2614,6 +2621,17 @@ void do_quick_switch(int new_file) {
         && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
       switch_audio_clip(new_file, TRUE);
+    }
+  }
+
+  if (cfile->clip_type == CLIP_TYPE_GENERATOR) {
+    // if we switch to a new blend_file, and it is a genertator, then we want to
+    // add its instance as the source
+    weed_plant_t *inst = rte_keymode_get_instance(rte_fg_gen_key() + 1, rte_fg_gen_mode());
+    if (inst && (!cfile->primary_src ||  cfile->primary_src->source != inst)) {
+      cfile->primary_src = add_clip_source(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
+                                           LIVES_SRC_TYPE_FILTER);
+      weed_instance_unref(inst);
     }
   }
 
@@ -2674,20 +2692,23 @@ void do_quick_switch(int new_file) {
       weed_layer_unref(mainw->blend_layer);
       mainw->blend_layer = NULL;
     }
-    track_source_free(1, mainw->blend_file);
-    if (IS_VALID_CLIP(mainw->new_blend_file))
+    if (IS_VALID_CLIP(mainw->new_blend_file)) {
       mainw->blend_file = mainw->new_blend_file;
-    else
-      mainw->blend_file = old_file;
-    if (!IS_VALID_CLIP(mainw->blend_file))
-      mainw->blend_file = -1;
-    mainw->new_blend_file = -1;
+      if (mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+        // if we switch to a new blend_file, and it is a genertator, then we want to
+        // add its instance as the source
+        weed_plant_t *inst = rte_keymode_get_instance(rte_bg_gen_key() + 1, rte_bg_gen_mode());
+        if (inst && (!mainw->files[mainw->blend_file]->primary_src
+                     || mainw->files[mainw->blend_file]->primary_src->source != inst)) {
+          mainw->files[mainw->blend_file]->primary_src =
+            add_clip_source(mainw->blend_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
+                            LIVES_SRC_TYPE_FILTER);
+          weed_instance_unref(inst);
+        }
+      }
+    } else mainw->new_blend_file = mainw->blend_file = -1;
+    mainw->blend_palette = WEED_PALETTE_END;
   }
-
-  /* if (mainw->play_window && prefs->show_playwin) { */
-  /*   lives_window_present(LIVES_WINDOW(mainw->play_window)); */
-  /*   lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window)); */
-  /* } */
 
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
@@ -2720,6 +2741,7 @@ void switch_clip(int type, int newclip, boolean force) {
     // switch bg clip
     if (LIVES_IS_PLAYING) {
       mainw->new_blend_file = newclip;
+      weed_layer_set_invalid(mainw->blend_layer, TRUE);
     } else {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
           && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
@@ -2818,7 +2840,9 @@ lives_clip_src_t *get_clip_source(int nclip, int track, int purpose) {
 }
 
 
-boolean swap_clip_sources(int nclip, int track, int opurpose, int npurpose) {
+// swap src a (purpose / track) with src_b
+// swap primary_src with precache; swap primary_src with track_src
+boolean swap_clip_sources(int nclip, int otrack, int opurpose, int ntrack, int npurpose) {
   lives_clip_t *sfile;
   if (opurpose != npurpose) return FALSE;
   if ((sfile = RETURN_VALID_CLIP(nclip))) {
@@ -2827,35 +2851,47 @@ boolean swap_clip_sources(int nclip, int track, int opurpose, int npurpose) {
       int nsrcs = sfile->n_sources;
       for (int i = 0; i < nsrcs; i++) {
         lives_clip_src_t *mysrc = sfile->sources[i];
-        if (track == -1 || mysrc->track == track) {
-          if (mysrc->purpose == opurpose) src_a = mysrc;
-          else if (mysrc->purpose == npurpose) src_b = mysrc;
-          if (src_a && src_b) {
-            src_a->purpose = npurpose;
-            src_b->purpose = opurpose;
-            if (opurpose == SRC_PURPOSE_PRIMARY) {
-              sfile->primary_src = src_b;
-              src_a->flags &= ~SRC_FLAG_NOFREE;
-              src_b->flags |= SRC_FLAG_NOFREE;
-            } else if (npurpose == SRC_PURPOSE_PRIMARY) {
-              sfile->primary_src = src_a;
-              src_b->flags &= ~SRC_FLAG_NOFREE;
-              src_a->flags |= SRC_FLAG_NOFREE;
+        if (mysrc->purpose == opurpose && (otrack == -1 || mysrc->track == otrack))
+          src_a = mysrc;
+        else if (mysrc->purpose == npurpose && (ntrack == -1 || mysrc->track == ntrack))
+          src_b = mysrc;
+        if (src_a && src_b) {
+          src_a->track = ntrack;
+          src_b->track = otrack;
+          src_a->purpose = npurpose;
+          src_b->purpose = opurpose;
+          if (opurpose == SRC_PURPOSE_PRIMARY) {
+            sfile->primary_src = src_b;
+            src_b->flags |= SRC_FLAG_NOFREE;
+            src_a->flags &= ~SRC_FLAG_NOFREE;
+          } else if (npurpose == SRC_PURPOSE_PRIMARY) {
+            sfile->primary_src = src_a;
+            src_a->flags |= SRC_FLAG_NOFREE;
+            src_b->flags &= ~SRC_FLAG_NOFREE;
+          }
+          for (int i = 0; i < mainw->num_tracks; i++) {
+            if (mainw->track_sources[i] == src_a) {
+              mainw->track_sources[i] = src_b;
+              src_b->track = i;
+            } else if (mainw->track_sources[i] == src_b) {
+              mainw->track_sources[i] = src_a;
+              src_a->track = i;
             }
-            pthread_mutex_unlock(&sfile->source_mutex);
-            return TRUE;
+          }
+          pthread_mutex_unlock(&sfile->source_mutex);
+          return TRUE;
 	  // *INDENT-OFF*
-	  }}}
+	}}
       pthread_mutex_unlock(&sfile->source_mutex);
-    }}
+}}
   // *INDENT-ON*
   return FALSE;
 }
 
 
-
 static void _clip_source_free(lives_clip_t *sfile, int nclip, lives_clip_src_t *mysrc) {
   int nsrcs = sfile->n_sources, i;
+  if (!nsrcs) return;
   switch (mysrc->src_type) {
   case LIVES_SRC_TYPE_DECODER:
     if (!mysrc->flags & SRC_FLAG_NOFREE) {
@@ -2872,12 +2908,15 @@ static void _clip_source_free(lives_clip_t *sfile, int nclip, lives_clip_src_t *
   for (i = 0; i < nsrcs; i++) {
     if (sfile->sources[i] == mysrc) break;
   }
+  lives_free(mysrc);
   for (; i < nsrcs; i++) {
     sfile->sources[i] = sfile->sources[i + 1];
   }
   if (nsrcs) sfile->sources = lives_realloc(sfile->sources, nsrcs * sizeof(lives_clip_src_t *));
-  else sfile->sources = NULL;
-  lives_free(mysrc);
+  else {
+    lives_free(sfile->sources);
+    sfile->sources = NULL;
+  }
 }
 
 
@@ -2897,7 +2936,11 @@ void clip_source_remove(int nclip, int track, int purpose) {
     lives_clip_src_t *mysrc;
     pthread_mutex_lock(&sfile->source_mutex);
     mysrc = _get_clip_source(sfile, nclip, track, purpose);
-    if (mysrc) _clip_source_free(sfile, nclip, mysrc);
+    if (mysrc) {
+      if (purpose == SRC_PURPOSE_ANY)
+        mysrc->flags &= ~SRC_FLAG_NOFREE;
+      _clip_source_free(sfile, nclip, mysrc);
+    }
     pthread_mutex_unlock(&sfile->source_mutex);
   }
 }
@@ -2905,6 +2948,10 @@ void clip_source_remove(int nclip, int track, int purpose) {
 
 LIVES_GLOBAL_INLINE void clip_sources_free_all(int nclip) {
   lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
-  if (sfile) while (sfile->n_sources) clip_source_remove(nclip, -1, SRC_PURPOSE_ANY);
-  close_clip_decoder(nclip);
+  if (sfile) {
+    while (sfile->n_sources) {
+      clip_source_remove(nclip, -1, SRC_PURPOSE_ANY);
+    }
+    sfile->primary_src = NULL;
+  }
 }

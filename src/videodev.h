@@ -35,7 +35,7 @@ typedef struct {
   int YUV_subspace;
   int YUV_clamping;
   boolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
-  lives_object_instance_t *object;
+  lives_obj_instance_t *object;
 } lives_vdev_t;
 
 #define MAX_DEVICES 1024

@@ -64,6 +64,8 @@
 #include <assert.h>
 #include <errno.h>
 
+#include <setjmp.h>
+
 #define NEED_ENDIANTEST 0
 #include "defs.h"
 
@@ -117,12 +119,16 @@ weed_ext_attach_leaf_f _weed_ext_attach_leaf;
 weed_ext_detach_leaf_f _weed_ext_detach_leaf;
 #endif
 weed_plant_new_f _weed_plant_new;
+weed_plant_free_f _weed_plant_free;
+#if DEBUG_PLANTS
+weed_plant_new_f Xweed_plant_new;
+weed_plant_free_f Xweed_plant_free;
+#endif
 weed_plant_list_leaves_f _weed_plant_list_leaves;
 weed_leaf_num_elements_f _weed_leaf_num_elements;
 weed_leaf_element_size_f _weed_leaf_element_size;
 weed_leaf_seed_type_f _weed_leaf_seed_type;
 weed_leaf_get_flags_f _weed_leaf_get_flags;
-weed_plant_free_f _weed_plant_free;
 weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
 
@@ -260,6 +266,7 @@ typedef struct {
 #define OOM_ADJ_RANGE 1000
   char *oom_adjust_file;
   int oom_adj_value;
+  uint64_t clock_res;
 } hw_caps_t;
 
 #ifdef FINALISE_MEMFUNCS
@@ -273,19 +280,22 @@ typedef struct {
 #include "stringfuncs.h"
 
 #define _BASE_DEFS_ONLY_
-
 #include "intents.h"
 #ifdef  _BASE_DEFS_ONLY_
 #undef _BASE_DEFS_ONLY_
 #endif
 
+typedef weed_plant_t weed_layer_t;
+typedef weed_plant_t weed_param_t;
+
 #include "functions.h"
-#include "plugins.h"
 #include "alarms.h"
 #include "lists.h"
 #include "intents.h"
 #include "maths.h"
 #include "cliphandler.h"
+#include "plugins.h"
+
 #include "layers.h"
 #include "colourspace.h"
 #include "frameloader.h"
@@ -395,10 +405,6 @@ extern const char *NO_COPY_LEAVES[];
 #define USE_MPV (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv)
 #define HAS_EXTERNAL_PLAYER (capable->has_mplayer || capable->has_mplayer2 || capable->has_mpv)
 
-// common defs for mainwindow (retain this order)
-//#include "plugins.h"
-
-//#include "intents.h"
 #include "threading.h"
 
 #ifdef ENABLE_JACK

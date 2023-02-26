@@ -55,9 +55,6 @@ uint64_t test_opts = 0;//TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS
 #include <mach/mach_host.h>
 #endif
 
-#include <png.h>
-#include <setjmp.h>
-
 /* #ifdef HAVE_PRCTL */
 /* #include <sys/prctl.h> */
 /* #endif */
@@ -455,9 +452,8 @@ static boolean pre_init(void) {
 #ifdef GUI_GTK
   LiVESPixbuf *iconpix;
 #endif
-  lives_proc_thread_t dummy_lpt;
   pthread_mutexattr_t mattr;
-  lives_hook_stack_t **lpt_hooks;
+  lives_hook_stack_t **lpt_hooks, **thread_hooks;
   char *msg, *tmp, *tmp2, *cfgdir, *old_libdir = NULL;
 
   boolean needs_update = FALSE;
@@ -465,19 +461,24 @@ static boolean pre_init(void) {
   int i;
 
   /// create context data for main thread; must be called before get_capabilities()
-  lives_thread_data_create(LIVES_INT_TO_POINTER(-1));
-  mainw->global_hook_stacks = THREADVAR(hook_stacks);
-
+  mainw->def_lpt =
+    lives_thread_data_create(LIVES_INT_TO_POINTER(-1));
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
   // linked to the proc_thread currently being actioned
-  dummy_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
-  lpt_hooks = lives_proc_thread_get_hook_stacks(dummy_lpt);
-  lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
-  lives_free(lpt_hooks);
-  weed_set_voidptr_value(dummy_lpt, LIVES_LEAF_HOOK_STACKS, mainw->global_hook_stacks);
+  mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
+  THREADVAR(proc_thread) = mainw->def_lpt;
 
-  THREADVAR(proc_thread) = dummy_lpt;
+  // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
+  // to the thread hook_stacks instead
+
+  lpt_hooks = lives_proc_thread_get_hook_stacks(mainw->def_lpt);
+  lives_hooks_clear_all(lpt_hooks, N_GLOBAL_HOOKS);
+
+  thread_hooks = THREADVAR(hook_stacks);
+  for (i = 0; i < N_GLOBAL_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
+
+  mainw->global_hook_stacks = lpt_hooks;
 
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 8;
@@ -1317,8 +1318,7 @@ boolean lazy_startup_checks(void) {
 
   if (LIVES_IS_PLAYING) {
     dqshown = mwshown = tlshown = red_tim = TRUE;
-    lives_proc_thread_cancel(self);
-    return FALSE;
+    lives_proc_thread_cancel(self); // does not return
   }
 
   if (!mwshown) {
@@ -1409,7 +1409,10 @@ boolean lazy_startup_checks(void) {
   }
 
   if (mainw->ldg_menuitem) {
-    if (!RFX_LOADED) return TRUE;
+    if (!RFX_LOADED) {
+      lives_millisleep;
+      return TRUE;
+    }
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       if (!lives_proc_thread_join_boolean(mainw->helper_procthreads[PT_LAZY_RFX])) {
         lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
@@ -1432,7 +1435,7 @@ boolean lazy_startup_checks(void) {
       }
     }
   }
-  lives_proc_thread_cancel(self);
+  lives_proc_thread_cancel(self); // no return
   return FALSE;
 }
 
@@ -2015,13 +2018,14 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
-  libweed_set_memory_funcs(rpmalloc, rpfree, rpcalloc);
+  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
 #else
 #ifndef DISABLE_GSLICE
 #if GLIB_CHECK_VERSION(2, 14, 0)
-  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, lives_slice_alloc_and_copy);
+  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, lives_slice_alloc_and_copy,
+                         _lives_memcpy);
 #else
-  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL);
+  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL, _lives_memcpy);
 #endif
 #else
   libweed_set_memory_funcs(_lives_calloc, _lives_free);
@@ -2071,9 +2075,14 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // allow us to set immutable values (plugins can't)
   //weed_leaf_get = weed_leaf_get_monitor;
 
+#if DEBUG_PLANTS
+  Xweed_plant_free = weed_plant_free_host;
+  Xweed_plant_new = weed_plant_new_host;
+#else
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
   weed_plant_new = weed_plant_new_host;
+#endif
 
   init_colour_engine();
 
@@ -2887,7 +2896,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifdef GUI_GTK
   if (!gtk_thread) {
+    pthread_cleanup_push(pthread_cleanup_func, NULL);
     gtk_main();
+    pthread_cleanup_pop(1);
   }
 #endif
 

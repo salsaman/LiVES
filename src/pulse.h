@@ -40,7 +40,7 @@ typedef struct {
 } audio_buffer_t;
 
 typedef struct {
-  lives_object_instance_t *inst;
+  lives_obj_instance_t *inst;
 
   pa_threaded_mainloop *mloop;
   pa_context *con;
@@ -140,8 +140,6 @@ void pulse_shutdown(void); ///< shudown server, mainloop, context
 
 void pulse_aud_pb_ready(pulse_driver_t *, int fileno);
 
-size_t pulse_write_data(float out_scale, int achans, int fileno, size_t rbytes, void *data);
-
 void pulse_driver_uncork(pulse_driver_t *);
 void pulse_driver_cork(pulse_driver_t *);
 
@@ -162,10 +160,6 @@ double lives_pulse_get_pos(pulse_driver_t *);
 off_t lives_pulse_get_offset(pulse_driver_t *);
 
 size_t pulse_get_buffsize(pulse_driver_t *);
-
-
-void pa_mloop_lock(void);
-void pa_mloop_unlock(void);
 
 //////////////////////
 

@@ -67,7 +67,7 @@ extern boolean bundle_has_item(NIRVA_BUNDLEPTR_T, const char *item);
 #define IMkType(str) ((const uint64_t)(ashift8((str)[0], (str)[1], (str)[2], (str)[3], \
 					       (str)[4], (str)[5], (str)[6], (str)[7])))
 
-#define LIVES_OBJECT(o) ((lives_object_t *)((o)))
+#define LIVES_OBJECT(o) ((lives_obj_t *)((o)))
 
 typedef union {
   uint8_t c[8];
@@ -77,7 +77,7 @@ typedef union {
 // for external object data (e.g g_object)
 #define INTENTION_KEY "intention_"
 
-typedef struct _obj_transform_t lives_object_transform_t;
+typedef struct _object_transform_t lives_object_transform_t;
 //
 typedef weed_param_t lives_tx_param_t;
 typedef weed_plant_t lives_obj_attr_t;
@@ -208,36 +208,55 @@ typedef struct {
   lives_tx_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
-// shorthand for calling OBJ_INTENTION_CREATE_INSTANCE in the template
-lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
+lives_obj_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
 boolean lives_obj_instance_destroy(lives_obj_instance_t *);
 
-boolean lives_object_instance_destroy(lives_object_instance_t *);
+boolean lives_object_instance_destroy(lives_obj_instance_t *);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
 int lives_object_instance_unref(lives_obj_instance_t *);
 
 // shorthand for calling OBJ_INTENTION_REF in the instance
-int lives_object_instance_ref(lives_object_instance_t *);
+int lives_object_instance_ref(lives_obj_instance_t *);
 
 #define LIVES_LEAF_OWNER "owner_uid"
 
+uint64_t lives_object_get_type(lives_obj_t *);
+int lives_object_get_state(lives_obj_t *);
+uint64_t lives_object_get_subtype(lives_obj_t *);
+uint64_t lives_object_get_uid(lives_obj_t *);
+weed_plant_t **lives_object_get_attrs(lives_obj_t *);
+
+int lives_attribute_get_value_int(lives_obj_attr_t *);
+
+int lives_attribute_get_value_boolean(lives_obj_attr_t *);
+
+double lives_attribute_get_value_double(lives_obj_attr_t *);
+
+float lives_attribute_get_value_float(lives_obj_attr_t *);
+
+int64_t lives_attribute_get_value_int64(lives_obj_attr_t *);
+
+uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *);
+
+char *lives_attribute_get_value_string(lives_obj_attr_t *);
+
 // when creating the instance, we should set the intial STATE, and declare its attributes
-lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *, const char *name, uint stype);
+lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st);
+lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *, const char *name);
+lives_obj_attr_t **lives_object_get_attrs(lives_obj_t *);
 
-lives_obj_attr_t *lives_object_get_attribute(lives_object_t *, const char *name);
-
-boolean lives_object_attribute_unref(lives_object_t *, lives_obj_attr_t *);
-void lives_object_attributes_unref_all(lives_object_t *);
+boolean lives_object_attribute_unref(lives_obj_t *, lives_obj_attr_t *);
+void lives_object_attributes_unref_all(lives_obj_t *);
 
 /// TODO - standardise :: lives_attribute_*(obj, name, ...  and lives_attr(attr, ...
 
 ///////////// get values
 char *lives_attr_get_name(lives_obj_attr_t *);
 int lives_attr_get_value_int(lives_obj_attr_t *);
-char *lives_attr_get_value_string(lives_object_t *, lives_obj_attr_t *);
+char *lives_attr_get_value_string(lives_obj_t *, lives_obj_attr_t *);
 uint32_t lives_attr_get_value_type(lives_obj_attr_t *);
 
 // implementation helper funcs
@@ -245,32 +264,32 @@ weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t s
 weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, uint32_t st, weed_funcptr_t func);
 
 // values can be set later
-weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);
-weed_error_t lives_object_set_attribute_default(lives_object_t *obj, const char *name, ...);
-weed_error_t lives_object_set_attribute_array(lives_object_t *, const char *name, weed_size_t ne, ...);
-weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj, const char *name, weed_size_t ne, ...);
+weed_error_t lives_object_set_attribute_value(lives_obj_t *, const char *name, ...);
+weed_error_t lives_object_set_attribute_default(lives_obj_t *obj, const char *name, ...);
+weed_error_t lives_object_set_attribute_array(lives_obj_t *, const char *name, weed_size_t ne, ...);
+weed_error_t lives_object_set_attribute_def_array(lives_obj_t *obj, const char *name, weed_size_t ne, ...);
 
-weed_error_t lives_object_set_attr_value(lives_object_t *, lives_obj_attr_t *, ...);
-weed_error_t lives_object_set_attr_default(lives_object_t *obj, lives_obj_attr_t *attr, ...);
-weed_error_t lives_object_set_attr_array(lives_object_t *, lives_obj_attr_t *, weed_size_t ne,  ...);
-weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr_t *attr,
+weed_error_t lives_object_set_attr_value(lives_obj_t *, lives_obj_attr_t *, ...);
+weed_error_t lives_object_set_attr_default(lives_obj_t *obj, lives_obj_attr_t *attr, ...);
+weed_error_t lives_object_set_attr_array(lives_obj_t *, lives_obj_attr_t *, weed_size_t ne,  ...);
+weed_error_t lives_object_set_attr_def_array(lives_obj_t *obj, lives_obj_attr_t *attr,
     weed_size_t ne,  ...);
 
 boolean obj_attr_is_leaf_readonly(lives_obj_attr_t *, const char *key);
-boolean lives_attribute_is_leaf_readonly(lives_object_t *, const char *name, const char *key);
+boolean lives_attribute_is_leaf_readonly(lives_obj_t *, const char *name, const char *key);
 
 weed_error_t obj_attr_set_leaf_readonly(lives_obj_attr_t *, const char *key, boolean state);
-weed_error_t lives_attribute_set_leaf_readonly(lives_object_t *, const char *name,
+weed_error_t lives_attribute_set_leaf_readonly(lives_obj_t *, const char *name,
     const char *key, boolean state);
 
 // cast to / from lives_param_type_t
-int lives_attribute_get_param_type(lives_object_t *obj, const char *name);
-weed_error_t lives_attribute_set_param_type(lives_object_t *obj, const char *name,
+int lives_attribute_get_param_type(lives_obj_t *obj, const char *name);
+weed_error_t lives_attribute_set_param_type(lives_obj_t *obj, const char *name,
     const char *label, int ptype);
 
-int lives_object_get_num_attributes(lives_object_t *);
+int lives_object_get_num_attributes(lives_obj_t *);
 
-char *lives_object_dump_attributes(lives_object_t *);
+char *lives_object_dump_attributes(lives_obj_t *);
 
 void *lookup_entry_full(uint64_t uid);
 
@@ -313,7 +332,7 @@ typedef struct {
 // can we map requirements / outputs to other objects - seems like it might be nice
 // separate default / value mappings for inputs ? multiple mappings for outputs ?
 
-struct _obj_transform_t {
+struct _object_transform_t {
   lives_intentcap_t icaps; // intention and capacities satisfied
 
   // can be a sequence of these
@@ -438,11 +457,11 @@ lives_transform_status_t *transform(lives_object_transform_t *);
 // first we should clear the status, then convert the subtype (maybe convert state first), then convert state
 // then finally convert status again
 
-//lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcaps icaps, lives_funct_t match_fn);
+//lives_object_transform_t *find_transform_for_intentcaps(lives_obj_t *obj, lives_intentcaps icaps, lives_funct_t match_fn);
 
-lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *, lives_intentcap_t *);
+lives_object_transform_t *find_transform_for_intentcaps(lives_obj_t *, lives_intentcap_t *);
 
-weed_param_t *weed_param_from_attribute(lives_object_instance_t *, const char *name);
+weed_param_t *weed_param_from_attribute(lives_obj_instance_t *obj, const char *name);
 weed_param_t *weed_param_from_attr(lives_obj_attr_t *);
 
 /* void lives_intentparams_free(lives_intentparams_t *); */
@@ -458,25 +477,24 @@ extern lives_objstore_t *bdef_store;
 ////////////////// object broker part ///////////
 
 // this is now a dictionary
-typedef lives_object_instance_t lives_dicto_t;
+typedef lives_obj_t lives_dicto_t;
 
 // create a new dictionary object
 lives_dicto_t *lives_dicto_new(uint64_t subtype);
 
 // update attributes. leave rest in place
-lives_dicto_t  *update_dicto(lives_dicto_t *, lives_object_t *, ...) LIVES_SENTINEL;
+lives_dicto_t  *update_dicto(lives_dicto_t *, lives_obj_t *, ...) LIVES_SENTINEL;
 
 // replace attributes
-lives_dicto_t  *replace_dicto(lives_dicto_t *, lives_object_t *, ...) LIVES_SENTINEL;
+lives_dicto_t  *replace_dicto(lives_dicto_t *, lives_obj_t *, ...) LIVES_SENTINEL;
 
 lives_dicto_t *weed_plant_to_dicto(weed_plant_t *);
 
 size_t add_weed_plant_to_objstore(weed_plant_t *);
 
-size_t add_object_to_objstore(lives_object_t *);
+size_t add_object_to_objstore(lives_obj_t *);
 
-size_t weigh_object(lives_object_instance_t *obj);
-
+size_t weigh_object(lives_obj_instance_t *obj);
 
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rtype,
                                      const char *args_fmt, char *file, int linei);

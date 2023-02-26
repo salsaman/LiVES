@@ -363,6 +363,9 @@ typedef struct _lives_clip_t {
 
   lives_delivery_t delivery;
 
+  char **frame_md5s;
+  char blank_md5s[10][16];
+
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system
 
@@ -436,7 +439,7 @@ typedef struct _lives_clip_t {
 
   ticks_t sync_delta; // used for audio sync when switching back to the clip
 
-  lives_object_instance_t *instance;
+  lives_obj_instance_t *instance;
 } lives_clip_t;
 
 #endif
@@ -555,7 +558,7 @@ lives_clip_src_t *get_clip_source(int nclip, int track, int purpose);
 void clip_source_remove(int nclip, int track, int purpose);
 void clip_source_free(int nclip, lives_clip_src_t *);
 void clip_sources_free_all(int nclip);
-boolean swap_clip_sources(int nclip, int track, int opurpose, int npurpose);
+boolean swap_clip_sources(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
 
 int find_clip_by_uid(uint64_t uid);
 

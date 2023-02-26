@@ -22,7 +22,7 @@ static int package_version = 2; // version of this package
 //
 // - we draw the texture in the SDL window, resizing it to the image size
 // - we read the pixels from the window into sd->fbuffer
-// - we copy sd->buffer to the output, adjusting the rowstride to match
+// - we copy sd->fbuffer to the output, adjusting the rowstride to match
 //   (sd->fbuffer has no rowstride padding, except in the case of RGB24, where we make it a multiple of 4 bytes)
 // - since we can only draw up to the window (screen) size, if the image size > screen size we set a scaling hint for the host
 //   (we also set MAXWIDTH and MAXHEIGHT for the channel, so the host can be aware of this limitation)
@@ -97,8 +97,9 @@ static Display *dpy;
 
 static int copies = 0;
 
-static const GLushort RGB2ARGB[8] =  {0, 1, 1, 2, 2, 3, 4, 0};
-static const GLushort RGB2BGR[4] = {0, 2, 2, 0};
+static const GLushort RGBA_TO_ARGB[8] =  {0, 1, 1, 2, 2, 3, 3, 0};
+static const GLushort RGBA_TO_BGRA[8] = {0, 2, 1, 1, 2, 0, 3, 3};
+static const GLushort RGB_TO_BGR[6] = {0, 2, 1, 1, 2, 0};
 
 static pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
@@ -107,7 +108,7 @@ static struct timespec ts;
 
 static int count = 0;
 static int pcount = 0;
-static int blanks = 0;
+static int blanks = 0, nonblanks = 0;
 
 static int scrwidth, scrheight;
 static int imgwidth, imgheight;
@@ -137,6 +138,7 @@ static void finalise(void);
 typedef struct {
   projectM *globalPM;
   GLubyte *fbuffer;
+  size_t fbuffer_size;
   int textureHandle;
   int texsize;
   int palette, psize;
@@ -352,6 +354,8 @@ static bool resize_buffer(_sdata *sd) {
   sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride
 				       * scrheight / align + align - 1, align);
   if (!sd->fbuffer) return false;
+  sd->fbuffer_size = (sizeof(GLubyte) * sd->rowstride
+		      * scrheight / align + align - 1) / align;
   return true;
 }
 
@@ -423,13 +427,13 @@ static int render_frame(_sdata *sd) {
       glPixelStorei(GL_UNPACK_ROW_LENGTH, sd->rowstride / sd->psize);
       if (sd->psize == 4) {
         if (sd->palette == WEED_PALETTE_BGRA32) {
-          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGBA_TO_BGRA);
         } else if (sd->palette == WEED_PALETTE_ARGB32) {
-          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGB2ARGB);
+          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGBA_TO_ARGB);
         }
       } else {
         if (sd->palette == WEED_PALETTE_BGR24) {
-          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 6, RGB_TO_BGR);
         }
       }
     }
@@ -526,24 +530,34 @@ static int render_frame(_sdata *sd) {
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
 
 #define BLANK_LIM 8
-#define ALPHA_MASK 0XFFFFFF00FFFFFF00
+#define PCOUNT_LIM (1000 * BLANK_LIM)
+#define ALPHA_MASK 0XF8F8F800F8F8F800
 
     if (sd->pidx == -1 && sd->checkforblanks) {
       /// check for blank frames: if the first BLANK_LIM frames from a new program are all blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
-      ssize_t frmsize = sd->rowstride * imgheight;
       uint64_t *p = (uint64_t *)sd->fbuffer;
-      int i = frmsize >> 3;
-      if (sd->psize == 4) while (--i && !(*p & ALPHA_MASK)) p++;
-      else while (--i && !*p) p++;
-      if (!i) blanks++;
-      else {
-        blanks = 0;
-        sd->checkforblanks = false;
-        sd->bad_programs[sd->program] = 2;
+      int pclim = PCOUNT_LIM / (1 + blanks + nonblanks), pcount = 0;
+      int i = sd->fbuffer_size;
+      if (sd->psize == 4) {
+	i >>= 3;
+	while (--i && (!(*p & ALPHA_MASK) || ++pcount < pclim)) p++;
       }
-      if (blanks >= BLANK_LIM) sd->bad_prog = true;
+      else while (--i && (!(*p & 0XF8) || ++pcount < pclim)) p++;
+      if (!i) {
+	if (++blanks >= BLANK_LIM) {
+	  sd->checkforblanks = false;
+	  sd->bad_prog = true;
+	}
+      }
+      else {
+	blanks--;
+	if (++nonblanks >= BLANK_LIM) {
+	  sd->checkforblanks = false;
+	  sd->bad_programs[sd->program] = 2;
+	}
+      }
     }
     sd->needs_more = false;
   }
@@ -761,7 +775,7 @@ static void *worker(void *data) {
         //sd->globalPM->queuePreset(sd->program);
         rerand = false;
         sd->bad_prog = false;
-        blanks = 0;
+        blanks = nonblanks = 0;
         if (sd->bad_programs[sd->program] == 0) sd->checkforblanks = true;
         sd->busy = false;
       }
@@ -779,10 +793,14 @@ static void *worker(void *data) {
         if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
           sd->rendering = false;
         }
-      } else if (sd->pidx == -1) {
+      }
+      else if (sd->pidx == -1) {
         if (sd->bad_prog) {
-          if (sd->silent) sd->bad_programs[sd->program] = 3;
-          else sd->bad_programs[sd->program] = 1;
+	  if (sd->bad_programs[sd->program] != 1 && !(sd->silent
+						      && sd->bad_programs[sd->program] == 3)) {
+	    if (sd->silent) sd->bad_programs[sd->program] = 3;
+	    else sd->bad_programs[sd->program] = 1;
+	  }
           rerand = true;
         }
       }
@@ -968,7 +986,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       //change_size(sd);
 
       statsd = sd;
-      inited = 1;
+      inited = true;
     }
 
     //sd->rendering = false;
@@ -1198,8 +1216,9 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       weed_memcpy(sd->audio, adata[0], adlen * 4);
     } else adlen = 0;
 
-    // fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 1] : 0.,
-    // 	    adata[0] ? adata[0][adlen >>1] : 0., adlen);
+    if (verbosity >= WEED_VERBOSITY_DEBUG)
+      fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 1] : 0.,
+	      adata[0] ? adata[0][adlen >>1] : 0., adlen);
     sd->audio_frames = adlen;
     sd->audio_offs = 0;
     pthread_mutex_unlock(&sd->pcm_mutex);
@@ -1317,7 +1336,7 @@ static void finalise(void) {
     weed_free(statsd);
     statsd = NULL;
   }
-  inited = 0;
+  inited = false;
 }
 
 

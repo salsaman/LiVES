@@ -743,7 +743,17 @@ static weed_layer_t **render_frame(frames_t frame) {
 static weed_layer_t *old_frame_layer = NULL;
 
 weed_layer_t *get_old_frame_layer(void) {return old_frame_layer;}
-void reset_old_frame_layer(void) {old_frame_layer = NULL;}
+
+void reset_old_frame_layer(void) {
+  if (old_frame_layer) {
+    if (old_frame_layer == mainw->frame_layer) mainw->frame_layer = NULL;
+    if (old_frame_layer == mainw->frame_layer_preload) mainw->frame_layer_preload = NULL;
+    if (old_frame_layer == mainw->blend_layer) mainw->blend_layer = NULL;
+    weed_layer_free(old_frame_layer);
+    old_frame_layer = NULL;
+  }
+}
+
 
 weed_layer_t *load_frame_image(frames_t frame) {
   // this is where we do the actual load/record of a playback frame
@@ -796,7 +806,9 @@ weed_layer_t *load_frame_image(frames_t frame) {
   int tgt_gamma = WEED_GAMMA_UNKNOWN;
   boolean was_letterboxed = FALSE;
 
-  if (mainw->play_sequence != oseq) old_frame_layer = NULL;
+  if (mainw->play_sequence != oseq && old_frame_layer) {
+    reset_old_frame_layer();
+  }
   oseq = mainw->play_sequence;
 
   framecount = NULL;
@@ -1891,7 +1903,7 @@ lfi_done:
     lives_free(msg);
   }
 
-  if (old_frame_layer) weed_layer_free(old_frame_layer);
+  reset_old_frame_layer();
   old_frame_layer = mainw->frame_layer;
 
   if (!mainw->multitrack && !mainw->is_rendering)
@@ -2175,13 +2187,13 @@ frames_t clamp_frame(int clipno, frames_t nframe) {
   }
   if (!(sfile = RETURN_NORMAL_CLIP(clipno))) return 0;
   else {
-    frames_t first_frame = 1, last_frame = sfile->frames;
+    frames_t first_frame = 1, nframes = sfile->alt_frames ? sfile->alt_frames : sfile->frames, last_frame = nframes;
     if (clipno == mainw->playing_file) {
       if ((mainw->scratch == SCRATCH_NONE || mainw->scratch == SCRATCH_REV)) {
         last_frame = mainw->playing_sel ? sfile->end : mainw->play_end;
-        if (last_frame > sfile->frames) last_frame = sfile->frames;
+        if (last_frame > nframes) last_frame = nframes;
         first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
-        if (first_frame > sfile->frames) first_frame = sfile->frames;
+        if (first_frame > nframes) first_frame = nframes;
       }
     }
     if (nframe >= first_frame && nframe <= last_frame) return nframe;
@@ -3000,11 +3012,19 @@ switch_point:
 
         mainw->can_switch_clips = FALSE;
 
+        sfile = mainw->files[mainw->playing_file];
+
+        if (mainw->playing_file != old_playing_file) {
+          trim_frame_index(mainw->playing_file, &sfile->frameno, sfile->pb_fps > - 0. ? 1 : -1, 0);
+          clamp_frame(-1, sfile->frameno);
+          if (sfile->alt_frames != sfile->frames) {
+            sfile->last_frameno = mainw->actual_frame = sfile->frameno;
+          }
+        }
+
         fg_stack_wait();
         lives_nanosleep_while_true(mainw->do_ctx_update);
         did_switch = TRUE;
-
-        sfile = mainw->files[mainw->playing_file];
 
         // TODO - make sure we are resetting correctly with audio lock on
         if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)

@@ -446,6 +446,8 @@ typedef struct {
 
   boolean concat_images;
 
+  boolean skip_rpts; // auto skip blansk + rptd frames
+
   boolean render_audio;
   boolean normalise_audio;  ///< for future use
 

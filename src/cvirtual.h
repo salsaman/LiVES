@@ -44,9 +44,17 @@ frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end);
 
 void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int palette);
 
-#define get_indexed_frame(clip, frame) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frame_index ? \
-					mainw->files[clip]->frame_index[frame - 1] == -1 ? -frame : \
-					mainw->files[clip]->frame_index[frame - 1] : \
-					frame : 0)
+#define get_indexed_frame(clip, frame) ((IS_PHYSICAL_CLIP((clip)) && (frame) > 0 && (frame)\
+					 <= mainw->files[(clip)]->frames) \
+					? (mainw->files[(clip)]->frame_index \
+					   ? (mainw->files[(clip)]->frame_index[((frame) - 1)] < 0 ? -(frame) : \
+					      mainw->files[(clip)]->frame_index[((frame) - 1)]) : -(frame)) : 1)
+
+frames_t *trim_frame_index(int clipno, frames_t *ref_frames, frames_t start, frames_t len);
+
+#define get_alt_indexed_frame(clip, frame)				\
+  ((frame) <= mainw->files[(clip)]->alt_frames				\
+   ? get_indexed_frame((clip), (mainw->files[(clip)]->alt_frame_index[((frame) - 1)] + 1)) \
+   : get_indexed_frame((clip), (frame)))
 
 #endif

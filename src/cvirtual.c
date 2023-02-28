@@ -25,6 +25,110 @@ frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end) {
 }
 
 
+frames_t *trim_frame_index(int clipno, frames_t *ref_frame, frames_t start, frames_t len) {
+  // make a reordering of frame_index, but omit any sequential frames with identical md5sums
+  // each value in alt_frame_index is an index to an entry in frame_index
+  // - if sfile has no frame_index, then all frames are images and we invent a vritual frame index filled with the value "-1"
+  //
+  // this function should only be called at the start of playback for a clip - ie. when startign playback, swithcing clips,
+  // looping (but not in ping pong mode) and the end is reached, or when retriggered, or when jumping to a bookmark
+  // the value ini_frame can be the index of a normal (un reordered frame), the value returned in it will be the new position
+  // in alt_frame_index (ie. frames removed before that index will be subtrcted, or frames after if playing in reverse)
+  // if the old index concides with an excluded frame, the value returned will be unchanged, but in the alt_index this will point now
+  // to the frame after (or before) the excluded region.
+  //
+  // start and len can define a region (in un reorded frames) to be scanned, since we cannot determine where this falls in the
+  // alt index. A start value of 0 will simply remov any exisitin alt_frame_index;
+  /// a positive start is offset from beggining, start < 0 offset from end
+  // abs(start > sfile->frames) will simpoly do nothing and return
+  // len will always be clamped so start + len - 1 <= sfile->frames or sfile->frames - (start + len - 1) >= 0
+  // If start < 0 then this is offset from sfile->frames, and ref_frame is set by reverse tracking
+  // Any existing alt_index will be replaced, except in the case where abs(start) > sfile->frames
+
+  //
+  // in VJ mode, we do not play audio, so this can be done duting playback, ideally we would parse the start of the clip to skip past
+  // blanks and fixed (titles) text
+
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(clipno);
+  if (sfile) {
+    int dir = 1;
+    int cut_st = -1;
+    int i, j, k = 0, end;
+    if (!start) return sfile->alt_frame_index;
+
+    if (start < 0) {
+      dir = -1;
+      start = -start;
+    }
+    pthread_mutex_lock(&sfile->frame_index_mutex);
+    if (sfile->alt_frame_index) {
+      lives_free(sfile->alt_frame_index);
+      sfile->alt_frame_index = NULL;
+    }
+    sfile->alt_frames = 0;
+
+    start--;
+
+    if (start >= sfile->frames) {
+      pthread_mutex_unlock(&sfile->frame_index_mutex);
+      return sfile->alt_frame_index;
+    }
+
+    if (len <= 0 || start + len > sfile->frames) len = sfile->frames - start;
+
+    sfile->alt_frame_index = lives_calloc(sfile->frames, sizeof(frames_t));
+
+    if (dir == 1) end = start + len;
+    else {
+      end = sfile->frames - 1 - start;
+      start -= len;
+    }
+    for (i = start; i < end; i++) {
+      // TODO allow setting of a callback function to determine which entries to filter out
+      if ((i + 1 < end && get_frame_md5(clipno, i) && get_frame_md5(clipno, i + 1)
+           && !lives_memcmp(get_frame_md5(clipno, i),
+                            get_frame_md5(clipno, i + 1), MD5_SIZE))
+          || (i + 1 == end && get_frame_md5(clipno, i) && get_frame_md5(clipno, i - 1)
+              && !lives_memcmp(get_frame_md5(clipno, i),
+                               get_frame_md5(clipno, i - 1), MD5_SIZE))) {
+        if (cut_st == -1) cut_st = i;
+        continue;
+      }
+      if (cut_st != -1) {
+        cut_st = -1;
+        // check audio from cut_st to here
+        // if it is silent, or we are in vj mode then we omit the frames from alt_frame_index
+        // and we cut out the audio section
+        // otherwise we will add all frames from cut_st up to here
+        if (1) {
+          /* if (!sfile->achans || is_silent((double)cut_st / sfile->fps, (double)i / sfile->fps, sfile->arate, */
+          /* 				sfile->achans, sfile->asampsize, sfile->signed_endian)) { */
+
+          /*   if (sfile->achans) cut_audio((double)cut_st / sfile->fps, (double)i / sfile->fps, sfile->srate, */
+          /* 			       sfile->achans, sfile->asampsize, sfile->signed_endian); */
+          continue;
+        }
+      } else cut_st = i;
+      for (j = cut_st; j <= i; j++) {
+        // next frame differs and we are not cutting so we just transfer this
+        sfile->alt_frame_index[k] = j;
+        sfile->alt_frames++;
+        if (ref_frame && j > *ref_frame) {
+          if (dir == 1) *ref_frame = k + 1;
+          else *ref_frame = k ? k : 1;
+          ref_frame = NULL;
+        }
+        k++;
+      }
+      cut_st = -1;
+    }
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return sfile->alt_frame_index;
+  }
+  return NULL;
+}
+
+
 boolean create_frame_index(int clipno, boolean init, frames_t start_offset, frames_t nframes) {
   lives_clip_t *sfile;
   size_t idxsize = nframes * sizeof(frames_t);
@@ -1074,6 +1178,9 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
 
   if (self) lives_proc_thread_set_cancellable(self);
 
+
+  //
+
   prefs->pb_quality = PB_QUALITY_BEST;
 
   // use internal image saver if we can
@@ -1139,6 +1246,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
           break;
         }
       }
+
       if (lives_proc_thread_is_unqueued(saver_procthread)) {
         // queue it
         goto queue_lpt;

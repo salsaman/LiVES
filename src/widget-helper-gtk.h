@@ -285,9 +285,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_path_get_basename(a) g_path_get_basename(a)
 
-#define LIVES_UNLIKELY(a) G_UNLIKELY(a)
-#define LIVES_LIKELY(a) G_LIKELY(a)
-
 #define lives_file_test(a, b) g_file_test(a, b)
 
 #define lives_get_current_dir() g_get_current_dir()

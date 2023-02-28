@@ -136,7 +136,7 @@ struct _weed_leaf_nopadding {
     const char *key;
   };
 
-#define _WEED_PADBYTES_ ((_CACHELINE_SIZE_-(int)(sizeof(struct _weed_leaf_nopadding)))%_CACHELINE_SIZE_)
+#define _WEED_PADBYTES_ (_CACHELINE_SIZE_-((((int)(sizeof(struct _weed_leaf_nopadding)))%_CACHELINE_SIZE_)))
 
   struct _weed_leaf {
     weed_hash_t	key_hash;

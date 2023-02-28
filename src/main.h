@@ -139,6 +139,9 @@ weed_leaf_delete_f _weed_leaf_delete;
 #define EXPECTED(x) __builtin_expect((x), 1)
 #define UNEXPECTED(x) __builtin_expect((x), 0)
 
+#define LIVES_UNLIKELY(a) UNEXPECTED(a)
+#define LIVES_LIKELY(a) EXPECTED(a)
+
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 

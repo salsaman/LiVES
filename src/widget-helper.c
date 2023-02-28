@@ -433,7 +433,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
-  if (1 || is_fg_thread()) cairo_stroke(cr);
+  if (!gui_loop_tight || is_fg_thread()) cairo_stroke(cr);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
     MAIN_THREAD_EXECUTE_RVOID(cairo_stroke, 0, "v", cr);

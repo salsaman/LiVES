@@ -2980,11 +2980,9 @@ static boolean thrdpool(void *arg) {
       if (rc == ETIMEDOUT) {
         // if the thread is waiting around doing nothing, and there are no tasks waitng,
         // exit, maybe free up some resources
-        g_print("thrd %d (0x%lx) expired, idled for %d sec.\n", tdata->slot_id, pthread_self(), lifetime);
         if (!pthread_mutex_trylock(&pool_mutex)) {
           if (!pthread_mutex_trylock(&twork_mutex)) {
             if (ntasks < npoolthreads) {
-              //g_print("thrd %d (0x%lx) leaving\n", tid, pself);
               pthread_t *myslot = poolthrds[tdata->slot_id];
               poolthrds[tdata->slot_id] = NULL;
               // slot can now be reused
@@ -3215,7 +3213,7 @@ uint64_t lives_thread_join(lives_thread_t *thread, void **retval) {
 
   nthrd = task->done;
 
-  // theread has been joined, so now it can be freed
+  // thread has been joined, so now it can be freed
   task->flags &= ~LIVES_THRDFLAG_NOFREE_LIST;
   lives_thread_free(thread);
 

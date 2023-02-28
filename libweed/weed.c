@@ -503,6 +503,7 @@ EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_fr
   else my_calloc = _malloc0_product;
   weed_free = my_free;
   weed_malloc_and_copy = _weed_malloc_copy;
+  weed_unmalloc_and_copy = _weed_unmalloc_copy;
   return 0;
 }
 

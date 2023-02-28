@@ -682,7 +682,9 @@ boolean init_memfuncs(int stage) {
 }
 
 
-#define NBIGBLOCKS 8
+#define BB_CACHE 512 // frame cache size (MB)
+
+#define NBIGBLOCKS (BB_CACHE >> 5)
 #define BBLOCKSIZE (33554432ul)
 
 static void *bigblocks[NBIGBLOCKS];

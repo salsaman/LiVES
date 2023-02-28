@@ -328,12 +328,27 @@ typedef struct _lives_clip_t {
   boolean has_binfmt;
 
   /// index of frames for CLIP_TYPE_FILE
-  /// >0 means corresponding frame within original clip
-  /// -1 means corresponding image file (equivalent to CLIP_TYPE_DISK)
-  /// size must be >= frames, MUST be contiguous in memory
+  /// >0 means corresponding frame within original clip (undecoded)
+  // e.g if frame_index[0] ie 20, then it means frame 20 (starting from 1) in the encoded source
+  // if frame_index[50] is 99, then this is frame 99 in encoded source
+  /// -1 means corresponding decoded (image) file (equivalent to CLIP_TYPE_DISK)
+  // ie. if frame_index[0] is -1, this correspondes to image 1, if frame_index[100] is -1, then it means images 101
+  // the advantage of only using -1 for images is that image files can be renamed / overwtitten to remove gaps
+  // and the corresponding section cut from the frame_index without a need to renumber anything within it
+
+  /// these are pointers to buffers large enough to hold frames *
+  // at least frames * sizeof(frames_t) and old_frames * sizeof(frames_t) respectively
   frames_t *frame_index;
   frames_t *frame_index_back; ///< for undo
   pthread_mutex_t frame_index_mutex;
+
+  // alt_frame_index may be used for temporary remappings, without disturbing the "real" frame_index
+  // in this variant, decoded (image) frames are stored as -frame, rather than simply -1
+  // this is useful if we want to skip over images without physically removing them
+  // this can be used for CLIP_TYPE_DISK as well as CLIP_TYPE_FILE
+  // (for the former, all entries will be < 0, for the latter, at least one entry will be > 0)
+  frames_t *alt_frame_index;
+  frames_t alt_frames; // the number "frames" in the alt_frame_index
 
   double img_decode_time;
 
@@ -363,8 +378,9 @@ typedef struct _lives_clip_t {
 
   lives_delivery_t delivery;
 
-  char **frame_md5s;
-  char blank_md5s[10][16];
+  char **frame_md5s[2]; // we have two arrays, 0 == decoded frames,
+  // 1 == undecoded frames
+  char blank_md5s[10][MD5_SIZE];
 
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system
@@ -550,6 +566,16 @@ char *get_untitled_name(int number);
 
 #define LIVES_LITERAL_EVENT "event"
 #define LIVES_LITERAL_FRAMES "frames"
+
+#define get_frame_md5(clip, frame) \
+  (IS_PHYSICAL_CLIP((clip))						\
+   ? (((frame) <= mainw->files[(clip)]->frames				\
+       && get_indexed_frame((clip), (frame) + 1) < 0) ?			\
+      ((mainw->files[(clip)]->frame_md5s[0]) ?				\
+       mainw->files[(clip)]->frame_md5s[0][-get_indexed_frame((clip), (frame) + 1)- 1] : NULL) \
+      : (((((get_clip_cdata((clip)) && (frame) <= get_clip_cdata((clip))->nframes))) \
+	  && get_indexed_frame((clip), (frame) + 1) >= 0 && mainw->files[(clip)]->frame_md5s[1]) \
+	 ? mainw->files[(clip)]->frame_md5s[1][get_indexed_frame((clip), (frame) + 1)] : NULL)): NULL)
 
 // clip sources
 lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source,

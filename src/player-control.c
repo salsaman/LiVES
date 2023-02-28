@@ -992,6 +992,8 @@ void play_file(void) {
 
   // PLAYBACK END /////////////////////
 
+  if (mainw->blend_layer) weed_layer_set_invalid(mainw->blend_layer, TRUE);
+
   lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_END_HOOK);
 
   mainw->osc_block = TRUE;
@@ -1023,6 +1025,10 @@ void play_file(void) {
 
   mainw->osc_auto = 0;
 
+  if (mainw->blend_layer) {
+    check_layer_ready(mainw->blend_layer);
+    weed_layer_unref(mainw->blend_layer);
+  }
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
   if (mainw->record && !mainw->record_paused)
     event_list_add_end_events(mainw->event_list, TRUE);
@@ -1030,6 +1036,7 @@ void play_file(void) {
   if (!mainw->foreign) {
     /// deinit any active real time effects
     really_deinit_effects();
+
     if (prefs->allow_easing && !mainw->multitrack) {
       // any effects which were "easing out" should be deinited now
       deinit_easing_effects();
@@ -1264,14 +1271,7 @@ void play_file(void) {
       if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
 
       /// free the last frame image(s)
-      old_flayer = get_old_frame_layer();
-      if (old_flayer) {
-        if (old_flayer == mainw->frame_layer) mainw->frame_layer = NULL;
-        if (old_flayer == mainw->frame_layer_preload) mainw->frame_layer_preload = NULL;
-        if (old_flayer == mainw->blend_layer) mainw->blend_layer = NULL;
-        weed_layer_free(old_flayer);
-        reset_old_frame_layer();
-      }
+      reset_old_frame_layer();
 
       if (mainw->frame_layer) {
         check_layer_ready(mainw->frame_layer);

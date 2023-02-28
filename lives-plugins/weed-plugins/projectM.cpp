@@ -887,8 +887,13 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     int palette = weed_channel_get_palette(out_channel);
     int psize = pixel_size(palette);
     int xrowstride = width * psize;
+    int64_t rseed = weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL);
 
     copies++;
+
+    // host can set rseed to a random value and then set it ro same again for repeatable
+    // RNG
+    fastrand(rseed);
 
     if (inited) {
       //std::cerr << "already inited" << std::endl;

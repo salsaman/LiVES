@@ -139,7 +139,7 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
 
 
 void timer_handler(int sig, siginfo_t *si, void *uc) {
-  lives_timer_t *xtimer;
+  volatile lives_timer_t *xtimer;
 
   if (!THREADVAR(uid)) return;
   thread_signal_block(LIVES_TIMER_SIG);

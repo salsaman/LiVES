@@ -874,22 +874,26 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
   lives_clip_src_t *dsource = NULL;
+  frames_t frameno;
 
   blend_file = RETURN_VALID_CLIP(mainw->blend_file);
   if (!blend_file) return NULL;
-  if (!IS_NORMAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = 1;
+  if (!IS_PHYSICAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = 1;
   else {
+    blend_file->last_frameno = frameno = blend_file->frameno;
     if (mainw->blend_file != mainw->last_blend_file) {
       // mainw->last_blend_file is set to -1 on playback start
-      blend_file->last_frameno = blend_file->frameno;
-      blend_tc = tc;
+      trim_frame_index(mainw->blend_file, &frameno, blend_file->pb_fps > - 0. ? 1 : -1, 0);
+      frameno = blend_file->frameno;
     } else {
       if (!cfile->play_paused) {
-        frames_t frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
-        frameno = clamp_frame(mainw->blend_file, frameno);
-        blend_file->last_frameno = blend_file->frameno = frameno;
-        blend_tc = ntc;
+        frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
       }
+    }
+    frameno = clamp_frame(mainw->blend_file, frameno);
+    if (frameno != blend_file->frameno) {
+      blend_file->last_frameno = blend_file->frameno = frameno;
+      blend_tc = ntc;
     }
   }
 

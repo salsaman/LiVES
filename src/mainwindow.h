@@ -62,13 +62,35 @@
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 
+typedef struct {
+  int width_base, height_base;
+  double ratio;
+} lives_aspect_ratio;
+
+#define _GUI_CONST_801 620. // min msgbox width
+
+#define _GUI_CONST_802 420. // timelime vspace
+#define _GUI_CONST_803 60. // tree row height
+
+#define _GUI_CONST_804 36. // min sepwin width
+#define _GUI_CONST_805 180. // button wid
+
+#define _GUI_CONST_806 240. // frameblank min wid
+#define _GUI_CONST_807 180. // frameblank
+
+#define _GUI_CONST_808 400. //
+
+#define _GUI_CONST_809 210. //
+
+#define MIN_MSGBOX_WIDTH ((int)(_GUI_CONST_801 * widget_opts.scaleW))
+
 // parameters for resizing the image frames, and for capture
 #define H_RESIZE_ADJUST (widget_opts.packing_width * 2)
 #define V_RESIZE_ADJUST (widget_opts.packing_height * 2)
 
 // space to reserve for the CE timeline
 // IMPORTANT to fine tune this - TODO
-#define CE_TIMELINE_VSPACE ((int)(420. * widget_opts.scale))
+#define CE_TIMELINE_VSPACE ((int)(_GUI_CONST_802 * widget_opts.scaleH))
 
 /// char width of combo entries (default)
 #define COMBOWIDTHCHARS 12
@@ -80,20 +102,20 @@
 #define PREVSBWIDTHCHARS 8
 
 // min sizes for the separate play window
-#define MIN_SEPWIN_WIDTH 600
-#define MIN_SEPWIN_HEIGHT 36
+#define MIN_SEPWIN_WIDTH ((int)(_GUI_CONST_801 * widget_opts.scaleW))
+#define MIN_SEPWIN_HEIGHT ((int)(_GUI_CONST_804 * widget_opts.scaleH))
 
 #define MENU_HIDE_LIM 24
 
 /// sepwin/screen size safety margins in pixels
-#define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scale))
-#define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scale))
+#define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scaleW))
+#define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scaleH))
 
 /// height of preview widgets in sepwin
-#define PREVIEW_BOX_HT ((int)(100. * widget_opts.scale))
+#define PREVIEW_BOX_HT ((int)(_GUI_CONST_803 * widget_opts.scaleH))
 
 /// (unexpanded) height of rows in treeviews
-#define TREE_ROW_HEIGHT ((int)(60. * widget_opts.scale))
+#define TREE_ROW_HEIGHT ((int)(_GUI_CONST_804 * widget_opts.scaleH))
 
 // a few GUI specific settings
 #define GUI_SCREEN_WIDTH (mainw->mgeom[widget_opts.monitor].width)
@@ -110,12 +132,28 @@
 #define SCREEN_169_MIN_HEIGHT 720
 
 /// default size for frames
-#define DEF_FRAME_HSIZE_4K_UNSCALED 3840.
-#define DEF_FRAME_VSIZE_4K_UNSCALED 2160.
+// 16:9
+#define DEF_FRAME_HSIZE_8K_UNSCALED 8192.
+#define DEF_FRAME_VSIZE_8K_UNSCALED 4608.
 
+#define DEF_FRAME_HSIZE_8KTV_UNSCALED 7680.
+#define DEF_FRAME_VSIZE_8KTV_UNSCALED 4320.
+
+#define DEF_FRAME_HSIZE_4K_UNSCALED 4096.
+#define DEF_FRAME_VSIZE_4K_UNSCALED 2304.
+
+#define DEF_FRAME_HSIZE_4KTV_UNSCALED 3840.
+#define DEF_FRAME_VSIZE_4KTV_UNSCALED 2160.
+
+// 1080p
 #define DEF_FRAME_HSIZE_HDTV_UNSCALED 1920.
 #define DEF_FRAME_VSIZE_HDTV_UNSCALED 1080.
 
+// 4:3
+#define DEF_FRAME_HSIZE_HD43_UNSCALED 1440.
+#define DEF_FRAME_VSIZE_HD43_UNSCALED 1080.
+
+// 720p
 #define DEF_FRAME_HSIZE_169_UNSCALED 1280.
 #define DEF_FRAME_VSIZE_169_UNSCALED 720.
 
@@ -128,11 +166,11 @@
 #define SCREEN_43S_LIMIT_WIDTH DEF_FRAME_HSIZE_43_UNSCALED
 #define SCREEN_43S_LIMIT_HEIGHT DEF_FRAME_VSIZE_169_UNSCALED
 
-#define DEF_FRAME_HSIZE_GUI (((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale) >> 2) << 1)
-#define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
+#define DEF_FRAME_HSIZE_GUI (((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scaleW) >> 2) << 1)
+#define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scaleH) >> 1) << 1)
 
 // min screen height to show the message area
-#define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)32. * widget_opts.scale) : 46)
+#define MIN_MSGBAR_HEIGHT (widget_opts.scaleH >= 1. ? ((int)32. * widget_opts.scaleH) : 46)
 #define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_VSIZE_GUI + CE_TIMELINE_VSPACE - MIN_MSGBAR_HEIGHT)
 #define MIN_MSGBOX_LLINES 2
 
@@ -149,37 +187,38 @@
 #define DEF_GEN_WIDTH DEF_FRAME_HSIZE_UNSCALED
 #define DEF_GEN_HEIGHT DEF_FRAME_VSIZE_UNSCALED
 
-#define DEF_FRAME_HSIZE ((((int)((double)DEF_FRAME_HSIZE_UNSCALED * widget_opts.scale)) >> 2) << 2)
-#define DEF_FRAME_VSIZE ((((int)((double)DEF_FRAME_VSIZE_UNSCALED * widget_opts.scale)) >> 1) << 1)
+#define DEF_FRAME_HSIZE ((((int)((double)DEF_FRAME_HSIZE_UNSCALED * widget_opts.scaleW)) >> 2) << 2)
+#define DEF_FRAME_VSIZE ((((int)((double)DEF_FRAME_VSIZE_UNSCALED * widget_opts.scaleH)) >> 1) << 1)
 
-#define FRAMEBLANK_MIN_WIDTH ((int)(240. * widget_opts.scale))
-#define FRAMEBLANK_MAX_WIDTH ((int)(600. * widget_opts.scale))
+#define FRAMEBLANK_MIN_WIDTH ((int)(_GUI_CONST_806 * widget_opts.scaleW))
+#define FRAMEBLANK_MAX_WIDTH ((int)(_GUI_CONST_801 * widget_opts.scaleW))
 
-#define FRAMEBLANK_MIN_HEIGHT ((int)(180. * widget_opts.scale))
-#define FRAMEBLANK_MAX_HEIGHT ((int)(400. * widget_opts.scale))
+#define FRAMEBLANK_MIN_HEIGHT ((int)(_GUI_CONST_807 * widget_opts.scaleH))
+#define FRAMEBLANK_MAX_HEIGHT ((int)(_GUI_CONST_808 * widget_opts.scaleH))
 
-#define IMSEP_MAX_HEIGHT ((int)(64. * widget_opts.scale))
+#define IMSEP_MAX_HEIGHT ((int)(64. * widget_opts.scaleH))
 #define IMSEP_MAX_WIDTH (GUI_SCREEN_WIDTH - 20)
 
-#define MAIN_SPIN_SPACER ((int)52. * widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
+#define MAIN_SPIN_SPACER ((int)52. * widget_opts.scaleW) ///< pixel spacing for start/end spins for clip and multitrack editors
 
 ///< horizontal size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_H ((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale))
+#define ENC_DETAILS_WIN_H ((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scaleW))
 ///< vertical size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_V (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale)) >> 1)
+#define ENC_DETAILS_WIN_V (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scaleH)) >> 1)
 
-#define MIN_MSG_WIDTH_CHARS ((int)(40. * widget_opts.scale)) ///< min width of text on warning/error labels
-#define MAX_MSG_WIDTH_CHARS ((int)(200. * widget_opts.scale)) ///< max width of text on warning/error labels
+#define MIN_MSG_WIDTH_CHARS ((int)(40. * widget_opts.scaleW)) ///< min width of text on warning/error labels
+#define MAX_MSG_WIDTH_CHARS ((int)(200. * widget_opts.scaleW)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH ? 210. * (1. + widget_opts.scale) : \
+#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH \
+			     ? _GUI_CONST_809 * (1. + widget_opts.scaleW) : \
 			     DEF_FRAME_HSIZE_43S_UNSCALED))
-#define RFX_WINSIZE_V ((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale))
+#define RFX_WINSIZE_V ((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scaleH))
 
-#define DLG_BUTTON_WIDTH ((int)(180. * widget_opts.scale))
+#define DLG_BUTTON_WIDTH ((int)(_GUI_CONST_805 * widget_opts.scaleW))
 #define DLG_BUTTON_HEIGHT (widget_opts.css_min_height * 3)
 
-#define DEF_BUTTON_WIDTH ((int)(180. * widget_opts.scale))
+#define DEF_BUTTON_WIDTH ((int)(_GUI_CONST_805 * widget_opts.scaleW))
 #define DEF_BUTTON_HEIGHT ((((widget_opts.css_min_height >> 1) + 2) >> 1) << 3)
 
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H

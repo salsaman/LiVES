@@ -2883,21 +2883,7 @@ void get_monitors(boolean reset) {
     prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
   }
 
-  widget_opts_rescale(prefs->screen_scale);
-
-  if (prefs->show_dev_opts) g_print("Can show msg_area if %d >= %d - calculated as %d + %d - %f; result is ",
-				    GUI_SCREEN_HEIGHT, (int)MIN_MSG_AREA_SCRNHEIGHT, DEF_FRAME_VSIZE_GUI, CE_TIMELINE_VSPACE,
-				    MIN_MSGBAR_HEIGHT);
-
-  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT > (int)MIN_MSG_AREA_SCRNHEIGHT) {
-    capable->can_show_msg_area = TRUE;
-    if (future_prefs->show_msg_area) prefs->show_msg_area = TRUE;
-    if (prefs->show_dev_opts) g_print("YES\n");
-  } else {
-    prefs->show_msg_area = FALSE;
-    capable->can_show_msg_area = FALSE;
-    if (prefs->show_dev_opts) g_print("NO\n");
-  }
+  widget_opts_set_scale(prefs->screen_scale);
 }
 
 

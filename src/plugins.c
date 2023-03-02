@@ -1002,8 +1002,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   else {
     // OBJ_INTENTION_TRANSCODE
     title = (_("Quick Transcoding"));
-    wscale = 2. * widget_opts.scale;
-    hscale = 1.5;
+    wscale = 2. * widget_opts.scaleW;
+    hscale = 3. / wscale * widget_opts.scaleH;
   }
 
   vppa->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH * wscale, DEF_DIALOG_HEIGHT * hscale);

@@ -14,6 +14,9 @@
 #include "callbacks.h"
 #include "startup.h"
 #include "ce_thumbs.h"
+#ifdef HAVE_YUV4MPEG
+#include "lives-yuv4mpeg.h"
+#endif
 
 #include <png.h>
 
@@ -265,25 +268,14 @@ void load_start_image(frames_t frame) {
   lives_widget_set_opacity(mainw->start_image, 1.);
 
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
-    int bx, by, hsize, vsize;
-    int scr_width = GUI_SCREEN_WIDTH;
-    int scr_height = GUI_SCREEN_HEIGHT;
-    int vspace = get_vspace();
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    bx = abs(bx);
-    by = abs(by);
-    if (!mainw->hdrbar) {
-      if (by > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-    hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
-                          + (prefs->show_msg_area ? mainw->mbar_res : 0)
-                          + widget_opts.border_width * 2);
+    int hsize, vsize;
+    get_gui_framesize(&hsize, &vsize);
+
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
     }
+    g_print("VS1 is %d\n", vsize);
     lives_widget_set_size_request(mainw->start_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame1, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox3, hsize, vsize);
@@ -554,25 +546,14 @@ void load_end_image(frames_t frame) {
   lives_widget_set_opacity(mainw->end_image, 1.);
 
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
-    int bx, by, hsize, vsize;
-    int scr_width = GUI_SCREEN_WIDTH;
-    int scr_height = GUI_SCREEN_HEIGHT;
-    int vspace = get_vspace();
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    bx = abs(bx);
-    by = abs(by);
-    if (!mainw->hdrbar) {
-      if (by > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-    hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
-                          + (prefs->show_msg_area ? mainw->mbar_res : 0)
-                          + widget_opts.border_width * 2);
+    int hsize, vsize;
+    get_gui_framesize(&hsize, &vsize);
+
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
     }
+    g_print("VS2 is %d\n", vsize);
     lives_widget_set_size_request(mainw->end_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame2, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox4, hsize, vsize);
@@ -2220,9 +2201,9 @@ fndone:
                     } else if (dplug->cdata->rec_rowstrides) {
                       lives_free(dplug->cdata->rec_rowstrides);
                       dplug->cdata->rec_rowstrides = NULL;
-		  // *INDENT-OFF*
-		}}}}
-	  // *INDENT-ON*
+		    // *INDENT-OFF*
+		  }}}}
+	    // *INDENT-ON*
 
               width = dplug->cdata->width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
               height = dplug->cdata->height;
@@ -2764,174 +2745,3 @@ fail:
                          saveargs->width, saveargs->height, &saveargs->error);
   }
 
-
-  static void _resize(double scale) {
-    // resize the frame widgets
-    // set scale < 0. to _force_ the playback frame to expand (for external capture)
-    LiVESXWindow *xwin;
-    double oscale = scale;
-
-    int xsize, vspace;
-    int bx, by;
-
-    // height of the separator imeage
-
-    // maximum values
-    int hsize, vsize;
-    int w, h;
-    int scr_width = GUI_SCREEN_WIDTH;
-    int scr_height = GUI_SCREEN_HEIGHT;
-
-    if (!prefs->show_gui || mainw->multitrack) return;
-    vspace = get_vspace();
-
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    bx = 2 * abs(bx);
-    by = abs(by);
-
-    if (!mainw->hdrbar) {
-      if (prefs->open_maximised && by > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-
-    w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
-    h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
-
-    // resize the main window so it fits the gui monitor
-    if (prefs->open_maximised)
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    else if (w > scr_width - bx || h > scr_height - by) {
-      w = scr_width - bx;
-      h = scr_height - by - mainw->mbar_res;
-      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-    }
-
-    hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
-                          + (prefs->show_msg_area ? mainw->mbar_res : 0)
-                          + widget_opts.border_width * 2);
-
-    if (scale < 0.) {
-      // foreign capture
-      scale = -scale;
-      hsize = (scr_width - H_RESIZE_ADJUST - bx) / scale;
-      vsize = (scr_height - V_RESIZE_ADJUST - by) / scale;
-    }
-
-    mainw->ce_frame_width = hsize;
-    mainw->ce_frame_height = vsize;
-
-    if (oscale == 2.) {
-      if (hsize * 2 > scr_width - SCR_WIDTH_SAFETY) {
-        scale = 1.;
-      }
-    }
-
-    if (oscale > 0.) {
-      if (scale > 1.) {
-        // this is the size for the start and end frames
-        // they shrink when scale is 2.0
-        mainw->ce_frame_width = hsize / scale;
-        mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST;
-
-        lives_widget_set_margin_left(mainw->playframe, widget_opts.packing_width);
-        lives_widget_set_margin_right(mainw->playframe, widget_opts.packing_width);
-      }
-
-      if (CURRENT_CLIP_IS_VALID) {
-        if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
-          if (!mainw->camframe) {
-            LiVESError *error = NULL;
-            char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
-            char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, LIVES_THEME_CAMERA, fname, NULL);
-            mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
-            if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
-            lives_free(tmp); lives_free(fname);
-          }
-        }
-      }
-
-      // THE SIZES OF THE FRAME CONTAINERS
-      lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, mainw->ce_frame_height);
-      lives_widget_set_size_request(mainw->eventbox3, mainw->ce_frame_width, mainw->ce_frame_height);
-      lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, mainw->ce_frame_height);
-      lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, mainw->ce_frame_height);
-
-      lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, mainw->ce_frame_height);
-      lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, mainw->ce_frame_height);
-
-      // use unscaled size in dblsize
-      if (scale > 1.) {
-        hsize *= scale;
-        vsize *= scale;
-      }
-      lives_widget_set_size_request(mainw->playframe, hsize, vsize);
-      lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
-      lives_widget_set_size_request(mainw->playarea, hsize, vsize);
-
-      // IMPORTANT (or the entire image will not be shown)
-      lives_widget_set_size_request(mainw->play_image, hsize, vsize);
-      xwin = lives_widget_get_xwindow(mainw->play_image);
-      if (LIVES_IS_XWINDOW(xwin)) {
-        if (hsize != lives_painter_image_surface_get_width(mainw->play_surface)
-            || vsize != lives_painter_image_surface_get_height(mainw->play_surface)) {
-          pthread_mutex_lock(&mainw->play_surface_mutex);
-          if (mainw->play_surface) lives_painter_surface_destroy(mainw->play_surface);
-          mainw->play_surface =
-            lives_xwindow_create_similar_surface(xwin, LIVES_PAINTER_CONTENT_COLOR,
-                                                 hsize, vsize);
-          clear_widget_bg(mainw->play_image, mainw->play_surface);
-          pthread_mutex_unlock(&mainw->play_surface_mutex);
-        }
-      }
-    } else {
-      // capture window size
-      xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
-      if (xsize > 0) {
-        lives_widget_set_size_request(mainw->frame1, xsize / scale, vsize + V_RESIZE_ADJUST);
-        lives_widget_set_size_request(mainw->eventbox3, xsize / scale, vsize + V_RESIZE_ADJUST);
-        lives_widget_set_size_request(mainw->frame2, xsize / scale, vsize + V_RESIZE_ADJUST);
-        lives_widget_set_size_request(mainw->eventbox4, xsize / scale, vsize + V_RESIZE_ADJUST);
-        mainw->ce_frame_width = xsize / scale;
-        mainw->ce_frame_height = vsize + V_RESIZE_ADJUST;
-      } else {
-        lives_widget_hide(mainw->frame1);
-        lives_widget_hide(mainw->frame2);
-        lives_widget_hide(mainw->eventbox3);
-        lives_widget_hide(mainw->eventbox4);
-      }
-    }
-
-    if (!mainw->foreign && mainw->current_file == -1) {
-      lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-      load_start_image(0);
-      load_end_image(0);
-    }
-
-    //  update_sel_menu();
-
-    if (scale != oscale) {
-      if (!LIVES_IS_PLAYING) {
-        lives_widget_context_update();
-        if (prefs->open_maximised)
-          lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-        else if (w > scr_width - bx || h > scr_height - by) {
-          w = scr_width - bx;
-          h = scr_height - by;
-          lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-          lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-        }
-      }
-    }
-  }
-
-
-  void resize(double scale) {
-    if (is_fg_thread()) _resize(scale);
-    else {
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-      main_thread_execute_rvoid(_resize, 0, "d", scale);
-      BG_THREADVAR(hook_hints) = 0;
-    }
-  }

@@ -18,4 +18,18 @@ boolean set_palette_colours(boolean force_reload);
 
 void set_main_title(const char *filename, int or_untitled_number);
 
+void get_gui_framesize(int *hsize, int *vsize);
+
+#define MIN_MSGAREA_SCRNHEIGHT (GUI_SCREEN_HEIGHT - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2) \
+						     / sqrt(widget_opts.scaleH) + vspace + by) \
+				+ CE_TIMELINE_VSPACE + MIN_MSGBAR_HEIGHT)
+
+boolean check_can_show_msg_area(void);
+
+void reset_mainwin_size(void);
+
+void resize(double scale);
+
+boolean resize_message_area(livespointer data);
+
 #endif

@@ -52,8 +52,6 @@ void showclipimgs(void);
 
 void load_preview_image(boolean update_always);
 
-void resize(double scale);
-
 void set_record(void);
 
 typedef struct {

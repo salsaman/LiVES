@@ -53,6 +53,9 @@
 
 //////////////////////
 
+typedef void *livespointer;
+typedef const void *livesconstpointer;
+
 #define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
 		      : DEF_ALIGN)
 

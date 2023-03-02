@@ -1,9 +1,8 @@
 // yuv4mpeg.h
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2013
+// (c) G. Finch 2004 - 2023
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
-
 
 #ifndef YUV4MPEG_H
 #define YUV4MPEG_H
@@ -13,7 +12,6 @@
 #define YUV4_TYPE_GENERIC 0
 #define YUV4_TYPE_FW 1
 #define YUV4_TYPE_TV 2
-
 
 typedef struct {
   int type;
@@ -40,12 +38,10 @@ void on_live_fw_activate(LiVESMenuItem *, livespointer);
 
 void lives_yuv_stream_stop_read(lives_yuv4m_t *);
 
-
 /// not used
 boolean lives_yuv_stream_start_write(lives_yuv4m_t *, const char *filename, int hsize, int vsize, double fps);
 boolean lives_yuv_stream_write_frame(lives_yuv4m_t *, void *pixel_data);
 void lives_yuv_stream_stop_write(lives_yuv4m_t *);
-
 
 typedef struct {
   LiVESWidget *dialog;
@@ -53,9 +49,5 @@ typedef struct {
   LiVESWidget *channel_spin;
 } lives_card_w;
 
-
-
-
 #endif
-
 

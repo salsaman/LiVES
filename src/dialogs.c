@@ -1601,13 +1601,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   last_open_check_ticks = mainw->offsetticks = mainw->deltaticks = mainw->adjticks = 0;
 
-#ifdef ENABLE_JACK
-  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
-      mainw->jackd_read && prefs->ahold_threshold > 0.) {
-    // if recording with external audio, wait for audio threshold before commencing
-    mainw->jackd_read->abs_maxvol_heard = 0.;
-    cfile->progress_end = 0;
-    do_threaded_dialog(_("Waiting for external audio"), TRUE);
+  IF_APLAYER_JACK
+  (
+    if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT &&
+  mainw->jackd_read && prefs->ahold_threshold > 0.) {
+  // if recording with external audio, wait for audio threshold before commencing
+  mainw->jackd_read->abs_maxvol_heard = 0.;
+  cfile->progress_end = 0;
+  do_threaded_dialog(_("Waiting for external audio"), TRUE);
     while (mainw->jackd_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
       lives_usleep(prefs->sleep_time);
       threaded_dialog_spin(0.);
@@ -1619,13 +1620,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       cancel_process(visible);
       return FALSE;
     }
-  }
-#endif
+  })
 
-#ifdef HAVE_PULSE_AUDIO
-  // start audio recording now
-  if (prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (mainw->pulsed_read) {
+  IF_APLAYER_PULSE
+  (
+    // start audio recording now
+  if (prefs->audio_src == AUDIO_SRC_EXT) {
+  if (mainw->pulsed_read) {
       // valgrind - something undefined here
       pulse_driver_uncork(mainw->pulsed_read);
     }
@@ -1644,8 +1645,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         return FALSE;
       }
     }
-  }
-#endif
+  })
+
   mainw->scratch = SCRATCH_NONE;
   if (mainw->iochan && mainw->proc_ptr) lives_widget_show_all(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
@@ -1696,11 +1697,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   cfile->frames = 0; // allow seek beyond video length
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
-      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
-      && mainw->jackd->playing_file > -1) {
-    if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
+
+  IF_APLAYER_JACK
+  (
+    if (cfile->achans > 0 && cfile->laudio_time > 0. &&
+        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
+  && mainw->jackd->playing_file > -1) {
+  if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
       cancel_process(visible);
       return FALSE;
     }
@@ -1712,13 +1715,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
-      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed
-      && mainw->pulsed->playing_file > -1) {
-    if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
+  })
+
+  IF_APLAYER_PULSE
+  (
+    if (cfile->achans > 0 && cfile->laudio_time > 0. &&
+        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed
+  && mainw->pulsed->playing_file > -1) {
+  if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
       handle_audio_timeout();
       cancel_process(visible);
       return FALSE;
@@ -1731,8 +1735,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
-  }
-#endif
+  })
+
   cfile->frames = frames;
 
 #ifdef USE_GDK_FRAME_CLOCK

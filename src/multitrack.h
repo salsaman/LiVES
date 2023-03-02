@@ -11,26 +11,49 @@
 
 ////////////////////// GUI constants ///////////////////////
 
-#define CLIP_THUMB_WIDTH ((int)(72.*widget_opts.scale))
-#define CLIP_THUMB_HEIGHT ((int)(72.*widget_opts.scale))
+// try to reduce and refine these
+#define _GUI_CONST_1 72. // thumbnail size base
 
-#define CLIP_LABEL_LENGTH ((int)(20.*widget_opts.scale))
+#define _GUI_CONST_2 20. // clip label length
 
-#define BLOCK_THUMB_WIDTH ((int)(40.*widget_opts.scale))
+#define _GUI_CONST_3 40. // block thumb width
 
-#define MT_PLAY_WIDTH_SMALL ((int)(320.*widget_opts.scale))
-#define MT_PLAY_HEIGHT_SMALL ((int)(216.*widget_opts.scale))
+#define _GUI_CONST_4 320. // small play width
+#define _GUI_CONST_5 216. // sm pl height
 
-#define MT_PLAY_WIDTH_EXP ((int)(432.*widget_opts.scale))
-#define MT_PLAY_HEIGHT_EXP ((int)(324.*widget_opts.scale))
+#define _GUI_CONST_6 432. // exp pl width
+#define _GUI_CONST_7 324. // exp pl height
 
-#define MT_CTX_WIDTH ((int)(320.*widget_opts.scale))
-#define MT_CTX_HEIGHT ((int)(220.*widget_opts.scale))
+#define _GUI_CONST_8 80. // fx block width
+#define _GUI_CONST_9 20. // fx block height
 
-#define FX_BLOCK_WIDTH ((int)(80.*widget_opts.scale))
-#define FX_BLOCK_HEIGHT ((int)(20.*widget_opts.scale))
+#define _GUI_CONST_10 36. // track height (base)
 
-#define MT_TRACK_HEIGHT ((int)(35.*widget_opts.scale))
+#define _GUI_CONST_11 320. // ctx width
+#define _GUI_CONST_12 220. // ctx height
+
+//////////////////
+
+#define CLIP_THUMB_WIDTH ((int)(_GUI_CONST_1 * widget_opts.scaleW))
+#define CLIP_THUMB_HEIGHT ((int)(_GUI_CONST_1 * widget_opts.scaleH))
+
+#define CLIP_LABEL_LENGTH ((int)(_GUI_CONST_2 * widget_opts.scaleW))
+
+#define BLOCK_THUMB_WIDTH ((int)(_GUI_CONST_3 * widget_opts.scaleW))
+
+#define MT_PLAY_WIDTH_SMALL ((int)(_GUI_CONST_4 * widget_opts.scaleW))
+#define MT_PLAY_HEIGHT_SMALL ((int)(_GUI_CONST_5 * widget_opts.scaleH))
+
+#define MT_PLAY_WIDTH_EXP ((int)(_GUI_CONST_6 * widget_opts.scaleW))
+#define MT_PLAY_HEIGHT_EXP ((int)(_GUI_CONST_7 * widget_opts.scaleH))
+
+#define MT_CTX_WIDTH ((int)(_GUI_CONST_11 * widget_opts.scaleW))
+#define MT_CTX_HEIGHT ((int)(_GUI_CONST_12 * widget_opts.scaleH))
+
+#define FX_BLOCK_WIDTH ((int)(_GUI_CONST_8 * widget_opts.scaleW))
+#define FX_BLOCK_HEIGHT ((int)(_GUI_CONST_9 * widget_opts.scaleH))
+
+#define MT_TRACK_HEIGHT ((int)(_GUI_CONST_10 * widget_opts.scaleH))
 
 #define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be > 12
 

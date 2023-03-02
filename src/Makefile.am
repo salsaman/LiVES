@@ -77,7 +77,7 @@ bin_PROGRAMS = lives-exe
 if HAVE_MJPEGTOOLS
 yuv4mpeg_SOURCES = lives-yuv4mpeg.c lives-yuv4mpeg.h
 yuv4mpeg_CFLAGS = -DHAVE_YUV4MPEG=1
-yuvmpeg_LIBS = @MJPEGTOOLS_LIBS@
+yuv4mpeg_LDADD = @MJPEGTOOLS_LIBS@
 endif
 
 if HAVE_UNICAP
@@ -160,14 +160,14 @@ if !NEED_LOCAL_WEED_UTILS
 libweed_LDADD += @WEED_UTILS_LIBS@
 else
 libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-utils.la
-libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS = 1
+libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
 endif
 
 if !NEED_LOCAL_WEED_HOST_UTILS
 libweed_LDADD += @WEED_HOST_UTILS_LIBS@
 else
 libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-host-utils.la
-libweed_CFLAGS += -DNEED_LOCAL_WEED_HOST_UTILS = 1
+libweed_CFLAGS += -DNEED_LOCAL_WEED_HOST_UTILS=1
 endif
 
 
@@ -298,7 +298,7 @@ lives_exe_SOURCES = \
 
 
 #############
-## not sure what the differece is between CPPFLAGS and CFLAS
+## not sure what the differece is between CPPFLAGS and CFLAGS
 
 AM_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -340,7 +340,7 @@ lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) $(gtk_LDADD) $(oil_LDADD)\
 	$(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) \
 	$(pthread_LIBADD) $(libweed_LDADD) $(swresample_LDADD) \
-	$(giw_LDADD) $(libexplain_LDADD) $(unicap_LDADD) $(yuv4mpeg_LIBS)
+	$(giw_LDADD) $(libexplain_LDADD) $(unicap_LDADD) $(yuv4mpeg_LDADD)
 
 ################################
 

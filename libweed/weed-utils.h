@@ -260,7 +260,7 @@ FN_TYPE weed_voidptr_t __weed_get_arrayx__(weed_plant_t *plant, const char *key,
   return (ctype *)(__weed_get_arrayx__(plant, key, WEED_SEED_##stype, sizeof(ctype), NULL, count));
 #define _ARRAY_NORM_(ctype, stype) \
   return (ctype *)(__weed_get_arrayx__(plant, key, WEED_SEED_##stype, sizeof(ctype), error, NULL));
-#define _SET_ARRAY_(ctype, stype) \
+#define _GET_ARRAY_(ctype, stype) \
   return (ctype *)(__weed_get_arrayx__(plant, key, WEED_SEED_##stype, sizeof(ctype), error, NULL));
 
 /*							--- ARRAY GETTERS ---						*/

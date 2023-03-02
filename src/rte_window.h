@@ -1,14 +1,18 @@
 // rte_window.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2013
+// (c) G. Finch 2005 - 2023
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 #ifndef HAS_LIVES_RTE_WINDOW_H
 #define HAS_LIVES_RTE_WINDOW_H
 
-#define RTE_INFO_WIDTH ((int)(550. * widget_opts.scale))
-#define RTE_INFO_HEIGHT ((int)(400. * widget_opts.scale))
+// info window base size
+#define _GUI_CONST_101 550.
+#define _GUI_CONST_102 400.
+
+#define RTE_INFO_WIDTH ((int)(_GUI_CONST_101 * widget_opts.scaleW))
+#define RTE_INFO_HEIGHT ((int)(_GUI_CONST_102 * widget_opts.scaleH))
 
 #define DEF_FX_KEYMODES 8
 

@@ -1,6 +1,6 @@
 // gui.c
 // LiVES
-// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2023 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -39,16 +39,6 @@
 static void _resize_play_window(void);
 
 static boolean pb_added = FALSE;
-
-LIVES_GLOBAL_INLINE int get_vspace(void) {
-  static int vspace = -1;
-  if (vspace == -1) {
-    LiVESPixbuf *sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image));
-    vspace = (sepbuf ? lives_pixbuf_get_height(sepbuf) : 0);
-  }
-  return vspace;
-}
-
 
 void load_theme_images(void) {
   // load the theme images
@@ -286,13 +276,13 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
     lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
     lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
-    lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
 
-    lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
-    lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
   }
   lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
+
   if (mainw->eventbox5) lives_widget_set_bg_color(mainw->eventbox5,
         LIVES_WIDGET_STATE_NORMAL, colb);
 
@@ -301,8 +291,13 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
   lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+
   lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colb);
 
@@ -507,7 +502,8 @@ void create_LiVES(void) {
   mainw->double_size = mainw->sep_win = FALSE;
 
   if (!mainw->preview_box) mainw->preview_image = NULL;
-  mainw->sep_image = lives_image_new_from_pixbuf(NULL);
+
+  if (!mainw->sep_image) mainw->sep_image = lives_image_new_from_pixbuf(NULL);
   mainw->imframe = mainw->imsep = NULL;
 
   mainw->start_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_sim), &mainw->si_surface);
@@ -577,7 +573,7 @@ void create_LiVES(void) {
   //                      (- alignment : only for gtk+ 2.x)
   //                           - eventbox3 (to allow context menu clicks)
   //                                 - frame1 (could probably become a direct child of pf_grid)
-  //                                       - freventbox1
+  //                                       - freventbox0
   //                                             - start_image
   //                           - playframe
   //                                 - pl_eventbox
@@ -587,7 +583,7 @@ void create_LiVES(void) {
   //                                                    - play_image
   //                           - eventbox4 (ditto)
   //                                 - frame2  (ditto)
-  //                                       - freventbox2
+  //                                       - freventbox1
   //                                             - end_image
   //                  - hbox3
   //                          - start_spinbutton
@@ -2271,11 +2267,8 @@ void create_LiVES(void) {
 
   mainw->eventbox3 = lives_event_box_new();
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox3, 0, 1, 0, 1,
-                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), widget_opts.packing_width, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_CENTER);
-
-  lives_widget_set_margin_left(mainw->eventbox3, widget_opts.packing_width);
-  lives_widget_set_margin_right(mainw->eventbox3, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.25, TRUE);
@@ -2296,13 +2289,7 @@ void create_LiVES(void) {
 
   lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), 0);
 
-  lives_widget_set_hexpand(mainw->playframe, TRUE);
-
-  lives_widget_set_margin_left(mainw->playframe, widget_opts.packing_width);
-  lives_widget_set_margin_right(mainw->playframe, widget_opts.packing_width);
-
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  //lives_widget_set_size_request(mainw->playframe, -1, GUI_SCREEN_HEIGHT / 4);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
 
   mainw->playarea = lives_event_box_new();
@@ -2310,21 +2297,16 @@ void create_LiVES(void) {
   lives_widget_set_app_paintable(mainw->playarea, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
-                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), widget_opts.packing_width, 0);
 
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
 
   mainw->eventbox4 = lives_event_box_new();
 
-  lives_widget_set_app_paintable(mainw->eventbox4, TRUE);
-
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
-                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), widget_opts.packing_width, 0);
 
   lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_CENTER);
-
-  lives_widget_set_margin_left(mainw->eventbox4, widget_opts.packing_width);
-  lives_widget_set_margin_right(mainw->eventbox4, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.75, TRUE);
@@ -3374,13 +3356,17 @@ void create_LiVES(void) {
 
 void show_lives(void) {
   lives_widget_show_all(mainw->top_vbox);
-  lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+
+  check_can_show_msg_area();
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
   } else {
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
   }
+
+  reset_mainwin_size();
 
   if (prefs->show_gui) {
     if (palette->style & STYLE_1) {
@@ -3732,9 +3718,7 @@ void fullscreen_internal(void) {
 
     if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
 
-    if (prefs->open_maximised) {
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    }
+    reset_mainwin_size();
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
@@ -3999,12 +3983,11 @@ LIVES_GLOBAL_INLINE void unhide_main_gui(void) {
   }
 
   lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
-  if (prefs->open_maximised && prefs->show_gui) {
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-  }
+  reset_mainwin_size();
+
   mainw->gui_hidden = FALSE;
   lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
   wid =
     lives_strdup_printf("0x%08lx",
                         (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET)));
@@ -4135,17 +4118,12 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   if (!need_mt) {
     lives_widget_context_update();
     if (current_file != -1) switch_clip(1, current_file, TRUE);
-    else {
-      resize(1);
-    }
-    if (mainw->play_window) {
-      resize_play_window();
-    }
+    else resize(1);
+
+    if (mainw->play_window) resize_play_window();
   } else {
     on_multitrack_activate(NULL, NULL);
-    if (fake_evlist) {
-      wipe_layout(mainw->multitrack);
-    }
+    if (fake_evlist) wipe_layout(mainw->multitrack);
   }
 
   lives_widget_context_update();
@@ -4153,12 +4131,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   mainw->suppress_dprint = FALSE;
   d_print(_("GUI size changed to %d X %d\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
 
-  if (prefs->open_maximised) {
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  } else {
-    lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-  lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
+  reset_mainwin_size();
   mainw->reconfig = FALSE;
 
   if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_ERROR;

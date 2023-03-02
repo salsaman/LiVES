@@ -7,6 +7,10 @@
 
 #ifndef _CLIPHANDLER_H_
 
+#define CLIPBOARD_FILE 0
+#define clipboard mainw->files[CLIPBOARD_FILE]
+#define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
+
 #define CLIP_NAME_MAXLEN 256
 
 #define IS_VALID_CLIP(clip) (mainw && (clip) >= 0 && (clip) <= MAX_FILES && mainw->files[(clip)])
@@ -55,12 +59,6 @@
 
 #define CURRENT_CLIP_TOTAL_TIME (mainw ? CLIP_TOTAL_TIME(mainw->current_file) : 0.)
 
-#define CLIPBOARD_FILE 0
-
-#define clipboard mainw->files[CLIPBOARD_FILE]
-
-#define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
-
 #define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
 			       && mainw->files[mainw->ascrap_file]->primary_src->src_type != LIVES_SRC_TYPE_RECORDER)
 
@@ -81,7 +79,10 @@ typedef union _binval {
 #ifndef HAVE_CLIP_T
 #define HAVE_CLIP_T
 
+#define IMG_BUFF_SIZE 262144  ///< 256 * 1024 < chunk size for reading images
+
 typedef enum {
+  CLIP_TYPE_UNDEFINED,
   CLIP_TYPE_DISK, ///< imported video, broken into frames
   CLIP_TYPE_FILE, ///< unimported video, not or partially broken in frames
   CLIP_TYPE_GENERATOR, ///< frames from generator plugin
@@ -92,7 +93,7 @@ typedef enum {
   CLIP_TYPE_VIDEODEV,  ///< frames from video device
 } lives_clip_type_t;
 
-// src types
+// src types (for clips)
 // source type not recognised
 #define LIVES_SRC_TYPE_UNKNOWN		-1
 
@@ -106,6 +107,7 @@ typedef enum {
 #define LIVES_SRC_TYPE_DECODER		2
 // frame src is a filter plugin (generator)
 #define LIVES_SRC_TYPE_FILTER		3
+#define LIVES_SRC_TYPE_GENERATOR LIVES_SRC_TYPE_FILTER
 
 // frame src is a fifo file
 #define LIVES_SRC_TYPE_FIFO		8
@@ -116,28 +118,24 @@ typedef enum {
 // frame src is a file buffer containing multiple frames
 // e.g a dump or raw frame data (scrap file)
 #define LIVES_SRC_TYPE_FILE_BUFF	11
-// frame src is internal (e.g test pattern or nullvideo)
+// frame src is internal (e.g test pattern, nullvideo)
 #define LIVES_SRC_TYPE_INTERNAL		256
 
-// grabbed frames, eg from the desktop
+// grabbed frames, eg from the desktop recorder
 #define LIVES_SRC_TYPE_RECORDER		1024
 
 // layer has no source
-#define SRC_STATUS_NOT_SET		-1
-// target clip / frame not set
-#define SRC_STATUS_NO_TARGET		0
-// target set, but on standby
-#define SRC_STATUS_IDLE			1
+#define SRC_STATUS_NOT_SET		0
+// source is on standby / idle
+#define SRC_STATUS_INACTIVE    		1
 // source is queued, initialising
-#define SRC_STATUS_PREPARING		2
+#define SRC_STATUS_QUEUED		2
 // source target has at least width, heihght, palette
-//#define SRC_STATUS_HAS_METADATA		3
-// source is reading data
-#define SRC_STATUS_LOADING		4
-// target is fully readt
-#define SRC_STATUS_READY		5
-// target is blank layer
-#define SRC_STATUS_BLANK		16
+#define SRC_STATUS_HAS_METADATA		3
+// target is fully ready
+#define SRC_STATUS_READY		4
+// source is invalid, do not use the associated layer
+#define SRC_STATUS_INVALID		16
 
 // target is out of date
 #define SRC_STATUS_EXPIRED		32
@@ -149,9 +147,7 @@ typedef enum {
 // source can retry getting data
 #define SRC_STATUS_EAGAIN		66
 // source provider is busy
-#define SRC_STATUS_EBUSY		67
-// source invalid, do not use
-#define SRC_STATUS_INVALID		1025
+
 // error encountered while loading
 #define SRC_STATUS_ERROR		1026
 // source provider has been removed
@@ -174,7 +170,7 @@ typedef enum {
 #define SRC_PURPOSE_THUMBNAIL		9
 
 #define SRC_FLAG_NOFREE			(1ull < 0)
-#define SRC_FLAG_INACTIVE		(1ull < 1)
+#define SRC_FLAG_INACTIVE		(1ull < 1) // TODO - use status
 
 typedef struct {
   uint64_t uid;
@@ -405,8 +401,6 @@ typedef struct _lives_clip_t {
 
   lives_proc_thread_t pumper;
 
-#define IMG_BUFF_SIZE 262144  ///< 256 * 1024 < chunk size for reading images
-
   volatile off64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
   ticks_t async_delta;
 
@@ -470,34 +464,35 @@ typedef struct {
 } lives_tcache_entry_t;
 
 typedef enum {
-  CLIP_DETAILS_BPP,
+  CLIP_DETAILS_HEADER_VERSION,
+  CLIP_DETAILS_UNIQUE_ID,
+  CLIP_DETAILS_CLIPNAME,
+  CLIP_DETAILS_FILENAME,
   CLIP_DETAILS_FPS,
-  CLIP_DETAILS_PB_FPS,
   CLIP_DETAILS_WIDTH,
   CLIP_DETAILS_HEIGHT,
-  CLIP_DETAILS_UNIQUE_ID,
   CLIP_DETAILS_ARATE,
-  CLIP_DETAILS_PB_ARATE,
   CLIP_DETAILS_ACHANS,
   CLIP_DETAILS_ASIGNED,
   CLIP_DETAILS_AENDIAN,
   CLIP_DETAILS_ASAMPS,
   CLIP_DETAILS_FRAMES,
+  CLIP_DETAILS_INTERLACE,
+  CLIP_DETAILS_DECODER_NAME, // deprecated
+  CLIP_DETAILS_DECODER_UID,
+  CLIP_DETAILS_BPP,
+  CLIP_DETAILS_IMG_TYPE,
+  CLIP_DETAILS_GAMMA_TYPE,
+  CLIP_DETAILS_PB_FPS,
+  CLIP_DETAILS_PB_ARATE,
+  CLIP_DETAILS_PB_FRAMENO,
+  CLIP_DETAILS_MD5SUM, // for future use
+  CLIP_DETAILS_CACHE_OBJECTS, // for future use
   CLIP_DETAILS_TITLE,
   CLIP_DETAILS_AUTHOR,
   CLIP_DETAILS_COMMENT,
-  CLIP_DETAILS_PB_FRAMENO,
-  CLIP_DETAILS_FILENAME,
-  CLIP_DETAILS_CLIPNAME,
-  CLIP_DETAILS_HEADER_VERSION,
   CLIP_DETAILS_KEYWORDS,
-  CLIP_DETAILS_INTERLACE,
-  CLIP_DETAILS_DECODER_NAME,
-  CLIP_DETAILS_GAMMA_TYPE,
-  CLIP_DETAILS_MD5SUM, // for future use
-  CLIP_DETAILS_CACHE_OBJECTS, // for future use
-  CLIP_DETAILS_DECODER_UID,
-  CLIP_DETAILS_IMG_TYPE,
+  //
   CLIP_DETAILS_RESERVED28,
   CLIP_DETAILS_RESERVED27,
   CLIP_DETAILS_RESERVED26,
@@ -567,7 +562,7 @@ char *get_untitled_name(int number);
 #define LIVES_LITERAL_EVENT "event"
 #define LIVES_LITERAL_FRAMES "frames"
 
-#define get_frame_md5(clip, frame) \
+#define get_frame_md5(clip, frame)					\
   (IS_PHYSICAL_CLIP((clip))						\
    ? (((frame) <= mainw->files[(clip)]->frames				\
        && get_indexed_frame((clip), (frame) + 1) < 0) ?			\
@@ -578,13 +573,15 @@ char *get_untitled_name(int number);
 	 ? mainw->files[(clip)]->frame_md5s[1][get_indexed_frame((clip), (frame) + 1)] : NULL)): NULL)
 
 // clip sources
-lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source,
-                                  int src_type);
+lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source, int src_type);
 lives_clip_src_t *get_clip_source(int nclip, int track, int purpose);
 void clip_source_remove(int nclip, int track, int purpose);
 void clip_source_free(int nclip, lives_clip_src_t *);
 void clip_sources_free_all(int nclip);
 boolean swap_clip_sources(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
+//////////
+
+void init_clipboard(void);
 
 int find_clip_by_uid(uint64_t uid);
 

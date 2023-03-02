@@ -7,17 +7,26 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
+// info textbox sizes
+#define _GUI_CONST_402 300.
+#define _GUI_CONST_403 80.
+#define _GUI_CONST_404 50.
+
+#define _GUI_CONST_405 20.
+#define _GUI_CONST_406 4.
+#define _GUI_CONST_407 48.
+
 // CE timeline bars
 #define OVERDRAW_MARGIN 16
 
 /// clip editor hrule height
-#define CE_HRULE_HEIGHT ((int)(20. * widget_opts.scale))
+#define CE_HRULE_HEIGHT ((int)(_GUI_CONST_405 * widget_opts.scaleH))
 
 /// clip edit vid/aud bar height
-#define CE_VIDBAR_HEIGHT ((int)(4. * widget_opts.scale))
+#define CE_VIDBAR_HEIGHT ((int)(_GUI_CONST_406 * widget_opts.scaleH))
 
 /// clip edit vid/aud bar height
-#define CE_AUDBAR_HEIGHT ((int)(48. * widget_opts.scale))
+#define CE_AUDBAR_HEIGHT ((int)(_GUI_CONST_407 * widget_opts.scaleH))
 
 #define MSG_AREA_VMARGIN 0
 #define LAYOUT_SIZE_MIN 0
@@ -288,12 +297,10 @@ rec_args *do_rec_desk_dlg(void);
 
 #define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
-#define MIN_MSGBOX_WIDTH ((int)(620. * widget_opts.scale))
-
 // textboxes for clip info
-#define TB_WIDTH ((int)(300. * widget_opts.scale))
-#define TB_HEIGHT_VID ((int)(80. * widget_opts.scale))
-#define TB_HEIGHT_AUD ((int)(50. * widget_opts.scale))
+#define TB_WIDTH ((int)(_GUI_CONST_402 * widget_opts.scaleW))
+#define TB_HEIGHT_VID ((int)(_GUI_CONST_403 * widget_opts.scaleH))
+#define TB_HEIGHT_AUD ((int)(_GUI_CONST_404 * widget_opts.scaleH))
 
 boolean do_utube_stream_warn(void);
 lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *);

@@ -623,6 +623,56 @@ LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int filenum, double time) {
 }
 
 
+//////////////// aspect ratios /////////
+
+#define N_ASP_RATIOS 14
+static lives_aspect_ratio std_ars[N_ASP_RATIOS];
+
+static boolean asps_inited = FALSE;
+
+static void init_aspects(void) {
+  lives_memset(std_ars, 0, 256 * sizeof(lives_aspect_ratio));
+  std_ars[0] = (lives_aspect_ratio) {4,		5, 	0.8};
+  std_ars[1] = (lives_aspect_ratio) {1,		1, 	1.0};
+  std_ars[2] = (lives_aspect_ratio) {5, 		4, 	1.25};
+  std_ars[3] = (lives_aspect_ratio) {4, 		3, 	1.33};
+  std_ars[4] = (lives_aspect_ratio) {5, 		3, 	1.66};
+  std_ars[5] = (lives_aspect_ratio) {16, 	9, 	1.78}; // flat
+  std_ars[6] = (lives_aspect_ratio) {0, 		0, 	1.85};
+  std_ars[7] = (lives_aspect_ratio) {0, 		0, 	1.9}; // full container
+  std_ars[8] = (lives_aspect_ratio) {2, 		1, 	2.};
+  std_ars[9] = (lives_aspect_ratio) {0, 		0,	2.35};
+  std_ars[10] = (lives_aspect_ratio) {0, 	0, 	2.37};
+  std_ars[11] = (lives_aspect_ratio) {0, 	0, 	2.39}; // scope
+  std_ars[12] = (lives_aspect_ratio) {0, 	0, 	2.4};
+  std_ars[13] = (lives_aspect_ratio) {0, 	0, 	2.44};
+  asps_inited = TRUE;
+}
+
+
+double find_nearest_ar(int width, int height, int *wm, int *hm) {
+  double ar, mindelta;
+  int best = 0;
+
+  if (!asps_inited) init_aspects();
+
+  ar = (double)width / (double)height;
+  mindelta = fabs(ar - std_ars[0].ratio);
+
+  for (int i = 1; i < N_ASP_RATIOS; i++) {
+    double delta = fabs(ar - std_ars[i].ratio);
+    if (delta > mindelta) break;
+    mindelta = delta;
+    best = i;
+  }
+  if (wm && hm) {
+    *wm = std_ars[best].width_base;
+    *hm = std_ars[best].height_base;
+  }
+  return std_ars[best].ratio;
+}
+
+
 LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
@@ -691,74 +741,6 @@ LIVES_GLOBAL_INLINE void calc_minspect(int *rwidth, int *rheight, int cwidth, in
 
 
 /////////////////////////////////////////////////////////////////////////////
-
-void init_clipboard(void) {
-  int current_file = mainw->current_file;
-  char *com;
-
-  if (!clipboard) {
-    // here is where we create the clipboard
-    // use get_new_handle(clipnumber,name);
-    if (!get_new_handle(CLIPBOARD_FILE, "clipboard")) {
-      mainw->error = TRUE;
-      return;
-    }
-    migrate_from_staging(CLIPBOARD_FILE);
-  } else {
-    // experimental feature - we can have duplicate copies of the clipboard with different palettes / gamma
-    for (int i = 0; i < mainw->ncbstores; i++) {
-      if (mainw->cbstores[i] != clipboard) {
-        char *clipd = lives_build_path(prefs->workdir, mainw->cbstores[i]->handle, NULL);
-        if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
-          char *com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->cbstores[i]->handle);
-          char *permitname = lives_build_path(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
-          lives_touch(permitname);
-          lives_free(permitname);
-          lives_system(com, TRUE);
-          lives_free(com);
-        }
-        lives_free(clipd);
-      }
-    }
-    mainw->ncbstores = 0;
-
-    if (clipboard->frames > 0) {
-      // clear old clipboard
-      // need to set current file to 0 before monitoring progress
-      mainw->current_file = CLIPBOARD_FILE;
-      cfile->cb_src = current_file;
-
-      if (cfile->clip_type == CLIP_TYPE_FILE) {
-        lives_freep((void **)&cfile->frame_index);
-        if (cfile->primary_src && cfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
-          clip_source_remove(CLIPBOARD_FILE, -1, SRC_PURPOSE_PRIMARY);
-        }
-        cfile->clip_type = CLIP_TYPE_DISK;
-      }
-
-      com = lives_strdup_printf("%s clear_clipboard \"%s\"", prefs->backend, clipboard->handle);
-      lives_rm(clipboard->info_file);
-      lives_system(com, FALSE);
-      lives_free(com);
-
-      if (THREADVAR(com_failed)) {
-        mainw->current_file = current_file;
-        return;
-      }
-
-      cfile->progress_start = cfile->start;
-      cfile->progress_end = cfile->end;
-      // show a progress dialog, not cancellable
-      do_progress_dialog(TRUE, FALSE, _("Clearing the clipboard"));
-    }
-  }
-  mainw->current_file = current_file;
-  *clipboard->file_name = 0;
-  clipboard->img_type = IMG_TYPE_BEST; // override the pref
-  clipboard->cb_src = current_file;
-}
-
-
 
 void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
                        int frameno, double atime, boolean affects_current) {

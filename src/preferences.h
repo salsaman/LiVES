@@ -1,14 +1,14 @@
 
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch (salsaman_lives@gmail.com) 2004 - 2019
+// (c) G. Finch (salsaman_lives@gmail.com) 2004 - 2023
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 #ifndef HAS_LIVES_PREFS_H
 #define HAS_LIVES_PREFS_H
 
-#define PREFS_PANED_POS ((int)(300.*widget_opts.scale))
+#define PREFS_PANED_POS ((int)(300.*widget_opts.scaleW))
 
 #ifdef HAVE_FREI0R
 #define FREI0R1_LITERAL "frei0r-1"

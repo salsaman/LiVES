@@ -113,9 +113,6 @@ typedef GError                            LiVESError;
 typedef GList                             LiVESList;
 typedef GSList                            LiVESSList;
 
-typedef gpointer                          livespointer;
-typedef gconstpointer                     livesconstpointer;
-
 typedef GClosure                          LiVESWidgetClosure;
 typedef GCClosure                         LiVESWidgetCClosure;
 

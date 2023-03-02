@@ -3569,7 +3569,7 @@ static void pref_init_list(LiVESWidget * list) {
   lives_tree_view_append_column(LIVES_TREE_VIEW(list), column1);
   lives_tree_view_append_column(LIVES_TREE_VIEW(list), column2);
   lives_tree_view_column_set_sizing(column2, LIVES_TREE_VIEW_COLUMN_FIXED);
-  lives_tree_view_column_set_fixed_width(column2, 150. * widget_opts.scale);
+  lives_tree_view_column_set_fixed_width(column2, 150. * widget_opts.scaleW);
 
   store = lives_list_store_new(N_COLUMNS, LIVES_COL_TYPE_PIXBUF, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_UINT);
 

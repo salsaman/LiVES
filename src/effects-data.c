@@ -1,6 +1,6 @@
 // effects-data.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2019 (salsaman+lives@gmail.com)
+// (c) G. Finch 2005 - 2023 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -39,8 +39,10 @@ static LiVESTreeModel *cmodel;
 
 static char *lctext;
 
-#define BW (40. * widget_opts.scale)
-#define BH (40. * widget_opts.scale)
+#define _GUI_CONST_201 40.
+
+#define BW (_GUI_CONST_201 * widget_opts.scaleW)
+#define BH (_GUI_CONST_201 * widget_opts.scaleH)
 //#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
 static void dump_connections(void) {

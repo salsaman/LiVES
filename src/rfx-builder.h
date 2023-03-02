@@ -1,6 +1,6 @@
 // rfx-builder.h
 // LiVES
-// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -50,8 +50,8 @@ void on_export_rfx_activate(LiVESMenuItem *, livespointer status);
 /// this should be set to the largest of the previous maxima
 #define RFXBUILD_MAX_TROWS 512
 
-#define PREF_RFXDIALOG_W ((int)(720.*widget_opts.scale))
-#define PREF_RFXDIALOG_H ((int)(650.*widget_opts.scale))
+#define PREF_RFXDIALOG_W ((int)(720.*widget_opts.scaleW))
+#define PREF_RFXDIALOG_H ((int)(650.*widget_opts.scaleH))
 
 #define RFX_LOADED (mainw->helper_procthreads[PT_LAZY_RFX] ?		\
 		    lives_proc_thread_check_finished(mainw->helper_procthreads[PT_LAZY_RFX]) : FALSE)

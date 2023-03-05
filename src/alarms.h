@@ -38,7 +38,7 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
 boolean lives_alarm_clear(lives_alarm_t alarm_handle);
 lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks);
 
-#define LIVES_TIMER_SIG SIGRTMIN+8
+#define LIVES_TIMER_SIG SIGRTMIN+8 // 42
 
 typedef lives_timeout_t lives_timer_t;
 

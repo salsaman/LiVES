@@ -4957,9 +4957,11 @@ boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event,
 
 void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
+  // important here to set ONESHOT and FG_THREAD
+
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
                                _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
@@ -7398,7 +7400,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
                                _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
@@ -7463,7 +7465,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
                                _on_double_size_activate, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
@@ -7641,7 +7643,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
                                _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
@@ -7697,7 +7699,7 @@ void on_fade_pressed(LiVESButton * button, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
                                _on_fade_pressed, user_data);
   else _on_fade_pressed(button, user_data);
 }
@@ -7732,7 +7734,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
                                _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
 }
@@ -9305,10 +9307,13 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
 }
 
 
-static boolean _all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
-  /// quick and dirty copy / paste
-
+boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
   // draw the cursors during CE playback
+  // nomrally we would create a drawable (surface) for a clip in redraw_timeline
+  // then paint the video line and the audio waveforms
+  // here we just paint lines over the surface, and this is composited to cr
+  // during playback, we defer this function and it is called when the player is at the
+  // UI update point
   if (mainw->go_away) return FALSE;
   if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
@@ -9395,24 +9400,12 @@ static boolean _all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, 
 }
 
 
-boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
-  lives_proc_thread_t lpt;
-  if (!LIVES_IS_PLAYING) return _all_expose_overlay(widget, creb, psurf);
-  lpt = lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                        HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
-                                        _all_expose_overlay, WEED_SEED_BOOLEAN, "vvv", widget, creb, psurf);
-  lives_proc_thread_unref(lpt);
-  return TRUE;
-}
-
-
 boolean all_expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   if (LIVES_IS_PLAYING) {
     // all_expose(widget, cr, psurf);
-    lives_proc_thread_t lpt = lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                              HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
-                              all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
-    lives_proc_thread_unref(lpt);
+    lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                    HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                    all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
   }
   return TRUE;
 }
@@ -9447,6 +9440,8 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 }
 
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  // this is used only when the mainwindow size changes
+  // TODO - should we invalidate drawables for all clips ?
   if (!mainw->reconfig) return TRUE;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
@@ -12583,7 +12578,7 @@ static void fix_lmap_errors(void) {
                   && cfile->undo1_int > 5000 && cfile->undo1_int < 500000) {
                 double audratio;
                 if (sfile->pb_fps != sfile->fps && sfile->arps && sfile->arate > sfile->arps
-                    && fabs(sfile->pb_fps / sfile->fps - (audratio = (double)(sfile->arate / sfile->arps))) < .001
+                    && fdim(sfile->pb_fps / sfile->fps, (audratio = (double)(sfile->arate / sfile->arps))) < .001
                     && sfile->laudio_time * audratio >= sfile->lmap_fix_apad) {
                   fix = 2;
 		  // *INDENT-OFF*

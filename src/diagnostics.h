@@ -32,6 +32,9 @@ boolean debug_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, 
 
 void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 
+void show_all_leaves(weed_plant_t *);
+void show_audit(weed_plant_t *);
+
 void run_diagnostic(LiVESWidget *, const char *testname);
 
 void list_leaves(weed_plant_t *);

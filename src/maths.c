@@ -325,6 +325,17 @@ uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
 }
 
 
+/* int factorial(int n) {return n == 1 ? 1 : n * factorial(n - 1);} */
+/* int factorialx(int n, int m) {return --n == m ? n + 1 : n * factorialx(n - 1, m);} */
+
+
+/* double binomial(int hits, int trials, double phit) { */
+/*   // calulate to probability of n hits in n trials, with p(hit) */
+/*   double n = factorialx(trials, trials - hits) / factorial(hits), pr = pow(phit, hits), */
+/*     pf = pow((1. - phit), trials - hits); */
+/*   return n * pr * pf; */
+/* } */
+
 /* start with the number line 0. / 1. to 1. / 1. (a = 0., b = 1., c = 1., d = 1.) */
 /* then: take the fraction (a + c) / (b + d), if this is > val, then this becomes new max */
 /* if this is < val, then this becomes new min */
@@ -339,7 +350,7 @@ static boolean est_fraction(double val, uint32_t *numer, uint32_t *denom, double
   for (i = 0; i < cycles; i++) {
     m = a + b; n = c + d;
     res = (double)m / (double)n;
-    if (fabs(res - val) <= limit) break;
+    if (fdim(res, val) <= limit) break;
     if (res > val) {
       b = m; d = n;
     } else {
@@ -413,14 +424,7 @@ static LIVES_HOT void lives_md5_proc(const void *p, size_t len, md5priv *priv) {
   if (priv->t[0] < len) priv->t[1]++;
   while (w < e) {
     uint32_t *_X = X, _A_ = A, _B_ = B, _C_ = C, _D_ = D;
-    BX(0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee)BX(0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501);
-    BX(0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be)BX(0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821);
-    CW(1, 0xf61e2562, 6, 0xc040b340, 11, 0x265e5a51, 0, 0xe9b6c7aa)CW(5, 0xd62f105d, 10, 0x02441453, 15, 0xd8a1e681, 4, 0xe7d3fbc8);
-    CW(9, 0x21e1cde6, 14, 0xc33707d6, 3, 0xf4d50d87, 8, 0x455a14ed)CW(13, 0xa9e3e905, 2, 0xfcefa3f8, 7, 0x676f02d9, 12, 0x8d2a4c8a);
-    CX(5, 0xfffa3942, 8, 0x8771f681, 11, 0x6d9d6122, 14, 0xfde5380c)CX(1, 0xa4beea44, 4, 0x4bdecfa9, 7, 0xf6bb4b60, 10, 0xbebfbc70);
-    CX(13, 0x289b7ec6, 0, 0xeaa127fa, 3, 0xd4ef3085, 6, 0x04881d05)CX(9, 0xd9d4d039, 12, 0xe6db99e5, 15, 0x1fa27cf8, 2, 0xc4ac5665);
-    CY(0, 0xf4292244, 7, 0x432aff97, 14, 0xab9423a7, 5, 0xfc93a039)CY(12, 0x655b59c3, 3, 0x8f0ccc92, 10, 0xffeff47d, 1, 0x85845dd1);
-    CY(8, 0x6fa87e4f, 15, 0xfe2ce6e0, 6, 0xa3014314, 13, 0x4e0811a1)CY(4, 0xf7537e82, 11, 0xbd3af235, 2, 0x2ad7d2bb, 9, 0xeb86d391);
+    MD5_VALUE_CALCULATION_MAGIC;
     A += _A_; B += _B_; C += _C_; D += _D_;
   }
   priv->A = A; priv->B = B; priv->C = C; priv->D = D;

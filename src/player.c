@@ -1121,6 +1121,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
       //g_print("clr1 start  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       check_layer_ready(mainw->frame_layer);
+      if (lives_layer_get_clip(mainw->frame_layer) != mainw->playing_file)
+        goto lfi_done;
       //g_print("clr1 done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
       // check again to make sure our palette is still valid
@@ -1343,6 +1345,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (mainw->vpp->play_frame) player_v2 = TRUE;
 
       check_layer_ready(mainw->frame_layer);
+      if (lives_layer_get_clip(mainw->frame_layer) != mainw->playing_file)
+        goto lfi_done;
       if (prefs->dev_show_timing)
         g_printerr("clr2  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -1628,6 +1632,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
     if (prefs->apply_gamma) tgt_gamma = WEED_GAMMA_SRGB;
 
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
+    if (lives_layer_get_clip(mainw->frame_layer) != mainw->playing_file)
+      goto lfi_done;
     //g_print("FLL is %p %p\n", mainw->frame_layer, weed_layer_get_pixel_data(mainw->frame_layer));;
 
     if (prefs->dev_show_timing)
@@ -1746,7 +1752,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       set_drawing_area_from_pixbuf(mainw->preview_image, pixbuf, mainw->pi_surface);
-      lives_widget_queue_draw_noblock(mainw->preview_image);
+      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                      lives_widget_queue_draw_and_update, 0, "v",
+                                      mainw->preview_image);
+      //lives_widget_queue_draw_noblock(mainw->preview_image);
     } else {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
       pheight = lives_widget_get_allocation_height(mainw->play_image);
@@ -1757,7 +1767,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
       old_pheight = pheight;
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
       pthread_mutex_unlock(&mainw->play_surface_mutex);
-      lives_widget_queue_draw_noblock(mainw->play_image);
+      //lives_widget_queue_draw_noblock(mainw->play_image);
+      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                      lives_widget_queue_draw_and_update, 0, "v",
+                                      mainw->play_image);
     }
 
     //can we save pixbufs ?;
@@ -1881,7 +1895,14 @@ lfi_done:
         && mainw->current_file != mainw->scrap_file) {
       double ptrtime = ((double)mainw->actual_frame - 1.) / cfile->fps;
       mainw->ptrtime = ptrtime;
-      lives_widget_queue_draw_noblock(mainw->eventbox2);
+
+      // add this to the sync_announce hooks for the player
+      // when player gets to ui updtae point, it will trigger the stack and
+      // since this is flagged as FG_THREAD, it will be run as an fg_service call
+      //
+      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                      lives_widget_queue_draw_and_update, 0, "v", mainw->eventbox2);
     }
     if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
   }
@@ -2673,7 +2694,6 @@ int process_one(boolean visible) {
 
   // current video playback direction
   lives_direction_t dir = LIVES_DIRECTION_NONE;
-  lives_hook_stack_t **phstacks = lives_proc_thread_get_hook_stacks(mainw->player_proc);
   old_current_file = mainw->current_file;
   old_playing_file = mainw->playing_file;
 
@@ -3014,13 +3034,13 @@ switch_point:
 
         sfile = mainw->files[mainw->playing_file];
 
-        if (mainw->playing_file != old_playing_file) {
-          trim_frame_index(mainw->playing_file, &sfile->frameno, sfile->pb_fps > - 0. ? 1 : -1, 0);
-          clamp_frame(-1, sfile->frameno);
-          if (sfile->alt_frames != sfile->frames) {
-            sfile->last_frameno = mainw->actual_frame = sfile->frameno;
-          }
-        }
+        /* if (mainw->playing_file != old_playing_file) { */
+        /*   trim_frame_index(mainw->playing_file, &sfile->frameno, sfile->pb_fps > - 0. ? 1 : -1, 0); */
+        /*   clamp_frame(-1, sfile->frameno); */
+        /*   if (sfile->alt_frames != sfile->frames) { */
+        /*     sfile->last_frameno = mainw->actual_frame = sfile->frameno; */
+        /*   } */
+        /* } */
 
         fg_stack_wait();
         lives_nanosleep_while_true(mainw->do_ctx_update);
@@ -3188,7 +3208,7 @@ switch_point:
     if (!mainw->do_ctx_update) {
       mainw->gui_much_events = TRUE;
       mainw->do_ctx_update = TRUE;
-      lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
+      lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
     }
 
     if (mainw->cancelled == CANCEL_NONE) return 0;
@@ -4103,7 +4123,7 @@ proc_dialog:
         // thread. We must allow idlefunc(s) to run during this time
 
         if (!mainw->do_ctx_update) {
-          lives_hooks_trigger(phstacks, SYNC_ANNOUNCE_HOOK);
+          lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
           mainw->gui_much_events = TRUE;
           mainw->do_ctx_update = TRUE;
         }

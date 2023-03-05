@@ -50,6 +50,69 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
 }
 
 
+void show_all_leaves(weed_plant_t *plant) {
+  weed_size_t nleaves;
+  char **keys = _weed_plant_list_leaves(plant, &nleaves);
+  fprintf(stderr, "Displaying all %d leaf values in plant %p\n",  nleaves, plant);
+  if (!keys) {
+    fprintf(stderr, "keys are NULL\n");
+    return;
+  } else {
+    if (!nleaves) {
+      fprintf(stderr, "plant has no leaves\n");
+      return;
+    } else {
+      for (int n = 0;  keys[n]; n++) {
+        int st = weed_leaf_seed_type(plant, keys[n]);
+        const char *fmt = get_fmtstr_for_st(st);
+        char *txt = NULL;
+        FOR_ALL_SEED_TYPES(st, txt = lives_strdup_printf, fmt, weed_get_, _value, plant, keys[n], NULL);
+        if (txt) {
+          g_print("\n%s %s has value: %s\n", weed_seed_to_ctype(st, FALSE), keys[n], txt);
+          lives_free(txt);
+        }
+        lives_free(keys[n]);
+      }
+      lives_free(keys);
+      g_print("\n\n");
+    }
+  }
+}
+
+
+void show_audit(weed_plant_t *plant) {
+  // so in an audit plant we have a lot of other plants we are tracking, stored as plantptr_value, with keys
+  // equivalent to stringified versions of their own ptrs
+  // so we can list the leaves, convert back to pointers and then examine the plants
+  weed_size_t nleaves;
+  char **keys = _weed_plant_list_leaves(plant, &nleaves);
+  fprintf(stderr, "AUDITOR %p has %d plants being tracked\n", plant, nleaves);
+  if (!keys) {
+    fprintf(stderr, "keys are NULL\n");
+    return;
+  } else {
+    if (!nleaves) {
+      fprintf(stderr, "plant has no leaves\n");
+      return;
+    } else {
+      // skip "type" leaf
+      for (int n = 1;  keys[n]; n++) {
+        void *ptr;
+        if (lives_strtol(keys[n] + 2)) {
+          fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
+          sscanf(keys[n], "%p", &ptr);
+          show_all_leaves((weed_plant_t *)ptr);
+        }
+        free(keys[n]);
+      }
+      free(keys);
+      fprintf(stderr, "\nDONE\n");
+    }
+    fprintf(stderr, "\n");
+  }
+}
+
+
 char *get_stats_msg(boolean calc_only) {
   volatile float *load;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];

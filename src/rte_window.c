@@ -1817,6 +1817,7 @@ void check_string_choice_params(weed_plant_t *inst) {
       weed_leaf_copy(tgui, WEED_LEAF_CHOICES, gui, WEED_LEAF_CHOICES);
     }
   }
+  if (in_params) lives_free(in_params);
 }
 
 

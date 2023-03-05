@@ -395,7 +395,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   if (!tdata) {
     tdata = get_thread_data();
-    tdata->vars.var_proc_thread = self;
+    lives_thread_push_self(self);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Reader Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
   }
@@ -1451,7 +1451,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   if (!tdata) {
     tdata = get_thread_data();
-    tdata->vars.var_proc_thread = self;
+    lives_thread_push_self(self);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
   }

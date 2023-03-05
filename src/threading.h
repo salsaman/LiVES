@@ -52,7 +52,10 @@ typedef struct {
   uint64_t var_uid; // copy of tdata uid
 
   char var_origin[128]; // thread descriptive text eg "LiVES Worker Thread"
-  lives_proc_thread_t var_proc_thread; // 'self' proc_thread
+
+  pthread_mutex_t *var_self_stack_mutex;
+  volatile LiVESList *var_self_stack; // 'self' proc_thread - stack
+
   lives_obj_attr_t **var_attributes; // attributes passed to proc_thread
 
   lives_intentcap_t var_intentcap;
@@ -216,7 +219,8 @@ lives_threadvars_t *get_threadvars(void);
 lives_threadvars_t *get_threadvars_bg_only(void);
 lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
-void *lives_thread_data_create(void *pidx);
+
+lives_thread_data_t *lives_thread_data_create(void);
 
 void pthread_cleanup_func(void *args);
 
@@ -374,7 +378,12 @@ uint64_t lives_proc_thread_get_state(lives_proc_thread_t);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t lives_proc_thread_has_states(lives_proc_thread_t, uint64_t state_bits);
 
-#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = THREADVAR(proc_thread);
+#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_self();
+
+lives_proc_thread_t lives_thread_get_self();
+void lives_thread_push_self(lives_proc_thread_t);
+lives_proc_thread_t lives_thread_pop_self(void);
+lives_proc_thread_t lives_thread_switch_self(lives_proc_thread_t);
 
 // because of hook triggers, there is no set_state, instead use lives_proc_thread_include_states(lives_proc_t
 // i.e.
@@ -485,8 +494,7 @@ ticks_t lives_proc_thread_get_timing_info(lives_proc_thread_t, int info_type);
 // internal value
 #define LIVES_THRDATTR_IS_PROC_THREAD   	(1ull << 24)
 
-#define lives_proc_thread_get_work(lpt)				\
-  ((thrd_work_t *)weed_get_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, NULL))
+thrd_work_t *lives_proc_thread_get_work(lives_proc_thread_t);
 
 #define lives_proc_thread_set_work(lpt, work)				\
   weed_set_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, (work))
@@ -662,7 +670,7 @@ void lives_proc_thread_make_static_data(lives_proc_thread_t lpt, const char *nam
 #define lives_proc_thread_get_plantptr_array(lpt, name, nvals)			\
   (weed_get_plantptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
 
-lives_proc_thread_t lives_proc_thread_get_dispatcher(void);
+lives_proc_thread_t lives_proc_thread_get_dispatcher(lives_proc_thread_t);
 
 // test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);
@@ -809,7 +817,7 @@ weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 
 char *lives_proc_thread_state_desc(uint64_t state);
 
-#define lpt_desc_state(lpt) lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt))
+void lpt_desc_state(lives_proc_thread_t);
 
 char *get_threadstats(void);
 void thread_stackdump(void);

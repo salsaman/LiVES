@@ -935,7 +935,7 @@ boolean check_clip_integrity(int clipno, const lives_clip_data_t *cdata, frames_
 	  lives_free(fname);
 	}}}}
   // *INDENT-ON*
-  if (cdata && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) {
+  if (cdata && (fdim(sfile->fps, (double)cdata->fps) > prefs->fps_tolerance)) {
     if (prefs->show_dev_opts) {
       g_printerr("fps mismtach, claimed %f, cdata said %f\n", sfile->fps, cdata->fps);
     }

@@ -3435,6 +3435,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
                                     LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
         lives_mv(recording_numbering_file, xfile);
         lives_free(xfile);
+
         mainw->recording_recovered = TRUE;
       }
     }

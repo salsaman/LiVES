@@ -487,7 +487,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
   }
   lives_painter_rectangle(cr, x, y, width, height);
   lives_painter_fill(cr);
-  lives_widget_queue_draw(widget);
+  //lives_widget_queue_draw(widget);
   return TRUE;
 #endif /// painter cairo
   return FALSE;
@@ -968,7 +968,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
       no_service_loop = TRUE;
       /* if (cprio == PRIO_HIGH) */
       /* 	lives_source_set_priority(mainw->fg_service_source, PRIO_LOW); */
+
       ret = g_main_context_iteration(ctx, may_block);
+
       no_service_loop = skip_id;
       /* if (cprio == PRIO_HIGH) */
       /* 	lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH); */
@@ -1768,10 +1770,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 
 
 static boolean lptdone(lives_obj_t *obj, void *data) {
+  GET_PROC_THREAD_SELF(self);
   *(boolean *)data = TRUE;
   if (mainw->debug) {
     break_me("LPTDONE");
   }
+  mainw->debug_ptr = self;
   return TRUE;
 }
 
@@ -1784,46 +1788,36 @@ void unlock_lpt(lives_proc_thread_t lpt) {
 }
 
 static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
-  volatile boolean bvar = FALSE;
+  GET_PROC_THREAD_SELF(self);
+  //volatile boolean bvar = FALSE;
   boolean do_cancel = FALSE;
 
   // must set this, so we get tyoed return value from finished action
   weed_set_voidptr_value(lpt, "retloc", retval);
 
-  lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
+  //lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
 
   // setting this, we trigger the main thread to run lpt in fg_service_fulfill)
   lpttorun = lpt;
 
   // wait for main thread to pick it up and set PREPARING state
-  lives_nanosleep_until_nonzero(bvar || (do_cancel = lives_proc_thread_should_cancel(lpt))
+  lives_nanosleep_until_nonzero((do_cancel = lives_proc_thread_should_cancel(lpt))
                                 || lives_proc_thread_is_preparing(lpt)
                                 || lives_proc_thread_is_running(lpt)
                                 || lives_proc_thread_is_done(lpt));
 
-  // once we unlock this, a) main thread can compltet lpttorun and nullify lpttorun
+  // once we unlock this, a) main thread can complete lpttorun and nullify lpttorun
   // this is fine since it would have triggered lptdone and hence bvar will be TRUE now
   // and b) another bg thread can now grab lpt_mutex, and it will set lpttorun to NULL, then to its lpt
   // this is also fine, it will block waiting for PREAPRING, with mutex locked
   pthread_mutex_unlock(&lpt_mutex);
 
-  if (!bvar && !do_cancel && !lives_proc_thread_is_done(lpt)) {
-    // wait for bvar to set to TRUE (via lptdone) or for self to get a cancel request
-    thread_wait_loop(lpt, FALSE, &bvar);
-  }
-
+  lives_nanosleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt));
 
   // if another bg thread is waiting it will have changed lpttorun, so only NULLify if ours and with mutex locked
   //     (so it cannot change while we check)
   // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
   if (lpt) unlock_lpt(lpt);
-
-  // need to remove this hook, in case it has not triggered, since bvar is about to go out of scope
-  // BUT - could be in process of triggering - reading bvar will crash
-  //
-  lives_nanosleep_while_false(bvar);
-  /* if (!lives_proc_thread_is_done(lpt)) */
-  /*   lives_hook_remove(compl_lpt); */
 }
 
 

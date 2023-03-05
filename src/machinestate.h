@@ -40,6 +40,9 @@
 
 #define LIVES_WEED_SUBTYPE_HASH_STORE 513
 
+// used for debugging purposes
+#define LIVES_WEED_SUBTYPE_AUDIT 1024
+
 /// disk/storage status values
 typedef enum {
   LIVES_STORAGE_STATUS_UNKNOWN = 0,

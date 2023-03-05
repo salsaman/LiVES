@@ -2493,9 +2493,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
     // in the sense that it runs this function, but by being "queued" by an external entity
     self = jackd->inst;
-
-    tdata->vars.var_proc_thread = self;
-
+    lives_thread_push_self(self);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
   }
@@ -3601,9 +3599,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
     // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
     // in the sense that it runs this function, but by being "queued" by an external entity
     self = jackd->inst;
-
-    tdata->vars.var_proc_thread = self;
-
+    lives_thread_push_self(self);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
   }
@@ -3701,7 +3697,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   // it must return within 2 seconds (LIVES_SHORTEST_TIMEOUT)
   // else it will be terminated
   // if the function is going to block for a known reason, e.g getting driver list frim user then
-  // - obtain the mointoring thread (THREADVAR(proc_thread)), include the THRD_STATE_BUSY state
+  // - obtain the mointoring thread (dispatcher) ?, include the THRD_STATE_BUSY state
   // lives_proc_thread_include_states(). This will have the effect of causing the timout to be continuously reset
   // After return, clear the BUSY state with lives_proc_thread_exclude_states(), which will retstart the timer
   GET_PROC_THREAD_SELF(self);

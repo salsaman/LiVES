@@ -448,6 +448,7 @@ typedef struct {
   // or created from param args / hook_type
   // adder is used so we can trace back to lpt which added the callback, and if freed,
   // remove it from other proc_thread's hook_cb_list
+  // holder is the proc_thread owning the stacks
   lives_proc_thread_t proc_thread, adder;
   // func def describing hook cb, this can be created from the lpt
   // or it can be a pointer to a static funcdef
@@ -539,6 +540,10 @@ typedef struct {
 
 // callback payload should be passed to the main thread to be run
 #define HOOK_DTL_MAIN_THREAD	       	(1ull < 6)
+
+// callbacks may be dded to the stack, but these wil not be triggered, instead of tirggering
+// at a later point they will be transferred to adifferent stack
+#define HOOK_DTL_INDIRECT	       	(1ull < 6)
 
 //
 

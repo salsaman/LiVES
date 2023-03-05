@@ -461,13 +461,15 @@ static boolean pre_init(void) {
   int i;
 
   /// create context data for main thread; must be called before get_capabilities()
-  mainw->def_lpt =
-    lives_thread_data_create(LIVES_INT_TO_POINTER(-1));
+  mainw->fg_tdata = lives_thread_data_create();
+
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
   // linked to the proc_thread currently being actioned
+
   mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
-  THREADVAR(proc_thread) = mainw->def_lpt;
+
+  lives_thread_push_self(mainw->def_lpt);
 
   // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
   // to the thread hook_stacks instead
@@ -1805,7 +1807,6 @@ static boolean lives_startup2(livespointer data) {
         / TICKS_PER_SECOND_DBL * .9;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
-      g_print("cccc state is %s\n", lpt_desc_state(mainw->helper_procthreads[PT_CUSTOM_COLOURS]));
       lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
       lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);

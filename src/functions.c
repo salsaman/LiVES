@@ -798,8 +798,6 @@ static int lives_fdef_get_category(int cat, int dtl) {
 
 lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt,
     uint64_t flags, int hook_type) {
-  // we will adda ref to lpt, then when the closure is freed (which may be deferred)
-  // we will remove this ref
   if (lpt && lives_proc_thread_ref(lpt) > 1) {
     lives_closure_t *closure  = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
     pthread_mutex_init(&closure->mutex, NULL);
@@ -810,6 +808,7 @@ lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt,
     closure->flags = flags;
     closure->retloc = weed_get_voidptr_value(lpt, LIVES_LEAF_RETLOC, NULL);
     weed_set_voidptr_value(lpt, LIVES_LEAF_CLOSURE, closure);
+    lives_proc_thread_unref(lpt);
     return closure;
   }
   return NULL;
@@ -1050,7 +1049,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
   if (is_append) xflags &= ~(HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD);
 
   // is_close,is for here
-  // the important flags for cehcking are ia_append, is_remove
+  // the important flags for checking are is_append, is_remove
 
   if (is_close) {
     xclosure = (lives_closure_t *)data;
@@ -1064,6 +1063,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
     }
   } else {
     lpt = (lives_proc_thread_t)data;
+    if (!is_append) xclosure = lives_hook_closure_new_for_lpt(lpt, flags, type);
   }
 
   if (!is_append) ret_closure = xclosure;
@@ -1108,6 +1108,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         closure = lives_proc_thread_get_closure(lpt2);
         if (!closure) continue;
       }
+
       if (lives_proc_thread_is_queued(lpt2)) continue;
       if (!lpt2) break_me("null procthread in closure\n");
       if (!lpt2 || lpt2 == lpt) continue;
@@ -1118,65 +1119,79 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         if (!(cfinv & HOOK_INVALIDATE_DATA)) cfinv = 0;
       }
 
-      if (!(fmatch = fn_func_match(lpt, lpt2) < 0)
+      // check if the function matches (unless we are just invalidating data)
+      if (!(fmatch = (fn_func_match(lpt, lpt2) >= 0))
           && !((xflags & HOOK_INVALIDATE_DATA) || cfinv != 0)) continue;
 
       if (fmatch && (xflags & (HOOK_UNIQUE_FUNC | HOOK_TOGGLE_FUNC))) {
-        // skip over if the target stack is triggering
-        if (!(hstacks[type]->flags & STACK_TRIGGERING)) {
-          // unique_func -> maintain only 1st fn match
-          // with unique replace -> also replace 1st with our data
-          if (xflags & HOOK_UNIQUE_DATA) {
-            // for unique func / unique data, if we are appending, we check if the match part
-            // of the params is equal, and if so, we replace the data
-            if (!fn_data_match(lpt2, lpt, maxp)) continue;
-            if (!ret_closure) {
-              ret_closure = closure;
-              if (!(xflags & HOOK_TOGGLE_FUNC)) {
-                if (!fn_data_match(lpt2, lpt, 0)) {
-                  fn_data_replace(lpt2, lpt);
-                }
-                continue;
-              }
-            }
-          }
-          // if we reach here, it means that we got a matching funtion,
-          // and either we got a data match and must remove the node
-          // or else unique_data was not flagged
+        // if function matches, and UNIQUE_FUNC was set, then we may need to remove this
+        // or not append.
+        //
+        // unique_func -> maintain only 1st fn match
+        // with unique data, -> also replace 1st with our data
+        if (xflags & HOOK_UNIQUE_DATA) {
+          // for unique func / unique data, if we are appending, we check if the match part
+          // of the params is equal, and if so, we replace the remaining params
+          // after this we remove any others with matching func / data
+          //
+          if (!fn_data_match(lpt2, lpt, maxp)) continue;
           if (!ret_closure) {
-            // if unique_func (without unique_data), and this is the first match,
-            // simply note it to prvent the new cllaback being added
             ret_closure = closure;
-            if (!(xflags & HOOK_TOGGLE_FUNC)) continue;
-          }
-          // here we have established that the closure must be removed
-          // since we already found a match, or we will prepend, or it is a "toggle" function
-          if (closure->flags & HOOK_CB_BLOCK) {
-            // if replacing a closure with BLOCKing flagged, we need to get the blocked threads to wait on
-            // the closure which replaced theirs. We will return a pointer the the replacement
-            // and we also need to add a ref to lpt2, since the waiter will unref it,
-            // and it will also be unreffed when the closure is freed
-            // we will also add a ref to ret_closure->proc_thread, for similar reasons
-            if (ret_closure != closure) {
-              lives_proc_thread_ref(lpt2);
-              if (ret_closure->proc_thread != lpt)
-                lives_proc_thread_ref(ret_closure->proc_thread);
-              // add flagbit BLOCK to ret_closure - thread will now be waiting on this
-              ret_closure->flags |= HOOK_CB_BLOCK;
-              // mark the replaced proc_thread  as "replaced"
-              weed_set_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, ret_closure->proc_thread);
-
-              // for toggle func, this closure will be removed, and new lpt will be rejected
-              // so neither will be replaced, but marking the proc_threads as "invalid" we force the waiters to give  up
-              // but we will return lpt2 (we need to return somehting different)
-              // but we will flag it as invalid,
-              ret_closure = closure;
+            // skip over if the target stack is triggering
+            if (hstacks[type]->flags & STACK_TRIGGERING) break;
+            if (!(xflags & HOOK_TOGGLE_FUNC)) {
+              if (!fn_data_match(lpt2, lpt, 0)) {
+                fn_data_replace(lpt2, lpt);
+                // data replaced
+              }
+              continue;
             }
-            lives_proc_thread_set_state(ret_closure->proc_thread, (THRD_STATE_INVALID | THRD_STATE_DESTROYING |
-                                        THRD_STATE_STACKED));
+            // toggle - fall thru and remove
           }
-          lives_proc_thread_ref(ret_closure->proc_thread);
-          closure->flags |= HOOK_STATUS_REMOVE;
+        }
+        // if we reach here, it means that we got a matching function,
+        // and either we got a data match and must remove the node
+        // or else unique_data was not flagged
+
+        if (!ret_closure) {
+          // if this is the first match, then we wont remove it, unless fn toggles
+          ret_closure = closure;
+          if (!(xflags & HOOK_TOGGLE_FUNC)) {
+            if (is_append) break;
+            continue;
+          }
+          if (hstacks[type]->flags & STACK_TRIGGERING) {
+            ret_closure = NULL;
+            break;
+          }
+        }
+
+        // here we have established that the closure must be removed
+        // since we already found a match, or we will prepend, or it is a "toggle" function
+        closure->flags |= HOOK_STATUS_REMOVE;
+
+        if (xflags & HOOK_TOGGLE_FUNC) {
+          // for toggle func, this closure will be removed, and new lpt will be rejected
+          // so neither will be replaced, but marking the proc_threads as "invalid" we force the waiters to give  up
+          // but we will return lpt2 (we need to return somehting different)
+          // but we will flag it as invalid,
+          lives_proc_thread_set_state(closure->proc_thread, (THRD_STATE_INVALID | THRD_STATE_DESTROYING |
+                                      THRD_STATE_STACKED));
+          break;
+        }
+
+        if (closure->flags & HOOK_CB_BLOCK) {
+          // if replacing a closure with BLOCKing flagged, we need to get the blocked threads to wait on
+          // the closure which replaced theirs. We will return a pointer the the replacement
+          // and we also need to add a ref to lpt2, since the waiter will unref it,
+          // and it will also be unreffed when the closure is freed
+          // we will also add a ref to ret_closure->proc_thread, for similar reasons
+          if (ret_closure != closure) {
+            lives_proc_thread_ref(lpt2);
+            lives_proc_thread_ref(ret_closure->proc_thread);
+            ret_closure->flags |= HOOK_CB_BLOCK;
+            weed_set_plantptr_value(lpt2, LIVES_LEAF_REPLACEMENT, ret_closure->proc_thread);
+          }
         }
         continue;
       }
@@ -1193,8 +1208,13 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
       // if we reach here it means that xflags == HOOK_UNIQUE_DATA, or closure->flags
       // had INVALIDATE_DATA, and we found a match
       // we wont remove anything, but we will reject an append
-      ret_closure = closure;
-      break;
+      if (!ret_closure) {
+        ret_closure = closure;
+        break;
+      }
+
+      closure->flags |= HOOK_STATUS_REMOVE;
+      continue;
     }
   }
 
@@ -1254,7 +1274,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags,
                                         lives_funcptr_t func, const char *fname, int return_type,
                                         const char *args_fmt, ...) {
-  lives_proc_thread_t lpt;
+  lives_proc_thread_t lpt, lpt2;
   uint64_t attrs = LIVES_THRDATTR_START_UNQUEUED;
   uint64_t dtype = 0;
 
@@ -1267,7 +1287,12 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, ui
     va_end(xargs);
   } else lpt = _lives_proc_thread_create_nullvargs(attrs, func, fname, return_type);
 
-  return lives_hook_add(hooks, type, flags, (void *)lpt, dtype);
+  lpt2 = lives_hook_add(hooks, type, flags, (void *)lpt, dtype);
+  if (lpt2 != lpt) {
+    lives_proc_thread_unref(lpt);
+    lpt = lpt2;
+  }
+  return lpt;
 }
 
 
@@ -1340,9 +1365,12 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   hmutex = hstack->mutex;
   //if (type == SYNC_WAIT_HOOK) dump_hook_stack(hstacks, type);
 
-  if (type == LIVES_GUI_HOOK && is_fg_thread()) {
-    if (PTMTLH) return TRUE;
-  } else PTMLH;
+  /* if (type == LIVES_GUI_HOOK && is_fg_thread()) { */
+  /*   if (PTMTLH) return TRUE; */
+  /* } else */
+
+
+  PTMLH;
 
   if (!hstack->stack || (hstack->flags & STACK_TRIGGERING)) {
     PTMUH;
@@ -1453,21 +1481,33 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         //g_print("sync run: %s\n", lives_proc_thread_show_func_call(lpt));
       }
 
+      // test here is hook_dtl_request - we forward some action request to another thread
+      //
       if (!(closure->flags & HOOK_CB_FG_THREAD) || is_fg_thread()) {
         PTMUH;
         hmulocked = FALSE;
         lives_proc_thread_execute(lpt, closure->retloc);
+        //if (lpt == mainw->debug_ptr) {
+        lives_proc_thread_t xxlpt = hstack->owner;
+        mainw->debug_ptr = xxlpt;
+        g_print("runing hstack type %d, fun was %s, holder is %s. with %d refs\nflags is %s\n", type,
+                lives_proc_thread_get_funcname(lpt), lives_proc_thread_get_funcname(xxlpt),
+                lives_proc_thread_count_refs(lpt), cl_flags_desc(closure->flags));
+        //}
       } else {
         PTMUH;
         hmulocked = FALSE;
-        // need to set state the same as if it were queued
+        // this function will call fg_service_call directly,
+        // block until the lpt completes or is cancelled
+        // We should have set ONESHOT and BLOCK as appropriate
         lives_proc_thread_queue(lpt, LIVES_THRDATTR_FG_THREAD | LIVES_THRDATTR_FG_LIGHT);
       }
 
       PTMLH;
       hmulocked = TRUE;
-      if (closure->flags & (HOOK_OPT_ONESHOT | HOOK_STATUS_REMOVE)) {
-        // remove our added ref UNLESS this is a blocking call, then blocked thrread will do that
+
+      if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)) {
+        // remove our added ref UNLESS this is a blocking call, then blocked thread will do that
         // if it is blocking, then caller will be waiting and will unref it now
         // so we leave our added ref to compensate for one which will be removed as closure is freed
         if (!(closure->flags & HOOK_CB_BLOCK)) lives_proc_thread_unref(lpt);
@@ -1866,8 +1906,12 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
     return;
   }
   hstack = hstacks[type];
+  if (!hstack) {
+    g_print("hstacks[%d] is NULL !!\n", type);
+    return;
+  }
   hmutex = hstack->mutex;
-  //PTMLH;
+  PTMLH;
   if (!hstack->stack) {
     g_print("Stack empty\n");
     goto done;
@@ -1908,8 +1952,12 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
 #endif
   }
 done:
-  //  PTMUH;
+  PTMUH;
   return;
+}
+
+void dump_hook_stack_for(lives_proc_thread_t lpt, int type) {
+  if (lpt) dump_hook_stack(lives_proc_thread_get_hook_stacks(lpt), type);
 }
 
 //////////////////////////// funcdefs & funcinsts /////////////////////////////////

@@ -1278,8 +1278,6 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   lives_free(remtstr);
   progbar_display(prog_label, FALSE);
   lives_free(prog_label);
-
-
 }
 
 
@@ -1302,7 +1300,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, doub
         fraction_done = (double)(frames_done - mainw->proc_ptr->progress_start)
                         / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
-      if (fabs(fraction_done - last_fraction_done) < 1.) progress_count = 0;
+      if (fdim(fraction_done, last_fraction_done) < 1.) progress_count = 0;
       progress_speed = 4.;
       last_fraction_done = fraction_done;
     } else {
@@ -1476,7 +1474,7 @@ void cancel_process(boolean visible) {
       }
     }
     mainw->is_processing = FALSE;
-    if (cfile->menuentry) {
+    if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD) {
       // note - for operations to/from clipboard (file 0) we
       // should manually call sensitize() after operation
       sensitize();
@@ -3625,9 +3623,9 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
 
 static void _thdlg_auto_spin(void) {
+  GET_PROC_THREAD_SELF(self);
   lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
-  g_print("state is %s\n", lpt_desc_state(mainw->dlg_spin_thread));
-  lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(), NULL));
+  lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), NULL));
   while (mainw->threaded_dialog
          && !lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
     int count = 10000;

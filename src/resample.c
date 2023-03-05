@@ -395,7 +395,7 @@ void pre_analyse(weed_plant_t *elist) {
       double dtime = (double)(etc - stc) / TICKS_PER_SECOND_DBL;
       double tpos = ststate[0].seek + ststate[0].vel * dtime;
       // ratio is real diff / est diff, e.g 1 / 2 we should go twice as fast
-      double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
+      double ratio = fdim(enstate[0].seek, ststate[0].seek) / fdim(tpos, ststate[0].seek);
       if (dtime >= READJ_MIN_TIME) {
         if (!prefs->rr_qmode) {
           // PRIORITIZE AUDIO RATE

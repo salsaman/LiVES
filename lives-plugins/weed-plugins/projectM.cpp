@@ -846,7 +846,6 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
       pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
       pthread_mutex_unlock(&cond_mutex);
-      if (sd->audio) weed_free(sd->audio);
       if (sd->bad_programs) weed_free(sd->bad_programs);
       weed_free(sd);
       weed_set_voidptr_value(inst, "plugin_internal", NULL);

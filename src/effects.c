@@ -883,8 +883,8 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     blend_file->last_frameno = frameno = blend_file->frameno;
     if (mainw->blend_file != mainw->last_blend_file) {
       // mainw->last_blend_file is set to -1 on playback start
-      trim_frame_index(mainw->blend_file, &frameno, blend_file->pb_fps > - 0. ? 1 : -1, 0);
-      frameno = blend_file->frameno;
+      //trim_frame_index(mainw->blend_file, &frameno, blend_file->pb_fps > - 0. ? 1 : -1, 0);
+      blend_tc = ntc;
     } else {
       if (!cfile->play_paused) {
         frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
@@ -1166,11 +1166,11 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   if (LIVES_IS_PLAYING) {
     if (key)
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
                                       _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
     else
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
                                       _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
   } else _rte_on_off((group != NULL), key);
   return TRUE;
@@ -1232,7 +1232,7 @@ boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
   if (!LIVES_IS_PLAYING) return _rtemode_callback(dirn);
   if (mainw->rte_keys == -1) return TRUE;
   lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                  HOOK_OPT_ONESHOT |  HOOK_CB_FG_THREAD,
                                   _rtemode_callback, WEED_SEED_BOOLEAN, "i", dirn);
   return TRUE;
 }
@@ -1247,7 +1247,7 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
 
   if (!LIVES_IS_PLAYING) rte_key_setmode(key + 1, mode);
   else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                         HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                         HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
                                          rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
   return TRUE;
 }

@@ -134,11 +134,6 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   // BLOCKING playback
   // - block until playback stops
   lives_proc_thread_t lpt;
-  /* if (!is_fg_thread()) { */
-  /*   // if called by bg thread, thread itself becomes player, and will block until play finishes */
-  /*   mainw->player_proc = THREADVAR(proc_thread); */
-  /*   return _start_playback(type); */
-  /* } */
   mainw->player_proc = lpt = lives_proc_thread_create(0, _start_playback, -1, "i", type);
   // the main thread will block here, waiting for playback to end.
   // during this time, it will service only bg requests set via fg_service_call
@@ -542,7 +537,6 @@ void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
   LiVESList *cliplist;
   weed_plant_t *pb_start_event = NULL;
-  weed_layer_t *old_flayer;
 
   double pointer_time = cfile->pointer_time;
   double real_pointer_time = cfile->real_pointer_time;

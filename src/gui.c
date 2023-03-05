@@ -4039,8 +4039,7 @@ void play_window_set_title(void) {
   if (!mainw->play_window) return;
 
   if (CURRENT_CLIP_IS_VALID) {
-    sepwin_scale = sqrt(mainw->pwidth * mainw->pwidth + mainw->pheight * mainw->pheight) /
-                   sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
+    sepwin_scale = hypot(mainw->pwidth, mainw->pheight) / hypot(cfile->hsize, cfile->vsize);
   }
 
   if (!LIVES_IS_PLAYING && sepwin_scale > 0.)

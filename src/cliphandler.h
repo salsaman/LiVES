@@ -62,7 +62,8 @@
 #define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
 
 #define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
-			       && mainw->files[mainw->ascrap_file]->primary_src->src_type != LIVES_SRC_TYPE_RECORDER)
+    && (!mainw->files[mainw->ascrap_file]->primary_src	\
+	|| mainw->files[mainw->ascrap_file]->primary_src->src_type != LIVES_SRC_TYPE_RECORDER))
 
 #define CLIPSWITCH_BLOCKED (!mainw || mainw->go_away || LIVES_MODE_MT || !CURRENT_CLIP_IS_VALID || mainw->preview \
 			    || (LIVES_IS_PLAYING && mainw->event_list && !(mainw->record || mainw->record_paused)) \

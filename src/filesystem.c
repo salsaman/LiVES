@@ -869,8 +869,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   // tests with mmap actually proved to be slower than simply reading in the file in chunks
   // changing the read block size did not appear to make much difference, however
   // we do read a smaller chunk to start with, so that small requests can be served more rapidly
-
-  lives_proc_thread_t self = THREADVAR(proc_thread);
+  GET_PROC_THREAD_SELF(self);
   int fd = fbuff->fd;
   off_t fsize, bufsize = smedbytes, res;
   boolean retval = TRUE;
@@ -878,9 +877,13 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   if (lives_proc_thread_get_cancel_requested(self)) {
     // if caller gets cancelled, then it will send a cancel_request to this thread
     // then wait for us to return with retval
+    fbuff->fd = -1;
+    IGN_RET(close(fd));
+    pthread_mutex_lock(&fbuff->sync_mutex);
+    if (!retval) fbuff->flags |= FB_FLAG_INVALID;
+    fbuff->flags &= ~FB_FLAG_BG_OP;
+    pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_cancel(self);
-    retval = FALSE;
-    goto finished;
   }
 
   fbuff->orig_size = get_file_size(fd, TRUE);
@@ -888,7 +891,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 
   if (fsize > 0) {
     // caller will wait until this thread goes to WAITING state, then do a sny_ready() and continue
-    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(), NULL));
+    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), NULL));
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -934,10 +937,10 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(), NULL));
+    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), NULL));
   }
 
-finished:
+
   fbuff->fd = -1;
   IGN_RET(close(fd));
   pthread_mutex_lock(&fbuff->sync_mutex);
@@ -962,6 +965,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                                  (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
   if (lpt) {
+    mainw->debug_ptr = lpt;
     weed_set_voidptr_value(lpt, "_filebuff", (void *)fbuff);
     lives_proc_thread_set_cancellable(lpt);
   }
@@ -971,6 +975,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
 
 boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
   if (lpt) {
+    GET_PROC_THREAD_SELF(self);
     lives_file_buffer_t *fbuff =
       (lives_file_buffer_t *)weed_get_voidptr_value(lpt, "_filebuff", NULL);
     pthread_mutex_lock(&fbuff->sync_mutex);

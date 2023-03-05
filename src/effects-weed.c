@@ -2742,8 +2742,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     SET_LPT_VALUE(lpt, int, "osampling", osampling);
     SET_LPT_VALUE(lpt, int, "oclamping", oclamping);
 
+    if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
     weed_set_plantptr_value(layer, LIVES_LEAF_PRIME_LPT, lpt);
-
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
   }
 
@@ -2753,13 +2753,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (weed_palette_is_alpha(inpalette)) continue;
 
     layer = layers[in_tracks[i]];
-    lpt = weed_get_plantptr_value(layer, LIVES_LEAF_PRIME_LPT, NULL);
-    if (lpt) {
-      retval = lives_proc_thread_join_int(lpt);
-      if (lives_proc_thread_had_error(lpt))
-        retval = lives_proc_thread_get_errnum(lpt);
-      mainw->debug_ptr = NULL;
-      lives_proc_thread_unref(lpt);
+    if (weed_plant_has_leaf(layer, LIVES_LEAF_PRIME_LPT)) {
+      lpt = weed_get_plantptr_value(layer, LIVES_LEAF_PRIME_LPT, NULL);
+      if (lpt) {
+        retval = lives_proc_thread_join_int(lpt);
+        if (lives_proc_thread_had_error(lpt))
+          retval = lives_proc_thread_get_errnum(lpt);
+        mainw->debug_ptr = NULL;
+        lives_proc_thread_unref(lpt);
+      }
+      weed_leaf_delete(layer, LIVES_LEAF_PRIME_LPT);
     }
 
     if (retval != FILTER_SUCCESS) goto done_video;

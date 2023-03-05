@@ -1676,6 +1676,7 @@ check_prcache:
       if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
         lives_proc_thread_join(resthread);
         weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
+        lives_proc_thread_unref(resthread);
       }
 #endif
       // convert RGBA -> YUVA4444P or RGB -> 444P or 420
@@ -2079,6 +2080,7 @@ fndone:
           }
           lives_free(md5sum);
         }
+        lives_free(rowstrides);
       }
     }
   }
@@ -2162,7 +2164,6 @@ fndone:
           pthread_mutex_unlock(&sfile->frame_index_mutex);
           if (xframe >= 0) {
             if (prefs->vj_mode && mainw->loop_locked && mainw->ping_pong && sfile->pb_fps >= 0. && !norecurse) {
-              lives_proc_thread_t tinfo = THREADVAR(proc_thread);
               LiVESPixbuf *pixbuf = NULL;
               norecurse = TRUE;
 
@@ -2170,14 +2171,11 @@ fndone:
               nsize[1] = height;
               weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
 
-              THREADVAR(proc_thread) = NULL;
-
               pthread_mutex_lock(&sfile->frame_index_mutex);
               virtual_to_images(clip, xframe, xframe, FALSE, &pixbuf);
               pthread_mutex_unlock(&sfile->frame_index_mutex);
 
               norecurse = FALSE;
-              THREADVAR(proc_thread) = tinfo;
               if (pixbuf) {
                 if (!pixbuf_to_layer(layer, pixbuf)) {
                   lives_widget_object_unref(pixbuf);
@@ -2367,12 +2365,14 @@ fndone:
             fname = make_image_file_name(sfile, xframe, image_ext);
             timex = lives_get_current_ticks();
             ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
+            lives_free(fname);
             img_decode_time = (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL;
 
 #if USE_RESTHREAD
             if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
               lives_proc_thread_join(resthread);
               weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
+              lives_proc_thread_unref(resthread);
             }
 #endif
             if (!ret) {
@@ -2542,6 +2542,7 @@ fail:
 
         lives_proc_thread_join_boolean(lpt);
         weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
+        lives_proc_thread_unref(lpt);
       }
     }
 
@@ -2550,8 +2551,9 @@ fail:
       if (resthread && cancelled && !lives_proc_thread_get_cancel_requested(resthread))
         lives_proc_thread_request_cancel(resthread);
       ready = FALSE;
-      weed_set_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL);
       lives_proc_thread_join(resthread);
+      weed_set_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL);
+      lives_proc_thread_unref(resthread);
     }
 #endif
 

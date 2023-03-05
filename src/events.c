@@ -4340,7 +4340,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 xaseek[mytrack] += xavel[mytrack] * dt;
                 if (xavel[mytrack] * aseeks[i + 1] < 0.) mult *= AUD_DIFF_REVADJ;
                 if (xaclips[mytrack] != aclips[i + 1] || xaon[i >> 1]
-                    || fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN * mult) {
+                    || fdim(xaseek[mytrack], aseeks[i]) > AUD_DIFF_MIN * mult) {
                   xaseek[mytrack] = aseeks[i];
                 }
               } else xaseek[mytrack] = aseeks[i];

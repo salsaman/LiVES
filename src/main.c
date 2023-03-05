@@ -366,8 +366,9 @@ void catch_sigint(int signum) {
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     // if we are not the main thread, just exit
+    GET_PROC_THREAD_SELF(self);
     lives_thread_data_t *mydata = get_thread_data();
-    lives_proc_thread_t self = mydata->vars.var_proc_thread;
+
     //if (mydata) {
     lives_proc_thread_set_signalled(self, signum, mydata);
     g_print("Thread got signal %d\n", signum);

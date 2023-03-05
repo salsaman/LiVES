@@ -167,26 +167,22 @@ uint64_t gen_unique_id(void) {
     rnum = fastrand() ^ lives_random();
   }
 
-  /// if we have a genuine RNG for 64 bits, then the probability of generating
-  // two sequential numbers with difference < 1 trillion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 billion
-  // and the probability of it happening twice is < 0.000000000000000001
-  // this is checked in lives_random(), but we will check here to ensure the uid algo is sound
-
-  while (get_log2_64(rnum ^ last_rnum) < 30) {
-    if (++strikes > 2) badrand(last_rnum, rnum);
-  }
-
-  last_rnum = rnum;
   return rnum;
 }
 
 
+#define NR_TESTS 10000
+
 static void check_random(void) {
   uint64_t rnum = 0, last_rnum = 0;
   uint64_t inrbits, maxbits = 0;
+  uint64_t tot_a = 0, tot_b = 0, tot_c = 0, par = 0, diff;
+  int n1s, min1s = 9999999;
   uint64_t tdifs = 0;
+  double pmin;
   char *tmp;
-  int i;
+  int sf = get_log2(NR_TESTS);
+  int i, esrc = 0;
   tdifs = 0;
   for (i = 0; i < 101; i++) {
     rnum = lives_random();
@@ -228,21 +224,87 @@ static void check_random(void) {
   }
   tdifs = 0;
   fastrand_val = lives_random();
-  for (i = 0; i < 1001; i++) {
+  for (i = 0; i < NR_TESTS; i++) {
     rnum = gen_unique_id();
     if (i > 0) {
-      maxbits = get_onescount_64(rnum ^ last_rnum);
-      tdifs += maxbits;
-      maxbits = get_onescount_64(rnum & last_rnum);
-      tdifs += maxbits << 1;
-      maxbits = get_onescount_64(rnum | last_rnum);
-      tdifs += (maxbits << 1) / 3;
+      // if the numbers are truly random, then for each binary digit a0...an, b0...bn
+      // p(a0 ^ b0) == 0.5
+      // p(a0 & b0) == 0.25
+      // p(a0 | b0) == 0.75
+      // however, a0 & b0 => a0 | b0, a0 ^ b0 => a0 | b0, a0 & b0 => !(a0 ^ b0), a0 ^ b0 => !(a0 & b0)
+      // conditions are not completely independent
+      // so, test a0 ^ b0 - this should be true 0.5 / 0.5
+      // if true,  then we already know a | b is true. and a & b is false
+      // if false then a & b will be true with p 0.5, as will a | b
+      // rather than summing, we can use Parity to check. Let us start with m bits all with parity 0
+      // then taking the first pair of 'random' numbers, perform a bitwise xor
+      // if both numbers are random, the we should have on average 0.5n bits with a 1
+      // we can store the 1s as parity - simply xor with the current parity, We multiply this by 20 to get around 10.
+      // now we can AND he numbers whichi should produce 0.25 1s, then we OR with parity, at first we will get 3/4,
+      // but this will tend to 5/8. So we multiply by 16 to get 10 and add.
+      // if we had a 0, then p == 0.5, the and result is 1, so again applying xor, approc half of the 0s should flip to 1
+      // now, counting the 1s and diviging by n. from pass 1 we should have 0.5. so multiplying by 6 gives us 3
+      // in pass 2, we should have 0.75, then we multiply this by 20 and add., the totalt should now comverge to NR * 20
+
+      // xor diff
+      diff = rnum ^ last_rnum;
+      n1s = get_onescount_64(diff);
+      if (n1s < min1s) {
+        //g_print("pt a1 %d\n", n1s);
+        min1s = n1s;
+        esrc = 1;
+      }
+      tot_a += n1s;
+
+      par ^= diff;
+      n1s = get_onescount_64(par);
+      if (n1s < min1s) {
+        min1s = n1s;
+        esrc = 2;
+        //g_print("pt a2 %d\n", n1s);
+      }
+      tot_b += n1s * 20;
+
+      diff = rnum & last_rnum;
+      n1s = get_onescount_64(diff) << 1;
+      if (n1s < min1s) {
+        min1s = n1s;
+        esrc = 3;
+        g_print("pt a3 %d 0X%016lX 0X%016lX 0X%016lX\n", n1s, rnum, last_rnum, diff);
+      }
+      tot_c += n1s;
+      par |= diff;
+
+      n1s = get_onescount_64(par);
+      tot_b += n1s * 16;
+      n1s = n1s * 4 / 5;
+      if (n1s < min1s) {
+        min1s = n1s;
+        esrc = 4;
+        //g_print("pt a4 %d\n", n1s);
+      }
     }
     last_rnum = rnum;
   }
-  maxbits = (uint64_t)((tdifs / 3000. + .5) * 2);
-  tmp = lives_strdup_printf("Tested RNG, generated 1000 uids, entropy is %lu bits\n",
-                            maxbits > 64 ? 64 : maxbits);
+  // div by NR and double
+  tot_a /= (NR_TESTS >> 1);
+
+  // div by 6 and double
+  tot_b /= (NR_TESTS * 20);
+
+  // div by NR and dbl
+  tot_c /= (NR_TESTS >> 1);
+
+  /* if (esrc == 3) pmin = binomial(min1s, 64, 0.25); */
+  /* else pmin = binomial(min1s, 64, 0.5); */
+
+  //pmin = binomial(1, NR_TESTS, pmin);
+
+  tmp = lives_strdup_printf("Tested RNG, generated %lu uids. Estimate for sequential XOR is %lu bits.\n"
+                            "Estimate from sequential AND is %lu bits. Parity check indicates %lu bits entropy.\n"
+                            "Minimum difference over all methods was %d bits, sample size 4 X %lu,\n"
+                            "Entropy is estimated at between %d and %lu bits.\n", NR_TESTS, tot_a, tot_c,
+                            tot_b, min1s, NR_TESTS, 1.0039, (min1s + sf) * 2 + 1, MIN(tot_a, MIN(tot_b, tot_c)));
   add_messages_to_list(tmp);
   lives_free(tmp);
 }
@@ -1252,16 +1314,15 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
                             const char *orig_loc, uint64_t extra, int type) {
   // type 0 = dir
   // type 1 = ordfile
+  GET_PROC_THREAD_SELF(self);
   lives_file_dets_t *fdets;
-  lives_proc_thread_t tinfo = NULL;
   LiVESList *list;
   char *extra_details;
   const char *dir = NULL;
   char *subdirname;
   boolean empty = TRUE;
 
-  tinfo = THREADVAR(proc_thread);
-  if (tinfo) lives_proc_thread_set_cancellable(tinfo);
+  if (self) lives_proc_thread_set_cancellable(self);
 
   switch (type) {
   case 0: {
@@ -1278,9 +1339,9 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     while (1) {
       tdirent = readdir(tldir);
-      if (lives_proc_thread_get_cancel_requested(tinfo) || !tdirent) {
+      if (lives_proc_thread_get_cancel_requested(self) || !tdirent) {
         closedir(tldir);
-        if (lives_proc_thread_get_cancel_requested(tinfo)) return NULL;
+        if (lives_proc_thread_get_cancel_requested(self)) return NULL;
         break;
       }
       if (tdirent->d_name[0] == '.'
@@ -1290,7 +1351,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       //g_print("GOT %s\n", fdets->name);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
-      if (lives_proc_thread_get_cancel_requested(tinfo)) {
+      if (lives_proc_thread_get_cancel_requested(self)) {
         closedir(tldir);
         return NULL;
       }
@@ -1304,7 +1365,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     if (!(orderfile = fopen(ofname, "r"))) return NULL;
     while (1) {
-      if (lives_proc_thread_get_cancel_requested(tinfo) || !orderfile) {
+      if (lives_proc_thread_get_cancel_requested(self) || !orderfile) {
         if (orderfile) {
           fclose(orderfile);
         }
@@ -1321,7 +1382,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       fdets->name = lives_strdup(buff);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
-      if (lives_proc_thread_get_cancel_requested(tinfo)) {
+      if (lives_proc_thread_get_cancel_requested(self)) {
         fclose(orderfile);
         return NULL;
       }
@@ -1334,12 +1395,12 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
   if (*listp) empty = FALSE;
   *listp = lives_list_append(*listp, NULL);
 
-  if (empty || lives_proc_thread_get_cancel_requested(tinfo)) return NULL;
+  if (empty || lives_proc_thread_get_cancel_requested(self)) return NULL;
 
   // listing done, now get details for each entry
   list = *listp;
   while (list && list->data) {
-    if (lives_proc_thread_get_cancel_requested(tinfo)) return NULL;
+    if (lives_proc_thread_get_cancel_requested(self)) return NULL;
 
     extra_details = lives_strdup("");
     fdets = (lives_file_dets_t *)list->data;
@@ -1348,7 +1409,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
     else subdirname = lives_build_path(dir, fdets->name, NULL);
 
     // need to call even with no extra, because it gets size / type tc.
-    if (!(extra_details = file_to_file_details(subdirname, fdets, tinfo, extra))) {
+    if (!(extra_details = file_to_file_details(subdirname, fdets, self, extra))) {
       lives_free(subdirname);
       lives_free(extra_details);
       return NULL;
@@ -1356,7 +1417,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     lives_free(subdirname);
 
-    if (tinfo && lives_proc_thread_get_cancel_requested(tinfo)) {
+    if (self && lives_proc_thread_get_cancel_requested(self)) {
       lives_free(extra_details);
       return NULL;
     }
@@ -1917,10 +1978,10 @@ static boolean rec_desk_done(livespointer data) {
 void rec_desk(void *args) {
   // experimental
   // TODO - start disk space monitor
+  GET_PROC_THREAD_SELF(self);
   savethread_priv_t *saveargs = NULL;
   lives_proc_thread_t saver_lpt = NULL;
   lives_painter_surface_t *csurf = NULL;
-  lives_proc_thread_t lpt = THREADVAR(proc_thread);
   rec_args *recargs = (rec_args *)args;
   LiVESWidget *win;
   lives_clip_t *sfile;
@@ -1937,7 +1998,7 @@ void rec_desk(void *args) {
   int x = 0, y = 0, frameno = 0;
   int w = GUI_SCREEN_WIDTH, h = GUI_SCREEN_HEIGHT;
 
-  if (lpt) lives_proc_thread_set_cancellable(lpt);
+  if (self) lives_proc_thread_set_cancellable(self);
 
   if (recargs->screen_area == SCREEN_AREA_FOREGROUND) {
     win = LIVES_MAIN_WINDOW_WIDGET;
@@ -1955,10 +2016,10 @@ void rec_desk(void *args) {
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
   lives_nanosleep_while_false(!lives_alarm_check(alarm_handle) == 0
-			      || (lpt && lives_proc_thread_get_cancel_requested(lpt)));
+			      || (self && lives_proc_thread_get_cancel_requested(self)));
   lives_alarm_clear(alarm_handle);
 
-  if (lpt && lives_proc_thread_get_cancel_requested(lpt)) goto done;
+  if (self && lives_proc_thread_get_cancel_requested(self)) goto done;
   //lives_widget_set_sensitive(mainw->desk_rec, FALSE);
 
   saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
@@ -1986,7 +2047,7 @@ void rec_desk(void *args) {
 
   while (1) {
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	|| (lpt && (cancelled = lives_proc_thread_get_cancel_requested(lpt))))
+	|| (self && (cancelled = lives_proc_thread_get_cancel_requested(self))))
       break;
 
     fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
@@ -1997,7 +2058,7 @@ void rec_desk(void *args) {
       saver_lpt = NULL;
       if (saveargs->error
 	  || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	      || (lpt && lives_proc_thread_get_cancel_requested(lpt)))) {
+	      || (self && lives_proc_thread_get_cancel_requested(self)))) {
 	lives_alarm_clear(fps_alarm);
 	break;
       }
@@ -2061,7 +2122,7 @@ void rec_desk(void *args) {
 
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
-			       && (!lpt || !(cancelled = lives_proc_thread_get_cancel_requested(lpt))));
+			       && (!self || !(cancelled = lives_proc_thread_get_cancel_requested(self))));
     lives_alarm_clear(fps_alarm);
   }
   lives_alarm_clear(alarm_handle);
@@ -2095,7 +2156,7 @@ void rec_desk(void *args) {
   sfile->end = sfile->frames = frameno;
   if (!save_clip_values(recargs->clipno)) sfile->frames = -1;
   if (sfile->frames > 0 && prefs->crash_recovery) add_to_recovery_file(sfile->handle);
-  recargs->lpt = lpt;
+  recargs->lpt = self;
   lives_widget_set_sensitive(mainw->desk_rec, FALSE);
   lives_idle_add(rec_desk_done, recargs);
 }
@@ -3393,15 +3454,14 @@ ticks_t check_thrd_latency(void) {
 }
 
 
-
 void perf_manager(void) {
   // this is designed to at some point be a self supporitn gobject
   ticks_t counter = 0;
   uint64_t seconds = 0, minutes = 0;
   boolean second_trigger = FALSE, minute_trigger = FALSE;
   boolean halfmin_trigger = FALSE;
+  GET_PROC_THREAD_SELF(self);
 
-  lives_proc_thread_t self = THREADVAR(proc_thread);
   lives_proc_thread_set_cancellable(self);
   while (!lives_proc_thread_get_cancel_requested(self)) {
     if (second_trigger) {

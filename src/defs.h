@@ -26,15 +26,24 @@
 # define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
 # define EXPAND(...) __VA_ARGS__
 
-#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+// concat a with va_args
 #define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
+// ditto
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
 
+// returns second arg
 #define CHECK_N(x, n, ...) n
+
+// returns second arg or 0
 #define CHECK(...) CHECK_N(__VA_ARGS__, 0,)
 
+// expands to: CHECK(NOT_<args>)
 #define NOT(x) CHECK(PRIMITIVE_CAT(NOT_, x))
+
+// when passed to CHECK() returns 1
 #define NOT_0 ~, 1,
 
+// returns COMPL_b
 #define COMPL(b) PRIMITIVE_CAT(COMPL_, b)
 #define COMPL_0 1
 #define COMPL_1 0
@@ -47,9 +56,7 @@
 
 #define IF(c) IIF(BOOL(c))
 
-#define EAT(...)
-#define EXPAND(...) __VA_ARGS__
-#define WHEN(c) IF(c)(EXPAND, EAT)
+#define WHEN(c) IF(c)(EXPAND, EMPTY)
 
 //////////////////////
 
@@ -166,6 +173,9 @@ typedef pid_t lives_pid_t;
 #  define LIVES_IGNORE_DEPRECATIONS G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 #  define LIVES_IGNORE_DEPRECATIONS_END G_GNUC_END_IGNORE_DEPRECATIONS
 #else
+#if defined(_MSC_VER) && !defined(__clang__)
+#  define LIVES_ALWAYS_INLINE inline __forceinline
+#else
 #  define LIVES_WARN_UNUSED
 #  define LIVES_ALLOW_UNUSED
 #  define LIVES_PURE
@@ -185,6 +195,62 @@ typedef pid_t lives_pid_t;
 #  define LIVES_RETURNS_TWICE
 #  define LIVES_IGNORE_DEPRECATIONS
 #  define LIVES_IGNORE_DEPRECATIONS_END
+#endif
+#endif
+
+#if defined(_MSC_VER) && !defined(__clang__)
+typedef volatile long      lives_atomic32_t;
+typedef volatile long long lives_atomic64_t;
+typedef volatile void     *lives_atomicptr_t;
+
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_load(lives_atomic32_t *src) {return *src;}
+static LIVES_ALWAYS_INLINE void lives_atomic32_store(lives_atomic32_t *dst, int32_t val) {*dst = val;}
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_inc(lives_atomic32_t *val) {return (int32_t)InterlockedIncrement(val);}
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_dec(lives_atomic32_t *val) {return (int32_t)InterlockedDecrement(val);}
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_add(lives_atomic32_t *val, int32_t add)
+{return (int32_t)InterlockedExchangeAdd(val, add) + add;}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_load(lives_atomic64_t *src) {return *src;}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_add(lives_atomic64_t *val, int64_t add)
+{return (int64_t)InterlockedExchangeAdd64(val, add) + add;}
+static LIVES_ALWAYS_INLINE void *lives_atomic_load_ptr(lives_atomicptr_t *src) {return (void *)*src;}
+static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr(lives_atomicptr_t *dst, void *val) {*dst = val;}
+static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr_release(lives_atomicptr_t *dst, void *val) {*dst = val;}
+static LIVES_ALWAYS_INLINE int lives_atomic_cas_ptr(lives_atomicptr_t *dst, void *val, void *ref)
+{return (InterlockedCompareExchangePointer((void *volatile *)dst, val, ref) == ref) ? 1 : 0;}
+static LIVES_ALWAYS_INLINE int lives_atomic_cas_ptr_acquire(lives_atomicptr_t *dst, void *val, void *ref)
+{return lives_atomic_cas_ptr(dst, val, ref);}
+
+#else
+
+#include <stdatomic.h>
+typedef volatile _Atomic(int32_t) lives_atomic32_t;
+typedef volatile _Atomic(int64_t) lives_atomic64_t;
+typedef volatile _Atomic(void *)  lives_atomicptr_t;
+
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_load(lives_atomic32_t *src)
+{return atomic_load_explicit(src, memory_order_relaxed);}
+static LIVES_ALWAYS_INLINE void lives_atomic32_store(lives_atomic32_t *dst, int32_t val)
+{atomic_store_explicit(dst, val, memory_order_relaxed);}
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_inc(lives_atomic32_t *val)
+{return atomic_fetch_add_explicit(val, 1, memory_order_relaxed) + 1;}
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_dec(lives_atomic32_t *val)
+{return atomic_fetch_add_explicit(val, -1, memory_order_relaxed) - 1;}
+static LIVES_ALWAYS_INLINE int32_t lives_atomic32_add(lives_atomic32_t *val, int32_t add)
+{return atomic_fetch_add_explicit(val, add, memory_order_relaxed) + add;}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_load(lives_atomic64_t *val)
+{return atomic_load_explicit(val, memory_order_relaxed);}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_add(lives_atomic64_t *val, int64_t add)
+{return atomic_fetch_add_explicit(val, add, memory_order_relaxed) + add;}
+static LIVES_ALWAYS_INLINE void *lives_atomic_load_ptr(lives_atomicptr_t *src)
+{return atomic_load_explicit(src, memory_order_relaxed);}
+static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr(lives_atomicptr_t *dst, void *val)
+{atomic_store_explicit(dst, val, memory_order_relaxed);}
+static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr_release(lives_atomicptr_t *dst, void *val)
+{atomic_store_explicit(dst, val, memory_order_release);}
+static LIVES_ALWAYS_INLINE int lives_atomic_cas_ptr(lives_atomicptr_t *dst, void *val, void *ref)\
+{return atomic_compare_exchange_weak_explicit(dst, &ref, val, memory_order_relaxed, memory_order_relaxed);}
+static LIVES_ALWAYS_INLINE int lives_atomic_cas_ptr_acquire(lives_atomicptr_t *dst, void *val, void *ref)
+{return atomic_compare_exchange_weak_explicit(dst, &ref, val, memory_order_acquire, memory_order_relaxed);}
 #endif
 
 #ifndef _GNU_SOURCE

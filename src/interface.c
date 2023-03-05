@@ -802,10 +802,10 @@ LiVESWidget *widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVE
 
     if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
       lives_widget_set_size_request(mainw->fs_playframe,
-                                    ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1.
-                                           ? widget_opts.scale : 1.)) >> 2) << 1,
-                                    ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1.
-                                           ? widget_opts.scale : 1.)) >> 2) << 1);
+                                    ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scaleW < 1.
+                                           ? widget_opts.scaleW : 1.)) >> 2) << 1,
+                                    ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scaleH < 1.
+                                           ? widget_opts.scaleH : 1.)) >> 2) << 1);
     } else lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
 
     lives_container_add(LIVES_CONTAINER(mainw->fs_playframe), mainw->fs_playalign);
@@ -1560,7 +1560,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   textwindow = (text_window *)lives_malloc(sizeof(text_window));
 
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) window_width
-      = RFX_WINSIZE_H * 1.5 * widget_opts.scale;
+      = RFX_WINSIZE_H * 1.5 * widget_opts.scaleH * widget_opts.scaleH / widget_opts.scaleW;
 
   textwindow->dialog = lives_standard_dialog_new(title, FALSE, window_width,
                        LIVES_SHOULD_EXPAND_HEIGHT ? DEF_DIALOG_HEIGHT
@@ -8169,6 +8169,7 @@ static int height, lheight;
 
 boolean msg_area_config(LiVESWidget * widget) {
   // widget is mainw->msg_area :- the drawing area we write messages to
+  RECURSE_GUARD_START;
   static int wiggle_room = 0;
   static int last_height = -1;
   static int last_textsize = -1;
@@ -8181,8 +8182,6 @@ boolean msg_area_config(LiVESWidget * widget) {
 
   static int gui_posx = 1000000;
   static int gui_posy = 1000000;
-
-  static boolean norecurse = FALSE;
 
   LingoLayout *layout;
   lives_rect_t rect;
@@ -8198,9 +8197,9 @@ boolean msg_area_config(LiVESWidget * widget) {
   int ww, hh, vvmin, hhmin;
   int paisize = 0, opaisize;
 
-  if (g_main_depth() > 1) return FALSE;
+  //if (g_main_depth() > 1) return FALSE;
 
-  if (norecurse) return FALSE;
+  RETURN_VAL_IF_RECURSED(FALSE);
 
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
@@ -8335,16 +8334,16 @@ boolean msg_area_config(LiVESWidget * widget) {
         mainw->mbar_res = height;
         if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && !THREADVAR(fg_service)
             && !FG_THREADVAR(fg_service)) {
-          norecurse = TRUE;
+          RECURSE_GUARD_LOCK;
           redraw_timeline(mainw->current_file);
-          norecurse = FALSE;
+          RECURSE_GUARD_END;
         }
         if (width < 0 || height < 0) return FALSE;
       }
     }
 
-    w = ww - overflowx + abs(bx);
-    h = hh - overflowy + abs(by);
+    w = ww - overflowx;// + abs(bx);
+    h = hh - overflowy;// + abs(by);
 
     if (!prefs->open_maximised) {
       mainw->assumed_width = w;
@@ -8366,18 +8365,7 @@ boolean msg_area_config(LiVESWidget * widget) {
     }
 
     if (!prefs->open_maximised) {
-      /* if (overflowx > 0) posx -= overflowx; */
-      /* else posx = -overflowx; */
-      /* //if (posx < 0) posx = 0; */
-      /* if (overflowy > 0) posy = overflowy - posy; */
-      /* //if (posy < 0) posy = 0; */
-
-      /* if (posx > gui_posx) posx = gui_posx; */
-      /* if (posy > gui_posy) posy = gui_posy; */
-
-      //get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-
-#ifdef DEBUG_OVERFLOW
+#ifndef DEBUG_OVERFLOW
       g_print("MOVE to %d X %d : %d %d\n", posx, posy, bx, by);
 #endif
       lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by, w, h);
@@ -8400,8 +8388,8 @@ boolean msg_area_config(LiVESWidget * widget) {
                                                mainw->multitrack->vpaned, TRUE);
       } else {
         if (mainw->mbar_res && height >= mainw->mbar_res * 2) {
-          mainw->mbar_res = 0;
           height -= mainw->mbar_res;
+          mainw->mbar_res = 0;
         }
       }
 
@@ -8410,26 +8398,21 @@ boolean msg_area_config(LiVESWidget * widget) {
 #endif
 
       // NECESSARY !
-      lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), abs(bx), abs(by), w, h);
+      //lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), abs(bx), abs(by), w - bx, h - by);
+      reset_mainwin_size();
 
       if (width + overflowx > scr_width) {
         lives_widget_set_size_request(widget, width, height);
-        //lives_widget_set_size_request(lives_widget_get_parent(widget), width, height);
         reqwidth = width;
       } else {
         lives_widget_set_size_request(widget, -1, height);
-        //lives_widget_set_size_request(lives_widget_get_parent(widget), -1, height);
         reqwidth = width + overflowx;
       }
       reqheight = height;
     }
 
     if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
-
-    if (!prefs->open_maximised)
-      lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-    else
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    reset_mainwin_size();
   }
 
   opaisize = paisize;

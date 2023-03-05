@@ -62,12 +62,12 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
 void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight);
 void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight);
 
+double find_nearest_ar(int width, int height, int *wm, int *hm);
+
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize,
                            int *width, int *height);
 
 int get_next_free_file(void);
-
-void init_clipboard(void);
 
 void get_total_time(lives_clip_t
                     *file); ///< calculate laudio, raudio and video time (may be deprecated and replaced with macros)

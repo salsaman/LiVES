@@ -836,7 +836,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     char *title, *defstr;
 
     if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 &&
-        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2. * widget_opts.scale;
+        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2. * widget_opts.scaleW;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
 
     fx_dialog[didx] = (_fx_dialog *)lives_calloc(1, sizeof(_fx_dialog));
@@ -1592,8 +1592,8 @@ boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   if (!mainw->multitrack || rfx->status != RFX_STATUS_WEED) {
     float box_scale = 1.;
     // for resize effects we add the framedraw to get its widgets, but hide it, so the box should get extra width and less height
-    if (rfx->props & RFX_PROPS_MAY_RESIZE) box_scale = 1.5 * widget_opts.scale;
-    scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H * box_scale, RFX_WINSIZE_V >> 1, top_hbox);
+    if (rfx->props & RFX_PROPS_MAY_RESIZE) box_scale = 1.5 * widget_opts.scaleW * widget_opts.scaleW / widget_opts.scaleH;
+    scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H * box_scale, RFX_WINSIZE_V, top_hbox);
   } else scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);

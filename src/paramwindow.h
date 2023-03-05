@@ -1,6 +1,6 @@
 // paramwindow.h
 // LiVES
-// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for licensing details
 
@@ -27,12 +27,12 @@ typedef struct {
 #define MAX_FMT_STRINGS 256
 #define FMT_STRING_SIZE 256
 
-#define RFX_TEXT_SCROLL_HEIGHT ((int)(80.*widget_opts.scale)) ///< height of textview scrolled window
+#define RFX_TEXT_SCROLL_HEIGHT ((int)(80.*widget_opts.scaleH)) ///< height of textview scrolled window
 
-#define GIW_KNOB_WIDTH ((int)(40.*widget_opts.scale))
-#define GIW_KNOB_HEIGHT ((int)(40.*widget_opts.scale))
+#define GIW_KNOB_WIDTH ((int)(40.*widget_opts.scaleW))
+#define GIW_KNOB_HEIGHT ((int)(40.*widget_opts.scaleH))
 
-#define DEF_SLIDER_WIDTH ((int)(200.*widget_opts.scale))
+#define DEF_SLIDER_WIDTH ((int)(200.*widget_opts.scaleW))
 
 #define NOSLID_RANGE_LIM 1000000.
 #define NOSLID_VALUE_LIM 100.

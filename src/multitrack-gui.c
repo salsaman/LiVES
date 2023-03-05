@@ -1,7 +1,7 @@
 
 // multitrack-gui.c
 // LiVES
-// (c) G. Finch 2005 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2005 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1229,8 +1229,8 @@ boolean add_mt_param_box(lives_mt * mt) {
 
   lives_signal_handlers_unblock_by_func(mt->node_spinbutton, (livespointer)on_node_spin_value_changed, (livespointer)mt);
 
-  widget_opts.packing_height = 2. * widget_opts.scale;
-  widget_opts.border_width = 2. * widget_opts.scale;
+  widget_opts.border_width = 2. * widget_opts.scaleW;
+  widget_opts.packing_height = 2. * widget_opts.scaleH;
   res = make_param_box(LIVES_VBOX(mt->fx_box), mt->current_rfx);
   widget_opts.packing_height = dph;
   widget_opts.border_width = dbw;
@@ -1849,7 +1849,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
                                   LIVES_GUI_CALLBACK(expose_paintlines),
                                   (livespointer)mt);
 
-  lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table), widget_opts.packing_height * widget_opts.scale);
+  lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table), widget_opts.packing_height * widget_opts.scaleH);
   lives_table_set_col_spacings(LIVES_TABLE(mt->timeline_table), 0);
 
   lives_widget_set_vexpand(mt->timeline_table, FALSE);

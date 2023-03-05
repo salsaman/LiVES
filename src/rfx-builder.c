@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1931,7 +1931,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   rfxbuilder->param_name_entry = lives_standard_entry_new((tmp = (_("_Name:    "))),
                                  pnum >= 0 ? rfxbuilder->copy_params[pnum].name : NULL,
-                                 60.*widget_opts.scale, -1, LIVES_BOX(dialog_vbox),
+                                 MEDIUM_ENTRY_WIDTH, -1, LIVES_BOX(dialog_vbox),
                                  (tmp2 = lives_strdup((_("Name of the parameter, must be unique in the plugin.")))));
 
   if (pnum < 0) lives_widget_grab_focus(rfxbuilder->param_name_entry);
@@ -1943,7 +1943,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   rfxbuilder->param_label_entry = lives_standard_entry_new((tmp = (_("_Label:    "))),
                                   pnum >= 0 ? rfxbuilder->copy_params[pnum].label : NULL,
-                                  60.*widget_opts.scale, -1, LIVES_BOX(dialog_vbox),
+                                  MEDIUM_ENTRY_WIDTH, -1, LIVES_BOX(dialog_vbox),
                                   (tmp2 = (_("Label to be shown by the parameter. "
                                           "An underscore represents mnemonic accelerator."))));
   lives_free(tmp);

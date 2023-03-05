@@ -1727,6 +1727,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_resize(LiVESWidget *widge
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int width, int height) {
 #ifdef GUI_GTK
+  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
   if (LIVES_IS_WINDOW(widget)) lives_window_resize(LIVES_WINDOW(widget), width, height);
   else gtk_widget_set_size_request(widget, width, height);
   return TRUE;
@@ -1740,6 +1741,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_minimum_size(LiVESWidget *w
   GdkGeometry geom;
   GdkWindowHints mask;
   GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
+  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
   if (GTK_IS_WINDOW(toplevel)) {
     geom.min_width = width;
     geom.min_height = height;
@@ -1757,6 +1759,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
   GdkGeometry geom;
   GdkWindowHints mask;
   GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
+  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
   if (GTK_IS_WINDOW(toplevel)) {
     geom.max_width = width;
     geom.max_height = height;
@@ -2990,6 +2993,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_monitor(LiVESWindow *window
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_default_size(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
+  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
   gtk_window_set_default_size(window, width, height);
   return TRUE;
 #endif
@@ -3016,6 +3020,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move(LiVESWindow *window, int x
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move_resize(LiVESWindow *window, int x, int y, int w, int h) {
 #ifdef GUI_GTK
+  if (w + x > GUI_SCREEN_WIDTH || h + y > GUI_SCREEN_HEIGHT) abort();
   gdk_window_move_resize(lives_widget_get_xwindow(LIVES_WIDGET(window)), x, y, w, h);
   return TRUE;
 #endif
@@ -3067,6 +3072,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_hide_titlebar_when_maximize
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
+  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
   gtk_window_resize(window, width, height);
   gtk_widget_set_size_request(GTK_WIDGET(window), width, height);
   return TRUE;
@@ -6598,6 +6604,7 @@ static void _lives_entry_set_text(LiVESEntry *entry, const char *text) {
   if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
   else if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
+  gtk_entry_set_text(entry, text);
 #endif
 }
 
@@ -7949,7 +7956,7 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_label_set_hpadding(LiVESLabel *label, int
 }
 
 
-#define H_ALIGN_ADJ (22. * widget_opts.scale) // why 22 ? no idea
+#define H_ALIGN_ADJ (22. * widget_opts.scaleH) // why 22 ? no idea
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingtoalignwith) {
 #ifdef GUI_GTK
@@ -11953,18 +11960,22 @@ boolean widget_helper_init(void) {
 }
 
 
-boolean widget_opts_rescale(double scale) {
-  widget_opts.scale = scale;
+boolean widget_opts_set_scale(double scale) {
+  double ar = find_nearest_ar(GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, NULL, NULL);
+  widget_opts.scaleW = widget_opts.scaleH = scale;
+  // hs = ws * 4/3 / ar
+  widget_opts.scaleH *= 4. / (3. * ar);
+
   if (def_widget_opts.css_min_width != -1) {
-    widget_opts.css_min_width = ALIGN_CEIL((int)((double)def_widget_opts.css_min_width * widget_opts.scale + .5), 2);
+    widget_opts.css_min_width = ALIGN_CEIL((int)((double)def_widget_opts.css_min_width * widget_opts.scaleW + .5), 2);
   }
   if (def_widget_opts.css_min_height != -1) {
-    widget_opts.css_min_height = ALIGN_CEIL((int)((double)def_widget_opts.css_min_height * widget_opts.scale + .5), 2);
+    widget_opts.css_min_height = ALIGN_CEIL((int)((double)def_widget_opts.css_min_height * widget_opts.scaleH + .5), 2);
   }
-  widget_opts.border_width = ALIGN_CEIL((int)((double)def_widget_opts.border_width * widget_opts.scale + .5), 2);
-  widget_opts.packing_width = ALIGN_CEIL((int)((double)def_widget_opts.packing_width * widget_opts.scale + .5), 2);
-  widget_opts.packing_height = ALIGN_CEIL((int)((double)def_widget_opts.packing_height * widget_opts.scale + .5), 2);
-  widget_opts.filler_len = (int)((double)def_widget_opts.filler_len * widget_opts.scale + .5);
+  widget_opts.border_width = ALIGN_CEIL((int)((double)def_widget_opts.border_width * widget_opts.scaleW + .5), 2);
+  widget_opts.packing_width = ALIGN_CEIL((int)((double)def_widget_opts.packing_width * widget_opts.scaleW + .5), 2);
+  widget_opts.packing_height = ALIGN_CEIL((int)((double)def_widget_opts.packing_height * widget_opts.scaleH + .5), 2);
+  widget_opts.filler_len = ALIGN_CEIL((int)((double)def_widget_opts.filler_len * widget_opts.scaleW + .5), 2);
   return TRUE;
 }
 
@@ -12214,7 +12225,7 @@ boolean lives_window_center(LiVESWindow * window) {
 
     width = lives_widget_get_allocation_width(LIVES_WIDGET(window));
 
-    if (width == 0) width = ((int)(620. * widget_opts.scale)); // MIN_MSGBOX_WIDTH in interface.h
+    if (width == 0) width = MIN_MSGBOX_WIDTH;
     height = lives_widget_get_allocation_height(LIVES_WIDGET(window));
 
     get_border_size(LIVES_WIDGET(window), &bx, &by);

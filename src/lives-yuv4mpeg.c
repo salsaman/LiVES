@@ -327,8 +327,8 @@ static boolean open_yuv4m_inner(const char *filename, const char *fname, int new
   yuv4mpeg->type = type;
   yuv4mpeg->cardno = cardno;
 
-  scrapfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY,
-                           (void *)yuv4mpeg, LIVES_SRC_TYPE_FIFO);
+  cfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY,
+                                       (void *)yuv4mpeg, LIVES_SRC_TYPE_FIFO);
 
   cfile->bpp = 12;
 

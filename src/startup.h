@@ -36,9 +36,6 @@ char *get_install_lib_cmd(const char *distro, const char *libname);
 
 boolean check_snap(const char *prog);
 
-// startup idle funcs
-boolean resize_message_area(livespointer data);
-
 boolean lazy_startup_checks(void);
 //
 void replace_with_delegates(void);

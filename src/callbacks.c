@@ -7452,8 +7452,7 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
           }
           if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
         }
-        if (prefs->open_maximised)
-          lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+        reset_mainwin_size();
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*

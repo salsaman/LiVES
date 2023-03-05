@@ -14,7 +14,7 @@ void set_preview_box_colours(void);
 void load_theme_images(void);
 void set_interactive(boolean interactive);
 char *get_menu_name(lives_clip_t *sfile, boolean add_set);
-int get_vspace(void);
+int get_sepbar_height(void);
 void enable_record(void);
 void toggle_record(void);
 void disable_record(void);

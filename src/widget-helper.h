@@ -28,10 +28,10 @@
 
 #define BUTTON_RAD 5. ///< button border radius
 
-#define LONGEST_ENTRY_WIDTH ((int)(150. * widget_opts.scale))
-#define LONG_ENTRY_WIDTH ((int)(100. * widget_opts.scale))
-#define MEDIUM_ENTRY_WIDTH ((int)(60. * widget_opts.scale))
-#define SHORT_ENTRY_WIDTH ((int)(40. * widget_opts.scale))
+#define LONGEST_ENTRY_WIDTH ((int)(150. * widget_opts.scaleW))
+#define LONG_ENTRY_WIDTH ((int)(100. * widget_opts.scaleW))
+#define MEDIUM_ENTRY_WIDTH ((int)(60. * widget_opts.scaleW))
+#define SHORT_ENTRY_WIDTH ((int)(40. * widget_opts.scaleW))
 #define SHORTER_ENTRY_WIDTH (MEDIUM_ENTRY_WIDTH >> 1)
 
 typedef enum {
@@ -265,7 +265,7 @@ void widget_helper_set_stock_icon_alts(LiVESIconTheme *);
 const char *widget_helper_suggest_icons(const char *part, int idx);
 
 boolean widget_helper_init(void);
-boolean widget_opts_rescale(double scale);
+boolean widget_opts_set_scale(double scale);
 
 lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha);
 lives_colRGBA64_t *widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
@@ -1601,7 +1601,8 @@ typedef struct {
   int css_min_height;
   int icon_size; ///< icon size for tooltips image, warn image, toolbar img, etc.
   boolean no_gui; ///< show nothing !
-  double scale; ///< scale factor for all sizes
+  double scaleW; ///< width scale factor for all sizes
+  double scaleH; ///< height scale factor for all sizes
   boolean alt_button_order; ///< unused for now
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; ///< Text which is prepended to window titles, etc.
@@ -1640,7 +1641,8 @@ const widget_opts_t _def_widget_opts = {
   W_CSS_MIN_HEIGHT, ///< css_min_height
   LIVES_ICON_SIZE_LARGE_TOOLBAR, ///< icon_size
   FALSE, ///< no_gui
-  1.0, ///< default scale
+  1.0, ///< default scaleW
+  1.0, ///< default scaleH
   FALSE, ///< alt button order
   NULL, ///< image_filter
   "", ///< title_prefix

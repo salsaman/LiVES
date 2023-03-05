@@ -6,12 +6,17 @@
 #ifndef HAS_LIVES_FRAMEDRAW_H
 #define HAS_LIVES_FRAMEDRAW_H
 
-// min and max frame sizes for framedraw preview
-#define MIN_PRE_X ((int)(58. * widget_opts.scale))
-#define MIN_PRE_Y ((int)(32. * widget_opts.scale))
+#define _GUI_CONST_301 58.
+#define _GUI_CONST_302 32.
+#define _GUI_CONST_303 480.
+#define _GUI_CONST_304 280.
 
-#define MAX_PRE_X ((int)(480. * widget_opts.scale))
-#define MAX_PRE_Y ((int)(280. * widget_opts.scale))
+// min and max frame sizes for framedraw preview
+#define MIN_PRE_X ((int)(_GUI_CONST_301 * widget_opts.scaleW))
+#define MIN_PRE_Y ((int)(_GUI_CONST_302 * widget_opts.scaleH))
+
+#define MAX_PRE_X ((int)(_GUI_CONST_303 * widget_opts.scaleW))
+#define MAX_PRE_Y ((int)(_GUI_CONST_304 * widget_opts.scaleH))
 
 // internal padding in pixels for LiVESFrame
 #define FD_HT_ADJ 12

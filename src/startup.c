@@ -1334,25 +1334,10 @@ boolean lazy_startup_checks(void) {
   }
 
   if (is_first) {
-    if (prefs->open_maximised && prefs->show_gui)
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    is_first = FALSE;
-    return TRUE;
-  }
-
-  if (prefs->vj_mode) {
     resize(1.);
-    if (prefs->open_maximised) {
-      if (!mainw->hdrbar) {
-        int bx, by;
-        get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-        if (abs(by) > MENU_HIDE_LIM)
-          lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-      }
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    }
-    lives_proc_thread_cancel(self);
-    return FALSE;
+    is_first = FALSE;
+    if (prefs->vj_mode) lives_proc_thread_cancel(self);
+    return TRUE;
   }
 
   if (!red_tim && CURRENT_CLIP_IS_VALID) {
@@ -1444,61 +1429,6 @@ boolean lazy_startup_checks(void) {
   return FALSE;
 }
 
-
-boolean resize_message_area(livespointer data) {
-  // workaround because the window manager will resize the window asynchronously
-  static boolean isfirst = TRUE;
-
-  if (data) isfirst = TRUE;
-
-  if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
-    mainw->assumed_height = mainw->assumed_width = -1;
-    mainw->idlemax = 0;
-    return FALSE;
-  }
-
-  if (mainw->idlemax-- == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
-
-  /* if (mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised) { */
-  /*   if (!mainw->hdrbar) { */
-  /*     int bx, by; */
-  /*     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by); */
-  /*     if (by > MENU_HIDE_LIM) */
-  /* 	lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE); */
-  /*   } */
-  /*   lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
-  /*   mainw->assumed_height = mainw->assumed_width = -1; */
-  /*   return TRUE; */
-  /* } */
-
-  if (mainw->msg_area_configed) mainw->idlemax = 0;
-
-  if (mainw->idlemax > 0 && mainw->assumed_height != -1 &&
-      mainw->assumed_height != lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET)) return TRUE;
-  if (mainw->idlemax > 0 && lives_widget_get_allocation_height(mainw->end_image) != mainw->ce_frame_height) return TRUE;
-
-  mainw->idlemax = 0;
-  mainw->assumed_height = mainw->assumed_width = -1;
-  msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
-  //#if !GTK_CHECK_VERSION(3, 0, 0)
-  msg_area_config(mainw->msg_area);
-  //#endif
-  if (isfirst) {
-    //lives_widget_set_vexpand(mainw->msg_area, TRUE);
-    if (prefs->open_maximised && prefs->show_gui) {
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    }
-    if (!CURRENT_CLIP_IS_VALID) {
-      d_print("");
-    }
-    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
-    lives_widget_queue_draw_if_visible(mainw->msg_area);
-    isfirst = FALSE;
-  }
-  resize(1.);
-  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-  return FALSE;
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 static boolean got_files = FALSE;
@@ -1611,23 +1541,7 @@ static boolean lives_startup(livespointer data) {
 
   create_LiVES();
 
-  if (prefs->open_maximised && prefs->show_gui) {
-    if (!mainw->hdrbar) {
-      int bx, by;
-      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (abs(by) > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
-  // needed to avoid priv->pulse2 > priv->pulse1 gtk error
-  /* mainw->gui_much_events = TRUE; */
-  /* lives_widget_context_update(); */
-  /* mainw->gui_much_events = FALSE; */
-
-  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-  //lives_widget_context_update();
+  reset_mainwin_size();
 
   if (theme_error && !mainw->foreign) {
     // non-fatal errors
@@ -1774,7 +1688,10 @@ static boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  if (!mainw->lives_shown) show_lives();
+  if (!mainw->lives_shown) {
+    mainw->is_ready = TRUE;
+    show_lives();
+  }
 
   if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
     // still experimental
@@ -1828,11 +1745,6 @@ static boolean lives_startup2(livespointer data) {
   // showing the query dialog
   mainw->fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
 
-  if (prefs->show_gui) {
-    switch_clip(1, mainw->current_file, TRUE);
-    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
-  }
-
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file == -1) {
@@ -1872,22 +1784,24 @@ static boolean lives_startup2(livespointer data) {
 
   if (prefs->startup_phase == 100) prefs->startup_phase = 0;
 
-  mainw->no_switch_dprint = TRUE;
-  if (mainw->current_file > -1 && !mainw->multitrack) {
-    switch_clip(1, mainw->current_file, TRUE);
+  if (prefs->show_gui) {
+    mainw->no_switch_dprint = TRUE;
+    if (mainw->current_file > -1 && !mainw->multitrack) {
+      switch_clip(1, mainw->current_file, TRUE);
 #ifdef ENABLE_GIW
-    giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+      giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 #endif
-    lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
-    lives_widget_queue_draw(mainw->hruler);
-  }
+      lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+      lives_widget_queue_draw(mainw->hruler);
+    }
 
-  if (!palette || !(palette->style & STYLE_LIGHT)) {
-    lives_widget_set_opacity(mainw->sep_image, 0.4);
-  } else {
-    lives_widget_set_opacity(mainw->sep_image, 0.8);
+    if (!palette || !(palette->style & STYLE_LIGHT)) {
+      lives_widget_set_opacity(mainw->sep_image, 0.4);
+    } else {
+      lives_widget_set_opacity(mainw->sep_image, 0.8);
+    }
+    lives_widget_queue_draw(mainw->sep_image);
   }
-  lives_widget_queue_draw(mainw->sep_image);
 
   if (*devmap) on_devicemap_load_activate(NULL, devmap);
 
@@ -4151,11 +4065,11 @@ static void do_start_messages(void) {
 
   d_print(_("Number of monitors detected: %d: "), capable->nmonitors);
 
-  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling has been set to %.3f.\n"),
+  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling has been set to %.3f. X %.3f\n"),
           mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
           GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
           (int)mainw->mgeom[widget_opts.monitor].dpi,
-          widget_opts.scale);
+          widget_opts.scaleW, widget_opts.scaleH);
 
   if (get_screen_usable_size(&w, &h)) {
     d_print(_("Actual usable size appears to be %d X %d\n"), w, h);

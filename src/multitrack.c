@@ -6561,7 +6561,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->eventbox = lives_event_box_new();
   hbox = lives_hbox_new(FALSE, 0);
 
-  lives_box_pack_start(LIVES_BOX(mt->tlx_vbox), mt->eventbox, FALSE, FALSE, 4.*widget_opts.scale);
+  lives_box_pack_start(LIVES_BOX(mt->tlx_vbox), mt->eventbox, FALSE, FALSE, 4. * widget_opts.scaleH);
   lives_container_add(LIVES_CONTAINER(mt->eventbox), hbox);
 
   mt->scroll_label = lives_standard_label_new(_("Scroll"));
@@ -6701,7 +6701,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_paned_pack(1, LIVES_PANED(mt->top_vpaned), mt->xtravbox, FALSE, FALSE);
   lives_paned_pack(2, LIVES_PANED(mt->top_vpaned), mt->vpaned, TRUE, FALSE);
   lives_paned_set_position(LIVES_PANED(mt->top_vpaned),
-                           (double)GUI_SCREEN_HEIGHT * 2. / 3. * widget_opts.scale);
+                           (double)GUI_SCREEN_HEIGHT * 2. / 3. * widget_opts.scaleH);
   return mt;
 }
 
@@ -7222,15 +7222,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   reset_clipmenu();
   mainw->last_dprint_file = -1;
 
-  if (prefs->show_gui && prefs->open_maximised) {
-    if (!mainw->hdrbar) {
-      int bx, by;
-      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (abs(by) > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
+  reset_mainwin_size();
 
   desensitize();
 
@@ -7263,8 +7255,6 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   if (!mainw->recoverable_layout) sensitize();
 
   lives_widget_set_vexpand(mainw->play_image, FALSE);
-
-
 
   if (prefs->show_msg_area) {
     prefs->msg_textsize = future_prefs->msg_textsize;
@@ -9027,15 +9017,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   mainw->is_ready = TRUE;
 
-  if (prefs->show_gui && prefs->open_maximised) {
-    if (!mainw->hdrbar) {
-      int bx, by;
-      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (abs(by) > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
+  reset_mainwin_size();
 
   reset_mt_play_sizes(multi);
   mt_redraw_all_event_boxes(multi);
@@ -9068,15 +9050,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   lives_idle_add(mt_idle_show_current_frame, (livespointer)multi);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (prefs->show_gui && prefs->open_maximised) {
-    if (!mainw->hdrbar) {
-      int bx, by;
-      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (abs(by) > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    }
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
+  reset_mainwin_size();
 
   if (multi->opts.hpaned_pos != -1)
     lives_paned_set_position(LIVES_PANED(multi->hpaned), multi->opts.hpaned_pos);

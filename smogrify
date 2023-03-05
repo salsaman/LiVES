@@ -32,17 +32,6 @@ use Cwd qw(cwd);
 
 #my $CRITIC = 1;
 
-if (defined $CRITIC) {
-    print "OK\n";
-    use Perl::Critic;
-    my $file = $0;
-    my $critic = Perl::Critic->new();
-    my @violations = $critic->critique($file);
-    print @violations;
-    print "OK done\n";
-    exit 0;
-}
-
 ##################################################################
 use POSIX qw(locale_h);
 use locale;

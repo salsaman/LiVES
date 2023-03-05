@@ -20,6 +20,10 @@
 #include "multitrack-gui.h"
 #include "startup.h"
 
+#ifdef HAVE_YUV4MPEG
+#include "lives-yuv4mpeg.h"
+#endif
+
 const char *get_deinterlace_string(void) {
   if (mainw->open_deint) {
     if (USE_MPV) return "--deinterlace=yes";

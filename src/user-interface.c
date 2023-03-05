@@ -681,4 +681,284 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 }
 
 
+void reset_mainwin_size(void) {
+  int w, h, x, y, bx, by;
+  int scr_width = GUI_SCREEN_WIDTH;
+  int scr_height = GUI_SCREEN_HEIGHT;
 
+  if (!prefs->show_gui) return;
+
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+  bx = 2 * abs(bx);
+  by = abs(by);
+
+  if (!mainw->hdrbar) {
+    if (prefs->open_maximised && by > MENU_HIDE_LIM)
+      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+  }
+
+  w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
+  h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
+
+  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
+
+  // resize the main window so it fits the gui monitor
+  if (prefs->open_maximised) {
+    bx = by = 0;
+    lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
+    lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
+    lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
+    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), bx, by);
+    lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  } else {
+    if (w > scr_width - bx || h > scr_height - by) {
+      w = scr_width - bx;
+      h = scr_height - by;
+      lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+    }
+    lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &x, &y);
+    if (x + w > scr_width - bx) x = scr_width - bx - w;
+    if (y + h > scr_height - by) y = scr_height - by - h;
+    lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), x, y);
+    lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+  }
+
+  if (!LIVES_IS_PLAYING) {
+    mainw->gui_much_events = TRUE;
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+    mainw->gui_much_events = FALSE;
+  }
+}
+
+
+LIVES_GLOBAL_INLINE int get_sepbar_height(void) {
+  static int vspace = -1;
+  if (vspace == -1) {
+    LiVESPixbuf *sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image));
+    vspace = (sepbuf ? (((lives_pixbuf_get_height(sepbuf) + 1) >> 1) << 1) : 0);
+  }
+  return vspace;
+}
+
+
+void get_gui_framesize(int *hsize, int *vsize) {
+  int bx, by;
+  int scr_width = GUI_SCREEN_WIDTH;
+  int scr_height = GUI_SCREEN_HEIGHT;
+  int vspace = get_sepbar_height();
+
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+  bx = abs(bx);
+  by = abs(by);
+
+  if (!mainw->hdrbar && by > MENU_HIDE_LIM)
+    lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+
+  if (hsize) *hsize = (((scr_width - H_RESIZE_ADJUST * 3 + bx) / 3) >> 1) << 1;
+  if (vsize) *vsize = ((int)(scr_height - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
+                               / sqrt(widget_opts.scaleH) + vspace + by
+                               + (prefs->show_msg_area ? mainw->mbar_res : 0))) >> 1) << 1;
+}
+
+
+boolean check_can_show_msg_area(void) {
+  int by, vspace = get_sepbar_height();
+
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, NULL, &by);
+  by = abs(by);
+
+  if (prefs->show_dev_opts) g_print("Can show msg_area if %d >= %d - calculated as %d + %d + %f; result is ",
+                                      GUI_SCREEN_HEIGHT, (int)MIN_MSGAREA_SCRNHEIGHT,
+                                      (int)(GUI_SCREEN_HEIGHT - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
+                                            / sqrt(widget_opts.scaleH) + vspace + by)),
+                                      CE_TIMELINE_VSPACE, MIN_MSGBAR_HEIGHT);
+
+  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT > (int)MIN_MSGAREA_SCRNHEIGHT) {
+    capable->can_show_msg_area = TRUE;
+    if (future_prefs->show_msg_area) prefs->show_msg_area = TRUE;
+    if (prefs->show_dev_opts) g_print("YES\n");
+  } else {
+    prefs->show_msg_area = capable->can_show_msg_area = FALSE;
+    if (prefs->show_dev_opts) g_print("NO\n");
+  }
+  return capable->can_show_msg_area;
+}
+
+
+static void _resize(double scale) {
+  // resize the frame widgets
+  // set scale < 0. to _force_ the playback frame to expand (for external capture)
+  LiVESXWindow *xwin;
+  double oscale = scale;
+  int hsize, vsize, xsize;
+  int bx, by;
+  int scr_width = GUI_SCREEN_WIDTH;
+  int scr_height = GUI_SCREEN_HEIGHT;
+
+  if (!prefs->show_gui || mainw->multitrack) return;
+
+  reset_mainwin_size();
+
+  get_gui_framesize(&hsize, &vsize);
+
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+  bx = 2 * abs(bx);
+  by = abs(by);
+
+  g_print("VS4 is %d\n", vsize);
+
+  if (scale < 0.) {
+    // foreign capture
+    scale = -scale;
+    hsize = (scr_width - H_RESIZE_ADJUST - bx) / scale;
+    vsize = (scr_height - V_RESIZE_ADJUST - by) / scale;
+  }
+
+  mainw->ce_frame_width = hsize;
+  mainw->ce_frame_height = vsize;
+
+  if (oscale > 0.) {
+    if (hsize * scale > scr_width - SCR_WIDTH_SAFETY)
+      scale = (scr_width - SCR_WIDTH_SAFETY) / hsize;
+
+    if (vsize * scale > scr_height - SCR_HEIGHT_SAFETY)
+      scale = (scr_height - SCR_HEIGHT_SAFETY) / vsize;
+
+    if (scale > 1.) {
+      // this is the size for the start and end frames
+      // they shrink when scale is 2.0
+      mainw->ce_frame_width = hsize / scale;
+      mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST;
+
+      lives_widget_set_margin_left(mainw->playframe, widget_opts.packing_width);
+      lives_widget_set_margin_right(mainw->playframe, widget_opts.packing_width);
+    }
+
+    if (CURRENT_CLIP_IS_VALID) {
+      if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
+        if (!mainw->camframe) {
+          LiVESError *error = NULL;
+          char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
+          char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, LIVES_THEME_CAMERA, fname, NULL);
+          mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
+          if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
+          lives_free(tmp); lives_free(fname);
+        }
+      }
+    }
+
+    // THE SIZES OF THE FRAME CONTAINERS
+    lives_widget_set_size_request(mainw->pf_grid, -1, mainw->ce_frame_height);
+    lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->eventbox3, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, -1);
+
+    lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, -1);
+
+    // use unscaled size in dblsize
+    if (scale > 1.) {
+      hsize *= scale;
+      vsize *= scale;
+      lives_widget_set_size_request(mainw->playframe, hsize, vsize);
+      lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
+      lives_widget_set_size_request(mainw->playarea, hsize, vsize);
+    }
+
+    // IMPORTANT (or the entire image will not be shown)
+    lives_widget_set_size_request(mainw->play_image, hsize, vsize);
+
+    xwin = lives_widget_get_xwindow(mainw->play_image);
+    if (LIVES_IS_XWINDOW(xwin)) {
+      if (hsize != lives_painter_image_surface_get_width(mainw->play_surface)
+          || vsize != lives_painter_image_surface_get_height(mainw->play_surface)) {
+        pthread_mutex_lock(&mainw->play_surface_mutex);
+        if (mainw->play_surface) lives_painter_surface_destroy(mainw->play_surface);
+        mainw->play_surface =
+          lives_xwindow_create_similar_surface(xwin, LIVES_PAINTER_CONTENT_COLOR,
+                                               hsize, vsize);
+        clear_widget_bg(mainw->play_image, mainw->play_surface);
+        pthread_mutex_unlock(&mainw->play_surface_mutex);
+      }
+    }
+  } else {
+    // capture window size
+    xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
+    if (xsize > 0) {
+      lives_widget_set_size_request(mainw->frame1, xsize / scale, vsize + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->eventbox3, xsize / scale, vsize + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->frame2, xsize / scale, vsize + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->eventbox4, xsize / scale, vsize + V_RESIZE_ADJUST);
+      mainw->ce_frame_width = xsize / scale;
+      mainw->ce_frame_height = vsize + V_RESIZE_ADJUST;
+    } else {
+      lives_widget_hide(mainw->frame1);
+      lives_widget_hide(mainw->frame2);
+      lives_widget_hide(mainw->eventbox3);
+      lives_widget_hide(mainw->eventbox4);
+    }
+  }
+
+  if (!mainw->foreign && mainw->current_file == -1) {
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+    load_start_image(0);
+    load_end_image(0);
+  }
+
+  if (scale != oscale) reset_mainwin_size();
+}
+
+
+void resize(double scale) {
+  if (is_fg_thread()) _resize(scale);
+  else {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    main_thread_execute_rvoid(_resize, 0, "d", scale);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+}
+
+
+boolean resize_message_area(livespointer data) {
+  // workaround because the window manager will resize the window asynchronously
+  static boolean isfirst = TRUE;
+
+  if (data) isfirst = TRUE;
+
+  if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
+    mainw->assumed_height = mainw->assumed_width = -1;
+    mainw->idlemax = 0;
+    return FALSE;
+  }
+
+  if (mainw->idlemax-- == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
+
+  if (mainw->msg_area_configed) mainw->idlemax = 0;
+
+  if (mainw->idlemax > 0 && mainw->assumed_height != -1 &&
+      mainw->assumed_height != lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET)) return TRUE;
+  if (mainw->idlemax > 0 && lives_widget_get_allocation_height(mainw->end_image) != mainw->ce_frame_height) return TRUE;
+
+  mainw->idlemax = 0;
+  mainw->assumed_height = mainw->assumed_width = -1;
+
+  msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
+  msg_area_config(mainw->msg_area);
+
+  if (isfirst) {
+    resize(1.);
+    if (!CURRENT_CLIP_IS_VALID) {
+      d_print("");
+    }
+    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+    lives_widget_queue_draw_if_visible(mainw->msg_area);
+    isfirst = FALSE;
+  }
+  resize(1.);
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  return FALSE;
+}

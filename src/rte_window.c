@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2005 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2201,8 +2201,8 @@ static LiVESWidget *create_rte_window(boolean reshow) {
 
   table = lives_table_new(prefs->rte_keys_virtual, modes + 1, FALSE);
 
-  lives_table_set_row_spacings(LIVES_TABLE(table), 16 * widget_opts.scale);
-  lives_table_set_col_spacings(LIVES_TABLE(table), 4 * widget_opts.scale);
+  lives_table_set_row_spacings(LIVES_TABLE(table), 16 * widget_opts.scaleW);
+  lives_table_set_col_spacings(LIVES_TABLE(table), 4 * widget_opts.scaleH);
 
   // dummy button for "no grab", we dont show this...there is a button instead
   dummy_radio = lives_radio_button_new(grab_group);

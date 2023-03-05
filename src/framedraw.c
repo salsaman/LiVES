@@ -207,7 +207,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   mainw->framedraw_reset = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, NULL,
                            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
   hbox_rst = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 4. * widget_opts.scale);
+  lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 4. * widget_opts.scaleH);
 
   lives_button_set_label(LIVES_BUTTON(mainw->framedraw_reset), _("_Reset Values"));
   lives_box_pack_start(LIVES_BOX(hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);

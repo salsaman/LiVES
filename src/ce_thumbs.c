@@ -426,9 +426,7 @@ void start_ce_thumb_mode(void) {
     cliplist = cliplist->next;
   }
 
-  if (prefs->open_maximised) {
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
+  reset_mainwin_size();
 
   lives_widget_show_all(top_hbox);
 

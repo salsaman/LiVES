@@ -826,6 +826,7 @@ static void _remove_ext_cb(lives_proc_thread_t lpt,
   LiVESList *xlist, *list, *listnext;
   cl->adder = NULL;
   cl->flags |= HOOK_STATUS_REMOVE;
+  g_print("REM 2nnnn\n");
   xlist = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
   if (xlist) {
     for (list = xlist; list; list = listnext) {
@@ -984,7 +985,10 @@ void flush_cb_list(lives_proc_thread_t lpt) {
       continue;
     }
     cl->adder = NULL;
+
+
     cl->flags |= HOOK_STATUS_REMOVE;
+    g_print("REM 2oppppppp\n");
     pthread_mutex_unlock(&cl->mutex);
     xlist = lives_list_remove_node(xlist, xlist, FALSE);
     weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, xlist);
@@ -1169,6 +1173,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         // here we have established that the closure must be removed
         // since we already found a match, or we will prepend, or it is a "toggle" function
         closure->flags |= HOOK_STATUS_REMOVE;
+        g_print("REM 2jijsaiajsio\n");
 
         if (xflags & HOOK_TOGGLE_FUNC) {
           // for toggle func, this closure will be removed, and new lpt will be rejected
@@ -1213,6 +1218,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         break;
       }
 
+      g_print("REM 2uuuuuuuuu\n");
       closure->flags |= HOOK_STATUS_REMOVE;
       continue;
     }
@@ -1251,7 +1257,13 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
   if (!closure) {
     closure = lives_hook_closure_new_for_lpt(lpt, flags, type);
   }
-  if (!is_self) {
+
+  if (!is_self && !(flags & HOOK_CB_TRANSFER_OWNER)) {
+    // add a pointer to the callback if we added it to the hook stack for another thread
+    // this is done so that we can remove any external callbacks when the proc_thread is freed
+    // however, we don't do this for self hooks (we can simply clear those)
+    // also we dont do this if transferring ownership of the callback (as when adding to the
+    // player's sync_announce stack)
     closure->adder = self;
     add_to_cb_list(self, closure);
   }
@@ -1415,6 +1427,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       closure = (lives_closure_t *)list->data;
 
       if (!closure) continue;
+
       if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_RUNNING)) continue;
 
       if (closure->flags & HOOK_STATUS_REMOVE) {
@@ -1425,6 +1438,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!(closure->flags & HOOK_STATUS_ACTIONED)) continue;
 
       lpt = closure->proc_thread;
+
       if (!lpt || lives_proc_thread_ref(closure->proc_thread) < 2) continue;
 
       if ((closure->flags & HOOK_OPT_ONESHOT) && lives_proc_thread_was_cancelled(lpt)) {
@@ -1467,9 +1481,6 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
       closure->flags |= HOOK_STATUS_RUNNING;
       closure->flags &= ~HOOK_STATUS_ACTIONED;
-
-      /* g_print("\nrun hook cb %s %p %p\n", lives_proc_thread_show_func_call(lpt), */
-      /* 	      lpt, lpt); */
 
       lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
                                        | THRD_STATE_FINISHED);
@@ -1634,6 +1645,7 @@ int lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
     if (!lpt || lives_proc_thread_ref(lpt) < 2) continue;
 
     if (lives_proc_thread_was_cancelled(lpt)) {
+      g_print("REM 3\n");
       closure->flags |= HOOK_STATUS_REMOVE;
       remove_from_hstack(hstack, list);
       continue;
@@ -1706,6 +1718,8 @@ void lives_hook_remove(lives_proc_thread_t lpt) {
   // - hook callback is no longer needed
   //
   lives_closure_t *closure = lives_proc_thread_get_closure(lpt);
+  g_print("REM 888\n");
+
   if (closure) closure->flags |= HOOK_STATUS_REMOVE;
   // flag lpt as INVALID, if a thread id waiting it will ontinue
   lives_proc_thread_set_state(lpt, (THRD_STATE_INVALID | THRD_STATE_DESTROYING));
@@ -1733,6 +1747,7 @@ void lives_hook_remove_by_data(lives_hook_stack_t **hstacks, int type,
         if (!lpt || !closure->fdef) continue;
         if (closure->fdef->function != func) continue;
         if (data != weed_get_voidptr_value(lpt, PROC_THREAD_PARAM(1), NULL)) continue;
+        g_print("REM 2xxx\n");
         closure->flags |= HOOK_STATUS_REMOVE;
         // flag lpt as INVALID, if a thread id waiting it will ontinue
         lives_proc_thread_set_state(lpt, (THRD_STATE_INVALID | THRD_STATE_DESTROYING));

@@ -10,6 +10,7 @@
 #include "diagnostics.h"
 #include "callbacks.h"
 #include "startup.h"
+#include "maths.h"
 
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
@@ -97,11 +98,24 @@ void show_audit(weed_plant_t *plant) {
     } else {
       // skip "type" leaf
       for (int n = 1;  keys[n]; n++) {
-        void *ptr;
-        if (lives_strtol(keys[n] + 2)) {
-          fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
-          sscanf(keys[n], "%p", &ptr);
-          show_all_leaves((weed_plant_t *)ptr);
+        int st = weed_leaf_seed_type(plant, keys[n]);
+        switch (st) {
+        case WEED_SEED_PLANTPTR: {
+          void *ptr;
+          if (lives_strtol(keys[n] + 2)) {
+            fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
+            sscanf(keys[n], "%p", &ptr);
+            show_all_leaves((weed_plant_t *)ptr);
+          }
+        }
+        break;
+        case WEED_SEED_VOIDPTR: {
+          if (lives_strtol(keys[n] + 2)) {
+            fprintf(stderr, "voidptr %d is at %s\n", n, keys[n]);
+          }
+        }
+        break;
+        default: break;
         }
         free(keys[n]);
       }
@@ -111,6 +125,176 @@ void show_audit(weed_plant_t *plant) {
     fprintf(stderr, "\n");
   }
 }
+
+
+static void upd_rstats(int n1s, int *pmin, int *pmax, int esrc, uint64_t nx, uint64_t ny) {
+  /* if (esrc && *pmax >= *pmin && (n1s < *pmin || n1s > *pmax)) { */
+  /*   g_print("rnd limits %d %d 0X%016lX 0X%016lX\n", esrc, n1s, nx, ny); */
+  /* } */
+  if (n1s < *pmin) *pmin = n1s;
+  if (n1s > *pmax) *pmax = n1s;
+}
+
+
+// p(a0 ^ b0) == 0.5
+// p(a0 & b0) == 0.25
+// however, a0 & b0 => a0 | b0, a0 ^ b0 => a0 | b0, a0 & b0 => !(a0 ^ b0), a0 ^ b0 => !(a0 & b0)
+// conditions are not completely independent
+// so, test a0 ^ b0 - this should be true 0.5 / 0.5
+// if true,  then we already know a | b is true. and a & b is false
+// if false then a & b will be true with p 0.5, as will a | b
+// rather than summing, we can use Parity to check. Let us start with m bits all with parity 0
+// then taking the first pair of 'random' numbers, perform a bitwise xor
+// if both numbers are random, the we should have on average 0.5n bits with a 1
+// we can store the 1s as parity - simply xor with the current parity, We multiply this by 20 to get around 10.
+// now we can AND he numbers whichi should produce 0.25 1s, then we OR with parity, at first we will get 3/4,
+// but this will tend to 5/8. So we multiply by 16 to get 10 and add.
+// if we had a 0, then p == 0.5, the and result is 1, so again applying xor, approc half of the 0s should flip to 1
+// now, counting the 1s and diviging by n. from pass 1 we should have 0.5. so multiplying by 6 gives us 3
+// in pass 2, we should have 0.75, then we multiply this by 20 and add., the totalt should now comverge to NR * 20
+
+#define NSTEPS 4
+
+int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q) {
+  uint64_t tot_a = 0, tot_b_add = 0, tot_c = 0, rtot = 0, diff;
+  int64_t tot_b_sub = 0;
+  uint64_t n0, n1, n2, on0 = 0, par = 0;
+  int n1s, pmin = 100000, pmax = 0, pmin_and = 10000, pmax_and = 0, pavg, pavg_and, rmin, rmax, rest;
+  double dtot_a, dtot_c, dtot_b_add, dtot_b_sub, drtot, axc, ppmin, ppmax, ppmin_and, ppmax_and;
+  double qual;
+
+  n0 = (*rfunc)();
+  rtot = get_onescount_64(n0);
+  n1 = (*rfunc)();
+  rtot += get_onescount_64(n1);
+
+  for (int i = 1; i <= ntests; i++) {
+    // xor diff
+    diff = n0 ^ n1;
+
+    n1s = get_onescount_64(diff);
+    upd_rstats(n1s, &pmin, &pmax, 1, n0, n1);
+    tot_a += n1s; // xor total
+    par ^= diff; // parity apply
+
+    if (on0) {
+      // now we need to scramble the bias from n1, we can do this by XORing with
+      // (n0 & n1) ^ (n1 & n2) from previous test
+      uint64_t v0 = on0 & n0;
+      uint64_t v1 = n0 & n1;
+      v0 &= v1;
+      par ^= v0;
+    }
+
+    n1s = get_onescount_64(par);
+    upd_rstats(n1s, &pmin, &pmax, 2, par, 0);
+
+    tot_b_add += (uint64_t)(n1s * 20); // avg should be 10 R
+    tot_b_sub += (int64_t)(n1s * 20); // avg should be 10 R
+
+    if (i == ntests) break;
+
+    //(n0 ^ n1) | (n0 & n2) ^ (n1 ^ n2)
+    n2 = (*rfunc)();
+    rtot += get_onescount_64(n2);
+
+    diff = n2 & n0;
+
+    n1s = get_onescount_64(diff);
+    upd_rstats(n1s, &pmin_and, &pmax_and, 3, n2, n0);
+
+    tot_c += n1s;
+
+    // if we OR par with diff, then any 1s in par will remain unchanged
+    // any 0s will change to 1 iff we have a 1 in diff
+    // since diff is n0 & n2, 0.25 * bits should be 1, thus we should alter 1 / 4 of the zeros
+    // 1 / 2 + 1 / 2 * 1 / 4 = 5 / 8
+    // if we multiply this by 16, we get 10, the same as 0.5 * 20
+    // now we add this to tot_b_add and we should approach 20 * ntests
+    // we subtract from tot_b_sub and we should be close to 0 at the limit
+
+    par |= diff;
+    n1s = get_onescount_64(par);
+    tot_b_add += (uint64_t)(n1s * 16); // avg 10 * R
+    tot_b_sub -= (int64_t)(n1s * 16); // avg 10 * R
+    n1s = n1s * 4 / 5;
+    upd_rstats(n1s, &pmin, &pmax, 4, par, 0);
+
+    on0 = n0;
+    n0 = n1;
+    n1 = n2;
+  }
+
+  // XOR total: div by NR and double
+  dtot_a = (double)tot_a / (double)(ntests / 2.);
+
+  // tot_c is the and total, normalised to 1.
+  dtot_c = (double)tot_c / (double)(ntests / 4.);
+
+  rmax = (int)dtot_a;
+  rmin = (int)dtot_a;
+
+  if (dtot_c > dtot_a) rmax = (int)dtot_c;
+  else rmin = (int)dtot_c;
+
+  // get avg of pmin, pmax
+  pavg = (pmax + pmin) / 2;
+  if (pmin + pmax < rmin) rmin = pmin + pmax;
+
+  pavg_and = (pmax_and + pmin_and) / 2;
+  if ((pmin_and + pmax_and) * 2 < rmin) rmin = (pmin_and + pmax_and) * 2;
+
+  rest = (rmin + rmax) / 2;
+
+  // deviance of ln2(pmax) = ln2(min) should be approx. 2 * ln2(ntests)
+  ppmin = binomial(pmin, rest, 0.5);
+  ppmax = binomial(pmax, rest, 0.5);
+  ppmin_and = binomial(pmin_and, rest, 0.25);
+  ppmax_and = binomial(pmax_and, rest, 0.25);
+
+  drtot = (double)rtot / (double)(ntests) / ((double)(rmax + rmin) / 2.);
+
+  // div 20 NR
+  dtot_b_add = (double)tot_b_add / (double)(ntests * 20.) / (double)rest;//   --> R
+  dtot_b_sub = (double)tot_b_sub / (double)(ntests * 10.);//    ---> avg non correlation
+
+  axc = dtot_c / dtot_a / 2.;
+
+  // so simplest is to begin with tot_a and tot_c
+  // tot_a --> R
+  // tot_c --> R
+  // - this should give a rough estimate for R
+  // tot_b_add and tot_b_sub then give a measure of the parity between 1s and 0s
+  // tot_b add should be close to 1, and tot_b_sub should be close to 0
+  // tot_b_add represents the ratio of 1s to 0s (but it assumes R == 64)
+  // tot_b_sub is a measure of the sequential difference, a negative value represents
+  // a a bias towards keeping the same digits, a positve value denotes bias towards changing digits
+
+  // (1 + R - pmax) / (1 + pmin) should be close to 1, as tot_b add, a value > 1. shows a bias towards 1s
+  // (symmetry of 1s and 0s) - we can use this insially to estimate R
+
+  // pmin and pmax should both be within the range predicted by the binomial distribution
+  // for 1 or more occurances of an event with p(Pn) over T trials,
+  // where T is ntests, and Pn is binomial probaility of n events with P(0,25) in R trials
+  // from this we should be able to approximate Pn, and then from Pn we can estimate R
+  qual = 1. / (fabs(1. - 2. * drtot) * 100  * fabs(1. - dtot_a / (double)rest) * 100 * fabs(1. - 2. * axc) * 100);
+
+  if (tmp)  *tmp = lives_strdup_printf("Tested RNG, generated %d values.\nEstimate from sequential XOR is %d bits, "
+                                         "estimate from sequential AND is %d bits.\nRatio of 1s to 0s was %f\n"
+                                         "AND / XOR correlation is %f (should be 0.5), persistance of same digit is %f\n"
+                                         "Range over all trials was: XOR %d to %d 1s, average %d, p(min) is %f, p(max) is %f\n"
+                                         "AND %d to %d 1s, average %d, p(min) is %f, p(max) is %f\n"
+                                         "Parity checks were %f (should be 0.)  and %f (should be 1.0)\n"
+                                         "Final analysis: Rbits = %d to %d (avg %d).\nBias towards 1 is %f, and sequential randomness is %f. "
+                                         "Logical correlation is %f\nQUALITY = %f\n\n",
+                                         ntests, (int)(dtot_a + .5), (int)(dtot_c + .5), drtot, axc, dtot_c / 2., pmin, pmax, pavg, ppmin, ppmax,
+                                         pmin_and, pmax_and, pavg_and, ppmin_and, ppmax_and, dtot_b_sub, dtot_b_add, rmin, rmax, rest,
+                                         drtot, dtot_a / (double)rest, axc, qual);
+  if (q) *q = qual;
+
+  return rest;
+}
+
 
 
 char *get_stats_msg(boolean calc_only) {
@@ -419,7 +603,7 @@ void disinform_perfmgr(uint64_t handle, const char *dir) {
 #define NITERS 1024
 #define DTHRESH 8
 #define PMISS 0.99609375
-void check_random(void) {
+void test_random(void) {
   int counter[64];
   int last[64];
   int buckets[64][4];
@@ -1987,7 +2171,7 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
     /*   run_weed_startup_tests(); */
 
     if (tests_to_run & TEST_RNG)
-      check_random();
+      test_random();
 
     if (tests_to_run & TEST_LSD)
       lives_struct_test();

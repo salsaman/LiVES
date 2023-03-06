@@ -4957,11 +4957,11 @@ boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event,
 
 void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
-  // important here to set ONESHOT and FG_THREAD
+  // important here to set ONESHOT, TRANSFER_OWNER  and FG_THREAD
 
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
@@ -7400,7 +7400,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
@@ -7464,7 +7464,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_double_size_activate, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
@@ -7642,7 +7642,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
@@ -7698,7 +7698,7 @@ void on_fade_pressed(LiVESButton * button, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_fade_pressed, user_data);
   else _on_fade_pressed(button, user_data);
 }
@@ -7733,7 +7733,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD,
+                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
 }
@@ -9403,7 +9403,7 @@ boolean all_expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer ps
   if (LIVES_IS_PLAYING) {
     // all_expose(widget, cr, psurf);
     lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                    HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                    HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                     all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
   }
   return TRUE;

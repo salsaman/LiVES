@@ -5,11 +5,6 @@
 
 #include "main.h"
 
-//#define AUDIT_LPTS
-#ifdef AUDIT_LPTS
-static weed_plant_t *auditor = NULL;
-#endif
-
 /**
    lives_proc_threads API
    - both proc_threads and normal threads are executed by worker thread from the pool, however:
@@ -525,9 +520,6 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_remove_nullify(lives_proc_thread_t lp
 
 LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(const char *fname, lives_thread_attr_t *attrs) {
   lives_proc_thread_t lpt;
-#ifdef AUDIT_LPTS
-  char *pkey;
-#endif
 #if USE_RPMALLOC
   // free up some thread memory before allocating more
   if (rpmalloc_is_thread_initialized())
@@ -535,12 +527,6 @@ LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(const char *fname, 
 #endif
   lpt = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
   if (lpt) add_garnish(lpt, fname, attrs);
-#ifdef AUDIT_LPTS
-  if (!auditor) auditor = lives_plant_new(LIVES_WEED_SUBTYPE_AUDIT);
-  pkey = lives_strdup_printf("%p", lpt);
-  weed_set_plantptr_value(auditor, pkey, lpt);
-  lives_free(pkey);
-#endif
   return lpt;
 }
 
@@ -901,9 +887,6 @@ int lives_proc_thread_unref(lives_proc_thread_t lpt) {
 }
 #endif
 if (lpt) {
-#ifdef AUDIT_LPTS
-  char *pkey;
-#endif
   pthread_rwlock_t *destruct_rwlock;
 
   pthread_mutex_lock(&ref_sync_mutex);
@@ -973,12 +956,6 @@ if (lpt) {
       data = lives_proc_thread_get_data(lpt);
       if (data && weed_refcount_dec(data) == 0)
         weed_plant_free(data);
-
-#ifdef AUDIT_LPTS
-      pkey = lives_strdup_printf("%p", lpt);
-      if (auditor) weed_leaf_delete(auditor, pkey);
-      lives_free(pkey);
-#endif
 
       weed_plant_free(lpt);
 

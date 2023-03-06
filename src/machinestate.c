@@ -34,11 +34,12 @@
 #endif
 
 #include <time.h>
-
 #include <sys/statvfs.h>
+
 #include "main.h"
 #include "callbacks.h"
 #include "startup.h"
+#include "diagnostics.h"
 
 LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
@@ -150,14 +151,16 @@ void lives_get_randbytes(void *ptr, size_t size) {
   }
 }
 
+#if HAVE_GETENTROPY
+static boolean use_getentropy = FALSE;
+#endif
 
 uint64_t gen_unique_id(void) {
-  static uint64_t last_rnum = 0;
   uint64_t rnum;
-#if HAVE_GETENTROPYx
-  int randres = getentropy(&rnum, 8);
-#else
   int randres = 1;
+
+#if HAVE_GETENTROPY
+  if (use_getentropy) randres = getentropy(&rnum, 8);
 #endif
 
   if (randres) {
@@ -170,143 +173,87 @@ uint64_t gen_unique_id(void) {
   return rnum;
 }
 
-
+#define RB_THRESH 62
 #define NR_TESTS 10000
 
 static void check_random(void) {
-  uint64_t rnum = 0, last_rnum = 0;
-  uint64_t inrbits, maxbits = 0;
-  uint64_t tot_a = 0, tot_b = 0, tot_c = 0, par = 0, diff;
-  int n1s, min1s = 9999999;
-  uint64_t tdifs = 0;
-  double pmin;
+  // check first with default method
   char *tmp;
-  int sf = get_log2(NR_TESTS);
-  int i, esrc = 0;
-  tdifs = 0;
-  for (i = 0; i < 101; i++) {
-    rnum = lives_random();
-    if (i > 0) {
-      inrbits = get_onescount_64(rnum ^ last_rnum);
-      tdifs += inrbits;
-      inrbits = get_onescount_64(rnum & last_rnum);
-      tdifs += inrbits << 1;
-      inrbits = get_onescount_64(rnum | last_rnum);
-      tdifs += (inrbits << 1) / 3;
-    }
-    last_rnum = rnum;
-  }
+  int rbits, xrbits;
+  double qual, xqual;
+  boolean need_rng32 = FALSE, rng_ok = FALSE;
 
-  inrbits = (uint64_t)((tdifs / 300. + .5)) * 2;
-
-  if (inrbits < 40) {
-    char *tmp;
-    rng32 = TRUE;
-    tdifs = 0;
-    for (i = 0; i < 1001; i++) {
-      rnum = lives_random();
-      if (i > 0) {
-        maxbits = get_onescount_64(rnum ^ last_rnum);
-        tdifs += maxbits;
-        maxbits = get_onescount_64(rnum & last_rnum);
-        tdifs += maxbits << 1;
-        maxbits = get_onescount_64(rnum | last_rnum);
-        tdifs += (maxbits << 1) / 3;
-      }
-      last_rnum = rnum;
-    }
-    maxbits = (uint64_t)((tdifs / 3000. + .5) * 2);
-    tmp = lives_strdup_printf(_("RNG seems to be %d bit only, injecting extra randomness...\n"
-                                "...increased it from %d bits to at least %d bits\n"),
-                              get_2pow_64(inrbits) << 1, inrbits, maxbits > 64 ? 64 : maxbits);
+  //rbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp);
+  rbits = benchmark_rng(NR_TESTS, lives_random, &tmp, &qual);
+  add_messages_to_list(tmp);
+  lives_free(tmp);
+  if (rbits < RB_THRESH) {
+    tmp = lives_strdup_printf(_("Randomness of %d bits is TOO LOW for generating unique IDs\n"
+                                "Will attempt to increase random bits to at least %d\n"),
+                              rbits, RB_THRESH);
+    add_messages_to_list(tmp);
+    lives_free(tmp);
+    need_rng32 = TRUE;
+    qual = 0.;
+  } else {
+    rng_ok = TRUE;
+    tmp = lives_strdup_printf("RNG quality is %f, checking if we can improve on this\n", qual);
     add_messages_to_list(tmp);
     lives_free(tmp);
   }
-  tdifs = 0;
-  fastrand_val = lives_random();
-  for (i = 0; i < NR_TESTS; i++) {
-    rnum = gen_unique_id();
-    if (i > 0) {
-      // if the numbers are truly random, then for each binary digit a0...an, b0...bn
-      // p(a0 ^ b0) == 0.5
-      // p(a0 & b0) == 0.25
-      // p(a0 | b0) == 0.75
-      // however, a0 & b0 => a0 | b0, a0 ^ b0 => a0 | b0, a0 & b0 => !(a0 ^ b0), a0 ^ b0 => !(a0 & b0)
-      // conditions are not completely independent
-      // so, test a0 ^ b0 - this should be true 0.5 / 0.5
-      // if true,  then we already know a | b is true. and a & b is false
-      // if false then a & b will be true with p 0.5, as will a | b
-      // rather than summing, we can use Parity to check. Let us start with m bits all with parity 0
-      // then taking the first pair of 'random' numbers, perform a bitwise xor
-      // if both numbers are random, the we should have on average 0.5n bits with a 1
-      // we can store the 1s as parity - simply xor with the current parity, We multiply this by 20 to get around 10.
-      // now we can AND he numbers whichi should produce 0.25 1s, then we OR with parity, at first we will get 3/4,
-      // but this will tend to 5/8. So we multiply by 16 to get 10 and add.
-      // if we had a 0, then p == 0.5, the and result is 1, so again applying xor, approc half of the 0s should flip to 1
-      // now, counting the 1s and diviging by n. from pass 1 we should have 0.5. so multiplying by 6 gives us 3
-      // in pass 2, we should have 0.75, then we multiply this by 20 and add., the totalt should now comverge to NR * 20
 
-      // xor diff
-      diff = rnum ^ last_rnum;
-      n1s = get_onescount_64(diff);
-      if (n1s < min1s) {
-        //g_print("pt a1 %d\n", n1s);
-        min1s = n1s;
-        esrc = 1;
-      }
-      tot_a += n1s;
+  rng32 = TRUE;
 
-      par ^= diff;
-      n1s = get_onescount_64(par);
-      if (n1s < min1s) {
-        min1s = n1s;
-        esrc = 2;
-        //g_print("pt a2 %d\n", n1s);
-      }
-      tot_b += n1s * 20;
-
-      diff = rnum & last_rnum;
-      n1s = get_onescount_64(diff) << 1;
-      if (n1s < min1s) {
-        min1s = n1s;
-        esrc = 3;
-        g_print("pt a3 %d 0X%016lX 0X%016lX 0X%016lX\n", n1s, rnum, last_rnum, diff);
-      }
-      tot_c += n1s;
-      par |= diff;
-
-      n1s = get_onescount_64(par);
-      tot_b += n1s * 16;
-      n1s = n1s * 4 / 5;
-      if (n1s < min1s) {
-        min1s = n1s;
-        esrc = 4;
-        //g_print("pt a4 %d\n", n1s);
-      }
-    }
-    last_rnum = rnum;
-  }
-  // div by NR and double
-  tot_a /= (NR_TESTS >> 1);
-
-  // div by 6 and double
-  tot_b /= (NR_TESTS * 20);
-
-  // div by NR and dbl
-  tot_c /= (NR_TESTS >> 1);
-
-  /* if (esrc == 3) pmin = binomial(min1s, 64, 0.25); */
-  /* else pmin = binomial(min1s, 64, 0.5); */
-
-  //pmin = binomial(1, NR_TESTS, pmin);
-
-  tmp = lives_strdup_printf("Tested RNG, generated %lu uids. Estimate for sequential XOR is %lu bits.\n"
-                            "Estimate from sequential AND is %lu bits. Parity check indicates %lu bits entropy.\n"
-                            "Minimum difference over all methods was %d bits, sample size 4 X %lu,\n"
-                            "Entropy is estimated at between %d and %lu bits.\n", NR_TESTS, tot_a, tot_c,
-                            tot_b, min1s, NR_TESTS, 1.0039, (min1s + sf) * 2 + 1, MIN(tot_a, MIN(tot_b, tot_c)));
+  // use an alternate strategy to try to increase randomnees
+  rbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp, &xqual);
   add_messages_to_list(tmp);
   lives_free(tmp);
+
+  if (rng_ok) {
+    if (xqual > qual) {
+      qual = xqual;
+      if (!need_rng32) {
+        tmp = lives_strdup_printf("RNG quality is now %f, this is better\n", qual);
+        add_messages_to_list(tmp);
+        lives_free(tmp);
+        need_rng32 = TRUE;
+      }
+      if (!need_rng32) rng32 = FALSE;
+    }
+  } else if (rbits >= RB_THRESH) {
+    rng_ok = TRUE;
+    qual = xqual;
+  }
+
+#if HAVE_GETENTROPY
+  if (rng_ok)
+    tmp = lives_strdup_printf("Compare quality with getentropy\n");
+  else
+    tmp = lives_strdup_printf("Randomness still too low, trying  with getentropy\n");
+  add_messages_to_list(tmp);
+  lives_free(tmp);
+
+  use_getentropy = TRUE;
+  xrbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp, &xqual);
+  tmp = lives_strdup_printf("%s", tmp);
+  add_messages_to_list(tmp);
+  lives_free(tmp);
+
+  if (xrbits >= RB_THRESH) {
+    if (rng_ok) {
+      if (xrbits < rbits || (xrbits == rbits && xqual < qual)) {
+        tmp = lives_strdup_printf("Quality %f is worse ! Sticking with alt methods\n", xqual);
+        use_getentropy = FALSE;
+      } else {
+        tmp = lives_strdup_printf("Quality %f is better, using getentropy.\n", xqual);
+      }
+      add_messages_to_list(tmp);
+      lives_free(tmp);
+    } else rng_ok = TRUE;
+  }
+
+#endif
+  //if (rbits < RB_THRESH) badrand(rbits, RB_THRESH);
 }
 
 

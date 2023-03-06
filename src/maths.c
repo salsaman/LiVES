@@ -45,7 +45,7 @@ LIVES_GLOBAL_INLINE uint64_t get_2pow_64(uint64_t x) {
 #define get_log2_8(x) ((x) >= 128 ? 7 : (x) >= 64 ? 6 : (x) >= 32 ? 5 : (x) >= 16 ? 4 \
 		       : (x) >= 8 ? 3 : (x) >= 4 ? 2 : (x) >= 2 ? 1 : 0)
 
-LIVES_LOCAL_INLINE uint16_t get_log2_16(uint16_t x) {
+LIVES_LOCAL_INLINE uint32_t get_log2_16(uint16_t x) {
   if (!x) return 0;
   if (x & 0xFF00) return get_log2_8((x & 0xFF00) >> 8) + 8;
   return get_log2_8(x & 0xFF);
@@ -56,7 +56,7 @@ LIVES_GLOBAL_INLINE uint32_t get_log2(uint32_t x) {
   return get_log2_16(x & 0xFFFF);
 }
 
-LIVES_GLOBAL_INLINE uint64_t get_log2_64(uint64_t x) {
+LIVES_GLOBAL_INLINE uint32_t get_log2_64(uint64_t x) {
   if (x & 0xFFFFFFFF00000000) return get_log2((x & 0xFFFFFFFF00000000) >> 32) + 32;
   return get_log2(x & 0xFFFFFFFF);
 }
@@ -104,6 +104,19 @@ LIVES_GLOBAL_INLINE int get_onescount_32(uint32_t num) {
 LIVES_GLOBAL_INLINE int get_onescount_64(uint64_t num) {
   return get_onescount_32((uint32_t)((num & 0xFFFFFFFF00000000) >> 32))
          + get_onescount_32((uint32_t)((num & 0xFFFFFFFF)));
+}
+
+
+// calc p(nhits in ntrials) with p(hit) == ps
+double binomial(int ntrials, int nhits, double ps) {
+  double tn = 1., td = 1, cnst = pow(1. - ps, ntrials);
+  if (nhits > ntrials / 2) nhits = ntrials - nhits;
+  ps /= (1. - ps);
+  for (int i = 0; i <= nhits; td *= ++i) {
+    cnst *= ps;
+    tn *= ntrials - i;
+  }
+  return (double)tn / (double)td * cnst;
 }
 
 
@@ -325,8 +338,8 @@ uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
 }
 
 
-/* int factorial(int n) {return n == 1 ? 1 : n * factorial(n - 1);} */
-/* int factorialx(int n, int m) {return --n == m ? n + 1 : n * factorialx(n - 1, m);} */
+uint64_t factorial(int n) {return n == 1 ? 1 : n * factorial(n - 1);}
+uint64_t factorial_div(int n, int m) {return --n == m ? n + 1 : n * factorial_div(n - 1, m);}
 
 
 /* double binomial(int hits, int trials, double phit) { */

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2013-11-09 23:22+0000\n"
 "Last-Translator: Simon Uslengh <simoneislanda@libero.it>\n"
 "Language-Team: Piemontese <pms@li.org>\n"
@@ -15372,20 +15372,12 @@ msgstr ""
 msgid "Adjusting noise on"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "Applying GMIC"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Applying photomosaic to"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
@@ -15461,13 +15453,13 @@ msgstr "partisan gròss"
 msgid "Brightness start"
 msgstr "partisan gròss"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -15514,10 +15506,6 @@ msgstr "Ardimensionament"
 #, fuzzy
 msgid "Clipboard _under selection"
 msgstr "Ardimensionament"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -15587,8 +15575,8 @@ msgstr ""
 msgid "Dreamifying"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -15720,10 +15708,6 @@ msgstr "Ardimensionament"
 #, fuzzy
 msgid "Frames _per second (FPS)"
 msgstr "Prim pian"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -15908,10 +15892,6 @@ msgstr ""
 msgid "Photo/still"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Photomosaic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
 msgid "Pixilate"
@@ -15967,8 +15947,8 @@ msgstr "Drefond"
 msgid "Rotating"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "partisan gròss"
@@ -16032,16 +16012,6 @@ msgstr "Ardimensionament"
 msgid "Solarizing"
 msgstr "Ardimensionament"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Ardimensionament"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Ardimensionament"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr ""
@@ -16083,8 +16053,8 @@ msgstr "partisan gròss"
 msgid "Step _Value"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "Step per _Frame"
@@ -16117,14 +16087,6 @@ msgstr "Drefond"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Tile _height"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Tile _width"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
@@ -16172,12 +16134,12 @@ msgstr ""
 msgid "Waving"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "Drefond"
@@ -16205,10 +16167,6 @@ msgstr ""
 msgid "_Calculate"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "_Command to be applied"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "_Cycle Start"
@@ -16218,13 +16176,13 @@ msgstr "partisan gròss"
 msgid "_Decrease Contrast"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "Drefond"
@@ -16242,8 +16200,8 @@ msgstr ""
 msgid "_End amount"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
 msgid "_Fade level"
 msgstr "Drefond"
@@ -16254,8 +16212,8 @@ msgstr "Drefond"
 msgid "_Fade start"
 msgstr "partisan gròss"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Fill colour"
 msgstr "Drefond"
@@ -16270,8 +16228,8 @@ msgstr "Ardimensionament"
 msgid "_Flash for"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr ""
 
@@ -16313,8 +16271,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -16355,12 +16313,8 @@ msgstr ""
 msgid "_Other"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Point size"
 msgstr ""
 
@@ -16374,21 +16328,21 @@ msgstr "partisan gròss"
 msgid "_Radius start"
 msgstr "partisan gròss"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
 msgid "_Radius"
 msgstr "partisan gròss"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Ardimensionament"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr ""
 
@@ -16428,8 +16382,8 @@ msgstr "Drefond"
 msgid "_Splice"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "Drefond"
@@ -16446,8 +16400,8 @@ msgstr "Drefond"
 msgid "_Start amount"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Stroke colour"
 msgstr "Drefond"
@@ -16457,8 +16411,8 @@ msgstr "Drefond"
 msgid "_Target Colour"
 msgstr "Drefond"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr ""
 
@@ -16503,8 +16457,8 @@ msgstr ""
 msgid "_X Start"
 msgstr "partisan gròss"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr ""
 
@@ -16521,8 +16475,8 @@ msgstr ""
 msgid "_Y Start"
 msgstr "partisan gròss"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr ""
 
@@ -16650,10 +16604,6 @@ msgstr "Ardimensionament"
 msgid "gen_text"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
 msgid "hue_change"
@@ -16693,10 +16643,6 @@ msgstr "Ardimensionament"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "photomosaic"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -16907,6 +16853,14 @@ msgstr ""
 #, fuzzy
 msgid "Bad default trashdir"
 msgstr "Andi dël jack audio server..."
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Ardimensionament"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Ardimensionament"
 
 #, fuzzy
 #~ msgid "'%s' or "

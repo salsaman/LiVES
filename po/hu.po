@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2012-08-08 08:49+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -16838,11 +16838,6 @@ msgstr "Kontraszt igazítása..."
 msgid "Adjusting noise on"
 msgstr "Hang igazítás ...-on, -en"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "Applying GMIC"
-msgstr "Szépia alkalmazása:"
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr "Rajzszén alkalmazása ..."
@@ -16850,11 +16845,6 @@ msgstr "Rajzszén alkalmazása ..."
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
 msgstr "Előre ugrás alkalmazása ide:"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Applying photomosaic to"
-msgstr "Szépia alkalmazása:"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
@@ -16920,13 +16910,13 @@ msgstr "Fényerő vége"
 msgid "Brightness start"
 msgstr "Fényerő kezdet"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "Középen _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Középen _Y"
 
@@ -16965,10 +16955,6 @@ msgstr "Vágólap _kiválasztás felül"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _under selection"
 msgstr "Vágólap _kiválasztás alul"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -17030,8 +17016,8 @@ msgstr "Álom"
 msgid "Dreamifying"
 msgstr "Álommá tevés"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "V_ége %"
 
@@ -17156,10 +17142,6 @@ msgstr "Képkocka _a képkockában pozíció a felső képkockától..."
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr "_Másodpercenkénti képkockák (FPS)"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
@@ -17327,11 +17309,6 @@ msgstr "Szöveg takarás a -on, -en"
 msgid "Photo/still"
 msgstr "Fénykép/állókép"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Photomosaic"
-msgstr "Fénykép/állókép"
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilate"
 msgstr "Pixilálás"
@@ -17380,8 +17357,8 @@ msgstr "Klip elforgatása"
 msgid "Rotating"
 msgstr "Forgatás"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "I_ndítás %"
 
@@ -17437,16 +17414,6 @@ msgstr "Szolarizálás (takarás vékony fóliával)"
 msgid "Solarizing"
 msgstr "Szolarizálás"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Képkockák kiemelése a klipből"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Képkockák kiemelése a klipből"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "Forgás"
@@ -17485,8 +17452,8 @@ msgstr "I_ndítás %"
 msgid "Step _Value"
 msgstr "Lépés _értéke"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Step per _Frame"
 msgstr "Lépés _képkockánként"
@@ -17514,16 +17481,6 @@ msgstr "Szöveg overlay"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr "Csökk_entés"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "Kékocka _magasság"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "Blokk _szélesség"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -17573,12 +17530,12 @@ msgstr "Esés/hullámok"
 msgid "Waving"
 msgstr "Készítés folyamatban"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
 msgstr "_Háttér szine"
 
@@ -17603,10 +17560,6 @@ msgstr "_Lent"
 msgid "_Calculate"
 msgstr "_Számítás"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "_Command to be applied"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
 msgstr "_Körbe indítás"
@@ -17615,13 +17568,13 @@ msgstr "_Körbe indítás"
 msgid "_Decrease Contrast"
 msgstr "_Kontraszt csökkentése"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr "_Különbségmax"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "_Szín vég"
 
@@ -17637,8 +17590,8 @@ msgstr ""
 msgid "_End amount"
 msgstr "_Végösszeg"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Fade level"
 msgstr "_Fokozatos hangerősödés szint"
 
@@ -17647,8 +17600,8 @@ msgstr "_Fokozatos hangerősödés szint"
 msgid "_Fade start"
 msgstr "_Fokozatos hangerősödés kezdet"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Fill colour"
 msgstr "_Szín kitöltés"
 
@@ -17660,8 +17613,8 @@ msgstr "_Első képkocka"
 msgid "_Flash for"
 msgstr "_Vaku..."
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr "_Betűtípus"
 
@@ -17702,8 +17655,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "_Szintek"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "_Induló és záró szín megcímzése"
 
@@ -17743,12 +17696,8 @@ msgstr "_Egyéb középre"
 msgid "_Other"
 msgstr "_Egyéb"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Point size"
 msgstr "_Pont méret"
 
@@ -17760,19 +17709,19 @@ msgstr "_Sugár vége"
 msgid "_Radius start"
 msgstr "_Sugár kezdet"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Sugár"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "_Véletlenszerű szín minden képkockánál"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr "_Véletlenszerűség"
 
@@ -17809,8 +17758,8 @@ msgstr "_Forrás szín"
 msgid "_Splice"
 msgstr "_Összekötés"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "_Indítás szín"
 
@@ -17824,8 +17773,8 @@ msgstr "_Indítás érték"
 msgid "_Start amount"
 msgstr "_Indítás összeg"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Stroke colour"
 msgstr "_Szín símitása"
 
@@ -17833,8 +17782,8 @@ msgstr "_Szín símitása"
 msgid "_Target Colour"
 msgstr "_Cél szín"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr "_Szöveg"
 
@@ -17875,8 +17824,8 @@ msgstr "_X vég"
 msgid "_X Start"
 msgstr "_X indítás"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr "_X ellenérték"
 
@@ -17892,8 +17841,8 @@ msgstr "_Y vég"
 msgid "_Y Start"
 msgstr "_Y indítás"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr "_Y különbség"
 
@@ -18010,10 +17959,6 @@ msgstr "szines_képkockák_készítése"
 msgid "gen_text"
 msgstr "szöveg_létrehozása"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
 msgstr "árnyalat_változtatás"
@@ -18049,11 +17994,6 @@ msgstr "normalizál"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr "fénykép_állókép"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "photomosaic"
 msgstr "fénykép_állókép"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -18264,6 +18204,38 @@ msgstr "$bővítőmodul_név nem sikerült:"
 #, fuzzy
 msgid "Bad default trashdir"
 msgstr "_Alapértelmezett billentyűzet kiosztás betöltése"
+
+#, fuzzy
+#~ msgid "Applying GMIC"
+#~ msgstr "Szépia alkalmazása:"
+
+#, fuzzy
+#~ msgid "Applying photomosaic to"
+#~ msgstr "Szépia alkalmazása:"
+
+#, fuzzy
+#~ msgid "Photomosaic"
+#~ msgstr "Fénykép/állókép"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Képkockák kiemelése a klipből"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Képkockák kiemelése a klipből"
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "Kékocka _magasság"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "Blokk _szélesség"
+
+#, fuzzy
+#~ msgid "photomosaic"
+#~ msgstr "fénykép_állókép"
 
 #, fuzzy
 #~ msgid "'%s' or "

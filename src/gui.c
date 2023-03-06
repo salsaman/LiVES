@@ -5053,7 +5053,7 @@ void splash_msg(const char *msg, double pct) {
     char *tmp = lives_strdup(msg);
     lives_chomp(tmp, TRUE);
     THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;
-    gtk_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp);
+    lives_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp);
     THREADVAR(perm_hook_hints) = 0;
     lives_free(tmp);
   }

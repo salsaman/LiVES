@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -15919,20 +15919,12 @@ msgstr "Koristi _preporučene postavke"
 msgid "Adjusting noise on"
 msgstr "Koristi _preporučene postavke"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "Applying GMIC"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Applying photomosaic to"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
@@ -16010,13 +16002,13 @@ msgstr "_Zanemari promjene"
 msgid "Brightness start"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -16063,10 +16055,6 @@ msgstr "LiVES: - Otvori za odabir"
 #, fuzzy
 msgid "Clipboard _under selection"
 msgstr "LiVES: - Otvori za odabir"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -16136,8 +16124,8 @@ msgstr ""
 msgid "Dreamifying"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -16271,10 +16259,6 @@ msgstr "Okvira"
 #, fuzzy
 msgid "Frames _per second (FPS)"
 msgstr "sekundi."
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -16459,10 +16443,6 @@ msgstr ""
 msgid "Photo/still"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Photomosaic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
 msgid "Pixilate"
@@ -16518,8 +16498,8 @@ msgstr "Lijepljenje"
 msgid "Rotating"
 msgstr "Lijepljenje"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Zanemari promjene"
@@ -16584,16 +16564,6 @@ msgstr "Promjena veličine"
 msgid "Solarizing"
 msgstr "Promjena veličine"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Okvira"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Okvira"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr ""
@@ -16635,8 +16605,8 @@ msgstr "_Zanemari promjene"
 msgid "Step _Value"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "Step per _Frame"
@@ -16670,16 +16640,6 @@ msgstr "_Izbriši isječak skup"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "Visina"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "Visina"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add Border"
@@ -16728,12 +16688,12 @@ msgstr ""
 msgid "Waving"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "_Zanemari promjene"
@@ -16761,10 +16721,6 @@ msgstr ""
 msgid "_Calculate"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "_Command to be applied"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "_Cycle Start"
@@ -16775,13 +16731,13 @@ msgstr "_Zanemari promjene"
 msgid "_Decrease Contrast"
 msgstr "Koristi _preporučene postavke"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Zanemari promjene"
@@ -16799,8 +16755,8 @@ msgstr ""
 msgid "_End amount"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
 msgid "_Fade level"
 msgstr "_Zanemari promjene"
@@ -16811,8 +16767,8 @@ msgstr "_Zanemari promjene"
 msgid "_Fade start"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Fill colour"
 msgstr "_Zanemari promjene"
@@ -16827,8 +16783,8 @@ msgstr "Okvira"
 msgid "_Flash for"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr ""
 
@@ -16871,8 +16827,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -16913,12 +16869,8 @@ msgstr ""
 msgid "_Other"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Point size"
 msgstr "Veličina datoteke"
@@ -16933,21 +16885,21 @@ msgstr "_Zanemari promjene"
 msgid "_Radius start"
 msgstr "_Zanemari promjene"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
 msgid "_Radius"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Okvira"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr ""
 
@@ -16989,8 +16941,8 @@ msgstr "_Zanemari promjene"
 msgid "_Splice"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Zanemari promjene"
@@ -17007,8 +16959,8 @@ msgstr "_Zanemari promjene"
 msgid "_Start amount"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Stroke colour"
 msgstr "_Zanemari promjene"
@@ -17018,8 +16970,8 @@ msgstr "_Zanemari promjene"
 msgid "_Target Colour"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr ""
 
@@ -17064,8 +17016,8 @@ msgstr ""
 msgid "_X Start"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr ""
 
@@ -17082,8 +17034,8 @@ msgstr ""
 msgid "_Y Start"
 msgstr "_Zanemari promjene"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr ""
 
@@ -17213,10 +17165,6 @@ msgstr "Okvira"
 msgid "gen_text"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
 msgid "hue_change"
@@ -17256,10 +17204,6 @@ msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "photomosaic"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -17495,6 +17439,22 @@ msgid "Bad default trashdir"
 msgstr ""
 "LiVES nije bio u mogućnosti to hvatanje ovu sliku\n"
 "\n"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Okvira"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Okvira"
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "Visina"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "Visina"
 
 #, fuzzy
 #~ msgid "'%s' or "

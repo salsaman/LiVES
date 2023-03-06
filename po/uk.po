@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2020-10-31 09:08+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -17083,10 +17083,6 @@ msgstr "Коригування контрастності"
 msgid "Adjusting noise on"
 msgstr "Коригування шумності"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "Applying GMIC"
-msgstr "Застосування GMIC"
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr "Застосування ефекту «вугільний олівець» до"
@@ -17094,11 +17090,6 @@ msgstr "Застосування ефекту «вугільний олівец�
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
 msgstr "Застосування забігання наперед до"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Applying photomosaic to"
-msgstr "Застосування перетворення на сепію до"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
@@ -17164,13 +17155,13 @@ msgstr "Яскравість наприкінці"
 msgid "Brightness start"
 msgstr "Яскравість напочатку"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "X _центра"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Y ц_ентра"
 
@@ -17209,10 +17200,6 @@ msgstr "Дані буфера _над позначеним"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _under selection"
 msgstr "Дані буфера _під позначеним"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -17274,8 +17261,8 @@ msgstr "Мрія"
 msgid "Dreamifying"
 msgstr "Надання мрійливого вигляду"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "К_інець %"
 
@@ -17393,10 +17380,6 @@ msgstr "Розташування верхнього кадру _у кадрі…
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr "_Частота кадрів (у кд/с)"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr "Типовий GMIC"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
@@ -17558,11 +17541,6 @@ msgstr "Накладання тексту"
 msgid "Photo/still"
 msgstr "Фотоспалах"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Photomosaic"
-msgstr "Фотоспалах"
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilate"
 msgstr "Пікселювання"
@@ -17611,8 +17589,8 @@ msgstr "Обертати кліп"
 msgid "Rotating"
 msgstr "Обертання"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "S_tart %"
 
@@ -17668,16 +17646,6 @@ msgstr "Вигорання"
 msgid "Solarizing"
 msgstr "Вигорання"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Отримуємо кадри з кліпу…"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Отримуємо кадри з кліпу…"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "Обертання навколо осі"
@@ -17716,8 +17684,8 @@ msgstr "S_tart %"
 msgid "Step _Value"
 msgstr "_Величин кроку"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Step per _Frame"
 msgstr "Крок за _кадром"
@@ -17745,16 +17713,6 @@ msgstr "Накладання тексту"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr "По_ріг"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "_Висота блоку"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "_Ширина блоку"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add Border"
@@ -17802,12 +17760,12 @@ msgstr "Хвиля"
 msgid "Waving"
 msgstr "Вигинання"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
 msgstr "Колір _тла"
 
@@ -17831,10 +17789,6 @@ msgstr "Ни_жньої частини"
 msgid "_Calculate"
 msgstr "_Обчислити"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "_Command to be applied"
-msgstr "_Команда, яку буде застосовано"
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
 msgstr "Початок _циклу"
@@ -17843,13 +17797,13 @@ msgstr "Початок _циклу"
 msgid "_Decrease Contrast"
 msgstr "З_меншити контрастність"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr "_Максимальна різниця"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "_Кінцевий колір"
 
@@ -17865,8 +17819,8 @@ msgstr "_Кінцевий розмір за Y:"
 msgid "_End amount"
 msgstr "_Кінцева величина"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Fade level"
 msgstr "Рівень з_гасання"
 
@@ -17875,8 +17829,8 @@ msgstr "Рівень з_гасання"
 msgid "_Fade start"
 msgstr "П_очаткове згасання"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Fill colour"
 msgstr "Колір _заповнення"
 
@@ -17888,8 +17842,8 @@ msgstr "П_ерший кадр"
 msgid "_Flash for"
 msgstr "Сп_палах протягом"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr "_Шрифт"
 
@@ -17929,8 +17883,8 @@ msgstr "По_чатковий розмір за Y:"
 msgid "_Levels"
 msgstr "_Рівні"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "З’_єднати початковий і кінцевий кольори"
 
@@ -17970,12 +17924,8 @@ msgstr "_Інший центр"
 msgid "_Other"
 msgstr "_Інше"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Point size"
 msgstr "Р_озмір точки"
 
@@ -17987,19 +17937,19 @@ msgstr "_Кінцевий радіус"
 msgid "_Radius start"
 msgstr "Початковий _радіус"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Радіус"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "Вип_адкова зміна кольорів кожного кадру"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr "В_ипадковість"
 
@@ -18035,8 +17985,8 @@ msgstr "_Початковий колір"
 msgid "_Splice"
 msgstr "_Розрізати"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "_Початковий колір"
 
@@ -18050,8 +18000,8 @@ msgstr "_Початкове значення"
 msgid "_Start amount"
 msgstr "_Початкова величина"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Stroke colour"
 msgstr "Колір _штриха"
 
@@ -18059,8 +18009,8 @@ msgstr "Колір _штриха"
 msgid "_Target Colour"
 msgstr "_Кінцевий колір"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr "_Текст"
 
@@ -18101,8 +18051,8 @@ msgstr "_Кінець за X"
 msgid "_X Start"
 msgstr "_Початок за X"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr "_Відступ за X"
 
@@ -18118,8 +18068,8 @@ msgstr "Кі_нець за Y"
 msgid "_Y Start"
 msgstr "П_очаток за Y"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr "В_ідступ за Y"
 
@@ -18235,10 +18185,6 @@ msgstr "створення_кольорових_кадрів"
 msgid "gen_text"
 msgstr "створення_тексту"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr "gmic"
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
 msgstr "зміна_відтінку"
@@ -18273,11 +18219,6 @@ msgstr "нормалізація"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr "фотоспалах"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "photomosaic"
 msgstr "фотоспалах"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -18476,6 +18417,46 @@ msgstr "Помилка $plugin_name:"
 #: /usr/bin/smogrify:0
 msgid "Bad default trashdir"
 msgstr "Помилковий типовий trashdir"
+
+#~ msgid "Applying GMIC"
+#~ msgstr "Застосування GMIC"
+
+#, fuzzy
+#~ msgid "Applying photomosaic to"
+#~ msgstr "Застосування перетворення на сепію до"
+
+#~ msgid "GMIC generic"
+#~ msgstr "Типовий GMIC"
+
+#, fuzzy
+#~ msgid "Photomosaic"
+#~ msgstr "Фотоспалах"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Отримуємо кадри з кліпу…"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Отримуємо кадри з кліпу…"
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "_Висота блоку"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "_Ширина блоку"
+
+#~ msgid "_Command to be applied"
+#~ msgstr "_Команда, яку буде застосовано"
+
+#~ msgid "gmic"
+#~ msgstr "gmic"
+
+#, fuzzy
+#~ msgid "photomosaic"
+#~ msgstr "фотоспалах"
 
 #~ msgid ""
 #~ "Allows checking for file changes, enabling additional files to be cached "

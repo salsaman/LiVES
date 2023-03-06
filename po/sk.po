@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -16772,11 +16772,6 @@ msgstr "Nastavujem kontrast"
 msgid "Adjusting noise on"
 msgstr "Nastavenie šumu na"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "Applying GMIC"
-msgstr "Aplikujem sépiu na"
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr "Aplikujem uhol na"
@@ -16784,11 +16779,6 @@ msgstr "Aplikujem uhol na"
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
 msgstr "Aplikujem preskočenie na"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Applying photomosaic to"
-msgstr "Aplikujem sépiu na"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
@@ -16854,13 +16844,13 @@ msgstr "Jas koniec"
 msgid "Brightness start"
 msgstr "Jas začiatok"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "Vystrediť _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Vystrediť _Y"
 
@@ -16899,10 +16889,6 @@ msgstr "Schránka _nad výberom"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _under selection"
 msgstr "Schránka _pod výberom"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -16964,8 +16950,8 @@ msgstr "Sen"
 msgid "Dreamifying"
 msgstr "Zasnenie"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "K_oniec %"
 
@@ -17090,10 +17076,6 @@ msgstr "Snímok _v pozícii snímku horného snímku..."
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr "Snímkov _za sekundu (FPS)"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
@@ -17261,11 +17243,6 @@ msgstr "Prekrývam textom"
 msgid "Photo/still"
 msgstr "Fotka/nehybný"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Photomosaic"
-msgstr "Fotka/nehybný"
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
 msgid "Pixilate"
@@ -17316,8 +17293,8 @@ msgstr "Otočiť klip"
 msgid "Rotating"
 msgstr "Otočenie"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "Š_tart %"
 
@@ -17373,16 +17350,6 @@ msgstr "Solarizovať"
 msgid "Solarizing"
 msgstr "Solarizovanie"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Ťahanie snímkov z klipu"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Ťahanie snímkov z klipu"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "Krútiť"
@@ -17421,8 +17388,8 @@ msgstr "Š_tart %"
 msgid "Step _Value"
 msgstr "_Hodnota kroku"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Step per _Frame"
 msgstr "Krok na _snímok"
@@ -17451,16 +17418,6 @@ msgstr "Prekryť textom"
 #, fuzzy
 msgid "Thres_hold"
 msgstr "Č/B Začiatok"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "_Výška snímku"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "_Šírka bloku"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -17510,12 +17467,12 @@ msgstr "Vlna"
 msgid "Waving"
 msgstr "Vlnenie"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
 msgstr "Farba _Pozadia"
 
@@ -17540,10 +17497,6 @@ msgstr "_Dole"
 msgid "_Calculate"
 msgstr "_Počítať"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "_Command to be applied"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
 msgstr "Štart _periódy"
@@ -17552,13 +17505,13 @@ msgstr "Štart _periódy"
 msgid "_Decrease Contrast"
 msgstr "_Znížiť kontrast"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "_Koniec farby"
 
@@ -17574,8 +17527,8 @@ msgstr ""
 msgid "_End amount"
 msgstr "_Koncová čiastka"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Fade level"
 msgstr "Ǔroveň _stmievania"
 
@@ -17584,8 +17537,8 @@ msgstr "Ǔroveň _stmievania"
 msgid "_Fade start"
 msgstr "Štart _stmievania"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Fill colour"
 msgstr "_Vyplniť farbou"
 
@@ -17597,8 +17550,8 @@ msgstr "_Prvý snímok"
 msgid "_Flash for"
 msgstr "_Záblesk pre"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr "_Písmo"
 
@@ -17641,8 +17594,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "_Levely"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Link start and end colours"
 msgstr "_Nastavenie počiatočných a koncových bodov"
@@ -17684,12 +17637,8 @@ msgstr "_Iný stred"
 msgid "_Other"
 msgstr "_Iné"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Point size"
 msgstr "_Veľkosť bodu"
 
@@ -17701,19 +17650,19 @@ msgstr "_Koniec polomeru"
 msgid "_Radius start"
 msgstr "_Štart polomeru"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Polomer"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "_Náhodná farba pre každý snímok"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr "_Nepravideľnosť"
 
@@ -17750,8 +17699,8 @@ msgstr "_Zdroj farby"
 msgid "_Splice"
 msgstr "Spojiť"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "_Počiatočná farba"
 
@@ -17765,8 +17714,8 @@ msgstr "_Počiatočná hodnota"
 msgid "_Start amount"
 msgstr "_Počiatočné množstvo"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Stroke colour"
 msgstr "_Počiatočná farba"
@@ -17775,8 +17724,8 @@ msgstr "_Počiatočná farba"
 msgid "_Target Colour"
 msgstr "_Cieľová farba"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr "_Text"
 
@@ -17819,8 +17768,8 @@ msgstr "_X koniec"
 msgid "_X Start"
 msgstr "_X štart"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr "_X odsadenie"
 
@@ -17836,8 +17785,8 @@ msgstr "_Y koniec"
 msgid "_Y Start"
 msgstr "_Y štart"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr "_Y odsadenie"
 
@@ -17954,10 +17903,6 @@ msgstr "gen_farebné_obrázky"
 msgid "gen_text"
 msgstr "gen_text"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
 msgstr "zmena_odtieňa"
@@ -17994,11 +17939,6 @@ msgstr "normalizovať"
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
 msgid "photo_still"
-msgstr "Fotka/nehybný"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "photomosaic"
 msgstr "Fotka/nehybný"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -18213,6 +18153,38 @@ msgstr "$plugin_name zlyhal:"
 #, fuzzy
 msgid "Bad default trashdir"
 msgstr "_Nahrať predvolenú mapu kláves"
+
+#, fuzzy
+#~ msgid "Applying GMIC"
+#~ msgstr "Aplikujem sépiu na"
+
+#, fuzzy
+#~ msgid "Applying photomosaic to"
+#~ msgstr "Aplikujem sépiu na"
+
+#, fuzzy
+#~ msgid "Photomosaic"
+#~ msgstr "Fotka/nehybný"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Ťahanie snímkov z klipu"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Ťahanie snímkov z klipu"
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "_Výška snímku"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "_Šírka bloku"
+
+#, fuzzy
+#~ msgid "photomosaic"
+#~ msgstr "Fotka/nehybný"
 
 #, fuzzy
 #~ msgid "'%s' or "

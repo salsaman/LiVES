@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Romanian <ro@li.org>\n"
@@ -15698,20 +15698,12 @@ msgstr "Păstraţi setările _mele"
 msgid "Adjusting noise on"
 msgstr "Păstraţi setările _mele"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "Applying GMIC"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Applying photomosaic to"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
@@ -15789,13 +15781,13 @@ msgstr "_Ignoră schimbările"
 msgid "Brightness start"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -15842,10 +15834,6 @@ msgstr "LiVES: - Deschidere de selecţie"
 #, fuzzy
 msgid "Clipboard _under selection"
 msgstr "LiVES: - Deschidere de selecţie"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -15915,8 +15903,8 @@ msgstr ""
 msgid "Dreamifying"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -16050,10 +16038,6 @@ msgstr "Cadre"
 #, fuzzy
 msgid "Frames _per second (FPS)"
 msgstr "secunde."
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -16238,10 +16222,6 @@ msgstr ""
 msgid "Photo/still"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Photomosaic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
 msgid "Pixilate"
@@ -16297,8 +16277,8 @@ msgstr "LiVES: - Redenumiţi Clip"
 msgid "Rotating"
 msgstr "LiVES: - Redenumiţi Clip"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Ignoră schimbările"
@@ -16363,16 +16343,6 @@ msgstr "Redimensionare"
 msgid "Solarizing"
 msgstr "Redimensionare"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Cadre"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Cadre"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr ""
@@ -16414,8 +16384,8 @@ msgstr "_Ignoră schimbările"
 msgid "Step _Value"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "Step per _Frame"
@@ -16449,16 +16419,6 @@ msgstr "_Ignoră schimbările"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "Dimensiune cadru"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "Dimensiune cadru"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add Border"
@@ -16507,12 +16467,12 @@ msgstr ""
 msgid "Waving"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "_Ignoră schimbările"
@@ -16539,10 +16499,6 @@ msgstr ""
 msgid "_Calculate"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "_Command to be applied"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "_Cycle Start"
@@ -16553,13 +16509,13 @@ msgstr "_Ignoră schimbările"
 msgid "_Decrease Contrast"
 msgstr "Păstraţi setările _mele"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Ignoră schimbările"
@@ -16577,8 +16533,8 @@ msgstr ""
 msgid "_End amount"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
 msgid "_Fade level"
 msgstr "_Ignoră schimbările"
@@ -16589,8 +16545,8 @@ msgstr "_Ignoră schimbările"
 msgid "_Fade start"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Fill colour"
 msgstr "_Ignoră schimbările"
@@ -16605,8 +16561,8 @@ msgstr "Cadre"
 msgid "_Flash for"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr ""
 
@@ -16649,8 +16605,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -16691,12 +16647,8 @@ msgstr ""
 msgid "_Other"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Point size"
 msgstr "Dimensiune fișier"
@@ -16711,21 +16663,21 @@ msgstr "_Ignoră schimbările"
 msgid "_Radius start"
 msgstr "_Ignoră schimbările"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
 msgid "_Radius"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Cadre"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr ""
 
@@ -16767,8 +16719,8 @@ msgstr "_Ignoră schimbările"
 msgid "_Splice"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Ignoră schimbările"
@@ -16785,8 +16737,8 @@ msgstr "_Ignoră schimbările"
 msgid "_Start amount"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Stroke colour"
 msgstr "_Ignoră schimbările"
@@ -16796,8 +16748,8 @@ msgstr "_Ignoră schimbările"
 msgid "_Target Colour"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr ""
 
@@ -16841,8 +16793,8 @@ msgstr ""
 msgid "_X Start"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr ""
 
@@ -16859,8 +16811,8 @@ msgstr ""
 msgid "_Y Start"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr ""
 
@@ -16990,10 +16942,6 @@ msgstr "Cadre"
 msgid "gen_text"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
 msgid "hue_change"
@@ -17033,10 +16981,6 @@ msgstr "Redimensionare"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "photomosaic"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -17272,6 +17216,22 @@ msgid "Bad default trashdir"
 msgstr ""
 "LiVES nu a putut pentru a capta această imagine\n"
 "\n"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Cadre"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Cadre"
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "Dimensiune cadru"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "Dimensiune cadru"
 
 #, fuzzy
 #~ msgid "'%s' or "

@@ -3183,16 +3183,17 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
           weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
         } else weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
       } else {
+	if (adata) lives_free(adata);
         lives_free(channels);
-        lives_freep((void **)&pixdata);
         lives_freep((void **)&ctmpls);
+	lives_freep((void **)&pixdata);
         return FILTER_ERROR_MISSING_LAYER;
       }
-      if (adata) lives_free(adata);
-    }
+    } 
+    lives_freep((void **)&pixdata);
+    if (adata) lives_free(adata);
   }
 
-  lives_freep((void **)&pixdata);
 
   // ensure all chantmpls not marked "optional" have at least one corresponding enabled channel
   // e.g. we could have disabled all channels from a template with "max_repeats" that is not also "optional"

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2020-10-12 19:43+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -16850,11 +16850,6 @@ msgstr "Ajustando contraste de"
 msgid "Adjusting noise on"
 msgstr "Ajustando o ruído em"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "Applying GMIC"
-msgstr "Aplicando sépia para"
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr "Aplicando carvão para"
@@ -16862,11 +16857,6 @@ msgstr "Aplicando carvão para"
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
 msgstr "Aplicando avanço pular para"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Applying photomosaic to"
-msgstr "Aplicando sépia para"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
@@ -16933,13 +16923,13 @@ msgstr "Brilho final"
 msgid "Brightness start"
 msgstr "Início de brilho"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "Centro _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Centro _Y"
 
@@ -16978,10 +16968,6 @@ msgstr "Área de transferência s_obre a seleção"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _under selection"
 msgstr "Área de transferência em baixo da seleção [_u]"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -17043,8 +17029,8 @@ msgstr "Sonho"
 msgid "Dreamifying"
 msgstr "Dreamifying"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "Fim % [_n]"
 
@@ -17162,10 +17148,6 @@ msgstr "Pos_ição quadro  do quadro superior ..."
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr "Quadros _por segundo (QPS)"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
@@ -17328,11 +17310,6 @@ msgstr "Sobrepondo texto em"
 msgid "Photo/still"
 msgstr "Foto/imagem parada"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Photomosaic"
-msgstr "Foto/imagem parada"
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilate"
 msgstr "Pixilate"
@@ -17382,8 +17359,8 @@ msgstr "Girar Clipe"
 msgid "Rotating"
 msgstr "Girando"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "% inicial [_t]"
 
@@ -17439,16 +17416,6 @@ msgstr "Solarizar"
 msgid "Solarizing"
 msgstr "Solarizando"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Puxando quadros do clipe..."
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Puxando quadros do clipe..."
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "Rodar"
@@ -17487,8 +17454,8 @@ msgstr "% inicial [_t]"
 msgid "Step _Value"
 msgstr "_Valor de Passo"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Step per _Frame"
 msgstr "Passo por Quadro [_F]"
@@ -17516,16 +17483,6 @@ msgstr "Sobreposição de Texto"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr "Limite [_h]"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "Altura do bloco [_h]"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "Largura do bloco [_w]"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add Border"
@@ -17573,12 +17530,12 @@ msgstr "Onda"
 msgid "Waving"
 msgstr "Ondulando"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
 msgstr "Cor de Fundo (_B)"
 
@@ -17602,11 +17559,6 @@ msgstr "_Base"
 msgid "_Calculate"
 msgstr "_Calcular"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "_Command to be applied"
-msgstr "Falha no comando: %s"
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
 msgstr "_Ciclo inicial"
@@ -17615,13 +17567,13 @@ msgstr "_Ciclo inicial"
 msgid "_Decrease Contrast"
 msgstr "_Diminuir Contraste"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr "_Difmax"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "Cor Final [_e]"
 
@@ -17637,8 +17589,8 @@ msgstr "Tamanho Final Y [_e]:"
 msgid "_End amount"
 msgstr "Valor final [_e]"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
 msgid "_Fade level"
 msgstr "Nível de desaparecimento  [_f]"
@@ -17648,8 +17600,8 @@ msgstr "Nível de desaparecimento  [_f]"
 msgid "_Fade start"
 msgstr "Desaparecimento inicial [_f]"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Fill colour"
 msgstr "Cor de preenchimento [_f]"
 
@@ -17661,8 +17613,8 @@ msgstr "_Primeiro quadro"
 msgid "_Flash for"
 msgstr "_Flash para"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr "_Fonte"
 
@@ -17702,8 +17654,8 @@ msgstr "Tamanho _Iniçial Y:"
 msgid "_Levels"
 msgstr "Níveis [_l]"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "_Ligar cores de início e fim"
 
@@ -17743,12 +17695,8 @@ msgstr "_Outro Centro"
 msgid "_Other"
 msgstr "_Outro"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Point size"
 msgstr "Tamanho em _Pontos"
 
@@ -17760,19 +17708,19 @@ msgstr "_Raio final"
 msgid "_Radius start"
 msgstr "_Raio  inicial"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Raio"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "Co_r aleatória em cada quadro"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr "Aleato_riedade"
 
@@ -17808,8 +17756,8 @@ msgstr "Cor de Origem [_s]"
 msgid "_Splice"
 msgstr "Unir [_s]"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "Cor Inicial [_s]"
 
@@ -17823,8 +17771,8 @@ msgstr "Valor Inícial [_s]"
 msgid "_Start amount"
 msgstr "Valor inicial [_s]"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Stroke colour"
 msgstr "Cor do traço (_S)"
 
@@ -17832,8 +17780,8 @@ msgstr "Cor do traço (_S)"
 msgid "_Target Colour"
 msgstr "Cor do Alvo [_t]"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr "_Texto"
 
@@ -17874,8 +17822,8 @@ msgstr "_X final"
 msgid "_X Start"
 msgstr "_X Inicial"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr "deslocamento _X"
 
@@ -17891,8 +17839,8 @@ msgstr "_Y Final"
 msgid "_Y Start"
 msgstr "_Y Inicial"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr "deslocamento _Y"
 
@@ -18008,10 +17956,6 @@ msgstr "gen_coloured_frames"
 msgid "gen_text"
 msgstr "gen_text"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
 msgstr "hue_change"
@@ -18046,11 +17990,6 @@ msgstr "normalizar"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr "photo_still"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "photomosaic"
 msgstr "photo_still"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -18250,6 +18189,42 @@ msgstr "$plugin_name falhou"
 #, fuzzy
 msgid "Bad default trashdir"
 msgstr "Carregar mapa de teclado padrão [_L]"
+
+#, fuzzy
+#~ msgid "Applying GMIC"
+#~ msgstr "Aplicando sépia para"
+
+#, fuzzy
+#~ msgid "Applying photomosaic to"
+#~ msgstr "Aplicando sépia para"
+
+#, fuzzy
+#~ msgid "Photomosaic"
+#~ msgstr "Foto/imagem parada"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Puxando quadros do clipe..."
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Puxando quadros do clipe..."
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "Altura do bloco [_h]"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "Largura do bloco [_w]"
+
+#, fuzzy
+#~ msgid "_Command to be applied"
+#~ msgstr "Falha no comando: %s"
+
+#, fuzzy
+#~ msgid "photomosaic"
+#~ msgstr "photo_still"
 
 #~ msgid "'%s' or "
 #~ msgstr "'%s' ou "

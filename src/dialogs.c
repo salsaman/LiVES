@@ -1443,43 +1443,45 @@ void cancel_process(boolean visible) {
             (LiVESXModifierType)0);
       accelerators_swapped = FALSE;
     }
+  }
 
-    if (mainw->proc_ptr) {
-      const char *btext = NULL;
-      if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
-      if (mainw->proc_ptr->processing) {
-        if (mainw->proc_ptr->rte_off_cb
-            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
-          weed_deinit_all(FALSE);
-        }
-        if (mainw->proc_ptr->audint_cb
-            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
-          pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
-        }
-        if (mainw->proc_ptr->notify_cb
-            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
-          notify_user(mainw->proc_ptr->text);
-        }
-        lives_hooks_trigger(NULL, COMPLETED_HOOK);
-        lives_freep((void **)&mainw->proc_ptr->text);
-        lives_widget_destroy(mainw->proc_ptr->processing);
-        mainw->proc_ptr->processing = NULL;;
-        lives_widget_context_update();
+  if (mainw->proc_ptr) {
+    const char *btext = NULL;
+    if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
+    if (mainw->proc_ptr->processing) {
+      if (mainw->proc_ptr->rte_off_cb
+	  && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
+	weed_deinit_all(FALSE);
       }
-      lives_free(mainw->proc_ptr);
-      mainw->proc_ptr = NULL;
-      if (btext) {
-        lives_text_view_set_text(mainw->optextview, btext, -1);
-        lives_free((char *)btext);
+      if (mainw->proc_ptr->audint_cb
+	  && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
+	pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
       }
+      if (mainw->proc_ptr->notify_cb
+	  && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
+	notify_user(mainw->proc_ptr->text);
+      }
+      lives_hooks_trigger(NULL, COMPLETED_HOOK);
+      lives_freep((void **)&mainw->proc_ptr->text);
+      lives_widget_destroy(mainw->proc_ptr->processing);
+      mainw->proc_ptr->processing = NULL;;
+      lives_widget_context_update();
     }
-    mainw->is_processing = FALSE;
-    if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD) {
-      // note - for operations to/from clipboard (file 0) we
-      // should manually call sensitize() after operation
-      sensitize();
+    lives_free(mainw->proc_ptr);
+    mainw->proc_ptr = NULL;
+    if (btext) {
+      lives_text_view_set_text(mainw->optextview, btext, -1);
+      lives_free((char *)btext);
     }
-  } else mainw->is_processing = mainw->preview;
+  }
+
+  mainw->is_processing = FALSE;
+  if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD) {
+    // note - for operations to/from clipboard (file 0) we
+    // should manually call sensitize() after operation
+    sensitize();
+  }
+  else mainw->is_processing = mainw->preview;
 }
 
 

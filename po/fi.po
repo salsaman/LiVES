@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -16568,11 +16568,6 @@ msgstr "Kontrastin säätö"
 msgid "Adjusting noise on"
 msgstr "Kontrastin säätö"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "Applying GMIC"
-msgstr "Valokuva/pysäytyskuva"
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #, fuzzy
 msgid "Applying charcoal to"
@@ -16581,11 +16576,6 @@ msgstr "Valokuva/pysäytyskuva"
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Applying forward skip to"
-msgstr "Valokuva/pysäytyskuva"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Applying photomosaic to"
 msgstr "Valokuva/pysäytyskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
@@ -16661,13 +16651,13 @@ msgstr "_Lopetuskirkkaus"
 msgid "Brightness start"
 msgstr "A_loituskirkkaus"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -16714,10 +16704,6 @@ msgstr "_Yhdistä leikepöydän sisältö valintaan..."
 #, fuzzy
 msgid "Clipboard _under selection"
 msgstr "_Yhdistä leikepöydän sisältö valintaan..."
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -16788,8 +16774,8 @@ msgstr "Suoratoisto/Verkko"
 msgid "Dreamifying"
 msgstr "Suoratoisto/Verkko"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "Lopetus-%"
 
@@ -16923,10 +16909,6 @@ msgstr "Luo kuvat leikepöydälle"
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr "Kuvaa _sekunnissa (FPS)"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -17110,11 +17092,6 @@ msgstr "Tekstitetään"
 msgid "Photo/still"
 msgstr "Valokuva/pysäytyskuva"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Photomosaic"
-msgstr "Valokuva/pysäytyskuva"
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilate"
 msgstr "Pikselöinti"
@@ -17167,8 +17144,8 @@ msgstr "Kierrä leikettä"
 msgid "Rotating"
 msgstr "Liitetään"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "Aloitus-%"
 
@@ -17232,16 +17209,6 @@ msgstr "Sävytys"
 msgid "Solarizing"
 msgstr "Sävytetään"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "Lisätään %d%s kuvaa leikepöydältä..."
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "Lisätään %d%s kuvaa leikepöydältä..."
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "Pyöritys"
@@ -17283,8 +17250,8 @@ msgstr "Aloitus-%"
 msgid "Step _Value"
 msgstr "A_loitusarvo"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "Step per _Frame"
@@ -17315,16 +17282,6 @@ msgstr "Tekstitys"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "Kuvan _korkeus"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "Kuvan _leveys"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -17375,12 +17332,12 @@ msgstr "Aallot"
 msgid "Waving"
 msgstr "Aallotetaan"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
 msgstr "_Taustaväri"
 
@@ -17406,11 +17363,6 @@ msgstr "A_lhaalta"
 msgid "_Calculate"
 msgstr "_Laske"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "_Command to be applied"
-msgstr "Komento epäonnistui: %s"
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
 msgid "_Cycle Start"
@@ -17420,13 +17372,13 @@ msgstr "_Käynnistä"
 msgid "_Decrease Contrast"
 msgstr "_Vähennä kontrastia"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "Lo_petusväri"
 
@@ -17443,8 +17395,8 @@ msgstr ""
 msgid "_End amount"
 msgstr "Lo_petusväri"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Fade level"
 msgstr "_Häivytystaso"
 
@@ -17454,8 +17406,8 @@ msgstr "_Häivytystaso"
 msgid "_Fade start"
 msgstr "_Säde"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Fill colour"
 msgstr "T_äyttöväri"
 
@@ -17467,8 +17419,8 @@ msgstr "E_nsimmäinen kuva"
 msgid "_Flash for"
 msgstr "_Salaman kesto"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr "Kir_jasin"
 
@@ -17511,8 +17463,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "_Tasoja"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "Li_nkitä aloitus- ja lopetusvärit"
 
@@ -17556,12 +17508,8 @@ msgstr "Muu ke_skipiste"
 msgid "_Other"
 msgstr "Muu ke_skipiste"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_Point size"
 msgstr "Ki_rjasinkoko"
@@ -17576,20 +17524,20 @@ msgstr "_Säde"
 msgid "_Radius start"
 msgstr "_Säde"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Säde"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Luodaan värillisiä kuvia"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr "_Satunnaisuus"
 
@@ -17629,8 +17577,8 @@ msgstr "A_loitusväri"
 msgid "_Splice"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "A_loitusväri"
 
@@ -17645,8 +17593,8 @@ msgstr "A_loitusarvo"
 msgid "_Start amount"
 msgstr "A_loitusarvo"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Stroke colour"
 msgstr "P_iirtoväri"
 
@@ -17655,8 +17603,8 @@ msgstr "P_iirtoväri"
 msgid "_Target Colour"
 msgstr "A_loitusväri"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr "_Teksti"
 
@@ -17703,8 +17651,8 @@ msgstr ""
 msgid "_X Start"
 msgstr "_Käynnistä"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
 msgid "_X offset"
 msgstr "_Y-sijainti"
@@ -17722,8 +17670,8 @@ msgstr ""
 msgid "_Y Start"
 msgstr "_Käynnistä"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr "_Y-sijainti"
 
@@ -17856,10 +17804,6 @@ msgstr "Luo värillisiä kuvia"
 msgid "gen_text"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
 msgid "hue_change"
@@ -17901,11 +17845,6 @@ msgstr "Normalisointi"
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
 msgid "photo_still"
-msgstr "Valokuva/pysäytyskuva"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "photomosaic"
 msgstr "Valokuva/pysäytyskuva"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -18132,6 +18071,42 @@ msgstr ""
 #, fuzzy
 msgid "Bad default trashdir"
 msgstr "_Lataa oletuskartta"
+
+#, fuzzy
+#~ msgid "Applying GMIC"
+#~ msgstr "Valokuva/pysäytyskuva"
+
+#, fuzzy
+#~ msgid "Applying photomosaic to"
+#~ msgstr "Valokuva/pysäytyskuva"
+
+#, fuzzy
+#~ msgid "Photomosaic"
+#~ msgstr "Valokuva/pysäytyskuva"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "Lisätään %d%s kuvaa leikepöydältä..."
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "Lisätään %d%s kuvaa leikepöydältä..."
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "Kuvan _korkeus"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "Kuvan _leveys"
+
+#, fuzzy
+#~ msgid "_Command to be applied"
+#~ msgstr "Komento epäonnistui: %s"
+
+#, fuzzy
+#~ msgid "photomosaic"
+#~ msgstr "Valokuva/pysäytyskuva"
 
 #, fuzzy
 #~ msgid "'%s' or "

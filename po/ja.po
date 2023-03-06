@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-05 03:34-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -17031,11 +17031,6 @@ msgstr "コントラスト調整の適用"
 msgid "Adjusting noise on"
 msgstr "ノイズ調整の適用"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "Applying GMIC"
-msgstr "セピアの適用"
-
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr "チャコールの適用"
@@ -17043,11 +17038,6 @@ msgstr "チャコールの適用"
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
 msgstr "前へスキップの適用"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Applying photomosaic to"
-msgstr "セピアの適用"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
@@ -17113,13 +17103,13 @@ msgstr "ブライトネス終了"
 msgid "Brightness start"
 msgstr "ブライトネス開始"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "中心のX座標(_X)"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "中心のY座標(_Y)"
 
@@ -17158,10 +17148,6 @@ msgstr "選択上のクリップボード(_O)"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _under selection"
 msgstr "選択領域のクリップボード(_U)"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "Collage _mode"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -17223,8 +17209,8 @@ msgstr "夢"
 msgid "Dreamifying"
 msgstr "夢の適用"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "終了% (_N)"
 
@@ -17342,10 +17328,6 @@ msgstr "先頭フレームのフレーム位置(_I)..."
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
 msgstr "フレーム/秒(FPS)(_P)"
-
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "GMIC generic"
-msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
@@ -17507,11 +17489,6 @@ msgstr "テキストを重ねあわせる"
 msgid "Photo/still"
 msgstr "写真/静止画"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Photomosaic"
-msgstr "写真/静止画"
-
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilate"
 msgstr "ピクセル化"
@@ -17560,8 +17537,8 @@ msgstr "クリップの回転"
 msgid "Rotating"
 msgstr "ローテーション"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "開始% (_T)"
 
@@ -17617,16 +17594,6 @@ msgstr "ソラリゼーション"
 msgid "Solarizing"
 msgstr "ソラリゼーションの適用"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames from whole _clip"
-msgstr "クリップからフレームを抽出"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Source frames only from _selection"
-msgstr "クリップからフレームを抽出"
-
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "スピン"
@@ -17665,8 +17632,8 @@ msgstr "開始% (_T)"
 msgid "Step _Value"
 msgstr "ステップ値(_V)"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Step per _Frame"
 msgstr "フレーム毎のステップ(_F)"
@@ -17694,16 +17661,6 @@ msgstr "文字の重ね合わせ"
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
 msgstr "閾値(_H)"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _height"
-msgstr "フレームの高さ(_H)"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "Tile _width"
-msgstr "フレームの幅(_W)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
@@ -17752,12 +17709,12 @@ msgstr "波"
 msgid "Waving"
 msgstr "波の適用"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
 msgstr "背景色(_B)"
 
@@ -17782,11 +17739,6 @@ msgstr "下(_B)"
 msgid "_Calculate"
 msgstr "計算(_C)"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-#, fuzzy
-msgid "_Command to be applied"
-msgstr "コマンドの実行に失敗しました: %s"
-
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
 msgstr "サイクルの開始(_C)"
@@ -17795,13 +17747,13 @@ msgstr "サイクルの開始(_C)"
 msgid "_Decrease Contrast"
 msgstr "コントラストの減少(_D)"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Diffmax"
 msgstr "差の最大値(_D)"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "終了色(_E)"
 
@@ -17817,8 +17769,8 @@ msgstr "Y座標の最終値(_E):"
 msgid "_End amount"
 msgstr "終了量(_E)"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Fade level"
 msgstr "フェードレベル(_F)"
 
@@ -17827,8 +17779,8 @@ msgstr "フェードレベル(_F)"
 msgid "_Fade start"
 msgstr "フェード開始(_F)"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Fill colour"
 msgstr "塗りつぶしの色(_F)"
 
@@ -17840,8 +17792,8 @@ msgstr "先頭フレーム(_F)"
 msgid "_Flash for"
 msgstr "フラッシュ(_F)"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Font"
 msgstr "フォント(_F)"
 
@@ -17882,8 +17834,8 @@ msgstr "Y座標の初期値(_I):"
 msgid "_Levels"
 msgstr "レベル(_L)"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "リンク開始と終了の色(_L)"
 
@@ -17923,12 +17875,8 @@ msgstr "その他の中心(_O)"
 msgid "_Other"
 msgstr "その他(_O)"
 
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-msgid "_Overlay amount (original)"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Point size"
 msgstr "ポイントサイズ(_P)"
 
@@ -17940,19 +17888,19 @@ msgstr "終了半径(_R)"
 msgid "_Radius start"
 msgstr "開始半径(_R)"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "半径(_R)"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "各フレーム毎にランダム色(_R)"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "_Randomness"
 msgstr "ランダムさ(_R)"
 
@@ -17988,8 +17936,8 @@ msgstr "ソースカラー(_S)"
 msgid "_Splice"
 msgstr "接合(_S)"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "開始色(_S)"
 
@@ -18003,8 +17951,8 @@ msgstr "開始値(_S)"
 msgid "_Start amount"
 msgstr "開始量(_S)"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Stroke colour"
 msgstr "描画色(_S)"
 
@@ -18012,8 +17960,8 @@ msgstr "描画色(_S)"
 msgid "_Target Colour"
 msgstr "ターゲット色(_T)"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
 msgstr "テキスト(_T)"
 
@@ -18054,8 +18002,8 @@ msgstr "終了時のX座標(_X)"
 msgid "_X Start"
 msgstr "開始時のX座標(_X)"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_X offset"
 msgstr "X座標のオフセット(_X)"
 
@@ -18071,8 +18019,8 @@ msgstr "終了時のY座標(_Y)"
 msgid "_Y Start"
 msgstr "開始時のY座標(_Y)"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Y offset"
 msgstr "Y座標のオフセット(_Y)"
 
@@ -18188,10 +18136,6 @@ msgstr "カラーフレームの生成"
 msgid "gen_text"
 msgstr "テキストの生成"
 
-#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
-msgid "gmic"
-msgstr ""
-
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
 msgstr "色相の変更"
@@ -18226,11 +18170,6 @@ msgstr "正規化"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr "フォトスチル"
-
-#: /usr/share/lives/plugins/effects/rendered/photomosaic.script:0
-#, fuzzy
-msgid "photomosaic"
 msgstr "フォトスチル"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
@@ -18438,6 +18377,42 @@ msgstr "$plugin_name は失敗しました:"
 #, fuzzy
 msgid "Bad default trashdir"
 msgstr "デフォルトキーマップの読み込み(_L)"
+
+#, fuzzy
+#~ msgid "Applying GMIC"
+#~ msgstr "セピアの適用"
+
+#, fuzzy
+#~ msgid "Applying photomosaic to"
+#~ msgstr "セピアの適用"
+
+#, fuzzy
+#~ msgid "Photomosaic"
+#~ msgstr "写真/静止画"
+
+#, fuzzy
+#~ msgid "Source frames from whole _clip"
+#~ msgstr "クリップからフレームを抽出"
+
+#, fuzzy
+#~ msgid "Source frames only from _selection"
+#~ msgstr "クリップからフレームを抽出"
+
+#, fuzzy
+#~ msgid "Tile _height"
+#~ msgstr "フレームの高さ(_H)"
+
+#, fuzzy
+#~ msgid "Tile _width"
+#~ msgstr "フレームの幅(_W)"
+
+#, fuzzy
+#~ msgid "_Command to be applied"
+#~ msgstr "コマンドの実行に失敗しました: %s"
+
+#, fuzzy
+#~ msgid "photomosaic"
+#~ msgstr "フォトスチル"
 
 #, fuzzy
 #~ msgid "'%s' or "

@@ -2680,7 +2680,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_switch_self(lives_proc_thre
 static void lives_thread_data_destroy(void *data) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)data;
   lives_hook_stack_t **hook_stacks = tdata->vars.var_hook_stacks;
-  pthread_mutex_t *self_stack_mutex = THREADVAR(self_stack_mutex);
+  pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
 
   if (tdata->thrd_type != THRD_TYPE_MAIN) {
     if (tdata->vars.var_sigstack.ss_sp) lives_free(tdata->vars.var_sigstack.ss_sp);

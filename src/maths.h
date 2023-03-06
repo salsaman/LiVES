@@ -113,14 +113,17 @@ uint64_t get_2pow_64(uint64_t x)LIVES_CONST;
 uint64_t get_near2pow(uint64_t val) LIVES_CONST;
 
 uint32_t get_log2(uint32_t val) LIVES_CONST;
-uint64_t get_log2_64(uint64_t x) LIVES_CONST;
+uint32_t get_log2_64(uint64_t x) LIVES_CONST;
 
 int get_onescount_64(uint64_t num);
 int get_onescount_32(uint32_t num);
 int get_onescount_16(uint16_t num);
 int get_onescount_8(uint8_t num);
 
-int factorial(int n);
+uint64_t factorial(int n);
+uint64_t factorial_div(int n, int m);
+
+double binomial(int ntrials, int nhits, double ps);
 
 #define LN_CONSTVAL 1.4427 // 1 / ln(2)
 

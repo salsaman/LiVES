@@ -317,6 +317,9 @@ void dump_fn_notes(void);
 // callback will only be run at most one time, and then removed from the stack
 #define HOOK_OPT_ONESHOT		(1ull << 2)
 
+// if this bit is set, then the callback will not be removed when the dispatcher is freed
+#define HOOK_CB_TRANSFER_OWNER		(1ull << 3)
+
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 8) // force fg service run
 
@@ -631,6 +634,7 @@ char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
 char *cl_flags_desc(uint64_t clflags);
 
 void dump_hook_stack(lives_hook_stack_t **, int type);
+void dump_hook_stack_for(lives_proc_thread_t, int type);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 

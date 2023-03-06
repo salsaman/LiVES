@@ -1650,7 +1650,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
   if (LIVES_IS_WIDGET(widget)) {
     if (mainw && mainw->is_ready) {
       THREADVAR(hook_match_nparams) = 1;
-      THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD;
+      THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD | HOOK_CB_TRANSFER_OWNER;
       // do this even for main thread so we can invalidate data for other threads
       MAIN_THREAD_EXECUTE_RVOID(_lives_widget_destroy, 0, "v", widget);
       THREADVAR(hook_hints) = 0;
@@ -1727,7 +1727,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_resize(LiVESWidget *widge
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int width, int height) {
 #ifdef GUI_GTK
-  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  if (!mainw->ignore_screen_size) {
+    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  } else {
+    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  }
   if (LIVES_IS_WINDOW(widget)) lives_window_resize(LIVES_WINDOW(widget), width, height);
   else gtk_widget_set_size_request(widget, width, height);
   return TRUE;
@@ -1741,7 +1745,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_minimum_size(LiVESWidget *w
   GdkGeometry geom;
   GdkWindowHints mask;
   GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
-  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  if (!mainw->ignore_screen_size) {
+    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  } else {
+    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  }
   if (GTK_IS_WINDOW(toplevel)) {
     geom.min_width = width;
     geom.min_height = height;
@@ -1759,7 +1767,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
   GdkGeometry geom;
   GdkWindowHints mask;
   GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
-  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  if (!mainw->ignore_screen_size) {
+    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  } else {
+    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  }
   if (GTK_IS_WINDOW(toplevel)) {
     geom.max_width = width;
     geom.max_height = height;
@@ -2993,7 +3005,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_monitor(LiVESWindow *window
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_default_size(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
-  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  if (!mainw->ignore_screen_size) {
+    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  } else {
+    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  }
   gtk_window_set_default_size(window, width, height);
   return TRUE;
 #endif
@@ -3020,7 +3036,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move(LiVESWindow *window, int x
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move_resize(LiVESWindow *window, int x, int y, int w, int h) {
 #ifdef GUI_GTK
-  if (w + x > GUI_SCREEN_WIDTH || h + y > GUI_SCREEN_HEIGHT) abort();
+  if (!mainw->ignore_screen_size) {
+    if (w + x > GUI_SCREEN_WIDTH || h + y > GUI_SCREEN_HEIGHT) abort();
+  } else {
+    if (w + x > GUI_SCREEN_PHYS_WIDTH || h + y > GUI_SCREEN_PHYS_HEIGHT) abort();
+  }
   gdk_window_move_resize(lives_widget_get_xwindow(LIVES_WIDGET(window)), x, y, w, h);
   return TRUE;
 #endif
@@ -3072,7 +3092,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_hide_titlebar_when_maximize
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
-  if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  if (!mainw->ignore_screen_size) {
+    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
+  } else {
+    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  }
   gtk_window_resize(window, width, height);
   gtk_widget_set_size_request(GTK_WIDGET(window), width, height);
   return TRUE;
@@ -3176,7 +3200,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
   }
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY | HOOK_CB_TRANSFER_OWNER;
     MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -3194,7 +3218,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_update_noblock(LiVES
   }
   if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
   else {
-    BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY  | HOOK_CB_TRANSFER_OWNER;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }

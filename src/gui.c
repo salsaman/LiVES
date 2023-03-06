@@ -4431,6 +4431,7 @@ static void _resize_play_window(void) {
         lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
 
+        mainw->ignore_screen_size = TRUE;
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
 

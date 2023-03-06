@@ -51,7 +51,11 @@ int run_weed_startup_tests(void);
 int test_palette_conversions(void);
 #endif
 
-void check_random(void);
+typedef uint64_t (*lives_randfunc_t)(void);
+
+void test_random(void);
+
+int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q);
 
 void lives_struct_test(void);
 

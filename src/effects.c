@@ -1166,11 +1166,11 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   if (LIVES_IS_PLAYING) {
     if (key)
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                       _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
     else
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                       _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
   } else _rte_on_off((group != NULL), key);
   return TRUE;
@@ -1232,7 +1232,7 @@ boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
   if (!LIVES_IS_PLAYING) return _rtemode_callback(dirn);
   if (mainw->rte_keys == -1) return TRUE;
   lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                  HOOK_OPT_ONESHOT |  HOOK_CB_FG_THREAD,
+                                  HOOK_OPT_ONESHOT |  HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                   _rtemode_callback, WEED_SEED_BOOLEAN, "i", dirn);
   return TRUE;
 }
@@ -1247,7 +1247,7 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
 
   if (!LIVES_IS_PLAYING) rte_key_setmode(key + 1, mode);
   else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                         HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
+                                         HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                          rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
   return TRUE;
 }

@@ -275,7 +275,6 @@ void load_start_image(frames_t frame) {
       hsize /= 2;
       vsize /= 2;
     }
-    g_print("VS1 is %d\n", vsize);
     lives_widget_set_size_request(mainw->start_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame1, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox3, hsize, vsize);
@@ -553,7 +552,6 @@ void load_end_image(frames_t frame) {
       hsize /= 2;
       vsize /= 2;
     }
-    g_print("VS2 is %d\n", vsize);
     lives_widget_set_size_request(mainw->end_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame2, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox4, hsize, vsize);

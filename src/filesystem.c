@@ -15,6 +15,10 @@
 #include <libexplain/read.h>
 #endif
 
+//#define AUDIT_FBUFFS
+#ifdef AUDIT_FBUFFS
+static weed_plant_t *auditor = NULL;
+#endif
 
 off_t get_file_size(int fd, boolean is_native) {
   // get the size of file fd
@@ -852,6 +856,9 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
   return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
 }
 
+#ifdef AUDIT_FBUFFS
+char *pkey;
+#endif
 
 static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t skip) {
   // slurped files: start reading in from posn skip (bytes), done in a dedicated worker thread
@@ -902,10 +909,15 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
     if (1) {
       off_t offs = skip > 0 ? skip : 0;
       fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
+#ifdef AUDIT_FBUFFS
+      if (!auditor) auditor = lives_plant_new(LIVES_WEED_SUBTYPE_AUDIT);
+      pkey = lives_strdup_printf("%p", fbuff->buffer);
+      weed_set_voidptr_value(auditor, pkey, fbuff->ptr);
+      lives_free(pkey);
+#endif
       lseek(fd, offs, SEEK_SET);
       mlock(fbuff->buffer, fsize);
-      //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
-      //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
+      //g_printerr("slurp for %d, %s with size %ld buffer is %p\n", fd, fbuff->pathname, fsize, fbuff->buffer);
       while (fsize > 0) {
         if (fbuff->flags & FB_FLAG_INVALID) {
           fbuff->flags &= ~FB_FLAG_INVALID;
@@ -975,7 +987,6 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
 
 boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
   if (lpt) {
-    GET_PROC_THREAD_SELF(self);
     lives_file_buffer_t *fbuff =
       (lives_file_buffer_t *)weed_get_voidptr_value(lpt, "_filebuff", NULL);
     pthread_mutex_lock(&fbuff->sync_mutex);
@@ -1097,15 +1108,12 @@ ssize_t lives_close_buffered(int fd) {
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
 
   if (fbuff->buffer) {
-#ifdef TEST_MMAP
-    if (fbuff->flags & FB_FLAG_MMAP)
-      munmap(fbuff->buffer, fbuff->bytes);
-    else {
+#ifdef AUDIT_FBUFFS
+    char *pkey = lives_strdup_printf("%p", fbuff->buffer);
+    if (auditor) weed_leaf_delete(auditor, pkey);
+    lives_free(pkey);
 #endif
-      lives_free(fbuff->buffer);
-#ifdef TEST_MMAP
-    }
-#endif
+    lives_free(fbuff->buffer);
   }
 
   if (fbuff->ring_buffer) {

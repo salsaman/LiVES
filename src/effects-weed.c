@@ -7306,7 +7306,9 @@ boolean weed_init_effect(int hotkey) {
         mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR && !is_audio_gen) {
       /////////////////////////////////////// if blend_file is a generator we should finish it
       if (bg_gen_to_start == -1) {
-        weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src->source);
+        if (IS_VALID_CLIP(mainw->blend_file) && mainw->files[mainw->blend_file]->primary_src
+            && mainw->files[mainw->blend_file]->primary_src->source)
+          weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src->source);
       }
 
       bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
@@ -7326,7 +7328,8 @@ boolean weed_init_effect(int hotkey) {
       } else {
         if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
         //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
-        weed_generator_end((weed_plant_t *)cfile->primary_src->source);
+        if (CURRENT_CLIP_IS_VALID && cfile->primary_src && cfile->primary_src->source)
+          weed_generator_end((weed_plant_t *)cfile->primary_src->source);
         fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
         if (CURRENT_CLIP_IS_VALID && (cfile->achans == 0 || cfile->frames > 0)) {
           // in case we switched to bg clip, and bg clip was gen

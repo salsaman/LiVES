@@ -693,7 +693,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   return TRUE;
 
 bail:
-  g_print("redraw cancelled\n");
   if (cr) {
     lives_painter_surface_t *surface = lives_painter_get_target(cr);
     lives_painter_surface_flush(surface);
@@ -3663,10 +3662,7 @@ void redraw_timeline(int clipno) {
   RECURSE_GUARD_START;
   GET_PROC_THREAD_SELF(self);
   lives_clip_t *sfile;
-  g_print("thread %d in redraw tl\n", THREADVAR(slot_id));
   RETURN_IF_RECURSED;
-
-  g_print("passed rec check\n");
 
   if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
       || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
@@ -3679,11 +3675,8 @@ void redraw_timeline(int clipno) {
     return;
   }
 
-  g_print("clip is OK\n");
-
   if (mainw->drawtl_thread && self == mainw->drawtl_thread) {
     // check if this is the thread that was assigned to run this
-    g_print("isa me, mario\n");
     if (lives_proc_thread_get_cancel_requested(self)) {
       RECURSE_GUARD_END;
       lives_proc_thread_cancel(self);
@@ -3691,13 +3684,10 @@ void redraw_timeline(int clipno) {
     }
   } else {
     if (is_fg_thread()) {
-      g_print("main man\n");
       // if this the fg thread, kick off a bg thread to actually run this
       if (lives_proc_thread_ref(mainw->drawtl_thread) > 1) {
         lives_proc_thread_t tlthread = mainw->drawtl_thread;
-        g_print("req cancel\n");
         cancel_tl_redraw();
-        g_print("got cancel\n");
         lives_proc_thread_unref(tlthread);
       }
       if (mainw->multitrack || mainw->reconfig) {
@@ -3710,19 +3700,15 @@ void redraw_timeline(int clipno) {
                              (lives_funcptr_t)redraw_timeline, -1, "i", clipno);
 
       //lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
-      g_print("created new lpt\n");
       lives_proc_thread_set_cancellable(mainw->drawtl_thread);
       lives_proc_thread_sync_ready(mainw->drawtl_thread);
       RECURSE_GUARD_END;
       pthread_mutex_unlock(&mainw->tlthread_mutex);
-      g_print("started new lpt\n");
       return;
     } else {
       RECURSE_GUARD_END;
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
       // or if we are running it adds to deferral hooks
-
-      g_print("ASK main to redraw\n");
       THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE | HOOK_CB_PRIORITY;
       main_thread_execute_rvoid(redraw_timeline, 0, "i", clipno);
       THREADVAR(hook_hints) = 0;
@@ -3731,8 +3717,6 @@ void redraw_timeline(int clipno) {
   }
 
   RECURSE_GUARD_END;
-
-  g_print("doing redraw\n");
 
   mainw->drawsrc = clipno;
 
@@ -4282,8 +4266,6 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   /// take the filename from the text entry widget
   if (LIVES_IS_TEXT_VIEW(tentry)) fname = lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
   else fname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
-
-  g_print("GOT FNAME %s\n", fname);
 
   /// TODO: only do this for directory mode, blank text is valid filename
   if (is_dir) {

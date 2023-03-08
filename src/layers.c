@@ -293,7 +293,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int w
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  if (layer == mainw->debug_ptr) break_me("FLPD2");
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
   return layer;
 }
@@ -301,7 +300,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer, void *pixel_data) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  if (layer == mainw->debug_ptr) break_me("FLPD");
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
   return layer;
 }
@@ -602,10 +600,11 @@ LIVES_GLOBAL_INLINE boolean weed_layer_check_valid(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
-    if (mainw->debug_ptr == layer) {
-      break_me("free dbg");
-      mainw->debug_ptr = NULL;
-    }
+    /* if (mainw->debug_ptr == layer) { */
+    /*   g_print("FREE %p\n", layer); */
+    /*   break_me("free dbg"); */
+    /*   mainw->debug_ptr = NULL; */
+    /* } */
     weed_layer_pixel_data_free(layer);
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     weed_plant_free(layer);
@@ -614,7 +613,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 }
 
 int weed_layer_unref(weed_layer_t *layer) {
-  if (layer == mainw->debug_ptr) break_me("unref ofl");
+  //if (layer == mainw->debug_ptr) break_me("unref ofl");
   int refs = weed_refcount_dec(layer);
   if (!refs) {
     weed_layer_free(layer);

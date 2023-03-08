@@ -2720,6 +2720,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     } else runtype = 2;
 
+    /* if (i > 0) { */
+    /*   mainw->debug_ptr = NULL; */
+    /* } */
     lpt = lives_proc_thread_chain(NULL, res_or_lbox, WEED_SEED_INT, "ii", runtype, i,
                                   palconv, WEED_SEED_INT, NULL, NULL);
 
@@ -2742,7 +2745,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     SET_LPT_VALUE(lpt, int, "osampling", osampling);
     SET_LPT_VALUE(lpt, int, "oclamping", oclamping);
 
-    if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
+    //if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
     weed_set_plantptr_value(layer, LIVES_LEAF_PRIME_LPT, lpt);
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
   }
@@ -2759,7 +2762,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = lives_proc_thread_join_int(lpt);
         if (lives_proc_thread_had_error(lpt))
           retval = lives_proc_thread_get_errnum(lpt);
-        mainw->debug_ptr = NULL;
+        //mainw->debug_ptr = NULL;
         lives_proc_thread_unref(lpt);
       }
       weed_leaf_delete(layer, LIVES_LEAF_PRIME_LPT);
@@ -4829,9 +4832,9 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   // free data pointed to by leaves flagged as autofree
   // the leaf is not actually deleted, only the data
   // the undeletable flag bit must be cleared before calling this,
-  // and here we also clear ht autodelte biy
+  // and here we also clear ht autodelete bit
   boolean bret = TRUE;
-  if (plant && weed_plant_has_leaf(plant, key)) {
+  if (plant) {
     int flags = weed_leaf_get_flags(plant, key);
     if (flags & WEED_FLAG_UNDELETABLE) return FALSE;
     if (flags & WEED_FLAG_FREE_ON_DELETE) {
@@ -4877,6 +4880,7 @@ void  weed_plant_autofree(weed_plant_t *plant) {
     if (leaves) {
       for (int i = 0; leaves[i]; i++) {
         weed_leaf_set_undeletable(plant, leaves[i], WEED_FALSE);
+        // act on FREE_ON_DELETE, remove flag
         weed_leaf_autofree(plant, leaves[i]);
         free(leaves[i]);
       }
@@ -4900,8 +4904,11 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_plant_free(plant);
   if (err == WEED_ERROR_UNDELETABLE) {
+    // make remeining leaves deleteable
+    // handle FREE_ON_DELETE
     weed_plant_autofree(plant);
     //nplants--;
+    // try again
     return _weed_plant_free(plant);
   }
   //nplants--;
@@ -4919,18 +4926,21 @@ weed_plant_t *weed_plant_new_host(int type) {
 
 weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
   // delete even undeletable leaves
-  weed_error_t err;
+  weed_error_t err = WEED_ERROR_NOSUCH_LEAF;
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
-  err = _weed_leaf_delete(plant, key);
-  if (err == WEED_ERROR_UNDELETABLE) {
-    // *** check this - there may be leaves that absolutely MUST be undeletable
-    weed_leaf_set_undeletable(plant, key, WEED_FALSE);
-    // check
-    weed_leaf_autofree(plant, key);
+  if (weed_plant_has_leaf(plant, key)) {
     err = _weed_leaf_delete(plant, key);
-    if (err != WEED_SUCCESS) {
-      char *msg = lives_strdup_printf("Unable to delete weed leaf - internal error detected (%d)", err);
-      lives_abort(msg);
+    if (err == WEED_ERROR_UNDELETABLE) {
+      // *** check this - there may be leaves that absolutely MUST be undeletable
+      weed_leaf_set_undeletable(plant, key, WEED_FALSE);
+      // free any planptrs or voidptrs fallged with FREE_ON_DELETE
+      weed_leaf_autofree(plant, key);
+      // try again
+      err = _weed_leaf_delete(plant, key);
+      if (err != WEED_SUCCESS) {
+        char *msg = lives_strdup_printf("Unable to delete weed leaf - internal error detected (%d)", err);
+        lives_abort(msg);
+      }
     }
   }
   return err;

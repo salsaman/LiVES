@@ -2154,6 +2154,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   } else pthread_mutex_unlock(&cond_mutex);
 
   if (texturebuf) weed_free((void *)texturebuf);
+  texturebuf = NULL;
 
   free(textures);
 

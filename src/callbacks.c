@@ -9451,8 +9451,12 @@ boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
     mainw->laudio_drawable = surf;
 
     if (laudio_drawable) {
+      if (mainw->files[mainw->drawsrc]->laudio_drawable == laudio_drawable)
+        mainw->files[mainw->drawsrc]->laudio_drawable = NULL;
       lives_painter_surface_destroy(laudio_drawable);
     }
+    if (mainw->files[mainw->drawsrc]->laudio_drawable)
+      lives_painter_surface_destroy(mainw->files[mainw->drawsrc]->laudio_drawable);
     mainw->files[mainw->drawsrc]->laudio_drawable = mainw->laudio_drawable;
   }
   return TRUE;
@@ -9478,8 +9482,12 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
     mainw->raudio_drawable = surf;
 
     if (raudio_drawable) {
+      if (mainw->files[mainw->drawsrc]->raudio_drawable == raudio_drawable)
+        mainw->files[mainw->drawsrc]->raudio_drawable = NULL;
       lives_painter_surface_destroy(raudio_drawable);
     }
+    if (mainw->files[mainw->drawsrc]->raudio_drawable)
+      lives_painter_surface_destroy(mainw->files[mainw->drawsrc]->raudio_drawable);
     mainw->files[mainw->drawsrc]->raudio_drawable = mainw->raudio_drawable;
   }
   return TRUE;

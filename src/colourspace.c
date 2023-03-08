@@ -77,14 +77,14 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
                                   int *orow, swpixfmt opixfmt, int flags, int subspace, int iclamping, int oclamp_hint) {
   swsctx_block *block, *bestblock;
   int max = MAX_THREADS + 1, minbnum = max, mingnum = minbnum, minanum = mingnum, num;
-  int i = -1, lastblock = THREADVAR(last_sws_block), j = 0, bestidx = -1;
+  int lastblock = THREADVAR(last_sws_block), j = 0, bestidx = -1;
 
-  if (lastblock >= 0) j = lastblock;
-  else i = 0;
+  if (lastblock > 0) j = lastblock;
+  else lastblock = nb - 1;
 
   pthread_mutex_lock(&ctxcnt_mutex);
 
-  for (; i < nb; j = ++i) {
+  while (1) {
     block = &bloxx[j];
     if (!block->in_use && (num = block->num) >= nreq) {
       if (iwidth == block->iwidth
@@ -128,7 +128,22 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
 	  if (num < minanum) {
 	    bestidx = j;
 	    minanum = num;
-	}}}}}
+	  }}}}
+    g_print("VALLRRR j %d and lb %d, nb %d\n", j, lastblock, nb);
+    if (j == lastblock) {
+      if (lastblock == nb - 1) break;
+      j = 0;
+      continue;
+    }
+    j++;
+    if (j == lastblock) {
+      if (lastblock != nb -1) {
+	lastblock = nb - 1;
+	j++;
+	continue;
+      }
+    }
+  }
   // *INDENT-ON*
 
   if (minbnum < max || mingnum < max) {
@@ -147,6 +162,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
       pthread_mutex_unlock(&ctxcnt_mutex);
       THREADVAR(last_sws_block) = bestidx;
     } else {
+      g_print("FAILED to get SWS block\n");
       bestblock = &bloxx[nb++];
       bestblock->in_use = TRUE;
       swctx_count = endctx;
@@ -154,7 +170,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
 
       bestblock->num = nreq;
       bestblock->offset = startctx;
-      for (i = startctx; i < endctx; i++) swscalep[i] = NULL;
+      for (int i = startctx; i < endctx; i++) swscalep[i] = NULL;
     }
 
     bestblock->iwidth = iwidth;
@@ -168,7 +184,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
     bestblock->subspace = subspace;
     bestblock->iclamping = iclamping;
     bestblock->oclamp_hint = oclamp_hint;
-    for (i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++) {
       bestblock->irow[i] = irow[i];
       bestblock->orow[i] = orow[i];
     }

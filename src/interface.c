@@ -3689,6 +3689,7 @@ void redraw_timeline(int clipno) {
         lives_proc_thread_t tlthread = mainw->drawtl_thread;
         cancel_tl_redraw();
         lives_proc_thread_unref(tlthread);
+        lives_proc_thread_unref(tlthread);
       }
       if (mainw->multitrack || mainw->reconfig) {
         RECURSE_GUARD_END;

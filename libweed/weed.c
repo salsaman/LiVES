@@ -891,7 +891,7 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
     }
   }
 
-  if (leafprev != plant) {
+  if (leafprev == plant) {
     // remove lock temporarily just in case other threads were trying to grab a read lock
     chain_lock_unlock(plant);
     structure_mutex_unlock(plant);

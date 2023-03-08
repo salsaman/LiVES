@@ -79,68 +79,70 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
   int max = MAX_THREADS + 1, minbnum = max, mingnum = minbnum, minanum = mingnum, num;
   int lastblock = THREADVAR(last_sws_block), j = 0, bestidx = -1;
 
-  if (lastblock > 0) j = lastblock;
-  else lastblock = nb - 1;
 
   pthread_mutex_lock(&ctxcnt_mutex);
 
-  while (1) {
-    block = &bloxx[j];
-    if (!block->in_use && (num = block->num) >= nreq) {
-      if (iwidth == block->iwidth
-          && iheight == block->iheight
-          && ipixfmt == block->ipixfmt
-          && width == block->width
-          && height == block->height
-          && opixfmt == block->opixfmt
-          && flags == block->flags) {
+  if (nb) {
+    if (lastblock > 0) j = lastblock;
+    else lastblock = nb - 1;
 
-        if (subspace == block->subspace
-            && iclamping == block->iclamping
-            && oclamp_hint == block->oclamp_hint
-            && irow[0] == block->irow[0]
-            && irow[1] == block->irow[1]
-            && irow[2] == block->irow[2]
-            && irow[3] == block->irow[3]
-            && orow[0] == block->orow[0]
-            && orow[1] == block->orow[1]
-            && orow[2] == block->orow[2]
-            && orow[3] == block->orow[3]
-           ) {
-          if (num < minbnum) {
-            minbnum = num;
-            bestidx = j;
-            //g_print("%d is perfect match !\n", i);
-            if (num == nreq) {
-              //if (i == -1) g_print("BINGO !\n");
-              break;
-            }
-          }
-        } else {
-          if (minbnum == max) {
-            if (num < mingnum) {
+    while (1) {
+      block = &bloxx[j];
+      if (!block->in_use && (num = block->num) >= nreq) {
+        if (iwidth == block->iwidth
+            && iheight == block->iheight
+            && ipixfmt == block->ipixfmt
+            && width == block->width
+            && height == block->height
+            && opixfmt == block->opixfmt
+            && flags == block->flags) {
+
+          if (subspace == block->subspace
+              && iclamping == block->iclamping
+              && oclamp_hint == block->oclamp_hint
+              && irow[0] == block->irow[0]
+              && irow[1] == block->irow[1]
+              && irow[2] == block->irow[2]
+              && irow[3] == block->irow[3]
+              && orow[0] == block->orow[0]
+              && orow[1] == block->orow[1]
+              && orow[2] == block->orow[2]
+              && orow[3] == block->orow[3]
+             ) {
+            if (num < minbnum) {
+              minbnum = num;
               bestidx = j;
-              mingnum = num;
-	    // *INDENT-OFF*
+              //g_print("%d is perfect match !\n", i);
+              if (num == nreq) {
+                //if (i == -1) g_print("BINGO !\n");
+                break;
+              }
+            }
+          } else {
+            if (minbnum == max) {
+              if (num < mingnum) {
+                bestidx = j;
+                mingnum = num;
+		// *INDENT-OFF*
+	      }}}}
+	else {
+	  if (minbnum == max && mingnum == max) {
+	    if (num < minanum) {
+	      bestidx = j;
+	      minanum = num;
 	    }}}}
-      else {
-	if (minbnum == max && mingnum == max) {
-	  if (num < minanum) {
-	    bestidx = j;
-	    minanum = num;
-	  }}}}
-    g_print("VALLRRR j %d and lb %d, nb %d\n", j, lastblock, nb);
-    if (j == lastblock) {
-      if (lastblock == nb - 1) break;
-      j = 0;
-      continue;
-    }
-    j++;
-    if (j == lastblock) {
-      if (lastblock != nb -1) {
-	lastblock = nb - 1;
-	j++;
+      if (j == lastblock) {
+	if (lastblock == nb - 1) break;
+	j = 0;
 	continue;
+      }
+      j++;
+      if (j == lastblock) {
+	if (lastblock != nb -1) {
+	  lastblock = nb - 1;
+	  j++;
+	  continue;
+	}
       }
     }
   }

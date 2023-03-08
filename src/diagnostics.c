@@ -11,6 +11,7 @@
 #include "callbacks.h"
 #include "startup.h"
 #include "maths.h"
+#include "colourspace.h"
 
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;

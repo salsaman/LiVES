@@ -15,11 +15,6 @@
 #include <libexplain/read.h>
 #endif
 
-//#define AUDIT_FBUFFS
-#ifdef AUDIT_FBUFFS
-static weed_plant_t *auditor = NULL;
-#endif
-
 off_t get_file_size(int fd, boolean is_native) {
   // get the size of file fd
   // is_native should be set in special cases to avoid mutex deadlocks
@@ -856,9 +851,6 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
   return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
 }
 
-#ifdef AUDIT_FBUFFS
-char *pkey;
-#endif
 
 static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t skip) {
   // slurped files: start reading in from posn skip (bytes), done in a dedicated worker thread
@@ -908,13 +900,14 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
     fbuff->skip = skip;
     if (1) {
       off_t offs = skip > 0 ? skip : 0;
-      fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
-#ifdef AUDIT_FBUFFS
+#if AUDIT_FBUFFS
+      char *pkey;
       if (!auditor) auditor = lives_plant_new(LIVES_WEED_SUBTYPE_AUDIT);
       pkey = lives_strdup_printf("%p", fbuff->buffer);
       weed_set_voidptr_value(auditor, pkey, fbuff->ptr);
       lives_free(pkey);
 #endif
+      fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
       lseek(fd, offs, SEEK_SET);
       mlock(fbuff->buffer, fsize);
       //g_printerr("slurp for %d, %s with size %ld buffer is %p\n", fd, fbuff->pathname, fsize, fbuff->buffer);
@@ -977,7 +970,8 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                                  (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
   if (lpt) {
-    mainw->debug_ptr = lpt;
+    /* mainw->debug_ptr = lpt; */
+    /* g_print("CREATE %p\n", lpt); */
     weed_set_voidptr_value(lpt, "_filebuff", (void *)fbuff);
     lives_proc_thread_set_cancellable(lpt);
   }

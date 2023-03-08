@@ -142,6 +142,24 @@ weed_leaf_delete_f _weed_leaf_delete;
 #define LIVES_UNLIKELY(a) UNEXPECTED(a)
 #define LIVES_LIKELY(a) EXPECTED(a)
 
+#define ADD_AUDIT(audt, ptr, vtype, val) do {				\
+    char *pkey;								\
+    if (!auditor_##audt) auditor_##audt = lives_plant_new(LIVES_WEED_SUBTYPE_AUDIT); \
+    pkey = lives_strdup_printf("%p", (ptr));				\
+    weed_set_##vtype##_value(auditor_##audt, pkey, (val));		\
+    lives_free(pkey);} while (0);
+
+#define REMOVE_AUDIT(audt, ptr) do {					\
+    if (auditor_##audt) {						\
+      char *pkey = lives_strdup_printf("%p", ptr);			\
+      weed_leaf_delete(auditor_##audt, pkey);				\
+      lives_free(pkey);}} while (0);
+
+#define AUDIT_REFC 1
+#if AUDIT_REFC
+extern weed_plant_t *auditor_refc;
+#endif
+
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 

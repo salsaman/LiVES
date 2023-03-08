@@ -18,8 +18,6 @@
 //#define DEBUG_LPT_REFS // lives_proc_threa refs / unrefs
 //#define DEBUG_WEED
 
-//
-
 // general purpose macros
 # define EMPTY(...)
 # define DEFER(...) __VA_ARGS__ EMPTY()

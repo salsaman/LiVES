@@ -103,9 +103,10 @@ void show_audit(weed_plant_t *plant) {
         case WEED_SEED_PLANTPTR: {
           void *ptr;
           if (lives_strtol(keys[n] + 2)) {
+            weed_plant_t *pl = weed_get_plantptr_value(plant, keys[n], NULL);
             fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
-            sscanf(keys[n], "%p", &ptr);
-            show_all_leaves((weed_plant_t *)ptr);
+            //sscanf(keys[n], "%p", &ptr);
+            if (pl) show_all_leaves(pl);
           }
         }
         break;

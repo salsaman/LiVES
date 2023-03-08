@@ -1784,17 +1784,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 }
 
 
-static boolean lptdone(lives_obj_t *obj, void *data) {
-  GET_PROC_THREAD_SELF(self);
-  *(boolean *)data = TRUE;
-  if (mainw->debug) {
-    break_me("LPTDONE");
-  }
-  mainw->debug_ptr = self;
-  return TRUE;
-}
-
-
 void unlock_lpt(lives_proc_thread_t lpt) {
   if (!pthread_mutex_trylock(&lpt_mutex)) {
     if (lpttorun == lpt) lpttorun = NULL;
@@ -5469,7 +5458,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_range(LiVESSpinButton *button, double min, double max) {
 #ifdef GUI_GTK
-  if (!gui_loop_tight || is_fg_thread()) gtk_spin_button_set_range(button, min, max);
+  if (is_fg_thread()) gtk_spin_button_set_range(button, min, max);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
     MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_range, 0, "vdd", button, min, max);
@@ -12259,6 +12248,7 @@ boolean lives_window_center(LiVESWindow * window) {
     xcen = mainw->mgeom[widget_opts.monitor].x + ((mainw->mgeom[widget_opts.monitor].width - width) >> 1);
     ycen = mainw->mgeom[widget_opts.monitor].y + ((mainw->mgeom[widget_opts.monitor].height - height) >> 1);
 
+    g_print("MOV %d %d\n", xcen, ycen);
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
   }
   return TRUE;

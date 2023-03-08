@@ -410,7 +410,10 @@ weed_layer_t **map_sources_to_tracks(boolean rndr) {
 
   for (i = 0; i < mainw->num_tracks; i++) {
     if (i == 1 && mainw->blend_layer) layers[i] = mainw->blend_layer;
-    else layers[i] = lives_layer_create_with_metadata(mainw->clip_index[i], mainw->frame_index[i]);
+    else {
+      layers[i] = lives_layer_create_with_metadata(mainw->clip_index[i], mainw->frame_index[i]);
+      //mainw->debug_ptr = layers[i];
+    }
     if (rndr) {
       weed_layer_set_palette(layers[i], (mainw->clip_index[i] == -1 ||
                                          mainw->files[mainw->clip_index[i]]->img_type ==

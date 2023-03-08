@@ -758,7 +758,7 @@ static boolean pre_init(void) {
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   // test
-  if (1 || prefs->vj_mode) prefs->skip_rpts = TRUE;
+  //if (1 || prefs->vj_mode) prefs->skip_rpts = TRUE;
 
   mainw->vrfx_update = NULL;
 

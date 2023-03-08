@@ -5,6 +5,10 @@
 
 #include "main.h"
 
+#ifdef AUDIT_REFC
+weed_plant_t *auditor_refc = NULL;
+#endif
+
 /**
    lives_proc_threads API
    - both proc_threads and normal threads are executed by worker thread from the pool, however:
@@ -565,7 +569,13 @@ lives_proc_thread_t lives_proc_thread_chain(lives_proc_thread_t lpt, ...) {
         xlpt = _lives_proc_thread_create_vargs(attrs, func, NULL, rtype, args_fmt, va);
       }
       if (!lpt) lpt = xlpt;
-      else lives_proc_thread_chain_next(lpt, xlpt);
+      else {
+        lives_proc_thread_chain_next(lpt, xlpt);
+        /* if (!mainw->debug_ptr) { */
+        /*   mainw->debug_ptr = xlpt; */
+        /*   g_print("CREATE %p\n", xlpt); */
+        /* } */
+      }
     }
   } while (func);
   va_end(va);
@@ -857,7 +867,6 @@ int refs = -1;
 if (lpt) {
   pthread_rwlock_t *destruct_rwlock;
   pthread_mutex_lock(&ref_sync_mutex);
-
   destruct_rwlock = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL);
   if (destruct_rwlock && !pthread_rwlock_rdlock(destruct_rwlock)) {
     pthread_mutex_unlock(&ref_sync_mutex);
@@ -888,7 +897,6 @@ int lives_proc_thread_unref(lives_proc_thread_t lpt) {
 #endif
 if (lpt) {
   pthread_rwlock_t *destruct_rwlock;
-
   pthread_mutex_lock(&ref_sync_mutex);
   destruct_rwlock
     = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL);
@@ -911,52 +919,44 @@ if (lpt) {
       lives_proc_thread_t nxtlpt;
       weed_plant_t *data;
       pthread_mutex_t *state_mutex;
-      lives_hook_stack_t **lpt_hooks;
-      // will trigger destruction hook
+      lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
 
-      lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYING | THRD_STATE_DESTROYED);
+      if (lives_proc_thread_get_closure(lpt)) break_me("free lpt with closure !");
 
-      if (lpt == self) lives_thread_pop_self();
-
-      // make sure the proc_thread is not in the work queue
       if (lives_proc_thread_get_work(lpt)) {
         // try to remove from pool, but we may be too late
         // however we also lock twork_list, and worker threads should give up if DESTROYING is set
         lpt_remove_from_pool(lpt);
       }
 
-      lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
+      // will trigger destruction hook
+      lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYING | THRD_STATE_DESTROYED);
 
-      // action any deferred updates
-      /* if (mainw->debug_ptr == lpt) { */
-      /*   dump_hook_stack(lpt_hooks, LIVES_GUI_HOOK); */
-      /*   break_me("flush"); */
-      /* } */
-      lives_proc_thread_trigger_hooks(lpt, LIVES_GUI_HOOK);
-
-      if (lives_proc_thread_get_closure(lpt)) break_me("free lpt with closure !");
-      state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
-
-      // remove any callbacks from stacks in other lpts / threads
-      flush_cb_list(lpt);
-
-      lives_nanosleep_until_zero(pthread_mutex_lock(&mainw->all_hstacks_mutex));
+      pthread_mutex_lock(&mainw->all_hstacks_mutex);
       mainw->all_hstacks =
         lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
-      // this will force other lpts to remove their pointers to callbacks in our stacks
-      lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
       pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-      lives_free(lpt_hooks);
 
       nxtlpt = lives_proc_thread_get_chain_next(lpt);
       if (nxtlpt && nxtlpt != lives_proc_thread_get_chain_prime(lpt)) {
         lives_proc_thread_unref(nxtlpt);
       }
 
+      lives_hooks_trigger(lpt_hooks, LIVES_GUI_HOOK);
+
+      // this will force other lpts to remove their pointers to callbacks in our stacks
+      lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
+      lives_free(lpt_hooks);
+
+      // remove any callbacks from stacks in other lpts / threads
+      flush_cb_list(lpt);
+
       data = lives_proc_thread_get_data(lpt);
       if (data && weed_refcount_dec(data) == 0)
         weed_plant_free(data);
 
+      state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+      if (lpt == self) lives_thread_pop_self();
       weed_plant_free(lpt);
 
       pthread_mutex_destroy(state_mutex);
@@ -1951,7 +1951,7 @@ LIVES_GLOBAL_INLINE char *lives_proc_thread_sync_with(lives_proc_thread_t lpt, c
     char *xmotive;
     GET_PROC_THREAD_SELF(self);
     if (lpt == self) {
-      LIVES_WARN("lpt syncing with self\n");
+      lives_proc_thread_unref(lpt);
       return NULL;
     }
     if (motive) lives_proc_thread_set_sync_motive(motive);
@@ -3050,6 +3050,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
     return FALSE;
   }
 
+  // REFS++
   if (lives_proc_thread_ref((lpt = mywork->lpt)) < 2) lpt = NULL;
 
   pthread_mutex_unlock(&twork_mutex);

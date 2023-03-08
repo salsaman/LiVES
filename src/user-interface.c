@@ -676,6 +676,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
   }
+  lives_painter_surface_flush(surface);
   lives_painter_fill(cr);
   lives_painter_destroy(cr);
 }
@@ -693,8 +694,10 @@ void reset_mainwin_size(void) {
   by = abs(by);
 
   if (!mainw->hdrbar) {
-    if (prefs->open_maximised && by > MENU_HIDE_LIM)
+    if (prefs->open_maximised && by > MENU_HIDE_LIM) {
+      break_me("mabr hide 1");
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
   }
 
   w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
@@ -754,9 +757,10 @@ void get_gui_framesize(int *hsize, int *vsize) {
   bx = abs(bx);
   by = abs(by);
 
-  if (!mainw->hdrbar && by > MENU_HIDE_LIM)
+  if (!mainw->hdrbar && by > MENU_HIDE_LIM) {
+    break_me("mabr hide 2");
     lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-
+  }
   if (hsize) *hsize = (((scr_width - H_RESIZE_ADJUST * 3 + bx) / 3) >> 1) << 1;
   if (vsize) *vsize = ((int)(scr_height - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
                                / sqrt(widget_opts.scaleH) + vspace + by
@@ -923,6 +927,40 @@ void resize(double scale) {
 }
 
 
+// when doing things which may chenge widget sizes withint the CE GUI,
+// reset_message_area should be called first, this will cause the main window height to shrink
+// and allows the other widgets to shrink or expand
+// then resize_message_area should be added as an idlefunc. The size and position of the main window will be reset
+// and the message area will resize itself to occupy the free vertical space. After doing so we check main window size,
+// to see if has the requested size. If not then we repeat the process, set the height to 1, resize the main window
+// add the message area with adjusted height, until the main window keeps its correct size.
+
+// NOTE:
+// This is the only way in GTK+. You cannot ask a window to shrink or grow to a pecific by auto adjusting the size of a child widget.
+// All you can do is shrink or grow the child widget and reshow the parent. The parent will then resize itself to contain the child widgets.
+// It is not always posible to determine in advance the size of the child widfet which will result in the parent ending up with the target size.
+// This is partly due to the fact that other widgets inside the parent may also resize themselves according to the child widget being adjusted.
+// Thus this has to be done iteratively, using heuristics to avoid falling into loops.
+//
+// It would be nice if gtk+ / gdk would provide some simple way to do this - provide a target size for a parent window, and a pointer to an "adjustable"
+// widget, and have gtk+ automatically shrink or expand the adjustable widget so that the parent window ended up with the target size.
+// This would be especially useful when you want the parent window to have the display size, no more and no less.
+// In some cases you can maximize the window, but this only works if the window size is SMALLER than the screen size.
+
+void reset_message_area(void) {
+  if (!prefs->show_msg_area || mainw->multitrack) return;
+  if (!mainw->is_ready || !prefs->show_gui) return;
+  // need to shrink the message_box then re-expand it after redrawing the widgets
+  // otherwise the main window can expand beyond the bottom of the screen
+  lives_widget_set_size_request(mainw->message_box, 1, 1);
+  lives_widget_set_size_request(mainw->msg_area, 1, 1);
+
+  // hide this and show it last, because being narrow, it can "poke up" into the area above
+  // and mess up the size calculations
+  lives_widget_hide(mainw->msg_scrollbar);
+}
+
+
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
@@ -959,6 +997,7 @@ boolean resize_message_area(livespointer data) {
     isfirst = FALSE;
   }
   resize(1.);
+  lives_widget_show(mainw->msg_scrollbar);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   return FALSE;
 }

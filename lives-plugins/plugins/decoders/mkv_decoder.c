@@ -2118,6 +2118,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   }
 
   if (!attach_stream(cdata, clonetype)) {
+    cdata->nclips = 0;
     clip_data_free(cdata);
     return NULL;
   }
@@ -3236,8 +3237,10 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (priv->idxc) idxc_release(cdata, priv->idxc);
   if (priv->idxb) idxc_release(cdata, priv->idxb);
   priv->idxc = priv->idxb = NULL;
-  if (cdata->URI) detach_stream(cdata);
-  //lsd_struct_free(cdata->lsd);
+  if (cdata->nclips) {
+    detach_stream(cdata);
+    lsd_struct_free(cdata->lsd);
+  }
 }
 
 

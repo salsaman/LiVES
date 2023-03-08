@@ -826,7 +826,6 @@ static void _remove_ext_cb(lives_proc_thread_t lpt,
   LiVESList *xlist, *list, *listnext;
   cl->adder = NULL;
   cl->flags |= HOOK_STATUS_REMOVE;
-  g_print("REM 2nnnn\n");
   xlist = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
   if (xlist) {
     for (list = xlist; list; list = listnext) {
@@ -988,7 +987,6 @@ void flush_cb_list(lives_proc_thread_t lpt) {
 
 
     cl->flags |= HOOK_STATUS_REMOVE;
-    g_print("REM 2oppppppp\n");
     pthread_mutex_unlock(&cl->mutex);
     xlist = lives_list_remove_node(xlist, xlist, FALSE);
     weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, xlist);
@@ -1173,7 +1171,6 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         // here we have established that the closure must be removed
         // since we already found a match, or we will prepend, or it is a "toggle" function
         closure->flags |= HOOK_STATUS_REMOVE;
-        g_print("REM 2jijsaiajsio\n");
 
         if (xflags & HOOK_TOGGLE_FUNC) {
           // for toggle func, this closure will be removed, and new lpt will be rejected
@@ -1218,7 +1215,6 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
         break;
       }
 
-      g_print("REM 2uuuuuuuuu\n");
       closure->flags |= HOOK_STATUS_REMOVE;
       continue;
     }
@@ -1500,7 +1496,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         lives_proc_thread_execute(lpt, closure->retloc);
         //if (lpt == mainw->debug_ptr) {
         lives_proc_thread_t xxlpt = hstack->owner;
-        mainw->debug_ptr = xxlpt;
+        //mainw->debug_ptr = xxlpt;
         g_print("runing hstack type %d, fun was %s, holder is %s. with %d refs\nflags is %s\n", type,
                 lives_proc_thread_get_funcname(lpt), lives_proc_thread_get_funcname(xxlpt),
                 lives_proc_thread_count_refs(lpt), cl_flags_desc(closure->flags));
@@ -1645,7 +1641,6 @@ int lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
     if (!lpt || lives_proc_thread_ref(lpt) < 2) continue;
 
     if (lives_proc_thread_was_cancelled(lpt)) {
-      g_print("REM 3\n");
       closure->flags |= HOOK_STATUS_REMOVE;
       remove_from_hstack(hstack, list);
       continue;
@@ -1718,7 +1713,6 @@ void lives_hook_remove(lives_proc_thread_t lpt) {
   // - hook callback is no longer needed
   //
   lives_closure_t *closure = lives_proc_thread_get_closure(lpt);
-  g_print("REM 888\n");
 
   if (closure) closure->flags |= HOOK_STATUS_REMOVE;
   // flag lpt as INVALID, if a thread id waiting it will ontinue
@@ -1747,7 +1741,6 @@ void lives_hook_remove_by_data(lives_hook_stack_t **hstacks, int type,
         if (!lpt || !closure->fdef) continue;
         if (closure->fdef->function != func) continue;
         if (data != weed_get_voidptr_value(lpt, PROC_THREAD_PARAM(1), NULL)) continue;
-        g_print("REM 2xxx\n");
         closure->flags |= HOOK_STATUS_REMOVE;
         // flag lpt as INVALID, if a thread id waiting it will ontinue
         lives_proc_thread_set_state(lpt, (THRD_STATE_INVALID | THRD_STATE_DESTROYING));

@@ -5105,14 +5105,3 @@ void splash_end(void) {
   }
 }
 
-
-void reset_message_area(void) {
-  if (!prefs->show_msg_area || mainw->multitrack) return;
-  if (!mainw->is_ready || !prefs->show_gui) return;
-  // need to shrink the message_box then re-expand it after redrawing the widgets
-  // otherwise the main window can expand beyond the bottom of the screen
-  lives_widget_set_size_request(mainw->message_box, 1, 1);
-  lives_widget_set_size_request(mainw->msg_area, 1, 1);
-  lives_widget_set_size_request(mainw->msg_scrollbar, 1, 1);
-}
-

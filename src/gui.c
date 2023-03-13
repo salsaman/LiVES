@@ -76,7 +76,6 @@ void load_theme_images(void) {
     }
 
     lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->sep_image), mainw->imsep);
-    // imframe
 
     pixbuf = lives_pixbuf_new_from_file(mainw->frameblank_path, &error);
 
@@ -3366,7 +3365,9 @@ void show_lives(void) {
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
   }
 
+  mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
 
   if (prefs->show_gui) {
     if (palette->style & STYLE_1) {
@@ -4407,6 +4408,7 @@ static void _resize_play_window(void) {
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         mainw->ignore_screen_size = TRUE;
+
         if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
             && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
             capable->wm_caps.pan_res & RESTYPE_ACTION) {
@@ -4431,11 +4433,10 @@ static void _resize_play_window(void) {
         lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
 
-        mainw->ignore_screen_size = TRUE;
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
-
         lives_widget_queue_draw_and_update(mainw->play_window);
+        mainw->ignore_screen_size = FALSE;
       }
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
@@ -5081,10 +5082,6 @@ void splash_msg(const char *msg, double pct) {
   lives_widget_queue_draw_and_update(mainw->splash_window);
   if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
     lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-
-  /* mainw->gui_much_events = TRUE; */
-  /* lives_widget_context_update(); */
-  /* mainw->gui_much_events = FALSE; */
 }
 
 

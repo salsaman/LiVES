@@ -1072,6 +1072,7 @@ typedef struct {
   int errval;
   boolean use_ext_memfuncs;
   int index_scale;
+  double est_noseek;
 } lives_mkv_priv_t;
 
 #define ERR_NOMEM         1

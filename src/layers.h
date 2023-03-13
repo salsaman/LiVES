@@ -31,6 +31,7 @@ weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int curr
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
 weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame);
+void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
 
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);

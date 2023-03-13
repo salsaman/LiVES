@@ -2248,8 +2248,6 @@ boolean reload_clip(int fileno, frames_t maxframe) {
   lives_free(clipdir);
 
   while (1) {
-    threaded_dialog_spin(0.);
-
     fake_cdata->URI = lives_strdup(sfile->file_name);
     fake_cdata->fps = sfile->fps;
 
@@ -2717,11 +2715,14 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (!auto_recover) {
     char *tmp;
-    //lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+
+    lives_nanosleep_while_false(mainw->pretty_colours);
+
+    lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
 
     if (!do_yesno_dialogf_with_countdown
-        (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n")))) {
+        (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\n"
+                            "Do you want to attempt to recover them ?\n")))) {
       lives_free(tmp);
       retb = FALSE;
       goto recovery_done;
@@ -2751,9 +2752,18 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->recovering_files = TRUE;
 
   while (1) {
-    if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+    // must set this until after setting strt and end.
+    // otherwise  all_config() may get triggered for start and end image.
+    // If start or end is zero,
+    // this will cause the widget to be redrawn with the image blank pixbuf
+    defer_config(mainw->start_image);
+    defer_config(mainw->end_image);
 
     threaded_dialog_spin(0.);
+
+    if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+
+    //threaded_dialog_spin(0.);
     is_scrap = FALSE;
     is_ascrap = FALSE;
 
@@ -2966,6 +2976,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
     }
 
+    cfile->start = cfile->frames > 0 ? 1 : 0;
+    cfile->end = cfile->frames;
+
     threaded_dialog_spin(0.);
 
     /** not really from a set, but let's pretend to get the details
@@ -3012,14 +3025,14 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     add_to_clipmenu();
 
-    cfile->start = cfile->frames > 0 ? 1 : 0;
-    cfile->end = cfile->frames;
     cfile->is_loaded = TRUE;
     cfile->changed = TRUE;
     lives_rm(cfile->info_file);
     if (!mainw->multitrack) set_main_title(cfile->name, 0);
 
     if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
+
+    if (!mainw->multitrack) resize(1);
 
     if (!mainw->multitrack) {
       lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
@@ -3063,11 +3076,11 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       cfile->async_delta = 0;
     }
 
-    if (!mainw->multitrack) resize(1);
-
     lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
   }
-  //}
+
+  run_deferred_config(mainw->start_image, &mainw->si_surface);
+  run_deferred_config(mainw->end_image, &mainw->ei_surface);
 
   //if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 

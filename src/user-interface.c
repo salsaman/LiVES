@@ -703,11 +703,10 @@ void reset_mainwin_size(void) {
   w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 
-  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
-
   // resize the main window so it fits the gui monitor
   if (prefs->open_maximised) {
     bx = by = 0;
+    lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -719,8 +718,9 @@ void reset_mainwin_size(void) {
     if (w > scr_width - bx || h > scr_height - by) {
       w = scr_width - bx;
       h = scr_height - by;
-      lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
     }
+    lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+    lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &x, &y);
     if (x + w > scr_width - bx) x = scr_width - bx - w;
     if (y + h > scr_height - by) y = scr_height - by - h;
@@ -811,8 +811,6 @@ static void _resize(double scale) {
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
   bx = 2 * abs(bx);
   by = abs(by);
-
-  g_print("VS4 is %d\n", vsize);
 
   if (scale < 0.) {
     // foreign capture
@@ -957,13 +955,14 @@ void reset_message_area(void) {
 
   // hide this and show it last, because being narrow, it can "poke up" into the area above
   // and mess up the size calculations
-  lives_widget_hide(mainw->msg_scrollbar);
+  if (mainw->msg_scrollbar) lives_widget_hide(mainw->msg_scrollbar);
 }
 
 
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
+  if (mainw->no_idlefuncs) return TRUE;
 
   if (data) isfirst = TRUE;
 
@@ -992,12 +991,13 @@ boolean resize_message_area(livespointer data) {
     if (!CURRENT_CLIP_IS_VALID) {
       d_print("");
     }
+    if (mainw->msg_scrollbar) lives_widget_show(mainw->msg_scrollbar);
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
     isfirst = FALSE;
   }
   resize(1.);
-  lives_widget_show(mainw->msg_scrollbar);
+  if (mainw->msg_scrollbar) lives_widget_show(mainw->msg_scrollbar);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   return FALSE;
 }

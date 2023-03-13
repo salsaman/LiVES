@@ -1391,6 +1391,7 @@ static boolean reset_timebase(void) {
         pa_reset = FALSE;
       }
     } else {
+      //      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
       if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
         pa_reset = FALSE;
       }
@@ -2051,9 +2052,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
   GET_PROC_THREAD_SELF(self);
-
   FILE *infofile = NULL;
-
   uint64_t time = 0, stime = 0;
 
   char *label_text;
@@ -2132,11 +2131,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   if (!mainw->cancelled && (!self || !lives_proc_thread_get_cancel_requested(self))) {
     if (infofile) {
       if (type == 0 || type == 2) {
-        size_t bread;
-        THREADVAR(read_failed) = FALSE;
-        bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-        fclose(infofile);
-        lives_memset(mainw->msg + bread, 0, 1);
+        read_from_infofile(infofile);
         if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
         if (alarm_handle > 0) {
           ticks_t tl;
@@ -3585,7 +3580,7 @@ static void _threaded_dialog_spin(double fraction) {
     }
   }
   // necessary
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 

@@ -2615,7 +2615,8 @@ lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose) {
   // we ned to be able to specify the purpose - track main, track precache, thumbnailer
   if (IS_NORMAL_CLIP(nclip)) {
     lives_decoder_t *dec = clone_decoder(nclip);
-    if (dec) add_clip_source(nclip, track, purpose, (void *)dec, LIVES_SRC_TYPE_DECODER);
+    if (dec) add_clip_source(nclip, track, purpose,
+                               (void *)dec, LIVES_SRC_TYPE_DECODER);
     return dec;
   }
   return NULL;

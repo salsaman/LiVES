@@ -1661,6 +1661,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_th
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t xself) {
+  if (xself == mainw->debug_ptr) break_me("cancelled");
   if (xself) {
     GET_PROC_THREAD_SELF(self);
     lives_proc_thread_include_states(xself, THRD_STATE_CANCELLED);

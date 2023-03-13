@@ -145,6 +145,26 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, f
 }
 
 
+void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
+  if (src && dest) {
+    int width = weed_layer_get_width(src);
+    int height = weed_layer_get_height(src);
+    weed_layer_set_size(dest, width, height);
+    if (weed_plant_has_leaf(src, WEED_LEAF_NATURAL_SIZE))
+      weed_leaf_dup(dest, src, WEED_LEAF_NATURAL_SIZE);
+    else {
+      int nsize[2];
+      nsize[0] = width;
+      nsize[1] = height;
+      weed_set_int_array(dest, WEED_LEAF_NATURAL_SIZE, 2, nsize);
+    }
+    weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE);
+    weed_leaf_dup(dest, src, WEED_LEAF_YUV_SUBSPACE);
+    weed_leaf_dup(dest, src, WEED_LEAF_YUV_SAMPLING);
+    weed_leaf_dup(dest, src, WEED_LEAF_YUV_CLAMPING);
+  }
+}
+
 
 /**
    @brief fills layer with default values.
@@ -600,11 +620,11 @@ LIVES_GLOBAL_INLINE boolean weed_layer_check_valid(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
-    /* if (mainw->debug_ptr == layer) { */
-    /*   g_print("FREE %p\n", layer); */
-    /*   break_me("free dbg"); */
-    /*   mainw->debug_ptr = NULL; */
-    /* } */
+    if (mainw->debug_ptr == layer) {
+      g_print("FREE %p\n", layer);
+      break_me("free dbg");
+      mainw->debug_ptr = NULL;
+    }
     weed_layer_pixel_data_free(layer);
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     weed_plant_free(layer);
@@ -613,11 +633,12 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 }
 
 int weed_layer_unref(weed_layer_t *layer) {
-  //if (layer == mainw->debug_ptr) break_me("unref ofl");
   int refs = weed_refcount_dec(layer);
-  if (!refs) {
-    weed_layer_free(layer);
+  if (layer == mainw->debug_ptr) {
+    //break_me("unref dbg");
+    g_print("nrefs is %d\n", refs);
   }
+  if (!refs) weed_layer_free(layer);
   return refs;
 }
 

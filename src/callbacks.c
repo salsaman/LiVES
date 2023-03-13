@@ -418,7 +418,8 @@ void lives_exit(int signum) {
             abortit = TRUE;
             THREADVAR(com_failed) = FALSE;
             msg = lives_strdup_printf(_("A problem was encountered while moving %s to\n%s\n"
-                                        "Please review the log check your system for possible errors\n"), from, future_prefs->workdir);
+                                        "Please review the log check your system for possible errors\n"),
+                                      from, future_prefs->workdir);
           } else {
             msg = lives_strdup_printf(_("Successfully migrated %s to\%s\nDetails may be viewed in the log file\n"), from,
                                       future_prefs->workdir);
@@ -5569,10 +5570,14 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   g_print("lpt has1 %d refs\n", lives_proc_thread_count_refs(lpt));
   mainw->debug_ptr = lpt;
 
+  if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
+  clear_mainw_msg();
+
   lives_popen(com, TRUE, (char *)tbuff, 0);
   lives_free(com);
 
-  g_print("lpt has2 %d refs\n", lives_proc_thread_count_refs(lpt));
+  // 4 refs !!!!
+  g_print("lpt has2 %d refs, reading from %s\n", lives_proc_thread_count_refs(lpt), cfile->info_file);
   lives_proc_thread_cancel(lpt);
   g_print("lpt has3 %d refs\n", lives_proc_thread_count_refs(lpt));
 
@@ -5583,6 +5588,8 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   lives_proc_thread_join(lpt);
 
   lives_widget_context_update();
+
+  read_from_infofile(NULL);
 
   return tbuff;
 }
@@ -5882,11 +5889,12 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   tbuff = cleardisk_analyse(temp_backend, trashdir);
 
   // show results of analysis
-
+  break_me("diska");
   if (*mainw->msg && (ntok = get_token_count(mainw->msg, '|')) > 1) {
     char **array = lives_strsplit(mainw->msg, "|", 2);
     if (!strcmp(array[0], "completed")) {
       nitems = atoi(array[1]);
+      g_print("GOT NITEMS %d\n", nitems);
     }
     lives_strfreev(array);
   }
@@ -5910,7 +5918,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // *INDENT-ON*
 
   tbuff = NULL;
-
+  break_me("cllnup ready");
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
   } else {
@@ -7277,6 +7285,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       if (mainw->sep_win) {
         mainw->ignore_screen_size = TRUE;
         resize_play_window();
+        mainw->ignore_screen_size = FALSE;
         if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
           lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
       }
@@ -7297,7 +7306,6 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
-        mainw->ignore_screen_size = TRUE;
         if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
             && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
             capable->wm_caps.pan_res & RESTYPE_ACTION) {
@@ -7320,6 +7328,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         if (!mainw->faded) unfade_background();
         mainw->ignore_screen_size = TRUE;
         resize_play_window();
+        mainw->ignore_screen_size = FALSE;
 
         if (!mainw->multitrack && mainw->opwx > -1) {
           //opwx and opwy were stored when we first switched to full screen
@@ -7566,6 +7575,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
           resize(1.);
           if (mainw->fs) mainw->ignore_screen_size = TRUE;
           resize_play_window();
+          mainw->ignore_screen_size = FALSE;
         }
 
         if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
@@ -7585,6 +7595,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
           if (prefs->show_desktop_panel) {
             show_desktop_panel();
           }
+          mainw->ignore_screen_size = FALSE;
         }
 
         kill_play_window();
@@ -7617,8 +7628,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
 	    unhide_main_gui();
 	    lives_widget_context_update();
 	    pop_to_front(LIVES_MAIN_WINDOW_WIDGET, NULL);
-	  }}}}
-  }
+	  }}}}}
   // *INDENT-ON*
 
   if (mainw->sep_win) {
@@ -9295,12 +9305,13 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
 boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_surface_t **surf = (lives_painter_surface_t **)psurf;
   if (surf && *surf) {
+    boolean need_unlock = FALSE;
     pthread_mutex_t *mlocked = NULL;
     if (*surf == mainw->play_surface) mlocked = &mainw->play_surface_mutex;
-    if (mlocked) pthread_mutex_lock(mlocked);
+    if (mlocked && !pthread_mutex_trylock(mlocked)) need_unlock = TRUE;
     lives_painter_set_source_surface(cr, *surf, 0., 0.);
     lives_painter_paint(cr);
-    if (mlocked) pthread_mutex_unlock(mlocked);
+    if (need_unlock) pthread_mutex_unlock(mlocked);
   }
   return TRUE;
 }
@@ -9423,6 +9434,7 @@ boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 }
 
 boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  if (mainw->no_configs) return TRUE;
   if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
   mainw->video_drawable = lives_widget_create_painter_surface(widget);
   clear_widget_bg(widget, mainw->video_drawable);
@@ -9441,6 +9453,7 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   // this is used only when the mainwindow size changes
   // TODO - should we invalidate drawables for all clips ?
+  if (mainw->no_configs) return TRUE;
   if (!mainw->reconfig) return TRUE;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
@@ -9472,6 +9485,7 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 }
 
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  if (mainw->no_configs) return TRUE;
   if (!mainw->reconfig) return TRUE;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
@@ -9500,14 +9514,14 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 
 
 /// generic func. to create surfaces
-boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
+static void all_config(LiVESWidget * widget, livespointer ppsurf) {
+  RECURSE_GUARD_START;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
-  static boolean no_recurse = FALSE;
-  if (mainw->no_configs) return TRUE;
 
-  if (no_recurse) return TRUE;
+  if (!psurf) return;
 
-  if (!psurf) return FALSE;
+  RETURN_IF_RECURSED;
+
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
 
@@ -9516,12 +9530,12 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     LiVESWidget *parent = lives_widget_get_parent(widget);
     if (parent && LIVES_IS_BUTTON(parent) && is_standard_widget(parent)) {
       render_standard_button(LIVES_BUTTON(parent));
-      return FALSE;
+      return;
     }
   }
 #endif
 
-  clear_widget_bg(widget, *psurf);
+  //clear_widget_bg(widget, *psurf);
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
@@ -9530,9 +9544,9 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   else if (widget == mainw->preview_image)
     load_preview_image(FALSE);
   else if (widget == mainw->msg_area && !mainw->multitrack) {
-    no_recurse = TRUE;
+    RECURSE_GUARD_LOCK;
     msg_area_config(widget);
-    no_recurse = FALSE;
+    RECURSE_GUARD_END;
   } else if (widget == mainw->dsu_widget)
     draw_dsu_widget(widget);
   else if (mainw->multitrack) {
@@ -9546,12 +9560,35 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
       //set_mt_play_sizes_cfg(mainw->multitrack);
       //mt_show_current_frame(mainw->multitrack, FALSE);
     } else if (widget == mainw->multitrack->msg_area) {
-      no_recurse = TRUE;
+      RECURSE_GUARD_LOCK;
       msg_area_config(widget);
-      no_recurse = FALSE;
+      RECURSE_GUARD_END;
     }
   }
+}
+
+
+boolean all_config_deferrable(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
+  // a deferrable config_function - amazing !
+  int do_defer = GET_INT_DATA(widget, DEFER_KEY);
+  if (do_defer) SET_INT_DATA(widget, DEFERRED_KEY, 1);
+  else all_config(widget, ppsurf);
   return FALSE;
+}
+
+
+void run_deferred_config(LiVESWidget * widget, livespointer ppsurf) {
+  SET_INT_DATA(widget, DEFER_KEY, 0);
+  if (GET_INT_DATA(widget, DEFERRED_KEY)) {
+    SET_INT_DATA(widget, DEFERRED_KEY, 0);
+    all_config(widget, ppsurf);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {
+  SET_INT_DATA(widget, DEFERRED_KEY, 0);
+  SET_INT_DATA(widget, DEFER_KEY, 0);
 }
 
 

@@ -3,12 +3,12 @@
 # This file is distributed under the same license as the lives package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
-#: src/interface.c:927
+#: src/interface.c:926
 msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-03-05 03:29-0300\n"
+"POT-Creation-Date: 2023-03-08 03:45-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -1827,7 +1827,7 @@ msgstr "Ayrıştırma"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:62 src/interface.c:1254 src/gui.c:2462 src/resample.c:2174
+#: src/interface.c:62 src/interface.c:1253 src/gui.c:2462 src/resample.c:2174
 msgid "Video"
 msgstr "Video"
 
@@ -1858,351 +1858,351 @@ msgstr "(Tanımsız)"
 msgid "(No audio)"
 msgstr "(Ses yok)"
 
-#: src/interface.c:771 src/callbacks.c:9883 src/callbacks.c:9905
-#: src/callbacks.c:9906 src/gui.c:3652 src/gui.c:4194 src/dialogs.c:1586
+#: src/interface.c:770 src/callbacks.c:9891 src/callbacks.c:9913
+#: src/callbacks.c:9914 src/gui.c:3652 src/gui.c:4194 src/dialogs.c:1586
 #: src/dialogs.c:1587 src/dialogs.c:1913 src/dialogs.c:1914 src/framedraw.c:321
 #: src/framedraw.c:384 src/multitrack.c:6024 src/player-control.c:401
 msgid "Preview"
 msgstr "Önizleme"
 
-#: src/interface.c:819
+#: src/interface.c:818
 #, fuzzy
 msgid "Click here to _Preview the Selected Video, Image or Audio File"
 msgstr "video _önizleme için buraya tıklayın"
 
-#: src/interface.c:825
+#: src/interface.c:824
 #, fuzzy
 msgid "Click here to _Preview the Selected Audio File"
 msgstr "video _önizleme için buraya tıklayın"
 
-#: src/interface.c:829
+#: src/interface.c:828
 #, fuzzy
 msgid "Click here to _Preview the Selection"
 msgstr "video _önizleme için buraya tıklayın"
 
-#: src/interface.c:835
+#: src/interface.c:834
 #, fuzzy
 msgid "Click here to _Preview the file"
 msgstr "video _önizleme için buraya tıklayın"
 
-#: src/interface.c:860
+#: src/interface.c:859
 #, fuzzy
 msgid "Apply deinterlace"
 msgstr "Ayrıştırma"
 
-#: src/interface.c:899 src/interface.c:1027
+#: src/interface.c:898 src/interface.c:1026
 #, fuzzy
 msgid "Processing..."
 msgstr "LiVES: - İşleniyor..."
 
-#: src/interface.c:952 src/interface.c:1115
+#: src/interface.c:951 src/interface.c:1114
 msgid "_Enough"
 msgstr "_Yeterli"
 
-#: src/interface.c:990
+#: src/interface.c:989
 msgid "Switch off real time effects when finished"
 msgstr ""
 
-#: src/interface.c:998
+#: src/interface.c:997
 msgid "Switch to intenal audio when finished"
 msgstr ""
 
-#: src/interface.c:1002
+#: src/interface.c:1001
 msgid "Notify when finished"
 msgstr ""
 
-#: src/interface.c:1100
+#: src/interface.c:1099
 #, fuzzy
 msgid "Show Details"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:1100
+#: src/interface.c:1099
 #, fuzzy
 msgid "Hide Details"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:1121 src/callbacks.c:9602 src/callbacks.c:9664
+#: src/interface.c:1120 src/callbacks.c:9610 src/callbacks.c:9672
 msgid "Paus_e"
 msgstr "Durakla_t"
 
-#: src/interface.c:1122 src/callbacks.c:9663
+#: src/interface.c:1121 src/callbacks.c:9671
 msgid "Pause/_Enough"
 msgstr "Duraklat/_Yeterli"
 
-#: src/interface.c:1126
+#: src/interface.c:1125
 msgid "_Preview"
 msgstr "_Önizleme"
 
-#: src/interface.c:1242
+#: src/interface.c:1241
 #, fuzzy
 msgid "Multitrack Details"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/interface.c:1264 src/interface.c:6433
+#: src/interface.c:1263 src/interface.c:6416
 msgid "Format"
 msgstr "Biçim"
 
-#: src/interface.c:1278 src/interface.c:3531 src/videodev.c:595
+#: src/interface.c:1277 src/interface.c:3530 src/videodev.c:595
 msgid "FPS"
 msgstr "FPS"
 
-#: src/interface.c:1289
+#: src/interface.c:1288
 #, fuzzy
 msgid "Frame Size"
 msgstr "Çerçeve boyutu"
 
-#: src/interface.c:1302
+#: src/interface.c:1301
 msgid "Frames"
 msgstr "Çerçeveler"
 
-#: src/interface.c:1314
+#: src/interface.c:1313
 #, fuzzy
 msgid "File Size"
 msgstr "Dosya boyutu"
 
-#: src/interface.c:1327
+#: src/interface.c:1326
 #, fuzzy
 msgid "Total Time"
 msgstr "Toplam süre"
 
-#: src/interface.c:1340 src/resample.c:1966
+#: src/interface.c:1339 src/resample.c:1966
 msgid "Audio"
 msgstr "Ses"
 
-#: src/interface.c:1355 src/interface.c:1398
+#: src/interface.c:1354 src/interface.c:1397
 msgid "Rate/size"
 msgstr "Oran / boyut"
 
-#: src/interface.c:1369 src/interface.c:1412
+#: src/interface.c:1368 src/interface.c:1411
 msgid "Total time"
 msgstr "Toplam süre"
 
-#: src/interface.c:1426 src/interface.c:1598 src/callbacks.c:12747
+#: src/interface.c:1425 src/interface.c:1597 src/callbacks.c:12755
 #: src/paramwindow.c:938 src/preferences.c:3953 src/rte_window.c:1709
 #: src/jack.c:584 src/omc-learn.c:1335
 msgid "_Close Window"
 msgstr "_Pencereyi Kapat"
 
-#: src/interface.c:1465
+#: src/interface.c:1464
 #, fuzzy
 msgid "Encoding Options"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/interface.c:1469
+#: src/interface.c:1468
 msgid "<------------- (Check the box to re_size as suggested)"
 msgstr ""
 
-#: src/interface.c:1470
+#: src/interface.c:1469
 msgid "<------------- (Check the box to use the _size recommendation)"
 msgstr ""
 
-#: src/interface.c:1488
+#: src/interface.c:1487
 msgid "Use _letterboxing to maintain aspect ratio (optional)"
 msgstr ""
 
-#: src/interface.c:1515
+#: src/interface.c:1514
 msgid "Keep _my settings"
 msgstr "Ayarlarımı tut"
 
-#: src/interface.c:1517
+#: src/interface.c:1516
 msgid "Use _recommended settings"
 msgstr "Tavsiye edilen ayarları kullan"
 
-#: src/interface.c:1592
+#: src/interface.c:1591
 msgid "_Save to file"
 msgstr "Dosyaya _kaydet"
 
-#: src/interface.c:1638 src/callbacks.c:5628 src/callbacks.c:5688
+#: src/interface.c:1637 src/callbacks.c:5628 src/callbacks.c:5688
 #, fuzzy
 msgid "Show _Log"
 msgstr "_Mesajları Göster"
 
-#: src/interface.c:1638 src/callbacks.c:5628 src/callbacks.c:5688
+#: src/interface.c:1637 src/callbacks.c:5628 src/callbacks.c:5688
 #, fuzzy
 msgid "Hide _Log"
 msgstr "_Seçenekler"
 
-#: src/interface.c:1654
+#: src/interface.c:1653
 #, fuzzy
 msgid "_Abort"
 msgstr "_Hakkında"
 
-#: src/interface.c:1689 src/callbacks.c:4026
+#: src/interface.c:1688 src/callbacks.c:4026
 msgid "Insert"
 msgstr "Ekle"
 
-#: src/interface.c:1702
+#: src/interface.c:1701
 #, fuzzy
 msgid "_Number of times to insert"
 msgstr "Çerçeve _Çıkar"
 
-#: src/interface.c:1714
+#: src/interface.c:1713
 msgid "_Insert to fit audio"
 msgstr "Ses uyacak şekilde ekle"
 
-#: src/interface.c:1716
+#: src/interface.c:1715
 #, fuzzy
 msgid "_Insert from selection end to audio end"
 msgstr "Seçilmiş Sesi sil"
 
-#: src/interface.c:1728
+#: src/interface.c:1727
 msgid "Insert _before selection"
 msgstr "Seçim _öncesi ekle"
 
-#: src/interface.c:1730
+#: src/interface.c:1729
 #, fuzzy
 msgid "Insert clipboard before selected frames"
 msgstr "Seçildikten sonra çerçeveyi panoya ekle"
 
-#: src/interface.c:1745
+#: src/interface.c:1744
 msgid "Insert _after selection"
 msgstr "Seçim _sonrası ekle"
 
-#: src/interface.c:1747
+#: src/interface.c:1746
 msgid "Insert clipboard after selected frames"
 msgstr "Seçildikten sonra çerçeveyi panoya ekle"
 
-#: src/interface.c:1760
+#: src/interface.c:1759
 #, fuzzy
 msgid "Insert _with silence"
 msgstr "Ses ile ekle"
 
-#: src/interface.c:1763
+#: src/interface.c:1762
 msgid "Insert _with sound"
 msgstr "Ses ile ekle"
 
-#: src/interface.c:1772
+#: src/interface.c:1771
 msgid "Insert with_out sound"
 msgstr "Ses olmadan ekle"
 
-#: src/interface.c:1843
+#: src/interface.c:1842
 msgid "Send to Trash"
 msgstr ""
 
-#: src/interface.c:1848 src/interface.c:1974 src/callbacks.c:4425
+#: src/interface.c:1847 src/interface.c:1973 src/callbacks.c:4425
 msgid "Delete"
 msgstr "Sil"
 
-#: src/interface.c:1973
+#: src/interface.c:1972
 #, fuzzy
 msgid "Recover"
 msgstr "Kaydediliyor"
 
-#: src/interface.c:1975
+#: src/interface.c:1974
 msgid "Leave"
 msgstr ""
 
-#: src/interface.c:1986
+#: src/interface.c:1985
 msgid "All"
 msgstr ""
 
-#: src/interface.c:2001
+#: src/interface.c:2000
 #, fuzzy
 msgid "Action"
 msgstr "seleksiyon"
 
-#: src/interface.c:2006 src/interface.c:2730
+#: src/interface.c:2005 src/interface.c:2729
 msgid "Name"
 msgstr ""
 
-#: src/interface.c:2008 src/interface.c:2729 src/interface.c:2829
+#: src/interface.c:2007 src/interface.c:2728 src/interface.c:2828
 #: src/preferences.c:4364
 #, fuzzy
 msgid "Size"
 msgstr "Dosya boyutu"
 
-#: src/interface.c:2010 src/interface.c:2728 src/interface.c:2828
+#: src/interface.c:2009 src/interface.c:2727 src/interface.c:2827
 msgid "Modified Date"
 msgstr ""
 
-#: src/interface.c:2012 src/interface.c:2830
+#: src/interface.c:2011 src/interface.c:2829
 #, fuzzy
 msgid "Details"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:2153
+#: src/interface.c:2152
 #, fuzzy, c-format
 msgid "\tFile\t\t:\t%s"
 msgstr "Dizinler"
 
-#: src/interface.c:2156
+#: src/interface.c:2155
 #, fuzzy, c-format
 msgid "\tDirectory\t\t:\t%s"
 msgstr "Dizinler"
 
-#: src/interface.c:2159
+#: src/interface.c:2158
 #, c-format
 msgid "\t????????\t\t:\t%s"
 msgstr ""
 
-#: src/interface.c:2217
+#: src/interface.c:2216
 msgid "Disk Cleanup"
 msgstr ""
 
-#: src/interface.c:2234
+#: src/interface.c:2233
 msgid "_Accept and Continue"
 msgstr ""
 
-#: src/interface.c:2255
+#: src/interface.c:2254
 #, fuzzy, c-format
 msgid "Analysis of directory: %s"
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:2271
+#: src/interface.c:2270
 msgid "Possibly Recoverable Clips"
 msgstr ""
 
-#: src/interface.c:2296
+#: src/interface.c:2295
 msgid "Items for Automatic Removal"
 msgstr ""
 
-#: src/interface.c:2321
+#: src/interface.c:2320
 msgid "Items for Manual Removal"
 msgstr ""
 
-#: src/interface.c:2439
+#: src/interface.c:2438
 #, c-format
 msgid "[ maximum =  %d ]"
 msgstr ""
 
-#: src/interface.c:2469
+#: src/interface.c:2468
 #, fuzzy
 msgid "Open Selection"
 msgstr "Seçimi _kopyala"
 
-#: src/interface.c:2476
+#: src/interface.c:2475
 #, fuzzy
 msgid "Selection start time (sec.)"
 msgstr "_Süre (saniye)"
 
-#: src/interface.c:2480
+#: src/interface.c:2479
 #, c-format
 msgid "[ maximum =  %.2f ]"
 msgstr ""
 
-#: src/interface.c:2496
+#: src/interface.c:2495
 #, fuzzy, c-format
 msgid " at %.2f fps"
 msgstr ""
 "\n"
 "  %.2f sn."
 
-#: src/interface.c:2499
+#: src/interface.c:2498
 #, fuzzy, c-format
 msgid "Number of frames to open%s"
 msgstr "Çerçeve _Çıkar"
 
-#: src/interface.c:2509
+#: src/interface.c:2508
 #, fuzzy
 msgid "Open to end"
 msgstr "LIVES - Açma Konumu"
 
-#: src/interface.c:2554
+#: src/interface.c:2553
 #, fuzzy
 msgid "Open Location"
 msgstr "LIVES - Açma Konumu"
 
-#: src/interface.c:2566
+#: src/interface.c:2565
 #, fuzzy
 msgid ""
 "\n"
@@ -2220,77 +2220,77 @@ msgstr ""
 "olun\n"
 "\n"
 
-#: src/interface.c:2577
+#: src/interface.c:2576
 msgid "URL : "
 msgstr "URL : "
 
-#: src/interface.c:2582
+#: src/interface.c:2581
 msgid "Do not send bandwidth information"
 msgstr "bant genişliği bilgisi gönderme"
 
-#: src/interface.c:2584
+#: src/interface.c:2583
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "Eğer akışta problem yaşıyorsanız bu ayarı deneyin"
 
-#: src/interface.c:2619
+#: src/interface.c:2618
 #, c-format
 msgid "<big>Contents of Set: <b>%s</b></big> in volume %s"
 msgstr ""
 
-#: src/interface.c:2623
+#: src/interface.c:2622
 #, fuzzy
 msgid "Calculating..."
 msgstr "_Hesapla"
 
-#: src/interface.c:2625 src/interface.c:2627
+#: src/interface.c:2624 src/interface.c:2626
 #, fuzzy
 msgid "counting..."
 msgstr "Video [açılıyor ...]"
 
-#: src/interface.c:2629
+#: src/interface.c:2628
 #, c-format
 msgid "<big>Total size = %s\tclips: <b>%s</b>\tlayouts: <b>%s</b></big>"
 msgstr ""
 
-#: src/interface.c:2692
+#: src/interface.c:2691
 #, fuzzy
 msgid "Layouts"
 msgstr "Düzen hataları"
 
-#: src/interface.c:2815 src/ce_thumbs.c:298 src/multitrack.c:3831
+#: src/interface.c:2814 src/ce_thumbs.c:298 src/multitrack.c:3831
 msgid "Clips"
 msgstr "Klipler"
 
-#: src/interface.c:3004
+#: src/interface.c:3003
 #, fuzzy
 msgid "Rename Clip"
 msgstr "Klibi döndür"
 
-#: src/interface.c:3007
+#: src/interface.c:3006
 #, fuzzy
 msgid "Enter Set Name to Save as"
 msgstr "LiVES: - Ayarlama Adını Girin"
 
-#: src/interface.c:3009
+#: src/interface.c:3008
 #, fuzzy
 msgid "Enter a Set Name to Reload"
 msgstr "LiVES: - Ayarlama Adını Girin"
 
-#: src/interface.c:3011
+#: src/interface.c:3010
 #, fuzzy
 msgid "Choose a Working Directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:3013 src/multitrack.c:5112
+#: src/interface.c:3012 src/multitrack.c:5112
 msgid "Rename Current Track"
 msgstr ""
 
-#: src/interface.c:3015
+#: src/interface.c:3014
 #, fuzzy
 msgid "Enter a Name for Your Theme"
 msgstr "LiVES: - Ayarlama Adını Girin"
 
-#: src/interface.c:3027
+#: src/interface.c:3026
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -2302,7 +2302,7 @@ msgstr ""
 "Lütfen kullanmak istediğiniz adını girin.\n"
 "LiVES çıkmak istediğinizde klibi kaydetmek için hatırlatacaktır\n"
 
-#: src/interface.c:3036
+#: src/interface.c:3035
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -2310,14 +2310,14 @@ msgstr ""
 "Bu projeyi dışarı çıkarmak için bu klip için isim girmelisiniz.\n"
 "Bu aynı zamanda projenin adı kullanılır.\n"
 
-#: src/interface.c:3042
+#: src/interface.c:3041
 #, fuzzy
 msgid "Welcome to LiVES !"
 msgstr ""
 "LiVES'a Hoşgeldiniz version %s.\n"
 "\n"
 
-#: src/interface.c:3064
+#: src/interface.c:3063
 #, fuzzy
 msgid ""
 "This startup wizard will guide you through the\n"
@@ -2327,13 +2327,13 @@ msgstr ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application.\n"
 
-#: src/interface.c:3070
+#: src/interface.c:3069
 msgid ""
 "First of all you need to <b>choose a working directory</b> for LiVES.\n"
 "This should be a directory with plenty of disk space available."
 msgstr ""
 
-#: src/interface.c:3077
+#: src/interface.c:3076
 msgid ""
 "If the value of the working directory is changed, you can choose whether \n"
 "the contents of the currentdirectory should be left, deleted, or moved \n"
@@ -2341,186 +2341,186 @@ msgid ""
 "with an existing LiVES directory\n"
 msgstr ""
 
-#: src/interface.c:3096
+#: src/interface.c:3095
 msgid "New name "
 msgstr "Yeni isim "
 
-#: src/interface.c:3099
+#: src/interface.c:3098
 msgid "Set name "
 msgstr "Ayar ismi "
 
-#: src/interface.c:3101
+#: src/interface.c:3100
 #, fuzzy
 msgid "Theme name "
 msgstr "Yeni isim "
 
-#: src/interface.c:3137
+#: src/interface.c:3136
 msgid "LiVES working directory."
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:3183
+#: src/interface.c:3182
 #, fuzzy
 msgid "<b>Show Contents</b>"
 msgstr "Kısayol Tuşları Göster"
 
-#: src/interface.c:3183
+#: src/interface.c:3182
 #, fuzzy
 msgid "<b>Hide Contents</b>"
 msgstr "Kısayol Tuşları Göster"
 
-#: src/interface.c:3201
+#: src/interface.c:3200
 msgid "Save extended colors"
 msgstr ""
 
-#: src/interface.c:3212
+#: src/interface.c:3211
 msgid "Quit from Setup"
 msgstr ""
 
-#: src/interface.c:3221
+#: src/interface.c:3220
 msgid "_Next"
 msgstr "_Sonraki"
 
-#: src/interface.c:3270
+#: src/interface.c:3269
 msgid "Use def_aults"
 msgstr "Varsayılanı kullan"
 
-#: src/interface.c:3272 src/interface.c:3489 src/preferences.c:4770
+#: src/interface.c:3271 src/interface.c:3488 src/preferences.c:4770
 #: src/preferences.c:5019
 msgid "_Advanced"
 msgstr "_Gelişmiş"
 
-#: src/interface.c:3319
+#: src/interface.c:3318
 #, fuzzy
 msgid "Select input device"
 msgstr "Son  _efektii seç"
 
-#: src/interface.c:3328
+#: src/interface.c:3327
 #, fuzzy
 msgid "Select input device:"
 msgstr "Son  _efektii seç"
 
-#: src/interface.c:3377
+#: src/interface.c:3376
 #, fuzzy
 msgid "Load CD Track"
 msgstr "_CD Parçası Yükle..."
 
-#: src/interface.c:3379
+#: src/interface.c:3378
 #, fuzzy
 msgid "Select DVD Title/Chapter"
 msgstr "LIVES: - DVD Başlık / Bölüm seçimi"
 
-#: src/interface.c:3381
+#: src/interface.c:3380
 #, fuzzy
 msgid "Select VCD Title"
 msgstr "LIVES: - VCD Başlığı Seçiniz"
 
-#: src/interface.c:3383
+#: src/interface.c:3382
 #, fuzzy
 msgid "Change Maximum Visible Tracks"
 msgstr "LIVES - Maksimum Görünür Parça Sayısını Değiştir"
 
-#: src/interface.c:3385
+#: src/interface.c:3384
 #, fuzzy
 msgid "Device details"
 msgstr "LiVES:- Aygıt detayları"
 
-#: src/interface.c:3400
+#: src/interface.c:3399
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Parça yükleme ( %s den)"
 
-#: src/interface.c:3402
+#: src/interface.c:3401
 msgid "DVD Title"
 msgstr "DVD Başlığı"
 
-#: src/interface.c:3404
+#: src/interface.c:3403
 msgid "VCD Title"
 msgstr "VCD Başlığı"
 
-#: src/interface.c:3406
+#: src/interface.c:3405
 msgid "Maximum number of tracks to display"
 msgstr "parça azami sayısını görüntülemek için"
 
-#: src/interface.c:3408
+#: src/interface.c:3407
 msgid "Device:        /dev/video"
 msgstr "Aygıt: /dev/video"
 
-#: src/interface.c:3410
+#: src/interface.c:3409
 msgid "Device:        fw:"
 msgstr "Aygıt:        fw:"
 
-#: src/interface.c:3439
+#: src/interface.c:3438
 msgid "Chapter  "
 msgstr "Bölüm  "
 
-#: src/interface.c:3442
+#: src/interface.c:3441
 msgid "Channel  "
 msgstr "Kanal  "
 
-#: src/interface.c:3453
+#: src/interface.c:3452
 msgid "Audio ID  "
 msgstr "Ses nosu  "
 
-#: src/interface.c:3504
+#: src/interface.c:3503
 msgid "Input number"
 msgstr "Giriş numarası"
 
-#: src/interface.c:3510
+#: src/interface.c:3509
 msgid "Use default width, height and FPS"
 msgstr "Ön tanımlı genişlik, yükseklik ve FPS kullanımı"
 
-#: src/interface.c:3521 src/videodev.c:577
+#: src/interface.c:3520 src/videodev.c:577
 msgid "Width"
 msgstr "Genişlik"
 
-#: src/interface.c:3526 src/videodev.c:580
+#: src/interface.c:3525 src/videodev.c:580
 msgid "Height"
 msgstr "Yükseklik"
 
-#: src/interface.c:3538
+#: src/interface.c:3537
 msgid "_Driver"
 msgstr ""
 
-#: src/interface.c:3541
+#: src/interface.c:3540
 #, fuzzy
 msgid "_Output format"
 msgstr "Çıktı biçimi"
 
-#: src/interface.c:3591
+#: src/interface.c:3590
 #, fuzzy
 msgid "Changing the audio volume"
 msgstr "Panoyu temizle"
 
-#: src/interface.c:3595
+#: src/interface.c:3594
 #, fuzzy
 msgid "Adjusting clip volume..."
 msgstr "Kontrastı ayarla"
 
-#: src/interface.c:3603
+#: src/interface.c:3602
 msgid "Volume Adjustment"
 msgstr ""
 
-#: src/interface.c:3607
+#: src/interface.c:3606
 #, c-format
 msgid "clip volume adjusted by a factor of %.2f\n"
 msgstr ""
 
-#: src/interface.c:3799
+#: src/interface.c:3784
 #, fuzzy
 msgid "Change Playback Speed"
 msgstr "Oynatmayı durdur (q)"
 
-#: src/interface.c:3801
+#: src/interface.c:3786
 #, fuzzy
 msgid "Resample Video"
 msgstr "Örnek tekrar"
 
-#: src/interface.c:3803
+#: src/interface.c:3788
 #, fuzzy
 msgid "Adjust Clip Volume"
 msgstr "Kontrastı ayarla"
 
-#: src/interface.c:3818
+#: src/interface.c:3803
 #, c-format
 msgid ""
 "Current playback speed is %.3f frames per second.\n"
@@ -2529,7 +2529,7 @@ msgid ""
 "in _frames per second"
 msgstr ""
 
-#: src/interface.c:3823
+#: src/interface.c:3808
 #, c-format
 msgid ""
 "Current playback speed is %.3f frames per second.\n"
@@ -2538,7 +2538,7 @@ msgid ""
 "in frames per second"
 msgstr ""
 
-#: src/interface.c:3828
+#: src/interface.c:3813
 #, c-format
 msgid ""
 "Current volume level for this clip is %.2f.\n"
@@ -2550,149 +2550,149 @@ msgid ""
 "Changing it here will make the adjustment permanent.\n"
 msgstr ""
 
-#: src/interface.c:3859
+#: src/interface.c:3844
 msgid "OR enter the desired clip length in _seconds"
 msgstr ""
 
-#: src/interface.c:3883
+#: src/interface.c:3868
 #, fuzzy
 msgid "Change the _audio speed as well"
 msgstr "Panoyu temizle"
 
-#: src/interface.c:3891
+#: src/interface.c:3876
 msgid "Maintain audio pitch"
 msgstr ""
 
-#: src/interface.c:3988
+#: src/interface.c:3973
 #, fuzzy
 msgid "Fade Audio In"
 msgstr "LiVES:- Ses girişini zayıflatmak"
 
-#: src/interface.c:3990
+#: src/interface.c:3975
 #, fuzzy
 msgid "Fade Audio Out"
 msgstr "LiVES:- Ses çıkışını zayıflatmak"
 
-#: src/interface.c:4003
+#: src/interface.c:3988
 #, fuzzy
 msgid "Fade in over  "
 msgstr "Kaybol"
 
-#: src/interface.c:4004
+#: src/interface.c:3989
 msgid "first"
 msgstr "birinci"
 
-#: src/interface.c:4006
+#: src/interface.c:3991
 #, fuzzy
 msgid "Fade out over  "
 msgstr "Kaybol"
 
-#: src/interface.c:4007
+#: src/interface.c:3992
 msgid "last"
 msgstr "sonuncu"
 
-#: src/interface.c:4025
+#: src/interface.c:4010
 msgid "seconds."
 msgstr "saniye."
 
-#: src/interface.c:4033 src/clip_load_save.c:443
+#: src/interface.c:4018 src/clip_load_save.c:443
 msgid "selection"
 msgstr "seleksiyon"
 
-#: src/interface.c:4065
+#: src/interface.c:4050
 #, fuzzy
 msgid " (Optional)"
 msgstr "_Seçenekler"
 
-#: src/interface.c:4068
+#: src/interface.c:4053
 #, fuzzy, c-format
 msgid "File Comments%s"
 msgstr "LiVES - Dosya Yorumları (isteğe bağlı)"
 
-#: src/interface.c:4079
+#: src/interface.c:4064
 #, fuzzy, c-format
 msgid "File Name: %s"
 msgstr "Başlık / İsim: "
 
-#: src/interface.c:4092
+#: src/interface.c:4077
 msgid "Title/Name : "
 msgstr "Başlık / İsim: "
 
-#: src/interface.c:4097
+#: src/interface.c:4082
 msgid "Author/Artist : "
 msgstr "Yazar / Sanatçı: "
 
-#: src/interface.c:4103
+#: src/interface.c:4088
 msgid "Comments : "
 msgstr "Açıklama: "
 
-#: src/interface.c:4136
+#: src/interface.c:4121
 #, fuzzy
 msgid "Save _subtitles to file"
 msgstr "Dosyaya _kaydet"
 
-#: src/interface.c:4145
+#: src/interface.c:4130
 #, fuzzy
 msgid "Subtitle file"
 msgstr "Bu dosya"
 
-#: src/interface.c:4147
+#: src/interface.c:4132
 msgid "Browse..."
 msgstr "Gözat..."
 
-#: src/interface.c:4183
+#: src/interface.c:4168
 msgid "_Options"
 msgstr "_Seçenekler"
 
-#: src/interface.c:4183
+#: src/interface.c:4168
 #, fuzzy
 msgid "Hide _Options"
 msgstr "_Seçenekler"
 
-#: src/interface.c:4626
+#: src/interface.c:4609
 #, fuzzy, c-format
 msgid "%sChoose a Device"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:4630
+#: src/interface.c:4613
 #, fuzzy, c-format
 msgid "%sChoose a Directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:4632
+#: src/interface.c:4615
 #, fuzzy, c-format
 msgid "%sChoose a File"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:4660 src/preferences.c:6009
+#: src/interface.c:4643 src/preferences.c:6009
 msgid "Directories"
 msgstr "Dizinler"
 
-#: src/interface.c:4962
+#: src/interface.c:4945
 #, fuzzy
 msgid "_Autoreload next time"
 msgstr "Altyazıları otomatik yükle"
 
-#: src/interface.c:4968
+#: src/interface.c:4951
 #, fuzzy
 msgid "Start and End Times"
 msgstr "Son  _efektii seç"
 
-#: src/interface.c:4980
+#: src/interface.c:4963
 #, fuzzy
 msgid "Start time (seconds)"
 msgstr "_Süre (saniye)"
 
-#: src/interface.c:4984
+#: src/interface.c:4967
 #, fuzzy
 msgid "End time (seconds)"
 msgstr "_Süre (saniye)"
 
-#: src/interface.c:4991
+#: src/interface.c:4974
 msgid "Snap to nearest frame start"
 msgstr ""
 
-#: src/interface.c:5041
+#: src/interface.c:5024
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -2702,7 +2702,7 @@ msgstr ""
 "Geçerli yerleşim düzeni kaydedilemedi\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5045
+#: src/interface.c:5028
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -2712,7 +2712,7 @@ msgstr ""
 "Geçerli yerleşim düzeni son kayıttan bu yana değiştirilmiştir.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5051
+#: src/interface.c:5034
 #, fuzzy
 msgid ""
 "You are about to exit LiVES.\n"
@@ -2723,7 +2723,7 @@ msgstr ""
 "Geçerli yerleşim düzeni kaydedilemedi\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5054
+#: src/interface.c:5037
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -2731,7 +2731,7 @@ msgstr ""
 "Geçerli klip set kaydedilmedi.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5058
+#: src/interface.c:5041
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -2739,7 +2739,7 @@ msgstr ""
 "Mevcut düzen kaydedilmedi.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5061
+#: src/interface.c:5044
 #, fuzzy
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
@@ -2748,7 +2748,7 @@ msgstr ""
 "Mevcut yerleşim düzeninde o son kaydedilen bu yana değişlik olmamıştır.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5066
+#: src/interface.c:5049
 #, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
@@ -2759,686 +2759,686 @@ msgstr ""
 "Geçerli yerleşim düzeni kaydedilemedi\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:5071
+#: src/interface.c:5054
 msgid "Save or Delete Set"
 msgstr ""
 
-#: src/interface.c:5082
+#: src/interface.c:5065
 msgid "Clip set _name"
 msgstr "Klip ayar ismi"
 
-#: src/interface.c:5114 src/interface.c:5138
+#: src/interface.c:5097 src/interface.c:5121
 #, fuzzy
 msgid "_Wipe layout"
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/interface.c:5115
+#: src/interface.c:5098
 msgid "_Ignore changes"
 msgstr "Değişiklikleri Yoksay"
 
-#: src/interface.c:5118
+#: src/interface.c:5101
 msgid "_Delete clip set"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:5120
+#: src/interface.c:5103
 msgid "_Discard all clips"
 msgstr ""
 
-#: src/interface.c:5121
+#: src/interface.c:5104
 msgid "_Delete layout"
 msgstr "Düzeni sil"
 
-#: src/interface.c:5126
+#: src/interface.c:5109
 #, fuzzy
 msgid "Save in _Current Work Directory"
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:5131
+#: src/interface.c:5114
 #, fuzzy
 msgid "Transfer to _New Directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:5136
+#: src/interface.c:5119
 msgid "_Save layout"
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/interface.c:5137
+#: src/interface.c:5120
 msgid "_Save clip set"
 msgstr "Klip ayarlarını kaydet"
 
-#: src/interface.c:5172
+#: src/interface.c:5155
 #, fuzzy
 msgid "Disk Recovery Options"
 msgstr "Siliniyor"
 
-#: src/interface.c:5188
+#: src/interface.c:5171
 msgid "Check for Lost Clips"
 msgstr ""
 
-#: src/interface.c:5202
+#: src/interface.c:5185
 #, fuzzy
 msgid "Remove Empty Directories"
 msgstr "Dizinler"
 
-#: src/interface.c:5215
+#: src/interface.c:5198
 #, fuzzy
 msgid "Delete _Orphaned Clips"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:5229
+#: src/interface.c:5212
 msgid "Clear Useless  _Backup Files from Clips"
 msgstr ""
 
-#: src/interface.c:5239
+#: src/interface.c:5222
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
-#: src/interface.c:5249
+#: src/interface.c:5232
 #, fuzzy
 msgid "Remove temporary staging directories"
 msgstr "Dizinler"
 
-#: src/interface.c:5263
+#: src/interface.c:5246
 msgid "Check files marked as 'Ignore'"
 msgstr ""
 
-#: src/interface.c:5275
+#: src/interface.c:5258
 #, fuzzy
 msgid "_Reset to Defaults"
 msgstr "_Değerleri Sıfırla"
 
-#: src/interface.c:5440
+#: src/interface.c:5423
 msgid "Show Keys"
 msgstr "Kısayol Tuşları Göster"
 
-#: src/interface.c:5451
+#: src/interface.c:5434
 msgid "You can use the following keys during playback to control LiVES:-"
 msgstr ""
 
-#: src/interface.c:5453
+#: src/interface.c:5436
 msgid ""
 "Recordable keys (press 'r' before or during playback to toggle recording)"
 msgstr ""
 
-#: src/interface.c:5454
+#: src/interface.c:5437
 #, fuzzy
 msgid "ctrl + left"
 msgstr "Diğer merkez"
 
-#: src/interface.c:5454
+#: src/interface.c:5437
 msgid ""
 "skip / scratch backwards\n"
 "When not playing moves the playback cursor"
 msgstr ""
 
-#: src/interface.c:5455
+#: src/interface.c:5438
 #, fuzzy
 msgid "ctrl + right"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5455
+#: src/interface.c:5438
 msgid ""
 "skip / scratch forwards\n"
 "When not playing moves the playback cursor"
 msgstr ""
 
-#: src/interface.c:5456
+#: src/interface.c:5439
 #, fuzzy
 msgid "ctrl + up"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5456
+#: src/interface.c:5439
 #, fuzzy
 msgid "play faster"
 msgstr "mplayer"
 
-#: src/interface.c:5457
+#: src/interface.c:5440
 #, fuzzy
 msgid "ctrl + down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5457
+#: src/interface.c:5440
 #, fuzzy
 msgid "play slower"
 msgstr "mplayer"
 
-#: src/interface.c:5458
+#: src/interface.c:5441
 #, fuzzy
 msgid "shift + up"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5458
+#: src/interface.c:5441
 #, fuzzy
 msgid "background clip play faster"
 msgstr "_Arkaplan rengi"
 
-#: src/interface.c:5459
+#: src/interface.c:5442
 #, fuzzy
 msgid "shift + down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5459
+#: src/interface.c:5442
 #, fuzzy
 msgid "background clip play slower"
 msgstr "_Arkaplan rengi"
 
-#: src/interface.c:5460
+#: src/interface.c:5443
 msgid "(The 'effect parameter' here is the first 'simple' numerical parameter)"
 msgstr ""
 
-#: src/interface.c:5461
+#: src/interface.c:5444
 #, fuzzy
 msgid "alt + up"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5461
+#: src/interface.c:5444
 msgid "increase effect parameter for keygrabbed effect"
 msgstr ""
 
-#: src/interface.c:5462
+#: src/interface.c:5445
 #, fuzzy
 msgid "alt + down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5462
+#: src/interface.c:5445
 msgid "decrease effect parameter for keygrabbed effect"
 msgstr ""
 
-#: src/interface.c:5463
+#: src/interface.c:5446
 #, fuzzy
 msgid "ctrl + enter"
 msgstr "Diğer merkez"
 
-#: src/interface.c:5463
+#: src/interface.c:5446
 #, fuzzy
 msgid "reset frame rate / resync audio (foreground clip)"
 msgstr "_İlk çerçeve"
 
-#: src/interface.c:5464
+#: src/interface.c:5447
 #, fuzzy
 msgid "shift + enter"
 msgstr "Diğer merkez"
 
-#: src/interface.c:5464
+#: src/interface.c:5447
 #, fuzzy
 msgid "reset frame rate (background clip)"
 msgstr "_İlk çerçeve"
 
-#: src/interface.c:5465 src/interface.c:5546
+#: src/interface.c:5448 src/interface.c:5529
 #, fuzzy
 msgid "ctrl + space"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5465
+#: src/interface.c:5448
 #, fuzzy
 msgid "reverse direction (foreground clip)"
 msgstr "seleksiyon"
 
-#: src/interface.c:5466
+#: src/interface.c:5449
 #, fuzzy
 msgid "ctrl + shift + space"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5466
+#: src/interface.c:5449
 #, fuzzy
 msgid "reverse direction (background clip)"
 msgstr "seleksiyon"
 
-#: src/interface.c:5467
+#: src/interface.c:5450
 #, fuzzy
 msgid "ctrl + alt + space"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5468
+#: src/interface.c:5451
 msgid ""
 "Loop Lock\n"
 "(press once to mark IN point, then again to mark OUT point;\n"
 "ctrl-space, ctrl-enter, or switching clips clears)"
 msgstr ""
 
-#: src/interface.c:5470
+#: src/interface.c:5453
 #, fuzzy
 msgid "ctrl + backspace"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5470
+#: src/interface.c:5453
 #, fuzzy
 msgid "freeze frame (foreground and background)"
 msgstr "_İlk çerçeve"
 
-#: src/interface.c:5471
+#: src/interface.c:5454
 #, fuzzy
 msgid "ctrl + alt + backspace"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5471
+#: src/interface.c:5454
 #, fuzzy
 msgid "freeze frame (background clip only)"
 msgstr "_İlk çerçeve"
 
-#: src/interface.c:5472
+#: src/interface.c:5455
 #, fuzzy
 msgid "swap background / foreground clips"
 msgstr "seleksiyon"
 
-#: src/interface.c:5474
+#: src/interface.c:5457
 msgid "The following may also be used outside of playback:-"
 msgstr ""
 
-#: src/interface.c:5475
+#: src/interface.c:5458
 #, fuzzy
 msgid "nervous mode"
 msgstr "Örnek tekrar"
 
-#: src/interface.c:5476 src/interface.c:5544
+#: src/interface.c:5459 src/interface.c:5527
 #, fuzzy
 msgid "ctrl + page-up"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5476
+#: src/interface.c:5459
 #, fuzzy
 msgid "previous clip"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:5477 src/interface.c:5545
+#: src/interface.c:5460 src/interface.c:5528
 #, fuzzy
 msgid "ctrl + page-down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5477
+#: src/interface.c:5460
 #, fuzzy
 msgid "next clip"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:5479
+#: src/interface.c:5462
 #, fuzzy
 msgid "ctrl + 1"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5479
+#: src/interface.c:5462
 #, fuzzy
 msgid "toggle real-time effect 1"
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/interface.c:5480
+#: src/interface.c:5463
 #, fuzzy
 msgid "ctrl + 2"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5480
+#: src/interface.c:5463
 #, fuzzy
 msgid "toggle real-time effect 2"
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/interface.c:5481 src/interface.c:5495 src/interface.c:5502
+#: src/interface.c:5464 src/interface.c:5478 src/interface.c:5485
 msgid "...etc..."
 msgstr ""
 
-#: src/interface.c:5482
+#: src/interface.c:5465
 #, fuzzy
 msgid "ctrl + 9"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5482
+#: src/interface.c:5465
 #, fuzzy
 msgid "toggle real-time effect 9"
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/interface.c:5483
+#: src/interface.c:5466
 #, fuzzy
 msgid "ctrl + 0"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5483
+#: src/interface.c:5466
 #, fuzzy
 msgid "real-time effects (1 - 9) OFF"
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/interface.c:5484 src/interface.c:5548
+#: src/interface.c:5467 src/interface.c:5531
 #, fuzzy
 msgid "ctrl + minus"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5484
+#: src/interface.c:5467
 #, fuzzy
 msgid "toggle real-time effect 10 (unaffected by ctrl-0)"
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/interface.c:5485
+#: src/interface.c:5468
 #, fuzzy
 msgid "ctrl + equals"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5485
+#: src/interface.c:5468
 #, fuzzy
 msgid "toggle real-time effect 11 (unaffected by ctrl-0)"
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/interface.c:5488
+#: src/interface.c:5471
 msgid ""
 "audio lock ON: lock audio to the current foreground clip;\n"
 "ignore video clip switches and rate / direction changes"
 msgstr ""
 
-#: src/interface.c:5489
+#: src/interface.c:5472
 msgid ""
 "audio lock OFF; audio follows the foreground video clip\n"
 "(unless overridden in Preferences)"
 msgstr ""
 
-#: src/interface.c:5490
+#: src/interface.c:5473
 msgid ""
 "grab keyboard for last activated effect key\n"
 "(affects m, M, t, tab and ctrl-alt-up, ctrl-alt-down keys)"
 msgstr ""
 
-#: src/interface.c:5491
+#: src/interface.c:5474
 msgid "next effect mode (for whichever key has keyboard grab)"
 msgstr ""
 
-#: src/interface.c:5492
+#: src/interface.c:5475
 msgid "previous effect mode (for whichever key has keyboard grab)"
 msgstr ""
 
-#: src/interface.c:5493
+#: src/interface.c:5476
 #, fuzzy
 msgid "ctrl + alt + 1"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5493
+#: src/interface.c:5476
 msgid "grab keyboard for effect key 1 (similar to k key)"
 msgstr ""
 
-#: src/interface.c:5494
+#: src/interface.c:5477
 #, fuzzy
 msgid "ctrl + alt + 2"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5494
+#: src/interface.c:5477
 msgid "grab keyboard for effect key 2"
 msgstr ""
 
-#: src/interface.c:5496
+#: src/interface.c:5479
 msgid "enter text parameter (when effect has keyboard grab)"
 msgstr ""
 
-#: src/interface.c:5497
+#: src/interface.c:5480
 msgid "TAB"
 msgstr ""
 
-#: src/interface.c:5497
+#: src/interface.c:5480
 msgid "leave text parameter (reverse of 't')"
 msgstr ""
 
-#: src/interface.c:5498
+#: src/interface.c:5481
 msgid "F1"
 msgstr ""
 
-#: src/interface.c:5498
+#: src/interface.c:5481
 msgid "store/switch to bookmark 1 (first press stores clip and frame)"
 msgstr ""
 
-#: src/interface.c:5499
+#: src/interface.c:5482
 #, fuzzy
 msgid "shift + F1"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5499
+#: src/interface.c:5482
 msgid "clear bookmark 1"
 msgstr ""
 
-#: src/interface.c:5500
+#: src/interface.c:5483
 msgid "F2"
 msgstr ""
 
-#: src/interface.c:5500
+#: src/interface.c:5483
 msgid "store/switch to bookmark 2"
 msgstr ""
 
-#: src/interface.c:5501
+#: src/interface.c:5484
 #, fuzzy
 msgid "shift + F2"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5501
+#: src/interface.c:5484
 msgid "clear bookmark 2"
 msgstr ""
 
-#: src/interface.c:5503
+#: src/interface.c:5486
 msgid "F12"
 msgstr ""
 
-#: src/interface.c:5503
+#: src/interface.c:5486
 msgid "clear function keys (bookmarks)"
 msgstr ""
 
-#: src/interface.c:5505
+#: src/interface.c:5488
 #, fuzzy
 msgid "Other playback keys"
 msgstr "Oynatmayı durdur (q)"
 
-#: src/interface.c:5506
+#: src/interface.c:5489
 #, fuzzy
 msgid "play all"
 msgstr "Tümünü oynat"
 
-#: src/interface.c:5507
+#: src/interface.c:5490
 #, fuzzy
 msgid "play selection"
 msgstr "Seçimi oynat"
 
-#: src/interface.c:5508
+#: src/interface.c:5491
 msgid "stop"
 msgstr ""
 
-#: src/interface.c:5509
+#: src/interface.c:5492
 #, fuzzy
 msgid "fullscreen"
 msgstr "_Tam Ekran"
 
-#: src/interface.c:5510
+#: src/interface.c:5493
 #, fuzzy
 msgid "separate window"
 msgstr "Pencereyi kapat"
 
-#: src/interface.c:5511
+#: src/interface.c:5494
 msgid "double sized playarea (only in clip edit mode)"
 msgstr ""
 
-#: src/interface.c:5512
+#: src/interface.c:5495
 msgid "toggle recording mode (clip edit mode only)"
 msgstr ""
 
-#: src/interface.c:5513
+#: src/interface.c:5496
 msgid "blank / unblank the interface background (clip editor only)"
 msgstr ""
 
-#: src/interface.c:5514
+#: src/interface.c:5497
 msgid "activate / deactivate continuous looping"
 msgstr ""
 
-#: src/interface.c:5515
+#: src/interface.c:5498
 msgid "enable / disable ping pong looping"
 msgstr ""
 
-#: src/interface.c:5516
+#: src/interface.c:5499
 msgid ""
 "enable / disable stop on audio end\n"
 "(ignored if continuous loop is active)"
 msgstr ""
 
-#: src/interface.c:5517
+#: src/interface.c:5500
 msgid "lower the volume of current audio clip"
 msgstr ""
 
-#: src/interface.c:5518
+#: src/interface.c:5501
 msgid "increase the volume of current audio clip"
 msgstr ""
 
-#: src/interface.c:5519
+#: src/interface.c:5502
 msgid "display a/v sync status (developer mode)"
 msgstr ""
 
-#: src/interface.c:5526
+#: src/interface.c:5509
 msgid "Multitrack Keys"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/interface.c:5536
+#: src/interface.c:5519
 msgid "You can use the following keys to control the multitrack window:"
 msgstr ""
 
-#: src/interface.c:5538
+#: src/interface.c:5521
 #, fuzzy
 msgid "ctrl + left-arrow"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5538
+#: src/interface.c:5521
 msgid "move timeline cursor left 1 second"
 msgstr ""
 
-#: src/interface.c:5539
+#: src/interface.c:5522
 #, fuzzy
 msgid "ctrl + right-arrow"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5539
+#: src/interface.c:5522
 msgid "move timeline cursor right 1 second"
 msgstr ""
 
-#: src/interface.c:5540
+#: src/interface.c:5523
 #, fuzzy
 msgid "shift + left-arrow"
 msgstr "Diğer merkez"
 
-#: src/interface.c:5540
+#: src/interface.c:5523
 msgid "move timeline cursor left 1 frame"
 msgstr ""
 
-#: src/interface.c:5541
+#: src/interface.c:5524
 #, fuzzy
 msgid "shift + right-arrow"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5541
+#: src/interface.c:5524
 msgid "move timeline cursor right 1 frame"
 msgstr ""
 
-#: src/interface.c:5542
+#: src/interface.c:5525
 #, fuzzy
 msgid "ctrl + up-arrow"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5542
+#: src/interface.c:5525
 msgid "move current track up"
 msgstr ""
 
-#: src/interface.c:5543
+#: src/interface.c:5526
 #, fuzzy
 msgid "ctrl + down-arrow"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5543
+#: src/interface.c:5526
 msgid "move current track down"
 msgstr ""
 
-#: src/interface.c:5544
+#: src/interface.c:5527
 #, fuzzy
 msgid "select previous clip"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:5545
+#: src/interface.c:5528
 #, fuzzy
 msgid "select next clip"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:5546
+#: src/interface.c:5529
 msgid "select/deselect current track"
 msgstr ""
 
-#: src/interface.c:5547
+#: src/interface.c:5530
 #, fuzzy
 msgid "ctrl + plus"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:5547
+#: src/interface.c:5530
 msgid "zoom in"
 msgstr ""
 
-#: src/interface.c:5548
+#: src/interface.c:5531
 msgid "zoom out"
 msgstr ""
 
-#: src/interface.c:5549
+#: src/interface.c:5532
 msgid "make a mark on the timeline (during playback)"
 msgstr ""
 
-#: src/interface.c:5550
+#: src/interface.c:5533
 msgid "rewind to play start."
 msgstr ""
 
-#: src/interface.c:5552
+#: src/interface.c:5535
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/interface.c:5579
+#: src/interface.c:5562
 #, fuzzy
 msgid "Autolives Options"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/interface.c:5583
+#: src/interface.c:5566
 msgid "Trigger"
 msgstr ""
 
-#: src/interface.c:5593
+#: src/interface.c:5576
 #, fuzzy
 msgid "Timed:"
 msgstr "Süre"
 
-#: src/interface.c:5595
+#: src/interface.c:5578
 msgid "Trigger changes at regular intervals based on time"
 msgstr ""
 
-#: src/interface.c:5599
+#: src/interface.c:5582
 #, fuzzy
 msgid "change time (seconds)"
 msgstr "_Süre (saniye)"
 
-#: src/interface.c:5604
+#: src/interface.c:5587
 msgid "OMC"
 msgstr ""
 
-#: src/interface.c:5619
+#: src/interface.c:5602
 #, fuzzy
 msgid "Playback start:"
 msgstr "Oynat"
 
-#: src/interface.c:5622
+#: src/interface.c:5605
 msgid "Automatic"
 msgstr ""
 
-#: src/interface.c:5629
+#: src/interface.c:5612
 msgid "Manual"
 msgstr ""
 
-#: src/interface.c:5639
+#: src/interface.c:5622
 msgid "Mute internal audio during playback"
 msgstr ""
 
-#: src/interface.c:5640
+#: src/interface.c:5623
 msgid ""
 "Mute the audio in LiVES during playback by setting the audio source to "
 "external."
 msgstr ""
 
-#: src/interface.c:5650
+#: src/interface.c:5633
 msgid "Debug mode"
 msgstr ""
 
-#: src/interface.c:5651
+#: src/interface.c:5634
 msgid "Show debug output on stderr."
 msgstr ""
 
-#: src/interface.c:5728
+#: src/interface.c:5711
 msgid ""
 "The selected clip appears to be a stream.\n"
 "The output will be continuously saved until either the Enough or Cancel "
@@ -3448,76 +3448,76 @@ msgid ""
 "Do you wish to continue with the download anyway ?"
 msgstr ""
 
-#: src/interface.c:5786
+#: src/interface.c:5769
 msgid "- Approximately:"
 msgstr ""
 
-#: src/interface.c:5788
+#: src/interface.c:5771
 msgid "Select the closest to this size"
 msgstr ""
 
-#: src/interface.c:5806
+#: src/interface.c:5789
 msgid "- At _least"
 msgstr ""
 
-#: src/interface.c:5808
+#: src/interface.c:5791
 msgid "Frame size should be at least this size"
 msgstr ""
 
-#: src/interface.c:5825
+#: src/interface.c:5808
 msgid "- At _most:"
 msgstr ""
 
-#: src/interface.c:5827
+#: src/interface.c:5810
 msgid "Frame size should be at most this size"
 msgstr ""
 
-#: src/interface.c:5845 src/paramwindow.c:543 src/plugins.c:1079
+#: src/interface.c:5828 src/paramwindow.c:543 src/plugins.c:1079
 msgid "_Width"
 msgstr "_Genişlik"
 
-#: src/interface.c:5855
+#: src/interface.c:5838
 #, fuzzy
 msgid "X\t_Height"
 msgstr "_Yükseklik"
 
-#: src/interface.c:5865
+#: src/interface.c:5848
 msgid "pixels"
 msgstr ""
 
-#: src/interface.c:5880
+#: src/interface.c:5863
 msgid " OR:"
 msgstr ""
 
-#: src/interface.c:5890
+#: src/interface.c:5873
 msgid "- Pick the _smallest"
 msgstr ""
 
-#: src/interface.c:5892
+#: src/interface.c:5875
 msgid "Select the lowest resolution available"
 msgstr ""
 
-#: src/interface.c:5911
+#: src/interface.c:5894
 msgid "- Pick the _largest"
 msgstr ""
 
-#: src/interface.c:5913
+#: src/interface.c:5896
 msgid "Select the highest resolution available"
 msgstr ""
 
-#: src/interface.c:5934
+#: src/interface.c:5917
 msgid "- Let me choose..."
 msgstr ""
 
-#: src/interface.c:5936
+#: src/interface.c:5919
 msgid "Choose the resolution from a list (opens in new window)"
 msgstr ""
 
-#: src/interface.c:5954
+#: src/interface.c:5937
 msgid "Remember my choice"
 msgstr ""
 
-#: src/interface.c:5976
+#: src/interface.c:5959
 #, c-format
 msgid ""
 "LiVES will only update %s if you have a local user copy installed.\n"
@@ -3528,172 +3528,172 @@ msgid ""
 "After this it can be updated without needing root privileges.\n"
 msgstr ""
 
-#: src/interface.c:6058
+#: src/interface.c:6041
 msgid "LiVES can try to install a local copy, however"
 msgstr ""
 
-#: src/interface.c:6086
+#: src/interface.c:6069
 #, fuzzy
 msgid "Open Online Clip"
 msgstr "_Seçili dosyayı aç"
 
-#: src/interface.c:6096
+#: src/interface.c:6079
 #, c-format
 msgid ""
 "To open a clip from Youtube or another video site, LiVES will first download "
 "it with %s.\n"
 msgstr ""
 
-#: src/interface.c:6108
+#: src/interface.c:6091
 #, c-format
 msgid "<--- Install or Update local copy of %s ?"
 msgstr ""
 
-#: src/interface.c:6118 src/gui.c:1438
+#: src/interface.c:6101 src/gui.c:1438
 msgid "_Info"
 msgstr "_Bilgi"
 
-#: src/interface.c:6126
+#: src/interface.c:6109
 #, c-format
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g. %s"
 msgstr ""
 
-#: src/interface.c:6138
+#: src/interface.c:6121
 #, fuzzy
 msgid "Clip URL : "
 msgstr "URL : "
 
-#: src/interface.c:6150
+#: src/interface.c:6133
 #, fuzzy
 msgid "Format selection:"
 msgstr "seleksiyon"
 
-#: src/interface.c:6155
+#: src/interface.c:6138
 msgid "_Free (eg. vp9 / opus / webm)"
 msgstr ""
 
-#: src/interface.c:6156
+#: src/interface.c:6139
 msgid "Download clip using Free codecs and support the community"
 msgstr ""
 
-#: src/interface.c:6163
+#: src/interface.c:6146
 #, fuzzy
 msgid "_File Name : "
 msgstr "Başlık / İsim: "
 
-#: src/interface.c:6179
+#: src/interface.c:6162
 msgid "_Non-free (eg. h264 / aac / mp4)"
 msgstr ""
 
-#: src/interface.c:6181
+#: src/interface.c:6164
 msgid "Download clip using non-free codecs and support commercial interests"
 msgstr ""
 
-#: src/interface.c:6197
+#: src/interface.c:6180
 #, fuzzy
 msgid "_Directory to save to: "
 msgstr "Dizin adı çok uzun !"
 
-#: src/interface.c:6214 src/videodev.c:782
+#: src/interface.c:6197 src/videodev.c:782
 #, fuzzy
 msgid "Desired frame size:"
 msgstr "Çerçeve boyutu"
 
-#: src/interface.c:6232
+#: src/interface.c:6215
 msgid "Other _options (e.g audio, subtitles)..."
 msgstr ""
 
-#: src/interface.c:6233
+#: src/interface.c:6216
 #, fuzzy
 msgid "Hide _options"
 msgstr "_Seçenekler"
 
-#: src/interface.c:6250
+#: src/interface.c:6233
 msgid "Please enter the name of the file to save the downloaded clip as.\n"
 msgstr ""
 
-#: src/interface.c:6258
+#: src/interface.c:6241
 msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
-#: src/interface.c:6294
+#: src/interface.c:6277
 #, fuzzy, c-format
 msgid "Downloading %s to %s..."
 msgstr "%s ayarı otomatik yükleniyor..."
 
-#: src/interface.c:6391
+#: src/interface.c:6374
 msgid "Select Video Format to Download"
 msgstr ""
 
-#: src/interface.c:6397
+#: src/interface.c:6380
 msgid "Double click on a format to load it, or click Cancel to exit."
 msgstr ""
 
-#: src/interface.c:6426
+#: src/interface.c:6409
 msgid "ID"
 msgstr ""
 
-#: src/interface.c:6440
+#: src/interface.c:6423
 #, fuzzy
 msgid "Resolution"
 msgstr "seleksiyon"
 
-#: src/interface.c:6447
+#: src/interface.c:6430
 msgid "Notes"
 msgstr ""
 
-#: src/interface.c:6603
+#: src/interface.c:6586
 msgid "Diskspace Options for New Location"
 msgstr ""
 
-#: src/interface.c:6609
+#: src/interface.c:6592
 #, fuzzy
 msgid "Diskspace critical levels"
 msgstr "Kaybol"
 
-#: src/interface.c:6611
+#: src/interface.c:6594
 #, fuzzy
 msgid "Diskspace warning levels"
 msgstr "Kaybol"
 
-#: src/interface.c:6617
+#: src/interface.c:6600
 msgid "Set quota for new volume"
 msgstr ""
 
-#: src/interface.c:6631
+#: src/interface.c:6614
 #, fuzzy
 msgid "Options for Changing Working Directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:6663
+#: src/interface.c:6646
 #, fuzzy
 msgid ""
 "<b>_Delete</b> the old directory\n"
 "and its contents"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:6666
+#: src/interface.c:6649
 #, fuzzy
 msgid ""
 "<b>_Leave</b> the contents,\n"
 "change to a new directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:6669
+#: src/interface.c:6652
 #, fuzzy
 msgid ""
 "<b>_Move</b> everything\n"
 "to the new directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:6697
+#: src/interface.c:6680
 #, fuzzy, c-format
 msgid "Checking free space in %s"
 msgstr "\"convert\"  varlığının kontrol edilmesi"
 
-#: src/interface.c:6708
+#: src/interface.c:6691
 #, c-format
 msgid ""
 "Insuffient space in volume containing %s !\n"
@@ -3702,44 +3702,44 @@ msgid ""
 "Please free up some disk space in %s or choose another action"
 msgstr ""
 
-#: src/interface.c:6760
+#: src/interface.c:6743
 #, fuzzy
 msgid ""
 "\n"
 "Directory was not changed\n"
 msgstr "Dizin adı çok uzun !"
 
-#: src/interface.c:6795
+#: src/interface.c:6778
 #, fuzzy
 msgid "current set"
 msgstr "Güncel"
 
-#: src/interface.c:6797
+#: src/interface.c:6780
 #, fuzzy, c-format
 msgid "set %s"
 msgstr "Ayarlar kaydediliyor %s"
 
-#: src/interface.c:6799
+#: src/interface.c:6782
 #, c-format
 msgid ""
 "The %s will be permanently deleted from the disk.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/interface.c:6813
+#: src/interface.c:6796
 msgid "All Sets have been erased from the disk"
 msgstr ""
 
-#: src/interface.c:6834
+#: src/interface.c:6817
 #, c-format
 msgid "The set %s is already loaded !"
 msgstr ""
 
-#: src/interface.c:6838
+#: src/interface.c:6821
 msgid "The current clips must be saved before reloading another set"
 msgstr ""
 
-#: src/interface.c:6844
+#: src/interface.c:6827
 msgid ""
 "After reloading the Set you can inspect it and use it as normal.\n"
 "Should you decide to delete it or re-save it, click on\n"
@@ -3748,15 +3748,15 @@ msgid ""
 "where you may choose to continue this process further\n"
 msgstr ""
 
-#: src/interface.c:6888
+#: src/interface.c:6871
 msgid "_Reload"
 msgstr ""
 
-#: src/interface.c:6905
+#: src/interface.c:6888
 msgid " including the current set."
 msgstr ""
 
-#: src/interface.c:6908
+#: src/interface.c:6891
 #, c-format
 msgid ""
 "<b>The current working directory contains %d Clip Sets%s</b>\n"
@@ -3769,327 +3769,327 @@ msgid ""
 "Please select an option below\n"
 msgstr ""
 
-#: src/interface.c:6919
+#: src/interface.c:6902
 #, fuzzy
 msgid "Manage Clipsets"
 msgstr "Klip ayarlarını kaydet"
 
-#: src/interface.c:6924
+#: src/interface.c:6907
 msgid "Go back"
 msgstr ""
 
-#: src/interface.c:6929
+#: src/interface.c:6912
 msgid "Continue"
 msgstr ""
 
-#: src/interface.c:7039
+#: src/interface.c:7022
 #, c-format
 msgid ""
 "Free space\n"
 " %s"
 msgstr ""
 
-#: src/interface.c:7048
+#: src/interface.c:7031
 #, c-format
 msgid ""
 "<b>ALERT ! FREE SPACE IN %s IS BELOW THE CRITICAL LEVEL OF %s\n"
 "YOU SHOULD EXIT LIVES IMMEDIATELY TO AVOID POSSIBLE DATA LOSS</b>"
 msgstr ""
 
-#: src/interface.c:7070
+#: src/interface.c:7053
 #, c-format
 msgid ""
 "WARNING ! Free space in %s is below the warning level of %s\n"
 "Action should be taken to remedy this"
 msgstr ""
 
-#: src/interface.c:7078
+#: src/interface.c:7061
 #, c-format
 msgid "WARNING ! LiVES has exceeded its quota by %s"
 msgstr ""
 
-#: src/interface.c:7082
+#: src/interface.c:7065
 #, c-format
 msgid "ATTENTION: LiVES is currently using over %d%% of its assigned quota"
 msgstr ""
 
-#: src/interface.c:7084
+#: src/interface.c:7067
 msgid ""
 "ATTENTION ! There is insufficient free space on the disk for LiVES' current "
 "quota"
 msgstr ""
 
-#: src/interface.c:7089
+#: src/interface.c:7072
 msgid "LiVES can help limit the amount of diskspace used by projects (sets)."
 msgstr ""
 
-#: src/interface.c:7096
+#: src/interface.c:7079
 #, fuzzy
 msgid "Value not set"
 msgstr "Güncel"
 
-#: src/interface.c:7097
+#: src/interface.c:7080
 #, fuzzy
 msgid "Calculating...."
 msgstr "_Hesapla"
 
-#: src/interface.c:7184
+#: src/interface.c:7167
 #, fuzzy, c-format
 msgid "%.2f%% used"
 msgstr "%.2f sn."
 
-#: src/interface.c:7186
+#: src/interface.c:7169
 #, fuzzy, c-format
 msgid "<b>%.2f%% used !!</b>"
 msgstr "%.2f sn."
 
-#: src/interface.c:7193 src/interface.c:7414
+#: src/interface.c:7176 src/interface.c:7397
 #, c-format
 msgid "LiVES is currently using over %d%% of its available quota"
 msgstr ""
 
-#: src/interface.c:7199
+#: src/interface.c:7182
 #, fuzzy, c-format
 msgid "Calculating %% used"
 msgstr "_Hesapla"
 
-#: src/interface.c:7292
+#: src/interface.c:7275
 #, fuzzy
 msgid "Working directory"
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:7294
+#: src/interface.c:7277
 #, fuzzy
 msgid "New working directory"
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:7298
+#: src/interface.c:7281
 msgid "Mount point"
 msgstr ""
 
-#: src/interface.c:7305
+#: src/interface.c:7288
 #, fuzzy
 msgid "Total size"
 msgstr "Toplam süre"
 
-#: src/interface.c:7313
+#: src/interface.c:7296
 #, fuzzy
 msgid "Disk space free"
 msgstr "Kaybol"
 
-#: src/interface.c:7327
+#: src/interface.c:7310
 #, fuzzy, c-format
 msgid "(After migrating working directory: %s)"
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:7335
+#: src/interface.c:7318
 #, fuzzy
 msgid "Free diskspace is below the critical level"
 msgstr "Kaybol"
 
-#: src/interface.c:7337
+#: src/interface.c:7320
 #, fuzzy
 msgid "Free diskspace is below the warning level"
 msgstr "Kaybol"
 
-#: src/interface.c:7341
+#: src/interface.c:7324
 msgid "Used by other applications"
 msgstr ""
 
-#: src/interface.c:7352 src/interface.c:7655
+#: src/interface.c:7335 src/interface.c:7638
 msgid "Used by LiVES"
 msgstr ""
 
-#: src/interface.c:7363
+#: src/interface.c:7346
 msgid "Sets on disk"
 msgstr ""
 
-#: src/interface.c:7369
+#: src/interface.c:7352
 #, fuzzy
 msgid "Currently opened clips"
 msgstr "Bu klibi _kapat"
 
-#: src/interface.c:7376
+#: src/interface.c:7359
 msgid "Disk quota"
 msgstr ""
 
-#: src/interface.c:7398
+#: src/interface.c:7381
 #, c-format
 msgid "Quota is reduced by %s due to free disk space limitations"
 msgstr ""
 
-#: src/interface.c:7409
+#: src/interface.c:7392
 msgid "Unused quota"
 msgstr ""
 
-#: src/interface.c:7426
+#: src/interface.c:7409
 #, fuzzy
 msgid "Disk warning level"
 msgstr "Kaybol"
 
-#: src/interface.c:7436
+#: src/interface.c:7419
 #, fuzzy
 msgid "Disk critical level"
 msgstr "Kaybol"
 
-#: src/interface.c:7452
+#: src/interface.c:7435
 msgid "Still calculating...please wait and try again..."
 msgstr ""
 
-#: src/interface.c:7459
+#: src/interface.c:7442
 msgid ""
 "<b>Change the quota by clicking in the free space area in the disk map "
 "above,\n"
 "or by dragging the slider below</b>"
 msgstr ""
 
-#: src/interface.c:7467
+#: src/interface.c:7450
 msgid "APPLY _QUOTA"
 msgstr ""
 
-#: src/interface.c:7476
+#: src/interface.c:7459
 #, fuzzy
 msgid "<b>Updated !</b>"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:7547
+#: src/interface.c:7530
 msgid "Disk Space Quota"
 msgstr ""
 
-#: src/interface.c:7571
+#: src/interface.c:7554
 #, fuzzy
 msgid "Current working directory"
 msgstr "LiVES çalışma dizini."
 
-#: src/interface.c:7579
+#: src/interface.c:7562
 #, fuzzy
 msgid "Change Directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:7593
+#: src/interface.c:7576
 msgid "<b>Disk space used by LiVES:</b>"
 msgstr ""
 
-#: src/interface.c:7600
+#: src/interface.c:7583
 #, c-format
 msgid "in %s"
 msgstr ""
 
-#: src/interface.c:7645
+#: src/interface.c:7628
 msgid "Used by other apps"
 msgstr ""
 
-#: src/interface.c:7665
+#: src/interface.c:7648
 msgid "Quota"
 msgstr ""
 
-#: src/interface.c:7675
+#: src/interface.c:7658
 #, fuzzy
 msgid "Free space"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:7685
+#: src/interface.c:7668
 #, fuzzy
 msgid "Warn level"
 msgstr "Kaybol"
 
-#: src/interface.c:7695
+#: src/interface.c:7678
 #, fuzzy
 msgid "Critical level"
 msgstr "Kaybol"
 
-#: src/interface.c:7705
+#: src/interface.c:7688
 #, fuzzy
 msgid "<b>Click for Full _Details</b>"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:7706
+#: src/interface.c:7689
 #, fuzzy
 msgid "<b>Hide _Details</b>"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:7726
+#: src/interface.c:7709
 msgid ""
 "Note: LiVES cannot <b>guarantee</b> not to exceed its quota\n"
 "but it can warn you if this is detected."
 msgstr ""
 
-#: src/interface.c:7730
+#: src/interface.c:7713
 msgid ""
 "<b>Quota checking is disabled when workdir\n"
 "is set via commandline option.</b>"
 msgstr ""
 
-#: src/interface.c:7736
+#: src/interface.c:7719
 #, fuzzy
 msgid "_Reset"
 msgstr "_Değerleri Sıfırla"
 
-#: src/interface.c:7752
+#: src/interface.c:7735
 #, fuzzy
 msgid "<b>Change _Quota</b>"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:7768
+#: src/interface.c:7751
 msgid "Quota:"
 msgstr ""
 
-#: src/interface.c:7773
+#: src/interface.c:7756
 msgid "<big><b>Unlimited</b></big>"
 msgstr ""
 
-#: src/interface.c:7783
+#: src/interface.c:7766
 #, fuzzy
 msgid "Value:"
 msgstr "değer"
 
-#: src/interface.c:7813
+#: src/interface.c:7796
 #, fuzzy
 msgid "Diskspace Management Options"
 msgstr "Disk alanını temizle"
 
-#: src/interface.c:7821
+#: src/interface.c:7804
 #, fuzzy
 msgid "Clean Up Diskspace"
 msgstr "Disk alanını temizle"
 
-#: src/interface.c:7832
+#: src/interface.c:7815
 #, fuzzy
 msgid "Manage Clip Sets"
 msgstr "Klip ayarlarını kaydet"
 
-#: src/interface.c:7854
+#: src/interface.c:7837
 #, fuzzy
 msgid "Close Current Clips"
 msgstr "Bu klibi _kapat"
 
-#: src/interface.c:7874
+#: src/interface.c:7857
 #, fuzzy
 msgid "Show this dialog on startup"
 msgstr "_Mesajları Göster"
 
-#: src/interface.c:7884
+#: src/interface.c:7867
 msgid "<big><b>No quota has been set</b></big>"
 msgstr ""
 
-#: src/interface.c:7889
+#: src/interface.c:7872
 #, fuzzy
 msgid "Abort"
 msgstr "Negatifleştirilyor"
 
-#: src/interface.c:7900
+#: src/interface.c:7883
 msgid "FINISH"
 msgstr ""
 
-#: src/interface.c:7903
+#: src/interface.c:7886
 msgid "Continue with current values"
 msgstr ""
 
-#: src/interface.c:7933
+#: src/interface.c:7916
 msgid "Record Desktop (LiVES Main Window)"
 msgstr ""
 
-#: src/interface.c:7943
+#: src/interface.c:7926
 msgid ""
 "This tool may be used to record either the entire desktop or just the area "
 "covered by the LiVES main window.\n"
@@ -4099,59 +4099,59 @@ msgid ""
 "itself - thus anything placed over the window will also be recorded."
 msgstr ""
 
-#: src/interface.c:7951
+#: src/interface.c:7934
 msgid "Screen area to record:"
 msgstr ""
 
-#: src/interface.c:7954
+#: src/interface.c:7937
 #, fuzzy
 msgid "LiVES main _window"
 msgstr "LiVES: - Oynatma Penceresi"
 
-#: src/interface.c:7957
+#: src/interface.c:7940
 msgid "Entire _desktop"
 msgstr ""
 
-#: src/interface.c:7961
+#: src/interface.c:7944
 msgid "Max recording time (unless cancelled from the menu)"
 msgstr ""
 
-#: src/interface.c:7965
+#: src/interface.c:7948
 msgid "Unlimited (until cancelled from the menu)"
 msgstr ""
 
-#: src/interface.c:7967 src/interface.c:7985
+#: src/interface.c:7950 src/interface.c:7968
 msgid "_Hours"
 msgstr ""
 
-#: src/interface.c:7969 src/interface.c:7987
+#: src/interface.c:7952 src/interface.c:7970
 #, fuzzy
 msgid "_Minutes"
 msgstr " dakika  "
 
-#: src/interface.c:7971 src/interface.c:7989
+#: src/interface.c:7954 src/interface.c:7972
 #, fuzzy
 msgid "_Seconds"
 msgstr "saniye"
 
-#: src/interface.c:7979
+#: src/interface.c:7962
 msgid "Delay before starting"
 msgstr ""
 
-#: src/interface.c:7982
+#: src/interface.c:7965
 msgid "Immediate"
 msgstr ""
 
-#: src/interface.c:7998 src/plugins.c:1046
+#: src/interface.c:7981 src/plugins.c:1046
 msgid "_FPS"
 msgstr "_FPS"
 
-#: src/interface.c:8003
+#: src/interface.c:7986
 #, fuzzy
 msgid "Record internal audio"
 msgstr "Yeni ses kaydet"
 
-#: src/interface.c:8006
+#: src/interface.c:7989
 #, fuzzy
 msgid "Voiceover mode"
 msgstr "Örnek tekrar"
@@ -4385,7 +4385,7 @@ msgstr ".lv1 dosyası olarak yedekle"
 msgid "Restore %s File"
 msgstr ".lv1 dosyası geri yükleniyor"
 
-#: src/callbacks.c:2263 src/callbacks.c:12433 src/resample.c:1850
+#: src/callbacks.c:2263 src/callbacks.c:12441 src/resample.c:1850
 msgid "Insert Silence"
 msgstr "Sessiz ekle"
 
@@ -4542,7 +4542,7 @@ msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
 #: src/callbacks.c:3864 src/callbacks.c:8371 src/callbacks.c:8424
 #: src/callbacks.c:8636 src/callbacks.c:8673 src/callbacks.c:8714
-#: src/callbacks.c:11580
+#: src/callbacks.c:11588
 msgid "Cancelling"
 msgstr "İptal ediliyor"
 
@@ -4584,7 +4584,7 @@ msgstr ""
 "Bu dosyayı kapatınca tüm çerçeveler silinecek.\n"
 "Emin misiniz ?"
 
-#: src/callbacks.c:4344 src/callbacks.c:11667
+#: src/callbacks.c:4344 src/callbacks.c:11675
 #, fuzzy
 msgid "Deletion"
 msgstr "Siliniyor"
@@ -5033,8 +5033,8 @@ msgstr "%s Ses dosyası  ekleniyor"
 msgid "Opening audio"
 msgstr "Ses açılıyor"
 
-#: src/callbacks.c:8476 src/callbacks.c:8755 src/callbacks.c:11619
-#: src/callbacks.c:12213
+#: src/callbacks.c:8476 src/callbacks.c:8755 src/callbacks.c:11627
+#: src/callbacks.c:12221
 #, fuzzy
 msgid "Committing audio"
 msgstr "Ses dışa aktarılıyor"
@@ -5061,11 +5061,11 @@ msgstr "CD parçası açılıyor..."
 msgid "Error loading CD track\n"
 msgstr "CD parçası yüklenirken hata veriyor\n"
 
-#: src/callbacks.c:9594 src/callbacks.c:9616
+#: src/callbacks.c:9602 src/callbacks.c:9624
 msgid "Resume"
 msgstr "Devam Et"
 
-#: src/callbacks.c:9595
+#: src/callbacks.c:9603
 msgid ""
 "\n"
 "Paused\n"
@@ -5075,11 +5075,11 @@ msgstr ""
 "Duraklatıldı\n"
 "(İşleme devam etmek için tıklayınız )"
 
-#: src/callbacks.c:9596 src/callbacks.c:9647
+#: src/callbacks.c:9604 src/callbacks.c:9655
 msgid "paused..."
 msgstr "duraklatıldı..."
 
-#: src/callbacks.c:9603 src/callbacks.c:9668
+#: src/callbacks.c:9611 src/callbacks.c:9676
 msgid ""
 "\n"
 "Please Wait"
@@ -5087,20 +5087,20 @@ msgstr ""
 "\n"
 "Lütfen Bekleyin"
 
-#: src/callbacks.c:9604 src/callbacks.c:9669
+#: src/callbacks.c:9612 src/callbacks.c:9677
 #, fuzzy
 msgid "resumed..."
 msgstr "duraklatıldı..."
 
-#: src/callbacks.c:9621
+#: src/callbacks.c:9629
 msgid "Keep"
 msgstr "Koru"
 
-#: src/callbacks.c:9623
+#: src/callbacks.c:9631
 msgid "Enough"
 msgstr "Yeter"
 
-#: src/callbacks.c:9630
+#: src/callbacks.c:9638
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5112,16 +5112,16 @@ msgstr ""
 "Duraklatıldı\n"
 "(İşleme devam etmek için tıklayınız )"
 
-#: src/callbacks.c:9665
+#: src/callbacks.c:9673
 msgid "Cancel"
 msgstr "İptal"
 
-#: src/callbacks.c:9820
+#: src/callbacks.c:9828
 #, fuzzy
 msgid "Stop"
 msgstr "_Durdur"
 
-#: src/callbacks.c:9946
+#: src/callbacks.c:9954
 msgid ""
 "VJ Mode is specifically designed to make LiVES ready for realtime "
 "presentation.\n"
@@ -5152,22 +5152,22 @@ msgid ""
 " - Continuous looping of video will be enabled automatically on startup"
 msgstr ""
 
-#: src/callbacks.c:10417 src/multitrack.c:11422
+#: src/callbacks.c:10425 src/multitrack.c:11422
 #, fuzzy
 msgid "Selected Frame"
 msgstr "_Tüm çerçeveleri seç"
 
-#: src/callbacks.c:10425
+#: src/callbacks.c:10433
 #, fuzzy
 msgid "_Save Frame as..."
 msgstr "Son Çerçeve"
 
-#: src/callbacks.c:10843
+#: src/callbacks.c:10851
 #, c-format
 msgid "Playing frame %d / %d, at fps %.3f\n"
 msgstr ""
 
-#: src/callbacks.c:10998
+#: src/callbacks.c:11006
 msgid ""
 "\n"
 "\n"
@@ -5176,7 +5176,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:11004
+#: src/callbacks.c:11012
 msgid ""
 "\n"
 "\n"
@@ -5184,7 +5184,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:11078 src/callbacks.c:12130
+#: src/callbacks.c:11086 src/callbacks.c:12138
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -5192,7 +5192,7 @@ msgstr ""
 "\n"
 "Kayıt süresi 0'dan büyük olmalıdır.\n"
 
-#: src/callbacks.c:11094
+#: src/callbacks.c:11102
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -5201,11 +5201,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:11100
+#: src/callbacks.c:11108
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:11143
+#: src/callbacks.c:11151
 msgid ""
 "Click on any desktop window to capture it\n"
 "When a blank LiVES window appears behind it, then it is being recorded.\n"
@@ -5214,7 +5214,7 @@ msgid ""
 "and press the 'q' key.</big></b>\n"
 msgstr ""
 
-#: src/callbacks.c:11183
+#: src/callbacks.c:11191
 #, c-format
 msgid ""
 "\n"
@@ -5224,129 +5224,129 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:11210
+#: src/callbacks.c:11218
 #, fuzzy
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/callbacks.c:11360
+#: src/callbacks.c:11368
 #, fuzzy
 msgid "Export Selected Audio as..."
 msgstr "_Seçili Sesi Çıkart..."
 
-#: src/callbacks.c:11363
+#: src/callbacks.c:11371
 #, fuzzy
 msgid "Export Audio as..."
 msgstr "Ses _Çıkart..."
 
-#: src/callbacks.c:11376
+#: src/callbacks.c:11384
 #, fuzzy, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:11380
+#: src/callbacks.c:11388
 #, fuzzy, c-format
 msgid "Exporting audio as %s..."
 msgstr "%s... Proje dışarıya aktarılıyor"
 
-#: src/callbacks.c:11401
+#: src/callbacks.c:11409
 msgid "Exporting audio"
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:11422
+#: src/callbacks.c:11430
 #, fuzzy
 msgid "Normalising audio..."
 msgstr "Normalleştiriliyor"
 
-#: src/callbacks.c:11425
+#: src/callbacks.c:11433
 #, fuzzy
 msgid "Normalizing audio..."
 msgstr "Normalleştiriliyor"
 
-#: src/callbacks.c:11465
+#: src/callbacks.c:11473
 #, fuzzy
 msgid "Normalise audio"
 msgstr "Normalleştir"
 
-#: src/callbacks.c:11499
+#: src/callbacks.c:11507
 #, fuzzy
 msgid "Append Audio File"
 msgstr "Ses ekle"
 
-#: src/callbacks.c:11554
+#: src/callbacks.c:11562
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/callbacks.c:11571
+#: src/callbacks.c:11579
 msgid "Appending audio"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:11635
+#: src/callbacks.c:11643
 msgid "Append Audio"
 msgstr "Ses ekle"
 
-#: src/callbacks.c:11677
+#: src/callbacks.c:11685
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11679
+#: src/callbacks.c:11687
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11700
+#: src/callbacks.c:11708
 msgid "Trimming/Padding audio"
 msgstr "Ses Kırpılıyor/Dolgulanıyor"
 
-#: src/callbacks.c:11710
+#: src/callbacks.c:11718
 msgid "Trim/Pad Audio"
 msgstr "Ses Kırp/Dolgu"
 
-#: src/callbacks.c:11782
+#: src/callbacks.c:11790
 #, fuzzy
 msgid "Fading audio in"
 msgstr "LiVES:- Ses girişini zayıflatmak"
 
-#: src/callbacks.c:11783
+#: src/callbacks.c:11791
 #, fuzzy
 msgid "Fade audio in"
 msgstr "LiVES:- Ses girişini zayıflatmak"
 
-#: src/callbacks.c:11787
+#: src/callbacks.c:11795
 #, fuzzy
 msgid "Fading audio out"
 msgstr "LiVES:- Ses çıkışını zayıflatmak"
 
-#: src/callbacks.c:11788
+#: src/callbacks.c:11796
 #, fuzzy
 msgid "Fade audio out"
 msgstr "LiVES:- Ses çıkışını zayıflatmak"
 
-#: src/callbacks.c:11800
+#: src/callbacks.c:11808
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11802
+#: src/callbacks.c:11810
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11809
+#: src/callbacks.c:11817
 #, fuzzy
 msgid "Fading audio..."
 msgstr "Normalleştiriliyor"
 
-#: src/callbacks.c:11879
+#: src/callbacks.c:11887
 #, fuzzy
 msgid "Deleting all audio"
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:11888
+#: src/callbacks.c:11896
 #, fuzzy
 msgid ""
 "\n"
@@ -5357,63 +5357,63 @@ msgstr ""
 "Bu dosyayı kapatınca tüm çerçeveler silinecek.\n"
 "Emin misiniz ?"
 
-#: src/callbacks.c:11892
+#: src/callbacks.c:11900
 msgid "Deleting all audio..."
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:11903
+#: src/callbacks.c:11911
 #, fuzzy, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:11907
+#: src/callbacks.c:11915
 #, fuzzy
 msgid "Deleting audio"
 msgstr "Ses siliniyor"
 
-#: src/callbacks.c:11945
+#: src/callbacks.c:11953
 #, fuzzy
 msgid "Trimming Audio"
 msgstr "Kırpma"
 
-#: src/callbacks.c:11946
+#: src/callbacks.c:11954
 msgid "Deleting Audio"
 msgstr "Ses siliniyor"
 
-#: src/callbacks.c:11956
+#: src/callbacks.c:11964
 #, fuzzy
 msgid "Trim Audio"
 msgstr "Ses Kırp/Dolgu"
 
-#: src/callbacks.c:11957
+#: src/callbacks.c:11965
 msgid "Delete Audio"
 msgstr "Sesi sil"
 
-#: src/callbacks.c:12295
+#: src/callbacks.c:12303
 msgid "Record new audio"
 msgstr "Yeni ses kaydet"
 
-#: src/callbacks.c:12369
+#: src/callbacks.c:12377
 #, fuzzy
 msgid "Inserting silence"
 msgstr "Sessiz ekle"
 
-#: src/callbacks.c:12382
+#: src/callbacks.c:12390
 #, fuzzy, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Zamanlar%d panodan%s ekleniyor..."
 
-#: src/callbacks.c:12415
+#: src/callbacks.c:12423
 #, fuzzy
 msgid "Inserting Silence"
 msgstr "Sessiz ekle"
 
-#: src/callbacks.c:12586
+#: src/callbacks.c:12594
 #, fuzzy
 msgid "Fix Missing Audio ?"
 msgstr "Kırpma"
 
-#: src/callbacks.c:12587
+#: src/callbacks.c:12595
 #, c-format
 msgid ""
 "It may be possible to work around missing audio for the clip\n"
@@ -5423,53 +5423,53 @@ msgid ""
 "What would you like to do ?"
 msgstr ""
 
-#: src/callbacks.c:12590
+#: src/callbacks.c:12598
 #, fuzzy
 msgid "by padding to the end with silence."
 msgstr "Ses ile ekle"
 
-#: src/callbacks.c:12598
+#: src/callbacks.c:12606
 #, fuzzy
 msgid "Restore audio from backup"
 msgstr ".lv1 den klibi _geri yükle..."
 
-#: src/callbacks.c:12602
+#: src/callbacks.c:12610
 #, fuzzy
 msgid "Undo clip speed change"
 msgstr "Geçiş _İçeri"
 
-#: src/callbacks.c:12607
+#: src/callbacks.c:12615
 #, fuzzy
 msgid "Pad audio with silence"
 msgstr "Ses ile ekle"
 
-#: src/callbacks.c:12615
+#: src/callbacks.c:12623
 msgid "Do the same for all clips"
 msgstr ""
 
-#: src/callbacks.c:12618
+#: src/callbacks.c:12626
 msgid "Try workaround"
 msgstr ""
 
-#: src/callbacks.c:12623
+#: src/callbacks.c:12631
 #, fuzzy
 msgid "Ignore this error"
 msgstr "Değişiklikleri Yoksay"
 
-#: src/callbacks.c:12715
+#: src/callbacks.c:12723
 msgid "Show layout warnings when reloading a set"
 msgstr ""
 
-#: src/callbacks.c:12729
+#: src/callbacks.c:12737
 #, fuzzy
 msgid "Layout Errors"
 msgstr "Düzen hataları"
 
-#: src/callbacks.c:12738
+#: src/callbacks.c:12746
 msgid "_Delete affected layouts"
 msgstr "Etkilenen düzenleri sil"
 
-#: src/callbacks.c:12743
+#: src/callbacks.c:12751
 msgid "_Try to _Fix Errors"
 msgstr ""
 
@@ -6466,7 +6466,7 @@ msgstr ""
 msgid "First Frame"
 msgstr "İlk Kare"
 
-#: src/gui.c:2284 src/gui.c:3650 src/player.c:711 src/player.c:712
+#: src/gui.c:2284 src/gui.c:3650 src/player.c:714 src/player.c:715
 #: src/player-control.c:399
 msgid "Play"
 msgstr "Oynat"
@@ -6600,23 +6600,23 @@ msgstr ""
 msgid "Hide Play Window"
 msgstr "Oynatma Penceresini Gizle"
 
-#: src/gui.c:4715
+#: src/gui.c:4716
 msgid "Show Play Window"
 msgstr "Oynatma Penceresini Göster"
 
-#: src/gui.c:4849
+#: src/gui.c:4850
 #, fuzzy, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/gui.c:4873
+#: src/gui.c:4874
 #, fuzzy, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr "Dosya kapandı %s\n"
 
-#: src/filesystem.c:167
+#: src/filesystem.c:166
 #, c-format
 msgid ""
 "\n"
@@ -6631,23 +6631,23 @@ msgstr ""
 "\n"
 "Üzerine yazayım mı ?\n"
 
-#: src/filesystem.c:2026
+#: src/filesystem.c:2028
 msgid "FREE DISK SPACE"
 msgstr ""
 
-#: src/filesystem.c:2027
+#: src/filesystem.c:2029
 msgid "BELOW"
 msgstr ""
 
-#: src/filesystem.c:2029
+#: src/filesystem.c:2031
 msgid "DISK SPACE USED"
 msgstr ""
 
-#: src/filesystem.c:2030
+#: src/filesystem.c:2032
 msgid "ABOVE"
 msgstr ""
 
-#: src/filesystem.c:2032
+#: src/filesystem.c:2034
 #, c-format
 msgid ""
 "\n"
@@ -6655,7 +6655,7 @@ msgid ""
 "Diskspace limits can be set in Preferences / Misc.\n"
 msgstr ""
 
-#: src/filesystem.c:2036
+#: src/filesystem.c:2038
 msgid "RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"
 msgstr ""
 
@@ -8900,7 +8900,7 @@ msgstr ""
 "\n"
 "%d çerçeve açıldı.\n"
 
-#: src/effects-weed.c:5291
+#: src/effects-weed.c:5301
 #, fuzzy, c-format
 msgid ""
 "Unable to load plugin %s\n"
@@ -8909,208 +8909,208 @@ msgstr ""
 "Bilgi: %s eklentisi yüklenemiyor\n"
 "Hata:% s\n"
 
-#: src/effects-weed.c:5297
+#: src/effects-weed.c:5307
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:5330
+#: src/effects-weed.c:5340
 #, c-format
 msgid ""
 "No usable filters found in plugin:\n"
 "%s\n"
 msgstr ""
 
-#: src/effects-weed.c:5416
+#: src/effects-weed.c:5426
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr ""
 
-#: src/effects-weed.c:5446
+#: src/effects-weed.c:5456
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5475
+#: src/effects-weed.c:5485
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:5508
+#: src/effects-weed.c:5518
 #, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:5531 src/effects-weed.c:6620
+#: src/effects-weed.c:5541 src/effects-weed.c:6630
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "LiVES çalışma dizini."
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5589 src/rte_window.c:2090
+#: src/effects-weed.c:5599 src/rte_window.c:2090
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:5786
+#: src/effects-weed.c:5796
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d Weed filtresi başarıyla yüklendi\n"
 
-#: src/effects-weed.c:5906
+#: src/effects-weed.c:5916
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:5926
+#: src/effects-weed.c:5936
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5943
+#: src/effects-weed.c:5953
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:6064
+#: src/effects-weed.c:6074
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6086
+#: src/effects-weed.c:6096
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6104
+#: src/effects-weed.c:6114
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6117
+#: src/effects-weed.c:6127
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6134
+#: src/effects-weed.c:6144
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6164
+#: src/effects-weed.c:6174
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6201
+#: src/effects-weed.c:6211
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6235
+#: src/effects-weed.c:6245
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6249
+#: src/effects-weed.c:6259
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6270
+#: src/effects-weed.c:6280
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6285
+#: src/effects-weed.c:6295
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:6298
+#: src/effects-weed.c:6308
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6315
+#: src/effects-weed.c:6325
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6347
+#: src/effects-weed.c:6357
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6361
+#: src/effects-weed.c:6371
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:6382
+#: src/effects-weed.c:6392
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6395
+#: src/effects-weed.c:6405
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6416
+#: src/effects-weed.c:6426
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6454
+#: src/effects-weed.c:6464
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:6516
+#: src/effects-weed.c:6526
 #, fuzzy, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "%d Weed filtresi başarıyla yüklendi\n"
 
-#: src/effects-weed.c:7272
+#: src/effects-weed.c:7282
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:7450
+#: src/effects-weed.c:7463
 #, fuzzy, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:7534
+#: src/effects-weed.c:7547
 #, fuzzy, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr "%s üretci başlayamıyor\n"
 
-#: src/effects-weed.c:9234
+#: src/effects-weed.c:9247
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:9353
+#: src/effects-weed.c:9366
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:10273
+#: src/effects-weed.c:10286
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -12132,7 +12132,7 @@ msgstr "Güncel"
 msgid "Rate (Hz) "
 msgstr "Oran / boyut"
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:4216
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:4219
 #, fuzzy
 msgid "Channels"
 msgstr "Kanal  "
@@ -12142,7 +12142,7 @@ msgstr "Kanal  "
 msgid "Sample Size "
 msgstr "Tek boyut (d)"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:4221
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:4224
 #, fuzzy
 msgid "Signed"
 msgstr "imzalandı"
@@ -14993,18 +14993,18 @@ msgid "Opened device %s\n"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/frameloader.c:1228
+#: src/frameloader.c:1226
 #, c-format
 msgid "rec %.2f MB"
 msgstr "kayıt %.2f MB"
 
-#: src/frameloader.c:1233
+#: src/frameloader.c:1231
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!kayıt %.2f MB"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/frameloader.c:1236
+#: src/frameloader.c:1234
 #, fuzzy
 msgid "rec ?? MB"
 msgstr "kayıt %.2f MB"
@@ -15024,93 +15024,93 @@ msgstr "LiVES-%s: <%s> %dx%d : %d çerçeveler %d bpp %.3f fps"
 msgid "<No File>"
 msgstr "LiVES-%s: <Dosya Yok>"
 
-#: src/machinestate.c:219
+#: src/machinestate.c:191
 #, c-format
 msgid ""
-"RNG seems to be %d bit only, injecting extra randomness...\n"
-"...increased it from %d bits to at least %d bits\n"
+"Randomness of %d bits is TOO LOW for generating unique IDs\n"
+"Will attempt to increase random bits to at least %d\n"
 msgstr ""
 
 #. TRANSLATORS: Exabytes
-#: src/machinestate.c:576
+#: src/machinestate.c:523
 #, fuzzy, c-format
 msgid "%.2f EB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Petabytes
-#: src/machinestate.c:579
+#: src/machinestate.c:526
 #, fuzzy, c-format
 msgid "%.2f PB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Terabytes
-#: src/machinestate.c:582
+#: src/machinestate.c:529
 #, fuzzy, c-format
 msgid "%.2f TB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Gigabytes
-#: src/machinestate.c:585
+#: src/machinestate.c:532
 #, fuzzy, c-format
 msgid "%.2f GB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Megabytes
-#: src/machinestate.c:588
+#: src/machinestate.c:535
 #, fuzzy, c-format
 msgid "%.2f MB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Kilobytes (1024 bytes)
-#: src/machinestate.c:591
+#: src/machinestate.c:538
 #, fuzzy, c-format
 msgid "%.2f KiB"
 msgstr "kayıt %.2f MB"
 
-#: src/machinestate.c:593
+#: src/machinestate.c:540
 #, c-format
 msgid "%d bytes"
 msgstr ""
 
-#: src/machinestate.c:733
+#: src/machinestate.c:680
 msgid "Processing has been paused."
 msgstr ""
 
-#: src/machinestate.c:886
+#: src/machinestate.c:833
 #, c-format
 msgid "Today %s"
 msgstr ""
 
-#: src/machinestate.c:888
+#: src/machinestate.c:835
 #, c-format
 msgid "Yesterday %s"
 msgstr ""
 
-#: src/machinestate.c:1219
+#: src/machinestate.c:1166
 msgid "(empty)"
 msgstr ""
 
-#: src/machinestate.c:1246
+#: src/machinestate.c:1193
 #, fuzzy, c-format
 msgid "Header version %d (%s)"
 msgstr "Sürüm: %d"
 
-#: src/machinestate.c:1249
+#: src/machinestate.c:1196
 #, fuzzy
 msgid "Same as current"
 msgstr "_Süre (saniye)"
 
-#: src/machinestate.c:1251
+#: src/machinestate.c:1198
 #, fuzzy, c-format
 msgid "Current is %d"
 msgstr "Güncel"
 
-#: src/machinestate.c:1253
+#: src/machinestate.c:1200
 #, c-format
 msgid "Current is %d; consider updating before loading"
 msgstr ""
 
-#: src/machinestate.c:1260
+#: src/machinestate.c:1207
 #, c-format
 msgid ""
 "Source: %s\n"
@@ -15118,23 +15118,23 @@ msgid ""
 "Frames: %d, size: %d X %d, fps: %.3f"
 msgstr ""
 
-#: src/machinestate.c:1297
+#: src/machinestate.c:1244
 msgid "(ABSENT)"
 msgstr ""
 
-#: src/machinestate.c:1821
+#: src/machinestate.c:1768
 #, fuzzy, c-format
 msgid "%s was not found\n"
 msgstr " (sessiz)\n"
 
-#: src/machinestate.c:1859 src/machinestate.c:1864
+#: src/machinestate.c:1806 src/machinestate.c:1811
 #, fuzzy, c-format
 msgid "Could not write to %s\n"
 msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/machinestate.c:1887
+#: src/machinestate.c:1834
 #, fuzzy, c-format
 msgid ""
 "LiVES was unable to send the item to trash.\n"
@@ -15143,12 +15143,12 @@ msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/machinestate.c:1930
+#: src/machinestate.c:1877
 #, c-format
 msgid "Grabbed %d frames in %s (average %.3f fps)"
 msgstr ""
 
-#: src/machinestate.c:1971
+#: src/machinestate.c:1918
 msgid "Screen grab failed"
 msgstr ""
 
@@ -15829,18 +15829,18 @@ msgid "error in file. Failed.\n"
 msgstr "Başarısız . dosyada hata\n"
 
 #. TRANSLATORS: rec(ord)
-#: src/player.c:916
+#: src/player.c:919
 #, fuzzy, c-format
 msgid "rec %9d / %d"
 msgstr "kayıt %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/player.c:922
+#: src/player.c:925
 #, fuzzy, c-format
 msgid "!rec %9d / %d"
 msgstr "!kayıt %9d/%d"
 
-#: src/player.c:1844
+#: src/player.c:1847
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -15848,30 +15848,30 @@ msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/player.c:4206
+#: src/player.c:4209
 #, fuzzy
 msgid "Source"
 msgstr "Kaynak: %s"
 
-#: src/player.c:4214
+#: src/player.c:4217
 #, fuzzy
 msgid "Rate Hz"
 msgstr "Oran / boyut"
 
-#: src/player.c:4218
+#: src/player.c:4221
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "Tek boyut (d)"
 
-#: src/player.c:4223
+#: src/player.c:4226
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:4231
+#: src/player.c:4234
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:4233
+#: src/player.c:4236
 #, fuzzy
 msgid "Interleaved"
 msgstr "Ayrıştırma"
@@ -16019,34 +16019,34 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/diagnostics.c:145
+#: src/diagnostics.c:330
 #, c-format
 msgid "Audio is %s video by %.4f secs.\n"
 msgstr ""
 
-#: src/diagnostics.c:146
+#: src/diagnostics.c:331
 msgid "ahead of"
 msgstr ""
 
-#: src/diagnostics.c:146
+#: src/diagnostics.c:331
 msgid "behind"
 msgstr ""
 
-#: src/diagnostics.c:149
+#: src/diagnostics.c:334
 msgid "Clip has no audio.\n"
 msgstr ""
 
-#: src/diagnostics.c:150
+#: src/diagnostics.c:335
 #, fuzzy
 msgid "Audio source external.\n"
 msgstr "Ses çözücüsü"
 
-#: src/diagnostics.c:155
+#: src/diagnostics.c:340
 #, c-format
 msgid "Bg clip: %d X %d, frame: %d / %d, palette: %s\n"
 msgstr ""
 
-#: src/diagnostics.c:166
+#: src/diagnostics.c:351
 #, c-format
 msgid ""
 "%sFrame %d / %d, fps %.3f (target: %.3f)\n"
@@ -16058,33 +16058,33 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/diagnostics.c:176 src/diagnostics.c:195
+#: src/diagnostics.c:361 src/diagnostics.c:380
 msgid "Low"
 msgstr ""
 
-#: src/diagnostics.c:177 src/diagnostics.c:196
+#: src/diagnostics.c:362 src/diagnostics.c:381
 #, fuzzy
 msgid "Med"
 msgstr "Geriye Sar"
 
-#: src/diagnostics.c:177 src/diagnostics.c:196
+#: src/diagnostics.c:362 src/diagnostics.c:381
 msgid "High"
 msgstr ""
 
-#: src/diagnostics.c:178
+#: src/diagnostics.c:363
 msgid "adaptive"
 msgstr ""
 
-#: src/diagnostics.c:178
+#: src/diagnostics.c:363
 msgid "fixed"
 msgstr ""
 
-#: src/diagnostics.c:187
+#: src/diagnostics.c:372
 #, c-format
 msgid "bg: %d/%d "
 msgstr ""
 
-#: src/diagnostics.c:206
+#: src/diagnostics.c:391
 #, c-format
 msgid ""
 "\t'%s' was not found on your system.\n"
@@ -16092,67 +16092,67 @@ msgid ""
 "\t- "
 msgstr ""
 
-#: src/diagnostics.c:208
+#: src/diagnostics.c:393
 msgid ""
 "Enables easier identification of file types,\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:209 src/diagnostics.c:211
+#: src/diagnostics.c:394 src/diagnostics.c:396
 msgid ""
 "Enables measuring of disk space used,\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:210
+#: src/diagnostics.c:395
 msgid ""
 "Enables reduction in file size for some files,\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:212
+#: src/diagnostics.c:397
 msgid ""
 "Assists in the identification of video clips\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:213
+#: src/diagnostics.c:398
 msgid ""
 "Assists in the identification of image files\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:214
+#: src/diagnostics.c:399
 msgid ""
 "Required for many rendered effects in the clip editor.\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:215
+#: src/diagnostics.c:400
 msgid ""
 "Enables clip merging in the clip editor.\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:216
+#: src/diagnostics.c:401
 msgid ""
 "Allows use of some additional encoder plugins\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:217
+#: src/diagnostics.c:402
 msgid ""
 "Enables download and import of files from Youtube and other sites.\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:219
+#: src/diagnostics.c:404
 msgid ""
 "Enables identification of external windows so that they can be recorded.\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:223
+#: src/diagnostics.c:408
 #, c-format
 msgid ""
 "\t'%s' was not found on your system.\n"
@@ -16160,63 +16160,63 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:225
+#: src/diagnostics.c:410
 msgid ""
 "Enables adjustment of windows within the desktop,\n"
 "\n"
 msgstr ""
 
-#: src/diagnostics.c:230
+#: src/diagnostics.c:415
 #, fuzzy, c-format
 msgid ""
 "Try: %s\n"
 "\n"
 msgstr "Tür: %s"
 
-#: src/diagnostics.c:253
+#: src/diagnostics.c:438
 #, fuzzy
 msgid "real time audio"
 msgstr "Normalleştir"
 
-#: src/diagnostics.c:257
+#: src/diagnostics.c:442
 msgid "greatly improve audio performance"
 msgstr ""
 
-#: src/diagnostics.c:262
+#: src/diagnostics.c:447
 #, fuzzy, c-format
 msgid "LiVES was compiled without support for %s."
 msgstr ""
 ", ama LiVES ın bu sürümü pulse audio desteği ile derlenmedi.\n"
 "\n"
 
-#: src/diagnostics.c:264
+#: src/diagnostics.c:449
 #, c-format
 msgid " Recompiling with this will %s.\n"
 msgstr ""
 
-#: src/diagnostics.c:268
+#: src/diagnostics.c:453
 msgid "Before compiling, try "
 msgstr ""
 
-#: src/diagnostics.c:271
+#: src/diagnostics.c:456
 #, c-format
 msgid "installing lib%s-dev"
 msgstr ""
 
-#: src/diagnostics.c:277
+#: src/diagnostics.c:462
 #, c-format
 msgid "lib%s-dev"
 msgstr ""
 
-#: src/diagnostics.c:294
+#: src/diagnostics.c:479
 msgid "What is missing ?"
 msgstr ""
 
-#: src/diagnostics.c:321
+#: src/diagnostics.c:506
 msgid "All optional components located\n"
 msgstr ""
 
-#: src/diagnostics.c:325
+#: src/diagnostics.c:510
 #, fuzzy, c-format
 msgid ""
 "Compilation Options:\n"
@@ -16224,11 +16224,11 @@ msgid ""
 "%s"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/diagnostics.c:326
+#: src/diagnostics.c:511
 msgid "Executables:\n"
 msgstr ""
 
-#: src/diagnostics.c:333
+#: src/diagnostics.c:518
 msgid ""
 "\n"
 "If you DO have any of these missing executables, please ensure they are "

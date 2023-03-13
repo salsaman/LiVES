@@ -610,6 +610,8 @@ void clear_event_frames(int clipno);
 void set_undoable(const char *what, boolean sensitive);
 void set_redoable(const char *what, boolean sensitive);
 
+boolean read_from_infofile(FILE *infofile);
+
 // query function //
 boolean check_for_ratio_fps(double fps);
 

@@ -69,8 +69,8 @@ typedef struct {
 
 static volatile int nb = 0;
 static volatile int swctx_count = 0;
-static swsctx_block bloxx[MAX_SWS_BLOCKS];
-static struct SwsContext *swscalep[MAX_SWS_CTX];
+static swsctx_block **bloxx = NULL;
+static struct SwsContext **swscalep = NULL;
 static pthread_mutex_t ctxcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, swpixfmt ipixfmt, int width, int height,
@@ -87,7 +87,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
     else lastblock = nb - 1;
 
     while (1) {
-      block = &bloxx[j];
+      block = bloxx[j];
       if (!block->in_use && (num = block->num) >= nreq) {
         if (iwidth == block->iwidth
             && iheight == block->iheight
@@ -149,30 +149,29 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
   // *INDENT-ON*
 
   if (minbnum < max || mingnum < max) {
-    bestblock = &bloxx[bestidx];
+    bestblock = bloxx[bestidx];
     bestblock->in_use = TRUE;
     pthread_mutex_unlock(&ctxcnt_mutex);
     bestblock->match = TRUE;
     THREADVAR(last_sws_block) = bestidx;
   } else {
     int startctx = swctx_count, endctx = startctx + nreq;
-    if (endctx >= MAX_SWS_CTX
-        || nb  >= MAX_SWS_BLOCKS - 1) {
-      if (bestidx == -1) lives_abort("Unable to allocate SWS context block");
-      bestblock = &bloxx[bestidx];
+    if (bestidx != -1) {
+      bestblock = bloxx[bestidx];
       bestblock->in_use = TRUE;
       pthread_mutex_unlock(&ctxcnt_mutex);
       THREADVAR(last_sws_block) = bestidx;
     } else {
-      g_print("FAILED to get SWS block\n");
-      bestblock = &bloxx[nb++];
+      nb++;
+      bloxx = (swsctx_block **)lives_recalloc(bloxx, nb, nb - 1, sizeof(swsctx_block *));
+      bestblock = bloxx[nb - 1] = (swsctx_block *)lives_calloc(1, sizeof(swsctx_block));
       bestblock->in_use = TRUE;
       swctx_count = endctx;
+      swscalep = (struct SwsContext **)lives_recalloc(swscalep, endctx,
+                 startctx, sizeof(struct SwsContext *));
       pthread_mutex_unlock(&ctxcnt_mutex);
-
       bestblock->num = nreq;
       bestblock->offset = startctx;
-      for (int i = startctx; i < endctx; i++) swscalep[i] = NULL;
     }
 
     bestblock->iwidth = iwidth;

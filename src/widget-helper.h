@@ -1671,6 +1671,8 @@ const widget_opts_t _def_widget_opts = {
 #define WH_LAYOUT_KEY "_wh_layout"
 #define WIDTH_KEY "_wh_width"
 #define HEIGHT_KEY "_wh_height"
+#define DEFER_KEY "_wh_defer"
+#define DEFERRED_KEY "_wh_deferred"
 
 #define SBUTT_MARKUP_KEY "_sbutt_markup"
 

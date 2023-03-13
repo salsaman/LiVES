@@ -957,6 +957,7 @@ typedef struct {
   boolean error; //  --> status
   volatile boolean fatal; ///< got fatal signal --> status
 
+  volatile boolean no_idlefuncs;
   uint32_t fg_service_handle;
   GSource *fg_service_source;
 
@@ -1104,6 +1105,7 @@ typedef struct {
   pthread_mutex_t pwin_surface_mutex;
 
   /// predictive caching apparatus
+  weed_plant_t *cached_frame;
   weed_plant_t *frame_layer_preload;
   frames64_t pred_frame;
   int pred_clip;

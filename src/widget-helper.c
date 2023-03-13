@@ -9,6 +9,7 @@
 #include "main.h"
 #include "startup.h"
 #include "functions.h"
+#include "callbacks.h"
 
 // max number of GUI events we process per update loop: 64 - 256 seems about right
 #define EV_LIM 64.
@@ -32,14 +33,13 @@ static volatile boolean gui_loop_tight = FALSE;
 
 // this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
 static volatile int cprio = PRIO_HIGH;
-static volatile boolean no_service_loop = FALSE;
 static pthread_mutex_t lpt_mutex = PTHREAD_MUTEX_INITIALIZER;
 static volatile lives_proc_thread_t lpttorun = NULL;
 
 static boolean _lives_widget_context_update(void);
-static boolean _lives_widget_process_updates(LiVESWidget *widget);
+static boolean _lives_widget_process_updates(LiVESWidget *);
 
-extern boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
+extern boolean all_config_deferrable(LiVESWidget *, LiVESXEventConfigure *event, livespointer ppsurf);
 extern boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
 static boolean _lives_standard_button_set_label(LiVESButton *, const char *txt);
@@ -958,26 +958,37 @@ boolean set_gui_loop_tight(boolean val) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *ctx, boolean may_block) {
+  RECURSE_GUARD_START;
+  boolean ret = FALSE;
+  RETURN_VAL_IF_RECURSED(FALSE);
+  RECURSE_GUARD_LOCK;
   if (!is_fg_thread()) {
     if (!gui_loop_tight) mainw->do_ctx_update = TRUE;
+    RECURSE_GUARD_END;
     return FALSE;
   } else {
-    boolean ret = FALSE;
-    if (mainw && mainw->fg_service_source) {
-      boolean skip_id = no_service_loop;
-      no_service_loop = TRUE;
-      /* if (cprio == PRIO_HIGH) */
-      /* 	lives_source_set_priority(mainw->fg_service_source, PRIO_LOW); */
+    boolean no_idlefuncs = FALSE;
+    if (mainw) {
+      no_idlefuncs = mainw->no_idlefuncs;
+      mainw->no_idlefuncs = TRUE;
+      if (mainw->fg_service_source) {
+        if (cprio == PRIO_HIGH)
+          lives_source_set_priority(mainw->fg_service_source, PRIO_LOW);
+      }
+    }
 
-      ret = g_main_context_iteration(ctx, may_block);
+    ret = g_main_context_iteration(ctx, may_block);
 
-      no_service_loop = skip_id;
-      /* if (cprio == PRIO_HIGH) */
-      /* 	lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH); */
-      return ret;
+    if (mainw) {
+      mainw->no_idlefuncs = no_idlefuncs;
+      if (mainw->fg_service_source) {
+        if (cprio == PRIO_HIGH)
+          lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH);
+      }
     }
   }
-  return FALSE;
+  RECURSE_GUARD_END;
+  return ret;
 }
 
 
@@ -1043,6 +1054,15 @@ boolean fg_service_fulfill(void) {
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE double lives_widget_get_opacity(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 8, 0)
+  return gtk_widget_get_opacity(widget);
+#endif
+#endif
+  return FALSE;
+}
+
 static volatile int misses = 0;
 
 boolean fg_service_fulfill_cb(void *dummy) {
@@ -1055,13 +1075,13 @@ boolean fg_service_fulfill_cb(void *dummy) {
   // in high priority, the loop runs as fast as it can to be super responsive
   // after a set number of cycles with no activity, we will switch to low priority
   // to reduce the CPU load. Before pushing requests, background threads can force a kick from low to high prio
-  // in advance,no_se
+  // in advance
   static int prio =  PRIO_HIGH;
   static boolean omode = -1;
   boolean is_fg_service = FALSE;
   boolean is_active;
 
-  if (no_service_loop) {
+  if (mainw->no_idlefuncs) {
     // callback has to be disabled during calls to g_main_context_iteration,
     // to prevent that function from blocking
     return TRUE;
@@ -1609,6 +1629,7 @@ static boolean _lives_widget_queue_draw_and_update(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget *widget) {
   if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
   else {
+    //BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
     BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
@@ -8828,7 +8849,8 @@ void render_standard_button(LiVESButton * sbutt) {
         if (height < minheight) height = minheight;
         lives_widget_set_size_request(LIVES_WIDGET(sbutt), width, height);
       }
-      if (is_fg_thread()) lives_widget_queue_draw(LIVES_WIDGET(sbutt));
+      //if (is_fg_thread())
+      lives_widget_queue_draw_and_update(LIVES_WIDGET(sbutt));
     }
   }
 }
@@ -8868,6 +8890,8 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   button = lives_button_new();
 
   if (!palette) return button;
+
+  //da = lives_standard_drawing_area_new(NULL, pbsurf);
 
   da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
   lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
@@ -9392,10 +9416,11 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
                            LIVES_GUI_CALLBACK(callback),
                            (livespointer)ppsurf);
 #endif
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_CONFIGURE_EVENT,
-                              LIVES_GUI_CALLBACK(all_config),
-                              (livespointer)ppsurf);
   }
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_CONFIGURE_EVENT,
+                            LIVES_GUI_CALLBACK(all_config_deferrable),
+                            (livespointer)ppsurf);
+
   if (widget_opts.apply_theme) {
     set_standard_widget(darea, TRUE);
     lives_widget_apply_theme(darea, LIVES_WIDGET_STATE_NORMAL);
@@ -12247,8 +12272,6 @@ boolean lives_window_center(LiVESWindow * window) {
 
     xcen = mainw->mgeom[widget_opts.monitor].x + ((mainw->mgeom[widget_opts.monitor].width - width) >> 1);
     ycen = mainw->mgeom[widget_opts.monitor].y + ((mainw->mgeom[widget_opts.monitor].height - height) >> 1);
-
-    g_print("MOV %d %d\n", xcen, ycen);
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
   }
   return TRUE;

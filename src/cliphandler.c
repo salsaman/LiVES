@@ -59,6 +59,22 @@ char *get_staging_dir_for(int index, const lives_intentcap_t *icaps) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean read_from_infofile(FILE *infofile) {
+  size_t bread;
+  if (!infofile) infofile = fopen(cfile->info_file, "r");
+  if (!infofile) return FALSE;
+  THREADVAR(read_failed) = FALSE;
+  bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
+  fclose(infofile);
+  if (ferror(infofile)) {
+    THREADVAR(read_failed) = TRUE;
+    return FALSE;
+  }
+  lives_memset(mainw->msg + bread, 0, 1);
+  return TRUE;
+}
+
+
 LIVES_GLOBAL_INLINE
 char *use_staging_dir_for(int clipno) {
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
@@ -2607,6 +2623,15 @@ void do_quick_switch(int new_file) {
   mainw->blend_palette = WEED_PALETTE_END;
 
   if (old_file != new_file && old_file == mainw->playing_file) {
+    if (mainw->cached_frame && mainw->cached_frame != mainw->frame_layer
+        && mainw->cached_frame != get_old_frame_layer()) {
+      if (weed_layer_get_pixel_data(mainw->cached_frame)
+          == weed_layer_get_pixel_data(mainw->frame_layer))
+        weed_layer_nullify_pixel_data(mainw->cached_frame);
+      weed_layer_free(mainw->cached_frame);
+      mainw->cached_frame = NULL;
+    }
+
     weed_layer_set_invalid(mainw->frame_layer, TRUE);
     if (mainw->frame_layer_preload && mainw->frame_layer_preload != mainw->frame_layer) {
       weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
@@ -2769,7 +2794,12 @@ void do_quick_switch(int new_file) {
 
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
-  redraw_timeline(mainw->current_file);
+
+  mainw->ignore_screen_size = TRUE;
+  reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
+
+  if (!mainw->fs && !mainw->fade) redraw_timeline(mainw->current_file);
 }
 
 
@@ -2854,6 +2884,7 @@ lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *sourc
     mysrc->source = source;
     mysrc->src_type = src_type;
     mysrc->track = track;
+    mysrc->status = SRC_STATUS_INACTIVE;
     mysrc->purpose = purpose;
     if (purpose == SRC_PURPOSE_PRIMARY)
       mysrc->flags = SRC_FLAG_NOFREE | SRC_FLAG_INACTIVE;

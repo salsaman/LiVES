@@ -226,7 +226,6 @@ weed_layer_t *set_if_md5_valid(int clipno, frames_t frame, weed_layer_t *layer) 
 //////////////////////////////// GUI frame functions ////
 
 void showclipimgs(void) {
-  mainw->gui_much_events = TRUE;
   if (CURRENT_CLIP_IS_VALID) {
     load_end_image(cfile->end);
     load_start_image(cfile->start);
@@ -234,9 +233,6 @@ void showclipimgs(void) {
     load_end_image(0);
     load_start_image(0);
   }
-  lives_widget_queue_draw_and_update(mainw->start_image);
-  lives_widget_queue_draw_and_update(mainw->end_image);
-  mainw->gui_much_events = FALSE;
 }
 
 

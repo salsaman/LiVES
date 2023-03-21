@@ -1673,7 +1673,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget * widget) 
 
 static void _lives_widget_destroy(LiVESWidget * widget) {
 #ifdef GUI_GTK
-  if (widget == mainw->debug_ptr) break_me("wdestroy");
   gtk_widget_destroy(widget);
 #endif
 }

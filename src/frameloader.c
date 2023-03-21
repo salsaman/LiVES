@@ -731,8 +731,6 @@ check_encache:
       }
     }
 
-    g_print("GOT %p and %p %d %d\n", layer, end_pixbuf, width, height);
-
     if (!layer && !end_pixbuf) {
       lives_clip_src_t *dsource = NULL;
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
@@ -2517,9 +2515,14 @@ fail:
 
 
   LIVES_GLOBAL_INLINE boolean is_layer_ready(weed_layer_t *layer) {
-    lives_proc_thread_t lpt = (lives_proc_thread_t)weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
-    if (lpt) return lives_proc_thread_is_done(lpt);
-    return TRUE;
+    boolean ret = TRUE;
+    lives_proc_thread_t lpt =
+      (lives_proc_thread_t)weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
+    if (lives_proc_thread_ref(lpt) > 1) {
+      ret = lives_proc_thread_is_done(lpt);
+      lives_proc_thread_unref(lpt);
+    }
+    return ret;
   }
 
 
@@ -2556,8 +2559,8 @@ fail:
 #endif
     if (!layer) return FALSE;
     else {
-      lives_proc_thread_t lpt = NULL, new_val = NULL;
-      weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &new_val, &lpt);
+      lives_proc_thread_t lpt = NULL;
+      weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
       if (lpt) {
         if (!weed_layer_check_valid(layer)) lives_proc_thread_request_cancel(lpt, FALSE);
 #if USE_RESTHREAD
@@ -2682,8 +2685,8 @@ fail:
     lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
                                    | LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)pft_thread,
                                    WEED_SEED_BOOLEAN, "vs", layer, img_ext);
-    weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
     lives_proc_thread_queue(lpt, 0);
+    weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
 #endif
   }
 

@@ -76,6 +76,55 @@ int lives_get_status(void) {
 }
 
 
+boolean video_sync_ready(void) {
+  // can be cancelled by setting mainw->video_seek_ready to TRUE before calling
+  int count = USEC_WAIT_FOR_SYNC / 10;
+  lives_clip_t *sfile = NULL;
+#ifdef VALGRIND_ON
+  count *= 10;
+#else
+  if (mainw->debug) count *= 10;
+#endif
+
+  if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
+      || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
+      || !is_realtime_aplayer(prefs->audio_player) || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
+    mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+    return TRUE;
+  }
+
+  IF_APLAYER_JACK
+  (
+    if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+  && !mainw->record_paused && mainw->jackd->is_paused)) {
+  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  return TRUE;
+})
+
+  IF_APLAYER_PULSE
+  (
+    if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+  && !mainw->record_paused && mainw->pulsed->is_paused)) {
+  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  return TRUE;
+})
+
+  if (mainw->audio_seek_ready) {
+    mainw->video_seek_ready = TRUE;
+    return TRUE;
+  }
+
+  mainw->startticks -= lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+  lives_nanosleep_while_false(mainw->audio_seek_ready);
+  mainw->startticks += lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+
+  mainw->fps_mini_measure = 0;
+  mainw->fps_mini_ticks = mainw->last_startticks = mainw->startticks;
+
+  return TRUE;
+}
+
+
 void get_player_size(int *opwidth, int *opheight) {
   // calc output size for display
   int rwidth, rheight;
@@ -1941,6 +1990,11 @@ lfi_done:
   }
   frame_layer = NULL;
 
+  // this is reset when we call avsync_force()
+  // the audio will have seeked to this frame and then be holding (outputting silence)
+  // the audio player will signal when it reaches that point by setting audio_seek_ready to TRUE
+  // once we set video_seek_ready to TRUE, the audio can continue
+  // the timer will be advancing during this, so we discount the time spent waiting for audio_seek_ready
   if (!mainw->video_seek_ready) video_sync_ready();
 
   if (framecount) {
@@ -2019,6 +2073,31 @@ void reset_playback_clock(void) {
 }
 
 
+
+/// synchronised timing
+// assume we have several time sources, each running at a slightly varying rate and with their own offsets
+// the goal here is to invent a "virtual" timing source which doesnt suffer from jumps (ie. monotonic)
+// and in addition avoids sudden changes in the timing rate, We base this imaginary clock on the system (wall time)
+// clock + offset (O) running at a variable rate (R) X clock time
+// when switching sources we get the current time, and adjust O so it is last time + R(wall delta)
+// then when called again with that source a second time, we can get an estimate for R.
+//
+// Now we also have a designated Master Clock, this can be e.g. soundcard, system time, external time.
+// If the Master Clock is system, then this is easy to handle, we simply ignore all other timing sources
+// if Master Clock is another source (e.g. soundcard), then it may become temporarily unavalable,
+// or else it may only update periodically. Thus we try to estimate R (the ratio of Master Clock ticks vs.
+// wall ticks), as well as for all other sources. Then we simply multiply wall ticks by R. Once we get a new timing
+// update from the Master Clock, we may find that it is ahead or behind the estimate.in this case we need a new
+// factor A, projected so that the imaginary clock gradually realigns with the Master Clock. Since R itself may vary
+// we apply this as an adjustment to R, slightly increasing or reducing.it. If it turns out that we are unable
+// to resync, we have to apply more harsh adjustments. So in fact the calculation is:
+// If we are currently advancing at rate R, and the timer source is advancing at a variable rate X, and the error
+// delta is D, then first we project the rate of time to reduce D to zero in time T. The timer source will advance by
+// approximately X * T, at the current rate R, we will advance by R * T, but we want to advance by T + D
+// Suppose R > X, but to resync, we need to advance at a rate < X. We begin reducing R, the time is still advancing too
+// rapidly, worsening the situation. So we want to quickly reduce R, porportional to (R - X) ^ 2,
+// until we are on the correct side of X, then reduce logarithmically until we reach the projected rate ln(D).
+
 ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
@@ -2029,9 +2108,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 
   if (time_source) tsource = *time_source;
   else tsource = LIVES_TIME_SOURCE_NONE;
-  //if (last_tsource == LIVES_TIME_SOURCE_NONE) last_sync_ticks = mainw->syncticks;
 
-  ////
   clock_delta = lives_get_relative_ticks(origsecs, orignsecs) - mainw->clock_ticks;
   mainw->clock_ticks += clock_delta;
   ///
@@ -2070,33 +2147,31 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 
       // if the timecard cannot return current time we get a value of -1 back, and then fall back to system clock
 
-#ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK &&
-          ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use &&
-            IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0) ||
-           (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use))) {
-        tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-        if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+      IF_APLAYER_JACK
+      (
+        if ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use
+             && IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0)
+      || (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use)) {
+      tsource = LIVES_TIME_SOURCE_SOUNDCARD;
+      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_jack_get_time(mainw->jackd_read);
         else
           current = lives_jack_get_time(mainw->jackd);
-      }
-#endif
+      })
 
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE &&
-          ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
-            ((mainw->multitrack && cfile->achans > 0)
-             || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                 && CLIP_HAS_AUDIO(mainw->pulsed->playing_file))))
-           || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use))) {
-        tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-        if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+      IF_APLAYER_PULSE
+      (
+        if ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
+             ((mainw->multitrack && cfile->achans > 0)
+              || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file)
+                  && CLIP_HAS_AUDIO(mainw->pulsed->playing_file))))
+      || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use)) {
+      tsource = LIVES_TIME_SOURCE_SOUNDCARD;
+      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_pulse_get_time(mainw->pulsed_read);
         else
           current = lives_pulse_get_time(mainw->pulsed);
-      }
-#endif
+      })
     }
 
     if (tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
@@ -2121,7 +2196,6 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   Itime += R * clock_delta;
 
   if (tsource == LIVES_TIME_SOURCE_NONE)
-
     last_tsource = tsource;
   if (time_source) *time_source = tsource;
   return Itime;
@@ -2171,37 +2245,14 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 /*         delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
 //}
 
-/// synchronised timing
-// assume we have several time sources, each running at a slightly varying rate and with their own offsets
-// the goal here is to invent a "virtual" timing source which doesnt suffer from jumps (ie. monotonic)
-// and in addition avoids sudden changes in the timing rate, We base this imaginary clock on the system (wall time)
-// clock + offset (O) running at a variable rate (R) X clock time
-// when switching sources we get the current time, and adjust O so it is last time + R(wall delta)
-// then when called again with that source a second time, we can get an estimate for R.
-//
-// Now we also have a designated Master Clock, this can be e.g. soundcard, system time, external time.
-// If the Master Clock is system, then this is easy to handle, we simply ignore all other timing sources
-// if Master Clock is another source (e.g. soundcard), then it may become temporarily unavalable,
-// or else it may only update periodically. Thus we try to estimate R (the ratio of Master Clock ticks vs.
-// wall ticks), as well as for all other sources. Then we simply multiply wall ticks by R. Once we get a new timing
-// update from the Master Clock, we may find that it is ahead or behind the estimate.in this case we need a new
-// factor A, projected so that the imaginary clock gradually realigns with the Master Clock. Since R itself may vary
-// we apply this as an adjustment to R, slightly increasing or reducing.it. If it turns out that we are unable
-// to resync, we have to apply more harsh adjustments. So in fact the calculation is:
-// If we are currently advancing at rate R, and the timer source is advancing at a variable rate X, and the error
-// delta is D, then first we project the rate of time to reduce D to zero in time T. The timer source will advance by
-// approximately X * T, at the current rate R, we will advance by R * T, but we want to advance by T + D
-// Suppose R > X, but to resync, we need to advance at a rate < X. We begin reducing R, the time is still advancing too
-// rapidly, worsening the situation. So we want to quickly reduce R, porportional to (R - X) ^ 2,
-// until we are on the correct side of X, then reduce logarithmically until we reach the projected rate ln(D).
-
 static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t last_frame) {
   // this is only used for older versions with non-realtime players
   // return FALSE if audio stops playback
   lives_clip_t *sfile = mainw->files[fileno];
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->playing_file == fileno) {
-    if (!mainw->loop || mainw->playing_sel) {
+  IF_APLAYER_JACK
+  (
+  if (mainw->jackd->playing_file == fileno) {
+  if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
         if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
             || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001)) {
@@ -2211,17 +2262,18 @@ static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t l
     } else {
       if (!mainw->loop_cont) {
         if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
-            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
+            (sfile->adirection == LIVES_DIRECTION_FORWARD
+             && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
              >= cfile->laudio_time - 0.0001)) {
           return FALSE;
 	  // *INDENT-OFF*
-        }}}}
+        }}}})
   // *INDENT-ON*
 
-#endif
-#ifdef HAVE_PULSE_AUDIO
+  IF_APLAYER_PULSE
+  (
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->playing_file == fileno) {
-    if (!mainw->loop || mainw->playing_sel) {
+  if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
         if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
             || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001)) {
@@ -2231,14 +2283,14 @@ static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t l
     } else {
       if (!mainw->loop_cont) {
         if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
-            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
+            (sfile->adirection == LIVES_DIRECTION_FORWARD
+             && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
              >= cfile->laudio_time - 0.0001)) {
           return FALSE;
 	  // *INDENT-OFF*
-        }}}}
+        }}}})
   // *INDENT-ON*
 
-#endif
   return TRUE;
 }
 
@@ -2655,13 +2707,15 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
     double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
     best_frame = sfile->last_frameno + dir;
     if (mainw->inst_fps < CATCHUP_LIMIT * target_fps
-        || (dropped && dir * (requested_frame - sfile->last_frameno) - dropped
-            < MIN(LAGFRAME_TRIGGER, dir * (requested_frame - sfile->last_frameno)) / 2)) {
+        || (dropped && dir * (requested_frame - sfile->last_frameno) < dropped))
       best_frame += dir;
-    }
+
     if (jumplim > 0 && dir * (best_frame - sfile->last_frameno) > jumplim) {
       best_frame = sfile->last_frameno + dir * jumplim;
     }
+    if ((best_frame - requested_frame) * dir > dropped) best_frame = requested_frame + dropped * dir;
+    if ((best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir;
+
     if (best_frame != clamp_frame(mainw->playing_file, best_frame)) best_frame = -1;
     else {
       double targ_time = 1. / fabs(sfile->pb_fps);
@@ -2671,6 +2725,8 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
                                    best_frame, best_frame + dropped + MIN(LAGFRAME_TRIGGER, dir * (requested_frame - sfile->last_frameno))
                                    / 2 * dir, &targ_time, &tconf);
     }
+    if ((best_frame - requested_frame) * dir > dropped) best_frame = requested_frame + dropped * dir;
+    if ((best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir;
   }
   return best_frame;
 }
@@ -2749,7 +2805,7 @@ int process_one(boolean visible) {
   static frames_t requested_frame = 0;
   static frames_t best_frame = -1;
   frames_t xrequested_frame = -1;
-  boolean fixed_frame = FALSE;
+  frames_t fixed_frame = 0;
   boolean show_frame = FALSE, showed_frame = FALSE;
   boolean did_switch = FALSE;
   boolean can_rec = FALSE;
@@ -3096,8 +3152,10 @@ switch_point:
         // as this might allow other threads to change current clip
         // so here we use mainw->can_switch_clips
 
-        sfile->last_frameno = sfile->frameno = sfile->last_req_frame;
-        sfile->sync_delta = mainw->currticks - mainw->startticks;
+        if ((sfile->last_req_frame - sfile->last_frameno) * dir >= 0) {
+          sfile->last_frameno = sfile->frameno = sfile->last_req_frame;
+          sfile->sync_delta = mainw->currticks - mainw->startticks;
+        } else sfile->sync_delta = 0;
 
         sfile->last_play_sequence = mainw->play_sequence;
 
@@ -3136,7 +3194,7 @@ switch_point:
         } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
         mainw->force_show = TRUE;
-        fixed_frame = TRUE;
+        fixed_frame = sfile->frameno;
 
         lagged = dropped = skipped = 0;
         check_getahead = FALSE;
@@ -3157,14 +3215,15 @@ switch_point:
         } else jumplim = 0;
 
         if (sfile->last_play_sequence != mainw->play_sequence) {
-          if (mainw->audio_seek_ready) sfile->last_play_sequence = mainw->play_sequence;
+          sfile->last_play_sequence = mainw->play_sequence;
           sfile->last_frameno = mainw->actual_frame = sfile->last_req_frame = sfile->frameno;
         } else {
-          mainw->startticks = mainw->currticks - sfile->sync_delta;
-          if (time_source == LIVES_TIME_SOURCE_SOUNDCARD)
-            sfile->sync_delta -= mainw->currticks;
-          avsync_force();
+          if ((sfile->last_req_frame - sfile->last_frameno) * dir >= 0) {
+            mainw->startticks = mainw->currticks - sfile->sync_delta;
+          }
         }
+        sfile->sync_delta = 0;
+        avsync_force();
 
 #ifdef ENABLE_JACK
         if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -3293,6 +3352,12 @@ switch_point:
 
   // free playback
 
+
+  if (mainw->scratch == SCRATCH_JUMP) {
+    resync_audio(mainw->playing_file, (double)sfile->last_frameno + dir);
+    mainw->scratch = SCRATCH_JUMP_NORESYNC;
+  }
+
   if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
     // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
     // this is to avoid the keyboard repeat delay (dammit !) so we get smooth trickplay
@@ -3307,7 +3372,7 @@ switch_point:
                                            mainw->currticks / TICKS_PER_SECOND_DBL);
     mainw->startticks = mainw->currticks;
     mainw->force_show = TRUE;
-    fixed_frame = TRUE;
+    fixed_frame = sfile->frameno;
   }
 
   new_ticks = mainw->currticks;
@@ -3366,46 +3431,32 @@ switch_point:
           sfile->fps_scale = 4.;
       } else sfile->fps_scale = 1.;
 
+      /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_req_frame, */
+      /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
+      requested_frame = xrequested_frame
+                        = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
+      /* g_print("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead); */
+
       if (mainw->scratch == SCRATCH_JUMP) {
         avsync_force(); // should reset video_seek_ready
       }
-      if (1) {
-        if (!mainw->video_seek_ready) {
-          if (time_source == LIVES_TIME_SOURCE_SOUNDCARD)
-            sfile->sync_delta += mainw->currticks;
-          requested_frame = sfile->last_frameno = sfile->frameno = sfile->last_req_frame;
-          new_ticks = mainw->startticks = mainw->currticks - sfile->sync_delta;
-          if (time_source == LIVES_TIME_SOURCE_SOUNDCARD)
-            sfile->sync_delta -= mainw->currticks;
-        }
-        /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_req_frame, */
-        /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
-        requested_frame = xrequested_frame
-                          = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
-        /* g_print("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead); */
 
-        if (!mainw->video_seek_ready) {
-          // wait for next frame, since it can be slow to reshow the same last frame
-          if (requested_frame == sfile->last_req_frame) goto player_loop;
-          mainw->force_show = TRUE;
-          scratch = mainw->scratch;
-          mainw->scratch = SCRATCH_NONE;
-        }
-
-        sfile->sync_delta = 0;
-
-        // by default we play the requested_frame, unless it is invalid
-        // if we have a pre-cached frame ready, we may play that instead
-
-        if (new_ticks != mainw->startticks) {
-#ifdef ENABLE_PRECACHE
-          if (spare_cycles > 0 && last_spare_cycles > 0) can_precache = TRUE;
-#endif
-          update_effort(spare_cycles + 1., FALSE);
-          last_spare_cycles = spare_cycles;
-          spare_cycles = 0;
-        } else spare_cycles++;
+      if (!mainw->video_seek_ready) {
+        mainw->force_show = TRUE;
+        requested_frame = fixed_frame = sfile->last_req_frame = sfile->last_frameno + dir;
       }
+
+      // by default we play the requested_frame, unless it is invalid
+      // if we have a pre-cached frame ready, we may play that instead
+
+      if (new_ticks != mainw->startticks) {
+#ifdef ENABLE_PRECACHE
+        if (spare_cycles > 0 && last_spare_cycles > 0) can_precache = TRUE;
+#endif
+        update_effort(spare_cycles + 1., FALSE);
+        last_spare_cycles = spare_cycles;
+        spare_cycles = 0;
+      } else spare_cycles++;
 
       /* g_print("VALS %ld %ld %ld and %d %d\n", new_ticks, mainw->startticks, mainw->last_startticks, requested_frame, sfile->last_req_frame); */
       if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks
@@ -3660,8 +3711,7 @@ play_frame:
               // if the player has been asked to resync with audio, then we need to jump to the requested frame
               // as the audio player will be holding there
               // in this case we accept a small gap in playback as the cost of resyncing
-              sfile->frameno = requested_frame;
-              fixed_frame = TRUE;
+              fixed_frame = sfile->frameno = requested_frame;
               scratch = mainw->scratch = SCRATCH_JUMP_NORESYNC;
             }
           }
@@ -3674,23 +3724,19 @@ play_frame:
           // can change in clamp_frame()
           dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
 
+          if (fixed_frame) sfile->frameno = fixed_frame;
+
           if (!check_audio_limits(mainw->playing_file, sfile->frameno)) {
             //
             if (mainw->cancelled != CANCEL_NONE) {
               retval = ONE_MILLION + mainw->cancelled;
               goto err_end;
             }
+            sfile->frameno = clamp_frame(mainw->playing_file, sfile->frameno);
             if (can_realign) {
-              if (fixed_frame) {
-                if ((sfile->frameno >= sfile->frames)
-                    || (mainw->playing_sel && sfile->frameno > sfile->end)) {
-                  // may happpen e.g. if we have longer audio and user clicks on timeline
-                  sfile->frameno = mainw->actual_frame + dir;
-                  // otherwise we can pull the timecode to us, and the audio will realign
-                } else requested_frame = sfile->frameno;
-              } else requested_frame = sfile->frameno;
+              requested_frame = sfile->last_req_frame = sfile->frameno;
             }
-          }
+          } else sfile->frameno = clamp_frame(mainw->playing_file, sfile->frameno);
 
           // if we are resyncing with audio, that has already been handled, we do not want to resync more than once
           if (mainw->scratch == SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
@@ -3731,7 +3777,7 @@ play_frame:
             // however, if actual frame is too far ahead, then we will keep the same last_frameno
             //
 
-            fixed_frame = FALSE;
+            fixed_frame = 0;
 
             // the player will check the preload frame, and either consume it and set frame_layer_preload to NULL
             // or else set pred_Frame to 0 if the preload is unsuitable
@@ -3770,7 +3816,7 @@ play_frame:
 
           scratch = mainw->scratch;
           mainw->scratch = SCRATCH_NONE;
-          fixed_frame = FALSE;
+          fixed_frame = 0;
 
           mainw->inst_fps = get_inst_fps(FALSE);
           mainw->fps_mini_measure++;

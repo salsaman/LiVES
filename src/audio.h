@@ -7,6 +7,8 @@
 #ifndef HAS_LIVES_AUDIO_H
 #define HAS_LIVES_AUDIO_H
 
+#define USEC_WAIT_FOR_SYNC 50000 // 50 msec
+
 typedef uint64_t size64_t;
 typedef int64_t ssize64_t;
 

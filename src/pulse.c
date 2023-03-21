@@ -575,6 +575,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     boolean alock_mixer = FALSE;
     boolean rec_output = FALSE;
 
+    if (!mainw->audio_seek_ready) {
+      audio_sync_ready();
+    }
+
     if (!mainw->video_seek_ready) {
       // while waiting for video seek, we play silence, and the clock is advancing
       // however, the video player will add this extra time to its sync_delta
@@ -583,9 +587,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       lives_proc_thread_include_states(self, THRD_STATE_IDLING);
       lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
       return;
-    }
-    if (!mainw->audio_seek_ready) {
-      audio_sync_ready();
     }
 
     if (IS_VALID_CLIP(pulsed->playing_file)) qnt = afile->achans * (afile->asampsize >> 3);

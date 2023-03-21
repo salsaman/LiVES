@@ -680,7 +680,7 @@ void play_file(void) {
     cfile->pb_fps = -cfile->pb_fps;
     cfile->frameno = mainw->play_end;
   }
-  cfile->last_frameno = cfile->frameno;
+  cfile->last_frameno = cfile->last_req_frame = cfile->frameno;
   mainw->reverse_pb = FALSE;
 
   mainw->swapped_clip = -1;

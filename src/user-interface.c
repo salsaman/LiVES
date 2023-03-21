@@ -912,25 +912,27 @@ static void _resize(double scale) {
 
     // THE SIZES OF THE FRAME CONTAINERS
     lives_widget_set_size_request(mainw->pf_grid, -1, mainw->ce_frame_height);
-    lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, vsize);
     lives_widget_set_size_request(mainw->eventbox3, mainw->ce_frame_width, mainw->ce_frame_height);
-    lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, -1);
-    lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, vsize);
+    lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, vsize);
 
-    lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, -1);
-    lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, vsize);
+    lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, vsize);
 
     // use unscaled size in dblsize
     if (scale > 1.) {
       hsize *= scale;
       vsize *= scale;
-      lives_widget_set_size_request(mainw->playframe, hsize, vsize);
-      lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
+      /* lives_widget_set_size_request(mainw->playframe, hsize, vsize); */
+      /* lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize); */
     }
 
     // IMPORTANT (or the entire image will not be shown)
     lives_widget_set_size_request(mainw->play_image, hsize, vsize);
     lives_widget_set_size_request(mainw->playarea, hsize, vsize);
+    lives_widget_set_size_request(mainw->playframe, hsize, vsize);
+    lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
 
     xwin = lives_widget_get_xwindow(mainw->play_image);
     if (LIVES_IS_XWINDOW(xwin)) {

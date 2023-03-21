@@ -2012,8 +2012,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       break;
     }
     layer = layers[in_tracks[i]];
+
+    // TODO - w-e should do 2 passes here - once to discover which layers are actually visible
+    // in the output, and pull freames for those layers - this can be done as soon as we have dealt with
+    // the layers from the last frame load
     if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
-      if (weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL)) {
+      if (!weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL)) {
         const char *img_ext;
         int nclip = lives_layer_get_clip(layer);
         if (IS_VALID_CLIP(nclip)) {
@@ -2029,7 +2033,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                               in_tracks[i], SRC_PURPOSE_TRACK);
             dsource = get_clip_source(lives_layer_get_clip(layer), in_tracks[i], SRC_PURPOSE_TRACK);
             lives_layer_set_source(layer, dsource);
+            mainw->track_sources[in_tracks[i]] = dsource;
           }
+
           img_ext = get_image_ext_for_type(mainw->files[nclip]->img_type);
           pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
         }
@@ -3187,13 +3193,13 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
           weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
         } else weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
       } else {
-	if (adata) lives_free(adata);
+        if (adata) lives_free(adata);
         lives_free(channels);
         lives_freep((void **)&ctmpls);
-	lives_freep((void **)&pixdata);
+        lives_freep((void **)&pixdata);
         return FILTER_ERROR_MISSING_LAYER;
       }
-    } 
+    }
     lives_freep((void **)&pixdata);
     if (adata) lives_free(adata);
   }

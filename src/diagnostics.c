@@ -315,6 +315,9 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q) {
 
 
 char *get_stats_msg(boolean calc_only) {
+  static double av_offs = 0.;
+  static int last_pfile = -1;
+  static int pseq = -1;
   volatile float *load;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
@@ -325,17 +328,26 @@ char *get_stats_msg(boolean calc_only) {
 
   if (!LIVES_IS_PLAYING) return NULL;
 
-  if (AUD_SRC_INTERNAL && AV_CLIPS_EQUAL) {
+  if (AUD_SRC_INTERNAL) {
     int clipno = get_aplay_clipno();
     if (CLIP_HAS_AUDIO(clipno)) {
       lives_clip_t *afile = mainw->files[clipno];
       avsync = (double)get_aplay_offset()
-               / (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3)); //lives_pulse_get_pos(mainw->jackd);
-      avsync -= ((double)mainw->actual_frame - 1.) / afile->fps
+               / (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3)); //lives_pulse_get_pos(mainw->jackd
+      avsync -= ((double)sfile->last_frameno - .5) / afile->fps
                 + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
+    if (pseq != mainw->play_sequence ||
+        mainw->playing_file != last_pfile ||
+        !mainw->video_seek_ready || !mainw->audio_seek_ready) {
+      pseq = mainw->play_sequence;
+      last_pfile = mainw->playing_file;
+      av_offs = avsync;
+    }
+    avsync -= av_offs;
   }
+
   //currticks = lives_get_current_ticks();
 
   if (calc_only) return NULL;
@@ -347,7 +359,7 @@ char *get_stats_msg(boolean calc_only) {
                                    tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabs(avsync));
       lives_free(tmp);
     } else {
-      if (prefs->audio_src == AUDIO_SRC_INT) audmsg = (_("Clip has no audio.\n"));
+      if (prefs->audio_src == AUDIO_SRC_INT) audmsg = (_("Audio is not playing.\n"));
       else audmsg = (_("Audio source external.\n"));
     }
 
@@ -364,12 +376,12 @@ char *get_stats_msg(boolean calc_only) {
 
     fgpal = get_palette_name_for_clip(mainw->current_file);
 
-    msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
+    msg = lives_strdup_printf(_("%sFrame %d / %d / %d, fps %.3f (target: %.3f)\n"
                                 "CPU load %.2f %% : Disk load: %f\n"
                                 "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
                                 "Fg clip: %d X %d, palette: %s\n%s\n%s"),
                               audmsg ? audmsg : "",
-                              mainw->actual_frame, sfile->frames,
+                              sfile->frameno, sfile->last_req_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
                               *load, mainw->disk_pressure,
                               mainw->effort, EFFORT_RANGE_MAX,

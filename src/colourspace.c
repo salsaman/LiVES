@@ -10291,7 +10291,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   retval = TRUE;
 
- fail:
+fail:
   if (fixed_rs) lives_free(fixed_rs);
   return retval;
 }
@@ -14311,7 +14311,6 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
   lives_proc_thread_t lpt = NULL;
   void **pixel_data;
-  void *new_val = NULL;
   int nplanes;
 
   if (!layer) return;
@@ -14328,11 +14327,12 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-  weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, new_val, &lpt);
+  weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
 
   if (lpt) {
-    lives_proc_thread_cancel(lpt);
+    lives_proc_thread_request_cancel(lpt,  FALSE);
     lives_proc_thread_join_boolean(lpt);
+    lives_proc_thread_unref(lpt);
   }
 
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);

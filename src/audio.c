@@ -3547,6 +3547,7 @@ void freeze_unfreeze_audio(boolean is_frozen) {
 LIVES_GLOBAL_INLINE boolean avsync_force(void) {
   /// force realignment of video and audio at current file->frameno / player->seek_pos
   /// a corresponding call to avsync_check (done automatically after loading /showing a frame) in the video thread
+  //
   /// and audio_sync_ready() in the audio_thread
   /// completes the alignment process
 
@@ -3567,150 +3568,28 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
   if (mainw->audio_seek_ready && mainw->video_seek_ready) {
     mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   }
+
   mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, &time_source);
-  sfile->async_delta = mainw->currticks - mainw->startticks;
   pthread_mutex_unlock(&mainw->avseek_mutex);
   return TRUE;
 }
 
-
-#define USEC_WAIT_FOR_SYNC 50000
 
 void audio_sync_ready(void) {
-  int count = USEC_WAIT_FOR_SYNC / 100, rc = 0;
-  lives_clip_t *afile;
-  struct timespec ts;
-
   if (mainw->audio_seek_ready) return;
 
-  afile = RETURN_VALID_CLIP(get_aplay_clipno());
-  if (afile) afile->last_play_sequence = mainw->play_sequence;
+  IF_APLAYER_JACK(
+    if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
+        && mainw->rec_aclip != mainw->ascrap_file)
+    jack_get_rec_avals(mainw->jackd);)
 
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
-      (prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
-      && mainw->rec_aclip != mainw->ascrap_file) {
-    jack_get_rec_avals(mainw->jackd);
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
-      (prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
-      && mainw->rec_aclip != mainw->ascrap_file) {
-    pulse_get_rec_avals(mainw->pulsed);
-  }
-#endif
+    IF_APLAYER_PULSE(
+      if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
+          && mainw->rec_aclip != mainw->ascrap_file)
+      pulse_get_rec_avals(mainw->pulsed);)
 
-  mainw->audio_seek_ready = TRUE;
-  clock_gettime(CLOCK_REALTIME, &ts);
-
-  while (count--) {
-    ts.tv_nsec += 100000;   // def. 100 usec (* 500 = 0.05 sec)
-    if (ts.tv_nsec >= ONE_BILLION) {
-      ts.tv_sec++;
-      ts.tv_nsec -= ONE_BILLION;
-    }
-    pthread_mutex_lock(&mainw->avseek_mutex);
-    rc = pthread_cond_timedwait(&mainw->avseek_cond, &mainw->avseek_mutex, &ts);
-    pthread_mutex_unlock(&mainw->avseek_mutex);
-    if (!rc) break;
-    if (rc != ETIMEDOUT) count++;
-  }
+      mainw->audio_seek_ready = TRUE;
 }
-
-
-boolean video_sync_ready(void) {
-  // can be cancelled by setting mainw->video_seek_ready to TRUE before calling
-  int count = USEC_WAIT_FOR_SYNC / 10;
-  lives_clip_t *sfile = NULL;
-#ifdef VALGRIND_ON
-  count *= 10;
-#else
-  if (mainw->debug) count *= 10;
-#endif
-
-  if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
-      || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
-      || !is_realtime_aplayer(prefs->audio_player) || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
-    mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-    return TRUE;
-  }
-
-#ifdef ENABLE_JACK
-  if (!mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
-    if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
-                       && !mainw->record_paused && mainw->jackd->is_paused)) {
-      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      return TRUE;
-    }
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
-                       && !mainw->record_paused && mainw->pulsed->is_paused)) {
-      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      return TRUE;
-    }
-  }
-#endif
-
-  if (!mainw->video_seek_ready) {
-    mainw->video_seek_ready = TRUE;
-    if (!mainw->audio_seek_ready) {
-      int aclip = get_aplay_clipno();
-      if (CLIP_HAS_AUDIO(aclip)) sfile = mainw->files[aclip];
-      else mainw->audio_seek_ready = TRUE;
-    }
-  }
-
-  if (sfile) {
-    lives_time_source_t time_source = LIVES_TIME_SOURCE_NONE;
-
-    await_audio_queue(LIVES_DEFAULT_TIMEOUT);
-
-    if (sfile->last_play_sequence != mainw->play_sequence) count *= 10; // def. 100 usec (* 5000 = 0.5 sec)
-    while (!mainw->audio_seek_ready && --count) {
-      lives_nanosleep(100000);
-    }
-    if (!mainw->audio_seek_ready && !count) {
-      mainw->cancelled = handle_audio_timeout();
-      return FALSE;
-    }
-    mainw->fps_mini_measure = 0;
-    mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, &time_source);
-    mainw->fps_mini_ticks = mainw->last_startticks = mainw->startticks = mainw->currticks - sfile->async_delta;
-    sfile->async_delta = 0;
-    sfile->last_play_sequence = mainw->play_sequence;
-  }
-
-  else if (!mainw->audio_seek_ready) {
-    // check again - for CANCEL
-    int aclip = get_aplay_clipno();
-    if (CLIP_HAS_AUDIO(aclip)) {
-      sfile = mainw->files[aclip];
-    } else mainw->audio_seek_ready = TRUE;
-
-    if (sfile) {
-      await_audio_queue(LIVES_DEFAULT_TIMEOUT);
-      if (sfile->last_play_sequence != mainw->play_sequence) count *= 10;
-      while (!mainw->audio_seek_ready && --count) {
-        lives_nanosleep(100000);
-      }
-      if (!mainw->audio_seek_ready && !count) {
-        mainw->cancelled = handle_audio_timeout();
-        return FALSE;
-      }
-    }
-  }
-
-  pthread_mutex_lock(&mainw->avseek_mutex);
-  pthread_cond_signal(&mainw->avseek_cond);
-  pthread_mutex_unlock(&mainw->avseek_mutex);
-
-  return TRUE;
-}
-
 
 
 LIVES_GLOBAL_INLINE int get_aplay_clipno(void) {
@@ -3785,38 +3664,34 @@ boolean resync_audio(int clipno, double frameno) {
   if ((mainw->event_list && !mainw->multitrack && !mainw->record && !mainw->record_paused)
       || mainw->agen_key != 0 || mainw->agen_needs_reinit) return FALSE;
 
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (frameno) {
-      avsync_force();
-      if (!jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps)) {
-        if (jack_try_reconnect()) jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps);
-        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      }
-      if (sfile->fps != 0.) {
-        if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-            && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
-          jack_transport_update(mainw->jackd_trans, (frameno - 1.) / sfile->fps);
-        }
+  IF_APLAYER_JACK
+  (
+  if (frameno) {
+  avsync_force();
+    if (!jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps)) {
+      if (jack_try_reconnect()) jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps);
+      else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+    }
+    if (sfile->fps != 0.) {
+      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
+        jack_transport_update(mainw->jackd_trans, (frameno - 1.) / sfile->fps);
       }
     }
-    retval = TRUE;
   }
-#endif
+  retval = TRUE;)
 
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (frameno) {
-      avsync_force();
-      if (!pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps
-                                           * sfile->arate / sfile->arps)) {
-        if (pulse_try_reconnect()) pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps);
-        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      }
+  IF_APLAYER_PULSE
+  (
+  if (frameno) {
+  avsync_force();
+    if (!pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps
+                                         * sfile->arate / sfile->arps)) {
+      if (pulse_try_reconnect()) pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps);
+      else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     }
-    retval = TRUE;
   }
-#endif
+  retval = TRUE;)
 
   return retval;
 }

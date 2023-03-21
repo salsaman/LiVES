@@ -1451,16 +1451,16 @@ void cancel_process(boolean visible) {
     if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
     if (mainw->proc_ptr->processing) {
       if (mainw->proc_ptr->rte_off_cb
-	  && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
-	weed_deinit_all(FALSE);
+          && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
+        weed_deinit_all(FALSE);
       }
       if (mainw->proc_ptr->audint_cb
-	  && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
-	pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
+          && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
+        pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
       }
       if (mainw->proc_ptr->notify_cb
-	  && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
-	notify_user(mainw->proc_ptr->text);
+          && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
+        notify_user(mainw->proc_ptr->text);
       }
       lives_hooks_trigger(NULL, COMPLETED_HOOK);
       lives_freep((void **)&mainw->proc_ptr->text);
@@ -1481,8 +1481,7 @@ void cancel_process(boolean visible) {
     // note - for operations to/from clipboard (file 0) we
     // should manually call sensitize() after operation
     sensitize();
-  }
-  else mainw->is_processing = mainw->preview;
+  } else mainw->is_processing = mainw->preview;
 }
 
 

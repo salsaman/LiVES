@@ -871,9 +871,9 @@ void on_realfx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
 
 static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
+  weed_layer_t *layer = NULL;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
-  lives_clip_src_t *dsource = NULL;
   frames_t frameno;
 
   blend_file = RETURN_VALID_CLIP(mainw->blend_file);
@@ -892,35 +892,22 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     }
     frameno = clamp_frame(mainw->blend_file, frameno);
     if (frameno != blend_file->frameno) {
-      blend_file->last_frameno = blend_file->frameno = frameno;
+      blend_file->last_frameno = blend_file->last_req_frame = blend_file->frameno = frameno;
       blend_tc = ntc;
     }
   }
 
   mainw->last_blend_file = mainw->blend_file;
 
-  if (!mainw->blend_layer)
-    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  else lives_layer_set_frame(mainw->blend_layer, blend_file->frameno);
-  if (mainw->blend_file == mainw->playing_file) {
-    if (blend_file->clip_type == CLIP_TYPE_FILE) {
-      // TODO: should do this through track decoders
-      lives_clip_src_t *dsource = get_clip_source(mainw->blend_file, 1, SRC_PURPOSE_TRACK);
-      if (!dsource) {
-        add_decoder_clone(mainw->blend_file, 1, SRC_PURPOSE_TRACK);
-        dsource = get_clip_source(mainw->blend_file, 1, SRC_PURPOSE_TRACK);
-      } else dsource = get_clip_source(mainw->blend_file, -1, SRC_PURPOSE_PRIMARY);
-    }
-    lives_layer_set_source(mainw->blend_layer, dsource);
-  }
-  weed_layer_set_invalid(mainw->blend_layer, FALSE);
-  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
-  return mainw->blend_layer;
+  layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+  lives_layer_set_track(layer, 1);
+  pull_frame_threaded(layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
+  return layer;
 }
 
 
-boolean get_blend_layer(weed_timecode_t tc) {
-  /// will set mainw->blend_layer
+weed_layer_t *get_blend_layer(weed_timecode_t tc) {
+  weed_layer_t *layer = NULL;
   if ((mainw->num_tr_applied > 0
        && !IS_VALID_CLIP(mainw->blend_file)) ||
       (IS_VALID_CLIP(mainw->blend_file) &&
@@ -931,17 +918,15 @@ boolean get_blend_layer(weed_timecode_t tc) {
     if (mainw->blend_file != mainw->playing_file) {
       track_source_free(1, mainw->blend_file);
       mainw->blend_file = mainw->playing_file;
-      return FALSE;
     }
-    return TRUE;
+    return layer;
   }
 
   if (mainw->num_tr_applied && (prefs->tr_self || mainw->blend_file != mainw->playing_file) &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
-    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, 0);
-    get_blend_layer_inner(tc);
+    layer = get_blend_layer_inner(tc);
   }
-  return TRUE;
+  return layer;
 }
 
 

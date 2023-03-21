@@ -2490,7 +2490,7 @@ int close_current_file(int file_to_switch_to) {
 
   if (mainw->blend_file == mainw->current_file) {
     // set blend_file to -1. This is in case the file is a generator - we need to distinguish between the cases where
-    // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
+    // the generator is the blend file and we switch because it was deinited, and when we swap fg <-> bg
     // in the former case the generator is killed off, in the latter it survives
     need_new_blend_file = TRUE;
     if (!LIVES_IS_PLAYING) {

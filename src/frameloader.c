@@ -239,6 +239,7 @@ void showclipimgs(void) {
 void load_start_image(frames_t frame) {
   LiVESPixbuf *start_pixbuf = NULL;
   LiVESPixbuf *orig_pixbuf = NULL;
+  pthread_mutex_t *mutex;
   weed_layer_t *layer = NULL;
   weed_timecode_t tc;
   LiVESInterpType interp;
@@ -256,6 +257,10 @@ void load_start_image(frames_t frame) {
                                         capable->nmonitors == 1) &&
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+
+  mutex = lives_widget_get_mutex(mainw->start_image);
+  pthread_mutex_lock(mutex);
+
   if (frame < 0) {
     frame = -frame;
     expose = TRUE;
@@ -288,11 +293,13 @@ void load_start_image(frames_t frame) {
       if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
       lives_free(tmp); lives_free(fname);
     }
+    pthread_mutex_unlock(mutex);
     set_drawing_area_from_pixbuf(mainw->start_image, mainw->camframe, mainw->si_surface);
     return;
   }
 
   if (!CURRENT_CLIP_IS_NORMAL || mainw->current_file == mainw->scrap_file || frame < 1 || frame > cfile->frames) {
+    pthread_mutex_unlock(mutex);
     if (mainw->imframe) {
       set_drawing_area_from_pixbuf(mainw->start_image, mainw->imframe, mainw->si_surface);
     } else {
@@ -323,7 +330,7 @@ check_stcache:
   if (!layer) {
     if (mainw->st_fcache) {
       if (mainw->st_fcache != mainw->en_fcache && mainw->st_fcache != mainw->pr_fcache)
-        weed_layer_unref(mainw->st_fcache);
+        weed_layer_free(mainw->st_fcache);
       mainw->st_fcache = NULL;
     }
     if (tries--) {
@@ -364,7 +371,8 @@ check_stcache:
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-          weed_layer_unref(layer);
+          if (layer) weed_layer_free(layer);
+	  pthread_mutex_unlock(mutex);
           return;
         }
       } else if (dsource) {
@@ -376,6 +384,7 @@ check_stcache:
     if (!start_pixbuf) start_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
 
     if (LIVES_IS_PIXBUF(start_pixbuf)) {
+      pthread_mutex_unlock(mutex);
       set_drawing_area_from_pixbuf(mainw->start_image, start_pixbuf, mainw->si_surface);
       if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, start_pixbuf)))
         lives_widget_object_unref(start_pixbuf);
@@ -386,7 +395,10 @@ check_stcache:
           && mainw->en_fcache != mainw->st_fcache && mainw->pr_fcache != mainw->st_fcache)
         weed_layer_unref(mainw->st_fcache);
       mainw->st_fcache = NULL;
-      if (layer) weed_layer_unref(layer);
+      if (layer) {
+	weed_layer_unref(layer);
+	layer = NULL;
+      }
     } else {
       if (!mainw->st_fcache) {
         mainw->st_fcache = layer;
@@ -442,7 +454,8 @@ check_stcache:
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-          weed_layer_unref(layer);
+          if (layer) weed_layer_free(layer);
+          pthread_mutex_unlock(mutex);
           return;
         }
       } else if (dsource) {
@@ -470,7 +483,9 @@ check_stcache:
     }
 
     if (LIVES_IS_PIXBUF(start_pixbuf)) {
+      pthread_mutex_unlock(mutex);
       set_drawing_area_from_pixbuf(mainw->start_image, start_pixbuf, mainw->si_surface);
+      pthread_mutex_lock(mutex);
     }
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -494,9 +509,12 @@ check_stcache:
   if (!cache_it) {
     if (mainw->st_fcache && mainw->st_fcache != layer
         && mainw->st_fcache != mainw->en_fcache && mainw->pr_fcache != mainw->st_fcache)
-      weed_layer_unref(mainw->st_fcache);
+      weed_layer_free(mainw->st_fcache);
     mainw->st_fcache = NULL;
-    weed_layer_unref(layer);
+    if (layer) {
+      weed_layer_unref(layer);
+      layer = NULL;
+    }
   } else {
     if (!mainw->st_fcache) {
       mainw->st_fcache = layer;
@@ -508,14 +526,15 @@ check_stcache:
     }}
   lives_layer_set_frame(layer, xpf);
   lives_layer_set_clip(layer, mainw->current_file);
- }
+  }
 // *INDENT-ON*
+  pthread_mutex_unlock(mutex);
 }
-
 
 void load_end_image(frames_t frame) {
   LiVESPixbuf *end_pixbuf = NULL;
   LiVESPixbuf *orig_pixbuf = NULL;
+  pthread_mutex_t *mutex;
   weed_layer_t *layer = NULL;
   weed_timecode_t tc;
   LiVESInterpType interp;
@@ -533,6 +552,10 @@ void load_end_image(frames_t frame) {
                                         capable->nmonitors == 1) &&
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+
+  mutex = lives_widget_get_mutex(mainw->end_image);
+  pthread_mutex_lock(mutex);
+
   if (frame < 0) {
     frame = -frame;
     expose = TRUE;
@@ -565,11 +588,13 @@ void load_end_image(frames_t frame) {
       if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
       lives_free(tmp); lives_free(fname);
     }
+    pthread_mutex_unlock(mutex);
     set_drawing_area_from_pixbuf(mainw->end_image, mainw->camframe, mainw->ei_surface);
     return;
   }
 
   if (!CURRENT_CLIP_IS_NORMAL || mainw->current_file == mainw->scrap_file || frame < 1 || frame > cfile->frames) {
+    pthread_mutex_unlock(mutex);
     if (mainw->imframe) {
       set_drawing_area_from_pixbuf(mainw->end_image, mainw->imframe, mainw->ei_surface);
     } else {
@@ -599,7 +624,7 @@ check_encache:
   if (!layer) {
     if (mainw->en_fcache) {
       if (mainw->en_fcache != mainw->st_fcache && mainw->en_fcache != mainw->pr_fcache)
-        weed_layer_unref(mainw->en_fcache);
+        weed_layer_free(mainw->en_fcache);
       mainw->en_fcache = NULL;
     }
     if (tries--) {
@@ -641,7 +666,8 @@ check_encache:
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-          weed_layer_unref(layer);
+          if (layer) weed_layer_free(layer);
+          pthread_mutex_unlock(mutex);
           return;
         }
       } else if (dsource) {
@@ -653,6 +679,7 @@ check_encache:
     if (!end_pixbuf) end_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
 
     if (LIVES_IS_PIXBUF(end_pixbuf)) {
+      pthread_mutex_unlock(mutex);
       set_drawing_area_from_pixbuf(mainw->end_image, end_pixbuf, mainw->ei_surface);
       if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, end_pixbuf)))
         lives_widget_object_unref(end_pixbuf);
@@ -661,9 +688,12 @@ check_encache:
     if (!cache_it) {
       if (mainw->en_fcache && mainw->en_fcache != layer
           && mainw->en_fcache != mainw->st_fcache && mainw->pr_fcache != mainw->en_fcache)
-        weed_layer_unref(mainw->en_fcache);
+        weed_layer_free(mainw->en_fcache);
       mainw->en_fcache = NULL;
-      if (layer) weed_layer_unref(layer);
+      if (layer) {
+        weed_layer_unref(layer);
+        layer = NULL;
+      }
     } else {
       if (!mainw->en_fcache) {
         mainw->en_fcache = layer;
@@ -701,9 +731,12 @@ check_encache:
       }
     }
 
+    g_print("GOT %p and %p %d %d\n", layer, end_pixbuf, width, height);
+
     if (!layer && !end_pixbuf) {
       lives_clip_src_t *dsource = NULL;
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
+      mainw->debug_ptr = layer;
       if (!mainw->go_away && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame)) {
         dsource = get_clip_source(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
         if (!dsource) {
@@ -717,7 +750,8 @@ check_encache:
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-          weed_layer_unref(layer);
+          if (layer) weed_layer_free(layer);
+          pthread_mutex_unlock(mutex);
           return;
         }
       } else if (dsource) {
@@ -745,7 +779,9 @@ check_encache:
     }
 
     if (LIVES_IS_PIXBUF(end_pixbuf)) {
+      pthread_mutex_unlock(mutex);
       set_drawing_area_from_pixbuf(mainw->end_image, end_pixbuf, mainw->ei_surface);
+      pthread_mutex_lock(mutex);
     }
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -773,9 +809,12 @@ check_encache:
     if (!cache_it) {
       if (mainw->en_fcache && mainw->en_fcache != layer
           && mainw->en_fcache != mainw->st_fcache && mainw->pr_fcache != mainw->en_fcache)
-        weed_layer_unref(mainw->en_fcache);
+        weed_layer_free(mainw->en_fcache);
       mainw->en_fcache = NULL;
-      weed_layer_unref(layer);
+      if (layer) {
+        weed_layer_unref(layer);
+        layer = NULL;
+      }
     } else {
       if (!mainw->en_fcache) {
         mainw->en_fcache = layer;
@@ -783,12 +822,13 @@ check_encache:
           if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
             set_md5_for_frame(mainw->current_file, frame, layer);
           }
-	// *INDENT-OFF*
-      }}
-    lives_layer_set_frame(layer, xpf);
-    lives_layer_set_clip(layer, mainw->current_file);
-  }
-  // *INDENT-ON*
+	  // *INDENT-OFF*
+	}}
+      lives_layer_set_frame(layer, xpf);
+      lives_layer_set_clip(layer, mainw->current_file);
+    }
+    // *INDENT-ON*
+    pthread_mutex_unlock(mutex);
   }
 
 
@@ -903,7 +943,7 @@ check_prcache:
       if (!layer) {
         if (mainw->pr_fcache) {
           if (mainw->pr_fcache != mainw->st_fcache && mainw->pr_fcache != mainw->en_fcache)
-            weed_layer_unref(mainw->pr_fcache);
+            weed_layer_free(mainw->pr_fcache);
           mainw->pr_fcache = NULL;
         }
         if (tries--) {
@@ -952,7 +992,7 @@ check_prcache:
           check_layer_ready(layer);
           if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
               !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-            weed_layer_unref(layer);
+            if (layer) weed_layer_free(layer);
             return;
           }
         } else if (dsource) {
@@ -986,7 +1026,10 @@ check_prcache:
     }
 
     if (!cache_it) {
-      weed_layer_unref(layer);
+      if (layer) {
+        weed_layer_unref(layer);
+        layer = NULL;
+      }
       mainw->pr_fcache = NULL;
     } else {
       if (!mainw->pr_fcache) {
@@ -1024,7 +1067,7 @@ check_prcache:
 
       case PRV_START:
         if (mainw->st_fcache && mainw->st_fcache != mainw->pr_fcache && mainw->st_fcache != mainw->en_fcache) {
-          weed_layer_unref(mainw->st_fcache);
+          weed_layer_free(mainw->st_fcache);
         }
         mainw->st_fcache = mainw->pr_fcache;
         if (cfile->start != mainw->preview_frame) {
@@ -1036,7 +1079,7 @@ check_prcache:
 
       case PRV_END:
         if (mainw->en_fcache && mainw->en_fcache != mainw->pr_fcache && mainw->en_fcache != mainw->st_fcache) {
-          weed_layer_unref(mainw->en_fcache);
+          weed_layer_free(mainw->en_fcache);
         }
         mainw->en_fcache = mainw->pr_fcache;
         if (cfile->end != mainw->preview_frame) {
@@ -2082,8 +2125,9 @@ fndone:
     boolean is_thread = FALSE;
     static boolean norecurse = FALSE;
 
-    //weed_layer_pixel_data_free(layer);
     weed_layer_ref(layer);
+
+    //weed_layer_pixel_data_free(layer);
     weed_layer_set_size(layer, width, height);
 
     clip = lives_layer_get_clip(layer);
@@ -2092,7 +2136,7 @@ fndone:
     // the default unless overridden
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
-    if (weed_plant_has_leaf(layer, LIVES_LEAF_PROC_THREAD)) is_thread = TRUE;
+    if (weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL)) is_thread = TRUE;
 
     sfile = RETURN_VALID_CLIP(clip);
 
@@ -2176,6 +2220,14 @@ fndone:
               }
 
               dsource = lives_layer_get_source(layer);
+              if (!dsource) {
+                int track = lives_layer_get_track(layer);
+                if (track >= 0 && track < mainw->num_tracks) {
+                  dsource = mainw->track_sources[track];
+                  lives_layer_set_source(layer, dsource);
+                }
+              }
+
               if (dsource) dplug = (lives_decoder_t *)dsource->source;
               if (!dplug) dplug = (lives_decoder_t *)sfile->primary_src->source;
               if (!dplug || !dplug->cdata || xframe >= dplug->cdata->nframes) {
@@ -2504,8 +2556,10 @@ fail:
 #endif
     if (!layer) return FALSE;
     else {
-      lives_proc_thread_t lpt = (lives_proc_thread_t)weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
+      lives_proc_thread_t lpt = NULL, new_val = NULL;
+      weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &new_val, &lpt);
       if (lpt) {
+        if (!weed_layer_check_valid(layer)) lives_proc_thread_request_cancel(lpt, FALSE);
 #if USE_RESTHREAD
         if (lives_proc_thread_get_cancel_requested(lpt)) {
           cancelled = TRUE;
@@ -2514,9 +2568,7 @@ fail:
             lives_proc_thread_request_cancel(resthread);
         }
 #endif
-
         lives_proc_thread_join_boolean(lpt);
-        weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
         lives_proc_thread_unref(lpt);
       }
     }
@@ -2543,8 +2595,7 @@ fail:
     if (weed_plant_has_leaf(layer, WEED_LEAF_CLIP)) {
       // TODO: we should render subs before display, to avoid the text size changing
       clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
-      if (IS_VALID_CLIP(clip)) {
-        sfile = mainw->files[clip];
+      if ((sfile = RETURN_VALID_CLIP(clip))) {
         // render subtitles from file
         if (sfile->subt && sfile->subt->tfile >= 0 && prefs->show_subtitles) {
           frames_t frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);

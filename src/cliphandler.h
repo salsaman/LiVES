@@ -373,6 +373,7 @@ typedef struct _lives_clip_t {
 
   pthread_mutex_t transform_mutex;
 
+  // can be PUSH, PULL or PUSH_PULL
   lives_delivery_t delivery;
 
   char **frame_md5s[2]; // we have two arrays, 0 == decoded frames,
@@ -407,8 +408,11 @@ typedef struct _lives_clip_t {
 
   int aplay_fd; /// may point to a buffered file during playback, else -1
 
-  // decoder data
+  // last frame requested by timer. The base from which calculate the next frame to play
+  // this may differ from last_frameno, which is the last frame actually played
+  frames_t last_req_frame;
 
+  // decoder data
   frames_t last_vframe_played; /// experimental for player
 
   /// layout map for the current layout
@@ -449,8 +453,6 @@ typedef struct _lives_clip_t {
   boolean tsavedone;
 
   ticks_t sync_delta; // used for audio sync when switching back to the clip
-
-  lives_obj_instance_t *instance;
 } lives_clip_t;
 
 #endif

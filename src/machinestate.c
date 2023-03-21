@@ -52,17 +52,17 @@ LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
 #define cpuid(index, p)						    \
 __asm__ volatile (						    \
-            "mov    %%"LIVES_REG_b", %%"LIVES_REG_S" \n\t"                \
-            "cpuid                       \n\t"                      \
-            "xchg   %%"LIVES_REG_b", %%"LIVES_REG_S                       \
-            : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3]) \
-            : "0" (index), "2"(0))
+		  "mov    %%"LIVES_REG_b", %%"LIVES_REG_S" \n\t"    \
+		  "cpuid                       \n\t"		    \
+		  "xchg   %%"LIVES_REG_b", %%"LIVES_REG_S	    \
+		  : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])	\
+		  : "0" (index), "2"(0))
 #endif
 
 static void get_cpuinfo(void) {
 #if IS_X86_64
-  unsigned int regs[4]; // regs2 :: eax, ebx, ecx, 0
-  union { int i[4]; char c[16]; } vendor;
+  unsigned int regs[4]; // regs2 :: eax, ebx, ecx, edx
+  union {u_int i[4]; char c[16]; } vendor;
   cpuid(0x00000000, vendor.i); // regs == max_level, vendor0, vendor2, vendor1
   capable->hw.cpu_vendor = lives_strdup_printf("%.4s%.4s%.4s", &vendor.c[4], &vendor.c[12], &vendor.c[8]);
   if (vendor.i[0] >= 0x00000001) {
@@ -78,7 +78,13 @@ static void get_cpuinfo(void) {
     //// if (ecx & 0x00001000)
     ///              fma3}
     ///if avx && (ebx & 0x00000020) avx2
-
+    // get L1 cache size
+    // for AMD - 0x8000001D
+    // (EBX[31:22] + 1) * (EBX[21:12] + 1) * (EBX[11:0] + 1) * (ECX + 1)
+    regs[0] = 4;
+    cpuid(0x00000000, regs); // regs == max_level, vendor0, vendor2, vendor1
+    capable->hw.cache_size = (get_bits32(regs[1], 31, 22) + 1) * (get_bits32(regs[1], 21, 12) + 1)
+                             * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
   }
 #endif
 }
@@ -2958,8 +2964,11 @@ boolean get_machine_dets(void) {
 
   com = lives_strdup("uname -m");
   capable->os_hardware = mini_popen(com);
-
+#if IS_X86_64
+  get_cpuinfo();
+#else
   capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
+#endif
 
 #ifdef _SC_PAGESIZE
   capable->hw.pagesize = sysconf(_SC_PAGESIZE);

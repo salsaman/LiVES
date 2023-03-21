@@ -91,7 +91,18 @@ weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, uint32_t 
   /*   case WEED_SEED_FLOAT: return SET_LEAF_FROM_VARG(plant, key, float, ne, xargs); */
   /* #endif */
   case WEED_SEED_FUNCPTR: return SET_LEAF_FROM_VARG(plant, key, funcptr, ne, xargs);
-  case WEED_SEED_VOIDPTR:  return SET_LEAF_FROM_VARG(plant, key, voidptr, ne, xargs);
+  case WEED_SEED_VOIDPTR:  {
+    if (prefs->show_dev_opts) {
+      void *ptr;
+      va_list vc;
+      va_copy(vc, xargs);
+      ptr = va_arg(vc, void *);
+      va_end(vc);
+      if (ptr && isstck(ptr)) g_print("Warning - wlfv, key = %s, isstack = 1\n", key);
+
+    }
+    return SET_LEAF_FROM_VARG(plant, key, voidptr, ne, xargs);
+  }
   case WEED_SEED_PLANTPTR: return SET_LEAF_FROM_VARG(plant, key, plantptr, ne, xargs);
   default: return WEED_ERROR_WRONG_SEED_TYPE;
   }

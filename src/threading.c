@@ -1645,10 +1645,10 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t
 
   lives_proc_thread_include_states(lpt, THRD_STATE_CANCEL_REQUESTED);
 
-  if (lives_proc_thread_sync_waiting(lpt)) {
-    if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt);
-    else lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL));
-  }
+  /* if (lives_proc_thread_sync_waiting(lpt)) { */
+  /*   if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt); */
+  /*   else lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL)); */
+  /* } */
 
   if (lives_proc_thread_is_paused(lpt)) lives_proc_thread_request_resume(lpt);
 
@@ -1995,7 +1995,7 @@ LIVES_GLOBAL_INLINE char *lives_proc_thread_sync_with(lives_proc_thread_t lpt, c
 // timeout is in seconds
 int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
   if (lives_proc_thread_ref(lpt) > 1) {
-    ticks_t slptime = LIVES_QUICK_NAP * 10;
+    ticks_t slptime = MSEC_TO_TICKS;
     if (timeout) timeout *= ONE_BILLION;
     if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt))
       check_pool_threads();
@@ -2005,7 +2005,7 @@ int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
       // may block waiting for a fg_service_call
       if (is_fg_thread()) fg_service_fulfill();
       // wait 10 usec
-      lives_microsleep;
+      lives_millisleep;
       if (timeout) {
         do {
           timeout -= slptime;
@@ -2658,7 +2658,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_switch_self(lives_proc_thre
 static void lives_thread_data_destroy(void *data) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)data;
   lives_hook_stack_t **hook_stacks = tdata->vars.var_hook_stacks;
-  pthread_mutex_t *self_stack_mutex = THREADVAR(self_stack_mutex);
+  pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
 
   if (tdata->thrd_type != THRD_TYPE_MAIN) {
     if (tdata->vars.var_sigstack.ss_sp) lives_free(tdata->vars.var_sigstack.ss_sp);

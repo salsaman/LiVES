@@ -425,7 +425,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   lives_aplayer_set_data_len(self, 0);
   lives_aplayer_set_data(self, NULL);
 
-
   if (cancel_rec_lpt) {
     // since we cancelled rec_lpt, then called async_join, it should have been removed from the hook_stack
     // we can now unref it, and it should be freed
@@ -443,6 +442,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     return;
   }
+
+  pulsed->extrausec += ((double)nbytes / (double)(pulsed->out_arate) * (double)ONE_MILLION
+                        / (double)(pulsed->out_achans * (pulsed->out_asamps >> 3)) + .5);
 
   /// handle control commands from the main (video) thread
   if ((msg = (aserver_message_t *)pulsed->msgq) != NULL) {
@@ -485,7 +487,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       if (pulsed->fd >= 0) {
         if (LIVES_IS_PLAYING && IS_VALID_CLIP(pulsed->playing_file)) {
           afile->aplay_fd = pulsed->fd;
-          if (!mainw->audio_seek_ready) afile->sync_delta = mainw->startticks - mainw->currticks;
+          //if (!mainw->audio_seek_ready) afile->sync_delta = mainw->startticks - mainw->currticks;
         } else lives_close_buffered(pulsed->fd);
       }
       if (pulsed->sound_buffer == pulsed->aPlayPtr->data) pulsed->sound_buffer = NULL;
@@ -574,6 +576,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     boolean rec_output = FALSE;
 
     if (!mainw->video_seek_ready) {
+      // while waiting for video seek, we play silence, and the clock is advancing
+      // however, the video player will add this extra time to its sync_delta
       sample_silence_pulse(pulsed, -nbytes);
       in_ap = FALSE;
       lives_proc_thread_include_states(self, THRD_STATE_IDLING);
@@ -2009,10 +2013,10 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   volatile aserver_message_t *msg;
   static ticks_t last_retval = -1, lclk_ticks = 0;
   static boolean have_cticks = FALSE;
-  static ticks_t syncticks = 0;
+  static ticks_t syncticks = 0, lextra = 0;
   static double ratio = 1.;
   int64_t usec;
-  ticks_t retval = -1;
+  ticks_t retval = -1, lsyncticks = syncticks;
 
   msg = pulsed->msgq;
 
@@ -2035,25 +2039,31 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     if (retval < last_retval) last_retval = -1;
   }
   if (retval == last_retval || retval == -1) {
-    if (have_cticks) {
+    if (pulsed->extrausec > lextra)
+      syncticks += (pulsed->extrausec - lextra) * USEC_TO_TICKS;
+    else if (have_cticks) {
       syncticks += (mainw->clock_ticks - lclk_ticks) * ratio;
-      mainw->syncticks += (double)(mainw->clock_ticks - lclk_ticks) * ratio;
     }
+    if (syncticks < lsyncticks) syncticks = lsyncticks;
     retval = last_retval;
   } else {
     if (retval > 0) {
-      if (last_retval > -1 && syncticks && have_cticks) {
-        ratio = (double)(retval - last_retval) / ((double)syncticks / ratio + (double)(mainw->clock_ticks - lclk_ticks));
-        if (syncticks > (retval - last_retval + (lclk_ticks - mainw->clock_ticks) * ratio))
-          syncticks -= (retval - last_retval + (lclk_ticks - mainw->clock_ticks) * ratio);
-        mainw->syncticks -= syncticks;
+      if (last_retval > -1 && mainw->clock_ticks > lclk_ticks) {
+        ratio = (double)(retval - last_retval) / (double)(mainw->clock_ticks - lclk_ticks);
       }
       syncticks = 0;
+      pulsed->extrausec = 0;
       last_retval = retval;
     }
   }
+  lextra = pulsed->extrausec;
   lclk_ticks = mainw->clock_ticks;
   have_cticks = TRUE;
+  retval += syncticks;
+  if (retval < last_retval) {
+    syncticks = retval - last_retval;
+    retval = last_retval;
+  }
   return retval;
 }
 

@@ -524,9 +524,4 @@ double intrin_resample_vol(float *dst, size_t dst_skip, float *src, double offsd
 /* void **get_other_ptr(void **ptr, int op); */
 /* void *lives_nullify_weak_check(void **pp); */
 
-/* #ifdef THRD_SPECIFIC */
-/* void set_thread_id(uint64_t id); */
-/* uint64_t get_thread_id(void); */
-/* #endif */
-
 #endif // 0

@@ -13,7 +13,6 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
    Weed is developed by:
-
    Gabriel "Salsaman" Finch - http://lives-video.com
 
    partly based on LiViDO, which was developed by:
@@ -55,12 +54,13 @@ extern "C"
 #include <stddef.h>
 #include <inttypes.h>
 
-  /* API / ABI version * 201 */
+  /* API / ABI version * 202 */
   // changes in 200 -> 201: weed_leaf_element_size now returns (strlen + 1) for WEED_SEED_STRING values,
   // allowing NULL strings, which return size 0; prior to this, strlen was returned, and NULLS
   // were treated like empty strings.
   // 201 -> 202 :: technical updates (see spec for details)
-
+  // 201 - 202 :: weed_memory_funcs -> libweed_memory_funcs, added optional ext_funct
+  //		added (7) mandatory functions for libweed implmentations, made more things #define-able
 #define WEED_ABI_VERSION 		202
 #define WEED_API_VERSION 		WEED_ABI_VERSION
 
@@ -189,6 +189,7 @@ struct _weed_leaf_nopadding {
   typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
   typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
+  /* API 202+ */
   /* "extended" functions - only enabled if WEED_INIT_EXTENDED_FUNCS is passed to libweed_init */
   /* functions may be dangerous if not used with caution */
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
@@ -206,6 +207,10 @@ struct _weed_leaf_nopadding {
   /* CAUTION - no checking is done to ensure size is correct or target is still valid */
   typedef weed_error_t (*weed_ext_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
 						      weed_size_t new_size);
+  /* CAUTION - only works with scalar values */
+  typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, uint32_t seed_type,
+						    weed_voidptr_t new_value, weed_voidptr_t old_value);
+
 #endif
 
   /* end extended functions */
@@ -229,10 +234,12 @@ struct _weed_leaf_nopadding {
   __WEED_FN_DEF__ weed_ext_detach_leaf_f  weed_ext_detach_leaf;
   __WEED_FN_DEF__ weed_ext_set_element_size_f weed_ext_set_element_size;
   __WEED_FN_DEF__ weed_ext_append_elements_f weed_ext_append_elements;
+  __WEED_FN_DEF__ weed_ext_atomic_exchange_f weed_ext_atomic_exchange;
   /*------------------------------*/
 
-#ifndef WITHOUT_LIBWEED  /// functions will be exported from libweed
-  
+#ifndef WITHOUT_LIBWEED
+  /// MANDATORY functions for libweed implementations
+
   __WEED_FN_DEF__ size_t weed_leaf_get_byte_size(weed_plant_t *, const char *key);
   __WEED_FN_DEF__ size_t weed_plant_get_byte_size(weed_plant_t *);
 
@@ -257,7 +264,6 @@ struct _weed_leaf_nopadding {
   weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
 
 int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
-/* int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f); */
 /*   int libweed_set_memory_funcs(weed_calloc_f, weed_free_f, weed_memcpy_f); */
 
   typedef void *(*libweed_slab_alloc_clear_f)(size_t);

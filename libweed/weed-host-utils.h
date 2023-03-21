@@ -16,7 +16,6 @@
    Gabriel "Salsaman" Finch - http://lives-video.com
 
    partly based on LiViDO, which is developed by:
-
    Niels Elburg - http://veejay.sf.net
    Denis "Jaromil" Rojo - http://freej.dyne.org
    Tom Schouten - http://zwizwa.fartit.com

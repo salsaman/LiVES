@@ -4961,7 +4961,7 @@ void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // important here to set ONESHOT, TRANSFER_OWNER  and FG_THREAD
 
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
                                HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
@@ -7351,33 +7351,35 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         // switch FROM fullscreen during pb
         // in frame window
         if (!mainw->multitrack) {
+          lives_widget_hide(mainw->pf_grid);
+          if (mainw->double_size) {
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+            resize(2.);
+          } else {
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+            resize(1.);
+          }
           if (!mainw->faded) {
             if (mainw->double_size) {
-              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
               lives_widget_hide(mainw->sep_image);
               if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
-            } else lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+            }
             unfade_background();
-            //unfade_background();
           } else {
             lives_widget_hide(mainw->frame1);
             lives_widget_hide(mainw->frame2);
             lives_widget_show(mainw->eventbox3);
             lives_widget_show(mainw->eventbox4);
-            fade_background();
-            if (mainw->double_size) {
-              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-              resize(2.);
-            } else {
-              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-              resize(1.);
-            }
+            //fade_background();
           }
+
+          lives_widget_show_all(mainw->pf_grid);
 
           lives_widget_set_sensitive(mainw->fade, TRUE);
           lives_widget_set_sensitive(mainw->dsize, TRUE);
 	  // *INDENT-OFF*
 	}}
+      lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
       if (!mainw->multitrack && !mainw->faded) {
 	if (CURRENT_CLIP_IS_VALID) {
 	  redraw_timeline(mainw->current_file);
@@ -7401,14 +7403,14 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     lives_window_center(LIVES_WINDOW(mainw->play_window));
   }
-  if (mainw->play_window) play_window_set_title();
+  disp_main_title();
 }
 
 
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
                                HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
@@ -7651,7 +7653,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
 void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
                                HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
@@ -7696,24 +7698,6 @@ void on_sticky_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-static void _on_fade_pressed(LiVESButton * button, livespointer user_data) {
-  // toolbar button (unblank background)
-  if (mainw->fs && (!mainw->play_window || (prefs->play_monitor == widget_opts.monitor || capable->nmonitors == 1)))
-    return;
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade), !mainw->faded);
-}
-
-
-void on_fade_pressed(LiVESButton * button, livespointer user_data) {
-  if (mainw->go_away) return;
-  if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                               _on_fade_pressed, user_data);
-  else _on_fade_pressed(button, user_data);
-}
-
-
 static void _on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->faded = !mainw->faded;
   if (LIVES_IS_PLAYING && (!mainw->fs || (prefs->play_monitor != widget_opts.monitor && mainw->play_window &&
@@ -7746,6 +7730,16 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                                HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
+}
+
+
+void on_fade_pressed(LiVESButton * button, livespointer user_data) {
+  // toolbar button (unblank background)
+  if (mainw->fs && (!mainw->play_window || (prefs->play_monitor == widget_opts.monitor || capable->nmonitors == 1)))
+    return;
+  if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->fade)) == mainw->faded)
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade), !mainw->faded);
+  else on_fade_activate(NULL, NULL);
 }
 
 
@@ -9516,14 +9510,18 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 /// generic func. to create surfaces
 static void all_config(LiVESWidget * widget, livespointer ppsurf) {
   RECURSE_GUARD_START;
+  pthread_mutex_t *mutex;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
 
   if (!psurf) return;
 
   RETURN_IF_RECURSED;
 
+  mutex = lives_widget_get_mutex(widget);
+  pthread_mutex_lock(mutex);
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
+  pthread_mutex_unlock(mutex);
 
 #ifdef USE_SPECIAL_BUTTONS
   if (LIVES_IS_DRAWING_AREA(widget)) {
@@ -10283,31 +10281,34 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 
 
 #ifdef ENABLE_GIW_3
+static void  update_playpos(double ptrtime) {
+  lives_clip_t *pfile = RETURN_NORMAL_CLIP(mainw->playing_file);
+  if (pfile) {
+    frames_t frameno = calc_frame_from_time(mainw->playing_file, ptrtime);
+    if (frameno < pfile->frames) {
+      if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+          && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+        mainw->scratch = SCRATCH_JUMP;
+      }
+    } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
+    pfile->last_req_frame = frameno;
+  }
+}
+
+
 void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (!LIVES_IS_INTERACTIVE) return;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
   if (is_transport_locked()) return;
 
+  cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
+
   if (LIVES_IS_PLAYING) {
-    lives_clip_t *pfile = RETURN_NORMAL_CLIP(mainw->playing_file);
-    if (pfile) {
-      int maf = mainw->actual_frame;
-      mainw->actual_frame = pfile->frameno;
-      pfile->frameno = calc_frame_from_time(mainw->playing_file,
-                                            giw_timeline_get_value(GIW_TIMELINE(widget)));
-      if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-          && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
-        mainw->scratch = SCRATCH_JUMP;
-      } else {
-        if (pfile->frameno >= pfile->frames) {
-          pfile->frameno = mainw->actual_frame;
-          mainw->actual_frame = maf;
-        } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
-      }
-    }
+    update_playpos(cfile->pointer_time);
     return;
   }
-  cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
+
+  mainw->ptrtime = cfile->pointer_time;
   if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file,
                                             cfile->pointer_time);
 
@@ -10409,14 +10410,16 @@ boolean on_hrule_set(LiVESWidget * widget, LiVESXEventButton * event, livespoint
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)(lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
-  if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
 
-  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-      && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
-    mainw->scratch = SCRATCH_JUMP;
-  } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
+  if (LIVES_IS_PLAYING) {
+    update_playpos(cfile->ptrtime);
+    return;
+  }
 
   mainw->ptrtime = cfile->pointer_time;
+
+  if (cfile->frames > 0) cfile->frameno = cfile->last_frameno_p = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+
   lives_widget_queue_draw(mainw->eventbox2);
   return TRUE;
 }

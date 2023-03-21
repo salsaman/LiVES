@@ -2013,7 +2013,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     layer = layers[in_tracks[i]];
     if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
-      if (!weed_plant_has_leaf(layer, LIVES_LEAF_PROC_THREAD)) {
+      if (weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL)) {
         const char *img_ext;
         int nclip = lives_layer_get_clip(layer);
         if (IS_VALID_CLIP(nclip)) {
@@ -2690,6 +2690,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// get the pixel widths to compare
     /// the channel has the sizes we set in pass1
 
+    // can crash here..
     check_layer_ready(layer);
     if (!weed_layer_check_valid(layer)) goto done_video;
 
@@ -4084,10 +4085,9 @@ apply_inst3:
   // TODO - set mainw->vpp->play_params from connected out params and out alphas
 
   // caller should free all layers, but here we will free all other pixel_data
-
+  // (apart from return layer)
   for (int i = 0; layers[i]; i++) {
-    if (layers[i] == mainw->blend_layer) mainw->blend_layer = NULL;
-
+    //check if this is a candidate for output_layer, which will not be freed
     if (((mainw->multitrack && i == mainw->multitrack->preview_layer)
          || (!mainw->multitrack || mainw->multitrack->preview_layer < 0))
         && (weed_layer_get_pixel_data(layers[i])
@@ -8734,10 +8734,6 @@ recheck:
   if (sfile) {
     sfile->hsize = xwidth;
     sfile->vsize = xheight;
-
-    if (clipno == mainw->playing_file) {
-      set_main_title(sfile->file_name, 0);
-    }
   }
 
   // if we have an optional audio channel, we can push audio to it
@@ -10623,16 +10619,10 @@ int rte_switch_keymode(int key, int mode, const char *hashname) {
 void rte_swap_fg_bg(void) {
   int key = fg_generator_key;
   int mode = fg_generator_mode;
-  mainw->blend_palette = WEED_PALETTE_END;
 
-  if (key != -1) {
-    fg_generator_clip = -1;
-  }
   fg_generator_key = bg_generator_key;
   fg_generator_mode = bg_generator_mode;
-  if (fg_generator_key != -1) {
-    fg_generator_clip = mainw->current_file;
-  }
+
   bg_generator_key = key;
   bg_generator_mode = mode;
 }

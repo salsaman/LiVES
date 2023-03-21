@@ -309,8 +309,10 @@ void lives_widget_object_set_data_destroyable(LiVESWidgetObject *, const char *k
     LiVESWidgetObject *widget);
 
 #define GET_INT_DATA(widg, key) (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), (key))))
-
 #define SET_INT_DATA(widg, key, val) (lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), ((key)), LIVES_INT_TO_POINTER((val))))
+
+#define GET_VOIDP_DATA(widg, key) lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), (key))
+#define SET_VOIDP_DATA(widg, key, val) lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), ((key)), (val))
 
 int lives_pixbuf_get_width(const LiVESPixbuf *);
 int lives_pixbuf_get_height(const LiVESPixbuf *);
@@ -742,6 +744,8 @@ LiVESCellRenderer *lives_cell_renderer_text_new(void);
 LiVESCellRenderer *lives_cell_renderer_spin_new(void);
 LiVESCellRenderer *lives_cell_renderer_toggle_new(void);
 LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void);
+
+pthread_mutex_t *lives_widget_get_mutex(LiVESWidget *);
 
 LiVESWidget *lives_drawing_area_new(void);
 
@@ -1673,6 +1677,9 @@ const widget_opts_t _def_widget_opts = {
 #define HEIGHT_KEY "_wh_height"
 #define DEFER_KEY "_wh_defer"
 #define DEFERRED_KEY "_wh_deferred"
+
+#define MUTEX_KEY "_wh_mutex"
+#define SURFP_KEY "_wh_surfp"
 
 #define SBUTT_MARKUP_KEY "_sbutt_markup"
 

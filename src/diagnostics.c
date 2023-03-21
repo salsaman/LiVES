@@ -101,7 +101,6 @@ void show_audit(weed_plant_t *plant) {
         int st = weed_leaf_seed_type(plant, keys[n]);
         switch (st) {
         case WEED_SEED_PLANTPTR: {
-          void *ptr;
           if (lives_strtol(keys[n] + 2)) {
             weed_plant_t *pl = weed_get_plantptr_value(plant, keys[n], NULL);
             fprintf(stderr, "plant %d is at %s\n", n, keys[n]);

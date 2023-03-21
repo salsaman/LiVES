@@ -23,8 +23,6 @@
 
 //#define WEED_ADVANCED_PALETTES
 
-#define WEED_LEAF_CLIP "clip"
-#define WEED_LEAF_FRAME "frame"
 #define LIVES_LEAF_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define LIVES_LEAF_PIXBUF_SRC "host_pixbuf_src"
 #define LIVES_LEAF_SURFACE_SRC "host_surface_src"

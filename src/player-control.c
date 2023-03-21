@@ -127,8 +127,8 @@ static boolean _start_playback(int play_type) {
 // is set to a value other than CANCEL_NONE.
 //
 // realtime effects, ie. mainw->rte may not be altered, instead rte_on_off_callback must be called
-// player output cahnges - sepwin / fullsize / double etc. must be done by setting a hook
-// callback for mainw->player_proc's SYNC_ANNOUNCE_HOOK (see keyboard.c for examples)
+// player output changes - sepwin / fullsize / double etc. must be done by setting a hook
+// callback for mainw->player_proc's SYNC_ANNOUNCE_HOOK (see callbacks.c for examples)
 //
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   // BLOCKING playback
@@ -230,23 +230,6 @@ static void post_playback(void) {
       kill_play_window();
     } else {
       /// or resize it back to single size
-      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering
-          && (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
-        if (mainw->preview_controls) {
-          /// create the preview in the sepwin
-          if (prefs->show_gui) {
-            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-            lives_widget_show_all(mainw->preview_box);
-            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-          }
-        }
-        if (mainw->current_file != mainw->pre_play_file) {
-          // now we have to guess how to center the play window
-          mainw->opwx = mainw->opwy = -1;
-          mainw->preview_frame = 0;
-        }
-      }
-
       if (!mainw->multitrack) {
         //
         mainw->playing_file = -2;
@@ -271,6 +254,7 @@ static void post_playback(void) {
 
         if (mainw->play_window) {
           if (prefs->show_playwin) {
+            mainw->no_context_update = TRUE;
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             // need to recheck mainw->play_window after this
@@ -285,7 +269,9 @@ static void post_playback(void) {
               }
             }
 	    // *INDENT-OFF*
-	  }}}}}
+	  }
+	  mainw->no_context_update = FALSE;
+	}}}}
   // *INDENT-ON*
 
   if (prefs->show_player_stats && mainw->fps_measure > 0) {
@@ -304,13 +290,14 @@ static void post_playback(void) {
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
   }
 
+  // do this and update widgets BEFORE closing gen
+  reset_mainwin_size();
+
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
     weed_generator_end((weed_plant_t *)cfile->primary_src->source);
     mainw->osc_block = FALSE;
   }
-
-  reset_mainwin_size();
 
   if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
@@ -784,14 +771,11 @@ void play_file(void) {
         if (mainw->ascrap_file != -1) {
           if (AUD_SRC_EXTERNAL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
           else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
-        } else
-        }
-    }
-    if (AUD_SRC_EXTERNAL && mainw->pulsed_read)
-    pulse_rec_audio_to_clip(-1, -1, 0);
-    )
-    }
-
+        } else if (AUD_SRC_EXTERNAL && mainw->pulsed_read)
+          pulse_rec_audio_to_clip(-1, -1, 0);
+      }
+    })
+  }
   // set in case audio lock gets actioned
   future_prefs->audio_opts = prefs->audio_opts;
 

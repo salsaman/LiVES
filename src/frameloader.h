@@ -42,8 +42,6 @@ LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks
 boolean weed_layer_create_from_file_progressive(weed_layer_t *, const char *fname, int width,
     int height, int tpalette, const char *img_ext);
 
-void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *, lives_painter_surface_t *);
-
 void load_start_image(frames_t frame);
 
 void load_end_image(frames_t frame);

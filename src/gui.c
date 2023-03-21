@@ -4021,6 +4021,7 @@ void play_window_set_title(void) {
 
   if (mainw->multitrack) return;
   if (!mainw->play_window) return;
+  if (LIVES_IS_PLAYING && mainw->fs) return;
 
   if (CURRENT_CLIP_IS_VALID) {
     sepwin_scale = hypot(mainw->pwidth, mainw->pheight) / hypot(cfile->hsize, cfile->vsize);

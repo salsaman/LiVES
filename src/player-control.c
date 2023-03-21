@@ -127,8 +127,8 @@ static boolean _start_playback(int play_type) {
 // is set to a value other than CANCEL_NONE.
 //
 // realtime effects, ie. mainw->rte may not be altered, instead rte_on_off_callback must be called
-// player output cahnges - sepwin / fullsize / double etc. must be done by setting a hook
-// callback for mainw->player_proc's SYNC_ANNOUNCE_HOOK (see keyboard.c for examples)
+// player output changes - sepwin / fullsize / double etc. must be done by setting a hook
+// callback for mainw->player_proc's SYNC_ANNOUNCE_HOOK (see callbacks.c for examples)
 //
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   // BLOCKING playback
@@ -224,33 +224,18 @@ static void post_playback(void) {
         show_desktop_panel();
       }
       lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+      mainw->ignore_screen_size = FALSE;
     }
     if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
       kill_play_window();
     } else {
       /// or resize it back to single size
-      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering
-          && (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
-        if (mainw->preview_controls) {
-          /// create the preview in the sepwin
-          if (prefs->show_gui) {
-            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-            lives_widget_show_all(mainw->preview_box);
-            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-          }
-        }
-        if (mainw->current_file != mainw->pre_play_file) {
-          // now we have to guess how to center the play window
-          mainw->opwx = mainw->opwy = -1;
-          mainw->preview_frame = 0;
-        }
-      }
-
       if (!mainw->multitrack) {
         //
         mainw->playing_file = -2;
         if (mainw->fs) mainw->ignore_screen_size = TRUE;
         resize_play_window();
+        mainw->ignore_screen_size = FALSE;
         mainw->playing_file = -1;
         lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -269,6 +254,7 @@ static void post_playback(void) {
 
         if (mainw->play_window) {
           if (prefs->show_playwin) {
+            mainw->no_context_update = TRUE;
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             // need to recheck mainw->play_window after this
@@ -283,7 +269,9 @@ static void post_playback(void) {
               }
             }
 	    // *INDENT-OFF*
-	  }}}}}
+	  }
+	  mainw->no_context_update = FALSE;
+	}}}}
   // *INDENT-ON*
 
   if (prefs->show_player_stats && mainw->fps_measure > 0) {
@@ -302,13 +290,14 @@ static void post_playback(void) {
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
   }
 
+  // do this and update widgets BEFORE closing gen
+  reset_mainwin_size();
+
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
     weed_generator_end((weed_plant_t *)cfile->primary_src->source);
     mainw->osc_block = FALSE;
   }
-
-  reset_mainwin_size();
 
   if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
@@ -527,6 +516,7 @@ void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
   LiVESList *cliplist;
   weed_plant_t *pb_start_event = NULL;
+  weed_layer_t *ofl;
 
   double pointer_time = cfile->pointer_time;
   double real_pointer_time = cfile->real_pointer_time;
@@ -781,18 +771,11 @@ void play_file(void) {
         if (mainw->ascrap_file != -1) {
           if (AUD_SRC_EXTERNAL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
           else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
-        }
+        } else if (AUD_SRC_EXTERNAL && mainw->pulsed_read)
+          pulse_rec_audio_to_clip(-1, -1, 0);
       }
-    }
-    if (AUD_SRC_EXTERNAL && mainw->pulsed_read) {
-    mainw->pulsed_read->in_achans = mainw->pulsed_read->out_achans = PA_ACHANS;
-    mainw->pulsed_read->in_asamps = mainw->pulsed_read->out_asamps = PA_SAMPSIZE;
-    mainw->pulsed_read->in_arate = mainw->pulsed_read->out_arate;
-    mainw->pulsed_read->is_paused = TRUE;
-    mainw->pulsed_read->in_use = TRUE;
-  })
+    })
   }
-
   // set in case audio lock gets actioned
   future_prefs->audio_opts = prefs->audio_opts;
 
@@ -1008,6 +991,7 @@ void play_file(void) {
   if (mainw->blend_layer) {
     check_layer_ready(mainw->blend_layer);
     weed_layer_unref(mainw->blend_layer);
+    mainw->blend_layer = NULL;
   }
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
   if (mainw->record && !mainw->record_paused)
@@ -1250,11 +1234,20 @@ void play_file(void) {
       lives_hooks_trigger(NULL, COMPLETED_HOOK);
 
       if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
+      ofl = get_old_frame_layer();
 
-      /// free the last frame image(s)
-      reset_old_frame_layer();
+      if (mainw->cached_frame) {
+        if (mainw->cached_frame != mainw->frame_layer
+            && mainw->cached_frame != ofl) {
+          if (weed_layer_get_pixel_data(mainw->cached_frame)
+              == weed_layer_get_pixel_data(mainw->frame_layer))
+            weed_layer_nullify_pixel_data(mainw->cached_frame);
+          weed_layer_free(mainw->cached_frame);
+        }
+        mainw->cached_frame = NULL;
+      }
 
-      if (mainw->frame_layer) {
+      if (mainw->frame_layer && mainw->frame_layer != ofl) {
         check_layer_ready(mainw->frame_layer);
         weed_layer_free(mainw->frame_layer);
         if (mainw->frame_layer == mainw->frame_layer_preload)
@@ -1278,6 +1271,10 @@ void play_file(void) {
         weed_layer_free(mainw->blend_layer);
         mainw->blend_layer = NULL;
       }
+
+      /// free the last frame image(s)
+      reset_old_frame_layer();
+
 
       cliplist = mainw->cliplist;
       while (cliplist) {
@@ -1447,8 +1444,6 @@ void play_file(void) {
   }
 
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
-
-  mainw->ignore_screen_size = FALSE;
 
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */

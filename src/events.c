@@ -5966,6 +5966,7 @@ boolean deal_with_render_choice(boolean is_recovery) {
 
 
 boolean render_choice_idle(void *data) {
+  if (mainw->no_idlefuncs) return TRUE;
   lives_proc_thread_create(0, deal_with_render_choice, -1, "i", (LIVES_POINTER_TO_INT(data)));
   return FALSE;
 }

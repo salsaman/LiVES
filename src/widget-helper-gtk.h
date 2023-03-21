@@ -542,6 +542,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
   typedef GtkTextMark                       LiVESTextMark;
   typedef GtkTextIter                       LiVESTextIter;
 
+  typedef GtkDrawingArea                    LiVESDrawingArea;
   typedef GtkEntry                          LiVESEntry;
   typedef GtkEntryCompletion                LiVESEntryCompletion;
   typedef GtkRadioButton                    LiVESRadioButton;

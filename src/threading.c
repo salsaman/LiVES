@@ -1645,10 +1645,10 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t
 
   lives_proc_thread_include_states(lpt, THRD_STATE_CANCEL_REQUESTED);
 
-  if (lives_proc_thread_sync_waiting(lpt)) {
-    if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt);
-    else lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL));
-  }
+  /* if (lives_proc_thread_sync_waiting(lpt)) { */
+  /*   if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt); */
+  /*   else lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL)); */
+  /* } */
 
   if (lives_proc_thread_is_paused(lpt)) lives_proc_thread_request_resume(lpt);
 
@@ -1661,6 +1661,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_th
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t xself) {
+  if (xself == mainw->debug_ptr) break_me("cancelled");
   if (xself) {
     GET_PROC_THREAD_SELF(self);
     lives_proc_thread_include_states(xself, THRD_STATE_CANCELLED);
@@ -1994,7 +1995,7 @@ LIVES_GLOBAL_INLINE char *lives_proc_thread_sync_with(lives_proc_thread_t lpt, c
 // timeout is in seconds
 int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
   if (lives_proc_thread_ref(lpt) > 1) {
-    ticks_t slptime = LIVES_QUICK_NAP * 10;
+    ticks_t slptime = MSEC_TO_TICKS;
     if (timeout) timeout *= ONE_BILLION;
     if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt))
       check_pool_threads();
@@ -2004,7 +2005,7 @@ int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
       // may block waiting for a fg_service_call
       if (is_fg_thread()) fg_service_fulfill();
       // wait 10 usec
-      lives_microsleep;
+      lives_millisleep;
       if (timeout) {
         do {
           timeout -= slptime;

@@ -681,6 +681,35 @@ boolean init_memfuncs(int stage) {
   return TRUE;
 }
 
+#define _MB_(m) ((m) * 1024 * 1024)
+
+static char loc_data32M[_MB_(32)];
+static char loc_data8M[_MB_(8)];
+static char loc_data1M[_MB_(1)];
+
+void *localise_data(void *src, size_t dsize) {
+  if (dsize <= capable->hw.cache_size) {
+    g_print("1m is %p\n", loc_data1M);
+    if (dsize <= _MB_(1)) {
+      if (src) lives_memcpy(loc_data1M, src, dsize);
+      else lives_memset(loc_data1M, 0, _MB_(1));
+      return (void *)loc_data1M;
+    }
+    if (dsize <= _MB_(8)) {
+      if (src) lives_memcpy(loc_data8M, src, dsize);
+      else lives_memset(loc_data8M, 0, _MB_(8));
+      return &loc_data8M;
+    }
+    if (dsize <= _MB_(32)) {
+      if (src) lives_memcpy(loc_data32M, src, dsize);
+      else lives_memset(loc_data32M, 0, _MB_(32));
+      return (void *)loc_data32M;
+    }
+  }
+  return NULL;
+}
+
+
 
 #define BB_CACHE 512 // frame cache size (MB)
 
@@ -1179,9 +1208,5 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
   return dest;
 }
 
-
-weed_error_t set_plant_leaf_any_type_vargs(weed_plant_T * pl, const char *key, uint32_t st, int ne, ...) {
-  return WEED_SUCCESS;
-}
 #endif
 

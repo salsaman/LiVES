@@ -18,6 +18,10 @@
 #define WEED_LAYER_TYPE_VIDEO	1
 #define WEED_LAYER_TYPE_AUDIO	2
 
+#define WEED_LEAF_CLIP "clip"
+#define WEED_LEAF_FRAME "frame"
+#define LIVES_LEAF_TRACK "track"
+
 #define WEED_IS_LAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER)
 
 #define WEED_IS_XLAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER || weed_plant_get_type(plant) == WEED_PLANT_CHANNEL)
@@ -31,6 +35,7 @@ weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int curr
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
 weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame);
+void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
 
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);
@@ -41,9 +46,11 @@ int weed_layer_count_refs(weed_layer_t *);
 // lives specific
 weed_layer_t *lives_layer_new_for_frame(int clip, frames_t frame);
 
+void lives_layer_set_track(weed_layer_t *, int track);
 void lives_layer_set_clip(weed_layer_t *, int clip);
 void lives_layer_set_frame(weed_layer_t *, frames_t frame);
 
+int lives_layer_get_track(weed_layer_t *);
 int lives_layer_get_clip(weed_layer_t *);
 frames_t lives_layer_get_frame(weed_layer_t *);
 

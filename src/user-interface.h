@@ -14,9 +14,14 @@ void sensitize_rfx(void);
 void desensitize(void);
 void procw_desensitize(void);
 
+void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *, lives_painter_surface_t *);
+
+void lives_layer_draw(LiVESDrawingArea *widget, weed_layer_t *layer);
+
 boolean set_palette_colours(boolean force_reload);
 
 void set_main_title(const char *filename, int or_untitled_number);
+void disp_main_title(void);
 
 void get_gui_framesize(int *hsize, int *vsize);
 

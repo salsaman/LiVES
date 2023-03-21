@@ -41,38 +41,45 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
 }
 
 
+static char *win_title = NULL;
+
+void disp_main_title(void) {
+#if LIVES_HAS_HEADER_BAR_WIDGET
+  if (!(LIVES_IS_PLAYING && mainw->fs && mainw->sepwin))
+    lives_header_bar_set_title(LIVES_HEADER_BAR(mainw->hdrbar), win_title);
+#else
+  lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), win_title);
+#endif
+  if (mainw->play_window) play_window_set_title();
+}
+
+
 void set_main_title(const char *file, int untitled) {
-  char *title, *tmp, *tmp2;
+  char *tmp, *tmp2;
   char short_file[256];
+
+  if (win_title) lives_free(win_title);
 
   if (file && CURRENT_CLIP_IS_VALID) {
     if (untitled) {
-      title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")), (tmp2 = get_untitled_name(untitled)),
-                                  cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+      win_title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")), (tmp2 = get_untitled_name(untitled)),
+                                      cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
     } else {
       lives_snprintf(short_file, 256, "%s", file);
       if (cfile->restoring || (cfile->opening && cfile->frames == 123456789)) {
-        title = lives_strdup_printf((tmp = _("<%s> %dx%d : ??? frames ??? bpp %.3f fps")),
-                                    (tmp2 = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
+        win_title = lives_strdup_printf((tmp = _("<%s> %dx%d : ??? frames ??? bpp %.3f fps")),
+                                        (tmp2 = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
       } else {
-        title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")),
-                                    cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp2 = lives_path_get_basename(file))
-                                    : (tmp2 = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+        win_title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")),
+                                        cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp2 = lives_path_get_basename(file))
+                                        : (tmp2 = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       }
     }
     lives_free(tmp); lives_free(tmp2);
-  } else {
-    title = (_("<No File>"));
-  }
+  } else win_title = (_("<No File>"));
 
-#if LIVES_HAS_HEADER_BAR_WIDGET
-  lives_header_bar_set_title(LIVES_HEADER_BAR(mainw->hdrbar), title);
-#else
-  lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), title);
-#endif
-  lives_free(title);
-
-  if (mainw->play_window) play_window_set_title();
+  if (!(LIVES_IS_PLAYING && mainw->fs && mainw->sepwin))
+    disp_main_title();
 }
 
 
@@ -578,22 +585,39 @@ void procw_desensitize(void) {
 }
 
 
+// surface poaram ignored - deprecate
 void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
                                   lives_painter_surface_t *surface) {
+  pthread_mutex_t *mutex;
+  lives_painter_surface_t **psurface;
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
 
-  if (!surface || !widget) return;
-
-  cr = lives_painter_create_from_surface(surface);
-
-  if (!cr) return;
+  if (!widget) return;
 
   rwidth = lives_widget_get_allocation_width(widget);
   rheight = lives_widget_get_allocation_height(widget);
 
   if (!rwidth || !rheight) return;
+
+  mutex = lives_widget_get_mutex(widget);
+  pthread_mutex_lock(mutex);
+
+  psurface = (lives_painter_surface_t **)GET_VOIDP_DATA(widget, SURFP_KEY);
+  if (psurface) surface = *psurface;
+  else surface = NULL;
+
+  if (!psurface || !surface) {
+    pthread_mutex_unlock(mutex);
+    return;
+  }
+
+  cr = lives_painter_create_from_surface(surface);
+  if (!cr) {
+    pthread_mutex_unlock(mutex);
+    return;
+  }
 
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
@@ -679,6 +703,40 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   lives_painter_surface_flush(surface);
   lives_painter_fill(cr);
   lives_painter_destroy(cr);
+  pthread_mutex_unlock(mutex);
+}
+
+
+// layer should be reffed
+void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
+  static int old_pwidth = 0, old_pheight = 0;
+  LiVESPixbuf *pixbuf;
+
+  if (!LIVES_IS_DRAWING_AREA(darea)) return;
+
+  if (!weed_layer_check_valid(layer)) return;
+
+  pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
+
+  if (pixbuf) {
+    LiVESWidget *widget = LIVES_WIDGET(darea);
+    lives_painter_surface_t **psurface = (lives_painter_surface_t **)GET_VOIDP_DATA(widget, SURFP_KEY), *surface = *psurface;
+    /* if (widget == mainw->play_image) { */
+    /*   int pwidth = lives_widget_get_allocation_width(widget); */
+    /*   int pheight = lives_widget_get_allocation_height(widget); */
+    /*   if (pwidth < old_pwidth || pheight < old_pheight) */
+    /* 	clear_widget_bg(widget, surface); */
+    /*   old_pwidth = pwidth; */
+    /*   old_pheight = pheight; */
+    /* } */
+
+    set_drawing_area_from_pixbuf(widget, pixbuf, surface);
+    lives_widget_object_unref(pixbuf);
+
+    lives_widget_queue_draw_and_update(widget);
+  }
+
+  weed_layer_unref(layer);
 }
 
 
@@ -703,11 +761,10 @@ void reset_mainwin_size(void) {
   w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 
-  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
-
   // resize the main window so it fits the gui monitor
   if (prefs->open_maximised) {
     bx = by = 0;
+    lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -719,8 +776,9 @@ void reset_mainwin_size(void) {
     if (w > scr_width - bx || h > scr_height - by) {
       w = scr_width - bx;
       h = scr_height - by;
-      lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
     }
+    lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+    lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &x, &y);
     if (x + w > scr_width - bx) x = scr_width - bx - w;
     if (y + h > scr_height - by) y = scr_height - by - h;
@@ -812,8 +870,6 @@ static void _resize(double scale) {
   bx = 2 * abs(bx);
   by = abs(by);
 
-  g_print("VS4 is %d\n", vsize);
-
   if (scale < 0.) {
     // foreign capture
     scale = -scale;
@@ -857,7 +913,7 @@ static void _resize(double scale) {
     // THE SIZES OF THE FRAME CONTAINERS
     lives_widget_set_size_request(mainw->pf_grid, -1, mainw->ce_frame_height);
     lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, -1);
-    lives_widget_set_size_request(mainw->eventbox3, mainw->ce_frame_width, -1);
+    lives_widget_set_size_request(mainw->eventbox3, mainw->ce_frame_width, mainw->ce_frame_height);
     lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, -1);
     lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, -1);
 
@@ -870,11 +926,11 @@ static void _resize(double scale) {
       vsize *= scale;
       lives_widget_set_size_request(mainw->playframe, hsize, vsize);
       lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
-      lives_widget_set_size_request(mainw->playarea, hsize, vsize);
     }
 
     // IMPORTANT (or the entire image will not be shown)
     lives_widget_set_size_request(mainw->play_image, hsize, vsize);
+    lives_widget_set_size_request(mainw->playarea, hsize, vsize);
 
     xwin = lives_widget_get_xwindow(mainw->play_image);
     if (LIVES_IS_XWINDOW(xwin)) {
@@ -957,13 +1013,14 @@ void reset_message_area(void) {
 
   // hide this and show it last, because being narrow, it can "poke up" into the area above
   // and mess up the size calculations
-  lives_widget_hide(mainw->msg_scrollbar);
+  if (mainw->msg_scrollbar) lives_widget_hide(mainw->msg_scrollbar);
 }
 
 
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
+  if (mainw->no_idlefuncs) return TRUE;
 
   if (data) isfirst = TRUE;
 
@@ -992,12 +1049,13 @@ boolean resize_message_area(livespointer data) {
     if (!CURRENT_CLIP_IS_VALID) {
       d_print("");
     }
+    if (mainw->msg_scrollbar) lives_widget_show(mainw->msg_scrollbar);
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
     isfirst = FALSE;
   }
   resize(1.);
-  lives_widget_show(mainw->msg_scrollbar);
+  if (mainw->msg_scrollbar) lives_widget_show(mainw->msg_scrollbar);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   return FALSE;
 }

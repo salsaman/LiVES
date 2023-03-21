@@ -36,6 +36,7 @@
 #define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second - GLOBAL TIMEBASE
 #define TICKS_PER_SECOND_DBL ((double)TICKS_PER_SECOND)   ///< actually microseconds / 100.
 #define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)
+#define MSEC_TO_TICKS (TICKS_PER_SECOND / 1000) ///< multiplying factor mSec -> ticks_t  (def. 100000)
 #define TICKS_TO_NANOSEC (ONE_BILLION / TICKS_PER_SECOND) /// multiplying factor ticks_t -> nSec (def 10)
 
 #define DEF_FPS 25.
@@ -957,6 +958,7 @@ typedef struct {
   boolean error; //  --> status
   volatile boolean fatal; ///< got fatal signal --> status
 
+  volatile boolean no_idlefuncs;
   uint32_t fg_service_handle;
   GSource *fg_service_source;
 
@@ -1104,6 +1106,7 @@ typedef struct {
   pthread_mutex_t pwin_surface_mutex;
 
   /// predictive caching apparatus
+  weed_plant_t *cached_frame;
   weed_plant_t *frame_layer_preload;
   frames64_t pred_frame;
   int pred_clip;

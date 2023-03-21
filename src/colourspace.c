@@ -69,8 +69,8 @@ typedef struct {
 
 static volatile int nb = 0;
 static volatile int swctx_count = 0;
-static swsctx_block bloxx[MAX_SWS_BLOCKS];
-static struct SwsContext *swscalep[MAX_SWS_CTX];
+static swsctx_block **bloxx = NULL;
+static struct SwsContext **swscalep = NULL;
 static pthread_mutex_t ctxcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, swpixfmt ipixfmt, int width, int height,
@@ -79,98 +79,99 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
   int max = MAX_THREADS + 1, minbnum = max, mingnum = minbnum, minanum = mingnum, num;
   int lastblock = THREADVAR(last_sws_block), j = 0, bestidx = -1;
 
-  if (lastblock > 0) j = lastblock;
-  else lastblock = nb - 1;
 
   pthread_mutex_lock(&ctxcnt_mutex);
 
-  while (1) {
-    block = &bloxx[j];
-    if (!block->in_use && (num = block->num) >= nreq) {
-      if (iwidth == block->iwidth
-          && iheight == block->iheight
-          && ipixfmt == block->ipixfmt
-          && width == block->width
-          && height == block->height
-          && opixfmt == block->opixfmt
-          && flags == block->flags) {
+  if (nb) {
+    if (lastblock > 0) j = lastblock;
+    else lastblock = nb - 1;
 
-        if (subspace == block->subspace
-            && iclamping == block->iclamping
-            && oclamp_hint == block->oclamp_hint
-            && irow[0] == block->irow[0]
-            && irow[1] == block->irow[1]
-            && irow[2] == block->irow[2]
-            && irow[3] == block->irow[3]
-            && orow[0] == block->orow[0]
-            && orow[1] == block->orow[1]
-            && orow[2] == block->orow[2]
-            && orow[3] == block->orow[3]
-           ) {
-          if (num < minbnum) {
-            minbnum = num;
-            bestidx = j;
-            //g_print("%d is perfect match !\n", i);
-            if (num == nreq) {
-              //if (i == -1) g_print("BINGO !\n");
-              break;
-            }
-          }
-        } else {
-          if (minbnum == max) {
-            if (num < mingnum) {
+    while (1) {
+      block = bloxx[j];
+      if (!block->in_use && (num = block->num) >= nreq) {
+        if (iwidth == block->iwidth
+            && iheight == block->iheight
+            && ipixfmt == block->ipixfmt
+            && width == block->width
+            && height == block->height
+            && opixfmt == block->opixfmt
+            && flags == block->flags) {
+
+          if (subspace == block->subspace
+              && iclamping == block->iclamping
+              && oclamp_hint == block->oclamp_hint
+              && irow[0] == block->irow[0]
+              && irow[1] == block->irow[1]
+              && irow[2] == block->irow[2]
+              && irow[3] == block->irow[3]
+              && orow[0] == block->orow[0]
+              && orow[1] == block->orow[1]
+              && orow[2] == block->orow[2]
+              && orow[3] == block->orow[3]
+             ) {
+            if (num < minbnum) {
+              minbnum = num;
               bestidx = j;
-              mingnum = num;
-	    // *INDENT-OFF*
+              //g_print("%d is perfect match !\n", i);
+              if (num == nreq) {
+                //if (i == -1) g_print("BINGO !\n");
+                break;
+              }
+            }
+          } else {
+            if (minbnum == max) {
+              if (num < mingnum) {
+                bestidx = j;
+                mingnum = num;
+		// *INDENT-OFF*
+	      }}}}
+	else {
+	  if (minbnum == max && mingnum == max) {
+	    if (num < minanum) {
+	      bestidx = j;
+	      minanum = num;
 	    }}}}
-      else {
-	if (minbnum == max && mingnum == max) {
-	  if (num < minanum) {
-	    bestidx = j;
-	    minanum = num;
-	  }}}}
-    g_print("VALLRRR j %d and lb %d, nb %d\n", j, lastblock, nb);
-    if (j == lastblock) {
-      if (lastblock == nb - 1) break;
-      j = 0;
-      continue;
-    }
-    j++;
-    if (j == lastblock) {
-      if (lastblock != nb -1) {
-	lastblock = nb - 1;
-	j++;
+      if (j == lastblock) {
+	if (lastblock == nb - 1) break;
+	j = 0;
 	continue;
+      }
+      j++;
+      if (j == lastblock) {
+	if (lastblock != nb -1) {
+	  lastblock = nb - 1;
+	  j++;
+	  continue;
+	}
       }
     }
   }
   // *INDENT-ON*
 
   if (minbnum < max || mingnum < max) {
-    bestblock = &bloxx[bestidx];
+    bestblock = bloxx[bestidx];
     bestblock->in_use = TRUE;
     pthread_mutex_unlock(&ctxcnt_mutex);
     bestblock->match = TRUE;
     THREADVAR(last_sws_block) = bestidx;
   } else {
     int startctx = swctx_count, endctx = startctx + nreq;
-    if (endctx >= MAX_SWS_CTX
-        || nb  >= MAX_SWS_BLOCKS - 1) {
-      if (bestidx == -1) lives_abort("Unable to allocate SWS context block");
-      bestblock = &bloxx[bestidx];
+    if (bestidx != -1) {
+      bestblock = bloxx[bestidx];
       bestblock->in_use = TRUE;
       pthread_mutex_unlock(&ctxcnt_mutex);
       THREADVAR(last_sws_block) = bestidx;
     } else {
-      g_print("FAILED to get SWS block\n");
-      bestblock = &bloxx[nb++];
+      nb++;
+      bloxx = (swsctx_block **)lives_recalloc(bloxx, nb, nb - 1, sizeof(swsctx_block *));
+      bestblock = bloxx[nb - 1] = (swsctx_block *)lives_calloc(1, sizeof(swsctx_block));
       bestblock->in_use = TRUE;
       swctx_count = endctx;
+      swscalep = (struct SwsContext **)lives_recalloc(swscalep, endctx,
+                 startctx, sizeof(struct SwsContext *));
       pthread_mutex_unlock(&ctxcnt_mutex);
-
       bestblock->num = nreq;
       bestblock->offset = startctx;
-      for (int i = startctx; i < endctx; i++) swscalep[i] = NULL;
     }
 
     bestblock->iwidth = iwidth;
@@ -10711,13 +10712,13 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   weed_layer_copy(orig_layer, layer);
   //g_print("COPIED %p TO %p %d\n", layer, orig_layer, weed_layer_count_refs(orig_layer));
 
-  if (mainw->frame_layer && layer != mainw->frame_layer
-      && weed_layer_get_pixel_data(mainw->frame_layer) ==
-      weed_layer_get_pixel_data(orig_layer)) {
-    /// retain orig pixel_data if it belongs to mainw->frame_layer
-    //g_print("RETAIN %p\n", orig_layer);
-    no_free_orig = TRUE;
-  }
+  /* if (mainw->frame_layer && layer != mainw->frame_layer */
+  /*     && weed_layer_get_pixel_data(mainw->frame_layer) == */
+  /*     weed_layer_get_pixel_data(orig_layer)) { */
+  /*   /// retain orig pixel_data if it belongs to mainw->frame_layer */
+  /*   //g_print("RETAIN %p\n", orig_layer); */
+  /*   no_free_orig = TRUE; */
+  /* } */
 
 #ifdef WEED_ADVANCED_PALETTES
   // all RGB -> RGB conversions are now handled here
@@ -12407,11 +12408,6 @@ memfail:
       weed_layer_nullify_pixel_data(orig_layer);
     }
     weed_layer_unref(orig_layer);
-  }  if (orig_layer) {
-    if (no_free_orig) {
-      weed_layer_nullify_pixel_data(orig_layer);
-    }
-    weed_layer_unref(orig_layer);
   }
   return FALSE;
 }
@@ -12701,10 +12697,8 @@ LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int t
 
 
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
-  // create a gdkpixbuf from a weed layer
-  // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
-  // layer may safely be passed to weed_layer_unref() since if the pixel data is shared then it will be set to NULL in the layer.
-  // pixbuf should be unreffed after use as per normal
+  // create a pixbuf from a weed layer
+  // layer "pixel_data" is either copied to the pixbuf pixels, or the contents shared with the pixbuf and the layer pixel_data nullified
 
   LiVESPixbuf *pixbuf;
 
@@ -12723,7 +12717,12 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   palette = weed_layer_get_palette(layer);
 
-  if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
+  if ((weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE) ||
+      weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC))
+    nocheat = TRUE;
+
+  if (!nocheat && weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC) && (!realpalette ||
+      weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just nullify the layer and return the original pixbuf
     pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
     weed_layer_nullify_pixel_data(layer);
@@ -12733,13 +12732,8 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   // otherwise we need to steal or copy the pixel_data
 
-  if (!weed_layer_get_pixel_data(layer)) {
+  if (!weed_layer_get_pixel_data(layer))
     layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_END);
-  }
-
-  if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) {
-    nocheat = TRUE;
-  }
 
   do {
     width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
@@ -13360,12 +13354,14 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
       /// swsfreeContext always seems to leak memory..
       //sws_freeContext(swscalep[sl + offset]);
+      pthread_mutex_lock(&ctxcnt_mutex);
       if (!ctxblock->match)
         swparams[sl].swscale = swscalep[sl + offset] =
                                  sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
                                      height, opixfmt, flags, NULL, NULL, NULL);
       else
         swparams[sl].swscale = swscalep[sl + offset];
+      pthread_mutex_unlock(&ctxcnt_mutex);
 
       if (!swparams[sl].swscale) {
         LIVES_DEBUG("swscale is NULL !!");
@@ -14313,8 +14309,9 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 
    this function should always be used to free WEED_LEAF_PIXEL_DATA */
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
-  lives_proc_thread_t lpt;
+  lives_proc_thread_t lpt = NULL;
   void **pixel_data;
+  void *new_val = NULL;
   int nplanes;
 
   if (!layer) return;
@@ -14331,7 +14328,8 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-  lpt = weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, 0);
+  weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, new_val, &lpt);
+
   if (lpt) {
     lives_proc_thread_cancel(lpt);
     lives_proc_thread_join_boolean(lpt);

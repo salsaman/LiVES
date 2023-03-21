@@ -2016,13 +2016,13 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata, int clonetype) {
   if (clonetype == 1) {
     // full clone
     lives_mkv_priv_t *dpriv, *spriv;
-    fprintf(stderr, "cloning decplug withdfsdfd type %d\n", clonetype);
+    //fprintf(stderr, "cloning decplug withdfsdfd type %d\n", clonetype);
     clone = clone_cdata(cdata);
     clone->palettes[0] = 512;
     clone->palettes[1] = 0;
 
-    fprintf(stderr, "ipalzxczxc is %d and %d\n", clone->palettes[0], clone->palettes[1]);
-    fprintf(stderr, "ipazxcl is %d and %d\n", cdata->palettes[0], cdata->palettes[1]);
+    //fprintf(stderr, "ipalzxczxc is %d and %d\n", clone->palettes[0], clone->palettes[1]);
+    //fprintf(stderr, "ipazxcl is %d and %d\n", cdata->palettes[0], cdata->palettes[1]);
     spriv = cdata->priv;
     dpriv = clone->priv = calloc(1, sizeof(lives_mkv_priv_t));
     dpriv->data_start = 0;//spriv->data_start;
@@ -2680,8 +2680,6 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 }
 
 
-static double est_noseek;
-
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
                   int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
@@ -2750,11 +2748,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
     if (!rev && cdata->last_frame_decoded > -1) {
       est = estimate_delay(cdata, tframe);
       if (!rev) {
-        if (est <= 0. || est_noseek <= 0.) {
+        if (est <= 0. || priv->est_noseek <= 0.) {
           if (!cdata->kframes_complete || kf_before(cdata, tframe) > cdata->last_frame_decoded)
             if (cdata->jump_limit && delta > cdata->jump_limit) do_seek = TRUE;
         } else {
-          if (est < est_noseek) do_seek = TRUE;
+          if (est < priv->est_noseek) do_seek = TRUE;
           else if (cdata->kframe_dist <= 0 && delta > cdata->jump_limit)
             ((lives_clip_data_t *)cdata)->jump_limit = delta;
         }
@@ -3078,9 +3076,10 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
 
   if (!cdata) return est;
 
-  est_noseek = 0.;
-
   priv = cdata->priv;
+
+  priv->est_noseek = 0.;
+
   if (last_frame <= 0) last_frame = cdata->last_frame_decoded;
   if (last_frame < 0) last_frame = 0;
 
@@ -3175,28 +3174,28 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
         if (nks < 0) nks = delta / xkfd;
 
         // non seek estimate is just num kfraems * kframe decode time + num ib frames * ibdecode time
-        est_noseek = nks * fabs(ktime) + (delta - nks) * ibtime;
+        priv->est_noseek = nks * fabs(ktime) + (delta - nks) * ibtime;
 
         if (breadtime > 0) {
           int64_t bbytes = 0;
           count_between(priv->idxb, last_frame, tframe, &bbytes);
-          est_noseek += breadtime * bbytes;
+          priv->est_noseek += breadtime * bbytes;
           //fprintf(stderr, "ESTIMbb is %ld\n", bbytes);
         }
 
-        //fprintf(stderr, "ESTIMb is %f\n", est_noseek);
+        //fprintf(stderr, "ESTIMb is %f\n", priv->est_noseek);
 
-        if (est_noseek < est) {
+        if (priv->est_noseek < est) {
           // if it seems quicker without a seek, then use that
           if (ktime == 0.) conf -= .1;
           else if (ktime < 0.) conf -= .05;
           conf += dconf;
-          est = est_noseek;
+          est = priv->est_noseek;
         } else {
           // otherwise use estimate with seek to keyframe
           conf += yconf;
         }
-        //printf("EST 3 is %.4f\n",est_noseek);
+        //printf("EST 3 is %.4f\n",priv->est_noseek);
       }
     }
   }
@@ -3205,18 +3204,18 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
   if (cdata->adv_timing.const_time == 0.) conf -= .1;
   else if (cdata->adv_timing.const_time < 0.) conf -= .05;
   est += fabs(cdata->adv_timing.const_time);
-  est_noseek += fabs(cdata->adv_timing.const_time);
+  priv->est_noseek += fabs(cdata->adv_timing.const_time);
 
   // multiply by transient load factor
-  //printf("estdel 1444 %.4f %.4f\n", est, est_noseek);
+  //printf("estdel 1444 %.4f %.4f\n", est, priv->est_noseek);
   //if (est > 0. && cdata->adv_timing.ctiming_ratio > 0.) est *= fabs(cdata->adv_timing.ctiming_ratio);
   if (fpclassify(est) != FP_NORMAL) est = -1.;
 
-  if (est_noseek > 0. && cdata->adv_timing.ctiming_ratio > 0.)
-    est_noseek *= fabs(cdata->adv_timing.ctiming_ratio);
-  if (fpclassify(est_noseek) != FP_NORMAL) est_noseek = -1.;
+  if (priv->est_noseek > 0. && cdata->adv_timing.ctiming_ratio > 0.)
+    priv->est_noseek *= fabs(cdata->adv_timing.ctiming_ratio);
+  if (fpclassify(priv->est_noseek) != FP_NORMAL) priv->est_noseek = -1.;
 
-  //printf("estdel 1444 %.4f %.4f %.4f\n", est, est_noseek, conf);
+  //printf("estdel 1444 %.4f %.4f %.4f\n", est, priv->est_noseek, conf);
 
   if (est <= 0 || conf < 0.) conf = 0.;
   if (conf > 1.) conf = 1.;

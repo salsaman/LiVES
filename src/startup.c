@@ -1326,18 +1326,18 @@ boolean lazy_startup_checks(void) {
     lives_proc_thread_cancel(self); // does not return
   }
 
-  if (!mwshown) {
-    mwshown = TRUE;
-    if (prefs->show_msgs_on_startup) {
-      do_messages_window(TRUE);
-    }
-  }
-
   if (is_first) {
     resize(1.);
     is_first = FALSE;
     if (prefs->vj_mode) lives_proc_thread_cancel(self);
     return TRUE;
+  }
+
+  if (!mwshown) {
+    mwshown = TRUE;
+    if (prefs->show_msgs_on_startup) {
+      do_messages_window(TRUE);
+    }
   }
 
   if (!red_tim && CURRENT_CLIP_IS_VALID) {
@@ -1436,6 +1436,7 @@ static boolean lives_startup2(livespointer data);
 static boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
   char *tmp, *msg;
+  if (mainw->no_idlefuncs) return TRUE;
 
   // check the working directory
   if (needs_workdir) {
@@ -1541,12 +1542,17 @@ static boolean lives_startup(livespointer data) {
 
   create_LiVES();
 
+  mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
+
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
   if (theme_error && !mainw->foreign) {
     // non-fatal errors
     char *old_prefix_dir = lives_strdup(prefs->prefix_dir);
-    char *themesdir = lives_build_path((tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR, NULL);
+    char *themesdir = lives_build_path((tmp = lives_filename_to_utf8(prefs->prefix_dir,
+                                        -1, NULL, NULL, NULL)), THEME_DIR, NULL);
     msg = lives_strdup_printf(
             _("\n\nThe theme you requested (%s) could not be located.\n"
               "Please make sure you have the themes installed in\n%s.\n"),
@@ -1706,7 +1712,7 @@ static boolean lives_startup(livespointer data) {
 static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
-
+  if (mainw->no_idlefuncs) return TRUE;
 #ifndef VALGRIND_ON
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
     if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {

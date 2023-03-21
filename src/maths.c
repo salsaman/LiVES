@@ -108,15 +108,41 @@ LIVES_GLOBAL_INLINE int get_onescount_64(uint64_t num) {
 
 
 // calc p(nhits in ntrials) with p(hit) == ps
-double binomial(int ntrials, int nhits, double ps) {
-  double tn = 1., td = 1, cnst = pow(1. - ps, ntrials);
+
+// fn is nt ! / ((nt - h) ! . h!) * ps ** h * (1. - ps) ** (nt - h)
+// here we express thaat as  tn / td * missfac
+// where tn = nt ! / (nt - h) !,  td == 1 / h!, and probf == ps ** h * (1. - ps) ** (nt - h)
+
+// we start with tn, td == 1 and psf == (1 - ps) ** nt
+// now we step from 0 to h
+// multiply tn by (nt - i) [the rest cancels], multiply td by i + 1
+// multiply psf by ps and divide by (1. - ps)  i.e multiply by psf / (1.- psf)
+LIVES_GLOBAL_INLINE double binomial(int ntrials, int nhits, double ps) {
+  double tn = 1., td = 1, psf = pow(1. - ps, ntrials);
   if (nhits > ntrials / 2) nhits = ntrials - nhits;
   ps /= (1. - ps);
-  for (int i = 0; i <= nhits; td *= ++i) {
-    cnst *= ps;
+  for (int i = 1; i <= nhits; td *= ++i) {
+    psf *= ps;
     tn *= ntrials - i;
   }
-  return (double)tn / (double)td * cnst;
+  return (double)tn / (double)td * psf;
+}
+
+
+LIVES_GLOBAL_INLINE uint32_t make_bitmask32(int hi, int lo) {
+  uint32_t val, tot = 0;
+  if (hi > 31 || lo < 0 || lo > hi) return 0;
+  tot = val = get_2pow(lo);
+  for (int i = lo + 1; i <= hi; i++) {
+    val <<= 1;
+    tot |= val;
+  }
+  return tot;
+}
+
+
+LIVES_GLOBAL_INLINE uint32_t get_bits32(uint32_t bytes, int hi, int lo) {
+  return bytes & make_bitmask32(hi, lo);
 }
 
 

@@ -141,6 +141,9 @@ double gaussian(double x, double a, double m, double s1, double s2);
 
 int hextodec(const char *string);
 
+uint32_t make_bitmask32(int hi, int lo);
+uint32_t get_bits32(uint32_t bytes, int hi, int lo);
+
 //// statistics ///
 #define OBJECT_TYPE_MATH		IMkType("obj.MATH")
 #define MATH_OBJECT_SUBTYPE_STATS	IMkType("MATHstat")

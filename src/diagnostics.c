@@ -101,7 +101,6 @@ void show_audit(weed_plant_t *plant) {
         int st = weed_leaf_seed_type(plant, keys[n]);
         switch (st) {
         case WEED_SEED_PLANTPTR: {
-          void *ptr;
           if (lives_strtol(keys[n] + 2)) {
             weed_plant_t *pl = weed_get_plantptr_value(plant, keys[n], NULL);
             fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
@@ -155,6 +154,23 @@ static void upd_rstats(int n1s, int *pmin, int *pmax, int esrc, uint64_t nx, uin
 // in pass 2, we should have 0.75, then we multiply this by 20 and add., the totalt should now comverge to NR * 20
 
 #define NSTEPS 4
+
+// proceed as follows: generate n 'random' (nomially 64 bit) numbers - r0. r1. r2. r3, ..., rn
+// bitwise we define r0 as b0[63], b0[62], b0[61], ..., b0[0]
+// and r1 as b1[64], ... b1[0], etc
+// define the result of a logic op on rA, rB as l[63], l[62], ... l[0]
+// initialise  parity bits to all 0s
+// find x = n0 ^ n1 - write result to parity
+// now if l[i] is 1, b0[i], b1[i] are {1,0} or {0,1}
+// if l[i] is 0, b0[i], b1[i] are {0,0} or {1,1}
+// next we find r0 & r2. We cannot determine anything about the bits in r0 from l0
+// thus for the second result we cannot know anything a priori from r0 & r2
+// however if l1[i] is 1, then r0[i] must be 1, and r2[i] must be 1
+// thus if r1[i] was 0, we would have a 1 in parity, if 0, we would have a 1
+// thus, if l1[i] is 1, this implies, if there is a 1 value in l1[i], then p[i] (parity) ....
+// is the inverse of l1[i].
+// Now the 1s in l1 have p(0.25) so we have B / 4 on avearage
+// TBD.
 
 int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q) {
   uint64_t tot_a = 0, tot_b_add = 0, tot_c = 0, rtot = 0, diff;

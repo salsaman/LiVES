@@ -572,8 +572,9 @@ typedef enum {
 #endif
 
 #define RECURSE_GUARD_START static pthread_mutex_t recursion_mutex=PTHREAD_MUTEX_INITIALIZER;
-#define RETURN_IF_RECURSED do{if(pthread_mutex_trylock(&recursion_mutex))return;}while (0);
-#define RETURN_VAL_IF_RECURSED(val)do{if(pthread_mutex_trylock(&recursion_mutex))return val;\
+#define RETURN_IF_RECURSED do{if(pthread_mutex_trylock(&recursion_mutex))return; \
+    pthread_mutex_unlock(&recursion_mutex);}while (0);
+#define RETURN_VAL_IF_RECURSED(val)do{if(pthread_mutex_trylock(&recursion_mutex))return val; \
     pthread_mutex_unlock(&recursion_mutex);}while (0);
 #define RECURSE_GUARD_LOCK do{pthread_mutex_lock(&recursion_mutex);}while(0);
 #define RECURSE_GUARD_END do{pthread_mutex_trylock(&recursion_mutex);pthread_mutex_unlock(&recursion_mutex);}while(0);

@@ -1077,6 +1077,7 @@ xprocess *create_processing(const char *text) {
 
   widget_opts.last_container = vbox3;
 
+  // ????
   lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
@@ -2211,7 +2212,6 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   // cr dat, mod date
 
   filtresp = LIVES_RESPONSE_NONE;
-  g_main_context_acquire(g_main_context_default());
 
   dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
   lives_widget_set_maximum_size(dialog, winsize_h, winsize_v);
@@ -2334,7 +2334,6 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   leave_recheck = fill_filt_section(left_list, pass, 2, layout_leave);
   lives_layout_add_fill(LIVES_LAYOUT(layout_leave), FALSE);
 
-
   if (resetb) {
     /// reset button
     if (!pass) {
@@ -2427,7 +2426,6 @@ harlem_shuffle:
   // *INDENT-ON*
   lives_widget_destroy(dialog);
   //lives_widget_context_update();
-  g_main_context_release(g_main_context_default());
   return filtresp;
 }
 
@@ -3662,7 +3660,9 @@ void redraw_timeline(int clipno) {
   RECURSE_GUARD_START;
   GET_PROC_THREAD_SELF(self);
   lives_clip_t *sfile;
+
   RETURN_IF_RECURSED;
+  RECURSE_GUARD_LOCK;
 
   if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
       || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
@@ -6760,6 +6760,7 @@ void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
 }
 
 boolean run_diskspace_dialog_idle(livespointer data) {
+  if (mainw->no_idlefuncs) return TRUE;
   run_diskspace_dialog((const char *)data);
   return FALSE;
 }
@@ -7084,6 +7085,7 @@ boolean update_dsu(livespointer data) {
   int64_t dsu = -1;
   char *txt;
   char *xtarget = (char *)data;
+  if (mainw->no_idlefuncs) return TRUE;
   if (!xtarget) xtarget = prefs->workdir;
   if ((!dsq || dsq->scanning) && (dsu = disk_monitor_check_result(xtarget)) < 0) {
     if (!dsq || !dsq->visible) {
@@ -8149,6 +8151,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
 
 //#define DEBUG_OVERFLOW
 static int height, lheight;
+static boolean msgbar_configged = FALSE;
 
 boolean msg_area_config(LiVESWidget * widget) {
   // widget is mainw->msg_area :- the drawing area we write messages to
@@ -8458,6 +8461,7 @@ boolean msg_area_config(LiVESWidget * widget) {
       wiggle_room = height - lheight;
     }
   }
+  msgbar_configged = TRUE;
   return FALSE;
 }
 
@@ -8469,6 +8473,9 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   if (gtk_widget_get_state_flags(widget) & GTK_STATE_FLAG_BACKDROP) return FALSE;
 
   if (!prefs->show_msg_area) return TRUE;
+
+  if (!msgbar_configged) return FALSE;
+
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 

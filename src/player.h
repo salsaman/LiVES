@@ -47,8 +47,6 @@ lives_obj_instance_t *lives_player_inst_create(uint64_t subtype);
 
 #define RECORD_PAUSED (mainw && mainw->record && mainw->record_paused)
 
-// resizing ??
-
 // multitrack mode
 #define LIVES_MODE_MT (mainw && mainw->multitrack)
 

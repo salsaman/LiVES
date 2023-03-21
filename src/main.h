@@ -160,14 +160,17 @@ weed_leaf_delete_f _weed_leaf_delete;
 extern weed_plant_t *auditor_refc;
 #endif
 
+typedef weed_plant_t weed_layer_t;
+typedef weed_plant_t weed_param_t;
+
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 
 #include "support.h"
 
-#include "user-interface.h"
-
 #include "widget-helper.h"
+
+#include "user-interface.h"
 
 #include "filesystem.h"
 
@@ -277,6 +280,7 @@ typedef struct {
   char *cpu_vendor;
   uint64_t cpu_features;
   int cacheline_size;
+  size_t cache_size;
   size_t pagesize;
   //
   int mem_status;
@@ -305,9 +309,6 @@ typedef struct {
 #ifdef  _BASE_DEFS_ONLY_
 #undef _BASE_DEFS_ONLY_
 #endif
-
-typedef weed_plant_t weed_layer_t;
-typedef weed_plant_t weed_param_t;
 
 #include "functions.h"
 #include "alarms.h"

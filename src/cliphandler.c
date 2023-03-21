@@ -59,6 +59,22 @@ char *get_staging_dir_for(int index, const lives_intentcap_t *icaps) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean read_from_infofile(FILE *infofile) {
+  size_t bread;
+  if (!infofile) infofile = fopen(cfile->info_file, "r");
+  if (!infofile) return FALSE;
+  THREADVAR(read_failed) = FALSE;
+  bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
+  fclose(infofile);
+  if (ferror(infofile)) {
+    THREADVAR(read_failed) = TRUE;
+    return FALSE;
+  }
+  lives_memset(mainw->msg + bread, 0, 1);
+  return TRUE;
+}
+
+
 LIVES_GLOBAL_INLINE
 char *use_staging_dir_for(int clipno) {
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
@@ -2601,27 +2617,46 @@ void do_quick_switch(int new_file) {
     return;
   }
 
+  if (new_file == mainw->blend_file && mainw->new_blend_file == mainw->blend_file
+      && IS_VALID_CLIP(old_file))
+    mainw->new_blend_file = old_file;
+
   sfile = RETURN_VALID_CLIP(old_file);
 
   mainw->whentostop = NEVER_STOP;
-  mainw->blend_palette = WEED_PALETTE_END;
 
   if (old_file != new_file && old_file == mainw->playing_file) {
-    weed_layer_set_invalid(mainw->frame_layer, TRUE);
-    if (mainw->frame_layer_preload && mainw->frame_layer_preload != mainw->frame_layer) {
-      weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
-      check_layer_ready(mainw->frame_layer_preload);
-      weed_layer_unref(mainw->frame_layer_preload);
-      mainw->frame_layer_preload = NULL;
-      mainw->pred_clip = -1;
-      mainw->pred_frame = 0;
+    weed_layer_t *old_frame_layer = get_old_frame_layer();
+    if (old_frame_layer) weed_layer_set_invalid(old_frame_layer, TRUE);
+    if (mainw->cached_frame) {
+      weed_layer_set_invalid(mainw->cached_frame, TRUE);
+      if (mainw->cached_frame != mainw->frame_layer
+          && mainw->cached_frame != get_old_frame_layer()) {
+        if (weed_layer_get_pixel_data(mainw->cached_frame)
+            == weed_layer_get_pixel_data(mainw->frame_layer))
+          weed_layer_nullify_pixel_data(mainw->cached_frame);
+        weed_layer_free(mainw->cached_frame);
+        mainw->cached_frame = NULL;
+      }
+    }
+
+    if (mainw->frame_layer) weed_layer_set_invalid(mainw->frame_layer, TRUE);
+
+    if (mainw->frame_layer_preload) {
+      if (mainw->frame_layer_preload != mainw->frame_layer) {
+        weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
+        check_layer_ready(mainw->frame_layer_preload);
+        weed_layer_free(mainw->frame_layer_preload);
+        mainw->frame_layer_preload = NULL;
+        mainw->pred_clip = -1;
+        mainw->pred_frame = 0;
+      }
     }
   }
 
-  if (new_file == mainw->blend_file || old_file == mainw->blend_file) {
-    if (mainw->blend_layer) {
-      weed_layer_set_invalid(mainw->blend_layer, TRUE);
-    }
+  if (mainw->blend_layer) {
+    mainw->blend_palette = WEED_PALETTE_END;
+    weed_layer_set_invalid(mainw->blend_layer, TRUE);
   }
 
   if (old_file != mainw->blend_file && !mainw->is_rendering) {
@@ -2633,15 +2668,15 @@ void do_quick_switch(int new_file) {
         mainw->gen_started_play = FALSE;
         weed_generator_end(inst);
       } else {
-        // switch fg to bg
+        // swap fg / bg gen keys/modes
         rte_swap_fg_bg();
       }
     }
 
     if (new_file == mainw->blend_file
         && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR
-        && mainw->files[mainw->blend_file]->primary_src && mainw->files[mainw->blend_file]->primary_src) {
-      // switch bg to fg
+        && mainw->files[mainw->blend_file]->primary_src && mainw->files[mainw->blend_file]->primary_src->source) {
+      // swap fg / bg gen keys/modes
       rte_swap_fg_bg();
     }
   }
@@ -2681,9 +2716,10 @@ void do_quick_switch(int new_file) {
     }
   }
 
-  if (cfile->clip_type == CLIP_TYPE_GENERATOR) {
-    // if we switch to a new blend_file, and it is a genertator, then we want to
-    // add its instance as the source
+  if (cfile->clip_type == CLIP_TYPE_GENERATOR && old_file != mainw->blend_file) {
+    // if we switch to a new file, and it is a genertator, then we want to
+    // ADD INSTANCE AS PRIMARY_SOURECE
+
     weed_plant_t *inst = rte_keymode_get_instance(rte_fg_gen_key() + 1, rte_fg_gen_mode());
     if (inst && (!cfile->primary_src ||  cfile->primary_src->source != inst)) {
       cfile->primary_src = add_clip_source(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
@@ -2742,34 +2778,14 @@ void do_quick_switch(int new_file) {
 
   if (!mainw->fs && !mainw->faded) showclipimgs();
 
-  if (new_file == mainw->blend_file || old_file == mainw->blend_file) {
-    if (mainw->blend_layer) {
-      weed_layer_set_invalid(mainw->blend_layer, TRUE);
-      check_layer_ready(mainw->blend_layer);
-      weed_layer_unref(mainw->blend_layer);
-      mainw->blend_layer = NULL;
-    }
-    if (IS_VALID_CLIP(mainw->new_blend_file)) {
-      mainw->blend_file = mainw->new_blend_file;
-      if (mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-        // if we switch to a new blend_file, and it is a genertator, then we want to
-        // add its instance as the source
-        weed_plant_t *inst = rte_keymode_get_instance(rte_bg_gen_key() + 1, rte_bg_gen_mode());
-        if (inst && (!mainw->files[mainw->blend_file]->primary_src
-                     || mainw->files[mainw->blend_file]->primary_src->source != inst)) {
-          mainw->files[mainw->blend_file]->primary_src =
-            add_clip_source(mainw->blend_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
-                            LIVES_SRC_TYPE_FILTER);
-          weed_instance_unref(inst);
-        }
-      }
-    } else mainw->new_blend_file = mainw->blend_file = -1;
-    mainw->blend_palette = WEED_PALETTE_END;
-  }
-
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
-  redraw_timeline(mainw->current_file);
+
+  mainw->ignore_screen_size = TRUE;
+  reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
+
+  if (!mainw->fs && !mainw->fade) redraw_timeline(mainw->current_file);
 }
 
 
@@ -2854,6 +2870,7 @@ lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *sourc
     mysrc->source = source;
     mysrc->src_type = src_type;
     mysrc->track = track;
+    mysrc->status = SRC_STATUS_INACTIVE;
     mysrc->purpose = purpose;
     if (purpose == SRC_PURPOSE_PRIMARY)
       mysrc->flags = SRC_FLAG_NOFREE | SRC_FLAG_INACTIVE;

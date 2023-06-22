@@ -6654,7 +6654,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
               mainw->fsp_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fs_playimg), LIVES_WIDGET_EXPOSE_EVENT,
                                 LIVES_GUI_CALLBACK(all_expose), &mainw->fsp_surface);
           }
-          set_drawing_area_from_pixbuf(mainw->fs_playimg, pixbuf, mainw->fsp_surface);
+          set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->fs_playimg), pixbuf);
         } else lives_error_free(error);
       }
 
@@ -7013,7 +7013,7 @@ void end_fs_preview(LiVESFileChooser * fchoo, LiVESWidget * button) {
       lives_painter_surface_destroy(mainw->fsp_surface);
       mainw->fsp_surface = NULL;
     }
-    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+    set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
   }
 
   if (mainw->fs_preview_cleanup) {
@@ -7404,6 +7404,13 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     lives_window_center(LIVES_WINDOW(mainw->play_window));
   }
   disp_main_title();
+
+  if (LIVES_IS_PLAYING) {
+    // since the output size may change, we need to rebuild nodesmodel, taking into account
+    // the new player size
+    // since the player plugin may change, we also need to do this
+    build_nodes_model(&mainw->node_srcs);
+  }
 }
 
 
@@ -7467,7 +7474,12 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
-  if (LIVES_IS_PLAYING && !mainw->fs) mainw->force_show = TRUE;
+  if (LIVES_IS_PLAYING && !mainw->fs) {
+    mainw->force_show = TRUE;
+    // since the output size may change, we need to rebuild nodesmodel, taking into account
+    // the new player size
+    build_nodes_model(&mainw->node_srcs);
+  }
 }
 
 
@@ -7552,7 +7564,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
                                       && mainw->vpp->fwidth > -1)) {
             resize_play_window();
           }
-          set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+          set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
         }
         make_play_window();
 
@@ -7646,7 +7658,13 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
   }
 
   if (mainw->play_window) play_window_set_title();
-  if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
+  if (LIVES_IS_PLAYING) {
+    mainw->force_show = TRUE;
+    // since the output size may change, we need to rebuild nodesmodel, taking into account
+    // the new player size
+    // since the player plugin may change, we also need to do this
+    build_nodes_model(&mainw->node_srcs);
+  }
 }
 
 
@@ -9515,8 +9533,6 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
 
   if (!psurf) return;
 
-  RETURN_IF_RECURSED;
-
   mutex = lives_widget_get_mutex(widget);
   pthread_mutex_lock(mutex);
   if (*psurf) lives_painter_surface_destroy(*psurf);
@@ -9532,6 +9548,8 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
     }
   }
 #endif
+
+  RETURN_IF_RECURSED;
 
   //clear_widget_bg(widget, *psurf);
 
@@ -9569,6 +9587,7 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
 boolean all_config_deferrable(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   // a deferrable config_function - amazing !
   int do_defer = GET_INT_DATA(widget, DEFER_KEY);
+  if (!mainw->configured) do_defer = TRUE;
   if (do_defer) SET_INT_DATA(widget, DEFERRED_KEY, 1);
   else all_config(widget, ppsurf);
   return FALSE;
@@ -9591,9 +9610,12 @@ LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {
 
 
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  static boolean no_config = FALSE;
+  if (!mainw->go_away) no_config = FALSE;
+  if (no_config) return FALSE;
   if (!mainw->configured) {
     mainw->configured = TRUE;
-    return FALSE;
+    no_config = TRUE;
   }
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
     int scr_width, scr_height;
@@ -10030,7 +10052,6 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
   else sfile = mainw->files[mainw->playing_file];
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
-  if (new_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / fabs(new_fps);
 
   if (!user_data && ((!sfile->play_paused && sfile->pb_fps == new_fps) || (sfile->play_paused && new_fps == 0.))) {
     return;
@@ -10684,8 +10705,6 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
 
   if (cfile->play_paused) {
     cfile->pb_fps = cfile->freeze_fps;
-    if (cfile->pb_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
-    else mainw->period = INT_MAX;
     cfile->play_paused = FALSE;
     if (mainw->record && !mainw->record_paused) {
       pthread_mutex_lock(&mainw->event_list_mutex);
@@ -10915,13 +10934,13 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
    during playback
 */
 boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                           livespointer clip_number) {
+                           livespointer fnkey_number) {
   // ctrl-fn key will store a clip for higher switching
-  int clip = LIVES_POINTER_TO_INT(clip_number) - 1;
+  int fnkey = LIVES_POINTER_TO_INT(fnkey_number) - 1;
 
   if (CLIPSWITCH_BLOCKED) return TRUE;
 
-  if (clip >= FN_KEYS - 1) {
+  if (fnkey >= FN_KEYS - 1) {
     // last fn key will clear all
     for (int i = 0; i < FN_KEYS - 1; i++) {
       mainw->clipstore[i][0] = -1;
@@ -10930,33 +10949,39 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   if (mod == LIVES_SHIFT_MASK) {
-    mainw->clipstore[clip][0] = -1;
+    mainw->clipstore[fnkey][0] = -1;
     return TRUE;
   }
 
-  if (!IS_VALID_CLIP(mainw->clipstore[clip][0])) {
-    mainw->clipstore[clip][0] = mainw->current_file;
+
+  g_print("storeclip, key %d\n", fnkey);
+  g_print("got clip %d, frame %d\n", mainw->clipstore[fnkey][0], mainw->clipstore[fnkey][1]);
+  
+  if (!IS_VALID_CLIP(mainw->clipstore[fnkey][0])) {
+    mainw->clipstore[fnkey][0] = mainw->current_file;
     if (LIVES_IS_PLAYING) {
-      mainw->clipstore[clip][1] = mainw->actual_frame;
+      mainw->clipstore[fnkey][1] = cfile->frameno;
     } else {
       int frame = calc_frame_from_time4(mainw->current_file, cfile->pointer_time);
-      if (frame <= cfile->frames) mainw->clipstore[clip][1] = frame;
-      else mainw->clipstore[clip][1] = 1;
+      if (frame <= cfile->frames) mainw->clipstore[fnkey][1] = frame;
+      else mainw->clipstore[fnkey][1] = 1;
     }
   } else {
     if (CLIPSWITCH_BLOCKED) return TRUE;
     else {
-      lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
+      lives_clip_t *sfile = mainw->files[mainw->clipstore[fnkey][0]];
+      frames_t frame = mainw->clipstore[fnkey][1];
       if (LIVES_CE_PLAYBACK) {
-        if (mainw->clipstore[clip][0] != mainw->playing_file) {
+	g_print("jumping !\n");
+        if (mainw->clipstore[fnkey][0] != mainw->playing_file) {
           // player will call do_quick_switch, and possiblt switch_audio_clip()
-          sfile->frameno = mainw->clipstore[clip][1];
-          mainw->new_clip = mainw->clipstore[clip][0];
-        }
+          mainw->new_clip = mainw->clipstore[fnkey][0];
+	}
+	sfile->next_frame = frame;
       } else {
-        if (mainw->clipstore[clip][0] != mainw->current_file)
-          switch_clip(0, mainw->clipstore[clip][0], TRUE);
-        cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
+        if (mainw->clipstore[fnkey][0] != mainw->current_file)
+          switch_clip(0, mainw->clipstore[fnkey][0], TRUE);
+        cfile->real_pointer_time = (mainw->clipstore[fnkey][1] - 1.) / cfile->fps;
         lives_ce_update_timeline(0, cfile->real_pointer_time);
       }
       if (mainw->loop_locked) unlock_loop_lock();

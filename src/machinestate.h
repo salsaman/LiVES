@@ -1,5 +1,5 @@
 // machinestate.h
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -12,6 +12,50 @@
 
 #include <sys/time.h>
 #include <time.h>
+
+// hardware config details (capable->hw.*)
+
+#define CPU_VENDOR_INTEL		"intel"
+#define CPU_VENDOR_AMD			"amd"
+
+#define CPU_TYPE_OTHER		-1
+#define CPU_TYPE_UNKNOWN	0
+#define CPU_TYPE_INTEL		1
+#define CPU_TYPE_AMD		2
+
+#define CPU_FEATURE_HAS_SSE		(1ull << 0)
+#define CPU_FEATURE_HAS_SSE2		(1ull << 1)
+#define CPU_FEATURE_HAS_FMA		(1ull << 2)
+#define CPU_FEATURE_HAS_AVX		(1ull << 3)
+#define CPU_FEATURE_HAS_AVX2		(1ull << 4)
+#define CPU_FEATURE_HAS_AVX512		(1ull << 5)
+#define CPU_FEATURE_HAS_F16C		(1ull << 6)
+
+typedef struct {
+  int byte_order;
+  int ncpus;
+  short cpu_maxlvl;
+  short cpu_bits;
+  char *cpu_name;
+  char *cpu_vendor;
+  int cpu_type;
+  uint64_t cpu_features;
+  int cacheline_size;
+  size_t cache_size;
+  size_t pagesize;
+  //
+  int mem_status;
+  int64_t memtotal;
+  int64_t memfree;
+  int64_t memavail;
+  //
+#define OOM_ADJ_RANGE 1000
+  char *oom_adjust_file;
+  int oom_adj_value;
+  uint64_t clock_res;
+} hw_caps_t;
+
+//////////////
 
 #define LIVES_LEAF_MD5SUM "md5sum"
 #define LIVES_LEAF_MD5_CHKSIZE "md5_chksize"
@@ -109,9 +153,9 @@ char *get_fstype_for(const char *vol);
 
 boolean file_is_ours(const char *fname);
 
-void get_current_time_offset(ticks_t *xsecs, ticks_t *xnsecs);
-ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
+ticks_t lives_get_relative_ticks(ticks_t origticks);
 ticks_t lives_get_current_ticks(void);
+ticks_t lives_get_session_ticks(void);
 double lives_get_session_time(void);
 char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
@@ -291,8 +335,6 @@ boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 
 void get_monitors(boolean reset);
-
-#define CPU_FEATURE_HAS_SSE2 1
 
 boolean get_machine_dets(void);
 int get_num_cpus(void);

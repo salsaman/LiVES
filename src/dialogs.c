@@ -1381,7 +1381,7 @@ static void clock_upd(GdkFrameClock * clock, gpointer user_data) {display_ready 
 static boolean reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
 
-  get_current_time_offset(&mainw->origsecs, &mainw->orignsecs);
+  mainw->origticks = lives_get_session_ticks();
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -1599,7 +1599,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // startticks is the ticks value of the last frame played
 
-  last_open_check_ticks = mainw->offsetticks = mainw->deltaticks = mainw->adjticks = 0;
+  last_open_check_ticks = mainw->offsetticks = 0;
 
   IF_APLAYER_JACK
   (

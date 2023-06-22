@@ -39,56 +39,91 @@
 #include "main.h"
 #include "callbacks.h"
 #include "startup.h"
+#include "nodemodel.h"
 #include "diagnostics.h"
 
 LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
 #if IS_X86_64
 
-#define LIVES_REG_b  "rbx"
-#define LIVES_REG_S  "rsi"
+#define LIVES_REG_RBX  "rbx"
+#define LIVES_REG_RSI  "rsi"
+#define LIVES_REG_EAX  regs[0]
+#define LIVES_REG_EBX  regs[1]
+#define LIVES_REG_ECX  regs[2]
+#define LIVES_REG_EDX  regs[3]
 
 //////////////#define cpuid(index, eax, ebx, ecx, edx)
 
-#define cpuid(index, p)						    \
-__asm__ volatile (						    \
-		  "mov    %%"LIVES_REG_b", %%"LIVES_REG_S" \n\t"    \
-		  "cpuid                       \n\t"		    \
-		  "xchg   %%"LIVES_REG_b", %%"LIVES_REG_S	    \
-		  : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])	\
-		  : "0" (index), "2"(0))
+#if defined(_MSC_VER)
+/* Microsoft C/C++-compatible compiler */
+#include <intrin.h>
+// SSE SIMD intrinsics
+#include <xmmintrin.h>
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+/* GCC-compatible compiler, targeting x86/x86-64 */
+// AVX SIMD intrinsics included
+#include <x86intrin.h>
+// SSE SIMD intrinsics
+#include <xmmintrin.h>
+#elif defined(__GNUC__) && defined(__ARM_NEON__)
+/* GCC-compatible compiler, targeting ARM with NEON */
+#include <arm_neon.h>
+#elif defined(__GNUC__) && defined(__IWMMXT__)
+/* GCC-compatible compiler, targeting ARM with WMMX */
+#include <mmintrin.h>
 #endif
+
+#define cpuid(index, regs)						\
+  __asm__ volatile (							\
+		    "mov    %%"LIVES_REG_RBX", %%"LIVES_REG_RSI" \n\t"	\
+		    "cpuid                       \n\t"			\
+		    "xchg   %%"LIVES_REG_RBX", %%"LIVES_REG_RSI		\
+		    : "=a" (LIVES_REG_EAX), "=S" (LIVES_REG_EBX), "=c" (LIVES_REG_ECX), "=d" (LIVES_REG_EDX) \
+		    : "0" (index), "2"(0))
 
 static void get_cpuinfo(void) {
-#if IS_X86_64
-  unsigned int regs[4]; // regs2 :: eax, ebx, ecx, edx
-  union {u_int i[4]; char c[16]; } vendor;
-  cpuid(0x00000000, vendor.i); // regs == max_level, vendor0, vendor2, vendor1
+  union {uint i[4]; char c[16];} vendor;
+  uint regs[4]; // eax, ebx, ecx, edx
+  char *vendstr;
+
+  vendor.i[0] = 0; // stop gcc from complaining
+  cpuid(0x00000000, vendor.i); // max_level, vendor0, vendor2, vendor1
+  capable->hw.cpu_maxlvl = vendor.i[0];
+
+  if (!capable->hw.cpu_maxlvl) return;
+
   capable->hw.cpu_vendor = lives_strdup_printf("%.4s%.4s%.4s", &vendor.c[4], &vendor.c[12], &vendor.c[8]);
-  if (vendor.i[0] >= 0x00000001) {
-    cpuid(0x00000001, regs);
-    capable->hw.cacheline_size = ((regs[1] >> 8) & 0xFF) << 3; // ebx
-    if (regs[3] & 0x4000000) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE2;
-    // 25 == sse, 1 == sse3, 0x200 == ssse3, 0x80000 == sse4, 0x100000 == sse42,
-    // cpuid(7, eax, ebx, ecx, edx)
-    //if ((ecx & 0x18000000) == 0x18000000) {
-    //             xgetbv(0, xcr0_lo, xcr0_hi);
-    //             if ((xcr0_lo & 0x6) == 0x6) {
-    ///avx
-    //// if (ecx & 0x00001000)
-    ///              fma3}
-    ///if avx && (ebx & 0x00000020) avx2
-    // get L1 cache size
-    // for AMD - 0x8000001D
-    // (EBX[31:22] + 1) * (EBX[21:12] + 1) * (EBX[11:0] + 1) * (ECX + 1)
-    regs[0] = 4;
+  vendstr = lives_string_tolower(capable->hw.cpu_vendor);
+  if (strstr(vendstr, CPU_VENDOR_INTEL)) capable->hw.cpu_type = CPU_TYPE_INTEL;
+  else if (strstr(vendstr, CPU_VENDOR_AMD)) capable->hw.cpu_type = CPU_TYPE_AMD;
+  else capable->hw.cpu_type = CPU_TYPE_OTHER;
+  lives_free(vendstr);
+
+  cpuid(0x00000001, regs);
+  capable->hw.cacheline_size = ((regs[1] >> 8) & 0xFF) << 3;
+
+  if (regs[2] & (1 << 27)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE;
+  if (regs[3] & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE2;
+  if (regs[2] & (1 << 28)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX;
+  if (regs[2] & (1 << 12)) capable->hw.cpu_features |= CPU_FEATURE_HAS_FMA;
+  if (regs[2] & (1 << 16)) capable->hw.cpu_features |= CPU_FEATURE_HAS_F16C;
+  if (regs[2] & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX2;
+  if (regs[2] & (1 << 28) && regs[2] & (1 << 27) && regs[2] & (1 << 26))
+    capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512;
+
+  regs[0] = 4;
+  if (capable->hw.cpu_type == CPU_TYPE_AMD)
+    cpuid(0x8000001D, regs); // regs == max_level, vendor0, vendor2, vendor1
+  else
     cpuid(0x00000000, regs); // regs == max_level, vendor0, vendor2, vendor1
-    capable->hw.cache_size = (get_bits32(regs[1], 31, 22) + 1) * (get_bits32(regs[1], 21, 12) + 1)
-                             * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
-  }
-#endif
+  capable->hw.cache_size = (get_bits32(regs[1], 31, 22) + 1) * (get_bits32(regs[1], 21, 12) + 1)
+    * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
 }
 
+#else
+static void get_cpuinfo(void) {;}
+#endif
 
 static uint64_t fastrand_val = 0;
 
@@ -783,47 +818,43 @@ LIVES_GLOBAL_INLINE uint64_t get_blocksize(const char *dir) {
 }
 
 
-LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
+LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   ticks_t ret, wall_ticks;
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  ret = ((ts.tv_sec * ONE_BILLION + ts.tv_nsec)
-         - (origsecs * ONE_BILLION + orignsecs)) / TICKS_TO_NANOSEC;
+  ret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC - origticks;
+    
 #else
 #ifdef USE_MONOTONIC_TIME
   ret = (lives_get_monotonic_time() - orignsecs) / 10;
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  ret = ((tv.tv_sec * ONE_MILLLION + tv.tv_usec)
-         - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
+  ret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS - origticks;
 #endif
 #endif
   if (ret < 0) ret = 0;
-  wall_ticks = ret + (origsecs * ONE_BILLION + orignsecs) / TICKS_TO_NANOSEC;
+  wall_ticks = ret + origticks;
   if (wall_ticks > mainw->wall_ticks) mainw->wall_ticks = wall_ticks;
   return ret;
 }
-
-
-LIVES_GLOBAL_INLINE void get_current_time_offset(ticks_t *xsecs, ticks_t *xnsecs) {
-  ticks_t originticks = lives_get_current_ticks();
-  originticks *= TICKS_TO_NANOSEC;
-  if (xsecs) *xsecs = originticks / ONE_BILLION;
-  if (xnsecs) *xnsecs = originticks - mainw->origsecs * ONE_BILLION;
+    
+LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
+  //  return current (wallclock) time in ticks (units of 10 nanoseconds)
+  return lives_get_relative_ticks(0);
 }
 
 
-LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
-  //  return current (wallclock) time in ticks (units of 10 nanoseconds)
-  return lives_get_relative_ticks(0, 0);
+LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks(void) {
+  // return time since application was (re)started
+  return lives_get_relative_ticks(mainw->initial_ticks);
 }
 
 
 LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
-  // return time since application was last restarted
-  return (double)(lives_get_current_ticks() - mainw->initial_ticks) / TICKS_PER_SECOND_DBL;
+  // return time since application was (re)started
+  return lives_get_session_ticks() * TICKS_TO_USEC_DBL / ONE_MILLION;
 }
 
 
@@ -1653,7 +1684,9 @@ void update_effort(double nthings, boolean is_bad) {
 					  || is_layer_ready(mainw->frame_layer_preload))) {
     prefs->pb_quality = pb_quality;
     mainw->blend_palette = WEED_PALETTE_END;
-  if (mainw->scratch == SCRATCH_NONE)  mainw->scratch = SCRATCH_JUMP_NORESYNC;
+    if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP_NORESYNC;
+
+    build_nodes_model(&mainw->node_srcs);
   }
 
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);

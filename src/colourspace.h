@@ -108,6 +108,16 @@ typedef struct {
 } yuv411_macropixel;
 
 typedef struct {
+  int pal;
+  int clamping;
+  int sampling;
+  int subspace;
+  int gamma;
+} lives_pal_full_t;
+
+lives_pal_full_t *make_full_pal(int pal, int clamping, int sampling, int subspace, int gamme);
+
+typedef struct {
   void *src;
   void *srcp[4];
   size_t hsize;
@@ -191,17 +201,30 @@ double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8
 #define LIVES_PALETTE_YUVFLOAT		9564
 #define LIVES_PALETTE_YUVAFLOAT		9565
 
+// convert from advanced palette to simple palette and vice versa
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
-boolean weed_palette_is_valid(int pal);
 int get_simple_palette(weed_macropixel_t *mpx);
-double pixel_size(int pal); ///< actually MACROpixel size in bytes
+
+boolean weed_palette_is_valid(int pal);
+
+#define pixel_size(pal) ((int)weed_palette_get_bytes_per_macropixel(pal))
+
 int weed_palette_get_pixels_per_macropixel(int pal);
+
 int weed_palette_get_bits_per_macropixel(int pal);
+int weed_palette_get_bits_per_pixel(int pal);
+
+int weed_palette_get_bits_per_pixel_planar(int pal, int n);
+
+double weed_palette_get_bytes_per_macropixel(int pal);
 double weed_palette_get_bytes_per_pixel(int pal);
+
 int weed_palette_get_nplanes(int pal);
+
 boolean weed_palette_is_rgb(int pal);
 boolean weed_palette_is_yuv(int pal);
 boolean weed_palette_is_alpha(int pal);
+
 boolean weed_palette_has_alpha(int pal);
 boolean weed_palette_is_float(int pal);
 double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
@@ -233,7 +256,6 @@ boolean consider_swapping(int *inpal, int *outpal);
 				|| (p) == WEED_PALETTE_YUV444P || (p) == WEED_PALETTE_YUVA4444P || (p) == WEED_PALETTE_YUV411 \
 				|| (p) == WEED_PALETTE_UYVY || (p) == WEED_PALETTE_YUYV) \
   ? TRUE : FALSE)
-
 
 // palette information functions
 boolean weed_palette_is_lower_quality(int p1, int p2);

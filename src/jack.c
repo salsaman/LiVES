@@ -4185,7 +4185,7 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
                                    : jackd->sample_out_rate) / 1000000.));
   jackd->frames_written = jackd->frames_read = 0;
   mainw->currticks = offset;
-  mainw->deltaticks = mainw->startticks = 0;
+  mainw->startticks = 0;
 }
 
 

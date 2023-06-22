@@ -99,7 +99,6 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define DESTROYED_KEY "_wh_destroyed"
 #define ACTION_AREA_KEY "_wh_act_area"
 
-#define SBUTT_SURFACE_KEY "_sbutt_surf"
 #define SBUTT_TXT_KEY "_sbutt_txt"
 #define SBUTT_LAYOUT_KEY "_sbutt_layout"
 #define SBUTT_LW_KEY "_sbutt_lw"
@@ -1136,6 +1135,8 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (!gui_loop_tight) break;
 
     if (mainw->do_ctx_update) {
+
+      // during playback this is where all callbacks such as key presses will happen
       if (!is_active) _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
     } else {
@@ -8622,27 +8623,61 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_frozen(LiVESWidget * widget
 #define BT_UNPRE_WIDTH 2.0
 
 static void lives_painter_psurface_destroy_cb(livespointer data) {
-  lives_painter_surface_t **pbsurf = (lives_painter_surface_t **)data;
-  if (pbsurf) {
-    lives_painter_surface_t *bsurf = *pbsurf;
-    if (bsurf) lives_painter_surface_destroy(bsurf);
-    lives_free(pbsurf);
+  struct pbs_struct *pbs = (struct pbs_struct *)data;
+  if (pbs) {
+    pthread_mutex_t *mutex = NULL;
+    LiVESWidget *w = pbs->widget;
+    lives_painter_surface_t **pbsurf;
+    if (w) {
+      mutex = lives_widget_get_mutex(w);
+      if (mutex) pthread_mutex_lock(mutex);
+    }
+    pbsurf = pbs->surfp;
+    if (pbsurf) {
+      lives_painter_surface_t *bsurf = *pbsurf;
+      if (bsurf) {
+	lives_painter_surface_destroy(bsurf);
+	*pbsurf = NULL;
+      }
+    }
+    if (w) {
+      if (pbs->key) SET_VOIDP_DATA(w, pbs->key, NULL);
+      if (mutex) pthread_mutex_unlock(mutex);
+    }
+    lives_free(pbs);
   }
 }
 
 static void lives_widget_object_set_data_psurface(LiVESWidgetObject * obj, const char *key, livespointer data) {
-  lives_widget_object_set_data_full(obj, key, data,
-                                    (LiVESDestroyNotify)lives_painter_psurface_destroy_cb);
+  struct pbs_struct *pbs;
+  pthread_mutex_t *mutex = NULL;
+  LiVESWidget *w = (LiVESWidget *)obj;
+  if (w) {
+    mutex = lives_widget_get_mutex(w);
+    if (mutex) pthread_mutex_lock(mutex);
+  }
+  pbs = (struct pbs_struct *)GET_VOIDP_DATA(obj, key);
+  if (!pbs) {
+    pbs = (struct pbs_struct *)lives_calloc(1, sizeof(struct pbs_struct));
+    lives_widget_object_set_data_full(obj, key, pbs,
+				      (LiVESDestroyNotify)lives_painter_psurface_destroy_cb);
+  }
+  pbs->surfp = (lives_painter_surface_t **)data;
+  pbs->widget = w;
+  pbs->key = key;
+  if (mutex) pthread_mutex_unlock(mutex);
 }
 
 
 void render_standard_button(LiVESButton * sbutt) {
-  if (!is_standard_widget(LIVES_WIDGET(sbutt))) return;
+  LiVESWidget *widget = LIVES_WIDGET(sbutt);
+  if (!is_standard_widget(widget)) return;
   else {
-    LiVESWidget *widget = lives_bin_get_child(LIVES_BIN(sbutt));
-    lives_painter_surface_t **pbsurf =
-      (lives_painter_surface_t **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-          SBUTT_SURFACE_KEY);
+    LiVESWidget *da = lives_bin_get_child(LIVES_BIN(sbutt));
+    struct pbs_struct *pbs = (struct pbs_struct *)GET_VOIDP_DATA(widget, PBS_KEY);
+    lives_painter_surface_t **pbsurf;
+    if (!pbs) return;
+    pbsurf = pbs->surfp;
     if (!pbsurf || !*pbsurf) return;
     else {
       lives_painter_t *cr;
@@ -8662,7 +8697,7 @@ void render_standard_button(LiVESButton * sbutt) {
       boolean use_markup = GET_INT_DATA(sbutt, SBUTT_MARKUP_KEY);
       boolean prelit = (state & LIVES_WIDGET_STATE_PRELIGHT) == 0 ? FALSE : TRUE;
       boolean insens = (state & LIVES_WIDGET_STATE_INSENSITIVE) == 0 ? FALSE : TRUE;
-      boolean focused = lives_widget_is_focus(LIVES_WIDGET(sbutt));
+      boolean focused = lives_widget_is_focus(widget);
       uint32_t acc;
       int themetype = 0;
       int width, height, minwidth, minheight;
@@ -8697,8 +8732,8 @@ void render_standard_button(LiVESButton * sbutt) {
 
       bsurf = *pbsurf;
 
-      width = lives_widget_get_allocation_width(widget);
-      height = lives_widget_get_allocation_height(widget);
+      width = lives_widget_get_allocation_width(da);
+      height = lives_widget_get_allocation_height(da);
 
       cr = lives_painter_create_from_surface(bsurf);
 
@@ -8749,7 +8784,7 @@ void render_standard_button(LiVESButton * sbutt) {
                            SBUTT_TXT_KEY);
         if (text && *text) {
           LiVESWidget *topl;
-          LingoContext *ctx = gtk_widget_get_pango_context(widget);
+          LingoContext *ctx = gtk_widget_get_pango_context(da);
           char *markup, *full_markup;
           layout = pango_layout_new(ctx);
           lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
@@ -8775,10 +8810,10 @@ void render_standard_button(LiVESButton * sbutt) {
                 lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
               } else {
                 uint32_t oaccl = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY));
-                if (oaccl) lives_widget_remove_accelerator(LIVES_WIDGET(sbutt),
+                if (oaccl) lives_widget_remove_accelerator(widget,
                       accel_group, oaccl, (LiVESXModifierType)LIVES_ALT_MASK);
               }
-              lives_widget_add_accelerator(LIVES_WIDGET(sbutt), LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+              lives_widget_add_accelerator(widget, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                            acc, (LiVESXModifierType)LIVES_ALT_MASK, (LiVESAccelFlags)0);
               lives_widget_object_set_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY, LIVES_INT_TO_POINTER(acc));
             }
@@ -8789,17 +8824,17 @@ void render_standard_button(LiVESButton * sbutt) {
           lw = ((double)w_) / (double)LINGO_SCALE;
           lh = ((double)h_) / (double)LINGO_SCALE;
 
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), SBUTT_LW_KEY,
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(da), SBUTT_LW_KEY,
                                        LIVES_INT_TO_POINTER(lw));
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), SBUTT_LH_KEY,
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(da), SBUTT_LH_KEY,
                                        LIVES_INT_TO_POINTER(lh));
           lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(widget), SBUTT_LAYOUT_KEY,
               (livespointer)layout);
         }
       } else {
-        lw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+        lw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(da),
                                   SBUTT_LW_KEY));
-        lh = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+        lh = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(da),
                                   SBUTT_LH_KEY));
       }
 
@@ -8871,16 +8906,16 @@ void render_standard_button(LiVESButton * sbutt) {
       if (LIVES_EXPAND_HEIGHT(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
         minheight = lh + widget_opts.border_width * 2;
       } else minheight = lh;
-      width = lives_widget_get_allocation_width(LIVES_WIDGET(sbutt));
-      height = lives_widget_get_allocation_height(LIVES_WIDGET(sbutt));
+      width = lives_widget_get_allocation_width(widget);
+      height = lives_widget_get_allocation_height(widget);
 
       if (width < minwidth || height < minheight) {
         if (width < minwidth) width = minwidth;
         if (height < minheight) height = minheight;
-        lives_widget_set_size_request(LIVES_WIDGET(sbutt), width, height);
+        lives_widget_set_size_request(widget, width, height);
       }
       //if (is_fg_thread())
-      lives_widget_queue_draw_and_update(LIVES_WIDGET(sbutt));
+      lives_widget_queue_draw_and_update(widget);
     }
   }
 }
@@ -8893,7 +8928,8 @@ static void sbutt_render(LiVESButton * sbutt, LiVESWidgetState state, livespoint
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_image(LiVESButton * sbutt,
     LiVESWidget * img, boolean force_show) {
-  if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_image(sbutt, img);
+  LiVESWidget *widget = LIVES_WIDGET(sbutt);
+  if (!is_standard_widget(widget)) return lives_button_set_image(sbutt, img);
 
   if (img) {
     LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(img));
@@ -8921,17 +8957,12 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 
   if (!palette) return button;
 
-  //da = lives_standard_drawing_area_new(NULL, pbsurf);
-
   da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
-  lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
-                                        SBUTT_SURFACE_KEY, (livespointer)pbsurf);
 
   lives_container_add(LIVES_CONTAINER(button), da);
   lives_widget_set_show_hide_with(button, da);
 
   SET_INT_DATA(button, EXPANSION_KEY, widget_opts.expand);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_SURFACE_KEY, NULL);
 
   if (widget_opts.apply_theme) {
     set_standard_widget(button, TRUE);
@@ -8968,6 +8999,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   lives_widget_set_app_paintable(da, TRUE);
   lives_widget_set_size_request(da, width, height);
 
+  render_standard_button(LIVES_BUTTON(button));
   return button;
 }
 
@@ -8985,7 +9017,8 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_standard_button_set_label(LiVESButton 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_label(LiVESButton * sbutt,
     const char *txt) {
   boolean ret;
-  if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_label(sbutt, txt);
+  LiVESWidget *widget = LIVES_WIDGET(sbutt);
+  if (!is_standard_widget(widget)) return lives_button_set_label(sbutt, txt);
   ret = _lives_standard_button_set_label(sbutt, txt);
   return ret;
 }
@@ -8998,7 +9031,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_button_new_with_label(co
 }
 
 WIDGET_HELPER_GLOBAL_INLINE const char *lives_standard_button_get_label(LiVESButton * sbutt) {
-  if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_get_label(sbutt);
+  LiVESWidget *widget = LIVES_WIDGET(sbutt);
+  if (!is_standard_widget(widget)) return lives_button_get_label(sbutt);
   return lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_TXT_KEY);
 }
 #endif
@@ -9046,7 +9080,7 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
   }
 
 #ifdef USE_SPECIAL_BUTTONS
-  if (is_standard_widget(LIVES_WIDGET(sbutt))) {
+  if (is_standard_widget(sbutt)) {
     if (fake_default) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(sbutt)),
                                    SBUTT_FAKEDEF_KEY, sbutt);
@@ -9455,8 +9489,8 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
   darea = gtk_drawing_area_new();
   lives_widget_set_app_paintable(darea, TRUE);
 
-  SET_VOIDP_DATA(darea, SURFP_KEY, ppsurf);
   lives_widget_add_mutex(darea);
+  lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(darea), PBS_KEY, ppsurf);
 
   if (ppsurf) {
     if (callback)

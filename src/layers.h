@@ -1,6 +1,6 @@
 // layers.h
 // LiVES
-// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2023 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -22,6 +22,27 @@
 #define WEED_LEAF_FRAME "frame"
 #define LIVES_LEAF_TRACK "track"
 
+#define LIVES_LEAF_LAYER_STATUS "layer_status"
+#define LIVES_LEAF_TIMING_DATA "timedata"
+
+// layer statuses
+
+#define LAYER_STATUS_NONE		0
+
+// time code reference (queued time or recorded time)
+#define LAYER_STATUS_TREF		1
+
+// layer is queued in a clip_src
+#define LAYER_STATUS_QUEUED		2
+// layert has at least width, heihght, palette
+#define LAYER_STATUS_GOT_METADATA      	3
+// layer pixel_data is fully ready
+#define LAYER_STATUS_READY		4
+// layer is invalid, do not use 
+#define LAYER_STATUS_INVALID		5
+
+#define N_LAYER_STATUSES	    	6
+
 #define WEED_IS_LAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER)
 
 #define WEED_IS_XLAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER || weed_plant_get_type(plant) == WEED_PLANT_CHANNEL)
@@ -30,6 +51,7 @@
 weed_layer_t *weed_layer_new(int layer_type);
 int weed_layer_get_type(weed_layer_t *);
 weed_layer_t *create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
+// samas previous, but can also set specific rowstide values
 weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides, int tgt_gamma, int target_palette);
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
@@ -113,5 +135,7 @@ weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *, void **pixel_data
 weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
+
+int lives_layer_guess_palette(weed_layer_t *);
 
 #endif

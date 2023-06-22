@@ -20,6 +20,7 @@
 #include "effects-data.h"
 #include "audio.h"
 #include "clip_load_save.h"
+#include "nodemodel.h"
 
 #define BILLIONS(n) (n##000000000l)
 #define ONE_BILLION BILLIONS(1)
@@ -1128,11 +1129,15 @@ typedef struct {
   int pre_src_audio_file; ///< audio file we were playing before any ext input started
   int pre_play_file; ///< the current file before playback started
 
+  // node model for current fx chain
+  lives_nodemodel_t *nodemodel;
+
   /// background clip details
   int blend_file, last_blend_file, new_blend_file;
   weed_plant_t *blend_layer;
 
-  /// here we can store the details of the blend file at the insertion point, if nothing changes we can target this to optimise
+  /// here we can store the details of the blend file at the insertion point,
+  // if nothing changes we can target this to optimise
   volatile int blend_palette;
   int blend_width, blend_height;
   int blend_clamping, blend_sampling, blend_subspace;
@@ -1149,25 +1154,23 @@ typedef struct {
   // ticks are measured in 1. / TICKS_PER_SECOND_DBL of a second (by default a tick is 10 nano seconds)
 
   // for the internal player
-  double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
   ticks_t initial_ticks; ///< set ASAP when app is (re)started
   volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
   ticks_t last_startticks; ///< effective ticks when last frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
-  ticks_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
-  ticks_t orignsecs; ///< usecs at start of playback - ditto
+
+  ticks_t origticks; ///< playback start time
+
   ticks_t offsetticks; ///< offset for multitrack playback start
   volatile ticks_t clock_ticks; ///< unadjusted system time since pb start, measured concurrently with currticks
   ticks_t wall_ticks; /// wall clock time, updated whenever lives_get_*_ticks is called
   volatile ticks_t currticks; ///< current playback ticks (relative)
-  ticks_t deltaticks; ///< deltaticks for scratching
-  ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (source -> clock adjustment)
-  ticks_t cadjticks; ///< used to equalise the timecode between alternate timer sources (clock -> source adjustment)
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
-  double sc_timing_ratio;
-  ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources
+  //ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
+
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
+
   int play_sequence; ///< incremented for each playback
 
   double audio_stretch; ///< for fixed fps modes, the value is used to speed up / slow down audio

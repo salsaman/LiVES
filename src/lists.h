@@ -46,7 +46,7 @@ void lives_slist_free_all(LiVESSList **);
 #define FIND_BY_DATA(list, xdata) {for (LiVESList *qlist = (list); qlist; qlist = qlist->next) \
       if (DATAx(qlist, xdata)) return qlist;} return NULL;
 
-#define DATA_FIELD(l, t, f, x) ((void *)(((t *)(l/**/->data))->/**/f) == x)
+#define DATA_FIELD(l, t, f, x) ((void *)(((t *)(l##->data))->##f) == (x))
 
 #define FIND_BY_DATA_FIELD(list, struct_type, field, target) \
   do {for (LiVESList *qlist = list; qlist; qlist = qlist->next) 	\
@@ -58,6 +58,12 @@ void lives_slist_free_all(LiVESSList **);
 	if (DATA_FIELD(qlist, struct_type, field1, target) \
 	    || DATA_FIELD(qlist, struct_type, field2, target))	\
 	  {list = qlist; break;}; list = NULL;} while(0);
+
+#define FIND_BY_DATA_FIELD(list, struct_type, field, target) \
+  do {for (LiVESList *qlist = list; qlist; qlist = qlist->next) 	\
+	if (DATA_FIELD(qlist, struct_type, field, target)) \
+	  {list = qlist; break;}; list = NULL;} while(0);
+
 
 // locate in list
 LiVESList *lives_list_find_by_data(LiVESList *, livespointer data);

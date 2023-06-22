@@ -953,6 +953,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_BUTTON(widget) GTK_BUTTON(widget)
 #define LIVES_BUTTON_BOX(widget) GTK_BUTTON_BOX(widget)
 #define LIVES_LABEL(widget) GTK_LABEL(widget)
+#define LIVES_DRAWING_AREA(widget) GTK_DRAWING_AREA(widget)
 #define LIVES_ALIGNMENT(widget) GTK_ALIGNMENT(widget)
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #if GTK_CHECK_VERSION(3, 2, 0)

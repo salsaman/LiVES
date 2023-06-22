@@ -1849,11 +1849,8 @@ rerun:
 
   add_test(table, ++testcase, _("Checking if ???? can convert audio"));
 
-#ifdef ALLOW_PNG24
   msg = lives_strdup_printf(_("Checking if %s can decode to png"), "????");
-#else
-  msg = lives_strdup_printf(_("Checking if %s can decode to png/alpha"), "????");
-#endif
+
   add_test(table, ++testcase, msg);
   lives_free(msg);
 
@@ -2131,11 +2128,7 @@ rerun:
     success4 = FALSE;
   } else success4 = TRUE;
 
-#ifdef ALLOW_PNG24
   msg = lives_strdup_printf(_("Checking if %s can decode to png"), mp_cmd);
-#else
-  msg = lives_strdup_printf(_("Checking if %s can decode to png/alpha"), mp_cmd);
-#endif
 
   onowait = nowait;
   nowait = success2;
@@ -2288,11 +2281,7 @@ rerun:
     }
   } else {
     if (!success3) {
-#ifdef ALLOW_PNG24
       msg = lives_strdup_printf(_("You should install %s with either png or jpeg support"), mp_cmd);
-#else
-      msg = lives_strdup_printf(_("You should install %s with either png/alpha or jpeg support"), mp_cmd);
-#endif
       fail_test(table, testcase, msg);
       lives_free(msg);
     } else {

@@ -124,6 +124,7 @@ typedef struct {
 #define WEED_CHANNEL_OPTIONAL                          	(1 << 3)
 #define WEED_CHANNEL_CAN_DO_INPLACE                    	(1 << 4)
 #define WEED_CHANNEL_NEEDS_NATURAL_SIZE                	(1 << 5)
+#define WEED_CHANNEL_PLUGIN_CONTROLLED                	(1 << 6)
 
 /* audio */
 #define WEED_CHANNEL_REINIT_ON_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_SIZE_CHANGE

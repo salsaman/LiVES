@@ -2440,20 +2440,20 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         if (mt->frame_pixbuf) lives_widget_object_unref(mt->frame_pixbuf);
         // set frame_pixbuf, this gets painted in in expose_event
         mt->frame_pixbuf = mainw->imframe;
-        set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, mainw->play_surface);
+        set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), mt->frame_pixbuf);
       }
 #else
-      set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, mainw->play_surface);
+      set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), mainw->imframe);
 #endif
     } else {
 #if GTK_CHECK_VERSION(3, 0, 0)
       if (mt->frame_pixbuf != mainw->imframe) {
         if (mt->frame_pixbuf) lives_widget_object_unref(mt->frame_pixbuf);
         mt->frame_pixbuf = NULL;
-        set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, mainw->play_surface);
+        set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), mt->frame_pixbuf);
       }
 #else
-      set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+      set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
 #endif
     }
     lives_widget_queue_draw(mt->preview_eventbox);
@@ -2659,7 +2659,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 #if GTK_CHECK_VERSION(3, 0, 0)
       // set frame_pixbuf, this gets painted in in expose_event
       mt->frame_pixbuf = pixbuf;
-      set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, mainw->play_surface);
+      set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), mt->frame_pixbuf);
 #endif
       lives_widget_queue_draw(mt->preview_eventbox);
       weed_plant_free(mainw->frame_layer);
@@ -2675,9 +2675,9 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf = mainw->imframe;
-    set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, mainw->play_surface);
+    set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), mt->frame_pixbuf);
 #else
-    set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, mainw->play_surface);
+    set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), mainw->imframe);
 #endif
     lives_widget_queue_draw(mt->preview_eventbox);
   }

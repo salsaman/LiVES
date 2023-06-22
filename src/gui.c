@@ -3738,9 +3738,7 @@ void fullscreen_internal(void) {
     mainw->ce_frame_width = width;
     mainw->ce_frame_height = height;
 
-    if (!LIVES_IS_PLAYING) {
-      set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
-    }
+    if (!LIVES_IS_PLAYING) set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
 
     // visible contents of pf_grid
     lives_widget_set_size_request(mainw->pl_eventbox, width, height);

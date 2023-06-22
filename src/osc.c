@@ -439,6 +439,15 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
   double entd, sttd;
 
   if (mainw->go_away) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments(arglen, vargs, "i", FALSE)) {
+    // ignore if toggled off
+    int toggle;
+    lives_osc_check_arguments(arglen, vargs, "i", TRUE);
+    lives_osc_parse_int_argument(vargs, &toggle);
+    if (!toggle) return FALSE;
+  }
+
   mainw->osc_auto = 1; ///< request early notifiction of success
 
   if (mainw->current_file <= 0 || mainw->playing_file != -1) return lives_osc_notify_failure();
@@ -479,6 +488,13 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
 
 boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
+  if (lives_osc_check_arguments(arglen, vargs, "i", FALSE)) {
+    // ignore if toggled off
+    int toggle;
+    lives_osc_check_arguments(arglen, vargs, "i", TRUE);
+    lives_osc_parse_int_argument(vargs, &toggle);
+    if (!toggle) return FALSE;
+  }
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
     start_playback_async(4);
   }
@@ -635,6 +651,13 @@ boolean lives_osc_cb_bgplay_reset(void *context, int arglen, const void *vargs, 
 
 /* /video/stop */
 boolean lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (lives_osc_check_arguments(arglen, vargs, "i", FALSE)) {
+    // ignore if toggled off
+    int toggle;
+    lives_osc_check_arguments(arglen, vargs, "i", TRUE);
+    lives_osc_parse_int_argument(vargs, &toggle);
+    if (!toggle) return FALSE;
+  }
   if (LIVES_IS_PLAYING) {
     on_stop_activate(NULL, NULL); // should send play stop event
     return lives_osc_notify_success(NULL);

@@ -25,6 +25,7 @@
 
 #include "main.h"
 #include "effects-weed.h"
+#include "effects.h"
 #include "cvirtual.h"
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
@@ -96,48 +97,44 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, f
   // create a layer and try to set natural_size and palette
   weed_layer_t *layer;
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
-  lives_clip_src_t *dsource;
   int width = 0, height = 0, pal = 0;
   if (!sfile) return NULL;
-  dsource  = sfile->primary_src;
+
   layer = lives_layer_new_for_frame(clipno, frame);
+
+  // set palette according to clip AND frame
+  // for clips of type FILE, we cna have 2 palettes and 2 sizes depeding on whterh the frame is
+  // decoded to image or not
+  // for the most general case, frame should be 0
+  pal = lives_layer_guess_palette(layer);
+
+  // get the layer size
   switch (sfile->clip_type) {
-  case CLIP_TYPE_FILE:
-    if (is_virtual_frame(clipno, frame)) {
-      lives_clip_data_t *cdata = get_clip_cdata(clipno);
-      pal = cdata->current_palette;
-      // layer width is always measured in MACROpixels
-      width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
-      height = cdata->height;
-      break;
-    }
-  // for non virtual frames, fall through
-  case CLIP_TYPE_DISK:
-    width = sfile->hsize;
-    height = sfile->vsize;
-    if (sfile->bpp == 24) pal = WEED_PALETTE_RGB24;
-    else pal = WEED_PALETTE_RGBA32;
+  case CLIP_TYPE_FILE: {
+    lives_clip_data_t *cdata = get_clip_cdata(clipno);
+    // layer width is always measured in MACROpixels
+    width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
+    height = cdata->height;
+  }
     break;
-  case CLIP_TYPE_GENERATOR:
-    if (dsource) {
-      weed_instance_t *inst = (weed_instance_t *)dsource->source;
-      if (inst) {
-        weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
-        pal = weed_channel_get_palette(channel);
-        width = weed_channel_get_width_pixels(channel);
-        height = weed_channel_get_height(channel);
-      }
-    }
-    if (!width || !height) {
-      width = sfile->hsize;
-      height = sfile->vsize;
-    }
+  case CLIP_TYPE_GENERATOR: {
+    lives_clip_src_t *dsource  = sfile->primary_src;
+    weed_instance_t *instance = (weed_instance_t *)dsource->source;
+    weed_channel_t *channel = get_enabled_channel(instance, 0, DALSE);
+    width = weed_channel_get_width_pixels(channel);
+    height = weed_channel_get_height(channel);
+  }
     break;
   default: break;
   }
 
-  if (width && height) {
-    int nsize[2];
+  if (!width || !height) {
+    width = sfile->hsize;
+    height = sfile->vsize;
+  }
+
+ if (width && height) {
+   int nsize[2];
     weed_layer_set_size(layer, width, height);
     nsize[0] = width;
     nsize[1] = height;
@@ -154,6 +151,8 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
   if (src && dest) {
     int width = weed_layer_get_width(src);
     int height = weed_layer_get_height(src);
+    lives_layer_set_clip(dest, lives_layer_get_clip(src));
+    lives_layer_set_frame(dest, lives_layer_get_frame(src));
     weed_layer_set_size(dest, width, height);
     if (weed_plant_has_leaf(src, WEED_LEAF_NATURAL_SIZE))
       weed_leaf_dup(dest, src, WEED_LEAF_NATURAL_SIZE);
@@ -177,20 +176,22 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
    If either width or height are zero, then dimensions will be taken from the layer or
    defaults used
    if layer has a palette set, that will be maintained, else it will be set to target_palette
-   if targette palette is WEED_PALETTE_NONE then default will be set depending on image_ext
+   if target palette is WEED_PALETTE_NONE then default will be set depending on image_ext
    if this is "jpg" then it will be RGB24, otherwise RGBA32
    finally we create the pixel data for layer */
 static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_ext,
     int width, int height, int *rowstrides, int tgt_gamma, int target_palette) {
+  lives_clip_t *sfile = NULL;
   if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   else {
     if (!width) width = weed_layer_get_width(layer);
     if (!height) height = weed_layer_get_height(layer);
     if (!width || !height) {
       int clip = lives_layer_get_clip(layer);
-      if (clip && IS_VALID_CLIP(clip)) {
-        width = mainw->files[clip]->hsize;
-        height = mainw->files[clip]->vsize;
+      sfile = RETURN_VALID_CLIP(clip);
+      if (sfile) {
+        width = sfile->hsize;
+        height = sfile->vsize;
       }
     }
   }
@@ -200,9 +201,13 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
   if (weed_layer_get_palette(layer) == WEED_PALETTE_NONE) {
     if (target_palette != WEED_PALETTE_NONE) weed_layer_set_palette(layer, target_palette);
     else {
-      if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
-        weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
-      else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
+      if (!image_ext && sfile && sfile->bpp == 32)
+	weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
+      else  {
+	if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
+	  weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
+	else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
+      }
     }
   }
 
@@ -214,28 +219,26 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) weed_layer_nullify_pixel_data(layer);
   weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
 
-  if (prefs->apply_gamma && tgt_gamma != WEED_GAMMA_UNKNOWN) {
-    weed_layer_set_gamma(layer, tgt_gamma);
+  if (prefs->apply_gamma) {
+    if (tgt_gamma != WEED_GAMMA_UNKNOWN)
+      weed_layer_set_gamma(layer, tgt_gamma);
+    else {
+      if (sfile) weed_layer_set_gamme(layer, sfile->gamma_type);
+      else weed_layer_set_gamme(layer, WEED_GAMMA_SRGB);
+    }
   }
-
   return layer;
 }
 
 
 weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
                                  int width, int height, int target_palette) {
-  int tgt_gamma = WEED_GAMMA_UNKNOWN;
-  if (layer && !weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
-    int clip = lives_layer_get_clip(layer);
-    if (clip && IS_VALID_CLIP(clip))
-      tgt_gamma = mainw->files[clip]->gamma_type;
-    else tgt_gamma = WEED_GAMMA_SRGB;
-  }
   return _create_blank_layer(layer, image_ext, width, height, NULL, tgt_gamma, target_palette);
 }
 
 
-weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides, int tgt_gamma, int target_palette) {
+weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides,
+					 int tgt_gamma, int target_palette) {
   return _create_blank_layer(NULL, NULL,  width, height, rowstrides, tgt_gamma, target_palette);
 }
 
@@ -472,13 +475,13 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   for (i = 0; i < numplanes; i++) {
     xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
     if (rowstrides[i] == orowstrides[i])
-      lives_memcpy(npixel_data[i], pixel_data[i], xheight *  rowstrides[i]);
+      lives_memmove(npixel_data[i], pixel_data[i], xheight *  rowstrides[i]);
     else {
       uint8_t *dst = (uint8_t *)npixel_data[i];
       uint8_t *src = (uint8_t *)pixel_data[i];
       xwidth = width * psize * weed_palette_get_plane_ratio_horizontal(pal, i);
       for (j = 0; j < xheight; j++) {
-        lives_memcpy(&dst[rowstrides[i] * j], &src[orowstrides[i] * j], xwidth);
+        lives_memmove(&dst[rowstrides[i] * j], &src[orowstrides[i] * j], xwidth);
       }
     }
   }
@@ -500,6 +503,20 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   lives_freep((void **)&orowstrides);
   lives_freep((void **)&rowstrides);
   return TRUE;
+}
+
+
+void lives_layer_reset_timing_data(weed_layer_t *layer) {
+  if (layer) {
+    weed_timecode_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+    if (!timing_data) {
+      timing_data =
+	(weed_timecode_t *)lives_calloc(N_LAYER_STATUSES, sizeof(weed_timecode_t));
+    }
+    for (int i = 0; i < N_SRC_STATUSES; i++) timing_data[i] = 0;
+    weed_set_int64_array(layer, LIVES_LEAF_TIMER_DATA, N_LAYER_STATUSES, timer_data);
+    lives_free(timer_data);
+  }
 }
 
 
@@ -760,5 +777,58 @@ LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_layer_t *layer) {
 LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
   return weed_get_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+}
+
+
+int lives_layer_guess_palette(weed_layer_t *layer) {
+  // attempt to pre empt the layer palette before it is loaded, using information from the layer_source and the
+  // clip and frame data
+  // TODO -use src_type
+
+  if (layer) {
+    lives_clip_t *sfile;
+    int pal, clip;
+    if ((pal = weed_layer_get_palette(layer)) != WEED_PALETTE_NONE) return pal;
+    clip = lives_layer_get_clip(layer);
+    sfile = RETURN_VALID_CLIP(clip);
+
+    if (sfile) {
+      frames_t frame = lives_layer_get_clip(layer);
+      switch (sfile->clip_type) {
+      case CLIP_TYPE_FILE:
+	if (frame > 0 && is_virtual_frame(clip, frame)) {
+	  lives_clip_data_t *cdata = get_clip_cdata(clip);
+	  if (cdata) return cdata->current_palette;
+	}
+      case CLIP_TYPE_DISK:
+	// use RGB24 or RGBA32
+	if (sfile->bpp == 32) return WEED_PALETTE_RGBA32;
+	return WEED_PALETTE_RGB24;
+	break;
+      case CLIP_TYPE_GENERATOR:
+	lives_clip_src_t *dsource = sfile->primary_src;
+	if (dsource) {
+	  weed_instance_t *inst = (weed_instance_t *)dsource->source;
+	  if (inst) {
+	    weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
+	    if (channel) {
+	      g_print("get pal for channel %p\n", channel);
+	      return weed_channel_get_palette(channel);
+	    }
+	  }
+	}
+	return WEED_PALETTE_INVALID;
+      case CLIP_TYPE_NULL_VIDEO:
+	// we can generate blank frames in any palette,
+	// so we will return special value WEED_PALETTE_ANY
+	return WEED_PALETTE_ANY;
+      case CLIP_TYPE_YUV4MPEG:
+      case CLIP_TYPE_LIVES2LIVES:
+      case CLIP_TYPE_VIDEODEV:
+      default: break;
+      }
+    }
+  }
+  return WEED_PALETTE_NONE;
 }
 

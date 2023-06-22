@@ -283,7 +283,7 @@ int weed_palette_get_bits_per_macropixel(int pal);
 #define weed_palette_is_float(pal) ((pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || \
 				     pal == WEED_PALETTE_RGBFLOAT) ? WEED_TRUE : WEED_FALSE)
 
-/// This is actually the MACRO pixel size in bytes, to get the real pixel size, divide by weed_palette_pixles_per_macropixel()
+/// This is actually the MACRO pixel size in bytes, to get the real pixel size, divide by weed_palette_pixels_per_macropixel()
 #define pixel_size(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) ? 3 : \
 			 (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || \
 			  pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 4 : 1)

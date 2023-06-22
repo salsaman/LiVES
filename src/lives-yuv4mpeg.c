@@ -264,10 +264,8 @@ void weed_layer_set_from_yuv4m(weed_layer_t *layer, lives_clip_t *sfile) {
 
   if (!yuv4mpeg->ready) lives_yuv_stream_start_read(sfile);
 
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, sfile->hsize);
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, sfile->vsize);
-  weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_YUV420P);
-  weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_YCBCR);
+  weed_layer_set_size(layer, sfile->hsize, sfile->vsize);
+  weed_layer_set_palette(layer, WEED_PALETTE_YUV420P);
 
   create_empty_pixel_data(layer, TRUE, TRUE);
 
@@ -466,7 +464,7 @@ boolean lives_yuv_stream_start_write(lives_yuv4m_t *yuv4mpeg, const char *filena
   if (!filename) filename = lives_strdup_printf("%s/streamout.yuv", prefs->workdir);
 
   // TODO - do_threaded_dialog
-  if ((yuvout = creat(filename, O_CREAT)) < 0) {
+  if ((yuvout = lives_open2(filename, O_CREAT)) < 0) {
     do_error_dialog(lives_strdup_printf(_("Unable to open yuv4mpeg out stream %s\n"), filename));
     return FALSE;
   }

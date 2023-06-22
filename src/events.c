@@ -4099,7 +4099,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             else ztc = tc;
 
             layer = weed_apply_effects(layers, mainw->filter_map, ztc,
-                                       cfile->hsize, cfile->vsize, pchains);
+                                       cfile->hsize, cfile->vsize, pchains, FALSE);
 
             for (i = 0; layers[i]; i++) {
               weed_layer_unref(layers[i]);
@@ -4215,16 +4215,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer));
             height = weed_layer_get_height(layer);
             lpal = layer_palette = weed_layer_get_palette(layer);
-#ifndef ALLOW_PNG24
-            if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24
-                && layer_palette != WEED_PALETTE_RGBA32)
-              layer_palette = WEED_PALETTE_RGB24;
-
-            else if (cfile->img_type == IMG_TYPE_PNG && layer_palette != WEED_PALETTE_RGBA32)
-              layer_palette = WEED_PALETTE_RGBA32;
-#else
             layer_palette = WEED_PALETTE_RGB24;
-#endif
+
             // TODO - enc lb
             if ((mainw->multitrack && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
               calc_maxspect(cfile->hsize, cfile->vsize, &width, &height);

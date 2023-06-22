@@ -254,23 +254,22 @@ static void post_playback(void) {
 
         if (mainw->play_window) {
           if (prefs->show_playwin) {
-            mainw->no_context_update = TRUE;
+            //mainw->no_context_update = TRUE;
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-            // need to recheck mainw->play_window after this
             lives_widget_show_all(mainw->preview_box);
-            lives_widget_grab_focus(mainw->preview_spinbutton);
-            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+            // need to recheck mainw->play_window after this
+            lives_widget_show_now(mainw->preview_box);
             if (mainw->play_window) {
-              if (mainw->play_window) {
-                lives_window_center(LIVES_WINDOW(mainw->play_window));
-                clear_widget_bg(mainw->play_image, mainw->play_surface);
-                load_preview_image(FALSE);
-              }
+	      lives_widget_grab_focus(mainw->preview_spinbutton);
+	      lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+	      lives_window_center(LIVES_WINDOW(mainw->play_window));
+	      clear_widget_bg(mainw->play_image, mainw->play_surface);
+	      load_preview_image(FALSE);
             }
 	    // *INDENT-OFF*
 	  }
-	  mainw->no_context_update = FALSE;
+	  //mainw->no_context_update = FALSE;
 	}}}}
   // *INDENT-ON*
 
@@ -321,7 +320,7 @@ static void post_playback(void) {
   if (!mainw->multitrack) {
     /// update screen for internal players
     if (prefs->hfbwnp) lives_widget_hide(mainw->framebar);
-    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+    set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
     lives_widget_set_opacity(mainw->play_image, 0.);
     lives_widget_set_opacity(mainw->playframe, 0.);
   }
@@ -687,7 +686,6 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
 
   cfile->play_paused = FALSE;
-  mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
   if ((audio_player == AUD_PLAYER_JACK && AUD_SRC_INTERNAL)
       || (mainw->event_list && (!mainw->is_rendering || !mainw->preview || mainw->preview_rendering)))
@@ -1275,6 +1273,11 @@ void play_file(void) {
       /// free the last frame image(s)
       reset_old_frame_layer();
 
+      if (mainw->node_srcs) {
+	// free the nodemodel
+	free_nodes_model(mainw->node_srcs);
+	mainw->node_srcs = NULL;
+      }
 
       cliplist = mainw->cliplist;
       while (cliplist) {

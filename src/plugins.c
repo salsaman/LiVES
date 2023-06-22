@@ -2472,12 +2472,16 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 
 LIVES_GLOBAL_INLINE lives_clip_data_t *get_clip_cdata(int clipno) {
   lives_clip_t *sfile;
-  if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type == CLIP_TYPE_FILE
-      && !pthread_mutex_lock(&sfile->source_mutex)
-      && sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
-    lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
+  if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type == CLIP_TYPE_FILE) {
+    pthread_mutex_lock(&sfile->source_mutex)) {
+    if (sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
+      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
+      if (dplug) {
+	pthread_mutex_unlock(&sfile->source_mutex);
+	return dplug->cdata;
+      }
+    }
     pthread_mutex_unlock(&sfile->source_mutex);
-    if (dplug) return dplug->cdata;
   }
   return NULL;
 }

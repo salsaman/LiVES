@@ -95,48 +95,49 @@ typedef enum {
 } lives_clip_type_t;
 
 // src types (for clips)
-// source type not recognised
-#define LIVES_SRC_TYPE_UNKNOWN		-1
 
 // no source
-#define LIVES_SRC_TYPE_NONE		0
+#define LIVES_SRC_TYPE_UDNEFINED	0
 
-// frame source for still images (sequences)
-// (currently not set)
+// static source types
 #define LIVES_SRC_TYPE_IMAGE		1
+
+#define LIVES_SRC_TYPE_BLANK		2
+
 // frame source is a video clip
 #define LIVES_SRC_TYPE_DECODER		2
+
 // frame src is a filter plugin (generator)
-#define LIVES_SRC_TYPE_FILTER		3
-#define LIVES_SRC_TYPE_GENERATOR LIVES_SRC_TYPE_FILTER
+#define LIVES_SRC_TYPE_GENERATOR	3
+
+
+// source pixel_data is a memory buffer that can be written to
+// asynchronously
+#define LIVES_SRC_TYPE_MEMBUFF		6
 
 // frame src is a fifo file
-#define LIVES_SRC_TYPE_FIFO		8
+#define LIVES_SRC_TYPE_FIFO		7
+
 // frame src is a socket / network connection
 #define LIVES_SRC_TYPE_STREAM		9
+
 // frame source is a hardware device (e.g webcam)
 #define LIVES_SRC_TYPE_DEVICE		10
+
 // frame src is a file buffer containing multiple frames
 // e.g a dump or raw frame data (scrap file)
 #define LIVES_SRC_TYPE_FILE_BUFF	11
-// frame src is internal (e.g test pattern, nullvideo)
-#define LIVES_SRC_TYPE_INTERNAL		256
 
 // grabbed frames, eg from the desktop recorder
-#define LIVES_SRC_TYPE_RECORDER		1024
+#define LIVES_SRC_TYPE_RECORDER		16
+
+// frame src is internal (e.g test pattern, nullvideo)
+#define LIVES_SRC_TYPE_INTERNAL		256
 
 // layer has no source
 #define SRC_STATUS_NOT_SET		0
 // source is on standby / idle
 #define SRC_STATUS_INACTIVE    		1
-// source is queued, initialising
-#define SRC_STATUS_QUEUED		2
-// source target has at least width, heihght, palette
-#define SRC_STATUS_HAS_METADATA		3
-// target is fully ready
-#define SRC_STATUS_READY		4
-// source is invalid, do not use the associated layer
-#define SRC_STATUS_INVALID		16
 
 // target is out of date
 #define SRC_STATUS_EXPIRED		32
@@ -150,11 +151,13 @@ typedef enum {
 // source provider is busy
 
 // error encountered while loading
-#define SRC_STATUS_ERROR		1026
+#define SRC_STATUS_ERROR		512
 // source provider has been removed
-#define SRC_STATUS_DELETED		1027
+#define SRC_STATUS_DELETED		513
 // source cannot operate correctly, do not use
-#define SRC_STATUS_BROKEN		1028
+#define SRC_STATUS_BROKEN		514
+
+//
 
 #define SRC_PURPOSE_ANY		     	-1
 
@@ -170,20 +173,39 @@ typedef enum {
 // source used for creating thumbnail images
 #define SRC_PURPOSE_THUMBNAIL		9
 
+// for srcs used in nodemodel
+#define SRC_PURPOSE_MODEL		128
+
 #define SRC_FLAG_NOFREE			(1ull < 0)
 #define SRC_FLAG_INACTIVE		(1ull < 1) // TODO - use status
 
+// 
+#define SRC_FLAG_ASYNC			(1ull < 8)
+
+typedef lives_result_t (*lives_clipsrc_func_t)(weed_layer_t *layer);
+
 typedef struct {
+  int method; // SRC_METHOD_OBJ or SRC_METHOD_FUNC
   uint64_t uid;
-  void *source; // pointer to src itself
+
+  // pointer to a plugin for this clip_src (for staic srcs, this will be NULL)
+  void *source;
+
+  // if this is defined, then we need only create a layer with appropriate values
+  // then call action_func(layer);
+  lives_clipsrc_func_t action_func;
+
   int src_type;
   int src_type_detail;
   int track; // track number the source outputs to
   int purpose; // the source purpose, for locating it
   int status; // src status
   uint64_t flags;
-  weed_layer_t *layer; // current output layer for source
+  layer_t *layer; // current output layer for source
   void *priv; // private data for the source
+
+  // listof possible palettes for the source
+  int * pals;
 } lives_clip_src_t;
 
 typedef union {
@@ -335,6 +357,7 @@ typedef struct _lives_clip_t {
 
   /// these are pointers to buffers large enough to hold frames *
   // at least frames * sizeof(frames_t) and old_frames * sizeof(frames_t) respectively
+  // TODO - this will change at soem point - -replaced by an array of struct - clip_src, identifier  fro src
   frames_t *frame_index;
   frames_t *frame_index_back; ///< for undo
   pthread_mutex_t frame_index_mutex;
@@ -408,9 +431,12 @@ typedef struct _lives_clip_t {
 
   int aplay_fd; /// may point to a buffered file during playback, else -1
 
-  // last frame requested by timer. The base from which calculate the next frame to play
+  // last frame requested by timer. The base from which we calculate the next frame to play
   // this may differ from last_frameno, which is the last frame actually played
   frames_t last_req_frame;
+
+  frames_t next_frame; // efault 0, can be setr to force player to show
+  // a certain frame next, and continuue from there
 
   // decoder data
   frames_t last_vframe_played; /// experimental for player
@@ -582,6 +608,10 @@ void clip_source_remove(int nclip, int track, int purpose);
 void clip_source_free(int nclip, lives_clip_src_t *);
 void clip_sources_free_all(int nclip);
 boolean swap_clip_sources(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
+
+// create union from all clip srcs, teinated with WEED_PALETTE_END
+int *combine_src_palettes(int clipno);
+
 //////////
 
 void init_clipboard(void);

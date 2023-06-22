@@ -8500,6 +8500,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   }
   lives_painter_set_source_surface(cr, mainw->msg_surface, 0., 0.);
   lives_painter_paint(cr);
+  lives_painter_fill(cr);
 
   return FALSE;
 }

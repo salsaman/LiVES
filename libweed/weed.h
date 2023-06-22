@@ -103,10 +103,10 @@ extern "C"
   struct _weed_data {
     weed_size_t		size;
     union {
-      weed_voidptr_t	voidptr;
-      weed_funcptr_t	funcptr;
+      weed_voidptr_t	value;
+      weed_funcptr_t	funcval;
       char storage[WEED_VOIDPTR_SIZE];
-    } value;
+    };
   };
 #endif
 #endif

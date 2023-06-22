@@ -315,9 +315,41 @@ FIRST_NON_PTR_TYPE / LAST_NON_PTR_TYPE)
 weed_get_element_size() formerly returned WEED_VOIDPTR_SIZE for
 WEED_PLANTPTR_T. It now returns WEED_PLANTPTR_SIZE (just on the remote chance this is different)
 
+03/05/2023
+
+libwwed changes:
+weed_leaf_set_element_size() redefined as weed_ext_set_element_size()
+
+added extension functions:
+	weed_ext_attach_leaf()
+	weed_ext_detach_leaf()
+	weed_ext_append_elements()
+	weed_ext_atomic_exchange()
+
+added libweed init option WEED_INIT_EXTENDED_FUNCS, if set this enables use of extended functions.
+
+added leaf flag WEED_FLAG_PROXY (for internal use only)
+
+increased WEED_FLAG_FIRST_RESERVED to (1 << 3)
+removed WEED_FLAG_RESERVED_12
+
+deprecated weed_set_memory_funcs() and weed_set_slab_funcs()
+added ibweed_set_memory_funcs() and libweed_set_slab_funcs()
+
+added libweed_print_init_opts()
 
 
-(C) Gabriel "Salsaman" Finch 2005 - 2022
+weed-effects.h changes:
+Added WEED_CHANNEL_PLUGIN_CONTROLLED
+
+
+added new weed-host-utils.h
+
+
+weed-palettes.h:
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2023
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -2386,6 +2418,9 @@ Valid only for in_channels. For out channels, the plugin should just set
 the value in the channel.
 
 
+If the filter sets WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, then the host should reinit the instance
+if it changes any of the channel leaves YUV_clamping, YUV_sampling or YUV_subspace.
+
 
 
  * Every plugin can store internal data in leaves inside the
@@ -2945,7 +2980,7 @@ and all channels must have the same value.
 If the filter_class has the flag WEED_FILTER_PALETTES_MAY_VARY set,
 then it may be any of the palettes from the channel_template's "palette_list",
 if that leaf is present, otherwise from the "palette_list" in the filter class.
-In this case each channel may be set to a different, however each out channel must
+In this case each channel may be set to a different value from the global list, however each out channel must
 match the corresponding in_channel, unless the flag WEED_FILTER_IS_CONVERTER is
 also set.
 
@@ -3922,13 +3957,16 @@ Explanation of flag bit combinations:
     as the first non-disabled in_channel (or first non-disabled out_channel for filters that have no in channels).
     All video channels are also assumed to have the same "current_palette" as the first non-disabled in_channel
     (or first non-disabled out_channel for filters that have no in channels).
+
     The flag bits: WEED_FILTER_CHANNEL_SIZES_MAY_VARY and WEED_FILTER_CHANNEL_PALETTES_MAY_VARY override this
     behaviour, in conjunction with the flag bit WEED_FILTER_IS_CONVERTER.
-
     WEED_FILTER_IS_CONVERTER on its own has no meaning However it may be combined with either or both of the other flag bits.
 
+
+    WEED_FILTER_CHANNEL_SIZES_MAY_VARY
+
     If the flag bit WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set, then each channel may have a different size
-    (and / or rowstrides value).
+    (and / or rowstrides value). The filter may define restrictions per channel, or the host may be free to choose a size.
 
     If the filter has 0 output video channels, then the filter is assumed to be some kind of analyser (i.e. it would normally
     have out_parameters).
@@ -3944,12 +3982,14 @@ Explanation of flag bit combinations:
 
 
 
+    WEED_FILTER_PALETTES_MAY_VARY
 
     If the flag bit WEED_FILTER_PALETTES_MAY_VARY is set, then each of the input channels may have ANY of the palettes
     declared in the filter class, or in the corresponding channel_template's "palette_list" (which may be used to override the filter class
     defaults).
 
-    The number of out video channels must be either 0, 1, or equal to the number of input video channels,
+    The number of out video channels must be either 0, 1, or equal to the number of input video channels, UNLESS the extra channels
+    are flagged with WEED_CHANNEL_PLUGIN_CONTROLLED (see below).
 
     If the filter has 0 output video channels, then the filter is assumed to be some kind of analyser, and no further consideration of
     palette matching is necessary.
@@ -3957,6 +3997,9 @@ Explanation of flag bit combinations:
     If the filter has 1 in and 1 out channel, then it must also set the flag WEED_FILTER_IS_CONVERTER (See below) and it MUST convert
     between in and out palettes, UNLESS it is simply changing palettes around without any conversion of values, (e.g. RGB24 <-> BGR24,
     RGB24 <-> RGBA32 , YUV888 <-> YUV444P); in this case WEED_FILTER_IS_CONVERTER should not be set.
+
+    if the filter has one in video channel and > 1 out video channels, then the out channel must be FILTER CONTROLLED (see below).
+
 
     If the filter has multiple input channels and a single output video channel, then it can be assumed that the filter combines the
     input channels in some way (for example a filter which mixes two colour channels using a separate alpha layer (alpha mixer),
@@ -3994,9 +4037,8 @@ Explanation of flag bit combinations:
 
     These flags may also be combined with any of the other flags.
 
-    Note that for audio filters, the meaning of the flags WEED_FILTER_IS_CONVERTER and WEED_FILTER_CHANNEL_SIZES_MAY_VARY
+    Note that for AUDIO FILTERS, the meaning of the flags WEED_FILTER_IS_CONVERTER and WEED_FILTER_CHANNEL_SIZES_MAY_VARY
     is somewhat different than for video filters (see Weed Audio Extension).
-
 
 === filter instance flags ===
 
@@ -4015,7 +4057,7 @@ Explanation of flag bit combinations:
 
   * WEED_CHANNEL_OPTIONAL
     channel that can be disabled during processing.
-    The host MUST still create the channel, however if the "disabled" lef is set to WEED_TRUE for the channel, all the other
+    The host MUST still create the channel, however if the "disabled" leaf is set to WEED_TRUE for the channel, all the other
     leaves in it should be ignored.
     The host must reinit the instance if a channel is enabled or disabled after init_func().
     The exception to this rule is for channel templates which have "max_repeats" set. In that case the host may create up to
@@ -4079,6 +4121,43 @@ Explanation of flag bit combinations:
 
 
 
+ * WEED_CHANNEL_PLUGIN_CONTROLLED
+  This flag bit may only be set for output channel templates. It has the following effects:
+
+  If the template is flagged as OPTIONAL, and the flagbit is also set, then during instance init_func(),
+  the plugin itself may enable or disable optional channels created from this channel template.
+  The host MUST create all such optional channels before calling init_func(), and allow the plugin to enable or disable them itself.
+
+  If the filter is flagged with  WEED_FILTER_PALETTES_MAY_VARY, then
+  During the instance init_func(), the plugin iself may alter the palette of the output video channel created from this template,
+  The template may optionally  have its own PALETTE_LIST for the output channel
+  which MUST contain the set of all palettes from which the plugin will choose., otherwise the global palette_list for the filter is used.
+
+  If this is the first output video channel, or if the channel is
+  flagged as WEED_CHANNEL_CAN_DO_INPLACE, and the plugin wants to set a pallete fiferring from the corresponding (same numbered)
+  in_hannel, then the filter MUST also be flagged as "is_converter".
+
+  NB: These rules are exactly the same as the rules for normal out_cheannels, except for the fact that the plugin sets the palette and
+  enabled state.
+
+  For output channels created from these tmeplates, the host may set an initial default palette from the palette list,
+  and enabled / disabled state, if appropriate.
+
+  After calling init_func() for the first time, the host MUST NOT set the palette or the state itself.
+
+  Thee plugin  may only alter the out channel palette or enabled state during init_func(). Thus if it needs to do this in response to
+  changes in the input channel palettes, it must set the filter flag WEED_FILTER_REINIT_ON_PALETTE_CHANGE.
+
+  If the template is not flagged as optional and WEED_FILTER_PALETTES_MAY_VARY is not set for the filter then this flagbit has no effect,
+  and should be ignored.
+
+  IMPORTANT: the host must ensure the current_palette and / or disabled leaves are writable by the plugin,
+  as appropriate when calling init_func() for the instance.
+  
+
+  Only valid for out_channels.
+
+
 Flag bits >= 30 are free to use for custom flags.
 
 
@@ -4114,9 +4193,9 @@ Flag bits >= 30 are free to use for custom flags.
    which are disabled. In other words: the number of values / channels is fixed when the host calls the init_func in the filter,
    and may only be altered by reinitializing the filter.
 
-The order of channels and values is the same.
+The order of channels and values is identical.
 
-   N.B:
+    N.B:
    If a channel template has "max_repeats" set to other than 1, then WEED_PARAMETER_VARIABLE_SIZE
    is ASSUMED to be set for the parameter, as it must shrink and grow depending on the number of channels created.
 
@@ -4126,11 +4205,12 @@ The order of channels and values is the same.
    (Valid for in parameters only)
 
 
- * WEED_PARAMETER_VALUE_IRRELEVANT :: setting this bit informs the host that the "value" of the parameter should be ignored
-  when storing / restoring the state of an instance, it should only be initialized with its default value and not changed.
-  Examples might be: a parameter whose value is only used for updating the
-  GUI (see below); in this case the filter may set the GUI flag WEED_GUI_REINIT_ON_VALUE_CHANGE as well as this flag bit;
-  and the value is only relevant when displaying an interactive GUI.
+ * WEED_PARAMETER_VALUE_IRRELEVANT
+   Setting this bit informs the host that the "value" of the parameter should be ignored
+   when storing / restoring the state of an instance, it should only be initialized with its default value and not changed.
+   Examples might be: a parameter whose value is only used for updating the
+   GUI (see below); in this case the filter may set the GUI flag WEED_GUI_REINIT_ON_VALUE_CHANGE as well as this flag bit;
+   and the value is only relevant when displaying an interactive GUI.
   or a filter could have a "reset" switch parameter with WEED_PARAMETER_REINIT_ON_VALUE_CHANGE, but which is only
   intended for debugging purposes - in this case the host should reinit the instance, but the parameter change should not be
   recorded.

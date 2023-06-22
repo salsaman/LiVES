@@ -20,10 +20,13 @@
 // signature for serialisation / deserialisation
 #define WEED_LAYER_MARKER 0x44454557;
 
+#define LIVES_PALETTE_ANY -1
+
 /// filter apply errors
 typedef enum {
   FILTER_SUCCESS = 0,
   FILTER_ERROR_MISSING_LAYER,
+  FILTER_ERROR_INVALID_LAYER,
   FILTER_ERROR_BLANK_FRAME,
   FILTER_ERROR_MISSING_FRAME,
   FILTER_ERROR_INVALID_PALETTE_CONVERSION,
@@ -256,9 +259,9 @@ int get_next_free_key(void); ///< next free "key" for the multitrack system
 void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
 weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, ticks_t tc, int opwidth, int opheight,
-                                 void ***pchains);
+                                 void ***pchains, boolean dry_run);
 lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
-    int opwidth, int opheight, ticks_t tc);
+					 int opwidth, int opheight, ticks_t tc, boolean dry);
 void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbtracks, int nchans, int64_t nsamps, double arate,
                               ticks_t tc, double *vis);
 void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);

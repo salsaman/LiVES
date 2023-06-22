@@ -585,16 +585,16 @@ void procw_desensitize(void) {
 }
 
 
-// surface poaram ignored - deprecate
-void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
-                                  lives_painter_surface_t *surface) {
+void set_drawing_area_from_pixbuf(LiVESDrawingArea *da, LiVESPixbuf * pixbuf) {
+  struct pbs_struct *pbs;
   pthread_mutex_t *mutex;
-  lives_painter_surface_t **psurface;
+  LiVESWidget *widget;
+  lives_painter_surface_t **psurface, *surface;
   lives_painter_t *cr;
-  int cx, cy;
-  int rwidth, rheight, width, height, owidth, oheight;
+  int rwidth, rheight, width, height, owidth, oheight, cx, cy;
 
-  if (!widget) return;
+  if (!da) return;
+  widget = LIVES_WIDGET(da);
 
   rwidth = lives_widget_get_allocation_width(widget);
   rheight = lives_widget_get_allocation_height(widget);
@@ -604,11 +604,13 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   mutex = lives_widget_get_mutex(widget);
   pthread_mutex_lock(mutex);
 
-  psurface = (lives_painter_surface_t **)GET_VOIDP_DATA(widget, SURFP_KEY);
-  if (psurface) surface = *psurface;
-  else surface = NULL;
-
-  if (!psurface || !surface) {
+  pbs = (struct pbs_struct *)GET_VOIDP_DATA(widget, PBS_KEY);
+  if (pbs) {
+    psurface = pbs->surfp;
+    if (psurface) surface = *psurface;
+    else surface = NULL;
+  }
+  if (!pbs || !psurface || !surface) {
     pthread_mutex_unlock(mutex);
     return;
   }
@@ -709,7 +711,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 
 // layer should be reffed
 void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
-  static int old_pwidth = 0, old_pheight = 0;
+  //static int old_pwidth = 0, old_pheight = 0;
   LiVESPixbuf *pixbuf;
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
@@ -720,7 +722,7 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
   if (pixbuf) {
     LiVESWidget *widget = LIVES_WIDGET(darea);
-    lives_painter_surface_t **psurface = (lives_painter_surface_t **)GET_VOIDP_DATA(widget, SURFP_KEY), *surface = *psurface;
+
     /* if (widget == mainw->play_image) { */
     /*   int pwidth = lives_widget_get_allocation_width(widget); */
     /*   int pheight = lives_widget_get_allocation_height(widget); */
@@ -730,9 +732,8 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
     /*   old_pheight = pheight; */
     /* } */
 
-    set_drawing_area_from_pixbuf(widget, pixbuf, surface);
+    set_drawing_area_from_pixbuf(darea, pixbuf);
     lives_widget_object_unref(pixbuf);
-
     lives_widget_queue_draw_and_update(widget);
   }
 

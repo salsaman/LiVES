@@ -9506,7 +9506,7 @@ static void update_in_image(lives_mt * mt) {
                         width - 2 - ((widget_opts.border_width + 2) >> 1),
                         height - ((widget_opts.border_width + 2) >> 1),
                         frame_start, get_interp_value(prefs->pb_quality, FALSE), FALSE);
-  set_drawing_area_from_pixbuf(mt->in_image, thumb, mt->insurface);
+  set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mt->in_image), thumb);
   if (thumb) lives_widget_object_unref(thumb);
 }
 
@@ -9541,7 +9541,7 @@ static void update_out_image(lives_mt * mt, weed_timecode_t end_tc) {
                         width - ((widget_opts.border_width + 2) >> 1),
                         height - ((widget_opts.border_width + 2) >> 1),
                         frame_end, get_interp_value(prefs->pb_quality, FALSE), FALSE);
-  set_drawing_area_from_pixbuf(mt->out_image, thumb, mt->outsurface);
+  set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mt->out_image), thumb);
   if (thumb) lives_widget_object_unref(thumb);
 }
 
@@ -10704,7 +10704,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       // start image
       if (mt->insurface) {
         thumb = mt_make_thumb(mt, filenum, width, height, frame_start, LIVES_INTERP_NORMAL, FALSE);
-        set_drawing_area_from_pixbuf(mt->in_image, thumb, mt->insurface);
+        set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mt->in_image), thumb);
         if (thumb) lives_widget_object_unref(thumb);
       }
     } else {
@@ -10770,7 +10770,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       // end image
       if (mt->outsurface) {
         thumb = mt_make_thumb(mt, filenum, width, height, frame_end, LIVES_INTERP_NORMAL, FALSE);
-        set_drawing_area_from_pixbuf(mt->out_image, thumb, mt->outsurface);
+        set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mt->out_image), thumb);
         if (thumb) lives_widget_object_unref(thumb);
       }
       out_end_range = count_resampled_frames(mainw->files[filenum]->frames, mainw->files[filenum]->fps, mt->fps) / mt->fps;
@@ -14716,7 +14716,7 @@ void multitrack_playall(lives_mt * mt) {
   }
 
   if (needs_clear) {
-    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+    set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
     needs_clear = FALSE;
   }
 

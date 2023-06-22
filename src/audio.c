@@ -4938,7 +4938,7 @@ void nullaudio_time_reset(int64_t offset) {
   mainw->nullaudio_seek_posn = 0;
   mainw->nullaudio_arate = DEF_AUDIO_RATE;
   mainw->nullaudio_playing_file = -1;
-  mainw->deltaticks = mainw->startticks = 0;
+  mainw->startticks = 0;
 }
 
 

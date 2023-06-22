@@ -672,6 +672,19 @@ double find_nearest_ar(int width, int height, int *wm, int *hm) {
   return std_ars[best].ratio;
 }
 
+// ar == w / h.  w == ar * h,  so if ar0 > ar1, then fr0 wider than fr1
+
+// methods needed. taking a box C of size cwidth X cheight and a second R of rwidth X rheight:
+// consider aspect ratios AC and AR
+
+// expand / shrink C, keeping AC, max so fits in R - maxspect
+// if AC > AR - cw = rw and shrink ch. else ch = rh 
+
+// expand / shrink C, keeping AC, min size so contains R - midspect
+// if AC > AR , exapnd rw, else expand rh
+
+// expand / shrink C, set to AR, min size so contains C - minspect
+// if AR > AC  expand cw, else expand ch
 
 LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
@@ -679,17 +692,19 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
 
   // i.e both dimensions will expand or shrink to fit in the bounding rectangle
 
-  double aspect;
+  double caspect, raspect;
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
-  aspect = (double)(*cwidth) / (double)(*cheight);
+  caspect = (double)(*cwidth) / (double)(*cheight);
+  raspect = (double)(rwidth) / (double)(rheight);
 
-  *cwidth = rwidth;
-  *cheight = (double)(*cwidth) / aspect;
-  if (*cheight > rheight) {
-    // image too tall shrink it
+  if (caspect > raspect) {
+    *cwidth = rwidth;
+    *cheight = (double)(rwidth) / caspect;    
+  }
+  else {
     *cheight = rheight;
-    *cwidth = (double)(*cheight) * aspect;
+    *cwidth = (double)(rheight) * caspect;
   }
   *cwidth = (*cwidth >> 2) << 2;
   *cheight = (*cheight >> 1) << 1;
@@ -699,25 +714,25 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
 LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate midspect (minimum size which conforms to aspect ratio of
   // of cwidth, cheight) - which contains rwidth, rheight
+  // (so either rwidth or rheight will increase)
 
   // i.e both dimensions may grow, image size will never shrink
-
-  double aspect;
+  // (otherwise can use maxspect with boxes swapped)
+  double caspect, raspect;
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
   if (*cwidth >= rwidth && *cheight >= rheight) return;
 
-  aspect = (double)(*cwidth) / (double)(*cheight);
+  caspect = (double)(*cwidth) / (double)(*cheight);
+  raspect = (double)(rwidth) / (double)(rheight);
 
-  calc_maxspect(rwidth, rheight, cwidth, cheight);
-
-  if (rwidth > *cwidth) {
-    *cwidth = rwidth;
-    *cheight = *cwidth / aspect;
-  }
-  if (rheight > *cheight) {
+  if (caspect > raspect) {
     *cheight = rheight;
-    *cwidth = *cheight * aspect;
+    *cwidth = (double)rheight * caspect;
+  }
+  else {
+    *cwidth = rwidth;
+    *cheight = (double)rwidth / caspect;
   }
 
   *cwidth = ((*cwidth + 3) >> 2) << 2;
@@ -727,13 +742,22 @@ LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int
 
 LIVES_GLOBAL_INLINE void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight) {
   // calculate minspect (minimum size which conforms to aspect ratio of
-  // of rwidth, rheight) - which contains cwidth, cheight
+  // of rwidth, rheight) - which contains cwidth, cheight (so one axis will grow while the other stays same)
+  double caspect, raspect;
 
-  // rwidth, rheight keeps aspect ratio, but we fit it inside cwidth, cheight...
-  calc_maxspect(cwidth, cheight, rwidth, rheight);
+  if (cwidth <= 0 || cheight <= 0 || *rwidth <= 0 || *rheight <= 0) return;
 
-  // ...then expand it so it contains cwidth, cheight...
-  calc_midspect(cwidth, cheight, rwidth, rheight);
+  caspect = (double)(*cwidth) / (double)(*cheight);
+  raspect = (double)(rwidth) / (double)(rheight);
+
+  *rwidth = cwidth;
+  *rheight = cheight;
+
+  if (raspect == caspect) return;
+
+  if (raspect > caspect)
+    *rwidth = (double)cheight * raspect;
+  else *rheight = (double)cwidth / raspect;
 
   *rwidth = (*rwidth >> 2) << 2;
   *rheight = (*rheight  >> 1) << 1;

@@ -61,6 +61,7 @@ typedef struct {
 /////////////// GUI threading parts ////////////////
 
 typedef weed_plantptr_t lives_proc_thread_t;
+
 void unlock_lpt(lives_proc_thread_t);
 
 // fg service calls //
@@ -159,6 +160,12 @@ typedef LingoEllipsizeMode LiVESEllipsizeMode;
 
 typedef cairo_t lives_painter_t;
 typedef cairo_surface_t lives_painter_surface_t;
+
+struct pbs_struct {
+  lives_painter_surface_t **surfp;
+  LiVESWidget *widget;
+  const char *key;
+};
 
 boolean lives_painter_surface_destroy(lives_painter_surface_t *);
 lives_painter_surface_t *lives_painter_surface_reference(lives_painter_surface_t *);
@@ -1679,7 +1686,7 @@ const widget_opts_t _def_widget_opts = {
 #define DEFERRED_KEY "_wh_deferred"
 
 #define MUTEX_KEY "_wh_mutex"
-#define SURFP_KEY "_wh_surfp"
+#define PBS_KEY "_wh_pbs"
 
 #define SBUTT_MARKUP_KEY "_sbutt_markup"
 

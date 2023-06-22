@@ -318,50 +318,83 @@ uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
 uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
   // to avoid only checking powers of 2, we want some number which is (2 ** i) + (6 ** j)
   // which gives a nice range of results
-  uint64_t oval = val;
-  int i = 0, j = 0;
+  uint64_t min_diff = UINT64_MAX, v;
+  struct _decomp_tab* closest = NULL;
+
   if (!nxttab_inited) make_nxttab();
-  /// decompose val into i, j
-  /// divide by 6 until val mod 6 is non zero
-  // add or subtract 1 to make the value even (since we know the final result must be a power of two or of 6)
-  if (val & 1) {
-    if (less) val--;
-    else val++;
-  }
-  for (; !(val % 6) && val > 0; j++, val /= 6);
-  /// divide by 2 until we reach 1; if the result of a division is odd we add or subtract 1
-  for (; val > 1; i++, val /= 2) {
-    if (val & 1) {
-      if (less) val--;
-      else val++;
-    }
-  }
-  val = nxttbl[i][j].value;
-  if (less) {
-    if (val == oval) {
-      if (nxttbl[i][j].lower) val = nxttbl[i][j].lower->value;
-    } else {
-      while (nxttbl[i][j].higher->value < oval) {
-        int xi = nxttbl[i][j].higher->i;
-        val = nxttbl[i][j].value;
-        j = nxttbl[i][j].higher->j;
-        i = xi;
+
+  for (int ii = 0; ii < 64; ii++) {
+    for (int jj = 0; jj < 25; jj++) {
+      uint64_t v = nxttbl[ii][jj].value;
+      uint64_t diff = v > val ? v - val : val - v;
+      if (v <= lim && diff < min_diff) {
+	closest = &nxttbl[ii][jj];
+	min_diff = diff;
       }
     }
-    return val > lim ? val : lim;
   }
-  if (val == oval) {
-    if (nxttbl[i][j].higher) val = nxttbl[i][j].higher->value;
-  } else {
-    while (nxttbl[i][j].lower && nxttbl[i][j].lower->value > oval) {
-      int xi = nxttbl[i][j].lower->i;
-      j = nxttbl[i][j].lower->j;
-      i = xi;
-      val = nxttbl[i][j].value;
+  v = closest->value;
+  if (less) {
+    if (v > val) {
+      if (closest->lower != NULL) {
+	closest = closest->lower;
+	v = closest->value;
+      }
     }
   }
-  return val < lim ? val : lim;
+  else {
+    if (v < val) {
+      if (closest->higher != NULL) {
+	closest = closest->higher;
+	v = closest->value;
+      }
+    }
+  }
+  return less ? (v <= lim ? v : lim) : (v < lim ? v : lim);
 }
+
+
+/*   /// decompose val into i, j */
+/*   /// divide by 6 until val mod 6 is non zero */
+/*   // add or subtract 1 to make the value even (since we know the final result must be a power of two or of 6) */
+/*   if (val & 1) { */
+/*     if (less) val--; */
+/*     else val++; */
+/*   } */
+/*   for (; !(val % 6) && val > 0; j++, val /= 6); */
+/*   /// divide by 2 until we reach 1; if the result of a division is odd we add or subtract 1 */
+/*   for (; val > 1; i++, val /= 2) { */
+/*     if (val & 1) { */
+/*       if (less) val--; */
+/*       else val++; */
+/*     } */
+/*   } */
+/*   val = nxttbl[i][j].value; */
+/*   if (less) { */
+/*     if (val == oval) { */
+/*       if (nxttbl[i][j].lower) val = nxttbl[i][j].lower->value; */
+/*     } else { */
+/*       while (nxttbl[i][j].higher->value < oval) { */
+/*         int xi = nxttbl[i][j].higher->i; */
+/*         val = nxttbl[i][j].value; */
+/*         j = nxttbl[i][j].higher->j; */
+/*         i = xi; */
+/*       } */
+/*     } */
+/*     return val > lim ? val : lim; */
+/*   } */
+/*   if (val == oval) { */
+/*     if (nxttbl[i][j].higher) val = nxttbl[i][j].higher->value; */
+/*   } else { */
+/*     while (nxttbl[i][j].lower && nxttbl[i][j].lower->value > oval) { */
+/*       int xi = nxttbl[i][j].lower->i; */
+/*       j = nxttbl[i][j].lower->j; */
+/*       i = xi; */
+/*       val = nxttbl[i][j].value; */
+/*     } */
+/*   } */
+/*   return val < lim ? val : lim; */
+/* } */
 
 
 uint64_t factorial(int n) {return n == 1 ? 1 : n * factorial(n - 1);}

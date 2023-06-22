@@ -13,6 +13,24 @@
 
 // functions that deal with loading (and saving) frames
 
+// create "fake" sources - "real" sources are things like
+// clip decoders adn generators,  which operate via plugins.
+// we also have "fake" sources: image loader, filebuffer loader (scrap_frames)
+// and blank fram generator being examples
+// in this latter case there is no associated plugin (at laeast currently)
+// and the plugin functions are simulated via function pointers to internal code
+// see cliphandler.h for definitons of clip
+//
+// for clip sources we have this union:
+/* union { */
+/*     void *source; // pointer to src object (object that fills the pixel_data and has metadata) */
+/*     lives_clipsrc_func_t source_func; // or to a function that fills pixel data for a layer */
+/*   }; */
+
+lives_result_t lives_img_srcfunc(weed_layer_t *layer);
+
+lives_result_t lives_blankframe_srcfunc(weed_layer_t *layer);
+
 /////////////////// image filennames ////////
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration
@@ -30,7 +48,7 @@ boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
 boolean flush_scrap_file(void);
 
 boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
-void pull_frame_threaded(weed_layer_t *, const char *img_ext, ticks_t tc, int width, int height);
+void pull_frame_threaded(weed_layer_t *, ticks_t tc, int width, int height);
 boolean is_layer_ready(weed_layer_t *);
 boolean check_layer_ready(weed_layer_t *);
 boolean pull_frame_at_size(weed_layer_t *, const char *image_ext, ticks_t tc,

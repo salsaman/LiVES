@@ -2318,14 +2318,17 @@ void switch_to_file(int old_file, int new_file) {
 
     lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
     lives_widget_show_now(mainw->preview_box);
-    lives_widget_context_update();
     lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 
-    // and resize it
-    lives_widget_grab_focus(mainw->preview_spinbutton);
-
-    resize_play_window();
-    load_preview_image(FALSE);
+    if (mainw->play_window) { // must keep checking this, as it can be switched of by user
+      // and resize it
+      lives_widget_grab_focus(mainw->preview_spinbutton);
+      resize_play_window();
+    }
+    //
+    if (mainw->play_window) {
+      load_preview_image(FALSE);
+    }
   }
 
   if (!mainw->go_away && CURRENT_CLIP_IS_NORMAL) {
@@ -2664,7 +2667,7 @@ void do_quick_switch(int new_file) {
         && sfile->primary_src->source) {
       if (new_file != mainw->blend_file) {
         // switched from generator to another clip, end the generator
-        weed_plant_t *inst = (weed_plant_t *)sfile->primary_src->source;
+        weed_instance_t *inst = (weed_instance_t *)sfile->primary_src->source;
         mainw->gen_started_play = FALSE;
         weed_generator_end(inst);
       } else {
@@ -2720,7 +2723,7 @@ void do_quick_switch(int new_file) {
     // if we switch to a new file, and it is a genertator, then we want to
     // ADD INSTANCE AS PRIMARY_SOURECE
 
-    weed_plant_t *inst = rte_keymode_get_instance(rte_fg_gen_key() + 1, rte_fg_gen_mode());
+    weed_instance_t *inst = rte_keymode_get_instance(rte_fg_gen_key() + 1, rte_fg_gen_mode());
     if (inst && (!cfile->primary_src ||  cfile->primary_src->source != inst)) {
       cfile->primary_src = add_clip_source(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, (void *)inst,
                                            LIVES_SRC_TYPE_FILTER);
@@ -2819,7 +2822,7 @@ void switch_clip(int type, int newclip, boolean force) {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
           && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
         if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
-        weed_plant_t *inst = mainw->files[mainw->blend_file]->primary_src->source;
+        weed_instance_t *inst = mainw->files[mainw->blend_file]->primary_src->source;
         if (inst) {
           if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
             int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
@@ -2872,6 +2875,10 @@ lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *sourc
     mysrc->track = track;
     mysrc->status = SRC_STATUS_INACTIVE;
     mysrc->purpose = purpose;
+
+    if (src_type == LIVES_SRC_TYPE_BLANK)
+      mysrc->source_func = lives_blankframe_srcfunc;
+
     if (purpose == SRC_PURPOSE_PRIMARY)
       mysrc->flags = SRC_FLAG_NOFREE | SRC_FLAG_INACTIVE;
     pthread_mutex_unlock(&sfile->source_mutex);

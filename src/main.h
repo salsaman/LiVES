@@ -272,28 +272,6 @@ typedef struct {
   char sshot[64];
 } wm_caps_t;
 
-typedef struct {
-  int byte_order;
-  int ncpus;
-  short cpu_bits;
-  char *cpu_name;
-  char *cpu_vendor;
-  uint64_t cpu_features;
-  int cacheline_size;
-  size_t cache_size;
-  size_t pagesize;
-  //
-  int mem_status;
-  int64_t memtotal;
-  int64_t memfree;
-  int64_t memavail;
-  //
-#define OOM_ADJ_RANGE 1000
-  char *oom_adjust_file;
-  int oom_adj_value;
-  uint64_t clock_res;
-} hw_caps_t;
-
 #ifdef FINALISE_MEMFUNCS
 #undef FINALISE_MEMFUNCS
 #endif
@@ -326,8 +304,6 @@ typedef struct {
 
 boolean weed_threadsafe;
 int weed_abi_version;
-
-#define ALLOW_PNG24
 
 #ifdef IS_LIBLIVES
 #include "liblives.hpp"

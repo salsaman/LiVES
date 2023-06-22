@@ -32,81 +32,6 @@
 
 // implementation of libweed with or without glib's slice allocator, with or without thread safety (needs pthread)
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#define __LIBWEED__
-
-#define _WEED_ABI_VERSION_MAX_SUPPORTED 202
-#define _WEED_ABI_VERSION_MIN_SUPPORTED 200
-
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#else
-#include "weed.h"
-#endif
-
-#ifdef ENABLE_PROXIES
-#define _get_leaf_proxy(leaf) if (leaf && (leaf->flags & WEED_FLAG_PROXY)) { \
-    weed_leaf_t *proxy = (weed_leaf_t *)leaf->data[0]->value.voidptr;	\
-    if (proxy)data_lock_readlock(proxy);data_lock_unlock(leaf);leaf = proxy;}}
-#endif
-
-#ifdef WRITER_PREF_AVAILABLE
-#undef WRITER_PREF_AVAILABLE
-#endif
-
-#if _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809
-#define WRITER_PREF_AVAILABLE 1
-#define WEED_INIT_PRIV_NO_PREF_WRITERS (1ull << 32)
-#else
-#define WRITER_PREF_AVAILABLE 0
-#endif
-
-#define WEED_INIT_PRIV_SKIP_ERRCHECKS (1ull << 33)
-
-#define WEED_FLAG_OP_DELETE WEED_FLAG_RESERVED_0
-
-#if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
-#define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
-#define GNU_CONST  __attribute__((const))
-#define GNU_HOT  __attribute__((hot))
-#define GNU_PURE  __attribute__((pure))
-#else
-#define GNU_FLATTEN
-#define GNU_CONST
-#define GNU_HOT
-#define GNU_PURE
-#endif
-
-// Define EXPORTED for any platform
-#if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
-#ifdef WIN_EXPORT
-#ifdef __GNUC__
-#define EXPORTED __attribute__ ((dllexport))
-#else
-#define EXPORTED __declspec(dllexport) // Note: actually gcc seems to also support this syntax.
-#endif
-#else
-#ifdef __GNUC__
-#define EXPORTED __attribute__ ((dllimport))
-#else
-#define EXPORTED __declspec(dllimport) // Note: actually gcc seems to also support this syntax.
-#endif
-#endif
-#define NOT_EXPORTED
-#else
-#if __GNUC__ >= 4
-#define EXPORTED __attribute__ ((visibility ("default")))
-#define NOT_EXPORTED  __attribute__ ((visibility ("hidden")))
-#else
-#define EXPORTED
-#define NOT_EXPORTED
-#endif
-#endif
-
-#include <pthread.h>
 
 /* explanation of locks and mutexes
    structure_mutex - plant only, locking this prevents leaves from being added or deleted
@@ -133,86 +58,6 @@
    The purpose is to avoid the leaf being deleted in the interval between dropping the readlock
    and obtaining the writelock. Used by writer threads, and as a check by deletion threads.
 */
-
-
-typedef struct {
-  pthread_rwlock_t	chain_lock;
-  pthread_rwlock_t	data_lock;
-  pthread_mutex_t	data_mutex;
-} leaf_priv_data_t;
-
-typedef struct {
-  leaf_priv_data_t	ldata;
-  pthread_rwlock_t	reader_count;
-  pthread_mutex_t	structure_mutex;
-} plant_priv_data_t;
-
-#ifndef HAVE_WEED_HASHFUNC
-
-/* this must be the hash value for WEED_LEAF_TYPE */
-#define WEED_MAGIC_HASH 0xB82E802F
-
-#define get16bits(d) (*((const uint16_t *) (d)))
-
-#define HASHROOT 5381
-// fast hash from: http://www.azillionmonkeys.com/qed/hash.html
-// (c) Paul Hsieh
-
-static weed_hash_t def_weed_hash(const char *key) {
-  if (key && *key) {
-    size_t len = strlen(key), rem = len & 3;
-    uint32_t hash = len + HASHROOT, tmp;
-    for (len >>= 2; len; len--) {
-      hash += get16bits (key);
-      tmp = (get16bits (key + 2) << 11) ^ hash;
-      hash = (hash << 16) ^ tmp; hash += hash >> 11;
-      key += 4;
-    }
-    switch (rem) {
-    case 3: hash += get16bits (key);
-      hash ^= hash << 16; hash ^= ((int8_t)key[2]) << 18;
-      hash += hash >> 11; break;
-    case 2: hash += get16bits (key);
-      hash ^= hash << 11; hash += hash >> 17; break;
-    case 1: hash += (int8_t)*key;
-      hash ^= hash << 10; hash += hash >> 1; break;
-    default: break;
-    }
-    hash ^= hash << 3; hash += hash >> 5; hash ^= hash << 4;
-    hash += hash >> 17; hash ^= hash << 25; hash += hash >> 6;
-    return hash;
-  }
-  return 0;
-}
-
-#ifndef weed_hash
-#define weed_hash def_weed_hash
-#endif
-
-#endif
-
-#define is_plant(leaf) (leaf->key_hash == WEED_MAGIC_HASH)
-
-#define get_data_lock(leaf) (is_plant(leaf) ?				\
-			     &(((plant_priv_data_t *)((leaf)->private_data))->ldata.data_lock) : \
-			     &(((leaf_priv_data_t *)((leaf)->private_data))->data_lock))
-
-#define get_chain_lock(leaf) (is_plant(leaf) ?				\
-			      &(((plant_priv_data_t *)((leaf)->private_data))->ldata.chain_lock) : \
-			      &(((leaf_priv_data_t *)((leaf)->private_data))->chain_lock))
-
-#define get_data_mutex(leaf) (is_plant(leaf) ?				\
-			      &(((plant_priv_data_t *)((leaf)->private_data))->ldata.data_mutex) : \
-			      &(((leaf_priv_data_t *)((leaf)->private_data))->data_mutex))
-
-#define get_structure_mutex(plant) (&(((plant_priv_data_t *)((plant)->private_data))->structure_mutex))
-
-#define get_count_lock(plant) (&(((plant_priv_data_t *)((plant)->private_data))->reader_count))
-
-#define data_mutex_trylock(obj) ((obj) ? pthread_mutex_trylock(get_data_mutex((obj))) : -1)
-
-#define data_mutex_lock(obj) do {					\
-    if ((obj)) pthread_mutex_lock(get_data_mutex((obj)));} while (0)
 
 #define data_mutex_unlock(obj) do {					\
     if ((obj)) pthread_mutex_unlock(get_data_mutex((obj)));} while (0)
@@ -487,30 +332,22 @@ static inline void *weed_unmalloc_copy_retnull(size_t sz, void *ptr)
 
 #define KEY_IN_SIZE (_WEED_PADBYTES_ ? _WEED_PADBYTES_ + sizeof(char *) : 0)
 
+#define weed_leaf_set_key(leaf, key, size)				\
+  ((size < KEY_IN_SIZE ? weed_memcpy((void *)leaf->padding, key, size + 1) \
+    : ((leaf->key = weed_malloc_and_copy(size + 1, (void *)key))) ? leaf->key : NULL))
+
 #define weed_leaf_get_key(leaf) ((!_WEED_PADBYTES_ || !leaf->padding[0]) \
 				 ? leaf->key : (const char *)leaf->padding)
 
-#define weed_leaf_set_key(leaf, key, size)				\
-  (size < KEY_IN_SIZE ? weed_memcpy((void *)leaf->padding, key, size + 1) \
-   : ((leaf->key = weed_malloc_and_copy(size + 1, (void *)key)))	\
-   ? leaf->key : NULL)
-
-// wee need the following:
-// weed_calloc - used for allocatin leaves (plants), leaf data rray and array elements, and priv data
-// if not defined, ma
-// weed_free - used only to free leaf data
-// weed_malloc_and_copy
-// weed_unmalloc_and_copy
-
-    EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free, weed_calloc_f my_calloc) {
-      weed_malloc = my_malloc;
-      if (my_calloc) weed_calloc = my_calloc;
-      else my_calloc = _malloc0_product;
-      weed_free = my_free;
-      weed_malloc_and_copy = _weed_malloc_copy;
-      weed_unmalloc_and_copy = _weed_unmalloc_copy;
-      return 0;
-    }
+EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free, weed_calloc_f my_calloc) {
+  weed_malloc = my_malloc;
+  if (my_calloc) weed_calloc = my_calloc;
+  else my_calloc = _malloc0_product;
+  weed_free = my_free;
+  weed_malloc_and_copy = _weed_malloc_copy;
+  weed_unmalloc_and_copy = _weed_unmalloc_copy;
+  return 0;
+}
 
 EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_clear_f my_slab_alloc0, libweed_slab_unalloc_f my_slab_unalloc,
 				    libweed_slab_alloc_and_copy_f my_slab_alloc_and_copy) {
@@ -645,8 +482,8 @@ static inline void *weed_data_free(weed_data_t **data, weed_size_t num_valid_ele
   int xnullv = 0, minsize = WEED_VOIDPTR_SIZE;
   if (seed_type == WEED_SEED_STRING) minsize = xnullv = nullv;
   for (weed_size_t i = 0; i < num_valid_elems; i++) {
-    if (is_nonptr && data[i]->size > minsize && data[i]->value.voidptr)
-      weed_unmalloc_and_copy(data[i]->size - xnullv, data[i]->value.voidptr);
+    if (is_nonptr && data[i]->size > minsize && data[i]->value)
+      weed_unmalloc_and_copy(data[i]->size - xnullv, data[i]->value);
     weed_uncalloc_sizeof(weed_data_t, data[i]);
   }
   return weed_unmalloc_copy_retnull(num_elems * sizeof(weed_data_t *), data);
@@ -666,19 +503,19 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
       if (!(data[i] = weed_calloc_sizeof(weed_data_t)))
 	return weed_data_free(data, --i, num_elems, seed_type);
       if (seed_type == WEED_SEED_STRING) {
-	data[i]->value.voidptr = valuec ?
+	data[i]->value = valuec ?
 	  (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[i])) > nullv) ?
 			   (weed_voidptr_t)weed_malloc_and_copy(data[i]->size - nullv,
 								valuec[i]) : NULL) : NULL; continue;}
       data[i]->size = weed_seed_get_size(seed_type, 0);
       if (seed_type == WEED_SEED_FUNCPTR) {
-	data[i]->value.funcptr = valuef ? valuef[i] : NULL; continue;}
-      if (is_ptr) {data[i]->value.voidptr = valuep ? valuep[i] : NULL; continue;}
+	data[i]->funcval = valuef ? valuef[i] : NULL; continue;}
+      if (is_ptr) {data[i]->value = valuep ? valuep[i] : NULL; continue;}
       if (data[i]->size <= WEED_VOIDPTR_SIZE) {
-	weed_memcpy(&data[i]->value.voidptr, (char *)values + i * data[i]->size, data[i]->size); continue;}
-      data[i]->value.voidptr =
+	weed_memcpy(&data[i]->storage, (char *)values + i * data[i]->size, data[i]->size); continue;}
+      data[i]->value =
 	(weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + i * data[i]->size));
-      if (!is_ptr && !data[i]->value.voidptr && data[i]->size > nullv) //memory error
+      if (!is_ptr && !data[i]->value && data[i]->size > nullv) //memory error
 	return weed_data_free(data, --i, num_elems, seed_type);}} return data;
 }
 
@@ -700,19 +537,19 @@ static inline weed_data_t **weed_data_append(weed_leaf_t *leaf,
       if (!(data[i] = weed_calloc_sizeof(weed_data_t)))
 	return weed_data_free(data, --i, new_elems, seed_type);
       if (seed_type == WEED_SEED_STRING) {
-	data[i]->value.voidptr = valuec ?
+	data[i]->value = valuec ?
 	  (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[j])) > nullv) ?
 			   (weed_voidptr_t)weed_malloc_and_copy(data[i]->size - nullv,
 								valuec[j]) : NULL) : NULL; continue;}
       data[i]->size = weed_seed_get_size(seed_type, 0);
       if (seed_type == WEED_SEED_FUNCPTR) {
-	data[i]->value.funcptr = valuef ? valuef[j] : NULL; continue;}
-      if (is_ptr) {data[i]->value.voidptr = valuep ? valuep[j] : NULL; continue;}
+	data[i]->funcval = valuef ? valuef[j] : NULL; continue;}
+      if (is_ptr) {data[i]->value = valuep ? valuep[j] : NULL; continue;}
       if (data[i]->size <= WEED_VOIDPTR_SIZE) {
-	weed_memcpy(&data[i]->value.voidptr, (char *)values + j * data[i]->size, data[i]->size); continue;}
-      data[i]->value.voidptr =
+	weed_memcpy(&data[i]->storage, (char *)values + j * data[i]->size, data[i]->size); continue;}
+      data[i]->value =
 	(weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + j * data[i]->size));
-      if (!is_ptr && !data[i]->value.voidptr && data[i]->size > nullv) //memory error
+      if (!is_ptr && !data[i]->value && data[i]->size > nullv) //memory error
 	return weed_data_free(data, --i, new_elems, seed_type);
     }
   }
@@ -955,7 +792,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
     // get next leaf and lock it, then unlock the current leaf
     // normally we would do this after locking leaf, but in this case we want to keep lock on leaf
     // and on prevleaf
-    if (leafprev != plant) chain_lock_unlock(leafprev);
+
     // we have lock on leaf, either from last loop, or because it is plant
     leafprev = leaf;
     if (!(leaf = leaf->next)) break;
@@ -972,6 +809,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   }
 
   if (err != WEED_SUCCESS) {
+    if (leafprev != plant) chain_lock_unlock(leafprev);
     chain_lock_unlock(plant);
     if (leafprev != leaf && leafprev != plant) chain_lock_unlock(leafprev);
     if (leaf && leaf != plant) chain_lock_unlock(leaf);
@@ -1076,9 +914,9 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant, weed_size_t *nleaves)
 
 static weed_error_t _weed_data_get(weed_data_t **data, uint32_t type, weed_size_t idx,
 				   weed_voidptr_t value) {
-  if (type == WEED_SEED_FUNCPTR) *((weed_funcptr_t *)value) = data[idx]->value.funcptr;
+  if (type == WEED_SEED_FUNCPTR) *((weed_funcptr_t *)value) = data[idx]->funcval;
   else {
-    if (weed_seed_is_ptr(type)) *((weed_voidptr_t *)value) = data[idx]->value.voidptr;
+    if (weed_seed_is_ptr(type)) *((weed_voidptr_t *)value) = data[idx]->value;
     else {
       if (type == WEED_SEED_STRING) {
 	weed_size_t size = (size_t)data[idx]->size;
@@ -1086,10 +924,10 @@ static weed_error_t _weed_data_get(weed_data_t **data, uint32_t type, weed_size_
 	if (nullv && data[idx]->size < nullv) *valuecharptrptr = NULL;
 	else {
 	  size -= nullv;
-	  if (size > 0) weed_memcpy(*valuecharptrptr, data[idx]->value.voidptr, size);
+	  if (size > 0) weed_memcpy(*valuecharptrptr, data[idx]->storage, size);
 	  (*valuecharptrptr)[size] = 0;
 	}}
-      else weed_memcpy(value, &(data[idx]->value.voidptr), data[idx]->size);
+      else weed_memcpy(value, &(data[idx]->storage), data[idx]->size);
     }}
   return WEED_SUCCESS;
 }

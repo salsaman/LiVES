@@ -259,6 +259,7 @@ lives_exe_SOURCES = \
 	filesystem.c filesystem.h \
 	lists.c lists.h \
 	layers.c layers.h \
+	nodemodel.c nodemodel.h \
 	cliphandler.c cliphandler.h \
 	player.c player.h \
 	dialogs.c dialogs.h\

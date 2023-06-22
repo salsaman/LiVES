@@ -651,7 +651,7 @@ lives_render_error_t realfx_progress(boolean reset) {
       return LIVES_RENDER_WARNING_READ_FRAME;
     }
 
-    layer = on_rte_apply(layers, 0, 0, (weed_timecode_t)frameticks);
+    layer = on_rte_apply(layers, 0, 0, (weed_timecode_t)frameticks, FALSE);
 
     for (int i = 0; layers[i]; i++) {
       if (layers[i] != layer) {
@@ -901,7 +901,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
 
   layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   lives_layer_set_track(layer, 1);
-  pull_frame_threaded(layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
+  pull_frame_threaded(layer, blend_tc, 0, 0);
   return layer;
 }
 
@@ -930,7 +930,7 @@ weed_layer_t *get_blend_layer(weed_timecode_t tc) {
 }
 
 
-weed_plant_t *on_rte_apply(weed_layer_t **layers, int opwidth, int opheight, weed_timecode_t tc) {
+weed_plant_t *on_rte_apply(weed_layer_t **layers, int opwidth, int opheight, weed_timecode_t tc, boolean dry_run) {
   // apply realtime effects to an array (stack) of layers, with the array in "track" order
   // (from map_sources_to_tracks() for playback, from render_events() for tendering
   // mainw->filter_map is used as a guide showing which filter instances are active
@@ -945,10 +945,10 @@ weed_plant_t *on_rte_apply(weed_layer_t **layers, int opwidth, int opheight, wee
     weed_plant_t *init_event = weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
     weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
-    (void)(ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc));
+    (void)(ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc, FALSE));
     weed_plant_free(init_event);
   } else {
-    weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains);
+    weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains, dry_run);
   }
 
   return layers[0];
@@ -979,7 +979,7 @@ void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
 
 deint1:
 
-  weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc);
+  weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc, FALSE);
   weed_call_deinit_func(deint_instance);
   next_inst = get_next_compound_inst(deint_instance);
   if (deint_instance != orig_instance) weed_instance_unref(deint_instance);
@@ -1048,6 +1048,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
       mainw->rte |= new_rte;
 
+      build_nodes_model(&mainw->nodemodel);
+
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
       if (mainw->ce_thumbs) {
@@ -1094,18 +1096,21 @@ static boolean _rte_on_off(boolean from_menu, int key) {
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
             weed_instance_unref(xinst);
+	    build_nodes_model(&mainw->nodemodel);
           }
           weed_instance_unref(inst);
         }
       }
 
-      if (!THREADVAR(fx_is_auto))
+      if (!THREADVAR(fx_is_auto)) {
+	g_print("FX %d off\n", key);
+	if (key == 2) break_me("deinit 2");
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
-
+      }
       filter_mutex_unlock(key);
 
       if (!LIVES_IS_PLAYING) {
@@ -1116,6 +1121,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
             if (rte_key_is_enabled(i, FALSE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
+      build_nodes_model(&mainw->nodemodel);
     }
   }
   if (mainw->rendered_fx)

@@ -149,6 +149,7 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_PLANTP_VOIDP						0X000000ED
 #define FUNCSIG_VOIDP_STRING 				       		0X000000D4
 #define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
+#define FUNCSIG_VOIDP_INT 				       		0X000000D1
 #define FUNCSIG_VOIDP_INT64 				       		0X000000D5
 #define FUNCSIG_DOUBLE_DOUBLE 				       		0X00000022
 // 3p

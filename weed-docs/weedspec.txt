@@ -271,6 +271,13 @@ API 202
 - mostly technical changes.
   core ABI:
 
+API 203:
+removed NATURAL_SIZE in favour of DISPLAY_RATIO
+removed INNER_SIZE
+chandged naem of PIXEL_ASPECT_RATIO to just PAR.
+Added optional "aspect_ratio" leaf to out chans for generators.
+
+
 The following seed types are defined, 
 
 - WEED_SEED_UINT (type 6) has been added for convenience
@@ -2230,7 +2237,34 @@ code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
 the following are optional for filters with video channels:
 
+* "aspect_ratio" : NEW !! :: WEED_SEED_DOUBLE
+  this is an optional leaf for geneaators (filters with outputs but no video inputs)
+
+  For generators which have have non-fixed  output sizes, it may be desirable still to specify
+  the preferred aspect ratio(s)
+  This enables the host to provide correct letterboxing, if that is the method beign used.
+
+  The filter may set  a single value or an array of values.
+  The values are calculated as the ratio of widtth / height in pixels (not macropixels),
+  rounded to at least 2 decimal places.
+  
+  The array values should be arranged in ascending order, to simplify for the host.
+
+  If multiple values are provided, the host may choose one of these aspect ratios and the plugin can ascertain which
+  from the out channel size set in the init_func(), or process_func(), in case the filter lacks an init_func()
+
+  Example: if the filter output has a prefered aspect ratio of 16:9, then the value 1.33 should be set.
+  (16.0 / 9.0 ~= 1.33)
+
+  See also the discussion on "display_ratio" for more details.
+
+
 * "width" : WEED_SEED_INT    :
+  DO NOT CONFUSE THIS with the leaf of the same name in the channel plants. The value there is set by the host
+  setting the equialent value in the template is intended to handel situations where a channel has a fixed size.
+  The principle  use for this is for video sources / generators which create output layers at a specific size.
+  this could be the case if they are reading from a network socket or from a hardware device
+  
   For filters that require fixed frame sizes. The host MUST set channel pixel widths to this value in order to use the filter, otherwise
   the plugin may return WEED_ERROR_REINIT_NEEDED from it process_func().
 
@@ -2257,6 +2291,7 @@ the following are optional for filters with video channels:
 
 
  * "height" : WEED_SEED_INT   :
+  Similar observations as for "width" -
   For filters that require fixed frame sizes. The rules are similar to those for width.
 
   If this leaf contains multiple elements then height values matching the same width (or no width) MUST be listed in
@@ -3048,20 +3083,15 @@ frame(s).
 '''Optional leaves for channel plants with video''': [[BR]]
 
 
- * "inner_size" : WEED_SEED_INT[4] : if the host "letterboxes" the image, this leaf may be set.
-   The 4 integer values represent (x_offset, y_offset, width, height). Offsets are measured from
-   top left, and width and height are in pixels (NOT macropixels). Plugins may use this to cut
-   blank borders for example when resizing an image to overlay it.
-   If the leaf is absent then no letterboxing has been done.
+* "PAR"   : WEED_SEED_DOUBLE :
+Pixel Aspect Ratio.
 
-* "pixel_aratio"   : WEED_SEED_DOUBLE : physical aspect ratio of the display device that the host is using to display
-the corresponding out_channel. par = pixel_width / pixel_height.
+physical aspect ratio of the display device that the host is using to display
+the corresponding out_channel. PAR = pixel_width / pixel_height.
 
-Pixel aspect ratio 
-other than 1.0 means pixels are non-square on whatever display device the host is using).
-For example, if a filter wants to draw an exact circle independent of the display device,
-then it should take this value into consideration and actually draw an ellipse with
-horizontal radius == vertical_radius / pixel_aspect_ratio.
+Pixel aspect ratio other than 1.0 means pixels are non-square on whatever display device the host is using).
+
+See the discussion on "display_ratio" for more details.
 
 
 * "alpha_premult" :       WEED_SEED_BOOLEAN :
@@ -3901,12 +3931,27 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
    WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA in the host_info plant.
 
  * WEED_FILTER_HINT_PROCESS_LAST
-   This is a hint to the host that the filter should be run AFTER all other filters have performed their processing.
-   Examples might be a video filter that overlays subtitles on the finished frame, or performs letterboxing,
-   or an audio filter that mixes the final output of several input audio channels or overlays a commentary.
+   This is a hint to the host that the filter should be run AFTER all other filters have performed their processing,
+   AND  optionally after the host has resized / letterboxed for the display / output (TBD)
+
+   Examples might be a video filter that overlays subtitles or a watermark
+   on the finished frame,
+    or an audio filter that mixes the final output of several input audio channels or overlays a commentary.
+
+   The plugin may speify whether the frames should be received BEFORE or after resize / letterbox for display
+   note that requsting frames AFTER may create performance issues for the host,
+   This is left to the plugin and host to determine.
+ 
    If there are multiple filters like this in
-   the processing chain, then the host (or the user) may decide the order to run them in. However, the set of filters which set this flag
+   the processing chain, then the host (or the user via preferences)
+   decide the order to run them in.
+
+
+   However, the set of filters which set this flag
    bit should be run as a whole after any filters without this flag have completed their processing for the cycle.
+
+
+
 
 *  WEED_FILTER_HINT_MAY_THREAD
    If a video plugin (TODO - implement for audio ) operates in such a manner that its output may be subdivided vertically (or horizontally)
@@ -3915,15 +3960,19 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
 
    IMPORTANT:
    if the filter also sets the filter flag bit WEED_FILTER_HINT_STATEFUL, then the following should happen:
-   - when calling the process_func() with threads, the host should call it with the first thread, and the instance leaf "state_updated"
-   set to WEED_FALSE, then wait for the plugin to set that leaf to WEED_TRUE before running the remaining threads.
-   The host must also ensure the "state_updated" is reset before the next process cycle.
+   - when calling the process_func() with threads, the host should call it with the first thread
+   , and the instance leaf "state_updated" set to WEED_FALSE, then wait for the plugin to set that leaf to
+   WEED_TRUE before running the remaining threads.
+
+  The host must also ensure the "state_updated" is reset before the next process cycle.
    The plugin should update its internal state and set the leaf as soon as possible in the process_func() so as not to
    needlessy delay the host.
 
-   In case the host fails to set the leaf to WEED_FALSE, on the first call to ptocess_func(), and the filter requires this behaviour,
-   it may return WEED_ERROR_FILTER_INVALID.
-   If the first filter thread returns WEED_SUCESS without setting the leaf, then the host may assume that the plugin does not support
+   In case the host fails to set the leaf to WEED_FALSE, on the first call to ptocess_func(),
+   and the filter requires this behaviour, it may return WEED_ERROR_FILTER_INVALID.
+
+If the first filter thread returns WEED_SUCESS without setting the leaf,
+then the host may assume that the plugin does not support
    or require this behaviour and may delete the "state_updated" leaf and ignore it in subsequent calls.
 
    See also note below about threading.
@@ -4102,22 +4151,227 @@ Explanation of flag bit combinations:
 
     The plugin should set the appropriate flag bits to minimise the number of reinits.
 
- * WEED_CHANNEL_NEEDS_NATURAL_SIZE
-   If this flagbit is set, the host should add an extra leaf to channels created from this template: "natural_size".
-   This is intended for filters which use fixed size objects (e.g. text);
-   the object should be scaled proportionally using the ratio  actual channel size / natural size.
-   (In simple terms, if the image has been stretched, then the fixed size object should be stretched accordingly).
 
-   In order to function properly, the plugin should look at the "inner_size" leaf set by the host and
-   use the letterboxed width and height as the "actual size".
+* WEED_CHANNEL_NEEDS_DISPLAY_RATIO
 
-   Natural size is not restricted by the usual channel rules (maxwidth, maxheight, minwidth, minheight, hstep, vstep,
-   alignment_height), since these apply only to the scaled channel size.
+  This flagbit is for out_channels only. This is intended for filters which want to creeate objects with fixed
+  size / offset ratios at the display.
 
-   In addition, if WEED_CHANNEL_REINIT_ON_SIZE_CHANGE is also set, the host need only reinit the filter when the
-   "natural_size" changes. WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE is not affected, however.
+  If this flagbit is set, the host should add an extra leaf to channels created from this template: "display_ratio".
+  an array with FOUR WEED_SEED_DOUBLE values. In the case that the host has multiple outputs with differing aspect
+  ratios, or ofssets, the host should determine which is the "most important" of these,
+  ie. which outout should have correctly scaled / offset objects.
 
-   Only valid for in_channels.
+  The 4 values are: width_factor, height_factor, horiz_offset, vert_offset.
+
+   To understand "display_ratio", let us imagine that a filter wants to draw a rectangle in the display output
+   with its centre coinciding with the centre of the screen, and with width and height euivalent to 20% of the display size.
+
+   The "display_ratio" allows the plugin developer to calculate the equivalent percentages in the output channel.
+
+   There are two methods the host can use to transform
+   from the layer current size to the display size: - resize and letterbox.
+
+   The display_ratio can be used to determine the method.
+
+   With the resize method, the layer is stretched or shrunk to fit the display, with the letterbox method, the layer
+   will maintain its current aspect ratio and horizontal or vertical bands added around it so that it fits the display.
+   We also ASSUME that when letterboxing the output is still centred, so the bands are added symmetrically in
+   each direction. Another thing to note is that the out channel dat in some cases may be lettrboxed BEFORE reaching
+   the display, as well as at teh display. This can happen if frames with different aspect ratios are overlaid on
+   top of each other before being displayed. The "display_ratio" will be the oriduct of all steps including
+   intermediate ones.
+
+   By looking at the two "display_ratio" values, one can determine the the reltive size of the rectangle in the output
+   channel pixel_data to produce a given relative size on the display (display could mean scrren, stream output, encoder
+   or whatever - for the sake of illustration we will assume it means the screen).
+
+   If the host knows it is going to letterbox the outout pixel_data, then the values of display_ratio represent
+   the ratio of "coverage" in each axit. For example, a value of 1.0, 0.8 would signify that the output from this instance
+   will cover 100% of the display width and 80% of the display height, with bands above and below each covering 10%
+   of the display height.
+
+   Thss in this case to draw a rectangle 20% X 20% on the screen, we would draw the rectangle
+   with width 20%, and height 25%  in the output pixel_data. This is because 25% of 80% ehight == 20%  of full 100% height.
+
+   The calculation is simply:
+   	owr = swr / display_ratio[0], ohr = shr / display_ratio[1]
+   where owr = out chan width ratio, swr = screen width ratio, ohr = out chan height ratio, and shr = screen hgith ratio.
+
+   Note that by considering ratios rather than absolute pixel values, the object will appear the same realtive size
+   regardless of the actual screen size. The actual display size cannot be determined since the output may be resized
+   prior to or after to being letterboxed.
+
+   When letterboxing is the host selected method, one or both of the display_ratio values will be < 1.0.
+   Note that for letterboxing, part ot the output display is inaccesible. To draw in this "inaccesible" region,
+   the templat should set the flagbit WEED_FILTER_PROCESS_LAST, and chack the "display_ratio" values. If these
+   are both 1.0, then the filter can draw anywhere pn the display.
+
+   With the resize method, the layer will be streched to fit the display output, which may distort it if the screen
+   has a different aspect ratio to the output channel. In this case one of the display_Ratio values will be >= 1,0,
+   and the other will be 1.0. These values denote the relative amounts of scaling in each axis. Note that a value
+   > 1.0 doess not necessarily imply a size increase, it may be the case that the ouput is actually shrunk
+   to fit the display. The values simply indicate the realtive amountsof distortion.
+
+   Let us imagine the display_ratio values are 1.33 and 1.0. In this case to draw a rectangel size 20% X 20% centred in
+   the display, we would draw it as 20.0 / 1.33 X 20.0 in the out channel pixel data, i.e 15% X 20%.
+
+   The calulation in this case is again
+   	owr = swr / display_ratio[0], ohr = shr / display_ratio[1]
+
+Note that with this calulation we could end up with values > 100%. This represents the layer tyring to draw into the 
+banded region, which is not possible. It is up to the filter author as to how to handle this.
+
+   Thus in both cases:
+   		owr = swr / display_ratio[0], ohr = shr / display_ratio[1]
+
+Offset values
+The thrd and fourth values in the display_ratio only have meaning when the letterbox method is used
+(ie. both the first values are <= 1.) the third value is the horiz_offset. This can take a value -1.0 to 1.0
+-1.0 idicates tha all th banding is on the left hand side (ie. if display_ratio[1] is 0.8, then the leftmost 20%
+of the screen would be blank, with the image on the righmost 80%. If the value were +1.0 then all the banding would be
+on the right, with the image occupying the leftmos 80%). The default value 0. implies that the both bands are equally sized.
+
+The fourth value is similar but applies to top and bottom horizontal bands
+
+Thus we can work out the banding sizes as diplay_as:
+(1. - display_ratio[2]) / 2. * (1.0 - display_ratio[0]) for LHS
+(1. + display_ratio[2]) / 2. * (1.0 - display_ratio[0]) for RHS
+//
+(1. - display_ratio[3]) / 2. * (1.0 - display_ratio[1]) for TOP
+(1. + display_ratio[3]) / 2. * (1.0 - display_ratio[1]) for BOTTOM
+
+
+Thus if we want to keep the rectangle centred, we may need to transform its centre.
+
+Suppose we have all banding at the top, and a banding ratio of .2
+then diaply_ratio[1] = 0.8, display_ratio[3] = -1.0
+
+we first calulate the banding amount, this is just 1.0 - display_ratio[1] == 0.2
+If the value of display_ratio[3] were 0.0 then we would not have to move the centre vertiaclly
+and top banding would be 0.1
+
+However with a value -1.0, we have from above, TOP == 0.2
+
+We can defive the centre value 0.1 as (1. - 0.) / 2. * (1.0 - display_ratio[1])
+we can derive the value 0.2 from (1. - display_ratio[3]) / 2. * (1.0 - display_ratio[1])
+
+thus the difference is rather obviously: -display_ratio[3] / 2, * (1.0 - display_ratio[1])
+inserting values -1.0, and 0.8 gives 1. / 2. * (1. - 0.8) = 0.5 * 0.2 == 0.1 as we would expect.
+In this case the centre is moved DOWN by a factor 0.1, ie 10%.
+However this is in proportion to the display height, to find the equivalnt proportion in the out channel,
+we need to divide this by 0,8 to give a value 0,125, 12.5% of the channel height, which for the exmaple
+of 400 X 300 would be 12.5 * 300 / 100 ~= 38 pixels. Thus to keep the rectangle centred in the dissplay (rather than
+centerd in the un the letterboxed area, we would need to move our center up by 38 pixels.
+
+
+Thus our centre is offset by:
+
+-display_ratio[3] / 2, * (1.0 - display_ratio[1]) * chan_height
+
+or more genearally:
+
+voffs = display_ratio[3] / 2, * (1.0 - display_ratio[1]) * chan_height_pixels
+where a negative value indicates UP and posiitve, DOWN.
+
+Similaryly for a horizontal offset:
+hoffs = display_ratio[2] / 2, * (1.0 - display_ratio[0]) * chan_width_pixels
+
+
+
+Interaction with "aspect_ratio" and "PAR".
+These sets of values are intimatel linked and used propely can enable obejcts to remain proportional on any display.
+
+Suppose a genrator defines a preffered aspect_Ratio of 1.33 (4:3), and thehost sets the size to 400 X 300 pixels.
+
+Suppose the display aspect_ratio is 16:9.
+
+If letterboxing is ussed the the output would fill an area equivalent to 12 : 9, so the displya_ratio would be
+0.75, 1.0
+
+Thus to draw a rectangle sized 20 % X 20 % centred in the display, this would be size
+
+ 20 / 0.75 X 20 * 1.0 == 26.66% X 20% in the output channel.
+
+With out_channel size 400 X 303 this gives 106 X 60 [rounding to even values, this give rectangle coords -52. -30 and 53, 30]
+
+Combining this with the PAR for the channel allows for the objects to appear rectangle independantly of the pixel shape
+for any display. Suppose the display is a super wide monitor, with a PAR of 1.2 - that is the pixels are not sqaure but
+rather rectangles with size ratios width == 1.2, height == 1.
+
+In this case our rectangle size 26.66% X 20% would have size 20% X 20% on the screen, but due to the pixel aspect ratio
+this would appear as 24% wide X 20% high when placed side by side with a monitor with PAR 1.0
+
+Thus to make both rectangles appear equivalent, for the monitor with PAR 1.2, the correct size in the output would be:
+(26.666 / 1.2) = 22.22% X 20%
+
+Thus for the size 400 X 300, the rectangle would be drawn with size 400 * 22.222 / 100. X 300 * 20 / 100
+== 88 X 60 in the output (ie if we consider the centre to be 0, 0 then the recatngle would be
+-44, -30 to +44, +30).
+
+For PAR of 1.0, the rectangle would be 106 X 60 pxiels in the output.
+
+If resizing is used instead of letterboxing, then we would have display_Ratio 1.33, 1.0
+
+In this the rectangle will be stretched in the x-axis, so the correct size with PAR 1,0 is:
+
+20 / 1.33 % X 20 %  == 15% X 20% - in pixels this would be 60 X 60
+
+and for a PAR of 1.2 this would be 20 / 1.33 / 1.2 % X 20% == 12.5% X 20% == 50 X 60 in pixels in
+the out channel frame.
+
+   To sumarrize, if we want to account for non square pixels:
+   		owr = swr / display_ratio[0] / PAR, ohr = shr / display_ratio[1]
+
+
+For the offesets, if we want to make these appear the same, then we should divide the horizontal offset by PAR,
+so we get:
+
+voffs = display_ratio[3] / 2, * (1.0 - display_ratio[1]) * chan_height_pixels
+
+hoffs = display_ratio[2] / 2, * (1.0 - display_ratio[0]) / PAR * chan_width_pixels
+
+
+If we wnated to draw a square instead of a rectangle we need to recalculate the ratios.
+Instead of 20% X 20% for a out_channel size of 400 X 300, a square with the same height would be
+300 / 400 * 0.2 X  0.2 = 15% width X 20% height, ie. 60px X 60px
+
+so applying this to above values:
+- letter box from A.R 4:3 to A.R 16L9 - recatngle size is (106 X .75) X 60 = 80px X 60px
+  in output and 60px X 60 in channel
+---- with PAR 1.2, this becomes 66px X 60px
+
+-- if we had all banding at the LHS (display_ratio[2] == -1.0) then this would shift right by (1.0 - 0.75) / 2.0
+       == 12.5%, but this ratio is for thedisplay, to find equivalent in out_channel, divide by 0.75, so we get
+       12.5 / .75 = 16.6666,,%, the multiplying by 400, we get 66ps left shift to compensate.
+
+       with PAR == 1.2 the shift is the same, the pixels are wider, so the shift will appear greater, but
+       the compensating shift will also be larger and the two factors cancel out.
+
+-- resize from AR 4:3 to 16:9 - rectangle size is (60 X .75) X 60 = 45px * 60px
+
+----- with PAR 1.2 this becomes 38px * 60px
+
+
+To simplify there are (will be ) convenience a funtion:
+   int calc_ar_rectange(double *left, double *top, double *width, double *height.
+     int ch_width, int ch_height, doouble * display_ratio, double par);
+
+     If we wan to to produce an object with left at 0.4 display width and top at 0.7 of the display height
+     with size 0.2 disp width and height 0.1 disp height, then we would call
+     calc_ar_recatangle(0.4, 0.7, 0,2, 0.1, ch_width, ch_height, display_ratio, par) 
+     will set left, top, width and height in pixels for the output channel.
+     Thsi can be used for exmaple to draw sprites or to ensure tha an embedded image keeps its original aspect ratio
+
+     More usefully perhaps, if height is 0, then the function will return values for a square with center at top left
+     ass input and with edge size width. The funciton wilkl return left, top, width and height values to draw the
+     square in the out chan/ Providing PAR measn theat eh square can stay square even on nomonitors with no sqaure pixels.
+     This could be useful for drawing watermarks, grids and so on with correct proportions independantof the actual display
+     dimensions.
+
+     a return value of 0 indicates the desired rectangle may be drawn completely, a return value of 1 indicates tha the
+     rectangle is wholly or partially impossible to draw in, due to letterboxing - ie. the recatangle falls wholly or
+     partially into the banding region of the display.
 
 
 
@@ -4126,7 +4380,8 @@ Explanation of flag bit combinations:
 
   If the template is flagged as OPTIONAL, and the flagbit is also set, then during instance init_func(),
   the plugin itself may enable or disable optional channels created from this channel template.
-  The host MUST create all such optional channels before calling init_func(), and allow the plugin to enable or disable them itself.
+  The host MUST create all such optional channels before calling init_func(), and allow the plugin to enable or
+  disable them itself.
 
   If the filter is flagged with  WEED_FILTER_PALETTES_MAY_VARY, then
   During the instance init_func(), the plugin iself may alter the palette of the output video channel created from this template,

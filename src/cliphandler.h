@@ -110,7 +110,6 @@ typedef enum {
 // frame src is a filter plugin (generator)
 #define LIVES_SRC_TYPE_GENERATOR	3
 
-
 // source pixel_data is a memory buffer that can be written to
 // asynchronously
 #define LIVES_SRC_TYPE_MEMBUFF		6
@@ -136,8 +135,11 @@ typedef enum {
 
 // layer has no source
 #define SRC_STATUS_NOT_SET		0
+
 // source is on standby / idle
 #define SRC_STATUS_INACTIVE    		1
+
+#define SRC_STATUS_RUNNING    		2
 
 // target is out of date
 #define SRC_STATUS_EXPIRED		32
@@ -148,7 +150,6 @@ typedef enum {
 #define SRC_STATUS_EINVAL		65
 // source can retry getting data
 #define SRC_STATUS_EAGAIN		66
-// source provider is busy
 
 // error encountered while loading
 #define SRC_STATUS_ERROR		512
@@ -177,21 +178,49 @@ typedef enum {
 #define SRC_PURPOSE_MODEL		128
 
 #define SRC_FLAG_NOFREE			(1ull < 0)
-#define SRC_FLAG_INACTIVE		(1ull < 1) // TODO - use status
-
-// 
+#define SRC_FLAG_SINGLE			(1ull < 4)
 #define SRC_FLAG_ASYNC			(1ull < 8)
 
 typedef lives_result_t (*lives_clipsrc_func_t)(weed_layer_t *layer);
 
+// clip_srcs are obejcts (plugins or functions) which take a layer with size / palette
+// framenumber defined, and fill the empty pixel_data for the layer
+// the clip_src may be a data provider (eg. blank frame source) or may connect to an external provider
+// (eg. a device clip_src)
+//
+// clips may have multiple srcs which each map to a set of frame numbers
+// (mapping will be done through extension to frame_index - TODO)
+//
+// the default set of clip_srcs for a clip are known collectively as the primary source
+// it is possible to create clones of the primary source and have duplicate source sets
+// these can be used to allow parallel access to the sources - examples are thumbnail creators
+// duplicate track players, precaching sources. during playback, sets of clip_srcs can be bound to a track
+// by taking a snapshot of the track sources we can fill an array of layers, representing the frames for
+// the active stack of clips and other layer sources
+//
+// we have static clip_srcs - these are shared between all clips (e.g. blank_frame clip_src)
+// we also have dynamic clip_srcs which are specific to a single clip (e.g decoder type sources)
+// the most common mixture of clip_srcs is combining a decoder src and the static img_decoder src
+// cloning a dynamic src creates a copy of the src, cloning a static src just returns the static src
+// it is possible to define new clip_srcs by providing an action_func which takes a layer as input and
+// fills in the pixel_data.
+
+// clip_srcs can be sync or async. In the case of async, the layer STATUS is used
+// to track the layer through queued, loading, lodaded and ready statuses.
+// the frame_index for a clip (TODO) maps each frame to a clip_src, and an index value for the src.
+// clip_srcs also have a STATUS, most commonly this can be INACTIVE / ACTIVE
+//
+// Some clip srcs are abel to fill layer_pixel data in parallel (e.g blank frame src)
+// others can only be used to fill a single layer at a time (e.g decoder srcs)
+// to use single srcs in parallel, it is necessary to create a clone.
 typedef struct {
-  int method; // SRC_METHOD_OBJ or SRC_METHOD_FUNC
   uint64_t uid;
 
   // pointer to a plugin for this clip_src (for staic srcs, this will be NULL)
   void *source;
 
-  // if this is defined, then we need only create a layer with appropriate values
+  // if this is non NULL defined, then we need only create a layer with appropriate values
+  // size, palette, clip, frame
   // then call action_func(layer);
   lives_clipsrc_func_t action_func;
 

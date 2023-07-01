@@ -15,13 +15,16 @@
 #include "effects-weed.h"
 #include "effects.h"
 
+  /* if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) { */
+  /*   weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL); */
+  /*   deinterlace_frame(layer, tc); */
+  /*   weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE); */
+  /* } */
+
 // still to do:
-// - creat outputs for all src types
 // calc sizes, pass 2
 // calc costd for inputs from srcs
 // fine tune sizes for channels
-// implement dry run 1 and set skip
-// premult alpha flag
 // check for reinits
 /// do asynch reinits
 
@@ -31,12 +34,57 @@
 //create new func - execute_plan()
 // include provision  for deinterlace
 // implemnt 2 way letterboxing
-// lerly loading for layers
+// early loading for layers
 // measure actual timings
 
 // create model deltas, bypass nodes
 
 
+LiVESList *create_plan_from_model(lives_nodemodel_t *nodemodel) {
+  // since a nodemodel can be difficult to parse we will create a plan - a "flattebed version"
+  // of it in temploral order
+  // 
+  // create a plan from the nodemodel
+  // the shedule will list all the actions for the nodemodel in temporal oreder
+  // the format will be st_time (est) | p | flags | duration (est) | deadline | action | data |
+  // in_tr[] | in_ch | out_tr | out_ch{}
+  // final_pal[4] | sizes[4] |  gamma | opts
+  //
+  // opts can include SCHED_OPT_DEINTERLACE
+  //
+  // pal will be {idx, clamp, samp, subspace),
+  // sizes will be {width in pixels, height, inwidth pixels, inheight}
+  // if inheght < height or inwidth < widht, this indicates letterboxing
+  // p is an array of actions which must be completed before the step can be run
+  // flags will include STEP_FLAG_COMPLETE, STEP_FLAG_BYPASS
+  // if bypass is set the step should be marked as complete as soon as the prerequsites are complted
+  // if a sstep has duration 0, this means it cannot be estimate, the duration should be measured
+  // the value added as an offeset to all other start and deadline times
+  //
+  // when running an action we can check current cycle time, and if curtime + dur < dealine
+  // we can de prioritse thi
+  // if curtime + dur > deadline, we can try to up prioritise
+  //
+  /
+  // e.g
+  // 0 | dur | ded | load + conv | sfile | -   | -   | otr | -   | final pal | final size | final gamma | deinterlace
+  // 0 | ded | convert 	 |   -   |     | -   | otr | och | final pal | final size | final gamma | deinterlace
+  // t | ded | apply inst  | inst  | itr | ich | otr | och |
+  // t | ded | copy layer  |  -    | itr |  -  | otr |  -  |
+  //
+  // for load + conv - if sfile is NULL, then use blank frame
+  // for copy layer, if this is after convert then we will have in channels, but only 1 in track
+  //  if before convert then we will have out_chans, and a single out_track
+  // for apply inst, if an in track is inplace then the out_track will appear
+  // but the corresponding out chan will be set to -1,
+  // for layers WITH an out chan, we need to
+  // create empty pixel_data in the out chan, apply inst, free in chan pdata, transfer och pdata to layer
+
+  // when a frame load is triggered, (or possibly earlier if we know the fram enumber for source,
+  // we begin going throught the schedul step by step. When an ction is continued, we flag is as completed
+  // before proceeding the the next step we have to make sure that all actions with tded <= st_time have completed
+  // 
+}
 
 
 static void align_with_model(lives_nodemodel_t *nodemodel) {
@@ -62,9 +110,17 @@ static void align_with_model(lives_nodemodel_t *nodemodel) {
   /* } */
 
   // for instances, set the channel palettes (sizes are set when testing)
+  // check if we need a reinit - either inst has just been created, or pal changeed , or szie or rstrides
 
   // for display output set the vpp palette
-  
+
+  //if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE)
+	    /* retval = weed_reinit_effect(inst, FALSE); */
+	    /* if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN */
+	    /* 	|| retval == FILTER_ERROR_INVALID_FILTER) { */
+	    /*   weed_instance_unref(inst); */
+	    /*   return retval; */
+	    /* } */
 }
 
 
@@ -74,30 +130,42 @@ static void align_with_model(lives_nodemodel_t *nodemodel) {
 // we also have a number of pool threads available, if we know what operations are occuring in paralell,
 // we can model distrubuting the threads approximately over simultaneous operations
 // and discount some time cost
-// this can affect resize, palcovn, gamma conv and proc tcosts
+// this can affect resize, palcovn, gamma conv and proc tcosts (and dinterlace)
 
-double get_resize_cost(int cost_type, int inpl, int outpl, int *outpals, boolean ghost) {
-  // there is a tcost based on input size, and a qloss for downscaling
-  // there is a ghost cost for upscaling based on the fact that the quality los is more perceptible
-  // the time cost is partly based on measurements, and should factor in the input size and palette
-  // for some palettes, this can be combined with palette conversion and gamma change
-  // in some cases we letterbox instead
-  // then the cost is calculted as resize + layer copy
-
-
+// here we calulculate tcost, qloss_sG, qloss_sR
+double get_resize_cost(int cost_type, int out_width, int out_height, int in_width, int in_height,
+		       int outpl, int inpl) {
+  int in_size, out_size;
+  // if downscaling we add a ghost cost, if upscaling we add a real one
+  switch (cost_type) {
+  case COST_TYPE_QLOSS_S:
+    out_size = out_width * out_height;
+    in_size = in_width * in_height;
+    if (in_size < out_size)
+      return = out_size / in_size;
+    else return = in_size / out_size;
+    break;
+  case COST_TYPE_TIME:
+    // return esstimate of time using pal., and max in_size, out_size
+    break;
+  default: break;
+  }
+  return 0.;
 }
 
 
-double get_proc_cost(int cost_type, int inpl, int outpl, int *outpals, boolean ghost) {
-  // get processing cost for applying an instance. The 
-  // we do not assing a qloss value
-  // but here will be a tcost based on measurements, and assumed to be depndent on the input size and palette
+double get_proc_cost(int cost_type, int width, int height, int pal) {
+  // get processing cost for applying an instance. The only cost with non-zero valueis tcost
+  double est = 0,;
+  if (cost_type == COST_TYPE_TIME) {
 
-
+    // return estimate which will be fn(size, pal)
+  }
+  return est;
 }
 
 
-double get_layer_copy_cost(int cost_type, int inpl, int outpl, int *outpals, boolean ghost) {
+double get_layer_copy_cost(int cost_type, int bytesize) {
   // find the cost for copying (duplicating) a layer. This needs to be factored in if we have cloned inputs,
   // after resizing / converting palette and gamma
   // thishould be dependent on byte size of the pixel data
@@ -107,39 +175,63 @@ double get_layer_copy_cost(int cost_type, int inpl, int outpl, int *outpals, boo
 }
 
 
-
-
-double get_gammaconv_cosst(int cost_type, int inpl, int outpl, int *outpals, boolean ghost) {
-  // find the time cst for converting gamma - this should be similar to the layer copy time
-  // and may be paralellisable
+ double get_gamma_cost(int cost_type, int width, int height, int pal, int out_gamma, int in_gamma, boolean ghost) {
+  // find the time cst for converting gamma - calc size * psize
+  // the mpy by const
+  // - may be paralellisable
+  //
   // there is a small qloss associated, which varies with pb_quality
-  // ther eiss also a ghost negative qloss for using linear gamma if a plugin prefers this
+  // there is also a ghost negative qloss for using linear gamma if a plugin prefers this
+
+  if (cost_type == COST_TYPE_QLOSS_P) {
+    double q = 1.;
+    if (in_gamma != out_gamma) {
+      q *= .99;
+      // converting from gamma != linear, unknown to different !linear, unknown
+      // we have to go via linear, so that would be two conversions
+      if (out_gamma_type != WEED_GAMMA_LINEAR && out_gamma_type != WEED_GAMMA_UNKNOWN
+	  && in_gamma_type != WEED_GAMMA_LINEAR && in_gamma_type != WEED_GAMMA_UNKNOWN)
+	q *= .99;
+    }
+    if (ghost && in_gamma == WEED_GAMMA_LINEAR) q += .1;
+    return (1. - q);
+  }
   
+  return 1.;
+}
+
+
+double get_misc_cost(int cost_type, int flags, int pal, iint width, int height) {
+  // calc for misc costs like deinterlac
 
 
 }
 
 
+// estimate COST_TYPE_QLOSS_P for a palette conversion
+// - rather than returning the cost per se, we return (1. - q_in / q_uot)
+// i.e if there is no quality loss we return 1.0, for a 5% loss we return 0.95
+// this makes it easier to multiply losses. We try to maximise this value
+// and when calulating combined_cost we use factor * (1.0 - qloss_p)
+// if the (out) gamma_type is WEED_GAMMA_LINEAR, then this means that the filter prefers that,
+// and if calulating with ghost == TRUE, we actually get a bonus (considered as NEGATIVE quality loss)
+//
+double get_qloss_p(int outpl, int inpl, int *inpals) {
+  double q = 1., cost = 0.;
 
-// calculate estimated cost of type cost_type for converting a palette
-double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals, boolean ghost) {
-  double cost = 0.;
-  // these are ignored for now
-  int in_sampling, out_sampling, in_clamping, out_clamping, in_subspace, out_subspace;
-  in_sampling = out_sampling = WEED_YUV_SAMPLING_DEFAULT;
-  in_clamping = out_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
-  in_subspace = out_subspace = WEED_YUV_SUBSPACE_YUV;
-  if (inpl == outpl) return cost;
-  switch (cost_type) {
-  case COST_TYPE_QLOSS: {
-    double q = 1.;
-    switch (inpl) {
+  // subspace and sampling are  ignored for now
+  int in_clamping, out_clamping, in_subspace, out_subspace, in_sampling, out_sampling;
+
+  out_clamping = in_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+
+  if (inpl != outpl)  {
+    switch (outpl) {
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGR24:
     case WEED_PALETTE_BGRA32:
     case WEED_PALETTE_ARGB32:
-      switch (outpl) {
+      switch (inpl) {
       case WEED_PALETTE_RGB24:
       case WEED_PALETTE_RGBA32:
       case WEED_PALETTE_BGR24:
@@ -169,7 +261,6 @@ double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals,
 	if (out_clamping == WEED_YUV_CLAMPING_UNCLAMPED) q *= 1.01;
 	break;
       default:
-	q *= 0;
 	if (out_clamping == WEED_YUV_CLAMPING_UNCLAMPED) q *= 1.01;
 	break;
       }
@@ -177,7 +268,7 @@ double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals,
     case WEED_PALETTE_YUV444P:
     case WEED_PALETTE_YUVA8888:
     case WEED_PALETTE_YUVA4444P:
-      switch (outpl) {
+      switch (inpl) {
       case WEED_PALETTE_YUV888:
       case WEED_PALETTE_YUV444P:
       case WEED_PALETTE_YUVA8888:
@@ -214,14 +305,12 @@ double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals,
 	if (out_subspace != in_subspace) q *= .96;
 	q *= .85;
 	break;
-      default:
-	q *= 0;
-	break;
+      default: break;
       }
     case WEED_PALETTE_YUV422P:
     case WEED_PALETTE_UYVY:
     case WEED_PALETTE_YUYV:
-      switch (outpl) {
+      switch (inpl) {
       case WEED_PALETTE_YUV888:
       case WEED_PALETTE_YUV444P:
       case WEED_PALETTE_YUVA8888:
@@ -253,13 +342,11 @@ double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals,
 	if (out_subspace != in_subspace) q *= .96;
 	q *= .9;
 	break;
-      default:
-	q *= 0;
-	break;
+      default: break;
       }
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      switch (outpl) {
+      switch (inpl) {
       case WEED_PALETTE_YUV888:
       case WEED_PALETTE_YUV444P:
       case WEED_PALETTE_YUVA8888:
@@ -286,12 +373,10 @@ double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals,
 	if (out_subspace != in_subspace) q *= .96;
 	q *= .95;
 	break;
-      default:
-	q *= 0;
-	break;
+      default: break;
       }
     case WEED_PALETTE_YUV411:
-      switch (outpl) {
+      switch (inpl) {
       case WEED_PALETTE_YUV888:
       case WEED_PALETTE_YUV444P:
       case WEED_PALETTE_YUVA8888:
@@ -312,42 +397,503 @@ double get_pal_conversion_cost(int cost_type, int inpl, int outpl, int *outpals,
       case WEED_PALETTE_ARGB32:
 	q *= .95;
 	break;
-      default:
-	cost = -1.;
-	break;
+      default: break;
       }
-    default:
-      cost = -1.;
-      break;
+    default: break;
     }
-    if (cost == 0.) {
-      cost = 1. - q;
-      if (prefs->pb_quality == PB_QUALITY_HIGH) cost *= .75;
-      else if (prefs->pb_quality == PB_QUALITY_LOW) cost *= 1.5;
-    }
-    if (ghost && weed_palette_is_yuv(outpl)) cost *= 1.1;
-    break;
+    cost = 1. - q;
+    if (prefs->pb_quality == PB_QUALITY_HIGH) cost *= .8;
+    else if (prefs->pb_quality == PB_QUALITY_LOW) cost *= 1.2;
   }
-  case COST_TYPE_TIME:
-    cost = get_conv_time(inpl, outpl, outpals);
-    break;
-  default:
-    cost = -1.;
-    break;
-  }
-
- done:
+  
   return cost;
 }
 
 
-static int calc_node_sizes(inst_node_t *inode) {
+double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl) {
+  // find the time cst for converting gamma - calc size * psize
+  // the mpy by const
+  // - may be paralellisable
+  //
+  // there is a small qloss associated, which varies with pb_quality
+  // there is also a ghost negative qloss for using linear gamma if a plugin prefers this
+  // --
+  if (cost_type == COST_TYPE_QLOSS_P)
+    return get_qloss_p(outpl, inpl, inpals);
+  return 0.;
+}
+
+
+#define OP_RESIZE 0
+#define OP_PCONV 1
+#define OP_GAMMA 2
+#define N_OP_TYPES 3
+
+void get_resize_ops(int outpl, int inpl, int *ops) {
+  // TODO - we really need to know clamping - but we cannot know tht until we actually pull frames from clip_srcs
+  // - need to chack closer
+
+  ops[OP_RESIZE] = TRUE;
+  ops[OP_PALCONV] = FALSE;
+  ops[OP_GAMMA] = FALSE;
+
+#ifdef USE_SWSCALE
+  // only swscale can convert and resize together
+  if (weed_palette_conv_resizable(outpl, oclamp, TRUE) &&
+      weed_palette_conv_resizable(inpl, iclamping, FALSE)) {
+    ops[OP_PALCONV] = TRUE;
+  }
+#endif
+
+  if (can_inline_gamma(outpl, inpl)) ops[OP_GAMMA_CONV] = TRUE;
+}
+
+
+static void get_op_order(int out_size, int in_size, int outpl, int inpl,
+			 int out_gamma_type, int in_gamma_type, int *op_order) {
+  // we can define order 1, 2, 3
+  // if multiple ops have same number, they are done simultaneously
+  // if an op is not needed, order remains at 0
+
+  // each of resize / palconv / gamma can be needed or not
+  // resize can do resize OR resize + palconv OR ressize + gamma OR resize + palconv + gamma
+  // palconv can do palconv or palconv + gamma
+
+  // also, we can NEED resize / palconv / gamma
+
+  boolean resize_ops[N_OP_TYPES];
+  boolean ops_needed[N_OP_TYPES];
+
+  boolean palconv_does_gamma = FALSE;
+  boolean is_upscale = FALSE;
+  boolean in_yuv = FALSE;
+  boolean out_yuv = FALSE;
+
+  if (weed_palette_is_yuv(inpl)) in_yuv = TRUE;
+  if (weed_palette_is_yuv(outpl)) out_yuv = TRUE;
+
+  if (in_size != out_size) {
+    ops_needed[OP_RESIZE] = TRUE;
+    if (in_size > out_size) is_upscale = TRUE;
+  }
+  else ops_needed[OP_RESIZE] = FALSE;
+
+  if ((in_gamma_type != out_gamma_type && (!out_yuv || !in_yuv))
+      || (!out_yuv && in_yuv && out_gamma_type != WEED_GAMMA_UNKNOWN
+	  && out_gamma_type != WEED_GAMMA_SRGB))
+    ops_needed[OP_GAMMA] = TRUE;
+  else ops_needed[OP_GAMMA] = FALSE;
+
+  if (inpl != outpl) ops_needed[OP_PCONV] = TRUE;
+  
+  // handle trivial situations first
+  if (!ops_needed[OP_RESIZE]) {
+    if (!ops_needed[OP_PCONV]) {
+      if (!ops_needed[OP_GAMMA]) {
+	op_order[OP_RESIZE] = op_order[OP_PCONV] = op_order[OP_GAMMA] = 0;
+	return LIVES_RESULT_SUCCESS;
+      }
+      // only gamma
+      op_order[OP_RESIZE] = op_order[OP_PCONV] = 0;
+      op_order[OP_GAMMA] = 1;
+      return LIVES_RESULT_SUCCESS;
+    }
+    // no resize; pconv needed
+    if (!ops_needed[OP_GAMMA]) {
+      // no gamma
+      op_order[OP_RESIZE] = op_order[OP_GAMMA] = 0;
+      op_order[OP_PCONV] = 1;
+      return LIVES_RESULT_SUCCESS;
+    }
+    // pconv / gamma
+    // pconv may do both
+    pconv_does_gamma = can_inline_gamma(outpl, inpl);
+    if (pconv_does_gamma) {
+      op_order[OP_RESIZE] = 0;
+      op_order[OP_PCONV] = op_order[OP_GAMMA] = 1;
+      return LIVES_RESULT_SUCCESS;
+    }1
+    if (in_yuv) {
+      // gamma then pconv
+      op_order[OP_RESIZE] = 0;
+      op_order[OP_GAMMA] = 1;
+      op_order[OP_PCONV] = 2;
+      return LIVES_RESULT_SUCCESS;
+    }
+    // pconv then gamma
+    op_order[OP_RESIZE] = 0;
+    op_order[OP_PCONV] = 1;
+    op_order[OP_GAMMA] = 2;
+    return LIVES_RESULT_SUCCESS;
+  }
+
+  // resize needed
+  get_resize_ops(outpl, intpl, resize_ops);
+  if (ops_needed[OP_PALCONV]) {
+    if (resize_ops[OP_PALCONV]) {
+      if (ops_needed[OP_GAMMA]) {
+	if (resize_ops[OP_GAMMA]) {
+	  // resize does everything
+	  op_order[OP_RESIZE] = op_order[OP_PALCONV] = op_order[OPGAMMA] = 1;
+	  return LIVES_RESULT_SUCCESS;
+	}
+	// resize does palconv but not gamma
+	if (in_yuv) {
+	  // do gamma b4 palconv
+	  op_order[OP_GAMMA] = 1;
+	  op_order[OP_RESIZE] = op_order[OP_PALCONV] = 2;
+	  return LIVES_RESULT_SUCCESS;
+	}
+	else {
+	  // do pal_conv b4 gamma
+	  op_order[OP_RESIZE] = op_order[OP_PALCONV] = 1;
+	  op_order[OP_GAMMA] = 2;
+	  return LIVES_RESULT_SUCCESS;	    
+	}
+      }
+      // resize does palconv, no gamma needed
+      op_order[OP_RESIZE] = op_order[OP_PALCONV] = 1;
+      op_order[OP_GAMMA] = 0;
+      return LIVES_RESULT_SUCCESS;	    
+    }
+
+    // resize does not do palconv, palconv needed
+
+    if (ops_needed[OP_GAMMA]) {
+      // resize may do gamma
+      if (resize_ops[OP_GAMMA]) {
+	if (out_yuv) {
+	  op_order[OP_PALCONV] = 1;
+	  op_order[OP_GAMMA] = 2;
+	  op_order[OP_RESIZE] = 2;
+	  return LIVES_RESULT_SUCCESS;	    
+	}
+	if (is_upscale && !in_yuv) {
+	  op_order[OP_PALCONV] = 1;
+	  op_order[OP_GAMMA] = 2;
+	  op_order[OP_RESIZE] = 2;
+	  return LIVES_RESULT_SUCCESS;	    
+	}
+	op_order[OP_GAMMA] = 1;
+	op_order[OP_RESIZE] = 1;
+	op_order[OP_PALCONV] = 2;
+	return LIVES_RESULT_SUCCESS;	    
+      }
+
+      // gamma needed
+      // palconv may do gamma though
+      pconv_does_gamma = can_inline_gamma(outpl, inpl);
+      if (is_upscale) {
+	// upscale - do resize last if we can
+	// do palconv / gamma before resize
+	if (pconv_does_gamma) {
+	  op_order[OP_GAMMA] = op_order[OP_PALCONV] = 1;
+	  op_order[OP_RESIZE] = 2;
+	  return LIVES_RESULT_SUCCESS;	    
+	}
+	// palconv dont do gamma
+	if (in_yuv) {
+	  // gamma, palconv, resize
+	  op_order[OP_GAMMA] = 1;
+	  op_order[OP_PALCONV] = 2;
+	  op_order[OP_RESIZE] = 3;
+	  return LIVES_RESULT_SUCCESS;	    
+	}
+	// palconv, gamma, resize
+	op_order[OP_PALCONV] = 1;
+	op_order[OP_GAMMA] = 2;
+	op_order[OP_RESIZE] = 3;
+	return LIVES_RESULT_SUCCESS;	    
+      }
+      // resize does not do palconv, palconv needed
+      // need resize, palconv, gamma; resize does not do gamme, no upscale - do resize first
+ 
+      if (palconv_does_gamma) {
+	op_order[OP_RESIZE] = 1;
+	op_order[OP_PALCONV] = 2;
+	op_order[OP_GAMMA] = 2;
+	return LIVES_RESULT_SUCCESS;	    
+      }
+
+      if (resize_ops[OP_GAMMA]) {
+	op_order[OP_RESIZE] = 1;
+	op_order[OP_GAMMA] = 1;
+	op_order[OP_PALCONV] = 2;
+	return LIVES_RESULT_SUCCESS;	    
+      }
+      
+      if (in_yuv) {
+	// gamma before palconv
+	op_order[OP_RESIZE] = 1;
+	op_order[OP_GAMMA] = 2;
+	op_order[OP_PALCONV] = 3;
+	return LIVES_RESULT_SUCCESS;	    
+      }
+      // palconv before gamma
+      op_order[OP_RESIZE] = 1;
+      op_order[OP_PALCONV] = 2;
+      op_order[OP_GAMMA] = 3;
+    }
+
+    // resize, palconv, no gamma
+    if (is_upscale) {
+      op_order[OP_PALCONV] = 1;
+      op_order[OP_RESIZE] = 2;
+      op_order[OP_GAMMA] = 0;
+      return LIVES_RESULT_SUCCESS;	    
+    }
+    op_order[OP_RESIZE] = 1;
+    op_order[OP_PALCONV] = 2;
+    op_order[OP_GAMMA] = 0;
+    return LIVES_RESULT_SUCCESS;	    
+  }
+  // resize, no palconv, maybe gamma
+  if (ops_needed[OP_GAMMA]) {
+    if (resize_ops[OP_GAMMA]) {
+      // resize does gamma
+      op_order[OP_RESIZE] = 1;
+      op_order[OP_GAMMA] = 1;
+      op_order[OP_PALCONV] = 0;
+      return LIVES_RESULT_SUCCESS;	    
+    }
+    if (ia_upsscale) {
+      op_order[OP_GAMMA] = 1;
+      op_order[OP_RESIZE] = 2;
+      op_order[OP_PALCONV] = 0;
+      return LIVES_RESULT_SUCCESS;	    
+    }
+    op_order[OP_RESIZE] = 1;
+    op_order[OP_GAMMA] = 2;
+    op_order[OP_PALCONV] = 0;
+    return LIVES_RESULT_SUCCESS;	    
+  }
+  // no gamma needed, only resize
+  op_order[OP_RESIZE] = 1;
+  op_order[OP_PALCONV] = 0;
+  op_order[OP_GAMMA] = 0;
+  return LIVES_RESULT_SUCCESS;	    
+}
+
+
+// we go from out (output) to in (input)
+double get_conversion_cost(int cost_type, int out_width, int out_height, int in_width, int in_height,
+			   int outpl, int inpl, int *inpals, int out_gamma_type, int in_gamma_type,
+			   boolean ghost) {
+  // get cost for resize, pal_conv, gamma_change + misc_costs
+  // qloss costs for size_changes (QLOSS_S) are already baked into the model so we do not calculate those
+  // for QLOSS_P, we have conversion cosst + possible ghost cost
+  // for time cost, some operations can be combined - resize, pal_conv, gamma_conversion
+  // in addiition we may have misc costs (e.g for deinterlacing)
+  // so, valid cost_types are COST_TYPE_TIME and COST_TYPE_QLOSS_P
+
+  int op_order[N_OP_TYPES];
+
+  get_op_order(out_size, in_size, outpl, inpl, out_gamma_type, in_gamma_type, op_order); 
+
+  if (!op_order[OP_RESIZE] && !op_order[OP_PCONV] && !op_order[OP_GAMMA]) return 0,;
+
+  // for COST_TYPE_QLOSS_P it can be more conveneint to call calc_pal_conv_costs directly
+  if (cost_type == COST_TYPE_QLOSS_P) {
+    double q = 1.; 
+    if (op_order[OP_GAMMA]) 
+      q *= get_gamma_cost(cost_type, 0., 0., WEED_PALETTE_NONE, out_gamma_type, in_gamma_type, ghost);  
+    if (op_order[OP_PALCONV]) 
+      q *= get_pconv_cost(cost_type, 0., 0., outpl, inpl);
+    return q;
+  }
+
+  if (cost_type != COST_TYPE_TIME) return 0.;
+  
+  // check if resize or letterbox - for lbox we consider only inner size
+  // now we should have the operations in order
+  if (op_order[OP_RESIZE] == 1) {
+    // 1 - -
+    if (op_order[OP_PALCONV] == 1) {
+      // 1 1 -
+      if (op_order[OP_GAMMA] == 1) {
+	// all 3 ops - so only resize cost : R
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+      }
+      if (!op_order[OP_GAMMA]) {
+	// resize + pconv : R
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 2) {
+	// resize + palconv / gamma : R G
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl)
+	  + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, inpl, out_gamma_type, in_gamma_type, ghost);
+      }
+    }
+    if (!op_order[OP_PALCONV]) {
+      // 1 0 -
+	if (op_order[OP_GAMMA] == 1) {
+	  // resize + gamma : R
+	  return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+	}
+	if (!op_order[OP_GAMMA]) {
+	// resize only : R
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 2) {
+	// resize / gamma : R G
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl)
+	  + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, outpl, out_gamma, in_gamma, ghost);
+      }
+    }
+    if (op_order[OP_PALCONV] == 2) {
+      // 1 2 -
+      if (op_order[OP_GAMMA] == 1) {
+	// resize + gamma / pconv: R P
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+	  + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl);
+      }
+      if (!op_order[OP_GAMMA]) {
+	// resize / pconv : R P
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+	  + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 2) {
+	// resize / palconv + gamma : R P
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+	  + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 3) {
+	// resize / pconv / gamma : R P G
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+	  + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl)
+	  + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, inpl, out_gamma_type, in_gamma_type, ghost);
+      }
+    }
+    if (op_order[OP_PALCONV] == 3) {
+      // 1 3 2
+      if (op_order[OP_GAMMA] == 2) {
+	// resize / gamma / pconv : R G P
+	return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+	  + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, outpl, out_gamma_type, in_gamma_type, ghost)
+	  + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl);
+      }
+    }
+  }
+
+  // pconv first
+  if (op_order[OP_PCONV] == 1) {
+    // - 1 -
+    if (!op_order[OP_RESIZE]) {
+      // 0 1 -
+      if (!op_order[OP_GAMMA]) {
+	// pconv only : P
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 1) {
+	// pconv + gamma : P
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl);
+      }
+      if (!op_order[OP_GAMMA] == 2) {
+	// pconv / gamma : P G
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, inpl, out_gamma_type, in_gamma_type, ghost);
+      }
+    }
+    if (op_order[OP_RESIZE] == 2) {
+      if (op_order[OP_GAMMA] == 1) {
+	// pconv + gamma / resize : P R
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
+      }
+      if (!op_order[OP_GAMMA]) {
+	// pconv / resize : P R
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 2) {
+	// pconv / resize + gamma : P R
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
+      }
+      if (op_order[OP_GAMMA] == 3) {
+	// pconv / resize / gamma : P R G
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl)
+	  + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, inpl, out_gamma_type, in_gamma_type, ghost);
+      }
+    }
+    if (op_order[OP_RESIZE] == 3) {
+      if (op_order[OP_GAMMA] == 2) {
+	// pconv / gamma / resize : P G R
+	return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, inpl, out_gamma_type, in_gamma_type, ghost)
+	+ get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
+      }
+    }
+  }
+
+  // gamma first
+  if (op_order[OP_GAMMA] == 1) {
+    // - - 1
+    if (!op_order[OP_RESIZE]) { 
+      if (!op_order[OP_PCONV]) {
+	// gamma only
+	return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost);
+      }
+      if (op_order[OP_PCONV] == 2) {
+	// gamma / pconv : G P
+	return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+	  + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl);
+      }
+      if (!op_order[OP_PCONV]) {
+	// gamma only : G
+	return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost);
+      }
+    }
+    if (op_order[OP_RESIZE] == 2) {
+      if (op_order[OP_PCONV] == 2) {
+	// gamma / resize + pconv : G R
+	return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+	  + get_resize_cost(COST_TYPE_TIME, out_size, in_size, outpl, outpl);
+      }
+      if (op_order[OP_PCONV] == 3) {
+	// gamma / resize / pconv : G R P
+	return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+	  + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+	    + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl);
+      }
+    }
+    if (op_order[OP_RESIZE] == 3) {
+      if (op_order[OP_PCONV] == 2) {
+	// gamma / pconv / resize : G P R
+	return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+	  + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl)
+	  + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
+      }
+    }
+  }
+  return 0.;
+}
+
+
+static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
   // CALCULATE CHANNEL SIZES
 
   // the sizes set here are just initial values to bootstrap the nodemodel
 
   // in the final implementation, sizes will be a thing that gets optimised, alongside palettes
   // and gamma types
+
+  // MODEL_TYPES
+
+  // for NODE_MODELS_CLIP, NODE_MODELS_SRC, we do not set the sizes
+  // SRC can produce frames at any desired size, CLIP may have multip[e internal clip_srcs, hence
+  // no real size, so we just resize to whatever the connected input requirss
+  // for INSTANCES which are also sources (generators) we also assume (for now) that they can produce any necessary size
+
+  // this leaves non source INSTANCES, OUTPUTS, and INTERNAL sinks
+
+  // since source sizes can be easily adjusted, we start from the sink / output and work backwards
+
+  // calculating the input size to the sink is of extreme importance since it has a huge breaking on overal costs
+  // it also depends on quality level
+  // for low q and mid q, the input may be smaller than the node size (opwidth, opheight)
+  // 
 
   // since we have FIVE contributors to costs - palette conversion, resizes, and gamma conversion,
   // processing time, and layer copy times
@@ -419,26 +965,35 @@ static int calc_node_sizes(inst_node_t *inode) {
   //
   // at sink,we will strech or expand to fit in sink
   // if sink is a pb plugin and can letterbox, we do not add blank bars. If sink can resize
+  
+  weed_instance_t *inst = (weed_instance_t *)n->model_for;
 
-  weed_instance_t *instance = (weed_instance_t *)dsource->source;
-  weed_channel_t *channel = get_enabled_channel(instance, 0,
-						dsource->src_type == LIVES_SRC_TYPE_EFFECT);
-  weed_chantmpl_t *chantmpl = weed_channel_get_template(channel);
+  weed_channel_t **in_channels = weed_instance_get_in_channels(inst, &num_inc);
+  weed_channel_t **out_channels = weed_instance_get_out_channels(inst, &num_outc);
   weed_filter_t *filter = weed_instance_get_filter(instance, TRUE);
+  weed_channel_t *channel;
 
-  doublke minaar = 0., maxar = 0., ar, op_ar, w0, w1, h0, h1;
+  input_node_t *inpnode;
+  output_node_t *outnode;
+
+  double minar = 0., maxar = 0., ar, w0, w1, h0, h1;
   double rmaxw, rmaxh, rminw = 0., rminh = 0.;
-  double op_ar, bb_ar, 
-    boolean non_lb_layer = FALSE, letterbox = FALSE;
+  double op_ar, bb_ar;
+
+  boolean non_lb_layer = FALSE, letterbox = FALSE;
   boolean svary = FALSE, is_converter = FALSE;
-  int xopwidth = opwidth;
-  int xopheight = oheight;
 
-  int filter_flags = weed_filter_get_flags(filter);
-  int sflags = weed_chantmpl_get_flags(chantmpl);
+  int opwidth = nodemodel->opwidth;
+  int opheight = nodemodel->opheight;
 
-  if (filter_flags & WEED_FILTER_CHANNEL_SIZES_MAY_VARY) svary = TRUE;
-  if (filter_flags & WEED_FILTER_IS_CONVERTER) is_converter = TRUE;
+  int nins, nouts;
+
+  int ni = 0, i;
+
+  if (!n->n_inputs) return;
+
+  if (n->flags & NODESRC_ANY_SIZE) svary = TRUE;
+  if (n->flags & NODESRC_IS_CONVERTOR) is_convertor = TRUEl
 
   if ((mainw->multitrack && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)
       || (LIVES_IS_RENDERING && prefs->enc_letterbox))
@@ -446,674 +1001,608 @@ static int calc_node_sizes(inst_node_t *inode) {
 
   rminw = rmaxw = 0.;
   rminh = rmaxh = 0.;
-  
-  // get max and min widths and heights for all input layers
-  for (i = 0; i < num_in_tracks; i++) {
-    lives_clip_t *sfile = NULL;
-    channel = in_channels[i];
 
-    // TODO - flag as SKIP in nodemodel
+  op_ar = (double)opwidth / (double)opheight;
+
+  nins = enabled_in_channels(filter, FALSE);
+  nouts = enabled_in_channels(filter, FALSE);
+
+  // get max and min widths and heights for all input layers
+  for (k = 0; k < nins; k++) {
+    if (i >= n->n_inputs) break;
+
+    channel = in_channels[k];
+
+    // if a in channel is alpha only we do not associate it with an input - these inputs / ouutputs
+    // fall outside the layers model
     if (weed_channel_is_alpha(channel)) continue;
    
-    // TODO - flag as SKIP in nodemodel
-    if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
-	weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
+    if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE) continue;
+
+    // if a channel is temp disabled this means that it is currently not connected to an active layer
+    // we will create an extra input for it, increae n_inputs, but then mark it as IGNORE
+    // at a latrer point it may need to be enabled (if we hav more in_tracks than active inputs)
+    // in some circumstances this allows for the new inptu to be enabled and connected to a new source node without
+    // having to rebuild the entire model
+    //
+    
+    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
+      //  what we need to here is to find the channel template for the channel, check the in_count
+      // to find how many repetitions of the tmeplate are in use, then count the current number of channels
+      // if there are fewer specified in the in_count than actually exist, some of them will be marked as temp_disbaled
+      // and will not be connected to anode. If there are more incount than active chans, we can enable som disabled ones
+      // if there are fewer in in count than enabled, we need to diable some
+      // what we should do first is look in in_Count, create a new count of how many copies of each template then compare
+      // if we need more we can enabel some, if we still need more we need to crate more copies,
+      // but this reuires a reinit and rebuild.
+      // If we havew fewr in in_Count we can diable channels and mark inputs as INGORE
+      // here we assume all this has been done, we will create an extre input, and mark it as ignore
+      n->inputs = (input_node_t **)lives_recalloc(n->inputs, n->n_inputs + 1,
+						    n->n_inputs, sizeof(input_node_t *));
+      inpnode = n->inputs[n->n_inputs] = (input_node_t *)lives_calloc(1, sizeof(input_node_t));
+      inpnode->flags |= NODEFLAG_IO_DISABLED;
+      n->n_inputs++;
+      // added at end, then when we get there, it will be flagged as SKIP
       continue;
     }
 
-    // get size from prev output
-    outnode = get_out_for_input(inpnode);
+    inpnode = n->inputs[i++];
 
+    if (inpnode->flags & NODEFLAGS_SKIP) continue;
+    
+    // get size from prev output
+    outnode = inpnode->node;
     if (!outnode) continue;
 
-    if (!non_lb_layesr) {
-      if (num_in_tracks > 1 && sfile && sfile->clip_type == CLIP_TYPE_GENERATOR
-	  && prefs->no_lb_gens) {
-	// if we have mixed letterboxing / non letterboxin layers, we not this
-	// then all layers which dont letterbox will get size opwidth X opheight
-	// these layers will then define the lb_size (rather than rmaxw X rmaxh)
-	//
-	non_lb_layer = TRUE;
-      }
-    }
-
-    inpnode->wdidth = outnode->width;
+    inpnode->width = outnode->width;
     inpnode->height = outnode->height;
 
-    if (num_in_tracks == 1) break;
+    if (!non_lb_layer) {
+      lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+      if (sfile) {
+	if (num_in_tracks > 1 && sfile && sfile->clip_type == CLIP_TYPE_GENERATOR
+	    && prefs->no_lb_gens) {
+	  // if we have mixed letterboxing / non letterboxin layers, we not this
+	  // then all layers which dont letterbox will get size opwidth X opheight
+	  // these layers will then define the lb_size (rather than rmaxw X rmaxh)
+	  //
+	  non_lb_layer = TRUE;
+	}
+      }
+    }
     
     // if prevnode has no size set - which can be the case if we have variable size sources
     // then if we have other inputs with size set, we set this to the bounding box size
     // if there are no other inputs with non zero height, then we leave it as zero, and set ouput to zero
 
-    // after the first pass we will begin with the sink size, and ascend up the node tree
-    // if we arrive at a node with output size, 0, 0, 
-    // we set the output size for the node to be equal to the
-    // connected input. Then we will ascend. setting input size == output size until we
-    // just as with palettes, the first output to reach a multi output node will set the size for the node
+    if (!inpnode->width || !inpnode->height) continue;
 
-    if (inpnode->width == 0. || inpnode->height == 0.) continue;
+    // for a single layer, avoid resizing as long ass possible
+    if (nins == 1) continue;
 
-    if (rminw == 0. || (double)inpnode->width < rminw) rminw = (double)inpnode->width;
-    if ((double)inpnode->width > rmaxw) rmaxw = (double)inpnode->width;
+    layer_ar = (double)inpnode->width / (double)inpnode->height;
 
-    if (rminh == 0.|| (double)inpnode->height < rminh) rminh = (double)inpnode->height;
-    if ((double)inpnode->height > (double)rmaxh) rmaxh = (double)inpnode->height;
+    if (!letterbox) {
+      // if we have sizes set and we are not letterboxing, set layer ar to op_ar
+      if (op_ar > layer_ar) {
+	// op_ar is wider
+	if (prefs->pb_quality == PB_QUALITY_HIGH) {
+	  // stretch to op_ar unless inner box > display size
+	  if (inpnode->width >= opwidth && (double)inpnode->width / op_ar >= (double)opheight) {
+	    inpnode->height = (int)((double)inpnode->width / op_ar + .5);
+	  }
+	  else {
+	    inpnode->width = (int)((double)inpnode->height * op_ar + .5);
+	  }
+	}
+	if (prefs->pb_quality == PB_QUALITY_MED) {
+	  // stretch to op_ar unless either axis is > display axis
+	  if (inpnode->width >= opwidth || (double)inpnode->width / op_ar >= (double)opheight) {
+	    inpnode->height = (int)((double)inpnode->width / op_ar + .5);
+	  }
+	  else {
+	    inpnode->width = (int)((double)inpnode->height * op_ar + .5);
+	  }
+	}
+	if (prefs->pb_quality == PB_QUALITY_LOW) {
+	  // change a.r. but keep size constant
+	  int area = inpnode->width * inpnode->height, new_area;
+	  inpnode->width = (int)((double)inpnode->height * op_ar + .5);
+	  new_area = inpnode->width * inpnode->height;
+	  sclf = sqrt((double)new_area - (double)area);
+	  inpnode->width = (int)((double)inpnode->width / scf + .5);
+	  inpnode->height = (int)((double)inpnode->height / scf + .5);
+	}
+      }
+      else if (op_ar < layer_ar) {
+	// op_ar is taller
+	if (prefs->pb_quality == PB_QUALITY_HIGH) {
+	  if (inpnode->height >= opheight && (double)inpnode->height * op_ar >= (double)opwidth) {
+	    inpnode->width = (int)((double)inpnode->height / op_ar + .5);
+	  }
+	  else {
+	    inpnode->height = (int)((double)inpnode->width * op_ar + .5);
+	  }
+	}
+	if (prefs->pb_quality == PB_QUALITY_MED) {
+	  if (inpnode->height >= opheight || (double)inpnode->height / op_ar >= (double)opwidth) {
+	    inpnode->width = (int)((double)inpnode->height / op_ar + .5);
+	  }
+	  else {
+	    inpnode->height = (int)((double)inpnode->width * op_ar + .5);
+	  }
+	}
+	if (prefs->pb_quality == PB_QUALITY_LOW) {
+	  // change a.r. but keep size constant
+	  double sclf;
+	  int area = inpnode->height * inpnode->width, new_area;
+	  inpnode->height = (int)((double)inpnode->width * op_ar + .5);
+	  new_area = inpnode->height * inpnode->width;
+	  sclf = sqrt((double)new_area - (double)area);
+	  inpnode->height = (int)((double)inpnode->height / scf + .5);
+	  inpnode->width = (int)((double)inpnode->width / scf + .5);
+	}
+      }
+      if ((double)inpnode->width > rmaxw) {
+	rmaxw = (double)inpnode->width;
+	rmaxh = (double)inpnode->height;
+      }
+      if (rminw == 0. || (double)inpnode->width < rminw) {
+	rminw = (double)inpnode->width;
+	rminh = (double)inpnode->height;
+      }
+    }
+    else {
+      // letterboxing - depednign on banding direction we take either tallest or widest
+      // layer as baseline
+      if (rminw == 0. || (double)inpnode->width < rminw) rminw = (double)inpnode->width;
+      if ((double)inpnode->width > rmaxw) rmaxw = (double)inpnode->width;
 
-    ar = (double)inpnode->width / (double)inpnode->height;
-    if (minar == 0. ar < minar) minar = ar;
-    if (ar > maxar) maxar = ar;
+      if (rminh == 0.|| (double)inpnode->height < rminh) rminh = (double)inpnode->height;
+      if ((double)inpnode->height > (double)rmaxh) rmaxh = (double)inpnode->height;
+
+      if (minar == 0. layer_ar < minar) minar = layer_ar;
+      if (layer_ar > maxar) maxar = layer_ar;
+    }
   }
 
-  if (ramxw > 0. && rmaxh > 0.) {
+  if (rmaxw > 0. && rmaxh > 0.) {
     // we can have cases where all inputs are from srcs with var. size
     // if so then we are going to set node and output sizes to 0
     // and fix this ascending
-    op_ar = (double)opwidth / (double)opheight;
 
-    // we found bounding box rmaxw X rmaxh
-    // find 2 new boxes
+    // for resize we scaled to op_ar
+    // now we want to set all sizes equal
 
-    // if we have only one in channel, we avoid resizing
-    // if we have mutliple in channels we will find the bounding box of all layers
-    // set this to a.r of op and then resize all layers to this
+    // for HIGH_Q we will use MAX(op_size, MAX(layer_sizes))
+    // for MED_Q we will use MIN(op_size, MAX(layer_sizes))
+    // for LOW_Q we will use MIN(op_size, MIN(layer_sizes))
 
-    // (if letterboxing then opwidht X opheight becomes lb_size, and inner sizes keep layer aspect ratios
-    // letterbox size is rmaxw X rmaxh, unless we hav layers which do not lettrebox, then they are scaled
-    // to opwidht X opheight and  this becomes lb_size
+    if (!letterbox) {
+      op_area = opwidth * opheight;
+      max_larea = rmaxw * rmaxh;
+      min_larea = rminw * rminh;
 
-    // test width, maintinaing height and adjusting to ar of op
-    w0 = rmaxh * op_ar;
-    // test width, maintinaing height and adjusting to ar of op
-    h0 = rmaxw / op_ar;
-    // in one case one dimension will now be smaller, this is the inner frame
-    // in the other it will be larger this is the outer frame
-    // or all ar are the same
-
-    w1 = rminh * op_ar;
-    h1 = rminw / op_ar;
-
-    // here we will define a new opwidth, opheight
-    // this is the size we will set all frames to
-    switch (pb_quality) {
-    case PB_QUALITY_HIGH:
-      // we have 2 options, keep width same, increas or redeuce height,
-      // or keep hieght same, reduce or increase width
-      // try reducing first, if this is > op size we use that
-      // if < op size, then try increasing
-      // if still < opsize, we use opsize
-      
-      // for high qu we use the op size or inner box, whcihever is largest
-      if (w0 <= rmaxw) {
-	// size w0 X rmaxh
-	if (w0 >= (double)opwidth && rmaxh >= (double)opheight) {
-	  // use inner
-	  opwidth = (int)w0;
-	  opheight = (int)rmaxh;
-	  break;
+      switch (prefs->pb_quality) {
+      case PB_QUALITY_HIGH:
+	if (op_area < max_larea) {
+	  opwidth = rmaxw;
+	  opheight = rmaxh;
+	}
+	break;
+      case PB_QUALITY_MED:
+	if (op_area > max_larea) {
+	  opwidth = rmaxw;
+	  opheight = rmaxh;
+	}
+	break;
+      case PB_QUALITY_LOW:
+	if (op_area > min_larea) {
+	  opwidth = rminw;
+	  opheight = rminh;
 	}
       }
-      if (h0 <= (double)rmaxh) {
-	// size w0 
-	if (h0 >= (double)opheight && rmaxw >= (double)opwidth) {
-	  // use inner
-	  opwidth = (int)rmaxw;
-	  opheight = (int)h0;
-	  break;
-	}
-      }
-      // inner was < displaye
-      // try with max instead
-      if (w0 >= rmaxw) {
-	// size w0 X rmaxh
-	if (w0 >= (double)opwidth && rmaxh >= (double)opheight) {
-	  // use inner
-	  opwidth = (int)w0;
-	  opheight = (int)rmaxh;
-	  break;
-	}
-      }
-      if (h0 = (double)rmaxh) {
-	// size w0 
-	if (h0 >= (double)opheight && rmaxw >= (double)opwidth) {
-	  // use inner
-	  opwidth = (int)rmaxw;
-	  opheight = (int)h0;
-	  break;
-	}
-      }
-      // if neither inner or outer is > screen size, use screen size
-      break;
-    case PB_QUALITY_MED:
-      // for med we will use outer box, inner box  or op size, whichever is smaller
-      if (w0 >= rmaxw) {
-	if (w0 <= (double)opwidth && rmaxh <= (double)opheight) {
-	  opwidth = (int)w0;
-	  opheight = (int)rmaxh;
-	  break;
-	}
-      }
-      if (h0 >= rmaxh) {
-	if (h0 <= (double)opheight && rmaxw <= (double)opwidth) {
-	  opwidth = (int)rmaxw;
-	  opheight = (int)h0;
-	  break;
-	}
-      }
-      if (w0 < rmaxw) {
-	if (w0 <= (double)opwidth && rmaxh <= (double)opheight) {
-	  opwidth = (int)w0;
-	  opheight = (int)rmaxh;
-	  break;
-	}
-      }
-      if (h0 < rmaxh) {
-	if (h0 <= (double)opheight && rmaxw <= (double)opwidth) {
-	  opwidth = (int)rmaxw;
-	  opheight = (int)h0;
-	  break;
-	}
-      }
-      break;
-    case PB_QUALITY_LOW:
-      // for low we will use outer box of min vals, or inner box of max vals, whichever is smaller
-      // if both are > op size, we use inner box of min vals or op size, whichever issmaller
-      if (w1 > rminww) {
-	if (w1 <= (double)opwidth && rminh <= (double)opheight && rminh < h0 ) {
-	  opwidth = (int)w1;
-	  opheight = (int)rminh;
-	  break;
-	}
-      }
-      if (h1 > rminh) {
-	if (h1 <= (double)opheight && rminw <= (double)opwidth && rminw < w0) {
-	  opwidth = (int)rminw;
-	  opheight = (int)h1;
-	  break;
-	}
-      }
-      if (w0 < rmaxw) {
-	if (w0 <= (double)opwidth && rmaxh <= (double)opheight) {
-	  opwidth = (int)w0;
-	  opheight = (int)rmaxh;
-	  break;
-	}
-      }
-      if (h0 < rmaxh) {
-	if (h0 <= (double)opheight && rmaxw <= (double)opwidth) {
-	  opwidth = (int)rmaxw;
-	  opheight = (int)h0;
-	  break;
-	}
-      }
-      break;
-    default: break;
-    }
-
-    if (!letterbox || svary) {
-      // if not letterboxing, all layers will be resized to new opwidth
-      innode->width = opwidth;
-      innode->height = opheight;
     }
     else {
-      // when letterboxing, all layers that implement it keep their original a.r. but may shrink or expand
-      // we know ar of opwidth / opheight and ar of rmaxw, rmaxh and rminw, rminh
-      // when letterboxing, we want to opwidth / opheith and fit rmaxw, rmax inside it
-      // but we are not going to resize layers to opwidth X opheit, instead we will fit the extended bb inside it
-      // the bb extends when we expand some layers to all havam rmaxw eidth or all to have rmaxh heigth
-      // then we take the expanded bbox and try to fit this in output
-      //  if we had a very tall bbox to start with and width did not change, then we cannt use the max width
-      // and hve height fit in op. If we have very thin layers in each direction, then when expanding
-      // to max width or height, the orer dimension gets very large no matter which way round we do it
+      // we found bounding box rmaxw X rmaxh
+      // find 2 new boxes
+
+      // if we have only one in channel, we avoid resizing
+      // if we have mutliple in channels we will find the bounding box of all layers
+      // set this to a.r of op and then resize all layers to this
+
+      // (if letterboxing then opwidht X opheight becomes lb_size, and inner sizes keep layer aspect ratios
+      // letterbox size is rmaxw X rmaxh, unless we have layers which do not lettrebox, then they are scaled
+      // to opwidht X opheight and  this becomes lb_size
+
+      // test width, maintinaing height and adjusting to ar of op
+      w0 = rmaxh * op_ar;
+      // test width, maintinaing height and adjusting to ar of op
+      h0 = rmaxw / op_ar;
+      // in one case one dimension will now be smaller, this is the inner frame
+      // in the other it will be larger this is the outer frame
+      // or all ar are the same
+
+      w1 = rminh * op_ar;
+      h1 = rminw / op_ar;
+
+      // here we will define a new opwidth, opheight
+      // this is the size we will set all frames to
+      switch (prefs->pb_quality) {
+      case PB_QUALITY_HIGH:
+	// we have 2 options, keep width same, increas or redeuce height,
+	// or keep hieght same, reduce or increase width
+	// try reducing first, if this is > op size we use that
+	// if < op size, then try increasing
+	// if still < opsize, we use opsize
       
-      // 
-      // we calculate - set all layer heigths to max height and get expanded widdth
-      // versus set all to max width and calc ne hithg
-      // then check ratios - proportion of op frame filled by baning axis * a wigth
-      // , then for each laye calc ratio of non max direction as opwidth . reduc use wighting
-      // calc for each layer width layer / full with (or height), multiply toget with bangin proportion * wieghting,
-      // find which give higher total
-      // and a thrid ratio which is op size / expanded value * another weighting
-      // also need to factor in how much size reduction
-      // each layer gets expanded, thenthis is recuded, so multiplying togetr then  divide by maxed dimension
-      // so thre ratios - redced dimension / op, for each layer, final expanded dmiension . max expanded,
-      // and expanded dim. strectch over redux
-      // the first tesll how much of op is banded
-      // the second the internal banding,
-      // and third how much the layers get rudced by due to a wide / tall outlier layer
-      // eg we have one very wide layer, we should band op horizontally
-      // unless we halso have on very tall layer outlier
-      // this owudl be worst case option 1 vey wide laye and 1 very tall
-      // another consideration we want to avoid constanly switching from h bands
-      // to v bands as layers are added or q value alters
-      //
-      // if we have one row like layer and another very large square layerwe should avoid vertical banding since
-      // the row like layer would expand vertially and exttend ven more horiozontally
-      // then shrunk to fit in op which would , the bb expands less so is less
-      // reduced, the big layer epand to the wo width then all cut down to op width, maning nothign gets very reduced
-      // thus exp size / opsize is important for this
-      // ratio of layer in lb axis would be small but we should discount originsal opproportion
-      //
-      // thus most important is max w or h / lare w or h eninon fixed direction
-      // second cosideration is ratio of op willed
-      // least important in tra lyer proportion
-      // so calculate both ways, see which is best. also if op ar > 1 we prefer horiz  (cinemasocpe)
-      // 
-      // calcate with ha baning
-      //
-      // set all heights to opheight,
-      // calc new width rmax
-      // shirnk / expand to  opwidth. for each layer then, find how much reduction this is expand / div shrin * width
-      // this is just a constant now so it just depends on
-
-      // summary: we found rmaw, rmaxh, rminw, rminh
-      // calulated a box of size depending on quality
-      // if not letterboxing, all channels get set to this
-
-      // for letterboxing, we go back to rmaxw, rmaxh, and construct the opsize around it
-      // then if opbox is taller, we are going to add hbands, if wider, vbands
-      // if adding hbands, we want to set all layers to have rmaxh. This will expanf rmaxw
-      // we then construct anothe op box around this, and then if it is > screen size, shrink it down
-      // for hi we use the  final box as is, but 2 sides must hit orig rmaxw or rmaxh
-      //
-      // for mid we are going to shrink it down to fit in orig op size,
-      //
-      // for low we shrink it down so two sides touch rminh rminw
-
-      double vcov, hcov, hspread = 1., vspread = 1., hshrinkage = 1, vshrinlage = 1.;
-      double rw, rwh, rh, rhw, new_maxw = 0., new_maxh = 0.;
-      int lb_width, lb_height;
-
-      // get new opbox
-
-      bb_ar = rmaxw / rmaxh;
-
-      if (pb_quality == PB_QUALITY_LOW) {
-	if (opwidth <= rmaxw && opheight <= rmaxh) {
-	  if (opwidth / bb_ar > opheight) {
-	    rmaxw = opwidth;
-	    rmaxh = rmaxw / bb_ar;
-	  }
-	  if (opheight * bb_ar > owidth) {
-	    rmaxh = opheight;
-	    rmaxw = rmaxh * bb_ar;
+	// for high qu we use the op size or inner box, whcihever is largest
+	if (w0 <= rmaxw) {
+	  // size w0 X rmaxh
+	  if (w0 >= (double)opwidth && rmaxh >= (double)opheight) {
+	    // use inner
+	    opwidth = (int)w0;
+	    opheight = (int)rmaxh;
+	    break;
 	  }
 	}
+	if (h0 <= (double)rmaxh) {
+	  // size w0 
+	  if (h0 >= (double)opheight && rmaxw >= (double)opwidth) {
+	    // use inner
+	    opwidth = (int)rmaxw;
+	    opheight = (int)h0;
+	    break;
+	  }
+	}
+	// inner was < displaye
+	// try with max instead
+	if (w0 >= rmaxw) {
+	  // size w0 X rmaxh
+	  if (w0 >= (double)opwidth && rmaxh >= (double)opheight) {
+	    // use inner
+	    opwidth = (int)w0;
+	    opheight = (int)rmaxh;
+	    break;
+	  }
+	}
+	if (h0 = (double)rmaxh) {
+	  // size w0 
+	  if (h0 >= (double)opheight && rmaxw >= (double)opwidth) {
+	    // use inner
+	    opwidth = (int)rmaxw;
+	    opheight = (int)h0;
+	    break;
+	  }
+	}
+	// if neither inner or outer is > screen size, use screen size
+	break;
+      case PB_QUALITY_MED:
+	// for med we will use outer box, inner box  or op size, whichever is smaller
+	if (w0 >= rmaxw) {
+	  if (w0 <= (double)opwidth && rmaxh <= (double)opheight) {
+	    opwidth = (int)w0;
+	    opheight = (int)rmaxh;
+	    break;
+	  }
+	}
+	if (h0 >= rmaxh) {
+	  if (h0 <= (double)opheight && rmaxw <= (double)opwidth) {
+	    opwidth = (int)rmaxw;
+	    opheight = (int)h0;
+	    break;
+	  }
+	}
+	if (w0 < rmaxw) {
+	  if (w0 <= (double)opwidth && rmaxh <= (double)opheight) {
+	    opwidth = (int)w0;
+	    opheight = (int)rmaxh;
+	    break;
+	  }
+	}
+	if (h0 < rmaxh) {
+	  if (h0 <= (double)opheight && rmaxw <= (double)opwidth) {
+	    opwidth = (int)rmaxw;
+	    opheight = (int)h0;
+	    break;
+	  }
+	}
+	break;
+      case PB_QUALITY_LOW:
+	// for low we will use outer box of min vals, or inner box of max vals, whichever is smaller
+	// if both are > op size, we use inner box of min vals or op size, whichever issmaller
+	if (w1 > rminww) {
+	  if (w1 <= (double)opwidth && rminh <= (double)opheight && rminh < h0 ) {
+	    opwidth = (int)w1;
+	    opheight = (int)rminh;
+	    break;
+	  }
+	}
+	if (h1 > rminh) {
+	  if (h1 <= (double)opheight && rminw <= (double)opwidth && rminw < w0) {
+	    opwidth = (int)rminw;
+	    opheight = (int)h1;
+	    break;
+	  }
+	}
+	if (w0 < rmaxw) {
+	  if (w0 <= (double)opwidth && rmaxh <= (double)opheight) {
+	    opwidth = (int)w0;
+	    opheight = (int)rmaxh;
+	    break;
+	  }
+	}
+	if (h0 < rmaxh) {
+	  if (h0 <= (double)opheight && rmaxw <= (double)opwidth) {
+	    opwidth = (int)rmaxw;
+	    opheight = (int)h0;
+	    break;
+	  }
+	}
+	break;
+      default: break;
       }
+    }
 
+    for (i = 0; i < n->n_inputs; i++) {
+      inpnode->n->inputs[i];
+
+      if (inpnode->flags & NODEFLAGS_SKIP) continue;
+      
+      if (!letterbox || svary) {
+	// if not letterboxing, all layers will be resized to new opwidth
+	innode->width = opwidth;
+	innode->height = opheight;
+      }
       else {
-	if (opwidth < rmaxw) {
-	  opwidth = rmaxw;
-	  opheight = rmaxw / op_ar;
+	// when letterboxing, all layers that implement it keep their original a.r. but may shrink or expand
+	// we know ar of opwidth / opheight and ar of rmaxw, rmaxh and rminw, rminh
+	// when letterboxing, we want to opwidth / opheith and fit rmaxw, rmax inside it
+	// but we are not going to resize layers to opwidth X opheit, instead we will fit the extended bb inside it
+	// the bb extends when we expand some layers to all havam rmaxw eidth or all to have rmaxh heigth
+	// then we take the expanded bbox and try to fit this in output
+	//  if we had a very tall bbox to start with and width did not change, then we cannt use the max width
+	// and hve height fit in op. If we have very thin layers in each direction, then when expanding
+	// to max width or height, the orer dimension gets very large no matter which way round we do it
+      
+	// 
+	// we calculate - set all layer heigths to max height and get expanded widdth
+	// versus set all to max width and calc ne hithg
+	// then check ratios - proportion of op frame filled by baning axis * a wigth
+	// , then for each laye calc ratio of non max direction as opwidth . reduc use wighting
+	// calc for each layer width layer / full with (or height), multiply toget with bangin proportion * wieghting,
+	// find which give higher total
+	// and a thrid ratio which is op size / expanded value * another weighting
+	// also need to factor in how much size reduction
+	// each layer gets expanded, thenthis is recuded, so multiplying togetr then  divide by maxed dimension
+	// so thre ratios - redced dimension / op, for each layer, final expanded dmiension . max expanded,
+	// and expanded dim. strectch over redux
+	// the first tesll how much of op is banded
+	// the second the internal banding,
+	// and third how much the layers get rudced by due to a wide / tall outlier layer
+	// eg we have one very wide layer, we should band op horizontally
+	// unless we halso have on very tall layer outlier
+	// this owudl be worst case option 1 vey wide laye and 1 very tall
+	// another consideration we want to avoid constanly switching from h bands
+	// to v bands as layers are added or q value alters
+	//
+	// if we have one row like layer and another very large square layerwe should avoid vertical banding since
+	// the row like layer would expand vertially and exttend ven more horiozontally
+	// then shrunk to fit in op which would , the bb expands less so is less
+	// reduced, the big layer epand to the wo width then all cut down to op width, maning nothign gets very reduced
+	// thus exp size / opsize is important for this
+	// ratio of layer in lb axis would be small but we should discount originsal opproportion
+	//
+	// thus most important is max w or h / lare w or h eninon fixed direction
+	// second cosideration is ratio of op willed
+	// least important in tra lyer proportion
+	// so calculate both ways, see which is best. also if op ar > 1 we prefer horiz  (cinemasocpe)
+	// 
+	//
+	// set all heights to opheight,
+	// calc new width rmax
+	// shirnk / expand to  opwidth. for each layer then, find how much reduction this is expand / div shrin * width
+	// this is just a constant now so it just depends on
+
+	// summary: we found rmaw, rmaxh, rminw, rminh
+	// calulated a box of size depending on quality
+	// if not letterboxing, all channels get set to this
+
+	// for letterboxing, we go back to rmaxw, rmaxh, and construct the opsize around it
+	// then if opbox is taller, we are going to add hbands, if wider, vbands
+	// if adding hbands, we want to set all layers to have rmaxh. This will expanf rmaxw
+	// we then construct anothe op box around this, and then if it is > screen size, shrink it down
+	// for hi we use the  final box as is, but 2 sides must hit orig rmaxw or rmaxh
+	//
+	// for mid we are going to shrink it down to fit in orig op size,
+	//
+	// for low we shrink it down so two sides touch rminh rminw
+
+	double vcov, hcov, hspread = 1., vspread = 1., hshrinkage = 1, vshrinlage = 1.;
+	double rw, rwh, rh, rhw, new_maxw = 0., new_maxh = 0.;
+	int lb_width, lb_height;
+
+	// get new opbox
+
+	bb_ar = rmaxw / rmaxh;
+
+	if (prefs->pb_quality == PB_QUALITY_LOW) {
+	  if (opwidth <= rmaxw && opheight <= rmaxh) {
+	    if (opwidth / bb_ar > opheight) {
+	      rmaxw = opwidth;
+	      rmaxh = rmaxw / bb_ar;
+	    }
+	    if (opheight * bb_ar > owidth) {
+	      rmaxh = opheight;
+	      rmaxw = rmaxh * bb_ar;
+	    }
+	  }
 	}
-	if (opheight < rmaxh) {
-	  opheight = rmaxh;
-	  opwidth = rmaxh * op_ar;
+
+	else {
+	  if (opwidth < rmaxw) {
+	    opwidth = rmaxw;
+	    opheight = rmaxw / op_ar;
+	  }
+	  if (opheight < rmaxh) {
+	    opheight = rmaxh;
+	    opwidth = rmaxh * op_ar;
+	  }
+	}
+
+	if (opwidth > rmaxw) banding = 1;
+
+	for (i = 0; i < nins; i++) {
+	  inpnode->n->inputs[i];
+	  if (inpnode->flags & NODEFLAGS_SKIP) continue;
+
+	if (rmaxw > 0. && inpnode->node->model_type == MODEL_TYPE_INSTANCE
+	    && !inpnode->node->n_inputs && prefs->no_lb_gens) continue;
+
+	  width = inpnode->width;
+	  height = inpnode->height;
+
+	  if (banding == 0) {
+	    width = (int)((double)width * rmaxh / (double)height + .5);
+	    if (width > new_maxw) new_maxw = width;
+	    height = (int)(rmaxh + .5);
+	  }
+	  else {
+	    height = (int)((double)height * rmaxw / (double)width + .5);
+	    if (height > new_maxh) new_maxh = height;
+	    width = (int)(rmaxw + .5);
+	  }
+	  // set inner_width, inner_height
+	  inpnode->inner_width = width;
+	  inpnode->inner_height = height;
+	}
+
+	bb_ar = new_max_width / rmaxh;
+	scf = 1;
+      
+	if (banding == 0) {
+	  rmaxw = new_max_w;
+	  if (prefs->pb_quality == PB_QUALITY_MED) {
+	    if (rmaxw > (double)xopwidth) scf = rmaxw / (double)xopwidth;
+	  }
+	  if (prefs->pb_quality == PB_QUALITY_LOW) {
+	    if (rmaxw > (double)opwidth) scf = rmaxw / (double)opwidth;
+	  }
+	}
+	else {
+	  rmaxh = new_max_h;
+	  if (prefs->pb_quality == PB_QUALITY_MED) {
+	    if (rmaxh > (double)xopheight) scf = rmaxh / (double)xopheight;
+	  }
+	  if (prefs->pb_quality == PB_QUALITY_LOW) {
+	    if (rmaxh > (double)opheight) scf = rmaxw / (double)opheight;
+	  }
+	}
+
+	if (scf != 1.) {
+	  rmaxw /= scf;
+	  rmaxh /= scf;
+	  opwidth = (int)((double)opwidth * scf + .5);
+	  opheight = (int)((double)opheight * scf + .5);
 	}
       }
 
-      if (opwidth > rmaxw) banding = 1;
-      
-      for (i = 0; i < num_in_tracks; i++) {
-	lives_clip_t *sfile = NULL;
-	channel = in_channels[i];
+      if (has_non_lb) {
+	lb_wddith = opwidth;
+	lb_height = opheight;
+      }
+      else {
+	lb_wddith = (int)(rmaxw + .5);
+	lb_height = (int)(rmaxh + .5);
+      };
 
-	// TODO - flag as SKIP in nodemodel
-	if (weed_channel_is_alpha(channel)) continue;
-      
-	/* cpalette = weed_channel_get_palette(channel); */
-	/* if (weed_palette_is_alpha(cpalette)) continue; */
+      lb_width = (lb_width >> 2) << 2;
+      lb_height = (lb_height >> 2) << 2;
 
-	// TODO - flag as SKIP in nodemodel
-	if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
-	    weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
+      opwidth = (opwidth >> 2) << 2;
+      opheight = (opwidth >> 2) << 2;
+
+      for (i = 0; i < nins; i++) {
+	inpnode = n->inputs[i];
+	if (inpnode->flags & NODESRC_IO_SKIP) continue;
+
+	if (rmaxw > 0. && inpnode->node->model_type == MODEL_TYPE_INSTANCE
+	    && !inpnode->node->n_inputs && prefs->no_lb_gens) {
+	  inpnode->width = inpnode->inner_width = opwidth;
+	  inpnode->height = inpnode->inner_height = opheight;
 	  continue;
 	}
 
-	if (rmaxw > 0. && inpdnode->node->dsource
-	    && inpnode->source->dsource->src_type == LIVES_SRC_TYPE_FILTER
-	    && prefs->no_lb_gens) continue;
-
-	width = inpnode->width;
-	height = inpnode->height;
-
-	if (banding == 0) {
-	  width = (int)((double)width * rmaxh / (double)height + .5);
-	  if (width > new_maxw) new_maxw = width;
-	  height = (int)(rmaxh + .5);
-	}
-	else {
-	  height = (int)((double)height * rmaxw / (double)width + .5);
-	  if (height > new_maxh) new_maxh = height;
-	  width = (int)(rmaxw + .5);
-	}
-	inpnode->inner_width = width;
-	inpnode->inner_height = height;
-      }
-
-      bb_ar = new_max_width / rmaxh;
-      scf = 1;
-      
-      if (banding == 0) {
-	rmaxw = new_max_w;
-	if (pb_quality == PB_QUALITY_MED) {
-	  if (rmaxw > (double)xopwidth) scf = rmaxw / (double)xopwidth;
-	}
-	if (pb_quality == PB_QUALITY_LOW) {
-	  if (rmaxw > (double)opwidth) scf = rmaxw / (double)opwidth;
-	}
-      }
-      else {
-	rmaxh = new_max_h;
-	if (pb_quality == PB_QUALITY_MED) {
-	  if (rmaxh > (double)xopheight) scf = rmaxh / (double)xopheight;
-	}
-	if (pb_quality == PB_QUALITY_LOW) {
-	  if (rmaxh > (double)opheight) scf = rmaxw / (double)opheight;
-	}
-      }
-
-      if (scf != 1.) {
-	rmaxw /= scf;
-	rmaxh /= scf;
-	opwidth = (int)((double)opwidth * scf + .5);
-	opheight = (int)((double)opheight * scf + .5);
+	inpnode->inner_width = (int)(scf * (double)inpnode->inner_width + .5);
+	inpnode->inner_height = (int)(scf * (double)inpnode->inner_height + .5);
+	inpnode->inner_width = (inpnode->inner_width << 2) >> 2;
+	inpnode->inner_height = (inpnode->inner_height << 2) >> 2;
+	inpnode->width = lb_width;
+	inpnode->height = lb_height;
       }
     }
+  }
 
-    if (has_non_lb) {
-      lb_wddith = opwidth;
-      lb_height = opheight;
+  i = 0;
+
+  for (k = 0; k < nouts; k++) {
+    if (i >= n->n_inputs) break;
+
+    channel = out_channels[k];
+
+    // if a in channel is alpha only we do not associate it with an input - these inputs / ouutputs
+    // fall outside the layers model
+    if (weed_channel_is_alpha(channel)) continue;
+
+    if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE) continue;
+
+    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
+      output_note_t *outnode;
+      n->outputs = (input_node_t **)lives_recalloc(n->outputs, n->n_outputs + 1,
+						   n->n_outputs, sizeof(output_node_t *));
+      outnode = n->outputs[n->n_outputs] = (output_node_t *)lives_calloc(1, sizeof(output_node_t));
+      outnode->flags |= NODEFLAG_IO_DISABLED;
+      n->n_outputs++;
+      continue;
+    }
+
+    outnode = n->outputs[i++];
+    
+    if (is_converter && svary) {
+      /// resizing - use the value we set in channel template
+      /// this allows us to, for example, resize the same in_channel to multiple out_channels at various sizes
+      chantmpl = weed_channel_get_template(channel);
+      cpalette = weed_channel_get_palette(channel);
+      width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
+      width /= weed_palette_get_pixels_per_macropixel(weed_channel_get_palette(channel));
+      height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
+      outnode->width = width;
+      outnode->height = height;
     }
     else {
-      lb_wddith = (int)(rmaxw + .5);
-      lb_height = (int)(rmaxh + .5);
-    };
-
-    for (i = 0; i < num_in_tracks; i++) {
-      lives_clip_t *sfile = NULL;
-      channel = in_channels[i];
-
-      // TODO - flag as SKIP in nodemodel
-      if (weed_channel_is_alpha(channel)) continue;
-      
-      /* cpalette = weed_channel_get_palette(channel); */
-      /* if (weed_palette_is_alpha(cpalette)) continue; */
-
-      // TODO - flag as SKIP in nodemodel
-      if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
-	  weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE)
-	continue;
-
-      if (rmaxw > 0. && inpdnode->node->dsource
-	  && inpnode->source->dsource->src_type == LIVES_SRC_TYPE_FILTER
-	  && prefs->no_lb_gens) {
-	inpnode->width = inpnode->inner_width = opwidth;
-	inpnode->height = inpnode->inner_height = opheight;
-	continue;
+      if (svary) {
+	inpnode = n->inputs[i];
+	outnode->width = inpnode->width;
+	outnode->height = inpnode->height;
       }
-
-      inpnode->inner_wodth = scf * inpnode->inner_width;
-      inpnode->inner_height = scf * inpnode->inner_height;
-      inpnode->width = lb_width;
-      inpnode->height = lb_height;
+      else {
+	outnode->width = n->inputs[0]->width;
+	outnode->height = n->inputs[0]->height;
+      }
     }
   }
-
-  // calculate score for each variant (horiz / vert banding)
-  // the score is derived from: coversge (the ratio of inner frame to outer frame)
-  // shrinkage - how much a layer is squashed - we first exapnd the layers to max, then reduce this to
-  // opwidth or opheight - this gives factors for the bounding box, rrw, rh
-  // however we look at this layer by layer each layer expands by a different amount and then is reduced
-  // by the same amount. Layers which expand less, are stil shrunk by same ratio, this is the shrinkage.
-  // we expand in both x and y, then reduce in both x and y simultaneously, we dont want to upscalelayers too much
-  // since this reduces quality, and costs time, so  we divide score by each shrinkage * a weight. Also
-  // if we had say, a wide, shrot layer, we would expand height a lot, expand with a lot, shrin widht a lot
-  // the othe r layers would expand les, but still shrink a lot
-  // on ther hand if we increa all to max width, then heigh increases a lot, then shrnking back fit it
-  // reduces a lot, more or less cancelling the expansion, thus shrinkage is less, except for thewide layer
-  // theheight would not increase at all, but would be shrunk down, howerve thi is only one layer.
-  // finally we have spread - this is a measure of the differenc in widths or heighta after shrinking / expanding
-  // this defines the amount of internal letterboxing. This is realted to the a.r of all the layers
-  // this is least important, since if this differes we will always have to lb
-  // and finally we consider parallel banding, this where we have to reduc in opposite direction
-  // due to bounding box a.r so we calulate this also
-  // we end up with a final score, and use whichever method has the highest weighted
-  // coverage + porduct of shrinkages +
-  // product of spreads, + product of cross banding
-  /* /\* hscore = 0.; *\/ */
-  /* /\* vscore = 0,; *\/ */
-
-  /* /\* // coverage *\/ */
-  /* /\* hcov = rmaxh / rw * / (double)opheight * (double)opwidth; *\/ */
-  /* /\* vcov = rmaxw / rh / (double)opwidth * (double)opheight; *\/ */
-
-  /* /\* // shrinkage *\/ */
-  /* /\* for (i = 0; i < num_in_tracks; i++) { *\/ */
-  /* /\* 	channel = in_channels[i]; *\/ */
-
-  /* /\* 	// TODO - flag as SKIP in nodemodel *\/ */
-  /* /\* 	if (weed_channel_is_alpha(channel)) continue; *\/ */
-
-  /* /\* 	// TODO - flag as SKIP in nodemodel *\/ */
-  /* /\* 	if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE || *\/ */
-  /* /\* 	    weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) { *\/ */
-  /* /\* 	  continue; *\/ */
-  /* /\* 	} *\/ */
-
-  /* /\* 	width = innode->width; *\/ */
-  /* /\* 	height = innode->height; *\/ */
-
-  /* /\* 	// we want this to be large as poss. *\/ */
-  /* /\* 	// we want to avoid upscalign too mucha as this can introduce artefacts *\/ */
-  /* /\* 	// this is less of an issue at high q, as we use slower higher quality scalers *\/ */
-
-  /* /\* 	// so we want (new_width * new_height) / (width * height) *\/ */
-  /* /\* 	// this is ((width * rmaxh / height) * rmaxh) / (width * height) *\/ */
-  /* /\* 	// this is correct because we already reduced rmaxh and rmahxw by factor rw *\/ */
-  /* /\* 	// so we end up with (rmaxh *rmaxh) / (height * height) *\/ */
-  /* /\* 	// then cancelling width from top and bottom, we end up with rmaxh / (height * height). This is correct because *\/ */
-  /* /\* 	// we increase width proportianlly to height, then  *\/ */
-  /* /\* 	hshrinkage *= ((double)height * (double)height) / (rmaxh * rmaxh); *\/ */
-  /* /\* 	vshrinkage *= ((double)width * (double)width) / (rmaxw * rmaxw); *\/ */
-
-  /* /\* 	// now spread, we want to be large as possible *\/ */
-  /* /\* 	// rmaxh we already reduced by rw, so thsi gives expanded width / rw  *\/ */
-  /* /\* 	hspread *= rmaxh / (double)height * (double)width / (double)opwidth; *\/ */
-  /* /\* 	vspread *= rmaxw / (double)width * (double)height / (double)opheight;  *\/ */
-  /* /\* } *\/ */
-
-  /* /\* if (horiz_bands) *\/ */
-  /* /\* 	hscore = hcov * COV_WEIGHT + hshrinkage * SHRK_WEIGHT + hdpread * SPRD_WEIGHT; *\/ */
-  /* /\* if (vert_bands) *\/ */
-  /* /\* 	vscore = vcov * COV_WEIGHT + vshrinkage * SHRK_WEIGHT + vdpread * SPRD_WEIGHT; *\/ */
-
-  /* /\* // now we know banding we can get the sizes for each layer (input) *\/ */
-  /* /\* // we set two sizes - the inner size, whcih we first expand / shrink the layer to *\/ */
-  /* /\* // and outer size, which is the size we letterbox to *\/ */
-  /* /\* // if both sizes are equal, or either is 0., 0. we do not letterbox *\/ */
-  /* /\* // for the sink, different rules apply depending on the nature of the source it represents, *\/ */
-  /* /\* // We may resize and / or letterbox the input(s), this is not included here *\/ */
-  /* /\* // *\/ */
-  /* /\* if (hscore > vscore) { *\/ */
-  /* /\* 	// horiz banding *\/ */
-	
-  /* /\* 	rmaxh /= rw; *\/ */
-
-  /* /\* 	if (non_lb_layesr) { *\/ */
-  /* /\* 	  lb_width = (int)(rmaxw + .5); *\/ */
-  /* /\* 	  lb_height = (int)(rmaxw / op_ar + .5); *\/ */
-  /* /\* 	} *\/ */
-  /* /\* 	else { *\/ */
-  /* /\* 	  lb_width = rmaxw; *\/ */
-  /* /\* 	  lb_height = rmaxh; *\/ */
-  /* /\* 	} *\/ */
-
-  /* /\* 	for (i = 0; i < num_in_tracks; i++) { *\/ */
-  /* /\* 	  channel = in_channels[i]; *\/ */
-
-  /* /\* 	  // TODO - flag as SKIP in nodemodel *\/ */
-  /* /\* 	  if (weed_channel_is_alpha(channel)) continue; *\/ */
-
-  /* /\* 	  // TODO - flag as SKIP in nodemodel *\/ */
-  /* /\* 	  if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE || *\/ */
-  /* /\* 	      weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) { *\/ */
-  /* /\* 	    continue; *\/ */
-  /* /\* 	  } *\/ */
-
-  /* /\* 	  width = innode->width; *\/ */
-  /* /\* 	  height = innode->height; *\/ */
-
-  /* /\* 	  inpnode->lb_width = lb_width; *\/ */
-  /* /\* 	  inpnode->lb_height = lb_height; *\/ */
-
-  /* /\* 	  // generators can be set to not letterbox - in this case we find the outer aspect box *\/ */
-  /* /\* 	  // for rmaxw, rmaxh, and this is their size, then everthing else letterboxes inside them *\/ */
-  /* /\* 	  // instead of  *\/ */
-  /* /\* 	  // and everything else will letterbox inside them *\/ */
-  /* /\* 	  if (num_in_tracks > 1 && sfile && sfile->clip_type == CLIP_TYPE_GENERATOR *\/ */
-  /* /\* 	      && prefs->no_lb_gens) { *\/ */
-  /* /\* 	    inpnode->width = lb_width; *\/ */
-  /* /\* 	    inpnode->height = lb_height; *\/ */
-  /* /\* 	  } *\/ */
-  /* /\* 	  else { *\/ */
-  /* /\* 	    // this is correct, since we reduced rmaxh already by rw *\/ */
-  /* /\* 	    width = (int)((double)width *rmaxh / (double)height + .5); *\/ */
-  /* /\* 	    height = (int)(rmaxh +.5); *\/ */
-  /* /\* 	    inpnode->width = width; *\/ */
-  /* /\* 	    inpnode->height = height; *\/ */
-  /* /\* 	  } *\/ */
-  /* /\* 	} *\/ */
-  /* /\* } *\/ */
-  /* /\* else { *\/ */
-  /* /\* 	// vertical banding *\/ */
-  /* /\* 	rmaxw /= rh; *\/ */
-
-  /* /\* 	if (non_lb_layesr) { *\/ */
-  /* /\* 	  lb_width = (int)(rmaxw + .5); *\/ */
-  /* /\* 	  lb_height = (int)(rmaxw / op_ar + .5); *\/ */
-  /* /\* 	} *\/ */
-  /* /\* 	else { *\/ */
-  /* /\* 	  lb_width = rmaxw; *\/ */
-  /* /\* 	  lb_height = rmaxh; *\/ */
-  /* /\* 	} *\/ */
-
-  /* /\* 	for (i = 0; i < num_in_tracks; i++) { *\/ */
-  /* /\* 	  channel = in_channels[i]; *\/ */
-
-  /* /\* 	  // TODO - flag as SKIP in nodemodel *\/ */
-  /* 	  if (weed_channel_is_alpha(channel)) continue; */
-
-  /* 	  // TODO - flag as SKIP in nodemodel */
-  /* 	  if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE || */
-  /* 	      weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) { */
-  /* 	    continue; */
-  /* 	  } */
-
-  /* 	  // get size from prev output */
-  /* 	  width = innode->width; */
-  /* 	  height = innode->height; */
-
-  /* 	  inpnode->lb_width = lb_width; */
-  /* 	  inpnode->lb_height = lb_height; */
-
-  /* 	  if (num_in_tracks > 1 && inpdnode->node->dsource */
-  /* 	      && inpnode->source->dsource->src_type == LIVES_SRC_TYPE_FILTER */
-  /* 	      && prefs->no_lb_gens) { */
-  /* 	    inpnode->width = lb_width; */
-  /* 	    inpnode->height = lb_height; */
-  /* 	  } */
-  /* 	  else { */
-  /* 	    // this is correct, since we reduced rmaxh already by rw */
-  /* 	    width = (int)((double)width *rmaxh / (double)height + .5); */
-  /* 	    height = (int)(rmaxh +.5); */
-  /* 	    inpnode->width = width; */
-  /* 	    inpnode->height = height; */
-  /* 	  } */
-
-  /* // set size and pal for input - check id we need reinit */
-  /* channel = get_enabled_channel(inst, i, FALSE); */
-  /* if (!channel) break; // compound fx */
-
-  /* // TODO - flag as SKIP in nodemodel */
-  /* if (weed_channel_is_alpha(channel)) continue; */
-
-  /* // TODO - flag as SKIP in nodemodel */
-  /* if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE || */
-  /*     weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) */
-  /*   continue; */
-	  
-  /* // */
-  /* inpnode->cwidth = weed_channel_get_width_pixels(channel); */
-  /* inpnode->cheight = weed_channel_get_height(channel); */
-
-  /* set_channel_size(filter, channel, width, height); */
-
-  /* inpnode->width = weed_channel_get_width_pixels(channel); */
-  /* inpnode->height = weed_channel_get_height(channel); */
-
-  /* // check if we need to reinit due to size change */
-  /* if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) { */
-  /*   if (width != inwidth || height != inheight) */
-  /*     inode->needs_reinit = TRUE; */
-  /* } */
-    
-  // check if we need to reinit due to size change
-  /* if (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE) { */
-  /*   // get before and after sizes in pixels, then multiply by bits per pixel */
-  /*   // if this veries then the rowsstride will almost certainly change */
-  /*if (width * weed_palette_get_pixels_per_macropixel(opalette) * weed_palette_bits_per_pixel_planar(opalette, 0) */
-  /* 	  != inwidth * weed_palette_get_pixels_per_macropixel(cpalette)
-  //  * weed_palette_bits_per_pixel_planar(cpalette, 0)) */
-  /* 	needs_reinit = TRUE; */
-  /* } */
-}
-}
-}
-}
-// having calculated in input node / in channel sizes we can move to output nodes / out_channels
-// currently, each out chanel / output gets the same size as corresponding input
-// this may change in future in favour of size groups
-
-ni = 0;
-
-for (i = 0; i < num_out_tracks + num_out_alpha; i++) {
-  /// for the time being we only have a single out channel, so it simplifes things greatly
-
-  channel = get_enabled_channel(inst, i, FALSE);
-  if (!channel) break; // compound fx
-
-  // TODO - flag as SKIP in nodemodel
-  if (weed_channel_is_alpha(channel)) continue;
-
-  // TODO - flag as SKIP in nodemodel
-  if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
-      weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE)
-    continue;
-
-  if (is_converter && svary) {
-    /// resizing - use the value we set in channel template
-    /// this allows us to, for example, resize the same in_channel to multiple out_channels at various sizes
-    chantmpl = weed_channel_get_template(channel);
-    cpalette = weed_channel_get_palette(channel);
-    width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
-    width /= weed_palette_get_pixels_per_macropixel(weed_channel_get_palette(channel));
-    height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
-    outnode->width = widthl
-      outnode->height = height;
-  }
-  else {
-    inpnode = inp(innode, ni++);
-    outnode = outp(innode, ni++);
-    outnode->width = inpnode->width;
-    outnode->height = inpnode->height;
-  }
- }
 }
 
 
 static int cost_summation[N_COST_TYPES];
 static boolean sumty = FALSE;
+
+// nodetpye can heve the follwoing values:
+/* NODE_MODELS_CLIP		*/
+/* NODE_MODELS_INSTANCE		*/
+/* NODE_MODELS_OUTPUT		*/
+/* NODE_MODELS_SRC		*/
+/* NODE_MODELS_INTERNAL		*/
 
 static lives_result_t prepend_node(inst_node_t *n, int track, inst_node_t *target) {
   // create a forward link from n to target
@@ -1126,9 +1615,9 @@ static lives_result_t prepend_node(inst_node_t *n, int track, inst_node_t *targe
 
   // we match an input from target to an output from n, using track numbers
   // we fill the the input values for the target and the output details for n
-  
-  input node_t *prime_ip;
-  output node_t *prime_op;
+
+  input_node_t *prime_ip;
+  output_node_t *prime_op;
 
   int op_idx = -1, ip_idx = -1, i;
 
@@ -1195,19 +1684,24 @@ static lives_result_t prepend_node(inst_node_t *n, int track, inst_node_t *targe
   // for other source types (layer, blank), the ouputs will produce whatever the input requires
   switch (n->model_type) {
   case NODE_MODELS_INSTANCE: {
-    weed_channel_t *channel;
-    weed_chantmpl_t *chantmpl;
-    uint64_t sflags;
+    weed_channel_t *channel = get_enabled_channel(instance, prime_op, TRUE);
+    weed_chantmpl_t *chantmpl = weed_channel_get_template(channel);
+    weed_filter_t *filter = weed_instance_get_filter(instance, TRUE);
+    int sflags = weed_chantmpl_get_flags(chantmpl);
+    int filter_flags = weed_filter_get_flags(filter);
 
-    if (outnode->flags & NODEFLAGS_SKIP) continue;
+    pals = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
+    for (npals = 0; pals[npals] != WEED_PALETTE_END; npals++);
 
-    channel = get_enabled_channel(instance, 0, TRUE);
-    chantmpl = weed_channel_get_template(channel);
-    sflags = weed_chantmpl_get_flags(chantmpl);
-
-    // get palette list from channel template
-    outnode->pals = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
-
+    if (pvary) {
+      outnode->pals = pals;
+      outnode->npals = npals;
+    }
+    else {
+      n->pals = pals;
+      n->npals = npals;
+    }
+    
     // get current palette, width and height from channel
     outnode->cpal = weed_channel_get_palette(channel);
     outnode->cwidth = weed_channel_get_width_pixels(channel);
@@ -1219,13 +1713,37 @@ static lives_result_t prepend_node(inst_node_t *n, int track, inst_node_t *targe
       outnode->flags |= NODESRC_REINIT_PAL;
     if (sflags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
       outnode->flags |= NODESRC_REINIT_RS;
-  }
+
+    if (!n->n_inputs) {
+      // generator 
+      // check gamma_type of output
+      if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
+	if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
+	  weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
+	else {
+	  if (sfile)
+	    weed_channel_set_gamma_type(channel, sfile->gamma_type);
+	  else
+	    weed_channel_set_gamma_type(channel, WEED_GAMMA_SRGB);
+	  // *INDENT-OFF*
+	}}}}
+    // *INDENT-ON*
     break;
   case NODE_MODELS_SRC:
-  case NODE_MODELS_CLIP:
     outnode->flags |= NODESRC_ANY_SIZE;
     outnode->flags |= NODESRC_ANY_PALETTE;
     break;
+  case NODE_MODELS_CLIP: {
+    lives_clip_t *sfile = n->model_for;
+    if (sfile) {
+      outnode->cwidth = sfile->hsize;
+      outnode->cheight = sfile->vsize;
+    }
+    outnode->flags |= NODESRC_ANY_PALETTE;
+  }
+    break;
+    // OUTPUT, INTERNAL should have no out chans, and in any case they dont get
+    // prepended to anything !
   default: break;
   }
 
@@ -1263,39 +1781,88 @@ static lives_result_t prepend_node(inst_node_t *n, int track, inst_node_t *targe
 
   nclones = 0;
   if (prime_ip->clones) while (prime_ip->clones[nclones++]);
-  
-  if (target->moodel_type == NODE_MODELS_INSTANCE) {
+  inpnode = target->inputs[ip_idx];
+
+  switch (target->model_type) {
+  case NODE_MODELS_INSTANCE: {
     // for fx instances, now we set up the inputs according to instance in_channels
     weed_instance_t *instance = (weed_instance_t *)target->model_for;
-    for (i = ip_idx + 1; i < target->n_inputs; i++) {
-      weed_channel_t *channel;
-      weed_chantmpl_t *chantmpl;
-      uint64_t sflags;
-      input_node_t *inpnode = target->inputs[i];
+    weed_channel_t *channel = get_enabled_channel(instance, ip_idx, TRUE);
+    weed_chantmpl_t *chantmpl = weed_channel_get_template(channel);
+    weed_filter_t *filter = weed_instance_get_filter(instance, TRUE);
+    int sflags = weed_chantmpl_get_flags(chantmpl);
+    int filter_flags = weed_filter_get_flags(filter);
+      
+    if (sflags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)
+      inpnode->flags |= NODESRC_REINIT_SIZE;
+    if (sflags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE)
+      inpnode->flags |= NODESRC_REINIT_PAL;
+    if (sflags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
+      inpnode->flags |= NODESRC_REINIT_RS;
 
-      if (inpnode->flags & NODEFLAGS_SKIP) continue;
+    inpnode->cpal = weed_channel_get_palette(channel);
 
-      if (target->in_tracks[i] == track) {
-	nclones++;
-	inpnode->flags |= NODEFLAG_IO_CLONE;
-      }
+    pals = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
+    for (npals = 0; pals[npals] != WEED_PALETTE_END; npals++);
 
-      channel = get_enabled_channel(instance, 0, TRUE);
-      chantmpl = weed_channel_get_template(channel);
-      sflags = weed_chantmpl_get_flags(chantmpl);
+    if (pvary) {
+      outnode->pals = pals;
+      outnode->npals = npals;
+    }
+    else {
+      n->pals = pals;
+      n->npals = npals;
+    }
 
-      if (sflags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)
-	inpnode->flags |= NODESRC_REINIT_SIZE;
-      if (sflags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE)
-	inpnode->flags |= NODESRC_REINIT_PAL;
-      if (sflags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
-	inpnode->flags |= NODESRC_REINIT_RS;
-
+    if (svary) inpnode->flags |= NODESRC_ANY_SIZE;
+    else {
       inpnode->cwidth = weed_channel_get_width_pixels(channel);
       inpnode->cheight = weed_channel_get_height(channel);
-      inpnode->cpal = weed_channel_get_palette(channel);
     }
   }
+    break;
+
+  case NODE_MODELS_OUTPUT: {
+    int npals = 1;
+    int cpal = mainw->vpp->palette;
+    if (mainw->vpp->capabilities & VPP_CAN_CHANGE_PALETTE) {
+      int *pal_list = (*mainw->vpp->get_palette_list)();
+      for (npals = 0; pal_list[npals] != WEED_PALETTE_END; npals++);
+      xplist = (int *)lives_calloc(npals + 1, sizint);
+      for (i = 0; i < npals; i++) xplist[i] = pal_list[i];
+    }
+    else {
+      xplist = (int *)lives_calloc(2, sizint);
+      xplist[0] = cpal;
+    }
+    xplist[npals] = WEED_PALETTE_END;
+
+    inpnode->cpal = cpal;
+    inpnode->npals = npals;
+    n-->inputs[0]->pals = xplist;
+
+    inpnode->width = nodemodel->opwidth;
+    inpnode->height = nodemodel->opheight;
+  }
+    break;
+  case NODE_MODELS_INTERNAL:
+    if (!target->n_outputs) {
+      int *xplist = (int *)lives_calloc(3, sizint);
+      xplist[0] = WEED_PALETTE_RGB24;
+      xplist[1] = WEED_PALETTE_RGBA32;
+      xplist[2] = WEED_PALETTE_END;
+      inpnode->cpal = WEED_PALETTE_RGB24;
+      inpnode->npals = 2;
+      n-->inputs[0]->pals = xplist;
+
+      inpnode->width = nodemodel->opwidth;
+      inpnode->height = nodemodel->opheight;
+    }
+    break;
+    // target cannot be a SRC or CLIP, these have no inputs, so we cannot prepend anything to them
+  default: break;
+  }
+  
   return LIVES_RESULT_SUCCESS;
 }
 
@@ -1305,112 +1872,122 @@ static lives_result_t prepend_node(inst_node_t *n, int track, inst_node_t *targe
 /* } */
 
 
-static node_chain_t *get_node_chain(LiVESList *node_chains, int track) {
-  for (LiVESList *list = node_chains; list; list = list->next) {
+// get node_chain for track - during construction this will retunr the lastest, otherwise the earliest
+static node_chain_t *get_node_chain(lives_nodemodel_t *nodemodel, int track) {
+  for (LiVESList *list = nodemodel->node_chains; list; list = list->next) {
     node_chain_t *nchain = (node_chain_t *)list->data;
-    if (nchain->first_node->dsource->track  == track) return nchain;
+    if (nchain->track  == track) return nchain;
   }
   return NULL;
 }
 
 
-static node_chain_t *lowest_unterm_chain(LiVESList *node_chains) {
-  node_chain_t *lchn = NULL;
-  int min_track = -1;
-  for (LiVESList *list = node_chains; list; list = list->next) {
+static int find_output_track(lives_nodemodel_t *nodemodel) {
+  // create an int array of size ntracks
+  // the we step throughnode_chains, find the track, and set teh follwoing
+  // - if we find a TERMINATED chain, and array val is 0, set it to 2
+  // - if we find an UNTERMINATED node_chain, set it to 1
+  //   also note min_track for unterminated chains
+  // --
+  // then check if we have a non NULL layer betwwen 0 and min_track, where the
+  // array value iss 0, if so we return that as the track, otherwise we return min_track
+  // thus we return the idx of the first non_NULL layer which is not in any chain, or the trackof the first
+  // unterminated node_chain, whicheer of these is the lower
+  //
+  // if all of the above fail then we return the default -1, and a blank frame src will be created
+
+  int *vals = (int *)lives_calloc(nodemodel->ntracks, sizint);
+  int min_track = -1, track;
+
+  for (LiVESList *list = nodemodel->node_chains; list; list = list->next) {
     node_chain_t *nchain = (node_chain_t *)list->data;
-    if (!(nchain->flags & NODEFLAG_TERMINATED)
-	&& (min_track == -1 || nchain->first_node->dsource->track < min_track)) {
-      min_track = nchain->first_node->dsource->track;
-      lchn = nchain;
+    track = nchain->track;
+    if (track < 0 || track >= nodemodel->ntracks) continue;
+    if (!(nchain->flags & NODEFLAG_TERMINATED)) {
+      vals[>track] = 1;
+      if (min_track == -1 || track < min_track) {
+	min_track = track;
+      }
     }
+    else if (vals[>track] == 0) vals[track] = 2;
   }
-  return lchn;
+  for (track = 0; track < min_track; track++)
+    if (!vals[track] && nodemodel->layers[track]) {
+      min_track = track;
+      break;
+    }
+  lives_free(vals);
+  return min_track;
 }
 
 
-static void est_Costs_for_src(inst_node_t * n, int ni) {
-// for srcs we have a set of possible palettes and various clip_srcs
-// for the region betweemn start and end we can count the number of frames for each clip_src
-// then this acts like a type of fractional palette
-
-//  --- for example we may have img src - palette RGBA32
-// -- decoder src - palette yuv420p
-// if we have 20% decoded frames and 80% undecodec then we calculate costs for RGBA32 and for YUV420P and
-
-// multiply the formar by .2 and the later by .8 to give the calulate d cost
-
-// we treat each clip_src as a "ghost" output, wiht own palette list, and we get the tcost and qcost
-// connected to a ghsot output with palette list equivalnt to the clipo_ssrc pals
-// the palette list for the src is " borrowed" from the first ouput, (to be optimised...)
-// the as for any other node, for each out pal, we find min in pal from the clip srcs, however when totalling to din 
-
-// strating from the src, we go throught the "borrowed" out palettes,
-// then as usual find min in pals, and total over thsi to get value fro "out pal"
-// this gives the optimal "out pal", which becoems the src out pal, there is no conversion cost to the first  next
-// inst_node / sink node,
-
-// additionally when counting toalling the frames for each clip_src we can apply
-///a distance factro from current frame to prioritse the near region
-
-// when we total across inputs, rather than finding max or multiplying we, multiply the values by the
-
-// we have a hiddend "internal cost" caused by switching between clip_srcs
-// thus for each possible intermeadi
-// all clip src wil convert to this intermediary,
-
-// calc costs_from_src(inst_node_t *n, int ni) {
-// set pals, npals for src to be equivalnt to input
-
-// calc percentage of frames for eachinput, by finding clip and its frame_index
-
-
-// temporarily add clip_srcs as ouputs connecting to inputs for the node
-// - for each "out_pal"m, calc costs for each input
-// calc costs for each "input"
-
-
-
-
-
-}
-
-
-
-
-static lives_result_t add_src_node(lives_nodemodel_T
-				   nst_node_t *n, int track) {
+// prepend a new node_chain for src node to the nodemodel
+// if we have an existing unterminated node_Chain for the track, then this is an ERROR
+// and we retunr NULL, otherwise we retunr a pointer to the newly prepended
+static node_chain_t *add_src_node(lives_nodemodel_t *nodelmodel, inst_node_t *n, int track) {
   // check first to ensure we don't have an active uncommited node_chain
-  node_chain_t *nchain = get_node_chain(*node_chains, track);
-  if (nchain && !(nchain->flags & NODEFLAG_TERMINATED)) return LIVES_RESULT_ERROR;
+  node_chain_t *nchain = get_node_chain(nodemodel, track);
+  if (nchain && !(nchain->flags & NODEFLAG_TERMINATED)) return NULL;
 
-  n->dsource->track = track;
   nchain = (node_chain_t *)lives_calloc(1, sizeof(node_chain_t));
+  nchain->track = track;
   nchain->first_node = nchain->last_node = n;
-  *node_chains = lives_list_prepend(*node_chains, (void *)nchain);
-  return LIVES_RESULT_SUCCESS;
+  nodemodel->node_chains = lives_list_prepend(nodemodel->node_chains, (void *)nchain);
+  return nchain;
 }
 
 
-static node_chain_t *fork_output(LiVESList **node_chains, inst_node_t *n, int track) {
-  // find node for in_track track,
-  // and another output for the track, flagged with CLONE
-  // when we arrive at node, we then just add a layer copy time
+static node_chain_t *fork_output(lives_nodemodel_t *nodemodel, inst_node_t *n, int track) {
+  // - find node for in_track track,
+  // - add another output for the track, flagged with CLONE
+  // - add the node as first_node in anew node_chain, checking to ensure there i no exisitng unterminated chain
+  // - prepend the new node_chain in the nodemodel
+  // - extend the node_chain last_node to the curretn node and connect the forked output to th e input
+  //
+  // when we arrive at source node, we will copy the output layer, adding an extra layer_copy time cost
+  node_chain_t *newchain = NULL;
   for (int i = 0; i < n->n_inputs; i++) {
     if (n->inputs[i]->flags & NODEFLAGS_SKIP) continue;
     if (n->in_tracks[i] == track) {
+      output_node_t *outnode;
       inst_node_t *p = n->inputs[i]->node;
+      int orig = -1;
+      // this will be a clone, check first to find the original output it should be cloned from
+      for (int j = 0; j < p->n_ouputs; j++) {
+	if (p->outputs[i]->flags & NODEFLAGS_SKIP) continue;
+	if (p->out_tracks[j] == track) {
+	  orig = j;
+	  breka;
+	}
+      }
+      // thisis an error, we could not locate an original output in the source node
+      // with the correct track number, this is wrong as we should be cloning an exisitng track
+      if (orig == -1) return NULL;
+
       p->outputs = (output_node_t **)lives_recalloc(p->outputs, p->n_outputs + 1,
 						    p->n_outputs, sizeof(output_node_t *));
-      p->outputs[p->n_outputs] = (output_node_t *)lives_calloc(1, sizeof(output_node_t));
-      p->outputs[p->n_outputs]->flags = NODEFLAG_IO_CLONE;
+      outnode = p->outputs[p->n_outputs] = (output_node_t *)lives_calloc(1, sizeof(output_node_t));
+
+      outnode->flags = NODEFLAG_IO_CLONE;
+      outnode >origin = p->outputs[orig];
+
+      if (p->outputs[orig]->clones) {
+	// add this as another clone to orig
+	while (p->outputs[orig]->clones[nclones++]);
+	p->outputs[orig]->clones = (output_node_t **)lives_recalloc(p->outputs[orig]->clones,
+								    nclones + 1, nclones,
+								    sizeof(output_node_t *));
+	p->outputs[orig]->clones[nclones] = outnode;
+      }
+
       p->out_tracks = (int *)lives_recalloc(p->out_tracks, p->n_outputs + 1,
 					    p->n_outputs, sizint);
       p->out_tracks[p->n_outputs] = track;
       p->n_outputs++;
-      
-      add_src_node(node_chains, p, track);
-      return (*node_chains)->data;
+
+      // returns NULL on error
+      newchain = add_src_node(nodemodel, p, track);
+      return newchain;
     }
   }
   // this should never happen - it means that the last_node for a node_chain has no input
@@ -1433,10 +2010,11 @@ static node_chain_t *fork_output(LiVESList **node_chains, inst_node_t *n, int tr
 // if we have an out track without and input then we add this node as a src for the track
 // - if there is an existing unconnected src then this in an error
 
-
 static int check_node_connections(lives_nodemodel_t *nodemodel, inst_node_t *n) {
   // here we are going to merge a new node into an existing graph
-  // begin by checking the inputs
+  // begin by checking the inputs, ensuring thes are all connected to a new
+  // or exisitng unterminated node chain
+  //
   weed_layer_t **layers = nodemodel->layers;
   int ntracks = nodemodel->ntracks;
 
@@ -1444,17 +2022,10 @@ static int check_node_connections(lives_nodemodel_t *nodemodel, inst_node_t *n) 
     if (n->inputs[i]->flags & NODEFLAGS_SKIP) continue;
     if (!n->inputs[i]->node) {
       int track = n->in_tracks[i];
-
-
-      NOOO;
-      xyzzy
-  
-  
-
-
       node_chain_t *in_chain = get_node_chain(nodemodel, track);
-      // if we have no src, returnn to caller so it can add a src for the track
+      // if we have no src, return to caller so it can add a src for the track
       if (!in_chain) return i;
+      
       if (in_chain->terminated) {
 	// if we do have a node_chain for the track, but it is terminated
 	// then we are going to back up one node and a clone output
@@ -1463,11 +2034,23 @@ static int check_node_connections(lives_nodemodel_t *nodemodel, inst_node_t *n) 
 	// creating a new node_chain for this track, 
 	// which will be an input to this node
 	in_chain = fork_output(&nodemodel->node_chains, in_chain->last_node, track);
-	// mark this input as a clone, otherewise we would be recalculating the
-	// palette for each output
-	
-	n->inputs[i]->flags |= NODEFLAG_IO_CLONE;
+
+	if (!in_chain) {
+	  // this means something has gone wrong, eitehr we found an unterminated node_chain
+	  // which should have prepend before the teminated one
+	  // if this is the cae it means eithe the node_chains are out of order, or
+	  // a chain was terminated, whilst another unerminated node_chain existed
+	  // - it should not be possible to add a new node_chain for a track when
+	  // there is still an exisitn unterminated one - we check for this when adding and the code should
+	  // check for this as well before creating a new node_chain
+	  // OR, we failed to find an input in this node for 'track'
+	  // or we failed to find an existtng output
+	  abort();
+	}
       }
+
+      // here we found an unterminated chain - either from a source just added, or a forekd output
+      // or else from the normal output from another instance
       prepend_node(in_chain->last_node, track, n);
       in_chain->last_node = n;
 
@@ -1479,10 +2062,24 @@ static int check_node_connections(lives_nodemodel_t *nodemodel, inst_node_t *n) 
     }
   }
 
+  // once all inputs are connected, we may be able to calulate the input size for node
+  // if we have only a single input, we  do not need to do any resizing, unless the frame is realtively large
+  // e.g coming from a source
+  // if we have mutliple inputs then we use a heuristic approach,
+  // in some cases we will have sources wutrh no fixed frame size, in this casse we wait for the next pass
+  // ascending, which 
+  calc_node_sizes(nodemodel, n);
+
   // after connecting all inputs, we check outputs
-  // if the the out_track lacks a corresponding in track
-  // if the track has an unconnected src this is
-  // an error, otherwise this node becomes a src for the track
+  // if any out_track lacks a corresponding in track:
+  //
+  // - if the track has an unconnected node_chain, this is an error
+  // - otherwise this node becomes a src for the track, abd we begin a new node_chain here
+  //
+  // for out tracks tha DO have a corresponding input, the node chian simply contues to the noxt node
+  // (if the output forks, then we would have already created new node_chains when adding the forked output)
+  // (if we have multiple outs for a track, and these were NOT added as clones, then this is a
+  // programming erro, tracks should not appear multiple times in the original out_tracks)
   for (j = 0; j < n->n_outputs; j++) {
     if (n->outputs[j]->flags & NODEFLAGS_SKIP) continue;
     for (i = 0; i < n->n_inputs; i++) {
@@ -1494,13 +2091,13 @@ static int check_node_connections(lives_nodemodel_t *nodemodel, inst_node_t *n) 
       node_chain_t *in_chain = get_node_chain(nodemodel, n->out_tracks[j]);
       // check to make sure there is no unterminated node_chain for this track
       // we cannot have > 1 unterminated chain simultaneously on same track
-      // in addition, if there is a layer for the track, and no node_chain,
-      // this is not allowed - we can consider this an unterminated chain with 0 nodes
-      if (!in_chain && layers[out_tracks[j|]] ||
-	  (in_chain && !in_chain->terminated)) {
+      // if there is a layer for the track, and no node_chain,
+      // this is allowed, it simply means that layer is unused
+      if (in_chain && !in_chain->terminated) {
 	// TODO - throw error
 	n->outputs[j]->flags |= NODEFLG_IO_IGNORE;
       }
+      //
       else add_src_node(nodemodel, n, n->out_tracks[j]);
     }
   }
@@ -1536,14 +2133,19 @@ static inst_node_t *create_node(int nodetype, void *source, int nins, int *in_tr
   // allocate input and output subnodes, but do not set the details yet
   // for efficiency we only do this when a connection is made
 
-  if (modeltpye == NODE_MODELS_CLIP) n_clip_srcs = nins;
+  if (modeltpye == NODE_MODELS_CLIP) {
+    // for clip models, we create an input for each lip_src, bur do not count thes in n->n_inputs
+    // instead we create teh inputs with an extra NULL input at the end
+    n_clip_srcs = nins;
+  }
   else n->n_inputs = nins;
 
   if (nins) {
-    n->inputs = (input_node_t **)lives_calloc(nins, sizeof(input_node_t *));
-    for (i = 0; i < n->n_inputs; i++) {
+    n->inputs = (input_node_t **)lives_calloc(n_clip_srcs ? nins + 1 : nins, sizeof(input_node_t *));
+    for (i = 0; i < nins; i++) {
       n->inputs[i] = (input_node_t *)lives_calloc(1, sizeof(input_node_t));
     }
+    if (n_clip_srcs) n->inputs[i] = NULL;
   }
 
   if (nouts) {
@@ -1554,7 +2156,8 @@ static inst_node_t *create_node(int nodetype, void *source, int nins, int *in_tr
   }
 
   // now set some type specific things
-  // - 
+  // - for clip, add the clip_srcs
+  // - for instance, set any flags which affect the node
   switch (modeltype) {
   case NODE_MODELS_CLIP: {
     lives_clip_t *sfile = (lives_clip_t *)source;
@@ -1618,65 +2221,20 @@ static inst_node_t *create_node(int nodetype, void *source, int nins, int *in_tr
     if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
       n->flags |= NODESRC_LINEAR_GAMMA;
 
+    if (filter_flags & WEED_FILTER_PREF_PREMULTIPLIED_ALPHA)
+      n->flags |= NODESRC_ALPHA_PREMULT;
+    
+    if (filter_flags & WEED_FILTER_CHANNEL_SIZES_MAY_VARY) n->flags |= NODESRC_ANY_SIZE;
+    if (filter_flags & WEED_FILTER_PALETTES_MAY_VARY) n->flags |= NODESRC_ANY_PALETTE;
+    if (filter_flags & WEED_FILTER_IS_CONVERTER) n->flags |= NODESRC_IS_CONVERTOR;
+    
     if (nins) {
       n->in_tracks = in_tracks;
       // filter instance
     }
-    else {
-      // generator
-    }
     break;
-  case NODE_MODELS_SRC:
-    // some other type, eg blank frame src
 
-    lives_clip_t *sfile = (lives_clip_t *)source;
-    // create outputs
-
-
-
-
-    
-    
-    break;
-  case NODE_MODELS_OUTPUT: {
-    int npals = 1;
-    int cpal = mainw->vpp->palette;
-    if (mainw->vpp->capabilities & VPP_CAN_CHANGE_PALETTE) {
-      int *pal_list = (*mainw->vpp->get_palette_list)();
-      for (npals = 0; pal_list[npals] != WEED_PALETTE_END; npals++);
-      xplist = (int *)lives_calloc(npals + 1, sizint);
-      for (i = 0; i < npals; i++) xplist[i] = pal_list[i];
-    }
-    else {
-      xplist = (int *)lives_calloc(2, sizint);
-      xplist[0] = cpal;
-    }
-    xplist[npals] = WEED_PALETTE_END;
-
-    n->inputs[0]->cpal = cpal;
-    n->inputs[0]->npals = npals;
-    n-->inputs[0]->pals = xplist;
-
-    get_player_size(&nodemodel->opwidth, &nodemodel->opheight);
-    n->inputs[0]->width = nodemodel->opwidth;
-    n->inputs[0]->height = nodemodel->opheight;
-  }
-    break;
-  case NODE_MODELS_INTERNAL:
-    if (!nouts) {
-      int *xplist = (int *)lives_calloc(3, sizint);
-      xplist[0] = WEED_PALETTE_RGB24;
-      xplist[1] = WEED_PALETTE_RGBA32;
-      xplist[2] = WEED_PALETTE_END;
-      n->inputs[0]->cpal = WEED_PALETTE_RGB24;
-      n->inputs[0]->npals = 2;
-      n-->inputs[0]->pals = xplist;
-
-      get_player_size(&nodemodel->opwidth, &nodemodel->opheight);
-      n->inputs[0]->width = nodemodel->opwidth;
-      n->inputs[0]->height = nodemodel->opheight;
-    }
-    break;
+    // SRC, OUTPUT, INTERNAL are handled when connected
   default: break;
   }
   return n;
@@ -1697,16 +2255,11 @@ static void free_inp_nodes(int ninps, input_node_t **inps) {
 static void free_node(inst_node_t *n) {
   if (n) {
     if (n->n_inputs) free_inp_nodes(n->n_inputs, n->inputs);
-    for (int i = 0; i < n->n_outputs; i++)
-      if (n->outputs[i]) lives_free(n->outputs[i]);
+    if (n->n_inputs) free_outp_nodes(n->n_outputs, n->outputs);
     if (n->min_cost) lives_free(n->min_cost);
     if (n->pals) lives_free(n->pals);
     if (n->in_tracks) lives_free(n->in_tracks);
     if (n->out_tracks) lives_free(n->out_tracks);
-    if (n->dsource) {
-      if (n->dsource->purpose == SRC_PURPOSE_MODEL)
-	lives_free(n->dsource);
-    }
     lives_free(n);
   }
 }
@@ -1782,7 +2335,7 @@ static boolean output_pal_permitted(inst_node_t *n, int idx, int pal) {
 
 static LiVESList *_add_sorted_cdeltas(LiVESList *cdeltas, int out_pal, int in_pal,
 				      double *costs,  int sort_by, boolean replace,
-				      int n_gamma_type, int p_gamma_type) {
+				      int out_gamma_type, int in_gamma_type) {
   // update cdeltas for an input
   // if replace is set we find an old entry to remove and re-add
   // sort_by is the cost type to order the cdeltas
@@ -1795,7 +2348,9 @@ static LiVESList *_add_sorted_cdeltas(LiVESList *cdeltas, int out_pal, int in_pa
   if (replace) {
     for (list = cdeltas; list; list = list->next) {
       cdelta = (cost_delta_t *)list->data;
-      if (cdelta->out_pal == out_pal && cdetla->in_pal == in_pal && cdelta->gamma_type == gamma_type) break;
+      if (cdelta->out_pal == out_pal && cdetla->in_pal == in_pal
+	  && cdelta->out_gamma_type == out_gamma_type
+	  && cdelta->in_gamma_type == in_gamma_type) break;
     }
     if (list) {
       // remove data so we can re-add it sorted
@@ -1809,10 +2364,11 @@ static LiVESList *_add_sorted_cdeltas(LiVESList *cdeltas, int out_pal, int in_pa
   }
 
   cdelta = (cost_delta_t *)lives_calloc(1, sizeof(list_delta_t));
-  cdelta->in_pal = in_pal;
   cdelta->out_pal = out_pal;
+  cdelta->in_pal = in_pal;
   cdelta->deltas = costs;
-  cdelta->gamma = gamma_type;
+  cdelta->out_gamma_type = out_gamma_type;
+  cdelta->in_gamma_type = in_gamma_type;
 
   for (list = cdeltas; list; list = list->next) {
     cost_delta_t *xcdelta = (cost_delta_t *)list->data;
@@ -1828,6 +2384,109 @@ static LiVESList *_add_sorted_cdeltas(LiVESList *cdeltas, int out_pal, int in_pa
 }
 
 
+static void calc_costs_for_src(double *costs, inst_node_t *n, input_node_t *in, int *pal_list, int j, 
+			       int out_gamma_type, int in_gamma_type,
+			       double *factors, boolean ghost) {
+  // if an input is fed from a src then we call this for each palette in the input
+  // we have in this case two sets of costs - an internal cost to produce the frame in the
+  // 
+  // for sources, the costs depend on the model_type;
+  // we calulate costs for each output
+  //
+  // if we have NODE_MODELS_SRC, output is NODESRC_ANY_PALETTE so the only cost is
+  // proc_time,
+  //
+  // for other sources, there is no time cost to switch palettes, however this may affect proc_time
+  // and in addition we will add a qloss_p ghost cost to represent visual changes,
+  // the cost being equivalent to the cost converting from cpal to pal, or 0.5 * cost for pal to cpal
+  // whichever is the greater
+
+  // for NODE_MODELS_CLIP we have a set of possible palettes and various clip_srcs
+  // for the region betweemn start and end we can count the number of frames for each clip_src
+  // then this acts like a type of fractional palette
+
+  //  --- for example we may have img src - palette RGBA32
+  // -- decoder src - palette yuv420p
+  // if we have 20% decoded frames and 80% undecodec then we calculate costs for RGBA32 and for YUV420P and
+
+  // multiply the former by .2 and the later by .8 to give the calulate d cost
+
+  // since we do not have a defined palette at the output, these costs are stored in the connected input
+  // even though partr of the cost, proc_time is properly part of the source
+
+  if (n->model_type != NODE_MODELS_CLIP) {
+    for (k = 1; k < N_COST_TYPES; k++) {
+      costs[k] = 0.;
+    }
+    return;
+  }
+  else {
+    // in the model, clip sources are represented by non enumerated inputs
+    // we will step through each of these and calulate its costs. Then multiply the values by the relative frequency
+    // and sum all of these for all clip_srcs
+
+    lives_clip_t *sfile = (lives_clip_t *)n->model_for;
+   
+    for (int ni = 0; n->inputs[ni]; ni++) {
+      // node srcs are currently hardcoded, this iwll change
+      // normally we would have an ouput_node here, but here we have an input
+      input_node_t *out = n->inputs[ni];
+      // set pals, cpal, size and f_ratio
+      int *pals = out->pals;
+      int npals = out->npals;
+      int owidth = out->width;
+      int oheight = out->height;
+      if (!owidht || !oheight) {
+	owidth = sfile->hsize;
+	oheight = sfile->vsize;
+      }
+      // go through pals, and get the costs for converting to input of next node
+      // for each cost_type we want to find the best pal
+      // store this in the input as if the clip_src palette wer thein palette, and the next nod input palette
+      // were the out palette. Then having done this for each input we can sum these
+      // fractional costs and set as output costs
+
+      for (int i = 0; i < pals; i++) {
+	// generally we only have a single palette choice for clip_srcs
+	// find costs to convert from width, height, ipal gamma_type to
+	// owidth, oheight, opal, ogamma_type
+	for (k = 1; k < N_COST_TYPES; k++) {
+	  cost = get_conversion_cost(cost_type, owidth, oheight, in->width, in->height,
+				     pals[i], pal_list[j], pal_list, in_gamma_type, out_gamma_type, ghost);
+
+	  if (k == COST_TYPE_QLOSS_P) {
+	    int cpal = in->node->cpal;
+	    if (in->npals) cpal = in->cpal;
+
+	    if (ghost && pal_list[j] != cpal) {
+	      double delta_costf = get_pconv_cost(k, w, h, cpal, pal_list[j]);
+	      double delta_costb = get_pconv_cost(k, w, h, pal_list[j], cpal) * .5;
+	      if (delta_costf > delta_costb) cost += delta_costf;
+	      else cost += delta_costb;
+	    }
+	  }
+
+	  if (out->prev_pal[j * N_COST_TYPES + k] == -1
+	      || cost < out->min_cost[j * N_COST_TYPES + k]) {
+	    out->min_cost[j * N_COST_TYPES + k] = cost;
+	    out->prev_pal[j * N_COST_TYPES + k] = i;
+	  }
+	  ccost += cost * factors[k - 1];
+	}
+	if (out->prev_pal[j * N_COST_TYPES] == -1
+	    || ccost < out->min_cost[j * N_COST_TYPES]) {
+	    out->min_cost[j * N_COST_TYPES] = ccost;
+	    out->prev_pal[j * N_COST_TYPES] = i;
+	}
+      }
+      for (k = 0; k < N_COST_TYPES; k++) {
+	costs[k] += out->min_cost[j * N_COST_TYPES + k] * out->f_ratio;
+      }
+    }
+  }
+}
+ 
+
 #define _FLG_GHOST_COSTS	1
 #define _FLG_ORD_DESC		2
 
@@ -1835,137 +2494,152 @@ static LiVESList *_add_sorted_cdeltas(LiVESList *cdeltas, int out_pal, int in_pa
 
 static void _calc_costs_for_input(input_node_t *in, int *pal_list, int j, 
 				  int flags, double *factors) {
+  // calc costs for in converting to pal_list[j]
   inst_node_t *p = in->node;
   out_node_t *out = p->outputs[in->oidx];
+  double *costs;
   int npals, cpal, *pals;
-  int ncopies = 0;
-  int gamma_type = WEED_GAMMA_UNKNOWN, p_gamma_type = WEED_GAMMA_UNKNOWN;
+  int out_gamma_type = WEED_GAMMA_UNKNOWN, in_gamma_type = WEED_GAMMA_UNKNOWN;
   boolean ghost = FALSE, enable_gamma = FALSE;
 
+  // if p is an input, we dont really have palettes, we have composit clip srcs
+  
   if (flags & _FLG_GHOST_COSTS) ghost = TRUE;
   if (flags & _FLG_ENA_GAMMA) enable_gamma = TRUE;
-
-  if (out->npals) {
-    npals = out->npals;
-    pals = out->pals;
-    cpal = out->cpal;
+  
+  if (p->n_inputs) {
+    if (out->npals) {
+      npals = out->npals;
+      pals = out->pals;
+      cpal = out->cpal;
+    }
+    else {
+      npals = p->npals;
+      pals = p->pals;
+      cpal = p->cpal;
+    }
   }
-  else {
-    npals = p->npals;
-    pals = p->pals;
-    cpal = p->cpal;
-  }
-
-  out_size = p->width * p->height;
-  in_size = in->width * in->height;
-
-  in->flags & NODESRC_ANY_SIZE) in_size = out_size;
-
-  if (in->clones) while (in->clones[ncopies - 1]) ncopies++;
 
   // test with gamma conversions applied; when optmising we will test the effects of disabling this
   if (enable_gamma && (n->flags & NODESRC_LINEAR_GAMMA))
-    gamma_type = WEED_GAMMA_LINEAR;
-  if (p->sflags & NODESRC_LINEAR_GAMMA) p_gamma_type = WEED_GAMMA_LINEAR;
+    in_gamma_type = WEED_GAMMA_LINEAR;
+  if (p->flags & NODESRC_LINEAR_GAMMA) out_gamma_type = WEED_GAMMA_LINEAR;
 
-  for (int i = 0; i < npals; i++) {
-    int ogamma_type = gamma_type;
-    double ccost = 0.;
+  costs = (double *)lives_calloc(N_COST_TYPES, sizdbl);
+  
+  if (!p->n_inputs && p->model_type != NODE_MODELS_INSTANCE) {
+    //in->min_cost[j * N_COST_TYPES + k] = cost[k] =
+    calc_costs_for_source(cossts, p, in, pal_list, j, out_gamma_type, in_gamma_type, factors, ghost);
 
-    // apply node restrictions
-    if ((!out->npals && !pal_permitted(p, pals[i]))
-	|| (out->npals && !output_pal_permitted(out, pals[i]))) continue;
+    for (k = 0; k < N_COST_TYPES; k++)
+      in->min_cost[j * N_COST_TYPES + k] = costs[k];
 
-    if (gamma_type == WEED_GAMMA_LINEAR && !weed_palette_is_rgb(pal_list[j])
-	&& !weed_palette_is_rgb(pals[i]) && p_gamma_type != WEED_GAMMA_LINEAR)
-      ogamma_type = WEED_GAMMA_UNKNOWN;
-
-    // find cost_delta. This is computed according to
-    // cost_type, in_pal, out_pal, out_pal_list, in size and out size
-
-    // for time:
-    // - if the output is a clone, or has clones, add the layer copy time, based on out_pal and size
-    //   layer
-    //  - (for clones, we add a copy time to original and clone -in fact if we have n clones,
-    //	we need to first copy the original, then select a copy to make another copy from)
-    //   - add 1 copy time to the orignal, then we can select whether to send one or both coppies
-    //    to inputs, or whether to copy again. If there are enough copies for out clones then all
-    //    copies now go to remaining outputs. Otherwise if we have N copies not sent to layers,
-    //    we can copy up to N of them in threads. However if two inpputs connected to outputs
-    //    have same in palette, same size, same gamme, and the input is not inplace, we can
-    //   elect to do the copy starting from the Ready Time for the node connected to the output we will copy from)
-    //   in this case there is only a time cost for the clone. IN all other cases, we add 1 X copy time
-    //   to the oriignal output,
-    //  We will do this calculation after building the inital cost model, where we assume simply that each output
-    // has 1 copy time cost. When we do the step to reconcile ouput palettes, we will adjust this, along with the
-    // node palette.
-
-    // - if the output size and input size differ, and the input is not flagged as size_any
-    //     then we add the resize cost, based on out_pal, in_pals and max(out_size, in_size)
-    //	 in some cases we use letterboing, the resize cost may vary in this case
-    //  - if out_pal and in_pal differ, for some palette combinations, the conversion is done
-    //	 in combination with resize, otherwise the conversion time cost is added
-    //	 this is dependant on in_pal, out_pal, and out_size
-    //  - if the node prefers linear gamma, this may alter costs
-    //  but we calulate this via the priority list adjustments
-    //
-    //	 - if the out palette is flagged as linear gamme, then there is no extra cost at the
-    //	  input, but there may be an addition for converting back, at the ouptut
-    //	 - otherwise:
-    //       - in some cases, the gamma conversion can be combined with a resize / pal conversion
-    //	     in which case there is no extra cost, we simply do the conversion simultaneously
-    //	   - otherwise we calculate deltas twice, once without the conversion, once with
-    //	     for the latter:
-    //
-    //	     - if the input palette is YUV, then
-    //		- if out pal is YUV, then ther is a possibilty it was converted from RGB with
-    //		  linear gamma, in this case there is no cost to keep it in linear  gamma
-    //	        - if the out_pal is RGB
-    //	         - if resize, pal conv are combined, do the gamma change before resizing
-    //		 - else do this before resize if upsizing, or after, if downsizing
-    //	       what we have now is YUV with linear gamma. This is non standard, but it is what we will
-    //	       go with.
-    //		- If the following node does not support linear gamma:
-    //		 - if it is YUV, this is worst case scenario, we must conver to RGB, convert gamme
-    //		     then convert back to YUV, therfore we set the "qbonus" for conveting to lienar gamma
-    //			< the qloss converitng to rgb and back
-    //
-    // otherwise the extra time cost / qloss is borne by teh following node
-    //
-    // what we shall do is to get the initial costs without the gamma conversion
-    // then add the alteration via the priority list
-
-    for (k = 1; k < N_COST_TYPES; k++) {
-      double delta_cost = get_pal_conversion_cost(k, pals[i], pal_list[j], pal_list,
-						  out_size, in_size, ncopies, ogamma_type, p_gamma_type);
-
-      // add on the (possibly palette dependent) processing time for the prvious node
-      // if the connected output has its own palette list, then we cannot determine the palette
-      // dependent processing times
-      if (k == COST_TYPE_TIME && !out->npals)
-	delta_cost += _get_proc_time(p, pals[i], out_size);
-	
-      costs[k] = delta_cost;
-      ccost += factors[k - 1] * delta_cost;
-    }
-
-    costs[COST_TYPE_COMBINED] = ccost;
-	
     // add to cdeltas for input, sorted by increasing ccost
-    in->cdeltas = _add_sorted_cdeltas(in->cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, ogamma_type,
-				      p_gamma_type);
+    in->cdeltas = _add_sorted_cdeltas(in->cdeltas, j, -1, costs, COST_TYPE_COMBINED, FALSE,
+				      out_gamma_type, in_gamma_type);
+  }
+  else {
+    for (int i = 0; i < npals; i++) {
+      //int out_gamma_type = in_gamma_type;
+      double ccost = 0.;
+      int igamma_type = in_gamma_type;
 
-    /* g_print("%d %f and %f\n", in->prev_pal[j * N_COST_TYPES + k], */
-    /* 	  total_cost, in->min_cost[j * N_COST_TYPES + k]); */
-    for (k = 0; k < N_COST_TYPES; k++) {
-      // note the palette producing the lowest delta for each cost_type
-      if (in->prev_pal[j * N_COST_TYPES + k] == -1
-	  || costs[k] < in->min_cost[j * N_COST_TYPES + k]) {
-	in->min_cost[j * N_COST_TYPES + k] = costs[k];
-	in->prev_pal[j * N_COST_TYPES + k] = i;
-	g_print("SET2 a prev_pal to %d for node %d->%d\n", i, n->idx, in->node->idx);
-	// *INDENT-OFF*
-      }}}
+      // apply node restrictions
+      if ((!out->npals && !pal_permitted(p, pals[i]))
+	  || (out->npals && !output_pal_permitted(out, pals[i]))) continue;
+
+      if (out_gamma_type == WEED_GAMMA_LINEAR && !weed_palette_is_rgb(pal_list[j])
+	  && !weed_palette_is_rgb(pals[i]) && in_gamma_type != WEED_GAMMA_LINEAR)
+	igamma_type = WEED_GAMMA_LINEAR;
+
+      // find cost_delta. This is computed according to
+      // cost_type, in_pal, out_pal, out_pal_list, in size and out size
+
+      // for time:
+      // - if the output is a clone, or has clones, add the layer copy time, based on out_pal and size
+      //   layer
+      //  - (for clones, we add a copy time to original and clone -in fact if we have n clones,
+      //	we need to first copy the original, then select a copy to make another copy from)
+      //   - add 1 copy time to the orignal, then we can select whether to send one or both coppies
+      //    to inputs, or whether to copy again. If there are enough copies for out clones then all
+      //    copies now go to remaining outputs. Otherwise if we have N copies not sent to layers,
+      //    we can copy up to N of them in threads. However if two inpputs connected to outputs
+      //    have same in palette, same size, same gamme, and the input is not inplace, we can
+      //   elect to do the copy starting from the Ready Time for the node connected to the output we will copy from)
+      //   in this case there is only a time cost for the clone. IN all other cases, we add 1 X copy time
+      //   to the oriignal output,
+      //  We will do this calculation after building the inital cost model, where we assume simply that each output
+      // has 1 copy time cost. When we do the step to reconcile ouput palettes, we will adjust this, along with the
+      // node palette.
+
+      // - if the output size and input size differ, and the input is not flagged as size_any
+      //     then we add the resize cost, based on out_pal, in_pals and max(out_size, in_size)
+      //	 in some cases we use letterboing, the resize cost may vary in this case
+      //  - if out_pal and in_pal differ, for some palette combinations, the conversion is done
+      //	 in combination with resize, otherwise the conversion time cost is added
+      //	 this is dependant on in_pal, out_pal, and out_size
+      //  - if the node prefers linear gamma, this may alter costs
+      //  but we calulate this via the priority list adjustments
+      //
+      //	 - if the out palette is flagged as linear gamme, then there is no extra cost at the
+      //	  input, but there may be an addition for converting back, at the ouptut
+      //	 - otherwise:
+      //       - in some cases, the gamma conversion can be combined with a resize / pal conversion
+      //	     in which case there is no extra cost, we simply do the conversion simultaneously
+      //	   - otherwise we calculate deltas twice, once without the conversion, once with
+      //	     for the latter:
+      //
+      //	     - if the input palette is YUV, then
+      //		- if out pal is YUV, then ther is a possibilty it was converted from RGB with
+      //		  linear gamma, in this case there is no cost to keep it in linear  gamma
+      //	        - if the out_pal is RGB
+      //	         - if resize, pal conv are combined, do the gamma change before resizing
+      //		 - else do this before resize if upsizing, or after, if downsizing
+      //	       what we have now is YUV with linear gamma. This is non standard, but it is what we will
+      //	       go with.
+      //		- If the following node does not support linear gamma:
+      //		 - if it is YUV, this is worst case scenario, we must conver to RGB, convert gamme
+      //		     then convert back to YUV, therfore we set the "qbonus" for conveting to lienar gamma
+      //			< the qloss converitng to rgb and back
+      //
+      // otherwise the extra time cost / qloss is borne by teh following node
+      //
+      // what we shall do is to get the initial costs without the gamma conversion
+      // then add the alteration via the priority list
+    
+      for (k = 1; k < N_COST_TYPES; k++) {
+	double delta_cost = get_conversion_cost(k, out->width, out->height, in->width, in->height,
+					   pals[i], pal_list[j], pal_list, out_gamma_type, igamma_type, ghost);
+	// add on the (possibly palette dependent) processing time for the previous node
+	// if the connected output has its own palette list, then we cannot determine the palette
+	// dependent processing times
+	if (k == COST_TYPE_TIME && !out->npals)
+	  delta_cost += get_proc_cost(COST_TYPE_TIME, out_size, pals[i]);
+
+	// TODO: misc_costs and any layer copy costs
+	
+	costs[k] = delta_cost;
+	ccost += factors[k - 1] * delta_cost;
+      }
+
+      costs[COST_TYPE_COMBINED] = ccost;
+	
+      // add to cdeltas for input, sorted by increasing ccost
+      in->cdeltas = _add_sorted_cdeltas(in->cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+					igamma_type);
+
+
+      /* g_print("%d %f and %f\n", in->prev_pal[j * N_COST_TYPES + k], */
+      /* 	  total_cost, in->min_cost[j * N_COST_TYPES + k]); */
+      for (k = 0; k < N_COST_TYPES; k++) {
+	// note the palette producing the lowest delta for each cost_type
+	if (in->prev_pal[j * N_COST_TYPES + k] == -1
+	    || costs[k] < in->min_cost[j * N_COST_TYPES + k]) {
+	  in->min_cost[j * N_COST_TYPES + k] = costs[k];
+	  in->prev_pal[j * N_COST_TYPES + k] = i;
+	  g_print("SET2 a prev_pal to %d for node %d->%d\n", i, n->idx, in->node->idx);
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
   if (flags & _FLG_ORD_DESC) in->cdeltas = lives_list_reverse(in->cdeltas);
 }
@@ -1980,9 +2654,18 @@ static void compute_all_costs(inst_node_t *n, int ord_ctype, double *factors, in
   // setting ENA_GAMMA will force linear gamma if the node prefers it
   //   (invalid if palette is yuv, prev palette was also yuv, and prev gamma type was not linear)
 
+  // intially we may find a cdelta for an input with no inpal, and no outpal,
+  // - in this case it will hold QLOSS_S calculated in previous phases.
+  // We need to thus find an existing cdalta with QLOSS_S set and hold this in a global cdelta for the input
+  // then using a kind of "mask" with just QLOSS_S set, copy the global masked values to each othe cdelta 
+
   inst_node_t *p = NULL;
   input_node_t *in;
   cost_delta_t *cdelta;
+
+  double glob_costs[N_COST_TYPES];
+  double glob_mask[N_COST_TYPES];
+
   double tcost = 0;
   double delta_cost;
 
@@ -1992,83 +2675,84 @@ static void compute_all_costs(inst_node_t *n, int ord_ctype, double *factors, in
   int max_in = n->n_inputs;
   int npals, cpal, *pal_list;
 
+  // costs for srcs are calulated at the following node
+  if (!n->inputs) return;
+
   if (flags & _FLG_GHOST_COSTS) ghost = TRUE;
 
-  if (!n->inputs) max_in = 1;
-  
-  for (ni = 0; ni < max_in; ni++) {
-    // we will go tehough each input separately, in case any has a private palette list,
-    // then after that for the node itself, which will take care of the mojority of inputs, which
+  for (ni = 0; ni < n->n_inputs; ni++) {
+    // we will go through each input separately, in case any has a private palette list,
+    // then after that for the node itself, which will take care of the majority of inputs, which
     // use the instance palette
-    if (ni < n->n_inputs) {
-      in = n->inputs[xni];
-      if (in->flags & NODEFLAGS_SKIP) continue;
-      npals = in->npals;
-      if (npals) {
-	pal_list = in->pals;
-	cpal = in->cpal;
-      }
-      else {
-	npals = n->npals;
-	pal_list = n->pals;
-	cpal = n->cpal;
-      }
+    in = n->inputs[ni];
+    if (in->flags & (NODEFLAGS_SKIP | NODEFLAG_IO_CLONE)) continue;
 
-      // iterate over all out pals, either for the node or for a specific input
-      // cross reference this against the in pals available at the input 
-      for (j = 0; j < npals; j++) {
-	//double xtracost_post = 0.;
-	double prev_cost, total_cost;
+    // palettes for input can be global or specific
+    npals = in->npals;
+    if (npals) {
+      pal_list = in->pals;
+      cpal = in->cpal;
+    }
+    else {
+      npals = n->npals;
+      pal_list = n->pals;
+      cpal = n->cpal;
+    }
 
-	// apply node restrictions
-	if (in && !input_pal_permitted(n, xni, pal_list[j])) continue;
-	if (!in && !pal_permitted(n, pal_list[j])) continue;
+    for (k = 0; k < N_COST_TYPES; k++) glob_mask[k] = FALSE;
 
-	// go through all inputs and calculate costs for each in_pal / out_pal pair
-	// storing this in cdeltas for the input_node
-	// we find the ouput_node which the input connects to, and if it has npals > 0
-	// we use the palette list from the output, otherwise we use the list from the node
-	// we optimise independently for each output, if this leads to conflicting palettes in prv node
-	// then that will be resolved once we are able to calulate combined cost at the sink
+    if (in->cdeltas) {
+      cost_delta_t *cdelta = (cost_delta_t *)in->cdeltas->data;
+      for (k = 0; k < N_COST_TYPES; k++) glob_costs[k] = cdelta->deltas[k];
+      glob_mask[COST_TYPE_QLOSS_S] = TRUE;
+    }
 
-	if (!n->inputs) {
-	  // for sources, there is no time cost to switch palette, however thie may affect proc_time
-	  // and in addition we will have a qloss ghost cost to represent visual changes,
-	  // the cost being equivalent to the cost converting from cpal to pal, or 0.5 * cost for pal to cpal
-	  // whichever is the greater
-	  n->min_cost[j * N_COST_TYPES + COST_TYPE_TIME] = proc_time;//_get_proc_time(n, pal_list[j], out_size);
-	  if (ghost) {
-	    // TODO - make this part of the calc function
-	    double delta_costf + get_pal_conversion_cost(COST_TYPE_QLOSS, cpal, pal_list[j], pal_list,
-							 out_size, out_size, ncopies, FALSE);
-	    fouble delta_costb + (1. - (1. - get_pal_conversion_cost(COST_TYPE_QLOSS, pal_list[j], cpal, pal_list,
-								     out_size, out_size, ncopies, FALSE)) / 2.);
+    // iterate over all out pals, either for the node or for a specific input
+    // cross reference this against the in pals available from the previous node output
+    for (j = 0; j < npals; j++) {
+      //double xtracost_post = 0.;
+      double prev_cost, total_cost;
 
-	    if (delta_costf > delta_costb)
-	      n->min_cost[j * N_COST_TYPES + COST_TYPE_QLOSS] = delta_costf;
-	    else n->min_cost[j * N_COST_TYPES + COST_TYPE_QLOSS] = delta_costb;
-	  }
-	  else n->min_cost[j * N_COST_TYPES + COST_TYPE_QLOSS] = 1.;
-	  continue;
-	}
-	// make cdeltas for each in / out pair
+      // apply node restrictions
+      if (in && !input_pal_permitted(n, ni, pal_list[j])) continue;
+      if (!in && !pal_permitted(n, pal_list[j])) continue;
 
-	calc_costs_for_input(in, pal_list, j, flags, factors);
-	// *INDENT-OFF*
-      }}}
+      // go through all inputs and calculate costs for each in_pal / out_pal pair
+      // storing this in cdeltas for the input_node
+      // we find the ouput_node which the input connects to, and if it has npals > 0
+      // we use the palette list from the output, otherwise we use the list from the node
+      // we optimise independently for each output, if this leads to conflicting palettes in prv node
+      // then that will be resolved once we are able to calulate combined cost at the sink
+
+      // make cdeltas for each in / out pair
+
+      // calc for in - with pal pal_list[j] - over all in pals, - if glob_mask[i] is TRUE set val to glob_costs[k]
+      // factors are used to compute combined_cost
+      calc_costs_for_input(in, pal_list, j, flags, glob_costs, glob_mask, factors);
+      // *INDENT-OFF*
+    }}
   // *INDENT-ON*
 }
 
 
-static void trace_to_src(inst_node_t *n, int oper) {
+static void ascend_tree(inst_node_t *n, int oper) {
   // for each input, we iterate over cost_types. Since for the current node we already have
   // best_pal[cost_type], we can thus look up the prev node in pal with min cost,
   // and we set best_pal[cost_type] for each input node, ascedning the branches depth first recursively
 
-  static int depth = 0;
-  int k, ni;
+  // oper can be: 	0 - map lc palettes
+  //			1 - accumulate_slack
+  // 			2  set_missing_sizes
+  //			3 -  consolidate_size_costs
 
+  static int depth = 0;
+  output_node_t *out;
+  input_node_t *in;
+  double maxqls = 0.;
+  int width = 0, height = 0;
+  
   depth++;
+
   g_print("trace to src %d %d\n", depth, n->n_inputs);
 
   // in case a node has multiple outputs, we can only optimise for one of these (unless the output has its
@@ -2079,81 +2763,189 @@ static void trace_to_src(inst_node_t *n, int oper) {
   // if the output does not, then we need to optimise the global palette, to find which of the outputs we
   // should use/ For now we just use the first output to reach here
 
-  if (oper == 0) {
-    if (n->n_outputs) {
-      for (no = 0; no < n->n_outputs; no++) {
-	output_node_t *out = n->outputs[no];
-	indt_node_t *nxt = out->node->inputs[out->iidx];
-	if (out->flags & NODEFLAGS_SKIP)continue;{
+  // processs outputs
+  if (n->n_outputs) {
+    boolean is_first = TRUE;
+    for (int no = 0; no < n->n_outputs; no++) {
+      out = n->outputs[no];
+      if (out->flags & NODEFLAGS_SKIP) continue;
+
+      // make sure outputs have been processed
+      // for 0 - min pals, we dont need this as only out[0] counts anyway
+      // but we check for pvary
+      // for 2, set missing sizes, again only out[0] counts
+      // but we check for svary
+      if (oper == 1 || oper == 3)
+	if (!(out->flags & NODEFLAG_PROCESSED)) return;
+
+      // this is input from lower node
+      in = out->node->inputs[out->iidx];
+      switch (oper) {
+      case 0:
+	// set optimal pal for node or for output
+	for (k) {
 	  if (out->npals) {
-	    out->optimal_pal = out->best_out_pal[k] = nxt->best_in_pal[k];
+	    out->optimal_pal = out->best_out_pal[k] = in->best_in_pal[k];
 	  }
 	  else {
-	    if (no == 0) {
-	      n->optimal_pal = n->best_pal_up[k] = nxt->best_in_pal[k];
+	    if (is_first) {
+	      n->optimal_pal = n->best_pal_up[k] = in->best_in_pal[k];
 	      // *INDENT-OFF*
-	    }}}}}
-    // *INDENT-OFF*
-  
-    if (n->n_inputs) {
-      if (oper == 1) {
-	// if we have unprocessed outputs, we have to pause here
-	// once all are processed, we find min slack for all, and this value gets added for each input
-	for (int no = 0; no < n->n_outputs; no++) {
-	  if (!(n->outputs[no]->flags & NODEFLAG_PROCESSED)) return;
+	    }}}
+	// *INDENT-OFF*
+	break;
 
-	  // otherwise, find min tot_slack for all outputs, and we add this to the next node (going up)
-	  // outputs slack to deriver their total slack
-	  if (!no || n->outputs[no]->total_slack < minslack)
-	    minslack = n->outputs[no]->total_slack;
-	}
-      }
-
-      for (int ni = 0; ni < n->n_inputs; ni++) {
-	input_node_t *in = n->inputs[ni];
-	output_node *out;
-	inst_node_t *p;
-	// again, we ignore cloned inputs, they don't affect the previous palette
-	if (in->flags & (NODEFLAGS_SKIP | NODEFLAG_IO_CLONE)) continue;
-
-	p = in->node;
-	out = p->outputs[in->oidx];
-
-	if (oper == 1) {
-	  // find slack and add to total
-	  double slack = (double)(n->ready_time - p->ready_time) / TICKS_PRE_SECOND_DBL
-	    - cdelta->deltas[COST_TYPE_TIME];
-	  out->slack = slack;
-	  out->total_slack = slack + minslack;
-	  // when optimising, we can "spend" slack to increase tcost, without increasing combined
-	  // cost at the sink
-	}
-	else {
-	  if (p->flags & NODEFLAG_LOCKED) continue;
-	  // nodes can have more than one output, but pnly the first output is capable of defining the
-	  if (in->oidx > 0 && !out->npals) continue;
-	}
-      }
-
-      if (oper == 1) {
-	// create tuples for all combos of in / out pals for all inputs
-	LiVESList *prio_list = backtrack(n, 1);
-	for (k = 0; k < N_COST_TYPES; k++) {
-	  // find a tuple with min cost for each type
-	  cost_tuple_t *tup = best_tuple_for(k);
-	  for (ni = 0; ni < n->n_inputs; ni++) {
-	    n->inputs[ni]->best_in_pal = tuple->palconv[ni]->in_pal;
-	    n->inputs[ni]->best_out_pal = tuple->palconv[ni]->out_pal;
-	    if (!n->inputs[i]->npals) n->best_pal_up = n->optimal_pal = tuple->palconv[ni]->out_pal;
+      case 1:
+	// find minslack
+	if (is_first || n->outputs[no]->total_slack < minslack)
+	  minslack = n->outputs[no]->total_slack;
+	break;
+    
+      case 2:
+	// foreach output, check if we have a size set, if not we set its size
+	// to the size of the input node it connects to
+	// we then push this size up inputs
+	if (!out->width || !out->height) {
+	  out->width = in->width;
+	  out->height = in->height;
+	  if (!svary && !width) {
+	    width = in->width;
+	    height = in->height;
 	  }
 	}
-	free_prio_list(prio_list);
-      }
-      trace_to_src(p, oper);
-    }
+	break;
 
-    depth--;
+      case 3:
+	if (out->cdeltas) {
+	  // find max upscale cost from all outputs
+	  cost_delta_t *cdelta = (cost_delta_t *)out->cdeltas->data;
+	  double qloss_s = cdelta->deltas[COST_TYPE_QLOSS_S];
+	  if (qloss_s > maxqls) maxqls = qloss_s;
+	  free_cdeltas(out->cdeltas);
+	  out->cdeltas = NULL;
+	}
+	break;
+      default: break;
+      }
+      is_first = FALSE;
+    }
   }
+  
+  // process inputs
+  
+  if (n->n_ninputs) {
+    LiVESList *prio_list = NULL;
+
+    if (oper == 3) prio_list = backtrack(n, 1);
+
+    for (int ni = 0; ni < n->n_inputs; ni++) {
+      input_node_t *in = n->inputs[ni];
+      output_node *out;
+      inst_node_t *p;
+
+      // again, we ignore cloned inputs, they don't affect the previous palette
+      if (in->flags & (NODEFLAGS_SKIP | NODEFLAG_IO_CLONE)) continue;
+
+      p = in->node;
+      out = p->outputs[in->oidx];
+      switch (oper) {
+      case 1: {
+	// find slack and add to minslack
+	double slack = (double)(n->ready_time - p->ready_time) / TICKS_PER_SECOND_DBL
+	  - cdelta->deltas[COST_TYPE_TIME];
+	out->slack = slack;
+	out->total_slack = slack + minslack;
+	// when optimising, we can "spend" slack to increase tcost, without increasing combined
+	// cost at the sink
+      }
+	break;
+      case 3: {
+	// apply upscale costs and actualise downscale costs
+	double outqls = maxqls;
+	if (in->cdeltas) {
+	  // if input has cdelta with qloss_s, we convert this potential loss to real loss
+	  // converting MIN(qloss_in, vqloss)
+	  // the amount converted
+	  cost_delta_t *cdelta = (cost_delta_t *)in->cdeltas->data;
+	  double inqls = cdelta->deltas[COST_TYPE_QLOSS_S];
+	  if (inqls > maxqls) inqls = maxqls;
+	  outqls -= inqls;
+	  if (inqls)
+	    cdelta->deltas[COST_TYPE_QLOSS_S] = inqls;
+	  else {
+	    free_cdeltas(in->cdeltas);
+	    in->cdeltas = NULL;
+	  }
+	}
+	else {
+	  // if we had qloss in input, it must have been from a downscale, else
+	  // check for upscales, if we find one, calulate qloss cost, and add to tolal carrried upward
+	  // and add this to qloss_s for the output pre-upscale
+	  double uqls;
+	  int out_size = in_width * in->height;
+	  int in_size = out->width * out_size;
+	  if (out_size > in_size) {
+	    // downscaling - set cost in input
+	    double *costs = (double *)lives_calloc(N_COST_TYPES, sizdbl);
+	    double uqls = get_resize_cost(COST_TYPE_QLOSS_S, out->width, out->height, in->width, in->height.
+					  WEED_PALETTE_NONE, WEED_PALETTE_NONE);
+	    costs[COST_TYPE_QLOSS_S] = uqls;
+	    in->cdeltas = _add_sorted_cdeltas(in->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
+					      costs, COST_TYPE_QLOSS_S,
+					      FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+	    outqls += uqls;
+	  }
+	}
+
+	if (outqls) {
+	  // upscaling set in ouput
+	  cost_delta_t *cdelta = (cost_delta_t *)out->cdeltas->data;
+	  if (cdelta) {
+	    cdelta->deltas[COST_TYPE_QLOSS_S] = inqls;
+	  }
+	  else {
+	    costs[[COST_TYPE_QLOSS_S] = inqls;
+	    out->cdeltas = _add_sorted_cdeltas(in->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
+					       costs, COST_TYPE_QLOSS_S,
+					       FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+	  }
+	}
+      }
+	break;
+      case 0:
+	// create tuples for all combos of in / out pals for all inputs
+	if (p->flags & NODEFLAG_LOCKED) continue;
+	if (in->oidx > 0 && !out->npals) continue;
+
+	for (int k = 0; k < N_COST_TYPES; k++) {
+	  // find a tuple with min cost for each type
+	  cost_tuple_t *tup = best_tuple_for(k);
+	  //for (ni = 0; ni < n->n_inputs; ni++) {
+	  in->best_in_pal = tuple->palconv[ni]->in_pal;
+	  in->best_out_pal = tuple->palconv[ni]->out_pal;
+	  if (!in->npals) n->best_pal_up = n->optimal_pal = tuple->palconv[ni]->out_pal;
+	  //}
+	}
+	break;
+      case 2:
+	if (in->width && in->height) continue;
+	if (!svary || ni >= n->n_outputs) {
+	  in->Width = width;
+	  in->height = height;
+	}
+	else {
+	  in->width = n->outputs[ni]->width;
+	  in->height = n->outputs[ni]->height;
+	}
+	break;
+      default: break;
+      }
+      ascend_tree(p, oper);
+    }
+    if (prio_list) free_prio_list(prio_list);
+  }
+
+  depth--;
 }
 
 
@@ -2218,7 +3010,7 @@ static void map_least_cost_palettes(inst_node_t *n) {
   // by looking at input->prev_pal[out_pal][cost_type]
   // this then becomes best_pal[cost_type] for the previous nodes and we ascend
   // depth first until we reach a node with no inputs (src)
-  trace_to_src(n, 0);
+  ascend_tree(n, 0);
 }
 
 
@@ -2244,11 +3036,13 @@ static double *total_costs(int nvals, double **abs_costs, double **costs, double
     // set summation methods and def values for cost types
     sumty = TRUE;
     cost_summation[COST_TYPE_TIME] = SUM_MAX;
-    cost_summation[COST_TYPE_QLOSS] = SUM_MPY;
+    cost_summation[COST_TYPE_QLOSS_P] = SUM_MPY;
+    cost_summation[COST_TYPE_QLOSS_S] = SUM_MPY;
 
     DEF_COST[COST_TYPE_COMBINED] = 0.;
     DEF_COST[COST_TYPE_TIME] = 0.;
-    DEF_COST[COST_TYPE_QLOSS] = 1.;
+    DEF_COST[COST_TYPE_QLOSS_P] = 1.;
+    DEF_COST[COST_TYPE_QLOSS_S] = 1.;
   }
 
   for (int k = 0; k < N_COST_TYPES; k++) {
@@ -2318,8 +3112,18 @@ static cost_tuple_t *make_tuple(inst_node_t *n, conversion_t *conv) {
 }
 
 
-statc void accumulate_slack(inst_node_t *n) {
-  trace_to_src(n, 1);
+static void accumulate_slack(inst_node_t *n) {
+  ascend_tree(n, 1);
+}
+
+
+static void set_missing_sizes(inst_node_t *n) {
+  ascend_tree(n, 2);
+}
+
+
+static void consolidate_size_costs(inst_node_t *n) {
+  ascend_tree(n, 3);
 }
 
 
@@ -2507,13 +3311,14 @@ static void desc_and_total(inst_node_t *n, int flags, double *factors) {
   desc_and_do_something(4, n, NULL, NULL, flags, factors);
 }
 
-static void desc_and_get_sizes(inst_node_t *n) {
+static void desc_and_pass_sizes(inst_node_t *n) {
   desc_and_do_something(5, n, NULL, NULL, 0, NULL);
 }
 
 static inst_node_t *desc_and_do_something(int do_what, inst_node_t *n, inst_node_t *p,
 					  lives_clip_src_t *dsource, int flags, double *factors) {
   static inst_node_t *first_inst = NULL;
+  static int src_width, srcheihgt;
   input_node_t *xn;
   boolean *ign;
   int i;
@@ -2534,7 +3339,27 @@ static inst_node_t *desc_and_do_something(int do_what, inst_node_t *n, inst_node
 	if (n->inputs[i]->flags & NODEFLAGS_SKIP) continue;
 	if (n->inputs[i]->node == p && !(n->inputs[i]->flags & NODEFLAG_IO_CLONE))
 	  n->inputs[i]->flags |= NODEFLAG_PROCESSED;
+	if (do_what == 5) {
+	  // compare input size vs output size. If the out iss smallere we want to add a virutal cost here
+	  in_size = out->width * out->height;
+	  out_size = in->width * in->height;
+	  if (min_size == 0 || in_size < min_size) min_size = in_size;
+	  if (out_size < in_size) {
+	    double *costs = (double *)lives_calloc(N_COST_TYPES, sizdbl);
+	    costs[COST_TYPE_QLOSS_S] = get_resize_cost(COST_TYPE_QLOSS_S, out->width, out->height, in->width, in->height.
+						       WEED_PALETTE_NONE, WEED_PALETTE_NONE, NULL);
+	    in->cdeltas = _add_sorted_cdeltas(in->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
+					      costs, COST_TYPE_QLOSS_S, FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+	  }
+	}
       }
+    }
+    else if (do_what == 5) {
+      // store out size from src. Then if we rech a node with multi inputs, store the size in the input
+      // once we have all inputs we find whchever has smallest size bfore, and this is the "guilty" input,
+      //respmsible for down sizing the others. We can find itss wsrc and
+      src_width = n->outputs[0]->width;
+      src_height = n->outputs[0]->height;
     }
 
     // if we find any other inputs, just return, eventually these iwll be processed
@@ -2553,7 +3378,6 @@ static inst_node_t *desc_and_do_something(int do_what, inst_node_t *n, inst_node
     }
     g_print("all inputs defined\n");
 
-
     if (do_what == 0 || do_what == 4) {
       // for op type 0, calculate min costs for each pal / cost_type
       // for op type 4, set abs_cost for node
@@ -2564,7 +3388,6 @@ static inst_node_t *desc_and_do_something(int do_what, inst_node_t *n, inst_node
 	if ((flags & _FLG_GHOST_COSTS) && (n->flags & NODESRC_LINEAR_GAMMA)) ghost = TRUE;
 	g_print("computing min costs\n");
 	if (do_what == 0) compute_all_costs(n, factors, ghost);
-	else if (do_what == 5) calc_node_sizes(n);
 	else {
 	  double **costs = (double **)lives_calloc(n->n_inputs, sizeof(double *));
 	  double **oabs_costs = (double **)lives_calloc(n->n_inputs, sizeof(double *));
@@ -2803,43 +3626,51 @@ static inst_node_t *create_node_for_layer(weed_layer_t **layers, int xtrack, int
     int clipno = lives_layer_get_clip(layer);
 
     sfile = RETURN_VALID_CLIP(clipno);
+
     if (sfile) {
-      switch (sfile->clip_type) {
-      case CLIP_TYPE_NULL_VIDEO:
-	sfile = NULL;
-	break;
-      case CLIP_TYPE_GENERATOR:
-	n->model_type = NODE_MODELS_INSTANCE;
-	if (sfile->primary_src && sfile->primary_src->source) {
-	  n->model_for = sfile->primary_src->source;
-	}
-	break;
-      case CLIP_TYPE_FILE:
-	n->model_type = NODE_MODELS_CLIP;
-	n->model_for = sfile;
-	nins = -2;
-	break;
-      case CLIP_TYPE_DISK:
-	n->model_type = NODE_MODELS_CLIP;
-	n->model_for = sfile;
-	nins = -1;
-	break;
-#ifdef HAVE_YUV4MPEG
-      case CLIP_TYPE_YUV4MPEG:
+      n->model_for = sfile;
+      if (clipno == mainw->scrap_file) {
 	n->model_type = NODE_MODELS_SRC;
-	n->model_for = sfile;
-	break;
+	n->src_type = LIVES_SRC_TYPE_FIlE_BUFF;
+      }
+      else {
+	switch (sfile->clip_type) {
+	case CLIP_TYPE_NULL_VIDEO:
+	  n->model_for = sfile = NULL;
+	  break;
+	case CLIP_TYPE_GENERATOR:
+	  n->model_type = NODE_MODELS_INSTANCE;
+	  if (sfile->primary_src && sfile->primary_src->source) {
+	    n->model_for = sfile->primary_src->source;
+	  }
+	  break;
+	case CLIP_TYPE_FILE:
+	  n->model_type = NODE_MODELS_CLIP;
+	  nins = -2;
+	  break;
+	case CLIP_TYPE_DISK:
+	  n->model_type = NODE_MODELS_CLIP;
+	  nins = -1;
+	  break;
+#ifdef HAVE_YUV4MPEG
+	case CLIP_TYPE_YUV4MPEG:
+	  n->model_type = NODE_MODELS_SRC;
+	  n->src_type = LIVES_SRC_TYPE_FIFO;
+	  break;
 #endif
 
 #ifdef HAVE_UNICAP
-      case CLIP_TYPE_VIDEODEV:
-	n->model_type = NODE_MODELS_SRC;
-	n->model_for = sfile;
-	break;
+	case CLIP_TYPE_VIDEODEV:
+	  n->model_type = NODE_MODELS_SRC;
+	  n->src_type = LIVES_SRC_TYPE_DEVICE;
+	  break;
 #endif	
-	//case CLIP_TYPE_LIVES2LIVES:
-	//break;
-      default: break;
+	  //case CLIP_TYPE_LIVES2LIVES:
+	  //break;
+	default:
+	  n->model_for = NULL;
+	  break;
+	}
       }
     }
   }
@@ -2917,7 +3748,7 @@ void describe_chains(LiVESList *node_chains) {
 				       n->idx, ntype ? ntype : "??????",
 				       weed_palette_get_name(pal), weed_gamma_get_name(n->gamma_type),
 				       n->width, n->height, n->abs_cost[COST_TYPE_TIME],
-				       n->abs_cost[COSTY_TYPE_QLOSS], n->abs_cost[COSTY_TYPE_COMBINED]);
+				       n->abs_cost[COSTY_TYPE_QLOSS_P], n->abs_cost[COSTY_TYPE_COMBINED]);
 	for (i = 0; i < n->n_inputs; i++) {
 	  if (n->inputs[i]->npals) {
 	    if (!in_str) in_str = lives_strdup(_"The following nodes have variant inputs:");
@@ -3026,15 +3857,17 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
       int *in_tracks, *out_tracks;
       for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
 	if (rte_key_is_enabled(i, TRUE)) {
-	  // for multitrack iterate over filter_map filter_init events
+	  // for clip editor we consstruct instance nodes according to the order of
+	  // mainw->rte_keys
+	  // for multitrack iterate over filter_map filter_init events (TODO)
 	  if ((instance = weed_instance_obtain(i, rte_key_getmode(i))) != NULL) {
 	    filter = weed_instance_get_filter(instance, TRUE);
 	    if (!filter) {
 	      weed_instance_unref(instance);
 	      continue;
 	    }
+
 	    nins = enabled_in_channels(filter, FALSE);
-	    
 	    nouts = enabled_out_channels(filter, FALSE);
 
 	    if (!nins || !nouts){
@@ -3042,12 +3875,19 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
 	      continue;
 	    }
 
-	    in_tracks = (int *)lives_calloc(nins, sizint);
-	    out_tracks = (int *)lives_calloc(nouts, sizint);
-
 	    if (!mainw->multitrack) {
+	      in_tracks = (int *)lives_calloc(nins, sizint);
+	      out_tracks = (int *)lives_calloc(nouts, sizint);
 	      in_tracks[0] = 0;
 	      if (nins > 1) in_tracks[1] = 1;
+	    }
+	    else {
+	      // for  multitrack, we have to check to ensure that at least one in_track
+	      // has a non-NULL layer, or a node_chain for the track
+	      // otherwise the instance has no active inputs, so we will just skip over it
+	      // we can also have repeated channels, and need in_count, out_count for this
+	      // these values all come from the 
+	      // TODO
 	    }
 
 	    n = create_node(NODE_MODEL_INSTANCE, nins, in_tracks, nouts, out_tracks);
@@ -3068,53 +3908,57 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
 
   // finally we add one more node, this represents the display or sink
 
-
-
-  if (!mainw->ext_playback)
-    modeltype = NODE_MODELS_INTERNAL;
-  }
-  else
-    modeltype = NODE_MODELS_OUTPUT;
+  if (!mainw->ext_playback) modeltype = NODE_MODELS_INTERNAL;
+  else modeltype = NODE_MODELS_OUTPUT;
 
   // create a node for each sink
-  // for now we have only one sink, it outputs from the unconnected node_chain with lowest track number
-  // if we have no chains it will create a source node for the lowest non null layer
-  // if all layers are null, it will create a blank frame src
+  // for now we have only one sink,
+  //
+  // the output will always connect to the lowest non-NULL, unterminated track
+  // unless th track is marked as pass thru
+  // 
+  // this means usually track 0, unless layers[0] is NULL and there is no unteminated
+  // chain which outputs to track 0, or track 0 is pass thur, in which case we check track 1, etc
+  //
+  // so the check seuqence is
+  // : unconnected chain -> track 0, layers[0], unconnect chain -> track 1, layers[1]
+  // i.e if a layer is non-NULL, and there is no unconnected chain on that track, we see the layer
+  // and evrything els is considered "behind" it
+  // 
+  // if there is no such thing then it is possible that the layer for display is being sent to an analyser
+  // - the track would have on a terminated node chain; in this case the layer should have been sent to a splitter
+  //
+  // if we fail to find a non NULL layer, or unterminated node chain, then we create a blank frame source
+  // and connect that to the output
+  //
   pxtracks = (int *)lives_calloc(1, sizint);
-  nchain = lowest_unterm_chain(nodemodel->node_chains);
-  if (nchain && nchain->first_node && nchain->first_node->dsource)
-    pxtracks[0] = nchain->first_node->dsource->track;
-  if (pxtracks[0] == -1) {
-    pxtracks[0] = 0;
-    for (i = 0; i < ntracks; i++) {
-      if (layers[i]) pxtracks[0] = i;
-      break;
-    }
-  }
 
-  mysrc->purpose = SRC_PURPOSE_MODEL;
+  // find unteminated chain with lowest output track, or lowest non-NULL layer with no node chains
+  pxtracks[0] = find_output_track(nodemodel);///lowest_unterm_chain(nodemodel->node_chains);
 
-  n = create_node(mysrc, 1, pxtracks, 0, NULL, cpal, xplist);
+  n = create_node(modeltype, 1, pxtracks, 0, NULL);
 
   do {
+    // connect the unterminated output to the sink
     xtrack = check_node_connections(nodemodel, n);
     if (xtrack != -1) {
-      // inst node needs a src, and couldnt find one
-      // either create a layer source or a blank frame source
+      // this means that the sink connects to a layer wih no node_chains (or frame  blank src)
+      // so, create a node for the source and try again
       inst_node_t *ln = create_node_for_layer(layers, xtrack, ntracks);
       add_src_node(&nodemodel, ln, xtrack);
     }
   } while (xtrack != -1);
+
+  // since we prepend sources as they are added, we reverse the ordeign so sources whcih are pulled earlier
+  // appear earlier in the list
   nodemodel->node_chains = lives_list_reverse(nodemodel->node_chains);
 
   // now for each node_chain in nodemodel->node_chains, we will check if it is terminated or not
   // if we find an unterminated chain, then we will remove all the nodes in it.
-  // starting from last node and going backwards. If in doing so we reach a node with
-  // other outputs, we mark this output as unused. If this is the only output
-  // or all outputs are flagged unused, then we cna remove the node and go backwards.
-  // if other chains feed into the node they also need to now be marked as unterminated
-  // so we need to locate and remove those
-
+  // - this is likely a secondary output which never reaches a sink
+  // so starting from the lastnode we will ascend th tree removing nodes - if we reach a node with
+  // multiple outputs then we mark ours as pruned - if a node has all outputs flagged a pruned then we continu up
+  // TOOD !!
   //prune_chains(node_chains);
 }
 
@@ -3142,9 +3986,98 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   inst_node_t *n;
   int flags = _FLG_GHOST_COSTS;
 
-  // set the intiial state
+  // after constructin gthe treemodel by descending, we now proceed in phases
+  // we alternate descending and ascending phases, with descending ones passing values from srcs to sink
+  // and asceinding propogating values in the opposit direction
 
-  // pass 1, CALCULATE COST DELTAS NODE - NODE, for all palette pairings
+  // phase 0, building the model was descending so next wave is ascending
+  
+  // when constructing the model we set sizes, but only if the node_chain connected to a src with fixed size
+  // now we wil ascend from the sink up to all srcs. Starting with the display size, we con up all inputs
+  // keeping track of layer size.
+  
+  // If we reach a node with 0, 0- size, then we set thenode size to the carried size
+  // then ascend up inputs from there.
+
+  // pass 1 ascending
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    node_chain_t *nchain = (node_chain_t *)list->data;
+    inst_node_t *n = nchain->last_node;
+    if (n->n_outputs || !n->dsource || n->dsource->src_type != LIVES_SRC_TYPE_SINK) continue;
+    if (n->flags & NODEFLAG_PROCESSED) continue;
+
+    n->flags |= NODEFLAG_PROCESSED;
+    set_missing_sizes(n);
+  }
+
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    node_chain_t *nchain = (node_chain_t *)list->data;
+    inst_node_t *n = nchain->last_node;
+    n->flags &= ~NODEFLAG_PROCESSED;
+  }
+    
+  // now in the descending phase, we note anywhere where we downsscale and store qloss_s cost at the input
+  // for now this is only a potential cost, also we note the src_size as the potential maxed q size,
+  // and carry this doown. When mixing  we take the opsize as the "src_size" going down
+
+  // phase 2 descending
+
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    nchain = (node_chain_t *)list->data;
+    n = nchain->first_node;
+    if (n->n_inputs) continue;
+    desc_and_pass_sizes(n);
+  }
+
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    node_chain_t *nchain = (node_chain_t *)list->data;
+    inst_node_t *n = nchain->last_node;
+    n->flags &= ~NODEFLAG_PROCESSED;
+  }
+
+  // on the ascending wave we note anywher we upscale and calulate the cost adding to carried cost (qloss_size)
+  // if we reach a node with qloss from a downscale
+  // if we reach a node with mutli inputs, we find smallest layer. resize costs dicounted
+  // for all other ins, but cal downsize fr. src size to premix size. take osts from other layers and min(src_sz
+  // other, our src siz, scrn size)  is mutlipled in for each,
+  // then at nodes, we mltiply together qloss size for all ins and get tot.
+  // when calculating in qloss we use not pre qloss, bu prev qloss + ln(prev qloss)
+
+  // phase 3 ascending
+  
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    node_chain_t *nchain = (node_chain_t *)list->data;
+    inst_node_t *n = nchain->last_node;
+    if (n->n_outputs || !n->dsource || n->dsource->src_type != LIVES_SRC_TYPE_SINK) continue;
+    if (n->flags & NODEFLAG_PROCESSED) continue;
+
+    n->flags |= NODEFLAG_PROCESSED;
+    consolidate_size_costs(n);
+  }
+
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    node_chain_t *nchain = (node_chain_t *)list->data;
+    inst_node_t *n = nchain->last_node;
+    n->flags &= ~NODEFLAG_PROCESSED;
+  }
+  
+  // then we have all size costs set up, and the next wave is descending
+  // we will calculate remianing costs going down the branches (edges) of the tree. We would like to
+  // minimise the costs at the root node(s). We define two cost types, Let Q be the "quality" of the image at the
+  // display, with starting value 1.0 at each source, then passing down the branches and going from node to node,
+  // we multiply Q by delta_q (quality loss). At the next node we multiply the Q values for all inputs to find the new
+  // Q value. We have q costs for palette changes and qcosts for resizing.
+  //
+  // We also have cost type T (time). Moving along a branch we add delta_t to T and at thenext node we find max T,
+  // then backtrack and find max Q for T up to Tmax. Propogating these values we find Q and T at the root.
+  // We want to minimise C (combbined cost), which is tfactor * T + qfactor * (1. - Q)
+  // we will find at each output going to the input, delta T, delta Q pairs. The pairs correspond to conversions
+  // (size, palette, gamma change) going from output to input. There is an additional cost for T at each node,
+  // i.e proc_time.
+
+  // phase 4 descending
+  
+  // CALCULATE COST DELTAS NODE - NODE, for all palette pairings
   for (list = nodemodel->node_chains; list; list = list->next) {
     nchain = (node_chain_t *)list->data;
     n = nchain->first_node;
@@ -3157,8 +4090,10 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
     inst_node_t *n = nchain->last_node;
     n->flags &= ~NODEFLAG_PROCESSED;
   }
+
+  // phase 5 ascedning
   
-  // pass 2 - ascend, FIND LOWEST COST PALETTES for each cost type
+  // FIND LOWEST COST PALETTES for each cost type
   for (list = nodemodel->node_chains; list; list = list->next) {
     node_chain_t *nchain = (node_chain_t *)list->data;
     inst_node_t *n = nchain->last_node;
@@ -3179,7 +4114,7 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
     n->flags &= ~NODEFLAG_PROCESSED;
   }
 
-  // pass 3 descend, using previously calculated best_pals, find the total costs
+  // descend, using previously calculated best_pals, find the total costs
   // we pick one cost type to focus on (by default, COMBINED_COST)
   
   // at each node. we total costs over all inputs, setting abs_cost[cost_type] for the node
@@ -3198,6 +4133,8 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   // TODO -
   // we will also find best pals going down. Starting from a source, we find min deltas going downwards 
 
+  // phase 6 descending
+  
   for (list = nodemodel->node_chains; list; list = list->next) {
     nchain = (node_chain_t *)list->data;
     n = nchain->first_node;
@@ -3205,10 +4142,12 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
     desc_and_total(n, nodemodel);
   }
   
-  // pass 4 ASCEND, TOTALING SLACK - here we ascend nodes and for each node with outputs we find min slack
+  // ASCEND, TOTALING SLACK - here we ascend nodes and for each node with outputs we find min slack
   // over all outputs. This value is then added to outputs connected to the node inputs to give
   // total slack for that output
 
+  // phase 7 ascending
+  
   for (list = nodemodel->node_chains; list; list = list->next) {
     node_chain_t *nchain = (node_chain_t *)list->data;
     inst_node_t *n = nchain->last_node;
@@ -3227,7 +4166,7 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
 
 #idef OPTIM_MORE
   
-  // pass 5 - descend, creating tuples and prio list. We can "spend" slack to reduce tcost at the sink node
+  // phase 8 - descend, creating tuples and prio list. We can "spend" slack to reduce tcost at the sink node
 
   for (list = nodemodel->node_chains; list; list = list->next) {
     nchain = (node_chain_t *)list->data;
@@ -3236,7 +4175,6 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
     desc_and_make_tuples(n, nodemodel->factors, fake_costs);
   }
 
-  // pass 6 apply changes from prio list, until we hit a threshold or run out of changes
 #endif
 }
 
@@ -3403,6 +4341,8 @@ void build_nodes_model(lives_nodemodel_t **pnodemodel) {
       lives_layer_set_track(nodemodel->layers[i], i);
     }
 
+    get_player_size(&nodemodel->opwidth, &nodemodel->opheight);
+    
     // fill the nodemodel. We begin by passing through the fx instances is temporal order. At each
     // instance node, we look at the in+_tracks, and find the most current  node_chain for that track
     // if we have an unterminated chain, we simply connect to the last node of the chain. If we find
@@ -3419,28 +4359,13 @@ void build_nodes_model(lives_nodemodel_t **pnodemodel) {
     // towards the root, in other words a Reversed Rooteed Tree. If we have multiple sinks (e.g. a display and stream out)
     // then we could have multiple root nodes, and these would connect either to the same tree or to  multiple trees.
     //
-  _make_nodes_model(nodemodel);
 
-    // having done this, we will calculate costs going down the branches (edges) of the tree. We would like to
-    // minimes the costs at the root node(s). We define two cost types, Let Q be the "quality" of the image at the
-    // display, with starting value 1.0 at each source, then passing down the branches and going from node to node,
-    // we multiply Q by delta_q (quality loss). At the next node we multiply the Q vlaues for all inputs to find the new
-    // Q value.
-    // We also have cost type T (time). Moving along a breanch we add delta_t to T and at thenext node we find max T,
-    // then backtrack and find max Q for T up to Tmax. Propogating these values we find Q and T at the root.
-    // We want to minimise C (combbined cost), which is tfactor * T + qfactor * (1. - Q)
-    // we will at each output going to the input, delta T, delta Q pairs. The pairs correspond to conversions
-    // (size, palette, gamma change) going from output to input. There is an additional cost for T at eachnode,
-    // proc_time. In order to estimate the time costs, we need to know the layer sizes at each node. Since this can be
-    // tricky to figure out, we will do a dry run of the fx chain. For this we need to know the quality level,
-    // and the player (sink) size.
+    _make_nodes_model(nodemodel);
 
-    // first we do a dry, to get the channel (node) sizes
-    // xyzzy;
-    weed_apply_effects(nodemodel->layers, NULL, 0, nodemodel->opwidth, nodemodel->opheight, NULL, 1);
-
-    // needs adjusting - qloss will be around 0.2 bad qloss
-    // oe 0.5 for catastrrophic
+    // needs adjusting - qloss_p will be around 0.2 bad qloss
+    // or 0.5 for catastrrophic
+    // qloss_s - downsizing to half size and back up would be catastrophic - qloss_s of 4.
+    // downsize by 25% and back would be bad 
     // time will be around 0.02 - 0.05 bad with 0.2 being catastrophic
     // if running in highq mode, we should be under 0.02 per frame, an increase of 0.01 sec
     // in trade for a q increase of 0.05 q seems reaonable so we actually want to increase qcost
@@ -3448,10 +4373,10 @@ void build_nodes_model(lives_nodemodel_t **pnodemodel) {
     // in medq, we could be running aroun 0.05 tcost , we woul increase by 0.01 in trade for a 5% qloss reduction
     // 5:1
     // in lowq wr may be running at 0.1 tcost and reducing tcost by 0.04 say, for a 0.1 increase in qloss
-    // so 
     // is reasonable so 2.5:1
     nodemodel->factors[0] = 4.;
     nodemodel->factors[1] = 1.;
+    nodemodel->factors[3] = .15;
 
     // now we have all the details, we can calulate the costs for time and qloss
     // and then for combined costs. For each cost type, we find the sequence of palettes

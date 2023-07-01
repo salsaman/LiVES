@@ -133,14 +133,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, f
     height = sfile->vsize;
   }
 
- if (width && height) {
-   int nsize[2];
-    weed_layer_set_size(layer, width, height);
-    nsize[0] = width;
-    nsize[1] = height;
-    weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
-  }
-
   if (pal) weed_layer_set_palette(layer, pal);
 
   return layer;
@@ -154,14 +146,6 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
     lives_layer_set_clip(dest, lives_layer_get_clip(src));
     lives_layer_set_frame(dest, lives_layer_get_frame(src));
     weed_layer_set_size(dest, width, height);
-    if (weed_plant_has_leaf(src, WEED_LEAF_NATURAL_SIZE))
-      weed_leaf_dup(dest, src, WEED_LEAF_NATURAL_SIZE);
-    else {
-      int nsize[2];
-      nsize[0] = width;
-      nsize[1] = height;
-      weed_set_int_array(dest, WEED_LEAF_NATURAL_SIZE, 2, nsize);
-    }
     weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE);
     weed_leaf_dup(dest, src, WEED_LEAF_YUV_SUBSPACE);
     weed_leaf_dup(dest, src, WEED_LEAF_YUV_SAMPLING);
@@ -486,10 +470,8 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     }
   }
 
-  weed_leaf_dup(layer, old_layer, WEED_LEAF_NATURAL_SIZE);
 
   if (newdata) {
-
     // CHECK THIS
     if (mainw->frame_layer && layer != mainw->frame_layer
         && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
@@ -514,8 +496,23 @@ void lives_layer_reset_timing_data(weed_layer_t *layer) {
 	(weed_timecode_t *)lives_calloc(N_LAYER_STATUSES, sizeof(weed_timecode_t));
     }
     for (int i = 0; i < N_SRC_STATUSES; i++) timing_data[i] = 0;
-    weed_set_int64_array(layer, LIVES_LEAF_TIMER_DATA, N_LAYER_STATUSES, timer_data);
-    lives_free(timer_data);
+    weed_set_int64_array(layer, LIVES_LEAF_TIMER_DATA, N_LAYER_STATUSES, timing_data);
+    lives_free(timing_data);
+  }
+}
+
+
+void lives_layer_update_timing_data(weed_layer_t *layer, int status, ticks_t tc)) {
+  if (layer && status >= 0 && status < N_LAYER_STATUSES) {
+    weed_timecode_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+    if (!timing_data) {
+      lives_layer_reset_timing_data(layer);
+      timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+      if (tc <= 0) tc = livess_get_session_ticks();
+    }
+    timing_data[status] = tc;
+    weed_set_int64_array(layer, LIVES_LEAF_TIMER_DATA, N_LAYER_STATUSES, timing_data);
+    lives_free(timing_data);
   }
 }
 
@@ -590,7 +587,6 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     weed_layer_pixel_data_free(layer);
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
-    weed_leaf_dup(layer, slayer, WEED_LEAF_NATURAL_SIZE);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_HEIGHT, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
@@ -616,6 +612,29 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 
   if (pd_array) lives_free(pd_array);
   return layer;
+}
+
+
+LIES_GLOBAL_INLINE lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, weed_layer_t *src) {
+  // transfer pisxel data from src layer to dst layer, - no memcpy is involced
+  // the data is simply transferred the nullified in the src
+  weed_layer_copy(dst, src);
+  weed_layer_nullify_pixel_data(src);
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_layer_set_status(weed_layer_t *layer, int status) {
+  if (layer) {
+    weed_set_int_value(layer, LIVES_LEAF_LAYER_STATUS, status);
+    xyzzy;
+  }
+}
+
+
+LIVES_GLOBAL_INLINE int lives_layer_get_status(weed_layer_t *);
+  if (layer) return weed_get_int_value(layer, LIVES_LEAF_LAYER_STATUS, NULL);
+  return 0;
 }
 
 

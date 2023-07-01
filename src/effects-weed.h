@@ -151,31 +151,37 @@ int *weed_get_indices_from_template(const char *package_name, const char *filter
 int weed_filter_highest_version(const char *pkg, const char *fxname, const char *auth, int *return_version);
 int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);
-weed_plant_t *get_enabled_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
-weed_plant_t *get_enabled_audio_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
-weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_in);  ///< for FILTER_CLASS
-boolean weed_instance_is_resizer(weed_plant_t *filt);
-weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent);
+
+#define IN_CHAN TRUE
+#define OUT_CHAN FALSE
+
+weed_plant_t *get_enabled_channel(weed_instance_t *inst, int which, boolean is_in);  ///< for FILTER_INST
+weed_plant_t *get_enabled_audio_channel(weed_instance_t *inst, int which, boolean is_in);  ///< for FILTER_INST
+weed_plant_t *get_mandatory_channel(weed_filter_t *filter, int which, boolean is_in);  ///< for FILTER_CLASS
+
+boolean weed_instance_is_resizer(weed_filter_t *filt);
+weed_plant_t *weed_instance_get_filter(weed_instance_t *inst, boolean get_compound_parent);
 
 #define COMPOUND_LITERAL "compound"
 
 #define PLUGIN_COMPOUND_EFFECTS_BUILTIN EFFECTS_LITERAL LIVES_DIR_SEP COMPOUND_LITERAL
 #define PLUGIN_COMPOUND_EFFECTS_CUSTOM PLUGINS_LITERAL LIVES_DIR_SEP EFFECTS_LITERAL LIVES_DIR_SEP COMPOUND_LITERAL
 
-weed_plant_t *get_next_compound_inst(weed_plant_t *inst);
+weed_plant_t *get_next_compound_inst(weed_instance_t *inst);
 
-int num_compound_fx(weed_plant_t
-                    *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
+ ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
+int num_compound_fx(weed_plant_t *plant);
 
-boolean has_non_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter);
-boolean has_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter);
+boolean has_non_alpha_palette(weed_plant_t *ctmpl, weed_filter_t *filter);
+boolean has_alpha_palette(weed_plant_t *ctmpl, weed_filter_t *filter);
+boolean weed_channel_is_alpha(weed_channel_t *chan);
 
-boolean is_audio_channel_in(weed_plant_t *inst, int chnum);
-boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt);
-boolean has_audio_chans_in(weed_plant_t *filter, boolean count_opt);
-boolean is_audio_channel_out(weed_plant_t *inst, int chnum);
-boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt);
-boolean has_audio_chans_out(weed_plant_t *filter, boolean count_opt);
+boolean is_audio_channel_in(weed_instance_t *inst, int chnum);
+boolean has_video_chans_in(weed_filter_t *filter, boolean count_opt);
+boolean has_audio_chans_in(weed_filter_t *filter, boolean count_opt);
+boolean is_audio_channel_out(weed_instance_t *inst, int chnum);
+boolean has_video_chans_out(weed_filter_t *filter, boolean count_opt);
+boolean has_audio_chans_out(weed_filter_t *filter, boolean count_opt);
 boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
 boolean has_video_filters(boolean analysers_only);
@@ -186,7 +192,7 @@ lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t catego
 boolean has_audio_filters(lives_af_t af_type);
 #endif
 
-boolean has_usable_palette(weed_plant_t *filter, weed_plant_t *chantmpl);
+boolean has_usable_palette(weed_filter_t *filter, weed_plant_t *chantmpl);
 int best_palette_match(int *palete_list, int num_palettes, int palette);
 int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals);
 
@@ -195,41 +201,41 @@ weed_error_t weed_call_init_func(weed_plant_t *instance);
 weed_error_t weed_call_deinit_func(weed_plant_t *instance);
 lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc);
 
-char *cd_to_plugin_dir(weed_plant_t *filter);
+char *cd_to_plugin_dir(weed_filter_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
 boolean  weed_deinit_effect(int hotkey); ///< hotkey starts at 1
-weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
-void weed_in_parameters_free(weed_plant_t *inst);
+weed_plant_t *weed_instance_from_filter(weed_filter_t *filter);
+void weed_in_parameters_free(weed_instance_t *inst);
 void weed_in_params_free(weed_plant_t **parameters, int num_parameters);
-void add_param_connections(weed_plant_t *inst);
-lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound);
+void add_param_connections(weed_instance_t *inst);
+lives_filter_error_t weed_reinit_effect(weed_instance_t *inst, boolean reinit_compound);
 void weed_reinit_all(void);
 
 int weed_flagset_array_count(weed_plant_t **array, boolean set_readonly);
 
-int num_alpha_channels(weed_plant_t *filter, boolean out);
+int num_alpha_channels(weed_filter_t *filter, boolean out);
 
 int num_in_params(weed_plant_t *, boolean skip_hidden, boolean skip_internal);
 int num_out_params(weed_plant_t *);
-weed_plant_t *weed_inst_in_param(weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);
-weed_plant_t *weed_inst_out_param(weed_plant_t *inst, int param_num);
-weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, boolean skip_internal);
-weed_plant_t *weed_filter_out_paramtmpl(weed_plant_t *filter, int param_num);
+weed_plant_t *weed_inst_in_param(weed_instance_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);
+weed_plant_t *weed_inst_out_param(weed_instance_t *inst, int param_num);
+weed_plant_t *weed_filter_in_paramtmpl(weed_filter_t *filter, int param_num, boolean skip_internal);
+weed_plant_t *weed_filter_out_paramtmpl(weed_filter_t *filter, int param_num);
 boolean is_hidden_param(weed_plant_t *, int i);
 int get_nth_simple_param(weed_plant_t *, int pnum);
 int count_simple_params(weed_plant_t *);
-weed_plant_t **weed_params_create(weed_plant_t *filter, boolean in);
-int get_transition_param(weed_plant_t *filter, boolean skip_internal);
-int get_master_vol_param(weed_plant_t *filter, boolean skip_internal);
+weed_plant_t **weed_params_create(weed_filter_t *filter, boolean in);
+int get_transition_param(weed_filter_t *filter, boolean skip_internal);
+int get_master_vol_param(weed_filter_t *filter, boolean skip_internal);
 boolean is_perchannel_multiw(weed_plant_t *param);
-boolean has_perchannel_multiw(weed_plant_t *filter);
-boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);
+boolean has_perchannel_multiw(weed_filter_t *filter);
+boolean weed_parameter_has_variable_elements_strict(weed_instance_t *inst, weed_plant_t *ptmpl);
 
 void **get_easing_events(int *nev);
 
 /// parameter interpolation
 boolean interpolate_param(weed_plant_t *param, void *pchain, ticks_t tc);
-boolean interpolate_params(weed_plant_t *inst, void **pchains, ticks_t tc);
+boolean interpolate_params(weed_instance_t *inst, void **pchains, ticks_t tc);
 
 int filter_mutex_lock(int key);  // 0 based key
 int filter_mutex_trylock(int key);  // 0 based key
@@ -240,10 +246,10 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *plant);
 
 /// record a parameter value change in our event_list
-void rec_param_change(weed_plant_t *inst, int pnum);
+void rec_param_change(weed_instance_t *inst, int pnum);
 
 // copy values for "copy_value_to" params
-int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update);
+int set_copy_to(weed_instance_t *inst, int pnum, lives_rfx_t *rfx, boolean update);
 
 weed_plant_t *get_textparm();
 
@@ -260,13 +266,13 @@ void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
 weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, ticks_t tc, int opwidth, int opheight,
                                  void ***pchains, boolean dry_run);
-lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
+lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
 					 int opwidth, int opheight, ticks_t tc, boolean dry);
 void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbtracks, int nchans, int64_t nsamps, double arate,
                               ticks_t tc, double *vis);
 void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);
 
-boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan, boolean is_vid);
+boolean fill_audio_channel(weed_filter_t *filter, weed_plant_t *achan, boolean is_vid);
 int register_audio_client(boolean is_vid);
 int unregister_audio_client(boolean is_vid);
 
@@ -278,15 +284,15 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
     int64_t nsamps,
     double arate, ticks_t tc, double *vis);
 
-int weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
-void weed_generator_end(weed_plant_t *inst);
+int weed_generator_start(weed_instance_t *inst, int key);  // 0 based key
+void weed_generator_end(weed_instance_t *inst);
 boolean weed_playback_gen_start(void);
-void weed_bg_generator_end(weed_plant_t *inst);
-void wge_inner(weed_plant_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
+void weed_bg_generator_end(weed_instance_t *inst);
+void wge_inner(weed_instance_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
 weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer);
-weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, ticks_t tc, int clipno);
+weed_plant_t *weed_layer_create_from_generator(weed_instance_t *inst, ticks_t tc, int clipno);
 
 /// for multitrack
 void backup_weed_instances(void);
@@ -324,7 +330,7 @@ int rte_key_getmaxmode(int key); ///< returns highest mode which is set
 
 int rte_key_num_modes(int key); ///< max, set or not
 
-weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new refcounted inst (during recording playback)
+weed_instance_t *get_new_inst_for_keymode(int key, int mode); ///< get new refcounted inst (during recording playback)
 
 boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; if key==0 then the active key is used
 
@@ -344,10 +350,10 @@ int weed_get_sorted_filter(int i);
 // key starts at 0
 
 void free_key_defaults(int key, int mode);
-void apply_key_defaults(weed_plant_t *inst, int key, int mode);
+void apply_key_defaults(weed_instance_t *inst, int key, int mode);
 void write_key_defaults(int fd, int key, int mode);
 boolean read_key_defaults(int fd, int nparams, int key, int mode, int version);
-void set_key_defaults(weed_plant_t *inst, int key, int mode);
+void set_key_defaults(weed_instance_t *inst, int key, int mode);
 boolean has_key_defaults(void);
 
 //////////////////////////////////////////////////////
@@ -363,7 +369,7 @@ int rte_fg_gen_mode(void) LIVES_PURE;
 
 ////////////////////////////////////////////////////////////////////////
 
-char *get_weed_display_string(weed_plant_t *inst, int pnum);
+char *get_weed_display_string(weed_instance_t *inst, int pnum);
 
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list);
 weed_plant_t *add_filter_init_events(weed_plant_t *event_list, ticks_t tc);
@@ -407,13 +413,13 @@ int check_ninstrefs(void);
 #define weed_instance_obtain(a,b) _weed_instance_obtain(__LINE__, __FILE__, a, b)
 #endif
 
-int _weed_instance_ref(weed_plant_t *inst);
-int _weed_instance_unref(weed_plant_t *inst);
+int _weed_instance_ref(weed_instance_t *inst);
+int _weed_instance_unref(weed_instance_t *inst);
 weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode);
 
 #ifndef DEBUG_REFCOUNT
-int weed_instance_ref(weed_plant_t *inst);
-int weed_instance_unref(weed_plant_t *inst);
+int weed_instance_ref(weed_instance_t *inst);
+int weed_instance_unref(weed_instance_t *inst);
 weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
 

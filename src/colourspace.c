@@ -2581,19 +2581,28 @@ static boolean is_all_black_ish(int width, int height, int rstride, boolean has_
 }
 
 
-LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out) {
+LIVES_GLOBAL_INLINE boolean weed_palette_conv_resizable(int pal, int clamped, boolean in_out) {
+#ifdef USE_SWSCALE
+  if (in_out && sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
+  else if (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
+#enidf
+  return FALSE;
+}
+
+
+LIVES_LOCAL_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out) {
   // in_out is TRUE for input, FALSE for output
 
   // in future we may also have resize candidates/delegates for other palettes
   // we will need to check for these
 
+  if (weed_palette_conv_resizable(pal, clamped, in__out)) return TRUE;
+
   if (pal == WEED_PALETTE_YUV888 && clamped == WEED_YUV_CLAMPING_UNCLAMPED) pal = WEED_PALETTE_RGB24;
   if (pal == WEED_PALETTE_YUVA8888 && clamped == WEED_YUV_CLAMPING_UNCLAMPED) pal = WEED_PALETTE_RGBA32;
 
-#ifdef USE_SWSCALE
-  if (in_out && sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
-  else if (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
-#endif
+  if (weed_palette_conv_resizable(pal, clamped, in__out)) return TRUE;
+
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGR24 ||
       pal == WEED_PALETTE_BGRA32) return TRUE;
   return FALSE;
@@ -9834,14 +9843,6 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   int align = HW_ALIGNMENT;
   boolean retval = FALSE;
 
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
-    int nsize[2];
-    // set "natural_size" in case a filter needs it (width is in PIXELS)
-    nsize[0] = width * weed_palette_get_pixels_per_macropixel(palette);
-    nsize[1] = height;
-    weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
-  }
-
   if (width <= 0 || height <= 0) goto fail;
 
   if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC)) {
@@ -10510,7 +10511,7 @@ static void swap_chroma_planes(weed_layer_t *layer) {
 }
 
 
-LIVES_LOCAL_INLINE boolean can_inline_gamma(int inpl, int opal) {
+LIVES_GLOBAL_INLINE boolean can_inline_gamma(int inpl, int opal) {
   // TODO: rgb <-> bgra, bgr <-> rgba,
   if (inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YUV420P) {
     if (opal == WEED_PALETTE_RGB24 || opal == WEED_PALETTE_BGR24 || opal == WEED_PALETTE_RGBA32
@@ -13073,7 +13074,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
   // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
   // we can always scale these by pretending they are RGB24 and RGBA32 respectively
+  // (if outpal is yuv) or actually to rgb24 / rgba32 if opal is rgb
   if (weed_palette_is_yuv(palette)) {
+    // TODO -check this, we check orig pal, then yuv888 / yuva88888
     if (!weed_palette_is_resizable(palette, iclamping, TRUE)) {
       if (opal_hint == WEED_PALETTE_END || weed_palette_is_yuv(opal_hint)) {
         if (weed_palette_has_alpha(palette)) {
@@ -13127,6 +13130,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   xpalette = palette;
   xopal_hint = opal_hint;
 
+  // check this - we already converted once
+  
   if (palette == WEED_PALETTE_YUV888) {
     if (opal_hint == WEED_PALETTE_YUV888 || opal_hint == WEED_PALETTE_YUVA8888) {
       if (iclamping == WEED_YUV_CLAMPING_CLAMPED) {
@@ -13151,6 +13156,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
     if (!resolved) {
+      // odd ----- if we failed to conver to unclampe ... convert t 444p ??
       convert_layer_palette(layer, WEED_PALETTE_YUV444P, iclamping);
       xpalette = palette = weed_layer_get_palette_yuv(layer, &iclamping, NULL, NULL);
 #ifdef DEBUG_RESIZE
@@ -13163,6 +13169,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         convert_layer_palette(layer, WEED_PALETTE_YUVA8888, WEED_YUV_CLAMPING_UNCLAMPED);
         xpalette = palette = weed_layer_get_palette_yuv(layer, &iclamping, NULL, NULL);
       }
+      
       if (iclamping == WEED_YUV_CLAMPING_UNCLAMPED) {
         xpalette = WEED_PALETTE_RGBA32;
         oclamp_hint = WEED_YUV_CLAMPING_UNCLAMPED;
@@ -13190,6 +13197,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   iwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
   iheight = weed_layer_get_height(layer);
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
+
+  // I forget why this is here...if xopal_hint is RGB24 / RGBA32, then it would be masqueraded as RGB
+  // so no palconv needed
 
   if (opal_hint == WEED_PALETTE_YUV888) opal_hint = xopal_hint = WEED_PALETTE_YUV444P;
   else if (opal_hint == WEED_PALETTE_YUVA8888) opal_hint = xopal_hint = WEED_PALETTE_YUVA4444P;
@@ -13274,6 +13284,14 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       new_gamma_type = weed_layer_get_gamma(layer);
     }
 
+    if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
+      //weed_layer_set_gamma(layer, new_gamma_type);
+      if (new_gamma_type == WEED_GAMMA_BT709
+	  || *weed_palette_is_yuv(palette)
+	  && weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709)
+	subspace = WEED_YUV_SUBSPACE_BT709;
+    }
+
     // set new values
 
     if (palette != opal_hint && opal_hint != WEED_PALETTE_END) {
@@ -13294,16 +13312,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     out_pixel_data = weed_layer_get_pixel_data_planar(layer, &oplanes);
     orowstrides = weed_layer_get_rowstrides(layer, NULL);
 
-    if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
-      //weed_layer_set_gamma(layer, new_gamma_type);
-      if (weed_palette_is_rgb(palette)) {
-        if (new_gamma_type == WEED_GAMMA_BT709) subspace = WEED_YUV_SUBSPACE_BT709;
-      } else if (weed_palette_is_yuv(palette)) {
-        if (new_gamma_type == WEED_GAMMA_BT709 || weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709)
-          subspace = WEED_YUV_SUBSPACE_BT709;
-      }
-    }
-
     for (i = 0; i < 4; i++) {
       // swscale always likes 4 elements, even if fewer planes are used
       if (i < oplanes) {
@@ -13314,8 +13322,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         orw[i] = 0;
       }
     }
-
-    //width /= weed_palette_get_pixels_per_macropixel(palette);
 
 #if USE_THREADS
     while ((nthrds << 1) <= prefs->nfx_threads) {
@@ -13334,15 +13340,14 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     offset = ctxblock->offset;
     if (!ctxblock->match)
       swscale = swscalep[offset] = sws_getCachedContext(swscalep[offset], iwidth, iheight, ipixfmt,
-                                   width, height, opixfmt, flags,
-                                   NULL, NULL, NULL);
+                                   width, height, opixfmt, flags, NULL, NULL, NULL);
     swscale = swscalep[offset];
 
+    // colourspace here affects primaries, gamm tc and yuv constants
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                             ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
+							  ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
                              sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                 ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16);
-
+						 ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16);
     if (!swscale) {
       LIVES_DEBUG("swscale is NULL !!");
     } else {
@@ -13352,14 +13357,13 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     g_print("before resize with swscale: layer size %d X %d with palette %s to %d X %d, hinted %s,\n"
             "masquerading as %s (avpixfmt %d to avpixfmt %d)\n",
             iwidth, iheight, weed_palette_get_name_full(palette, iclamping, 0), width, height,
-            weed_palette_get_name_full(opal_hint,
-                                       oclamp_hint, 0),
+            weed_palette_get_name_full(opal_hint, oclamp_hint, 0),
             weed_palette_get_name_full(xopal_hint, oclamp_hint, 0), ipixfmt, opixfmt);
 #endif
 #if USE_THREADS
     // TODO - we should do this in 2 passes (maybe depending on pb_quality)
     // - for the second pass, we should resize just a few rows immediaely above and below the divisions
-    // from pass 1, so that we eliminate any artifacts caused by splitting the image
+    // from pass 1, so that we eliminatye any artifacts caused by splitting the image
     ctxblock = sws_getblock(nthrds, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
@@ -13375,8 +13379,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       pthread_mutex_lock(&ctxcnt_mutex);
       if (!ctxblock->match)
         swparams[sl].swscale = swscalep[sl + offset] =
-                                 sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
-                                     height, opixfmt, flags, NULL, NULL, NULL);
+	  sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
+			       height, opixfmt, flags, NULL, NULL, NULL);
       else
         swparams[sl].swscale = swscalep[sl + offset];
       pthread_mutex_unlock(&ctxcnt_mutex);
@@ -13592,7 +13596,6 @@ boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int to
     lives_memcpy(&opd[orow * i], &ipd[irow * i], xwidth);
   }
 
-  //nats = weed_get_int_array(channel, WEED_LEAF_NATURAL_SIZE, NULL);
   if (mainw->frame_layer && layer != mainw->frame_layer
       && weed_layer_get_pixel_data(newl) == weed_layer_get_pixel_data(mainw->frame_layer))
     weed_layer_nullify_pixel_data(newl);
@@ -14353,7 +14356,6 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
     lives_proc_thread_unref(lpt);
   }
 
-  weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   /* if (weed_plant_has_leaf(layer, LIVES_LEAF_MD5SUM)) { */
   /*   lives_free(weed_get_voidptr_value(layer, LIVES_LEAF_MD5SUM, NULL)); */

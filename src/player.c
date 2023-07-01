@@ -1159,56 +1159,36 @@ weed_layer_t *load_frame_image(frames_t frame) {
     }
 
     if (!lives_layer_get_clip(mainw->frame_layer)) abort();
-
     if (was_preview) lives_free(fname_next);
 
-    // OK. Here is the deal now. We have a layer from the current file, current frame.
-    // (or at least we sent out a thread to fetch it).
-    // (and possibly a thread to fetch the background frame)
-    // We will pass these layers into the effects, and we will get back a layer.
-    // The palette of the effected layer could be any Weed palette, so we may need to convert
-    // resize, and do gamma correction.
-    // We will pass the layer to all playback plugins. Some plugins support multiple palettes, however
+    // OK. Here is the deal now. We built a nodemodel, we constructed a step by step plan from the nodemodel
+    // we follow the steps in the plan
 
-    // Fiynally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL
-    // and we are in full screen mode).
+    // the steps are either - load / convert layer
+    // apply instance
+    // convert layer
+    // copy layer
 
-    size_ok = TRUE;
+    // some steps may have been completed in advance, otherwise we go over the plan and as soon as the
+    // preqrequesite steps have been flagged as completed, we action the next step
+    // when all steps are completed, we queue a display update
 
-    lives_nanosleep_while_false(weed_plant_has_leaf(mainw->frame_layer, WEED_LEAF_NATURAL_SIZE));
-
-    if (!prefs->vj_mode && (mainw->current_file != mainw->scrap_file || mainw->multitrack)
-        && mainw->pwidth > 0 && mainw->pheight > 0
-        && !(mainw->is_rendering && !(mainw->proc_ptr && mainw->preview))
-        && !cfile->opening && !mainw->resizing && CURRENT_CLIP_IS_NORMAL
-        && !is_virtual_frame(mainw->current_file, mainw->actual_frame)
-        && is_layer_ready(mainw->frame_layer)) {
-      // if we are pulling the frame from an IMAGE and playing back normally, check the size is what it should be
-      // this used to cause problems with some effects, but that may no longer be the case with the layers model
-      int wl, hl, *natsize;
-      natsize = weed_get_int_array(mainw->frame_layer, WEED_LEAF_NATURAL_SIZE, NULL);
-      wl = natsize[0];
-      hl = natsize[1];
-      if ((wl != cfile->hsize && wl != mainw->pwidth)
-          || (hl != cfile->vsize && hl != mainw->pheight)) {
-        break_me("bad frame size");
-        mainw->size_warn = mainw->current_file;
-        size_ok = FALSE;
-      }
-      //cfile->hsize = wl;
-      //cfile->vsize = hl;
+    while (run_next_step(mainw->masterplan)) {
+      do_stuff_while_waiting();
     }
+    
+    // to load and convert a layer we just call load_and_conv_step(masterplan)
+    // to convert a layer we call conv_step(masterplan)
+    // to apply an instance we call apply_inst_step(masterplan)
+    // to copy a layerwe just call copy_layer_step(masterplan)
 
-    if (size_ok) {
-      // if frame size is OK we apply real time effects
-      if ((mainw->rte || (mainw->is_rendering && !mainw->event_list))
-          && (mainw->current_file != mainw->scrap_file || mainw->multitrack)
-          && !mainw->preview) {
-        if (mainw->num_tracks == 2) layers[1] = mainw->blend_layer;
-        if (prefs->dev_show_timing)
-          g_printerr("rte start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-        mainw->frame_layer = on_rte_apply(layers, opwidth, opheight, (weed_timecode_t)mainw->currticks, FALSE);
-      }
+    if ((mainw->rte || (mainw->is_rendering && !mainw->event_list))
+	&& (mainw->current_file != mainw->scrap_file || mainw->multitrack)
+	&& !mainw->preview) {
+      if (mainw->num_tracks == 2) layers[1] = mainw->blend_layer;
+      if (prefs->dev_show_timing)
+	g_printerr("rte start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+      mainw->frame_layer = on_rte_apply(layers, opwidth, opheight, (weed_timecode_t)mainw->currticks, FALSE);
     }
 
     if (prefs->dev_show_timing)
@@ -1445,8 +1425,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (!player_v2) lives_free(pd_array);
       if (prefs->dev_show_timing)
         g_printerr("rend fr done @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
-
 
       if (frame_layer && frame_layer != mainw->frame_layer) {
         if (weed_layer_get_pixel_data(frame_layer)

@@ -625,27 +625,36 @@ LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int filenum, double time) {
 
 //////////////// aspect ratios /////////
 
-#define N_ASP_RATIOS 14
+#define N_ASP_RATIOS 17
+#define N_XASP_RATIOS 18
+
 static lives_aspect_ratio std_ars[N_ASP_RATIOS];
 
 static boolean asps_inited = FALSE;
 
 static void init_aspects(void) {
   lives_memset(std_ars, 0, 256 * sizeof(lives_aspect_ratio));
-  std_ars[0] = (lives_aspect_ratio) {4,		5, 	0.8};
-  std_ars[1] = (lives_aspect_ratio) {1,		1, 	1.0};
-  std_ars[2] = (lives_aspect_ratio) {5, 		4, 	1.25};
-  std_ars[3] = (lives_aspect_ratio) {4, 		3, 	1.33};
-  std_ars[4] = (lives_aspect_ratio) {5, 		3, 	1.66};
-  std_ars[5] = (lives_aspect_ratio) {16, 	9, 	1.78}; // flat
-  std_ars[6] = (lives_aspect_ratio) {0, 		0, 	1.85};
-  std_ars[7] = (lives_aspect_ratio) {0, 		0, 	1.9}; // full container
-  std_ars[8] = (lives_aspect_ratio) {2, 		1, 	2.};
-  std_ars[9] = (lives_aspect_ratio) {0, 		0,	2.35};
-  std_ars[10] = (lives_aspect_ratio) {0, 	0, 	2.37};
-  std_ars[11] = (lives_aspect_ratio) {0, 	0, 	2.39}; // scope
-  std_ars[12] = (lives_aspect_ratio) {0, 	0, 	2.4};
-  std_ars[13] = (lives_aspect_ratio) {0, 	0, 	2.44};
+  std_ars[0] = (lives_aspect_ratio) {9,		16, 	0.56}; // phone
+  std_ars[1] = (lives_aspect_ratio) {2,		3, 	0.67}; // tablet
+  std_ars[2] = (lives_aspect_ratio) {4,		5, 	0.8}; // portrait
+  std_ars[3] = (lives_aspect_ratio) {1,		1, 	1.0};
+  std_ars[4] = (lives_aspect_ratio) {5, 	4, 	1.25}; // computer
+  std_ars[5] = (lives_aspect_ratio) {4, 	3, 	1.33}; // old TV
+  std_ars[6] = (lives_aspect_ratio) {3, 	2, 	1.5}; // landscape
+  std_ars[7] = (lives_aspect_ratio) {5, 	3, 	1.66};
+  // there are qite a few non-standard AR's in this region
+  std_ars[8] = (lives_aspect_ratio) {16,	9, 	1.78}; // cinema
+  std_ars[9] = (lives_aspect_ratio) {0, 	0, 	1.85};
+  std_ars[10] = (lives_aspect_ratio) {0, 	0, 	1.9}; // full container
+  std_ars[11] = (lives_aspect_ratio) {2, 	1, 	2.};
+  std_ars[12] = (lives_aspect_ratio) {0,	0,	2.35};
+  std_ars[13] = (lives_aspect_ratio) {0, 	0, 	2.37}; // 4:3 * 16:9 
+  std_ars[14] = (lives_aspect_ratio) {0, 	0, 	2.39}; // scope
+  std_ars[15] = (lives_aspect_ratio) {0, 	0, 	2.4};
+  std_ars[16] = (lives_aspect_ratio) {0, 	0, 	2.44};
+
+  // unofficial, so we can recognises cases of 16:9 X 16:9, ie 256 : 81
+  std_ars[17] = (lives_aspect_ratio) {256, 	81, 	3.16);
   asps_inited = TRUE;
 }
 
@@ -672,23 +681,15 @@ double find_nearest_ar(int width, int height, int *wm, int *hm) {
   return std_ars[best].ratio;
 }
 
-// ar == w / h.  w == ar * h,  so if ar0 > ar1, then fr0 wider than fr1
 
-// methods needed. taking a box C of size cwidth X cheight and a second R of rwidth X rheight:
-// consider aspect ratios AC and AR
-
-// expand / shrink C, keeping AC, max so fits in R - maxspect
-// if AC > AR - cw = rw and shrink ch. else ch = rh 
-
-// expand / shrink C, keeping AC, min size so contains R - midspect
-// if AC > AR , exapnd rw, else expand rh
-
-// expand / shrink C, set to AR, min size so contains C - minspect
-// if AR > AC  expand cw, else expand ch
+// both thesse functions modify rwidth, rheith so we end up with ar of cwidth / cheight, return results in cwidth, cheight
+// maxspect does this by keeping width or ehight contsnt and expanding rhe other axis
+// minspect does this by keeping one axis constant and shrinking the other
 
 LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
+  // ie start with rwidth, rheight, shrink one edge to make ar of cwidth
 
   // i.e both dimensions will expand or shrink to fit in the bounding rectangle
 
@@ -711,7 +712,7 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
 }
 
 
-LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate midspect (minimum size which conforms to aspect ratio of
   // of cwidth, cheight) - which contains rwidth, rheight
   // (so either rwidth or rheight will increase)
@@ -740,29 +741,30 @@ LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int
 }
 
 
-LIVES_GLOBAL_INLINE void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight) {
-  // calculate minspect (minimum size which conforms to aspect ratio of
-  // of rwidth, rheight) - which contains cwidth, cheight (so one axis will grow while the other stays same)
-  double caspect, raspect;
+LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+  // calculate maxspect (maximum size which maintains aspect ratio)
+  // of cwidth, cheight - given restrictions rwidth * rheight
+  // ie start with rwidth, rheight, shrink one edge to make ar of cwidth
 
-  if (cwidth <= 0 || cheight <= 0 || *rwidth <= 0 || *rheight <= 0) return;
+  // i.e both dimensions will expand or shrink to fit in the bounding rectangle
+
+  double caspect, raspect;
+  if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
   caspect = (double)(*cwidth) / (double)(*cheight);
   raspect = (double)(rwidth) / (double)(rheight);
 
-  *rwidth = cwidth;
-  *rheight = cheight;
-
-  if (raspect == caspect) return;
-
-  if (raspect > caspect)
-    *rwidth = (double)cheight * raspect;
-  else *rheight = (double)cwidth / raspect;
-
-  *rwidth = (*rwidth >> 2) << 2;
-  *rheight = (*rheight  >> 1) << 1;
+  if (caspect > raspect) {
+    *cwidth = rwidth;
+    *cheight = (double)(rwidth) / caspect;    
+  }
+  else {
+    *cheight = rheight;
+    *cwidth = (double)(rheight) * caspect;
+  }
+  *cwidth = (*cwidth >> 2) << 2;
+  *cheight = (*cheight >> 1) << 1;
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 

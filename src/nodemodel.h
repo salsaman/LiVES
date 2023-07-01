@@ -39,9 +39,15 @@
 // defined cost types which we can optimise for:
 #define COST_TYPE_COMBINED	0
 #define COST_TYPE_TIME		1
-#define COST_TYPE_QLOSS		2
 
-#define N_COST_TYPES		3
+// this is qloss due to palette changes
+#define COST_TYPE_QLOSS_P      	2
+
+// this is qloss due to resizing
+#define COST_TYPE_QLOSS_S      	3
+
+// normal cost types
+#define N_COST_TYPES		4
 
 /* OPERATION :: there are 5 phases  */
 
@@ -57,7 +63,7 @@
 // failing to locate such a node_chain, we then construct a node for the correspodning track
 // and prepend this to the instance node. In doing so, we also create a new node_chain with first_node = last_node
 // pointing the new source node, flagged as unterminated.
-// Now, finding a node_chain in node_srcs with first_node->source->track corresponding to the instance node
+// Now, finding a node_chain in node_srcs with track corresponding to the instance node
 // in_track and being flagged as unterminated, we prepend this node to the instance node, and extend the node_chain
 // updating last_node to point to the instance node.
 // If we fail to find an unterminated node_chain for the track,
@@ -103,7 +109,39 @@
 /* least cost routing */
 // iterating ove node_srcs, we consider only nodes which have no inputs (true sources) ignoring any
 // first_nodes with inputs (instance sources)
-// we calulate costs for each palette avaialbel at the source node, then recurse ove over all outputs
+
+// we begin by setting initial sizes, this is started when building the model and connecting nodes
+// if  we have a src with set dize, then this size is carried to the input of the next node.
+
+// since we may have some srcs with variable size, this cannot bes set descending. If we rach anode with multiple inputs
+// we compute the in and out sizes. If we multiple inputs, if any of them have a calulated size, then we set in / out
+// sizes using the sizes which we have.otherwise we continu down with undefined size.
+
+// then on the ascending wave we check if an output has undefined size,
+// this is set to size from the input it connects to
+// eventually definng sizes for src
+
+// on the descender, 
+
+// when a layer is downsized this creates a virtual cost at the input equal to in_size / out_size
+// we also keep track of the "max_possible" size.
+
+// on the ascending wave if we find we upscale thenwe calc  cost for upscale
+// it and this valuie can be "spent"
+
+// the size contiues down until we have goen down all outputs
+// then ascending we want to do 2 things, set he sizes for any srcs with variable size, transfeer the size cost up
+// and convert vsize cost to real size cost
+// if we reach an output with virtual size cost this is converted to real size cost, until we exhaust the upscale cost
+// if we exhaust virtual cost we continue up until we hit a node with more virtual size cost
+// when calulate qloss cossts we multiply sizes for all inputs as with palette qlos, however, we also add ln(qloss)
+// for the next node/ Thus qloss for palettes occurs once, wheraas size qloss accumulates over each node until we get to
+// the sink. If we have vcost left anywhere this can be "spent" to reduce tcost, the same way as slack.
+// at the sink we multiply size qloss by a factor then multiply pal qloss and size qloss to give total qloss
+
+// after calulating size costs, then we move on to palette costs
+
+// we calulate costs for each palette available lat the source node, then recurse ove over all outputs
 // at the following node we add on the additional cost for each in / out combination, fidning the lowest cost
 // in palette per out palette.
 
@@ -173,8 +211,11 @@
 // (or for sources, indicates that the output can be set to any desired size)
 #define NODESRC_ANY_SIZE		(1ull << 35)
 
-// indicate that the input / output can use any valid palette
+// indicate that the input / output can use any listed palette
 #define NODESRC_ANY_PALETTE		(1ull << 36)
+
+//indicates that inputs and outputs may have differing sizes or palettes
+#define NODESRC_IS_CONVERTOR		(1ull << 37)
 
 // inst_node src flagbits
 
@@ -207,7 +248,6 @@
 // only consider planar palettes when selecting best_pal for a cost_type
 #define NODEFLAG_ONLY_PLANAR		(1ull << 54)
 
-
 typedef struct _inst_node inst_node_t;
 
 // node chains - when constructing the node model, we will end up with a linked list of
@@ -219,13 +259,20 @@ typedef struct _inst_node inst_node_t;
 // the src can be either a layer src, blank frame src, or an instance node
 // last node will be either an instance node, or else a sink (node with no out tracks)
 typedef struct {
-  // (n.b we can find the track from first_node->dsource->track)
+  // track number correcsponding to out_track in first_node
+  // we trace thiss through until reaching a node which does not output on that track
+  // we then set last_node, and set the trminated flad
+  // when a instance requires input from a specific track, we first check node_chains to see
+  // if there is an unterminated chain for the track. we connect to the last_node
+  // if there is a teminted chain then we will add a fork output at the node before last node.
+  // if there are no chains and the layer iss no null, we create a new ssource node and a new unterminated
+  // node chain. If the layer is NULL we will create a blank frame source node and this becomes the first_node
+
+  int track;
   // pointers to first and last nodes in the chain
-  // check flags for last_node to see if it is remi
   inst_node_t *first_node, *last_node;
   boolean terminated;
 } node_chain_t;
-
 
 // nodemodel flagbits
 #define NODEMODEL_NEW		(1 << 0)
@@ -268,7 +315,7 @@ typedef struct {
   // to find real out_pal we need n->pals[out_pal] where n is either the inst node, or the input node
     
   int out_pal, in_pal;
-  int p_gamma_type, n_gamma_type;
+  int out_gamma_type, in_gamma_type;
 
   // delta_t represents the time (seconds) to convert (and possibly copy) the layer from the prev node
   // out_channel to this node in_channel, this is added to p->dp_cost[out_pal][COST_TYPE_TIME]
@@ -328,6 +375,10 @@ struct _input_node {
   // during model building, holds current size, so we can check if reinit is needed
   int cwidth, cheight;
 
+  // during descend and srch for downscales, we cna maintian the size at the src. This used for blame costs
+  // at mixing nodes
+  int src_Width, src_height;
+  
   int oidx; // idx of output node (>= 0) in prev which this is connected to
 
   // these values are only used if the input has a divergent pal_list
@@ -437,6 +488,9 @@ struct _output_node {
 
   double least_cost[N_COST_TYPES];
   int best_out_pal, best_in_pal;
+
+  // we use this to store upscale qloss_s as we ascned and convert into actual qloss_s
+  LiVESList *cdeltas;
   
   // feature for use during optimisation, for each out palette, holds tmax - tcost
   double *slack;
@@ -458,7 +512,7 @@ struct _output_node {
   // for cloned outputs we copy the main output channel / layer for the track
   // similar to cloned inputs, except that each output goes to a separate next node
   // unlike input clones, each cloned output can have its own next palette and size and gamma_type for conversion
-  input_node_t **clones;
+  output_node_t **clones;
 
   // in case of cloned outputs, for a clone, this points to the original output
   output_node_t *origin;
@@ -493,12 +547,33 @@ typedef struct _inst_node {
   // type can be: clip, instnace, output, src, or internal 
   int model_type;
 
-  // pointer to the thing being modelled
+  // pointer to the object being modelled by the node
   void *model_for;
-  //
+
+  // this is used for non-CLIP sources
+  int src_type;
+  
   // for instances, these values hold the mapping from tracks to in and out channels
   int *in_tracks, *out_tracks;
 
+  // when modelling instances there will be a certain number of in channels and out channels
+  // some of these channels may be disabled permanently - in which case we ignore them
+  // some may be alpha channels we also ignore
+  // others may be optional / repeatable, and these can be disabled / re-enabled
+  // entries in in_tracks / out_tracks determine the mapping of layers (in track order) -> channels
+  // we beign by creating an input node for each in_track, and output_node for each out
+  // some channel templates are repeateable optional, there can be any number of channels created from these
+  // and they will either map to a layer or be temp disabled. in_count / out_count (TODO) will be used to determine
+  // number of copies of each template
+  // temp diabled channels are not noted in the in_tracks or out_tracks - if we discover one when checking cahnnels
+  // we will add an estra input or output flagged as IGNORE. This allows for these channels to be re-enabled
+  // and connected to a layer source. Gnerally these types of inputs are used in compositors and will have pvary and svary
+  // so there will be no additional costs on adding (except prehaps proc_time).
+  // in this case we would also change in_tracks, and increase nintracks accordingly
+  // in other words, n_inputs can be > nintracks if we have ingored inputs, thus we need to store nintracks
+  // spearately
+  int nintracks, noutracks;
+  
   /////////////////////////////////
   // global palette values for the node. These values are used for inputs / outputs which dont have an own palette_list
   // 

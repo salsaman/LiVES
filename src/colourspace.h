@@ -290,6 +290,8 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *);
 
 void lives_layer_set_opaque(weed_layer_t *);
 
+boolean can_inline_gamma(int inpl, int opal);
+
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 boolean letterbox_layer(weed_layer_t *, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,

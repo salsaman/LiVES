@@ -30,22 +30,29 @@
 #define LAYER_STATUS_NONE		0
 
 // time code reference (queued time or recorded time)
+// nota actually a status, but weant to record this in the timing daat
 #define LAYER_STATUS_TREF		1
 
 // layer is queued in a clip_src
 #define LAYER_STATUS_QUEUED		2
-// layert has at least width, heihght, palette
-#define LAYER_STATUS_GOT_METADATA      	3
+// pixel_data is being loaded
+#define LAYER_STATUS_LOADING      	3
 // layer pixel_data is fully ready
-#define LAYER_STATUS_READY		4
+#define LAYER_STATUS_LOADED      	4
+// layer pixel_data is fully ready
+#define LAYER_STATUS_READY		5
 // layer is invalid, do not use 
-#define LAYER_STATUS_INVALID		5
+#define LAYER_STATUS_INVALID		6
 
-#define N_LAYER_STATUSES	    	6
+#define N_LAYER_STATUSES	    	7
 
 #define WEED_IS_LAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER)
 
-#define WEED_IS_XLAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER || weed_plant_get_type(plant) == WEED_PLANT_CHANNEL)
+#define WEED_IS_XLAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER || \
+			       weed_plant_get_type(plant) == WEED_PLANT_CHANNEL)
+
+void lives_layer_set_status(weed_layer_t *, int status);
+int lives_layer_get_status(weed_layer_t *);
 
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);
@@ -61,6 +68,7 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
 
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);
+lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, weed_layer_t *src);
 int weed_layer_unref(weed_layer_t *);
 int weed_layer_ref(weed_layer_t *);
 int weed_layer_count_refs(weed_layer_t *);

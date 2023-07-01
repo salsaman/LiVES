@@ -2879,8 +2879,11 @@ lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *sourc
     if (src_type == LIVES_SRC_TYPE_BLANK)
       mysrc->source_func = lives_blankframe_srcfunc;
 
+    else if (src_type == LIVES_SRC_TYPE_IMAGE)
+      mysrc->source_func = lives_imgdec_srcfunc;
+
     if (purpose == SRC_PURPOSE_PRIMARY)
-      mysrc->flags = SRC_FLAG_NOFREE | SRC_FLAG_INACTIVE;
+      mysrc->flags = SRC_FLAG_NOFREE;
     pthread_mutex_unlock(&sfile->source_mutex);
     return mysrc;
   }

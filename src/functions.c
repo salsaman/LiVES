@@ -432,6 +432,10 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       void *p0; double p1;
       DO_CALL(2, voidptr, double);
     } break;
+    case FUNCSIG_VOIDP_INT: {
+      void *p0; int p1;
+      DO_CALL(2, voidptr, int);
+    } break;
     case FUNCSIG_VOIDP_INT64: {
       void *p0; int64_t p1;
       DO_CALL(2, voidptr, int64);

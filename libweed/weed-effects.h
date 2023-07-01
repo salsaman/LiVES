@@ -123,7 +123,7 @@ typedef struct {
 #define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1 << 2)
 #define WEED_CHANNEL_OPTIONAL                          	(1 << 3)
 #define WEED_CHANNEL_CAN_DO_INPLACE                    	(1 << 4)
-#define WEED_CHANNEL_NEEDS_NATURAL_SIZE                	(1 << 5)
+#define WEED_CHANNEL_NEEDS_DISPLAY_RATIO               	(1 << 5)
 #define WEED_CHANNEL_PLUGIN_CONTROLLED                	(1 << 6)
 
 /* audio */
@@ -265,6 +265,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_instance_t *filter_instance, w
 #define WEED_LEAF_ALIGNMENT_HINT "alignment_hint"
 
 /* optional for filters with video channels (may be overridden in channel templates depending on filter_class flags) */
+#define WEED_LEAF_ASPECT_RATIO "aspect_ratio"
 #define WEED_LEAF_WIDTH "width"
 #define WEED_LEAF_HEIGHT "height"
 #define WEED_LEAF_MAXWIDTH "maxwidth"
@@ -274,7 +275,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_instance_t *filter_instance, w
 #define WEED_LEAF_YUV_CLAMPING "YUV_clamping"
 #define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
 #define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
-#define WEED_LEAF_NATURAL_SIZE "natural_size"
+#define WEED_LEAF_DISPLAY_RATIO "display__ratio"
 #define WEED_LEAF_INNER_SIZE "inner_size"
 
 ///
@@ -370,7 +371,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_instance_t *filter_instance, w
 /// WEED_LEAF_YUV_CLAMPING
 /// WEED_LEAF_YUV_SAMPLING
 /// WEED_LEAF_YUV_SUBSPACE
-#define WEED_LEAF_PIXEL_ASPECT_RATIO "par"
+#define WEED_LEAF_PAR "pixel_aspect"
 #define WEED_LEAF_GAMMA_TYPE "gamma_type"
 #define WEED_LEAF_ALPHA_PREMULTIPLIED "alpha_premult"
 

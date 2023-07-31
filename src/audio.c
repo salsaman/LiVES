@@ -3569,7 +3569,7 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
     mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   }
 
-  mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, &time_source);
+  mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
   pthread_mutex_unlock(&mainw->avseek_mutex);
   return TRUE;
 }

@@ -2090,7 +2090,7 @@ static void _add_fn_note(fn_type_t ftype, lives_funcdef_t *fdef, void *ptr) {
         if (!(--count))
           ftrace_store = remove_from_hash_store_i(ftrace_store, (uintptr_t)ptr);
         else
-          weed_set_int_value(note, "count", --count);
+          weed_set_int_value(note, "count", count);
       }
       pthread_mutex_unlock(&ftrace_mutex);
       return;

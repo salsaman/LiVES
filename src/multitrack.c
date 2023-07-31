@@ -8850,7 +8850,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     // shouldn't be playing, so OK to just call this
-    weed_generator_end((weed_plant_t *)cfile->primary_src->source);
+    weed_generator_end((weed_instance_t *)get_primary_actor(cfile));
   }
 
   // create new file for rendering to
@@ -11770,7 +11770,7 @@ boolean on_track_click(LiVESWidget * eventbox, LiVESXEventButton * event, livesp
                                          mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
               if (track >= 0 && !mt->aud_track_selected) {
                 if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
-                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->primary_src->source)->cdata;
+                  lives_clip_data_t *cdata = get_clip_cdata(filenum);
                   if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
                     mt_set_cursor_style(mt, LIVES_CURSOR_VIDEO_BLOCK, width, height, filenum, 0, height / 2);
                   } else {

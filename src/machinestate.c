@@ -41,6 +41,7 @@
 #include "startup.h"
 #include "nodemodel.h"
 #include "diagnostics.h"
+#include "nodemodel.h"
 
 LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
@@ -118,7 +119,7 @@ static void get_cpuinfo(void) {
   else
     cpuid(0x00000000, regs); // regs == max_level, vendor0, vendor2, vendor1
   capable->hw.cache_size = (get_bits32(regs[1], 31, 22) + 1) * (get_bits32(regs[1], 21, 12) + 1)
-    * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
+                           * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
 }
 
 #else
@@ -824,7 +825,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   ret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC - origticks;
-    
+
 #else
 #ifdef USE_MONOTONIC_TIME
   ret = (lives_get_monotonic_time() - orignsecs) / 10;
@@ -839,7 +840,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   if (wall_ticks > mainw->wall_ticks) mainw->wall_ticks = wall_ticks;
   return ret;
 }
-    
+
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   return lives_get_relative_ticks(0);
@@ -854,7 +855,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks(void) {
 
 LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
   // return time since application was (re)started
-  return lives_get_session_ticks() * TICKS_TO_USEC_DBL / ONE_MILLION;
+  return lives_get_session_ticks() * TICKS_PER_SECOND_DBL;
 }
 
 
@@ -1686,7 +1687,7 @@ void update_effort(double nthings, boolean is_bad) {
     mainw->blend_palette = WEED_PALETTE_END;
     if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
-    build_nodes_model(&mainw->node_srcs);
+    build_nodemodel(&mainw->nodemodel);
   }
 
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
@@ -2024,8 +2025,7 @@ void rec_desk(void *args) {
       jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
     })
 
-  sfile->primary_src = add_clip_source(recargs->clipno, -1, SRC_PURPOSE_PRIMARY,
-					 NULL, LIVES_SRC_TYPE_RECORDER);
+  add_primary_src(recargs->clipno, NULL, LIVES_SRC_TYPE_RECORDER);
 
   mainw->rec_samples = -1; // record unlimited
   //

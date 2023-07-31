@@ -121,7 +121,7 @@
 /*( omits WEED_PALETTE_YUV411, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_RGB_FLOAT
    and WEED_PALETTE_RGBA_FLOAT as well as the alpha palettes
   WEED_PALETTE_A1, WEED_PALETTE_A8 and WEED_PALETTE_AFLOAT also WEED_PALETTE_ARGB32 so that alpha is always last*/
-#define ALL_PACKED_PALETTES q{WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, \
+#define ALL_PACKED_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, \
       WEED_PALETTE_BGRA32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END}
 
 /* adds WEED_PALETTE_ARGB32, WEED_PALETTE_UYVY8888. WEED_PALETTE_YUYV8888 */
@@ -197,8 +197,14 @@
 #define WEED_LEAF_ADVANCED_PALETTE_LIST "adv_pal_list"
 #define WEED_LEAF_ADVANCED_PALETTE "adv_palette"
 
-#ifndef MAXPPLANES
-#define MAXPPLANES 8
+// max number of channels in a palette
+#ifndef WEED_MAXPCHANS
+#define WEED_MAXPCHANS 8
+#endif
+
+// max number of planes in a palette
+#ifndef WEED_MAXPPLANES
+#define WEED_MAXPPLANES 4
 #endif
 
 #define WEED_VCHAN_end 		0
@@ -217,18 +223,18 @@
 
 #define WEED_VCHAN_DESC_PLANAR		(1 << 0) ///< planar type
 #define WEED_VCHAN_DESC_FP		(1 << 1) ///< floating point type
-#define WEED_VCHAN_DESC_BE		(1 << 1) ///< pixel data is big endian (within each component)
+#define WEED_VCHAN_DESC_BE		(1 << 2) ///< pixel data is big endian (within each component)
 
 #define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 16) ///< floating point type
 
 typedef struct {
   uint16_t ext_ref;  ///< link to an enumerated type
-  uint16_t chantype[MAXPPLANES]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
+  uint16_t chantype[WEED_MAXPCHANS]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
   uint32_t flags; /// bitmap of flags, eg. WEED_VCHAN_DESC_FP | WEED_VCHAN_DESC_PLANAR
-  uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
-  uint8_t  vsub[MAXPPLANES];  /// vert subsampling
+  uint8_t  hsub[WEED_MAXPCHANS];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
+  uint8_t  vsub[WEED_MAXPCHANS];  /// vert subsampling
   uint8_t npixels; ///< npixels per macropixel: {0, 1} == 1
-  uint8_t bitsize[MAXPPLANES];
+  uint8_t bitsize[WEED_MAXPCHANS];
   void *extended; ///< pointer to app defined data
 } weed_macropixel_t;
 #endif

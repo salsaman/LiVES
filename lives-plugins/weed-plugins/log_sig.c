@@ -47,6 +47,11 @@ static weed_error_t logsig_process(weed_plant_t *inst, weed_timecode_t timestamp
     if (weed_param_has_value(in_params[i])) {
       fval = weed_param_get_value_double(in_params[i]);
       weed_set_double_value(out_params[i], WEED_LEAF_VALUE, 1. / (1. + exp(-fval)));
+      // tanh
+      //weed_set_double_value(out_params[i], WEED_LEAF_VALUE, 2. / (1. + exp(-fval * 2.)) - 1.);
+      // ReLU
+      /* if (fval > 0.) weed_set_double_value(out_params[i], WEED_LEAF_VALUE, fval); */
+      /* else weed_set_double_value(out_params[i], WEED_LEAF_VALUE, 0.); */
     }
   }
 
@@ -83,7 +88,7 @@ WEED_SETUP_START(200, 200) {
                                         NULL, logsig_process, NULL, NULL, NULL, in_params, out_params);
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION,
-                        "Scales (double) values between -1.0 and 1.0 using a log-sig function\n"
+                        "Scales (double) values between 0.0 and 1.0 using a log-sig function\n"
                         "Inputs may be fed from the outputs of the data_processor or data_unpacker plugins, "
                         "for instance.\n");
 

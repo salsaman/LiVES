@@ -19,6 +19,7 @@
 #include "effects-weed.h"
 #include "resample.h"
 #include "clip_load_save.h"
+#include "nodemodel.h"
 
 static boolean _start_playback(int play_type) {
   // play types: (some are no longer valid)
@@ -261,11 +262,11 @@ static void post_playback(void) {
             // need to recheck mainw->play_window after this
             lives_widget_show_now(mainw->preview_box);
             if (mainw->play_window) {
-	      lives_widget_grab_focus(mainw->preview_spinbutton);
-	      lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-	      lives_window_center(LIVES_WINDOW(mainw->play_window));
-	      clear_widget_bg(mainw->play_image, mainw->play_surface);
-	      load_preview_image(FALSE);
+              lives_widget_grab_focus(mainw->preview_spinbutton);
+              lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+              lives_window_center(LIVES_WINDOW(mainw->play_window));
+              clear_widget_bg(mainw->play_image, mainw->play_surface);
+              load_preview_image(FALSE);
             }
 	    // *INDENT-OFF*
 	  }
@@ -275,7 +276,7 @@ static void post_playback(void) {
 
   if (prefs->show_player_stats && mainw->fps_measure > 0) {
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
-            (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
+            (double)lives_get_relative_ticks(mainw->origticks)
             / TICKS_PER_SECOND_DBL);
   }
 
@@ -294,7 +295,7 @@ static void post_playback(void) {
 
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
-    weed_generator_end((weed_plant_t *)cfile->primary_src->source);
+    weed_generator_end((weed_instance_t *)(get_primary_src(mainw->current_file))->actor);
     mainw->osc_block = FALSE;
   }
 
@@ -661,6 +662,17 @@ void play_file(void) {
 
   mainw->playing_file = mainw->current_file;
 
+  lives_freep((void **)&mainw->layers);
+  mainw->layers = map_sources_to_tracks(FALSE, FALSE);
+
+  build_nodemodel(&mainw->nodemodel);
+
+  describe_chains(mainw->nodemodel);
+  break_me("descd");
+
+  align_with_model(mainw->nodemodel);
+  mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
+
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);
   BG_THREADVAR(hook_hints) = 0;
@@ -979,7 +991,7 @@ void play_file(void) {
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0) {
       fps_med = (double)mainw->fps_measure
-                / ((double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
+                / ((double)lives_get_relative_ticks(mainw->origticks)
                    / TICKS_PER_SECOND_DBL);
     }
   }
@@ -1200,10 +1212,9 @@ void play_file(void) {
 
       mainw->close_this_clip = mainw->new_clip = -1;
 
-      if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->primary_src) {
-        lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src->source));
-        clip_source_free(mainw->scrap_file, mainw->files[mainw->scrap_file]->primary_src);
-        mainw->files[mainw->scrap_file]->primary_src = NULL;
+      if (IS_VALID_CLIP(mainw->scrap_file) && get_primary_src(mainw->scrap_file)) {
+        lives_close_buffered(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)->priv));
+        remove_primary_src(mainw->scrap_file, LIVES_SRC_TYPE_FILE_BUFF);
       }
 
       if (mainw->foreign) {
@@ -1273,14 +1284,15 @@ void play_file(void) {
       /// free the last frame image(s)
       reset_old_frame_layer();
 
-      if (mainw->node_srcs) {
-	// free the nodemodel
-	free_nodes_model(mainw->node_srcs);
-	mainw->node_srcs = NULL;
+      if (mainw->nodemodel) {
+        // free the nodemodel
+        free_nodemodel(&mainw->nodemodel);
+        mainw->nodemodel = NULL;
       }
 
       cliplist = mainw->cliplist;
       while (cliplist) {
+        // TODO - free any track srgrps
         int i = LIVES_POINTER_TO_INT(cliplist->data);
         if (IS_NORMAL_CLIP(i) && mainw->files[i]->clip_type == CLIP_TYPE_FILE)
           chill_decoder_plugin(i);
@@ -1298,7 +1310,7 @@ void play_file(void) {
         current_file = mainw->current_file;
         mainw->can_switch_clips = TRUE;
         // TODO - make sure we dont remove this too soon
-        weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->primary_src->source);
+        weed_bg_generator_end((weed_instance_t *)(get_primary_src(mainw->blend_file))->actor);
         mainw->can_switch_clips = FALSE;
         if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
       }

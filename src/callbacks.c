@@ -273,7 +273,7 @@ void lives_exit(int signum) {
           if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
           // must do this before we move it
-          clip_sources_free_all(i);
+          srcgrps_free_all(i);
           threaded_dialog_spin(0.);
 
           lives_freep((void **)&sfile->frame_index);
@@ -2545,8 +2545,8 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
 
     cfile->fps = cfile->undo1_dbl;
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+    if (cfile->clip_type == CLIP_TYPE_FILE && get_primary_src(mainw->current_file) != NULL) {
+      lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -2733,8 +2733,8 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->arate -= cfile->undo1_int;
     /// DON'T ! we only save the pb_fps now, since otherwise we may lose the orig. clip fps
     /* save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps); */
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+    if (cfile->clip_type == CLIP_TYPE_FILE && get_primary_src(mainw->current_file) != NULL) {
+      lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -2768,8 +2768,8 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->frames = deorder_frames(cfile->old_frames, mainw->current_file == 0 && !prefs->conserve_space);
 
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+    if (cfile->clip_type == CLIP_TYPE_FILE && get_primary_src(mainw->current_file) != NULL) {
+      lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
       double dfps = (double)cdata->fps;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
     } else {
@@ -3058,7 +3058,7 @@ void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     clipboard->frames = end - start + 1;
     check_if_non_virtual(0, 1, clipboard->frames);
     if (clipboard->clip_type == CLIP_TYPE_FILE) {
-      clipboard->primary_src = add_ext_decoder_clone(CLIPBOARD_FILE, mainw->current_file, -1, SRC_PURPOSE_PRIMARY);
+      clone_srcgrp(CLIPBOARD_FILE, mainw->current_file, -1, SRC_PURPOSE_PRIMARY);
       end = -end; // allow missing frames
       lives_snprintf(clipboard->file_name, PATH_MAX, "%s", cfile->file_name);
     }
@@ -3342,7 +3342,7 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
   cfile->clip_type = clipboard->clip_type;
 
   if (cfile->clip_type == CLIP_TYPE_FILE) {
-    cfile->primary_src = (CLIPBOARD_FILE);
+    clone_srcgrp(mainw->current_file, CLIPBOARD_FILE, -1, SRC_PURPOSE_PRIMARY);
     lives_snprintf(cfile->file_name, PATH_MAX, "%s", clipboard->file_name);
   }
 #endif
@@ -3421,7 +3421,7 @@ void on_insert_activate(LiVESButton * button, _insertw * insertw) {
 
   // if it is an insert into the original file, and we can do fast seek, we can insert virtual frames
   if (button && mainw->current_file == clipboard->cb_src && !check_if_non_virtual(0, 1, clipboard->frames)) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+    lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
     if (cdata->seek_flag & LIVES_SEEK_FAST) {
       virtual_ins = TRUE;
       if (count_virtual_frames(clipboard->frame_index, 1, clipboard->frames) == clipboard->frames) all_virtual = TRUE;
@@ -3998,6 +3998,7 @@ void on_insert_activate(LiVESButton * button, _insertw * insertw) {
   if (cfile->end == 0) cfile->end = cfile->frames;
 
   if (cfile->frames > 0 && orig_frames == 0) {
+    lives_clip_data_t *cdata;
     lives_snprintf(cfile->type, 40, "Frames");
     cfile->orig_file_name = FALSE;
     cfile->hsize = clipboard->hsize;
@@ -4010,10 +4011,8 @@ void on_insert_activate(LiVESButton * button, _insertw * insertw) {
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_IMG_TYPE,
                          (void *)image_ext_to_lives_image_type(get_image_ext_for_type(cfile->img_type))))
       bad_header = TRUE;
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->primary_src) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
-      double dfps = (double)cdata->fps;
-      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    if (cfile->clip_type == CLIP_TYPE_FILE && (cdata = get_clip_cdata(mainw->current_file))) {
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cdata->fps)) bad_header = TRUE;
     } else {
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
     }
@@ -4410,13 +4409,6 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     showclipimgs();
     redraw_timeline(mainw->current_file);
     return;
-  }
-
-  if (cfile->clip_type == CLIP_TYPE_FILE) {
-    if (check_if_non_virtual(mainw->current_file, 1, cfile->frames)) {
-      // do not free, in case we need to undo
-      cfile->primary_src = NULL;
-    }
   }
 
   if (user_data) return;
@@ -6292,7 +6284,7 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     lives_free(tmp);
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
-      lives_decoder_t *dplug = (lives_decoder_t *)cfile->primary_src->source;
+      lives_decoder_t *dplug = (lives_decoder_t *)((get_primary_src(mainw->current_file)->actor));
       lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
       char *decname = lives_strdup_printf("%s plugin v %d.%d", dpsys->id->name,
                                           dpsys->id->pl_version_major, dpsys->id->pl_version_minor);
@@ -7409,7 +7401,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
     // since the player plugin may change, we also need to do this
-    build_nodes_model(&mainw->node_srcs);
+    build_nodemodel(&mainw->nodemodel);
   }
 }
 
@@ -7478,7 +7470,7 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
     mainw->force_show = TRUE;
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
-    build_nodes_model(&mainw->node_srcs);
+    build_nodemodel(&mainw->nodemodel);
   }
 }
 
@@ -7663,7 +7655,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
     // since the player plugin may change, we also need to do this
-    build_nodes_model(&mainw->node_srcs);
+    build_nodemodel(&mainw->nodemodel);
   }
 }
 
@@ -8029,7 +8021,7 @@ void on_rev_clipboard_activate(LiVESMenuItem * menuitem, livespointer user_data)
   mainw->current_file = 0;
 
   if (!check_if_non_virtual(0, 1, cfile->frames)) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+    lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
     char *msg = (_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
       if (realize_all_frames(0, msg, FALSE, 1, 0) <= 0) {
@@ -9588,7 +9580,7 @@ boolean all_config_deferrable(LiVESWidget * widget, LiVESXEventConfigure * event
   // a deferrable config_function - amazing !
   int do_defer = GET_INT_DATA(widget, DEFER_KEY);
   if (!mainw->configured) do_defer = TRUE;
-  if (do_defer) SET_INT_DATA(widget, DEFERRED_KEY, 1);
+  if (0 && do_defer) SET_INT_DATA(widget, DEFERRED_KEY, 1);
   else all_config(widget, ppsurf);
   return FALSE;
 }
@@ -9673,7 +9665,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
 
   if (!mainw->iochan) {
     // pause during effects processing or opening
-    xticks = lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs);
+    xticks = lives_get_relative_ticks(mainw->origticks);
     if (!mainw->effects_paused) {
       mainw->timeout_ticks -= xticks;
       com = lives_strdup_printf("%s pause \"%s\"", prefs->backend_sync, cfile->handle);
@@ -10059,7 +10051,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   if (1 || !mainw->switch_during_pb) {
     sfile->pb_fps = new_fps;
-    mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+    mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
 
     if (new_fps != sfile->pb_fps && fabs(new_fps) > .001 && !sfile->play_paused) {
       /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
@@ -10866,17 +10858,16 @@ char *get_palette_name_for_clip(int clipno) {
   sfile = mainw->files[clipno];
   if (IS_NORMAL_CLIP(clipno)) {
     if (is_virtual_frame(clipno, sfile->frameno)) {
-      lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->primary_src->source)->cdata;
+      lives_clip_data_t *cdata = get_clip_cdata(clipno);
       palname = lives_strdup(weed_palette_get_name_full(cdata->current_palette, cdata->YUV_clamping, cdata->YUV_subspace));
     } else {
       palname = lives_strdup(weed_palette_get_name((sfile->bpp == 24 ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32)));
     }
   } else switch (sfile->clip_type) {
     case CLIP_TYPE_GENERATOR: {
-      weed_plant_t *inst = NULL;
-      if (sfile->primary_src) inst = (weed_plant_t *)sfile->primary_src->source;
+      weed_instance_t *inst = (weed_instance_t *)((get_primary_src(clipno))->actor);
       if (inst) {
-        weed_plant_t *channel = get_enabled_channel(inst, 0, FALSE);
+        weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
         if (channel) {
           int clamping, subspace, pal;
           pal = weed_channel_get_palette_yuv(channel, &clamping, NULL, &subspace);
@@ -10887,7 +10878,7 @@ char *get_palette_name_for_clip(int clipno) {
     break;
     case CLIP_TYPE_VIDEODEV: {
 #ifdef HAVE_UNICAP
-      lives_vdev_t *ldev = (lives_vdev_t *)sfile->primary_src->source;
+      lives_vdev_t *ldev = (lives_vdev_t *)((get_primary_src(mainw->current_file))->actor);
       palname = lives_strdup(weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, 0));
 #endif
     }
@@ -10956,7 +10947,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   g_print("storeclip, key %d\n", fnkey);
   g_print("got clip %d, frame %d\n", mainw->clipstore[fnkey][0], mainw->clipstore[fnkey][1]);
-  
+
   if (!IS_VALID_CLIP(mainw->clipstore[fnkey][0])) {
     mainw->clipstore[fnkey][0] = mainw->current_file;
     if (LIVES_IS_PLAYING) {
@@ -10972,12 +10963,12 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       lives_clip_t *sfile = mainw->files[mainw->clipstore[fnkey][0]];
       frames_t frame = mainw->clipstore[fnkey][1];
       if (LIVES_CE_PLAYBACK) {
-	g_print("jumping !\n");
+        g_print("jumping !\n");
         if (mainw->clipstore[fnkey][0] != mainw->playing_file) {
           // player will call do_quick_switch, and possiblt switch_audio_clip()
           mainw->new_clip = mainw->clipstore[fnkey][0];
-	}
-	sfile->next_frame = frame;
+        }
+        sfile->next_frame = frame;
       } else {
         if (mainw->clipstore[fnkey][0] != mainw->current_file)
           switch_clip(0, mainw->clipstore[fnkey][0], TRUE);

@@ -262,9 +262,9 @@ void *lives_calloc_safety(size_t nmemb, size_t xsize);
 
 ///////////////////// byte manipulation /////////
 
-void swab2(const void *from, const void *to, size_t granularity) 	LIVES_HOT;
-void swab4(const void *from, const void *to, size_t granularity) 	LIVES_HOT;
-void swab8(const void *from, const void *to, size_t granularity) 	LIVES_HOT;
+void swab2(const void *to, const void *from, size_t granularity) 	LIVES_HOT;
+void swab4(const void *to, const void *from, size_t granularity) 	LIVES_HOT;
+void swab8(const void *to, const void *from, size_t granularity) 	LIVES_HOT;
 
 #define reverse_bytes(buff, count, granularity) do {\
   count == 2 ? swab2(buff, buff, 1) : count == 4 ? swab4(buff, buff, granularity) \

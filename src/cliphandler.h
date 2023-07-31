@@ -60,8 +60,8 @@
 #define CURRENT_CLIP_TOTAL_TIME (mainw ? CLIP_TOTAL_TIME(mainw->current_file) : 0.)
 
 #define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
-    && (!mainw->files[mainw->ascrap_file]->primary_src	\
-	|| mainw->files[mainw->ascrap_file]->primary_src->src_type != LIVES_SRC_TYPE_RECORDER))
+			       && (!get_primary_src(mainw->ascrap_file) \
+				   || (get_primary_src(mainw->ascrap_file))->src_type != LIVES_SRC_TYPE_RECORDER))
 
 #define CLIPSWITCH_BLOCKED (!mainw || mainw->go_away || LIVES_MODE_MT || !CURRENT_CLIP_IS_VALID || mainw->preview \
 			    || (LIVES_IS_PLAYING && mainw->event_list && !(mainw->record || mainw->record_paused)) \
@@ -97,38 +97,39 @@ typedef enum {
 // src types (for clips)
 
 // no source
-#define LIVES_SRC_TYPE_UDNEFINED	0
+#define LIVES_SRC_TYPE_UNDEFINED	0
 
-// static source types
+// static source types (actor == NULL)
 #define LIVES_SRC_TYPE_IMAGE		1
-
 #define LIVES_SRC_TYPE_BLANK		2
 
+// non static source types
+
 // frame source is a video clip
-#define LIVES_SRC_TYPE_DECODER		2
+#define LIVES_SRC_TYPE_DECODER		64
 
-// frame src is a filter plugin (generator)
-#define LIVES_SRC_TYPE_GENERATOR	3
+// frame src is a filter instance (generator)
+#define LIVES_SRC_TYPE_GENERATOR	65
 
-// source pixel_data is a memory buffer that can be written to
-// asynchronously
-#define LIVES_SRC_TYPE_MEMBUFF		6
+// source pixel_data is a r/w memory buffer
+#define LIVES_SRC_TYPE_MEMBUFF		66
 
 // frame src is a fifo file
-#define LIVES_SRC_TYPE_FIFO		7
+#define LIVES_SRC_TYPE_FIFO		67
 
 // frame src is a socket / network connection
-#define LIVES_SRC_TYPE_STREAM		9
+#define LIVES_SRC_TYPE_STREAM		68
 
 // frame source is a hardware device (e.g webcam)
-#define LIVES_SRC_TYPE_DEVICE		10
+#define LIVES_SRC_TYPE_DEVICE		69
 
 // frame src is a file buffer containing multiple frames
 // e.g a dump or raw frame data (scrap file)
-#define LIVES_SRC_TYPE_FILE_BUFF	11
+#define LIVES_SRC_TYPE_FILE_BUFF	70
 
 // grabbed frames, eg from the desktop recorder
-#define LIVES_SRC_TYPE_RECORDER		16
+// may be similaer to
+#define LIVES_SRC_TYPE_RECORDER		71
 
 // frame src is internal (e.g test pattern, nullvideo)
 #define LIVES_SRC_TYPE_INTERNAL		256
@@ -137,9 +138,13 @@ typedef enum {
 #define SRC_STATUS_NOT_SET		0
 
 // source is on standby / idle
-#define SRC_STATUS_INACTIVE    		1
+#define SRC_STATUS_IDLE    		1
 
-#define SRC_STATUS_RUNNING    		2
+// ready to fetch data
+#define SRC_STATUS_READY    		2
+
+// fethcing data / busy
+#define SRC_STATUS_RUNNING    		3
 
 // target is out of date
 #define SRC_STATUS_EXPIRED		32
@@ -177,26 +182,46 @@ typedef enum {
 // for srcs used in nodemodel
 #define SRC_PURPOSE_MODEL		128
 
+// src is required to provide some frames for the clip, and is in the primary srcgroup
+// is hould only be freed when the clip is closed, or under special circumstance - e.g
+// to reload the src and clear and error condition
 #define SRC_FLAG_NOFREE			(1ull < 0)
+
+// src can only load one layer pixel_data at a time, otherwise multiple layers can be filled in parallel
 #define SRC_FLAG_SINGLE			(1ull < 4)
+
+// src can be slow to fill the pixel_data, running the action_func async is recommended
 #define SRC_FLAG_ASYNC			(1ull < 8)
 
 typedef lives_result_t (*lives_clipsrc_func_t)(weed_layer_t *layer);
 
 // clip_srcs are obejcts (plugins or functions) which take a layer with size / palette
-// framenumber defined, and fill the empty pixel_data for the layer
-// the clip_src may be a data provider (eg. blank frame source) or may connect to an external provider
-// (eg. a device clip_src)
+// frame number defined, and fill the empty pixel_data for the layer
+// the clip_src may be internal (eg. blank frame source) where the pixel_data is filled without any external source
+// or may be external, in this case data is read from an extern source, decoded, and the placed in pixel_data
 //
 // clips may have multiple srcs which each map to a set of frame numbers
 // (mapping will be done through extension to frame_index - TODO)
 //
-// the default set of clip_srcs for a clip are known collectively as the primary source
+// the default set (group) of clip_srcs for a clip are known collectively as the primary source
 // it is possible to create clones of the primary source and have duplicate source sets
 // these can be used to allow parallel access to the sources - examples are thumbnail creators
-// duplicate track players, precaching sources. during playback, sets of clip_srcs can be bound to a track
-// by taking a snapshot of the track sources we can fill an array of layers, representing the frames for
-// the active stack of clips and other layer sources
+// duplicate track players, precaching sources
+//
+// during playback we have a stack of "layers", each layer represents the target of a clip_src
+// the layers are orered by "track" index, thus we can bind one or more clip_srcs to each track
+// and these clip_srcs will fill the layers in the stack
+//
+// this means for example, a single clip can be connected to multiple tracks, in this case the clip_srcs would be cloned
+// each track getting its own copy. We can also have cloned clip_srcs not associated with any track (for example
+// the thumbnail srcs), the precache srcs are special clones becsue they can swap plaes with the primary src
+//
+// clip_src types are designed to be extendible, all that is necessary is to provide an action_function which
+// takes a a layer as input - the layer will have width, height, palettes, clip and idx (frame) number set
+// the clip_src simply needs to fill the pixel data im the layer. Some clip_srcs can prodice frames at any size
+// or palette, others may have fixed sizes, and one or a set of palttes. Tnhey can also advise if they use linear gamma
+// or produce premultiplied alpha. Clip_srcs can also be generator plugins (generating pixel_data in memeory).
+// or can connect to fifo files, streams, devices...
 //
 // we have static clip_srcs - these are shared between all clips (e.g. blank_frame clip_src)
 // we also have dynamic clip_srcs which are specific to a single clip (e.g decoder type sources)
@@ -210,37 +235,168 @@ typedef lives_result_t (*lives_clipsrc_func_t)(weed_layer_t *layer);
 // the frame_index for a clip (TODO) maps each frame to a clip_src, and an index value for the src.
 // clip_srcs also have a STATUS, most commonly this can be INACTIVE / ACTIVE
 //
-// Some clip srcs are abel to fill layer_pixel data in parallel (e.g blank frame src)
+// Some clip srcs are able to fill layer_pixel data in parallel (e.g blank frame src)
 // others can only be used to fill a single layer at a time (e.g decoder srcs)
 // to use single srcs in parallel, it is necessary to create a clone.
-typedef struct {
-  uint64_t uid;
 
-  // pointer to a plugin for this clip_src (for staic srcs, this will be NULL)
-  void *source;
-
-  // if this is non NULL defined, then we need only create a layer with appropriate values
-  // size, palette, clip, frame
-  // then call action_func(layer);
-  lives_clipsrc_func_t action_func;
-
-  int src_type;
-  int src_type_detail;
-  int track; // track number the source outputs to
-  int purpose; // the source purpose, for locating it
-  int status; // src status
-  uint64_t flags;
-  layer_t *layer; // current output layer for source
-  void *priv; // private data for the source
-
-  // listof possible palettes for the source
-  int * pals;
-} lives_clip_src_t;
-
+// when a clip is saved we need to also save the frame_index and the metadata for each clip_src,
+// so that when the clip is reloaded, we can recreate the clip srcs
+// to aid this we have fields:
+//  src_uid (e.g for a decoder src, this would point to a decoder plugin uid)
+//  src_type: eg. decoder
+//  ext_id - a fingerprint for the ext media (eg. md5sum)
+//  ext_URI - the location where the ext_src can be found
+//
 typedef union {
   char md5sum[MD5_SIZE];
   char cert[64];
 } fingerprint_t;
+
+
+// a clip_source (clipsrc) is some object which can fill the pixel_data for a layer
+// a clip can have multiple clipsrcs, and these are arranged into sourc groups (clipsrc_groups)
+// almost all clips have a PRIMARY srcgrp, whcih has sufficeint clipsrcs in it to fill pixel data for all
+// frame from 1 - frames
+
+
+// clip srcs have 1 mandatory function - action_funcy(layer, boolean async)
+// which should take the layer, and fill its pixel data, adjusitng layer_status
+// it should attempt to adhere to the values set in the layer fo the following:
+// - width (in macropixels of the target palette), height, palette, (and YUV_clamping, YUV_sampling, YUV-subtype
+// if these are set and the palette is YUV) as well as gamma_type
+// the source will set the layer leaves to the actual values
+// if async is set, the action_function should run in athread, and layer status can be monitored by the caller
+// otherwise the function should block untill all the pixel_data is loaded and converted
+// the action_func can be a wrapper which reads the detail from the layer, passes them as parameter
+// in case of error, NULL pixel_Data is retrun and layer status set to error or invalid
+typedef lives_result_t (*clipsrc_action_func_t)(lives_layer_t *, boolean async);
+
+// some clip_srcs ar re entrant / threadsafe, that is, action _Function can be called as many times as required
+// in parallel
+// if this is not the case, the src must provide a function for creating a copy (clone) of an existing "actor"
+typedef void *(*clipsrc_clone_func_t)(void *actor, const char *URI);
+// normally, actor would be NULL, and URI would be set. To create a clone, URI is NULL and actor is set
+// to create a clone from a sanpshot, actor will be set with snapshot adn URI set with the URI for
+// which the snapshot was created
+
+// other functions will exst to int / deinit the src factory
+
+// and a further function to return a snapshot of the current src state,
+// to make it possible to reload the src in a future session
+
+typedef struct {
+  // nunique id for this clip src in clipgrp - clones all have same uid
+  uint64_t uid;
+
+  ////////////////////////////// template part
+  int src_type;
+
+  // for plugins (eg. decodder pllugins, this would be the plugin uid)
+  // for filters (e.g. generators, the filter plugin uid)
+  uint64_t actor_uid;
+
+  //clipsrc_init_func_t create_func;  // (ext_URI) - return instance of actor
+
+  // if this is non NULL defined, then we need only create a layer with appropriate values
+  // size, palette, frame
+  // then call action_func(layer);
+  clipsrc_action_func_t action_func; // layer - fill layer pixel_data
+  //clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
+  //clipsrc_snapshot_func_t snapshot_func; // create a snapshot of strate for faster reloading
+  //clipsrc_destroy_func_t destroy_func; // actor - frees actor
+
+  uint64_t flags;
+
+  //////////////////////////////////
+
+  // pointer to a plugin for this clip_src (for staic srcs, this will be NULL)
+  void *actor;
+
+  // if actor is a template, points to the specific inst for the scrgroup
+  void *actor_inst;
+
+  // external checksum for clip source (e.g md4sum, cert)
+  fingerprint_t ext_checksum;
+
+  // URI of external source
+  char *ext_URI;
+
+  void *priv; // private data for the source
+} lives_clip_src_t;
+
+// we will have an array of these, representing all static clipsrcs
+// when creating a clipsrc, we check src_type
+// we look this up to see if it is a static clipsrc. If so we create the clipsrc. setting
+// details as contained in the template for that src_type
+// all fields are copied from template to clipsrc
+// the clone
+typedef struct {
+  int src_type;
+  uint64_t actor_uid;
+  clipsrc_action_func_t action_func; // layer - fill layer pixel_data
+  clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
+  uint64_t flags;
+} lives_clipsrc_template;
+
+// clip_srcs are contained in clipsrc_groups. Clips  can have one or more clipsrc groups
+// the default group is the PRIMARY group, but we can ausiliar groups
+// each group has an apparent pelette - the group acts like a single entity
+// which returns frames 1 -> frames at size hsize X vsize,
+// with palette apparent_pal
+// within the group there may be any number of clip_srcs - these link to a frame number via the
+// frame_index -> idx of clip_src in srcs_list
+//
+// the primary group is the one used for playback
+// each group can only pull a single frame at a time
+// to pull a frame, the status must be READY
+// then we can point to layer to a lyer to be filled, and set a frame number
+// then call load_frema(src_group)
+// the frame index will be consulted, and we find which source in the group is responsible for that frame
+// and the index of the frame for that src
+// now we need to monitor the status until it gets to ready and then the layer can be used
+//
+// since a group can only fill one layer at a time we can create audiliar groups (for example for thumbnailing)
+// we can call clone_group(src_group, purpose) and get a new group. Static clip_srcs in the group
+// are copied by referennce, non stastic are cloned.
+//
+// the width, height, gamma_type and  palette of the layer may be set
+// if the size is set, the gorup will resize the frame to that size if possible
+// if palette and gamm_type are set, the gorup will try to satisfy these
+// if not set, the layer size, palette, gamma will be set depnding on which src of the group is used
+// if the layer does set palette and gamma, these are stored for information in apparent_palette, apparent_gamma
+// this allows for a consistent visual by setting the next layer to the same values
+//
+// if load_frame() is called with pixel_data in layer, this will be freed
+//
+// instead of attaching layer to a srcgrp and calling load_frame(), it is also possible to set the srcgrp for
+// a layer and call it that way
+typedef struct {
+  int n_srcs;
+  int track;
+
+  int active_src;
+
+  lives_clip_src_t **srcs;
+
+  union {
+    int apparent_pal;
+    full_pal_t apparent_pally;
+  };
+
+  int apparent_gamma;
+
+  pthread_mutex_t src_mutex;
+
+  pthread_mutex_t refcnt_mutex;
+
+  // refcnt set to 1 on creation
+  int refcnt;
+
+  weed_layer_t *layer; // current output layer for group
+
+  int purpose; // the src_group purpose, for locating it
+  int status; // group status, same codes as for clip_src
+} lives_clipsrc_group_t;
 
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
@@ -248,8 +404,6 @@ typedef struct _lives_clip_t {
 
   uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
   char handle[256];
-
-  fingerprint_t ext_id;  // external id for clip source (e.g md4sum, cert)
 
   char type[64];
 
@@ -375,12 +529,23 @@ typedef struct _lives_clip_t {
 
   boolean has_binfmt;
 
+  // TODO - this will change soon. In the future, we can have multiple clip_srcs per clip
+  // and the frame index will contain pairs: clip_src | clip_src_idx
+  // for now we can consider two clip_srcs: an img_decoder, and a video_decoder
+  // positive values will become 1 | idx_val and -values will become 0 | idx_val
+  // with idx_val < 0 meaning virtual_frame_number - idx_val
+  // thus the only change initially will be to put a 1 before +ve values and a 0 before -ve values
+  // - the advantage of this method is that for example we can have clips which pull frames from multiple
+  // video clips, simply by creating a clip_src for each clip, however we will need to keep a record of
+  // what the clip_src numbers refer to -
+  // eg. 0 == img_decoder, 1 == dec_plugin with uid X, targeted at vidclip with URI Y, md5sum Z
+
   /// index of frames for CLIP_TYPE_FILE
   /// >0 means corresponding frame within original clip (undecoded)
   // e.g if frame_index[0] ie 20, then it means frame 20 (starting from 1) in the encoded source
   // if frame_index[50] is 99, then this is frame 99 in encoded source
   /// -1 means corresponding decoded (image) file (equivalent to CLIP_TYPE_DISK)
-  // ie. if frame_index[0] is -1, this correspondes to image 1, if frame_index[100] is -1, then it means images 101
+  // ie. if frame_index[0] is -1, this corresponds to image 1, if frame_index[100] is -1, then it means image 101
   // the advantage of only using -1 for images is that image files can be renamed / overwtitten to remove gaps
   // and the corresponding section cut from the frame_index without a need to renumber anything within it
 
@@ -446,10 +611,16 @@ typedef struct _lives_clip_t {
   double lmap_fix_apad;
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  pthread_mutex_t source_mutex;
-  lives_clip_src_t **sources;
-  lives_clip_src_t *primary_src;
-  int n_sources;
+  pthread_mutex_t srcgrp_mutex;
+
+  lives_clipsrc_group_t **src_groups;
+  int n_src_groups;
+
+  // since clips may have multiple clip_srcs each with their own internal palete, we select one palette
+  // to be "representative" of tyhe clip. Just as width and heith are "representative" of the frame size
+  // aooarent pal is representative of the palette. This means that whatever clip_src is applied for a frame
+  // we convert it to width,height, apparent_pal
+  int apparent_pal;
 
   uint64_t *cache_objects; ///< for future use
 
@@ -630,16 +801,41 @@ char *get_untitled_name(int number);
 	  && get_indexed_frame((clip), (frame) + 1) >= 0 && mainw->files[(clip)]->frame_md5s[1]) \
 	 ? mainw->files[(clip)]->frame_md5s[1][get_indexed_frame((clip), (frame) + 1)] : NULL)): NULL)
 
-// clip sources
-lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source, int src_type);
-lives_clip_src_t *get_clip_source(int nclip, int track, int purpose);
-void clip_source_remove(int nclip, int track, int purpose);
-void clip_source_free(int nclip, lives_clip_src_t *);
-void clip_sources_free_all(int nclip);
-boolean swap_clip_sources(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
+// srcgrps
 
-// create union from all clip srcs, teinated with WEED_PALETTE_END
-int *combine_src_palettes(int clipno);
+// create a clone of primary
+lives_clipsrc_group_t *clone_srcgrp(int sclip, int dclip, int track, int purpose);
+lives_clip_src_t *add_clip_src(int nclip, int track, int purpose, void *actor, int src_type,
+                               uint64_t actor_uid, fingerprint_t *chksum, const char *ext_URI);
+lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *, uint64_t actor_uid, int src_type, const char *ext_URI,
+                               fingerprint_t *chksum);
+lives_clipsrc_group_t *get_srcgrp(int nclip, int track, int purpose);
+lives_clipsrc_group_t *get_primary_srcgrp(int nclip);
+boolean swap_srcgrps(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
+void clip_src_free(int nclip,  lives_clipsrc_group_t *, lives_clip_src_t *);
+void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *);
+void srcgrp_free(int nclip, lives_clipsrc_group_t *);
+void srcgrp_remove(int nclip, int track, int purpose);
+void srcgrps_free_all(int nclip);
+void *get_primary_actor(lives_clip_t *);
+void *get_primary_inst(lives_clip_t *);
+int get_primary_src_type(lives_clip_t *);
+lives_clip_src_t *get_primary_src(int nclip);
+lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type);
+lives_clip_src_t *add_primary_inst(int nclip, void *actor, void *actor_inst, int src_type);
+void remove_primary_src(int nclip, int src_type);
+void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t pally, int gamma_type);
+
+// clip sources
+/* lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source, int src_type); */
+/* lives_clip_src_t *get_clip_source(int nclip, int track, int purpose); */
+/* void clip_source_remove(int nclip, int track, int purpose); */
+/* void clip_source_free(int nclip, lives_clip_src_t *); */
+/* void clip_sources_free_all(int nclip); */
+/* boolean swap_clip_sources(int nclip, int otrack, int opurpose, int ntrack, int npurpose); */
+
+/* // create union from all clip srcs, teinated with WEED_PALETTE_END */
+/* int *combine_src_palettes(int clipno); */
 
 //////////
 

@@ -243,14 +243,14 @@ static size_t hwlim = 0;
 // use a normal malloc, then when freeing we just check if the ptr is in range
 
 typedef struct {
-  void* buffer;
+  void *buffer;
   size_t buffer_size;
   size_t max_size;
   size_t toobig_size;
   int chunk_size;
   int num_chunks;
   int free_chunks;
-  LiVESList* chunk_list;
+  LiVESList *chunk_list;
 } mem_pool_t;
 
 static malloc_f orig_malloc;
@@ -269,13 +269,12 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     if (xsize <= 0) return NULL;
     if (PAGESIZE && xsize >= PAGESIZE) return lives_malloc_medium(xsize);
     if (xsize < hwlim || xsize > smblock_pool->max_size
-	|| (smblock_pool->toobig_size > 0 && xsize >= smblock_pool->toobig_size)) return orig_malloc(xsize);
+        || (smblock_pool->toobig_size > 0 && xsize >= smblock_pool->toobig_size)) return orig_malloc(xsize);
     if (pthread_mutex_trylock(&smblock_mutex)) return orig_malloc(xsize);
-  }
-  else {
+  } else {
     if (PAGESIZE && xsize * nmemb  >= PAGESIZE) return lives_calloc_medium(nmemb * xsize);
     if (xsize < hwlim || xsize > smblock_pool->max_size
-	|| (smblock_pool->toobig_size > 0 && xsize >= smblock_pool->toobig_size)) return orig_calloc(nmemb, xsize);
+        || (smblock_pool->toobig_size > 0 && xsize >= smblock_pool->toobig_size)) return orig_calloc(nmemb, xsize);
     if (pthread_mutex_trylock(&smblock_mutex)) return orig_calloc(nmemb, xsize);
     xsize *= nmemb;
   }
@@ -288,19 +287,19 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     for (LiVESList *list = smblock_pool->chunk_list; list; list = list->next) {
       int nxtchunks = LIVES_POINTER_TO_INT(list->data);
       if (nxtchunks < nchunks_req) {
-	offs += abs(nxtchunks);
-	continue;
+        offs += abs(nxtchunks);
+        continue;
       }
       list->data = LIVES_INT_TO_POINTER(-nchunks_req);
       nxtchunks -= nchunks_req;
       if (nxtchunks > 0) {
-	LiVESList *nlist = lives_list_append(NULL, LIVES_INT_TO_POINTER(nxtchunks));
-	if (list->next) {
-	  nlist->next = list->next;
-	  nlist->next->prev = nlist;
-	}
-	nlist->prev = list;
-	list->next = nlist;
+        LiVESList *nlist = lives_list_append(NULL, LIVES_INT_TO_POINTER(nxtchunks));
+        if (list->next) {
+          nlist->next = list->next;
+          nlist->next->prev = nlist;
+        }
+        nlist->prev = list;
+        list->next = nlist;
       }
       smblock_pool->free_chunks -= nchunks_req;
 
@@ -341,41 +340,40 @@ static void speedy_free(void *ptr) {
     offs += abs(nchunks);
     if (offs == toffs) {
       if (nchunks >= 0) {
-	// double free or corruption...
-	pthread_mutex_unlock(&smblock_mutex);
-	return;
+        // double free or corruption...
+        pthread_mutex_unlock(&smblock_mutex);
+        return;
       }
       nchunks = -nchunks;
       smblock_pool->free_chunks += nchunks;
       if (list->next) {
-	int nxtchunks = LIVES_POINTER_TO_INT(list->next->data);
-	// merge node and next node
-	if (nxtchunks > 0) {
-	  nchunks += nxtchunks;
-	  if (list->next->next) {
-	    list->next->next->prev = list;
-	    list->next = list->next->next;
-	  }
-	  list->next->next = list->next->prev = NULL;
-	  lives_list_free(list->next);
-	}
+        int nxtchunks = LIVES_POINTER_TO_INT(list->next->data);
+        // merge node and next node
+        if (nxtchunks > 0) {
+          nchunks += nxtchunks;
+          if (list->next->next) {
+            list->next->next->prev = list;
+            list->next = list->next->next;
+          }
+          list->next->next = list->next->prev = NULL;
+          lives_list_free(list->next);
+        }
       }
       if (list->prev) {
-	int prevchunks = LIVES_POINTER_TO_INT(list->prev->data);
-	if (prevchunks > 0) {
-	  // merge node and prev node
-	  nchunks += prevchunks;
-	  list->prev->data = LIVES_INT_TO_POINTER(nchunks);
-	  list->prev->next = list->next;
-	  if (list->next) list->next->prev = list->prev;
-	  list->next = list->prev = NULL;
-	  lives_list_free(list);
-	}
-      }
-      else list->data = LIVES_INT_TO_POINTER(nchunks);
+        int prevchunks = LIVES_POINTER_TO_INT(list->prev->data);
+        if (prevchunks > 0) {
+          // merge node and prev node
+          nchunks += prevchunks;
+          list->prev->data = LIVES_INT_TO_POINTER(nchunks);
+          list->prev->next = list->next;
+          if (list->next) list->next->prev = list->prev;
+          list->next = list->prev = NULL;
+          lives_list_free(list);
+        }
+      } else list->data = LIVES_INT_TO_POINTER(nchunks);
       xsize = nchunks * smblock_pool->chunk_size;
       if (xsize > smblock_pool->toobig_size)
-	smblock_pool->toobig_size = xsize + 1;
+        smblock_pool->toobig_size = xsize + 1;
       break;
     }
   }
@@ -393,7 +391,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
   //  else merge with nxt
   // fit in prev + nchunks + nxt - set prev to - req, remove this node,
   //   reduxe chunks in nct node, if 0, delete it
-  
+
   size_t nchunks_req, nchunks, onchunks, nxtchunks = 0, prevchunks = 0;
   off_t offs = 0, toffs;
   void *ptr, *prevptr;
@@ -409,139 +407,137 @@ static  void *speedy_realloc(void *op, size_t xsize) {
     offs += abs(nchunks);
     if (offs == toffs) {
       if (nchunks <= 0) {
-	// double free or corruption...
-	pthread_mutex_unlock(&smblock_mutex);
-	return NULL;
+        // double free or corruption...
+        pthread_mutex_unlock(&smblock_mutex);
+        return NULL;
       }
 
       ptr = (char *)smblock_pool->buffer + offs * smblock_pool->chunk_size;
       if (nchunks == nchunks_req) {
-	pthread_mutex_unlock(&smblock_mutex);
-	return ptr;
+        pthread_mutex_unlock(&smblock_mutex);
+        return ptr;
       }
 
       onchunks = nchunks;
-      if (list->next){
-	nxtchunks = LIVES_POINTER_TO_INT(list->next->data);
-	if (nxtchunks < 0) nxtchunks = 0;
+      if (list->next) {
+        nxtchunks = LIVES_POINTER_TO_INT(list->next->data);
+        if (nxtchunks < 0) nxtchunks = 0;
       }
       if (nchunks > nchunks_req) {
-	// shrink size
-	list->data = LIVES_INT_TO_POINTER(-nchunks_req);
-	nchunks -= nchunks_req;
-	smblock_pool->free_chunks += nchunks;
-	nchunks += nxtchunks;
-	if (nxtchunks) {
-	  // add excess chunks to nxt
-	  list->next->data = LIVES_INT_TO_POINTER(-nchunks);
-	}
-	else {
-	  // append
-	  LiVESList *nlist = lives_list_append(NULL, LIVES_INT_TO_POINTER(-nchunks));
-	  if (list->next) {
-	    nlist->next = list->next;
-	    list->next->prev = nlist;
-	  }
-	  nlist->prev = list;
-	  list->next = nlist;
-	}
-	if (nchunks * smblock_pool->chunk_size > smblock_pool->toobig_size)
-	  smblock_pool->toobig_size = nchunks * smblock_pool->chunk_size;
-	pthread_mutex_unlock(&smblock_mutex);
-	return ptr;
+        // shrink size
+        list->data = LIVES_INT_TO_POINTER(-nchunks_req);
+        nchunks -= nchunks_req;
+        smblock_pool->free_chunks += nchunks;
+        nchunks += nxtchunks;
+        if (nxtchunks) {
+          // add excess chunks to nxt
+          list->next->data = LIVES_INT_TO_POINTER(-nchunks);
+        } else {
+          // append
+          LiVESList *nlist = lives_list_append(NULL, LIVES_INT_TO_POINTER(-nchunks));
+          if (list->next) {
+            nlist->next = list->next;
+            list->next->prev = nlist;
+          }
+          nlist->prev = list;
+          list->next = nlist;
+        }
+        if (nchunks * smblock_pool->chunk_size > smblock_pool->toobig_size)
+          smblock_pool->toobig_size = nchunks * smblock_pool->chunk_size;
+        pthread_mutex_unlock(&smblock_mutex);
+        return ptr;
       }
       if (nchunks + nxtchunks >= nchunks_req) {
-	// extend node into nxt node
-	list->data = LIVES_INT_TO_POINTER(-nchunks_req);
-	nchunks_req -= nchunks;
-	nxtchunks -= nchunks_req;
-	if (nxtchunks) list->next->data = LIVES_INT_TO_POINTER(nxtchunks);
-	else {
-	  // nxtchunks all used, delete
-	  if (list->next->next) {
-	    list->next->next->prev = list;
-	    list->next = list->next->next;
-	  }
-	  list->next->next = list->next->prev = NULL;
-	  lives_list_free(list->next);
-	}
-	smblock_pool->free_chunks -= nchunks_req;
-	pthread_mutex_unlock(&smblock_mutex);
-	return ptr;
+        // extend node into nxt node
+        list->data = LIVES_INT_TO_POINTER(-nchunks_req);
+        nchunks_req -= nchunks;
+        nxtchunks -= nchunks_req;
+        if (nxtchunks) list->next->data = LIVES_INT_TO_POINTER(nxtchunks);
+        else {
+          // nxtchunks all used, delete
+          if (list->next->next) {
+            list->next->next->prev = list;
+            list->next = list->next->next;
+          }
+          list->next->next = list->next->prev = NULL;
+          lives_list_free(list->next);
+        }
+        smblock_pool->free_chunks -= nchunks_req;
+        pthread_mutex_unlock(&smblock_mutex);
+        return ptr;
       }
 
       if (list->prev) {
-	prevchunks = LIVES_POINTER_TO_INT(list->prev->data);
-	if (prevchunks < 0) prevchunks = 0;
-	if (prevchunks + nchunks + nxtchunks < nchunks_req) {
-	  void *nptr;
-	  if (nxtchunks) {
-	    nchunks += nxtchunks;
-	    if (list->next->next) {
-	      list->next->next->prev = list;
-	      list->next = list->next->next;
-	    }
-	    list->next->next = list->next->prev = NULL;
-	    lives_list_free(list->next);
-	  }
-	  pthread_mutex_unlock(&smblock_mutex);
-	  nptr = speedy_malloc(xsize);
-	  pthread_mutex_lock(&smblock_mutex);
-	  lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
-	  list->data = LIVES_INT_TO_POINTER(nchunks);
-	  smblock_pool->free_chunks += nchunks;
-	  return nptr;
-	}
+        prevchunks = LIVES_POINTER_TO_INT(list->prev->data);
+        if (prevchunks < 0) prevchunks = 0;
+        if (prevchunks + nchunks + nxtchunks < nchunks_req) {
+          void *nptr;
+          if (nxtchunks) {
+            nchunks += nxtchunks;
+            if (list->next->next) {
+              list->next->next->prev = list;
+              list->next = list->next->next;
+            }
+            list->next->next = list->next->prev = NULL;
+            lives_list_free(list->next);
+          }
+          pthread_mutex_unlock(&smblock_mutex);
+          nptr = speedy_malloc(xsize);
+          pthread_mutex_lock(&smblock_mutex);
+          lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
+          list->data = LIVES_INT_TO_POINTER(nchunks);
+          smblock_pool->free_chunks += nchunks;
+          return nptr;
+        }
 
-	prevptr = (char *)smblock_pool->buffer + (offs - prevchunks) * smblock_pool->chunk_size;
-	// migrate to prev node: some chunks may be left over from pre
-	list->prev->data = LIVES_INT_TO_POINTER(-nchunks_req);
-	nchunks += prevchunks - nchunks_req;
-	if (nchunks > 0) list->data = LIVES_INT_TO_POINTER(-nchunks);
-	else {
-	  // del node
-	  list->prev->next = list->next;
-	  if (list->next) list->next->prev = list->prev;
-	  list->next = list->prev = NULL;
-	  lives_list_free(list);
-	  if (nchunks) {
-	    // will fitin prev + n +nxt
-	    nxtchunks += nchunks;
-	    if (nxtchunks > 0) list->next->data = LIVES_INT_TO_POINTER(-nxtchunks);
-	    else {
-	      // del node
-	      list->prev->next = list->next->next;
-	      if (list->next->next) list->next->next->prev = list->prev;
-	      list->next->next = list->next->prev = NULL;
-	      lives_list_free(list->next);
-	    }
-	  }
-	}
-	//
-	// subtract nreq_chunks, add nchunks
-	smblock_pool->free_chunks += nchunks - nchunks_req;
-	lives_memmove(prevptr, op, onchunks * smblock_pool->chunk_size);
-	pthread_mutex_unlock(&smblock_mutex);
-	return prevptr;
-      }
-      else {
-	void *nptr;
-	if (nxtchunks) {
-	  nchunks += nxtchunks;
-	  if (list->next->next) {
-	    list->next->next->prev = list;
-	    list->next = list->next->next;
-	  }
-	  list->next->next = list->next->prev = NULL;
-	  lives_list_free(list->next);
-	}
-	pthread_mutex_unlock(&smblock_mutex);
-	nptr = speedy_malloc(xsize);
-	pthread_mutex_lock(&smblock_mutex);
-	lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
-	list->data = LIVES_INT_TO_POINTER(nchunks);
-	smblock_pool->free_chunks += nchunks;
-	return nptr;
+        prevptr = (char *)smblock_pool->buffer + (offs - prevchunks) * smblock_pool->chunk_size;
+        // migrate to prev node: some chunks may be left over from pre
+        list->prev->data = LIVES_INT_TO_POINTER(-nchunks_req);
+        nchunks += prevchunks - nchunks_req;
+        if (nchunks > 0) list->data = LIVES_INT_TO_POINTER(-nchunks);
+        else {
+          // del node
+          list->prev->next = list->next;
+          if (list->next) list->next->prev = list->prev;
+          list->next = list->prev = NULL;
+          lives_list_free(list);
+          if (nchunks) {
+            // will fitin prev + n +nxt
+            nxtchunks += nchunks;
+            if (nxtchunks > 0) list->next->data = LIVES_INT_TO_POINTER(-nxtchunks);
+            else {
+              // del node
+              list->prev->next = list->next->next;
+              if (list->next->next) list->next->next->prev = list->prev;
+              list->next->next = list->next->prev = NULL;
+              lives_list_free(list->next);
+            }
+          }
+        }
+        //
+        // subtract nreq_chunks, add nchunks
+        smblock_pool->free_chunks += nchunks - nchunks_req;
+        lives_memmove(prevptr, op, onchunks * smblock_pool->chunk_size);
+        pthread_mutex_unlock(&smblock_mutex);
+        return prevptr;
+      } else {
+        void *nptr;
+        if (nxtchunks) {
+          nchunks += nxtchunks;
+          if (list->next->next) {
+            list->next->next->prev = list;
+            list->next = list->next->next;
+          }
+          list->next->next = list->next->prev = NULL;
+          lives_list_free(list->next);
+        }
+        pthread_mutex_unlock(&smblock_mutex);
+        nptr = speedy_malloc(xsize);
+        pthread_mutex_lock(&smblock_mutex);
+        lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
+        list->data = LIVES_INT_TO_POINTER(nchunks);
+        smblock_pool->free_chunks += nchunks;
+        return nptr;
       }
     }
   }
@@ -549,7 +545,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
   pthread_mutex_unlock(&smblock_mutex);
   return NULL;
 }
-  
+
 
 #define N_SMCHUNKS 1000000
 
@@ -579,7 +575,7 @@ void smallblock_init(void) {
     else smblock_pool->max_size = smblock_pool->buffer_size;
 
     smblock_pool->free_chunks = smblock_pool->num_chunks;
-    
+
     pthread_mutex_lock(&smblock_mutex);
     orig_free = lives_free;
     orig_malloc = lives_malloc;
@@ -596,15 +592,15 @@ void smallblock_init(void) {
 
 
 char *get_memstats(void) {
-   char *msg;
+  char *msg;
 
   if (smblock_pool) msg = lives_strdup_printf("smallblock: total size %ld, block size %ld, page_size = %ld, "
-                                           "cachline_size = %d\n"
-                                           "Blocks in use: %d of %d (%.2f %%)\n",
-                                           smblock_pool->buffer_size, hwlim, capable->hw.pagesize, capable->hw.cacheline_size,
-                                           smblock_pool->num_chunks - smblock_pool->free_chunks, smblock_pool->num_chunks,
-					      (double)(smblock_pool->num_chunks - smblock_pool->free_chunks)
-					      / (double)smblock_pool->num_chunks * 100.);
+                            "cachline_size = %d\n"
+                            "Blocks in use: %d of %d (%.2f %%)\n",
+                            smblock_pool->buffer_size, hwlim, capable->hw.pagesize, capable->hw.cacheline_size,
+                            smblock_pool->num_chunks - smblock_pool->free_chunks, smblock_pool->num_chunks,
+                            (double)(smblock_pool->num_chunks - smblock_pool->free_chunks)
+                            / (double)smblock_pool->num_chunks * 100.);
   else msg = lives_strdup_printf("smallblock not in use\n");
   return msg;
 }
@@ -719,7 +715,7 @@ boolean init_memfuncs(int stage) {
   else if (stage == 1) {
     // should be called after we have pagesize
     if (capable && capable->hw.pagesize) PAGESIZE = capable->hw.pagesize;
-    smallblock_init();
+    //smallblock_init();
     bigblock_init();
   }
 
@@ -826,6 +822,7 @@ void *calloc_bigblock(size_t xsize) {
 #endif
   void *start;
   if (xsize > bmemsize) {
+    break_me("bballoc over");
     if (prefs->show_dev_opts) g_print("size req %lu > %lu, "
                                         "cannot use bblockalloc\n", xsize,
                                         bmemsize);
@@ -916,15 +913,16 @@ union split4 {
   uint16_t u16[2];
 };
 
-      
+
+// src is divided into groups of bytesize gran(ularity)
+// the groups fro src are then copied to dest in reverse sequence
+
 // gran(ularity) may be 1, or 2
-LIVES_GLOBAL_INLINE void swab2(const void *from, const void *to, size_t gran) {
+LIVES_GLOBAL_INLINE void swab2(const void *to, const void *from, size_t gran) {
   uint16_t *s = (uint16_t *)from;
   uint16_t *d = (uint16_t *)to;
   if (gran == 2) {
-    uint16_t tmp = *s;
-    *s = *d;
-    *d = tmp;
+    *d = *s;
     return;
   }
   if (!swabtab_inited) init_swabtab();
@@ -932,42 +930,47 @@ LIVES_GLOBAL_INLINE void swab2(const void *from, const void *to, size_t gran) {
 }
 
 // gran(ularity) may be 1, 2 or 4
-LIVES_GLOBAL_INLINE void swab4(const void *from, const void *to, size_t gran) {
+LIVES_GLOBAL_INLINE void swab4(const void *to, const void *from, size_t gran) {
   union split4 *d = (union split4 *)to, s;
   uint16_t tmp;
 
   if (gran > 2) {
-    lives_memcpy((void *)to, from, gran);
+    lives_memcpy((void *)to, from, 4);
     return;
   }
   s.u32 = *(uint32_t *)from;
   tmp = s.u16[0];
   if (gran == 2) {
+    // abcd -> cdab
     d->u16[0] = s.u16[1];
     d->u16[1] = tmp;
   } else {
-    swab2(&s.u16[1], &d->u16[0], 1);
-    swab2(&tmp, &d->u16[1], 1);
+    // abcd -> dcba
+    swab2(&d->u16[0], &s.u16[1], 1);
+    swab2(&d->u16[1], &tmp, 1);
   }
 }
 
 
 // gran(ularity) may be 1, 2 or 4
-LIVES_GLOBAL_INLINE void swab8(const void *from, const void *to, size_t gran) {
+LIVES_GLOBAL_INLINE void swab8(const void *to, const void *from, size_t gran) {
   union split8 *d = (union split8 *)to, s;
   uint32_t tmp;
   if (gran > 4) {
-    lives_memcpy((void *)to, from, gran);
+    lives_memcpy((void *)to, from, 8);
     return;
   }
   s.u64 = *(uint64_t *)from;
   tmp = s.u32[0];
   if (gran == 4) {
+    // abcdefgh -> efghabcd
     d->u32[0] = s.u32[1];
     d->u32[1] = tmp;
   } else {
-    swab4(&s.u32[1], &d->u32[0], gran);
-    swab4(&tmp, &d->u32[1], gran);
+    // 2             1
+    // ghefcdab or hgfedcba
+    swab4(&d->u32[0], &s.u32[1], gran);
+    swab4(&d->u32[1], &tmp, gran);
   }
 }
 
@@ -977,8 +980,9 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   ssize_t start = -1, end;
   size_t ocount = count;
 
-  if (chunk < 8) {
-    if ((chunk != 4 && chunk != 2 && chunk != 1) || (count % chunk) != 0) return FALSE;
+  if (chunk <= 8) {
+    if ((chunk != 8 && chunk != 4 && chunk != 2 && chunk != 1)
+        || (count % chunk) != 0) return FALSE;
   } else {
     if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
     else {
@@ -1020,8 +1024,8 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
           buff8[end] = buff8[++start];
           buff8[start] = tmp8;
         } else {
-          swab8(&buff8[++start], &buff8[end], chunk);
-          swab8(&tmp8, &buff8[start], chunk);
+          swab8(&buff8[end], &buff8[++start], chunk);
+          swab8(&buff8[start], &tmp8, chunk);
         }
       }
       if (count <= chunk / 2) return TRUE;
@@ -1047,8 +1051,8 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
           buff4[end] = buff4[++start];
           buff4[start] = tmp4;
         } else {
-          swab4(&buff4[++start], &buff4[end], chunk);
-          swab4(&tmp4, &buff4[start], chunk);
+          swab4(&buff4[end], &buff4[++start], chunk);
+          swab4(&buff4[start], &tmp4, chunk);
         }
       }
       if (count <= chunk / 2) return TRUE;
@@ -1076,8 +1080,8 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
         }
         /// swap single bytes
         else {
-          swab2(&buff2[++start], &buff2[end], 1);
-          swab2(&tmp2, &buff2[start], 1);
+          swab2(&buff2[end], &buff2[++start], 1);
+          swab2(&buff2[start], &tmp2, 1);
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*

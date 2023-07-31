@@ -223,7 +223,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   ticks_t currticks;
   ssize_t in_bytes;
   char *pname;
-  const char *img_ext = NULL;
   char *afname = NULL;
   char *msg = NULL;
   double spf = 0., ospf;
@@ -375,9 +374,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
     weed_layer_set_palette_yuv(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace);
 
-    // need img_ext for pulling the frame
-    img_ext = get_image_ext_for_type(cfile->img_type);
-
     mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
 
     msg = lives_strdup_printf(_("Quick transcoding to %s..."), pname);
@@ -417,10 +413,17 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
                          cfile->fps);
     if (!internal) {
-      weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
-
       // - pull next frame (thread)
-      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)currticks, cfile->hsize, cfile->vsize);
+      ticks_t *timing_data = get_layer_timing(frame_layer);
+      if (timing_data) {
+        timing_data[LAYER_STATUS_TREF] = currticks;
+        set_layer_timing(frame_layer, timing_data);
+        lives_free(timing_data);
+      }
+
+      lives_layer_set_frame(frame_layer, i);
+
+      pull_frame_threaded(frame_layer, cfile->hsize, cfile->vsize);
 
       if (mainw->fx1_bool) {
         //frame_layer = on_rte_apply(frame_layer, vpp->fwidth, vpp->fheight, (weed_timecode_t)currticks);

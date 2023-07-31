@@ -4624,7 +4624,7 @@ static void _resize_play_window(void) {
     }
     xnwidth = nwidth;
     xnheight = nheight;
-    calc_midspect(mainw->pwidth, mainw->pheight, &xnwidth, &xnheight);
+    calc_maxspect(mainw->pwidth, mainw->pheight, &xnwidth, &xnheight);
     if (pmonitor == 0 || !LIVES_IS_PLAYING) {
       if (xnwidth <= GUI_SCREEN_WIDTH - scr_width_safety &&
           xnheight <= GUI_SCREEN_HEIGHT - scr_height_safety) {
@@ -4743,7 +4743,7 @@ void kill_play_window(void) {
 */
 void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale) {
   if (!player_can_upscale) calc_maxspect(*pwidth, *pheight, lb_width, lb_height);
-  else calc_minspect(pwidth, pheight, *lb_width, *lb_height);
+  else calc_minspect(*lb_width, *lb_height, pwidth, pheight);
 }
 
 

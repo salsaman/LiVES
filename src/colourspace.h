@@ -21,8 +21,6 @@
 #define WEED_GAMMA_FILE 1025
 #define WEED_GAMMA_VARIANT 2048
 
-//#define WEED_ADVANCED_PALETTES
-
 #define LIVES_LEAF_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define LIVES_LEAF_PIXBUF_SRC "host_pixbuf_src"
 #define LIVES_LEAF_SURFACE_SRC "host_surface_src"
@@ -79,6 +77,17 @@
 #define MAX_THREADS 65536
 
 /////////////////////////////////////////////
+
+
+#define _PAL_IDX 		0
+#define _PAL_CLAMPING 		1
+#define _PAL_SAMPLING 		2
+#define _PAL_SUBSPACE 		3
+
+typedef union {
+  int vals[4];
+  int pal, clamping, sampling, subspace;
+} full_pal_t;
 
 typedef struct {
   float offs, lin, thresh, pf;
@@ -172,7 +181,6 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
 
 double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1);
 
-#ifdef WEED_ADVANCED_PALETTES
 #define LIVES_VCHAN_grey	       	2048
 #define LIVES_VCHAN_mono_b      	2049
 #define LIVES_VCHAN_mono_w      	2050
@@ -201,6 +209,8 @@ double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8
 #define LIVES_PALETTE_YUVFLOAT		9564
 #define LIVES_PALETTE_YUVAFLOAT		9565
 
+#define MAX_N_PALS 256
+
 // convert from advanced palette to simple palette and vice versa
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
 int get_simple_palette(weed_macropixel_t *mpx);
@@ -221,6 +231,9 @@ double weed_palette_get_bytes_per_pixel(int pal);
 
 int weed_palette_get_nplanes(int pal);
 
+boolean weed_palette_conv_resizable(int pal, int clamped, boolean in_out);
+boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out);
+
 boolean weed_palette_is_rgb(int pal);
 boolean weed_palette_is_yuv(int pal);
 boolean weed_palette_is_alpha(int pal);
@@ -236,7 +249,6 @@ boolean weed_palette_red_first(int pal);
 boolean weed_palettes_rbswapped(int pal0, int pal1);
 boolean weed_palette_has_alpha_first(int pal);
 boolean weed_palette_has_alpha_last(int pal);
-#endif
 
 int32_t round_special(int32_t val);
 
@@ -275,6 +287,11 @@ boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
 void weed_layer_pixel_data_free(weed_layer_t *);
 
+// layer needed only if fixed rs
+int *calc_rowstrides(int width, int pal, weed_layer_t *, int *nplanes);
+
+size_t lives_frame_calc_bytesize(int width, int height, int pal, size_t **planes);
+
 void alpha_unpremult(weed_layer_t *, boolean un);
 
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
@@ -291,6 +308,7 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *);
 void lives_layer_set_opaque(weed_layer_t *);
 
 boolean can_inline_gamma(int inpl, int opal);
+boolean pconv_can_inplace(int inpl, int outpl);
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);

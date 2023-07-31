@@ -332,7 +332,7 @@ print OUT "static int package_version = $pver; // version of this package\n\n";
 print OUT "/////////////////////////////////////////////////////////////////////////////\n";
 
 if ($uid) {
-    print OUT "\n#define _UNIQUE_ID_ \"$uid\"\n\n";
+    print OUT "\n#define _UNIQUE_ID_ \"$uid\"\n";
 }
 
 #add requirements

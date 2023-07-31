@@ -1527,7 +1527,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
   if (LIVES_IS_PLAYING && is_audio_thread) {
     THREADVAR(fx_is_audio) = TRUE;
-    THREADVAR(event_ticks) = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+    THREADVAR(event_ticks) = lives_get_current_playback_ticks(mainw->origticks, NULL);
   } else THREADVAR(fx_is_audio) = FALSE;
 
   for (i = start; i < nparams; i++) {

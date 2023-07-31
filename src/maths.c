@@ -319,7 +319,7 @@ uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
   // to avoid only checking powers of 2, we want some number which is (2 ** i) + (6 ** j)
   // which gives a nice range of results
   uint64_t min_diff = UINT64_MAX, v;
-  struct _decomp_tab* closest = NULL;
+  struct _decomp_tab *closest = NULL;
 
   if (!nxttab_inited) make_nxttab();
 
@@ -328,8 +328,8 @@ uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
       uint64_t v = nxttbl[ii][jj].value;
       uint64_t diff = v > val ? v - val : val - v;
       if (v <= lim && diff < min_diff) {
-	closest = &nxttbl[ii][jj];
-	min_diff = diff;
+        closest = &nxttbl[ii][jj];
+        min_diff = diff;
       }
     }
   }
@@ -337,16 +337,15 @@ uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
   if (less) {
     if (v > val) {
       if (closest->lower != NULL) {
-	closest = closest->lower;
-	v = closest->value;
+        closest = closest->lower;
+        v = closest->value;
       }
     }
-  }
-  else {
+  } else {
     if (v < val) {
       if (closest->higher != NULL) {
-	closest = closest->higher;
-	v = closest->value;
+        closest = closest->higher;
+        v = closest->value;
       }
     }
   }

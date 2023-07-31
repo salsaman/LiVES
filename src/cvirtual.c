@@ -194,36 +194,31 @@ static frames_t extend_frame_index(int clipno, frames_t start, frames_t end, fra
 
 
 boolean repair_frame_index(int clipno, frames_t offs) {
-  if (IS_PHYSICAL_CLIP(clipno)) {
-    lives_clip_data_t *cdata = NULL;
-    lives_clip_t *sfile = mainw->files[clipno];
-    if (sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
-      cdata = ((lives_decoder_t *)sfile->primary_src->source)->cdata;
-    }
-    if (extend_frame_index(clipno, sfile->old_frames, sfile->frames,
-                           cdata ? cdata->nframes : 0, offs, sfile->img_type) == sfile->frames) {
-      save_frame_index(clipno);
-      return TRUE;
-    }
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(clipno);
+  lives_clip_data_t *cdata = get_clip_cdata(clipno);
+  if (extend_frame_index(clipno, sfile->old_frames, sfile->frames,
+                         cdata ? cdata->nframes : 0, offs, sfile->img_type) == sfile->frames) {
+    save_frame_index(clipno);
+    return TRUE;
   }
   return FALSE;
 }
 
+
 void repair_findex_cb(LiVESMenuItem *menuitem, livespointer offsp) {
   frames_t oldf = cfile->old_frames;
   if (menuitem) cfile->old_frames = 0;
-  if (cfile->primary_src && cfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
-    // force full reload of decoder so we can check again
+  // force full reload of decoder so we can check again
 
-    ///< retain original order to restore for freshly opened clips
-    // get_decoder_cdata() may alter this
-
+  ///< retain original order to restore for freshly opened clips
+  // get_decoder_cdata() may alter this
+  if (1) {
     LiVESList *odeclist = lives_list_copy(capable->plugins_list[PLUGIN_TYPE_DECODER]);
     int clipno = mainw->current_file;
     char *clipdir = get_clip_dir(clipno);
     char *cwd = lives_get_current_dir();
 
-    clip_source_remove(clipno, -1, SRC_PURPOSE_PRIMARY);
+    remove_primary_src(clipno, LIVES_SRC_TYPE_DECODER);
 
     lives_chdir(clipdir, FALSE);
     lives_free(clipdir);
@@ -1065,9 +1060,7 @@ boolean check_if_non_virtual(int clipno, frames_t start, frames_t end) {
 
   sfile->clip_type = CLIP_TYPE_DISK;
 
-  if (sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
-    clip_source_remove(clipno, -1, SRC_PURPOSE_PRIMARY);
-  }
+  remove_primary_src(clipno, LIVES_SRC_TYPE_DECODER);
 
   sfile->old_dec_uid = 0;
   if (mainw->is_ready) {
@@ -1142,6 +1135,9 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
 
   // return index of last frame decoded, (negaive value on error)
 
+  // we will use the THUMBNAIL srcgroup to pull the images
+
+  lives_clipsrc_group_t *srcgrp = NULL;
   lives_proc_thread_t saver_procthread;
   lives_clip_t *sfile;
   LiVESPixbuf *pixbuf = NULL;
@@ -1177,7 +1173,6 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
   }
 
   if (self) lives_proc_thread_set_cancellable(self);
-
 
   //
 
@@ -1222,6 +1217,9 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
       if (intimg) {
         int palette, tpal;
         layer = lives_layer_new_for_frame(sclipno, i);
+        if (!srcgrp) srcgrp = get_srcgrp(sclipno, -1, SRC_PURPOSE_THUMBNAIL);
+        if (!srcgrp) srcgrp = clone_srcgrp(sclipno, sclipno, -1, SRC_PURPOSE_THUMBNAIL);
+        lives_layer_set_srcgrp(layer, srcgrp);
         if (!pull_frame(layer, get_image_ext_for_type(sfile->img_type), 0)) {
           retval = -i;
           break;
@@ -1634,13 +1632,13 @@ void restore_frame_index_back(int sclipno) {
           bad_header = TRUE;
       }
       if (!bad_header) {
-        lives_clip_src_t *dsource = get_clip_source(sclipno, -1, SRC_PURPOSE_PRIMARY);
+        lives_clip_src_t *dsource = get_primary_src(sclipno);
         if (dsource && sfile->old_dec_uid) {
           lives_decoder_t *dplug;
           sfile->decoder_uid = sfile->old_dec_uid;
           sfile->old_dec_uid = 0;
-          sfile->primary_src = dsource;
-          dplug = (lives_decoder_t *)dsource->source;
+          //sfile->primary_src = dsource;
+          dplug = (lives_decoder_t *)dsource->actor;
           if (dplug) {
             lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
             if (!save_clip_value(sclipno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) bad_header = TRUE;

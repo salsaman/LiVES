@@ -1282,7 +1282,7 @@ int run_weed_startup_tests(void) {
   intpr = weed_get_int_array(plant, "intarray", &werr);
   if (!intpr) {
     fprintf(stderr, "NULL returned when getting intarray !");
-  } else fprintf(stderr, "int array got %d %d %d %d, should be 1000000, 1, 5, 199"
+  } else fprintf(stderr, "int array got %d %d %d %d, should be 1000000, 1, 5, -199"
                    "err was %d\n", intpr[0], intpr[1], intpr[2], intpr[3], werr);
   werr_expl(werr);
 
@@ -1530,7 +1530,7 @@ int run_weed_startup_tests(void) {
   flags = _weed_leaf_get_flags(plant, "string2");
   fprintf(stderr, "set flags returned %d\n", flags);
   werr = _weed_leaf_delete(plant, "string2");
-  fprintf(stderr, "deleting string2 returned %d, shoul be WEED_SUCCESS\n", werr);
+  fprintf(stderr, "deleting string2 returned %d, should be WEED_SUCCESS\n", werr);
   werr_expl(werr);
 
   str = weed_get_string_value(plant, "string2", &werr);

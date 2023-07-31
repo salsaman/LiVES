@@ -479,13 +479,12 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
 
-void clip_decoder_free(int clipno, lives_decoder_t *);
+void clip_decoder_free(lives_clip_t *, lives_decoder_t *);
+
+lives_decoder_t *clone_decoder(int clipno);
 
 lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose);
 lives_clip_src_t *add_ext_decoder_clone(int dclip, int sclip, int track, int purpose);
-
-#define get_decoder_clone(nclip, track, purpose)		\
-  (lives_decoder_t *)(get_clip_source(nclip, track, purpose) ? get_clip_source(nclip, track, purpose)->source : NULL)
 
 void propogate_timing_data(lives_decoder_t *);
 

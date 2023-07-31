@@ -1458,6 +1458,7 @@ weed_param_t *weed_param_from_attribute(lives_obj_instance_t *obj, const char *n
 
 static boolean lives_transform_status_unref(lives_transform_status_t *st) {
   // return FALSE if destroyedy
+  check_refcnt_init(&st->refcounter);
   if (!refcount_dec(&st->refcounter)) {
     lives_free(st);
     return FALSE;

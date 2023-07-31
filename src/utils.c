@@ -628,7 +628,7 @@ LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int filenum, double time) {
 #define N_ASP_RATIOS 17
 #define N_XASP_RATIOS 18
 
-static lives_aspect_ratio std_ars[N_ASP_RATIOS];
+static lives_aspect_ratio std_ars[N_XASP_RATIOS];
 
 static boolean asps_inited = FALSE;
 
@@ -648,13 +648,13 @@ static void init_aspects(void) {
   std_ars[10] = (lives_aspect_ratio) {0, 	0, 	1.9}; // full container
   std_ars[11] = (lives_aspect_ratio) {2, 	1, 	2.};
   std_ars[12] = (lives_aspect_ratio) {0,	0,	2.35};
-  std_ars[13] = (lives_aspect_ratio) {0, 	0, 	2.37}; // 4:3 * 16:9 
+  std_ars[13] = (lives_aspect_ratio) {0, 	0, 	2.37}; // 4:3 * 16:9
   std_ars[14] = (lives_aspect_ratio) {0, 	0, 	2.39}; // scope
   std_ars[15] = (lives_aspect_ratio) {0, 	0, 	2.4};
   std_ars[16] = (lives_aspect_ratio) {0, 	0, 	2.44};
 
   // unofficial, so we can recognises cases of 16:9 X 16:9, ie 256 : 81
-  std_ars[17] = (lives_aspect_ratio) {256, 	81, 	3.16);
+  std_ars[17] = (lives_aspect_ratio) {256, 	81, 	3.16};
   asps_inited = TRUE;
 }
 
@@ -682,16 +682,28 @@ double find_nearest_ar(int width, int height, int *wm, int *hm) {
 }
 
 
-// both thesse functions modify rwidth, rheith so we end up with ar of cwidth / cheight, return results in cwidth, cheight
-// maxspect does this by keeping width or ehight contsnt and expanding rhe other axis
-// minspect does this by keeping one axis constant and shrinking the other
+// both thesse functions scale cwidth, cheight by the same factor
+// given a bounding box rwidth, rheight:
+// maxspect keeps either rwidth or rheight constant, then shrinks the other value
+// to get ar cwidth: cheight - this is max size cwidth, cheight can be to keep its a.r and fit inside
+// rwidth, rheight
+// minspect does this by keeping either rwisth or rheight constant, and stretching the other
+
+// example uses: - find max size for a box, keeping its a.r but fittng in another box
+// - cwitdht, cheight are box size, rwidth, rheight are bounding box size, call maxspect, new dimensions are in
+// cwisth, cheight
+
+// - change ar. of a box from a:b to c:d  while guaranteeing thet neither direction shrinks, bu expands minimally
+// set original box in rwidth, rheight and set cwidth, cheight to any sized box with desired ar.
+//  - then call minspect, and new dimensions will be in cwidth, cheight
+
 
 LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
-  // ie start with rwidth, rheight, shrink one edge to make ar of cwidth
+  // ie start with rwidth, rheight, shrink one edge to make ar of cwidth : cheight
 
-  // i.e both dimensions will expand or shrink to fit in the bounding rectangle
+  // i.e box cwidht, cheight is scaled up or doen to fit exactly in rwidth, rheight
 
   double caspect, raspect;
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
@@ -701,9 +713,8 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
 
   if (caspect > raspect) {
     *cwidth = rwidth;
-    *cheight = (double)(rwidth) / caspect;    
-  }
-  else {
+    *cheight = (double)(rwidth) / caspect;
+  } else {
     *cheight = rheight;
     *cwidth = (double)(rheight) * caspect;
   }
@@ -713,7 +724,7 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
 
 
 LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
-  // calculate midspect (minimum size which conforms to aspect ratio of
+  // calculate minspect (minimum size which conforms to aspect ratio of
   // of cwidth, cheight) - which contains rwidth, rheight
   // (so either rwidth or rheight will increase)
 
@@ -730,8 +741,7 @@ LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int
   if (caspect > raspect) {
     *cheight = rheight;
     *cwidth = (double)rheight * caspect;
-  }
-  else {
+  } else {
     *cwidth = rwidth;
     *cheight = (double)rwidth / caspect;
   }
@@ -740,31 +750,6 @@ LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int
   *cheight = ((*cheight + 1) >> 1) << 1;
 }
 
-
-LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
-  // calculate maxspect (maximum size which maintains aspect ratio)
-  // of cwidth, cheight - given restrictions rwidth * rheight
-  // ie start with rwidth, rheight, shrink one edge to make ar of cwidth
-
-  // i.e both dimensions will expand or shrink to fit in the bounding rectangle
-
-  double caspect, raspect;
-  if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
-
-  caspect = (double)(*cwidth) / (double)(*cheight);
-  raspect = (double)(rwidth) / (double)(rheight);
-
-  if (caspect > raspect) {
-    *cwidth = rwidth;
-    *cheight = (double)(rwidth) / caspect;    
-  }
-  else {
-    *cheight = rheight;
-    *cwidth = (double)(rheight) * caspect;
-  }
-  *cwidth = (*cwidth >> 2) << 2;
-  *cheight = (*cheight >> 1) << 1;
-}
 
 /////////////////////////////////////////////////////////////////////////////
 

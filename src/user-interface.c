@@ -585,7 +585,7 @@ void procw_desensitize(void) {
 }
 
 
-void set_drawing_area_from_pixbuf(LiVESDrawingArea *da, LiVESPixbuf * pixbuf) {
+void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   struct pbs_struct *pbs;
   pthread_mutex_t *mutex;
   LiVESWidget *widget;

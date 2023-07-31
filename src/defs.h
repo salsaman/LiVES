@@ -554,7 +554,6 @@ typedef enum {
 #define AUTOTUNE_FILEBUFF_SIZES 1
 #define AUTOTUNE_MALLOC_SIZES 1
 
-#define WEED_ADVANCED_PALETTES 1
 #define ENABLE_DVD_GRAB 1
 
 #define BG_LOAD_RFX 1

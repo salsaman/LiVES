@@ -70,7 +70,7 @@ void track_source_free(int i, int oclip);
 
 boolean record_setup(ticks_t actual_ticks);
 
-weed_layer_t **map_sources_to_tracks(boolean rndr);
+weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only);
 
 weed_layer_t *load_frame_image(frames_t frame);
 
@@ -80,7 +80,7 @@ void reset_old_frame_layer(void);
 frames_t clamp_frame(int clipno, frames_t nframe);
 
 void reset_playback_clock(void);
-ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
+ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source);
 frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 

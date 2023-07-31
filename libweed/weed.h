@@ -209,7 +209,7 @@ struct _weed_leaf_nopadding {
 						      weed_size_t new_size);
   /* CAUTION - only works with scalar values */
   typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, uint32_t seed_type,
-						    weed_voidptr_t new_value, weed_voidptr_t old_value);
+						    weed_voidptr_t new_value, weed_voidptr_t old_valptr);
 
 #endif
 
@@ -222,8 +222,7 @@ struct _weed_leaf_nopadding {
 
   typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, uint32_t flags);
   typedef weed_error_t (*weed_leaf_set_private_data_f)(weed_plant_t *, const char *key, void *data);
-  typedef weed_error_t (*weed_leaf_get_private_data_f)(weed_plant_t *, const char *key,
-						       void **data_return);
+  typedef weed_error_t (*weed_leaf_get_private_data_f)(weed_plant_t *, const char *key, void **ret_loc);
 
   __WEED_FN_DEF__ weed_leaf_set_flags_f weed_leaf_set_flags;
   __WEED_FN_DEF__ weed_leaf_set_private_data_f weed_leaf_set_private_data;
@@ -263,7 +262,7 @@ struct _weed_leaf_nopadding {
 
   weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
 
-int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
+  int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
 /*   int libweed_set_memory_funcs(weed_calloc_f, weed_free_f, weed_memcpy_f); */
 
   typedef void *(*libweed_slab_alloc_clear_f)(size_t);
@@ -284,6 +283,10 @@ int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, l
   //
 
 #ifdef __LIBWEED__
+  // library functions to lock / unlock leaves for atomic operations
+  __WEED_FN_DEF__ weed_error_t _weed_leaf_freeze(weed_plant_t *, const char *);
+  __WEED_FN_DEF__ weed_error_t _weed_leaf_unfreeze(weed_plant_t *, const char *);
+
   // for plugin bootstrap, only relevent for libweed
   __WEED_FN_DEF__ weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,
 				       const char *,  weed_voidptr_t);

@@ -2589,17 +2589,6 @@ The leaf is valid for BOTH in and out channel templates.
 
 
 
- * "natural_size" : WEED_SEED_INT[2]
-
-if the plugin sets the channel_template flagbit WEED_CHANNEL_NEEDS_NATURAL_SIZE, then the host
-should set this to the width
-and height in pixels (NOT macropixels) of the channel BEFORE without any resizing.
-This is to allow for example fixed size objects to
-be properly scaled regardless of the scaled channel size. See also the notes for the flagbit.
-If the leaf is not set, then it should be assumed that the current size is also the natural size.
-
-
-
 
 '''Optional leaves for channels with audio''': [[BR]]
 

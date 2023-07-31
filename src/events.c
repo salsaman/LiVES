@@ -3390,8 +3390,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
           int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, NULL);
-          lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src->source), offs);
-          if (!mainw->files[mainw->scrap_file]->primary_src) load_from_scrap_file(NULL, -1);
+          if (!get_primary_src(mainw->scrap_file)) load_from_scrap_file(NULL, -1);
+          else lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)), offs);
         }
       }
     }
@@ -4076,10 +4076,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], old_scrap_frame);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
-              if (!mainw->files[mainw->scrap_file]->primary_src) load_from_scrap_file(NULL, -1);
+              if (!get_primary_src(mainw->scrap_file)) load_from_scrap_file(NULL, -1);
               else {
-                lives_lseek_buffered_rdonly_absolute
-                (LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->primary_src->source), offs);
+                lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)), offs);
                 if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                   weed_layer_unref(layer);
                   layer = NULL;
@@ -4092,7 +4091,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 is_blank = FALSE;
             }
 
-            layers = map_sources_to_tracks(TRUE);
+            layers = map_sources_to_tracks(TRUE, FALSE);
 
             if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC))
               ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
@@ -5905,8 +5904,8 @@ static boolean _deal_with_render_choice(void) {
 
     if (IS_VALID_CLIP(mainw->scrap_file)) {
       // rewind scrap file to beginning
-      if (!mainw->files[mainw->scrap_file]->primary_src) load_from_scrap_file(NULL, -1);
-      lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->primary_src->source), 0);
+      if (!get_primary_src(mainw->scrap_file)) load_from_scrap_file(NULL, -1);
+      else lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)), 0);
     }
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 

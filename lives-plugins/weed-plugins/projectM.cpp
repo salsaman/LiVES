@@ -30,6 +30,8 @@ static int package_version = 2; // version of this package
 
 // TODO - handle screen size changes (we need to completely reset the filter)
 
+#define _UNIQUE_ID_ "0XB19C4A9D0D97C556"
+
 #define FONT_DIR1 "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 #define FONT_DIR2 "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf"
 

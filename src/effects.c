@@ -871,6 +871,7 @@ void on_realfx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
 
 static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
+  ticks_t *timing_data;
   weed_layer_t *layer = NULL;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
@@ -899,9 +900,17 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
 
   mainw->last_blend_file = mainw->blend_file;
 
+
   layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   lives_layer_set_track(layer, 1);
-  pull_frame_threaded(layer, blend_tc, 0, 0);
+  timing_data = get_layer_timing(layer);
+  if (timing_data) {
+    timing_data[LAYER_STATUS_TREF] = blend_tc;
+    set_layer_timing(layer, timing_data);
+    lives_free(timing_data);
+  }
+  pull_frame_threaded(layer, 0, 0);
+
   return layer;
 }
 
@@ -1048,7 +1057,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
       mainw->rte |= new_rte;
 
-      build_nodes_model(&mainw->nodemodel);
+      build_nodemodel(&mainw->nodemodel);
 
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1096,15 +1105,15 @@ static boolean _rte_on_off(boolean from_menu, int key) {
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
             weed_instance_unref(xinst);
-	    build_nodes_model(&mainw->nodemodel);
+            build_nodemodel(&mainw->nodemodel);
           }
           weed_instance_unref(inst);
         }
       }
 
       if (!THREADVAR(fx_is_auto)) {
-	g_print("FX %d off\n", key);
-	if (key == 2) break_me("deinit 2");
+        g_print("FX %d off\n", key);
+        if (key == 2) break_me("deinit 2");
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
@@ -1121,7 +1130,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
             if (rte_key_is_enabled(i, FALSE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
-      build_nodes_model(&mainw->nodemodel);
+      build_nodemodel(&mainw->nodemodel);
     }
   }
   if (mainw->rendered_fx)

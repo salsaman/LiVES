@@ -772,6 +772,8 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
+    if (weed_layer_get_pixel_data(test_layer) == weed_layer_get_pixel_data(layer))
+      weed_layer_nullify_pixel_data(test_layer);
     weed_layer_unref(test_layer);
 
     /// if possible just render the slice which contains the text

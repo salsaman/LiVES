@@ -1131,6 +1131,9 @@ typedef struct {
 
   // node model for current fx chain
   lives_nodemodel_t *nodemodel;
+  exec_plan_t *exec_plan;
+
+  lives_layer_t **layers;
 
   /// background clip details
   int blend_file, last_blend_file, new_blend_file;
@@ -1889,7 +1892,7 @@ typedef struct {
 
   int active_track_list[MAX_TRACKS];
   boolean primary_src_used[MAX_FILES];
-  lives_clip_src_t *track_sources[MAX_TRACKS];
+  lives_clipsrc_group_t *track_sources[MAX_TRACKS];
   int old_active_track_list[MAX_TRACKS];
 
   boolean gen_started_play;

@@ -1661,7 +1661,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     //////////////////////////
   }
   if (mainw->record_starting) {
-    if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL))) {
+    if (!record_setup(lives_get_current_playback_ticks(mainw->origticks, NULL))) {
       cancel_process(visible);
       return FALSE;
     }

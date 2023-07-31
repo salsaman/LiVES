@@ -14,7 +14,7 @@ void sensitize_rfx(void);
 void desensitize(void);
 void procw_desensitize(void);
 
-void set_drawing_area_from_pixbuf(LiVESDrawingArea *da, LiVESPixbuf * pixbuf);
+void set_drawing_area_from_pixbuf(LiVESDrawingArea *da, LiVESPixbuf *pixbuf);
 
 void lives_layer_draw(LiVESDrawingArea *widget, weed_layer_t *layer);
 

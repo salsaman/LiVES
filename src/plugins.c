@@ -2473,15 +2473,10 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 LIVES_GLOBAL_INLINE lives_clip_data_t *get_clip_cdata(int clipno) {
   lives_clip_t *sfile;
   if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type == CLIP_TYPE_FILE) {
-    pthread_mutex_lock(&sfile->source_mutex)) {
-    if (sfile->primary_src && sfile->primary_src->src_type == LIVES_SRC_TYPE_DECODER) {
-      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
-      if (dplug) {
-	pthread_mutex_unlock(&sfile->source_mutex);
-	return dplug->cdata;
-      }
+    if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER) {
+      lives_decoder_t *dplug = (lives_decoder_t *)get_primary_actor(sfile);
+      if (dplug) return dplug->cdata;
     }
-    pthread_mutex_unlock(&sfile->source_mutex);
   }
   return NULL;
 }
@@ -2493,7 +2488,7 @@ typedef struct {
   lives_clip_t *sfile;
 } tdp_data;
 
-static lives_decoder_t *clone_decoder(int clipno) {
+lives_decoder_t *clone_decoder(int clipno) {
   // create a clone of primary_src, primary source
   lives_decoder_t *dplug, *dplug2;
   const lives_decoder_sys_t *dpsys;
@@ -2501,17 +2496,19 @@ static lives_decoder_t *clone_decoder(int clipno) {
   lives_clip_t *sfile;
 
   if (!(sfile = RETURN_PHYSICAL_CLIP(clipno))
-      || (!pthread_mutex_lock(&sfile->source_mutex)
-          && (!sfile->primary_src || sfile->primary_src->src_type != LIVES_SRC_TYPE_DECODER))) {
-    pthread_mutex_unlock(&sfile->source_mutex);
+      || (!get_primary_src(clipno)
+          || ((get_primary_src(clipno))->src_type != LIVES_SRC_TYPE_DECODER))) {
     return NULL;
   }
-  dplug = (lives_decoder_t *)mainw->files[clipno]->primary_src->source;
-  pthread_mutex_unlock(&sfile->source_mutex);
+
+  dplug = (lives_decoder_t *)get_primary_actor(sfile);
 
   if (dplug) {
     dpsys = dplug->dpsys;
+    //////////
+    // create (full) clone by passing in parent plugin with a NULL URI
     if (dpsys) cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
+    ////////
   }
 
   if (!cdata) return NULL;
@@ -2530,8 +2527,7 @@ static lives_decoder_t *clone_decoder(int clipno) {
 
 
 // called from clip_source_remove for this decoder source_type
-void clip_decoder_free(int nclip, lives_decoder_t *decoder) {
-  lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
+void clip_decoder_free(lives_clip_t *sfile, lives_decoder_t *decoder) {
   if (sfile && decoder && !pthread_mutex_lock(&decoder->mutex)) {
     lives_clip_data_t *cdata = decoder->cdata;
     lives_decoder_t *parent = decoder->relations.parent;
@@ -2616,23 +2612,32 @@ void propogate_timing_data(lives_decoder_t *dplug) {
 
 
 lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose) {
-  // we ned to be able to specify the purpose - track main, track precache, thumbnailer
   if (IS_NORMAL_CLIP(nclip)) {
-    lives_decoder_t *dec = clone_decoder(nclip);
-    if (dec) add_clip_source(nclip, track, purpose,
-                               (void *)dec, LIVES_SRC_TYPE_DECODER);
-    return dec;
+    lives_decoder_t *dplug = clone_decoder(nclip);
+    if (dplug) {
+      add_clip_src(nclip, track, purpose,
+                   (void *)dplug, LIVES_SRC_TYPE_DECODER,
+                   dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
+      return dplug;
+    }
   }
   return NULL;
 }
+
+
+// take clip_src from a srgroup in one clip and add to another
+
+
 
 
 lives_clip_src_t *add_ext_decoder_clone(int dclip, int sclip, int track, int purpose) {
   // we ned to be able to specify the purpose - track main, track precache, thumbnailer
   lives_clip_src_t *dsource = NULL;
   if (IS_NORMAL_CLIP(sclip)) {
-    lives_decoder_t *dec = clone_decoder(sclip);
-    if (dec) dsource = add_clip_source(dclip, track, purpose, (void *)dec, LIVES_SRC_TYPE_DECODER);
+    lives_decoder_t *dplug = clone_decoder(sclip);
+    if (dplug) dsource = add_clip_src(dclip, track, purpose,
+                                        (void *)dplug, LIVES_SRC_TYPE_DECODER,
+                                        dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
   }
   return dsource;
 }
@@ -2835,10 +2840,10 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (dplug && dplug->dpsys && dplug->dpsys->id) {
-    lives_clip_src_t *dsource = add_clip_source(clipno, -1, SRC_PURPOSE_PRIMARY,
-                                (void *)dplug, LIVES_SRC_TYPE_DECODER);
+    add_clip_src(clipno, -1, SRC_PURPOSE_PRIMARY,
+                 (void *)dplug, LIVES_SRC_TYPE_DECODER,
+                 dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
     sfile->decoder_uid = dplug->dpsys->id->uid;
-    sfile->primary_src = dsource;
     return dplug->cdata;
   }
 
@@ -2869,26 +2874,25 @@ void unload_decoder_plugins(void) {
 
 
 boolean chill_decoder_plugin(int clipno) {
-  // TODO - specify source purpose
   lives_clip_t *sfile = RETURN_NORMAL_CLIP(clipno);
-  if (sfile) {
-    pthread_mutex_lock(&sfile->source_mutex);
-    if (sfile->clip_type == CLIP_TYPE_FILE && sfile->primary_src) {
-      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
-      lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
-      lives_clip_data_t *cdata = dplug->cdata;
-      pthread_mutex_unlock(&sfile->source_mutex);
-      if (cdata) {
-        if (dpsys->chill_out) {
-          boolean ret;
-          pthread_mutex_lock(&dplug->mutex);
-          ret = (*dpsys->chill_out)(cdata);
-          pthread_mutex_unlock(&dplug->mutex);
-          return ret;
+  if (sfile && sfile->clip_type == CLIP_TYPE_FILE) {
+    lives_clip_src_t *dsource = get_primary_src(clipno);
+    if (dsource && dsource->src_type == LIVES_SRC_TYPE_DECODER) {
+      lives_decoder_t *dplug = (lives_decoder_t *)dsource->actor;
+      if (dplug) {
+        const lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
+        lives_clip_data_t *cdata = get_clip_cdata(clipno);
+        if (cdata) {
+          if (dpsys->chill_out) {
+            boolean ret;
+            pthread_mutex_lock(&dplug->mutex);
+            ret = (*dpsys->chill_out)(cdata);
+            pthread_mutex_unlock(&dplug->mutex);
+            return ret;
+          }
         }
       }
     }
-    pthread_mutex_unlock(&sfile->source_mutex);
   }
   return FALSE;
 }

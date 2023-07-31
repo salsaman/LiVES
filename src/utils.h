@@ -59,9 +59,7 @@ frames_t calc_frame_from_time3(int filenum, double time);  ///< nearest frame ro
 frames_t calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
 
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
-void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight);
-void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight);
-
+void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight);
 double find_nearest_ar(int width, int height, int *wm, int *hm);
 
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize,

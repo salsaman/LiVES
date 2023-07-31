@@ -14,7 +14,6 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////////////////////
 
 #define _UNIQUE_ID_ "0X50D8DEA3BA293FD4"
-
 #define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN

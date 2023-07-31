@@ -3435,12 +3435,23 @@ LIVES_GLOBAL_INLINE uint64_t lives_thread_done(lives_thread_t *thrd) {
 
 ///////////// refcounting ///////////////
 
+static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 LIVES_GLOBAL_INLINE boolean check_refcnt_init(lives_refcounter_t *refcount) {
   if (refcount) {
     if (!refcount->mutex_inited) {
-      refcount->mutex_inited = TRUE;
-      pthread_mutex_init(&refcount->mutex, NULL);
-      refcount->count = 1;
+      // there is a reace condition here
+      // - we do the init, but before get the lock, another thread reaches this point
+      // it will init the mutex again
+      pthread_mutex_lock(&init_mutex);
+      if (!refcount->mutex_inited) {
+        pthread_mutex_init(&refcount->mutex, NULL);
+        refcount->mutex_inited = TRUE;
+        pthread_mutex_lock(&refcount->mutex);
+        refcount->count = 1;
+        pthread_mutex_unlock(&refcount->mutex);
+      }
+      pthread_mutex_unlock(&init_mutex);
     }
     return TRUE;
   }
@@ -3503,10 +3514,14 @@ LIVES_GLOBAL_INLINE int weed_refcount_inc(weed_plant_t *plant) {
 
 LIVES_GLOBAL_INLINE int weed_refcount_dec(weed_plant_t *plant) {
   // value of 0 indicates the plant should be freed with weed_plant_free()
-  // if plant does not have a refcounter, 0 will be returned.
+  // if plant does not have a refcounter, we add one then decrement it
   if (plant) {
     lives_refcounter_t *refcnt =
       (lives_refcounter_t *)weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
+    if (!refcnt) {
+      weed_add_refcounter(plant);
+      refcnt = (lives_refcounter_t *)weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
+    }
     return refcount_dec(refcnt);
   }
   return -1;
@@ -3514,6 +3529,7 @@ LIVES_GLOBAL_INLINE int weed_refcount_dec(weed_plant_t *plant) {
 
 
 LIVES_GLOBAL_INLINE int weed_refcount_query(weed_plant_t *plant) {
+  // query number of refs for plant
   if (plant) {
     lives_refcounter_t *refcnt =
       (lives_refcounter_t *)weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
@@ -3525,6 +3541,7 @@ LIVES_GLOBAL_INLINE int weed_refcount_query(weed_plant_t *plant) {
 
 
 LIVES_GLOBAL_INLINE lives_refcounter_t *weed_add_refcounter(weed_plant_t *plant) {
+  // if plant does not have a refcounter, add one with refcount initialised to 1
   lives_refcounter_t *refcount = NULL;
   if (plant) {
     if (weed_plant_has_leaf(plant, LIVES_LEAF_REFCOUNTER))
@@ -3532,7 +3549,6 @@ LIVES_GLOBAL_INLINE lives_refcounter_t *weed_add_refcounter(weed_plant_t *plant)
     else {
       refcount = (lives_refcounter_t *)lives_calloc(1, sizeof(lives_refcounter_t));
       if (refcount) {
-        refcount->mutex_inited = FALSE;
         weed_set_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, refcount);
         weed_leaf_set_autofree(plant, LIVES_LEAF_REFCOUNTER, TRUE);
         check_refcnt_init(refcount);

@@ -83,11 +83,10 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
 
 
 boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, double timeoutsecs) {
-  lives_vdev_t *ldev = (lives_vdev_t *)sfile->primary_src->source;
+  lives_vdev_t *ldev = (lives_vdev_t *)get_primary_actor(sfile);
   unicap_data_buffer_t *returned_buffer = NULL;
   void **pixel_data;
   int nplanes;
-
   weed_layer_set_size(layer, sfile->hsize / weed_palette_get_pixels_per_macropixel(ldev->palette),
                       sfile->vsize);
   weed_layer_set_palette_yuv(layer, ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace,
@@ -553,8 +552,8 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   lives_object_set_attribute_value(obj, VDEV_PROP_HEIGHT, cfile->vsize);
   //lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
 
-  cfile->primary_src = add_clip_source(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)ldev,
-                                       LIVES_SRC_TYPE_DEVICE);
+  add_clip_src(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)ldev,
+               LIVES_SRC_TYPE_DEVICE, 0, NULL, NULL);
 
   ldev->buffer1.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
   ldev->buffer1.buffer_size = ldev->format->buffer_size;

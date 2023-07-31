@@ -380,9 +380,9 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
   else
     cairo = channel_to_cairo(in_channel);
 
-  // create a cairo surface using natural_size
-  if (weed_plant_has_leaf(in_channel, WEED_LEAF_NATURAL_SIZE)) {
-    int *nsize = weed_get_int_array(in_channel, WEED_LEAF_NATURAL_SIZE, NULL);
+  // create a cairo surface using display_ratio
+  if (weed_plant_has_leaf(in_channel, WEED_LEAF_DISPLAY_RATIO)) {
+    int *nsize = weed_get_int_array(in_channel, WEED_LEAF_DISPLAY_RATIO, NULL);
     nwidth = nsize[0];
     nheight = nsize[1];
     sx = (double)width / (double)nwidth;
@@ -507,7 +507,7 @@ WEED_SETUP_START(200, 200) {
     palette_list[2] = WEED_PALETTE_END;
   }
 
-  in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_NEEDS_NATURAL_SIZE);
+  in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_NEEDS_DISPLAY_RATIO);
   in_chantmpls[1] = NULL;
 
   out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE);

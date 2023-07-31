@@ -13,28 +13,46 @@
 #ifndef HAS_LIVES_NODEMODEL_H
 #define HAS_LIVES_NODEMODEL_H
 
-#define NODE_IS_SRC(n) (!n->inputs)
-#define NODE_IS_SINK(n) (!n->outputs)
+#define NODE_PASSTHRU 0
+#define NODE_INPUT 1
+#define NODE_OUTPUT 2
+
+#define NODE_DIRN(n) (n->model_type % 4)
+#define NODE_IS_SOURCE(n) (NODE_DIRN(n) == NODE_INPUT)
+#define NODE_IS_SINK(n) (NODE_DIRN(n) == NODE_OUTPUT)
 
 // node models frames which are pulled for a clip
-// model_for point to the lives_clip_t 
-#define NODE_MODELS_CLIP		1
+// model_for point to the lives_clip_t
+#define NODE_MODELS_EXTERN		0
+
+#define NODE_MODELS_INTERN	      	4
 
 // node models an fx instance (filter or generator)
 // model_for points to the weed_instance_t
-#define NODE_MODELS_INSTANCE		2
+#define NODE_MODELS_PLUGIN		8
+
+// combos
+
+#define NODE_MODELS_CLIP		(NODE_MODELS_EXTERN + NODE_INPUT)
 
 // node models an output plugin
 // model_for points to a playback plugin
-#define NODE_MODELS_OUTPUT		3
+#define NODE_MODELS_OUTPUT		(NODE_MODELS_PLUGIN + NODE_OUTPUT)
 
 // node models a non-clip src (e.g blank frame producer)
 // model for points to a constructed clip_src
-#define NODE_MODELS_SRC			4
+
+#define NODE_MODELS_SRC		      	(NODE_MODELS_INTERN + NODE_INPUT)
 
 // node models some internal object (e.g pixbuf for diaplay)
 // model_for is an opaque pointer
-#define NODE_MODELS_INTERNAL		5
+#define NODE_MODELS_INTERNAL		(NODE_MODELS_INTERN + NODE_OUTPUT)
+
+// geerator plugins are enumerated as this, but with no in channels, so as to differentiate from
+// static sources
+#define NODE_MODELS_FILTER		(NODE_MODELS_PLUGIN + NODE_PASSTHRU)
+
+#define NODE_MODELS_GENERATOR		(NODE_MODELS_PLUGIN + NODE_INPUT)
 
 // defined cost types which we can optimise for:
 #define COST_TYPE_COMBINED	0
@@ -95,7 +113,6 @@
 // we iterate through the layers array and create a source node for the first non-NULL layer we encounter
 // if all layers are NULL, then we create a blank frame source and prepend that.
 
- 
 /* check and prune - TODO*/
 /* here we iterate over the node_srcs list */
 /* if a node_chain is not flagged as terminated, */
@@ -105,7 +122,7 @@
 // we go up one level to the input node, and apply the same rules, freeing or marking as pruned, nad ascending
 // inputs. on reaching the node_chain last-node, we stop and can remove the node_chain entriely from node_srcs.
 // outputs flegged as pruned are ignored during further processing.
- 
+
 /* least cost routing */
 // iterating ove node_srcs, we consider only nodes which have no inputs (true sources) ignoring any
 // first_nodes with inputs (instance sources)
@@ -121,7 +138,7 @@
 // this is set to size from the input it connects to
 // eventually definng sizes for src
 
-// on the descender, 
+// on the descender,
 
 // when a layer is downsized this creates a virtual cost at the input equal to in_size / out_size
 // we also keep track of the "max_possible" size.
@@ -141,7 +158,7 @@
 
 // after calulating size costs, then we move on to palette costs
 
-// we calulate costs for each palette available lat the source node, then recurse ove over all outputs
+// we calculate costs for each palette available lat the source node, then recurse ove over all outputs
 // at the following node we add on the additional cost for each in / out combination, fidning the lowest cost
 // in palette per out palette.
 
@@ -154,7 +171,7 @@
 // this is set in best_pal for the node / cost_type
 // on reaching a source node, if this is a true source, or if it is an instance source and we arrived
 // the second or higher output, then we stop
- 
+
 // completed model
 // now we can use this info, we can find a node for any node source, descend the node_chains, etc
 // optionally we can restrict / relax  the model nodes and recalculate costs and re run reverse routing
@@ -163,18 +180,16 @@
 // cost for node have been computed (used during cost calculation)
 #define NODEFLAG_PROCESSED		(1ull << 0)
 
-// when recalculating costs, if this is set, then we keep eveything fixed for thsi node (inst, input ot output)
-#define NODEFLAG_LOCKED	       	(1ull << 1)
+// can be set for input or output to indicate that the width and height cannot be altered
+#define NODEFLAG_IO_FIXED_SIZE		(1ull << 1)
 
-// bypass this nod - act-s if outputs from prev node were contected directly to oututs from this node
+// can be set for a node, input or ouptu -- indicates that the node will use optial_pal
+// and this cannot be changed
+#define NODEFLAG_FIXED_PAL		(1ull << 2)
+
+// bypass this node - act-s if outputs from prev node were contected directly to oututs from this node
 // and we will reduce tcost by an amount
-#define NODEFLAG_BYPASS		(1ull << 2)
-
-// defines an input as "inplace", ie. the input layer is read / write
-// if not set, then it is possibel to make a layer copy after conversion, during the instance processing
-// this could be useful in case we have a cloned output, with same pal and size, which is not nneded
-// until a later time, and the instance has a long processing cycle
-#define NODEFLAG_INPUT_INPLACE			(1ull << 4)
+#define NODEFLAG_BYPASS			(1ull << 4)
 
 // we have two types of clones - cloned outputs - created when an output goes to one node
 // and terminates, and another copy bypasses this and inputs into a later node
@@ -195,14 +210,23 @@
 // used during forward routing
 #define NODEFLAG_OUTPUT_PRUNED		(1ull << 11)
 
-#define NODEFLAGS_IO_SKIP	       i(NODEFLAG_OUTPUT_PRUNED | NODEFLAG_IO_IGNORE | NODEFLAG_IO_DISABLED \
-					 | NODEFLAG_LOCKED)
+#define NODEFLAGS_IO_SKIP		(NODEFLAG_OUTPUT_PRUNED | NODEFLAG_IO_IGNORE | NODEFLAG_IO_DISABLED)
+
+// used to flag outputs which teminate in non display nodes
+// ie. node_chain->last_node has no ouputs, butis a FILTER node. Ascending from there we flag all  inputs
+// until we reach a node with > 1 output (which we must have, else no frames would ever reach the sink)
+// - either it would be a plitter or we would have added an output clone
+#define NODEFLAG_OUTPUT_NODISPLAY		(1ull << 16)
 
 // flagbits corresponding to node source flags
-// input / output flagbits
+
+// chantmpl flag - actually from out_chantmpol, but we set it in input
+#define NODESRC_INPLACE		(1ull << 32)
+
+// input / output flagbits - these are actually set for the filter, but we set them in
+// input / ouput nodes to facilitate
 
 // flags that indicate when to reinit an instance
-// input / output specific
 #define NODESRC_REINIT_PAL		(1ull << 32)
 #define NODESRC_REINIT_RS		(1ull << 33)
 #define NODESRC_REINIT_SIZE		(1ull << 34)
@@ -214,19 +238,19 @@
 // indicate that the input / output can use any listed palette
 #define NODESRC_ANY_PALETTE		(1ull << 36)
 
-//indicates that inputs and outputs may have differing sizes or palettes
-#define NODESRC_IS_CONVERTOR		(1ull << 37)
-
 // inst_node src flagbits
+
+//indicates that inputs and outputs may have differing sizes or palettes
+#define NODESRC_IS_CONVERTER		(1ull << 40)
 
 // flag tells us to add "ghost" qloss costs for YUV palettes - these represent the
 // theoretical "loss" for not being RGB and able to gamma convert, but are not counted when
 // calculating the actual costs
-#define NODESRC_LINEAR_GAMMA		(1ull << 40)
+#define NODESRC_LINEAR_GAMMA		(1ull << 41)
 
 // flagbit indicates src prefers premultiplied alpha
 // this may add an additional set of costs
-#define NODESRC_ALPHA_PREMULT		(1ull << 41)
+#define NODESRC_ALPHA_PREMULT		(1ull << 42)
 
 // RESTRICTIONS THAT CAN BE APPLIED FOR COST OPTIMISATION
 
@@ -274,6 +298,13 @@ typedef struct {
   boolean terminated;
 } node_chain_t;
 
+// resources with limits
+#define RES_TYPE_MEM			0
+#define RES_TYPE_BBLOCK			1
+#define RES_TYPE_THRD			2
+
+#define N_RES_TYPES			3
+
 // nodemodel flagbits
 #define NODEMODEL_NEW		(1 << 0)
 #define NODEMODEL_INVALID	(1 << 16)
@@ -282,25 +313,21 @@ typedef struct {
   // list of node_chains, first node will either be a src_node, or a src_inst
   // last node will either be a sink_inst or a sink_node
   int flags;
-  double factors[N_COST_TYPES -1];
+  double factors[N_COST_TYPES];
   int opwidth, opheight;
 
   LiVESList *node_chains;
   //
-  // this is an array of LiVESList[track], each entry (one per track0, constains
-  // a list of pointesr to elements in node_chains, in reverse temporal order
-  LiVESList **track_nodechains;
-
-  // list of instances in running order
-  LiVESList *fx_nodes;
+  // list of weed_filter_t * in running order
+  LiVESList *fx_list;
 
   // these values are used during construction, and hold placeholder layers
   int ntracks;
-  weed_layer_t **layers;
+  int *clip_index;
 
   // we can use this to create subsets of nodes - for example when testing to apply gamma changes
   // we may us it
-  LiVESList *sel_nodes;
+  //LiVESList *sel_nodes;
 } lives_nodemodel_t;
 
 // we may have two values for a single in_pal, out_pal, one including conversion
@@ -313,7 +340,7 @@ typedef struct {
   // we make a list of these for each input
   // to find real in_pal we need p->pals[in_pal] where p is either in->node, or in->node->outputs[oidx]
   // to find real out_pal we need n->pals[out_pal] where n is either the inst node, or the input node
-    
+
   int out_pal, in_pal;
   int out_gamma_type, in_gamma_type;
 
@@ -328,16 +355,16 @@ typedef struct {
 
 // representation of a layer conversion from node output to next node input
 typedef struct {
-  // pixels ?
-  int in_width, in_height;
+  // pixels
   int out_width, out_height;
+  int in_width, in_height;
   //
   int lb_width, lb_height;
 
   // (copied from cdelta->deltas)
-  
-  int in_pal, out_pal;
-  int in_gamma, out_gamma;
+
+  int out_pal, in_pal;
+  int out_gamma, in_gamma;
 
   // delta costs for this specific conversion
 
@@ -350,7 +377,7 @@ typedef struct {
 typedef struct {
   // pointer to node
   inst_node_t *node;
-  
+
   // array of size node->n_inputs
   conversion_t *palconv;
 
@@ -364,6 +391,8 @@ struct _input_node {
   // pointer to prev node
   inst_node_t *node;
 
+  int track;
+
   // the size for this chennel. This is set during node construction, then updated during dry run 1
   // if this changes during dry run, then this may set needs_reinit in the node
   int width, height;
@@ -371,24 +400,29 @@ struct _input_node {
   // if we are letterboxing, these values are for the inner part, we actually resize to this sie
   // then letterbox to width / height
   int inner_width, inner_height;
-  
-  // during model building, holds current size, so we can check if reinit is needed
-  int cwidth, cheight;
 
-  // during descend and srch for downscales, we cna maintian the size at the src. This used for blame costs
-  // at mixing nodes
-  int src_Width, src_height;
-  
   int oidx; // idx of output node (>= 0) in prev which this is connected to
+
+  int cpal; // current palette for the input
+
+  // detials for yuv_clamping, sampling, subspace
+  // when we set a yuv palette, these will be set to defaults
+  // unless filter overrides this.
+  // if we do not have npals then we use gloobal vals
+  // these can be changed IFF we connect to a clip_src which is also yuv, and has clamped
+  // THEN we may choose to set input to clamped, because this will introduce an extra time cost
+  // clamped ->unclamped for width * height, pal, however anywhere where we resize with yuv clamped
+  // an dnot resizable direct, we need to add this cost anyway
+  int c_clamp, c_samp, c_sub;
 
   // these values are only used if the input has a divergent pal_list
   // in this case npals will be > 0
   int npals;
   int *pals;
-  int cpal; // current palette for the input
-  
+
   // this is set for the node, and for inputs and outputs with own pal_list
   // this is the actua palette that the object repressented by the node should use
+  // generally best_in_pal[COST_TYPE_COMBINED]
   int optimal_pal;
 
   // when optimising this can be set to a speculative palette and the node / input / output locked
@@ -397,47 +431,39 @@ struct _input_node {
   // if npals > 0, we store here the best "out" palette per cost type for the input
   // otherwise best_pal from the node is used. This can be cross referenced with prev_pal
   // to find best_pal for the output there
-  int best_pal_up[N_COST_TYPES];
-  int best_pal_down[N_COST_TYPES];
+  int best_out_pal[N_COST_TYPES];
 
-  ////
-  
+  // this is only used in cases where the input has npals > 0
+  int best_in_pal[N_COST_TYPES];
+
+  // for clip_srcs, we can use best_pal[next_in_pal][cost_type]
+  // this is simpler than for filter nodes, because we only add together values
+  // fom clip_srcs, there is no totalling across them, since we only use one or other at any time
+  int *best_src_pal;
+  double *min_cost;
+
+  //double least_cost[N_COST_TYPES];
+
   // for each in / pal out pal / cost type, we create a cdelta
-  // 
+  //
   LiVESList *cdeltas;
-
-  // for each cost type, and each out pal, we can find the in pal which provides the lowest cost for the type
-  // this is used when ascending, after resolving conflicts in cases of multiple outputs
-  //
-  // this can also be found via perusing the cdeltas, but it is more convenient to store this here
-  //
-
-  double least_cost[N_COST_TYPES];
-  int best_in_pal[N_COST_TYPES], best_out_pal[N_COST_TYPES];
 
   uint64_t flags; // clone; processed, ignore
 
-  // either NULL or a NULL terminated array of clone inputs for the same node
-  // similar to cloned outputs, except that each output goes to a separate next node
-  // these are simple copies of the input layer, they must have identical palette, size, gamma_type
-  input_node_t **clones;
-
-  // in case of cloned inputs, for a clone, this points to the original input
-  input_node_t *origin;
-
-  // the gamma_type for this input, and the output
-  // if these do not match, we need to do a gamma conversion
-  int gamma_type, prev_gamma_type;
+  // for cloned inputs this is a pointer to the cloned input
+  int origin;
 
   // for srcs we will create virutal inputs, and f_ratio prepresents the fraction of frames in the clip which
   // use that particular clip_src
   double f_ratio;
 };
-  
+
 typedef struct _output_node output_node_t;
 
 struct _output_node {
   inst_node_t *node;
+
+  int track;
 
   int iidx; // idx of input node (>= 0) in prev which this is connected to
 
@@ -446,13 +472,11 @@ struct _output_node {
   // if the input it connects to has an different size, we must resize
   int width, height;
 
-  // current width height when model building
-  int cwidth, cheight;
-
   // in some cases the out palette can vary per output track
   // if npals is 0, then we use the global values from the node
   // if npals > 0, then cpal is set during dry_run 2, and may affect the recalc
   int cpal; // current palette for the output
+  int c_clamp, c_samp, c_sub;
 
   //
   int npals;
@@ -460,25 +484,14 @@ struct _output_node {
 
   // this is set for the node, and for inputs and outputs with own pal_list
   // this is the actua palette that the object repressented by the node should use
+  // == best_out_pal[COST_TYPE_COMBINED]
   int optimal_pal;
 
   // when optimising this can be set to a speculative palette and the node / input / output locked
   int spec_pal;
 
-  int best_pal_up[N_COST_TYPES];
-  int best_pal_down[N_COST_TYPES];
-  //
-
-  // going down, we find the best palette at the input connecting to each output
-  // (going up we set best pal for the output, connecting from input)
-  // to calculate this we look at cdeltas for the next inputs, then reverse the ordering
-  // instead of finding best in for each out, we find best out for each in
-  // (out here becomes in at next node)
-  
-  int *next_pal;
-  
-  // min_cost is per out_pal, we find next_pal and min_cost
-  double *min_costs;
+  // best out pal per cost type, if npals == 0, the we use best_pal_up from node
+  int best_out_pal[N_COST_TYPES];
 
   // least cost is for all out palettes, we set this and set best_pal_up (down)
   // either for the input (if we have in->npals) or for the node as a whole
@@ -487,35 +500,24 @@ struct _output_node {
   // either for prev node or for the output
 
   double least_cost[N_COST_TYPES];
-  int best_out_pal, best_in_pal;
 
-  // we use this to store upscale qloss_s as we ascned and convert into actual qloss_s
+  // we use this to store potential  qloss_s due to downscaling
   LiVESList *cdeltas;
-  
-  // feature for use during optimisation, for each out palette, holds tmax - tcost
-  double *slack;
+
+  // feature for use during optimisation, for selected palette, holds tmax - tcost
+  double slack;
 
   // htis measures the cumulative slack from here to the sink node, we can increase tcost by up to this amount
-  // without changing the overall tcost, as the increase will be absorbed // reduced by elliminating slack sequentially
-  double *tot_slack;
-
-  // if the out
-  double *copy_cost;
-
+  // without changing the overall tcost, as the increase will be absorbed
+  // reduced by eliminating slack sequentially
+  double tot_slack;
   // if npals > 0, this is an advisory to the host, suggesting the optimal palette to set if it has free choice
   // of out palettes. This is determind from evaluating whatever node the output feeds into
 
   uint64_t flags; // pruned, processed, ignore
 
-  // either NULL or a NULL terminated array of clone outputs for the same node
-  // the model  assumes palette conversion / resize gamma happens as soon as the node has finished processing
-  // for cloned outputs we copy the main output channel / layer for the track
-  // similar to cloned inputs, except that each output goes to a separate next node
-  // unlike input clones, each cloned output can have its own next palette and size and gamma_type for conversion
-  output_node_t **clones;
-
   // in case of cloned outputs, for a clone, this points to the original output
-  output_node_t *origin;
+  int origin;
 };
 
 typedef struct _inst_node {
@@ -525,12 +527,12 @@ typedef struct _inst_node {
   // time == 0. represents the moment that the first intance node begins pprocessing
   // == ready_time of first node
   // since some sources are loaded before procesing, they may have a negative ready_time
-  ticks_t ready_time;
+  ticks_t ready_ticks;
 
   // this is a measure of the difference between the estimated ready_time and the previous actual
   // ready_time, this can be used to calibrate future tcost estimates
   ticks_t ready_time_delta;
-  
+
   // this is the global size, in some cases inputs or outputs may override this
   // if their values are 0, 0 then we use the global value
   // these values are set duirng dry run 1, and there we also determine if we need to reinit is set
@@ -544,56 +546,44 @@ typedef struct _inst_node {
   boolean needs_reinit;
 
   // the real object being modelled
-  // type can be: clip, instnace, output, src, or internal 
+  // type can be: clip, instnace, output, src, or internal
   int model_type;
 
-  // pointer to the object being modelled by the node
+  // pointer to the object (template) being modelled by the node
   void *model_for;
 
-  // this is used for non-CLIP sources
-  int src_type;
-  
-  // for instances, these values hold the mapping from tracks to in and out channels
-  int *in_tracks, *out_tracks;
+  // pointer to the object instance being modelled by the node
+  void *model_inst;
 
-  // when modelling instances there will be a certain number of in channels and out channels
-  // some of these channels may be disabled permanently - in which case we ignore them
-  // some may be alpha channels we also ignore
-  // others may be optional / repeatable, and these can be disabled / re-enabled
-  // entries in in_tracks / out_tracks determine the mapping of layers (in track order) -> channels
-  // we beign by creating an input node for each in_track, and output_node for each out
-  // some channel templates are repeateable optional, there can be any number of channels created from these
-  // and they will either map to a layer or be temp disabled. in_count / out_count (TODO) will be used to determine
-  // number of copies of each template
-  // temp diabled channels are not noted in the in_tracks or out_tracks - if we discover one when checking cahnnels
-  // we will add an estra input or output flagged as IGNORE. This allows for these channels to be re-enabled
-  // and connected to a layer source. Gnerally these types of inputs are used in compositors and will have pvary and svary
-  // so there will be no additional costs on adding (except prehaps proc_time).
-  // in this case we would also change in_tracks, and increase nintracks accordingly
-  // in other words, n_inputs can be > nintracks if we have ingored inputs, thus we need to store nintracks
-  // spearately
-  int nintracks, noutracks;
-  
+  int filter_key;
+
+  int *in_count, *out_count;
+
   /////////////////////////////////
   // global palette values for the node. These values are used for inputs / outputs which dont have an own palette_list
-  // 
+  //
 
   int cpal; // current palette for node->dsource
+  int c_clamp, c_samp, c_sub;
+
   int npals; // num values in pals, excluding WEED_PALETTE_END
   // int [npals + 1]
   int *pals; // array of input pals (out pals to next node)
 
   // this is set for the node, and for inputs and outputs with own pal_list
   // this is the actua palette that the object repressented by the node should use
+  // == best_pal_up[COST_TYPE_TIME]
   int optimal_pal;
-  int optimal_gamma;
+
+  // optimised gamm_type for inputs / outputs
+  int gamma_type;
 
   // when optimising this can be set to a speculative palette and the node / input / output locked
   int spec_pal;
   int spec_gamma;
 
   // this is only used when we have no inputs, otherwise each input stores its own copy
-  
+
   // here is where we store the results of the calulation - for each cost type,
   // the optimal palette to use, this is an index value - i.e palette is pals[idx]
   // some output_nodes may have their own palette lists, and they will then have their own best_pal
@@ -604,7 +594,7 @@ typedef struct _inst_node {
 
   // we actually have two arrays - the first is used when we find best palettes starting from sink and going up
   // the second when finding palettes descendig from source
-  //  
+  //
   int best_pal_up[N_COST_TYPES];
   int best_pal_down[N_COST_TYPES];
 
@@ -612,45 +602,125 @@ typedef struct _inst_node {
   // to process
   double abs_cost[N_COST_TYPES];
   /////////////////////////////////////////////
-  
+
   // nodes following this one, these are just for reference; when tracing back
   // we need to make sure we traced back up from all outputs
   // inputs are in order identical to out_tracks
   int n_outputs;
   output_node_t **outputs;
-  
+
   // nodes feeding into this one, each of these has (updated) cumulative costs, from which we
   // can ascertain the min cost per cost type for a given out palette
   // inputs are in order identical to in_tracks
   int n_inputs;
 
   // value only used for src nodess
-  in n_clip_srcs;
+  int n_clip_srcs;
 
   input_node_t **inputs;
 
   uint64_t flags; // inst_node flags, restictions and prefs
 } inst_node_t;
 
-void build_nodes_model(lives_nodemodel_t **);
-void free_nodes_model(lives_nodemodel_t **);
+#define STEP_FLAG_SKIP			(1ull < 0)
+#define STEP_FLAG_INVALID		(1ull < 1)
 
-void find_best_routes(lives_nodemodel_t *, 
-		      double *factors, ticks_t t_thresh);
+#define STEP_FLAG_OPTIMISE		(1ull < 1)
+
+#define STEP_TYPE_LOAD	 		1
+#define STEP_TYPE_CONVERT 		2
+#define STEP_TYPE_APPLY_INST 	       	3
+#define STEP_TYPE_COPY_IN_LAYER        	4
+#define STEP_TYPE_COPY_OUT_LAYER      	5
+
+typedef struct _plan_step plan_step_t;
+
+struct _plan_step {
+  int st_type;
+  inst_node_t *node;
+  int idx;
+  //
+  int ndeps;
+  plan_step_t **deps;
+  size_t start_res[N_RES_TYPES], end_res[N_RES_TYPES];
+  ticks_t real_st, real_end;
+  int state;  // same values as PLAN_STATE
+  uint64_t flags;
+
+  // step details
+  ticks_t st_time;
+  ticks_t dur;
+  ticks_t ded;
+
+  weed_filter_t *target;
+  weed_instance_t *target_inst;
+
+  int track; // for conv / load conv
+  int dchan, schan;
+  //
+  int fin_width, fin_height;
+  int fin_pal, fin_gamma;
+
+  // eg. apply deinterlace
+  uint64_t opts;
+}; // plan_step_t
+
+#define PLAN_STATE_NONE		0
+#define PLAN_STATE_RUNNING	1
+#define PLAN_STATE_WAITNG	2
+#define PLAN_STATE_FINISHED	3
+#define PLAN_STATE_ERROR	-1
+
+typedef struct {
+  uint64_t uid;
+  uint64_t flags;
+  lives_nodemodel_t *model;
+
+  // stack of layers in track order. These are created as soon as plan is executed
+  // by calling map_sources_to_tracks
+  // LOAD event will wait for the layer 'frame' to be set to non-zero before loading
+  //occasionally, for repeatabel, optional channels as targets, the track_source may be unmapped
+  // and the layer will be NULL, in this case when we try to LOAD from the layer, we will skip the step
+  // and mark the channel as WEED_LEAF_HOST_TEMP_DISABLED. The corresponding input node in the model will
+  // be flagged as IGNORE
+  weed_layer_t **layers;
+
+  // the actual steps of the plan, no step may appear before all of its dependent steps
+  LiVESList *steps;
+
+  int ntracks;
+  frames_t *frame_index;
+
+  // list of current steps. The status of these will eithrer be
+  // running (all dependencies complete) or waiting (incomplete dependecies)
+  // or possibly error
+  plan_step_t **current;
+  uint64_t state;
+} exec_plan_t;
+
+void build_nodemodel(lives_nodemodel_t **);
+void free_nodemodel(lives_nodemodel_t **);
+
+exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
+void align_with_model(lives_nodemodel_t *);
+
+void find_best_routes(lives_nodemodel_t *nodemodel, double *thresh);
 
 inst_node_t *find_node_for_source(lives_nodemodel_t *, lives_clip_src_t *dsource);
 
-inst_node_t *get_inode_for_track(inst_node_t *n, int track);
+inst_node_t *src_node_for_track(lives_nodemodel_t *, int track);
 
-void get_true_costs(lives_nodemodel_t *, double *factors);
+void get_true_costs(lives_nodemodel_t *);
+
+char *get_node_name(inst_node_t *);
 
 int  get_best_in_palette(inst_node_t *, int inp_idx, int cost_type);
 int  get_best_out_palette(inst_node_t *, int out_idx, int cost_type);
 
 double get_min_cost_to_node(inst_node_t *, int cost_type);
 
-lives_result_t inst_node_set_flags(inst_node_t *n, int flags);
+lives_result_t inst_node_set_flags(inst_node_t *n, uint64_t flags);
 
-void describe_chains(LiVESList *node_srcs);
+void describe_chains(lives_nodemodel_t *);
 
 #endif

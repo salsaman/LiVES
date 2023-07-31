@@ -60,8 +60,7 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
                        (double)(sfile->start - 1) / sfile->fps, fname);
     break;
 
-  default:
-    return;
+  default: return;
   }
 
   d_print(_("Subtitles were saved as %s\n"), mainw->subt_save_file);
@@ -1094,6 +1093,9 @@ int close_temp_handle(int new_clip) {
     lives_free(temp_backend);
     mainw->cancelled = cancelled;
   }
+
+  srcgrps_free_all(clipno);
+
   lives_freep((void **)&mainw->files[clipno]);
 
   mainw->current_file = new_clip;
@@ -1263,7 +1265,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     // user pressed "enough"
     // just in case last frame is damaged, we delete it (physically,
     // otherwise it will get dragged in when the file is opened)
-    if (!cfile->primary_src) {
+    if (!get_primary_src(mainw->current_file)) {
       cfile->frames = get_frame_count(mainw->current_file, cfile->opening_frames);
       if (cfile->frames > 1) {
         com = lives_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
@@ -2087,7 +2089,6 @@ boolean open_ascrap_file(int clipno) {
     }
   })
 
-
   IF_APLAYER_JACK
   (
   if (prefs->audio_src == AUDIO_SRC_EXT) {
@@ -2127,9 +2128,7 @@ void close_scrap_file(boolean remove) {
 
   if (flush_scrap_file()) {
     mainw->current_file = mainw->scrap_file;
-    clip_source_free(mainw->current_file, cfile->primary_src);
-    cfile->primary_src = NULL;
-
+    srcgrps_free_all(mainw->current_file);
     if (remove) close_temp_handle(current_file);
     else mainw->current_file = current_file;
   }
@@ -2366,7 +2365,7 @@ manual_locate:
 
   // we will set correct value in check_clip_integrity() if there are any real images
 
-  if (sfile->primary_src) {
+  if (get_primary_src(fileno)) {
     boolean bad_header = FALSE;
     boolean correct = TRUE;
     if (!was_renamed) {
@@ -2377,7 +2376,7 @@ manual_locate:
     if (!correct) {
       if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
     } else {
-      lives_decoder_t *dplug = (lives_decoder_t *)sfile->primary_src->source;
+      lives_decoder_t *dplug = (lives_decoder_t *)(get_primary_src(fileno))->actor;
       if (dplug) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
         sfile->decoder_uid = dpsys->id->uid;
@@ -2485,7 +2484,8 @@ int close_current_file(int file_to_switch_to) {
                   LIVES_IS_PLAYING)) &&
              index != mainw->current_file);
     if (index == mainw->current_file) index = -1;
-    if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
+    if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file)
+      remove_from_clipmenu();
   }
 
   if (mainw->blend_file == mainw->current_file) {
@@ -2502,8 +2502,6 @@ int close_current_file(int file_to_switch_to) {
       }
     }
   }
-
-  clip_sources_free_all(mainw->current_file);
 
   free_thumb_cache(mainw->current_file, 0);
   lives_freep((void **)&cfile->frame_index);
@@ -2537,18 +2535,7 @@ int close_current_file(int file_to_switch_to) {
 
   if (cfile->subt) subtitles_free(cfile);
 
-  if (cfile->clip_type == CLIP_TYPE_YUV4MPEG) {
-#ifdef HAVE_YUV4MPEG
-    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->primary_src->source);
-    lives_free(cfile->primary_src->source);
-#endif
-  }
-
-  if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
-#ifdef HAVE_UNICAP
-    if (cfile->primary_src) lives_vdev_free((lives_vdev_t *)cfile->primary_src->source);
-#endif
-  }
+  srcgrps_free_all(mainw->current_file);
 
   if (cfile->audio_waveform) {
     cancel_tl_redraw();
@@ -2936,8 +2923,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         /// CLIP_TYPE_FILE
         if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
+        add_primary_src(mainw->current_file, NULL, LIVES_SRC_TYPE_IMAGE);
         if (cfile->needs_update || cfile->img_type == IMG_TYPE_UNKNOWN) {
-          lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+          lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
           if (cfile->needs_update || count_virtual_frames(cfile->frame_index, 1, cfile->frames)
               < cfile->frames) {
             if (!cfile->checked && !check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
@@ -2949,6 +2937,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         check_if_non_virtual(mainw->current_file, 1, cfile->frames);
       } else {
         /// CLIP_TYPE_DISK
+        // add the img_loader clip_src, which will create the primary srcgroup with one clip_src
+        add_primary_src(mainw->current_file, NULL, LIVES_SRC_TYPE_IMAGE);
         if (!cfile->checked) {
           if (!check_clip_integrity(mainw->current_file, NULL, cfile->frames)) {
             cfile->needs_update = TRUE;
@@ -2969,7 +2959,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       }
       if (!recovery_file && !cfile->checked) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+        lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
         }
@@ -3003,7 +2993,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (cfile->video_time < cfile->laudio_time) {
       if (!cfile->checked) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+        lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
         }
@@ -3715,6 +3705,8 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
       goto img_load;
     }
 
+    add_primary_src(mainw->current_file, NULL, LIVES_SRC_TYPE_IMAGE);
+
     if (prefs->instant_open && !mainw->opening_loc) {
       // cd to clip directory - so decoder plugins can write temp files
       char *clipdir = get_clip_dir(mainw->current_file);
@@ -3961,7 +3953,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
       } else lives_free(msgstr);
     } else lives_free(msgstr);
 
-    if (cfile->primary_src) {
+    if (get_primary_src(mainw->current_file)) {
       if (mainw->open_deint) {
         // override what the plugin says
         cfile->deinterlace = TRUE;
@@ -4044,7 +4036,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
 
     mainw->effects_paused = FALSE;
 
-    if (!cfile->primary_src) {
+    if (!get_primary_src(mainw->current_file)) {
       migrate_from_staging(mainw->current_file);
 
       if (!mainw->file_open_params) mainw->file_open_params = lives_strdup("");
@@ -4102,7 +4094,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
     // (also check for cancel)
     msgstr = lives_strdup_printf(_("Opening %s"), file_name);
 
-    if (!cfile->primary_src && mainw->toy_type != LIVES_TOY_TV) {
+    if (!get_primary_src(mainw->current_file) && mainw->toy_type != LIVES_TOY_TV) {
       end_threaded_dialog();
       mainw->disk_mon = MONITOR_QUOTA;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
@@ -4148,7 +4140,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
     lives_free(msgstr);
   }
 
-  if (cfile->primary_src && cfile->achans > 0) {
+  if (get_primary_src(mainw->current_file) && cfile->achans > 0) {
     char *afile = get_audio_file_name(mainw->current_file, TRUE);
     char *ofile = get_audio_file_name(mainw->current_file, FALSE);
     rename(afile, ofile);
@@ -4221,7 +4213,8 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
   }
 
   // now file should be loaded...get full details
-  if (!cfile->primary_src) add_file_info(cfile->handle, FALSE);
+
+  if (!get_primary_src(mainw->current_file)) add_file_info(cfile->handle, FALSE);
 
   cfile->is_loaded = TRUE;
 
@@ -4268,7 +4261,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
     cfile->frames = 0;
   }
 
-  if (!cfile->primary_src) {
+  if (!get_primary_src(mainw->current_file)) {
     extra_frames = cfile->frames;
     add_file_info(cfile->handle, FALSE);
     extra_frames -= cfile->frames;
@@ -4283,7 +4276,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
     }
   }
 
-  if (!cfile->primary_src) {
+  if (!get_primary_src(mainw->current_file)) {
     reget_afilesize(mainw->current_file);
     if (prefs->auto_trim_audio || prefs->keep_all_audio) {
       if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
@@ -4367,7 +4360,9 @@ img_load:
 #define GET_MD5
 #ifdef GET_MD5
   md5sum = get_md5sum(file_name);
-  lives_memcpy(cfile->ext_id.md5sum, md5sum, MD5_SIZE);
+
+  // TODO - this should be attached to a clip_src
+  //lives_memcpy(cfile->ext_id.md5sum, md5sum, MD5_SIZE);
   g_print("md5sum is: ");
   md5_print(md5sum);
   g_print("\n");
@@ -4393,7 +4388,7 @@ img_load:
 
   if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
     migrate_from_staging(mainw->current_file);
-    if (mainw->img_concat_clip == -1) {
+    if (!prefs->concat_images || mainw->img_concat_clip == -1) {
       cfile->img_type = lives_image_type_to_img_type(cfile->type);
       mainw->img_concat_clip = mainw->current_file;
       add_to_clipmenu();
@@ -4402,7 +4397,8 @@ img_load:
       cfile->opening_frames = -1;
       mainw->effects_paused = FALSE;
       cfile->is_loaded = TRUE;
-    } else if (prefs->concat_images) {
+      add_primary_src(mainw->current_file, NULL, LIVES_SRC_TYPE_IMAGE);
+    } else {
       // insert this image into our image clip, close this file
       com = lives_strdup_printf("%s insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d", prefs->backend,
                                 mainw->files[mainw->img_concat_clip]->handle,

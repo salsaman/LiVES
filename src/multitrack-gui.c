@@ -355,12 +355,12 @@ void free_thumb_cache(int fnum, frames_t fromframe) {
 }
 
 
-LiVESPixbuf *mt_make_thumb(lives_mt *mt, int file, int width, int height, frames_t frame, LiVESInterpType interp,
+LiVESPixbuf *mt_make_thumb(lives_mt *mt, int clipno, int width, int height, frames_t frame, LiVESInterpType interp,
                            boolean noblanks) {
   LiVESPixbuf *thumbnail = NULL, *pixbuf;
   LiVESError *error = NULL;
 
-  lives_clip_t *sfile = mainw->files[file];
+  lives_clip_t *sfile = mainw->files[clipno];
 
   boolean tried_all = FALSE;
   boolean needs_idlefunc = FALSE;
@@ -369,7 +369,7 @@ LiVESPixbuf *mt_make_thumb(lives_mt *mt, int file, int width, int height, frames
 
   int nframe, oframe = frame;
 
-  if (file < 1) {
+  if (clipno < 1) {
     LIVES_WARN("Warning - make thumb for file -1");
     return NULL;
   }
@@ -388,13 +388,13 @@ LiVESPixbuf *mt_make_thumb(lives_mt *mt, int file, int width, int height, frames
     if (sfile->frames > 0) {
       weed_timecode_t tc = (frame - 1.) / sfile->fps * TICKS_PER_SECOND;
       if (sfile->frames > 0 && sfile->clip_type == CLIP_TYPE_FILE) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->primary_src->source)->cdata;
+        lives_clip_data_t *cdata = get_clip_cdata(clipno);
         if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
-            is_virtual_frame(file, frame)) {
-          virtual_to_images(file, frame, frame, FALSE, NULL);
+            is_virtual_frame(clipno, frame)) {
+          virtual_to_images(clipno, frame, frame, FALSE, NULL);
         }
       }
-      thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(sfile->img_type), tc,
+      thumbnail = pull_lives_pixbuf_at_size(clipno, frame, get_image_ext_for_type(sfile->img_type), tc,
                                             width, height, LIVES_INTERP_FAST, TRUE);
     } else {
       pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width);
@@ -735,7 +735,7 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
               }
               if (!(thumbnail = get_from_thumb_cache(filenum, framenum, range))) {
                 if (mainw->files[filenum]->frames > 0 && mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
-                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->primary_src->source)->cdata;
+                  lives_clip_data_t *cdata = get_clip_cdata(filenum);
                   if (cdata && !((cdata->seek_flag & LIVES_SEEK_FAST) &&
                                  is_virtual_frame(filenum, framenum))) {
                     thumbnail = make_thumb_fast_between(mt, filenum, width, height,

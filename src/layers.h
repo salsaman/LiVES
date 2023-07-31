@@ -22,26 +22,35 @@
 #define WEED_LEAF_FRAME "frame"
 #define LIVES_LEAF_TRACK "track"
 
-#define LIVES_LEAF_LAYER_STATUS "layer_status"
+#define LIVES_LEAF_SRCGRP "host_srcgrp"
 #define LIVES_LEAF_TIMING_DATA "timedata"
+
+#define LIVES_LEAF_LAYER_STATUS "layer_status"
 
 // layer statuses
 
 #define LAYER_STATUS_NONE		0
 
 // time code reference (queued time or recorded time)
-// nota actually a status, but weant to record this in the timing daat
-#define LAYER_STATUS_TREF		1
+// not actually a status, but want to record this in the timing data
+#define LAYER_STATUS_TREF		0
+
+// layer is prepared, and can now be queued with a clip_src
+#define LAYER_STATUS_PREPARED		1
 
 // layer is queued in a clip_src
 #define LAYER_STATUS_QUEUED		2
+
 // pixel_data is being loaded
 #define LAYER_STATUS_LOADING      	3
-// layer pixel_data is fully ready
+
+// layer pixel_data is loaded, but may need conversion
 #define LAYER_STATUS_LOADED      	4
+
 // layer pixel_data is fully ready
 #define LAYER_STATUS_READY		5
-// layer is invalid, do not use 
+
+// layer is invalid, do not use
 #define LAYER_STATUS_INVALID		6
 
 #define N_LAYER_STATUSES	    	7
@@ -53,6 +62,10 @@
 
 void lives_layer_set_status(weed_layer_t *, int status);
 int lives_layer_get_status(weed_layer_t *);
+
+ticks_t *get_layer_timing(lives_layer_t *);
+void set_layer_timing(lives_layer_t *, ticks_t *timing_data);
+void reset_layer_timing(lives_layer_t *);
 
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);
@@ -69,8 +82,19 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);
 lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, weed_layer_t *src);
+
+//#define DEBUG_LAYER_REFS
+#ifdef DEBUG_LAYER_REFS
+int _weed_layer_unref(weed_layer_t *);
+int _weed_layer_ref(weed_layer_t *);
+
+#define weed_layer_ref(layer) (FN_REF_TARGET(_weed_layer_ref,(layer)))
+#define weed_layer_unref(layer) FN_UNREF_TARGET(_weed_layer_unref,(layer))
+#else
 int weed_layer_unref(weed_layer_t *);
 int weed_layer_ref(weed_layer_t *);
+#endif
+
 int weed_layer_count_refs(weed_layer_t *);
 
 // lives specific
@@ -84,9 +108,9 @@ int lives_layer_get_track(weed_layer_t *);
 int lives_layer_get_clip(weed_layer_t *);
 frames_t lives_layer_get_frame(weed_layer_t *);
 
-void lives_layer_set_source(weed_layer_t *, lives_clip_src_t *);
-lives_clip_src_t *lives_layer_get_source(weed_layer_t *);
-void lives_layer_unset_source(weed_layer_t *);
+void lives_layer_set_srcgrp(weed_layer_t *, lives_clipsrc_group_t *);
+lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *);
+void lives_layer_unset_srcgrp(weed_layer_t *);
 
 boolean weed_layer_check_valid(weed_layer_t *);
 void weed_layer_set_invalid(weed_layer_t *, boolean);

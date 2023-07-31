@@ -23,6 +23,28 @@
 */
 
 
+// TODO - there is an issue that needs to be checked for:
+// some code does the following: create new layer, copy_layer (shallow) existing layer -> new layer
+// - this causes both layers to share same pixel_data
+// then at a later point: create_empty_pixel_data(existing_layer) - initially this would allocate new pixel_data
+// for existing layer, so that we could do weed_layer_unref(new_layer), freeing the old pixel_data
+// HOWEVER, and optimisation to create_empty_pixel_data() means that in some cases, existing_layer can
+// retain its original pixel_data, which is simply cleared and overwritten. Thus the unref_layer() new_layer
+// will also free the pixel_data from the second layer.
+//
+// Therefore we need to do one of two things - before unreffing a shallow copy layer, check if the pixel_data
+// is still the same as the original it was copied from, and if so, nullify its pixel_dat before unreffing
+//
+// else - nullify the pixel_data for the original before calling create_emplty_pixel_data()
+// - the first is preferrable IF we can be certain that no other refs can be added to copy layer and unref will free it
+// otherwise, nullify its data will affect anything which added a ref
+//
+// if it is not clear whether anyhting else may add a ref, then nullifying before calling create_empty_pixel_data is
+// preferred - this will prevent the optimisation, so this should be avoided in cases where the other option is viable
+//
+// THERE MAY still be places in the code where we do weed_layer_copy(dst, src), followed by create_empty_pixel_data(src)
+// followed by weed_layer_unref (or weed_layer_free) dst
+
 #include "main.h"
 #include "effects-weed.h"
 #include "effects.h"
@@ -61,35 +83,27 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_new_for_frame(int clip, frames_t f
 }
 
 
-LIVES_GLOBAL_INLINE void lives_layer_set_source(weed_layer_t *layer, lives_clip_src_t *source) {
+LIVES_GLOBAL_INLINE void lives_layer_set_srcgrp(weed_layer_t *layer, lives_clipsrc_group_t *srcgrp) {
   if (layer) {
-    weed_set_voidptr_value(layer, LIVES_LEAF_SOURCE, source);
-    if (source) source->layer = layer;
+    weed_set_voidptr_value(layer, LIVES_LEAF_SRCGRP, srcgrp);
+    if (srcgrp) srcgrp->layer = layer;
   }
 }
 
 
-LIVES_GLOBAL_INLINE void lives_layer_unset_source(weed_layer_t *layer) {
+LIVES_GLOBAL_INLINE void lives_layer_unset_srcgrp(weed_layer_t *layer) {
   if (layer) {
-    lives_clip_src_t *source = weed_get_voidptr_value(layer, LIVES_LEAF_SOURCE, NULL);
-    if (source) {
-      source->layer = NULL;
-      weed_set_voidptr_value(layer, LIVES_LEAF_SOURCE, NULL);
+    lives_clipsrc_group_t *srcgrp = weed_get_voidptr_value(layer, LIVES_LEAF_SRCGRP, NULL);
+    if (srcgrp) {
+      srcgrp->layer = NULL;
+      weed_set_voidptr_value(layer, LIVES_LEAF_SRCGRP, NULL);
     }
   }
 }
 
 
-LIVES_GLOBAL_INLINE lives_clip_src_t *lives_layer_get_source(weed_layer_t *layer) {
-  return layer ?  weed_get_voidptr_value(layer, LIVES_LEAF_SOURCE, NULL) : NULL;
-}
-
-
-LIVES_GLOBAL_INLINE boolean lives_layer_source_set_status(weed_layer_t *layer, int status) {
-  if (layer) {
-    lives_clip_src_t *source = lives_layer_get_source(layer);
-    if (source) return source->status;
-  }
+LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *layer) {
+  return layer ? weed_get_voidptr_value(layer, LIVES_LEAF_SRCGRP, NULL) : NULL;
 }
 
 
@@ -116,15 +130,14 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, f
     width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
     height = cdata->height;
   }
-    break;
+  break;
   case CLIP_TYPE_GENERATOR: {
-    lives_clip_src_t *dsource  = sfile->primary_src;
-    weed_instance_t *instance = (weed_instance_t *)dsource->source;
-    weed_channel_t *channel = get_enabled_channel(instance, 0, DALSE);
-    width = weed_channel_get_width_pixels(channel);
+    weed_instance_t *instance = (weed_instance_t *)((get_primary_src(clipno))->actor);
+    weed_channel_t *channel = get_enabled_channel(instance, 0, FALSE);
+    width = weed_channel_get_pixel_width(channel);
     height = weed_channel_get_height(channel);
   }
-    break;
+  break;
   default: break;
   }
 
@@ -186,11 +199,11 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
     if (target_palette != WEED_PALETTE_NONE) weed_layer_set_palette(layer, target_palette);
     else {
       if (!image_ext && sfile && sfile->bpp == 32)
-	weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
+        weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
       else  {
-	if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
-	  weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
-	else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
+        if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
+          weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
+        else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
       }
     }
   }
@@ -207,8 +220,8 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
     if (tgt_gamma != WEED_GAMMA_UNKNOWN)
       weed_layer_set_gamma(layer, tgt_gamma);
     else {
-      if (sfile) weed_layer_set_gamme(layer, sfile->gamma_type);
-      else weed_layer_set_gamme(layer, WEED_GAMMA_SRGB);
+      if (sfile) weed_layer_set_gamma(layer, sfile->gamma_type);
+      else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
     }
   }
   return layer;
@@ -217,12 +230,12 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
 
 weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
                                  int width, int height, int target_palette) {
-  return _create_blank_layer(layer, image_ext, width, height, NULL, tgt_gamma, target_palette);
+  return _create_blank_layer(layer, image_ext, width, height, NULL, WEED_GAMMA_UNKNOWN, target_palette);
 }
 
 
 weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides,
-					 int tgt_gamma, int target_palette) {
+    int tgt_gamma, int target_palette) {
   return _create_blank_layer(NULL, NULL,  width, height, rowstrides, tgt_gamma, target_palette);
 }
 
@@ -417,7 +430,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   }
 
   if (!old_layer) {
-    // do alginment
+    // do alignment
     newdata = TRUE;
     old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     weed_layer_copy(old_layer, layer);
@@ -493,25 +506,25 @@ void lives_layer_reset_timing_data(weed_layer_t *layer) {
     weed_timecode_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
     if (!timing_data) {
       timing_data =
-	(weed_timecode_t *)lives_calloc(N_LAYER_STATUSES, sizeof(weed_timecode_t));
+        (weed_timecode_t *)lives_calloc(N_LAYER_STATUSES, sizeof(weed_timecode_t));
     }
-    for (int i = 0; i < N_SRC_STATUSES; i++) timing_data[i] = 0;
-    weed_set_int64_array(layer, LIVES_LEAF_TIMER_DATA, N_LAYER_STATUSES, timing_data);
+    for (int i = 0; i < N_LAYER_STATUSES; i++) timing_data[i] = 0;
+    weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
     lives_free(timing_data);
   }
 }
 
 
-void lives_layer_update_timing_data(weed_layer_t *layer, int status, ticks_t tc)) {
+void lives_layer_update_timing_data(weed_layer_t *layer, int status, ticks_t tc) {
   if (layer && status >= 0 && status < N_LAYER_STATUSES) {
     weed_timecode_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
     if (!timing_data) {
       lives_layer_reset_timing_data(layer);
       timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
-      if (tc <= 0) tc = livess_get_session_ticks();
+      if (tc <= 0) tc = lives_get_session_ticks();
     }
     timing_data[status] = tc;
-    weed_set_int64_array(layer, LIVES_LEAF_TIMER_DATA, N_LAYER_STATUSES, timing_data);
+    weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
     lives_free(timing_data);
   }
 }
@@ -608,14 +621,14 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_CLAMPING, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SUBSPACE, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SAMPLING, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_PIXEL_ASPECT_RATIO, slayer);
+  weed_leaf_copy_or_delete(layer, WEED_LEAF_PAR, slayer);
 
   if (pd_array) lives_free(pd_array);
   return layer;
 }
 
 
-LIES_GLOBAL_INLINE lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, weed_layer_t *src) {
+LIVES_GLOBAL_INLINE lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, weed_layer_t *src) {
   // transfer pisxel data from src layer to dst layer, - no memcpy is involced
   // the data is simply transferred the nullified in the src
   weed_layer_copy(dst, src);
@@ -627,14 +640,40 @@ LIES_GLOBAL_INLINE lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, w
 LIVES_GLOBAL_INLINE void lives_layer_set_status(weed_layer_t *layer, int status) {
   if (layer) {
     weed_set_int_value(layer, LIVES_LEAF_LAYER_STATUS, status);
-    xyzzy;
   }
 }
 
 
-LIVES_GLOBAL_INLINE int lives_layer_get_status(weed_layer_t *);
+LIVES_GLOBAL_INLINE int lives_layer_get_status(weed_layer_t *layer) {
   if (layer) return weed_get_int_value(layer, LIVES_LEAF_LAYER_STATUS, NULL);
   return 0;
+}
+
+
+LIVES_GLOBAL_INLINE ticks_t *get_layer_timing(lives_layer_t *layer) {
+  if (layer) {
+    ticks_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+    if (!timing_data) {
+      reset_layer_timing(layer);
+      timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+    }
+    return timing_data;
+  }
+  return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE void set_layer_timing(lives_layer_t *layer, ticks_t *timing_data) {
+  if (layer)
+    weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
+}
+
+
+LIVES_GLOBAL_INLINE void reset_layer_timing(lives_layer_t *layer) {
+  if (layer) {
+    ticks_t *timing_data = (ticks_t *)lives_calloc(N_LAYER_STATUSES, sizeof(ticks_t));
+    set_layer_timing(layer, timing_data);
+  }
 }
 
 
@@ -647,7 +686,7 @@ LIVES_GLOBAL_INLINE void weed_layer_set_invalid(weed_layer_t *layer, boolean is)
   if (layer) {
     if (is) {
       (weed_layer_set_flags(layer, weed_layer_get_flags(layer) | LIVES_LAYER_INVALID));
-      lives_layer_unset_source(layer);
+      lives_layer_unset_srcgrp(layer);
     } else
       weed_layer_set_flags(layer, weed_layer_get_flags(layer) & ~LIVES_LAYER_INVALID);
   }
@@ -672,6 +711,11 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
     /*   break_me("free dbg"); */
     /*   mainw->debug_ptr = NULL; */
     /* } */
+#ifdef DEBUG_LAYER_REFS
+    while (weed_layer_count_refs(layer) > 0) {
+      if (!weed_layer_unref(layer)) return NULL;
+    }
+#endif
     weed_layer_pixel_data_free(layer);
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     weed_plant_free(layer);
@@ -679,20 +723,44 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   return NULL;
 }
 
-int weed_layer_unref(weed_layer_t *layer) {
-  int refs = weed_refcount_dec(layer);
-  /* if (layer == mainw->debug_ptr) { */
-  /*   //break_me("unref dbg"); */
-  /*   g_print("nrefs is %d\n", refs); */
-  /* } */
-  if (!refs) weed_layer_free(layer);
-  return refs;
+
+#ifdef DEBUG_LAYER_REFS
+int _weed_layer_unref(weed_layer_t *layer) {
+  ____FUNC_ENTRY____(_weed_layer_unref, "i", "p");
+#else
+LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
+#endif
+#if 0
+}
+#endif
+int refs = weed_refcount_dec(layer);
+/* if (layer == mainw->debug_ptr) { */
+/*   //break_me("unref dbg"); */
+/*   g_print("nrefs is %d\n", refs); */
+/* } */
+if (!refs) weed_layer_free(layer);
+#ifdef DEBUG_LAYER_REFS
+____FUNC_EXIT____;
+#endif
+return refs;
 }
 
+
+#ifdef DEBUG_LAYER_REFS
+int _weed_layer_ref(weed_layer_t *layer) {
+  ____FUNC_ENTRY____(_weed_layer_ref, "i", "p");
+#else
 LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
-  if (!layer) break_me("null layer");
-  //g_print("refff layer %p\n", layer);
-  return weed_refcount_inc(layer);
+#endif
+#if 0
+}
+#endif
+//if (!layer) break_me("null layer");
+//g_print("refff layer %p\n", layer);
+#ifdef DEBUG_LAYER_REFS
+____FUNC_EXIT____;
+#endif
+return weed_refcount_inc(layer);
 }
 
 
@@ -815,32 +883,30 @@ int lives_layer_guess_palette(weed_layer_t *layer) {
       frames_t frame = lives_layer_get_clip(layer);
       switch (sfile->clip_type) {
       case CLIP_TYPE_FILE:
-	if (frame > 0 && is_virtual_frame(clip, frame)) {
-	  lives_clip_data_t *cdata = get_clip_cdata(clip);
-	  if (cdata) return cdata->current_palette;
-	}
+        if (frame > 0 && is_virtual_frame(clip, frame)) {
+          lives_clip_data_t *cdata = get_clip_cdata(clip);
+          if (cdata) return cdata->current_palette;
+        }
       case CLIP_TYPE_DISK:
-	// use RGB24 or RGBA32
-	if (sfile->bpp == 32) return WEED_PALETTE_RGBA32;
-	return WEED_PALETTE_RGB24;
-	break;
-      case CLIP_TYPE_GENERATOR:
-	lives_clip_src_t *dsource = sfile->primary_src;
-	if (dsource) {
-	  weed_instance_t *inst = (weed_instance_t *)dsource->source;
-	  if (inst) {
-	    weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
-	    if (channel) {
-	      g_print("get pal for channel %p\n", channel);
-	      return weed_channel_get_palette(channel);
-	    }
-	  }
-	}
-	return WEED_PALETTE_INVALID;
+        // use RGB24 or RGBA32
+        if (sfile->bpp == 32) return WEED_PALETTE_RGBA32;
+        return WEED_PALETTE_RGB24;
+        break;
+      case CLIP_TYPE_GENERATOR: {
+        weed_instance_t *inst = (weed_instance_t *)((get_primary_src(clip))->actor);
+        if (inst) {
+          weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
+          if (channel) {
+            g_print("get pal for channel %p\n", channel);
+            return weed_channel_get_palette(channel);
+          }
+        }
+      }
+      return WEED_PALETTE_INVALID;
       case CLIP_TYPE_NULL_VIDEO:
-	// we can generate blank frames in any palette,
-	// so we will return special value WEED_PALETTE_ANY
-	return WEED_PALETTE_ANY;
+        // we can generate blank frames in any palette,
+        // so we will return special value WEED_PALETTE_ANY
+        return WEED_PALETTE_ANY;
       case CLIP_TYPE_YUV4MPEG:
       case CLIP_TYPE_LIVES2LIVES:
       case CLIP_TYPE_VIDEODEV:

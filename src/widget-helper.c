@@ -8636,8 +8636,8 @@ static void lives_painter_psurface_destroy_cb(livespointer data) {
     if (pbsurf) {
       lives_painter_surface_t *bsurf = *pbsurf;
       if (bsurf) {
-	lives_painter_surface_destroy(bsurf);
-	*pbsurf = NULL;
+        lives_painter_surface_destroy(bsurf);
+        *pbsurf = NULL;
       }
     }
     if (w) {
@@ -8660,7 +8660,7 @@ static void lives_widget_object_set_data_psurface(LiVESWidgetObject * obj, const
   if (!pbs) {
     pbs = (struct pbs_struct *)lives_calloc(1, sizeof(struct pbs_struct));
     lives_widget_object_set_data_full(obj, key, pbs,
-				      (LiVESDestroyNotify)lives_painter_psurface_destroy_cb);
+                                      (LiVESDestroyNotify)lives_painter_psurface_destroy_cb);
   }
   pbs->surfp = (lives_painter_surface_t **)data;
   pbs->widget = w;
@@ -8674,7 +8674,7 @@ void render_standard_button(LiVESButton * sbutt) {
   if (!is_standard_widget(widget)) return;
   else {
     LiVESWidget *da = lives_bin_get_child(LIVES_BIN(sbutt));
-    struct pbs_struct *pbs = (struct pbs_struct *)GET_VOIDP_DATA(widget, PBS_KEY);
+    struct pbs_struct *pbs = (struct pbs_struct *)GET_VOIDP_DATA(da, PBS_KEY);
     lives_painter_surface_t **pbsurf;
     if (!pbs) return;
     pbsurf = pbs->surfp;

@@ -1119,7 +1119,7 @@ boolean reload_set(const char *set_name) {
         and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
 
       if (!cfile->checked && cfile->img_type == IMG_TYPE_UNKNOWN) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->primary_src->source)->cdata;
+        lives_clip_data_t *cdata = get_clip_cdata(mainw->current_file);
         int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
         /** if there are some decoded frames then we have a problem.
           Since the img type was not found it means that the final decoded

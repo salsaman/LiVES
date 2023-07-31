@@ -101,7 +101,7 @@ weed_error_t weed_plant_duplicate(weed_plant_t *dst, weed_plant_t *src, int add)
 
   // permits the 'type' of a plant to be altered, i.e. temporarily removes the IMMUTABLE flag
   // should be used with caution, as the 'type' defines the optional and mandatory leaves
-  weed_error_t weed_plant_mutate_type(weed_plantptr_t, int32_t newtype);
+weed_error_t weed_plant_mutate_type(weed_plantptr_t, int32_t newtype);
 
 size_t weed_plant_weigh(weed_plant_t *); // get total size in bytes
 
@@ -129,132 +129,156 @@ void weed_host_set_verbosity(weed_plant_t *host_info, int verbosityy);
 char *weed_plugin_info_get_package_name(weed_plant_t *pinfo);
 
 /* FILTER functions */
-int weed_filter_get_flags(weed_plant_t *filter);
-int weed_filter_is_resizer(weed_plant_t *filter);
-char *weed_filter_get_name(weed_plant_t *filter);
-weed_plant_t **weed_filter_get_in_chantmpls(weed_plant_t *filter, int *ntmpls);
-weed_plant_t **weed_filter_get_out_chantmpls(weed_plant_t *filter, int *ntmpls);
-weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls);
-weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls);
-weed_plant_t *weed_filter_get_gui(weed_plant_t *filter, int create_if_not_exists);
-weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filter);
-char *weed_filter_get_package_name(weed_plant_t *filter);
-int weed_filter_hints_unstable(weed_plant_t *filter);
-int weed_filter_hints_hidden(weed_plant_t *filter);
-int weed_filter_hints_stateless(weed_plant_t *filter);
-int weed_filter_is_converter(weed_plant_t *filter);
-int weed_filter_is_process_last(weed_plant_t *filter);
-int weed_filter_prefers_linear_gamma(weed_plant_t *filter);
-int weed_filter_prefers_premult_alpha(weed_plant_t *filter);
-int weed_filter_non_realtime(weed_plant_t *filter);
-int weed_filter_may_thread(weed_plant_t *filter);
-int weed_filter_channel_sizes_vary(weed_plant_t *filter);
-int weed_filter_palettes_vary(weed_plant_t *filter);
+int weed_filter_get_flags(weed_filter_t *);
+int weed_filter_is_resizer(weed_filter_t *);
+char *weed_filter_get_name(weed_filter_t *);
+weed_chantmpl_t **weed_filter_get_in_chantmpls(weed_filter_t *, int *ntmpls);
+weed_chantmpl_t **weed_filter_get_out_chantmpls(weed_filter_t *, int *ntmpls);
+weed_paramtmpl_t **weed_filter_get_in_paramtmpls(weed_filter_t *, int *ntmpls);
+weed_paramtmpl_t **weed_filter_get_out_paramtmpls(weed_filter_t *, int *ntmpls);
+weed_gui_t *weed_filter_get_gui(weed_filter_t *, int create_if_not_exists);
+weed_plugin_info_t *weed_filter_get_plugin_info(weed_filter_t *);
+char *weed_filter_get_package_name(weed_filter_t *);
+int weed_filter_hints_unstable(weed_filter_t *);
+int weed_filter_hints_hidden(weed_filter_t *);
+int weed_filter_hints_stateless(weed_filter_t *);
+int weed_filter_is_converter(weed_filter_t *);
+int weed_filter_is_process_last(weed_filter_t *);
+int weed_filter_prefers_linear_gamma(weed_filter_t *);
+int weed_filter_prefers_premult_alpha(weed_filter_t *);
+int weed_filter_non_realtime(weed_filter_t *);
+int weed_filter_may_thread(weed_filter_t *);
+int weed_filter_channel_sizes_vary(weed_filter_t *);
+int weed_filter_palettes_vary(weed_filter_t *);
 
 /* FILTER_INSTANCE functions */
-weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchans);
-weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans);
-weed_plant_t **weed_instance_get_in_params(weed_plant_t *instance, int *nparams);
-weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams);
-weed_plant_t *weed_instance_get_gui(weed_plant_t *inst, int create_if_not_exists);
-int weed_instance_get_flags(weed_plant_t *instance);
-void weed_instance_set_flags(weed_plant_t *instance, int flags);
+weed_channel_t **weed_instance_get_out_channels(weed_instance_t *, int *nchans);
+weed_channel_t **weed_instance_get_in_channels(weed_instance_t *, int *nchans);
+weed_param_t **weed_instance_get_in_params(weed_instance_t *, int *nparams);
+weed_param_t **weed_instance_get_out_params(weed_instance_t *, int *nparams);
+weed_gui_t *weed_instance_get_gui(weed_plant_t *inst, int create_if_not_exists);
+int weed_instance_get_flags(weed_instance_t *);
+void weed_instance_set_flags(weed_instance_t *, int flags);
 
 /* CHANNEL_TEMPLATE functions */
-char *weed_chantmpl_get_name(weed_plant_t *chantmpl);
-int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
-int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
-int weed_chantmpl_is_audio(weed_plant_t *chantmpl);
-int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals);
+char *weed_chantmpl_get_name(weed_chantmpl_t *);
+int weed_chantmpl_get_flags(weed_chantmpl_t *);
+int weed_chantmpl_is_optional(weed_chantmpl_t *);
+int weed_chantmpl_is_audio(weed_chantmpl_t *);
+int *weed_chantmpl_get_palette_list(weed_filter_t *, weed_chantmpl_t *, int *nvals);
 
 // audio
-int weed_chantmpl_get_max_audio_length(weed_plant_t *chantmpl);
+int weed_chantmpl_get_max_audio_length(weed_chantmpl_t *);
 
 /* a return value of zero means unlimited repeats */
-int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl);
+int weed_chantmpl_get_max_repeats(weed_chantmpl_t *);
 
 /* CHANNEL functions */
-void *weed_channel_get_pixel_data(weed_plant_t *channel);
-void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes);
-weed_plant_t *weed_channel_get_gui(weed_plant_t *channel, int create_if_not_exists);
+void *weed_channel_get_pixel_data(weed_channel_t *);
+void **weed_channel_get_pixel_data_planar(weed_channel_t *, int *nplanes);
+weed_gui_t *weed_channel_get_gui(weed_channel_t *, int create_if_not_exists);
+
+// returns WEED_TRUE iff width is a multiple of palette macropixel size
+int weed_check_width_for_palette(int width, int palette);
 
 /// width in macropixels
-int weed_channel_get_width(weed_plant_t *channel);
-int weed_channel_get_height(weed_plant_t *channel);
-int weed_channel_get_palette(weed_plant_t *channel);
-int weed_channel_get_gamma_type(weed_plant_t *channel);
-int weed_channel_get_palette_yuv(weed_plant_t *channel, int *clamping, int *sampling, int *subspace);
-int weed_channel_get_rowstride(weed_plant_t *channel);
-int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
-int weed_channel_is_disabled(weed_plant_t *channel);
-weed_plant_t *weed_channel_get_template(weed_plant_t *channel);
+int weed_channel_get_width(weed_channel_t *);
+
+/// width in pixels
+int weed_channel_get_pixel_width(weed_channel_t *);
+
+int weed_channel_get_height(weed_channel_t *);
+int weed_channel_get_palette(weed_channel_t *);
+int weed_channel_get_gamma_type(weed_channel_t *);
+int weed_channel_get_palette_yuv(weed_channel_t *, int *clamping, int *sampling, int *subspace);
+int weed_channel_get_rowstride(weed_channel_t *);
+int *weed_channel_get_rowstrides(weed_channel_t *, int *nplanes);
+int weed_channel_is_disabled(weed_channel_t *);
+weed_chantmpl_t *weed_channel_get_template(weed_channel_t *);
 
 /// width in macropixels
-void weed_channel_set_width(weed_plant_t *channel, int width);
-void weed_channel_set_height(weed_plant_t *channel, int height);
-void weed_channel_set_size(weed_plant_t *channel, int width, int height);
-void weed_channel_set_palette(weed_plant_t *channel, int palette);
+void weed_channel_set_width(weed_channel_t *, int width);
+void weed_channel_set_height(weed_channel_t *, int height);
+void weed_channel_set_palette(weed_channel_t *, int palette);
+void weed_channel_set_palette_yuv(weed_channel_t *, int palette, int clamping,
+				  int sampling, int subspace);
+
+// for the following 2 functions, if width is not a multiple of palette macropixel size
+// WEED_FALSE is returned and no changes are made
+// otherwise the channel width is set to size converted to maropixels, and WEED_TRUE is returned
+
+int weed_channel_set_pixel_width(weed_channel_t *, int width);
+int weed_channel_set_pixel_size(weed_channel_t *, int width, int height);
+
+// for the following 2 functions, if width is not a multiple of new palette macropixel size
+// WEED_FALSE is returned and no changes are made
+// otherwise the palette is updated, channel width is updated to new palette macropixel size,
+// and WEED_TRUE is returned
+
+int weed_channel_update_palette(weed_channel_t *, int palette);
+int weed_channel_update_palette_yuv(weed_channel_t *, int palette, int clamping,
+				     int sampling, int subspace);
 
 /// only sets value; no conversion of pixel_data done
-weed_plant_t *weed_channel_set_gamma_type(weed_plant_t *channel, int gamma_type);
+weed_channel_t *weed_channel_set_gamma_type(weed_channel_t *, int gamma_type);
 
 /// width in pixels: only relevant when comparing widths of different palettes
-int weed_channel_get_width_pixels(weed_plant_t *channel);
+int weed_channel_get_width_pixels(weed_channel_t *);
 
 // audio channels
-int weed_channel_get_audio_rate(weed_plant_t *channel);
-int weed_channel_get_naudchans(weed_plant_t *channel);
-int weed_channel_get_audio_length(weed_plant_t *channel); // in sampls
-float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
+int weed_channel_get_audio_rate(weed_channel_t *);
+int weed_channel_get_naudchans(weed_channel_t *);
+int weed_channel_get_audio_length(weed_channel_t *); // in sampls
+float **weed_channel_get_audio_data(weed_channel_t *, int *naudchans);
 
-weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, int arate, int naudchans, int nsamps);
+weed_channel_t *weed_channel_set_audio_data(weed_channel_t *, float **data, int arate, int naudchans, int nsamps);
 
 // paramtmpls
-weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl, int create_if_not_exists);
-int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
-char *weed_paramtmpl_get_name(weed_plant_t *paramtmpl);
-int weed_paramtmpl_get_type(weed_plant_t *paramtmpl);
-int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl);
-int weed_paramtmpl_has_value_perchannel(weed_plant_t *paramtmpl);
-uint32_t weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
-int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl);
-int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmpl);
-int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl);
-int weed_paramtmpl_value_irrelevant(weed_plant_t *paramtmpl);
+weed_gui_t *weed_paramtmpl_get_gui(weed_paramtmpl_t *, int create_if_not_exists);
+int weed_paramtmpl_get_flags(weed_paramtmpl_t *);
+char *weed_paramtmpl_get_name(weed_paramtmpl_t *);
+int weed_paramtmpl_get_type(weed_paramtmpl_t *);
+int weed_paramtmpl_has_variable_size(weed_paramtmpl_t *);
+int weed_paramtmpl_has_value_perchannel(weed_paramtmpl_t *);
+uint32_t weed_paramtmpl_value_type(weed_paramtmpl_t *);
+int weed_paramtmpl_does_wrap(weed_paramtmpl_t *);
+int weed_paramtmpl_hints_string_choice(weed_paramtmpl_t *);
+int weed_paramtmpl_hints_hidden(weed_paramtmpl_t *);
+int weed_paramtmpl_value_irrelevant(weed_paramtmpl_t *);
 
 // params
 
 // if temporary is WEED_TRUE, then we return the current state,
 // otherwise we return the permanent (structural) state
-int weed_param_is_hidden(weed_plant_t *param, int temporary);
-weed_plant_t *weed_param_get_gui(weed_plant_t *param, int create_if_not_exists);
-weed_plant_t *weed_param_get_template(weed_plant_t *param);
-int weed_param_get_type(weed_plant_t *param);
-int weed_param_has_variable_size(weed_plant_t *param);
-int weed_param_has_value_perchannel(weed_plant_t *param);
-int weed_param_does_wrap(weed_plant_t *param);
-int weed_param_get_value_type(weed_plant_t *param);
-int weed_param_value_irrelevant(weed_plant_t *param);
+int weed_param_is_hidden(weed_param_t *, int temporary);
+weed_gui_t *weed_param_get_gui(weed_param_t *, int create_if_not_exists);
+weed_paramtmpl_t *weed_param_get_template(weed_param_t *);
+int weed_param_get_type(weed_param_t *);
+int weed_param_has_variable_size(weed_param_t *);
+int weed_param_has_value_perchannel(weed_param_t *);
+int weed_param_does_wrap(weed_param_t *);
+int weed_param_get_value_type(weed_param_t *);
+int weed_param_value_irrelevant(weed_param_t *);
 
-int weed_param_get_value_int(weed_plant_t *param);
-int weed_param_get_value_boolean(weed_plant_t *param);
-double weed_param_get_value_double(weed_plant_t *param);
-float weed_param_get_value_float(weed_plant_t *param);
-int64_t weed_param_get_value_int64(weed_plant_t *param);
-char *weed_param_get_value_string(weed_plant_t *param);
+int weed_param_get_value_int(weed_param_t *);
+int weed_param_get_value_boolean(weed_param_t *);
+double weed_param_get_value_double(weed_param_t *);
+float weed_param_get_value_float(weed_param_t *);
+int64_t weed_param_get_value_int64(weed_param_t *);
+char *weed_param_get_value_string(weed_param_t *);
 
-weed_error_t weed_param_set_value_int(weed_plant_t *param, int val);
-weed_error_t weed_param_set_value_boolean(weed_plant_t *param, int val);
-weed_error_t weed_param_set_value_double(weed_plant_t *param, double val);
-weed_error_t weed_param_set_value_float(weed_plant_t *param, float val);
-weed_error_t weed_param_set_value_int64(weed_plant_t *param, int64_t val);
-weed_error_t weed_param_set_value_string(weed_plant_t *param, const char *val);
+weed_error_t weed_param_set_value_int(weed_param_t *, int val);
+weed_error_t weed_param_set_value_boolean(weed_param_t *, int val);
+weed_error_t weed_param_set_value_double(weed_param_t *, double val);
+weed_error_t weed_param_set_value_float(weed_param_t *, float val);
+weed_error_t weed_param_set_value_int64(weed_param_t *, int64_t val);
+weed_error_t weed_param_set_value_string(weed_param_t *, const char *val);
 
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
-int weed_param_get_nchoices(weed_plant_t *param);
+int weed_param_get_nchoices(weed_param_t *);
 
 /// gui plants
-int weed_gui_get_flags(weed_plant_t *gui);
+int weed_gui_get_flags(weed_gui_t *gui);
 
 // utils
 const char *weed_seed_to_ctype(uint32_t st, int add_space);

@@ -69,6 +69,8 @@
 #define NEED_ENDIANTEST 0
 #include "defs.h"
 
+#define WEED_ADVANCED_PALETTES 1
+
 #if NEED_LOCAL_WEED
 #include "../libweed/weed-host.h"
 #include "../libweed/weed.h"
@@ -161,6 +163,7 @@ extern weed_plant_t *auditor_refc;
 #endif
 
 typedef weed_plant_t weed_layer_t;
+typedef weed_plant_t lives_layer_t;
 typedef weed_plant_t weed_param_t;
 
 typedef struct _capabilities capabilities;
@@ -293,11 +296,12 @@ typedef struct {
 #include "lists.h"
 #include "intents.h"
 #include "maths.h"
+#include "colourspace.h"
 #include "cliphandler.h"
 #include "plugins.h"
 
 #include "layers.h"
-#include "colourspace.h"
+
 #include "frameloader.h"
 #include "machinestate.h"
 #include "lsd-tab.h"

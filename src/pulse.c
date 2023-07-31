@@ -1278,6 +1278,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
 
       if (!pulsed->is_corked) {
+        lives_clip_t *sfile = RETURN_VALID_CLIP(mainw->ascrap_file);
         if (alock_mixer) {
           boolean had_fltbuf = FALSE;
           if (fltbuf) had_fltbuf = TRUE;
@@ -1338,14 +1339,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           lives_free(fbdata);
           fbdata = NULL;
         }
+
         if (mainw->alock_abuf && mainw->alock_abuf->is_ready && mainw->alock_abuf->_fd == -1) {
-          if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
+          if (mainw->record && !mainw->record_paused && sfile && LIVES_IS_PLAYING) {
             /// if we are recording then write mixed audio to ascrap_file
             rec_output = TRUE;
           }
-        } else if (IS_VALID_CLIP(mainw->ascrap_file)
-                   && mainw->files[mainw->ascrap_file]->primary_src->src_type == LIVES_SRC_TYPE_RECORDER) {
-          // here we are recrding for the desktop grabber
+        } else if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_RECORDER) {
+          // here we are recording for the desktop grabber
           rec_output = TRUE;
         }
       }

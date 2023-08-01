@@ -953,12 +953,9 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
     // on next cycle, leafprev is leaf->prev
     // leaf is locked, this become leafprev, leaf goes to leaf->next and we lock it
     // so we start with two locked leaves, unlock one, then lock the next
-    if (leafprev != plant) chain_lock_unlock(leafprev);
     leafprev = leaf;
     if (!(leaf = leaf->next)) break;
-    chain_lock_readlock(leaf);
   }
-  // finish with chain_lock readlock on prev and leaf
 
   if (!leaf || leaf == plant) err = WEED_ERROR_NOSUCH_LEAF;
   else {
@@ -985,7 +982,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   reader_count_wait(plant);
 
   // block readers at leafprev - rlease chain lock readlock on leafprev and grab writelock
-  if (leafprev != plant) chain_lock_upgrade(leafprev, 1, 0);
+  if (leafprev != plant) chain_lock_writelock(leafprev, 1, 0);
 
   // adjust the link
   leafprev->next = leaf->next;

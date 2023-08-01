@@ -1132,6 +1132,7 @@ typedef struct {
   // node model for current fx chain
   lives_nodemodel_t *nodemodel;
   exec_plan_t *exec_plan;
+  exec_plan_t *plan_cycle;
 
   lives_layer_t **layers;
 

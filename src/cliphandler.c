@@ -2397,15 +2397,17 @@ void switch_to_file(int old_file, int new_file) {
     lives_widget_queue_draw(mainw->eventbox2);
   }
 
-  if (!mainw->multitrack && !mainw->reconfig) {
-    if (prefs->show_msg_area && !mainw->only_close) {
-      reset_message_area(); // necessary
-      if (mainw->idlemax == 0) {
-        lives_idle_add(resize_message_area, NULL);
+  if (mainw->is_ready) {
+    if (!mainw->multitrack && !mainw->reconfig) {
+      if (prefs->show_msg_area && !mainw->only_close) {
+        reset_message_area(); // necessary
+        if (mainw->idlemax == 0) {
+          lives_idle_add(resize_message_area, NULL);
+        }
+        mainw->idlemax = DEF_IDLE_MAX;
       }
-      mainw->idlemax = DEF_IDLE_MAX;
+      redraw_timeline(mainw->current_file);
     }
-    redraw_timeline(mainw->current_file);
   }
 }
 
@@ -3085,9 +3087,9 @@ boolean swap_srcgrps(int nclip, int otrack, int opurpose, int ntrack, int npurpo
           pthread_mutex_unlock(&sfile->srcgrp_mutex);
           return TRUE;
 	  // *INDENT-OFF*
-	}}
-      pthread_mutex_unlock(&sfile->srcgrp_mutex);
-    }}
+	}}}
+    pthread_mutex_unlock(&sfile->srcgrp_mutex);
+  }
   // *INDENT-ON*
   return FALSE;
 }
@@ -3301,6 +3303,7 @@ void srcgrp_set_apparent(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, ful
     pthread_mutex_lock(&sfile->srcgrp_mutex);
     srcgrp->apparent_pal = pally.pal;
     srcgrp->apparent_gamma = gamma_type;
+    pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
 }
 

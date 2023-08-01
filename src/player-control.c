@@ -663,15 +663,19 @@ void play_file(void) {
   mainw->playing_file = mainw->current_file;
 
   lives_freep((void **)&mainw->layers);
+
   mainw->layers = map_sources_to_tracks(FALSE, FALSE);
 
   build_nodemodel(&mainw->nodemodel);
 
   describe_chains(mainw->nodemodel);
-  break_me("descd");
 
   align_with_model(mainw->nodemodel);
+
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
+  mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
+
+  display_plan(mainw->plan_cycle);
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);

@@ -637,7 +637,7 @@ typedef struct _plan_step plan_step_t;
 
 struct _plan_step {
   int st_type;
-  inst_node_t *node;
+  inst_node_t *node; // ??
   int idx;
   //
   int ndeps;
@@ -648,7 +648,8 @@ struct _plan_step {
   uint64_t flags;
 
   // step details
-  ticks_t st_time;
+  ticks_t st_time; // ??
+
   ticks_t dur;
   ticks_t ded;
 
@@ -656,6 +657,7 @@ struct _plan_step {
   weed_instance_t *target_inst;
 
   int track; // for conv / load conv
+  int clip;
   int dchan, schan;
   //
   int fin_width, fin_height;
@@ -667,15 +669,16 @@ struct _plan_step {
 
 #define PLAN_STATE_NONE		0
 #define PLAN_STATE_RUNNING	1
-#define PLAN_STATE_WAITNG	2
-#define PLAN_STATE_FINISHED	3
+#define PLAN_STATE_FINISHED	2
 #define PLAN_STATE_ERROR	-1
+
+// template cannot be executed, but it can be used to make a plan_cycle which can be
+#define PLAN_STATE_TEMPLATE	16
 
 typedef struct {
   uint64_t uid;
-  uint64_t flags;
   lives_nodemodel_t *model;
-
+  uint64_t iteration;
   // stack of layers in track order. These are created as soon as plan is executed
   // by calling map_sources_to_tracks
   // LOAD event will wait for the layer 'frame' to be set to non-zero before loading
@@ -683,18 +686,13 @@ typedef struct {
   // and the layer will be NULL, in this case when we try to LOAD from the layer, we will skip the step
   // and mark the channel as WEED_LEAF_HOST_TEMP_DISABLED. The corresponding input node in the model will
   // be flagged as IGNORE
+
+  int ntracks;
   weed_layer_t **layers;
 
   // the actual steps of the plan, no step may appear before all of its dependent steps
   LiVESList *steps;
 
-  int ntracks;
-  frames_t *frame_index;
-
-  // list of current steps. The status of these will eithrer be
-  // running (all dependencies complete) or waiting (incomplete dependecies)
-  // or possibly error
-  plan_step_t **current;
   uint64_t state;
 } exec_plan_t;
 
@@ -703,6 +701,9 @@ void free_nodemodel(lives_nodemodel_t **);
 
 exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
 void align_with_model(lives_nodemodel_t *);
+exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **);
+
+void display_plan(exec_plan_t *);
 
 void find_best_routes(lives_nodemodel_t *nodemodel, double *thresh);
 

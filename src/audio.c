@@ -2928,7 +2928,7 @@ void audio_analyser_start(int source) {
       ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
                 WEED_SEED_BOOLEAN, "p", aplayer);
       // this ensures ana_lpt is not freed as soon as we cancel it
-      mainw->debug_ptr = ana_lpt;
+      //mainw->debug_ptr = ana_lpt;
       lives_proc_thread_ref(ana_lpt);
     }
   }

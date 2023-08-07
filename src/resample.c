@@ -1053,7 +1053,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           /* g_print("frame (%p) with %d tracks %d %ld  going in at %ld\n", newframe, */
           /* 	tracks, clips[0], frames[0], out_tc); */
           /* g_print("frame tc is %ld\n", weed_event_get_timecode(newframe)); */
-          if (out_tc == 0) mainw->debug_ptr = newframe;
+          //if (out_tc == 0) mainw->debug_ptr = newframe;
           if (response == LIVES_RESPONSE_CANCEL) {
             event_list_free(out_list);
             lives_free(what);

@@ -447,7 +447,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
   if (!gui_loop_tight || is_fg_thread()) cairo_stroke(cr);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(cairo_stroke, 0, "v", cr);
+    MAIN_THREAD_EXECUTE_RVOID(cairo_stroke, "v", cr);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -1563,7 +1563,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget * wid
   if (1 || is_fg_thread()) _lives_widget_set_sensitive(widget, state);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_set_sensitive, 0, "vb", widget, state);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_set_sensitive, "vb", widget, state);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -1644,7 +1644,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidg
   else {
     //BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
     BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
   return FALSE;
@@ -1685,7 +1685,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget * widget) {
       THREADVAR(hook_match_nparams) = 1;
       THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD | HOOK_CB_TRANSFER_OWNER;
       // do this even for main thread so we can invalidate data for other threads
-      MAIN_THREAD_EXECUTE_RVOID(_lives_widget_destroy, 0, "v", widget);
+      MAIN_THREAD_EXECUTE_RVOID(_lives_widget_destroy, "v", widget);
       THREADVAR(hook_hints) = 0;
       THREADVAR(hook_match_nparams) = 0;
       return TRUE;
@@ -1726,7 +1726,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget * widget
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
     BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -1741,7 +1741,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_area(LiVESWidget * w
     gtk_widget_queue_draw_area(widget, x, y, width, height);
     return TRUE;
   } else {
-    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw_area, 0, "viiii", widget, x, y, width, height);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw_area, "viiii", widget, x, y, width, height);
     return TRUE;
   }
 #endif
@@ -3223,7 +3223,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
     BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY | HOOK_CB_TRANSFER_OWNER;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, 0, "v", widget);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -3241,7 +3241,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_update_noblock(LiVES
   if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY  | HOOK_CB_TRANSFER_OWNER;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, 0, "v", widget);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -3571,7 +3571,7 @@ boolean lives_box_pack_start(LiVESBox * box, LiVESWidget * child, boolean expand
     gtk_box_pack_start(box, child, expand, fill, padding);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_box_pack_start, 0, "vvbbi", box, child, expand, fill, padding);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_box_pack_start, "vvbbi", box, child, expand, fill, padding);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -5277,7 +5277,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_add(LiVESContainer * contain
     gtk_container_add(container, widget);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_container_add, 0, "vv", container, widget);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_container_add, "vv", container, widget);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -5292,7 +5292,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_remove(LiVESContainer * cont
     gtk_container_remove(container, widget);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_container_remove, 0, "vv", container, widget);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_container_remove, "vv", container, widget);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -5483,7 +5483,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton 
   if (!gui_loop_tight || is_fg_thread()) gtk_spin_button_set_value(button, value);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_value, 0, "vd", button, value);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_value, "vd", button, value);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -5497,7 +5497,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_range(LiVESSpinButton 
   if (is_fg_thread()) gtk_spin_button_set_range(button, min, max);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_range, 0, "vdd", button, min, max);
+    MAIN_THREAD_EXECUTE_RVOID(gtk_spin_button_set_range, "vdd", button, min, max);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -5576,7 +5576,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_update(LiVESSpinButton * b
     _lives_spin_button_update(button);
   } else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_spin_button_update, 0, "v", button);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_spin_button_update, "v", button);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;
@@ -6679,7 +6679,7 @@ boolean lives_entry_set_text(LiVESEntry * entry, const char *text) {
     _lives_entry_set_text(entry, text);
   } else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_entry_set_text, 0, "vs", entry, text);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_entry_set_text, "vs", entry, text);
     BG_THREADVAR(hook_hints) = 0;
   }
   return TRUE;

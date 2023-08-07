@@ -1057,7 +1057,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
       mainw->rte |= new_rte;
 
-      build_nodemodel(&mainw->nodemodel);
+      mainw->refresh_model = TRUE;
 
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1105,7 +1105,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
             weed_instance_unref(xinst);
-            build_nodemodel(&mainw->nodemodel);
+            mainw->refresh_model = TRUE;
           }
           weed_instance_unref(inst);
         }
@@ -1130,7 +1130,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
             if (rte_key_is_enabled(i, FALSE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
-      build_nodemodel(&mainw->nodemodel);
+      mainw->refresh_model = TRUE;
     }
   }
   if (mainw->rendered_fx)

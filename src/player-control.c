@@ -662,20 +662,26 @@ void play_file(void) {
 
   mainw->playing_file = mainw->current_file;
 
+  for (int i = 0; i < mainw->num_tracks; i++) {
+    if (mainw->layers[i]) {
+      weed_layer_unref(mainw->layers[i]);
+      mainw->layers[i] = NULL;
+    }
+  }
+
   lives_freep((void **)&mainw->layers);
+
+  // rebuild nodemodel and plan ///////////////////////
 
   mainw->layers = map_sources_to_tracks(FALSE, FALSE);
 
   build_nodemodel(&mainw->nodemodel);
-
   describe_chains(mainw->nodemodel);
-
   align_with_model(mainw->nodemodel);
-
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
-  display_plan(mainw->plan_cycle);
+  //////////////////////////////////////////////////////////////
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);
@@ -1002,11 +1008,10 @@ void play_file(void) {
 
   mainw->osc_auto = 0;
 
-  if (mainw->blend_layer) {
-    check_layer_ready(mainw->blend_layer);
-    weed_layer_unref(mainw->blend_layer);
-    mainw->blend_layer = NULL;
+  if (mainw->plan_cycle->state == PLAN_STATE_RUNNING) {
+    lives_proc_thread_cancel(mainw->plan_runner_proc);
   }
+
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
   if (mainw->record && !mainw->record_paused)
     event_list_add_end_events(mainw->event_list, TRUE);
@@ -1172,6 +1177,12 @@ void play_file(void) {
 
       // terminate autolives if running
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
+
+      reset_old_frame_layer();
+
+      // nodemodel / plan
+      cleanup_nodemodel();
+
 
       // PLAY FINISHED...
 

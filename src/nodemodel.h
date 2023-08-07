@@ -385,11 +385,18 @@ typedef struct {
   double tot_cost[N_COST_TYPES];
 } cost_tuple_t;
 
+typedef struct _plan_step plan_step_t;
+
 typedef struct _input_node input_node_t;
 
 struct _input_node {
   // pointer to prev node
   inst_node_t *node;
+
+  // for fake inputs of clip nodes, this is the value of class_uid for the src
+  uint64_t src_uid;
+
+  plan_step_t *dep; // dependency step for this input - used in plan building
 
   int track;
 
@@ -397,7 +404,7 @@ struct _input_node {
   // if this changes during dry run, then this may set needs_reinit in the node
   int width, height;
 
-  // if we are letterboxing, these values are for the inner part, we actually resize to this sie
+  // if we are letterboxing, these values are for the inner part, we actually resize to this size
   // then letterbox to width / height
   int inner_width, inner_height;
 
@@ -419,6 +426,8 @@ struct _input_node {
   // in this case npals will be > 0
   int npals;
   int *pals;
+
+  boolean free_pals;
 
   // this is set for the node, and for inputs and outputs with own pal_list
   // this is the actua palette that the object repressented by the node should use
@@ -481,6 +490,7 @@ struct _output_node {
   //
   int npals;
   int *pals;
+  boolean free_pals;
 
   // this is set for the node, and for inputs and outputs with own pal_list
   // this is the actua palette that the object repressented by the node should use
@@ -555,7 +565,8 @@ typedef struct _inst_node {
   // pointer to the object instance being modelled by the node
   void *model_inst;
 
-  int filter_key;
+  // for filters, the filter kymap key, for clip srcs, the clip number etc
+  int model_idx;
 
   int *in_count, *out_count;
 
@@ -569,6 +580,8 @@ typedef struct _inst_node {
   int npals; // num values in pals, excluding WEED_PALETTE_END
   // int [npals + 1]
   int *pals; // array of input pals (out pals to next node)
+
+  boolean free_pals;
 
   // this is set for the node, and for inputs and outputs with own pal_list
   // this is the actua palette that the object repressented by the node should use
@@ -633,12 +646,11 @@ typedef struct _inst_node {
 #define STEP_TYPE_COPY_IN_LAYER        	4
 #define STEP_TYPE_COPY_OUT_LAYER      	5
 
-typedef struct _plan_step plan_step_t;
-
 struct _plan_step {
   int st_type;
   inst_node_t *node; // ??
   int idx;
+  lives_proc_thread_t proc_thread;
   //
   int ndeps;
   plan_step_t **deps;
@@ -656,24 +668,54 @@ struct _plan_step {
   weed_filter_t *target;
   weed_instance_t *target_inst;
 
-  int track; // for conv / load conv
-  int clip;
+  int track; // for conv / load
+  int clip; // for info only, track is used instead
   int dchan, schan;
   //
   int fin_width, fin_height;
+  int fin_iwidth, fin_iheight;
   int fin_pal, fin_gamma;
 
   // eg. apply deinterlace
   uint64_t opts;
 }; // plan_step_t
 
+// flagbits for pan and for steps
+
 #define PLAN_STATE_NONE		0
+#define PLAN_STATE_IDLE		0
 #define PLAN_STATE_RUNNING	1
 #define PLAN_STATE_FINISHED	2
 #define PLAN_STATE_ERROR	-1
 
+#define PLAN_STATE_CANCELLED	16
+#define PLAN_STATE_PAUSED	17
+#define PLAN_STATE_RESUMING	18
+
+// idicates an ignorable step
+#define PLAN_STATE_IGNORE	64
+
 // template cannot be executed, but it can be used to make a plan_cycle which can be
-#define PLAN_STATE_TEMPLATE	16
+#define PLAN_STATE_TEMPLATE	256
+
+// step states - same numbers as PLAN states
+
+#define STEP_STATE_NONE		PLAN_STATE_NONE
+#define STEP_STATE_IDLE		PLAN_STATE_IDLE
+#define STEP_STATE_RUNNING	PLAN_STATE_RUNNING
+#define STEP_STATE_FINISHED	PLAN_STATE_FINISHED
+#define STEP_STATE_ERROR	PLAN_STATE_ERROR
+
+#define STEP_STATE_CANCELLED	PLAN_STATE_CANCELLED
+#define STEP_STATE_PAUSED	PLAN_STATE_PAUSED
+#define STEP_STATE_RESUMING	PLAN_STATE_RESUMING
+
+// idicates an ignorable step
+#define STEP_STATE_IGNORE	PLAN_STATE_IGNORE
+
+// template cannot be executed, but it can be used to make a plan_cycle which can be
+
+
 
 typedef struct {
   uint64_t uid;
@@ -699,9 +741,13 @@ typedef struct {
 void build_nodemodel(lives_nodemodel_t **);
 void free_nodemodel(lives_nodemodel_t **);
 
+void cleanup_nodemodel(void);
+
 exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
 void align_with_model(lives_nodemodel_t *);
 exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **);
+lives_proc_thread_t execute_plan(exec_plan_t *, boolean async);
+void exec_plan_free(exec_plan_t *);
 
 void display_plan(exec_plan_t *);
 

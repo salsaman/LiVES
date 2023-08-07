@@ -8093,6 +8093,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   if (layout) {
     if (LINGO_IS_LAYOUT(layout)) lingo_layout_set_text(layout, "", -1);
     lives_widget_object_unref(layout);
+    layout = NULL;
   }
 
   if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
@@ -8105,7 +8106,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
 
-  if (!LINGO_IS_LAYOUT(layout) || !layout) {
+  if (!layout || !LINGO_IS_LAYOUT(layout)) {
     return FALSE;
   }
 

@@ -110,43 +110,55 @@ LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *
 LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame) {
   // create a layer and try to set natural_size and palette
   weed_layer_t *layer;
+  lives_clipsrc_group_t *srcgrp;
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
   int width = 0, height = 0, pal = 0;
+
   if (!sfile) return NULL;
 
   layer = lives_layer_new_for_frame(clipno, frame);
 
-  // set palette according to clip AND frame
-  // for clips of type FILE, we cna have 2 palettes and 2 sizes depeding on whterh the frame is
-  // decoded to image or not
-  // for the most general case, frame should be 0
-  pal = lives_layer_guess_palette(layer);
+  srcgrp = lives_layer_get_srcgrp(layer);
+  if (srcgrp) {
+    pal = srcgrp->apparent_pal;
+    weed_layer_set_gamma(layer, srcgrp->apparent_gamma);
+  } else {
+    // set palette according to clip AND frame
+    // for clips of type FILE, we cna have 2 palettes and 2 sizes depeding on whterh the frame is
+    // decoded to image or not
+    // for the most general case, frame should be 0
+    pal = lives_layer_guess_palette(layer);
+  }
 
-  // get the layer size
-  switch (sfile->clip_type) {
-  case CLIP_TYPE_FILE: {
-    lives_clip_data_t *cdata = get_clip_cdata(clipno);
-    // layer width is always measured in MACROpixels
-    width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
-    height = cdata->height;
-  }
-  break;
-  case CLIP_TYPE_GENERATOR: {
-    weed_instance_t *instance = (weed_instance_t *)((get_primary_src(clipno))->actor);
-    weed_channel_t *channel = get_enabled_channel(instance, 0, FALSE);
-    width = weed_channel_get_pixel_width(channel);
-    height = weed_channel_get_height(channel);
-  }
-  break;
-  default: break;
-  }
+  // clip width is in pixels, but layer width is in macropixels !
+  width = sfile->hsize / (pal != WEED_PALETTE_NONE
+                          ? weed_palette_get_pixels_per_macropixel(pal) : 1);
+
+  height = sfile->vsize;
 
   if (!width || !height) {
-    width = sfile->hsize;
-    height = sfile->vsize;
+    // get the layer size
+    switch (sfile->clip_type) {
+    case CLIP_TYPE_FILE: {
+      lives_clip_data_t *cdata = get_clip_cdata(clipno);
+      // layer width is always measured in MACROpixels
+      width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
+      height = cdata->height;
+    }
+    break;
+    case CLIP_TYPE_GENERATOR: {
+      weed_instance_t *instance = (weed_instance_t *)((get_primary_src(clipno))->actor);
+      weed_channel_t *channel = get_enabled_channel(instance, 0, FALSE);
+      width = weed_channel_get_pixel_width(channel);
+      height = weed_channel_get_height(channel);
+    }
+    break;
+    default: break;
+    }
   }
 
   if (pal) weed_layer_set_palette(layer, pal);
+  weed_layer_set_size(layer, width, height);
 
   return layer;
 }
@@ -734,10 +746,10 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 }
 #endif
 int refs = weed_refcount_dec(layer);
-/* if (layer == mainw->debug_ptr) { */
-/*   //break_me("unref dbg"); */
-/*   g_print("nrefs is %d\n", refs); */
-/* } */
+if (layer == mainw->debug_ptr) {
+  break_me("unref dbg");
+  g_print("nrefs is %d\n", refs);
+}
 if (!refs) weed_layer_free(layer);
 #ifdef DEBUG_LAYER_REFS
 ____FUNC_EXIT____;
@@ -846,6 +858,22 @@ LIVES_GLOBAL_INLINE int weed_layer_get_palette_yuv(weed_layer_t *layer, int *cla
   if (sampling) *sampling = weed_layer_get_yuv_sampling(layer);
   if (subspace) *subspace = weed_layer_get_yuv_subspace(layer);
   return weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_gamma(weed_layer_t *layer) {
+  int gamma_type = WEED_GAMMA_UNKNOWN;
+  if (prefs->apply_gamma) {
+    if (weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
+      gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
+    }
+    /* if (gamma_type == WEED_GAMMA_UNKNOWN) { */
+    /*   break_me("weed_layer_get_gamma with unk. gamma"); */
+    /*   LIVES_WARN("Layer with unknown gamma !!"); */
+    /*   gamma_type = WEED_GAMMA_SRGB; */
+    /* } */
+  }
+  return gamma_type;
 }
 
 

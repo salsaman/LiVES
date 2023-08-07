@@ -262,7 +262,7 @@ void *lives_calloc_safety(size_t nmemb, size_t xsize);
 
 ///////////////////// byte manipulation /////////
 
-void swab2(const void *to, const void *from, size_t granularity) 	LIVES_HOT;
+void swab2(void *to, const void *from, size_t granularity) 	LIVES_HOT;
 void swab4(const void *to, const void *from, size_t granularity) 	LIVES_HOT;
 void swab8(const void *to, const void *from, size_t granularity) 	LIVES_HOT;
 

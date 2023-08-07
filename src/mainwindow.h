@@ -787,17 +787,18 @@ typedef struct {
 } lives_permmgr_t;
 
 /// helper proc_threads
-#define N_HLP_PROCTHREADS 256
-#define PT_DRAWTL 1
-#define PT_TRANSREND 2
-#define PT_DLG_SPINNER 3
-#define PT_LAZY_RFX 16
-#define PT_LAZY_DSUSED 17
-#define PT_CUSTOM_COLOURS 18
-#define PT_LAZY_STARTUP 19
-#define PT_PERF_MANAGER 32
-#define PT_PLAYER 64
-#define PT_SCRAPFILE_SAVER 128
+#define N_HLP_PROCTHREADS	256
+#define PT_DRAWTL		1
+#define PT_TRANSREND		2
+#define PT_DLG_SPINNER		3
+#define PT_LAZY_RFX		16
+#define PT_LAZY_DSUSED		17
+#define PT_CUSTOM_COLOURS	18
+#define PT_LAZY_STARTUP		19
+#define PT_PERF_MANAGER		32
+#define PT_PLAYER		64
+#define PT_PLAN_RUNNER		65
+#define PT_SCRAPFILE_SAVER	128
 
 #define lazy_starter helper_procthreads[PT_LAZY_STARTUP]
 #define drawtl_thread helper_procthreads[PT_DRAWTL]
@@ -805,6 +806,7 @@ typedef struct {
 #define dlg_spin_thread helper_procthreads[PT_DLG_SPINNER]
 #define player_proc helper_procthreads[PT_PLAYER]
 #define scrap_file_proc helper_procthreads[PT_SCRAPFILE_SAVER]
+#define plan_runner_proc helper_procthreads[PT_PLAN_RUNNER]
 
 typedef struct {
   char *name;
@@ -1133,6 +1135,7 @@ typedef struct {
   lives_nodemodel_t *nodemodel;
   exec_plan_t *exec_plan;
   exec_plan_t *plan_cycle;
+  boolean refresh_model;
 
   lives_layer_t **layers;
 

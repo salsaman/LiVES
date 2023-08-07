@@ -47,11 +47,14 @@
 // layer pixel_data is loaded, but may need conversion
 #define LAYER_STATUS_LOADED      	4
 
+// pixel_data is being converted
+#define LAYER_STATUS_CONVERTING      	5
+
 // layer pixel_data is fully ready
-#define LAYER_STATUS_READY		5
+#define LAYER_STATUS_READY		6
 
 // layer is invalid, do not use
-#define LAYER_STATUS_INVALID		6
+#define LAYER_STATUS_INVALID	       -1
 
 #define N_LAYER_STATUSES	    	7
 

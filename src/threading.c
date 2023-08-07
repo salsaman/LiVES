@@ -1868,9 +1868,14 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_proc_thread_get_chain_next(lives_p
 
 LIVES_GLOBAL_INLINE lives_proc_thread_t lives_proc_thread_chain_next(lives_proc_thread_t lpt,
     lives_proc_thread_t follower) {
-  if (!lpt) return NULL;
-  weed_set_plantptr_value(lpt, LIVES_LEAF_FOLLOWER, follower);
-  return follower;
+  if (lpt) {
+    // set attrs
+    uint64_t attrs = lives_proc_thread_get_attrs(lpt);
+    lives_proc_thread_set_attrs(lpt, attrs | LIVES_THRDATTR_NXT_IMMEDIATE);
+    weed_set_plantptr_value(lpt, LIVES_LEAF_FOLLOWER, follower);
+    return follower;
+  }
+  return NULL;
 }
 
 
@@ -2244,7 +2249,6 @@ static lives_proc_thread_t next_in_chain(lives_proc_thread_t olpt, lives_proc_th
   attrs = lives_proc_thread_get_attrs(lpt);
   if (attrs & LIVES_THRDATTR_AUTO_REQUEUE) arq = TRUE;
   if (attrs & LIVES_THRDATTR_AUTO_PAUSE) apause = TRUE;
-
 
   if (!apause && !arq) {
     // if neither auto_pause nor auto_queue, just exit

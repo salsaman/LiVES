@@ -48,6 +48,25 @@
 #define SCALE_FACTOR (1 << FP_BITS)
 #endif
 
+struct _conv_array {
+  int *Yx_R, *Yx_G, *Yx_B;
+  int *Cbx_R, *Cbx_G, *Cbx_B;
+  int *Crx_R, *Crx_G, *Crx_B;
+
+  float *Yf_R, *Yf_G, *Yf_B;
+  float *Cbf_R, *Cbf_G, *Cbf_B;
+  float *Crf_R, *Crf_G, *Crf_B;
+
+  short min_Y, max_Y, min_UV, max_UV;
+  uint8_t *cavg;
+
+  int *RGBx_Y, *Rx_Cr, *Gx_Cb, *Gx_Cr, *Bx_Cb;
+
+  float *RGBf_Y, *Rf_Cr, *Gf_Cb, *Gf_Cr, *Bf_Cb;
+
+  uint8_t *Yx_to_Y, *Ux_to_U, *Vx_to_V;
+};
+
 #define KR_YCBCR 0.2989
 #define KB_YCBCR 0.114
 
@@ -78,7 +97,6 @@
 
 /////////////////////////////////////////////
 
-
 #define _PAL_IDX 		0
 #define _PAL_CLAMPING 		1
 #define _PAL_SAMPLING 		2
@@ -92,6 +110,38 @@ typedef union {
 typedef struct {
   float offs, lin, thresh, pf;
 } gamma_const_t;
+
+// o = ((t/l) ^ 1/pf - t) / (1 - (t/l) ^1/pf)
+#define INIT_GAMMA(gtype) gamma_tx[gtype##_IDX] = (gamma_const_t) {0., GAMMA_CONSTS_##gtype}; \
+  gamma_tx[gtype##_IDX].offs = (powf((gamma_tx[gtype##_IDX].thresh / gamma_tx[gtype##_IDX].lin), \
+				     (1. / gamma_tx[gtype##_IDX].pf)) - gamma_tx[gtype##_IDX].thresh) \
+    / (1. - (powf((gamma_tx[gtype##_IDX].thresh / gamma_tx[gtype##_IDX].lin), \
+		  (1. / gamma_tx[gtype##_IDX].pf))));			\
+  gamma_idx[gtype##_IDX] = gtype;
+
+extern gamma_const_t gamma_tx[];
+extern int gamma_idx[];
+
+// additional gamma_types an be defined here /////////////////
+
+#define GAMMA_CONSTS_WEED_GAMMA_SRGB 12.92, 0.04045, 2.4
+#define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.081, 1. / .45
+//#define GAMMA_CONSTS_MYGAMMA lin, thresh, pf
+
+enum {
+  WEED_GAMMA_SRGB_IDX,
+  WEED_GAMMA_BT709_IDX,
+  // MYGAMMA_IDX,
+  N_GAMMA_TYPES,
+};
+
+static inline void init_gamma_tx(void) {
+  INIT_GAMMA(WEED_GAMMA_SRGB);
+  INIT_GAMMA(WEED_GAMMA_BT709);
+  //INIT_GAMMA(MYGAMMA);
+}
+
+//////////////////////////////////////////////////
 
 typedef struct {
   uint8_t u0;
@@ -138,6 +188,7 @@ typedef struct {
   int orowstrides[4];
   void *dest;
   void *destp[4];
+  struct _conv_array conv_arrays;
   boolean in_alpha;
   boolean out_alpha;
   boolean in_clamping;

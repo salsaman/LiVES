@@ -1237,7 +1237,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
             if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
             weed_instance_unref(inst);
             filter_mutex_unlock(key);
-            build_nodemodel(&mainw->nodemodel);
+            mainw->refresh_model = TRUE;
             return FILTER_ERROR_COULD_NOT_REINIT;
           }
           filter_mutex_unlock(key);
@@ -3158,7 +3158,7 @@ apply_inst3:
 
                 // remove extra ref we added
                 weed_instance_unref(instance);
-                build_nodemodel(&mainw->nodemodel);
+                mainw->refresh_model = TRUE;
                 continue;
               }
             }
@@ -9303,17 +9303,17 @@ boolean rte_key_setmode(int key, int newmode) {
     weed_layer_set_invalid(mainw->blend_layer, TRUE);
     mainw->new_blend_file = blend_file;
   } else {
-    if (inst) build_nodemodel(&mainw->nodemodel);
-  }
-  if (inst) {
-    if (!weed_init_effect(key)) {
+    if (inst) {
+      mainw->refresh_model = TRUE;
+      if (!weed_init_effect(key)) {
+        weed_instance_unref(inst);
+        mainw->whentostop = whentostop;
+        key = real_key;
+        mainw->rte &= ~(GU641 << key);
+        return FALSE;
+      }
       weed_instance_unref(inst);
-      mainw->whentostop = whentostop;
-      key = real_key;
-      mainw->rte &= ~(GU641 << key);
-      return FALSE;
     }
-    weed_instance_unref(inst);
     if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key, TRUE);
   }
   mainw->whentostop = whentostop;

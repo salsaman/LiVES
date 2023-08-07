@@ -2919,11 +2919,13 @@ lives_clipsrc_group_t *get_primary_srcgrp(int nclip) {
 }
 
 
-static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile) {
+static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile, int track, int purpose) {
   int ngrps = sfile->n_src_groups;
   lives_clipsrc_group_t *srcgrp =
     (lives_clipsrc_group_t *)lives_calloc(1, sizeof(lives_clipsrc_group_t));
   srcgrp->status = SRC_STATUS_IDLE;
+  srcgrp->track = track;
+  srcgrp->purpose = purpose;
 
   pthread_mutex_init(&srcgrp->src_mutex, NULL);
   pthread_mutex_init(&srcgrp->refcnt_mutex, NULL);
@@ -2952,6 +2954,7 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
   lives_clip_src_t *mysrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
 
   mysrc->uid = gen_unique_id();
+  mysrc->class_uid = gen_unique_id();
   mysrc->actor = actor;
   mysrc->actor_inst = actor_inst;
   mysrc->actor_uid = actor_uid;
@@ -2980,24 +2983,18 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
 static lives_clip_src_t *_add_clip_src(lives_clip_t *sfile, int track, int purpose, void *actor,
                                        void *actor_inst, int src_type, uint64_t actor_uid,
                                        fingerprint_t *chksum, const char *ext_URI) {
+  lives_clip_src_t *mysrc = NULL;
   if (sfile) {
     // find a clipsrc_group with purpose
     // if such does not exist we will clone primary and make one
     // then make a clip_src for source, and insert in src_group
-    lives_clipsrc_group_t *srcgrp;
-    lives_clip_src_t *mysrc = NULL;
-    srcgrp = _get_srcgrp(sfile, track, purpose);
-    if (!srcgrp) {
-      srcgrp = _add_srcgrp(sfile);
-      srcgrp->track = track;
-      srcgrp->purpose = purpose;
-    }
+    lives_clipsrc_group_t *srcgrp = _get_srcgrp(sfile, track, purpose);
+    if (!srcgrp) srcgrp = _add_srcgrp(sfile, track, purpose);
     if (srcgrp)
       mysrc = _add_src_to_group(sfile, srcgrp, actor, actor_inst, src_type,
                                 actor_uid, chksum, ext_URI);
-    return mysrc;
   }
-  return NULL;
+  return mysrc;
 }
 
 
@@ -3015,7 +3012,7 @@ lives_clip_src_t *add_clip_src(int nclip, int track, int purpose, void *actor, i
 
 
 static lives_clip_src_t *_get_clip_src(lives_clipsrc_group_t *srcgrp, uint64_t actor_uid, void *actor_inst,
-                                       int src_type, const char *ext_URI, fingerprint_t *chksum) {
+                                       int src_type, uint64_t class_uid, const char *ext_URI, fingerprint_t *chksum) {
   // find clpsrc in srcgrp
   // actor_uid can be 0 / non 0
   // src_type can be undefined or defined
@@ -3027,7 +3024,8 @@ static lives_clip_src_t *_get_clip_src(lives_clipsrc_group_t *srcgrp, uint64_t a
       lives_clip_src_t *mysrc = srcgrp->srcs[i];
       if (actor_uid && mysrc->actor_uid != actor_uid) continue;
       if (actor_inst && mysrc->actor_inst != actor_inst) continue;
-      if (src_type && mysrc->src_type != src_type) continue;
+      if (src_type != LIVES_SRC_TYPE_UNDEFINED && mysrc->src_type != src_type) continue;
+      if (class_uid && mysrc->class_uid != class_uid) continue;
       if (ext_URI && *ext_URI && (!mysrc->ext_URI || !*mysrc->ext_URI
                                   || lives_strcmp(ext_URI, mysrc->ext_URI)))
         continue;
@@ -3042,7 +3040,16 @@ lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *srcgrp, uint64_t actor_uid
                                fingerprint_t *chksum) {
   lives_clip_src_t *mysrc;
   pthread_mutex_lock(&srcgrp->src_mutex);
-  mysrc = _get_clip_src(srcgrp, actor_uid, NULL, src_type, ext_URI, chksum);
+  mysrc = _get_clip_src(srcgrp, actor_uid, NULL, src_type, 0, ext_URI, chksum);
+  pthread_mutex_unlock(&srcgrp->src_mutex);
+  return mysrc;
+}
+
+
+lives_clip_src_t *find_src_by_class_uid(lives_clipsrc_group_t *srcgrp, uint64_t class_uid) {
+  lives_clip_src_t *mysrc;
+  pthread_mutex_lock(&srcgrp->src_mutex);
+  mysrc = _get_clip_src(srcgrp, 0, NULL, LIVES_SRC_TYPE_UNDEFINED, class_uid, NULL, NULL);
   pthread_mutex_unlock(&srcgrp->src_mutex);
   return mysrc;
 }
@@ -3290,14 +3297,6 @@ LIVES_GLOBAL_INLINE void srcgrps_free_all(int nclip) {
 }
 
 
-/* lives_clipsrc_t *find_in_srcgroup(lives_clipsrc_group_t *srcgrp, int src_type) { */
-/*   for (int i = 0; i < srcgrp->n_srcs; i++) { */
-/*     if (srcgrp->srcs[i]->src_type == src_type) return srcgrp->srcs[i]; */
-/*   } */
-/*   return NULL; */
-/* } */
-
-
 void srcgrp_set_apparent(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, full_pal_t pally, int gamma_type) {
   if (srcgrp && sfile) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
@@ -3337,18 +3336,61 @@ lives_clip_src_t *get_primary_src(int nclip) {
 }
 
 
-// a shortcut for adding a new clipsrc to PRIMARY srcgrp
+lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc) {
+  lives_clip_src_t *outsrc;
+  if (!insrc) return NULL;
+  outsrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
+  if (outsrc) {
+    outsrc->uid = gen_unique_id();
+    outsrc->class_uid = insrc->class_uid;
+    outsrc->actor_uid = insrc->actor_uid;
+
+    outsrc->src_type = insrc->src_type;
+    outsrc->flags = insrc->flags;
+
+    switch (insrc->src_type) {
+    case LIVES_SRC_TYPE_DECODER:
+      outsrc->actor = clone_decoder(nclip);
+      break;
+    case LIVES_SRC_TYPE_FILE_BUFF:
+      outsrc->actor_inst = insrc->actor_inst;
+      break;
+    default:
+      outsrc->actor = insrc->actor;
+    }
+
+    lives_memcpy(&outsrc->ext_checksum, &insrc->ext_checksum, sizeof(fingerprint_t));
+    if (insrc->ext_URI) outsrc->ext_URI = lives_strdup(insrc->ext_URI);
+  }
+  return outsrc;
+}
+
+
+lives_clip_src_t *clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc) {
+  lives_clip_src_t *mysrc = NULL;
+  if (srcgrp && insrc && IS_VALID_CLIP(nclip)) {
+    pthread_mutex_lock(&srcgrp->src_mutex);
+    mysrc = _clone_clipsrc(srcgrp, nclip, insrc);
+    pthread_mutex_unlock(&srcgrp->src_mutex);
+  }
+  return mysrc;
+}
+
+
+// a shortcut for adding a new clip_src to PRIMARY srcgrp
 lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type) {
   // TODO - add to all srcgrps
   lives_clip_src_t *mysrc = NULL;
   lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
   if (sfile) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
+    mysrc = _add_clip_src(sfile, -1, SRC_PURPOSE_PRIMARY,
+                          actor, NULL, src_type, 0, NULL, NULL);
+
     for (int i = 0; i < sfile->n_src_groups; i++) {
       lives_clipsrc_group_t *srcgrp = sfile->src_groups[i];
-      lives_clip_src_t *xmysrc = _add_clip_src(sfile, srcgrp->track, srcgrp->purpose,
-                                 actor, NULL, src_type, 0, NULL, NULL);
-      if (srcgrp->purpose == SRC_PURPOSE_PRIMARY) mysrc = xmysrc;
+      if (srcgrp->purpose == SRC_PURPOSE_PRIMARY) continue;
+      _clone_clipsrc(srcgrp, nclip, mysrc);
     }
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
@@ -3428,35 +3470,6 @@ int get_primary_src_type(lives_clip_t *sfile) {
 }
 
 
-lives_clip_src_t *clone_clipsrc(int nclip, lives_clip_src_t *insrc) {
-  lives_clip_src_t *outsrc;
-  if (!insrc) return NULL;
-  outsrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
-  if (outsrc) {
-    outsrc->uid = gen_unique_id();
-    outsrc->actor_uid = insrc->actor_uid;
-
-    outsrc->src_type = insrc->src_type;
-    outsrc->flags = insrc->flags;
-
-    switch (insrc->src_type) {
-    case LIVES_SRC_TYPE_DECODER:
-      outsrc->actor = clone_decoder(nclip);
-      break;
-    case LIVES_SRC_TYPE_FILE_BUFF:
-      outsrc->actor_inst = insrc->actor_inst;
-      break;
-    default:
-      outsrc->actor = insrc->actor;
-    }
-
-    lives_memcpy(&outsrc->ext_checksum, &insrc->ext_checksum, sizeof(fingerprint_t));
-    if (insrc->ext_URI) outsrc->ext_URI = lives_strdup(insrc->ext_URI);
-  }
-  return outsrc;
-}
-
-
 lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose) {
   // create a clone of PRIMARY with track and purpose
   // from sclip to dclip (sclip can be = to dclip)
@@ -3466,17 +3479,17 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
     if (srcgrp) {
       // create new grp, memcpy, adjust track and purpose and uid
       // step trhough srcs, clone each one
-      lives_clipsrc_group_t *xsrcgrp = _add_srcgrp(sfile);
+      lives_clipsrc_group_t *xsrcgrp = _add_srcgrp(sfile, track, purpose);
       lives_memcpy(xsrcgrp, srcgrp, sizeof(lives_clipsrc_group_t));
       pthread_mutex_init(&xsrcgrp->src_mutex, NULL);
       pthread_mutex_init(&xsrcgrp->refcnt_mutex, NULL);
       xsrcgrp->refcnt = 1;
+      // set again as memcpy will overwrite
       xsrcgrp->track = track;
       xsrcgrp->purpose = purpose;
       pthread_mutex_lock(&xsrcgrp->src_mutex);
-      for (int i = 0; i < xsrcgrp->n_srcs; i++) {
-        xsrcgrp->srcs[i] = clone_clipsrc(sclip, srcgrp->srcs[i]);
-      }
+      for (int i = 0; i < srcgrp->n_srcs; i++)
+        _clone_clipsrc(xsrcgrp, sclip, srcgrp->srcs[i]);
       pthread_mutex_unlock(&xsrcgrp->src_mutex);
       return xsrcgrp;
     }

@@ -855,7 +855,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks(void) {
 
 LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
   // return time since application was (re)started
-  return lives_get_session_ticks() * TICKS_PER_SECOND_DBL;
+  return lives_get_session_ticks() / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -1687,7 +1687,7 @@ void update_effort(double nthings, boolean is_bad) {
     mainw->blend_palette = WEED_PALETTE_END;
     if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
-    build_nodemodel(&mainw->nodemodel);
+    mainw->refresh_model = TRUE;
   }
 
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);

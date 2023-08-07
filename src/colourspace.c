@@ -47,6 +47,375 @@ typedef enum PixelFormat swpixfmt;
 typedef enum AVPixelFormat swpixfmt;
 #endif
 
+/* precomputed tables */
+
+// clamped Y'CbCr
+static int Y_Rc[256];
+static int Y_Gc[256];
+static int Y_Bc[256];
+static int Cb_Rc[256];
+static int Cb_Gc[256];
+static int Cb_Bc[256];
+static int Cr_Rc[256];
+static int Cr_Gc[256];
+static int Cr_Bc[256];
+
+static float Yf_Rc[256];
+static float Yf_Gc[256];
+static float Yf_Bc[256];
+
+#if 0
+static float Cbf_Rc[256];
+static float Cbf_Gc[256];
+static float Cbf_Bc[256];
+static float Crf_Rc[256];
+static float Crf_Gc[256];
+static float Crf_Bc[256];
+#endif
+
+// unclamped Y'CbCr
+static int Y_Ru[256];
+static int Y_Gu[256];
+static int Y_Bu[256];
+static int Cb_Ru[256];
+static int Cb_Gu[256];
+static int Cb_Bu[256];
+static int Cr_Ru[256];
+static int Cr_Gu[256];
+static int Cr_Bu[256];
+
+// clamped BT.709
+static int HY_Rc[256];
+static int HY_Gc[256];
+static int HY_Bc[256];
+static int HCb_Rc[256];
+static int HCb_Gc[256];
+static int HCb_Bc[256];
+static int HCr_Rc[256];
+static int HCr_Gc[256];
+static int HCr_Bc[256];
+
+// float - experimental
+static float HYf_Rc[256];
+static float HYf_Gc[256];
+static float HYf_Bc[256];
+static float HCbf_Rc[256];
+static float HCbf_Gc[256];
+static float HCbf_Bc[256];
+static float HCrf_Rc[256];
+static float HCrf_Gc[256];
+static float HCrf_Bc[256];
+
+// unclamped BT.709
+static int HY_Ru[256];
+static int HY_Gu[256];
+static int HY_Bu[256];
+static int HCb_Ru[256];
+static int HCb_Gu[256];
+static int HCb_Bu[256];
+static int HCr_Ru[256];
+static int HCr_Gu[256];
+static int HCr_Bu[256];
+
+static float HYf_Ru[256];
+static float HYf_Gu[256];
+static float HYf_Bu[256];
+static float HCbf_Ru[256];
+static float HCbf_Gu[256];
+static float HCbf_Bu[256];
+static float HCrf_Ru[256];
+static float HCrf_Gu[256];
+static float HCrf_Bu[256];
+
+static boolean conv_RY_inited = FALSE;
+
+// clamped Y'CbCr
+static int RGB_Yc[256];
+static int R_Crc[256];
+static int G_Cbc[256];
+static int G_Crc[256];
+static int B_Cbc[256];
+
+// unclamped Y'CbCr
+static int RGB_Yu[256];
+static int R_Cru[256];
+static int G_Cru[256];
+static int G_Cbu[256];
+static int B_Cbu[256];
+
+// clamped BT.709
+static int HRGB_Yc[256];
+static int HR_Crc[256];
+static int HG_Crc[256];
+static int HG_Cbc[256];
+static int HB_Cbc[256];
+
+static float HRGBf_Yc[256];
+static float HRf_Crc[256];
+static float HGf_Crc[256];
+static float HGf_Cbc[256];
+static float HBf_Cbc[256];
+
+// unclamped BT.709
+static int HRGB_Yu[256];
+static int HR_Cru[256];
+static int HG_Cru[256];
+static int HG_Cbu[256];
+static int HB_Cbu[256];
+
+static float HRGBf_Yu[256];
+static float HRf_Cru[256];
+static float HGf_Cru[256];
+static float HGf_Cbu[256];
+static float HBf_Cbu[256];
+
+static boolean conv_YR_inited = FALSE;
+
+// averaging
+static uint8_t cavgc[256][256];
+static uint8_t cavgu[256][256];
+static uint8_t cavgrgb[256][256];
+static boolean avg_inited = FALSE;
+
+// pre-post multiply alpha
+static int unal[256][256];
+static int al[256][256];
+static int unalcy[256][256];
+static int alcy[256][256];
+static int unalcuv[256][256];
+static int alcuv[256][256];
+
+static void init_average(void) {
+  for (int x = 0; x < 256; x++) {
+    float fa = (float)(x - 128.) * 255. / 244.;
+    short sa = (short)(x - 128);
+    for (int y = 0; y < 256; y++) {
+      float fb = (float)(y - 128.) * 255. / 244.;
+      short sb = (short)(y - 128);
+#ifdef MULT_AVG
+      // values mixed in proportion to strength
+
+      //a + var 1 , b + var2
+      // abs(a) + abs(b)
+      // [(a * abs(a) +  b * abs(b)) / (2 * (abs(a) + abs(b)))]
+
+      float fc = (fa * fabs(fa) + fb * fabs(fb)) / (2. * (fabs(fa) + fabs(fb)));
+      short absa = sa < 0 ? -sa : sa, absb = sb < 0 ? -sb : sb,
+            c = (absa * sa + absb * sb) / ((absa + absb) << 1);
+#else
+      // values mixed equally
+      float fc = (fa + fb) * 224. / 512. + 128.;
+      short c = ((sa + sb) >> 1) + 128;
+#endif
+      cavgc[x][y] = (uint8_t)(fc > 240. ? 240 : fc < 16. ? 16 : fc);
+      cavgrgb[x][y] = cavgu[x][y] = (uint8_t)(c > 255 ? 255 : c < 0 ? 0 : c);
+    }
+  }
+  avg_inited = TRUE;
+}
+
+
+static void set_conversion_arrays(int clamping, int subspace) {
+  // set conversion arrays for RGB <-> YUV, also min/max YUV values
+  // depending on clamping and subspace
+  struct _conv_array *conv_arrays = &THREADVAR(conv_arrays);
+
+  switch (subspace) {
+  case WEED_YUV_SUBSPACE_YUV: // assume YCBCR
+  case WEED_YUV_SUBSPACE_YCBCR:
+    if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
+      conv_arrays->Yx_R = Y_Rc;
+      conv_arrays->Yx_G = Y_Gc;
+      conv_arrays->Yx_B = Y_Bc;
+
+      conv_arrays->Yf_R = Yf_Rc;
+      conv_arrays->Yf_G = Yf_Gc;
+      conv_arrays->Yf_B = Yf_Bc;
+
+      conv_arrays->Crx_R = Cr_Rc;
+      conv_arrays->Crx_G = Cr_Gc;
+      conv_arrays->Crx_B = Cr_Bc;
+
+      conv_arrays->Cbx_R = Cb_Rc;
+      conv_arrays->Cbx_G = Cb_Gc;
+      conv_arrays->Cbx_B = Cb_Bc;
+
+      conv_arrays->RGBx_Y = RGB_Yc;
+
+      conv_arrays->Rx_Cr = R_Crc;
+      conv_arrays->Gx_Cr = G_Crc;
+
+      conv_arrays->Gx_Cb = G_Cbc;
+      conv_arrays->Bx_Cb = B_Cbc;
+    } else {
+      conv_arrays->Yx_R = Y_Ru;
+      conv_arrays->Yx_G = Y_Gu;
+      conv_arrays->Yx_B = Y_Bu;
+
+      conv_arrays->Crx_R = Cr_Ru;
+      conv_arrays->Crx_G = Cr_Gu;
+      conv_arrays->Crx_B = Cr_Bu;
+
+      conv_arrays->Cbx_R = Cb_Ru;
+      conv_arrays->Cbx_G = Cb_Gu;
+      conv_arrays->Cbx_B = Cb_Bu;
+
+      conv_arrays->RGBx_Y = RGB_Yu;
+
+      conv_arrays->Rx_Cr = R_Cru;
+      conv_arrays->Gx_Cr = G_Cru;
+      conv_arrays->Gx_Cb = G_Cbu;
+      conv_arrays->Bx_Cb = B_Cbu;
+    }
+    break;
+  case WEED_YUV_SUBSPACE_BT709:
+    if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
+      conv_arrays->Yx_R = HY_Rc;
+      conv_arrays->Yx_G = HY_Gc;
+      conv_arrays->Yx_B = HY_Bc;
+
+      conv_arrays->Yf_R = HYf_Rc;
+      conv_arrays->Yf_G = HYf_Gc;
+      conv_arrays->Yf_B = HYf_Bc;
+
+      conv_arrays->Crx_R = HCr_Rc;
+      conv_arrays->Crx_G = HCr_Gc;
+      conv_arrays->Crx_B = HCr_Bc;
+
+      conv_arrays->Crf_R = HCrf_Rc;
+      conv_arrays->Crf_G = HCrf_Gc;
+      conv_arrays->Crf_B = HCrf_Bc;
+
+      conv_arrays->Cbx_R = HCb_Rc;
+      conv_arrays->Cbx_G = HCb_Gc;
+      conv_arrays->Cbx_B = HCb_Bc;
+
+      conv_arrays->Cbf_R = HCbf_Rc;
+      conv_arrays->Cbf_G = HCbf_Gc;
+      conv_arrays->Cbf_B = HCbf_Bc;
+
+      conv_arrays->RGBx_Y = HRGB_Yc;
+      conv_arrays->RGBf_Y = HRGBf_Yc;
+
+      conv_arrays->Rx_Cr = HR_Crc;
+      conv_arrays->Gx_Cr = HG_Crc;
+      conv_arrays->Gx_Cb = HG_Cbc;
+      conv_arrays->Bx_Cb = HB_Cbc;
+
+      conv_arrays->Rf_Cr = HRf_Crc;
+      conv_arrays->Gf_Cr = HGf_Crc;
+      conv_arrays->Gf_Cb = HGf_Cbc;
+      conv_arrays->Bf_Cb = HBf_Cbc;
+    } else {
+      conv_arrays->Yx_R = HY_Ru;
+      conv_arrays->Yx_G = HY_Gu;
+      conv_arrays->Yx_B = HY_Bu;
+
+      conv_arrays->Yf_R = HYf_Ru;
+      conv_arrays->Yf_G = HYf_Gu;
+      conv_arrays->Yf_B = HYf_Bu;
+
+      conv_arrays->Yx_R = HY_Ru;
+      conv_arrays->Yx_G = HY_Gu;
+      conv_arrays->Yx_B = HY_Bu;
+
+      conv_arrays->Yf_R = HYf_Ru;
+      conv_arrays->Yf_G = HYf_Gu;
+      conv_arrays->Yf_B = HYf_Bu;
+
+      conv_arrays->Crx_R = HCr_Ru;
+      conv_arrays->Crx_G = HCr_Gu;
+      conv_arrays->Crx_B = HCr_Bu;
+
+      conv_arrays->Crf_R = HCrf_Ru;
+      conv_arrays->Crf_G = HCrf_Gu;
+      conv_arrays->Crf_B = HCrf_Bu;
+
+      conv_arrays->Cbx_R = HCb_Ru;
+      conv_arrays->Cbx_G = HCb_Gu;
+      conv_arrays->Cbx_B = HCb_Bu;
+
+      conv_arrays->Cbf_R = HCbf_Ru;
+      conv_arrays->Cbf_G = HCbf_Gu;
+      conv_arrays->Cbf_B = HCbf_Bu;
+
+      conv_arrays->RGBx_Y = HRGB_Yu;
+      conv_arrays->RGBf_Y = HRGBf_Yu;
+
+      conv_arrays->Rx_Cr = HR_Cru;
+      conv_arrays->Gx_Cr = HG_Cru;
+      conv_arrays->Gx_Cb = HG_Cbu;
+      conv_arrays->Bx_Cb = HB_Cbu;
+
+      conv_arrays->Rf_Cr = HRf_Cru;
+      conv_arrays->Gf_Cr = HGf_Cru;
+      conv_arrays->Gf_Cb = HGf_Cbu;
+      conv_arrays->Bf_Cb = HBf_Cbu;
+    }
+    break;
+  }
+
+  if (!avg_inited) init_average();
+
+  if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
+    conv_arrays->min_Y = conv_arrays->min_UV = YUV_CLAMP_MIN;
+    conv_arrays->max_Y = Y_CLAMP_MAX;
+    conv_arrays->max_UV = UV_CLAMP_MAX;
+    conv_arrays->cavg = (uint8_t *)cavgc;
+  } else {
+    conv_arrays->min_Y = conv_arrays->min_UV = 0;
+    conv_arrays->max_Y = conv_arrays->max_UV = 255;
+    conv_arrays->cavg = (uint8_t *)cavgu;
+  }
+}
+
+#define Y_R THREADVAR(conv_arrays).Yx_R
+#define Y_G THREADVAR(conv_arrays).Yx_G
+#define Y_B THREADVAR(conv_arrays).Yx_B
+
+#define Cb_R THREADVAR(conv_arrays).Cbx_R
+#define Cb_G THREADVAR(conv_arrays).Cbx_G
+#define Cb_B THREADVAR(conv_arrays).Cbx_B
+
+#define Cr_R THREADVAR(conv_arrays).Crx_R
+#define Cr_G THREADVAR(conv_arrays).Crx_G
+#define Cr_B THREADVAR(conv_arrays).Crx_B
+
+#define Yf_R THREADVAR(conv_arrays).Yf_R
+#define Yf_G THREADVAR(conv_arrays).Yf_G
+#define Yf_B THREADVAR(conv_arrays).Yf_B
+
+#define Cbf_R THREADVAR(conv_arrays).Cbf_R
+#define Cbf_G THREADVAR(conv_arrays).Cbf_G
+#define Cbf_B THREADVAR(conv_arrays).Cbf_B
+
+#define Crf_R THREADVAR(conv_arrays).Crf_R
+#define Crf_G THREADVAR(conv_arrays).Crf_G
+#define Crf_B THREADVAR(conv_arrays).Crf_B
+
+#define cavg THREADVAR(conv_arrays).cavg
+
+#define min_Y THREADVAR(conv_arrays).min_Y
+#define max_Y THREADVAR(conv_arrays).max_Y
+#define min_UV THREADVAR(conv_arrays).min_UV
+#define max_UV THREADVAR(conv_arrays).max_UV
+
+#define RGB_Y THREADVAR(conv_arrays).RGBx_Y
+#define R_Cr THREADVAR(conv_arrays).Rx_Cr
+#define G_Cb THREADVAR(conv_arrays).Gx_Cb
+#define G_Cr THREADVAR(conv_arrays).Gx_Cr
+#define B_Cb THREADVAR(conv_arrays).Bx_Cb
+
+#define RGBf_Y THREADVAR(conv_arrays).RGBf_Y
+#define Rf_Cr THREADVAR(conv_arrays).Rf_Cr
+#define Gf_Cb THREADVAR(conv_arrays).Gf_Cb
+#define Gf_Cr THREADVAR(conv_arrays).Gf_Cr
+#define Bf_Cb THREADVAR(conv_arrays).Bf_Cb
+
+#define Y_to_Y THREADVAR(conv_arrays).Yx_to_Y
+#define U_to_U THREADVAR(conv_arrays).Ux_to_U
+#define V_to_V THREADVAR(conv_arrays).Vx_to_V
+
 #if USE_SWSCALE
 #include <pthread.h>
 typedef struct {
@@ -101,14 +470,8 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
           if (subspace == block->subspace
               && iclamping == block->iclamping
               && oclamp_hint == block->oclamp_hint
-              && irow[0] == block->irow[0]
-              && irow[1] == block->irow[1]
-              && irow[2] == block->irow[2]
-              && irow[3] == block->irow[3]
-              && orow[0] == block->orow[0]
-              && orow[1] == block->orow[1]
-              && orow[2] == block->orow[2]
-              && orow[3] == block->orow[3]
+              && !lives_memcmp(irow, block->irow, 4 * sizint)
+              && !lives_memcmp(orow, block->orow, 4 * sizint)
              ) {
             if (num < minbnum) {
               minbnum = num;
@@ -242,190 +605,6 @@ static inline uint8_t clamp0255f(float f) {
   return f;
 }
 
-
-/* precomputed tables */
-
-// generic
-static int *Y_R;
-static int *Y_G;
-static int *Y_B;
-static int *Cb_R;
-static int *Cb_G;
-static int *Cb_B;
-static int *Cr_R;
-static int *Cr_G;
-static int *Cr_B;
-
-static float *Yf_R;
-static float *Yf_G;
-static float *Yf_B;
-static float *Cbf_R;
-static float *Cbf_G;
-static float *Cbf_B;
-static float *Crf_R;
-static float *Crf_G;
-static float *Crf_B;
-
-// clamped Y'CbCr
-static int Y_Rc[256];
-static int Y_Gc[256];
-static int Y_Bc[256];
-static int Cb_Rc[256];
-static int Cb_Gc[256];
-static int Cb_Bc[256];
-static int Cr_Rc[256];
-static int Cr_Gc[256];
-static int Cr_Bc[256];
-
-static float Yf_Rc[256];
-static float Yf_Gc[256];
-static float Yf_Bc[256];
-
-#if 0
-static float Cbf_Rc[256];
-static float Cbf_Gc[256];
-static float Cbf_Bc[256];
-static float Crf_Rc[256];
-static float Crf_Gc[256];
-static float Crf_Bc[256];
-#endif
-
-// unclamped Y'CbCr
-static int Y_Ru[256];
-static int Y_Gu[256];
-static int Y_Bu[256];
-static int Cb_Ru[256];
-static int Cb_Gu[256];
-static int Cb_Bu[256];
-static int Cr_Ru[256];
-static int Cr_Gu[256];
-static int Cr_Bu[256];
-
-// clamped BT.709
-static int HY_Rc[256];
-static int HY_Gc[256];
-static int HY_Bc[256];
-static int HCb_Rc[256];
-static int HCb_Gc[256];
-static int HCb_Bc[256];
-static int HCr_Rc[256];
-static int HCr_Gc[256];
-static int HCr_Bc[256];
-
-// float - experimental
-static float HYf_Rc[256];
-static float HYf_Gc[256];
-static float HYf_Bc[256];
-static float HCbf_Rc[256];
-static float HCbf_Gc[256];
-static float HCbf_Bc[256];
-static float HCrf_Rc[256];
-static float HCrf_Gc[256];
-static float HCrf_Bc[256];
-
-
-// unclamped BT.709
-static int HY_Ru[256];
-static int HY_Gu[256];
-static int HY_Bu[256];
-static int HCb_Ru[256];
-static int HCb_Gu[256];
-static int HCb_Bu[256];
-static int HCr_Ru[256];
-static int HCr_Gu[256];
-static int HCr_Bu[256];
-
-static float HYf_Ru[256];
-static float HYf_Gu[256];
-static float HYf_Bu[256];
-static float HCbf_Ru[256];
-static float HCbf_Gu[256];
-static float HCbf_Bu[256];
-static float HCrf_Ru[256];
-static float HCrf_Gu[256];
-static float HCrf_Bu[256];
-
-static boolean conv_RY_inited = FALSE;
-
-// generic
-static int *RGB_Y;
-static int *R_Cr;
-static int *G_Cb;
-static int *G_Cr;
-static int *B_Cb;
-
-static float *RGBf_Y;
-static float *Rf_Cr;
-static float *Gf_Cb;
-static float *Gf_Cr;
-static float *Bf_Cb;
-
-// clamped Y'CbCr
-static int RGB_Yc[256];
-static int R_Crc[256];
-static int G_Cbc[256];
-static int G_Crc[256];
-static int B_Cbc[256];
-
-// unclamped Y'CbCr
-static int RGB_Yu[256];
-static int R_Cru[256];
-static int G_Cru[256];
-static int G_Cbu[256];
-static int B_Cbu[256];
-
-// clamped BT.709
-static int HRGB_Yc[256];
-static int HR_Crc[256];
-static int HG_Crc[256];
-static int HG_Cbc[256];
-static int HB_Cbc[256];
-
-static float HRGBf_Yc[256];
-static float HRf_Crc[256];
-static float HGf_Crc[256];
-static float HGf_Cbc[256];
-static float HBf_Cbc[256];
-
-// unclamped BT.709
-static int HRGB_Yu[256];
-static int HR_Cru[256];
-static int HG_Cru[256];
-static int HG_Cbu[256];
-static int HB_Cbu[256];
-
-static float HRGBf_Yu[256];
-static float HRf_Cru[256];
-static float HGf_Cru[256];
-static float HGf_Cbu[256];
-static float HBf_Cbu[256];
-
-static boolean conv_YR_inited = FALSE;
-
-static short min_Y, max_Y, min_UV, max_UV;
-
-// averaging
-static uint8_t *cavg;
-static uint8_t cavgc[256][256];
-static uint8_t cavgu[256][256];
-static uint8_t cavgrgb[256][256];
-static boolean avg_inited = FALSE;
-
-// pre-post multiply alpha
-static int unal[256][256];
-static int al[256][256];
-static int unalcy[256][256];
-static int alcy[256][256];
-static int unalcuv[256][256];
-static int alcuv[256][256];
-
-// clamping and subspace converters
-
-// generic
-static uint8_t *Y_to_Y;
-static uint8_t *U_to_U;
-static uint8_t *V_to_V;
-
 // same subspace, clamped to unclamped
 static uint8_t Yclamped_to_Yunclamped[256];
 static uint8_t UVclamped_to_UVunclamped[256];
@@ -453,7 +632,8 @@ static boolean conv_YY_inited = FALSE;
 /// for bt709:
 /// a = 0.099, b = 0.018, c = 4.5, d = 0.081, G = 2.22222222
 
-static gamma_const_t gamma_tx[3];
+gamma_const_t gamma_tx[N_GAMMA_TYPES];
+int gamma_idx[N_GAMMA_TYPES];
 
 static uint8_t *gamma_s2l = NULL;
 static uint8_t *gamma_l2s = NULL;
@@ -462,10 +642,30 @@ static uint8_t *gamma_l2b = NULL;
 static uint8_t *gamma_s2b = NULL;
 static uint8_t *gamma_b2s = NULL;
 
+static inline int get_gamma_idx(int gamma_type) {
+  for (int i = 0; i < N_GAMMA_TYPES; i++) if (gamma_idx[i] == gamma_type) return i;
+  return 0;
+}
+
+
 static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_to) {
+  // formula: for x 1:255, a = x / 255
+  // if a < thresh, x = a / lin   (linear part)
+  // if a >= thresh, x = ((a + offs) / (1.0 + offs)) ^ pf (power law part)
+
+  // at thesh, the two values must be euqal so:
+  // thresh / lin == ((thresh + offs) / (1.0 + offs)) ^ pf
+  // (thresh + offs) / (1 + offs) = (thresh / lin) ^ -pf
+  // t + o = (t / l) ^-pf . (1 + o)
+  // o = -t + (t / l) ^ - pf . (1 + o)
+  // o - o . (t/l)^ -pf = -t + (t / l) ^ -pf
+  // o (1 - (t/l) ^ -pf) = (t/l) ^ -pf - t
+  // o = ((t/l) ^ 1/pf - t) / (1 - (t/l) ^1/pf)
+
   uint8_t *gamma_lut = NULL;
   float inv_gamma = 0.;
   float a, x = 0.;
+  int idx;
 
   if (fileg == 1.0) {
     if (gamma_to == gamma_from || gamma_to == WEED_GAMMA_UNKNOWN
@@ -489,91 +689,44 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
   gamma_lut[0] = 0;
 
   for (int i = 1; i < 256; ++i) {
-    /* if (gamma_from == gamma_to && fileg == 1.0) { */
-    /*   gamma_lut[i] = i; */
-    /*   continue; */
-    /* } */
-
     x = a = (float)i / 255.;
 
-    if (fileg != 1.0) {
-      x = powf(a, fileg);
+    // thresh == 0., offs == 0., (is this correct ?)
+    if (fileg != 1.0) x = powf(a, fileg);
+
+    if (gamma_from == WEED_GAMMA_MONITOR) {
+      // if in gamma is monitor, conv to SRGB
+      x = powf(a, prefs->screen_gamma);
+      gamma_from = WEED_GAMMA_SRGB;
     }
 
-    if (1) {
-      switch (gamma_to) {
-      // simple power law transformation
-      case WEED_GAMMA_MONITOR:
-      case WEED_GAMMA_SRGB:
-        // sRGB gamma
-        switch (gamma_from) {
-        case WEED_GAMMA_BT709:
-          // conv to linear first
-          a = (a < gamma_tx[WEED_GAMMA_BT709].thresh) ? a / gamma_tx[WEED_GAMMA_BT709].lin
-              : powf((a + gamma_tx[WEED_GAMMA_BT709].offs) / (1. + gamma_tx[WEED_GAMMA_BT709].offs),
-                     gamma_tx[WEED_GAMMA_BT709].pf);
-        case WEED_GAMMA_LINEAR:
-          x = (a < (gamma_tx[WEED_GAMMA_SRGB].thresh) / gamma_tx[WEED_GAMMA_SRGB].lin)
-              ? a * gamma_tx[WEED_GAMMA_SRGB].lin
-              : powf((1. + gamma_tx[WEED_GAMMA_SRGB].offs) * a,
-                     1. / gamma_tx[WEED_GAMMA_SRGB].pf) - gamma_tx[WEED_GAMMA_SRGB].offs;
-
-          if (gamma_to == WEED_GAMMA_MONITOR)
-            x = powf(a, inv_gamma);
-          break;
-        case WEED_GAMMA_MONITOR:
-          x = powf(a, prefs->screen_gamma);
-          break;
-        default:
-          break;
-        }
-        break;
-
-      case WEED_GAMMA_LINEAR:
-        switch (gamma_from) {
-        case WEED_GAMMA_MONITOR:
-          x = powf(a, prefs->screen_gamma);
-          break;
-        case WEED_GAMMA_SRGB:
-          x = (a < gamma_tx[WEED_GAMMA_SRGB].thresh) ? a / gamma_tx[WEED_GAMMA_SRGB].lin
-              : powf((a + gamma_tx[WEED_GAMMA_SRGB].offs) / (1. + gamma_tx[WEED_GAMMA_SRGB].offs),
-                     gamma_tx[WEED_GAMMA_SRGB].pf);
-          break;
-        case WEED_GAMMA_BT709:
-          x = (a < gamma_tx[WEED_GAMMA_BT709].thresh) ? a / gamma_tx[WEED_GAMMA_BT709].lin
-              : powf((a + gamma_tx[WEED_GAMMA_BT709].offs) / (1. + gamma_tx[WEED_GAMMA_BT709].offs),
-                     gamma_tx[WEED_GAMMA_BT709].pf);
-          break;
-        default:
-          break;
-        }
-      // rec 709 gamma
-      case WEED_GAMMA_BT709:
-        switch (gamma_from) {
-        case WEED_GAMMA_MONITOR:
-          x = powf(a, prefs->screen_gamma);
-          break;
-        case WEED_GAMMA_SRGB:
-          // convert first to linear
-          a = (a < gamma_tx[WEED_GAMMA_SRGB].thresh) ? a / gamma_tx[WEED_GAMMA_SRGB].lin
-              : powf((a + gamma_tx[WEED_GAMMA_SRGB].offs) / (1. + gamma_tx[WEED_GAMMA_SRGB].offs),
-                     gamma_tx[WEED_GAMMA_SRGB].pf);
-        case WEED_GAMMA_LINEAR:
-          x = (a < (gamma_tx[WEED_GAMMA_BT709].thresh) / gamma_tx[WEED_GAMMA_BT709].lin)
-              ? a * gamma_tx[WEED_GAMMA_BT709].lin
-              : powf((1. + gamma_tx[WEED_GAMMA_BT709].offs) * a,
-                     1. / gamma_tx[WEED_GAMMA_BT709].pf) - gamma_tx[WEED_GAMMA_BT709].offs;
-        default:
-          break;
-        }
-        break;
-
-      default:
-        break;
-      }
+    if (gamma_from != WEED_GAMMA_LINEAR
+        && !(gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_MONITOR)) {
+      // conv to linear
+      idx = get_gamma_idx(gamma_from);
+      a = (a < gamma_tx[idx].thresh) ? a / gamma_tx[idx].lin
+          : powf((a + gamma_tx[idx].offs) / (1. + gamma_tx[idx].offs),
+                 gamma_tx[idx].pf);
+      gamma_from = WEED_GAMMA_LINEAR;
     }
+
+    if (gamma_to != WEED_GAMMA_LINEAR) {
+      // conv to target gamma (if target is monitor, convert to SRGB first)
+      if (gamma_to == WEED_GAMMA_MONITOR)
+        idx = get_gamma_idx(WEED_GAMMA_SRGB);
+      else idx = get_gamma_idx(gamma_to);
+
+      x = (a < (gamma_tx[idx].thresh) / gamma_tx[idx].lin)
+          ? a * gamma_tx[idx].lin
+          : powf((1. + gamma_tx[idx].offs) * a,
+                 1. / gamma_tx[idx].pf) - gamma_tx[idx].offs;
+    }
+
+    // convert from SRGB to monitor if called for
+    if (gamma_to == WEED_GAMMA_MONITOR) x = powf(a, inv_gamma);
     gamma_lut[i] = CLAMP0255((int32_t)(255. * x + .5));
   }
+
   if (fileg == 1.) {
     if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && !gamma_l2s)
       gamma_l2s = gamma_lut;
@@ -933,30 +1086,6 @@ static void init_YUV_to_YUV_tables(void) {
 }
 
 
-static void init_average(void) {
-  for (int x = 0; x < 256; x++) {
-    float fa = (float)(x - 128.) * 255. / 244.;
-    short sa = (short)(x - 128);
-    for (int y = 0; y < 256; y++) {
-      float fb = (float)(y - 128.) * 255. / 244.;
-      short sb = (short)(y - 128);
-#ifdef MULT_AVG
-      // values mixed in proportion to strength
-      float fc = (fa + fb - ((fa * fb) >> 8)) * 224. / 512. + 128.;
-      short c = (sa + sb - ((sa * sb) >> 8)) + 128;
-#else
-      // values mixed equally
-      float fc = (fa + fb) * 224. / 512. + 128.;
-      short c = ((sa + sb) >> 1) + 128;
-#endif
-      cavgc[x][y] = (uint8_t)(fc > 240. ? 240 : fc < 16. ? 16 : fc);
-      cavgrgb[x][y] = cavgu[x][y] = (uint8_t)(c > 255 ? 255 : c < 0 ? 0 : c);
-    }
-  }
-  avg_inited = TRUE;
-}
-
-
 static void init_unal(void) {
   // premult to postmult and vice-versa
   for (int i = 0; i < 256; i++) { //alpha val
@@ -972,160 +1101,6 @@ static void init_unal(void) {
     }
   }
   unal_inited = TRUE;
-}
-
-
-static void set_conversion_arrays(int clamping, int subspace) {
-  // set conversion arrays for RGB <-> YUV, also min/max YUV values
-  // depending on clamping and subspace
-
-  switch (subspace) {
-  case WEED_YUV_SUBSPACE_YUV: // assume YCBCR
-  case WEED_YUV_SUBSPACE_YCBCR:
-    if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
-      Y_R = Y_Rc;
-      Y_G = Y_Gc;
-      Y_B = Y_Bc;
-
-      Yf_R = Yf_Rc;
-      Yf_G = Yf_Gc;
-      Yf_B = Yf_Bc;
-
-      Cr_R = Cr_Rc;
-      Cr_G = Cr_Gc;
-      Cr_B = Cr_Bc;
-
-      Cb_R = Cb_Rc;
-      Cb_G = Cb_Gc;
-      Cb_B = Cb_Bc;
-
-      RGB_Y = RGB_Yc;
-
-      R_Cr = R_Crc;
-      G_Cr = G_Crc;
-
-      G_Cb = G_Cbc;
-      B_Cb = B_Cbc;
-    } else {
-      Y_R = Y_Ru;
-      Y_G = Y_Gu;
-      Y_B = Y_Bu;
-
-      Cr_R = Cr_Ru;
-      Cr_G = Cr_Gu;
-      Cr_B = Cr_Bu;
-
-      Cb_R = Cb_Ru;
-      Cb_G = Cb_Gu;
-      Cb_B = Cb_Bu;
-
-      RGB_Y = RGB_Yu;
-
-      R_Cr = R_Cru;
-      G_Cr = G_Cru;
-      G_Cb = G_Cbu;
-      B_Cb = B_Cbu;
-    }
-    break;
-  case WEED_YUV_SUBSPACE_BT709:
-    if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
-      Y_R = HY_Rc;
-      Y_G = HY_Gc;
-      Y_B = HY_Bc;
-
-      Yf_R = HYf_Rc;
-      Yf_G = HYf_Gc;
-      Yf_B = HYf_Bc;
-
-      Cr_R = HCr_Rc;
-      Cr_G = HCr_Gc;
-      Cr_B = HCr_Bc;
-
-      Crf_R = HCrf_Rc;
-      Crf_G = HCrf_Gc;
-      Crf_B = HCrf_Bc;
-
-      Cb_R = HCb_Rc;
-      Cb_G = HCb_Gc;
-      Cb_B = HCb_Bc;
-
-      Cbf_R = HCbf_Rc;
-      Cbf_G = HCbf_Gc;
-      Cbf_B = HCbf_Bc;
-
-      RGB_Y = HRGB_Yc;
-      RGBf_Y = HRGBf_Yc;
-
-      R_Cr = HR_Crc;
-      G_Cr = HG_Crc;
-      G_Cb = HG_Cbc;
-      B_Cb = HB_Cbc;
-
-      Rf_Cr = HRf_Crc;
-      Gf_Cr = HGf_Crc;
-      Gf_Cb = HGf_Cbc;
-      Bf_Cb = HBf_Cbc;
-    } else {
-      Y_R = HY_Ru;
-      Y_G = HY_Gu;
-      Y_B = HY_Bu;
-
-      Yf_R = HYf_Ru;
-      Yf_G = HYf_Gu;
-      Yf_B = HYf_Bu;
-
-      Y_R = HY_Ru;
-      Y_G = HY_Gu;
-      Y_B = HY_Bu;
-
-      Yf_R = HYf_Ru;
-      Yf_G = HYf_Gu;
-      Yf_B = HYf_Bu;
-
-      Cr_R = HCr_Ru;
-      Cr_G = HCr_Gu;
-      Cr_B = HCr_Bu;
-
-      Crf_R = HCrf_Ru;
-      Crf_G = HCrf_Gu;
-      Crf_B = HCrf_Bu;
-
-      Cb_R = HCb_Ru;
-      Cb_G = HCb_Gu;
-      Cb_B = HCb_Bu;
-
-      Cbf_R = HCbf_Ru;
-      Cbf_G = HCbf_Gu;
-      Cbf_B = HCbf_Bu;
-
-      RGB_Y = HRGB_Yu;
-      RGBf_Y = HRGBf_Yu;
-
-      R_Cr = HR_Cru;
-      G_Cr = HG_Cru;
-      G_Cb = HG_Cbu;
-      B_Cb = HB_Cbu;
-
-      Rf_Cr = HRf_Cru;
-      Gf_Cr = HGf_Cru;
-      Gf_Cb = HGf_Cbu;
-      Bf_Cb = HBf_Cbu;
-    }
-    break;
-  }
-
-  if (!avg_inited) init_average();
-
-  if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
-    min_Y = min_UV = YUV_CLAMP_MIN;
-    max_Y = Y_CLAMP_MAX;
-    max_UV = UV_CLAMP_MAX;
-    cavg = (uint8_t *)cavgc;
-  } else {
-    min_Y = min_UV = 0;
-    max_Y = max_UV = 255;
-    cavg = (uint8_t *)cavgu;
-  }
 }
 
 
@@ -1832,7 +1807,6 @@ LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha_last(int pal) {
 }
 
 LIVES_GLOBAL_INLINE boolean weed_palette_is_sane(int pal) {
-
   // if there is only a single component it maybe of any type
 
   // otherwise:
@@ -1859,11 +1833,11 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_sane(int pal) {
   int i;
 
   if (!mpx) return FALSE;
-  if (!(mpx->flags & WEED_VCHAN_DESC_PLANAR)) is_planar = TRUE;
+  if (mpx->flags & WEED_VCHAN_DESC_PLANAR) is_planar = TRUE;
   else maxcpts = WEED_MAXPCHANS;
 
-  for (i = 0; i < maxcpts && mpx->chantype[i]; i++) ncpts++;
-  if (!ncpts || ncpts == maxcpts) return FALSE;
+  for (ncpts = 0; ncpts < maxcpts && mpx->chantype[ncpts]; ncpts++);
+  if (!ncpts || ncpts > maxcpts) return FALSE;
 
   for (i = 0; i < ncpts; i++) {
     switch (mpx->chantype[i]) {
@@ -1879,7 +1853,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_sane(int pal) {
     default: return FALSE;
     }
     if (ncpts == 1) return TRUE;
-    if (num_a > 1 || num_r > 1 || num_g < 1 || num_b > 1 || num_u > 1 || num_v > 1)
+    if (num_a > 1 || num_r > 1 || num_g > 1 || num_b > 1 || num_u > 1 || num_v > 1)
       return FALSE;
     if (is_planar && num_y > 1) return FALSE;
     if ((num_r || num_g || num_b) && (num_y || num_u || num_v))
@@ -1895,11 +1869,6 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_sane(int pal) {
   return TRUE;
 }
 
-
-static void init_gamma_tx(void) {
-  gamma_tx[WEED_GAMMA_SRGB] = (gamma_const_t) {0.055, 12.92, 0.04045, 2.4};
-  gamma_tx[WEED_GAMMA_BT709] = (gamma_const_t) {0.099, 4.5, 0.081, 1. / .45};
-}
 
 static void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) LIVES_HOT;
 
@@ -2065,7 +2034,8 @@ LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_
 #define bgr2yuv(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v)
 
 
-LIVES_INLINE void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) {
+LIVES_INLINE void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v,
+                                     uint8_t *LIVES_RESTRICT lut) {
   short a;
   if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) * y = max_Y;
   else *y = a < min_Y ? min_Y : a;
@@ -2094,7 +2064,7 @@ LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 }
 
 LIVES_INLINE void rgb2uyvy_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                      uyvy_macropixel *uyvy, uint8_t *lut) {
+                                      uyvy_macropixel *uyvy, uint8_t *LIVES_RESTRICT lut) {
   short a;
   if ((a = spc_rnd(Cb_R[(r0 = lut[r0])] + Cb_G[(g0 = lut[g0])] + Cb_B[(b0 = lut[b0])])) > max_UV) uyvy->u0 = max_UV;
   else uyvy->u0 = a < min_UV ? min_UV : a;
@@ -2126,7 +2096,7 @@ LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 
 
 LIVES_INLINE void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                      yuyv_macropixel *yuyv, uint8_t *lut) {
+                                      yuyv_macropixel *yuyv, uint8_t *LIVES_RESTRICT lut) {
   short a;
   if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) yuyv->y0 = max_Y;
   else yuyv->y0 = a < min_Y ? min_Y : a;
@@ -2199,7 +2169,7 @@ LIVES_INLINE void rgb16_2uyvy(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1
 
 #if 0
 LIVES_INLINE void rgb16_2uyvy_with_gamma(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
-    uyvy_macropixel *uyvy, uint8_t *lut) {
+    uyvy_macropixel *uyvy, uint8_t *LIVES_RESTRICT lut) {
   short a;
   uint8_t rfrac0, gfrac0, bfrac0, rfrac1, gfrac1, bfrac1;
   uint8_t rr0, bb0, gg0, rr1, gg1, bb1;
@@ -2282,6 +2252,20 @@ LIVES_LOCAL_INLINE void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r,
   *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
 }
 
+#define xyuv2rgb(y,u,v,r,g,b) do			\
+{							\
+  int yy = xRGB_Y[y];							\
+  *r = CLAMP0255f(spc_rnd(yy + xR_Cr[v]));				\
+  *g = CLAMP0255f(spc_rnd(yy + xG_Cb[u] + xG_Cr[v]));			\
+  *b = CLAMP0255f(spc_rnd(yy + xB_Cb[u]));} while (0);			\
+
+#define SETVARS					\
+  int *xRGB_Y = THREADVAR(conv_arrays).RGBx_Y,	\
+    *xR_Cr = THREADVAR(conv_arrays).Rx_Cr,	\
+    *xG_Cb = THREADVAR(conv_arrays).Gx_Cb,	\
+    *xG_Cr = THREADVAR(conv_arrays).Gx_Cr,	\
+    *xB_Cb = THREADVAR(conv_arrays).Bx_Cb
+
 LIVES_LOCAL_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = clamp0255f(RGBf_Y[y] + Rf_Cr[v]);
   *g = clamp0255f(RGBf_Y[y] + Gf_Cb[u] + Gf_Cr[v]);
@@ -2292,21 +2276,22 @@ LIVES_LOCAL_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *
 //#define yuv2rgb(y, u, v, r, g, b) (yuv2rgb_float((y), (u), (v), (r), (g), (b)))
 #define yuv2bgr(y, u, v, b, g, r) yuv2rgb(y, u, v, r, g, b)
 
-LIVES_LOCAL_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) {
+LIVES_LOCAL_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b,
+    uint8_t *LIVES_RESTRICT lut) {
   *r = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]))];
   *g = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]))];
   *b = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]))];
 }
 
 // nope...
-/* LIVES_INLINE void yuv2rgb_with_gamma_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) { */
+/* LIVES_INLINE void yuv2rgb_with_gamma_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *LIVES_RESTRICT lut) { */
 /*   //yuv2rgb_with_gamma_int(y, u, v, r, g, b, lut); */
 /*   *r = lut[(uint8_t)clamp0255f(RGBf_Y[y] + Rf_Cr[v])]; */
 /*   *g = lut[(uint8_t)clamp0255f(RGBf_Y[y] + Gf_Cb[u] + Gf_Cr[v])]; */
 /*   *b = lut[(uint8_t)clamp0255f(RGBf_Y[y] + Bf_Cb[u])]; */
 /* } */
 
-/* LIVES_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) { */
+/* LIVES_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *LIVES_RESTRICT lut) { */
 /*   if (prefs->pb_quality == PB_QUALITY_HIGH) return yuv2rgb_with_gamma_float(y, u, v, r, g, b, lut); */
 /*   return yuv2rgb_with_gamma_int(y, u, v, r, g, b, lut); */
 /* } */
@@ -2620,8 +2605,8 @@ void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, i
 ///////////////////////////////////////////////////////////
 // frame conversions
 
-static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
-                                        int orowstride, uint8_t *dest, boolean add_alpha, int clamping, int subspace, int thread_id) {
+static void convert_yuv888_to_rgb_frame(uint8_t *LIVES_RESTRICT src, int hsize, int vsize, int irowstride,
+                                        int orowstride, uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping, int subspace, int thread_id) {
   int x, y, i;
   size_t offs = 3;
 
@@ -2662,6 +2647,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
           ccparams[i].out_alpha = add_alpha;
           ccparams[i].in_clamping = clamping;
           ccparams[i].in_subspace = subspace;
+          lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
           ccparams[i].thread_id = i;
 
           if (i == 0) convert_yuv888_to_rgb_frame_thread(&ccparams[i]);
@@ -2698,6 +2684,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
 
 static void *convert_yuv888_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv888_to_rgb_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                               ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->out_alpha,
                               ccparams->in_clamping, ccparams->in_subspace, ccparams->thread_id);
@@ -2705,8 +2692,8 @@ static void *convert_yuv888_to_rgb_frame_thread(void *data) {
 }
 
 
-static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, int irowstride,
-    int orowstride, uint8_t *dest, boolean del_alpha, int clamping, int subspace, int thread_id) {
+static void convert_yuva8888_to_rgba_frame(uint8_t *LIVES_RESTRICT src, int hsize, int vsize, int irowstride,
+    int orowstride, uint8_t *LIVES_RESTRICT dest, boolean del_alpha, int clamping, int subspace, int thread_id) {
   int x, y, i;
 
   size_t offs = 4;
@@ -2747,6 +2734,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
         ccparams[i].out_alpha = !del_alpha;
         ccparams[i].in_clamping = clamping;
         ccparams[i].in_subspace = subspace;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuva8888_to_rgba_frame_thread(&ccparams[i]);
@@ -2782,6 +2770,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
 
 static void *convert_yuva8888_to_rgba_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuva8888_to_rgba_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                  ccparams->orowstrides[0], (uint8_t *)ccparams->dest, !ccparams->out_alpha,
                                  ccparams->in_clamping, ccparams->in_subspace, ccparams->thread_id);
@@ -2789,8 +2778,8 @@ static void *convert_yuva8888_to_rgba_frame_thread(void *data) {
 }
 
 
-static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int irowstride,
-                                        int orowstride, uint8_t *dest, boolean add_alpha, int clamping, int subspace, int thread_id) {
+static void convert_yuv888_to_bgr_frame(uint8_t *LIVES_RESTRICT src, int hsize, int vsize, int irowstride,
+                                        int orowstride, uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping, int subspace, int thread_id) {
   int x, y, i;
   size_t offs = 3;
 
@@ -2830,6 +2819,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
         ccparams[i].out_alpha = add_alpha;
         ccparams[i].in_clamping = clamping;
         ccparams[i].in_subspace = subspace;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuv888_to_bgr_frame_thread(&ccparams[i]);
@@ -2865,6 +2855,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
 
 static void *convert_yuv888_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv888_to_bgr_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                               ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->out_alpha,
                               ccparams->in_clamping, ccparams->in_subspace, ccparams->thread_id);
@@ -2872,8 +2863,8 @@ static void *convert_yuv888_to_bgr_frame_thread(void *data) {
 }
 
 
-static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, int irowstride,
-    int orowstride, uint8_t *dest, boolean del_alpha, int clamping, int subspace, int thread_id) {
+static void convert_yuva8888_to_bgra_frame(uint8_t *LIVES_RESTRICT src, int hsize, int vsize, int irowstride,
+    int orowstride, uint8_t *LIVES_RESTRICT dest, boolean del_alpha, int clamping, int subspace, int thread_id) {
   int x, y, i;
 
   size_t offs = 4;
@@ -2914,6 +2905,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
         ccparams[i].out_alpha = !del_alpha;
         ccparams[i].in_clamping = clamping;
         ccparams[i].in_subspace = subspace;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuva8888_to_bgra_frame_thread(&ccparams[i]);
@@ -2949,6 +2941,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
 
 static void *convert_yuva8888_to_bgra_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuva8888_to_bgra_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                  ccparams->orowstrides[0], (uint8_t *)ccparams->dest, !ccparams->out_alpha,
                                  ccparams->in_clamping, ccparams->in_subspace, ccparams->thread_id);
@@ -2956,8 +2949,8 @@ static void *convert_yuva8888_to_bgra_frame_thread(void *data) {
 }
 
 
-static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
-    int orowstride, uint8_t *dest, int clamping, int subspace, int thread_id) {
+static void convert_yuv888_to_argb_frame(uint8_t *LIVES_RESTRICT src, int hsize, int vsize, int irowstride,
+    int orowstride, uint8_t *LIVES_RESTRICT dest, int clamping, int subspace, int thread_id) {
   int x, y, i;
   size_t offs = 4;
 
@@ -2996,6 +2989,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_clamping = clamping;
         ccparams[i].in_subspace = subspace;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuv888_to_argb_frame_thread(&ccparams[i]);
@@ -3030,6 +3024,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
 
 static void *convert_yuv888_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv888_to_argb_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
                                ccparams->in_clamping, ccparams->in_subspace, ccparams->thread_id);
@@ -3037,8 +3032,8 @@ static void *convert_yuv888_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
-    int orowstride, uint8_t *dest, int clamping, int subspace, int thread_id) {
+static void convert_yuva8888_to_argb_frame(uint8_t *LIVES_RESTRICT src, int hsize, int vsize, int irowstride,
+    int orowstride, uint8_t *LIVES_RESTRICT dest, int clamping, int subspace, int thread_id) {
   int x, y, i;
 
   size_t offs = 4;
@@ -3078,6 +3073,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_clamping = clamping;
         ccparams[i].in_subspace = subspace;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuva8888_to_argb_frame_thread(&ccparams[i]);
@@ -3112,6 +3108,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
 
 static void *convert_yuva8888_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuva8888_to_argb_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                  ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
                                  ccparams->in_clamping, ccparams->in_subspace, ccparams->thread_id);
@@ -3119,18 +3116,12 @@ static void *convert_yuva8888_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
-    int orowstride,
-    uint8_t *dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
+static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height,
+    boolean is_bottom, int *istrides, int orowstride,
+    uint8_t *LIVES_RESTRICT dest, boolean add_alpha, boolean is_422, int sampling,
+    int clamping, int subspace,
     int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
-  int i, j;
-  uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
-  int opsize = 3;
-  int irow = istrides[0];
-  int r2 = 0;
-  boolean even = TRUE;
-  size_t uv_offs = 0, y_offs = 0;
-  uint8_t y, u, v, next_u, next_v, last_u, last_v;
+  int i;
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 #if USE_THREADS
@@ -3181,6 +3172,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           ccparams[i].in_subspace = subspace;
           ccparams[i].is_422 = is_422;
           ccparams[i].lut = gamma_lut;
+          lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
           ccparams[i].thread_id = i;
 
           if (i == 0) convert_yuv420p_to_rgb_frame_thread(&ccparams[i]);
@@ -3199,94 +3191,194 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
       return;
     }
   }
+  SETVARS;
+  uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
+  int opsize = 3;
+  int irow = istrides[0];
+  int r2 = 0;
 
   if (add_alpha) opsize = 4;
-  width *= opsize;
 
-  for (i = 0; i < height; i++) {
-    if (!is_422) {
-      if (!(i & 1)) even = TRUE;
-      else even = FALSE;
+  // row 0, y0 horiz avgs u1,v1
+  // row 2 - y2 horiz avg u2, v2
+  // avg row 1 - y1, avg u1, v1, u2, v2
+  // 4. 3
+
+
+  if (!is_422) {
+    for (int i = 0; i < height; i += 2) {
+      uint8_t last_u1 = s_u[istrides[1] * r2], last_v1 = s_v[istrides[2] * r2];
+      uint8_t last_u2 = !(is_bottom && i >= height - 2) ? s_u[istrides[1] * (r2 + 1)]
+                        : last_u1;
+      uint8_t last_v2 = !(is_bottom && i >= height - 2) ? s_v[istrides[1] * (r2 + 1)]
+                        : last_v1;
+      uint8_t this_u1 = last_u1, this_v1 = last_v1, this_u2 = last_u2, this_v2 = last_v2;
+      uint8_t next_u1 = last_u1, next_v1 = last_v1, next_u2 = last_u2, next_v2 = last_v2;
+      uint8_t u1 = last_u1, u2, u3 = last_u2, u4, v1 = last_v1, v2, v3 = last_v2, v4;
+
+      //
+
+      for (int j = 0; j < width; j += 2) {
+        // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+        // we know we can do this because Y must be even width
+        // LEFT OUTPUT PIXEL
+        uint8_t y1 = s_y[irow * i + j], y2 = s_y[irow * i + j + 1];
+        uint8_t y3 = s_y[irow * (i + 1) + j], y4 = s_y[irow * (i + 1) + j + 1];
+
+        if (j > 0) {
+          // we assume central sampling (mpeg) so we have y1-uv1-y2-y3-uv2-y4-y5-uv3-y6-y7- etc
+          // then y1 gets 100% uv1, y2 gets 75% uv1 and 25% uv2, y3 gets 25% uv1, 75% uv2 etc
+          u1 = avg_chromaf(this_u1, last_u1);
+          v1 = avg_chromaf(this_v1, last_v1);
+        }
+
+        next_u1 = s_u[istrides[1] * r2 + (j >> 1) + 1];
+        next_v1 = s_v[istrides[2] * r2 + (j >> 1) + 1];
+
+        u2 = avg_chromaf(this_u1, next_u1);
+        v2 = avg_chromaf(this_v1, next_v1);
+
+        last_u1 = this_u1;
+        last_v1 = this_v1;
+        this_u1 = next_u1;
+        this_v1 = next_v1;
+
+        if (gamma_lut) {
+          yuv2rgb_with_gamma(y1, u1, v1, &dest[orowstride * i + j * opsize],
+                             &dest[orowstride * i + j * opsize + 1],
+                             &dest[orowstride * i + j * opsize + 2], gamma_lut);
+
+          yuv2rgb_with_gamma(y3, u2, v2, &dest[orowstride * (i + 1) + j * opsize],
+                             &dest[orowstride * (i + 1) + j * opsize + 1],
+                             &dest[orowstride * (i + 1) + j * opsize + 2], gamma_lut);
+        } else {
+          xyuv2rgb(y1, u1, v1, &dest[orowstride * i + j * opsize],
+                   &dest[orowstride * i + j * opsize + 1],
+                   &dest[orowstride * i + j * opsize + 2]);
+
+          xyuv2rgb(y3, u2, v2, &dest[orowstride * (i + 1)  + j * opsize],
+                   &dest[orowstride * (i + 1) + j * opsize + 1],
+                   &dest[orowstride * (i + 1) + j * opsize + 2]);
+        }
+
+        if (add_alpha)
+          dest[orowstride * i + j * opsize + 3] = dest[orowstride * (i + 1) + j * opsize + 3] = 255;
+
+        // next row ////
+
+        if (j > 0) {
+          // we assume central sampling (mpeg) so we have y1-uv1-y2-y3-uv2-y4-y5-uv3-y6-y7- etc
+          // then y1 gets 100% uv1, y2 gets 75% uv1 and 25% uv2, y3 gets 25% uv1, 75% uv2 etc
+          u3 = avg_chromaf(avg_chromaf(this_u2, last_u2), u1);
+          v3 = avg_chromaf(avg_chromaf(this_v2, last_v2), v1);
+        }
+
+        if (is_bottom && i == height - 1) {
+          next_u2 = next_u1;
+          next_v2 = next_v1;
+        } else {
+          next_u2 = s_u[istrides[1] * (r2 + 1) + (j >> 1) + 1];
+          next_v2 = s_v[istrides[2] * (r2 + 1) + (j >> 1) + 1];
+
+          /// center = 3 : 1, left = avg(last, next), right = only next
+          u4 = avg_chroma_3_1(this_u2, next_u1);
+          v4 = avg_chroma_3_1(this_v2, next_v2);
+        }
+
+        u4 = avg_chromaf(avg_chromaf(this_u2, next_u2), u2);
+        v4 = avg_chromaf(avg_chromaf(this_v2, next_v2), v2);
+
+        last_u2 = this_u2;
+        last_v2 = this_v2;
+        this_u2 = next_u1;
+        this_v2 = next_v2;
+
+        if (gamma_lut) {
+          yuv2rgb_with_gamma(y2, u3, v3, &dest[orowstride * i + (j + 1) * opsize],
+                             &dest[orowstride * i + (j + 1) * opsize + 1],
+                             &dest[orowstride * i + (j + 1) * opsize + 2], gamma_lut);
+
+          yuv2rgb_with_gamma(y4, u4, v4, &dest[orowstride * (i + 1) + (j + 1) * opsize],
+                             &dest[orowstride * (i + 1) + (j + 1) * opsize + 1],
+                             &dest[orowstride * (i + 1) + (j + 1) * opsize + 2], gamma_lut);
+        } else {
+          xyuv2rgb(y2, u3, v3, &dest[orowstride * i + (j + 1) * opsize],
+                   &dest[orowstride * i + (j + 1) * opsize + 1],
+                   &dest[orowstride * i + (j + 1) * opsize + 2]);
+
+          xyuv2rgb(y4, u4, v4, &dest[orowstride * (i + 1) + (j + 1) * opsize],
+                   &dest[orowstride * (i + 1) + (j + 1) * opsize + 1],
+                   &dest[orowstride * (i + 1) + (j + 1) * opsize + 2]);
+        }
+
+        if (add_alpha)
+          dest[orowstride * i + (j + 1) * opsize  + 3]
+            = dest[orowstride * (i + 1) + (j + 1) * opsize  + 3] = 255;
+      }
+      r2++;
     }
+  } else {
+    for (int i = 0; i < height; i++) {
+      uint8_t last_u = s_u[istrides[1] * r2], last_v = s_v[istrides[2] * r2];
+      uint8_t next_u = last_u, u = last_u, next_v = last_v, v = last_v;
 
-    uv_offs = y_offs = 0;
+      for (int j = 0; j < width; j += 2) {
+        // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+        // we know we can do this because Y must be even width
+        /// even row, normal
+        uint8_t y1 = s_y[irow * i + j], y2 = s_y[irow * i + j + 1];
 
-    for (j = 0; j < width; j += opsize) {
-      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
-      // we know we can do this because Y must be even width
-      y = s_y[irow * i + y_offs++];
-      /// even row, normal
-      if (j > 0) {
-        /// center = 3 : 1, left = only next, right = avg(last, next)
-        u = avg_chroma_3_1(next_u, last_u);
-        v = avg_chroma_3_1(next_v, last_v);
+        if (j > 0) {
+          /// center = 3 : 1, left = only next, right = avg(last, next)
+          u = avg_chroma_3_1(next_u, last_u);
+          v = avg_chroma_3_1(next_v, last_v);
+          last_u = next_u;
+          last_v = next_v;
+        }
+
+        if (gamma_lut)
+          yuv2rgb_with_gamma(y1, u, v, &dest[orowstride * i + j * opsize],
+                             &dest[orowstride * i + j * opsize + 1],
+                             &dest[orowstride * i + j * opsize + 2], gamma_lut);
+        else
+          yuv2rgb(y1, u, v, &dest[orowstride * i + j * opsize],
+                  &dest[orowstride * i + j * opsize + 1],
+                  &dest[orowstride * i + j * opsize + 2]);
+
+        if (add_alpha) dest[orowstride * i + j * opsize + 3] = 255;
+
+        // second RGB pixel
         last_u = next_u;
         last_v = next_v;
-      } else {
-        if (even) {
-          last_u = next_u = u = s_u[istrides[1] * r2 + uv_offs];
-          last_v = next_v = v = s_v[istrides[2] * r2 + uv_offs];
-        } else {
-          if (is_bottom && i >= height - 3) {
-            next_u = u = s_u[istrides[1] * r2 + uv_offs];
-            next_v = v = s_v[istrides[2] * r2 + uv_offs];
-          } else {
-            next_u = u = avg_chromaf(s_u[istrides[1] * r2 + uv_offs], s_u[istrides[1] * r2 + uv_offs + istrides[1]]);
-            next_v = v = avg_chromaf(s_v[istrides[2] * r2 + uv_offs], s_v[istrides[2] * r2 + uv_offs + istrides[2]]);
-          }
+
+        if (j < width - 1) {
+          next_u = s_u[istrides[1] * r2 + (j >> 1) + 1];
+          next_v = s_v[istrides[2] * r2 + (j >> 1) + 1];
+
+          u = avg_chroma_3_1(next_u, last_u);
+          v = avg_chroma_3_1(next_v, last_v);
+          /// center = 3 : 1, left = avg(last, next), right = only next
         }
+
+        if (gamma_lut)
+          yuv2rgb_with_gamma(y2, u, v, &dest[orowstride * i + (j + 1) * opsize],
+                             &dest[orowstride * i + (j + 1) * opsize + 1],
+                             &dest[orowstride * i + (j + 1) * opsize + 2], gamma_lut);
+        else
+          yuv2rgb(y2, u, v, &dest[orowstride * i + (j + 1) * opsize],
+                  &dest[orowstride * i + (j + 1) * opsize + 1],
+                  &dest[orowstride * i + (j + 1) * opsize + 2]);
+
+        if (add_alpha) dest[orowstride * i + (j + 1) * opsize + 3] = 255;
       }
-      if (gamma_lut)
-        yuv2rgb_with_gamma(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1],
-                           &dest[orowstride * i + j + 2], gamma_lut);
-      else
-        yuv2rgb(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1], &dest[orowstride * i + j + 2]);
-      if (add_alpha) dest[orowstride * i + j + 3] = 255;
-
-      // second RGB pixel
-      j += opsize;
-      y = s_y[irow * i + y_offs++];
-
-      last_u = next_u;
-      last_v = next_v;
-
-      if (j < width - 1) {
-        if (even) {
-          /// even row, normal
-          next_u = s_u[istrides[1] * r2 + uv_offs];
-          next_v = s_v[istrides[2] * r2 + uv_offs];
-        } else {
-          if (is_bottom && i >= height - 3) {
-            next_u = u = s_u[istrides[1] * r2 + uv_offs];
-            next_v = v = s_v[istrides[2] * r2 + uv_offs];
-          } else {
-            //g_print("vals %ld and %d %d %d\n", uv_offs, istrides[2], i, j);
-            next_u = u = avg_chromaf(s_u[istrides[1] * r2 + uv_offs], s_u[istrides[1] * r2 + uv_offs + istrides[1]]);
-            next_v = v = avg_chromaf(s_v[istrides[2] * r2 + uv_offs], s_v[istrides[2] * r2 + uv_offs + istrides[2]]);
-          }
-        }
-        /// center = 3 : 1, left = avg(last, next), right = only next
-        u = avg_chroma_3_1(next_u, last_u);
-        v = avg_chroma_3_1(next_v, last_v);
-      } else {
-        u = last_u;
-        v = last_v;
-      }
-      if (gamma_lut)
-        yuv2rgb_with_gamma(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1],
-                           &dest[orowstride * i + j + 2], gamma_lut);
-      else
-        yuv2rgb(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1],
-                &dest[orowstride * i + j + 2]);
-      if (add_alpha) dest[orowstride * i + j + 3] = 255;
-      uv_offs++;
+      r2++;
     }
-    if (is_422 || !even) r2++;
   }
 }
 
 static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv420p_to_rgb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize,
                                ccparams->is_bottom, ccparams->irowstrides,
                                ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
@@ -3299,7 +3391,7 @@ static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
 
 static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
     int orowstride,
-    uint8_t *dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
+    uint8_t *LIVES_RESTRICT dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
     int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
@@ -3358,6 +3450,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           ccparams[i].in_subspace = subspace;
           ccparams[i].is_422 = is_422;
           ccparams[i].lut = gamma_lut;
+          lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
           ccparams[i].thread_id = i;
 
           if (i == 0) convert_yuv420p_to_bgr_frame_thread(&ccparams[i]);
@@ -3466,6 +3559,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
 
 static void *convert_yuv420p_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv420p_to_bgr_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize,
                                ccparams->is_bottom, ccparams->irowstrides,
                                ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
@@ -3476,9 +3570,9 @@ static void *convert_yuv420p_to_bgr_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
-    int orowstride,
-    uint8_t *dest, boolean is_422, int sampling, int clamping, int subspace,
+static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int width, int height,
+    boolean is_bottom, int *istrides, int orowstride,
+    uint8_t *LIVES_RESTRICT dest, boolean is_422, int sampling, int clamping, int subspace,
     int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
@@ -3536,6 +3630,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           ccparams[i].in_subspace = subspace;
           ccparams[i].is_422 = is_422;
           ccparams[i].lut = gamma_lut;
+          lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
           ccparams[i].thread_id = i;
 
           if (i == 0) convert_yuv420p_to_argb_frame_thread(&ccparams[i]);
@@ -3694,6 +3789,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
 
 static void *convert_yuv420p_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv420p_to_argb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize,
                                 ccparams->is_bottom, ccparams->irowstrides,
                                 ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
@@ -3704,8 +3800,9 @@ static void *convert_yuv420p_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
-                                      uyvy_macropixel *u, boolean has_alpha, int clamping, uint8_t *gamma_lut, int thread_id) {
+static void convert_rgb_to_uyvy_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orowstride,
+                                      uyvy_macropixel *u, boolean has_alpha, int clamping, uint8_t *LIVES_RESTRICT gamma_lut,
+                                      int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
   uint8_t *end;
@@ -3752,6 +3849,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].lut = gamma_lut;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_rgb_to_uyvy_frame_thread(&ccparams[i]);
@@ -3797,6 +3895,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_rgb_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_rgb_to_uyvy_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (uyvy_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->lut,
@@ -3805,8 +3904,8 @@ static void *convert_rgb_to_uyvy_frame_thread(void *data) {
 }
 
 
-static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
-                                      yuyv_macropixel *u, boolean has_alpha, int clamping, uint8_t *gamma_lut, int thread_id) {
+static void convert_rgb_to_yuyv_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orowstride,
+                                      yuyv_macropixel *u, boolean has_alpha, int clamping, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
   uint8_t *end = rgbdata + rowstride * vsize;
@@ -3851,6 +3950,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].lut = gamma_lut;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_rgb_to_yuyv_frame_thread(&ccparams[i]);
@@ -3896,6 +3996,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_rgb_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_rgb_to_yuyv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (yuyv_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->lut, ccparams->thread_id);
@@ -3903,8 +4004,8 @@ static void *convert_rgb_to_yuyv_frame_thread(void *data) {
 }
 
 
-static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
-                                      uyvy_macropixel *u, boolean has_alpha, int clamping, uint8_t *gamma_lut, int thread_id) {
+static void convert_bgr_to_uyvy_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orowstride,
+                                      uyvy_macropixel *u, boolean has_alpha, int clamping, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
   uint8_t *end = rgbdata + rowstride * vsize;
@@ -3949,6 +4050,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].lut = gamma_lut;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_bgr_to_uyvy_frame_thread(&ccparams[i]);
@@ -3994,6 +4096,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_bgr_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_bgr_to_uyvy_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (uyvy_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->lut, ccparams->thread_id);
@@ -4001,8 +4104,8 @@ static void *convert_bgr_to_uyvy_frame_thread(void *data) {
 }
 
 
-static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
-                                      yuyv_macropixel *u, boolean has_alpha, int clamping, uint8_t *gamma_lut, int thread_id) {
+static void convert_bgr_to_yuyv_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orowstride,
+                                      yuyv_macropixel *u, boolean has_alpha, int clamping, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
 
@@ -4043,6 +4146,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].lut = gamma_lut;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_bgr_to_yuyv_frame_thread(&ccparams[i]);
@@ -4088,6 +4192,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_bgr_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_bgr_to_yuyv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (yuyv_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->lut, ccparams->thread_id);
@@ -4095,8 +4200,8 @@ static void *convert_bgr_to_yuyv_frame_thread(void *data) {
 }
 
 
-static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
-                                       uyvy_macropixel *u, int clamping, uint8_t *gamma_lut, int thread_id) {
+static void convert_argb_to_uyvy_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orowstride,
+                                       uyvy_macropixel *u, int clamping, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 4, ipsize2;
   uint8_t *end;
@@ -4134,6 +4239,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_clamping = clamping;
         ccparams[i].lut = gamma_lut;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_argb_to_uyvy_frame_thread(&ccparams[i]);
@@ -4172,6 +4278,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
 static void *convert_argb_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_argb_to_uyvy_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                              ccparams->orowstrides[0],
                              (uyvy_macropixel *)ccparams->dest, ccparams->out_clamping, ccparams->lut, ccparams->thread_id);
@@ -4179,8 +4286,8 @@ static void *convert_argb_to_uyvy_frame_thread(void *data) {
 }
 
 
-static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
-                                       yuyv_macropixel *u, int clamping, uint8_t *gamma_lut, int thread_id) {
+static void convert_argb_to_yuyv_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orowstride,
+                                       yuyv_macropixel *u, int clamping, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 4, ipsize2;
   uint8_t *end;
@@ -4218,6 +4325,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_clamping = clamping;
         ccparams[i].lut = gamma_lut;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_argb_to_yuyv_frame_thread(&ccparams[i]);
@@ -4255,6 +4363,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
 static void *convert_argb_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_argb_to_yuyv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                              ccparams->orowstrides[0],
                              (yuyv_macropixel *)ccparams->dest, ccparams->out_clamping, ccparams->lut, ccparams->thread_id);
@@ -4262,8 +4371,8 @@ static void *convert_argb_to_yuyv_frame_thread(void *data) {
 }
 
 
-static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
-                                     uint8_t *u, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
+static void convert_rgb_to_yuv_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orow,
+                                     uint8_t *LIVES_RESTRICT u, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 3, opsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -4300,6 +4409,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
         ccparams[i].in_alpha = in_has_alpha;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_rgb_to_yuv_frame_thread(&ccparams[i]);
@@ -4338,6 +4448,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
 static void *convert_rgb_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_rgb_to_yuv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                            ccparams->orowstrides[0],
                            (uint8_t *)ccparams->dest, ccparams->in_alpha, ccparams->out_alpha, ccparams->out_clamping,
@@ -4346,8 +4457,8 @@ static void *convert_rgb_to_yuv_frame_thread(void *data) {
 }
 
 
-static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
-                                      uint8_t **yuvp, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
+static void convert_rgb_to_yuvp_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orow,
+                                      uint8_t **LIVES_RESTRICT yuvp, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -4395,6 +4506,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].in_alpha = in_has_alpha;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_rgb_to_yuvp_frame_thread(&ccparams[i]);
@@ -4437,6 +4549,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_rgb_to_yuvp_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_rgb_to_yuvp_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (uint8_t **)ccparams->destp, ccparams->in_alpha, ccparams->out_alpha, ccparams->out_clamping,
@@ -4445,8 +4558,8 @@ static void *convert_rgb_to_yuvp_frame_thread(void *data) {
 }
 
 
-static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
-                                     uint8_t *u, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
+static void convert_bgr_to_yuv_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orow,
+                                     uint8_t *LIVES_RESTRICT u, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 3, opsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -4482,6 +4595,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
         ccparams[i].in_alpha = in_has_alpha;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_bgr_to_yuv_frame_thread(&ccparams[i]);
@@ -4520,6 +4634,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
 static void *convert_bgr_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_bgr_to_yuv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                            ccparams->orowstrides[0],
                            (uint8_t *)ccparams->dest, ccparams->in_alpha, ccparams->out_alpha, ccparams->out_clamping, ccparams->thread_id);
@@ -4527,8 +4642,8 @@ static void *convert_bgr_to_yuv_frame_thread(void *data) {
 }
 
 
-static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
-                                      uint8_t **yuvp, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
+static void convert_bgr_to_yuvp_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orow,
+                                      uint8_t **LIVES_RESTRICT yuvp, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -4576,6 +4691,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].in_alpha = in_has_alpha;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_bgr_to_yuvp_frame_thread(&ccparams[i]);
@@ -4618,6 +4734,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_bgr_to_yuvp_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_bgr_to_yuvp_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (uint8_t **)ccparams->destp, ccparams->in_alpha, ccparams->out_alpha, ccparams->out_clamping,
@@ -4626,8 +4743,8 @@ static void *convert_bgr_to_yuvp_frame_thread(void *data) {
 }
 
 
-static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
-                                      uint8_t *u, boolean out_has_alpha, int clamping, int thread_id) {
+static void convert_argb_to_yuv_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orow,
+                                      uint8_t *LIVES_RESTRICT u, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 4, opsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -4663,6 +4780,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].orowstrides[0] = orow;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_rgb_to_yuv_frame_thread(&ccparams[i]);
@@ -4699,6 +4817,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
 static void *convert_argb_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_argb_to_yuv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                             ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->out_clamping, ccparams->thread_id);
@@ -4706,8 +4825,8 @@ static void *convert_argb_to_yuv_frame_thread(void *data) {
 }
 
 
-static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
-                                       uint8_t **yuvp, boolean out_has_alpha, int clamping, int thread_id) {
+static void convert_argb_to_yuvp_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int orow,
+                                       uint8_t **LIVES_RESTRICT yuvp, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 4;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -4753,6 +4872,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
         ccparams[i].orowstrides[0] = orow;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_argb_to_yuvp_frame_thread(&ccparams[i]);
@@ -4792,6 +4912,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
 static void *convert_argb_to_yuvp_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_argb_to_yuvp_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                              ccparams->orowstrides[0],
                              (uint8_t **)ccparams->destp, ccparams->out_alpha, ccparams->out_clamping,
@@ -4800,8 +4921,8 @@ static void *convert_argb_to_yuvp_frame_thread(void *data) {
 }
 
 
-static void convert_rgb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int *ostrides,
-                                        uint8_t **dest, boolean is_422, boolean has_alpha, int subspace, int clamping) {
+static void convert_rgb_to_yuv420_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int *ostrides,
+                                        uint8_t **LIVES_RESTRICT dest, boolean is_422, boolean has_alpha, int subspace, int clamping) {
   // for odd sized widths, cut the rightmost pixel
   // TODO - handle different out sampling types
   uint16_t *rgbdata16 = NULL;
@@ -4873,8 +4994,8 @@ static void convert_rgb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, 
 }
 
 
-static void convert_argb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int *ostrides,
-    uint8_t **dest, boolean is_422, int subspace, int clamping) {
+static void convert_argb_to_yuv420_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int *ostrides,
+    uint8_t **LIVES_RESTRICT dest, boolean is_422, int subspace, int clamping) {
   // for odd sized widths, cut the rightmost pixel
   // TODO - handle different out sampling types
   int hs3;
@@ -4935,8 +5056,8 @@ static void convert_argb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize,
 }
 
 
-static void convert_bgr_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int *ostrides,
-                                        uint8_t **dest, boolean is_422, boolean has_alpha, int subspace, int clamping) {
+static void convert_bgr_to_yuv420_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride, int *ostrides,
+                                        uint8_t **LIVES_RESTRICT dest, boolean is_422, boolean has_alpha, int subspace, int clamping) {
   // for odd sized widths, cut the rightmost pixel
   // TODO - handle different out sampling types
   int hs3;
@@ -4992,7 +5113,8 @@ static void convert_bgr_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, 
 }
 
 
-static void convert_yuv422p_to_uyvy_frame(uint8_t **src, int width, int height, int *irows, int orow, uint8_t *dest) {
+static void convert_yuv422p_to_uyvy_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int *irows, int orow,
+    uint8_t *LIVES_RESTRICT dest) {
   // TODO - handle different in sampling types
   uint8_t *src_y = src[0];
   uint8_t *src_u = src[1];
@@ -5019,7 +5141,8 @@ static void convert_yuv422p_to_uyvy_frame(uint8_t **src, int width, int height, 
 }
 
 
-static void convert_yuv422p_to_yuyv_frame(uint8_t **src, int width, int height, int *irows, int orow, uint8_t *dest) {
+static void convert_yuv422p_to_yuyv_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int *irows, int orow,
+    uint8_t *LIVES_RESTRICT dest) {
   // TODO - handle different in sampling types
 
   uint8_t *src_y = src[0];
@@ -5047,7 +5170,7 @@ static void convert_yuv422p_to_yuyv_frame(uint8_t **src, int width, int height, 
 }
 
 
-static void convert_rgb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_rgb_to_yuv411_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride,
                                         yuv411_macropixel *u, boolean has_alpha, int clamping) {
   // for odd sized widths, cut the rightmost one, two or three pixels. Widths should be divisible by 4.
   // TODO - handle different out sampling types
@@ -5090,7 +5213,7 @@ static void convert_rgb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, 
 }
 
 
-static void convert_bgr_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_bgr_to_yuv411_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride,
                                         yuv411_macropixel *u, boolean has_alpha, int clamping) {
   // for odd sized widths, cut the rightmost one, two or three pixels
   // TODO - handle different out sampling types
@@ -5133,7 +5256,7 @@ static void convert_bgr_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, 
 }
 
 
-static void convert_argb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_argb_to_yuv411_frame(uint8_t *LIVES_RESTRICT rgbdata, int hsize, int vsize, int rowstride,
     yuv411_macropixel *u, int clamping) {
   // for odd sized widths, cut the rightmost one, two or three pixels. Widths should be divisible by 4.
   // TODO - handle different out sampling types
@@ -5165,7 +5288,7 @@ static void convert_argb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize,
 
 
 static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int height, int irow, int orowstride,
-                                      uint8_t *dest, boolean add_alpha, int clamping, int  subspace, int thread_id) {
+                                      uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping, int  subspace, int thread_id) {
   int i, j;
   int psize = 6;
   int a = 3, b = 4, c = 5;
@@ -5241,6 +5364,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 
 static void *convert_uyvy_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_uyvy_to_rgb_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
                             ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping,
@@ -5250,7 +5374,7 @@ static void *convert_uyvy_to_rgb_frame_thread(void *data) {
 
 
 static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int height, int irow, int orowstride,
-                                      uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
+                                      uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping, int thread_id) {
   int i, j;
   int psize = 6;
 
@@ -5326,6 +5450,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 
 static void *convert_uyvy_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_uyvy_to_bgr_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
                             ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
@@ -5334,7 +5459,7 @@ static void *convert_uyvy_to_bgr_frame_thread(void *data) {
 
 
 static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int height, int irow, int orowstride,
-                                       uint8_t *dest, int clamping, int thread_id) {
+                                       uint8_t *LIVES_RESTRICT dest, int clamping, int thread_id) {
   int i, j;
   int psize = 8;
 
@@ -5400,6 +5525,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
 
 static void *convert_uyvy_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_uyvy_to_argb_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
                              ccparams->irowstrides[0], ccparams->orowstrides[0],
                              (uint8_t *)ccparams->dest, ccparams->in_clamping, ccparams->thread_id);
@@ -5408,7 +5534,7 @@ static void *convert_uyvy_to_argb_frame_thread(void *data) {
 
 
 static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int height, int irow, int orowstride,
-                                      uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
+                                      uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping, int thread_id) {
   int i, j;
   int psize = 6;
   int a = 3, b = 4, c = 5;
@@ -5482,6 +5608,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
 
 static void *convert_yuyv_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuyv_to_rgb_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
                             ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
@@ -5490,7 +5617,7 @@ static void *convert_yuyv_to_rgb_frame_thread(void *data) {
 
 
 static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int height, int irow, int orowstride,
-                                      uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
+                                      uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping, int thread_id) {
   int i, j;
   int psize = 6;
   int a = 3, b = 4, c = 5;
@@ -5565,6 +5692,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 
 static void *convert_yuyv_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuyv_to_bgr_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
                             ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
@@ -5573,7 +5701,7 @@ static void *convert_yuyv_to_bgr_frame_thread(void *data) {
 
 
 static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int height, int irow, int orowstride,
-                                       uint8_t *dest, int clamping, int thread_id) {
+                                       uint8_t *LIVES_RESTRICT dest, int clamping, int thread_id) {
   int i, j;
   int psize = 8;
 
@@ -5639,6 +5767,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
 
 static void *convert_yuyv_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuyv_to_argb_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
                              ccparams->irowstrides[0], ccparams->orowstrides[0],
                              (uint8_t *)ccparams->dest, ccparams->in_clamping, ccparams->thread_id);
@@ -5646,7 +5775,7 @@ static void *convert_yuyv_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, int *irows, int orow,
+static void convert_yuv420_to_uyvy_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int *irows, int orow,
     uyvy_macropixel *dest, int clamping) {
   int i = 0, j;
   uint8_t *y, *u, *v, *end;
@@ -5694,7 +5823,8 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, i
 }
 
 
-static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, int *irows, int orow, yuyv_macropixel *dest,
+static void convert_yuv420_to_yuyv_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int *irows, int orow,
+    yuyv_macropixel *dest,
     int clamping) {
   int i = 0, j;
   uint8_t *y, *u, *v, *end;
@@ -5741,7 +5871,8 @@ static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, i
 }
 
 
-static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height, int irowstride, int orowstride, uint8_t *dest,
+static void convert_yuv_planar_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+    uint8_t *LIVES_RESTRICT dest,
     boolean in_alpha, boolean out_alpha, int clamping, int thread_id) {
   uint8_t *y = src[0];
   uint8_t *u = src[1];
@@ -5790,6 +5921,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
         ccparams[i].in_alpha = in_alpha;
         ccparams[i].out_alpha = out_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuv_planar_to_rgb_frame_thread(&ccparams[i]);
@@ -5833,6 +5965,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
 
 static void *convert_yuv_planar_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv_planar_to_rgb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                   ccparams->orowstrides[0],
                                   (uint8_t *)ccparams->dest, ccparams->in_alpha, ccparams->out_alpha,
@@ -5841,7 +5974,8 @@ static void *convert_yuv_planar_to_rgb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height, int irowstride, int orowstride, uint8_t *dest,
+static void convert_yuv_planar_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+    uint8_t *LIVES_RESTRICT dest,
     boolean in_alpha, boolean out_alpha, int clamping, int thread_id) {
   uint8_t *y = src[0];
   uint8_t *u = src[1];
@@ -5891,6 +6025,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
         ccparams[i].in_alpha = in_alpha;
         ccparams[i].out_alpha = out_alpha;
         ccparams[i].out_clamping = clamping;
+        lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_yuv_planar_to_bgr_frame_thread(&ccparams[i]);
@@ -5932,6 +6067,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
 
 static void *convert_yuv_planar_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv_planar_to_bgr_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                   ccparams->orowstrides[0],
                                   (uint8_t *)ccparams->dest, ccparams->in_alpha, ccparams->out_alpha,
@@ -5940,8 +6076,9 @@ static void *convert_yuv_planar_to_bgr_frame_thread(void *data) {
 }
 
 
-static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,
-    uint8_t *dest,
+static void convert_yuv_planar_to_argb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride,
+    int orowstride,
+    uint8_t *LIVES_RESTRICT dest,
     boolean in_alpha, int clamping, int thread_id) {
   uint8_t *y = src[0];
   uint8_t *u = src[1];
@@ -6026,6 +6163,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
 
 static void *convert_yuv_planar_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
   convert_yuv_planar_to_argb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                                    ccparams->orowstrides[0],
                                    (uint8_t *)ccparams->dest, ccparams->in_alpha, ccparams->in_clamping, ccparams->thread_id);
@@ -6033,7 +6171,8 @@ static void *convert_yuv_planar_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,
+static void convert_yuv_planar_to_uyvy_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride,
+    int orowstride,
     uyvy_macropixel *uyvy, int clamping) {
   int x, k;
   int size = (width * height) >> 1;
@@ -6080,7 +6219,8 @@ static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int heigh
 }
 
 
-static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,
+static void convert_yuv_planar_to_yuyv_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride,
+    int orowstride,
     yuyv_macropixel *yuyv, int clamping) {
   int x, k;
   int hsize = (width * height) >> 1;
@@ -6124,8 +6264,8 @@ static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int heigh
 }
 
 
-static void convert_combineplanes_frame(uint8_t **src, int width, int height, int irowstride,
-                                        int orowstride, uint8_t *dest, boolean in_alpha, boolean out_alpha) {
+static void convert_combineplanes_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride,
+                                        int orowstride, uint8_t *LIVES_RESTRICT dest, boolean in_alpha, boolean out_alpha) {
   // turn 3 or 4 planes into packed pixels, src and dest can have alpha
 
   // e.g yuv444(4)p to yuv888(8)
@@ -6174,7 +6314,8 @@ static void convert_combineplanes_frame(uint8_t **src, int width, int height, in
 }
 
 
-static void convert_yuvap_to_yuvp_frame(uint8_t **src, int width, int height, int irowstride, int orowstride, uint8_t **dest) {
+static void convert_yuvap_to_yuvp_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                        uint8_t **LIVES_RESTRICT dest) {
   size_t size = irowstride * height;
 
   uint8_t *ys = src[0];
@@ -6213,13 +6354,15 @@ static void convert_yuvap_to_yuvp_frame(uint8_t **src, int width, int height, in
 }
 
 
-static void convert_yuvp_to_yuvap_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,  uint8_t **dest) {
+static void convert_yuvp_to_yuvap_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                        uint8_t **LIVES_RESTRICT dest) {
   convert_yuvap_to_yuvp_frame(src, width, height, irowstride, orowstride, dest);
   lives_memset(dest[3], 255, orowstride * height);
 }
 
 
-static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, int *irows, int *orows, uint8_t **dest,
+static void convert_yuvp_to_yuv420_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int *irows, int *orows,
+    uint8_t **LIVES_RESTRICT dest,
     int clamping) {
   // halve the chroma samples vertically and horizontally, with sub-sampling
 
@@ -6283,7 +6426,7 @@ static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, i
 }
 
 
-static void convert_yuvp_to_yuv411_frame(uint8_t **src, int width, int height, int irowstride,
+static void convert_yuvp_to_yuv411_frame(uint8_t **LIVES_RESTRICT src, int width, int height, int irowstride,
     yuv411_macropixel *yuv, int clamping) {
   // quarter the chroma samples horizontally, with sub-sampling
 
@@ -6328,7 +6471,8 @@ static void convert_yuvp_to_yuv411_frame(uint8_t **src, int width, int height, i
 }
 
 
-static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int height, int irow, int *orow, uint8_t **dest,
+static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int height, int irow, int *orow,
+                                       uint8_t **LIVES_RESTRICT dest,
                                        boolean add_alpha) {
   // TODO - avg_chroma
 
@@ -6351,7 +6495,7 @@ static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int hei
 
 
 static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int height, int irow, int *orow,
-                                       uint8_t **dest, boolean add_alpha) {
+                                       uint8_t **LIVES_RESTRICT dest, boolean add_alpha) {
   // TODO - avg_chroma
 
   uint8_t *y = dest[0];
@@ -6373,7 +6517,7 @@ static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int hei
 
 
 static void convert_uyvy_to_yuv888_frame(uyvy_macropixel *uyvy, int width, int height, int irow, int orow,
-    uint8_t *yuv, boolean add_alpha) {
+    uint8_t *LIVES_RESTRICT yuv, boolean add_alpha) {
   // no subsampling : TODO
 
   irow /= 4;
@@ -6394,7 +6538,7 @@ static void convert_uyvy_to_yuv888_frame(uyvy_macropixel *uyvy, int width, int h
 
 
 static void convert_yuyv_to_yuv888_frame(yuyv_macropixel *yuyv, int width, int height, int irow, int orow,
-    uint8_t *yuv, boolean add_alpha) {
+    uint8_t *LIVES_RESTRICT yuv, boolean add_alpha) {
   // no subsampling : TODO
 
   irow /= 4;
@@ -6414,7 +6558,8 @@ static void convert_yuyv_to_yuv888_frame(yuyv_macropixel *yuyv, int width, int h
 }
 
 
-static void convert_uyvy_to_yuv420_frame(uyvy_macropixel *uyvy, int width, int height, uint8_t **yuv, int clamping) {
+static void convert_uyvy_to_yuv420_frame(uyvy_macropixel *uyvy, int width, int height, uint8_t **LIVES_RESTRICT yuv,
+    int clamping) {
   // subsample vertically
 
   // TODO - handle different sampling types
@@ -6456,7 +6601,8 @@ static void convert_uyvy_to_yuv420_frame(uyvy_macropixel *uyvy, int width, int h
 }
 
 
-static void convert_yuyv_to_yuv420_frame(yuyv_macropixel *yuyv, int width, int height, uint8_t **yuv, int clamping) {
+static void convert_yuyv_to_yuv420_frame(yuyv_macropixel *yuyv, int width, int height, uint8_t **LIVES_RESTRICT yuv,
+    int clamping) {
   // subsample vertically
 
   // TODO - handle different sampling types
@@ -6560,8 +6706,8 @@ static void convert_yuyv_to_yuv411_frame(yuyv_macropixel *yuyv, int width, int h
 }
 
 
-static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height, int irowstride, int *orows,
-    uint8_t **yuv4, boolean src_alpha, int clamping) {
+static void convert_yuv888_to_yuv420_frame(uint8_t *LIVES_RESTRICT yuv8, int width, int height, int irowstride, int *orows,
+    uint8_t **LIVES_RESTRICT yuv4, boolean src_alpha, int clamping) {
   // subsample vertically and horizontally
 
   //
@@ -6618,7 +6764,7 @@ static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height,
 }
 
 
-static void convert_uyvy_to_yuv422_frame(uyvy_macropixel *uyvy, int width, int height, uint8_t **yuv) {
+static void convert_uyvy_to_yuv422_frame(uyvy_macropixel *uyvy, int width, int height, uint8_t **LIVES_RESTRICT yuv) {
   int size = width * height; // y is twice this, u and v are equal
 
   uint8_t *y = yuv[0];
@@ -6636,7 +6782,7 @@ static void convert_uyvy_to_yuv422_frame(uyvy_macropixel *uyvy, int width, int h
 }
 
 
-static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int height, uint8_t **yuv) {
+static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int height, uint8_t **LIVES_RESTRICT yuv) {
   int size = width * height; // y is twice this, u and v are equal
 
   uint8_t *y = yuv[0];
@@ -6654,8 +6800,8 @@ static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int h
 }
 
 
-static void convert_yuv888_to_yuv422_frame(uint8_t *yuv8, int width, int height, int irowstride, int *ostrides,
-    uint8_t **yuv4, boolean has_alpha, int clamping) {
+static void convert_yuv888_to_yuv422_frame(uint8_t *LIVES_RESTRICT yuv8, int width, int height, int irowstride, int *ostrides,
+    uint8_t **LIVES_RESTRICT yuv4, boolean has_alpha, int clamping) {
   // 888(8) packed to 422p
 
   // TODO - handle different sampling types
@@ -6709,7 +6855,7 @@ static void convert_yuv888_to_yuv422_frame(uint8_t *yuv8, int width, int height,
 }
 
 
-static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, int irowstride, int orow,
+static void convert_yuv888_to_uyvy_frame(uint8_t *LIVES_RESTRICT yuv, int width, int height, int irowstride, int orow,
     uyvy_macropixel *uyvy, boolean has_alpha, int clamping) {
   int size = width * height;
 
@@ -6753,7 +6899,7 @@ static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, in
 }
 
 
-static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, int irowstride, int orow,
+static void convert_yuv888_to_yuyv_frame(uint8_t *LIVES_RESTRICT yuv, int width, int height, int irowstride, int orow,
     yuyv_macropixel *yuyv, boolean has_alpha, int clamping) {
   int size = width * height;
 
@@ -6797,7 +6943,7 @@ static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, in
 }
 
 
-static void convert_yuv888_to_yuv411_frame(uint8_t *yuv8, int width, int height, int irowstride,
+static void convert_yuv888_to_yuv411_frame(uint8_t *LIVES_RESTRICT yuv8, int width, int height, int irowstride,
     yuv411_macropixel *yuv411, boolean has_alpha) {
   // yuv 888(8) packed to yuv411. Chroma pixels are averaged.
 
@@ -6831,7 +6977,7 @@ static void convert_yuv888_to_yuv411_frame(uint8_t *yuv8, int width, int height,
 
 
 static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, int height, int orowstride,
-                                        uint8_t *dest, boolean add_alpha, int clamping) {
+                                        uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping) {
   uyvy_macropixel uyvy;
   int m = 3, n = 4, o = 5;
   uint8_t u, v, h_u, h_v, q_u, q_v, y0, y1;
@@ -6939,7 +7085,7 @@ static void convert_yuv411_to_rgb_frame(yuv411_macropixel *yuv411, int width, in
 
 
 static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, int height, int orowstride,
-                                        uint8_t *dest, boolean add_alpha, int clamping) {
+                                        uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping) {
   uyvy_macropixel uyvy;
   int m = 3, n = 4, o = 5;
   uint8_t u, v, h_u, h_v, q_u, q_v, y0, y1;
@@ -7048,7 +7194,7 @@ static void convert_yuv411_to_bgr_frame(yuv411_macropixel *yuv411, int width, in
 
 
 static void convert_yuv411_to_argb_frame(yuv411_macropixel *yuv411, int width, int height, int orowstride,
-    uint8_t *dest, int clamping) {
+    uint8_t *LIVES_RESTRICT dest, int clamping) {
   uyvy_macropixel uyvy;
   uint8_t u, v, h_u, h_v, q_u, q_v, y0, y1;
   int j;
@@ -7148,7 +7294,7 @@ static void convert_yuv411_to_argb_frame(yuv411_macropixel *yuv411, int width, i
 
 
 static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width, int height,
-    uint8_t *dest, boolean add_alpha, int clamping) {
+    uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int clamping) {
   size_t psize = 3;
   int j;
   yuv411_macropixel *end = yuv411 + width * height;
@@ -7264,7 +7410,7 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
 }
 
 
-static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, int height, uint8_t **dest,
+static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, int height, uint8_t **LIVES_RESTRICT dest,
     boolean add_alpha, int clamping) {
   int j;
   yuv411_macropixel *end = yuv411 + width * height;
@@ -7507,7 +7653,8 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
 }
 
 
-static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width, int height, uint8_t **dest, int clamping) {
+static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width, int height, uint8_t **LIVES_RESTRICT dest,
+    int clamping) {
   int j;
   yuv411_macropixel *end = yuv411 + width * height;
   uint8_t h_u, h_v;
@@ -7563,7 +7710,7 @@ static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width,
 }
 
 
-static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width, int height, uint8_t **dest,
+static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width, int height, uint8_t **LIVES_RESTRICT dest,
     boolean is_yvu, int clamping) {
   int j;
   yuv411_macropixel *end = yuv411 + width * height;
@@ -7672,7 +7819,7 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
 }
 
 
-static void convert_yuv420_to_yuv411_frame(uint8_t **src, int hsize, int vsize, yuv411_macropixel *dest,
+static void convert_yuv420_to_yuv411_frame(uint8_t **LIVES_RESTRICT src, int hsize, int vsize, yuv411_macropixel *dest,
     boolean is_422, int clamping) {
   // TODO -handle various sampling types
 
@@ -7722,8 +7869,8 @@ static void convert_yuv420_to_yuv411_frame(uint8_t **src, int hsize, int vsize, 
 }
 
 
-static void convert_splitplanes_frame(uint8_t *src, int width, int height, int irowstride, int *orowstrides,
-                                      uint8_t **dest, boolean src_alpha, boolean dest_alpha) {
+static void convert_splitplanes_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int *orowstrides,
+                                      uint8_t **LIVES_RESTRICT dest, boolean src_alpha, boolean dest_alpha) {
   // TODO - orowstrides
   // convert 888(8) packed to 444(4)P planar
   size_t size = width * height;
@@ -7783,9 +7930,169 @@ static void convert_splitplanes_frame(uint8_t *src, int width, int height, int i
 /////////////////////////////////////////////////////////////////
 // RGB palette conversions
 
-static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                uint8_t *dest, uint8_t *gamma_lut, int thread_id) {
+static void convert_swap3_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride,
+                                uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 byte palette
+  uint8_t *end = src + height * irowstride;
+  int i;
+
+  if (thread_id == -1 && prefs->nfx_threads > 1) {
+    lives_thread_t *threads[prefs->nfx_threads];
+    int nthreads = 1;
+    int dheight, xdheight;
+    lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
+
+    xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
+    for (i = prefs->nfx_threads; i--;) {
+      dheight = xdheight;
+
+      if ((src + dheight * i * irowstride) < end) {
+        ccparams[i].src = src + dheight * i * irowstride;
+        ccparams[i].hsize = width * 3;
+
+        if (dheight * (i + 1) > (height - 4)) {
+          dheight = height - (dheight * i);
+        }
+
+        ccparams[i].vsize = dheight;
+
+        ccparams[i].irowstrides[0] = irowstride;
+        ccparams[i].lut = gamma_lut;
+        ccparams[i].thread_id = i;
+
+        if (i == 0) convert_swap3_frame_thread(&ccparams[i]);
+        else {
+          lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_swap3_frame_thread, &ccparams[i]);
+          nthreads++;
+        }
+      }
+    }
+
+    for (i = 1; i < nthreads; i++) {
+      lives_thread_join(threads[i], NULL);
+    }
+    lives_free(ccparams);
+    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
+    return;
+  }
+
+  if (1) {
+    uint8_t tmp;
+    for (; src < end; src += irowstride) {
+      for (i = 0; i < width; i += 3) {
+        tmp = src[i];
+        if (!gamma_lut) {
+          src[i] = src[i + 2]; // red
+          src[i + 2] = tmp; // blue
+        } else {
+          src[i] = gamma_lut[src[i + 2]]; // red
+          src[i + 1] = gamma_lut[src[i + 1]]; // red
+          src[i + 2] = gamma_lut[tmp]; // blue
+        }
+      }
+    }
+    return;
+  }
+}
+
+
+static void *convert_swap3_frame_thread(void *data) {
+  lives_cc_params *ccparams = (lives_cc_params *)data;
+  convert_swap3_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                      ccparams->lut, ccparams->thread_id);
+  return NULL;
+}
+
+
+static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride,
+                                uint8_t *LIVES_RESTRICT gamma_lut, boolean alpha_first, int thread_id) {
+  // swap 4 byte palette
+  uint8_t *end = src + height * irowstride;
+  uint8_t tmp[4];
+  int i, j;
+
+  if (thread_id == -1 && prefs->nfx_threads > 1) {
+    lives_thread_t *threads[prefs->nfx_threads];
+    int nthreads = 1;
+    int dheight, xdheight;
+    lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
+
+    xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
+    for (i = prefs->nfx_threads; i--;) {
+      dheight = xdheight;
+
+      if ((src + dheight * i * irowstride) < end) {
+        ccparams[i].src = src + dheight * i * irowstride;
+        ccparams[i].hsize = width * 4;
+
+        if ((height - dheight * i) < dheight) dheight = height - (dheight * i);
+
+        ccparams[i].vsize = dheight;
+
+        ccparams[i].irowstrides[0] = irowstride;
+        ccparams[i].lut = gamma_lut;
+        ccparams[i].alpha_first = alpha_first;
+        ccparams[i].thread_id = i;
+
+        if (i == 0) convert_swap4_frame_thread(&ccparams[i]);
+        else {
+          lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_swap4_frame_thread, &ccparams[i]);
+          nthreads++;
+        }
+      }
+    }
+
+    for (i = 1; i < nthreads; i++) {
+      lives_thread_join(threads[i], NULL);
+    }
+    lives_free(ccparams);
+    return;
+  }
+
+  if (!gamma_lut) {
+    for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j += 4) {
+        swab4(&src[i * irowstride + j], &src[i * irowstride + j], 1);
+      }
+    }
+    return;
+  }
+
+  if (!alpha_first) {
+    for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j += 4) {
+        tmp[0] = src[i * irowstride + j + 3]; // alpha
+        tmp[1] = gamma_lut[src[i * irowstride + j + 2]]; // red / blue
+        tmp[2] = gamma_lut[src[i * irowstride + j + 1]]; // green
+        tmp[3] = gamma_lut[src[i * irowstride + j]]; // blue / red
+        lives_memcpy(src + i * irowstride + j, &tmp, 4);
+      }
+    }
+    return;
+  }
+  for (i = 0; i < height; i++) {
+    for (j = 0; j < width; j += 4) {
+      tmp[0] = gamma_lut[src[i * irowstride + j + 3]]; // r / b
+      tmp[1] = gamma_lut[src[i * irowstride + j + 2]]; // g
+      tmp[2] = gamma_lut[src[i * irowstride + j + 1]]; // b / r
+      tmp[3] = src[i * irowstride + j]; // a
+      lives_memcpy(src + i * irowstride + j, &tmp, 4);
+    }
+  }
+}
+
+
+static void *convert_swap4_frame_thread(void *data) {
+  lives_cc_params *ccparams = (lives_cc_params *)data;
+  convert_swap4_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                      ccparams->lut, ccparams->alpha_first, ccparams->thread_id);
+  return NULL;
+}
+
+
+static void convert_swap3addpost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                       uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  // swap 3 bytes, add post alpha
   uint8_t *end = src + height * irowstride;
   int i;
 
@@ -7815,217 +8122,6 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
         ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
-        if (i == 0) convert_swap3_frame_thread(&ccparams[i]);
-        else {
-          lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_swap3_frame_thread, &ccparams[i]);
-          nthreads++;
-        }
-      }
-    }
-
-    for (i = 1; i < nthreads; i++) {
-      lives_thread_join(threads[i], NULL);
-    }
-    lives_free(ccparams);
-    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
-    return;
-  }
-
-  if (src == dest) {
-    uint8_t tmp;
-    int width3 = width * 3;
-    orowstride -= width3;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width3; i += 3) {
-        tmp = src[i];
-        if (!gamma_lut) {
-          dest[0] = src[i + 2]; // red
-          dest[2] = tmp; // blue
-        } else {
-          dest[0] = gamma_lut[src[i + 2]]; // red
-          dest[1] = gamma_lut[src[i + 1]]; // red
-          dest[2] = gamma_lut[tmp]; // blue
-        }
-        dest += 3;
-      }
-      dest += orowstride;
-    }
-    return;
-  }
-
-  if ((irowstride == width * 3) && (orowstride == irowstride)) {
-    // quick version
-#ifdef ENABLE_OILx
-    if (!gamma_lut) {
-      oil_rgb2bgr(dest, src, width * height);
-      return;
-    }
-#endif
-    for (; src < end; src += 3) {
-      if (!gamma_lut) {
-        *(dest++) = src[2]; // red
-        *(dest++) = src[1]; // green
-        *(dest++) = src[0]; // blue
-      } else {
-        *(dest++) = gamma_lut[src[2]]; // red
-        *(dest++) = gamma_lut[src[1]]; // green
-        *(dest++) = gamma_lut[src[0]]; // blue
-      }
-    }
-  } else {
-    int width3 = width * 3;
-    orowstride -= width3;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width3; i += 3) {
-        if (!gamma_lut) {
-          *(dest++) = src[i + 2]; // red
-          *(dest++) = src[i + 1]; // green
-          *(dest++) = src[i]; // blue
-        } else {
-          *(dest++) = gamma_lut[src[2]]; // red
-          *(dest++) = gamma_lut[src[1]]; // green
-          *(dest++) = gamma_lut[src[0]]; // blue
-        }
-      }
-      dest += orowstride;
-    }
-  }
-}
-
-
-static void *convert_swap3_frame_thread(void *data) {
-  lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_swap3_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                      ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
-  return NULL;
-}
-
-
-static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                uint8_t *dest, int thread_id) {
-  // swap 4 byte palette
-  uint8_t *end = src + height * irowstride;
-  int i;
-
-  if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t *threads[prefs->nfx_threads];
-    int nthreads = 1;
-    int dheight, xdheight;
-    lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
-
-    xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads; i--;) {
-      dheight = xdheight;
-
-      if ((src + dheight * i * irowstride) < end) {
-        ccparams[i].src = src + dheight * i * irowstride;
-        ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * orowstride;
-
-        if ((height - dheight * i) < dheight) dheight = height - (dheight * i);
-
-        ccparams[i].vsize = dheight;
-
-        ccparams[i].irowstrides[0] = irowstride;
-        ccparams[i].orowstrides[0] = orowstride;
-        ccparams[i].thread_id = i;
-
-        if (i == 0) convert_swap4_frame_thread(&ccparams[i]);
-        else {
-          lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_swap4_frame_thread, &ccparams[i]);
-          nthreads++;
-        }
-      }
-    }
-
-    for (i = 1; i < nthreads; i++) {
-      lives_thread_join(threads[i], NULL);
-    }
-    lives_free(ccparams);
-    return;
-  }
-
-  if (src == dest) {
-    uint8_t tmp[4];
-    int width4 = width * 4;
-    orowstride -= width4;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width4; i += 4) {
-        tmp[0] = src[i + 3]; // alpha
-        tmp[1] = src[i + 2]; // red
-        tmp[2] = src[i + 1]; // green
-        tmp[3] = src[i]; // blue
-        lives_memcpy(dest, tmp, 4);
-        dest += 4;
-      }
-      dest += orowstride;
-    }
-    return;
-  }
-
-  if ((irowstride == width * 4) && (orowstride == irowstride)) {
-    // quick version
-    for (; src < end; src += 4) {
-      *(dest++) = src[3]; // alpha
-      *(dest++) = src[2]; // red
-      *(dest++) = src[1]; // green
-      *(dest++) = src[0]; // blue
-    }
-  } else {
-    int width4 = width * 4;
-    orowstride -= width4;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width4; i += 4) {
-        *(dest++) = src[i + 3]; // alpha
-        *(dest++) = src[i + 2]; // red
-        *(dest++) = src[i + 1]; // green
-        *(dest++) = src[i]; // blue
-      }
-      dest += orowstride;
-    }
-  }
-}
-
-
-static void *convert_swap4_frame_thread(void *data) {
-  lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_swap4_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                      ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
-  return NULL;
-}
-
-
-static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                       uint8_t *dest, int thread_id) {
-  // swap 3 bytes, add post alpha
-  uint8_t *end = src + height * irowstride;
-  int i;
-
-  if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t *threads[prefs->nfx_threads];
-    int nthreads = 1;
-    int dheight, xdheight;
-    lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
-
-    xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads; i--;) {
-      dheight = xdheight;
-
-      if ((src + dheight * i * irowstride) < end) {
-        ccparams[i].src = src + dheight * i * irowstride;
-        ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * orowstride;
-
-        if (dheight * (i + 1) > (height - 4)) {
-          dheight = height - (dheight * i);
-        }
-
-        ccparams[i].vsize = dheight;
-
-        ccparams[i].irowstrides[0] = irowstride;
-        ccparams[i].orowstrides[0] = orowstride;
-        ccparams[i].thread_id = i;
-
         if (i == 0) convert_swap3addpost_frame_thread(&ccparams[i]);
         else {
           lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_swap3addpost_frame_thread, &ccparams[i]);
@@ -8041,12 +8137,36 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
     return;
   }
 
+  if (!gamma_lut) {
+    if ((irowstride == width * 3) && (orowstride == width * 4)) {
+      // quick version
+      for (; src < end; src += 3) {
+        *(dest++) = src[2]; // red
+        *(dest++) = src[1]; // green
+        *(dest++) = src[0]; // blue
+        *(dest++) = 255; // alpha
+      }
+    } else {
+      int j, k;
+      for (j = 0; j < height; j++) {
+        k = 0;
+        for (i = 0; i < width * 3; i += 3) {
+          dest[orowstride * j + k++] = src[irowstride * j + i + 2]; // red
+          dest[orowstride * j + k++] = src[irowstride * j + i + 1]; // green
+          dest[orowstride * j + k++] = src[irowstride * j + i]; // blue
+          dest[orowstride * j + k++] = 255; // alpha
+        }
+      }
+    }
+    return;
+  }
+
   if ((irowstride == width * 3) && (orowstride == width * 4)) {
     // quick version
     for (; src < end; src += 3) {
-      *(dest++) = src[2]; // red
-      *(dest++) = src[1]; // green
-      *(dest++) = src[0]; // blue
+      *(dest++) = gamma_lut[src[2]]; // red
+      *(dest++) = gamma_lut[src[1]]; // green
+      *(dest++) = gamma_lut[src[0]]; // blue
       *(dest++) = 255; // alpha
     }
   } else {
@@ -8054,9 +8174,9 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
     for (j = 0; j < height; j++) {
       k = 0;
       for (i = 0; i < width * 3; i += 3) {
-        dest[orowstride * j + k++] = src[irowstride * j + i + 2]; // red
-        dest[orowstride * j + k++] = src[irowstride * j + i + 1]; // green
-        dest[orowstride * j + k++] = src[irowstride * j + i]; // blue
+        dest[orowstride * j + k++] = gamma_lut[src[irowstride * j + i + 2]]; // red
+        dest[orowstride * j + k++] = gamma_lut[src[irowstride * j + i + 1]]; // green
+        dest[orowstride * j + k++] = gamma_lut[src[irowstride * j + i]]; // blue
         dest[orowstride * j + k++] = 255; // alpha
       }
     }
@@ -8067,13 +8187,13 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
 static void *convert_swap3addpost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3addpost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                             ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                             ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                      uint8_t *dest, int thread_id) {
+static void convert_swap3addpre_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                      uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 bytes, add pre alpha
   uint8_t *end = src + height * irowstride;
   int i;
@@ -8101,6 +8221,7 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
 
         ccparams[i].irowstrides[0] = irowstride;
         ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3addpre_frame_thread(&ccparams[i]);
@@ -8117,23 +8238,49 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
     lives_free(ccparams);
     return;
   }
+
+  if (!gamma_lut) {
+    if ((irowstride == width * 3) && (orowstride == width * 4)) {
+      // quick version
+      for (; src < end; src += 3) {
+        *(dest++) = 255; // alpha
+        *(dest++) = src[2]; // red
+        *(dest++) = src[1]; // green
+        *(dest++) = src[0]; // blue
+      }
+    } else {
+      int width3 = width * 3;
+      orowstride -= width * 4;
+      for (; src < end; src += irowstride) {
+        for (i = 0; i < width3; i += 3) {
+          *(dest++) = 255; // alpha
+          *(dest++) = src[i + 2]; // red
+          *(dest++) = src[i + 1]; // green
+          *(dest++) = src[i]; // blue
+        }
+        dest += orowstride;
+      }
+    }
+    return;
+  }
+
   if ((irowstride == width * 3) && (orowstride == width * 4)) {
     // quick version
     for (; src < end; src += 3) {
-      *(dest++) = 255; // alpha
-      *(dest++) = src[2]; // red
-      *(dest++) = src[1]; // green
-      *(dest++) = src[0]; // blue
+      *(dest++) = gamma_lut[255]; // alpha
+      *(dest++) = gamma_lut[src[2]]; // red
+      *(dest++) = gamma_lut[src[1]]; // green
+      *(dest++) = gamma_lut[src[0]]; // blue
     }
   } else {
     int width3 = width * 3;
     orowstride -= width * 4;
     for (; src < end; src += irowstride) {
       for (i = 0; i < width3; i += 3) {
-        *(dest++) = 255; // alpha
-        *(dest++) = src[i + 2]; // red
-        *(dest++) = src[i + 1]; // green
-        *(dest++) = src[i]; // blue
+        *(dest++) = gamma_lut[255]; // alpha
+        *(dest++) = gamma_lut[src[i + 2]]; // red
+        *(dest++) = gamma_lut[src[i + 1]]; // green
+        *(dest++) = gamma_lut[src[i]]; // blue
       }
       dest += orowstride;
     }
@@ -8144,13 +8291,13 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
 static void *convert_swap3addpre_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3addpre_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, int rowstride,
-    int thread_id) {
+static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride,
+    uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 bytes, leave alpha
   uint8_t *end = src + height * rowstride, tmp;
   int i;
@@ -8176,6 +8323,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3postalpha_frame_thread(&ccparams[i]);
@@ -8194,10 +8342,22 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
   }
 
   rowstride -= width << 2;
+  if (!gamma_lut) {
+    for (; src < end; src += rowstride) {
+      for (i = 0; i < width; i++) {
+        tmp = src[0];
+        src[0] = src[2];
+        src[2] = tmp;
+        src += 4;
+      }
+    }
+    return;
+  }
   for (; src < end; src += rowstride) {
     for (i = 0; i < width; i++) {
-      tmp = src[0];
-      src[0] = src[2];
+      tmp = gamma_lut[src[0]];
+      src[0] = gamma_lut[src[2]];
+      src[1] = gamma_lut[src[1]];
       src[2] = tmp;
       src += 4;
     }
@@ -8208,12 +8368,12 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
 static void *convert_swap3postalpha_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3postalpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                               ccparams->thread_id);
+                               ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int rowstride,
+static void convert_swap3prealpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, uint8_t *gamma_lut,
                                         int thread_id) {
   // swap 3 bytes, leave alpha
   uint8_t *end = src + height * rowstride, tmp;
@@ -8240,6 +8400,7 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3prealpha_frame_thread(&ccparams[i]);
@@ -8259,10 +8420,22 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
 
   rowstride -= width << 2;
 
+  if (!gamma_lut) {
+    for (; src < end; src += rowstride) {
+      for (i = 0; i < width; i++) {
+        tmp = src[1];
+        src[1] = src[3];
+        src[3] = tmp;
+        src += 4;
+      }
+    }
+    return;
+  }
   for (; src < end; src += rowstride) {
     for (i = 0; i < width; i++) {
-      tmp = src[1];
-      src[1] = src[3];
+      tmp = gamma_lut[src[1]];
+      src[1] = gamma_lut[src[3]];
+      src[2] = gamma_lut[src[2]];
       src[3] = tmp;
       src += 4;
     }
@@ -8273,13 +8446,13 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
 static void *convert_swap3prealpha_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3prealpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize,
-                              ccparams->irowstrides[0], ccparams->thread_id);
+                              ccparams->irowstrides[0], ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_addpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                  uint8_t *dest, uint8_t *gamma_lut, int thread_id) {
+static void convert_addpost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                  uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // add post alpha
   int i, end = height * irowstride, j = 0;
 
@@ -8373,8 +8546,8 @@ static void *convert_addpost_frame_thread(void *data) {
 }
 
 
-static void convert_addpre_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                 uint8_t *dest, int thread_id) {
+static void convert_addpre_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                 uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // add pre alpha
   uint8_t *end = src + height * irowstride;
   int i;
@@ -8402,6 +8575,7 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
 
         ccparams[i].irowstrides[0] = irowstride;
         ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_addpre_frame_thread(&ccparams[i]);
@@ -8419,12 +8593,36 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
     return;
   }
 
+  if (!gamma_lut) {
+    if ((irowstride == width * 3) && (orowstride == width * 4)) {
+      // quick version
+      for (; src < end; src += 3) {
+        *(dest++) = 255; // alpha
+        lives_memcpy(dest, src, 3);
+        dest += 3;
+      }
+    } else {
+      int width3 = width * 3;
+      orowstride -= width * 4;
+      for (; src < end; src += irowstride) {
+        for (i = 0; i < width3; i += 3) {
+          *(dest++) = 255; // alpha
+          lives_memcpy(dest, src + i, 3);
+          dest += 3;
+        }
+        dest += orowstride;
+      }
+    }
+    return;
+  }
+
   if ((irowstride == width * 3) && (orowstride == width * 4)) {
     // quick version
     for (; src < end; src += 3) {
       *(dest++) = 255; // alpha
-      lives_memcpy(dest, src, 3);
-      dest += 3;
+      *(dest++) = gamma_lut[src[0]];
+      *(dest++) = gamma_lut[src[1]];
+      *(dest++) = gamma_lut[src[2]];
     }
   } else {
     int width3 = width * 3;
@@ -8432,8 +8630,10 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
     for (; src < end; src += irowstride) {
       for (i = 0; i < width3; i += 3) {
         *(dest++) = 255; // alpha
-        lives_memcpy(dest, src + i, 3);
-        dest += 3;
+        *(dest++) = gamma_lut[src[i]];
+        *(dest++) = gamma_lut[src[i + 1]];
+        *(dest++) = gamma_lut[src[i + 2]];
+
       }
       dest += orowstride;
     }
@@ -8444,13 +8644,13 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
 static void *convert_addpre_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_addpre_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                       ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                       ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                       uint8_t *dest, int thread_id) {
+static void convert_swap3delpost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                       uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 bytes, delete post alpha
   int i, end = height * irowstride, j = 0;
 
@@ -8478,6 +8678,7 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
 
         ccparams[i].irowstrides[0] = irowstride;
         ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3delpost_frame_thread(&ccparams[i]);
@@ -8495,21 +8696,43 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
     return;
   }
 
+  if (!gamma_lut) {
+    if ((irowstride == width * 4) && (orowstride == width * 3)) {
+      // quick version
+      for (i = 0; i < end; i += 4) {
+        dest[j++] = src[i + 2]; // red
+        dest[j++] = src[i + 1]; // green
+        dest[j++] = src[i]; // blue
+      }
+    } else {
+      int width4 = width * 4;
+      for (int k = 0; k < height; k++) {
+        j = 0;
+        for (i = 0; i < width4; i += 4) {
+          dest[orowstride * k + j++] = src[irowstride * k + i + 2]; // red
+          dest[orowstride * k + j++] = src[irowstride * k + i + 1]; // green
+          dest[orowstride * k + j++] = src[irowstride * k + i]; // blue
+        }
+      }
+    }
+    return;
+  }
+
   if ((irowstride == width * 4) && (orowstride == width * 3)) {
     // quick version
     for (i = 0; i < end; i += 4) {
-      dest[j++] = src[i + 2]; // red
-      dest[j++] = src[i + 1]; // green
-      dest[j++] = src[i]; // blue
+      dest[j++] = gamma_lut[src[i + 2]]; // red
+      dest[j++] = gamma_lut[src[i + 1]]; // green
+      dest[j++] = gamma_lut[src[i]]; // blue
     }
   } else {
     int width4 = width * 4;
     for (int k = 0; k < height; k++) {
       j = 0;
       for (i = 0; i < width4; i += 4) {
-        dest[orowstride * k + j++] = src[irowstride * k + i + 2]; // red
-        dest[orowstride * k + j++] = src[irowstride * k + i + 1]; // green
-        dest[orowstride * k + j++] = src[irowstride * k + i]; // blue
+        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 2]]; // red
+        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 1]]; // green
+        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i]]; // blue
       }
     }
   }
@@ -8519,13 +8742,13 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
 static void *convert_swap3delpost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3delpost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                             ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                             ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_delpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                  uint8_t *dest, uint8_t *gamma_lut, int thread_id) {
+static void convert_delpost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                  uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // delete post alpha
   int i, end = height * irowstride, j = 0;
 
@@ -8617,8 +8840,8 @@ static void *convert_delpost_frame_thread(void *data) {
 }
 
 
-static void convert_delpre_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                 uint8_t *dest, int thread_id) {
+static void convert_delpre_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                 uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // delete pre alpha
   uint8_t *end = src + height * irowstride;
   int i;
@@ -8646,6 +8869,7 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
 
         ccparams[i].irowstrides[0] = irowstride;
         ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_delpre_frame_thread(&ccparams[i]);
@@ -8665,36 +8889,46 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
 
   src++;
 
-  if ((irowstride == width * 4) && (orowstride == width * 3)) {
-    // quick version
-    for (; src < end; src += 4) {
-      lives_memcpy(dest, src, 3);
-      dest += 3;
-    }
-  } else {
-    int width4 = width * 4;
-    orowstride -= width * 3;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width4; i += 4) {
-        lives_memcpy(dest, src + i, 3);
+  if (!gamma_lut) {
+    if ((irowstride == width * 4) && (orowstride == width * 3)) {
+      // quick version
+      for (; src < end; src += 4) {
+        dest[0] = gamma_lut[src[0]];
+        dest[1] = gamma_lut[src[1]];
+        dest[2] = gamma_lut[src[2]];
         dest += 3;
       }
-      dest += orowstride;
+    } else {
+      int width4 = width * 4;
+      orowstride -= width * 3;
+      for (; src < end; src += irowstride) {
+        for (i = 0; i < width4; i += 4) {
+          dest[0] = gamma_lut[src[i]];
+          dest[1] = gamma_lut[src[i + 1]];
+          dest[2] = gamma_lut[src[i + 2]];
+          dest += 3;
+        }
+        dest += orowstride;
+      }
     }
+    return;
   }
+
+
+
 }
 
 
 static void *convert_delpre_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_delpre_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                       ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                       ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                      uint8_t *dest, int thread_id) {
+static void convert_swap3delpre_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
+                                      uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // delete pre alpha, swap last 3
   uint8_t *end = src + height * irowstride;
   int i;
@@ -8722,6 +8956,7 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
 
         ccparams[i].irowstrides[0] = irowstride;
         ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3delpre_frame_thread(&ccparams[i]);
@@ -8739,45 +8974,67 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
     return;
   }
 
+  if (!gamma_lut) {
+    if ((irowstride == width * 4) && (orowstride == width * 3)) {
+      // quick version
+      for (; src < end; src += 4) {
+        *(dest++) = src[3]; // red
+        *(dest++) = src[2]; // green
+        *(dest++) = src[1]; // blue
+      }
+    } else {
+      int width4 = width * 4;
+      orowstride -= width * 3;
+      for (; src < end; src += irowstride) {
+        for (i = 0; i < width4; i += 4) {
+          *(dest++) = src[i + 3]; // red
+          *(dest++) = src[i + 2]; // green
+          *(dest++) = src[i + 1]; // blue
+        }
+        dest += orowstride;
+      }
+    }
+    return;
+  }
+
   if ((irowstride == width * 4) && (orowstride == width * 3)) {
     // quick version
     for (; src < end; src += 4) {
-      *(dest++) = src[3]; // red
-      *(dest++) = src[2]; // green
-      *(dest++) = src[1]; // blue
+      *(dest++) = gamma_lut[src[3]]; // red
+      *(dest++) = gamma_lut[src[2]]; // green
+      *(dest++) = gamma_lut[src[1]]; // blue
     }
   } else {
     int width4 = width * 4;
     orowstride -= width * 3;
     for (; src < end; src += irowstride) {
       for (i = 0; i < width4; i += 4) {
-        *(dest++) = src[i + 3]; // red
-        *(dest++) = src[i + 2]; // green
-        *(dest++) = src[i + 1]; // blue
+        *(dest++) = gamma_lut[src[i + 3]]; // red
+        *(dest++) = gamma_lut[src[i + 2]]; // green
+        *(dest++) = gamma_lut[src[i + 1]]; // blue
       }
       dest += orowstride;
     }
   }
 }
 
-
 static void *convert_swap3delpre_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3delpre_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swapprepost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                      uint8_t *dest, int thread_id) {
+static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride,
+                                      uint8_t *LIVES_RESTRICT gamma_lut, boolean alpha_first, int thread_id) {
   // swap first and last bytes in a 4 byte palette
-  uint64_t *uup;
-  uint8_t *end = src + height * irowstride;
-  int i;
+  uint8_t tmp[4];
+  int i, j;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     lives_thread_t *threads[prefs->nfx_threads];
+    uint8_t *end = src + height * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8788,8 +9045,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
 
       if ((src + dheight * i * irowstride) < end) {
         ccparams[i].src = src + dheight * i * irowstride;
-        ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * orowstride;
+        ccparams[i].hsize = width >> 3;
 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
@@ -8798,7 +9054,8 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = irowstride;
-        ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].lut = gamma_lut;
+        ccparams[i].alpha_first = alpha_first;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swapprepost_frame_thread(&ccparams[i]);
@@ -8816,48 +9073,38 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
     return;
   }
 
-  uup = (uint64_t *)src;
-  if ((void *)uup == (void *)src) {
-    uint64_t uu;
-    int width8 = width >> 3;
-    orowstride -= width * 4;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width8; i++) {
-        uu = ((*uup & 0xFF000000FF000000) >> 24);
-        uu |= ((*uup & 0x00FFFFFF00FFFFFF) << 8);
-        lives_memcpy(dest, &uu, 8);
-        dest += 8;
-        uup++;
+  if (!gamma_lut) {
+    uint64_t *uup = (uint64_t *)src;
+    if ((void *)uup == (void *)src) {
+      for (i = 0; i < height; i++) {
+        for (j = 0; j < width; j++) {
+          uup[i * irowstride + j] = ((uup[i * irowstride + j] & 0xFF000000FF000000) >> 24)
+                                    | ((uup[i * irowstride] & 0x00FFFFFF00FFFFFF) << 8);
+        }
       }
-      dest += orowstride;
+      return;
+    }
+  }
+
+  if (!alpha_first) {
+    for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j += 4) {
+        tmp[0] = src[i * irowstride + j + 3]; // alpha
+        tmp[1] = gamma_lut[src[i * irowstride + j + 1]]; // red / blue
+        tmp[2] = gamma_lut[src[i * irowstride + j + 2]]; // green
+        tmp[3] = gamma_lut[src[i * irowstride + j]]; // blue / red
+        lives_memcpy(src + i * irowstride + j, &tmp, 4);
+      }
     }
     return;
   }
-
-  if (src == dest) {
-    uint8_t tmp;
-    int width4 = width << 2;
-    orowstride -= width4;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width4; i += 4) {
-        tmp = dest[i];
-        lives_memmove(&dest[i], &dest[i + 1], 3);
-        dest[i + 3] = tmp;
-      }
-      dest += orowstride;
-    }
-    return;
-  } else {
-    uint8_t tmp;
-    int width4 = width << 2;
-    orowstride -= width4;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width4; i += 4) {
-        tmp = src[i];
-        lives_memcpy(&dest[i], &src[i + 1], 3);
-        dest[i + 3] = tmp;
-      }
-      dest += orowstride;
+  for (i = 0; i < height; i++) {
+    for (j = 0; j < width; j += 4) {
+      tmp[0] = gamma_lut[src[i * irowstride + j + 3]]; // r / b
+      tmp[1] = gamma_lut[src[i * irowstride + j + 1]]; // g
+      tmp[2] = gamma_lut[src[i * irowstride + j + 2]]; // b / r
+      tmp[3] = src[i * irowstride + j]; // a
+      lives_memcpy(src + i * irowstride + j, &tmp, 4);
     }
   }
 }
@@ -8866,7 +9113,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
 static void *convert_swapprepost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swapprepost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                            ccparams->lut, ccparams->alpha_first, ccparams->thread_id);
   return NULL;
 }
 
@@ -8874,16 +9121,16 @@ static void *convert_swapprepost_frame_thread(void *data) {
 //////////////////////////
 // generic YUV
 
-static void convert_swab_frame(uint8_t *src, int width, int height, int irow, int orow, uint8_t *dest, int thread_id) {
-  int i;
-  int width4 = width * 4;
-  uint8_t *end = src + height * irow;
+static void convert_swab_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irow, int thread_id) {
+  void *tmp;
+  int width4 = width * 4, i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
+    uint8_t *end = src + height * irow;
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = prefs->nfx_threads; i--;) {
@@ -8892,7 +9139,6 @@ static void convert_swab_frame(uint8_t *src, int width, int height, int irow, in
       if ((src + dheight * i * width4) < end) {
         ccparams[i].src = src + dheight * i * irow;
         ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * orow;
 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
@@ -8900,7 +9146,6 @@ static void convert_swab_frame(uint8_t *src, int width, int height, int irow, in
 
         ccparams[i].vsize = dheight;
         ccparams[i].irowstrides[0] = irow;
-        ccparams[i].orowstrides[0] = orow;
 
         ccparams[i].thread_id = i;
 
@@ -8919,25 +9164,26 @@ static void convert_swab_frame(uint8_t *src, int width, int height, int irow, in
     return;
   }
 
-  for (; src < end; src += irow) {
-    for (i = 0; i < width4; i += 2) {
-      swab2(&dest[i], &src[i], 1);
-    }
-    dest += orow;
+  tmp = lives_malloc(width4);
+
+  for (i = 0; i < height; i++) {
+    swab(src + i * irow, tmp, width4);
+    lives_memcpy(src + i * irow, tmp, width4);
   }
+  lives_free(tmp);
 }
 
 
 static void *convert_swab_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swab_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize,
-                     ccparams->irowstrides[0], ccparams->orowstrides[0],
-                     (uint8_t *)ccparams->dest, ccparams->thread_id);
+                     ccparams->irowstrides[0], ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_halve_chroma(uint8_t **src, int width, int height, int *istrides, int *ostrides, uint8_t **dest,
+static void convert_halve_chroma(uint8_t **LIVES_RESTRICT src, int width, int height, int *istrides, int *ostrides,
+                                 uint8_t **LIVES_RESTRICT dest,
                                  int clamping) {
   // width and height here are width and height of src *chroma* planes, in bytes
 
@@ -8970,7 +9216,8 @@ static void convert_halve_chroma(uint8_t **src, int width, int height, int *istr
 }
 
 
-static void convert_double_chroma(uint8_t **src, int width, int height, int *istrides, int *ostrides, uint8_t **dest,
+static void convert_double_chroma(uint8_t **LIVES_RESTRICT src, int width, int height, int *istrides, int *ostrides,
+                                  uint8_t **LIVES_RESTRICT dest,
                                   int clamping) {
   // width and height here are width and height of src *chroma* planes, in bytes
   // double two chroma planes vertically, with interpolation: eg: 420p to 422p
@@ -8999,7 +9246,8 @@ static void convert_double_chroma(uint8_t **src, int width, int height, int *ist
 }
 
 
-static void convert_quad_chroma(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t **dest,
+static void convert_quad_chroma(uint8_t **LIVES_RESTRICT src, int width, int height, int *istrides, int ostride,
+                                uint8_t **LIVES_RESTRICT dest,
                                 boolean add_alpha, int sampling, int clamping) {
   // width and height here are width and height of dest chroma planes, in bytes
   // double the chroma samples vertically and horizontally, with interpolation
@@ -9071,8 +9319,8 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, int *istri
 }
 
 
-static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride,
-                                       uint8_t *dest, boolean add_alpha, int sampling, int clamping) {
+static void convert_quad_chroma_packed(uint8_t **LIVES_RESTRICT src, int width, int height, int *istrides, int ostride,
+                                       uint8_t *LIVES_RESTRICT dest, boolean add_alpha, int sampling, int clamping) {
   // width and height here are width and height of dest chroma planes, in bytes
   // stretch (double) the chroma samples vertically and horizontally, with interpolation
   // output to packed pixels
@@ -9167,7 +9415,8 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
 }
 
 
-static void convert_double_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t *dest,
+static void convert_double_chroma_packed(uint8_t **LIVES_RESTRICT src, int width, int height, int *istrides, int ostride,
+    uint8_t *LIVES_RESTRICT dest,
     boolean add_alpha, int sampling, int clamping) {
   // width and height here are width and height of dest chroma planes, in bytes
   // double the chroma samples horizontally, with interpolation
@@ -9466,7 +9715,8 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
 
    psize is sizeof(bpix), width, height and rowstride are the dimensions of the target plane
 */
-LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int rowstride, unsigned char *bpix) {
+LIVES_INLINE void fill_plane(uint8_t *LIVES_RESTRICT ptr, int psize, int width, int height, int rowstride,
+                             unsigned char *bpix) {
   int j, widthp = width * psize;
   for (j = 0; j < width; j++) {
     lives_memcpy(&ptr[psize * j], bpix, psize);
@@ -9477,7 +9727,7 @@ LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int
 }
 
 
-static size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src) {
+static size_t blank_pixel(uint8_t *LIVES_RESTRICT dst, int pal, int yuv_clamping, uint8_t *LIVES_RESTRICT src) {
   // set src to non-null to preserve the alpha channel (if applicable)
   // yuv_clamping
   // only valid for non-planar (packed) palettes
@@ -9523,8 +9773,8 @@ static size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src)
   return 0;
 }
 
-static void blank_row(uint8_t **pdst, int width, int pal, int nplanes,
-                      int yuv_clamping, int uvcopy, uint8_t **psrc) {
+static void blank_row(uint8_t **LIVES_RESTRICT pdst, int width, int pal, int nplanes,
+                      int yuv_clamping, int uvcopy, uint8_t **LIVES_RESTRICT psrc) {
   // for YUV420 and YVU420, only set uvcopy for even rows,
   //and increment pdst[1], pdst[2] on the odd rows
   int p;
@@ -10458,24 +10708,20 @@ static void swap_chroma_planes(weed_layer_t *layer) {
 
 
 LIVES_GLOBAL_INLINE boolean can_inline_gamma(int inpl, int opal) {
-  // TODO: rgb <-> bgra, bgr <-> rgba,
-  if (inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YUV420P) {
-    if (opal == WEED_PALETTE_RGB24 || opal == WEED_PALETTE_BGR24 || opal == WEED_PALETTE_RGBA32
-        || opal == WEED_PALETTE_BGRA32 || opal == WEED_PALETTE_ARGB32) return TRUE;
-  }
+  if (weed_palette_is_rgb(inpl) && weed_palette_is_rgb(opal)) return TRUE;
+
+  if ((inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YVU420P || inpl == WEED_PALETTE_YUV422P
+       || inpl == WEED_PALETTE_YUV444P) && weed_palette_is_rgb(opal)) return TRUE;
+  if (opal == WEED_PALETTE_RGB24 || opal == WEED_PALETTE_BGR24 || opal == WEED_PALETTE_RGBA32
+      || opal == WEED_PALETTE_BGRA32 || opal == WEED_PALETTE_ARGB32) return TRUE;
+
   if (opal == WEED_PALETTE_UYVY || opal == WEED_PALETTE_YUYV) {
     if (inpl == WEED_PALETTE_RGB24 || inpl == WEED_PALETTE_RGBA32
+        || inpl == WEED_PALETTE_UYVY || inpl == WEED_PALETTE_YUYV
         || inpl == WEED_PALETTE_BGR24 || inpl == WEED_PALETTE_BGRA32
         || inpl == WEED_PALETTE_ARGB32
        ) return TRUE;
   }
-
-  if ((inpl == WEED_PALETTE_RGB24 && opal == WEED_PALETTE_BGR24) || (inpl == WEED_PALETTE_BGR24
-      && opal == WEED_PALETTE_RGB24)) return TRUE;
-  if ((inpl == WEED_PALETTE_RGB24 && opal == WEED_PALETTE_RGBA32) || (inpl == WEED_PALETTE_BGR24
-      && opal == WEED_PALETTE_BGRA32)) return TRUE;
-  if ((inpl == WEED_PALETTE_RGBA32 && opal == WEED_PALETTE_RGB24) || (inpl == WEED_PALETTE_BGRA32
-      && opal == WEED_PALETTE_BGR24)) return TRUE;
 
   return FALSE;
 }
@@ -10527,6 +10773,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   // TODO: allow plugin candidates/delegates
   weed_layer_t *orig_layer;
   uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest = NULL, **gudest_array = NULL;
+  uint8_t *gamma_lut = NULL;
   int width, height, orowstride, irowstride, *istrides, *ostrides = NULL;
   int nplanes;
   int error, inpl, flags = 0;
@@ -10678,6 +10925,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   // since there is an optimisation to keep the same memory block
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(orig_layer, layer);
+  if (!weed_layer_get_pixel_data(orig_layer)) abort();
   //g_print("COPIED %p TO %p %d\n", layer, orig_layer, weed_layer_count_refs(orig_layer));
 
   /* if (mainw->frame_layer && layer != mainw->frame_layer */
@@ -10690,16 +10938,13 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 
   // all RGB -> RGB conversions are now handled here
   if (weed_palette_is_rgb(inpl) && weed_palette_is_rgb(outpl)) {
+    if (gamma_type != new_gamma_type) gamma_lut = create_gamma_lut(1.0, gamma_type, new_gamma_type);
     gusrc = weed_layer_get_pixel_data(layer);
     if (!weed_palette_has_alpha_first(inpl)) {
       if (!weed_palette_has_alpha_last(inpl)) {
         if (!weed_palette_has_alpha_first(outpl)) {
           if (!weed_palette_has_alpha_last(outpl)) {
-            convert_swap3_frame(gusrc, width, height, irowstride, irowstride, gusrc,
-                                gamma_type == new_gamma_type ? NULL :
-                                create_gamma_lut(1.0, gamma_type, new_gamma_type),
-                                -USE_THREADS);
-            weed_layer_nullify_pixel_data(orig_layer);
+            convert_swap3_frame(gusrc, width, height, irowstride, gamma_lut, -USE_THREADS);
           } else {
             // add post
             if (weed_palettes_rbswapped(inpl, outpl)) {
@@ -10708,16 +10953,14 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
-                                         -USE_THREADS);
+                                         gamma_lut, -USE_THREADS);
             } else {
               weed_layer_nullify_pixel_data(layer);
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
-                                    gamma_type == new_gamma_type ? NULL :
-                                    create_gamma_lut(1.0, gamma_type, new_gamma_type),
-                                    -USE_THREADS);
+                                    gamma_lut, -USE_THREADS);
             }
           }
         } else {
@@ -10728,13 +10971,13 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
             convert_swap3addpre_frame(gusrc, width, height, irowstride, orowstride, gudest,
-                                      -USE_THREADS);
+                                      gamma_lut, -USE_THREADS);
           } else {
             weed_layer_nullify_pixel_data(layer);
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
-            convert_addpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+            convert_addpre_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
           }
         }
       } else {
@@ -10747,31 +10990,27 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
-                                         -USE_THREADS);
+                                         gamma_lut, -USE_THREADS);
             } else {
               weed_layer_nullify_pixel_data(layer);
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
-                                    gamma_type == new_gamma_type ? NULL :
-                                    create_gamma_lut(1.0, gamma_type, new_gamma_type),
-                                    -USE_THREADS);
+                                    gamma_lut, -USE_THREADS);
             }
           } else {
             /// outpl has post
-            convert_swap3postalpha_frame(gusrc, width, height, irowstride, -USE_THREADS);
-            weed_layer_nullify_pixel_data(orig_layer);
+            convert_swap3postalpha_frame(gusrc, width, height, irowstride, gamma_lut, -USE_THREADS);
           }
         } else {
           /// outpl has pre
           if (weed_palettes_rbswapped(inpl, outpl)) {
-            convert_swap4_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
-            weed_layer_nullify_pixel_data(orig_layer);
+            // bgra -> argb
+            convert_swap4_frame(gusrc, width, height, irowstride, gamma_lut, FALSE, -USE_THREADS);
           } else {
-            convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc,
-                                      -USE_THREADS);
-            weed_layer_nullify_pixel_data(orig_layer);
+            // rgba -> argb
+            convert_swapprepost_frame(gusrc, width, height, irowstride, gamma_lut, FALSE, -USE_THREADS);
           }
         }
       }
@@ -10785,29 +11024,27 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
             convert_swap3delpre_frame(gusrc, width, height, irowstride, orowstride, gudest,
-                                      -USE_THREADS);
+                                      gamma_lut, -USE_THREADS);
           } else {
             weed_layer_nullify_pixel_data(layer);
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
-            convert_delpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+            convert_delpre_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
           }
         } else {
           /// outpl has post
           if (weed_palettes_rbswapped(inpl, outpl)) {
-            convert_swap4_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
-            weed_layer_nullify_pixel_data(orig_layer);
+            // argb -> bgra
+            convert_swap4_frame(gusrc, width, height, irowstride, gamma_lut, TRUE, -USE_THREADS);
           } else {
-            convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc,
-                                      -USE_THREADS);
-            weed_layer_nullify_pixel_data(orig_layer);
+            // argb -> rgba
+            convert_swapprepost_frame(gusrc, width, height, irowstride, gamma_lut, TRUE, -USE_THREADS);
           }
         }
       } else {
         /// outpl has pre
-        convert_swap3prealpha_frame(gusrc, width, height, irowstride, -USE_THREADS);
-        weed_layer_nullify_pixel_data(orig_layer);
+        convert_swap3prealpha_frame(gusrc, width, height, irowstride, gamma_lut, -USE_THREADS);
       }
     }
     goto conv_done;
@@ -11467,11 +11704,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_YUYV8888:
-      weed_layer_nullify_pixel_data(layer);
-      if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
-      orowstride = weed_layer_get_rowstride(layer);
-      gudest = weed_layer_get_pixel_data(layer);
-      convert_swab_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+      convert_swab_frame(gusrc, width, height, irowstride, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
@@ -11583,11 +11816,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
-      weed_layer_nullify_pixel_data(layer);
-      if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
-      orowstride = weed_layer_get_rowstride(layer);
-      gudest = weed_layer_get_pixel_data(layer);
-      convert_swab_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+      convert_swab_frame(gusrc, width, height, irowstride, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
@@ -12377,7 +12606,7 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
 }
 
 
-LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *buf) {
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *LIVES_RESTRICT buf) {
   // we can cheat if our buffer is correctly sized
   LiVESPixbuf *pixbuf;
   int channels = has_alpha ? 4 : 3;
@@ -12386,22 +12615,6 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int h
   pixbuf = lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride,
                                       (LiVESPixbufDestroyNotify)lives_free_buffer, NULL);
   return pixbuf;
-}
-
-
-int weed_layer_get_gamma(weed_layer_t *layer) {
-  int gamma_type = WEED_GAMMA_UNKNOWN;
-  if (prefs->apply_gamma) {
-    if (weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
-      gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
-    }
-    if (gamma_type == WEED_GAMMA_UNKNOWN) {
-      break_me("weed_layer_get_gamma with unk. gamma");
-      LIVES_WARN("Layer with unknown gamma !!");
-      gamma_type = WEED_GAMMA_SRGB;
-    }
-  }
-  return gamma_type;
 }
 
 
@@ -12909,8 +13122,6 @@ static void *swscale_threadfunc(void *arg) {
 
    NOTE: if input layer is a shallow copy of mainw->frame_layer, orig pixel_data is not freed
 
-
-
    @return FALSE if we were unable to resize */
 boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint) {
   // TODO ** - see if there is a resize plugin candidate/delegate which supports this palette :
@@ -12926,7 +13137,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   int iwidth = weed_layer_get_width_pixels(layer);
   int iheight = weed_layer_get_height(layer);
   int iclamping = weed_layer_get_yuv_clamping(layer);
-  int new_gamma_type = WEED_GAMMA_UNKNOWN;
 
 #ifdef USE_SWSCALE
   boolean resolved = FALSE;
@@ -12955,8 +13165,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   //        #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
-          weed_palette_get_name_full(palette,
-                                     iclamping, 0), width, height, weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
+          weed_palette_get_name_full(palette, iclamping, 0), width, height,
+          weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
 #endif
 
   iwidth = (iwidth >> 1) << 1;
@@ -12971,15 +13181,13 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   }
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) new_gamma_type  = weed_layer_get_gamma(layer);
-
   // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
   // we can always scale these by pretending they are RGB24 and RGBA32 respectively
   // (if outpal is yuv) or actually to rgb24 / rgba32 if opal is rgb
   if (weed_palette_is_yuv(palette)) {
     // TODO -check this, we check orig pal, then yuv888 / yuva88888
     if (!weed_palette_is_resizable(palette, iclamping, TRUE)) {
-      if (opal_hint == WEED_PALETTE_END || weed_palette_is_yuv(opal_hint)) {
+      if (opal_hint == WEED_PALETTE_ANY || weed_palette_is_yuv(opal_hint)) {
         if (weed_palette_has_alpha(palette)) {
           convert_layer_palette(layer, WEED_PALETTE_YUVA8888, WEED_YUV_CLAMPING_UNCLAMPED);
         } else {
@@ -12987,6 +13195,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         }
         oclamp_hint = iclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, NULL));
       } else {
+        //
         if (weed_palette_has_alpha(palette)) {
           convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0);
         } else {
@@ -13174,24 +13383,24 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-    if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
-      if (weed_palette_is_rgb(palette) && !weed_palette_is_rgb(opal_hint) &&
-          weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
-        // gamma correction
-        if (prefs->apply_gamma) {
-          gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-        }
-      }
-      new_gamma_type = weed_layer_get_gamma(layer);
-    }
+    /* if (new_gamma_type != WEED_GAMMA_UNKNOWN) { */
+    /*   if (weed_palette_is_rgb(palette) && !weed_palette_is_rgb(opal_hint) && */
+    /*       weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) { */
+    /*     // gamma correction */
+    /*     if (prefs->apply_gamma) { */
+    /*       gamma_convert_layer(WEED_GAMMA_SRGB, layer); */
+    /*     } */
+    /*   } */
+    /*   new_gamma_type = weed_layer_get_gamma(layer); */
+    /* } */
 
-    if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
-      //weed_layer_set_gamma(layer, new_gamma_type);
-      if (new_gamma_type == WEED_GAMMA_BT709
-          || (weed_palette_is_yuv(palette)
-              && weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709))
-        subspace = WEED_YUV_SUBSPACE_BT709;
-    }
+    /* if (new_gamma_type != WEED_GAMMA_UNKNOWN) { */
+    /*   //weed_layer_set_gamma(layer, new_gamma_type); */
+    /*   if (new_gamma_type == WEED_GAMMA_BT709 */
+    /*       || (weed_palette_is_yuv(palette) */
+    /*           && weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709)) */
+    /*     subspace = WEED_YUV_SUBSPACE_BT709; */
+    /* } */
 
     // set new values
 

@@ -482,14 +482,6 @@ static boolean pre_init(void) {
 
   mainw->global_hook_stacks = lpt_hooks;
 
-#ifdef VALGRIND_ON
-  prefs->nfx_threads = 8;
-#else
-  if (mainw->debug) prefs->nfx_threads = 2;
-#endif
-
-  lives_threadpool_init();
-
   // locate shell commands that may be used in processing
   //
   get_location("touch", capable->touch_cmd, PATH_MAX);
@@ -513,6 +505,12 @@ static boolean pre_init(void) {
       capable->has_smogrify && capable->smog_version_correct) {
     // check the backend is there, get some system details and prefs
     capable = get_capabilities();
+  }
+
+  capable->session_uid = gen_unique_id();
+
+  if (prefs->show_dev_opts) {
+    g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
   }
 
   //FATAL ERRORS
@@ -575,10 +573,6 @@ static boolean pre_init(void) {
       startup_message_fatal(msg);
     }
   }
-
-  sizint = sizeof(int);
-  sizdbl = sizeof(double);
-  sizshrt = sizeof(short);
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = (_("Any"));
@@ -932,20 +926,6 @@ static boolean pre_init(void) {
     if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();
     print_notice();
   }
-
-  capable->session_uid = gen_unique_id();
-
-  if (prefs->show_dev_opts) {
-    g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
-  }
-
-  g_printerr("Getting hardware details...\n");
-  get_machine_dets();
-  g_printerr("OK\n");
-
-  g_printerr("Initializing memory block allocators...\n");
-  init_memfuncs(1);
-  g_printerr("OK\n");
 
   get_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
 
@@ -1923,6 +1903,11 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
 #endif
+
+  sizint = sizeof(int);
+  sizdbl = sizeof(double);
+  sizshrt = sizeof(short);
+
 #ifndef IS_LIBLIVES
   // start up the Weed system
   weed_abi_version = libweed_get_abi_version();
@@ -1980,10 +1965,29 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
-  mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
+  mainw = (mainwindow *)(_lives_calloc(1, sizeof(mainwindow)));
 
   mainw->wall_ticks = -1;
   mainw->initial_ticks = lives_get_current_ticks();
+
+  prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
+  future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
+
+#ifdef VALGRIND_ON
+  prefs->nfx_threads = 8;
+#else
+  if (mainw->debug) prefs->nfx_threads = 2;
+#endif
+
+  lives_threadpool_init();
+
+  g_printerr("Getting hardware details...\n");
+  get_machine_dets();
+  g_printerr("OK\n");
+
+  g_printerr("Initializing memory block allocators...\n");
+  init_memfuncs(1);
+  g_printerr("OK\n");
 
   init_random();
 
@@ -2034,8 +2038,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ",
                              lives_get_application_name(), LiVES_VERSION);
 
-  prefs = (_prefs *)lives_calloc(1, sizeof(_prefs));
-  future_prefs = (_future_prefs *)lives_calloc(1, sizeof(_future_prefs));
   prefs->workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
   prefs->config_datadir[0] = '\0';

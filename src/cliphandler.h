@@ -285,8 +285,11 @@ typedef void *(*clipsrc_clone_func_t)(void *actor, const char *URI);
 // to make it possible to reload the src in a future session
 
 typedef struct {
-  // nunique id for this clip src in clipgrp - clones all have same uid
+  // unique id for this clip src in srcgrp - clones get differetn values
   uint64_t uid;
+
+  // unique id for this clip src in srcgrp - clones get same value
+  uint64_t class_uid;
 
   ////////////////////////////// template part
   int src_type;
@@ -301,6 +304,7 @@ typedef struct {
   // size, palette, frame
   // then call action_func(layer);
   clipsrc_action_func_t action_func; // layer - fill layer pixel_data
+
   //clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
   //clipsrc_snapshot_func_t snapshot_func; // create a snapshot of strate for faster reloading
   //clipsrc_destroy_func_t destroy_func; // actor - frees actor
@@ -314,6 +318,14 @@ typedef struct {
 
   // if actor is a template, points to the specific inst for the scrgroup
   void *actor_inst;
+
+  // cpal and gaama will be converted first to srcgroup appatent_pal, apparent_gamma
+
+  // current palette in use
+  int cpal;
+
+  // current gamm_type for the src
+  int gamma_type;
 
   // external checksum for clip source (e.g md4sum, cert)
   fingerprint_t ext_checksum;
@@ -803,20 +815,28 @@ char *get_untitled_name(int number);
 
 // srcgrps
 
+lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc);
+
 // create a clone of primary
 lives_clipsrc_group_t *clone_srcgrp(int sclip, int dclip, int track, int purpose);
 lives_clip_src_t *add_clip_src(int nclip, int track, int purpose, void *actor, int src_type,
                                uint64_t actor_uid, fingerprint_t *chksum, const char *ext_URI);
+
 lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *, uint64_t actor_uid, int src_type, const char *ext_URI,
                                fingerprint_t *chksum);
+lives_clip_src_t *find_src_by_class_uid(lives_clipsrc_group_t *srcgrp, uint64_t class_uid);
+
 lives_clipsrc_group_t *get_srcgrp(int nclip, int track, int purpose);
 lives_clipsrc_group_t *get_primary_srcgrp(int nclip);
+
 boolean swap_srcgrps(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
+
 void clip_src_free(int nclip,  lives_clipsrc_group_t *, lives_clip_src_t *);
 void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *);
 void srcgrp_free(int nclip, lives_clipsrc_group_t *);
 void srcgrp_remove(int nclip, int track, int purpose);
 void srcgrps_free_all(int nclip);
+
 void *get_primary_actor(lives_clip_t *);
 void *get_primary_inst(lives_clip_t *);
 int get_primary_src_type(lives_clip_t *);
@@ -824,6 +844,7 @@ lives_clip_src_t *get_primary_src(int nclip);
 lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type);
 lives_clip_src_t *add_primary_inst(int nclip, void *actor, void *actor_inst, int src_type);
 void remove_primary_src(int nclip, int src_type);
+
 void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t pally, int gamma_type);
 
 // clip sources

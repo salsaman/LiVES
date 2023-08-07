@@ -787,7 +787,7 @@ check_encache:
 
     if (!layer && !end_pixbuf) {
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
-      mainw->debug_ptr = layer;
+      //mainw->debug_ptr = layer;
       if (!mainw->go_away) {
         lives_clipsrc_group_t *srcgrp = get_srcgrp(mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
         if (!srcgrp) srcgrp = clone_srcgrp(mainw->current_file, mainw->current_file, -1, SRC_PURPOSE_THUMBNAIL);
@@ -2177,20 +2177,22 @@ fndone:
     weed_layer_ref(layer);
 
     //weed_layer_pixel_data_free(layer);
-    weed_layer_set_size(layer, width, height);
+    if (width && height)
+      weed_layer_set_size(layer, width, height);
 
     clip = lives_layer_get_clip(layer);
     frame = lives_layer_get_frame(layer);
 
-    // the default unless overridden
-    weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
+    if (weed_layer_get_gamma(layer) == WEED_GAMMA_UNKNOWN)
+      // the default unless overridden
+      weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
     if (lives_layer_get_procthread(layer)) is_thread = TRUE;
 
     sfile = RETURN_VALID_CLIP(clip);
 
     if (!sfile) {
-      if (target_palette != WEED_PALETTE_END) weed_layer_set_palette(layer, target_palette);
+      if (target_palette != WEED_PALETTE_NONE) weed_layer_set_palette(layer, target_palette);
       goto fail;
     }
 
@@ -2220,8 +2222,7 @@ fndone:
           pthread_mutex_lock(&sfile->frame_index_mutex);
           if (LIVES_IS_PLAYING && prefs->skip_rpts && sfile->alt_frame_index)
             xframe = get_alt_indexed_frame(clip, frame);
-          else if (sfile->frame_index)
-            xframe = get_indexed_frame(clip, frame);
+          else if (sfile->frame_index) xframe = get_indexed_frame(clip, frame);
 
           pthread_mutex_unlock(&sfile->frame_index_mutex);
           if (xframe >= 0) {
@@ -2255,9 +2256,7 @@ fndone:
               double timex = 0, xtimex, est = -1.;
               boolean res = TRUE;
 
-              if (!weed_layer_check_valid(layer)) {
-                goto fail;
-              }
+              if (!weed_layer_check_valid(layer)) goto fail;
 
               srcgrp = lives_layer_get_srcgrp(layer);
               if (!srcgrp) {
@@ -2268,7 +2267,8 @@ fndone:
                 }
               }
 
-              if (srcgrp) dplug = (lives_decoder_t *)get_clip_src(srcgrp, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL);
+              if (srcgrp) dplug = (lives_decoder_t *)(get_clip_src(srcgrp, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL)->actor);
+
               if (!dplug && get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
                 dplug = (lives_decoder_t *)get_primary_actor(sfile);
               if (!dplug || !dplug->cdata || xframe >= dplug->cdata->nframes) {
@@ -2510,7 +2510,7 @@ success:
     if (xlayer) layer = xlayer;
     lives_layer_set_status(layer, LAYER_STATUS_LOADED);
 
-    // TODO - if this is a plan step, the we should now trigger reszie / palconv/ gamma
+    // TODO - if this is a plan step, the we should now trigger resize / palconv/ gamma
 
     lives_layer_set_status(layer, LAYER_STATUS_READY);
     return TRUE;

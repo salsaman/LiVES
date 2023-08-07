@@ -14,6 +14,7 @@
 #define _THREADING_H_
 
 #include "alarms.h"
+#include "colourspace.h"
 
 typedef void *(*lives_thread_func_t)(void *);
 typedef struct _lives_thread_data_t lives_thread_data_t;
@@ -91,6 +92,8 @@ typedef struct {
   LiVESWidgetLoop *var_guiloop;
   LiVESWidgetSource *var_guisource;
 
+  // pixel conversions
+  struct _conv_array var_conv_arrays;
   int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
@@ -554,11 +557,18 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
       _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, args_fmt, __VA_ARGS__); \
     else *retloc = func(__VA_ARGS__);} while (0)
 
+// real params, ret_type 0
+#define MAIN_THREAD_EXECUTE_RVOID(func, args_fmt, ...) do { \
+    if (!is_fg_thread())						\
+      _main_thread_execute((lives_funcptr_t)func, #func, 0, NULL, args_fmt, __VA_ARGS__); \
+    else func(__VA_ARGS__);} while (0);
+
 // real params, ret_type 0 or -1
-#define MAIN_THREAD_EXECUTE_RVOID(func, return_type, args_fmt, ...) do { \
+#define MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, ...) do { \
     if (!is_fg_thread())						\
       _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, args_fmt, __VA_ARGS__); \
     else func(__VA_ARGS__);} while (0);
+
 
 // void params, real return_type
 #define MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc) do {	\
@@ -576,7 +586,7 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
   do {MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, __VA_ARGS__);} while (0)
 
 #define main_thread_execute_rvoid(func, return_type, args_fmt, ...) \
-  do {MAIN_THREAD_EXECUTE_RVOID(func, return_type, args_fmt, __VA_ARGS__);} while (0)
+  do {MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, __VA_ARGS__);} while (0)
 
 #define main_thread_execute_pvoid(func, return_type, retloc)	\
   do {MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc);} while (0)
@@ -759,7 +769,7 @@ void lives_proc_thread_pause(lives_proc_thread_t self);
 boolean lives_proc_thread_get_pause_requested(lives_proc_thread_t);
 
 // ask a paused proc_thread to resume. Processing only continues after this has been called, and any
-// paused and unpaused hook callbacks have returnes
+// paused and unpaused hook callbacks have returned
 boolean lives_proc_thread_request_resume(lives_proc_thread_t);
 boolean lives_proc_thread_get_resume_requested(lives_proc_thread_t);
 boolean lives_proc_thread_resume(lives_proc_thread_t self);

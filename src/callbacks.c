@@ -5560,7 +5560,7 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
 
   lpt = do_auto_dialog_async(_("Analysing Disk"), 0);
   g_print("lpt has1 %d refs\n", lives_proc_thread_count_refs(lpt));
-  mainw->debug_ptr = lpt;
+  //mainw->debug_ptr = lpt;
 
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
   clear_mainw_msg();
@@ -5574,9 +5574,9 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   g_print("lpt has3 %d refs\n", lives_proc_thread_count_refs(lpt));
 
   lives_proc_thread_wait_done(lpt, 0.);
-  if (lpt != mainw->debug_ptr) abort();
+  //if (lpt != mainw->debug_ptr) abort();
   g_print("lpt has4 %d refs\n", lives_proc_thread_count_refs(lpt));
-  mainw->debug_ptr = NULL;
+  //mainw->debug_ptr = NULL;
   lives_proc_thread_join(lpt);
 
   lives_widget_context_update();
@@ -7401,7 +7401,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
     // since the player plugin may change, we also need to do this
-    build_nodemodel(&mainw->nodemodel);
+    mainw->refresh_model = TRUE;
   }
 }
 
@@ -7470,7 +7470,7 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
     mainw->force_show = TRUE;
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
-    build_nodemodel(&mainw->nodemodel);
+    mainw->refresh_model = TRUE;
   }
 }
 
@@ -7655,7 +7655,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
     // since the player plugin may change, we also need to do this
-    build_nodemodel(&mainw->nodemodel);
+    mainw->refresh_model = TRUE;
   }
 }
 

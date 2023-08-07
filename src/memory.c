@@ -281,29 +281,33 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
   if (1) {
     void *ptr = NULL;
     off_t offs = 0;
+    // round up to next multiple of chunk size
     size_t nchunks_req = (xsize + smblock_pool->chunk_size - 1) / smblock_pool->chunk_size;
     // Find a free block of memory with enough contiguous chunks
-    // a more effient way moeyr wise would be to find the smallest block large enough
+    // a more effient way memory wise would be to find the smallest block large enough
+    // nxtchunks > 0 - free size following
+    // nxthchunks < 0 - allocated size following
     for (LiVESList *list = smblock_pool->chunk_list; list; list = list->next) {
       int nxtchunks = LIVES_POINTER_TO_INT(list->data);
       if (nxtchunks < nchunks_req) {
         offs += abs(nxtchunks);
         continue;
       }
+      // mark n chunks allocted
       list->data = LIVES_INT_TO_POINTER(-nchunks_req);
+      // the remainder is carried over to the end of the allocated block
       nxtchunks -= nchunks_req;
       if (nxtchunks > 0) {
-        LiVESList *nlist = lives_list_append(NULL, LIVES_INT_TO_POINTER(nxtchunks));
-        if (list->next) {
-          nlist->next = list->next;
-          nlist->next->prev = nlist;
-        }
-        nlist->prev = list;
-        list->next = nlist;
+        // if anything is left over, we need to append a new node
+        // this is because the follwoing node after a free block node must be an allocated node
+        // thus we cannot simply add the remainder the next block
+        smblock_pool->chunk_list = lives_list_append(list, LIVES_INT_TO_POINTER(nxtchunks));
       }
       smblock_pool->free_chunks -= nchunks_req;
 
       pthread_mutex_unlock(&smblock_mutex);
+
+      // zero out the newly allocated block
       ptr = (char *)smblock_pool->buffer + offs * smblock_pool->chunk_size;
       if (nmemb) lives_memset(ptr, 0, nchunks_req * smblock_pool->chunk_size);
       return  ptr;
@@ -715,7 +719,7 @@ boolean init_memfuncs(int stage) {
   else if (stage == 1) {
     // should be called after we have pagesize
     if (capable && capable->hw.pagesize) PAGESIZE = capable->hw.pagesize;
-    //smallblock_init();
+    smallblock_init();
     bigblock_init();
   }
 
@@ -890,19 +894,6 @@ void *free_bigblock(void *bstart) {
 }
 
 
-static uint16_t swabtab[65536];
-static boolean swabtab_inited = FALSE;
-
-static void init_swabtab(void) {
-  for (int i = 0; i < 256; i++) {
-    int z = i << 8;
-    for (int j = 0; j < 256; j++) {
-      swabtab[z++] = (j << 8) + i;
-    }
-  }
-  swabtab_inited = TRUE;
-}
-
 union split8 {
   uint64_t u64;
   uint32_t u32[2];
@@ -915,18 +906,16 @@ union split4 {
 
 
 // src is divided into groups of bytesize gran(ularity)
-// the groups fro src are then copied to dest in reverse sequence
+// the groups from src are then copied to dest in reverse sequence
 
 // gran(ularity) may be 1, or 2
-LIVES_GLOBAL_INLINE void swab2(const void *to, const void *from, size_t gran) {
-  uint16_t *s = (uint16_t *)from;
-  uint16_t *d = (uint16_t *)to;
-  if (gran == 2) {
-    *d = *s;
-    return;
+LIVES_GLOBAL_INLINE void swab2(void *to, const void *from, size_t gran) {
+  char tmp[2];
+  if (gran == 1) {
+    swab(from, tmp, 2);
+    from = &tmp;
   }
-  if (!swabtab_inited) init_swabtab();
-  *d = swabtab[*s];
+  if (to != from) lives_memcpy(to, from, 2);
 }
 
 // gran(ularity) may be 1, 2 or 4
@@ -945,6 +934,8 @@ LIVES_GLOBAL_INLINE void swab4(const void *to, const void *from, size_t gran) {
     d->u16[0] = s.u16[1];
     d->u16[1] = tmp;
   } else {
+    s.u32 = *(uint32_t *)from;
+    tmp = s.u16[0];
     // abcd -> dcba
     swab2(&d->u16[0], &s.u16[1], 1);
     swab2(&d->u16[1], &tmp, 1);

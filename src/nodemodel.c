@@ -1019,10 +1019,6 @@ static lives_filter_error_t gamma_conv(lives_layer_t *layer) {
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
 
-  /*   // do gamma correction of any RGB(A) parameters */
-  /*   gamma_conv_params(tgt_gamma == WEED_GAMMA_LINEAR ? tgt_gamma : WEED_GAMMA_SRGB, inst, TRUE); */
-  /*   gamma_conv_params(tgt_gamma == WEED_GAMMA_LINEAR ? tgt_gamma : WEED_GAMMA_SRGB, inst, FALSE); */
-
   if (prefs->dev_show_timing)
     g_printerr("gamma1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
   // if we letterboxed then we can save a few cycles by not gamma converting the blank regions
@@ -1247,6 +1243,24 @@ static void run_plan(exec_plan_t *plan) {
             step->state = STEP_STATE_FINISHED;
             continue;
           }
+          weed_instance_t *inst = (weed_instance_t *)step->target_inst;
+          lives_layer_t *layer = plan->layers[step->track];
+          int layer_gamma = weed_layer_get_gamma(layer);
+          if (layer_gamma == WEED_GAMMA_LINEAR) {
+            // if we have RGBA type in / out params, and instance runs with linear gamma
+            // then we scale the param values according to the gamma correction
+            gamma_conv_params(WEED_GAMMA_LINEAR, inst, TRUE);
+            gamma_conv_params(WEED_GAMMA_LINEAR, inst, FALSE);
+          }
+
+          // apply inst
+
+          if (layer_gamma == WEED_GAMMA_LINEAR) {
+            // if we scaled params, scale them back so they are displayed correctly in interfaces
+            gamma_conv_params(WEED_GAMMA_SRGB, inst, TRUE);
+            gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE);
+          }
+
           break;
         default: break;
         }
@@ -2012,119 +2026,119 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
       break;
     case NODE_MODELS_GENERATOR:
     case NODE_MODELS_FILTER: {
-        // set channel palettes and sizes, get actual size after channel limitations are applied.
-        // check if weed to reinit
-        weed_filter_t *filter = (weed_filter_t *)n->model_for;
-        weed_instance_t *inst = weed_instance_obtain(n->model_idx, rte_key_getmode(n->model_idx));
-        int nins, nouts;
-        weed_channel_t **in_channels = weed_instance_get_in_channels(inst, &nins);
-        weed_channel_t **out_channels = weed_instance_get_out_channels(inst, &nouts);
-        int i = 0, k, cwidth, cheight;
-        boolean is_first = TRUE;
+      // set channel palettes and sizes, get actual size after channel limitations are applied.
+      // check if weed to reinit
+      weed_filter_t *filter = (weed_filter_t *)n->model_for;
+      weed_instance_t *inst = weed_instance_obtain(n->model_idx, rte_key_getmode(n->model_idx));
+      int nins, nouts;
+      weed_channel_t **in_channels = weed_instance_get_in_channels(inst, &nins);
+      weed_channel_t **out_channels = weed_instance_get_out_channels(inst, &nouts);
+      int i = 0, k, cwidth, cheight;
+      boolean is_first = TRUE;
 
-        for (k = 0; k < nins; k++) {
-          weed_channel_t *channel = in_channels[k];
+      for (k = 0; k < nins; k++) {
+	weed_channel_t *channel = in_channels[k];
 
-          if (weed_channel_is_alpha(channel)) continue;
-          if (weed_channel_is_disabled(channel)) continue;
+	if (weed_channel_is_alpha(channel)) continue;
+	if (weed_channel_is_disabled(channel)) continue;
 
-          if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL)
-              == WEED_TRUE) {
-            continue;
-          }
-          in = n->inputs[k];
-          if (in->npals) {
-            pal = in->optimal_pal;
-            cpal = in->cpal = weed_channel_get_palette(channel);
-          } else {
-            pal = n->optimal_pal;
-            cpal = n->cpal = weed_channel_get_palette(channel);
-          }
-          weed_channel_set_gamma_type(channel, n->gamma_type);
+	if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL)
+	    == WEED_TRUE) {
+	  continue;
+	}
+	in = n->inputs[k];
+	if (in->npals) {
+	  pal = in->optimal_pal;
+	  cpal = in->cpal = weed_channel_get_palette(channel);
+	} else {
+	  pal = n->optimal_pal;
+	  cpal = n->cpal = weed_channel_get_palette(channel);
+	}
+	weed_channel_set_gamma_type(channel, n->gamma_type);
 
-          in = n->inputs[i++];
+	in = n->inputs[i++];
 
-          if (in->flags & NODEFLAGS_IO_SKIP) continue;
+	if (in->flags & NODEFLAGS_IO_SKIP) continue;
 
-          weed_channel_set_palette_yuv(channel, pal, WEED_YUV_CLAMPING_UNCLAMPED,
-                                       WEED_YUV_SAMPLING_DEFAULT, WEED_YUV_SUBSPACE_YUV);
+	weed_channel_set_palette_yuv(channel, pal, WEED_YUV_CLAMPING_UNCLAMPED,
+				     WEED_YUV_SAMPLING_DEFAULT, WEED_YUV_SUBSPACE_YUV);
 
-          cwidth = weed_channel_get_pixel_width(channel);
-          cheight = weed_channel_get_height(channel);
-          set_channel_size(filter, channel, &in->width, &in->height);
+	cwidth = weed_channel_get_pixel_width(channel);
+	cheight = weed_channel_get_height(channel);
+	set_channel_size(filter, channel, &in->width, &in->height);
 
-	  if (in->inner_width && in->inner_height
-	      && (in->inner_width < in->width || in->inner_height < in->height)) {
-	    int lbvals[4];
-	    lbvals[0] = (in->width - in->inner_width) >> 1;
-	    lbvals[1] = (in->height - in->inner_height) >> 1;
-	    lbvals[2] = in->inner_width;
-	    lbvals[3] = in->inner_height;
-	    weed_set_int_array(channel, WEED_LEAF_INNER_SIZE, 4, lbvals);
-	  }
+	if (in->inner_width && in->inner_height
+	    && (in->inner_width < in->width || in->inner_height < in->height)) {
+	  int lbvals[4];
+	  lbvals[0] = (in->width - in->inner_width) >> 1;
+	  lbvals[1] = (in->height - in->inner_height) >> 1;
+	  lbvals[2] = in->inner_width;
+	  lbvals[3] = in->inner_height;
+	  weed_set_int_array(channel, WEED_LEAF_INNER_SIZE, 4, lbvals);
+	}
 
-	  if (in->width != cwidth || in->height != cheight)
-            if (in->flags & NODESRC_REINIT_SIZE) n->needs_reinit = TRUE;
-          if (in->width * pixel_size(in->optimal_pal) != cwidth * pixel_size(cpal))
-            if (in->flags & NODESRC_REINIT_RS) n->needs_reinit = TRUE;
-          if (pal != cpal)
-            if (in->flags & NODESRC_REINIT_PAL) n->needs_reinit = TRUE;
-        }
-
-        i = 0;
-        for (k = 0; k < nouts; k++) {
-          // output channel setup
-          output_node_t *out;
-          weed_channel_t *channel = out_channels[k];
-
-          if (weed_channel_is_alpha(channel) ||
-              weed_channel_is_disabled(channel)) continue;
-
-          out = n->outputs[i++];
-
-          if (out->flags & NODEFLAGS_IO_SKIP) continue;
-
-          if (n->model_type == NODE_MODELS_GENERATOR && is_first) {
-            // this would have been set during ascending phase of size setting
-            // now we can set in sfile
-            lives_clip_t *sfile = (lives_clip_t *)n->model_for;
-            sfile->hsize = out->width;
-            sfile->vsize = out->height;
-          }
-
-          is_first = FALSE;
-
-          cpal = weed_channel_get_palette(channel);
-
-          if (out->npals) pal = out->optimal_pal;
-          else pal = n->optimal_pal;
-
-          weed_channel_set_palette(channel, pal);
-
-          cwidth = weed_channel_get_width(channel);
-          cheight = weed_channel_get_height(channel);
-          set_channel_size(filter, channel, &out->width, &out->height);
-
-          if (!out->npals) n->cpal = pal;
-          else out->cpal = pal;
-
-          if (out->width != cwidth || out->height != cheight)
-            if (out->flags & NODESRC_REINIT_SIZE) n->needs_reinit = TRUE;
-          if (out->width * pixel_size(pal) != cwidth * pixel_size(cpal))
-            if (out->flags & NODESRC_REINIT_RS) n->needs_reinit = TRUE;
-          if (pal != cpal)
-            if (out->flags & NODESRC_REINIT_PAL) n->needs_reinit = TRUE;
-        }
-
-        if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE)
-          n->needs_reinit = TRUE;
-
-        if (!n->model_inst) n->model_inst = inst;
-        else weed_instance_unref(inst);
-
-        lives_freep((void **)in_channels);
-        lives_freep((void **)out_channels);
+	if (in->width != cwidth || in->height != cheight)
+	  if (in->flags & NODESRC_REINIT_SIZE) n->needs_reinit = TRUE;
+	if (in->width * pixel_size(in->optimal_pal) != cwidth * pixel_size(cpal))
+	  if (in->flags & NODESRC_REINIT_RS) n->needs_reinit = TRUE;
+	if (pal != cpal)
+	  if (in->flags & NODESRC_REINIT_PAL) n->needs_reinit = TRUE;
       }
+
+      i = 0;
+      for (k = 0; k < nouts; k++) {
+	// output channel setup
+	output_node_t *out;
+	weed_channel_t *channel = out_channels[k];
+
+	if (weed_channel_is_alpha(channel) ||
+	    weed_channel_is_disabled(channel)) continue;
+
+	out = n->outputs[i++];
+
+	if (out->flags & NODEFLAGS_IO_SKIP) continue;
+
+	if (n->model_type == NODE_MODELS_GENERATOR && is_first) {
+	  // this would have been set during ascending phase of size setting
+	  // now we can set in sfile
+	  lives_clip_t *sfile = (lives_clip_t *)n->model_for;
+	  sfile->hsize = out->width;
+	  sfile->vsize = out->height;
+	}
+
+	is_first = FALSE;
+
+	cpal = weed_channel_get_palette(channel);
+
+	if (out->npals) pal = out->optimal_pal;
+	else pal = n->optimal_pal;
+
+	weed_channel_set_palette(channel, pal);
+
+	cwidth = weed_channel_get_width(channel);
+	cheight = weed_channel_get_height(channel);
+	set_channel_size(filter, channel, &out->width, &out->height);
+
+	if (!out->npals) n->cpal = pal;
+	else out->cpal = pal;
+
+	if (out->width != cwidth || out->height != cheight)
+	  if (out->flags & NODESRC_REINIT_SIZE) n->needs_reinit = TRUE;
+	if (out->width * pixel_size(pal) != cwidth * pixel_size(cpal))
+	  if (out->flags & NODESRC_REINIT_RS) n->needs_reinit = TRUE;
+	if (pal != cpal)
+	  if (out->flags & NODESRC_REINIT_PAL) n->needs_reinit = TRUE;
+      }
+
+      if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE)
+	n->needs_reinit = TRUE;
+
+      if (!n->model_inst) n->model_inst = inst;
+      else weed_instance_unref(inst);
+
+      lives_freep((void **)in_channels);
+      lives_freep((void **)out_channels);
+    }
       break;
 
     case NODE_MODELS_OUTPUT: {
@@ -2418,7 +2432,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
     if (!(in->flags & NODEFLAG_IO_FIXED_SIZE)) {
       in->width = out->width;
       in->height = out->height;
-    g_print("pt a4\n");
+      g_print("pt a4\n");
 
       if (n->model_type == NODE_MODELS_OUTPUT) {
 	// if we have a sinni output that tanies any size, it may nevertheless not be able to do letterboxing
@@ -2653,7 +2667,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         opwidth = (int)rmaxw;
         opheight = (int)rmaxh;
       }
-      break;
+	break;
       case PB_QUALITY_MED:
         // for med we will use max_size, shrunk so it fits in opsize
         if (w0 >= rmaxw) {
@@ -3015,7 +3029,7 @@ static lives_result_t prepend_node(lives_nodemodel_t *nodemodel, inst_node_t *n,
       n->npals = n_allpals;
       n->pals = allpals;
     }
-    break;
+      break;
 
     case NODE_MODELS_FILTER: {
       weed_filter_t *filter = (weed_filter_t *)n->model_for;
@@ -3059,7 +3073,7 @@ static lives_result_t prepend_node(lives_nodemodel_t *nodemodel, inst_node_t *n,
           if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
             n->gamma_type = WEED_GAMMA_LINEAR;
           else
-              n->gamma_type = WEED_GAMMA_SRGB;
+	    n->gamma_type = WEED_GAMMA_SRGB;
 	  // *INDENT-OFF*
 	}}}
   // *INDENT-ON*

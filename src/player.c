@@ -1886,9 +1886,9 @@ static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t l
              && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
              >= cfile->laudio_time - 0.0001)) {
           return FALSE;
-	  // *INDENT-OFF*
-        }}}})
-  // *INDENT-ON*
+	     // *INDENT-OFF*
+	   }}}})
+    // *INDENT-ON*
 
   IF_APLAYER_PULSE
   (
@@ -1907,9 +1907,9 @@ static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t l
              && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
              >= cfile->laudio_time - 0.0001)) {
           return FALSE;
-	  // *INDENT-OFF*
-        }}}})
-  // *INDENT-ON*
+	     // *INDENT-OFF*
+	   }}}})
+    // *INDENT-ON*
 
   return TRUE;
 }
@@ -3967,17 +3967,17 @@ play_frame:
 		else mainw->pred_frame = 0;
 	      }}}
 #ifdef SHOW_CACHE_PREDICTIONS
-      //g_print("frame %ld already in cache\n", mainw->pred_frame);
+	  //g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif
-    }
+	}
 #endif
-    // *INDENT-ON*
+	// *INDENT-ON*
 
         if (mainw->video_seek_ready) {
           if (new_ticks > mainw->startticks) {
             mainw->last_startticks = mainw->startticks;
             mainw->startticks = new_ticks;
-	// *INDENT-OFF*
+	    // *INDENT-OFF*
 	  }}}}
 
     sfile->last_req_frame = requested_frame;
@@ -4069,7 +4069,7 @@ proc_dialog:
               if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n",
                                                        lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
               mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks);
-	    // *INDENT-OFF*
+	      // *INDENT-OFF*
             }}}}
       // *INDENT-ON*
 

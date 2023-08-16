@@ -703,7 +703,7 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
   // of cwidth, cheight - given restrictions rwidth * rheight
   // ie start with rwidth, rheight, shrink one edge to make ar of cwidth : cheight
 
-  // i.e box cwidht, cheight is scaled up or doen to fit exactly in rwidth, rheight
+  // i.e box cwidth, cheight is scaled up or doen to fit exactly in rwidth, rheight
 
   double caspect, raspect;
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;

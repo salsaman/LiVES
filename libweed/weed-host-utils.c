@@ -436,8 +436,6 @@ WEED_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_filter_t *filter, we
   if ((weed_filter_get_flags(filter) & WEED_FILTER_PALETTES_MAY_VARY)
       && weed_plant_has_leaf(chantmpl, WEED_LEAF_PALETTE_LIST)) {
     pals = weed_get_int_array_counted(chantmpl, WEED_LEAF_PALETTE_LIST, &npals);
-    for (int i = 0; i < npals; i++) {
-    }
   } else {
     if (!weed_plant_has_leaf(filter, WEED_LEAF_PALETTE_LIST)) return NULL;
     pals = weed_get_int_array_counted(filter, WEED_LEAF_PALETTE_LIST, &npals);

@@ -178,6 +178,7 @@ void *OpenHTMSocket(char *host, int portnumber) {
     if (hostsEntry == NULL) {
       fprintf(stderr, "Couldn't decipher host name \"%s\"\n",
               host);
+      free(o);
       return 0;
     }
 

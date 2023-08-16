@@ -15,6 +15,27 @@
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
+#define DIAG_ALL		(uint64_t)-1
+#define DIAG_MEMORY		(1ull << 0)
+#define DIAG_THREADS		(1ull << 1)
+
+void print_diagnostics(uint64_t types) {
+  char *tmp;
+  if (types & DIAG_MEMORY) {
+    tmp = get_memstats();
+    g_print("MEMORY\n");
+    g_print("%s\n", tmp);
+    lives_free(tmp);
+  }
+  if (types & DIAG_THREADS) {
+    tmp = get_threadstats();
+    g_print("THREADS\n");
+    g_print("%s\n", tmp);
+    lives_free(tmp);
+  }
+}
+
+
 boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                        livespointer statep) {
   break_me("debug_callback");

@@ -1018,6 +1018,7 @@ typedef struct {
   boolean last_transition_ins_frames;
 
   volatile uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
+  volatile uint64_t rte_soft; ///< keeps track of rte keys during a play cycle
 
   uint32_t last_grabbable_effect; // (spelt wrong but I like it this way)
   int rte_keys; ///< which effect is bound to keyboard (m) modechange and ctrl-alt-up-arrow / ctrl-alt-down-arrow param changes

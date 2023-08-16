@@ -76,7 +76,7 @@ boolean rtemode_callback_hook(LiVESToggleButton *, livespointer user_data);  ///
 
 boolean swap_fg_bg_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-weed_layer_t *get_blend_layer(ticks_t tc);
+frames64_t get_blend_frame(weed_timecode_t tc);
 
 weed_layer_t *on_rte_apply(weed_layer_t **, int opwidth, int opheight, ticks_t tc, boolean dry_run);
 
@@ -86,12 +86,12 @@ void deinterlace_frame(weed_layer_t *, ticks_t tc);
 void rte_keymodes_backup(int nkeys);
 void rte_keymodes_restore(int nkeys);
 
-// equivalent to weed_deinit_all
-void rte_keys_reset(void);
+#define rte_keys_reset() rte_key_toggle(0)
 
 // hotkey is 1 based
-boolean rte_key_on_off(int hotkey, boolean on);
-boolean rte_key_toggle(int hotkey);
+lives_result_t rte_key_toggle(int key);
+
+boolean rte_key_on_off(int key, boolean on);
 
 // key is 0 based (now)
 boolean rte_key_is_enabled(int key, boolean ign_soft_deinits);

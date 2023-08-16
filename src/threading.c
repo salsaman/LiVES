@@ -627,7 +627,7 @@ lives_proc_thread_t lives_proc_thread_create_from_funcinst(lives_thread_attr_t a
    return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
    will free its own resources and NULL is returned from this function (fire and forget)
    return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
-   lives_proc_thread_check_done() with the return : - this function is guaranteed to return FALSE whilst the thread is running
+   lives_proc_thread_is_done() with the return : - this function is guaranteed to return FALSE whilst the thread is running
    and TRUE thereafter, the proc_thread should be freed once TRUE is returned and not before.
    for the other return_types, the appropriate join function should be called
    and it will block until the thread has completed its
@@ -1113,7 +1113,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
 
     if (hook_hints & HOOK_OPT_FG_LIGHT) {
       lives_proc_thread_queue(lpt, attrs | LIVES_THRDATTR_FG_LIGHT);
-      lives_proc_thread_unref(lpt);
+      //lives_proc_thread_unref(lpt);
       goto mte_done;
     }
 
@@ -1557,7 +1557,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_had_error(lives_proc_thread_t lpt)
 }
 
 
-LIVES_GLOBAL_INLINE int lives_proc_thread_get_errnum(lives_proc_thread_t lpt) {
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_ernum(lives_proc_thread_t lpt) {
   return lpt ? weed_get_int_value(lpt, LIVES_LEAF_ERRNUM, NULL) : 0;
 }
 
@@ -1633,7 +1633,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t
 
   if (lives_proc_thread_is_done(lpt)) return FALSE;
 
-  // requestes may be forwarded to chain current
+  // requests may be forwarded to chain current
   if (lives_proc_thread_is_passive(lpt)) {
     lives_proc_thread_t xlpt = lives_proc_thread_get_chain_active(lpt);
     if (xlpt) return lives_proc_thread_request_cancel(xlpt, FALSE);
@@ -2051,8 +2051,11 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t lpt) {
       && !(lives_proc_thread_is_unqueued(lpt)				\
 	   && lives_proc_thread_should_cancel(lpt))) {			\
     if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt)) \
-      check_pool_threads();						\
-    lives_nanosleep_while_false(weed_plant_has_leaf(lpt, _RV_) == WEED_TRUE);} \
+      check_pool_threads();						 \
+    lives_nanosleep_while_false(weed_plant_has_leaf(lpt, _RV_) == WEED_TRUE \
+				|| lives_proc_thread_is_invalid(lpt)	\
+				|| lives_proc_thread_had_error(lpt)	\
+				|| lives_proc_thread_was_cancelled(lpt));} \
   return weed_get_##stype##_value(lpt, _RV_, NULL);
 
 LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t lpt) { _join(lpt, int);}
@@ -2794,6 +2797,8 @@ static void *_lives_thread_data_create(void *pslot_id) {
     tdata->vars.var_pcond = (pthread_cond_t *)lives_malloc(sizeof(pthread_cond_t));
     pthread_cond_init(tdata->vars.var_pcond, NULL);
     tdata->vars.var_sync_ready = TRUE;
+
+    tdata->vars.var_loveliness = MAX_LOVELINESS;
 
     if (tdata->thrd_type < THRD_TYPE_EXTERN) {
       tdata->vars.var_guictx = lives_widget_context_new();

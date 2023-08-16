@@ -46,7 +46,7 @@ const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_BBLOCKALLOC,
                                        };
 
 // additional leaves which should be removed / reset after copying
-const char *NO_COPY_LEAVES[] = {LIVES_LEAF_REFCOUNTER, NULL};
+const char *NO_COPY_LEAVES[] = {LIVES_LEAF_REFCOUNTER, LIVES_LEAF_COPYLIST, NULL};
 
 static int our_plugin_id = 0;
 static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
@@ -1618,7 +1618,7 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
 /* set the fps (data) in the instance */
 
 // tansfer layer pixel_data to in_channels
-// if an out chennl is not inplcea, create empty pixel_data for it
+// if an out channel is not inplcea, create empty pixel_data for it
 // apply the instance
 // for non inplcae inputs, free the piixel_Data
 // transfrer out_chan pixdata to layers
@@ -1638,8 +1638,8 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
    for filters with mixed video / audio inputs (currently only generators) audio is colleccted and pushed via
    a separate audio channel
 */
-lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *init_event, weed_layer_t **layers,
-    int opwidth, int opheight, weed_timecode_t tc, boolean dry_run) {
+lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *init_event, lives_layer_t **layers,
+    int opwidth, int opheight, weed_timecode_t tc) {
   // for dry_run, all we need do is - check if the instance needs to be reinited for reasons other
   // than a palette change
   // there may be some other reason for doing so, then we can ignore reinit costs when routing
@@ -1663,6 +1663,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   int *mand;
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean needs_reinit = FALSE;
+  boolean busy = FALSE;
   frames_t frame;
   int clip = -1;
   int lcount = 0;
@@ -1671,7 +1672,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   int num_in_alpha = 0, num_out_alpha = 0;
   int num_in_tracks = 0, num_out_tracks;
   int nmandout = 0;
-  int channel_flags, filter_flags = 0;
+  int channel_flags;
   int i, j, k;
 
   // this function is called 2 times when we rebuild the nodemodel
@@ -1701,8 +1702,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     lives_freep((void **)&out_channels);
     return retval;
   }
-
-  filter_flags = weed_filter_get_flags(filter);
 
   if (is_pure_audio(filter, TRUE)) {
     /// we process audio effects elsewhere
@@ -1820,19 +1819,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
           if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
             retval = FILTER_ERROR_MEMORY_ERROR;
             goto done_video;
-          }
-
-          if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
-            // if instance has not been inited, we set needs_reinit and can change palettes and
-            // sizes at no extra cost
-
-            retval = weed_reinit_effect(inst, FALSE);
-
-            if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
-                || retval == FILTER_ERROR_INVALID_FILTER) {
-              weed_instance_unref(inst);
-              return retval;
-            }
           }
           retval = run_process_func(inst, tc);
         }
@@ -2026,7 +2012,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         num_out_alpha++;
     } else {
       if (!weed_channel_is_disabled(out_channels[i]) &&
-          weed_get_boolean_value(out_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_FALSE) {
+          !weed_get_boolean_value(out_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
         nmandout++;
       }
     }
@@ -2044,54 +2030,74 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     goto done_video;
   }
 
-  for (i = 0; i < num_in_tracks; i++) {
+  // now we link layers to channels
+  // - any existing pdata for in channels is freed
+  // - pdata is shared from layers to in channels
+  //
+  // - free any existing pdata for out channels
+  // - if an out channel is inplace, share pdata from corresponding layer
+  //    otherwise, create new pdata for out channel
+
+  // after applying the instance:
+  // nullify all in_chans,
+  //
+  // if out chan is not inplace, free layer, share pdata to layer
+  // nullify out_chan
+  //
+  // free / unref will take care of nullify
+
+  // if filte is busy - skip step of free layer, share pdata to layer
+
+  // i.e for inplace, layer pdata is shared with in channel, out chanel and layer
+  // for non inplace, layer pdata is shared with in channel, out chanel gets new pdata
+  //    in channel / layer pdata is freed, out channel pdata is shared to layer
+
+  // pdata for alpha channels is a little different - this is not passed around in layers,
+  // instead there is an "alpha channel connection". The pdata from the previous out channel is
+  // simply transferred directly to the in channel. Thus we must ensure that out channel alpha
+  // pdata is not freed or nullified (this is handled elsewhere)
+
+
+  for (i = 0, k = 0; k < num_inc + num_in_alpha; k++) {
     /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
     /// the cast to weed_layer_t * is unnecessary, but added for clarity
-    channel = get_enabled_channel(inst, i, IN_CHAN);
-    // should have been done already, but seems to not always happen
-    weed_layer_nullify_pixel_data(channel);
+    channel = get_enabled_channel(inst, k, IN_CHAN);
+    if (weed_channel_is_alpha(channel) &&
+        weed_get_boolean_value(channel, WEED_LEAF_HOST_ORIG_PDATA, NULL)) continue;
+
+    layer = layers[in_tracks[i++]];
+
+    weed_layer_pixel_data_free(channel);
 
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
-
-    weed_layer_nullify_pixel_data(layer);
   }
 
-  for (i = 0; i < num_out_tracks; i++) {
-    weed_channel_t *inchan = get_enabled_channel(inst, i, IN_CHAN);
+  for (i = 0; i < num_out_tracks + num_out_alpha; i++) {
     boolean inplace = FALSE;
     // check for INPLACE.
     channel = get_enabled_channel(inst, i, OUT_CHAN);
+    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL))
+      continue;
+    if (weed_channel_is_alpha(channel)) continue;
+    weed_layer_pixel_data_free(channel);
     chantmpl = weed_channel_get_template(channel);
     channel_flags = weed_chantmpl_get_flags(chantmpl);
-    if (inchan && channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
-      /// INPLACE, the out channel and corresponding in_channel share th same pixel_data
-      if (!(weed_channel_is_alpha(channel) &&
-            weed_get_boolean_value(channel, WEED_LEAF_HOST_ORIG_PDATA, NULL) == WEED_TRUE)) {
-        // seems like we cannot inplace if we have alpha and "orig pdata" ??
-        weed_layer_nullify_pixel_data(channel);
-        // this is actually weed_channel_copy()
-        // copy all values from inchan to channel
-        // both channels share pdata, we will not create pdata for out chan, and when done we will nullify
-        // inchan pdata instead of free
-        if (!weed_layer_copy(channel, inchan)) {
-          retval = FILTER_ERROR_COPYING_FAILED;
-          goto done_video;
-        }
-        inplace = TRUE;
-        /* if (weed_channel_is_alpha(channel)) { */
-        /*   // protect our in / out channel from being freed() */
-        /*   // - otherwise, since this is not the DIAPLAY output it would be freed */
-        /*   weed_set_boolean_value(channel, WEED_LEAF_HOST_ORIG_PDATA, WEED_TRUE); */
-        /* } */
-        weed_set_boolean_value(inchan, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
-        weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
+    if (channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
+      layer = layers[out_tracks[i]];
+      if (!weed_layer_copy(channel, layer)) {
+        retval = FILTER_ERROR_COPYING_FAILED;
+        goto done_video;
       }
+      inplace = TRUE;
+      weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, TRUE);
     }
 
     if (!inplace) {
+      weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, FALSE);
+
       if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
         int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
         if (rowstride_alignment_hint > THREADVAR(rowstride_alignment)) {
@@ -2105,132 +2111,69 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         retval = FILTER_ERROR_MEMORY_ERROR;
         goto done_video;
       }
-      if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-        weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
-      else {
-        if (CURRENT_CLIP_IS_VALID)
-          weed_channel_set_gamma_type(channel, cfile->gamma_type);
-      }
-
-      if (inchan) weed_set_boolean_value(inchan, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
-      weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
     }
   }
 
   if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
-  if (prefs->dev_show_timing)
-    g_printerr("run fx pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
   // RUN THE INSTANCE //////////////
   retval = run_process_func(inst, tc);
   //////////////////////
-
-  if (prefs->dev_show_timing)
-    g_printerr("run fx post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
   if (retval == FILTER_ERROR_INVALID_PLUGIN) {
     goto done_video;
   }
 
-  if (retval == FILTER_ERROR_NEEDS_REINIT) {
-    needs_reinit = TRUE;
-  }
-
   for (k = 0; k < num_inc + num_in_alpha; k++) {
     channel = get_enabled_channel(inst, k, IN_CHAN);
-    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) continue;
-    if (weed_channel_is_alpha(channel)) {
-      // free pdata for all alpha in channels, unless orig pdata was passed from a prior fx
-
-
-      layer = layers[in_tracks[k]];
-      weed_layer_pixel_data_free(channel);
-      if (!weed_channel_get_pixel_data(channel)) {
-        weed_layer_nullify_pixel_data(layer);
-      }
-    }
-    // in_channel pixel_data was shared from the layers
-    // below we either free layer pixdata, or leave it (inplace)
-    //else weed_layer_nullify_pixel_data(channel);
+    weed_layer_pixel_data_free(channel);
   }
 
   // now we write our out channels back to layers, leaving the palettes and sizes unchanged
 
-  // for inplace, in and out channel share the same pixel_data. and since layer
-  // shares pixel_data with in_channel, then we just nullify the in and out channels
-
-  // otherwise, we should nullify the in_channel, free the layer pixdata, then copy
-  // (shallow) out_channel to layer, then nullify out_channel
+  if (retval == FILTER_ERROR_BUSY) busy = TRUE;
 
   for (i = k = 0; k < num_out_tracks + num_out_alpha; k++) {
-    weed_plant_t *in_channel = get_enabled_channel(inst, k, IN_CHAN);
-    channel = get_enabled_channel(inst, k, OUT_CHAN);
+    weed_plant_t *channel = get_enabled_channel(inst, k, OUT_CHAN);
+    boolean inplace = FALSE;
+
     if (!channel) break; // compound fx
 
     /// set the timecode for the channel (this is optional, but its good to do to timestamp the output)
     weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
-
-    layer = layers[out_tracks[i]];
-
-    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL) == WEED_TRUE) {
-      weed_plant_t *in_channel = get_enabled_channel(inst, k, IN_CHAN);
-      // layer and in_channel alwyas share pixdata, so we need to nullify this
-      weed_layer_nullify_pixel_data(in_channel);
-      // for inplace, the in_channel also shares pixdata with out_channel, hence
-      // it also shares with layer
-      weed_layer_nullify_pixel_data(channel);
-      // reset this for next time round
-      weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
-      continue;
-    }
 
     if (weed_channel_is_alpha(channel)) {
       // out chan data for alpha is freed after all fx proc - in case we need for in chans
       continue;
     }
 
-    if (retval == FILTER_ERROR_BUSY && num_in_tracks == 1 && num_out_tracks == 1) {
-      // filter busy, we will free out_channel data, set values from in_channel instead
-      weed_layer_pixel_data_free(channel);
-      weed_layer_nullify_pixel_data(layer);
-      if (!weed_layer_copy(layer, in_channel)) {
-        retval = FILTER_ERROR_COPYING_FAILED;
-        goto done_video;
-      }
-      weed_layer_nullify_pixel_data(in_channel);
-    } else {
-      weed_layer_nullify_pixel_data(in_channel);
-      // free any existing pixel_data, we will replace it with the channel data
+    layer = layers[out_tracks[i++]];
+
+    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL)) inplace = TRUE;
+
+    if (!inplace && !busy) {
       weed_layer_pixel_data_free(layer);
       if (!weed_layer_copy(layer, channel)) {
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
       }
-      weed_layer_nullify_pixel_data(channel);
-      weed_leaf_copy(layer, WEED_LEAF_HOST_WIDTH, layer, WEED_LEAF_WIDTH);
-      weed_leaf_copy(layer, WEED_LEAF_HOST_HEIGHT, layer, WEED_LEAF_HEIGHT);
     }
-    i++;
-  }
 
-  if (needs_reinit) retval = FILTER_ERROR_NEEDS_REINIT;
+    weed_layer_pixel_data_free(channel);
+    weed_leaf_copy(layer, WEED_LEAF_HOST_WIDTH, layer, WEED_LEAF_WIDTH);
+    weed_leaf_copy(layer, WEED_LEAF_HOST_HEIGHT, layer, WEED_LEAF_HEIGHT);
+  }
 
 done_video:
 
-  for (i = 0; i < num_in_tracks; i++) {
-    layer = layers[in_tracks[i]];
-    check_layer_ready(layer);
+  if (needs_reinit && retval == FILTER_SUCCESS)
+    retval = FILTER_ERROR_NEEDS_REINIT;
 
-    if (in_channels) {
-      num_inc = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
-      for (i = 0; i < num_inc + num_in_alpha; i++) {
-        if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
-          weed_set_boolean_value(in_channels[i], WEED_LEAF_DISABLED, WEED_FALSE);
-          weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
-        }
-      }
+  for (i = 0; i < num_inc + num_out_alpha; i++) {
+    if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
+      weed_set_boolean_value(in_channels[i], WEED_LEAF_DISABLED, WEED_FALSE);
+      weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
     }
   }
 
@@ -2988,7 +2931,7 @@ apply_inst2:
         }
 
         //if (LIVES_IS_PLAYING)
-        filter_error = weed_apply_instance(instance, init_event, layers, opwidth, opheight, tc, FALSE);
+        filter_error = weed_apply_instance(instance, init_event, layers, opwidth, opheight, tc);
 
         if (filter_error == WEED_SUCCESS && (xinstance = get_next_compound_inst(instance)) != NULL) {
           if (instance != orig_inst) weed_instance_unref(instance);
@@ -3019,6 +2962,92 @@ apply_inst2:
 }
 
 
+lives_filter_error_t act_on_instance(weed_instance_t *instance, int key, lives_layer_t **layers,
+                                     int opwidth, int opheight) {
+  // check and apply instance
+  // checks:
+  // if this is an audio instance, skip it
+  // NB:
+  // if the instance is "soft deinited", we simply skip the instance and continue to the next plan step
+  // but we flag to rebuild the nodemodel
+
+  // - double check to make sure this is not an audio effect
+  // - if we are in multitrack mode, interpolate params for the instance / timecode
+
+  // we first chain any data from parameter data connections
+  // this can cause the instance to need reiniting
+  // which we have to do now, since we cannot predict this
+
+  weed_filter_t *filter;
+  weed_instance_t *orig_inst = instance, *xinstance;
+  weed_gui_t *gui;
+  weed_timecode_t tc = 0;
+  lives_filter_error_t filter_error = FILTER_SUCCESS;
+  int myeaseval = -1;
+
+  if ((mainw->is_rendering && !(mainw->proc_ptr && mainw->preview))) tc = mainw->cevent_tc;
+
+  if (!instance) return FILTER_ERROR_INVALID_INSTANCE;
+
+  filter = weed_instance_get_filter(instance, TRUE);
+
+  if (is_pure_audio(filter, TRUE)) return FILTER_ERROR_IS_AUDIO;
+
+  if (mainw->multitrack && !mainw->unordered_blocks && pchains[key]) {
+    tc = mainw->cevent_tc;
+    interpolate_params(instance, mainw->pchains[key], tc); // interpolate parameters during preview
+  }
+
+apply_inst3:
+
+  if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
+    // chain any internal data pipelines for compound fx
+    boolean needs_reinit = pconx_chain_data_internal(instance);
+    if (needs_reinit) return FILTER_ERROR_NEEDS_REINIT;
+  }
+
+  // if the plugin is supposed to be easing out, make sure it is really doing so
+  gui = weed_instance_get_gui(instance, FALSE);
+  if (gui && weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT))
+    myeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
+
+  if (myeaseval) filter_error = weed_apply_instance(instance, NULL, layers, opwidth, opheight, tc);
+  else filter_error = FILTER_SUCCESS;
+
+  if (myeaseval >= 0) {
+    //g_print("mev is %d\n", myeaseval);
+    int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
+    if (!xeaseval) {
+      if (!weed_plant_has_leaf(instance, LIVES_LEAF_AUTO_EASING)) {
+        rte_key_on_off(key, FALSE);
+        return FILTER_ERROR_INVALID_INSTANCE;
+      }
+    }
+    // count how many frames to ease out
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT, xeaseval);
+  }
+
+  //#define DEBUG_RTE
+#ifdef DEBUG_RTE
+  if (filter_error != FILTER_SUCCESS) lives_printerr("Render error was %d\n", filter_error);
+#endif
+
+  if (filter_error == FILTER_SUCCESS && (xinstance = get_next_compound_inst(instance))) {
+    if (instance != orig_inst) weed_instance_unref(instance);
+    weed_instance_ref(xinstance);
+    instance = xinstance;
+    goto apply_inst3;
+  }
+
+  if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
+                       || filter_error == FILTER_INFO_REDRAWN)) {
+    pconx_chain_data_omc(orig_inst, key, key_modes[key]);
+  }
+
+  return filter_error;
+}
+
+
 weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc,
                                  int opwidth, int opheight, void ***pchains, boolean dry_run) {
   // given a stack of layers, a filter map, a timecode and possibly parameter chains
@@ -3029,12 +3058,8 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   // returned layer can be of any width,height,palette
   // caller should free all input layers, WEED_LEAF_PIXEL_DATA of all non-returned layers is free()d here
 
-  weed_plant_t *filter, *instance, *orig_inst = NULL, *xinstance;
+  weed_plant_t *instance, *orig_inst = NULL;
   weed_layer_t *layer;
-
-  lives_filter_error_t filter_error;
-
-  boolean needs_reinit;
 
   int output = -1;
   int clip;
@@ -3050,12 +3075,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   // Effects are applied in key order, in tracks are 0 and 1, out track is 0
   else {
     for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-      weed_plant_t *gui;
-      int myeaseval = -1;
-
-      if (orig_inst) weed_instance_unref(orig_inst);
-      orig_inst = NULL;
-
       if (rte_key_valid(i + 1, TRUE)) {
         if (!(rte_key_is_enabled(i, FALSE))) {
           // if anything is connected to ACTIVATE, the fx may be activated
@@ -3066,131 +3085,14 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
           if ((instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
             continue;
           }
-
-          orig_inst = instance;
-
-          if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
-            continue;
-          }
-
-          filter = weed_instance_get_filter(instance, TRUE);
-
-          if (is_pure_audio(filter, TRUE)) {
-            continue;
-          }
-
-          if (!dry_run) {
-            if (mainw->multitrack && !mainw->unordered_blocks && pchains && pchains[i]) {
-              interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
-            }
-          }
-
-          // TODO *** enable this, and apply pconx to audio gens in audio.c
-          if (!is_pure_audio(filter, TRUE)) {
-            if (!dry_run && mainw->pconx && !(mainw->preview || mainw->is_rendering)) {
-              // chain any data pipelines
-              needs_reinit = pconx_chain_data(i, key_modes[i], FALSE);
-
-              // if anything is connected to ACTIVATE, the fx may be activated
-              // however this should not happen here any more, instead the activastion should have
-              // been added to the sync_announce hook of the player
-              if ((xinstance = weed_instance_obtain(i, key_modes[i])) == NULL) {
-                continue;
-              }
-
-              // either we just added another ref, or we dont need this
-              // this should work both ways
-              weed_instance_unref(instance);
-              if (xinstance != instance) instance = orig_inst = xinstance;
-
-              if (needs_reinit) {
-                filter_error = weed_reinit_effect(instance, FALSE);
-                if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
-                    || filter_error == FILTER_ERROR_INVALID_FILTER) {
-                  continue;
-		  // *INDENT-OFF*
-                }}}}
-	  // *INDENT-ON*
-
-apply_inst3:
-
-          if (!dry_run && weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-            // chain any internal data pipelines for compound fx
-            needs_reinit = pconx_chain_data_internal(instance);
-            if (needs_reinit) {
-              filter_error = weed_reinit_effect(instance, FALSE);
-              if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
-                  || filter_error == FILTER_ERROR_INVALID_FILTER) {
-                if (instance != orig_inst) weed_instance_unref(instance);
-                continue;
-		// *INDENT-OFF*
-              }}}
-	  // *INDENT-ON*
-          if (!dry_run) {
-            // if the plugin is supposed to be easing out, make sure it is really doing so
-            gui = weed_instance_get_gui(orig_inst, FALSE);
-            if (gui && weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT))
-              myeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
-          }
-
-          if (myeaseval) filter_error = weed_apply_instance(instance, NULL, layers, opwidth, opheight, tc, dry_run);
-          else filter_error = FILTER_SUCCESS;
-
-          if (dry_run) continue;
-
-          if (myeaseval >= 0) {
-            //g_print("mev is %d\n", myeaseval);
-            int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
-            if (!xeaseval) {
-              if (!weed_plant_has_leaf(instance, LIVES_LEAF_AUTO_EASING)) {
-                uint64_t new_rte = GU641 << i;
-                filter_mutex_lock(i);
-                if (instance == orig_inst) orig_inst = NULL;
-                weed_deinit_effect(i);
-
-                g_print("AFX %ld and %ld\n", mainw->rte, new_rte);
-                mainw->rte &= ~new_rte;
-                g_print("BFX %ld and %ld\n", mainw->rte, new_rte);
-
-                if (rte_window) rtew_set_keych(i, FALSE);
-                if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
-                filter_mutex_unlock(i);
-
-                // remove extra ref we added
-                weed_instance_unref(instance);
-                mainw->refresh_model = TRUE;
-                continue;
-              }
-            }
-            // count how many frames to ease out
-            weed_set_int_value(gui, WEED_LEAF_EASE_OUT, xeaseval);
-          }
-          if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
-            // TODO...
-          }
-          if (filter_error == FILTER_INFO_REINITED)
-            update_widget_vis(NULL, i, key_modes[i]);
-          //#define DEBUG_RTE
-#ifdef DEBUG_RTE
-          if (filter_error != FILTER_SUCCESS) lives_printerr("Render error was %d\n", filter_error);
-#endif
-          if (filter_error == FILTER_SUCCESS && (xinstance = get_next_compound_inst(instance))) {
-            if (instance != orig_inst) weed_instance_unref(instance);
-            weed_instance_ref(xinstance);
-            instance = xinstance;
-            goto apply_inst3;
-          }
-
-          if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
-                               || filter_error == FILTER_INFO_REDRAWN)) {
-            pconx_chain_data_omc(orig_inst, i, key_modes[i]);
-          }
+          act_on_instance(instance, i, layers, opwidth, opheight);
+          weed_instance_unref(orig_inst);
 	  // *INDENT-OFF*
         }}}
     // *INDENT-ON*
-    if (orig_inst) weed_instance_unref(orig_inst);
+    if (orig_inst) {
+    }
   }
-
   if (dry_run) return NULL;
 
   // TODO - set mainw->vpp->play_params from connected out params and out alphas
@@ -7713,6 +7615,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     cfile->start = cfile->end = 1;
     cfile->clip_type = CLIP_TYPE_GENERATOR;
     cfile->frameno = 1;
+    add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
     mainw->play_start = mainw->play_end = 1;
     mainw->startticks = mainw->currticks;
 
@@ -7727,6 +7630,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     lives_snprintf(cfile->file_name, PATH_MAX, "generator: %s", filter_name);
     lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "generator: %s", filter_name);
     lives_free(filter_name);
+    add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
 
     // open as a clip with 1 frame
     cfile->start = cfile->end = cfile->frames = 1;

@@ -338,7 +338,7 @@ NIRVA_ENUM
   // - this is now OBJ_INTENTION_REQUEST_UPDATE / dest == taraget_object.refcoucnt.refcount,
   // value == -1
   //#define  OBJ_INTENTION_DESTROY_INSTANCE OBJ_INTENTION_UNREF
-#define  OBJ_INTENTION_DESTROY_INSTANCE 0x00002000
+  OBJ_INTENTION_DESTROY_INSTANCE = 0x00002000,
 
   OBJ_INTENTION_FIRST_CUSTOM = 0x80000000,
   OBJ_INTENTION_MAX = 0xFFFFFFFF)
@@ -1735,7 +1735,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    THREAD_EXIT_HOOK,
 
                    // for an APPLICATION instance, these are GLOBAL HOOKS
-                   N_GLOBAL_HOOKS,// 4
+                   N_GLOBAL_HOOKS,// 5
 
                    // The following are the standard hook points in the system
                    // all DATA_HOOKS must return "immedaitely"
@@ -1766,7 +1766,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // add strand is triggered when data is to be appended to a non existent strand, ie old value is absent
                    // delete strand is triggered from delete_strand, ie. new_value is absent
 
-                   ADDING_STRAND_HOOK, // 10
+                   ADDING_STRAND_HOOK, // 12
 
                    DELETING_STRAND_HOOK,
 

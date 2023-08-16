@@ -1186,7 +1186,7 @@ sub add_start {
 		print OUT "  int width = weed_channel_get_width(in_chan);\n";
 		print OUT "  int height = weed_channel_get_height(in_chan);\n";
 	    }
-	    print OUT "  int pal = weed_channel_get_palette(in_chan);\n";
+	    print OUT "  const int pal = (const int)weed_channel_get_palette(in_chan);\n";
 	    if (!@in_planar) {
 		print OUT "  int irow = weed_channel_get_stride(in_chan);\n";
 	    }
@@ -1199,7 +1199,7 @@ sub add_start {
 		print OUT "  int width = weed_channel_get_width(in_chans[0]);\n";
 		print OUT "  int height = weed_channel_get_height(in_chans[0]);\n";
 	    }
-	    print OUT "  int pal = weed_channel_get_palette(in_chans[0]);\n";
+	    print OUT "  const int pal = (const int)weed_channel_get_palette(in_chans[0]);\n";
 	    for ($i = 0; $i < $num_inc; $i++) {
 		my $got_planar = 0;
 		foreach (@out_planar) {
@@ -1243,7 +1243,7 @@ sub add_start {
 		print OUT "  int orow = weed_channel_get_stride(out_chan);\n";
 	    }
 	    if (!$num_inc) {
-		print OUT "  int pal = weed_channel_get_palette(out_chan);\n";
+		print OUT "  const int pal = (const int)weed_channel_get_palette(out_chan);\n";
 	    }
 	}
 	else {
@@ -1265,12 +1265,12 @@ sub add_start {
 		}
 	    }
 	    if (!$num_inc) {
-		print OUT "  int pal = weed_channel_get_palette(out_chans[0]);\n";
+		print OUT "  const int pal = (const int)weed_channel_get_palette(out_chans[0]);\n";
 	    }
 	}
     }
-    if ($need_putils && ($num_inc || $num_out)) {
-	print OUT "  int psize = pixel_size(pal);\n";
+    if ($need_putils && ($num_inc || $num_outc)) {
+	print OUT "  const int psize = (const int)pixel_size((int)pal);\n";
     }
     if ($use_sdata) {
 	print OUT "  sdata_t *sdata";

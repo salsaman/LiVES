@@ -8129,7 +8129,9 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
       lives_adjustment_set_lower(adj, page_size);
       lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 2));
       lives_adjustment_set_page_size(adj, page_size);
+
       lives_adjustment_set_value(adj, (double)msgno);
+
       lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
       if (mainw->multitrack)
         lives_signal_handler_unblock(mainw->multitrack->msg_adj, mainw->mt_msg_adj_func);

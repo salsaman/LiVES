@@ -25,6 +25,11 @@
 #define LIVES_LEAF_SRCGRP "host_srcgrp"
 #define LIVES_LEAF_TIMING_DATA "timedata"
 
+// list of shallow copies of layer, if present, we nullify on free
+// if nullifed, we remove from all lists
+// if another copy is made, add to all lists
+#define LIVES_LEAF_COPYLIST "layer_copies"
+
 #define LIVES_LEAF_LAYER_STATUS "layer_status"
 
 // layer statuses
@@ -79,7 +84,7 @@ weed_layer_t *create_blank_layer_precise(int width, int height, int *rowstrides,
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
-weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame);
+
 void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
 
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);

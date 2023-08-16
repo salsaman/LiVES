@@ -93,7 +93,7 @@ static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   unsigned char *src = weed_channel_get_pixel_data(in_chan);
   unsigned char *dst = weed_channel_get_pixel_data(out_chan);
-  int pal = weed_channel_get_palette(in_chan);
+  const int pal = (const int)weed_channel_get_palette(in_chan);
   int irow = weed_channel_get_stride(in_chan);
   int iheight = weed_channel_get_height(in_chan);
   int is_threading = weed_is_threading(inst);
@@ -101,7 +101,7 @@ static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t tc) {
   int width = weed_channel_get_width(out_chan);
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
-  int psize = pixel_size(pal);
+  const int psize = (const int)pixel_size((int)pal);
   double xshift = weed_param_get_value_double(in_params[P_xshift]);
   double yshift = weed_param_get_value_double(in_params[P_yshift]);
   int transbg = weed_param_get_value_boolean(in_params[P_transbg]);

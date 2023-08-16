@@ -8850,7 +8850,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     // shouldn't be playing, so OK to just call this
-    weed_generator_end((weed_instance_t *)get_primary_actor(cfile));
+    weed_generator_end((weed_instance_t *)get_primary_inst(cfile));
   }
 
   // create new file for rendering to

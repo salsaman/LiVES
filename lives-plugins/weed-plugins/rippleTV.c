@@ -246,7 +246,7 @@ static void motiondetect(RGB32 *src, int width, int height, int rowstride, struc
 
   for (y = height - 2; y > 0; y--) {
     for (x = width - 2; x > 0; x--) {
-      h = (int) * diff + (int) * (diff + 1) + (int) * (diff + width) + (int) * (diff + width + 1);
+      h = (int) *diff + (int) *(diff + 1) + (int) *(diff - width) + (int) *(diff - width + 1);
       if (h > 0) {
         *p = h << (POINT + IMPACT - 8);
         *q = *p;

@@ -51,7 +51,8 @@ typedef enum {
 
   /// values >= 512 are info
   FILTER_INFO_REINITED = 512,
-  FILTER_INFO_REDRAWN
+  FILTER_INFO_REDRAWN,
+  FILTER_INFO_BYPASSED,
 } lives_filter_error_t;
 
 #define FILTER_ERROR_IS_INFO(err) (err >= 512)
@@ -269,12 +270,18 @@ int get_next_free_key(void); ///< next free "key" for the multitrack system
 
 void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
+lives_filter_error_t act_on_instance(weed_instance_t *, int key, lives_layer_t **,
+                                     int opwidth, int opheight);
+
 weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, ticks_t tc, int opwidth, int opheight,
                                  void ***pchains, boolean dry_run);
-lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
-    int opwidth, int opheight, ticks_t tc, boolean dry);
-void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbtracks, int nchans, int64_t nsamps, double arate,
-                              ticks_t tc, double *vis);
+
+lives_filter_error_t weed_apply_instance(weed_instance_t *, weed_plant_t *init_event, lives_layer_t **,
+    int opwidth, int opheight, ticks_t tc);
+
+void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbtracks, int nchans,
+                              int64_t nsamps, double arate, ticks_t tc, double *vis);
+
 void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);
 
 boolean fill_audio_channel(weed_filter_t *filter, weed_plant_t *achan, boolean is_vid);

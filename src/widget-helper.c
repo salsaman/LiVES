@@ -375,9 +375,11 @@ WIDGET_HELPER_LOCAL_INLINE void lives_widget_object_set_data_mutex(LiVESWidgetOb
 /// needed because lives_list_free() is a macro
 static void _lives_list_free_cb(livespointer list) {lives_list_free((LiVESList *)list);}
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_list(LiVESWidgetObject * obj, const char *key, LiVESList * list) {
+WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_list(LiVESWidgetObject * obj,
+    const char *key, LiVESList * list) {
   lives_widget_object_set_data_full(obj, key, list, _lives_list_free_cb);
 }
+
 
 static void _lives_widget_object_unref_cb(livespointer obj) {lives_widget_object_unref((LiVESWidgetObject *)obj);}
 
@@ -1760,10 +1762,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_resize(LiVESWidget * widg
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget * widget, int width, int height) {
 #ifdef GUI_GTK
-  if (!mainw->ignore_screen_size) {
-    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
-  } else {
-    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  if (mainw->mgeom) {
+    if (!mainw->ignore_screen_size) {
+      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
+        lives_abort("Widget size too large for display (sr!i) !");
+    } else {
+      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
+        lives_abort("Widget size too large for display (sri) !");
+    }
   }
   if (LIVES_IS_WINDOW(widget)) lives_window_resize(LIVES_WINDOW(widget), width, height);
   else gtk_widget_set_size_request(widget, width, height);
@@ -1778,10 +1784,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_minimum_size(LiVESWidget * 
   GdkGeometry geom;
   GdkWindowHints mask;
   GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
-  if (!mainw->ignore_screen_size) {
-    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
-  } else {
-    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  if (mainw->mgeom) {
+    if (!mainw->ignore_screen_size) {
+      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
+        lives_abort("Widget size too large for display (min!i) !");
+    } else {
+      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
+        lives_abort("Widget size too large for display (mini) !");
+    }
   }
   if (GTK_IS_WINDOW(toplevel)) {
     geom.min_width = width;
@@ -1800,10 +1810,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget * 
   GdkGeometry geom;
   GdkWindowHints mask;
   GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
-  if (!mainw->ignore_screen_size) {
-    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
-  } else {
-    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  if (mainw->mgeom) {
+    if (!mainw->ignore_screen_size) {
+      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
+        lives_abort("Widget size too large for display (max!i) !");
+    } else {
+      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
+        lives_abort("Widget size too large for display (maxi) !");
+    }
   }
   if (GTK_IS_WINDOW(toplevel)) {
     geom.max_width = width;
@@ -1844,16 +1858,20 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
                                 || lives_proc_thread_is_done(lpt));
 
   // once we unlock this, a) main thread can complete lpttorun and nullify lpttorun
-  // this is fine since it would have triggered lptdone and hence bvar will be TRUE now
-  // and b) another bg thread can now grab lpt_mutex, and it will set lpttorun to NULL, then to its lpt
-  // this is also fine, it will block waiting for PREAPRING, with mutex locked
+  // this means it already made a local copy of lpttorun; it will oly nullify lpttoru if it
+  // still has the saem value
+  //
+  // another bg thread can now grab lpt_mutex, and it will set lpttorun to NULL, then to its lpt
+  // this is fine, it will block waiting for PREPARING, with mutex locked
   pthread_mutex_unlock(&lpt_mutex);
 
+  // now we wait for our lpt to finish
   lives_nanosleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt));
 
-  // if another bg thread is waiting it will have changed lpttorun, so only NULLify if ours and with mutex locked
-  //     (so it cannot change while we check)
   // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
+  // try to lock lpt_mutex, if we succeed, check if lpttorun == lpt, if so set lpttorun to NULL, unlock lpt_mutex
+  // main thread should have set lpttorun to NULL after executing it, but it is possible the whole process
+  // finsihed before we unlocked, so that would have been skipped
   if (lpt) unlock_lpt(lpt);
 }
 
@@ -2013,9 +2031,9 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
     return;
   } else {
     GET_PROC_THREAD_SELF(self);
-    // wait here until we get the mutex - this means any thread ahead of us has waited
-    // its lpt has passed at least to prepared, or it is locke transiently while lpttorun is nullified
     fg_service_wake();
+    // wait here until we get the mutex - this means any thread ahead of us has waited
+    // its lpt has passed at least to prepared, or it is locked transiently while lpttorun is nullified
     while (pthread_mutex_trylock(&lpt_mutex)) {
       if (lives_proc_thread_get_cancel_requested(lpt)
           || lives_proc_thread_get_cancel_requested(self)) {
@@ -3027,10 +3045,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_monitor(LiVESWindow * windo
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_default_size(LiVESWindow * window, int width, int height) {
 #ifdef GUI_GTK
-  if (!mainw->ignore_screen_size) {
-    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
-  } else {
-    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  if (mainw->mgeom) {
+    if (!mainw->ignore_screen_size) {
+      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
+        lives_abort("Widget size too large for display (def!i) !");
+    } else {
+      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
+        lives_abort("Widget size too large for display (defi) !");
+    }
   }
   gtk_window_set_default_size(window, width, height);
   return TRUE;
@@ -3058,10 +3080,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move(LiVESWindow * window, int 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move_resize(LiVESWindow * window, int x, int y, int w, int h) {
 #ifdef GUI_GTK
-  if (!mainw->ignore_screen_size) {
-    if (w + x > GUI_SCREEN_WIDTH || h + y > GUI_SCREEN_HEIGHT) abort();
-  } else {
-    if (w + x > GUI_SCREEN_PHYS_WIDTH || h + y > GUI_SCREEN_PHYS_HEIGHT) abort();
+  if (mainw->mgeom) {
+    if (!mainw->ignore_screen_size) {
+      if (w + x > GUI_SCREEN_WIDTH || h + y > GUI_SCREEN_HEIGHT)
+        lives_abort("Widget size too large for display (mr!i) !");
+    } else {
+      if (w + x > GUI_SCREEN_PHYS_WIDTH || h + y > GUI_SCREEN_PHYS_HEIGHT)
+        lives_abort("Widget size too large for display (mri) !");
+    }
   }
   gdk_window_move_resize(lives_widget_get_xwindow(LIVES_WIDGET(window)), x, y, w, h);
   return TRUE;
@@ -3114,10 +3140,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_hide_titlebar_when_maximize
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow * window, int width, int height) {
 #ifdef GUI_GTK
-  if (!mainw->ignore_screen_size) {
-    if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) abort();
-  } else {
-    if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) abort();
+  if (mainw->mgeom) {
+    if (!mainw->ignore_screen_size) {
+      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
+        lives_abort("Widget size too large for display (winr!i) !");
+    } else {
+      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
+        lives_abort("Widget size too large for display (winri) !");
+    }
   }
   gtk_window_resize(window, width, height);
   gtk_widget_set_size_request(GTK_WIDGET(window), width, height);

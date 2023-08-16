@@ -353,8 +353,8 @@ static bool resize_buffer(_sdata *sd) {
     } else align = 2;
   }
   if (sd->fbuffer) weed_free(sd->fbuffer);
-  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride
-				       * scrheight / align + align - 1, align);
+  sd->fbuffer = static_cast<GLubyte *>(weed_calloc(sizeof(GLubyte) * sd->rowstride
+						   * scrheight / align + align - 1, align));
   if (!sd->fbuffer) return false;
   sd->fbuffer_size = (sizeof(GLubyte) * sd->rowstride
 		      * scrheight / align + align - 1) / align;
@@ -366,7 +366,6 @@ static int render_frame(_sdata *sd) {
   float yscale, xscale;
   int maxwidth = imgwidth, maxheight = imgheight;
   bool checked_audio = false;
-  bool do_unlock = false;
 
   if (maxwidth > scrwidth) maxwidth = scrwidth;
   if (maxheight > scrheight) maxheight = scrheight;
@@ -539,7 +538,7 @@ static int render_frame(_sdata *sd) {
       /// check for blank frames: if the first BLANK_LIM frames from a new program are all blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
-      uint64_t *p = (uint64_t *)sd->fbuffer;
+      uint64_t *p = reinterpret_cast<uint64_t *>(sd->fbuffer);
       int pclim = PCOUNT_LIM / (1 + blanks + nonblanks), pcount = 0;
       int i = sd->fbuffer_size;
       if (sd->psize == 4) {
@@ -682,7 +681,7 @@ static void *worker(void *data) {
   if (!sd->prnames) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
   else sd->bad_programs = (uint8_t *)weed_calloc(nprs - 1, 1);
   if (!sd->bad_programs) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
-  sd->good_programs = (uint8_t *)weed_calloc(nprs - 1, 1);
+  sd->good_programs = static_cast<uint8_t *>(weed_calloc(nprs - 1, 1));
   if (!sd->good_programs) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) sd->rendering = false;
   else {
@@ -879,7 +878,6 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 #ifdef HAVE_SDL2
     SDL_Window *win;
     SDL_GLContext glCtx;
-    bool reinit = false;
 #endif
     _sdata *sd;
     weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
@@ -912,7 +910,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     } else {
       weed_plant_t **iparams = weed_get_in_params(inst, NULL);
       int rc = 0;
-      sd = (_sdata *)weed_calloc(1, sizeof(_sdata));
+      sd = static_cast<_sdata *>(weed_calloc(1, sizeof(_sdata)));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
       //std::cerr << "resetting" << std::endl;
 
@@ -997,7 +995,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
     //sd->rendering = false;
 
-    sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2, sizeof(float));
+    sd->audio = static_cast<float *>(weed_calloc(MAX_AUDLEN * 2, sizeof(float)));
     if (!sd->audio) {
       projectM_deinit(inst);
       return WEED_ERROR_MEMORY_ALLOCATION;

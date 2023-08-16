@@ -396,8 +396,6 @@ retry_configfile:
 
   get_location(EXEC_DF, capable->df_cmd, PATH_MAX);
   get_location(EXEC_WC, capable->wc_cmd, PATH_MAX);
-  get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
-  get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX);
   get_location(EXEC_EJECT, capable->eject_cmd, PATH_MAX);
 
   check_for_executable(&capable->has_du, EXEC_DU);
@@ -509,7 +507,7 @@ static boolean pre_init(void) {
 
   capable->session_uid = gen_unique_id();
 
-  if (prefs->show_dev_opts) {
+  if (!prefs->show_dev_opts) {
     g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
   }
 
@@ -1940,7 +1938,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   libweed_set_memory_funcs(_lives_calloc, _lives_free);
 #endif // DISABLE_GSLICE
 #endif // USE_RPMALLOC
-  weed_utils_set_custom_memfuncs(_lives_malloc, _lives_calloc, _lives_memcpy, NULL, _lives_free);
+  weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
 #endif // USE_STD_MEMFUNCS
 #endif //IS_LIBLIVES
 
@@ -1980,6 +1978,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   lives_threadpool_init();
+
+  get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
+  get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX);
 
   g_printerr("Getting hardware details...\n");
   get_machine_dets();

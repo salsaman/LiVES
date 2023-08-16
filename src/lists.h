@@ -8,6 +8,16 @@
 #ifndef _LISTS_H_
 #define _LISTS_H_
 
+typedef struct {
+  pthread_mutex_t mutex;
+  LiVESList *list;
+} lives_sync_list_t;
+
+lives_sync_list_t *lives_sync_list_new(void);
+void lives_sync_list_add(lives_sync_list_t *, void *data);
+void lives_sync_list_remove(lives_sync_list_t *, void *data, boolean do_free);
+void lives_sync_list_free(lives_sync_list_t *);
+
 LiVESList *array_to_string_list(const char **y, int offset, int len);
 char *lives_list_to_string(LiVESList *list, const char *delim);
 

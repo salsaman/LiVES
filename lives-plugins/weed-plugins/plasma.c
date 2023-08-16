@@ -14,6 +14,7 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////////////////////
 
 #define _UNIQUE_ID_ "0XA5478ADFCD0B956"
+#define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -80,7 +81,8 @@ static weed_error_t plasma_init(weed_plant_t *inst) {
   int width = weed_channel_get_width(out_chan);
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
-  int pal = weed_channel_get_palette(out_chan);
+  const int pal = (const int)weed_channel_get_palette(out_chan);
+  const int psize = (const int)pixel_size((int)pal);
   sdata_t *sdata;
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));
@@ -109,7 +111,8 @@ static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t tc) {
   int width = weed_channel_get_width(out_chan);
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
-  int pal = weed_channel_get_palette(out_chan);
+  const int pal = (const int)weed_channel_get_palette(out_chan);
+  const int psize = (const int)pixel_size((int)pal);
   sdata_t *sdata = weed_get_instance_data(inst, sdata);
   if (!sdata) return WEED_ERROR_REINIT_NEEDED;
   else {
@@ -117,7 +120,7 @@ static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t tc) {
     if (1) {
         unsigned char *end;
         uint8_t index;
-        int x, widthx = width * 3;
+        int x, widthx = width * psize;
         int offs = orow - widthx;
 
         sdata->tpos4 = sdata->pos4;
@@ -179,6 +182,10 @@ WEED_SETUP_START(200, 200) {
 
   if (!sscanf(_UNIQUE_ID_, "0X%lX", &unique_id) || !sscanf(_UNIQUE_ID_, "0x%lx", &unique_id)) {
     weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);
+  }
+
+  if (1) {
+    plasma_prep();
   }
 
   weed_plugin_set_package_version(plugin_info, package_version);

@@ -315,6 +315,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
   }
   // insufficient space
   smblock_pool->toobig_size = xsize;
+  pthread_mutex_unlock(&smblock_mutex);
   if (!nmemb) return orig_malloc(xsize);
   return orig_calloc(nmemb, xsize / nmemb);
 }
@@ -491,6 +492,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
           lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
           list->data = LIVES_INT_TO_POINTER(nchunks);
           smblock_pool->free_chunks += nchunks;
+          pthread_mutex_unlock(&smblock_mutex);
           return nptr;
         }
 
@@ -541,6 +543,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
         lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
         list->data = LIVES_INT_TO_POINTER(nchunks);
         smblock_pool->free_chunks += nchunks;
+        pthread_mutex_unlock(&smblock_mutex);
         return nptr;
       }
     }
@@ -766,7 +769,7 @@ static volatile int used[NBIGBLOCKS];
 static int NBBLOCKS = 0;
 
 #define NBAD_LIM 8
-//#define BBL_TEST
+#define BBL_TEST
 #ifdef BBL_TEST
 static int bbused = 0;
 #endif
@@ -818,7 +821,6 @@ void *alloc_bigblock(size_t sizeb) {
   return NULL;
 }
 
-//#define BBL_TEST
 #ifdef DEBUG_BBLOCKS
 void *_calloc_bigblock(size_t xsize) {
 #else
@@ -841,7 +843,7 @@ void *calloc_bigblock(size_t xsize) {
       g_print("bigblocks in use after calloc %d\n", bbused);
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
-      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
+      g_print("CALLOBIG %p %d\n", bigblocks[i], i);
       //break_me("callobig");
       nbads = 0;
       start = bigblocks[i];
@@ -885,7 +887,7 @@ void *free_bigblock(void *bstart) {
       pthread_mutex_unlock(&bigblock_mutex);
       g_print("bigblocks in use after free %d\n", bbused);
 #endif
-      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
+      g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return bstart;
     }
   }

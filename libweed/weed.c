@@ -727,6 +727,8 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
       if (chain_lock_try_readlock(plant)) {
 	// another thread has writelock
 	if (plant->flags & WEED_FLAG_OP_DELETE) checkmode = 1;
+	data_lock_readlock(plant);
+	data_lock_unlock(plant);
       }
       else chain_lock_unlock(plant);
       // this counts the number of readers running in non-check mode
@@ -966,8 +968,8 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   }
 
   if (err != WEED_SUCCESS) {
-    if (leafprev != leaf && leafprev != plant) chain_lock_unlock(leafprev);
-    if (leaf && leaf != plant) chain_lock_unlock(leaf);
+    /* if (leafprev != leaf && leafprev != plant) chain_lock_unlock(leafprev); */
+    /* if (leaf && leaf != plant) chain_lock_unlock(leaf); */
     chain_lock_unlock(plant);
     structure_mutex_unlock(plant);
     return err;
@@ -981,11 +983,24 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   // first, wait for non-checking readers to complete
   reader_count_wait(plant);
 
+  // problem: leaf is first after plant
+  // reader in checkmode has no readlock on plant
+  // reader in checkmode reads next ptr
+  // reader in checkmode tries to chain_lock_readlock leaf
+  // soln: need some other method to lock plant, so that nex ptr is not read
+  // thus: if leafprev == plant, get data_lock_writelock on plant
+  // readers in checkmode need data_lock_readlock on plant before reading next ptr for plant
+
   // block readers at leafprev - rlease chain lock readlock on leafprev and grab writelock
-  if (leafprev != plant) chain_lock_writelock(leafprev, 1, 0);
+  if (leafprev != plant) chain_lock_writelock(leafprev);
+  else data_lock_writelock(plant);
+
+  if (leaf != plant) chain_lock_writelock(leaf);
 
   // adjust the link
   leafprev->next = leaf->next;
+
+  if (leafprev == plant) data_lock_unlock(plant);
 
   // and that is it, job done. Now we can free leaf at leisure
   plant->flags &= ~WEED_FLAG_OP_DELETE;

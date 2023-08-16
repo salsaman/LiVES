@@ -158,7 +158,7 @@ static inline weed_plant_t *weed_get_in_param(weed_plant_t *i, int x)
 static inline weed_plant_t *weed_get_out_param(weed_plant_t *i, int x)
 {return gg_p(i, WEED_LEAF_OUT_PARAMETERS, x);}
 static inline void *weed_channel_get_pixel_data(weed_plant_t *c)
-{void *pd; return *((void **)(gg(c, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));}
+{void *pd = *((void **)(gg(c, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd))); return pd;}
 static inline int weed_channel_get_width(weed_plant_t *c) {return gg_i(c, WEED_LEAF_WIDTH);}
 static inline int weed_channel_get_height(weed_plant_t *c) {return gg_i(c, WEED_LEAF_HEIGHT);}
 static inline int weed_channel_get_palette(weed_plant_t *c) {return gg_i(c, WEED_LEAF_CURRENT_PALETTE);}
@@ -944,11 +944,13 @@ static void alpha_premult(unsigned char *ptr, int width, int height, int rowstri
       ptr += rowstride;
     }
   } else {
-    for (i = 0; i < height; i++) for (j = 0; j < width; j += psize) {
+    for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j += psize) {
         alpha = ptr[j + aoffs];
         for (p = coffs; p < psizel; p++) ptr[j + p] = al[alpha][ptr[j + p]];
       }
-    ptr += rowstride;
+      ptr += rowstride;
+    }
   }
 }
 

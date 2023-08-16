@@ -107,74 +107,19 @@ LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *
 }
 
 
-LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_create_with_metadata(int clipno, frames_t frame) {
-  // create a layer and try to set natural_size and palette
-  weed_layer_t *layer;
-  lives_clipsrc_group_t *srcgrp;
-  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
-  int width = 0, height = 0, pal = 0;
-
-  if (!sfile) return NULL;
-
-  layer = lives_layer_new_for_frame(clipno, frame);
-
-  srcgrp = lives_layer_get_srcgrp(layer);
-  if (srcgrp) {
-    pal = srcgrp->apparent_pal;
-    weed_layer_set_gamma(layer, srcgrp->apparent_gamma);
-  } else {
-    // set palette according to clip AND frame
-    // for clips of type FILE, we cna have 2 palettes and 2 sizes depeding on whterh the frame is
-    // decoded to image or not
-    // for the most general case, frame should be 0
-    pal = lives_layer_guess_palette(layer);
-  }
-
-  // clip width is in pixels, but layer width is in macropixels !
-  width = sfile->hsize / (pal != WEED_PALETTE_NONE
-                          ? weed_palette_get_pixels_per_macropixel(pal) : 1);
-
-  height = sfile->vsize;
-
-  if (!width || !height) {
-    // get the layer size
-    switch (sfile->clip_type) {
-    case CLIP_TYPE_FILE: {
-      lives_clip_data_t *cdata = get_clip_cdata(clipno);
-      // layer width is always measured in MACROpixels
-      width = cdata->width / weed_palette_get_pixels_per_macropixel(pal);
-      height = cdata->height;
-    }
-    break;
-    case CLIP_TYPE_GENERATOR: {
-      weed_instance_t *instance = (weed_instance_t *)((get_primary_src(clipno))->actor);
-      weed_channel_t *channel = get_enabled_channel(instance, 0, FALSE);
-      width = weed_channel_get_pixel_width(channel);
-      height = weed_channel_get_height(channel);
-    }
-    break;
-    default: break;
-    }
-  }
-
-  if (pal) weed_layer_set_palette(layer, pal);
-  weed_layer_set_size(layer, width, height);
-
-  return layer;
-}
-
 
 void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
+  // copy width, height, clip, frame, full palette
   if (src && dest) {
-    int width = weed_layer_get_width(src);
-    int height = weed_layer_get_height(src);
     lives_layer_set_clip(dest, lives_layer_get_clip(src));
     lives_layer_set_frame(dest, lives_layer_get_frame(src));
-    weed_layer_set_size(dest, width, height);
-    weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE);
-    weed_leaf_dup(dest, src, WEED_LEAF_YUV_SUBSPACE);
-    weed_leaf_dup(dest, src, WEED_LEAF_YUV_SAMPLING);
-    weed_leaf_dup(dest, src, WEED_LEAF_YUV_CLAMPING);
+    /* int width = weed_layer_get_width(src); */
+    /* int height = weed_layer_get_height(src); */
+    /* weed_layer_set_size(dest, width, height); */
+    /* weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE); */
+    /* weed_leaf_dup(dest, src, WEED_LEAF_YUV_SUBSPACE); */
+    /* weed_leaf_dup(dest, src, WEED_LEAF_YUV_SAMPLING); */
+    /* weed_leaf_dup(dest, src, WEED_LEAF_YUV_CLAMPING); */
   }
 }
 
@@ -350,9 +295,26 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  lives_sync_list_t *copylist =
+    (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
+  if (copylist) {
+    weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
+    lives_sync_list_remove(copylist, (void *)layer, FALSE);
+    if (!copylist->list) {
+      lives_sync_list_free(copylist);
+      copylist = NULL;
+    }
+  }
+
+  if (!copylist) {
+    if (weed_layer_get_pixel_data(layer))
+      break_me("NULLIFY non-copied layer with pixdata !");
+    else if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC))
+      g_print("LAYERS: %p nullfied, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
+  }
+
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
   weed_plant_sanitize(layer, FALSE);
-  //g_print("LAYERS: %p nullfied, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
   return layer;
 }
 
@@ -597,6 +559,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     int height = weed_layer_get_height(slayer);
     int width = weed_layer_get_width(slayer);
     int palette = weed_layer_get_palette(slayer);
+
     int *rowstrides = weed_layer_get_rowstrides(slayer, NULL);
     if (height <= 0 || width < 0 || !rowstrides || !weed_palette_is_valid(palette)) {
       if (pd_array) lives_free(pd_array);
@@ -612,10 +575,26 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     weed_layer_pixel_data_free(layer);
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
+
     weed_leaf_copy_or_delete(layer, WEED_LEAF_HEIGHT, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
     if (pd_array) {
+      // potential dealock - we lock our copylist_mutex - go to update copies
+      // meanwhile, a copy has its mutex locked, trying to update us
+      //
+      lives_sync_list_t *copylist =
+        (lives_sync_list_t *)weed_get_voidptr_value(slayer, LIVES_LEAF_COPYLIST, NULL);
+      if (!copylist) {
+        copylist = lives_sync_list_new();
+        lives_sync_list_add(copylist, (void *)slayer);
+        weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
+      }
+
+      lives_sync_list_add(copylist, (void *)layer);
+
+      weed_leaf_dup(layer, slayer, LIVES_LEAF_COPYLIST);
+
       weed_leaf_copy_or_delete(layer, LIVES_LEAF_BBLOCKALLOC, slayer);
       weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXBUF_SRC, slayer);
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);

@@ -1125,7 +1125,7 @@ static boolean call_fx_enable(livespointer data) {
             // return value first because...
             ext_caller_return_int(fxdata->id, (int)TRUE);
             // ...we are going to hang here until playback ends
-            ret = rte_key_toggle(effect_key);
+            rte_key_toggle(effect_key);
             return FALSE;
           } else {
             ret = rte_key_toggle(effect_key);
@@ -1135,7 +1135,8 @@ static boolean call_fx_enable(livespointer data) {
       }
     } else {
       if (mainw->rte & (GU641 << (effect_key - 1))) {
-        ret = rte_key_toggle(effect_key);
+        rte_key_toggle(effect_key);
+        ret = rte_ket_is_enabled(key - 1);
       }
     }
   }

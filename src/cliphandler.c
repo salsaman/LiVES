@@ -2319,10 +2319,6 @@ void switch_to_file(int old_file, int new_file) {
       lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
     }
 
-    lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-    lives_widget_show_now(mainw->preview_box);
-    lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-
     if (mainw->play_window) { // must keep checking this, as it can be switched of by user
       // and resize it
       lives_widget_grab_focus(mainw->preview_spinbutton);
@@ -2332,6 +2328,13 @@ void switch_to_file(int old_file, int new_file) {
     if (mainw->play_window) {
       load_preview_image(FALSE);
     }
+  }
+
+  if (mainw->play_window) { // must keep checking this, as it can be switched of by user
+    lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+    lives_widget_show_all(mainw->preview_box);
+    lives_widget_show_now(mainw->preview_box);
+    lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
   }
 
   if (!mainw->go_away && CURRENT_CLIP_IS_NORMAL) {
@@ -3339,6 +3342,7 @@ lives_clip_src_t *get_primary_src(int nclip) {
 lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc) {
   lives_clip_src_t *outsrc;
   if (!insrc) return NULL;
+  if (insrc->actor_inst) return NULL;
   outsrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
   if (outsrc) {
     outsrc->uid = gen_unique_id();
@@ -3357,6 +3361,7 @@ lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives
       break;
     default:
       outsrc->actor = insrc->actor;
+      break;
     }
 
     lives_memcpy(&outsrc->ext_checksum, &insrc->ext_checksum, sizeof(fingerprint_t));
@@ -3379,7 +3384,6 @@ lives_clip_src_t *clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_
 
 // a shortcut for adding a new clip_src to PRIMARY srcgrp
 lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type) {
-  // TODO - add to all srcgrps
   lives_clip_src_t *mysrc = NULL;
   lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
   if (sfile) {
@@ -3399,19 +3403,15 @@ lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type) {
 
 
 lives_clip_src_t *add_primary_inst(int nclip, void *actor, void *inst, int src_type) {
+  // add actor + actor_inst to primary srcgroup, which will be created if it does not exist
+  // clip_srcs with actor_inst cannot be cloned, since instances are specific to  single clip_src
+  // so this is not copied to other srcgrps
   lives_clip_src_t *mysrc = NULL;
   lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
   if (sfile) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
-    for (int i = 0; i < sfile->n_src_groups; i++) {
-      lives_clipsrc_group_t *srcgrp = sfile->src_groups[i];
-      if (srcgrp->purpose == SRC_PURPOSE_PRIMARY)
-        mysrc = _add_clip_src(sfile, srcgrp->track, srcgrp->purpose,
-                              actor, inst, src_type, 0, NULL, NULL);
-      else
-        _add_clip_src(sfile, srcgrp->track, srcgrp->purpose,
-                      actor, actor ? NULL : inst, src_type, 0, NULL, NULL);
-    }
+    mysrc = _add_clip_src(sfile, -1, SRC_PURPOSE_PRIMARY,
+                          actor, inst, src_type, 0, NULL, NULL);
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
   return mysrc;
@@ -3472,7 +3472,8 @@ int get_primary_src_type(lives_clip_t *sfile) {
 
 lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose) {
   // create a clone of PRIMARY with track and purpose
-  // from sclip to dclip (sclip can be = to dclip)
+  // from sclip to dclip (dclip can == sclip)
+  // clip_srcs which have actor_inst defined will not be copied
   lives_clip_t *sfile = RETURN_VALID_CLIP(sclip);
   if (sfile) {
     lives_clipsrc_group_t *srcgrp = get_srcgrp(sclip, -1, SRC_PURPOSE_PRIMARY);

@@ -1681,12 +1681,10 @@ void update_effort(double nthings, boolean is_bad) {
       }}}
   // *INDENT-ON
  tryset:
-  if (pb_quality != prefs->pb_quality && (!mainw->frame_layer_preload || mainw->pred_frame == -1
-					  || is_layer_ready(mainw->frame_layer_preload))) {
-    prefs->pb_quality = pb_quality;
-    mainw->blend_palette = WEED_PALETTE_END;
+  if (pb_quality != future_prefs->pb_quality && (!mainw->frame_layer_preload || mainw->pred_frame == -1
+						 || is_layer_ready(mainw->frame_layer_preload))) {
+    future_prefs->pb_quality = pb_quality;
     if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP_NORESYNC;
-
     mainw->refresh_model = TRUE;
   }
 

@@ -2468,6 +2468,7 @@ static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pk
 
   // read packets from matroska->packets (uses memcpy)
   while (matroska_deliver_packet(cdata, pkt)) {
+
     if (matroska->done || priv->got_eof) return FALSE;
     matroska_parse_cluster(cdata);
   }

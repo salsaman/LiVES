@@ -501,7 +501,7 @@ static void setFullScreen(void) {
 
 static uint8_t *buffer_free(volatile uint8_t *retbuf) {
   if (!retbuf) return NULL;
-  weed_free((void *)retbuf);
+  weed_free(static_cast<void *>(const_cast<uint8_t *>(retbuf)));
   return NULL;
 }
 
@@ -572,10 +572,10 @@ static void render_to_gpumem_inner(int tnum, int texwidth, int width, int height
   glTexParameteri(m_TexTarget, GL_TEXTURE_MAX_LEVEL, 0);
 
   glTexImage2D(m_TexTarget, mipMapLevel, type, texwidth, height, 0, intype, btype,
-               (const GLvoid *)texturebuf);
+               static_cast<GLvoid *>(const_cast<uint8_t *>(texturebuf)));
 
   glTexSubImage2D(m_TexTarget, mipMapLevel, texwidth - width, 0, texwidth, height, intype, btype,
-                  (const GLvoid *)((char *)texturebuf - (texwidth - width)));
+                  static_cast<GLvoid *>(const_cast<uint8_t *>(texturebuf) - (texwidth - width)));
 
   glBindTexture(m_TexTarget, 0);
   glDisable(m_TexTarget);
@@ -682,17 +682,6 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   Cursor invisibleCursor;
   Pixmap bitmapNoData;
   XColor black;
-  static char noData[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-  int singleBufferAttributess[] = {
-    GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-    GLX_RENDER_TYPE,   GLX_RGBA_BIT,
-    GLX_RED_SIZE,      1,			//	Request a single buffered color buffer
-    GLX_GREEN_SIZE,    1,			//	with the maximum number of color bits
-    GLX_BLUE_SIZE,     1,			//	for each component.
-    GLX_ALPHA_SIZE,    1,
-    None
-  };
 
   int doubleBufferAttributes[] = {
     GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
@@ -705,7 +694,6 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     None
   };
 
-  XVisualInfo          *vInfo;
   GLXFBConfig          *fbConfigs = NULL;
   XEvent                event;
   XSetWindowAttributes  swa;
@@ -763,13 +751,24 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     context = glXCreateContext(dpy, &xvis[0], 0, GL_TRUE);
 
-    width = attr.width;
     height = attr.height;
 
     glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &dblbuf);
     XFree(xvis);
     is_ext = TRUE;
   } else {
+    XVisualInfo          *vInfo;
+    int singleBufferAttributess[] = {
+      GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+      GLX_RENDER_TYPE,   GLX_RGBA_BIT,
+      GLX_RED_SIZE,      1,			//	Request a single buffered color buffer
+      GLX_GREEN_SIZE,    1,			//	with the maximum number of color bits
+      GLX_BLUE_SIZE,     1,			//	for each component.
+      GLX_ALPHA_SIZE,    1,
+      None
+    };
+    int swaMask;
+    static char noData[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     width = fullscreen ? m_WidthFS : width;
     height = fullscreen ? m_HeightFS : height;
 
@@ -965,7 +964,7 @@ static int Upload(void) {
   int window_width, window_height;
 
   float scalex, scaley, offs_x, offs_y;
-  double x_stretch, y_stretch = 1.;
+  double x_stretch;
   double aspect;
 
   // scaling for particles
@@ -1160,7 +1159,7 @@ static int Upload(void) {
   case 3: {
     // wobbler:
 
-    float vx = -1.0, vy = 1.0;
+    float vy = 1.0, vx = 1.0;;
     float tx = 0.0, ty;
 
     float vz;
@@ -1939,7 +1938,7 @@ static int Upload(void) {
 
 
 static void *render_thread_func(void *data) {
-  _xparms *xparms = (_xparms *)data;
+  _xparms *xparms = reinterpret_cast<_xparms *>(data);
   int usec = 1000000. / tfps;
   int timetowait = usec;
 
@@ -1990,7 +1989,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   int hsize = weed_channel_get_width(frame);
   int vsize = weed_channel_get_height(frame);
   int row = weed_channel_get_stride(frame);
-  int rowz, mwidth;
+  int rowz;
   void **return_data = NULL;
   void *pixel_data = weed_channel_get_pixel_data(frame);
   int i;
@@ -2026,7 +2025,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   if (texHeight < 1024) texHeight = 1024;
 
   if (otexRow != texRow || otexHeight != texHeight || !texturebuf) {
-    if (texturebuf) weed_free((void *)texturebuf);
+    if (texturebuf) weed_free(static_cast<void *>(const_cast<uint8_t *>(texturebuf)));
     texturebuf = (uint8_t *)weed_malloc(texRow * texHeight);
   }
 
@@ -2044,6 +2043,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
   if (return_data) {
     uint8_t *dst, *src;
+    int mwidth;
     return_ready = FALSE;
     retdata = dst = (uint8_t *)return_data[0]; // host created space for return data
 
@@ -2078,7 +2078,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
       dst += row;
       src -= texWidth;
     }
-    weed_free(return_data);
+    weed_free(static_cast<void *>(const_cast<uint8_t *>(texturebuf)));
   } else {
     retdata = NULL;
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
@@ -2103,7 +2103,6 @@ void decode_pparams(weed_plant_t **pparams) {
   weed_plant_t *ptmpl;
   char *pname;
   weed_error_t error;
-  int pltype;
 
   zmode = 0;
   zfft0 = 0.;
@@ -2112,7 +2111,7 @@ void decode_pparams(weed_plant_t **pparams) {
 
   if (!pparams) return;
   for (int i = 0; pparams[i]; i++) {
-    pltype = weed_plant_get_type(pparams[i]);
+    int pltype = weed_plant_get_type(pparams[i]);
 
     if (pltype == WEED_PLANT_PARAMETER) {
       ptmpl = weed_param_get_template(pparams[i]);
@@ -2153,7 +2152,8 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     pthread_join(rthread, NULL);
   } else pthread_mutex_unlock(&cond_mutex);
 
-  if (texturebuf) weed_free((void *)texturebuf);
+  if (texturebuf)
+    weed_free(static_cast<void *>(const_cast<uint8_t *>(texturebuf)));
   texturebuf = NULL;
 
   free(textures);

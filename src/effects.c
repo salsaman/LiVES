@@ -869,16 +869,15 @@ void on_realfx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
 }
 
 
-static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
+static frames64_t get_blend_frame_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
   ticks_t *timing_data;
-  weed_layer_t *layer = NULL;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
-  frames_t frameno;
+  frames64_t frameno;
 
   blend_file = RETURN_VALID_CLIP(mainw->blend_file);
-  if (!blend_file) return NULL;
+  if (!blend_file) return -1;
   if (!IS_PHYSICAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = 1;
   else {
     blend_file->last_frameno = frameno = blend_file->frameno;
@@ -900,22 +899,54 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
 
   mainw->last_blend_file = mainw->blend_file;
 
-
-  layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  lives_layer_set_track(layer, 1);
-  timing_data = get_layer_timing(layer);
-  if (timing_data) {
-    timing_data[LAYER_STATUS_TREF] = blend_tc;
-    set_layer_timing(layer, timing_data);
-    lives_free(timing_data);
-  }
-  pull_frame_threaded(layer, 0, 0);
-
-  return layer;
+  return frameno;
 }
 
+/* if (!weed_layer_check_valid(mainw->blend_layer)) { */
+/*   if (mainw->blend_layer != old_frame_layer) { */
+/*     check_layer_ready(mainw->blend_layer); */
+/*     weed_layer_free(mainw->blend_layer); */
+/*   } */
+/*   mainw->blend_layer = NULL; */
+/*  } */
 
-weed_layer_t *get_blend_layer(weed_timecode_t tc) {
+/* if (!mainw->blend_layer && mainw->new_blend_file == mainw->blend_file) { */
+/*   // try to do this right after sync_announce, since that is the point where we */
+/*   // transitions would be inited / deinited */
+/*   if ((mainw->rte || (mainw->is_rendering && !mainw->event_list)) */
+/*       && (mainw->current_file != mainw->scrap_file) */
+/*       && (mainw->blend_file != mainw->playing_file */
+/* 	  || prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) { */
+/*     /// will set mainw->blend_layer */
+/*     if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n", */
+/* 					   lives_get_current_ticks() / TICKS_PER_SECOND_DBL); */
+/*     mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks); */
+/*     // *INDENT-OFF* */
+/*   }}}} */
+/* // *INDENT-ON* */
+
+
+/* if (mainw->blend_layer) { */
+/*   // assume we played the blend_layer, if we have one */
+/*   if (mainw->blend_layer != get_old_frame_layer()) { */
+/*     weed_layer_set_invalid(mainw->blend_layer, TRUE); */
+/*     check_layer_ready(mainw->blend_layer); */
+/*     weed_layer_unref(mainw->blend_layer); */
+/*   } */
+/*   mainw->blend_layer = NULL; */
+/*  } */
+/* if ((mainw->rte || (mainw->is_rendering && !mainw->event_list)) */
+/*     && (mainw->current_file != mainw->scrap_file) */
+/*     && (mainw->blend_file != mainw->playing_file */
+/* 	|| prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) { */
+/*   /// will set mainw->blend_layer */
+/*   if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n", */
+/* 					 lives_get_current_ticks() / TICKS_PER_SECOND_DBL); */
+/*   mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks); */
+/*  } */
+
+
+frames64_t get_blend_frame(weed_timecode_t tc) {
   weed_layer_t *layer = NULL;
   if ((mainw->num_tr_applied > 0
        && !IS_VALID_CLIP(mainw->blend_file)) ||
@@ -925,17 +956,17 @@ weed_layer_t *get_blend_layer(weed_timecode_t tc) {
         !mainw->files[mainw->blend_file]->is_loaded))) {
     // invalid blend file
     if (mainw->blend_file != mainw->playing_file) {
-      track_source_free(1, mainw->blend_file);
-      mainw->blend_file = mainw->playing_file;
+      //track_source_free(1, mainw->blend_file);
+      mainw->new_blend_file = -1;
     }
-    return layer;
+    return -1;
   }
 
   if (mainw->num_tr_applied && (prefs->tr_self || mainw->blend_file != mainw->playing_file) &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
-    layer = get_blend_layer_inner(tc);
+    return get_blend_frame_inner(tc);
   }
-  return layer;
+  return -1;
 }
 
 
@@ -954,7 +985,7 @@ weed_plant_t *on_rte_apply(weed_layer_t **layers, int opwidth, int opheight, wee
     weed_plant_t *init_event = weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
     weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
-    (void)(ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc, FALSE));
+    (void)(ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc));
     weed_plant_free(init_event);
   } else {
     weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains, dry_run);
@@ -988,7 +1019,7 @@ void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
 
 deint1:
 
-  weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc, FALSE);
+  weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc);
   weed_call_deinit_func(deint_instance);
   next_inst = get_next_compound_inst(deint_instance);
   if (deint_instance != orig_instance) weed_instance_unref(deint_instance);
@@ -1009,16 +1040,22 @@ deint1:
 // keypresses
 // TODO - we should mutex lock mainw->rte
 
-static boolean _rte_on_off(boolean from_menu, int key) {
+static lives_result_t _rte_on_off(boolean from_menu, int key) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based
   // in automode we don't add the effect parameters in ce_thumbs mode, and we use SOFT_DEINIT
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
   uint64_t new_rte;
+  boolean refresh_model = TRUE;
+  lives_result_t res = LIVES_RESULT_SUCCESS;
 
-  if (mainw->go_away) return TRUE;
-  if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
+  if (mainw->go_away) return res;
+  if (!LIVES_IS_INTERACTIVE && from_menu) return res;
+
+  if (!THREADVAR(fx_is_auto)) {
+    cleanup_nodemodel();
+  }
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1048,16 +1085,16 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
+          mainw->rte_soft &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
           filter_mutex_unlock(key);
-          return TRUE;
+          return res;
         }
       }
 
       mainw->rte |= new_rte;
-
-      mainw->refresh_model = TRUE;
+      mainw->rte_soft |= new_rte;
 
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1071,7 +1108,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
       filter_mutex_unlock(key);
 
-      if (mainw->gen_started_play) return TRUE;
+      if (mainw->gen_started_play) return res;
 
       if (!LIVES_IS_PLAYING)
         // if anything is connected to ACTIVATE, the fx may be activated
@@ -1090,32 +1127,35 @@ static boolean _rte_on_off(boolean from_menu, int key) {
           weed_instance_unref(inst);
         }
         filter_mutex_unlock(key);
-        return TRUE;
+        return res;
       }
 
       filter_mutex_lock(key);
 
       if (THREADVAR(fx_is_auto)) {
         // SOFT_DEINIT
-        weed_plant_t *inst, *xinst;
+        // if the change was caused by a data connection, the target may be toggled rapidly
+        // in this case we dont actually deinit / reinti the instance, we just flag it as ignored
+        weed_plant_t *inst;
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-          weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, WEED_TRUE);
-          if ((xinst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) == inst) {
+          int inc_count = enabled_in_channels(inst, FALSE);
+          if (inc_count == 1) {
+            weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, TRUE);
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
-            weed_instance_unref(xinst);
-            mainw->refresh_model = TRUE;
+            mainw->rte_soft &= ~new_rte;
           }
           weed_instance_unref(inst);
         }
+        refresh_model = FALSE;
       }
 
       if (!THREADVAR(fx_is_auto)) {
-        g_print("FX %d off\n", key);
-        if (key == 2) break_me("deinit 2");
+        // deinit effect
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
+          mainw->rte_soft &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
@@ -1123,17 +1163,17 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       filter_mutex_unlock(key);
 
       if (!LIVES_IS_PLAYING) {
-        // if anything is connected to ACTIVATE, the fx may be de-activated
+        // if anything is connected to ACTIVATE, the target may be activated / de-activated
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
           if (rte_key_valid(i + 1, TRUE))
             if (rte_key_is_enabled(i, FALSE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
-      mainw->refresh_model = TRUE;
     }
   }
   if (mainw->rendered_fx)
+    // enable /disable menu option "Apply current realtime effects" in rendered fx menu
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
       if (!LIVES_IS_PLAYING
           && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
@@ -1145,40 +1185,97 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
   if (key > 0 && !THREADVAR(fx_is_auto)) {
     // user override any ACTIVATE data connection
-
+    // (return key to manual control, disable automatic mode)
     override_if_active_input(key);
 
     // if this is an outlet for ACTIVATE, disable the override now
+    // (re enable automatic mode)
     end_override_if_activate_output(key);
   }
 
-  if (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused) {
+  if (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused)
     mainw->force_show = TRUE;
-  }
 
-  return TRUE;
+  if (refresh_model) mainw->refresh_model = TRUE;
+  return res;
 }
 
-boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                            livespointer user_data) {
-  // key is 1 based
-  int key = LIVES_POINTER_TO_INT(user_data);
+
+static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
+  //
+  uint64_t new_rte = GU641 << key;
+  if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
   if (LIVES_IS_PLAYING) {
     if (key)
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
+                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, key);
     else
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
-  } else _rte_on_off((group != NULL), key);
+                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, 0);
+    mainw->rte_soft ^= new_rte;
+    return LIVES_RESULT_SUCCESS;
+  }
+
+  return _rte_on_off(from_menu, key);
+}
+
+// THIS is the correct function to call from code to toggle a rte key
+// - if not playing then the key is simply toggled immediately
+// - otherwise the change is queued for execution at a safe point during the playback loop
+//    - if toggled an even number of times before being run, calls wil cancel out
+//  all of the follwoing are handled automatically:
+//  - if the fx has an "ease out" time, the easing process will begin but the effect will not be
+//     deinited yet.
+//  - if a generator is inited or deinited this can cause the fg or bg clip to change,
+//     this is handled automatically
+//  - if the effect is a transition, in clip edit mode this can add or remove a backgorund clip
+//  - activating or deactivating an effect can cause a data event which is passed to the target(s)
+//  - interface changes resulting from the toggle are handled
+//  - mainw->rfx_keys (key mapping) and mainw->last_grabbable_effect are updated
+//  - if key is 0, all effects are deinited, this is not handled like a toggle
+//  - if recording is enabled, the fx init / deinit event is recorded at the current timecode
+//     the current filter map is updated to include the new effect
+//  - the nodemodel is rebuilt, and new costs calculated, including or excluding the instance
+//  - new plan is created from the updated nodemodel which may include a step to apply the new instance
+lives_result_t rte_key_toggle(int key) {
+  // key is 1 based
+  return _rte_key_toggle(key, FALSE);
+}
+
+
+LIVES_LOCAL_INLINE boolean rte_key_soft_enabled(int key, boolean ign_soft_deinits) {
+  return !!(mainw->rte_soft & (GU641 << key));
+}
+
+
+boolean rte_key_on_off(int key, boolean on) {
+  // key is 1 based
+  // returns the state of the key afterwards
+  boolean state;
+  if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
+  state = rte_key_soft_enabled(key - 1, FALSE);
+  if (state == on) return state;
+  _rte_key_toggle(key, FALSE);
+  return rte_key_soft_enabled(key - 1, FALSE);
+}
+
+// callback from fx keys
+boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                            livespointer user_data) {
+  // key is 1 based
+  int key = LIVES_POINTER_TO_INT(user_data);
+  _rte_key_toggle(key, group != NULL);
   return TRUE;
 }
 
+
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
+  // key is 1 based
   int key = LIVES_POINTER_TO_INT(user_data);
-  return _rte_on_off(FALSE, key);
+  _rte_key_toggle(key, FALSE);
+  return TRUE;
 }
 
 
@@ -1277,12 +1374,9 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * acc, LiVESWidgetObject * o, uint32
   mainw->new_blend_file = mainw->playing_file;
   mainw->new_clip = mainw->blend_file;
 
-  mainw->active_track_list[0] = mainw->new_clip;
-  mainw->active_track_list[1] = mainw->new_blend_file;
-
-  if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
-                           || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
-    ce_thumbs_highlight_current_clip();
+  /* if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND */
+  /*                          || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND)) */
+  /*   ce_thumbs_highlight_current_clip(); */
 
   return TRUE;
   // **TODO - for weed, invert all transition parameters for any active effects
@@ -1304,7 +1398,7 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits
       enabled = TRUE;
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) enabled = FALSE;
+        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = FALSE;
         weed_instance_unref(inst);
       }
       filter_mutex_unlock(key);
@@ -1314,29 +1408,22 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits
 }
 
 
-LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {
-  // key is 1 based
-  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-  return rte_key_is_enabled(--key, FALSE);
-}
+/* boolean rte_key_on_off(int key, boolean on) { */
+/*   // key is 1 based */
+/*   // returns the state of the key afterwards */
+/*   boolean state; */
+/*   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE; */
+/*   state = rte_key_is_enabled(key - 1, FALSE); */
+/*   if (state == on) return state; */
+/*   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key)); */
+/*   return rte_key_is_enabled(key - 1, FALSE); */
+/* } */
 
 
-boolean rte_key_on_off(int key, boolean on) {
-  // key is 1 based
-  // returns the state of the key afterwards
-  boolean state;
-  if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
-  state = rte_key_is_enabled(key - 1, FALSE);
-  if (state == on) return state;
-  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-  return rte_key_is_enabled(key - 1, FALSE);
-}
-
-
-LIVES_GLOBAL_INLINE void rte_keys_reset(void) {
-  // switch off all realtime effects
-  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(EFFECT_NONE));
-}
+/* LIVES_GLOBAL_INLINE void rte_keys_reset(void) { */
+/*   // switch off all realtime effects */
+/*   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(EFFECT_NONE)); */
+/* } */
 
 
 static int backup_key_modes[FX_KEYS_MAX_VIRTUAL];

@@ -54,9 +54,7 @@ for (int j = 0; j < height; j++) {
       dst[orow * j + i] = src[irow * j + i];
       i++;
     }
-    dst[orow * j + i] = 0xFF - src[irow * j + i];
-    dst[orow * j + i + 1] = 0xFF - src[irow * j + i + 1];
-    dst[orow * j + i + 2] = 0xFF - src[irow * j + i + 2];
+    for (int k = 0; k < 3; k++) dst[orow * j + i + k] = 0xFF ^ src[irow * j + i + k];
     if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32) {
       dst[orow * j + i + 3] = src[irow * j + i + 3];
       i++;

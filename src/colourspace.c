@@ -361,11 +361,11 @@ static void set_conversion_arrays(int clamping, int subspace) {
     conv_arrays->min_Y = conv_arrays->min_UV = YUV_CLAMP_MIN;
     conv_arrays->max_Y = Y_CLAMP_MAX;
     conv_arrays->max_UV = UV_CLAMP_MAX;
-    conv_arrays->cavg = (uint8_t *)cavgc;
+    conv_arrays->cavgx = (uint8_t *)cavgc;
   } else {
     conv_arrays->min_Y = conv_arrays->min_UV = 0;
     conv_arrays->max_Y = conv_arrays->max_UV = 255;
-    conv_arrays->cavg = (uint8_t *)cavgu;
+    conv_arrays->cavgx = (uint8_t *)cavgu;
   }
 }
 
@@ -393,7 +393,7 @@ static void set_conversion_arrays(int clamping, int subspace) {
 #define Crf_G THREADVAR(conv_arrays).Crf_G
 #define Crf_B THREADVAR(conv_arrays).Crf_B
 
-#define cavg THREADVAR(conv_arrays).cavg
+#define cavg THREADVAR(conv_arrays).cavgx
 
 #define min_Y THREADVAR(conv_arrays).min_Y
 #define max_Y THREADVAR(conv_arrays).max_Y
@@ -592,6 +592,12 @@ static boolean unal_inited = FALSE;
 
 
 static void lives_free_buffer(uint8_t *pixels, livespointer data) {
+  if (data) {
+    lives_sync_list_t *copylist = (lives_sync_list_t *)data;
+    lives_sync_list_remove(copylist, (void *)pixels, FALSE);
+    if (!copylist->list) lives_sync_list_free(copylist);
+    else return;
+  }
   lives_free(pixels);
 }
 
@@ -2001,6 +2007,9 @@ static uint8_t (*avg_chromaf)(uint8_t x, uint8_t y);
 /*   return (((float)(spc_rnd(((x) << 8) + ((y) << 8)))) * 128. + .5); */
 /* } */
 
+
+#define xavg_chroma(x, y)((uint8_t)(*(xcavg + ((x) << 8) + (y))))
+
 static uint8_t avg_chromaf_fast(uint8_t x, uint8_t y) {
   return avg_chroma(x, y);
 }
@@ -2259,12 +2268,15 @@ LIVES_LOCAL_INLINE void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r,
   *g = CLAMP0255f(spc_rnd(yy + xG_Cb[u] + xG_Cr[v]));			\
   *b = CLAMP0255f(spc_rnd(yy + xB_Cb[u]));} while (0);			\
 
-#define SETVARS					\
-  int *xRGB_Y = THREADVAR(conv_arrays).RGBx_Y,	\
-    *xR_Cr = THREADVAR(conv_arrays).Rx_Cr,	\
-    *xG_Cb = THREADVAR(conv_arrays).Gx_Cb,	\
-    *xG_Cr = THREADVAR(conv_arrays).Gx_Cr,	\
-    *xB_Cb = THREADVAR(conv_arrays).Bx_Cb
+#define xyuv2bgr(y,u,v,b,g,r) xyuv2rgb(y,u,v,r,g,b)
+
+#define SETVARS						\
+  int *xRGB_Y = THREADVAR(conv_arrays).RGBx_Y,		\
+    *xR_Cr = THREADVAR(conv_arrays).Rx_Cr,		\
+    *xG_Cb = THREADVAR(conv_arrays).Gx_Cb,		\
+    *xG_Cr = THREADVAR(conv_arrays).Gx_Cr,		\
+    *xB_Cb = THREADVAR(conv_arrays).Bx_Cb;		\
+  uint8_t *xcavg = THREADVAR(conv_arrays).cavgx;
 
 LIVES_LOCAL_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = clamp0255f(RGBf_Y[y] + Rf_Cr[v]);
@@ -3117,10 +3129,10 @@ static void *convert_yuva8888_to_argb_frame_thread(void *data) {
 
 
 static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height,
-    boolean is_bottom, int *istrides, int orowstride,
-    uint8_t *LIVES_RESTRICT dest, boolean add_alpha, boolean is_422, int sampling,
-    int clamping, int subspace,
-    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+    boolean is_bottom, int *istrides, int orowstride, uint8_t *LIVES_RESTRICT dest, boolean add_alpha,
+    boolean is_422, int sampling, int clamping, int subspace,
+    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut,
+    int thread_id) {
   int i;
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
@@ -3228,6 +3240,276 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
         if (j > 0) {
           // we assume central sampling (mpeg) so we have y1-uv1-y2-y3-uv2-y4-y5-uv3-y6-y7- etc
           // then y1 gets 100% uv1, y2 gets 75% uv1 and 25% uv2, y3 gets 25% uv1, 75% uv2 etc
+          u1 = xavg_chroma(this_u1, last_u1);
+          v1 = xavg_chroma(this_v1, last_v1);
+        }
+
+        next_u1 = s_u[istrides[1] * r2 + (j >> 1) + 1];
+        next_v1 = s_v[istrides[2] * r2 + (j >> 1) + 1];
+
+        u2 = xavg_chroma(this_u1, next_u1);
+        v2 = xavg_chroma(this_v1, next_v1);
+
+        last_u1 = this_u1;
+        last_v1 = this_v1;
+        this_u1 = next_u1;
+        this_v1 = next_v1;
+
+        if (gamma_lut) {
+          yuv2rgb_with_gamma(y1, u1, v1, &dest[orowstride * i + j * opsize],
+                             &dest[orowstride * i + j * opsize + 1],
+                             &dest[orowstride * i + j * opsize + 2], gamma_lut);
+
+          yuv2rgb_with_gamma(y3, u2, v2, &dest[orowstride * (i + 1) + j * opsize],
+                             &dest[orowstride * (i + 1) + j * opsize + 1],
+                             &dest[orowstride * (i + 1) + j * opsize + 2], gamma_lut);
+        } else {
+          xyuv2rgb(y1, u1, v1, &dest[orowstride * i + j * opsize],
+                   &dest[orowstride * i + j * opsize + 1],
+                   &dest[orowstride * i + j * opsize + 2]);
+
+          xyuv2rgb(y3, u2, v2, &dest[orowstride * (i + 1)  + j * opsize],
+                   &dest[orowstride * (i + 1) + j * opsize + 1],
+                   &dest[orowstride * (i + 1) + j * opsize + 2]);
+        }
+
+        if (add_alpha)
+          dest[orowstride * i + j * opsize + 3] = 255;
+
+        // next row ////
+
+        if (j > 0) {
+          // we assume central sampling (mpeg) so we have y1-uv1-y2-y3-uv2-y4-y5-uv3-y6-y7- etc
+          // then y1 gets 100% uv1, y2 gets 75% uv1 and 25% uv2, y3 gets 25% uv1, 75% uv2 etc
+          u3 = xavg_chroma(xavg_chroma(this_u2, last_u2), u1);
+          v3 = xavg_chroma(xavg_chroma(this_v2, last_v2), v1);
+        }
+
+        if (is_bottom && i == height - 1) {
+          next_u2 = next_u1;
+          next_v2 = next_v1;
+        } else {
+          next_u2 = s_u[istrides[1] * (r2 + 1) + (j >> 1) + 1];
+          next_v2 = s_v[istrides[2] * (r2 + 1) + (j >> 1) + 1];
+
+          /// center = 3 : 1, left = avg(last, next), right = only next
+          u4 = xavg_chroma(this_u2, next_u1);
+          v4 = xavg_chroma(this_v2, next_v2);
+        }
+
+        u4 = xavg_chroma(xavg_chroma(this_u2, next_u2), u2);
+        v4 = xavg_chroma(xavg_chroma(this_v2, next_v2), v2);
+
+        last_u2 = this_u2;
+        last_v2 = this_v2;
+        this_u2 = next_u1;
+        this_v2 = next_v2;
+
+        if (gamma_lut) {
+          yuv2rgb_with_gamma(y2, u3, v3, &dest[orowstride * i + (j + 1) * opsize],
+                             &dest[orowstride * i + (j + 1) * opsize + 1],
+                             &dest[orowstride * i + (j + 1) * opsize + 2], gamma_lut);
+
+          yuv2rgb_with_gamma(y4, u4, v4, &dest[orowstride * (i + 1) + (j + 1) * opsize],
+                             &dest[orowstride * (i + 1) + (j + 1) * opsize + 1],
+                             &dest[orowstride * (i + 1) + (j + 1) * opsize + 2], gamma_lut);
+        } else {
+          xyuv2rgb(y2, u3, v3, &dest[orowstride * i + (j + 1) * opsize],
+                   &dest[orowstride * i + (j + 1) * opsize + 1],
+                   &dest[orowstride * i + (j + 1) * opsize + 2]);
+
+          xyuv2rgb(y4, u4, v4, &dest[orowstride * (i + 1) + (j + 1) * opsize],
+                   &dest[orowstride * (i + 1) + (j + 1) * opsize + 1],
+                   &dest[orowstride * (i + 1) + (j + 1) * opsize + 2]);
+        }
+
+        if (add_alpha)
+          dest[orowstride * (i + 1) + (j + 1) * opsize  + 3] = 255;
+      }
+      r2++;
+    }
+  } else {
+    for (int i = 0; i < height; i++) {
+      uint8_t last_u = s_u[istrides[1] * i], last_v = s_v[istrides[2] * i];
+      uint8_t u = last_u, this_u = u, next_u = u, v = last_v, this_v = v, next_v = v;
+
+      for (int j = 0; j < width; j++) {
+        // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+        // we know we can do this because Y must be even width
+        /// even row, normal
+        uint8_t y1 = s_y[irow * i + j], y2 = s_y[irow * i + j + 1];
+
+        if (j > 0) {
+          /// center = 3 : 1, left = only next, right = avg(last, next)
+          u = xavg_chroma(this_u, last_u);
+          v = xavg_chroma(this_v, last_v);
+        }
+
+        if (gamma_lut)
+          yuv2rgb_with_gamma(y1, u, v, &dest[orowstride * i + j * opsize],
+                             &dest[orowstride * i + j * opsize + 1],
+                             &dest[orowstride * i + j * opsize + 2], gamma_lut);
+        else
+          xyuv2rgb(y1, u, v, &dest[orowstride * i + j * opsize],
+                   &dest[orowstride * i + j * opsize + 1],
+                   &dest[orowstride * i + j * opsize + 2]);
+
+        if (add_alpha) dest[orowstride * i + j * opsize + 3] = 255;
+
+        // second RGB pixel
+        j++;
+
+        if (j < width - 1) {
+          next_u = s_u[istrides[1] * i + (j >> 1) + 1];
+          next_v = s_v[istrides[2] * i + (j >> 1) + 1];
+
+          u = xavg_chroma(next_u, this_u);
+          v = xavg_chroma(next_v, this_v);
+        }
+
+        if (gamma_lut)
+          yuv2rgb_with_gamma(y2, u, v, &dest[orowstride * i + j * opsize],
+                             &dest[orowstride * i + j * opsize + 1],
+                             &dest[orowstride * i + j * opsize + 2], gamma_lut);
+        else
+          xyuv2rgb(y2, u, v, &dest[orowstride * i + j * opsize],
+                   &dest[orowstride * i + j * opsize + 1],
+                   &dest[orowstride * i + j * opsize + 2]);
+
+        if (add_alpha) dest[orowstride * i + j * opsize + 3] = 255;
+
+        last_u = this_u;
+        last_v = this_v;
+        this_u = next_u;
+        this_v = next_v;
+      }
+    }
+  }
+}
+
+static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
+  lives_cc_params *ccparams = (lives_cc_params *)data;
+  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
+  convert_yuv420p_to_rgb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize,
+                               ccparams->is_bottom, ccparams->irowstrides,
+                               ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
+                               ccparams->out_alpha, ccparams->is_422, ccparams->in_sampling,
+                               ccparams->in_clamping, ccparams->in_subspace, 0, 0,
+                               ccparams->lut, ccparams->thread_id);
+  return NULL;
+}
+
+
+static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
+    int orowstride,
+    uint8_t *LIVES_RESTRICT dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
+    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  int i;
+
+  if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
+#if USE_THREADS
+  if (thread_id == -1) {
+#endif
+    set_conversion_arrays(clamping, subspace);
+    if (tgt_gamma) {
+      gamma_lut = create_gamma_lut(1.0, gamma, tgt_gamma);
+    }
+#if USE_THREADS
+  }
+#endif
+
+  if (thread_id == -1) {
+    if (prefs->nfx_threads > 1) {
+      lives_thread_t *threads[prefs->nfx_threads];
+      uint8_t *end = src[0] + height * istrides[0];
+      int nthreads = 1;
+      int dheight, xdheight;
+      lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
+
+      xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
+      for (i = prefs->nfx_threads; i--;) {
+        dheight = xdheight;
+
+        if ((src[0] + dheight * i * istrides[0]) < end) {
+          ccparams[i].srcp[0] = src[0] + dheight * i * istrides[0];
+          ccparams[i].srcp[1] = src[1] + dheight / 2 * i * istrides[1];
+          ccparams[i].srcp[2] = src[2] + dheight / 2 * i * istrides[2];
+          ccparams[i].hsize = width;
+          ccparams[i].dest = dest + dheight * i * orowstride;
+
+          if (dheight * (i + 1) > (height - 4)) {
+            dheight = height - (dheight * i);
+          }
+
+          ccparams[i].vsize = dheight;
+          if (i == prefs->nfx_threads - 1) {
+            ccparams[i].is_bottom = TRUE;
+          }
+          ccparams[i].irowstrides[0] = istrides[0];
+          ccparams[i].irowstrides[1] = istrides[1];
+          ccparams[i].irowstrides[2] = istrides[2];
+          ccparams[i].orowstrides[0] = orowstride;
+          ccparams[i].out_alpha = add_alpha;
+          ccparams[i].in_sampling = sampling;
+          ccparams[i].in_clamping = clamping;
+          ccparams[i].in_subspace = subspace;
+          ccparams[i].is_422 = is_422;
+          ccparams[i].lut = gamma_lut;
+          lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
+          ccparams[i].thread_id = i;
+
+          if (i == 0) convert_yuv420p_to_rgb_frame_thread(&ccparams[i]);
+          else {
+            lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_yuv420p_to_bgr_frame_thread, &ccparams[i]);
+            nthreads++;
+          }
+        }
+      }
+
+      for (i = 1; i < nthreads; i++) {
+        lives_thread_join(threads[i], NULL);
+      }
+      lives_free(ccparams);
+      if (gamma_lut) lives_gamma_lut_free(gamma_lut);
+      return;
+    }
+  }
+  SETVARS;
+  uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
+  int opsize = 3;
+  int irow = istrides[0];
+  int r2 = 0;
+
+  if (add_alpha) opsize = 4;
+
+  // row 0, y0 horiz avgs u1,v1
+  // row 2 - y2 horiz avg u2, v2
+  // avg row 1 - y1, avg u1, v1, u2, v2
+  // 4. 3
+
+  if (!is_422) {
+    for (int i = 0; i < height; i += 2) {
+      uint8_t last_u1 = s_u[istrides[1] * r2], last_v1 = s_v[istrides[2] * r2];
+      uint8_t last_u2 = !(is_bottom && i >= height - 2) ? s_u[istrides[1] * (r2 + 1)]
+                        : last_u1;
+      uint8_t last_v2 = !(is_bottom && i >= height - 2) ? s_v[istrides[1] * (r2 + 1)]
+                        : last_v1;
+      uint8_t this_u1 = last_u1, this_v1 = last_v1, this_u2 = last_u2, this_v2 = last_v2;
+      uint8_t next_u1 = last_u1, next_v1 = last_v1, next_u2 = last_u2, next_v2 = last_v2;
+      uint8_t u1 = last_u1, u2, u3 = last_u2, u4, v1 = last_v1, v2, v3 = last_v2, v4;
+
+      //
+
+      for (int j = 0; j < width; j += 2) {
+        // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+        // we know we can do this because Y must be even width
+        // LEFT OUTPUT PIXEL
+        uint8_t y1 = s_y[irow * i + j], y2 = s_y[irow * i + j + 1];
+        uint8_t y3 = s_y[irow * (i + 1) + j], y4 = s_y[irow * (i + 1) + j + 1];
+
+        if (j > 0) {
+          // we assume central sampling (mpeg) so we have y1-uv1-y2-y3-uv2-y4-y5-uv3-y6-y7- etc
+          // then y1 gets 100% uv1, y2 gets 75% uv1 and 25% uv2, y3 gets 25% uv1, 75% uv2 etc
           u1 = avg_chromaf(this_u1, last_u1);
           v1 = avg_chromaf(this_v1, last_v1);
         }
@@ -3281,12 +3563,12 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           next_v2 = s_v[istrides[2] * (r2 + 1) + (j >> 1) + 1];
 
           /// center = 3 : 1, left = avg(last, next), right = only next
-          u4 = avg_chroma_3_1(this_u2, next_u1);
-          v4 = avg_chroma_3_1(this_v2, next_v2);
+          u4 = xavg_chroma(this_u2, next_u1);
+          v4 = xavg_chroma(this_v2, next_v2);
         }
 
-        u4 = avg_chromaf(avg_chromaf(this_u2, next_u2), u2);
-        v4 = avg_chromaf(avg_chromaf(this_v2, next_v2), v2);
+        u4 = xavg_chroma(xavg_chroma(this_u2, next_u2), u2);
+        v4 = xavg_chroma(xavg_chroma(this_v2, next_v2), v2);
 
         last_u2 = this_u2;
         last_v2 = this_v2;
@@ -3294,17 +3576,17 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
         this_v2 = next_v2;
 
         if (gamma_lut) {
-          yuv2rgb_with_gamma(y2, u3, v3, &dest[orowstride * i + (j + 1) * opsize],
-                             &dest[orowstride * i + (j + 1) * opsize + 1],
-                             &dest[orowstride * i + (j + 1) * opsize + 2], gamma_lut);
+          yuv2rgb_with_gamma(y2, u3, v3, &dest[orowstride * (i + 1) + j * opsize],
+                             &dest[orowstride * (i + 1) + j * opsize + 1],
+                             &dest[orowstride * (i + 1) * j * opsize + 2], gamma_lut);
 
           yuv2rgb_with_gamma(y4, u4, v4, &dest[orowstride * (i + 1) + (j + 1) * opsize],
                              &dest[orowstride * (i + 1) + (j + 1) * opsize + 1],
                              &dest[orowstride * (i + 1) + (j + 1) * opsize + 2], gamma_lut);
         } else {
-          xyuv2rgb(y2, u3, v3, &dest[orowstride * i + (j + 1) * opsize],
-                   &dest[orowstride * i + (j + 1) * opsize + 1],
-                   &dest[orowstride * i + (j + 1) * opsize + 2]);
+          xyuv2rgb(y2, u3, v3, &dest[orowstride * (i + 1) + j * opsize],
+                   &dest[orowstride * (i + 1) + j * opsize + 1],
+                   &dest[orowstride * (i + 1) + j * opsize + 2]);
 
           xyuv2rgb(y4, u4, v4, &dest[orowstride * (i + 1) + (j + 1) * opsize],
                    &dest[orowstride * (i + 1) + (j + 1) * opsize + 1],
@@ -3312,17 +3594,17 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
         }
 
         if (add_alpha)
-          dest[orowstride * i + (j + 1) * opsize  + 3]
+          dest[orowstride * (i + 1) + j * opsize  + 3]
             = dest[orowstride * (i + 1) + (j + 1) * opsize  + 3] = 255;
       }
       r2++;
     }
   } else {
     for (int i = 0; i < height; i++) {
-      uint8_t last_u = s_u[istrides[1] * r2], last_v = s_v[istrides[2] * r2];
-      uint8_t next_u = last_u, u = last_u, next_v = last_v, v = last_v;
+      uint8_t last_u = s_u[istrides[1] * i], last_v = s_v[istrides[2] * i];
+      uint8_t u = last_u, this_u = u, next_u = u, v = last_v, this_v = v, next_v = v;
 
-      for (int j = 0; j < width; j += 2) {
+      for (int j = 0; j < width; j++) {
         // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
         // we know we can do this because Y must be even width
         /// even row, normal
@@ -3330,230 +3612,49 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 
         if (j > 0) {
           /// center = 3 : 1, left = only next, right = avg(last, next)
-          u = avg_chroma_3_1(next_u, last_u);
-          v = avg_chroma_3_1(next_v, last_v);
-          last_u = next_u;
-          last_v = next_v;
+          u = xavg_chroma(this_u, last_u);
+          v = xavg_chroma(this_v, last_v);
         }
 
         if (gamma_lut)
-          yuv2rgb_with_gamma(y1, u, v, &dest[orowstride * i + j * opsize],
+          yuv2bgr_with_gamma(y1, u, v, &dest[orowstride * i + j * opsize],
                              &dest[orowstride * i + j * opsize + 1],
                              &dest[orowstride * i + j * opsize + 2], gamma_lut);
         else
-          yuv2rgb(y1, u, v, &dest[orowstride * i + j * opsize],
-                  &dest[orowstride * i + j * opsize + 1],
-                  &dest[orowstride * i + j * opsize + 2]);
+          xyuv2bgr(y1, u, v, &dest[orowstride * i + j * opsize],
+                   &dest[orowstride * i + j * opsize + 1],
+                   &dest[orowstride * i + j * opsize + 2]);
 
         if (add_alpha) dest[orowstride * i + j * opsize + 3] = 255;
 
         // second RGB pixel
-        last_u = next_u;
-        last_v = next_v;
+        j++;
 
         if (j < width - 1) {
-          next_u = s_u[istrides[1] * r2 + (j >> 1) + 1];
-          next_v = s_v[istrides[2] * r2 + (j >> 1) + 1];
+          next_u = s_u[istrides[1] * i + (j >> 1) + 1];
+          next_v = s_v[istrides[2] * i + (j >> 1) + 1];
 
-          u = avg_chroma_3_1(next_u, last_u);
-          v = avg_chroma_3_1(next_v, last_v);
-          /// center = 3 : 1, left = avg(last, next), right = only next
+          u = xavg_chroma(next_u, this_u);
+          v = xavg_chroma(next_v, this_v);
         }
 
         if (gamma_lut)
-          yuv2rgb_with_gamma(y2, u, v, &dest[orowstride * i + (j + 1) * opsize],
-                             &dest[orowstride * i + (j + 1) * opsize + 1],
-                             &dest[orowstride * i + (j + 1) * opsize + 2], gamma_lut);
+          yuv2bgr_with_gamma(y2, u, v, &dest[orowstride * i + j * opsize],
+                             &dest[orowstride * i + j * opsize + 1],
+                             &dest[orowstride * i + j * opsize + 2], gamma_lut);
         else
-          yuv2rgb(y2, u, v, &dest[orowstride * i + (j + 1) * opsize],
-                  &dest[orowstride * i + (j + 1) * opsize + 1],
-                  &dest[orowstride * i + (j + 1) * opsize + 2]);
+          xyuv2bgr(y2, u, v, &dest[orowstride * i + j * opsize],
+                   &dest[orowstride * i + j * opsize + 1],
+                   &dest[orowstride * i + j * opsize + 2]);
 
-        if (add_alpha) dest[orowstride * i + (j + 1) * opsize + 3] = 255;
+        if (add_alpha) dest[orowstride * i + j * opsize + 3] = 255;
+
+        last_u = this_u;
+        last_v = this_v;
+        this_u = next_u;
+        this_v = next_v;
       }
-      r2++;
     }
-  }
-}
-
-static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
-  lives_cc_params *ccparams = (lives_cc_params *)data;
-  lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
-  convert_yuv420p_to_rgb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize,
-                               ccparams->is_bottom, ccparams->irowstrides,
-                               ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
-                               ccparams->out_alpha, ccparams->is_422, ccparams->in_sampling,
-                               ccparams->in_clamping, ccparams->in_subspace, 0, 0,
-                               ccparams->lut, ccparams->thread_id);
-  return NULL;
-}
-
-
-static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
-    int orowstride,
-    uint8_t *LIVES_RESTRICT dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgt_gamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
-  int i, j;
-  uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
-  int opsize = 3;
-  int irow = istrides[0];
-  int r2 = 0;
-  boolean even = TRUE;
-  size_t uv_offs = 0, y_offs = 0;
-  uint8_t y, u, v, next_u, next_v, last_u, last_v;
-
-  if (LIVES_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
-#if USE_THREADS
-  if (thread_id == -1) {
-#endif
-    /// TODO: this is NOT threadsafe !!!!
-    set_conversion_arrays(clamping, subspace);
-    if (tgt_gamma) gamma_lut = create_gamma_lut(1.0, gamma, tgt_gamma);
-#if USE_THREADS
-  }
-#endif
-
-  if (thread_id == -1) {
-    if (prefs->nfx_threads > 1) {
-      lives_thread_t *threads[prefs->nfx_threads];
-      uint8_t *end = src[0] + height * istrides[0];
-      int nthreads = 1;
-      int dheight, xdheight;
-      lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
-
-      xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-      for (i = prefs->nfx_threads; i--;) {
-        dheight = xdheight;
-
-        if ((src[0] + dheight * i * istrides[0]) < end) {
-          ccparams[i].srcp[0] = src[0] + dheight * i * istrides[0];
-          ccparams[i].srcp[1] = src[1] + dheight / 2 * i * istrides[1];
-          ccparams[i].srcp[2] = src[2] + dheight / 2 * i * istrides[2];
-          ccparams[i].hsize = width;
-          ccparams[i].dest = dest + dheight * i * orowstride;
-
-          if (dheight * (i + 1) > (height - 4)) {
-            dheight = height - (dheight * i);
-          }
-
-          ccparams[i].vsize = dheight;
-          if (i == prefs->nfx_threads - 1) {
-            ccparams[i].is_bottom = TRUE;
-          }
-          ccparams[i].irowstrides[0] = istrides[0];
-          ccparams[i].irowstrides[1] = istrides[1];
-          ccparams[i].irowstrides[2] = istrides[2];
-          ccparams[i].orowstrides[0] = orowstride;
-          ccparams[i].out_alpha = add_alpha;
-          ccparams[i].in_sampling = sampling;
-          ccparams[i].in_clamping = clamping;
-          ccparams[i].in_subspace = subspace;
-          ccparams[i].is_422 = is_422;
-          ccparams[i].lut = gamma_lut;
-          lives_memcpy(&ccparams[i].conv_arrays, &THREADVAR(conv_arrays), sizeof(struct _conv_array));
-          ccparams[i].thread_id = i;
-
-          if (i == 0) convert_yuv420p_to_bgr_frame_thread(&ccparams[i]);
-          else {
-            lives_thread_create(&threads[i], LIVES_THRDATTR_PRIORITY, convert_yuv420p_to_bgr_frame_thread, &ccparams[i]);
-            nthreads++;
-          }
-        }
-      }
-
-      for (i = 1; i < nthreads; i++) {
-        lives_thread_join(threads[i], NULL);
-      }
-      lives_free(ccparams);
-      if (gamma_lut) lives_gamma_lut_free(gamma_lut);
-      return;
-    }
-  }
-
-  if (add_alpha) opsize = 4;
-  width *= opsize;
-
-  for (i = 0; i < height; i++) {
-    if (!is_422) {
-      if (!(i & 1)) even = TRUE;
-      else even = FALSE;
-    }
-
-    uv_offs = y_offs = 0;
-
-    for (j = 0; j < width; j += opsize) {
-      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
-      // we know we can do this because Y must be even width
-      y = s_y[irow * i + y_offs++];
-      /// even row, normal
-      if (j > 0) {
-        /// center = 3 : 1, left = only next, right = avg(last, next)
-        u = avg_chroma_3_1(next_u, last_u);
-        v = avg_chroma_3_1(next_v, last_v);
-        last_u = next_u;
-        last_v = next_v;
-      } else {
-        if (even) {
-          last_u = next_u = u = s_u[istrides[1] * r2 + uv_offs];
-          last_v = next_v = v = s_v[istrides[2] * r2 + uv_offs];
-        } else {
-          if (is_bottom && i >= height - 3) {
-            next_u = u = s_u[istrides[1] * r2 + uv_offs];
-            next_v = v = s_v[istrides[2] * r2 + uv_offs];
-          } else {
-            next_u = u = avg_chromaf(s_u[istrides[1] * r2 + uv_offs], s_u[istrides[1] * r2 + uv_offs + istrides[1]]);
-            next_v = v = avg_chromaf(s_v[istrides[2] * r2 + uv_offs], s_v[istrides[2] * r2 + uv_offs + istrides[2]]);
-          }
-        }
-      }
-
-      if (gamma_lut)
-        yuv2bgr_with_gamma(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1],
-                           &dest[orowstride * i + j + 2], gamma_lut);
-      else
-        yuv2bgr(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1], &dest[orowstride * i + j + 2]);
-      if (add_alpha) dest[orowstride * i + j + 3] = 255;
-
-      // second RGB pixel
-      j += opsize;
-      y = s_y[irow * i + y_offs++];
-
-      last_u = next_u;
-      last_v = next_v;
-
-      if (j < width - 1) {
-        if (even) {
-          /// even row, normal
-          next_u = s_u[istrides[1] * r2 + uv_offs];
-          next_v = s_v[istrides[2] * r2 + uv_offs];
-        } else {
-          if (is_bottom && i >= height - 3) {
-            next_u = u = s_u[istrides[1] * r2 + uv_offs];
-            next_v = v = s_v[istrides[2] * r2 + uv_offs];
-          } else {
-            //g_print("vals %ld and %d %d %d\n", uv_offs, istrides[2], i, j);
-            next_u = u = avg_chromaf(s_u[istrides[1] * r2 + uv_offs], s_u[istrides[1] * r2 + uv_offs + istrides[1]]);
-            next_v = v = avg_chromaf(s_v[istrides[2] * r2 + uv_offs], s_v[istrides[2] * r2 + uv_offs + istrides[2]]);
-          }
-        }
-        /// center = 3 : 1, left = avg(last, next), right = only next
-        u = avg_chroma_3_1(next_u, last_u);
-        v = avg_chroma_3_1(next_v, last_v);
-      } else {
-        u = last_u;
-        v = last_v;
-      }
-
-      if (gamma_lut)
-        yuv2bgr_with_gamma(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1],
-                           &dest[orowstride * i + j + 2], gamma_lut);
-      else
-        yuv2bgr(y, u, v, &dest[orowstride * i + j], &dest[orowstride * i + j + 1],
-                &dest[orowstride * i + j + 2]);
-      if (add_alpha) dest[orowstride * i + j + 3] = 255;
-      uv_offs++;
-    }
-    if (is_422 || !even) r2++;
   }
 }
 
@@ -8267,7 +8368,7 @@ static void convert_swap3addpre_frame(uint8_t *LIVES_RESTRICT src, int width, in
   if ((irowstride == width * 3) && (orowstride == width * 4)) {
     // quick version
     for (; src < end; src += 3) {
-      *(dest++) = gamma_lut[255]; // alpha
+      *(dest++) = 255; // alpha
       *(dest++) = gamma_lut[src[2]]; // red
       *(dest++) = gamma_lut[src[1]]; // green
       *(dest++) = gamma_lut[src[0]]; // blue
@@ -8277,7 +8378,7 @@ static void convert_swap3addpre_frame(uint8_t *LIVES_RESTRICT src, int width, in
     orowstride -= width * 4;
     for (; src < end; src += irowstride) {
       for (i = 0; i < width3; i += 3) {
-        *(dest++) = gamma_lut[255]; // alpha
+        *(dest++) = 255; // alpha
         *(dest++) = gamma_lut[src[i + 2]]; // red
         *(dest++) = gamma_lut[src[i + 1]]; // green
         *(dest++) = gamma_lut[src[i]]; // blue
@@ -12506,11 +12607,7 @@ conv_done:
   lives_freep((void **)&ostrides);
   lives_freep((void **)&gusrc_array);
 
-  if (orig_layer) {
-    if (weed_layer_get_pixel_data(orig_layer) == weed_layer_get_pixel_data(layer))
-      weed_layer_nullify_pixel_data(orig_layer);
-    weed_layer_unref(orig_layer);
-  }
+  if (orig_layer) weed_layer_unref(orig_layer);
 
   if (new_gamma_type != WEED_GAMMA_UNKNOWN && can_inline_gamma(inpl, outpl)) {
     weed_layer_set_gamma(layer, new_gamma_type);
@@ -12552,11 +12649,8 @@ memfail:
   }
   lives_free(istrides);
 
-  if (orig_layer) {
-    if (weed_layer_get_pixel_data(orig_layer) == weed_layer_get_pixel_data(layer))
-      weed_layer_nullify_pixel_data(orig_layer);
-    weed_layer_unref(orig_layer);
-  }
+  if (orig_layer) weed_layer_unref(orig_layer);
+
   return FALSE;
 }
 
@@ -12606,14 +12700,21 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
 }
 
 
-LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *LIVES_RESTRICT buf) {
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height,
+    uint8_t *LIVES_RESTRICT buf, lives_layer_t *layer) {
   // we can cheat if our buffer is correctly sized
+  lives_sync_list_t *copylist =
+    (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
   LiVESPixbuf *pixbuf;
   int channels = has_alpha ? 4 : 3;
   int rowstride = get_pixbuf_rowstride_value(width * channels);
 
   pixbuf = lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride,
-                                      (LiVESPixbufDestroyNotify)lives_free_buffer, NULL);
+                                      (LiVESPixbufDestroyNotify)lives_free_buffer, (void *)copylist);
+
+  // if layer is a shallow copy, then we need to add pixbuf to copy list
+  if (copylist) lives_sync_list_add(copylist, (void *)buf);
+
   return pixbuf;
 }
 
@@ -12830,7 +12931,8 @@ LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int t
 
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
   // create a pixbuf from a weed layer
-  // layer "pixel_data" is either copied to the pixbuf pixels, or the contents shared with the pixbuf and the layer pixel_data nullified
+  // layer "pixel_data" is either copied to the pixbuf pixels,
+  // or the contents shared with the pixbuf and the layer pixel_data nullified
 
   LiVESPixbuf *pixbuf;
 
@@ -12893,7 +12995,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     case WEED_PALETTE_YUV888:
       if (!nocheat && irowstride == get_pixbuf_rowstride_value(width * 3)) {
         // rowstrides are OK, we can just steal the pixel_data
-        pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data);
+        pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data, layer);
         weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
       } else {
@@ -12911,7 +13013,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     case WEED_PALETTE_YUVA8888:
       if (!nocheat && irowstride == get_pixbuf_rowstride_value(width * 4)) {
         // rowstrides are OK, we can just steal the pixel_data
-        pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data);
+        pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data, layer);
         weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
       } else {
@@ -14432,11 +14534,31 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 
    this function should always be used to free WEED_LEAF_PIXEL_DATA */
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
+  static pthread_mutex_t xmutex = PTHREAD_MUTEX_INITIALIZER;
+  lives_sync_list_t *copylist;
   lives_proc_thread_t lpt = NULL;
   void **pixel_data;
   int nplanes;
 
   if (!layer) return;
+
+  copylist = (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
+  if (copylist) {
+    weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
+    pthread_mutex_lock(&xmutex);
+    lives_sync_list_remove(copylist, (void *)layer, FALSE);
+    if (!copylist->list) {
+      pthread_mutex_unlock(&xmutex);
+      lives_sync_list_free(copylist);
+    } else {
+      pthread_mutex_unlock(&xmutex);
+      g_print("nullify pdata as it is a copy\n");
+      // need to do this 1st as we have no copylist now
+      weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
+      weed_layer_nullify_pixel_data(layer);
+      return;
+    }
+  }
 
   pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
   if (!pixel_data || !nplanes) return;
@@ -14490,6 +14612,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
         }
         pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
         for (int i = 0; i < nplanes; i++) {
+          g_print("freeing pdata %d\n", i);
           if (pixel_data[i]) lives_free(pixel_data[i]);
         }
         lives_free(pixel_data);
@@ -14497,6 +14620,8 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
     }
   }
 
+  // need to do this 1st as we have no copylist now
+  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
   weed_layer_nullify_pixel_data(layer);
 }
 

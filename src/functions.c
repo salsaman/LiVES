@@ -915,7 +915,6 @@ LIVES_GLOBAL_INLINE void lives_hooks_clear(lives_hook_stack_t **hstacks, int typ
 
     hsstack = (LiVESList *)hstack->stack;
     if (hsstack) {
-      hstack->stack = NULL;
       for (LiVESList *cblist = hsstack; cblist; cblist = cblist->next) {
         lives_closure_t *cl = (lives_closure_t *)cblist->data;
         if (cl) lives_closure_free(cl);

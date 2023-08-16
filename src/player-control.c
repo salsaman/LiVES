@@ -662,10 +662,12 @@ void play_file(void) {
 
   mainw->playing_file = mainw->current_file;
 
-  for (int i = 0; i < mainw->num_tracks; i++) {
-    if (mainw->layers[i]) {
-      weed_layer_unref(mainw->layers[i]);
-      mainw->layers[i] = NULL;
+  if (mainw->layers) {
+    for (int i = 0; i < mainw->num_tracks; i++) {
+      if (mainw->layers[i]) {
+        weed_layer_unref(mainw->layers[i]);
+        mainw->layers[i] = NULL;
+      }
     }
   }
 
@@ -676,7 +678,6 @@ void play_file(void) {
   mainw->layers = map_sources_to_tracks(FALSE, FALSE);
 
   build_nodemodel(&mainw->nodemodel);
-  describe_chains(mainw->nodemodel);
   align_with_model(mainw->nodemodel);
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
@@ -1182,7 +1183,6 @@ void play_file(void) {
 
       // nodemodel / plan
       cleanup_nodemodel();
-
 
       // PLAY FINISHED...
 

@@ -916,6 +916,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
           fbuff->flags &= ~FB_FLAG_INVALID;
           break; // file was closed
         }
+        // TOOD
+        //lives_nanosleep((10 - THREADVAR(loveliness)) * UGLY_SLOW);
         if (bufsize > fsize) bufsize = fsize;
         res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
         //g_printerr("slurp for %d, %s with "

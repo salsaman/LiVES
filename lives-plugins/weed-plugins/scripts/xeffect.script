@@ -14,6 +14,10 @@ xeffect|graphic novel
 salsaman
 </author>
 
+<unique_id>
+0X44E1FBC4FD61D571
+</unique_id>
+
 <requires>
 pconv
 putils

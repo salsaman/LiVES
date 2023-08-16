@@ -567,7 +567,7 @@ boolean check_clip_integrity(int clipno, const lives_clip_data_t *cdata, frames_
     get_total_time(sfile);
     if (sfile->video_time < sfile->laudio_time) {
       if (prefs->show_dev_opts) {
-        g_printerr("AV timing mismatch: video time == %.2f sec, audio time == %.2f\n",
+        g_printerr("AV timing mismatch: video time == %f sec, audio time == %f\n",
                    sfile->video_time, sfile->laudio_time);
       }
       binf = clip_forensic(clipno, NULL);

@@ -415,7 +415,6 @@ static void play_toy(void) {
 
 static char *framecount = NULL;
 static char *fname_next = NULL, *info_file = NULL;
-static int opwidth = 0, opheight = 0;
 static const char *img_ext = NULL;
 
 // when rendering / playing we begin with an array (stack) of clip numbers - these map clips to "tracks"
@@ -609,7 +608,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
       nclip = mainw->active_track_list[i];
       if (nclip > 0) {
         // TODO - create blanks if clip < 0
-        layers[i] = lives_layer_create_with_metadata(nclip, mainw->frame_index[i]);
+        layers[i] = lives_layer_new_for_frame(nclip, mainw->frame_index[i]);
         lives_layer_set_track(layers[i], i);
         lives_layer_set_srcgrp(layers[i], mainw->track_sources[i]);
         lives_layer_set_status(layers[i], LAYER_STATUS_PREPARED);
@@ -621,18 +620,14 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
       }
     }
     layers[i] = NULL;
-  } else {
-    if (mainw->frame_index) lives_free(mainw->frame_index);
-    mainw->frame_index = (frames64_t *)lives_calloc(mainw->num_tracks, sizeof(frames64_t));
   }
   return layers;
 }
 
 
-static weed_layer_t **prepare_frames(frames_t frame) {
+static lives_result_t prepare_frames(frames_t frame) {
   // here we prepare the layers in mainw->layers so they can be loaded
   // mostly this involves checking for precached frames for the player in clip editor mode
-  weed_layer_t **layers = NULL;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
   boolean rndr = FALSE;
   int bad_frame_count = 0;
@@ -646,7 +641,7 @@ static weed_layer_t **prepare_frames(frames_t frame) {
   if (rndr && mainw->scrap_file != -1 && mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
     // load from scrap_file -
     // do not apply fx, just pull frame
-    // - the frame index should hold the byte offset in the file buffer
+    // - the frame index should hold the byte offset in the file buffer - TODO !!!
     mainw->frame_layer = lives_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
     lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_PREPARED);
     //pull_frame_threaded(mainw->frame_layer, 0, 0);
@@ -686,29 +681,30 @@ static weed_layer_t **prepare_frames(frames_t frame) {
     //     can reqlinquish the clone and get the original, we must also take care that if all transitions are switched off,
     //   blend_file releases its clone before evaporating
 
-    layers = mainw->layers;
-    g_print("in\n");
+    if (!mainw->layers) mainw->layers = (lives_layer_t **)lives_calloc(mainw->num_tracks, sizeof(lives_layer_t *));
+    mainw->frame_layer =  mainw->layers[0];
 
     if (rndr) {
-      for (int i = 0; layers[i]; i++) {
-        ticks_t *timing_data = weed_get_int64_array(layers[i], LIVES_LEAF_TIMING_DATA, NULL);
+      for (int i = 0; mainw->layers[i]; i++) {
+        ticks_t *timing_data = weed_get_int64_array(mainw->layers[i], LIVES_LEAF_TIMING_DATA, NULL);
         timing_data[LAYER_STATUS_TREF] = mainw->cevent_tc;
-        weed_layer_set_invalid(layers[i], FALSE);
-        weed_layer_ref(layers[i]);
-        lives_layer_set_status(layers[i], LAYER_STATUS_PREPARED);
+        weed_layer_set_invalid(mainw->layers[i], FALSE);
+        weed_layer_ref(mainw->layers[i]);
+        lives_layer_set_status(mainw->layers[i], LAYER_STATUS_PREPARED);
       }
 
       /* mainw->frame_layer = weed_apply_effects(layers, mainw->filter_map, */
       /*                                         tc, opwidth, opheight, mainw->pchains, FALSE); */
       // wait here for plan to complete
-      lives_nanosleep_while_true(mainw->plan_cycle->state == PLAN_STATE_IDLE
+      lives_nanosleep_while_true(mainw->plan_cycle->state == PLAN_STATE_INERT
+                                 || mainw->plan_cycle->state == PLAN_STATE_WAITING
                                  || mainw->plan_cycle->state == PLAN_STATE_RUNNING);
 
-      for (int i = 1; layers[i]; i++) {
+      for (int i = 1; mainw->layers[i]; i++) {
         // ouput is always in layer[0]
-        weed_layer_set_invalid(layers[i], TRUE);
-        weed_layer_unref(layers[i]);
-        layers[i] = NULL;
+        weed_layer_set_invalid(mainw->layers[i], TRUE);
+        weed_layer_unref(mainw->layers[i]);
+        mainw->layers[i] = NULL;
       }
 
       if (mainw->internal_messaging) {
@@ -718,7 +714,7 @@ static weed_layer_t **prepare_frames(frames_t frame) {
         lives_freep((void **)&info_file);
         weed_layer_ref(mainw->frame_layer);
         //weed_layer_ref(mainw->frame_layer);
-        return NULL;
+        return LIVES_RESULT_ERROR;
       }
       // end RENDERING
     } else {
@@ -806,7 +802,6 @@ static weed_layer_t **prepare_frames(frames_t frame) {
                 if (delta_a <= LAGFRAME_TRIGGER / 2) {
                   // precached frame is in target range: actual_frame : af + laglim / 2
                   cache_hits++;
-                  g_print("route f\n");
                   if (mainw->cached_frame && (labs(mainw->pred_frame) - lives_layer_get_frame(mainw->cached_frame))
                       * pldir > 0) {
                     if (mainw->cached_frame != get_old_frame_layer())
@@ -823,7 +818,7 @@ static weed_layer_t **prepare_frames(frames_t frame) {
                   // otherwise we grab the pre frame, and switch decoders, thus we can continue playing
                   // without needing to jump fwd
 
-                  mainw->frame_layer = mainw->frame_layer_preload;
+                  mainw->layers[0] = mainw->frame_layer = mainw->frame_layer_preload;
                   mainw->frame_layer_preload = NULL;
                   mainw->actual_frame = labs(mainw->pred_frame);
 
@@ -842,7 +837,6 @@ static weed_layer_t **prepare_frames(frames_t frame) {
                       }
                       lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
                     }
-                    g_print("route e\n");
 		    // *INDENT-OFF*
 		  }}
 		else {
@@ -851,14 +845,12 @@ static weed_layer_t **prepare_frames(frames_t frame) {
 		  cache_misses++;
 		  mainw->cached_frame = mainw->frame_layer_preload;
 		  mainw->frame_layer_preload = NULL;
-		  g_print("route d\n");
 		}}}}
 	  // *INDENT-ON*
 
 no_precache:
 
           if (mainw->cached_frame) {
-            g_print("route c\n");
             int clip = lives_layer_get_clip(mainw->cached_frame);
             if (clip == mainw->playing_file) {
               frames_t frame = lives_layer_get_frame(mainw->cached_frame);
@@ -875,9 +867,9 @@ no_precache:
                     if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
                     mainw->frame_layer = weed_layer_copy(NULL, mainw->cached_frame);
                     lives_layer_copy_metadata(mainw->frame_layer, mainw->cached_frame);
+                    mainw->layers[0] = mainw->frame_layer;
                     mainw->actual_frame = frame;
                     lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
-                    g_print("route b\n");
 		    // *INDENT-OFF*
 		  }}}}}
 	  // *INDENT-ON*
@@ -886,21 +878,16 @@ skip_precache:
 
           if (!mainw->frame_layer) {
             // if we didn't have a preloaded frame, we kick off a thread here to load it
-            lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
-            mainw->frame_layer = lives_layer_create_with_metadata(mainw->playing_file, sfile->frameno);
-            lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
-            // set layer status to PREPARED, the plan executor should then load it
-            g_print("route a\n");
-            if (lives_layer_get_status(mainw->frame_layer) == LAYER_STATUS_NONE)
-              lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_PREPARED);
+            mainw->plan_cycle->frame_idx[0] = sfile->frameno;
 	    // *INDENT-OFF*
 	  }}}}
     // *INDENT-ON*
     g_print("out\n");
 
-    layers[0] = mainw->frame_layer;
-    lives_layer_set_track(layers[0], 0);
-    // setting status to ready will trigger the LOAD step to pull in pixel_data
+    if (mainw->frame_layer) {
+      lives_layer_set_track(mainw->frame_layer, 0);
+      mainw->layers[0] = mainw->frame_layer;
+    }
   }
 
   if (prefs->dev_show_timing)
@@ -914,7 +901,7 @@ skip_precache:
     if (mainw->cancelled) {
       lives_free(fname_next);
       lives_freep((void **)&info_file);
-      return NULL;
+      return LIVES_RESULT_ERROR;
     }
     // in case we are opening via non-instant means. We keep trying until the next frame appears.
     mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
@@ -926,15 +913,9 @@ skip_precache:
     // here we are rendering to an effect or timeline, need to keep mainw->frame_layer and return
     lives_freep((void **)&framecount);
     lives_freep((void **)&info_file);
-    check_layer_ready(mainw->frame_layer);
     weed_layer_ref(mainw->frame_layer);
     //weed_layer_ref(mainw->frame_layer);
-    return NULL;
-  }
-
-  if (!mainw->frame_layer && (!mainw->preview || (mainw->multitrack && !cfile->opening))) {
-    lives_freep((void **)&info_file);
-    return NULL;
+    return LIVES_RESULT_SUCCESS;
   }
 
   if (mainw->preview && !mainw->frame_layer && (!mainw->event_list || cfile->opening)) {
@@ -977,12 +958,14 @@ skip_precache:
       lives_free(fname_next);
       // end of playback, so this is no longer needed
       lives_freep((void **)&info_file);
-      return NULL;
+      return LIVES_RESULT_FAIL;
       // *INDENT-OFF*
     }}
   // *INDENT-ON*
-
-  return layers;
+  if (!mainw->layers) {
+    return LIVES_RESULT_ERROR;
+  }
+  return LIVES_RESULT_SUCCESS;
 }
 
 
@@ -1032,7 +1015,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
   void **pd_array = NULL, **retdata = NULL;
   LiVESPixbuf *pixbuf = NULL;
-  weed_layer_t *frame_layer = NULL, *xframe_layer, **layers = NULL;
+  weed_layer_t *frame_layer = NULL, *xframe_layer;
 
   char *tmp;
 
@@ -1048,7 +1031,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
   framecount = NULL;
   fname_next = info_file = NULL;
-  opwidth = opheight = 0;
   img_ext = NULL;
 
   mainw->scratch = SCRATCH_NONE;
@@ -1229,58 +1211,82 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     /* if (!(mainw->record && !mainw->record_paused && mainw->scrap_file != -1 */
     /*       && fg_file == mainw->scrap_file && !rec_after_pb)) { */
-    if (!rec_after_pb) {
-      get_player_size(&opwidth, &opheight);
-    } else opwidth = opheight = 0;
-
-    ////////////////////////////////////////////////////////////
-    // load a frame from disk buffer
 
     if (mainw->preview && (!mainw->event_list || cfile->opening)) {
       info_file = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
     }
 
-    do {
-      // if we are playing a backend preview, we may need to call this several times until the
-      // backend frame is rendered
-      // otherwise this will pull the foreground frame (or more likely, start a thread to do this)
-      // and possibly kick off another thread to fetch a background frame
-      layers = prepare_frames(frame);
-    } while (!layers && !mainw->frame_layer && mainw->cancelled == CANCEL_NONE
-             && cfile->clip_type == CLIP_TYPE_DISK);
+    ////////////////////////////////////////////////////////////
+    // load a frame from a clip_src
 
+    /////////////////// TRIGGER PLAN CYCLE //////////////////////////////
 
-    lives_freep((void **)&info_file);
-
-    if (!layers) goto lfi_done;
-
-    if (!mainw->frame_layer) mainw->frame_layer = layers[0];
-
-    // no change
-    mainw->layers = layers;
-
-    if (LIVES_UNLIKELY((!mainw->frame_layer) || mainw->cancelled != CANCEL_NONE)) {
-      // NULL frame or user cancelled
-      if (mainw->frame_layer) {
-        weed_layer_set_invalid(mainw->frame_layer, TRUE);
+    if (mainw->plan_cycle) {
+      if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
+          || mainw->plan_cycle->state == PLAN_STATE_WAITING) {
+        double xtime = lives_get_session_time();
+        plan_cycle_trigger(mainw->plan_cycle, xtime);
+        g_print("I triggered the plan\n");
       }
-      goto lfi_done;
     }
 
-    if (was_preview) lives_free(fname_next);
+    if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
+      lives_result_t res;
+      do {
+        // if we are playing a backend preview, we may need to call this several times until the
+        // backend frame is rendered
+        // otherwise this will pull the foreground frame (or more likely, start a thread to do this)
+        // and possibly kick off another thread to fetch a background frame
+        res = prepare_frames(frame);
+      } while (res == LIVES_RESULT_FAIL && !mainw->frame_layer && mainw->cancelled == CANCEL_NONE
+               && cfile->clip_type == CLIP_TYPE_DISK);
 
+      lives_freep((void **)&info_file);
+
+      if (!mainw->layers) {
+        goto lfi_done;
+      }
+      if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
+
+      // TODO -> mainw->cancelled sshould cancel plan_cyycle
+      if (LIVES_UNLIKELY((mainw->cancelled != CANCEL_NONE))) {
+        // NULL frame or user cancelled
+        if (mainw->frame_layer) {
+          weed_layer_set_invalid(mainw->frame_layer, TRUE);
+        }
+        g_print("bad 2\n");
+        goto lfi_done;
+      }
+
+      if (was_preview) lives_free(fname_next);
+    }
+
+    ///////// EXECUTE PLAN CYCLE ////////////
+
+    g_print("wating for plan to complete\n");
     // in render frame, we would have set all frames to either prepared or loaded
     // so the plan runner should have started loading them already
     // the reamining steps will be run, applying all fx instances until we are left with the single output layer
-    lives_nanosleep_while_false(mainw->plan_cycle->state == PLAN_STATE_FINISHED
+    lives_nanosleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
                                 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
+
+    g_print("PLAN DONE in pla\n");
+
     if (mainw->plan_cycle->state == PLAN_STATE_CANCELLED
         || mainw->plan_cycle->state == PLAN_STATE_ERROR)
       goto lfi_done;
 
+    if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
+
+    if (mainw->plan_cycle->state == PLAN_STATE_COMPLETE)
+      mainw->plan_cycle->state = PLAN_STATE_DISCARD;
+
+    g_print("PLAN DONE in pla2 %d %d\n", lives_layer_get_clip(mainw->frame_layer), mainw->playing_file);
+
     if (lives_layer_get_clip(mainw->frame_layer) != mainw->playing_file)
       goto lfi_done;
+    g_print("PLAN DONE in pla 4\n");
 
     ////////////////////////
 
@@ -1459,6 +1465,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) goto lfi_done;
     } // EXT PB done
 
+    g_print("PLAN DONE in43534 pla\n");
     ////////////////////////////////////////////////////////
     // local display - either we are playing with no playback plugin, or else the playback plugin has no
     // local display of its own
@@ -1497,9 +1504,10 @@ weed_layer_t *load_frame_image(frames_t frame) {
       }
       gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
     }
+    g_print("PLAN DONE234234 in pla\n");
 
     ////////////////////////////////////////
-    weed_layer_ref(frame_layer);
+    if (frame_layer ==  mainw->frame_layer) weed_layer_ref(frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
@@ -1510,6 +1518,9 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                       lives_layer_draw, 0, "vv", mainw->play_image, frame_layer);
     }
+
+    g_print("PLAN DONE in pldsfijasdfija\n");
+    frame_layer = NULL;
     success = TRUE;
     if (prefs->dev_show_timing)
       g_print("paint @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -1588,28 +1599,24 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
 lfi_done:
 
-  if (layers) {
+  if (mainw->layers) {
     // all our pixel_data should have been free'd already
-    if (mainw->multitrack || mainw->is_rendering) {
-      for (int i = 0; layers[i]; i++) {
-        if (layers[i] != mainw->frame_layer && layers[i] != mainw->blend_layer
-            && layers[i] != frame_layer) {
-          weed_layer_set_invalid(layers[i], TRUE);
-          check_layer_ready(layers[i]);
-          weed_layer_free(layers[i]);
-          layers[i] = NULL;
-        }
+    for (int i = 0; mainw->layers[i]; i++) {
+      if (mainw->layers[i] != mainw->frame_layer) {
+        weed_layer_set_invalid(mainw->layers[i], TRUE);
+        weed_layer_unref(mainw->layers[i]);
+        mainw->layers[i] = NULL;
       }
     }
   }
 
+  mainw->blend_layer = NULL;
+
+  // problem if we sent frame_layer to lives_layer_draw
   if (frame_layer && frame_layer != mainw->frame_layer) {
-    if (weed_layer_get_pixel_data(frame_layer)
-        == weed_layer_get_pixel_data(mainw->frame_layer))
-      weed_layer_nullify_pixel_data(frame_layer);
-    weed_layer_free(frame_layer);
+    weed_layer_unref(frame_layer);
+    frame_layer = NULL;
   }
-  frame_layer = NULL;
 
   // this is reset when we call avsync_force()
   // the audio will have seeked to this frame and then be holding (outputting silence)
@@ -1658,7 +1665,7 @@ lfi_done:
     if (sfile) pb_fps = sfile->pb_fps;
     tmp = lives_strdup_printf("%.8f|%d|", (double)mainw->currticks / TICKS_PER_SECOND_DBL, mainw->num_tracks);
     for (int i = 0; i < mainw->num_tracks; i++) {
-      tmp = lives_strdup_concat(tmp, "|", "%d|%ld", mainw->clip_index[i], mainw->frame_index[i]);
+      tmp = lives_strdup_concat(tmp, "|", "%d|%ld", mainw->clip_index[i], mainw->plan_cycle->frame_idx[i]);
     }
     msg = lives_strdup_printf("%s|%.3f", tmp, pb_fps);
     lives_free(tmp);
@@ -1670,8 +1677,7 @@ lfi_done:
   old_frame_layer = mainw->frame_layer;
 
   if (!mainw->multitrack && !mainw->is_rendering) {
-    mainw->frame_layer = NULL;
-    mainw->layers[0] = NULL;
+    mainw->frame_layer = mainw->layers[0] = NULL;
   }
 
   return old_frame_layer;
@@ -2043,9 +2049,8 @@ frames_t clamp_frame(int clipno, frames_t nframe) {
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           RECURSE_GUARD_END;
         } else sfile->pb_fps = -sfile->pb_fps;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
   // *INDENT-ON*
 
   return nframe;
@@ -2475,6 +2480,7 @@ int process_one(boolean visible) {
   static double audio_stretch = 1.0;
   ticks_t audio_ticks = -2;
 #endif
+  ticks_t delay_ticks = 0;
   lives_clip_data_t *cdata = NULL;
   int64_t jumplim = 0;
   int retval = 0;
@@ -2542,30 +2548,64 @@ player_loop:
   // it and any currently running plan to complete. Thi means for example, we can be loading frames for the next
   // cycle at the same time as fx instances are being executed for the current exec cycle.
 
-  if (mainw->plan_cycle) {
-    if (mainw->plan_cycle->state == PLAN_STATE_FINISHED
-        || mainw->plan_cycle->state == PLAN_STATE_CANCELLED) {
-      if (mainw->plan_runner_proc) {
-        lives_proc_thread_join_int(mainw->plan_runner_proc);
-        lives_proc_thread_unref(mainw->plan_runner_proc);
-        mainw->plan_runner_proc = NULL;
+  if (prefs->pb_quality != future_prefs->pb_quality)
+    mainw->refresh_model = TRUE;
+
+  if (!mainw->refresh_model) {
+    if (mainw->plan_cycle) {
+      if (mainw->plan_cycle->state == PLAN_STATE_DISCARD
+          || mainw->plan_cycle->state == PLAN_STATE_ERROR
+          || mainw->plan_cycle->state == PLAN_STATE_CANCELLED) {
+        if (mainw->plan_runner_proc) {
+          lives_proc_thread_join_int(mainw->plan_runner_proc);
+          lives_proc_thread_unref(mainw->plan_runner_proc);
+          mainw->plan_runner_proc = NULL;
+        }
+
+        if (mainw->plan_cycle->state == PLAN_STATE_DISCARD) {
+          exec_plan_t *plan = mainw->plan_cycle;
+          if (!delay_ticks)
+            delay_ticks = (ticks_t)((plan->en_time - plan->st_time - plan->paused_time)
+                                    * TICKS_PER_SECOND_DBL);
+          else
+            delay_ticks = delay_ticks / 4 + (ticks_t)((plan->en_time - plan->st_time - plan->paused_time)
+                          * TICKS_PER_SECOND_DBL / 4. * 3.);
+        }
+        exec_plan_free(mainw->plan_cycle);
+        mainw->plan_cycle = NULL;
       }
+    }
+  }
 
-      exec_plan_free(mainw->plan_cycle);
-      mainw->plan_cycle = NULL;
-      if (mainw->layers) {
-        for (int i = 0; i < mainw->nodemodel->ntracks; i++) {
-          if (mainw->layers[i]) {
-            weed_layer_unref(mainw->layers[i]);
-            mainw->layers[i] = NULL;
-	    // *INDENT-OFF*
-	  }}}}}
-  // *INDENT-ON*
+  if (mainw->refresh_model) {
+    g_print("node model needs rebuilding\n");
+    cleanup_nodemodel();
+    g_print("prev plan cancelled, good to create new plan\n");
+    prefs->pb_quality = future_prefs->pb_quality;
+    mainw->layers = map_sources_to_tracks(FALSE, FALSE);
+    g_print("rebuilding model\n");
+    build_nodemodel(&mainw->nodemodel);
+    align_with_model(mainw->nodemodel);
+    mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
+    g_print("made new plan from  model\n");
+    mainw->refresh_model = FALSE;
+  }
 
-  if (!mainw->plan_cycle) mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
+  if (!mainw->plan_cycle)
+    mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
-  if (mainw->plan_cycle->state == PLAN_STATE_NONE)
+  if (mainw->plan_cycle->state == PLAN_STATE_INERT) {
     execute_plan(mainw->plan_cycle, TRUE);
+    if (mainw->blend_file != -1
+        && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
+      frames64_t blend_frame = get_blend_frame(mainw->currticks);
+      // if value is -1, error occurrred, ignore
+      if (blend_frame > 0) {
+        mainw->plan_cycle->frame_idx[1] = blend_frame;
+        plan_cycle_trigger(mainw->plan_cycle, lives_get_session_time());
+      }
+    }
+  }
 
   old_playing_file = mainw->playing_file;
   old_vpp = mainw->vpp;
@@ -2589,6 +2629,16 @@ player_loop:
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
   if (mainw->currticks < mainw->startticks) {
+    delay_ticks += (mainw->currticks - mainw->startticks);
+    if (delay_ticks > mainw->startticks - mainw->currticks) {
+      delay_ticks -= mainw->startticks - mainw->currticks;
+      mainw->startticks = mainw->currticks;
+    } else {
+      if (delay_ticks > 0) mainw->startticks -= delay_ticks;
+      delay_ticks = 0;
+    }
+  }
+  if (mainw->currticks < mainw->startticks) {
     break_me("cur start");
   }
   //g_print("LOOP\n");
@@ -2610,6 +2660,7 @@ player_loop:
     mainw->last_startticks = mainw->startticks = mainw->fps_mini_ticks = mainw->currticks;
     mainw->last_startticks--;
     mainw->fps_mini_measure = 0;
+    delay_ticks = 0;
     getahead = 0;
     test_getahead = -1;
     sfile->last_req_frame = sfile->last_frameno =
@@ -2747,6 +2798,7 @@ switch_point:
     }
 
     if (IS_VALID_CLIP(close_this_clip)) {
+      mainw->refresh_model = TRUE;
       mainw->can_switch_clips = TRUE;
       mainw->current_file = close_this_clip;
       mainw->current_file = close_current_file(mainw->playing_file);
@@ -2856,6 +2908,8 @@ switch_point:
         } else sfile->sync_delta = 0;
 
         sfile->last_play_sequence = mainw->play_sequence;
+
+        mainw->refresh_model = TRUE;
 
         lives_nanosleep_while_true(mainw->do_ctx_update);
         mainw->gui_much_events = TRUE;
@@ -3015,6 +3069,8 @@ switch_point:
 
   if (mainw->refresh_model) {
     cleanup_nodemodel();
+    g_print("prev plan cancelled2, good to create new plan\n");
+    prefs->pb_quality = future_prefs->pb_quality;
 
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
     build_nodemodel(&mainw->nodemodel);
@@ -3025,8 +3081,16 @@ switch_point:
     mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
     mainw->refresh_model = FALSE;
-
+    g_print("rebuilt model, created new plan, new plan_cycle, and executed cycle\n");
     execute_plan(mainw->plan_cycle, TRUE);
+    if (mainw->blend_file != -1
+        && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
+      frames64_t blend_frame = get_blend_frame(mainw->currticks);
+      if (blend_frame > 0) {
+        mainw->plan_cycle->frame_idx[1] = blend_frame;
+        plan_cycle_trigger(mainw->plan_cycle, lives_get_session_time());
+      }
+    }
   }
 
   // playing back an event_list
@@ -3169,7 +3233,9 @@ switch_point:
       /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_req_frame, */
       /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
       requested_frame = xrequested_frame
-                        = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
+                        = calc_new_playback_position(mainw->playing_file, mainw->startticks - delay_ticks,
+                            &new_ticks);
+      new_ticks += delay_ticks;
       /* g_print("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead); */
 
       if (mainw->scratch == SCRATCH_JUMP) {
@@ -3254,18 +3320,6 @@ switch_point:
             weed_layer_free(mainw->blend_layer);
           }
           mainw->blend_layer = NULL;
-        }
-      }
-
-      if (!mainw->blend_layer) {
-        if ((mainw->rte || (mainw->is_rendering && !mainw->event_list))
-            && (mainw->current_file != mainw->scrap_file)
-            && (mainw->blend_file != mainw->playing_file
-                || prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) {
-          /// will set mainw->blend_layer
-          if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n",
-                                                   lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-          mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks);
         }
       }
 
@@ -3369,6 +3423,8 @@ update_effort:
 	    // *INDENT-OFF*
           }}}
       // *INDENT-ON*
+
+      // check model reubild from qchanges
 
       if (sfile->delivery == LIVES_DELIVERY_PUSH
           || (sfile->delivery == LIVES_DELIVERY_PUSH_PULL && mainw->force_show)) {
@@ -3500,12 +3556,16 @@ play_frame:
 
             mainw->actual_frame = requested_frame;
 
+            /// >>>>>>>>> PLAY A FRAME
+
             //g_print("lfi in  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
             //lives_nanosleep_while_true(mainw->do_ctx_update);
             load_frame_image(sfile->frameno);
             //g_print("lfi out  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
             sfile->last_frameno = mainw->actual_frame;
+
+            ///// >>>>>>>>>>>>>>>>>>>>
 
             // on return, we have:
             // mainw->actual_frame == the frame that was actually played, this may differ from
@@ -3520,25 +3580,6 @@ play_frame:
             // or else set pred_Frame to 0 if the preload is unsuitable
             if ((mainw->frame_layer_preload && !weed_layer_check_valid(mainw->frame_layer_preload))
                 || (!mainw->frame_layer_preload && mainw->pred_frame)) cleanup_preload = TRUE;
-
-            if (mainw->blend_layer) {
-              // assume we played the blend_layer, if we have one
-              if (mainw->blend_layer != get_old_frame_layer()) {
-                weed_layer_set_invalid(mainw->blend_layer, TRUE);
-                check_layer_ready(mainw->blend_layer);
-                weed_layer_unref(mainw->blend_layer);
-              }
-              mainw->blend_layer = NULL;
-            }
-            if ((mainw->rte || (mainw->is_rendering && !mainw->event_list))
-                && (mainw->current_file != mainw->scrap_file)
-                && (mainw->blend_file != mainw->playing_file
-                    || prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) {
-              /// will set mainw->blend_layer
-              if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n",
-                                                       lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-              mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks);
-            }
 
             if (check_getahead) {
               if (scratch == SCRATCH_NONE) {
@@ -3979,10 +4020,10 @@ play_frame:
             mainw->startticks = new_ticks;
 	    // *INDENT-OFF*
 	  }}}}
+    // *INDENT-ON*
 
     sfile->last_req_frame = requested_frame;
 
-    // *INDENT-ON*
     cancelled = THREADVAR(cancelled) = mainw->cancelled;
 
 proc_dialog:
@@ -4024,6 +4065,7 @@ proc_dialog:
             // events like fullscreen on / off are not acted on directly, instead these are stacked
             // for execution at this point. The callbacks are triggered and will pass requests to the main
             // thread.
+
             lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
 
             if (mainw->new_clip != mainw->playing_file || IS_VALID_CLIP(mainw->close_this_clip)
@@ -4031,6 +4073,8 @@ proc_dialog:
 
             if (mainw->refresh_model) {
               cleanup_nodemodel();
+              g_print("prev plan cancelled5, good to create new plan\n");
+              prefs->pb_quality = future_prefs->pb_quality;
               mainw->layers = map_sources_to_tracks(FALSE, FALSE);
               build_nodemodel(&mainw->nodemodel);
               align_with_model(mainw->nodemodel);
@@ -4038,6 +4082,15 @@ proc_dialog:
               mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
               mainw->refresh_model = FALSE;
               execute_plan(mainw->plan_cycle, TRUE);
+              g_print("rebuilt model 3, created new plan, new plan_cycle, and executed cycle\n");
+              if (mainw->blend_file != -1
+                  && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
+                frames64_t blend_frame = get_blend_frame(mainw->currticks);
+                if (blend_frame > 0) {
+                  mainw->plan_cycle->frame_idx[1] = blend_frame;
+                  plan_cycle_trigger(mainw->plan_cycle, lives_get_session_time());
+                }
+              }
             }
 
             // following this, whether or no there were updates, we allow th gui main loop to run
@@ -4049,30 +4102,8 @@ proc_dialog:
           if (!CURRENT_CLIP_IS_VALID) {
             mainw->cancelled = CANCEL_INTERNAL_ERROR;
           }
-
-          if (!weed_layer_check_valid(mainw->blend_layer)) {
-            if (mainw->blend_layer != old_frame_layer) {
-              check_layer_ready(mainw->blend_layer);
-              weed_layer_free(mainw->blend_layer);
-            }
-            mainw->blend_layer = NULL;
-          }
-
-          if (!mainw->blend_layer && mainw->new_blend_file == mainw->blend_file) {
-            // try to do this right after sync_announce, since that is the point where we
-            // transitions would be inited / deinited
-            if ((mainw->rte || (mainw->is_rendering && !mainw->event_list))
-                && (mainw->current_file != mainw->scrap_file)
-                && (mainw->blend_file != mainw->playing_file
-                    || prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) {
-              /// will set mainw->blend_layer
-              if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n",
-                                                       lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-              mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks);
-	      // *INDENT-OFF*
-            }}}}
-      // *INDENT-ON*
-
+        }
+      }
       //else proc_file = THREADVAR(proc_file) = mainw->playing_file;
       if (mainw->cancelled != CANCEL_NONE) {
         retval = ONE_MILLION + mainw->cancelled;

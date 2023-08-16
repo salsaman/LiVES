@@ -7,6 +7,42 @@
 #include "maths.h"
 
 
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
+  lives_sync_list_t *synclist = (lives_sync_list_t *)lives_calloc(1, sizeof(lives_sync_list_t));
+  pthread_mutex_init(&synclist->mutex, NULL);
+  return synclist;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
+  if (synclist) {
+    pthread_mutex_lock(&synclist->mutex);
+    synclist->list = lives_list_prepend(synclist->list, data);
+    pthread_mutex_unlock(&synclist->mutex);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_remove(lives_sync_list_t *synclist, void *data,
+    boolean do_free) {
+  if (synclist) {
+    pthread_mutex_lock(&synclist->mutex);
+    synclist->list = lives_list_remove_data(synclist->list, data, do_free);
+    pthread_mutex_unlock(&synclist->mutex);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_free(lives_sync_list_t *synclist) {
+  if (synclist) {
+    pthread_mutex_lock(&synclist->mutex);
+    lives_list_free(synclist->list);
+    pthread_mutex_unlock(&synclist->mutex);
+    lives_free(synclist);
+  }
+}
+
+
 LIVES_GLOBAL_INLINE LiVESList *lives_list_locate_string(LiVESList *list, const char *strng) {
   for (; list; list = list->next) if (!lives_strcmp(strng, (const char *)list->data)) return list;
   return NULL;

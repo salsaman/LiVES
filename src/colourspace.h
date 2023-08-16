@@ -58,7 +58,7 @@ struct _conv_array {
   float *Crf_R, *Crf_G, *Crf_B;
 
   short min_Y, max_Y, min_UV, max_UV;
-  uint8_t *cavg;
+  uint8_t *cavgx;
 
   int *RGBx_Y, *Rx_Cr, *Gx_Cb, *Gx_Cr, *Bx_Cb;
 

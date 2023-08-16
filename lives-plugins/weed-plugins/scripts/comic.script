@@ -14,6 +14,10 @@ comic|comic book
 salsaman
 </author>
 
+<unique_id>
+0X54C3F442B2FE42C7
+</unique_id>
+
 <requires>
 putils
 <inttypes.h>

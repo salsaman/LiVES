@@ -104,7 +104,7 @@ typedef struct {
   boolean var_force_button_image;
 
   // hardware values
-  double var_loveliness; // a bit like 'niceness', only better
+  volatile double var_loveliness; // a bit like 'niceness', only better
   uint64_t var_thrdnative_flags;
   uint64_t var_random_seed;
   const void *var_stackaddr;
@@ -836,6 +836,10 @@ void thread_stackdump(void);
 boolean is_fg_thread(void);
 
 int isstck(void *ptr);
+
+/// loveliness
+#define MAX_LOVELINESS 100
+//#define UGLY_SLOW ONE_MILLION // nsec to wait per uint of ugliness - LV at 50, we have 50 * msec wait
 
 ///////////////// refcounting ////////////////
 

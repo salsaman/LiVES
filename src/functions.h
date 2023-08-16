@@ -580,7 +580,7 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **, int type, uint64_
 #define lives_proc_thread_add_hook(lpt, type, flags, func, data)	\
   lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
 		      (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-		      "vv", NULL, (void *)(data))
+		      "vv", (void *)lpt, (void *)(data))
 
 // any func
 

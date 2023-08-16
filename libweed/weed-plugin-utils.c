@@ -220,9 +220,7 @@ if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_
 
   // 2.0
   if (weed_abi_version >= 200) {
-    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) {
-      return NULL;
-    }
+    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) return NULL;
     if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
     if (weed_leaf_get(host_info, WEED_LEAF_MEMMOVE_FUNC, 0, &weed_memmove) != WEED_SUCCESS) return NULL;
   }
@@ -946,11 +944,13 @@ static void alpha_premult(unsigned char *ptr, int width, int height, int rowstri
       ptr += rowstride;
     }
   } else {
-    for (i = 0; i < height; i++) for (j = 0; j < width; j += psize) {
+    for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j += psize) {
         alpha = ptr[j + aoffs];
         for (p = coffs; p < psizel; p++) ptr[j + p] = al[alpha][ptr[j + p]];
       }
-    ptr += rowstride;
+      ptr += rowstride;
+    }
   }
 }
 

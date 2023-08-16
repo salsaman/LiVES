@@ -2471,7 +2471,7 @@ fndone:
       // Note: vlayer is actually the out channel of the generator, so we should
       // never free it !
       weed_plant_t *inst;
-      if (!weed_layer_check_valid(layer) || !(inst = (weed_instance_t *)get_primary_actor(sfile))) goto fail;
+      if (!weed_layer_check_valid(layer) || !(inst = (weed_instance_t *)get_primary_inst(sfile))) goto fail;
       weed_instance_ref(inst);
       if (inst) {
         int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);

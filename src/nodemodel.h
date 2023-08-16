@@ -210,7 +210,14 @@
 // used during forward routing
 #define NODEFLAG_OUTPUT_PRUNED		(1ull << 11)
 
-#define NODEFLAGS_IO_SKIP		(NODEFLAG_OUTPUT_PRUNED | NODEFLAG_IO_IGNORE | NODEFLAG_IO_DISABLED)
+// if we have an instance with no in / out channels, but with in / out params, this is a data processing node
+// it will not have any effect on the nodemodel, except that we add it as a "virtual" instance to the preceding node
+// - then instead of the parent instance being a depenendancy, the virtual instances have first a dependency on the instance, then
+// on the preceding virtual instance (if there are multiple), and the final virtual inst becomes th dependancy for next node
+#define NODEFLAG_IO_VIRTUAL		(1ull << 12)
+
+#define NODEFLAGS_IO_SKIP		(NODEFLAG_OUTPUT_PRUNED | NODEFLAG_IO_IGNORE | NODEFLAG_IO_DISABLED \
+					 | NODEFLAG_IO_VIRTUAL)
 
 // used to flag outputs which teminate in non display nodes
 // ie. node_chain->last_node has no ouputs, butis a FILTER node. Ascending from there we flag all  inputs
@@ -221,7 +228,7 @@
 // flagbits corresponding to node source flags
 
 // chantmpl flag - actually from out_chantmpol, but we set it in input
-#define NODESRC_INPLACE		(1ull << 32)
+#define NODESRC_INPLACE		(1ull << 31)
 
 // input / output flagbits - these are actually set for the filter, but we set them in
 // input / ouput nodes to facilitate
@@ -316,6 +323,10 @@ typedef struct {
   double factors[N_COST_TYPES];
   int opwidth, opheight;
 
+  // list of all nodes in any order
+  LiVESList *nodes;
+
+  // chains starting from src nodes
   LiVESList *node_chains;
   //
   // list of weed_filter_t * in running order
@@ -324,10 +335,6 @@ typedef struct {
   // these values are used during construction, and hold placeholder layers
   int ntracks;
   int *clip_index;
-
-  // we can use this to create subsets of nodes - for example when testing to apply gamma changes
-  // we may us it
-  //LiVESList *sel_nodes;
 } lives_nodemodel_t;
 
 // we may have two values for a single in_pal, out_pal, one including conversion
@@ -365,13 +372,6 @@ typedef struct {
 
   int out_pal, in_pal;
   int out_gamma, in_gamma;
-
-  // delta costs for this specific conversion
-
-  double deltas[N_COST_TYPES];
-
-  // cumulative costs for this specific conversion
-  double abs_costs[N_COST_TYPES];
 } conversion_t;
 
 typedef struct {
@@ -565,11 +565,13 @@ typedef struct _inst_node {
   // pointer to the object instance being modelled by the node
   void *model_inst;
 
-  // for filters, the filter kymap key, for clip srcs, the clip number etc
+  // for filters, the filter keymap key, for clip srcs, the clip number etc
   int model_idx;
 
   int *in_count, *out_count;
 
+  // a lsit of "virtual" outputs -data processing nodes which are run before this inst
+  LiVESList *virtuals;
   /////////////////////////////////
   // global palette values for the node. These values are used for inputs / outputs which dont have an own palette_list
   //
@@ -635,10 +637,13 @@ typedef struct _inst_node {
   uint64_t flags; // inst_node flags, restictions and prefs
 } inst_node_t;
 
-#define STEP_FLAG_SKIP			(1ull < 0)
-#define STEP_FLAG_INVALID		(1ull < 1)
+#define STEP_FLAG_SKIP			(1ull << 0)
+#define STEP_FLAG_INVALID		(1ull << 1)
 
-#define STEP_FLAG_OPTIMISE		(1ull < 1)
+//#define STEP_FLAG_OPTIMISE		(1ull << 1)
+
+#define STEP_FLAG_NO_READY_STAT		(1ull << 8)
+#define STEP_FLAG_RUN_AS_LOAD		(1ull << 9)
 
 #define STEP_TYPE_LOAD	 		1
 #define STEP_TYPE_CONVERT 		2
@@ -648,15 +653,13 @@ typedef struct _inst_node {
 
 struct _plan_step {
   int st_type;
-  inst_node_t *node; // ??
-  int idx;
   lives_proc_thread_t proc_thread;
   //
   int ndeps;
   plan_step_t **deps;
   size_t start_res[N_RES_TYPES], end_res[N_RES_TYPES];
-  ticks_t real_st, real_end;
-  int state;  // same values as PLAN_STATE
+  double real_st, real_end, paused_time;
+  volatile int state;  // same values as PLAN_STATE
   uint64_t flags;
 
   // step details
@@ -666,15 +669,18 @@ struct _plan_step {
   ticks_t ded;
 
   weed_filter_t *target;
-  weed_instance_t *target_inst;
+
+  // clip number, fx key
+  int target_idx;
 
   int track; // for conv / load
-  int clip; // for info only, track is used instead
   int dchan, schan;
   //
   int fin_width, fin_height;
   int fin_iwidth, fin_iheight;
   int fin_pal, fin_gamma;
+
+  char *errmsg;
 
   // eg. apply deinterlace
   uint64_t opts;
@@ -682,43 +688,69 @@ struct _plan_step {
 
 // flagbits for pan and for steps
 
-#define PLAN_STATE_NONE		0
-#define PLAN_STATE_IDLE		0
-#define PLAN_STATE_RUNNING	1
-#define PLAN_STATE_FINISHED	2
+// initial, pre-execution state
+#define PLAN_STATE_INERT	0
+
+// plan is executing, but is passively waiting for st_time to be set
+#define PLAN_STATE_QUEUED	1
+
+// plan is executing, but is passively waiting for st_time to be set
+#define PLAN_STATE_WAITING	2
+
+// st_time set, plan is running steps as deps get filled
+#define PLAN_STATE_RUNNING	3
+
+// all steps in plan have completed
+#define PLAN_STATE_COMPLETE	4
+
+// plan fully processed can be discarded and a new cycel created
+#define PLAN_STATE_DISCARD	8
+
+// plan or a step encountered a fatal error; execution halted
 #define PLAN_STATE_ERROR	-1
 
+// 8 - 15 STEP states
+
+// plan was cancelled, all steps have also been cancelled
 #define PLAN_STATE_CANCELLED	16
+
+// plan is paused, all steps have either completed or are also paused
 #define PLAN_STATE_PAUSED	17
+
+// plan is resuming after a pause, some steps are still in the process of resuming
 #define PLAN_STATE_RESUMING	18
 
-// idicates an ignorable step
-#define PLAN_STATE_IGNORE	64
+// 32 - 64 STEP states
 
 // template cannot be executed, but it can be used to make a plan_cycle which can be
 #define PLAN_STATE_TEMPLATE	256
 
 // step states - same numbers as PLAN states
 
-#define STEP_STATE_NONE		PLAN_STATE_NONE
-#define STEP_STATE_IDLE		PLAN_STATE_IDLE
+#define STEP_STATE_INACTIVE	PLAN_STATE_INERT
+#define STEP_STATE_WAITING	PLAN_STATE_WAITING
 #define STEP_STATE_RUNNING	PLAN_STATE_RUNNING
-#define STEP_STATE_FINISHED	PLAN_STATE_FINISHED
+#define STEP_STATE_FINISHED	PLAN_STATE_COMPLETE
 #define STEP_STATE_ERROR	PLAN_STATE_ERROR
+
+// state was skipped over (counted as FINISHED)
+#define STEP_STATE_SKIPPED	8
 
 #define STEP_STATE_CANCELLED	PLAN_STATE_CANCELLED
 #define STEP_STATE_PAUSED	PLAN_STATE_PAUSED
 #define STEP_STATE_RESUMING	PLAN_STATE_RESUMING
 
 // idicates an ignorable step
-#define STEP_STATE_IGNORE	PLAN_STATE_IGNORE
+#define STEP_STATE_IGNORE	64
 
 // template cannot be executed, but it can be used to make a plan_cycle which can be
 
 
+typedef struct _exec_plan exec_plan_t;
 
-typedef struct {
+struct _exec_plan {
   uint64_t uid;
+  exec_plan_t *template;
   lives_nodemodel_t *model;
   uint64_t iteration;
   // stack of layers in track order. These are created as soon as plan is executed
@@ -729,14 +761,16 @@ typedef struct {
   // and mark the channel as WEED_LEAF_HOST_TEMP_DISABLED. The corresponding input node in the model will
   // be flagged as IGNORE
 
-  int ntracks;
+  double st_time, en_time, paused_time;
+
+  frames64_t *frame_idx;
   weed_layer_t **layers;
 
   // the actual steps of the plan, no step may appear before all of its dependent steps
   LiVESList *steps;
 
-  uint64_t state;
-} exec_plan_t;
+  volatile uint64_t state;
+};
 
 void build_nodemodel(lives_nodemodel_t **);
 void free_nodemodel(lives_nodemodel_t **);
@@ -746,7 +780,8 @@ void cleanup_nodemodel(void);
 exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
 void align_with_model(lives_nodemodel_t *);
 exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **);
-lives_proc_thread_t execute_plan(exec_plan_t *, boolean async);
+lives_proc_thread_t execute_plan(exec_plan_t *cycle, boolean async);
+void plan_cycle_trigger(exec_plan_t *cycle, double st_time);
 void exec_plan_free(exec_plan_t *);
 
 void display_plan(exec_plan_t *);

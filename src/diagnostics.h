@@ -23,6 +23,8 @@
 
 lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 
+void print_diagnostics(uint64_t types);
+
 //
 
 void test_procthreads(void);

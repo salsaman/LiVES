@@ -1621,7 +1621,9 @@ framedone2:
       goto cleanup;
     }
     if ((rowstride = rowstrides[p]) <= 0) {
-      fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n", rowstride, tframe, p);
+      fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n"
+              "last frame decoded was %ld\n", rowstride, tframe, p, cdata->last_frame_decoded);
+      if (did_seek) fprintf(stderr, "did seek to frame %ld\n", seek_target);
       goto cleanup;
     }
 

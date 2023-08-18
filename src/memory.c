@@ -491,7 +491,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
           pthread_mutex_lock(&smblock_mutex);
           lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
           list->data = LIVES_INT_TO_POINTER(nchunks);
-          smblock_pool->free_chunks += nchunks;
+          smblock_pool->free_chunks += nchunks - nxtxhunk;
           pthread_mutex_unlock(&smblock_mutex);
           return nptr;
         }
@@ -554,7 +554,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
 }
 
 
-#define N_SMCHUNKS 1000000
+#define N_SMCHUNKS 65536
 
 void smallblock_init(void) {
   size_t memsize;
@@ -769,7 +769,7 @@ static volatile int used[NBIGBLOCKS];
 static int NBBLOCKS = 0;
 
 #define NBAD_LIM 8
-#define BBL_TEST
+//#define BBL_TEST
 #ifdef BBL_TEST
 static int bbused = 0;
 #endif
@@ -843,7 +843,7 @@ void *calloc_bigblock(size_t xsize) {
       g_print("bigblocks in use after calloc %d\n", bbused);
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
-      g_print("CALLOBIG %p %d\n", bigblocks[i], i);
+      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
       //break_me("callobig");
       nbads = 0;
       start = bigblocks[i];
@@ -887,7 +887,7 @@ void *free_bigblock(void *bstart) {
       pthread_mutex_unlock(&bigblock_mutex);
       g_print("bigblocks in use after free %d\n", bbused);
 #endif
-      g_print("FREEBIG %p %d\n", bigblocks[i], i);
+      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return bstart;
     }
   }

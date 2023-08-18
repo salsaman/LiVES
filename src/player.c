@@ -686,11 +686,15 @@ static lives_result_t prepare_frames(frames_t frame) {
 
     if (rndr) {
       for (int i = 0; mainw->layers[i]; i++) {
-        ticks_t *timing_data = weed_get_int64_array(mainw->layers[i], LIVES_LEAF_TIMING_DATA, NULL);
+        ticks_t *timing_data;
+        lock_layer_status(mainw->layers[i]);
+        timing_data = _get_layer_timing(mainw->layers[i]);
         timing_data[LAYER_STATUS_TREF] = mainw->cevent_tc;
-        weed_layer_set_invalid(mainw->layers[i], FALSE);
         weed_layer_ref(mainw->layers[i]);
-        lives_layer_set_status(mainw->layers[i], LAYER_STATUS_PREPARED);
+        _set_layer_timing(mainw->layers[i], timing_data);
+        _lives_layer_set_status(mainw->layers[i], LAYER_STATUS_PREPARED);
+        unlock_layer_status(mainw->layers[i]);
+        lives_free(timing_data);
       }
 
       /* mainw->frame_layer = weed_apply_effects(layers, mainw->filter_map, */
@@ -794,7 +798,6 @@ static lives_result_t prepare_frames(frames_t frame) {
             if (mainw->pred_frame > 0) {
               // set pred_frame to -ve, this notifies caller that pred_frame is / was in use
               mainw->pred_frame = -mainw->pred_frame;
-              check_layer_ready(mainw->frame_layer_preload);
             }
             if (weed_layer_get_pixel_data(mainw->frame_layer_preload)) {
               if (delta_a <= LAGFRAME_TRIGGER / 2 || !mainw->cached_frame) {
@@ -1224,10 +1227,10 @@ weed_layer_t *load_frame_image(frames_t frame) {
     if (mainw->plan_cycle) {
       if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
           || mainw->plan_cycle->state == PLAN_STATE_WAITING) {
-        double xtime = lives_get_session_time();
-        plan_cycle_trigger(mainw->plan_cycle, xtime);
+        plan_cycle_trigger(mainw->plan_cycle);
         g_print("I triggered the plan\n");
       }
+      mainw->plan_cycle->tdata->actual_start = lives_get_session_time();
     }
 
     if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
@@ -1271,7 +1274,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
 
-    g_print("PLAN DONE in pla\n");
+    g_print("PLAN DONE in play loop\n");
 
     if (mainw->plan_cycle->state == PLAN_STATE_CANCELLED
         || mainw->plan_cycle->state == PLAN_STATE_ERROR)
@@ -1282,11 +1285,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
     if (mainw->plan_cycle->state == PLAN_STATE_COMPLETE)
       mainw->plan_cycle->state = PLAN_STATE_DISCARD;
 
-    g_print("PLAN DONE in pla2 %d %d\n", lives_layer_get_clip(mainw->frame_layer), mainw->playing_file);
-
     if (lives_layer_get_clip(mainw->frame_layer) != mainw->playing_file)
       goto lfi_done;
-    g_print("PLAN DONE in pla 4\n");
 
     ////////////////////////
 
@@ -1465,12 +1465,9 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) goto lfi_done;
     } // EXT PB done
 
-    g_print("PLAN DONE in43534 pla\n");
     ////////////////////////////////////////////////////////
     // local display - either we are playing with no playback plugin, or else the playback plugin has no
     // local display of its own
-    if (prefs->dev_show_timing)
-      g_printerr("clr @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
     if (weed_layer_get_width(mainw->frame_layer) == 0) {
       goto lfi_done;
@@ -1504,7 +1501,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       }
       gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
     }
-    g_print("PLAN DONE234234 in pla\n");
 
     ////////////////////////////////////////
     if (frame_layer ==  mainw->frame_layer) weed_layer_ref(frame_layer);
@@ -1519,11 +1515,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                       lives_layer_draw, 0, "vv", mainw->play_image, frame_layer);
     }
 
-    g_print("PLAN DONE in pldsfijasdfija\n");
     frame_layer = NULL;
     success = TRUE;
-    if (prefs->dev_show_timing)
-      g_print("paint @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     goto lfi_done;
   }
 
@@ -2562,15 +2555,13 @@ player_loop:
           mainw->plan_runner_proc = NULL;
         }
 
-        if (mainw->plan_cycle->state == PLAN_STATE_DISCARD) {
-          exec_plan_t *plan = mainw->plan_cycle;
-          if (!delay_ticks)
-            delay_ticks = (ticks_t)((plan->en_time - plan->st_time - plan->paused_time)
-                                    * TICKS_PER_SECOND_DBL);
-          else
-            delay_ticks = delay_ticks / 4 + (ticks_t)((plan->en_time - plan->st_time - plan->paused_time)
-                          * TICKS_PER_SECOND_DBL / 4. * 3.);
-        }
+        /* if (mainw->plan_cycle->state == PLAN_STATE_DISCARD) { */
+        /*   exec_plan_t *plan = mainw->plan_cycle; */
+        /*   if (!delay_ticks) */
+        /*     delay_ticks = (ticks_t)(plan->tdata->real_duration * TICKS_PER_SECOND_DBL); */
+        /*   else */
+        /*     delay_ticks = delay_ticks / 4 + (ticks_t)(plan->tdata->real_duration * TICKS_PER_SECOND_DBL / 4. * 3.); */
+        /* } */
         exec_plan_free(mainw->plan_cycle);
         mainw->plan_cycle = NULL;
       }
@@ -2579,7 +2570,7 @@ player_loop:
 
   if (mainw->refresh_model) {
     g_print("node model needs rebuilding\n");
-    cleanup_nodemodel();
+    cleanup_nodemodel(&mainw->nodemodel);
     g_print("prev plan cancelled, good to create new plan\n");
     prefs->pb_quality = future_prefs->pb_quality;
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
@@ -2596,13 +2587,17 @@ player_loop:
 
   if (mainw->plan_cycle->state == PLAN_STATE_INERT) {
     execute_plan(mainw->plan_cycle, TRUE);
+    if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
+      mainw->plan_cycle->frame_idx[0] = sfile->frameno;
+      plan_cycle_trigger(mainw->plan_cycle);
+    }
     if (mainw->blend_file != -1
         && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
       frames64_t blend_frame = get_blend_frame(mainw->currticks);
       // if value is -1, error occurrred, ignore
       if (blend_frame > 0) {
         mainw->plan_cycle->frame_idx[1] = blend_frame;
-        plan_cycle_trigger(mainw->plan_cycle, lives_get_session_time());
+        plan_cycle_trigger(mainw->plan_cycle);
       }
     }
   }
@@ -2629,16 +2624,16 @@ player_loop:
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
   if (mainw->currticks < mainw->startticks) {
-    delay_ticks += (mainw->currticks - mainw->startticks);
-    if (delay_ticks > mainw->startticks - mainw->currticks) {
-      delay_ticks -= mainw->startticks - mainw->currticks;
-      mainw->startticks = mainw->currticks;
-    } else {
-      if (delay_ticks > 0) mainw->startticks -= delay_ticks;
-      delay_ticks = 0;
-    }
-  }
-  if (mainw->currticks < mainw->startticks) {
+    /* delay_ticks += (mainw->currticks - mainw->startticks); */
+    /* if (delay_ticks > mainw->startticks - mainw->currticks) { */
+    /*   delay_ticks -= mainw->startticks - mainw->currticks; */
+    /*   mainw->startticks = mainw->currticks; */
+    /* } else { */
+    /*   if (delay_ticks > 0) mainw->startticks -= delay_ticks; */
+    /*   delay_ticks = 0; */
+    /* } */
+    //}
+    //if (mainw->currticks < mainw->startticks) {
     break_me("cur start");
   }
   //g_print("LOOP\n");
@@ -3068,7 +3063,7 @@ switch_point:
   if (!CURRENT_CLIP_IS_VALID) abort();
 
   if (mainw->refresh_model) {
-    cleanup_nodemodel();
+    cleanup_nodemodel(&mainw->nodemodel);
     g_print("prev plan cancelled2, good to create new plan\n");
     prefs->pb_quality = future_prefs->pb_quality;
 
@@ -3083,12 +3078,16 @@ switch_point:
     mainw->refresh_model = FALSE;
     g_print("rebuilt model, created new plan, new plan_cycle, and executed cycle\n");
     execute_plan(mainw->plan_cycle, TRUE);
+    if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
+      mainw->plan_cycle->frame_idx[0] = sfile->frameno;
+      plan_cycle_trigger(mainw->plan_cycle);
+    }
     if (mainw->blend_file != -1
         && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
       frames64_t blend_frame = get_blend_frame(mainw->currticks);
       if (blend_frame > 0) {
         mainw->plan_cycle->frame_idx[1] = blend_frame;
-        plan_cycle_trigger(mainw->plan_cycle, lives_get_session_time());
+        plan_cycle_trigger(mainw->plan_cycle);
       }
     }
   }
@@ -3316,7 +3315,6 @@ switch_point:
       if (mainw->blend_layer) {
         if (!weed_layer_check_valid(mainw->blend_layer)) {
           if (mainw->blend_layer != old_frame_layer) {
-            check_layer_ready(mainw->blend_layer);
             weed_layer_free(mainw->blend_layer);
           }
           mainw->blend_layer = NULL;
@@ -3771,7 +3769,6 @@ play_frame:
       }
 #endif
 
-      //g_print("lfi done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       if (mainw->last_display_ticks == 0) mainw->last_display_ticks = mainw->clock_ticks;
       else {
         if (mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
@@ -3794,8 +3791,7 @@ play_frame:
           if (mainw->pred_clip > 0) {
             weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
             if (mainw->frame_layer_preload != old_frame_layer) {
-              check_layer_ready(mainw->frame_layer_preload);
-              weed_layer_free(mainw->frame_layer_preload);
+              weed_layer_unref(mainw->frame_layer_preload);
             }
           }
         }
@@ -3871,8 +3867,7 @@ play_frame:
           if (mainw->frame_layer_preload) {
             if (mainw->frame_layer_preload != old_frame_layer) {
               weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
-              check_layer_ready(mainw->frame_layer_preload);
-              weed_layer_free(mainw->frame_layer_preload);
+              weed_layer_unref(mainw->frame_layer_preload);
             }
             mainw->frame_layer_preload = NULL;
             mainw->pred_frame = 0;
@@ -4072,7 +4067,7 @@ proc_dialog:
                 || mainw->new_blend_file != mainw->blend_file) goto switch_point;
 
             if (mainw->refresh_model) {
-              cleanup_nodemodel();
+              cleanup_nodemodel(&mainw->nodemodel);
               g_print("prev plan cancelled5, good to create new plan\n");
               prefs->pb_quality = future_prefs->pb_quality;
               mainw->layers = map_sources_to_tracks(FALSE, FALSE);
@@ -4083,12 +4078,16 @@ proc_dialog:
               mainw->refresh_model = FALSE;
               execute_plan(mainw->plan_cycle, TRUE);
               g_print("rebuilt model 3, created new plan, new plan_cycle, and executed cycle\n");
+              if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
+                mainw->plan_cycle->frame_idx[0] = sfile->frameno;
+                plan_cycle_trigger(mainw->plan_cycle);
+              }
               if (mainw->blend_file != -1
                   && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
                 frames64_t blend_frame = get_blend_frame(mainw->currticks);
                 if (blend_frame > 0) {
                   mainw->plan_cycle->frame_idx[1] = blend_frame;
-                  plan_cycle_trigger(mainw->plan_cycle, lives_get_session_time());
+                  plan_cycle_trigger(mainw->plan_cycle);
                 }
               }
             }

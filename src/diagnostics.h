@@ -23,6 +23,10 @@
 
 lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 
+#define DIAG_ALL		(uint64_t)-1
+#define DIAG_MEMORY		(1ull << 0)
+#define DIAG_THREADS		(1ull << 1)
+
 void print_diagnostics(uint64_t types);
 
 //
@@ -76,7 +80,5 @@ void do_lsd_tests(void) LIVES_NEVER_INLINE;
 void bundle_test(void);
 
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
-
-void md5test(void);
 
 #endif

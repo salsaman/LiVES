@@ -568,7 +568,7 @@ void *lives_md5_sum(const char *filename, int64_t *fsize) {
 
 
 uint8_t *tinymd5(void *data, size_t dsize) {
-  uint8_t *md5buf = lives_calloc(1, MD5_SIZE);
+  uint8_t *md5buf = (uint8_t *)lives_calloc(1, MD5_SIZE);
   lives_md5_make(data, dsize, md5buf);
   return md5buf;
 }

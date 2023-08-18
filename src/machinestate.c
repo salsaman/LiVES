@@ -1451,17 +1451,11 @@ void lives_log(const char *what) {
 #endif
 
 
-#define HASHROOT 5381
-LIVES_GLOBAL_INLINE uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) {
-  uint64_t hash = HASHROOT;
-  for (int i = 0; i < binlen; hash += (hash << 5) + (uint64_t)bin[i++]);
-  return hash;
-}
-
-
 // fast hash from: http://www.azillionmonkeys.com/qed/hash.html
 // (c) Paul Hsieh
 #define get16bits(d) (*((const uint16_t *) (d)))
+
+#define HASHROOT 5381
 
 LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key, size_t ss) {
   /// approx 5 - 10 % faster than lives_string_hash
@@ -1501,16 +1495,42 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key, size_t ss) {
   return 0;
 }
 
+
+LIVES_GLOBAL_INLINE uint64_t bin_hash64(void *data, size_t dlen) {
+  // write alternare bytes to 2 memblocks. hash both blocks and get upper and lower
+  // 32 bits
+  uint64_t hash64 = 0;
+  char *c = (char *)data;
+  size_t hslen = (dlen + 3) >> 1, ss1 = 0, ss2 = 0;
+  char *str1 = (char *)lives_malloc(hslen);
+  char *str2 = (char *)lives_malloc(hslen);
+  for (int j = 0; j < hslen; j++) {
+    str1[j] = *c;
+    ss1++;
+    c++;
+    str2[j] = *c;
+    ss2++;
+    c++;
+  }
+  hash64 = fast_hash(str1, ss1);
+  hash64 = (hash64 << 32) | fast_hash(str2, ss2);
+  lives_free(str1); lives_free(str2);
+  return hash64;
+}
+
 LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
-#if USE_INTERNAL_MD5SUM
-  return minimd5((void *)key, lives_strlen(key));
-#else
   char *c = (char *)key;
   uint64_t hash64 = 0;
   if (*c) {
-    size_t hslen = (strlen(key) + 3) >> 1, ss1 = 0, ss2 = 0;
-    char *str1 = (char *)malloc(hslen);
-    char *str2 = (char *)malloc(hslen);
+    size_t slen = lives_strlen(key);
+    if (slen <= 8) {
+      lives_memcpy(&hash64, key, slen);
+      return hash64;
+    }
+
+    size_t hslen = (slen + 3) >> 1, ss1 = 0, ss2 = 0;
+    char *str1 = (char *)lives_malloc(hslen);
+    char *str2 = (char *)lives_malloc(hslen);
     --hslen; // make doubly sure to allow for \0
     for (int j = 0; j < hslen; j++) {
       str1[j] = *c;
@@ -1522,10 +1542,9 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
     }
     hash64 = fast_hash(str1, ss1);
     hash64 = (hash64 << 32) | fast_hash(str2, ss2);
-    free(str1); free(str2);
+    lives_free(str1); lives_free(str2);
   }
   return hash64;
-#endif
 }
 
 

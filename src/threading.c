@@ -159,6 +159,8 @@ static boolean _thrd_cond_wait(lives_proc_thread_t self) {
     thrd_work_t *work = lives_proc_thread_get_work(self);
     if (work) {
       pthread_mutex_t *pause_mutex = THREADVAR(pause_mutex);
+      if (pthread_mutex_trylock(pause_mutex)) return TRUE;
+      pthread_mutex_unlock(pause_mutex);
       pthread_cond_t *pcond = THREADVAR(pcond);
       while (!THREADVAR(sync_ready)) {
         work->flags |= LIVES_THRDFLAG_COND_WAITING;
@@ -182,12 +184,13 @@ static boolean _lives_proc_thread_cond_signal(lives_proc_thread_t lpt) {
         if (tdata) {
           pthread_mutex_t *pause_mutex = tdata->vars.var_pause_mutex;
           pthread_cond_t *pcond = tdata->vars.var_pcond;
+          // lock the mutex - if the target cannot lock this it will skip pausing
           pthread_mutex_lock(pause_mutex);
           tdata->vars.var_sync_ready = TRUE;
           pthread_cond_signal(pcond);
+          lives_nanosleep_while_true(lives_proc_thread_is_paused(lpt));
           pthread_mutex_unlock(pause_mutex);
           // we need to ensure that an associated proc_thread has responded now
-          lives_nanosleep_while_true(lives_proc_thread_is_paused(lpt));
           // excluding this permits the proc_thread to continue and either resume or cancel
           lives_proc_thread_exclude_states(lpt, THRD_STATE_RESUME_REQUESTED);
           lives_proc_thread_unref(lpt);

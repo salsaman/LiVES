@@ -733,7 +733,7 @@ boolean should_use_decoder(int clipno) {
           use_decoder = TRUE;
 	  // *INDENT-OFF*
 	}}}}
-// *INDENT-ON*
+  // *INDENT-ON*
 
   return use_decoder;
 }
@@ -774,11 +774,11 @@ static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
           if (fvirt < sfile->frames) {
             if (!sfile->checked && !check_clip_integrity(fileno, cdata, sfile->frames)) {
               sfile->checked = TRUE;
-		// *INDENT-OFF*
-	      }}
-	    if (!prefs->vj_mode && sfile->needs_update) do_clip_divergence_error(fileno);
-	  }}}
-      // *INDENT-ON*
+	      // *INDENT-OFF*
+	    }}
+	  if (!prefs->vj_mode && sfile->needs_update) do_clip_divergence_error(fileno);
+	}}}
+    // *INDENT-ON*
 
     if (sfile->frames == cframes) {
       int hsize, vsize;
@@ -802,10 +802,10 @@ static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
           _RELOAD_STRING(title, 1024); _RELOAD_STRING(author, 1024);
           _RELOAD_STRING(comment, 1024); _RELOAD_STRING(keywords, 1024);
           _RELOAD(unique_id);
-	    // *INDENT-OFF*
-	  }}
-	return TRUE;
-      }}
+	  // *INDENT-OFF*
+	}}
+      return TRUE;
+    }}
   // *INDENT-ON*
   return FALSE;
 }
@@ -2661,8 +2661,7 @@ void do_quick_switch(int new_file) {
 
         // TODO - avoid waiting, cancel thread, set layer invalid
         // free srcgrp
-        check_layer_ready(mainw->frame_layer_preload);
-        weed_layer_free(mainw->frame_layer_preload);
+        weed_layer_unref(mainw->frame_layer_preload);
         mainw->frame_layer_preload = NULL;
         mainw->pred_clip = -1;
         mainw->pred_frame = 0;
@@ -2834,9 +2833,11 @@ void switch_clip(int type, int newclip, boolean force) {
     } else {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
           && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-        if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
-
         weed_instance_t *inst = (weed_instance_t *)((get_primary_src(mainw->blend_file))->actor);
+        if (mainw->blend_layer) {
+          weed_layer_unref(mainw->blend_layer);
+          mainw->blend_layer = NULL;
+        }
         if (inst) {
           if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
             int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
@@ -2988,6 +2989,7 @@ static lives_clip_src_t *_add_clip_src(lives_clip_t *sfile, int track, int purpo
                                        fingerprint_t *chksum, const char *ext_URI) {
   lives_clip_src_t *mysrc = NULL;
   if (sfile) {
+    if (sfile->clip_type == CLIP_TYPE_DISK && src_type != LIVES_SRC_TYPE_IMAGE) break_me("badsrctyp");
     // find a clipsrc_group with purpose
     // if such does not exist we will clone primary and make one
     // then make a clip_src for source, and insert in src_group
@@ -3121,9 +3123,8 @@ static void _clip_src_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, l
 
     layer = srcgrp->layer;
     if (layer) {
-      lives_proc_thread_t lpt = lives_layer_get_procthread(layer);
-      if (lpt) lives_proc_thread_request_cancel(lpt, FALSE);
-      check_layer_ready(layer);
+      weed_layer_set_invalid(layer, TRUE);
+      weed_layer_pixel_data_free(layer);
     }
 
     switch (mysrc->src_type) {

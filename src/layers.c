@@ -22,29 +22,6 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 */
 
-
-// TODO - there is an issue that needs to be checked for:
-// some code does the following: create new layer, copy_layer (shallow) existing layer -> new layer
-// - this causes both layers to share same pixel_data
-// then at a later point: create_empty_pixel_data(existing_layer) - initially this would allocate new pixel_data
-// for existing layer, so that we could do weed_layer_unref(new_layer), freeing the old pixel_data
-// HOWEVER, and optimisation to create_empty_pixel_data() means that in some cases, existing_layer can
-// retain its original pixel_data, which is simply cleared and overwritten. Thus the unref_layer() new_layer
-// will also free the pixel_data from the second layer.
-//
-// Therefore we need to do one of two things - before unreffing a shallow copy layer, check if the pixel_data
-// is still the same as the original it was copied from, and if so, nullify its pixel_dat before unreffing
-//
-// else - nullify the pixel_data for the original before calling create_emplty_pixel_data()
-// - the first is preferrable IF we can be certain that no other refs can be added to copy layer and unref will free it
-// otherwise, nullify its data will affect anything which added a ref
-//
-// if it is not clear whether anyhting else may add a ref, then nullifying before calling create_empty_pixel_data is
-// preferred - this will prevent the optimisation, so this should be avoided in cases where the other option is viable
-//
-// THERE MAY still be places in the code where we do weed_layer_copy(dst, src), followed by create_empty_pixel_data(src)
-// followed by weed_layer_unref (or weed_layer_free) dst
-
 #include "main.h"
 #include "effects-weed.h"
 #include "effects.h"
@@ -153,7 +130,8 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
   if (!height) height = DEF_FRAME_VSIZE_UNSCALED;
   weed_layer_set_size(layer, width, height);
   if (weed_layer_get_palette(layer) == WEED_PALETTE_NONE) {
-    if (target_palette != WEED_PALETTE_NONE) weed_layer_set_palette(layer, target_palette);
+    if (target_palette != WEED_PALETTE_NONE && target_palette != WEED_PALETTE_ANY)
+      weed_layer_set_palette(layer, target_palette);
     else {
       if (!image_ext && sfile && sfile->bpp == 32)
         weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
@@ -294,23 +272,21 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
+  lives_sync_list_t *copylist;
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  lives_sync_list_t *copylist =
-    (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
+
+  wait_layer_ready(layer);
+
+  copylist = (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
   if (copylist) {
     weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
-    lives_sync_list_remove(copylist, (void *)layer, FALSE);
-    if (!copylist->list) {
-      lives_sync_list_free(copylist);
-      copylist = NULL;
-    }
+    copylist = lives_sync_list_remove(copylist, (void *)layer, FALSE);
   }
 
-  if (!copylist) {
-    if (weed_layer_get_pixel_data(layer))
-      break_me("NULLIFY non-copied layer with pixdata !");
-    else if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC))
-      g_print("LAYERS: %p nullfied, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
+  if (!copylist && weed_layer_get_pixel_data(layer)) {
+    LIVES_WARN("NULLIFY non-copied layer with pixdata - freeing first!");
+    weed_layer_pixel_data_free(layer);
+    return layer;
   }
 
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
@@ -384,6 +360,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_palette_yuv(weed_layer_t *layer
 // returns TRUE on success
 boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t alignment) {
   // copy (deep) old_layer -> layer
+  // if old_layer is NULL, and layer is non-NULL, we can change rowstride alignment for layer
 
   int numplanes, xheight, xwidth;
   int *orowstrides, *rowstrides;;
@@ -395,12 +372,12 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   boolean newdata = FALSE;
   double psize = pixel_size(pal);
 
-  if (alignment != 0 && !old_layer) {
+  if (alignment && !old_layer) {
     // check if we need to align memory
     rowstrides = weed_layer_get_rowstrides(layer, &i);
-    while (i > 0) if (rowstrides[--i] % alignment != 0) i = -1;
+    while (i > 0) if (rowstrides[--i] % alignment) i = -1;
     lives_free(rowstrides);
-    if (i == 0) return TRUE;
+    if (!i) return TRUE;
   }
 
   if (!old_layer) {
@@ -412,19 +389,13 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   pixel_data = weed_layer_get_pixel_data_planar(old_layer, &numplanes);
   if (!pixel_data || !pixel_data[0]) {
-    if (newdata) {
-      weed_layer_nullify_pixel_data(old_layer);
-      weed_layer_unref(old_layer);
-    }
+    if (newdata) weed_layer_unref(old_layer);
     return FALSE;
   }
 
   orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
 
-  if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;
-
-  /// should we free ?
-  weed_layer_nullify_pixel_data(layer);
+  if (alignment) THREADVAR(rowstride_alignment_hint) = alignment;
 
   weed_layer_set_palette(layer, pal);
   weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(pal), height);
@@ -432,7 +403,6 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     if (newdata) {
       weed_layer_copy(layer, old_layer);
-      weed_layer_nullify_pixel_data(old_layer);
       weed_layer_unref(old_layer);
     }
     return FALSE;
@@ -446,27 +416,19 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   for (i = 0; i < numplanes; i++) {
     xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
     if (rowstrides[i] == orowstrides[i])
-      lives_memmove(npixel_data[i], pixel_data[i], xheight *  rowstrides[i]);
+      lives_memcpy(npixel_data[i], pixel_data[i], xheight *  rowstrides[i]);
     else {
       uint8_t *dst = (uint8_t *)npixel_data[i];
       uint8_t *src = (uint8_t *)pixel_data[i];
       xwidth = width * psize * weed_palette_get_plane_ratio_horizontal(pal, i);
       for (j = 0; j < xheight; j++) {
-        lives_memmove(&dst[rowstrides[i] * j], &src[orowstrides[i] * j], xwidth);
+        lives_memcpy(&dst[rowstrides[i] * j], &src[orowstrides[i] * j], xwidth);
       }
     }
   }
 
+  if (newdata) weed_layer_unref(old_layer);
 
-  if (newdata) {
-    // CHECK THIS
-    if (mainw->frame_layer && layer != mainw->frame_layer
-        && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
-      /// retain orig pixel_data if it belongs to mainw->frame_layer
-      weed_layer_nullify_pixel_data(old_layer);
-    }
-    weed_layer_unref(old_layer);
-  }
   lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
   lives_freep((void **)&orowstrides);
@@ -537,9 +499,8 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
    for an existing dlayer, we copy pixel_data by reference.
    all the other relevant attributes are also copied
 
-   For shallow copy, both layers share the same pixel_data. Thus we must be careful NOT to call weed_layer_unref
-   on both layers without first nullifying the pixel_data of one or other of the copies,
-   or replacing its pixel_data via a call to create_rmpty_pixel_data
+   For shallow copy, both layers share the same pixel_data. There is a mechanism to ensure that
+   the pixel_data is only freed when the last copy is freed (otherwise it will be nullified).
 */
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_layer_t *layer;
@@ -586,13 +547,11 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
       lives_sync_list_t *copylist =
         (lives_sync_list_t *)weed_get_voidptr_value(slayer, LIVES_LEAF_COPYLIST, NULL);
       if (!copylist) {
-        copylist = lives_sync_list_new();
-        lives_sync_list_add(copylist, (void *)slayer);
+        copylist = lives_sync_list_add(NULL, (void *)slayer);
         weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
       }
 
       lives_sync_list_add(copylist, (void *)layer);
-
       weed_leaf_dup(layer, slayer, LIVES_LEAF_COPYLIST);
 
       weed_leaf_copy_or_delete(layer, LIVES_LEAF_BBLOCKALLOC, slayer);
@@ -628,42 +587,108 @@ LIVES_GLOBAL_INLINE lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, 
 }
 
 
+LIVES_GLOBAL_INLINE void lock_layer_status(weed_layer_t *layer) {
+  pthread_mutex_t *lst_mutex = (pthread_mutex_t *)weed_get_voidptr_value(layer, LIVES_LEAF_LST_MUTEX, NULL);
+  if (!lst_mutex) {
+    lst_mutex = LIVES_CALLOC_SIZEOF(pthread_mutex_t, 1);
+    pthread_mutex_init(lst_mutex, NULL);
+    weed_set_voidptr_value(layer, LIVES_LEAF_LST_MUTEX, lst_mutex);
+    weed_leaf_set_autofree(layer, LIVES_LEAF_LST_MUTEX, TRUE);
+  }
+  pthread_mutex_lock(lst_mutex);
+}
+
+
+LIVES_GLOBAL_INLINE void unlock_layer_status(weed_layer_t *layer) {
+  pthread_mutex_t *lst_mutex = (pthread_mutex_t *)weed_get_voidptr_value(layer, LIVES_LEAF_LST_MUTEX, NULL);
+  if (lst_mutex) pthread_mutex_unlock(lst_mutex);
+}
+
+
+LIVES_GLOBAL_INLINE void _lives_layer_set_status(weed_layer_t *layer, int status) {
+  if (status >= 0) {
+    ticks_t *tm_data = _get_layer_timing(layer);
+    tm_data[status] = lives_get_session_time();
+    _set_layer_timing(layer, tm_data);
+    lives_free(tm_data);
+  }
+  weed_set_int_value(layer, LIVES_LEAF_LAYER_STATUS, status);
+}
+
+
+
 LIVES_GLOBAL_INLINE void lives_layer_set_status(weed_layer_t *layer, int status) {
-  if (layer) {
-    weed_set_int_value(layer, LIVES_LEAF_LAYER_STATUS, status);
+  if (layer && status >= -1 && status < N_LAYER_STATUSES) {
+    lock_layer_status(layer);
+    _lives_layer_set_status(layer, status);
+    unlock_layer_status(layer);
   }
 }
 
 
+LIVES_GLOBAL_INLINE int _lives_layer_get_status(weed_layer_t *layer) {
+  return weed_get_int_value(layer, LIVES_LEAF_LAYER_STATUS, NULL);
+}
+
+
 LIVES_GLOBAL_INLINE int lives_layer_get_status(weed_layer_t *layer) {
-  if (layer) return weed_get_int_value(layer, LIVES_LEAF_LAYER_STATUS, NULL);
-  return 0;
+  int st = 0;
+  if (layer) {
+    lock_layer_status(layer);
+    st = _lives_layer_get_status(layer);
+    unlock_layer_status(layer);
+  }
+  return st;
+}
+
+
+LIVES_GLOBAL_INLINE ticks_t *_get_layer_timing(lives_layer_t *layer) {
+  ticks_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+  if (!timing_data) {
+    _reset_layer_timing(layer);
+    timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
+  }
+  return timing_data;
 }
 
 
 LIVES_GLOBAL_INLINE ticks_t *get_layer_timing(lives_layer_t *layer) {
   if (layer) {
-    ticks_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
-    if (!timing_data) {
-      reset_layer_timing(layer);
-      timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
-    }
+    ticks_t *timing_data;
+    lock_layer_status(layer);
+    timing_data = _get_layer_timing(layer);
+    unlock_layer_status(layer);
     return timing_data;
   }
   return NULL;
 }
 
 
+LIVES_GLOBAL_INLINE void _set_layer_timing(lives_layer_t *layer, ticks_t *timing_data) {
+  weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
+}
+
+
 LIVES_GLOBAL_INLINE void set_layer_timing(lives_layer_t *layer, ticks_t *timing_data) {
-  if (layer)
-    weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
+  if (layer) {
+    lock_layer_status(layer);
+    _set_layer_timing(layer, timing_data);
+    unlock_layer_status(layer);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void _reset_layer_timing(lives_layer_t *layer) {
+  ticks_t *timing_data = (ticks_t *)lives_calloc(N_LAYER_STATUSES, sizeof(ticks_t));
+  _set_layer_timing(layer, timing_data);
 }
 
 
 LIVES_GLOBAL_INLINE void reset_layer_timing(lives_layer_t *layer) {
   if (layer) {
-    ticks_t *timing_data = (ticks_t *)lives_calloc(N_LAYER_STATUSES, sizeof(ticks_t));
-    set_layer_timing(layer, timing_data);
+    lock_layer_status(layer);
+    _reset_layer_timing(layer);
+    unlock_layer_status(layer);
   }
 }
 

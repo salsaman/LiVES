@@ -47,11 +47,12 @@ int save_to_scrap_file(weed_layer_t *);
 boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
 boolean flush_scrap_file(void);
 
-boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
+boolean pull_frame(weed_layer_t *, const char *img_ext, ticks_t tc);
 lives_result_t  pull_frame_threaded(weed_layer_t *, int width, int height);
 lives_proc_thread_t lives_layer_get_procthread(lives_layer_t *);
 boolean is_layer_ready(weed_layer_t *);
-lives_result_t check_layer_ready(weed_layer_t *);
+lives_result_t wait_layer_ready(weed_layer_t *);
+
 boolean pull_frame_at_size(weed_layer_t *, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,

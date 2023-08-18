@@ -1220,7 +1220,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
         if (!srcgrp) srcgrp = get_srcgrp(sclipno, -1, SRC_PURPOSE_THUMBNAIL);
         if (!srcgrp) srcgrp = clone_srcgrp(sclipno, sclipno, -1, SRC_PURPOSE_THUMBNAIL);
         lives_layer_set_srcgrp(layer, srcgrp);
-        if (!pull_frame(layer, get_image_ext_for_type(sfile->img_type), 0)) {
+        if (!pull_frame(layer, NULL, 0)) {
           retval = -i;
           break;
         }

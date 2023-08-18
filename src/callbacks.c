@@ -470,7 +470,6 @@ void lives_exit(int signum) {
     // stop valgrind from complaining
 #ifdef VALGRIND_ON
     if (mainw->frame_layer) {
-      check_layer_ready(mainw->frame_layer);
       weed_layer_unref(mainw->frame_layer);
       mainw->frame_layer = NULL;
     }
@@ -4597,7 +4596,8 @@ void on_select_activate(LiVESWidget * widget, livespointer user_data) {
 }
 
 void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
-  uint64_t *myrows;
+  // select from start to frame before matching frame
+  lives_row_hash_t *rowhash;
   boolean mv_start = FALSE;
   boolean from_cursor = FALSE;
   int dirn = LIVES_DIRECTION_FORWARD;
@@ -4613,8 +4613,8 @@ void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
   // maxcheck
 
   if (!mv_start) {
-    myrows = hash_cmp_rows(NULL, mainw->current_file, cfile->start);
-    if (!myrows) return;
+    rowhash = hash_cmp_rows(NULL, mainw->current_file, cfile->start);
+    if (!rowhash) return;
     fridx = get_indexed_frame(mainw->current_file, cfile->start);
     if (from_cursor) posn = 0; // TODO
     else posn = cfile->end;
@@ -4624,9 +4624,10 @@ void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
       if (maxcheck > cfile->frames) maxcheck = cfile->frames;
       for (i = posn; i <= maxcheck; i++) {
         if (get_indexed_frame(mainw->current_file, i) == fridx) break;
-        if (hash_cmp_rows(myrows, mainw->current_file, i)) break;
+        if (hash_cmp_rows(rowhash, mainw->current_file, i)) break;
       }
-      lives_free(myrows);
+      if (rowhash->crows) lives_free(rowhash->crows);
+      lives_free(rowhash);
       if (i > maxcheck) {
         // notfound
         return;

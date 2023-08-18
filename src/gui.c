@@ -3784,7 +3784,7 @@ void make_preview_box(void) {
 
   char *tmp, *tmp2;
 
-  preview_box = lives_vbox_new(FALSE, 0);
+  mainw->preview_box = preview_box = lives_vbox_new(FALSE, 0);;
 
   eventbox = lives_event_box_new();
   lives_widget_set_events(eventbox, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
@@ -3952,10 +3952,9 @@ void make_preview_box(void) {
                              LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_preview_spinbutton_changed), NULL);
 
-  mainw->preview_box = preview_box;
   if (palette->style & STYLE_1) set_preview_box_colours();
 
-  lives_widget_show_all(preview_box);
+  lives_widget_show_all(mainw->preview_box);
   lives_widget_hide(mainw->preview_controls);
   lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 }

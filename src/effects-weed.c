@@ -1944,12 +1944,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     // connect the kth in_channel to
     channel = in_channels[k];
-    layer = layers[in_tracks[i]];
-
-    //if (!weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL)) {
-    /// wait for thread to pull layer pixel_data
-    if (prefs->dev_show_timing)
-      g_printerr("fx clr pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+    layer = layers[in_tracks[i++]];
 
     frame = lives_layer_get_frame(layer);
     if (frame <= 0 || !layer || !weed_layer_get_pixel_data(layer)) {
@@ -1965,7 +1960,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         goto done_video;
 	// *INDENT-OFF*
       }}
-    k++;
   }
   // *INDENT-ON*
 
@@ -3112,13 +3106,13 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                                             (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, NULL)))))) {
       if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, NULL) == -1) {
         if (!weed_layer_get_pixel_data(layers[i]))
-          check_layer_ready(layers[i]);
+          wait_layer_ready(layers[i]);
         if (!weed_layer_get_pixel_data(layers[i])) continue;
         weed_layer_pixel_data_free(layers[i]);
       } else output = i;
     } else {
       if (!weed_layer_get_pixel_data(layers[i]))
-        check_layer_ready(layers[i]);
+        wait_layer_ready(layers[i]);
       if (!weed_layer_get_pixel_data(layers[i])) continue;
       weed_layer_pixel_data_free(layers[i]);
     }
@@ -3134,7 +3128,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
   // frame is pulled uneffected here. TODO: Try to pull at target output palette
   if (!weed_layer_get_pixel_data(layer)) {
-    check_layer_ready(layer);
+    wait_layer_ready(layer);
     if (!weed_layer_get_pixel_data(layer)) {
       if (!pull_frame_at_size(layer, get_image_ext_for_type(mainw->files[clip]->img_type), tc, opwidth, opheight,
                               WEED_PALETTE_END)) {
@@ -7435,8 +7429,13 @@ matchvals:
     return NULL;
   }
 
-  if (!get_primary_src(mainw->current_file))
-    add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
+  if (!is_bg) {
+    if (!get_primary_src(mainw->current_file))
+      add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
+  } else {
+    if (!get_primary_src(mainw->blend_file))
+      add_primary_inst(mainw->blend_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
+  }
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
     int num_inc;
@@ -7618,7 +7617,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
     mainw->play_start = mainw->play_end = 1;
     mainw->startticks = mainw->currticks;
-
+    is_bg = FALSE;
   } else {
     if (!create_cfile(-1, filter_name, TRUE)) {
       return 3;

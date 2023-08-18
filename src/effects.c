@@ -644,7 +644,7 @@ lives_render_error_t realfx_progress(boolean reset) {
     layers[1] = NULL;
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
     //THREADVAR(rowstride_alignment_hint) = 4;
-    if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
+    if (!pull_frame(layer, NULL, frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "error|missing image %d", i);
       prefs->pb_quality = pbq;
@@ -653,12 +653,8 @@ lives_render_error_t realfx_progress(boolean reset) {
 
     layer = on_rte_apply(layers, 0, 0, (weed_timecode_t)frameticks, FALSE);
 
-    for (int i = 0; layers[i]; i++) {
-      if (layers[i] != layer) {
-        check_layer_ready(layers[i]);
-        weed_layer_unref(layers[i]);
-      }
-    }
+    for (int i = 0; layers[i]; i++)
+      if (layers[i] != layer) weed_layer_unref(layers[i]);
     lives_free(layers);
 
     if (!has_video_filters(TRUE) || resize_instance) {
@@ -871,14 +867,13 @@ void on_realfx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
 
 static frames64_t get_blend_frame_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
-  ticks_t *timing_data;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
   frames64_t frameno;
 
   blend_file = RETURN_VALID_CLIP(mainw->blend_file);
   if (!blend_file) return -1;
-  if (!IS_PHYSICAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = 1;
+  if (!IS_PHYSICAL_CLIP(mainw->blend_file)) blend_file->last_frameno = blend_file->frameno = frameno = 1;
   else {
     blend_file->last_frameno = frameno = blend_file->frameno;
     if (mainw->blend_file != mainw->last_blend_file) {
@@ -902,52 +897,8 @@ static frames64_t get_blend_frame_inner(weed_timecode_t tc) {
   return frameno;
 }
 
-/* if (!weed_layer_check_valid(mainw->blend_layer)) { */
-/*   if (mainw->blend_layer != old_frame_layer) { */
-/*     check_layer_ready(mainw->blend_layer); */
-/*     weed_layer_free(mainw->blend_layer); */
-/*   } */
-/*   mainw->blend_layer = NULL; */
-/*  } */
-
-/* if (!mainw->blend_layer && mainw->new_blend_file == mainw->blend_file) { */
-/*   // try to do this right after sync_announce, since that is the point where we */
-/*   // transitions would be inited / deinited */
-/*   if ((mainw->rte || (mainw->is_rendering && !mainw->event_list)) */
-/*       && (mainw->current_file != mainw->scrap_file) */
-/*       && (mainw->blend_file != mainw->playing_file */
-/* 	  || prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) { */
-/*     /// will set mainw->blend_layer */
-/*     if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n", */
-/* 					   lives_get_current_ticks() / TICKS_PER_SECOND_DBL); */
-/*     mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks); */
-/*     // *INDENT-OFF* */
-/*   }}}} */
-/* // *INDENT-ON* */
-
-
-/* if (mainw->blend_layer) { */
-/*   // assume we played the blend_layer, if we have one */
-/*   if (mainw->blend_layer != get_old_frame_layer()) { */
-/*     weed_layer_set_invalid(mainw->blend_layer, TRUE); */
-/*     check_layer_ready(mainw->blend_layer); */
-/*     weed_layer_unref(mainw->blend_layer); */
-/*   } */
-/*   mainw->blend_layer = NULL; */
-/*  } */
-/* if ((mainw->rte || (mainw->is_rendering && !mainw->event_list)) */
-/*     && (mainw->current_file != mainw->scrap_file) */
-/*     && (mainw->blend_file != mainw->playing_file */
-/* 	|| prefs->tr_self) && !mainw->multitrack && IS_VALID_CLIP(mainw->blend_file)) { */
-/*   /// will set mainw->blend_layer */
-/*   if (prefs->dev_show_timing) g_printerr("get blend layer start  @ %f\n", */
-/* 					 lives_get_current_ticks() / TICKS_PER_SECOND_DBL); */
-/*   mainw->blend_layer = get_blend_layer((weed_timecode_t)mainw->currticks); */
-/*  } */
-
 
 frames64_t get_blend_frame(weed_timecode_t tc) {
-  weed_layer_t *layer = NULL;
   if ((mainw->num_tr_applied > 0
        && !IS_VALID_CLIP(mainw->blend_file)) ||
       (IS_VALID_CLIP(mainw->blend_file) &&
@@ -956,7 +907,6 @@ frames64_t get_blend_frame(weed_timecode_t tc) {
         !mainw->files[mainw->blend_file]->is_loaded))) {
     // invalid blend file
     if (mainw->blend_file != mainw->playing_file) {
-      //track_source_free(1, mainw->blend_file);
       mainw->new_blend_file = -1;
     }
     return -1;
@@ -1052,10 +1002,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
 
   if (mainw->go_away) return res;
   if (!LIVES_IS_INTERACTIVE && from_menu) return res;
-
-  if (!THREADVAR(fx_is_auto)) {
-    cleanup_nodemodel();
-  }
 
   if (key == EFFECT_NONE) {
     // switch off real time effects

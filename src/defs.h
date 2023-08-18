@@ -558,8 +558,6 @@ typedef enum {
 
 #define BG_LOAD_RFX 1
 
-#define USE_RESTHREAD 0
-
 #ifdef HAVE_MJPEGTOOLS
 #define HAVE_YUV4MPEG		1
 #endif

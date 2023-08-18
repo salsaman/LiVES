@@ -1063,6 +1063,8 @@ static boolean pre_init(void) {
 #endif
     prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
 
+  prefs->dev_show_timing = TRUE;
+
   prefs->show_urgency_msgs = get_boolean_prefd(PREF_SHOW_URGENCY, TRUE);
   prefs->show_overlay_msgs = get_boolean_prefd(PREF_SHOW_OVERLAY_MSGS, TRUE);
 
@@ -1723,6 +1725,8 @@ static boolean lives_startup2(livespointer data) {
   /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
   /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
 
+  prefs->pb_quality = future_prefs->pb_quality = PB_QUALITY_MED;
+
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   // this can only be added AFTER calling check_for_recovery_files, otherwise we get stuck
@@ -1869,7 +1873,8 @@ static boolean lives_startup2(livespointer data) {
   dump_messages(NULL);
 #endif
 
-  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+  //lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);

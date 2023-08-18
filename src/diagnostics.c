@@ -15,10 +15,6 @@
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
-#define DIAG_ALL		(uint64_t)-1
-#define DIAG_MEMORY		(1ull << 0)
-#define DIAG_THREADS		(1ull << 1)
-
 void print_diagnostics(uint64_t types) {
   char *tmp;
   if (types & DIAG_MEMORY) {
@@ -2173,23 +2169,6 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
 /*   lives_free(buf); */
 /*   g_print("size is %ld\n", ts); */
 /* } */
-
-
-void md5test(void) {
-  char bb[1024 * 1024];
-  void *ret;
-  const char *bytes = "hello world";
-  reset_timer_info();
-  for (int i = 0; i < 49; i++) {
-    ret = tinymd5((void *)bytes, strlen(bytes));
-    g_print("0x");
-    for (int j = 0; j < 16; j++) {
-      g_print("%02x", ((uint8_t *)ret)[j]);
-    }
-    g_print("\n");
-  }
-  show_timer_info();
-}
 
 
 static void pth_testfunc(void *var) {

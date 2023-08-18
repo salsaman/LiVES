@@ -14,22 +14,28 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
-  if (synclist) {
-    pthread_mutex_lock(&synclist->mutex);
-    synclist->list = lives_list_prepend(synclist->list, data);
-    pthread_mutex_unlock(&synclist->mutex);
-  }
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
+  if (!synclist) synclist = lives_sync_list_new();
+  pthread_mutex_lock(&synclist->mutex);
+  synclist->list = lives_list_prepend(synclist->list, data);
+  pthread_mutex_unlock(&synclist->mutex);
+  return synclist;
 }
 
 
-LIVES_GLOBAL_INLINE void lives_sync_list_remove(lives_sync_list_t *synclist, void *data,
-    boolean do_free) {
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t *synclist,
+    void *data, boolean do_free) {
   if (synclist) {
     pthread_mutex_lock(&synclist->mutex);
     synclist->list = lives_list_remove_data(synclist->list, data, do_free);
+    if (!synclist->list) {
+      pthread_mutex_unlock(&synclist->mutex);
+      lives_free(synclist);
+      return NULL;
+    }
     pthread_mutex_unlock(&synclist->mutex);
   }
+  return synclist;;
 }
 
 
@@ -50,9 +56,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_locate_string(LiVESList *list, const c
 
 
 LIVES_GLOBAL_INLINE boolean cmp_rows(uint64_t *r0, uint64_t *r1, int nr) {
-  for (int i = 0; i < nr; i++) {
-    if (r0[i] != r1[i]) return TRUE;
-  }
+  for (int i = 0; i < nr; i++) if (r0[i] != r1[i]) return TRUE;
   return FALSE;
 }
 
@@ -454,7 +458,7 @@ LIVES_GLOBAL_INLINE void *get_from_hash_store_i(lives_hash_store_t *store, uint6
 }
 
 LIVES_GLOBAL_INLINE void *get_from_hash_store(lives_hash_store_t *store, const char *key) {
-  return get_from_hash_store_i(store, minimd5((void *)key, lives_strlen(key)));
+  return get_from_hash_store_i(store, fast_hash64((void *)key));
 }
 
 
@@ -473,7 +477,7 @@ LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store_i(lives_hash_store_t *
 }
 
 LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store(lives_hash_store_t *store, const char *key, void *data) {
-  return add_to_hash_store_i(store, minimd5((void *)key, lives_strlen(key)), data);
+  return add_to_hash_store_i(store, fast_hash64((void *)key), data);
 }
 
 

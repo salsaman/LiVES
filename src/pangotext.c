@@ -772,8 +772,6 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
-    if (weed_layer_get_pixel_data(test_layer) == weed_layer_get_pixel_data(layer))
-      weed_layer_nullify_pixel_data(test_layer);
     weed_layer_unref(test_layer);
 
     /// if possible just render the slice which contains the text
@@ -793,12 +791,6 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
       layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(layer_slice, layer);
-
-      // ensure we don't mess with the original pixel_data
-      weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
-      weed_leaf_delete(layer_slice, LIVES_LEAF_PIXBUF_SRC);
-      weed_leaf_delete(layer_slice, LIVES_LEAF_SURFACE_SRC);
-      weed_leaf_delete(layer_slice, LIVES_LEAF_BBLOCKALLOC);
 
       // restore original values for the original layer
       weed_layer_set_height(layer, height);
@@ -854,9 +846,8 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
             lives_memcpy(&src[i * row], &pd[(i - itop) * orow], row);
           }
         } else lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
-      } else weed_layer_nullify_pixel_data(layer_slice);
+      }
 
-      weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
       weed_layer_unref(layer_slice);
 
       if (rbswapped) {
@@ -875,7 +866,8 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   if (!cr) {
     cr = layer_to_lives_painter(layer);
     if (!cr) return layer; ///< error occurred
-    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, &top, &offsx, width, &height);
+    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col,
+                               bg_col, center, rising, &top, &offsx, width, &height);
     if (layout && LINGO_IS_LAYOUT(layout)) {
       lingo_painter_show_layout(cr, layout);
       if (layout) lives_widget_object_unref(layout);
@@ -884,6 +876,44 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   }
   if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
   return layer;
+}
+
+
+void render_subs_from_file(lives_clip_t *sfile, double xtime, weed_layer_t *layer) {
+  // render subtitles from whatever (.srt or .sub) file
+  // uses default values for colours, fonts, size, etc.
+
+  // TODO - allow prefs settings for colours, fonts, size, alpha (use plugin for this)
+
+  //char *sfont=mainw->font_list[prefs->sub_font];
+  const char *sfont = "Sans";
+  lives_colRGBA64_t col_white, col_black_a;
+
+  int error, size;
+
+  xtime -= (double)sfile->subt->offset / sfile->fps;
+
+  // round to 2 dp
+  xtime = (double)((int)(xtime * 100. + .5)) / 100.;
+
+  if (xtime < 0.) return;
+
+  get_subt_text(sfile, xtime);
+
+  if (!sfile->subt->text) return;
+
+  size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
+
+  col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
+  col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
+
+  if (prefs->apply_gamma && prefs->pb_quality == PB_QUALITY_HIGH) {
+    // make it look nicer by dimming relative to luma
+    gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
+  }
+
+  render_text_to_layer(layer, sfile->subt->text, sfont, size,
+                       LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, TRUE, 0.);
 }
 
 

@@ -4079,7 +4079,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               if (!get_primary_src(mainw->scrap_file)) load_from_scrap_file(NULL, -1);
               else {
                 lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)), offs);
-                if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
+                if (!pull_frame(layer, NULL, tc)) {
                   weed_layer_unref(layer);
                   layer = NULL;
                 }
@@ -4103,7 +4103,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             for (i = 0; layers[i]; i++) {
               weed_layer_unref(layers[i]);
               if (layer != layers[i]) {
-                check_layer_ready(layers[i]);
                 weed_layer_unref(layers[i]);
               }
             }
@@ -4160,15 +4159,14 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 if (layer == mainw->scrap_layer) {
                   // hmmm
                 } else {
-                  check_layer_ready(layer);
-                  if (prefs->enc_letterbox) {
-                    int lb_width = weed_layer_get_width_pixels(layer);
-                    int lb_height = weed_layer_get_height(layer);
-                    calc_maxspect(cfile->hsize, cfile->vsize, &lb_width, &lb_height);
-                    lb_width = (lb_width >> 2) << 2;
-                    letterbox_layer(layer, cfile->hsize, cfile->vsize, lb_width, lb_height,
-                                    LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
-                  } else resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
+                  /* if (prefs->enc_letterbox) { */
+                  /*   int lb_width = weed_layer_get_width_pixels(layer); */
+                  /*   int lb_height = weed_layer_get_height(layer); */
+                  /*   calc_maxspect(cfile->hsize, cfile->vsize, &lb_width, &lb_height); */
+                  /*   lb_width = (lb_width >> 2) << 2; */
+                  /*   letterbox_layer(layer, cfile->hsize, cfile->vsize, lb_width, lb_height, */
+                  /*                   LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0); */
+                  /* } else resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0); */
                 }
                 // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
                 next_frame_event = get_next_frame_event(event);
@@ -4210,8 +4208,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
               break;
             }
-            check_layer_ready(layer);
-            width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer));
+
+            wait_layer_ready(layer);
+            width = weed_layer_get_width_pixels(layer);
             height = weed_layer_get_height(layer);
             lpal = layer_palette = weed_layer_get_palette(layer);
             layer_palette = WEED_PALETTE_RGB24;

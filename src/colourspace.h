@@ -374,12 +374,28 @@ boolean lives_layer_is_all_black(weed_layer_t *layer, boolean exact);
 
 // pixbuf functions
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)
-boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf, boolean exact);
-void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
+boolean lives_pixbuf_is_all_black(LiVESPixbuf *, boolean exact);
+void lives_pixbuf_set_opaque(LiVESPixbuf *);
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette, boolean fordisp);
 boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
-uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame);
+typedef struct {
+  // struct for quickly comparing (planar) layer pdata
+  // uses - compare two layers
+  // check if layer is blank
+  // equate undecoded layer with decoded layer
+  // blank row removal
+  // count blanks above and below image
+  int nrows;
+  int width;
+  // hash64 of each row
+  uint64_t *crows;
+  // parity formed by XORing crows
+  uint64_t parity;
+} lives_row_hash_t;
+
+lives_row_hash_t *hash_cmp_rows(lives_row_hash_t *, int clipno, frames_t frame);
+lives_row_hash_t *hash_cmp_layer(lives_layer_t *, lives_row_hash_t *);
 
 /// utility funcs for GUI
 int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, boolean do_back, int *nbad, int *nmiss);

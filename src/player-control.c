@@ -258,6 +258,7 @@ static void post_playback(void) {
             //mainw->no_context_update = TRUE;
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+
             lives_widget_show_all(mainw->preview_box);
             // need to recheck mainw->play_window after this
             lives_widget_show_now(mainw->preview_box);
@@ -1169,249 +1170,245 @@ void play_file(void) {
         mainw->pulsed->in_use = FALSE;
       }
 #endif
-
       /// stop the players before the cache thread, else the players may try to play from a non-existent file
       if (audio_player == AUD_PLAYER_JACK
           || (mainw->event_list && !mainw->record && (!mainw->is_rendering
               || !mainw->preview || mainw->preview_rendering)))
         audio_cache_end();
-
-      // terminate autolives if running
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
-
-      reset_old_frame_layer();
-
-      // nodemodel / plan
-      cleanup_nodemodel();
-
-      // PLAY FINISHED...
-
-      if (prefs->stop_screensaver) lives_reenable_screensaver();
-
-      if (prefs->show_gui) {
-        if (mainw->gui_hidden) unhide_main_gui();
-        else lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
-      }
-
-      if (!mainw->multitrack && mainw->ext_audio_mon)
-        lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), FALSE);
-
-      if ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED
-           && (prefs->audio_opts & AUDIO_OPTS_AUTO_UNLOCK))) {
-        aud_lock_act(NULL, LIVES_INT_TO_POINTER(FALSE));
-      }
-
-      // TODO ***: use MIDI output port for this
-      if (!mainw->foreign && prefs->midisynch) {
-        lives_cancel_t cancelled = mainw->cancelled;
-        lives_system(EXEC_MIDISTOP, TRUE);
-        mainw->cancelled = cancelled;
-      }
-      // we could have started by playing a generator, which could've been closed
-      if (!mainw->files[current_file]) current_file = mainw->current_file;
-
-      if (IS_VALID_CLIP(mainw->close_this_clip)) {
-        // need to keep blend_file around until we check if it is a generator to close
-        int blend_file = mainw->blend_file;
-
-        current_file = mainw->current_file;
-        mainw->can_switch_clips = TRUE;
-        mainw->current_file = mainw->close_this_clip;
-        if (mainw->blend_file == mainw->current_file) blend_file = -1;
-        mainw->new_clip = close_current_file(current_file);
-        if (!IS_VALID_CLIP(current_file)) mainw->current_file = mainw->new_clip;
-        mainw->can_switch_clips = FALSE;
-        if (IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
-        else mainw->blend_file = -1;
-      }
-
-      mainw->close_this_clip = mainw->new_clip = -1;
-
-      if (IS_VALID_CLIP(mainw->scrap_file) && get_primary_src(mainw->scrap_file)) {
-        lives_close_buffered(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)->priv));
-        remove_primary_src(mainw->scrap_file, LIVES_SRC_TYPE_FILE_BUFF);
-      }
-
-      if (mainw->foreign) {
-        // recording from external window capture
-        mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
-        mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
-
-        cfile->hsize = mainw->pwidth;
-        cfile->vsize = mainw->pheight;
-
-        lives_xwindow_set_keep_above(mainw->foreign_window, FALSE);
-
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-
-        ____FUNC_EXIT____;
-
-        return;
-      }
-
-      disable_record();
-      prefs->pb_quality = future_prefs->pb_quality;
-      mainw->lockstats = FALSE;
-      mainw->blend_palette = WEED_PALETTE_END;
-      mainw->audio_stretch = 1.;
-
-      lives_hooks_trigger(NULL, COMPLETED_HOOK);
-
-      if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
-      ofl = get_old_frame_layer();
-
-      if (mainw->cached_frame) {
-        if (mainw->cached_frame != mainw->frame_layer
-            && mainw->cached_frame != ofl) {
-          if (weed_layer_get_pixel_data(mainw->cached_frame)
-              == weed_layer_get_pixel_data(mainw->frame_layer))
-            weed_layer_nullify_pixel_data(mainw->cached_frame);
-          weed_layer_free(mainw->cached_frame);
-        }
-        mainw->cached_frame = NULL;
-      }
-
-      if (mainw->frame_layer && mainw->frame_layer != ofl) {
-        check_layer_ready(mainw->frame_layer);
-        weed_layer_free(mainw->frame_layer);
-        if (mainw->frame_layer == mainw->frame_layer_preload)
-          mainw->frame_layer_preload = NULL;
-        if (mainw->frame_layer == mainw->blend_layer)
-          mainw->blend_layer = NULL;
-        mainw->frame_layer = NULL;
-      }
-
-      /// free any pre-cached frame
-      if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
-        check_layer_ready(mainw->frame_layer_preload);
-        weed_layer_free(mainw->frame_layer_preload);
-        if (mainw->frame_layer_preload == mainw->blend_layer)
-          mainw->blend_layer = NULL;
-      }
-      mainw->frame_layer_preload = NULL;
-
-      if (mainw->blend_layer) {
-        check_layer_ready(mainw->blend_layer);
-        weed_layer_free(mainw->blend_layer);
-        mainw->blend_layer = NULL;
-      }
-
-      /// free the last frame image(s)
-      reset_old_frame_layer();
-
-      if (mainw->nodemodel) {
-        // free the nodemodel
-        free_nodemodel(&mainw->nodemodel);
-        mainw->nodemodel = NULL;
-      }
-
-      cliplist = mainw->cliplist;
-      while (cliplist) {
-        // TODO - free any track srgrps
-        int i = LIVES_POINTER_TO_INT(cliplist->data);
-        if (IS_NORMAL_CLIP(i) && mainw->files[i]->clip_type == CLIP_TYPE_FILE)
-          chill_decoder_plugin(i);
-        mainw->files[i]->adirection = LIVES_DIRECTION_FORWARD;
-        cliplist = cliplist->next;
-      }
-
-      // join any threads created for this
-      if (mainw->scrap_file > -1) flush_scrap_file();
-
-      if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
-
-      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
-          && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-        current_file = mainw->current_file;
-        mainw->can_switch_clips = TRUE;
-        // TODO - make sure we dont remove this too soon
-        weed_bg_generator_end((weed_instance_t *)(get_primary_src(mainw->blend_file))->actor);
-        mainw->can_switch_clips = FALSE;
-        if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
-      }
-
-      mainw->filter_map = mainw->afilter_map = mainw->audio_event = NULL;
-
-      /// disable the freeze key
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), bg_freeze_closure);
-
-      if (needsadone) d_print_done();
-
-      if (!prefs->vj_mode) {
-        /// pop up error dialog if badly sized frames were detected
-        if (mainw->size_warn) {
-          if (mainw->size_warn > 0 && mainw->files[mainw->size_warn]) {
-            char *smsg = lives_strdup_printf(
-                           _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should "
-                             "click on Tools--->Resize All\n"
-                             "and resize all frames to the current size.\n"),
-                           mainw->files[mainw->size_warn]->name);
-            widget_opts.non_modal = TRUE;
-            do_error_dialog(smsg);
-            widget_opts.non_modal = FALSE;
-            lives_free(smsg);
-          }
-        }
-      }
-      mainw->size_warn = 0;
-
-      // set processing state again if a previewe finished
-      // CAUTION !!
-      /////
-
-      mainw->is_processing = mainw->preview;
-      /////////////////
-
-      if (prefs->volume != (double)future_prefs->volume)
-        pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
-
-      if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
-          && cfile->frames == 0 && mainw->record_perf) {
-        // I beleive this is needed in the case where a video generator was recorded using audio
-        // from a clip with no video frames
-        lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
-        lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
-        lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
-      }
-
-      // TODO - can this be done earlier ?
-      if (mainw->cancelled == CANCEL_APP_QUIT) on_quit_activate(NULL, NULL);
-
-      /// end record performance
-
-      // TODO - use awai_audio_queue
-
-#ifdef ENABLE_JACK
-      if (audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-        ticks_t timeout;
-        lives_alarm_t alarm_handle;
-        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
-        lives_alarm_clear(alarm_handle);
-        if (timeout == 0) handle_audio_timeout();
-        if (has_audio_buffers) {
-          free_jack_audio_buffers();
-          audio_free_fnames();
-        }
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-        ticks_t timeout;
-        lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
-                                   && pulse_get_msgq(mainw->pulsed));
-        lives_alarm_clear(alarm_handle);
-        if (timeout == 0) handle_audio_timeout();
-        if (has_audio_buffers) {
-          free_pulse_audio_buffers();
-          audio_free_fnames();
-        }
-      }
-#endif
     }
   }
+  // terminate autolives if running
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
+
+  reset_old_frame_layer();
+
+  // nodemodel / plan
+  cleanup_nodemodel(&mainw->nodemodel);
+
+  // PLAY FINISHED...
+
+  if (prefs->stop_screensaver) lives_reenable_screensaver();
+
+  if (prefs->show_gui) {
+    if (mainw->gui_hidden) unhide_main_gui();
+    else lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
+  }
+
+  if (!mainw->multitrack && mainw->ext_audio_mon)
+    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), FALSE);
+
+  if ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED
+       && (prefs->audio_opts & AUDIO_OPTS_AUTO_UNLOCK))) {
+    aud_lock_act(NULL, LIVES_INT_TO_POINTER(FALSE));
+  }
+
+  // TODO ***: use MIDI output port for this
+  if (!mainw->foreign && prefs->midisynch) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(EXEC_MIDISTOP, TRUE);
+    mainw->cancelled = cancelled;
+  }
+  // we could have started by playing a generator, which could've been closed
+  if (!mainw->files[current_file]) current_file = mainw->current_file;
+
+  if (IS_VALID_CLIP(mainw->close_this_clip)) {
+    // need to keep blend_file around until we check if it is a generator to close
+    int blend_file = mainw->blend_file;
+
+    current_file = mainw->current_file;
+    mainw->can_switch_clips = TRUE;
+    mainw->current_file = mainw->close_this_clip;
+    if (mainw->blend_file == mainw->current_file) blend_file = -1;
+    mainw->new_clip = close_current_file(current_file);
+    if (!IS_VALID_CLIP(current_file)) mainw->current_file = mainw->new_clip;
+    mainw->can_switch_clips = FALSE;
+    if (IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
+    else mainw->blend_file = -1;
+  }
+
+  mainw->close_this_clip = mainw->new_clip = -1;
+
+  if (IS_VALID_CLIP(mainw->scrap_file) && get_primary_src(mainw->scrap_file)) {
+    lives_close_buffered(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)->priv));
+    remove_primary_src(mainw->scrap_file, LIVES_SRC_TYPE_FILE_BUFF);
+  }
+
+  if (mainw->foreign) {
+    // recording from external window capture
+    mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
+    mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
+
+    cfile->hsize = mainw->pwidth;
+    cfile->vsize = mainw->pheight;
+
+    lives_xwindow_set_keep_above(mainw->foreign_window, FALSE);
+
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+
+    ____FUNC_EXIT____;
+
+    return;
+  }
+
+  disable_record();
+  prefs->pb_quality = future_prefs->pb_quality;
+  mainw->lockstats = FALSE;
+  mainw->blend_palette = WEED_PALETTE_END;
+  mainw->audio_stretch = 1.;
+
+  lives_hooks_trigger(NULL, COMPLETED_HOOK);
+
+  if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
+  ofl = get_old_frame_layer();
+
+  if (mainw->cached_frame) {
+    if (mainw->cached_frame != mainw->frame_layer
+        && mainw->cached_frame != ofl) {
+      if (weed_layer_get_pixel_data(mainw->cached_frame)
+          == weed_layer_get_pixel_data(mainw->frame_layer))
+        weed_layer_nullify_pixel_data(mainw->cached_frame);
+      weed_layer_free(mainw->cached_frame);
+    }
+    mainw->cached_frame = NULL;
+  }
+
+  if (mainw->frame_layer && mainw->frame_layer != ofl) {
+    weed_layer_unref(mainw->frame_layer);
+    if (mainw->frame_layer == mainw->frame_layer_preload)
+      mainw->frame_layer_preload = NULL;
+    if (mainw->frame_layer == mainw->blend_layer)
+      mainw->blend_layer = NULL;
+    mainw->frame_layer = NULL;
+  }
+
+  /// free any pre-cached frame
+  if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
+    weed_layer_unref(mainw->frame_layer_preload);
+    if (mainw->frame_layer_preload == mainw->blend_layer)
+      mainw->blend_layer = NULL;
+  }
+  mainw->frame_layer_preload = NULL;
+
+  if (mainw->blend_layer) {
+    weed_layer_unref(mainw->blend_layer);
+    mainw->blend_layer = NULL;
+  }
+
+  /// free the last frame image(s)
+  reset_old_frame_layer();
+
+  if (mainw->nodemodel) {
+    // free the nodemodel
+    free_nodemodel(&mainw->nodemodel);
+    mainw->nodemodel = NULL;
+  }
+
+  cliplist = mainw->cliplist;
+  while (cliplist) {
+    // TODO - free any track srgrps
+    int i = LIVES_POINTER_TO_INT(cliplist->data);
+    if (IS_NORMAL_CLIP(i) && mainw->files[i]->clip_type == CLIP_TYPE_FILE)
+      chill_decoder_plugin(i);
+    mainw->files[i]->adirection = LIVES_DIRECTION_FORWARD;
+    cliplist = cliplist->next;
+  }
+
+  // join any threads created for this
+  if (mainw->scrap_file > -1) flush_scrap_file();
+
+  if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
+
+  if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
+      && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+    current_file = mainw->current_file;
+    mainw->can_switch_clips = TRUE;
+    // TODO - make sure we dont remove this too soon
+    weed_bg_generator_end((weed_instance_t *)(get_primary_src(mainw->blend_file))->actor);
+    mainw->can_switch_clips = FALSE;
+    if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
+  }
+
+  mainw->filter_map = mainw->afilter_map = mainw->audio_event = NULL;
+
+  /// disable the freeze key
+  lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
+  lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), bg_freeze_closure);
+
+  if (needsadone) d_print_done();
+
+  if (!prefs->vj_mode) {
+    /// pop up error dialog if badly sized frames were detected
+    if (mainw->size_warn) {
+      if (mainw->size_warn > 0 && mainw->files[mainw->size_warn]) {
+        char *smsg = lives_strdup_printf(
+                       _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should "
+                         "click on Tools--->Resize All\n"
+                         "and resize all frames to the current size.\n"),
+                       mainw->files[mainw->size_warn]->name);
+        widget_opts.non_modal = TRUE;
+        do_error_dialog(smsg);
+        widget_opts.non_modal = FALSE;
+        lives_free(smsg);
+      }
+    }
+  }
+  mainw->size_warn = 0;
+
+  // set processing state again if a previewe finished
+  // CAUTION !!
+  /////
+
+  mainw->is_processing = mainw->preview;
+  /////////////////
+
+  if (prefs->volume != (double)future_prefs->volume)
+    pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
+
+  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
+      && cfile->frames == 0 && mainw->record_perf) {
+    // this is needed in the case where a video generator was recorded using audio
+    // from a clip with no video frames
+    lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
+    lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
+  }
+
+  // TODO - can this be done earlier ?
+  if (mainw->cancelled == CANCEL_APP_QUIT) on_quit_activate(NULL, NULL);
+
+  /// end record performance
+
+  // TODO - use awai_audio_queue
+
+#ifdef ENABLE_JACK
+  if (audio_player == AUD_PLAYER_JACK && mainw->jackd) {
+    ticks_t timeout;
+    lives_alarm_t alarm_handle;
+    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
+    lives_alarm_clear(alarm_handle);
+    if (timeout == 0) handle_audio_timeout();
+    if (has_audio_buffers) {
+      free_jack_audio_buffers();
+      audio_free_fnames();
+    }
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
+    ticks_t timeout;
+    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
+                               && pulse_get_msgq(mainw->pulsed));
+    lives_alarm_clear(alarm_handle);
+    if (timeout == 0) handle_audio_timeout();
+    if (has_audio_buffers) {
+      free_pulse_audio_buffers();
+      audio_free_fnames();
+    }
+  }
+#endif
+
   if (THREADVAR(bad_aud_file)) {
     /// we got an error recording audio
     do_write_failed_error_s(THREADVAR(bad_aud_file), NULL);

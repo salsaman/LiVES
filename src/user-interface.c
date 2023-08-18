@@ -863,7 +863,7 @@ static void _resize(double scale) {
 
   if (!prefs->show_gui || mainw->multitrack) return;
 
-  reset_mainwin_size();
+  if (!mainw->go_away) reset_mainwin_size();
 
   get_gui_framesize(&hsize, &vsize);
 

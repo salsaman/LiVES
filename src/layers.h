@@ -31,6 +31,7 @@
 #define LIVES_LEAF_COPYLIST "layer_copies"
 
 #define LIVES_LEAF_LAYER_STATUS "layer_status"
+#define LIVES_LEAF_LST_MUTEX "lst_mutex"
 
 // layer statuses
 
@@ -71,9 +72,19 @@
 void lives_layer_set_status(weed_layer_t *, int status);
 int lives_layer_get_status(weed_layer_t *);
 
+void _lives_layer_set_status(weed_layer_t *, int status);
+int _lives_layer_get_status(weed_layer_t *);
+
+void lock_layer_status(weed_layer_t *layer);
+void unlock_layer_status(weed_layer_t *layer);
+
 ticks_t *get_layer_timing(lives_layer_t *);
 void set_layer_timing(lives_layer_t *, ticks_t *timing_data);
 void reset_layer_timing(lives_layer_t *);
+
+ticks_t *_get_layer_timing(lives_layer_t *);
+void _set_layer_timing(lives_layer_t *, ticks_t *timing_data);
+void _reset_layer_timing(lives_layer_t *);
 
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);

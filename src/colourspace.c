@@ -592,12 +592,8 @@ static boolean unal_inited = FALSE;
 
 
 static void lives_free_buffer(uint8_t *pixels, livespointer data) {
-  if (data) {
-    lives_sync_list_t *copylist = (lives_sync_list_t *)data;
-    lives_sync_list_remove(copylist, (void *)pixels, FALSE);
-    if (!copylist->list) lives_sync_list_free(copylist);
-    else return;
-  }
+  if (data && lives_sync_list_remove((lives_sync_list_t *)data,
+                                     (void *)pixels, FALSE)) return;
   lives_free(pixels);
 }
 
@@ -1631,7 +1627,7 @@ void init_advanced_palettes(void) {
 
 
 LIVES_GLOBAL_INLINE const weed_macropixel_t *get_advanced_palette(int weed_palette) {
-  for (int i = 0; advp[i].ext_ref != WEED_PALETTE_END; i++)
+  for (int i = 0; advp[i].ext_ref != WEED_PALETTE_NONE; i++)
     if (advp[i].ext_ref == weed_palette) return &advp[i];
   return NULL;
 }
@@ -1654,7 +1650,7 @@ LIVES_LOCAL_INLINE boolean is_yuvchan(uint16_t ctype) {
 }
 
 LIVES_GLOBAL_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
-  if (pal == WEED_PALETTE_END) return 1;
+  if (pal == WEED_PALETTE_NONE) return 1;
   else {
     int npix = 0;
     const weed_macropixel_t *mpx = get_advanced_palette(pal);
@@ -2261,12 +2257,12 @@ LIVES_LOCAL_INLINE void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r,
   *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
 }
 
-#define xyuv2rgb(y,u,v,r,g,b) do			\
-{							\
-  int yy = xRGB_Y[y];							\
-  *r = CLAMP0255f(spc_rnd(yy + xR_Cr[v]));				\
-  *g = CLAMP0255f(spc_rnd(yy + xG_Cb[u] + xG_Cr[v]));			\
-  *b = CLAMP0255f(spc_rnd(yy + xB_Cb[u]));} while (0);			\
+#define xyuv2rgb(y,u,v,r,g,b) do				\
+    {								\
+      int yy = xRGB_Y[y];					\
+      *r = CLAMP0255f(spc_rnd(yy + xR_Cr[v]));			\
+      *g = CLAMP0255f(spc_rnd(yy + xG_Cb[u] + xG_Cr[v]));	\
+      *b = CLAMP0255f(spc_rnd(yy + xB_Cb[u]));} while (0);	\
 
 #define xyuv2bgr(y,u,v,b,g,r) xyuv2rgb(y,u,v,r,g,b)
 
@@ -10103,7 +10099,7 @@ LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int 
    a rowstride multiple of 4 pixels. If this is converted to RGB8, each pixel is now 3 bytes,
    so 4 pixels would take up 12 bytes and there wull be an extra 4 bytes of space between rows.
    The other way round, if we start with RGB8 and go in terms of 4 bytes then we get 12 byte
-   multiples, and when converting to RGBA this is only 3 pixels, which can casue problems for
+   multiples, and when converting to RGBA this is only 3 pixels, which can cause problems for
    openGL for example. Thus it is better to use an alignment of 16 and add some blank space for
    RGB.
    If a thread wants a rowstride alignment other than 16, it can set rowstride_alignment_hint.
@@ -10115,6 +10111,7 @@ LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int 
 */
 
 boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean may_contig) {
+  lives_sync_list_t *copylist;
   int palette = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
@@ -10146,25 +10143,16 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
     weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
   }
-  pflags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
-  weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags & ~LIVES_FLAG_MAINTAIN_VALUE);
 
-  /* if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) { */
-  /*   // if we have big blog pdata, it should be big enough for whatever frame type */
-  /*   // so just reuse it */
-  /*   realloced = weed_layer_get_pixel_data(layer); */
-  /* } */
-  /* // CHECK THIS */
-  /* if (realloced) { */
-  /*   weed_layer_nullify_pixel_data(layer); */
-  /*   weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE); */
-  /* } */
-  /* else { */
-  /*   // ?? */
+  copylist = (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
 
-  weed_layer_pixel_data_free(layer);
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC) && !copylist) {
+    // if we have big blog pdata, it should be big enough for whatever frame type
+    // so just reuse it
+    realloced = weed_layer_get_pixel_data(layer);
+  }
 
-  //  }
+  if (!realloced) weed_layer_pixel_data_free(layer);
 
   if (black_fill) {
     if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING))
@@ -10536,7 +10524,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   case WEED_PALETTE_RGBFLOAT:
 #ifdef USE_BIGBLOCKS
-    if ((pixel_data = calloc_bigblock(rowstride * height))) {
+    if ((pixel_data = realloced) || (pixel_data = calloc_bigblock(rowstride * height))) {
       weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     } else
 #endif
@@ -10548,7 +10536,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   case WEED_PALETTE_RGBAFLOAT:
 #ifdef USE_BIGBLOCKS
-    if ((pixel_data = calloc_bigblock(rowstride * height))) {
+    if ((pixel_data = realloced) || (pixel_data = calloc_bigblock(rowstride * height))) {
       weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     } else
 #endif
@@ -10563,7 +10551,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   case WEED_PALETTE_AFLOAT:
 #ifdef USE_BIGBLOCKS
-    if ((pixel_data = calloc_bigblock(width * height))) {
+    if ((pixel_data = realloced) || (pixel_data = calloc_bigblock(width * height))) {
       weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     } else
 #endif
@@ -10578,6 +10566,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     break;
 
   case WEED_PALETTE_A8:
+    if (realloced) weed_layer_pixel_data_free(layer);
     framesize = rowstride * height;
     pixel_data = (uint8_t *)lives_calloc_safety(framesize, align);
     if (!pixel_data) goto fail;
@@ -10590,6 +10579,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     break;
 
   case WEED_PALETTE_A1:
+    if (realloced) weed_layer_pixel_data_free(layer);
     framesize = rowstride * height;
     pixel_data = (uint8_t *)lives_calloc_safety(framesize, align);
     if (!pixel_data) goto fail;
@@ -11021,21 +11011,11 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   }
   if (get_advanced_palette(inpl)->chantype[1] == WEED_VCHAN_V) swap_chroma_planes(layer);
 
-  // orig_layer will be a duplicate of layer
-  // before calling create_empty_pixel_data for layer, we must nullify layer
-  // since there is an optimisation to keep the same memory block
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(orig_layer, layer);
-  if (!weed_layer_get_pixel_data(orig_layer)) abort();
+  if (!weed_layer_get_pixel_data(orig_layer) && weed_layer_get_pixel_data(layer))
+    lives_abort("copy pdata failed");
   //g_print("COPIED %p TO %p %d\n", layer, orig_layer, weed_layer_count_refs(orig_layer));
-
-  /* if (mainw->frame_layer && layer != mainw->frame_layer */
-  /*     && weed_layer_get_pixel_data(mainw->frame_layer) == */
-  /*     weed_layer_get_pixel_data(orig_layer)) { */
-  /*   /// retain orig pixel_data if it belongs to mainw->frame_layer */
-  /*   //g_print("RETAIN %p\n", orig_layer); */
-  /*   no_free_orig = TRUE; */
-  /* } */
 
   // all RGB -> RGB conversions are now handled here
   if (weed_palette_is_rgb(inpl) && weed_palette_is_rgb(outpl)) {
@@ -11049,14 +11029,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
           } else {
             // add post
             if (weed_palettes_rbswapped(inpl, outpl)) {
-              weed_layer_nullify_pixel_data(layer);
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          gamma_lut, -USE_THREADS);
             } else {
-              weed_layer_nullify_pixel_data(layer);
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
@@ -11067,14 +11045,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
         } else {
           /// add pre
           if (weed_palettes_rbswapped(inpl, outpl)) {
-            weed_layer_nullify_pixel_data(layer);
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
             convert_swap3addpre_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                       gamma_lut, -USE_THREADS);
           } else {
-            weed_layer_nullify_pixel_data(layer);
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
@@ -11086,14 +11062,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
         if (!weed_palette_has_alpha_first(outpl)) {
           if (!weed_palette_has_alpha_last(outpl)) {
             if (weed_palettes_rbswapped(inpl, outpl)) {
-              weed_layer_nullify_pixel_data(layer);
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          gamma_lut, -USE_THREADS);
             } else {
-              weed_layer_nullify_pixel_data(layer);
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
@@ -11120,14 +11094,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       if (!weed_palette_has_alpha_first(outpl)) {
         if (!weed_palette_has_alpha_last(outpl)) {
           if (weed_palettes_rbswapped(inpl, outpl)) {
-            weed_layer_nullify_pixel_data(layer);
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
             convert_swap3delpre_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                       gamma_lut, -USE_THREADS);
           } else {
-            weed_layer_nullify_pixel_data(layer);
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
@@ -11157,7 +11129,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11168,7 +11139,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11178,7 +11148,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                 -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11186,7 +11155,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11194,7 +11162,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11204,7 +11171,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YVU420P:
     case WEED_PALETTE_YUV420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11213,7 +11179,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11221,7 +11186,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                 FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11229,7 +11193,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                 TRUE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV411:
-      weed_layer_nullify_pixel_data(layer);
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
@@ -11247,7 +11210,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
-      weed_layer_nullify_pixel_data(layer);
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
@@ -11258,7 +11220,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11267,14 +11228,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                 -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_rgb_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
 
       gudest = weed_layer_get_pixel_data(layer);
@@ -11282,7 +11241,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       convert_rgb_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, TRUE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
 
 
@@ -11294,7 +11252,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11302,14 +11259,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
       convert_rgb_to_yuvp_frame(gusrc, width, height, irowstride, orowstride, gudest_array, TRUE, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11317,7 +11272,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_rgb_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, TRUE, oclamping);
@@ -11333,7 +11287,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11343,7 +11296,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11352,21 +11304,18 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                 -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_rgb_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_rgb_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, TRUE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11375,7 +11324,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
       if (weed_get_int_value(layer, LIVES_LEAF_PIXEL_BITS, NULL) == 16) width >>= 1;
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11385,14 +11333,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
       convert_rgb_to_yuvp_frame(gusrc, width, height, irowstride, orowstride, gudest_array, FALSE, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11400,7 +11346,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_rgb_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, FALSE, oclamping);
@@ -11416,7 +11361,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11426,7 +11370,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11435,21 +11378,18 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                 -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_bgr_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_bgr_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, TRUE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11459,7 +11399,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YVU420P:
     case WEED_PALETTE_YUV420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11467,14 +11406,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
       convert_bgr_to_yuvp_frame(gusrc, width, height, irowstride, orowstride, gudest_array, TRUE, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11482,7 +11419,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_bgr_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, TRUE, oclamping);
@@ -11498,7 +11434,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11508,7 +11443,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11517,35 +11451,30 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                  -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_argb_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_argb_to_yuv_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
       convert_argb_to_yuvp_frame(gusrc, width, height, irowstride, orowstride, gudest_array, FALSE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
       convert_argb_to_yuvp_frame(gusrc, width, height, irowstride, orowstride, gudest_array, TRUE, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11555,7 +11484,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11564,7 +11492,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_argb_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, oclamping);
@@ -11579,7 +11506,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, FALSE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       lives_free(gudest_array[0]);
@@ -11591,7 +11517,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_layer_set_pixel_data_planar(orig_layer, (void **)gusrc_array, 3);
       break;
     case WEED_PALETTE_RGB24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11599,7 +11524,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11607,7 +11531,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11615,7 +11538,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11623,7 +11545,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11631,7 +11552,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11639,28 +11559,24 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv_planar_to_yuyv_frame(gusrc_array, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_combineplanes_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, FALSE);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_combineplanes_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, TRUE);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11668,7 +11584,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11677,7 +11592,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuvp_to_yuv411_frame(gusrc_array, width, height, irowstride, (yuv411_macropixel *)gudest, iclamping);
@@ -11692,7 +11606,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, FALSE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       lives_free(gudest_array[0]);
@@ -11704,7 +11617,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_layer_set_pixel_data_planar(orig_layer, (void **)gusrc_array, 4);
       break;
     case WEED_PALETTE_RGB24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11712,7 +11624,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11720,7 +11631,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11728,7 +11638,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11736,7 +11645,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                       -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11744,7 +11652,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -11752,28 +11659,24 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv_planar_to_yuyv_frame(gusrc_array, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_combineplanes_frame(gusrc_array, width, height, irowstride, orowstride, gudest, TRUE, FALSE);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_combineplanes_frame(gusrc_array, width, height, irowstride, orowstride, gudest, TRUE, TRUE);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11781,7 +11684,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11790,7 +11692,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuvp_to_yuv411_frame(gusrc_array, width, height, irowstride, (yuv411_macropixel *)gudest, iclamping);
@@ -11809,14 +11710,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_uyvy_to_yuv422_frame((uyvy_macropixel *)gusrc, width, height, gudest_array);
       break;
     case WEED_PALETTE_RGB24:
       //weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11825,7 +11724,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_RGBA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11834,7 +11732,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_BGR24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11843,7 +11740,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_BGRA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11852,7 +11748,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_ARGB32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11861,7 +11756,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11869,7 +11763,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUVA4444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11877,7 +11770,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11885,7 +11777,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUVA8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11894,7 +11785,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_uyvy_to_yuv420_frame((uyvy_macropixel *)gusrc, width, height, gudest_array, iclamping);
@@ -11902,7 +11792,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_uyvy_to_yuv411_frame((uyvy_macropixel *)gusrc, width, height, (yuv411_macropixel *)gudest, iclamping);
@@ -11921,14 +11810,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuyv_to_yuv422_frame((yuyv_macropixel *)gusrc, width, height, gudest_array);
       break;
     case WEED_PALETTE_RGB24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11937,7 +11824,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_RGBA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11946,7 +11832,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_BGR24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11955,7 +11840,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_BGRA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11964,7 +11848,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_ARGB32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11973,7 +11856,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11981,7 +11863,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUVA4444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -11989,7 +11870,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -11997,7 +11877,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUVA8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -12006,7 +11885,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuyv_to_yuv420_frame((yuyv_macropixel *)gusrc, width, height, gudest_array, iclamping);
@@ -12014,7 +11892,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuyv_to_yuv411_frame((yuyv_macropixel *)gusrc, width, height, (yuv411_macropixel *)gudest, iclamping);
@@ -12030,56 +11907,48 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_addpost_frame(gusrc, width, height, irowstride, orowstride, gudest, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
       convert_splitplanes_frame(gusrc, width, height, irowstride, ostrides, gudest_array, FALSE, FALSE);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
       convert_splitplanes_frame(gusrc, width, height, irowstride, ostrides, gudest_array, FALSE, TRUE);
       break;
     case WEED_PALETTE_RGB24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv888_to_rgb_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv888_to_rgb_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv888_to_bgr_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv888_to_bgr_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12087,7 +11956,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YVU420P:
     case WEED_PALETTE_YUV420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
@@ -12096,7 +11964,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osampling);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
@@ -12104,7 +11971,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12112,7 +11978,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12120,7 +11985,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv888_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, FALSE);
@@ -12135,56 +11999,48 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_delpost_frame(gusrc, width, height, irowstride, orowstride, gudest, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_YUVA4444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
       convert_splitplanes_frame(gusrc, width, height, irowstride, ostrides, gudest_array, TRUE, TRUE);
       break;
     case WEED_PALETTE_YUV444P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
       convert_splitplanes_frame(gusrc, width, height, irowstride, ostrides, gudest_array, TRUE, FALSE);
       break;
     case WEED_PALETTE_RGB24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuva8888_to_rgba_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuva8888_to_rgba_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuva8888_to_bgra_frame(gusrc, width, height, irowstride, orowstride, gudest, TRUE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuva8888_to_bgra_frame(gusrc, width, height, irowstride, orowstride, gudest, FALSE, iclamping, isampling, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12192,7 +12048,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -12201,7 +12056,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osampling);
       break;
     case WEED_PALETTE_YUV422P:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -12209,7 +12063,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12217,7 +12070,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12225,7 +12077,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv888_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, TRUE);
@@ -12241,7 +12092,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_RGB24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12249,7 +12099,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12257,7 +12106,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12265,7 +12113,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12273,7 +12120,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12282,7 +12128,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12290,7 +12135,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12336,14 +12180,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       // the only thing to be wary of is, if we have contig, chroma data starts at pixel_data[2] not pixel_data[1]
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_quad_chroma_packed(gusrc_array, width, height, istrides, orowstride, gudest, FALSE, isampling, iclamping);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -12351,7 +12193,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv420_to_yuv411_frame(gusrc_array, width, height, (yuv411_macropixel *)gudest, FALSE, iclamping);
@@ -12366,7 +12207,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_RGB24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12374,7 +12214,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12382,7 +12221,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12390,7 +12228,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12398,7 +12235,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                    isampling, iclamping, isubspace, gamma_type, new_gamma_type, NULL, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12407,7 +12243,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12415,7 +12250,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12458,14 +12292,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       weed_layer_set_pixel_data_planar(orig_layer, (void **)gusrc_array, 3);
       break;
     case WEED_PALETTE_YUV888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
       convert_double_chroma_packed(gusrc_array, width, height, istrides, orowstride, gudest, FALSE, isampling, iclamping);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       orowstride = weed_layer_get_rowstride(layer);
@@ -12473,7 +12305,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv420_to_yuv411_frame(gusrc_array, width, height, (yuv411_macropixel *)gudest, TRUE, iclamping);
@@ -12489,7 +12320,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_RGB24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12497,7 +12327,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_RGBA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12505,7 +12334,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_BGR24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12513,7 +12341,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_BGRA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12521,7 +12348,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_ARGB32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       orowstride = weed_layer_get_rowstride(layer);
       gudest = weed_layer_get_pixel_data(layer);
@@ -12529,63 +12355,54 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv411_to_yuv888_frame((yuv411_macropixel *)gusrc, width, height, gudest, FALSE, iclamping);
       break;
     case WEED_PALETTE_YUVA8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv411_to_yuv888_frame((yuv411_macropixel *)gusrc, width, height, gudest, TRUE, iclamping);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuv411_to_yuvp_frame((yuv411_macropixel *)gusrc, width, height, gudest_array, FALSE, iclamping);
       break;
     case WEED_PALETTE_YUVA4444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuv411_to_yuvp_frame((yuv411_macropixel *)gusrc, width, height, gudest_array, TRUE, iclamping);
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv411_to_uyvy_frame((yuv411_macropixel *)gusrc, width, height, (uyvy_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data(layer);
       convert_yuv411_to_yuyv_frame((yuv411_macropixel *)gusrc, width, height, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuv411_to_yuv422_frame((yuv411_macropixel *)gusrc, width, height, gudest_array, iclamping);
       break;
     case WEED_PALETTE_YUV420P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuv411_to_yuv420_frame((yuv411_macropixel *)gusrc, width, height, gudest_array, FALSE, iclamping);
       break;
     case WEED_PALETTE_YVU420P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
-      weed_layer_nullify_pixel_data(layer);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       convert_yuv411_to_yuv420_frame((yuv411_macropixel *)gusrc, width, height, gudest_array, TRUE, iclamping);
@@ -12709,11 +12526,10 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int h
   int channels = has_alpha ? 4 : 3;
   int rowstride = get_pixbuf_rowstride_value(width * channels);
 
+  // add pixbuf to copy list
+  copylist = lives_sync_list_add(copylist, (void *)buf);
   pixbuf = lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride,
                                       (LiVESPixbufDestroyNotify)lives_free_buffer, (void *)copylist);
-
-  // if layer is a shallow copy, then we need to add pixbuf to copy list
-  if (copylist) lives_sync_list_add(copylist, (void *)buf);
 
   return pixbuf;
 }
@@ -12938,7 +12754,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   uint8_t *pixel_data, *pixels;
 
-  boolean cheat = FALSE, done, nocheat = FALSE;
+  boolean cheat = FALSE;
 
   int palette, xpalette;
   int width;
@@ -12951,11 +12767,8 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   palette = weed_layer_get_palette(layer);
 
-  if ((weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE) ||
-      weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC))
-    nocheat = TRUE;
 
-  if (!nocheat && weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC) && (!realpalette ||
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC) && (!realpalette ||
       weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just nullify the layer and return the original pixbuf
     pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
@@ -12967,7 +12780,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
   // otherwise we need to steal or copy the pixel_data
 
   if (!weed_layer_get_pixel_data(layer))
-    layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_END);
+    layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_ANY);
 
   do {
     width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
@@ -12979,7 +12792,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     if (realpalette) {
       if (!weed_palette_is_pixbuf_palette(palette)) {
         // force conversion to RGB24 or RGBA32
-        xpalette = WEED_PALETTE_END;
+        xpalette = WEED_PALETTE_NONE;
       } else {
         if (prefs->apply_gamma) {
           gamma_convert_layer(WEED_GAMMA_SRGB, layer);
@@ -12993,7 +12806,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
     case WEED_PALETTE_YUV888:
-      if (!nocheat && irowstride == get_pixbuf_rowstride_value(width * 3)) {
+      if (irowstride == get_pixbuf_rowstride_value(width * 3)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data, layer);
         weed_layer_nullify_pixel_data(layer);
@@ -13011,7 +12824,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 #else
 #endif
     case WEED_PALETTE_YUVA8888:
-      if (!nocheat && irowstride == get_pixbuf_rowstride_value(width * 4)) {
+      if (irowstride == get_pixbuf_rowstride_value(width * 4)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data, layer);
         weed_layer_nullify_pixel_data(layer);
@@ -13135,11 +12948,9 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   // special value to indicate "compact rowstrides"
   THREADVAR(rowstride_alignment_hint) = -1;
 
-  weed_layer_nullify_pixel_data(layer);
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     weed_layer_copy(layer, old_layer);
-    weed_layer_nullify_pixel_data(old_layer);
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     lives_free(pixel_data);
     lives_free(rowstrides);
     return FALSE;
@@ -13149,8 +12960,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 
   if (!new_pixel_data) {
     weed_layer_copy(layer, old_layer);
-    weed_layer_nullify_pixel_data(old_layer);
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     lives_free(pixel_data);
     lives_free(rowstrides);
     return FALSE;
@@ -13169,9 +12979,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 
   if (nplanes > 1) weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
 
-  if (weed_layer_get_pixel_data(old_layer) == weed_layer_get_pixel_data(layer))
-    weed_layer_nullify_pixel_data(old_layer);
-  weed_layer_free(old_layer);
+  weed_layer_unref(old_layer);
   lives_free(pixel_data);
   lives_free(new_pixel_data);
   lives_free(rowstrides);
@@ -13215,14 +13023,12 @@ static void *swscale_threadfunc(void *arg) {
    opal_hint and oclamp_hint may be set to hint the desired output palette and YUV clamping
    this is simply to ensure more efficient resizing, and may be ignored
 
-   - setting opal_hint to WEED_PALETTE_END will attempt to minimise palette changes
+   - setting opal_hint to WEED_PALETTE_NONE or WEED_PALETTE_ANY will attempt to minimise palette changes
 
-   "current_palette" should be checked on return as it may change
+   layer palette should be checked on return as it may change
 
    NOTE: swscale may crash if widths are not even,
    and likes to have width in multiples of 8 (may only be when changing palettes ?)
-
-   NOTE: if input layer is a shallow copy of mainw->frame_layer, orig pixel_data is not freed
 
    @return FALSE if we were unable to resize */
 boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint) {
@@ -13251,7 +13057,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
-    if (opal_hint != WEED_PALETTE_END) {
+    if (opal_hint != WEED_PALETTE_NONE && opal_hint != WEED_PALETTE_ANY) {
       weed_layer_set_palette(layer, opal_hint);
     }
     weed_layer_set_yuv_clamping(layer, oclamp_hint);
@@ -13319,7 +13125,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   // check if we can also convert to the output palette
 #ifdef USE_SWSCALE
   // only swscale can convert and resize together
-  if (opal_hint == WEED_PALETTE_END || !weed_palette_is_resizable(opal_hint, oclamp_hint, FALSE)) {
+  if (opal_hint == WEED_PALETTE_END || opal_hint == WEED_PALETTE_ANY
+      || !weed_palette_is_resizable(opal_hint, oclamp_hint, FALSE)) {
 #endif
     opal_hint = palette;
     oclamp_hint = iclamping;
@@ -13506,17 +13313,17 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     // set new values
 
-    if (palette != opal_hint && opal_hint != WEED_PALETTE_END) {
+    if (palette != opal_hint && opal_hint != WEED_PALETTE_NONE
+        && opal_hint != WEED_PALETTE_ANY) {
       weed_layer_set_palette(layer, opal_hint);
     }
 
     if (weed_palette_is_yuv(opal_hint)) weed_layer_set_yuv_clamping(layer, oclamp_hint);
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
 
-    weed_layer_nullify_pixel_data(layer);
+    // will free layer pd, old layer now has only copy
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
-      weed_layer_nullify_pixel_data(old_layer);
       weed_layer_free(old_layer);
       return FALSE;
     }
@@ -13679,9 +13486,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     /*   memset(&((uint8_t *)out_pixel_data[0])[gg * orowstrides[0]], 255, width * 3 / 2); */
     /* } */
 
-    if (weed_layer_get_pixel_data(old_layer) == weed_layer_get_pixel_data(layer))
-      weed_layer_nullify_pixel_data(old_layer);
-
     weed_layer_free(old_layer);
 
     lives_free(out_pixel_data);
@@ -13776,16 +13580,15 @@ boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int to
   xheight = height - top - bottom;
   if ((xwidth == width && xheight == height) || xwidth <= 0 || xheight <= 0) return TRUE;
   newl = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+
   if (!weed_layer_copy(newl, layer)) {
-    weed_layer_nullify_pixel_data(newl);
     weed_layer_unref(newl);
     return FALSE;
   }
-  weed_layer_nullify_pixel_data(layer);
+
   weed_layer_set_size(layer, xwidth, xheight);
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) {
     weed_layer_copy(layer, newl);
-    weed_layer_nullify_pixel_data(newl);
     weed_layer_unref(newl);
     return FALSE;
   }
@@ -13799,10 +13602,6 @@ boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int to
   for (int i = 0; i < xheight; i++) {
     lives_memcpy(&opd[orow * i], &ipd[irow * i], xwidth);
   }
-
-  if (mainw->frame_layer && layer != mainw->frame_layer
-      && weed_layer_get_pixel_data(newl) == weed_layer_get_pixel_data(mainw->frame_layer))
-    weed_layer_nullify_pixel_data(newl);
   weed_layer_unref(newl);
 
   if (opwidth == -1) opwidth = width;
@@ -13810,7 +13609,7 @@ boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int to
   if (opheight == -1) opheight = height;
   else if (!opheight) opheight = xheight;
 
-  return resize_layer(layer, opwidth, opheight, LIVES_INTERP_BEST, WEED_PALETTE_END,
+  return resize_layer(layer, opwidth, opheight, LIVES_INTERP_BEST, WEED_PALETTE_ANY,
                       WEED_YUV_CLAMPING_UNCLAMPED);
 }
 
@@ -13865,7 +13664,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   /// create the outer rectangle in layer
   weed_layer_set_size(layer, nwidth / weed_palette_get_pixels_per_macropixel(pal), nheight);
 
-  weed_layer_nullify_pixel_data(layer);
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) goto memfail2;
 
   new_pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
@@ -14055,13 +13853,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     break;
   }
 
-  if (mainw->frame_layer && layer != mainw->frame_layer
-      && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
-    /// retain orig pixel_data if it belongs to mainw->frame_layer
-    weed_layer_nullify_pixel_data(old_layer);
-  }
-
-  /// otherwise do not nullify, as we want to free old pixel_data
   weed_layer_unref(old_layer);
 
   lives_free(pixel_data);
@@ -14073,7 +13864,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
 memfail2:
   weed_layer_pixel_data_free(layer);
   weed_layer_copy(layer, old_layer);
-  weed_layer_nullify_pixel_data(old_layer);
   weed_layer_unref(old_layer);
   lives_free(pixel_data);
   lives_free(irowstrides);
@@ -14092,8 +13882,8 @@ memfail2:
 
    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
    if (pixbuf) {
-	if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
-	else do NOT unref the pixbuf !!!!
+   if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
+   else do NOT unref the pixbuf !!!!
    }
 
    do something with layer...
@@ -14172,7 +13962,7 @@ LIVES_LOCAL_INLINE int swap_red_blue(int pal) {
   if (pal == WEED_PALETTE_RGBA32) return WEED_PALETTE_BGRA32;
   if (pal == WEED_PALETTE_BGR24) return WEED_PALETTE_RGB24;
   if (pal == WEED_PALETTE_BGRA32) return WEED_PALETTE_RGBA32;
-  return WEED_PALETTE_END;
+  return WEED_PALETTE_NONE;
 }
 
 /**
@@ -14421,7 +14211,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
     }
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     weed_layer_set_flags(layer, LIVES_LAYER_LOAD_IF_NEEDS_RESIZE);
-    if (!weed_layer_create_from_file_progressive(layer, fname, width, height, WEED_PALETTE_END,
+    if (!weed_layer_create_from_file_progressive(layer, fname, width, height, WEED_PALETTE_ANY,
         get_image_ext_for_type(ximgtype))) {
       lives_free(fname);
       miss++;
@@ -14435,7 +14225,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
       continue;
     }
 
-    if (!resize_layer(layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END,
+    if (!resize_layer(layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_NONE,
                       WEED_YUV_CLAMPING_UNCLAMPED)) {
       weed_layer_unref(layer);
       lives_free(fname);
@@ -14479,47 +14269,61 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
   return nres;
 }
 
-
-//uint64_t *hash_img_rows(int clipno, frames_t frame, int *pheight) {
-// with crows NULL, creates row hash and returns it
-// with crows non NULL, compares row by row, on diff. returns NULL, else returns crows
-uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
-  if (CLIP_HAS_VIDEO(clipno)) {
-    uint64_t *hashes = NULL;
-    weed_timecode_t tc;
-    lives_clip_t *sfile = mainw->files[clipno];
-    weed_layer_t *layer;
-    if (frame > sfile->frames) return NULL;
-    layer = lives_layer_new_for_frame(clipno, frame);
-    tc = ((frame - 1.)) / sfile->fps * TICKS_PER_SECOND;
-    if (pull_frame_at_size(layer, get_image_ext_for_type(sfile->img_type),
-                           tc, sfile->hsize, sfile->vsize, WEED_PALETTE_RGB24)) {
-      uint8_t *pd = weed_layer_get_pixel_data(layer);
-      int32_t width = weed_layer_get_width(layer) * 3;
-      uint32_t height = weed_layer_get_height(layer);
+lives_row_hash_t *hash_cmp_layer(lives_layer_t *layer, lives_row_hash_t *row_hash) {
+  if (layer) {
+    uint8_t *pd = weed_layer_get_pixel_data(layer);
+    if (pd) {
+      int width = weed_layer_get_width(layer);
+      int height = weed_layer_get_height(layer);
       int row = weed_layer_get_rowstride(layer);
 
-      if (height > MAX_FRAME_HEIGHT) height = MAX_FRAME_HEIGHT;
-      if (!crows) hashes = lives_calloc(height, 8);
-
-      if (crows || hashes) {
-        for (int i = 0; i < height; i++) {
-          if (crows) {
-            if (crows[i] != lives_bin_hash(&pd[row * i], width)) {
-              weed_layer_unref(layer);
-              return NULL;
-            }
-          } else hashes[i] = lives_bin_hash(&pd[row * i], width);
+      lives_row_hash_t *rowhash = row_hash;
+      if (row_hash) {
+        if (width != row_hash->width || height != row_hash->nrows) return NULL;
+      } else {
+        rowhash = (lives_row_hash_t *)lives_calloc(1, sizeof(lives_row_hash_t));
+        rowhash->nrows = height;
+        rowhash->width = width;
+        rowhash->crows = (uint64_t *)lives_calloc(height, 8);
+      }
+      for (int i = 0; i < height; i++) {
+        uint64_t hash = minimd5((void *)&pd[row * i], width);
+        if (row_hash) {
+          if (hash != row_hash->crows[i]) return NULL;
+        } else {
+          rowhash->crows[i] = hash;
+          rowhash->parity ^= hash;
         }
       }
-      if (layer) weed_layer_unref(layer);
-      if (!crows) return hashes;
-      return crows;
+      return rowhash;
     }
   }
   return NULL;
 }
 
+
+//uint64_t *hash_img_rows(int clipno, frames_t frame, int *pheight) {
+// with crows NULL, creates row hash and returns it
+// with crows non NULL, compares row by row, on diff. returns NULL, else returns crows
+lives_row_hash_t *hash_cmp_rows(lives_row_hash_t *row_hash, int clipno, frames_t frame) {
+  if (CLIP_HAS_VIDEO(clipno)) {
+    weed_timecode_t tc;
+    lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+    weed_layer_t *layer;
+
+    if (!sfile || frame > sfile->frames) return NULL;
+
+    layer = lives_layer_new_for_frame(clipno, frame);
+    tc = ((frame - 1.)) / sfile->fps * TICKS_PER_SECOND;
+
+    if (pull_frame(layer, NULL, tc)) {
+      lives_row_hash_t *res = hash_cmp_layer(layer, row_hash);
+      weed_layer_unref(layer);
+      return res;
+    }
+  }
+  return NULL;
+}
 
 /**
    @brief free pixel_data from layer
@@ -14534,24 +14338,18 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 
    this function should always be used to free WEED_LEAF_PIXEL_DATA */
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
-  static pthread_mutex_t xmutex = PTHREAD_MUTEX_INITIALIZER;
   lives_sync_list_t *copylist;
-  lives_proc_thread_t lpt = NULL;
   void **pixel_data;
   int nplanes;
 
   if (!layer) return;
 
+  wait_layer_ready(layer);
+
   copylist = (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
   if (copylist) {
     weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
-    pthread_mutex_lock(&xmutex);
-    lives_sync_list_remove(copylist, (void *)layer, FALSE);
-    if (!copylist->list) {
-      pthread_mutex_unlock(&xmutex);
-      lives_sync_list_free(copylist);
-    } else {
-      pthread_mutex_unlock(&xmutex);
+    if (lives_sync_list_remove(copylist, (void *)layer, FALSE)) {
       g_print("nullify pdata as it is a copy\n");
       // need to do this 1st as we have no copylist now
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
@@ -14572,13 +14370,13 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-  weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
+  /* weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt); */
 
-  if (lpt) {
-    lives_proc_thread_request_cancel(lpt,  FALSE);
-    lives_proc_thread_join_boolean(lpt);
-    lives_proc_thread_unref(lpt);
-  }
+  /* if (lpt && lpt != self) { */
+  /*   lives_proc_thread_request_cancel(lpt,  FALSE); */
+  /*   lives_proc_thread_join_boolean(lpt); */
+  /*   lives_proc_thread_unref(lpt); */
+  /* } */
 
   /* if (weed_plant_has_leaf(layer, LIVES_LEAF_MD5SUM)) { */
   /*   lives_free(weed_get_voidptr_value(layer, LIVES_LEAF_MD5SUM, NULL)); */

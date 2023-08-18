@@ -13,6 +13,8 @@
 #ifndef HAS_LIVES_NODEMODEL_H
 #define HAS_LIVES_NODEMODEL_H
 
+#define LIVES_LEAF_PLAN_CONTROL "plan_control"
+
 #define NODE_PASSTHRU 0
 #define NODE_INPUT 1
 #define NODE_OUTPUT 2
@@ -289,6 +291,7 @@ typedef struct _inst_node inst_node_t;
 // per track at any moment.
 // the src can be either a layer src, blank frame src, or an instance node
 // last node will be either an instance node, or else a sink (node with no out tracks)
+
 typedef struct {
   // track number correcsponding to out_track in first_node
   // we trace thiss through until reaching a node which does not output on that track
@@ -645,11 +648,47 @@ typedef struct _inst_node {
 #define STEP_FLAG_NO_READY_STAT		(1ull << 8)
 #define STEP_FLAG_RUN_AS_LOAD		(1ull << 9)
 
+#define STEP_FLAG_TAGGED_LAYER		(1ull << 16)
+
 #define STEP_TYPE_LOAD	 		1
 #define STEP_TYPE_CONVERT 		2
 #define STEP_TYPE_APPLY_INST 	       	3
 #define STEP_TYPE_COPY_IN_LAYER        	4
 #define STEP_TYPE_COPY_OUT_LAYER      	5
+
+typedef struct {
+  // offsets from plan trigger time
+  // since we do not know exact frame load times
+  // we only set est dur for now
+  // real_start / real_end are in session_time
+  ticks_t
+  // steps / template
+  est_start,
+  est_end,
+  est_duration,
+  deadline;
+  //
+  double
+  real_start,
+  real_end,
+  paused_time,
+  real_duration,
+  // plan only
+  actual_start,
+  preload_time, // actual_start - real_start
+  active_pl_time, // step time until actual_start
+  tgt_time, // 1. / pb_fps
+  concurrent_time, // total time when > 1 steps were active
+  sequential_time, // sum of all steps if run sequentially
+  exec_time,
+  trun_time,
+  queued_time, // trun_time - exec_time
+  trigger_time,
+  start_wait, // time between thread running and trigger (trigger - trun)
+  waiting_time; // after triggering, time when no steps were running
+} timedata_t;
+
+typedef struct _exec_plan exec_plan_t;
 
 struct _plan_step {
   int st_type;
@@ -662,11 +701,11 @@ struct _plan_step {
   volatile int state;  // same values as PLAN_STATE
   uint64_t flags;
 
-  // step details
-  ticks_t st_time; // ??
+  // pointer to the plan containing step
+  exec_plan_t *plan;
 
-  ticks_t dur;
-  ticks_t ded;
+  // timing data
+  timedata_t *tdata;
 
   weed_filter_t *target;
 
@@ -679,6 +718,7 @@ struct _plan_step {
   int fin_width, fin_height;
   int fin_iwidth, fin_iheight;
   int fin_pal, fin_gamma;
+  int fin_sampling, fin_subspace, fin_clamping;
 
   char *errmsg;
 
@@ -745,9 +785,6 @@ struct _plan_step {
 
 // template cannot be executed, but it can be used to make a plan_cycle which can be
 
-
-typedef struct _exec_plan exec_plan_t;
-
 struct _exec_plan {
   uint64_t uid;
   exec_plan_t *template;
@@ -756,15 +793,17 @@ struct _exec_plan {
   // stack of layers in track order. These are created as soon as plan is executed
   // by calling map_sources_to_tracks
   // LOAD event will wait for the layer 'frame' to be set to non-zero before loading
-  //occasionally, for repeatabel, optional channels as targets, the track_source may be unmapped
+  // occasionally, for repeatabel, optional channels as targets, the track_source may be unmapped
   // and the layer will be NULL, in this case when we try to LOAD from the layer, we will skip the step
   // and mark the channel as WEED_LEAF_HOST_TEMP_DISABLED. The corresponding input node in the model will
   // be flagged as IGNORE
-
-  double st_time, en_time, paused_time;
+  weed_layer_t **layers;
 
   frames64_t *frame_idx;
-  weed_layer_t **layers;
+
+  timedata_t *tdata;
+
+  int nsteps_running;
 
   // the actual steps of the plan, no step may appear before all of its dependent steps
   LiVESList *steps;
@@ -775,13 +814,13 @@ struct _exec_plan {
 void build_nodemodel(lives_nodemodel_t **);
 void free_nodemodel(lives_nodemodel_t **);
 
-void cleanup_nodemodel(void);
+void cleanup_nodemodel(lives_nodemodel_t **);
 
 exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
 void align_with_model(lives_nodemodel_t *);
 exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **);
 lives_proc_thread_t execute_plan(exec_plan_t *cycle, boolean async);
-void plan_cycle_trigger(exec_plan_t *cycle, double st_time);
+void plan_cycle_trigger(exec_plan_t *cycle);
 void exec_plan_free(exec_plan_t *);
 
 void display_plan(exec_plan_t *);

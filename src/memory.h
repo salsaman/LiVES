@@ -387,9 +387,8 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #define _lives_memmove default_memmove
 #endif
 
-/* void speedy_free(void *); */
-/* void *speedy_malloc(size_t s); */
-/* void *speedy_calloc(size_t, size_t); */
+#define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
+#define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))
 
 static pthread_mutex_t weak_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *WEAK_LIST = NULL;

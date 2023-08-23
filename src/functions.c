@@ -784,7 +784,7 @@ char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
     parvals = lpt_paramstr(lpt, sig);
 
     if (ret_type) {
-      fmtstring = lives_strdup_printf("%sreturn_value = %s(%s);",
+      fmtstring = lives_strdup_printf("(%s) %s(%s);",
                                       weed_seed_to_ctype(ret_type, TRUE), funcname, parvals);
     } else fmtstring = lives_strdup_printf("(void) %s(%s);", funcname, parvals);
     lives_free(funcname); lives_free(parvals);
@@ -1726,11 +1726,14 @@ void lives_hook_remove(lives_proc_thread_t lpt) {
   // - lpt is finishing
   // - hook callback is no longer needed
   //
+  lives_proc_thread_t xlpt;
   lives_closure_t *closure = lives_proc_thread_get_closure(lpt);
-
-  if (closure) closure->flags |= HOOK_STATUS_REMOVE;
-  // flag lpt as INVALID, if a thread id waiting it will ontinue
-  lives_proc_thread_set_state(lpt, (THRD_STATE_INVALID | THRD_STATE_DESTROYING));
+  if (closure) {
+    closure->flags |= HOOK_STATUS_REMOVE;
+    // flag lpt as INVALID, if a thread id waiting it will continue
+    xlpt = closure->proc_thread;
+    if (xlpt) lives_proc_thread_set_state(xlpt, (THRD_STATE_INVALID | THRD_STATE_DESTROYING));
+  }
 }
 
 

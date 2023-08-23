@@ -790,8 +790,9 @@ void reset_mainwin_size(void) {
 
   if (!LIVES_IS_PLAYING) {
     mainw->gui_much_events = TRUE;
-    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
-    mainw->gui_much_events = FALSE;
+    //lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    //mainw->gui_much_events = FALSE;
   }
 }
 
@@ -863,7 +864,8 @@ static void _resize(double scale) {
 
   if (!prefs->show_gui || mainw->multitrack) return;
 
-  if (!mainw->go_away) reset_mainwin_size();
+  //if (!mainw->go_away)
+  reset_mainwin_size();
 
   get_gui_framesize(&hsize, &vsize);
 

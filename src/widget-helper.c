@@ -802,8 +802,25 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref(livespointer object)
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer object) {
 #ifdef GUI_GTK
-  if (LIVES_IS_WIDGET_OBJECT(object)) g_object_unref(object);
-  else {
+  if (LIVES_IS_WIDGET_OBJECT(object)) {
+    if (LIVES_IS_PIXBUF(object)) {
+      LiVESPixbuf *pixbuf = LIVES_PIXBUF(object);
+      if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pixbuf), NOFREE_KEY) == pixbuf) {
+        LIVES_WARN("Attemped unref of pixbuf with invalid pixels\n");
+        return FALSE;
+      }
+      lives_layer_t *proxy =
+        (lives_layer_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(object), LAYER_PROXY_KEY);
+      if (proxy) {
+        // this will either nullify layer pixdata or free it
+        // either way, we must prevent pixbuf from freeing its pixdata
+        weed_layer_unref(proxy);
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(object), LAYER_PROXY_KEY, NULL);
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(object), NOFREE_KEY, (void *)pixbuf);
+      }
+    }
+    g_object_unref(object);
+  } else {
     LIVES_WARN("Attempted unref of non-object");
     break_me("unref of nonobj");
     return FALSE;
@@ -990,7 +1007,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
       }
     }
 
-    ret = g_main_context_iteration(ctx, may_block);
+    if (!lpttorun)
+      ret = g_main_context_iteration(ctx, may_block);
 
     if (mainw) {
       mainw->no_idlefuncs = no_idlefuncs;
@@ -1054,6 +1072,7 @@ boolean fg_service_fulfill(void) {
   } else THREADVAR(fg_service) = TRUE;
 
   retval = weed_get_voidptr_value(lptr, "retloc", NULL);
+  lpttorun = NULL;
   lives_proc_thread_execute(lptr, retval);
 
   if (!is_fg_service) THREADVAR(fg_service) = FALSE;
@@ -1162,14 +1181,19 @@ boolean fg_service_fulfill_cb(void *dummy) {
     mainw->do_ctx_update = FALSE;
     if (!is_fg_service) THREADVAR(fg_service) = FALSE;
   } else if (!gui_loop_tight) {
-    if (prio == PRIO_HIGH)
-      lives_widget_context_iteration(NULL, FALSE);
-    else {
+    if (prio == PRIO_HIGH) {
+      if (!lpttorun) {
+        if (!mainw->go_away && mainw->is_ready) {
+          lives_widget_context_iteration(NULL, FALSE);
+        }
+      }
+    } else {
       for (int zz = 0; zz < 2048 && cprio == PRIO_LOW; zz++)
         lives_microsleep;
     }
   }
   mainw->do_ctx_update = FALSE;
+
   return TRUE;
 }
 
@@ -6705,7 +6729,7 @@ static void _lives_entry_set_text(LiVESEntry * entry, const char *text) {
 boolean lives_entry_set_text(LiVESEntry * entry, const char *text) {
   if (!LIVES_IS_ENTRY(entry)) return FALSE;
 #ifdef GUI_GTK
-  if (!gui_loop_tight || is_fg_thread()) {
+  if (is_fg_thread() || (mainw->is_ready && !gui_loop_tight)) {
     _lives_entry_set_text(entry, text);
   } else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
@@ -8839,7 +8863,8 @@ void render_standard_button(LiVESButton * sbutt) {
                 accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
                 lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
               } else {
-                uint32_t oaccl = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY));
+                uint32_t oaccl = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl),
+                                                      BACCL_ACCL_KEY));
                 if (oaccl) lives_widget_remove_accelerator(widget,
                       accel_group, oaccl, (LiVESXModifierType)LIVES_ALT_MASK);
               }
@@ -8909,7 +8934,6 @@ void render_standard_button(LiVESButton * sbutt) {
         if (LINGO_IS_LAYOUT(layout))
           lingo_painter_show_layout(cr, layout);
       }
-
       if (pixbuf) {
         if (lw && layout) {
           // shift to get pixbuf pos
@@ -8929,6 +8953,7 @@ void render_standard_button(LiVESButton * sbutt) {
         lives_painter_paint(cr);
       }
       lives_painter_destroy(cr);
+
       if (LIVES_EXPAND_WIDTH(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
         minwidth = lw + (pbw ? pbw + widget_opts.packing_width
                          : 0) + widget_opts.border_width * 4;
@@ -8945,7 +8970,7 @@ void render_standard_button(LiVESButton * sbutt) {
         lives_widget_set_size_request(widget, width, height);
       }
       //if (is_fg_thread())
-      lives_widget_queue_draw_and_update(widget);
+      //lives_widget_queue_draw_and_update(widget);
     }
   }
 }
@@ -13452,7 +13477,6 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   GdkCursor *cursor = NULL;
   GdkDisplay *disp;
   GdkCursorType ctype = GDK_X_CURSOR;
-
   if (!widget) {
     if (mainw->recovering_files || ((!mainw->multitrack && mainw->is_ready)
                                     || (mainw->multitrack &&

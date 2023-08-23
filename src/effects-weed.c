@@ -6334,12 +6334,11 @@ boolean weed_init_effect(int hotkey) {
     // we must stop any old generators
     if (!all_out_alpha && is_gen && outc_count > 0 && hotkey != fg_generator_key && mainw->num_tr_applied > 0 &&
         mainw->blend_file != -1 && mainw->blend_file != mainw->current_file &&
-        mainw->files[mainw->blend_file] &&
+        IS_VALID_CLIP(mainw->blend_file) &&
         mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR && !is_audio_gen) {
       /////////////////////////////////////// if blend_file is a generator we should finish it
       if (bg_gen_to_start == -1) {
-        if (IS_VALID_CLIP(mainw->blend_file))
-          weed_generator_end((weed_instance_t *)get_primary_src(mainw->blend_file));
+        weed_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
       }
 
       bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
@@ -6360,7 +6359,7 @@ boolean weed_init_effect(int hotkey) {
         if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
         //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
         if (CURRENT_CLIP_IS_VALID)
-          weed_generator_end((weed_instance_t *)get_primary_src(mainw->current_file));
+          weed_generator_end((weed_instance_t *)get_primary_inst(cfile));
         fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
         if (CURRENT_CLIP_IS_VALID && (cfile->achans == 0 || cfile->frames > 0)) {
           // in case we switched to bg clip, and bg clip was gen
@@ -7119,7 +7118,7 @@ void weed_deinit_all(boolean shutdown) {
 
         weed_instance_unref(instance);
         if (shutdown || !LIVES_IS_PLAYING || !CURRENT_CLIP_IS_VALID
-            || get_primary_src(mainw->current_file) != (void *)instance) {
+            || get_primary_inst(cfile) != (void *)instance) {
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
           if (rte_window) rtew_set_keych(i, FALSE);
@@ -7594,10 +7593,10 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (!LIVES_IS_PLAYING) mainw->pre_src_file = mainw->current_file;
 
   if (old_file != -1 && mainw->blend_file != -1 && mainw->blend_file != mainw->current_file &&
-      mainw->num_tr_applied > 0 && mainw->files[mainw->blend_file] &&
+      mainw->num_tr_applied > 0 && IS_VALID_CLIP(mainw->blend_file) &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     ////////////////////////// switching background generator: stop the old one first
-    weed_generator_end((weed_instance_t *)get_primary_src(mainw->blend_file));
+    weed_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
     mainw->new_clip = mainw->blend_file;
   }
 
@@ -7800,10 +7799,14 @@ void weed_generator_end(weed_plant_t *inst) {
   //  - set close_this_clip
   //
   // - closing the clip_via close_this_clip()
+  RECURSE_GUARD_START;
   boolean is_bg = FALSE;
   boolean clip_switched = mainw->clip_switched;
   boolean playing_sel = mainw->playing_sel;
   int current_file = mainw->current_file;
+
+  RETURN_IF_RECURSED;
+  RECURSE_GUARD_LOCK;
 
   if (!inst) {
     LIVES_WARN("inst was NULL !");
@@ -7816,7 +7819,7 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != current_file &&
-      get_primary_src(mainw->blend_file) == (void *)inst) is_bg = TRUE;
+      get_primary_inst(mainw->files[mainw->blend_file]) == (void *)inst) is_bg = TRUE;
   else mainw->new_blend_file = mainw->blend_file;
 
   if ((!is_bg && fg_generator_key == -1) || (is_bg && bg_generator_key == -1)) return;
@@ -7825,6 +7828,7 @@ void weed_generator_end(weed_plant_t *inst) {
     // we will close the file after playback stops
     // and also unref the instance
     mainw->cancelled = CANCEL_GENERATOR_END;
+    RECURSE_GUARD_END;
     return;
   }
 
@@ -7895,6 +7899,7 @@ void weed_generator_end(weed_plant_t *inst) {
     cfile->clip_type = CLIP_TYPE_DISK;
     cfile->hsize = cfile->vsize = 0;
     cfile->pb_fps = cfile->fps = prefs->default_fps;
+    RECURSE_GUARD_END;
     return;
   }
 
@@ -7924,6 +7929,7 @@ void weed_generator_end(weed_plant_t *inst) {
   // *INDENT-ON*
 
   if (!CURRENT_CLIP_IS_VALID) mainw->cancelled = CANCEL_GENERATOR_END;
+  RECURSE_GUARD_END;
 }
 
 

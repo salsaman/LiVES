@@ -317,6 +317,7 @@ typedef struct {
 
 // nodemodel flagbits
 #define NODEMODEL_NEW		(1 << 0)
+#define NODEMODEL_TRAINED	(1 << 1)
 #define NODEMODEL_INVALID	(1 << 16)
 
 typedef struct {
@@ -459,6 +460,7 @@ struct _input_node {
   // for each in / pal out pal / cost type, we create a cdelta
   //
   LiVESList *cdeltas;
+  LiVESList *true_cdeltas;
 
   uint64_t flags; // clone; processed, ignore
 
@@ -516,6 +518,7 @@ struct _output_node {
 
   // we use this to store potential  qloss_s due to downscaling
   LiVESList *cdeltas;
+  LiVESList *true_cdeltas;
 
   // feature for use during optimisation, for selected palette, holds tmax - tcost
   double slack;
@@ -665,10 +668,10 @@ typedef struct {
   // steps / template
   est_start,
   est_end,
-  est_duration,
   deadline;
   //
   double
+  est_duration,
   real_start,
   real_end,
   paused_time,
@@ -687,6 +690,63 @@ typedef struct {
   start_wait, // time between thread running and trigger (trigger - trun)
   waiting_time; // after triggering, time when no steps were running
 } timedata_t;
+
+#define OP_RESIZE	0
+#define OP_PCONV	1
+#define OP_GAMMA	2
+#define OP_APPLY_INST	3
+#define OP_MEMCPY	4
+#define N_OP_TYPES	5
+
+typedef struct {
+  int op_idx;
+  double start, end, paused, copy_time;
+  int width, height;
+  int pal, pb_quality;
+  double cpuload;
+} exec_plan_substep_t;
+
+// letterboxing is represented as a resize followed by a memcpy
+// deinterlace is represented by an apply_inst
+
+typedef struct {
+  int op_idx;
+  double time;
+  int out_size;
+  int in_size;
+  int out_pal, in_pal; // OP_PCONV, OP_RESIZE
+  int out_clamping, in_clamping;
+  int out_sampling, in_sampling;
+  int out_subspace, in_subspace;
+  boolean gamma;
+  double cpu_load;
+  int pb_quality;
+} tcost_data;
+
+// define the neural network for estimating resize / palconv tcosts
+#define TIMING_ANN_NLAYERS 3
+#define TIMING_ANN_LCOUNTS {36, 18, 10}
+
+// substep -> testdata mapping for ANN
+#define TIMING_ANN_OUTSIZE	0
+#define TIMING_ANN_INSIZE	1
+#define TIMING_ANN_CPULOAD	2
+#define TIMING_ANN_PBQ_BASE 	2 //(base is 1)
+#define TIMING_ANN_OUT_PAL_BASE 5 //(base is 1)
+#define TIMING_ANN_IN_PAL_BASE 20 //(base is 1)
+
+typedef struct {
+  int filt_idx;
+  int pal;
+  double c0, c1, c2;
+} proctime_consts;
+
+
+typedef struct {
+  lives_ann_t *ann;
+  LiVESList *proc_times;
+  double bytes_per_sec;
+} glob_timedata_t;
 
 typedef struct _exec_plan exec_plan_t;
 
@@ -720,6 +780,8 @@ struct _plan_step {
   int fin_pal, fin_gamma;
   int fin_sampling, fin_subspace, fin_clamping;
 
+  LiVESList *substeps;
+
   char *errmsg;
 
   // eg. apply deinterlace
@@ -742,6 +804,9 @@ struct _plan_step {
 
 // all steps in plan have completed
 #define PLAN_STATE_COMPLETE	4
+
+//
+#define PLAN_STATE_RESETTING	5
 
 // plan fully processed can be discarded and a new cycel created
 #define PLAN_STATE_DISCARD	8

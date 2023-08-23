@@ -265,6 +265,7 @@ double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8
 // convert from advanced palette to simple palette and vice versa
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
 int get_simple_palette(weed_macropixel_t *mpx);
+int get_enum_palette(int weed_palette);
 
 boolean weed_palette_is_valid(int pal);
 
@@ -341,7 +342,7 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 // layer needed only if fixed rs
 int *calc_rowstrides(int width, int pal, weed_layer_t *, int *nplanes);
 
-size_t lives_frame_calc_bytesize(int width, int height, int pal, size_t **planes);
+size_t lives_frame_calc_bytesize(int width, int height, int pal, boolean inc_roswstrides, size_t **planes);
 
 void alpha_unpremult(weed_layer_t *, boolean un);
 

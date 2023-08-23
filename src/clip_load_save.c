@@ -2489,18 +2489,19 @@ int close_current_file(int file_to_switch_to) {
   }
 
   if (mainw->blend_file == mainw->current_file) {
-    // set blend_file to -1. This is in case the file is a generator - we need to distinguish between the cases where
-    // the generator is the blend file and we switch because it was deinited, and when we swap fg <-> bg
-    // in the former case the generator is killed off, in the latter it survives
     need_new_blend_file = TRUE;
+    // if closing a generator clip, it is better to reomve the track_source here,
+    // otherwise map_sources_to_tracks will try to fins a clip_srcgrp and make the track_source idle
+    track_source_free(1, mainw->blend_file);
     if (!LIVES_IS_PLAYING) {
-      track_source_free(1, mainw->blend_file);
       mainw->blend_file = -1;
       if (mainw->blend_layer) {
         weed_layer_unref(mainw->blend_layer);
         mainw->blend_layer = NULL;
       }
     }
+  } else if (mainw->current_file == mainw->playing_file) {
+    track_source_free(0, mainw->current_file);
   }
 
   free_thumb_cache(mainw->current_file, 0);
@@ -2560,7 +2561,7 @@ int close_current_file(int file_to_switch_to) {
   if (!mainw->only_close) {
     if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
       if (!mainw->multitrack) {
-        if (!mainw->noswitch) {
+        if (!LIVES_IS_PLAYING) {
           mainw->current_file = file_to_switch_to;
           switch_clip(1, file_to_switch_to, TRUE);
           d_print("");
@@ -2704,8 +2705,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     char *tmp;
 
     lives_nanosleep_while_false(mainw->pretty_colours);
-
-    lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
 
     if (!do_yesno_dialogf_with_countdown
         (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\n"
@@ -3303,7 +3302,10 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     recfname = lives_strdup_printf("%s.%d.%d.%d", RECOVERY_LITERAL, luid, lgid, recpid);
     recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
     lives_free(recfname);
+
+    // PROMPT TO RELOAD CLIPS
     if (!no_recover) retval = recover_files(recovery_file, auto_recover);
+    /////////////
 
     else lives_rm(recovery_file);
     lives_free(recovery_file);

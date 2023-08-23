@@ -820,30 +820,25 @@ LIVES_GLOBAL_INLINE uint64_t get_blocksize(const char *dir) {
 
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
-  ticks_t ret, wall_ticks;
-#if _POSIX_TIMERS
-  struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  ret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC - origticks;
-
-#else
-#ifdef USE_MONOTONIC_TIME
-  ret = (lives_get_monotonic_time() - orignsecs) / 10;
-#else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  ret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS - origticks;
-#endif
-#endif
-  if (ret < 0) ret = 0;
-  wall_ticks = ret + origticks;
-  if (wall_ticks > mainw->wall_ticks) mainw->wall_ticks = wall_ticks;
-  return ret;
+  ticks_t ret = lives_get_current_ticks();
+  return ret - origticks;
 }
+
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
-  return lives_get_relative_ticks(0);
+  ticks_t ret;
+#if _POSIX_TIMERS
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  ret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC;
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  ret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS;
+#endif
+  mainw->wall_ticks = ret;
+  return ret;
 }
 
 
@@ -1676,12 +1671,10 @@ void update_effort(double nthings, boolean is_bad) {
       pb_quality = future_prefs->pb_quality;
       goto tryset;
     }
-    if (!struggling) {
-      struggling = 1;
-      return;
-    }
-    if (mainw->effort > EFFORT_LIMIT_MED || (struggling > 0 && (mainw->effort > EFFORT_LIMIT_LOW))) {
-      if (struggling < EFFORT_RANGE_MAX) struggling++;
+    if (struggling < EFFORT_RANGE_MAX) struggling++;
+
+    if (mainw->effort > EFFORT_LIMIT_MED ||
+        (struggling > EFFORT_LIMIT_MED && (mainw->effort > EFFORT_LIMIT_LOW))) {
       if (struggling == EFFORT_RANGE_MAX) {
         if (pb_quality > PB_QUALITY_LOW) {
           pb_quality = PB_QUALITY_LOW;

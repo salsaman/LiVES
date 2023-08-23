@@ -5590,7 +5590,6 @@ static LiVESResponseType _show_rc_dlg(void) {
   LiVESResponseType resp;
   LiVESWidget *e_rec_dialog = events_rec_dialog();
   resp = lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
-  lives_widget_destroy(e_rec_dialog);
   return resp;
 }
 

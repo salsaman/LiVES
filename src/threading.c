@@ -111,7 +111,8 @@ LIVES_GLOBAL_INLINE thrd_work_t *lives_proc_thread_get_work(lives_proc_thread_t 
 
 
 LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
-  if (lpt) lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt));
+  if (lpt) g_printerr("Thread state is: %s\n",
+                        lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt)));
 }
 
 
@@ -474,13 +475,13 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
   lives_hook_stack_t **hook_stacks;
 
   if (!weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL)) {
-    pthread_mutex_t *state_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_t *state_mutex = (pthread_mutex_t *)lives_calloc(1, sizeof(pthread_mutex_t));
     pthread_mutex_init(state_mutex, NULL);
     weed_set_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, state_mutex);
   }
 
   if (!weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL)) {
-    pthread_rwlock_t *destruct_rwlock = (pthread_rwlock_t *)lives_malloc(sizeof(pthread_rwlock_t));
+    pthread_rwlock_t *destruct_rwlock = (pthread_rwlock_t *)lives_calloc(1, sizeof(pthread_rwlock_t));
     pthread_rwlock_init(destruct_rwlock, NULL);
     weed_set_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, destruct_rwlock);
   }
@@ -489,7 +490,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 
   for (int i = 0; i < N_HOOK_POINTS; i++) {
     hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
-    hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
+    hook_stacks[i]->mutex = (pthread_mutex_t *)lives_calloc(1, sizeof(pthread_mutex_t));
     pthread_mutex_init(hook_stacks[i]->mutex, NULL);
     hook_stacks[i]->owner = lpt;
   }
@@ -1130,7 +1131,8 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
 
         // call is not priority,  and main thread is already performing
         // a service call - in this case we will add the request to main thread's deferral stack
-        if (hook_hints & HOOK_CB_BLOCK) lives_proc_thread_ref(lpt);
+
+        if (hook_hints & HOOK_CB_BLOCK) lives_proc_thread_ref(lpt); // !!!
 
         lpt2 = what_to_wait_for(lpt, hook_hints);
 
@@ -1167,19 +1169,22 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
         }
         goto mte_done;
       }
+
       // high priority, or gov loop is running or main thread is running a service call
       // we need to wait and action this rather than add it to the queue
       //
       // if priority and not blocking, we will append lpt to the thread stack
       // then prepend our stack to maim thread
       // must not unref lpt, as it is in a hook_stack, it well be unreffed when the closure is freed
+
+      // add ref
       lives_proc_thread_ref(lpt);
 
       lpt2 = add_to_deferral_stack(lpt, hook_hints);
 
       if (lpt2 != lpt) {
         lives_proc_thread_unref(lpt);
-        lives_proc_thread_unref(lpt);
+        //lives_proc_thread_unref(lpt);
         lpt = lpt2;
         lives_proc_thread_ref(lpt);
       }
@@ -1197,16 +1202,15 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
           lpt2 = append_all_to_fg_deferral_stack();
           if (lpt2 && lpt2 != lpt) {
             lives_proc_thread_unref(lpt);
-            lives_proc_thread_unref(lpt);
+            // lives_proc_thread_unref(lpt);
             lpt = lpt2;
             lives_proc_thread_ref(lpt);
           }
           lpt = lpt_wait_with_repl(lpt);
         }
-        // we need to check for invalid, because in the cas of a toglefun, lpt is repalced by lpt2
+        // we need to check for invalid, because in the case of a togglefun, lpt is repalced by lpt2
         // but lpt2 is marked invalid
         if (lpt && !lives_proc_thread_is_invalid(lpt)) {
-          lives_proc_thread_unref(lpt);
           lives_proc_thread_unref(lpt);
         }
       }
@@ -2773,6 +2777,10 @@ static void *_lives_thread_data_create(void *pslot_id) {
     tdata->vars.var_self_stack_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(tdata->vars.var_self_stack_mutex, NULL);
 
+#if IS_LINUX_GNU
+    tdata->vars.var_tid = gettid();
+#endif
+
     for (int i = 0; i < N_HOOK_POINTS; i++) {
       tdata->vars.var_hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
       tdata->vars.var_hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
@@ -2890,7 +2898,8 @@ lives_thread_data_t *get_thread_data(void) {
   lives_thread_data_t *tdata;
   pthread_once(&do_once, make_pth_key);
   tdata = pthread_getspecific(tdata_key);
-  if (!tdata) tdata = _lives_thread_data_create(LIVES_INT_TO_POINTER(-(lives_atomic32_inc(&next_extern_tidx))));
+  if (!tdata)
+    tdata = _lives_thread_data_create(LIVES_INT_TO_POINTER(-(lives_atomic32_inc(&next_extern_tidx))));
   return tdata;
 }
 
@@ -3591,39 +3600,59 @@ void thread_stackdump(void) {
 
 
 char *get_threadstats(void) {
-  char *msg = lives_strdup_printf("Total threads in use: %d, active threads\n\n", rnpoolthreads);
+  int totthreads = 0, actthreads = 0;
+  char *msg = NULL;
   pthread_rwlock_rdlock(&allctx_rwlock);
-  g_print("\nThreads current state\n");
+  g_printerr("\nThreads current state\n");
   for (LiVESList *list = allctxs; list; list = list->next) {
-    char *notes = NULL;
+    char *notes = NULL, *tnum;
     lives_thread_data_t *tdata  = (lives_thread_data_t *)list->data;
     if (tdata) {
       lives_proc_thread_t lpt = NULL;
       LiVESList *lpt_self_stack;
       pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
+      totthreads++;
       pthread_mutex_lock(self_stack_mutex);
       lpt_self_stack = (LiVESList *)tdata->vars.var_self_stack;
       if (lpt_self_stack) lpt = (lives_proc_thread_t)lpt_self_stack->data;
       pthread_mutex_unlock(self_stack_mutex);
       if (pthread_equal(tdata->thrd_self, capable->gui_thread)) notes = lives_strdup("GUI thread");
-      if (pthread_equal(tdata->thrd_self, pthread_self())) notes = lives_strdup("me !");
-      g_print("Thread %d (%s):\nType: %s\n", tdata->slot_id, notes, THREADVAR(origin));
-      if (lpt) {
+      else if (tdata->thrd_type >= THRD_TYPE_EXTERN) notes = lives_strdup("External");
+#if IS_LINUX_GNU
+      tnum = lives_strdup_printf("(Thread 0x%lx (LWP %d)) ",
+                                 tdata->vars.var_thrd_self, tdata->vars.var_tid);
+#else
+      tnum = lives_strdup("");
+#endif
+      g_printerr("\nThread %d %s(%s):\nType: %s\n", tdata->slot_id, tnum,
+                 notes ? notes : "-", THREADVAR(origin));
+      lives_free(tnum);
+      if (!lpt) g_printerr("Waiting in threadpool\n");
+      else {
         ticks_t ptime, sytime, qtime;
         thrd_work_t *work = lives_proc_thread_get_work(lpt);
-        g_print("Currently running: %s\n", lives_proc_thread_show_func_call(lpt));
+        if (!lives_proc_thread_get_funcname(lpt))
+          g_printerr("Running unknown function\n");
+        else {
+          actthreads++;
+          g_printerr("Currently running: %s\n", lives_proc_thread_show_func_call(lpt));
+        }
         lpt_desc_state(lpt);
+        g_printerr("Loveliness %.2f\n", tdata->vars.var_loveliness);
         qtime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_QUEUE);
         sytime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_SYNC_START);
         ptime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_PROC);
-        g_print("\n[queue wait time %.4f usec, sync_wait time %.4f usec, "
-                "proc time %.4f usec]\n\n",
-                (double)qtime / (double)USEC_TO_TICKS,
-                (double)sytime / (double)USEC_TO_TICKS,
-                (double)ptime / (double)USEC_TO_TICKS);
+        g_printerr("\n[queue wait time %.4f usec, sync_wait time %.4f usec, "
+                   "proc time %.4f usec]\n\n",
+                   (double)qtime / (double)USEC_TO_TICKS,
+                   (double)sytime / (double)USEC_TO_TICKS,
+                   (double)ptime / (double)USEC_TO_TICKS);
       }
     }
   }
   pthread_rwlock_unlock(&allctx_rwlock);
+  msg = lives_strdup_printf("Total threads in use: %d, (%d poolhtreads, %d other), "
+                            "active threads %d\n\n", totthreads, rnpoolthreads,
+                            totthreads - rnpoolthreads, actthreads);
   return msg;
 }

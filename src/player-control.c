@@ -512,6 +512,52 @@ static void pre_playback(void) {
 }
 
 
+static boolean reset_timebase(void) {
+  // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
+
+  mainw->origticks = lives_get_session_ticks();
+
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    boolean pa_reset = TRUE;
+    if (prefs->audio_src == AUDIO_SRC_INT) {
+      if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
+        pa_reset = FALSE;
+      }
+    } else {
+      //      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
+      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
+        pa_reset = FALSE;
+      }
+    }
+    if (!pa_reset) {
+      handle_audio_timeout();
+      return FALSE;
+    }
+    if (mainw->event_list) {
+      mainw->pulsed->in_use = TRUE;
+    }
+  }
+#endif
+
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (mainw->jackd) {
+      jack_time_reset(mainw->jackd, 0);
+    }
+    if (mainw->jackd_read) {
+      jack_time_reset(mainw->jackd_read, 0);
+    }
+    if (mainw->jackd && mainw->event_list)
+      mainw->jackd->in_use = TRUE;
+  }
+#endif
+
+  reset_playback_clock(mainw->origticks);
+  return TRUE;
+}
+
+
 /// play the current clip from 'mainw->play_start' to 'mainw->play_end'
 void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
@@ -661,6 +707,7 @@ void play_file(void) {
     lives_disable_screensaver();
   }
 
+  mainw->actual_frame = cfile->frameno;
   mainw->playing_file = mainw->current_file;
 
   if (mainw->layers) {
@@ -672,18 +719,7 @@ void play_file(void) {
     }
   }
 
-  lives_freep((void **)&mainw->layers);
-
-  // rebuild nodemodel and plan ///////////////////////
-
-  mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-
-  build_nodemodel(&mainw->nodemodel);
-  align_with_model(mainw->nodemodel);
-  mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
-  mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
-
-  //////////////////////////////////////////////////////////////
+  mainw->refresh_model = TRUE;
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);
@@ -902,6 +938,12 @@ void play_file(void) {
       }
 
       if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
+
+      if (!reset_timebase()) {
+        mainw->cancelled = CANCEL_INTERNAL_ERROR;
+        break;
+      }
+
       if (!mainw->multitrack || !mainw->multitrack->pb_start_event) {
         do_progress_dialog(FALSE, FALSE, NULL);
 
@@ -1011,7 +1053,8 @@ void play_file(void) {
   mainw->osc_auto = 0;
 
   if (mainw->plan_cycle->state == PLAN_STATE_RUNNING) {
-    lives_proc_thread_cancel(mainw->plan_runner_proc);
+    if (mainw->plan_runner_proc)
+      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
   }
 
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
@@ -1408,6 +1451,8 @@ void play_file(void) {
     }
   }
 #endif
+
+  cleanup_nodemodel(&mainw->nodemodel);
 
   if (THREADVAR(bad_aud_file)) {
     /// we got an error recording audio

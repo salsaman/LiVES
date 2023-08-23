@@ -444,7 +444,7 @@ static boolean est_fraction(double val, uint32_t *numer, uint32_t *denom, double
    step 1: fps' = fps / (fps + 1.)
 
    step 4: find next power of 10 (curt) above x. mpy by (fps + 1.)
-           since fps / (fps + 1.) = x / y, y = x * (fps + 1.) / fps = x / fps'
+   since fps / (fps + 1.) = x / y, y = x * (fps + 1.) / fps = x / fps'
    step 5: return TRUE and values (fps + 1) * curt : curt / fps'
 */
 boolean calc_ratio_fps(double fps, int *numer, int *denom) {
@@ -627,88 +627,282 @@ LIVES_LOCAL_INLINE  void lives_sha512_calc(uint64_t H[8], uint8 const data[SHA2_
     H[0] += a; H[1] += b; H[2] += c;  H[3] += d;
     H[4] += e; H[5] += f; H[6] += g; H[7] += h;
   }
+}
+}
 
-  LIVES_LOCAL_INLINE void *lives_sha512_make(const char *p, size_t len, void *ret) {
-    sha512priv priv;
-    lives_sha512_start(&priv);
-    lives_sha512_calc(p, len, &priv);
-    return lives_sha512_end(&priv, ret);
-  }
+
+LIVES_LOCAL_INLINE void *lives_sha512_make(const char *p, size_t len, void *ret) {
+  sha512priv priv;
+  lives_sha512_start(&priv);
+  lives_sha512_calc(p, len, &priv);
+  return lives_sha512_end(&priv, ret);
+}
 #endif
 
-  ///////////////////////////////////////////////////////// end md5sum code /////////////
+///////////////////////////////////////////////////////// end md5sum code /////////////
 
-  // statistics
+// ANN - sset up ann_layers with Nx nodes each
+// create an array of n0 * n1 + n1 * n2 weights ,and n0 + n1 + n2 biases
+// for the weights th first n2 values belong to n0 node 1, then the next to n0 node 2
+// up to n0 * n1
+// the the next nt wieights belong to n0 of next layert etc
+// so to find set o weights for a node - multiply node numbers for all lower latyers, add n1 ( n2 vals
 
-  /* static boolean inited = FALSE; */
-  /* //static const lives_object_template_t tmpls[1]; */
-
-  /* static void init_templates(void) { */
-  /*   lives_object_template_t tmpl; */
-  /*   if (inited) return; */
-  /*   inited = TRUE; */
-  /*   tmpl = tmpls[0]; */
-  /*   tmpl.uid = tmpl.subtype = SUBTYPE_STATS; */
-  /*   tmpl.type = OBJECT_TYPE_MATH; */
-  /* } */
+// bias we just sum n nodes for lower layers then add
 
 
-  typedef struct {
-    int nvals, maxsize;
-    size_t fill;
-    float **res;
-  } tab_data;
-
-  // to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
-  // the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
-  // tab_data is used by the functionand not to be messed with
-  size_t running_average(float * newval, int idx, void **data) {
-    size_t nfill;
-    if (!data) return 0;
-    else {
-      tab_data **tdatap = (tab_data **)data;
-      tab_data *tdata = *tdatap;
-      float tot = 0.;
-      if (!newval) {
-        if (!tdata) {
-          tdata = (tab_data *)lives_calloc(sizeof(tab_data), 1);
-          *tdatap = tdata;
-        }
-        if (!tdata->nvals) {
-          tdata->nvals = idx;
-          tdata->res = (float **)lives_calloc(sizeof(float *), tdata->nvals);
-        } else {
-          tdata->maxsize = idx;
-          for (int i = 0; i < tdata->nvals; i++) {
-            tdata->res[i] = (float *)lives_calloc(4, tdata->maxsize + 1);
-          }
-        }
-        return 0;
+LIVES_LOCAL_INLINE  double ann_get_result(lives_ann_t *ann) {
+  int nn = 0, nw = 0;
+  int lcount = 0;
+  for (int i = 0; i < ann->nlayers; i++) {
+    int lcount2 = ann->lcount[i + 1];
+    lcount += ann->lcount[i];
+    for (; nn < lcount; nn++) {
+      double val = ann->values[nn];
+      if (!val) {
+        nw += lcount2;
+        continue;
       }
-      tot = tdata->res[idx][tdata->maxsize];
-      if (tdata->fill > tdata->maxsize - 2) {
-        tot -= tdata->res[idx][0];
-        lives_memmove(&tdata->res[idx][0], &tdata->res[idx][1], (tdata->maxsize - 1) * 4);
+      val += ann->biases[nn];
+      for (int k = 0; k < lcount2; k++) {
+        double res = val * ann->weights[nw++];
+        if (res > 0.) ann->values[lcount + k] += res;
       }
-      tot += *newval;
-      tdata->res[idx][tdata->fill] = *newval;
-      tdata->res[idx][tdata->maxsize] = tot;
-      *newval = tot / (tdata->fill + 1);
-      nfill = tdata->fill + 1;
-      if (idx == tdata->nvals - 1 && tdata->fill < tdata->maxsize - 1) tdata->fill++;
     }
-    return nfill;
+  }
+  return ann->values[nn];
+}
+
+
+static LIVES_HOT double ann_test_with_data(lives_ann_t *ann) {
+  int ntrials  = 0;
+  double ersq = 0., err;
+  for (LiVESList *list = ann->tstdata; list; list = list->next) {
+    ann_testdata_t *trndata = (ann_testdata_t *)list->data;
+    if (trndata) {
+      double est;
+      int max = ann->lcount[0], j;
+      for (j = 0; j < max; j++)	ann->values[j] = trndata->inputs[j];
+      while (j < ann->nnodes) ann->values[j++] = 0.;
+      est = ann_get_result(ann);
+      err = (est - trndata->res) * (est - trndata->res);
+      ersq += err;
+      ntrials++;
+      /* if (ntrials == 10) g_print("check %f, %f %f, %f\n", est, trndata->res, (est - trndata->res) / trndata->res, */
+      /* 				err); */
+    }
   }
 
 
-  lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent) {
-    return NULL;
+  if (ntrials) return ersq / (double)ntrials;
+  return 0.;
+}
+
+
+static void ann_backup_weights(lives_ann_t *ann) {
+  lives_memcpy(ann->bweights, ann->weights, ann->nweights * sizdbl);
+  lives_memcpy(ann->bbiases, ann->biases, ann->nnodes * sizdbl);
+}
+
+
+static void ann_restore_weights(lives_ann_t *ann) {
+  lives_memcpy(ann->weights, ann->bweights, ann->nweights * sizdbl);
+  lives_memcpy(ann->biases, ann->bbiases, ann->nnodes * sizdbl);
+}
+
+
+static void vary_weights_and_biases(lives_ann_t *ann) {
+  double deltab = ann->damp * ann->maxrb  / (double)ann->nrnds;
+  double deltawx = ann->damp * ann->maxr / (double)ann->nrnds;
+  ann->generations++;
+  if (ann->nvary < ann->nnodes) {
+    for (int i = 0; i < ann->nvary; i++) {
+      int wtoalt = (int)fastrand_dbl(ann->nweights + 1);
+      int btoalt = (int)fastrand_dbl(ann->nnodes + 1);
+      double deltaw = ann->weights[wtoalt] * deltawx;
+      ann->weights[wtoalt] += fastrand_dbl(deltaw * 2.) - deltaw;
+      ann->biases[btoalt]  += fastrand_dbl(deltab * 2.) - deltab;
+    }
+    return;
   }
+  for (int i = ann->nweights; i--;) {
+    double deltaw = ann->weights[i] * deltawx;
+    for (int j = ann->nrnds; --j;) {
+      ann->weights[i] += fastrand_dbl(deltaw * 2.) - deltaw;
+    }
+  }
+  for (int i = ann->nnodes; i--;) {
+    for (int j = ann->nrnds; --j;) {
+      ann->biases[i]  += fastrand_dbl(deltab * 2.) - deltab;
+    }
+  }
+}
 
 
-  /* const lives_object_template_t *maths_object_with_subtype(uint64_t subtype) { */
-  /*   if (!inited) init_templates(); */
-  /*   if (subtype == MATH_OBJECT_SUBTYPE_STATS) return &tmpls[SUBTYPE_STATS]; */
-  /*   return NULL; */
-  /* } */
+LIVES_GLOBAL_INLINE void lives_ann_set_variance(lives_ann_t *ann, double maxr,
+    double maxrb, double damp, int nrnds) {
+  ann->maxr = maxr;
+  ann->maxrb = maxrb;
+  ann->nrnds = nrnds;
+  ann->damp = damp;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_ann_init_seed(lives_ann_t *ann, double maxw) {
+  ann->nvary = ann->nnodes;
+  ann->maxw = maxw;
+  for (int i = ann->nweights - 1; i--;) ann->weights[i] = fastrand_dbl(maxw);
+  for (int i = ann->nnodes - 1; i--;) ann->biases[i] = 0.;
+}
+
+
+double lives_ann_evolve(lives_ann_t *ann) {
+  double res;
+  ann_backup_weights(ann);
+  vary_weights_and_biases(ann);
+  res = ann_test_with_data(ann);
+  //g_print("res == %.8f, X %.8f\n", res, ann->last_res);
+  if (res && !ann->last_res || res < ann->last_res) {
+    g_print("NN converged to %f\n", res);
+    ann->last_res = res;
+    if (ann->damp > 0.7) ann->damp *= ann->damp;
+    ann->no_change_count = 0;
+    return res;
+  }
+  ann_restore_weights(ann);
+  ++ann->no_change_count;
+  return ann->last_res;
+}
+
+
+double lives_ann_predict_result(lives_ann_t *ann, ann_testdata_t *realdata) {
+  int max = ann->lcount[0], j;
+  for (j = 0; j < max; j++) ann->values[j] = realdata->inputs[j];
+  while (j < ann->nnodes) ann->values[j++] = 0.;
+  double res = ann_get_result(ann);
+  return res;
+}
+
+
+lives_ann_t *lives_ann_create(int nlayers, int *lcounts) {
+  LIVES_CALLOC_TYPE(lives_ann_t, ann, 1);
+  int nw = 0, nn = 0;
+  ann->nlayers = nlayers;
+  ann->lcount = LIVES_CALLOC_SIZEOF(int, nlayers + 1);
+
+  for (int i = 0; i <= nlayers; i++) {
+    if (i < nlayers) ann->lcount[i] = lcounts[i];
+    else ann->lcount[i] = 1;
+    if (i) {
+      // count of connections up to layer + 1
+      nw += ann->lcount[i - 1] * ann->lcount[i];
+    }
+    nn += ann->lcount[i];
+  }
+  ann->weights = LIVES_CALLOC_SIZEOF(double, nw);
+  ann->bweights = LIVES_CALLOC_SIZEOF(double, nw);
+  ann->biases = LIVES_CALLOC_SIZEOF(double, nn);
+  ann->bbiases = LIVES_CALLOC_SIZEOF(double, nn);
+  ann->values = LIVES_CALLOC_SIZEOF(double, nn);
+  //
+  ann->nweights = nw;
+  ann->nnodes = nn;
+  //
+  return ann;
+}
+
+void lives_ann_free(lives_ann_t *ann) {
+  if (ann) {
+    if (ann->weights) lives_free(ann->weights);
+    if (ann->bweights) lives_free(ann->bweights);
+    if (ann->biases) lives_free(ann->biases);
+    if (ann->bbiases) lives_free(ann->bbiases);
+    if (ann->values) lives_free(ann->values);
+    if (ann->lcount) lives_free(ann->lcount);
+    if (ann->tstdata) {
+      for (LiVESList *list = ann->tstdata; list; list = list->next) {
+        ann_testdata_t *trndata = (ann_testdata_t *)list->data;
+        if (trndata && trndata->inputs) lives_free(trndata->inputs);
+      }
+      lives_list_free(ann->tstdata);
+    }
+    lives_free(ann);
+  }
+}
+
+///////////////////////////////////////////////
+
+// statistics
+
+/* static boolean inited = FALSE; */
+/* //static const lives_object_template_t tmpls[1]; */
+
+/* static void init_templates(void) { */
+/*   lives_object_template_t tmpl; */
+/*   if (inited) return; */
+/*   inited = TRUE; */
+/*   tmpl = tmpls[0]; */
+/*   tmpl.uid = tmpl.subtype = SUBTYPE_STATS; */
+/*   tmpl.type = OBJECT_TYPE_MATH; */
+/* } */
+
+
+typedef struct {
+  int nvals, maxsize;
+  size_t fill;
+  float **res;
+} tab_data;
+
+// to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
+// the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
+// tab_data is used by the functionand not to be messed with
+size_t running_average(float *newval, int idx, void **data) {
+  size_t nfill;
+  if (!data) return 0;
+  else {
+    tab_data **tdatap = (tab_data **)data;
+    tab_data *tdata = *tdatap;
+    float tot = 0.;
+    if (!newval) {
+      if (!tdata) {
+        tdata = (tab_data *)lives_calloc(sizeof(tab_data), 1);
+        *tdatap = tdata;
+      }
+      if (!tdata->nvals) {
+        tdata->nvals = idx;
+        tdata->res = (float **)lives_calloc(sizeof(float *), tdata->nvals);
+      } else {
+        tdata->maxsize = idx;
+        for (int i = 0; i < tdata->nvals; i++) {
+          tdata->res[i] = (float *)lives_calloc(4, tdata->maxsize + 1);
+        }
+      }
+      return 0;
+    }
+    tot = tdata->res[idx][tdata->maxsize];
+    if (tdata->fill > tdata->maxsize - 2) {
+      tot -= tdata->res[idx][0];
+      lives_memmove(&tdata->res[idx][0], &tdata->res[idx][1], (tdata->maxsize - 1) * 4);
+    }
+    tot += *newval;
+    tdata->res[idx][tdata->fill] = *newval;
+    tdata->res[idx][tdata->maxsize] = tot;
+    *newval = tot / (tdata->fill + 1);
+    nfill = tdata->fill + 1;
+    if (idx == tdata->nvals - 1 && tdata->fill < tdata->maxsize - 1) tdata->fill++;
+  }
+  return nfill;
+}
+
+
+lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent) {
+  return NULL;
+}
+
+
+/* const lives_object_template_t *maths_object_with_subtype(uint64_t subtype) { */
+/*   if (!inited) init_templates(); */
+/*   if (subtype == MATH_OBJECT_SUBTYPE_STATS) return &tmpls[SUBTYPE_STATS]; */
+/*   return NULL; */
+/* } */
 

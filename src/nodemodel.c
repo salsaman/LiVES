@@ -115,19 +115,15 @@
 static int allpals[] = ALL_STANDARD_PALETTES;
 static int n_allpals = 0;
 
-/*   weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE); */
-/* } */
+#define ANN_ERR_THRESH 0.0025
+#define ANN_GEN_LIMIT 50
+
+static glob_timedata_t *glob_timing = NULL;
 
 // still to do:
-/// do asynch reinits
 
 // elsewhere:
-// create static clip_srcs
-// clean up code in load_Frame_layer and weed_appl_instace
-// create new func - execute_plan()
 // include provision  for deinterlace
-// implemnt 2 way letterboxing
-// early loading for layers
 // measure actual timings
 
 // create model deltas, bypass nodes
@@ -136,12 +132,7 @@ static int n_allpals = 0;
 static inst_node_t *desc_and_add_steps(lives_nodemodel_t *, inst_node_t *, exec_plan_t *);
 static inst_node_t *desc_and_align(inst_node_t *, lives_nodemodel_t *);
 
-#define OP_RESIZE 0
-#define OP_PCONV 1
-#define OP_GAMMA 2
-#define N_OP_TYPES 3
-
-static lives_result_t get_op_order(int out_size, int in_size, int outpl, int inpl,
+static lives_result_t get_op_order(int out_size, int in_size, boolean lbox, int outpl, int inpl,
                                    int out_gamma_type, int in_gamma_type, int *op_order);
 
 static void reset_model(lives_nodemodel_t *nodemodel) {
@@ -241,7 +232,7 @@ static boolean does_pconv_gamma(int outpl, int inpl) {
 }
 
 
-static lives_result_t get_op_order(int out_size, int in_size, int outpl, int inpl,
+static lives_result_t get_op_order(int out_size, int in_size, boolean letterbox, int outpl, int inpl,
                                    int out_gamma_type, int in_gamma_type, int *op_order) {
   // we can define order 1, 2, 3
   // if multiple ops have same number, they are done simultaneously
@@ -264,9 +255,9 @@ static lives_result_t get_op_order(int out_size, int in_size, int outpl, int inp
   if (weed_palette_is_yuv(inpl)) in_yuv = TRUE;
   if (weed_palette_is_yuv(outpl)) out_yuv = TRUE;
 
-  if (in_size != out_size) {
+  if (letterbox || (in_size != out_size)) {
     ops_needed[OP_RESIZE] = TRUE;
-    if (in_size > out_size) is_upscale = TRUE;
+    if (letterbox || (in_size > out_size)) is_upscale = TRUE;
   } else ops_needed[OP_RESIZE] = FALSE;
 
   if ((in_gamma_type != out_gamma_type && (!out_yuv || !in_yuv))
@@ -454,16 +445,36 @@ static double get_resize_cost(int cost_type, int out_width, int out_height, int 
   case COST_TYPE_QLOSS_S:
     out_size = out_width * out_height;
     in_size = in_width * in_height;
-    if (in_size < out_size)
-      return out_size / in_size;
-    else return in_size / out_size;
-    break;
-  case COST_TYPE_TIME:
-    // return esstimate of time using pal., and max in_size, out_size
-    break;
+    if (in_size < out_size) return out_size / in_size;
+    return in_size / out_size;
+
+  case COST_TYPE_TIME: {
+    double tcost = 1.;
+    if (glob_timing) {
+      volatile float *cpuload;
+      ann_testdata_t realdata;
+      realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
+      realdata.inputs[TIMING_ANN_OUTSIZE] = (double)lives_frame_calc_bytesize(out_width, out_height,
+                                            outpl, FALSE, NULL)
+                                            / 1000000.;
+      realdata.inputs[TIMING_ANN_INSIZE] = (double)lives_frame_calc_bytesize(in_width, in_height,
+                                           inpl, FALSE, NULL)
+                                           / 1000000.;
+      // estimate here will not be very accurate - we can get a more accurate value
+      // in real time once we know the clip_src for the srcgroup + the current cpuload
+      cpuload = get_core_loadvar(0);
+      realdata.inputs[TIMING_ANN_CPULOAD] = (double) * cpuload / 100.;
+      realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 1.0;
+      realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = 1.;
+      realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = 1.;
+      tcost = lives_ann_predict_result(glob_timing->ann, &realdata);
+      lives_free(realdata.inputs);
+    }
+    return tcost;
+  }
   default: break;
   }
-  return 10.;
+  return 0.;
 }
 
 
@@ -726,6 +737,30 @@ double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl,
   // --
   if (cost_type == COST_TYPE_QLOSS_P)
     return get_qloss_p(outpl, inpl, inpals);
+  if (cost_type == COST_TYPE_TIME) {
+    double tcost = 0.01;
+    if (glob_timing) {
+      volatile float *cpuload;
+      ann_testdata_t realdata;
+      realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
+      realdata.inputs[TIMING_ANN_OUTSIZE] = (double)lives_frame_calc_bytesize(width, height,
+                                            outpl, FALSE, NULL)
+                                            / 1000000.;
+      realdata.inputs[TIMING_ANN_INSIZE] = (double)lives_frame_calc_bytesize(width, height,
+                                           inpl, FALSE, NULL)
+                                           / 1000000.;
+      // estimate here will not be very accurate - we can get a more accurate value
+      // in real time once we know the clip_src for the srcgroup + the current cpuload
+      cpuload = get_core_loadvar(0);
+      realdata.inputs[TIMING_ANN_CPULOAD] = (double) * cpuload / 100.;
+      realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 1.0;
+      realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = 1.;
+      realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = 1.;
+      tcost = lives_ann_predict_result(glob_timing->ann, &realdata);
+      lives_free(realdata.inputs);
+    }
+    return tcost;
+  }
   return 0.;
 }
 
@@ -742,18 +777,19 @@ static double get_proc_cost(int cost_type, weed_filter_t *filter, int width, int
 
 // we go from out (output) to in (input)
 static double get_conversion_cost(int cost_type, int out_width, int out_height, int in_width, int in_height,
-                                  int outpl, int inpl, int *inpals, int out_gamma_type, int in_gamma_type,
-                                  boolean ghost) {
+                                  boolean lbox, int outpl, int inpl, int *inpals, int out_gamma_type,
+                                  int in_gamma_type, boolean ghost) {
   // get cost for resize, pal_conv, gamma_change + misc_costs
   // qloss costs for size_changes (QLOSS_S) are already baked into the model so we do not calculate those
   // for QLOSS_P, we have conversion cosst + possible ghost cost
   // for time cost, some operations can be combined - resize, pal_conv, gamma_conversion
   // in addiition we may have misc costs (e.g for deinterlacing)
   // so, valid cost_types are COST_TYPE_TIME and COST_TYPE_QLOSS_P
+  double cost = 0.;
 
   int op_order[N_OP_TYPES];
 
-  get_op_order(out_width * out_height, in_width * in_height, outpl, inpl,
+  get_op_order(out_width * out_height, in_width * in_height, lbox, outpl, inpl,
                out_gamma_type, in_gamma_type, op_order);
 
   if (!op_order[OP_RESIZE] && !op_order[OP_PCONV] && !op_order[OP_GAMMA]) return 0.;
@@ -771,23 +807,23 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
 
   if (cost_type != COST_TYPE_TIME) return 0.;
 
-  // check if resize or letterbox - for lbox we consider only inner size
-  // now we should have the operations in order
+  if (lbox && glob_timing->bytes_per_sec) cost += (in_width * in_height) / glob_timing->bytes_per_sec;
+
   if (op_order[OP_RESIZE] == 1) {
     // 1 - -
     if (op_order[OP_PCONV] == 1) {
       // 1 1 -
       if (op_order[OP_GAMMA] == 1) {
         // all 3 ops - so only resize cost : R
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
       }
       if (!op_order[OP_GAMMA]) {
         // resize + pconv : R
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
       }
       if (op_order[OP_GAMMA] == 2) {
         // resize + palconv / gamma : R G
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl)
                + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, inpl, out_gamma_type, in_gamma_type, ghost);
       }
     }
@@ -795,15 +831,15 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
       // 1 0 -
       if (op_order[OP_GAMMA] == 1) {
         // resize + gamma : R
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
       }
       if (!op_order[OP_GAMMA]) {
         // resize only : R
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl);
       }
       if (op_order[OP_GAMMA] == 2) {
         // resize / gamma : R G
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, inpl)
                + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, outpl, out_gamma_type, in_gamma_type, ghost);
       }
     }
@@ -811,22 +847,22 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
       // 1 2 -
       if (op_order[OP_GAMMA] == 1) {
         // resize + gamma / pconv: R P
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
                + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl, inpals);
       }
       if (!op_order[OP_GAMMA]) {
         // resize / pconv : R P
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
                + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl, inpals);
       }
       if (op_order[OP_GAMMA] == 2) {
         // resize / palconv + gamma : R P
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
                + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl, inpals);
       }
       if (op_order[OP_GAMMA] == 3) {
         // resize / pconv / gamma : R P G
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
                + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl, inpals)
                + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, inpl, out_gamma_type, in_gamma_type, ghost);
       }
@@ -835,7 +871,7 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
       // 1 3 2
       if (op_order[OP_GAMMA] == 2) {
         // resize / gamma / pconv : R G P
-        return get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
+        return cost + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
                + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, outpl, out_gamma_type, in_gamma_type, ghost)
                + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl, inpals);
       }
@@ -849,37 +885,37 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
       // 0 1 -
       if (!op_order[OP_GAMMA]) {
         // pconv only : P
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals);
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals);
       }
       if (op_order[OP_GAMMA] == 1) {
         // pconv + gamma : P
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals);
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals);
       }
       if (op_order[OP_GAMMA] == 2) {
         // pconv / gamma : P G
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, inpl, out_gamma_type, in_gamma_type, ghost);
       }
     }
     if (op_order[OP_RESIZE] == 2) {
       if (op_order[OP_GAMMA] == 1) {
         // pconv + gamma / resize : P R
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
       }
       if (!op_order[OP_GAMMA]) {
         // pconv / resize : P R
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
       }
       if (op_order[OP_GAMMA] == 2) {
         // pconv / resize + gamma : P R
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
       }
       if (op_order[OP_GAMMA] == 3) {
         // pconv / resize / gamma : P R G
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl)
                + get_gamma_cost(COST_TYPE_TIME, in_width, in_height, inpl, out_gamma_type, in_gamma_type, ghost);
       }
@@ -887,7 +923,7 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
     if (op_order[OP_RESIZE] == 3) {
       if (op_order[OP_GAMMA] == 2) {
         // pconv / gamma / resize : P G R
-        return get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
+        return cost + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, inpl, out_gamma_type, in_gamma_type, ghost)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
       }
@@ -900,27 +936,27 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
     if (!op_order[OP_RESIZE]) {
       if (!op_order[OP_PCONV]) {
         // gamma only
-        return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost);
+        return cost + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost);
       }
       if (op_order[OP_PCONV] == 2) {
         // gamma / pconv : G P
-        return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+        return cost + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
                + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals);
       }
       if (!op_order[OP_PCONV]) {
         // gamma only : G
-        return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost);
+        return cost + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost);
       }
     }
     if (op_order[OP_RESIZE] == 2) {
       if (op_order[OP_PCONV] == 2) {
         // gamma / resize + pconv : G R
-        return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+        return cost + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl);
       }
       if (op_order[OP_PCONV] == 3) {
         // gamma / resize / pconv : G R P
-        return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+        return cost + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, outpl, outpl)
                + get_pconv_cost(COST_TYPE_TIME, in_width, in_height, outpl, inpl, inpals);
       }
@@ -928,7 +964,7 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
     if (op_order[OP_RESIZE] == 3) {
       if (op_order[OP_PCONV] == 2) {
         // gamma / pconv / resize : G P R
-        return get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
+        return cost + get_gamma_cost(COST_TYPE_TIME, out_width, out_height, outpl, out_gamma_type, in_gamma_type, ghost)
                + get_pconv_cost(COST_TYPE_TIME, out_width, out_height, outpl, inpl, inpals)
                + get_resize_cost(COST_TYPE_TIME, out_width, out_height, in_width, in_height, inpl, inpl);
       }
@@ -936,6 +972,23 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
   }
   return 0.;
 }
+
+
+static exec_plan_substep_t *make_substep(int op_idx, double st_time,
+    int out_width, int out_height, int out_pal) {
+  volatile float *cpuload;
+  LIVES_CALLOC_TYPE(exec_plan_substep_t, substep, 1);
+  substep->op_idx = op_idx;
+  substep->width = out_width;
+  substep->height = out_height;
+  substep->pal = out_pal;
+  substep->start = st_time;
+  substep->pb_quality = prefs->pb_quality;
+  cpuload = get_core_loadvar(0);
+  substep->cpuload = (double) * cpuload;
+  return substep;
+}
+
 
 // CONVERT STEP // (need LOAD STEP, LAYER COPY STEP, APPLY INST step)
 
@@ -977,6 +1030,7 @@ static boolean do_opt_actions(plan_step_t *step, boolean check) {
 
 static lives_filter_error_t palconv(plan_step_t *step) {
   GET_PROC_THREAD_SELF(self);
+  exec_plan_substep_t *sub;
   int track = step->track;
   lives_layer_t *layer = step->plan->layers[track];
   int tgt_gamma = step->fin_gamma;
@@ -990,8 +1044,10 @@ static lives_filter_error_t palconv(plan_step_t *step) {
 
   double xtime = lives_get_session_time();
   SET_SELF_VALUE(double, "pconv_start", xtime);
-  if (prefs->dev_show_timing)
-    g_printerr("pconv_start, track %d @ %.4f pal %d to pal %d\n", track, xtime * 1000., inpalette, opalette);
+  sub = make_substep(OP_PCONV, xtime, weed_layer_get_width(layer),
+                     weed_layer_get_height(layer), weed_layer_get_palette(layer));
+  /* if (prefs->dev_show_timing) */
+  /*   g_printerr("pconv_start, track %d @ %.4f pal %d to pal %d\n", track, xtime * 1000., inpalette, opalette); */
 
   if (inpalette != opalette) {
     if (!convert_layer_palette_full(layer, opalette, oclamping,
@@ -1006,8 +1062,12 @@ static lives_filter_error_t palconv(plan_step_t *step) {
   }
   xtime = lives_get_session_time();
   SET_SELF_VALUE(double, "pconv_end", xtime);
-  if (prefs->dev_show_timing)
-    g_printerr("pconv_end, track %d @ %.4f\n", track, xtime * 1000.);
+
+  sub->end = xtime;
+  step->substeps = lives_list_append(step->substeps, (void *)sub);
+
+  /* if (prefs->dev_show_timing) */
+  /*   g_printerr("pconv_end, track %d @ %.4f\n", track, xtime * 1000.); */
   return retval;
 }
 
@@ -1050,38 +1110,39 @@ static lives_filter_error_t gamma_conv(plan_step_t *step) {
 
 static lives_filter_error_t res_or_lbox(plan_step_t *step) {
   GET_PROC_THREAD_SELF(self);
-  int interp = GET_SELF_VALUE(int, "interp");
+  exec_plan_substep_t *sub;
   int track = step->track;
   lives_layer_t *layer = step->plan->layers[track];
+  double lb_time = 0.;
+  int interp = GET_SELF_VALUE(int, "interp");
   int oclamping = step->fin_sampling;
   int opalette = step->fin_pal;
   int xwidth = step->fin_iwidth;
   int xheight = step->fin_iheight;
   int width = step->fin_width;
   int height = step->fin_height;
-  int inwidth = weed_layer_get_width(layer);
-  int inheight = weed_layer_get_height(layer);
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean resized = FALSE;
 
   double xtime = lives_get_session_time();
   SET_SELF_VALUE(double, "res_start", xtime);
-  if (prefs->dev_show_timing)
-    g_printerr("res_start, track %d @ %.4f, res from %d X %d to %d X %d (%d X %d)\n", track, xtime * 1000.,
-               inwidth, inheight, width, height, xwidth, xheight);
+  sub = make_substep(OP_RESIZE, xtime, weed_layer_get_width(layer),
+                     weed_layer_get_height(layer), weed_layer_get_palette(layer));
 
-  if (xwidth && xheight && (xwidth < width || xheight < height))
+  if (xwidth < width || xheight < height)
     resized = letterbox_layer(layer, width, height, xwidth, xheight, interp, opalette, oclamping);
+
   if (!resized) {
     SET_SELF_VALUE(boolean, "letterboxed", FALSE);
     resized = resize_layer(layer, width, height, interp, opalette, oclamping);
   } else {
     SET_SELF_VALUE(boolean, "letterboxed", TRUE);
-    if (prefs->dev_show_timing)
-      g_printerr("was letterboxed\n");
+    lb_time = weed_get_double_value(layer, LIVES_LEAF_COPY_TIME, NULL);
+    /* if (prefs->dev_show_timing) */
+    /*   g_printerr("was letterboxed\n"); */
   }
+
   if (!resized) {
-    //break_me("unable");
     retval = FILTER_ERROR_UNABLE_TO_RESIZE;
     lives_proc_thread_error(self, (int)retval, "Unable to resize");
   }
@@ -1089,8 +1150,17 @@ static lives_filter_error_t res_or_lbox(plan_step_t *step) {
   xtime = lives_get_session_time();
   SET_SELF_VALUE(double, "res_end", xtime);
 
-  if (prefs->dev_show_timing)
-    g_printerr("res_end, track %d @ %.4f\n", track, xtime * 1000.);
+  xtime -= lb_time;
+  sub->end = xtime;
+
+  if (sub->start > sub->end) sub->end = sub->start;
+
+  sub->copy_time = lb_time;
+
+  step->substeps = lives_list_append(step->substeps, (void *)sub);
+
+  /* if (prefs->dev_show_timing) */
+  /*   g_printerr("res_end, track %d @ %.4f (%.4f)\n", track, xtime * 1000., lb_time); */
 
   return retval;
 }
@@ -1202,7 +1272,8 @@ static int check_step_condition(exec_plan_t *plan, plan_step_t *step, boolean ca
     if (lives_proc_thread_is_done(lpt)) {
       double xtime = lives_get_session_time();
       step->tdata->real_end = xtime;
-      step->tdata->real_duration = step->tdata->real_end - step->tdata->real_start - step->tdata->paused_time;
+      step->tdata->real_duration = 1000. * (step->tdata->real_end
+                                            - step->tdata->real_start - step->tdata->paused_time);
       plan->tdata->sequential_time += step->tdata->real_duration;
       if (lives_proc_thread_had_error(lpt)) {
         step->errmsg = lives_proc_thread_get_errmsg(lpt);
@@ -1229,6 +1300,97 @@ static int check_step_condition(exec_plan_t *plan, plan_step_t *step, boolean ca
 }
 
 
+static void glob_timing_init(void) {
+  if (glob_timing) return;
+  int lcounts[] = TIMING_ANN_LCOUNTS;
+  glob_timing = LIVES_CALLOC_SIZEOF(glob_timedata_t, 1);
+  glob_timing->ann = lives_ann_create(TIMING_ANN_NLAYERS, lcounts);
+  // the predictor is VERY sensitive to inital conditions
+  // but with these values it can usually train itself in under 50 generations
+  lives_ann_init_seed(glob_timing->ann, .001);
+  lives_ann_set_variance(glob_timing->ann, 1.0, 1.0, 0.9999, 2);
+}
+
+#define ANN_MAX_DPOINTS 200
+
+
+static ann_testdata_t *tst_data_copy(ann_testdata_t *tstdata, int nins) {
+  LIVES_CALLOC_TYPE(ann_testdata_t, trndata, 1);
+  lives_memcpy(trndata, tstdata, sizeof(ann_testdata_t));
+  trndata->inputs = LIVES_CALLOC_SIZEOF(double, nins);
+  lives_memcpy(trndata->inputs, tstdata->inputs, nins * sizdbl);
+  return trndata;
+}
+
+
+static void extract_timedata(exec_plan_t *plan) {
+  // go though plan steps and scavenge timer data
+  for (LiVESList *list = plan->steps; list; list = list->next) {
+    plan_step_t *step = (plan_step_t *)list->data;
+    if (!step) continue;
+    if (step->state == STEP_STATE_FINISHED) {
+      switch (step->st_type) {
+      case STEP_TYPE_CONVERT:
+        // what we are interested in here are the sub-step timings
+        // resize and palcovn - we will use this to make training data for the ANN
+        for (LiVESList *sublist = step->substeps; sublist; sublist = sublist->next) {
+          ann_testdata_t *tstdata;
+          exec_plan_substep_t *substep = (exec_plan_substep_t *)sublist->data;
+          switch (substep->op_idx) {
+          case OP_PCONV:
+          case OP_RESIZE: {
+            double insize = (double)lives_frame_calc_bytesize(step->fin_iwidth, step->fin_iheight,
+                            step->fin_pal, FALSE, NULL);
+            double outsize = (double)lives_frame_calc_bytesize(substep->width, substep->height,
+                             substep->pal, FALSE, NULL);
+
+            if (substep->copy_time) glob_timing->bytes_per_sec = insize / substep->copy_time;
+
+            tstdata = LIVES_CALLOC_SIZEOF(ann_testdata_t, 1);
+            tstdata->inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
+
+            tstdata->inputs[TIMING_ANN_OUTSIZE] = outsize / 100000.;
+            tstdata->inputs[TIMING_ANN_INSIZE] = insize / 1000000.;
+            tstdata->inputs[TIMING_ANN_CPULOAD] = substep->cpuload / 100.;
+            tstdata->inputs[TIMING_ANN_PBQ_BASE + substep->pb_quality] = 1.;
+            tstdata->inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(substep->pal)] = 1.;
+            tstdata->inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(step->fin_pal)] = 1.;
+
+            if (insize == outsize && substep->pal == step->fin_pal)
+              tstdata->res = 0.;
+            else tstdata->res = (substep->end - substep->start - substep->paused);
+
+            int max = 1;
+            if (plan->model->flags & NODEMODEL_NEW) max = ANN_MAX_DPOINTS / (1 + plan->iteration);
+            for (int rpt = 0; rpt < max; rpt++) {
+              ann_testdata_t *trndata = tstdata;
+              if (rpt < max - 1) trndata = tst_data_copy(tstdata, glob_timing->ann->lcount[0]);
+              glob_timing->ann->tstdata = lives_list_prepend(glob_timing->ann->tstdata, (void *)trndata);
+              if (!glob_timing->ann->last_data) glob_timing->ann->last_data = glob_timing->ann->tstdata;
+              if (++glob_timing->ann->ndatapoints > ANN_MAX_DPOINTS) {
+                LiVESList *old_last = glob_timing->ann->last_data;
+                glob_timing->ann->last_data = old_last->prev;
+                old_last->prev->next = NULL;
+                old_last->prev = NULL;
+                trndata = (ann_testdata_t *)old_last->data;
+                if (trndata) {
+                  if (trndata->inputs) lives_free(trndata->inputs);
+                  lives_free(trndata);
+                }
+                lives_list_free(old_last);
+                --glob_timing->ann->ndatapoints;
+              }
+            }
+          }
+          break;
+          default: break;
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
+}
+
+
+
 static void run_plan(exec_plan_t *plan) {
   // cycle through the plan steps
   // skip over any flagged as running, finished, error or ignore
@@ -1237,6 +1399,7 @@ static void run_plan(exec_plan_t *plan) {
   lives_layer_t *layer;
   lives_proc_thread_t lpt;
   double xtime;
+  double errval;
   boolean complete = FALSE;
   boolean cancelled = FALSE;
   boolean paused = FALSE;
@@ -1264,6 +1427,7 @@ static void run_plan(exec_plan_t *plan) {
   if (!plan->tdata->trigger_time) {
     // wait for plan cycle to be triggered
     lives_proc_thread_pause(self);
+    plan->tdata->trigger_time = lives_get_session_time();
   }
 
   plan->tdata->start_wait = plan->tdata->trigger_time - plan->tdata->trun_time;
@@ -1441,15 +1605,21 @@ static void run_plan(exec_plan_t *plan) {
 
           // figure out the sequence of operations needed, construct a prochthread chain,
           // then queue it
+          double est_dur;
           int op_order[N_OP_TYPES];
           int out_width = weed_layer_get_width(layer);
           int out_height = weed_layer_get_height(layer);
           int in_width = step->fin_width;
           int in_height = step->fin_height;
+          int in_iwidth = step->fin_iwidth;
+          int in_iheight = step->fin_iheight;
           int outpl = weed_layer_get_palette(layer);
           int inpl = step->fin_pal;
           int out_gamma_type = weed_layer_get_gamma(layer);
           int in_gamma_type = step->fin_gamma;
+          boolean letterbox = FALSE;
+          if (in_iwidth < in_width || in_iheight < in_height)
+            letterbox = TRUE;
 
           // if this is a pre-conversion for a clip, we won't have a target pal or gamma
           // we have to get these from the srcgroup
@@ -1462,7 +1632,7 @@ static void run_plan(exec_plan_t *plan) {
             in_gamma_type = srcgrp->apparent_gamma;
           }
 
-          get_op_order(out_width * out_height, in_width * in_height, outpl, inpl,
+          get_op_order(out_width * out_height, in_width * in_height, letterbox, outpl, inpl,
                        out_gamma_type, in_gamma_type, op_order);
 
           if (!op_order[OP_RESIZE] && !op_order[OP_PCONV] && !op_order[OP_GAMMA]) {
@@ -1477,6 +1647,13 @@ static void run_plan(exec_plan_t *plan) {
               plan->tdata->concurrent_time += xtime;
             break;
           }
+
+          est_dur = get_conversion_cost(COST_TYPE_TIME, out_width, out_height,
+                                        in_iwidth, in_iheight, letterbox,
+                                        outpl, inpl, NULL,
+                                        out_gamma_type, in_gamma_type, FALSE);
+
+          g_print("online estimate is %.4f msec\n", est_dur * 1000.);
 
           // TODO - lock layer_status
 
@@ -1609,11 +1786,12 @@ static void run_plan(exec_plan_t *plan) {
           if (lstatus == LAYER_STATUS_LOADED || lstatus == LAYER_STATUS_READY) {
             xtime = lives_get_session_time();
             step->tdata->real_end = xtime;
-            step->tdata->real_duration = step->tdata->real_end - step->tdata->real_start - step->tdata->paused_time;
+            step->tdata->real_duration = 1000. * (step->tdata->real_end - step->tdata->real_start
+                                                  - step->tdata->paused_time);
             plan->tdata->sequential_time += step->tdata->real_duration;
             if (prefs->dev_show_timing)
               g_printerr("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                         1000. * step->tdata->real_duration);
+                         step->tdata->real_duration);
             if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
               weed_instance_t *inst =
                 weed_instance_obtain(step->target_idx, rte_key_getmode(step->target_idx));
@@ -1650,18 +1828,26 @@ static void run_plan(exec_plan_t *plan) {
             } else if (step->state == STEP_STATE_CANCELLED) {
               if (layer) weed_layer_set_invalid(layer, TRUE);
             } else {
-              if (prefs->dev_show_timing)
+              if (prefs->dev_show_timing) {
                 g_printerr("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                           step->tdata->real_end * 1000., 1000. * step->tdata->real_duration);
-              if (!(step->flags & STEP_FLAG_NO_READY_STAT))
-                lives_layer_set_status(layer, LAYER_STATUS_READY);
-              else
-                lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+                           step->tdata->real_end * 1000., step->tdata->real_duration);
+                //if (step->tdata->est_duration) {
+                g_printerr("EST DURATION %f vs real duration %f\n", step->tdata->est_duration  * 1000.,
+                           step->tdata->real_duration);
+                //}
+              }
+              if (weed_layer_check_valid(layer)) {
+                if (!(step->flags & STEP_FLAG_NO_READY_STAT))
+                  lives_layer_set_status(layer, LAYER_STATUS_READY);
+                else
+                  lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+              }
             }
 
             lives_proc_thread_join_int(step->proc_thread);
             weed_leaf_delete(layer, LIVES_LEAF_PROC_THREAD);
             lives_proc_thread_unref(step->proc_thread);
+            step->proc_thread = NULL;
           } else {
             complete = FALSE;
             if (res & 2) can_resume = FALSE;
@@ -1680,7 +1866,7 @@ static void run_plan(exec_plan_t *plan) {
               lives_filter_error_t filter_error;
               if (prefs->dev_show_timing)
                 g_printerr("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
-                           1000. * step->tdata->real_duration);
+                           step->tdata->real_duration);
 
               // filter_errors include:
               /* FILTER_ERROR_INVALID_PLUGIN; */
@@ -1693,6 +1879,8 @@ static void run_plan(exec_plan_t *plan) {
               /* FILTER_ERROR_IS_AUDIO */
 
               filter_error = lives_proc_thread_join_int(step->proc_thread);
+
+              // grab all the juicy timing data from lpt and store it in the summary
               lives_proc_thread_unref(step->proc_thread);
 
               if (filter_error == FILTER_ERROR_INVALID_INSTANCE || filter_error == FILTER_ERROR_IS_AUDIO
@@ -1710,6 +1898,8 @@ static void run_plan(exec_plan_t *plan) {
       }
     }
 
+    //
+
     if (plan->state == PLAN_STATE_RESUMING && can_resume) {
       xtime = lives_get_session_time();
       plan->state = PLAN_STATE_RUNNING;
@@ -1725,6 +1915,8 @@ static void run_plan(exec_plan_t *plan) {
       complete = FALSE;
       paused = FALSE;
     }
+
+
     lives_microsleep;
   } while (!complete);
 
@@ -1752,23 +1944,81 @@ static void run_plan(exec_plan_t *plan) {
   } else if (error) {
     plan->state = PLAN_STATE_ERROR;
     lives_proc_thread_error(self, error, "%s", "plan error");
-  } else plan->state = PLAN_STATE_COMPLETE;
+  } else {
+    if (lives_proc_thread_get_cancel_requested(self)) {
+      g_printerr("Cancel requested, ignoring as we are done anyway !\n");
+      plan->state = PLAN_STATE_CANCELLED;
+    }
+  }
 
-  if (prefs->dev_show_timing)
-    g_printerr("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%.4f), sequential time %.4f (%.2f %%)\n"
-               "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
-               "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f\n"
-               "waiting time = %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n",
-               1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
-               1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
-               1000. * plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration * 100.,
-               1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
-               plan->tdata->active_pl_time / plan->tdata->preload_time * 100.,
-               1000. * plan->tdata->queued_time, plan->tdata->queued_time / plan->tdata->real_duration * 100.,
-               1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
-               1000. * plan->tdata->paused_time,
-               1000. * plan->tdata->waiting_time, plan->tdata->waiting_time / plan->tdata->real_duration * 100.,
-               1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.);
+  if (plan->state == PLAN_STATE_RUNNING) {
+    extract_timedata(plan);
+    g_print("train nnet\n");
+    int nns = 0;
+    do {
+      // train nnet. With very little data it trains easily
+      // but when we have varied data this is more difficult
+      // and it maybe overtrained
+      nns++;
+      errval = sqrt(lives_ann_evolve(glob_timing->ann));
+      // want high varaince at first then reduce it
+      if ((mainw->nodemodel->flags & NODEMODEL_TRAINED)) {
+        if (glob_timing->ann->no_change_count > 1000) {
+          glob_timing->ann->nvary = 1;
+          glob_timing->ann->damp = 0.9999;
+        }
+      }
+    } while (((mainw->nodemodel->flags & NODEMODEL_NEW) || errval > ANN_ERR_THRESH)
+             && nns < ANN_GEN_LIMIT);
+    /* if (nns == ANN_GEN_LIMIT) { */
+    /*   lives_ann_set_variance(glob_timing->ann, glob_timing->ann->maxr, glob_timing->ann->maxrb, */
+    /* 			     0.9999, 1); */
+    /* } */
+    /* if (errval <= ANN_ERR_THRESH) */
+    /*   glob_timing->ann->flags |= ANN_TRAINED; */
+
+    g_print("ann error is %f %% after %d generations\n", errval * 100., glob_timing->ann->generations);
+
+    if (prefs->dev_show_timing)
+      g_printerr("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%.4f), sequential time %.4f (%.2f %%)\n"
+                 "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
+                 "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f\n"
+                 "waiting time = %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n",
+                 1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
+                 1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
+                 plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
+
+                 1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
+                 plan->tdata->active_pl_time / plan->tdata->preload_time * 100.,
+                 1000. * plan->tdata->queued_time, plan->tdata->queued_time / plan->tdata->real_duration * 100.,
+                 1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
+                 1000. * plan->tdata->paused_time,
+                 1000. * plan->tdata->waiting_time, plan->tdata->waiting_time / plan->tdata->real_duration * 100.,
+                 1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.);
+
+    if (!mainw->refresh_model) {
+      if (mainw->nodemodel->flags & NODEMODEL_NEW) {
+        if (glob_timing->ann->no_change_count >= 50) {
+          // after training the cost predictor once, we should rebeuild the model with updated values
+          // we create new mainw->nodemodel, mainw->exec_plan
+          mainw->plan_cycle->state = PLAN_STATE_RESETTING;
+          free_nodemodel(&mainw->nodemodel);
+          g_print("rebuilding model with trained data\n");
+          build_nodemodel(&mainw->nodemodel);
+          align_with_model(mainw->nodemodel);
+          mainw->nodemodel->flags &= ~NODEMODEL_NEW;
+          mainw->nodemodel->flags |= NODEMODEL_TRAINED;
+          if (mainw->exec_plan)
+            exec_plan_free(mainw->exec_plan);
+          mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
+          g_print("made new plan from  model\n");
+          plan->template = mainw->exec_plan;
+        }
+      }
+    }
+    glob_timing->ann->flags |= ANN_TRAINED;
+    plan->state = PLAN_STATE_COMPLETE;
+  }
 }
 
 
@@ -2009,7 +2259,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       // can substitue a bblock cost
       step->start_res[RES_TYPE_THRD] += 1;
       step->end_res[RES_TYPE_MEM] =
-        lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, NULL);
+        lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, FALSE, NULL);
       step->end_res[RES_TYPE_BBLOCK] = 1;
     }
     break;
@@ -2033,8 +2283,8 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
 
         sfile = RETURN_VALID_CLIP(step->target_idx);
 
-        step->fin_width = sfile->hsize;
-        step->fin_height = sfile->vsize;
+        step->fin_width = step->fin_iwidth = sfile->hsize;
+        step->fin_height = step->fin_iheight = sfile->vsize;
         step->fin_pal = srcgrp->apparent_pal;
         step->fin_gamma = srcgrp->apparent_gamma;
 
@@ -2061,12 +2311,20 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       if (out->npals) opal = out->pals[out->optimal_pal];
       else opal = n->pals[n->optimal_pal];
       step->tdata->est_start = n->ready_ticks;
+
       if (filter) {
         step->tdata->est_start += get_proc_cost(COST_TYPE_TIME, filter,
                                                 n->width, n->height, n->optimal_pal);
-        step->tdata->est_duration = get_conversion_cost(COST_TYPE_TIME, out->width, out->height, in->width, in->height,
-                                    opal, ipal, pal_list, n->gamma_type, out->node->gamma_type, FALSE);
       }
+      boolean letterbox = FALSE;
+      if (in->inner_width < in->width || in->inner_height < in->height)
+        letterbox = TRUE;
+
+      step->tdata->est_duration = get_conversion_cost(COST_TYPE_TIME, out->width, out->height,
+                                  in->inner_width, in->inner_height, letterbox,
+                                  opal, ipal, pal_list,
+                                  n->gamma_type, out->node->gamma_type, FALSE);
+
       step->tdata->deadline = out->node->ready_ticks;
 
       step->fin_width = in->width;
@@ -2079,11 +2337,15 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       if (in->width == out->width && in->height == out->height
           && (ipal == opal || pconv_can_inplace(opal, ipal))) inplace = TRUE;
 
-      if (!inplace) {
+      if (!inplace || !step->start_res[RES_TYPE_MEM]) {
+        if (!step->start_res[RES_TYPE_MEM]) {
+          step->start_res[RES_TYPE_MEM] =
+            lives_frame_calc_bytesize(out->width, out->height, opal, FALSE, NULL);
+        }
         step->start_res[RES_TYPE_MEM] +=
-          lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, NULL);
+          lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, FALSE, NULL);
         step->end_res[RES_TYPE_MEM] = step->start_res[RES_TYPE_MEM]
-                                      - lives_frame_calc_bytesize(out->width, out->height, opal, NULL);
+                                      - lives_frame_calc_bytesize(out->width, out->height, opal, FALSE, NULL);
         step->start_res[RES_TYPE_BBLOCK]++;
         step->end_res[RES_TYPE_BBLOCK] = 1;
       }
@@ -2102,7 +2364,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         step->schan = in->origin;
         step->dchan = idx;
         step->start_res[RES_TYPE_MEM] +=
-          lives_frame_calc_bytesize(orig->width, orig->height, pal, NULL);
+          lives_frame_calc_bytesize(orig->width, orig->height, pal, FALSE, NULL);
         step->tdata->est_duration = get_layer_copy_cost(COST_TYPE_TIME, orig->width, orig->height, pal);
       } else {
         output_node_t *orig = n->outputs[out->origin];
@@ -2111,7 +2373,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         step->schan = out->origin;
         step->dchan = idx;
         step->start_res[RES_TYPE_MEM] +=
-          lives_frame_calc_bytesize(orig->width, orig->height, pal, NULL);
+          lives_frame_calc_bytesize(orig->width, orig->height, pal, FALSE, NULL);
         step->tdata->est_duration = get_layer_copy_cost(COST_TYPE_TIME, orig->width, orig->height, pal);
       }
 
@@ -2144,7 +2406,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
           if (out->flags & NODEFLAGS_IO_SKIP) continue;
           if (out->npals) pal = out->optimal_pal;
           else pal = n->optimal_pal;
-          memused += lives_frame_calc_bytesize(out->width, out->height, pal, NULL);
+          memused += lives_frame_calc_bytesize(out->width, out->height, pal, FALSE, NULL);
         }
 
         step->start_res[RES_TYPE_MEM] += memused;
@@ -2159,7 +2421,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         size_t memused;
         in = n->inputs[0];
         pal = n->optimal_pal;
-        memused = lives_frame_calc_bytesize(in->width, in->height, pal, NULL);
+        memused = lives_frame_calc_bytesize(in->width, in->height, pal, FALSE, NULL);
         step->start_res[RES_TYPE_THRD] = step->end_res[RES_TYPE_THRD] = 0;
         step->end_res[RES_TYPE_MEM] = memused;
         step->end_res[RES_TYPE_BBLOCK] = 1;
@@ -2239,6 +2501,16 @@ exec_plan_t *create_plan_from_model(lives_nodemodel_t *nodemodel) {
   plan->steps = lives_list_reverse(plan->steps);
   if (prefs->dev_show_timing)
     display_plan(plan);
+
+  if (nodemodel->flags & NODEMODEL_NEW) {
+    glob_timing->ann->flags &= ~ANN_TRAINED;
+
+    lives_ann_init_seed(glob_timing->ann, .001);
+    lives_ann_set_variance(glob_timing->ann, 1.0, 1.0, 0.9999, 2);
+    glob_timing->ann->nvary = glob_timing->ann->nnodes;
+    glob_timing->ann->last_res = 0.;
+    glob_timing->ann->no_change_count = 0;
+  }
   return plan;
 }
 
@@ -2368,7 +2640,7 @@ void display_plan(exec_plan_t *plan) {
     lives_free(memstr);
     g_printerr("Timing estimates: start time %.4f msec, duration %.4f msec, deadline %.4f msec\n",
                step->tdata->est_start / TICKS_PER_SECOND_DBL * 1000.,
-               step->tdata->est_duration / TICKS_PER_SECOND_DBL * 1000.,
+               step->tdata->est_duration * 1000.,
                step->tdata->deadline / TICKS_PER_SECOND_DBL * 1000.);
     g_printerr("Dependencies: ");
     if (step->st_type == STEP_TYPE_LOAD) g_printerr("Wait for LAYER_STATUS_PREPARED");
@@ -2414,7 +2686,7 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
       lives_clipsrc_group_t *srcgrp = mainw->track_sources[track];
       if (!srcgrp) srcgrp = get_primary_srcgrp(clip);
 
-      for (int ni = 0; n->inputs[ni]; ni++) {
+      for (int ni = 0; ni < n->n_clip_srcs; ni++) {
         lives_clip_src_t *mysrc;
         in = n->inputs[ni];
         mysrc = find_src_by_class_uid(srcgrp, in->src_uid);
@@ -2850,8 +3122,8 @@ for (ni = 0; ni < nins; ni++) {
   if (!out) continue;
 
   if (!(in->flags & NODEFLAG_IO_FIXED_SIZE)) {
-    in->width = out->width;
-    in->height = out->height;
+    in->width = in->inner_width = out->width;
+    in->height = in->inner_height = out->height;
     if (prefs->dev_show_timing)
       g_printerr("set in sizes %d X %d\n", in->width, in->height);
   }
@@ -2868,10 +3140,12 @@ for (ni = 0; ni < nins; ni++) {
           needs_lb = TRUE;
       }
       if (n->model_type == NODE_MODELS_INTERNAL) needs_lb = TRUE;
-      if (needs_lb) {
-        in->inner_width = out->width;
-        in->inner_height = out->height;
-        calc_maxspect(in->width, in->height, &in->inner_width, &in->inner_height);
+      in->inner_width = out->width;
+      in->inner_height = out->height;
+      calc_maxspect(in->width, in->height, &in->inner_width, &in->inner_height);
+      if (!needs_lb) {
+        in->width = in->inner_width;
+        in->height = in->inner_height;
       }
     }
   }
@@ -3455,7 +3729,7 @@ if (main_idx != -1 && main_idx != op_idx) {
 
   case NODE_MODELS_CLIP: {
     // for clip_srcs
-    for (i = 0; n->inputs[i]; i++) {
+    for (i = 0; i < n->n_clip_srcs; i++) {
       n->inputs[i]->best_src_pal = (int *)lives_calloc(N_COST_TYPES * n_allpals, sizint);
       n->inputs[i]->min_cost = (double *)lives_calloc(N_COST_TYPES * n_allpals, sizdbl);
     }
@@ -3982,6 +4256,7 @@ for (int i = 0; i < ninps; i++) {
     if (inps[i]->best_src_pal) lives_free(inps[i]->best_src_pal);
     if (inps[i]->min_cost) lives_free(inps[i]->min_cost);
     if (inps[i]->cdeltas) lives_list_free_all(&inps[i]->cdeltas);
+    if (inps[i]->true_cdeltas) lives_list_free_all(&inps[i]->true_cdeltas);
     if (inps[i]->free_pals && inps[i]->pals) lives_free(inps[i]->pals);
     lives_free(inps[i]);
   }
@@ -3994,6 +4269,7 @@ for (int i = 0; i < nouts; i++) {
   if (outs[i]) {
     if (outs[i]->free_pals && outs[i]->pals) lives_free(outs[i]->pals);
     if (outs[i]->cdeltas) lives_list_free_all(&outs[i]->cdeltas);
+    if (outs[i]->true_cdeltas) lives_list_free_all(&outs[i]->true_cdeltas);
     lives_free(outs[i]);
   }
 }
@@ -4223,7 +4499,7 @@ if (!srcgrp) {
 for (j = 0; j < n_allpals; j++) {
   // step through list of ALL palettes
   double ccost = 0;
-  for (ni = 0; n->inputs[ni]; ni++) {
+  for (ni = 0; i < n->n_clip_srcs; ni++) {
     double gcost = 0.;
     input_node_t *in = n->inputs[ni];
     int cpal = WEED_PALETTE_NONE;
@@ -4243,7 +4519,7 @@ for (j = 0; j < n_allpals; j++) {
       if (delta_costf > delta_costb) gcost = delta_costf;
       else gcost = delta_costb;
     }
-    // combo with all ouy_pals for clipsrc
+    // combo with all out_pals for clipsrc
     // generally we only have a single palette choice for clip_srcs
     for (i = 0; i < in->npals; i++) {
       // find costs to convert from width, height, ipal gamma_type to
@@ -4251,10 +4527,10 @@ for (j = 0; j < n_allpals; j++) {
       for (k = 0; k < N_COST_TYPES; k++) {
         double cost;
         if (k == COST_TYPE_COMBINED) continue;
-        // we dont know th out_size, so we assume th sfile size
+        // we dont know the out_size, so we assume the sfile size
         // or in gamma type
-        cost = get_conversion_cost(k, owidth, oheight, owidth, oheight,
-                                   in->pals[i], allpals[j], allpals, n->gamma_type, n->gamma_type, FALSE);
+        cost = get_conversion_cost(k, owidth, oheight, owidth, oheight, FALSE,
+                                   in->pals[i], allpals[j], allpals, n->gamma_type, n->gamma_type, ghost);
         if (k == COST_TYPE_QLOSS_P) {
           // we will only have cpal if we have fully defined track_sources
           // i.e. if map_sources_to_tracks was called with the current clip_index
@@ -4280,8 +4556,12 @@ for (j = 0; j < n_allpals; j++) {
   // we now have costs for each cost type for this palette j
   for (no = 0; no < n->n_outputs; no++) {
     output_node_t *out = n->outputs[no];
-    out->cdeltas = _add_sorted_cdeltas(out->cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
-                                       n->gamma_type, n->gamma_type);
+    if (ghost)
+      out->cdeltas = _add_sorted_cdeltas(out->cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
+                                         n->gamma_type, n->gamma_type);
+    else
+      out->true_cdeltas = _add_sorted_cdeltas(out->true_cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
+                                              n->gamma_type, n->gamma_type);
   }
 }
 lives_free(costs);
@@ -4308,28 +4588,41 @@ return cdelta;
 #define _FLG_ENA_GAMMA		16
 
 static void _calc_costs_for_input(lives_nodemodel_t *nodemodel, inst_node_t *n, int idx,
-                                int *pal_list, int j, int flags,
+                                int *pal_list, int j, boolean flags,
                                 double * glob_costs, boolean * glob_mask, double * factors) {
 // calc costs for in converting to pal_list[j]
-weed_filter_t *filter;
+weed_filter_t *filter = NULL, *prev_filter = NULL;
+LiVESList *ocdeltas;
 input_node_t *in = n->inputs[idx];
 inst_node_t *p = in->node;
 output_node_t *out = p->outputs[in->oidx];
 double *costs, *srccosts = NULL;
 int npals, *pals;
 boolean clone_added = FALSE;
-boolean ghost = FALSE;//, enable_gamma = FALSE;
-int owidth, oheight;
+int owidth, oheight, iwidth, iheight;
 int out_gamma_type = WEED_GAMMA_UNKNOWN, in_gamma_type = WEED_GAMMA_UNKNOWN;
+
+boolean letterbox = FALSE, ghost = FALSE;
+
+iwidth = in->inner_width;
+iheight = in->inner_height;
+
+if (iwidth < in->width || iheight < in->height)
+  letterbox = TRUE;
 
 if (n->model_type == NODE_MODELS_FILTER)
   filter = (weed_filter_t *)n->model_for;
+if (p->model_type == NODE_MODELS_FILTER)
+  prev_filter = (weed_filter_t *)p->model_for;
 
 // if p is an input, we dont really have palettes, we have composit clip srcs
 
 if (flags & _FLG_GHOST_COSTS) ghost = TRUE;
 
-if (!p->n_inputs && !out->cdeltas)
+if (ghost) ocdeltas = out->cdeltas;
+else ocdeltas = out->true_cdeltas;
+
+if (!p->n_inputs && !ocdeltas)
   calc_costs_for_source(nodemodel, p, in->track, factors, ghost);
 
 //if (flags & _FLG_ENA_GAMMA) enable_gamma = TRUE;
@@ -4365,7 +4658,10 @@ for (int i = 0; i < npals; i++) {
 
   if (!p->n_inputs && p->model_type != NODE_MODELS_GENERATOR) {
     cost_delta_t *xcdelta;
-    xcdelta = find_cdelta(out->cdeltas, WEED_PALETTE_ANY, pals[i], WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+    if (ghost)
+      xcdelta = find_cdelta(out->cdeltas, WEED_PALETTE_ANY, pals[i], WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+    else
+      xcdelta = find_cdelta(out->true_cdeltas, WEED_PALETTE_ANY, pals[i], WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
     srccosts = xcdelta->deltas;
   }
 
@@ -4376,20 +4672,29 @@ for (int i = 0; i < npals; i++) {
     double delta_cost = 0.;
     if (glob_mask[k]) costs[k] = glob_costs[k];
     else {
-      if (k == COST_TYPE_TIME) {
-        if (k == COST_TYPE_COMBINED) continue;
-        delta_cost = get_conversion_cost(k, out->width, out->height, in->width, in->height,
-                                         pals[i], pal_list[j], pal_list, out_gamma_type, igamma_type, ghost);
-        // add on the (possibly palette dependent) processing time for the previous node
-        // if the connected output has its own palette list, then we cannot determine the palette
-        // dependent processing times
-        if (k == COST_TYPE_TIME && !out->npals)
-          delta_cost += get_proc_cost(COST_TYPE_TIME, filter, owidth, oheight, pals[i]);
+      if (k == COST_TYPE_COMBINED) continue;
+
+      delta_cost += get_conversion_cost(k, owidth, oheight, iwidth, iheight,
+                                        letterbox, pals[i], pal_list[j], pal_list,
+                                        out_gamma_type, igamma_type, ghost);
+
+      // if we are adding ghost costs, include processing time for prev node ussing our pal
+      // current node using in pal. These are not actual costs as the proc_time just adjsuts the
+      // start time, but we consider them when optimising
+      // if the connected output or input has its own palette list,
+      // then we cannot determine the palette dependent processing times
+
+      if (ghost && k == COST_TYPE_TIME) {
+        if (prev_filter && !(p->flags & NODESRC_ANY_SIZE) && !out->npals)
+          delta_cost += get_proc_cost(COST_TYPE_TIME, prev_filter, owidth, oheight, pals[i]);
+        if (filter && !(n->flags & NODESRC_ANY_SIZE) && !in->npals)
+          delta_cost += get_proc_cost(COST_TYPE_TIME, filter, in->width, in->height, pal_list[j]);
       }
+
       // TODO: misc_costs
 
       if (srccosts) {
-        // if we are pulling from a clip src, we triangluate fro clip_srcs to apparent_pal to in_pal
+        // if we are pulling from a clip src, we triangluate from clip_srcs to apparent_pal to in_pal
         // and we will join both cost
         if (k == COST_TYPE_QLOSS_P)
           delta_cost += srccosts[k] - delta_cost * srccosts[k];
@@ -4397,7 +4702,6 @@ for (int i = 0; i < npals; i++) {
       }
       costs[k] = delta_cost;
     }
-    if (k == COST_TYPE_COMBINED) continue;
     ccost += factors[k] * costs[k];
   }
 
@@ -4419,8 +4723,13 @@ for (int i = 0; i < npals; i++) {
         ccost += factors[COST_TYPE_TIME] * xtra;
         clone_added = TRUE;
       }
-      xin->cdeltas = _add_sorted_cdeltas(xin->cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
-                                         igamma_type);
+      if (ghost)
+        xin->cdeltas = _add_sorted_cdeltas(xin->cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                           igamma_type);
+      else
+        xin->true_cdeltas = _add_sorted_cdeltas(xin->true_cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                                igamma_type);
+
     }
   }
 
@@ -4428,14 +4737,20 @@ for (int i = 0; i < npals; i++) {
   costs[COST_TYPE_COMBINED] = ccost;
   // add to cdeltas for input, sorted by increasing ccost
 
-
-  in->cdeltas = _add_sorted_cdeltas(in->cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
-                                    igamma_type);
+  if (ghost)
+    in->cdeltas = _add_sorted_cdeltas(in->cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                      igamma_type);
+  else
+    in->true_cdeltas = _add_sorted_cdeltas(in->true_cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                           igamma_type);
   //g_printerr("ADD2 cdeltas for %d to %d\n", i, j);
 }
 
 lives_free(costs);
-if (flags & _FLG_ORD_DESC) in->cdeltas = lives_list_reverse(in->cdeltas);
+if (flags & _FLG_ORD_DESC) {
+  if (ghost) in->cdeltas = lives_list_reverse(in->cdeltas);
+  else in->true_cdeltas = lives_list_reverse(in->true_cdeltas);
+}
 }
 
 
@@ -4567,7 +4882,9 @@ return mintup;
 
 static void free_tuple(cost_tuple_t *tup) {
 if (tup) {
-  if (tup->palconv) lives_free(tup->palconv);
+  if (tup->palconv) {
+    lives_free(tup->palconv);
+  }
   lives_free(tup);
 }
 }
@@ -4967,7 +5284,7 @@ if (oper > 0) {
         else in_pal = n->pals[n->optimal_pal];
         if (out->npals) out_pal = out->pals[out->optimal_pal];
         else out_pal = p->pals[p->optimal_pal];
-        cdelta = find_cdelta(in->cdeltas, out_pal, in_pal, p->gamma_type, n->gamma_type);
+        cdelta = find_cdelta(in->true_cdeltas, out_pal, in_pal, p->gamma_type, n->gamma_type);
         slack = (double)(n->ready_ticks - p->ready_ticks) / TICKS_PER_SECOND_DBL
                 - cdelta->deltas[COST_TYPE_TIME];
         out->slack = slack;
@@ -5070,7 +5387,7 @@ else {
       // leasst total cost to the input
       // now we want to find for each input (clip_src), which is the best palette for the selected
       // one
-      for (ni = 0;; ni++) {
+      for (ni = 0; ni < n->n_clip_srcs; ni++) {
         in = n->inputs[ni];
         if (!in) break;
         for (int k = 0; k < N_COST_TYPES; k++) {
@@ -5263,13 +5580,11 @@ if (do_what == 0 || do_what == 4) {
   // for op type 0, calculate min costs for each pal / cost_type
   // for op type 4, set abs_cost for node
   if (!(n->flags & NODEFLAG_PROCESSED)) {
-    boolean ghost = FALSE;
-    if ((flags & _FLG_GHOST_COSTS) && (n->flags & NODESRC_LINEAR_GAMMA)) ghost = TRUE;
     if (prefs->dev_show_timing)
       g_printerr("computing min costs\n");
     if (do_what == 0) {
       lives_nodemodel_t *nodemodel = (lives_nodemodel_t *)data;
-      if (n->n_inputs) compute_all_costs(nodemodel, n, COST_TYPE_COMBINED, factors, ghost);
+      if (n->n_inputs) compute_all_costs(nodemodel, n, COST_TYPE_COMBINED, factors, flags);
     } else {
       double **costs = (double **)lives_calloc(n->n_inputs, sizeof(double *));
       double **oabs_costs = (double **)lives_calloc(n->n_inputs, sizeof(double *));
@@ -5289,14 +5604,14 @@ if (do_what == 0 || do_what == 4) {
         else in_pal = n->pals[n->optimal_pal];
 
         // ignore gamma for now
-        cdelta = find_cdelta(in->cdeltas, out_pal, in_pal, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+        cdelta = find_cdelta(in->true_cdeltas, out_pal, in_pal, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
         costs[ni] = cdelta->deltas;
         oabs_costs[ni] = p->abs_cost;
       }
 
       total_costs(n, n->n_inputs, oabs_costs, costs, factors, n->abs_cost);
       lives_free(oabs_costs); lives_free(costs);
-      n->ready_ticks = n->abs_cost[COST_TYPE_TIME];
+      n->ready_ticks = n->abs_cost[COST_TYPE_TIME] * TICKS_PER_SECOND_DBL;
     }
   }
 }
@@ -5714,20 +6029,6 @@ for (LiVESList *list = nodemodel->nodes; list; list = list->next) {
 }
 
 
-void free_nodes_model(lives_nodemodel_t **pnodemodel) {
-// use same algo as for computing costs, except we free instead
-lives_nodemodel_t *nodemodel = *pnodemodel;
-if (nodemodel->node_chains)
-  lives_list_free_all(&(nodemodel->node_chains));
-if (nodemodel->nodes) {
-  free_all_nodes(nodemodel);
-  lives_list_free(nodemodel->nodes);
-}
-lives_free(nodemodel);
-*pnodemodel = NULL;
-}
-
-
 char *get_node_name(inst_node_t *n) {
 char *ntype = NULL;
 if (n) {
@@ -5801,7 +6102,7 @@ if (idx >= 0) {
     input_node_t *in = n->inputs[idx];
     in->flags |= NODEFLAG_PROCESSED;
 
-    node_dtl = lives_strdup_printf("input %d of %d, ", idx, n->n_inputs);
+    node_dtl = lives_strdup_printf("input %d of %d, ", idx + 1, n->n_inputs);
     g_printerr("%s", node_dtl);
     lives_free(node_dtl);
 
@@ -5873,7 +6174,7 @@ if (i < n->n_outputs) {
   print_node_dtl(n);
 
   node_dtl = lives_strdup_printf("\t output %d of %d: size %d X %d, est. costs: time = %.4f, "
-                                 "qloss = %.4f, combined = %.4f] ", i, n->n_outputs,
+                                 "qloss = %.4f, combined = %.4f] ", i + 1, n->n_outputs,
                                  out->width, out->height,
                                  n->abs_cost[COST_TYPE_TIME],
                                  n->abs_cost[COST_TYPE_QLOSS_P], n->abs_cost[COST_TYPE_COMBINED]);
@@ -6177,6 +6478,19 @@ do {
 
 reset_model(nodemodel);
 
+flags &= ~_FLG_GHOST_COSTS;
+
+do {
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    nchain = (node_chain_t *)list->data;
+    n = nchain->first_node;
+    if (n->n_inputs) continue;
+    retn = desc_and_compute(n, nodemodel, flags, nodemodel->factors);
+  }
+} while (retn);
+
+reset_model(nodemodel);
+
 // we will do this in cycles - first we do not have any absolute timing values, but we just calulate using deltas.
 // this is then used to assign absolute times to the nodes, and the next cycle will use these absolute values
 // and add deltas. This may give different results, and again we use the best values to recalulate aboslute imtes
@@ -6226,6 +6540,11 @@ for (int cyc = 0; cyc < 4; cyc++) {
 
   // phase 6 descending
 
+  // when calculating min costs, we added some fiddle factors (ghost costs)
+  // these are the values we use for optimising costs
+
+  // now when computing abs values we need the versions without these (i.e treu costs)
+
   do {
     for (list = nodemodel->node_chains; list; list = list->next) {
       nchain = (node_chain_t *)list->data;
@@ -6274,39 +6593,6 @@ do {
 reset_model(nodemodel);
 
 #endif
-}
-
-
-void get_true_costs(lives_nodemodel_t *nodemodel) {
-// recalc costs, but now ignoring ghost costs for gamma_conversions
-node_chain_t *nchain;
-inst_node_t *n, *retn = NULL;
-LiVESList *list;
-do {
-  for (list = nodemodel->node_chains; list; list = list->next) {
-    nchain = (node_chain_t *)list->data;
-    n = nchain->first_node;
-    if (n->n_inputs) continue;
-    retn = desc_and_compute(n, nodemodel, 0, nodemodel->factors);
-  }
-} while (retn);
-
-reset_model(nodemodel);
-
-// we dont adjust any palettes
-
-do {
-  // descend and total costs for ech node to get abs_cost
-  for (list = nodemodel->node_chains; list; list = list->next) {
-    nchain = (node_chain_t *)list->data;
-    n = nchain->first_node;
-    if (n->n_inputs) continue;
-    retn = desc_and_total(n, 0, nodemodel->factors);
-  }
-} while (retn);
-
-reset_model(nodemodel);
-// only recalc slack and optimise if soemthing has changed in the model
 }
 
 
@@ -6393,6 +6679,7 @@ void free_nodemodel(lives_nodemodel_t **pnodemodel) {
 if (!pnodemodel || !*pnodemodel) return;
 if ((*pnodemodel)->fx_list) lives_list_free((*pnodemodel)->fx_list);
 if ((*pnodemodel)->clip_index) lives_free((*pnodemodel)->clip_index);
+free_all_nodes(*pnodemodel);
 lives_list_free_all(&(*pnodemodel)->node_chains);
 lives_free(*pnodemodel);
 *pnodemodel = NULL;
@@ -6402,11 +6689,13 @@ lives_free(*pnodemodel);
 static void _build_nodemodel(lives_nodemodel_t **pnodemodel, int ntracks, int *clip_index) {
 inst_node_t *retn = NULL;
 
+if (!glob_timing) glob_timing_init();
+
 if (pnodemodel) {
   lives_nodemodel_t *nodemodel = (lives_nodemodel_t *)lives_calloc(1, sizeof(lives_nodemodel_t));
 
   if (*pnodemodel) {
-    free_nodes_model(pnodemodel);
+    free_nodemodel(pnodemodel);
   }
 
   *pnodemodel = nodemodel = (lives_nodemodel_t *)lives_calloc(1, sizeof(lives_nodemodel_t));
@@ -6478,11 +6767,6 @@ if (pnodemodel) {
   // calclate for each cost type separately as well.
   find_best_routes(nodemodel, NULL);
 
-  // for the calulation and routing, we may have added some "dummy" qloss costs to ensure we found the optimal
-  // palette sequnce/ . Now we recalulate without the dummy values, so we can know the true cost.
-
-  get_true_costs(nodemodel);
-
   reset_model(nodemodel);
 
   // show model but now with costs
@@ -6517,7 +6801,8 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
 if (mainw->plan_runner_proc) {
   lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
   if (mainw->plan_cycle) {
-    if (mainw->plan_cycle->state == PLAN_STATE_WAITING) {
+    if (mainw->plan_cycle->state == PLAN_STATE_WAITING ||
+        mainw->plan_cycle->state == PLAN_STATE_QUEUED) {
       plan_cycle_trigger(mainw->plan_cycle);
     }
   }

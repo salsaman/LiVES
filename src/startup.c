@@ -1549,7 +1549,6 @@ static boolean lives_startup(livespointer data) {
   }
 
   if (!lives_init(&ign_opts)) return FALSE;
-
   // non-fatal errors
 
   if (!mainw->foreign) {
@@ -1693,6 +1692,7 @@ static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
   if (mainw->no_idlefuncs) return TRUE;
+
 #ifndef VALGRIND_ON
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
     if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {

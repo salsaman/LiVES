@@ -74,7 +74,6 @@ void update_play_times(void); ///< like get_play_times, but will force redraw of
 
 boolean check_frame_count(int idx, boolean last_chkd);
 frames_t get_frame_count(int idx, int xsize);
-boolean get_frames_sizes(int fileno, frames_t frame_to_test, int *hsize, int *vsize);
 frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
 
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian); ///< produce bitmapped value

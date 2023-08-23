@@ -9358,7 +9358,8 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
       if (mainw->video_drawable) {
         bar_height = CE_VIDBAR_HEIGHT;
 
-        allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
+        allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar)
+                      + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
         lives_painter_move_to(creb, offset, allocy);
         lives_painter_line_to(creb, offset, allocy + allocheight);
@@ -9544,8 +9545,6 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
 
   RETURN_IF_RECURSED;
 
-  //clear_widget_bg(widget, *psurf);
-
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
   else if (widget == mainw->end_image)
@@ -9603,13 +9602,17 @@ LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {
 
 
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  // code here stops the main window from "jiggling around" on startup ///
   static boolean no_config = FALSE;
   if (!mainw->go_away) no_config = FALSE;
   if (no_config) return FALSE;
   if (!mainw->configured) {
+    // run this the first time it is called, but then not again until we explicitly call
     mainw->configured = TRUE;
     no_config = TRUE;
   }
+
+  /////////////////////////////////////////////////////////////////////////////////
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
     int scr_width, scr_height;
     scr_width = GUI_SCREEN_PHYS_WIDTH;

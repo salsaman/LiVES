@@ -35,6 +35,11 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_layer_plan_controlled(lives_layer_t *layer) {
+  if (!layer) return FALSE;
+  return weed_get_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, NULL);
+}
+
 LIVES_GLOBAL_INLINE void lives_layer_set_frame(weed_layer_t *layer, frames_t frame) {
   // TODO -> int64
   weed_set_int_value(layer, WEED_LEAF_FRAME, frame);

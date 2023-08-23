@@ -24,6 +24,7 @@
 
 #define LIVES_LEAF_SRCGRP "host_srcgrp"
 #define LIVES_LEAF_TIMING_DATA "timedata"
+#define LIVES_LEAF_COPY_TIME "copy_time"
 
 // list of shallow copies of layer, if present, we nullify on free
 // if nullifed, we remove from all lists
@@ -126,6 +127,8 @@ void lives_layer_set_frame(weed_layer_t *, frames_t frame);
 int lives_layer_get_track(weed_layer_t *);
 int lives_layer_get_clip(weed_layer_t *);
 frames_t lives_layer_get_frame(weed_layer_t *);
+
+boolean lives_layer_plan_controlled(lives_layer_t *);
 
 void lives_layer_set_srcgrp(weed_layer_t *, lives_clipsrc_group_t *);
 lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *);

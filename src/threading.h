@@ -48,6 +48,11 @@ typedef struct {
   // thread specific variables
   // copy of thread_data_t
   pthread_t var_thrd_self;
+#if IS_LINUX_GNU
+  pid_t var_tid;
+#else
+  int var_tid;
+#endif
   lives_thread_type var_thrd_type;
   int32_t var_slot_id; // pool slot, -1 for non worker threads
   uint64_t var_uid; // copy of tdata uid

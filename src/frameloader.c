@@ -203,25 +203,17 @@ frames_t get_frame_count(int idx, int start) {
 }
 
 
-boolean get_frames_sizes(int fileno, frames_t frame, int *hsize, int *vsize) {
+lives_result_t get_frames_sizes(int clipno, frames_t frame, int *hsize, int *vsize) {
   // get the actual physical frame size
-  lives_clip_t *sfile = mainw->files[fileno];
-  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-  char *fname = make_image_file_name(sfile, frame, get_image_ext_for_type(sfile->img_type));
+  weed_layer_t *layer = lives_layer_new_for_frame(clipno, frame);
   weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, LIVES_LAYER_GET_SIZE_ONLY);
-  if (!weed_layer_create_from_file_progressive(layer, fname, 0, 0, WEED_PALETTE_ANY,
-      get_image_ext_for_type(sfile->img_type))) {
-    lives_free(fname);
-    return FALSE;
-  }
-  lives_free(fname);
-  *hsize = weed_layer_get_width(layer);
-  *vsize = weed_layer_get_height(layer);
+  if (!weed_layer_create_from_file_progressive(layer, NULL))
+    return LIVES_RESULT_FAIL;
+  if (hsize) *hsize = weed_layer_get_width(layer);
+  if (vsize) *vsize = weed_layer_get_height(layer);
   weed_layer_unref(layer);
-  return TRUE;
+  return LIVES_RESULT_SUCCESS;
 }
-
-
 
 
 // TODO - use md5_frame(weed_layer_t *layer), then compare with sfile->frame_md5s
@@ -1897,12 +1889,13 @@ check_prcache:
   }
 
 
-  boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *fname, int width,
-      int height, int tpalette, const char *img_ext) {
+  boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *img_ext) {//, const char *fname, int width,
+    //int height, int tpalette, const char *img_ext) {
     LiVESPixbuf *pixbuf = NULL;
     LiVESError *gerror = NULL;
     lives_clip_t *sfile;
     char *shmpath = NULL;
+    char *fname;
     boolean ret = TRUE;
 #ifndef VALGRIND_ON
     boolean is_png = FALSE;
@@ -1915,9 +1908,40 @@ check_prcache:
 #endif
     uint8_t ibuff[IMG_BUFF_SIZE];
     size_t bsize;
-    int clip = lives_layer_get_clip(layer);
+    int clipno = lives_layer_get_clip(layer);
+    frames_t frame = lives_layer_get_frame(layer);
+    int width = weed_layer_get_width_pixels(layer);
+    int height = weed_layer_get_height(layer);
+    int tpalette = weed_layer_get_palette(layer);
+    int privflags;
 
-    sfile = RETURN_VALID_CLIP(clip);
+    sfile = RETURN_VALID_CLIP(clipno);
+    if (!sfile) return FALSE;
+
+    if (!img_ext || !*img_ext) img_ext = get_image_ext_for_type(sfile->img_type);
+    fname = make_image_file_name(sfile, frame, img_ext);
+
+    privflags = weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
+    if (privflags == LIVES_LAYER_GET_SIZE_ONLY) {
+#ifdef GUI_GTK
+      /* struct GdkPixbufFormat { */
+      /*   gchar* name; */
+      /*   GdkPixbufModulePattern* signature; */
+      /*   gchar* domain; */
+      /*   gchar* description; */
+      /*   gchar** mime_types; */
+      /*   gchar** extensions; */
+      /*   guint32 flags; */
+      /*   gboolean disabled; */
+      /*   gchar* license; */
+      /* } */
+      GdkPixbufFormat *pixform = gdk_pixbuf_get_file_info(fname, &width, &height);
+      if (pixform) {
+        weed_layer_set_size(layer, width, height);
+        return TRUE;
+      }
+#endif
+    }
 
 #ifndef VALGRIND_ON
     if (!mainw->debug)
@@ -1949,7 +1973,6 @@ check_prcache:
     xxheight = height;
 
     if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) {
-      tpalette = weed_layer_get_palette(layer);
       ret = layer_from_png(fd, layer, width, height, tpalette, TRUE);
       goto fndone;
     }
@@ -1997,7 +2020,6 @@ check_prcache:
       posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
 #endif
-      tpalette = weed_layer_get_palette(layer);
       ret = layer_from_png(fd, layer, width, height, tpalette, FALSE);
       goto fndone;
     }
@@ -2213,7 +2235,6 @@ fndone:
               void **pixel_data;
               int *rowstrides;
               int cpal;
-              double timex = 0, xtimex, est = -1.;
               boolean res = TRUE;
 
               if (!weed_layer_check_valid(layer)) goto fail;
@@ -2278,7 +2299,8 @@ fndone:
               if (!pixel_data || !pixel_data[0]) {
                 char *msg = lives_strdup_printf("NULL pixel data for layer size %d X %d, palette %s\n", width, height,
                                                 weed_palette_get_name_full(dplug->cdata->current_palette,
-                                                    dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
+                                                    dplug->cdata->YUV_clamping,
+                                                    dplug->cdata->YUV_subspace));
                 LIVES_WARN(msg);
                 lives_free(msg);
                 goto fail;
@@ -2286,13 +2308,6 @@ fndone:
 
               rowstrides = weed_layer_get_rowstrides(layer, NULL);
               pthread_mutex_lock(&dplug->mutex);
-              if (prefs->dev_show_timing) {
-                timex = lives_get_session_time();
-                if (dplug->dpsys->estimate_delay) {
-                  est = (*dplug->dpsys->estimate_delay)(dplug->cdata, xframe);
-                }
-                g_printerr("get_frame pre %d / %d with %p  @ %.4f\n", clip, xframe, dplug, timex * 1000.);
-              }
 
               lives_layer_set_status(layer, LAYER_STATUS_LOADING);
               if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)xframe, rowstrides, sfile->vsize, pixel_data)) {
@@ -2314,13 +2329,6 @@ fndone:
 
                 propogate_timing_data(dplug);
                 if (LIVES_IS_PLAYING && prefs->skip_rpts) md5_frame(layer);
-
-                if (prefs->dev_show_timing) {
-                  xtimex = lives_get_session_time() - timex;
-                  if (est > 0.) g_print("\n\nERROR DELTAS: %f and %f\n\n", xtimex - est, xtimex / est);
-                  g_printerr("get_frame post %d / %d with %p  @ %f\n", clip, xframe, dplug,
-                             1000. * (xtimex + timex));
-                }
               }
 
               lives_free(pixel_data);
@@ -2364,32 +2372,17 @@ fndone:
             int64_t timex;
             double img_decode_time;
             boolean ret;
-            char *fname;
-#if USE_RESTHREAD
-            lives_proc_thread_t resthread;
-#endif
+
             pthread_mutex_unlock(&sfile->frame_index_mutex);
             xframe = -xframe;
 
-            if (!image_ext || !*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
-            fname = make_image_file_name(sfile, xframe, image_ext);
             timex = lives_get_session_time();
             lives_layer_set_status(layer, LAYER_STATUS_LOADING);
-            ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
-            lives_free(fname);
+            ret = weed_layer_create_from_file_progressive(layer, image_ext);
             img_decode_time = lives_get_session_time() - timex;
 
-#if USE_RESTHREAD
-            if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
-              lives_proc_thread_join(resthread);
-              weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
-              lives_proc_thread_unref(resthread);
-            }
-#endif
-            if (!ret) {
-              lives_free(fname);
-              goto fail;
-            }
+            if (!ret) goto fail;
+
             if (!sfile->img_decode_time) sfile->img_decode_time = img_decode_time;
             else sfile->img_decode_time = (sfile->img_decode_time * 3 + img_decode_time) / 4.;
             if (LIVES_IS_PLAYING && prefs->skip_rpts) md5_frame(layer);
@@ -2571,11 +2564,12 @@ fail:
 
   static boolean frame_loaded_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
     weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
-    if (weed_get_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, NULL)) {
+    if (lives_layer_plan_controlled(layer)) {
       lives_layer_set_status(layer, LAYER_STATUS_LOADED);
     } else {
       lives_layer_set_status(layer, LAYER_STATUS_READY);
     }
+    return TRUE;
   }
 
 

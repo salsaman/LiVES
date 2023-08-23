@@ -53,14 +53,15 @@ lives_proc_thread_t lives_layer_get_procthread(lives_layer_t *);
 boolean is_layer_ready(weed_layer_t *);
 lives_result_t wait_layer_ready(weed_layer_t *);
 
+lives_result_t get_frames_sizes(int clipno, frames_t frame_to_test, int *hsize, int *vsize);
+
 boolean pull_frame_at_size(weed_layer_t *, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,
                                        int width, int height, LiVESInterpType interp, boolean fordisp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
-boolean weed_layer_create_from_file_progressive(weed_layer_t *, const char *fname, int width,
-    int height, int tpalette, const char *img_ext);
+boolean weed_layer_create_from_file_progressive(weed_layer_t *l, const char *img_ext);
 
 void load_start_image(frames_t frame);
 

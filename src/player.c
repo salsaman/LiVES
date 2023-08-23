@@ -581,15 +581,16 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
       nclip = mainw->active_track_list[i];
       if (nclip != oclip) {
         sfile = RETURN_VALID_CLIP(oclip);
-        for (j = 0; j < sfile->n_src_groups; j++) {
-          srcgrp = sfile->src_groups[j];
-          if (srcgrp->purpose != SRC_PURPOSE_TRACK) continue;
-          if (srcgrp && srcgrp->status == SRC_STATUS_IDLE) {
-            srcgrp_remove(oclip, srcgrp->track, SRC_PURPOSE_TRACK);
-	    // *INDENT-OFF*
-          }}}}}
-  // *INDENT-ON*
-
+        if (sfile) {
+          for (j = 0; j < sfile->n_src_groups; j++) {
+            srcgrp = sfile->src_groups[j];
+            if (srcgrp->purpose != SRC_PURPOSE_TRACK) continue;
+            if (srcgrp && srcgrp->status == SRC_STATUS_IDLE) {
+              srcgrp_remove(oclip, srcgrp->track, SRC_PURPOSE_TRACK);
+	      // *INDENT-OFF*
+	    }}}}}
+    // *INDENT-ON*
+  }
   if (!rndr && !mainw->multitrack && mainw->blend_file == mainw->playing_file) {
     // in clip edit mode, we can sometimes end up with track 0  being a track srcgroup
     // and track 1 being the primary source,  We need to swap these otherwise precaching will not
@@ -702,6 +703,7 @@ static lives_result_t prepare_frames(frames_t frame) {
       // wait here for plan to complete
       lives_nanosleep_while_true(mainw->plan_cycle->state == PLAN_STATE_INERT
                                  || mainw->plan_cycle->state == PLAN_STATE_WAITING
+                                 || mainw->plan_cycle->state == PLAN_STATE_RESETTING
                                  || mainw->plan_cycle->state == PLAN_STATE_RUNNING);
 
       for (int i = 1; mainw->layers[i]; i++) {
@@ -722,10 +724,6 @@ static lives_result_t prepare_frames(frames_t frame) {
       }
       // end RENDERING
     } else {
-      /* mainw->frame_layer = layers[0]; */
-      //dsource = mainw->track_sources[0];
-      if (prefs->dev_show_timing)
-        g_printerr("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       // normal playback in the clip editor, or applying a non-realtime effect
       if (!mainw->preview || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
         if (!img_ext) img_ext = get_image_ext_for_type(cfile->img_type);
@@ -740,10 +738,6 @@ static lives_result_t prepare_frames(frames_t frame) {
               weed_layer_free(mainw->frame_layer);
               mainw->frame_layer = NULL;
             }
-            /* if (dsource) { */
-            /*   dsource->layer = NULL; */
-            /*   dsource->status = SRC_STATUS_INVALID; */
-            /* } */
             if (cfile->clip_type == CLIP_TYPE_DISK &&
                 cfile->opening && cfile->img_type == IMG_TYPE_PNG
                 && sget_file_size(fname_next) <= 0) {
@@ -885,7 +879,6 @@ skip_precache:
 	    // *INDENT-OFF*
 	  }}}}
     // *INDENT-ON*
-    g_print("out\n");
 
     if (mainw->frame_layer) {
       lives_layer_set_track(mainw->frame_layer, 0);
@@ -893,8 +886,6 @@ skip_precache:
     }
   }
 
-  if (prefs->dev_show_timing)
-    g_printerr("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
   if ((!cfile->next_event && mainw->is_rendering && !mainw->clip_switched &&
        (!mainw->multitrack || (!mainw->multitrack->is_rendering && !mainw->is_generating))) ||
       ((!mainw->multitrack || (mainw->multitrack && mainw->multitrack->is_rendering)) &&
@@ -1228,7 +1219,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
           || mainw->plan_cycle->state == PLAN_STATE_WAITING) {
         plan_cycle_trigger(mainw->plan_cycle);
-        g_print("I triggered the plan\n");
       }
       mainw->plan_cycle->tdata->actual_start = lives_get_session_time();
     }
@@ -1257,7 +1247,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (mainw->frame_layer) {
           weed_layer_set_invalid(mainw->frame_layer, TRUE);
         }
-        g_print("bad 2\n");
         goto lfi_done;
       }
 
@@ -1266,15 +1255,13 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     ///////// EXECUTE PLAN CYCLE ////////////
 
-    g_print("wating for plan to complete\n");
+    //g_print("wating for plan to complete\n");
     // in render frame, we would have set all frames to either prepared or loaded
     // so the plan runner should have started loading them already
     // the reamining steps will be run, applying all fx instances until we are left with the single output layer
     lives_nanosleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
                                 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
-
-    g_print("PLAN DONE in play loop\n");
 
     if (mainw->plan_cycle->state == PLAN_STATE_CANCELLED
         || mainw->plan_cycle->state == PLAN_STATE_ERROR)
@@ -1677,19 +1664,17 @@ lfi_done:
 }
 
 
-static lives_time_source_t last_tsource = LIVES_TIME_SOURCE_NONE;
-static ticks_t delta = 0;
-static ticks_t Itime, Delta = 0;
-static double R = 1., X = 1.;
-static ticks_t last_ticks, last_sc_ticks, last_sc_clock_ticks;
-static ticks_t sc_adj_ticks = 0, sys_adj_ticks = 0;
+static ticks_t Itime = 0;
+static double R = 1.;
+static ticks_t last_ticks, last_sc_ticks, last_sc_clock_ticks = 0;
+static ticks_t sc_sync_ticks, xsc_sync_ticks;
+static int last_tsource;
 
-void reset_playback_clock(void) {
+void reset_playback_clock(ticks_t origticks) {
+  R = 1.;
   last_tsource = LIVES_TIME_SOURCE_NONE;
-  Delta = 0;
-  R = X = 1.;
-  last_ticks = last_sc_ticks = last_sc_clock_ticks;
-  last_tsource = LIVES_TIME_SOURCE_NONE;
+  sc_sync_ticks = 0, xsc_sync_ticks = 0;
+  last_ticks = last_sc_ticks = last_sc_clock_ticks = origticks;
 }
 
 
@@ -1723,22 +1708,26 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t tsource;
   ticks_t current = 0, clock_delta;
+  double X = 1.;
   //
 
   if (time_source) tsource = *time_source;
   else tsource = LIVES_TIME_SOURCE_NONE;
 
+  // sync clock_ticks to origticks
   clock_delta = lives_get_relative_ticks(origticks) - mainw->clock_ticks;
   mainw->clock_ticks += clock_delta;
   ///
 
   if (tsource == LIVES_TIME_SOURCE_EXTERNAL) tsource = LIVES_TIME_SOURCE_NONE;
 
+  // force system clock
   if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && AUD_SRC_EXTERNAL)) {
     tsource = LIVES_TIME_SOURCE_SYSTEM;
     current = mainw->clock_ticks;
   }
 
+  //get timecode from jack transport
 #ifdef ENABLE_JACK_TRANSPORT
   if (tsource == LIVES_TIME_SOURCE_NONE) {
     if (mainw->jack_can_stop && mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) {
@@ -1793,76 +1782,42 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
       })
     }
 
+    // Itime is initially 0
     if (tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
-      if (current < 0 || current == last_sc_ticks) current = Itime;
-    } else {
-      if (last_sc_ticks == 0) {
-        sc_adj_ticks = Itime - current;
-        R = 1.;
-      } else {
-        R = X = (current - last_sc_ticks) / (mainw->clock_ticks - last_sc_clock_ticks);
+      X = 1.0;
+      if (current > last_sc_ticks && last_sc_ticks > 0) {
+        if (last_tsource != LIVES_TIME_SOURCE_SOUNDCARD) {
+          // delta between sc time and Itime when last time came from scard
+          // if delta has increased, advance time a little slower
+          // if delta has increased, advance time a little faster
+          // we want try to keep a constant delta and constant rate (R)
+          xsc_sync_ticks = sc_sync_ticks;
+        }
+        if (xsc_sync_ticks) {
+          if (Itime - xsc_sync_ticks > current) X = 1.01;
+          if (Itime - xsc_sync_ticks < current) X = 0.99;
+        }
+        sc_sync_ticks = Itime - current;
+
+        if (mainw->clock_ticks > last_sc_clock_ticks) {
+          R = (R + (current - last_sc_ticks) /
+               (mainw->clock_ticks - last_sc_clock_ticks)) / 2.;
+        }
       }
+      // set last_sc_ticks, and last_sc_clock_ticks
       last_sc_clock_ticks = mainw->clock_ticks;
       last_sc_ticks = current;
-
-      // ignore Deltas for now
-      //Delta =  current + sc_adj_ticks - Itime;
-      //Itime += Delta;
-
+      // now R should be the ratio of sc time / clock time
     }
   }
 
-  Itime += R * clock_delta;
-
-  if (tsource == LIVES_TIME_SOURCE_NONE)
-    last_tsource = tsource;
+  // Itime is the sc time calculated using R, which is what we return
+  Itime += R * X * clock_delta;
+  if (tsource != LIVES_TIME_SOURCE_NONE) last_tsource = tsource;
   if (time_source) *time_source = tsource;
   return Itime;
 }
 
-
-/* #define RESYNC_THRESH 30. // seconds projected forwards to resync */
-/*       delta = Delts / TICKS_PER_SECOND_DBL; */
-/*       F = (RESYNC_THRESH + delta) / RESYNC_THRESH; */
-/*       if ((F > R && X < R) || (F < R && X > R)) */
-/* 	xdelta = delta; */
-/*       else xdelta = 0.; */
-/*       fac = (X - R) * (X - R) / (R * R); */
-/* 	// run a simulation, each loop is 1 second, each time we  reduce or increase R by this amount * some constant */
-/* 	// the goal is to get within X +- X / million */
-/* 	// if get to end and odnt succeed increas a, if we hit too soon, reduce a */
-/*       // if xdelta != 0., we move forward TICKS_PER_SECOND_DOUBLE * R, whereas the time source advances TPSD * X */
-/*       // we want to move logarithmically closer to X, but we also wanto reduce xdelta. */
-/*       a = 1; */
-/*       while (1) { */
-/* 	for (int i = 0; i < RESYNC_THRESH; i++) { */
-/* 	//move towards X */
-/* 	  dR = a * (X - R) * (X - R) / (R * R); */
-/* 	  if (dR > MAX_DR) dR = MAX_DR; */
-/* 	  R += dR; */
-/* 	  if ( */
-/*     } */
-/*       } */
-
-/*     } */
-
-
-
-/*   if (current >= 0 && LIVES_IS_PLAYING && time_source && lastt == LIVES_TIME_SOURCE_SOUNDCARD */
-/*       && *tsource == LIVES_TIME_SOURCE_SOUNDCARD) { */
-/*     if (current - mainw->adjticks + mainw->syncticks < mainw->startticks) { */
-/*       mainw->syncticks = mainw->startticks - current + mainw->adjticks; */
-/*     } */
-/*     if (current - mainw->adjticks + mainw->syncticks < mainw->currticks) { */
-/*       mainw->syncticks = mainw->currticks - current + mainw->adjticks; */
-/*     } */
-/*   } */
-/* } */
-
-//if (lastt != *tsource) {
-/* g_print("t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, mainw->adjticks, */
-/*         delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
-//}
 
 static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t last_frame) {
   // this is only used for older versions with non-realtime players
@@ -1966,7 +1921,8 @@ frames_t clamp_frame(int clipno, frames_t nframe) {
       frames_t selrange = (1 + last_frame - first_frame);
       lives_direction_t dir, ndir;
       int nloops;
-
+      g_print("CLAMP %d %d %d %ld %ld\n", nframe, first_frame, last_frame,
+              mainw->startticks, mainw->currticks);
       if (!LIVES_IS_PLAYING || (fabs(fps) < 0.001 && mainw->scratch != SCRATCH_NONE))
         fps = sfile->fps;
 
@@ -2550,6 +2506,7 @@ player_loop:
           || mainw->plan_cycle->state == PLAN_STATE_ERROR
           || mainw->plan_cycle->state == PLAN_STATE_CANCELLED) {
         if (mainw->plan_runner_proc) {
+          lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
           lives_proc_thread_join_int(mainw->plan_runner_proc);
           lives_proc_thread_unref(mainw->plan_runner_proc);
           mainw->plan_runner_proc = NULL;
@@ -2582,10 +2539,8 @@ player_loop:
     mainw->refresh_model = FALSE;
   }
 
-  if (!mainw->plan_cycle)
+  if (!mainw->plan_cycle) {
     mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
-
-  if (mainw->plan_cycle->state == PLAN_STATE_INERT) {
     execute_plan(mainw->plan_cycle, TRUE);
     if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
       mainw->plan_cycle->frame_idx[0] = sfile->frameno;
@@ -2650,8 +2605,11 @@ player_loop:
     mainw->last_startticks = mainw->startticks = mainw->fps_mini_ticks = mainw->currticks;
   }
 
+  if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
+
   if (init_timers) {
     init_timers = FALSE;
+    mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
     mainw->last_startticks = mainw->startticks = mainw->fps_mini_ticks = mainw->currticks;
     mainw->last_startticks--;
     mainw->fps_mini_measure = 0;
@@ -2795,8 +2753,11 @@ switch_point:
     if (IS_VALID_CLIP(close_this_clip)) {
       mainw->refresh_model = TRUE;
       mainw->can_switch_clips = TRUE;
+      new_clip = mainw->playing_file;
+      if (close_this_clip == mainw->playing_file && mainw->blend_file != mainw->current_file
+          && mainw->blend_file != -1) new_clip = mainw->blend_file;
       mainw->current_file = close_this_clip;
-      mainw->current_file = close_current_file(mainw->playing_file);
+      mainw->current_file = close_current_file(new_clip);
       mainw->can_switch_clips = FALSE;
 
       if (close_this_clip != old_current_file)
@@ -2809,8 +2770,10 @@ switch_point:
 
     if (close_this_clip != old_playing_file)
       mainw->playing_file = old_playing_file;
-    else mainw->playing_file = mainw->current_file;
-
+    else {
+      new_clip = mainw->current_file;
+      mainw->current_file = mainw->playing_file;
+    }
     if (new_blend_file == close_this_clip) {
       if (new_blend_file != mainw->blend_file) {
         new_blend_file = mainw->new_blend_file = mainw->playing_file;

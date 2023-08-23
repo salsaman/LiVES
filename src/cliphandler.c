@@ -3185,13 +3185,11 @@ void clip_src_free(int nclip,  lives_clipsrc_group_t *srcgrp, lives_clip_src_t *
   if (srcgrp && mysrc) {
     lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
     if (sfile) {
-      pthread_mutex_lock(&sfile->srcgrp_mutex);
       if (!(mysrc->flags & SRC_FLAG_NOFREE)) {
         pthread_mutex_lock(&srcgrp->src_mutex);
         _clip_src_free(sfile, srcgrp, mysrc);
         pthread_mutex_unlock(&srcgrp->src_mutex);
       }
-      pthread_mutex_unlock(&sfile->srcgrp_mutex);
     }
   }
 }

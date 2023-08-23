@@ -3354,16 +3354,20 @@ void create_LiVES(void) {
 
 
 void show_lives(void) {
-  lives_widget_show_all(mainw->top_vbox);
-  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
-
-  check_can_show_msg_area();
+  mainw->lives_shown = TRUE;
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
   } else {
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
   }
+
+  mainw->ignore_screen_size = TRUE;
+  lives_widget_show_all(mainw->top_vbox);
+  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+  mainw->ignore_screen_size = FALSE;
+
+  check_can_show_msg_area();
 
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
@@ -3425,8 +3429,6 @@ void show_lives(void) {
 
   if (prefs->present && prefs->show_gui)
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-
-  mainw->lives_shown = TRUE;
 }
 
 
@@ -5054,9 +5056,9 @@ void splash_msg(const char *msg, double pct) {
   else {
     char *tmp = lives_strdup(msg);
     lives_chomp(tmp, TRUE);
-    THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;
+    //THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;
     lives_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp);
-    THREADVAR(perm_hook_hints) = 0;
+    //THREADVAR(perm_hook_hints) = 0;
     lives_free(tmp);
   }
 #else

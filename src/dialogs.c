@@ -1378,52 +1378,6 @@ static void clock_upd(GdkFrameClock * clock, gpointer user_data) {display_ready 
 #endif
 
 
-static boolean reset_timebase(void) {
-  // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
-
-  mainw->origticks = lives_get_session_ticks();
-
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    boolean pa_reset = TRUE;
-    if (prefs->audio_src == AUDIO_SRC_INT) {
-      if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
-        pa_reset = FALSE;
-      }
-    } else {
-      //      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
-      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
-        pa_reset = FALSE;
-      }
-    }
-    if (!pa_reset) {
-      handle_audio_timeout();
-      return FALSE;
-    }
-    if (mainw->event_list) {
-      mainw->pulsed->in_use = TRUE;
-    }
-  }
-#endif
-
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (mainw->jackd) {
-      jack_time_reset(mainw->jackd, 0);
-    }
-    if (mainw->jackd_read) {
-      jack_time_reset(mainw->jackd_read, 0);
-    }
-    if (mainw->jackd && mainw->event_list)
-      mainw->jackd->in_use = TRUE;
-  }
-#endif
-
-  reset_playback_clock();
-  return TRUE;
-}
-
-
 static boolean accelerators_swapped;
 
 boolean get_accels_swapped(void) {return accelerators_swapped;}
@@ -1651,15 +1605,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (mainw->iochan && mainw->proc_ptr) lives_widget_show_all(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
 
-  if (LIVES_IS_PLAYING) {
-    /////////////////////////
-    if (!reset_timebase()) {
-      mainw->cancelled = CANCEL_INTERNAL_ERROR;
-      cancel_process(visible);
-      return FALSE;
-    }
-    //////////////////////////
-  }
   if (mainw->record_starting) {
     if (!record_setup(lives_get_current_playback_ticks(mainw->origticks, NULL))) {
       cancel_process(visible);

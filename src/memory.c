@@ -17,6 +17,21 @@ memset_f lives_memset;
 memcmp_f lives_memcmp;
 memmove_f lives_memmove;
 
+static size_t bmemsize;
+
+#define BB_CACHE 512 // frame cache size (MB)
+#define BBLOCK_SIZE 32 // bblocksize MB
+#define BBLOCKSIZE (BBLOCK_SIZE * 1024 * 1024)
+#define NBIGBLOCKS (BB_CACHE / BBLOCK_SIZE) // make each block 32MB (def 16 blocks)
+static int NBBLOCKS = 0;
+static void *bigblocks[NBIGBLOCKS];
+
+#define assert_no_bblock(p) do {		\
+    for (int i = 0; i < NBBLOCKS; i++) {	\
+      if (p >= bigblocks[i] && p < bigblocks[i] + BBLOCKSIZE) abort();	\
+    }} while (0);
+
+
 /* #if USE_RPMALLOC */
 /* void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size); */
 /* #endif */
@@ -491,7 +506,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
           pthread_mutex_lock(&smblock_mutex);
           lives_memmove(nptr, op, onchunks * smblock_pool->chunk_size);
           list->data = LIVES_INT_TO_POINTER(nchunks);
-          smblock_pool->free_chunks += nchunks - nxtxhunk;
+          smblock_pool->free_chunks += nchunks - nxtchunks;
           pthread_mutex_unlock(&smblock_mutex);
           return nptr;
         }
@@ -758,15 +773,7 @@ void *localise_data(void *src, size_t dsize) {
 }
 
 
-#define BB_CACHE 512 // frame cache size (MB)
-
-#define NBIGBLOCKS (BB_CACHE >> 5)
-#define BBLOCKSIZE (33554432ul)
-
-static void *bigblocks[NBIGBLOCKS];
 static volatile int used[NBIGBLOCKS];
-
-static int NBBLOCKS = 0;
 
 #define NBAD_LIM 8
 //#define BBL_TEST
@@ -777,8 +784,6 @@ static int bbused = 0;
 static int nbads = 0;
 
 static pthread_mutex_t bigblock_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static size_t bmemsize;
 
 void bigblock_init(void) {
   bmemsize = BBLOCKSIZE;
@@ -791,6 +796,7 @@ void bigblock_init(void) {
   for (int i = 0; i < NBIGBLOCKS; i++) {
     bigblocks[i] = lives_calloc_medium(bmemsize);
     if (mlock(bigblocks[i], bmemsize)) {
+      abort();
       lives_free(bigblocks[i]);
       return;
     }

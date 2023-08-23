@@ -7,6 +7,15 @@
 #ifndef _MATHS_H_
 #define _MATHS_H_
 
+#ifdef MIN
+#undef MIN
+#endif
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#ifdef MAX
+#undef MAX
+#endif
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+
 // math macros / functions
 #define MASK64_h32	0xFFFFFFFF00000000
 #define MASK64_l32	0x00000000FFFFFFFF
@@ -143,6 +152,40 @@ int hextodec(const char *string);
 
 uint32_t make_bitmask32(int hi, int lo);
 uint32_t get_bits32(uint32_t bytes, int hi, int lo);
+
+//flagbits for ann->flags
+#define ANN_TRAINED		(1ull << 1)
+
+typedef struct {
+  int nweights, nnodes;
+  double *weights, *bweights;
+  double *biases, *bbiases;
+  double *values;
+  int nlayers;
+  int nrnds;
+  int *lcount;
+  int ndatapoints;
+  LiVESList *last_data;
+  LiVESList *tstdata;
+  double last_res;
+  double maxr, maxrb, maxw, damp;
+  uint64_t flags;
+  int nvary;
+  int no_change_count;
+  int generations;
+} lives_ann_t;
+
+typedef struct {
+  double *inputs;
+  double res;
+} ann_testdata_t;
+
+lives_ann_t *lives_ann_create(int nlayers, int *lcounts);
+double lives_ann_predict_result(lives_ann_t *, ann_testdata_t *realdata);
+double lives_ann_evolve(lives_ann_t *);
+void lives_ann_init_seed(lives_ann_t *, double maxw);
+void lives_ann_set_variance(lives_ann_t *, double maxr, double maxrb, double damp, int nrnds);
+void lives_ann_free(lives_ann_t *);
 
 //// statistics ///
 #define OBJECT_TYPE_MATH		IMkType("obj.MATH")

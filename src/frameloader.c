@@ -1131,7 +1131,6 @@ check_prcache:
       }
       lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
     }
-    lives_widget_queue_draw_and_update(mainw->play_window);
   }
 
 
@@ -1938,6 +1937,7 @@ check_prcache:
       GdkPixbufFormat *pixform = gdk_pixbuf_get_file_info(fname, &width, &height);
       if (pixform) {
         weed_layer_set_size(layer, width, height);
+        if (fname) lives_free(fname);
         return TRUE;
       }
 #endif
@@ -1951,7 +1951,10 @@ check_prcache:
 #ifdef PNG_BIO
     fd = lives_open_buffered_rdonly(fname);
     if (fd < 0) break_me(fname);
-    if (fd < 0) return FALSE;
+    if (fd < 0) {
+      if (fname) lives_free(fname);
+      return FALSE;
+    }
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
@@ -1962,7 +1965,10 @@ check_prcache:
 #else
     fd = lives_open2(fname, O_RDONLY);
 #endif
-    if (fd < 0) return FALSE;
+    if (fd < 0) {
+      if (fname) lives_free(fname);
+      return FALSE;
+    }
 #ifndef PNG_BIO
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
@@ -2013,8 +2019,10 @@ check_prcache:
 #else
       fd = lives_open2(fname, O_RDONLY);
 
-      if (fd < 0) return FALSE;
-
+      if (fd < 0) {
+        if (fname) lives_free(fname);
+        return FALSE;
+      }
 #ifndef PNG_BIO
 #ifdef HAVE_POSIX_FADVISE
       posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
@@ -2062,9 +2070,10 @@ fndone:
     if (fd >= 0) close(fd);
 #endif
     if (shmpath) {
-      lives_rm(fname);
+      if (fname) lives_rm(fname);
       lives_rmdir_with_parents(shmpath);
     }
+    if (fname) lives_free(fname);
     return ret;
   }
 
@@ -2154,8 +2163,14 @@ fndone:
     frames_t frame;
     int clip;
     int clip_type;
+    int lstatus;
 
     weed_layer_ref(layer);
+
+    if (!layer) goto fail;
+
+    lstatus = lives_layer_get_status(layer);
+    if (lstatus == LAYER_STATUS_INVALID) goto fail;
 
     //weed_layer_pixel_data_free(layer);
     if (width && height)
@@ -2189,10 +2204,11 @@ fndone:
       if (frame == 0) {
         goto fail;
       } else {
-        if (clip == mainw->scrap_file) {
-          boolean res;
+        if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
           lives_layer_set_status(layer, LAYER_STATUS_LOADING);
-          res = load_from_scrap_file(layer, frame);
+
+        if (clip == mainw->scrap_file) {
+          boolean res = load_from_scrap_file(layer, frame);
           if (!res) goto fail;
           // realign
           copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
@@ -2210,7 +2226,7 @@ fndone:
           if (xframe >= 0) {
             if (prefs->vj_mode && mainw->loop_locked && mainw->ping_pong && sfile->pb_fps >= 0.) {
               LiVESPixbuf *pixbuf = NULL;
-              RECURSE_GUARD_LOCK;
+              RECURSE_GUARD_ARM;
 
               pthread_mutex_lock(&sfile->frame_index_mutex);
               virtual_to_images(clip, xframe, xframe, FALSE, &pixbuf);
@@ -2236,8 +2252,6 @@ fndone:
               int *rowstrides;
               int cpal;
               boolean res = TRUE;
-
-              if (!weed_layer_check_valid(layer)) goto fail;
 
               srcgrp = lives_layer_get_srcgrp(layer);
               if (!srcgrp) {
@@ -2309,7 +2323,9 @@ fndone:
               rowstrides = weed_layer_get_rowstrides(layer, NULL);
               pthread_mutex_lock(&dplug->mutex);
 
-              lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+              if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
+                lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+
               if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)xframe, rowstrides, sfile->vsize, pixel_data)) {
                 pthread_mutex_unlock(&dplug->mutex);
                 if (prefs->show_dev_opts) {
@@ -2377,7 +2393,7 @@ fndone:
             xframe = -xframe;
 
             timex = lives_get_session_time();
-            lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+
             ret = weed_layer_create_from_file_progressive(layer, image_ext);
             img_decode_time = lives_get_session_time() - timex;
 
@@ -2394,7 +2410,8 @@ fndone:
       // handle other types of sources
 #ifdef HAVE_YUV4MPEG
     case CLIP_TYPE_YUV4MPEG:
-      lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+      if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
+        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
       weed_layer_set_from_yuv4m(layer, sfile);
       if (sfile->deinterlace) {
         if (!is_thread) {
@@ -2405,7 +2422,8 @@ fndone:
 #endif
 #ifdef HAVE_UNICAP
     case CLIP_TYPE_VIDEODEV:
-      lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+      if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
+        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
       weed_layer_set_from_lvdev(layer, sfile, 4. / cfile->pb_fps);
       if (sfile->deinterlace) {
         if (!is_thread) {
@@ -2415,7 +2433,8 @@ fndone:
       goto success;
 #endif
     case CLIP_TYPE_LIVES2LIVES:
-      lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+      if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
+        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
       weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)get_primary_actor(sfile));
       goto success;
     case CLIP_TYPE_GENERATOR: {
@@ -2423,8 +2442,14 @@ fndone:
       // Note: vlayer is actually the out channel of the generator, so we should
       // never free it !
       weed_plant_t *inst;
-      if (!weed_layer_check_valid(layer) || !(inst = (weed_instance_t *)get_primary_inst(sfile))) goto fail;
+      inst = (weed_instance_t *)get_primary_inst(sfile);
       weed_instance_ref(inst);
+
+      if (!inst) goto fail;
+
+      if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
+        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+
       if (inst) {
         int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
         filter_mutex_lock(key);
@@ -2432,7 +2457,6 @@ fndone:
           // gen was switched off
           goto fail;
         } else {
-          lives_layer_set_status(layer, LAYER_STATUS_LOADING);
           vlayer = weed_layer_create_from_generator(inst, tc, clip);
           weed_layer_transfer_pdata(layer, vlayer);
         }
@@ -2471,11 +2495,28 @@ success:
       weed_layer_unref(xlayer);
     }
 
+    lock_layer_status(layer);
+
+    lstatus = _lives_layer_get_status(layer);
+    if (lstatus == LAYER_STATUS_INVALID) {
+      unlock_layer_status(layer);
+      goto fail2;
+    }
+
+    if (lstatus == LAYER_STATUS_LOADING) {
+      if (lives_layer_plan_controlled(layer))
+        _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+      else
+        _lives_layer_set_status(layer, LAYER_STATUS_READY);
+    }
+
+    unlock_layer_status(layer);
     weed_layer_unref(layer);
     return TRUE;
 
 fail:
     lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+fail2:
     weed_layer_pixel_data_free(layer);
     create_blank_layer(layer, image_ext, width, height, target_palette);
     weed_layer_unref(layer);
@@ -2503,7 +2544,7 @@ fail:
   LIVES_GLOBAL_INLINE boolean is_layer_ready(weed_layer_t *layer) {
     if (lives_layer_get_status(layer) == LAYER_STATUS_READY
         || lives_layer_get_status(layer) == LAYER_STATUS_INVALID) {
-      wait_layer_ready(layer);
+      wait_layer_ready(layer, FALSE);
       return TRUE;
     }
     return FALSE;
@@ -2522,36 +2563,43 @@ fail:
      prior to freeing the layer, reading it's  properties, pixel dat
   */
 
-  lives_result_t wait_layer_ready(weed_layer_t *layer) {
+  lives_result_t wait_layer_ready(weed_layer_t *layer, boolean allow_loaded) {
+    lives_result_t res = LIVES_RESULT_SUCCESS;
     if (!layer) return LIVES_RESULT_ERROR;
-    if (lives_layer_get_status(layer) == LAYER_STATUS_NONE) return LIVES_RESULT_SUCCESS;
-    else {
+    if (lives_layer_get_status(layer) != LAYER_STATUS_NONE) {
       GET_PROC_THREAD_SELF(self);
       lives_proc_thread_t lpt = NULL;
       // spin while state is queued, prepared, loading, loaded, converting
       // if state is invalid, cancel any thread running
       //   completed - SUCCESS
-      boolean checked_lpt = FALSE;
-      while (1) {
-        if (!checked_lpt) {
-          weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
-          if (lives_proc_thread_ref(lpt) > 1 || !lpt) {
-            if (!lpt || lpt == self) return LIVES_RESULT_SUCCESS;
-            if (lives_layer_get_status(layer) == LAYER_STATUS_INVALID) {
-              lives_proc_thread_request_cancel(lpt, TRUE);
-              weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
-              lives_proc_thread_unref(lpt);
-            } else weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
-            return LIVES_RESULT_FAIL;
-          }
-          weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt);
-          checked_lpt = TRUE;
-        }
-        if (lives_layer_get_status(layer) == LAYER_STATUS_READY)
-          return LIVES_RESULT_SUCCESS;
-        lives_microsleep;
+      lpt = lives_layer_get_procthread(layer);
+      if (lives_proc_thread_ref(lpt) > 1) {
+        lives_proc_thread_unref(lpt);
+        if (lpt == self) return LIVES_RESULT_SUCCESS;
       }
+      while (1) {
+        int lstatus;
+        lock_layer_status(layer);
+        lstatus = _lives_layer_get_status(layer);
+        if (lstatus == LAYER_STATUS_READY || lstatus == LAYER_STATUS_QUEUED) break;
+        if (!allow_loaded && lstatus == LAYER_STATUS_LOADED) {
+          lstatus = LAYER_STATUS_INVALID;
+          _lives_layer_set_status(layer, lstatus);
+        }
+        if (!mainw->plan_cycle && lstatus == LAYER_STATUS_PREPARED) {
+          lstatus = LAYER_STATUS_INVALID;
+          _lives_layer_set_status(layer, lstatus);
+        }
+        if (lstatus == LAYER_STATUS_INVALID) {
+          res = LIVES_RESULT_FAIL;
+          break;
+        }
+        unlock_layer_status(layer);
+        lives_proc_thread_wait(self, 100000);
+      }
+      unlock_layer_status(layer);
     }
+    return res;
   }
 
   static void pft_thread(weed_layer_t *layer, const char *img_ext) {
@@ -2565,7 +2613,10 @@ fail:
   static boolean frame_loaded_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
     weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
     if (lives_layer_plan_controlled(layer)) {
-      lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+      lock_layer_status(layer);
+      if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
+        _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+      unlock_layer_status(layer);
     } else {
       lives_layer_set_status(layer, LAYER_STATUS_READY);
     }

@@ -2690,11 +2690,9 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
-    /// may crash
     mainw->err_funcdef = create_funcdef_here(try_decoder_plugins);
 
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
-    ////
 
     lives_hook_remove(defer_sigint_lpt);
 
@@ -2710,7 +2708,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     if (cdata) {
       // check for sanity
-      //g_print("Checking return data from %s\n", dpsys->soname);
+      g_print("Checking return data from %s\n", dpsys->soname);
       if (lsd_check_match((lsd_struct_def_t *)get_lsd(LIVES_STRUCT_CLIP_DATA_T),
                           cdata->lsd)) {
         char *msg = lives_strdup_printf("Error in cdata received from decoder plugin:\n%s\nAborting.", dpsys->soname);
@@ -2721,6 +2719,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
         prefs->disabled_decoders = lives_list_append_unique(prefs->disabled_decoders, (void *)dpsys);
         continue;
       }
+
       if (!sanity_check_cdata(cdata)) {
         lsd_struct_free(cdata->lsd);
         cdata = NULL;
@@ -2827,6 +2826,7 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
 
   // check each decoder in turn, use a background thread so we can animate the progress bar
   // TODO - use auto_dialog
+  if (is_fg_thread()) fg_service_fulfill();
 
   lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)try_decoder_plugins,
                                  WEED_SEED_VOIDPTR, "svv", (!fake_cdata || !use_fake_cdata) ? sfile->file_name

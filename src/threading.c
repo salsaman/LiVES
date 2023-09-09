@@ -95,6 +95,50 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt);
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/// useful hook callbacks for proc_thread magic
+// (lsee also: nullify_ptr_cb
+
+boolean wake_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
+  // hook callback to resume a paused / waiting proc_thread
+  // e.g pause and wake simultaneous with other ptoc_thread
+  //lives_proc_thread_add_hook(lpt, RESUMING_HOOK, 0, wake_other_lpt, self);
+  if (!other) return FALSE;
+  lives_proc_thread_request_resume(other);
+  return FALSE;
+}
+
+
+boolean pause_request_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
+  // hook callback ask other thread to pause
+  // e.g have another proc_thread pause when this one resumes
+  //lives_proc_thread_add_hook(self, RESUMING_HOOK, 0, pause_request_other_lpt, lpt);
+  if (!other) return FALSE;
+  lives_proc_thread_request_pause(other);
+  return FALSE;
+}
+
+
+boolean cancel_request_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
+  // hook callback ask other thred to cancel
+  // e.g have another proc_thread cancel when this is cancelled
+  //lives_proc_thread_add_hook(self, CANCELLED_HOOK, 0, cancel_request_other_lpt, lpt);
+  if (!other) return FALSE;
+  lives_proc_thread_request_cancel(other, TRUE);
+  return FALSE;
+}
+
+
+boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
+  // hook callback to queue other lpt for actioning
+  // e.g queue another proc_thread to run when this on completes
+  //lives_proc_thread_add_hook(self, COMPLETED_HOOK, 0, queue_other_lpt, lpt);
+  if (!other) return FALSE;
+  lives_proc_thread_queue(other, 0);
+  return FALSE;
+}
+
+//////////////////////////////////////////////
+
 
 static boolean sync_hooks_done(lives_obj_t *obj, void *data) {
   if (data) {
@@ -110,119 +154,64 @@ LIVES_GLOBAL_INLINE thrd_work_t *lives_proc_thread_get_work(lives_proc_thread_t 
 }
 
 
+LIVES_GLOBAL_INLINE lives_thread_data_t *lives_proc_thread_get_thread_data(lives_proc_thread_t lpt) {
+  return lpt ? ((lives_thread_data_t *)weed_get_voidptr_value((lpt),
+                LIVES_LEAF_THREAD_DATA, NULL)) : NULL;
+}
+
+
 LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
-  if (lpt) g_printerr("Thread state is: %s\n",
-                        lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt)));
-}
-
-
-#if 0
-static boolean _thrd_cond_timedwait(lives_proc_thread_t self, int secs) {
-  // if thread gets cancel_immediate here, this acts like cond_signal
-  // the thread will continue up to the exit point then run the cleanup handler
-  // thus it would seem better NOT to call pthread_cond_signal before theread cancellation
-  // as this way we can ensure the thread is cancelled before returning to the caller function
-  if (self) {
-    thrd_work_t *work = lives_proc_thread_get_work(self);
-    if (work) {
-      static struct timespec ts;
-      pthread_mutex_t *pause_mutex = THREADVAR(pause_mutex);
-      pthread_cond_t *pcond = THREADVAR(pcond);
-
-      int rc = 0;
-      clock_gettime(CLOCK_REALTIME, &ts);
-      ts.tv_sec += secs;
-      pthread_mutex_lock(pause_mutex);
-      while (!THREADVAR(sync_ready) && rc != ETIMEDOUT) {
-        rc = pthread_cond_timedwait(pcond, pause_mutex, &ts);
-      }
-      pthread_mutex_unlock(pause_mutex);
-      if (rc == ETIMEDOUT && !THREADVAR(sync_ready)) {
-        THREADVAR(sync_ready) = TRUE;
-        work->flags |= LIVES_THRDFLAG_TIMEOUT;
-      }
-      return TRUE;
-    }
+  if (lpt) {
+    char *tmp = lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt));
+    g_printerr("Thread state is: %s\n", tmp);
+    lives_free(tmp);
   }
-  return FALSE;
 }
-#endif
 
 
-static boolean _thrd_cond_wait(lives_proc_thread_t self) {
-  // wait here for sync-ready. thread must be running a proc_thread
-  // NB.
-  // if thread gets cancel_immediate here, this acts like cond_signal
-  // the thread will continue up to the exit point then run the cleanup handler
-  // thus it would seem better NOT to call pthread_cond_signal before theread cancellation
-  // as this way we can ensure the thread is cancelled before returning to the caller function
+// auto-pausse, returns TRUE if timedout, FALSE if another thread resumed it
+boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, boolean have_lock) {
+  if (!nanosec) return TRUE;
   if (self) {
-    thrd_work_t *work = lives_proc_thread_get_work(self);
-    if (work) {
-      pthread_mutex_t *pause_mutex = THREADVAR(pause_mutex);
-      if (pthread_mutex_trylock(pause_mutex)) return TRUE;
-      pthread_mutex_unlock(pause_mutex);
-      pthread_cond_t *pcond = THREADVAR(pcond);
-      while (!THREADVAR(sync_ready)) {
-        work->flags |= LIVES_THRDFLAG_COND_WAITING;
-        pthread_cond_wait(pcond, pause_mutex);
-        work->flags &= ~LIVES_THRDFLAG_COND_WAITING;
-      }
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
+    pthread_mutex_t *pause_mutex = &(THREADVAR(pause_mutex));
+    pthread_cond_t *pcond = &(THREADVAR(pcond));
+    uint64_t sec;
+    int rc = 0;
+    struct timespec ts;
+    THREADVAR(sync_ready) = FALSE;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    nanosec += ts.tv_nsec;
+    sec = nanosec / ONE_BILLION;
+    nanosec -= sec * ONE_BILLION;
+    ts.tv_sec += sec;
+    ts.tv_nsec = nanosec;
 
-// unpause
-static boolean _lives_proc_thread_cond_signal(lives_proc_thread_t lpt) {
-  if (lives_proc_thread_ref(lpt) > 1) {
-    thrd_work_t *work = lives_proc_thread_get_work(lpt);
-    if (work) {
-      uint64_t tuid = work->busy;
-      if (tuid) {
-        lives_thread_data_t *tdata = get_thread_data_by_uid(tuid);
-        if (tdata) {
-          pthread_mutex_t *pause_mutex = tdata->vars.var_pause_mutex;
-          pthread_cond_t *pcond = tdata->vars.var_pcond;
-          // lock the mutex - if the target cannot lock this it will skip pausing
-          pthread_mutex_lock(pause_mutex);
-          tdata->vars.var_sync_ready = TRUE;
-          pthread_cond_signal(pcond);
-          lives_nanosleep_while_true(lives_proc_thread_is_paused(lpt));
-          pthread_mutex_unlock(pause_mutex);
-          // we need to ensure that an associated proc_thread has responded now
-          // excluding this permits the proc_thread to continue and either resume or cancel
-          lives_proc_thread_exclude_states(lpt, THRD_STATE_RESUME_REQUESTED);
-          lives_proc_thread_unref(lpt);
-          return TRUE;
-        }
-      }
+    if (!have_lock)pthread_mutex_lock(pause_mutex);
+
+    lives_proc_thread_include_states(self, THRD_STATE_AUTO_PAUSED);
+    while (!rc && !lives_proc_thread_get_resume_requested(self)
+           && !lives_proc_thread_should_cancel(self)) {
+      rc = pthread_cond_timedwait(pcond, pause_mutex, &ts);
     }
-    lives_proc_thread_unref(lpt);
+
+    if (!have_lock) pthread_mutex_unlock(pause_mutex);
+
+    lives_proc_thread_resume(self);
+    if (lives_proc_thread_get_cancel_requested(self)) {
+      if (have_lock) pthread_mutex_unlock(pause_mutex);
+      lives_proc_thread_cancel(self);
+      return FALSE;
+    }
+    if (rc == ETIMEDOUT) return TRUE;
   }
   return FALSE;
 }
 
 
-#if 0
-static boolean lives_proc_thread_timedwait(lives_proc_thread_t self, int sec) {
-  boolean retval = FALSE;
-  if (self) {
-    thrd_work_t *work = lives_proc_thread_get_work(self);
-    if (work && !(work->flags & LIVES_THRDFLAG_IGNORE_SYNCPTS)) {
-      pthread_mutex_t *pause_mutex = THREADVAR(pause_mutex);
-      THREADVAR(sync_ready) = FALSE;
-      pthread_mutex_lock(pause_mutex);
-      lives_proc_thread_include_states(self, THRD_STATE_SYNC_WAITING);
-      retval = _thrd_cond_timedwait(self, sec);
-      lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
-      pthread_mutex_unlock(pause_mutex);
-    }
-  }
-  return retval;
+// auto-pausse, returns TRUE if timedout, FALSE if another thread resumed it
+boolean lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec) {
+  return _lives_proc_thread_wait(self, nanosec, FALSE);
 }
-#endif
 
 
 // lives_proc_threads can call this when waiting for some other thread to sync
@@ -237,7 +226,7 @@ static boolean lives_proc_thread_timedwait(lives_proc_thread_t self, int sec) {
 // if trigger_sync_hooks is set, the thread will trigger any hook functions in its WAIT_SYNC_HOOKS stack
 //   (TODO - make the stack type selectable)
 // the thread will then loop until either: it is cancelled, another thread calls sync_ready(lpt), or it times out
-// the timeout limit is 0 *unlimited) by default, but this can be set (value in msec) in THREADVARS(sync_timeout)
+// the timeout limit is 0 *unlimited) by default, but this can be set (value in msec) in THREADVAR(sync_timeout)
 // if the timeout limit is reached or passed, the thread will effectivle call sync_ready() on itself,
 // with imeout is > 0 the thread will simply exit with value FALSE
 // if timeout is < 0, the timeout value  will be the positive value of this,
@@ -425,6 +414,11 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_proc_thread_get_data(lives_proc_thread_t
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_has_data(lives_proc_thread_t lpt) {
+  return lpt ? weed_plant_has_leaf(lpt, LIVES_LEAF_LPT_DATA) : FALSE;
+}
+
+
 LIVES_GLOBAL_INLINE weed_plant_t *lives_proc_thread_ensure_data(lives_proc_thread_t lpt) {
   if (lpt) {
     weed_plant_t *data = weed_get_plantptr_value(lpt, LIVES_LEAF_LPT_DATA, NULL);
@@ -490,12 +484,12 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 
   for (int i = 0; i < N_HOOK_POINTS; i++) {
     hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
-    hook_stacks[i]->mutex = (pthread_mutex_t *)lives_calloc(1, sizeof(pthread_mutex_t));
-    pthread_mutex_init(hook_stacks[i]->mutex, NULL);
+    pthread_mutex_init(&hook_stacks[i]->mutex, NULL);
     hook_stacks[i]->owner = lpt;
   }
 
   weed_set_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, (void *)hook_stacks);
+  if (weed_get_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, NULL) != (void *)hook_stacks) abort();
   weed_set_string_value(lpt, LIVES_LEAF_FUNC_NAME, fname);
 
   lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED);
@@ -504,7 +498,8 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t lpt, void **ptr) {
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t lpt,
+    void **ptr) {
   if (lpt && ptr) {
     lives_proc_thread_add_hook(lpt, DESTRUCTION_HOOK, 0, lives_nullify_ptr_cb, (void *)ptr);
     return TRUE;
@@ -513,16 +508,33 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_nullify_on_destruction(lives_proc_
 }
 
 
-LIVES_GLOBAL_INLINE lives_proc_thread_t lives_proc_thread_auto_nullify(lives_proc_thread_t *plpt) {
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_nullify_on_completion(lives_proc_thread_t lpt,
+    void **ptr) {
+  if (lpt && ptr) {
+    lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, lives_nullify_ptr_cb, (void *)ptr);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE lives_proc_thread_t _lpt_auto_nullify(lives_proc_thread_t *plpt) {
   if (plpt && *plpt) {
-    return lives_proc_thread_add_hook(*plpt, DESTRUCTION_HOOK, 0, lives_nullify_ptr_cb, (void *)plpt);
+    lives_proc_thread_nullify_on_destruction(*plpt, (void **)plpt);
+    return *plpt;
   }
   return NULL;
 }
 
 
-LIVES_GLOBAL_INLINE void lives_proc_thread_remove_nullify(lives_proc_thread_t lpt, void **ptr) {
-  lives_proc_thread_remove_hook_by_data(lpt, DESTRUCTION_HOOK, lives_nullify_ptr_cb, (void *)ptr);
+LIVES_GLOBAL_INLINE lives_proc_thread_t _lpt_remove_nullify(lives_proc_thread_t lpt, void **ptr) {
+  if (lpt && ptr)
+    lives_proc_thread_remove_hook_by_data(lpt, DESTRUCTION_HOOK, lives_nullify_ptr_cb, (void *)ptr);
+  return lpt;
+}
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_remove_nullify(lives_proc_thread_t lpt, void **ptr) {
+  return lpt &&  _lpt_remove_nullify(lpt, ptr) == lpt;
 }
 
 
@@ -651,7 +663,7 @@ lives_proc_thread_t lives_proc_thread_create_from_funcinst(lives_thread_attr_t a
 lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t attrs, lives_funcptr_t func,
     const char *fname, int return_type, const char *args_fmt, ...) {
   lives_proc_thread_t lpt;
-  if (args_fmt) {
+  if (args_fmt && *args_fmt) {
     va_list xargs;
     va_start(xargs, args_fmt);
     lpt = _lives_proc_thread_create_vargs(attrs, func, fname, return_type, args_fmt, xargs);
@@ -734,8 +746,8 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(ticks_t timeout, live
 
 
 boolean is_fg_thread(void) {
-  if (!mainw || !capable || !capable->gui_thread) return TRUE;
-  return pthread_equal(pthread_self(), capable->gui_thread);
+  if (!main_thread) return TRUE;
+  return pthread_equal(pthread_self(), main_thread);
 }
 
 
@@ -764,8 +776,8 @@ LIVES_LOCAL_INLINE lives_proc_thread_t append_all_to_fg_deferral_stack(void) {
   lives_hook_stack_t **hstacks = lives_proc_thread_get_hook_stacks(self);
   lives_proc_thread_t lpt, lpt2 = NULL, xlpt = NULL;
   LiVESList *cbnext;
-  pthread_mutex_t *hmutex = hstacks[LIVES_GUI_HOOK]->mutex,
-                   *fgmutex = mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex;
+  pthread_mutex_t *hmutex = &(hstacks[LIVES_GUI_HOOK]->mutex),
+                   *fgmutex = &(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 
   pthread_mutex_lock(&mainw->all_hstacks_mutex);
   mainw->all_hstacks =
@@ -816,8 +828,8 @@ LIVES_LOCAL_INLINE lives_proc_thread_t prepend_all_to_fg_deferral_stack(void) {
   lives_hook_stack_t **hstacks = lives_proc_thread_get_hook_stacks(self);
   lives_proc_thread_t lpt, lpt2 = NULL;
   LiVESList *cbprev;
-  pthread_mutex_t *hmutex = hstacks[LIVES_GUI_HOOK]->mutex,
-                   *fgmutex = mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex;
+  pthread_mutex_t *hmutex = &(hstacks[LIVES_GUI_HOOK]->mutex),
+                   *fgmutex = &(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 
   pthread_mutex_lock(&mainw->all_hstacks_mutex);
   mainw->all_hstacks =
@@ -899,7 +911,10 @@ int lives_proc_thread_unref(lives_proc_thread_t lpt) {
 #if 0
 }
 #endif
+T_RECURSE_GUARD_START;
 if (lpt) {
+  GET_PROC_THREAD_SELF(self);
+  T_RETURN_VAL_IF_RECURSED_CHECK(lpt == self, FALSE);
   pthread_rwlock_t *destruct_rwlock;
   pthread_mutex_lock(&ref_sync_mutex);
   destruct_rwlock
@@ -949,16 +964,20 @@ if (lpt) {
       lives_hooks_trigger(lpt_hooks, LIVES_GUI_HOOK);
 
       // this will force other lpts to remove their pointers to callbacks in our stacks
+      T_RECURSE_GUARD_ARM;
       lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
+      T_RECURSE_GUARD_END;
+
       lives_free(lpt_hooks);
 
       // remove any callbacks from stacks in other lpts / threads
       flush_cb_list(lpt);
 
       data = lives_proc_thread_get_data(lpt);
-      if (data && weed_refcount_dec(data) == 0)
-        weed_plant_free(data);
-
+      if (data) {
+        int nr = weed_refcount_dec(data);
+        if (!nr) weed_plant_free(data);
+      }
       state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
       if (lpt == self) lives_thread_pop_self();
       weed_plant_free(lpt);
@@ -1117,7 +1136,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
 
     if (hook_hints & HOOK_OPT_FG_LIGHT) {
       lives_proc_thread_queue(lpt, attrs | LIVES_THRDATTR_FG_LIGHT);
-      //lives_proc_thread_unref(lpt);
+      lives_proc_thread_unref(lpt);
       goto mte_done;
     }
 
@@ -1195,6 +1214,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
           fg_service_wake();
         }
       } else {
+
         if (hook_hints & HOOK_CB_PRIORITY) {
           GET_PROC_THREAD_SELF(self);
           lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
@@ -1432,18 +1452,12 @@ uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t stat
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
     if (state_mutex) {
       uint64_t tstate;
-      lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
       pthread_mutex_lock(state_mutex);
       tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
       state_bits &= tstate;
       tstate &= ~state_bits;
       weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
       pthread_mutex_unlock(state_mutex);
-
-      if (!(tstate & THRD_BLOCK_HOOKS)) {
-        if (state_bits & THRD_STATE_PAUSED) lives_hooks_trigger(hook_stacks, RESUMING_HOOK);
-      }
-
       lives_proc_thread_unref(lpt);
 
       // some states are reflected in the prime_lpt
@@ -1484,7 +1498,8 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_unqueued(lives_proc_thread_t lp
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_paused(lives_proc_thread_t lpt) {
-  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_PAUSED))) return TRUE;
+  if (lpt && (lives_proc_thread_check_states(lpt, THRD_STATE_PAUSED
+              | THRD_STATE_AUTO_PAUSED))) return TRUE;
   return FALSE;
 }
 
@@ -1522,7 +1537,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_paused_idling(lives_proc_thread_t 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_done(lives_proc_thread_t lpt) {
   if (lpt) {
     return (lives_proc_thread_check_finished(lpt) || lives_proc_thread_paused_idling(lpt)
-            || lives_proc_thread_will_destroy(lpt) || lives_proc_thread_was_cancelled(lpt));
+            || lives_proc_thread_will_destroy(lpt));
   }
   return TRUE;
 }
@@ -1606,6 +1621,15 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t l
 }
 
 
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_loveliness(lives_proc_thread_t lpt, double how_lovely_it_is) {
+  if (lpt) {
+    if (how_lovely_it_is < 1.) how_lovely_it_is = 1.;
+    if (how_lovely_it_is > MAX_LOVELINESS) how_lovely_it_is = MAX_LOVELINESS;
+    LPT_THREADVAR_SET(lpt, loveliness, how_lovely_it_is);
+  }
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancellable(lives_proc_thread_t lpt) {
   return (lpt && (lives_proc_thread_has_states(lpt, THRD_OPT_CANCELLABLE)));
 }
@@ -1630,36 +1654,53 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_pauseable(lives_proc_thread_t 
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t lpt, boolean dontcare) {
+  boolean ret;
   if (!lpt) return FALSE;
 
-  if (lives_proc_thread_is_unqueued(lpt)) {
-    lives_proc_thread_cancel(lpt);
-    lives_proc_thread_set_final_state(lpt);
+  if (lives_proc_thread_ref(lpt) > 1) {
+    if (lives_proc_thread_is_unqueued(lpt)) {
+      lives_proc_thread_include_states(lpt, (THRD_STATE_CANCEL_REQUESTED | THRD_STATE_CANCELLED));
+      lives_proc_thread_unref(lpt);
+      return TRUE;
+    }
+
+    ret = lives_proc_thread_is_done(lpt);
+    if (ret) {
+      lives_proc_thread_unref(lpt);
+      return FALSE;
+    }
+    // requests may be forwarded to chain current
+    if (lives_proc_thread_is_passive(lpt)) {
+      lives_proc_thread_t xlpt = lives_proc_thread_get_chain_active(lpt);
+      if (xlpt) {
+        ret =  lives_proc_thread_request_cancel(xlpt, FALSE);
+        lives_proc_thread_unref(lpt);
+        return ret;
+      }
+    }
+
+    if (dontcare && !lives_proc_thread_dontcare(lpt)) {
+      lives_proc_thread_unref(lpt);
+      return FALSE;
+    }
+
+    if (!lives_proc_thread_get_cancellable(lpt)) {
+      lives_proc_thread_unref(lpt);
+      return FALSE;
+    }
+    lives_proc_thread_exclude_states(lpt, THRD_STATE_PAUSE_REQUESTED);
+    lives_proc_thread_include_states(lpt, THRD_STATE_CANCEL_REQUESTED);
+
+    /* if (lives_proc_thread_sync_waiting(lpt)) { */
+    /*   if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt); */
+    /*   else lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL)); */
+    /* } */
+
+    if (lives_proc_thread_is_paused(lpt)) lives_proc_thread_request_resume(lpt);
+    lives_proc_thread_unref(lpt);
     return TRUE;
   }
-
-  if (lives_proc_thread_is_done(lpt)) return FALSE;
-
-  // requests may be forwarded to chain current
-  if (lives_proc_thread_is_passive(lpt)) {
-    lives_proc_thread_t xlpt = lives_proc_thread_get_chain_active(lpt);
-    if (xlpt) return lives_proc_thread_request_cancel(xlpt, FALSE);
-  }
-
-  if (dontcare) if (!lives_proc_thread_dontcare(lpt)) return FALSE;
-
-  if (!lives_proc_thread_get_cancellable(lpt)) return FALSE;
-
-  lives_proc_thread_include_states(lpt, THRD_STATE_CANCEL_REQUESTED);
-
-  /* if (lives_proc_thread_sync_waiting(lpt)) { */
-  /*   if (lives_proc_thread_is_preparing(lpt)) lives_proc_thread_sync_ready(lpt); */
-  /*   else lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL)); */
-  /* } */
-
-  if (lives_proc_thread_is_paused(lpt)) lives_proc_thread_request_resume(lpt);
-
-  return TRUE;
+  return FALSE;
 }
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_thread_t lpt) {
@@ -1673,6 +1714,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t xself) 
     GET_PROC_THREAD_SELF(self);
     lives_proc_thread_include_states(xself, THRD_STATE_CANCELLED);
     lives_proc_thread_exclude_states(xself, THRD_STATE_CANCEL_REQUESTED);
+
     if (xself == self) {
       if (weed_plant_has_leaf(self, LIVES_LEAF_LONGJMP)) {
         jmp_buf *env = (jmp_buf *)weed_get_voidptr_value(self, LIVES_LEAF_LONGJMP, NULL);
@@ -1709,26 +1751,56 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_error(lives_proc_thread_t xself, i
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_resume(lives_proc_thread_t lpt) {
+boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_lock) {
   // to ensure proper synchronisation, - set resume_requested, and wake thread
   // and wait for paused state to go away.
   // - target thread wakes, removes paused state, but waits for resume_req. to be cleared
   // once paused is cleared, remove resume_req, allowing target to unblock
-  if (!lpt) return FALSE;
+  if (lives_proc_thread_ref(lpt) > 1) {
+    lives_thread_data_t *tdata;
+    // requests may be forwarded to chain current
+    if (lives_proc_thread_is_passive(lpt)) {
+      lives_proc_thread_t xlpt = lives_proc_thread_get_chain_active(lpt);
+      if (lives_proc_thread_ref(xlpt) > 1) {
+        boolean ret = lives_proc_thread_request_resume(xlpt);
+        lives_proc_thread_unref(xlpt);
+        lives_proc_thread_unref(lpt);
+        return ret;
+      }
+    }
 
-  // requests may be forwarded to chain current
-  if (lives_proc_thread_is_passive(lpt)) {
-    lives_proc_thread_t xlpt = lives_proc_thread_get_chain_active(lpt);
-    if (xlpt) return lives_proc_thread_request_resume(xlpt);
+    tdata = get_thread_data_for_lpt(lpt);
+    if (tdata) {
+      pthread_mutex_t *pause_mutex = &(tdata->vars.var_pause_mutex);
+      pthread_cond_t *pcond = &(tdata->vars.var_pcond);
+
+      if (!have_lock) pthread_mutex_lock(pause_mutex);
+
+      if (!lives_proc_thread_is_paused(lpt)
+          && !lives_proc_thread_sync_waiting(lpt)) {
+        if (!have_lock) pthread_mutex_unlock(pause_mutex);
+        lives_proc_thread_unref(lpt);
+        return FALSE;
+      }
+
+      lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
+
+      tdata->vars.var_sync_ready = TRUE;
+      pthread_cond_signal(pcond);
+
+      if (!have_lock) pthread_mutex_unlock(pause_mutex);
+
+      lives_proc_thread_unref(lpt);
+      return TRUE;
+    }
+    lives_proc_thread_unref(lpt);
   }
+  return FALSE;
+}
 
-  if (!lives_proc_thread_is_paused(lpt)) return FALSE;
 
-  lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
-  _lives_proc_thread_cond_signal(lpt);
-  lives_nanosleep_while_true(lives_proc_thread_is_paused(lpt));
-  lives_proc_thread_exclude_states(lpt, THRD_STATE_RESUME_REQUESTED);
-  return TRUE;
+boolean lives_proc_thread_request_resume(lives_proc_thread_t lpt) {
+  return _lives_proc_thread_request_resume(lpt, FALSE);
 }
 
 
@@ -1739,15 +1811,13 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_resume_requested(lives_proc_th
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_resume(lives_proc_thread_t self) {
   if (self) {
+    lives_hook_stack_t **hstacks = lives_proc_thread_get_hook_stacks(self);
     // need to remove idling and unqueued in case this is an idle proc thread
     // which is paused / idling
     lives_proc_thread_exclude_states(self, THRD_STATE_PAUSED | THRD_STATE_UNQUEUED |
-                                     THRD_STATE_IDLING);
-    lives_nanosleep_while_true(lives_proc_thread_get_state(self) & THRD_STATE_RESUME_REQUESTED);
-    if (lives_proc_thread_get_cancel_requested(self)) {
-      lives_proc_thread_cancel(self);
-      return FALSE;
-    }
+                                     THRD_STATE_IDLING | THRD_STATE_AUTO_PAUSED |
+                                     THRD_STATE_RESUME_REQUESTED);
+    lives_hooks_trigger(hstacks, RESUMING_HOOK);
   }
   return TRUE;
 }
@@ -1774,29 +1844,50 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_pause_requested(lives_proc_thr
 }
 
 
-LIVES_GLOBAL_INLINE void lives_proc_thread_pause(lives_proc_thread_t self) {
-  // self function to be called during processing for pauseable proc_threads when pause is requested
-  // for auto_pause proc_threads, this will  be called on completion, unless cancelled
-  // (even if not set pauseable)
+boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock) {
+  // self function to be called during processing,
+  // (pauseable proc_threads may pause when pause is requested)
+  // for auto_pause proc_threads, this will be called on completion, unless cancelled
+  // self pausing does not requeire proc_thread to be "pausable"
   //
   if (self) {
-    if (!lives_proc_thread_get_pauseable(self)
-        && !(lives_proc_thread_paused_idling(self))) return;
+    pthread_mutex_t *pause_mutex = &(THREADVAR(pause_mutex));
     if (lives_proc_thread_get_cancel_requested(self)) {
-      if (!lives_proc_thread_was_cancelled(self))
-        lives_proc_thread_cancel(self);
-      return;
+      lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
+      if (have_lock) pthread_mutex_unlock(pause_mutex);
+      lives_proc_thread_cancel(self);
+      return FALSE;
     } else {
-      pthread_mutex_t *pause_mutex = THREADVAR(pause_mutex);
+      pthread_cond_t *pcond = &(THREADVAR(pcond));
+      if (!have_lock) pthread_mutex_lock(pause_mutex);
+
+      // we will wait for this to be TRUE
       THREADVAR(sync_ready) = FALSE;
-      pthread_mutex_lock(pause_mutex);
       lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
       lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
-      _thrd_cond_wait(self);
-      pthread_mutex_unlock(pause_mutex);
+
+      while (!THREADVAR(sync_ready)) {
+        pthread_cond_wait(pcond, pause_mutex);
+      }
+      lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
+
+      if (!have_lock) pthread_mutex_unlock(pause_mutex);
+
       lives_proc_thread_resume(self);
+      if (lives_proc_thread_get_cancel_requested(self)) {
+        if (have_lock) pthread_mutex_unlock(pause_mutex);
+        lives_proc_thread_cancel(self);
+        return FALSE;
+      }
+      return TRUE;
     }
   }
+  return FALSE;
+}
+
+
+boolean lives_proc_thread_pause(lives_proc_thread_t self) {
+  return _lives_proc_thread_pause(self, FALSE);
 }
 
 
@@ -1812,7 +1903,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel_immediate(uint64_t uid) {
     lives_proc_thread_t lpt = NULL;
     LiVESList *lpt_self_stack;
     pthread_t base_thread = tdata->thrd_self;
-    pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
+    pthread_mutex_t *self_stack_mutex = &tdata->vars.var_self_stack_mutex;
     pthread_mutex_lock(self_stack_mutex);
     lpt_self_stack = (LiVESList *)tdata->vars.var_self_stack;
     if (lpt_self_stack) lpt = (lives_proc_thread_t)lpt_self_stack->data;
@@ -1905,32 +1996,26 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t 
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_sync_ready(lives_proc_thread_t lpt) {
-  // unblocks threads which are waiting in preparation state
-  // i.e.
-  // returns FALSE if lpt was cancelled / cancel_requested
-  GET_PROC_THREAD_SELF(self);
-
-  if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt))
-    check_pool_threads();
-
-  lives_nanosleep_while_true(lives_proc_thread_is_queued(lpt) && !lives_proc_thread_should_cancel(lpt)
-                             && !lives_proc_thread_should_cancel(self));
-
-  if (lives_proc_thread_should_cancel(self) || lives_proc_thread_should_cancel(lpt)
-      || lives_proc_thread_is_done(lpt)) return FALSE;
-
-  while (1) {
-    if (lives_proc_thread_should_cancel(self) || lives_proc_thread_should_cancel(lpt)
-        || lives_proc_thread_is_running(lpt) || lives_proc_thread_is_done(lpt)) return FALSE;
-    if (lives_proc_thread_sync_waiting(lpt) && lives_proc_thread_is_preparing(lpt)) {
-      _lives_proc_thread_cond_signal(lpt);
-      lives_nanosleep_while_true(lives_proc_thread_sync_waiting(lpt) && lives_proc_thread_is_preparing(lpt))
-      break;
-    }
-    lives_millisleep;
+// THIS FUNCTION IS ONLY USED FOR CONTINUNING TRHEAD WORKLOADS QUEUED WITH WAIT_SYNC
+LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t lpt) {
+  if (lives_proc_thread_ref(lpt) > 1) {
+    thrd_work_t *work = lives_proc_thread_get_work(lpt);
+    if (work) {
+      if (!work->sync_ready) {
+        work->sync_ready = TRUE;
+        lives_thread_data_t *tdata = get_thread_data_for_lpt(lpt);
+        if (tdata) {
+          pthread_mutex_t *pause_mutex = &tdata->vars.var_pause_mutex;
+          pthread_cond_t *pcond = &tdata->vars.var_pcond;
+          pthread_mutex_lock(pause_mutex);
+          if (work->flags & LIVES_THRDFLAG_COND_WAITING)
+            pthread_cond_signal(pcond);
+          pthread_mutex_unlock(pause_mutex);
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+    lives_proc_thread_unref(lpt);
   }
-  return TRUE;
 }
 
 
@@ -1948,58 +2033,184 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_sync_motive(const char *motive) {
 
 
 LIVES_GLOBAL_INLINE char *lives_proc_thread_get_sync_motive(lives_proc_thread_t lpt) {
-  return EXT_THREADVAR(lpt, sync_motive);
+  return LPT_THREADVAR_GET(lpt, sync_motive);
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_proc_thread_sync_with(lives_proc_thread_t lpt, const char *motive) {
-  // casuses self to wait until lpt also calls this function
-  // if lpt is wating for sync_ready to start, this will also send a sync_ready
-  // after this it will include state sync_waiting, then wait for other thread to include it
-  // (if it has not done so already)
-  // after this, each thread will clear the wating state from the *other* thread
-  // continuing to do so until its own waiting_state is cleared (presumably by the other thread)
-  // thus the first thread will wait for the later thread, once both reach here, they will both continue
-  if (lives_proc_thread_ref(lpt) > 1)  {
-    char *xmotive;
-    GET_PROC_THREAD_SELF(self);
-    if (lpt == self) {
-      lives_proc_thread_unref(lpt);
-      return NULL;
-    }
-    if (motive) lives_proc_thread_set_sync_motive(motive);
-    lives_nanosleep_while_true(lives_proc_thread_is_queued(lpt));
-    while (lives_proc_thread_is_preparing(lpt)) {
-      if (lives_proc_thread_sync_waiting(lpt)) {
-        _lives_proc_thread_cond_signal(lpt);
-        lives_nanosleep_while_true(lives_proc_thread_is_preparing(lpt));
-        break;
-      }
-      lives_millisleep;
-    }
-    lives_proc_thread_include_states(self, THRD_STATE_SYNC_WAITING);
-    lives_nanosleep_while_false(lives_proc_thread_sync_waiting(lpt) || lives_proc_thread_is_done(lpt));
-    //xmotive = lives_strdup(lives_proc_thread_get_sync_motive(lpt));
-    if (lives_proc_thread_is_done(lpt)) {
-      lives_proc_thread_unref(lpt);
-      return NULL;
-    }
-    do {
-      lives_proc_thread_exclude_states(lpt, THRD_STATE_SYNC_WAITING);
-      lives_millisleep;
-    } while (lives_proc_thread_sync_waiting(self) && !lives_proc_thread_is_done(lpt));
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_sync_idx(int idx) {
+  THREADVAR(sync_idx) = idx;
+}
 
-    if (lives_proc_thread_should_cancel(lpt)
-        || lives_proc_thread_should_cancel(self)
-        || lives_proc_thread_is_done(lpt)) {
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_sync_idx(lives_proc_thread_t lpt) {
+  return LPT_THREADVAR_GET(lpt, sync_idx);
+}
+
+
+LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t lpt,
+    int sync_idx, int mm_op, int64_t timeout) {
+  // wait for sync with other lpt
+  // we want to avoid two situations - both threads are waiting for each other
+  // one thread continues and leaves the other waiting
+  // - we cannot lock both pause mutex AND opause mutex, or this could cause a deadlock
+  // so we follow this sequence:
+  // - read sync_idx of other
+  // - set our sync_idx
+  // - compare two sync_idx
+  /// - if these match, we are synced, but other thread will not know this
+  //  - if mismatch, we need to wait for other thread to see the match and wake us
+  //  --
+  // if matching:
+  // - lock opause mutex, if other about to wait then it will block
+  // else if it had the lock it will now be waiting
+
+  // - check if other is waiting, if so resume it
+  // -- on resuming it will check for sync_idx match, then reset its sync_idx
+  //
+  // --- if other thread is in a timedwait, it could timeout
+  // --   if this happens it will check for match, then reset its sync_idx, the same as if it were resumed
+  // - so after resuming we wait for other thread to reset its sync_idx
+
+  if (sync_idx == 0) sync_idx = -1;
+
+  if (lives_proc_thread_ref(lpt) > 1)  {
+    GET_PROC_THREAD_SELF(self);
+    if (lpt != self) {
+      int osync_idx;
+      boolean gotmatch = FALSE;
+      pthread_mutex_t *opause_mutex = LPT_THREADVAR_GETp(lpt, pause_mutex),
+                       *pause_mutex = &(THREADVAR(pause_mutex));
+
+      if (!opause_mutex) {
+        lives_proc_thread_unref(lpt);
+        return LIVES_RESULT_ERROR;
+      }
+
+      g_print("synwith: check state of other\n");
+
+      g_print("get opause lock\n");
+
+      // (A)
+      pthread_mutex_lock(opause_mutex);
+      g_print("got opause lock\n");
+
+      lives_proc_thread_set_sync_idx(sync_idx);
+      osync_idx = lives_proc_thread_get_sync_idx(lpt);
+
+      if (osync_idx == sync_idx) {
+        gotmatch = TRUE;
+        g_print("synwith: idx matches\n");
+      } else g_print("synwith: no idx match, will wait\n");
+      pthread_mutex_unlock(opause_mutex);
+
+      // (B)
+      pthread_mutex_lock(pause_mutex);
+
+      if (!gotmatch) {
+        // check again but now with lock - either other has not yet reached (A), will block at (A)
+        // or has passed (B)
+        // if it passed (B), we will now get a match,
+        osync_idx = lives_proc_thread_get_sync_idx(lpt);
+        if (osync_idx == sync_idx) {
+          gotmatch = TRUE;
+          g_print("synwith: now we DID get match\n");
+        }
+      }
+
+      if (gotmatch) {
+        // we got a match, but we dont know if other read our sync_idx before or after we set it
+        // if it did get a match it will be waiting for use either to pause or reset our sync_idx
+        // so, we reset our sync_idx and see if it does likewise or pauses
+        lives_proc_thread_set_sync_idx(0);
+        pthread_mutex_unlock(pause_mutex);
+        //
+        while (1) {
+          if (!lives_proc_thread_get_sync_idx(lpt)) goto synced;
+          pthread_mutex_lock(opause_mutex);
+          if (lives_proc_thread_is_paused(lpt)) {
+            g_print("synwith: other is paused, requesting resume\n");
+            lives_proc_thread_set_sync_idx(sync_idx);
+            _lives_proc_thread_request_resume(lpt, TRUE);
+            g_print("synwith: waiting fro other to reset sync_idx\n");
+          }
+          pthread_mutex_unlock(opause_mutex);
+        }
+        lives_microsleep;
+      }
+      // non-match, pause / wait
+      if (!timeout) {
+        osync_idx = lives_proc_thread_get_sync_idx(lpt);
+        if (!osync_idx) {
+          g_print("synwith: other reset sync_idx, assume synced\n");
+          pthread_mutex_unlock(pause_mutex);
+          goto synced;
+        }
+
+        g_print("synwith: pausing\n");
+        _lives_proc_thread_pause(self, TRUE);
+        pthread_mutex_unlock(pause_mutex);
+        g_print("synwith: resumed, checking for match\n");
+        if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
+          pthread_mutex_unlock(pause_mutex);
+          goto synced;
+        }
+        g_print("no match after resuming - wrong thread woek us ?\n");
+        lives_proc_thread_set_sync_idx(0);
+        pthread_mutex_unlock(pause_mutex);
+        lives_proc_thread_unref(lpt);
+        return LIVES_RESULT_FAIL;
+      } else {
+        g_print("synwith: waiting\n");
+        if (_lives_proc_thread_wait(self, timeout, TRUE)) {
+          // timed out waiting
+          g_print("synwith: timed out waiting\n");
+          if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
+            pthread_mutex_unlock(pause_mutex);
+            g_print("synwith: synced anyway\n");
+            goto synced;
+          }
+          g_print("syncwith: timed out, should retry");
+          lives_proc_thread_set_sync_idx(0);
+          pthread_mutex_unlock(pause_mutex);
+          lives_proc_thread_unref(lpt);
+          return LIVES_RESULT_FAIL;
+        }
+        g_print("synwith: resumed\n");
+        if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
+          pthread_mutex_unlock(pause_mutex);
+          goto synced;
+        }
+        g_print("no match after resuming - wrong thread woek us ?\n");
+        lives_proc_thread_set_sync_idx(0);
+        pthread_mutex_unlock(pause_mutex);
+        lives_proc_thread_unref(lpt);
+        return LIVES_RESULT_FAIL;
+      }
+synced:
+      // if here, either - requested resume, or nrither paused, or thread resumed us
+      // or timed out but sync_idx matched
+      g_print("synwith: SYNCED !!\n");
+      pthread_mutex_lock(opause_mutex);
+      // locke to ensure other read our sync_idx before unlocking
+      lives_proc_thread_set_sync_idx(0);
+      pthread_mutex_unlock(opause_mutex);
       lives_proc_thread_unref(lpt);
-      return NULL;
+      g_print("synwith: DONE !!\n");
+      return LIVES_RESULT_SUCCESS;
+      /* mismatch: */
+      /*   lives_proc_thread_error(self, 0, "sync_idx mismatch, wating for %d and found %d\n", sync_idx, osync_idx); */
+      /*   lives_proc_thread_unref(lpt); */
+      /*   return LIVES_RESULT_ERROR; */
     }
-    lives_proc_thread_set_sync_motive(NULL);
     lives_proc_thread_unref(lpt);
-    return xmotive;
+    return LIVES_RESULT_SUCCESS;
   }
-  return NULL;
+  return LIVES_RESULT_FAIL;
+}
+
+
+LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t lpt, int sync_idx, int mm_op) {
+  return lives_proc_thread_sync_with_timeout(lpt, sync_idx, mm_op, 0);
 }
 
 
@@ -2053,17 +2264,18 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t lpt) {
   _lives_proc_thread_join(lpt, 0.);
 }
 
-#define _join(lpt, stype) lives_proc_thread_wait_done(lpt, 0.);		\
-  if (!lives_proc_thread_is_invalid(lpt) && !lives_proc_thread_was_cancelled(lpt) \
-      && !(lives_proc_thread_is_unqueued(lpt)				\
-	   && lives_proc_thread_should_cancel(lpt))) {			\
-    if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt)) \
-      check_pool_threads();						 \
-    lives_nanosleep_while_false(weed_plant_has_leaf(lpt, _RV_) == WEED_TRUE \
-				|| lives_proc_thread_is_invalid(lpt)	\
-				|| lives_proc_thread_had_error(lpt)	\
-				|| lives_proc_thread_was_cancelled(lpt));} \
-  return weed_get_##stype##_value(lpt, _RV_, NULL);
+#define _join(lpt, stype) if (lpt) {lives_proc_thread_wait_done(lpt, 0.); \
+    if (!lives_proc_thread_is_invalid(lpt)				\
+	&& !lives_proc_thread_has_states(lpt, THRD_STATE_COMPLETED | THRD_STATE_CANCELLED) \
+	&& !(lives_proc_thread_is_unqueued(lpt))) {			\
+      if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt)) \
+	check_pool_threads();						\
+      lives_microsleep_while_false(weed_plant_has_leaf(lpt, _RV_) == WEED_TRUE \
+				   || lives_proc_thread_is_invalid(lpt)	\
+				   || lives_proc_thread_had_error(lpt)	\
+				   || lives_proc_thread_has_states(lpt, THRD_STATE_COMPLETED \
+								   | THRD_STATE_CANCELLED));} \
+    return weed_get_##stype##_value(lpt, _RV_, NULL);} return 0;
 
 LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t lpt) { _join(lpt, int);}
 LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t lpt) {_join(lpt, double);}
@@ -2107,6 +2319,7 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t lpt) {
     lives_proc_thread_unref(lpt);
     return FALSE;
   }
+  lives_proc_thread_exclude_states(lpt, THRD_OPT_NOTIFY);
   lives_proc_thread_include_states(lpt, THRD_OPT_DONTCARE);
   lives_proc_thread_unref(lpt);
   return TRUE;
@@ -2124,12 +2337,15 @@ boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t lpt, void **thing
 
 void pthread_cleanup_func(void *args) {
   // if the main_thread is ever cancelled by pthread_cancel, this will be triggered, and any hook callbacks
-  // added, to THREAD_EXIT_HOOK will be trgigered
+  // added, to THREAD_EXIT_HOOK will be triggered
   // this is also called after gtk_main() exits, thus on normal exit, any threads still running lpts
   // with hook callbacks in the main thread THREAD_EXIT_HOOK should flush their ext_cb lists, or manually remove the
   // callbacks,
   // unless they need informing when this happens
+  g_print("THREAD IS EXITING\n");
+  //if (is_fg_thread())
   lives_hooks_trigger(THREADVAR(hook_stacks), THREAD_EXIT_HOOK);
+  g_print("THREAD IS FIN\n");
 }
 
 
@@ -2160,14 +2376,17 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
 
   state = lives_proc_thread_get_state(lpt);
 
+  if (state & THRD_STATE_RUNNING)
+    lives_proc_thread_exclude_states(lpt, THRD_STATE_RUNNING);
+
   if (!lives_proc_thread_is_stacked(lpt)
       && ((state & THRD_OPT_DONTCARE) || (!ret_type && !(state & THRD_OPT_NOTIFY)))) {
     // if dontcare, or there is no return type then we should unref the proc_thread
     // unless it is a hook callback, (then it stays in the stack - the equivalent would be
     // to add it as ONESHOT, to return FALSE from a REMOVE_IF_FALSE stack, or to remove manually)
 
-    // call the COMPLETED hook, but with DESTROYING set
-    lives_proc_thread_include_states(lpt, THRD_STATE_WILL_DESTROY);
+    // call the COMPLETED hook, but with WILL DESTROY set
+    lives_proc_thread_include_states(lpt, THRD_STATE_WILL_DESTROY | THRD_STATE_COMPLETED);
 
     // TODO - check this, now we have is_hook_cb
     if (!(attrs & LIVES_THRDATTR_NO_UNREF)) {
@@ -2343,19 +2562,10 @@ static void *proc_thread_worker_func(void *args) {
       // lpt self cancel point
       if (lpt != olpt) {
         weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
-        lives_proc_thread_unref(lpt);
         lives_thread_switch_self(olpt);
+        lives_proc_thread_unref(lpt);
       }
-#if USE_RPMALLOC
-      rpmalloc_thread_collect();
-#endif
-      weed_leaf_delete(olpt, LIVES_LEAF_LONGJMP);
-      lives_proc_thread_share_data(NULL, olpt);
-      lives_proc_thread_exclude_states(olpt, THRD_STATE_PASSIVE);
-      lives_proc_thread_set_final_state(olpt);
-      lives_proc_thread_unref(olpt);
-      lives_thread_pop_self();
-      return args;
+      goto done;
     }
 
     while (1) {
@@ -2370,12 +2580,16 @@ static void *proc_thread_worker_func(void *args) {
     }
 
     lives_thread_switch_self(olpt);
+done:
     weed_leaf_delete(olpt, LIVES_LEAF_LONGJMP);
     lives_proc_thread_share_data(NULL, olpt);
     lives_proc_thread_exclude_states(olpt, THRD_STATE_PASSIVE);
     lives_proc_thread_set_final_state(olpt);
-    lives_proc_thread_unref(olpt);
     lives_thread_pop_self();
+    lives_proc_thread_unref(olpt);
+#if USE_RPMALLOC
+    rpmalloc_thread_collect();
+#endif
   }
   return args;
 }
@@ -2400,13 +2614,13 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
   sjval = setjmp(env);
   if (sjval) {
     // lpt self cancel point
+    weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
+    lives_proc_thread_set_final_state(lpt);
+    lives_thread_pop_self();
+    lives_proc_thread_unref(lpt);
 #if USE_RPMALLOC
     rpmalloc_thread_collect();
 #endif
-    weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
-    lives_proc_thread_set_final_state(lpt);
-    lives_proc_thread_unref(lpt);
-    lives_thread_pop_self();
     return FALSE;
   }
 
@@ -2414,11 +2628,10 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
     lives_thread_push_self(lpt);
 
     if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_PREPARING);
-    ////
+
     call_funcsig(lpt);
 
     weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
-    lives_thread_pop_self();
     ////
     if (rloc) {
       if (weed_leaf_seed_type(lpt, _RV_) == WEED_SEED_STRING)
@@ -2432,12 +2645,12 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
   }
 
   lives_proc_thread_set_final_state(lpt);
+  lives_thread_pop_self();
   lives_proc_thread_unref(lpt);
 
 #if USE_RPMALLOC
   rpmalloc_thread_collect();
 #endif
-
   return bret;
 }
 
@@ -2456,6 +2669,16 @@ boolean lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t att
   thrd_work_t *mywork;
   uint64_t lpt_attrs = lives_proc_thread_get_attrs(lpt);
   uint64_t state = lives_proc_thread_get_state(lpt);
+
+  // if we have BOTH cancelled and cancel_requested, this means the proc_thread was
+  // cancelled BEFORE being queued, (if it were from a previous run, we would have only one or the other)
+  // (this can be done even if the proc_thread is not explicitly 'cancellable',
+  // otherwise, in some circumstances,  there would be no way to prevent a proc_thread from being queued)
+  if ((state & (THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED))
+      == (THRD_STATE_CANCELLED | THRD_STATE_CANCEL_REQUESTED)) {
+    lives_proc_thread_set_final_state(lpt);
+    return FALSE;
+  }
 
   lpt_attrs |= attrs;
 
@@ -2539,11 +2762,13 @@ char *lives_proc_thread_state_desc(uint64_t state) {
   if (state & THRD_STATE_WAITING)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is waiting on conditions");
   if (state & THRD_STATE_SYNC_WAITING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is waiting for synx");
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "is waiting for sync");
   if (state & THRD_STATE_BLOCKED)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is blocked");
   if (state & THRD_STATE_PAUSE_REQUESTED)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "pause was requested");
+  if (state & THRD_STATE_AUTO_PAUSED)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "is auto paused for set time");
   if (state & THRD_STATE_PAUSED)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is paused");
   if (state & THRD_STATE_RESUME_REQUESTED)
@@ -2581,7 +2806,7 @@ char *lives_proc_thread_state_desc(uint64_t state) {
 #ifndef VALGRIND_ON
 #define MINPOOLTHREADS 8
 #else
-#define MINPOOLTHREADS 2
+#define MINPOOLTHREADS 8
 #endif
 // rnpoolthreads is the reserved npoolthreads, npoolthreads is the ctual number, which may be lower because idle
 // threads will time out and exit after a while
@@ -2600,10 +2825,23 @@ static LiVESList *allctxs = NULL;
 
 static lives_threadvars_t dummy_vars;
 
+lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t lpt) {
+  // wait and only return when lpt has thread data (ie. is in running state)
+  lives_thread_data_t *tdata = NULL;
+  if (lpt) {
+    lives_microsleep_until_nonzero(lives_proc_thread_is_done(lpt) ? 1 :
+                                   pthread_rwlock_rdlock(&allctx_rwlock) ? 0
+                                   : (tdata = lives_proc_thread_get_thread_data(lpt))
+                                   ? !pthread_rwlock_unlock(&allctx_rwlock) ? 1 : 1
+                                   : !pthread_rwlock_unlock(&allctx_rwlock) ? 0 : 0);
+  }
+  return tdata;
+}
+
 
 LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_get_self(void) {
   lives_proc_thread_t self = NULL;
-  pthread_mutex_t *self_stack_mutex = THREADVAR(self_stack_mutex);
+  pthread_mutex_t *self_stack_mutex = &(THREADVAR(self_stack_mutex));
   LiVESList *self_stack;
   pthread_mutex_lock(self_stack_mutex);
   self_stack = (LiVESList *)THREADVAR(self_stack);
@@ -2615,7 +2853,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_get_self(void) {
 
 LIVES_GLOBAL_INLINE void lives_thread_push_self(lives_proc_thread_t lpt) {
   LiVESList *self_stack;
-  pthread_mutex_t *self_stack_mutex = THREADVAR(self_stack_mutex);
+  pthread_mutex_t *self_stack_mutex = &(THREADVAR(self_stack_mutex));
   pthread_mutex_lock(self_stack_mutex);
   self_stack = (LiVESList *)THREADVAR(self_stack);
   THREADVAR(self_stack) = lives_list_prepend(self_stack, (void *)lpt);
@@ -2627,7 +2865,7 @@ LIVES_GLOBAL_INLINE void lives_thread_push_self(lives_proc_thread_t lpt) {
 LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_pop_self(void) {
   lives_proc_thread_t lpt = NULL;
   LiVESList *self_stack;
-  pthread_mutex_t *self_stack_mutex = THREADVAR(self_stack_mutex);
+  pthread_mutex_t *self_stack_mutex = &(THREADVAR(self_stack_mutex));
   pthread_mutex_lock(self_stack_mutex);
   self_stack = (LiVESList *)THREADVAR(self_stack);
   if (self_stack) {
@@ -2648,7 +2886,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_switch_self(lives_proc_thre
   // atomic pop then push
   lives_proc_thread_t lpt2 = NULL;
   LiVESList *self_stack;
-  pthread_mutex_t *self_stack_mutex = THREADVAR(self_stack_mutex);
+  pthread_mutex_t *self_stack_mutex = &(THREADVAR(self_stack_mutex));
   pthread_mutex_lock(self_stack_mutex);
   self_stack = (LiVESList *)THREADVAR(self_stack);
   if (self_stack) {
@@ -2672,7 +2910,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_thread_switch_self(lives_proc_thre
 static void lives_thread_data_destroy(void *data) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)data;
   lives_hook_stack_t **hook_stacks = tdata->vars.var_hook_stacks;
-  pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
+  pthread_mutex_t *self_stack_mutex = &tdata->vars.var_self_stack_mutex;
 
   if (tdata->thrd_type != THRD_TYPE_MAIN) {
     if (tdata->vars.var_sigstack.ss_sp) lives_free(tdata->vars.var_sigstack.ss_sp);
@@ -2681,8 +2919,8 @@ static void lives_thread_data_destroy(void *data) {
   pthread_mutex_lock(self_stack_mutex);
   lives_list_free((LiVESList *)tdata->vars.var_self_stack);
   pthread_mutex_unlock(self_stack_mutex);
-  pthread_mutex_destroy(self_stack_mutex);
-  lives_free(self_stack_mutex);
+
+  lives_list_free((LiVESList *)tdata->vars.var_trest_list);
 
   pthread_rwlock_wrlock(&allctx_rwlock);
   allctxs = lives_list_remove_data(allctxs, tdata, FALSE);
@@ -2693,11 +2931,6 @@ static void lives_thread_data_destroy(void *data) {
     lives_hooks_clear_all(hook_stacks, -N_HOOK_POINTS);
   }
 
-  pthread_cond_destroy(tdata->vars.var_pcond);
-  lives_free(tdata->vars.var_pcond);
-  pthread_mutex_destroy(tdata->vars.var_pause_mutex);
-  lives_free(tdata->vars.var_pause_mutex);
-
   if (tdata->vars.var_guiloop) g_main_loop_unref(tdata->vars.var_guiloop);
   if (tdata->vars.var_guictx && tdata->vars.var_guictx != g_main_context_default())
     g_main_context_unref(tdata->vars.var_guictx);
@@ -2705,7 +2938,7 @@ static void lives_thread_data_destroy(void *data) {
 
 #if USE_RPMALLOC
   if (rpmalloc_is_thread_initialized()) {
-    rpmalloc_thread_finalize();
+    rpmalloc_thread_finalize(1);
   }
 #endif
 }
@@ -2774,17 +3007,18 @@ static void *_lives_thread_data_create(void *pslot_id) {
     thread_signal_block(LIVES_TIMER_SIG);
     tdata->uid = tdata->vars.var_uid = gen_unique_id();
 
-    tdata->vars.var_self_stack_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(tdata->vars.var_self_stack_mutex, NULL);
+    //pthread_cleanup_push(pthread_cleanup_func, tdata);
+
+    pthread_mutex_init(&tdata->vars.var_self_stack_mutex, NULL);
 
 #if IS_LINUX_GNU
     tdata->vars.var_tid = gettid();
 #endif
 
     for (int i = 0; i < N_HOOK_POINTS; i++) {
-      tdata->vars.var_hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
-      tdata->vars.var_hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
-      pthread_mutex_init(tdata->vars.var_hook_stacks[i]->mutex, NULL);
+      tdata->vars.var_hook_stacks[i] =
+        (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
+      pthread_mutex_init(&tdata->vars.var_hook_stacks[i]->mutex, NULL);
       tdata->vars.var_hook_stacks[i]->flags |= STACK_NATIVE;
     }
 
@@ -2801,15 +3035,16 @@ static void *_lives_thread_data_create(void *pslot_id) {
     allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
     pthread_rwlock_unlock(&allctx_rwlock);
 
+    tdata->vars.var_func_stack = NULL;
+
     tdata->vars.var_thrd_self = tdata->thrd_self = pthread_self();
 
-    tdata->vars.var_pause_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(tdata->vars.var_pause_mutex, NULL);
-    tdata->vars.var_pcond = (pthread_cond_t *)lives_malloc(sizeof(pthread_cond_t));
-    pthread_cond_init(tdata->vars.var_pcond, NULL);
+    pthread_mutex_init(&tdata->vars.var_pause_mutex, NULL);
+
+    pthread_cond_init(&tdata->vars.var_pcond, NULL);
     tdata->vars.var_sync_ready = TRUE;
 
-    tdata->vars.var_loveliness = MAX_LOVELINESS;
+    tdata->vars.var_loveliness = DEF_LOVELINESS;
 
     if (tdata->thrd_type < THRD_TYPE_EXTERN) {
       tdata->vars.var_guictx = lives_widget_context_new();
@@ -2861,8 +3096,8 @@ static void *_lives_thread_data_create(void *pslot_id) {
     }
 #endif
 
-    make_thrdattrs(tdata);
-  }
+    //make_thrdattrs(tdata);
+  } while (0);
 
   if (tdata->thrd_type >= THRD_TYPE_EXTERN) return tdata;
 
@@ -2886,7 +3121,10 @@ static void *_lives_thread_data_create(void *pslot_id) {
     tdata->vars.var_guiloop = NULL;
     tdata->vars.var_guisource = lives_idle_priority(fg_service_fulfill_cb, NULL);
     g_main_context_iteration(g_main_context_default(), TRUE);
+    g_print("THRD22 EXITING\n");
   }
+
+  g_print("THRD EXITING\n");
   return NULL;
 }
 
@@ -2961,23 +3199,23 @@ lives_thread_data_t *get_thread_data_by_uid(uint64_t uid) {
 lives_thread_data_t *get_thread_data_by_lpt(lives_proc_thread_t xlpt) {
   // recommended to only use this when it is certain that the thread running the lpt
   // is not going to complete it or run some sub task, and caller holds a ref for lpt
-  LiVESList *list = allctxs;
   pthread_rwlock_rdlock(&allctx_rwlock);
-  for (; list; list = list->next) {
+  for (LiVESList *list = allctxs; list; list = list->next) {
     lives_thread_data_t *tdata = (lives_thread_data_t *)list->data;
-    if (tdata && tdata->slot_id >= 0) {
+    if (tdata) {
       lives_proc_thread_t lpt = NULL;
       LiVESList *lpt_self_stack;
-      pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
+      pthread_mutex_t *self_stack_mutex = &tdata->vars.var_self_stack_mutex;
+      if (self_stack_mutex) {
+        pthread_mutex_lock(self_stack_mutex);
+        lpt_self_stack = (LiVESList *)tdata->vars.var_self_stack;
+        if (lpt_self_stack) lpt = (lives_proc_thread_t)lpt_self_stack->data;
+        pthread_mutex_unlock(self_stack_mutex);
 
-      pthread_mutex_lock(self_stack_mutex);
-      lpt_self_stack = (LiVESList *)tdata->vars.var_self_stack;
-      if (lpt_self_stack) lpt = (lives_proc_thread_t)lpt_self_stack->data;
-      pthread_mutex_unlock(self_stack_mutex);
-
-      if (lpt == xlpt) {
-        pthread_rwlock_unlock(&allctx_rwlock);
-        return tdata;
+        if (lpt == xlpt) {
+          pthread_rwlock_unlock(&allctx_rwlock);
+          return tdata;
+        }
       }
     }
   }
@@ -3007,7 +3245,7 @@ static boolean widget_context_wrapper(livespointer data) {
   // for lpt, we set this in call_funcsig
   mywork->flags |= LIVES_THRDFLAG_RUNNING;
   (*mywork->func)(mywork->arg);
-  mywork->flags = (mywork->flags & ~LIVES_THRDFLAG_RUNNING) | LIVES_THRDFLAG_FINISHED;
+  mywork->flags = (mywork->flags & ~LIVES_THRDFLAG_RUNNING) | LIVES_THRDFLAG_CONCLUDED;
   return FALSE;
 }
 
@@ -3084,6 +3322,8 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
 
   mywork->busy = tdata->uid;
 
+  if (lpt) lives_proc_thread_set_thread_data(lpt, tdata);
+
   // STATE chenge - queued - queued / preparing
   if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_PREPARING);
   if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_QUEUED);
@@ -3094,42 +3334,49 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
   if (should_skip(lpt, mywork)) goto skip_over;
 
   // wait for SYNC READY
+  // other thread must lock pause mutex, check for cond waiting
+  // set mywork->sync_ready
   if (!mywork->sync_ready) {
-    pthread_mutex_t *pause_mutex = THREADVAR(pause_mutex);
-    pthread_cond_t *pcond = THREADVAR(pcond);
-
-    THREADVAR(sync_ready) = FALSE;
+    pthread_mutex_t *pause_mutex = &(THREADVAR(pause_mutex));
 
     pthread_mutex_lock(pause_mutex);
-    if (lpt) {
-      // STATE CHANGE - > gains WAITING
-      lives_proc_thread_include_states(lpt, THRD_STATE_SYNC_WAITING);
-      if (mywork->flags & LIVES_THRDFLAG_NOTE_TIMINGS)
-        weed_set_int64_value(lpt, LIVES_LEAF_SYNC_WAIT_TICKS,
-                             lives_get_current_ticks());
-    }
 
-    while (!THREADVAR(sync_ready)) {
+    // re-check with mutex lock held
+    if (!mywork->sync_ready) {
+      pthread_cond_t *pcond = &(THREADVAR(pcond));
+
+      // we set flags to indicate waiting
+      // - set in thread data, proc_thread state and work flags
+      THREADVAR(sync_ready) = FALSE;
+      if (lpt) {
+        // STATE CHANGE - > gains WAITING
+        lives_proc_thread_include_states(lpt, THRD_STATE_SYNC_WAITING);
+        if (mywork->flags & LIVES_THRDFLAG_NOTE_TIMINGS)
+          weed_set_int64_value(lpt, LIVES_LEAF_SYNC_WAIT_TICKS,
+                               lives_get_current_ticks());
+      }
       mywork->flags |= LIVES_THRDFLAG_COND_WAITING;
-      pthread_cond_wait(pcond, pause_mutex);
+
+      while (!mywork->sync_ready) {
+        pthread_cond_wait(pcond, pause_mutex);
+      }
+
       mywork->flags &= ~LIVES_THRDFLAG_COND_WAITING;
-    }
-    pthread_mutex_unlock(pause_mutex);
-    mywork->sync_ready = TRUE;
+      if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_SYNC_WAITING);
+      THREADVAR(sync_ready) = TRUE;
 
-    if (lpt) {
-      lives_proc_thread_exclude_states(lpt, THRD_STATE_SYNC_WAITING);
-    }
+      pthread_mutex_unlock(pause_mutex);
 
-    // check if lpt will be destroyed or cancelled
-    if (should_skip(lpt, mywork)) goto skip_over;
+      // check if lpt will be destroyed or cancelled
+      if (should_skip(lpt, mywork)) goto skip_over;
 
-    if (lpt) {
-      if (mywork->flags & LIVES_THRDFLAG_NOTE_TIMINGS)
-        weed_set_int64_value(lpt, LIVES_LEAF_SYNC_WAIT_TICKS,
-                             lives_get_current_ticks() -
-                             weed_get_int64_value(lpt, LIVES_LEAF_SYNC_WAIT_TICKS, NULL));
-    }
+      if (lpt) {
+        if (mywork->flags & LIVES_THRDFLAG_NOTE_TIMINGS)
+          weed_set_int64_value(lpt, LIVES_LEAF_SYNC_WAIT_TICKS,
+                               lives_get_current_ticks() -
+                               weed_get_int64_value(lpt, LIVES_LEAF_SYNC_WAIT_TICKS, NULL));
+      }
+    } else  pthread_mutex_unlock(pause_mutex);
   }
 
   // check if lpt will be destroyed or cancelled
@@ -3145,9 +3392,12 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
 skip_over:
 
   if (lpt) {
+    if (lpt) lives_proc_thread_set_thread_data(lpt, NULL);
     if (lives_proc_thread_has_states(lpt, THRD_STATE_CANCEL_REQUESTED)
-        && !lives_proc_thread_has_states(lpt, THRD_STATE_CANCELLED))
+        && !lives_proc_thread_has_states(lpt, THRD_STATE_CANCELLED)) {
+      weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
       lives_proc_thread_cancel(lpt);
+    }
     if (was_skipped)
       lives_proc_thread_set_final_state(lpt);
     lives_proc_thread_unref(lpt);
@@ -3162,16 +3412,15 @@ skip_over:
   ntasks--;
   pthread_mutex_unlock(&twork_mutex);
 
-#if USE_RPMALLOC
-  rpmalloc_thread_collect();
-#endif
-
   if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
     lives_thread_free((lives_thread_t *)list);
   } else {
     if (was_skipped) mywork->skipped = TRUE;
     else mywork->done = tdata->uid;
   }
+#if USE_RPMALLOC
+  rpmalloc_thread_collect();
+#endif
   return TRUE;
 }
 
@@ -3297,7 +3546,7 @@ LIVES_GLOBAL_INLINE void lives_thread_free(lives_thread_t *thread) {
 
 void check_pool_threads(void) {
   pthread_mutex_lock(&pool_mutex);
-  pthread_mutex_lock(&twork_mutex);
+  //pthread_mutex_lock(&twork_mutex);
 
   while (ntasks >= npoolthreads && npoolthreads < rnpoolthreads) {
     for (int i = 0; i < rnpoolthreads; i++) {
@@ -3305,7 +3554,7 @@ void check_pool_threads(void) {
       // relaunch thread, npoolthreads ---> rnpoolthreads
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
       npoolthreads++;
-      pthread_mutex_unlock(&twork_mutex);
+      //pthread_mutex_unlock(&twork_mutex);
       pthread_mutex_unlock(&pool_mutex);
       pthread_create(poolthrds[i], NULL, _lives_thread_data_create, LIVES_INT_TO_POINTER(i));
       pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
@@ -3313,7 +3562,7 @@ void check_pool_threads(void) {
       pthread_cond_signal(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
       pthread_mutex_lock(&pool_mutex);
-      pthread_mutex_lock(&twork_mutex);
+      //pthread_mutex_lock(&twork_mutex);
       break;
     }
   }
@@ -3324,9 +3573,11 @@ void check_pool_threads(void) {
       pthread_cond_signal(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
     }
+    //pthread_mutex_unlock(&twork_mutex);
   } else {
     // we need more threads to service all tasks
     int extrs = MAX(MINPOOLTHREADS, ntasks - rnpoolthreads);
+    //pthread_mutex_unlock(&twork_mutex);
     poolthrds =
       (pthread_t **)lives_realloc(poolthrds, (rnpoolthreads + extrs) * sizeof(pthread_t *));
     for (int i = rnpoolthreads; i < rnpoolthreads + extrs; i++) {
@@ -3339,7 +3590,6 @@ void check_pool_threads(void) {
     pthread_cond_broadcast(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
   }
-  pthread_mutex_unlock(&twork_mutex);
   pthread_mutex_unlock(&pool_mutex);
 }
 
@@ -3390,9 +3640,7 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
     pthread_mutex_unlock(&twork_mutex);
     return NULL;
   }
-  if (mainw->debug) {
-    g_print("adding to pool %p\n", list);
-  }
+
   if (!twork_list) {
     twork_list = twork_last = list;
   } else {
@@ -3429,7 +3677,7 @@ uint64_t lives_thread_join(lives_thread_t *thread, void **retval) {
 
   if (!task->skipped) {
     if (!task->busy) check_pool_threads();
-    lives_nanosleep_until_nonzero(task->done);
+    lives_microsleep_until_nonzero(task->done);
   }
 
   nthrd = task->done;
@@ -3599,6 +3847,22 @@ void thread_stackdump(void) {
 }
 
 
+char *get_thread_id(uint64_t uid) {
+  char *tnum = NULL;
+  lives_thread_data_t *tdata = get_thread_data_by_uid(uid);
+  if (tdata) {
+#if IS_LINUX_GNU
+    tnum = lives_strdup_printf("uid: 0x%lx (Thread 0x%lx (LWP %d)) ",
+                               tdata->uid, tdata->vars.var_thrd_self, tdata->vars.var_tid);
+#else
+    tnum = lives_strdup_printf("uid: 0x%lx (Thread 0x%lx) ",
+                               tdata->uid, tdata->vars.var_thrd_self);
+#endif
+  } else tnum = lives_strdup(_("Unknown thread "));
+  return tnum;
+}
+
+
 char *get_threadstats(void) {
   int totthreads = 0, actthreads = 0;
   char *msg = NULL;
@@ -3610,7 +3874,7 @@ char *get_threadstats(void) {
     if (tdata) {
       lives_proc_thread_t lpt = NULL;
       LiVESList *lpt_self_stack;
-      pthread_mutex_t *self_stack_mutex = tdata->vars.var_self_stack_mutex;
+      pthread_mutex_t *self_stack_mutex = &tdata->vars.var_self_stack_mutex;
       totthreads++;
       pthread_mutex_lock(self_stack_mutex);
       lpt_self_stack = (LiVESList *)tdata->vars.var_self_stack;
@@ -3618,25 +3882,23 @@ char *get_threadstats(void) {
       pthread_mutex_unlock(self_stack_mutex);
       if (pthread_equal(tdata->thrd_self, capable->gui_thread)) notes = lives_strdup("GUI thread");
       else if (tdata->thrd_type >= THRD_TYPE_EXTERN) notes = lives_strdup("External");
-#if IS_LINUX_GNU
-      tnum = lives_strdup_printf("(Thread 0x%lx (LWP %d)) ",
-                                 tdata->vars.var_thrd_self, tdata->vars.var_tid);
-#else
-      tnum = lives_strdup("");
-#endif
+      tnum = get_thread_id(tdata->vars.var_uid);
       g_printerr("\nThread %d %s(%s):\nType: %s\n", tdata->slot_id, tnum,
                  notes ? notes : "-", THREADVAR(origin));
       lives_free(tnum);
       if (!lpt) g_printerr("Waiting in threadpool\n");
       else {
         ticks_t ptime, sytime, qtime;
-        thrd_work_t *work = lives_proc_thread_get_work(lpt);
-        if (!lives_proc_thread_get_funcname(lpt))
+        char *funcname = lives_proc_thread_get_funcname(lpt);
+        if (!funcname)
           g_printerr("Running unknown function\n");
         else {
+          char *tmp = lives_proc_thread_show_func_call(lpt);
+          g_printerr("Currently running: %s\n", tmp);
+          lives_free(tmp);
           actthreads++;
-          g_printerr("Currently running: %s\n", lives_proc_thread_show_func_call(lpt));
         }
+        lives_free(funcname);
         lpt_desc_state(lpt);
         g_printerr("Loveliness %.2f\n", tdata->vars.var_loveliness);
         qtime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_QUEUE);

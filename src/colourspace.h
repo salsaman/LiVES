@@ -67,7 +67,7 @@ struct _conv_array {
   uint8_t *Yx_to_Y, *Ux_to_U, *Vx_to_V;
 };
 
-#define KR_YCBCR 0.2989
+#define KR_YCBCR 0.299
 #define KB_YCBCR 0.114
 
 #define KR_I240 0.212
@@ -116,8 +116,7 @@ typedef struct {
   gamma_tx[gtype##_IDX].offs = (powf((gamma_tx[gtype##_IDX].thresh / gamma_tx[gtype##_IDX].lin), \
 				     (1. / gamma_tx[gtype##_IDX].pf)) - gamma_tx[gtype##_IDX].thresh) \
     / (1. - (powf((gamma_tx[gtype##_IDX].thresh / gamma_tx[gtype##_IDX].lin), \
-		  (1. / gamma_tx[gtype##_IDX].pf))));			\
-  gamma_idx[gtype##_IDX] = gtype;
+		  (1. / gamma_tx[gtype##_IDX].pf)))); gamma_idx[gtype##_IDX] = gtype;
 
 extern gamma_const_t gamma_tx[];
 extern int gamma_idx[];
@@ -127,6 +126,7 @@ extern int gamma_idx[];
 #define GAMMA_CONSTS_WEED_GAMMA_SRGB 12.92, 0.04045, 2.4
 #define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.081, 1. / .45
 //#define GAMMA_CONSTS_MYGAMMA lin, thresh, pf
+// (offs will be derived as the point at which val_line(x) ~= val_pf(x)
 
 enum {
   WEED_GAMMA_SRGB_IDX,
@@ -283,7 +283,7 @@ double weed_palette_get_bytes_per_pixel(int pal);
 
 int weed_palette_get_nplanes(int pal);
 
-boolean weed_palette_conv_resizable(int pal, int clamped, boolean in_out);
+boolean weed_palette_conv_resizable(int ipal, int opal);
 boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out);
 
 boolean weed_palette_is_rgb(int pal);
@@ -363,9 +363,13 @@ boolean can_inline_gamma(int inpl, int opal);
 boolean pconv_can_inplace(int inpl, int outpl);
 
 /// widths in PIXELS
+lives_result_t get_resizable(lives_layer_t *, int *palette, int iclamping, int *opal, int oclamp_hint,
+                             int *pxpal, int *pxopal);
+
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 boolean letterbox_layer(weed_layer_t *, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,
                         int tclamp);
+
 boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int top, int bottom, int left, int right);
 
 boolean compact_rowstrides(weed_layer_t *);

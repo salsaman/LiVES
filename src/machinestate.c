@@ -126,6 +126,17 @@ static void get_cpuinfo(void) {
 static void get_cpuinfo(void) {;}
 #endif
 
+void lives_spin(void) {
+#if defined(_MSC_VER)
+  _mm_pause();
+#elif defined(__x86_64__) || defined(__i386__)
+  __asm__ volatile("pause" ::: "memory");
+#else
+  struct timespec ts = {0};
+  nanosleep(&ts, 0);
+#endif
+}
+
 static uint64_t fastrand_val = 0;
 
 LIVES_GLOBAL_INLINE uint64_t fastrand(void) {
@@ -277,7 +288,6 @@ static void check_random(void) {
 
   use_getentropy = TRUE;
   xrbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp, &xqual);
-  tmp = lives_strdup_printf("%s", tmp);
   add_messages_to_list(tmp);
   lives_free(tmp);
 
@@ -606,32 +616,68 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   return LIVES_STORAGE_STATUS_NORMAL;
 }
 
+static int64_t result = -1;
 static volatile lives_proc_thread_t running = NULL;
 static char *running_for = NULL;
+static int dircheck_state = 0;
+lives_proc_thread_t ds_syncwith = NULL;
 
-boolean disk_monitor_running(const char *dir)
-{return (running && (!dir || !lives_strcmp(dir, running_for)));}
+static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
+  dircheck_state = 2;
+  if (ds_syncwith) {
+    lives_proc_thread_sync_with(ds_syncwith, 0, MM_IGNORE);
+    ds_syncwith = NULL;
+  }
+  return FALSE;
+}
+
+// disk monitor bg funcs
+// disk_monitor_start(dir) - (re)start a procthread to get the size ofr directory
+// disk_monitor_trunning(dir) - checks if running for dir
+// disk_monitor_check_result(dir) - returns available result, or -1 if still running
+//     (check mainw->ds_valid, may need rechecking)
+// disk_monitor_wait_result(dir, timeout_nsec) - if reult not avaible before timeout, forget
+// disk_monitor_forget - dont care, no int64_join needed
+
+boolean disk_monitor_running(const char *dir) {
+  return (dircheck_state == 1 && (!dir || !lives_strcmp(dir, running_for)));
+}
+
 
 lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (disk_monitor_running(dir)) disk_monitor_forget();
-  running = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+  running = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                                      get_dir_size, WEED_SEED_INT64, "s", dir);
+  lives_proc_thread_add_hook(running, COMPLETED_HOOK, 0, dirsize_done_cb, &result);
+
   mainw->dsu_valid = TRUE;
+  if (running_for) lives_free(running_for);
   running_for = lives_strdup(dir);
+  dircheck_state = 1;
+  lives_proc_thread_queue(running, 0);
   return running;
 }
 
+
 int64_t disk_monitor_check_result(const char *dir) {
   // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
-  int64_t bytes;
-  if (!disk_monitor_running(dir)) disk_monitor_start(dir);
+  int64_t bytes = -1;
+  //if (!disk_monitor_running(dir))
+
+  //if (!dircheck_state) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
-    if (!lives_proc_thread_check_finished(running)) {
+    if (dircheck_state == 1) {
       return -1;
     }
-    bytes = lives_proc_thread_join_int64(running);
-    lives_proc_thread_unref(running);
-    running = NULL;
+    if (dircheck_state == 2) {
+      bytes = result = lives_proc_thread_join_int64(running);
+      lives_proc_thread_unref(running);
+      running = NULL;
+      dircheck_state = 3;
+    }
+    if (dircheck_state == 3) {
+      bytes = result;
+    }
   } else bytes = (int64_t)get_dir_size(dir);
   return bytes;
 }
@@ -639,35 +685,35 @@ int64_t disk_monitor_check_result(const char *dir) {
 
 LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout) {
   // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
-  lives_alarm_t alarm_handle = LIVES_NO_ALARM;
-  int64_t dsval;
 
-  if (*running_for && !lives_strcmp(dir, running_for)) {
+  if (*running_for && lives_strcmp(dir, running_for)) {
     if (timeout) return -1;
     return get_dir_size(dir);
   }
 
-  if (timeout < 0) timeout = LIVES_LONGEST_TIMEOUT;
-  if (timeout > 0) alarm_handle = lives_alarm_set(timeout);
-
-  while ((dsval = disk_monitor_check_result(dir)) < 0
-         && (alarm_handle == LIVES_NO_ALARM || ((timeout = lives_alarm_check(alarm_handle)) > 0))) {
-    lives_nanosleep(1000);
-  }
-  if (alarm_handle != LIVES_NO_ALARM) {
-    lives_alarm_clear(alarm_handle);
-    if (!timeout) {
-      disk_monitor_forget();
-      return -1;
+  if (dircheck_state == 1) {
+    GET_PROC_THREAD_SELF(self);
+    if (timeout < 0) timeout = BILLIONS(30); // TODO
+    ds_syncwith = self;
+    if (dircheck_state == 1) {
+      if (lives_proc_thread_sync_with_timeout(running, 0, MM_IGNORE, timeout)
+          == LIVES_RESULT_FAIL) {
+        ds_syncwith = NULL;
+        disk_monitor_forget();
+        return -1;
+      }
+      ds_syncwith = NULL;
     }
   }
-  return dsval;
+  return disk_monitor_check_result(dir);
 }
+
 
 void disk_monitor_forget(void) {
   if (!disk_monitor_running(NULL)) return;
-  lives_proc_thread_dontcare(running);
+  lives_proc_thread_request_cancel(running, TRUE);
   running = NULL;
+  dircheck_state = 0;
 }
 
 
@@ -721,7 +767,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   char *msg, *tmp;
   char *pausstr = (_("Processing has been paused."));
 
-  if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
+  sfile = RETURN_VALID_CLIP(clipno);
 
   do {
     if (mainw->dsu_valid && capable->ds_used > -1) {
@@ -1057,8 +1103,9 @@ char *get_mountpoint_for(const char *dirx) {
   dir = get_symlink_for(dirx);
   slen = lives_strlen(dir);
 
-  com = lives_strdup("df -P");
-  if ((res = mini_popen(com))) {
+  com = lives_strdup_printf("%s -lP", EXEC_DF);
+  res = mini_popen(com);
+  if (res && *res) {
     int lcount = get_token_count(res, '\n');
     char **array0 = lives_strsplit(res, "\n", lcount);
     for (int l = 0; l < lcount; l++) {
@@ -1076,9 +1123,9 @@ char *get_mountpoint_for(const char *dirx) {
       lives_strfreev(array1);
     }
     lives_strfreev(array0);
-    lives_free(res);
-  }
-  lives_free(dir);
+  } else abort();
+  if (res) lives_free(res);
+  if (dir) lives_free(dir);
   return mp;
 }
 
@@ -1093,7 +1140,7 @@ char *get_fstype_for(const char *volx) {
   char *fstype = NULL;
   if (volx) {
     char *vol = get_symlink_for(volx);
-    char *res, *com = lives_strdup("df --output=fstype,target");
+    char *res, *com = lives_strdup_printf("%s -l --output=fstype,target", EXEC_DF);
     if ((res = mini_popen(com))) {
       int lcount = get_token_count(res, '\n');
       char **array0 = lives_strsplit(res, "\n", lcount);
@@ -2987,9 +3034,21 @@ int get_num_cpus(void) {
 }
 
 
-boolean get_machine_dets(void) {
+boolean get_machine_dets(int phase) {
   struct timespec res;
- #ifdef IS_FREEBSD
+  if (phase == 0) {
+#ifdef _SC_PAGESIZE
+    capable->hw.pagesize = sysconf(_SC_PAGESIZE);
+#endif
+#if IS_X86_64
+    get_cpuinfo();
+#else
+    capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
+#endif
+    return TRUE;
+  }
+
+#ifdef IS_FREEBSD
   char *com = lives_strdup("sysctl -n hw.model");
 #else
   char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | "
@@ -3007,23 +3066,15 @@ boolean get_machine_dets(void) {
 
   com = lives_strdup("uname -m");
   capable->os_hardware = mini_popen(com);
-#if IS_X86_64
-  get_cpuinfo();
-#else
-  capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
-#endif
-
-#ifdef _SC_PAGESIZE
-  capable->hw.pagesize = sysconf(_SC_PAGESIZE);
-#endif
-  if (!mainw->debug && !strcmp(capable->os_hardware, "x86_64"))
-    get_cpuinfo();
 
   com = lives_strdup("uname -n");
   capable->mach_name = mini_popen(com);
 
   com = lives_strdup("whoami");
   capable->username = mini_popen(com);
+
+  if (!mainw->debug && !strcmp(capable->os_hardware, "x86_64"))
+    get_cpuinfo();
 
   if (!clock_getres(CLOCK_REALTIME, &res))
     capable->hw.clock_res = res.tv_sec * ONE_BILLION + res.tv_nsec;

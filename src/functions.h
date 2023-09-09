@@ -8,6 +8,10 @@
 
 ///// low level operations //////
 
+boolean have_recursion_token(uint32_t tok);
+void push_recursion_token(uint32_t tok);
+void remove_recursion_token(uint32_t tok);
+
 typedef int(*funcptr_int_t)();
 typedef double(*funcptr_dbl_t)();
 typedef int(*funcptr_bool_t)();
@@ -34,7 +38,7 @@ typedef union {
 
 typedef struct {
   char letter;
-  uint32_t seed_type;
+  uint32_t seed_btype;
   uint8_t sigbits;
   const char *symname;
   const char *fmtstr;
@@ -180,6 +184,7 @@ typedef uint64_t funcsig_t;
 #define LIVES_LEAF_LONGJMP "_longjmp_env_ptr"
 
 weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
+lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, ...);
 boolean call_funcsig(lives_proc_thread_t);
 
 // funcinst (future use)
@@ -202,6 +207,11 @@ typedef weed_plant_t lives_funcinst_t;
 #define FUNC_CATEGORY_HOOK_COMMON 	(N_STD_FUNC_CATEGORIES + 100)
 #define FUNC_CATEGORY_HOOK_SYNC 	(N_STD_FUNC_CATEGORIES + 101)
 #define FUNC_CATEGORY_HOOK_GUI	 	(N_STD_FUNC_CATEGORIES + 102)
+
+void toggle_var_cb(void *dummy, boolean *var);
+void inc_counter_cb(void *dummy, int *var);
+void dec_counter_cb(void *dummy, int *var);
+void reset_counter_cb(void *dummy, int *var);
 
 /// tracing / debugging tools //
 
@@ -254,17 +264,32 @@ void dump_fn_notes(void);
 #define FN_DEBUG_EXIT_OUT g_print("Thread %ld exiting func at %s, line %d\n", \
 				  THREADVAR(uid), _FILE_REF_, _LINE_REF_)
 
+void _func_entry(lives_funcptr_t, const char *funcname, int category, const char *rettype,
+                 const char *args_fmt, char *file_ref, int line_ref);
+void _func_exit(char *file_ref, int line_ref);
+
+void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
+
+#if DEBUG_FNS
 // macro to be placed near start of "major" functions. It will prepend funcname to
 // a thread's 'func_stack', print out a debug line (optional), and also add fn lookup
 // to fn_store, e.g:   ____FUNC_ENTRY____(transcode_clip, "b", "iibs");
 #define ____FUNC_ENTRY____(func, rettype, args_fmt)			\
-  do {THREADVAR(func_stack)=lives_list_prepend(THREADVAR(func_stack),#func);FN_DEBUG_OUT(func);	\
-    add_fn_lookup((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_, _LINE_REF_);}while (0);
+  do {_func_entry((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_,_LINE_REF_);}while (0);
 
 // macro to be placed near start of "major" functions, counterpart to ___FUNC_ENTRY___
 // It will remove top entry from a thread's 'func_stack', and print out a debug line (optional)
-#define ____FUNC_EXIT____ do {LiVESList *list=THREADVAR(func_stack);FN_DEBUG_EXIT_OUT; \
-    THREADVAR(func_stack)=list->next;list->next=NULL;lives_list_free(list);} while (0);
+#define ____FUNC_EXIT____ do {_func_exit(_FILE_REF_, _LINE_REF_);} while(0);
+
+#define ____FUNC_EXIT_VAL____(rtype, val) do {weed_plant_t *pl = lives_plant_new(123); \
+    weed_leaf_from_va(pl, "val", get_seedtype(rtype[0]), 1, (val));	\
+    _func_exit_val(pl, _FILE_REF_, _LINE_REF_); weed_plant_free(pl);} while(0);
+
+#else
+#define ____FUNC_ENTRY____(func, rettype, args_fmt)
+#define ____FUNC_EXIT____
+#define ____FUNC_EXIT_VAL____(rtype, val)
+#endif
 
 // calls (void)func(args), and before or after calling it, adds a fn note with a ptr / file / line
 // if ptr is already noted then will remove it
@@ -318,8 +343,11 @@ void dump_fn_notes(void);
 // callback will only be run at most one time, and then removed from the stack
 #define HOOK_OPT_ONESHOT		(1ull << 2)
 
+// ignored if retrun value is not boolean. If FALSE is returned, remove rom stack
+#define HOOK_OPT_REMOVE_ON_FALSE	(1ull << 3)
+
 // if this bit is set, then the callback will not be removed when the dispatcher is freed
-#define HOOK_CB_TRANSFER_OWNER		(1ull << 3)
+#define HOOK_CB_TRANSFER_OWNER		(1ull << 4)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 8) // force fg service run
@@ -479,7 +507,7 @@ void lives_closure_free(lives_closure_t *closure);
 
 typedef struct _hstack_t {
   volatile LiVESList *stack;
-  pthread_mutex_t *mutex;
+  pthread_mutex_t mutex;
   volatile uint64_t flags;
   lives_proc_thread_t owner;
 } lives_hook_stack_t;
@@ -549,13 +577,11 @@ typedef struct {
 // at a later point they will be transferred to adifferent stack
 #define HOOK_DTL_INDIRECT	       	(1ull < 6)
 
-//
-
 /* #define HSTACK_FLAGS(DATA_READY_HOOK) HOOK_DTL_ASYNC_CALLBACKS */
 /* #define HSTACK_FLAGS(SYNC_WAIT_HOOK) HOOK_DTL_SELF | HOOK_DTL_ASYNC_TRIGGER | HOOK_DETAIL_COMBINED_BOOL | HOOK_DTL_BOOL_LOOP */
 /* #define HSTACK_FLAGS(INTERNAL_HOOK_0) HOOK_DETAIL_MAIN_THREAD | HOOK_DTL_SINGLE */
 
-// low level flags used internally when adding callbacks
+// low level flags used internally when adding callbackdddas*/
 
 #define DTYPE_PREPEND 		(1ull << 0) // unset == append
 #define DTYPE_CLOSURE 		(1ull << 1) // unset == lpt
@@ -608,8 +634,6 @@ void lives_hook_remove_by_data(lives_hook_stack_t **, int type, lives_funcptr_t 
 #define lives_proc_thread_remove_hook_by_data(lpt, type, func, data)	\
   lives_hook_remove_by_data(lives_proc_thread_get_hook_stacks(lpt), type, (lives_funcptr_t)func, data)
 
-void lives_proc_thread_remove_nullify(lives_proc_thread_t, void **ptr);
-
 lives_closure_t *lives_proc_thread_get_closure(lives_proc_thread_t);
 
 void flush_cb_list(lives_proc_thread_t self);
@@ -654,7 +678,6 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
 lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thread_t);
 
 void free_funcdef(lives_funcdef_t *);
-
 
 // a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters
 // plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt

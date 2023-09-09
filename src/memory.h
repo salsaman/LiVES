@@ -1,5 +1,5 @@
 // memory.h
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -228,6 +228,7 @@ void _ext_unmalloc_and_copy(size_t, void *);
 ///////////////////////////////////
 
 boolean init_memfuncs(int stage);
+void memory_cleanup(void);
 
 #define copy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
 
@@ -247,6 +248,8 @@ void *lives_free_and_return(void *);
 boolean lives_freep(void **);
 
 boolean lives_free_if_non_null(void *);
+
+void *lives_steal_pointer(void **);
 
 void *lives_slice_alloc0(size_t sz);
 void lives_slice_unalloc(size_t sz, void *);
@@ -389,6 +392,12 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 
 #define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
 #define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))
+
+void speedy_free(void *ptr);
+void *speedy_calloc(size_t nm, size_t xsize);
+void *speedy_malloc(size_t xsize);
+
+void do_test(void);
 
 static pthread_mutex_t weak_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *WEAK_LIST = NULL;

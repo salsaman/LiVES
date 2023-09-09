@@ -991,7 +991,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
   RECURSE_GUARD_START;
   boolean ret = FALSE;
   RETURN_VAL_IF_RECURSED(FALSE);
-  RECURSE_GUARD_LOCK;
+  RECURSE_GUARD_ARM;
   if (!is_fg_thread()) {
     if (!gui_loop_tight) mainw->do_ctx_update = TRUE;
     RECURSE_GUARD_END;
@@ -1047,10 +1047,10 @@ boolean fg_service_fulfill(void) {
     if (lptr) lives_proc_thread_unref(lptr);
 
     if (mainw->global_hook_stacks) {
-      if (!pthread_mutex_trylock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
+      if (!pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
         if (mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
           boolean is_active;
-          pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+          pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
           if (THREADVAR(fg_service)) {
             is_fg_service = TRUE;
           } else THREADVAR(fg_service) = TRUE;
@@ -1058,7 +1058,7 @@ boolean fg_service_fulfill(void) {
           if (!is_fg_service) THREADVAR(fg_service) = FALSE;
           return is_active;
         }
-        pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+        pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
         return FALSE;
       }
       // if we cannot get a lock on the hook_stack, we assume it is busy
@@ -1112,6 +1112,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
   static boolean omode = -1;
   boolean is_fg_service = FALSE;
   boolean is_active;
+  int depth;
 
   if (mainw->no_idlefuncs) {
     // callback has to be disabled during calls to g_main_context_iteration,
@@ -1128,8 +1129,11 @@ boolean fg_service_fulfill_cb(void *dummy) {
     cprio = prio;
   }
 
+  // this can be > 1 for example if this is called from inside gtk_dialog_run()
+  depth = g_main_depth();
+
   // just to be sure...
-  if (gui_loop_tight && g_main_depth() > 1) return TRUE;
+  if (gui_loop_tight && depth > 1) return TRUE;
 
   do {
     is_active = FALSE;
@@ -1188,8 +1192,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
         }
       }
     } else {
-      for (int zz = 0; zz < 2048 && cprio == PRIO_LOW; zz++)
-        lives_microsleep;
+      //lives_proc_thread_wait(mainw->def_lpt, 8000000);
+      /* for (int zz = 0; zz < 2048 && cprio == PRIO_LOW; zz++) */
+      /*   lives_microsleep; */
     }
   }
   mainw->do_ctx_update = FALSE;
@@ -1212,11 +1217,11 @@ WIDGET_HELPER_GLOBAL_INLINE void fg_stack_wait(void) {
   // (the mutex unlock) and the loop finshes, then we just need to ensure the mutex unlock happens
   // if the (anti)condition is TRUE, then the other part of the || is checked
   // - the mutex unlock should always return 0, then negated this becomes 1, so we loop again
-  lives_nanosleep_until_zero(pthread_mutex_trylock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex) // a;lways 0 to pass
-                             && !(!(mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack != NULL
-                                    && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) ||
-                                  pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)));
-  pthread_mutex_unlock(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+  lives_microsleep_until_zero(pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex) // a;lways 0 to pass
+                              && !(!(mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack != NULL
+                                     && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) ||
+                                   pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)));
+  pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 }
 
 
@@ -1258,41 +1263,6 @@ static void async_sig_handler3(livespointer instance, livespointer extra, livesp
   sigdata_free(sigdata, NULL);
 }
 
-#if 0
-static boolean async_timer_handler(livespointer data) {
-  if (mainw->is_exiting) return FALSE;
-  else {
-    lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
-    lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
-    sigdata->detsig = NULL;
-    sigdata->is_timer = TRUE;
-    //g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source())); // NULL for timer, GIdleSource for idle
-    //g_print("hndling %p %s %p\n", sigdata, sigdata->detsig, (void *)sigdata->detsig);
-
-    if (sigdata->state == SIGDATA_STATE_NEW) {
-      lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
-      sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
-                      "v", sigdata->user_data);
-    }
-
-    while (1) {
-      if (sigdata->state == SIGDATA_STATE_DESTROYED || sigdata->state == SIGDATA_STATE_FINISHED) {
-        boolean res = FALSE;
-        if (sigdata->state == SIGDATA_STATE_FINISHED) {
-          res = lives_proc_thread_join_boolean(sigdata->proc);
-        }
-        if (sigdata->proc) lives_proc_thread_unref(sigdata->proc);
-        sigdata->proc = NULL;
-        sigdata_free(sigdata, NULL);
-        return res;
-      } else {
-        lives_nanosleep_while_true(gov_loop_blocked || governor_loop(sigdata));
-      }
-    }
-  }
-  return FALSE;
-}
-#endif
 
 unsigned long lives_signal_connect_async(livespointer instance, const char *detailed_signal, LiVESGuiCallback c_handler,
     livespointer data, LiVESConnectFlags flags) {
@@ -1876,10 +1846,10 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   lpttorun = lpt;
 
   // wait for main thread to pick it up and set PREPARING state
-  lives_nanosleep_until_nonzero((do_cancel = lives_proc_thread_should_cancel(lpt))
-                                || lives_proc_thread_is_preparing(lpt)
-                                || lives_proc_thread_is_running(lpt)
-                                || lives_proc_thread_is_done(lpt));
+  lives_microsleep_until_nonzero((do_cancel = lives_proc_thread_should_cancel(lpt))
+                                 || lives_proc_thread_is_preparing(lpt)
+                                 || lives_proc_thread_is_running(lpt)
+                                 || lives_proc_thread_is_done(lpt));
 
   // once we unlock this, a) main thread can complete lpttorun and nullify lpttorun
   // this means it already made a local copy of lpttorun; it will oly nullify lpttoru if it
@@ -1890,7 +1860,7 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   pthread_mutex_unlock(&lpt_mutex);
 
   // now we wait for our lpt to finish
-  lives_nanosleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt));
+  lives_microsleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt));
 
   // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
   // try to lock lpt_mutex, if we succeed, check if lpttorun == lpt, if so set lpttorun to NULL, unlock lpt_mutex
@@ -1999,13 +1969,21 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   _lives_widget_show_all(LIVES_WIDGET(dialog));
 
-  if (!mainw->is_ready) pop_to_front(LIVES_WIDGET(dialog), NULL);
+  if (!GET_INT_DATA(dialog, URGENCY_KEY)) {
+    if (!mainw->is_ready) SET_INT_DATA(dialog, URGENCY_KEY, MSG_URGENCY_STARTUP);
+  }
+
+  if (ATT_MESSAGE(dialog)) pop_to_front(LIVES_WIDGET(dialog), NULL);
+  else {
+    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
+  }
 
   do {
-    fg_service_fulfill();
+    //fg_service_fulfill();
+    // TODO - only if focused / visible
     lives_widget_context_iteration(NULL, FALSE);
     pthread_yield();
-    lives_nanosleep(NSLEEP_TIME);
+    if (mainw->def_lpt) lives_proc_thread_wait(mainw->def_lpt, 1000);
     resp = GET_INT_DATA(dialog, RESPONSE_KEY);
   } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
 
@@ -2028,6 +2006,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
   if (is_fg_thread()) {
     gtk_widget_show_all(GTK_WIDGET(dialog));
     _lives_widget_context_update();
+    //if (mainw->debug_ptr) gtk_test_widget_send_key(mainw->debug_ptr, LIVES_KEY_Return, 0);
     resp = gtk_dialog_run(dialog);
   } else {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
@@ -2061,7 +2040,7 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
     while (pthread_mutex_trylock(&lpt_mutex)) {
       if (lives_proc_thread_get_cancel_requested(lpt)
           || lives_proc_thread_get_cancel_requested(self)) {
-        lives_proc_thread_cancel(lpt);
+        //lives_proc_thread_cancel(lpt);
         lives_proc_thread_unref(lpt);
         return;
       }
@@ -2075,8 +2054,6 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
     lpttorun = NULL;
 
     if (lives_proc_thread_should_cancel(lpt)) {
-      /* if (!lives_proc_thread_was_cancelled) */
-      /* 	lives_proc_thread_cancel(lpt); */
       lives_proc_thread_unref(lpt);
       pthread_mutex_unlock(&lpt_mutex);
       return;
@@ -2486,6 +2463,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_size(LiVESWidget * wid
   else if (strcmp(tsize, LIVES_TEXT_SIZE_MEDIUM)) xsize = atoi(tsize);
   xxsize = lives_strdup_printf("%dpx", xsize);
   retb = set_css_value(widget, state, "font-size", xxsize);
+  lives_free(xxsize);
   return retb;
 #endif
 #endif
@@ -3314,10 +3292,34 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget * w
 }
 
 
+typedef boolean(*accelfunc_f)(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t,
+                              LiVESXModifierType, livespointer);
+
+#ifdef GUI_GTK
+static boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
+                         LiVESXModifierType mod, livespointer data) {
+  static boolean ret = TRUE;
+  if (!ret) return FALSE;
+  GET_PROC_THREAD_SELF(self);
+  /* g_print("accel group %p, keyval %d, keymod %d obj %p\n", group, keyval, mod, obj); */
+  /* if (mainw->play_window && obj == LIVES_WIDGET_OBJECT(mainw->play_window)) { */
+  /*   g_print("playwin key %d\n", keyval); */
+  /* } */
+  ret = FALSE;
+  lives_proc_thread_trigger_hooks(self, SEGMENT_START_HOOK);
+  gtk_accel_groups_activate(obj, keyval, mod);
+  lives_proc_thread_trigger_hooks(self, SEGMENT_END_HOOK);
+  ret = TRUE;
+  return ret;
+}
+#endif
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
   LiVESAccelGroup *group = NULL;
 #ifdef GUI_GTK
   group = gtk_accel_group_new();
+  lives_signal_connect(LIVES_GUI_OBJECT(group), LIVES_WIDGET_ACCEL_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(accel_act), NULL);
 #endif
   return group;
 }
@@ -9387,7 +9389,6 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
   return menuitem;
 }
 
-static void togglevar_cb(LiVESWidget * w, boolean * var) {if (var) *var = !(*var);}
 
 LiVESWidget *
 lives_standard_check_menu_item_new_for_var(const char *labeltext, boolean * var, boolean invert) {
@@ -9395,7 +9396,7 @@ lives_standard_check_menu_item_new_for_var(const char *labeltext, boolean * var,
   if (invert) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mi), !(*var));
   else lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mi), *var);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mi), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(togglevar_cb),
+                                  LIVES_GUI_CALLBACK(toggle_var_cb),
                                   (livespointer)var);
   return mi;
 }
@@ -12856,7 +12857,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean toggle_toggles_var(LiVESToggleButton * tbut,
   if (invert) lives_toggle_button_set_active(tbut, !(*var));
   else lives_toggle_button_set_active(tbut, *var);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tbut), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(togglevar_cb), (livespointer)var);
+                                  LIVES_GUI_CALLBACK(toggle_var_cb), (livespointer)var);
   return TRUE;
 }
 

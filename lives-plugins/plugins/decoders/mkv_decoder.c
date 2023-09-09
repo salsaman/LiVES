@@ -2042,7 +2042,6 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata, int clonetype) {
       clone->nframes = cdata->nframes;
     }
 
-
     fprintf(stderr, "ipal is %d and %d\n", clone->palettes[0], clone->palettes[1]);
 
     if (cdata->palettes && cdata->palettes[0]
@@ -2159,6 +2158,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     if (priv->picture) av_frame_unref(priv->picture);
     priv->picture = NULL;
   }
+
   return cdata;
 }
 

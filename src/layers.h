@@ -55,7 +55,8 @@
 #define LAYER_STATUS_LOADED      	4
 
 // pixel_data is being converted
-#define LAYER_STATUS_CONVERTING      	5
+#define LAYER_STATUS_BUSY		5
+#define LAYER_STATUS_CONVERTING      	LAYER_STATUS_BUSY
 
 // layer pixel_data is fully ready
 #define LAYER_STATUS_READY		6
@@ -189,6 +190,8 @@ weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *, void **pixel_data
 weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
+
+void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t);
 
 int lives_layer_guess_palette(weed_layer_t *);
 

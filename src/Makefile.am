@@ -307,6 +307,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 	-I $(top_srcdir) \
 	$(osc_CPPFLAGS) \
+	-mrtm -mxsave	\
 	@MJPEGTOOLS_CFLAGS@ \
 	@UNICAP_CFLAGS@ \
 	@GTK_CFLAGS@ \

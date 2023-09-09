@@ -2611,7 +2611,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     int cpal = WEED_PALETTE_RGB24, layer_palette;
     boolean was_letterboxed = FALSE;
 
-    wait_layer_ready(mainw->frame_layer);
+    wait_layer_ready(mainw->frame_layer, TRUE);
     layer_palette = weed_layer_get_palette(mainw->frame_layer);
     if (weed_palette_has_alpha(layer_palette)) cpal = WEED_PALETTE_RGBA32;
 

@@ -958,6 +958,8 @@ typedef struct {
 
   boolean is_ready;
 
+  boolean can_play;
+
   boolean error; //  --> status
   volatile boolean fatal; ///< got fatal signal --> status
 

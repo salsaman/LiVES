@@ -23,6 +23,8 @@ boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_m
 
 void print_opthelp(LiVESTextBuffer *, const char *extracmds_file1, const char *extracmds_file2);
 
+double pick_custom_colours(double var, double timer);
+
 capabilities *get_capabilities(void);
 
 // checking for executables
@@ -36,7 +38,7 @@ char *get_install_lib_cmd(const char *distro, const char *libname);
 
 boolean check_snap(const char *prog);
 
-boolean lazy_startup_checks(void);
+void lazy_startup_checks(void);
 //
 void replace_with_delegates(void);
 

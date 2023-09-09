@@ -85,6 +85,8 @@ void init_prefs(void) {
   DEFINE_PREF_INT(REC_STOP_QUOTA, rec_stop_quota, 90, 0);
   DEFINE_PREF_BOOL(REC_STOP_DWARN, rec_stop_dwarn, TRUE, 0);
 
+  DEFINE_PREF_INT(FOCUS_STEAL, focus_steal, FOCUS_STEAL_DEF, PREF_FLAG_INCOMPLETE)
+
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
@@ -92,6 +94,7 @@ void init_prefs(void) {
   DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, 0);
   DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", 0);
 }
+
 
 
 static weed_plant_t *find_pref(const char *pref_idx) {

@@ -96,17 +96,24 @@ extern "C"
 #define WEED_VOIDPTR_SIZE	sizeof(weed_voidptr_t)
 #define WEED_FUNCPTR_SIZE	sizeof(weed_funcptr_t)
 
+#ifndef HAVE_WEED_STORRAGE_U
+#define HAVE_WEED_STORAGE_U
+  typedef union _weed_storage_u weed_storage_u;
+#ifdef __LIBWEED__
+  union _weed_storage_u {
+    weed_voidptr_t	value;
+    char storage[WEED_VOIDPTR_SIZE];
+  };
+#endif
+#endif
+
 #ifndef HAVE_WEED_DATA_T
 #define HAVE_WEED_DATA_T
   typedef struct _weed_data weed_data_t;
 #ifdef __LIBWEED__
   struct _weed_data {
     weed_size_t		size;
-    union {
-      weed_voidptr_t	value;
-      weed_funcptr_t	funcval;
-      char storage[WEED_VOIDPTR_SIZE];
-    };
+    weed_storage_u	v;
   };
 #endif
 #endif
@@ -127,11 +134,11 @@ typedef weed_hash_t (*weed_hash_f)(const char *key, ...);
 
 struct _weed_leaf_nopadding {
     weed_hash_t	key_hash;
-    weed_size_t num_elements;
-    weed_leaf_t *next;
+    volatile weed_size_t num_elements;
+    volatile weed_leaf_t *next;
     weed_seed_t seed_type;
-    uint32_t flags;
-    weed_data_t **data;
+    volatile uint32_t flags;
+    volatile weed_data_t **data;
     void *private_data;
     const char *key;
   };
@@ -140,11 +147,11 @@ struct _weed_leaf_nopadding {
 
   struct _weed_leaf {
     weed_hash_t	key_hash;
-    weed_size_t num_elements;
-    weed_leaf_t *next;
+    volatile weed_size_t num_elements;
+    volatile weed_leaf_t *next;
     weed_seed_t seed_type;
-    uint32_t flags;
-    weed_data_t **data;
+    volatile uint32_t flags;
+    volatile weed_data_t *data;
     void *private_data;
     char padding[_WEED_PADBYTES_];
     const char *key;
@@ -179,8 +186,7 @@ struct _weed_leaf_nopadding {
   typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *, weed_size_t *nleaves);
   typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 					  weed_size_t num_elems, weed_voidptr_t values);
-  typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, weed_size_t idx,
-					  weed_voidptr_t value);
+  typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, weed_size_t idx, weed_voidptr_t value);
   typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key);
   typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx);
 
@@ -207,10 +213,10 @@ struct _weed_leaf_nopadding {
   /* CAUTION - no checking is done to ensure size is correct or target is still valid */
   typedef weed_error_t (*weed_ext_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
 						      weed_size_t new_size);
+
   /* CAUTION - only works with scalar values */
   typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, uint32_t seed_type,
 						    weed_voidptr_t new_value, weed_voidptr_t old_valptr);
-
 #endif
 
   /* end extended functions */
@@ -263,16 +269,13 @@ struct _weed_leaf_nopadding {
   weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
 
   int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
-/*   int libweed_set_memory_funcs(weed_calloc_f, weed_free_f, weed_memcpy_f); */
 
   typedef void *(*libweed_slab_alloc_clear_f)(size_t);
   typedef void *(*libweed_slab_alloc_and_copy_f)(size_t, void *);
   typedef void (*libweed_slab_unalloc_f)(size_t, void *);
   typedef void (*libweed_unmalloc_and_copy_f)(size_t, void *);
 
-int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
-  /* int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, */
-  /* 			     libweed_slab_alloc_and_copy_f, weed_memcpy_f); */
+  int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
 
   /* deprecated versions - do not use in newly written code */
   int weed_set_memory_funcs(weed_malloc_f, weed_free_f);
@@ -284,8 +287,13 @@ int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, l
 
 #ifdef __LIBWEED__
   // library functions to lock / unlock leaves for atomic operations
-  __WEED_FN_DEF__ weed_error_t _weed_leaf_freeze(weed_plant_t *, const char *);
-  __WEED_FN_DEF__ weed_error_t _weed_leaf_unfreeze(weed_plant_t *, const char *);
+  __WEED_FN_DEF__ weed_leaf_t *_weed_intern_freeze(weed_plant_t *, const char *);
+  __WEED_FN_DEF__ weed_error_t _weed_intern_unfreeze(weed_leaf_t *);
+  __WEED_FN_DEF__ weed_seed_t _weed_intern_seed_type(weed_leaf_t *);
+  __WEED_FN_DEF__ weed_size_t _weed_intern_num_elems(weed_leaf_t *);
+  __WEED_FN_DEF__ weed_size_t _weed_intern_elem_sizes(weed_leaf_t *, weed_size_t *);
+  __WEED_FN_DEF__ weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
+  __WEED_FN_DEF__ weed_error_t _weed_intern_get_all(weed_leaf_t *, weed_voidptr_t retvals);
 
   // for plugin bootstrap, only relevent for libweed
   __WEED_FN_DEF__ weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,

@@ -568,15 +568,52 @@ typedef enum {
 #endif
 #endif
 
+// recursion prevention:
+// - there are two types, global and thread specific
+//  -- a global recursion guard ensures that a segment of code is only executed on by al threads
+//  -- thread specific adds a recursion token to the the thread's rec_tokens list
+//      - if the token is already in its list, then it will return. Once the thread has passed any
+//        critical section, the token is removed for that thread
+
+// place RECURSE_GUARD_START / T_RECURSE_START  once at the start of the function
+
+// place RETURN_[VAL_]IF_RECURSED / T_.. an the start of any points where recursed threads
+// should returnfrom the function
+
+// place RECURSE_GUAR_ARM / T_REC.. before an ptentialy recursive function calls
+
+// place RECURSE_GUARD_END / T_REC after the function call
+
+// the requirements are: start MUST be placed once only before using any of the other macros
+// if ARM maybe placed any number of times, but there MUST be at least one END called following
+// this and before exiting the function
+// RETURN* shall not be placed after one or more ARMS and before an END
+//
+// aside from start, the other macros may be placed any number of times and in any order,
+// notwithstanding the rule about END following ARM and RETURN not being placed between
+// ARM and END
+//
+// placing a RETURN* after an ARM and bfore the following END will cause even non recursed threads
+// to return
+
 #define RECURSE_GUARD_START static pthread_mutex_t recursion_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define RETURN_IF_RECURSED do{if(pthread_mutex_trylock(&recursion_mutex))return; \
     pthread_mutex_unlock(&recursion_mutex);}while (0);
 #define RETURN_VAL_IF_RECURSED(val)do{if(pthread_mutex_trylock(&recursion_mutex))return val; \
     pthread_mutex_unlock(&recursion_mutex);}while (0);
-#define RECURSE_GUARD_LOCK do{pthread_mutex_lock(&recursion_mutex);}while(0);
+#define RECURSE_GUARD_ARM do{pthread_mutex_trylock(&recursion_mutex);}while(0);
 #define RECURSE_GUARD_END do{pthread_mutex_trylock(&recursion_mutex);pthread_mutex_unlock(&recursion_mutex);}while(0);
 
-/// global (shared) definiitions
+#define T_RECURSE_GUARD_START static uint32_t trec_token = 0; \
+  if (!trec_token) {trec_token = (gen_unique_id() >> 32);}
+#define T_RETURN_IF_RECURSED do{if(have_recursion_token(trec_token))return;} while(0);
+#define T_RETURN_VAL_IF_RECURSED(val) do{if(have_recursion_token(trec_token))return (val);} while(0);
+#define T_RETURN_VAL_IF_RECURSED_CHECK(code, val) do{if(have_recursion_token(trec_token))\
+      if ((code)) return (val);} while(0);
+#define T_RECURSE_GUARD_ARM do{push_recursion_token(trec_token);} while (0);
+#define T_RECURSE_GUARD_END do{remove_recursion_token(trec_token);} while (0);
+
+/// global (shared) definitions
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
 

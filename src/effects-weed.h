@@ -264,6 +264,8 @@ int weed_get_blend_factor(int hotkey); // 0 based key
 
 void weed_functions_init(void); ///< call weed_init() to set our weed core functions
 
+void load_rte_plugins(void);
+
 void weed_load_all(void);  ///< load effects
 void weed_unload_all(void); ///< unload all effects
 int get_next_free_key(void); ///< next free "key" for the multitrack system
@@ -449,6 +451,6 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant);
 weed_plant_t *weed_plant_new_host(int type);
 //weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value);
 
-void show_weed_stats(weed_plant_t *statsplant);
+void show_weed_stats(void);
 
 #endif

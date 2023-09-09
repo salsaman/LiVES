@@ -978,6 +978,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
+  gtk_window_set_focus_on_map(LIVES_WINDOW(procw->processing), FALSE);
+  lives_window_present(LIVES_WINDOW(procw->processing));
+
   procw->is_ready = TRUE;
   return procw;
 }
@@ -3662,7 +3665,7 @@ void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
 
   RETURN_IF_RECURSED;
-  RECURSE_GUARD_LOCK;
+  RECURSE_GUARD_ARM;
 
   if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
       || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
@@ -8323,7 +8326,7 @@ boolean msg_area_config(LiVESWidget * widget) {
         mainw->mbar_res = height;
         if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && !THREADVAR(fg_service)
             && !FG_THREADVAR(fg_service)) {
-          RECURSE_GUARD_LOCK;
+          RECURSE_GUARD_ARM;
           redraw_timeline(mainw->current_file);
           RECURSE_GUARD_END;
         }
@@ -8478,7 +8481,6 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   if (!prefs->show_msg_area) return TRUE;
 
   if (!msgbar_configged) return FALSE;
-
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 

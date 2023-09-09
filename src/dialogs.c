@@ -360,7 +360,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
 
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_YES, NULL,
                            LIVES_RESPONSE_YES);
-
+    mainw->debug_ptr = okbutton;
     lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
     break;
 
@@ -537,10 +537,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
   }
 
   if (transient) {
-    //// NONE of this works....there seems to be no way at all to prevent dialogs
-    // from stealing focus
-    //
-    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
+    if ((widget_opts.non_modal && !(prefs->focus_steal & FOCUS_STEAL_MSG)) ||
+        (!widget_opts.non_modal && !(prefs->focus_steal & (FOCUS_STEAL_BLOCKED
+                                     | FOCUS_STEAL_MSG))))
+      gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
+    gtk_window_present(LIVES_WINDOW(dialog));
   }
 
   if (okbutton && mainw && mainw->iochan) {
@@ -3569,23 +3570,22 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
 static void _thdlg_auto_spin(void) {
   GET_PROC_THREAD_SELF(self);
-  lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
-  lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), NULL));
-  while (mainw->threaded_dialog
-         && !lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
+  lives_proc_thread_set_cancellable(self);
+  lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 0, MM_IGNORE);
+  while (mainw->threaded_dialog && !lives_proc_thread_get_cancel_requested(self)) {
     int count = 10000;
     boolean spun = FALSE;
-    while (!lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread) && --count) {
+    while (!lives_proc_thread_get_cancel_requested(self) && --count) {
       if (mainw->threaded_dialog && !mainw->cancelled && !spun && !FG_THREADVAR(fg_service)) {
         threaded_dialog_spin(xfraction);
         spun = TRUE;
       }
       lives_nanosleep(100000);
-      //g_print("ah %d", lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread));
+      //g_print("ah %d", lives_proc_thread_get_cancel_requested(self));
     }
   }
-  if (lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
-    lives_proc_thread_cancel(mainw->dlg_spin_thread);
+  if (lives_proc_thread_get_cancel_requested(self)) {
+    lives_proc_thread_cancel(self);
   }
 }
 
@@ -3595,7 +3595,7 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                            (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
-  lives_free_if_non_null(lives_proc_thread_sync_with(mainw->dlg_spin_thread, NULL));
+  lives_proc_thread_sync_with(mainw->dlg_spin_thread, 0, MM_IGNORE);
 }
 
 
@@ -3632,11 +3632,13 @@ static void _end_threaded_dialog(void) {
 
   if (prefs->show_msg_area) {
     // TODO
-    if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
-      lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      lives_widget_grab_focus(mainw->msg_area);
-      gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
-    }
+
+
+    /* if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) { */
+    /*   lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
+    /*   lives_widget_grab_focus(mainw->msg_area); */
+    /*   gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area); */
+    /* } */
   }
 }
 

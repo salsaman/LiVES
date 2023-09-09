@@ -2588,6 +2588,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
       mainw->pulsed_read->reverse_endian = FALSE;
       mainw->aud_rec_fd = -1;
       pulse_driver_activate(mainw->pulsed_read);
+      mainw->pulsed_read->in_use = TRUE;
     }
     return;
   }
@@ -2716,7 +2717,7 @@ void pulse_rec_audio_end(boolean close_fd) {
 
 
 boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
-  // this function is similar to pus_audio_to_channel, except that it pushes to a file,
+  // this function is similar to push_audio_to_channel, except that it pushes to a file,
   // and it runs during the audio cycle
   // this can be added as a callback for a player's DATA_READY_HOOK, so it can be run in parallel
   // with data analysis, and will not hold up the audio player, since these callbacks are run async / parallel
@@ -2943,7 +2944,7 @@ void audio_analyser_end(int source) {
       // and then be removed from the hook_stack either when triggered or joined
       // whichever happens next
       lives_proc_thread_request_cancel(ana_lpt, FALSE);
-      lives_proc_thread_wait_done(ana_lpt, 0.);
+      lives_hooks_async_join(NULL, DATA_READY_HOOK);
       lives_proc_thread_unref(ana_lpt);
       ana_lpt = NULL;
     }
@@ -5026,7 +5027,7 @@ int lives_aplayer_get_source(lives_obj_t *aplayer) {
 }
 
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source) {
-  mainw->debug = TRUE;
+  //mainw->debug = TRUE;
   return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SOURCE, source);
 }
 

@@ -9,7 +9,7 @@
 
 void play_file(void);
 
-void start_playback_async(int type);
+lives_proc_thread_t start_playback_async(int type);
 
 boolean start_playback(int type);
 

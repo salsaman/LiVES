@@ -419,7 +419,7 @@ char *subst(const char *xstring, const char *from, const char *to) {
   ret[retfil++] = 0;
   retsize *= BSIZE;
 
-  if (retsize - retfil > (retsize >> 2)) {
+  if (retfil && retsize - retfil > (retsize >> 2)) {
     char *tmp = lives_malloc(retfil);
     lives_memcpy(tmp, ret, retfil);
     lives_free(ret);

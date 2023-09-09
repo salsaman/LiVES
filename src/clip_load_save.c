@@ -2893,6 +2893,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         mainw->ascrap_file = mainw->current_file;
         cfile->opening = FALSE;
         lives_snprintf(cfile->type, 40, ASCRAP_LITERAL);
+        // TODO - if we dont end up with an event_list, silently dorp this - disk celanup can remove it later
       }
 
       /// get file details; this will cache the header in mainw->hdrs_cache

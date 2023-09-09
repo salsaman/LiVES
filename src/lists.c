@@ -145,7 +145,7 @@ LiVESList *idx_list_remove(LiVESList *idxlist, int idx, boolean free_data) {
     else idxlist = lptr->next;
     if (lptr->next) lptr->next->prev = lptr->prev;
     lives_free(lptr->data);
-    lives_free(lptr);
+    lives_list_free(lptr);
   }
   return idxlist;
 }
@@ -243,12 +243,19 @@ LiVESList *lives_list_delete_string(LiVESList *list, const char *string) {
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList *list) {
   // copy a list, copying the strings too
-  LiVESList *xlist = NULL, *olist = list;
-  while (olist) {
+  LiVESList *xlist = NULL;
+  for (LiVESList *olist = list; olist; olist = olist->next)
     xlist = lives_list_prepend(xlist, lives_strdup((char *)olist->data));
-    olist = olist->next;
-  }
   return lives_list_reverse(xlist);
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_reverse_strings(LiVESList *list) {
+  // copy a list, copying the strings too
+  LiVESList *xlist = NULL;
+  for (LiVESList *olist = list; olist; olist = olist->next)
+    xlist = lives_list_prepend(xlist, lives_strdup((char *)olist->data));
+  return xlist;
 }
 
 
@@ -346,16 +353,14 @@ LIVES_GLOBAL_INLINE void lives_list_free_data(LiVESList *list) {
 LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
   if (!list || !*list) return;
   lives_list_free_data((LiVESList *)*list);
-  lives_slist_free(*list);
-  *list = NULL;
+  lives_slist_free(lives_steal_pointer((void **)list));
 }
 
 
 LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
   if (!list || !*list) return;
   lives_list_free_data(*list);
-  lives_list_free(*list);
-  *list = NULL;
+  lives_list_free(lives_steal_pointer((void **)list));
 }
 
 
@@ -472,6 +477,7 @@ LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store_i(lives_hash_store_t *
   if (store) {
     char *xkey = MAKE_HASHSTORE_KEY(key);
     weed_set_voidptr_value(store, xkey, data);
+    lives_free(xkey);
   }
   return store;
 }
@@ -485,6 +491,7 @@ LIVES_GLOBAL_INLINE lives_hash_store_t *remove_from_hash_store_i(lives_hash_stor
   if (store) {
     char *xkey = lives_strdup_printf("k_%lu", key);
     weed_leaf_delete(store, xkey);
+    lives_free(xkey);
   }
   return store;
 }

@@ -565,7 +565,7 @@ boolean check_clip_integrity(int clipno, const lives_clip_data_t *cdata, frames_
   if (sfile->frames) {
     sfile->afilesize = reget_afilesize_inner(clipno);
     get_total_time(sfile);
-    if (sfile->video_time < sfile->laudio_time) {
+    if (sfile->laudio_time - sfile->video_time > AV_TRACK_MIN_DIFF) {
       if (prefs->show_dev_opts) {
         g_printerr("AV timing mismatch: video time == %f sec, audio time == %f\n",
                    sfile->video_time, sfile->laudio_time);
@@ -1151,6 +1151,9 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
   boolean intimg = FALSE;
   short pbq = prefs->pb_quality;
 
+  if (lives_proc_thread_get_cancel_requested(self))
+    lives_proc_thread_cancel_self(self);
+
   sfile = RETURN_PHYSICAL_CLIP(sclipno);
   if (!sfile) return -1;
 
@@ -1171,8 +1174,6 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
     pthread_mutex_unlock(&sfile->frame_index_mutex);
     return eframe;
   }
-
-  if (self) lives_proc_thread_set_cancellable(self);
 
   //
 
@@ -1205,7 +1206,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
         lives_nanosleep_while_true((mainw->effects_paused || mainw->preview)
                                    && !lives_proc_thread_get_cancel_requested(sfile->pumper));
       }
-      if (lives_proc_thread_get_cancel_requested(sfile->pumper)) break;
+      if (lives_proc_thread_get_cancel_requested(self)) break;
     }
 
     if (update_progress) {
@@ -1224,6 +1225,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
           retval = -i;
           break;
         }
+        if (lives_proc_thread_get_cancel_requested(self)) break;
         palette = weed_layer_get_palette(layer);
         if (weed_palette_has_alpha(palette)) {
           tpal = WEED_PALETTE_RGBA32;
@@ -1244,6 +1246,8 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
           break;
         }
       }
+
+      if (lives_proc_thread_get_cancel_requested(self)) break;
 
       if (lives_proc_thread_is_unqueued(saver_procthread)) {
         // queue it
@@ -1289,6 +1293,8 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
         saveargs->fname = NULL;
       }
 
+      if (lives_proc_thread_get_cancel_requested(self)) break;
+
 queue_lpt:
       saveargs->fname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
       if (intimg) {
@@ -1313,6 +1319,7 @@ queue_lpt:
         lives_widget_context_update();
       }
 
+      if (lives_proc_thread_get_cancel_requested(self)) break;
       if (mainw->cancelled != CANCEL_NONE && !(sfile->pumper && mainw->preview)) {
         break;
       }
@@ -1357,7 +1364,7 @@ queue_lpt:
   } else if (layer) weed_layer_unref(layer);
 
   if (lives_proc_thread_get_cancel_requested(sfile->pumper))
-    lives_proc_thread_cancel(sfile->pumper);
+    lives_proc_thread_cancel_self(self);
 
   return retval;
 }

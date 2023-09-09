@@ -275,7 +275,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_instance_t *filter_instance, w
 #define WEED_LEAF_YUV_CLAMPING "YUV_clamping"
 #define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
 #define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
-#define WEED_LEAF_DISPLAY_RATIO "display__ratio"
+#define WEED_LEAF_DISPLAY_RATIO "display_ratio"
 #define WEED_LEAF_INNER_SIZE "inner_size"
 
 ///

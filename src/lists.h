@@ -27,6 +27,7 @@ LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSE
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
 
 LiVESList *lives_list_copy_strings(LiVESList *);
+LiVESList *lives_list_copy_reverse_strings(LiVESList *);
 
 boolean string_lists_differ(LiVESList *, LiVESList *);
 boolean lists_differ(LiVESList *, LiVESList *, boolean ordered);

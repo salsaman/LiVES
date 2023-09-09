@@ -510,7 +510,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     // get frame, send it
     //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
-    wait_layer_ready(frame_layer);
+    wait_layer_ready(frame_layer, TRUE);
 
     width = weed_layer_get_width_pixels(frame_layer);
     height = weed_layer_get_height(frame_layer);

@@ -156,11 +156,17 @@ uint32_t get_bits32(uint32_t bytes, int hi, int lo);
 //flagbits for ann->flags
 #define ANN_TRAINED		(1ull << 1)
 
+#define KNOCKOUT_NULL		0
+#define KNOCKOUT_ON		1
+#define KNOCKOUT_OFF		2
+
 typedef struct {
   int nweights, nnodes;
   double *weights, *bweights;
   double *biases, *bbiases;
   double *values;
+  uint8_t *knockouts;
+  int nk;
   int nlayers;
   int nrnds;
   int *lcount;
@@ -168,6 +174,7 @@ typedef struct {
   LiVESList *last_data;
   LiVESList *tstdata;
   double last_res;
+  volatile int genstorun;
   double maxr, maxrb, maxw, damp;
   uint64_t flags;
   int nvary;

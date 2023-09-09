@@ -551,6 +551,10 @@ void lives_exit(int signum) {
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
   lives_free(tmp);
 
+
+  if (main_thread) {
+    memory_cleanup();
+  }
   exit(0);
 }
 
@@ -5571,7 +5575,7 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
 
   // 4 refs !!!!
   g_print("lpt has2 %d refs, reading from %s\n", lives_proc_thread_count_refs(lpt), cfile->info_file);
-  lives_proc_thread_cancel(lpt);
+  lives_proc_thread_request_cancel(lpt, FALSE);
   g_print("lpt has3 %d refs\n", lives_proc_thread_count_refs(lpt));
 
   lives_proc_thread_wait_done(lpt, 0.);
@@ -9552,7 +9556,7 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
   else if (widget == mainw->preview_image)
     load_preview_image(FALSE);
   else if (widget == mainw->msg_area && !mainw->multitrack) {
-    RECURSE_GUARD_LOCK;
+    RECURSE_GUARD_ARM;
     msg_area_config(widget);
     RECURSE_GUARD_END;
   } else if (widget == mainw->dsu_widget)
@@ -9568,7 +9572,7 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
       //set_mt_play_sizes_cfg(mainw->multitrack);
       //mt_show_current_frame(mainw->multitrack, FALSE);
     } else if (widget == mainw->multitrack->msg_area) {
-      RECURSE_GUARD_LOCK;
+      RECURSE_GUARD_ARM;
       msg_area_config(widget);
       RECURSE_GUARD_END;
     }

@@ -889,8 +889,10 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   fsize = fbuff->orig_size - ABS(skip);
 
   if (fsize > 0) {
-    // caller will wait until this thread goes to WAITING state, then do a sny_ready() and continue
-    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), NULL));
+    // caller will wait until this thread goes to WAITING state, then do a sync_ready() and continue
+    g_print("22 %p syncing with %p\n", self, lives_proc_thread_get_dispatcher(self));
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 0, MM_IGNORE);
+    g_print("22 %p synced with %p\n", self, lives_proc_thread_get_dispatcher(self));
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -944,9 +946,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_free_if_non_null(lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), NULL));
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 0, MM_IGNORE);
   }
-
 
   fbuff->fd = -1;
   IGN_RET(close(fd));
@@ -991,7 +992,9 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bytes = fbuff->offset = 0;
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    lives_free_if_non_null(lives_proc_thread_sync_with(lpt, NULL));
+    //g_print("%p syncing with %p\n", lives_thread_get_self(), lpt);
+    lives_proc_thread_sync_with(lpt, 0, MM_IGNORE);
+    //g_print("%p synced with %p\n", lives_thread_get_self(), lpt);
     return TRUE;
   }
   return FALSE;

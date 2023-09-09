@@ -20,6 +20,7 @@
 #define ALLOW_NONFREE_CODECS 1
 
 #define PREF_FLAG_EXPERIMENTAL		(1 << 0)
+#define PREF_FLAG_INCOMPLETE		(1 << 1)
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
@@ -525,6 +526,8 @@ typedef struct {
 
   // frame size selection match methods
   lives_match_t  dload_matmet, webcam_matmet;
+
+  int focus_steal;
 
   boolean stream_audio_out;
   boolean unstable_fx;
@@ -1314,6 +1317,28 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_DLOAD_MATMET "dload_match_method"
 #define PREF_WEBCAM_MATMET "webcam_match_method"
+
+#define PREF_FOCUS_STEAL "focus_steal"
+#define FOCUS_STEAL_NONE	0
+#define FOCUS_STEAL_URGENT	(1 << 0)
+#define FOCUS_STEAL_BLOCKED	(1 << 1)
+#define FOCUS_STEAL_STARTUP	(1 << 2)
+#define FOCUS_STEAL_MSG		(1 << 3)
+//
+#define FOCUS_LEVEL_MASK	0x0Fu
+//
+#define FOCUS_STEAL_PLAY_GUI	(1 << 16)
+#define FOCUS_STEAL_PLAY_WIN	(1 << 17)
+
+#define FOCUS_STEAL_DEF		(FOCUS_STEAL_URGENT | FOCUS_STEAL_PLAY_GUI | FOCUS_STEAL_PLAY_WIN)
+
+#define MSG_URGENCY_NONE	0
+#define MSG_URGENCY_IMPORTANT	(1 << 0)
+#define MSG_URGENCY_BLOCKS	(1 << 1)
+#define MSG_URGENCY_STARTUP	(1 << 2)
+
+#define ATT_MESSAGE(dialog) (prefs && GET_INT_DATA((dialog), URGENCY_KEY) \
+			     <= (prefs->focus_steal & FOCUS_LEVEL_MASK))
 
 ////////// boolean values
 #define PREF_MT_EXIT_RENDER "mt_exit_render"

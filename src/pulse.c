@@ -1991,7 +1991,7 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
 
   timer = lives_timer_create(MILLIONS(5));
-  lives_Xnanosleep_until_nonzero(timer->triggered
+  lives_microsleep_until_nonzero(timer->triggered
                                  || pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
 
   lives_timer_free(timer);

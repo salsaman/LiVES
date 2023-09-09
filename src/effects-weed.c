@@ -71,6 +71,10 @@ struct _procvals {
                              - sizeof(weed_timecode_t) - sizeof(weed_error_t)) % DEF_ALIGN)];
 };
 
+#define STATS_LIST		0
+#define STATS_FREQ		1
+
+static int statsmotive = STATS_LIST;
 static weed_plantptr_t statsplant = NULL;
 
 #ifndef VALGRIND_ON
@@ -83,6 +87,71 @@ LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
 }
 #endif
 ////////////////////////////////////////////////////////////////////////////
+
+
+void weed_functions_init(void) {
+  int winitopts = 0;
+  weed_error_t werr;
+#ifndef IS_LIBLIVES
+  // start up the Weed system
+  weed_abi_version = libweed_get_abi_version();
+  if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
+#ifdef WEED_STARTUP_TESTS
+  winitopts |= WEED_INIT_DEBUGMODE;
+  test_opts |= TEST_WEED;
+#endif
+  winitopts |= (1ull << 33); // skip un-needed error checks
+  winitopts |= WEED_INIT_EXTENDED_FUNCS;
+  werr = libweed_init(weed_abi_version, winitopts);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+
+#if !USE_STD_MEMFUNCS
+#if XUSE_RPMALLOC
+  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
+#else
+#ifndef DISABLE_GSLICE
+#if GLIB_CHECK_VERSION(2, 14, 0)
+  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, lives_slice_alloc_and_copy,
+                         _lives_memcpy);
+#else
+  libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL, _lives_memcpy);
+#endif
+#else
+  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
+#endif // DISABLE_GSLICE
+#endif // USE_RPMALLOC
+  weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
+#endif // USE_STD_MEMFUNCS
+#endif //IS_LIBLIVES
+
+  // backup the core functions so we can override them
+  _weed_plant_new = weed_plant_new;
+  _weed_plant_free = weed_plant_free;
+  _weed_leaf_set = weed_leaf_set;
+  _weed_leaf_get = weed_leaf_get;
+  _weed_leaf_delete = weed_leaf_delete;
+  _weed_plant_list_leaves = weed_plant_list_leaves;
+  _weed_leaf_num_elements = weed_leaf_num_elements;
+  _weed_leaf_element_size = weed_leaf_element_size;
+
+#if WEED_ABI_CHECK_VERSION(202)
+  _weed_ext_set_element_size = weed_ext_set_element_size;
+  _weed_ext_append_elements = weed_ext_append_elements;
+  _weed_ext_attach_leaf = weed_ext_attach_leaf;
+  _weed_ext_detach_leaf = weed_ext_detach_leaf;
+#endif
+
+  _weed_leaf_seed_type = weed_leaf_seed_type;
+  _weed_leaf_get_flags = weed_leaf_get_flags;
+  _weed_leaf_set_flags = weed_leaf_set_flags;
+  do_test();
+  statsplant = weed_plant_new(12345);
+}
+
 
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
   if (!weed_plant_has_leaf(slayer, key)) return weed_leaf_delete(dlayer, key);
@@ -3106,13 +3175,13 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                                             (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, NULL)))))) {
       if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, NULL) == -1) {
         if (!weed_layer_get_pixel_data(layers[i]))
-          wait_layer_ready(layers[i]);
+          wait_layer_ready(layers[i], FALSE);
         if (!weed_layer_get_pixel_data(layers[i])) continue;
         weed_layer_pixel_data_free(layers[i]);
       } else output = i;
     } else {
       if (!weed_layer_get_pixel_data(layers[i]))
-        wait_layer_ready(layers[i]);
+        wait_layer_ready(layers[i], FALSE);
       if (!weed_layer_get_pixel_data(layers[i])) continue;
       weed_layer_pixel_data_free(layers[i]);
     }
@@ -3128,7 +3197,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
   // frame is pulled uneffected here. TODO: Try to pull at target output palette
   if (!weed_layer_get_pixel_data(layer)) {
-    wait_layer_ready(layer);
+    wait_layer_ready(layer, FALSE);
     if (!weed_layer_get_pixel_data(layer)) {
       if (!pull_frame_at_size(layer, get_image_ext_for_type(mainw->files[clip]->img_type), tc, opwidth, opheight,
                               WEED_PALETTE_END)) {
@@ -3914,6 +3983,7 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, con
   return weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
 }
 
+//static int nplants = 0;
 
 weed_error_t weed_plant_free_host(weed_plant_t *plant) {
   // delete even undeletable plants
@@ -3924,20 +3994,16 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
     // make remeining leaves deleteable
     // handle FREE_ON_DELETE
     weed_plant_autofree(plant);
-    //nplants--;
     // try again
     return _weed_plant_free(plant);
   }
-  //nplants--;
   return err;
 }
 
 
 weed_plant_t *weed_plant_new_host(int type) {
-  /* nplants++; */
-  /* g_print("nplants is %d\n", nplants); */
-  //if (nplants > 200) break_me("more plants");
-  return _weed_plant_new(type);
+  weed_plant_t *plant = _weed_plant_new(type);
+  return plant;
 }
 
 
@@ -3988,7 +4054,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
 static void upd_statsplant(const char *key) {
   int freq;
   if (mainw->is_exiting) return;
-  if (!statsplant) statsplant = weed_plant_new(0);
+  if (!statsplant) statsplant = weed_plant_new(LIVES_WEED_SUBTYPE_AUDIT);
   _weed_leaf_get(statsplant, key, 0, &freq);
   _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
 }
@@ -4031,48 +4097,56 @@ weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t
 }
 
 
-void show_weed_stats(weed_plant_t *statsplant) {
+void show_weed_stats(void) {
   LiVESList *freq = NULL, *sorted = NULL, *list;
   char **leaves;
   int val, i, added = 0, min, lmin = 0;
   weed_size_t nleaves;
 
   if (!statsplant) return;
-  leaves = weed_plant_list_leaves(statsplant, &nleaves);
-  /// sort in descending order
-  for (i = 0; i < nleaves; i++) {
-    int f = weed_get_int_value(statsplant, leaves[i], NULL);
-    freq = lives_list_prepend(freq, LIVES_INT_TO_POINTER(f));
-    //g_print("added %s with freq %d\n", leaves[i], f);
-  }
-  while (added < nleaves) {
-    min = LIVES_MAXINT32;
-    for (list = freq; list; list = list->next) {
-      val = LIVES_POINTER_TO_INT(list->data);
-      if (val < min && val > lmin) min = val;
+  switch (statsmotive) {
+  case STATS_LIST:
+    list_leaves(statsplant);
+    break;
+  case STATS_FREQ:
+    leaves = weed_plant_list_leaves(statsplant, &nleaves);
+    /// sort in descending order
+    for (i = 0; i < nleaves; i++) {
+      int f = weed_get_int_value(statsplant, leaves[i], NULL);
+      freq = lives_list_prepend(freq, LIVES_INT_TO_POINTER(f));
+      //g_print("added %s with freq %d\n", leaves[i], f);
     }
-    //g_print("next min was %d\n", min);
-    i = nleaves - 1;
-    for (list = freq; list; list = list->next) {
-      val = LIVES_POINTER_TO_INT(list->data);
-      if (val == min) {
-        //g_print("prep. %d %s\n", i, leaves[i]);
-        sorted = lives_list_prepend(sorted, LIVES_INT_TO_POINTER(i));
-        if (++added == nleaves) break;
+    while (added < nleaves) {
+      min = LIVES_MAXINT32;
+      for (list = freq; list; list = list->next) {
+        val = LIVES_POINTER_TO_INT(list->data);
+        if (val < min && val > lmin) min = val;
       }
-      i--;
+      //g_print("next min was %d\n", min);
+      i = nleaves - 1;
+      for (list = freq; list; list = list->next) {
+        val = LIVES_POINTER_TO_INT(list->data);
+        if (val == min) {
+          //g_print("prep. %d %s\n", i, leaves[i]);
+          sorted = lives_list_prepend(sorted, LIVES_INT_TO_POINTER(i));
+          if (++added == nleaves) break;
+        }
+        i--;
+      }
+      if (min == lmin) break;
+      lmin = min;
     }
-    if (min == lmin) break;
-    lmin = min;
+    for (list = sorted; list; list = list->next) {
+      val = LIVES_POINTER_TO_INT(list->data);
+      g_print("STATS: %s : %d\n", leaves[val], weed_get_int_value(statsplant, leaves[val], NULL));
+      free(leaves[val]);
+    }
+    free(leaves);
+    lives_list_free(freq);
+    lives_list_free(sorted);
+    break;
+  default: break;
   }
-  for (list = sorted; list; list = list->next) {
-    val = LIVES_POINTER_TO_INT(list->data);
-    g_print("STATS: %s : %d\n", leaves[val], weed_get_int_value(statsplant, leaves[val], NULL));
-    free(leaves[val]);
-  }
-  free(leaves);
-  lives_list_free(freq);
-  lives_list_free(sorted);
   weed_plant_free(statsplant);
 }
 
@@ -4749,6 +4823,15 @@ void weed_load_all(void) {
 #endif
   threaded_dialog_spin(0.);
 
+  // here we want to load all plants and leaves into std memory,
+  // otherwise we use up all allocated space for rpmalloc
+  // this is safe povided no other threads are active, and we use same functions when unloading
+#if !USE_STD_MEMFUNCS
+#if USE_RPMALLOC
+  libweed_set_memory_funcs(_lives_malloc, _lives_free, _lives_calloc);
+#endif
+#endif
+
   for (i = numdirs - 1; i >= 0; i--) {
     // get list of all files
     LiVESList *list;
@@ -4811,17 +4894,112 @@ void weed_load_all(void) {
 
   lives_strfreev(dirs);
 
+#if !USE_STD_MEMFUNCS
+#if USE_RPMALLOC
+  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
+#endif
+#endif
+
   d_print(_("Successfully loaded %d Weed filters\n"), num_weed_filters);
 
 #ifndef VALGRIND_ON
   threaded_dialog_spin(0.);
-  ncompounds = load_compound_fx();
+  //  ncompounds = load_compound_fx();
   threaded_dialog_spin(0.);
 #endif
   make_fx_defs_menu(ncompounds);
   threaded_dialog_spin(0.);
   weed_fx_sorted_list = lives_list_reverse(weed_fx_sorted_list);
   fx_inited = TRUE;
+}
+
+
+void load_rte_plugins(void) {
+  /// load fx plugins, part of the startup process
+  // MUST be run single threaded
+  char *weed_plugin_path;
+#ifdef HAVE_FREI0R
+  char *frei0r_path;
+#endif
+#ifdef HAVE_LADSPA
+  char *ladspa_path;
+#endif
+#ifdef HAVE_LIBVISUAL
+  char *libvis_path;
+#endif
+  boolean needs_free = FALSE;
+
+  get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
+  if (!*prefs->weed_plugin_path) {
+    weed_plugin_path = getenv("WEED_PLUGIN_PATH");
+    if (!weed_plugin_path) {
+      char *ppath1 = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
+                                      PLUGIN_WEED_FX_BUILTIN, NULL);
+      char *ppath2 = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_LIB_DIR, PLUGIN_EXEC_DIR,
+                                      PLUGIN_WEED_FX_BUILTIN, NULL);
+      weed_plugin_path = lives_strdup_printf("%s:%s", ppath1, ppath2);
+      lives_free(ppath1); lives_free(ppath2);
+      needs_free = TRUE;
+    }
+    lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);
+    if (needs_free) lives_free(weed_plugin_path);
+    set_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path);
+  }
+  lives_setenv("WEED_PLUGIN_PATH", prefs->weed_plugin_path);
+
+#ifdef HAVE_FREI0R
+  needs_free = FALSE;
+  get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
+  if (!*prefs->frei0r_path) {
+    frei0r_path = getenv("FREI0R_PATH");
+    if (!frei0r_path) {
+      char *fp0 = lives_build_path(LIVES_USR_DIR, LIVES_LIB_DIR, FREI0R1_LITERAL, NULL);
+      char *fp1 = lives_build_path(LIVES_USR_DIR, LIVES_LOCAL_DIR, LIVES_LIB_DIR, FREI0R1_LITERAL, NULL);
+      char *fp2 = lives_build_path(capable->home_dir, FREI0R1_LITERAL, NULL);
+      frei0r_path =
+        lives_strdup_printf("%s:%s:%s", fp0, fp1, fp2);
+      lives_free(fp0); lives_free(fp1); lives_free(fp2);
+      needs_free = TRUE;
+    }
+    lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
+    if (needs_free) lives_free(frei0r_path);
+    set_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path);
+  }
+  lives_setenv("FREI0R_PATH", prefs->frei0r_path);
+#endif
+
+#if HAVE_LADSPA
+  needs_free = FALSE;
+  get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
+  if (!*prefs->ladspa_path) {
+    ladspa_path = getenv("LADSPA_PATH");
+    if (!ladspa_path) {
+      ladspa_path = lives_build_path(LIVES_USR_DIR, LIVES_LIB_DIR, LADSPA_LITERAL, NULL);
+      needs_free = TRUE;
+    }
+    lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
+    if (needs_free) lives_free(ladspa_path);
+    set_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path);
+  }
+  lives_setenv("LADSPA_PATH", prefs->ladspa_path);
+#endif
+
+#if HAVE_LIBVISUAL
+  needs_free = FALSE;
+  get_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path, PATH_MAX);
+  if (!*prefs->libvis_path) {
+    libvis_path = getenv("VISUAL_PLUGIN_PATH");
+    if (!libvis_path) {
+      libvis_path = "";
+    }
+    lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
+    set_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path);
+  }
+  lives_setenv("VISUAL_PLUGIN_PATH", prefs->libvis_path);
+#endif
+
+  splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
+  weed_load_all();
 }
 
 
@@ -5200,6 +5378,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         }
 
         // TODO - for INT and DOUBLE, check if default is within min/max bounds
+        if (!ntok) break;
 
         switch (ptype) {
         case WEED_SEED_INT:
@@ -5511,12 +5690,12 @@ static int load_compound_fx(void) {
   lives_compound_plugin_path = lives_build_path(prefs->config_datadir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM, TRUE, lives_compound_plugin_path, NULL);
 
-  for (plugin_idx = 0; plugin_idx < lives_list_length(compound_plugin_list); plugin_idx++) {
-    plugin_name = (char *)lives_list_nth_data(compound_plugin_list, plugin_idx);
+  for (LiVESList *list = compound_plugin_list; list; list = list->next) {
+    plugin_name = (char *)list->data;
     plugin_path = lives_build_path(lives_compound_plugin_path, plugin_name, NULL);
     load_compound_plugin(plugin_name, plugin_path);
     lives_free(plugin_path);
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
   }
 
   lives_list_free_all(&compound_plugin_list);
@@ -5530,12 +5709,12 @@ static int load_compound_fx(void) {
 
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_BUILTIN, TRUE, lives_compound_plugin_path, NULL);
 
-  for (plugin_idx = 0; plugin_idx < lives_list_length(compound_plugin_list); plugin_idx++) {
-    plugin_name = (char *)lives_list_nth_data(compound_plugin_list, plugin_idx);
+  for (LiVESList *list = compound_plugin_list; list; list = list->next) {
+    plugin_name = (char *)list->data;
     plugin_path = lives_build_path(lives_compound_plugin_path, plugin_name, NULL);
     load_compound_plugin(plugin_name, plugin_path);
     lives_free(plugin_path);
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
   }
 
   lives_list_free_all(&compound_plugin_list);
@@ -6552,6 +6731,7 @@ deinit2:
       filter_mutex_unlock(hotkey);
       return TRUE;
     }
+
     if (retcode != 0) {
       int weed_error;
       char *filter_name;
@@ -7477,8 +7657,8 @@ matchvals:
   }
 
   if (needs_reinit) {
+    g_print("RENITT\n");
     weed_layer_pixel_data_free(channel);
-
     needs_reinit = FALSE;
     // could recalculate palette costs here
 
@@ -7725,7 +7905,6 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     if (mainw->play_window) {
       lives_widget_queue_draw(mainw->play_window);
     }
-    mainw->gen_started_play = TRUE;
     start_playback_async(6);
     return -1;
   } else {
@@ -7806,7 +7985,7 @@ void weed_generator_end(weed_plant_t *inst) {
   int current_file = mainw->current_file;
 
   RETURN_IF_RECURSED;
-  RECURSE_GUARD_LOCK;
+  RECURSE_GUARD_ARM;
 
   if (!inst) {
     LIVES_WARN("inst was NULL !");

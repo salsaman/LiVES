@@ -164,15 +164,19 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       // start decoding frames for the rendered effect plugins to start processing
       if (!cfile->pumper) {
         if (rfx->props & RFX_PROPS_MAY_RESIZE)
-          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_WAIT_START,
+          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY
+                          | LIVES_THRDATTR_START_UNQUEUED,
                           (lives_funcptr_t)virtual_to_images,
                           -1, "iiibV", mainw->current_file,
                           1, cfile->frames, FALSE, NULL);
         else
-          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_WAIT_START,
+          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY
+                          | LIVES_THRDATTR_START_UNQUEUED,
                           (lives_funcptr_t)virtual_to_images,
                           -1, "iiibV", mainw->current_file,
                           cfile->undo_start, cfile->undo_end, FALSE, NULL);
+        lives_proc_thread_set_cancellable(cfile->pumper);
+        lives_proc_thread_queue(cfile->pumper, 0);
       }
     }
   }
@@ -1011,7 +1015,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
     // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
     // and then we come out of there and do not wish to set the key on
     key--;
-    mainw->gen_started_play = FALSE;
     new_rte = GU641 << key;
 
     if (!rte_key_is_enabled(key, !THREADVAR(fx_is_auto))) {
@@ -1026,8 +1029,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
         }
         weed_instance_unref(inst);
       } else {
-        if (!LIVES_IS_PLAYING) mainw->gen_started_play = FALSE;
-
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
@@ -1053,8 +1054,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
       }
 
       filter_mutex_unlock(key);
-
-      if (mainw->gen_started_play) return res;
 
       if (!LIVES_IS_PLAYING)
         // if anything is connected to ACTIVATE, the fx may be activated
@@ -1118,6 +1117,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
       }
     }
   }
+
   if (mainw->rendered_fx)
     // enable /disable menu option "Apply current realtime effects" in rendered fx menu
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
@@ -1143,6 +1143,10 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
     mainw->force_show = TRUE;
 
   if (refresh_model) mainw->refresh_model = TRUE;
+
+
+
+
   return res;
 }
 

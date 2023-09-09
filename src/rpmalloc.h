@@ -61,7 +61,7 @@ extern "C" {
 //! Flag to rpaligned_realloc to not preserve content in reallocation
 #define RPMALLOC_NO_PRESERVE    1
 //! Flag to rpaligned_realloc to fail and return null pointer if grow cannot be done in-place,
-//  in which case the original pointer is still valid (just like a call to realloc which fails to allocate
+//  in which case the original pointer is still valid (just like a call to realloc which failes to allocate
 //  a new block).
 #define RPMALLOC_GROW_OR_FAIL   2
 
@@ -111,7 +111,7 @@ typedef struct rpmalloc_thread_statistics_t {
     size_t from_reserved;
     //! Number of raw memory map calls (not hitting the reserve spans but resulting in actual OS mmap calls)
     size_t map_calls;
-  } span_use[32];
+  } span_use[64];
   //! Per size class statistics (only if ENABLE_STATISTICS=1)
   struct {
     //! Current number of allocations
@@ -143,7 +143,8 @@ typedef struct rpmalloc_config_t {
   //  larger than 65535 (storable in an uint16_t), if it is you must use natural
   //  alignment to shift it into 16 bits. If you set a memory_map function, you
   //  must also set a memory_unmap function or else the default implementation will
-  //  be used for both.
+  //  be used for both. This function must be thread safe, it can be called by
+  //  multiple threads simultaneously.
   void *(*memory_map)(size_t size, size_t *offset);
   //! Unmap the memory pages starting at address and spanning the given number of bytes.
   //  If release is set to non-zero, the unmap is for an entire span range as returned by
@@ -151,8 +152,18 @@ typedef struct rpmalloc_config_t {
   //  release argument holds the size of the entire span range. If release is set to 0,
   //  the unmap is a partial decommit of a subset of the mapped memory range.
   //  If you set a memory_unmap function, you must also set a memory_map function or
-  //  else the default implementation will be used for both.
+  //  else the default implementation will be used for both. This function must be thread
+  //  safe, it can be called by multiple threads simultaneously.
   void (*memory_unmap)(void *address, size_t size, size_t offset, size_t release);
+  //! Called when an assert fails, if asserts are enabled. Will use the standard assert()
+  //  if this is not set.
+  void (*error_callback)(const char *message);
+  //! Called when a call to map memory pages fails (out of memory). If this callback is
+  //  not set or returns zero the library will return a null pointer in the allocation
+  //  call. If this callback returns non-zero the map call will be retried. The argument
+  //  passed is the number of bytes that was requested in the map call. Only used if
+  //  the default system memory map function is used (memory_map callback is not set).
+  int (*map_fail_callback)(size_t size);
   //! Size of memory pages. The page size MUST be a power of two. All memory mapping
   //  requests to memory_map will be made with size set to a multiple of the page size.
   //  Used if RPMALLOC_CONFIGURABLE is defined to 1, otherwise system page size is used.
@@ -175,6 +186,10 @@ typedef struct rpmalloc_config_t {
   //  For Windows, see https://docs.microsoft.com/en-us/windows/desktop/memory/large-page-support
   //  For Linux, see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
   int enable_huge_pages;
+  //! Respectively allocated pages and huge allocated pages names for systems
+  //  supporting it to be able to distinguish among anonymous regions.
+  const char *page_name;
+  const char *huge_page_name;
 } rpmalloc_config_t;
 
 //! Initialize allocator with default configuration
@@ -199,7 +214,7 @@ rpmalloc_thread_initialize(void);
 
 //! Finalize allocator for calling thread
 RPMALLOC_EXPORT void
-rpmalloc_thread_finalize(void);
+rpmalloc_thread_finalize(int release_caches);
 
 //! Perform deferred deallocations pending for the calling thread heap
 RPMALLOC_EXPORT void
@@ -278,6 +293,10 @@ rpposix_memalign(void **memptr, size_t alignment, size_t size);
 RPMALLOC_EXPORT size_t
 rpmalloc_usable_size(void *ptr);
 
+//! Dummy empty function for forcing linker symbol inclusion
+RPMALLOC_EXPORT void
+rpmalloc_linker_reference(void);
+
 #if RPMALLOC_FIRST_CLASS_HEAPS
 
 //! Heap type
@@ -331,7 +350,7 @@ rpmalloc_heap_realloc(rpmalloc_heap_t *heap, void *ptr, size_t size,
 //  the span size (default 64KiB).
 RPMALLOC_EXPORT RPMALLOC_ALLOCATOR void *
 rpmalloc_heap_aligned_realloc(rpmalloc_heap_t *heap, void *ptr, size_t alignment, size_t size,
-                              unsigned int flags) RPMALLOC_ATTRIB_MALLOC RPMALLOC_ATTRIB_ALLOC_SIZE(3);
+                              unsigned int flags) RPMALLOC_ATTRIB_MALLOC RPMALLOC_ATTRIB_ALLOC_SIZE(4);
 
 //! Free the given memory block from the given heap. The memory block MUST be allocated
 //  by the same heap given to this function.
@@ -347,6 +366,10 @@ rpmalloc_heap_free_all(rpmalloc_heap_t *heap);
 //  current heap for the calling thread is released to be reused by other threads.
 RPMALLOC_EXPORT void
 rpmalloc_heap_thread_set_current(rpmalloc_heap_t *heap);
+
+//! Returns which heap the given pointer is allocated on
+RPMALLOC_EXPORT rpmalloc_heap_t *
+rpmalloc_get_heap_for_ptr(void *ptr);
 
 #endif
 

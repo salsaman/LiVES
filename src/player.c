@@ -127,7 +127,6 @@ boolean video_sync_ready(void) {
 
 void get_player_size(int *opwidth, int *opheight) {
   // calc output size for display
-  int rwidth, rheight;
 
   ///// external playback plugin
   if (mainw->ext_playback) {
@@ -158,14 +157,16 @@ void get_player_size(int *opwidth, int *opheight) {
 
   if (lives_get_status() != LIVES_STATUS_RENDERING && mainw->play_window
       && LIVES_IS_WIDGET(mainw->preview_image)) {
+    int rwidth, rheight;
+
     // playback in separate window
     // use values set in resize_play_window
 
-    *opwidth = rwidth = lives_widget_get_allocation_width(mainw->preview_image);// - H_RESIZE_ADJUST;
-    *opheight = rheight = lives_widget_get_allocation_height(mainw->preview_image);// - V_RESIZE_ADJUST;
+    /* *opwidth = rwidth = lives_widget_get_allocation_width(mainw->preview_image);// - H_RESIZE_ADJUST; */
+    /* *opheight = rheight = lives_widget_get_allocation_height(mainw->preview_image);// - V_RESIZE_ADJUST; */
 
-    /* *opwidth = mainw->pwidth; */
-    /* *opheight = mainw->pheight; */
+    *opwidth = rwidth =  mainw->pwidth;
+    *opheight = rheight = mainw->pheight;
 
     if (mainw->multitrack && prefs->letterbox_mt) {
       rwidth = *opwidth;
@@ -201,8 +202,11 @@ void get_player_size(int *opwidth, int *opheight) {
 
   if (!mainw->fs) {
     // embedded player
-    *opwidth = rwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
-    *opheight = rheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
+    *opwidth = mainw->pwidth;
+    *opheight = mainw->pheight;
+
+    *opwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
+    *opheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
   }
   if (*opwidth * *opheight < 16) {
     *opwidth = mainw->ce_frame_width;
@@ -972,8 +976,9 @@ void reset_old_frame_layer(void) {
     mainw->debug_ptr = NULL;
     if (old_frame_layer != mainw->cached_frame
         && old_frame_layer != mainw->frame_layer_preload
-        && old_frame_layer != mainw->blend_layer)
+        && old_frame_layer != mainw->blend_layer) {
       weed_layer_unref(old_frame_layer);
+    }
     old_frame_layer = NULL;
   }
 }
@@ -1255,6 +1260,12 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     ///////// EXECUTE PLAN CYCLE ////////////
 
+    /* if (!mainw->frame_layer) { */
+    /*   if (mainw->plan_cycle) mainw->plan_cycle->state = PLAN_STATE_ERROR; */
+    /*   break_me("no r layer\n"); */
+    /*   g_print("BOB 1\n"); */
+    /*   goto lfi_done; */
+    /* } */
     //g_print("wating for plan to complete\n");
     // in render frame, we would have set all frames to either prepared or loaded
     // so the plan runner should have started loading them already
@@ -1263,11 +1274,22 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
 
-    if (mainw->plan_cycle->state == PLAN_STATE_CANCELLED
-        || mainw->plan_cycle->state == PLAN_STATE_ERROR)
-      goto lfi_done;
-
     if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
+
+    if (lives_layer_get_status(mainw->frame_layer) != LAYER_STATUS_READY) {
+      if (!(mainw->plan_cycle->state == PLAN_STATE_CANCELLED
+            || mainw->plan_cycle->state == PLAN_STATE_ERROR)) {
+        g_print("BOB2\n");
+        mainw->plan_cycle->state = PLAN_STATE_ERROR;
+      }
+    }
+
+    if (mainw->plan_cycle->state == PLAN_STATE_CANCELLED
+        || mainw->plan_cycle->state == PLAN_STATE_ERROR) {
+      for (int i = 0; i < mainw->num_tracks; i++)
+        if (mainw->layers[i]) weed_layer_set_invalid(mainw->layers[i], TRUE);
+      goto lfi_done;
+    }
 
     if (mainw->plan_cycle->state == PLAN_STATE_COMPLETE)
       mainw->plan_cycle->state = PLAN_STATE_DISCARD;
@@ -1578,14 +1600,17 @@ weed_layer_t *load_frame_image(frames_t frame) {
   }
 
 lfi_done:
+  wait_layer_ready(mainw->frame_layer, FALSE);
 
   if (mainw->layers) {
     // all our pixel_data should have been free'd already
     for (int i = 0; mainw->layers[i]; i++) {
       if (mainw->layers[i] != mainw->frame_layer) {
         weed_layer_set_invalid(mainw->layers[i], TRUE);
+        //g_print("unref layer %d with status %d\n", i, _lives_layer_get_status(mainw->layers[i]));
         weed_layer_unref(mainw->layers[i]);
         mainw->layers[i] = NULL;
+        //g_print("unref layerX %d\n", i);
       }
     }
   }
@@ -1654,7 +1679,9 @@ lfi_done:
   }
 
   reset_old_frame_layer();
-  old_frame_layer = mainw->frame_layer;
+  g_print("STAT is %d\n", lives_layer_get_status(mainw->frame_layer));
+  if (lives_layer_get_status(mainw->frame_layer) == LAYER_STATUS_READY)
+    old_frame_layer = mainw->frame_layer;
 
   if (!mainw->multitrack && !mainw->is_rendering) {
     mainw->frame_layer = mainw->layers[0] = NULL;
@@ -1993,7 +2020,7 @@ frames_t clamp_frame(int clipno, frames_t nframe) {
         if (is_pbframe) {
           /// must set norecurse, otherwise we can end up in an infinite loop since dirchange_callback calls
           // calc_new_playback_position() which in turn calls this function
-          RECURSE_GUARD_LOCK;
+          RECURSE_GUARD_ARM;
           dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           RECURSE_GUARD_END;
@@ -2476,6 +2503,10 @@ int process_one(boolean visible) {
                                               (LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton))));
   }
 #endif
+
+
+  mainw->pulsed_read->in_use = TRUE;
+
 player_loop:
 
   // what we do first is execute the plan created from mainw->nodemodel
@@ -2505,6 +2536,7 @@ player_loop:
       if (mainw->plan_cycle->state == PLAN_STATE_DISCARD
           || mainw->plan_cycle->state == PLAN_STATE_ERROR
           || mainw->plan_cycle->state == PLAN_STATE_CANCELLED) {
+        g_print("pl state is %lu\n", mainw->plan_cycle->state);
         if (mainw->plan_runner_proc) {
           lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
           lives_proc_thread_join_int(mainw->plan_runner_proc);
@@ -2512,13 +2544,14 @@ player_loop:
           mainw->plan_runner_proc = NULL;
         }
 
-        /* if (mainw->plan_cycle->state == PLAN_STATE_DISCARD) { */
-        /*   exec_plan_t *plan = mainw->plan_cycle; */
-        /*   if (!delay_ticks) */
-        /*     delay_ticks = (ticks_t)(plan->tdata->real_duration * TICKS_PER_SECOND_DBL); */
-        /*   else */
-        /*     delay_ticks = delay_ticks / 4 + (ticks_t)(plan->tdata->real_duration * TICKS_PER_SECOND_DBL / 4. * 3.); */
-        /* } */
+        if (mainw->plan_cycle->state == PLAN_STATE_DISCARD) {
+          exec_plan_t *plan = mainw->plan_cycle;
+          if (!delay_ticks)
+            delay_ticks = (ticks_t)(plan->tdata->real_duration * TICKS_PER_SECOND_DBL);
+          else
+            delay_ticks = (delay_ticks + 3 * (ticks_t)(plan->tdata->real_duration * TICKS_PER_SECOND_DBL)) / 4;
+        }
+
         exec_plan_free(mainw->plan_cycle);
         mainw->plan_cycle = NULL;
       }
@@ -2532,12 +2565,20 @@ player_loop:
     prefs->pb_quality = future_prefs->pb_quality;
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
     g_print("rebuilding model\n");
+
+    lives_microsleep_while_true(mainw->do_ctx_update);
+    mainw->gui_much_events = TRUE;
+    fg_stack_wait();
+    lives_microsleep_while_true(mainw->do_ctx_update);
+
     build_nodemodel(&mainw->nodemodel);
     align_with_model(mainw->nodemodel);
     mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
     g_print("made new plan from  model\n");
     mainw->refresh_model = FALSE;
   }
+
+  //
 
   if (!mainw->plan_cycle) {
     mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
@@ -2673,7 +2714,6 @@ player_loop:
           audio_stretch > 0.5) {
         // if audio_stretch is > 1. it means that audio is playing too fast
         // < 1. it is playing too slow
-
         // if too fast we increase the apparent sample rate so that it gets downsampled more
         // if too slow we decrease the apparent sample rate so that it gets upsampled more
         mainw->audio_stretch = audio_stretch;
@@ -2728,7 +2768,7 @@ switch_point:
     if (IS_VALID_CLIP(close_this_clip) || mainw->new_clip != mainw->playing_file
         || mainw->new_blend_file != mainw->blend_file) {
       fg_stack_wait();
-      lives_nanosleep_while_true(mainw->do_ctx_update);
+      lives_microsleep_while_true(mainw->do_ctx_update);
     }
   } while (mainw->close_this_clip != close_this_clip || mainw->new_clip != new_clip
            || mainw->new_blend_file != new_blend_file);
@@ -2869,10 +2909,10 @@ switch_point:
 
         mainw->refresh_model = TRUE;
 
-        lives_nanosleep_while_true(mainw->do_ctx_update);
+        lives_microsleep_while_true(mainw->do_ctx_update);
         mainw->gui_much_events = TRUE;
         fg_stack_wait();
-        lives_nanosleep_while_true(mainw->do_ctx_update);
+        lives_microsleep_while_true(mainw->do_ctx_update);
 
         mainw->can_switch_clips = TRUE;
 
@@ -2896,7 +2936,7 @@ switch_point:
         mainw->gui_much_events = TRUE;
         mainw->do_ctx_update = TRUE;
         fg_stack_wait();
-        lives_nanosleep_while_true(mainw->do_ctx_update);
+        lives_microsleep_while_true(mainw->do_ctx_update);
 
         mainw->refresh_model = TRUE;
 
@@ -3031,6 +3071,12 @@ switch_point:
     prefs->pb_quality = future_prefs->pb_quality;
 
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
+
+    lives_microsleep_while_true(mainw->do_ctx_update);
+    mainw->gui_much_events = TRUE;
+    fg_stack_wait();
+    lives_microsleep_while_true(mainw->do_ctx_update);
+
     build_nodemodel(&mainw->nodemodel);
 
     align_with_model(mainw->nodemodel);
@@ -3040,7 +3086,9 @@ switch_point:
 
     mainw->refresh_model = FALSE;
     g_print("rebuilt model, created new plan, new plan_cycle, and executed cycle\n");
+
     execute_plan(mainw->plan_cycle, TRUE);
+
     if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
       mainw->plan_cycle->frame_idx[0] = sfile->frameno;
       plan_cycle_trigger(mainw->plan_cycle);
@@ -3192,12 +3240,15 @@ switch_point:
           sfile->fps_scale = 4.;
       } else sfile->fps_scale = 1.;
 
+      //new_ticks += delay_ticks;
+
       /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_req_frame, */
       /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
       requested_frame = xrequested_frame
-                        = calc_new_playback_position(mainw->playing_file, mainw->startticks - delay_ticks,
+                        = calc_new_playback_position(mainw->playing_file, mainw->startticks,
                             &new_ticks);
-      new_ticks += delay_ticks;
+
+      //new_ticks -= delay_ticks;
       /* g_print("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead); */
 
       if (mainw->scratch == SCRATCH_JUMP) {
@@ -4029,18 +4080,40 @@ proc_dialog:
             if (mainw->new_clip != mainw->playing_file || IS_VALID_CLIP(mainw->close_this_clip)
                 || mainw->new_blend_file != mainw->blend_file) goto switch_point;
 
+            // following this, whether or no there were updates, we allow th gui main loop to run
+            // (async in the mmain thread)
+            mainw->gui_much_events = TRUE;
+            mainw->do_ctx_update = TRUE;
+
+            // if any player window config changes happend, we need to rebuild the nodemodel
+            // wiht new player target
+
             if (mainw->refresh_model) {
               cleanup_nodemodel(&mainw->nodemodel);
               g_print("prev plan cancelled5, good to create new plan\n");
+
+              lives_microsleep_while_true(mainw->do_ctx_update);
+              mainw->gui_much_events = TRUE;
+              fg_stack_wait();
+              lives_microsleep_while_true(mainw->do_ctx_update);
+
               prefs->pb_quality = future_prefs->pb_quality;
               mainw->layers = map_sources_to_tracks(FALSE, FALSE);
+
+              lives_microsleep_while_true(mainw->do_ctx_update);
+              mainw->gui_much_events = TRUE;
+              fg_stack_wait();
+              lives_microsleep_while_true(mainw->do_ctx_update);
+
               build_nodemodel(&mainw->nodemodel);
               align_with_model(mainw->nodemodel);
               mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
               mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
               mainw->refresh_model = FALSE;
-              execute_plan(mainw->plan_cycle, TRUE);
+
               g_print("rebuilt model 3, created new plan, new plan_cycle, and executed cycle\n");
+              execute_plan(mainw->plan_cycle, TRUE);
+
               if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
                 mainw->plan_cycle->frame_idx[0] = sfile->frameno;
                 plan_cycle_trigger(mainw->plan_cycle);
@@ -4054,11 +4127,6 @@ proc_dialog:
                 }
               }
             }
-
-            // following this, whether or no there were updates, we allow th gui main loop to run
-            // (async in the mmain thread)
-            mainw->gui_much_events = TRUE;
-            mainw->do_ctx_update = TRUE;
           }
 
           if (!CURRENT_CLIP_IS_VALID) {

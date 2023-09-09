@@ -169,6 +169,8 @@ typedef weed_plant_t weed_param_t;
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 
+extern pthread_t main_thread;
+
 #include "support.h"
 
 #include "widget-helper.h"

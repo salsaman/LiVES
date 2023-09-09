@@ -642,6 +642,7 @@ boolean del_clip_value(int which, lives_clip_details_t what) {
   if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
   lives_free(temp_backend);
   lives_free(lives_header_bak);
+  lives_free(lives_header);
 
   pthread_mutex_unlock(&sfile->transform_mutex);
   return TRUE;
@@ -3139,7 +3140,6 @@ static void _clip_src_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, l
       break;
     case LIVES_SRC_TYPE_GENERATOR: {
       weed_instance_t *inst = (weed_instance_t *)(mysrc->actor_inst);
-      mainw->gen_started_play = FALSE;
       weed_generator_end(inst);
     }
     break;
@@ -3196,8 +3196,9 @@ void clip_src_free(int nclip,  lives_clipsrc_group_t *srcgrp, lives_clip_src_t *
 
 
 static void _clip_srcs_free_all(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp) {
-  for (int i = 0; i < sfile->n_src_groups; i++) {
+  for (int i = 0; i < srcgrp->n_srcs; i++) {
     _clip_src_free(sfile, srcgrp, srcgrp->srcs[i]);
+    lives_freep((void **)&srcgrp->srcs);
   }
 }
 
@@ -3294,6 +3295,7 @@ LIVES_GLOBAL_INLINE void srcgrps_free_all(int nclip) {
       _srcgrp_remove(sfile, srcgrp);
       _srcgrp_free(sfile, srcgrp);
     }
+    lives_freep((void **)&sfile->src_groups);
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
 }

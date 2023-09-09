@@ -652,20 +652,19 @@ LIVES_LOCAL_INLINE void *lives_sha512_make(const char *p, size_t len, void *ret)
 
 
 LIVES_LOCAL_INLINE  double ann_get_result(lives_ann_t *ann) {
-  int nn = 0, nw = 0;
+  int nn = 0, nw = -ann->lcount[1];
   int lcount = 0;
   for (int i = 0; i < ann->nlayers; i++) {
     int lcount2 = ann->lcount[i + 1];
     lcount += ann->lcount[i];
     for (; nn < lcount; nn++) {
-      double val = ann->values[nn];
-      if (!val) {
-        nw += lcount2;
-        continue;
-      }
-      val += ann->biases[nn];
+      double val = 0.;
+      nw += lcount2;
+      if (ann->knockouts[nn] == KNOCKOUT_ON) continue;
+      val = ann->values[nn] + ann->biases[nn];
+      if (!val) continue;
       for (int k = 0; k < lcount2; k++) {
-        double res = val * ann->weights[nw++];
+        double res = val * ann->weights[nw + k];
         if (res > 0.) ann->values[lcount + k] += res;
       }
     }
@@ -692,8 +691,6 @@ static LIVES_HOT double ann_test_with_data(lives_ann_t *ann) {
       /* 				err); */
     }
   }
-
-
   if (ntrials) return ersq / (double)ntrials;
   return 0.;
 }
@@ -733,9 +730,26 @@ static void vary_weights_and_biases(lives_ann_t *ann) {
   }
   for (int i = ann->nnodes; i--;) {
     for (int j = ann->nrnds; --j;) {
-      ann->biases[i]  += fastrand_dbl(deltab * 2.) - deltab;
+      ann->biases[i] += fastrand_dbl(deltab * 2.) - deltab;
     }
   }
+  if (ann->nk) {
+    for (int j = 0; j < 2; j++) {
+      int nk = 0;
+      int z = (int)fastrand_dbl(ann->nk);
+      for (int i = ann->nnodes; i--;) {
+        if (ann->knockouts[i] != KNOCKOUT_NULL) {
+          if (nk++ == z) {
+            if (j && ann->knockouts[i] == KNOCKOUT_OFF) {
+              j--;
+              break;
+            }
+            ann->knockouts[i] = KNOCKOUT_OFF;
+            if (j) break;
+          } else if (!j) ann->knockouts[i] = KNOCKOUT_ON;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 }
 
 
@@ -757,21 +771,24 @@ LIVES_GLOBAL_INLINE void lives_ann_init_seed(lives_ann_t *ann, double maxw) {
 
 
 double lives_ann_evolve(lives_ann_t *ann) {
-  double res;
+  double res1, res2;
+  res1 = ann_test_with_data(ann);
+  //g_print("res 1== %.8f\n", res1);
   ann_backup_weights(ann);
   vary_weights_and_biases(ann);
-  res = ann_test_with_data(ann);
-  //g_print("res == %.8f, X %.8f\n", res, ann->last_res);
-  if (res && !ann->last_res || res < ann->last_res) {
-    g_print("NN converged to %f\n", res);
-    ann->last_res = res;
-    if (ann->damp > 0.7) ann->damp *= ann->damp;
+  res2 = ann_test_with_data(ann);
+  // g_print("res2 == %.8f\n", res2);
+  if (res2 < res1) {
+    // g_print("NN converged to %f\n", res2);
+    ann->last_res = res2;
+    if (ann->damp > 0.9) ann->damp *= ann->damp;
     ann->no_change_count = 0;
-    return res;
+    return res2;
   }
   ann_restore_weights(ann);
   ++ann->no_change_count;
-  return ann->last_res;
+  ann->last_res = res1;
+  return res1;
 }
 
 
@@ -791,7 +808,7 @@ lives_ann_t *lives_ann_create(int nlayers, int *lcounts) {
   ann->lcount = LIVES_CALLOC_SIZEOF(int, nlayers + 1);
 
   for (int i = 0; i <= nlayers; i++) {
-    if (i < nlayers) ann->lcount[i] = lcounts[i];
+    if (i < nlayers) ann->lcount[i] = abs(lcounts[i]);
     else ann->lcount[i] = 1;
     if (i) {
       // count of connections up to layer + 1
@@ -804,12 +821,26 @@ lives_ann_t *lives_ann_create(int nlayers, int *lcounts) {
   ann->biases = LIVES_CALLOC_SIZEOF(double, nn);
   ann->bbiases = LIVES_CALLOC_SIZEOF(double, nn);
   ann->values = LIVES_CALLOC_SIZEOF(double, nn);
+  ann->knockouts = LIVES_CALLOC_SIZEOF(uint8_t, nn);
   //
   ann->nweights = nw;
   ann->nnodes = nn;
   //
+
+  nn = 0;
+  for (int i = 0; i < nlayers; i++) {
+    if (lcounts[i] < 0) {
+      lcounts[i] = -lcounts[i];
+      ann->nk += lcounts[i];
+      for (int j = 0; j < lcounts[i]; j++)
+        ann->knockouts[nn + j] = KNOCKOUT_ON;
+    }
+    nn += lcounts[i];
+  }
+
   return ann;
 }
+
 
 void lives_ann_free(lives_ann_t *ann) {
   if (ann) {
@@ -819,6 +850,7 @@ void lives_ann_free(lives_ann_t *ann) {
     if (ann->bbiases) lives_free(ann->bbiases);
     if (ann->values) lives_free(ann->values);
     if (ann->lcount) lives_free(ann->lcount);
+    if (ann->knockouts) lives_free(ann->knockouts);
     if (ann->tstdata) {
       for (LiVESList *list = ann->tstdata; list; list = list->next) {
         ann_testdata_t *trndata = (ann_testdata_t *)list->data;
@@ -856,7 +888,7 @@ typedef struct {
 // to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
 // the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
 // tab_data is used by the functionand not to be messed with
-size_t running_average(float *newval, int idx, void **data) {
+size_t running_average(float * newval, int idx, void **data) {
   size_t nfill;
   if (!data) return 0;
   else {

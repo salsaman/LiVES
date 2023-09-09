@@ -2238,7 +2238,7 @@ code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 the following are optional for filters with video channels:
 
 * "aspect_ratio" : NEW !! :: WEED_SEED_DOUBLE
-  this is an optional leaf for geneaators (filters with outputs but no video inputs)
+  this is an optional leaf for generators (filters with outputs but no video inputs)
 
   For generators which have have non-fixed  output sizes, it may be desirable still to specify
   the preferred aspect ratio(s)
@@ -4143,87 +4143,115 @@ Explanation of flag bit combinations:
 
 * WEED_CHANNEL_NEEDS_DISPLAY_RATIO
 
-  This flagbit is for out_channels only. This is intended for filters which want to creeate objects with fixed
-  size / offset ratios at the display.
+  This flagbit is for out_channels only. This is intended for filters which want to
+  create objects with fixed  size / offset ratios at the display.
 
-  If this flagbit is set, the host should add an extra leaf to channels created from this template: "display_ratio".
-  an array with FOUR WEED_SEED_DOUBLE values. In the case that the host has multiple outputs with differing aspect
-  ratios, or ofssets, the host should determine which is the "most important" of these,
-  ie. which outout should have correctly scaled / offset objects.
+  If this flagbit is set, the host should add an extra leaf to channels created from this template:
+  "display_ratio".
+  an array with FOUR WEED_SEED_DOUBLE values.
 
   The 4 values are: width_factor, height_factor, horiz_offset, vert_offset.
 
-   To understand "display_ratio", let us imagine that a filter wants to draw a rectangle in the display output
-   with its centre coinciding with the centre of the screen, and with width and height euivalent to 20% of the display size.
+   To understand "display_ratio", let us imagine that a filter
+   wants to draw a rectangle in the display output
+   with its centre coinciding with the centre of the screen,
+   and with width and height equivalent to 20% of the display size.
+   Simply creating the rectangle to cover 20% X 20% of the output layer is not sufficient,
+   since the layer may be resized to fit the final display output.
 
-   The "display_ratio" allows the plugin developer to calculate the equivalent percentages in the output channel.
+   The "display_ratio" allows the plugin developer to calculate the equivalent
+   percentages in the output channel.
 
    There are two methods the host can use to transform
    from the layer current size to the display size: - resize and letterbox.
 
    The display_ratio can be used to determine the method.
 
-   With the resize method, the layer is stretched or shrunk to fit the display, with the letterbox method, the layer
-   will maintain its current aspect ratio and horizontal or vertical bands added around it so that it fits the display.
-   We also ASSUME that when letterboxing the output is still centred, so the bands are added symmetrically in
-   each direction. Another thing to note is that the out channel dat in some cases may be lettrboxed BEFORE reaching
-   the display, as well as at teh display. This can happen if frames with different aspect ratios are overlaid on
-   top of each other before being displayed. The "display_ratio" will be the oriduct of all steps including
-   intermediate ones.
+   With the resize method, the layer is stretched or shrunk to fit the display,
+   with the letterbox method, the layer
+   will maintain its current aspect ratio and horizontal or vertical bands added around it
+   so that it fits the display.
+   We also ASSUME that when letterboxing the output is still centred,
+   so the bands are added symmetrically in
+   each direction. Another thing to note is that the out channel data in some cases may be
+   letterboxed /resized BEFORE reaching the display, as well as at the display.
+   This can happen if frames with different sizes / aspect ratios are overlaid on
+   top of each other before being displayed.
+   The "display_ratio" will be the priduct of all steps including intermediate ones.
 
-   By looking at the two "display_ratio" values, one can determine the the reltive size of the rectangle in the output
-   channel pixel_data to produce a given relative size on the display (display could mean scrren, stream output, encoder
+   By looking at the two "display_ratio" values, one can determine the the relative size of
+   the rectangle in the output channel pixel_data to produce the given relative size
+   on the display (display could mean screen, stream output, encoder
    or whatever - for the sake of illustration we will assume it means the screen).
 
-   If the host knows it is going to letterbox the outout pixel_data, then the values of display_ratio represent
-   the ratio of "coverage" in each axit. For example, a value of 1.0, 0.8 would signify that the output from this instance
-   will cover 100% of the display width and 80% of the display height, with bands above and below each covering 10%
-   of the display height.
+   If the host knows it is going to letterbox the outout pixel_data,
+   then the values of display_ratio represent
+   the ratio of "coverage" in each axis. For example, a value of 1.0, 0.8
+   would signify that the output from this instance
+   will cover 100% of the display width and 80% of the display height,
+   with bands above and below each covering 10% of the display height.
 
-   Thss in this case to draw a rectangle 20% X 20% on the screen, we would draw the rectangle
-   with width 20%, and height 25%  in the output pixel_data. This is because 25% of 80% ehight == 20%  of full 100% height.
+   Thus in this case, to draw a rectangle 20% X 20% on the screen, we would draw the rectangle
+   with width 20%, and height 25% in the output pixel_data. This is because 25% of 80% height == 20%
+   of full 100% height, that is, an object drawn in an 80% high screen needs to
+   stretch by 1 /4 of its height to have the same ratio in a 100% high screen.
 
    The calculation is simply:
    	owr = swr / display_ratio[0], ohr = shr / display_ratio[1]
-   where owr = out chan width ratio, swr = screen width ratio, ohr = out chan height ratio, and shr = screen hgith ratio.
 
-   Note that by considering ratios rather than absolute pixel values, the object will appear the same realtive size
-   regardless of the actual screen size. The actual display size cannot be determined since the output may be resized
-   prior to or after to being letterboxed.
+	where owr = out chan width ratio, swr = screen width ratio,
+	   ohr = out chan height ratio, and shr = screen hgith ratio.
+
+   Note that by considering ratios rather than absolute pixel values,
+   the object will appear the same realtive size
+   regardless of the actual screen size. The actual display size cannot be determined this way,
+   since the output may be resized  prior to or after to being letterboxed.
 
    When letterboxing is the host selected method, one or both of the display_ratio values will be < 1.0.
-   Note that for letterboxing, part ot the output display is inaccesible. To draw in this "inaccesible" region,
-   the templat should set the flagbit WEED_FILTER_PROCESS_LAST, and chack the "display_ratio" values. If these
-   are both 1.0, then the filter can draw anywhere pn the display.
+   Note that for letterboxing, part ot the output display is inaccesible.
+   To draw in this "inaccesible" region,
+   the templat should set the flagbit WEED_FILTER_PROCESS_LAST,
+   and check the "display_ratio" values. If these
+   are both 1.0, then the filter can draw anywhere on the display.
 
-   With the resize method, the layer will be streched to fit the display output, which may distort it if the screen
-   has a different aspect ratio to the output channel. In this case one of the display_Ratio values will be >= 1,0,
-   and the other will be 1.0. These values denote the relative amounts of scaling in each axis. Note that a value
-   > 1.0 doess not necessarily imply a size increase, it may be the case that the ouput is actually shrunk
-   to fit the display. The values simply indicate the realtive amountsof distortion.
+   With the resize method, the layer will be stretched to fit the display output,
+   which may distort it if the screen has a different aspect ratio to the output channel.
+   In this case one of the display_Ratio values will be >= 1,0,
+   and the other will be 1.0. These values denote the relative amounts of scaling in each axis.
+   Note that a value
+   > 1.0 doess not necessarily imply a size increase,
+   it may be the case that the ouput is actually shrunk
+   to fit the display. The values simply indicate the realtive amounts of distortion.
 
-   Let us imagine the display_ratio values are 1.33 and 1.0. In this case to draw a rectangel size 20% X 20% centred in
-   the display, we would draw it as 20.0 / 1.33 X 20.0 in the out channel pixel data, i.e 15% X 20%.
+   Let us imagine the display_ratio values are 1.33 and 1.0. In this case to draw a rectangle size 20% X	 20% centred in the display, we would draw it as 20.0 / 1.33 X 20.0 in the out channel
+   pixel data, i.e 15% X 20%.
 
    The calulation in this case is again
    	owr = swr / display_ratio[0], ohr = shr / display_ratio[1]
 
-Note that with this calulation we could end up with values > 100%. This represents the layer tyring to draw into the 
-banded region, which is not possible. It is up to the filter author as to how to handle this.
-
    Thus in both cases:
    		owr = swr / display_ratio[0], ohr = shr / display_ratio[1]
 
+   - the difference being that a value > 1.0 indicates stretching and a value < 1.0 indicates
+   letterboxing
+
 Offset values
-The thrd and fourth values in the display_ratio only have meaning when the letterbox method is used
-(ie. both the first values are <= 1.) the third value is the horiz_offset. This can take a value -1.0 to 1.0
--1.0 idicates tha all th banding is on the left hand side (ie. if display_ratio[1] is 0.8, then the leftmost 20%
-of the screen would be blank, with the image on the righmost 80%. If the value were +1.0 then all the banding would be
-on the right, with the image occupying the leftmos 80%). The default value 0. implies that the both bands are equally sized.
+       The third and fourth values in the display_ratio only have meaning
+       when the letterbox method is used (ie. both the first values are <= 1.)
+       the third value is the horiz_offset ratio, 4th is the vertical ratio.
+       The value can ary between -1.0 and 1.0
+       A value of 1.0 idicates that all the banding is on the left hand side
+       (ie. if display_ratio[1] is 0.8, then the leftmost 20%
+       of the screen would be blank, with the image on the righmost 80%.)
+       If the value were -1.0,  then all the banding would be on the right, with the image occupying
+       the leftmost 80%). The default value 0. implies that the both bands are equally sized.
 
 The fourth value is similar but applies to top and bottom horizontal bands
 
 Thus we can work out the banding sizes as diplay_as:
+example with values {0.8, 1.0, -0.4, 0.0}
+. (1. + 0.4) / 2 * (1 - 0.8) ==> 0.7 * 0.2 = 0.14 = 14% | 80% | 6%
+
 (1. - display_ratio[2]) / 2. * (1.0 - display_ratio[0]) for LHS
 (1. + display_ratio[2]) / 2. * (1.0 - display_ratio[0]) for RHS
 //
@@ -4233,88 +4261,43 @@ Thus we can work out the banding sizes as diplay_as:
 
 Thus if we want to keep the rectangle centred, we may need to transform its centre.
 
-Suppose we have all banding at the top, and a banding ratio of .2
-then diaply_ratio[1] = 0.8, display_ratio[3] = -1.0
-
-we first calulate the banding amount, this is just 1.0 - display_ratio[1] == 0.2
-If the value of display_ratio[3] were 0.0 then we would not have to move the centre vertiaclly
-and top banding would be 0.1
-
-However with a value -1.0, we have from above, TOP == 0.2
-
-We can defive the centre value 0.1 as (1. - 0.) / 2. * (1.0 - display_ratio[1])
-we can derive the value 0.2 from (1. - display_ratio[3]) / 2. * (1.0 - display_ratio[1])
-
-thus the difference is rather obviously: -display_ratio[3] / 2, * (1.0 - display_ratio[1])
-inserting values -1.0, and 0.8 gives 1. / 2. * (1. - 0.8) = 0.5 * 0.2 == 0.1 as we would expect.
-In this case the centre is moved DOWN by a factor 0.1, ie 10%.
-However this is in proportion to the display height, to find the equivalnt proportion in the out channel,
-we need to divide this by 0,8 to give a value 0,125, 12.5% of the channel height, which for the exmaple
-of 400 X 300 would be 12.5 * 300 / 100 ~= 38 pixels. Thus to keep the rectangle centred in the dissplay (rather than
-centerd in the un the letterboxed area, we would need to move our center up by 38 pixels.
-
-
-Thus our centre is offset by:
-
--display_ratio[3] / 2, * (1.0 - display_ratio[1]) * chan_height
-
-or more genearally:
-
-voffs = display_ratio[3] / 2, * (1.0 - display_ratio[1]) * chan_height_pixels
-where a negative value indicates UP and posiitve, DOWN.
-
-Similaryly for a horizontal offset:
-hoffs = display_ratio[2] / 2, * (1.0 - display_ratio[0]) * chan_width_pixels
-
+In the example above we have 14% of the display on the LHS,
+so to centre in the display we would need to move the centre point 4% to the left.
+However this is 4% of the display at 100% so we need to convert this to pixels in the 80% wide frame.
+ 4% of 100% = 5% of 80%
+ So now we can calulate for the centered rectangle covering 20% X 20% of the display,
+ we nned to draw the rectangle with size 25% X 20% and centre offet 5% to the left.
 
 
 Interaction with "aspect_ratio" and "PAR".
-These sets of values are intimatel linked and used propely can enable obejcts to remain proportional on any display.
+These sets of values are intimately linked and used propely can enable obejcts
+to remain proportional on any display.
 
-Suppose a genrator defines a preffered aspect_Ratio of 1.33 (4:3), and thehost sets the size to 400 X 300 pixels.
+Suppose a genrator defines a preferred aspect_Ratio of 1.33 (4:3),
+and the host sets the size to 400 X 300 pixels.
 
 Suppose the display aspect_ratio is 16:9.
 
-If letterboxing is ussed the the output would fill an area equivalent to 12 : 9, so the displya_ratio would be
-0.75, 1.0
+If letterboxing is used, the the output would fill an area equivalent to 12 : 9,
+so the display_ratio would {0.75, 1.0, 0., 0.}
 
 Thus to draw a rectangle sized 20 % X 20 % centred in the display, this would be size
 
- 20 / 0.75 X 20 * 1.0 == 26.66% X 20% in the output channel.
+ 20% / 0.75 X 20% * 1.0 == 26.66% X 20% in the output channel.
 
-With out_channel size 400 X 303 this gives 106 X 60 [rounding to even values, this give rectangle coords -52. -30 and 53, 30]
-
-Combining this with the PAR for the channel allows for the objects to appear rectangle independantly of the pixel shape
-for any display. Suppose the display is a super wide monitor, with a PAR of 1.2 - that is the pixels are not sqaure but
-rather rectangles with size ratios width == 1.2, height == 1.
-
-In this case our rectangle size 26.66% X 20% would have size 20% X 20% on the screen, but due to the pixel aspect ratio
-this would appear as 24% wide X 20% high when placed side by side with a monitor with PAR 1.0
-
-Thus to make both rectangles appear equivalent, for the monitor with PAR 1.2, the correct size in the output would be:
-(26.666 / 1.2) = 22.22% X 20%
-
-Thus for the size 400 X 300, the rectangle would be drawn with size 400 * 22.222 / 100. X 300 * 20 / 100
-== 88 X 60 in the output (ie if we consider the centre to be 0, 0 then the recatngle would be
--44, -30 to +44, +30).
-
-For PAR of 1.0, the rectangle would be 106 X 60 pxiels in the output.
-
-If resizing is used instead of letterboxing, then we would have display_Ratio 1.33, 1.0
-
-In this the rectangle will be stretched in the x-axis, so the correct size with PAR 1,0 is:
-
-20 / 1.33 % X 20 %  == 15% X 20% - in pixels this would be 60 X 60
-
-and for a PAR of 1.2 this would be 20 / 1.33 / 1.2 % X 20% == 12.5% X 20% == 50 X 60 in pixels in
-the out channel frame.
+Finally, we need to consider the somewhat rare case of PAR other tha 1.
+A value other than 1 for PAR indicates non-square pixels on a display, for example a PAR of 1.2
+means the pixels are rectangular with width : height = 1.2 : 1
+Thus anything drawn on such a display will apear 20% wider than the ssame imager drawn on a displayu with square pixels. Thus this value may also come into play, in this example one would divde the with of an objhect by 1.2.
 
    To sumarrize, if we want to account for non square pixels:
-   		owr = swr / display_ratio[0] / PAR, ohr = shr / display_ratio[1]
+		owr = swr / display_ratio[0] / PAR,
+		ohr = shr / display_ratio[1]
+where owr is the output width ratio, and swr the ratio on the display
+ohr an shr are equivalent height values.
 
-
-For the offesets, if we want to make these appear the same, then we should divide the horizontal offset by PAR,
-so we get:
+For the offesets, if we want to make these appear the same,
+then we should divide the horizontal offset by PAR, so we get:
 
 voffs = display_ratio[3] / 2, * (1.0 - display_ratio[1]) * chan_height_pixels
 

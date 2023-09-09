@@ -256,6 +256,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_height(weed_layer_t *layer, int
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int width, int height) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (width > 0 && !height) abort();
   weed_layer_set_width(layer, width);
   weed_layer_set_height(layer, height);
   return layer;
@@ -280,7 +281,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *la
   lives_sync_list_t *copylist;
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
 
-  wait_layer_ready(layer);
+  wait_layer_ready(layer, TRUE);
 
   copylist = (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
   if (copylist) {
@@ -442,6 +443,41 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 }
 
 
+static boolean remove_lpt_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
+  // whenever an asyn op acts on a layer, we should set
+  //
+  // weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
+  // lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, remove_lpt_cb, layer);
+  // lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
+  //
+  // the proc_thread can then be queued, the status will change to busy,
+  //  then eveantually ready (or invalid)
+  lock_layer_status(layer);
+  if (lives_layer_plan_controlled(layer)) {
+    if (_lives_layer_get_status(layer) == LAYER_STATUS_BUSY
+        || _lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
+      _lives_layer_set_status(layer, LAYER_STATUS_READY);
+  }
+  weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
+  unlock_layer_status(layer);
+  return TRUE;
+}
+
+
+void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
+  if (layer && lpt) {
+    lock_layer_status(layer);
+    _lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
+    weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
+    //lives_proc_thread_t hlpt =
+    lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, remove_lpt_cb, layer);
+    //if (!mainw->debug_ptr) mainw->debug_ptr = hlpt;
+    lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
+    unlock_layer_status(layer);
+  }
+}
+
+
 void lives_layer_reset_timing_data(weed_layer_t *layer) {
   if (layer) {
     weed_timecode_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
@@ -539,6 +575,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   } else {
     /// shallow copy
     weed_layer_pixel_data_free(layer);
+
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
 
@@ -546,9 +583,6 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
     if (pd_array) {
-      // potential dealock - we lock our copylist_mutex - go to update copies
-      // meanwhile, a copy has its mutex locked, trying to update us
-      //
       lives_sync_list_t *copylist =
         (lives_sync_list_t *)weed_get_voidptr_value(slayer, LIVES_LEAF_COPYLIST, NULL);
       if (!copylist) {
@@ -559,11 +593,11 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
       lives_sync_list_add(copylist, (void *)layer);
       weed_leaf_dup(layer, slayer, LIVES_LEAF_COPYLIST);
 
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_BBLOCKALLOC, slayer);
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXBUF_SRC, slayer);
-      weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_SURFACE_SRC, slayer);
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, slayer);
+      weed_leaf_dup(layer, slayer, LIVES_LEAF_BBLOCKALLOC);
+      weed_leaf_dup(layer, slayer, LIVES_LEAF_PIXBUF_SRC);
+      weed_leaf_dup(layer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
+      weed_leaf_dup(layer, slayer, LIVES_LEAF_SURFACE_SRC);
+      weed_leaf_dup(layer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
       weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
                           weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA));
     }
@@ -671,6 +705,7 @@ LIVES_GLOBAL_INLINE ticks_t *get_layer_timing(lives_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE void _set_layer_timing(lives_layer_t *layer, ticks_t *timing_data) {
   weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
+  weed_leaf_set_autofree(layer, LIVES_LEAF_TIMING_DATA, TRUE);
 }
 
 
@@ -684,8 +719,10 @@ LIVES_GLOBAL_INLINE void set_layer_timing(lives_layer_t *layer, ticks_t *timing_
 
 
 LIVES_GLOBAL_INLINE void _reset_layer_timing(lives_layer_t *layer) {
+
   ticks_t *timing_data = (ticks_t *)lives_calloc(N_LAYER_STATUSES, sizeof(ticks_t));
   _set_layer_timing(layer, timing_data);
+  lives_free(timing_data);
 }
 
 

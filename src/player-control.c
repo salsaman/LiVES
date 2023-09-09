@@ -41,7 +41,7 @@ static boolean _start_playback(int play_type) {
 
   switch (play_type) {
   case 8: case 6: case 0:
-    /// normal play
+    /// normal play (6 == generator started)
     if (play_type == 0) flag = TRUE;
     play_all(flag);
     break;
@@ -143,10 +143,16 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 }
 
 
-void start_playback_async(int type) {
+lives_proc_thread_t start_playback_async(int type) {
   // nonblocking playback, player is launcehd in a pool thread, and this thread returns
   // immediately
-  mainw->player_proc = lives_proc_thread_create(0, _start_playback, 0, "i", type);
+  GET_PROC_THREAD_SELF(self);
+  lives_thread_attr_t attrs = LIVES_THRDATTR_PRIORITY;
+  if (type == 6) attrs |= LIVES_THRDATTR_START_UNQUEUED;
+  mainw->player_proc = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
+  if (type == 6) lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, 0, queue_other_lpt,
+        mainw->player_proc);
+  return mainw->player_proc;
 }
 
 
@@ -581,9 +587,9 @@ void play_file(void) {
 #endif
   boolean has_audio_buffers = FALSE;
 
-  //int arate;
+  int current_file;
 
-  int current_file = mainw->current_file;
+  //int arate;
 
   ____FUNC_ENTRY____(play_file, "", "");
 
@@ -1228,6 +1234,8 @@ void play_file(void) {
   // nodemodel / plan
   cleanup_nodemodel(&mainw->nodemodel);
 
+  ann_roll_cancel();
+
   // PLAY FINISHED...
 
   if (prefs->stop_screensaver) lives_reenable_screensaver();
@@ -1346,6 +1354,8 @@ void play_file(void) {
     mainw->nodemodel = NULL;
   }
 
+  //show_weed_stats();
+
   cliplist = mainw->cliplist;
   while (cliplist) {
     // TODO - free any track srgrps
@@ -1452,8 +1462,6 @@ void play_file(void) {
   }
 #endif
 
-  cleanup_nodemodel(&mainw->nodemodel);
-
   if (THREADVAR(bad_aud_file)) {
     /// we got an error recording audio
     do_write_failed_error_s(THREADVAR(bad_aud_file), NULL);
@@ -1474,7 +1482,6 @@ void play_file(void) {
 
   // allow the main thread to exit from its blocking loop, it will resume normal operations
   lives_nanosleep_while_true(mainw->do_ctx_update);
-  set_gui_loop_tight(FALSE);
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
@@ -1484,6 +1491,8 @@ void play_file(void) {
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(post_playback, 0);
   BG_THREADVAR(hook_hints) = 0;
+
+  set_gui_loop_tight(FALSE);
 
   // and startup helpers which were paused during playback may now resume
   if (lazy_start) {

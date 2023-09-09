@@ -8,6 +8,8 @@
 
 LiVESWindow *get_transient_full();
 
+#define URGENCY_KEY "_urgency"
+
 /// generic ......
 
 boolean do_warning_dialog(const char *text);

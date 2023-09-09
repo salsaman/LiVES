@@ -19,7 +19,6 @@ typedef int lives_alarm_t;
 #define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout
 #define LIVES_DEFAULT_TIMEOUT  (10. * TICKS_PER_SECOND_DBL) // 10 sec timeout
 #define LIVES_LONGER_TIMEOUT  (20. * TICKS_PER_SECOND_DBL) // 20 sec timeout
-#define LIVES_LONGEST_TIMEOUT  (30. * TICKS_PER_SECOND_DBL) // 30 sec timeout
 
 #define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS // this is fine since we will subtract 1
 #define URGENCY_MSG_TIMEOUT 10. // seconds

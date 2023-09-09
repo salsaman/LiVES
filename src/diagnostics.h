@@ -10,6 +10,8 @@
 #include "main.h"
 #include "mainwindow.h"
 
+//#define TEST_RTM_CODE
+
 #define TEST_WEED		(1ull << 0)
 #define TEST_RNG		(1ull << 1)
 #define TEST_LSD		(1ull << 2)
@@ -18,6 +20,10 @@
 
 #define TEST_POINT_2		(1ull << 16)
 #define TEST_PROCTHRDS		(1ull << 17)
+
+#ifdef TEST_RTM_CODE
+#define TEST_RTM		(1ull << 32)
+#endif
 
 #define ABORT_AFTER		(1ull << 60)
 

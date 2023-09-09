@@ -3427,8 +3427,11 @@ void show_lives(void) {
   if (mainw->go_away)
     update_rfx_menus();
 
-  if (prefs->present && prefs->show_gui)
+  if (prefs->present && prefs->show_gui) {
+    if (!(prefs->focus_steal & FOCUS_STEAL_STARTUP))
+      gtk_window_set_focus_on_map(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
 }
 
 
@@ -4564,7 +4567,6 @@ static void _resize_play_window(void) {
         lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
     }
     if (prefs->show_playwin) {
-
       lives_window_present(LIVES_WINDOW(mainw->play_window));
       lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
     }

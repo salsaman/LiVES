@@ -3415,6 +3415,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
           }
         }
 
+        //
+
         load_frame_image(cfile->frameno);
 
         if (LIVES_IS_PLAYING) {
@@ -3433,6 +3435,20 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       } else spare_cycles++;
     } else {
+
+      // check clip_index vs nodemodel->clip_index
+      // if anything changed, we need to rebuild nodemodel
+
+      // creeate plan_cycle
+      // set frame_idx from frame_index
+
+      // call lfi
+      // - it will wait for plan to complete and output to display
+
+
+
+
+
       if (mainw->num_tracks > 1) {
         if (mainw->blend_file != mainw->clip_index[1]) {
           track_source_free(1, mainw->blend_file);
@@ -3500,6 +3516,17 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       }
     }
+
+
+
+
+
+
+
+
+
+
+
     cfile->next_event = get_next_event(next_event);
     break;
   case WEED_EVENT_TYPE_FILTER_INIT:
@@ -4209,7 +4236,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               break;
             }
 
-            wait_layer_ready(layer);
+            wait_layer_ready(layer, TRUE);
             width = weed_layer_get_width_pixels(layer);
             height = weed_layer_get_height(layer);
             lpal = layer_palette = weed_layer_get_palette(layer);

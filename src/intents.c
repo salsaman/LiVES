@@ -247,11 +247,12 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
 
 // if "name" is registered in the func store, return the const fdef
 // otherwise we create a new fdef, register it as static, and return the new entry
-const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rttype,
+const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category,
+                                     const char *rttype,
                                      const char *args_fmt, char *file, int line) {
-
-  const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
+  const lives_funcdef_t *funcdef = get_template_for_func(func);
   if (!funcdef) {
+    char *functxt;
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
     lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, "native_ptr",
                               WEED_SEED_VOIDPTR);
@@ -262,7 +263,10 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int
 
     lives_object_set_attr_value(dicto, xattr, funcdef);
     fn_objstore = add_to_objstore(fn_objstore, funcdef->uid, dicto);
-  }
+    functxt = lives_funcdef_explain(funcdef);
+    g_printerr("Noted new func: %s;\n", functxt);
+    lives_free(functxt);
+  } else g_printerr("function %s already in store\n", name);
   return funcdef;
 }
 
@@ -294,7 +298,8 @@ static boolean fdef_funcmatch(void *data, void *pfunc) {
 
 const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
   lives_funcdef_t *fdef = NULL;
-  void *data = get_from_hash_store_cbfunc(fn_objstore, fdef_funcmatch, (void *)(lives_funcptr_t *)&func);
+  void *data = get_from_hash_store_cbfunc(fn_objstore, fdef_funcmatch,
+                                          (void *)(lives_funcptr_t *)&func);
   if (data) {
     lives_dicto_t *dicto = (lives_dicto_t *)data;
     if (dicto && lives_object_get_subtype(dicto) == DICT_SUBTYPE_FUNCDEF) {
@@ -617,24 +622,24 @@ weed_error_t lives_object_set_attr_def_array(lives_obj_t *obj, lives_obj_attr_t 
 
 
 lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *obj, const char *name) {
-  if (name && *name) {
-    lives_obj_attr_t **attrs, *attr;
-    char *pname;
-    if (obj) attrs = lives_object_get_attrs(obj);
-    else attrs = THREADVAR(attributes);
-    if (attrs) {
-      for (int count = 0; attrs[count]; count++) {
-        attr = attrs[count];
-        pname = lives_attr_get_name(attr);
-        if (!lives_strcmp(name, pname)) {
-          lives_free(pname);
-          if (obj) lives_free(attrs);
-          return attr;
-        }
-        lives_free(pname);
-      }
-    }
-  }
+  /* if (name && *name) { */
+  /*   lives_obj_attr_t **attrs, *attr; */
+  /*   char *pname; */
+  /*   if (obj) attrs = lives_object_get_attrs(obj); */
+  /*   else attrs = THREADVAR(attributes); */
+  /*   if (attrs) { */
+  /*     for (int count = 0; attrs[count]; count++) { */
+  /*       attr = attrs[count]; */
+  /*       pname = lives_attr_get_name(attr); */
+  /*       if (!lives_strcmp(name, pname)) { */
+  /*         lives_free(pname); */
+  /*         if (obj) lives_free(attrs); */
+  /*         return attr; */
+  /*       } */
+  /*       lives_free(pname); */
+  /*     } */
+  /*   } */
+  /* } */
   return NULL;
 }
 
@@ -741,50 +746,50 @@ void weed_plant_take_snapshot(weed_plant_t *plant) {
 
 
 lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st) {
-  lives_obj_attr_t *attr;
-  lives_obj_attr_t **attrs;
-  uint64_t uid;
-  int count = 0;
-  if (obj) {
-    attrs = weed_get_plantptr_array(obj, "attrs", NULL);
-    uid = capable->uid;
-  } else {
-    attrs = THREADVAR(attributes);
-    uid = THREADVAR(uid);
-  }
-  if (attrs) {
-    for (count = 0; attrs[count]; count++) {
-      char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
-      if (!lives_strcmp(name, pname)) {
-        lives_free(pname);
-        return NULL;
-      }
-      lives_free(pname);
-    }
-  }
+  /* lives_obj_attr_t *attr; */
+  /* lives_obj_attr_t **attrs; */
+  /* uint64_t uid; */
+  /* int count = 0; */
+  /* if (obj) { */
+  /*   attrs = weed_get_plantptr_array(obj, "attrs", NULL); */
+  /*   uid = capable->uid; */
+  /* } else { */
+  /*   attrs = THREADVAR(attributes); */
+  /*   uid = THREADVAR(uid); */
+  /* } */
+  /* if (attrs) { */
+  /*   for (count = 0; attrs[count]; count++) { */
+  /*     char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL); */
+  /*     if (!lives_strcmp(name, pname)) { */
+  /*       lives_free(pname); */
+  /*       return NULL; */
+  /*     } */
+  /*     lives_free(pname); */
+  /*   } */
+  /* } */
 
-  attrs = lives_realloc(attrs, (count + 2) * sizeof(lives_obj_attr_t *));
+  /* attrs = lives_realloc(attrs, (count + 2) * sizeof(lives_obj_attr_t *)); */
 
-  attr = lives_plant_new_with_refcount(LIVES_WEED_SUBTYPE_OBJ_ATTR);
-  weed_set_string_value(attr, WEED_LEAF_NAME, name);
-  weed_set_int64_value(attr, LIVES_LEAF_OWNER, uid);
+  /* attr = lives_plant_new_with_refcount(LIVES_WEED_SUBTYPE_OBJ_ATTR); */
+  /* weed_set_string_value(attr, WEED_LEAF_NAME, name); */
+  /* weed_set_int64_value(attr, LIVES_LEAF_OWNER, uid); */
 
-  if (obj) weed_add_plant_flags(attr, WEED_FLAG_IMMUTABLE, LIVES_LEAF_REFCOUNTER);
+  /* if (obj) weed_add_plant_flags(attr, WEED_FLAG_IMMUTABLE, LIVES_LEAF_REFCOUNTER); */
 
-  // set types for default and for value
-  weed_leaf_set(attr, WEED_LEAF_VALUE, st, 0, NULL);
-  weed_leaf_set(attr, WEED_LEAF_DEFAULT, st, 0, NULL);
+  /* // set types for default and for value */
+  /* weed_leaf_set(attr, WEED_LEAF_VALUE, st, 0, NULL); */
+  /* weed_leaf_set(attr, WEED_LEAF_DEFAULT, st, 0, NULL); */
 
-  if (obj) weed_add_plant_flags(attr, WEED_FLAG_UNDELETABLE, NULL);
+  /* if (obj) weed_add_plant_flags(attr, WEED_FLAG_UNDELETABLE, NULL); */
 
-  attrs[count++] = attr;
-  attrs[count++] = NULL;
+  /* attrs[count++] = attr; */
+  /* attrs[count++] = NULL; */
 
-  if (obj) {
-    weed_set_plantptr_array(obj, "attrs", count, attrs);
-    lives_free(attrs);
-  } else THREADVAR(attributes) = attrs;
-  return attr;
+  /* if (obj) { */
+  /*   weed_set_plantptr_array(obj, "attrs", count, attrs); */
+  /*   lives_free(attrs); */
+  /* } else THREADVAR(attributes) = attrs; */
+  return NULL;
 }
 
 

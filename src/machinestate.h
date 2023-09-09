@@ -180,24 +180,18 @@ char *get_current_timestamp(void);
 #define lives_millisleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=ONE_MILLION; \
     while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1&&errno!=ETIMEDOUT);}while(0);
 
-// sleep for 1usec (lives_micro_sleep_...)
-#define lives_Xnanosleep_until_nonzero(condition) \
+#define lives_microsleep_until_nonzero(condition) \
   {while (!(condition))lives_microsleep;}
+#define lives_microsleep_until_zero(condition)lives_microsleep_until_nonzero(!(condition))
+#define lives_microsleep_while_false(c)lives_microsleep_until_nonzero(c)
+#define lives_microsleep_while_true(c)lives_microsleep_until_zero(c)
 
-// sleep for 1msec (should really be lives_millisleep_)
-#define lives_nanosleep_until_nonzero(condition)		\
-  {while(!(condition))lives_millisleep;}
-#define lives_nanosleep_until_zero(condition) {while((condition))lives_millisleep;}
-#define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
-#define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
+void lives_spin(void);
 
-/* #define lives_microsleep_until_nonzero_timeout(p_err, condition, timeout) do { \ */
-/*     uint64_t tmout = timeout; {while(!(condition) && tmout--)lives_microsleep;}	\ */
-/*     if (p_err != NULL) *p_err = (condition);} while (0); */
-
-/* #define lives_millisleep_until_nonzero_timeout(p_err, condition, timeout) do { \ */
-/*     uint64_t tmout = timeout; while(!(condition) && tmout--)lives_millisleep; \ */
-/*     if (p_err != NULL) *p_err = (condition);} while (0); */
+#define lives_nanosleep_until_nonzero(condition){while(!(condition))lives_spin();}
+#define lives_nanosleep_until_zero(condition)lives_nanosleep_until_nonzero(!(condition))
+#define lives_nanosleep_while_false(c)lives_nanosleep_until_nonzero(c)
+#define lives_nanosleep_while_true(c)lives_nanosleep_until_zero(c)
 
 int check_dev_busy(char *devstr);
 
@@ -336,7 +330,7 @@ boolean get_distro_dets(void);
 
 void get_monitors(boolean reset);
 
-boolean get_machine_dets(void);
+boolean get_machine_dets(int phase);
 int get_num_cpus(void);
 double get_disk_load(const char *mp);
 double check_disk_pressure(double current);

@@ -483,8 +483,10 @@ struct _output_node {
 
   // the layer size as it exits from this output. Width is measured in pixels
   // generally all inputs and outputs have identical sizes
-  // if the input it connects to has an different size, we must resize
+  // if the input it connects to has a different size, we must resize
   int width, height;
+
+  int maxwidth, maxheight, minwidth, minheight;
 
   // in some cases the out palette can vary per output track
   // if npals is 0, then we use the global values from the node
@@ -725,7 +727,7 @@ typedef struct {
 
 // define the neural network for estimating resize / palconv tcosts
 #define TIMING_ANN_NLAYERS 3
-#define TIMING_ANN_LCOUNTS {36, 18, 10}
+#define TIMING_ANN_LCOUNTS {36, 48, 8}
 
 // substep -> testdata mapping for ANN
 #define TIMING_ANN_OUTSIZE	0
@@ -744,8 +746,14 @@ typedef struct {
 
 typedef struct {
   lives_ann_t *ann;
+  int ann_gens;
+  pthread_mutex_t ann_mutex;
   LiVESList *proc_times;
+  int cpu_nsamples;
+  float av_cpuload;
+  double tot_duration;
   double bytes_per_sec;
+  double gbytes_per_sec;
 } glob_timedata_t;
 
 typedef struct _exec_plan exec_plan_t;
@@ -775,6 +783,11 @@ struct _plan_step {
   int track; // for conv / load
   int dchan, schan;
   //
+  int ini_width, ini_height;
+  int ini_iwidth, ini_iheight;
+  int ini_pal, ini_gamma;
+  int ini_sampling, ini_subspace, ini_clamping;
+
   int fin_width, fin_height;
   int fin_iwidth, fin_iheight;
   int fin_pal, fin_gamma;
@@ -788,7 +801,7 @@ struct _plan_step {
   uint64_t opts;
 }; // plan_step_t
 
-// flagbits for pan and for steps
+// flagbits for plan and for steps
 
 // initial, pre-execution state
 #define PLAN_STATE_INERT	0
@@ -879,6 +892,8 @@ struct _exec_plan {
 void build_nodemodel(lives_nodemodel_t **);
 void free_nodemodel(lives_nodemodel_t **);
 
+void ann_roll_cancel(void);
+
 void cleanup_nodemodel(lives_nodemodel_t **);
 
 exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
@@ -908,5 +923,7 @@ double get_min_cost_to_node(inst_node_t *, int cost_type);
 lives_result_t inst_node_set_flags(inst_node_t *n, uint64_t flags);
 
 void describe_chains(lives_nodemodel_t *);
+
+void ann_roll_cancel(void);
 
 #endif

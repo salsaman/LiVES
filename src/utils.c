@@ -201,15 +201,16 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
   }
   //g_print("doing: %s\n",com);
 
-  if (is_fg_thread()) {
-    if (mainw && mainw->is_ready && !mainw->is_exiting &&
-        ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
-         (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
-      cnorm = TRUE;
-      lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  if (mainw->is_ready) {
+    if (is_fg_thread()) {
+      if (mainw && mainw->is_ready && !mainw->is_exiting &&
+          ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
+           (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
+        cnorm = TRUE;
+        lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+      }
     }
   }
-
   do {
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
@@ -223,6 +224,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
         strg = fgets(xbuff + totlen, tbuff ? buflen : buflen - totlen, fp);
         err = ferror(fp);
         if (err || !strg || !*strg) break;
+
         slen = lives_strlen(xbuff);
         if (tbuff) {
           lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(tbuff), &end_iter);

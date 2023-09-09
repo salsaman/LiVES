@@ -105,6 +105,8 @@ _palette *palette;
 ssize_t sizint, sizdbl, sizshrt;
 mainwindow *mainw;
 
+pthread_t main_thread = 0;
+
 capabilities *capable;
 //////////////////////////////////////////
 static _ign_opts ign_opts;
@@ -362,83 +364,80 @@ void catch_sigint(int signum) {
   // trap for ctrl-C and others
   //if (mainw->jackd) lives_jack_end();
 
-  lives_hooks_trigger(NULL, FATAL_HOOK);
-
-  if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
+  if (!pthread_equal(main_thread, pthread_self())) {
     // if we are not the main thread, just exit
     GET_PROC_THREAD_SELF(self);
+    g_print("Signal %d received by thread ", signum);
     lives_thread_data_t *mydata = get_thread_data();
-
+    char *tnum = get_thread_id(mydata->vars.var_uid);
+    g_print("%s\n", tnum);
     //if (mydata) {
     lives_proc_thread_set_signalled(self, signum, mydata);
-    g_print("Thread got signal %d\n", signum);
     pthread_detach(pthread_self());
   }
 
-#ifdef QUICK_EXIT
+  //#ifdef QUICK_EXIT
   /* shoatend(); */
   /* fprintf(stderr, "shoatt end"); */
   /* fflush(stderr); */
-  exit(signum);
-#endif
-  if (mainw) {
-    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
+  if (!mainw) exit(signum);
 
-    if (LIVES_MAIN_WINDOW_WIDGET) {
-      if (mainw->foreign) {
-        exit(signum);
-      }
+  //#endif
+  lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
 
-      if (mainw->record) backup_recording(NULL, NULL);
+  if (mainw->foreign) {
+    exit(signum);
+  }
 
-      if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
-      mainw->fatal = TRUE;
+  if (mainw->record) backup_recording(NULL, NULL);
 
-      if (signum == LIVES_SIGABRT || signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
-        mainw->memok = FALSE;
-        signal(LIVES_SIGSEGV, SIG_DFL);
-        signal(LIVES_SIGABRT, SIG_DFL);
-        signal(LIVES_SIGFPE, SIG_DFL);
-        fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
-                          "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
-        fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
-                          "distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
+  if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
+  mainw->fatal = TRUE;
 
-        if (capable->has_gdb) {
-          if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
-          else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
-        } else {
-          fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option "
-                                  "to collect more information.\n\n"));
-        }
+  if (signum == LIVES_SIGABRT || signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
+    mainw->memok = FALSE;
+    signal(LIVES_SIGSEGV, SIG_DFL);
+    signal(LIVES_SIGABRT, SIG_DFL);
+    signal(LIVES_SIGFPE, SIG_DFL);
+    fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
+                      "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
+    fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
+                      "distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
+
+    if (capable->has_gdb) {
+      if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
+      else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
+    } else {
+      fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option "
+                              "to collect more information.\n\n"));
+    }
 
 #ifdef USE_GLIB
 #ifdef LIVES_NO_DEBUG
-        if (mainw->debug) {
+    if (mainw->debug) {
 #endif
 #ifdef HAVE_PRCTL
-          prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
+      prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
 #endif
-          g_on_error_query(capable->myname_full);
+      g_on_error_query(capable->myname_full);
 #ifdef LIVES_NO_DEBUG
-        }
+    }
 #endif
 #endif
 #ifndef GDB_ON
-        _exit(signum);
+    _exit(signum);
 #endif
-      }
-
-      if (mainw->was_set) {
-        if (mainw->memok) fprintf(stderr, "%s", _("Preserving set.\n"));
-      }
-
-      mainw->leave_recovery = mainw->leave_files = TRUE;
-
-      mainw->only_close = FALSE;
-      lives_exit(signum);
-    }
   }
+
+  if (mainw->was_set) {
+    if (mainw->memok) fprintf(stderr, "%s", _("Preserving set.\n"));
+  }
+
+  mainw->leave_recovery = mainw->leave_files = TRUE;
+
+  mainw->only_close = FALSE;
+  lives_exit(signum);
+
   exit(signum);
 }
 
@@ -545,6 +544,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   else
     capable->hw.byte_order = LIVES_LITTLE_ENDIAN;
 
+  main_thread = pthread_self();
   capable->main_thread = pthread_self();
   capable->gui_thread = pthread_self();
 

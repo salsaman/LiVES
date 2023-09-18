@@ -7,6 +7,8 @@
 #ifndef _ALARMS_H_
 #define _ALARMS_H_
 
+#include <signal.h>
+
 typedef int lives_alarm_t;
 
 /// lives_alarms
@@ -26,24 +28,32 @@ typedef int lives_alarm_t;
 typedef struct {
   ticks_t tleft;
   volatile ticks_t lastcheck;
-
-  // sys timers
-  volatile timer_t *tidp;
-  volatile boolean triggered;
 } lives_timeout_t;
+
+typedef struct {
+  // sys timers
+  timer_t tid;
+  volatile boolean triggered;
+} lives_timer_t;
 
 lives_alarm_t lives_alarm_set(ticks_t ticks);
 ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
 boolean lives_alarm_clear(lives_alarm_t alarm_handle);
 lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks);
 
-#define LIVES_TIMER_SIG SIGRTMIN+8 // 42
+typedef void (*lives_sigfunc_t)(int signum, siginfo_t *si, void *uc);
 
-typedef lives_timeout_t lives_timer_t;
+#define LIVES_TIMER_SIG SIGRTMIN+8 // 42
 
 void timer_handler(int sig, siginfo_t *si, void *uc);
 
-lives_timer_t *lives_timer_create(uint64_t delay);
-void lives_timer_free(lives_timer_t *);
+void thread_signal_establish(int sig, lives_sigfunc_t sigfunc);
+void thrd_signal_unblock(int sig, boolean thrd_specific);
+void thrd_signal_block(int sig, boolean thrd_specific);
+
+lives_timer_t *lives_timer_create(lives_timer_t *, uint64_t delay);
+void lives_timer_delete(lives_timer_t *);
+
+#define lives_spin() do {lives_nanosleep(1);} while (0);
 
 #endif

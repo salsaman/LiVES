@@ -191,6 +191,8 @@ weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
 
+lives_sync_list_t *lives_layer_get_copylist(lives_layer_t *);
+
 void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t);
 
 int lives_layer_guess_palette(weed_layer_t *);

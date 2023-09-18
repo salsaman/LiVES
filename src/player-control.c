@@ -1034,7 +1034,6 @@ void play_file(void) {
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
 
-  //
   if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT);
 
   if (mainw->ext_playback) {

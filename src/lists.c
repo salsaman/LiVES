@@ -8,7 +8,7 @@
 
 
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
-  lives_sync_list_t *synclist = (lives_sync_list_t *)lives_calloc(1, sizeof(lives_sync_list_t));
+  LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
   pthread_mutex_init(&synclist->mutex, NULL);
   return synclist;
 }
@@ -20,6 +20,21 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_add(lives_sync_list_t *sy
   synclist->list = lives_list_prepend(synclist->list, data);
   pthread_mutex_unlock(&synclist->mutex);
   return synclist;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_sync_list_pop(lives_sync_list_t *synclist) {
+  LiVESList *list = NULL;
+  if (!synclist) return NULL;
+  pthread_mutex_lock(&synclist->mutex);
+  list = synclist->list;
+  if (list) {
+    synclist->list = list->next;
+    if (synclist->list) synclist->list->prev = NULL;
+    list->next = NULL;
+  }
+  pthread_mutex_unlock(&synclist->mutex);
+  return list;
 }
 
 

@@ -465,11 +465,13 @@ static boolean pre_init(void) {
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
   // linked to the proc_thread currently being actioned
 
+  // we have to do some manual actions which are normal done automaticlly when a thread is added to the pool
   mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
   lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
 
-  lives_thread_push_self(mainw->def_lpt);
-
+  // set the active proc_thread for the main pthread
+  lives_thread_switch_self(mainw->def_lpt, FALSE);
+  
   // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
   // to the thread hook_stacks instead
 
@@ -1712,7 +1714,8 @@ static boolean lives_startup2(livespointer data) {
 
   // this can only be added AFTER calling check_for_recovery_files, otherwise we get stuck
   // showing the query dialog
-  mainw->fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
+
+  lives_idle_priority(fg_service_ready_cb, NULL);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -1897,21 +1900,24 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #else
   if (mainw->debug) prefs->nfx_threads = 2;
 #endif
-
+  
   //do_startup_diagnostics(test_opts);
 
   get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
   get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX);
 
-  g_printerr("Getting phase 1 hardware details...\n");
+  g_printerr("Getting phase 1 hardware details...");
   get_machine_dets(0);
   g_printerr("OK\n");
 
-  g_printerr("Initializing memory block allocators...\n");
+  g_printerr("Initializing memory block allocators...");
 
   init_memfuncs(1);
+  g_printerr("OK\n");
+  g_printerr("Initializing Weed functions...");
   weed_functions_init();
-
+  g_printerr("OK\n");
+  g_printerr("Initializing threadpool...");
   lives_threadpool_init();
   g_printerr("OK\n");
 
@@ -1919,7 +1925,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   get_machine_dets(1);
   g_printerr("OK\n");
 
+  g_printerr("Initializing RNG...");
   init_random();
+  g_printerr("OK\n");
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
@@ -1939,7 +1947,14 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_plant_new = weed_plant_new_host;
 #endif
 
+  thread_signal_establish(LIVES_TIMER_SIG, timer_handler);
+
+  // unblock just for calling thread (main thread)
+  thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);  
+
+  g_printerr("Initializing colour engine...");
   init_colour_engine();
+  g_printerr("OK\n");
 
   make_std_icaps();
 
@@ -1948,10 +1963,12 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
     weed_threadsafe = TRUE;
   else weed_threadsafe = FALSE;
-  do_test();
+
   weed_plant_free(test_plant);
 
+  g_printerr("Initializing GUI toolkit...");
   widget_helper_init();
+  g_printerr("OK\n");
 
 #ifdef WEED_WIDGETS
   widget_klasses_init(LIVES_TOOLKIT_GTK);

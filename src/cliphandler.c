@@ -437,7 +437,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     char *lives_header_bak = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_BAK);
     char *temp_backend = use_staging_dir_for(which);
     if (!mainw->signals_deferred) {
-      set_signal_handlers((SignalHandlerPointer)defer_sigint);
+      set_signal_handlers((lives_sigfunc_t)defer_sigint);
       needs_sigs = TRUE;
     }
     com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",
@@ -445,8 +445,8 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     lives_system(com, FALSE);
     lives_cp(lives_header, lives_header_bak);
     pthread_mutex_unlock(&sfile->transform_mutex);
-    if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
-    if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+    if (needs_sigs) set_signal_handlers((lives_sigfunc_t)catch_sigint);
     lives_free(temp_backend);
     lives_free(com);
     lives_free(lives_header_bak);
@@ -476,7 +476,7 @@ boolean save_clip_values(int which) {
 
   if (!which || which == mainw->scrap_file || which == mainw->ascrap_file) return TRUE;
 
-  set_signal_handlers((SignalHandlerPointer)defer_sigint); // ignore ctrl-c
+  set_signal_handlers((lives_sigfunc_t)defer_sigint); // ignore ctrl-c
 
   asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
   endian = sfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -492,8 +492,8 @@ boolean save_clip_values(int which) {
     if (!mainw->clip_header) {
       retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
-        set_signal_handlers((SignalHandlerPointer)catch_sigint);
-        if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+        set_signal_handlers((lives_sigfunc_t)catch_sigint);
+        if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
         lives_free(lives_header_new);
         lives_free(clipdir);
         return FALSE;
@@ -576,8 +576,8 @@ boolean save_clip_values(int which) {
 
   lives_free(clipdir);
 
-  if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
-  set_signal_handlers((SignalHandlerPointer)catch_sigint);
+  if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+  set_signal_handlers((lives_sigfunc_t)catch_sigint);
 
   lives_free(lives_header_new);
 
@@ -628,7 +628,7 @@ boolean del_clip_value(int which, lives_clip_details_t what) {
   THREADVAR(com_failed) = FALSE;
 
   if (!mainw->signals_deferred) {
-    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    set_signal_handlers((lives_sigfunc_t)defer_sigint);
     needs_sigs = TRUE;
   }
 
@@ -637,9 +637,9 @@ boolean del_clip_value(int which, lives_clip_details_t what) {
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+  if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
   else lives_cp(lives_header, lives_header_bak);
-  if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
+  if (needs_sigs) set_signal_handlers((lives_sigfunc_t)catch_sigint);
   lives_free(temp_backend);
   lives_free(lives_header_bak);
   lives_free(lives_header);

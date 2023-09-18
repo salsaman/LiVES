@@ -395,7 +395,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   if (!tdata) {
     tdata = get_thread_data();
-    lives_thread_push_self(self);
+    lives_thread_switch_self(self, FALSE);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Reader Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
@@ -1459,7 +1459,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   if (!tdata) {
     tdata = get_thread_data();
-    lives_thread_push_self(self);
+    lives_thread_switch_self(self, FALSE);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
@@ -1990,11 +1990,11 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
 
-  timer = lives_timer_create(MILLIONS(5));
+  timer = lives_timer_create(NULL, MILLIONS(5));
   lives_microsleep_until_nonzero(timer->triggered
                                  || pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
 
-  lives_timer_free(timer);
+  lives_timer_delete(timer);
 
   pa_operation_unref(pa_op);
   pa_mloop_unlock();

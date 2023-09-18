@@ -274,21 +274,22 @@ boolean ret = TRUE;
 #endif
 static char errdets[512], errmsg[512];
 
-void defer_sigint(int signum) {
+void defer_sigint(int signum, siginfo_t *si, void *uc) {
   // here we can prepare for and handle specific fn calls which we know may crash / abort
   // provided if we know ahead of time.
   // The main reason would be to show an error dialog and then exit, or transmit some error code first,
   // rather than simply doing nothing and aborting /exiting.
   // we should do the minimum necessary and exit, as the stack may be corrupted.
 
-  if (mainw->err_funcdef) lives_snprintf(errdets, 512, " in function %s, %s line %d", mainw->err_funcdef->funcname,
+  if (signum >= 0) {
+    if (mainw->err_funcdef) lives_snprintf(errdets, 512, " in function %s, %s line %d", mainw->err_funcdef->funcname,
                                            mainw->err_funcdef->file, mainw->err_funcdef->line);
 
-  lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
-                 *errdets ? errdets : NULL);
+    lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
+		   *errdets ? errdets : NULL);
 
-  LIVES_ERROR_NOBRK(errmsg);
-
+    LIVES_ERROR_NOBRK(errmsg);
+  }
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK
   case 1:
@@ -353,16 +354,23 @@ void defer_sigint(int signum) {
 boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl) {
   int crpos = mainw->crash_possible;
   mainw->crash_possible = LIVES_POINTER_TO_INT(pdtl);
-  defer_sigint(-1);
+  defer_sigint(-1, NULL, NULL);
   mainw->crash_possible = crpos;
   return FALSE;
 }
 
 
 //#define QUICK_EXIT
-void catch_sigint(int signum) {
+void catch_sigint(int signum, siginfo_t *si, void *uc) {
   // trap for ctrl-C and others
-  //if (mainw->jackd) lives_jack_end();
+  // if (mainw->jackd) lives_jack_end();
+  boolean has_si = TRUE;
+  if (signum < 0) {
+    has_si = FALSE;
+    signum = -signum;
+  }
+
+  if (mainw) mainw->critical = TRUE;
 
   if (!pthread_equal(main_thread, pthread_self())) {
     // if we are not the main thread, just exit
@@ -376,33 +384,64 @@ void catch_sigint(int signum) {
     pthread_detach(pthread_self());
   }
 
+  if (!mainw) {
+    if (signum == LIVES_SIGSEGV) {
+      fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+    }
+    fflush(stderr);
+    exit(signum);
+  }
+
   //#ifdef QUICK_EXIT
   /* shoatend(); */
   /* fprintf(stderr, "shoatt end"); */
   /* fflush(stderr); */
-  if (!mainw) exit(signum);
 
   //#endif
   lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
 
-  if (mainw->foreign) {
-    exit(signum);
-  }
+  if (mainw->foreign) _exit(signum);
 
   if (mainw->record) backup_recording(NULL, NULL);
 
-  if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
-  mainw->fatal = TRUE;
+  if (signum == LIVES_SIGABRT) {
+    fprintf(stderr, "%s", _("Program aborted\n\n"));
+    _exit(signum);
+  }
 
-  if (signum == LIVES_SIGABRT || signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
+  if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
+
+  if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
     mainw->memok = FALSE;
-    signal(LIVES_SIGSEGV, SIG_DFL);
-    signal(LIVES_SIGABRT, SIG_DFL);
-    signal(LIVES_SIGFPE, SIG_DFL);
+
     fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
                       "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
     fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
                       "distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
+
+    if (signum == LIVES_SIGSEGV) {
+      fprintf(stderr, "Segmentation fault, ");
+      if (mainw->critical) {
+	fprintf(stderr, "raised by thread");
+	if (mainw->critical_thread)
+	  fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
+	fprintf(stderr, "\n");
+	if (mainw->critical_errno) {
+	  fprintf(stderr, "Error code was %d", mainw->critical_errno);
+	  if (mainw->critical_errmsg)
+	    fprintf(stderr, ", %s", mainw->critical_errmsg);
+	  fprintf(stderr, "\n");
+	}
+      }
+      else {
+	if (has_si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+      }
+    }
+    else {
+      if(has_si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
+    }
+
+      fprintf(stderr, "\n");
 
     if (capable->has_gdb) {
       if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
@@ -444,56 +483,103 @@ void catch_sigint(int signum) {
 #ifdef USE_GLIB
 static boolean glib_sighandler(livespointer data) {
   int signum = LIVES_POINTER_TO_INT(data);
-  catch_sigint(signum);
+  catch_sigint(-signum, NULL, NULL);
   return TRUE;
 }
 #endif
 
-void set_signal_handlers(SignalHandlerPointer sigfunc) {
-  sigset_t smask;
-  struct sigaction sact;
 
-  memset(errmsg, 0, 512);
-  memset(errdets, 0, 512);
+LIVES_GLOBAL_INLINE void ign_signal_handlers(void) {
+  // sigkill, sigstop cannot be changed
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
 
-  sigemptyset(&smask);
+  sigaddset(&sa.sa_mask, LIVES_SIGINT);
+  sigaddset(&sa.sa_mask, LIVES_SIGTERM);
+  sigaddset(&sa.sa_mask, LIVES_SIGFPE);
+  sigaddset(&sa.sa_mask, LIVES_SIGSEGV);
+
+  sa.sa_handler = SIG_IGN;
+  sa.sa_flags = 0;
+
+  sigaction(LIVES_SIGINT, &sa, NULL);
+  sigaction(LIVES_SIGTERM, &sa, NULL);
+  sigaction(LIVES_SIGFPE, &sa, NULL);
+  sigaction(LIVES_SIGSEGV, &sa, NULL);
+}
+
+
+void set_signal_handlers(lives_sigfunc_t sigfunc) {
+  static boolean set_sighup = FALSE;
+  static void *alt_stack = NULL;
+  stack_t ss;
+  struct sigaction sa;
+
+  // use alt_stack for SIGSEGV /////////
+  if (sigemptyset(&sa.sa_mask) == -1)
+    LIVES_FATAL("Sigemptyset failed for SIGSEGV handler");
+
+  if (!alt_stack) alt_stack = lives_malloc(SIGSTKSZ);
+  if (!alt_stack) LIVES_FATAL("Could not allocate alt_stack for SIGSEGV handler");
+  ss.ss_sp = alt_stack;
+  ss.ss_size = SIGSTKSZ;
+  ss.ss_flags = 0;
+  if (sigaltstack(&ss, NULL) == -1)
+    LIVES_FATAL("Could not set alt_stack for SIGSEGV handler");
+  sa.sa_flags = SA_ONSTACK;
+  sa.sa_sigaction = sigfunc;
+
+  if (sigaction(SIGSEGV, &sa, NULL) == -1)
+    LIVES_FATAL("Could not set sigaction for SIGSEGV handler");
+
+  ///////////////////////////
+  
+  // remaining signals can use std stack
+  if (sigemptyset(&sa.sa_mask) == -1)
+    LIVES_FATAL("Sigemptyset failed for signal handler");
 
 #define USE_GLIB_SIGHANDLER
 #ifdef USE_GLIB_SIGHANDLER
   g_unix_signal_add(LIVES_SIGINT, glib_sighandler, LIVES_INT_TO_POINTER(LIVES_SIGINT));
   g_unix_signal_add(LIVES_SIGTERM, glib_sighandler, LIVES_INT_TO_POINTER(LIVES_SIGTERM));
 #else
-  sigaddset(&smask, LIVES_SIGINT);
-  sigaddset(&smask, LIVES_SIGTERM);
+  sigaddset(&sa.sa_mask, LIVES_SIGINT);
+  sigaddset(&sa.sa_mask, LIVES_SIGTERM);
 #endif
 
-  sigaddset(&smask, LIVES_SIGSEGV);
-  sigaddset(&smask, LIVES_SIGABRT);
-  sigaddset(&smask, LIVES_SIGFPE);
+  // signals which should be blocked during execution of handler
+  sigaddset(&sa.sa_mask, LIVES_SIGABRT);
+  sigaddset(&sa.sa_mask, LIVES_SIGFPE);
 
-  sact.sa_handler = sigfunc;
-  sact.sa_flags = 0;
-  sact.sa_mask = smask;
 
-  sigaction(LIVES_SIGINT, &sact, NULL);
-  sigaction(LIVES_SIGTERM, &sact, NULL);
-  sigaction(LIVES_SIGSEGV, &sact, NULL);
-  sigaction(LIVES_SIGABRT, &sact, NULL);
-  sigaction(LIVES_SIGFPE, &sact, NULL);
+  sa.sa_sigaction = sigfunc;
+  sa.sa_flags = SA_SIGINFO;
+
+  sigaction(LIVES_SIGINT, &sa, NULL);
+  sigaction(LIVES_SIGTERM, &sa, NULL);
+  sigaction(LIVES_SIGSEGV, &sa, NULL);
+  sigaction(LIVES_SIGABRT, &sa, NULL);
+  sigaction(LIVES_SIGFPE, &sa, NULL);
+
+  if (!set_sighup) {
+    set_sighup = TRUE;
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, LIVES_SIGHUP);
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+    sa.sa_mask = sa.sa_mask;
+    sigaction(LIVES_SIGHUP, &sa, NULL);
+  }
 
   if (mainw) {
     if (sigfunc == defer_sigint) {
       mainw->signals_deferred = TRUE;
     } else {
-      sigemptyset(&smask);
-      sigaddset(&smask, LIVES_SIGHUP);
-      sact.sa_handler = SIG_IGN;
-      sact.sa_flags = 0;
-      sact.sa_mask = smask;
-      sigaction(LIVES_SIGHUP, &sact, NULL);
       mainw->signals_deferred = FALSE;
     }
   }
+  memset(errmsg, 0, 512);
+  memset(errdets, 0, 512);
 }
 
 
@@ -519,7 +605,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #endif
 
-  set_signal_handlers((SignalHandlerPointer)catch_sigint);
+  set_signal_handlers((lives_sigfunc_t)catch_sigint);
 
   lives_memset(&ign_opts, 0, sizeof(ign_opts));
 

@@ -1428,7 +1428,7 @@ retry_connect:
 
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
-      set_signal_handlers((SignalHandlerPointer)defer_sigint);
+      set_signal_handlers((lives_sigfunc_t)defer_sigint);
       needs_sigs = TRUE;
     }
 
@@ -1445,7 +1445,7 @@ retry_connect:
     lives_hook_remove(defer_lpt);
 
     if (needs_sigs) {
-      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      set_signal_handlers((lives_sigfunc_t)catch_sigint);
       mainw->crash_possible = 0;
     }
 
@@ -1472,7 +1472,7 @@ retry_connect:
                                   defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
-      set_signal_handlers((SignalHandlerPointer)defer_sigint);
+      set_signal_handlers((lives_sigfunc_t)defer_sigint);
       needs_sigs = TRUE;
     }
 
@@ -1487,7 +1487,7 @@ retry_connect:
     lives_hook_remove(defer_lpt);
 
     if (needs_sigs) {
-      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      set_signal_handlers((lives_sigfunc_t)catch_sigint);
       mainw->crash_possible = 0;
     }
     if (jackd->client) {
@@ -1829,7 +1829,7 @@ retry_connect:
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_server_open()
-    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    set_signal_handlers((lives_sigfunc_t)defer_sigint);
     needs_sigs = TRUE;
   }
 
@@ -1843,7 +1843,7 @@ retry_connect:
     lives_hook_remove(defer_lpt);
 
     if (needs_sigs) {
-      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      set_signal_handlers((lives_sigfunc_t)catch_sigint);
       mainw->crash_possible = 0;
     }
 
@@ -1875,7 +1875,7 @@ retry_connect:
     lives_hook_remove(defer_lpt);
 
     if (needs_sigs) {
-      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      set_signal_handlers((lives_sigfunc_t)catch_sigint);
       mainw->crash_possible = 0;
     }
     logmsg = lives_strdup_printf("Could not start jack2 server named '%s' for %s client",
@@ -1899,7 +1899,7 @@ retry_connect:
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_client_open()
-    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    set_signal_handlers((lives_sigfunc_t)defer_sigint);
     needs_sigs = TRUE;
   }
 
@@ -1909,7 +1909,7 @@ retry_connect:
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     lives_hook_remove(defer_lpt);
     if (needs_sigs) {
-      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      set_signal_handlers((lives_sigfunc_t)catch_sigint);
       mainw->crash_possible = 0;
     }
 
@@ -1929,7 +1929,7 @@ retry_connect:
   lives_hook_remove(defer_lpt);
 
   if (needs_sigs) {
-    set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    set_signal_handlers((lives_sigfunc_t)catch_sigint);
     mainw->crash_possible = 0;
   }
 
@@ -2493,7 +2493,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
     // in the sense that it runs this function, but by being "queued" by an external entity
     self = jackd->inst;
-    lives_thread_push_self(self);
+    lives_thread_switch_self(self, FALSE);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
   }
@@ -3599,7 +3599,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
     // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
     // in the sense that it runs this function, but by being "queued" by an external entity
     self = jackd->inst;
-    lives_thread_push_self(self);
+    lives_thread_switch_self(self, FALSE);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
   }

@@ -3602,7 +3602,6 @@ void threaded_dialog_auto_spin(void) {
 void threaded_dialog_stop_spin(void) {
   if (mainw->dlg_spin_thread) {
     lives_proc_thread_request_cancel(mainw->dlg_spin_thread, FALSE);
-    lives_proc_thread_wait_done(mainw->dlg_spin_thread, 0);
     lives_proc_thread_join(mainw->dlg_spin_thread);
     mainw->dlg_spin_thread = NULL;
   }

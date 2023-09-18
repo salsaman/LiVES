@@ -139,65 +139,125 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
 
 
 void timer_handler(int sig, siginfo_t *si, void *uc) {
-  volatile lives_timer_t *xtimer;
-
-  if (!THREADVAR(uid)) return;
-  thread_signal_block(LIVES_TIMER_SIG);
-  xtimer = THREADVAR(xtimer);
-  // doesnt work !!!
-  //(lives_timer_t *)si->si_value.sival_ptr;
-
+  lives_timer_t *xtimer = (lives_timer_t *)si->si_value.sival_ptr;
   if (xtimer) {
-    if (xtimer->tidp) {
-      // valgrind - undefined here !?
-      timer_delete(*xtimer->tidp);
-      xtimer->tidp = NULL;
-    }
     xtimer->triggered = TRUE;
+    lives_timer_delete(xtimer);
   }
 }
 
 
-void lives_timer_free(lives_timer_t *xtimer) {
-  thread_signal_block(LIVES_TIMER_SIG);
-  if (xtimer && xtimer == THREADVAR(xtimer)) {
-    THREADVAR(xtimer) = NULL;
-    if (xtimer->tidp) {
-      timer_delete(*xtimer->tidp);
-      xtimer->tidp = NULL;
+LIVES_GLOBAL_INLINE void thread_signal_establish(int sig, lives_sigfunc_t sigfunc) {
+  // establish a signal handler for signum
+  // initially this is blocked for the process
+  // it can then be unblocked either process wide, or just for the caller thread
+  struct sigaction sa;
+
+  thrd_signal_block(sig, FALSE);  
+  thrd_signal_block(sig, TRUE);  
+  sa.sa_sigaction = sigfunc;
+  sa.sa_flags = SA_SIGINFO;
+  sigemptyset(&sa.sa_mask);
+  sigaction(sig, &sa, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE void thrd_signal_unblock(int sig, boolean thrd_specific) {
+  sigset_t sigset;
+
+  sigemptyset(&sigset);
+  sigaddset(&sigset, sig);
+
+  if (!thrd_specific) {
+    if (sigprocmask(SIG_UNBLOCK, &sigset, NULL) == -1) {
+      char *msg = lives_strdup_printf("Error in sigproc mask UNBLOCK signal %d", sig);
+      LIVES_FATAL(msg);
     }
-    lives_free(xtimer);
+  }
+  else {
+    // thread specific
+    if (pthread_sigmask(SIG_UNBLOCK, &sigset, NULL)) {
+      char *msg = lives_strdup_printf("Error in pthread_sigmask UNBLOCK signal %d", sig);
+      LIVES_FATAL(msg);
+    }
   }
 }
 
 
-lives_timer_t *lives_timer_create(uint64_t delay) {
+LIVES_GLOBAL_INLINE void thrd_signal_block(int sig, boolean thrd_specific) {
+  sigset_t sigset;
+
+  sigemptyset(&sigset);
+  sigaddset(&sigset, sig);
+
+  if (!thrd_specific) {
+    if (sigprocmask(SIG_BLOCK, &sigset, NULL) == -1) {
+      char *msg = lives_strdup_printf("Error in sigproc mask BLOCK signal %d", sig);
+      LIVES_FATAL(msg);
+    }
+  }
+  else {
+    // thread specific
+    if (pthread_sigmask(SIG_BLOCK, &sigset, NULL)) {
+      char *msg = lives_strdup_printf("Error in pthread_sigmask BLOCK signal %d", sig);
+      LIVES_FATAL(msg);
+    }
+  }
+}
+
+
+lives_timer_t *lives_timer_create(lives_timer_t *xtimer, uint64_t delay) {
   timer_t timerid;
   struct sigevent sev;
   struct itimerspec its;
-  uint64_t dly_nanosecs;
-  lives_timer_t *xtimer;
 
-  // create timer
-  xtimer = lives_calloc(1, sizeof(lives_timer_t));
+  // create timer, this is per process, as the same-thread version is non portable
+  // thread can pass in an xtimer struct, otherwise we allocate one
+  // delay is in nsec, relative to current time. Timer will only trigger once.
+  //
+  // set xtimer as the sigevent.ssgev_value.sival_ptr
+  // when this alarm is triggered, si_info->si_value.sival_ptr should point to the xtimer we set here
+  // then whichever thread runs the singnal handler, it will set
+  // the 'triggered' field of xtimer to TRUE, then remove the timer so it is not called again
+  //
+  // the orignal thread can store xtimer as a local variable or in THREADVAR(xtimer)
+  // by checking the value of 'triggered' it can determine whether the timer has expired or not
+  // in addition, if the xtimer holds a valid proc_thread, and the proc_thread is wait, it will
+  // be sent a resume_request
+  if (!xtimer) xtimer = lives_calloc(1, sizeof(lives_timer_t));
+  else xtimer->triggered = FALSE;
+
+  // tell the timer to send a signal LIVES_TIMER_SIG when it expires
   sev.sigev_notify = SIGEV_SIGNAL;
   sev.sigev_signo = LIVES_TIMER_SIG;
+
+  // pass the created struct as data to callback
   sev.sigev_value.sival_ptr = xtimer;
+
+  // changes to CLOCK_REALTIME do not affect relative times
   if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) return FALSE;
+  xtimer->tid = timerid;
 
   // set the delay (nanoseconds)
-  dly_nanosecs = delay;
-  its.it_value.tv_sec = dly_nanosecs / ONE_BILLION;
-  its.it_value.tv_nsec = dly_nanosecs % ONE_BILLION;
-  its.it_interval.tv_sec = its.it_value.tv_sec;
-  its.it_interval.tv_nsec = its.it_value.tv_nsec;
+  its.it_value.tv_sec = delay / ONE_BILLION;
+  its.it_value.tv_nsec = delay - its.it_value.tv_sec * ONE_BILLION;
+  its.it_interval.tv_sec = its.it_interval.tv_nsec = 0;
+
   if (timer_settime(timerid, 0, &its, NULL) == -1) return NULL;
 
-  xtimer->tidp = (volatile timer_t *)&timerid;
-  THREADVAR(xtimer) = xtimer;
-
-  // unblock timer signal for this thread
-  thread_signal_unblock(LIVES_TIMER_SIG);
-
   return xtimer;
+}
+
+
+void lives_timer_delete(lives_timer_t *xtimer) {
+  if (xtimer) {
+    timer_t timerid = xtimer->tid;
+    xtimer->tid = 0;
+    if (timerid) {
+      struct itimerspec its;
+      its.it_value.tv_sec = its.it_value.tv_nsec = 0;
+      if (!timer_settime(timerid, 0, &its, NULL))
+	timer_delete(timerid);
+    }
+  }
 }

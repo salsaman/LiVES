@@ -963,6 +963,11 @@ typedef struct {
   boolean error; //  --> status
   volatile boolean fatal; ///< got fatal signal --> status
 
+  volatile boolean critical; ///< got critical signal --> status
+  uint64_t critical_thread;
+  int critical_errno;
+  const char *critical_errmsg;
+
   volatile boolean no_idlefuncs;
   uint32_t fg_service_handle;
   GSource *fg_service_source;

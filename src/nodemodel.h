@@ -696,9 +696,12 @@ typedef struct {
 #define OP_RESIZE	0
 #define OP_PCONV	1
 #define OP_GAMMA	2
-#define OP_APPLY_INST	3
-#define OP_MEMCPY	4
-#define N_OP_TYPES	5
+#define OP_LETTERBOX	3
+#define OP_MEMCPY	5
+#define N_OP_TYPES	6
+
+#define OP_APPLY_INST	16
+#define OP_LOAD		17
 
 typedef struct {
   int op_idx;

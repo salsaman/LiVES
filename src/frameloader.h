@@ -13,6 +13,9 @@
 
 // functions that deal with loading (and saving) frames
 
+
+void copy_md5(lives_layer_t *dl, lives_layer_t *sl);
+
 // create "fake" sources - "real" sources are things like
 // clip decoders adn generators,  which operate via plugins.
 // we also have "fake" sources: image loader, filebuffer loader (scrap_frames)

@@ -46,6 +46,10 @@ typedef struct {
 
 extern const lookup_tab crossrefs[];
 
+#define LIVES_LEAF_RETURN_VALUE "return_value"
+
+#define _RV_ LIVES_LEAF_RETURN_VALUE
+
 #define PROC_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  #n
 
 #define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
@@ -83,14 +87,14 @@ extern const lookup_tab crossrefs[];
     default:break;}}while(0);
 
 #define GEN_SET(thing, wret, funcname, FUNCARGS) err = \
-  (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*funcname->funcint)(FUNCARGS)) : \
-     wret == WEED_SEED_DOUBLE ? weed_set_double_value((thing), _RV_, (*funcname->funcdouble)(FUNCARGS)) : \
-     wret == WEED_SEED_BOOLEAN ? weed_set_boolean_value((thing), _RV_, (*funcname->funcboolean)(FUNCARGS)) : \
-     wret == WEED_SEED_STRING ? weed_set_string_value((thing), _RV_, (*funcname->funcstring)(FUNCARGS)) : \
-     wret == WEED_SEED_INT64 ? weed_set_int64_value((thing), _RV_, (*funcname->funcint64)(FUNCARGS)) : \
-     wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*funcname->funcfuncptr)(FUNCARGS)) : \
-     wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*funcname->funcvoidptr)(FUNCARGS)) : \
-     wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*funcname->funcplantptr)(FUNCARGS)) : \
+  (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*(funcname)->funcint)(FUNCARGS)) : \
+     wret == WEED_SEED_DOUBLE ? weed_set_double_value((thing), _RV_, (*(funcname)->funcdouble)(FUNCARGS)) : \
+     wret == WEED_SEED_BOOLEAN ? weed_set_boolean_value((thing), _RV_, (*(funcname)->funcboolean)(FUNCARGS)) : \
+     wret == WEED_SEED_STRING ? weed_set_string_value((thing), _RV_, (*(funcname)->funcstring)(FUNCARGS)) : \
+     wret == WEED_SEED_INT64 ? weed_set_int64_value((thing), _RV_, (*(funcname)->funcint64)(FUNCARGS)) : \
+     wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*(funcname)->funcfuncptr)(FUNCARGS)) : \
+     wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
+     wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*(funcname)->funcplantptr)(FUNCARGS)) : \
    WEED_ERROR_WRONG_SEED_TYPE)
 
 #define ARGS1(thing, t1) GETARG((thing), t1, 0)
@@ -104,15 +108,15 @@ extern const lookup_tab crossrefs[];
 
 // e.g ARGS(7, lpt, t8, t1, ,,,)
 #define _ARGS(n, thing, tn, ...) ARGS##n(thing, __VA_ARGS__), GETARG(thing, tn, n)
-#define CALL_VOID_8(thing, ...) (*thefunc->func)(ARGS8((thing), __VA_ARGS__))
-#define CALL_VOID_7(thing, ...) (*thefunc->func)(ARGS7((thing), __VA_ARGS__))
-#define CALL_VOID_6(thing, ...) (*thefunc->func)(ARGS6((thing), __VA_ARGS__))
-#define CALL_VOID_5(thing, ...) (*thefunc->func)(ARGS5((thing), __VA_ARGS__))
-#define CALL_VOID_4(thing, ...) (*thefunc->func)(ARGS4((thing), __VA_ARGS__))
-#define CALL_VOID_3(thing, ...) (*thefunc->func)(ARGS3((thing), __VA_ARGS__))
-#define CALL_VOID_2(thing, ...) (*thefunc->func)(ARGS2((thing), __VA_ARGS__))
-#define CALL_VOID_1(thing, ...) (*thefunc->func)(ARGS1((thing), __VA_ARGS__))
-#define CALL_VOID_0(thing, dummy) (*thefunc->func)()
+#define CALL_VOID_8(thing, funcname, ...) (*(funcname)->func)(ARGS8((thing), __VA_ARGS__))
+#define CALL_VOID_7(thing, funcname, ...) (*(funcname)->func)(ARGS7((thing), __VA_ARGS__))
+#define CALL_VOID_6(thing, funcname, ...) (*(funcname)->func)(ARGS6((thing), __VA_ARGS__))
+#define CALL_VOID_5(thing, funcname, ...) (*(funcname)->func)(ARGS5((thing), __VA_ARGS__))
+#define CALL_VOID_4(thing, funcname, ...) (*(funcname)->func)(ARGS4((thing), __VA_ARGS__))
+#define CALL_VOID_3(thing, funcname, ...) (*(funcname)->func)(ARGS3((thing), __VA_ARGS__))
+#define CALL_VOID_2(thing, funcname, ...) (*(funcname)->func)(ARGS2((thing), __VA_ARGS__))
+#define CALL_VOID_1(thing, funcname, ...) (*(funcname)->func)(ARGS1((thing), __VA_ARGS__))
+#define CALL_VOID_0(thing, funcname, dummy) (*(funcname)->func)()
 #define XCALL_8(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7, t8)	\
   GEN_SET(thing, wret, funcname, _ARGS(7, (thing), t8, t1, t2, t3, t4, t5, t6, t7))
 #define XCALL_7(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7)	\
@@ -186,6 +190,9 @@ typedef uint64_t funcsig_t;
 weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
 lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, ...);
 boolean call_funcsig(lives_proc_thread_t);
+lives_result_t do_call(lives_proc_thread_t);
+
+#define LIVES_LEAF_RETLOC "retloc"
 
 // funcinst (future use)
 
@@ -251,6 +258,8 @@ enum {
 
 #define FN_REF_TARGET(fname,...) (ADD_NOTEI(_FN_REF,fname,__VA_ARGS__))
 #define FN_UNREF_TARGET(fname,...) (ADD_NOTEI(_FN_UNREF,fname,__VA_ARGS__))
+
+const char *get_funcname(lives_funcptr_t);
 
 // add a note to to ftrace_store, va_args depend on fn_type
 void *add_fn_note(fn_type_t, ...);

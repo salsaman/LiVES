@@ -630,12 +630,12 @@ int orig_argc(void);
 char **orig_argv(void);
 
 // main.c
-typedef void (*SignalHandlerPointer)(int);
 
-void set_signal_handlers(SignalHandlerPointer sigfunc);
-void catch_sigint(int signum);
-void defer_sigint(int signum);
+void set_signal_handlers(lives_sigfunc_t sigfunc);
+void catch_sigint(int signum, siginfo_t *si, void *uc);
+void defer_sigint(int signum, siginfo_t *si, void *uc);
 boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl);
+void ign_signal_handlers(void);
 
 // multitrack-gui.c
 void mt_desensitise(lives_mt *);
@@ -705,7 +705,7 @@ void break_me(const char *dtl);
 
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", (x)); break_me((x)); raise (LIVES_SIGSEGV);}
+#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", (x)); break_me((x)); lives_abort(x);}
 #else // LIVES_NO_CRITICAL
 #define LIVES_CRITICAL(x)      dummychar = (x)
 #endif // LIVES_NO_CRITICAL

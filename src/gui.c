@@ -5035,8 +5035,12 @@ void splash_init(void) {
 
     lives_window_set_monitor(LIVES_WINDOW(mainw->splash_window), widget_opts.monitor);
 
+    if (!(prefs->focus_steal & FOCUS_STEAL_STARTUP))
+      gtk_window_set_focus_on_map(LIVES_WINDOW(mainw->splash_window), FALSE);
+
     lives_window_center(LIVES_WINDOW(mainw->splash_window));
     lives_window_present(LIVES_WINDOW(mainw->splash_window));
+
     if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
       lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 

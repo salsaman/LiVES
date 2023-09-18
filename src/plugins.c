@@ -2688,7 +2688,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     defer_sigint_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0,
                                          defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
-    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    set_signal_handlers((lives_sigfunc_t)defer_sigint);
 
     mainw->err_funcdef = create_funcdef_here(try_decoder_plugins);
 
@@ -2696,7 +2696,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     lives_hook_remove(defer_sigint_lpt);
 
-    set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    set_signal_handlers((lives_sigfunc_t)catch_sigint);
     mainw->crash_possible = 0;
 
     ////////////////

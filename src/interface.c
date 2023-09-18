@@ -973,13 +973,13 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
     *td_had_focus = TRUE;
   } else *td_had_focus = FALSE;
 
-  lives_widget_show_all(procw->processing);
-
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
   gtk_window_set_focus_on_map(LIVES_WINDOW(procw->processing), FALSE);
   lives_window_present(LIVES_WINDOW(procw->processing));
+
+  lives_widget_show_all(procw->processing);
 
   procw->is_ready = TRUE;
   return procw;

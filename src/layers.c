@@ -89,7 +89,6 @@ LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *
 }
 
 
-
 void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
   // copy width, height, clip, frame, full palette
   if (src && dest) {
@@ -277,13 +276,25 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 }
 
 
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_layer_get_copylist(lives_layer_t *layer) {
+  if (!layer) return NULL;
+  return (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
+
+  /* copylist = lives_layer_get_copylist(layer); */
+  /* if (copylist) { */
+  /*   weed_leaf_delete(layer, LIVES_LEAF_COPYLIST); */
+  /*   copylist = lives_sync_list_remove(copylist, (void *)layer, FALSE); */
+  /* } */
+}
+
+
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   lives_sync_list_t *copylist;
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
 
   wait_layer_ready(layer, TRUE);
 
-  copylist = (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
+  copylist = lives_layer_get_copylist(layer);
   if (copylist) {
     weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
     copylist = lives_sync_list_remove(copylist, (void *)layer, FALSE);
@@ -583,8 +594,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
     if (pd_array) {
-      lives_sync_list_t *copylist =
-        (lives_sync_list_t *)weed_get_voidptr_value(slayer, LIVES_LEAF_COPYLIST, NULL);
+      lives_sync_list_t *copylist = lives_layer_get_copylist(layer);
       if (!copylist) {
         copylist = lives_sync_list_add(NULL, (void *)slayer);
         weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
@@ -764,11 +774,21 @@ LIVES_GLOBAL_INLINE boolean weed_layer_check_valid(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
-    /* if (mainw->debug_ptr == layer) { */
-    /*   g_print("FREE %p\n", layer); */
-    /*   break_me("free dbg"); */
-    /*   mainw->debug_ptr = NULL; */
-    /* } */
+    int lstatus;
+    if (mainw->debug_ptr == layer) {
+      g_print("FREE %p\n", layer);
+      break_me("free dbg");
+      mainw->debug_ptr = NULL;
+    }
+    lock_layer_status(layer);
+    lstatus = _lives_layer_get_status(layer);
+    if (lstatus == LAYER_STATUS_CONVERTING) {
+      // cannot free layer if loading or converting, but when op is finsished,
+      // caller must check refconut, and if 0 must lives_layer_free(layer)
+      unlock_layer_status(layer);
+      return layer;
+    }
+    unlock_layer_status(layer);
 #ifdef DEBUG_LAYER_REFS
     while (weed_layer_count_refs(layer) > 0) {
       if (!weed_layer_unref(layer)) return NULL;

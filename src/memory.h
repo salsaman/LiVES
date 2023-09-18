@@ -290,8 +290,11 @@ void *_free_bigblock(void *bstart);
 #define free_bigblock(p) FN_FREE_TARGET(_free_bigblock,p)
 #else
 void *calloc_bigblock(size_t s);
+void *malloc_bigblock(size_t s);
 void *free_bigblock(void *bstart);
 #endif
+
+void *realloc_bigblock(void *, size_t s);
 
 void *lives_malloc_medium(size_t msize);
 void *lives_calloc_medium(size_t msize);
@@ -325,6 +328,28 @@ char *get_memstats(void);
 
 #ifndef __cplusplus
 
+#if FORCE_BUILTIN_MEMFUNCS
+#ifdef USE_BUILTIN_MEMFUNCS
+#undef USE_BUILTIN_MEMFUNCS
+#define USE_BUILTIN_MEMFUNCS 1
+#endif
+#endif
+
+#define USE_BUILTIN_MEMFUNCS
+#if defined(USE_BUILTIN_MEMFUNCS) && (defined(__GNUC__) || defined(__clang__))
+
+//#if __has_builtin(__builtin_memcpy_inline)
+#define _fast_memcpy(d, s, l) __builtin_memcpy(d, s, l)
+#define _lives_memcpy _fast_memcpy
+//#endif
+
+//#if __has_builtin(__builtin_memset_inline)
+#define _fast_memset(x, y, s) __builtin_memset(x, y, s)
+//#define _lives_memset _fast_memset
+//#endif
+
+#else
+
 #ifdef ENABLE_ORC
 
 void *lives_orc_memcpy(void *dest, const void *src, size_t n);
@@ -342,10 +367,10 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #endif
 #endif
 
-#endif
-
 #endif // c++
 
+#endif
+#endif
 
 #endif // HAVE_MEMFUNC
 
@@ -399,80 +424,80 @@ void *speedy_malloc(size_t xsize);
 
 void do_test(void);
 
-static pthread_mutex_t weak_mutex = PTHREAD_MUTEX_INITIALIZER;
-static LiVESList *WEAK_LIST = NULL;
+/* static pthread_mutex_t weak_mutex = PTHREAD_MUTEX_INITIALIZER; */
+/* static LiVESList *WEAK_LIST = NULL; */
 
-typedef struct {
-  void *val;
-  void **weak;
-} lives_weak_ref_t;
+/* typedef struct { */
+/*   void *val; */
+/*   void **weak; */
+/* } lives_weak_ref_t; */
 
-// call as ADD_WEAK_REF((void **)&weakptr, val)
-#define _ADD_WEAK_REF(ptr, val)						\
-  do {									\
-    if (ptr) {								\
-      pthread_mutex_lock(&weak_mutex);					\
-      void *var = (val);						\
-      if (var) {							\
-	lives_weak_ref_t *weakref;					\
-	LiVESList *x;							\
-	for (x = WEAK_LIST; x; x = x->next) {				\
-	  weakref = (lives_weak_ref_t *)x->data;			\
-	  if (weakref->weak == ptr) {					\
-	    weakref->val = var;						\
-	    break;							\
-	  }								\
-	}								\
-	if (!x) {							\
-	  weakref = (lives_weak_ref_t *)lives_calloc(1, sizeof(lives_weak_ref_t)); \
-	  weakref->val = var;						\
-	  weakref->weak = ptr;						\
-	  WEAK_LIST = lives_list_prepend(WEAK_LIST, weakref);		\
-	}								\
-      }									\
-      *ptr = var;							\
-      pthread_mutex_unlock(&weak_mutex);				\
-    }									\
-  } while (0);
+/* // call as ADD_WEAK_REF((void **)&weakptr, val) */
+/* #define _ADD_WEAK_REF(ptr, val)						\ */
+/*   do {									\ */
+/*     if (ptr) {								\ */
+/*       pthread_mutex_lock(&weak_mutex);					\ */
+/*       void *var = (val);						\ */
+/*       if (var) {							\ */
+/* 	lives_weak_ref_t *weakref;					\ */
+/* 	LiVESList *x;							\ */
+/* 	for (x = WEAK_LIST; x; x = x->next) {				\ */
+/* 	  weakref = (lives_weak_ref_t *)x->data;			\ */
+/* 	  if (weakref->weak == ptr) {					\ */
+/* 	    weakref->val = var;						\ */
+/* 	    break;							\ */
+/* 	  }								\ */
+/* 	}								\ */
+/* 	if (!x) {							\ */
+/* 	  weakref = (lives_weak_ref_t *)lives_calloc(1, sizeof(lives_weak_ref_t)); \ */
+/* 	  weakref->val = var;						\ */
+/* 	  weakref->weak = ptr;						\ */
+/* 	  WEAK_LIST = lives_list_prepend(WEAK_LIST, weakref);		\ */
+/* 	}								\ */
+/*       }									\ */
+/*       *ptr = var;							\ */
+/*       pthread_mutex_unlock(&weak_mutex);				\ */
+/*     }									\ */
+/*   } while (0); */
 
-#define _REMOVE_WEAK_REF(ptr)					\
-  do {								\
-    lives_weak_ref_t *weakref;					\
-    LiVESList *x;						\
-    pthread_mutex_lock(&weak_mutex);				\
-    for (x = WEAK_LIST; x; x = x->next) {			\
-      weakref = (lives_weak_ref_t *)x->data;			\
-      if (weakref->weak == ptr) {				\
-	WEAK_LIST = lives_list_remove_node(WEAK_LIST, x, TRUE);	\
-	break;							\
-      }								\
-    }								\
-    pthread_mutex_unlock(&weak_mutex);				\
-  } while (0);
+/* #define _REMOVE_WEAK_REF(ptr)					\ */
+/*   do {								\ */
+/*     lives_weak_ref_t *weakref;					\ */
+/*     LiVESList *x;						\ */
+/*     pthread_mutex_lock(&weak_mutex);				\ */
+/*     for (x = WEAK_LIST; x; x = x->next) {			\ */
+/*       weakref = (lives_weak_ref_t *)x->data;			\ */
+/*       if (weakref->weak == ptr) {				\ */
+/* 	WEAK_LIST = lives_list_remove_node(WEAK_LIST, x, TRUE);	\ */
+/* 	break;							\ */
+/*       }								\ */
+/*     }								\ */
+/*     pthread_mutex_unlock(&weak_mutex);				\ */
+/*   } while (0); */
 
-#define _WEAK_FREE(var)						\
-  do {								\
-    lives_weak_ref_t *weakref;					\
-    LiVESList *x;						\
-    pthread_mutex_lock(&weak_mutex);				\
-    for (x = WEAK_LIST; x; x = x->next) {			\
-      weakref = (lives_weak_ref_t *)x->data;			\
-      if (weakref->val == var) {				\
-	*weakref->weak = NULL;					\
-	WEAK_LIST = lives_list_remove_node(WEAK_LIST, x, TRUE);	\
-	break;							\
-      }								\
-    }								\
-    pthread_mutex_unlock(&weak_mutex);				\
-  } while (0);
+/* #define _WEAK_FREE(var)						\ */
+/*   do {								\ */
+/*     lives_weak_ref_t *weakref;					\ */
+/*     LiVESList *x;						\ */
+/*     pthread_mutex_lock(&weak_mutex);				\ */
+/*     for (x = WEAK_LIST; x; x = x->next) {			\ */
+/*       weakref = (lives_weak_ref_t *)x->data;			\ */
+/*       if (weakref->val == var) {				\ */
+/* 	*weakref->weak = NULL;					\ */
+/* 	WEAK_LIST = lives_list_remove_node(WEAK_LIST, x, TRUE);	\ */
+/* 	break;							\ */
+/*       }								\ */
+/*     }								\ */
+/*     pthread_mutex_unlock(&weak_mutex);				\ */
+/*   } while (0); */
 
-static LIVES_ALLOW_UNUSED void *ADD_WEAK_REF(void **weak, void *val) {
-  _ADD_WEAK_REF(weak, val);
-  return *weak;
-}
-static LIVES_ALLOW_UNUSED void REMOVE_WEAK_REF(void **weak) {_REMOVE_WEAK_REF(weak);}
+/* static LIVES_ALLOW_UNUSED void *ADD_WEAK_REF(void **weak, void *val) { */
+/*   _ADD_WEAK_REF(weak, val); */
+/*   return *weak; */
+/* } */
+/* static LIVES_ALLOW_UNUSED void REMOVE_WEAK_REF(void **weak) {_REMOVE_WEAK_REF(weak);} */
 
-static LIVES_ALLOW_UNUSED void WEAK_FREE(void *val) {_WEAK_FREE(val);}
+/* static LIVES_ALLOW_UNUSED void WEAK_FREE(void *val) {_WEAK_FREE(val);} */
 
 #endif // !HAVE_FINAL_MEMFUNCS
 #endif // FINALISE_MEMFUNCS

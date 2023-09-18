@@ -743,10 +743,11 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
       return weed_uncalloc_sizeof_retnull(weed_leaf_t, leaf);}
 
     pthread_rwlock_init(&pdata->ldata.data_lock, rwattrp);
-    pthread_rwlock_init(&pdata->reader_count, NULL);
     pthread_rwlock_init(&pdata->ldata.chain_lock, rwattrp);
     pthread_rwlock_init(&pdata->ldata.ref_lock, rwattrp);
+
     pthread_mutex_init(&pdata->structure_mutex, NULL);
+    pthread_rwlock_init(&pdata->reader_count, NULL);
     leaf->private_data = (void *)pdata;
   }
   else {

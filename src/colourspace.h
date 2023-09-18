@@ -363,10 +363,17 @@ boolean can_inline_gamma(int inpl, int opal);
 boolean pconv_can_inplace(int inpl, int outpl);
 
 /// widths in PIXELS
-lives_result_t get_resizable(lives_layer_t *, int *palette, int iclamping, int *opal, int oclamp_hint,
-                             int *pxpal, int *pxopal);
+lives_result_t get_resizable(int *ppalette, int *pxpal, int *oclamp_hint, int *opal, 
+                             int *pxopal, boolean upscale);
+
+int get_tgt_gamma(int ipal, int opal);
+
+boolean resize_layer_full(weed_layer_t *layer, int width, int height,
+			  LiVESInterpType interp, int opal_hint, int oclamp_hint,
+			  int osamp_hint, int osubs_hint, int tgt_gamma);
 
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
+
 boolean letterbox_layer(weed_layer_t *, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,
                         int tclamp);
 

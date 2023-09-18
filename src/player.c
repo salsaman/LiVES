@@ -735,7 +735,7 @@ static lives_result_t prepare_frames(frames_t frame) {
             && (!mainw->event_list || cfile->opening)) {
           // external frame manipulation preview
           // TODO - use imgdec clipsrc
-          //g_print("loaing flay2 as %p\n", mainw->frame_layer);
+          g_print("loaing flay2 as %p\n", mainw->frame_layer);
           if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                   cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
             if (mainw->frame_layer) {
@@ -757,11 +757,11 @@ static lives_result_t prepare_frames(frames_t frame) {
           // check first if got handed an external layer to play
           // if so, just copy it (deep) to mainw->frame_layer
           if (mainw->ext_layer) {
-            mainw->frame_layer = weed_layer_copy(NULL, mainw->ext_layer);
-            lives_layer_copy_metadata(mainw->frame_layer, mainw->ext_layer);
-            if (mainw->cached_frame != get_old_frame_layer())
-              weed_layer_free(mainw->cached_frame);
-            mainw->cached_frame = NULL;
+	    weed_layer_copy(mainw->layers[0], mainw->ext_layer);
+	    mainw->frame_layer = mainw->layers[0];
+	    lives_layer_copy_metadata(mainw->frame_layer, mainw->ext_layer);
+	    weed_layer_free(mainw->ext_layer);
+	    mainw->ext_layer = NULL;
             lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
             goto skip_precache;
           }
@@ -819,7 +819,9 @@ static lives_result_t prepare_frames(frames_t frame) {
                   // otherwise we grab the pre frame, and switch decoders, thus we can continue playing
                   // without needing to jump fwd
 
-                  mainw->layers[0] = mainw->frame_layer = mainw->frame_layer_preload;
+		  weed_layer_copy(mainw->layers[0], mainw->frame_layer_preload);
+		  mainw->frame_layer = mainw->layers[0];
+		  weed_layer_free(mainw->frame_layer_preload);
                   mainw->frame_layer_preload = NULL;
                   mainw->actual_frame = labs(mainw->pred_frame);
 
@@ -865,10 +867,11 @@ no_precache:
                   frames_t delta_a = (frame - mainw->actual_frame) * pldir;
                   frames_t delta_f = (frame - sfile->frameno) * pldir;
                   if (delta_a < LAGFRAME_TRIGGER / 2 || delta_f <= 0) {
-                    if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
-                    mainw->frame_layer = weed_layer_copy(NULL, mainw->cached_frame);
-                    lives_layer_copy_metadata(mainw->frame_layer, mainw->cached_frame);
-                    mainw->layers[0] = mainw->frame_layer;
+                    weed_layer_copy(mainw->layers[0], mainw->cached_frame);
+		    mainw->frame_layer = mainw->layers[0];
+		    lives_layer_copy_metadata(mainw->frame_layer, mainw->cached_frame);
+		    weed_layer_free(mainw->cached_frame);
+		    mainw->cached_frame = weed_layer_copy(NULL, mainw->frame_layer);
                     mainw->actual_frame = frame;
                     lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
 		    // *INDENT-OFF*
@@ -878,15 +881,19 @@ no_precache:
 skip_precache:
 
           if (!mainw->frame_layer) {
+	    g_print("plan please load\n");
             // if we didn't have a preloaded frame, we kick off a thread here to load it
             mainw->plan_cycle->frame_idx[0] = sfile->frameno;
 	    // *INDENT-OFF*
 	  }}}}
     // *INDENT-ON*
 
+    if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
+    if (!mainw->layers[0]) mainw->layers[0] = mainw->frame_layer;
+    
     if (mainw->frame_layer) {
       lives_layer_set_track(mainw->frame_layer, 0);
-      mainw->layers[0] = mainw->frame_layer;
+      //mainw->layers[0] = mainw->frame_layer;
     }
   }
 
@@ -972,15 +979,21 @@ static weed_layer_t *old_frame_layer = NULL;
 weed_layer_t *get_old_frame_layer(void) {return old_frame_layer;}
 
 void reset_old_frame_layer(void) {
+  g_print("unref old_frame\n");
   if (old_frame_layer) {
+    g_print("unref olweqwed_framewww %p %d\n", old_frame_layer,
+	    weed_layer_count_refs(old_frame_layer));
     mainw->debug_ptr = NULL;
     if (old_frame_layer != mainw->cached_frame
         && old_frame_layer != mainw->frame_layer_preload
         && old_frame_layer != mainw->blend_layer) {
       weed_layer_unref(old_frame_layer);
+      g_print("unref oldsdkasdkpodasd_framewww\n");
+
     }
     old_frame_layer = NULL;
   }
+  g_print("unref old_framewww\n");
 }
 
 
@@ -1241,10 +1254,10 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
       lives_freep((void **)&info_file);
 
-      if (!mainw->layers) {
-        goto lfi_done;
-      }
+      if (!mainw->layers) goto lfi_done;
+
       if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
+      if (!mainw->layers[0]) mainw->layers[0] = mainw->frame_layer;
 
       // TODO -> mainw->cancelled sshould cancel plan_cyycle
       if (LIVES_UNLIKELY((mainw->cancelled != CANCEL_NONE))) {
@@ -1259,14 +1272,14 @@ weed_layer_t *load_frame_image(frames_t frame) {
     }
 
     ///////// EXECUTE PLAN CYCLE ////////////
-
+    
     /* if (!mainw->frame_layer) { */
     /*   if (mainw->plan_cycle) mainw->plan_cycle->state = PLAN_STATE_ERROR; */
     /*   break_me("no r layer\n"); */
     /*   g_print("BOB 1\n"); */
     /*   goto lfi_done; */
     /* } */
-    //g_print("wating for plan to complete\n");
+    g_print("wating for plan to complete\n");
     // in render frame, we would have set all frames to either prepared or loaded
     // so the plan runner should have started loading them already
     // the reamining steps will be run, applying all fx instances until we are left with the single output layer
@@ -1275,6 +1288,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
 
     if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
+    if (!mainw->layers[0]) mainw->layers[0] = mainw->frame_layer;
 
     if (lives_layer_get_status(mainw->frame_layer) != LAYER_STATUS_READY) {
       if (!(mainw->plan_cycle->state == PLAN_STATE_CANCELLED
@@ -1283,6 +1297,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
         mainw->plan_cycle->state = PLAN_STATE_ERROR;
       }
     }
+
+    g_print("plan done\n");
 
     if (mainw->plan_cycle->state == PLAN_STATE_CANCELLED
         || mainw->plan_cycle->state == PLAN_STATE_ERROR) {
@@ -1513,7 +1529,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     ////////////////////////////////////////
     if (frame_layer ==  mainw->frame_layer) weed_layer_ref(frame_layer);
-
+    g_print("\n\nADD draw imt\n");
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
@@ -1600,6 +1616,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
   }
 
 lfi_done:
+  g_print("LFI done\n");
   wait_layer_ready(mainw->frame_layer, FALSE);
 
   if (mainw->layers) {
@@ -1641,6 +1658,7 @@ lfi_done:
   }
 
   THREADVAR(rowstride_alignment_hint) = 0;
+  g_print("LFI done2\n");
 
   if (success) {
     if (!mainw->multitrack &&
@@ -1654,13 +1672,14 @@ lfi_done:
       // when player gets to ui updtae point, it will trigger the stack and
       // since this is flagged as FG_THREAD, it will be run as an fg_service call
       //
-      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY
+      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA
                                       | HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD,
                                       lives_widget_queue_draw_and_update, 0, "v", mainw->eventbox2);
     }
     if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
   }
 
+  g_print("LFI done 3\n");
   if (success && mainw->frame_layer) {
     // format is (int64_t)tc|(int32_t)nclips|(int32_t)clip|(int64_t)frame|.....|(double)pb_fps
     char *tmp, *msg;
@@ -1678,7 +1697,9 @@ lfi_done:
     lives_free(msg);
   }
 
+  g_print("LFI done 4\n");
   reset_old_frame_layer();
+
   g_print("STAT is %d\n", lives_layer_get_status(mainw->frame_layer));
   if (lives_layer_get_status(mainw->frame_layer) == LAYER_STATUS_READY)
     old_frame_layer = mainw->frame_layer;
@@ -2932,7 +2953,7 @@ switch_point:
         /*   } */
         /* } */
 
-        lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
+	lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
         mainw->gui_much_events = TRUE;
         mainw->do_ctx_update = TRUE;
         fg_stack_wait();
@@ -3141,7 +3162,7 @@ switch_point:
 
     // screen update during event playback
     if (!mainw->do_ctx_update) {
-      lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
+      lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
       mainw->gui_much_events = TRUE;
       mainw->do_ctx_update = TRUE;
     }
@@ -4022,7 +4043,6 @@ play_frame:
 	}
 #endif
 	// *INDENT-ON*
-
         if (mainw->video_seek_ready) {
           if (new_ticks > mainw->startticks) {
             mainw->last_startticks = mainw->startticks;
@@ -4075,17 +4095,17 @@ proc_dialog:
             // for execution at this point. The callbacks are triggered and will pass requests to the main
             // thread.
 
-            lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
+	    lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
 
-            if (mainw->new_clip != mainw->playing_file || IS_VALID_CLIP(mainw->close_this_clip)
+	    if (mainw->new_clip != mainw->playing_file || IS_VALID_CLIP(mainw->close_this_clip)
                 || mainw->new_blend_file != mainw->blend_file) goto switch_point;
 
-            // following this, whether or no there were updates, we allow th gui main loop to run
+            // following this, whether or not there were updates, we allow the gui main loop to run
             // (async in the mmain thread)
             mainw->gui_much_events = TRUE;
             mainw->do_ctx_update = TRUE;
 
-            // if any player window config changes happend, we need to rebuild the nodemodel
+            // if any player window config changes happened, we need to rebuild the nodemodel
             // wiht new player target
 
             if (mainw->refresh_model) {

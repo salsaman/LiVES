@@ -115,9 +115,9 @@ static void get_cpuinfo(void) {
 
   regs[0] = 4;
   if (capable->hw.cpu_type == CPU_TYPE_AMD)
-    cpuid(0x8000001D, regs); // regs == max_level, vendor0, vendor2, vendor1
+    cpuid(0x8000001D, regs);
   else
-    cpuid(0x00000000, regs); // regs == max_level, vendor0, vendor2, vendor1
+    cpuid(0x00000000, regs);
   capable->hw.cache_size = (get_bits32(regs[1], 31, 22) + 1) * (get_bits32(regs[1], 21, 12) + 1)
                            * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
 }
@@ -125,17 +125,6 @@ static void get_cpuinfo(void) {
 #else
 static void get_cpuinfo(void) {;}
 #endif
-
-void lives_spin(void) {
-#if defined(_MSC_VER)
-  _mm_pause();
-#elif defined(__x86_64__) || defined(__i386__)
-  __asm__ volatile("pause" ::: "memory");
-#else
-  struct timespec ts = {0};
-  nanosleep(&ts, 0);
-#endif
-}
 
 static uint64_t fastrand_val = 0;
 

@@ -713,6 +713,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   //static int old_pwidth = 0, old_pheight = 0;
   LiVESPixbuf *pixbuf;
+    g_print("DRAW LAYER0\n");
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
 
@@ -733,12 +734,18 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
     /*   old_pwidth = pwidth; */
     /*   old_pheight = pheight; */
     /* } */
+    g_print("DRAW LAYER\n");
 
     set_drawing_area_from_pixbuf(darea, pixbuf);
+    
     lives_widget_object_unref(pixbuf);
+
+    g_print("unref of pb %p\n", pixbuf);
+
     lives_widget_queue_draw_and_update(widget);
   }
 
+  g_print("unref %p, nrefs is %d\n", layer, weed_layer_count_refs(layer));
   weed_layer_unref(layer);
 }
 

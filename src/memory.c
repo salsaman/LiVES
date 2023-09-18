@@ -17,26 +17,18 @@ memset_f lives_memset;
 memcmp_f lives_memcmp;
 memmove_f lives_memmove;
 
-#if defined(__GNUC__) || defined(__clang__)
-#if 1//__has_builtin(__builtin_memcpy_inline)
-#define _fast_memcpy(d, s, l) __builtin_memcpy_inline(d, s, l)
-#endif
-
-#if 1//__has_builtin(__builtin_memset_inline)
-#define _fast_memset(x, y, s) __builtin_memset_inline(x, y, s)
-#endif
-#endif
+#define _MB_(m) ((m) * 1024 * 1024)
 
 static size_t bmemsize;
-static void bigblock_free(void);
-static void smallblock_free(void);
+static void bigblocks_end(void);
+static void smallblocks_end(void);
 
 #define BB_CACHE 512 // frame cache size (MB)
-#define BBLOCK_SIZE 32 // bblocksize MB
-#define BBLOCKSIZE (BBLOCK_SIZE * 1024 * 1024)
+#define BBLOCK_SIZE 8 // bblocksize MB
+#define BBLOCKSIZE (_MB_(BBLOCK_SIZE))
 #define NBIGBLOCKS (BB_CACHE / BBLOCK_SIZE) // make each block 32MB (def 16 blocks)
 static int NBBLOCKS = 0;
-static void *bigblocks[NBIGBLOCKS];
+static char *bigblocks[NBIGBLOCKS];
 
 #define assert_no_bblock(p) do {		\
     for (int i = 0; i < NBBLOCKS; i++) {	\
@@ -644,7 +636,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
 #define N_SMCHUNKS 65536 * 64
 
 
-static void smallblock_free(void) {
+static void smallblocks_end(void) {
   pthread_mutex_lock(&smblock_pool->mutex);
   lives_free = orig_free;
   lives_malloc = orig_malloc;
@@ -719,7 +711,8 @@ char *get_memstats(void) {
 /////////////////////// medium allocators ////////////
 
 LIVES_LOCAL_INLINE void *lives_malloc_aligned(size_t nblocks, size_t align) {
-  return aligned_alloc(align, nblocks * align);
+  void *p = aligned_alloc(align, nblocks * align);
+  return p;
 }
 
 LIVES_GLOBAL_INLINE void *lives_malloc_medium(size_t msize) {
@@ -807,8 +800,8 @@ void *lives_memcpy_extra(void *d, const void *s, size_t n) {
 
 
 void memory_cleanup(void) {
-  bigblock_free();
-  smallblock_free();
+  bigblocks_end();
+  smallblocks_end();
 #if USE_RPMALLOC
   rpmalloc_finalize();
 #endif
@@ -842,7 +835,6 @@ boolean init_memfuncs(int stage) {
   return TRUE;
 }
 
-#define _MB_(m) ((m) * 1024 * 1024)
 
 static char loc_data32M[_MB_(32)];
 static char loc_data8M[_MB_(8)];
@@ -875,10 +867,11 @@ void *localise_data(void *src, size_t dsize) {
 static LiVESList *ustacks[NBIGBLOCKS];
 #endif
 
-static volatile uint64_t used[NBIGBLOCKS];
+// blocks can be allocated in groups of 1,2 or 4
+static volatile int used[NBIGBLOCKS];
 
 #define NBAD_LIM 8
-//#define BBL_TEST
+#define BBL_TEST
 #ifdef BBL_TEST
 static int bbused = 0;
 #endif
@@ -887,21 +880,25 @@ static int nbads = 0;
 
 static pthread_mutex_t bigblock_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+const char *bigblock_root = NULL;
 
-static void bigblock_free(void) {
+static void bigblocks_end(void) {
   for (int i = 0; i < NBIGBLOCKS; i++) {
 #ifdef TRACE_BBALLOC
     lives_list_free_all(&ustacks[i]);
 #endif
-    if (bigblocks[i]) {
-      munlock(bigblocks[i], bmemsize);
-      lives_free(bigblocks[i]);
-    }
+  }
+
+  if (bigblock_root) {
+    munlock(bigblock_root, NBIGBLOCKS * bmemsize);
+    lives_free((void *)bigblock_root);
   }
 }
 
 
 void bigblock_init(void) {
+  char *ptr;
+
   bmemsize = BBLOCKSIZE;
   hwlim = HW_ALIGNMENT;
   bmemsize = (size_t)(bmemsize / hwlim) * hwlim;
@@ -909,43 +906,129 @@ void bigblock_init(void) {
   if (PAGESIZE) {
     bmemsize = (size_t)(bmemsize / PAGESIZE) * PAGESIZE;
   }
+  bigblock_root = lives_calloc_medium(bmemsize * NBIGBLOCKS);
+  if (!bigblock_root) {
+    LIVES_WARN("Unable to allocate bigblock arena");
+    return;
+  }
+  if (mlock(bigblock_root, bmemsize * NBIGBLOCKS)) {
+    LIVES_WARN("Unable to mlock bigblock arena");
+    lives_free((void *)bigblock_root);
+    return;
+  }
+
+  ptr = (char *)bigblock_root;
+
   for (int i = 0; i < NBIGBLOCKS; i++) {
-    bigblocks[i] = lives_calloc_medium(bmemsize);
-    if (mlock(bigblocks[i], bmemsize)) {
-      lives_free(bigblocks[i]);
-      return;
-    }
+    bigblocks[i] = ptr;
+    ptr += bmemsize;
 #ifdef TRACE_BBALLOC
     ustacks[NBBLOCKS] = NULL;
+    tuid[NBBLOCKS] = 0;
 #endif
     used[NBBLOCKS++] = 0;
   }
-  bmemsize -= EXTRA_BYTES;
 }
 
-void *alloc_bigblock(size_t sizeb) {
-  if (sizeb >= bmemsize) {
-    if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
-                                        sizeb, bmemsize);
-    return NULL;
-  }
-  pthread_mutex_lock(&bigblock_mutex);
-  for (int i = 0; i < NBBLOCKS; i++) {
-    if (used[i] == 0) {
-#ifdef TRACE_BBALLOC
-      ustacks[i] = lives_list_copy_reverse_strings(THREADVAR(func_stack));
-#endif
-      used[i] = THREADVAR(uid);
-#ifdef BBL_TEST
-      bbused++;
-#endif
-      pthread_mutex_unlock(&bigblock_mutex);
-      //g_print("ALLOBIG %p\n", bigblocks[i]);
-      return bigblocks[i];
+
+static int get_bblock_idx(void *bstart, off_t *offs, int *bbafter) {
+  off_t xoffs = (char *)bstart - (char *)bigblocks[0];
+
+  if (offs) *offs = xoffs;
+  if (xoffs < 0 || xoffs > NBBLOCKS * bmemsize) return -1;
+
+  int bbidx = xoffs / bmemsize;
+  if (bbafter) *bbafter = bbidx;
+
+  xoffs -= bbidx * bmemsize;
+  if (offs) *offs = xoffs;
+
+  if (!xoffs)
+    for (int i = 1; i <= bbidx; i++) {
+      if (i > 3) break;
+      if (used[bbidx - i] > i) {
+	if (bbafter) *bbafter = bbidx - i;
+	break;
+      }
     }
+  return bbidx;
+}
+
+
+static int _alloc_bigblock(size_t sizeb, int oblock) {
+  int nblocks = 1;
+  int i, j, max;
+  prefs->show_dev_opts = TRUE;
+  if (sizeb > bmemsize) {
+    if (sizeb > (bmemsize >> 1)) {
+      if (sizeb > (bmemsize >> 2)) {
+	if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
+					sizeb, bmemsize >> 2);
+	return -2;
+      }
+      nblocks = 4;
+    }
+    else nblocks = 2;
   }
-  pthread_mutex_unlock(&bigblock_mutex);
-  return NULL;
+
+  if (oblock >= 0 && nblocks <= used[oblock]) {
+#ifdef BBL_TEST
+    bbused += nblocks - used[oblock];
+#endif
+    used[oblock] = nblocks;
+    return oblock;
+  }
+
+  if (oblock >= 0) i = max = oblock;
+  else {
+    i = used[0];
+    max = NBBLOCKS - nblocks;
+  }
+  
+  while (i <= max) {
+    for (j = nblocks - 1; j >= 0; j--) {
+      int u = used[i + j];
+      //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
+      if (u) {
+	if (oblock != -1) return -1;
+	i += u + j;
+	break;
+      }
+    }
+    if (j < 0) break;
+  }
+
+  if (i <= max) {
+#ifdef TRACE_BBALLOC
+    if (oblock == -1) {
+      ustacks[i] = lives_list_copy_reverse_strings(THREADVAR(func_stack));
+      tuid[i] = THREADVAR(uid);
+    }
+#endif
+#ifdef BBL_TEST
+    bbused += nblocks - used[i];
+#endif
+    used[i] = nblocks;
+  }
+
+  //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
+  //g_print("ALLOBIG %p size %d\n", bigblocks[i], nblocks);
+  g_print("ALLOCBIG has vals %d and %d\n", i, max);
+  if (i <= max) return i;
+
+  ///////////////////////////////////////////////////
+  //  dump_fn_notes();
+  break_me("bblock");
+  LIVES_WARN("OUT OF BIGBLOCKS");
+#ifdef TRACE_BBALLOC
+  for (int i = 0; i < NBBLOCKS; i++) {
+    g_printerr("block %d assigned to thread %s\n", i, get_thread_id(tuid[i]));
+    dump_fn_stack(ustacks[i]);
+  }
+#endif
+  if (++nbads > NBAD_LIM) LIVES_FATAL("Aborting due to probable internal memory errors");
+  ////////////////////////
+  return -1;
 }
 
 #ifdef DEBUG_BBLOCKS
@@ -953,85 +1036,100 @@ void *_calloc_bigblock(size_t xsize) {
 #else
 void *calloc_bigblock(size_t xsize) {
 #endif
-  void *start;
-  if (xsize > bmemsize) {
-    break_me("bballoc over");
-    if (prefs->show_dev_opts) g_print("size req %lu > %lu, "
-                                        "cannot use bblockalloc\n", xsize,
-                                        bmemsize);
-    return NULL;
-  }
+  int bbidx;
   pthread_mutex_lock(&bigblock_mutex);
-  for (int i = 0; i < NBBLOCKS; i++) {
-    if (used[i] == 0) {
-#ifdef TRACE_BBALLOC
-      ustacks[i] = lives_list_copy_reverse_strings(THREADVAR(func_stack));
-#endif
-      used[i] = THREADVAR(uid);
-#ifdef BBL_TEST
-      bbused++;
-      g_print("bigblocks in use after calloc %d\n", bbused);
-#endif
-      pthread_mutex_unlock(&bigblock_mutex);
-      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
-      //break_me("callobig");
-      nbads = 0;
-      start = bigblocks[i];
-      /* start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align); */
-      /* used[i] = (char *)start - (char *)bigblocks[i]; */
-      lives_memset(start, 0, xsize + EXTRA_BYTES);
-      //FN_ALLOC_TARGET(calloc_bigblock, start);
-      return start;
-    }
-  }
+  bbidx = _alloc_bigblock(xsize, -1);
   pthread_mutex_unlock(&bigblock_mutex);
-  //  dump_fn_notes();
-  break_me("bblock");
-  g_print("OUT OF BIGBLOCKS !!\n");
-  for (int i = 0; i < NBBLOCKS; i++) {
-    g_printerr("block %d assigned to thread %s\n", i, get_thread_id(used[i]));
-#ifdef TRACE_BBALLOC
-    dump_fn_stack(ustacks[i]);
-#endif
+  if (bbidx >= 0) {
+    lives_memset(bigblocks[bbidx], 0, xsize);
+    return bigblocks[bbidx];
   }
-  if (++nbads > NBAD_LIM) lives_abort("Aborting due to probable internal memory errors");
   return NULL;
 }
+
+  
+#ifdef DEBUG_BBLOCKS
+void *_malloc_bigblock(size_t xsize) {
+#else
+void *malloc_bigblock(size_t xsize) {
+#endif
+  int bbidx;
+  pthread_mutex_lock(&bigblock_mutex);
+  bbidx = _alloc_bigblock(xsize, -1);
+  pthread_mutex_unlock(&bigblock_mutex);
+  g_print("got bbidx %d, so returning biblocks[%d], which is %p\n", bbidx, bbidx, bigblocks[bbidx]);
+  if (bbidx >= 0) return bigblocks[bbidx];
+  return NULL;
+}
+
+
+
+ 
+void *realloc_bigblock(void *p, size_t new_size) {
+  int bbidx;
+  pthread_mutex_lock(&bigblock_mutex);
+  int oblock = get_bblock_idx(p, NULL, NULL);
+  bbidx = _alloc_bigblock(new_size, oblock);
+  pthread_mutex_unlock(&bigblock_mutex);
+  if (bbidx == oblock) return p;
+  return NULL;
+}
+
 
 #ifdef DEBUG_BBLOCKS
 void *_free_bigblock(void *bstart) {
 #else
 void *free_bigblock(void *bstart) {
 #endif
+  char *msg;
+  off_t offs;
+  int bbidx, bbafter;
+
   if (bstart == mainw->debug_ptr) {
     break_me("badfree");
   }
-  for (int i = 0; i < NBBLOCKS; i++) {
-    if ((char *)bstart >= (char *)bigblocks[i]
-        && (char *)bstart - (char *)bigblocks[i] < bmemsize + EXTRA_BYTES) {
-      //FN_FREE_TARGET(free_bigblock, bigblocks[i]);
-      if (used[i] == 0) {
-        g_print("\n\n");
-        dump_fn_notes();
-        g_print("\n\n");
-        lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
-      }
-      used[i] = 0;
-#ifdef TRACE_BBALLOC
-      lives_list_free_all(&ustacks[i]);
-#endif
-#ifdef BBL_TEST
-      pthread_mutex_lock(&bigblock_mutex);
-      bbused--;
-      pthread_mutex_unlock(&bigblock_mutex);
-      g_print("bigblocks in use after free %d\n", bbused);
-#endif
-      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
-      return bstart;
-    }
+
+  pthread_mutex_lock(&bigblock_mutex);
+  bbidx = get_bblock_idx(bstart, &offs, &bbafter);
+
+  if (bbidx < 0) {
+    pthread_mutex_unlock(&bigblock_mutex);
+    msg = lives_strdup_printf("Invalid free of bigblock, %p not in range %p -> %p\n",
+			      bstart, bigblocks[0], bigblocks[0] + NBBLOCKS * bmemsize);
+    LIVES_WARN(msg);
+    lives_free(msg);
+    lives_free(bstart);
+    return bstart;
   }
-  lives_abort("Attempt to free() invalid bigblock - aborting due to internal memory errors");
-  return NULL;
+
+  if (offs) {
+    pthread_mutex_unlock(&bigblock_mutex);
+    msg = lives_strdup_printf("Invalid free of bigblock, %p is at offset %ld after block %d\n",
+			      bstart, offs, bbafter);
+    LIVES_FATAL(msg);
+    return NULL;
+  }
+
+  if (bbafter != bbidx) {
+    msg = lives_strdup_printf("Invalid free of bigblock, %p is %d blocks after block %d, with size %d blocks\n",
+			      bstart, bbidx - bbafter, bbafter, used[bbafter]);
+    pthread_mutex_unlock(&bigblock_mutex);
+    LIVES_FATAL(msg);
+    return NULL;
+  }
+
+#ifdef BBL_TEST
+  bbused -= used[bbidx];
+  g_print("bigblocks in use after free %d\n", bbused);
+#endif
+  used[bbidx] = 0;
+#ifdef TRACE_BBALLOC
+  lives_list_free_all(&ustacks[bbidx]);
+  tuid[bbidx] = 0;
+#endif
+  pthread_mutex_unlock(&bigblock_mutex);
+  g_print("FREEBIG %p %d\n", bigblocks[bbidx], bbidx);
+  return bstart;
 }
 
 
@@ -1297,7 +1395,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
 
   if (maxbytes > 0 ? n <= maxbytes : n >= -maxbytes) {
 #if AUTOTUNE_MALLOC_SIZES
-    if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 32);
+    if (haslock) autotune_u64_start(tuner, _MB_(-1), _MB_(1), 32);
 #endif
 
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
@@ -1314,7 +1412,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   }
 
 #if AUTOTUNE_MALLOC_SIZES
-  if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 128);
+  if (haslock) autotune_u64_start(tuner, _MB_(-1), _MB_(1), 128);
 #endif
 
   def_memcpy(dest, src, n);
@@ -1360,7 +1458,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
   if (maxbytes > 0 ? n <= maxbytes : n >= -maxbytes) {
 
 #if AUTOTUNE_MALLOC_SIZES
-    if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 32);
+    if (haslock) autotune_u64_start(tuner, _MB_(-1), _MB_(1), 32);
 #endif
 
     oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
@@ -1375,7 +1473,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
     return dest;
   }
 #if AUTOTUNE_MALLOC_SIZES
-  if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 128);
+  if (haslock) autotune_u64_start(tuner, _MB_(-1), _MB_(1), 128);
 #endif
 
   def_memcpy(dest, src, n);

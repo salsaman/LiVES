@@ -66,7 +66,21 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 
 
 LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
+  // ignore sigint, sigterm, sigsegv, sigfpe
+  ign_signal_handlers();
+
+  if (mainw && !pthread_equal(main_thread, pthread_self())) {
+    mainw->critical_errmsg = reason;
+    mainw->critical_thread = THREADVAR(uid);
+    mainw->critical = TRUE;
+    while (1) {
+      // sleep for 1 quadrillion nanoseconds
+      lives_nanosleep(BILLIONS(1000000));
+    }
+  }
+
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
   if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
   break_me(reason);
@@ -74,6 +88,8 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
     lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
+
+  // this will actually call our default signal handler
   abort();
 }
 

@@ -2549,8 +2549,6 @@ void jack_rec_audio_end(boolean close_fd) {
   // recording ended
   if (mainw->aud_rec_lpt) {
     lives_proc_thread_request_cancel(mainw->aud_rec_lpt, FALSE);
-    lives_proc_thread_wait_done(mainw->aud_rec_lpt, 0.);
-    lives_proc_thread_unref(mainw->aud_rec_lpt);
     mainw->aud_rec_lpt = NULL;
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
@@ -2691,8 +2689,6 @@ void pulse_rec_audio_end(boolean close_fd) {
   // recording ended
   if (mainw->aud_rec_lpt) {
     lives_proc_thread_request_cancel(mainw->aud_rec_lpt, FALSE);
-    lives_proc_thread_wait_done(mainw->aud_rec_lpt, 0.);
-    lives_proc_thread_unref(mainw->aud_rec_lpt);
     mainw->aud_rec_lpt = NULL;
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
@@ -2928,9 +2924,7 @@ void audio_analyser_start(int source) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
                 WEED_SEED_BOOLEAN, "p", aplayer);
-      // this ensures ana_lpt is not freed as soon as we cancel it
-      //mainw->debug_ptr = ana_lpt;
-      lives_proc_thread_ref(ana_lpt);
+      lives_proc_thread_set_cancellable(ana_lpt);
     }
   }
 }
@@ -2944,8 +2938,6 @@ void audio_analyser_end(int source) {
       // and then be removed from the hook_stack either when triggered or joined
       // whichever happens next
       lives_proc_thread_request_cancel(ana_lpt, FALSE);
-      lives_hooks_async_join(NULL, DATA_READY_HOOK);
-      lives_proc_thread_unref(ana_lpt);
       ana_lpt = NULL;
     }
   }
@@ -3034,6 +3026,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   rec_ext_dets = dets;
   lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
                                         WEED_SEED_BOOLEAN, "pv", aplayer, dets);
+  lives_proc_thread_set_cancellable(lpt);
   return lpt;
 }
 
@@ -3487,9 +3480,7 @@ void freeze_unfreeze_audio(boolean is_frozen) {
         lives_clip_t *xafile = mainw->files[afile];
         if (!is_frozen) {
           /* align_async_pos(afile); */
-          /* jack_audio_seek_bytes(mainw->jackd, xafile->async_pos, xafile); */
           mainw->startticks = mainw->currticks - xafile->async_delta;
-          //await_audio_queue(LIVES_DEFAULT_TIMEOUT);
         } else {
           xafile->async_delta = mainw->currticks - mainw->startticks;
         }

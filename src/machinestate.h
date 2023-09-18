@@ -84,6 +84,8 @@ typedef struct {
 
 #define LIVES_WEED_SUBTYPE_HASH_STORE 513
 
+#define LIVES_WEED_SUBTYPE_INDEX 514
+
 // used for debugging purposes
 #define LIVES_WEED_SUBTYPE_AUDIT 1024
 
@@ -185,8 +187,6 @@ char *get_current_timestamp(void);
 #define lives_microsleep_until_zero(condition)lives_microsleep_until_nonzero(!(condition))
 #define lives_microsleep_while_false(c)lives_microsleep_until_nonzero(c)
 #define lives_microsleep_while_true(c)lives_microsleep_until_zero(c)
-
-void lives_spin(void);
 
 #define lives_nanosleep_until_nonzero(condition){while(!(condition))lives_spin();}
 #define lives_nanosleep_until_zero(condition)lives_nanosleep_until_nonzero(!(condition))

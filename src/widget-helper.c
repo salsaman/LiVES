@@ -802,29 +802,51 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref(livespointer object)
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer object) {
 #ifdef GUI_GTK
-  if (LIVES_IS_WIDGET_OBJECT(object)) {
-    if (LIVES_IS_PIXBUF(object)) {
-      LiVESPixbuf *pixbuf = LIVES_PIXBUF(object);
-      if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pixbuf), NOFREE_KEY) == pixbuf) {
-        LIVES_WARN("Attemped unref of pixbuf with invalid pixels\n");
-        return FALSE;
-      }
-      lives_layer_t *proxy =
-        (lives_layer_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(object), LAYER_PROXY_KEY);
-      if (proxy) {
-        // this will either nullify layer pixdata or free it
-        // either way, we must prevent pixbuf from freeing its pixdata
-        weed_layer_unref(proxy);
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(object), LAYER_PROXY_KEY, NULL);
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(object), NOFREE_KEY, (void *)pixbuf);
-      }
-    }
-    g_object_unref(object);
-  } else {
+  if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Attempted unref of non-object");
     break_me("unref of nonobj");
     return FALSE;
   }
+  if (LIVES_IS_PIXBUF(object)) {
+    int refs = GET_INT_DATA(object, REFCOUNT_KEY);
+    if (refs <= 1) {
+      weed_layer_t *layer = lives_widget_object_get_data(object, LAYER_PROXY_KEY);
+      if (layer) {
+	// there are two ways a pixbuf can gain a "proxy_layer" -
+	// a) if it was made via shared data from another layer - in this case we added a special free_data
+	// function which will simnply free th eproxy layer, not free the pixbuf data,
+	// and then complete the unref
+	// b) the pixbuf data was from an external source, then shared with a layer
+	// in this case we added a proxy_layer which copied back from target layer
+	// - in this case we only wnat to free the data when there are no other layers wirth copies
+	// thus we first add a leaf to the proxy layer, pointing to the pixbuf to be freed
+	// then we will nullify the pixel_Data for the layer (to prevent accidental copying)
+	// however, when we nullify the pixdata, this wil remove proxy layer from copylist, but we want it to sstay in
+	// so first we will add a second copy of procy_layer to copylist. Then we nullify it
+	// since this is not the last meember, the pixdata will not be freed as it would otherwise, if we removved the last member
+	// but instewad it will be properly nullified. Then whenever we romve a layer from a copy list,t ehre is a check
+	// to see if the sole remeing member is a "Dead"pixbuf proxy, and if so we simpley unref the pixbif (frreeing the pixdata)
+	// and free the proxy layer (since we nullified pixdata for it, this is fine)
+	//
+	// but - how to differentiate between these two cases...simple, for the pixbuf-?layer case we add a leaf
+	// (void *)LIVES_LEAF_PIXBUF_SRC = pixbuf
+	if (weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL) == ob) {
+	  lives_sync_list_t *copylist;
+	  // set his to NULL but do not nullify it, as that would  remove layer
+	  // from copylist, and clear PIXBUF_SRC
+	  weed_layer_set_pixel_data(layer, NULL);
+	  copylist = lives_layer_get_copylist(layer);
+	  if (copylist && copylist->next) {
+	    // other layers have copy of pixbuf data, so we cannot unref pixbuf yet
+	    weed_layer_set-invalid(layer, TRUE);
+	    return TRUE;
+	  }
+	  // if no other copies we can free layer (since pixel_data is NILL, this wont be freed)
+	  weed_layer_free(layer);
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+  g_object_unref(object);		
   return TRUE;
 #endif
   return FALSE;
@@ -1026,7 +1048,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
 boolean fg_service_fulfill(void) {
   lives_proc_thread_t lptr = NULL;
   boolean is_fg_service = FALSE;
-  void *retval;
 
   lptr = lpttorun;
 
@@ -1043,7 +1064,7 @@ boolean fg_service_fulfill(void) {
   } else lptr = NULL;
 
   if (!lptr || lives_proc_thread_is_running(lptr)
-      || lives_proc_thread_is_done(lptr)) {
+      || lives_proc_thread_is_done(lptr, FALSE)) {
     if (lptr) lives_proc_thread_unref(lptr);
 
     if (mainw->global_hook_stacks) {
@@ -1071,9 +1092,8 @@ boolean fg_service_fulfill(void) {
     is_fg_service = TRUE;
   } else THREADVAR(fg_service) = TRUE;
 
-  retval = weed_get_voidptr_value(lptr, "retloc", NULL);
   lpttorun = NULL;
-  lives_proc_thread_execute(lptr, retval);
+  lives_proc_thread_execute(lptr);
 
   if (!is_fg_service) THREADVAR(fg_service) = FALSE;
   if (!pthread_mutex_trylock(&lpt_mutex)) {
@@ -1114,6 +1134,8 @@ boolean fg_service_fulfill_cb(void *dummy) {
   boolean is_active;
   int depth;
 
+  if (mainw->critical) lives_abort(mainw->critical_errmsg);
+
   if (mainw->no_idlefuncs) {
     // callback has to be disabled during calls to g_main_context_iteration,
     // to prevent that function from blocking
@@ -1136,6 +1158,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
   if (gui_loop_tight && depth > 1) return TRUE;
 
   do {
+    if (mainw->critical) lives_abort(mainw->critical_errmsg);
     is_active = FALSE;
     if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
       is_active = fg_service_fulfill();
@@ -1160,7 +1183,6 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (!gui_loop_tight) break;
 
     if (mainw->do_ctx_update) {
-
       // during playback this is where all callbacks such as key presses will happen
       if (!is_active) _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
@@ -1200,6 +1222,13 @@ boolean fg_service_fulfill_cb(void *dummy) {
   mainw->do_ctx_update = FALSE;
 
   return TRUE;
+}
+
+
+boolean fg_service_ready_cb(void *dummy) {
+  g_printerr("GUI thread ready, providing services for all other threads\n");
+  mainw->fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
+  return FALSE;
 }
 
 
@@ -1832,13 +1861,10 @@ void unlock_lpt(lives_proc_thread_t lpt) {
   }
 }
 
-static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
+static void wait_for_fg_response(lives_proc_thread_t lpt) {
   GET_PROC_THREAD_SELF(self);
   //volatile boolean bvar = FALSE;
   boolean do_cancel = FALSE;
-
-  // must set this, so we get tyoed return value from finished action
-  weed_set_voidptr_value(lpt, "retloc", retval);
 
   //lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
 
@@ -1849,7 +1875,7 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   lives_microsleep_until_nonzero((do_cancel = lives_proc_thread_should_cancel(lpt))
                                  || lives_proc_thread_is_preparing(lpt)
                                  || lives_proc_thread_is_running(lpt)
-                                 || lives_proc_thread_is_done(lpt));
+                                 || lives_proc_thread_is_done(lpt, FALSE));
 
   // once we unlock this, a) main thread can complete lpttorun and nullify lpttorun
   // this means it already made a local copy of lpttorun; it will oly nullify lpttoru if it
@@ -1860,7 +1886,7 @@ static void wait_for_fg_response(lives_proc_thread_t lpt, void *retval) {
   pthread_mutex_unlock(&lpt_mutex);
 
   // now we wait for our lpt to finish
-  lives_microsleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt));
+  lives_microsleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt, FALSE));
 
   // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
   // try to lock lpt_mutex, if we succeed, check if lpttorun == lpt, if so set lpttorun to NULL, unlock lpt_mutex
@@ -2023,13 +2049,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
 // (i.e graphics) thread. Background threads which need to do GUI updates should use this
 // to run a lpt. Also note that fg service calls may not be nested,
 // instead the calls may be deferred and run in sequence
-void fg_service_call(lives_proc_thread_t lpt, void *retval) {
+void fg_service_call(lives_proc_thread_t lpt, void *retloc) {
   lives_proc_thread_ref(lpt);
   if (!lpt) return;
 
   if (is_fg_thread()) {
     // should not happend, but just in case
-    lives_proc_thread_execute(lpt, retval);
+    lives_proc_thread_execute(lpt);
     lives_proc_thread_unref(lpt);
     return;
   } else {
@@ -2059,7 +2085,9 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
       return;
     }
 
-    wait_for_fg_response(lpt, retval);
+    weed_set_voidptr_value(lpt, LIVES_LEAF_RETLOC, retloc);
+    weed_set_plantptr_value(lpt, LIVES_LEAF_DISPATCHER, self);
+    wait_for_fg_response(lpt);
 
     lives_proc_thread_unref(lpt);
   }

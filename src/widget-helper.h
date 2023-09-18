@@ -70,6 +70,7 @@ void fg_service_call(lives_proc_thread_t, void *retval);
 
 boolean fg_service_fulfill(void);
 boolean fg_service_fulfill_cb(void *dummy);
+boolean fg_service_ready_cb(void *dummy);
 
 void fg_service_wake(void);
 

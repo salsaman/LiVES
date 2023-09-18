@@ -207,6 +207,28 @@ LIVES_GLOBAL_INLINE void dump_fn_stack(LiVESList *fnstack) {
   }
 }
 
+static weed_plant_t *fn_looker = NULL;
+
+static void add_quick_fn(lives_funcptr_t func, const char *funcname) {
+  char *key;
+  if (sizeof(lives_funcptr_t) != sizeof(void *)) return;
+  key = lives_strdup_printf("%p", func);
+  if (!fn_looker) fn_looker = lives_plant_new(LIVES_WEED_SUBTYPE_INDEX);
+  weed_set_voidptr_value(fn_looker, key, (void *)funcname);
+  lives_free(key);
+}
+
+
+const char *get_funcname(lives_funcptr_t func) {
+  const char *fname;
+  char *key;
+  if (!fn_looker) return NULL;
+  key = lives_strdup_printf("%p", func);
+  fname = weed_get_voidptr_value(fn_looker, key, NULL);
+  lives_free(key);
+  return fname;
+}
+
 
 LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int cat,
                                      const char *rettype, const char *args_fmt,
@@ -215,6 +237,7 @@ LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname,
                           (void *)lives_strdup(funcname));
   g_printerr("Thread 0x%lx in func %s at %s, line %d\n",
              THREADVAR(uid), funcname, file_ref, line_ref);
+  add_quick_fn(func, funcname);
   /* add_fn_lookup(func, funcname, cat, rettype, args_fmt, file_ref, line_ref); */
 }
 
@@ -365,41 +388,17 @@ LIVES_GLOBAL_INLINE lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thr
 }
 
 
-//#define DEBUG_FN_CALLBACKS
-static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func,
-                                   uint32_t ret_type, funcsig_t sig) {
-  /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
-  /// however since there are almost 3 quadrillion possibilities (nargs < 16 * all return types)
-  /// it is not feasible to add every one; new funcsigs can be added as needed; then the only remaining thing is to
-  /// ensure the matching case is handled in the switch statement
-  uint64_t attrs = lives_proc_thread_get_attrs(lpt);
-  allfunc_t *thefunc = (allfunc_t *)lives_malloc(sizeof(allfunc_t));
-  char *msg;
-  weed_error_t err = WEED_SUCCESS;
-  int nparms = get_funcsig_nparms(sig);
-#ifdef DEBUG_FN_CALLBACKS
-  lives_closure_t *closure;
-  const lives_funcdef_t *funcdef;
-#endif
+#define _IF_(pn)if (pn) lives_free(pn)
 
-  if (!lpt || lives_proc_thread_ref(lpt) < 2) {
-    LIVES_CRITICAL("call_funcsig was supplied a NULL / invalid proc_thread");
-    return FALSE;
-  }
+#define _DC_(n, ...) do {if (ret_type) XCALL_##n(lpt, ret_type, &thefunc, __VA_ARGS__); \
+    else CALL_VOID_##n(lpt, &thefunc, __VA_ARGS__);} while (0);
 
-  thefunc->func = func;
-
-  // STATE CHANGED - queued / preparing -> running
-  lives_proc_thread_include_states(lpt, THRD_STATE_RUNNING);
-  lives_proc_thread_exclude_states(lpt, THRD_STATE_QUEUED | THRD_STATE_UNQUEUED | THRD_STATE_DEFERRED |
-                                   THRD_STATE_PREPARING);
-
-  // Note: C compilers don't necessarily care about the type / number of function args.,
-  // or what the function returns, (else it would be impossible to alias any function pointer)
-  // e.g ((generic_func_t) f)(parameters........)
-  // the catch is that thhe compiler does need to know the types of the variables being passed as parameters
+lives_result_t do_call(lives_proc_thread_t lpt) {
+  // The compiler needs to know the types of the variables being passed as parameters
+  // and the return type,
   // hence we cannot create a macro that just returns a value of the correct type and use this to fill in
-  // the function parameters. For this reason, the number and types of parameters have to be defined as literas
+  // the function parameters (unless the function is variadic)
+  //. For this reason, the number and types of parameters have to be declared as literals
   // which is the rason for the switch
   //
 
@@ -436,226 +435,150 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
   // Macro paremeters in DO_CALL have to be literals, therefore.
   // Unfortunately we cannot simply use DO_CALL(nparams, p0, p1, ...)
 
-#define DO_CALL(n, ...) do {if (ret_type) XCALL_##n(lpt, ret_type, thefunc, __VA_ARGS__); \
-    else CALL_VOID_##n(lpt, __VA_ARGS__);} while (0);
+  weed_error_t err = WEED_SUCCESS;
+  weed_funcptr_t func = weed_get_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, NULL);
+  if (!func) return LIVES_RESULT_ERROR;
+
+  uint32_t ret_type = weed_leaf_seed_type(lpt, _RV_);
+
+  funcsig_t sig = lives_proc_thread_get_funcsig(lpt);
+
+  int nparms = get_funcsig_nparms(sig);
+
+  allfunc_t thefunc;
+
+  thefunc.func = func;
+
+  // compressed lines as this could become quite long...
+  switch (nparms) {
+  case 0:_DC_(0,);break;
+
+  case 1:
+    switch (sig) {
+    case FUNCSIG_INT:{int p0;_DC_(1,int);}break;
+    case FUNCSIG_BOOL:{boolean p0;_DC_(1,boolean);}break;
+    case FUNCSIG_INT64:{int64_t p0;_DC_(1,int64);}break;
+    case FUNCSIG_DOUBLE:{double p0;_DC_(1,double);}break;
+    case FUNCSIG_STRING:{char*p0 = NULL;_DC_(1,string);_IF_(p0);}break;
+    case FUNCSIG_VOIDP:{void*p0;_DC_(1,voidptr);}break;
+    case FUNCSIG_PLANTP:{weed_plant_t*p0;_DC_(1,plantptr);}break;
+    // undefined funcsig
+    default: return LIVES_RESULT_ERROR;}
+   break;
+
+  case 2:
+    switch (sig) {
+    case FUNCSIG_INT_INT:{int p0,p1;_DC_(2,int,int);}break;
+    case FUNCSIG_BOOL_INT:{int p0,p1;_DC_(2,int,int);}break;
+    case FUNCSIG_INT_VOIDP:{int p0;void*p1;_DC_(2,int,voidptr);}break;
+    case FUNCSIG_STRING_INT:{char*p0 = NULL;int p1;_DC_(2,string,int);_IF_(p0);}break;
+    case FUNCSIG_STRING_BOOL:{char*p0 = NULL;int p1;_DC_(2,string,boolean);_IF_(p0);}break;
+    case FUNCSIG_DOUBLE_DOUBLE:{double p0,p1;_DC_(2,double,double);}break;
+    case FUNCSIG_VOIDP_DOUBLE:{void*p0;double p1;_DC_(2,voidptr,double);}break;
+    case FUNCSIG_VOIDP_INT:{void*p0;int p1;_DC_(2,voidptr,int);}break;
+    case FUNCSIG_VOIDP_INT64:{void*p0;int64_t p1;_DC_(2,voidptr,int64);}break;
+    case FUNCSIG_VOIDP_VOIDP:{void*p0,*p1;_DC_(2,voidptr,voidptr);}break;
+    case FUNCSIG_PLANTP_VOIDP:{weed_plant_t*p0;void*p1;_DC_(2,plantptr,voidptr);}break;
+    case FUNCSIG_VOIDP_BOOL:{void*p0;int p1;_DC_(2,voidptr,boolean);}break;
+    case FUNCSIG_VOIDP_STRING:{void*p0;char*p1 = NULL;_DC_(2,voidptr,string);_IF_(p1);}break;
+    // undefined funcsig
+    default: return LIVES_RESULT_ERROR;}
+   break;
+
+  case 3:
+    switch (sig) {
+    case FUNCSIG_VOIDP_VOIDP_VOIDP:{void*p0,*p1,*p2;_DC_(3,voidptr,voidptr,voidptr);}break;
+    case FUNCSIG_VOIDP_VOIDP_BOOL:{void*p0,*p1;int p2;_DC_(3,voidptr,voidptr,boolean);}break;
+    case FUNCSIG_STRING_VOIDP_VOIDP:{char*p0=NULL;void*p1,*p2;_DC_(3,string,voidptr,voidptr);_IF_(p0);}break;
+    case FUNCSIG_VOIDP_DOUBLE_INT:{void*p0;double p1;int p2;_DC_(3,voidptr,double,int);}break;
+    case FUNCSIG_VOIDP_DOUBLE_DOUBLE:{void*p0;double p1,p2;_DC_(3,voidptr,double,double);}break;
+    case FUNCSIG_PLANTP_VOIDP_INT64:{weed_plant_t*p0;void*p1;int64_t p2;_DC_(3,plantptr,voidptr,int64);}break;
+    case FUNCSIG_INT_INT_BOOL:{int p0,p1,p2;_DC_(3,int,int,boolean);}break;
+    case FUNCSIG_STRING_INT_BOOL:{char*p0=NULL;int p1,p2;_DC_(3,string,int,boolean);_IF_(p0);}break;
+    case FUNCSIG_INT_INT64_VOIDP:{int p0;int64_t p1;void*p2;_DC_(3,int,int64,voidptr);}break;
+    // undefined funcsig
+    default: return LIVES_RESULT_ERROR;}
+   break;
+
+  case 4:
+    switch (sig) {
+    case FUNCSIG_STRING_DOUBLE_INT_STRING:{char*p0=NULL,*p3=NULL;double p1;int p2;_DC_(4,string,double,int,string);
+      _IF_(p0);_IF_(p3);}break;
+    case FUNCSIG_INT_INT_BOOL_VOIDP:{int p0,p1,p2;void*p3;_DC_(4,int,int,boolean,voidptr);}break;
+    case FUNCSIG_VOIDP_INT_FUNCP_VOIDP:{void*p0,*p3;int p1;weed_funcptr_t p2;_DC_(4,voidptr,int,funcptr,voidptr);}break;
+    // undefined funcsig
+    default: return LIVES_RESULT_ERROR;}
+   break;
+
+  case 5:
+    switch (sig) {
+    case FUNCSIG_VOIDP_STRING_STRING_INT64_INT:{void*p0;char*p1 = NULL,*p2 = NULL;int64_t p3;int p4;
+      _DC_(5,voidptr,string,string,int64,int);_IF_(p1);_IF_(p2);}break;
+    case FUNCSIG_INT_INT_INT_BOOL_VOIDP:{int p0,p1,p2,p3;void*p4;_DC_(5,int,int,int,boolean,voidptr);}break;
+    case FUNCSIG_VOIDP_INT_INT_INT_INT:{void*p0;int p1,p2,p3,p4;_DC_(5,voidptr,int,int,int,int);}break;
+    case FUNCSIG_VOIDP_VOIDP_BOOL_BOOL_INT:{void*p0,*p1;int p2,p3,p4;_DC_(5,voidptr,voidptr,boolean,boolean,int);}break;
+    /*   // undefined funcsig*/
+    default: return LIVES_RESULT_ERROR;}
+   break;
+
+  case 6:
+    switch (sig) {
+    case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP:{char*p0=NULL,*p1=NULL,*p4=NULL;void*p2,*p5;int p3;
+	_DC_(6,string,string,voidptr,int,string,voidptr);_IF_(p0);_IF_(p1);_IF_(p4);}break;
+    // undefined funcsig
+    default: return LIVES_RESULT_ERROR;}
+   break;
+  // invalid nparms
+  default: return LIVES_RESULT_ERROR;
+  }
+  if (err != WEED_SUCCESS) return LIVES_RESULT_FAIL;
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+#undef _IF_
+#undef _DC_
+
+//#define DEBUG_FN_CALLBACKS
+static boolean _call_funcsig_inner(lives_proc_thread_t lpt) {
+  /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
+  /// however since there are almost 3 quadrillion possibilities (nargs < 16 * all return types)
+  /// it is not feasible to add every one; new funcsigs can be added as needed; then the only remaining thing is to
+  /// ensure the matching case is handled in the switch statement
+  uint64_t attrs = lives_proc_thread_get_attrs(lpt);
+  char *msg;
+  weed_error_t err = WEED_SUCCESS;
+  int nparms;
+  lives_result_t ret;
+#ifdef DEBUG_FN_CALLBACKS
+  lives_closure_t *closure;
+  const lives_funcdef_t *funcdef;
+#endif
+  funcsig_t sig;
+
+  if (!lpt || lives_proc_thread_ref(lpt) < 2) {
+    LIVES_CRITICAL("call_funcsig was supplied a NULL / invalid proc_thread");
+    return FALSE;
+  }
+
+  weed_funcptr_t func = weed_get_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, NULL);
+  if (!func) {
+    LIVES_CRITICAL("call_funcsig was supplied a NULL / invalid function");
+    return FALSE;
+  }
+
+  // STATE CHANGED - queued / preparing -> running
+  lives_proc_thread_include_states(lpt, THRD_STATE_RUNNING);
+  lives_proc_thread_exclude_states(lpt, THRD_STATE_QUEUED | THRD_STATE_UNQUEUED | THRD_STATE_DEFERRED |
+                                   THRD_STATE_PREPARING);
 
   if (attrs & LIVES_THRDATTR_NOTE_TIMINGS)
     weed_set_int64_value(lpt, LIVES_LEAF_START_TICKS, lives_get_current_ticks());
 
-  switch (nparms) {
-  case 0: //FUNCSIG_VOID
-    DO_CALL(0,)
-    break;
+  ret = do_call(lpt);
 
-  case 1:
-    switch (sig) {
-    case FUNCSIG_INT: {
-      int p0;
-      DO_CALL(1, int);
-    } break;
-    case FUNCSIG_BOOL: {
-      boolean p0;
-      DO_CALL(1, boolean);
-    } break;
-    case FUNCSIG_INT64: {
-      int64_t p0;
-      DO_CALL(1, int64);
-    } break;
-    case FUNCSIG_DOUBLE: {
-      double p0;
-      DO_CALL(1, double);
-    } break;
-    case FUNCSIG_STRING: {
-      char *p0 = NULL;
-      DO_CALL(1, string);
-      if (p0) lives_free(p0);
-    } break;
-    case FUNCSIG_VOIDP: {
-      void *p0;
-      DO_CALL(1, voidptr);
-    } break;
-    case FUNCSIG_PLANTP: {
-      weed_plant_t *p0;
-      DO_CALL(1, plantptr);
-    } break;
-    // undefined funcsig
-    default: goto funcerr;
-    }
-    break;
-
-  case 2:
-    switch (sig) {
-    case FUNCSIG_INT_INT: {
-      int p0, p1;
-      DO_CALL(2, int, int);
-    } break;
-    case FUNCSIG_BOOL_INT: {
-      int p0, p1;
-      DO_CALL(2, int, int);
-    } break;
-    case FUNCSIG_INT_VOIDP: {
-      int p0; void *p1;
-      DO_CALL(2, int, voidptr);
-    } break;
-    case FUNCSIG_STRING_INT: {
-      char *p0 = NULL; int p1;
-      DO_CALL(2, string, int);
-      if (p0) lives_free(p0);
-    } break;
-    case FUNCSIG_STRING_BOOL: {
-      char *p0 = NULL; int p1;
-      DO_CALL(2, string, boolean);
-      if (p0) lives_free(p0);
-    } break;
-    case FUNCSIG_DOUBLE_DOUBLE: {
-      double p0, p1;
-      DO_CALL(2, double, double);
-    } break;
-    case FUNCSIG_VOIDP_DOUBLE: {
-      void *p0; double p1;
-      DO_CALL(2, voidptr, double);
-    } break;
-    case FUNCSIG_VOIDP_INT: {
-      void *p0; int p1;
-      DO_CALL(2, voidptr, int);
-    } break;
-    case FUNCSIG_VOIDP_INT64: {
-      void *p0; int64_t p1;
-      DO_CALL(2, voidptr, int64);
-    } break;
-    case FUNCSIG_VOIDP_VOIDP: {
-      void *p0, *p1;
-      DO_CALL(2, voidptr, voidptr);
-    } break;
-    case FUNCSIG_PLANTP_VOIDP: {
-      weed_plant_t *p0; void *p1;
-      DO_CALL(2, plantptr, voidptr);
-    } break;
-    case FUNCSIG_VOIDP_BOOL: {
-      void *p0; int p1;
-      DO_CALL(2, voidptr, boolean);
-    } break;
-    case FUNCSIG_VOIDP_STRING: {
-      void *p0; char *p1 = NULL;
-      DO_CALL(2, voidptr, string);
-      if (p1) lives_free(p1);
-    } break;
-    // undefined funcsig
-    default: goto funcerr;
-    }
-    break;
-
-  case 3:
-    switch (sig) {
-    case FUNCSIG_VOIDP_VOIDP_VOIDP: {
-      void *p0, *p1, *p2;
-      DO_CALL(3, voidptr, voidptr, voidptr);
-    } break;
-    case FUNCSIG_VOIDP_VOIDP_BOOL: {
-      void *p0, *p1; int p2;
-      DO_CALL(3, voidptr, voidptr, boolean);
-    } break;
-    case FUNCSIG_STRING_VOIDP_VOIDP: {
-      char *p0 = NULL; void *p1, *p2;
-      DO_CALL(3, string, voidptr, voidptr);
-      if (p0) lives_free(p0);
-    } break;
-    case FUNCSIG_VOIDP_DOUBLE_INT: {
-      void *p0; double p1; int p2;
-      DO_CALL(3, voidptr, double, int);
-    } break;
-    case FUNCSIG_VOIDP_DOUBLE_DOUBLE: {
-      void *p0; double p1, p2;
-      DO_CALL(3, voidptr, double, double);
-    } break;
-    case FUNCSIG_PLANTP_VOIDP_INT64: {
-      weed_plant_t *p0; void *p1; int64_t p2;
-      DO_CALL(3, plantptr, voidptr, int64);
-    } break;
-    case FUNCSIG_INT_INT_BOOL: {
-      int p0, p1, p2;
-      DO_CALL(3, int, int, boolean);
-    } break;
-    case FUNCSIG_STRING_INT_BOOL: {
-      char *p0 = NULL; int p1, p2;
-      DO_CALL(3, string, int, boolean);
-      if (p0) lives_free(p0);
-    } break;
-    case FUNCSIG_INT_INT64_VOIDP: {
-      int p0; int64_t p1; void *p2;
-      DO_CALL(3, int, int64, voidptr);
-    } break;
-    // undefined funcsig
-    default: goto funcerr;
-    }
-    break;
-
-  case 4:
-    switch (sig) {
-    case FUNCSIG_STRING_DOUBLE_INT_STRING: {
-      char *p0 = NULL, *p3 = NULL; double p1; int p2;
-      DO_CALL(4, string, double, int, string);
-      if (p0) lives_free(p0);
-      if (p3) lives_free(p3);
-    } break;
-    case FUNCSIG_INT_INT_BOOL_VOIDP: {
-      int p0, p1, p2; void *p3;
-      DO_CALL(4, int, int, boolean, voidptr);
-    } break;
-    case FUNCSIG_VOIDP_INT_FUNCP_VOIDP: {
-      void *p0, *p3; int p1; weed_funcptr_t p2;
-      DO_CALL(4, voidptr, int, funcptr, voidptr);
-    } break;
-    // undefined funcsig
-    default: goto funcerr;
-    }
-    break;
-
-  case 5:
-    switch (sig) {
-    case FUNCSIG_VOIDP_STRING_STRING_INT64_INT: {
-      void *p0; char *p1 = NULL, *p2 = NULL; int64_t p3; int p4;
-      DO_CALL(5, voidptr, string, string, int64, int);
-      if (p1) lives_free(p1);
-      if (p2) lives_free(p2);
-    } break;
-    case FUNCSIG_INT_INT_INT_BOOL_VOIDP: {
-      int p0, p1, p2, p3; void *p4;
-      DO_CALL(5, int, int, int, boolean, voidptr);
-    } break;
-    case FUNCSIG_VOIDP_INT_INT_INT_INT: {
-      void *p0; int p1, p2, p3, p4;
-      DO_CALL(5, voidptr, int, int, int, int);
-    } break;
-    case FUNCSIG_VOIDP_VOIDP_BOOL_BOOL_INT: {
-      void *p0, *p1; int p2, p3, p4;
-      DO_CALL(5, voidptr, voidptr, boolean, boolean, int);
-    } break;
-    /*   // undefined funcsig */
-    default: goto funcerr;
-    }
-    break;
-
-  case 6:
-    switch (sig) {
-    case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP: {
-      char *p0 = NULL, *p1 = NULL, *p4 = NULL; void *p2, *p5; int p3;
-      DO_CALL(6, string, string, voidptr, int, string, voidptr);
-      if (p0) lives_free(p0);
-      if (p1) lives_free(p1);
-      if (p4) lives_free(p4);
-    } break;
-    // undefined funcsig
-    default: goto funcerr;
-    }
-    break;
-
-  // invalid nparms
-  default: goto funcerr;
-  }
-
-  weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
-  lives_free(thefunc);
+  if (weed_plant_has_leaf(lpt, LIVES_LEAF_LONGJMP))
+    weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
 
   lives_proc_thread_exclude_states(lpt, THRD_STATE_RUNNING);
 
@@ -663,13 +586,19 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
     weed_set_int64_value(lpt, LIVES_LEAF_END_TICKS, lives_get_current_ticks());
   }
 
+  if (ret == LIVES_RESULT_ERROR) goto funcerr;
+      
   if (lives_proc_thread_get_cancel_requested(lpt)
       && !lives_proc_thread_was_cancelled(lpt)) {
     lives_proc_thread_cancel(lpt);
   }
 
   if (err == WEED_SUCCESS) {
+    if (lpt == mainw->debug_ptr)
+      g_print("pt a1\n");
     lives_proc_thread_unref(lpt);
+    if (lpt == mainw->debug_ptr)
+      g_print("pt a122\n");
     return TRUE;
   }
   msg = lives_strdup_printf("Got error %d running procthread ", err);
@@ -677,7 +606,8 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
 
 funcerr:
   // invalid args_fmt
-  lives_free(thefunc);
+  sig = lives_proc_thread_get_funcsig(lpt);
+  nparms = get_funcsig_nparms(sig);
   msg = lives_strdup_printf("Unknown funcsig with type 0x%016lX (%lu), nparams = %d\n", sig, sig, nparms);
   if (prefs->show_dev_opts) {
     char *symstr = funcsig_to_symstring(sig);
@@ -709,9 +639,7 @@ funcerr2:
   if (!msg)
     msg = lives_strdup_printf("Got error %d running function with type 0x%016lX (%lu)", err, sig, sig);
 
-  lives_proc_thread_error(lpt, 0, msg);
-
-  LIVES_FATAL(msg);
+  lives_proc_thread_error(lpt, 0, LPT_ERR_CRITICAL, msg);
 
   /* LIVES_ERROR(msg); */
   /* lives_free(msg); */
@@ -721,12 +649,7 @@ funcerr2:
 
 
 boolean call_funcsig(lives_proc_thread_t lpt) {
-  weed_funcptr_t func = weed_get_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, NULL);
-  if (func) {
-    uint32_t ret_type = weed_leaf_seed_type(lpt, _RV_);
-    funcsig_t sig = lives_proc_thread_get_funcsig(lpt);
-    _call_funcsig_inner(lpt, func, ret_type, sig);
-  }
+  _call_funcsig_inner(lpt);
   return FALSE;
 }
 
@@ -985,6 +908,8 @@ LIVES_GLOBAL_INLINE void lives_closure_free(lives_closure_t *closure) {
       // do this to avoid error check in unref
       if (weed_plant_has_leaf(lpt, LIVES_LEAF_CLOSURE))
         weed_leaf_delete(lpt, LIVES_LEAF_CLOSURE);
+
+      // this removes our added ref and MAY free lpt if not reffed elsewhere
       nrefs = lives_proc_thread_unref(lpt);
       nrefs = lives_proc_thread_unref(lpt);
     }
@@ -1107,7 +1032,9 @@ void flush_cb_list(lives_proc_thread_t lpt) {
 
 void remove_from_hstack(lives_hook_stack_t *hstack, LiVESList *list) {
   // should be called with hstack mutex LOCKED !
-  // remove list from htack, free the closure (which will unref the proc_thread in it)
+  // remove list from htack, free the closure
+  // (which will unref the proc_thread in it)
+  // lpt will be FREED unless reffed elsewhere !
   lives_closure_t *closure = (lives_closure_t *)list->data;
   if (list->prev) list->prev->next = list->next;
   else hstack->stack = (volatile LiVESList *)list->next;
@@ -1463,6 +1390,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   boolean have_recheck_mutex = FALSE;
   boolean hmulocked = FALSE;
 
+  //if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
+
   if (!hstacks) {
     // test should be HOOK_TYPE_SELF
     if (type == SYNC_WAIT_HOOK) hstacks = THREADVAR(hook_stacks);
@@ -1537,7 +1466,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_RUNNING)) continue;
 
       if (closure->flags & HOOK_STATUS_REMOVE) {
-        remove_from_hstack(hstack, list);
+	remove_from_hstack(hstack, list);
         continue;
       }
 
@@ -1547,12 +1476,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
       if (!lpt || lives_proc_thread_ref(closure->proc_thread) < 2) continue;
 
-      if ((closure->flags & HOOK_OPT_ONESHOT) && lives_proc_thread_was_cancelled(lpt)) {
-        closure->flags |= HOOK_STATUS_REMOVE;
-        lives_proc_thread_set_state(lpt, (THRD_STATE_INVALID | THRD_STATE_CANCELLED | THRD_STATE_DESTROYING |
-                                          THRD_STATE_STACKED));
-        remove_from_hstack(hstack, list);
-        lives_proc_thread_unref(lpt);
+      if (lives_proc_thread_is_invalid(lpt)) {
+	remove_from_hstack(hstack, list);
         continue;
       }
 
@@ -1579,7 +1504,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
           if (wait_parent) {
             lives_proc_thread_unref(lpt);
-            lives_proc_thread_wait_done(wait_parent, 0.);
+            lives_proc_thread_wait_done(wait_parent, 0., FALSE);
             break;
           }
         }
@@ -1603,9 +1528,13 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       // test here is hook_dtl_request - we forward some action request to another thread
       //
       if (!(closure->flags & HOOK_CB_FG_THREAD) || is_fg_thread()) {
+	GET_PROC_THREAD_SELF(self);
         PTMUH;
         hmulocked = FALSE;
-        lives_proc_thread_execute(lpt, closure->retloc);
+
+	weed_set_plantptr_value(lpt, LIVES_LEAF_DISPATCHER, self);
+
+        lives_proc_thread_execute(lpt);
         //if (lpt == mainw->debug_ptr) {
         //lives_proc_thread_t xxlpt = hstack->owner;
         //mainw->debug_ptr = xxlpt;
@@ -1661,7 +1590,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         }
       }
 
-      // actually should be HOOK_DTL_SINGLE
+      // will be be HOOK_DTL_SINGLE
       if (type == LIVES_GUI_HOOK) {
         if (is_fg_thread()) {
           //g_print("done single\n");
@@ -1760,7 +1689,6 @@ int lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
     if (!lpt || lives_proc_thread_ref(lpt) < 2) continue;
 
     if (lives_proc_thread_was_cancelled(lpt)) {
-      closure->flags |= HOOK_STATUS_REMOVE;
       remove_from_hstack(hstack, list);
       continue;
     } else {
@@ -1901,7 +1829,7 @@ void lives_hooks_async_join(lives_hook_stack_t **hstacks, int htype) {
     lpt = closure->proc_thread;
     if (!lpt) continue;
 
-    lives_proc_thread_wait_done(lpt, 0.);
+    lives_proc_thread_wait_done(lpt, 0., FALSE);
 
     if (closure->flags & (HOOK_OPT_ONESHOT | HOOK_STATUS_REMOVE)) {
       remove_from_hstack(hstack, cblist);

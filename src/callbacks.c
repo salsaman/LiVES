@@ -5578,7 +5578,6 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   lives_proc_thread_request_cancel(lpt, FALSE);
   g_print("lpt has3 %d refs\n", lives_proc_thread_count_refs(lpt));
 
-  lives_proc_thread_wait_done(lpt, 0.);
   //if (lpt != mainw->debug_ptr) abort();
   g_print("lpt has4 %d refs\n", lives_proc_thread_count_refs(lpt));
   //mainw->debug_ptr = NULL;

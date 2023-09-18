@@ -148,7 +148,7 @@ void weed_functions_init(void) {
   _weed_leaf_seed_type = weed_leaf_seed_type;
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
-  do_test();
+
   statsplant = weed_plant_new(12345);
 }
 

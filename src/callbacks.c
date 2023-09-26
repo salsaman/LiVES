@@ -9522,13 +9522,19 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 }
 
 
+static weed_plant_t *defer_plant = NULL;
+
 /// generic func. to create surfaces
-static void all_config(LiVESWidget * widget, livespointer ppsurf) {
+boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   RECURSE_GUARD_START;
   pthread_mutex_t *mutex;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
 
-  if (!psurf) return;
+  if (!psurf) return TRUE;
+
+  if (GET_INT_DATA(widget, DEFER_KEY) && all_config_defer(widget, ppsurf)) return TRUE;
+
+  RETURN_VAL_IF_RECURSED(TRUE);
 
   mutex = lives_widget_get_mutex(widget);
   pthread_mutex_lock(mutex);
@@ -9541,12 +9547,10 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
     LiVESWidget *parent = lives_widget_get_parent(widget);
     if (parent && LIVES_IS_BUTTON(parent) && is_standard_widget(parent)) {
       render_standard_button(LIVES_BUTTON(parent));
-      return;
+      return TRUE;
     }
   }
 #endif
-
-  RETURN_IF_RECURSED;
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
@@ -9576,43 +9580,58 @@ static void all_config(LiVESWidget * widget, livespointer ppsurf) {
       RECURSE_GUARD_END;
     }
   }
+  return TRUE;
 }
 
 
-boolean all_config_deferrable(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
-  // a deferrable config_function - amazing !
-  int do_defer = GET_INT_DATA(widget, DEFER_KEY);
-  if (!mainw->configured) do_defer = TRUE;
-  if (0 && do_defer) SET_INT_DATA(widget, DEFERRED_KEY, 1);
-  else all_config(widget, ppsurf);
-  return FALSE;
+boolean all_config_defer(LiVESWidget * widget, void *ppsurf) {
+  boolean ret = TRUE;
+  if (mainw->configured) return FALSE;
+  char *key = lives_strdup_printf("widg_%p", widget);
+  if (!defer_plant) defer_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
+  if (!weed_plant_has_leaf(defer_plant, key)) ret = FALSE;
+  weed_set_voidptr_value(defer_plant, key, ppsurf);
+  lives_free(key);
+  return ret;
 }
 
 
-void run_deferred_config(LiVESWidget * widget, livespointer ppsurf) {
-  SET_INT_DATA(widget, DEFER_KEY, 0);
-  if (GET_INT_DATA(widget, DEFERRED_KEY)) {
-    SET_INT_DATA(widget, DEFERRED_KEY, 0);
-    all_config(widget, ppsurf);
+static void run_deferred_configs(void) {
+  if (defer_plant) {
+    char **leaves = weed_plant_list_leaves(defer_plant, NULL);
+    break_me("eunconfig");
+    for (int i = 0; leaves[i]; i++) {
+      LiVESWidget *widget = NULL;
+      sscanf(leaves[i], "widg_%p", &widget);
+      g_print("allconfig %p\n", widget);
+      if (widget) all_config(widget, NULL, weed_get_voidptr_value(defer_plant, leaves[i], NULL));
+      free(leaves[i]);
+    }
+    if (leaves) free(leaves);
+    weed_plant_free(defer_plant);
+    defer_plant = NULL;
   }
 }
 
 
 LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {
-  SET_INT_DATA(widget, DEFERRED_KEY, 0);
-  SET_INT_DATA(widget, DEFER_KEY, 0);
+  SET_INT_DATA(widget, DEFER_KEY, 1);
 }
 
 
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   // code here stops the main window from "jiggling around" on startup ///
   static boolean no_config = FALSE;
+  boolean run_deferred = FALSE;
   if (!mainw->go_away) no_config = FALSE;
   if (no_config) return FALSE;
   if (!mainw->configured) {
-    // run this the first time it is called, but then not again until we explicitly call
-    mainw->configured = TRUE;
-    no_config = TRUE;
+    if (widget == LIVES_MAIN_WINDOW_WIDGET) {
+      // run this the first time it is called, but then not again until we explicitly call
+      mainw->configured = TRUE;
+      no_config = TRUE;
+      run_deferred = TRUE;
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -9637,6 +9656,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     }}
   // *INDENT-ON*
 
+  if (run_deferred) run_deferred_configs();
   return FALSE;
 }
 

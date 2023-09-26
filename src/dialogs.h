@@ -208,7 +208,7 @@ void do_rmem_max_error(int size);
 boolean do_gamma_import_warn(uint64_t fv, int gamma_type);
 boolean do_mt_lb_warn(boolean lb);
 
-void do_no_decoder_error(const char *fname);
+void do_no_decoder_error(int clipno);
 void do_no_loadfile_error(const char *fname);
 
 #ifdef ENABLE_JACK

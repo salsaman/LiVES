@@ -4174,7 +4174,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 lives_nanosleep_while_false(lives_proc_thread_is_paused(mainw->transrend_proc));
 
                 mainw->transrend_waiting = FALSE;
-                lives_proc_thread_sync_ready(mainw->transrend_proc);
+                //lives_proc_thread_sync_ready(mainw->transrend_proc);
 
                 g_print("trans processed\n");
                 if (mainw->transrend_layer != mainw->scrap_layer)
@@ -4228,7 +4228,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               mainw->transrend_waiting = FALSE;
 
-              lives_proc_thread_sync_ready(mainw->transrend_proc);
+              //lives_proc_thread_sync_ready(mainw->transrend_proc);
               g_print("sent syn\n");
 
               // sig_progress...
@@ -5367,7 +5367,7 @@ boolean render_to_clip(boolean new_clip) {
     mainw->transrend_waiting = FALSE;
 
     mainw->transrend_proc
-      = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC, transcode_clip,
+      = lives_proc_thread_create(0, transcode_clip,
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
     lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);

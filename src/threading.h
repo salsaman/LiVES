@@ -70,15 +70,17 @@ typedef struct {
 
   char var_origin[128]; // thread descriptive text eg "LiVES Worker Thread"
 
-  lives_proc_thread_t var_active_lpt;
+  pthread_mutex_t var_active_lpt_mutex;
 
-  pthread_mutex_t var_self_stack_mutex;
-  LiVESList *var_self_stack; // 'self' proc_thread - stack
+  volatile lives_proc_thread_t var_active_lpt;
+
+  lives_proc_thread_t var_prime_lpt;
 
   lives_obj_attr_t **var_attributes; // attributes passed to proc_thread
 
   lives_intentcap_t var_intentcap;
 
+  // recusrion guard tokens
   LiVESList *var_trest_list;
 
   // sync related
@@ -91,8 +93,8 @@ typedef struct {
   uint64_t var_blocked_limit;
   ticks_t var_event_ticks;
 
-  int var_sync_idx;
-  
+  volatile int var_sync_idx;
+
   // built in timer
   lives_timer_t var_xtimer;
 
@@ -137,9 +139,9 @@ typedef struct {
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 
   int var_sig_act;
-  
+
   lives_sync_list_t *var_simple_cmd_list;
-  
+
   // debugging
   LiVESList *var_func_stack;
   ticks_t var_timerinfo, var_round_trip_ticks, var_ticks_to_activate;
@@ -175,7 +177,6 @@ typedef struct {
   // attrs set when creating / queuing
   lives_thread_attr_t attrs;
   uint64_t caller;  // uid of thread which created the packet
-  boolean sync_ready; // flag for thread sync
   volatile uint64_t busy; // uid of thread worker
   volatile uint64_t done; // when finished, == busy
   // if set, the work was cancelled before being run
@@ -230,7 +231,7 @@ typedef struct {
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
 
-void check_pool_threads(void);
+void check_pool_threads(boolean important);
 
 // lives_threads
 thrd_work_t *lives_thread_create(lives_thread_t **, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
@@ -241,7 +242,7 @@ void lives_thread_free(lives_thread_t *thread);
 // thread functions
 lives_thread_data_t *get_thread_data_by_slot_idx(int32_t idx);
 lives_thread_data_t *get_thread_data_by_uid(uint64_t uid);
-lives_thread_data_t *get_thread_data_by_lpt(lives_proc_thread_t);
+lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 int get_n_active_threads(void);
 
 lives_thread_data_t *get_thread_data(void);
@@ -257,13 +258,13 @@ void pthread_cleanup_func(void *args);
 lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
-//#define EXT_THREADVAR(lpt, var) (get_thread_data_by_lpt(lpt)->vars.var_##var)
-#define LPT_THREADVAR_GET(lpt, var) (get_thread_data_for_lpt(lpt) ? \
+
+#define LPT_THREADVAR_GET(lpt, var) (get_thread_data_for_lpt(lpt) ?	\
 				     get_thread_data_for_lpt(lpt)->vars.var_##var : 0)
-#define LPT_THREADVAR_GETp(lpt, var) (get_thread_data_for_lpt(lpt) ? \
+#define LPT_THREADVAR_GETp(lpt, var) (get_thread_data_for_lpt(lpt) ?	\
 				      &(get_thread_data_for_lpt(lpt)->vars.var_##var) : 0)
-#define LPT_THREADVAR_SET(lpt, var, val) do {\
-    if (get_thread_data_for_lpt(lpt)) \
+#define LPT_THREADVAR_SET(lpt, var, val) do {				\
+    if (get_thread_data_for_lpt(lpt))					\
       get_thread_data_for_lpt(lpt)->vars.var_##var = (val);} while (0);
 
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
@@ -295,14 +296,6 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 // combined instead with paused means the thread can be resumed rather than requeud
 // may be combined with PAUSED, and always combined with UNQUEUED
 #define THRD_STATE_IDLING 	(1ull << 5)
-
-// a proc_thread may enter this state if it has a followp proc_thread and is the first
-// in the chain (prime_lpt), it will remain in this state untll the chain completes (normally, by cancel or error)
-// it will not reach a final state until the chain completes
-#define THRD_STATE_PASSIVE 	(1ull << 6)
-
-// state is set for followup lpts
-#define THRD_STATE_CHAINED 	(1ull << 7)
 
 // fixed states
 // completed is combined with FINISHED after 'completed' hook cbs have all returned
@@ -418,14 +411,20 @@ uint64_t lives_proc_thread_get_state(lives_proc_thread_t);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t lives_proc_thread_has_states(lives_proc_thread_t, uint64_t state_bits);
 
-lives_proc_thread_t lives_thread_get_self();
-lives_proc_thread_t lives_thread_pop_self(void);
-void lives_thread_push_self(void);
+void lives_thread_set_active(lives_proc_thread_t);
+lives_proc_thread_t lives_thread_get_active(void);
 
-// push / pop should be followed by this
-void lives_thread_switch_self(lives_proc_thread_t, boolean clr_stack);
+void lives_thread_set_prime(lives_proc_thread_t);
+lives_proc_thread_t lives_thread_get_prime(void);
 
-#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_self();
+// returns the lpt orignating the functionality - generally the one pased to proc_thread_queue
+#define GET_PROC_THREAD_PRIME(self) lives_proc_thread_t self = lives_thread_get_prime()
+
+// returns the lpt active for the functionality - can be different from prime if
+// - a hook callback is running; or a proc_thread chain is running; the proc_thrad itself launched
+// other proc threads - (this is more complex as it may have active lpts in sever pthreads - TODO)
+//#define GET_PROC_THREAD_ACTIVE(self) lives_proc_thread_t self = lives_thread_get_active();
+#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_active()
 
 void lives_proc_thread_set_pthread(lives_proc_thread_t, pthread_t pthread);
 pthread_t lives_proc_thread_get_pthread(lives_proc_thread_t);
@@ -488,7 +487,7 @@ uint64_t get_worker_status(uint64_t tid);
 // worker flagbits (can be set when queueing)
 #define LIVES_THRDATTR_PRIORITY			(1ull << 0)
 #define LIVES_THRDATTR_AUTODELETE		(1ull << 1)
-#define LIVES_THRDATTR_WAIT_SYNC   	    	(1ull << 2)
+#define LIVES_THRDATTR_SET_CANCELLABLE 	    	(1ull << 2)
 #define LIVES_THRDATTR_WAIT_START		(1ull << 3)
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 4)
 
@@ -546,12 +545,9 @@ ticks_t lives_proc_thread_get_timing_info(lives_proc_thread_t, int info_type);
 
 thrd_work_t *lives_proc_thread_get_work(lives_proc_thread_t);
 lives_thread_data_t *lives_proc_thread_get_thread_data(lives_proc_thread_t);
-
-#define lives_proc_thread_set_work(lpt, work) do {		\
+void lives_proc_thread_set_thread_data(lives_proc_thread_t, lives_thread_data_t *);
+#define lives_proc_thread_set_work(lpt, work) do {			\
     if (lpt) weed_set_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, (work));} while(0);
-
-#define lives_proc_thread_set_thread_data(lpt, tdata) do {		\
-    if (lpt) weed_set_voidptr_value((lpt), LIVES_LEAF_THREAD_DATA, (tdata));} while (0);
 
 // attrs
 void lives_proc_thread_set_attrs(lives_proc_thread_t, uint64_t attrs);
@@ -609,7 +605,7 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
     else *retloc = func(__VA_ARGS__);} while (0)
 
 // real params, ret_type 0
-#define MAIN_THREAD_EXECUTE_RVOID(func, args_fmt, ...) do { \
+#define MAIN_THREAD_EXECUTE_RVOID(func, args_fmt, ...) do {		\
     if (!is_fg_thread())						\
       _main_thread_execute((lives_funcptr_t)func, #func, 0, NULL, args_fmt, __VA_ARGS__); \
     else func(__VA_ARGS__);} while (0);
@@ -636,16 +632,16 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 #define main_thread_execute(func, return_type, retloc, args_fmt, ...)	\
   do {MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, __VA_ARGS__);} while (0)
 
-#define main_thread_execute_rvoid(func, return_type, args_fmt, ...) \
+#define main_thread_execute_rvoid(func, return_type, args_fmt, ...)	\
   do {MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, __VA_ARGS__);} while (0)
 
-#define main_thread_execute_pvoid(func, return_type, retloc)	\
+#define main_thread_execute_pvoid(func, return_type, retloc)		\
   do {MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc);} while (0)
 
-#define main_thread_execute_void(func, return_type)			\
+#define main_thread_execute_void(func, return_type)		\
   do {MAIN_THREAD_EXECUTE_VOID(func, return_type);} while (0)
 
-boolean lives_proc_thread_execute(lives_proc_thread_t);
+uint64_t lives_proc_thread_execute(lives_proc_thread_t);
 
 boolean lives_proc_thread_queue(lives_proc_thread_t, lives_thread_attr_t);
 
@@ -665,8 +661,8 @@ int lives_proc_thread_count_refs(lives_proc_thread_t);
 lives_proc_thread_t _lpt_auto_nullify(lives_proc_thread_t *);
 lives_proc_thread_t _lpt_remove_nullify(lives_proc_thread_t, void **ptr);
 
-#define lives_proc_thread_auto_nullify(lpt, state) do {	\
-    if (state) _lpt_auto_nullify(&(lpt));		\
+#define lives_proc_thread_auto_nullify(lpt, state) do {			\
+    if (state) _lpt_auto_nullify(&(lpt));				\
     else _lpt_remove_nullify((lpt), (void **)&(lpt));} while (0);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
@@ -685,21 +681,21 @@ void lives_proc_thread_make_static_data(lives_proc_thread_t lpt, const char *nam
 
 #define DEL_SELF_VALUE(name)weed_leaf_delete(lives_proc_thread_get_data(self),name)
 
-#define SET_SELF_VALUE(type, name, val)		\
+#define SET_SELF_VALUE(type, name, val)					\
   weed_set_##type##_value(lives_proc_thread_ensure_data(self), name, val)
-#define SET_SELF_ARRAY(type, name, nvals, valsptr)				\
+#define SET_SELF_ARRAY(type, name, nvals, valsptr)			\
   weed_set_##type##_array(lives_proc_thread_ensure_data(self), name, nvals, valsptr)
-#define GET_SELF_VALUE(type, name)		\
+#define GET_SELF_VALUE(type, name)			\
   lives_proc_thread_get_##type##_value(self, name)
-#define GET_SELF_ARRAY(type, name, nvals)				\
+#define GET_SELF_ARRAY(type, name, nvals)			\
   lives_proc_thread_get_##type##_array(self, name, nvals)
 
 #define SET_LPT_VALUE(lpt, type, name, val) do {			\
-  weed_set_##type##_value(lives_proc_thread_ensure_data(lpt), name, val);	\
-  lives_proc_thread_make_static_data(lives_proc_thread_get_data(lpt), name);} while(0);
+    weed_set_##type##_value(lives_proc_thread_ensure_data(lpt), name, val); \
+    lives_proc_thread_make_static_data(lives_proc_thread_get_data(lpt), name);} while(0);
 #define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr) do {		\
     weed_set_##type##_array(lives_proc_thread_ensure_data(lpt), name, nvals, valsptr); \
-  lives_proc_thread_make_static_data(lives_proc_thread_get_data(lpt), name);} while(0);
+    lives_proc_thread_make_static_data(lives_proc_thread_get_data(lpt), name);} while(0);
 #define GET_LPT_VALUE(lpt, type, name)			\
   lives_proc_thread_get_##type##_value(lpt, name)
 #define GET_LPT_ARRAY(lpt, type, name, nvals)			\
@@ -722,21 +718,21 @@ void lives_proc_thread_make_static_data(lives_proc_thread_t lpt, const char *nam
 #define lives_proc_thread_get_plantptr_value(lpt, name)			\
   (weed_get_plantptr_value(lives_proc_thread_get_data(lpt), name, NULL))
 
-#define lives_proc_thread_get_int_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_int_array(lpt, name, nvals)		\
   (weed_get_int_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_boolean_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_boolean_array(lpt, name, nvals)		\
   (weed_get_boolean_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_double_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_double_array(lpt, name, nvals)		\
   (weed_get_double_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_string_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_string_array(lpt, name, nvals)		\
   (weed_get_string_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_int64_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_int64_array(lpt, name, nvals)		\
   (weed_get_int64_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_funcptr_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_funcptr_array(lpt, name, nvals)		\
   (weed_get_funcptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_voidptr_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_voidptr_array(lpt, name, nvals)		\
   (weed_get_voidptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
-#define lives_proc_thread_get_plantptr_array(lpt, name, nvals)			\
+#define lives_proc_thread_get_plantptr_array(lpt, name, nvals)		\
   (weed_get_plantptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
 
 lives_proc_thread_t lives_proc_thread_get_dispatcher(lives_proc_thread_t);
@@ -749,7 +745,7 @@ boolean lives_proc_thread_is_preparing(lives_proc_thread_t);
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
 lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t,
-						   int sync_idx, int mm_op, int64_t timeout);
+    int sync_idx, int mm_op, int64_t timeout);
 lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t lpt, int sync_idx, int mm_op);
 
 boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
@@ -762,32 +758,52 @@ boolean lives_proc_thread_idle_paused(lives_proc_thread_t);
 boolean lives_proc_thread_was_cancelled(lives_proc_thread_t);
 
 // some state bits are copied from chain active to chain prime
-#define TX_BITS (THRD_STATE_BLOCKED | THRD_STATE_TIMED_OUT \
-		 | THRD_STATE_PAUSED | THRD_STATE_WAITING | THRD_STATE_SYNC_WAITING)
+#define INC_TX_BITS (THRD_STATE_BLOCKED | THRD_STATE_TIMED_OUT		\
+		     | THRD_STATE_PAUSED | THRD_STATE_WAITING | THRD_STATE_SYNC_WAITING \
+		     | THRD_STATE_CANCEL_REQUESTED | THRD_STATE_PAUSE_REQUESTED | THRD_STATE_RESUME_REQUESTED)
 
+#define EXC_TX_BITS (THRD_STATE_BLOCKED | THRD_STATE_TIMED_OUT		\
+		     | THRD_STATE_PAUSED | THRD_STATE_WAITING | THRD_STATE_SYNC_WAITING \
+		     | THRD_STATE_PAUSE_REQUESTED | THRD_STATE_RESUME_REQUESTED)
+
+// if proc_thread is subordinated by a lower level lpt, (e.g running a hook callback)
+// or when running a proc_thread chain
+// this returns the active proc_thread - we need this for forwarding pause / cancel / resume rquessts
+// hence the name. Should only be called with tdata->active_lpt_mutex locked
+lives_proc_thread_t lives_proc_thread_get_subord(lives_proc_thread_t);
+lives_proc_thread_t lives_proc_thread_get_toplevel(lives_proc_thread_t);
+
+boolean lives_proc_thread_is_suspended(lives_proc_thread_t);
+boolean lives_proc_thread_is_subordinate(lives_proc_thread_t);
+
+// chain a sequence of proc_threads to be run in order
+// arguments look like: prime_lpt, func, func_name, ret_type, args_fmt, args..., func, fun_name, ...,, NULL
+// if prime_lpt is NULL, then the first proc_thread becomes the prime_lpt for the chain
+// returns prime_lpt. Prime_lpt is the first proc_thread to run, and will also be the one which responds to pause, cancel, resume
+// requests.
 lives_proc_thread_t lives_proc_thread_chain(lives_proc_thread_t, ...);
 
-boolean lives_proc_thread_is_passive(lives_proc_thread_t);
-boolean lives_proc_thread_is_chained(lives_proc_thread_t);
-
 lives_proc_thread_t lives_proc_thread_get_chain_next(lives_proc_thread_t);
-lives_proc_thread_t lives_proc_thread_chain_next(lives_proc_thread_t,
+lives_proc_thread_t lives_proc_thread_add_chain_next(lives_proc_thread_t,
     lives_proc_thread_t follower);
 
-lives_proc_thread_t lives_proc_thread_get_chain_active(lives_proc_thread_t);
+// unlike toplevel. this works even when the chain is not being executed
 lives_proc_thread_t lives_proc_thread_get_chain_prime(lives_proc_thread_t);
 
-#define LPT_ERR_MINOR		0 // minor errors do not stop processing
-#define LPT_ERR_MAJOR		1 // major errors stop processing in the thread
-#define LPT_ERR_CRITICAL	2 // critical error, cause main thread to abort ASAP
-#define LPT_ERR_FATAL		3 // signal SIGSEGV to main thread
-#define LPT_ERR_DEADLY		4 // calls _exit() immediately
+#define LPT_ERR_NONE		0 // no error
+#define LPT_ERR_MINOR		1 // minor errors do not stop processing
+#define LPT_ERR_MAJOR		2 // major errors stop processing in the thread
+#define LPT_ERR_CRITICAL	3 // critical error, causes main thread to abort ASAP
+#define LPT_ERR_FATAL		4 // signal SIGSEGV to main thread
+#define LPT_ERR_DEADLY		5 // calls _exit() immediately
 
 // error handling
 boolean lives_proc_thread_error(lives_proc_thread_t self, int errnum, int severity, const char *fmt, ...);
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
+
 int lives_proc_thread_get_errnum(lives_proc_thread_t);
 char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
+int lives_proc_thread_get_errsev(lives_proc_thread_t);
 
 // test if lpt is in a hook stack
 boolean lives_proc_thread_is_stacked(lives_proc_thread_t);
@@ -847,10 +863,12 @@ boolean lives_proc_thread_resume(lives_proc_thread_t self);
 // WARING - currently will result in the entire app exiting
 // to use this, the uid of the underlying thread must be used
 // TODO - set signal handler (similar to lives_timer, but with a signal that we send)
-boolean lives_proc_thread_cancel_immediate(uint64_t uid);
+boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
 
 /// tell a thread with return value that we no longer need the value so it can free itself
 /// after setting this, no further operations may be done on the proc_thread
+// however the CANCELLED, COMPLETED and DESTROYED hook callbacks will still be triggered (but not FINISHED)
+// if called on a proc_thread which is running a hook callback, the callback will be removed from the stack
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
 // as above but takes address of ptr to be nullified when the thread is about to be freed
@@ -867,12 +885,6 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
 // if control is NULL, an internal variable will be used
 // proc_thread can add hook_callbacks to its SYNC_WAIT hook stack
 boolean thread_wait_loop(lives_proc_thread_t, boolean full_sync, volatile boolean *control);
-
-// pthread level waiting
-// hard wait, thread can only continue by either timedwait timing out, or another thread calling
-// lives_proc_thread_sync_ready on its behalf
-// essentially the proc_thread is "frozen"
-void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 // ignore idx mismatch
 #define MM_IGNORE		0
@@ -895,7 +907,7 @@ void lives_proc_thread_join(lives_proc_thread_t);
 // wait until a proc thread signals FINISHED | IDLING
 // or timeout (seconds) has elapsed (timeout == 0. means unlimited)
 // if caller is the fg thread, it will service fg requests while waiting
-int lives_proc_thread_wait_done(lives_proc_thread_t, double timeout, boolean ign_cancel);
+lives_result_t lives_proc_thread_wait_done(lives_proc_thread_t, double timeout, boolean ign_cancel);
 
 // with return value should free proc_thread
 int lives_proc_thread_join_int(lives_proc_thread_t);

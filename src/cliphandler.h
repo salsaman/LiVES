@@ -890,6 +890,8 @@ void set_redoable(const char *what, boolean sensitive);
 
 boolean read_from_infofile(FILE *infofile);
 
+boolean do_delete_or_mark(int clipno, int typ);
+
 // query function //
 boolean check_for_ratio_fps(double fps);
 

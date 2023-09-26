@@ -12,8 +12,9 @@
 void lives_exit(int signum);
 
 boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
-boolean all_config_deferrable(LiVESWidget *, LiVESXEventConfigure *event, livespointer ppsurf);
-void run_deferred_config(LiVESWidget *, livespointer ppsurf);
+boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
+boolean all_config_defer(LiVESWidget *, void *ppsurf);
+//void run_deferred_config(LiVESWidget *, livespointer ppsurf);
 void defer_config(LiVESWidget *);
 
 void play_all(boolean from_menu);

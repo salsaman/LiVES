@@ -30,16 +30,41 @@ typedef struct {
   volatile ticks_t lastcheck;
 } lives_timeout_t;
 
+#if HAS_ATOMICS
+typedef volatile sig_atomic_t lives_sigatomic;
+#else
+typedef uint8_t lives_sigatomic;
+#endif
+
 typedef struct {
   // sys timers
   timer_t tid;
-  volatile boolean triggered;
+  uint64_t delay;
+
+#if HAS_ATOMICS
+  volatile sig_atomic_t triggered;
+#else
+  volatile int triggered;
+#endif
 } lives_timer_t;
 
-lives_alarm_t lives_alarm_set(ticks_t ticks);
-ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
-boolean lives_alarm_clear(lives_alarm_t alarm_handle);
-lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks);
+// alarms -  deprecated
+#define lives_alarm_set(ticks) (lives_alarm_set_timeout((ticks) * 10) * 1000 + ALL_USED)
+#define lives_alarm_check(dimmy) (!lives_alarm_triggered())
+#define lives_alarm_reset(dummy, ticks) lives_alarm_set(ticks)
+boolean lives_alarm_clear(int dummy);
+
+// alarms -  new style
+#define LIVES_ALARM_DISARMED	0
+#define LIVES_ALARM_ARMED	1
+#define LIVES_ALARM_TRIGGERED	2
+
+lives_result_t lives_alarm_set_timeout(uint64_t nsec);
+void lives_alarm_wait(void);
+int lives_alarm_get_state(void);
+void lives_alarm_disarm(void);
+
+#define lives_alarm_triggered() (lives_alarm_get_state() != LIVES_ALARM_ARMED)
 
 typedef void (*lives_sigfunc_t)(int signum, siginfo_t *si, void *uc);
 
@@ -50,9 +75,6 @@ void timer_handler(int sig, siginfo_t *si, void *uc);
 void thread_signal_establish(int sig, lives_sigfunc_t sigfunc);
 void thrd_signal_unblock(int sig, boolean thrd_specific);
 void thrd_signal_block(int sig, boolean thrd_specific);
-
-lives_timer_t *lives_timer_create(lives_timer_t *, uint64_t delay);
-void lives_timer_delete(lives_timer_t *);
 
 #define lives_spin() do {lives_nanosleep(1);} while (0);
 

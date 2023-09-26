@@ -2791,6 +2791,8 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   if (!dec_uid) dec_uid = sfile->decoder_uid;
   sfile->decoder_uid = sfile->old_dec_uid = 0;
 
+  g_print("DEC UID is %lu\n", dec_uid);
+
   if (dec_uid) {
     // if we are reloading a clip try first with the same decoder as last time,
     // if it is disabled prompt user
@@ -2801,11 +2803,12 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
     }
     //decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
     //const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
+    g_print("2DEC UID is %lu\n", dec_uid);
 
     if (dec_uid > 1) {
       const lives_decoder_sys_t *decoder_plugin = find_decoder(dec_uid, decplugname);
       if (decoder_plugin) {
-        //g_print("trying first with 0X%016lX\n", dec_uid);
+        g_print("trying first with 0X%016lX\n", dec_uid);
         use_fake_cdata = TRUE;
         if (lives_list_find_by_data(xdisabled, (void *)decoder_plugin)) {
           char *msg = lives_strdup_printf(_("The %s decoder has been disabled, but was used earlier to open the clip\n"
@@ -2820,6 +2823,8 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
           lives_free(msg);
         }
         if (use_fake_cdata) decoder_plugin_move_to_first(decoder_plugin);
+      } else {
+        g_print("No decoder found\n");
       }
     }
   }
@@ -2839,11 +2844,14 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
+  g_print("GOT %p and %p and %p %lu\n", dplug, dplug ? dplug->dpsys : 0, dplug && dplug->dpsys ? dplug->dpsys->id : 0, dplug &&
+          dplug->dpsys && dplug->dpsys->id ? dplug->dpsys->id->uid : 0);
+
   if (dplug && dplug->dpsys && dplug->dpsys->id) {
     add_clip_src(clipno, -1, SRC_PURPOSE_PRIMARY,
                  (void *)dplug, LIVES_SRC_TYPE_DECODER,
                  dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
-    sfile->decoder_uid = dplug->dpsys->id->uid;
+    sfile->old_dec_uid = sfile->decoder_uid = dplug->dpsys->id->uid;
     return dplug->cdata;
   }
 

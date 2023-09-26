@@ -891,7 +891,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   if (fsize > 0) {
     // caller will wait until this thread goes to WAITING state, then do a sync_ready() and continue
     g_print("22 %p syncing with %p\n", self, lives_proc_thread_get_dispatcher(self));
-    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 0, MM_IGNORE);
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 123, MM_IGNORE);
     g_print("22 %p synced with %p\n", self, lives_proc_thread_get_dispatcher(self));
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
@@ -904,7 +904,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       off_t offs = skip > 0 ? skip : 0;
 #if AUDIT_FBUFFS
       char *pkey;
-      if (!auditor) auditor = lives_plant_new(LIVES_WEED_SUBTYPE_AUDIT);
+      if (!auditor) auditor = lives_plant_new(LIVES_PLANT_AUDIT);
       pkey = lives_strdup_printf("%p", fbuff->buffer);
       weed_set_voidptr_value(auditor, pkey, fbuff->ptr);
       lives_free(pkey);
@@ -946,7 +946,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 0, MM_IGNORE);
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 123, MM_IGNORE);
   }
 
   fbuff->fd = -1;
@@ -993,7 +993,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
     //g_print("%p syncing with %p\n", lives_thread_get_self(), lpt);
-    lives_proc_thread_sync_with(lpt, 0, MM_IGNORE);
+    lives_proc_thread_sync_with(lpt, 123, MM_IGNORE);
     //g_print("%p synced with %p\n", lives_thread_get_self(), lpt);
     return TRUE;
   }
@@ -1197,16 +1197,16 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
 #if AUTOTUNE_FILEBUFF_SIZES
   if (autotune) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
-      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 3);
+      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 3);
       autotune_u64_start(tuners, TUNABLE_SMALLFILE_FLUSH_RANGEMIN, TUNABLE_SMALLFILE_FLUSH_RANGEMAX, 64);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
-      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 4);
+      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 4);
       autotune_u64_start(tunersm, TUNABLE_SMEDFILE_FLUSH_RANGEMIN, TUNABLE_SMEDFILE_FLUSH_RANGEMAX, 32);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
-      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 5);
+      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 5);
       autotune_u64_start(tunerm, TUNABLE_MEDFILE_FLUSH_RANGEMIN, TUNABLE_MEDFILE_FLUSH_RANGEMAX, 32);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) {
-      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 6);
+      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 6);
       autotune_u64_start(tunerl, TUNABLE_LARGEFILE_FLUSH_RANGEMIN, TUNABLE_LARGEFILE_FLUSH_RANGEMAX, 32);
     }
   }

@@ -17,11 +17,36 @@ static double inst_fps = 0.;
 
 void print_diagnostics(uint64_t types) {
   char *tmp;
+  if (types & DIAG_APP_STATUS) {
+    int64_t nsc, onsc, xnsc;
+    if (what_sup_now() == sup_ready) g_print("Startup complete\n");
+    else switch (what_sup_now()) {
+      case nothing_sup: g_print("Early stage initt\n"); break;
+      case pre_init_sup: g_print("Stertup: pre_init\n"); break;
+      case init_sup: g_print("Stertup: pre_init\n"); break;
+      case startup_sup: g_print("Stertup: pre_init\n"); break;
+      case startup2_sup: g_print("Stertup: pre_init\n"); break;
+      default: break;
+      }
+    xnsc = nsc = lives_atomic64_load(&mainw->n_service_calls);
+    g_print("Number of sevice calls: %lu\n", nsc);
+    g_print("checking service call frequency:\n");
+    onsc = nsc;
+    lives_alarm_set_timeout(MILLIONS(100));
+    while (!lives_alarm_triggered()) {
+      nsc = mainw->n_service_calls;
+      g_print("valxxx %lu and %lu\n", nsc, onsc);
+      if (nsc != onsc) g_print(".");
+    }
+    g_print("%lu calls in 0.1 sec\n", nsc - xnsc);
+  }
   if (types & DIAG_MEMORY) {
     tmp = get_memstats();
     g_print("MEMORY\n");
     g_print("%s\n", tmp);
     lives_free(tmp);
+    g_print("\n\nbigblock mapping\n");
+    bbsummary();
   }
   if (types & DIAG_THREADS) {
     tmp = get_threadstats();
@@ -1870,11 +1895,11 @@ int run_weed_startup_tests(void) {
   plant = _weed_plant_new(123);
 
   for (int tt = 0; tt < NCTHRD; tt++) {
-    lpts[tt] = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
+    lpts[tt] = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                                         weed_concurrency_test, -1, "v", plant);
   }
   for (int tt = 0; tt < NCTHRD; tt++) {
-    lives_proc_thread_sync_ready(lpts[tt]);
+    lives_proc_thread_queue(lpts[tt], LIVES_THRDATTR_NONE);
   }
 
   for (int tt = 0; tt < NCTHRD; tt++) {

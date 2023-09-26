@@ -9,6 +9,20 @@
 #ifndef _HAS_STARTUP_H
 #define _HAS_STARTUP_H
 
+
+typedef enum startup_stages {
+  nothing_sup,
+  pre_init_sup,
+  init_sup,
+  startup_sup,
+  startup2_sup,
+  sup_ready,
+} sup_stage;
+
+extern sup_stage what_sup;
+
+sup_stage what_sup_now(void);
+
 int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id);
 
 void startup_message_fatal(char *msg) LIVES_NORETURN;

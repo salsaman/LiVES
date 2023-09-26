@@ -292,6 +292,7 @@ void *_free_bigblock(void *bstart);
 void *calloc_bigblock(size_t s);
 void *malloc_bigblock(size_t s);
 void *free_bigblock(void *bstart);
+void bbsummary(void);
 #endif
 
 void *realloc_bigblock(void *, size_t s);

@@ -399,7 +399,7 @@ LIVES_GLOBAL_INLINE lives_obj_instance_t *lives_object_instance_create(uint64_t 
   // for now object instances can be treated exaclty like live_proc_htreads, except that they will
   // not have a pool thread assigned, not a target function
   // however, things like hook_stacks and
-  lives_obj_instance_t *oinst = lives_plant_new(LIVES_WEED_SUBTYPE_OBJECT);
+  lives_obj_instance_t *oinst = lives_plant_new(LIVES_PLANT_OBJECT);
   add_garnish(oinst, NULL, 0);
   return oinst;
 }
@@ -770,7 +770,7 @@ lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *n
 
   /* attrs = lives_realloc(attrs, (count + 2) * sizeof(lives_obj_attr_t *)); */
 
-  /* attr = lives_plant_new_with_refcount(LIVES_WEED_SUBTYPE_OBJ_ATTR); */
+  /* attr = lives_plant_new_with_refcount(LIVES_PLANT_OBJ_ATTR); */
   /* weed_set_string_value(attr, WEED_LEAF_NAME, name); */
   /* weed_set_int64_value(attr, LIVES_LEAF_OWNER, uid); */
 
@@ -947,7 +947,7 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_obj_t *obj, const c
 ////// capacities ///////
 
 LIVES_GLOBAL_INLINE lives_capacities_t *lives_capacities_new(void) {
-  return lives_plant_new_with_refcount(LIVES_WEED_SUBTYPE_CAPACITIES);
+  return lives_plant_new_with_refcount(LIVES_PLANT_CAPACITIES);
 }
 
 

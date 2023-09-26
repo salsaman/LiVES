@@ -13,18 +13,26 @@ typedef struct {
   LiVESList *list;
 } lives_sync_list_t;
 
-lives_sync_list_t *lives_sync_list_new(void);
+// versions beginning with underscore should be called if and only if synclist->mutex is locked
+void lives_sync_list_lock(lives_sync_list_t *);
+void lives_sync_list_unlock(lives_sync_list_t *);
+lives_sync_list_t *_lives_sync_list_add(lives_sync_list_t *, void *data);
 lives_sync_list_t *lives_sync_list_add(lives_sync_list_t *, void *data);
+lives_sync_list_t *_lives_sync_list_remove(lives_sync_list_t *, void *data, boolean do_free);
 lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t *, void *data, boolean do_free);
+void _lives_sync_list_free(lives_sync_list_t *);
 void lives_sync_list_free(lives_sync_list_t *);
-LiVESList *lives_sync_list_pop(lives_sync_list_t *synclist);
+LiVESList *_lives_sync_list_pop(lives_sync_list_t *);
+LiVESList *lives_sync_list_pop(lives_sync_list_t *);
+void *_lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
+void *lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
 
 LiVESList *array_to_string_list(const char **y, int offset, int len);
 char *lives_list_to_string(LiVESList *list, const char *delim);
 
 LiVESList *lives_list_locate_string(LiVESList *, const char *);
 
-LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;
+LiVESList *lives_list_move_to_first(LiVESList *, LiVESList *item) WARN_UNUSED;
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
 
 LiVESList *lives_list_copy_strings(LiVESList *);
@@ -53,40 +61,49 @@ void lives_list_free_data(LiVESList *);
 void lives_list_free_all(LiVESList **);
 void lives_slist_free_all(LiVESSList **);
 
-#define DATAx(list, x) (list->data == (void *)(x))
+#define LIVES_CONST_LIST_FOREACH(const_list, list) for(LiVESList* list =(const_list);list;list = list->next)
 
-#define FIND_BY_DATA(list, xdata) {for (LiVESList *qlist = (list); qlist; qlist = qlist->next) \
-      if (DATAx(qlist, xdata)) return qlist;} return NULL;
+#define LIVES_LIST_FOREACH(list) for(;list;list=list->next)
 
-#define DATA_FIELD(l, t, f, x) ((void *)(((t *)(l##->data))->##f) == (x))
+#define DATA_IS(list, x) (list->data==(void *)x)
 
-#define FIND_BY_DATA_FIELD(list, struct_type, field, target) \
-  do {for (LiVESList *qlist = list; qlist; qlist = qlist->next) 	\
-	if (DATA_FIELD(qlist, struct_type, field, target)) \
-	  {list = qlist; break;}; list = NULL;} while(0);
+#define FIND_BY_DATA(list, data) LIVES_LIST_FOREACH(list) if (DATA_IS(list, data)) break;
 
-#define FIND_BY_DATA_2FIELD(list, struct_type, field1, field2, target)	\
-  do {for (LiVESList *qlist = list; qlist; qlist = qlist->next) 	\
-	if (DATA_FIELD(qlist, struct_type, field1, target) \
-	    || DATA_FIELD(qlist, struct_type, field2, target))	\
-	  {list = qlist; break;}; list = NULL;} while(0);
+#define DATA_FIELD_IS(l,t,f,x) ((void *)(((t *)(l##->data))->##f)==x)
 
-#define FIND_BY_DATA_FIELD(list, struct_type, field, target) \
-  do {for (LiVESList *qlist = list; qlist; qlist = qlist->next) 	\
-	if (DATA_FIELD(qlist, struct_type, field, target)) \
-	  {list = qlist; break;}; list = NULL;} while(0);
+#define FIND_BY_DATA_FIELD(list, struct_type, field, target) LIVES_LIST_FOREACH(list)	\
+    if (DATA_FIELD_IS(list,structtype,field,target)) break;
 
+/* #define FIND_BY_DATA2_FIELD(list, struct_type, field, target) LIVES_LIST_FOREACH(list)	\ */
+/*     if (DATA_FIELD_IS(qlist,struct_type,field,target)||DATA_FIELD_IS(qlist,struct_type,field2,target)) break; */
+
+// each data element is passed to a callbackj function, if the function returns TRUE then the
+//callback should be of the form: lives_result_t (*cond_func)(void *);
+#define FIND_BY_CALLBACK(list, callback) LIVES_LIST_FOREACH(list)	\
+    if (LIVES_RESULT_SUCCESS==(*(callback))(list->data)) break;
+
+#define LIVES_LIST_CHECK_CONTAINS(list, node) LIVES_LIST_FOREACH(list) if (list==node) break;
+
+// returns node if node is within list, otherwise NULL
+LiVESList *lives_list_contains(LiVESList *, LiVESList *node);
 
 // locate in list
 LiVESList *lives_list_find_by_data(LiVESList *, livespointer data);
 
 // detatch and free node
+// !! no checking is done to verify that 'node' is within list
 LiVESList *lives_list_remove_node(LiVESList *, LiVESList *node, boolean free_data);
 LiVESList *lives_list_remove_data(LiVESList *, livespointer data, boolean free_data);
 
 // detatch but do not free
+// !! no checking is done to verify that 'node' is within list
 LiVESList *lives_list_detatch_node(LiVESList *, LiVESList *node);
 LiVESList *lives_list_detatch_data(LiVESList **, livespointer data);
+
+// trim list so last node is node before 'node', freeing the sublist starting from node
+// if node not in list, returns list unchanged. If node == list, returns NULL, otherwise returns list
+// !! no checking is done to verify that 'node' is within list
+LiVESList *lives_list_trim(LiVESList *, LiVESList *node, boolean free_data);
 
 // returns TRUE if found and removed
 boolean lives_list_check_remove_data(LiVESList **list, livespointer data, boolean free_data);

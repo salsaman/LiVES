@@ -290,7 +290,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     // indicate ready status
     lives_proc_thread_set_cancellable(mainw->transrend_proc);
     if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) goto tr_err2;
-    lives_proc_thread_sync_ready(mainw->transrend_proc);
+    //lives_proc_thread_sync_ready(mainw->transrend_proc);
   }
 
   // (re)set these for the current clip

@@ -35,7 +35,7 @@
 
 /// rowstride alignment values
 
-#define RS_ALIGN_DEF 16
+#define RS_ALIGN_DEF 32
 #define RA_MIN 4
 #define RA_MAX 128
 
@@ -363,14 +363,14 @@ boolean can_inline_gamma(int inpl, int opal);
 boolean pconv_can_inplace(int inpl, int outpl);
 
 /// widths in PIXELS
-lives_result_t get_resizable(int *ppalette, int *pxpal, int *oclamp_hint, int *opal, 
+lives_result_t get_resizable(int *ppalette, int *pxpal, int *oclamp_hint, int *opal,
                              int *pxopal, boolean upscale);
 
 int get_tgt_gamma(int ipal, int opal);
 
 boolean resize_layer_full(weed_layer_t *layer, int width, int height,
-			  LiVESInterpType interp, int opal_hint, int oclamp_hint,
-			  int osamp_hint, int osubs_hint, int tgt_gamma);
+                          LiVESInterpType interp, int opal_hint, int oclamp_hint,
+                          int osamp_hint, int osubs_hint, int tgt_gamma);
 
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 

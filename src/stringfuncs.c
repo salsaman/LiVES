@@ -93,6 +93,7 @@ LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
 /// each byte B can be thought of as a signed char, subtracting 1 sets bit 7 if B was <= 0, then AND with ~B clears bit 7 if it
 /// was already set (i.e B was < 0), thus bit 7 only remains set if the byte started as 0.
 #define hasNulByte(x) (((x) - 0x0101010101010101) & ~(x) & 0x8080808080808080)
+#define hasNulByte128(x) (((x) - 0x01010101010101010101010101010101) & ~(x) & 0x80808080808080808080808080808080)
 
 // here we use a binary search, using the result from aove we want yo detext which byte is now non-zero
 // so we do x & 0xFFFFFFFF00000000, if this is zero then try x & 0xFFFF0000 and so on
@@ -139,6 +140,23 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
 #endif
   return strlen(s);
 }
+
+
+/* LIVES_GLOBAL_INLINE size_t lives_strlen128(const char *s) { */
+/*   if (!s) return 0; */
+/*   //#ifndef STD_STRINGFUNCS */
+/*   else { */
+/*     __uint128_t *pi = (__uint128_t *)s, nulmask; */
+/*     if ((void *)pi == (void *)s) { */
+/*       while (!(nulmask = hasNulByte128(*pi))) pi++; */
+/*       if (hasNulByte(*pi & 0xFFFFFFFFFFFFFFFF)) */
+/* 	return (char *)pi - (char *)s + lives_strlen((char *)pi); */
+/*       return (char *)pi - (char *)s + 8 + lives_strlen((((char *)pi) + 8)); */
+/*     } */
+/*   } */
+/*   //#endif */
+/*   return strlen(s); */
+/* } */
 
 
 LIVES_GLOBAL_INLINE boolean lives_strlen_atleast(const char *s, size_t min) {

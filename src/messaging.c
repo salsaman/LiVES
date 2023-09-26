@@ -109,7 +109,7 @@ static weed_plant_t *make_msg(const char *text) {
   // make single msg. text should have no newlines in it, except possibly as the last character.
   if (!text) return NULL;
   else {
-    weed_plant_t *msg = lives_plant_new(LIVES_WEED_SUBTYPE_MESSAGE);
+    weed_plant_t *msg = lives_plant_new(LIVES_PLANT_MESSAGE);
     if (!msg) return NULL;
 
     weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);

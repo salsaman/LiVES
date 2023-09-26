@@ -869,6 +869,7 @@ static LiVESList *ustacks[NBIGBLOCKS];
 
 // blocks can be allocated in groups of 1,2 or 4
 static volatile int used[NBIGBLOCKS];
+static volatile int seqset[NBIGBLOCKS];
 
 #define NBAD_LIM 8
 #define BBL_TEST
@@ -947,8 +948,8 @@ static int get_bblock_idx(void *bstart, off_t *offs, int *bbafter) {
     for (int i = 1; i <= bbidx; i++) {
       if (i > 3) break;
       if (used[bbidx - i] > i) {
-	if (bbafter) *bbafter = bbidx - i;
-	break;
+        if (bbafter) *bbafter = bbidx - i;
+        break;
       }
     }
   return bbidx;
@@ -962,13 +963,12 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   if (sizeb > bmemsize) {
     if (sizeb > (bmemsize >> 1)) {
       if (sizeb > (bmemsize >> 2)) {
-	if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
-					sizeb, bmemsize >> 2);
-	return -2;
+        if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
+                                            sizeb, bmemsize >> 2);
+        return -2;
       }
       nblocks = 4;
-    }
-    else nblocks = 2;
+    } else nblocks = 2;
   }
 
   if (oblock >= 0 && nblocks <= used[oblock]) {
@@ -983,16 +983,17 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   else {
     i = used[0];
     max = NBBLOCKS - nblocks;
+    g_print("block 0 used %d blocks\n", used[0]);
   }
-  
+
   while (i <= max) {
     for (j = nblocks - 1; j >= 0; j--) {
       int u = used[i + j];
-      //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
+      g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
-	if (oblock != -1) return -1;
-	i += u + j;
-	break;
+        if (oblock != -1) return -1;
+        i += u + j;
+        break;
       }
     }
     if (j < 0) break;
@@ -1031,6 +1032,32 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   return -1;
 }
 
+
+void bbsummary(void) {
+  static int seq = 0;
+
+  pthread_mutex_lock(&bigblock_mutex);
+  seq++;
+  g_print("SEQ %d\n", seq);
+  for (int i = 0; i < NBBLOCKS; i++) {
+    if (used[i]) {
+      g_print("BB %d : %d", i, used[i]);
+      if (!seqset[i]) {
+        g_print("New !!");
+        seqset[i] = seq;
+      } else {
+        g_print("held for %d iters", seq - seqset[i]);
+        if (seq - seqset[i] > 14) g_print("assigned in seqeuence %d", seqset[i]);
+      }
+      g_print("\n");
+
+      i += used[i] - 1;
+    } else seqset[i] = 0;
+  }
+  pthread_mutex_unlock(&bigblock_mutex);
+}
+
+
 #ifdef DEBUG_BBLOCKS
 void *_calloc_bigblock(size_t xsize) {
 #else
@@ -1047,7 +1074,7 @@ void *calloc_bigblock(size_t xsize) {
   return NULL;
 }
 
-  
+
 #ifdef DEBUG_BBLOCKS
 void *_malloc_bigblock(size_t xsize) {
 #else
@@ -1064,7 +1091,7 @@ void *malloc_bigblock(size_t xsize) {
 
 
 
- 
+
 void *realloc_bigblock(void *p, size_t new_size) {
   int bbidx;
   pthread_mutex_lock(&bigblock_mutex);
@@ -1095,7 +1122,7 @@ void *free_bigblock(void *bstart) {
   if (bbidx < 0) {
     pthread_mutex_unlock(&bigblock_mutex);
     msg = lives_strdup_printf("Invalid free of bigblock, %p not in range %p -> %p\n",
-			      bstart, bigblocks[0], bigblocks[0] + NBBLOCKS * bmemsize);
+                              bstart, bigblocks[0], bigblocks[0] + NBBLOCKS * bmemsize);
     LIVES_WARN(msg);
     lives_free(msg);
     lives_free(bstart);
@@ -1105,14 +1132,14 @@ void *free_bigblock(void *bstart) {
   if (offs) {
     pthread_mutex_unlock(&bigblock_mutex);
     msg = lives_strdup_printf("Invalid free of bigblock, %p is at offset %ld after block %d\n",
-			      bstart, offs, bbafter);
+                              bstart, offs, bbafter);
     LIVES_FATAL(msg);
     return NULL;
   }
 
   if (bbafter != bbidx) {
     msg = lives_strdup_printf("Invalid free of bigblock, %p is %d blocks after block %d, with size %d blocks\n",
-			      bstart, bbidx - bbafter, bbafter, used[bbafter]);
+                              bstart, bbidx - bbafter, bbafter, used[bbafter]);
     pthread_mutex_unlock(&bigblock_mutex);
     LIVES_FATAL(msg);
     return NULL;
@@ -1384,7 +1411,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   /// however, it is a simple matter to adjust the cost calculation
 
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
-    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 2);
+    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         haslock = TRUE;
@@ -1446,7 +1473,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
 
 #if AUTOTUNE_MALLOC_SIZES
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
-    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 2);
+    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         haslock = TRUE;

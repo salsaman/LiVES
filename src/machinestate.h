@@ -70,24 +70,23 @@ typedef struct {
 #define WEED_LEAF_LIVES_SUBTYPE "subtype"
 #define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
 
-#define LIVES_WEED_SUBTYPE_MESSAGE 1
-#define LIVES_WEED_SUBTYPE_WIDGET 2
-#define LIVES_WEED_SUBTYPE_TUNABLE 3
-#define LIVES_WEED_SUBTYPE_PROC_THREAD 4
-#define LIVES_WEED_SUBTYPE_PREFERENCE 5
+#define LIVES_PLANT_MESSAGE 1
+#define LIVES_PLANT_WIDGET 2
+#define LIVES_PLANT_TUNABLE 3
+#define LIVES_PLANT_PROC_THREAD 4
+#define LIVES_PLANT_PREFERENCE 5
 
-#define LIVES_WEED_SUBTYPE_BUNDLE 64
-#define LIVES_WEED_SUBTYPE_OBJECT 65
-#define LIVES_WEED_SUBTYPE_OBJ_ATTR 66
+#define LIVES_PLANT_OBJECT 65
+#define LIVES_PLANT_OBJ_ATTR 66
 
-#define LIVES_WEED_SUBTYPE_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
+#define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
-#define LIVES_WEED_SUBTYPE_HASH_STORE 513
+#define LIVES_PLANT_HASH_STORE 513
 
-#define LIVES_WEED_SUBTYPE_INDEX 514
+#define LIVES_PLANT_INDEX 514
 
 // used for debugging purposes
-#define LIVES_WEED_SUBTYPE_AUDIT 1024
+#define LIVES_PLANT_AUDIT 1024
 
 /// disk/storage status values
 typedef enum {

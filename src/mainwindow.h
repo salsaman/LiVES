@@ -979,7 +979,7 @@ typedef struct {
   boolean preview;
   boolean preview_rendering;
 
-  //
+  lives_atomic64_t n_service_calls;
 
   boolean foreign;  ///< for external window capture
   boolean record_foreign;

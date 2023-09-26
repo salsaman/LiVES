@@ -360,7 +360,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
 
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_YES, NULL,
                            LIVES_RESPONSE_YES);
-    mainw->debug_ptr = okbutton;
+
     lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
     break;
 
@@ -535,6 +535,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
   if (cancelbutton) {
     lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
   }
+
+  lives_widget_show_all(dialog);
 
   if (transient) {
     if ((widget_opts.non_modal && !(prefs->focus_steal & FOCUS_STEAL_MSG)) ||
@@ -2809,14 +2811,16 @@ LiVESResponseType do_file_notfound_dialog(const char *detail, const char *filena
 }
 
 
-LIVES_GLOBAL_INLINE void do_no_decoder_error(const char *fname) {
-  lives_widget_context_update();
-  do_error_dialogf(
-    _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\n"
-      "The clip could not be loaded.\n\n"
-      "The clip will be marked 'ignore' - you can try to recover it using\n"
-      "Files | Clean up Disk Space / Recover files, "
-      "with the option 'Consider Files Marked Ignore' enabled."), fname);
+LIVES_GLOBAL_INLINE void do_no_decoder_error(int clipno) {
+  do_delete_or_mark(clipno, 1);
+
+  /* lives_widget_context_update(); */
+  /* do_error_dialogf( */
+  /*   _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\n" */
+  /*     "The clip could not be loaded.\n\n" */
+  /*     "The clip will be marked 'ignore' - you can try to recover it using\n" */
+  /*     "Files | Clean up Disk Space / Recover files, " */
+  /*     "with the option 'Consider Files Marked Ignore' enabled."), fname); */
 }
 
 

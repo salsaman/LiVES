@@ -3700,12 +3700,10 @@ void redraw_timeline(int clipno) {
       }
 
       pthread_mutex_lock(&mainw->tlthread_mutex);
-      mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
+      mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_SET_CANCELLABLE,
                              (lives_funcptr_t)redraw_timeline, -1, "i", clipno);
 
       //lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
-      lives_proc_thread_set_cancellable(mainw->drawtl_thread);
-      lives_proc_thread_sync_ready(mainw->drawtl_thread);
       RECURSE_GUARD_END;
       pthread_mutex_unlock(&mainw->tlthread_mutex);
       return;

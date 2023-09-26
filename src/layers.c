@@ -31,6 +31,12 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
   weed_set_int_value(layer, WEED_LEAF_LAYER_TYPE, layer_type);
   weed_add_refcounter(layer);
+  if (layer_type == WEED_LAYER_TYPE_VIDEO) {
+    LIVES_CALLOC_TYPE(pthread_mutex_t, copylist_mutex, 1);
+    pthread_mutex_init(copylist_mutex, NULL);
+    weed_set_voidptr_value(layer, "copylist_mutex", copylist_mutex);
+    g_print("new layer %p\n", layer);
+  }
   return layer;
 }
 
@@ -90,17 +96,21 @@ LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *
 
 
 void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
-  // copy width, height, clip, frame, full palette
+  // copy width, height, clip, frame, full palette, etc
   if (src && dest) {
-    lives_layer_set_clip(dest, lives_layer_get_clip(src));
-    lives_layer_set_frame(dest, lives_layer_get_frame(src));
-    /* int width = weed_layer_get_width(src); */
-    /* int height = weed_layer_get_height(src); */
-    /* weed_layer_set_size(dest, width, height); */
-    /* weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE); */
-    /* weed_leaf_dup(dest, src, WEED_LEAF_YUV_SUBSPACE); */
-    /* weed_leaf_dup(dest, src, WEED_LEAF_YUV_SAMPLING); */
-    /* weed_leaf_dup(dest, src, WEED_LEAF_YUV_CLAMPING); */
+    weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE);
+    weed_leaf_dup(dest, src, WEED_LEAF_WIDTH);
+    weed_leaf_dup(dest, src, WEED_LEAF_HEIGHT);
+
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_CLIP, src);
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_FRAME, src);
+
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_GAMMA_TYPE, src);
+    weed_leaf_copy_or_delete(dest, LIVES_LEAF_HOST_FLAGS, src);
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_YUV_CLAMPING, src);
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_YUV_SUBSPACE, src);
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_YUV_SAMPLING, src);
+    weed_leaf_copy_or_delete(dest, WEED_LEAF_PAR, src);
   }
 }
 
@@ -130,9 +140,12 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
       }
     }
   }
+
   if (!width) width = DEF_FRAME_HSIZE_UNSCALED;
   if (!height) height = DEF_FRAME_VSIZE_UNSCALED;
+
   weed_layer_set_size(layer, width, height);
+
   if (weed_layer_get_palette(layer) == WEED_PALETTE_NONE) {
     if (target_palette != WEED_PALETTE_NONE && target_palette != WEED_PALETTE_ANY)
       weed_layer_set_palette(layer, target_palette);
@@ -152,6 +165,7 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
     weed_layer_set_rowstrides(layer, rowstrides, nplanes);
     weed_leaf_set_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
   }
+
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) weed_layer_nullify_pixel_data(layer);
   weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
 
@@ -167,6 +181,9 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
 }
 
 
+// similaer to create_empty_pixel_data with blank == TRUE, but we try to guess the frame size,
+// palette and gamma. Rowstride values can alse be preset and flag WEED_LEAF_MAINTAIN_VALUE will
+// leave them as set, then clear the flagbit
 weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
                                  int width, int height, int target_palette) {
   return _create_blank_layer(layer, image_ext, width, height, NULL, WEED_GAMMA_UNKNOWN, target_palette);
@@ -279,34 +296,134 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_layer_get_copylist(lives_layer_t *layer) {
   if (!layer) return NULL;
   return (lives_sync_list_t *)weed_get_voidptr_value(layer, LIVES_LEAF_COPYLIST, NULL);
+}
 
-  /* copylist = lives_layer_get_copylist(layer); */
-  /* if (copylist) { */
-  /*   weed_leaf_delete(layer, LIVES_LEAF_COPYLIST); */
-  /*   copylist = lives_sync_list_remove(copylist, (void *)layer, FALSE); */
-  /* } */
+
+// remove layer from a copylist containing it
+// delete the copylist leaf from layer
+// if layer is the final member of copylist,
+// if layer has no PIXBUF_SRC, we return TRUE
+//
+// otherwise we nullify pixel_data, and if there is a PIXBUG_SRC, unref pixbuf, removing the extra ref,
+//
+// if there is only one member left in copylist after removing layer, we recursively call the function,
+// passing final layer as layer
+//
+// after removing layer, we then check if there is only a single member remaining
+// if so, we check also if this is the proxy_layer for a pixbuf, if so we unref pixbuf, removing the ref we
+// added when creating it or copying it to a layer
+// we then free the copylist with its single member and delete the copylist leaf in layer
+//
+
+//
+LIVES_LOCAL_INLINE boolean _lives_copylist_remove(lives_sync_list_t *copylist, lives_layer_t *layer) {
+  pthread_mutex_t *copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(layer, "copylist_mutex", NULL);
+  LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
+
+  weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
+  copylist = _lives_sync_list_remove(copylist, layer, FALSE);
+  if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
+
+  g_print("rem from copylist %p %p %p\n", layer, copylist, pixbuf);
+
+  // should only happen if we recursed
+  if (!copylist && !pixbuf) return TRUE;
+
+  if (pixbuf) {
+    // there are a few possibilities here
+    // - pixbuf was created from a layer (a)
+    // - layer wwas created from pixbuf (b)
+    //
+    // this is the final ref on pixbuf or not (0 or 1)
+    // there are other layers in copylist not not
+    // - this must be the last since we only remove proy layers when they are final member of copylist
+    // (since they are otherwise never unreffed)
+
+
+    //  so we have a0, a1, b0, b1
+    // a0 - pixbuf was created from layer, there are other refs - not posible since proxy layer would not be last
+    // a1 - created from layer, last ref
+    // - we need to free pixel_date for layer  instead for pixbuf, layer remains as proxy
+    /// - lives_free_buffer
+    // b0 same, impossible
+    //  layer from pixbuf - in this case we want to nullify layer and free it
+    // detaching proxy from pixbuf, so after ureffing pb it will eithre be freed or cut loose as normal pixbuf
+    // (we need to differentiate because when creating pixbuf from layer, pixel data coul be a bigblock, etc)
+    // pixbuf -> layer normal pixbuf pixels
+
+
+    g_print("UNREFPB %p\n", pixbuf);
+    // cut pixbuf free, if there are other refs it becomes a normal pixbuf
+    weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, NULL);
+    // will free pixbuf data if no other refs
+    lives_widget_object_unref(pixbuf);
+    // now we can dispose of the layer
+    // this is proxy layer for a pixbuf, so we can free it - since pixdata is NULL, it cannot be freed
+    weed_layer_free(layer);
+    return TRUE;
+  }
+
+  weed_layer_set_pixel_data(layer, NULL);
+
+  if (copylist->list->next) return FALSE; // -> nullify layer
+
+  /////////////
+
+  // if layer was penultimate meber of copylist, remove last member from list
+  // but leave its pixel_data untouched
+  g_print("nis last m \n");
+  weed_layer_t *xlayer = (weed_layer_t *)copylist->list->data;
+  copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(xlayer, "copylist_mutex", NULL);
+  // if we fail to get lock, another thread is removing or adding
+  // so leave alone - this avoids any dealock situation where we have lock on layer,
+  // lock on synclist, and we block trying to get lock on another layer, whilst the other thread
+  // has locked other layer is waiting for synclist_lock
+  if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
+  _lives_copylist_remove(copylist, xlayer);
+  return TRUE;
+}
+
+
+
+LIVES_GLOBAL_INLINE boolean lives_copylist_remove(lives_sync_list_t *copylist, lives_layer_t *layer) {
+  // with copylist mutex held, remvoe layer from its copylist
+  if (copylist && layer) return _lives_copylist_remove(copylist, layer);
+  return TRUE;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   lives_sync_list_t *copylist;
+  pthread_mutex_t *copylist_mutex;
+
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
 
   wait_layer_ready(layer, TRUE);
 
-  copylist = lives_layer_get_copylist(layer);
-  if (copylist) {
-    weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
-    copylist = lives_sync_list_remove(copylist, (void *)layer, FALSE);
-  }
+  copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(layer, "copylist_mutex", NULL);
+  if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
 
-  if (!copylist && weed_layer_get_pixel_data(layer)) {
+  copylist = lives_layer_get_copylist(layer);
+
+  if (copylist) {
+    // if FALSE is returned, then we have detected other layers sharing with this
+    // pixels will have been set to NULL, and we fall through to next section
+    //
+    // if TRUE is returned, then there are no other layers sharing with this one, so we can go ahead
+    // pixel_data isnt set to NULL, so we catch this below and free the data instead
+    lives_sync_list_lock(copylist);
+    if (!lives_copylist_remove(copylist, (void *)layer))
+      lives_sync_list_unlock(copylist);
+  }
+  if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
+
+  if (weed_layer_get_pixel_data(layer)) {
     LIVES_WARN("NULLIFY non-copied layer with pixdata - freeing first!");
     weed_layer_pixel_data_free(layer);
     return layer;
   }
 
-  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
   weed_plant_sanitize(layer, FALSE);
   return layer;
 }
@@ -378,16 +495,12 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_palette_yuv(weed_layer_t *layer
 boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t alignment) {
   // copy (deep) old_layer -> layer
   // if old_layer is NULL, and layer is non-NULL, we can change rowstride alignment for layer
-
   int numplanes, xheight, xwidth;
   int *orowstrides, *rowstrides;;
   void **pixel_data, **npixel_data;
-  int pal = weed_layer_get_palette(layer);
-  int width = weed_layer_get_width(layer);
-  int height = weed_layer_get_height(layer);
-  int i, j;
-  boolean newdata = FALSE;
-  double psize = pixel_size(pal);
+  int pal, width, height, i, j;
+  boolean newdata = TRUE;
+  double psize;
 
   if (alignment && !old_layer) {
     // check if we need to align memory
@@ -399,36 +512,34 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   if (!old_layer) {
     // do alignment
-    newdata = TRUE;
+    newdata = FALSE;
     old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     weed_layer_copy(old_layer, layer);
   }
 
   pixel_data = weed_layer_get_pixel_data_planar(old_layer, &numplanes);
   if (!pixel_data || !pixel_data[0]) {
-    if (newdata) weed_layer_unref(old_layer);
-    return FALSE;
+    if (!newdata) weed_layer_unref(old_layer);
+    return TRUE;
   }
-
-  orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
 
   if (alignment) THREADVAR(rowstride_alignment_hint) = alignment;
 
-  weed_layer_set_palette(layer, pal);
-  weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(pal), height);
-
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
-    if (newdata) {
+    if (!newdata) {
       weed_layer_copy(layer, old_layer);
       weed_layer_unref(old_layer);
     }
     return FALSE;
   }
 
+  orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
   rowstrides = weed_layer_get_rowstrides(layer, &numplanes);
   npixel_data = weed_layer_get_pixel_data_planar(layer, &numplanes);
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
+  pal = weed_layer_get_palette(layer);
+  psize = pixel_size(pal);
 
   for (i = 0; i < numplanes; i++) {
     xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
@@ -444,7 +555,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     }
   }
 
-  if (newdata) weed_layer_unref(old_layer);
+  if (!newdata) weed_layer_unref(old_layer);
 
   lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
@@ -555,75 +666,95 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
    the pixel_data is only freed when the last copy is freed (otherwise it will be nullified).
 */
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
-  weed_layer_t *layer;
-  void **pd_array = NULL;
+  lives_sync_list_t *copylist;
+  pthread_mutex_t *copylist_mutex, *copylist_mutex2;
 
   if (!slayer || !WEED_IS_XLAYER(slayer)) return NULL;
-
-  if (dlayer) {
-    if (!WEED_IS_XLAYER(dlayer)) return NULL;
-    layer = dlayer;
-  }
-
-  pd_array = weed_layer_get_pixel_data_planar(slayer, NULL);
+  if (dlayer && !WEED_IS_XLAYER(dlayer)) return NULL;
 
   if (!dlayer) {
     /// deep copy
     int height = weed_layer_get_height(slayer);
     int width = weed_layer_get_width(slayer);
     int palette = weed_layer_get_palette(slayer);
-
     int *rowstrides = weed_layer_get_rowstrides(slayer, NULL);
-    if (height <= 0 || width < 0 || !rowstrides || !weed_palette_is_valid(palette)) {
-      if (pd_array) lives_free(pd_array);
+
+    if (height <= 0 || width < 0 || !rowstrides
+        || !weed_palette_is_valid(palette))
       return NULL;
-    } else {
-      layer = weed_layer_create(width, height, rowstrides, palette);
-      if (!pd_array) weed_layer_nullify_pixel_data(layer);
-      else copy_pixel_data(layer, slayer, 0);
-      lives_free(rowstrides);
+
+    dlayer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+    lives_layer_copy_metadata(dlayer, slayer);
+    if (!copy_pixel_data(dlayer, slayer, 0)) {
+      weed_layer_free(dlayer);
+      return NULL;
     }
-  } else {
-    /// shallow copy
-    weed_layer_pixel_data_free(layer);
+    return dlayer;
+  }
+  /// shallow copy
 
-    weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
-    weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
+  // locking this prevents dlayer from being reomved from any copy list as, "last member"
+  // since we are now going to add dlayer to copylist, this is superfluous
+  // if slsayer and dlayer are already in same copylist, when dlayer is removed
+  // if slayer is last member, the finction will try to lock slayer to remove it,
+  // however the lock will fail and slayer will maintain its list
 
-    weed_leaf_copy_or_delete(layer, WEED_LEAF_HEIGHT, slayer);
-    weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
-    weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
-    if (pd_array) {
-      lives_sync_list_t *copylist = lives_layer_get_copylist(layer);
-      if (!copylist) {
-        copylist = lives_sync_list_add(NULL, (void *)slayer);
-        weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
-      }
+  copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(slayer, "copylist_mutex", NULL);
+  if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
 
-      lives_sync_list_add(copylist, (void *)layer);
-      weed_leaf_dup(layer, slayer, LIVES_LEAF_COPYLIST);
+  copylist_mutex2 = (pthread_mutex_t *)weed_get_voidptr_value(dlayer, "copylist_mutex", NULL);
+  if (copylist_mutex2) pthread_mutex_lock(copylist_mutex2);
 
-      weed_leaf_dup(layer, slayer, LIVES_LEAF_BBLOCKALLOC);
-      weed_leaf_dup(layer, slayer, LIVES_LEAF_PIXBUF_SRC);
-      weed_leaf_dup(layer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
-      weed_leaf_dup(layer, slayer, LIVES_LEAF_SURFACE_SRC);
-      weed_leaf_dup(layer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-      weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
-                          weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA));
-    }
-    //g_print("LAYERS: %p duplicated to %p, bb %d %d\n", slayer, layer, weed_plant_has_leaf(slayer, LIVES_LEAF_BBLOCKALLOC),
-    //	    weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
+  copylist = lives_layer_get_copylist(slayer);
+
+  if (copylist && copylist == lives_layer_get_copylist(dlayer)) {
+    // dlayer is already a copy of slayer, so do nothing
+    if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
+    if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
+    return dlayer;
   }
 
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_GAMMA_TYPE, slayer);
-  weed_leaf_copy_or_delete(layer, LIVES_LEAF_HOST_FLAGS, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_CLAMPING, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SUBSPACE, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SAMPLING, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_PAR, slayer);
+  if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
+  if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
 
-  if (pd_array) lives_free(pd_array);
-  return layer;
+  weed_layer_pixel_data_free(dlayer);
+
+  if (copylist_mutex2) pthread_mutex_lock(copylist_mutex2);
+  if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
+
+  lives_layer_copy_metadata(dlayer, slayer);
+
+  if (weed_layer_get_pixel_data(slayer)) {
+    if (!copylist) {
+      copylist = lives_sync_list_add(NULL, (void *)slayer);
+      weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
+      g_print("add to  copylist %p\n", slayer);
+    }
+
+    lives_sync_list_add(copylist, (void *)dlayer);
+    g_print("add2 to  copylist %p\n", dlayer);
+
+    // not part of the standard metadata set
+    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_COPYLIST);
+
+    weed_leaf_dup(dlayer, slayer, WEED_LEAF_ROWSTRIDES);
+    weed_leaf_dup(dlayer, slayer, WEED_LEAF_PIXEL_DATA);
+
+    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_BBLOCKALLOC);
+    weed_leaf_dup(dlayer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
+    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_SURFACE_SRC);
+    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
+    weed_leaf_set_flags(dlayer, WEED_LEAF_PIXEL_DATA,
+                        weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA));
+  }
+
+  //g_print("LAYERS: %p duplicated to %p, bb %d %d\n", slayer, layer, weed_plant_has_leaf(slayer, LIVES_LEAF_BBLOCKALLOC),
+  //	    weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
+
+  if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
+  if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
+
+  return dlayer;
 }
 
 
@@ -642,7 +773,6 @@ LIVES_GLOBAL_INLINE void lock_layer_status(weed_layer_t *layer) {
     lst_mutex = LIVES_CALLOC_SIZEOF(pthread_mutex_t, 1);
     pthread_mutex_init(lst_mutex, NULL);
     weed_set_voidptr_value(layer, LIVES_LEAF_LST_MUTEX, lst_mutex);
-    weed_leaf_set_autofree(layer, LIVES_LEAF_LST_MUTEX, TRUE);
   }
   pthread_mutex_lock(lst_mutex);
 }
@@ -775,6 +905,9 @@ LIVES_GLOBAL_INLINE boolean weed_layer_check_valid(weed_layer_t *layer) {
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
     int lstatus;
+    pthread_mutex_t *mutexp;
+    g_print("free layer %p\n", layer);
+
     if (mainw->debug_ptr == layer) {
       g_print("FREE %p\n", layer);
       break_me("free dbg");
@@ -794,8 +927,13 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
       if (!weed_layer_unref(layer)) return NULL;
     }
 #endif
-    weed_layer_pixel_data_free(layer);
+    if (weed_layer_get_pixel_data(layer)) weed_layer_pixel_data_free(layer);
+    else weed_layer_nullify_pixel_data(layer);
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
+    mutexp = weed_get_voidptr_value(layer, "copylist_mutex", NULL);
+    if (mutexp) lives_free(mutexp);
+    mutexp = weed_get_voidptr_value(layer, LIVES_LEAF_LST_MUTEX, NULL);
+    if (mutexp) lives_free(mutexp);
     weed_plant_free(layer);
   }
   return NULL;
@@ -838,6 +976,7 @@ LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
 #ifdef DEBUG_LAYER_REFS
 ____FUNC_EXIT____;
 #endif
+if (LIVES_IS_PLAYING && mainw->layers && layer == mainw->layers[0]) break_me("ref mwfl");
 return weed_refcount_inc(layer);
 }
 

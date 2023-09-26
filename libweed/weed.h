@@ -88,8 +88,8 @@ extern "C"
   typedef int32_t weed_error_t;
   typedef void * weed_voidptr_t;
   typedef void (*weed_funcptr_t)();
-
   typedef uint32_t weed_seed_t;
+  typedef uint32_t weed_flags_t;
 
 #define weed_seed_type weed_seed_t;
   
@@ -137,7 +137,7 @@ struct _weed_leaf_nopadding {
     weed_size_t num_elements;
     weed_leaf_t *next;
     weed_seed_t seed_type;
-    uint32_t flags;
+    weed_flags_t flags;
     weed_data_t **data;
     void *private_data;
     const char *key;
@@ -150,7 +150,7 @@ struct _weed_leaf_nopadding {
     weed_size_t num_elements;
     weed_leaf_t *next;
     weed_seed_t seed_type;
-    uint32_t flags;
+    weed_flags_t flags;
     weed_data_t *data;
     void *private_data;
     char padding[_WEED_PADBYTES_];
@@ -191,7 +191,7 @@ struct _weed_leaf_nopadding {
   typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx);
 
   typedef weed_seed_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
-  typedef uint32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
+  typedef weed_flags_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
   typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
   typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
@@ -215,7 +215,7 @@ struct _weed_leaf_nopadding {
 						      weed_size_t new_size);
 
   /* CAUTION - only works with scalar values */
-  typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, uint32_t seed_type,
+  typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 						    weed_voidptr_t new_value, weed_voidptr_t old_valptr);
 #endif
 
@@ -226,7 +226,7 @@ struct _weed_leaf_nopadding {
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
   /* host only functions */
 
-  typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, uint32_t flags);
+  typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, weed_flags_t flags);
   typedef weed_error_t (*weed_leaf_set_private_data_f)(weed_plant_t *, const char *key, void *data);
   typedef weed_error_t (*weed_leaf_get_private_data_f)(weed_plant_t *, const char *key, void **ret_loc);
 

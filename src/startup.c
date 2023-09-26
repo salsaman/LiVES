@@ -4,7 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-
 #include "main.h"
 
 _palette *palette;
@@ -73,6 +72,10 @@ static void do_start_messages(void);
 #ifndef VALGRIND_ON
 static void set_extra_colours(void);
 #endif
+
+sup_stage what_sup = nothing_sup;
+
+sup_stage what_sup_now(void) {return what_sup;}
 
 capabilities *capable;
 //////////////////////////////////////////
@@ -458,8 +461,18 @@ static boolean pre_init(void) {
 
   int i;
 
+  what_sup = pre_init_sup;
+
   /// create context data for main thread; must be called before get_capabilities()
   mainw->fg_tdata = lives_thread_data_create();
+
+  // test the timer
+  if (1) {
+    g_printerr("Testing LiVES timers...");
+    lives_alarm_set_timeout(ONE_MILLION);
+    lives_alarm_wait();
+    g_printerr("OK\n");
+  }
 
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
@@ -470,8 +483,8 @@ static boolean pre_init(void) {
   lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
 
   // set the active proc_thread for the main pthread
-  lives_thread_switch_self(mainw->def_lpt, FALSE);
-  
+  lives_thread_set_active(mainw->def_lpt);
+
   // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
   // to the thread hook_stacks instead
 
@@ -736,7 +749,7 @@ static boolean pre_init(void) {
 
   mainw->kb_timer = -1;
 
-  mainw->overlay_alarm = lives_alarm_set(0);
+  //mainw->overlay_alarm = lives_alarm_set(0);
 
   prefs->sleep_time = 1000;
 
@@ -1359,6 +1372,8 @@ static boolean lives_startup(livespointer data) {
   char *tmp, *msg;
   if (mainw->no_idlefuncs) return TRUE;
 
+  what_sup = startup_sup;
+
   // check the working directory
   if (needs_workdir) {
     // get initial workdir
@@ -1613,15 +1628,33 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
-  lives_idle_add(lives_startup2, NULL);
+  mainw->n_service_calls = ATOMIC_VAR_INIT(0);
+
+  lives_idle_priority(fg_service_ready_cb, NULL);
+
+  set_gui_loop_tight(TRUE);
+  lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, WEED_SEED_BOOLEAN, "v", NULL);
+  //lives_idle_add(lives_startup2, NULL);
   return FALSE;
 }
 
 
 static boolean lives_startup2(livespointer data) {
+  GET_PROC_THREAD_SELF(self);
   char *ustr;
   boolean layout_recovered = FALSE;
+  int64_t nsc;
+  uint64_t attrs;
+
   if (mainw->no_idlefuncs) return TRUE;
+
+  nsc = lives_atomic64_load(&mainw->n_service_calls);
+  if (!nsc) return TRUE;
+
+  attrs = lives_proc_thread_get_attrs(self);
+  lives_proc_thread_set_attrs(self, attrs & ~LIVES_THRDATTR_AUTO_REQUEUE);
+
+  what_sup = startup2_sup;
 
 #ifndef VALGRIND_ON
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
@@ -1641,6 +1674,8 @@ static boolean lives_startup2(livespointer data) {
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
       lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
+
+      g_print("wait for PCUSTCOL\n");
       lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       // must take care to execute this here or in the function itself, otherwise
@@ -1715,7 +1750,7 @@ static boolean lives_startup2(livespointer data) {
   // this can only be added AFTER calling check_for_recovery_files, otherwise we get stuck
   // showing the query dialog
 
-  lives_idle_priority(fg_service_ready_cb, NULL);
+  //lives_idle_priority(fg_service_ready_cb, NULL);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -1842,6 +1877,8 @@ static boolean lives_startup2(livespointer data) {
 
   if (prefs->interactive) set_interactive(TRUE);
 
+  set_gui_loop_tight(FALSE);
+
 #ifdef ENABLE_JACK_TRANSPORT
   mainw->jack_can_start = TRUE;
 #endif
@@ -1850,8 +1887,8 @@ static boolean lives_startup2(livespointer data) {
   dump_messages(NULL);
 #endif
 
-  //lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
-  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+  //lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
@@ -1860,6 +1897,9 @@ static boolean lives_startup2(livespointer data) {
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
+
+  fg_service_wake();
+  what_sup = sup_ready;
 
   return FALSE;
 } // end lives_startup2()
@@ -1900,7 +1940,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #else
   if (mainw->debug) prefs->nfx_threads = 2;
 #endif
-  
+
   //do_startup_diagnostics(test_opts);
 
   get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
@@ -1950,7 +1990,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   thread_signal_establish(LIVES_TIMER_SIG, timer_handler);
 
   // unblock just for calling thread (main thread)
-  thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);  
+  thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);
 
   g_printerr("Initializing colour engine...");
   init_colour_engine();
@@ -2845,6 +2885,8 @@ static boolean lives_init(_ign_opts * ign_opts) {
 #endif
   int i;
 
+  what_sup = init_sup;
+
   mainw->insert_after = TRUE;
   if (!prefs->vj_mode) mainw->save_with_sound = TRUE;   // also affects loading
   mainw->untitled_number = mainw->cap_number = 1;
@@ -3421,9 +3463,12 @@ static boolean lives_init(_ign_opts * ign_opts) {
     // anything that d_prints messages should go here:
     do_start_messages();
 
+    g_printerr("\n\nLoading realtime fx plugins...");
+
     // this cannot be run until after do_start_messages()
     load_rte_plugins();
 
+    g_printerr("OK\n");
     // up to here, do not launcha any bg threads
 
     if (!prefs->vj_mode) {
@@ -4220,6 +4265,8 @@ double pick_custom_colours(double var, double timer) {
   boolean retried = FALSE, fixed = FALSE;
   int ncols = 0;
 
+  g_print("in PCC, self is %p, cf %p\n", self, mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+
   if (timer > 0.) fixed = TRUE;
   else timer = -timer;
 
@@ -4229,13 +4276,14 @@ double pick_custom_colours(double var, double timer) {
     lmin = .45; lmax = .6;
   }
 retry:
+  g_print("now zzzhere, %d\n", lives_proc_thread_get_cancel_requested(self));
+  lpt_desc_state(self);
   ncr = palette->menu_and_bars.red * 255.;
   ncg = palette->menu_and_bars.green * 255.;
   ncb = palette->menu_and_bars.blue * 255.;
   prefs->pb_quality = PB_QUALITY_HIGH;
 
-  if (self)
-    lives_proc_thread_set_cancellable(self);
+  if (self) lives_proc_thread_set_cancellable(self);
 
   timeout = (ticks_t)(timer * TICKS_PER_SECOND_DBL);
   xtimerinfo = lives_get_current_ticks();
@@ -4260,8 +4308,7 @@ retry:
 
     ncols++;
 
-    if (self &&
-        lives_proc_thread_get_cancel_requested(self)) goto windup;
+    if (self && lives_proc_thread_get_cancel_requested(self)) goto windup;
 
     if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
@@ -4310,10 +4357,17 @@ retry:
       goto retry;
     } else lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
   }
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+
+  g_print("now here, %d\n", lives_proc_thread_get_cancel_requested(self));
+  lpt_desc_state(self);
+  if (lives_proc_thread_get_cancel_requested(self)) {
+    break_me("canccc");
+    lives_proc_thread_cancel(self);
+  }
   return var;
 
 windup:
+  g_print("WINFUP\n");
   if (ncols < 2) lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
   palette->nice3.red = palette->nice2.red;
   palette->nice3.green = palette->nice2.green;

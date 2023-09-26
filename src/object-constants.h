@@ -1812,20 +1812,22 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    // these hook stacks are created on demand when a callback is added to a transform bundle
 
-                   PREPARING_HOOK,  /// none or queued -> prepare
+                   PREPARING_HOOK,  /// none or queued -> prepare **
 
-                   PREPARED_HOOK,  /// prepare -> running
+                   PREPARED_HOOK,  /// prepare -> running ??
 
                    TX_START_HOOK, /// any -> running //25
 
                    ///
-                   PAUSED_HOOK, ///< transform was paused via pause_hook
+                   PAUSED_HOOK, ///< transform was paused via pause_hook **
 
                    ///< transform was resumed via resume hook (if it exists),
                    // and / or all paused hook callbacks returning
-                   RESUMING_HOOK,
+                   RESUMING_HOOK,  // **
 
                    COMPLETED_HOOK,   /// 27 running -> finished
+
+                   FINISHED_HOOK,
 
                    /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
                    // and mey be actioned again
@@ -1893,7 +1895,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // callbacks for this hook number must return boolean
                    // hook_stack is in the thread instance, as it is a self hook, callbacks are added via functional code
                    // and triggered by functional code
-                   SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until
+                   SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until **
 
                    // functionals may trigger sync announcements at key points during their processing
                    // other threads can add callbacks for this and be advised when such a point is reached

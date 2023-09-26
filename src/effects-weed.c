@@ -3914,6 +3914,42 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 
 // Weed function overrides /////////////////
 
+weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, const char *string) {
+  if (!plant) return WEED_ERROR_NOSUCH_PLANT;
+  if (!key || !!*key) return WEED_ERROR_NOSUCH_LEAF;
+  if (!string) return WEED_ERROR_WRONG_SEED_TYPE;
+  char *xstr = lives_strdup(string);
+  size_t slen = lives_strlen(string);
+  weed_error_t err = weed_set_voidptr_value(plant, key, xstr);
+  lives_free(xstr);
+  if (err != WEED_SUCCESS) return err;
+  weed_ext_set_element_size(plant, key, 0, slen);
+  lives_leaf_set_rdonly(plant, key, TRUE, TRUE);
+  weed_leaf_set_autofree(plant, key, TRUE);
+  return WEED_SUCCESS;
+}
+
+
+LIVES_GLOBAL_INLINE const char *weed_get_const_string_value(weed_plant_t *plant, const char *key, weed_error_t *err) {
+  weed_error_t xerr = WEED_SUCCESS;
+  if (!plant) xerr = WEED_ERROR_NOSUCH_PLANT;
+  else if (!key || !!*key) xerr = WEED_ERROR_NOSUCH_LEAF;
+  if (xerr != WEED_SUCCESS) {
+    if (err) *err = xerr;
+    return NULL;
+  }
+  return weed_get_voidptr_value(plant, key, err);
+}
+
+
+LIVES_GLOBAL_INLINE ssize_t weed_leaf_const_string_len(weed_plant_t *plant, const char *key) {
+  weed_error_t err;
+  weed_get_const_string_value(plant, key, &err);
+  if (err == WEED_SUCCESS) return weed_leaf_element_size(plant, key, 0);
+  return -1;
+}
+
+
 boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   // free data pointed to by leaves flagged as autofree
   // the leaf is not actually deleted, only the data
@@ -3923,7 +3959,7 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   if (plant) {
     int flags = weed_leaf_get_flags(plant, key);
     if (flags & WEED_FLAG_UNDELETABLE) return FALSE;
-    if (flags & WEED_FLAG_FREE_ON_DELETE) {
+    if (flags & LIVES_FLAG_FREE_ON_DELETE) {
       uint32_t st = weed_leaf_seed_type(plant, key);
       int nvals;
       bret = FALSE;
@@ -3950,7 +3986,7 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
       break;
       default: break;
       }
-      weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
+      weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
     }
   }
   return bret;
@@ -3979,8 +4015,8 @@ void  weed_plant_autofree(weed_plant_t *plant) {
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, const char *key, boolean state) {
   // a leaf can be set to autofree, this can be done for a plantptr ot voidptr, array or scalar
   if (state)
-    return weed_leaf_set_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
-  return weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
+    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+  return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
 }
 
 //static int nplants = 0;
@@ -4033,14 +4069,14 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type,
                                 weed_size_t num_elems, void *values) {
   // change even immutable leaves
-  // check in case we hvave some really must be immutable leaves
-  // then we could set host_readonly as well
+  // WEED_FLAG_RDONLY_HOST can also be set if we want to make a leaf self readonly
   weed_error_t err;
 
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   if (err == WEED_ERROR_IMMUTABLE) {
     int32_t flags = weed_leaf_get_flags(plant, key);
+    if (flags & LIVES_FLAG_RDONLY_HOST) return err;
     flags &= ~WEED_FLAG_IMMUTABLE;
     weed_leaf_set_flags(plant, key, flags);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
@@ -4051,10 +4087,25 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
 }
 
 
+LIVES_GLOBAL_INLINE weed_error_t lives_leaf_set_rdonly(weed_plant_t *plant, const char *key,
+    boolean rdonly_host, boolean rdonly_plugin) {
+  int32_t flags;
+  if (!plant) return WEED_ERROR_NOSUCH_PLANT;
+  flags = weed_leaf_get_flags(plant, key);
+  if (rdonly_host) flags |= LIVES_FLAG_RDONLY_HOST;
+  else {
+    flags &= ~LIVES_FLAG_RDONLY_HOST;
+    if (rdonly_plugin) flags |= WEED_FLAG_IMMUTABLE;
+  }
+  return weed_leaf_set_flags(plant, key, flags);
+}
+
+
+
 static void upd_statsplant(const char *key) {
   int freq;
   if (mainw->is_exiting) return;
-  if (!statsplant) statsplant = weed_plant_new(LIVES_WEED_SUBTYPE_AUDIT);
+  if (!statsplant) statsplant = weed_plant_new(LIVES_PLANT_AUDIT);
   _weed_leaf_get(statsplant, key, 0, &freq);
   _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
 }
@@ -4846,6 +4897,7 @@ void weed_load_all(void) {
       plugin_ext = get_extension(plugin_name);
       if (!lives_strcmp(plugin_ext, DLL_EXT)) {
         plugin_path = lives_build_filename(dirs[i], plugin_name, NULL);
+        g_printerr("\nloading %s\n", plugin_name);
         load_weed_plugin(plugin_name, plugin_path, dirs[i]);
         lives_freep((void **)&plugin_name);
         lives_free(plugin_path);
@@ -11022,8 +11074,8 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
     char **leaves = weed_plant_list_leaves(plant, NULL);
     for (int i = 0; leaves[i]; i++) {
       if (pixdata_nullify_leaf(leaves[i]) || (sterilize && no_copy_leaf(leaves[i]))) {
-        if (weed_leaf_get_flags(plant, leaves[i]) & WEED_FLAG_FREE_ON_DELETE)
-          weed_leaf_clear_flagbits(plant, leaves[i], WEED_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+        if (weed_leaf_get_flags(plant, leaves[i]) & LIVES_FLAG_FREE_ON_DELETE)
+          weed_leaf_clear_flagbits(plant, leaves[i], LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
         weed_leaf_delete(plant, leaves[i]);
       }
       free(leaves[i]);

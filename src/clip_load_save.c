@@ -2205,11 +2205,11 @@ static LiVESResponseType manual_locate(const char *orig_filename, lives_clip_t *
 }
 
 
-boolean reload_clip(int fileno, frames_t maxframe) {
+boolean reload_clip(int clipno, frames_t maxframe) {
   // reload clip -- for CLIP_TYPE_FILE
   // cd to clip directory - so decoder plugins can write temp files
   LiVESList *odeclist;
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile = mainw->files[clipno];
   const lives_clip_data_t *cdata = NULL;
   lives_clip_data_t *fake_cdata;
 
@@ -2217,7 +2217,7 @@ boolean reload_clip(int fileno, frames_t maxframe) {
 
   char *orig_filename = lives_strdup(sfile->file_name);
   char *cwd = lives_get_current_dir();
-  char *clipdir = get_clip_dir(fileno);
+  char *clipdir = get_clip_dir(clipno);
 
   LiVESResponseType response;
   boolean was_renamed = FALSE, retb = FALSE, ignore;
@@ -2258,7 +2258,7 @@ boolean reload_clip(int fileno, frames_t maxframe) {
 
     response = LIVES_RESPONSE_NONE;
 
-    if ((cdata = get_decoder_cdata(fileno, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
+    if ((cdata = get_decoder_cdata(clipno, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
 manual_locate:
       if (mainw->error || was_renamed) {
         mainw->error = FALSE;
@@ -2276,7 +2276,7 @@ manual_locate:
         }
       } else {
         // unopenable
-        if (!sfile->old_dec_uid) do_no_decoder_error(sfile->file_name);
+        if (!sfile->old_dec_uid) do_no_decoder_error(clipno);
         ignore = TRUE;
       }
 
@@ -2285,21 +2285,21 @@ manual_locate:
 
       // NOT openable, or not found and user cancelled, switch back to original clip
       if (!sfile->checked && cdata) {
-        check_clip_integrity(fileno, cdata, maxframe);
+        check_clip_integrity(clipno, cdata, maxframe);
         if (sfile->frames > 0 || sfile->afilesize > 0) {
           // recover whatever we can
           sfile->clip_type = CLIP_TYPE_FILE;
-          retb = check_if_non_virtual(fileno, 1, sfile->frames);
+          retb = check_if_non_virtual(clipno, 1, sfile->frames);
         }
         sfile->checked = TRUE;
       }
       if (!retb) {
         if (ignore) {
-          ignore_clip(fileno);
-          lives_freep((void **)&mainw->files[fileno]);
+          ignore_clip(clipno);
+          lives_freep((void **)&mainw->files[clipno]);
         } else {
           current_file = mainw->current_file;
-          mainw->current_file = fileno;
+          mainw->current_file = clipno;
           close_current_file(current_file);
         }
       }
@@ -2315,9 +2315,9 @@ manual_locate:
     if (was_renamed) {
       // manual relocation
       sfile->fps = orig_fps;
-      if (!sfile->checked && !check_clip_integrity(fileno, cdata, maxframe)) {
+      if (!sfile->checked && !check_clip_integrity(clipno, cdata, maxframe)) {
         // get correct img_type, fps, etc.
-        if (THREADVAR(com_failed) || THREADVAR(write_failed)) do_header_write_error(fileno);
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) do_header_write_error(clipno);
         goto manual_locate;
       }
       sfile->checked = TRUE;
@@ -2365,36 +2365,36 @@ manual_locate:
 
   // we will set correct value in check_clip_integrity() if there are any real images
 
-  if (get_primary_src(fileno)) {
+  if (get_primary_src(clipno)) {
     boolean bad_header = FALSE;
     boolean correct = TRUE;
     if (!was_renamed) {
       if (!sfile->checked)
-        correct = check_clip_integrity(fileno, cdata, maxframe); // get correct img_type, fps, etc.
+        correct = check_clip_integrity(clipno, cdata, maxframe); // get correct img_type, fps, etc.
       sfile->checked = TRUE;
     }
     if (!correct) {
       if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
     } else {
-      lives_decoder_t *dplug = (lives_decoder_t *)(get_primary_src(fileno))->actor;
+      lives_decoder_t *dplug = (lives_decoder_t *)(get_primary_src(clipno))->actor;
       if (dplug) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
         sfile->decoder_uid = dpsys->id->uid;
-        save_clip_value(fileno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid);
+        save_clip_value(clipno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid);
         if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         else {
-          save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->soname);
+          save_clip_value(clipno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->soname);
           if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         }
       }
     }
 
-    if (bad_header) do_header_write_error(fileno);
+    if (bad_header) do_header_write_error(clipno);
   }
   lives_list_free(capable->plugins_list[PLUGIN_TYPE_DECODER]);
   capable->plugins_list[PLUGIN_TYPE_DECODER] = odeclist;
   if (prefs->autoload_subs) {
-    reload_subs(fileno);
+    reload_subs(clipno);
   }
   return TRUE;
 }
@@ -2744,7 +2744,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     // this will cause the widget to be redrawn with the image blank pixbuf
     defer_config(mainw->start_image);
     defer_config(mainw->end_image);
-
+    g_print("a11\n");
     threaded_dialog_spin(0.);
 
     if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
@@ -2784,6 +2784,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       boolean crash_recovery = prefs->crash_recovery;
       LiVESResponseType resp;
       // set to be opened
+      g_print("a121\n");
 
       buff[lives_strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
       do {
@@ -2836,7 +2837,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         lives_free(ignore);
         continue;
       }
-      lives_free(ignore)
+      lives_free(ignore);
+      g_print("a1155\n");
       ;
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
@@ -2871,6 +2873,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         d_print_failed();
         break;
       }
+      g_print("a16661\n");
 
       if (is_scrap || is_ascrap) {
         // need this for rewrite recovery
@@ -2914,6 +2917,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (mainw->current_file < 1) continue;
       if (is_ascrap) continue;
+      g_print("a11444\n");
 
       use_decoder = should_use_decoder(mainw->current_file);
       maxframe = load_frame_index(mainw->current_file);
@@ -2965,6 +2969,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       }
     }
+    g_print("a110000000\n");
 
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
@@ -3009,9 +3014,11 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       save_clip_values(mainw->current_file);
       cfile->needs_silent_update = cfile->needs_update = FALSE;
     }
+    g_print("a11kkkkk\n");
 
     // add to clip menu
     threaded_dialog_spin(0.);
+    g_print("a11lllllll\n");
 
     add_to_clipmenu();
 
@@ -3022,7 +3029,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
 
+    g_print("a11lllllllzzz\n");
     if (!mainw->multitrack) resize(1);
+    g_print("a11lllllllttt\n");
 
     if (!mainw->multitrack) {
       lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
@@ -3070,8 +3079,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
   }
 
-  run_deferred_config(mainw->start_image, &mainw->si_surface);
-  run_deferred_config(mainw->end_image, &mainw->ei_surface);
+  /* run_deferred_config(mainw->start_image, &mainw->si_surface); */
+  /* run_deferred_config(mainw->end_image, &mainw->ei_surface); */
 
   //if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 

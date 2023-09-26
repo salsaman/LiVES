@@ -5047,7 +5047,7 @@ void splash_init(void) {
     /* mainw->gui_much_events = TRUE; */
     /* lives_widget_context_update(); */
     /* mainw->gui_much_events = FALSE; */
-    lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);
+    //lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);
   } else {
     lives_widget_destroy(mainw->splash_window);
     mainw->splash_window = NULL;

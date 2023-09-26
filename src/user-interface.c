@@ -652,27 +652,27 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
         rheight = xrheight;
       }
 
-      if ((mainw->multitrack && widget == mainw->preview_image && prefs->letterbox_mt)
-          || (!mainw->multitrack && (prefs->ce_maxspect || prefs->letterbox))) {
-        calc_maxspect(rwidth, rheight, &width, &height);
+      /*   if ((mainw->multitrack && widget == mainw->preview_image && prefs->letterbox_mt) */
+      /*       || (!mainw->multitrack && (prefs->ce_maxspect || prefs->letterbox))) { */
+      /*     calc_maxspect(rwidth, rheight, &width, &height); */
 
-        width = (width >> 1) << 1;
-        height = (height >> 1) << 1;
+      /*     width = (width >> 1) << 1; */
+      /*     height = (height >> 1) << 1; */
 
-        if (width > owidth && height > oheight) {
-          width = owidth;
-          height = oheight;
-        }
-      }
+      /*     if (width > owidth && height > oheight) { */
+      /*       width = owidth; */
+      /*       height = oheight; */
+      /*     } */
+      /*   } */
 
-      if (mainw->multitrack) {
-        cx = (rwidth - width) >> 1;
-        if (cx < 0) cx = 0;
-        cy = (rheight - height) >> 1;
-        if (cy < 0) cy = 0;
-      }
+      /*   if (mainw->multitrack) { */
+      /*     cx = (rwidth - width) >> 1; */
+      /*     if (cx < 0) cx = 0; */
+      /*     cy = (rheight - height) >> 1; */
+      /*     if (cy < 0) cy = 0; */
+      /*   } */
+      /* } */
     }
-
     lives_widget_set_opacity(widget, 1.);
 
     if ((!mainw->multitrack || widget != mainw->play_image) && widget != mainw->preview_image) {
@@ -709,11 +709,14 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 }
 
 
-// layer should be reffed
+// layer should be reffed if it is to be used afterwards
+// TODO - can we use
+//
+
 void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   //static int old_pwidth = 0, old_pheight = 0;
   LiVESPixbuf *pixbuf;
-    g_print("DRAW LAYER0\n");
+  g_print("DRAW LAYER0\n");
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
 
@@ -737,7 +740,7 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
     g_print("DRAW LAYER\n");
 
     set_drawing_area_from_pixbuf(darea, pixbuf);
-    
+
     lives_widget_object_unref(pixbuf);
 
     g_print("unref of pb %p\n", pixbuf);

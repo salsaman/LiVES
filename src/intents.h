@@ -341,7 +341,7 @@ struct _object_transform_t {
   uint64_t flags;
 };
 
-#define LIVES_WEED_SUBTYPE_CAPACITIES 512
+#define LIVES_PLANT_CAPACITIES 512
 
 lives_capacities_t *lives_capacities_new(void);
 

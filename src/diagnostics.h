@@ -32,6 +32,7 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 #define DIAG_ALL		(uint64_t)-1
 #define DIAG_MEMORY		(1ull << 0)
 #define DIAG_THREADS		(1ull << 1)
+#define DIAG_APP_STATUS		(1ull << 2)
 
 void print_diagnostics(uint64_t types);
 

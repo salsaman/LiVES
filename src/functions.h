@@ -203,7 +203,7 @@ typedef weed_plant_t lives_funcinst_t;
 #define LIVES_LEAF_FUNCDEF "_funcdef"
 #define LIVES_LEAF_REPLACEMENT "_replacement"
 
-#define LIVES_WEED_SUBTYPE_FUNCINST 150
+#define LIVES_PLANT_FUNCINST 150
 
 #define LIVES_LEAF_CLOSURE "_closure"
 
@@ -259,6 +259,7 @@ enum {
 #define FN_REF_TARGET(fname,...) (ADD_NOTEI(_FN_REF,fname,__VA_ARGS__))
 #define FN_UNREF_TARGET(fname,...) (ADD_NOTEI(_FN_UNREF,fname,__VA_ARGS__))
 
+void add_quick_fn(lives_funcptr_t func, const char *funcname);
 const char *get_funcname(lives_funcptr_t);
 
 // add a note to to ftrace_store, va_args depend on fn_type

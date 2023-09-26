@@ -146,7 +146,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 #define ADD_AUDIT(audt, ptr, vtype, val) do {				\
     char *pkey;								\
-    if (!auditor_##audt) auditor_##audt = lives_plant_new(LIVES_WEED_SUBTYPE_AUDIT); \
+    if (!auditor_##audt) auditor_##audt = lives_plant_new(LIVES_PLANT_AUDIT); \
     pkey = lives_strdup_printf("%p", (ptr));				\
     weed_set_##vtype##_value(auditor_##audt, pkey, (val));		\
     lives_free(pkey);} while (0);

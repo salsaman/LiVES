@@ -7,6 +7,14 @@
 #include "maths.h"
 
 
+LIVES_GLOBAL_INLINE void lives_sync_list_lock(lives_sync_list_t *synclist) {
+  if (synclist) pthread_mutex_lock(&synclist->mutex);
+}
+
+LIVES_GLOBAL_INLINE void lives_sync_list_unlock(lives_sync_list_t *synclist) {
+  if (synclist) pthread_mutex_unlock(&synclist->mutex);
+}
+
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
   LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
   pthread_mutex_init(&synclist->mutex, NULL);
@@ -14,55 +22,100 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
 }
 
 
+LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
+  if (!synclist) synclist = lives_sync_list_new();
+  synclist->list = lives_list_append(synclist->list, data);
+  return synclist;
+}
+
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
   if (!synclist) synclist = lives_sync_list_new();
   pthread_mutex_lock(&synclist->mutex);
-  synclist->list = lives_list_prepend(synclist->list, data);
+  synclist = _lives_sync_list_add(synclist, data);
   pthread_mutex_unlock(&synclist->mutex);
   return synclist;
 }
 
 
-LIVES_GLOBAL_INLINE LiVESList *lives_sync_list_pop(lives_sync_list_t *synclist) {
-  LiVESList *list = NULL;
-  if (!synclist) return NULL;
-  pthread_mutex_lock(&synclist->mutex);
-  list = synclist->list;
+LIVES_GLOBAL_INLINE void *_lives_sync_list_find(lives_sync_list_t *synclist, lives_condfunc_f cb_func) {
+  LiVESList *list = synclist->list;
+  FIND_BY_CALLBACK(list, cb_func);
+  return list ? list->data : NULL;
+}
+
+LIVES_GLOBAL_INLINE void *lives_sync_list_find(lives_sync_list_t *synclist, lives_condfunc_f cb_func) {
+  void *data = NULL;
+  if (synclist) {
+    pthread_mutex_lock(&synclist->mutex);
+    data = _lives_sync_list_find(synclist, cb_func);
+    pthread_mutex_unlock(&synclist->mutex);
+  }
+  return data;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t *synclist) {
+  LiVESList *list = synclist->list;
   if (list) {
     synclist->list = list->next;
     if (synclist->list) synclist->list->prev = NULL;
     list->next = NULL;
   }
-  pthread_mutex_unlock(&synclist->mutex);
+  return list;
+}
+
+LIVES_GLOBAL_INLINE LiVESList *lives_sync_list_pop(lives_sync_list_t *synclist) {
+  LiVESList *list = NULL;
+  if (synclist) {
+    pthread_mutex_lock(&synclist->mutex);
+    list = _lives_sync_list_pop(synclist);
+    pthread_mutex_unlock(&synclist->mutex);
+  }
   return list;
 }
 
 
-LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t *synclist,
+LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_remove(lives_sync_list_t *synclist,
     void *data, boolean do_free) {
   if (synclist) {
-    pthread_mutex_lock(&synclist->mutex);
     synclist->list = lives_list_remove_data(synclist->list, data, do_free);
     if (!synclist->list) {
+      pthread_mutex_trylock(&synclist->mutex);
       pthread_mutex_unlock(&synclist->mutex);
       lives_free(synclist);
       return NULL;
     }
-    pthread_mutex_unlock(&synclist->mutex);
   }
   return synclist;;
 }
 
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t *synclist,
+    void *data, boolean do_free) {
+  lives_sync_list_t *ret = NULL;
+  if (synclist) {
+    pthread_mutex_lock(&synclist->mutex);
+    ret = _lives_sync_list_remove(synclist, data, do_free);
+    if (ret) pthread_mutex_unlock(&synclist->mutex);
+  }
+  return ret;
+}
+
+
+LIVES_GLOBAL_INLINE void  _lives_sync_list_free(lives_sync_list_t *synclist) {
+  pthread_mutex_trylock(&synclist->mutex);
+  lives_list_free(synclist->list);
+  pthread_mutex_unlock(&synclist->mutex);
+  lives_free(synclist);
+}
 
 LIVES_GLOBAL_INLINE void lives_sync_list_free(lives_sync_list_t *synclist) {
   if (synclist) {
     pthread_mutex_lock(&synclist->mutex);
-    lives_list_free(synclist->list);
-    pthread_mutex_unlock(&synclist->mutex);
-    lives_free(synclist);
+    _lives_sync_list_free(synclist);
   }
 }
 
+/////////////////////////////
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_locate_string(LiVESList *list, const char *strng) {
   for (; list; list = list->next) if (!lives_strcmp(strng, (const char *)list->data)) return list;
@@ -283,7 +336,7 @@ boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
 
   if (lives_list_length(alist) != lives_list_length(blist)) return TRUE; // check the simple case first
 
-  // run through alist and see if we have a mismatch
+  // run through alist and see if we have a mismatclish
 
   for (; alist; alist = alist->next) {
     LiVESList *qlist = rlist;
@@ -360,14 +413,13 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fw
 }
 
 
-LIVES_GLOBAL_INLINE void lives_list_free_data(LiVESList *list) {
-  for (; list; list = list->next) lives_freep((void **)&list->data);
-}
+LIVES_GLOBAL_INLINE void lives_list_free_data(LiVESList *list)
+{LIVES_LIST_FOREACH(list); lives_freep((void **)&list->data);}
 
 
 LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
   if (!list || !*list) return;
-  lives_list_free_data((LiVESList *)*list);
+  lives_list_free_data((LiVESList *)list);
   lives_slist_free(lives_steal_pointer((void **)list));
 }
 
@@ -378,15 +430,34 @@ LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
   lives_list_free(lives_steal_pointer((void **)list));
 }
 
+// if node isin list, returns node, else returns NULL
+LIVES_GLOBAL_INLINE LiVESList *lives_list_contains(LiVESList *list, LiVESList *node) {
+  if (!node || !list) return NULL;
+  LIVES_LIST_CHECK_CONTAINS(list, node);
+  return list;
+}
+
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_find_by_data(LiVESList *list, livespointer data) {
-  FIND_BY_DATA(list, data);
+  LiVESList *xlist = list;
+  FIND_BY_DATA(xlist, data);
+  return xlist;
 }
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList *node, boolean free_data) {
   list = lives_list_detatch_node(list, node);
   if (node->data && free_data) lives_free(node->data);
+  lives_list_free(node);
+  return list;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_trim(LiVESList *list, LiVESList *node, boolean free_data) {
+  if (!node || !list) return list;
+  if (node->prev) node->prev = node->prev->next = NULL;
+  else if (node == list) list = NULL;
+  if (free_data) lives_list_free_data(node);
   lives_list_free(node);
   return list;
 }
@@ -462,7 +533,7 @@ LIVES_GLOBAL_INLINE char *lives_list_to_string(LiVESList *list, const char *deli
 #define MAKE_HASHSTORE_KEY(key) ((key) ? lives_strdup_printf("%s%" PRIu64, HASH_STORE_PFX, (key)) : NULL)
 
 LIVES_GLOBAL_INLINE lives_hash_store_t *lives_hash_store_new(const char *id) {
-  lives_hash_store_t *store = lives_plant_new(LIVES_WEED_SUBTYPE_HASH_STORE);
+  lives_hash_store_t *store = lives_plant_new(LIVES_PLANT_HASH_STORE);
   if (id) weed_set_string_value(store, LIVES_LEAF_ID, id);
   return store;
 }

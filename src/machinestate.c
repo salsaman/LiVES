@@ -653,13 +653,18 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes = -1;
   //if (!disk_monitor_running(dir))
 
+  g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
+
   //if (!dircheck_state) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
     if (dircheck_state == 1) {
       return -1;
     }
     if (dircheck_state == 2) {
+      lpt_desc_state(running);
+      g_print("wait for diskmon res %p\n", running);
       bytes = result = lives_proc_thread_join_int64(running);
+      g_print("got for diskmon res\n");
       lives_proc_thread_unref(running);
       running = NULL;
       dircheck_state = 3;
@@ -680,6 +685,8 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
     return get_dir_size(dir);
   }
 
+  g_print("DISKMON sync, state is %d\n", dircheck_state);
+
   if (dircheck_state == 1) {
     GET_PROC_THREAD_SELF(self);
     if (timeout < 0) timeout = BILLIONS(30); // TODO
@@ -691,6 +698,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
         disk_monitor_forget();
         return -1;
       }
+      g_print("synced with diskmn, will get result now\n");
       ds_syncwith = NULL;
     }
   }
@@ -700,6 +708,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
 
 void disk_monitor_forget(void) {
   if (!disk_monitor_running(NULL)) return;
+  g_print("DISKMON FORGET !!\n");
   lives_proc_thread_request_cancel(running, TRUE);
   running = NULL;
   dircheck_state = 0;
@@ -862,6 +871,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
+  uint64_t uret;
   ticks_t ret;
 #if _POSIX_TIMERS
   struct timespec ts;
@@ -870,8 +880,9 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  ret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS;
+  uret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS;
 #endif
+  if ((int64_t)uret < 0) ret = (int64_t)((((uint64_t) -1) - uret) + 1);
   mainw->wall_ticks = ret;
   return ret;
 }

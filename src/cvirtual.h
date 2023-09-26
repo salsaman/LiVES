@@ -33,7 +33,7 @@ boolean realize_all_frames(int clipno, const char *msg, boolean enough, frames_t
 void clean_images_from_virtual(lives_clip_t *, frames_t oldsframe, frames_t oldframes);
 int *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset);
 
-frames_t first_virtual_frame(int clipno, frames_t start, frames_t end);
+//frames_t first_virtual_frame(int clipno, frames_t start, frames_t end);
 boolean check_if_non_virtual(int clipno, frames_t start, frames_t end);
 
 void restore_frame_index_back(int sclipno);

@@ -53,7 +53,7 @@ static weed_plant_t *define_pref(const char *pref_idx, void *pref_ptr, int32_t v
   // lives_attribute_set_param_type(pref, PREF_ATTR_VARPTR, label, WEED_PARAM_INTEGER);
   // txfuncs: OBJ_INTENTION_BACKUP, RESTORE, SET_VALUE, GET_VALUE,
 
-  weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
+  weed_plant_t *prefplant = lives_plant_new(LIVES_PLANT_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
   weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr);
   weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef);

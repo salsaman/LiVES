@@ -199,7 +199,13 @@ typedef pid_t lives_pid_t;
 #endif
 #endif
 
+#define HAVE_ATOMICS 1 // TODO
+
+#if HAVE_ATOMICS
+#ifndef NO_ATOMICS
+
 #if defined(_MSC_VER) && !defined(__clang__)
+#define HAS_ATOMICS 1
 typedef volatile long      lives_atomic32_t;
 typedef volatile long long lives_atomic64_t;
 typedef volatile void     *lives_atomicptr_t;
@@ -213,6 +219,8 @@ static LIVES_ALWAYS_INLINE int32_t lives_atomic32_add(lives_atomic32_t *val, int
 static LIVES_ALWAYS_INLINE int64_t lives_atomic64_load(lives_atomic64_t *src) {return *src;}
 static LIVES_ALWAYS_INLINE int64_t lives_atomic64_add(lives_atomic64_t *val, int64_t add)
 {return (int64_t)InterlockedExchangeAdd64(val, add) + add;}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_inc(lives_atomic32_t *val) {return (int64_t)InterlockedIncrement(val);}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_dec(lives_atomic32_t *val) {return (int64_t)InterlockedDecrement(val);}
 static LIVES_ALWAYS_INLINE void *lives_atomic_load_ptr(lives_atomicptr_t *src) {return (void *)*src;}
 static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr(lives_atomicptr_t *dst, void *val) {*dst = val;}
 static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr_release(lives_atomicptr_t *dst, void *val) {*dst = val;}
@@ -224,10 +232,15 @@ static LIVES_ALWAYS_INLINE int lives_atomic_cas_ptr_acquire(lives_atomicptr_t *d
 #else
 
 #include <stdatomic.h>
-typedef volatile _Atomic(int32_t) lives_atomic32_t;
-typedef volatile _Atomic(int64_t) lives_atomic64_t;
+#if defined(ATOMIC_INT_LOCK_FREE) && ATOMIC_INT_LOCK_FREE != 0
+#define HAS_ATOMICS 1
+#endif
+
+typedef volatile atomic_int_fast32_t lives_atomic32_t;
+typedef volatile atomic_int_fast64_t lives_atomic64_t;
 typedef volatile _Atomic(void *)  lives_atomicptr_t;
 
+// relaxed means we fetch the value, return it, then update later
 static LIVES_ALWAYS_INLINE int32_t lives_atomic32_load(lives_atomic32_t *src)
 {return atomic_load_explicit(src, memory_order_relaxed);}
 static LIVES_ALWAYS_INLINE void lives_atomic32_store(lives_atomic32_t *dst, int32_t val)
@@ -242,6 +255,10 @@ static LIVES_ALWAYS_INLINE int64_t lives_atomic64_load(lives_atomic64_t *val)
 {return atomic_load_explicit(val, memory_order_relaxed);}
 static LIVES_ALWAYS_INLINE int64_t lives_atomic64_add(lives_atomic64_t *val, int64_t add)
 {return atomic_fetch_add_explicit(val, add, memory_order_relaxed) + add;}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_inc(lives_atomic64_t *val)
+{return atomic_fetch_add_explicit(val, 1, memory_order_relaxed) + 1;}
+static LIVES_ALWAYS_INLINE int64_t lives_atomic64_dec(lives_atomic64_t *val)
+{return atomic_fetch_add_explicit(val, -1, memory_order_relaxed) - 1;}
 static LIVES_ALWAYS_INLINE void *lives_atomic_load_ptr(lives_atomicptr_t *src)
 {return atomic_load_explicit(src, memory_order_relaxed);}
 static LIVES_ALWAYS_INLINE void lives_atomic_store_ptr(lives_atomicptr_t *dst, void *val)
@@ -254,15 +271,43 @@ static LIVES_ALWAYS_INLINE int lives_atomic_cas_ptr_acquire(lives_atomicptr_t *d
 {return atomic_compare_exchange_weak_explicit(dst, &ref, val, memory_order_acquire, memory_order_relaxed);}
 #endif
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE // for "environ"
+#endif
+#endif
+#ifndef HAS_ATOMICS
+#define HAS_ATOMICS 0
+#endif
+
+#if !HAS_ATOMICS
+extern pthread_mutex_t *atomic_lock;
+typedef int32_t lives_atomic32_t;
+typedef int64_t lives_atomic64_t;
+#define ATOMIC_VAR_INIT(value) (value)
+#define lives_atomic32_add(pval,add)					\
+  (!pthread_mutex_lock(atomic_lock) * (*pval += (add)) * !pthread_mutex_unlock(atomic_lock))
+#define lives_atomic32_load(pval) lives_atomic32_add(pval,0)
+#define lives_atomic32_store(pval,val) do {				\
+    pthread_mutex_lock(atomic_lock); *pval = val; pthread_mutex_unlock(atomic_lock);} while (0);
+#define lives_atomic32_inc(val) lives_atomic32_add(val,1)
+#define lives_atomic32_dec(val) lives_atomic32_add(val,-1)
+#define lives_atomic64_add(pval,add)					\
+  (!pthread_mutex_lock(atomic_lock) * (*pval += (add)) * !pthread_mutex_unlock(atomic_lock))
+#define lives_atomic64_load(pval) lives_atomic64_add(pval,0)
+#define lives_atomic64_store(pval,val) do {				\
+    pthread_mutex_lock(atomic_lock); *pval = val; pthread_mutex_unlock(atomic_lock);} while (0);
+#define lives_atomic64_inc(val) lives_atomic64_add(val,1)
+#define lives_atomic64_dec(val) lives_atomic64_add(val,-1)
 #endif
 
 #define LIVES_RESULT_SUCCESS	1
 #define LIVES_RESULT_FAIL	0
-#define LIVES_RESULT_ERROR	-1
+
+#define LIVES_RESULT_INVALID	-1
+#define LIVES_RESULT_ERROR	-2
+#define LIVES_RESULT_TIMEDOUT	-3
 
 typedef int lives_result_t;
+
+typedef lives_result_t(*lives_condfunc_f)(void *);
 
 /// default defs
 

@@ -93,6 +93,11 @@
 #include <glib-unix.h>
 #endif
 
+#if !HAS_ATOMICS
+static pthread_mutex_t atomic_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t *atomic_lock = &atomic_mutex;
+#endif
+
 //#define WEED_STARTUP_TESTS
 ////////////////////////////////
 //// externs - 'global' variables
@@ -283,10 +288,10 @@ void defer_sigint(int signum, siginfo_t *si, void *uc) {
 
   if (signum >= 0) {
     if (mainw->err_funcdef) lives_snprintf(errdets, 512, " in function %s, %s line %d", mainw->err_funcdef->funcname,
-                                           mainw->err_funcdef->file, mainw->err_funcdef->line);
+                                             mainw->err_funcdef->file, mainw->err_funcdef->line);
 
     lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
-		   *errdets ? errdets : NULL);
+                   *errdets ? errdets : NULL);
 
     LIVES_ERROR_NOBRK(errmsg);
   }
@@ -370,6 +375,8 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     signum = -signum;
   }
 
+  print_diagnostics(DIAG_ALL);
+
   if (mainw) mainw->critical = TRUE;
 
   if (!pthread_equal(main_thread, pthread_self())) {
@@ -422,26 +429,24 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     if (signum == LIVES_SIGSEGV) {
       fprintf(stderr, "Segmentation fault, ");
       if (mainw->critical) {
-	fprintf(stderr, "raised by thread");
-	if (mainw->critical_thread)
-	  fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
-	fprintf(stderr, "\n");
-	if (mainw->critical_errno) {
-	  fprintf(stderr, "Error code was %d", mainw->critical_errno);
-	  if (mainw->critical_errmsg)
-	    fprintf(stderr, ", %s", mainw->critical_errmsg);
-	  fprintf(stderr, "\n");
-	}
+        fprintf(stderr, "raised by thread");
+        if (mainw->critical_thread)
+          fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
+        fprintf(stderr, "\n");
+        if (mainw->critical_errno) {
+          fprintf(stderr, "Error code was %d", mainw->critical_errno);
+          if (mainw->critical_errmsg)
+            fprintf(stderr, ", %s", mainw->critical_errmsg);
+          fprintf(stderr, "\n");
+        }
+      } else {
+        if (has_si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
       }
-      else {
-	if (has_si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
-      }
-    }
-    else {
-      if(has_si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
+    } else {
+      if (has_si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
     }
 
-      fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
 
     if (capable->has_gdb) {
       if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
@@ -533,7 +538,7 @@ void set_signal_handlers(lives_sigfunc_t sigfunc) {
     LIVES_FATAL("Could not set sigaction for SIGSEGV handler");
 
   ///////////////////////////
-  
+
   // remaining signals can use std stack
   if (sigemptyset(&sa.sa_mask) == -1)
     LIVES_FATAL("Sigemptyset failed for signal handler");

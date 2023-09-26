@@ -17,7 +17,7 @@
 // - should result in 1.0 - 0.1 second delay
 #define MISS_PRIO_THRESH 100000
 // nanosec to wait in loops - a value of about 500 seems to be optimal
-#define NSLEEP_TIME 500
+#define NSLEEP_TIME 5000
 // how much longer to wait in low prio mode, multilpier (sLo_FACTOR + 1)
 // gui_tight mode
 #define sLO_FACTOR 8
@@ -122,7 +122,7 @@ weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
 
   if (!o || !G_IS_OBJECT(o)) return NULL;
 
-  plant = lives_plant_new(LIVES_WEED_SUBTYPE_WIDGET);
+  plant = lives_plant_new(LIVES_PLANT_WIDGET);
 
   oclass = G_OBJECT_GET_CLASS(o);
 
@@ -137,7 +137,6 @@ weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
       // check pspec[i]->flags (G_PARAM_READABLE, G_PARAM_WRITABLE...)
       // if (!G_PARAM_EXPLICIT_NOTIFY), we can hook to the notify signal to shadow it
       //
-
       params[i] = weed_plant_new(WEED_PLANT_PARAMETER);
       weed_set_string_value(params[i], WEED_LEAF_NAME, g_param_spec_get_name(pspec[i]));
       gtype = G_PARAM_SPEC_VALUE_TYPE(pspec[i]);
@@ -788,12 +787,12 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_format_t lives_painter_image_surface_g
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref(livespointer object) {
 #ifdef GUI_GTK
-  if (LIVES_IS_WIDGET_OBJECT(object)) g_object_ref(object);
-  else {
+  if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Attempted ref of non-object");
     break_me("ref of nonobj");
     return FALSE;
   }
+  g_object_ref(object);
   return TRUE;
 #endif
   return FALSE;
@@ -807,46 +806,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
     break_me("unref of nonobj");
     return FALSE;
   }
-  if (LIVES_IS_PIXBUF(object)) {
-    int refs = GET_INT_DATA(object, REFCOUNT_KEY);
-    if (refs <= 1) {
-      weed_layer_t *layer = lives_widget_object_get_data(object, LAYER_PROXY_KEY);
-      if (layer) {
-	// there are two ways a pixbuf can gain a "proxy_layer" -
-	// a) if it was made via shared data from another layer - in this case we added a special free_data
-	// function which will simnply free th eproxy layer, not free the pixbuf data,
-	// and then complete the unref
-	// b) the pixbuf data was from an external source, then shared with a layer
-	// in this case we added a proxy_layer which copied back from target layer
-	// - in this case we only wnat to free the data when there are no other layers wirth copies
-	// thus we first add a leaf to the proxy layer, pointing to the pixbuf to be freed
-	// then we will nullify the pixel_Data for the layer (to prevent accidental copying)
-	// however, when we nullify the pixdata, this wil remove proxy layer from copylist, but we want it to sstay in
-	// so first we will add a second copy of procy_layer to copylist. Then we nullify it
-	// since this is not the last meember, the pixdata will not be freed as it would otherwise, if we removved the last member
-	// but instewad it will be properly nullified. Then whenever we romve a layer from a copy list,t ehre is a check
-	// to see if the sole remeing member is a "Dead"pixbuf proxy, and if so we simpley unref the pixbif (frreeing the pixdata)
-	// and free the proxy layer (since we nullified pixdata for it, this is fine)
-	//
-	// but - how to differentiate between these two cases...simple, for the pixbuf-?layer case we add a leaf
-	// (void *)LIVES_LEAF_PIXBUF_SRC = pixbuf
-	if (weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL) == ob) {
-	  lives_sync_list_t *copylist;
-	  // set his to NULL but do not nullify it, as that would  remove layer
-	  // from copylist, and clear PIXBUF_SRC
-	  weed_layer_set_pixel_data(layer, NULL);
-	  copylist = lives_layer_get_copylist(layer);
-	  if (copylist && copylist->next) {
-	    // other layers have copy of pixbuf data, so we cannot unref pixbuf yet
-	    weed_layer_set-invalid(layer, TRUE);
-	    return TRUE;
-	  }
-	  // if no other copies we can free layer (since pixel_data is NILL, this wont be freed)
-	  weed_layer_free(layer);
-	  // *INDENT-OFF*
-	}}}}
-  // *INDENT-ON*
-  g_object_unref(object);		
+  g_object_unref(object);
   return TRUE;
 #endif
   return FALSE;
@@ -1029,9 +989,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
       }
     }
 
-    if (!lpttorun)
-      ret = g_main_context_iteration(ctx, may_block);
-
+    if (!lpttorun) ret = g_main_context_iteration(ctx, may_block);
     if (mainw) {
       mainw->no_idlefuncs = no_idlefuncs;
       if (mainw->fg_service_source) {
@@ -1056,6 +1014,7 @@ boolean fg_service_fulfill(void) {
       char *fcall = lives_proc_thread_show_func_call(lptr);
       g_print("fulfill %s\n", fcall);
       lives_free(fcall);
+      //mainw->debug_ptr = lptr;
     }
     if (!lives_proc_thread_is_queued(lptr)) {
       lives_proc_thread_unref(lptr);
@@ -1088,9 +1047,8 @@ boolean fg_service_fulfill(void) {
     return FALSE;
   }
 
-  if (THREADVAR(fg_service)) {
-    is_fg_service = TRUE;
-  } else THREADVAR(fg_service) = TRUE;
+  if (THREADVAR(fg_service)) is_fg_service = TRUE;
+  else THREADVAR(fg_service) = TRUE;
 
   lpttorun = NULL;
   lives_proc_thread_execute(lptr);
@@ -1133,6 +1091,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
   boolean is_fg_service = FALSE;
   boolean is_active;
   int depth;
+
+  int64_t nsc = lives_atomic64_inc(&mainw->n_service_calls);
+  g_print("fg cb %lu\n", nsc);
 
   if (mainw->critical) lives_abort(mainw->critical_errmsg);
 
@@ -1214,7 +1175,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
         }
       }
     } else {
-      //lives_proc_thread_wait(mainw->def_lpt, 8000000);
+      lives_proc_thread_wait(mainw->def_lpt, 8000000);
       /* for (int zz = 0; zz < 2048 && cprio == PRIO_LOW; zz++) */
       /*   lives_microsleep; */
     }
@@ -1991,18 +1952,16 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
                                           LIVES_GUI_CALLBACK(lives_dialog_destroyed), NULL);
   boolean dest;
 
+  if (!GET_INT_DATA(dialog, URGENCY_KEY)) {
+    if (!mainw->is_ready) SET_INT_DATA(dialog, URGENCY_KEY, MSG_URGENCY_STARTUP);
+  }
+  if (!ATT_MESSAGE(dialog)) gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
+
   lives_widget_object_ref(dialog);
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   _lives_widget_show_all(LIVES_WIDGET(dialog));
 
-  if (!GET_INT_DATA(dialog, URGENCY_KEY)) {
-    if (!mainw->is_ready) SET_INT_DATA(dialog, URGENCY_KEY, MSG_URGENCY_STARTUP);
-  }
-
   if (ATT_MESSAGE(dialog)) pop_to_front(LIVES_WIDGET(dialog), NULL);
-  else {
-    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
-  }
 
   do {
     //fg_service_fulfill();
@@ -2054,7 +2013,7 @@ void fg_service_call(lives_proc_thread_t lpt, void *retloc) {
   if (!lpt) return;
 
   if (is_fg_thread()) {
-    // should not happend, but just in case
+    // should not happen, but just in case
     lives_proc_thread_execute(lpt);
     lives_proc_thread_unref(lpt);
     return;
@@ -2980,7 +2939,7 @@ static boolean _lives_window_set_modal(LiVESWindow * window, boolean modal, bool
 
 
 boolean lives_window_set_modal(LiVESWindow * window, boolean modal) {
-  return _lives_window_set_modal(window, modal, FALSE);
+  return _lives_window_set_modal(window, modal, TRUE);
 }
 
 
@@ -5372,7 +5331,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_add(LiVESContainer * contain
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_remove(LiVESContainer * container, LiVESWidget * widget) {
 #ifdef GUI_GTK
-  if (is_fg_thread())
+  if (!gui_loop_tight || is_fg_thread())
     gtk_container_remove(container, widget);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
@@ -8740,6 +8699,7 @@ static void lives_widget_object_set_data_psurface(LiVESWidgetObject * obj, const
     mutex = lives_widget_get_mutex(w);
     if (mutex) pthread_mutex_lock(mutex);
   }
+
   pbs = (struct pbs_struct *)GET_VOIDP_DATA(obj, key);
   if (!pbs) {
     pbs = (struct pbs_struct *)lives_calloc(1, sizeof(struct pbs_struct));
@@ -8758,7 +8718,7 @@ void render_standard_button(LiVESButton * sbutt) {
   if (!is_standard_widget(widget)) return;
   else {
     LiVESWidget *da = lives_bin_get_child(LIVES_BIN(sbutt));
-    struct pbs_struct *pbs = (struct pbs_struct *)GET_VOIDP_DATA(da, PBS_KEY);
+    struct pbs_struct *pbs = GET_VOIDP_DATA(da, PBS_KEY);
     lives_painter_surface_t **pbsurf;
     if (!pbs) return;
     pbsurf = pbs->surfp;
@@ -9574,6 +9534,8 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
   lives_widget_set_app_paintable(darea, TRUE);
 
   lives_widget_add_mutex(darea);
+
+  // stores a struct contiangin ppsurf, widget, key
   lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(darea), PBS_KEY, ppsurf);
 
   if (ppsurf) {
@@ -9586,8 +9548,10 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
                            (livespointer)ppsurf);
 #endif
   }
+  //if (!mainw->configured) defer_config(darea);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config_deferrable),
+                            LIVES_GUI_CALLBACK(all_config),
                             (livespointer)ppsurf);
 
   if (widget_opts.apply_theme) {
@@ -12637,7 +12601,7 @@ boolean toggle_shows_warn_cond(LiVESWidget * tb, LiVESWidget * widget,
     weed_plant_t *cond_plant =
       lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
     if (!cond_plant) {
-      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      cond_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
       lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
                                             cond_plant);
     }
@@ -12684,7 +12648,7 @@ boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
     weed_plant_t *cond_plant =
       lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
     if (!cond_plant) {
-      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      cond_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
       lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
                                             cond_plant);
     }
@@ -12731,7 +12695,7 @@ boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
     weed_plant_t *cond_plant =
       lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
     if (!cond_plant) {
-      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      cond_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
       lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
                                             cond_plant);
     }
@@ -12777,7 +12741,7 @@ boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
     weed_plant_t *cond_plant =
       lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
     if (!cond_plant) {
-      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      cond_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
       lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
                                             cond_plant);
     }
@@ -13500,7 +13464,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_display_get_n_screens(LiVESXDisplay * disp
 }
 
 
-void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
+static void _lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
 #ifdef GUI_GTK
   LiVESXWindow *window;
   GdkCursor *cursor = NULL;
@@ -13564,6 +13528,16 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   // XFixesChangeCursor (Display *dpy, Cursor source, Cursor destination);
   // and then wait for X11 event...
   // then no need for the majority of lives_window_process_updates().....
+}
+
+
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
+  if (!gui_loop_tight || is_fg_thread()) _lives_set_cursor_style(cstyle, widget);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(_lives_set_cursor_style, "vv", cstyle, widget);
+    BG_THREADVAR(hook_hints) = 0;
+  }
 }
 
 
@@ -14229,7 +14203,7 @@ const LiVESList *widget_toolkit_klasses_list(lives_toolkit_t tk) {
 
 
 WIDGET_HELPER_LOCAL_INLINE lives_widget_klass_t *lives_widget_klass_new(int idx) {
-  lives_widget_klass_t *k = lives_plant_new(LIVES_WEED_SUBTYPE_WIDGET);
+  lives_widget_klass_t *k = lives_plant_new(LIVES_PLANT_WIDGET);
   if (idx >= 0) weed_set_int_value(k, LIVES_LEAF_KLASS_IDX, idx);
   return k;
 }

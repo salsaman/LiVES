@@ -998,29 +998,29 @@ mismatch:
 }
 
 
-frames_t first_virtual_frame(int clipno, frames_t start, frames_t end) {
-  // check all franes in frame_index between start and end inclusive
-  // if we find a virtual frame, we stop checking and return the frame number
-  // if all are non - virtual we return 0
-  lives_clip_t *sfile;
-  if (!IS_PHYSICAL_CLIP(clipno)) return 0;
+/* frames_t first_virtual_frame(int clipno, frames_t start, frames_t end) { */
+/*   // check all franes in frame_index between start and end inclusive */
+/*   // if we find a virtual frame, we stop checking and return the frame number */
+/*   // if all are non - virtual we return 0 */
+/*   lives_clip_t *sfile; */
+/*   if (!IS_PHYSICAL_CLIP(clipno)) return 0; */
 
-  sfile = mainw->files[clipno];
+/*   sfile = mainw->files[clipno]; */
 
-  pthread_mutex_lock(&sfile->frame_index_mutex);
-  if (!sfile->frame_index) {
-    pthread_mutex_unlock(&sfile->frame_index_mutex);
-    return  0;
-  }
-  for (frames_t i = start; i <= end; i++) {
-    if (sfile->frame_index[i - 1] != -1) {
-      pthread_mutex_unlock(&sfile->frame_index_mutex);
-      return i;
-    }
-  }
-  pthread_mutex_unlock(&sfile->frame_index_mutex);
-  return 0;
-}
+/*   pthread_mutex_lock(&sfile->frame_index_mutex); */
+/*   if (!sfile->frame_index) { */
+/*     pthread_mutex_unlock(&sfile->frame_index_mutex); */
+/*     return  0; */
+/*   } */
+/*   for (frames_t i = start; i <= end; i++) { */
+/*     if (sfile->frame_index[i - 1] != -1) { */
+/*       pthread_mutex_unlock(&sfile->frame_index_mutex); */
+/*       return i; */
+/*     } */
+/*   } */
+/*   pthread_mutex_unlock(&sfile->frame_index_mutex); */
+/*   return 0; */
+/* } */
 
 
 boolean check_if_non_virtual(int clipno, frames_t start, frames_t end) {

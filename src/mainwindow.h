@@ -747,37 +747,36 @@ enum {
 #define LIVES_TV_CARD_TYPES  {"v4l2", "v4l", "bsdbt848", "dummy", "*autodetect", "yv12", "*", "rgb32", "rgb24", "rgb16", \
       "rgb15", "uyvy", "yuy2", "i2420", NULL}
 
-#define NUM_VOL_LIGHTS 10 ///< unused
-
 /* actions */
-#define UNMATCHED -1
-#define START_PLAYBACK 0
-#define STOP_PLAYBACK 1
-#define CLIP_SELECT 2
-#define PLAY_FORWARDS 3
-#define PLAY_BACKWARDS 4
-#define REVERSE_PLAYBACK 5
-#define PLAY_FASTER 6
-#define PLAY_SLOWER 7
-#define TOGGLE_FREEZE 8
-#define SET_FRAMERATE 9
-#define START_RECORDING 10
-#define STOP_RECORDING 11
-#define TOGGLE_RECORDING 12
-#define SWAP_FOREGROUND_BACKGROUND 13
-#define RESET_EFFECT_KEYS 14
-#define ENABLE_EFFECT_KEY 15
-#define DISABLE_EFFECT_KEY 16
-#define TOGGLE_EFFECT_KEY 17
-#define SET_PARAMETER_VALUE 18
-#define NEXT_CLIP_SELECT 19
-#define PREV_CLIP_SELECT 20
-#define SET_FPS_RATIO 21
-#define RETRIGGER_CLIP 22
-#define NEXT_MODE_CYCLE 23
-#define PREV_MODE_CYCLE 24
-#define SET_VPP_PARAMETER_VALUE 25
-#define OSC_NOTIFY 26
+
+#define LIVES_ACTION_UNMATCHED -1
+#define LIVES_ACTION_START_PLAYBACK 0
+#define LIVES_ACTION_STOP_PLAYBACK 1
+#define LIVES_ACTION_CLIP_SELECT 2
+#define LIVES_ACTION_PLAY_FORWARDS 3
+#define LIVES_ACTION_PLAY_BACKWARDS 4
+#define LIVES_ACTION_REVERSE_PLAYBACK 5
+#define LIVES_ACTION_PLAY_FASTER 6
+#define LIVES_ACTION_PLAY_SLOWER 7
+#define LIVES_ACTION_TOGGLE_FREEZE 8
+#define LIVES_ACTION_SET_FRAMERATE 9
+#define LIVES_ACTION_START_RECORDING 10
+#define LIVES_ACTION_STOP_RECORDING 11
+#define LIVES_ACTION_TOGGLE_RECORDING 12
+#define LIVES_ACTION_SWAP_FOREGROUND_BACKGROUND 13
+#define LIVES_ACTION_RESET_EFFECT_KEYS 14
+#define LIVES_ACTION_ENABLE_EFFECT_KEY 15
+#define LIVES_ACTION_DISABLE_EFFECT_KEY 16
+#define LIVES_ACTION_TOGGLE_EFFECT_KEY 17
+#define LIVES_ACTION_SET_PARAMETER_VALUE 18
+#define LIVES_ACTION_NEXT_CLIP_SELECT 19
+#define LIVES_ACTION_PREV_CLIP_SELECT 20
+#define LIVES_ACTION_SET_FPS_RATIO 21
+#define LIVES_ACTION_RETRIGGER_CLIP 22
+#define LIVES_ACTION_NEXT_MODE_CYCLE 23
+#define LIVES_ACTION_PREV_MODE_CYCLE 24
+#define LIVES_ACTION_SET_VPP_PARAMETER_VALUE 25
+#define LIVES_ACTION_OSC_NOTIFY 26
 
 typedef struct {
   int idx;
@@ -970,7 +969,6 @@ typedef struct {
 
   volatile boolean no_idlefuncs;
   uint32_t fg_service_handle;
-  GSource *fg_service_source;
 
   boolean is_processing;
   boolean is_rendering;
@@ -979,7 +977,7 @@ typedef struct {
   boolean preview;
   boolean preview_rendering;
 
-  lives_atomic64_t n_service_calls;
+  volatile uint64_t n_service_calls;
 
   boolean foreign;  ///< for external window capture
   boolean record_foreign;
@@ -1452,9 +1450,6 @@ typedef struct {
   LiVESWidget *rename_test_rfx;
   LiVESWidget *delete_test_rfx;
   LiVESWidget *promote_test_rfx;
-
-  ///< for future use
-  LiVESWidget *vol_checkbuttons[NUM_VOL_LIGHTS][2];
 
   /// for the fileselection preview
   LiVESWidget *fs_playarea;

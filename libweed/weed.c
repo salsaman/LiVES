@@ -544,13 +544,15 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
 
 #define weed_seed_get_size(seed_type, size)				\
   (seed_type == WEED_SEED_STRING ? size					\
-    : (seed_type == WEED_SEED_VOIDPTR || seed_type == WEED_SEED_FUNCPTR	\
-       || seed_type >= WEED_SEED_FIRST_CUSTOM) ? _vs(size)		\
-   : (seed_type == WEED_SEED_BOOLEAN || seed_type == WEED_SEED_INT	\
-      || seed_type == WEED_SEED_UINT)					\
-   ? 4 : (seed_type == WEED_SEED_DOUBLE || seed_type == WEED_SEED_FLOAT	\
-	  || seed_type == WEED_SEED_INT64 || seed_type == WEED_SEED_UINT64) \
-   ? 8 : seed_type == WEED_SEED_PLANTPTR ? _pptrsize : 0)
+   : (seed_type == WEED_SEED_VOIDPTR || seed_type == WEED_SEED_FUNCPTR	\
+      || seed_type >= WEED_SEED_FIRST_CUSTOM) ? _vs(size)		\
+   : seed_type == WEED_SEED_INT						\
+   || seed_type == WEED_SEED_UINT)					\
+  ? 4 : (seed_type == WEED_SEED_BOOLEAN) ? 1				\
+    (seed_type == WEED_SEED_DOUBLE || seed_type == WEED_SEED_FLOAT	\
+     : seed_type == WEED_SEED_INT64 || seed_type == WEED_SEED_UINT64)	\
+    ? 8 : seed_type == WEED_SEED_PLANTPTR ? _pptrsize : 0)
+fg
 
 //#undef _vs
 

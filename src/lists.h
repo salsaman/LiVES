@@ -23,7 +23,7 @@ lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t *, void *data, boole
 void _lives_sync_list_free(lives_sync_list_t *);
 void lives_sync_list_free(lives_sync_list_t *);
 LiVESList *_lives_sync_list_pop(lives_sync_list_t *);
-LiVESList *lives_sync_list_pop(lives_sync_list_t *);
+void *lives_sync_list_pop(lives_sync_list_t *);
 void *_lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
 void *lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
 

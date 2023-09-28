@@ -384,7 +384,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boo
     }
   }
 
-  if (!check_dir_access(*pdirname, FALSE)) {
+  if (!check_dir_access(*pdirname)) {
     do_dir_perm_error(*pdirname, FALSE);
     return LIVES_RESPONSE_RETRY;
   }

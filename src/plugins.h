@@ -16,8 +16,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-typedef struct _param_t lives_param_t;
-
 #include "intents.h"
 
 // generic objects / plugins
@@ -576,6 +574,9 @@ typedef enum {
 #define PARAM_FLAG_OPTIONAL 	0x10000000
 // the 'value' has been set (after being initialised to "default"
 #define PARAM_FLAG_VALUE_SET	0x20000000
+
+#define PARAM_FLAG_IS_INPUT	0x10000
+#define PARAM_FLAG_IS_OUTPUT	0x20000
 
 struct _param_t {
   // weed style part

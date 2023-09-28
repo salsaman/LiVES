@@ -26,7 +26,7 @@ int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pid_t pgrp, int sig);
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_unsetenv(const char *name);
-int lives_rmdir(const char *dir, boolean force);
+lives_result_t lives_rmdir(const char *dir, boolean force);
 int lives_rmdir_with_parents(const char *dir);
 int lives_rm(const char *file);
 int lives_rmglob(const char *files);

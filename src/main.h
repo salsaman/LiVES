@@ -119,6 +119,7 @@ weed_ext_set_element_size_f _weed_ext_set_element_size;
 weed_ext_append_elements_f _weed_ext_append_elements;
 weed_ext_attach_leaf_f _weed_ext_attach_leaf;
 weed_ext_detach_leaf_f _weed_ext_detach_leaf;
+weed_ext_atomic_exchange_f _weed_ext_atomic_exchange;
 #endif
 weed_plant_new_f _weed_plant_new;
 weed_plant_free_f _weed_plant_free;
@@ -133,6 +134,23 @@ weed_leaf_seed_type_f _weed_leaf_seed_type;
 weed_leaf_get_flags_f _weed_leaf_get_flags;
 weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
+
+// LiVES extensions (effects-weed.c)
+
+#define LIVES_FLAG_MAINTAIN_VALUE	(1 << 16)
+#define LIVES_FLAG_RDONLY_HOST		(LIVES_FLAG_MAINTAIN_VALUE | WEED_FLAG_IMMUTABLE)
+// NB. setting rdonly_host also sets rdonly_plugin; this makes checking less costly
+weed_error_t lives_leaf_set_rdonly(weed_plant_t *, const char *key,
+                                   boolean rdonly_host, boolean rdonly_plugin);
+
+#define LIVES_FLAG_FREE_ON_DELETE	(1 << 17)
+weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean state);
+
+weed_error_t weed_set_const_string_value(weed_plant_t *, const char *key, const char *);
+const char *weed_get_const_string_value(weed_plant_t *, const char *key, weed_error_t *);
+weed_size_t weed_leaf_const_string_len(weed_plant_t *, const char *key);
+boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
+
 
 #ifndef IGN_RET
 #define IGN_RET(a) ((void)((a) + 1))
@@ -293,6 +311,12 @@ typedef struct {
 #undef _BASE_DEFS_ONLY_
 #endif
 
+typedef struct _param_t lives_param_t;
+
+#ifndef DISABLE_DIAGNOSTICS
+extern uint64_t test_opts;
+#endif
+
 #include "functions.h"
 #include "alarms.h"
 #include "lists.h"
@@ -397,9 +421,6 @@ typedef enum {
 
 extern const char *NO_COPY_LEAVES[];
 
-#define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
-#define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
-
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
 
 #include "events.h"
@@ -434,6 +455,7 @@ extern mainwindow *mainw;
 
 /// type sizes
 extern ssize_t sizint, sizdbl, sizshrt;
+extern size_t dslen; // strlen(LIVES_DIR_SEP)
 
 #include "setup.h"
 #include "dialogs.h"
@@ -658,64 +680,69 @@ int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
-const char *dummychar;
+const char *dummystr;
 
 void break_me(const char *dtl);
+
+#define SHOW_LOCATION(text) \
+  fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_) 
 
 #define LIVES_NO_DEBUG
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG
-#define LIVES_DEBUG(x)      fprintf(stderr, "LiVES debug: %s\n", x)
+#define LIVES_DEBUG(errmsg)      fprintf(stderr, "LiVES debug: %s\n", x)
 #else // LIVES_NO_DEBUG
-#define LIVES_DEBUG(x)      dummychar = x
+#define LIVES_DEBUG(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_DEBUG
 #endif // LIVES_DEBUG
 
 #ifndef LIVES_INFO
 #ifndef LIVES_NO_INFO
-#define LIVES_INFO(x)      fprintf(stderr, "LiVES info: %s\n", (x))
+#define LIVES_INFO(errmsg)      fprintf(stderr, "LiVES info: %s\n", (errmsg))
 #else // LIVES_NO_INFO
-#define LIVES_INFO(x)      dummychar = (x)
+#define LIVES_INFO(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_INFO
 #endif // LIVES_INFO
 
+// minor error
 #ifndef LIVES_WARN
 #ifndef LIVES_NO_WARN
-#define LIVES_WARN(x)      fprintf(stderr, "LiVES warning: %s\n", (x))
+#define LIVES_WARN(errmsg)      fprintf(stderr, "LiVES warning: %s\n", (errmsg))
 #else // LIVES_NO_WARN
-#define LIVES_WARN(x)      dummychar = (x)
+#define LIVES_WARN(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_WARN
 #endif // LIVES_WARN
 
+// major error
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES ERROR: %s\n", (x)); break_me((x));}
+#define LIVES_ERROR(errmsg)      {fprintf(stderr, "LiVES ERROR: %s\n", (errmsg)); break_me((errmsg));}
+#define LIVES_ERROR_NOBRK(errmsg) {fprintf(stderr, "LiVES ERROR: %s\n", (errmsg)); break_me((errmsg));}
 #else // LIVES_NO_ERROR
-#define LIVES_ERROR(x)      dummychar = (x)
+#define LIVES_ERROR(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_ERROR
 #endif // LIVES_ERROR
 
-#ifndef LIVES_ERROR_NOBRK
-#ifndef LIVES_NO_ERROR
-#define LIVES_ERROR_NOBRK(x)      {fprintf(stderr, "LiVES ERROR: %s\n", (x));}
-#else // LIVES_NO_ERROR
-#define LIVES_ERROR_NOBRK(x)      dummychar = (x)
-#endif // LIVES_NO_ERROR
-#endif // LIVES_ERROR_NOBRK
-
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", (x)); break_me((x)); lives_abort(x);}
+#define LIVES_CRITICAL(errmsg) do {					\
+    SHOW_LOCATION("LiVES CRITICAL:"); break_me((errmsg));			\
+    if (mainw) mainw->critical_errno = -1; lives_abort(errmsg);} while(0);
 #else // LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(x)      dummychar = (x)
+#define LIVES_CRITICAL(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_CRITICAL
 #endif // LIVES_CRITICAL
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL // WARNING - defining LIVES_NO_FATAL may result in DANGEROUS behaviour !!
-#define LIVES_FATAL(x)      lives_abort((x))
+#define LIVES_FATAL(errmsg) do {					\
+    SHOW_LOCATION("LiVES FATAL:"); fprintf(stderr, "%s", (errmsg));	\
+    if (mainw && pthread_self() != main_thread)				\
+      {pthread_kill(main_thread,LIVES_SIGABRT);				\
+	while(1) lives_spin();}						\
+    else abort();} while(0);
 #else // LIVES_NO_FATAL
-#define LIVES_FATAL(x)      dummychar = (x)
+#define LIVES_FATAL(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
 

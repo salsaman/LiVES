@@ -140,11 +140,7 @@
 
 ////////////////
 
-void timer_handler(int sig, siginfo_t *si, void *uc) {
-  lives_sigatomic *ptrigger = (lives_sigatomic *)si->si_value.sival_ptr;
-  if (ptrigger) *ptrigger = 1;
-}
-
+lives_timer_t app_timers[N_APP_TIMERS];
 
 LIVES_GLOBAL_INLINE void thread_signal_establish(int sig, lives_sigfunc_t sigfunc) {
   // establish a signal handler for signum
@@ -158,6 +154,15 @@ LIVES_GLOBAL_INLINE void thread_signal_establish(int sig, lives_sigfunc_t sigfun
   sa.sa_flags = SA_SIGINFO;
   sigemptyset(&sa.sa_mask);
   sigaction(sig, &sa, NULL);
+}
+
+
+void lives_alarms_init(void) {
+  static boolean inited = FALSE;
+  if (inited) return;
+  lives_memset(app_timers, 0, N_APP_TIMERS * sizeof(lives_timer_t));
+  thread_signal_establish(LIVES_TIMER_SIG, timer_handler);
+  inited = TRUE;
 }
 
 
@@ -212,49 +217,54 @@ static int lives_timer_set_delay(lives_timer_t *xtimer, uint64_t delay) {
   its.it_interval.tv_sec = its.it_interval.tv_nsec = 0;
 
   xtimer->delay = delay;
+  xtimer->triggered = 0;
 
-  g_print("TIDD is %d\n", xtimer->tid);
   return timer_settime(xtimer->tid, 0, &its, NULL);
 }
 
 
+void timer_handler(int sig, siginfo_t *si, void *uc) {
+  lives_sigatomic *ptrigger = (lives_sigatomic *)si->si_value.sival_ptr;
+  if (ptrigger) *ptrigger = 1;
+}
+
+
 static lives_timer_t *lives_timer_create(lives_timer_t *xtimer) {
-  if (!xtimer || xtimer->tid || !xtimer->delay) return NULL;
+  // To avoid too much confuion, only the main thread ha the timer signal unblocked.
+  // all it doe in the handler is dereference the address of (lives_sigatomic *) trigger,
+  // and et thi to 1
+  //
+  // we have an array of (static)lives_timer_t for shared (process wide) timers
+  // each thread has its own specific timer (also static)
+  // here we create a timer, set the delay and interval such that it only fires once
+  // the timer trigger is first et to 0, and the address of the trigger is passed to handler in
+  // sigevent.sigev_value.sival_ptr
+  // we can then simply check if trigger == 1
+  // when the timer is not needed any more, it should be deleted, or at least disarmed to
+  // prevent unneeded timer events
   timer_t timerid;
   struct sigevent sev;
 
-  // create timer, this is per process, as the same-thread version is non portable
-  // thread can pass in an xtimer struct, otherwise we allocate one
-  // delay is in nsec, relative to current time. Timer will only trigger once.
-  //
-  // set xtimer as the sigevent.ssgev_value.sival_ptr
-  // when this alarm is triggered, si_info->si_value.sival_ptr should point to the xtimer we set here
-  // then whichever thread runs the singnal handler, it will set
-  // the 'triggered' field of xtimer to TRUE, then remove the timer so it is not called again
-  //
-  // the orignal thread can store xtimer as a local variable or in THREADVAR(xtimer)
-  // by checking the value of 'triggered' it can determine whether the timer has expired or not
-  // in addition, if the xtimer holds a valid proc_thread, and the proc_thread is wait, it will
-  // be sent a resume_request
+  if (!xtimer) return NULL;
 
-  /* if (!xtimer) { */
-  /*   xtimer = lives_calloc(1, sizeof(lives_timer_t)); */
-  /*   xtimer.triggered = ATOMIC_VAR_INIT(0); */
-  /* } */
-  /* else */
+  if (xtimer->tid) {
+    if (xtimer->delay && !xtimer->triggered)
+      lives_timer_set_delay(xtimer, 0);
+  }
+  else {
+    // tell the timer to send a signal LIVES_TIMER_SIG when it expires
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = LIVES_TIMER_SIG;
+
+    // pass the created struct as data to callback
+    sev.sigev_value.sival_ptr = (void *)&xtimer->triggered;;
+
+    // changes to CLOCK_REALTIME do not affect relative times
+    if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) return FALSE;
+    xtimer->tid = timerid;
+  }
 
   xtimer->triggered = 0;
-
-  // tell the timer to send a signal LIVES_TIMER_SIG when it expires
-  sev.sigev_notify = SIGEV_SIGNAL;
-  sev.sigev_signo = LIVES_TIMER_SIG;
-
-  // pass the created struct as data to callback
-  sev.sigev_value.sival_ptr = (void *)&xtimer->triggered;;
-
-  // changes to CLOCK_REALTIME do not affect relative times
-  if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) return FALSE;
-  xtimer->tid = timerid;
 
   if (lives_timer_set_delay(xtimer, xtimer->delay) == -1) return NULL;
 
@@ -264,65 +274,102 @@ static lives_timer_t *lives_timer_create(lives_timer_t *xtimer) {
 
 static void lives_timer_delete(lives_timer_t *xtimer) {
   if (xtimer) {
-    timer_t timerid = xtimer->tid;
-    if (timerid) {
-      if (!lives_timer_set_delay(xtimer, 0))
-        timer_delete(timerid);
+    if (xtimer->tid) {
+      // disarm first
+      lives_timer_set_delay(xtimer, 0);
+      timer_delete(xtimer->tid);
       xtimer->tid = 0;
     }
+    xtimer->triggered = 0;
+  }
+}
+
+// alarms -  new style ///
+
+boolean lives_alarm_clear(int dummy) {
+  lives_timer_t *timer = &(THREADVAR(xtimer));
+  if (timer->tid) {
+    lives_timer_delete(timer);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+void lives_alarm_disarm(void)
+{lives_timer_delete(&(THREADVAR(xtimer)));}
+
+void lives_sys_alarm_disarm(alarm_name_t alaname) {
+  if (alaname > sys_alarms_min && alaname < sys_alarms_max) {
+   lives_timer_t *timer = &app_timers[alaname];
+    if (timer->tid && !timer->triggered)
+      lives_timer_set_delay(timer, 0);
+    timer->triggered = 0;
   }
 }
 
 
-// alarms -  new style ///
-
-static void _lives_alarm_clear(lives_timer_t *timer) {
-  if (!timer) timer = &(THREADVAR(xtimer));
-  //
-  if (timer->tid) lives_timer_delete(timer);
-  //
-  timer->delay = 0;
-  timer->triggered = 0;
-  timer->tid = 0;
-}
-
-
-void lives_alarm_disarm(void) {_lives_alarm_clear(NULL);}
-
-boolean lives_alarm_clear(int dummy) {lives_alarm_disarm(); return TRUE;}
-
-
-void lives_alarm_wait(void) {
-  lives_timer_t *timer = &(THREADVAR(xtimer));
+static void _lives_alarm_wait(lives_timer_t *timer) {
   if (timer && timer->tid && !timer->triggered)
     lives_microsleep_until_nonzero(timer->triggered);
-  _lives_alarm_clear(timer);
+  lives_timer_delete(timer);
+}
+
+void lives_alarm_wait(void) 
+{_lives_alarm_wait(&(THREADVAR(xtimer)));}
+
+void lives_sys_alarm_wait(alarm_name_t alaname) {
+  if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return;
+  _lives_alarm_wait(&app_timers[alaname]);
 }
 
 
-lives_result_t lives_alarm_set_timeout(uint64_t nsec) {
-  lives_timer_t *timer = &(THREADVAR(xtimer));
-  _lives_alarm_clear(timer);
-  if (!nsec) return LIVES_RESULT_ERROR;
+static lives_result_t _lives_alarm_set_timeout(lives_timer_t *timer, uint64_t nsec) {
+  lives_timer_delete(timer);
+  if (!nsec) return LIVES_RESULT_INVALID;
   timer->delay = nsec;
-  if (!lives_timer_create(timer)) return LIVES_RESULT_FAIL;
+  if (!lives_timer_create(timer)) return LIVES_RESULT_ERROR;
   return LIVES_RESULT_SUCCESS;
 }
 
+lives_result_t lives_alarm_set_timeout(uint64_t nsec)
+{return _lives_alarm_set_timeout(&(THREADVAR(xtimer)), nsec);}
 
-static lives_result_t check_alarm_state(void) {
-  lives_timer_t *timer = &(THREADVAR(xtimer));
-  return !timer->tid ? LIVES_RESULT_ERROR
-         : !timer->triggered ? LIVES_RESULT_FAIL
-         : LIVES_RESULT_TIMEDOUT;
+lives_result_t lives_sys_alarm_set_timeout(alarm_name_t alaname, uint64_t nsec) {
+  if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return LIVES_RESULT_INVALID;
+  return _lives_alarm_set_timeout(&app_timers[alaname], nsec);
 }
+  
 
+#define ALARM_STATE(timer) (!timer->tid ? LIVES_RESULT_ERROR		\
+			    : !timer->triggered ? LIVES_RESULT_FAIL	\
+			    : LIVES_RESULT_TIMEDOUT)			\
 
-int lives_alarm_get_state(void) {
-  lives_result_t ret = check_alarm_state();
+static int _get_alarm_state(lives_timer_t *timer) {
+  lives_result_t ret = ALARM_STATE(timer);
   return ret ==  LIVES_RESULT_ERROR ? LIVES_ALARM_DISARMED
          : ret == LIVES_RESULT_FAIL ? LIVES_ALARM_ARMED
          : LIVES_ALARM_TRIGGERED;
 }
 
+int lives_alarm_get_state(void)
+{return _get_alarm_state(&(THREADVAR(xtimer)));}
 
+int lives_sys_alarm_get_state(alarm_name_t alaname) {
+  if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return LIVES_ALARM_INVALID;
+  return _get_alarm_state(&app_timers[alaname]);
+}
+
+
+
+// experimental
+
+/* lpt_mind_control(pthread_t target, int spell, void *data) { */
+/*   // surprise another thread... */
+/*   switch spell { */
+/*       case SIG_ACT_CMD: { */
+/* 	boolean rev = FALSE; */
+/* 	for (liVESList *lst = (LiVESList *)data; list; list = list->next) { */
+/* 	  if (!rev) list = lives-list_reverse(list); */
+/* 	  lives_sync_list_add(LPT_THREADVAR(simple_cmd_list), list->data); */
+	  

@@ -284,11 +284,8 @@ boolean d_print_urgency(double timeout, const char *fmt, ...) {
   d_print(text);
 
   if (LIVES_IS_PLAYING && prefs->show_urgency_msgs) {
-    int nfa = mainw->next_free_alarm;
-    mainw->next_free_alarm = LIVES_URGENCY_ALARM;
     lives_freep((void **)&mainw->urgency_msg);
-    lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
-    mainw->next_free_alarm = nfa;
+    lives_alarm_set_timeout(timeout * ONE_BILLION);
     mainw->urgency_msg = lives_strdup(text);
     lives_free(text);
     return TRUE;

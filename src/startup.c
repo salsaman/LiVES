@@ -30,7 +30,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = 0;//TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -108,7 +108,7 @@ static char **zargv;
 static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
-static boolean ran_ds_dlg = FALSE;
+//static boolean ran_ds_dlg = FALSE;
 
 static char buff[256];
 static void print_notice(void) {
@@ -1285,58 +1285,15 @@ static boolean open_yuv4m_startup(livespointer data) {
 ///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
 void lazy_startup_checks(void) {
-  //GET_PROC_THREAD_SELF(self);
-  int64_t dsval;
-  boolean do_show_quota = prefs->show_disk_quota;
-
   capable->boot_time = get_cpu_load(-1);
 
-  resize(1.);
-
   if (prefs->vj_mode) goto alldone;
-
-  if (CURRENT_CLIP_IS_VALID)
-    redraw_timeline(mainw->current_file);
-
-  if (prefs->show_msgs_on_startup)
-    do_messages_window(TRUE);
 
   if (prefs->autoclean) {
     char *com = lives_strdup_printf("%s empty_trash . general %s", prefs->backend, TRASH_NAME);
     lives_system(com, FALSE);
     lives_free(com);
   }
-
-  if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
-    if (disk_monitor_running(prefs->workdir)) {
-      dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
-      // pause until diskspace check complete
-      //
-    }
-
-    mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
-
-    capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
-    capable->ds_free = dsval;
-
-    if (capable->ds_used > prefs->disk_quota * .9 || (capable->ds_status != LIVES_STORAGE_STATUS_NORMAL
-        && capable->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
-      if (capable->ds_used > prefs->disk_quota * .9
-          && (capable->ds_status == LIVES_STORAGE_STATUS_NORMAL
-              || capable->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
-        capable->ds_status = LIVES_STORAGE_STATUS_OVER_QUOTA;
-      }
-      do_show_quota = TRUE;
-    }
-  }
-
-  if (do_show_quota) {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK;
-    main_thread_execute_rvoid(run_diskspace_dialog, 0, "v", NULL);
-    BG_THREADVAR(hook_hints) = 0;
-  }
-
-  mainw->can_play = TRUE;
 
   /* if (capable->has_plugins_libdir == UNCHECKED) { */
   /*   if (check_for_plugins(prefs->lib_dir, FALSE)) { */
@@ -1357,7 +1314,7 @@ void lazy_startup_checks(void) {
 
   /* add_rfx_effects2(RFX_STATUS_ANY); */
 
-  if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
+  //  if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
 
 alldone:
   mainw->lazy_starter = NULL;
@@ -1507,6 +1464,8 @@ static boolean lives_startup(livespointer data) {
   if (!lives_init(&ign_opts)) return FALSE;
   // non-fatal errors
 
+  what_sup = startupB_sup;
+
   if (!mainw->foreign) {
     if (*capable->startup_msg) {
       if (info_only) startup_message_info(capable->startup_msg);
@@ -1627,28 +1586,26 @@ static boolean lives_startup(livespointer data) {
     // still experimental
     switch_aud_to_none(FALSE);
   }
-
-  mainw->n_service_calls = ATOMIC_VAR_INIT(0);
-
   lives_idle_priority(fg_service_ready_cb, NULL);
 
   set_gui_loop_tight(TRUE);
-  lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, WEED_SEED_BOOLEAN, "v", NULL);
-  //lives_idle_add(lives_startup2, NULL);
+  lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, 0, "v", NULL);
   return FALSE;
 }
 
 
 static boolean lives_startup2(livespointer data) {
   GET_PROC_THREAD_SELF(self);
-  char *ustr;
+  uint64_t nsc, attrs;
+  int64_t dsval;
+  char *ustr,*tmp, *msg;
+
   boolean layout_recovered = FALSE;
-  int64_t nsc;
-  uint64_t attrs;
+  boolean do_show_quota = prefs->show_disk_quota;
 
   if (mainw->no_idlefuncs) return TRUE;
 
-  nsc = lives_atomic64_load(&mainw->n_service_calls);
+  nsc = (uint64_t)mainw->n_service_calls;
   if (!nsc) return TRUE;
 
   attrs = lives_proc_thread_get_attrs(self);
@@ -1675,7 +1632,6 @@ static boolean lives_startup2(livespointer data) {
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
       lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
 
-      g_print("wait for PCUSTCOL\n");
       lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       // must take care to execute this here or in the function itself, otherwise
@@ -1696,38 +1652,60 @@ static boolean lives_startup2(livespointer data) {
   if (!prefs->vj_mode && !needs_workdir && mainw->next_ds_warn_level > 0) {
     if (!disk_monitor_running(prefs->workdir))
       mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
-    disk_monitor_wait_result(prefs->workdir, 0);
-    check_storage_space(-1, FALSE);
-    mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
 
-    /* if (dsval > 0) { */
-    /*   capable->ds_used = dsval; */
-    /*   capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0); */
-    /*   capable->ds_free = dsval; */
-    /*   if (capable->ds_status == LIVES_STORAGE_STATUS_CRITICAL) { */
-    /* 	tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval); */
-    /* 	msg = lives_strdup_printf("\n%s\n", tmp); */
-    /* 	lives_free(tmp); */
-    /* 	widget_opts.use_markup = TRUE; */
-    /* 	startup_message_nonfatal(msg); */
-    /* 	widget_opts.use_markup = FALSE; */
-    /* 	lives_free(msg); */
-    /*   } */
-    /*   if (mainw->next_ds_warn_level > 0) { */
-    /* 	if (capable->ds_status == LIVES_STORAGE_STATUS_WARNING) { */
-    /* 	  uint64_t curr_ds_warn = mainw->next_ds_warn_level; */
-    /* 	  mainw->next_ds_warn_level >>= 1; */
-    /* 	  if (mainw->next_ds_warn_level > (capable->ds_free >> 1)) mainw->next_ds_warn_level = capable->ds_free >> 1; */
-    /* 	  if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level; */
-    /* 	  tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, capable->ds_free, */
-    /* 			       curr_ds_warn, mainw->next_ds_warn_level); */
-    /* 	  msg = lives_strdup_printf("\n%s\n", tmp); */
-    /* 	  lives_free(tmp); */
-    /* 	  startup_message_nonfatal(msg); */
-    /* 	  lives_free(msg); */
-    /* 	} */
-    /*   } */
-    /* } */
+    if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
+      if (disk_monitor_running(prefs->workdir)) {
+	dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
+	mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
+      }
+    }
+
+    /// ChECK : redundant ?
+    check_storage_space(-1, FALSE);
+
+    if (dsval > 0) {
+
+      /// ChECK : redundant ?
+      capable->ds_used = dsval;
+      capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+      capable->ds_free = dsval;
+
+      if (capable->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
+    	tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
+    	msg = lives_strdup_printf("\n%s\n", tmp);
+    	lives_free(tmp);
+    	widget_opts.use_markup = TRUE;
+    	startup_message_nonfatal(msg);
+    	widget_opts.use_markup = FALSE;
+    	lives_free(msg);
+      }
+
+      if (mainw->next_ds_warn_level > 0) {
+    	if (capable->ds_status == LIVES_STORAGE_STATUS_WARNING) {
+    	  uint64_t curr_ds_warn = mainw->next_ds_warn_level;
+    	  mainw->next_ds_warn_level >>= 1;
+    	  if (mainw->next_ds_warn_level > (capable->ds_free >> 1)) mainw->next_ds_warn_level = capable->ds_free >> 1;
+    	  if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
+    	  tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, capable->ds_free,
+    			       curr_ds_warn, mainw->next_ds_warn_level);
+    	  msg = lives_strdup_printf("\n%s\n", tmp);
+    	  lives_free(tmp);
+    	  startup_message_nonfatal(msg);
+    	  lives_free(msg);
+    	}
+      }
+    }
+
+    if ((prefs->disk_quota && capable->ds_used > prefs->disk_quota * .9)
+	 || (capable->ds_status != LIVES_STORAGE_STATUS_NORMAL
+	     && capable->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
+      if (capable->ds_used > prefs->disk_quota * .9
+          && (capable->ds_status == LIVES_STORAGE_STATUS_NORMAL
+              || capable->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
+        capable->ds_status = LIVES_STORAGE_STATUS_OVER_QUOTA;
+      }
+      do_show_quota = TRUE;
+    }
   }
 
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
@@ -1739,18 +1717,7 @@ static boolean lives_startup2(livespointer data) {
     mainw->ascrap_file = -1;
   }
 
-  if (prefs->show_disk_quota && !prefs->vj_mode) {
-    //capable->ds_used = disk_monitor_check_result(prefs->workdir);
-    if (capable->ds_used >= 0) {
-      ran_ds_dlg = TRUE;
-      run_diskspace_dialog(NULL);
-    }
-  }
-
-  // this can only be added AFTER calling check_for_recovery_files, otherwise we get stuck
-  // showing the query dialog
-
-  //lives_idle_priority(fg_service_ready_cb, NULL);
+  if (prefs->show_disk_quota && !prefs->vj_mode) do_show_quota = TRUE;
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -1898,6 +1865,22 @@ static boolean lives_startup2(livespointer data) {
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 
+  if (prefs->show_msgs_on_startup)
+    do_messages_window(TRUE);
+
+  resize(1.);
+
+  if (CURRENT_CLIP_IS_VALID)
+    redraw_timeline(mainw->current_file);
+
+  if (do_show_quota) {
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK;
+    main_thread_execute_rvoid(run_diskspace_dialog, 0, "v", NULL);
+    BG_THREADVAR(hook_hints) = 0;
+  }
+
+  mainw->can_play = TRUE;
+
   fg_service_wake();
   what_sup = sup_ready;
 
@@ -1926,6 +1909,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   sizint = sizeof(int);
   sizdbl = sizeof(double);
   sizshrt = sizeof(short);
+
+  what_sup = run_program_sup;
 
   mainw = (mainwindow *)(_lives_calloc(1, sizeof(mainwindow)));
 
@@ -1987,7 +1972,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_plant_new = weed_plant_new_host;
 #endif
 
-  thread_signal_establish(LIVES_TIMER_SIG, timer_handler);
+  lives_alarms_init();
 
   // unblock just for calling thread (main thread)
   thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);
@@ -2760,6 +2745,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
+  what_sup = run_program2_sup;
+  
   // late tests (has prefs, has threadpool, has random, has gtk)
   /* do_startup_diagnostics(test_opts); */
   /* do_startup_diagnostics(test_opts); */
@@ -2806,6 +2793,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
   lives_idle_add(lives_startup, NULL);
 
+  what_sup = gtk_launch_sup;
+  
 #ifdef GUI_GTK
   if (!gtk_thread) {
     pthread_cleanup_push(pthread_cleanup_func, NULL);
@@ -3488,7 +3477,7 @@ static boolean lives_init(_ign_opts * ign_opts) {
 
       if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
       mainw->helper_procthreads[PT_CUSTOM_COLOURS]
-        = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, (lives_funcptr_t)pick_custom_colours,
+        = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, pick_custom_colours,
                                    WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
     }
 #endif

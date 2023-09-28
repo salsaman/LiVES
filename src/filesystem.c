@@ -15,6 +15,9 @@
 #include <libexplain/read.h>
 #endif
 
+size_t dslen = strlen(LIVES_DIR_SEP);
+
+
 off_t get_file_size(int fd, boolean is_native) {
   // get the size of file fd
   // is_native should be set in special cases to avoid mutex deadlocks
@@ -55,11 +58,9 @@ retry:
 
 
 off_t sget_file_size(const char *name) {
-  off_t res;
   struct stat xstat;
   if (!name) return 0;
-  res = stat(name, &xstat);
-  if (res < 0) return res;
+  if (stat(name, &xstat)) return -1;
   return xstat.st_size;
 }
 
@@ -151,6 +152,7 @@ LIVES_GLOBAL_INLINE void lives_sync(int times) {
 
 
 boolean check_file(const char *file_name, boolean check_existing) {
+  // check if file is writeable, and optionally if it exists already or not
   int check;
   boolean exists = FALSE;
   char *msg;
@@ -204,138 +206,121 @@ boolean check_file(const char *file_name, boolean check_existing) {
 }
 
 
-boolean check_dir_access(const char *dir, boolean leaveit) {
-  // if a directory exists, make sure it is readable and writable
-  // otherwise create it and then check
-  // we test here by actually creating a (mkstemp) file and writing to it
-  // dir is in locale encoding
-
-  // see also is_writeable_dir() which uses access() to check directory permissions
-
-  // WARNING: may leave some parents around
-  char test[5] = "1234";
-  char *testfile;
-  boolean exists = lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
-  int fp;
-
-  if (!exists) lives_mkdir_with_parents(dir, capable->umask);
-
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
-
-  if (!is_writeable_dir(dir)) return FALSE;
-
-  testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
-  fp = g_mkstemp(testfile);
-  if (fp == -1) {
-    lives_free(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    return FALSE;
+LIVES_GLOBAL_INLINE char *get_ancestor_dir(const char *pathname, boolean append_first) {
+  // given pathname, find the lowest existing directory which would contain pathname
+  // if add_first is TRUE, leave the first compnent below ancestor
+  char *dir;
+  size_t sl;
+  if (!pathname || !*pathname) return NULL;
+  dir = lives_strdup(pathname);
+  get_dirname(dir);
+  sl = lives_strlen(dir);
+  while (sl > 1 && !lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    while (sl && strncmp(&dir[sl], LIVES_DIR_SEP, dslen)) sl--;
+    dir[sl] = 0;
   }
-  if (lives_write(fp, test, 4, TRUE) != 4) {
-    close(fp);
-    lives_rm(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    lives_free(testfile);
-    return FALSE;
-  }
-  close(fp);
-  fp = lives_open2(testfile, O_RDONLY);
-  if (fp < 0) {
-    lives_rm(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    lives_free(testfile);
-    return FALSE;
-  }
-  if (lives_read(fp, test, 4, TRUE) != 4) {
-    close(fp);
-    lives_rm(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    lives_free(testfile);
-    return FALSE;
-  }
-  close(fp);
-  lives_rm(testfile);
-  if (!exists && !leaveit) {
-    lives_rmdir(dir, FALSE);
-  }
-  lives_free(testfile);
-  return TRUE;
+  if (append_first) dir[sl] = *LIVES_DIR_SEP;
+  return dir;
 }
+
+
+static boolean _check_dir_access(const char *dir, boolean create) {
+  // if create is TRUE and dir does not exist we try to create it, returning FALSE if we fail
+  // then, if dir exists, make sure it has rwx permisssions
+  // otherwise, find the ancestor of dir which exists, and check that instead
+  // if the test succeeds, we return TRUE
+  char *tmp = (char *)dir;
+  boolean ret;
+  ret = lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
+  if (!ret) {
+    if (create) {
+      tmp = get_ancestor_dir(dir, TRUE);
+      lives_mkdir_with_parents(dir, capable->umask);
+      LIVES_DEBUG("Created directory");
+      LIVES_DEBUG(dir);
+      ret = is_writeable_dir(dir);
+      if (!ret)	lives_rmdir(tmp, FALSE);
+      lives_free(tmp);
+      return ret;
+    }
+    tmp = get_ancestor_dir(dir, FALSE);
+  }
+  ret = lives_file_test(tmp, LIVES_FILE_TEST_IS_DIR);
+  if (ret) ret = is_writeable_dir(tmp);
+  if (tmp != dir) lives_free(tmp);
+  return ret;
+}
+
+// sinilar to is_writeable_dir, but the directory does not need to exist
+// will also return FALSE if dir is the name of an existing file
+boolean check_dir_access(const char *dir)
+{return _check_dir_access(dir, FALSE);}
+
 
 
 boolean lives_make_writeable_dir(const char *newdir) {
   /// create a directory (including parents)
   /// and ensure we can actually write to it
-  int ret = lives_mkdir_with_parents(newdir, capable->umask);
-  int myerrno = errno;
-  if (!check_dir_access(newdir, TRUE)) {
-    // abort if we cannot create the new subdir
-    if (myerrno == EINVAL) {
-      LIVES_ERROR("Could not write to directory");
-    } else LIVES_ERROR("Could not create directory");
+  boolean ret = _check_dir_access(newdir, TRUE);
+  if (!ret) {
+    LIVES_ERROR("Could not write to directory");
     LIVES_ERROR(newdir);
-    THREADVAR(com_failed) = FALSE;
-    return FALSE;
-  } else {
-    if (ret != -1) {
-      LIVES_DEBUG("Created directory");
-      LIVES_DEBUG(newdir);
-    }
   }
-  return TRUE;
+  return ret;
 }
 
 
-boolean is_writeable_dir(const char *dir) {
-  // return FALSE if we cannot create / write to dir
-  // dir should be in locale encoding
-  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
-
-  //struct statvfs sbuf;
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-    lives_mkdir_with_parents(dir, capable->umask);
-    if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-      return FALSE;
-    }
-  }
-
-  if (!access(dir, R_OK | W_OK | X_OK)) return TRUE;
-  return FALSE;
+LIVES_GLOBAL_INLINE boolean is_writeable_dir(const char *dir) {
+  // check if dir is writteable (rwx)
+  // fails if dir does not exist or exists and is not a directory
+  struct stat xstat;
+  return !stat(dir, &xstat) && (xstat.st_mode & (S_IFDIR | S_IRWXU)) == (S_IFDIR | S_IRWXU);
 }
 
 
-void get_dirname(char *filename) {
-  char *tmp;
+LIVES_GLOBAL_INLINE void get_rel_dirname(char *filename, const char *topdir) {
   // get directory name from a file
+  // if filename begins with a '.' then this will be substituted with topdir
   // filename should point to char[PATH_MAX]
-  // WARNING: will change contents of filename
-
-  lives_snprintf(filename, PATH_MAX, "%s%s", (tmp = lives_path_get_dirname(filename)), LIVES_DIR_SEP);
-  if (!strcmp(tmp, ".")) {
-    char *tmp1 = lives_get_current_dir(), *tmp2 = lives_build_filename(tmp1, filename + 2, NULL);
-    lives_free(tmp1);
-    lives_snprintf(filename, PATH_MAX, "%s", tmp2);
-    lives_free(tmp2);
+  // may alter contents of filename
+  char *tmp = lives_path_get_dirname(filename);
+  if (*tmp == '.') {
+    off_t offs = 1;
+    if (lives_str_ends_with(topdir, LIVES_DIR_SEP)) offs += dslen;
+    lives_snprintf(filename, PATH_MAX, "%s%s", topdir, tmp + offs);
   }
-
+  else lives_snprintf(filename, PATH_MAX, "%s", tmp);
   lives_free(tmp);
 }
 
 
-char *get_dir(const char *filename) {
+LIVES_GLOBAL_INLINE void get_dirname(char *filename) {
+  // get directory name from a file
+  // if filename begins with a '.' then this will be substitued with current directory
+  // filename should point to char[PATH_MAX]
+  // may alter contents of filename
+  char *cwd = lives_get_current_dir();
+  get_rel_dirname(filename, cwd);
+  lives_free(cwd);
+}
+
+
+LIVES_GLOBAL_INLINE char *get_rel_dir(const char *filename, const char *topdir) {
   // get directory as string, should free after use
   char tmp[PATH_MAX];
   lives_snprintf(tmp, PATH_MAX, "%s", filename);
-  get_dirname(tmp);
+  get_rel_dirname(tmp, topdir);
   return lives_strdup(tmp);
+}
+
+
+LIVES_GLOBAL_INLINE char *get_dir(const char *filename) {
+  // get directory as string, should free after use
+  // relativeto current dir
+  char *cwd = lives_get_current_dir();
+  char *ret = get_rel_dir(filename, cwd);
+  lives_free(cwd);
+  return ret;
 }
 
 
@@ -404,45 +389,54 @@ char *ensure_extension(const char *fname, const char *ext) {
 
 boolean ensure_isdir(char *fname) {
   // ensure dirname ends in a single dir separator
-  // fname should be char[PATH_MAX]
+  // any double file separators are replaced with single ones
+  // fname should be char[PATH_MAX] (i.e max stlren should be PATH_MAX - 1 - strlen(dir_sep))
 
   // returns TRUE if fname was altered
 
-  size_t dslen = strlen(LIVES_DIR_SEP);
-  ssize_t offs;
-  boolean ret = FALSE;
-  char *tmp = lives_strdup_printf("%s%s", LIVES_DIR_SEP, fname), *tmp2;
-  size_t tlen = lives_strlen(tmp), slen, tlen2;
+  char *tmp2, *tmp = fname;
+  size_t tlen, tlen2, olen;
+
+  olen = tlen2 = tlen = lives_strlen(fname);
 
   while (1) {
     // recursively remove double DIR_SEP
     tmp2 = subst(tmp, LIVES_DIR_SEP LIVES_DIR_SEP, LIVES_DIR_SEP);
-    if ((tlen2 = lives_strlen(tmp2)) < tlen) {
-      ret = TRUE;
-      lives_free(tmp);
-      tmp = tmp2;
-      tlen = tlen2;
-    } else {
-      if (tmp2 && tmp2 != tmp) lives_free(tmp2);
+    if ((tlen2 = lives_strlen(tmp2)) == tlen) {
+      lives_free(tmp2);
       break;
     }
+    if (tmp != fname) lives_free(tmp);
+    tmp = tmp2;
+    tlen = tlen2;
   }
 
-  if (ret) lives_snprintf(fname, PATH_MAX, "%s", tmp);
-  if (tmp) lives_free(tmp);
+  if (!lives_str_starts_with(tmp, LIVES_DIR_SEP)) {
+    tmp2 = lives_strdup_printf("%s%s", LIVES_DIR_SEP, tmp);
+    if (tmp != fname) lives_free(tmp);
+    tmp = tmp2;
+    tlen += dslen;
+  }
 
-  slen = tlen - 1;
-  offs = slen;
+  if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)
+      && !lives_file_test(tmp, LIVES_FILE_TEST_IS_DIR)) {
+    get_basename(tmp);
+    tlen = lives_strlen(tmp);
+  }
 
-  // we should now only have one or zero DIR_SEP at the end, but just in case we remove all but the last one
-  while (offs >= 0 && !strncmp(fname + offs, LIVES_DIR_SEP, dslen)) offs -= dslen;
-  if (offs == slen - dslen) return ret; // format is OK as-is
+  if (lives_strcmp(&tmp[tlen - dslen], LIVES_DIR_SEP)) {
+    tmp2 = lives_strdup_printf("%s%s", tmp, LIVES_DIR_SEP);
+    if (tmp != fname) lives_free(tmp);
+    tmp = tmp2;
+    tlen += dslen;
+  }
 
-  // strip off all terminating DIR_SEP and then append one
-  if (++offs < 0) offs = 0;
-  if (offs < slen) fname[offs] = 0;
-  fname = strncat(fname, LIVES_DIR_SEP, PATH_MAX - offs - 1);
-  return TRUE;
+  if (tmp != fname) {
+    lives_snprintf(fname, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+    olen = tlen;
+  }
+  return tlen != olen;
 }
 
 
@@ -971,7 +965,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return NULL;
   lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                 (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
+                                 _lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
   if (lpt) {
     /* mainw->debug_ptr = lpt; */
     /* g_print("CREATE %p\n", lpt); */
@@ -2024,7 +2018,63 @@ off_t lives_buffered_flush(int fd) {
   return fbuff->offset;
 }
 
+
+/////////////////////////////// filesystem hardware / OS /////////
+
+off_t get_dir_size(const char *dirname) {
+  // get size of tree with root at dirname
+  // for some FS this can be very slow, so it can be done async
+  off_t dirsize = -1;
+  if (!dirname || !*dirname || !lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) return -1;
+  if (check_for_executable(&capable->has_du, EXEC_DU)) {
+    char buff[PATH_MAX * 2];
+    char *com = lives_strdup_printf("%s -sB %d \"%s\"", EXEC_DU, DU_BLOCKSIZE, dirname);
+    lives_popen(com, TRUE, buff, PATH_MAX * 2);
+    lives_free(com);
+    if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+    else dirsize = atol(buff) / DU_BLOCKSIZE;
+  }
+  return dirsize;
+}
+
+
+const char *get_shmdir(void) {
+  if (!*capable->shmdir_path) {
+    char *xshmdir = NULL, *shmdir = lives_build_path(LIVES_RUN_DIR, NULL);
+    if (lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+      xshmdir = lives_build_path(LIVES_RUN_DIR, LIVES_SHM_DIR, NULL);
+      if (!lives_file_test(xshmdir, LIVES_FILE_TEST_IS_DIR) || !is_writeable_dir(xshmdir)) {
+        lives_free(xshmdir);
+        if (!is_writeable_dir(shmdir)) {
+          lives_free(shmdir);
+          shmdir = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, NULL);
+          if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)  || !is_writeable_dir(shmdir)) {
+            lives_free(shmdir);
+            shmdir = lives_build_path(LIVES_TMP_DIR, NULL);
+            if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR) || !is_writeable_dir(shmdir)) {
+              lives_free(shmdir);
+              capable->writeable_shmdir = MISSING;
+              return NULL;
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+      else {
+        lives_free(shmdir);
+        shmdir = xshmdir;
+      }
+    }
+    capable->writeable_shmdir = PRESENT;
+    xshmdir = lives_build_path(shmdir, LIVES_DEF_WORK_SUBDIR, NULL);
+    lives_free(shmdir);
+    lives_snprintf(capable->shmdir_path, PATH_MAX, "%s", xshmdir);
+    lives_free(xshmdir);
+  }
+  if (capable->writeable_shmdir) return capable->shmdir_path;
+  return NULL;
+}
+
 //////////////////////////////////////////////////////////
+/////////// diskspace checks, warnings
 
 static void ds_warn(boolean freelow, uint64_t bytes) {
   char *reason, *aorb;
@@ -2046,6 +2096,41 @@ static void ds_warn(boolean freelow, uint64_t bytes) {
 }
 
 
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t ds_resvd) {
+  // call with *dsval set to ds_used, ds_resvd set to any potential space to be used
+  // 
+  // dval is 'disk space used' in tree from dir
+  // checks)
+  // if "dir" not set or empty or is part of workdir tree, check if dsval is over quota
+  // if so, et status to OVER_QUOTA
+  //
+  // if dir is not writeable, return OVER_QUOTA or UNKNOWN
+  //
+  // - get free space in partition containing dir
+  //  -- subtract ds_resvd
+  //  --- set *dsval
+  // if dsval <= 0 return status OVERFLOW
+  // if status is CRITICAL, return it
+  // if status is OVER_QUOTA return it
+  // if status is WARNING return it
+  // return status NORMAL
+  int64_t ds;
+  lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
+  if (dsval && prefs->disk_quota > 0 && *dsval > (int64_t)((double)prefs->disk_quota * prefs->quota_limit / 100.))
+    if (!dir || !*dir || file_is_ours(dir))
+      status = LIVES_STORAGE_STATUS_OVER_QUOTA;
+  if (!is_writeable_dir(dir)) return status;
+  ds = (int64_t)get_ds_free(dir);
+  ds -= ds_resvd;
+  if (dsval) *dsval = ds;
+  if (ds <= 0) return LIVES_STORAGE_STATUS_OVERFLOW;
+  if (ds < prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
+  if (status != LIVES_STORAGE_STATUS_UNKNOWN) return status;
+  if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
+  return LIVES_STORAGE_STATUS_NORMAL;
+}
+
+
 boolean check_for_disk_space(boolean fullcheck) {
   /// fullcheck == FALSE, we MAY check ds used, and we WILL check free ds using cached value
   /// fullcheck == TRUE, we WILL update free ds
@@ -2063,9 +2148,6 @@ boolean check_for_disk_space(boolean fullcheck) {
   if (IS_VALID_CLIP(mainw->scrap_file)) {
     scrap_mb = (double)mainw->files[mainw->scrap_file]->f_size / (double)ONE_MILLION;
   }
-
-  //capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
-  //capable->ds_free = dsval;
 
   if (prefs->disk_quota > 0) {
     int64_t ds_used;
@@ -2115,6 +2197,283 @@ boolean check_for_disk_space(boolean fullcheck) {
     }
   }
   return TRUE;
+}
+
+
+boolean check_storage_space(int clipno, boolean is_processing) {
+  // check storage space in prefs->workdir
+  lives_clip_t *sfile = NULL;
+
+  int64_t dsval = -1;
+
+  lives_storage_status_t ds;
+  int retval;
+  boolean did_pause = FALSE;
+
+  char *msg, *tmp;
+  char *pausstr = (_("Processing has been paused."));
+
+  sfile = RETURN_VALID_CLIP(clipno);
+
+  do {
+    if (mainw->dsu_valid && capable->ds_used > -1) {
+      dsval = capable->ds_used;
+    } else if (prefs->disk_quota) {
+      dsval = disk_monitor_check_result(prefs->workdir);
+      if (dsval >= 0) capable->ds_used = dsval;
+    }
+    ds = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+    capable->ds_free = dsval;
+    if (ds == LIVES_STORAGE_STATUS_WARNING) {
+      uint64_t curr_ds_warn = mainw->next_ds_warn_level;
+      mainw->next_ds_warn_level >>= 1;
+      if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
+      if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
+      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
+          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
+        did_pause = TRUE;
+      }
+
+      tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, dsval, curr_ds_warn, mainw->next_ds_warn_level);
+      if (!did_pause)
+        msg = lives_strdup_printf("\n%s\n", tmp);
+      else
+        msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
+      lives_free(tmp);
+      mainw->add_clear_ds_button = TRUE; // gets reset by do_warning_dialog()
+      if (!do_warning_dialog(msg)) {
+        lives_free(msg);
+        lives_free(pausstr);
+        mainw->cancelled = CANCEL_USER;
+        if (is_processing) {
+          if (sfile) sfile->nokeep = TRUE;
+          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
+        }
+        return FALSE;
+      }
+      lives_free(msg);
+    } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
+      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
+          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
+        did_pause = TRUE;
+      }
+      tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
+      if (!did_pause)
+        msg = lives_strdup_printf("\n%s\n", tmp);
+      else {
+        char *xpausstr = lives_markup_escape_text(pausstr, -1);
+        msg = lives_strdup_printf("\n%s\n%s\n", tmp, xpausstr);
+        lives_free(xpausstr);
+      }
+      lives_free(tmp);
+      widget_opts.use_markup = TRUE;
+      retval = do_abort_retry_cancel_dialog(msg);
+      widget_opts.use_markup = FALSE;
+      lives_free(msg);
+      if (retval == LIVES_RESPONSE_CANCEL) {
+        if (is_processing) {
+          if (sfile) sfile->nokeep = TRUE;
+          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
+        }
+        mainw->cancelled = CANCEL_ERROR;
+        lives_free(pausstr);
+        return FALSE;
+      }
+    }
+  } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
+
+  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA && !mainw->is_processing) {
+    run_diskspace_dialog(NULL);
+  }
+
+  if (did_pause && mainw->effects_paused) {
+    on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
+  }
+
+  lives_free(pausstr);
+
+  return TRUE;
+}
+
+//////////////////////////////////
+
+char *lives_format_storage_space_string(uint64_t space) {
+  char *fmt;
+
+  if (space >= lives_10pow(18)) {
+    // TRANSLATORS: Exabytes
+    fmt = lives_strdup_printf(_("%.2f EB"), (double)space / (double)lives_10pow(18));
+  } else if (space >= lives_10pow(15)) {
+    // TRANSLATORS: Petabytes
+    fmt = lives_strdup_printf(_("%.2f PB"), (double)space / (double)lives_10pow(15));
+  } else if (space >= lives_10pow(12)) {
+    // TRANSLATORS: Terabytes
+    fmt = lives_strdup_printf(_("%.2f TB"), (double)space / (double)lives_10pow(12));
+  } else if (space >= lives_10pow(9)) {
+    // TRANSLATORS: Gigabytes
+    fmt = lives_strdup_printf(_("%.2f GB"), (double)space / (double)lives_10pow(9));
+  } else if (space >= lives_10pow(6)) {
+    // TRANSLATORS: Megabytes
+    fmt = lives_strdup_printf(_("%.2f MB"), (double)space / (double)lives_10pow(6));
+  } else if (space >= 1024) {
+    // TRANSLATORS: Kilobytes (1024 bytes)
+    fmt = lives_strdup_printf(_("%.2f KiB"), (double)space / 1024.);
+  } else {
+    fmt = lives_strdup_printf(_("%d bytes"), space);
+  }
+
+  return fmt;
+}
+
+
+//////////////////////////// disk space monitor, size checking
+
+static int64_t result = -1;
+static volatile lives_proc_thread_t running = NULL;
+static char *running_for = NULL;
+static int dircheck_state = 0;
+lives_proc_thread_t ds_syncwith = NULL;
+
+static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
+  dircheck_state = 2;
+  if (ds_syncwith) {
+    lives_proc_thread_sync_with(ds_syncwith, 0, MM_IGNORE);
+    ds_syncwith = NULL;
+  }
+  return FALSE;
+}
+
+// disk monitor bg funcs
+// disk_monitor_start(dir) - (re)start a procthread to get the size ofr directory
+// disk_monitor_trunning(dir) - checks if running for dir
+// disk_monitor_check_result(dir) - returns available result, or -1 if still running
+//     (check mainw->ds_valid, may need rechecking)
+// disk_monitor_wait_result(dir, timeout_nsec) - if reult not avaible before timeout, forget
+// disk_monitor_forget - dont care, no int64_join needed
+
+boolean disk_monitor_running(const char *dir) {
+  return (dircheck_state == 1 && (!dir || !lives_strcmp(dir, running_for)));
+}
+
+
+lives_proc_thread_t disk_monitor_start(const char *dir) {
+  if (disk_monitor_running(dir)) disk_monitor_forget();
+  running = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+                                     get_dir_size, WEED_SEED_INT64, "s", dir);
+  lives_proc_thread_add_hook(running, COMPLETED_HOOK, 0, dirsize_done_cb, &result);
+
+  mainw->dsu_valid = TRUE;
+  if (running_for) lives_free(running_for);
+  running_for = lives_strdup(dir);
+  dircheck_state = 1;
+  lives_proc_thread_queue(running, 0);
+  return running;
+}
+
+
+int64_t disk_monitor_check_result(const char *dir) {
+  // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
+  int64_t bytes = -1;
+  //if (!disk_monitor_running(dir))
+
+  g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
+
+  //if (!dircheck_state) disk_monitor_start(dir);
+  if (!lives_strcmp(dir, running_for)) {
+    if (dircheck_state == 1) {
+      return -1;
+    }
+    if (dircheck_state == 2) {
+      lpt_desc_state(running);
+      g_print("wait for diskmon res %p\n", running);
+      bytes = result = lives_proc_thread_join_int64(running);
+      g_print("got for diskmon res\n");
+      lives_proc_thread_unref(running);
+      running = NULL;
+      dircheck_state = 3;
+    }
+    if (dircheck_state == 3) {
+      bytes = result;
+    }
+  } else bytes = (int64_t)get_dir_size(dir);
+  return bytes;
+}
+
+
+LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout) {
+  // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
+
+  if (*running_for && lives_strcmp(dir, running_for)) {
+    if (timeout) return -1;
+    return get_dir_size(dir);
+  }
+
+  g_print("DISKMON sync, state is %d\n", dircheck_state);
+
+  if (dircheck_state == 1) {
+    GET_PROC_THREAD_SELF(self);
+    if (timeout < 0) timeout = BILLIONS(30); // TODO
+    ds_syncwith = self;
+    if (dircheck_state == 1) {
+      if (lives_proc_thread_sync_with_timeout(running, 0, MM_IGNORE, timeout)
+          == LIVES_RESULT_FAIL) {
+        ds_syncwith = NULL;
+        disk_monitor_forget();
+        return -1;
+      }
+      g_print("synced with diskmn, will get result now\n");
+      ds_syncwith = NULL;
+    }
+  }
+  return disk_monitor_check_result(dir);
+}
+
+
+void disk_monitor_forget(void) {
+  if (!disk_monitor_running(NULL)) return;
+  lives_proc_thread_request_cancel(running, TRUE);
+  running = NULL;
+  dircheck_state = 0;
+}
+
+//////////////////////////
+
+uint64_t get_ds_free(const char *dir) {
+  // get free space in bytes for volume containing directory dir
+  // return 0 if we cannot create/write to dir
+
+  // caller should test with is_writeable_dir() first before calling this
+  // since 0 is a valid return value
+
+  // dir should be in locale encoding
+
+  // WARNING: this may temporarily create the directory (since we dont know if its parents are needed)
+
+  struct statvfs sbuf;
+
+  uint64_t bytes = 0;
+  boolean must_delete = FALSE;
+
+  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) must_delete = TRUE;
+  if (!is_writeable_dir(dir)) goto getfserr;
+
+  // use statvfs to get fs details
+  if (statvfs(dir, &sbuf) == -1) goto getfserr;
+  if (sbuf.f_flag & ST_RDONLY) goto getfserr;
+
+  // result is block size * blocks available
+  bytes = sbuf.f_bsize * sbuf.f_bavail;
+  if (!lives_strcmp(dir, prefs->workdir)) {
+    capable->ds_free = bytes;
+    capable->ds_tot = sbuf.f_bsize * sbuf.f_blocks;
+  }
+
+getfserr:
+  if (must_delete) lives_rmdir(dir, FALSE);
+
+  return bytes;
 }
 
 

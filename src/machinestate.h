@@ -57,18 +57,10 @@ typedef struct {
 
 //////////////
 
-#define LIVES_LEAF_MD5SUM "md5sum"
-#define LIVES_LEAF_MD5_CHKSIZE "md5_chksize"
-
-#define LIVES_LEAF_UID "uid"
-
 /// TODO - move elsewhere, does not really belong here
 ///
 // weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
 #define WEED_PLANT_LIVES 31337
-
-#define WEED_LEAF_LIVES_SUBTYPE "subtype"
-#define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
 
 #define LIVES_PLANT_MESSAGE 1
 #define LIVES_PLANT_WIDGET 2
@@ -87,17 +79,6 @@ typedef struct {
 
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
-
-/// disk/storage status values
-typedef enum {
-  LIVES_STORAGE_STATUS_UNKNOWN = 0,
-  LIVES_STORAGE_STATUS_NORMAL,
-  LIVES_STORAGE_STATUS_WARNING,
-  LIVES_STORAGE_STATUS_CRITICAL,
-  LIVES_STORAGE_STATUS_OVERFLOW,
-  LIVES_STORAGE_STATUS_OVER_QUOTA,
-  LIVES_STORAGE_STATUS_OFFLINE
-} lives_storage_status_t;
 
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
@@ -133,19 +114,6 @@ uint64_t gen_unique_id(void);
 char *get_md5sum(const char *filename);
 
 boolean check_mem_status(void);
-
-char *lives_format_storage_space_string(uint64_t space);
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t resvd);
-uint64_t get_ds_free(const char *dir);
-uint64_t get_blocksize(const char *dir);
-
-lives_proc_thread_t disk_monitor_start(const char *dir);
-boolean disk_monitor_running(const char *dir);
-int64_t disk_monitor_check_result(const char *dir);
-int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
-void disk_monitor_forget(void);
-
-boolean check_storage_space(int clipno, boolean is_processing);
 
 char *get_symlink_for(const char *link);
 
@@ -342,8 +310,6 @@ int set_thread_cpuid(pthread_t pth);
 volatile float *get_core_loadvar(int corenum);
 
 double analyse_cpu_stats(void);
-
-const char *get_shmdir(void);
 
 char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);

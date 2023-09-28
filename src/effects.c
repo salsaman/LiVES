@@ -1266,7 +1266,7 @@ boolean grabkeys_callback_hook(LiVESToggleButton * button, livespointer user_dat
 
 static boolean _rtemode_callback(int dirn) {
   if (mainw->rte_keys == -1) return TRUE;
-  rte_key_setmode(0, dirn == PREV_MODE_CYCLE ? -2 : -1);
+  rte_key_setmode(0, dirn == LIVES_ACTION_PREV_MODE_CYCLE ? -2 : -1);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
   return TRUE;
 }

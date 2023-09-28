@@ -367,7 +367,8 @@ struct _weed_leaf_nopadding {
 
 #define WEED_SEED_double		WEED_SEED_DOUBLE
 
-#define WEED_SEED_BOOLEAN		3 // int32_t: restrict to values WEED_TRUE or WEED_FALSE
+  // was int32_t: restrict to values WEED_TRUE or WEED_FALSE
+#define WEED_SEED_BOOLEAN		3 // uint8_t: restrict to values WEED_TRUE or WEED_FALSE
 
 #define WEED_SEED_boolean		WEED_SEED_BOOLEAN
 
@@ -419,6 +420,11 @@ struct _weed_leaf_nopadding {
 #define WEED_SEED_plantptr		WEED_SEED_PLANTPTR
 #define WEED_SEED_weed_plantptr_t      	WEED_SEED_PLANTPTR
 
+  // This is an alias of WEED_SEED_VOIDPTR, for pointers to rdonly strings, may avoid  malloc/memcpy/free
+  // - Consider Flagging the leaf IMMUTABLE once set, to make the pointer value const.
+  // - Avoid memory leaks, consider freeing the string prior to freeing the plant, deleting the leaf
+  // or amending its value. (ie. string is in stack & no other refs exist)
+  // - Optionally, enable weed extensions and store the string length in element size(s).
 #define WEED_SEED_CONST_CHARPTR		67 // pointer to READ-ONLY string
 
 #define WEED_SEED_FIRST_PTR_TYPE	WEED_SEED_FUNCPTR

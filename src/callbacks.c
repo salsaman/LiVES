@@ -947,11 +947,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   if (tmpdir) {
     ddir = lives_build_path(tmpdir, req->fname, NULL);
     keep_frags = 1;
-    if (lives_file_test(ddir, LIVES_FILE_TEST_IS_DIR)) {
-      if (check_dir_access(ddir, FALSE)) {
-        keep_old_dir = TRUE;
-      }
-    }
+    if (is_writeable_dir(ddir)) keep_old_dir = TRUE;
     if (!keep_old_dir) {
       LiVESResponseType resp;
       char *cwd = lives_get_current_dir();
@@ -5850,7 +5846,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   do {
     resp = LIVES_RESPONSE_NONE;
-    if (!lives_make_writeable_dir(full_trashdir) || !check_dir_access(full_trashdir, TRUE)) {
+    if (!lives_make_writeable_dir(full_trashdir)) {
       resp = do_dir_perm_error(full_trashdir, TRUE);
       if (resp == LIVES_RESPONSE_CANCEL) goto cleanup;
     }

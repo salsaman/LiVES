@@ -591,7 +591,8 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   LiVESWidget *widget;
   lives_painter_surface_t **psurface, *surface;
   lives_painter_t *cr;
-  int rwidth, rheight, width, height, owidth, oheight, cx, cy;
+  int rwidth, rheight, width, height, cx, cy;
+  //int owidth, oheight;
 
   if (!da) return;
   widget = LIVES_WIDGET(da);
@@ -625,8 +626,10 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   rheight = (rheight >> 1) << 1;
 
   if (pixbuf) {
-    owidth = width = lives_pixbuf_get_width(pixbuf);
-    oheight = height = lives_pixbuf_get_height(pixbuf);
+    //owidth =
+    width = lives_pixbuf_get_width(pixbuf);
+    //oheight =
+    height = lives_pixbuf_get_height(pixbuf);
 
     cx = (rwidth - width) >> 1;
     if (cx < 0) cx = 0;

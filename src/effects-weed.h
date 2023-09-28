@@ -22,10 +22,6 @@
 
 #define LIVES_PALETTE_ANY -1
 
-weed_error_t weed_set_const_string_value(weed_plant_t *, const char *key, const char *);
-const char *weed_get_const_string_value(weed_plant_t *, const char *key, weed_error_t *);
-ssize_t weed_leaf_const_string_len(weed_plant_t *, const char *key);
-
 /// filter apply errors
 typedef enum {
   FILTER_SUCCESS = 0,
@@ -69,19 +65,7 @@ typedef enum {
 
 // set some custom Weed values
 
-// custom leaf flags, may evolve
-#define LIVES_FLAG_MAINTAIN_VALUE	(1 << 16)
-#define LIVES_FLAG_FREE_ON_DELETE	(1 << 17)
-
-#define LIVES_FLAG_RDONLY_HOST		(LIVES_FLAG_MAINTAIN_VALUE | WEED_FLAG_IMMUTABLE)
-
-// NB. setting rdonly_host also sets rdonly_plugin; this makes checking less costly
-weed_error_t lives_leaf_set_rdonly(weed_plant_t *, const char *key,
-                                   boolean rdonly_host, boolean rdonly_plugin);
-
 boolean weed_leaf_autofree(weed_plant_t *plant, const char *key);
-
-weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean state);
 void  weed_plant_autofree(weed_plant_t *);
 
 // for copy and cleanup
@@ -162,13 +146,10 @@ int weed_filter_highest_version(const char *pkg, const char *fxname, const char 
 int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);
 
-#define IN_CHAN TRUE
-#define OUT_CHAN FALSE
+weed_channel_t *get_enabled_channel(weed_instance_t *, int which, int direction);  ///< for FILTER_INST
+weed_channel_t *get_enabled_audio_channel(weed_instance_t *, int which, int direction);  ///< for FILTER_INST
 
-weed_channel_t *get_enabled_channel(weed_instance_t *, int which, boolean is_in);  ///< for FILTER_INST
-weed_channel_t *get_enabled_audio_channel(weed_instance_t *, int which, boolean is_in);  ///< for FILTER_INST
-
-weed_chantmpl_t *get_mandatory_channel(weed_filter_t *, int which, boolean is_in);  ///< for FILTER_CLASS
+weed_chantmpl_t *get_mandatory_channel(weed_filter_t *, int which, int direction);  ///< for FILTER_CLASS
 
 boolean weed_chantmpl_is_disabled(weed_chantmpl_t *);
 

@@ -3984,7 +3984,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
     lives_tree_store_set(tstore, &iter1, KEY_COLUMN, keystr, NAME_COLUMN, keystr, KEYVAL_COLUMN, 0, MODEVAL_COLUMN, 0, -1);
 
     for (i = 0; get_omc_macro(i); i++) {
-      if (i != OSC_NOTIFY) continue; // TODO
+      if (i != LIVES_ACTION_OSC_NOTIFY) continue; // TODO
       text = get_omc_macro(i)->macro_text;
       lives_tree_store_append(tstore, &iter2, &iter1);
       lives_tree_store_set(tstore, &iter2, KEY_COLUMN, text, NAME_COLUMN, text,

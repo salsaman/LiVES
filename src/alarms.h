@@ -30,23 +30,16 @@ typedef struct {
   volatile ticks_t lastcheck;
 } lives_timeout_t;
 
-#if HAS_ATOMICS
-typedef volatile sig_atomic_t lives_sigatomic;
-#else
-typedef uint8_t lives_sigatomic;
-#endif
-
 typedef struct {
   // sys timers
   timer_t tid;
+  // initial value when set, only for info purposes
   uint64_t delay;
-
-#if HAS_ATOMICS
-  volatile sig_atomic_t triggered;
-#else
-  volatile int triggered;
-#endif
+  lives_sigatomic triggered;
 } lives_timer_t;
+
+#define N_APP_TIMERS 1024
+extern lives_timer_t app_timers[N_APP_TIMERS];
 
 // alarms -  deprecated
 #define lives_alarm_set(ticks) (lives_alarm_set_timeout((ticks) * 10) * 1000 + ALL_USED)
@@ -55,9 +48,14 @@ typedef struct {
 boolean lives_alarm_clear(int dummy);
 
 // alarms -  new style
+#define LIVES_ALARM_INVALID	-1
 #define LIVES_ALARM_DISARMED	0
 #define LIVES_ALARM_ARMED	1
 #define LIVES_ALARM_TRIGGERED	2
+
+void lives_alarms_init(void);
+
+// thread specific alarms
 
 lives_result_t lives_alarm_set_timeout(uint64_t nsec);
 void lives_alarm_wait(void);
@@ -66,9 +64,29 @@ void lives_alarm_disarm(void);
 
 #define lives_alarm_triggered() (lives_alarm_get_state() != LIVES_ALARM_ARMED)
 
+//shared (system) alarms
+
+typedef enum {
+      thread_alarm = -1,
+      sys_alarms_min = 0,
+      urgent_msg_timeout,
+      overlay_msg_timeout,
+      sys_alarms_max = N_APP_TIMERS,
+} alarm_name_t;
+
+lives_result_t lives_sys_alarm_set_timeout(alarm_name_t alaname, uint64_t nsec);
+void lives_sys_alarm_wait(alarm_name_t alaname);
+int lives_sys_alarm_get_state(alarm_name_t alaname);
+void lives_sys_alarm_disarm(alarm_name_t alaname);
+
+#define lives_sys_alarm_triggered(alaname)		\
+ (lives_sys_alarm_get_state(alaname) != LIVES_ALARM_ARMED)
+
+/////////// lowlevel functions /////
+
 typedef void (*lives_sigfunc_t)(int signum, siginfo_t *si, void *uc);
 
-#define LIVES_TIMER_SIG SIGRTMIN+8 // 42
+#define LIVES_TIMER_SIG SIGRTMIN+8 // 42...
 
 void timer_handler(int sig, siginfo_t *si, void *uc);
 

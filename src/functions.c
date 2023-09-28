@@ -209,16 +209,20 @@ LIVES_GLOBAL_INLINE void dump_fn_stack(LiVESList *fnstack) {
 
 static weed_plant_t *fn_looker = NULL;
 
+extern char *nirvascope_bundle_to_header(weed_plant_t *, const char *tname, int idx);
+
 void add_quick_fn(lives_funcptr_t func, const char *funcname) {
   char *key, *xfuncname;
+  //g_print("ADDDDING fn %s\n", funcname);
   if (sizeof(lives_funcptr_t) != sizeof(void *)) return;
-  key = lives_strdup_printf("func_%p", func);
+  key = lives_strdup_printf("function@%p", func);
   xfuncname = lives_strdup(funcname);
   if (!fn_looker) fn_looker = lives_plant_new(LIVES_PLANT_INDEX);
-  weed_set_voidptr_value(fn_looker, key, (void *)xfuncname);
+  weed_set_const_string_value(fn_looker, key, (void *)xfuncname);
   lives_free(key);
-#ifdef SHOW_KNOWN_FUNCSS
-  list_leaves(fn_looker);
+#ifdef SHOW_KNOWN_FUNCS
+  if (fn_looker)
+    g_print("%s", nirvascope_bundle_to_header(fn_looker, 0, 0));
 #endif
 }
 
@@ -227,7 +231,7 @@ const char *get_funcname(lives_funcptr_t func) {
   const char *fname;
   char *key;
   if (!fn_looker) return NULL;
-  key = lives_strdup_printf("func_%p", func);
+  key = lives_strdup_printf("function@%p", func);
   fname = weed_get_voidptr_value(fn_looker, key, NULL);
   lives_free(key);
   return fname;
@@ -237,33 +241,35 @@ const char *get_funcname(lives_funcptr_t func) {
 LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int cat,
                                      const char *rettype, const char *args_fmt,
                                      char *file_ref, int line_ref) {
-  THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack),
+  
+  /* g_printerr("Thread 0x%lx in func %s at %s, line %d\n", */
+  /*            THREADVAR(uid), funcname, file_ref, line_ref); */
+
+  lives_sync_list_add(THREADVAR(func_stack),
                           (void *)lives_strdup(funcname));
-  g_printerr("Thread 0x%lx in func %s at %s, line %d\n",
-             THREADVAR(uid), funcname, file_ref, line_ref);
+
   add_quick_fn(func, funcname);
   /* add_fn_lookup(func, funcname, cat, rettype, args_fmt, file_ref, line_ref); */
 }
 
 
 LIVES_GLOBAL_INLINE void _func_exit(char *file_ref, int line_ref) {
-  LiVESList *list = THREADVAR(func_stack);
-  g_print("Thread 0x%lx exiting func %s @ line %d, %s\n", THREADVAR(uid),
-          (char *)list->data, line_ref, file_ref);
-  THREADVAR(func_stack) = list->next;
-  if (list->next) list->next = list->next->prev = NULL;
-  lives_list_free_all(&list);
+  char *fname = (char *)lives_sync_list_pop(THREADVAR(func_stack));
+  lives_free(fname);
 }
 
 
-LIVES_GLOBAL_INLINE void _func_exit_val(weed_plant_t *pl, char *file_ref, int line_ref) {
-  LiVESList *list = THREADVAR(func_stack);
-  g_print("Thread 0x%lx exiting func %s @ line %d, %s\n", THREADVAR(uid),
-          (char *)list->data, line_ref, file_ref);
 
-  THREADVAR(func_stack) = list->next;
-  if (list->next) list->next = list->next->prev = NULL;
-  lives_list_free_all(&list);
+LIVES_GLOBAL_INLINE void _func_exit_val(weed_plant_t *pl, char *file_ref, int line_ref) {
+  char *fname = (char *)lives_sync_list_pop(THREADVAR(func_stack));
+  lives_free(fname);
+  /* LiVESList *list = THREADVAR(func_stack); */
+  /* g_print("Thread 0x%lx exiting func %s @ line %d, %s\n", THREADVAR(uid), */
+  /*         (char *)list->data, line_ref, file_ref); */
+
+  /* THREADVAR(func_stack) = list->next; */
+  /* if (list->next) list->next = list->next->prev = NULL; */
+  /* lives_list_free_all(&list); */
 }
 
 
@@ -597,7 +603,7 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt) {
   if (attrs & LIVES_THRDATTR_NOTE_TIMINGS)
     weed_set_int64_value(lpt, LIVES_LEAF_START_TICKS, lives_get_current_ticks());
 
-  if (lpt == mainw->debug_ptr) g_print("nrefss PPPmmmmm = %d\n", lives_proc_thread_count_refs(lpt));
+  if (lpt == mainw->debug_ptr) g_print("nrefs PPPmmmmm = %d\n", lives_proc_thread_count_refs(lpt));
 
   ret = do_call(lpt);
 

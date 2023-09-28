@@ -2690,11 +2690,11 @@ void create_LiVES(void) {
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_m, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(rtemode_callback), NULL,
-                                LIVES_INT_TO_POINTER(NEXT_MODE_CYCLE)));
+                                LIVES_INT_TO_POINTER(LIVES_ACTION_NEXT_MODE_CYCLE)));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_m, (LiVESXModifierType)LIVES_SHIFT_MASK,
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(rtemode_callback),
-                                LIVES_INT_TO_POINTER(PREV_MODE_CYCLE), NULL));
+                                LIVES_INT_TO_POINTER(LIVES_ACTION_PREV_MODE_CYCLE), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_x, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(swap_fg_bg_callback), NULL, NULL));

@@ -1726,7 +1726,9 @@ char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname, int idx) 
     tabs = "\t";
   }
   for (int i = 0; leaves[i]; i++) {
-    if (*leaves[i] == '.') {
+    int offs = 0;
+    if (*leaves[i] == '.') offs = 1;
+    if (1) {
       st = weed_leaf_seed_type(bundle, leaves[i]);
       ne = weed_leaf_num_elements(bundle, leaves[i]);
       tp = weed_seed_to_ctype(st, TRUE);
@@ -1765,6 +1767,11 @@ char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname, int idx) 
           val = lives_strdup_printf("\t (%p)", vs);
         }
         break;
+        case WEED_SEED_CONST_CHARPTR: {
+          const char *vs = weed_get_custom_value(bundle, leaves[i], st, NULL);
+          val = lives_strdup_printf("\t (%s)", vs);
+        }
+        break;
         case WEED_SEED_PLANTPTR: {
           weed_plant_t *vs = weed_get_plantptr_value(bundle, leaves[i], NULL);
           val = lives_strdup_printf("\t (%p)", vs);
@@ -1773,7 +1780,7 @@ char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname, int idx) 
         default: break;
         }
       }
-      xline = lives_strdup_printf("\n  %s%s%s%s;", tabs, tp, leaves[i] + 1,
+      xline = lives_strdup_printf("\n  %s%s%s%s;", tabs, tp, leaves[i] + offs,
                                   ar ? ar : "");
       line = lives_strdup_printf("%-40s%s", xline, val ? val : "");
       lives_free(xline);

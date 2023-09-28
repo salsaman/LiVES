@@ -550,7 +550,7 @@ char *remove_trailing_zeroes(double val) {
 }
 
 
-boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
+boolean lives_str_ends_with(const char *string, const char *fmt, ...) {
   char *textx;
   va_list xargs;
   size_t slen, cklen;

@@ -336,38 +336,33 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
 }
 
 
-int lives_rmdir(const char *dir, boolean force) {
+lives_result_t lives_rmdir(const char *dir, boolean force) {
   // if force is TRUE, removes non-empty dirs, otherwise leaves them
-  // may fail
-  if (!dir) return 1;
-  else {
-    size_t dirlen = lives_strlen(dir);
-    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
-    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
-        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
-      char *msg = lives_strdup_printf("Refusing to lives_rmdir the following directory: %s", dir);
-      LIVES_FATAL(msg);
-      lives_free(msg);
-    }
-    if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-      char *com, *cmd;
-      int retval;
-
-      if (force) {
-        cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
-      } else {
-        cmd = lives_strdup(capable->rmdir_cmd);
-      }
-
-      com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
-      retval = lives_system(com, TRUE);
-      lives_free(com);
-      lives_free(cmd);
-      return retval;
-    }
+  // returns LIVES_RESULT_SUCCESS or LIVES_RESULT_FAIL on error
+  char *com, *cmd;
+  int retval;
+  size_t dirlen;
+  if (!dir) return LIVES_RESULT_FAIL;
+  dirlen = lives_strlen(dir);
+  // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
+  if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
+      || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
+    char *msg = lives_strdup_printf("Refusing to lives_rmdir the following directory: %s", dir);
+    LIVES_FATAL(msg);
+    lives_free(msg);
   }
-  return 1;
-}
+  // try first with rmdir() then if that fails with ENOTEMPTY / EESXIST, and force, do rm -rf
+  retval = rmdir(dir);
+
+  if (!retval)  return LIVES_RESULT_SUCCESS;
+  if (!force || (errno != ENOTEMPTY && errno != EEXIST)) return LIVES_RESULT_FAIL;
+
+  cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
+  com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
+  retval = lives_system(com, TRUE);
+  lives_free(com); lives_free(cmd);
+  return retval ? LIVES_RESULT_FAIL : LIVES_RESULT_SUCCESS;
+ }
 
 
 int lives_rmdir_with_parents(const char *dir) {

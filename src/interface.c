@@ -895,7 +895,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 
+  widget_opts.non_modal = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
+  widget_opts.non_modal = FALSE;
   lives_widget_set_minimum_size(procw->processing, DEF_DIALOG_WIDTH * .75, DEF_DIALOG_HEIGHT >> 1);
 
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
@@ -4492,11 +4494,11 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
     boolean folhas = FALSE, fnahas = FALSE;
 
     if (extra_dir) {
-      if (lives_string_ends_with(dirname, "%s", extra_dir)) {
+      if (lives_str_ends_with(dirname, "%s", extra_dir)) {
         fnahas = TRUE;
         s1 -= lives_strlen(extra_dir) + 1;
       }
-      if (lives_string_ends_with(fold, "%s", extra_dir)) {
+      if (lives_str_ends_with(fold, "%s", extra_dir)) {
         folhas = TRUE;
         s2 -= lives_strlen(extra_dir) + 1;
       }
@@ -5595,7 +5597,7 @@ autolives_window *autolives_pre_dialog(void) {
 
   lives_free(tmp); lives_free(tmp2);
 
-  if (has_devicemap(OSC_NOTIFY)) {
+  if (has_devicemap(LIVES_ACTION_OSC_NOTIFY)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
 

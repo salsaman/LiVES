@@ -7,6 +7,12 @@
 #ifndef _FILESYSTEM_H_
 #define _FILESYSTEM_H_
 
+#ifdef IS_FREEBSD
+#define DU_BLOCKSIZE 1024
+#else
+#define DU_BLOCKSIZE 1
+#endif
+
 #define DEF_FILE_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) ///< non-executable, is modified by umask
 
 /// return filename (no dir, no .ext) (c.f get_filename for inplace version)
@@ -16,9 +22,16 @@ char *filename_from_fd(char *val, int fd);
 
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 
+// check if existitng directory is writeable, but do not create
 boolean is_writeable_dir(const char *dir);
-boolean check_dir_access(const char *dir, boolean leaveit);
+
+// check if dir is writeable, creating it if necessary
 boolean lives_make_writeable_dir(const char *newdir);
+
+// similar to is_writeable_dir, but the directory does not need to exist
+// will also return FALSE if dir is the name of an existing file
+boolean check_dir_access(const char *dir);
+
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
 
 boolean ensure_isdir(char *fname);
@@ -28,9 +41,15 @@ char *get_extension(const char *filename);
 char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
 
 void get_dirname(char *filename);
+void get_rel_dirname(char *filename, const char *topdir);
+
 char *get_dir(const char *filename);
+char *get_rel_dir(const char *filename, const char *topdir);
+
 void get_basename(char *filename);
 void get_filename(char *filename, boolean strip_dir);
+
+char *get_ancestor_dir(const char *pathname, boolean append_first);
 
 off_t get_file_size(int fd, boolean maybe_padded);
 off_t sget_file_size(const char *name);
@@ -173,6 +192,35 @@ boolean lives_buffered_rdonly_is_slurping(int fd);
 
 off_t lives_buffered_flush(int fd);
 
+// diskspace checks etc
+
+/// disk/storage status values
+typedef enum {
+  LIVES_STORAGE_STATUS_UNKNOWN = 0,
+  LIVES_STORAGE_STATUS_NORMAL,
+  LIVES_STORAGE_STATUS_WARNING,
+  LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OVERFLOW,
+  LIVES_STORAGE_STATUS_OVER_QUOTA,
+  LIVES_STORAGE_STATUS_OFFLINE
+} lives_storage_status_t;
+
+/// TODO - do we really need 3 different functions ?
+boolean check_storage_space(int clipno, boolean is_processing);
+boolean check_for_disk_space(boolean fullcheck);
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t resvd);
+
+char *lives_format_storage_space_string(uint64_t space);
+uint64_t get_ds_free(const char *dir);
+
+const char *get_shmdir(void);
+
+lives_proc_thread_t disk_monitor_start(const char *dir);
+boolean disk_monitor_running(const char *dir);
+int64_t disk_monitor_check_result(const char *dir);
+int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
+void disk_monitor_forget(void);
+
 //////////////////////////// prefs file caching ////
 
 LiVESList *cache_file_contents(const char *filename);
@@ -180,8 +228,5 @@ char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList *cache)
 void cached_list_free(LiVESList **list);
 
 void print_cache(LiVESList *cache);
-
-// OS filesystems ////
-boolean check_for_disk_space(boolean fullcheck);
 
 #endif

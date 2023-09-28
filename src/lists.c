@@ -64,14 +64,17 @@ LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t *synclist)
   return list;
 }
 
-LIVES_GLOBAL_INLINE LiVESList *lives_sync_list_pop(lives_sync_list_t *synclist) {
+LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t *synclist) {
   LiVESList *list = NULL;
+  void *data = NULL;
   if (synclist) {
     pthread_mutex_lock(&synclist->mutex);
     list = _lives_sync_list_pop(synclist);
+    data = list->data;
     pthread_mutex_unlock(&synclist->mutex);
   }
-  return list;
+  lives_list_free(list);
+  return data;
 }
 
 

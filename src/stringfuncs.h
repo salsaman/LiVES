@@ -44,7 +44,7 @@ char *lives_chomp(char *, boolean multi);
 char *lives_strtrim(const char *);
 
 boolean lives_str_starts_with(const char *st1, const char *st2);
-boolean lives_string_ends_with(const char *, const char *fmt, ...);
+boolean lives_str_ends_with(const char *, const char *fmt, ...);
 const char *lives_str_starts_with_skip(const char *st1, const char *st2);
 
 size_t get_token_count(const char *, int delim);

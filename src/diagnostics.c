@@ -18,27 +18,30 @@ static double inst_fps = 0.;
 void print_diagnostics(uint64_t types) {
   char *tmp;
   if (types & DIAG_APP_STATUS) {
-    int64_t nsc, onsc, xnsc;
+    int64_t nsc, onsc;
     if (what_sup_now() == sup_ready) g_print("Startup complete\n");
     else switch (what_sup_now()) {
       case nothing_sup: g_print("Early stage initt\n"); break;
-      case pre_init_sup: g_print("Stertup: pre_init\n"); break;
-      case init_sup: g_print("Stertup: pre_init\n"); break;
-      case startup_sup: g_print("Stertup: pre_init\n"); break;
-      case startup2_sup: g_print("Stertup: pre_init\n"); break;
+      case run_program_sup: g_print("Startup: First stage, run_the_program\n"); break;
+      case pre_init_sup: g_print("Startup: pre_init\n"); break;
+      case run_program2_sup: g_print("Startup: run_the_program part 2\n"); break;
+      case gtk_launch_sup: g_print("Startup: launch gtk_main\n"); break;
+      case startup_sup: g_print("Startup: lives_startup part A\n"); break;
+      case init_sup: g_print("Startup: pre_init\n"); break;
+      case startupB_sup: g_print("Startup: lives_startup part B\n"); break;
+      case startup2_sup: g_print("Startup: lives_startup2\n"); break;
       default: break;
       }
-    xnsc = nsc = lives_atomic64_load(&mainw->n_service_calls);
+    nsc = mainw->n_service_calls;
     g_print("Number of sevice calls: %lu\n", nsc);
     g_print("checking service call frequency:\n");
     onsc = nsc;
     lives_alarm_set_timeout(MILLIONS(100));
     while (!lives_alarm_triggered()) {
       nsc = mainw->n_service_calls;
-      g_print("valxxx %lu and %lu\n", nsc, onsc);
       if (nsc != onsc) g_print(".");
     }
-    g_print("%lu calls in 0.1 sec\n", nsc - xnsc);
+    g_print("%lu calls in 0.1 sec\n", nsc - onsc);
   }
   if (types & DIAG_MEMORY) {
     tmp = get_memstats();
@@ -875,7 +878,6 @@ void hash_test(void) {
 #endif
 
 
-
 #ifdef WEED_STARTUP_TESTS
 
 void benchmark(void) {
@@ -1010,7 +1012,7 @@ static void weed_concurrency_test(weed_plant_t *plant) {
     int x = fastrand_int(MAXLVS);
     char *key = lives_strdup_printf("%d%d", x * 917, x % 13);
     int act = fastrand_int(10);
-    //g_print("ACT is %d\n", act);
+    //g_print("ACTis %d\n", act);
     if (act < 2) werr = _weed_leaf_delete(plant, key);
     else if (act < 6) {
       weed_set_int_value(plant, key, x);
@@ -2015,6 +2017,7 @@ int run_weed_startup_tests(void) {
   return 0;
 }
 
+#ifdef WEED_STARTUP_TESTS
 
 #define SCALE_FACT 65793. /// (2 ^ 24 - 1) / (2 ^ 8 - 1)
 
@@ -2056,9 +2059,6 @@ int test_palette_conversions(void) {
   return 0;
 }
 
-#endif
-
-#ifdef WEED_STARTUP_TESTS
 
 #ifdef WEED_WIDGETS
 void show_widgets_info(void) {
@@ -2122,7 +2122,7 @@ void show_widgets_info(void) {
   }
 }
 #endif
-q
+
 #endif
 
 
@@ -2347,3 +2347,5 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
 }
 
 #pragma GCC diagnostic pop
+
+#endif

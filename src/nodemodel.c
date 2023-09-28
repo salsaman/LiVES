@@ -3638,7 +3638,7 @@ do {
         if (nxt->model_type == NODE_MODELS_FILTER) {
           weed_instance_t *inst = weed_instance_obtain(n->model_idx, rte_key_getmode(n->model_idx));
           if (inst) {
-            weed_channel_t *channel = get_enabled_channel(inst, out->iidx, IN_CHAN);
+            weed_channel_t *channel = get_enabled_channel(inst, out->iidx, LIVES_INPUT);
             weed_chantmpl_t *chantmpl = weed_channel_get_template(channel);
             if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl)))
               weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
@@ -4372,7 +4372,7 @@ if (opwidth && opheight) {
       if (is_converter) {
         /// resizing - use the value we set in channel template
         /// this allows us to, for example, resize the same in_channel to multiple out_channels at various sizes
-        weed_chantmpl_t *chantmpl = get_nth_chantmpl(n, no, NULL, OUT_CHAN);
+        weed_chantmpl_t *chantmpl = get_nth_chantmpl(n, no, NULL, LIVES_OUTPUT);
         int width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
         int height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
         out->width = width;
@@ -4514,7 +4514,7 @@ if (main_idx != -1 && main_idx != op_idx) {
   case NODE_MODELS_GENERATOR:
   case NODE_MODELS_FILTER: {
     weed_filter_t *filter = (weed_filter_t *)n->model_for;
-    weed_chantmpl_t *chantmpl = get_nth_chantmpl(n, op_idx, NULL, OUT_CHAN);
+    weed_chantmpl_t *chantmpl = get_nth_chantmpl(n, op_idx, NULL, LIVES_OUTPUT);
     int *pals, npals;
     boolean pvary = weed_filter_palettes_vary(filter);
     int sflags = weed_chantmpl_get_flags(chantmpl);
@@ -4525,7 +4525,7 @@ if (main_idx != -1 && main_idx != op_idx) {
     out->minheight = weed_get_int_value(chantmpl, WEED_LEAF_MINHEIGHT, NULL);
 
     if (sflags & WEED_CHANNEL_CAN_DO_INPLACE) {
-      weed_chantmpl_t *ichantmpl = get_nth_chantmpl(n, op_idx, NULL, IN_CHAN);
+      weed_chantmpl_t *ichantmpl = get_nth_chantmpl(n, op_idx, NULL, LIVES_INPUT);
       if (ichantmpl) {
         n->inputs[op_idx]->flags |= NODESRC_INPLACE;
       }
@@ -4572,14 +4572,14 @@ if (in->npals) npals = in->npals;
 switch (target->model_type) {
 case NODE_MODELS_FILTER: {
   weed_filter_t *filter = (weed_filter_t *)target->model_for;
-  weed_chantmpl_t *chantmpl = get_nth_chantmpl(target, ip_idx, NULL, IN_CHAN);
+  weed_chantmpl_t *chantmpl = get_nth_chantmpl(target, ip_idx, NULL, LIVES_INPUT);
   int sflags = weed_chantmpl_get_flags(chantmpl);
   boolean svary = weed_filter_channel_sizes_vary(filter);
   boolean pvary = weed_filter_palettes_vary(filter);
 
   weed_instance_t *inst = target->model_inst;
   if (inst) {
-    weed_channel_t *channel = get_enabled_channel(inst, ip_idx, IN_CHAN);
+    weed_channel_t *channel = get_enabled_channel(inst, ip_idx, LIVES_INPUT);
     if (channel) {
       in->cpal = weed_channel_get_palette(channel);
     }
@@ -7146,8 +7146,8 @@ if (!mainw->multitrack) {
         } else continue;
 
         // create an input / output for each non (permanently) disabled channel
-        nins = count_ctmpls(filter, NULL, IN_CHAN);
-        nouts = count_ctmpls(filter, NULL, OUT_CHAN);
+        nins = count_ctmpls(filter, NULL, LIVES_INPUT);
+        nouts = count_ctmpls(filter, NULL, LIVES_OUTPUT);
 
         if (LIVES_CE_PLAYBACK && nins > 1
             && (mainw->blend_file == -1 ||

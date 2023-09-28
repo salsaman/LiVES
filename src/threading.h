@@ -34,9 +34,9 @@ typedef pthread_attr_t native_attr_t;
 #define SIG_ACT_ERROR		2
 #define SIG_ACT_HOLD		3
 
-#define SIG_ACT_CHARM		8
-
-#define SIG_ACT_STATUS		9
+#define SIG_ACT_CMD		8
+#define SIG_ACT_REPORT		9
+#define SIG_ACT_CONTEXT		10
 
 #define LIVES_INTERRUPT_SIG SIGRTMIN+6 // 40
 
@@ -95,7 +95,7 @@ typedef struct {
 
   volatile int var_sync_idx;
 
-  // built in timer
+  // built in timer (per thread)
   lives_timer_t var_xtimer;
 
   // hooks
@@ -143,7 +143,7 @@ typedef struct {
   lives_sync_list_t *var_simple_cmd_list;
 
   // debugging
-  LiVESList *var_func_stack;
+  lives_sync_list_t *var_func_stack;
   ticks_t var_timerinfo, var_round_trip_ticks, var_ticks_to_activate;
   const char *var_fn_alloc_trace, *var_fn_free_trace;
   boolean var_fn_alloc_triggered, var_fn_free_triggered;
@@ -203,7 +203,7 @@ typedef struct {
 #define SIGDATA_STATE_ADDED	2
 #define SIGDATA_STATE_RUNNING	3
 #define SIGDATA_STATE_POSTPONED	4
-#define SIGDATA_STATE_FINISHED	5
+#define SIGDATA_STATE_FIISHED	5
 #define SIGDATA_STATE_DESTROYED 6
 
 // work flags
@@ -241,6 +241,7 @@ void lives_thread_free(lives_thread_t *thread);
 
 // thread functions
 lives_thread_data_t *get_thread_data_by_slot_idx(int32_t idx);
+lives_thread_data_t *get_thread_data_by_pthread(pthread_t pth);
 lives_thread_data_t *get_thread_data_by_uid(uint64_t uid);
 lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 int get_n_active_threads(void);
@@ -475,7 +476,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_FOLLOWER "lpt_follower"  // proc_thread to be run after this one (for AUTO_REQUEUE & AUTO_PAUSE)
 #define LIVES_LEAF_LPT_CCHAIN "lpt_cchain"  // active lpt for chained proc_threads
 #define LIVES_LEAF_PRIME_LPT "prime_lpt"  // prime lpt for chained followups
-#define LIVES_LEAF_LPT_DATA "lpt_data" // scratch data area for proc_threads
+#define LIVES_LEAF_LPT_BOOK "lpt_book" // scratch data area for proc_threads
 #define LIVES_LEAF_DISPATCHER "dispatcher" // proc_thread which queued the proc_thread
 
 #define LIVES_LEAF_ERRNUM "errnum"
@@ -671,69 +672,75 @@ boolean lives_proc_thread_remove_nullify(lives_proc_thread_t, void **ptr);
 // each lpt has a "data" area. Any type of data can be written here
 // and later recalled
 // live_proc-thread_steal_data will return the data area (plant) and set the dat ain lpt to NULL
-weed_error_t lives_proc_thread_set_data(lives_proc_thread_t, weed_plant_t *data);
-weed_plant_t *lives_proc_thread_get_data(lives_proc_thread_t);
-weed_plant_t *lives_proc_thread_ensure_data(lives_proc_thread_t);
-weed_plant_t *lives_proc_thread_share_data(lives_proc_thread_t dst,
+weed_error_t lives_proc_thread_set_book(lives_proc_thread_t, weed_plant_t *book);
+weed_plant_t *lives_proc_thread_get_book(lives_proc_thread_t);
+weed_plant_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
+weed_plant_t *lives_proc_thread_share_book(lives_proc_thread_t dst,
     lives_proc_thread_t src);
 
-void lives_proc_thread_make_static_data(lives_proc_thread_t lpt, const char *name);
+void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name);
+
+#define mk_data_name(name) "data_" #name
+
+#define DEF_SELF_VALUE(type, name) \
+    weed_leaf_set(lives_proc_thread_ensure_book(self), name, val)
+
 
 #define DEL_SELF_VALUE(name)weed_leaf_delete(lives_proc_thread_get_data(self),name)
 
 #define SET_SELF_VALUE(type, name, val)					\
-  weed_set_##type##_value(lives_proc_thread_ensure_data(self), name, val)
+  weed_set_##type##_value(lives_proc_thread_ensure_book(self), name, val)
 #define SET_SELF_ARRAY(type, name, nvals, valsptr)			\
-  weed_set_##type##_array(lives_proc_thread_ensure_data(self), name, nvals, valsptr)
+  weed_set_##type##_array(lives_proc_thread_ensure_book(self), name, nvals, valsptr)
 #define GET_SELF_VALUE(type, name)			\
   lives_proc_thread_get_##type##_value(self, name)
 #define GET_SELF_ARRAY(type, name, nvals)			\
   lives_proc_thread_get_##type##_array(self, name, nvals)
 
 #define SET_LPT_VALUE(lpt, type, name, val) do {			\
-    weed_set_##type##_value(lives_proc_thread_ensure_data(lpt), name, val); \
-    lives_proc_thread_make_static_data(lives_proc_thread_get_data(lpt), name);} while(0);
+    weed_set_##type##_value(lives_proc_thread_ensure_book(lpt), name, val); \
+    lives_proc_thread_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
 #define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr) do {		\
-    weed_set_##type##_array(lives_proc_thread_ensure_data(lpt), name, nvals, valsptr); \
-    lives_proc_thread_make_static_data(lives_proc_thread_get_data(lpt), name);} while(0);
+    weed_set_##type##_array(lives_proc_thread_ensure_book(lpt), name, nvals, valsptr); \
+    lives_proc_thread_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
 #define GET_LPT_VALUE(lpt, type, name)			\
   lives_proc_thread_get_##type##_value(lpt, name)
 #define GET_LPT_ARRAY(lpt, type, name, nvals)			\
   lives_proc_thread_get_##type##_array(lpt, name, nvals)
 
 #define lives_proc_thread_get_int_value(lpt, name)			\
-  (weed_get_int_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_int_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_boolean_value(lpt, name)			\
-  (weed_get_boolean_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_boolean_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_double_value(lpt, name)			\
-  (weed_get_double_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_double_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_string_value(lpt, name)			\
-  (weed_get_string_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_string_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_int64_value(lpt, name)			\
-  (weed_get_int64_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_int64_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_funcptr_value(lpt, name)			\
-  (weed_get_funcptr_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_funcptr_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_voidptr_value(lpt, name)			\
-  (weed_get_voidptr_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_voidptr_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_plantptr_value(lpt, name)			\
-  (weed_get_plantptr_value(lives_proc_thread_get_data(lpt), name, NULL))
+  (weed_get_plantptr_value(lives_proc_thread_get_book(lpt), name, NULL))
 
 #define lives_proc_thread_get_int_array(lpt, name, nvals)		\
-  (weed_get_int_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_int_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_boolean_array(lpt, name, nvals)		\
-  (weed_get_boolean_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_boolean_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_double_array(lpt, name, nvals)		\
-  (weed_get_double_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_double_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_string_array(lpt, name, nvals)		\
-  (weed_get_string_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_string_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_int64_array(lpt, name, nvals)		\
-  (weed_get_int64_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_int64_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_funcptr_array(lpt, name, nvals)		\
-  (weed_get_funcptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_funcptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_voidptr_array(lpt, name, nvals)		\
-  (weed_get_voidptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_voidptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_plantptr_array(lpt, name, nvals)		\
-  (weed_get_plantptr_array_counted(lives_proc_thread_get_data(lpt), name, nvals))
+  (weed_get_plantptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 
 lives_proc_thread_t lives_proc_thread_get_dispatcher(lives_proc_thread_t);
 

@@ -93,11 +93,6 @@
 #include <glib-unix.h>
 #endif
 
-#if !HAS_ATOMICS
-static pthread_mutex_t atomic_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t *atomic_lock = &atomic_mutex;
-#endif
-
 //#define WEED_STARTUP_TESTS
 ////////////////////////////////
 //// externs - 'global' variables
@@ -293,7 +288,7 @@ void defer_sigint(int signum, siginfo_t *si, void *uc) {
     lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
                    *errdets ? errdets : NULL);
 
-    LIVES_ERROR_NOBRK(errmsg);
+    fprintf(stderr, "%s", errmsg);
   }
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK

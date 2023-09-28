@@ -519,350 +519,6 @@ LIVES_GLOBAL_INLINE char *get_md5sum(const char *filename) {
 }
 
 
-const char *get_shmdir(void) {
-  if (!*capable->shmdir_path) {
-    char *xshmdir = NULL, *shmdir = lives_build_path(LIVES_RUN_DIR, NULL);
-    if (lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
-      xshmdir = lives_build_path(LIVES_RUN_DIR, LIVES_SHM_DIR, NULL);
-      if (!lives_file_test(xshmdir, LIVES_FILE_TEST_IS_DIR) || !is_writeable_dir(xshmdir)) {
-        lives_free(xshmdir);
-        if (!is_writeable_dir(shmdir)) {
-          lives_free(shmdir);
-          shmdir = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, NULL);
-          if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)  || !is_writeable_dir(shmdir)) {
-            lives_free(shmdir);
-            shmdir = lives_build_path(LIVES_TMP_DIR, NULL);
-            if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR) || !is_writeable_dir(shmdir)) {
-              lives_free(shmdir);
-              capable->writeable_shmdir = MISSING;
-              return NULL;
-	      // *INDENT-OFF*
-	    }}}}
-      // *INDENT-ON*
-      else {
-        lives_free(shmdir);
-        shmdir = xshmdir;
-      }
-    }
-    capable->writeable_shmdir = PRESENT;
-    xshmdir = lives_build_path(shmdir, LIVES_DEF_WORK_SUBDIR, NULL);
-    lives_free(shmdir);
-    lives_snprintf(capable->shmdir_path, PATH_MAX, "%s", xshmdir);
-    lives_free(xshmdir);
-  }
-  if (capable->writeable_shmdir) return capable->shmdir_path;
-  return NULL;
-}
-
-//// TODO: move a lot of this to filesystem.c //////////
-
-char *lives_format_storage_space_string(uint64_t space) {
-  char *fmt;
-
-  if (space >= lives_10pow(18)) {
-    // TRANSLATORS: Exabytes
-    fmt = lives_strdup_printf(_("%.2f EB"), (double)space / (double)lives_10pow(18));
-  } else if (space >= lives_10pow(15)) {
-    // TRANSLATORS: Petabytes
-    fmt = lives_strdup_printf(_("%.2f PB"), (double)space / (double)lives_10pow(15));
-  } else if (space >= lives_10pow(12)) {
-    // TRANSLATORS: Terabytes
-    fmt = lives_strdup_printf(_("%.2f TB"), (double)space / (double)lives_10pow(12));
-  } else if (space >= lives_10pow(9)) {
-    // TRANSLATORS: Gigabytes
-    fmt = lives_strdup_printf(_("%.2f GB"), (double)space / (double)lives_10pow(9));
-  } else if (space >= lives_10pow(6)) {
-    // TRANSLATORS: Megabytes
-    fmt = lives_strdup_printf(_("%.2f MB"), (double)space / (double)lives_10pow(6));
-  } else if (space >= 1024) {
-    // TRANSLATORS: Kilobytes (1024 bytes)
-    fmt = lives_strdup_printf(_("%.2f KiB"), (double)space / 1024.);
-  } else {
-    fmt = lives_strdup_printf(_("%d bytes"), space);
-  }
-
-  return fmt;
-}
-
-
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t ds_resvd) {
-  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
-  // call with dsval set to ds_used to check for OVER_QUOTA
-  // dsval is overwritten and set to ds_free
-  int64_t ds;
-  lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
-  if (dsval && prefs->disk_quota > 0 && *dsval > (int64_t)((double)prefs->disk_quota * prefs->quota_limit / 100.))
-    if (!dir || !*dir || file_is_ours(dir))
-      status = LIVES_STORAGE_STATUS_OVER_QUOTA;
-  if (!is_writeable_dir(dir)) return status;
-  ds = (int64_t)get_ds_free(dir);
-  ds -= ds_resvd;
-  if (dsval) *dsval = ds;
-  if (ds <= 0) return LIVES_STORAGE_STATUS_OVERFLOW;
-  if (ds < prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
-  if (status != LIVES_STORAGE_STATUS_UNKNOWN) return status;
-  if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
-  return LIVES_STORAGE_STATUS_NORMAL;
-}
-
-static int64_t result = -1;
-static volatile lives_proc_thread_t running = NULL;
-static char *running_for = NULL;
-static int dircheck_state = 0;
-lives_proc_thread_t ds_syncwith = NULL;
-
-static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
-  dircheck_state = 2;
-  if (ds_syncwith) {
-    lives_proc_thread_sync_with(ds_syncwith, 0, MM_IGNORE);
-    ds_syncwith = NULL;
-  }
-  return FALSE;
-}
-
-// disk monitor bg funcs
-// disk_monitor_start(dir) - (re)start a procthread to get the size ofr directory
-// disk_monitor_trunning(dir) - checks if running for dir
-// disk_monitor_check_result(dir) - returns available result, or -1 if still running
-//     (check mainw->ds_valid, may need rechecking)
-// disk_monitor_wait_result(dir, timeout_nsec) - if reult not avaible before timeout, forget
-// disk_monitor_forget - dont care, no int64_join needed
-
-boolean disk_monitor_running(const char *dir) {
-  return (dircheck_state == 1 && (!dir || !lives_strcmp(dir, running_for)));
-}
-
-
-lives_proc_thread_t disk_monitor_start(const char *dir) {
-  if (disk_monitor_running(dir)) disk_monitor_forget();
-  running = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                     get_dir_size, WEED_SEED_INT64, "s", dir);
-  lives_proc_thread_add_hook(running, COMPLETED_HOOK, 0, dirsize_done_cb, &result);
-
-  mainw->dsu_valid = TRUE;
-  if (running_for) lives_free(running_for);
-  running_for = lives_strdup(dir);
-  dircheck_state = 1;
-  lives_proc_thread_queue(running, 0);
-  return running;
-}
-
-
-int64_t disk_monitor_check_result(const char *dir) {
-  // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
-  int64_t bytes = -1;
-  //if (!disk_monitor_running(dir))
-
-  g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
-
-  //if (!dircheck_state) disk_monitor_start(dir);
-  if (!lives_strcmp(dir, running_for)) {
-    if (dircheck_state == 1) {
-      return -1;
-    }
-    if (dircheck_state == 2) {
-      lpt_desc_state(running);
-      g_print("wait for diskmon res %p\n", running);
-      bytes = result = lives_proc_thread_join_int64(running);
-      g_print("got for diskmon res\n");
-      lives_proc_thread_unref(running);
-      running = NULL;
-      dircheck_state = 3;
-    }
-    if (dircheck_state == 3) {
-      bytes = result;
-    }
-  } else bytes = (int64_t)get_dir_size(dir);
-  return bytes;
-}
-
-
-LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout) {
-  // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
-
-  if (*running_for && lives_strcmp(dir, running_for)) {
-    if (timeout) return -1;
-    return get_dir_size(dir);
-  }
-
-  g_print("DISKMON sync, state is %d\n", dircheck_state);
-
-  if (dircheck_state == 1) {
-    GET_PROC_THREAD_SELF(self);
-    if (timeout < 0) timeout = BILLIONS(30); // TODO
-    ds_syncwith = self;
-    if (dircheck_state == 1) {
-      if (lives_proc_thread_sync_with_timeout(running, 0, MM_IGNORE, timeout)
-          == LIVES_RESULT_FAIL) {
-        ds_syncwith = NULL;
-        disk_monitor_forget();
-        return -1;
-      }
-      g_print("synced with diskmn, will get result now\n");
-      ds_syncwith = NULL;
-    }
-  }
-  return disk_monitor_check_result(dir);
-}
-
-
-void disk_monitor_forget(void) {
-  if (!disk_monitor_running(NULL)) return;
-  g_print("DISKMON FORGET !!\n");
-  lives_proc_thread_request_cancel(running, TRUE);
-  running = NULL;
-  dircheck_state = 0;
-}
-
-
-uint64_t get_ds_free(const char *dir) {
-  // get free space in bytes for volume containing directory dir
-  // return 0 if we cannot create/write to dir
-
-  // caller should test with is_writeable_dir() first before calling this
-  // since 0 is a valid return value
-
-  // dir should be in locale encoding
-
-  // WARNING: this may temporarily create the directory (since we dont know if its parents are needed)
-
-  struct statvfs sbuf;
-
-  uint64_t bytes = 0;
-  boolean must_delete = FALSE;
-
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) must_delete = TRUE;
-  if (!is_writeable_dir(dir)) goto getfserr;
-
-  // use statvfs to get fs details
-  if (statvfs(dir, &sbuf) == -1) goto getfserr;
-  if (sbuf.f_flag & ST_RDONLY) goto getfserr;
-
-  // result is block size * blocks available
-  bytes = sbuf.f_bsize * sbuf.f_bavail;
-  if (!lives_strcmp(dir, prefs->workdir)) {
-    capable->ds_free = bytes;
-    capable->ds_tot = sbuf.f_bsize * sbuf.f_blocks;
-  }
-
-getfserr:
-  if (must_delete) lives_rmdir(dir, FALSE);
-
-  return bytes;
-}
-
-
-boolean check_storage_space(int clipno, boolean is_processing) {
-  // check storage space in prefs->workdir
-  lives_clip_t *sfile = NULL;
-
-  int64_t dsval = -1;
-
-  lives_storage_status_t ds;
-  int retval;
-  boolean did_pause = FALSE;
-
-  char *msg, *tmp;
-  char *pausstr = (_("Processing has been paused."));
-
-  sfile = RETURN_VALID_CLIP(clipno);
-
-  do {
-    if (mainw->dsu_valid && capable->ds_used > -1) {
-      dsval = capable->ds_used;
-    } else if (prefs->disk_quota) {
-      dsval = disk_monitor_check_result(prefs->workdir);
-      if (dsval >= 0) capable->ds_used = dsval;
-    }
-    ds = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
-    capable->ds_free = dsval;
-    if (ds == LIVES_STORAGE_STATUS_WARNING) {
-      uint64_t curr_ds_warn = mainw->next_ds_warn_level;
-      mainw->next_ds_warn_level >>= 1;
-      if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
-      if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
-          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
-        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-        did_pause = TRUE;
-      }
-
-      tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, dsval, curr_ds_warn, mainw->next_ds_warn_level);
-      if (!did_pause)
-        msg = lives_strdup_printf("\n%s\n", tmp);
-      else
-        msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
-      lives_free(tmp);
-      mainw->add_clear_ds_button = TRUE; // gets reset by do_warning_dialog()
-      if (!do_warning_dialog(msg)) {
-        lives_free(msg);
-        lives_free(pausstr);
-        mainw->cancelled = CANCEL_USER;
-        if (is_processing) {
-          if (sfile) sfile->nokeep = TRUE;
-          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
-        }
-        return FALSE;
-      }
-      lives_free(msg);
-    } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
-          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
-        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-        did_pause = TRUE;
-      }
-      tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
-      if (!did_pause)
-        msg = lives_strdup_printf("\n%s\n", tmp);
-      else {
-        char *xpausstr = lives_markup_escape_text(pausstr, -1);
-        msg = lives_strdup_printf("\n%s\n%s\n", tmp, xpausstr);
-        lives_free(xpausstr);
-      }
-      lives_free(tmp);
-      widget_opts.use_markup = TRUE;
-      retval = do_abort_retry_cancel_dialog(msg);
-      widget_opts.use_markup = FALSE;
-      lives_free(msg);
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        if (is_processing) {
-          if (sfile) sfile->nokeep = TRUE;
-          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
-        }
-        mainw->cancelled = CANCEL_ERROR;
-        lives_free(pausstr);
-        return FALSE;
-      }
-    }
-  } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
-
-  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA && !mainw->is_processing) {
-    run_diskspace_dialog(NULL);
-  }
-
-  if (did_pause && mainw->effects_paused) {
-    on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-  }
-
-  lives_free(pausstr);
-
-  return TRUE;
-}
-
-
-LIVES_GLOBAL_INLINE uint64_t get_blocksize(const char *dir) {
-  struct statvfs sbuf;
-
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return 0;
-
-  // use statvfs to get fs details
-  if (statvfs(dir, &sbuf) == -1) return 0;
-
-  // result is block size * blocks available
-  return sbuf.f_bsize;
-}
-
-
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   ticks_t ret = lives_get_current_ticks();
   return ret - origticks;
@@ -876,13 +532,14 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  ret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC;
+  uret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC;
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
   uret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS;
 #endif
   if ((int64_t)uret < 0) ret = (int64_t)((((uint64_t) -1) - uret) + 1);
+  else ret = uret;
   mainw->wall_ticks = ret;
   return ret;
 }
@@ -1157,27 +814,6 @@ char *get_fstype_for(const char *volx) {
     lives_free(vol);
   }
   return fstype;
-}
-
-
-#ifdef IS_FREEBSD
-#define DU_BLOCKSIZE 1024
-#else
-#define DU_BLOCKSIZE 1
-#endif
-
-off_t get_dir_size(const char *dirname) {
-  off_t dirsize = -1;
-  if (!dirname || !*dirname || !lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) return -1;
-  if (check_for_executable(&capable->has_du, EXEC_DU)) {
-    char buff[PATH_MAX * 2];
-    char *com = lives_strdup_printf("%s -sB %d \"%s\"", EXEC_DU, DU_BLOCKSIZE, dirname);
-    lives_popen(com, TRUE, buff, PATH_MAX * 2);
-    lives_free(com);
-    if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
-    else dirsize = atol(buff) / DU_BLOCKSIZE;
-  }
-  return dirsize;
 }
 
 
@@ -1898,12 +1534,12 @@ LiVESResponseType send_to_trash(const char *item) {
       trashfilesdir = lives_build_path(trashdir, "files", NULL);
       umask = capable->umask;
       capable->umask = 0700;
-      if (!check_dir_access(trashinfodir, TRUE)) {
+      if (!make_writeable_dir(trashinfodir)) {
 	retval = FALSE;
 	reason = lives_strdup_printf(_("Could not write to %s\n"), trashinfodir);
       }
       if (retval) {
-	if (!check_dir_access(trashfilesdir, TRUE)) {
+	if (!make_writeable_dir(trashfilesdir)) {
 	  retval = FALSE;
 	  reason = lives_strdup_printf(_("Could not write to %s\n"), trashfilesdir);
 	}
@@ -2719,7 +2355,7 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *pref
       return NULL;
   }
   if (is_dir) {
-    if (!check_dir_access(res, FALSE)) {
+    if (!is_writeable_dir(res)) {
       lives_free(res);
       return NULL;
     }
@@ -2727,9 +2363,10 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *pref
   return res;
 }
 
-LIVES_GLOBAL_INLINE char *get_systmp(const char *suff, boolean is_dir) {
-  return get_systmp_inner(suff, is_dir, NULL);
-}
+
+LIVES_GLOBAL_INLINE char *get_systmp(const char *suff, boolean is_dir)
+{return get_systmp_inner(suff, is_dir, NULL);}
+
 
 static char *_get_worktmp(const char *prefix, boolean is_dir) {
   char *dirname = NULL;

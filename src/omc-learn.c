@@ -112,7 +112,7 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 
     mnode = (lives_omc_match_node_t *)slist->data;
 
-    if (every || mnode->macro == UNMATCHED) {
+    if (every || mnode->macro == LIVES_ACTION_UNMATCHED) {
       if (slist_last) slist_last->next = slist->next;
       else omc_node_list = slist->next;
       omc_match_node_free(mnode);
@@ -1230,7 +1230,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   lives_table_attach(LIVES_TABLE(omclw->table), combo, 2, 3, omclw->tbl_currow, omclw->tbl_currow + 1,
                      (LiVESAttachOptions) 0, (LiVESAttachOptions)(0), 0, 0);
 
-  if (mnode->macro == UNMATCHED) lives_widget_set_sensitive(omclw->clear_button, TRUE);
+  if (mnode->macro == LIVES_ACTION_UNMATCHED) lives_widget_set_sensitive(omclw->clear_button, TRUE);
   lives_widget_set_sensitive(omclw->del_all_button, TRUE);
 }
 
@@ -1353,260 +1353,253 @@ static omclearn_w *create_omclearn_dialog(void) {
 static void init_omc_macros(void) {
   int i;
 
-  for (i = 0; i < N_OMC_MACROS; i++) {
-    omc_macros[i].macro_text = NULL;
-    omc_macros[i].info_text = NULL;
-    omc_macros[i].msg = NULL;
-    omc_macros[i].nparams = 0;
-    omc_macros[i].pname = NULL;
-  }
+  lives_memset(omc_macros, 0, N_OMC_MACROS * sizeof(lives_omc_macro_t));
 
-  omc_macros[START_PLAYBACK].msg = lives_strdup("/video/play");
-  omc_macros[START_PLAYBACK].macro_text = (_("Start video playback"));
+  omc_macros[LIVES_ACTION_START_PLAYBACK].msg = lives_strdup("/video/play");
+  omc_macros[LIVES_ACTION_START_PLAYBACK].macro_text = (_("Start video playback"));
 
-  omc_macros[STOP_PLAYBACK].msg = lives_strdup("/video/stop");
-  omc_macros[STOP_PLAYBACK].macro_text = (_("Stop video playback"));
+  omc_macros[LIVES_ACTION_STOP_PLAYBACK].msg = lives_strdup("/video/stop");
+  omc_macros[LIVES_ACTION_STOP_PLAYBACK].macro_text = (_("Stop video playback"));
 
-  omc_macros[CLIP_SELECT].msg = lives_strdup("/clip/foreground/select");
-  omc_macros[CLIP_SELECT].macro_text = (_("Clip select <clipnum>"));
-  omc_macros[CLIP_SELECT].info_text = (_("Switch foreground clip to the nth valid clip"));
-  omc_macros[CLIP_SELECT].nparams = 1;
+  omc_macros[LIVES_ACTION_CLIP_SELECT].msg = lives_strdup("/clip/foreground/select");
+  omc_macros[LIVES_ACTION_CLIP_SELECT].macro_text = (_("Clip select <clipnum>"));
+  omc_macros[LIVES_ACTION_CLIP_SELECT].info_text = (_("Switch foreground clip to the nth valid clip"));
+  omc_macros[LIVES_ACTION_CLIP_SELECT].nparams = 1;
 
-  omc_macros[PLAY_FORWARDS].msg = lives_strdup("/video/play/forwards");
-  omc_macros[PLAY_FORWARDS].macro_text = (_("Play forwards"));
-  omc_macros[PLAY_FORWARDS].info_text = (_("Play video in a forwards direction"));
+  omc_macros[LIVES_ACTION_PLAY_FORWARDS].msg = lives_strdup("/video/play/forwards");
+  omc_macros[LIVES_ACTION_PLAY_FORWARDS].macro_text = (_("Play forwards"));
+  omc_macros[LIVES_ACTION_PLAY_FORWARDS].info_text = (_("Play video in a forwards direction"));
 
-  omc_macros[PLAY_BACKWARDS].msg = lives_strdup("/video/play/backwards");
-  omc_macros[PLAY_BACKWARDS].macro_text = (_("Play backwards"));
-  omc_macros[PLAY_BACKWARDS].info_text = (_("Play video in a backwards direction"));
+  omc_macros[LIVES_ACTION_PLAY_BACKWARDS].msg = lives_strdup("/video/play/backwards");
+  omc_macros[LIVES_ACTION_PLAY_BACKWARDS].macro_text = (_("Play backwards"));
+  omc_macros[LIVES_ACTION_PLAY_BACKWARDS].info_text = (_("Play video in a backwards direction"));
 
-  omc_macros[REVERSE_PLAYBACK].msg = lives_strdup("/video/play/reverse");
-  omc_macros[REVERSE_PLAYBACK].macro_text = (_("Reverse playback direction"));
-  omc_macros[REVERSE_PLAYBACK].info_text = (_("Reverse direction of video playback"));
+  omc_macros[LIVES_ACTION_REVERSE_PLAYBACK].msg = lives_strdup("/video/play/reverse");
+  omc_macros[LIVES_ACTION_REVERSE_PLAYBACK].macro_text = (_("Reverse playback direction"));
+  omc_macros[LIVES_ACTION_REVERSE_PLAYBACK].info_text = (_("Reverse direction of video playback"));
 
-  omc_macros[PLAY_FASTER].msg = lives_strdup("/video/play/faster");
-  omc_macros[PLAY_FASTER].macro_text = (_("Play video faster"));
-  omc_macros[PLAY_FASTER].info_text = (_("Play video at a slightly faster rate"));
+  omc_macros[LIVES_ACTION_PLAY_FASTER].msg = lives_strdup("/video/play/faster");
+  omc_macros[LIVES_ACTION_PLAY_FASTER].macro_text = (_("Play video faster"));
+  omc_macros[LIVES_ACTION_PLAY_FASTER].info_text = (_("Play video at a slightly faster rate"));
 
-  omc_macros[PLAY_SLOWER].msg = lives_strdup("/video/play/slower");
-  omc_macros[PLAY_SLOWER].macro_text = (_("Play video slower"));
-  omc_macros[PLAY_SLOWER].info_text = (_("Play video at a slightly slower rate"));
+  omc_macros[LIVES_ACTION_PLAY_SLOWER].msg = lives_strdup("/video/play/slower");
+  omc_macros[LIVES_ACTION_PLAY_SLOWER].macro_text = (_("Play video slower"));
+  omc_macros[LIVES_ACTION_PLAY_SLOWER].info_text = (_("Play video at a slightly slower rate"));
 
-  omc_macros[TOGGLE_FREEZE].msg = lives_strdup("/video/freeze/toggle");
-  omc_macros[TOGGLE_FREEZE].macro_text = (_("Toggle video freeze"));
-  omc_macros[TOGGLE_FREEZE].info_text = (_("Freeze video, or if already frozen, unfreeze it"));
+  omc_macros[LIVES_ACTION_TOGGLE_FREEZE].msg = lives_strdup("/video/freeze/toggle");
+  omc_macros[LIVES_ACTION_TOGGLE_FREEZE].macro_text = (_("Toggle video freeze"));
+  omc_macros[LIVES_ACTION_TOGGLE_FREEZE].info_text = (_("Freeze video, or if already frozen, unfreeze it"));
 
-  omc_macros[SET_FRAMERATE].msg = lives_strdup("/video/fps/set");
-  omc_macros[SET_FRAMERATE].macro_text = (_("Set video framerate to <fps>"));
-  omc_macros[SET_FRAMERATE].info_text = (_("Set the framerate of foreground clip to <(float) fps>"));
-  omc_macros[SET_FRAMERATE].nparams = 1;
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].msg = lives_strdup("/video/fps/set");
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].macro_text = (_("Set video framerate to <fps>"));
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].info_text = (_("Set the framerate of foreground clip to <(float) fps>"));
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].nparams = 1;
 
-  omc_macros[START_RECORDING].msg = lives_strdup("/record/enable");
-  omc_macros[START_RECORDING].macro_text = (_("Start recording"));
+  omc_macros[LIVES_ACTION_START_RECORDING].msg = lives_strdup("/record/enable");
+  omc_macros[LIVES_ACTION_START_RECORDING].macro_text = (_("Start recording"));
 
-  omc_macros[STOP_RECORDING].msg = lives_strdup("/record/disable");
-  omc_macros[STOP_RECORDING].macro_text = (_("Stop recording"));
+  omc_macros[LIVES_ACTION_STOP_RECORDING].msg = lives_strdup("/record/disable");
+  omc_macros[LIVES_ACTION_STOP_RECORDING].macro_text = (_("Stop recording"));
 
-  omc_macros[TOGGLE_RECORDING].msg = lives_strdup("/record/toggle");
-  omc_macros[TOGGLE_RECORDING].macro_text = (_("Toggle recording state"));
+  omc_macros[LIVES_ACTION_TOGGLE_RECORDING].msg = lives_strdup("/record/toggle");
+  omc_macros[LIVES_ACTION_TOGGLE_RECORDING].macro_text = (_("Toggle recording state"));
 
-  omc_macros[SWAP_FOREGROUND_BACKGROUND].msg = lives_strdup("/clip/foreground/background/swap");
-  omc_macros[SWAP_FOREGROUND_BACKGROUND].macro_text = (_("Swap foreground and background clips"));
+  omc_macros[LIVES_ACTION_SWAP_FOREGROUND_BACKGROUND].msg = lives_strdup("/clip/foreground/background/swap");
+  omc_macros[LIVES_ACTION_SWAP_FOREGROUND_BACKGROUND].macro_text = (_("Swap foreground and background clips"));
 
-  omc_macros[RESET_EFFECT_KEYS].msg = lives_strdup("/effect_key/reset");
-  omc_macros[RESET_EFFECT_KEYS].macro_text = (_("Reset effect keys"));
-  omc_macros[RESET_EFFECT_KEYS].info_text = (_("Switch all effects off."));
+  omc_macros[LIVES_ACTION_RESET_EFFECT_KEYS].msg = lives_strdup("/effect_key/reset");
+  omc_macros[LIVES_ACTION_RESET_EFFECT_KEYS].macro_text = (_("Reset effect keys"));
+  omc_macros[LIVES_ACTION_RESET_EFFECT_KEYS].info_text = (_("Switch all effects off."));
 
-  omc_macros[ENABLE_EFFECT_KEY].msg = lives_strdup("/effect_key/enable");
-  omc_macros[ENABLE_EFFECT_KEY].macro_text = (_("Enable effect key <key>"));
-  omc_macros[ENABLE_EFFECT_KEY].nparams = 1;
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].msg = lives_strdup("/effect_key/enable");
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].macro_text = (_("Enable effect key <key>"));
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].nparams = 1;
 
-  omc_macros[DISABLE_EFFECT_KEY].msg = lives_strdup("/effect_key/disable");
-  omc_macros[DISABLE_EFFECT_KEY].macro_text = (_("Disable effect key <key>"));
-  omc_macros[DISABLE_EFFECT_KEY].nparams = 1;
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].msg = lives_strdup("/effect_key/disable");
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].macro_text = (_("Disable effect key <key>"));
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].nparams = 1;
 
-  omc_macros[TOGGLE_EFFECT_KEY].msg = lives_strdup("/effect_key/toggle");
-  omc_macros[TOGGLE_EFFECT_KEY].macro_text = (_("Toggle effect key <key>"));
-  omc_macros[TOGGLE_EFFECT_KEY].nparams = 1;
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].msg = lives_strdup("/effect_key/toggle");
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].macro_text = (_("Toggle effect key <key>"));
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].nparams = 1;
 
-  omc_macros[SET_PARAMETER_VALUE].msg = lives_strdup("/effect_key/nparameter/value/set");
-  omc_macros[SET_PARAMETER_VALUE].macro_text = (_("Set parameter value <key> <pnum> = <value>"));
-  omc_macros[SET_PARAMETER_VALUE].info_text = (_("Set <value> of pth (numerical) parameter for effect key <key>."));
-  omc_macros[SET_PARAMETER_VALUE].nparams = 3;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].msg = lives_strdup("/effect_key/nparameter/value/set");
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].macro_text = (_("Set parameter value <key> <pnum> = <value>"));
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].info_text = (_("Set <value> of pth (numerical) parameter for effect key <key>."));
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].nparams = 3;
 
-  omc_macros[NEXT_CLIP_SELECT].msg = lives_strdup("/clip/select/next");
-  omc_macros[NEXT_CLIP_SELECT].macro_text = (_("Switch foreground to next clip"));
+  omc_macros[LIVES_ACTION_NEXT_CLIP_SELECT].msg = lives_strdup("/clip/select/next");
+  omc_macros[LIVES_ACTION_NEXT_CLIP_SELECT].macro_text = (_("Switch foreground to next clip"));
 
-  omc_macros[PREV_CLIP_SELECT].msg = lives_strdup("/clip/select/previous");
-  omc_macros[PREV_CLIP_SELECT].macro_text = (_("Switch foreground to previous clip"));
+  omc_macros[LIVES_ACTION_PREV_CLIP_SELECT].msg = lives_strdup("/clip/select/previous");
+  omc_macros[LIVES_ACTION_PREV_CLIP_SELECT].macro_text = (_("Switch foreground to previous clip"));
 
-  omc_macros[SET_FPS_RATIO].msg = lives_strdup("/video/fps/ratio/set");
-  omc_macros[SET_FPS_RATIO].macro_text = (_("Set video framerate to ratio <fps__ratio>"));
-  omc_macros[SET_FPS_RATIO].info_text = (_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
-  omc_macros[SET_FPS_RATIO].nparams = 1;
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].msg = lives_strdup("/video/fps/ratio/set");
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].macro_text = (_("Set video framerate to ratio <fps__ratio>"));
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].info_text = (_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].nparams = 1;
 
-  omc_macros[RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");
-  omc_macros[RETRIGGER_CLIP].macro_text = (_("Retrigger clip <clipnum>"));
-  omc_macros[RETRIGGER_CLIP].info_text = lives_strdup(
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].macro_text = (_("Retrigger clip <clipnum>"));
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].info_text = lives_strdup(
       _("Switch foreground clip to the nth valid clip, and reset the frame number"));
-  omc_macros[RETRIGGER_CLIP].nparams = 1;
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].nparams = 1;
 
-  omc_macros[NEXT_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/next");
-  omc_macros[NEXT_MODE_CYCLE].macro_text = (_("Cycle to next mode for effect key <key>"));
-  omc_macros[NEXT_MODE_CYCLE].nparams = 1;
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/next");
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].macro_text = (_("Cycle to next mode for effect key <key>"));
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].nparams = 1;
 
-  omc_macros[PREV_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/previous");
-  omc_macros[PREV_MODE_CYCLE].macro_text = (_("Cycle to previous mode for effect key <key>"));
-  omc_macros[PREV_MODE_CYCLE].nparams = 1;
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/previous");
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].macro_text = (_("Cycle to previous mode for effect key <key>"));
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].nparams = 1;
 
-  omc_macros[SET_VPP_PARAMETER_VALUE].msg = lives_strdup("/video/play/parameter/value/set");
-  omc_macros[SET_VPP_PARAMETER_VALUE].macro_text = (_("Set playback plugin parameter value <pnum> = <value>"));
-  omc_macros[SET_VPP_PARAMETER_VALUE].info_text = (_("Set <value> of pth parameter for the playback plugin."));
-  omc_macros[SET_VPP_PARAMETER_VALUE].nparams = 2;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].msg = lives_strdup("/video/play/parameter/value/set");
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].macro_text = (_("Set playback plugin parameter value <pnum> = <value>"));
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].info_text = (_("Set <value> of pth parameter for the playback plugin."));
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].nparams = 2;
 
-  omc_macros[OSC_NOTIFY].msg = lives_strdup("internal"); // handled internally
-  omc_macros[OSC_NOTIFY].macro_text = (_("Send OSC notification message"));
-  omc_macros[OSC_NOTIFY].info_text = lives_strdup(
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].msg = lives_strdup("internal"); // handled internally
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].macro_text = (_("Send OSC notification message"));
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].info_text = lives_strdup(
                                        _("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
-  omc_macros[OSC_NOTIFY].nparams = 2;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].nparams = 2;
 
   for (i = 0; i < N_OMC_MACROS; i++) {
     if (omc_macros[i].msg) {
       if (omc_macros[i].nparams > 0) {
-        omc_macros[i].ptypes = (int *)lives_malloc(omc_macros[i].nparams * sizint);
-        omc_macros[i].mini = (int *)lives_malloc(omc_macros[i].nparams * sizint);
-        omc_macros[i].maxi = (int *)lives_malloc(omc_macros[i].nparams * sizint);
-        omc_macros[i].vali = (int *)lives_malloc(omc_macros[i].nparams * sizint);
+        omc_macros[i].ptypes = (int *)lives_calloc(omc_macros[i].nparams, sizint);
+        omc_macros[i].mini = (int *)lives_calloc(omc_macros[i].nparams, sizint);
+        omc_macros[i].maxi = (int *)lives_calloc(omc_macros[i].nparams, sizint);
+        omc_macros[i].vali = (int *)lives_calloc(omc_macros[i].nparams, sizint);
 
-        omc_macros[i].mind = (double *)lives_malloc(omc_macros[i].nparams * sizdbl);
-        omc_macros[i].maxd = (double *)lives_malloc(omc_macros[i].nparams * sizdbl);
-        omc_macros[i].vald = (double *)lives_malloc(omc_macros[i].nparams * sizdbl);
-        omc_macros[i].pname = (char **)lives_malloc(omc_macros[i].nparams * sizeof(char *));
-
+        omc_macros[i].mind = (double *)lives_calloc(omc_macros[i].nparams, sizdbl);
+        omc_macros[i].maxd = (double *)lives_calloc(omc_macros[i].nparams, sizdbl);
+        omc_macros[i].vald = (double *)lives_calloc(omc_macros[i].nparams, sizdbl);
+        omc_macros[i].pname = (char **)lives_calloc(omc_macros[i].nparams, sizeof(char *));
       }
     }
   }
 
   // clip select
-  omc_macros[CLIP_SELECT].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[CLIP_SELECT].mini[0] = omc_macros[CLIP_SELECT].vali[0] = 1;
-  omc_macros[CLIP_SELECT].maxi[0] = MAX_FILES;
+  omc_macros[LIVES_ACTION_CLIP_SELECT].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_CLIP_SELECT].mini[0] = omc_macros[LIVES_ACTION_CLIP_SELECT].vali[0] = 1;
+  omc_macros[LIVES_ACTION_CLIP_SELECT].maxi[0] = MAX_FILES;
   // TRANSLATORS: short form of "clip number"
-  omc_macros[CLIP_SELECT].pname[0] = (_("clipnum"));
+  omc_macros[LIVES_ACTION_CLIP_SELECT].pname[0] = (_("clipnum"));
 
   // set fps (will be handled to avoid 0.)
-  omc_macros[SET_FRAMERATE].ptypes[0] = OMC_PARAM_DOUBLE;
-  omc_macros[SET_FRAMERATE].mind[0] = -FPS_MAX;
-  omc_macros[SET_FRAMERATE].vald[0] = prefs->default_fps;
-  omc_macros[SET_FRAMERATE].maxd[0] = FPS_MAX;
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].ptypes[0] = OMC_PARAM_DOUBLE;
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].mind[0] = -FPS_MAX;
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].vald[0] = prefs->default_fps;
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].maxd[0] = FPS_MAX;
   // TRANSLATORS: short form of "frames per second"
-  omc_macros[SET_FRAMERATE].pname[0] = (_("fps"));
+  omc_macros[LIVES_ACTION_SET_FRAMERATE].pname[0] = (_("fps"));
 
   // effect_key enable,disable, toggle
-  omc_macros[ENABLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[ENABLE_EFFECT_KEY].mini[0] = 1;
-  omc_macros[ENABLE_EFFECT_KEY].vali[0] = 1;
-  omc_macros[ENABLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].mini[0] = 1;
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].vali[0] = 1;
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[ENABLE_EFFECT_KEY].pname[0] = (_("key"));
+  omc_macros[LIVES_ACTION_ENABLE_EFFECT_KEY].pname[0] = (_("key"));
 
-  omc_macros[DISABLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[DISABLE_EFFECT_KEY].mini[0] = 1;
-  omc_macros[DISABLE_EFFECT_KEY].vali[0] = 1;
-  omc_macros[DISABLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].mini[0] = 1;
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].vali[0] = 1;
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[DISABLE_EFFECT_KEY].pname[0] = (_("key"));
+  omc_macros[LIVES_ACTION_DISABLE_EFFECT_KEY].pname[0] = (_("key"));
 
-  omc_macros[TOGGLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[TOGGLE_EFFECT_KEY].mini[0] = 1;
-  omc_macros[TOGGLE_EFFECT_KEY].vali[0] = 1;
-  omc_macros[TOGGLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].mini[0] = 1;
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].vali[0] = 1;
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[TOGGLE_EFFECT_KEY].pname[0] = (_("key"));
+  omc_macros[LIVES_ACTION_TOGGLE_EFFECT_KEY].pname[0] = (_("key"));
 
   // key
-  omc_macros[SET_PARAMETER_VALUE].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[SET_PARAMETER_VALUE].mini[0] = 1;
-  omc_macros[SET_PARAMETER_VALUE].vali[0] = 1;
-  omc_macros[SET_PARAMETER_VALUE].maxi[0] = prefs->rte_keys_virtual;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].mini[0] = 1;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].vali[0] = 1;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[SET_PARAMETER_VALUE].pname[0] = (_("key"));
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].pname[0] = (_("key"));
 
   // param (this will be matched with numeric params)
-  omc_macros[SET_PARAMETER_VALUE].ptypes[1] = OMC_PARAM_INT;
-  omc_macros[SET_PARAMETER_VALUE].mini[1] = 0;
-  omc_macros[SET_PARAMETER_VALUE].maxi[1] = 65536;
-  omc_macros[SET_PARAMETER_VALUE].vali[1] = 0;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].ptypes[1] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].mini[1] = 0;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].maxi[1] = 65536;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].vali[1] = 0;
   // TRANSLATORS: short form of "parameter number"
-  omc_macros[SET_PARAMETER_VALUE].pname[1] = (_("pnum"));
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].pname[1] = (_("pnum"));
 
   // value (this will get special handling)
   // type conversion and auto offset/scaling will be done
-  omc_macros[SET_PARAMETER_VALUE].ptypes[2] = OMC_PARAM_SPECIAL;
-  omc_macros[SET_PARAMETER_VALUE].mind[2] = 0.;
-  omc_macros[SET_PARAMETER_VALUE].maxd[2] = 0.;
-  omc_macros[SET_PARAMETER_VALUE].vald[2] = 0.;
-  omc_macros[SET_PARAMETER_VALUE].pname[2] = (_("value"));
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].ptypes[2] = OMC_PARAM_SPECIAL;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].mind[2] = 0.;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].maxd[2] = 0.;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].vald[2] = 0.;
+  omc_macros[LIVES_ACTION_SET_PARAMETER_VALUE].pname[2] = (_("value"));
 
   // set ratio fps (will be handled to avoid 0.)
-  omc_macros[SET_FPS_RATIO].ptypes[0] = OMC_PARAM_DOUBLE;
-  omc_macros[SET_FPS_RATIO].mind[0] = -10.;
-  omc_macros[SET_FPS_RATIO].vald[0] = 1.;
-  omc_macros[SET_FPS_RATIO].maxd[0] = 10.;
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].ptypes[0] = OMC_PARAM_DOUBLE;
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].mind[0] = -10.;
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].vald[0] = 1.;
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].maxd[0] = 10.;
   // TRANSLATORS: short form of "frames per second"
-  omc_macros[SET_FPS_RATIO].pname[0] = (_("fps__ratio"));
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].pname[0] = (_("fps__ratio"));
 
   // clip retrigger
-  omc_macros[RETRIGGER_CLIP].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[RETRIGGER_CLIP].mini[0] = omc_macros[RETRIGGER_CLIP].vali[0] = 1;
-  omc_macros[RETRIGGER_CLIP].maxi[0] = MAX_FILES;
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].mini[0] = omc_macros[LIVES_ACTION_RETRIGGER_CLIP].vali[0] = 1;
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].maxi[0] = MAX_FILES;
   // TRANSLATORS: short form of "clip number"
-  omc_macros[RETRIGGER_CLIP].pname[0] = (_("clipnum"));
+  omc_macros[LIVES_ACTION_RETRIGGER_CLIP].pname[0] = (_("clipnum"));
 
   // key
-  omc_macros[NEXT_MODE_CYCLE].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[NEXT_MODE_CYCLE].mini[0] = 1;
-  omc_macros[NEXT_MODE_CYCLE].vali[0] = 1;
-  omc_macros[NEXT_MODE_CYCLE].maxi[0] = prefs->rte_keys_virtual;
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].mini[0] = 1;
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].vali[0] = 1;
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[NEXT_MODE_CYCLE].pname[0] = (_("key"));
+  omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].pname[0] = (_("key"));
 
   // key
-  omc_macros[PREV_MODE_CYCLE].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[PREV_MODE_CYCLE].mini[0] = 1;
-  omc_macros[PREV_MODE_CYCLE].vali[0] = 1;
-  omc_macros[PREV_MODE_CYCLE].maxi[0] = prefs->rte_keys_virtual;
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].mini[0] = 1;
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].vali[0] = 1;
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[PREV_MODE_CYCLE].pname[0] = (_("key"));
+  omc_macros[LIVES_ACTION_PREV_MODE_CYCLE].pname[0] = (_("key"));
 
   // param
-  omc_macros[SET_VPP_PARAMETER_VALUE].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[SET_VPP_PARAMETER_VALUE].mini[0] = 0;
-  omc_macros[SET_VPP_PARAMETER_VALUE].maxi[0] = 128;
-  omc_macros[SET_VPP_PARAMETER_VALUE].vali[0] = 0;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].mini[0] = 0;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].maxi[0] = 128;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].vali[0] = 0;
   // TRANSLATORS: short form of "parameter number"
-  omc_macros[SET_VPP_PARAMETER_VALUE].pname[0] = (_("pnum"));
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].pname[0] = (_("pnum"));
 
   // value (this will get special handling)
   // type conversion and auto offset/scaling will be done
-  omc_macros[SET_VPP_PARAMETER_VALUE].ptypes[1] = OMC_PARAM_SPECIAL;
-  omc_macros[SET_VPP_PARAMETER_VALUE].mind[1] = 0.;
-  omc_macros[SET_VPP_PARAMETER_VALUE].maxd[1] = 0.;
-  omc_macros[SET_VPP_PARAMETER_VALUE].vald[1] = 0.;
-  omc_macros[SET_VPP_PARAMETER_VALUE].pname[1] = (_("value"));
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].ptypes[1] = OMC_PARAM_SPECIAL;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].mind[1] = 0.;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].maxd[1] = 0.;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].vald[1] = 0.;
+  omc_macros[LIVES_ACTION_SET_VPP_PARAMETER_VALUE].pname[1] = (_("value"));
 
   // variables for LIVES_OSC_NOTIFY_USER1
-  omc_macros[OSC_NOTIFY].ptypes[0] = OMC_PARAM_INT;
-  omc_macros[OSC_NOTIFY].mini[0] = 0;
-  omc_macros[OSC_NOTIFY].vali[0] = 0;
-  omc_macros[OSC_NOTIFY].maxi[0] = 100000;
-  omc_macros[OSC_NOTIFY].pname[0] = (_("discrimination"));
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].mini[0] = 0;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].vali[0] = 0;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].maxi[0] = 100000;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].pname[0] = (_("discrimination"));
 
-  omc_macros[OSC_NOTIFY].ptypes[1] = OMC_PARAM_DOUBLE;
-  omc_macros[OSC_NOTIFY].mini[1] = -1000000.;
-  omc_macros[OSC_NOTIFY].vali[1] = 0.;
-  omc_macros[OSC_NOTIFY].maxi[1] = 1000000.;
-  omc_macros[OSC_NOTIFY].pname[1] = (_("data"));
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].ptypes[1] = OMC_PARAM_DOUBLE;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].mini[1] = -1000000.;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].vali[1] = 0.;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].maxi[1] = 1000000.;
+  omc_macros[LIVES_ACTION_OSC_NOTIFY].pname[1] = (_("data"));
 }
 
 
@@ -1851,7 +1844,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     mnode = omc_match_sig(OMC_MIDI, idx, string);
     //g_print("autoscale !\n");
 
-    if (!mnode || mnode->macro == UNMATCHED) {
+    if (!mnode || mnode->macro == LIVES_ACTION_UNMATCHED) {
       mnode = lives_omc_match_node_new(OMC_MIDI, idx, string, nfixed);
       mnode->max[0] = 127;
       mnode->min[0] = 0;
@@ -1866,7 +1859,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     mnode = omc_match_sig(OMC_MIDI, idx, string);
     //g_print("autoscale !\n");
 
-    if (!mnode || mnode->macro == UNMATCHED) {
+    if (!mnode || mnode->macro == LIVES_ACTION_UNMATCHED) {
       mnode = lives_omc_match_node_new(OMC_MIDI, idx, string, nfixed);
       mnode->max[0] = 127;
       mnode->min[0] = 0;
@@ -1882,7 +1875,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     mnode = omc_match_sig(OMC_MIDI, idx, string);
     //g_print("autoscale !\n");
 
-    if (!mnode || mnode->macro == UNMATCHED) {
+    if (!mnode || mnode->macro == LIVES_ACTION_UNMATCHED) {
       mnode = lives_omc_match_node_new(OMC_MIDI, idx, string, nfixed);
       mnode->max[0] = 8192;
       mnode->min[0] = -8192;
@@ -1895,7 +1888,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     // display note and allow it to be matched
     mnode = omc_match_sig(OMC_MIDI, idx, string);
 
-    if (!mnode || mnode->macro == UNMATCHED) {
+    if (!mnode || mnode->macro == LIVES_ACTION_UNMATCHED) {
       mnode = lives_omc_match_node_new(OMC_MIDI, idx, string, nfixed);
 
       mnode->max[0] = 127;
@@ -1915,7 +1908,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 
     mnode = omc_match_sig(str_type, idx, string);
 
-    if (!mnode || mnode->macro == UNMATCHED) {
+    if (!mnode || mnode->macro == LIVES_ACTION_UNMATCHED) {
       mnode = lives_omc_match_node_new(str_type, idx, string, nfixed);
 
       mnode->min[0] = -128;
@@ -1929,7 +1922,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     // display note and allow it to be matched
     mnode = omc_match_sig(str_type, idx, string);
 
-    if (!mnode || mnode->macro == UNMATCHED) {
+    if (!mnode || mnode->macro == LIVES_ACTION_UNMATCHED) {
       mnode = lives_omc_match_node_new(str_type, idx, string, nfixed);
       omclearn_match_control(mnode, str_type, idx, string, nfixed, omclw);
       return mnode;
@@ -2203,7 +2196,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
     macro = mnode->macro;
 
-    if (macro == UNMATCHED) return NULL;
+    if (macro == LIVES_ACTION_UNMATCHED) return NULL;
   }
 
   omacro = omc_macros[macro];
@@ -2214,7 +2207,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
   OSC_resetBuffer(&obuf);
 
-  if (macro != OSC_NOTIFY) {
+  if (macro != LIVES_ACTION_OSC_NOTIFY) {
     lives_snprintf(typetags, OSC_MAX_TYPETAGS, ",");
 
     // TODO ***: OMC_INTERNAL...we want to set param number token[2] with value token[3]
@@ -2238,7 +2231,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
       if (type != OMC_INTERNAL) j = mnode->map[i];
       else j = -1; // TODO *****, get from token[2]
       if (j > -1) {
-        if (macro == SET_VPP_PARAMETER_VALUE && i == 1 && mainw->vpp && mainw->vpp->play_params &&
+        if (macro == LIVES_ACTION_SET_VPP_PARAMETER_VALUE && i == 1 && mainw->vpp && mainw->vpp->play_params &&
             oval0 < mainw->vpp->num_play_params) {
           // auto scale for playback plugin params
 
@@ -2265,7 +2258,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
             } // end float
           }
         } else {
-          if (macro == SET_PARAMETER_VALUE && i == 2) {
+          if (macro == LIVES_ACTION_SET_PARAMETER_VALUE && i == 2) {
             // auto scale for fx param
             int mode = rte_key_getmode(oval0);
             weed_plant_t *filter;
@@ -2313,20 +2306,20 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               else oval = 0; // TODO ****
               if (i == 0) oval0 = (int)oval;
               if (i == 1) oval1 = (int)oval;
-              if (macro != OSC_NOTIFY) {
+              if (macro == LIVES_ACTION_OSC_NOTIFY) {
                 OSC_writeIntArg(&obuf, oval);
               }
             } else {
               double oval;
               if (type != OMC_INTERNAL) oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
               else oval = 0.; //
-              if (macro != OSC_NOTIFY)  OSC_writeFloatArg(&obuf, oval);
+              if (macro == LIVES_ACTION_OSC_NOTIFY)  OSC_writeFloatArg(&obuf, oval);
             }
           }
         }
       } else {                      // use default vals
         if (omacro.ptypes[i] == OMC_PARAM_INT) {
-          if (macro != OSC_NOTIFY) OSC_writeIntArg(&obuf, mnode->fvali[i]);
+          if (macro == LIVES_ACTION_OSC_NOTIFY) OSC_writeIntArg(&obuf, mnode->fvali[i]);
           if (type != OMC_INTERNAL) {
             if (i == 0) oval0 = mnode->fvali[i];
             if (i == 1) oval1 = mnode->fvali[i];
@@ -2340,14 +2333,14 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
           } else {
             oval = omacro.vald[i];
           }
-          if (macro != OSC_NOTIFY) OSC_writeFloatArg(&obuf, (float)oval);
+          if (macro == LIVES_ACTION_OSC_NOTIFY) OSC_writeFloatArg(&obuf, (float)oval);
         }
       }
     }
     if (vals) lives_free(vals);
   }
 
-  if (macro == OSC_NOTIFY) {
+  if (macro == LIVES_ACTION_OSC_NOTIFY) {
     char *tmp; // send OSC notificion USER1
     if (prefs->show_dev_opts)
       g_print("sending noti\n");

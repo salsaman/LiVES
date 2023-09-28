@@ -178,7 +178,7 @@ boolean check_for_plugins(const char *dirn, boolean check_only) {
     ret = miss_plugdirs_warn(pldirn, subdir_list);
     lives_list_free_all(&subdir_list);
     if (ret) {
-      if (!lives_string_ends_with(ret, "%s", LIVES_DIR_SEP PLUGIN_EXEC_DIR)) {
+      if (!lives_str_ends_with(ret, "%s", LIVES_DIR_SEP PLUGIN_EXEC_DIR)) {
         do_error_dialogf(_("Path name must end with %s. Please try again or rename the directory"), PLUGIN_EXEC_DIR);
       } else {
         if (new_libdir) lives_free(new_libdir);
@@ -2844,7 +2844,7 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  g_print("GOT %p and %p and %p %lu\n", dplug, dplug ? dplug->dpsys : 0, dplug && dplug->dpsys ? dplug->dpsys->id : 0, dplug &&
+  g_print("\n\n\nGOT %p and %p and %p %lu\n", dplug, dplug ? dplug->dpsys : 0, dplug && dplug->dpsys ? dplug->dpsys->id : 0, dplug &&
           dplug->dpsys && dplug->dpsys->id ? dplug->dpsys->id->uid : 0);
 
   if (dplug && dplug->dpsys && dplug->dpsys->id) {

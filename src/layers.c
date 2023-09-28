@@ -318,7 +318,9 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_layer_get_copylist(lives_layer_t *l
 //
 LIVES_LOCAL_INLINE boolean _lives_copylist_remove(lives_sync_list_t *copylist, lives_layer_t *layer) {
   pthread_mutex_t *copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(layer, "copylist_mutex", NULL);
-  LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
+  LiVESPixbuf *pixbuf;
+
+  pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
 
   weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
   copylist = _lives_sync_list_remove(copylist, layer, FALSE);
@@ -351,16 +353,12 @@ LIVES_LOCAL_INLINE boolean _lives_copylist_remove(lives_sync_list_t *copylist, l
     // (we need to differentiate because when creating pixbuf from layer, pixel data coul be a bigblock, etc)
     // pixbuf -> layer normal pixbuf pixels
 
-
     g_print("UNREFPB %p\n", pixbuf);
     // cut pixbuf free, if there are other refs it becomes a normal pixbuf
     weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, NULL);
-    // will free pixbuf data if no other refs
+    // will free pixbuf data if no other refs, and in the callback will fre layer
     lives_widget_object_unref(pixbuf);
-    // now we can dispose of the layer
-    // this is proxy layer for a pixbuf, so we can free it - since pixdata is NULL, it cannot be freed
-    weed_layer_free(layer);
     return TRUE;
   }
 
@@ -375,15 +373,10 @@ LIVES_LOCAL_INLINE boolean _lives_copylist_remove(lives_sync_list_t *copylist, l
   g_print("nis last m \n");
   weed_layer_t *xlayer = (weed_layer_t *)copylist->list->data;
   copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(xlayer, "copylist_mutex", NULL);
-  // if we fail to get lock, another thread is removing or adding
-  // so leave alone - this avoids any dealock situation where we have lock on layer,
-  // lock on synclist, and we block trying to get lock on another layer, whilst the other thread
-  // has locked other layer is waiting for synclist_lock
   if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
   _lives_copylist_remove(copylist, xlayer);
   return TRUE;
 }
-
 
 
 LIVES_GLOBAL_INLINE boolean lives_copylist_remove(lives_sync_list_t *copylist, lives_layer_t *layer) {
@@ -976,7 +969,7 @@ LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
 #ifdef DEBUG_LAYER_REFS
 ____FUNC_EXIT____;
 #endif
-if (LIVES_IS_PLAYING && mainw->layers && layer == mainw->layers[0]) break_me("ref mwfl");
+//if (LIVES_IS_PLAYING && mainw->layers && layer == mainw->layers[0]) break_me("ref mwfl");
 return weed_refcount_inc(layer);
 }
 

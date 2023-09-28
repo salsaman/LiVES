@@ -389,7 +389,7 @@ boolean lives_layer_is_all_black(weed_layer_t *layer, boolean exact);
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *, boolean exact);
 void lives_pixbuf_set_opaque(LiVESPixbuf *);
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette, boolean fordisp);
-boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
+lives_result_t pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
 typedef struct {
   // struct for quickly comparing (planar) layer pdata

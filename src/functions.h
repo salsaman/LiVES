@@ -194,9 +194,8 @@ lives_result_t do_call(lives_proc_thread_t);
 
 #define LIVES_LEAF_RETLOC "retloc"
 
-// funcinst (future use)
+// funcinst (future use) - an instnace of a funcdef, but with actual param / data values
 
-typedef weed_plant_t lives_funcinst_t;
 #define LIVES_LEAF_TEMPLATE "_template"
 #define LIVES_LEAF_FUNCSIG "_funcsig"
 #define LIVES_LEAF_FUNC_NAME "_funcname"
@@ -280,8 +279,8 @@ void _func_exit(char *file_ref, int line_ref);
 
 void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
-#if DEBUG_FNS
-// macro to be placed near start of "major" functions. It will prepend funcname to
+#ifndef NO_FUNC_TAGS
+// macro to be placeyd near start of "major" functions. It will prepend funcname to
 // a thread's 'func_stack', print out a debug line (optional), and also add fn lookup
 // to fn_store, e.g:   ____FUNC_ENTRY____(transcode_clip, "b", "iibs");
 #define ____FUNC_ENTRY____(func, rettype, args_fmt)			\
@@ -469,6 +468,24 @@ typedef struct {
 
 // denotes a line inside a function (i.e maybe far from entry point)
 #define FDEF_FLAG_INSIDE		(1ull << 1)
+
+typedef weed_plant_t lives_funcinst_t;
+
+typedef struct {
+  uint64_t idx;
+  lives_funcdef_t *funcdef;
+
+  // description of each function param, funcsig order
+  // for variadic functions, we may have optional |param_goup, min_repeats, max_rrepeats|
+  lives_param_t **func_params;
+
+  // mapped from return val from func
+  lives_param_t *out_param;
+
+  // optionally, we can describe the data to be passed in returned in the data book
+  // (if function is run via a proc_thread)
+  lives_param_t **book_data;
+} lives_full_funcdef_t;
 
 // when adding a hook callback, there are several methods
 // use a registered funcname, in this case the funcdef_t is looed up from funcname, and

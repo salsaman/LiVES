@@ -29,6 +29,8 @@
 #define PRIO_HIGH LIVES_WIDGET_PRIORITY_HIGH
 #define PRIO_LOW LIVES_WIDGET_PRIORITY_LOW
 
+static GSource *fg_service_source = NULL;
+
 static volatile boolean gui_loop_tight = FALSE;
 
 // this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
@@ -196,33 +198,18 @@ WIDGET_HELPER_LOCAL_INLINE void set_standard_widget(LiVESWidget *widget, boolean
 
 
 static void edit_state_cb(LiVESWidgetObject *object, livespointer pspec, livespointer user_data) {
+  // a simple callback to highlight visually whether an entry is editable or not
   LiVESWidget *entry = LIVES_WIDGET(object);
-  if (lives_entry_get_editable(LIVES_ENTRY(object))) {
+  if (lives_entry_get_editable(LIVES_ENTRY(object)))
     lives_widget_apply_theme3(entry, LIVES_WIDGET_STATE_NORMAL);
-  } else {
+  else
     lives_widget_apply_theme2(entry, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  }
 }
 
 
 #if !GTK_CHECK_VERSION(3, 16, 0)
+// TODO - we should be able to eliminate this now by using lives_standard_buttons, etc
 static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, livespointer user_data) {
-  // This callback is here because:
-  //
-  // a) cannot alter the text colour of a button after the initial draw of a button
-  // this is because it doesn't have a proper label widget
-  // we can only change the background colour, so here we change the border colour via updating the parent container
-
-  // note: if we need a button with changeable text colour we must use a toolbar button instead !
-  //
-  // b) CSS appears broken in gtk+ 3.18.9 and possibly other versions, preventing setting of colours for
-  // non-default states (e.g. insensitive)
-  // thus we need to set a callback to listen to "sensitive" changes, and update the colours in response
-  //
-  // c) it is also easier just to set the CSS colours when the widget state changes than to figure out ahead of time
-  //     what the colours should be for each state. Hopefully it doesn't add too much overhead listening for sensitivity
-  //     changes and then updating the CSS manually.
-  //
   LiVESWidget *widget = (LiVESWidget *)object;
   LiVESWidgetState state;
   int woat = widget_opts.apply_theme;
@@ -970,35 +957,36 @@ boolean set_gui_loop_tight(boolean val) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext * ctx, boolean may_block) {
-  RECURSE_GUARD_START;
+  T_RECURSE_GUARD_START;
   boolean ret = FALSE;
-  RETURN_VAL_IF_RECURSED(FALSE);
-  RECURSE_GUARD_ARM;
+  T_RETURN_VAL_IF_RECURSED(FALSE);
+  T_RECURSE_GUARD_ARM;
   if (!is_fg_thread()) {
     if (!gui_loop_tight) mainw->do_ctx_update = TRUE;
-    RECURSE_GUARD_END;
+    T_RECURSE_GUARD_END;
     return FALSE;
   } else {
     boolean no_idlefuncs = FALSE;
     if (mainw) {
       no_idlefuncs = mainw->no_idlefuncs;
+      // block recursive calls to idlefunc fg_Service-fulfull_cb
       mainw->no_idlefuncs = TRUE;
-      if (mainw->fg_service_source) {
+      if (fg_service_source) {
         if (cprio == PRIO_HIGH)
-          lives_source_set_priority(mainw->fg_service_source, PRIO_LOW);
+          lives_source_set_priority(fg_service_source, PRIO_LOW);
       }
     }
 
     if (!lpttorun) ret = g_main_context_iteration(ctx, may_block);
     if (mainw) {
       mainw->no_idlefuncs = no_idlefuncs;
-      if (mainw->fg_service_source) {
+      if (fg_service_source) {
         if (cprio == PRIO_HIGH)
-          lives_source_set_priority(mainw->fg_service_source, PRIO_HIGH);
+          lives_source_set_priority(fg_service_source, PRIO_HIGH);
       }
     }
   }
-  RECURSE_GUARD_END;
+  T_RECURSE_GUARD_END;
   return ret;
 }
 
@@ -1073,6 +1061,9 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_widget_get_opacity(LiVESWidget * widget
   return FALSE;
 }
 
+// def is 8 msec
+#define LOW_PRIO_WAIT 8000000
+
 static volatile int misses = 0;
 
 boolean fg_service_fulfill_cb(void *dummy) {
@@ -1092,20 +1083,20 @@ boolean fg_service_fulfill_cb(void *dummy) {
   boolean is_active;
   int depth;
 
-  int64_t nsc = lives_atomic64_inc(&mainw->n_service_calls);
-  g_print("fg cb %lu\n", nsc);
-
   if (mainw->critical) lives_abort(mainw->critical_errmsg);
+
+  mainw->n_service_calls++;
 
   if (mainw->no_idlefuncs) {
     // callback has to be disabled during calls to g_main_context_iteration,
-    // to prevent that function from blocking
+    // to prevent that function from blocking, since we are running here as an idel function
+    // we could end up endlessly recursing
     return TRUE;
   }
 
   if (omode != gui_loop_tight || cprio != prio) {
     cprio = PRIO_HIGH;
-    lives_source_set_priority(mainw->fg_service_source, cprio);
+    lives_source_set_priority(fg_service_source, cprio);
     prio = cprio;
     omode = gui_loop_tight ? TRUE : FALSE;
     misses = 0;
@@ -1118,8 +1109,16 @@ boolean fg_service_fulfill_cb(void *dummy) {
   // just to be sure...
   if (gui_loop_tight && depth > 1) return TRUE;
 
-  do {
+  do { // while (gui_loop_tight)
+    // in t"tight' mode, we never exit form this idlefunc
+    // this is used when we need more control over what events are received
+    // e.g during high performance playback, we permit updates only at a sepcific point
+    // during the player cycle, accelerator keys msut be blocked until this "safe" point
+    // and so on. Thus things are turned inside out, instead of the gui toolkit calling
+    // this function we trigger the gui loop for within it
+
     if (mainw->critical) lives_abort(mainw->critical_errmsg);
+
     is_active = FALSE;
     if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
       is_active = fg_service_fulfill();
@@ -1127,17 +1126,20 @@ boolean fg_service_fulfill_cb(void *dummy) {
       cprio = PRIO_HIGH;
       if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
           && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
+
         lives_widget_context_iteration(NULL, FALSE);
+
       if (prio != PRIO_HIGH) {
-        lives_source_set_priority(mainw->fg_service_source, cprio);
+        lives_source_set_priority(fg_service_source, cprio);
         prio = cprio;
       }
       misses = 0;
     } else if (misses >= 0 && cprio == PRIO_HIGH)
+      // afetr a certain period of inactivity, we flip to low prio mode
       if (++misses >= MISS_PRIO_THRESH) {
         cprio = PRIO_LOW;
         if (!gui_loop_tight) {
-          lives_source_set_priority(mainw->fg_service_source, cprio);
+          lives_source_set_priority(fg_service_source, cprio);
           prio = cprio;
         }
       }
@@ -1147,6 +1149,8 @@ boolean fg_service_fulfill_cb(void *dummy) {
       // during playback this is where all callbacks such as key presses will happen
       if (!is_active) _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
+      pthread_yield();
+      lives_microsleep;
     } else {
       lives_nanosleep(NSLEEP_TIME);
       if (cprio == PRIO_LOW) {
@@ -1155,29 +1159,42 @@ boolean fg_service_fulfill_cb(void *dummy) {
           pthread_yield();
           lives_nanosleep(NSLEEP_TIME);
         }
+	// servicing modal windows
         if (modalw) lives_widget_context_iteration(NULL, FALSE);
       }
     }
   } while (gui_loop_tight);
 
   if (mainw->do_ctx_update && !is_active) {
+    // do_ctx_update is signalled by other threads
+    // set threadvar fg_service - this will encourage threads to defer sending
+    // direct update request but instead add them to a queue
+    // is_active is set if we just executed a service, we woudl have already updated gui context
     if (THREADVAR(fg_service)) {
       is_fg_service = TRUE;
     } else THREADVAR(fg_service) = TRUE;
     _lives_widget_context_update();
     mainw->do_ctx_update = FALSE;
     if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+    //
   } else if (!gui_loop_tight) {
+    // gui_loop_tight is kind of "locked-in" mode
+    // mainly used during playback, where we are are just waitng to service a specific thread
     if (prio == PRIO_HIGH) {
+      // we have and lkow priority
+      // idling for some time will switch to low,
+      // activity, or request by bg threadd will kick back up to high
       if (!lpttorun) {
+	// skip if this if we a have a direct service to run
         if (!mainw->go_away && mainw->is_ready) {
           lives_widget_context_iteration(NULL, FALSE);
+	  pthread_yield();
+	  lives_microsleep;
         }
       }
     } else {
-      lives_proc_thread_wait(mainw->def_lpt, 8000000);
-      /* for (int zz = 0; zz < 2048 && cprio == PRIO_LOW; zz++) */
-      /*   lives_microsleep; */
+      // in low prio mode we avoid loadin gthe cpu by just waiting
+      lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT);
     }
   }
   mainw->do_ctx_update = FALSE;
@@ -1188,7 +1205,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
 boolean fg_service_ready_cb(void *dummy) {
   g_printerr("GUI thread ready, providing services for all other threads\n");
-  mainw->fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
+  fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
   return FALSE;
 }
 
@@ -2920,7 +2937,7 @@ static boolean _lives_window_set_modal(LiVESWindow * window, boolean modal, bool
     lives_signal_sync_connect(window, LIVES_WIDGET_UNMAP_SIGNAL,
                               LIVES_GUI_CALLBACK(modunmap), NULL);
     modalw = window;
-    set_gui_loop_tight(TRUE);
+    if (!widget_opts.non_modal) set_gui_loop_tight(TRUE);
   } else {
     if (!modalw) return FALSE;
     lives_signal_handlers_sync_disconnect_by_func(LIVES_GUI_OBJECT(modalw), LIVES_GUI_CALLBACK(moddest), NULL);
@@ -3205,7 +3222,6 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
 #ifdef GUI_GTK
   LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
-  boolean no_slack = FALSE;
 
   if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else if (LIVES_IS_WIDGET(widget))
@@ -3214,8 +3230,10 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
   if (win && LIVES_IS_WINDOW(win)) {
     was_modal = lives_window_get_modal(win);
     if (!was_modal) {
-      no_slack = gui_loop_tight;
+      boolean non_modal = widget_opts.non_modal;
+      widget_opts.non_modal = TRUE;
       lives_window_set_modal(win, TRUE);
+      widget_opts.non_modal = non_modal;
     }
   }
 
@@ -3223,7 +3241,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
 
   if (!was_modal) {
     if (win) {
-      _lives_window_set_modal(win, FALSE, no_slack);
+      _lives_window_set_modal(win, FALSE, TRUE);
     }
     if (modalold) lives_window_set_modal(modalold, TRUE);
   }

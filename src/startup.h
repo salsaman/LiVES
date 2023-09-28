@@ -12,9 +12,13 @@
 
 typedef enum startup_stages {
   nothing_sup,
+  run_program_sup,
   pre_init_sup,
-  init_sup,
+  run_program2_sup,
+  gtk_launch_sup,
   startup_sup,
+  init_sup,
+  startupB_sup,
   startup2_sup,
   sup_ready,
 } sup_stage;

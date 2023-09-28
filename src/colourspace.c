@@ -12832,8 +12832,9 @@ LIVES_LOCAL_INLINE void lives_free_buffer(uint8_t *pixels, livespointer data) {
   // if pixbuf ws used ot make layers, then nothing happens until px layer is last in copylist
   // going that route, we cannot add a custom free function so we must et the pixbuf data fre itself "naturally"
   //
-  LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(px_layer, LIVES_LEAF_PIXBUF_SRC, NULL);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, px_layer);
+  /* LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(px_layer, LIVES_LEAF_PIXBUF_SRC, NULL); */
+  /* lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, NULL); */
+
   weed_layer_unref(px_layer);
 }
 
@@ -13027,8 +13028,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
    then we make a new copy of the pixel data.
    - for RGB(A) pixbufs we assume SRGB gamma
 */
-boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
-  size_t framesize;
+lives_result_t pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
   void *pixel_data;
   void *in_pixel_data;
   lives_layer_t *px_layer;
@@ -13313,11 +13313,11 @@ lives_result_t get_resizable(int *ppalette, int *pxpal, int *oclamp_hint, int *o
   int ocl = WEED_YUV_CLAMPING_UNCLAMPED;
   boolean in_resizable = TRUE, out_resizable = TRUE;
 
-  if (!weed_palette_is_resizable(palette, WEED_YUV_CLAMPING_UNCLAMPED, IN_CHAN))
+  if (!weed_palette_is_resizable(palette, WEED_YUV_CLAMPING_UNCLAMPED, LIVES_INPUT))
     in_resizable = FALSE;
 
 
-  if (!weed_palette_is_resizable(opal_hint, ocl, OUT_CHAN))
+  if (!weed_palette_is_resizable(opal_hint, ocl, LIVES_OUTPUT))
     out_resizable = FALSE;
 
 #ifdef USE_SWSCALE
@@ -13371,7 +13371,7 @@ lives_result_t get_resizable(int *ppalette, int *pxpal, int *oclamp_hint, int *o
   imasq = resolved = xpalette = xopal_hint = opal_hint = get_inter_pal(palette, opal_hint, upscale);
 
   if (resolved == WEED_PALETTE_NONE ||
-      !weed_palette_is_resizable(resolved, WEED_YUV_CLAMPING_UNCLAMPED, IN_CHAN)) {
+      !weed_palette_is_resizable(resolved, WEED_YUV_CLAMPING_UNCLAMPED, LIVES_INPUT)) {
     if (resolved != WEED_PALETTE_NONE) imasq = get_masq_pal(resolved);
     if (imasq == WEED_PALETTE_NONE) {
       char *msg = lives_strdup_printf(_("Unable to convert from paletter %s to palette %s"),

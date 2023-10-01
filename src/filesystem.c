@@ -711,7 +711,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
       uint8_t *tmp_ptr = fbuff->ring_buffer;
       size_t buffsize;
       res = fbuff->bytes;
-      lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+      lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
 
       fbuff->flags |= FB_FLAG_BG_OP;
       fbuff->ring_buffer = fbuff->buffer;
@@ -1065,7 +1065,7 @@ ssize_t lives_close_buffered(int fd) {
     boolean allow_fail = ((fbuff->flags & FB_FLAG_ALLOW_FAIL) == FB_FLAG_ALLOW_FAIL);
     ssize_t bytes = fbuff->bytes;
 
-    lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+    lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
 
     if (bytes > 0) {
       ret = file_buffer_flush(fbuff);
@@ -1086,7 +1086,7 @@ ssize_t lives_close_buffered(int fd) {
       pthread_mutex_lock(&fbuff->sync_mutex);
       fbuff->flags |= FB_FLAG_INVALID;
       pthread_mutex_unlock(&fbuff->sync_mutex);
-      lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+      lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
     }
     should_close = FALSE;
     munlock(fbuff->buffer, fbuff->bytes);
@@ -1094,7 +1094,7 @@ ssize_t lives_close_buffered(int fd) {
 
   lives_free(fbuff->pathname);
 
-  lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+  lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
 
   pthread_mutex_lock(&mainw->fbuffer_mutex);
   if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
@@ -1110,7 +1110,7 @@ ssize_t lives_close_buffered(int fd) {
   }
 
   if (fbuff->ring_buffer) {
-    lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+    lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
     lives_free(fbuff->ring_buffer);
   }
 
@@ -1541,7 +1541,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         fbuff->offset -= ocount;
         fbuff->ptr -= ocount;
       }
-      lives_nanosleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
+      lives_sleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
                                  && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
         pthread_mutex_lock(&fbuff->sync_mutex);
@@ -1833,7 +1833,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
         lives_free(fbuff->buffer);
         fbuff->buffer = NULL;
         if (fbuff->ring_buffer) {
-          lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+          lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
           lives_free(fbuff->ring_buffer);
           fbuff->ring_buffer = NULL;
         }
@@ -1888,7 +1888,7 @@ ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
   }
 
   if (fbuff->ring_buffer) {
-    lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+    lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
     lives_free(fbuff->ring_buffer);
     fbuff->ring_buffer = NULL;
   }
@@ -2114,6 +2114,18 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   // if status is OVER_QUOTA return it
   // if status is WARNING return it
   // return status NORMAL
+
+  // since it can be slow to calculate diskspace used for some FS, particularly if the tree is large
+  // it is recommended to use the disk monitor when necessary
+  // - first check if disk_monitor is already running for dir
+  // - if running,  wait or return later
+  // - if already run, check if values are till valid
+  // if not, start the diskmonitor for dir
+  // - if running for this thread, and no longer necessary, call disk_monitor_forget
+  // if the values are known for certain to be invalid (ie. changed and diskmoitor alreeady finished)
+  // invalidate the value by setting mainw->dsu_valid to FALSE
+  // if disk_monitor_wait is called and diskmonitor is not running, it will be started for dir
+  // when blocked in disk_monitor wait, block will be removed when value is ready
   int64_t ds;
   lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
   if (dsval && prefs->disk_quota > 0 && *dsval > (int64_t)((double)prefs->disk_quota * prefs->quota_limit / 100.))
@@ -2350,7 +2362,7 @@ static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
 // disk_monitor_trunning(dir) - checks if running for dir
 // disk_monitor_check_result(dir) - returns available result, or -1 if still running
 //     (check mainw->ds_valid, may need rechecking)
-// disk_monitor_wait_result(dir, timeout_nsec) - if reult not avaible before timeout, forget
+// disk_monitor_wait_result(dir, timeout_nsec) - if result not available before timeout, forget
 // disk_monitor_forget - dont care, no int64_join needed
 
 boolean disk_monitor_running(const char *dir) {

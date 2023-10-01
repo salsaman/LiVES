@@ -248,7 +248,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
           xtotlen += slen;
         } else {
           //lives_snprintf(buff + totlen, buflen - totlen, "%s", xbuff);
-          totlen = slen;
+          totlen += slen;
           if (totlen >= buflen - 1) break;
         }
       }
@@ -1784,7 +1784,7 @@ void wait_for_bg_audio_sync(int fileno) {
   lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   ticks_t timeout;
 
-  lives_nanosleep_while_true(sget_file_size(afile) <= 0 && (timeout = lives_alarm_check(alarm_handle)) > 0);
+  lives_sleep_while_true(sget_file_size(afile) <= 0 && (timeout = lives_alarm_check(alarm_handle)) > 0);
 
   if (!timeout) break_me("no audio found");
   lives_alarm_clear(alarm_handle);

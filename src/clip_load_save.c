@@ -2704,7 +2704,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   if (!auto_recover) {
     char *tmp;
 
-    lives_nanosleep_while_false(mainw->pretty_colours);
+    lives_sleep_while_false(mainw->pretty_colours);
 
     if (!do_yesno_dialogf_with_countdown
         (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\n"

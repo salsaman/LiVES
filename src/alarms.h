@@ -1,6 +1,6 @@
 // alarms.h
 // LiVES
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -94,6 +94,97 @@ void thread_signal_establish(int sig, lives_sigfunc_t sigfunc);
 void thrd_signal_unblock(int sig, boolean thrd_specific);
 void thrd_signal_block(int sig, boolean thrd_specific);
 
+////////////////// spinwait /////
+
+// wait for 1 nsec
 #define lives_spin() do {lives_nanosleep(1);} while (0);
+
+// for compatibility
+#define lives_usleep(a) lives_nanosleep(1000*(a))
+
+// wait for specified nsec - could also use timer_wait
+#define lives_nanosleep(nanosec)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
+    ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION;while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
+							       &&errno!=ETIMEDOUT);}while(0);
+//#define lives_microsleep lives_nanosleep(1000)
+//#define lives_millisleep lives_nanosleep(ONE_MILLION)
+
+#define _lives_microsleep(usec) lives_nanosleep((usec) * 1000)
+#define lives_microsleep  _lives_microsleep(1)
+
+#define _lives_millisleep(msec) lives_nanosleep(MILLIONS(msec))
+#define lives_millisleep _lives_millisleep(1)
+
+#define lives_nanosleep_until_nonzero(condition){while(!(condition))lives_spin();}
+#define lives_nanosleep_until_zero(condition)lives_nanosleep_until_nonzero(!(condition))
+#define lives_nanosleep_while_false(c)lives_nanosleep_until_nonzero(c)
+#define lives_nanosleep_while_true(c)lives_nanosleep_until_zero(c)
+
+/* we always check condition first, as being TRUE may have side effects
+   in case it was TRUE we want to prevent alarm from triggering before it can be checked
+   Thus we disarm the timer which will stop it tirggering, then set trigger to 0 to make
+   everything consistent */
+#define lives_nanosleep_until_nonzero_timeout(t_nsec,...) do {	\
+  boolean condres;							\
+  lives_alarm_set_timeout((t_nsec));					\
+  while (!(condres=(__VA_ARGS__))&&!lives_alarm_triggered())lives_nanosleep; \
+  if (condres)lives_alarm_disarm();} while (0);
+#define lives_nanosleep_until_zero_timeout(t_nsec,...)lives_nanoleep_until_nonzero_timeout(t_nsec,!(__VA_ARGS__))
+#define lives_nanosleep_while_false_timeout(t,...)lives_nanoleep_until_nonzero_timeout(t,__VA_ARGS__)
+#define lives_nanosleep_while_true_timeout(t,...)lives_nanoleep_until_zero_timeout(t,__VA_ARGS__)
+
+#define lives_microsleep_until_nonzero(condition)	\
+  {while (!(condition))lives_microsleep;}
+#define lives_microsleep_until_zero(condition)lives_microsleep_until_nonzero(!(condition))
+#define lives_microsleep_while_false(c)lives_microsleep_until_nonzero(c)
+#define lives_microsleep_while_true(c)lives_microsleep_until_zero(c)
+
+#define lives_microsleep_until_nonzero_timeout(t_nsec,...) do {	\
+  boolean condres;							\
+  lives_alarm_set_timeout((t_nsec));					\
+  while (!(condres=(__VA_ARGS__))&&!lives_alarm_triggered())lives_microsleep; \
+  if (condres)lives_alarm_disarm();} while (0);
+#define lives_microsleep_until_zero_timeout(t_nsec,...)lives_microsleep_until_nonzero_timeout(t_nsec,!(__VA_ARGS__))
+#define lives_microsleep_while_false_timeout(t,...)lives_microleep_until_nonzero_timeout(t,__VA_ARGS__)
+#define lives_microsleep_while_true_timeout(t,...)lives_microleep_until_zero_timeout(t,__VA_ARGS__)
+
+#define lives_millisleep_until_nonzero(condition)	\
+  {while (!(condition))lives_millisleep;}
+#define lives_millisleep_until_zero(condition)lives_millisleep_until_nonzero(!(condition))
+#define lives_millisleep_while_false(c)lives_millisleep_until_nonzero(c)
+#define lives_millisleep_while_true(c)lives_millisleep_until_zero(c)
+
+#define lives_millisleep_until_nonzero_timeout(t_nsec,...) do {	\
+  boolean condres;							\
+  lives_alarm_set_timeout((t_nsec));					\
+  while (!(condres=(__VA_ARGS__))&&!lives_alarm_triggered())lives_millisleep; \
+  if (condres)lives_alarm_disarm();} while (0);
+#define lives_millisleep_until_zero_timeout(t_nsec,...)lives_millisleep_until_nonzero_timeout(t_nsec,!(__VA_ARGS__))
+#define lives_millisleep_while_false_timeout(t,...)lives_millisleep_until_nonzero_timeout(t,__VA_ARGS__)
+#define lives_millisleep_while_true_timeout(t,...)lives_millisleep_until_zero_timeout(t,__VA_ARGS__)
+
+#define _DEF_GRANULE_TIME_	ONE_MILLION // nsec, ie 1 millisec
+#define _lives_def_granule_sleep lives_nanosleep(_DEF_GRANULE_TIME_)
+
+#define lives_defsleep_until_nonzero(condition)		\
+  {while (!(condition))_lives_def_granule_sleep;}
+#define lives_sleep_until_nonzero(condition)lives_defsleep_until_nonzero(condition)
+#define lives_sleep_until_zero(condition)lives_sleep_until_nonzero(!(condition))
+#define lives_sleep_while_false(c)lives_sleep_until_nonzero(c)
+#define lives_sleep_while_true(c)lives_sleep_until_zero(c)
+
+#define lives_sleep_until_nonzero_timeout(t_nsec,...) do {	\
+  boolean condres;							\
+  lives_alarm_set_timeout((t_nsec));					\
+  while (!(condres=(__VA_ARGS__))&&!lives_alarm_triggered())_lives_def_granule_sleep; \
+  if (condres)lives_alarm_disarm();} while (0);
+#define lives_sleep_until_zero_timeout(t_nsec,...)lives_sleep_until_nonzero_timeout(t_nsec,!(__VA_ARGS__))
+#define lives_sleep_while_false_timeout(t,...)lives_sleep_until_nonzero_timeout(t,__VA_ARGS__)
+#define lives_sleep_while_true_timeout(t,...)lives_sleep_until_zero_timeout(t,__VA_ARGS__)
+
+#define return_val_if_triggered(v)do{if(lives_alarm_triggered()){lives_alarm_disarm();return(v);}}while (0);
+
+#define LIVES_FORTY_WINKS MILLIONS(40) // 40 mSec
+#define LIVES_WAIT_A_SEC ONE_BILLION // 1 second
 
 #endif

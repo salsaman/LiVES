@@ -4171,7 +4171,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                     || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                   return LIVES_RENDER_ERROR;
 
-                lives_nanosleep_while_false(lives_proc_thread_is_paused(mainw->transrend_proc));
+                lives_sleep_while_false(lives_proc_thread_is_paused(mainw->transrend_proc));
 
                 mainw->transrend_waiting = FALSE;
                 //lives_proc_thread_sync_ready(mainw->transrend_proc);
@@ -5375,7 +5375,7 @@ boolean render_to_clip(boolean new_clip) {
 
     g_print("wait for transcoder ready\n");
 
-    lives_nanosleep_while_false(mainw->transrend_waiting);
+    lives_sleep_while_false(mainw->transrend_waiting);
     //lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     mainw->transrend_waiting = FALSE;
@@ -5835,7 +5835,7 @@ static boolean _deal_with_render_choice(void) {
       }
       mainw->play_start = 1; ///< new clip frames always start  at 1
       if (info) {
-        //lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
+        //lives_sleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
         lives_proc_thread_join(info);
         info = NULL;
       }

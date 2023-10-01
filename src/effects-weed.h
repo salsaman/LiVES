@@ -259,6 +259,8 @@ void weed_load_all(void);  ///< load effects
 void weed_unload_all(void); ///< unload all effects
 int get_next_free_key(void); ///< next free "key" for the multitrack system
 
+void create_fx_defs_menu(void);
+
 void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
 lives_filter_error_t act_on_instance(weed_instance_t *, int key, lives_layer_t **,

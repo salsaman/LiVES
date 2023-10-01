@@ -115,7 +115,7 @@ boolean video_sync_ready(void) {
   }
 
   mainw->startticks -= lives_get_current_playback_ticks(mainw->origticks, NULL);
-  lives_nanosleep_while_false(mainw->audio_seek_ready);
+  lives_sleep_while_false(mainw->audio_seek_ready);
   mainw->startticks += lives_get_current_playback_ticks(mainw->origticks, NULL);
 
   mainw->fps_mini_measure = 0;
@@ -707,7 +707,7 @@ static lives_result_t prepare_frames(frames_t frame) {
       /* mainw->frame_layer = weed_apply_effects(layers, mainw->filter_map, */
       /*                                         tc, opwidth, opheight, mainw->pchains, FALSE); */
       // wait here for plan to complete
-      lives_nanosleep_while_true(mainw->plan_cycle->state == PLAN_STATE_INERT
+      lives_sleep_while_true(mainw->plan_cycle->state == PLAN_STATE_INERT
                                  || mainw->plan_cycle->state == PLAN_STATE_WAITING
                                  || mainw->plan_cycle->state == PLAN_STATE_RESETTING
                                  || mainw->plan_cycle->state == PLAN_STATE_RUNNING);
@@ -1290,7 +1290,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     // in render frame, we would have set all frames to either prepared or loaded
     // so the plan runner should have started loading them already
     // the reamining steps will be run, applying all fx instances until we are left with the single output layer
-    lives_nanosleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
+    lives_sleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
                                 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
 
@@ -3608,7 +3608,7 @@ play_frame:
             /// >>>>>>>>> PLAY A FRAME
 
             //g_print("lfi in  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-            //lives_nanosleep_while_true(mainw->do_ctx_update);
+            //lives_sleep_while_true(mainw->do_ctx_update);
             load_frame_image(sfile->frameno);
             //g_print("lfi out  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -4220,7 +4220,7 @@ lives_obj_instance_t *lives_player_inst_create(uint64_t subtype) {
   char *choices[2];
   weed_plant_t *gui;
   lives_obj_attr_t *attr;
-  lives_obj_t *inst = lives_object_instance_create(OBJECT_TYPE_PLAYER, subtype);
+  weed_plant_t  *inst = lives_obj_instance_create(OBJECT_TYPE_PLAYER, subtype);
   weed_set_int_value(inst, "state", OBJECT_STATE_PREPARED);
   attr = lives_object_declare_attribute(inst, ATTR_AUDIO_SOURCE, WEED_SEED_INT);
   lives_attribute_set_param_type(inst, ATTR_AUDIO_SOURCE, _("Source"), WEED_PARAM_INTEGER);

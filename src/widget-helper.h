@@ -171,6 +171,8 @@ struct pbs_struct {
 boolean lives_painter_surface_destroy(lives_painter_surface_t *);
 lives_painter_surface_t *lives_painter_surface_reference(lives_painter_surface_t *);
 
+#define lives_paintet_surface_get_reference_count(surf) cairo_surface_get_reference_count(surf)
+
 typedef cairo_format_t lives_painter_format_t;
 
 #define LIVES_PAINTER_FORMAT_A1   CAIRO_FORMAT_A1
@@ -205,10 +207,17 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 // lives_painter_functions
 
+typedef cairo_user_data_key_t painter_data_key;
+typedef cairo_destroy_func_t lives_painter_destroy_func_t;
+
 lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target);
 
+void lives_painter_surface_set_user_data(lives_painter_surface_t *, const painter_data_key *, void *data,
+				 lives_painter_destroy_func_t);
+
+void *lives_painter_surface_get_user_data(lives_painter_surface_t *, const painter_data_key *);
+
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
-boolean lives_painter_remerge(lives_painter_t *);
 
 boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
 boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
@@ -327,8 +336,8 @@ int lives_pixbuf_get_height(const LiVESPixbuf *);
 boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *);
 int lives_pixbuf_get_rowstride(const LiVESPixbuf *);
 int lives_pixbuf_get_n_channels(const LiVESPixbuf *);
-unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *);
-const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
+uint8_t *lives_pixbuf_get_pixels(const LiVESPixbuf *);
+uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
 LiVESPixbuf *lives_pixbuf_copy(LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width, int height,

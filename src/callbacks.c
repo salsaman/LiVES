@@ -480,7 +480,7 @@ void lives_exit(int signum) {
       threaded_dialog_spin(0.);
     }
 
-    weed_unload_all();
+    //weed_unload_all();
 
 #ifdef VALGRIND_ON
     lives_list_free_all(&mainw->current_layouts_map);
@@ -6809,7 +6809,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
     FILE *ifile;
     if (!(ifile = fopen(fsp_info_file, "r")) && mainw->fs_preview_running && lives_dialog_get_response(dlg)
         == LIVES_RESPONSE_INVALID) {
-      lives_nanosleep(LIVES_QUICK_NAP);
+      lives_microsleep;
       // cannot run this in bg since it gets called from within lives_dialog_run
       // thus we need to update widget state ourselves, otherwise we don't receive button clicks
       g_main_context_iteration(NULL, FALSE);
@@ -9636,7 +9636,10 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     scr_width = GUI_SCREEN_PHYS_WIDTH;
     scr_height = GUI_SCREEN_PHYS_HEIGHT;
     if (event->width != scr_width || event->height != scr_height) {
+      boolean iss = mainw->ignore_screen_size;
+      mainw->ignore_screen_size = TRUE;
       get_monitors(FALSE);
+      mainw->ignore_screen_size = iss;
       if (scr_width != GUI_SCREEN_PHYS_WIDTH || scr_height != GUI_SCREEN_PHYS_HEIGHT) {
         if (!mainw->ignore_screen_size) {
           if (prefs->show_dev_opts) {
@@ -11917,7 +11920,7 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   aud_fade(mainw->current_file, startt, endt, startv, endv);
   audio_free_fnames();
 
-  lives_nanosleep_until_zero(lives_alarm_check(alarm_handle));
+  lives_sleep_until_zero(lives_alarm_check(alarm_handle));
 
   lives_alarm_clear(alarm_handle);
 

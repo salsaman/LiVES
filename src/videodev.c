@@ -868,7 +868,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
 
 /// objects / intents etc
 static lives_obj_instance_t *lives_videodev_inst_create(uint64_t subtype) {
-  lives_obj_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_MEDIA_SOURCE, subtype);
+  lives_obj_instance_t *inst = lives_obj_instance_create(OBJECT_TYPE_MEDIA_SOURCE, subtype);
   weed_set_int_value(inst, "state", OBJECT_STATE_NORMAL);
   lives_object_declare_attribute(inst, VDEV_PROP_WIDTH, WEED_SEED_INT);
   lives_object_declare_attribute(inst, VDEV_PROP_HEIGHT, WEED_SEED_INT);

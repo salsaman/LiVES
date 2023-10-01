@@ -208,7 +208,7 @@ typedef struct {
   lives_tx_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
-lives_obj_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
+weed_plant_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
 boolean lives_obj_instance_destroy(lives_obj_instance_t *);
@@ -223,30 +223,49 @@ int lives_object_instance_ref(lives_obj_instance_t *);
 
 #define LIVES_LEAF_OWNER "owner_uid"
 
+#define LIVES_LEAF_VALUE_TYPE "value_type"
+#define LIVES_LEAF_NAME "name"
+#define LIVES_LEAF_ATTR_GRP "attr_group"
+#define LIVES_LEAF_VALUE "value"
+#define LIVES_LEAF_NAME "name"
+#define LIVES_LEAF_PARENT "parent"
+#define LIVES_LEAF_OBJ_TYPE "obj_type"
+#define LIVES_LEAF_OBJ_SUBTYPE "obj_subtype"
+
+#define LIVES_PLANT_OBJECT 31338
+// placeholder values
+#define OBJ_TYPE_PROC_THREAD   	1
+#define OBJ_TYPE_PLAYER		2
+///
+
+#define lives_object_include_states(o, s) lives_proc_thread_include_states(o, s)
+#define lives_object_exclude_states(o, s) lives_proc_thread_exclude_states(o, s)
+#define lives_object_set_state(o, s) lives_proc_thread_set_state(o, s)
+
+#define lives_object_get_state(o) lives_proc_thread_get_state(o)
+
 uint64_t lives_object_get_type(lives_obj_t *);
-int lives_object_get_state(lives_obj_t *);
 uint64_t lives_object_get_subtype(lives_obj_t *);
 uint64_t lives_object_get_uid(lives_obj_t *);
 weed_plant_t **lives_object_get_attrs(lives_obj_t *);
 
 int lives_attribute_get_value_int(lives_obj_attr_t *);
-
+int lives_attr_get_value_int(lives_obj_attr_t *);
 int lives_attribute_get_value_boolean(lives_obj_attr_t *);
-
 double lives_attribute_get_value_double(lives_obj_attr_t *);
-
 float lives_attribute_get_value_float(lives_obj_attr_t *);
-
 int64_t lives_attribute_get_value_int64(lives_obj_attr_t *);
-
 uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *);
-
 char *lives_attribute_get_value_string(lives_obj_attr_t *);
+char *lives_attr_get_value_string(lives_obj_t *, lives_obj_attr_t *);
 
 // when creating the instance, we should set the intial STATE, and declare its attributes
 lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st);
 lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *, const char *name);
 lives_obj_attr_t **lives_object_get_attrs(lives_obj_t *);
+weed_plant_t *lives_obj_instance_get_attribute(weed_plant_t *loi, const char *name);
+
+weed_plant_t *lives_obj_instance_create(uint64_t type, uint64_t subtype);
 
 boolean lives_object_attribute_unref(lives_obj_t *, lives_obj_attr_t *);
 void lives_object_attributes_unref_all(lives_obj_t *);
@@ -255,25 +274,110 @@ void lives_object_attributes_unref_all(lives_obj_t *);
 
 ///////////// get values
 char *lives_attr_get_name(lives_obj_attr_t *);
-int lives_attr_get_value_int(lives_obj_attr_t *);
-char *lives_attr_get_value_string(lives_obj_t *, lives_obj_attr_t *);
-uint32_t lives_attr_get_value_type(lives_obj_attr_t *);
+weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *);
 
 // implementation helper funcs
 weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t st, weed_size_t ne, ...);
 weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, uint32_t st, weed_funcptr_t func);
 
-// values can be set later
+// set by name
 weed_error_t lives_object_set_attribute_value(lives_obj_t *, const char *name, ...);
 weed_error_t lives_object_set_attribute_default(lives_obj_t *obj, const char *name, ...);
 weed_error_t lives_object_set_attribute_array(lives_obj_t *, const char *name, weed_size_t ne, ...);
 weed_error_t lives_object_set_attribute_def_array(lives_obj_t *obj, const char *name, weed_size_t ne, ...);
 
+// set by attr
 weed_error_t lives_object_set_attr_value(lives_obj_t *, lives_obj_attr_t *, ...);
 weed_error_t lives_object_set_attr_default(lives_obj_t *obj, lives_obj_attr_t *attr, ...);
 weed_error_t lives_object_set_attr_array(lives_obj_t *, lives_obj_attr_t *, weed_size_t ne,  ...);
 weed_error_t lives_object_set_attr_def_array(lives_obj_t *obj, lives_obj_attr_t *attr,
     weed_size_t ne,  ...);
+
+//// attr groups
+
+/* #define lives_obj_instance_set_attr_group(loi, attrgrp)		\ */
+/*   weed_set_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, attrgrp) */
+
+// each lpt has a "data" area. Any type of data can be written here
+// and later recalled
+weed_plant_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *);
+lives_result_t lives_obj_instance_set_attr_group(lives_obj_instance_t *, weed_plant_t *attrgrp);
+weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *);
+weed_plant_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *, lives_obj_instance_t *src);
+
+void lives_obj_attribute_make_static(lives_obj_instance_t *loi, const char *name);
+
+#define mk_attr_name(name) "data_" #name
+
+//#define DEL__VALUE(name)weed_leaf_delete(lives_obj_instance_get_attr_grp(self),name)
+
+//#define lives_obj_instance_get_attribute(loi) (weed_get_plantptr_value((loi), LIVES_LEAF_ATTR_GROUP, NULL))
+
+#define SET_ATTR_VALUE(loi, type, name, val) do {			\
+  weed_set_##type##_value(lives_obj_instance_get_atribute(lives_obj_instance_ensure_attr_group(loi),\
+							  name), liVES_LEAFE_VALUE, val);; \
+    lives_obj_instance_make_static(lives_obj_instance_get_attribute((loi), name);} while(0);
+#define SET_ATTR_ARRAY(loi, type, name, nvals, valsptr) do {		\
+  weed_set_##type##_array(lives_obj_instance_get_attribute(loi, name),	\
+			  LIVES_LEAF_VALUE, nvals, valsptr);		\
+  lives_obj_attribute_make_static(lives_obj_instance_get_attribute(loi, name);} while(0);
+
+#define GET_ATTR_VALUE(loi, type, name)		\
+  lives_obj_instance_get_##type##_value(lives_obj_instance_get_attribute(loi, name), LIVES_LEAF_VALUE)
+
+#define GET_ATTR_ARRAY(loi, type, name, nvals)			\
+  lives_obj_instance_get_##type##_array(loi, name, nvals)
+
+#define lives_obj_instance_get_int_value(loi, name)			\
+  (weed_get_int_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+		      LIVES_LEAF_VALUE, NULL))
+
+#define lives_obj_instance_get_boolean_value(loi, name)			\
+  (weed_get_boolean_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			  LIVES_LEAF_VALUE, NULL))
+#define lives_obj_instance_get_double_value(loi, name)			\
+  (weed_get_double_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			 LIVES_LEAF_VALUE, NULL))
+#define lives_obj_instance_get_string_value(loi, name)			\
+  (weed_get_string_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			 LIVES_LEAF_VALUE, NULL))
+#define lives_obj_instance_get_int64_value(loi, name)			\
+  (weed_get_int64_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			LIVES_LEAF_VALUE, NULL))
+#define lives_obj_instance_get_funcptr_value(loi, name)			\
+  (weed_get_funcptr_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			  LIVES_LEAF_VALUE, NULL))
+#define lives_obj_instance_get_voidptr_value(loi, name)			\
+  (weed_get_voidptr_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			  LIVES_LEAF_VALUE, NULL))
+#define lives_obj_instance_get_plantptr_value(loi, name)		\
+  (weed_get_plantptr_value(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, NULL), \
+			   LIVES_LEAF_VALUE, NULL))
+
+#define lives_obj_instance_get_int_array(loi, name, nvals)		\
+  (weed_get_int_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_boolean_array(loi, name, nvals)		\
+  (weed_get_boolean_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_double_array(loi, name, nvals)		\
+  (weed_get_double_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_string_array(loi, name, nvals)		\
+  (weed_get_string_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_int64_array(loi, name, nvals)		\
+  (weed_get_int64_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_funcptr_array(loi, name, nvals)		\
+  (weed_get_funcptr_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_voidptr_array(loi, name, nvals)		\
+  (weed_get_voidptr_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
+#define lives_obj_instance_get_plantptr_array(loi, name, nvals)		\
+  (weed_get_plantptr_array_counted(weed_get_plantptr_value(lives_obj_instance_get_attr_group(loi), name, \
+						      NULL), LIVES_LEAF_VALUE, nvals))
 
 boolean obj_attr_is_leaf_readonly(lives_obj_attr_t *, const char *key);
 boolean lives_attribute_is_leaf_readonly(lives_obj_t *, const char *name, const char *key);
@@ -307,12 +411,12 @@ char *interpret_uid(uint64_t uid);
 #define CAP_PREFIX "cap_"
 #define CAP_PREFIX_LEN 4
 
-typedef struct {
-  weed_plant_t **inputs; // inputs to function
-  lives_funcdef_t func_info; /// function(s) to perform the transformation
-  weed_plant_t **outputs;
-} tx_map;
-
+/* typedef struct { */
+/*   weed_plant_t **inputs; // inputs to function */
+/*   lives_funcdef_t func_info; /// function(s) to perform the transformation */
+/*   weed_plant_t **outputs; */
+/* } tx_map; */
+						
 // a transform(ation) is a function or sequence of functions which correspond to satistying some intention for the object
 // they will do one or more of the following:
 // - change the state of the obejct from start_state to new_state (active transform)

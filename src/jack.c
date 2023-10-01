@@ -551,7 +551,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
       if (is_fg_thread()) lives_widget_queue_draw(tstwin->dialog);
       lives_widget_context_update();
       for (int tt = 0; tt < 1000; tt++) {
-        lives_nanosleep(LIVES_SHORT_SLEEP);
+        lives_millisleep;
       }
       lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
       if (self && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
@@ -3680,7 +3680,7 @@ void jack_close_client(jack_driver_t *jackd) {
       if (cache_buffer) cache_buffer->die = TRUE;
     jack_deactivate(jackd->client);
     jack_set_process_callback(jackd->client, NULL, jackd);
-    lives_nanosleep_while_true(in_ap);
+    lives_sleep_while_true(in_ap);
     jack_client_close(jackd->client);
   }
 

@@ -68,9 +68,6 @@ typedef struct {
 #define LIVES_PLANT_PROC_THREAD 4
 #define LIVES_PLANT_PREFERENCE 5
 
-#define LIVES_PLANT_OBJECT 65
-#define LIVES_PLANT_OBJ_ATTR 66
-
 #define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
 #define LIVES_PLANT_HASH_STORE 513
@@ -132,33 +129,6 @@ char *get_current_timestamp(void);
 
 // cancelation point for threads with deferred cancel type
 #define lives_cancel_point pthread_testcancel();
-
-#define LIVES_QUICK_NAP 1000. // 1 uSec
-#define LIVES_SHORT_SLEEP 1000000. // 1 mSec
-#define LIVES_FORTY_WINKS 40000000. // 40 mSec
-#define LIVES_WAIT_A_SEC 1000000000. // 1 second
-
-#define lives_nanosleep(nanosec)do{struct timespec ts;ts.tv_sec=(uint64_t)(nanosec)/ONE_BILLION; \
-    ts.tv_nsec=(uint64_t)(nanosec)-ts.tv_sec*ONE_BILLION;while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1 \
-							       &&errno!=ETIMEDOUT);}while(0);
-#define lives_usleep(a) lives_nanosleep(1000*(a))
-
-#define lives_microsleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=1000; \
-    while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1&&errno!=ETIMEDOUT);}while(0);
-
-#define lives_millisleep do{struct timespec ts;ts.tv_sec=0;ts.tv_nsec=ONE_MILLION; \
-    while(clock_nanosleep(CLOCK_REALTIME,0,&ts,&ts)==-1&&errno!=ETIMEDOUT);}while(0);
-
-#define lives_microsleep_until_nonzero(condition) \
-  {while (!(condition))lives_microsleep;}
-#define lives_microsleep_until_zero(condition)lives_microsleep_until_nonzero(!(condition))
-#define lives_microsleep_while_false(c)lives_microsleep_until_nonzero(c)
-#define lives_microsleep_while_true(c)lives_microsleep_until_zero(c)
-
-#define lives_nanosleep_until_nonzero(condition){while(!(condition))lives_spin();}
-#define lives_nanosleep_until_zero(condition)lives_nanosleep_until_nonzero(!(condition))
-#define lives_nanosleep_while_false(c)lives_nanosleep_until_nonzero(c)
-#define lives_nanosleep_while_true(c)lives_nanosleep_until_zero(c)
 
 int check_dev_busy(char *devstr);
 

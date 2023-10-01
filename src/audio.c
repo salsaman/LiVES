@@ -5013,8 +5013,10 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
 //////////// objects / intents //////
 
 int lives_aplayer_get_source(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SOURCE);
-  return lives_attribute_get_value_int(param);
+  return GET_ATTR_VALUE(aplayer, int, ATTR_AUDIO_SOURCE);
+
+  //weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SOURCE);
+  // return lives_attribute_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source) {
@@ -5142,12 +5144,12 @@ boolean await_audio_queue(ticks_t xtimeout) {
   lives_alarm_t alarm_handle = lives_alarm_set(xtimeout);
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-    lives_nanosleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
+    lives_sleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-    lives_nanosleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed));
+    lives_sleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed));
   }
 #endif
   lives_alarm_clear(alarm_handle);

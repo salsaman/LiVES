@@ -26,6 +26,274 @@ lives_objstore_t *bdef_store = NULL;
 
 static size_t dict_size = 0;
 
+////////////////////////////////
+// object attr groups. For now we use the smae mechanism as the data "book" for proc_threads
+
+// proc_thread -> obj_inst
+// book -> attr_group
+
+/// work in progress, being rewritten
+// eventually this will be merged in with Nirva bundles
+
+// "bundles" in the LiVES implementation willbe represented by weed_plants (LiVES plants)
+// there will be fixed structs, only self defining data collections
+
+// proc_threads will become on type of object instnace, clips, plugins etc, will be other objects
+// abject instances. There will be no function per se (except for small inline functions)
+// instead there will be "functionals", wrrapped as objects, which will combine to form "segments"
+// a grouping of segment will create a "Transform", some transforms will be ervices provided by objects
+// some will be provided by the infrastructure (structure transforms).
+
+// the app will be highly modular, each modul being self contained with data inputs / outputs
+// defined. The application will operate on an intents / capacities model, some transforms will be
+// transactional and require a contract. hooks / hook callbacks will be
+// the mechanism via which various parts of the app counicate, synchronise and exchange data.
+
+
+LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *loi) {
+  return loi ? weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL) : NULL;
+}
+
+
+lives_result_t lives_add_subobj(weed_plant_t *parent, const char *name, weed_plant_t *sub) {
+  if (!parent || !sub || !name || !*name) return LIVES_RESULT_ERROR;
+  if (weed_plant_has_leaf(parent, name)) return LIVES_RESULT_FAIL;
+  weed_set_plantptr_value(parent, name, sub);
+  weed_set_voidptr_value(sub, LIVES_LEAF_PARENT, parent);
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_attr_group(lives_obj_instance_t *loi,
+								    weed_plant_t *attrgrp) {
+  return lives_add_subobj(loi, LIVES_LEAF_ATTR_GRP, attrgrp);
+}
+
+/* LIVES_GLOBAL_INLINE  */
+/* weed_plant_t *attrgrp) { */
+/*   if (loi) weed_set_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, attrgrp); */
+/* } */
+
+/* LIVES_GLOBAL_INLINE boolean lives_proc_thread_has_attrgroup( */
+/*   return lpt ? weed_plant_has_leaf(lpt, LIVES_LEAF_LPT_BOOK) : FALSE; */
+/* } */
+/* y */
+
+LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_create(uint64_t type, uint64_t subtype) {
+  // this is a stopgap until eventually we transition to Nirva object instances
+  // for now object instances can be treated exactly like lives_proc_htreads,
+  // except that they are not queued, and do not have a target func
+  // however, things like hook_stacks and mutexes, and states are the same
+  // the states have aliases
+  // in addition, whreer proc_threads have a data "book" which may be passed from thread to thread
+  // obj instances hava an attr_group
+  // and whrera in proc_threads the entries in the book are imple leaves, entries in attr_group
+  // are themelves weed plants, of type attribute.
+  lives_obj_instance_t *loi = weed_plant_new(LIVES_PLANT_OBJECT);
+  weed_set_int64_value(loi, LIVES_LEAF_UID, gen_unique_id());
+  weed_set_int64_value(loi, LIVES_LEAF_OBJ_TYPE, type);
+  weed_set_int64_value(loi, LIVES_LEAF_OBJ_SUBTYPE, subtype);
+  add_garnish(loi, NULL, 0);
+  return loi;
+}
+
+
+LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *loi) {
+  if (loi) {
+    weed_plant_t *attr_group = weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL);
+    if (!attr_group) {
+      attr_group = lives_obj_instance_create(0, 0);
+      lives_obj_instance_set_attr_group(loi, attr_group);
+    }
+    return attr_group;
+  }
+  return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *dst,
+								      lives_obj_instance_t *src) {
+  // if we have subordinate obj_instances, then data can be passed from one chain member to the next
+  // and then finally back to the chain prime
+  //
+  // if src is non NULL, we take data from src, else we take data from dst
+  // the function will strip any data not flagged as "static" (meaning flagged ass undletable)
+  // then if dst is non-NULL and doesnt already have this data et,
+  // it will get data as its data, and we add a ref to data
+  //
+  weed_plant_t *attr_group = NULL;
+  if (dst || src) {
+    if (src) attr_group = lives_obj_instance_get_attr_group(src);
+    else attr_group = lives_obj_instance_get_attr_group(dst);
+    if (attr_group) {
+      weed_refcount_inc(attr_group);
+      // this works because: with default _weed_plant_free(), any undeletable leaves are retained
+      // and plant is not freed. incrementing refcount adds an undeleteable leaf
+      // (refcount) if that does not already exist.
+      // thus, the plant cannot be freed, but any leaves NOT flagged as undeletable WILL be deleted.
+      // - undeleteable leaves include "type", "uid", the refcounter itself
+      // and ANY data added as "static", thus the effect will be to delete any data not flagged as "static"
+
+      _weed_plant_free(attr_group);
+
+      // when extending from src to dst, we leave the added ref,
+      // since when dst is freed, it will unref attr_group
+
+      if (!dst || lives_obj_instance_get_attr_group(dst) == attr_group)
+        weed_refcount_dec(attr_group);
+      else lives_obj_instance_set_attr_group(dst, attr_group);
+    }
+  }
+  return attr_group;
+}
+
+
+/// refcounting
+
+LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_obj_instance_t *obj) {
+  return lives_proc_thread_unref(obj);
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_obj_instance_t *obj) {
+  // return FALSE if destroyed
+  return (lives_object_instance_unref(obj) > 0);
+}
+
+
+LIVES_GLOBAL_INLINE int lives_object_instance_ref(lives_obj_instance_t *obj) {
+  return lives_proc_thread_ref(obj);
+}
+
+
+void lives_thread_set_intention(lives_intention intent, lives_capacities_t *caps) {
+  if (THREAD_CAPACITIES) {
+    lives_capacities_free(THREAD_CAPACITIES);
+    THREAD_CAPACITIES = NULL;
+  }
+  THREAD_INTENTION = intent;
+  if (caps) THREAD_CAPACITIES = caps;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_thread_set_intentcap(const lives_intentcap_t *icap) {
+  THREAD_INTENTION = icap->intent;
+  if (THREAD_CAPACITIES) lives_capacities_unref(THREAD_CAPACITIES);
+  THREAD_CAPACITIES = lives_capacities_copy(NULL, icap->capacities);
+}
+
+
+////// object attributes //////////////
+
+#define LIVES_ATTR_PREFIX "."
+
+char *make_attr_name(const char *name) {
+  if (lives_str_starts_with(name, LIVES_ATTR_PREFIX)) return lives_strdup(name);
+  return  lives_strdup_printf("%s%s", LIVES_ATTR_PREFIX, name);
+}
+
+
+weed_plant_t *lives_obj_attr_new(const char * name, weed_seed_t st) {
+  weed_plant_t *attr = lives_obj_instance_create(0, 0);
+  weed_set_string_value(attr, LIVES_LEAF_NAME, name);
+  weed_set_int_value(attr, LIVES_LEAF_VALUE_TYPE, st);
+  return attr;
+}
+
+
+weed_plant_t *attr_grp_find_attr(weed_plant_t *attr_grp, const char *name) {
+  char *aname = make_attr_name(name);
+  weed_plant_t *attr = weed_get_plantptr_value(attr_grp, aname, NULL);
+  weed_free(aname);
+  return attr;
+}
+
+
+weed_plant_t *lives_obj_instance_get_attribute(lives_obj_instance_t *loi, const char *name) {
+  weed_plant_t *attr = NULL;
+  if (!loi || !name || !*name) return NULL;
+  weed_plant_t *attr_grp = lives_obj_instance_get_attr_group(loi);
+  if (attr_grp) {
+    return attr_grp_find_attr(attr_grp, name);
+  }
+  return attr;
+}
+
+// in the final version of this, we will decalre attributes for objects, and these
+// will be used as template to create object intances
+// for now we will creeate attributes directly in obj_instance
+// first we need to ensure obj_int ha an attr_group
+// - all atttributes will live in here
+// then we create an attibute and add in the the attr_group
+//
+// for now we ue simple attributes, they have a name, a type and a value
+// plus an optional "param" - a pointer to a lives_param_t
+// we can store extra info in the param, e.g. max min values, widgets, list values
+//
+// here we declare the most basic form of an attribute
+// just the name ane value type
+// in order not confuse attr name with internal leaves of the plant,
+//  all attr names internally are prefixed with a "."
+
+lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi,
+						       const char *name, weed_seed_t st) {
+  if (!loi || !name || !*name) return NULL;
+  char *aname;
+  weed_plant_t *attr_grp = lives_obj_instance_ensure_attr_group(loi);
+
+ weed_plant_t *attr = attr_grp_find_attr(attr_grp, name);
+  if (attr) {
+    if (weed_get_int_value(attr, LIVES_LEAF_VALUE_TYPE, NULL) != st)
+      return NULL;
+    return attr;
+  }
+  attr = lives_obj_attr_new(name, st);
+  aname = make_attr_name(name);
+  lives_add_subobj(attr_grp, aname, attr);
+  lives_free(aname);
+  return attr;
+}
+
+
+LIVES_GLOBAL_INLINE weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *attr) {
+  return weed_get_int_value(attr, LIVES_LEAF_VALUE_TYPE, NULL);
+}
+
+///
+
+LIVES_GLOBAL_INLINE int lives_attribute_get_value_int(lives_obj_attr_t *attr) {
+  return weed_get_int_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE int lives_attribute_get_value_boolean(lives_obj_attr_t *attr) {
+  return weed_get_boolean_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE double lives_attribute_get_value_double(lives_obj_attr_t *attr) {
+  return weed_get_double_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE float lives_attribute_get_value_float(lives_obj_attr_t *attr) {
+  return weed_get_double_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE int64_t lives_attribute_get_value_int64(lives_obj_attr_t *attr) {
+  return weed_get_int64_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *attr) {
+  return weed_get_uint64_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+LIVES_GLOBAL_INLINE char *lives_attribute_get_value_string(lives_obj_attr_t *attr) {
+  if (weed_leaf_num_elements(attr, WEED_LEAF_VALUE) == 0) return NULL;
+  return weed_get_string_value(attr, WEED_LEAF_VALUE, NULL);
+}
+
+
+////////////////////////
+
+
 void *lookup_entry_full(uint64_t uid) {
   // check dictionary objects (objects and plant snapshots)
   void *thing = (void *)get_from_hash_store_i(main_objstore, uid);
@@ -53,9 +321,9 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(lives_obj_t *obj) {
 }
 
 
-LIVES_GLOBAL_INLINE int lives_object_get_state(lives_obj_t *obj) {
-  return obj ? weed_get_int_value(obj, "state", NULL) : 0;
-}
+/* LIVES_GLOBAL_INLINE int lives_object_get_state(lives_obj_t *obj) { */
+/*   return obj ? weed_get_int_value(obj, "state", NULL) : 0; */
+/* } */
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(lives_obj_t *obj) {
@@ -106,7 +374,7 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
   // intents - update - set with new vals, no delete
   // replace - delete old add new
 
-  if (!dicto) dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_OBJECT);
+  if (!dicto) dicto = lives_obj_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_OBJECT);
   else if (intent == OBJ_INTENTION_REPLACE && weed_plant_has_leaf(dicto, "attrs")) {
     lives_object_attributes_unref_all(dicto);
   }
@@ -127,7 +395,6 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
       xattr  = lives_object_get_attribute(dicto, aname);
       if (xattr) lives_object_attribute_unref(dicto, xattr);
     }
-    xattr = lives_object_declare_attribute(dicto, aname, st);
     if (xattr) {
       // TODO = warn if attr type changing
       weed_plant_duplicate_clean(xattr, attr);
@@ -224,7 +491,7 @@ lives_objstore_t *remove_from_objstore(uint64_t key) {
 
 
 LIVES_GLOBAL_INLINE lives_dicto_t *lives_dicto_new(uint64_t subtype) {
-  return lives_object_instance_create(OBJECT_TYPE_DICTIONARY, subtype);
+  return lives_obj_instance_create(OBJECT_TYPE_DICTIONARY, subtype);
 }
 
 lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
@@ -232,7 +499,7 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
   weed_size_t nleaves;
   char **leaves = weed_plant_list_leaves(plant, &nleaves);
   if (nleaves) {
-    dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_WEED_PLANT);
+    dicto = lives_obj_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_WEED_PLANT);
     for (int i = 0; leaves[i]; i++) {
       char *key = leaves[i];
       uint32_t st = weed_leaf_seed_type(plant, key);
@@ -253,7 +520,7 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int
   const lives_funcdef_t *funcdef = get_template_for_func(func);
   if (!funcdef) {
     char *functxt;
-    lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
+    lives_dicto_t *dicto = lives_obj_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
     lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, "native_ptr",
                               WEED_SEED_VOIDPTR);
     uint32_t rtype = get_seedtype(rttype[0]);
@@ -321,95 +588,12 @@ const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
 }
 
 
-void lives_thread_set_intention(lives_intention intent, lives_capacities_t *caps) {
-  if (THREAD_CAPACITIES) {
-    lives_capacities_free(THREAD_CAPACITIES);
-    THREAD_CAPACITIES = NULL;
-  }
-  THREAD_INTENTION = intent;
-  if (caps) THREAD_CAPACITIES = caps;
-}
-
-
-LIVES_GLOBAL_INLINE void lives_thread_set_intentcap(const lives_intentcap_t *icap) {
-  THREAD_INTENTION = icap->intent;
-  if (THREAD_CAPACITIES) lives_capacities_unref(THREAD_CAPACITIES);
-  THREAD_CAPACITIES = lives_capacities_copy(NULL, icap->capacities);
-}
-
-
-LIVES_GLOBAL_INLINE int lives_attribute_get_value_int(lives_obj_attr_t *attr) {
-  return weed_get_int_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-LIVES_GLOBAL_INLINE int lives_attribute_get_value_boolean(lives_obj_attr_t *attr) {
-  return weed_get_boolean_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-LIVES_GLOBAL_INLINE double lives_attribute_get_value_double(lives_obj_attr_t *attr) {
-  return weed_get_double_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-LIVES_GLOBAL_INLINE float lives_attribute_get_value_float(lives_obj_attr_t *attr) {
-  return weed_get_double_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-LIVES_GLOBAL_INLINE int64_t lives_attribute_get_value_int64(lives_obj_attr_t *attr) {
-  return weed_get_int64_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-LIVES_GLOBAL_INLINE uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *attr) {
-  return weed_get_uint64_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-LIVES_GLOBAL_INLINE char *lives_attribute_get_value_string(lives_obj_attr_t *attr) {
-  if (weed_leaf_num_elements(attr, WEED_LEAF_VALUE) == 0) return NULL;
-  return weed_get_string_value(attr, WEED_LEAF_VALUE, NULL);
-}
-
-/// refcounting
-
-LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_obj_instance_t *obj) {
-  return lives_proc_thread_unref(obj);
-}
-
-
-LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_obj_instance_t *obj) {
-  // return FALSE if destroyed
-  return (lives_object_instance_unref(obj) > 0);
-}
-
-
-LIVES_GLOBAL_INLINE int lives_object_instance_ref(lives_obj_instance_t *obj) {
-  return lives_proc_thread_ref(obj);
-}
-
-
 size_t weigh_object(lives_obj_instance_t *obj) {
   lives_obj_attr_t **attrs = lives_object_get_attrs(obj);
   size_t tot = weed_plant_weigh(obj);
   for (int i = 0; attrs[i]; i++) tot += weed_plant_weigh(attrs[i]);
   lives_free(attrs);
   return tot;
-}
-
-
-LIVES_GLOBAL_INLINE lives_obj_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
-  // this is a stopgap until eventually we transition to Nirva object instances
-  // for now object instances can be treated exaclty like live_proc_htreads, except that they will
-  // not have a pool thread assigned, not a target function
-  // however, things like hook_stacks and
-  lives_obj_instance_t *oinst = lives_plant_new(LIVES_PLANT_OBJECT);
-  add_garnish(oinst, NULL, 0);
-  return oinst;
-}
-
-
-////// object attributes //////////////
-
-LIVES_GLOBAL_INLINE char *lives_attr_get_name(lives_obj_attr_t *attr) {
-  if (attr) return weed_get_string_value(attr, WEED_LEAF_NAME, NULL);
-  return NULL;
 }
 
 
@@ -622,24 +806,6 @@ weed_error_t lives_object_set_attr_def_array(lives_obj_t *obj, lives_obj_attr_t 
 
 
 lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *obj, const char *name) {
-  /* if (name && *name) { */
-  /*   lives_obj_attr_t **attrs, *attr; */
-  /*   char *pname; */
-  /*   if (obj) attrs = lives_object_get_attrs(obj); */
-  /*   else attrs = THREADVAR(attributes); */
-  /*   if (attrs) { */
-  /*     for (int count = 0; attrs[count]; count++) { */
-  /*       attr = attrs[count]; */
-  /*       pname = lives_attr_get_name(attr); */
-  /*       if (!lives_strcmp(name, pname)) { */
-  /*         lives_free(pname); */
-  /*         if (obj) lives_free(attrs); */
-  /*         return attr; */
-  /*       } */
-  /*       lives_free(pname); */
-  /*     } */
-  /*   } */
-  /* } */
   return NULL;
 }
 
@@ -745,10 +911,8 @@ void weed_plant_take_snapshot(weed_plant_t *plant) {
 }
 
 
-lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st) {
-  /* lives_obj_attr_t *attr; */
-  /* lives_obj_attr_t **attrs; */
-  /* uint64_t uid; */
+lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, weed_seed_t st) {
+
   /* int count = 0; */
   /* if (obj) { */
   /*   attrs = weed_get_plantptr_array(obj, "attrs", NULL); */
@@ -790,14 +954,6 @@ lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *n
   /*   lives_free(attrs); */
   /* } else THREADVAR(attributes) = attrs; */
   return NULL;
-}
-
-
-LIVES_GLOBAL_INLINE uint32_t lives_attr_get_value_type(lives_obj_attr_t *attr) {
-  if (!attr) return WEED_SEED_INVALID;
-  if (weed_plant_has_leaf(attr, WEED_LEAF_DEFAULT))
-    return weed_leaf_seed_type(attr, WEED_LEAF_DEFAULT);
-  return weed_leaf_seed_type(attr, WEED_LEAF_VALUE);
 }
 
 

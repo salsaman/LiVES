@@ -2326,6 +2326,9 @@ const lives_decoder_sys_t *find_decoder(uint64_t dec_uid, const char *decplugnam
   decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
   for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
     const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
+    g_print("CHK1 %lu vs %lu\n", dec_uid, dpsys->id->uid);
+    g_print("CHK2 %s vs %s\n", dpsys->soname, decplugname);
+
     if ((dec_uid && dpsys->id->uid == dec_uid) ||
         (!dec_uid && !lives_strcmp(dpsys->soname, decplugname))) {
       return dpsys;

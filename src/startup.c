@@ -472,6 +472,9 @@ static boolean pre_init(void) {
     lives_alarm_set_timeout(ONE_MILLION);
     lives_alarm_wait();
     g_printerr("OK\n");
+    lives_alarm_set_timeout(10000);
+    lives_alarm_wait();
+    g_printerr("OK\n");
   }
 
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
@@ -786,6 +789,14 @@ static boolean pre_init(void) {
     prefs->audio_player = AUD_PLAYER_NONE;
     lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
   }
+  
+  g_printerr("\n\nLoading realtime fx plugins...");
+
+  // this cannot be run until after do_start_messages()
+  load_rte_plugins();
+
+  g_printerr("OK\n");
+  // up to here, do not launcha any bg threads
 
   prefs->open_decorated = TRUE;
 
@@ -1330,7 +1341,7 @@ static boolean lives_startup(livespointer data) {
   if (mainw->no_idlefuncs) return TRUE;
 
   what_sup = startup_sup;
-
+  
   // check the working directory
   if (needs_workdir) {
     // get initial workdir
@@ -1441,6 +1452,8 @@ static boolean lives_startup(livespointer data) {
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
+  create_fx_defs_menu();
+  
   if (theme_error && !mainw->foreign) {
     // non-fatal errors
     char *old_prefix_dir = lives_strdup(prefs->prefix_dir);
@@ -1577,18 +1590,14 @@ static boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  if (!mainw->lives_shown) {
-    mainw->is_ready = TRUE;
-    show_lives();
-  }
+  set_gui_loop_tight(TRUE);
+  lives_idle_priority(fg_service_ready_cb, NULL);
 
   if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
     // still experimental
     switch_aud_to_none(FALSE);
   }
-  lives_idle_priority(fg_service_ready_cb, NULL);
 
-  set_gui_loop_tight(TRUE);
   lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, 0, "v", NULL);
   return FALSE;
 }
@@ -1602,11 +1611,21 @@ static boolean lives_startup2(livespointer data) {
 
   boolean layout_recovered = FALSE;
   boolean do_show_quota = prefs->show_disk_quota;
-
+  g_print("\n\nst2\n\n");
+  
   if (mainw->no_idlefuncs) return TRUE;
+  g_print("\n\nst2a\n");
 
   nsc = (uint64_t)mainw->n_service_calls;
   if (!nsc) return TRUE;
+  g_print("\n\nst2b\n");
+  
+  if (!mainw->lives_shown) {
+    mainw->is_ready = TRUE;
+    show_lives();
+  }
+
+  resize_message_area(NULL);
 
   attrs = lives_proc_thread_get_attrs(self);
   lives_proc_thread_set_attrs(self, attrs & ~LIVES_THRDATTR_AUTO_REQUEUE);
@@ -2789,7 +2808,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s", tmp);
     lives_free(tmp);
   }
-
+  
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
   lives_idle_add(lives_startup, NULL);
 
@@ -3103,24 +3122,8 @@ static boolean lives_init(_ign_opts * ign_opts) {
 
   future_prefs->pref_trash = prefs->pref_trash = get_boolean_prefd(PREF_PREF_TRASH, FALSE);
 
-  // get window manager capabilities
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
-    capable->wm_name = lives_strdup("Wayland");
-#endif
-#ifdef GDK_WINDOWING_X11
-  if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
-    capable->wm_name = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
-#endif
-
-  *capable->wm_caps.wm_name = 0;
-  capable->has_wm_caps = FALSE;
-  get_wm_caps();
-
-  if (*capable->wm_caps.panel)
-    prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  if (prefs->show_dev_opts)
-    prefs->show_desktop_panel = TRUE;
+  // anything that d_prints messages should go here:
+  do_start_messages();
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -3449,23 +3452,14 @@ static boolean lives_init(_ign_opts * ign_opts) {
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
 
-    // anything that d_prints messages should go here:
-    do_start_messages();
-
-    g_printerr("\n\nLoading realtime fx plugins...");
-
-    // this cannot be run until after do_start_messages()
-    load_rte_plugins();
-
-    g_printerr("OK\n");
-    // up to here, do not launcha any bg threads
-
     if (!prefs->vj_mode) {
       if (!needs_workdir && initial_startup_phase == 0) {
         // check diskspace, slow, reutls checked in lazy_startup_checks
         mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
       }
     }
+
+
 
 #ifndef VALGRIND_ON
     /// generate some complementary colours
@@ -3482,6 +3476,8 @@ static boolean lives_init(_ign_opts * ign_opts) {
     }
 #endif
 
+
+    
     // replace any multi choice effects with their delegates
     replace_with_delegates();
 
@@ -3984,6 +3980,25 @@ static void do_start_messages(void) {
   if (get_screen_usable_size(&w, &h)) {
     d_print(_("Actual usable size appears to be %d X %d\n"), w, h);
   }
+
+    // get window manager capabilities
+#ifdef GDK_WINDOWING_WAYLAND
+  if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
+    capable->wm_name = lives_strdup("Wayland");
+#endif
+#ifdef GDK_WINDOWING_X11
+  if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
+    capable->wm_name = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
+#endif
+
+  *capable->wm_caps.wm_name = 0;
+  capable->has_wm_caps = FALSE;
+  get_wm_caps();
+
+  if (*capable->wm_caps.panel)
+    prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
+  if (prefs->show_dev_opts)
+    prefs->show_desktop_panel = TRUE;
 
   get_wm_caps();
 

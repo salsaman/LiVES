@@ -1042,8 +1042,6 @@ boolean resize_message_area(livespointer data) {
   static boolean isfirst = TRUE;
   if (mainw->no_idlefuncs) return TRUE;
 
-  if (data) isfirst = TRUE;
-
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
     mainw->idlemax = 0;
@@ -1059,6 +1057,7 @@ boolean resize_message_area(livespointer data) {
   if (mainw->idlemax > 0 && lives_widget_get_allocation_height(mainw->end_image) != mainw->ce_frame_height) return TRUE;
 
   mainw->idlemax = 0;
+
   mainw->assumed_height = mainw->assumed_width = -1;
 
   msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);

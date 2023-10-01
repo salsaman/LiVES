@@ -380,6 +380,22 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_widget_object(LiVE
 ////////////////////////////////////////////////////
 //lives_painter functions
 
+
+WIDGET_HELPER_GLOBAL_INLINE void lives_painter_surface_set_user_data(lives_painter_surface_t *surf, const painter_data_key *dkey, void *data,
+				 lives_painter_destroy_func_t destroy_fn) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_surface_set_user_data(surf, dkey, data, destroy_fn);
+#endif
+}
+
+WIDGET_HELPER_GLOBAL_INLINE void *lives_painter_surface_get_user_data(lives_painter_surface_t *surf, const painter_data_key *dkey) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  return cairo_surface_get_user_data(surf, dkey);
+#endif
+}
+
+
+
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target) {
   lives_painter_t *cr = NULL;
 #ifdef LIVES_PAINTER_IS_CAIRO
@@ -518,7 +534,30 @@ WIDGET_HELPER_LOCAL_INLINE void lives_painter_lozenge(lives_painter_t *cr, doubl
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
 #ifdef LIVES_PAINTER_IS_CAIRO
-  cairo_surface_destroy(surf);
+  // if we get down to 1 reference, check if the uurface has a proxy layer
+  // if so, this means - the surface was created from a layer, the uer_data was et at that time
+  // now the surface has been dereferenced and should normally be detroyed.
+  // However, if the layer link  still exists, thi means its pixdata has not been freed.
+  // We will finish() the surface, but not reduce the refcount yet.
+  // We will set layer pixel_data back to the data value (it would havebeen set to NULL to prevent copying)
+  // then we will  unpremultilpy alpha and end up with a layer in ARGB32. On return, caller canc convert palette back
+  // to RGB(A) or whatever. We also have sRGB gamme. Which may need converting.
+  // when the attached layer frees its pixel_data, it will already be nullified, so it will simply remove the link from
+  // surface to layer, free the layer, and unref the surface.
+  
+  // if we convert surface to layer, and a shallow copy i wanted, we check if layer target is the linked layer. If so
+  // we set we unref the surface, performing the op above and then unref surface once more when layer pixel data is freed.
+
+  // other things - layer to surface  -> ref surface -> surface to layer, surace unref, but count is > 1
+  // we need to copy pixel data for layer, unref surface, remove link between layer and surface
+  //
+  // what if we unref surface, but dont want it back in layer ? then simply nullify pixdata in layer first, even though it
+  // i NULL, it still has SURFACE_SRC set. nullifying will remove tha link and unref surface.
+  // refcount can go to 1, but ther will be no link any more.
+
+  // if we have an attached layer, do not free yet; hold at 1 ref
+  if (lives_painter_surface_check(surf)) lives_painter_surface_flush(surf);
+  else cairo_surface_destroy(surf);
   return TRUE;
 #endif
   return FALSE;
@@ -1765,11 +1804,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget * 
 #ifdef GUI_GTK
   if (mainw->mgeom) {
     if (!mainw->ignore_screen_size) {
-      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
-        lives_abort("Widget size too large for display (sr!i) !");
+      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) {
+	char *msg = lives_strdup_printf("Widget size (%d X %d0 too large for display (%d X %d) (sr!i) !",
+					width, height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+	lives_abort(msg);
+	lives_free(msg);
+      }
     } else {
-      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
-        lives_abort("Widget size too large for display (sri) !");
+      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) {
+	char *msg = lives_strdup_printf("Widget size (%d X %d) too large for display (%d X %d) (sri) !",
+					width, height, GUI_SCREEN_PHYS_WIDTH, GUI_SCREEN_PHYS_HEIGHT);
+	lives_abort(msg);
+	lives_free(msg);
+      }
     }
   }
   if (LIVES_IS_WINDOW(widget)) lives_window_resize(LIVES_WINDOW(widget), width, height);
@@ -2046,7 +2093,7 @@ void fg_service_call(lives_proc_thread_t lpt, void *retloc) {
         lives_proc_thread_unref(lpt);
         return;
       }
-      lives_nanosleep(LIVES_QUICK_NAP);
+      lives_microsleep;
     }
     // once we have lock, no other thread can reset lpttotrun so we will do that here
     // then in wati_for_fg_response, we will set lpttorun to our lpt, and block until
@@ -3500,16 +3547,16 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_pixbuf_get_n_channels(const LiVESPixbuf * 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf * pixbuf) {
+WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_pixbuf_get_pixels(const LiVESPixbuf * pixbuf) {
 #ifdef GUI_GTK
   return gdk_pixbuf_get_pixels(pixbuf);
 #endif
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf * pixbuf) {
+WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf * pixbuf) {
 #ifdef GUI_GTK
-  return (const guchar *)gdk_pixbuf_get_pixels(pixbuf);
+  return gdk_pixbuf_get_pixels(pixbuf);
 #endif
 }
 
@@ -13422,7 +13469,7 @@ boolean lives_widget_context_update(void) {
       }
       // trigger gui loop update
       mainw->do_ctx_update = TRUE;
-      lives_nanosleep_while_true(mainw->do_ctx_update);
+      lives_sleep_while_true(mainw->do_ctx_update);
       return TRUE;
     }
   }

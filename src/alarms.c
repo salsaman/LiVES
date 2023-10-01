@@ -361,7 +361,6 @@ int lives_sys_alarm_get_state(alarm_name_t alaname) {
 }
 
 
-
 // experimental
 
 /* lpt_mind_control(pthread_t target, int spell, void *data) { */

@@ -65,6 +65,7 @@
 #include <errno.h>
 
 #include <setjmp.h>
+#include <ucontext.h>
 
 #define NEED_ENDIANTEST 0
 #include "defs.h"
@@ -195,8 +196,6 @@ extern pthread_t main_thread;
 
 #include "user-interface.h"
 
-#include "filesystem.h"
-
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
@@ -210,6 +209,9 @@ typedef enum {
   LOCAL,	// user compiled code
   INTERNAL,	// executable replaced by internal function
 } lives_checkstatus_t;
+
+#include "startup.h"
+#include "filesystem.h"
 
 #define XCAPABLE(foo, EXE_FOO) \
   (capable->has_##foo->present == INTERNAL ? PRESENT :  ((capable->has_##foo->present == UNCHECKED \

@@ -4818,6 +4818,8 @@ static void make_fx_defs_menu(int num_weed_compounds) {
 }
 
 
+static int ncompounds = 0;
+
 void weed_load_all(void) {
   // get list of plugins from directory and create our fx
   LiVESList *weed_plugin_list, *weed_plugin_sublist;
@@ -4826,7 +4828,6 @@ void weed_load_all(void) {
   char *subdir_path, *subdir_name, *plugin_path, *plugin_name, *plugin_ext;
   int max_modes = FX_MODES_MAX;
   int numdirs;
-  int ncompounds = 0;
   int i, j;
 
   pthread_mutexattr_init(&mattr);
@@ -4837,7 +4838,7 @@ void weed_load_all(void) {
   weed_filters = NULL;
   hashnames = NULL;
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
 
 #ifdef DEBUG_WEED
   lives_printerr("In weed init\n");
@@ -4873,7 +4874,7 @@ void weed_load_all(void) {
 
   next_free_key = FX_KEYS_MAX_VIRTUAL;
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
 
   // first we parse the weed_plugin_path
 #ifndef IS_MINGW
@@ -4883,7 +4884,7 @@ void weed_load_all(void) {
   numdirs = get_token_count(prefs->weed_plugin_path, ';');
   dirs = lives_strsplit(prefs->weed_plugin_path, ";", numdirs);
 #endif
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
 
   // here we want to load all plants and leaves into std memory,
   // otherwise we use up all allocated space for rpmalloc
@@ -4903,7 +4904,7 @@ void weed_load_all(void) {
     // parse twice, first we get the plugins, then 1 level of subdirs
     while (list) {
       LiVESList *listnext = list->next;
-      threaded_dialog_spin(0.);
+      // threaded_dialog_spin(0.);
       plugin_name = (char *)list->data;
       plugin_ext = get_extension(plugin_name);
       if (!lives_strcmp(plugin_ext, DLL_EXT)) {
@@ -4921,7 +4922,7 @@ void weed_load_all(void) {
       }
       lives_free(plugin_ext);
       list = listnext;
-      threaded_dialog_spin(0.);
+      // threaded_dialog_spin(0.);
 #if USE_RPMALLOC
       if (rpmalloc_is_thread_initialized()) {
         rpmalloc_thread_collect();
@@ -4931,7 +4932,7 @@ void weed_load_all(void) {
 
     // get 1 level of subdirs
     for (list = weed_plugin_list; list; list = list->next) {
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
       subdir_name = (char *)list->data;
       subdir_path = lives_build_filename(dirs[i], subdir_name, NULL);
       if (!lives_file_test(subdir_path, LIVES_FILE_TEST_IS_DIR) || !strcmp(subdir_name, "icons") || !strcmp(subdir_name, "data")) {
@@ -4950,7 +4951,7 @@ void weed_load_all(void) {
       }
       lives_list_free_all(&weed_plugin_sublist);
       lives_freep((void **)&subdir_path);
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
     }
     lives_list_free_all(&weed_plugin_list);
   }
@@ -4965,15 +4966,18 @@ void weed_load_all(void) {
 
   d_print(_("Successfully loaded %d Weed filters\n"), num_weed_filters);
 
-#ifndef VALGRIND_ON
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   //  ncompounds = load_compound_fx();
-  threaded_dialog_spin(0.);
-#endif
+  //threaded_dialog_spin(0.);
+}
+
+
+void create_fx_defs_menu(void) {
+#ifndef VALGRIND_ON
   make_fx_defs_menu(ncompounds);
-  threaded_dialog_spin(0.);
   weed_fx_sorted_list = lives_list_reverse(weed_fx_sorted_list);
   fx_inited = TRUE;
+#endif
 }
 
 
@@ -5126,7 +5130,7 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
   // free out_param_templates
   plants = weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &nitems);
   if (nitems > 0) {
-    threaded_dialog_spin(0.);
+    //   threaded_dialog_spin(0.);
     for (i = 0; i < nitems; i++) {
       if (weed_plant_has_leaf(plants[i], WEED_LEAF_GUI))
         weed_plant_free(weed_get_plantptr_value(plants[i], WEED_LEAF_GUI, NULL));
@@ -5748,7 +5752,7 @@ static int load_compound_fx(void) {
 
   char *lives_compound_plugin_path, *plugin_name, *plugin_path;
 
-  threaded_dialog_spin(0.);
+  //  threaded_dialog_spin(0.);
 
   lives_compound_plugin_path = lives_build_path(prefs->config_datadir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM, TRUE, lives_compound_plugin_path, NULL);
@@ -5763,7 +5767,7 @@ static int load_compound_fx(void) {
 
   lives_list_free_all(&compound_plugin_list);
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   lives_free(lives_compound_plugin_path);
 
   lives_compound_plugin_path = lives_build_path(prefs->prefix_dir, PLUGIN_COMPOUND_DIR,
@@ -5787,7 +5791,7 @@ static int load_compound_fx(void) {
   }
 
   lives_free(lives_compound_plugin_path);
-  threaded_dialog_spin(0.);
+  //  threaded_dialog_spin(0.);
   return num_weed_filters - onum_filters;
 }
 #endif
@@ -5850,7 +5854,7 @@ void weed_unload_all(void) {
           lives_free(cwd);
         }
         dlclose(handle);
-        threaded_dialog_spin(0.);
+        //threaded_dialog_spin(0.);
       }
       freed_plants = weed_get_voidptr_value(plugin_info, WEED_LEAF_FREED_PLANTS, NULL);
       if (freed_plants) {
@@ -5884,7 +5888,7 @@ void weed_unload_all(void) {
     lives_free(key_to_instance_copy[i]);
   }
 
-  threaded_dialog_spin(0.);
+  //  threaded_dialog_spin(0.);
 
   if (THREADVAR(chdir_failed)) {
     char *dirs = (_("Some plugin directories"));

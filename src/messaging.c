@@ -306,7 +306,7 @@ boolean d_print_overlay(double timeout, const char *fmt, ...) {
     lives_freep((void **)&mainw->overlay_msg);
     mainw->overlay_msg = lives_strdup(text);
     lives_free(text);
-    lives_alarm_reset(mainw->overlay_alarm, timeout * TICKS_PER_SECOND_DBL);
+    lives_sys_alarm_set_timeout(overlay_msg_timeout, timeout * 10 * TICKS_PER_SECOND_DBL);
     return TRUE;
   }
   lives_free(text);

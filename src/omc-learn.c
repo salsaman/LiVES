@@ -2096,7 +2096,7 @@ void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         omclw->bresp = LIVES_RESPONSE_NONE;
       }
     }
-    lives_nanosleep(LIVES_QUICK_NAP);
+    lives_microsleep;
     lives_widget_context_update();
   }
 

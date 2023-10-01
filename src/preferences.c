@@ -3929,7 +3929,7 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   while (!gtk_widget_get_mapped(w)) {
     //while (!gtk_widget_get_visible(w)) {
     if (pos > PANED_MIN) lives_paned_set_position(p, --pos);
-    lives_nanosleep(LIVES_SHORT_SLEEP);
+    lives_millisleep;
     //lives_widget_show_now(w);
     //lives_widget_queue_draw_and_update(lives_widget_get_toplevel(w));
     lives_widget_context_update();
@@ -3938,7 +3938,7 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   if (gtk_widget_get_mapped(w)) {
     while (gtk_widget_get_mapped(w)) {
       lives_paned_set_position(p, ++pos);
-      lives_nanosleep(LIVES_SHORT_SLEEP);
+      lives_millisleep;
       lives_widget_context_update();
     }
   }

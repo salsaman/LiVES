@@ -1050,7 +1050,6 @@ void bbsummary(void) {
         if (seq - seqset[i] > 14) g_print("assigned in seqeuence %d", seqset[i]);
       }
       g_print("\n");
-
       i += used[i] - 1;
     } else seqset[i] = 0;
   }

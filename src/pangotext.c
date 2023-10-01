@@ -832,7 +832,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
         lives_widget_object_unref(layout);
       }
 
-      lives_painter_to_layer(cr, layer_slice);
+      lives_painter_to_layer(layer_slice, cr);
 
       convert_layer_palette(layer_slice, pal, 0);
 
@@ -872,7 +872,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       lingo_painter_show_layout(cr, layout);
       if (layout) lives_widget_object_unref(layout);
     }
-    lives_painter_to_layer(cr, layer);
+    lives_painter_to_layer(layer, cr);
   }
   if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
   return layer;

@@ -70,6 +70,13 @@ typedef struct {
 
   char var_origin[128]; // thread descriptive text eg "LiVES Worker Thread"
 
+  ucontext_t var_context;
+  ucontext_t var_context2;
+  ucontext_t *var_context_ptr;
+  ucontext_t *var_context_ptr2;
+
+  weed_plant_t *var_ret_value;
+  
   pthread_mutex_t var_active_lpt_mutex;
 
   volatile lives_proc_thread_t var_active_lpt;
@@ -270,6 +277,24 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
 #define BG_THREADVAR(var) (get_threadvars_bg_only()->var_##var)
+
+#define COME_BACK_LATER_START static ucontext_t conA, conB; static boolean ret = TRUE; \
+  if (ret) { ret = FALSE; swapcontext(THREADVAR(context_ptr2), THREADVAR(context_ptr));} \
+  while (1) { if (!ret) {ret = TRUE; getcontext(&conB);			\
+      if (!ret) {ret = TRUE; break;} ret = FALSE; swapcontext(&conA, &conB); ret = TRUE;} \
+    if (ret) { ret = FALSE; swapcontext(&conA, THREADVAR(context_ptr));}}
+
+#define COME_BACK_LATER_END swapcontext(&conB, &conA); 
+
+#define COME_BACJK_LATER_MAYBE					\
+  static int times = 0;						\
+  THREADVAR(context_ptr) = &THREADVAR(context);			\
+  THREADVAR(context_ptr2) = &THREADVAR(context2);		\
+  getcontext(&THREADVAR(context));
+/* if (!times++0 do_func(params)*/
+
+#define BACJK_FOR_MORE						\
+  swapcontext(THREADVAR(context_ptr), THREADVAR(context_ptr2));
 
 #define THREAD_CTX THREADVAR(guictx)
 
@@ -485,26 +510,38 @@ uint64_t get_worker_status(uint64_t tid);
 
 #define LIVES_THRDATTR_NONE			0
 
-// worker flagbits (can be set when queueing)
-#define LIVES_THRDATTR_PRIORITY			(1ull << 0)
-#define LIVES_THRDATTR_AUTODELETE		(1ull << 1)
-#define LIVES_THRDATTR_SET_CANCELLABLE 	    	(1ull << 2)
-#define LIVES_THRDATTR_WAIT_START		(1ull << 3)
+// valid only when creating
+// return proc_thread, do not quque it
+#define LIVES_THRDATTR_CREATE_UNQUEUED		(1ull << 0)
+#define LIVES_THRDATTR_START_UNQUEUED		LIVES_THRDATTR_CREATE_UNQUEUED
+
+// reutnr proc_thread with a ref count of 2
+#define LIVES_THRDATTR_CREATE_REFFED		(1ull << 1)
+#define LIVES_THRDATTR_START_REFFED		LIVES_THRDATTR_CREATE_REFFED
+
+// do not wait at sync points (??)
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 4)
 
-// lpt flagbits (only valid when creating a proc_thread)
-// create proc thread but do not queue it
-#define LIVES_THRDATTR_START_UNQUEUED		(1ull << 16)
+// can be et when creating or when queueing
+// -----------------
+// miminise time spent waiting in queue
+#define LIVES_THRDATTR_PRIORITY			(1ull << 8)
+// block until proc_thread is cancelled or running
+#define LIVES_THRDATTR_WAIT_START		(1ull << 9)
+// set cancelable before queueing
+#define LIVES_THRDATTR_SET_CANCELLABLE     	(1ull << 10)
 
 // after completion, a follow on proc_thread will be run
 // by default this will be the same proc thread, but an alternate proc_thread can be prepared unqued and
-#define LIVES_THRDATTR_AUTO_REQUEUE		(1ull << 17)
+#define LIVES_THRDATTR_AUTO_REQUEUE		(1ull << 16)
 
 // after completion, thread will pause, can be resumed
 // when combined with auto requeue, the thread will pause  until joined
-#define LIVES_THRDATTR_AUTO_PAUSE   		(1ull << 18)
+#define LIVES_THRDATTR_AUTO_PAUSE   		(1ull << 17)
 
 #define LIVES_THRDATTR_NXT_IMMEDIATE (LIVES_THRDATTR_AUTO_REQUEUE | LIVES_THRDATTR_AUTO_PAUSE)
+
+//
 
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 32)
@@ -521,7 +558,12 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 41)
 
 // internal flagbits
-#define LIVES_THRDATTR_NO_UNREF   		(1ull << 50) // deprecated ?
+// internal value
+#define LIVES_THRDATTR_AUTODELETE		(1ull << 50)
+
+// prevents proc_threads with state DONTCARE,
+// or with no notify return from being unreffed when finished
+#define LIVES_THRDATTR_NO_UNREF   		(1ull << 51)
 
 // timing related values
 #define LIVES_LEAF_QUEUED_TICKS "_queue_ticks"
@@ -759,6 +801,7 @@ boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
 
 //test if lpt is wating for self condition(s)
 boolean lives_proc_thread_is_waiting(lives_proc_thread_t);
+boolean lives_proc_thread_is_busy(lives_proc_thread_t);
 boolean lives_proc_thread_is_paused(lives_proc_thread_t);
 boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_idle_paused(lives_proc_thread_t);

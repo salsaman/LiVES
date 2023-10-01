@@ -39,6 +39,7 @@
 #define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)
 #define MSEC_TO_TICKS (TICKS_PER_SECOND / 1000) ///< multiplying factor mSec -> ticks_t  (def. 100000)
 #define TICKS_TO_NANOSEC (ONE_BILLION / TICKS_PER_SECOND) /// multiplying factor ticks_t -> nSec (def 10)
+#define TICKS_TO_NSEC(ticks) ((uint64_t)(ticks) * TICKS_TO_NANOSEC)
 
 #define DEF_FPS 25.
 
@@ -1851,8 +1852,6 @@ typedef struct {
   /// OSD
   char *urgency_msg;
   char *overlay_msg;
-
-  lives_alarm_t overlay_alarm;
 
   // stuff specific to audio gens
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)

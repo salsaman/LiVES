@@ -134,6 +134,8 @@ uint64_t factorial_div(int n, int m);
 
 double binomial(int ntrials, int nhits, double ps);
 
+float inv_sqrt(float number);
+
 #define LN_CONSTVAL 1.4427 // 1 / ln(2)
 
 float get_approx_ln(uint32_t val) LIVES_CONST;

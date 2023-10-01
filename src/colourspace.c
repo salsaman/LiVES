@@ -1628,7 +1628,9 @@ LIVES_GLOBAL_INLINE int get_enum_palette(int weed_palette) {
 
 LIVES_GLOBAL_INLINE const weed_macropixel_t *get_advanced_palette(int weed_palette) {
   for (int i = 0; advp[i].ext_ref != WEED_PALETTE_NONE; i++)
+
     if (advp[i].ext_ref == weed_palette) return &advp[i];
+
   return NULL;
 }
 
@@ -2582,7 +2584,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_check_resizable(int pal, int clamped, b
 
 
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf) {
-  unsigned char *pdata = lives_pixbuf_get_pixels(pixbuf);
+  unsigned char *pdata = lives_pixbuf_get_pixels_readonly(pixbuf);
   int row = lives_pixbuf_get_rowstride(pixbuf);
   int height = lives_pixbuf_get_height(pixbuf);
   int offs;
@@ -10667,7 +10669,7 @@ LIVES_GLOBAL_INLINE boolean rowstrides_differ(int n1, int *n1_array, int n2, int
 /** (un)premultply alpha using a lookup table
 
     if un is FALSE we go the other way, and do a pre-multiplication */
-void alpha_unpremult(weed_layer_t *layer, boolean un) {
+void alpha_premult(weed_layer_t *layer, int direction) {
   /// this is only used when going from palette with alpha to one without
   int error;
   int aoffs, coffs, psize, psizel, widthx;
@@ -10718,7 +10720,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
     rows = weed_layer_get_rowstrides(layer, NULL);
 
     if (!clamped) {
-      if (un) {
+      if (direction == LIVES_DIRECTION_REVERSE) {
         for (i = 0; i < height; i++) {
           for (j = 0; j < width; j++) {
             alpha = ptrp[3][j];
@@ -10744,7 +10746,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
         }
       }
     } else {
-      if (un) {
+      if (direction == LIVES_DIRECTION_REVERSE) {
         for (i = 0; i < height; i++) {
           for (j = 0; j < width; j++) {
             alpha = ptrp[3][j];
@@ -10778,7 +10780,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
   ptr = (unsigned char *)weed_layer_get_pixel_data(layer);
 
   if (!clamped) {
-    if (un) {
+    if (direction == LIVES_DIRECTION_REVERSE) {
       for (i = 0; i < height; i++) {
         for (j = 0; j < widthx; j += psize) {
           alpha = ptr[j + aoffs];
@@ -10801,7 +10803,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
     }
   } else {
     /// unclamped YUVA8888 (packed)
-    if (un) {
+    if (direction == LIVES_DIRECTION_REVERSE) {
       for (i = 0; i < height; i++) {
         for (j = 0; j < widthx; j += psize) {
           alpha = ptr[j + 3];
@@ -10826,7 +10828,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
 
   flags = weed_layer_get_flags(layer);
 
-  if (!un) flags |= WEED_LAYER_ALPHA_PREMULT;
+  if (direction == LIVES_DIRECTION_FORWARD) flags |= WEED_LAYER_ALPHA_PREMULT;
   else if (flags & WEED_LAYER_ALPHA_PREMULT) flags ^= WEED_LAYER_ALPHA_PREMULT;
   weed_layer_set_flags(layer, flags);
 }
@@ -11016,7 +11018,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     if ((flags & WEED_LAYER_ALPHA_PREMULT) &&
         (weed_palette_has_alpha(inpl) && !(weed_palette_has_alpha(outpl)))) {
       // if we have pre-multiplied alpha, remove it when removing alpha channel
-      alpha_unpremult(layer, TRUE);
+      alpha_premult(layer, LIVES_DIRECTION_REVERSE);
     }
   } else {
     if (!weed_palette_has_alpha(inpl) && weed_palette_has_alpha(outpl)) {
@@ -12793,7 +12795,7 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
   case WEED_PALETTE_BGR24:
     pixbuf = lives_pixbuf_new(FALSE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
-    pixels = lives_pixbuf_get_pixels(pixbuf);
+    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
     size = rowstride * (height - 1) + get_last_pixbuf_rowstride_value(width, 3);
     lives_memset(pixels, 0, size);
     break;
@@ -12801,14 +12803,14 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
   case WEED_PALETTE_BGRA32:
     pixbuf = lives_pixbuf_new(TRUE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
-    pixels = lives_pixbuf_get_pixels(pixbuf);
+    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
     size = rowstride * (height - 1) + get_last_pixbuf_rowstride_value(width, 4);
     lives_memset(pixels, 0, size);
     break;
   case WEED_PALETTE_ARGB32:
     pixbuf = lives_pixbuf_new(TRUE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
-    pixels = lives_pixbuf_get_pixels(pixbuf);
+    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
     size = rowstride * (height - 1) + get_last_pixbuf_rowstride_value(width, 4);
     lives_memset(pixels, 0, size);
     break;
@@ -13002,7 +13004,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     // copy the pixel data
     int k;
     pixel_data = (uint8_t *)weed_layer_get_pixel_data(layer);
-    pixels = lives_pixbuf_get_pixels(pixbuf);
+    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
     orowstride = lives_pixbuf_get_rowstride(pixbuf);
 
     if (irowstride > orowstride) rowstride = orowstride;
@@ -13070,7 +13072,7 @@ lives_result_t pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
     // then create a proxy layer to accompany the pixbuf, and share pixdata with proxy_layer
     // we will add a copylist to layer and to pixbuf
     px_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-    in_pixel_data = (void *)lives_pixbuf_get_pixels(pixbuf);
+    in_pixel_data = (void *)lives_pixbuf_get_pixels_readonly(pixbuf);
     weed_layer_set_pixel_data(layer, in_pixel_data);
     palette = weed_layer_get_palette(layer);
     if (weed_palette_is_rgb(palette)) weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
@@ -14445,23 +14447,73 @@ boolean consider_swapping(int *inpal, int *outpal) {
 
 /**
    @brief convert a weed layer to lives_painter (a.k.a cairo)
+   if the layer pixel_data is already being shared, or if there is a mismatch of rowstrides,
+   then we make a deep copy of it,
+   otherwie we may share the pixel_data between layer and surface.
+   For Cairo, there are 3 possible palettes, corresponding to
+   WEED_PALETTE_A1, WEED_PALETTE_A8 (alpha only palettes), oe WEED_PALETTE_ARGB32 (32 bit colour palette)
+   However, Cairo uses PREMULTIPLIED alpha, whereas the default in LiVES is POT mulipled.
+   Thus if we convert ot ARGB32, we then premultiply the alpha. In the case where all alpha is 255, 9fully opaque)
+   this makes no difference, otherwise we block other layers from haring pixdata, 
+   and any layer wanting to make a deep copy will have to unpryemultiply alpha. Whether or not we share e pixdata or make a
+   new layer, the layer then becomes a proxy layer for the surface, similar to pixbuf sources. The pixdata is nullifed and
+   wee get a pointer to the surface instead.
+   When converting from surface to layer, again we use a proxy layer. In this case though the layer has no-null pixdata 
+   unreffing the source layer will first nullify its pixdata then free it (if there are nother refs),
+   leaving surface a the sole copy. If the surface is dereffed, 
+   if it still has a proxy layer, the layer with nullifed pixdata will be freed. 
+   If it has a proxy with pixel_data set, do not free (See below)
 
-   width, height and rowstrides of source layer may all change */
+
+   In general - we cannot eaily share data between layer and urface, due to the premulltiplication.
+   Exceptions are if we use A1 or A8, or if we are sure the image is opaque, (e.g if we convert from RGB24 to ARGB)
+   AND tthe rowtide value match..
+
+   However we do not know if / when the uface may change an alpha value, and premulitply the RGB channels.
+
+   Thus, while shared, the layer cannot be copied.
+
+   Now consider the cae where we do layer -> surface -> layer.
+   In the first step we may be able to share pixdata.
+   In the second step we could copy the pixdata, and unpremultiply / convert pal
+   but then if we immediately unref the surface we wated a memcpy. We could do an inplace change and share the pissdata
+   avoiding a malloc, doing all inplace, but then if psurface is still needed, this is bad.
+   Hence we have lives_painter_to_layer(layer, surface) and layer = ...
+
+   So we have:
+   layer_to_lives_painter -> if (rs_match)) premult_alpha() -> create surface from data; nullify layer
+   --> layer unreffed -> freed but pixdata is NULL/ ssurface dereffed -> if layer, do not free, set layer pd,
+   
+   lives_painter to layer -> shallow ->  pixdata copied (shallow), if have proxy layer, return thiss,
+   ssurface unreffed, no free data, unpremult alpha,
+
+   painter to layer -> deep copy -> copy to new layer target, caller can unpremult.
+*/
+
+static painter_data_key px_layer_key;
+
+
+boolean lives_painter_surface_check(lives_painter_surface_t *surf) {
+  // check if  surf about to be destroyed. If it has a linked layer,
+  // hold at 1 refs until layer pixel_data is nullified
+  // hold !!
+  return lives_paintet_surface_get_reference_count(surf) == 1
+    && lives_painter_surface_get_user_data(surf, &px_layer_key);
+}
+
+
 lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
-  lives_painter_surface_t *surf;
+  lives_painter_surface_t *surf = NULL;
   lives_painter_t *cairo;
   lives_painter_format_t cform;
-  int lform;
   uint8_t *src, *dst, *pixel_data;
+  boolean new_alpha = FALSE, shared = FALSE;
+  int irowstride, orowstride, lform;
+  int width, widthx, height, pal, flags;
 
-  int irowstride, orowstride;
-  int width, widthx;
-  int height, pal;
-
-  int i;
-
-  if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
-    surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+  if (0 && weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
+    // shared data
+    //surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
   } else {
     pal = weed_layer_get_palette(layer);
     width = weed_layer_get_width_pixels(layer);
@@ -14472,6 +14524,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
       cform = LIVES_PAINTER_FORMAT_A1;
       widthx = width >> 3;
     } else {
+      if (!weed_palette_has_alpha(pal)) new_alpha = TRUE;
       lform = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order);
       convert_layer_palette(layer, lform, 0);
       cform = LIVES_PAINTER_FORMAT_ARGB32;
@@ -14484,68 +14537,105 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     src = (uint8_t *)weed_layer_get_pixel_data(layer);
 
     if (irowstride == orowstride && !weed_plant_has_leaf(layer, LIVES_LEAF_COPYLIST)
-        && !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
+	&& !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
+      shared = TRUE;
       pixel_data = src;
     } else {
-      dst = pixel_data = (uint8_t *)lives_calloc(1, height * orowstride);
+      boolean ret;
+
+      flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
+
+      ret = create_empty_pixel_data(layer, FALSE, TRUE);
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
+
+      if (!ret) return NULL;
+
+      dst = pixel_data = weed_layer_get_pixel_data(layer);
       if (!pixel_data) return NULL;
-      for (i = 0; i < height; i++) {
-        lives_memcpy(&dst[orowstride * i], &src[irowstride * i], widthx);
-      }
-      weed_layer_pixel_data_free(layer);
-      weed_layer_set_pixel_data(layer, pixel_data);
-      weed_layer_set_rowstride(layer, orowstride);
+
+      for (int i = 0; i < height; i++)
+	lives_memcpy(&dst[orowstride * i], &src[irowstride * i], widthx);
+      /* weed_layer_pixel_data_free(layer); */
+      /* weed_layer_set_pixel_data(layer, pixel_data); */
+      /* weed_layer_set_rowstride(layer, orowstride); */
     }
 
     if (weed_palette_has_alpha(pal)) {
-      int flags = weed_layer_get_flags(layer);
+      flags = weed_layer_get_flags(layer);
       if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
-        // if we have post-multiplied alpha, pre multiply
-        alpha_unpremult(layer, FALSE);
-        flags |= WEED_LAYER_ALPHA_PREMULT;
-        weed_layer_set_flags(layer, flags);
+	if (!new_alpha) {
+	  // if we have post-multiplied alpha, pre multiply
+	  alpha_premult(layer, LIVES_DIRECTION_FORWARD);
+	}
+	flags |= WEED_LAYER_ALPHA_PREMULT;
+	weed_layer_set_flags(layer, flags);
       }
     }
     surf = lives_painter_image_surface_create_for_data(pixel_data, cform, width, height, orowstride);
   }
+
   if (!surf) return NULL;
 
   cairo = lives_painter_create_from_surface(surf); // surf is refcounted
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa1 = %d %p\n", cairo_surface_get_reference_count(surf), surf);
 #endif
-  weed_layer_set_pixel_data(layer, lives_painter_image_surface_get_data(surf));
-  weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surf);
+  if (shared) {
+    // add an extra ref. This will only be removed when layer pixel_data is freed
+    lives_painter_surface_reference(surf);
+    weed_layer_set_pixel_data(layer, NULL);
+    lives_painter_surface_set_user_data(surf, &px_layer_key, (void *)layer, NULL);
+    weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surf);
+  }
   return cairo;
 }
 
 
-/**
-   @brief convert a lives_painter_t (a.k.a) cairo_t to a weed layer */
-boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
-  // updates a weed_layer from a cr
-  void *src;
-  lives_painter_surface_t *surface = lives_painter_get_target(cr), *xsurface = NULL;
+// NB, we convert pixel_data to / from surface, but we deal with cairo context
+//  cairo = lives_painter_create_from_surface(surf);
+//lives_painter_get_target(cr), *xsurface = NULL;
+
+// we need cr for example for overlaying text
+
+// refcounting is done via the urface, the context can been created and destryoed at will, provided we ref
+// urface before detroying cr (?)
+//  @brief convert a lives_painter_t (a.k.a) cairo_t to a weed layer */
+
+lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) {
+  // if layer is NULL, create a new layer (deep copy)
+  // otherwise create a shallow copy, detroying the surface in the process
+  lives_painter_surface_t *surface = lives_painter_get_target(cr);
+  void *src = lives_painter_image_surface_get_data(surface);
   lives_painter_format_t cform;
-
-  int width, height, rowstride;
-
+  lives_layer_t *xlayer = (lives_layer_t *)lives_painter_surface_get_user_data(surface, &px_layer_key);
+  weed_layer_t *orig_layer = NULL;
+  lives_painter_surface_t *xsurf =
+    (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+  int width, height, rowstride, pal;
+  int flags = weed_layer_get_flags(layer);
+  int refs = lives_paintet_surface_get_reference_count(surface);
   /// flush to ensure all writing to the image surface was done
+
   lives_painter_surface_flush(surface);
 
-  if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
-    xsurface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+  if (layer) {
+    if (xsurf == surface && refs == 1 && xlayer == layer) {
+      weed_layer_set_pixel_data(layer, src);
+      if (prefs->alpha_post) alpha_premult(layer, LIVES_DIRECTION_REVERSE);
+      return layer;
+    }
+    orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+    weed_layer_copy(orig_layer, layer);
   }
-  if (xsurface != surface) weed_layer_pixel_data_free(layer);
+  else layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
 
-  src = lives_painter_image_surface_get_data(surface);
-
-  weed_layer_set_pixel_data(layer, src);
-  weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surface);
-
+  if (!xlayer && refs == 1) weed_layer_set_pixel_data(layer, src);
+  
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa2 = %d %p\n", cairo_surface_get_reference_count(surface), surface);
 #endif
+
   lives_painter_surface_reference(surface);
   lives_painter_destroy(cr);
 
@@ -14560,34 +14650,56 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 
   switch (cform) {
   case LIVES_PAINTER_FORMAT_ARGB32:
+    pal = WEED_PALETTE_ARGB32;
     weed_layer_set_palette(layer, LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order));
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
-
-    if (prefs->alpha_post) {
-      /// un-premultiply the alpha
-      alpha_unpremult(layer, TRUE);
-    } else {
-      int flags = weed_layer_get_flags(layer);
-      flags |= WEED_LAYER_ALPHA_PREMULT;
-      weed_layer_set_flags(layer, flags);
-    }
     break;
 
   case LIVES_PAINTER_FORMAT_A8:
+    pal = WEED_PALETTE_A8;
     weed_layer_set_palette(layer, WEED_PALETTE_A8);
     break;
 
   case LIVES_PAINTER_FORMAT_A1:
+    pal = WEED_PALETTE_A1;
     weed_layer_set_palette(layer, WEED_PALETTE_A1);
     break;
 
-  default:
-    break;
+  default: goto failed;
   }
 
-  return TRUE;
-}
+  if (!src) {
+    void *dst;
+    double psize = pixel_size(pal);
+    weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
+    if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto failed;
+    weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
+    dst = weed_layer_get_pixel_data(layer);
+    lives_memcpy(dst, src, height * rowstride * psize);
+  }
+  else {
+    lives_painter_surface_set_user_data(surface, &px_layer_key, (void *)layer, NULL);
+    weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surface);
+    lives_painter_surface_reference(surface);
+  }
 
+  if (cform == LIVES_PAINTER_FORMAT_ARGB32) {
+    if (prefs->alpha_post) {
+      alpha_premult(layer, LIVES_DIRECTION_REVERSE);
+      weed_layer_set_flags(layer, flags & ~WEED_LAYER_ALPHA_PREMULT);
+    }
+    else weed_layer_set_flags(layer, flags | WEED_LAYER_ALPHA_PREMULT);
+  }
+  if (orig_layer) weed_layer_unref(orig_layer);
+  return layer;
+
+ failed:
+  if (orig_layer) {
+    weed_layer_copy(layer, orig_layer);
+    weed_layer_unref(orig_layer);
+  }
+  return NULL;
+}
 #endif
 
 
@@ -14755,6 +14867,16 @@ lives_row_hash_t *hash_cmp_rows(lives_row_hash_t *row_hash, int clipno, frames_t
   return NULL;
 }
 
+
+// consider - surface to layer, layer to surface
+
+// l 2 s, s 2 l, l 2 s  etc
+
+// l 2  s 2 l, copy copy copy
+
+// l 2 s unr , r s free l ref s fre s
+// 
+
 /**
    @brief free pixel_data from layer
 
@@ -14805,21 +14927,19 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   if (pixel_data) {
     if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-    /* weed_ext_atomic_exchange(layer, LIVES_LEAF_PROC_THREAD, WEED_SEED_VOIDPTR, &lpt, &lpt); */
-
     if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
       lives_painter_surface_t *surface =
         (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
       if (surface) {
         // this is where most surfaces die, as we convert from BGRA -> RGB
-        uint8_t *pdata = lives_painter_image_surface_get_data(surface);
 #ifdef DEBUG_CAIRO_SURFACE
         g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
 #endif
-        // call twice to remove our extra ref.
-        lives_painter_surface_destroy(surface);
-        lives_painter_surface_destroy(surface);
-        lives_free(pdata);
+	weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+	lives_painter_surface_set_user_data(surface, &px_layer_key, NULL, NULL);
+	
+	// remove our extra ref
+	lives_painter_surface_destroy(surface);
       }
     } else {
       boolean is_bigblock = FALSE;

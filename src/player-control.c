@@ -945,6 +945,8 @@ void play_file(void) {
 
       if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
 
+      // 
+      
       if (!reset_timebase()) {
         mainw->cancelled = CANCEL_INTERNAL_ERROR;
         break;
@@ -1142,7 +1144,7 @@ void play_file(void) {
       ticks_t timeout = 0;
       if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
         lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        lives_nanosleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0
+        lives_sleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0
                                    && jack_get_msgq(mainw->jackd));
         lives_alarm_clear(alarm_handle);
       }
@@ -1152,7 +1154,7 @@ void play_file(void) {
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
       if (!timeout) handle_audio_timeout();
-      else lives_nanosleep_while_true(mainw->jackd->playing_file > -1);
+      else lives_sleep_while_true(mainw->jackd->playing_file > -1);
     }
   } else {
 #endif
@@ -1188,7 +1190,7 @@ void play_file(void) {
             mainw->pulsed->playing_file = -1;
             mainw->pulsed->fd = -1;
           } else {
-            lives_nanosleep_while_true((mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0));
+            lives_sleep_while_true((mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0));
           }
         }
         // MAKE SURE TO UNCORK THIS LATER
@@ -1437,7 +1439,7 @@ void play_file(void) {
     ticks_t timeout;
     lives_alarm_t alarm_handle;
     alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
+    lives_sleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) handle_audio_timeout();
     if (has_audio_buffers) {
@@ -1450,7 +1452,7 @@ void play_file(void) {
   if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
     ticks_t timeout;
     lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
+    lives_sleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
                                && pulse_get_msgq(mainw->pulsed));
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) handle_audio_timeout();
@@ -1480,7 +1482,7 @@ void play_file(void) {
   }
 
   // allow the main thread to exit from its blocking loop, it will resume normal operations
-  lives_nanosleep_while_true(mainw->do_ctx_update);
+  lives_sleep_while_true(mainw->do_ctx_update);
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;

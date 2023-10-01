@@ -128,7 +128,7 @@ retry:
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
-    lives_nanosleep(LIVES_QUICK_NAP);
+    lives_microsleep;
     pa_mloop_lock();
     pa_state = pa_context_get_state(pcon);
     pa_mloop_unlock();
@@ -1581,7 +1581,7 @@ void pulse_shutdown(void) {
     pa_context_unref(pcon);
   }
   if (pa_mloop) {
-    lives_nanosleep_while_true(in_ap);
+    lives_sleep_while_true(in_ap);
     pa_threaded_mainloop_stop(pa_mloop);
   }
   pcon = NULL;
@@ -1826,7 +1826,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 #endif
     pa_mloop_unlock();
 
-    lives_nanosleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
+    lives_sleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
 
 #if PA_SW_CONNECTION
     // get the volume from the server
@@ -1867,7 +1867,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                  | PA_STREAM_NOT_MONOTONIC));
 
     pa_mloop_unlock();
-    lives_nanosleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
+    lives_sleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
   }
 
   rfx = obj_attrs_to_rfx(pdriver->inst, TRUE);
@@ -1982,7 +1982,6 @@ LIVES_GLOBAL_INLINE volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *p
 boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_operation *pa_op;
   int64_t usec;
-  boolean failed = FALSE;
 
   if (!pulsed->pstream) return FALSE;
 
@@ -1991,17 +1990,12 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
 
   lives_alarm_set_timeout(BILLIONS(5));
 
-  lives_microsleep_until_nonzero(lives_alarm_triggered()
-                                 || pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
-
-  if (pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING) failed = TRUE;
-
-  lives_alarm_disarm();
-
+  lives_microsleep_until_nonzero_timeout(BILLIONS(5), pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
+ 
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  if (failed) return FALSE;
+  return_val_if_triggered(FALSE);
 
   while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
     lives_nanosleep(10000);

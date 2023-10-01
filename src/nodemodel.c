@@ -2664,10 +2664,10 @@ void plan_cycle_trigger(exec_plan_t *plan) {
 
   plan->tdata->trigger_time = lives_get_session_time();
 
-  lives_nanosleep_while_true(plan->state == PLAN_STATE_QUEUED);
+  lives_sleep_while_true(plan->state == PLAN_STATE_QUEUED);
 
   if (plan->state == PLAN_STATE_WAITING) {
-    lives_nanosleep_while_false(lives_proc_thread_is_paused(mainw->plan_runner_proc));
+    lives_sleep_while_false(lives_proc_thread_is_paused(mainw->plan_runner_proc));
     lives_proc_thread_request_resume(mainw->plan_runner_proc);
   }
 }

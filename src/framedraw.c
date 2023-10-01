@@ -264,7 +264,7 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   lives_painter_fill(cr2);
   lives_painter_destroy(cr2);
 
-  lives_painter_to_layer(cr, layer);
+  lives_painter_to_layer(layer, cr);
   lives_widget_queue_draw(fd_widget);
 }
 
@@ -630,7 +630,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
     break;
   }
 
-  lives_painter_to_layer(cr, mainw->fd_layer);
+  lives_painter_to_layer(mainw->fd_layer, cr);
 
   if (!mainw->multitrack)
     redraw_framedraw_image(mainw->fd_layer);
@@ -712,7 +712,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && !(infofile = fopen(cfile->info_file, "r")) && !mainw->cancelled) {
     // wait until we get at least 1 frame
     //lives_widget_context_update();
-    lives_nanosleep(LIVES_QUICK_NAP);
+    lives_microsleep;
   }
   lives_alarm_clear(alarm_handle);
 

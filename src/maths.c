@@ -13,6 +13,18 @@ LIVES_GLOBAL_INLINE uint64_t lives_10pow(int pow) {
 }
 
 
+
+LIVES_GLOBAL_INLINE float inv_sqrt(float number) {
+  union {
+    float    f;
+    uint32_t i;
+  } conv = { .f = number };
+  conv.i  = 0x5f3759df - (conv.i >> 1);
+  conv.f *= 1.5F - (number * 0.5F * conv.f * conv.f);
+  return conv.f;
+}
+
+
 LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
 #ifdef _LIVES_SOURCE
   double factor = exp10((double)decimals);
@@ -398,14 +410,6 @@ uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
 
 uint64_t factorial(int n) {return n == 1 ? 1 : n * factorial(n - 1);}
 uint64_t factorial_div(int n, int m) {return --n == m ? n + 1 : n * factorial_div(n - 1, m);}
-
-
-/* double binomial(int hits, int trials, double phit) { */
-/*   // calulate to probability of n hits in n trials, with p(hit) */
-/*   double n = factorialx(trials, trials - hits) / factorial(hits), pr = pow(phit, hits), */
-/*     pf = pow((1. - phit), trials - hits); */
-/*   return n * pr * pf; */
-/* } */
 
 /* start with the number line 0. / 1. to 1. / 1. (a = 0., b = 1., c = 1., d = 1.) */
 /* then: take the fraction (a + c) / (b + d), if this is > val, then this becomes new max */

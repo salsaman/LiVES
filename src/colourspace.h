@@ -328,7 +328,9 @@ boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array);
 // lives_painter (cairo) functions
 boolean weed_palette_is_painter_palette(int pal);
 lives_painter_t *layer_to_lives_painter(weed_layer_t *);
-boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
+lives_layer_t *lives_painter_to_layer(weed_layer_t *, lives_painter_t *);
+
+boolean lives_painter_surface_check(lives_painter_surface_t *reado);
 
 // layer transformation functions
 
@@ -344,7 +346,8 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *, int *nplanes);
 
 size_t lives_frame_calc_bytesize(int width, int height, int pal, boolean inc_roswstrides, size_t **planes);
 
-void alpha_unpremult(weed_layer_t *, boolean un);
+// direction - LIVES_DIRECTION_FOREWARD / LIVES_DIRECTION_REVERSE
+void alpha_premult(weed_layer_t *, int direction);
 
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 

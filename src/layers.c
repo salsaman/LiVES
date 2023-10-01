@@ -102,6 +102,9 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
     weed_leaf_dup(dest, src, WEED_LEAF_WIDTH);
     weed_leaf_dup(dest, src, WEED_LEAF_HEIGHT);
 
+    // copy rowstrides, though these may get overwritten if we create new pixel data
+    weed_leaf_dup(dest, src, WEED_LEAF_ROWSTRIDES);
+
     weed_leaf_copy_or_delete(dest, WEED_LEAF_CLIP, src);
     weed_leaf_copy_or_delete(dest, WEED_LEAF_FRAME, src);
 
@@ -661,6 +664,7 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   lives_sync_list_t *copylist;
   pthread_mutex_t *copylist_mutex, *copylist_mutex2;
+  boolean full_copy = FALSE;
 
   if (!slayer || !WEED_IS_XLAYER(slayer)) return NULL;
   if (dlayer && !WEED_IS_XLAYER(dlayer)) return NULL;
@@ -686,67 +690,82 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   }
   /// shallow copy
 
+  if (weed_plant_has_leaf(slayer, LIVES_LEAF_SURFACE_SRC)) {
+    // if sharing with a painter (cairo) urface, we cannot shar onwards
+    // so we will make a copy and unpremultiply alpha
+    full_copy = TRUE;
+  }
   // locking this prevents dlayer from being reomved from any copy list as, "last member"
   // since we are now going to add dlayer to copylist, this is superfluous
   // if slsayer and dlayer are already in same copylist, when dlayer is removed
   // if slayer is last member, the finction will try to lock slayer to remove it,
   // however the lock will fail and slayer will maintain its list
 
-  copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(slayer, "copylist_mutex", NULL);
-  if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
+  if (!full_copy) {
+    copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(slayer, "copylist_mutex", NULL);
+    if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
 
-  copylist_mutex2 = (pthread_mutex_t *)weed_get_voidptr_value(dlayer, "copylist_mutex", NULL);
-  if (copylist_mutex2) pthread_mutex_lock(copylist_mutex2);
+    copylist_mutex2 = (pthread_mutex_t *)weed_get_voidptr_value(dlayer, "copylist_mutex", NULL);
+    if (copylist_mutex2) pthread_mutex_lock(copylist_mutex2);
 
-  copylist = lives_layer_get_copylist(slayer);
+    copylist = lives_layer_get_copylist(slayer);
 
-  if (copylist && copylist == lives_layer_get_copylist(dlayer)) {
-    // dlayer is already a copy of slayer, so do nothing
+    if (copylist && copylist == lives_layer_get_copylist(dlayer)) {
+      // dlayer is already a copy of slayer, so do nothing
+      if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
+      if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
+      return dlayer;
+    }
+
     if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
     if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
-    return dlayer;
   }
-
-  if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
-  if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
 
   weed_layer_pixel_data_free(dlayer);
 
-  if (copylist_mutex2) pthread_mutex_lock(copylist_mutex2);
-  if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
-
+  if (!full_copy) {
+    if (copylist_mutex2) pthread_mutex_lock(copylist_mutex2);
+    if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
+  }
   lives_layer_copy_metadata(dlayer, slayer);
-
+  
   if (weed_layer_get_pixel_data(slayer)) {
-    if (!copylist) {
-      copylist = lives_sync_list_add(NULL, (void *)slayer);
-      weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
-      g_print("add to  copylist %p\n", slayer);
+    if (full_copy) {
+      weed_leaf_set_flagbits(dlayer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+      copy_pixel_data(dlayer, slayer, 0);
     }
+    else {
+      if (!copylist) {
+	copylist = lives_sync_list_add(NULL, (void *)slayer);
+	weed_set_voidptr_value(slayer, LIVES_LEAF_COPYLIST, (void *)copylist);
+	g_print("add to  copylist %p\n", slayer);
+      }
 
-    lives_sync_list_add(copylist, (void *)dlayer);
-    g_print("add2 to  copylist %p\n", dlayer);
+      lives_sync_list_add(copylist, (void *)dlayer);
+      g_print("add2 to  copylist %p\n", dlayer);
 
-    // not part of the standard metadata set
-    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_COPYLIST);
+      // not part of the standard metadata set
+      weed_leaf_dup(dlayer, slayer, LIVES_LEAF_COPYLIST);
 
-    weed_leaf_dup(dlayer, slayer, WEED_LEAF_ROWSTRIDES);
-    weed_leaf_dup(dlayer, slayer, WEED_LEAF_PIXEL_DATA);
+      weed_leaf_dup(dlayer, slayer, WEED_LEAF_ROWSTRIDES);
+      weed_leaf_dup(dlayer, slayer, WEED_LEAF_PIXEL_DATA);
 
-    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_BBLOCKALLOC);
-    weed_leaf_dup(dlayer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
-    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_SURFACE_SRC);
-    weed_leaf_dup(dlayer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-    weed_leaf_set_flags(dlayer, WEED_LEAF_PIXEL_DATA,
-                        weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA));
+      weed_leaf_dup(dlayer, slayer, LIVES_LEAF_BBLOCKALLOC);
+      weed_leaf_dup(dlayer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
+
+      weed_leaf_dup(dlayer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
+      weed_leaf_set_flags(dlayer, WEED_LEAF_PIXEL_DATA,
+			  weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA));
+    }
   }
 
   //g_print("LAYERS: %p duplicated to %p, bb %d %d\n", slayer, layer, weed_plant_has_leaf(slayer, LIVES_LEAF_BBLOCKALLOC),
   //	    weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
 
-  if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
-  if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
-
+  if (!full_copy) {
+    if (copylist_mutex2) pthread_mutex_unlock(copylist_mutex2);
+    if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
+  }
   return dlayer;
 }
 

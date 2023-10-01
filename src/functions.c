@@ -556,6 +556,10 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
   default: return LIVES_RESULT_ERROR;
   }
 
+#if USE_RPMALLOC
+  rpmalloc_thread_collect();
+#endif
+
   if (lpt == mainw->debug_ptr) g_print("nrefssxxxxzzZZZ = %d\n", lives_proc_thread_count_refs(lpt));
 
   if (err != WEED_SUCCESS) return LIVES_RESULT_FAIL;
@@ -1530,7 +1534,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
               // this means some other thread also has invalidate_data, we must let it run then recheck
               // UNREF
               lives_proc_thread_unref(lpt);
-              lives_nanosleep_until_zero(pthread_mutex_trylock(&recheck_mutex));
+              lives_sleep_until_zero(pthread_mutex_trylock(&recheck_mutex));
               have_recheck_mutex = TRUE;
               break;
             }

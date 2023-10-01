@@ -348,13 +348,13 @@ if (1) {
 			my $xsize = -s $configfile;
 			smog_rename($configfile, $configfile_damaged);
 			unlink $configfile;
-			if (0 + -e $configfile) {
+			if (-e $configfile) {
 			    $bad_configfile = 1;
 			    startup_error(5, "report", "remove_noversion0", "$configfile:\@:");
 			}
 
 			if ($old_version_hash eq "0" && (-s $recovery_file > 0 || $recovery_file eq $newconfigfile
-							 || -s $newconfigfile == 0)) {
+							 || -z $newconfigfile)) {
 			    startup_error(5, "report", "config_recover_version0", "$configfile:$recovery_file:$xsize:\@:");
 			}
 			else {
@@ -369,7 +369,7 @@ if (1) {
 				    # still no joy
 				    smog_rename($configfile, $configfile_damaged);
 				    unlink $configfile;
-				    if (0 + -e $configfile) {
+				    if (-e $configfile) {
 					$bad_configfile = 1;
 					startup_error(5, "report", "remove_noversion1", "$configfile:\@:");
 				    }
@@ -385,7 +385,7 @@ if (1) {
 				    if ($workdir eq "") {
 					smog_rename($configfile, $configfile_damaged);
 					unlink $configfile;
-					if (0 + -e $configfile) {
+					if (-e $configfile) {
 					    $bad_configfile = 1;
 					    startup_error(5, "report", "remove_noworkdir0",
 							   "$configfile:\@:");
@@ -416,7 +416,7 @@ if (1) {
 		}
 		else {
 		    unlink $recovery_file;
-		    if (0 + -e $recovery_file) {
+		    if (-e $recovery_file) {
 			startup_error(5, "report", "remove_recovery0", "$recovery_file:\@:");
 		    }
 		}
@@ -448,7 +448,7 @@ if (1) {
 	    if (!$has_configfile) {
 		if ($upd) {
 		    unlink $configfile;
-		    if (0 + -e $configfile) {
+		    if (-e $configfile) {
 			startup_error(5, "report", "remove_badconfigfile0", "$configfile:\@:");
 		    }
 		    # set comment at start of file
@@ -518,7 +518,7 @@ if (1) {
 	    }
 	    else {
 		# only for backwards compatibility with older LiVES.
-		if (! (0 + -e $gui_bootstrap_file)) {
+		if (! (-e $gui_bootstrap_file)) {
 		    open OUT, ">", $gui_bootstrap_file or exit 5;
 		    print OUT "$version|";
 		    close OUT;
@@ -933,17 +933,15 @@ if (1) {
 	    }
 
 	    if (-d $plugindir) {
-		smog_chdir($plugindir);
 		opendir DIR, $plugindir;
 		my @files = readdir(DIR);
 		closedir DIR;
-		#@files = sort (@files);
 
 		foreach my $plugname (@files) {
 		    unless ($plugname =~ /^\./) {
-			if (-f $plugname || ($allow_subdirs == 1 && -d "$plugindir/$plugname")) {
+			if (-f "$plugindir/$plugname" || ($allow_subdirs == 1 && -d _)) {
 			    unless ($allow_nonex) {
-				next if ! -x "$plugindir/$plugname";
+				next if ! -x _;
 			    }
 			    unless ($plugname eq "") {
 				if ($ext eq "" || $plugname =~ /$ext$/) {
@@ -4977,8 +4975,8 @@ sub is_writeable {
     ## if the file does not exist and $leave is nonzero the the file will be created
     ## with mode 644, modified by umask
     my ($file, $leave) = @_;
-    return 1 if -f $file && -w $file;
-    return 0 if (0 + -e $file);
+    return 1 if -f $file && -w _;
+    return 0 if -e _;
     my $err = &create_empty_file($file);
     if ($err) {
 	unlink $file;
@@ -9155,7 +9153,7 @@ sub config_set {
 			    close IN;
 			    close OUT;
 			    unlink "$newconfigfile";
-			    if (0 + -e $newconfigfile) {
+			    if (-e $newconfigfile) {
 				close OUT;
 				startup_error(4, "config_set_new", "remove_new1", "$newconfigfile:\@:");
 			    }
@@ -9258,7 +9256,7 @@ sub config_set {
     if ($xconfigfile eq $configfile) {
 	# attempt to backup $configfile before replacement
 	unlink $recconfigfile;
-	if (0 + -e $recconfigfile) {
+	if (-e $recconfigfile) {
 	    startup_error(4, "config_set_rec", "remove_recovery1", "$recconfigfile:\@:");
 	}
 	if (-s $configfile) {
@@ -9304,7 +9302,7 @@ sub config_set {
     $delpref = $noreplace = 0;
 
     unlink $newconfigfile;
-    if (0 + -e $newconfigfile) {
+    if (-e $newconfigfile) {
 	startup_error(4, "config_set_new", "remove_new2", "$newconfigfile:\@:");
     }
 
@@ -9334,7 +9332,7 @@ sub startup_error {
 	    print STDERR "smogrify: $configfile is damaged and could not be removed.\n";
 	    print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	}
-	if (! (0 + -e $configfile)) {
+	if (! (-e $configfile)) {
 	    print STDERR "smogrify: $configfile not present.\n";
 	    if (-s $recconfigfile) {
 		print STDERR "smogrify: Recovery may be possible from $recconfigfile\n";
@@ -9369,7 +9367,7 @@ sub recover_configfile {
     ## attempt a one-time recovery of $configfile from $configfile.recovery
     #inputs: $configfile, $recconfigfile, $recconfigfile_tried
 
-    return "" if (0 + -e $configfile);
+    return "" if -e $configfile;
 
     my $xrecconfigfile = $recconfigfile;
     if (! -s $recconfigfile) {
@@ -9387,12 +9385,12 @@ sub recover_configfile {
     }
 
     # try to back up the recovery file if we can
-    if (0 + -e $recconfigfile_tried) {
+    if (-e $recconfigfile_tried) {
 	unlink $recconfigfile_tried;
     }
 
     $panic = 0;
-    if (! (0 + -e $recconfigfile_tried)) {
+    if (! -e $recconfigfile_tried) {
 	smog_copy($xrecconfigfile, $recconfigfile_tried);
 	if (!$panic && -s $recconfigfile_tried == $size) {
 	    # $recconfigfile successfully renamed as $recconfigfile_tried

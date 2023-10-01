@@ -1695,7 +1695,7 @@ void rec_desk(void *args) {
 
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
-  lives_nanosleep_while_false(!lives_alarm_check(alarm_handle) == 0
+  lives_sleep_while_false(!lives_alarm_check(alarm_handle) == 0
 			      || (self && lives_proc_thread_get_cancel_requested(self)));
   lives_alarm_clear(alarm_handle);
 
@@ -1800,7 +1800,7 @@ void rec_desk(void *args) {
 					     WEED_SEED_BOOLEAN, NULL, "v", saveargs);
 
     // TODO - check for timeout / cancel here too
-    lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
+    lives_sleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
 			       && (!self || !(cancelled = lives_proc_thread_get_cancel_requested(self))));
     lives_alarm_clear(fps_alarm);
   }

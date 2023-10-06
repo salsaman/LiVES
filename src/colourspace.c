@@ -14028,7 +14028,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
       g_print("will use cached layer %d %p\n", i, cached_layers[i]);
       weed_layer_nullify_pixel_data(layer);
 
-
       weed_layer_copy(layer, cached_layers[i]);
       break;
     }
@@ -14392,13 +14391,14 @@ boolean lives_painter_surface_check(lives_painter_surface_t *surf) {
 
 
 lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
+  weed_layer_t *old_layer = NULL;
   lives_painter_surface_t *surf = NULL;
   lives_painter_t *cairo;
   lives_painter_format_t cform;
   uint8_t *src, *dst, *pixel_data;
-  boolean new_alpha = FALSE, shared = FALSE;
+  boolean new_alpha = FALSE;
   int irowstride, orowstride, lform;
-  int width, widthx, height, pal, flags;
+  int width, height, pal, flags;
 
   if (0 && weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
     // shared data
@@ -14408,16 +14408,13 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     width = weed_layer_get_width_pixels(layer);
     if (pal == WEED_PALETTE_A8) {
       cform = LIVES_PAINTER_FORMAT_A8;
-      widthx = width;
     } else if (pal == WEED_PALETTE_A1) {
       cform = LIVES_PAINTER_FORMAT_A1;
-      widthx = width >> 3;
     } else {
       if (!weed_palette_has_alpha(pal)) new_alpha = TRUE;
       lform = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order);
       convert_layer_palette(layer, lform, 0);
       cform = LIVES_PAINTER_FORMAT_ARGB32;
-      widthx = width << 2;
     }
 
     height = weed_layer_get_height(layer);
@@ -14425,12 +14422,17 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     orowstride = lives_painter_format_stride_for_width(cform, width);
     src = (uint8_t *)weed_layer_get_pixel_data(layer);
 
-    if (irowstride == orowstride && !weed_plant_has_leaf(layer, LIVES_LEAF_COPYLIST)
+    if (0 && irowstride == orowstride && !weed_plant_has_leaf(layer, LIVES_LEAF_COPYLIST)
 	&& !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
-      shared = TRUE;
       pixel_data = src;
     } else {
       boolean ret;
+
+      old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+      weed_layer_copy(old_layer, layer);
+      weed_layer_nullify_pixel_data(layer);
+
+      weed_layer_set_rowstride(layer, orowstride);
 
       flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
       weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
@@ -14438,16 +14440,20 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
       ret = create_empty_pixel_data(layer, FALSE, TRUE);
       weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
 
-      if (!ret) return NULL;
+      if (!ret) {
+	weed_layer_copy(layer, old_layer);
+	weed_layer_unref(old_layer);
+	return NULL;
+      }
 
       dst = pixel_data = weed_layer_get_pixel_data(layer);
-      if (!pixel_data) return NULL;
+      if (!pixel_data) {
+	weed_layer_copy(layer, old_layer);
+	weed_layer_unref(old_layer);
+	return NULL;
+      }
 
-      for (int i = 0; i < height; i++)
-	lives_memcpy(&dst[orowstride * i], &src[irowstride * i], widthx);
-      /* weed_layer_pixel_data_free(layer); */
-      /* weed_layer_set_pixel_data(layer, pixel_data); */
-      /* weed_layer_set_rowstride(layer, orowstride); */
+      lives_memcpy(dst, src, height * orowstride);
     }
 
     if (weed_palette_has_alpha(pal)) {
@@ -14464,13 +14470,18 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     surf = lives_painter_image_surface_create_for_data(pixel_data, cform, width, height, orowstride);
   }
 
+  if (old_layer) {
+    weed_layer_copy(layer, old_layer);
+    weed_layer_unref(old_layer);
+  }
+
   if (!surf) return NULL;
 
   cairo = lives_painter_create_from_surface(surf); // surf is refcounted
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa1 = %d %p\n", cairo_surface_get_reference_count(surf), surf);
 #endif
-  if (shared) {
+  if (!old_layer) {
     // add an extra ref. This will only be removed when layer pixel_data is freed
     lives_painter_surface_reference(surf);
     weed_layer_set_pixel_data(layer, NULL);

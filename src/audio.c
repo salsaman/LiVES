@@ -3177,7 +3177,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
             if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
               int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
               weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
-              weed_leaf_dup(param, event, WEED_LEAF_VALUE);
+              lives_leaf_dup(param, event, WEED_LEAF_VALUE);
               weed_instance_unref(inst);
             }
           }

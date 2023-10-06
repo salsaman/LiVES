@@ -341,7 +341,7 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
     if (!mem && prefs->back_compat) {
       // create a "hint" leaf as a service to older versions of LiVES
       // TODO: prompt user if they need backwards compat or not
-      weed_leaf_copy(event, WEED_LEAF_HINT, event, WEED_LEAF_EVENT_TYPE);
+      lives_leaf_copy(event, WEED_LEAF_HINT, event, WEED_LEAF_EVENT_TYPE);
     }
 
     weed_plant_serialise(fd, event, mem);
@@ -16459,7 +16459,7 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
       /// if param is "value_per_channel", leave the other channels unaltered
       fill_param_vals_to(def_params[i], weed_param_get_template(def_params[i]), mt->track_index);
       if (!weed_leaf_elements_equate(in_params[i], WEED_LEAF_VALUE, def_params[i], WEED_LEAF_VALUE, mt->track_index)) {
-        weed_leaf_dup_nth(in_params[i], def_params[i], WEED_LEAF_VALUE, mt->track_index);
+        lives_leaf_copy_nth(in_params[i], WEED_LEAF_VALUE, def_params[i], WEED_LEAF_VALUE, mt->track_index);
         if (!weed_param_value_irrelevant(in_params[i])) {
           can_apply = TRUE;
           mt->current_rfx->params[i].flags |= PARAM_FLAG_VALUE_SET;
@@ -16467,7 +16467,7 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
       }
     } else {
       if (!weed_leaf_elements_equate(in_params[i], WEED_LEAF_VALUE, def_params[i], WEED_LEAF_VALUE, -1)) {
-        weed_leaf_dup(in_params[i], def_params[i], WEED_LEAF_VALUE);
+        lives_leaf_dup(in_params[i], def_params[i], WEED_LEAF_VALUE);
         if (!weed_param_value_irrelevant(in_params[i])) {
           mt->current_rfx->params[i].flags |= PARAM_FLAG_VALUE_SET;
           can_apply = TRUE;
@@ -16570,8 +16570,8 @@ void on_del_node_clicked(LiVESWidget * button, livespointer user_data) {
         weed_plant_t *param = in_params[i];
         weed_plant_t *paramtmpl = weed_param_get_template(param);
         if (weed_plant_has_leaf(paramtmpl, WEED_LEAF_HOST_DEFAULT)) {
-          weed_leaf_copy(event, WEED_LEAF_VALUE, paramtmpl, WEED_LEAF_HOST_DEFAULT);
-        } else weed_leaf_copy(event, WEED_LEAF_VALUE, paramtmpl, WEED_LEAF_DEFAULT);
+          lives_leaf_copy(event, WEED_LEAF_VALUE, paramtmpl, WEED_LEAF_HOST_DEFAULT);
+        } else lives_leaf_copy(event, WEED_LEAF_VALUE, paramtmpl, WEED_LEAF_DEFAULT);
         if (is_perchannel_multiw(param)) {
           int num_in_tracks = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_TRACKS);
           fill_param_vals_to(event, paramtmpl, num_in_tracks - 1);
@@ -16805,7 +16805,7 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
       }
     } else was_changed = TRUE;
 
-    weed_leaf_copy(pchange, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
+    lives_leaf_copy(pchange, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
     //weed_add_plant_flags(pchange, WEED_LEAF_READONLY_PLUGIN);
 
     // mark the default value as changed, so the user can delete this node (which will reset to defaults)
@@ -18146,7 +18146,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
       has_event_type = FALSE;
       if (api_version < 122) {
         if (weed_plant_has_leaf(event, WEED_LEAF_HINT)) {
-          weed_leaf_copy(event, WEED_LEAF_EVENT_TYPE, event, WEED_LEAF_HINT);
+          lives_leaf_copy(event, WEED_LEAF_EVENT_TYPE, event, WEED_LEAF_HINT);
           weed_leaf_delete(event, WEED_LEAF_HINT);
           has_event_type = TRUE;
         }

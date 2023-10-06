@@ -529,7 +529,7 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
       char *key = leaves[i];
       uint32_t st = weed_leaf_seed_type(plant, key);
       lives_obj_attr_t *attr = lives_object_declare_attribute(dicto, key, st);
-      weed_leaf_copy(attr, WEED_LEAF_VALUE, plant, key);
+      lives_leaf_copy(attr, WEED_LEAF_VALUE, plant, key);
       lives_free(leaves[i]);
     }
     lives_free(leaves);
@@ -1602,7 +1602,7 @@ weed_param_t *weed_param_from_attr(lives_obj_attr_t *attr) {
     weed_plant_mutate(param, WEED_PLANT_PARAMETER);
     if (!weed_plant_has_leaf(param, WEED_LEAF_VALUE)) {
       if (weed_plant_has_leaf(param, WEED_LEAF_DEFAULT)) {
-        weed_leaf_copy(param, WEED_LEAF_VALUE, param, WEED_LEAF_DEFAULT);
+        lives_leaf_copy(param, WEED_LEAF_VALUE, param, WEED_LEAF_DEFAULT);
       }
     }
     weed_remove_refcounter(param);
@@ -1653,7 +1653,7 @@ lives_transform_status_t *transform(lives_object_transform_t *tx) {
   /*   if (!(flags & PARAM_FLAG_VALUE_SET) && !(flags & PARAM_FLAG_OPTIONAL)) { */
   /*     lives_tx_param_t *xparam = iparam_from_name(prereq->reqs->params, iparam->pname); */
   /*     //lives_tx_param_t *xparam = iparam_from_name(tx->prereqs->oinst->params, iparam->name); */
-  /*     weed_leaf_dup(iparam, xparam, WEED_LEAF_VALUE); */
+  /*     lives_leaf_dup(iparam, xparam, WEED_LEAF_VALUE); */
   /*   } */
 
   /*   switch ( */

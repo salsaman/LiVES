@@ -98,22 +98,22 @@ LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *
 void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src) {
   // copy width, height, clip, frame, full palette, etc
   if (src && dest) {
-    weed_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE);
-    weed_leaf_dup(dest, src, WEED_LEAF_WIDTH);
-    weed_leaf_dup(dest, src, WEED_LEAF_HEIGHT);
+    lives_leaf_dup(dest, src, WEED_LEAF_CURRENT_PALETTE);
+    lives_leaf_dup(dest, src, WEED_LEAF_WIDTH);
+    lives_leaf_dup(dest, src, WEED_LEAF_HEIGHT);
 
     // copy rowstrides, though these may get overwritten if we create new pixel data
-    weed_leaf_dup(dest, src, WEED_LEAF_ROWSTRIDES);
+    lives_leaf_dup(dest, src, WEED_LEAF_ROWSTRIDES);
 
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_CLIP, src);
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_FRAME, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_CLIP, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_FRAME, src);
 
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_GAMMA_TYPE, src);
-    weed_leaf_copy_or_delete(dest, LIVES_LEAF_HOST_FLAGS, src);
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_YUV_CLAMPING, src);
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_YUV_SUBSPACE, src);
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_YUV_SAMPLING, src);
-    weed_leaf_copy_or_delete(dest, WEED_LEAF_PAR, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_GAMMA_TYPE, src);
+    lives_leaf_copy_or_delete(dest, LIVES_LEAF_HOST_FLAGS, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_YUV_CLAMPING, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_YUV_SUBSPACE, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_YUV_SAMPLING, src);
+    lives_leaf_copy_or_delete(dest, WEED_LEAF_PAR, src);
   }
 }
 
@@ -726,13 +726,8 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
 
   lives_layer_copy_metadata(dlayer, slayer);
 
-  g_print("copying PIX data\n");
-  weed_error_t err2, err = weed_leaf_dup(dlayer, slayer, WEED_LEAF_PIXEL_DATA);
-  g_print("valss are %d, %p -> %p, err is %d\n",
-	  weed_leaf_num_elements(slayer, WEED_LEAF_PIXEL_DATA),
-	  weed_get_voidptr_value(slayer, WEED_LEAF_PIXEL_DATA, &err),
-	  weed_get_voidptr_value(dlayer, WEED_LEAF_PIXEL_DATA, &err2), err);
-  g_print("err2 i %d\n", err2);
+  lives_leaf_dup(dlayer, slayer, WEED_LEAF_PIXEL_DATA);
+  
   if (weed_layer_get_pixel_data(slayer)) {
     if (full_copy) {
       weed_leaf_set_flagbits(dlayer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
@@ -750,21 +745,19 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
 	g_print("add2 %p to  copylist %p\n", dlayer, copylist);
 
 	// not part of the standard metadata set
-	weed_leaf_dup(dlayer, slayer, LIVES_LEAF_COPYLIST);
+	lives_leaf_dup(dlayer, slayer, LIVES_LEAF_COPYLIST);
 	g_print("CLIST2 is %p\n", weed_get_voidptr_value(slayer, LIVES_LEAF_COPYLIST, NULL));
       }
 
-      weed_leaf_dup(dlayer, slayer, LIVES_LEAF_BBLOCKALLOC);
-      weed_leaf_dup(dlayer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
+      lives_leaf_dup(dlayer, slayer, LIVES_LEAF_BBLOCKALLOC);
+      lives_leaf_dup(dlayer, slayer, WEED_LEAF_HOST_ORIG_PDATA);
 
-      weed_leaf_dup(dlayer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
+      lives_leaf_dup(dlayer, slayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
       weed_leaf_set_flags(dlayer, WEED_LEAF_PIXEL_DATA,
 			  weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA));
     }
   }
 
-  g_print("valss222 are %p -> %p\n", weed_layer_get_pixel_data(slayer),
-	  weed_layer_get_pixel_data(dlayer));
   //g_print("LAYERS: %p duplicated to %p, bb %d %d\n", slayer, layer, weed_plant_has_leaf(slayer, LIVES_LEAF_BBLOCKALLOC),
   //	    weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
 

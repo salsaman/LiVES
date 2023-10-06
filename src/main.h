@@ -139,7 +139,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 // LiVES extensions (effects-weed.c)
 
 #define LIVES_FLAG_MAINTAIN_VALUE	(1 << 16)
-#define LIVES_FLAG_RDONLY_HOST		(LIVES_FLAG_MAINTAIN_VALUE | WEED_FLAG_IMMUTABLE)
+#define LIVES_FLAGS_RDONLY_HOST		(LIVES_FLAG_MAINTAIN_VALUE | WEED_FLAG_IMMUTABLE)
 // NB. setting rdonly_host also sets rdonly_plugin; this makes checking less costly
 weed_error_t lives_leaf_set_rdonly(weed_plant_t *, const char *key,
                                    boolean rdonly_host, boolean rdonly_plugin);
@@ -655,6 +655,12 @@ struct _capabilities {
 
 int orig_argc(void);
 char **orig_argv(void);
+
+// effects-weed.c
+weed_error_t lives_leaf_copy_or_delete(weed_plant_t *dst, const char *key, weed_layer_t *src);
+weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n);
+weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf);
+weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key);
 
 // main.c
 

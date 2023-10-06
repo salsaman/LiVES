@@ -256,7 +256,7 @@ LIVES_GLOBAL_INLINE void copy_md5(lives_layer_t *dl, lives_layer_t *sl) {
         weed_leaf_set_autofree(dl, LIVES_LEAF_MD5SUM, TRUE);
       }
       lives_memcpy(dmd5buf, smd5buf, MD5_SIZE);
-      weed_leaf_dup(dl, sl, LIVES_LEAF_MD5_CHKSIZE);
+      lives_leaf_dup(dl, sl, LIVES_LEAF_MD5_CHKSIZE);
     }
   }
 }

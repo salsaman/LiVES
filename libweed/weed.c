@@ -859,8 +859,8 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   plant->flags &= ~WEED_FLAG_OP_DELETE;
 
   if (leafprev != plant) chain_lock_unlock(leafprev);
-  structure_mutex_unlock(plant);
   chain_lock_unlock(plant);
+  structure_mutex_unlock(plant);
 
   if (ref_lock_try_writelock(leaf)) leaf->flags |= WEED_FLAG_OP_DELETE;
   else {
@@ -888,7 +888,7 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, w
 	ref_lock_unlock(leaf);
 	weed_leaf_free(leaf);
       }
-      return WEED_ERROR_CONCURRENCY;
+      return_unlock(leaf, WEED_ERROR_CONCURRENCY);
     }
   }
   //

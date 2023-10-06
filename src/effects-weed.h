@@ -63,15 +63,12 @@ typedef enum {
   FX_LIST_HASHNAME, // hashnames - (packagefilterauthor) author and not extra_authors
 } lives_fx_list_t;
 
-// set some custom Weed values
+// geneic
 
 boolean weed_leaf_autofree(weed_plant_t *plant, const char *key);
 void  weed_plant_autofree(weed_plant_t *);
 
-// for copy and cleanup
-boolean pixdata_nullify_leaf(const char *key);
 // for sterilzing "dormant" plants
-boolean no_copy_leaf(const char *key);
 void weed_plant_sanitize(weed_plant_t *plant, boolean sterilize);
 
 // plugin specific values
@@ -295,7 +292,7 @@ void weed_bg_generator_end(weed_instance_t *inst);
 void wge_inner(weed_instance_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
-weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer);
+
 weed_plant_t *weed_layer_create_from_generator(weed_instance_t *inst, ticks_t tc, int clipno);
 
 /// for multitrack

@@ -1441,7 +1441,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (mainw->cconx) cconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
       }
 
-      if (return_layer) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
+      if (return_layer) lives_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
       lb_width = lwidth = weed_layer_get_width(frame_layer);
       lb_height = lheight = weed_layer_get_height(frame_layer);
 

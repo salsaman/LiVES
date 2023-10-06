@@ -89,6 +89,39 @@ LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
 ////////////////////////////////////////////////////////////////////////////
 
 
+weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf) {
+  weed_flags_t flags = weed_leaf_get_flags(dst, keyt);
+  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_IMMUTABLE);
+  weed_error_t err = weed_leaf_copy(dst, keyt, src, keyf);
+  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags);
+  return err;
+}
+
+
+weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n) {
+  weed_flags_t flags = weed_leaf_get_flags(dst, keyt);
+  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_IMMUTABLE);
+  weed_error_t err = weed_leaf_copy_nth(dst, keyt, src, keyf, n);
+  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags);
+  return err;
+}
+
+
+weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key) {
+  weed_flags_t flags = weed_leaf_get_flags(dst, key);
+  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, key, flags & ~WEED_FLAG_IMMUTABLE);
+  weed_error_t err = weed_leaf_dup(dst, src, key);
+  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, key, flags);
+  return err;
+}
+
+
+LIVES_GLOBAL_INLINE weed_error_t lives_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
+  if (!weed_plant_has_leaf(slayer, key)) return weed_leaf_delete(dlayer, key);
+  else return lives_leaf_dup(dlayer, slayer, key);
+}
+
+
 void weed_functions_init(void) {
   int winitopts = 0;
   weed_error_t werr;
@@ -150,12 +183,6 @@ void weed_functions_init(void) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   statsplant = weed_plant_new(12345);
-}
-
-
-LIVES_GLOBAL_INLINE weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
-  if (!weed_plant_has_leaf(slayer, key)) return weed_leaf_delete(dlayer, key);
-  else return weed_leaf_copy(dlayer, key, slayer, key);
 }
 
 
@@ -1524,7 +1551,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
     dheight = slices_per_thread * vstep;
     heights[0] = dheight;
     weed_set_int_value(out_channels[i], WEED_LEAF_OFFSET, 0);
-    weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
+    break_me("et");
+    weed_error_t err = weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
+    g_print("zNE is %d %d\n", weed_leaf_num_elements(out_channels[i], WEED_LEAF_HEIGHT), err);
   }
 
   for (j = 0; j < to_use; j++) {
@@ -1539,6 +1568,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
     for (i = 0; i < nchannels; i++) {
       xchan = xchannels[i] = lives_plant_copy(out_channels[i]);
+      g_print("NE is %d\n", weed_leaf_num_elements(out_channels[i], WEED_LEAF_HEIGHT));
       xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
       height = xheights[1];
       dheight = xheights[0];
@@ -2146,6 +2176,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL))
       continue;
     if (weed_channel_is_alpha(channel)) continue;
+    weed_channel_set_pixel_data(channel, NULL);
     weed_layer_pixel_data_free(channel);
     chantmpl = weed_channel_get_template(channel);
     channel_flags = weed_chantmpl_get_flags(chantmpl);
@@ -2194,7 +2225,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     channel = get_enabled_channel(inst, k, LIVES_INPUT);
     // MUST do this, since  the nullify function cannot detect that channel is sharing with layer
     // and would thus free pixel-data instead of nullifying
-    weed_layer_set_pixel_data(channel, NULL);
+    weed_channel_set_pixel_data(channel, NULL);
     weed_layer_nullify_pixel_data(channel);
   }
 
@@ -2229,8 +2260,8 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
       }
     }
     weed_layer_nullify_pixel_data(channel);
-    weed_leaf_copy(layer, WEED_LEAF_HOST_WIDTH, layer, WEED_LEAF_WIDTH);
-    weed_leaf_copy(layer, WEED_LEAF_HOST_HEIGHT, layer, WEED_LEAF_HEIGHT);
+    lives_leaf_copy(layer, WEED_LEAF_HOST_WIDTH, layer, WEED_LEAF_WIDTH);
+    lives_leaf_copy(layer, WEED_LEAF_HOST_HEIGHT, layer, WEED_LEAF_HEIGHT);
   }
 
 done_video:
@@ -2240,7 +2271,7 @@ done_video:
 
   for (i = 0; i < num_inc + num_out_alpha; i++) {
     channel = in_channels[i];
-    weed_layer_set_pixel_data(channel, NULL);
+    weed_channel_set_pixel_data(channel, NULL);
     weed_layer_nullify_pixel_data(channel);
     if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
       weed_set_boolean_value(in_channels[i], WEED_LEAF_DISABLED, WEED_FALSE);
@@ -2444,13 +2475,13 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) continue;
 
     weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_RATE);
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_CHANNELS);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_RATE);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_CHANNELS);
 
     /* g_print("setting ad for channel %d from layer %d. val %p, eg %f \n", i, in_tracks[i] + nbtracks, weed_get_voidptr_value(layer,
        "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA);
     /* g_print("setting afterval %p, eg %f \n", weed_get_voidptr_value(channel, "audio_data", NULL),
        ((float *)(weed_get_voidptr_value(channel, "audio_data", NULL)))[0]); */
   }
@@ -2479,7 +2510,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
         && weed_channel_get_audio_rate(channel) == weed_channel_get_audio_rate(inchan)
         && weed_channel_get_naudchans(channel) == weed_channel_get_naudchans(inchan)) {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
-      weed_leaf_dup(channel, inchan, WEED_LEAF_AUDIO_DATA);
+      lives_leaf_dup(channel, inchan, WEED_LEAF_AUDIO_DATA);
       /* g_print("setting dfff ad for channel %p from chan %p, eg %f \n", weed_get_voidptr_value(channel, "audio_data", NULL),
         weed_get_voidptr_value(inchan, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
     } else {
@@ -2500,9 +2531,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       lives_free(adata);
     }
 
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_RATE);
-    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_CHANNELS);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_RATE);
+    lives_leaf_dup(channel, layer, WEED_LEAF_AUDIO_CHANNELS);
   }
 
   if (CURRENT_CLIP_IS_VALID) weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
@@ -2532,7 +2563,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
         for (j = 0; j < nchans; j++) lives_freep((void **)&adata[j]);
         lives_freep((void **)&adata);
         // shallow copy
-        weed_leaf_dup(layer, channel, WEED_LEAF_AUDIO_DATA);
+        lives_leaf_dup(layer, channel, WEED_LEAF_AUDIO_DATA);
       }
     }
   }
@@ -3783,7 +3814,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
         }
       } else {
         if (!weed_plant_has_leaf(array[i], WEED_LEAF_PALETTE_LIST))
-          weed_leaf_copy(array[i], WEED_LEAF_PALETTE_LIST, filter, WEED_LEAF_PALETTE_LIST);
+          lives_leaf_copy(array[i], WEED_LEAF_PALETTE_LIST, filter, WEED_LEAF_PALETTE_LIST);
       }
     }
 
@@ -3861,7 +3892,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
         }
       } else {
         if (!weed_plant_has_leaf(array[i], WEED_LEAF_PALETTE_LIST))
-          weed_leaf_copy(array[i], WEED_LEAF_PALETTE_LIST, filter, WEED_LEAF_PALETTE_LIST);
+          lives_leaf_copy(array[i], WEED_LEAF_PALETTE_LIST, filter, WEED_LEAF_PALETTE_LIST);
       }
     }
 
@@ -4094,7 +4125,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   if (err == WEED_ERROR_IMMUTABLE) {
     int32_t flags = weed_leaf_get_flags(plant, key);
-    if (flags & LIVES_FLAG_RDONLY_HOST) return err;
+    if ((flags & LIVES_FLAGS_RDONLY_HOST) == LIVES_FLAGS_RDONLY_HOST) return err;
     flags &= ~WEED_FLAG_IMMUTABLE;
     weed_leaf_set_flags(plant, key, flags);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
@@ -4110,9 +4141,9 @@ LIVES_GLOBAL_INLINE weed_error_t lives_leaf_set_rdonly(weed_plant_t *plant, cons
   int32_t flags;
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   flags = weed_leaf_get_flags(plant, key);
-  if (rdonly_host) flags |= LIVES_FLAG_RDONLY_HOST;
+  if (rdonly_host) flags |= LIVES_FLAGS_RDONLY_HOST;
   else {
-    flags &= ~LIVES_FLAG_RDONLY_HOST;
+    flags &= ~LIVES_FLAGS_RDONLY_HOST;
     if (rdonly_plugin) flags |= WEED_FLAG_IMMUTABLE;
   }
   return weed_leaf_set_flags(plant, key, flags);
@@ -5246,9 +5277,9 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
         } else if (weed_plant_has_leaf(in_params[j], WEED_LEAF_IS_TRANSITION))
           weed_leaf_delete(in_params[j], WEED_LEAF_IS_TRANSITION);
 
-        if (x == tvolm) {
+        if (x == tvolm)
           weed_set_boolean_value(in_params[j], WEED_LEAF_IS_VOLUME_MASTER, WEED_TRUE);
-        } else if (weed_plant_has_leaf(in_params[j], WEED_LEAF_IS_VOLUME_MASTER))
+        else if (weed_plant_has_leaf(in_params[j], WEED_LEAF_IS_VOLUME_MASTER))
           weed_leaf_delete(in_params[j], WEED_LEAF_IS_VOLUME_MASTER);
 
         x++;
@@ -6150,11 +6181,11 @@ weed_plant_t **weed_params_create(weed_plant_t *filter, boolean in) {
     weed_set_plantptr_value(params[i], WEED_LEAF_TEMPLATE, paramtmpls[i]);
     if (in && !weed_paramtmpl_value_irrelevant(paramtmpls[i])) {
       if (weed_plant_has_leaf(paramtmpls[i], WEED_LEAF_HOST_DEFAULT)) {
-        weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_HOST_DEFAULT);
-      } else weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
+        lives_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_HOST_DEFAULT);
+      } else lives_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
       weed_add_plant_flags(params[i], WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE, "plugin_");
     } else {
-      weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
+      lives_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
     }
   }
   params[num_params] = NULL;
@@ -6683,9 +6714,9 @@ boolean weed_init_effect(int hotkey) {
   /* weed_leaf_delete(inst, LIVES_LEAF_AUTO_EASING); */
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
-    weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
+    lives_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
   else if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS))
-    weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
+    lives_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
 
   while ((inst = get_next_compound_inst(inst))) {
     weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hotkey);
@@ -7601,9 +7632,9 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
       weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, mainw->inst_fps);
     else {
       if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
-        weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
+        lives_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
       else if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS))
-        weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
+        lives_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
     }
     sfile->pb_fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
   }
@@ -7742,7 +7773,7 @@ procfunc1:
 
   // MUST do this, since  the nullify function cannot detect that channel is sharing with layer
   // and would thus free pixel-data instead of nullifying
-  weed_layer_set_pixel_data(channel, NULL);
+  weed_channel_set_pixel_data(channel, NULL);
   weed_layer_nullify_pixel_data(channel);
   
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
@@ -8725,9 +8756,9 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
         if (cspace == WEED_COLORSPACE_RGB) vsize = 3;
         else vsize = 4;
       }
-      weed_leaf_copy(paramtmpl2, "host_new_def_backup", paramtmpl2, WEED_LEAF_NEW_DEFAULT);
-      weed_leaf_copy(in_param2, "host_value_backup", in_param2, WEED_LEAF_VALUE);
-      weed_leaf_copy(paramtmpl2, WEED_LEAF_NEW_DEFAULT, in_param, WEED_LEAF_VALUE);
+      lives_leaf_copy(paramtmpl2, "host_new_def_backup", paramtmpl2, WEED_LEAF_NEW_DEFAULT);
+      lives_leaf_copy(in_param2, "host_value_backup", in_param2, WEED_LEAF_VALUE);
+      lives_leaf_copy(paramtmpl2, WEED_LEAF_NEW_DEFAULT, in_param, WEED_LEAF_VALUE);
       fill_param_vals_to(in_param2, paramtmpl2, nvals / vsize);
       ign_array = weed_get_boolean_array(in_param2, WEED_LEAF_IGNORE, NULL);
       for (int i = 0; i < nvals; i += vsize) {
@@ -8738,11 +8769,11 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
       }
       weed_set_boolean_array(in_param2, WEED_LEAF_IGNORE, nvals / vsize, ign_array);
       weed_leaf_delete(in_param2, "host_value_backup");
-      weed_leaf_copy(paramtmpl2, WEED_LEAF_NEW_DEFAULT, paramtmpl2, "host_new_def_backup");
+      lives_leaf_copy(paramtmpl2, WEED_LEAF_NEW_DEFAULT, paramtmpl2, "host_new_def_backup");
       weed_leaf_delete(paramtmpl2, "host_new_def_backup");
       lives_freep((void **)&ign_array);
     } else {
-      weed_leaf_dup(in_param2, in_param, WEED_LEAF_VALUE);
+      lives_leaf_dup(in_param2, in_param, WEED_LEAF_VALUE);
     }
   }
   return copyto;
@@ -11016,7 +11047,7 @@ LIVES_GLOBAL_INLINE int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t new
 }
 
 
-boolean pixdata_nullify_leaf(const char *key) {
+static boolean is_pixdata_nullify_leaf(const char *key) {
   for (int i = 0; PIXDATA_NULLIFY_LEAVES[i]; i++)
     if (!lives_strcmp(key, PIXDATA_NULLIFY_LEAVES[i]))
       return TRUE;
@@ -11024,7 +11055,7 @@ boolean pixdata_nullify_leaf(const char *key) {
 }
 
 
-boolean no_copy_leaf(const char *key) {
+static boolean is_no_copy_leaf(const char *key) {
   for (int i = 0; NO_COPY_LEAVES[i]; i++)
     if (!lives_strcmp(key, NO_COPY_LEAVES[i])) return TRUE;
   return FALSE;
@@ -11038,7 +11069,7 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
   if (plant) {
     char **leaves = weed_plant_list_leaves(plant, NULL);
     for (int i = 0; leaves[i]; i++) {
-      if (pixdata_nullify_leaf(leaves[i]) || (sterilize && no_copy_leaf(leaves[i]))) {
+      if (is_pixdata_nullify_leaf(leaves[i]) || (sterilize && is_no_copy_leaf(leaves[i]))) {
         if (weed_leaf_get_flags(plant, leaves[i]) & LIVES_FLAG_FREE_ON_DELETE)
           weed_leaf_clear_flagbits(plant, leaves[i], LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
         weed_leaf_delete(plant, leaves[i]);
@@ -11523,7 +11554,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           } else  weed_leaf_set(plant, key, st, ne, (void *)ints);
         } else {
           if (check_ptrs) {
-            if (pixdata_nullify_leaf(key) || no_copy_leaf(key)) add_leaf = FALSE;
+            if (is_pixdata_nullify_leaf(key) || is_no_copy_leaf(key)) add_leaf = FALSE;
           }
           if (add_leaf) weed_leaf_set(plant, key, st, ne, (void *)ints);
         }
@@ -12172,7 +12203,7 @@ void apply_key_defaults(weed_plant_t *inst, int key, int mode) {
 
     for (i = 0; i < nparams; i++) {
       if (!is_hidden_param(inst, i))
-        weed_leaf_dup(params[i], defs[j], WEED_LEAF_VALUE);
+        lives_leaf_dup(params[i], defs[j], WEED_LEAF_VALUE);
       j++;
     }
     lives_free(params);
@@ -12250,7 +12281,7 @@ void set_key_defaults(weed_plant_t *inst, int key, int mode) {
       params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
       while (i < last) {
         key_defs[++i] = weed_plant_new(WEED_PLANT_PARAMETER);
-        weed_leaf_dup(key_defs[i], params[i - poffset], WEED_LEAF_VALUE);
+        lives_leaf_dup(key_defs[i], params[i - poffset], WEED_LEAF_VALUE);
       }
       lives_free(params);
       poffset = ++last;

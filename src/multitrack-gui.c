@@ -2527,7 +2527,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
               weed_plant_t **src_params = weed_instance_get_in_params(live_inst, &nparams);
               weed_plant_t **dst_params = weed_instance_get_in_params((weed_plant_t *)mt->current_rfx->source, NULL);
               for (int i = 0; i < nparams; i++) {
-                weed_leaf_dup(dst_params[i], src_params[i], WEED_LEAF_VALUE);
+                lives_leaf_dup(dst_params[i], src_params[i], WEED_LEAF_VALUE);
               }
               if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mt->solo_check)))
                 mt->solo_inst = mt->current_rfx->source;

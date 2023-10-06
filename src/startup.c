@@ -30,7 +30,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = 0;//TEST_WEED_UTILS | TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = 0;//TEST_WEED_UTILS;// | TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -1340,7 +1340,7 @@ static boolean lives_startup(livespointer data) {
   if (mainw->no_idlefuncs) return TRUE;
 
   what_sup = startup_sup;
-  
+
   // check the working directory
   if (needs_workdir) {
     // get initial workdir

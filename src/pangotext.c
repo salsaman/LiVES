@@ -819,6 +819,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
 
       cr = layer_to_lives_painter(layer_slice);
+      weed_layer_pixel_data_free(layer_slice);
 
 #ifdef LIVES_PAINTER_IS_CAIRO
       // set antialiasing for text, depending on the current quality setting

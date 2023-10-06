@@ -2446,7 +2446,7 @@ static weed_error_t run_disp_func(weed_display_value_f disp_func, weed_plant_t *
     }
 
     // restore original value
-    weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+    lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
 
     // during reinit we will recursively call run_disp_func
     // if, after a reinit the plugin still returns WEED_ERROR_REINIT_NEEDED,
@@ -2497,7 +2497,7 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
           boolean delback = FALSE;
           gui = weed_param_get_gui(wparam, TRUE);
           if (!weed_plant_has_leaf(wparam, WEED_LEAF_VALUE_BACK)) {
-            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+            lives_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
             delback = TRUE;
           }
           switch (stype) {
@@ -2506,7 +2506,7 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
               if (delback) {
                 // something went wrong...restore original value
-                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                 weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
               }
               return FALSE;
@@ -2515,7 +2515,7 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             set_int_param(param->value, ival);
             ret = TRUE;
             if (delback) {
-              weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+              lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
               ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
               lives_free(tmp);
               weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
@@ -2528,7 +2528,7 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             weed_set_double_value(wparam, WEED_LEAF_VALUE, lives_adjustment_get_value(from));
             if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
               if (delback) {
-                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                 weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
               }
               return FALSE;
@@ -2537,7 +2537,7 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             set_double_param(param->value, dval);
             ret = TRUE;
             if (delback) {
-              weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+              lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
               ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp, dval);
               lives_free(tmp);
               weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
@@ -2599,7 +2599,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
           boolean delback = FALSE;
           gui = weed_param_get_gui(wparam, TRUE);
           if (!weed_plant_has_leaf(wparam, WEED_LEAF_VALUE_BACK)) {
-            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+            lives_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
             delback = TRUE;
           }
           switch (stype) {
@@ -2608,7 +2608,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
             if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
               if (delback) {
                 // something went wrong...restore original value
-                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                 weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
               }
               rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
@@ -2623,7 +2623,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
-                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
                 rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
@@ -2635,7 +2635,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
-                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
                 rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
@@ -2667,7 +2667,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
             if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
               if (delback) {
                 // something went wrong...restore original value
-                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                 weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
               }
               rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
@@ -2683,7 +2683,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
-                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
                 rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
@@ -2695,7 +2695,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
-                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
                 rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
@@ -2721,7 +2721,7 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
             break;
           }
           if (delback) {
-            weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+            lives_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
             weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
           }
 	  // *INDENT-OFF*

@@ -257,7 +257,7 @@ static weed_error_t _add_messages_to_list(const char *text, boolean is_top) {
       end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
       if (error != WEED_SUCCESS) return error;
       // head will get new previous (oend)
-      weed_leaf_dup(mainw->msg_list, omsg_list, WEED_LEAF_PREVIOUS);
+      lives_leaf_dup(mainw->msg_list, omsg_list, WEED_LEAF_PREVIOUS);
       // omsg_list gets new previous (end)
       weed_set_plantptr_value(omsg_list, WEED_LEAF_PREVIOUS, end);
       // end will get new next omsg_list

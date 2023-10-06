@@ -1615,7 +1615,7 @@ void backup_host_tags(weed_event_list_t *event_list, weed_timecode_t curr_tc) {
   weed_timecode_t tc;
 
   while (event && (tc = get_event_timecode(event)) <= curr_tc) {
-    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_leaf_copy(event, WEED_LEAF_HOST_TAG_COPY, event, WEED_LEAF_HOST_TAG);
+    if (WEED_EVENT_IS_FILTER_INIT(event)) lives_leaf_copy(event, WEED_LEAF_HOST_TAG_COPY, event, WEED_LEAF_HOST_TAG);
     event = get_next_event(event);
   }
 }
@@ -1631,7 +1631,7 @@ void restore_host_tags(weed_event_list_t *event_list, weed_timecode_t curr_tc) {
 
   while (event && (tc = get_event_timecode(event)) <= curr_tc) {
     if (WEED_EVENT_IS_FILTER_INIT(event)) {
-      weed_leaf_copy(event, WEED_LEAF_HOST_TAG, event, WEED_LEAF_HOST_TAG_COPY);
+      lives_leaf_copy(event, WEED_LEAF_HOST_TAG, event, WEED_LEAF_HOST_TAG_COPY);
       weed_leaf_delete(event, WEED_LEAF_HOST_TAG_COPY);
     }
     event = get_next_event(event);
@@ -2899,9 +2899,9 @@ void **filter_init_add_pchanges(weed_event_list_t *event_list, weed_plant_t *pla
     }
 
     if (weed_param_value_irrelevant(in_param))
-      weed_leaf_copy((weed_plant_t *)pchain[i], WEED_LEAF_VALUE,
+      lives_leaf_copy((weed_plant_t *)pchain[i], WEED_LEAF_VALUE,
                      weed_param_get_template(in_param), WEED_LEAF_DEFAULT);
-    else weed_leaf_dup((weed_plant_t *)pchain[i], in_param, WEED_LEAF_VALUE);
+    else lives_leaf_dup((weed_plant_t *)pchain[i], in_param, WEED_LEAF_VALUE);
 
     weed_set_int_value((weed_plant_t *)pchain[i], WEED_LEAF_INDEX, i);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_INIT_EVENT, init_event);
@@ -3107,7 +3107,7 @@ weed_event_list_t *append_param_change_event(weed_event_list_t *event_list,
   weed_set_int_value(event, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_PARAM_CHANGE);
   weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, init_event);
   weed_set_int_value(event, WEED_LEAF_INDEX, pnum);
-  weed_leaf_copy(event, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
+  lives_leaf_copy(event, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
 
   if (pchain) {
     last_pchange_event = (weed_event_t *)pchain[pnum];
@@ -3603,8 +3603,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 
       if (num_in_channels > 0) {
         for (i = 0; i < num_in_channels; i++) {
-          weed_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_DISABLED, bitmpl[i]);
-          weed_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_REPEATS, bitmpl[i]);
+          lives_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_DISABLED, bitmpl[i]);
+          lives_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_REPEATS, bitmpl[i]);
           weed_plant_free(bitmpl[i]);
         }
         lives_free(bitmpl);
@@ -3613,8 +3613,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 
       if (num_out_channels > 0) {
         for (i = 0; i < num_out_channels; i++) {
-          weed_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED, botmpl[i]);
-          weed_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS, botmpl[i]);
+          lives_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED, botmpl[i]);
+          lives_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS, botmpl[i]);
           weed_plant_free(botmpl[i]);
         }
         lives_free(botmpl);
@@ -3644,7 +3644,7 @@ filterinit1:
             in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
             for (i = 0; i < num_params && i < nparams; i++) {
               if (source_params[i + offset] && is_init_pchange(next_event, source_params[i + offset]))
-                weed_leaf_dup(in_params[i], source_params[i + offset], WEED_LEAF_VALUE);
+                lives_leaf_dup(in_params[i], source_params[i + offset], WEED_LEAF_VALUE);
             }
             lives_free(in_params);
           }
@@ -3736,7 +3736,7 @@ filterinit1:
         if ((inst = rte_keymode_get_instance(key + 1, 0))) {
           int pnum = weed_get_int_value(next_event, WEED_LEAF_INDEX, NULL);
           weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
-          weed_leaf_dup(param, next_event, WEED_LEAF_VALUE);
+          lives_leaf_dup(param, next_event, WEED_LEAF_VALUE);
           weed_instance_unref(inst);
         }
       }
@@ -4207,7 +4207,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   }
                 }
               }
-              weed_leaf_dup(layer, event, LIVES_LEAF_FAKE_TC);
+              lives_leaf_dup(layer, event, LIVES_LEAF_FAKE_TC);
               if (prefs->twater_type == TWATER_TYPE_DIAGNOSTICS) {
                 if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
                   char *texto = weed_get_string_value(event, WEED_LEAF_OVERLAY_TEXT, NULL);
@@ -4575,8 +4575,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       if (num_in_channels > 0) {
         for (i = 0; i < num_in_channels; i++) {
-          weed_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_DISABLED, bitmpl[i]);
-          weed_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_REPEATS, bitmpl[i]);
+          lives_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_DISABLED, bitmpl[i]);
+          lives_leaf_copy_or_delete(citmpl[i], WEED_LEAF_HOST_REPEATS, bitmpl[i]);
           weed_plant_free(bitmpl[i]);
         }
         lives_free(bitmpl);
@@ -4585,8 +4585,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       if (num_out_channels > 0) {
         for (i = 0; i < num_out_channels; i++) {
-          weed_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED, botmpl[i]);
-          weed_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS, botmpl[i]);
+          lives_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED, botmpl[i]);
+          lives_leaf_copy_or_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS, botmpl[i]);
           weed_plant_free(botmpl[i]);
         }
         lives_free(botmpl);
@@ -4617,7 +4617,7 @@ filterinit2:
             for (i = 0; i < num_params && i < nparams; i++) {
               if (source_params && source_params[i + offset]
                   && is_init_pchange(event, source_params[i + offset]))
-                weed_leaf_copy(in_params[i], WEED_LEAF_VALUE, source_params[i + offset], WEED_LEAF_VALUE);
+                lives_leaf_copy(in_params[i], WEED_LEAF_VALUE, source_params[i + offset], WEED_LEAF_VALUE);
             }
             lives_free(in_params);
           }
@@ -4689,7 +4689,7 @@ filterinit2:
           if ((inst = rte_keymode_get_instance(key + 1, 0))) {
             int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
             weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
-            weed_leaf_dup(param, event, WEED_LEAF_VALUE);
+            lives_leaf_dup(param, event, WEED_LEAF_VALUE);
             weed_instance_unref(inst);
           }
         }

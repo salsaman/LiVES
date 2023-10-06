@@ -210,6 +210,8 @@ void weed_channel_set_palette_yuv(weed_channel_t *, int palette, int clamping,
 int weed_channel_set_pixel_width(weed_channel_t *, int width);
 int weed_channel_set_pixel_size(weed_channel_t *, int width, int height);
 
+weed_error_t weed_channel_set_pixel_data(weed_channel_t *, void *pixel_data);
+
 // for the following 2 functions, if width is not a multiple of new palette macropixel size
 // WEED_FALSE is returned and no changes are made
 // otherwise the palette is updated, channel width is updated to new palette macropixel size,

@@ -537,6 +537,11 @@ WEED_GLOBAL_INLINE weed_channel_t *weed_channel_set_gamma_type(weed_channel_t *c
   return channel;
 }
 
+WEED_GLOBAL_INLINE weed_error_t weed_channel_set_pixel_data(weed_channel_t *channel, void *pixel_data) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, pixel_data);
+}
+
 WEED_GLOBAL_INLINE void *weed_channel_get_pixel_data(weed_channel_t *channel) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
   return weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);

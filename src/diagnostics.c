@@ -2129,8 +2129,18 @@ void weed_utils_test(void) {
   weed_plant_t *plant1, *plant2;
   void *vp1, *vp2;
   weed_error_t err;
+  int iv[4], *iv2;
   plant1 =weed_plant_new(123);
   plant2 =weed_plant_new(123);
+
+  iv[0] = 10;
+  iv[1] = 20;
+  iv[2] = 80;
+  iv[3] = 50;
+  weed_set_int_value(plant1, "test", 123);
+  weed_set_int_array(plant1, "test", 4, iv);
+  iv2 = weed_get_int_array(plant1, "test", 0);
+  g_print("valzz %d and %d %d %d\n", iv2[0], iv2[1], iv2[2], iv2[3]);
 
   vp1 = (void *)0x123;
   fprintf(stderr, "initial val will be %p\n", vp1);  
@@ -2143,7 +2153,7 @@ void weed_utils_test(void) {
   werr_expl(err);
   
   fprintf(stderr, "copy from plant1; %p to plant2: %p\n", plant1, plant2);
-  err = weed_leaf_copy(plant2, "voidptr2", plant1, WEED_LEAF_PIXEL_DATA); 
+  err = lives_leaf_copy(plant2, "voidptr2", plant1, WEED_LEAF_PIXEL_DATA); 
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
 
@@ -2158,7 +2168,7 @@ void weed_utils_test(void) {
   werr_expl(err);
 
   fprintf(stderr, "dup from plant1; %p to plant2: %p\n", plant1, plant2);
-  err = weed_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
+  err = lives_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
 
@@ -2178,7 +2188,7 @@ void weed_utils_test(void) {
   werr_expl(err);
 
   fprintf(stderr, "dup again from plant1; %p to plant2: %p\n", plant1, plant2);
-  err = weed_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
+  err = lives_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
 

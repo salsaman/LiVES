@@ -707,7 +707,7 @@ int64_t lives_strand_copy(bundle_t *dest, const char *dname, bundle_t *src,
                           const char *sname) {
   char *shname = get_short_name(dname);
   char *shname2 = get_short_name(sname);
-  weed_leaf_copy(dest, shname, src, shname2);
+  lives_leaf_copy(dest, shname, src, shname2);
   lives_free(shname);
   lives_free(shname2);
   return 1;

@@ -1004,7 +1004,7 @@ static boolean fn_data_replace(lives_proc_thread_t dst, lives_proc_thread_t src)
   if (nparms > 0) {
     for (int i = 0; i < nparms; i++) {
       char *pname = make_std_pname(i);
-      weed_leaf_dup(dst, src, pname);
+      lives_leaf_dup(dst, src, pname);
       lives_free(pname);
     }
     return TRUE;

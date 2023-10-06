@@ -418,7 +418,7 @@ void pre_analyse(weed_plant_t *elist) {
                 else
                   new_tc = weed_event_get_timecode(init_event);
                 rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
-                weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, LIVES_LEAF_NEW_TC);
+                lives_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, LIVES_LEAF_NEW_TC);
                 weed_leaf_delete(init_event, LIVES_LEAF_NEW_TC);
               }
               if (etype == WEED_EVENT_TYPE_FILTER_INIT)
@@ -463,7 +463,7 @@ void pre_analyse(weed_plant_t *elist) {
         else
           new_tc = weed_event_get_timecode(init_event);
         rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
-        weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, LIVES_LEAF_NEW_TC);
+        lives_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, LIVES_LEAF_NEW_TC);
         weed_leaf_delete(init_event, LIVES_LEAF_NEW_TC);
       }
       if (etype == WEED_EVENT_TYPE_FILTER_INIT)
@@ -823,7 +823,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             weed_plant_t *oinit_event
               = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
             init_event = weed_get_voidptr_value(out_event, WEED_LEAF_INIT_EVENT, NULL);
-            weed_leaf_dup(out_event, init_event, WEED_LEAF_IN_PARAMETERS);
+            lives_leaf_dup(out_event, init_event, WEED_LEAF_IN_PARAMETERS);
             if (noquant) {
               if (!(xout_list = copy_with_check(event, out_list, in_tc - offset_tc, what, 0, NULL))) {
                 event_list_free(out_list);
@@ -1061,9 +1061,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           }
 
           if (weed_plant_has_leaf(frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET)) {
-            weed_leaf_dup(newframe, frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET);
+            lives_leaf_dup(newframe, frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET);
           }
-          weed_leaf_dup(newframe, frame_event, WEED_LEAF_OVERLAY_TEXT);
+          lives_leaf_dup(newframe, frame_event, WEED_LEAF_OVERLAY_TEXT);
           weed_set_int64_value(newframe, LIVES_LEAF_FAKE_TC,
                                weed_event_get_timecode(frame_event) - offset_tc);
 

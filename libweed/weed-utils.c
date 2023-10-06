@@ -295,7 +295,7 @@ static inline weed_voidptr_t weed_get_arrayxy(weed_plant_t *plant, const char *k
     else {
       totsize = _weed_intern_elem_sizes(leaf, NULL);
       if (!totsize) goto exit;
-      retvals = (*_calloc_func)(1, totsize);
+      retvals = (*_calloc_func)(num_elems, totsize / num_elems);
       if (!retvals) {
 	err = WEED_ERROR_MEMORY_ALLOCATION;
 	goto exit;

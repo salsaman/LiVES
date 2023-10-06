@@ -1601,7 +1601,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
       if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
         // is param template, create a param
         vpp->play_params[i] = weed_plant_new(WEED_PLANT_PARAMETER);
-        weed_leaf_copy(vpp->play_params[i], WEED_LEAF_VALUE, ptmpl, WEED_LEAF_DEFAULT);
+        lives_leaf_copy(vpp->play_params[i], WEED_LEAF_VALUE, ptmpl, WEED_LEAF_DEFAULT);
         weed_set_plantptr_value(vpp->play_params[i], WEED_LEAF_TEMPLATE, ptmpl);
         vpp->num_play_params++;
       } else {

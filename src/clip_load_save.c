@@ -2539,11 +2539,12 @@ int close_current_file(int file_to_switch_to) {
   srcgrps_free_all(mainw->current_file);
 
   if (cfile->audio_waveform) {
-    cancel_tl_redraw();
+    drawtl_cancel();
     for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
     lives_freep((void **)&cfile->audio_waveform);
     lives_freep((void **)&cfile->aw_sizes);
     cfile->aw_sizes = NULL;
+    unlock_timeline();
   }
 
   if (mainw->files[mainw->current_file]) {
@@ -2704,7 +2705,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   if (!auto_recover) {
     char *tmp;
 
-    lives_sleep_while_false(mainw->pretty_colours);
+    lives_millisleep_while_false(mainw->pretty_colours);
 
     if (!do_yesno_dialogf_with_countdown
         (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\n"

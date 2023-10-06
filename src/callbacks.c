@@ -97,8 +97,6 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->trcount_mutex);
     pthread_mutex_trylock(&mainw->alock_mutex);
     pthread_mutex_unlock(&mainw->alock_mutex);
-    pthread_mutex_trylock(&mainw->tlthread_mutex);
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
     pthread_mutex_trylock(&mainw->all_hstacks_mutex);
     pthread_mutex_unlock(&mainw->all_hstacks_mutex);
     pthread_mutex_trylock(&mainw->play_surface_mutex);
@@ -2270,10 +2268,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     lives_rm(cfile->info_file);
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
-        cancel_tl_redraw();
+	drawtl_cancel();
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
+	unlock_timeline();
       }
     }
 
@@ -2426,10 +2425,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     if (reset_achans > 0) {
       reget_afilesize(mainw->current_file);
       if (cfile->audio_waveform) {
-        cancel_tl_redraw();
+	drawtl_cancel();
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
+	unlock_timeline();
       }
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -2696,10 +2696,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
-        cancel_tl_redraw();
-        for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+	drawtl_cancel();
+         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
+	unlock_timeline();
       }
     }
 
@@ -2925,10 +2926,11 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
   if (cfile->undo_action == UNDO_REC_AUDIO) {
     if (cfile->audio_waveform) {
-      cancel_tl_redraw();
+      drawtl_cancel();
       for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
+      unlock_timeline();
     }
     cfile->arate = mainw->fx1_val;
     cfile->achans = mainw->fx2_val;
@@ -3315,10 +3317,11 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   if (mainw->ccpd_with_sound) {
     if (cfile->audio_waveform) {
-      cancel_tl_redraw();
+      drawtl_cancel();
       for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
+      unlock_timeline();
     }
     cfile->arate = clipboard->arate;
     cfile->arps = clipboard->arps;
@@ -9440,10 +9443,13 @@ boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
 boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   if (mainw->no_configs) return TRUE;
-  if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
-  mainw->video_drawable = lives_widget_create_painter_surface(widget);
-  clear_widget_bg(widget, mainw->video_drawable);
-  update_timer_bars(0, 0, 0, 0, 1);
+  if (get_timeline_lock()) {
+    if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
+    mainw->video_drawable = lives_widget_create_painter_surface(widget);
+    clear_widget_bg(widget, mainw->video_drawable);
+    update_timer_bars(mainw->drawsrc, 0, 0, 0, 0, 1);
+    unlock_timeline();
+  }
   return TRUE;
 }
 
@@ -12052,10 +12058,11 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   if (cfile->laudio_time == 0. || cfile->raudio_time == 0.) {
     if (cfile->audio_waveform) {
-      cancel_tl_redraw();
+      drawtl_cancel();
       for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
+      unlock_timeline();
     }
     if (cfile->laudio_time == cfile->raudio_time) cfile->achans = 0;
     else cfile->achans = 1;
@@ -12422,10 +12429,11 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
     // redo
     if (sfile->achans != sfile->undo_achans) {
       if (sfile->audio_waveform) {
-        cancel_tl_redraw();
+	drawtl_cancel();
         for (int i = 0; i < sfile->achans; lives_freep((void **)&sfile->audio_waveform[i++]));
         lives_freep((void **)&sfile->audio_waveform);
         lives_freep((void **)&sfile->aw_sizes);
+	unlock_timeline();
       }
     }
     start = sfile->undo1_dbl;

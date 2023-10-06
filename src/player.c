@@ -1541,6 +1541,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
               weed_layer_count_refs(frame_layer));
       weed_layer_ref(frame_layer);
     }
+
+    
     g_print("\n\nADD draw imt\n");
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
@@ -4221,7 +4223,7 @@ lives_obj_instance_t *lives_player_inst_create(uint64_t subtype) {
   weed_plant_t *gui;
   lives_obj_attr_t *attr;
   weed_plant_t  *inst = lives_obj_instance_create(OBJECT_TYPE_PLAYER, subtype);
-  weed_set_int_value(inst, "state", OBJECT_STATE_PREPARED);
+  lives_object_include_states(inst, OBJECT_STATE_PREPARED);
   attr = lives_object_declare_attribute(inst, ATTR_AUDIO_SOURCE, WEED_SEED_INT);
   lives_attribute_set_param_type(inst, ATTR_AUDIO_SOURCE, _("Source"), WEED_PARAM_INTEGER);
   gui = weed_plant_new(WEED_PLANT_GUI);

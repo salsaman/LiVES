@@ -829,6 +829,27 @@ static volatile size_t medbytes = BUFFER_FILL_BYTES_MED;
 static volatile size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
 static volatile size_t smbytes = BUFFER_FILL_BYTES_SMALL;
 
+static size_t bigbytes_wr = BUFFER_FILL_BYTES_LARGE;
+static size_t bigmedbytes_wr = BUFFER_FILL_BYTES_BIGMED;
+static size_t medbytes_wr = BUFFER_FILL_BYTES_MED;
+static size_t smedbytes_wr = BUFFER_FILL_BYTES_SMALLMED;
+static size_t smbytes_wr = BUFFER_FILL_BYTES_SMALL;
+
+
+void init_fbuff_sizes(const char *workdir) {
+  int64_t blocksz = (int64_t)get_fs_blocksize(workdir);
+  if (blocksz > 0) medbytes_wr = blocksz;
+  if (capable->hw.cacheline_size) smbytes_wr = capable->hw.cacheline_size;
+  smedbytes_wr = (smbytes_wr << 3) + (medbytes_wr >> 3);
+  bigmedbytes_wr = medbytes_wr << 3;
+  bigbytes_wr = bigmedbytes_wr << 3;
+  smbytes = smbytes_wr;
+  smedbytes = smedbytes_wr;
+  medbytes = medbytes_wr;
+  bigbytes = bigbytes_wr;
+}
+
+
 #if AUTOTUNE_FILEBUFF_SIZES
 static weed_plant_t *tunerl = NULL;
 static boolean tunedl = FALSE;
@@ -930,7 +951,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
         else if (fsize >= smedbytes) bufsize = smedbytes;
         //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
         //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
-#ifdef _IS_LINUX_GNU
+#if IS_LINUX_GNU
         readahead(fd, fbuff->bytes + skip, bufsize * 4);
 #endif
       }
@@ -1134,11 +1155,11 @@ size_t get_read_buff_size(int sztype) {
 
 size_t get_write_buff_size(int sztype) {
   switch (sztype) {
-  case BUFF_SIZE_WRITE_SMALL: return BUFFER_FILL_BYTES_SMALL;
-  case BUFF_SIZE_WRITE_SMALLMED: return BUFFER_FILL_BYTES_SMALLMED;
-  case BUFF_SIZE_WRITE_MED: return BUFFER_FILL_BYTES_MED;
-  case BUFF_SIZE_WRITE_BIGMED: return BUFFER_FILL_BYTES_BIGMED;
-  case BUFF_SIZE_WRITE_LARGE: return BUFFER_FILL_BYTES_LARGE;
+  case BUFF_SIZE_WRITE_SMALL: return smbytes_wr;
+  case BUFF_SIZE_WRITE_SMALLMED: return smedbytes_wr;
+  case BUFF_SIZE_WRITE_MED: return medbytes_wr;
+  case BUFF_SIZE_WRITE_BIGMED: return bigmedbytes_wr;
+  case BUFF_SIZE_WRITE_LARGE: return bigbytes_wr;
   default: break;
   }
   return 0; // custom perhaps
@@ -1269,13 +1290,13 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   if (res < bufsize) fbuff->flags |= FB_FLAG_EOF;
   else fbuff->flags &= ~FB_FLAG_EOF;
 
-#if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && defined IS_LINUX_GNU)
+#if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && IS_LINUX_GNU)
   if (reversed) {
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fbuff->fd, 0, fbuff->offset - (bufsize >> 2) * 3, POSIX_FADV_RANDOM);
     posix_fadvise(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize, POSIX_FADV_WILLNEED);
 #endif
-#ifdef IS_LINUX_GNU
+#if IS_LINUX_GNU
     readahead(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize);
 #endif
   } else {
@@ -1283,7 +1304,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
     posix_fadvise(fbuff->fd, fbuff->offset, bufsize, POSIX_FADV_WILLNEED);
 #endif
-#ifdef IS_LINUX_GNU
+#if IS_LINUX_GNU
     readahead(fbuff->fd, fbuff->offset, bufsize);
 #endif
   }
@@ -1734,7 +1755,7 @@ static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const cha
 #ifdef WRITE_ALL
     size_t bigbsize = count;
 #else
-    size_t bigbsize = BUFFER_FILL_BYTES_LARGE;
+    size_t bigbsize = bigbytes_wr;
 #endif
     if (bigbsize > count) bigbsize = count;
     bytes = lives_write(fbuff->fd, buf + res, bigbsize, allow_fail);
@@ -1775,15 +1796,15 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
   if (count <= 0) return 0;
 
   if (fbuff->bufsztype != BUFF_SIZE_WRITE_CUSTOM) {
-    if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
+    if (count > bigbytes_wr) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
 
-    if (count >= BUFFER_FILL_BYTES_BIGMED >> 1)
-      bufsztype = BUFF_SIZE_WRITE_LARGE;
-    else if (count >= BUFFER_FILL_BYTES_MED >> 1)
+    if (count >= bigbytes_wr >> 1)
+      bufsztype =  BUFF_SIZE_WRITE_LARGE;
+    else if (count >= bigmedbytes_wr >> 1)
       bufsztype = BUFF_SIZE_WRITE_BIGMED;
-    else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALLMED)
+    else if (fbuff->totbytes >= smedbytes_wr)
       bufsztype = BUFF_SIZE_WRITE_MED;
-    else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALL)
+    else if (fbuff->totbytes >= smbytes_wr)
       bufsztype = BUFF_SIZE_WRITE_SMALLMED;
 
     if (bufsztype < fbuff->bufsztype) bufsztype = fbuff->bufsztype;
@@ -2038,6 +2059,16 @@ off_t get_dir_size(const char *dirname) {
 }
 
 
+LIVES_GLOBAL_INLINE uint64_t get_fs_blocksize(const char *dir) {
+  struct statvfs sbuf;
+  int64_t blocksz;
+  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return 0;
+  if (statvfs(dir, &sbuf) == -1) return 0;
+  blocksz = (int64_t)sbuf.f_bsize;
+  return blocksz > 0 ? blocksz : 0;
+}
+
+
 const char *get_shmdir(void) {
   if (!*capable->shmdir_path) {
     char *xshmdir = NULL, *shmdir = lives_build_path(LIVES_RUN_DIR, NULL);
@@ -2233,6 +2264,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
     } else if (prefs->disk_quota) {
       dsval = disk_monitor_check_result(prefs->workdir);
       if (dsval >= 0) capable->ds_used = dsval;
+      else return FALSE;
     }
     ds = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
     capable->ds_free = dsval;

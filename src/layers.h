@@ -102,7 +102,7 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
 
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);
-lives_result_t weed_layer_transfer_pdata(weed_layer_t *dst, weed_layer_t *src);
+lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed_plant_t *src);
 
 //#define DEBUG_LAYER_REFS
 #ifdef DEBUG_LAYER_REFS

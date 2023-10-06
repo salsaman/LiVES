@@ -2125,6 +2125,71 @@ void show_widgets_info(void) {
 
 #endif
 
+void weed_utils_test(void) {
+  weed_plant_t *plant1, *plant2;
+  void *vp1, *vp2;
+  weed_error_t err;
+  plant1 =weed_plant_new(123);
+  plant2 =weed_plant_new(123);
+
+  vp1 = (void *)0x123;
+  fprintf(stderr, "initial val will be %p\n", vp1);  
+  err = weed_set_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, vp1);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+  vp1 = weed_get_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, &err);
+  fprintf(stderr, "initial val read; %p\n", vp1);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+  
+  fprintf(stderr, "copy from plant1; %p to plant2: %p\n", plant1, plant2);
+  err = weed_leaf_copy(plant2, "voidptr2", plant1, WEED_LEAF_PIXEL_DATA); 
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  vp2 = weed_get_voidptr_value(plant2, "voidptr2", &err);
+  fprintf(stderr, "copy val read; %p\n", vp2);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  vp1 = weed_get_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, &err);
+  fprintf(stderr, "check orig val, val read; %p\n", vp1);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  fprintf(stderr, "dup from plant1; %p to plant2: %p\n", plant1, plant2);
+  err = weed_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  vp2 = weed_get_voidptr_value(plant2, WEED_LEAF_PIXEL_DATA, &err);
+  fprintf(stderr, "dup val read; %p\n", vp2);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  err = weed_set_voidptr_value(plant2, WEED_LEAF_PIXEL_DATA, NULL);
+  fprintf(stderr, "reset value for %p\n", plant2);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  vp2 = weed_get_voidptr_value(plant2, WEED_LEAF_PIXEL_DATA, &err);
+  fprintf(stderr, "reet val read; %p\n", vp2);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  fprintf(stderr, "dup again from plant1; %p to plant2: %p\n", plant1, plant2);
+  err = weed_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  vp2 = weed_get_voidptr_value(plant2, WEED_LEAF_PIXEL_DATA, &err);
+  fprintf(stderr, "dup val read; %p\n", vp2);
+  fprintf(stderr, "err was %d\n", err);
+  werr_expl(err);
+
+  weed_plant_free(plant1);  weed_plant_free(plant2);
+}
+
 
 void do_lsd_tests(void) {
   const lsd_struct_def_t *lsd;
@@ -2331,6 +2396,9 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
 
     if (tests_to_run & TEST_BUNDLES)
       init_bundles();
+
+    if (tests_to_run & TEST_WEED_UTILS)
+      weed_utils_test();
   }
   if (testpoint == 2) {
     if (tests_to_run & TEST_WEED)

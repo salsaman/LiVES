@@ -1558,7 +1558,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   last_open_check_ticks = mainw->offsetticks = 0;
 
-  IF_APLAYER_JACK
+  IF_AREADER_JACK
   (
     if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT &&
   mainw->jackd_read && prefs->ahold_threshold > 0.) {
@@ -1579,7 +1579,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
   })
 
-  IF_APLAYER_PULSE
+  IF_AREADER_PULSE
   (
     // start audio recording now
   if (prefs->audio_src == AUDIO_SRC_EXT) {

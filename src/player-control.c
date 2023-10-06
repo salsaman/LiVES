@@ -173,6 +173,8 @@ static void prep_audio_player(void) {
     IF_APLAYER_JACK(jack_aud_pb_ready(mainw->jackd, mainw->current_file));
     IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file));
   }
+
+  
 }
 
 
@@ -524,6 +526,7 @@ static boolean reset_timebase(void) {
   mainw->origticks = lives_get_session_ticks();
 
 #ifdef HAVE_PULSE_AUDIO
+  
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     boolean pa_reset = TRUE;
     if (prefs->audio_src == AUDIO_SRC_INT) {
@@ -531,9 +534,11 @@ static boolean reset_timebase(void) {
         pa_reset = FALSE;
       }
     } else {
-      //      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
-      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
-        pa_reset = FALSE;
+      if (mainw->pulsed_read) {
+	pulse_driver_uncork(mainw->pulsed_read);
+	if (!pa_time_reset(mainw->pulsed_read, 0)) {
+	  pa_reset = FALSE;
+	}
       }
     }
     if (!pa_reset) {
@@ -654,10 +659,12 @@ void play_file(void) {
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
-  if (!mainw->foreign && (!(AUD_SRC_EXTERNAL &&
-                            (audio_player == AUD_PLAYER_JACK ||
-                             audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-    prep_audio_player();
+  if (!mainw->foreign) {
+    if (!(AUD_SRC_EXTERNAL &&
+       (audio_player == AUD_PLAYER_JACK ||
+	audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE))) {
+      prep_audio_player();
+    }
   }
 
   if (mainw->record) {

@@ -1988,14 +1988,12 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
 
-  lives_alarm_set_timeout(BILLIONS(5));
-
-  lives_microsleep_until_nonzero_timeout(BILLIONS(5), pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
+  lives_microsleep_until_nonzero_timeout(MILLIONS(5), pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
  
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  return_val_if_triggered(FALSE);
+  //return_val_if_triggered(FALSE);
 
   while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
     lives_nanosleep(10000);

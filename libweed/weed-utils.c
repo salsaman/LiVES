@@ -516,16 +516,17 @@ int32_t weed_get_plant_type(weed_plant_t *plant)
 {return plant ? weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) : WEED_PLANT_UNKNOWN;}
 
 
-#define _COPY_DATA(ctype, wtype) {					\
+#define _COPY_DATA(ctype, wtype, dst, src, keyt, keyf, n, err) do {	\
+    int num, num2;						\
     ctype *vals = (ctype *)weed_get_arrayx(src, keyf, WEED_SEED_##wtype, &err, &num); \
-    if (err == WEED_SUCCESS) {if (n >= 0) {							\
-	if (n >= num) err = WEED_ERROR_NOSUCH_ELEMENT;			\
-	else {ctype *vals2 = (ctype *)weed_get_arrayx(dst, keyt, WEED_SEED_##wtype, &err, &count); \
-	  if (err == WEED_SUCCESS) {if (n >= count) err = WEED_ERROR_NOSUCH_ELEMENT;		\
-	    else {vals2[n] = vals[n]; (*_free_func)(vals); vals = vals2; num = count; \
-	    }}}} if (err == WEED_SUCCESS) err = weed_set_##wtype##_array(dst, keyt, num, vals);} \
-    if (vals) (*_free_func)(vals);}
-
+    if (err == WEED_SUCCESS) {						\
+      if (n < 0) err = weed_leaf_set(dst, keyt, WEED_SEED_##wtype, num, vals); \
+      else {if (n >= num) err = WEED_ERROR_NOSUCH_ELEMENT;		\
+	else {ctype *vals2 = (ctype *)weed_get_arrayx(dst, keyt, WEED_SEED_##wtype, &err, &num2); \
+	  if (err == WEED_SUCCESS) {       				\
+	    if (n >= num2) err = WEED_ERROR_NOSUCH_ELEMENT;		\
+	    else {vals2[n] = vals[n]; err = weed_leaf_set(dst, keyt, WEED_SEED_##wtype, num, vals);}} \
+	  (*_free_func)(vals2);}}} (*_free_func)(vals);} while (0);
 
 weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n) {
   // copy a leaf from src to dest
@@ -542,23 +543,25 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
 
   if (!dst || !src) return WEED_SUCCESS;
 
-  if ((err = weed_check_leaf(src, keyf)) == WEED_ERROR_NOSUCH_LEAF) return WEED_ERROR_NOSUCH_LEAF;
-
+  if ((err = weed_check_leaf(src, keyf)) == WEED_ERROR_NOSUCH_LEAF) {
+    return WEED_ERROR_NOSUCH_LEAF;
+  }
   seed_type = weed_leaf_seed_type(src, keyf);
 
   if (err == WEED_ERROR_NOSUCH_ELEMENT) {
     err = weed_leaf_set(dst, keyt, seed_type, 0, NULL);
   } else {
     switch (seed_type) {
-    case WEED_SEED_INT: _COPY_DATA(int32_t, int); break;
-    case WEED_SEED_INT64: _COPY_DATA(int64_t, int64); break;
-    case WEED_SEED_UINT: _COPY_DATA(uint32_t, uint); break;
-    case WEED_SEED_UINT64: _COPY_DATA(uint64_t, uint64); break;
-    case WEED_SEED_BOOLEAN: _COPY_DATA(int32_t, boolean); break;
-    case WEED_SEED_DOUBLE: _COPY_DATA(double, double); break;
-    case WEED_SEED_FUNCPTR: _COPY_DATA(weed_funcptr_t, funcptr); break;
-    case WEED_SEED_VOIDPTR: _COPY_DATA(void *, voidptr); break;
-    case WEED_SEED_PLANTPTR: _COPY_DATA(weed_plantptr_t, plantptr); break;
+    case WEED_SEED_INT: _COPY_DATA(int32_t, INT, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_INT64: _COPY_DATA(int64_t, INT64, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_UINT: _COPY_DATA(uint32_t, UINT, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_UINT64: _COPY_DATA(uint64_t, UINT64, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_BOOLEAN: _COPY_DATA(uint8_t, BOOLEAN, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_DOUBLE: _COPY_DATA(double, DOUBLE, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_FUNCPTR: _COPY_DATA(weed_funcptr_t, FUNCPTR, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_VOIDPTR: _COPY_DATA(weed_voidptr_t, VOIDPTR, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_PLANTPTR: _COPY_DATA(weed_plantptr_t, PLANTPTR, dst, src, keyt, keyf, n, err); break;
+
     case WEED_SEED_STRING: {
       char **datac = __weed_get_string_array__(src, keyf, &err, &num);
       if (err == WEED_SUCCESS) {

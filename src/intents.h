@@ -263,7 +263,8 @@ char *lives_attr_get_value_string(lives_obj_t *, lives_obj_attr_t *);
 lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st);
 lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *, const char *name);
 lives_obj_attr_t **lives_object_get_attrs(lives_obj_t *);
-weed_plant_t *lives_obj_instance_get_attribute(weed_plant_t *loi, const char *name);
+
+weed_plant_t *lives_obj_instance_get_attribute(lives_obj_instance_t *, const char *name);
 
 weed_plant_t *lives_obj_instance_create(uint64_t type, uint64_t subtype);
 
@@ -387,9 +388,9 @@ weed_error_t lives_attribute_set_leaf_readonly(lives_obj_t *, const char *name,
     const char *key, boolean state);
 
 // cast to / from lives_param_type_t
-int lives_attribute_get_param_type(lives_obj_t *obj, const char *name);
-weed_error_t lives_attribute_set_param_type(lives_obj_t *obj, const char *name,
-    const char *label, int ptype);
+int lives_attribute_get_param_type(lives_obj_instance_t *, const char *name);
+weed_error_t lives_attribute_set_param_type(lives_obj_instance_t *, const char *name,
+					    const char *label, int ptype);
 
 int lives_object_get_num_attributes(lives_obj_t *);
 

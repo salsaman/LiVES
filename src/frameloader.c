@@ -2566,7 +2566,9 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 	goto fail;
       } else {
 	vlayer = weed_layer_create_from_generator(inst, tc, clip);
-	weed_layer_transfer_pdata(layer, vlayer);
+	weed_pixel_data_share(layer, vlayer);
+	weed_layer_set_pixel_data(vlayer, NULL);
+	weed_layer_free(vlayer);
       }
       filter_mutex_unlock(key);
       weed_instance_unref(inst);

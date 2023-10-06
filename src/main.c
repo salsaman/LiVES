@@ -360,17 +360,33 @@ boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl) {
 }
 
 
+#define SIG_SRC_KERNEL		0
+#define SIG_SRC_INTERN		1
+#define SIG_SRC_EXTERN		1
+
+static int sigsrc = SIG_SRC_KERNEL;
+
 //#define QUICK_EXIT
 void catch_sigint(int signum, siginfo_t *si, void *uc) {
   // trap for ctrl-C and others
   // if (mainw->jackd) lives_jack_end();
-  boolean has_si = TRUE;
+  sigsrc = SIG_SRC_KERNEL;
+  
+  if (!uc) sigsrc = SIG_SRC_INTERN;
   if (signum < 0) {
-    has_si = FALSE;
+    sigsrc = SIG_SRC_EXTERN;
     signum = -signum;
   }
 
-  print_diagnostics(DIAG_ALL);
+  fprintf(stderr, "SIGNAL %d received\n", signum);
+  if (sigsrc == SIG_SRC_INTERN)
+    fprintf(stderr, "Signal wass caught internally\n");
+  if (sigsrc == SIG_SRC_EXTERN)
+    fprintf(stderr, "Signal wass caught externally\n");
+
+#if !NO_SHOW_DIAG
+  if (mainw->debug) print_diagnostics(DIAG_ALL);
+#endif
 
   if (mainw) mainw->critical = TRUE;
 
@@ -435,10 +451,10 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
           fprintf(stderr, "\n");
         }
       } else {
-        if (has_si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+        if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
       }
     } else {
-      if (has_si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
+      if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
     }
 
     fprintf(stderr, "\n");
@@ -451,6 +467,12 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
                               "to collect more information.\n\n"));
     }
 
+
+    if (sigsrc == SIG_SRC_EXTERN) {
+      fprintf(stderr, "External erros are ignored, continuing\n");
+      return;
+    }
+    
 #ifdef USE_GLIB
 #ifdef LIVES_NO_DEBUG
     if (mainw->debug) {
@@ -479,14 +501,6 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 
   exit(signum);
 }
-
-#ifdef USE_GLIB
-static boolean glib_sighandler(livespointer data) {
-  int signum = LIVES_POINTER_TO_INT(data);
-  catch_sigint(-signum, NULL, NULL);
-  return TRUE;
-}
-#endif
 
 
 LIVES_GLOBAL_INLINE void ign_signal_handlers(void) {
@@ -536,21 +550,15 @@ void set_signal_handlers(lives_sigfunc_t sigfunc) {
 
   // remaining signals can use std stack
   if (sigemptyset(&sa.sa_mask) == -1)
-    LIVES_FATAL("Sigemptyset failed for signal handler");
+    LIVES_FATAL("sigemptyset failed for signal handler");
 
-#define USE_GLIB_SIGHANDLER
-#ifdef USE_GLIB_SIGHANDLER
-  g_unix_signal_add(LIVES_SIGINT, glib_sighandler, LIVES_INT_TO_POINTER(LIVES_SIGINT));
-  g_unix_signal_add(LIVES_SIGTERM, glib_sighandler, LIVES_INT_TO_POINTER(LIVES_SIGTERM));
-#else
+  //#define USE_GLIB_SIGHANDLER
   sigaddset(&sa.sa_mask, LIVES_SIGINT);
   sigaddset(&sa.sa_mask, LIVES_SIGTERM);
-#endif
 
   // signals which should be blocked during execution of handler
   sigaddset(&sa.sa_mask, LIVES_SIGABRT);
   sigaddset(&sa.sa_mask, LIVES_SIGFPE);
-
 
   sa.sa_sigaction = sigfunc;
   sa.sa_flags = SA_SIGINFO;

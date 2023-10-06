@@ -2555,30 +2555,12 @@ LIVES_GLOBAL_INLINE int weed_palette_conv_resizable(int in_pal, int out_pal) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out) {
-  // in_out is TRUE for input, FALSE for output
+LIVES_GLOBAL_INLINE boolean weed_palette_is_resizable(int pal, int clamped, int direction) {
   // we have various possibilities
   // - palette can be resizeable and convertable
   int res = weed_palette_conv_resizable(pal, pal);
-  if (in_out && !(res & 1)) return TRUE;
-  if (!in_out && !(res & 2)) return TRUE;
-  return FALSE;
-}
-
-//#define NO_SWS_CSCONV
-LIVES_GLOBAL_INLINE boolean weed_palette_check_resizable(int pal, int clamped, boolean in_out) {
-  // we can call this when converting rgb <---> yuv
-  // if such converssions are blocked, then even if the palette is resizbale, if it is rgb
-  // we prentend it is not. This will force the palette conversion to be done before or after the resize
-  // this may be important for maintiang consistent conversion factors
-  int res = weed_palette_conv_resizable(pal, pal);
-#ifdef USE_SWSCALE
-#ifdef NO_SWS_CSCONV
-  if (weed_palette_is_rgb(pal)) return FALSE;
-#endif
-#endif
-  if (in_out && !(res & 1)) return TRUE;
-  if (!in_out && !(res & 2)) return TRUE;
+  if (direction == LIVES_INPUT && !(res & 1)) return TRUE;
+  if (direction == LIVES_OUTPUT && !(res & 2)) return TRUE;
   return FALSE;
 }
 
@@ -12821,205 +12803,103 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
 }
 
 
-LIVES_LOCAL_INLINE void lives_free_buffer(uint8_t *pixels, livespointer data) {
+LIVES_LOCAL_INLINE void weed_layer_unrefX(uint8_t *pixels, livespointer data) {
   weed_layer_t *px_layer = (weed_layer_t *)data;
-  // this will free the proxy_layer. Since we added an extra ref to pixbuf,
-  // it should only be freed when we remove that ref
-  // - we only remove the ref when removing proxy layer from copylist
-  // we only remove proxy_layer from copylist when it is last member of list
-  // since we nevery added refss to proxy layer, unreffing it now will free it, along with the pixelk data
-  // since we ignore the shared pixel_data in pixbuf, it only gets freed via the proxy
-  // if more refs are added to pixbuf before this happens, simply, layer is removed from copylist
-  // pixbuf then becomes a standalone pixbuf with proxy_layer just there to fcilkitate the correct freeing
-  // if pixbuf ws used ot make layers, then nothing happens until px layer is last in copylist
-  // going that route, we cannot add a custom free function so we must et the pixbuf data fre itself "naturally"
-  //
-  /* LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(px_layer, LIVES_LEAF_PIXBUF_SRC, NULL); */
-  /* lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, NULL); */
-
   weed_layer_unref(px_layer);
 }
 
 
-LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height,
-    uint8_t *LIVES_RESTRICT buf, lives_layer_t *layer) {
-  // we can cheat if our buffer is correctly sized
-  // we will create a proxy_layer for the pixbuf, then (shallow) copy layuer to it
-  // this then adds proxy_layer to the copylist of layer
-  // we also add a ref to pixbuf
-  //
-  // when all other layer copies are freed, the proxy_layer will be last in copylist, and will be removed
-  // at that point we will nullify pixel_data for proxy and free it, then unref pixbuf, removing our added ref
-  // this will either cause pixbuf to be freed along with its transferred pixdata,
-  // or else it is cut free and becomes just like any regular pixbuf
-  LiVESPixbuf *pixbuf;
-  int channels = has_alpha ? 4 : 3;
-  int rowstride = get_pixbuf_rowstride_value(width * channels);
-  lives_layer_t *px_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-
-  weed_layer_copy(px_layer, layer);
-  pixbuf = lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride, lives_free_buffer, px_layer);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, px_layer);
-  weed_set_voidptr_value(px_layer, LIVES_LEAF_PIXBUF_SRC, pixbuf);
-  g_print("SET PBSRC for %p to %p\n", px_layer, pixbuf);
-  lives_widget_object_ref(pixbuf);
-
+void *lives_pixbuf_new_from_data_wrapper(void *pixel_data, int pal, int width, int height,
+						int rowstride, ext_free_func_t ext_free_func, void *func_data) {
+  LiVESPixbuf *pixbuf = lives_pixbuf_new_from_data((const unsigned char *)pixel_data, weed_palette_has_alpha(pal),
+						   width, height, rowstride, (LiVESPixbufDestroyNotify)ext_free_func, func_data);
+  SET_VOIDP_DATA(pixbuf, LAYER_PROXY_KEY, func_data);
   return pixbuf;
 }
 
 
-static lives_result_t find_pb_src(void *data) {
-  if (data) {
-    weed_layer_t *layer = (weed_layer_t *)data;
-    if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC)) {
-      return LIVES_RESULT_SUCCESS;
-    }
-  }
-  return LIVES_RESULT_FAIL;
-}
-
-
-LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
+void *layer_to_extern(weed_layer_t *layer, ext_creator_func_t cr_func, boolean realpalette, boolean fordisplay) {
   // create a pixbuf from a weed layer
   // layer "pixel_data" is either copied to the pixbuf pixels,
   // or the contents shared with the pixbuf and the layer pixel_data will b enullified instead of freed
   // TODO - define some mechanism to force non-sharing, and another to detrmine if shared or not
-
-  LiVESPixbuf *pixbuf;
-
-  uint8_t *pixel_data, *pixels;
-
-  boolean cheat = FALSE, done;
-
-  int palette, xpalette;
-  int width, height;
-  int irowstride, rowstride, orowstride;
-  int n_channels;
+  void *ext;
+  lives_layer_t *px_layer;
+  uint8_t *pixel_data;
+  int palette, width, height;
+  int rowstride;
 
   if (!layer) return NULL;
 
   palette = weed_layer_get_palette(layer);
 
-  if (!realpalette || weed_palette_is_pixbuf_palette(palette)) {
-    // - we check if layer has a copy list, if so, is there a layer in copylist with PIXBUF_SRC
-    // if the layer is invalid this is no problem - the pixbuf was unreffed but not yet freed
-    // we can simply reactivate it !
-    // then we can just add a ref to pixbuf, and return it
-    // we shoukld only be in this situation if -- layer shared to a pixbuf layer_to_pixbuf -- and now we want a second copy
-    // or - pixbuf was shared to a laeyer: pixbuf to layer, and now we want a copy of the orignal pixbuf
-    // other possibilites... pixbuf to layer -- copy layer to second layer -- unref pixbuf
-    // .... but now we want the original pixbuf back again, then layer to pixbuf can restore it
-    // our layer pixel_data originally came from a pixbuf, so just nullify the layer and return the original pixbuf
-    weed_layer_t *xlayer = NULL;
-    lives_sync_list_t *copylist;
-    pthread_mutex_t *copylist_mutex = (pthread_mutex_t *)weed_get_voidptr_value(layer, "copylist_mutex", NULL);
-    if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
-    copylist = lives_layer_get_copylist(layer);
-    // do we have an pixbuf proxy amongst the copylist group ?
-    if (copylist) xlayer = (weed_layer_t *)lives_sync_list_find(copylist, find_pb_src);
-    if (xlayer) {
-      // if so we can just add another ref to pixbuf and return it
-      pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(xlayer, LIVES_LEAF_PIXBUF_SRC, NULL);
-      if (pixbuf) {
-        lives_widget_object_ref(pixbuf);
-        if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
-        return pixbuf;
-      }
-    }
-    if (copylist_mutex) pthread_mutex_unlock(copylist_mutex);
-  }
-
-  // otherwise we need to steal or copy the pixel_data
-  // we cannot lock copylit_mutex, so...
-
   if (!weed_layer_get_pixel_data(layer))
     layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_ANY);
 
-  do {
-    width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
-    height = weed_layer_get_height(layer);
-    irowstride = weed_layer_get_rowstride(layer);
-    pixel_data = (uint8_t *)weed_layer_get_pixel_data(layer);
-    done = TRUE;
-    xpalette = palette;
-    if (realpalette) {
-      if (!weed_palette_is_pixbuf_palette(palette)) {
-        // force conversion to RGB24 or RGBA32
-        xpalette = WEED_PALETTE_NONE;
-      } else {
-        if (prefs->apply_gamma) {
-          if (fordisplay && prefs->use_screen_gamma)
-            gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
-          else gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-        }
+  width = weed_layer_get_width_pixels(layer);
+  height = weed_layer_get_height(layer);
+  rowstride = weed_layer_get_rowstride(layer);
+
+  pixel_data = (uint8_t *)weed_layer_get_pixel_data(layer);
+
+  if (realpalette) {
+    if (!weed_palette_is_pixbuf_palette(palette))
+      // force conversion to RGB24 or RGBA32
+      palette = WEED_PALETTE_NONE;
+    else {
+      if (prefs->apply_gamma) {
+	if (fordisplay && prefs->use_screen_gamma)
+	  gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
+	else gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       }
     }
-
-    switch (xpalette) {
-    case WEED_PALETTE_RGB24:
-    case WEED_PALETTE_BGR24:
-    case WEED_PALETTE_YUV888:
-      if (irowstride == get_pixbuf_rowstride_value(width * 3)) {
-        // rowstrides are OK, we can just steal the pixel_data
-        pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data, layer);
-        //weed_layer_nullify_pixel_data(layer);
-        cheat = TRUE;
-      } else {
-        // otherwise we need to copy the data
-        pixbuf = lives_pixbuf_new(FALSE, width, height);
-      }
-      n_channels = 3;
-      break;
-    case WEED_PALETTE_RGBA32:
-    case WEED_PALETTE_BGRA32:
-#ifdef USE_SWSCALE
-    case WEED_PALETTE_ARGB32:
-#else
-#endif
-    case WEED_PALETTE_YUVA8888:
-      if (irowstride == get_pixbuf_rowstride_value(width * 4)) {
-        // rowstrides are OK, we can just steal the pixel_data
-        pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data, layer);
-        //weed_layer_nullify_pixel_data(layer);
-        cheat = TRUE;
-      } else {
-        // otherwise we need to copy the data
-        pixbuf = lives_pixbuf_new(TRUE, width, height);
-      }
-      n_channels = 4;
-      break;
-    default:
-      if (weed_palette_has_alpha(palette)) {
-        if (!convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0)) return NULL;
-        palette = WEED_PALETTE_RGBA32;
-      } else {
-        if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) return NULL;
-        palette = WEED_PALETTE_RGB24;
-      }
-      done = FALSE;
-    }
-  } while (!done);
-
-  if (!cheat && LIVES_IS_PIXBUF(pixbuf)) {
-    // copy the pixel data
-    int k;
-    pixel_data = (uint8_t *)weed_layer_get_pixel_data(layer);
-    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
-    orowstride = lives_pixbuf_get_rowstride(pixbuf);
-
-    if (irowstride > orowstride) rowstride = orowstride;
-    else rowstride = irowstride;
-
-    height--;
-
-    for (k = 0; k < height; k++) {
-      lives_memcpy(&pixels[orowstride * k], &pixel_data[irowstride * k], rowstride);
-      if (rowstride < orowstride) lives_memset(&pixels[orowstride * k + rowstride], 255, orowstride - rowstride);
-    }
-    rowstride = get_last_pixbuf_rowstride_value(width, n_channels);
-    lives_memcpy(&pixels[orowstride * k], &pixel_data[irowstride * k], rowstride);
   }
 
+  switch (palette) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_BGR24:
+  case WEED_PALETTE_YUV888:
+    break;
+  case WEED_PALETTE_RGBA32:
+  case WEED_PALETTE_BGRA32:
+#ifdef USE_SWSCALE
+  case WEED_PALETTE_ARGB32:
+#else
+#endif
+  case WEED_PALETTE_YUVA8888:
+    break;
+  default:
+    if (weed_palette_has_alpha(palette)) {
+      if (!realpalette && weed_palette_is_yuv(palette)) {
+	if (!convert_layer_palette(layer, WEED_PALETTE_YUVA8888, 0)) return NULL;
+      }
+      else {
+	if (!convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0)) return NULL;
+      }
+    } else {
+      if (!realpalette && weed_palette_is_yuv(palette)) {
+	if (!convert_layer_palette(layer, WEED_PALETTE_YUV888, 0)) return NULL;
+      }
+      else {
+	if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) return NULL;
+      }
+    }
+  }
+
+  px_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  weed_layer_copy(px_layer, layer);
+
+  ext = (*cr_func)(pixel_data, palette, width, height,
+		   rowstride, (ext_free_func_t)weed_layer_unrefX, px_layer);
+  //g_print("SET PBSRC for %p to %p\n", px_layer, pixbuf);
+
+  return ext;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisp) {
+  LiVESPixbuf *pixbuf = (LiVESPixbuf *)layer_to_extern(layer, (ext_creator_func_t)lives_pixbuf_new_from_data_wrapper,
+						       realpalette, fordisp);
   return pixbuf;
 }
 
@@ -13045,10 +12925,10 @@ lives_result_t pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
     return LIVES_RESULT_ERROR;
   }
 
-  px_layer = (lives_layer_t *)GET_VOIDP_DATA(pixbuf, LAYER_PROXY_KEY);
-  if (px_layer && weed_layer_check_valid(px_layer)
-      && weed_layer_get_pixel_data(px_layer)) {
+  px_layer = GET_VOIDP_DATA(pixbuf, LAYER_PROXY_KEY);
+  if (px_layer) {
     if (weed_layer_copy(layer, px_layer)) return LIVES_RESULT_SUCCESS;
+    return LIVES_RESULT_FAIL;
   }
 
   rowstride = lives_pixbuf_get_rowstride(pixbuf);
@@ -13068,21 +12948,23 @@ lives_result_t pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
   }
 
   if (rowstride == get_last_pixbuf_rowstride_value(width, nchannels)) {
-    // this is similar to layer_to_pixbuf - we set layer values from pixbuf,
-    // then create a proxy layer to accompany the pixbuf, and share pixdata with proxy_layer
-    // we will add a copylist to layer and to pixbuf
+    // if we can share data from pixbuf to layer, we do that
+    // but ince we cannot add pixbuf directly to the layer copylist, we create a proxy layer
+    // and add that. Proxy_layer will only be removed from copylist when it is last member
+    // at that point, it will free itselfss and remover the extra ref on pixbuf
+    // the extra ref is there to prevent pixbuf from being unreffed and leaving pproxy_layer hanging
     px_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     in_pixel_data = (void *)lives_pixbuf_get_pixels_readonly(pixbuf);
     weed_layer_set_pixel_data(layer, in_pixel_data);
     palette = weed_layer_get_palette(layer);
     if (weed_palette_is_rgb(palette)) weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
     weed_layer_copy(px_layer, layer);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pixbuf), LAYER_PROXY_KEY, px_layer);
     weed_set_voidptr_value(px_layer, LIVES_LEAF_PIXBUF_SRC, pixbuf);
     weed_layer_set_pixel_data(px_layer, NULL);
     lives_widget_object_ref(pixbuf);
     return TRUE;
   }
+
 
   flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
   weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
@@ -13710,6 +13592,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     if (weed_palette_is_yuv(opal_hint)) weed_layer_set_yuv_clamping(layer, oclamp_hint);
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
 
+    g_print("into crempila\n");
     // will free layer pd, old layer now has only copy
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
@@ -13721,6 +13604,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
       return FALSE;
     }
 
+    g_print("outof crempila\n");
     out_pixel_data = weed_layer_get_pixel_data_planar(layer, &oplanes);
     orowstrides = weed_layer_get_rowstrides(layer, NULL);
 
@@ -14113,6 +13997,8 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   g_print("contig: %p %d, %p %d\n", old_layer, weed_get_boolean_value(old_layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL),
           layer, weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL));
 
+
+  g_print("copylist is %p\n", lives_layer_get_copylist(layer));
   // lwidht, lheight are layer width in pixels, layer height, after resizing
   width = lwidth;
   height = lheight;
@@ -14127,7 +14013,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   for (i = 0; i < cache_count; i++) {
     // with cache_mutex locked, no other thread can double assing a cehcd layer, but
     // a layer can be released, and once released there are no more copies that can be made
-    if (lives_layer_get_copylist(cached_layers[i]))continue;
+    if (lives_layer_get_copylist(cached_layers[i])) continue;
     if (weed_layer_get_width(cached_layers[i]) >= nwidth
         && weed_layer_get_height(cached_layers[i]) >= nheight
         && weed_layer_get_palette(cached_layers[i]) == pal) {
@@ -14138,7 +14024,11 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
       inner_size[1] = height;
       weed_set_int_array(cached_layers[i], WEED_LEAF_INNER_SIZE, 2, inner_size);
       lives_free(inner_size);
+
+      g_print("will use cached layer %d %p\n", i, cached_layers[i]);
       weed_layer_nullify_pixel_data(layer);
+
+
       weed_layer_copy(layer, cached_layers[i]);
       break;
     }
@@ -14464,8 +14354,7 @@ boolean consider_swapping(int *inpal, int *outpal) {
    if it still has a proxy layer, the layer with nullifed pixdata will be freed. 
    If it has a proxy with pixel_data set, do not free (See below)
 
-
-   In general - we cannot eaily share data between layer and urface, due to the premulltiplication.
+   In general - we cannot easily share data between layer and urface, due to the premulltiplication.
    Exceptions are if we use A1 or A8, or if we are sure the image is opaque, (e.g if we convert from RGB24 to ARGB)
    AND tthe rowtide value match..
 
@@ -14883,7 +14772,6 @@ lives_row_hash_t *hash_cmp_rows(lives_row_hash_t *row_hash, int clipno, frames_t
    we do not free if WEED_LEAF_HOST_ORIG_PDATA is set (data is an alpha in which "belongs" to another out param)
 
    take care of LIVES_LEAF_PIXEL_DATA_CONTIGUOUS
-   take care of LIVES_LEAF_PIXBUF_SRC
    take care of LIVES_LEAF_SURFACE_SRC
 
    sets WEED_LEAF_PIXEL_DATA to NULL for the layer
@@ -14907,6 +14795,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
 
   copylist = lives_layer_get_copylist(layer);
+  g_print("checked layer %p, found copylit %p\n", layer, copylist);
 
   if (copylist) {
     // if FALSE is returned, then we have detected other layers sharing with this
@@ -14916,45 +14805,58 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
     // if TRUE is returned, then there are no other layers sharing with this one, se we can go ahead
     // snd free pixel_data
     //
-    if (!lives_copylist_remove(copylist, (void *)layer))
-      lives_sync_list_unlock(copylist);
-    weed_layer_nullify_pixel_data(layer);
+    if (!lives_copylist_remove(copylist, (void *)layer)) {
+      // this is allowed, since we may not know whehter a layer has copies sor not,
+      // it is always safe to call weed_layer_pixel_data_free()
+      // if there are copies, we nullify the pixel data intead
+      // howevre we MUST set pixel_data to NULL first - since layer is no longer
+      // in a copylist, it would otherwise look like an attempt to nullify
+      // a layer with pixel_data and no copies, resulting in ending up back here
+      // and then being freed for real
+
+      //////
+      weed_layer_set_pixel_data(layer, NULL);
+      weed_layer_nullify_pixel_data(layer);
+      ////
+    }
     return;
   }
 
   pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
 
   if (pixel_data) {
-    if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
+    if (pixel_data[0]) {
+      if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
-    if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
-      lives_painter_surface_t *surface =
-        (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
-      if (surface) {
-        // this is where most surfaces die, as we convert from BGRA -> RGB
+      if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
+	lives_painter_surface_t *surface =
+	  (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+	if (surface) {
+	  // this is where most surfaces die, as we convert from BGRA -> RGB
 #ifdef DEBUG_CAIRO_SURFACE
-        g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
+	  g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
 #endif
-	weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
-	lives_painter_surface_set_user_data(surface, &px_layer_key, NULL, NULL);
+	  weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+	  lives_painter_surface_set_user_data(surface, &px_layer_key, NULL, NULL);
 	
-	// remove our extra ref
-	lives_painter_surface_destroy(surface);
+	  // remove our extra ref
+	  lives_painter_surface_destroy(surface);
+	}
+      } else {
+	boolean is_bigblock = FALSE;
+	if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) is_bigblock = TRUE;
+	if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE)
+	  nplanes = 1;
+	for (int i = 0; i < nplanes; i++) {
+	  g_print("freeing pdata %d %p bb %d\n", i, pixel_data[i], is_bigblock);
+	  if (pixel_data[i]) {
+	    if (is_bigblock) free_bigblock(pixel_data[i]);
+	    else lives_free(pixel_data[i]);
+	  }
+	}
       }
-    } else {
-      boolean is_bigblock = FALSE;
-      if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) is_bigblock = TRUE;
-      if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE)
-        nplanes = 1;
-      for (int i = 0; i < nplanes; i++) {
-        g_print("freeing pdata %d %p bb %d\n", i, pixel_data[i], is_bigblock);
-        if (pixel_data[i]) {
-          if (is_bigblock) free_bigblock(pixel_data[i]);
-          else lives_free(pixel_data[i]);
-        }
-      }
-      lives_free(pixel_data);
     }
+    lives_free(pixel_data);
   }
 
   weed_layer_set_pixel_data(layer, NULL);

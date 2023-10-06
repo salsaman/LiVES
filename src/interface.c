@@ -20,6 +20,472 @@ extern void mt_change_disp_tracks_ok(LiVESButton *, livespointer user_data);
 static void dsu_fill_details(LiVESWidget *widget, livespointer data);
 static void qslider_changed(LiVESWidget *slid, livespointer data);
 
+
+void cancel_cleanup(void) {
+  GET_PROC_THREAD_SELF(self);
+  lives_painter_t *cr = GET_SELF_VALUE(voidptr, "cr");
+  int afd = GET_SELF_VALUE(int, "afd");
+  if (cr) {
+    lives_painter_surface_t *surface = lives_painter_get_target(cr);
+    lives_painter_surface_flush(surface);
+    cairo_surface_finish(surface);
+    lives_painter_destroy(cr);
+  }
+  if (afd) lives_close_buffered(afd - 1);
+}
+
+
+boolean update_timer_bars(int clipno, int posx, int posy, int width, int height, int which) {
+  // update the on-screen timer bars,
+  // and if we are not playing,
+  // get play times for video, audio channels, and total (longest) time
+
+  // refresh = reread audio waveforms
+
+  // which 0 = all, 1 = vidbar, 2 = laudbar, 3 = raudbar
+  GET_PROC_THREAD_SELF(self);
+  lives_painter_t *cr = NULL;
+  lives_clip_t *sfile = cfile;
+  char *filename;
+
+  double allocwidth;
+  double atime;
+
+  double y = 0., scalex;
+
+  int start, offset_left = 0, offset_right = 0, offset_end;
+  int lpos = -9999, pos;
+
+  int current_file = mainw->current_file;
+  int xwidth, zwidth;
+  int afd = -1;
+  int bar_height;
+
+  int i;
+
+  if (clipno != mainw->drawsrc) goto bail;
+  
+  if (self && lives_proc_thread_get_cancel_requested(self)) goto bail;
+  
+  if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) {
+    clipno = cfile->cb_src;
+  } else clipno = mainw->current_file;
+  sfile = RETURN_VALID_CLIP(clipno);
+
+  if (!sfile || sfile->fps == 0. || mainw->foreign
+      || mainw->multitrack || mainw->recoverable_layout) {
+    goto bail;
+  }
+
+  if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+  if (!LIVES_IS_PLAYING) get_total_time(sfile);
+
+  if (!mainw->is_ready || !prefs->show_gui) goto bail;
+
+  if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+  //livess_proc_threead_set_cleanup_func(cancel_cleanup, NULL);
+
+  // draw timer bars
+  // first them background
+  clear_tbar_bgs(posx, posy, width, height, which);
+
+  // empirically we need to draw wider
+  posx -= OVERDRAW_MARGIN;
+  if (width > 0) width += OVERDRAW_MARGIN;
+  if (posx < 0) posx = 0;
+  if (posy < 0) posy = 0;
+
+  if (sfile->frames > 0 && mainw->video_drawable && (which == 0 || which == 1)) {
+    bar_height = CE_VIDBAR_HEIGHT;
+    allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
+    scalex = (double)allocwidth / CLIP_TOTAL_TIME(clipno);
+
+    offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
+    offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
+
+    cr = lives_painter_create_from_surface(mainw->video_drawable);
+    xwidth = UTIL_CLAMP(width, allocwidth);
+
+    SET_SELF_VALUE(voidptr, "cr", cr);
+
+    // TEST
+    //set_interrupt_action(SIG_ACT_CANCEL);
+
+    if (offset_left > posx) {
+      // unselected
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lives_painter_rectangle(cr, posx, 0,
+                              NORMAL_CLAMP(offset_left - posx, xwidth),
+                              bar_height);
+      lives_painter_fill(cr);
+    }
+
+    if (offset_right > posx) {
+      if (offset_left < posx) offset_left = posx;
+      if (offset_right > posx + xwidth) offset_right = posx + xwidth;
+      // selected
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
+      lives_painter_rectangle(cr, offset_left, 0, offset_right - offset_left,
+                              bar_height);
+      lives_painter_fill(cr);
+    }
+
+    if (offset_right < posx + xwidth) {
+      if (posx > offset_right) offset_right = posx;
+      zwidth = ROUND_I(sfile->video_time * scalex) - offset_right;
+      if (posx < offset_right) xwidth -= offset_right - posx;
+      zwidth = NORMAL_CLAMP(zwidth, xwidth);
+      // unselected
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lives_painter_rectangle(cr, offset_right, 0, zwidth, bar_height);
+      lives_painter_fill(cr);
+    }
+    // TEST
+    //set_interrupt_action(SIG_ACT_IGNORE);
+    SET_SELF_VALUE(voidptr, "cr", NULL);
+
+    lives_painter_destroy(cr);
+    cr = NULL;
+  }
+
+  bar_height = CE_AUDBAR_HEIGHT / 2.;
+
+  if (sfile->achans > 0 && mainw->laudio_drawable && mainw->laudio_drawable == sfile->laudio_drawable
+      && (which == 0 || which == 2)) {
+    allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
+    scalex = (double)allocwidth / CLIP_TOTAL_TIME(clipno);
+    offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
+    offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
+    offset_end = ROUND_I(sfile->laudio_time * scalex);
+
+    if (!sfile->audio_waveform) {
+      sfile->audio_waveform = (float **)lives_calloc(sfile->achans, sizeof(float *));
+      sfile->aw_sizes = (size_t *)lives_calloc(sfile->achans, sizeof(size_t));
+    }
+
+    start = offset_end;
+    if (!sfile->audio_waveform[0]) {
+      // re-read the audio
+      sfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
+      start = 0;
+      sfile->aw_sizes[0] = offset_end;
+    } else if (sfile->aw_sizes[0] != offset_end) {
+      start = 0;
+      sfile->audio_waveform[0] =
+        (float *)lives_recalloc(sfile->audio_waveform[0], (int)offset_end, sfile->aw_sizes[0],  sizeof(float));
+      sfile->aw_sizes[0] = offset_end;
+    }
+
+    if (sfile->audio_waveform[0]) {
+      if (start != offset_end) {
+        filename = lives_get_audio_file_name(clipno);
+        afd = lives_open_buffered_rdonly(filename);
+        lives_free(filename);
+        if (afd < 0) {
+          THREADVAR(read_failed) = -2;
+          goto bail;
+        }
+
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) {
+          goto bail;
+        }
+        lives_buffered_rdonly_slurp(afd, 0);
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) {
+          goto bail;
+        }
+	SET_SELF_VALUE(int, "afd", afd + 1);
+        for (i = start; i < offset_end; i++) {
+          if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
+            goto bail;
+          }
+          atime = (double)i / scalex;
+          sfile->audio_waveform[0][i] =
+            sfile->vol * get_float_audio_val_at_time(clipno,
+                afd, atime, 0, sfile->achans) * 2.;
+        }
+      }
+
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+      cr = lives_painter_create_from_surface(mainw->laudio_drawable);
+      SET_SELF_VALUE(voidptr, "cr", cr);
+      offset_right = NORMAL_CLAMP(offset_right, sfile->laudio_time * scalex);
+      xwidth = UTIL_CLAMP(width, allocwidth);
+      if (offset_end > posx + xwidth) offset_end = posx + xwidth;
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, posx, bar_height);
+      for (i = posx; i < offset_left && i < offset_end; i++) {
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - sfile->audio_waveform[0][pos] / 2.);
+        }
+
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
+      lpos = -9999;
+
+      lives_painter_move_to(cr, i, bar_height);
+      for (; i < offset_right && i < offset_end; i++) {
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - sfile->audio_waveform[0][pos] / 2.);
+        }
+
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, offset_right, bar_height);
+      for (; i < offset_end; i++) {
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - sfile->audio_waveform[0][pos] / 2.);
+        }
+
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+      lives_painter_destroy(cr);
+      SET_SELF_VALUE(voidptr, "cr", NULL);
+      cr = NULL;
+    }
+  }
+
+  if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+  if (sfile->achans > 1 && mainw->raudio_drawable && mainw->raudio_drawable == sfile->raudio_drawable
+      && (which == 0 || which == 3)) {
+    allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
+    scalex = (double)allocwidth / CLIP_TOTAL_TIME(clipno);
+    offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
+    offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
+    offset_end = ROUND_I(sfile->raudio_time * scalex);
+
+    start = offset_end;
+    if (!sfile->audio_waveform[1]) {
+      // re-read the audio and force a redraw
+      sfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
+      start = 0;
+      sfile->aw_sizes[1] = offset_end;
+    } else if (sfile->aw_sizes[1] != offset_end) {
+      start = 0;
+      sfile->audio_waveform[1] =
+        (float *)lives_recalloc(sfile->audio_waveform[1], (int)offset_end, sfile->aw_sizes[1],  sizeof(float));
+      sfile->aw_sizes[1] = offset_end;
+    }
+
+    if (sfile->audio_waveform[1]) {
+      if (start != offset_end) {
+        if (afd < 0) {
+          filename = lives_get_audio_file_name(clipno);
+          afd = lives_open_buffered_rdonly(filename);
+          lives_free(filename);
+          if (afd < 0) {
+            THREADVAR(read_failed) = -2;
+            goto bail;
+          }
+          if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
+            goto bail;
+          }
+	  SET_SELF_VALUE(int, "afd", afd + 1);
+          lives_buffered_rdonly_slurp(afd, 0);
+          if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
+            goto bail;
+          }
+        }
+
+        for (i = start; i < offset_end; i++) {
+          if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
+            goto bail;
+          }
+          atime = (double)i / scalex;
+          sfile->audio_waveform[1][i] =
+            sfile->vol * get_float_audio_val_at_time(clipno,
+                afd, atime, 1, sfile->achans) * 2.;
+        }
+      }
+
+      offset_right = NORMAL_CLAMP(offset_right, sfile->raudio_time * scalex);
+      xwidth = UTIL_CLAMP(width, allocwidth);
+
+      cr = lives_painter_create_from_surface(mainw->raudio_drawable);
+      SET_SELF_VALUE(voidptr, "cr", cr);
+      if (offset_end > posx + xwidth) offset_end = posx + xwidth;
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, posx, bar_height);
+      for (i = posx; i < offset_left && i < offset_end; i++) {
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - sfile->audio_waveform[1][pos] / 2.);
+        }
+
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
+      lpos = -9999;
+
+      lives_painter_move_to(cr, i, bar_height);
+      for (; i < offset_right && i < offset_end; i++) {
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - sfile->audio_waveform[1][pos] / 2.);
+        }
+
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, offset_right, bar_height);
+      for (; i < offset_end; i++) {
+        if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - sfile->audio_waveform[1][pos] / 2.);
+        }
+
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+      lives_painter_destroy(cr);
+      SET_SELF_VALUE(voidptr, "cr", NULL);
+      cr = NULL;
+    }
+
+    if (afd >= 0) lives_close_buffered(afd);
+    SET_SELF_VALUE(int, "afd", 0);
+    afd = -1;
+  }
+
+  if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+  if (which == 0) {
+    // playback cursors
+    if (CLIP_TOTAL_TIME(clipno) > 0.) {
+      // set the range of the timeline
+      if (!sfile->opening_loc && which == 0) {
+        if (!lives_widget_is_visible(mainw->hruler)) {
+          lives_widget_show(mainw->hruler);
+        }
+      }
+
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+      if (!lives_widget_is_visible(mainw->video_draw)) {
+        lives_widget_show(mainw->hruler);
+        lives_widget_show(mainw->video_draw);
+        lives_widget_show(mainw->laudio_draw);
+        lives_widget_show(mainw->raudio_draw);
+      }
+
+#ifdef ENABLE_GIW
+      giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CLIP_TOTAL_TIME(clipno));
+#endif
+      lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CLIP_TOTAL_TIME(clipno));
+      lives_widget_queue_draw(mainw->hruler);
+    }
+    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+    show_playbar_labels(clipno);
+  }
+
+  if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+
+  mainw->current_file = current_file;
+
+  if (which == 0 || which == 1) {
+    lives_widget_queue_draw_if_visible(mainw->video_draw);
+    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+  }
+  if (which == 0 || which == 2) {
+    lives_widget_queue_draw_if_visible(mainw->laudio_draw);
+    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+  }
+  if (which == 0 || which == 3) {
+    lives_widget_queue_draw_if_visible(mainw->raudio_draw);
+    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+  }
+  return TRUE;
+
+bail:
+  cancel_cleanup();
+  return FALSE;
+}
+
+
 void add_suffix_check(LiVESBox *box, const char *ext) {
   char *ltext;
 
@@ -265,452 +731,6 @@ double lives_ce_update_timeline(int frame, double x) {
 }
 
 
-boolean update_timer_bars(int posx, int posy, int width, int height, int which) {
-  // update the on-screen timer bars,
-  // and if we are not playing,
-  // get play times for video, audio channels, and total (longest) time
-
-  // refresh = reread audio waveforms
-
-  // which 0 = all, 1 = vidbar, 2 = laudbar, 3 = raudbar
-  GET_PROC_THREAD_SELF(self);
-  lives_painter_t *cr = NULL;
-  lives_clip_t *sfile = cfile;
-  char *filename;
-
-  double allocwidth;
-  double atime;
-
-  double y = 0., scalex;
-
-  int start, offset_left = 0, offset_right = 0, offset_end;
-  int lpos = -9999, pos;
-
-  int current_file = mainw->current_file, fileno;
-  int xwidth, zwidth;
-  int afd = -1;
-  int bar_height;
-
-  int i;
-
-  if (self && lives_proc_thread_get_cancel_requested(self)) goto bail;
-
-  if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) {
-    fileno = cfile->cb_src;
-  } else fileno = mainw->current_file;
-  sfile = RETURN_VALID_CLIP(fileno);
-
-  if (!sfile || sfile->fps == 0. || mainw->foreign
-      || mainw->multitrack || mainw->recoverable_layout) {
-    goto bail;
-  }
-
-  fileno = current_file;
-
-  if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-  if (!LIVES_IS_PLAYING) get_total_time(sfile);
-
-  if (!mainw->is_ready || !prefs->show_gui) goto bail;
-
-  if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-  // draw timer bars
-  // first them background
-  clear_tbar_bgs(posx, posy, width, height, which);
-
-  // empirically we need to draw wider
-  posx -= OVERDRAW_MARGIN;
-  if (width > 0) width += OVERDRAW_MARGIN;
-  if (posx < 0) posx = 0;
-  if (posy < 0) posy = 0;
-
-  if (sfile->frames > 0 && mainw->video_drawable && (which == 0 || which == 1)) {
-    bar_height = CE_VIDBAR_HEIGHT;
-    allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
-    scalex = (double)allocwidth / CLIP_TOTAL_TIME(fileno);
-
-    offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
-    offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
-
-    cr = lives_painter_create_from_surface(mainw->video_drawable);
-    xwidth = UTIL_CLAMP(width, allocwidth);
-
-    if (offset_left > posx) {
-      // unselected
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-      lives_painter_rectangle(cr, posx, 0,
-                              NORMAL_CLAMP(offset_left - posx, xwidth),
-                              bar_height);
-      lives_painter_fill(cr);
-    }
-
-    if (offset_right > posx) {
-      if (offset_left < posx) offset_left = posx;
-      if (offset_right > posx + xwidth) offset_right = posx + xwidth;
-      // selected
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
-      lives_painter_rectangle(cr, offset_left, 0, offset_right - offset_left,
-                              bar_height);
-      lives_painter_fill(cr);
-    }
-
-    if (offset_right < posx + xwidth) {
-      if (posx > offset_right) offset_right = posx;
-      zwidth = ROUND_I(sfile->video_time * scalex) - offset_right;
-      if (posx < offset_right) xwidth -= offset_right - posx;
-      zwidth = NORMAL_CLAMP(zwidth, xwidth);
-      // unselected
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-      lives_painter_rectangle(cr, offset_right, 0, zwidth, bar_height);
-      lives_painter_fill(cr);
-    }
-    lives_painter_destroy(cr);
-    cr = NULL;
-  }
-
-  bar_height = CE_AUDBAR_HEIGHT / 2.;
-
-  if (sfile->achans > 0 && mainw->laudio_drawable && mainw->laudio_drawable == sfile->laudio_drawable
-      && (which == 0 || which == 2)) {
-    allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
-    scalex = (double)allocwidth / CLIP_TOTAL_TIME(fileno);
-    offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
-    offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
-    offset_end = ROUND_I(sfile->laudio_time * scalex);
-
-    if (!sfile->audio_waveform) {
-      sfile->audio_waveform = (float **)lives_calloc(sfile->achans, sizeof(float *));
-      sfile->aw_sizes = (size_t *)lives_calloc(sfile->achans, sizeof(size_t));
-    }
-
-    start = offset_end;
-    if (!sfile->audio_waveform[0]) {
-      // re-read the audio
-      sfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
-      start = 0;
-      sfile->aw_sizes[0] = offset_end;
-    } else if (sfile->aw_sizes[0] != offset_end) {
-      start = 0;
-      sfile->audio_waveform[0] =
-        (float *)lives_recalloc(sfile->audio_waveform[0], (int)offset_end, sfile->aw_sizes[0],  sizeof(float));
-      sfile->aw_sizes[0] = offset_end;
-    }
-
-    if (sfile->audio_waveform[0]) {
-      if (start != offset_end) {
-        filename = lives_get_audio_file_name(fileno);
-        afd = lives_open_buffered_rdonly(filename);
-        lives_free(filename);
-        if (afd < 0) {
-          THREADVAR(read_failed) = -2;
-          goto bail;
-        }
-
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) {
-          goto bail;
-        }
-        lives_buffered_rdonly_slurp(afd, 0);
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) {
-          goto bail;
-        }
-        for (i = start; i < offset_end; i++) {
-          if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-              || (self && lives_proc_thread_get_cancel_requested(self))) {
-            goto bail;
-          }
-          atime = (double)i / scalex;
-          sfile->audio_waveform[0][i] =
-            sfile->vol * get_float_audio_val_at_time(fileno,
-                afd, atime, 0, sfile->achans) * 2.;
-        }
-      }
-
-      if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-      cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-      offset_right = NORMAL_CLAMP(offset_right, sfile->laudio_time * scalex);
-      xwidth = UTIL_CLAMP(width, allocwidth);
-      if (offset_end > posx + xwidth) offset_end = posx + xwidth;
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-      lpos = -9999;
-      lives_painter_move_to(cr, posx, bar_height);
-      for (i = posx; i < offset_left && i < offset_end; i++) {
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
-        if (pos != lpos) {
-          lpos = pos;
-          y = bar_height * (1. - sfile->audio_waveform[0][pos] / 2.);
-        }
-
-        lives_painter_line_to(cr, i, bar_height);
-        lives_painter_line_to(cr, i, y);
-        lives_painter_line_to(cr, i, bar_height);
-      }
-      lives_painter_close_path(cr);
-      lives_painter_stroke(cr);
-
-      if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
-      lpos = -9999;
-
-      lives_painter_move_to(cr, i, bar_height);
-      for (; i < offset_right && i < offset_end; i++) {
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
-        if (pos != lpos) {
-          lpos = pos;
-          y = bar_height * (1. - sfile->audio_waveform[0][pos] / 2.);
-        }
-
-        lives_painter_line_to(cr, i, bar_height);
-        lives_painter_line_to(cr, i, y);
-        lives_painter_line_to(cr, i, bar_height);
-      }
-      lives_painter_close_path(cr);
-      lives_painter_stroke(cr);
-
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-      lpos = -9999;
-      lives_painter_move_to(cr, offset_right, bar_height);
-      for (; i < offset_end; i++) {
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
-        if (pos != lpos) {
-          lpos = pos;
-          y = bar_height * (1. - sfile->audio_waveform[0][pos] / 2.);
-        }
-
-        lives_painter_line_to(cr, i, bar_height);
-        lives_painter_line_to(cr, i, y);
-        lives_painter_line_to(cr, i, bar_height);
-      }
-      lives_painter_close_path(cr);
-      lives_painter_stroke(cr);
-      lives_painter_destroy(cr);
-      cr = NULL;
-    }
-  }
-
-  if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-  if (sfile->achans > 1 && mainw->raudio_drawable && mainw->raudio_drawable == sfile->raudio_drawable
-      && (which == 0 || which == 3)) {
-    allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
-    scalex = (double)allocwidth / CLIP_TOTAL_TIME(fileno);
-    offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
-    offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
-    offset_end = ROUND_I(sfile->raudio_time * scalex);
-
-    start = offset_end;
-    if (!sfile->audio_waveform[1]) {
-      // re-read the audio and force a redraw
-      sfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
-      start = 0;
-      sfile->aw_sizes[1] = offset_end;
-    } else if (sfile->aw_sizes[1] != offset_end) {
-      start = 0;
-      sfile->audio_waveform[1] =
-        (float *)lives_recalloc(sfile->audio_waveform[1], (int)offset_end, sfile->aw_sizes[1],  sizeof(float));
-      sfile->aw_sizes[1] = offset_end;
-    }
-
-    if (sfile->audio_waveform[1]) {
-      if (start != offset_end) {
-        if (afd < 0) {
-          filename = lives_get_audio_file_name(fileno);
-          afd = lives_open_buffered_rdonly(filename);
-          lives_free(filename);
-          if (afd < 0) {
-            THREADVAR(read_failed) = -2;
-            goto bail;
-          }
-          if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-              || (self && lives_proc_thread_get_cancel_requested(self))) {
-            goto bail;
-          }
-          lives_buffered_rdonly_slurp(afd, 0);
-          if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-              || (self && lives_proc_thread_get_cancel_requested(self))) {
-            goto bail;
-          }
-        }
-
-        for (i = start; i < offset_end; i++) {
-          if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-              || (self && lives_proc_thread_get_cancel_requested(self))) {
-            goto bail;
-          }
-          atime = (double)i / scalex;
-          sfile->audio_waveform[1][i] =
-            sfile->vol * get_float_audio_val_at_time(fileno,
-                afd, atime, 1, sfile->achans) * 2.;
-        }
-      }
-
-      offset_right = NORMAL_CLAMP(offset_right, sfile->raudio_time * scalex);
-      xwidth = UTIL_CLAMP(width, allocwidth);
-
-      cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-      if (offset_end > posx + xwidth) offset_end = posx + xwidth;
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-      lpos = -9999;
-      lives_painter_move_to(cr, posx, bar_height);
-      for (i = posx; i < offset_left && i < offset_end; i++) {
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
-        if (pos != lpos) {
-          lpos = pos;
-          y = bar_height * (1. - sfile->audio_waveform[1][pos] / 2.);
-        }
-
-        lives_painter_line_to(cr, i, bar_height);
-        lives_painter_line_to(cr, i, y);
-        lives_painter_line_to(cr, i, bar_height);
-      }
-      lives_painter_close_path(cr);
-      lives_painter_stroke(cr);
-
-      if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
-      lpos = -9999;
-
-      lives_painter_move_to(cr, i, bar_height);
-      for (; i < offset_right && i < offset_end; i++) {
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
-        if (pos != lpos) {
-          lpos = pos;
-          y = bar_height * (1. - sfile->audio_waveform[1][pos] / 2.);
-        }
-
-        lives_painter_line_to(cr, i, bar_height);
-        lives_painter_line_to(cr, i, y);
-        lives_painter_line_to(cr, i, bar_height);
-      }
-      lives_painter_close_path(cr);
-      lives_painter_stroke(cr);
-
-      if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-      lpos = -9999;
-      lives_painter_move_to(cr, offset_right, bar_height);
-      for (; i < offset_end; i++) {
-        if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-        pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
-        if (pos != lpos) {
-          lpos = pos;
-          y = bar_height * (1. - sfile->audio_waveform[1][pos] / 2.);
-        }
-
-        lives_painter_line_to(cr, i, bar_height);
-        lives_painter_line_to(cr, i, y);
-        lives_painter_line_to(cr, i, bar_height);
-      }
-      lives_painter_close_path(cr);
-      lives_painter_stroke(cr);
-      lives_painter_destroy(cr);
-      cr = NULL;
-    }
-
-    if (afd >= 0) lives_close_buffered(afd);
-    afd = -1;
-  }
-
-  if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-  if (which == 0) {
-    // playback cursors
-    if (CLIP_TOTAL_TIME(fileno) > 0.) {
-      // set the range of the timeline
-      if (!sfile->opening_loc && which == 0) {
-        if (!lives_widget_is_visible(mainw->hruler)) {
-          lives_widget_show(mainw->hruler);
-        }
-      }
-
-      if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-      if (!lives_widget_is_visible(mainw->video_draw)) {
-        lives_widget_show(mainw->hruler);
-        lives_widget_show(mainw->video_draw);
-        lives_widget_show(mainw->laudio_draw);
-        lives_widget_show(mainw->raudio_draw);
-      }
-
-#ifdef ENABLE_GIW
-      giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CLIP_TOTAL_TIME(fileno));
-#endif
-      lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CLIP_TOTAL_TIME(fileno));
-      lives_widget_queue_draw(mainw->hruler);
-    }
-    if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-    show_playbar_labels(fileno);
-  }
-
-  if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-
-  mainw->current_file = current_file;
-
-  if (which == 0 || which == 1) {
-    lives_widget_queue_draw_if_visible(mainw->video_draw);
-    if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-  }
-  if (which == 0 || which == 2) {
-    lives_widget_queue_draw_if_visible(mainw->laudio_draw);
-    if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-  }
-  if (which == 0 || which == 3) {
-    lives_widget_queue_draw_if_visible(mainw->raudio_draw);
-    if (mainw->current_file != fileno || !IS_VALID_CLIP(fileno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-  }
-  return TRUE;
-
-bail:
-  if (cr) {
-    lives_painter_surface_t *surface = lives_painter_get_target(cr);
-    lives_painter_surface_flush(surface);
-    cairo_surface_finish(surface);
-    lives_painter_destroy(cr);
-  }
-  if (afd >= 0) lives_close_buffered(afd);
-
-  if (self) {
-    if (lives_proc_thread_get_cancel_requested(self)) {
-      lives_proc_thread_cancel(self);
-    }
-  }
-
-  return FALSE;
-}
-
-
 void redraw_timer_bars(double oldx, double newx, int which) {
   // redraw region from cache
   // oldx and newx are in seconds
@@ -719,6 +739,7 @@ void redraw_timer_bars(double oldx, double newx, int which) {
 
   if (oldx == newx) return;
   if (CURRENT_CLIP_TOTAL_TIME == 0.) return;
+  if (mainw->drawsrc != mainw->current_file) return;
 
   allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
 
@@ -727,9 +748,9 @@ void redraw_timer_bars(double oldx, double newx, int which) {
   scalex = allocwidth / CURRENT_CLIP_TOTAL_TIME;
 
   if (newx > oldx) {
-    update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
+    update_timer_bars(mainw->current_file, ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
   } else {
-    update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
+    update_timer_bars(mainw->current_file, ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
   }
 }
 
@@ -3604,30 +3625,14 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
       }
       set_undoable(_("Volume Adjustment"), TRUE);
       cfile->undo_action = UNDO_AUDIO_VOL;
-      update_timer_bars(0, 0, 0, 0, 2);
-      update_timer_bars(0, 0, 0, 0, 3);
+      update_timer_bars(mainw->current_file, 0, 0, 0, 0, 2);
+      update_timer_bars(mainw->current_file, 0, 0, 0, 0, 3);
       d_print(_("clip volume adjusted by a factor of %.2f\n"), cfile->vol);
       cfile->vol = 1.;
     } else d_print_cancelled();
     lives_free(tmp);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   }
-}
-
-
-void cancel_tl_redraw(void) {
-  lives_proc_thread_t lpt = mainw->drawtl_thread;
-  if (lives_proc_thread_ref(lpt) > 1) {
-    if (!lives_proc_thread_check_finished(lpt)) {
-      pthread_mutex_lock(&mainw->tlthread_mutex);
-      lives_proc_thread_request_cancel(lpt, FALSE);
-      lives_proc_thread_join(lpt);
-      mainw->drawtl_thread = NULL;
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
-    }
-    lives_proc_thread_unref(lpt);
-  }
-  mainw->drawtl_thread = NULL;
 }
 
 
@@ -3657,100 +3662,6 @@ boolean is_recurse(volatile boolean * var) {
   *var = TRUE;
   pthread_mutex_unlock(&recursion_mutex);
   return FALSE;
-}
-
-
-void redraw_timeline(int clipno) {
-  //static pthread_mutex_t recursion_mutex = PTHREAD_MUTEX_INITIALIZER;
-  RECURSE_GUARD_START;
-  GET_PROC_THREAD_SELF(self);
-  lives_clip_t *sfile;
-
-  RETURN_IF_RECURSED;
-  RECURSE_GUARD_ARM;
-
-  if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
-      || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
-    RECURSE_GUARD_END;
-    return;
-  }
-  sfile = mainw->files[clipno];
-  if (sfile->clip_type == CLIP_TYPE_TEMP) {
-    RECURSE_GUARD_END;
-    return;
-  }
-
-  if (mainw->drawtl_thread && self == mainw->drawtl_thread) {
-    // check if this is the thread that was assigned to run this
-    if (lives_proc_thread_get_cancel_requested(self)) {
-      RECURSE_GUARD_END;
-      lives_proc_thread_cancel(self);
-      return;
-    }
-  } else {
-    if (is_fg_thread()) {
-      // if this the fg thread, kick off a bg thread to actually run this
-      if (lives_proc_thread_ref(mainw->drawtl_thread) > 1) {
-        lives_proc_thread_t tlthread = mainw->drawtl_thread;
-        cancel_tl_redraw();
-        lives_proc_thread_unref(tlthread);
-        lives_proc_thread_unref(tlthread);
-      }
-      if (mainw->multitrack || mainw->reconfig) {
-        RECURSE_GUARD_END;
-        return;
-      }
-
-      pthread_mutex_lock(&mainw->tlthread_mutex);
-      mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_SET_CANCELLABLE,
-                             (lives_funcptr_t)redraw_timeline, -1, "i", clipno);
-
-      //lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
-      RECURSE_GUARD_END;
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
-      return;
-    } else {
-      RECURSE_GUARD_END;
-      // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
-      // or if we are running it adds to deferral hooks
-      THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE | HOOK_CB_PRIORITY;
-      main_thread_execute_rvoid(redraw_timeline, 0, "i", clipno);
-      THREADVAR(hook_hints) = 0;
-      return;
-    }
-  }
-
-  RECURSE_GUARD_END;
-
-  mainw->drawsrc = clipno;
-
-  if (!mainw->video_drawable) {
-    mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
-  }
-  if (!update_timer_bars(0, 0, 0, 0, 1)) return;
-
-  if (!sfile->laudio_drawable) {
-    sfile->laudio_drawable = lives_widget_create_painter_surface(mainw->laudio_draw);
-    mainw->laudio_drawable = sfile->laudio_drawable;
-    clear_tbar_bgs(0, 0, 0, 0, 2);
-  } else {
-    mainw->laudio_drawable = sfile->laudio_drawable;
-  }
-  if (!update_timer_bars(0, 0, 0, 0, 2)) return;
-
-  if (!sfile->raudio_drawable) {
-    sfile->raudio_drawable = lives_widget_create_painter_surface(mainw->raudio_draw);
-    mainw->raudio_drawable = sfile->raudio_drawable;
-    clear_tbar_bgs(0, 0, 0, 0, 3);
-  } else {
-    mainw->raudio_drawable = sfile->raudio_drawable;
-  }
-  if (!update_timer_bars(0, 0, 0, 0, 3)) return;
-
-  lives_widget_queue_draw(mainw->video_draw);
-  lives_widget_queue_draw(mainw->laudio_draw);
-  lives_widget_queue_draw(mainw->raudio_draw);
-  lives_widget_queue_draw(mainw->eventbox2);
 }
 
 
@@ -3888,21 +3799,6 @@ void create_new_pb_speed(short type) {
                  LIVES_RESPONSE_CANCEL);
 
   lives_window_add_escape(LIVES_WINDOW(new_pb_speed), cancelbutton);
-
-  /// TODO: needs more work to enable easy playback of audio without the video
-  /* if (type == 3) { */
-  /*   char *tmp; */
-  /*   LiVESWidget *playbutt = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), */
-  /*                           LIVES_STOCK_MEDIA_PLAY, */
-  /*                           (tmp = (cfile->real_pointer_time > 0. || (cfile->start == 1 && cfile->end == cfile->frames) ? */
-  /*                                   (_("Preview audio")) : */
-  /*                                   (_("Preview audio in selected range")))), */
-  /*                           LIVES_RESPONSE_CANCEL); */
-  /*   lives_free(tmp); */
-  /*   lives_signal_connect(LIVES_GUI_OBJECT(playbutt), LIVES_WIDGET_CLICKED_SIGNAL, */
-  /*                        LIVES_GUI_CALLBACK(preview_aud_vol_cb), */
-  /*                        NULL); */
-  /* } */
 
   change_pb_ok = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), LIVES_STOCK_OK, NULL,
                  LIVES_RESPONSE_OK);
@@ -8072,17 +7968,21 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   // widget is mainw->msg_area (or mt->msg_area)
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;
-
+  RECURSE_GUARD_START;
   int width;
   int height = -1, lh;
   int nlines;
 
   static int last_height = -1;
 
+  RETURN_VAL_IF_RECURSED(TRUE);
+  
   if (!prefs->show_msg_area) return FALSE;
   if (mainw->n_messages <= 0) return FALSE;
 
   if (!LIVES_IS_WIDGET(widget)) return FALSE;
+
+  RECURSE_GUARD_ARM;
 
   height = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
   //if (reqheight != -1) height = reqheight;
@@ -8110,6 +8010,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
 
   if (!layout || !LINGO_IS_LAYOUT(layout)) {
+    RECURSE_GUARD_END;
     return FALSE;
   }
 
@@ -8152,6 +8053,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
 
+  RECURSE_GUARD_END;
   return TRUE;
 }
 
@@ -8327,7 +8229,9 @@ boolean msg_area_config(LiVESWidget * widget) {
         if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && !THREADVAR(fg_service)
             && !FG_THREADVAR(fg_service)) {
           RECURSE_GUARD_ARM;
+
           redraw_timeline(mainw->current_file);
+
           RECURSE_GUARD_END;
         }
         if (width < 0 || height < 0) return FALSE;

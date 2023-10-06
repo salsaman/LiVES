@@ -39,11 +39,10 @@ boolean update_dsu(void *lab);
 
 void draw_little_bars(double ptrtime, int which);
 double lives_ce_update_timeline(frames_t frame, double x);  ///< pointer position in timeline
-boolean update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
+boolean update_timer_bars(int clipno, int posx, int posy,
+			  int width, int height, int which); ///< draw the timer bars
 void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void show_playbar_labels(int clipno);
-void redraw_timeline(int clipno);
-void cancel_tl_redraw(void);
 
 void msg_area_scroll(LiVESAdjustment *, livespointer userdata);
 void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);

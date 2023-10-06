@@ -2121,7 +2121,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   // simply transferred directly to the in channel. Thus we must ensure that out channel alpha
   // pdata is not freed or nullified (this is handled elsewhere)
 
-
   for (i = 0, k = 0; k < num_inc + num_in_alpha; k++) {
     /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
     /// the cast to weed_layer_t * is unnecessary, but added for clarity
@@ -2133,10 +2132,11 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     weed_layer_pixel_data_free(channel);
 
-    if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
+    if (weed_pixel_data_share(channel, layer) != LIVES_RESULT_SUCCESS) {
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
+    assert(weed_layer_get_pixel_data(channel) == weed_layer_get_pixel_data(layer));
   }
 
   for (i = 0; i < num_out_tracks + num_out_alpha; i++) {
@@ -2151,9 +2151,9 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     channel_flags = weed_chantmpl_get_flags(chantmpl);
     if (channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
       layer = layers[out_tracks[i]];
-      if (!weed_layer_copy(channel, layer)) {
-        retval = FILTER_ERROR_COPYING_FAILED;
-        goto done_video;
+      if (!weed_pixel_data_share(channel, layer)) {
+	  retval = FILTER_ERROR_COPYING_FAILED;
+	  goto done_video;
       }
       inplace = TRUE;
       weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, TRUE);
@@ -2181,6 +2181,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
+  break_me("runproc");
   // RUN THE INSTANCE //////////////
   retval = run_process_func(inst, tc);
   //////////////////////
@@ -2191,7 +2192,10 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
   for (k = 0; k < num_inc + num_in_alpha; k++) {
     channel = get_enabled_channel(inst, k, LIVES_INPUT);
-    weed_layer_pixel_data_free(channel);
+    // MUST do this, since  the nullify function cannot detect that channel is sharing with layer
+    // and would thus free pixel-data instead of nullifying
+    weed_layer_set_pixel_data(channel, NULL);
+    weed_layer_nullify_pixel_data(channel);
   }
 
   // now we write our out channels back to layers, leaving the palettes and sizes unchanged
@@ -2216,15 +2220,15 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL)) inplace = TRUE;
 
+    // output layer
     if (!inplace && !busy) {
       weed_layer_pixel_data_free(layer);
-      if (!weed_layer_copy(layer, channel)) {
+      if (weed_pixel_data_share(layer, channel) != LIVES_RESULT_SUCCESS) {
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
       }
     }
-
-    weed_layer_pixel_data_free(channel);
+    weed_layer_nullify_pixel_data(channel);
     weed_leaf_copy(layer, WEED_LEAF_HOST_WIDTH, layer, WEED_LEAF_WIDTH);
     weed_leaf_copy(layer, WEED_LEAF_HOST_HEIGHT, layer, WEED_LEAF_HEIGHT);
   }
@@ -2235,6 +2239,9 @@ done_video:
     retval = FILTER_ERROR_NEEDS_REINIT;
 
   for (i = 0; i < num_inc + num_out_alpha; i++) {
+    channel = in_channels[i];
+    weed_layer_set_pixel_data(channel, NULL);
+    weed_layer_nullify_pixel_data(channel);
     if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
       weed_set_boolean_value(in_channels[i], WEED_LEAF_DISABLED, WEED_FALSE);
       weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
@@ -3058,7 +3065,7 @@ lives_filter_error_t act_on_instance(weed_instance_t *instance, int key, lives_l
   filter = weed_instance_get_filter(instance, TRUE);
 
   if (is_pure_audio(filter, TRUE)) return FILTER_ERROR_IS_AUDIO;
-
+  
   if (mainw->multitrack && !mainw->unordered_blocks && pchains[key]) {
     tc = mainw->cevent_tc;
     interpolate_params(instance, mainw->pchains[key], tc); // interpolate parameters during preview
@@ -7540,70 +7547,6 @@ boolean fill_audio_channel_aux(weed_plant_t *achan) {
 }
 
 
-int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals) {
-  // DEPRECATED
-  int palette = WEED_PALETTE_END;
-  int i;
-
-  if (mainw->rte) {
-    weed_plant_t *instance = NULL;
-    for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-      if (instance) weed_instance_unref(instance);
-      instance = NULL;
-      if (palette != WEED_PALETTE_END) break;
-      if (rte_key_is_enabled(i, TRUE)) {
-        if (i == fg_generator_key) continue;
-        if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
-          if (is_bg && enabled_in_channels(instance, FALSE) < 2) {
-            continue;
-          }
-          weed_plant_t *filter = weed_instance_get_filter(instance, TRUE);
-          weed_plant_t *channel = get_enabled_channel(instance, (is_bg ? 1 : 0), LIVES_INPUT);
-          if (channel) {
-            int nvals;
-            weed_plant_t *chantmpl = weed_channel_get_template(channel);
-            int *plist = weed_chantmpl_get_palette_list(filter, chantmpl, &nvals);
-            for (int j = 0; j < nvals; j++) {
-              if (plist[j] == WEED_PALETTE_END) break;
-              else for (int k = 0; k < npals; k++) {
-                  if (palette_list[k] == WEED_PALETTE_END) break;
-                  if (palette_list[k] == plist[j]) {
-                    palette = plist[j];
-                    break;
-		    // *INDENT-OFF*
-		  }}
-	      if (palette != WEED_PALETTE_END) break;
-	    }
-            lives_free(plist);
-          }
-	}}}
-    // *INDENT-ON*
-    if (instance) weed_instance_unref(instance);
-
-    if (palette == WEED_PALETTE_END) {
-      if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
-        for (i = 0; i < npals; i++) {
-          if (palette_list[i] == mainw->vpp->palette) {
-            palette = palette_list[i];
-            break;
-	    // *INDENT-OFF*
-	  }}}}}
-  // *INDENT-ON*
-
-  if (palette == WEED_PALETTE_END) {
-    for (i = 0; i < npals; i++) {
-      if (weed_palette_is_pixbuf_palette(palette_list[i])) break;
-    }
-  }
-  if (palette == WEED_PALETTE_END) {
-    for (i = 0; i < npals; i++) {
-      if (weed_palette_is_rgb(palette_list[i])) break;
-    }
-  }
-  if (palette == WEED_PALETTE_END) palette = palette_list[0];
-  return palette;
-}
-
 /////////////////////
 // special handling for generators (sources)
 
@@ -7794,9 +7737,17 @@ procfunc1:
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
 
+  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  weed_pixel_data_share(layer, channel);
+
+  // MUST do this, since  the nullify function cannot detect that channel is sharing with layer
+  // and would thus free pixel-data instead of nullifying
+  weed_layer_set_pixel_data(channel, NULL);
+  weed_layer_nullify_pixel_data(channel);
+  
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
   /* 	  weed_channel_get_palette(channel), weed_channel_get_pixel_data(channel)); */
-  return channel;
+  return layer;
 }
 
 

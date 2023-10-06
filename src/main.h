@@ -639,6 +639,9 @@ struct _capabilities {
   char *extracmds_file[2];
   int extracmds_idx;
 
+  // list of allthreads running in app
+  LiVESList *allthreads;
+  
   // plugins
   lives_checkstatus_t has_encoder_plugins;
   lives_checkstatus_t has_decoder_plugins;

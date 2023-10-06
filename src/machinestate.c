@@ -743,6 +743,22 @@ boolean is_empty_dir(const char *dirname) {
 }
 
 
+LiVESList *allthrds_list(void) {
+  LiVESList *allthrds = NULL;
+  DIR *proc_dir = opendir(LIVES_PROC_DIR);
+  if (proc_dir) {
+    struct dirent *entry;
+    while ((entry = readdir(proc_dir)) != NULL) {
+      if (entry->d_name[0] == '.') continue;
+      int tid = atoi(entry->d_name);
+      allthrds = lives_list_prepend(allthrds, LIVES_INT_TO_POINTER(tid));
+    }
+    closedir(proc_dir);
+  }
+  return allthrds;
+}
+
+
 LIVES_GLOBAL_INLINE char *get_symlink_for(const char *link) {
   char buff[PATH_MAX];
   ssize_t nbytes = readlink(link, buff, PATH_MAX);
@@ -1232,7 +1248,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int subtype) {
   weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
   weed_set_int_value(plant, WEED_LEAF_LIVES_SUBTYPE, subtype);
   weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
-  weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, NULL);
+  //weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, NULL);
   return plant;
 }
 
@@ -2415,7 +2431,7 @@ boolean notify_user(const char *detail) {
 
 
 boolean get_distro_dets(void) {
-#ifndef IS_LINUX_GNU
+#if !IS_LINUX_GNU
   capable->distro_name = lives_strdup(capable->os_name);
   capable->distro_ver = lives_strdup(capable->os_release);
 #else
@@ -2659,7 +2675,7 @@ int get_num_cpus(void) {
   int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
   if (num_cores > 0) return num_cores;
 #endif
-#ifdef IS_FREEBSD
+#if IS_FREEyBSD
   lives_snprintf(command, PATH_MAX, "sysctl -n kern.smp.cpus");
 #else
   lives_snprintf(command, PATH_MAX, "%s processor /proc/cpuinfo 2>/dev/null | %s -l 2>/dev/null",
@@ -2680,12 +2696,12 @@ boolean get_machine_dets(int phase) {
 #if IS_X86_64
     get_cpuinfo();
 #else
-    capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
+    capable->hw.cacheline_size = capable->hw.cpu_bits;
 #endif
     return TRUE;
   }
 
-#ifdef IS_FREEBSD
+#if IS_FREEBSD
   char *com = lives_strdup("sysctl -n hw.model");
 #else
   char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | "
@@ -2808,7 +2824,7 @@ double get_disk_load(const char *mp) {
   // not really working yet...
   if (0 && !mp) return -1.;
   else {
-#ifndef IS_LINUX_GNU
+#if !IS_LINUX_GNU
   return 0.;
 #else
 #define VM_STATS_FILE "/proc/vmstat"

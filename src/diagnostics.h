@@ -17,6 +17,7 @@
 #define TEST_LSD		(1ull << 2)
 #define TEST_PAL_CONV		(1ull << 3)
 #define TEST_BUNDLES		(1ull << 4)
+#define TEST_WEED_UTILS		(1ull << 6)
 
 #define TEST_POINT_2		(1ull << 16)
 #define TEST_PROCTHRDS		(1ull << 17)

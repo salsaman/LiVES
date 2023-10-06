@@ -753,6 +753,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     lheight = height;
     weed_layer_set_height(layer, 4);
 
+    // make a copy of part of layer
     test_layer = weed_layer_copy(NULL, layer);
 
     if (ipsize == opsize) {
@@ -768,11 +769,15 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
     weed_layer_set_height(layer, height);
     cr = layer_to_lives_painter(test_layer);
+    weed_layer_unref(test_layer);
+
     layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
-    weed_layer_unref(test_layer);
+    lives_painter_destroy(cr);
+    lives_painter_surface_t *surface = lives_painter_get_target(cr);
+    lives_painter_surface_destroy(surface);
 
     /// if possible just render the slice which contains the text
     // temporarily set the layer pixel_data and height to the slice, then copy it,
@@ -849,6 +854,8 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
 
       weed_layer_unref(layer_slice);
+      lives_painter_surface_t *surface = lives_painter_get_target(cr);
+      lives_painter_surface_destroy(surface);
 
       if (rbswapped) {
         // reverse out fake palette if needed
@@ -873,6 +880,8 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       if (layout) lives_widget_object_unref(layout);
     }
     lives_painter_to_layer(layer, cr);
+      lives_painter_surface_t *surface = lives_painter_get_target(cr);
+      lives_painter_surface_destroy(surface);
   }
   if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
   return layer;

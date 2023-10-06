@@ -30,7 +30,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = 0;//TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = 0;//TEST_WEED_UTILS | TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -732,7 +732,6 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->alarmlist_mutex, &mattr);
   pthread_mutex_init(&mainw->trcount_mutex, &mattr);
   pthread_mutex_init(&mainw->alock_mutex, &mattr);
-  pthread_mutex_init(&mainw->tlthread_mutex, &mattr);
   pthread_mutex_init(&mainw->all_hstacks_mutex, &mattr);
   pthread_mutex_init(&mainw->play_surface_mutex, &mattr);
   pthread_mutex_init(&mainw->pwin_surface_mutex, &mattr);
@@ -796,7 +795,7 @@ static boolean pre_init(void) {
   load_rte_plugins();
 
   g_printerr("OK\n");
-  // up to here, do not launcha any bg threads
+  // up to here, do not launch any bg threads
 
   prefs->open_decorated = TRUE;
 
@@ -1568,6 +1567,8 @@ static boolean lives_startup(livespointer data) {
     on_capture2_activate();  // exits
   }
 
+  init_fbuff_sizes(prefs->workdir);
+  
   //#define NOTTY
 #ifdef NOTTY
   if (!mainw->foreign) {
@@ -1590,7 +1591,7 @@ static boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  set_gui_loop_tight(TRUE);
+  //set_gui_loop_tight(TRUE);
   lives_idle_priority(fg_service_ready_cb, NULL);
 
   if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
@@ -1618,14 +1619,11 @@ static boolean lives_startup2(livespointer data) {
 
   nsc = (uint64_t)mainw->n_service_calls;
   if (!nsc) return TRUE;
-  g_print("\n\nst2b\n");
   
   if (!mainw->lives_shown) {
     mainw->is_ready = TRUE;
     show_lives();
   }
-
-  resize_message_area(NULL);
 
   attrs = lives_proc_thread_get_attrs(self);
   lives_proc_thread_set_attrs(self, attrs & ~LIVES_THRDATTR_AUTO_REQUEUE);
@@ -1661,13 +1659,9 @@ static boolean lives_startup2(livespointer data) {
   }
 #endif
   //  do_startup_diagnostics(test_opts);
-
-  /* mainw->helper_procthreads[PT_PERF_MANAGER] = */
-  /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
-  /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
-
   prefs->pb_quality = future_prefs->pb_quality = PB_QUALITY_MED;
 
+  // DISKSPACE check - wait for monitor to complete
   if (!prefs->vj_mode && !needs_workdir && mainw->next_ds_warn_level > 0) {
     if (!disk_monitor_running(prefs->workdir))
       mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
@@ -1679,12 +1673,10 @@ static boolean lives_startup2(livespointer data) {
       }
     }
 
-    /// ChECK : redundant ?
+    // check now, if diskspace used value is ready
     check_storage_space(-1, FALSE);
 
     if (dsval > 0) {
-
-      /// ChECK : redundant ?
       capable->ds_used = dsval;
       capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
       capable->ds_free = dsval;
@@ -1727,8 +1719,12 @@ static boolean lives_startup2(livespointer data) {
     }
   }
 
+  // crassh recover - reload
+  
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
+  ///////////////
+  
   if (mainw->ascrap_file != -1 && !mainw->event_list) {
     int current_file = mainw->current_file;
     mainw->current_file = mainw->ascrap_file;
@@ -1802,7 +1798,7 @@ static boolean lives_startup2(livespointer data) {
     ustr = lives_strdup_printf(", %s", capable->username);
   else
     ustr = lives_strdup("");
-
+  
   d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
   lives_free(ustr);
 
@@ -1865,6 +1861,10 @@ static boolean lives_startup2(livespointer data) {
 
   set_gui_loop_tight(FALSE);
 
+#if IS_LINUX_GNUbb
+  capable->allthreads = allthrds_list();
+#endif
+
 #ifdef ENABLE_JACK_TRANSPORT
   mainw->jack_can_start = TRUE;
 #endif
@@ -1875,6 +1875,8 @@ static boolean lives_startup2(livespointer data) {
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
   //lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+
+  resize_message_area(NULL);
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
@@ -1945,8 +1947,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (mainw->debug) prefs->nfx_threads = 2;
 #endif
 
-  //do_startup_diagnostics(test_opts);
-
   get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
   get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX);
 
@@ -1961,6 +1961,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_printerr("Initializing Weed functions...");
   weed_functions_init();
   g_printerr("OK\n");
+
+ //do_startup_diagnostics(test_opts);
+
   g_printerr("Initializing threadpool...");
   lives_threadpool_init();
   g_printerr("OK\n");
@@ -2010,7 +2013,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   weed_plant_free(test_plant);
 
-  g_printerr("Initializing GUI toolkit...");
+  g_printerr("Initializing GUI helper...");
   widget_helper_init();
   g_printerr("OK\n");
 
@@ -2816,6 +2819,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   
 #ifdef GUI_GTK
   if (!gtk_thread) {
+    g_printerr("Entering GUI mainloop...");
     pthread_cleanup_push(pthread_cleanup_func, NULL);
     gtk_main();
     pthread_cleanup_pop(1);
@@ -2827,7 +2831,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   return 0;
-
 }
 
 void startup_message_fatal(char *msg) {
@@ -3451,15 +3454,14 @@ static boolean lives_init(_ign_opts * ign_opts) {
 
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
-
+    
     if (!prefs->vj_mode) {
+      /// BEGIN DISKPACE check 
       if (!needs_workdir && initial_startup_phase == 0) {
         // check diskspace, slow, reutls checked in lazy_startup_checks
         mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
       }
     }
-
-
 
 #ifndef VALGRIND_ON
     /// generate some complementary colours

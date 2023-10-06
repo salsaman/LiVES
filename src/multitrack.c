@@ -525,7 +525,7 @@ static void save_mt_autoback(lives_mt *mt) {
       retval = save_event_list_inner(mt, fd, mt->event_list, NULL);
       if (retval) retval = write_backup_layout_numbering(mt);
 
-      if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+      if (mainw->signal_caught) catch_sigint(mainw->signal_caught, NULL, NULL);
 
       set_signal_handlers((lives_sigfunc_t)catch_sigint);
 
@@ -618,7 +618,7 @@ uint32_t mt_idle_add(lives_mt *mt) {
   // TODO: last param is a destroy notify, so we can check if something re-adds it or removes it when it shouldn't
   retval = lives_timer_add(1001, mt_auto_backup, mt);
 
-  if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+  if (mainw->signal_caught) catch_sigint(mainw->signal_caught, NULL, NULL);
 
   set_signal_handlers((lives_sigfunc_t)catch_sigint);
 

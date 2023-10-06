@@ -77,6 +77,8 @@ typedef struct {
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
 
+#define LIVES_PROC_DIR "/proc/self/task"
+
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 weed_plant_t *lives_plant_new_with_refcount(int subtype);
@@ -91,6 +93,9 @@ void lives_get_randbytes(void *ptr, size_t size);
 #define LIVES_LEAF_SMALLER "smaller"
 #define LIVES_LEAF_LARGER "larger"
 #define LIVES_LEAF_CYCLES "cycles"
+
+LiVESList *allthrds_list(void);
+LiVESList *cull_unknown_threads(LiVESList *cull_list);
 
 void autotune_u64_start(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials);
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost);

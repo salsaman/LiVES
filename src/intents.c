@@ -219,6 +219,31 @@ weed_plant_t *lives_obj_instance_get_attribute(lives_obj_instance_t *loi, const 
   return attr;
 }
 
+
+LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_obj_instance_t *loi, const char *name,
+    const char *label, int ptype) {
+  if (loi) {
+    lives_obj_attr_t *attr = lives_obj_instance_get_attribute(loi, name);
+    if (attr) {
+      if (label) weed_set_string_value(attr, WEED_LEAF_LABEL, label);
+      weed_set_int_value(attr, WEED_LEAF_PARAM_TYPE, ptype);
+      return WEED_SUCCESS;
+    }
+    return OBJ_ERROR_NOSUCH_ATTRIBUTE;
+  }
+  return OBJ_ERROR_NULL_OBJECT;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_obj_instance_t *loi, const char *name) {
+  if (loi) {
+    lives_obj_attr_t *attr = lives_obj_instance_get_attribute(loi, name);
+    if (attr) return weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL);
+  }
+  return LIVES_PARAM_TYPE_UNDEFINED;
+}
+
+
 // in the final version of this, we will decalre attributes for objects, and these
 // will be used as template to create object intances
 // for now we will creeate attributes directly in obj_instance
@@ -1076,28 +1101,6 @@ char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_
 
 ///////////////////////////////
 
-LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_obj_t *obj, const char *name,
-    const char *label, int ptype) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (attr) {
-      if (label) weed_set_string_value(attr, WEED_LEAF_LABEL, label);
-      weed_set_int_value(attr, WEED_LEAF_PARAM_TYPE, ptype);
-      return WEED_SUCCESS;
-    }
-    return OBJ_ERROR_NOSUCH_ATTRIBUTE;
-  }
-  return OBJ_ERROR_NULL_OBJECT;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_obj_t *obj, const char *name) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (attr) return weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL);
-  }
-  return LIVES_PARAM_TYPE_UNDEFINED;
-}
 
 
 ////// capacities ///////

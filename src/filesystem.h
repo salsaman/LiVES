@@ -71,6 +71,7 @@ ssize_t lives_read(int fd, void *buf, ssize_t count, boolean allow_less);
 ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 
 // buffered io
+void init_fbuff_sizes(const char *workdir);
 
 /// fixed values only for write buffers (must be multiples of 16)
 // selection of buufer / flush size is determined by the chunk of the data being written
@@ -78,7 +79,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFFER_FILL_BYTES_SMALL 64   /// 1 -> 8 byte chunks
 #define BUFFER_FILL_BYTES_SMALLMED 1024 /// 65 - 256 byte chunks
 #define BUFFER_FILL_BYTES_MED 4096  /// 257 -> 4096 bytes  ---> also size of a memory page
-#define BUFFER_FILL_BYTES_BIGMED 32768  ///  - 8192 bytes
+#define BUFFER_FILL_BYTES_BIGMED 32768  ///  - 32K bytes
 #define BUFFER_FILL_BYTES_LARGE 256 * 1024 /// 256KB
 // chunk sizes > LARGE are written directly
 
@@ -214,6 +215,7 @@ char *lives_format_storage_space_string(uint64_t space);
 uint64_t get_ds_free(const char *dir);
 
 const char *get_shmdir(void);
+uint64_t get_fs_blocksize(const char *dir);
 
 lives_proc_thread_t disk_monitor_start(const char *dir);
 boolean disk_monitor_running(const char *dir);

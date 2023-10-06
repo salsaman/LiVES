@@ -748,10 +748,8 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout_vargs
     if (!lives_proc_thread_is_done(lpt, FALSE)) {
       g_print("TIMED IT OUT\n");
       pthread_t pth = lives_proc_thread_get_pthread(lpt);
-      LPT_THREADVAR_SET(lpt, sig_act, SIG_ACT_CANCEL);
       pthread_kill(pth, LIVES_INTERRUPT_SIG);
       lives_proc_thread_join(lpt);
-      //lives_proc_thread_cancel_immediate(lpt);
       lives_proc_thread_unref(lpt);
       return NULL;
     }
@@ -948,16 +946,7 @@ int lives_proc_thread_unref(lives_proc_thread_t lpt) {
 }
 #endif
 T_RECURSE_GUARD_START;
-static boolean arm = FALSE;
 if (lpt) {
-  if (lpt == mainw->debug_ptr) {
-    if (mainw->debug) break_me("unref lpt");
-    //g_print("unref lpt %p\n", lpt);
-    if (arm) break_me("bad unref");
-    g_print("lpt is %p, %s ", lpt, lives_proc_thread_show_func_call(lpt));
-    lpt_desc_state(lpt);
-    arm = FALSE;
-  }
   GET_PROC_THREAD_SELF(self);
   T_RETURN_VAL_IF_RECURSED_CHECK(lpt == self, FALSE);
   pthread_rwlock_t *destruct_rwlock;
@@ -972,11 +961,6 @@ if (lpt) {
       return FALSE;
     }
 
-    if (lpt ==  mainw->debug_ptr) {
-      g_print("ARMMRMRMRMMRMRMMRMMRMMRMRM %p\n",lpt);
-      arm = TRUE;
-      break_me("free lpt");
-    }
     pthread_rwlock_unlock(destruct_rwlock);
     pthread_mutex_unlock(&ref_sync_mutex);
 
@@ -1195,11 +1179,8 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
       weed_set_int64_value(lpt, LIVES_LEAF_QUEUED_TICKS, lives_get_current_ticks());
 
     if (hook_hints & HOOK_OPT_FG_LIGHT) {
-      if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
       lives_proc_thread_queue(lpt, attrs | LIVES_THRDATTR_FG_LIGHT
                               | LIVES_THRDATTR_NO_UNREF);
-      //
-
       lives_proc_thread_unref(lpt);
       goto mte_done;
     }
@@ -1332,9 +1313,9 @@ boolean _main_thread_execute(lives_funcptr_t func, const char *fname, int return
 boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char *args_fmt, ...) {
   boolean bret;
   va_list xargs;
-  if (!args_fmt || !*args_fmt) return _main_thread_execute_vargs(func, fname, 0, NULL, "", NULL);
+  if (!args_fmt || !*args_fmt) return _main_thread_execute_vargs(func, fname, WEED_SEED_VOID, NULL, "", NULL);
   va_start(xargs, args_fmt);
-  bret = _main_thread_execute_vargs(func, fname, 0, NULL, args_fmt, xargs);
+  bret = _main_thread_execute_vargs(func, fname, WEED_SEED_VOID, NULL, args_fmt, xargs);
   va_end(xargs);
   return bret;
 }
@@ -1649,6 +1630,11 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_busy(lives_proc_thread_t lpt) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_can_interrupt(lives_proc_thread_t lpt) {
+  return lpt && lives_proc_thread_has_states(lpt, THRD_OPT_CAN_INTERRUPT);
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_sync_waiting(lives_proc_thread_t lpt) {
   if (lpt) {
     if (lives_proc_thread_is_queued(lpt)) check_pool_threads(FALSE);
@@ -1770,6 +1756,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_pauseable(lives_proc_thread_t 
 }
 
 
+
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t lpt, boolean dontcare) {
   lives_proc_thread_t xlpt;
   lives_thread_data_t *tdata;
@@ -1857,10 +1844,9 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t xself) 
     if (self) {
       if (weed_plant_has_leaf(self, LIVES_LEAF_LONGJMP)) {
         // prepare to jump into hyperspace...
-        jmp_buf *env = (jmp_buf *)weed_get_voidptr_value(self, LIVES_LEAF_LONGJMP, NULL);
-        // does not return !!
+	jmp_buf *env = (jmp_buf *)weed_get_voidptr_value(self, LIVES_LEAF_LONGJMP, NULL);
         if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
-        LIVES_WARN("canclled proc_thread had no longjmp destination");
+	LIVES_WARN("canclled proc_thread had no longjmp destination");
       }
     }
   }
@@ -2063,9 +2049,8 @@ boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock) {
 }
 
 
-boolean lives_proc_thread_pause(lives_proc_thread_t self) {
-  return _lives_proc_thread_pause(self, FALSE);
-}
+boolean lives_proc_thread_pause(lives_proc_thread_t self)
+{return _lives_proc_thread_pause(self, FALSE);}
 
 
 static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
@@ -2075,13 +2060,14 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
   // another thread can call pthread_kill providing the signal number, if other thread has the signal unblocked it
   // will end up here
   // TODO - check for deffered signals
+  //
+  // WE GOT SIGNAL !
   GET_PROC_THREAD_SELF(self);
   lives_thread_data_t *tdata = get_thread_data();
   int sig_act = tdata->vars.var_sig_act;
 
   switch (sig_act) {
-  case SIG_ACT_IGNORE:
-    return;
+  case SIG_ACT_IGNORE: return;
   case SIG_ACT_CANCEL:
     // cancel immediate, sent form other thread
     g_print("cancelling self !\n");
@@ -2141,8 +2127,35 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
 }
 
 
+LIVES_GLOBAL_INLINE void set_interrupt_action(int action) {
+  // unblock just for calling thread (main thread)
+  // TODO - we should ignore signal, as ther may be queued stale interrupts
+  GET_PROC_THREAD_SELF(self);
+  if (action != SIG_ACT_IGNORE) {
+    THREADVAR(sig_act) = SIG_ACT_IGNORE;
+    thrd_signal_unblock(LIVES_INTERRUPT_SIG, TRUE);
+    THREADVAR(sig_act) = action;
+    lives_proc_thread_include_states(self, THRD_OPT_CAN_INTERRUPT);
+  }
+  else {
+    lives_proc_thread_exclude_states(self, THRD_OPT_CAN_INTERRUPT);
+    THREADVAR(sig_act) = SIG_ACT_IGNORE;
+    thrd_signal_block(LIVES_INTERRUPT_SIG, TRUE);
+  }
+}
 
-// calls pthread_cancel on underlying thread
+
+lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t lpt) {
+  if (!lpt) return LIVES_RESULT_ERROR;
+  pthread_t pth = lives_proc_thread_get_pthread(lpt);
+  if (!pth) return LIVES_RESULT_INVALID;
+  if (!lives_proc_thread_can_interrupt(lpt)) return LIVES_RESULT_FAIL;
+  pthread_kill(pth, LIVES_INTERRUPT_SIG);
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+  // calls pthread_cancel on underlying thread
 // - cleanup function casues the thread to the normal post cleanup, so lives_proc_thread_join_*
 // will work as normal (though the values returned will not be valid)
 // however this should still be called, and the proc_thread freed as normal
@@ -2629,11 +2642,6 @@ static uint64_t lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
   uint32_t rtype;
   uint64_t state = lives_proc_thread_get_state(lpt);
 
-  // make sure we dont set this twice
-  if (state & THRD_STATE_COMPLETED) {
-    break_me("dbl fin");
-    return state;
-  }
   if (state & THRD_STATE_RUNNING)
     lives_proc_thread_exclude_states(lpt, THRD_STATE_RUNNING);
   state &= ~THRD_STATE_RUNNING;
@@ -2923,7 +2931,7 @@ uint64_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
 
   if (lpt != self && lives_proc_thread_ref(lpt) < 2) return THRD_STATE_INVALID;
 
-  sjval = setjmp(env);
+  sjval = sigsetjmp(env, 1);
   if (sjval) {
     // point of return for proc_threads if they cancel / error
     // since it is not clear what value lpt has now, get active_lpt again
@@ -2958,8 +2966,8 @@ uint64_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
     }
 
     weed_set_voidptr_value(lpt, LIVES_LEAF_LONGJMP, &env);
-    ///////////////////////
 
+    ///////////////////////
     call_funcsig(lpt);
     //if (lpt == mainw->debug_ptr) g_print("nrefss 555 = %d\n", lives_proc_thread_count_refs(self));
 
@@ -3192,6 +3200,8 @@ char *lives_proc_thread_state_desc(uint64_t state) {
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is INVALID");
   if (state & THRD_OPT_CANCELLABLE)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is cancellable");
+  if (state & THRD_OPT_CAN_INTERRUPT)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "accepts interrupt signal");  
   if (state & THRD_OPT_PAUSEABLE)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is pauseable");
   if (state & THRD_OPT_NOTIFY)
@@ -3423,6 +3433,10 @@ static void *_lives_thread_data_create(void *pslot_id) {
 #if IS_LINUX_GNU
     tdata->vars.var_tid = gettid();
 #endif
+#if IS_FREEBSD
+    // also #include <pthread_np.h>
+    tdata->vars.var_tid = pthread_getthreadid_np();
+#endif
 
     pthread_mutex_init(&tdata->vars.var_active_lpt_mutex, NULL);
 
@@ -3483,9 +3497,7 @@ static void *_lives_thread_data_create(void *pslot_id) {
     lives_icap_init(&tdata->vars.var_intentcap);
 
     thread_signal_establish(LIVES_INTERRUPT_SIG, lives_proc_thread_signalled);
-
-    // unblock just for calling thread (main thread)
-    thrd_signal_unblock(LIVES_INTERRUPT_SIG, TRUE);
+    thrd_signal_block(LIVES_INTERRUPT_SIG, TRUE);
 
 #ifndef NO_NP
     if (1) {
@@ -4226,6 +4238,40 @@ char *get_thread_id(uint64_t uid) {
 #endif
   } else tnum = lives_strdup(_("Unknown thread "));
   return tnum;
+}
+
+
+LiVESList *filter_unknown_threads(LiVESList *allthrds) {
+#if IS_LINUX_GNU
+  int known = 0, unknown = 0;
+  char *tmp = get_threadstats();
+  g_print("Filtering known threads from lit\n");
+  g_print("Known threads:\n%s\n", tmp);
+  lives_free(tmp);
+  pthread_rwlock_rdlock(&allctx_rwlock);
+  for (LiVESList *list = allctxs; list; list = list->next) {
+    lives_thread_data_t *tdata  = (lives_thread_data_t *)list->data;
+    if (tdata) {
+      for (LiVESList *xlist = allthrds; xlist; xlist = xlist->next) {
+	if (tdata->vars.var_tid == LIVES_POINTER_TO_INT(xlist->data)) {
+	    g_printerr("Known: %d\n", LIVES_POINTER_TO_INT(xlist->data));
+	    allthrds = lives_list_remove_node(allthrds, xlist, FALSE);
+	    known++;
+	    break;
+	}
+      }
+    }
+  }
+  pthread_rwlock_unlock(&allctx_rwlock);
+
+  for (LiVESList *xlist = allthrds; xlist; xlist = xlist->next) {
+    unknown++;
+    g_printerr("\nFound unknow thread %d (LWP %d))",
+		unknown, LIVES_POINTER_TO_INT(xlist->data));
+  }
+  g_print("\ntotal threads %d. Known %d, unknown %d\n", known + unknown, known, unknown);
+#endif
+  return allthrds;
 }
 
 

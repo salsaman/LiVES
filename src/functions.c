@@ -245,7 +245,7 @@ LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname,
   /* g_printerr("Thread 0x%lx in func %s at %s, line %d\n", */
   /*            THREADVAR(uid), funcname, file_ref, line_ref); */
 
-  lives_sync_list_add(THREADVAR(func_stack),
+  lives_sync_list_push(THREADVAR(func_stack),
                           (void *)lives_strdup(funcname));
 
   add_quick_fn(func, funcname);
@@ -613,8 +613,8 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt) {
 
   if (lpt == mainw->debug_ptr) g_print("nrefss AAAAmmmmm = %d\n", lives_proc_thread_count_refs(lpt));
 
-  if (weed_plant_has_leaf(lpt, LIVES_LEAF_LONGJMP))
-    weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
+  /* if (weed_plant_has_leaf(lpt, LIVES_LEAF_LONGJMP)) */
+  /*   weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP); */
 
   lives_proc_thread_exclude_states(lpt, THRD_STATE_RUNNING);
 

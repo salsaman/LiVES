@@ -1140,7 +1140,7 @@ char *repl_workdir(const char *entry, boolean fwd) {
 
 
 LIVES_GLOBAL_INLINE void get_play_times(void) {
-  update_timer_bars(0, 0, 0, 0, 0);
+  update_timer_bars(mainw->current_file, 0, 0, 0, 0, 0);
 }
 
 
@@ -1148,10 +1148,11 @@ void update_play_times(void) {
   // force a redraw, reread audio
   if (!CURRENT_CLIP_IS_PHYSICAL) return;
   if (cfile->audio_waveform) {
-    cancel_tl_redraw();
+    drawtl_cancel();
     for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
     lives_freep((void **)&cfile->audio_waveform);
     lives_freep((void **)&cfile->aw_sizes);
+    unlock_timeline();
   }
   redraw_timeline(mainw->current_file);
 }

@@ -391,8 +391,6 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
   }
   list_plugins = TRUE;
 
-  //g_print("\n\n\nLIST CMD: %s\n",com);
-
   pluglist = get_plugin_result(com, "|", FALSE, TRUE);
   lives_free(com);
   //threaded_dialog_spin(0.);
@@ -2326,9 +2324,6 @@ const lives_decoder_sys_t *find_decoder(uint64_t dec_uid, const char *decplugnam
   decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
   for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
     const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
-    g_print("CHK1 %lu vs %lu\n", dec_uid, dpsys->id->uid);
-    g_print("CHK2 %s vs %s\n", dpsys->soname, decplugname);
-
     if ((dec_uid && dpsys->id->uid == dec_uid) ||
         (!dec_uid && !lives_strcmp(dpsys->soname, decplugname))) {
       return dpsys;
@@ -2711,7 +2706,6 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     if (cdata) {
       // check for sanity
-      g_print("Checking return data from %s\n", dpsys->soname);
       if (lsd_check_match((lsd_struct_def_t *)get_lsd(LIVES_STRUCT_CLIP_DATA_T),
                           cdata->lsd)) {
         char *msg = lives_strdup_printf("Error in cdata received from decoder plugin:\n%s\nAborting.", dpsys->soname);
@@ -2794,8 +2788,6 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   if (!dec_uid) dec_uid = sfile->decoder_uid;
   sfile->decoder_uid = sfile->old_dec_uid = 0;
 
-  g_print("DEC UID is %lu\n", dec_uid);
-
   if (dec_uid) {
     // if we are reloading a clip try first with the same decoder as last time,
     // if it is disabled prompt user
@@ -2806,12 +2798,10 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
     }
     //decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
     //const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
-    g_print("2DEC UID is %lu\n", dec_uid);
 
     if (dec_uid > 1) {
       const lives_decoder_sys_t *decoder_plugin = find_decoder(dec_uid, decplugname);
       if (decoder_plugin) {
-        g_print("trying first with 0X%016lX\n", dec_uid);
         use_fake_cdata = TRUE;
         if (lives_list_find_by_data(xdisabled, (void *)decoder_plugin)) {
           char *msg = lives_strdup_printf(_("The %s decoder has been disabled, but was used earlier to open the clip\n"
@@ -2826,8 +2816,6 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
           lives_free(msg);
         }
         if (use_fake_cdata) decoder_plugin_move_to_first(decoder_plugin);
-      } else {
-        g_print("No decoder found\n");
       }
     }
   }
@@ -2846,9 +2834,6 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   if (xdisabled) lives_list_free(xdisabled);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-
-  g_print("\n\n\nGOT %p and %p and %p %lu\n", dplug, dplug ? dplug->dpsys : 0, dplug && dplug->dpsys ? dplug->dpsys->id : 0, dplug &&
-          dplug->dpsys && dplug->dpsys->id ? dplug->dpsys->id->uid : 0);
 
   if (dplug && dplug->dpsys && dplug->dpsys->id) {
     add_clip_src(clipno, -1, SRC_PURPOSE_PRIMARY,

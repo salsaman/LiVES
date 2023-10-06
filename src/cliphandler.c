@@ -445,7 +445,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     lives_system(com, FALSE);
     lives_cp(lives_header, lives_header_bak);
     pthread_mutex_unlock(&sfile->transform_mutex);
-    if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+    if (mainw->signal_caught) catch_sigint(mainw->signal_caught, NULL, NULL);
     if (needs_sigs) set_signal_handlers((lives_sigfunc_t)catch_sigint);
     lives_free(temp_backend);
     lives_free(com);
@@ -493,7 +493,7 @@ boolean save_clip_values(int which) {
       retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         set_signal_handlers((lives_sigfunc_t)catch_sigint);
-        if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+        if (mainw->signal_caught) catch_sigint(mainw->signal_caught, NULL, NULL);
         lives_free(lives_header_new);
         lives_free(clipdir);
         return FALSE;
@@ -576,7 +576,7 @@ boolean save_clip_values(int which) {
 
   lives_free(clipdir);
 
-  if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+  if (mainw->signal_caught) catch_sigint(mainw->signal_caught, NULL, NULL);
   set_signal_handlers((lives_sigfunc_t)catch_sigint);
 
   lives_free(lives_header_new);
@@ -637,7 +637,7 @@ boolean del_clip_value(int which, lives_clip_details_t what) {
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (mainw->signal_caught) catch_sigint(-mainw->signal_caught, NULL, NULL);
+  if (mainw->signal_caught) catch_sigint(mainw->signal_caught, NULL, NULL);
   else lives_cp(lives_header, lives_header_bak);
   if (needs_sigs) set_signal_handlers((lives_sigfunc_t)catch_sigint);
   lives_free(temp_backend);

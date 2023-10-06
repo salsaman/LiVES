@@ -4,6 +4,18 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+/**
+   This file is for UI updates at a higher level than create infividual windows / dialog boxes
+   The ideal would be a hierarchical approach, in cases where this makes sense:
+  - normal function, callback code - no gui code
+  	-- user-interface.c - higher level UI functions
+		-- other files (gui.c, interface.c, and all other files) : direct UI functions
+			-- widget-helper.c, .h. -gtk.h etc : wrapped UI calls
+
+   This is a general rule, in some cases one or more intermediate layers may be skipped for reasons of efficieny.
+**/
+
+
 #include "main.h"
 #include "interface.h"
 #include "effects.h"
@@ -13,16 +25,17 @@
 #include "startup.h"
 
 static void _pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
+  // low level, pop dialog to front of dektop stack
   if (prefs->startup_phase && !LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
     if (!mainw->is_ready) {
+#ifdef GUI_GTK
       gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
       gtk_window_set_type_hint(LIVES_WINDOW(dialog), GDK_WINDOW_TYPE_HINT_NORMAL);
       gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), TRUE);
+#endif
     }
   }
-  if (mainw->splash_window) {
-    lives_widget_hide(mainw->splash_window);
-  }
+  if (mainw->splash_window) lives_widget_hide(mainw->splash_window);
 
   if (extra) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
@@ -35,11 +48,15 @@ static void _pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
 
 
 void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
+  // high level, pop dialog to front of dektop stack
+  //
   if (!mainw->is_ready && !is_fg_thread()) {
     main_thread_execute_rvoid(_pop_to_front, 0, "vv", dialog, extra);
   } else _pop_to_front(dialog, extra);
 }
 
+
+// desktop window title ////////
 
 static char *win_title = NULL;
 
@@ -75,6 +92,7 @@ void set_main_title(const char *file, int untitled) {
                                         : (tmp2 = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       }
     }
+
     lives_free(tmp); lives_free(tmp2);
   } else win_title = (_("<No File>"));
 
@@ -82,6 +100,8 @@ void set_main_title(const char *file, int untitled) {
     disp_main_title();
 }
 
+
+/// sensitice / desensitize the interface ////
 
 void sensitize_rfx(void) {
   if (!mainw->foreign) {
@@ -585,6 +605,8 @@ void procw_desensitize(void) {
 }
 
 
+// drae directly in interface ////
+
 void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   struct pbs_struct *pbs;
   pthread_mutex_t *mutex;
@@ -727,7 +749,13 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
   if (!weed_layer_check_valid(layer)) return;
 
+  g_print("layer %p has ", layer);
+  lives_sync_list_t *copylist = lives_layer_get_copylist(layer);
+  if (copylist) g_print("copylist %p\n", copylist);
+  else g_print("no copylist\n");
+
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
+  g_print("CONV layer %p to pixbuf %p\n", layer, pixbuf);
 
   if (pixbuf) {
     LiVESWidget *widget = LIVES_WIDGET(darea);
@@ -746,15 +774,18 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
     lives_widget_object_unref(pixbuf);
 
-    g_print("unref of pb %p\n", pixbuf);
+    g_print("unref of pb %p, should still have 1 ref\n", pixbuf);
 
     lives_widget_queue_draw_and_update(widget);
   }
 
   g_print("unref %p, nrefs is %d\n", layer, weed_layer_count_refs(layer));
+  g_print("if we free %p, here, it should remove proxy layer, unless it entered with copylist\n", layer);
   weed_layer_unref(layer);
 }
 
+
+// UI sizing functions ////
 
 void reset_mainwin_size(void) {
   int w, h, x, y, bx, by;
@@ -1002,6 +1033,7 @@ void resize(double scale) {
   }
 }
 
+/////////////// message area //
 
 // when doing things which may chenge widget sizes withint the CE GUI,
 // reset_message_area should be called first, this will cause the main window height to shrink
@@ -1077,4 +1109,119 @@ boolean resize_message_area(livespointer data) {
   if (mainw->msg_scrollbar) lives_widget_show(mainw->msg_scrollbar);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   return FALSE;
+}
+
+
+//////////////////// TIMELINE /////////
+
+static void redraw_timeline_inner(int clipno);
+
+
+// mainw->drawsrc :: cureent clip being drawn / last drawn
+
+static lives_proc_thread_t drawtl_thread;
+static pthread_mutex_t tlthread_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+void drawtl_cancel(void) {
+  // must call unlock_timline()
+  pthread_mutex_lock(&tlthread_mutex);
+  if (drawtl_thread) {
+    lives_proc_thread_t lpt = drawtl_thread;
+    lives_proc_thread_request_cancel(lpt, FALSE);
+    lives_proc_thread_try_interrupt(lpt);
+    pthread_mutex_unlock(&tlthread_mutex);
+    lives_proc_thread_join(lpt);
+    pthread_mutex_lock(&tlthread_mutex);
+    lives_proc_thread_unref(lpt);
+    drawtl_thread = NULL;
+  }
+}
+
+
+void redraw_timeline(int clipno) {
+  // function to redraw the timeline (video and audio bars)
+  // this is run in a bg thread
+  // at any time it can be called again and by any thread, - e.g when current clip change,
+  // when audio length vchanges
+  //
+  // if the function is already active then the current thread is cancelled and the new one
+  // activated
+  // because thread does many  
+
+  //
+
+  mainw->drawsrc = clipno;
+
+  drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_SET_CANCELLABLE,
+						  (lives_funcptr_t)redraw_timeline_inner, -1, "i", clipno);
+  pthread_mutex_unlock(&tlthread_mutex);
+}
+
+boolean get_timeline_lock(void) {
+  if (!pthread_mutex_trylock(&tlthread_mutex)) {    
+    if (drawtl_thread) {
+      lives_proc_thread_t lpt = drawtl_thread;
+      if (lives_proc_thread_check_finished(lpt)
+	  && !lives_proc_thread_should_cancel(lpt)) {
+	pthread_mutex_unlock(&tlthread_mutex);
+	lives_proc_thread_join(lpt);
+	pthread_mutex_lock(&tlthread_mutex);
+	lives_proc_thread_unref(lpt);
+	drawtl_thread = NULL;
+	return TRUE;
+      }
+      pthread_mutex_unlock(&tlthread_mutex);
+      return FALSE;
+    }
+    return TRUE;
+  }
+  return FALSE;
+}
+      
+
+void unlock_timeline(void) {
+  pthread_mutex_trylock(&tlthread_mutex);
+  pthread_mutex_unlock(&tlthread_mutex);
+}
+
+
+static void redraw_timeline_inner(int clipno) {
+  // Video bar
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+
+  if (!sfile) return;
+  
+  if (!mainw->video_drawable) {
+    mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
+  }
+  // returns FALSE if cancel requested
+  if (!update_timer_bars(clipno, 0, 0, 0, 0, 1)) return;
+
+  // Left / mono audio
+  
+  if (!sfile->laudio_drawable) {
+    sfile->laudio_drawable = lives_widget_create_painter_surface(mainw->laudio_draw);
+    mainw->laudio_drawable = sfile->laudio_drawable;
+    clear_tbar_bgs(0, 0, 0, 0, 2);
+  } else {
+    mainw->laudio_drawable = sfile->laudio_drawable;
+  }
+  if (!update_timer_bars(clipno, 0, 0, 0, 0, 2)) return;
+
+  // right audio
+  
+  if (!sfile->raudio_drawable) {
+    sfile->raudio_drawable = lives_widget_create_painter_surface(mainw->raudio_draw);
+    mainw->raudio_drawable = sfile->raudio_drawable;
+    clear_tbar_bgs(0, 0, 0, 0, 3);
+  } else {
+    mainw->raudio_drawable = sfile->raudio_drawable;
+  }
+  if (!update_timer_bars(clipno, 0, 0, 0, 0, 3)) return;
+
+  lives_widget_queue_draw(mainw->video_draw);
+  lives_widget_queue_draw(mainw->laudio_draw);
+  lives_widget_queue_draw(mainw->raudio_draw);
+  lives_widget_queue_draw(mainw->eventbox2);
 }

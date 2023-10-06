@@ -7,33 +7,114 @@
 #include "maths.h"
 
 
-LIVES_GLOBAL_INLINE void lives_sync_list_lock(lives_sync_list_t *synclist) {
-  if (synclist) pthread_mutex_lock(&synclist->mutex);
+LIVES_GLOBAL_INLINE void lives_sync_list_set_lilo(lives_sync_list_t *synclist, boolean lilo) {
+  if (synclist) synclist->flags = lilo ? synclist->flags | SYNCLIST_FLAG_LILO
+		  : synclist->flags & ~SYNCLIST_FLAG_LILO;
+}
+
+LIVES_GLOBAL_INLINE void lives_sync_list_set_pop_head(lives_sync_list_t *synclist, boolean yes) {
+  if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_POP_HEAD
+		  : synclist->flags & ~SYNCLIST_FLAG_POP_HEAD;
+}
+
+LIVES_GLOBAL_INLINE void lives_sync_list_free_on_empty(lives_sync_list_t *synclist, boolean yes) {
+  if (synclist) synclist->flags = yes? synclist->flags | SYNCLIST_FLAG_FREE_ON_EMPTY
+		  : synclist->flags & ~SYNCLIST_FLAG_FREE_ON_EMPTY;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_rdlock(lives_sync_list_t *synclist) {
+  if (synclist) pthread_rwlock_rdlock(&synclist->lock);
+}
+
+LIVES_GLOBAL_INLINE void lives_sync_list_wrlock(lives_sync_list_t *synclist) {
+  if (synclist) pthread_rwlock_wrlock(&synclist->lock);
 }
 
 LIVES_GLOBAL_INLINE void lives_sync_list_unlock(lives_sync_list_t *synclist) {
-  if (synclist) pthread_mutex_unlock(&synclist->mutex);
+  if (synclist) pthread_rwlock_unlock(&synclist->lock);
 }
 
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
   LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
-  pthread_mutex_init(&synclist->mutex, NULL);
+  pthread_rwlock_init(&synclist->lock, NULL);
+  synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY | SYNCLIST_FLAG_LILO
+    | SYNCLIST_FLAG_POP_HEAD;
   return synclist;
 }
 
 
-LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
-  if (!synclist) synclist = lives_sync_list_new();
-  synclist->list = lives_list_append(synclist->list, data);
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_append(lives_sync_list_t *synclist, LiVESList *node) {
+  if (synclist->list) {
+    synclist->last->next = node;
+    node->prev = synclist->last;
+  }
+  else synclist->list = node;;
+  synclist->last = node;
   return synclist;
 }
 
-LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_add(lives_sync_list_t *synclist, void *data) {
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_append(lives_sync_list_t *synclist, void *data) {
   if (!synclist) synclist = lives_sync_list_new();
-  pthread_mutex_lock(&synclist->mutex);
-  synclist = _lives_sync_list_add(synclist, data);
-  pthread_mutex_unlock(&synclist->mutex);
+  LiVESList *list = lives_list_append(NULL, data);
+  lives_sync_list_wrlock(synclist);
+  synclist = _lives_sync_list_append(synclist, list);
+  lives_sync_list_unlock(synclist);
   return synclist;
+}
+
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_prepend(lives_sync_list_t *synclist, LiVESList *node) {
+  if (synclist->list) {
+    synclist->list->prev = node;
+    node->next = synclist->list;
+  }
+  else synclist->last = node;
+  synclist->list = node;
+return synclist;
+}
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_prepend(lives_sync_list_t *synclist, void *data) {
+  if (!synclist) synclist = lives_sync_list_new();
+  LiVESList *list = lives_list_append(NULL, data);
+  lives_sync_list_wrlock(synclist);
+  synclist = _lives_sync_list_prepend(synclist, list);
+  lives_sync_list_unlock(synclist);
+  return synclist;
+}
+
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *synclist, void *data) {
+  if (!synclist) synclist = lives_sync_list_new();
+  // by default we always pop first, we append for LILO, prepend for LIFO
+  if (synclist->flags & SYNCLIST_FLAG_LILO)
+    synclist = lives_sync_list_append(synclist, data);
+  else
+    synclist = lives_sync_list_prepend(synclist, data);
+  return synclist;
+}
+
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_push_priority(lives_sync_list_t *synclist, void *data) {
+  if (synclist) {
+    // swap order, we prepend for LILO, append for LIFO
+    if (synclist->flags & SYNCLIST_FLAG_LILO)
+      synclist = lives_sync_list_prepend(synclist, data);
+    else
+      synclist = lives_sync_list_append(synclist, data);
+  }
+  return synclist;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_replace_data(lives_sync_list_t *synclist, void *from, void *to) {
+  if (synclist && synclist->list && from) {
+    lives_sync_list_wrlock(synclist);
+    LiVESList *list = lives_list_find_by_data(synclist->list, from);
+    if (list) list->data = to;
+    lives_sync_list_unlock(synclist);
+  }
 }
 
 
@@ -46,21 +127,33 @@ LIVES_GLOBAL_INLINE void *_lives_sync_list_find(lives_sync_list_t *synclist, liv
 LIVES_GLOBAL_INLINE void *lives_sync_list_find(lives_sync_list_t *synclist, lives_condfunc_f cb_func) {
   void *data = NULL;
   if (synclist) {
-    pthread_mutex_lock(&synclist->mutex);
+    lives_sync_list_rdlock(synclist);
     data = _lives_sync_list_find(synclist, cb_func);
-    pthread_mutex_unlock(&synclist->mutex);
+    lives_sync_list_unlock(synclist);
   }
   return data;
 }
 
 
 LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t *synclist) {
-  LiVESList *list = synclist->list;
-  if (list) {
+  LiVESList *list;
+  if (synclist->flags & SYNCLIST_FLAG_POP_HEAD) {
+    list = synclist->list;
     synclist->list = list->next;
     if (synclist->list) synclist->list->prev = NULL;
-    list->next = NULL;
+    else synclist->last = NULL;
   }
+  else {
+    list = synclist->last;
+    synclist->last = list->prev;
+    if (synclist->last) synclist->last->next = NULL;
+    else synclist->list = NULL;
+  }
+  list->prev = list->next = NULL;
+
+  if (!synclist->list && (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY))
+    _lives_sync_list_free(synclist, FALSE);
+
   return list;
 }
 
@@ -68,12 +161,14 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t *synclist) {
   LiVESList *list = NULL;
   void *data = NULL;
   if (synclist) {
-    pthread_mutex_lock(&synclist->mutex);
+    lives_sync_list_wrlock(synclist);
     list = _lives_sync_list_pop(synclist);
-    data = list->data;
-    pthread_mutex_unlock(&synclist->mutex);
+    lives_sync_list_unlock(synclist);
+    if (list) {
+      data = list->data;
+      lives_list_free(list);
+    }
   }
-  lives_list_free(list);
   return data;
 }
 
@@ -81,41 +176,76 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t *synclist) {
 LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_remove(lives_sync_list_t *synclist,
     void *data, boolean do_free) {
   if (synclist) {
-    synclist->list = lives_list_remove_data(synclist->list, data, do_free);
-    if (!synclist->list) {
-      pthread_mutex_trylock(&synclist->mutex);
-      pthread_mutex_unlock(&synclist->mutex);
-      lives_free(synclist);
-      return NULL;
+    LiVESList *list = synclist->list;
+    for (; list && list->data != data; list = list->next);
+    if (list) {
+      if (list->prev) list->prev->next = list->next;
+      else synclist->list = list->next;
+      if (list->next) list->next->prev = list->prev;
+      else synclist->last = list->prev;
+      list->prev = list->next = NULL;
+      lives_list_free(list);
+      if (do_free) lives_free(data);
     }
+    if (!synclist->list && (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY))
+      synclist = _lives_sync_list_free(synclist, FALSE);
   }
   return synclist;;
 }
 
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t *synclist,
     void *data, boolean do_free) {
-  lives_sync_list_t *ret = NULL;
   if (synclist) {
-    pthread_mutex_lock(&synclist->mutex);
-    ret = _lives_sync_list_remove(synclist, data, do_free);
-    if (ret) pthread_mutex_unlock(&synclist->mutex);
+    lives_sync_list_wrlock(synclist);
+    synclist = _lives_sync_list_remove(synclist, data, do_free);
+    if (synclist) lives_sync_list_unlock(synclist);
   }
-  return ret;
+  return synclist;
 }
 
 
-LIVES_GLOBAL_INLINE void  _lives_sync_list_free(lives_sync_list_t *synclist) {
-  pthread_mutex_trylock(&synclist->mutex);
+LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_clear(lives_sync_list_t *synclist,
+							      boolean free_data) {
+  if (free_data) lives_list_free_data(synclist->list);
   lives_list_free(synclist->list);
-  pthread_mutex_unlock(&synclist->mutex);
-  lives_free(synclist);
+  synclist->list = NULL;
+  if (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY)
+    synclist = _lives_sync_list_free(synclist, FALSE);
+  return synclist;
 }
 
-LIVES_GLOBAL_INLINE void lives_sync_list_free(lives_sync_list_t *synclist) {
-  if (synclist) {
-    pthread_mutex_lock(&synclist->mutex);
-    _lives_sync_list_free(synclist);
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_clear(lives_sync_list_t *synclist,
+							     boolean free_data) {
+  if (synclist && synclist->list) {
+    lives_sync_list_wrlock(synclist);
+    synclist = _lives_sync_list_clear(synclist, free_data);
+    if (synclist) lives_sync_list_unlock(synclist);
   }
+  return synclist;
+}
+
+    
+LIVES_GLOBAL_INLINE lives_sync_list_t * _lives_sync_list_free(lives_sync_list_t *synclist,
+								 boolean free_data) {
+  pthread_rwlock_trywrlock(&synclist->lock);
+  if (synclist->list) {
+    if (free_data) lives_list_free_data(synclist->list);
+    lives_list_free(synclist->list);
+    synclist->list = NULL;
+  }
+  pthread_rwlock_unlock(&synclist->lock);
+  lives_free(synclist);
+  return NULL;
+}
+
+    LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_free(lives_sync_list_t *synclist,
+								boolean free_data) {
+  if (synclist) {
+    lives_sync_list_wrlock(synclist);
+    synclist = _lives_sync_list_free(synclist, free_data);
+  }
+  return synclist;
 }
 
 /////////////////////////////

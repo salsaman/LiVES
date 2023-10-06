@@ -788,7 +788,6 @@ typedef struct {
 
 /// helper proc_threads
 #define N_HLP_PROCTHREADS	256
-#define PT_DRAWTL		1
 #define PT_TRANSREND		2
 #define PT_DLG_SPINNER		3
 #define PT_LAZY_RFX		16
@@ -801,7 +800,6 @@ typedef struct {
 #define PT_SCRAPFILE_SAVER	128
 
 #define lazy_starter helper_procthreads[PT_LAZY_STARTUP]
-#define drawtl_thread helper_procthreads[PT_DRAWTL]
 #define transrend_proc helper_procthreads[PT_TRANSREND]
 #define dlg_spin_thread helper_procthreads[PT_DLG_SPINNER]
 #define player_proc helper_procthreads[PT_PLAYER]
@@ -1726,7 +1724,6 @@ typedef struct {
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
   pthread_mutex_t trcount_mutex; /// transition count mutex
   pthread_mutex_t alock_mutex; /// audio lock / unlock
-  pthread_mutex_t tlthread_mutex; /// timeline redraw thread
   pthread_mutex_t all_hstacks_mutex; ///
 
   pthread_mutex_t fx_key_mutex[FX_KEYS_MAX_VIRTUAL];

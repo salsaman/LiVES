@@ -46,6 +46,10 @@ if IS_FREEBSD
 freeBSD_CFLAGS = -DIS_FREEBSD=1
 endif
 
+if IS_MINGW
+mingw_CFLAGS = -DIS_MINGW=1
+endif
+
 if HAVE_LADSPA
 ladspa_CFLAGS = -DHAVE_LADSPA=1
 endif
@@ -319,7 +323,7 @@ AM_CPPFLAGS = \
 AM_CFLAGS += -fcommon -fPIE -Wstrict-aliasing=0 -Wall \
 	$(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) $(cpu_CFLAGS) 	\
-	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(freeBSD_CFLAGS) \
+	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(freeBSD_CFLAGS) $(mingw_CFLAGS) \
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) \
 	$(libweed_CFLAGS) $(libweed_compat_CFLAGS) \

@@ -391,7 +391,19 @@ boolean lives_layer_is_all_black(weed_layer_t *layer, boolean exact);
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *, boolean exact);
 void lives_pixbuf_set_opaque(LiVESPixbuf *);
+
+typedef void(*ext_free_func_t)(void *, void *data);
+
+typedef void * (*ext_creator_func_t)(void *pixel_data, uint32_t palette, int width, int height,
+				     int rowstride, ext_free_func_t, void *func_data);
+
+void *lives_pixbuf_new_from_data_wrapper(void *pixel_data, int pal, int width, int height,
+						int rowstride, ext_free_func_t ext_free_func, void *func_data);
+
+void *layer_to_extern(lives_layer_t * , ext_creator_func_t, boolean realpalette, boolean fordisp);
+
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette, boolean fordisp);
+
 lives_result_t pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
 typedef struct {

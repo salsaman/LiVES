@@ -1684,7 +1684,6 @@ const widget_opts_t _def_widget_opts = {
 #define BUTTON_KEY "link_button"
 #define RFX_KEY "rfx"
 #define REFCOUNT_KEY "refcountr"
-#define LAYER_PROXY_KEY "proxy_layer"
 #define DISP_LABEL_KEY "disp_label"
 #define KEEPABOVE_KEY "keep_above"
 #define ACTIVATE_KEY "activate"
@@ -1696,6 +1695,7 @@ const widget_opts_t _def_widget_opts = {
 #define HEIGHT_KEY "_wh_height"
 #define DEFER_KEY "_wh_defer"
 #define DEFERRED_KEY "_wh_deferred"
+#define LAYER_PROXY_KEY "proxy_layer"
 
 #define MUTEX_KEY "_wh_mutex"
 #define PBS_KEY "_wh_pbs"

@@ -969,7 +969,7 @@ static weed_error_t _weed_data_get_all(weed_leaf_t *leaf, weed_voidptr_t rvals) 
   weed_seed_t type = leaf->seed_type;
   if (weed_seed_is_ptr(type)) {
     for (int i = 0; i < ne; i++)
-      ((weed_voidptr_t *)rvals)[i] = leaf->data[i].v.value;}
+      (((weed_voidptr_t *)rvals))[i] = leaf->data[i].v.value;}
   else {
     if (type == WEED_SEED_STRING) {
       for (int i = 0; i < ne; i++) {

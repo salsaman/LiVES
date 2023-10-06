@@ -40,6 +40,10 @@ typedef pthread_attr_t native_attr_t;
 
 #define LIVES_INTERRUPT_SIG SIGRTMIN+6 // 40
 
+void set_interrupt_action(int action);
+lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t);
+boolean lives_proc_thread_can_interrupt(lives_proc_thread_t);
+
 #define THRDNATIVE_CAN_CORRECT (1ull << 0)
 
 typedef enum {
@@ -423,6 +427,9 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 // as an option when reequesting cancel
 #define THRD_OPT_DONTCARE 	(1ull << 51)
 
+// if set, the thread will respond to interrupt signals
+#define THRD_OPT_CAN_INTERRUPT 	(1ull << 52)
+
 // can be set to prevent state change hooks from being triggered
 #define THRD_BLOCK_HOOKS	(1ull << 60)
 
@@ -621,9 +628,9 @@ lives_proc_thread_t _lives_proc_thread_create_nullvargs(lives_thread_attr_t attr
 
 #define lives_proc_thread_create_pvoid(a, f, r) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, r, "", NULL)
 #define lives_proc_thread_create_rvoid(a, f, af, ...) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, \
-										0, af, __VA_ARGS__)
-#define lives_proc_thread_create_pvoid_rvoid(a, f) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, 0, "", NULL)
-#define lives_proc_thread_create_rvoid_pvoid(a, f) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, 0, "", NULL)
+										WEED_SEED_VOID, af, __VA_ARGS__)
+#define lives_proc_thread_create_pvoid_rvoid(a, f) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, WEED_SEED_VOID, "", NULL)
+#define lives_proc_thread_create_rvoid_pvoid(a, f) lives_proc_thread_create_pvoid_rvoid(a, f) _
 
 lives_proc_thread_t _lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
     const char *funcname, int return_type,
@@ -650,7 +657,7 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 // real params, ret_type 0
 #define MAIN_THREAD_EXECUTE_RVOID(func, args_fmt, ...) do {		\
     if (!is_fg_thread())						\
-      _main_thread_execute((lives_funcptr_t)func, #func, 0, NULL, args_fmt, __VA_ARGS__); \
+      _main_thread_execute((lives_funcptr_t)func, #func, WEED_SEED_VOID, NULL, args_fmt, __VA_ARGS__); \
     else func(__VA_ARGS__);} while (0);
 
 // real params, ret_type 0 or -1
@@ -985,6 +992,8 @@ void thread_stackdump(void);
 boolean is_fg_thread(void);
 
 int isstck(void *ptr);
+
+LiVESList *filter_unknown_threads(LiVESList *);
 
 /// loveliness
 #define MAX_LOVELINESS 200.

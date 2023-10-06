@@ -37,4 +37,10 @@ void resize(double scale);
 
 boolean resize_message_area(livespointer data);
 
+boolean get_timeline_lock(void);
+void unlock_timeline(void);
+
+void redraw_timeline(int clipno);
+void drawtl_cancel(void);
+
 #endif

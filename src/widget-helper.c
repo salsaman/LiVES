@@ -1164,10 +1164,11 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (is_active) {
       cprio = PRIO_HIGH;
       if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
-          && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
-
+          && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
         lives_widget_context_iteration(NULL, FALSE);
-
+	lives_microsleep;
+	pthread_yield();
+      }
       if (prio != PRIO_HIGH) {
         lives_source_set_priority(fg_service_source, cprio);
         prio = cprio;
@@ -1243,7 +1244,8 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
 
 boolean fg_service_ready_cb(void *dummy) {
-  g_printerr("GUI thread ready, providing services for all other threads\n");
+  g_printerr("OK\n");
+  g_printerr("GUI thread active, providing service for all other threads\n");
   fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
   return FALSE;
 }

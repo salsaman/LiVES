@@ -12,7 +12,7 @@
 #include "startup.h"
 #include "maths.h"
 
-#define STATS_TC (TICKS_PER_SECOND_DBL)
+#define STATS_NSEC BILLIONS(1)
 static double inst_fps = 0.;
 
 void print_diagnostics(uint64_t types) {
@@ -67,25 +67,27 @@ boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t 
 }
 
 LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
-  static ticks_t last_curr_tc = 0;
+  static double last_curr_time = 0.;
   static ticks_t last_mini_ticks = 0;
   static frames_t last_mm = 0;
-  ticks_t currticks = mainw->clock_ticks;
+  double currtime;
   lives_clip_t *sfile = RETURN_VALID_CLIP(mainw->playing_file);
-
   if (!sfile) return 0.;
 
+  currtime = lives_get_session_time();
+
   if (mainw->fps_mini_ticks != last_mini_ticks) {
+    // reset
     inst_fps = 0.;
-    last_curr_tc = currticks;
+    last_curr_time = currtime;
     last_mm = mainw->fps_mini_measure;
   } else {
-    if (currticks > last_curr_tc + STATS_TC) {
-      mainw->inst_fps = inst_fps = (double)(mainw->fps_mini_measure - last_mm
-                                            + (double)(mainw->currticks - mainw->startticks)
-                                            / TICKS_PER_SECOND_DBL / sfile->pb_fps)
-                                   / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
-      last_curr_tc = currticks;
+    if (currtime > last_curr_time + STATS_NSEC) {
+      mainw->inst_fps = inst_fps = ((double)(mainw->fps_mini_measure - last_mm)
+                                    + (((double)(mainw->currticks - mainw->startticks))
+                                       / TICKS_PER_SECOND_DBL / sfile->pb_fps))
+                                   / (currtime - last_curr_time) / ONE_BILLION;
+      last_curr_time = currtime;
       last_mm = mainw->fps_mini_measure;
     }
   }
@@ -218,13 +220,14 @@ static void upd_rstats(int n1s, int *pmin, int *pmax, int esrc, uint64_t nx, uin
 // Now the 1s in l1 have p(0.25) so we have B / 4 on avearage
 // TBD.
 
-int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q) {
+int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
   uint64_t tot_a = 0, tot_b_add = 0, tot_c = 0, rtot = 0, diff;
   int64_t tot_b_sub = 0;
   uint64_t n0, n1, n2, on0 = 0, par = 0;
   int n1s, pmin = 100000, pmax = 0, pmin_and = 10000, pmax_and = 0, pavg, pavg_and, rmin, rmax, rest;
   double dtot_a, dtot_c, dtot_b_add, dtot_b_sub, drtot, axc, ppmin, ppmax, ppmin_and, ppmax_and;
   double qual;
+  char *tmp;
 
   n0 = (*rfunc)();
   rtot = get_onescount_64(n0);
@@ -342,17 +345,23 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q) {
   // from this we should be able to approximate Pn, and then from Pn we can estimate R
   qual = 1. / (fabs(1. - 2. * drtot) * 100  * fabs(1. - dtot_a / (double)rest) * 100 * fabs(1. - 2. * axc) * 100);
 
-  if (tmp) *tmp = lives_strdup_printf("Tested RNG, generated %d values.\nEstimate from sequential XOR is %d bits, "
-                                        "estimate from sequential AND is %d bits.\nRatio of 1s to 0s was %f\n"
-                                        "AND / XOR correlation is %f (should be 0.5), persistance of same digit is %f\n"
-                                        "Range over all trials was: XOR %d to %d 1s, average %d, p(min) is %f, p(max) is %f\n"
-                                        "AND %d to %d 1s, average %d, p(min) is %f, p(max) is %f\n"
-                                        "Parity checks were %f (should be 0.)  and %f (should be 1.0)\n"
-                                        "Final analysis: Rbits = %d to %d (avg %d).\nBias towards 1 is %f, and sequential randomness is %f. "
-                                        "Logical correlation is %f\nQUALITY = %f\n\n",
-                                        ntests, (int)(dtot_a + .5), (int)(dtot_c + .5), drtot, axc, dtot_c / 2., pmin, pmax, pavg, ppmin, ppmax,
-                                        pmin_and, pmax_and, pavg_and, ppmin_and, ppmax_and, dtot_b_sub, dtot_b_add, rmin, rmax, rest,
-                                        drtot, dtot_a / (double)rest, axc, qual);
+  tmp = lives_strdup_printf("Tested RNG, generated %d values.\nEstimate from sequential XOR is %d bits, "
+                            "estimate from sequential AND is %d bits.\nRatio of 1s to 0s was %f\n"
+                            "AND / XOR correlation is %f (should be 0.5), persistance of same digit is %f\n"
+                            "Range over all trials was: XOR %d to %d 1s, average %d, p(min) is %f, p(max) is %f\n"
+                            "AND %d to %d 1s, average %d, p(min) is %f, p(max) is %f\n"
+                            "Parity checks were %f (should be 0.)  and %f (should be 1.0)\n"
+                            "Final analysis: Rbits = %d to %d (avg %d).\nBias towards 1 is %f, "
+                            "and sequential randomness is %f. "
+                            "Logical correlation is %f\nQUALITY = %f\n\n",
+                            ntests, (int)(dtot_a + .5), (int)(dtot_c + .5), drtot, axc, dtot_c / 2., pmin, pmax,
+                            pavg, ppmin, ppmax,
+                            pmin_and, pmax_and, pavg_and, ppmin_and, ppmax_and, dtot_b_sub, dtot_b_add, rmin, rmax, rest,
+                            drtot, dtot_a / (double)rest, axc, qual);
+
+  d_print(tmp);
+  lives_free(tmp);
+
   if (q) *q = qual;
 
   return rest;
@@ -2130,8 +2139,8 @@ void weed_utils_test(void) {
   void *vp1, *vp2;
   weed_error_t err;
   int iv[4], *iv2;
-  plant1 =weed_plant_new(123);
-  plant2 =weed_plant_new(123);
+  plant1 = weed_plant_new(123);
+  plant2 = weed_plant_new(123);
 
   iv[0] = 10;
   iv[1] = 20;
@@ -2143,7 +2152,7 @@ void weed_utils_test(void) {
   g_print("valzz %d and %d %d %d\n", iv2[0], iv2[1], iv2[2], iv2[3]);
 
   vp1 = (void *)0x123;
-  fprintf(stderr, "initial val will be %p\n", vp1);  
+  fprintf(stderr, "initial val will be %p\n", vp1);
   err = weed_set_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, vp1);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
@@ -2151,9 +2160,9 @@ void weed_utils_test(void) {
   fprintf(stderr, "initial val read; %p\n", vp1);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
-  
+
   fprintf(stderr, "copy from plant1; %p to plant2: %p\n", plant1, plant2);
-  err = lives_leaf_copy(plant2, "voidptr2", plant1, WEED_LEAF_PIXEL_DATA); 
+  err = lives_leaf_copy(plant2, "voidptr2", plant1, WEED_LEAF_PIXEL_DATA);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
 

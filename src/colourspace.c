@@ -2298,7 +2298,7 @@ LIVES_LOCAL_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint
       int yy = xRGB_Y[y];					\
       *r = lut[(int)CLAMP0255f(spc_rnd(yy + xR_Cr[v]))];	\
       *g = lut[(int)CLAMP0255f(spc_rnd(yy + xG_Cb[u] + xG_Cr[v]))];	\
-      *b = lut[(int)CLAMP0255f(spc_rnd(yy + xB_Cb[u]))];} while (0);	\
+      *b = lut[(int)CLAMP0255f(spc_rnd(yy + xB_Cb[u]))];} while (0);
 
 #define xyuv2bgr_with_gamma(y,u,v,b,g,r,lut) xyuv2rgb_with_gamma(y,u,v,r,g,g,lut)
 
@@ -8113,8 +8113,8 @@ static void convert_splitplanes_frame(uint8_t *LIVES_RESTRICT src, int width, in
 /////////////////////////////////////////////////////////////////
 // RGB palette conversions
 
-static void convert_swap3_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride,
-                                uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+static void _convert_swap3_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
+                                 uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 byte palette
   uint8_t *end = src + height * irowstride;
   int i;
@@ -8131,6 +8131,8 @@ static void convert_swap3_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
 
       if ((src + dheight * i * irowstride) < end) {
         ccparams[i].src = src + dheight * i * irowstride;
+        ccparams[i].dest = dest + dheight * i * orowstride;
+
         ccparams[i].hsize = width * 3;
 
         if (dheight * (i + 1) > (height - 4)) {
@@ -8140,6 +8142,7 @@ static void convert_swap3_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = irowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].lut = gamma_lut;
         ccparams[i].thread_id = i;
 
@@ -8165,30 +8168,41 @@ static void convert_swap3_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
       for (i = 0; i < width; i += 3) {
         tmp = src[i];
         if (!gamma_lut) {
-          src[i] = src[i + 2]; // red
-          src[i + 2] = tmp; // blue
+          dest[i] = src[i + 2]; // red
+          dest[i + 2] = tmp; // blue
         } else {
-          src[i] = gamma_lut[src[i + 2]]; // red
-          src[i + 1] = gamma_lut[src[i + 1]]; // red
-          src[i + 2] = gamma_lut[tmp]; // blue
+          dest[i] = gamma_lut[src[i + 2]]; // red
+          dest[i + 1] = gamma_lut[src[i + 1]]; // red
+          dest[i + 2] = gamma_lut[tmp]; // blue
         }
       }
+      dest += orowstride;
     }
     return;
   }
 }
 
+static void convert_swap3_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride,
+                                uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  _convert_swap3_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, thread_id);
+}
+
+static void convert_swap3_frameX(uint8_t *src, int width, int height, int rowstride, int orowstride,
+                                 uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  _convert_swap3_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, thread_id);
+}
 
 static void *convert_swap3_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                      ccparams->lut, ccparams->thread_id);
+                      ccparams->orowstrides[0], ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride,
-                                uint8_t *LIVES_RESTRICT gamma_lut, boolean alpha_first, int thread_id) {
+static void _convert_swap4_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
+                                 uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut,
+                                 boolean alpha_first, int thread_id) {
   // swap 4 byte palette
   uint8_t *end = src + height * irowstride;
   uint8_t tmp[4];
@@ -8206,6 +8220,7 @@ static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
 
       if ((src + dheight * i * irowstride) < end) {
         ccparams[i].src = src + dheight * i * irowstride;
+        ccparams[i].dest = dest + dheight * i * orowstride;
         ccparams[i].hsize = width * 4;
 
         if ((height - dheight * i) < dheight) dheight = height - (dheight * i);
@@ -8235,7 +8250,7 @@ static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
   if (!gamma_lut) {
     for (i = 0; i < height; i++) {
       for (j = 0; j < width; j += 4) {
-        swab4(&src[i * irowstride + j], &src[i * irowstride + j], 1);
+        swab4(&dest[i * orowstride + j], &src[i * irowstride + j], 1);
       }
     }
     return;
@@ -8248,7 +8263,7 @@ static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
         tmp[1] = gamma_lut[src[i * irowstride + j + 2]]; // red / blue
         tmp[2] = gamma_lut[src[i * irowstride + j + 1]]; // green
         tmp[3] = gamma_lut[src[i * irowstride + j]]; // blue / red
-        lives_memcpy(src + i * irowstride + j, &tmp, 4);
+        lives_memcpy(dest + i * orowstride + j, &tmp, 4);
       }
     }
     return;
@@ -8259,23 +8274,33 @@ static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int heig
       tmp[1] = gamma_lut[src[i * irowstride + j + 2]]; // g
       tmp[2] = gamma_lut[src[i * irowstride + j + 1]]; // b / r
       tmp[3] = src[i * irowstride + j]; // a
-      lives_memcpy(src + i * irowstride + j, &tmp, 4);
+      lives_memcpy(dest + i * orowstride + j, &tmp, 4);
     }
   }
 }
 
+static void convert_swap4_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride,
+                                uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut,
+                                boolean alpha_first, int thread_id) {
+  _convert_swap4_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, alpha_first, thread_id);
+}
+
+static void convert_swap4_frameX(uint8_t *src, int width, int height, int rowstride, int orowstride,
+                                 uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut,
+                                 boolean alpha_first, int thread_id) {
+  _convert_swap4_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, alpha_first, thread_id);
+}
 
 static void *convert_swap4_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_swap4_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                      ccparams->lut, ccparams->alpha_first, ccparams->thread_id);
+  _convert_swap4_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                       ccparams->orowstrides[0], ccparams->dest, ccparams->lut, ccparams->alpha_first, ccparams->thread_id);
   return NULL;
 }
 
 
 static void convert_swap3addpost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
-                                       uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
-  // swap 3 bytes, add post alpha
+                                       uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {  // swap 3 bytes, add post alpha
   uint8_t *end = src + height * irowstride;
   int i, j;
 
@@ -8455,8 +8480,8 @@ static void *convert_swap3addpre_frame_thread(void *data) {
 }
 
 
-static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride,
-    uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+static void _convert_swap3postalpha_frame(uint8_t *src, int width, int height, int rowstride, int orowstride,
+    uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 bytes, leave alpha
   uint8_t *end = src + height * rowstride, tmp;
   int i;
@@ -8474,6 +8499,7 @@ static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width,
       if ((src + dheight * i * rowstride) < end) {
         ccparams[i].src = src + dheight * i * rowstride;
         ccparams[i].hsize = width;
+        ccparams[i].dest = dest + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
@@ -8501,39 +8527,75 @@ static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width,
   }
 
   rowstride -= width << 2;
-  if (!gamma_lut) {
+  if (dest == src) {
+    if (!gamma_lut) {
+      for (; src < end; src += rowstride) {
+        for (i = 0; i < width; i++) {
+          tmp = src[0];
+          src[0] = src[2];
+          src[2] = tmp;
+          src += 4;
+        }
+      }
+      return;
+    }
     for (; src < end; src += rowstride) {
       for (i = 0; i < width; i++) {
-        tmp = src[0];
-        src[0] = src[2];
+        tmp = gamma_lut[src[0]];
+        src[0] = gamma_lut[src[2]];
+        src[1] = gamma_lut[src[1]];
         src[2] = tmp;
         src += 4;
       }
     }
     return;
   }
+  if (!gamma_lut) {
+    for (; src < end; src += rowstride) {
+      for (i = 0; i < width; i++) {
+        dest[2] = src[0];
+        dest[1] = src[1];
+        dest[0] = src[2];
+        dest[3] = src[3];
+        src += 4;
+        dest += 4;
+      }
+    }
+    return;
+  }
   for (; src < end; src += rowstride) {
     for (i = 0; i < width; i++) {
-      tmp = gamma_lut[src[0]];
-      src[0] = gamma_lut[src[2]];
-      src[1] = gamma_lut[src[1]];
-      src[2] = tmp;
+      dest[0] = gamma_lut[src[2]];
+      dest[1] = gamma_lut[src[1]];
+      dest[2] = gamma_lut[src[0]];
+      dest[3] = src[3];
       src += 4;
+      dest += 4;
     }
   }
+}
+
+static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride,
+    uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  _convert_swap3postalpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, thread_id);
+}
+
+static void convert_swap3postalpha_frameX(uint8_t *src, int width, int height, int rowstride, int orowstride,
+    uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  _convert_swap3postalpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, thread_id);
 }
 
 
 static void *convert_swap3postalpha_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3postalpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                               ccparams->lut, ccparams->thread_id);
+                               ccparams->orowstrides[0], ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_swap3prealpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, uint8_t *gamma_lut,
-                                        int thread_id) {
+static void _convert_swap3prealpha_frame(uint8_t *src, int width, int height, int rowstride, int orowstride,
+    uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   // swap 3 bytes, leave alpha
   uint8_t *end = src + height * rowstride, tmp;
   int i;
@@ -8550,6 +8612,7 @@ static void convert_swap3prealpha_frame(uint8_t *LIVES_RESTRICT src, int width, 
 
       if ((src + dheight * i * rowstride) < end) {
         ccparams[i].src = src + dheight * i * rowstride;
+        ccparams[i].dest = dest + dheight * i * orowstride;
         ccparams[i].hsize = width;
 
         if (dheight * (i + 1) > (height - 4)) {
@@ -8579,33 +8642,74 @@ static void convert_swap3prealpha_frame(uint8_t *LIVES_RESTRICT src, int width, 
 
   rowstride -= width << 2;
 
-  if (!gamma_lut) {
+  if (src == dest) {
+    if (!gamma_lut) {
+      for (; src < end; src += rowstride) {
+        for (i = 0; i < width; i++) {
+          tmp = src[1];
+          src[1] = src[3];
+          src[3] = tmp;
+          src += 4;
+        }
+      }
+      return;
+    }
     for (; src < end; src += rowstride) {
       for (i = 0; i < width; i++) {
-        tmp = src[1];
-        src[1] = src[3];
+        tmp = gamma_lut[src[1]];
+        src[1] = gamma_lut[src[3]];
+        src[2] = gamma_lut[src[2]];
         src[3] = tmp;
         src += 4;
       }
     }
     return;
   }
+
+  orowstride -= width << 2;
+
+  if (!gamma_lut) {
+    for (; src < end; src += rowstride) {
+      for (i = 0; i < width; i++) {
+        dest[0] = src[0];
+        dest[1] = src[3];
+        dest[2] = src[2];
+        dest[3] = src[1];
+        src += 4;
+        dest += 4;
+      }
+      dest += orowstride;
+    }
+    return;
+  }
   for (; src < end; src += rowstride) {
     for (i = 0; i < width; i++) {
-      tmp = gamma_lut[src[1]];
-      src[1] = gamma_lut[src[3]];
-      src[2] = gamma_lut[src[2]];
-      src[3] = tmp;
+      dest[0] = src[0];
+      dest[1] = gamma_lut[src[3]];
+      dest[2] = gamma_lut[src[2]];
+      dest[3] = gamma_lut[src[1]];
       src += 4;
+      dest += 4;
     }
+    dest += orowstride;
   }
+}
+
+static void convert_swap3prealpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride,
+                                        uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  _convert_swap3prealpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, thread_id);
+}
+
+static void convert_swap3prealpha_frameX(uint8_t *src, int width, int height, int rowstride, int orowstride,
+    uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
+  _convert_swap3prealpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, thread_id);
 }
 
 
 static void *convert_swap3prealpha_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_swap3prealpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize,
-                              ccparams->irowstrides[0], ccparams->lut, ccparams->thread_id);
+  convert_swap3prealpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize,  ccparams->irowstrides[0],
+                              ccparams->orowstrides[0], ccparams->dest, ccparams->lut, ccparams->thread_id);
   return NULL;
 }
 
@@ -8935,18 +9039,17 @@ static void convert_delpost_frame(uint8_t *LIVES_RESTRICT src, int width, int he
 
   if (gamma_lut) {
     for (int k = 0; k < height; k++) {
+      j = 0;
       for (i = 0; i < width; i++) {
-        dest[orowstride * k + i * 3] = gamma_lut[src[irowstride * k + i]];
-        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 1]];
-        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 2]];
+        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i * 4]];
+        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i * 4 + 1]];
+        dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i * 4 + 2]];
       }
     }
   } else {
-    for (int k = 0; k < height; k++) {
-      for (i = 0; i < width; i++) {
+    for (int k = 0; k < height; k++)
+      for (i = 0; i < width; i++)
         lives_memcpy(&dest[orowstride * k + i * 3], &src[irowstride * k + i * 4], 3);
-      }
-    }
   }
 }
 
@@ -9012,9 +9115,7 @@ static void convert_delpre_frame(uint8_t *LIVES_RESTRICT src, int width, int hei
     if ((irowstride == width * 4) && (orowstride == width * 3)) {
       // quick version
       for (; src < end; src += 4) {
-        dest[0] = gamma_lut[src[0]];
-        dest[1] = gamma_lut[src[1]];
-        dest[2] = gamma_lut[src[2]];
+        lives_memcpy(dest, src, 3);
         dest += 3;
       }
     } else {
@@ -9022,9 +9123,7 @@ static void convert_delpre_frame(uint8_t *LIVES_RESTRICT src, int width, int hei
       orowstride -= width * 3;
       for (; src < end; src += irowstride) {
         for (i = 0; i < width4; i += 4) {
-          dest[0] = gamma_lut[src[i]];
-          dest[1] = gamma_lut[src[i + 1]];
-          dest[2] = gamma_lut[src[i + 2]];
+          lives_memcpy(dest, src, 3);
           dest += 3;
         }
         dest += orowstride;
@@ -9033,8 +9132,27 @@ static void convert_delpre_frame(uint8_t *LIVES_RESTRICT src, int width, int hei
     return;
   }
 
-
-
+  if ((irowstride == width * 4) && (orowstride == width * 3)) {
+    // quick version
+    for (; src < end; src += 4) {
+      dest[0] = gamma_lut[src[0]];
+      dest[1] = gamma_lut[src[1]];
+      dest[2] = gamma_lut[src[2]];
+      dest += 3;
+    }
+  } else {
+    int width4 = width * 4;
+    orowstride -= width * 3;
+    for (; src < end; src += irowstride) {
+      for (i = 0; i < width4; i += 4) {
+        dest[0] = gamma_lut[src[i]];
+        dest[1] = gamma_lut[src[i + 1]];
+        dest[2] = gamma_lut[src[i + 2]];
+        dest += 3;
+      }
+      dest += orowstride;
+    }
+  }
 }
 
 
@@ -9145,8 +9263,9 @@ static void *convert_swap3delpre_frame_thread(void *data) {
 }
 
 
-static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride,
-                                      uint8_t *LIVES_RESTRICT gamma_lut, boolean alpha_first, int thread_id) {
+static void _convert_swapprepost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
+                                       uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut,
+                                       boolean alpha_first, int thread_id) {
   // swap first and last bytes in a 4 byte palette
   uint8_t tmp[4];
   int i, j;
@@ -9164,6 +9283,7 @@ static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, in
 
       if ((src + dheight * i * irowstride) < end) {
         ccparams[i].src = src + dheight * i * irowstride;
+        ccparams[i].dest = dest + dheight * i * orowstride;
         ccparams[i].hsize = width >> 3;
 
         if (dheight * (i + 1) > (height - 4)) {
@@ -9193,16 +9313,14 @@ static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, in
   }
 
   if (!gamma_lut) {
-    uint64_t *uup = (uint64_t *)src;
-    if ((void *)uup == (void *)src) {
-      for (i = 0; i < height; i++) {
-        for (j = 0; j < width; j++) {
-          uup[i * irowstride + j] = ((uup[i * irowstride + j] & 0xFF000000FF000000) >> 24)
-                                    | ((uup[i * irowstride] & 0x00FFFFFF00FFFFFF) << 8);
-        }
+    uint64_t *usp = (uint64_t *)src, *udp = (uint64_t *)dest;
+    for (i = 0; i < height; i++) {
+      for (j = 0; j < width; j++) {
+        udp[i * orowstride + j] = ((usp[i * irowstride + j] & 0xFF000000FF000000) >> 24)
+                                  | ((usp[i * irowstride] & 0x00FFFFFF00FFFFFF) << 8);
       }
-      return;
     }
+    return;
   }
 
   if (!alpha_first) {
@@ -9212,7 +9330,7 @@ static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, in
         tmp[1] = gamma_lut[src[i * irowstride + j + 1]]; // red / blue
         tmp[2] = gamma_lut[src[i * irowstride + j + 2]]; // green
         tmp[3] = gamma_lut[src[i * irowstride + j]]; // blue / red
-        lives_memcpy(src + i * irowstride + j, &tmp, 4);
+        lives_memcpy(dest + i * orowstride + j, tmp, 4);
       }
     }
     return;
@@ -9223,16 +9341,28 @@ static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, in
       tmp[1] = gamma_lut[src[i * irowstride + j + 1]]; // g
       tmp[2] = gamma_lut[src[i * irowstride + j + 2]]; // b / r
       tmp[3] = src[i * irowstride + j]; // a
-      lives_memcpy(src + i * irowstride + j, &tmp, 4);
+      lives_memcpy(dest + i * orowstride + j, tmp, 4);
     }
   }
 }
 
+static void convert_swapprepost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride,
+                                      uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut,
+                                      boolean alpha_first, int thread_id) {
+  _convert_swapprepost_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, alpha_first, thread_id);
+}
+
+static void convert_swapprepost_frameX(uint8_t *src, int width, int height, int rowstride, int orowstride,
+                                       uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut,
+                                       boolean alpha_first, int thread_id) {
+  _convert_swapprepost_frame(src, width, height, rowstride, orowstride, dest, gamma_lut, alpha_first, thread_id);
+}
 
 static void *convert_swapprepost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swapprepost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                            ccparams->lut, ccparams->alpha_first, ccparams->thread_id);
+                            ccparams->orowstrides[0], ccparams->dest, ccparams->lut, ccparams->alpha_first,
+                            ccparams->thread_id);
   return NULL;
 }
 
@@ -9979,9 +10109,16 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *layer, int *nplanes) {
   int max_ra = RA_MAX;
   int npl;
 
-  if (layer && weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_MAINTAIN_VALUE) {
+  if (layer && weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE) {
     /// force use of fixed rowstrides, eg. decoder plugin
     return weed_layer_get_rowstrides(layer, nplanes);
+  }
+
+  if (layer && weed_plant_has_leaf(layer, LIVES_LEAF_NEW_ROWSTRIDE)) {
+    rs = lives_calloc(1, sizint);
+    rs[0] = weed_get_int_value(layer, LIVES_LEAF_NEW_ROWSTRIDE, NULL);
+    if (nplanes) *nplanes = 1;
+    return rs;
   }
 
   npl = weed_palette_get_nplanes(pal);
@@ -10903,6 +11040,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   weed_layer_t *orig_layer;
   uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest = NULL, **gudest_array = NULL;
   uint8_t *gamma_lut = NULL;
+  boolean can_inplace = TRUE;
   int width, height, orowstride, irowstride, *istrides, *ostrides = NULL;
   int nplanes;
   int error, inpl, flags = 0;
@@ -11070,11 +11208,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     LIVES_WARN("Error copying layer in convert_layer_palette_full");
   }
 
-  //g_print("COPIED %p TO %p %d\n", layer, orig_layer, weed_layer_count_refs(orig_layer));
-  g_print("bcontig: %p %d, %p %d\n", orig_layer, weed_get_boolean_value(orig_layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL),
-          layer, weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL));
+  // then update the palette for all copies befoe unlocking
 
   // all RGB -> RGB conversions are now handled here
+  flags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
+  if (flags & LIVES_FLAG_CONST_DATA) can_inplace = FALSE;
+
   if (weed_palette_is_rgb(inpl) && weed_palette_is_rgb(outpl)) {
     if (gamma_type != new_gamma_type) gamma_lut = create_gamma_lut(1.0, gamma_type, new_gamma_type);
     gusrc = weed_layer_get_pixel_data(layer);
@@ -11082,16 +11221,28 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       if (!weed_palette_has_alpha_last(inpl)) {
         if (!weed_palette_has_alpha_first(outpl)) {
           if (!weed_palette_has_alpha_last(outpl)) {
-            convert_swap3_frame(gusrc, width, height, irowstride, gamma_lut, -USE_THREADS);
+            // INPLACE : rgb <-> bgr
+            if (can_inplace) {
+              gudest = gusrc;
+              orowstride = irowstride;
+              convert_swap3_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data(layer);
+              convert_swap3_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
+            }
           } else {
             // add post
             if (weed_palettes_rbswapped(inpl, outpl)) {
+              // rgb -> bgra, bgr -> rgba
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          gamma_lut, -USE_THREADS);
             } else {
+              // rgb -> rgba, bgr -> bgra
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
@@ -11100,7 +11251,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             }
           }
         } else {
-          /// add pre
+          /// add pre bgr -> argb
           if (weed_palettes_rbswapped(inpl, outpl)) {
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
@@ -11108,6 +11259,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             convert_swap3addpre_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                       gamma_lut, -USE_THREADS);
           } else {
+            // rgb -> argb
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
@@ -11119,12 +11271,14 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
         if (!weed_palette_has_alpha_first(outpl)) {
           if (!weed_palette_has_alpha_last(outpl)) {
             if (weed_palettes_rbswapped(inpl, outpl)) {
+              // brga -> rgb, rgba -> bgr
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          gamma_lut, -USE_THREADS);
             } else {
+              // rgba -> rgb / bgra -> bgr
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
@@ -11132,17 +11286,49 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                     gamma_lut, -USE_THREADS);
             }
           } else {
-            /// outpl has post
-            convert_swap3postalpha_frame(gusrc, width, height, irowstride, gamma_lut, -USE_THREADS);
+            /// outpl has post bgra <-> rgba
+            // INPLACE
+            if (can_inplace) {
+              gudest = gusrc;
+              orowstride = irowstride;
+              convert_swap3postalpha_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data(layer);
+              convert_swap3postalpha_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
+            }
           }
         } else {
           /// outpl has pre
           if (weed_palettes_rbswapped(inpl, outpl)) {
             // bgra -> argb
-            convert_swap4_frame(gusrc, width, height, irowstride, gamma_lut, FALSE, -USE_THREADS);
+            // INPLACE
+            if (can_inplace) {
+              gudest = gusrc;
+              orowstride = irowstride;
+              convert_swap4_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, FALSE, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data(layer);
+              convert_swap4_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, FALSE, -USE_THREADS);
+            }
           } else {
             // rgba -> argb
-            convert_swapprepost_frame(gusrc, width, height, irowstride, gamma_lut, FALSE, -USE_THREADS);
+            // INPLACE
+            if (can_inplace) {
+              gudest = gusrc;
+              orowstride = irowstride;
+              convert_swapprepost_frameX(gusrc, width, height, irowstride, orowstride, gudest,
+                                         gamma_lut, FALSE, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data(layer);
+              convert_swapprepost_frame(gusrc, width, height, irowstride, orowstride, gudest,
+                                        gamma_lut, FALSE, -USE_THREADS);
+            }
           }
         }
       }
@@ -11151,12 +11337,14 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       if (!weed_palette_has_alpha_first(outpl)) {
         if (!weed_palette_has_alpha_last(outpl)) {
           if (weed_palettes_rbswapped(inpl, outpl)) {
+            // argb -> bgr
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
             convert_swap3delpre_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                       gamma_lut, -USE_THREADS);
           } else {
+            // argb -> rgb
             if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
             orowstride = weed_layer_get_rowstride(layer);
             gudest = weed_layer_get_pixel_data(layer);
@@ -11166,15 +11354,45 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
           /// outpl has post
           if (weed_palettes_rbswapped(inpl, outpl)) {
             // argb -> bgra
-            convert_swap4_frame(gusrc, width, height, irowstride, gamma_lut, TRUE, -USE_THREADS);
+            // INPLACE
+            if (can_inplace) {
+              gudest = gusrc;
+              orowstride = irowstride;
+              convert_swap4_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, TRUE, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data(layer);
+              convert_swap4_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, TRUE, -USE_THREADS);
+            }
           } else {
             // argb -> rgba
-            convert_swapprepost_frame(gusrc, width, height, irowstride, gamma_lut, TRUE, -USE_THREADS);
+            // INPLACE
+            if (can_inplace) {
+              gudest = gusrc;
+              orowstride = irowstride;
+              convert_swapprepost_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, TRUE, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data(layer);
+              convert_swapprepost_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, TRUE, -USE_THREADS);
+            }
           }
         }
       } else {
-        /// outpl has pre
-        convert_swap3prealpha_frame(gusrc, width, height, irowstride, gamma_lut, -USE_THREADS);
+        /// outpl has pre : ARGB -> ABGR (invalid)
+        // INPLACE
+        if (can_inplace) {
+          gudest = gusrc;
+          orowstride = irowstride;
+          convert_swap3prealpha_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
+        } else {
+          if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+          orowstride = weed_layer_get_rowstride(layer);
+          gudest = weed_layer_get_pixel_data(layer);
+          convert_swap3prealpha_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut, -USE_THREADS);
+        }
       }
     }
     goto conv_done;
@@ -12200,15 +12418,38 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       convert_yuv420_to_yuyv_frame(gusrc_array, width, height, istrides, orowstride, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV422P:
+      // if old ! in copylist -
+      // create new layer, non contig
+      // free new array[0]
+      // array[0] set to old array[0]
+      // old_array[0] se to NULL
+      // convert old array[1] and array[2] -> new
+      // when we free array[0] this frees old array[0], [1], [2]
+      // else
+      // - create new array, contig
+      // copy y plane
+      // convert [1], [2]
+
+      // etc for other palettes (TODO)
+      flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_CONST_VALUE);
       create_empty_pixel_data(layer, FALSE, FALSE);
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
+
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
-      lives_free(gudest_array[0]);
-      gudest_array[0] = gusrc_array[0];
-      weed_layer_set_pixel_data_planar(layer, (void **)gudest_array, 3);
-      ostrides = weed_layer_get_rowstrides(layer, NULL);
-      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamping);
-      gusrc_array[0] = NULL;
-      weed_layer_set_pixel_data_planar(orig_layer, (void **)gusrc_array, 3);
+      if (!can_inplace) {
+        lives_free(gudest_array[0]);
+        gudest_array[0] = gusrc_array[0];
+        weed_layer_set_pixel_data_planar(layer, (void **)gudest_array, 3);
+        ostrides = weed_layer_get_rowstrides(layer, NULL);
+        convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamping);
+        gusrc_array[0] = NULL;
+        weed_layer_set_pixel_data_planar(orig_layer, (void **)gusrc_array, 3);
+      } else {
+        ostrides = weed_layer_get_rowstrides(layer, NULL);
+        lives_memcpy(gudest_array[0], gusrc_array[0], height * istrides[0]);
+        convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamping);
+      }
       break;
     case WEED_PALETTE_YUV444P:
       create_empty_pixel_data(layer, FALSE, FALSE);
@@ -12810,9 +13051,9 @@ LIVES_LOCAL_INLINE void weed_layer_unrefX(uint8_t *pixels, livespointer data) {
 
 
 void *lives_pixbuf_new_from_data_wrapper(void *pixel_data, int pal, int width, int height,
-						int rowstride, ext_free_func_t ext_free_func, void *func_data) {
+    int rowstride, ext_free_func_t ext_free_func, void *func_data) {
   LiVESPixbuf *pixbuf = lives_pixbuf_new_from_data((const unsigned char *)pixel_data, weed_palette_has_alpha(pal),
-						   width, height, rowstride, (LiVESPixbufDestroyNotify)ext_free_func, func_data);
+                        width, height, rowstride, (LiVESPixbufDestroyNotify)ext_free_func, func_data);
   SET_VOIDP_DATA(pixbuf, LAYER_PROXY_KEY, func_data);
   return pixbuf;
 }
@@ -12848,9 +13089,9 @@ void *layer_to_extern(weed_layer_t *layer, ext_creator_func_t cr_func, boolean r
       palette = WEED_PALETTE_NONE;
     else {
       if (prefs->apply_gamma) {
-	if (fordisplay && prefs->use_screen_gamma)
-	  gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
-	else gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+        if (fordisplay && prefs->use_screen_gamma)
+          gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
+        else gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       }
     }
   }
@@ -12871,17 +13112,15 @@ void *layer_to_extern(weed_layer_t *layer, ext_creator_func_t cr_func, boolean r
   default:
     if (weed_palette_has_alpha(palette)) {
       if (!realpalette && weed_palette_is_yuv(palette)) {
-	if (!convert_layer_palette(layer, WEED_PALETTE_YUVA8888, 0)) return NULL;
-      }
-      else {
-	if (!convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0)) return NULL;
+        if (!convert_layer_palette(layer, WEED_PALETTE_YUVA8888, 0)) return NULL;
+      } else {
+        if (!convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0)) return NULL;
       }
     } else {
       if (!realpalette && weed_palette_is_yuv(palette)) {
-	if (!convert_layer_palette(layer, WEED_PALETTE_YUV888, 0)) return NULL;
-      }
-      else {
-	if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) return NULL;
+        if (!convert_layer_palette(layer, WEED_PALETTE_YUV888, 0)) return NULL;
+      } else {
+        if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) return NULL;
       }
     }
   }
@@ -12890,7 +13129,7 @@ void *layer_to_extern(weed_layer_t *layer, ext_creator_func_t cr_func, boolean r
   weed_layer_copy(px_layer, layer);
 
   ext = (*cr_func)(pixel_data, palette, width, height,
-		   rowstride, (ext_free_func_t)weed_layer_unrefX, px_layer);
+                   rowstride, (ext_free_func_t)weed_layer_unrefX, px_layer);
   //g_print("SET PBSRC for %p to %p\n", px_layer, pixbuf);
 
   return ext;
@@ -12899,7 +13138,7 @@ void *layer_to_extern(weed_layer_t *layer, ext_creator_func_t cr_func, boolean r
 
 LIVES_GLOBAL_INLINE LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisp) {
   LiVESPixbuf *pixbuf = (LiVESPixbuf *)layer_to_extern(layer, (ext_creator_func_t)lives_pixbuf_new_from_data_wrapper,
-						       realpalette, fordisp);
+                        realpalette, fordisp);
   return pixbuf;
 }
 
@@ -12967,7 +13206,7 @@ lives_result_t pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
 
 
   flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
-  weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
+  weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_CONST_VALUE);
 
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
@@ -13592,19 +13831,15 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     if (weed_palette_is_yuv(opal_hint)) weed_layer_set_yuv_clamping(layer, oclamp_hint);
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
 
-    g_print("into crempila\n");
     // will free layer pd, old layer now has only copy
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
       weed_layer_free(old_layer);
 
       ____FUNC_EXIT_VAL____("b", FALSE);
-
-      g_print("fail 11rrrrrr\n");
       return FALSE;
     }
 
-    g_print("outof crempila\n");
     out_pixel_data = weed_layer_get_pixel_data_planar(layer, &oplanes);
     orowstrides = weed_layer_get_rowstrides(layer, NULL);
 
@@ -14343,14 +14578,14 @@ boolean consider_swapping(int *inpal, int *outpal) {
    WEED_PALETTE_A1, WEED_PALETTE_A8 (alpha only palettes), oe WEED_PALETTE_ARGB32 (32 bit colour palette)
    However, Cairo uses PREMULTIPLIED alpha, whereas the default in LiVES is POT mulipled.
    Thus if we convert ot ARGB32, we then premultiply the alpha. In the case where all alpha is 255, 9fully opaque)
-   this makes no difference, otherwise we block other layers from haring pixdata, 
+   this makes no difference, otherwise we block other layers from haring pixdata,
    and any layer wanting to make a deep copy will have to unpryemultiply alpha. Whether or not we share e pixdata or make a
    new layer, the layer then becomes a proxy layer for the surface, similar to pixbuf sources. The pixdata is nullifed and
    wee get a pointer to the surface instead.
-   When converting from surface to layer, again we use a proxy layer. In this case though the layer has no-null pixdata 
+   When converting from surface to layer, again we use a proxy layer. In this case though the layer has no-null pixdata
    unreffing the source layer will first nullify its pixdata then free it (if there are nother refs),
-   leaving surface a the sole copy. If the surface is dereffed, 
-   if it still has a proxy layer, the layer with nullifed pixdata will be freed. 
+   leaving surface a the sole copy. If the surface is dereffed,
+   if it still has a proxy layer, the layer with nullifed pixdata will be freed.
    If it has a proxy with pixel_data set, do not free (See below)
 
    In general - we cannot easily share data between layer and urface, due to the premulltiplication.
@@ -14371,7 +14606,7 @@ boolean consider_swapping(int *inpal, int *outpal) {
    So we have:
    layer_to_lives_painter -> if (rs_match)) premult_alpha() -> create surface from data; nullify layer
    --> layer unreffed -> freed but pixdata is NULL/ ssurface dereffed -> if layer, do not free, set layer pd,
-   
+
    lives_painter to layer -> shallow ->  pixdata copied (shallow), if have proxy layer, return thiss,
    ssurface unreffed, no free data, unpremult alpha,
 
@@ -14386,108 +14621,118 @@ boolean lives_painter_surface_check(lives_painter_surface_t *surf) {
   // hold at 1 refs until layer pixel_data is nullified
   // hold !!
   return lives_paintet_surface_get_reference_count(surf) == 1
-    && lives_painter_surface_get_user_data(surf, &px_layer_key);
+         && lives_painter_surface_get_user_data(surf, &px_layer_key);
 }
 
 
 lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
-  weed_layer_t *old_layer = NULL;
+  // - convert layer to painter format
+  // a) change palette to a painter palette:
+  // for Cairo this would be A8, A1 or BGRA32 (little endian) or ARGB32 (big endian)
+  // we may also use RGBA32, and note that red / blue channels are swapped, and say it is BGRA32
+  // if original layer was ARGB32, RGBA32 or BGRA32 (4 bytes per pixel), the conversion is done inplace
+  // iff the rowsstrides match, otherwise we get new pixel data with ro3wstrides set for the surface
+  //
+  // b) for cairo,
+  // - we need to premultiply alpha - if we have the default post multiplied alpha,
+  // we premultiply all RGB values by the alpha value
+  // - if we added alpha in the palette converion, we can skip this step, as the image will be opaque
+  //
+  // we can now create the painter surface from pixel_data
+  // - as with pixbufs, the layer is attached to the surface, it will be the thing which frees the data
+  // (since we may be using a bigblock).
+  //
+  // layer pixdata is nullified, and layer get an extra ref
+  // after this, 3 things can happen;
+  // - layer is unreffed :: this simply removes the extra ref, no other effect
+  // - surface is unreffed and destroyed :: if surface has user_data pointing to a layer, pixdata is transferred to layer,
+  //    the surface is finished, layer is unreffed
+  // - surface is converted to layer  :: surface is unreffed, layer is copied shallow to target layer, layer is unreffed
+  //
+  // so eg. layer_to_lives-painter() - uunref_layer() -> nothing happens immediately
+  // layer_to_lives_painter, unref surface -> if layer was unreffed, both surface and layer are freed
+  //   otherwise, layer has pixdata, but it is alpha premult
+  // layer_to_lives_painter - lives_painter_to_layer -> https://kiper.page.link/cvjg
+
   lives_painter_surface_t *surf = NULL;
   lives_painter_t *cairo;
   lives_painter_format_t cform;
-  uint8_t *src, *dst, *pixel_data;
-  boolean new_alpha = FALSE;
+  uint8_t *src;
+  boolean new_alpha = FALSE, has_copylist;
   int irowstride, orowstride, lform;
-  int width, height, pal, flags;
+  int flags = weed_layer_get_flags(layer);
+  int pflags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
+  int rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
 
-  if (0 && weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
-    // shared data
-    //surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+  int width, height, pal;
+
+  has_copylist = lives_layer_get_copylist(layer) != NULL;
+
+  src = (uint8_t *)weed_layer_get_pixel_data(layer);
+  pal = weed_layer_get_palette(layer);
+
+  if (pal == WEED_PALETTE_A8) {
+    cform = LIVES_PAINTER_FORMAT_A8;
+  } else if (pal == WEED_PALETTE_A1) {
+    cform = LIVES_PAINTER_FORMAT_A1;
   } else {
-    pal = weed_layer_get_palette(layer);
-    width = weed_layer_get_width_pixels(layer);
-    if (pal == WEED_PALETTE_A8) {
-      cform = LIVES_PAINTER_FORMAT_A8;
-    } else if (pal == WEED_PALETTE_A1) {
-      cform = LIVES_PAINTER_FORMAT_A1;
-    } else {
-      if (!weed_palette_has_alpha(pal)) new_alpha = TRUE;
-      lform = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order);
-      convert_layer_palette(layer, lform, 0);
-      cform = LIVES_PAINTER_FORMAT_ARGB32;
-    }
+    // if in_palette has alpha, conversion will be done inplace
+    // else we will get new pixdata in layer
+    if (!weed_palette_has_alpha(pal)) new_alpha = TRUE;
+    lform = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order);
+    cform = LIVES_PAINTER_FORMAT_ARGB32;
+  }
 
-    height = weed_layer_get_height(layer);
-    irowstride = weed_layer_get_rowstride(layer);
-    orowstride = lives_painter_format_stride_for_width(cform, width);
-    src = (uint8_t *)weed_layer_get_pixel_data(layer);
+  irowstride = weed_layer_get_rowstride(layer);
+  width = weed_layer_get_width_pixels(layer);
+  orowstride = lives_painter_format_stride_for_width(cform, width);
+  height = weed_layer_get_height(layer);
 
-    if (0 && irowstride == orowstride && !weed_plant_has_leaf(layer, LIVES_LEAF_COPYLIST)
-	&& !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
-      pixel_data = src;
-    } else {
-      boolean ret;
+  if (has_copylist || irowstride != orowstride) {
+    // if layer has copylist or rowstrides mismatch, we cannot do inplace
+    weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags | LIVES_FLAG_CONST_DATA);
+    weed_set_int_value(layer, LIVES_LEAF_NEW_ROWSTRIDE, orowstride);
+  } else {
+    // else we may, but if not keep same rowstrides
+    weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags | LIVES_FLAG_CONST_VALUE);
+  }
 
-      old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-      weed_layer_copy(old_layer, layer);
-      weed_layer_nullify_pixel_data(layer);
-
-      weed_layer_set_rowstride(layer, orowstride);
-
-      flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
-      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
-
-      ret = create_empty_pixel_data(layer, FALSE, TRUE);
-      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
-
-      if (!ret) {
-	weed_layer_copy(layer, old_layer);
-	weed_layer_unref(old_layer);
-	return NULL;
-      }
-
-      dst = pixel_data = weed_layer_get_pixel_data(layer);
-      if (!pixel_data) {
-	weed_layer_copy(layer, old_layer);
-	weed_layer_unref(old_layer);
-	return NULL;
-      }
-
-      lives_memcpy(dst, src, height * orowstride);
-    }
+  // we want to make sure output has orowstride
+  if (cform == LIVES_PAINTER_FORMAT_ARGB32) {
+    convert_layer_palette(layer, lform, 0);
+    weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags);
+    weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);
 
     if (weed_palette_has_alpha(pal)) {
       flags = weed_layer_get_flags(layer);
       if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
-	if (!new_alpha) {
-	  // if we have post-multiplied alpha, pre multiply
-	  alpha_premult(layer, LIVES_DIRECTION_FORWARD);
-	}
-	flags |= WEED_LAYER_ALPHA_PREMULT;
-	weed_layer_set_flags(layer, flags);
+        if (!new_alpha) {
+          // if we have post-multiplied alpha, pre multiply
+          alpha_premult(layer, LIVES_DIRECTION_FORWARD);
+        }
+        flags |= WEED_LAYER_ALPHA_PREMULT;
+        weed_layer_set_flags(layer, flags);
       }
     }
-    surf = lives_painter_image_surface_create_for_data(pixel_data, cform, width, height, orowstride);
   }
+  weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);
+  weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags);
 
-  if (old_layer) {
-    weed_layer_copy(layer, old_layer);
-    weed_layer_unref(old_layer);
-  }
+  surf = lives_painter_image_surface_create_for_data(src, cform, width, height, orowstride);
 
-  if (!surf) return NULL;
+  if (!surf) return NULL; // TODO - revert changes !
 
   cairo = lives_painter_create_from_surface(surf); // surf is refcounted
+
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa1 = %d %p\n", cairo_surface_get_reference_count(surf), surf);
 #endif
-  if (!old_layer) {
-    // add an extra ref. This will only be removed when layer pixel_data is freed
-    lives_painter_surface_reference(surf);
-    weed_layer_set_pixel_data(layer, NULL);
-    lives_painter_surface_set_user_data(surf, &px_layer_key, (void *)layer, NULL);
-    weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surf);
-  }
+
+  weed_layer_set_pixel_data(layer, NULL);
+  lives_painter_surface_set_user_data(surf, &px_layer_key, (void *)layer, NULL);
+  weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surf);
+  weed_layer_ref(layer);
+
   return cairo;
 }
 
@@ -14527,11 +14772,10 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
     }
     orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     weed_layer_copy(orig_layer, layer);
-  }
-  else layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  } else layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
 
   if (!xlayer && refs == 1) weed_layer_set_pixel_data(layer, src);
-  
+
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa2 = %d %p\n", cairo_surface_get_reference_count(surface), surface);
 #endif
@@ -14571,13 +14815,12 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
   if (!src) {
     void *dst;
     double psize = pixel_size(pal);
-    weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_MAINTAIN_VALUE);
+    weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_CONST_VALUE);
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto failed;
     weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
     dst = weed_layer_get_pixel_data(layer);
     lives_memcpy(dst, src, height * rowstride * psize);
-  }
-  else {
+  } else {
     lives_painter_surface_set_user_data(surface, &px_layer_key, (void *)layer, NULL);
     weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surface);
     lives_painter_surface_reference(surface);
@@ -14587,13 +14830,12 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
     if (prefs->alpha_post) {
       alpha_premult(layer, LIVES_DIRECTION_REVERSE);
       weed_layer_set_flags(layer, flags & ~WEED_LAYER_ALPHA_PREMULT);
-    }
-    else weed_layer_set_flags(layer, flags | WEED_LAYER_ALPHA_PREMULT);
+    } else weed_layer_set_flags(layer, flags | WEED_LAYER_ALPHA_PREMULT);
   }
   if (orig_layer) weed_layer_unref(orig_layer);
   return layer;
 
- failed:
+failed:
   if (orig_layer) {
     weed_layer_copy(layer, orig_layer);
     weed_layer_unref(orig_layer);
@@ -14775,7 +15017,7 @@ lives_row_hash_t *hash_cmp_rows(lives_row_hash_t *row_hash, int clipno, frames_t
 // l 2  s 2 l, copy copy copy
 
 // l 2 s unr , r s free l ref s fre s
-// 
+//
 
 /**
    @brief free pixel_data from layer
@@ -14796,7 +15038,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (!layer) return;
 
-  if ((weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE)
+  if ((weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_CONST_VALUE)
       || weed_get_boolean_value(layer, WEED_LEAF_HOST_ORIG_PDATA, NULL))return;
 
   // cannot do this, if we are called from weed_layer_
@@ -14806,7 +15048,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   if (copylist_mutex) pthread_mutex_lock(copylist_mutex);
 
   copylist = lives_layer_get_copylist(layer);
-  g_print("checked layer %p, found copylit %p\n", layer, copylist);
+  g_print("checked layer %p, found copylist %p\n", layer, copylist);
 
   if (copylist) {
     // if FALSE is returned, then we have detected other layers sharing with this
@@ -14840,31 +15082,31 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
       if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
 
       if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
-	lives_painter_surface_t *surface =
-	  (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
-	if (surface) {
-	  // this is where most surfaces die, as we convert from BGRA -> RGB
+        lives_painter_surface_t *surface =
+          (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+        if (surface) {
+          // this is where most surfaces die, as we convert from BGRA -> RGB
 #ifdef DEBUG_CAIRO_SURFACE
-	  g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
+          g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
 #endif
-	  weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
-	  lives_painter_surface_set_user_data(surface, &px_layer_key, NULL, NULL);
-	
-	  // remove our extra ref
-	  lives_painter_surface_destroy(surface);
-	}
+          weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
+          lives_painter_surface_set_user_data(surface, &px_layer_key, NULL, NULL);
+
+          // remove our extra ref
+          lives_painter_surface_destroy(surface);
+        }
       } else {
-	boolean is_bigblock = FALSE;
-	if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) is_bigblock = TRUE;
-	if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE)
-	  nplanes = 1;
-	for (int i = 0; i < nplanes; i++) {
-	  g_print("freeing pdata %d %p bb %d\n", i, pixel_data[i], is_bigblock);
-	  if (pixel_data[i]) {
-	    if (is_bigblock) free_bigblock(pixel_data[i]);
-	    else lives_free(pixel_data[i]);
-	  }
-	}
+        boolean is_bigblock = FALSE;
+        if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) is_bigblock = TRUE;
+        if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE)
+          nplanes = 1;
+        for (int i = 0; i < nplanes; i++) {
+          g_print("freeing pdata %d %p bb %d\n", i, pixel_data[i], is_bigblock);
+          if (pixel_data[i]) {
+            if (is_bigblock) free_bigblock(pixel_data[i]);
+            else lives_free(pixel_data[i]);
+          }
+        }
       }
     }
     lives_free(pixel_data);

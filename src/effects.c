@@ -1012,8 +1012,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
     // also switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
   } else {
-    // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
-    // and then we come out of there and do not wish to set the key on
     key--;
     new_rte = GU641 << key;
 
@@ -1027,6 +1025,9 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
             record_filter_init(key);
           }
         }
+
+
+
         weed_instance_unref(inst);
       } else {
         if (!(weed_init_effect(key))) {

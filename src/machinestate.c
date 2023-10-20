@@ -225,38 +225,33 @@ static void check_random(void) {
   double qual, xqual;
   boolean need_rng32 = FALSE, rng_ok = FALSE;
 
-  //rbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp);
-  rbits = benchmark_rng(NR_TESTS, lives_random, &tmp, &qual);
-  add_messages_to_list(tmp);
-  lives_free(tmp);
+  rbits = benchmark_rng(NR_TESTS, lives_random, &qual);
   if (rbits < RB_THRESH) {
     tmp = lives_strdup_printf(_("Randomness of %d bits is TOO LOW for generating unique IDs\n"
                                 "Will attempt to increase random bits to at least %d\n"),
                               rbits, RB_THRESH);
-    add_messages_to_list(tmp);
+    d_print(tmp);
     lives_free(tmp);
     need_rng32 = TRUE;
     qual = 0.;
   } else {
     rng_ok = TRUE;
     tmp = lives_strdup_printf("RNG quality is %f, checking if we can improve on this\n", qual);
-    add_messages_to_list(tmp);
+    d_print(tmp);
     lives_free(tmp);
   }
 
   rng32 = TRUE;
 
   // use an alternate strategy to try to increase randomnees
-  rbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp, &xqual);
-  add_messages_to_list(tmp);
-  lives_free(tmp);
+  rbits = benchmark_rng(NR_TESTS, gen_unique_id, &xqual);
 
   if (rng_ok) {
     if (xqual > qual) {
       qual = xqual;
       if (!need_rng32) {
         tmp = lives_strdup_printf("RNG quality is now %f, this is better\n", qual);
-        add_messages_to_list(tmp);
+        d_print(tmp);
         lives_free(tmp);
         need_rng32 = TRUE;
       }
@@ -272,13 +267,11 @@ static void check_random(void) {
     tmp = lives_strdup_printf("Compare quality with getentropy\n");
   else
     tmp = lives_strdup_printf("Randomness still too low, trying  with getentropy\n");
-  add_messages_to_list(tmp);
+  d_print(tmp);
   lives_free(tmp);
 
   use_getentropy = TRUE;
-  xrbits = benchmark_rng(NR_TESTS, gen_unique_id, &tmp, &xqual);
-  add_messages_to_list(tmp);
-  lives_free(tmp);
+  xrbits = benchmark_rng(NR_TESTS, gen_unique_id, &xqual);
 
   if (xrbits >= RB_THRESH) {
     if (rng_ok) {
@@ -288,7 +281,7 @@ static void check_random(void) {
       } else {
         tmp = lives_strdup_printf("Quality %f is better, using getentropy.\n", xqual);
       }
-      add_messages_to_list(tmp);
+      d_print(tmp);
       lives_free(tmp);
     } else rng_ok = TRUE;
   }
@@ -552,7 +545,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks(void) {
 
 
 LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
-  // return time since application was (re)started
+  // return time in seconds since application was (re)started
   return lives_get_session_ticks() / TICKS_PER_SECOND_DBL;
 }
 
@@ -670,7 +663,7 @@ boolean compress_files_in_dir(const char *dir, int method, void *data) {
 // for subdirs in dirname. Returns list wuth matched subdirs removed.
 // i.e returned list will contain only those sudirs in the original list which are NOT found in dirname
 // see also dir_to_pieces()
-LiVESList *check_for_subdirs(const char *dirname, LiVESList * subdirs) {
+LiVESList *check_for_subdirs(const char *dirname, LiVESList *subdirs) {
   DIR *tldir, *xsubdir;
   struct dirent *tdirent, *xtdirent;
   LiVESList *xlist, *nlist;
@@ -2775,14 +2768,29 @@ boolean parse_valfile(const char *fname, const char delim, const char **keys, ch
 #define PROC_MEMINFO "/proc/meminfo"
 #define MEM_CRIT 100000
 
-boolean check_mem_status(void) {
+boolean get_memstatus(void) {
+#if !IS_LINUX_GNU
   char *rets[4];
-  boolean bret;
-  int64_t memavail;
   const char *valx[] = {"MemTotal", "MemFree", "MemAvailable", "Mlocked", NULL};
   for (int i = 0; valx[i]; i++) rets[i] = NULL;
   bret = parse_valfile(PROC_MEMINFO, ':', valx, rets);
-  memavail = lives_strtol(rets[2]);
+  capable->hw.memtotall = lives_strtol(rets[0]);
+  capable->hw.memfree = lives_strtol(rets[1]);
+  capable->hw.memavail = lives_strtol(rets[2]);
+  capable->hw.memlocked = lives_strtol(rets[3]);
+  for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
+  return TRUE;
+#else
+  return FALSE;
+#endif
+}
+
+
+boolean check_mem_status(void) {
+  boolean bret;
+  int64_t memavail;
+  if (!get_memstatus()) return LIVES_STORAGE_STATUS_UNKNOWN;
+  memavail = capable->hw.memavail;
   if (memavail < MEM_CRIT) {
     // almost oom...backup all we can just in case...
     capable->hw.mem_status = LIVES_STORAGE_STATUS_CRITICAL;
@@ -2815,7 +2823,6 @@ boolean check_mem_status(void) {
       if (memavail > MEM_CRIT * 2) capable->hw.mem_status = LIVES_STORAGE_STATUS_NORMAL;
     }
   }
-  for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
   return bret;
 }
 

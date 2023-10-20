@@ -1966,6 +1966,10 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
 
 
 ///////////////////////////////////////////////////////////////
+static int64_t last_usec = -1, tot_extras = 0, tot_measured = 9;
+static int64_t sync_usec = 0, last_extra = 0, last_retval = 0;
+static double sclf = 1.;
+
 
 LIVES_GLOBAL_INLINE pulse_driver_t *pulse_get_driver(boolean is_output) {
   if (is_output) return &pulsed;
@@ -1988,16 +1992,20 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
 
-  lives_microsleep_until_nonzero_timeout(MILLIONS(5), pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
- 
+  lives_microsleep_until_nonzero_timeout(MILLIONS(1),
+                                         pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
+
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  //return_val_if_triggered(FALSE);
+  pulsed->extrausec = 0;
+  last_usec = pulsed->usec_start;
+  tot_extras = tot_measured = 0;
+  sync_usec = last_extra = last_retval = 0;
+  sclf = 1.;
 
-  while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
-    lives_nanosleep(10000);
-  }
+  lives_microsleep_while_true(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0);
+
   pulsed->usec_start = usec - offset  / USEC_TO_TICKS;
   pulsed->frames_written = 0;
   return TRUE;
@@ -2008,61 +2016,57 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
    @brief calculate the playback time based on samples sent to the soundcard
 */
 ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
-  // get the time in ticks since either playback started
-  volatile aserver_message_t *msg;
-  static ticks_t last_retval = -1, lclk_ticks = 0;
-  static boolean have_cticks = FALSE;
-  static ticks_t syncticks = 0, lextra = 0;
-  static double ratio = 1.;
-  int64_t usec;
-  ticks_t retval = -1, lsyncticks = syncticks;
+  // get the time in ticks since playback started
+  // we try first to get tie from pa_stream_get_time()
+  // if this fails then increment last time with nframes written | read / samplerate (extrausec)
+  // otherwise we will return same value as previous
+  // the clock reader is smart enough to be able to interpolate between equal values
+  //
+  // the value returned mut be monotonic after resset. Thus when we get a new reading we can only reduce extrausec by
+  // (new_reading / old_reading). However we will keep track of the ratio extrausec / measured_usec, and we will
+  // then start dividing extrausec by this value (clamped between 0.5 <= scale <= 2.0(
 
-  msg = pulsed->msgq;
+  int64_t usec;
+  ticks_t retval = -1;
+  volatile aserver_message_t *msg = pulsed->msgq;
 
   if (msg && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
     // if called from audio thread, then we have nothing else to clear the message queue
     // so just return the most recent value
     if (THREADVAR(fx_is_audio)) return mainw->currticks;
-    if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) return -1;
+    if (await_audio_queue(BILLIONS(2)) != LIVES_RESULT_SUCCESS) return -1;
   }
   for (int z = 0; z < 5000; z++) {
     if (!(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0 || usec == 0)) {
       retval = 0;
       break;
     }
-    lives_millisleep;
+    lives_microsleep;
   }
-  if (retval == 0) {
-    retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
-    if (retval < 0) retval = 0;
-    if (retval < last_retval) last_retval = -1;
-  }
-  if (retval == last_retval || retval == -1) {
-    if (pulsed->extrausec > lextra)
-      syncticks += (pulsed->extrausec - lextra) * USEC_TO_TICKS;
-    else if (have_cticks) {
-      syncticks += (mainw->clock_ticks - lclk_ticks) * ratio;
-    }
-    if (syncticks < lsyncticks) syncticks = lsyncticks;
-    retval = last_retval;
-  } else {
-    if (retval > 0) {
-      if (last_retval > -1 && mainw->clock_ticks > lclk_ticks) {
-        ratio = (double)(retval - last_retval) / (double)(mainw->clock_ticks - lclk_ticks);
-      }
-      syncticks = 0;
-      pulsed->extrausec = 0;
-      last_retval = retval;
+
+  tot_extras += (pulsed->extrausec - last_extra) / sclf;
+  sync_usec += (pulsed->extrausec - last_extra) / sclf;
+  last_extra = pulsed->extrausec;
+
+  if (!retval) {
+    if (usec > last_usec) {
+      tot_measured += usec - last_usec;
+      if (tot_measured > (tot_extras << 1)) sclf = 0.5;
+      else if (tot_measured < (tot_extras >> 1)) sclf = 2.;
+      else sclf = (double)tot_extras / (double)tot_measured;
+
+      sync_usec -= (usec - last_usec);
+      if (sync_usec < usec - last_usec) sync_usec = usec - last_usec;
+
+      last_usec = usec;
     }
   }
-  lextra = pulsed->extrausec;
-  lclk_ticks = mainw->clock_ticks;
-  have_cticks = TRUE;
-  retval += syncticks;
-  if (retval < last_retval) {
-    syncticks = retval - last_retval;
-    retval = last_retval;
-  }
+
+  retval = (ticks_t)(last_usec + sync_usec - pulsed->usec_start) * USEC_TO_TICKS;
+
+  if (retval < 0) retval = 0;
+  if (retval < last_retval) last_retval = -1;
+
   return retval;
 }
 

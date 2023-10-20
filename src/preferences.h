@@ -19,8 +19,9 @@
 
 #define ALLOW_NONFREE_CODECS 1
 
-#define PREF_FLAG_EXPERIMENTAL		(1 << 0)
-#define PREF_FLAG_INCOMPLETE		(1 << 1)
+#define PREF_FLAG_INTERNAL		(1 << 0)
+#define PREF_FLAG_EXPERIMENTAL		(1 << 8)
+#define PREF_FLAG_INCOMPLETE		(1 << 9)
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
@@ -619,6 +620,7 @@ typedef struct {
 
   double screen_gamma;
 
+  int msg_routing;
   int max_messages;
   int msg_textsize;
 
@@ -1317,6 +1319,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_DLOAD_MATMET "dload_match_method"
 #define PREF_WEBCAM_MATMET "webcam_match_method"
+
+#define PREF_MSG_ROUTING "msg_routing"
 
 #define PREF_FOCUS_STEAL "focus_steal"
 #define FOCUS_STEAL_NONE	0

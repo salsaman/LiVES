@@ -2640,13 +2640,13 @@ void do_quick_switch(int new_file) {
 
   mainw->whentostop = NEVER_STOP;
 
-  if (old_file != new_file && old_file == mainw->playing_file) {
+  if (old_file != new_file) {
     weed_layer_t *old_frame_layer = get_old_frame_layer();
     if (old_frame_layer) weed_layer_set_invalid(old_frame_layer, TRUE);
     if (mainw->cached_frame) {
       weed_layer_set_invalid(mainw->cached_frame, TRUE);
       if (mainw->cached_frame != mainw->frame_layer
-          && mainw->cached_frame != get_old_frame_layer()) {
+          && mainw->cached_frame != old_frame_layer) {
         if (weed_layer_get_pixel_data(mainw->cached_frame)
             == weed_layer_get_pixel_data(mainw->frame_layer))
           weed_layer_nullify_pixel_data(mainw->cached_frame);
@@ -3199,10 +3199,13 @@ void clip_src_free(int nclip,  lives_clipsrc_group_t *srcgrp, lives_clip_src_t *
 
 
 static void _clip_srcs_free_all(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp) {
-  for (int i = 0; i < srcgrp->n_srcs; i++) {
-    _clip_src_free(sfile, srcgrp, srcgrp->srcs[i]);
+  if (srcgrp->srcs) {
+    for (int i = 0; i < srcgrp->n_srcs; i++) {
+      _clip_src_free(sfile, srcgrp, srcgrp->srcs[i]);
+    }
     lives_freep((void **)&srcgrp->srcs);
   }
+  srcgrp->n_srcs = 0;
 }
 
 

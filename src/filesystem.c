@@ -288,8 +288,7 @@ LIVES_GLOBAL_INLINE void get_rel_dirname(char *filename, const char *topdir) {
     off_t offs = 1;
     if (lives_str_ends_with(topdir, LIVES_DIR_SEP)) offs += dslen;
     lives_snprintf(filename, PATH_MAX, "%s%s", topdir, tmp + offs);
-  }
-  else lives_snprintf(filename, PATH_MAX, "%s", tmp);
+  } else lives_snprintf(filename, PATH_MAX, "%s", tmp);
   lives_free(tmp);
 }
 
@@ -1563,7 +1562,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         fbuff->ptr -= ocount;
       }
       lives_sleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
-                                 && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+                             && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
         pthread_mutex_lock(&fbuff->sync_mutex);
         fbuff->flags |= FB_FLAG_EOF;
@@ -2129,7 +2128,7 @@ static void ds_warn(boolean freelow, uint64_t bytes) {
 
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t ds_resvd) {
   // call with *dsval set to ds_used, ds_resvd set to any potential space to be used
-  // 
+  //
   // dval is 'disk space used' in tree from dir
   // checks)
   // if "dir" not set or empty or is part of workdir tree, check if dsval is over quota

@@ -2268,11 +2268,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     lives_rm(cfile->info_file);
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
-	drawtl_cancel();
+        drawtl_cancel();
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
-	unlock_timeline();
+        unlock_timeline();
       }
     }
 
@@ -2425,11 +2425,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     if (reset_achans > 0) {
       reget_afilesize(mainw->current_file);
       if (cfile->audio_waveform) {
-	drawtl_cancel();
+        drawtl_cancel();
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
-	unlock_timeline();
+        unlock_timeline();
       }
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -2696,11 +2696,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
-	drawtl_cancel();
-         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+        drawtl_cancel();
+        for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
-	unlock_timeline();
+        unlock_timeline();
       }
     }
 
@@ -12429,11 +12429,11 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
     // redo
     if (sfile->achans != sfile->undo_achans) {
       if (sfile->audio_waveform) {
-	drawtl_cancel();
+        drawtl_cancel();
         for (int i = 0; i < sfile->achans; lives_freep((void **)&sfile->audio_waveform[i++]));
         lives_freep((void **)&sfile->audio_waveform);
         lives_freep((void **)&sfile->aw_sizes);
-	unlock_timeline();
+        unlock_timeline();
       }
     }
     start = sfile->undo1_dbl;

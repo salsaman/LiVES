@@ -252,12 +252,10 @@ typedef union {
   char cert[64];
 } fingerprint_t;
 
-
 // a clip_source (clipsrc) is some object which can fill the pixel_data for a layer
 // a clip can have multiple clipsrcs, and these are arranged into sourc groups (clipsrc_groups)
 // almost all clips have a PRIMARY srcgrp, whcih has sufficeint clipsrcs in it to fill pixel data for all
 // frame from 1 - frames
-
 
 // clip srcs have 1 mandatory function - action_funcy(layer, boolean async)
 // which should take the layer, and fill its pixel data, adjusitng layer_status
@@ -300,9 +298,13 @@ typedef struct {
 
   //clipsrc_init_func_t create_func;  // (ext_URI) - return instance of actor
 
-  // if this is non NULL defined, then we need only create a layer with appropriate values
-  // size, palette, frame
-  // then call action_func(layer);
+  // in future all actor tamplates will have a single mandatory function:
+  // action_func. This should point to a function of type lives_result_t action_func(lives_layer_t *)
+  // the function is expected to read the "clip" amnd "frame" values for the layer
+  // and optionally, width, height, current_palette, gamma_in,
+  // s well is desired size, desired palette, gama etc, then fucniton should try to comply but
+  // if not, the layer will be converted automatically
+  // if the layer has pixel_data defined, it should be used, else should be allocated.
   clipsrc_action_func_t action_func; // layer - fill layer pixel_data
 
   //clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID

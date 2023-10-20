@@ -69,7 +69,7 @@ typedef uint64_t (*lives_randfunc_t)(void);
 
 void test_random(void);
 
-int benchmark_rng(int ntests, lives_randfunc_t rfunc, char **tmp, double *q);
+int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q);
 
 void lives_struct_test(void);
 

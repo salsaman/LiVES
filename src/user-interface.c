@@ -1147,29 +1147,29 @@ void redraw_timeline(int clipno) {
   //
   // if the function is already active then the current thread is cancelled and the new one
   // activated
-  // because thread does many  
+  // because thread does many
 
   //
 
   mainw->drawsrc = clipno;
 
   drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_SET_CANCELLABLE,
-						  (lives_funcptr_t)redraw_timeline_inner, -1, "i", clipno);
+                  (lives_funcptr_t)redraw_timeline_inner, -1, "i", clipno);
   pthread_mutex_unlock(&tlthread_mutex);
 }
 
 boolean get_timeline_lock(void) {
-  if (!pthread_mutex_trylock(&tlthread_mutex)) {    
+  if (!pthread_mutex_trylock(&tlthread_mutex)) {
     if (drawtl_thread) {
       lives_proc_thread_t lpt = drawtl_thread;
       if (lives_proc_thread_check_finished(lpt)
-	  && !lives_proc_thread_should_cancel(lpt)) {
-	pthread_mutex_unlock(&tlthread_mutex);
-	lives_proc_thread_join(lpt);
-	pthread_mutex_lock(&tlthread_mutex);
-	lives_proc_thread_unref(lpt);
-	drawtl_thread = NULL;
-	return TRUE;
+          && !lives_proc_thread_should_cancel(lpt)) {
+        pthread_mutex_unlock(&tlthread_mutex);
+        lives_proc_thread_join(lpt);
+        pthread_mutex_lock(&tlthread_mutex);
+        lives_proc_thread_unref(lpt);
+        drawtl_thread = NULL;
+        return TRUE;
       }
       pthread_mutex_unlock(&tlthread_mutex);
       return FALSE;
@@ -1178,7 +1178,7 @@ boolean get_timeline_lock(void) {
   }
   return FALSE;
 }
-      
+
 
 void unlock_timeline(void) {
   pthread_mutex_trylock(&tlthread_mutex);
@@ -1191,7 +1191,7 @@ static void redraw_timeline_inner(int clipno) {
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
 
   if (!sfile) return;
-  
+
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
   }
@@ -1199,7 +1199,7 @@ static void redraw_timeline_inner(int clipno) {
   if (!update_timer_bars(clipno, 0, 0, 0, 0, 1)) return;
 
   // Left / mono audio
-  
+
   if (!sfile->laudio_drawable) {
     sfile->laudio_drawable = lives_widget_create_painter_surface(mainw->laudio_draw);
     mainw->laudio_drawable = sfile->laudio_drawable;
@@ -1210,7 +1210,7 @@ static void redraw_timeline_inner(int clipno) {
   if (!update_timer_bars(clipno, 0, 0, 0, 0, 2)) return;
 
   // right audio
-  
+
   if (!sfile->raudio_drawable) {
     sfile->raudio_drawable = lives_widget_create_painter_surface(mainw->raudio_draw);
     mainw->raudio_drawable = sfile->raudio_drawable;

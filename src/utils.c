@@ -362,7 +362,7 @@ lives_result_t lives_rmdir(const char *dir, boolean force) {
   retval = lives_system(com, TRUE);
   lives_free(com); lives_free(cmd);
   return retval ? LIVES_RESULT_FAIL : LIVES_RESULT_SUCCESS;
- }
+}
 
 
 int lives_rmdir_with_parents(const char *dir) {
@@ -697,6 +697,7 @@ double find_nearest_ar(int width, int height, int *wm, int *hm) {
 
 // both thesse functions scale cwidth, cheight by the same factor
 // given a bounding box rwidth, rheight:
+//
 // maxspect keeps either rwidth or rheight constant, then shrinks the other value
 // to get ar cwidth: cheight - this is max size cwidth, cheight can be to keep its a.r and fit inside
 // rwidth, rheight
@@ -718,19 +719,19 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
 
   // i.e box cwidth, cheight is scaled up or doen to fit exactly in rwidth, rheight
 
-  double caspect, raspect;
-  if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
+  double caspect;
+  if (!cwidth || !cheight || *cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
   caspect = (double)(*cwidth) / (double)(*cheight);
-  raspect = (double)(rwidth) / (double)(rheight);
 
-  if (caspect > raspect) {
-    *cwidth = rwidth;
-    *cheight = (double)(rwidth) / caspect;
-  } else {
-    *cheight = rheight;
-    *cwidth = (double)(rheight) * caspect;
-  }
+  *cwidth = rwidth;
+  *cheight = rheight;
+
+  rheight = (int)((double) * cwidth / caspect + .5);
+
+  if (rheight < *cheight) *cheight = rheight;
+  else *cwidth = (int)((double) * cheight * caspect + .5);
+
   *cwidth = (*cwidth >> 2) << 2;
   *cheight = (*cheight >> 1) << 1;
 }

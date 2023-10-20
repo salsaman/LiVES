@@ -80,7 +80,7 @@ typedef struct {
   ucontext_t *var_context_ptr2;
 
   weed_plant_t *var_ret_value;
-  
+
   pthread_mutex_t var_active_lpt_mutex;
 
   volatile lives_proc_thread_t var_active_lpt;
@@ -288,7 +288,7 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
       if (!ret) {ret = TRUE; break;} ret = FALSE; swapcontext(&conA, &conB); ret = TRUE;} \
     if (ret) { ret = FALSE; swapcontext(&conA, THREADVAR(context_ptr));}}
 
-#define COME_BACK_LATER_END swapcontext(&conB, &conA); 
+#define COME_BACK_LATER_END swapcontext(&conB, &conA);
 
 #define COME_BACJK_LATER_MAYBE					\
   static int times = 0;						\

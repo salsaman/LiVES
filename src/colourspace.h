@@ -9,9 +9,9 @@
 #ifndef HAS_LIVES_COLOURSPACE_H
 #define HAS_LIVES_COLOURSPACE_H
 
-#ifdef USE_16BIT_PCONV
+//#ifdef USE_16BIT_PCONV
 #define USE_EXTEND
-#endif
+//#endif
 
 #define LIVES_RESTRICT __restrict__
 
@@ -30,6 +30,7 @@
 #define LIVES_LEAF_PROGSCAN "progscan"
 #define LIVES_LEAF_BBLOCKALLOC "bblockalloc"
 #define LIVES_LEAF_ALTSRC "alt_src"
+#define LIVES_LEAF_NEW_ROWSTRIDE "new_rowstride"
 
 #define DEF_SCREEN_GAMMA 1.4 // extra gammm boost
 
@@ -43,7 +44,15 @@
 #define FP_BITS 16 /// max fp bits
 
 #ifdef USE_EXTEND
-#define SCALE_FACTOR 65793. /// (2 ^ 24 - 1) / (2 ^ 8 - 1), also 0xFF * SCALE_FACTOR = 0xFFFFFF
+/// (2 ^ 24 - 1) / (2 ^ 8 - 1), also 0xFF * SCALE_FACTOR = 0xFFFFFF
+// so we have expanded range 0 - 0xFFFFFF instead of 0 to 0xFF0000
+// thus we can use (int)(val / 256.) instead of (int)(val / 256. + 5)
+// in the former 0.0 - 0.9999 -> 0, in the latter 0.0 - 0.49999 -> 0
+// so we have a while unit that maps to 0, instead of half a unit, and a whole unit which maps to 255,
+// instead of half a unit
+// we can take (float)a * 65793. then take (int). now we can add the valuess together, then take result >> 16
+// and get correct answers.
+#define SCALE_FACTOR 65793.
 #else
 #define SCALE_FACTOR (1 << FP_BITS)
 #endif
@@ -124,7 +133,7 @@ extern int gamma_idx[];
 // additional gamma_types an be defined here /////////////////
 
 #define GAMMA_CONSTS_WEED_GAMMA_SRGB 12.92, 0.04045, 2.4
-#define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.081, 1. / .45
+#define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.018, 1. / .45
 //#define GAMMA_CONSTS_MYGAMMA lin, thresh, pf
 // (offs will be derived as the point at which val_line(x) ~= val_pf(x)
 
@@ -394,13 +403,13 @@ void lives_pixbuf_set_opaque(LiVESPixbuf *);
 
 typedef void(*ext_free_func_t)(void *, void *data);
 
-typedef void * (*ext_creator_func_t)(void *pixel_data, uint32_t palette, int width, int height,
-				     int rowstride, ext_free_func_t, void *func_data);
+typedef void *(*ext_creator_func_t)(void *pixel_data, uint32_t palette, int width, int height,
+                                    int rowstride, ext_free_func_t, void *func_data);
 
 void *lives_pixbuf_new_from_data_wrapper(void *pixel_data, int pal, int width, int height,
-						int rowstride, ext_free_func_t ext_free_func, void *func_data);
+    int rowstride, ext_free_func_t ext_free_func, void *func_data);
 
-void *layer_to_extern(lives_layer_t * , ext_creator_func_t, boolean realpalette, boolean fordisp);
+void *layer_to_extern(lives_layer_t *, ext_creator_func_t, boolean realpalette, boolean fordisp);
 
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette, boolean fordisp);
 

@@ -5139,20 +5139,16 @@ void show_aplayer_attribs(LiVESWidget * w, void **player) {
 }
 
 
-boolean await_audio_queue(ticks_t xtimeout) {
-  ticks_t timeout = xtimeout;
-  lives_alarm_t alarm_handle = lives_alarm_set(xtimeout);
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-    lives_sleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-    lives_sleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed));
-  }
-#endif
-  lives_alarm_clear(alarm_handle);
-  if (timeout == 0) return FALSE;
-  return TRUE;
+lives_result_t  await_audio_queue(int64_t nsec) {
+  lives_sys_alarm_set_timeout(audio_msgq_timeout, nsec);
+
+  IF_APLAYER_JACK(
+    lives_microsleep_while_true(jack_get_msgq(mainw->jackd) && !lives_sys_alarm_triggered(audio_msgq_timeout));
+    if (lives_sys_alarm_disarm(audio_msgq_timeout) && jack_get_msgq(mainw->jackd)) return LIVES_RESULT_FAIL;)
+
+    IF_APLAYER_PULSE(
+      lives_microsleep_while_true(pulse_get_msgq(mainw->pulsed) && !lives_sys_alarm_triggered(audio_msgq_timeout));
+      if (lives_sys_alarm_disarm(audio_msgq_timeout) && pulse_get_msgq(mainw->pulsed)) return LIVES_RESULT_FAIL;)
+
+      return LIVES_RESULT_SUCCESS;
 }

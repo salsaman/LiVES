@@ -592,8 +592,8 @@ typedef enum {
 #define LIVES_LEAF_UID "uid"
 
 // TODO WEED_LEAF -> LIVES_LEAF
+#define WEED_LEAF_LIVES_TYPE "lives_type"
 #define WEED_LEAF_LIVES_SUBTYPE "subtype"
-#define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
 #define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
 #define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
 

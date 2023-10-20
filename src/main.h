@@ -138,13 +138,18 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 // LiVES extensions (effects-weed.c)
 
-#define LIVES_FLAG_MAINTAIN_VALUE	(1 << 16)
-#define LIVES_FLAGS_RDONLY_HOST		(LIVES_FLAG_MAINTAIN_VALUE | WEED_FLAG_IMMUTABLE)
+// uncahngeable even for host
+#define LIVES_FLAG_CONST_VALUE	(1 << 16)
+
+// constant value and constant data
+#define LIVES_FLAG_CONST_DATA	(1 << 17)
+
+#define LIVES_FLAGS_RDONLY_HOST		(LIVES_FLAG_CONST_VALUE | WEED_FLAG_IMMUTABLE)
 // NB. setting rdonly_host also sets rdonly_plugin; this makes checking less costly
 weed_error_t lives_leaf_set_rdonly(weed_plant_t *, const char *key,
                                    boolean rdonly_host, boolean rdonly_plugin);
 
-#define LIVES_FLAG_FREE_ON_DELETE	(1 << 17)
+#define LIVES_FLAG_FREE_ON_DELETE	(1 << 20)
 weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean state);
 
 weed_error_t weed_set_const_string_value(weed_plant_t *, const char *key, const char *);
@@ -641,7 +646,7 @@ struct _capabilities {
 
   // list of allthreads running in app
   LiVESList *allthreads;
-  
+
   // plugins
   lives_checkstatus_t has_encoder_plugins;
   lives_checkstatus_t has_decoder_plugins;
@@ -696,9 +701,10 @@ const char *dummystr;
 void break_me(const char *dtl);
 
 #define SHOW_LOCATION(text) \
-  fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_) 
+  fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_)
 
-#define LIVES_NO_DEBUG
+#define LIVES_NO_DEBUG 1
+
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG
 #define LIVES_DEBUG(errmsg)      fprintf(stderr, "LiVES debug: %s\n", x)

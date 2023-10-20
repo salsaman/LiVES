@@ -213,7 +213,7 @@ typedef cairo_destroy_func_t lives_painter_destroy_func_t;
 lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target);
 
 void lives_painter_surface_set_user_data(lives_painter_surface_t *, const painter_data_key *, void *data,
-				 lives_painter_destroy_func_t);
+    lives_painter_destroy_func_t);
 
 void *lives_painter_surface_get_user_data(lives_painter_surface_t *, const painter_data_key *);
 

@@ -64,9 +64,9 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
   int i;
 
   if (clipno != mainw->drawsrc) goto bail;
-  
+
   if (self && lives_proc_thread_get_cancel_requested(self)) goto bail;
-  
+
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) {
     clipno = cfile->cb_src;
   } else clipno = mainw->current_file;
@@ -199,7 +199,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
             || (self && lives_proc_thread_get_cancel_requested(self))) {
           goto bail;
         }
-	SET_SELF_VALUE(int, "afd", afd + 1);
+        SET_SELF_VALUE(int, "afd", afd + 1);
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
               || (self && lives_proc_thread_get_cancel_requested(self))) {
@@ -325,7 +325,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
               || (self && lives_proc_thread_get_cancel_requested(self))) {
             goto bail;
           }
-	  SET_SELF_VALUE(int, "afd", afd + 1);
+          SET_SELF_VALUE(int, "afd", afd + 1);
           lives_buffered_rdonly_slurp(afd, 0);
           if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
               || (self && lives_proc_thread_get_cancel_requested(self))) {
@@ -7976,7 +7976,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   static int last_height = -1;
 
   RETURN_VAL_IF_RECURSED(TRUE);
-  
+
   if (!prefs->show_msg_area) return FALSE;
   if (mainw->n_messages <= 0) return FALSE;
 

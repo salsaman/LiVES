@@ -7,6 +7,20 @@
 #ifndef _MESSAGING_H_
 #define _MESSAGING_H_
 
+#define LIVES_LEAF_MESSAGE_STRING "msg_string"
+
+// flagbits for prefs->msg_routing
+#define MSG_ROUTE_CACHE				0
+
+#define MSG_ROUTE_STORE				(1 << 0)
+#define MSG_ROUTE_DISPLAY			(1 << 1)
+#define MSG_ROUTE_FANCY				(1 << 2)
+#define MSG_ROUTE_STDERR			(1 << 3)
+#define MSG_ROUTE_LOGFILE			(1 << 4)
+
+#define MSG_ROUTE_BLOCKED			(1 << 8)
+#define MSG_ROUTE_DEBUG_LOG			(1 << 9)
+
 // message collection
 void d_print(const char *fmt, ...);
 char *_dump_messages(int start, int end);
@@ -14,8 +28,8 @@ char *_dump_messages(int start, int end);
 void dump_messages(FILE *stream);
 
 weed_plant_t *get_nth_info_message(int n);
-weed_error_t add_messages_to_list(const char *text);
-weed_error_t add_messages_first(const char *text);
+weed_error_t add_message_to_list(const char *text);
+weed_error_t add_message_first(const char *text);
 weed_error_t free_n_msgs(int frval);
 
 #define msg_print(...) d_print(__VA_ARGS__)

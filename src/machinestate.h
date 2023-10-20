@@ -48,6 +48,7 @@ typedef struct {
   int64_t memtotal;
   int64_t memfree;
   int64_t memavail;
+  int64_t memlocked;
   //
 #define OOM_ADJ_RANGE 1000
   char *oom_adjust_file;
@@ -115,6 +116,7 @@ uint64_t gen_unique_id(void);
 
 char *get_md5sum(const char *filename);
 
+boolean get_memstatus(void);
 boolean check_mem_status(void);
 
 char *get_symlink_for(const char *link);

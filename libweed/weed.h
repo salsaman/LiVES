@@ -64,6 +64,11 @@ extern "C"
 #define WEED_ABI_VERSION 		202
 #define WEED_API_VERSION 		WEED_ABI_VERSION
 
+#ifndef HAVE_WEED_BOOLEAN_T
+#define HAVE_WEED_BOOLEAN_T
+  typedef int32_t weed_boolean_t;
+#endif
+
 #define WEED_TRUE	1
 #define WEED_FALSE	0
 
@@ -368,7 +373,7 @@ struct _weed_leaf_nopadding {
 #define WEED_SEED_double		WEED_SEED_DOUBLE
 
   // was int32_t: restrict to values WEED_TRUE or WEED_FALSE
-#define WEED_SEED_BOOLEAN		3 // uint8_t: restrict to values WEED_TRUE or WEED_FALSE
+#define WEED_SEED_BOOLEAN		3 // weed_boolean__t: restrict to values WEED_TRUE or WEED_FALSE
 
 #define WEED_SEED_boolean		WEED_SEED_BOOLEAN
 

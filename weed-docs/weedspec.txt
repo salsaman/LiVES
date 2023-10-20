@@ -10,66 +10,29 @@ as required. Before continuing a word about the reference implementation (i.e. l
 
 The author has been using this library for several years, in practice it runs in a performance demanding, highly concurrent
 environment. During the last two years (since 2020), the library has not crashed or hung even one single time.
-In cases where it has appeared to fail, 100% of the time it turned out to be duie to memory errors in the calling
-program itself. The library is extremely well optimised, the design concept is that there will be many sunultaneous read
-operations, relatively fewer write operations, and fewer still deletions.
+(Except in rare cases where new code is being tested).
+The library is designed for high concurrency realtime environments. Mutex locking is almost
+exclusively via read / write locks, and is used only where strictly necessary; any exclusive locking is minimised
+both in duration and in scope.
+
+
 
 See appendix Z for more technical details.
 
 Appendix Z.
 The data is stored in a linked list in the reference implementation, since we anticipate mostly read operations, then
 generally each thread will traverse the list and just aquire a shared read lock on the data (leaf) in question.
-For write operations, the functionality is similar, the writer will put an advisory lock on the plant, this prevents
-other threads from adding or deleting leaves. But without disrupting other read / write operations provided they are
-only updating existing data. It will then traverse the list looking for the target, and if it finds it, it
-aquires a write lock to the data updates it and unlocks everything.
-
-If the leaf is not found, then this becomes an add operation. The thread will aquire a write lock on the plant itself,
-it can only obtain this if there are no other writers traversing the list, thus it will stop new writers from entering
-and once all wirters have finished traversing it will obtain the plant write lock. Once this occurs, no other threads
-may enter the list, however those further down can continue as nornal. The lock is held very briefly, the thread will
-have already prepared the new data and simply appends it after the head, and then unlocks the plant.
-
-Other threads are only blocked for entering for the miniscule amount of time it takes to redirect the "next"
-pointer of the first element of the list. the already prepared data is simply slotted in and the thread can exit.
-
-Deletion operations are the slowest but still very optimised the thread traverses the list, with the same "no structure
-changes" lock as for a writer. If the target is not in the list it can simpley remove the lock and exit.
-If the target is found, the leaf is removed with the minimum of disruption. The idea is simply to briefly stop threads
-from entering the previos leaf and reading its "next pointer". It can do so by lecking the prior leaf thus preventing
-threads from entering. However, there is a chance that one or more threads are currently reading the prior leaf, and
-so the lock would be placed too late. Thus the thread needs to ensure that there are no threads upstream of it first.
-How it achieves this, each reader or writer thread increments a counter when it enters and then decrements it when it
-leaves. Thus is this is non-zero, the thread knows that there are others traversing the list, but nor whether they
-are upstream or downstream. To resolve this, the thread places a special lock on the first leaf, a "check mode" marker.
-In this mode, new threads entering will not increment the counter but before moving to the next leaf, they will check
-whether it is locked. Since this may create performance issues, this is only done before a deletion is scheduled.
-During this time also, readers and writers can continue as normal, other than being in "check mode" and not
-incrementing / decrementing the counter, all contiues as normal. However, writers may not update the structure as it
-could interfere. Now once the thread counter reaches zero, the deletion thread knows that all the earlier ones not
-in check mode have departed. The remaining threads are in check mode. The thread will have already placed an advisory on the prior leaf blocking threads from entering, so as soon as the counter reaches zero it can simply update the "next" pointer of the prior leaf, remove the advisory, and its job is done. The remaining threads will continue in check mode so if another thread comes to delete a leaf they will block. In fact they will check and lock the next leaf before moving onto it, this lock
-will ensure that a deletion threa cannot update the next pointer of the current leaf or of the next one, This means
-that in the unliekly event there is another deleion thread waiting it is blocked from updating the current leaf or the one
-ahead. After this, new threads entering will no longer be in check mode, (unless another deletion thread happens to
-ne waiting) and will begin incrementing / decrementing  the counter again.
+For write operations, the list is traversed once as a reader, if the target is found, a write lock on that data
+element is obtained, and the data updated. In this first pass we store a pointer to a refeernce element.
+If the element is not found in the first pass, a second pass is actioned - other writers are blocked only during the time it takes to arrive at the reference elemnt. we can asert that if the elements is not found on this second pas.
+Readers are unaffected by this unless they happen to want to read fomr the specific data which is bengi written to.
+deletion threads only lock out other deletion threads, otherwise they block readers only
+momentarily at the element prior to the one targeted for deletion.
 
 If the plant itself needs freeing, then that thread will lock it such a way that no nwe threads may enter and it will
 wait for all traversing threads to exit. If threads are running in check mode, this thread will detect that,
 as once the counter reaches zero, it will attempt to lock all leaves as if it were about to delete them all
 (which in fact it will do).
-
-Again for deletion, disruption is kept to a minumum. Other threads may continue as normal,
-those already traversing are unaffected. New threads entering are slowed a little by locking
-and unlocking the leaf ahead of it. This disruption only continues until all the counted threads have finished,
-and the deletion thread is able to attain a lock on the previous leaf. Once it has that, it is a simple matter of updating
-the "next" pointer on that leaf. Then it can free the data in the now detached leaf at leisure. It is possible that
-all leaves between it and head get deleted, then other leaves are added, so it can lose track of which is the previous leaf.
-It has to maintain the lock on theprevious leaf and there seems to be no other way to ensure that, other than by
-decreeing a ban on structure updates.
-
-
-
-
 
 TBD: - plugin parameter interpolation
       - zero copy for generators - host supplies buffer to be filled between process_func() calls
@@ -286,6 +249,8 @@ The following seed types are defined,
 
 - WEED_SEED_FLOAT (type 8) has been added for convenience. (stored as double)
 
+- WEED_SEED_CONST_CHARPTR (type 67) has been added for convenience. (stored as voidptr))
+
 
 - added aliases:
 WEED_SEED_VOID (type 0)
@@ -302,16 +267,14 @@ WEED_SEED_string		WEED_SEED_STRING
 WEED_SEED_int64			WEED_SEED_INT64
 WEED_SEED_uint64		WEED_SEED_UINT64
 
--  added weed_leaf_set_element_size(plant, key, idx, size)
-   for voidptr or custom seed types, this can be used to note the size of
-    data pointed to, For information only, has no other effet.
--  corrected type of 'idx' (data index) arguments, this is now weed_size_t (prevent accidental entry of negative values)
-
 - libweed changes
  added convenience functions weed_get_data_t_size(), weed_get_leaf_t_size()
  weed_leaf_get_byte_size(plant, key), weed_plant_get_byte_size(plant)
 
- added typedef weed_hash_t, HAVE_HASHFUNC (allows overriding the default (int32_t))
+ added typedef for weed_hash_t
+the preprocessor HAVE_HASHFUNC (allows overriding the default (int32_t))
+ added typedef for weed_seed_t
+ added typedef for weed_flags_t
 
 added macros WEED_IS_TRUE(), WEED_IS_FALSE(), WEED_SEED_IS_ (STANDARD / CUSTOM /
  POINTER / VALID),
@@ -345,9 +308,13 @@ added ibweed_set_memory_funcs() and libweed_set_slab_funcs()
 
 added libweed_print_init_opts()
 
+changed byte size of WEED_SEED_BOOLEAN from 4 bytes (i.e uint32_t) to 1 byte (uint8_t)
+
+
 
 weed-effects.h changes:
-Added WEED_CHANNEL_PLUGIN_CONTROLLED
+Added WEED_CHANNEL_PLUGIN_CONTROLLED - ued for cases where the plugin itself
+edefines the out_channel properties
 
 
 added new weed-host-utils.h
@@ -510,9 +477,11 @@ Weed provides the following 'fundamental' types:
 
  * WEED_SEED_DOUBLE  [2] : equivalent to a 64 bit signed double. size = 8 bytes
 
- * WEED_SEED_BOOLEAN [3] : signed /unsigned 32 bit integer, acceptable values are WEED_FALSE or WEED_TRUE. size = 4 bytes 
+ * WEED_SEED_BOOLEAN [3] : stored internally as an 8 bit value, converted to / from weed_boolean_t
+		     	   acceptable values are WEED_FALSE or WEED_TRUE. size = 1 bytes
 
- * WEED_SEED_STRING  [4] : 0 terminated array of char (max length is uint32_max). (char *)NULL is treated as a zero length string.
+ * WEED_SEED_STRING  [4] : 0 terminated array of char (max length is uint32_max).
+ 			 	(char *)NULL is treated as a zero length string.
    		     	   size = strlen(value). Unless otherwise note, the character set is utf-8.
 
  * WEED_SEED_INT64   [5] : signed /unsigned 64 bit integer . size = 8 bytes
@@ -529,7 +498,7 @@ Weed provides the following 'fundamental' types:
  * WEED_SEED_PLANTPTR   [66]  : a pointer to another weed plant.
 
 
-Convenience valuse:
+Convenience values:
 The following types are for infromation, but cannot be used to create leaves.
  * WEED_SEED_INVALID [0] :: undefined or erroneous type (depending on context)
 
@@ -538,6 +507,10 @@ The following types are for infromation, but cannot be used to create leaves.
 
  * WEED_SEED_FLOAT [6] :: (API 202) this is an alias for WEED_SEED_DOUBLE, and is stored as double. The distinction
  				exists simply for annotation purposes.
+
+ * WEED_SEED_CONST_CHARPTR [67] :: (API 202) this is an alias for WEED_SEED_VOIDPTR, for conveneince
+
+
 
 WEED_SEED_FIRST_CUSTOM	[1024]
 Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
@@ -572,7 +545,7 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 
     for WEED_SEED_INT, values should be (void *)(int32_t[num_elems]) or (void *)(uint32_t[num_elems])
     for WEED_SEED_DOUBLE, values should be (void *)(double[num_elems])
-    for WEED_SEED_BOOLEAN, values should be (void *)(int32_t[num_elems])
+    for WEED_SEED_BOOLEAN, values should be (void *)(weed_boolean_t[num_elems])
     for WEED_SEED_INT64, values should be (void *)(int64_t[num_elems]) or (void *)(uint32_t[num_elems])
     for WEED_SEED_STRING, it should be (void *)(char *[num_elems]),
     for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t[num_elems])

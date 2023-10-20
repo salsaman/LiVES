@@ -3356,18 +3356,16 @@ void create_LiVES(void) {
 void show_lives(void) {
   mainw->lives_shown = TRUE;
 
-  if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
+  if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE)
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
-  } else {
-    lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
-  }
+  else lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
 
   mainw->ignore_screen_size = TRUE;
   lives_widget_show_all(mainw->top_vbox);
   lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
   mainw->ignore_screen_size = FALSE;
 
-  check_can_show_msg_area();
+  if (check_can_show_msg_area()) prefs->msg_routing |= MSG_ROUTE_DISPLAY;
 
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();

@@ -292,8 +292,7 @@ void weed_bg_generator_end(weed_instance_t *inst);
 void wge_inner(weed_instance_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
-
-weed_plant_t *weed_layer_create_from_generator(weed_instance_t *inst, ticks_t tc, int clipno);
+lives_result_t lives_layer_fill_from_generator(weed_layer_t *, weed_instance_t *, weed_timecode_t tc);
 
 /// for multitrack
 void backup_weed_instances(void);

@@ -56,28 +56,45 @@ boolean lives_alarm_clear(int dummy);
 void lives_alarms_init(void);
 
 // thread specific alarms
+// e.g
+
+// lives_alarm_set_timeout(BILLIONS(5));
+// lives_microsleep_while_false((condition) || lives_alarm-triggered());
+// if (lives_alarm_disarm() && !(condition)) return LIVES_RESULT_TIMEDOUT;
 
 lives_result_t lives_alarm_set_timeout(uint64_t nsec);
+// returns TRUE if alarm was triggered
+boolean lives_alarm_disarm(void);
+
 void lives_alarm_wait(void);
 int lives_alarm_get_state(void);
-void lives_alarm_disarm(void);
 
 #define lives_alarm_triggered() (lives_alarm_get_state() != LIVES_ALARM_ARMED)
 
 //shared (system) alarms
 
 typedef enum {
-      thread_alarm = -1,
-      sys_alarms_min = 0,
-      urgent_msg_timeout,
-      overlay_msg_timeout,
-      sys_alarms_max = N_APP_TIMERS,
+  thread_alarm = -1,
+  sys_alarms_min = 0,
+  heartbeat_timeout,
+  urgent_msg_timeout,
+  overlay_msg_timeout,
+  audio_msgq_timeout,
+  sys_alarms_max = N_APP_TIMERS,
 } alarm_name_t;
 
+
+// lives_sys_alarm_set_timeout(audio_msgq_timeout, BILLIONS(5));
+// lives_microsleep_while_false((condition) || lives_sys_alarm-triggered(audio_msgq_timeout));
+// if (lives_sys_alarm_disarm(audio_msgq_timeout) && !(condition)) return LIVES_RESULT_TIMEDOUT;
+
 lives_result_t lives_sys_alarm_set_timeout(alarm_name_t alaname, uint64_t nsec);
+// returns TRUE if alarm was triggered
+boolean lives_sys_alarm_disarm(alarm_name_t alaname);
+
 void lives_sys_alarm_wait(alarm_name_t alaname);
 int lives_sys_alarm_get_state(alarm_name_t alaname);
-void lives_sys_alarm_disarm(alarm_name_t alaname);
+
 
 #define lives_sys_alarm_triggered(alaname)		\
  (lives_sys_alarm_get_state(alaname) != LIVES_ALARM_ARMED)
@@ -122,9 +139,11 @@ void thrd_signal_block(int sig, boolean thrd_specific);
 
 /* we always check condition first, as being TRUE may have side effects
    in case it was TRUE we want to prevent alarm from triggering before it can be checked
-   Thus we disarm the timer which will stop it tirggering, then set trigger to 0 to make
-   everything consistent */
-#define lives_nanosleep_until_nonzero_timeout(t_nsec,...) do {	\
+   Thus we disarm the timer which will stop it triggering, then set trigger to 0 to make
+   everything consistent.
+*/
+
+#define lives_nanosleep_until_nonzero_timeout(t_nsec,...) do {		\
   boolean condres;							\
   lives_alarm_set_timeout((t_nsec));					\
   while (!(condres=(__VA_ARGS__))&&!lives_alarm_triggered())lives_nanosleep; \

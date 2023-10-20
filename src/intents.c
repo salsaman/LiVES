@@ -65,7 +65,7 @@ lives_result_t lives_add_subobj(weed_plant_t *parent, const char *name, weed_pla
 
 
 LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_attr_group(lives_obj_instance_t *loi,
-								    weed_plant_t *attrgrp) {
+    weed_plant_t *attrgrp) {
   return lives_add_subobj(loi, LIVES_LEAF_ATTR_GRP, attrgrp);
 }
 
@@ -112,7 +112,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj
 
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *dst,
-								      lives_obj_instance_t *src) {
+    lives_obj_instance_t *src) {
   // if we have subordinate obj_instances, then data can be passed from one chain member to the next
   // and then finally back to the chain prime
   //
@@ -193,7 +193,7 @@ char *make_attr_name(const char *name) {
 }
 
 
-weed_plant_t *lives_obj_attr_new(const char * name, weed_seed_t st) {
+weed_plant_t *lives_obj_attr_new(const char *name, weed_seed_t st) {
   weed_plant_t *attr = lives_obj_instance_create(0, 0);
   weed_set_string_value(attr, LIVES_LEAF_NAME, name);
   weed_set_int_value(attr, LIVES_LEAF_VALUE_TYPE, st);
@@ -261,12 +261,12 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_obj_instance_t *loi
 //  all attr names internally are prefixed with a "."
 
 lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi,
-						       const char *name, weed_seed_t st) {
+    const char *name, weed_seed_t st) {
   if (!loi || !name || !*name) return NULL;
   char *aname;
   weed_plant_t *attr_grp = lives_obj_instance_ensure_attr_group(loi);
 
- weed_plant_t *attr = attr_grp_find_attr(attr_grp, name);
+  weed_plant_t *attr = attr_grp_find_attr(attr_grp, name);
   if (attr) {
     if (weed_get_int_value(attr, LIVES_LEAF_VALUE_TYPE, NULL) != st)
       return NULL;

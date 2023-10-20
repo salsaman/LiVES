@@ -241,12 +241,12 @@ const char *get_funcname(lives_funcptr_t func) {
 LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int cat,
                                      const char *rettype, const char *args_fmt,
                                      char *file_ref, int line_ref) {
-  
+
   /* g_printerr("Thread 0x%lx in func %s at %s, line %d\n", */
   /*            THREADVAR(uid), funcname, file_ref, line_ref); */
 
   lives_sync_list_push(THREADVAR(func_stack),
-                          (void *)lives_strdup(funcname));
+                       (void *)lives_strdup(funcname));
 
   add_quick_fn(func, funcname);
   /* add_fn_lookup(func, funcname, cat, rettype, args_fmt, file_ref, line_ref); */

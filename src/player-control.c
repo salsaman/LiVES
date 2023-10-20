@@ -146,12 +146,16 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 lives_proc_thread_t start_playback_async(int type) {
   // nonblocking playback, player is launcehd in a pool thread, and this thread returns
   // immediately
+  if (mainw->player_proc || !mainw->can_play) return NULL;
   GET_PROC_THREAD_SELF(self);
   lives_thread_attr_t attrs = LIVES_THRDATTR_PRIORITY;
   if (type == 6) attrs |= LIVES_THRDATTR_START_UNQUEUED;
   mainw->player_proc = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
-  if (type == 6) lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, 0, queue_other_lpt,
-        mainw->player_proc);
+  if (type == 6) {
+    lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, 0, queue_other_lpt,
+                               mainw->player_proc);
+    lives_proc_thread_queue(mainw->player_proc, 0);
+  }
   return mainw->player_proc;
 }
 
@@ -174,7 +178,7 @@ static void prep_audio_player(void) {
     IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file));
   }
 
-  
+
 }
 
 
@@ -269,6 +273,7 @@ static void post_playback(void) {
 
             lives_widget_show_all(mainw->preview_box);
             // need to recheck mainw->play_window after this
+
             lives_widget_show_now(mainw->preview_box);
             if (mainw->play_window) {
               lives_widget_grab_focus(mainw->preview_spinbutton);
@@ -283,11 +288,9 @@ static void post_playback(void) {
 	}}}}
   // *INDENT-ON*
 
-  if (prefs->show_player_stats && mainw->fps_measure > 0) {
+  if (prefs->show_player_stats && mainw->fps_measure > 0)
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
-            (double)lives_get_relative_ticks(mainw->origticks)
-            / TICKS_PER_SECOND_DBL);
-  }
+            (double)lives_get_relative_ticks(mainw->origticks) / TICKS_PER_SECOND_DBL);
 
   if (mainw->new_vpp) {
     mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
@@ -304,7 +307,7 @@ static void post_playback(void) {
 
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
-    weed_generator_end((weed_instance_t *)(get_primary_src(mainw->current_file))->actor);
+    weed_generator_end((weed_instance_t *)get_primary_inst(cfile));
     mainw->osc_block = FALSE;
   }
 
@@ -526,7 +529,7 @@ static boolean reset_timebase(void) {
   mainw->origticks = lives_get_session_ticks();
 
 #ifdef HAVE_PULSE_AUDIO
-  
+
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     boolean pa_reset = TRUE;
     if (prefs->audio_src == AUDIO_SRC_INT) {
@@ -535,10 +538,10 @@ static boolean reset_timebase(void) {
       }
     } else {
       if (mainw->pulsed_read) {
-	pulse_driver_uncork(mainw->pulsed_read);
-	if (!pa_time_reset(mainw->pulsed_read, 0)) {
-	  pa_reset = FALSE;
-	}
+        pulse_driver_uncork(mainw->pulsed_read);
+        if (!pa_time_reset(mainw->pulsed_read, 0)) {
+          pa_reset = FALSE;
+        }
       }
     }
     if (!pa_reset) {
@@ -661,8 +664,8 @@ void play_file(void) {
 
   if (!mainw->foreign) {
     if (!(AUD_SRC_EXTERNAL &&
-       (audio_player == AUD_PLAYER_JACK ||
-	audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE))) {
+          (audio_player == AUD_PLAYER_JACK ||
+           audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE))) {
       prep_audio_player();
     }
   }
@@ -952,8 +955,8 @@ void play_file(void) {
 
       if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
 
-      // 
-      
+      //
+
       if (!reset_timebase()) {
         mainw->cancelled = CANCEL_INTERNAL_ERROR;
         break;
@@ -979,7 +982,6 @@ void play_file(void) {
           mainw->pulsed->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         )
-        free_track_sources();
       } else {
         // play from middle of mt timeline
         cfile->next_event = mainw->multitrack->pb_start_event;
@@ -1016,10 +1018,6 @@ void play_file(void) {
         deinit_render_effects();
 
         cfile->next_event = NULL;
-
-        if (!(mainw->preview && mainw->multitrack && mainw->multitrack->is_rendering))
-          free_track_sources();
-
         // multitrack loop - go back to loop start position unless external transport moved us
         if (mainw->scratch == SCRATCH_NONE) {
           mainw->multitrack->pb_start_event = mainw->multitrack->pb_loop_event;
@@ -1028,10 +1026,23 @@ void play_file(void) {
         mainw->effort = 0;
         if (mainw->multitrack) pb_start_event = mainw->multitrack->pb_start_event;
       }
-    } while (mainw->multitrack && mainw->loop_cont &&
-             (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
-  }
+      // may call weed_generator_end
 
+      if (!(mainw->multitrack && mainw->loop_cont &&
+            (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END))) {
+
+        if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+          // if this is the final loop, protect this from being freed with track sources
+          // wee may neeed to keep it aropund if ther is a recording
+          weed_instance_ref((weed_instance_t *)(get_primary_inst(cfile)));
+        }
+
+        if (!mainw->preview && (!mainw->multitrack || !mainw->multitrack->is_rendering))
+          free_track_sources();
+      }
+    }  while (mainw->multitrack && mainw->loop_cont &&
+              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
+  }
   // PLAYBACK END /////////////////////
 
   if (mainw->blend_layer) weed_layer_set_invalid(mainw->blend_layer, TRUE);
@@ -1066,9 +1077,8 @@ void play_file(void) {
 
   mainw->osc_auto = 0;
 
-  if (mainw->plan_cycle->state == PLAN_STATE_RUNNING) {
-    if (mainw->plan_runner_proc)
-      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+  if (mainw->nodemodel) {
+    cleanup_nodemodel(&mainw->nodemodel);
   }
 
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
@@ -1152,7 +1162,7 @@ void play_file(void) {
       if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
         lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         lives_sleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0
-                                   && jack_get_msgq(mainw->jackd));
+                               && jack_get_msgq(mainw->jackd));
         lives_alarm_clear(alarm_handle);
       }
       if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
@@ -1384,7 +1394,7 @@ void play_file(void) {
     current_file = mainw->current_file;
     mainw->can_switch_clips = TRUE;
     // TODO - make sure we dont remove this too soon
-    weed_bg_generator_end((weed_instance_t *)(get_primary_src(mainw->blend_file))->actor);
+    weed_bg_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
     mainw->can_switch_clips = FALSE;
     if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
   }
@@ -1460,7 +1470,7 @@ void play_file(void) {
     ticks_t timeout;
     lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     lives_sleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
-                               && pulse_get_msgq(mainw->pulsed));
+                           && pulse_get_msgq(mainw->pulsed));
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) handle_audio_timeout();
     if (has_audio_buffers) {
@@ -1494,13 +1504,14 @@ void play_file(void) {
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
+  // return to NORMAL GUi SERVICING
+  set_gui_loop_tight(FALSE);
+
   // clean up the interface, this has to be executed by the main (gui) thread
   // due to restrictions in gtk+
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(post_playback, 0);
   BG_THREADVAR(hook_hints) = 0;
-
-  set_gui_loop_tight(FALSE);
 
   // and startup helpers which were paused during playback may now resume
   if (lazy_start) {

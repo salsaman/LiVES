@@ -9,17 +9,17 @@
 
 LIVES_GLOBAL_INLINE void lives_sync_list_set_lilo(lives_sync_list_t *synclist, boolean lilo) {
   if (synclist) synclist->flags = lilo ? synclist->flags | SYNCLIST_FLAG_LILO
-		  : synclist->flags & ~SYNCLIST_FLAG_LILO;
+                                    : synclist->flags & ~SYNCLIST_FLAG_LILO;
 }
 
 LIVES_GLOBAL_INLINE void lives_sync_list_set_pop_head(lives_sync_list_t *synclist, boolean yes) {
   if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_POP_HEAD
-		  : synclist->flags & ~SYNCLIST_FLAG_POP_HEAD;
+                                    : synclist->flags & ~SYNCLIST_FLAG_POP_HEAD;
 }
 
 LIVES_GLOBAL_INLINE void lives_sync_list_free_on_empty(lives_sync_list_t *synclist, boolean yes) {
-  if (synclist) synclist->flags = yes? synclist->flags | SYNCLIST_FLAG_FREE_ON_EMPTY
-		  : synclist->flags & ~SYNCLIST_FLAG_FREE_ON_EMPTY;
+  if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_FREE_ON_EMPTY
+                                    : synclist->flags & ~SYNCLIST_FLAG_FREE_ON_EMPTY;
 }
 
 
@@ -39,7 +39,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
   LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
   pthread_rwlock_init(&synclist->lock, NULL);
   synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY | SYNCLIST_FLAG_LILO
-    | SYNCLIST_FLAG_POP_HEAD;
+                    | SYNCLIST_FLAG_POP_HEAD;
   return synclist;
 }
 
@@ -49,8 +49,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_append(lives_sync_list_t
   if (synclist->list) {
     synclist->last->next = node;
     node->prev = synclist->last;
-  }
-  else synclist->list = node;;
+  } else synclist->list = node;;
   synclist->last = node;
   return synclist;
 }
@@ -69,10 +68,9 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_prepend(lives_sync_list_
   if (synclist->list) {
     synclist->list->prev = node;
     node->next = synclist->list;
-  }
-  else synclist->last = node;
+  } else synclist->last = node;
   synclist->list = node;
-return synclist;
+  return synclist;
 }
 
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_prepend(lives_sync_list_t *synclist, void *data) {
@@ -142,8 +140,7 @@ LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t *synclist)
     synclist->list = list->next;
     if (synclist->list) synclist->list->prev = NULL;
     else synclist->last = NULL;
-  }
-  else {
+  } else {
     list = synclist->last;
     synclist->last = list->prev;
     if (synclist->last) synclist->last->next = NULL;
@@ -205,7 +202,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_remove(lives_sync_list_t 
 
 
 LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_clear(lives_sync_list_t *synclist,
-							      boolean free_data) {
+    boolean free_data) {
   if (free_data) lives_list_free_data(synclist->list);
   lives_list_free(synclist->list);
   synclist->list = NULL;
@@ -216,7 +213,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_clear(lives_sync_list_t 
 
 
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_clear(lives_sync_list_t *synclist,
-							     boolean free_data) {
+    boolean free_data) {
   if (synclist && synclist->list) {
     lives_sync_list_wrlock(synclist);
     synclist = _lives_sync_list_clear(synclist, free_data);
@@ -225,9 +222,9 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_clear(lives_sync_list_t *
   return synclist;
 }
 
-    
-LIVES_GLOBAL_INLINE lives_sync_list_t * _lives_sync_list_free(lives_sync_list_t *synclist,
-								 boolean free_data) {
+
+LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_free(lives_sync_list_t *synclist,
+    boolean free_data) {
   pthread_rwlock_trywrlock(&synclist->lock);
   if (synclist->list) {
     if (free_data) lives_list_free_data(synclist->list);
@@ -239,8 +236,8 @@ LIVES_GLOBAL_INLINE lives_sync_list_t * _lives_sync_list_free(lives_sync_list_t 
   return NULL;
 }
 
-    LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_free(lives_sync_list_t *synclist,
-								boolean free_data) {
+LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_free(lives_sync_list_t *synclist,
+    boolean free_data) {
   if (synclist) {
     lives_sync_list_wrlock(synclist);
     synclist = _lives_sync_list_free(synclist, free_data);

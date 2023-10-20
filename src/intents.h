@@ -390,7 +390,7 @@ weed_error_t lives_attribute_set_leaf_readonly(lives_obj_t *, const char *name,
 // cast to / from lives_param_type_t
 int lives_attribute_get_param_type(lives_obj_instance_t *, const char *name);
 weed_error_t lives_attribute_set_param_type(lives_obj_instance_t *, const char *name,
-					    const char *label, int ptype);
+    const char *label, int ptype);
 
 int lives_object_get_num_attributes(lives_obj_t *);
 
@@ -417,7 +417,7 @@ char *interpret_uid(uint64_t uid);
 /*   lives_funcdef_t func_info; /// function(s) to perform the transformation */
 /*   weed_plant_t **outputs; */
 /* } tx_map; */
-						
+
 // a transform(ation) is a function or sequence of functions which correspond to satistying some intention for the object
 // they will do one or more of the following:
 // - change the state of the obejct from start_state to new_state (active transform)

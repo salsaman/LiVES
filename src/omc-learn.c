@@ -1436,13 +1436,14 @@ static void init_omc_macros(void) {
 
   omc_macros[LIVES_ACTION_SET_FPS_RATIO].msg = lives_strdup("/video/fps/ratio/set");
   omc_macros[LIVES_ACTION_SET_FPS_RATIO].macro_text = (_("Set video framerate to ratio <fps__ratio>"));
-  omc_macros[LIVES_ACTION_SET_FPS_RATIO].info_text = (_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
+  omc_macros[LIVES_ACTION_SET_FPS_RATIO].info_text =
+    (_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
   omc_macros[LIVES_ACTION_SET_FPS_RATIO].nparams = 1;
 
   omc_macros[LIVES_ACTION_RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");
   omc_macros[LIVES_ACTION_RETRIGGER_CLIP].macro_text = (_("Retrigger clip <clipnum>"));
   omc_macros[LIVES_ACTION_RETRIGGER_CLIP].info_text = lives_strdup(
-      _("Switch foreground clip to the nth valid clip, and reset the frame number"));
+        _("Switch foreground clip to the nth valid clip, and reset the frame number"));
   omc_macros[LIVES_ACTION_RETRIGGER_CLIP].nparams = 1;
 
   omc_macros[LIVES_ACTION_NEXT_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/next");
@@ -1461,7 +1462,7 @@ static void init_omc_macros(void) {
   omc_macros[LIVES_ACTION_OSC_NOTIFY].msg = lives_strdup("internal"); // handled internally
   omc_macros[LIVES_ACTION_OSC_NOTIFY].macro_text = (_("Send OSC notification message"));
   omc_macros[LIVES_ACTION_OSC_NOTIFY].info_text = lives_strdup(
-                                       _("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
+        _("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
   omc_macros[LIVES_ACTION_OSC_NOTIFY].nparams = 2;
 
   for (i = 0; i < N_OMC_MACROS; i++) {

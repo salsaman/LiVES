@@ -897,16 +897,34 @@ static void bigblocks_end(void) {
 }
 
 
+#define MEM_THRESH .8
+#define MIN_BBLOCKS 16 // min is 16 * 8 = 128 MB
+
 void bigblock_init(void) {
   char *ptr;
+  int64_t bbcachesize = BB_CACHE;
 
   bmemsize = BBLOCKSIZE;
+
   hwlim = HW_ALIGNMENT;
   bmemsize = (size_t)(bmemsize / hwlim) * hwlim;
 
-  if (PAGESIZE) {
-    bmemsize = (size_t)(bmemsize / PAGESIZE) * PAGESIZE;
+  if (PAGESIZE) bmemsize = (size_t)(bmemsize / PAGESIZE) * PAGESIZE;
+
+  if (get_memstatus()) {
+    if (bbcachesize > (int64_t)((double)capable->hw.memavail * MEM_THRESH)) {
+      bbcachesize = (int64_t)((double)capable->hw.memavail * MEM_THRESH);
+    }
+    if (bbcachesize / bmemsize < MIN_BBLOCKS) {
+      char *msg = lives_strdup_printf(_("Insufficient memory for big block allocator, "
+                                        "need at least %ld bytes, but only %ld avaialble"), MIN_BBLOCKS * bmemsize,
+                                      capable->hw.memavail);
+      LIVES_WARN(msg);
+      lives_free(msg);
+      return;
+    }
   }
+
   bigblock_root = lives_calloc_medium(bmemsize * NBIGBLOCKS);
   if (!bigblock_root) {
     LIVES_WARN("Unable to allocate bigblock arena");
@@ -922,12 +940,13 @@ void bigblock_init(void) {
 
   for (int i = 0; i < NBIGBLOCKS; i++) {
     bigblocks[i] = ptr;
-    ptr += bmemsize;
 #ifdef TRACE_BBALLOC
     ustacks[NBBLOCKS] = NULL;
     tuid[NBBLOCKS] = 0;
 #endif
     used[NBBLOCKS++] = 0;
+    ptr += bmemsize;
+    if (ptr >= bigblock_root + _MB_(bbcachesize)) break;
   }
 }
 
@@ -1014,7 +1033,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
 
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
   //g_print("ALLOBIG %p size %d\n", bigblocks[i], nblocks);
-  g_print("ALLOCBIG has vals %d and %d\n", i, max);
+  g_print("\n\nALLOCBIG has vals\t%d and \t%d\n", i, max);
   if (i <= max) return i;
 
   ///////////////////////////////////////////////////
@@ -1083,12 +1102,10 @@ void *malloc_bigblock(size_t xsize) {
   pthread_mutex_lock(&bigblock_mutex);
   bbidx = _alloc_bigblock(xsize, -1);
   pthread_mutex_unlock(&bigblock_mutex);
-  g_print("got bbidx %d, so returning biblocks[%d], which is %p\n", bbidx, bbidx, bigblocks[bbidx]);
+  g_print("\ngot bbidx %d, so returning biblocks[%d], which is %p\n\n", bbidx, bbidx, bigblocks[bbidx]);
   if (bbidx >= 0) return bigblocks[bbidx];
   return NULL;
 }
-
-
 
 
 void *realloc_bigblock(void *p, size_t new_size) {
@@ -1154,7 +1171,7 @@ void *free_bigblock(void *bstart) {
   tuid[bbidx] = 0;
 #endif
   pthread_mutex_unlock(&bigblock_mutex);
-  g_print("FREEBIG %p %d\n", bigblocks[bbidx], bbidx);
+  g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
   return bstart;
 }
 

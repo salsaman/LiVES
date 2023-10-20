@@ -155,100 +155,111 @@ void *gtk_thread_wrapper(void *data) {
 
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   if (prefs && prefs->vj_mode) return;
+
+  char *msg = lives_strdup_printf("%s: %s\n", domain, message);
+  LiVESLogLevelFlags xlevel = level & LIVES_LOG_LEVEL_MASK;
+
   if (level & LIVES_LOG_FATAL_MASK) {
 #ifndef IGNORE_FATAL_ERRORS
-    raise(LIVES_SIGSEGV);
+    LIVES_FATAL(msg);
+#else
+    fprintf(tderr, "Fatal error: %s\n", msg);
 #endif
-  } else {
-    char *msg;
-    LiVESLogLevelFlags xlevel = level & LIVES_LOG_LEVEL_MASK;
-#ifdef LIVES_NO_DEBUG
-    if (prefs && !prefs->show_dev_opts) return;
-#endif
-
-#ifndef SHOW_ALL_ERRORS
-#ifdef LIVES_NO_DEBUG
-    if (xlevel >= LIVES_LOG_LEVEL_DEBUG) return;
-#endif
-    //#define SHOW_INFO_ERRORS
-#ifndef SHOW_INFO_ERRORS
-    if (xlevel == LIVES_LOG_LEVEL_INFO) return;
-#endif
-    //#define SHOW_MSG_ERRORS
-#ifndef SHOW_MSG_ERRORS
-    if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
-#endif
-#define NO_WARN_ERRORS
-#ifdef NO_WARN_ERRORS
-    if (xlevel == LIVES_LOG_LEVEL_WARNING) {
-      return;
-    }
-#endif
-    //#define NO_CRITICAL_ERRORS
-#ifdef NO_CRITICAL_ERRORS
-    if (xlevel == LIVES_LOG_LEVEL_CRITICAL) {
-      return;
-    }
-#endif
-#endif
-
-    //#define TRAP_THEME_ERRORS
-    //#define SHOW_THEME_ERRORS
-#ifndef SHOW_THEME_ERRORS
-    if (prefs->show_dev_opts)
-      if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) {
-#ifdef TRAP_THEME_ERRORS
-        raise(LIVES_SIGTRAP);
-#endif
-        return;
-      }
-#endif
-
-    //#define TRAP_ERRMSG ""
-#ifdef TRAP_ERRMSG
-    if (*message && !strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
-      fprintf(stderr, "Trapped message %s\n", message);
-      raise(LIVES_SIGTRAP);
-    }
-#endif
-    if (xlevel == LIVES_LOG_LEVEL_FATAL)
-      msg = lives_strdup_printf("%s Fatal error: %s\n", domain, message);
-    else if (xlevel == LIVES_LOG_LEVEL_CRITICAL)
-      msg = lives_strdup_printf("%s Critical error: %s\n", domain, message);
-    else if (xlevel == LIVES_LOG_LEVEL_WARNING)
-      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
-    else if (xlevel == LIVES_LOG_LEVEL_MESSAGE)
-      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
-    else if (xlevel == LIVES_LOG_LEVEL_INFO)
-      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
-    else if (xlevel == LIVES_LOG_LEVEL_DEBUG)
-      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
-    else {
-      msg = lives_strdup_printf("%s (Unknown level %u error: %s\n", domain, xlevel, message);
-    }
-
-    if (mainw->is_ready) d_print(msg);
-    fprintf(stderr, "%s", msg);
-    lives_free(msg);
-
-#define BREAK_ON_CRIT
-    if (xlevel <= LIVES_LOG_LEVEL_CRITICAL) {
-#ifdef BREAK_ON_CRIT
-      raise(LIVES_SIGTRAP);
-#endif
-    }
-
-    //#define BREAK_ON_WARN
-#ifdef BREAK_ON_WARN
-    if (xlevel <= LIVES_LOG_LEVEL_WARNING) raise(LIVES_SIGTRAP);
-#endif
-
-    //#define BREAK_ON_ALL
-#ifdef BREAK_ON_ALL
-    raise(LIVES_SIGTRAP);
-#endif
+    goto done;
   }
+
+  if (xlevel <= LIVES_LOG_LEVEL_DEBUG) {
+#ifdef LIVES_NO_DEBUG
+    if (prefs && prefs->show_dev_opts)
+      fprintf(stderr, "LiVES debug: %s\n", msg);
+#else
+    LIVES_DEBUG(msg);
+#endif
+    goto done;
+  }
+
+  //#define SHOW_INFO_ERRORS
+  if (xlevel == LIVES_LOG_LEVEL_INFO) {
+#ifndef SHOW_INFO_ERRORS
+    if (prefs && prefs->show_dev_opts)
+      fprintf(stderr, "LiVES debug info: %s\n", msg);
+#else
+    LIVES_INFO(msg);
+#endif
+    goto done;
+    return;
+  }
+
+  if (xlevel == LIVES_LOG_LEVEL_MESSAGE) {
+#ifndef SHOW_MSG_ERRORS
+    if (prefs && prefs->show_dev_opts)
+      fprintf(stderr, "LiVES debug msg: %s\n", msg);
+#else
+    LIVES_INFO(msg);
+#endif
+    goto done;
+  }
+
+#define NO_WARN_ERRORS
+  if (xlevel == LIVES_LOG_LEVEL_WARNING) {
+#ifdef NO_WARN_ERRORS
+    if (prefs && prefs->show_dev_opts)
+      fprintf(stderr, "LiVES debug warn: %s\n", msg);
+#else
+    LIVES_WARN(msg);
+#endif
+    goto done;
+  }
+
+  //#define TRAP_THEME_ERRORS
+  //#define SHOW_THEME_ERRORS
+#ifndef SHOW_THEME_ERRORS
+  if (prefs->show_dev_opts)
+    if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) {
+#ifdef TRAP_THEME_ERRORS
+      raise(LIVES_SIGTRAP);
+#endif
+      goto done;
+    }
+#endif
+
+  //#define TRAP_ERRMSG ""
+#ifdef TRAP_ERRMSG
+  if (*message && !strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
+    fprintf(stderr, "Trapped message %s\n", msg);
+    raise(LIVES_SIGTRAP);
+    goto done;
+  }
+#endif
+
+
+  //#define NO_CRITICAL_ERRORS
+  if (xlevel == LIVES_LOG_LEVEL_CRITICAL) {
+#ifdef NO_CRITICAL_ERRORS
+#else
+#ifdef BREAK_ON_CRIT
+    LIVES_CRITICAL(msg);
+#else
+    fprintf(stderr, "LiVES Critical error: %s\n", msg);
+#endif
+#endif
+    goto done;
+  }
+
+done:
+  //#define BREAK_ON_WARN
+#ifdef BREAK_ON_WARN
+  if (xlevel <= LIVES_LOG_LEVEL_WARNING) raise(LIVES_SIGTRAP);
+#endif
+
+  //#define BREAK_ON_ALL
+#ifdef BREAK_ON_ALL
+  raise(LIVES_SIGTRAP);
+#endif
+
+  lives_free(msg);
 }
+
 
 
 #ifdef USE_GLIB
@@ -371,7 +382,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
   // trap for ctrl-C and others
   // if (mainw->jackd) lives_jack_end();
   sigsrc = SIG_SRC_KERNEL;
-  
+
   if (!uc) sigsrc = SIG_SRC_INTERN;
   if (signum < 0) {
     sigsrc = SIG_SRC_EXTERN;
@@ -472,7 +483,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
       fprintf(stderr, "External erros are ignored, continuing\n");
       return;
     }
-    
+
 #ifdef USE_GLIB
 #ifdef LIVES_NO_DEBUG
     if (mainw->debug) {

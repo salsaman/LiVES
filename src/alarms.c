@@ -250,8 +250,7 @@ static lives_timer_t *lives_timer_create(lives_timer_t *xtimer) {
   if (xtimer->tid) {
     if (xtimer->delay && !xtimer->triggered)
       lives_timer_set_delay(xtimer, 0);
-  }
-  else {
+  } else {
     // tell the timer to send a signal LIVES_TIMER_SIG when it expires
     sev.sigev_notify = SIGEV_SIGNAL;
     sev.sigev_signo = LIVES_TIMER_SIG;
@@ -272,42 +271,48 @@ static lives_timer_t *lives_timer_create(lives_timer_t *xtimer) {
 }
 
 
-static void lives_timer_delete(lives_timer_t *xtimer) {
+static boolean lives_timer_delete(lives_timer_t *xtimer) {
+  boolean ret = FALSE;
   if (xtimer) {
     if (xtimer->tid) {
       // disarm first
-      lives_timer_set_delay(xtimer, 0);
+      if (!xtimer->triggered) lives_timer_set_delay(xtimer, 0);
+      else ret = TRUE;
       timer_delete(xtimer->tid);
       xtimer->tid = 0;
     }
     xtimer->triggered = 0;
   }
+  return ret;
 }
 
 // alarms -  new style ///
 
+// following functions return TRUE if alarm was triggered
 boolean lives_alarm_clear(int dummy) {
   lives_timer_t *timer = &(THREADVAR(xtimer));
-  if (timer->tid) {
-    lives_timer_delete(timer);
-    return TRUE;
-  }
+  if (timer->tid) return lives_timer_delete(timer);
   return FALSE;
 }
 
 
-void lives_alarm_disarm(void)
-{lives_timer_delete(&(THREADVAR(xtimer)));}
+boolean lives_alarm_disarm(void)
+{return lives_timer_delete(&(THREADVAR(xtimer)));}
 
-void lives_sys_alarm_disarm(alarm_name_t alaname) {
+boolean lives_sys_alarm_disarm(alarm_name_t alaname) {
+  boolean ret = FALSE;
   if (alaname > sys_alarms_min && alaname < sys_alarms_max) {
-   lives_timer_t *timer = &app_timers[alaname];
-    if (timer->tid && !timer->triggered)
-      lives_timer_set_delay(timer, 0);
-    timer->triggered = 0;
+    lives_timer_t *timer = &app_timers[alaname];
+    if (timer->tid) {
+      if (!timer->triggered) lives_timer_set_delay(timer, 0);
+      else ret = TRUE;
+      timer->triggered = 0;
+    }
   }
+  return ret;
 }
 
+///////////////////////////////////////////
 
 static void _lives_alarm_wait(lives_timer_t *timer) {
   if (timer && timer->tid && !timer->triggered)
@@ -315,7 +320,7 @@ static void _lives_alarm_wait(lives_timer_t *timer) {
   lives_timer_delete(timer);
 }
 
-void lives_alarm_wait(void) 
+void lives_alarm_wait(void)
 {_lives_alarm_wait(&(THREADVAR(xtimer)));}
 
 void lives_sys_alarm_wait(alarm_name_t alaname) {
@@ -339,7 +344,7 @@ lives_result_t lives_sys_alarm_set_timeout(alarm_name_t alaname, uint64_t nsec) 
   if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return LIVES_RESULT_INVALID;
   return _lives_alarm_set_timeout(&app_timers[alaname], nsec);
 }
-  
+
 
 #define ALARM_STATE(timer) (!timer->tid ? LIVES_RESULT_ERROR		\
 			    : !timer->triggered ? LIVES_RESULT_FAIL	\
@@ -371,4 +376,4 @@ int lives_sys_alarm_get_state(alarm_name_t alaname) {
 /* 	for (liVESList *lst = (LiVESList *)data; list; list = list->next) { */
 /* 	  if (!rev) list = lives-list_reverse(list); */
 /* 	  lives_sync_list_add(LPT_THREADVAR(simple_cmd_list), list->data); */
-	  
+

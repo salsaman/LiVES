@@ -46,7 +46,6 @@ typedef struct {
 #define WEED_LEAF_DEINIT_EVENT "deinit_event"
 
 // marker
-#define WEED_LEAF_LIVES_TYPE "lives_type"
 #define WEED_LEAF_TRACKS "tracks"
 #define WEED_LEAF_TCDELTA "tc_delta"
 

@@ -95,7 +95,7 @@ weed_error_t weed_set_uint_value(weed_plant_t *plant, const char *key, uint32_t 
 weed_error_t weed_set_double_value(weed_plant_t *plant, const char *key, double value)
 {return weed_leaf_set(plant, key, WEED_SEED_DOUBLE, 1, (weed_voidptr_t)&value);}
 
-weed_error_t weed_set_boolean_value(weed_plant_t *plant, const char *key, int32_t value)
+weed_error_t weed_set_boolean_value(weed_plant_t *plant, const char *key, weed_boolean_t value)
 {return weed_leaf_set(plant, key, WEED_SEED_BOOLEAN, 1, (weed_voidptr_t)&value);}
 
 weed_error_t weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t value)
@@ -165,8 +165,8 @@ _weed_get_value(double, double, WEED_SEED_DOUBLE, 0.);
 /*   weed_error_t err = weed_value_get(plant, key, WEED_SEED_DOUBLE, &retval); */
 /* } */
 
-int32_t weed_get_boolean_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
-  int32_t retval = WEED_FALSE;
+weed_boolean_t weed_get_boolean_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
+  weed_boolean_t retval = WEED_FALSE;
   weed_error_t err = weed_value_get(plant, key, WEED_SEED_BOOLEAN, &retval);
   if (error) *error = err;
   return retval;
@@ -337,11 +337,11 @@ double *weed_get_double_array_counted(weed_plant_t *plant, const char *key, int 
 double *weed_get_double_array(weed_plant_t *plant, const char *key, weed_error_t *error)
 {return (double *)(weed_get_arrayx(plant, key, WEED_SEED_DOUBLE, error, NULL));}
 
-int32_t *weed_get_boolean_array_counted(weed_plant_t *plant, const char *key, int *count)
-{return (int32_t *)(weed_get_arrayx(plant, key, WEED_SEED_BOOLEAN, NULL, count));}
+weed_boolean_t *weed_get_boolean_array_counted(weed_plant_t *plant, const char *key, int *count)
+{return (weed_boolean_t *)(weed_get_arrayx(plant, key, WEED_SEED_BOOLEAN, NULL, count));}
 
-int32_t *weed_get_boolean_array(weed_plant_t *plant, const char *key, weed_error_t *error)
-{return (int32_t *)(weed_get_arrayx(plant, key, WEED_SEED_BOOLEAN, error, NULL));}
+weed_boolean_t *weed_get_boolean_array(weed_plant_t *plant, const char *key, weed_error_t *error)
+{return (weed_boolean_t *)(weed_get_arrayx(plant, key, WEED_SEED_BOOLEAN, error, NULL));}
 
 int64_t *weed_get_int64_array_counted(weed_plant_t *plant, const char *key, int *count)
 {return (int64_t *)(weed_get_arrayx(plant, key, WEED_SEED_INT64, NULL, count));}
@@ -453,7 +453,7 @@ weed_error_t weed_set_uint_array(weed_plant_t *plant, const char *key, weed_size
 weed_error_t weed_set_double_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, double *values)
 {return weed_leaf_set(plant, key, WEED_SEED_DOUBLE, num_elems, (weed_voidptr_t)values);}
 
-weed_error_t weed_set_boolean_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, int32_t *values)
+weed_error_t weed_set_boolean_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_boolean_t *values)
 {return weed_leaf_set(plant, key, WEED_SEED_BOOLEAN, num_elems, (weed_voidptr_t)values);}
 
 weed_error_t weed_set_int64_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, int64_t *values)
@@ -556,9 +556,10 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
     case WEED_SEED_INT64: _COPY_DATA(int64_t, INT64, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_UINT: _COPY_DATA(uint32_t, UINT, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_UINT64: _COPY_DATA(uint64_t, UINT64, dst, src, keyt, keyf, n, err); break;
-    case WEED_SEED_BOOLEAN: _COPY_DATA(uint8_t, BOOLEAN, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_BOOLEAN: _COPY_DATA(weed_boolean_t, BOOLEAN, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_DOUBLE: _COPY_DATA(double, DOUBLE, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_FUNCPTR: _COPY_DATA(weed_funcptr_t, FUNCPTR, dst, src, keyt, keyf, n, err); break;
+    case WEED_SEED_CONST_CHARPTR:
     case WEED_SEED_VOIDPTR: _COPY_DATA(weed_voidptr_t, VOIDPTR, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_PLANTPTR: _COPY_DATA(weed_plantptr_t, PLANTPTR, dst, src, keyt, keyf, n, err); break;
 

@@ -346,7 +346,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
   msg = get_nth_info_message(n);
   if (!msg) return NULL;
-  newtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
+  newtext = lives_strdup(weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
   if (error != WEED_SUCCESS) return NULL;
   if (!newtext) return NULL;
   slen = (int)lives_strlen(newtext);
@@ -364,13 +364,14 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   }
 
 #ifdef DEBUG_MSGS
-  g_print("Want msg number %d at bottom\n%s", n, weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error));
+  g_print("Want msg number %d at bottom\n%s", n,
+          weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
 #endif
 
   while (1) {
     if (!newtext) {
       if (!msg) break;
-      newtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
+      newtext = lives_strdup(weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
       if (error != WEED_SUCCESS) break;
       if (!newtext) break;
       totlines += get_token_count(newtext, '\n');
@@ -674,6 +675,8 @@ LingoLayout *render_text_to_cr(LiVESWidget * widget, lives_painter_t *cr, const 
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const char *text, double scaling) {
+  // call render_text_to_layer
+  //
   if (!text) return layer;
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
@@ -722,8 +725,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
                                    lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
-  // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
-
+  //
   lives_painter_t *cr = NULL;
   LingoLayout *layout;
 
@@ -748,23 +750,22 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     int opsize = pixel_size(ppal);
 
     // test first to get the layout coords; we just copy a tiny slice of the pixel data
+    // take a slice 4 pixels high
     gamma = weed_layer_get_gamma(layer);
 
     lheight = height;
     weed_layer_set_height(layer, 4);
 
-    // make a copy of part of layer
+    // make a copy of the layer slice
     test_layer = weed_layer_copy(NULL, layer);
 
-    if (ipsize == opsize) {
-      weed_layer_set_palette(test_layer, ppal);
-    } else {
-      if (consider_swapping(&pal, &ppal)) {
-        if (ppal == oppal) {
-          weed_layer_set_palette(test_layer, pal);
-        } else ppal = oppal;
-        pal = opal;
-      }
+    // we dont care about the palette here, because we are not going to actually render anything yet
+    if (ipsize == opsize) weed_layer_set_palette(test_layer, ppal);
+    else if (consider_swapping(&pal, &ppal)) {
+      if (ppal == oppal) {
+        weed_layer_set_palette(test_layer, pal);
+      } else ppal = oppal;
+      pal = opal;
     }
 
     weed_layer_set_height(layer, height);
@@ -778,6 +779,9 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     lives_painter_destroy(cr);
     lives_painter_surface_t *surface = lives_painter_get_target(cr);
     lives_painter_surface_destroy(surface);
+
+    // we now have the layout, we can find its height, and we will just take the part of the layer it covers
+    // convert that slice, render the layout, then convert back
 
     /// if possible just render the slice which contains the text
     // temporarily set the layer pixel_data and height to the slice, then copy it,
@@ -818,8 +822,11 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
         }
       }
 
+      // create a lives painter surface from layer_slice
+      //
       cr = layer_to_lives_painter(layer_slice);
       weed_layer_pixel_data_free(layer_slice);
+      //
 
 #ifdef LIVES_PAINTER_IS_CAIRO
       // set antialiasing for text, depending on the current quality setting
@@ -881,8 +888,8 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       if (layout) lives_widget_object_unref(layout);
     }
     lives_painter_to_layer(layer, cr);
-      lives_painter_surface_t *surface = lives_painter_get_target(cr);
-      lives_painter_surface_destroy(surface);
+    lives_painter_surface_t *surface = lives_painter_get_target(cr);
+    lives_painter_surface_destroy(surface);
   }
   if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
   return layer;

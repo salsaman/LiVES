@@ -17,7 +17,7 @@
 // - should result in 1.0 - 0.1 second delay
 #define MISS_PRIO_THRESH 100000
 // nanosec to wait in loops - a value of about 500 seems to be optimal
-#define NSLEEP_TIME 5000
+#define NSLEEP_TIME 500000
 // how much longer to wait in low prio mode, multilpier (sLo_FACTOR + 1)
 // gui_tight mode
 #define sLO_FACTOR 8
@@ -381,14 +381,16 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_widget_object(LiVE
 //lives_painter functions
 
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_painter_surface_set_user_data(lives_painter_surface_t *surf, const painter_data_key *dkey, void *data,
-				 lives_painter_destroy_func_t destroy_fn) {
+WIDGET_HELPER_GLOBAL_INLINE void lives_painter_surface_set_user_data(lives_painter_surface_t *surf,
+    const painter_data_key * dkey, void *data,
+    lives_painter_destroy_func_t destroy_fn) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_set_user_data(surf, dkey, data, destroy_fn);
 #endif
 }
 
-WIDGET_HELPER_GLOBAL_INLINE void *lives_painter_surface_get_user_data(lives_painter_surface_t *surf, const painter_data_key *dkey) {
+WIDGET_HELPER_GLOBAL_INLINE void *lives_painter_surface_get_user_data(lives_painter_surface_t *surf,
+    const painter_data_key * dkey) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   return cairo_surface_get_user_data(surf, dkey);
 #endif
@@ -544,7 +546,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_
   // to RGB(A) or whatever. We also have sRGB gamme. Which may need converting.
   // when the attached layer frees its pixel_data, it will already be nullified, so it will simply remove the link from
   // surface to layer, free the layer, and unref the surface.
-  
+
   // if we convert surface to layer, and a shallow copy i wanted, we check if layer target is the linked layer. If so
   // we set we unref the surface, performing the op above and then unref surface once more when layer pixel data is freed.
 
@@ -1036,18 +1038,20 @@ boolean fg_service_fulfill(void) {
 
   lptr = lpttorun;
 
-  if (lptr && lives_proc_thread_ref(lptr) > 1) {
-    if (mainw->debug) {
-      char *fcall = lives_proc_thread_show_func_call(lptr);
-      g_print("fulfill %s\n", fcall);
-      lives_free(fcall);
-      //mainw->debug_ptr = lptr;
-    }
-    if (!lives_proc_thread_is_queued(lptr)) {
-      lives_proc_thread_unref(lptr);
-      lptr = NULL;
-    }
-  } else lptr = NULL;
+  if (lptr) {
+    if (lives_proc_thread_ref(lptr) > 1) {
+      if (mainw->debug) {
+        char *fcall = lives_proc_thread_show_func_call(lptr);
+        g_print("fulfill %s\n", fcall);
+        lives_free(fcall);
+        //mainw->debug_ptr = lptr;
+      }
+      if (!lives_proc_thread_is_queued(lptr)) {
+        lives_proc_thread_unref(lptr);
+        lptr = NULL;
+      }
+    } else lptr = NULL;
+  }
 
   if (!lptr || lives_proc_thread_is_running(lptr)
       || lives_proc_thread_is_done(lptr, FALSE)) {
@@ -1085,6 +1089,8 @@ boolean fg_service_fulfill(void) {
     if (lpttorun == lptr) lpttorun = NULL;
     pthread_mutex_unlock(&lpt_mutex);
   }
+
+  //
 
   lives_proc_thread_unref(lptr);
   return TRUE;
@@ -1166,8 +1172,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
           && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
         lives_widget_context_iteration(NULL, FALSE);
-	lives_microsleep;
-	pthread_yield();
+        pthread_yield();
       }
       if (prio != PRIO_HIGH) {
         lives_source_set_priority(fg_service_source, cprio);
@@ -1183,6 +1188,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
           prio = cprio;
         }
       }
+
     if (!gui_loop_tight) break;
 
     if (mainw->do_ctx_update) {
@@ -1192,14 +1198,16 @@ boolean fg_service_fulfill_cb(void *dummy) {
       pthread_yield();
       lives_microsleep;
     } else {
+      //
       lives_nanosleep(NSLEEP_TIME);
+      //
       if (cprio == PRIO_LOW) {
         for (int i = 0; i < sLO_FACTOR; i++) {
           if (cprio != PRIO_LOW) break;
           pthread_yield();
           lives_nanosleep(NSLEEP_TIME);
         }
-	// servicing modal windows
+        // servicing modal windows
         if (modalw) lives_widget_context_iteration(NULL, FALSE);
       }
     }
@@ -1225,11 +1233,11 @@ boolean fg_service_fulfill_cb(void *dummy) {
       // idling for some time will switch to low,
       // activity, or request by bg threadd will kick back up to high
       if (!lpttorun) {
-	// skip if this if we a have a direct service to run
+        // skip if this if we a have a direct service to run
         if (!mainw->go_away && mainw->is_ready) {
           lives_widget_context_iteration(NULL, FALSE);
-	  pthread_yield();
-	  lives_microsleep;
+          pthread_yield();
+          lives_microsleep;
         }
       }
     } else {
@@ -1604,7 +1612,7 @@ WIDGET_HELPER_LOCAL_INLINE void _lives_widget_set_sensitive(LiVESWidget * widget
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget * widget, boolean state) {
 #ifdef GUI_GTK
   if (!LIVES_IS_WIDGET(widget)) break_me("non widget in set_sensitive");
-  if (1 || is_fg_thread()) _lives_widget_set_sensitive(widget, state);
+  if (is_fg_thread()) _lives_widget_set_sensitive(widget, state);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_set_sensitive, "vb", widget, state);
@@ -1807,17 +1815,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget * 
   if (mainw->mgeom) {
     if (!mainw->ignore_screen_size) {
       if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) {
-	char *msg = lives_strdup_printf("Widget size (%d X %d0 too large for display (%d X %d) (sr!i) !",
-					width, height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
-	lives_abort(msg);
-	lives_free(msg);
+        char *msg = lives_strdup_printf("Widget size (%d X %d0 too large for display (%d X %d) (sr!i) !",
+                                        width, height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+        lives_abort(msg);
+        lives_free(msg);
       }
     } else {
       if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT) {
-	char *msg = lives_strdup_printf("Widget size (%d X %d) too large for display (%d X %d) (sri) !",
-					width, height, GUI_SCREEN_PHYS_WIDTH, GUI_SCREEN_PHYS_HEIGHT);
-	lives_abort(msg);
-	lives_free(msg);
+        char *msg = lives_strdup_printf("Widget size (%d X %d) too large for display (%d X %d) (sri) !",
+                                        width, height, GUI_SCREEN_PHYS_WIDTH, GUI_SCREEN_PHYS_HEIGHT);
+        lives_abort(msg);
+        lives_free(msg);
       }
     }
   }
@@ -2034,7 +2042,7 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
     // TODO - only if focused / visible
     lives_widget_context_iteration(NULL, FALSE);
     pthread_yield();
-    if (mainw->def_lpt) lives_proc_thread_wait(mainw->def_lpt, 1000);
+    lives_millisleep;
     resp = GET_INT_DATA(dialog, RESPONSE_KEY);
   } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
 

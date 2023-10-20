@@ -2745,7 +2745,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     // this will cause the widget to be redrawn with the image blank pixbuf
     defer_config(mainw->start_image);
     defer_config(mainw->end_image);
-    g_print("a11\n");
+
     threaded_dialog_spin(0.);
 
     if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
@@ -2785,7 +2785,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       boolean crash_recovery = prefs->crash_recovery;
       LiVESResponseType resp;
       // set to be opened
-      g_print("a121\n");
 
       buff[lives_strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
       do {
@@ -2839,7 +2838,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         continue;
       }
       lives_free(ignore);
-      g_print("a1155\n");
       ;
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
@@ -2874,7 +2872,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         d_print_failed();
         break;
       }
-      g_print("a16661\n");
 
       if (is_scrap || is_ascrap) {
         // need this for rewrite recovery
@@ -2918,7 +2915,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (mainw->current_file < 1) continue;
       if (is_ascrap) continue;
-      g_print("a11444\n");
 
       use_decoder = should_use_decoder(mainw->current_file);
       maxframe = load_frame_index(mainw->current_file);
@@ -2970,7 +2966,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       }
     }
-    g_print("a110000000\n");
 
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
@@ -3015,11 +3010,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       save_clip_values(mainw->current_file);
       cfile->needs_silent_update = cfile->needs_update = FALSE;
     }
-    g_print("a11kkkkk\n");
 
     // add to clip menu
     threaded_dialog_spin(0.);
-    g_print("a11lllllll\n");
 
     add_to_clipmenu();
 
@@ -3030,9 +3023,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
 
-    g_print("a11lllllllzzz\n");
     if (!mainw->multitrack) resize(1);
-    g_print("a11lllllllttt\n");
 
     if (!mainw->multitrack) {
       lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);

@@ -1204,7 +1204,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
     if (sfile->pumper) {
       if (mainw->effects_paused || mainw->preview) {
         lives_sleep_while_true((mainw->effects_paused || mainw->preview)
-                                   && !lives_proc_thread_get_cancel_requested(sfile->pumper));
+                               && !lives_proc_thread_get_cancel_requested(sfile->pumper));
       }
       if (lives_proc_thread_get_cancel_requested(self)) break;
     }

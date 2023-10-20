@@ -2900,7 +2900,7 @@ void **filter_init_add_pchanges(weed_event_list_t *event_list, weed_plant_t *pla
 
     if (weed_param_value_irrelevant(in_param))
       lives_leaf_copy((weed_plant_t *)pchain[i], WEED_LEAF_VALUE,
-                     weed_param_get_template(in_param), WEED_LEAF_DEFAULT);
+                      weed_param_get_template(in_param), WEED_LEAF_DEFAULT);
     else lives_leaf_dup((weed_plant_t *)pchain[i], in_param, WEED_LEAF_VALUE);
 
     weed_set_int_value((weed_plant_t *)pchain[i], WEED_LEAF_INDEX, i);

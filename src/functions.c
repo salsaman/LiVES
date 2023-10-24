@@ -245,23 +245,20 @@ LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname,
   /* g_printerr("Thread 0x%lx in func %s at %s, line %d\n", */
   /*            THREADVAR(uid), funcname, file_ref, line_ref); */
 
-  lives_sync_list_push(THREADVAR(func_stack),
-                       (void *)lives_strdup(funcname));
-
+  lives_sync_list_push(THREADVAR(func_stack), (void *)lives_strdup(funcname));
   add_quick_fn(func, funcname);
   /* add_fn_lookup(func, funcname, cat, rettype, args_fmt, file_ref, line_ref); */
 }
 
 
 LIVES_GLOBAL_INLINE void _func_exit(char *file_ref, int line_ref) {
-  char *fname = (char *)lives_sync_list_pop(THREADVAR(func_stack));
+  char *fname = (char *)lives_sync_list_pop(&THREADVAR(func_stack));
   lives_free(fname);
 }
 
 
-
 LIVES_GLOBAL_INLINE void _func_exit_val(weed_plant_t *pl, char *file_ref, int line_ref) {
-  char *fname = (char *)lives_sync_list_pop(THREADVAR(func_stack));
+  char *fname = (char *)lives_sync_list_pop(&THREADVAR(func_stack));
   lives_free(fname);
   /* LiVESList *list = THREADVAR(func_stack); */
   /* g_print("Thread 0x%lx exiting func %s @ line %d, %s\n", THREADVAR(uid), */

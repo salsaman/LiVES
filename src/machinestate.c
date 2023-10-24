@@ -102,24 +102,22 @@ static void get_cpuinfo(void) {
   lives_free(vendstr);
 
   cpuid(0x00000001, regs);
-  capable->hw.cacheline_size = ((regs[1] >> 8) & 0xFF) << 3;
+  capable->hw.cacheline_size = ((LIVES_REG_EBX >> 8) & 0xFF) << 3;
 
-  if (regs[2] & (1 << 27)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE;
-  if (regs[3] & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE2;
-  if (regs[2] & (1 << 28)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX;
-  if (regs[2] & (1 << 12)) capable->hw.cpu_features |= CPU_FEATURE_HAS_FMA;
-  if (regs[2] & (1 << 16)) capable->hw.cpu_features |= CPU_FEATURE_HAS_F16C;
-  if (regs[2] & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX2;
-  if (regs[2] & (1 << 28) && regs[2] & (1 << 27) && regs[2] & (1 << 26))
+  if (LIVES_REG_ECX & (1 << 27)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE;
+  if (LIVES_REG_EDX & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE2;
+  if (LIVES_REG_ECX & (1 << 28)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX;
+  if (LIVES_REG_ECX & (1 << 12)) capable->hw.cpu_features |= CPU_FEATURE_HAS_FMA;
+  if (LIVES_REG_ECX & (1 << 16)) capable->hw.cpu_features |= CPU_FEATURE_HAS_F16C;
+  if (LIVES_REG_ECX & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX2;
+  if (LIVES_REG_ECX & (1 << 28) && LIVES_REG_ECX & (1 << 27) && LIVES_REG_ECX & (1 << 26))
     capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512;
 
-  regs[0] = 4;
-  if (capable->hw.cpu_type == CPU_TYPE_AMD)
-    cpuid(0x8000001D, regs);
-  else
-    cpuid(0x00000000, regs);
-  capable->hw.cache_size = (get_bits32(regs[1], 31, 22) + 1) * (get_bits32(regs[1], 21, 12) + 1)
-                           * (get_bits32(regs[1], 11, 0) + 1) * (regs[2] + 1);
+  LIVES_REG_EAX = 4;
+  if (capable->hw.cpu_type == CPU_TYPE_AMD) cpuid(0x8000001D, regs);
+  else cpuid(0x00000000, regs);
+  capable->hw.cache_size = (get_bits32(LIVES_REG_EBX, 31, 22) + 1) * (get_bits32(LIVES_REG_EBX, 21, 12) + 1)
+                           * (get_bits32(LIVES_REG_EBX, 11, 0) + 1) * (LIVES_REG_ECX + 1);
 }
 
 #else
@@ -146,7 +144,7 @@ LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fas
 
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
 
-static boolean rng32 = FALSE;
+static boolean force_rng64 = FALSE;
 static int strikes = 0;
 
 
@@ -157,6 +155,11 @@ static void badrand(uint64_t last_rnum, uint64_t rnum) {
 
 static uint64_t nrcalls = 0;
 
+#if HAVE_GETENTROPY
+static boolean use_getentropy_raw = FALSE;
+static boolean use_getentropy_cooked = FALSE;
+#endif
+
 #define RNG_MINDIFF BILLIONS(1)
 // the random range is approximately 18 quintillion. The probability
 // of getting two sequential numbers with delta < 1 billion is thus 1 in a 18 billion
@@ -165,14 +168,27 @@ static uint64_t nrcalls = 0;
 // p twice would be about 1 / 1 million
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   static uint64_t last_rnum = 0;
-  uint64_t rnum = random();
+  uint64_t rnum;
+
+#if HAVE_GETENTROPY
+  uint64_t rnum1, rnum2;
+  if (!use_getentropy_cooked || getentropy(&rnum, 4))
+#endif
+    rnum = random();
+
   nrcalls++;
-  while (rng32) {
-    rnum = (rnum << 22) ^ (random() << 39) ^ random();
+
+  while (force_rng64) {
+#if HAVE_GETENTROPY
+    if (use_getentropy_cooked && !getentropy(&rnum1, 4) && !getentropy(&rnum2, 4))
+      rnum = (rnum << 22) ^ (rnum1 << 39) ^ rnum2;
+    else
+#endif
+      rnum = (rnum << 22) ^ (random() << 39) ^ random();
     nrcalls += 2;
-    if (labs(rnum - last_rnum) < RNG_MINDIFF) {
-      if (++strikes > 2) badrand(last_rnum, rnum);
-    } else break;
+    if (labs(rnum - last_rnum) > RNG_MINDIFF) break;
+
+    if (++strikes > 2) badrand(last_rnum, rnum);
     rnum = random();
   }
 
@@ -193,16 +209,13 @@ void lives_get_randbytes(void *ptr, size_t size) {
   }
 }
 
-#if HAVE_GETENTROPY
-static boolean use_getentropy = FALSE;
-#endif
 
 uint64_t gen_unique_id(void) {
   uint64_t rnum;
   int randres = 1;
 
 #if HAVE_GETENTROPY
-  if (use_getentropy) randres = getentropy(&rnum, 8);
+  if (use_getentropy_raw) randres = getentropy(&rnum, 8);
 #endif
 
   if (randres) {
@@ -221,73 +234,107 @@ uint64_t gen_unique_id(void) {
 static void check_random(void) {
   // check first with default method
   char *tmp;
-  int rbits, xrbits;
-  double qual, xqual;
-  boolean need_rng32 = FALSE, rng_ok = FALSE;
+  int rbits1, rbits2, rbits3, rbits4, best = 1;
+  int maxbits;
+  double qual, maxqual;
 
-  rbits = benchmark_rng(NR_TESTS, lives_random, &qual);
-  if (rbits < RB_THRESH) {
+  prefs->msg_routing |= MSG_ROUTE_STDERR;
+
+  rbits1 = benchmark_rng(NR_TESTS, lives_random, &qual);
+  maxqual = qual;
+  maxbits = rbits1;
+  if (rbits1 < RB_THRESH) {
     tmp = lives_strdup_printf(_("Randomness of %d bits is TOO LOW for generating unique IDs\n"
                                 "Will attempt to increase random bits to at least %d\n"),
-                              rbits, RB_THRESH);
-    d_print(tmp);
-    lives_free(tmp);
-    need_rng32 = TRUE;
-    qual = 0.;
+                              rbits1, RB_THRESH);
   } else {
-    rng_ok = TRUE;
-    tmp = lives_strdup_printf("RNG quality is %f, checking if we can improve on this\n", qual);
-    d_print(tmp);
-    lives_free(tmp);
+    tmp = lives_strdup_printf("RNG quality is %f, bits == %d,"
+                              "checking if we can improve on this\n", qual, rbits1);
   }
 
-  rng32 = TRUE;
-
-  // use an alternate strategy to try to increase randomnees
-  rbits = benchmark_rng(NR_TESTS, gen_unique_id, &xqual);
-
-  if (rng_ok) {
-    if (xqual > qual) {
-      qual = xqual;
-      if (!need_rng32) {
-        tmp = lives_strdup_printf("RNG quality is now %f, this is better\n", qual);
-        d_print(tmp);
-        lives_free(tmp);
-        need_rng32 = TRUE;
-      }
-      if (!need_rng32) rng32 = FALSE;
-    }
-  } else if (rbits >= RB_THRESH) {
-    rng_ok = TRUE;
-    qual = xqual;
-  }
-
-#if HAVE_GETENTROPY
-  if (rng_ok)
-    tmp = lives_strdup_printf("Compare quality with getentropy\n");
-  else
-    tmp = lives_strdup_printf("Randomness still too low, trying  with getentropy\n");
   d_print(tmp);
   lives_free(tmp);
 
-  use_getentropy = TRUE;
-  xrbits = benchmark_rng(NR_TESTS, gen_unique_id, &xqual);
+  // use an alternate strategy to try to increase randomnees
+  force_rng64 = TRUE;
 
-  if (xrbits >= RB_THRESH) {
-    if (rng_ok) {
-      if (xrbits < rbits || (xrbits == rbits && xqual < qual)) {
-        tmp = lives_strdup_printf("Quality %f is worse ! Sticking with alt methods\n", xqual);
-        use_getentropy = FALSE;
-      } else {
-        tmp = lives_strdup_printf("Quality %f is better, using getentropy.\n", xqual);
-      }
+  rbits2 = benchmark_rng(NR_TESTS, gen_unique_id, &qual);
+
+  if (rbits2 > maxbits || (rbits2 == maxbits && qual > maxqual)) {
+    best = 2;
+    maxbits = rbits2;
+    maxqual = qual;
+    tmp = lives_strdup_printf("RNG bits increased to %d\n", rbits2);
+    d_print(tmp);
+    lives_free(tmp);
+    if (qual > maxqual) {
+      maxqual = qual;
+      tmp = lives_strdup_printf("RNG quality is now %f, this is better\n", qual);
       d_print(tmp);
       lives_free(tmp);
-    } else rng_ok = TRUE;
+    }
   }
 
+#if HAVE_GETENTROPY
+  if (maxbits > RB_THRESH)
+    tmp = lives_strdup_printf("Compare quality with getentropy\n");
+  else
+    tmp = lives_strdup_printf("Randomness still too low, trying  with getentropy\n");
+
+  d_print(tmp);
+  lives_free(tmp);
+
+  use_getentropy_raw = TRUE;
+  rbits3 = benchmark_rng(NR_TESTS, gen_unique_id, &qual);
+
+  if (rbits3 < maxbits || (rbits3 == maxbits && qual < maxqual)) {
+    tmp = lives_strdup_printf("Quality %f is worse ! Sticking with alt methods\n", qual);
+  } else {
+    maxbits = rbits3;
+    maxqual = qual;
+    best = 3;
+    tmp = lives_strdup_printf("Quality %f is better, using getentropy.\n", qual);
+  }
+
+  d_print(tmp);
+  lives_free(tmp);
+
+  d_print("Testing hybrid method\n");
+
+  use_getentropy_raw = FALSE;
+  use_getentropy_cooked = TRUE;
+  rbits4 = benchmark_rng(NR_TESTS, gen_unique_id, &qual);
+
+  if (rbits4 < maxbits || (rbits4 == maxbits && qual < maxqual)) {
+    tmp = lives_strdup_printf("Hybrid is worse, qual == %f, bits == %d, disabling hybrid\n", qual, rbits4);
+  } else {
+    maxbits = rbits4;
+    maxqual = qual;
+    best = 4;
+    tmp = lives_strdup_printf("Hybrid is better, qual == %f, enabling hybrid\n", qual);
+  }
+
+  d_print(tmp);
+  lives_free(tmp);
+
+  use_getentropy_raw = FALSE;
+  use_getentropy_cooked = FALSE;
+
+  if (best == 3) use_getentropy_raw = TRUE;
+  if (best == 4) use_getentropy_cooked = TRUE;
 #endif
-  //if (rbits < RB_THRESH) badrand(rbits, RB_THRESH);
+
+  if (maxbits < RB_THRESH) badrand(maxbits, RB_THRESH);
+
+  if (best == 1) force_rng64 = FALSE;
+
+  if (best > 1) {
+    tmp = lives_strdup_printf("Randomness increased to %d bits\n", maxbits);
+    d_print(tmp);
+    lives_free(tmp);
+  }
+
+  MSGMODE_OFF(STDERR);
 }
 
 

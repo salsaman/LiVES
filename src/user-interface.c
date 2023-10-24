@@ -155,6 +155,26 @@ void sensitize_rfx(void) {
 }
 
 
+void player_desensitize(void) {
+  lives_widget_set_sensitive(mainw->rte_defs_menu, FALSE);
+  lives_widget_set_sensitive(mainw->utilities_submenu, FALSE);
+  if (!mainw->helper_procthreads[PT_LAZY_RFX] && !prefs->vj_mode)
+    lives_widget_set_sensitive(mainw->rfx_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->import_theme, FALSE);
+  lives_widget_set_sensitive(mainw->export_theme, FALSE);
+}
+
+
+void player_sensitize(void) {
+  lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
+  lives_widget_set_sensitive(mainw->utilities_submenu, TRUE);
+  if (!mainw->helper_procthreads[PT_LAZY_RFX] && !prefs->vj_mode)
+    lives_widget_set_sensitive(mainw->rfx_submenu, TRUE);
+  lives_widget_set_sensitive(mainw->import_theme, TRUE);
+  lives_widget_set_sensitive(mainw->export_theme, TRUE);
+}
+
+
 void sensitize(void) {
   // sensitize main window controls
   // READY MODE
@@ -749,11 +769,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
   if (!weed_layer_check_valid(layer)) return;
 
-  g_print("layer %p has ", layer);
-  lives_sync_list_t *copylist = lives_layer_get_copylist(layer);
-  if (copylist) g_print("copylist %p\n", copylist);
-  else g_print("no copylist\n");
-
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
   g_print("CONV layer %p to pixbuf %p\n", layer, pixbuf);
 
@@ -771,7 +786,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
     g_print("DRAW LAYER\n");
 
     set_drawing_area_from_pixbuf(darea, pixbuf);
-
     lives_widget_object_unref(pixbuf);
 
     g_print("unref of pb %p, should still have 1 ref\n", pixbuf);
@@ -786,6 +800,100 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
 
 // UI sizing functions ////
+
+void get_player_size(int *opwidth, int *opheight) {
+  // calc output size for display
+
+  ///// external playback plugin
+  if (mainw->ext_playback) {
+    // playback plugin (therefore fullscreen / separate window)
+    if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+      if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
+        // plugin can resize, max is the screen size
+        get_play_screen_size(opwidth, opheight);
+      } else {
+        // ext plugin can't resize, use its fixed size
+        *opwidth = mainw->vpp->fwidth;
+        *opheight = mainw->vpp->fheight;
+      }
+    } else {
+      // remote display
+      if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+        // cant resize, we use the width it gave us if it can't resize
+        *opwidth = mainw->vpp->fwidth;
+        *opheight = mainw->vpp->fheight;
+      } else {
+        // else the clip size
+        *opwidth = cfile->hsize;
+        *opheight = cfile->vsize;
+      }
+    }
+    goto align;
+  }
+
+  if (lives_get_status() != LIVES_STATUS_RENDERING && mainw->play_window
+      && LIVES_IS_WIDGET(mainw->preview_image)) {
+    int rwidth, rheight;
+
+    // playback in separate window
+    // use values set in resize_play_window
+
+    /* *opwidth = rwidth = lives_widget_get_allocation_width(mainw->preview_image);// - H_RESIZE_ADJUST; */
+    /* *opheight = rheight = lives_widget_get_allocation_height(mainw->preview_image);// - V_RESIZE_ADJUST; */
+
+    *opwidth = rwidth =  mainw->pwidth;
+    *opheight = rheight = mainw->pheight;
+
+    if (mainw->multitrack && prefs->letterbox_mt) {
+      rwidth = *opwidth;
+      rheight = *opheight;
+      *opwidth = cfile->hsize;
+      *opheight = cfile->vsize;
+      calc_maxspect(rwidth, rheight, opwidth, opheight);
+    }
+    goto align;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // multitrack: we ignore double size, and fullscreen unless playing in the separate window
+  if (mainw->multitrack) {
+    *opwidth = mainw->multitrack->play_width;
+    *opheight = mainw->multitrack->play_height;
+    goto align;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  // clip edit mode
+  if (lives_get_status() == LIVES_STATUS_RENDERING) {
+    *opwidth = cfile->hsize;
+    *opheight = cfile->vsize;
+    *opwidth = (*opwidth >> 2) << 2;
+    *opheight = (*opheight >> 1) << 1;
+    mainw->pwidth = *opwidth;
+    mainw->pheight = *opheight;
+    return;
+  }
+
+  if (!mainw->fs) {
+    // embedded player
+    *opwidth = mainw->pwidth;
+    *opheight = mainw->pheight;
+
+    *opwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
+    *opheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
+  }
+  if (*opwidth * *opheight < 16) {
+    *opwidth = mainw->ce_frame_width;
+    *opheight = mainw->ce_frame_height;
+  }
+
+align:
+  *opwidth = (*opwidth >> 3) << 3;
+  *opheight = (*opheight >> 1) << 1;
+  mainw->pwidth = *opwidth;
+  mainw->pheight = *opheight;
+}
+
 
 void reset_mainwin_size(void) {
   int w, h, x, y, bx, by;

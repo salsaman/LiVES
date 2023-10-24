@@ -394,7 +394,7 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
   lives_obj_attr_t **attrs;
   char *aname;
   int count = 0;
-  uint32_t st;
+  //uint32_t st;
 
   // intents - update - set with new vals, no delete
   // replace - delete old add new
@@ -415,7 +415,7 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
     }
     if (!attr) break;
 
-    st = lives_attr_get_value_type(attr);
+    //st = lives_attr_get_value_type(attr);
     if (intent != OBJ_INTENTION_REPLACE) {
       xattr  = lives_object_get_attribute(dicto, aname);
       if (xattr) lives_object_attribute_unref(dicto, xattr);

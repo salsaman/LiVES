@@ -1422,7 +1422,7 @@ reload:
     if ((mode = weed_add_effectkey(key, whashname, TRUE)) == -1) {
       // could not locate effect
       if (!prefs->startup_phase) {
-        d_print((tmp = lives_strdup_printf(_("Unknown effect %s in\n%s\n"), whashname, keymap_file)));
+        d_print((tmp = lives_strdup_printf(_("\nUnknown effect %s in\n%s\n"), whashname, keymap_file)));
         LIVES_WARN(tmp);
         lives_free(tmp);
       }
@@ -1441,7 +1441,7 @@ reload:
 
     if (mode == -2) {
       d_print((tmp = lives_strdup_printf
-                     (_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"), key)));
+                     (_("\nThis version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"), key)));
       LIVES_ERROR(tmp);
       lives_free(tmp);
       badkeymap[key - 1][def_modes[key - 1]]++;
@@ -1458,7 +1458,7 @@ reload:
 
     if (mode == -3) {
       if (max_modes[key - 1] > maxmode) maxmode = max_modes[key - 1];;
-      d_print((tmp = lives_strdup_printf(_("Too many effects bound to key %d.\n"), key)));
+      d_print((tmp = lives_strdup_printf(_("\nToo many effects bound to key %d.\n"), key)));
       LIVES_ERROR(tmp);
       lives_free(tmp);
       if (keymap_file2) {

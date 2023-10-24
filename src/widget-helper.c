@@ -419,9 +419,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painte
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source(lives_painter_t *cr, lives_painter_surface_t *surface) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_set_source_surface(cr, surface, 0., 0.);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives_painter_surface_t *surface,
-    double x,
-    double y) {
+    double x, double y) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_source_surface(cr, surface, x, y);
   return TRUE;
@@ -472,6 +480,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
+  lives_painter_surface_t *surf = lives_painter_get_target(cr);
+  if (surf) lives_painter_surface_check(surf, 2);
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_destroy(cr);
   return TRUE;
@@ -533,33 +543,10 @@ WIDGET_HELPER_LOCAL_INLINE void lives_painter_lozenge(lives_painter_t *cr, doubl
   lives_painter_line_to(cr, rad + offs_x, offs_y);
 }
 
-
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
+  lives_painter_surface_check(surf, 1);
 #ifdef LIVES_PAINTER_IS_CAIRO
-  // if we get down to 1 reference, check if the uurface has a proxy layer
-  // if so, this means - the surface was created from a layer, the uer_data was et at that time
-  // now the surface has been dereferenced and should normally be detroyed.
-  // However, if the layer link  still exists, thi means its pixdata has not been freed.
-  // We will finish() the surface, but not reduce the refcount yet.
-  // We will set layer pixel_data back to the data value (it would havebeen set to NULL to prevent copying)
-  // then we will  unpremultilpy alpha and end up with a layer in ARGB32. On return, caller canc convert palette back
-  // to RGB(A) or whatever. We also have sRGB gamme. Which may need converting.
-  // when the attached layer frees its pixel_data, it will already be nullified, so it will simply remove the link from
-  // surface to layer, free the layer, and unref the surface.
-
-  // if we convert surface to layer, and a shallow copy i wanted, we check if layer target is the linked layer. If so
-  // we set we unref the surface, performing the op above and then unref surface once more when layer pixel data is freed.
-
-  // other things - layer to surface  -> ref surface -> surface to layer, surace unref, but count is > 1
-  // we need to copy pixel data for layer, unref surface, remove link between layer and surface
-  //
-  // what if we unref surface, but dont want it back in layer ? then simply nullify pixdata in layer first, even though it
-  // i NULL, it still has SURFACE_SRC set. nullifying will remove tha link and unref surface.
-  // refcount can go to 1, but ther will be no link any more.
-
-  // if we have an attached layer, do not free yet; hold at 1 ref
-  if (lives_painter_surface_check(surf)) lives_painter_surface_flush(surf);
-  else cairo_surface_destroy(surf);
+  cairo_surface_destroy(surf);
   return TRUE;
 #endif
   return FALSE;
@@ -663,7 +650,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_operator(lives_painter_t *
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
   // r,g,b values 0.0 -> 1.0
 #ifdef LIVES_PAINTER_IS_CAIRO
-  cairo_set_source_rgb(cr, red, green, blue);
+  boolean rb_swapped = lives_painter_check_swapped(cr);
+  if (rb_swapped) cairo_set_source_rgb(cr, blue, green, red);
+  else cairo_set_source_rgb(cr, red, green, blue);
   return TRUE;
 #endif
   return FALSE;
@@ -674,7 +663,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_
     double alpha) {
   // r,g,b,a values 0.0 -> 1.0
 #ifdef LIVES_PAINTER_IS_CAIRO
-  cairo_set_source_rgba(cr, red, green, blue, alpha);
+  boolean rb_swapped = lives_painter_check_swapped(cr);
+  if (rb_swapped) cairo_set_source_rgba(cr, blue, green, red, alpha);
+  else cairo_set_source_rgba(cr, red, green, blue, alpha);
   return TRUE;
 #endif
   return FALSE;
@@ -684,6 +675,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_fill_rule(cr, fill_rule);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_finish(lives_painter_surface_t *surf) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_surface_finish(surf);
   return TRUE;
 #endif
   return FALSE;
@@ -1252,8 +1252,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
 
 boolean fg_service_ready_cb(void *dummy) {
-  g_printerr("OK\n");
-  g_printerr("GUI thread active, providing service for all other threads\n");
+  d_print("GUI thread active, providing service for all other threads\n\n");
   fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
   return FALSE;
 }

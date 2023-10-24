@@ -900,7 +900,7 @@ static boolean pre_init(void) {
 
   ////
 
-  d_print("Activating message subsytem:\n");
+  d_print("Activating message subsytem...");
 
   prefs->max_messages = get_int_prefd(PREF_MAX_MSGS, DEF_MAX_MSGS);
   if (prefs->max_messages < mainw->n_messages + 1) {
@@ -915,8 +915,6 @@ static boolean pre_init(void) {
   // will push message to top then all cached messages are appended
 
   add_message_first(_("Starting...\n"));
-
-  // msg routing now in STORE mode
 
   //////////////////////////////////
 
@@ -1788,7 +1786,9 @@ static boolean lives_startup2(livespointer data) {
   if (prefs->startup_phase == 100) prefs->startup_phase = 0;
 
   if (prefs->show_gui) {
-    prefs->msg_routing &= ~MSG_ROUTE_FANCY;
+    MSGMODE_SAVE;
+    MSGMODE_OFF(FANCY);
+
     if (mainw->current_file > -1 && !mainw->multitrack) {
       switch_clip(1, mainw->current_file, TRUE);
 #ifdef ENABLE_GIW
@@ -1816,14 +1816,16 @@ static boolean lives_startup2(livespointer data) {
   d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
   lives_free(ustr);
 
-  prefs->msg_routing |= MSG_ROUTE_FANCY;
+  MSGMODE_RESTORE;
   d_print("");
 
-  if (prefs->msg_routing & MSG_ROUTE_DEBUG_LOG) {
+  if (MSGMODE_HAS(DEBUG_LOG)) {
     close_logfile(mainw->debug_log);
     mainw->debug_log = NULL;
-    prefs->msg_routing &= ~MSG_ROUTE_DEBUG_LOG;
+    MSGMODE_OFF(DEBUG_LOG);
   }
+
+  MSGMODE_OFF(STDERR);
 
   if (mainw->multitrack) {
     lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
@@ -1956,6 +1958,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
 
+  MSGMODE_SET(INIT);
+
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 8;
 #else
@@ -1965,7 +1969,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
   get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX);
 
-  d_print("Getting phase 1 hardware details...");
+  d_print("Getting first stage hardware details...");
   get_machine_dets(0);
   d_print("OK\n");
 
@@ -1982,15 +1986,11 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   d_print("Initializing threadpool...");
   lives_threadpool_init();
-  g_printerr("OK\n");
+  d_print("OK\n");
 
-  g_printerr("Getting phase 2 hardware details...\n");
+  d_print("Getting second stage hardware details...");
   get_machine_dets(1);
-  g_printerr("OK\n");
-
-  g_printerr("Initializing RNG...");
-  init_random();
-  g_printerr("OK\n");
+  d_print("OK\n");
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
@@ -2011,13 +2011,19 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   lives_alarms_init();
-
   // unblock just for calling thread (main thread)
   thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);
 
-  g_printerr("Initializing colour engine...");
+  d_print("Testing lives sysalarms...");
+  d_print("pause for 1 microsecond...");
+  lives_sys_alarm_set_timeout(test_timeout, 1000);
+  lives_sys_alarm_wait(test_timeout);
+  lives_sys_alarm_disarm(test_timeout);
+  d_print("OK\n");
+
+  d_print("Setting up colour engine...");
   init_colour_engine();
-  g_printerr("OK\n");
+  d_print("OK\n");
 
   make_std_icaps();
 
@@ -2029,14 +2035,18 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   weed_plant_free(test_plant);
 
-  g_printerr("Initializing GUI helper...");
+  d_print("Readying GUI helper...");
   widget_helper_init();
-  g_printerr("OK\n");
+  d_print("OK\n");
 
 #ifdef WEED_WIDGETS
   widget_klasses_init(LIVES_TOOLKIT_GTK);
   //show_widgets_info();
 #endif
+
+  d_print("Analysing RNG...\n");
+  init_random();
+  d_print("\n");
 
   // non-localised name
   lives_set_prgname("LIVES");
@@ -2778,7 +2788,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   if (mainw->debug) {
     mainw->debug_log = open_logfile(NULL);
-    prefs->msg_routing |= MSG_ROUTE_DEBUG_LOG;
+    MSGMODE_SET(DEBUG_INIT);
   }
 
   // get capabilities and if OK set some initial prefs
@@ -2836,7 +2846,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifdef GUI_GTK
   if (!gtk_thread) {
-    g_printerr("Entering GUI mainloop...");
+    d_print("Main thread entering GUI mainloop\n\n\n");
     pthread_cleanup_push(pthread_cleanup_func, NULL);
     gtk_main();
     pthread_cleanup_pop(1);
@@ -4286,8 +4296,6 @@ double pick_custom_colours(double var, double timer) {
   boolean retried = FALSE, fixed = FALSE;
   int ncols = 0;
 
-  g_print("in PCC, self is %p, cf %p\n", self, mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-
   if (timer > 0.) fixed = TRUE;
   else timer = -timer;
 
@@ -4297,7 +4305,7 @@ double pick_custom_colours(double var, double timer) {
     lmin = .45; lmax = .6;
   }
 retry:
-  g_print("now zzzhere, %d\n", lives_proc_thread_get_cancel_requested(self));
+
   lpt_desc_state(self);
   ncr = palette->menu_and_bars.red * 255.;
   ncg = palette->menu_and_bars.green * 255.;

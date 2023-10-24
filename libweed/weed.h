@@ -68,9 +68,25 @@ extern "C"
 #define HAVE_WEED_BOOLEAN_T
   typedef int32_t weed_boolean_t;
 #endif
+  
+#if !defined(WEED_TRUE) || !defined(WEED_FALSE)
 
-#define WEED_TRUE	1
+#ifdef WEED_TRUE
+#undef WEED_TRUE
+#endif
+#ifdef WEED_FALSE
+#undef WEED_FALSE
+#endif
+
+#if defined(TRUE) && defined(FALSE)
+#define WEED_TRUE	TRUE
+#define WEED_FALSE	FALSE
+#else
 #define WEED_FALSE	0
+#define WEED_TRUE	(!WEED_FALSE)
+#endif
+
+#endif
 
 #define WEED_IS_TRUE(expression) ((expression) == WEED_TRUE)
 #define WEED_IS_FALSE(expression) ((expression) == WEED_FALSE)

@@ -58,11 +58,6 @@ int lives_unset_status(int status);
 boolean lives_has_status(int status);
 int lives_get_status(void);
 
-void get_player_size(int *opwidth, int *opheight);
-
-void player_desensitize(void);
-void player_sensitize(void);
-
 void init_track_sources(void);
 void free_track_sources(void);
 

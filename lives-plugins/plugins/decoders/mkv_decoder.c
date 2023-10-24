@@ -1691,6 +1691,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, int clonetype) {
 #endif
 
   // need to do this for all clonetypes
+  memset(&priv->matroska, 0, sizeof(priv->matroska));
 
   priv->has_audio = priv->has_video = FALSE;
   priv->vidst = NULL;
@@ -2434,9 +2435,13 @@ static int matroska_parse_cluster(const lives_clip_data_t *cdata) {
   MatroskaCluster cluster = { 0 };
   EbmlList *blocks_list;
   MatroskaBlock *blocks;
+  int64_t pos;
   int i, res;
 
-  int64_t pos = priv->input_position;
+  /* (!matroska->contains_ssa) */
+  /*   return matroska_parse_cluster_incremental(matroska); */
+
+  pos = priv->input_position;
 
   matroska->prev_pkt = NULL;
   if (matroska->current_id)

@@ -1561,6 +1561,7 @@ void ann_roll_cancel(void) {
   if (lives_proc_thread_ref(ann_proc) > 1) {
     lives_proc_thread_request_cancel(ann_proc, TRUE);
     lives_proc_thread_unref(ann_proc);
+    ann_proc = NULL;
   }
 }
 
@@ -1707,7 +1708,9 @@ static void run_plan(exec_plan_t *plan) {
     }
   }
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  if (lives_proc_thread_get_cancel_requested(self)) {
+    lives_proc_thread_cancel(self);
+  }
 
   plan->tdata->trun_time = lives_get_session_time();
   plan->tdata->queued_time = plan->tdata->trun_time - plan->tdata->exec_time;
@@ -1814,7 +1817,6 @@ static void run_plan(exec_plan_t *plan) {
       if (state != STEP_STATE_RUNNING && !(plan->state == STEP_STATE_RESUMING
                                            && step->state == STEP_STATE_PAUSED)) {
         if (cancelled || paused || error) {
-
           if (cancelled) step->state = STEP_STATE_CANCELLED;
           if (paused) step->state = STEP_STATE_PAUSED;
           if (error) step->state = STEP_STATE_SKIPPED;
@@ -2363,22 +2365,25 @@ static void run_plan(exec_plan_t *plan) {
           }
           lstatus = lives_layer_get_status(layer);
           if (lstatus == LAYER_STATUS_INVALID) {
-            if (prefs->dev_show_timing) {
-              g_printerr("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                         step->tdata->real_end * 1000., step->tdata->real_duration);
-              g_printerr("Layer became invalid !\n");
+            if (!cancelled && !error) {
+              if (prefs->dev_show_timing) {
+                g_printerr("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+                           step->tdata->real_end * 1000., step->tdata->real_duration);
+                g_printerr("Layer became invalid !\n");
+              }
+
+              error = 2;
+              step->state = STEP_STATE_ERROR;
+              //weed_layer_unref(layer);
+              plan->nsteps_running--;
+              xtime = lives_get_session_time();
+              if (!plan->nsteps_running) {
+                plan->tdata->waiting_time -= xtime;
+                if (!got_act_st) plan->tdata->active_pl_time += xtime;
+              } else if (plan->nsteps_running == 1)
+                plan->tdata->concurrent_time += xtime;
+              break;
             }
-            error = 2;
-            step->state = STEP_STATE_ERROR;
-            //weed_layer_unref(layer);
-            plan->nsteps_running--;
-            xtime = lives_get_session_time();
-            if (!plan->nsteps_running) {
-              plan->tdata->waiting_time -= xtime;
-              if (!got_act_st) plan->tdata->active_pl_time += xtime;
-            } else if (plan->nsteps_running == 1)
-              plan->tdata->concurrent_time += xtime;
-            break;
           }
           res = check_step_condition(plan, step, cancelled, error, paused);
           if (!res) {
@@ -7537,6 +7542,9 @@ _build_nodemodel(pnodemodel, mainw->num_tracks, mainw->clip_index);
 
 
 void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
+if (mainw->plan_runner_proc)
+  lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+
 if (mainw->layers) {
   // before doing anything else, we need to invalidate
   int maxl;
@@ -7554,13 +7562,14 @@ if (mainw->layers) {
 }
 
 if (mainw->plan_runner_proc) {
-  lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
   if (mainw->plan_cycle) {
     if (mainw->plan_cycle->state == PLAN_STATE_WAITING ||
         mainw->plan_cycle->state == PLAN_STATE_QUEUED) {
       plan_cycle_trigger(mainw->plan_cycle);
     }
   }
+  lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+
   lives_proc_thread_join_int(mainw->plan_runner_proc);
   lives_proc_thread_unref(mainw->plan_runner_proc);
   mainw->plan_runner_proc = NULL;

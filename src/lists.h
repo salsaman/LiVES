@@ -24,14 +24,13 @@ typedef struct {
 void lives_sync_list_set_lilo(lives_sync_list_t *, boolean lilo);
 void lives_sync_list_set_pop_head(lives_sync_list_t *, boolean yes);
 void lives_sync_list_free_on_empty(lives_sync_list_t *, boolean yes);
-void lives_sync_list_rdlock(lives_sync_list_t *);
 void lives_sync_list_wrlock(lives_sync_list_t *);
 void lives_sync_list_unlock(lives_sync_list_t *);
 
 lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *, void *data);
 
-LiVESList *_lives_sync_list_pop(lives_sync_list_t *);
-void *lives_sync_list_pop(lives_sync_list_t *);
+LiVESList *_lives_sync_list_pop(lives_sync_list_t **);
+void *lives_sync_list_pop(lives_sync_list_t **);
 
 void *_lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
 void *lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);

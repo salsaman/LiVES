@@ -171,7 +171,7 @@ struct pbs_struct {
 boolean lives_painter_surface_destroy(lives_painter_surface_t *);
 lives_painter_surface_t *lives_painter_surface_reference(lives_painter_surface_t *);
 
-#define lives_paintet_surface_get_reference_count(surf) cairo_surface_get_reference_count(surf)
+#define lives_painter_surface_get_reference_count(surf) cairo_surface_get_reference_count(surf)
 
 typedef cairo_format_t lives_painter_format_t;
 
@@ -221,15 +221,20 @@ lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
 
 boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
 boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
+boolean lives_painter_set_source(lives_painter_t *cr, lives_painter_surface_t *surface);
 
 lives_painter_surface_t *lives_xwindow_create_similar_surface(LiVESXWindow *window,
-    lives_painter_content_t cont,
-    int width, int height);
+    lives_painter_content_t cont, int width, int height);
+
 lives_painter_surface_t *lives_widget_create_painter_surface(LiVESWidget *);
+
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t,
     int width, int height, int stride);
 
+boolean lives_painter_surface_finish(lives_painter_surface_t *);
+
 boolean lives_painter_surface_flush(lives_painter_surface_t *);
+
 boolean lives_painter_surface_mark_dirty(lives_painter_surface_t *);
 
 boolean lives_painter_destroy(lives_painter_t *);
@@ -287,6 +292,8 @@ boolean widget_opts_set_scale(double scale);
 lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha);
 lives_colRGBA64_t *widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
 LiVESWidgetColor *lives_rgba_to_widget_color(LiVESWidgetColor *, lives_colRGBA64_t *);
+
+boolean lives_painter_check_swapped(lives_painter_t *);
 
 lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *, lives_colRGBA64_t *);
 lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *, lives_colRGB48_t *);

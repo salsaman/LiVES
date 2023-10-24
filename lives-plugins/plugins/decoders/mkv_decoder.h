@@ -403,8 +403,10 @@ typedef enum {
   EBML_UTF8,
   EBML_BIN,
   EBML_NEST,
+  EBML_LEVEL1,
   EBML_PASS,
   EBML_STOP,
+  EBML_SINT,
   EBML_TYPE_COUNT
 } EbmlType;
 
@@ -414,6 +416,7 @@ typedef const struct EbmlSyntax {
   int list_elem_size;
   int data_offset;
   union {
+    int64_t	i;
     uint64_t    u;
     double      f;
     const char *s;
@@ -445,10 +448,16 @@ typedef struct {
   EbmlBin  settings;
 } MatroskaTrackCompression;
 
+typedef struct MatroskaTrackEncryption {
+  uint64_t algo;
+  EbmlBin  key_id;
+} MatroskaTrackEncryption;
+
 typedef struct {
   uint64_t scope;
   uint64_t type;
   MatroskaTrackCompression compression;
+  MatroskaTrackEncryption encryption;
 } MatroskaTrackEncoding;
 
 typedef struct {

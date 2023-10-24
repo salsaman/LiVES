@@ -29,8 +29,7 @@
 #define LIVES_LEAF_RESIZE_THREAD "res_thread"
 #define LIVES_LEAF_PROGSCAN "progscan"
 #define LIVES_LEAF_BBLOCKALLOC "bblockalloc"
-#define LIVES_LEAF_ALTSRC "alt_src"
-#define LIVES_LEAF_NEW_ROWSTRIDE "new_rowstride"
+#define LIVES_LEAF_NEW_ROWSTRIDES "new_rowstrides"
 
 #define DEF_SCREEN_GAMMA 1.4 // extra gammm boost
 
@@ -97,8 +96,11 @@ struct _conv_array {
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240
 
-#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
-#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
+#define Y_CLAMP_RANGE (Y_CLAMP_MAX - YUV_CLAMP_MIN)
+#define UV_CLAMP_RANGE (UV_CLAMP_MAX - YUV_CLAMP_MIN)
+
+#define CLAMP_FACTOR_Y (Y_CLAMP_RANGE / 255.) // unclamped -> clamped
+#define CLAMP_FACTOR_UV (UV_CLAMP_RANGE / 255.) // unclamped -> clamped
 
 #define UV_BIAS 128.
 
@@ -320,15 +322,14 @@ void init_colour_engine(void);
 double get_luma8(uint8_t r, uint8_t g, uint8_t b);
 double get_luma16(uint16_t r, uint16_t g, uint16_t b);
 
-boolean consider_swapping(int *inpal, int *outpal);
+boolean consider_swapping(int inpal, int outpal);
 
-#define is_useable_palette(p) (((p) == WEED_PALETTE_RGB24 || (p) == WEED_PALETTE_RGBA32 \
-				|| (p) == WEED_PALETTE_BGR24 || (p) == WEED_PALETTE_BGRA32 || (p) == WEED_PALETTE_ARGB32 \
-				|| (p) == WEED_PALETTE_YUV888 || (p) == WEED_PALETTE_YUVA8888 || (p) == WEED_PALETTE_YUV422P \
-				|| (p) == WEED_PALETTE_YUV420P || (p) == WEED_PALETTE_YVU420P || (p) == WEED_PALETTE_YUV411 \
-				|| (p) == WEED_PALETTE_YUV444P || (p) == WEED_PALETTE_YUVA4444P || (p) == WEED_PALETTE_YUV411 \
-				|| (p) == WEED_PALETTE_UYVY || (p) == WEED_PALETTE_YUYV) \
-  ? TRUE : FALSE)
+#define is_useable_palette(p) (((p)==WEED_PALETTE_RGB24||(p)==WEED_PALETTE_RGBA32\
+				||(p)==WEED_PALETTE_BGR24||(p)==WEED_PALETTE_BGRA32||(p)==WEED_PALETTE_ARGB32\
+				||(p)==WEED_PALETTE_YUV888||(p)==WEED_PALETTE_YUVA8888||(p)==WEED_PALETTE_YUV422P\
+				||(p)==WEED_PALETTE_YUV420P||(p)==WEED_PALETTE_YVU420P||(p)==WEED_PALETTE_YUV411\
+				||(p)==WEED_PALETTE_YUV444P||(p)==WEED_PALETTE_YUVA4444P||(p)==WEED_PALETTE_YUV411\
+				||(p)==WEED_PALETTE_UYVY||(p)==WEED_PALETTE_YUYV)?TRUE:FALSE)
 
 // palette information functions
 boolean weed_palette_is_lower_quality(int p1, int p2);
@@ -339,8 +340,8 @@ boolean weed_palette_is_painter_palette(int pal);
 lives_painter_t *layer_to_lives_painter(weed_layer_t *);
 lives_layer_t *lives_painter_to_layer(weed_layer_t *, lives_painter_t *);
 
-boolean lives_painter_surface_check(lives_painter_surface_t *reado);
-
+boolean lives_painter_check_swapped(lives_painter_t *);
+void lives_painter_surface_check(lives_painter_surface_t *, int chkval);
 // layer transformation functions
 
 // pixel_data
@@ -357,8 +358,6 @@ size_t lives_frame_calc_bytesize(int width, int height, int pal, boolean inc_ros
 
 // direction - LIVES_DIRECTION_FOREWARD / LIVES_DIRECTION_REVERSE
 void alpha_premult(weed_layer_t *, int direction);
-
-boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
 boolean gamma_convert_layer_variant(double file_gamma, int tgt_gamma, weed_layer_t *);

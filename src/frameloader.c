@@ -306,8 +306,8 @@ weed_layer_t *set_if_md5_valid(int clipno, frames_t frame, weed_layer_t *layer) 
 
 void showclipimgs(void) {
   if (CURRENT_CLIP_IS_VALID) {
-    load_end_image(cfile->end);
     load_start_image(cfile->start);
+    load_end_image(cfile->end);
   } else {
     load_end_image(0);
     load_start_image(0);
@@ -2329,8 +2329,6 @@ fndone:
         if (clip == mainw->scrap_file) {
           boolean res = load_from_scrap_file(layer, frame);
           if (!res) goto fail;
-          // realign
-          copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
           goto success;
         } else {
           frames_t xframe;

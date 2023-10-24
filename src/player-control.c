@@ -1254,6 +1254,10 @@ void play_file(void) {
 
   ann_roll_cancel();
 
+  // wait fro drawing operations to finish
+  fg_stack_wait();
+  lives_microsleep_while_true(mainw->do_ctx_update);
+
   // PLAY FINISHED...
 
   if (prefs->stop_screensaver) lives_reenable_screensaver();

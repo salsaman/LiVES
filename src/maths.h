@@ -80,16 +80,21 @@ typedef struct {
 
 #define sig(a) ((a) < 0. ? -1.0 : 1.0)
 
-// round to nearest integer
-#define ROUND_I(a) ((int)((double)(a) + .5))
+// round to nearest integer (positive values only)
+#define ROUND_I(a) ((int)((double)(a) + .5)) // double
+#define ROUND_IF(a) ((int)((float)(a) + .5)) // float
+
+#define CLAMP0255i(a)  ((a) > 255 ? (uint8_t)255 : (a) < 0 ? (uint8_t)0 : (uint8_t)a)
+#define CLAMP0255f(a)  ((a) >= 254.5 ? (uint8_t)255 : (a) < -0.5 ? (uint8_t)0 : (uint8_t)((a) + .5))
 
 // clamp a between 0 and b; both values rounded to nearest int
 #define NORMAL_CLAMP(a, b) (ROUND_I((a))  < 0 ? 0 : ROUND_I((a)) > ROUND_I((b)) ? ROUND_I((b)) : ROUND_I((a)))
 
-// clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is <= 0, return rounded b
+// clamp a between 1 and b; both values rounded to nearest int;
+// if rounded value of a is <= 0, return rounded b
 #define UTIL_CLAMP(a, b) (NORMAL_CLAMP((a), (b)) <= 0 ? ROUND_I((b)) : ROUND_I((a)))
 
-// normal integer clamp
+// normal integer clamp, no rounding
 #define INT_CLAMP(i, min, max) ((i) < (min) ? (min) : (i) > (max) ? (max) : (i))
 
 // round a up double / float a to  next multiple of int b

@@ -114,8 +114,8 @@ static weed_plant_t *make_msg(const char *text) {
     weed_plant_t *msg = lives_plant_new(LIVES_PLANT_MESSAGE);
     if (!msg) return NULL;
 
-    weed_error_t err = weed_set_string_value(msg, LIVES_LEAF_MESSAGE_STRING, text);
-    g_print("\n\ntext %d was %s\n", err, text);
+    weed_set_string_value(msg, LIVES_LEAF_MESSAGE_STRING, text);
+    //g_print("\n\ntext %d was %s\n", err, text);
     weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
     weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
     return msg;
@@ -187,7 +187,7 @@ static weed_error_t _add_message_to_list(const char *text, boolean is_top) {
         lives_strfreev(lines);
         return WEED_ERROR_MEMORY_ALLOCATION;
       }
-      g_print("\n\n\nADDED msg 1\n\n");
+      //g_print("\n\n\nADDED msg 1\n\n");
       mainw->n_messages = 1;
       continue;
     }
@@ -211,10 +211,10 @@ static weed_error_t _add_message_to_list(const char *text, boolean is_top) {
       }
       strg2 = lives_strdup_printf("%s%s", strg, lines[0]);
       weed_leaf_delete(end, LIVES_LEAF_MESSAGE_STRING);
-      g_print("will set %s\n", strg2);
+      //g_print("will set %s\n", strg2);
       weed_set_string_value(end, LIVES_LEAF_MESSAGE_STRING, strg2);
-      g_print("GOT %s\n",
-              weed_get_string_value(end, LIVES_LEAF_MESSAGE_STRING, NULL));
+      /* g_print("GOT %s\n", */
+      /*         weed_get_string_value(end, LIVES_LEAF_MESSAGE_STRING, NULL)); */
       lives_free(strg2);
       continue;
     }
@@ -281,13 +281,13 @@ static LiVESList *msgcache = NULL;
 weed_error_t add_message_to_list(const char *text) {return _add_message_to_list(text, FALSE);}
 
 lives_result_t add_message_first(const char *text) {
-  prefs->msg_routing = MSG_ROUTE_STORE;
+  MSGMODE_ON(STORE);
   _add_message_to_list(text, TRUE);
   if (msgcache) {
     msgcache = lives_list_reverse(msgcache);
     for (LiVESList *list = msgcache; list; list = list->next) {
       if (list->data) {
-        g_print("MSG: %s\n", (const char *)list->data);
+        //g_print("MSG: %s\n", (const char *)list->data);
         d_print((const char *)list->data);
         lives_free(list->data);
       }
@@ -312,7 +312,7 @@ boolean d_print_urgency(double timeout, const char *fmt, ...) {
 
   if (LIVES_IS_PLAYING && prefs->show_urgency_msgs) {
     lives_freep((void **)&mainw->urgency_msg);
-    lives_alarm_set_timeout(timeout * ONE_BILLION);
+    lives_sys_alarm_set_timeout(urgent_msg_timeout, timeout * ONE_BILLION);
     mainw->urgency_msg = lives_strdup(text);
     lives_free(text);
     return TRUE;
@@ -333,7 +333,7 @@ boolean d_print_overlay(double timeout, const char *fmt, ...) {
     lives_freep((void **)&mainw->overlay_msg);
     mainw->overlay_msg = lives_strdup(text);
     lives_free(text);
-    lives_sys_alarm_set_timeout(overlay_msg_timeout, timeout * 10 * TICKS_PER_SECOND_DBL);
+    lives_sys_alarm_set_timeout(overlay_msg_timeout, timeout * ONE_BILLION);
     return TRUE;
   }
   lives_free(text);
@@ -376,24 +376,19 @@ void d_print(const char *fmt, ...) {
 
   if (mainw && mainw->suppress_dprint) return;
 
+  if (MSGMODE_HAS(BLOCK)) return;
+
   va_start(xargs, fmt);
   text = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  if (!prefs || prefs->msg_routing == MSG_ROUTE_CACHE) {
-    cache_msg(text);
-    return;
-  }
+  if (!prefs || !prefs->msg_routing || MSGMODE_HAS(CACHE)) cache_msg(text);
 
-  if (prefs->msg_routing & MSG_ROUTE_STDERR) {
-    fprintf(stderr, "%s", text);
-  }
+  if (MSGMODE_HAS(STDERR)) fprintf(stderr, "%s", text);
 
-  if (prefs->msg_routing & MSG_ROUTE_DEBUG_LOG) {
-    log_msg(mainw->debug_log, text);
-  }
+  if (MSGMODE_HAS(DEBUG_LOG)) log_msg(mainw->debug_log, text);
 
-  if (prefs->msg_routing & MSG_ROUTE_FANCY) {
+  if (MSGMODE_HAS(FANCY)) {
     if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && !mainw->multitrack &&
         (mainw->current_file == -1 || (sfile = RETURN_PHYSICAL_CLIP(mainw->current_file)) != NULL)
         && !mainw->no_switch_dprint) {
@@ -410,13 +405,13 @@ void d_print(const char *fmt, ...) {
     }
   }
 
-  if (prefs->msg_routing & MSG_ROUTE_STORE) {
-    g_print("ADD msg %s\n", text);
+  if (MSGMODE_HAS(STORE)) {
+    //g_print("ADD msg %s\n", text);
     add_message_to_list(text);
     lives_free(text);
   }
 
-  if (prefs->msg_routing & MSG_ROUTE_DISPLAY) {
+  if (MSGMODE_HAS(DISPLAY)) {
     if (!mainw->go_away && prefs->show_gui && prefs->show_msg_area
         && ((!mainw->multitrack && mainw->msg_area && mainw->msg_adj)
             || (mainw->multitrack && mainw->multitrack->msg_area
@@ -431,8 +426,9 @@ void d_print(const char *fmt, ...) {
     }
   }
 
-  if ((mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
-      (!mainw->no_switch_dprint || mainw->current_file != 0)) mainw->last_dprint_file = mainw->current_file;
+  if (mainw && (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
+      (!mainw->no_switch_dprint || mainw->current_file != 0))
+    mainw->last_dprint_file = mainw->current_file;
 }
 
 

@@ -3365,7 +3365,7 @@ void show_lives(void) {
   lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
   mainw->ignore_screen_size = FALSE;
 
-  if (check_can_show_msg_area()) prefs->msg_routing |= MSG_ROUTE_DISPLAY;
+  if (check_can_show_msg_area()) MSGMODE_ON(DISPLAY);
 
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();

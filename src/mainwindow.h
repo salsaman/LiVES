@@ -22,16 +22,6 @@
 #include "clip_load_save.h"
 #include "nodemodel.h"
 
-#define BILLIONS(n) (n##000000000l)
-#define ONE_BILLION BILLIONS(1)
-#define MILLIONS(n) (n##000000l)
-#define ONE_MILLION MILLIONS(1)
-
-#define BILLIONS_DBL(n) (n##000000000.f)
-#define ONE_BILLION_DBL BILLIONS_DBL(1)
-#define MILLIONS_DBL(n) (n##000000.)
-#define ONE_MILLION_DBL MILLIONS_DBL(1)
-
 // hardware related prefs
 
 #define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second - GLOBAL TIMEBASE

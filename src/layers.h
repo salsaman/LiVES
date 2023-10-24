@@ -22,6 +22,8 @@
 #define WEED_LEAF_FRAME "frame"
 #define LIVES_LEAF_TRACK "track"
 
+#define LIVES_LEAF_REAL_PIXDATA "real_pixdata"
+
 #define LIVES_LEAF_SRCGRP "host_srcgrp"
 #define LIVES_LEAF_TIMING_DATA "timedata"
 #define LIVES_LEAF_COPY_TIME "copy_time"
@@ -98,9 +100,10 @@ weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int curr
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
 
-void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src);
-
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
+weed_layer_t *weed_layer_copy_slice(weed_layer_t *dlayer, weed_layer_t *slayer,
+                                    int off_x, int off_y, int width, int height);
+
 weed_layer_t *weed_layer_free(weed_layer_t *);
 lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed_plant_t *src);
 
@@ -191,10 +194,12 @@ weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
 
-lives_sync_list_t *lives_layer_get_copylist(lives_layer_t *);
-boolean lives_copylist_remove(lives_sync_list_t *, lives_layer_t *);
+lives_result_t copy_pixel_data(weed_layer_t *dst, weed_layer_t *src);
 
-void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t);
+boolean lives_layer_check_remove_copylist(lives_layer_t *);
+boolean lives_layer_has_copylist(lives_layer_t *);
+
+void lives_layer_async_auto(lives_layer_t *, lives_proc_thread_t);
 
 int lives_layer_guess_palette(weed_layer_t *);
 

@@ -39,6 +39,7 @@ const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_BBLOCKALLOC,
                                         WEED_LEAF_HOST_ORIG_PDATA,
                                         LIVES_LEAF_PIXBUF_SRC,
                                         LIVES_LEAF_SURFACE_SRC,
+                                        LIVES_LEAF_REAL_PIXDATA,
 
                                         LIVES_LEAF_MD5SUM,
                                         LIVES_LEAF_MD5_CHKSIZE,
@@ -46,7 +47,9 @@ const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_BBLOCKALLOC,
                                        };
 
 // additional leaves which should be removed / reset after copying
-const char *NO_COPY_LEAVES[] = {LIVES_LEAF_REFCOUNTER, LIVES_LEAF_COPYLIST, NULL};
+const char *NO_COPY_LEAVES[] = {LIVES_LEAF_REFCOUNTER,
+                                LIVES_LEAF_NEW_ROWSTRIDES, LIVES_LEAF_COPYLIST, NULL
+                               };
 
 static int our_plugin_id = 0;
 static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
@@ -90,6 +93,7 @@ LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
 
 
 weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf) {
+  // force overrride of IMMUTABLE dest leaves
   weed_flags_t flags = weed_leaf_get_flags(dst, keyt);
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_copy(dst, keyt, src, keyf);
@@ -99,6 +103,7 @@ weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *
 
 
 weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n) {
+  // force overrride of IMMUTABLE dest leaves
   weed_flags_t flags = weed_leaf_get_flags(dst, keyt);
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_copy_nth(dst, keyt, src, keyf, n);
@@ -108,6 +113,7 @@ weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant
 
 
 weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key) {
+  // force overrride of IMMUTABLE dest leaves
   weed_flags_t flags = weed_leaf_get_flags(dst, key);
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, key, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_dup(dst, src, key);
@@ -117,8 +123,11 @@ weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *ke
 
 
 LIVES_GLOBAL_INLINE weed_error_t lives_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
-  if (!weed_plant_has_leaf(slayer, key)) return weed_leaf_delete(dlayer, key);
-  else return lives_leaf_dup(dlayer, slayer, key);
+  // force overrride of IMMUTABLE dest leaves
+  if (!weed_plant_has_leaf(slayer, key)) {
+    weed_leaf_set_undeletable(dlayer, key, FALSE);
+    return weed_leaf_delete(dlayer, key);
+  } else return lives_leaf_dup(dlayer, slayer, key);
 }
 
 
@@ -143,10 +152,10 @@ void weed_functions_init(void) {
   }
 
 #if !USE_STD_MEMFUNCS
-#if USE_RPMALLOC
+#if xUSE_RPMALLOC
   libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
 #else
-#ifndef DISABLE_GSLICE
+#ifdef xENABLE_GSLICE
 #if GLIB_CHECK_VERSION(2, 14, 0)
   libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, lives_slice_alloc_and_copy,
                          _lives_memcpy);
@@ -154,8 +163,10 @@ void weed_functions_init(void) {
   libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL, _lives_memcpy);
 #endif
 #else
-  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
+  //libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
+  libweed_set_memory_funcs(lives_malloc, lives_free, lives_calloc);
 #endif // DISABLE_GSLICE
+
 #endif // USE_RPMALLOC
   weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
 #endif // USE_STD_MEMFUNCS
@@ -4929,6 +4940,7 @@ void weed_load_all(void) {
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
   libweed_set_memory_funcs(_lives_malloc, _lives_free, _lives_calloc);
+  //weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
 #endif
 #endif
 

@@ -80,9 +80,9 @@ typedef enum {
   urgent_msg_timeout,
   overlay_msg_timeout,
   audio_msgq_timeout,
+  test_timeout,
   sys_alarms_max = N_APP_TIMERS,
 } alarm_name_t;
-
 
 // lives_sys_alarm_set_timeout(audio_msgq_timeout, BILLIONS(5));
 // lives_microsleep_while_false((condition) || lives_sys_alarm-triggered(audio_msgq_timeout));
@@ -94,7 +94,6 @@ boolean lives_sys_alarm_disarm(alarm_name_t alaname);
 
 void lives_sys_alarm_wait(alarm_name_t alaname);
 int lives_sys_alarm_get_state(alarm_name_t alaname);
-
 
 #define lives_sys_alarm_triggered(alaname)		\
  (lives_sys_alarm_get_state(alaname) != LIVES_ALARM_ARMED)

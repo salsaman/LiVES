@@ -11,8 +11,13 @@
 
 void sensitize(void);
 void sensitize_rfx(void);
+void player_sensitize(void);
+
 void desensitize(void);
 void procw_desensitize(void);
+void player_desensitize(void);
+
+void get_player_size(int *opwidth, int *opheight);
 
 void set_drawing_area_from_pixbuf(LiVESDrawingArea *da, LiVESPixbuf *pixbuf);
 

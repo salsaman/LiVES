@@ -72,6 +72,9 @@
 
 #define WEED_ADVANCED_PALETTES 1
 
+#define HAVE_WEED_BOOLEAN_T
+typedef LIVES_BOOLEAN_TYPE weed_boolean_t;
+
 #if NEED_LOCAL_WEED
 #include "../libweed/weed-host.h"
 #include "../libweed/weed.h"

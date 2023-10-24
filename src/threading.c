@@ -2092,7 +2092,7 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
         g_print("\t%s\n", lives_proc_thread_show_func_call(active));
         lpt_desc_state(active);
         if (tdata->vars.var_func_stack && tdata->vars.var_func_stack->list) {
-          char *fname = lives_sync_list_pop(tdata->vars.var_func_stack);
+          char *fname = lives_sync_list_pop(&tdata->vars.var_func_stack);
           if (fname)
             g_print("Last func entry recorded was %s\n", fname);
         }
@@ -2102,7 +2102,7 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
   break;
   case SIG_ACT_CMD: {
     while (tdata->vars.var_simple_cmd_list) {
-      LiVESList *list = lives_sync_list_pop(tdata->vars.var_simple_cmd_list);
+      LiVESList *list = lives_sync_list_pop(&tdata->vars.var_simple_cmd_list);
       if (list) {
         lives_proc_thread_t lpt = (lives_proc_thread_t)list->data;
         // we can execute some simple tasks, but from a signal handler, only asyn safe functions may be used
@@ -3761,9 +3761,7 @@ skip_over:
     // also sets 'active'
     lives_thread_set_prime(NULL);
 
-    g_print("nrefss ++++ = %d %p\n", lives_proc_thread_count_refs(lpt), lpt);
-
-    lpt_desc_state(lpt);
+    //g_print("nrefss ++++ = %d %p\n", lives_proc_thread_count_refs(lpt), lpt);
 
     // should have a ref on this
     lives_proc_thread_unref(lpt);

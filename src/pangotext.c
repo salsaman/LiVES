@@ -10,49 +10,31 @@
 #include "pangotext.h"
 #include "effects-weed.h"
 
-#define N_MARKUP_TAGS 18
+static char *markup_tags[] =
+{"b>", "big>", "i>", "s>", "sub>", "sup>", "small>", "tt>", "u>", NULL};
 
-static char *markup_tags[N_MARKUP_TAGS];
-static int n_markup_tags = 0;
-
-#define MARKUP_SIG "<"
-#define MARKUP_SIG_LEN 1
-
-static void init_markup_tags(void) {
-  markup_tags[0] = lives_strdup("b>");
-  markup_tags[1] = lives_strdup("big>");
-  markup_tags[2] = lives_strdup("i>");
-  markup_tags[3] = lives_strdup("s>");
-  markup_tags[4] = lives_strdup("sub>");
-  markup_tags[5] = lives_strdup("sup>");
-  markup_tags[6] = lives_strdup("small>");
-  markup_tags[7] = lives_strdup("tt>");
-  markup_tags[8] = lives_strdup("u>");
-  markup_tags[9] = lives_strdup("/b>");
-  markup_tags[10] = lives_strdup("/big>");
-  markup_tags[11] = lives_strdup("/i>");
-  markup_tags[12] = lives_strdup("/s>");
-  markup_tags[13] = lives_strdup("/sub>");
-  markup_tags[14] = lives_strdup("/sup>");
-  markup_tags[15] = lives_strdup("/small>");
-  markup_tags[16] = lives_strdup("/tt>");
-  markup_tags[17] = lives_strdup("/u>");
-  n_markup_tags = N_MARKUP_TAGS;
-}
-
+#define MARKUP_SIG '<'
+#define MARKUP_SIG2 '/'
 
 char *pango_text_strip_markup(const char *text) {
-  size_t tlen = lives_strlen(text), xlen, plen = 0;
+  size_t slen = lives_strlen(text);
+  if (slen < 3) return lives_strdup(text);
+  size_t tlen = slen - 3, xlen, plen = 0;
   off_t start = 0, p = 0;
-  char *newtext = lives_calloc(tlen + 1, 1);
+  char *newtext = lives_malloc(++slen);
   int i;
-  if (!n_markup_tags) init_markup_tags();
-  for (i = 0; i < tlen - MARKUP_SIG_LEN - 1; i++) {
-    if (!lives_strncmp(text + i, MARKUP_SIG, MARKUP_SIG_LEN)) {
-      i += MARKUP_SIG_LEN;
-      for (int j = 0; j < n_markup_tags; j++) {
+  for (i = 0; i < tlen; i++) {
+    int skiplen = 0;
+    if (text[i] == MARKUP_SIG) {
+      skiplen++;
+      i++;
+      if (text[i] == MARKUP_SIG2) {
+        skiplen++;
+        i++;
+      }
+      for (int j = 0; markup_tags[j]; j++) {
         if (!lives_strncmp(text + i, markup_tags[j], (xlen = lives_strlen(markup_tags[j])))) {
-          plen = i - MARKUP_SIG_LEN - start;
+          plen = i - skiplen - start;
           lives_memcpy(newtext + p, text + start, plen);
           p += plen;
           i += xlen;
@@ -61,7 +43,7 @@ char *pango_text_strip_markup(const char *text) {
 	}}}}
   // *INDENT-ON*
 
-  plen = i - start + MARKUP_SIG_LEN + 1;
+  plen = slen - start;
   lives_memcpy(newtext + p, text + start, plen);
   return newtext;
 }
@@ -301,7 +283,8 @@ void layout_to_lives_painter(LingoLayout * layout, lives_painter_t *cr, lives_te
 
   lives_painter_new_path(cr);
   lives_painter_move_to(cr, x_text, y_text);
-  lives_painter_set_source_rgba(cr, (double)fg->red / 65535., (double)fg->green / 65535., (double)fg->blue / 65535., f_alpha);
+  lives_painter_set_source_rgba(cr, (double)fg->red / 65535., (double)fg->green / 65535.,
+                                (double)fg->blue / 65535., f_alpha);
 }
 
 
@@ -734,7 +717,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   cairo_font_options_t *ftopts = cairo_font_options_create();
 #endif
 
-  int pal = weed_layer_get_palette(layer), opal = pal;
+  int pal = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);
   int height = weed_layer_get_height(layer);
   weed_layer_t *test_layer, *layer_slice;
@@ -743,11 +726,10 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   double ztop = 0.;
   int lheight = height;
   int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
+  int itop;
 
   if (weed_palette_is_rgb(pal)) {
-    int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order), oppal = ppal;
-    int ipsize = pixel_size(pal);
-    int opsize = pixel_size(ppal);
+    lives_painter_surface_t *surf;
 
     // test first to get the layout coords; we just copy a tiny slice of the pixel data
     // take a slice 4 pixels high
@@ -757,28 +739,22 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     weed_layer_set_height(layer, 4);
 
     // make a copy of the layer slice
+    // TODO - weed_layer_copy_slice(layer, rowstart, height);
     test_layer = weed_layer_copy(NULL, layer);
 
-    // we dont care about the palette here, because we are not going to actually render anything yet
-    if (ipsize == opsize) weed_layer_set_palette(test_layer, ppal);
-    else if (consider_swapping(&pal, &ppal)) {
-      if (ppal == oppal) {
-        weed_layer_set_palette(test_layer, pal);
-      } else ppal = oppal;
-      pal = opal;
-    }
-
     weed_layer_set_height(layer, height);
+
     cr = layer_to_lives_painter(test_layer);
-    weed_layer_unref(test_layer);
 
     layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
+    // will unref test_layer
+
+    surf = lives_painter_get_target(cr);
+    lives_painter_surface_destroy(surf);
     lives_painter_destroy(cr);
-    lives_painter_surface_t *surface = lives_painter_get_target(cr);
-    lives_painter_surface_destroy(surface);
 
     // we now have the layout, we can find its height, and we will just take the part of the layer it covers
     // convert that slice, render the layout, then convert back
@@ -788,45 +764,23 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     // then restore the original values, using the slice copy
     // we have to be careful to ensure that the original slice pixel_data never gets freed
     // although it can be replaced, and then we copy it back and free the new data
-    if (top * height + lheight < height) {
+    itop = (int)(top * height + .5);
+    if (itop + lheight < height) {
       uint8_t *xsrc;
-      boolean rbswapped = FALSE;
 
       // adjust pixel_data and height, then copy-by-ref to layer_slice
       src = weed_layer_get_pixel_data(layer);
-      xsrc = src + (int)(top * height) * row;
-      weed_layer_set_pixel_data(layer, xsrc);
-      weed_layer_set_height(layer, lheight);
+      /* xsrc = src + (int)(top * height) * row; */
+      /* weed_layer_set_pixel_data(layer, xsrc); */
+      /* weed_layer_set_height(layer, lheight); */
 
       layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-      weed_layer_copy(layer_slice, layer);
 
-      // restore original values for the original layer
-      weed_layer_set_height(layer, height);
-      weed_layer_set_pixel_data(layer, src);
-
-      if (consider_swapping(&pal, &ppal)) {
-        // we may be able to speed things up, for example if we need to convert from
-        // BGR -> RGBA, we can pretend the layer palette is RGB, and then swap the red / blue of the fg and bg
-        // then after converting back from RGBA -> RGB, we just reset it back to BGR again
-        if (ppal == oppal) {
-          lives_colRGBA64_t col;
-          rbswapped = TRUE;
-          weed_layer_set_palette(layer_slice, pal);
-          col.red = fg_col->red;
-          fg_col->red = fg_col->blue;
-          fg_col->blue = col.red;
-          col.red = bg_col->red;
-          bg_col->red = bg_col->blue;
-          bg_col->blue = col.red;
-        }
-      }
+      weed_layer_copy_slice(layer_slice, layer, 0, itop, -1, lheight);
+      xsrc = weed_layer_get_pixel_data(layer_slice);
 
       // create a lives painter surface from layer_slice
-      //
       cr = layer_to_lives_painter(layer_slice);
-      weed_layer_pixel_data_free(layer_slice);
-      //
 
 #ifdef LIVES_PAINTER_IS_CAIRO
       // set antialiasing for text, depending on the current quality setting
@@ -840,6 +794,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
       layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center,
                                  FALSE, &ztop, &offsx, width, &height);
+
       if (layout && LINGO_IS_LAYOUT(layout)) {
         lingo_painter_show_layout(cr, layout);
         lives_widget_object_unref(layout);
@@ -847,50 +802,40 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
       lives_painter_to_layer(layer_slice, cr);
 
+      lives_painter_destroy(cr);
+
       convert_layer_palette(layer_slice, pal, 0);
 
       pd = weed_layer_get_pixel_data(layer_slice);
 
       if (pd && pd != xsrc) {
-        int itop = (int)(top * height);
         int orow = weed_layer_get_rowstride(layer_slice);
         if (row != orow) {
-          for (int i = itop; i < itop + lheight; i++) {
+          for (int i = itop; i < itop + lheight; i++)
             lives_memcpy(&src[i * row], &pd[(i - itop) * orow], row);
-          }
-        } else lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
+        } else lives_memcpy(src + itop * row, pd, lheight * row);
       }
 
+      g_print("lsls %p %p\n", layer_slice, weed_layer_get_pixel_data(layer_slice));
       weed_layer_unref(layer_slice);
-      lives_painter_surface_t *surface = lives_painter_get_target(cr);
-      lives_painter_surface_destroy(surface);
-
-      if (rbswapped) {
-        // reverse out fake palette if needed
-        lives_colRGBA64_t col;
-        col.red = fg_col->red;
-        fg_col->red = fg_col->blue;
-        fg_col->blue = col.red;
-        col.red = bg_col->red;
-        bg_col->red = bg_col->blue;
-        bg_col->blue = col.red;
-      }
+      g_print("lsls22 %p\n", layer_slice);
     }
   }
 
-  if (!cr) {
-    cr = layer_to_lives_painter(layer);
-    if (!cr) return layer; ///< error occurred
-    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col,
-                               bg_col, center, rising, &top, &offsx, width, &height);
-    if (layout && LINGO_IS_LAYOUT(layout)) {
-      lingo_painter_show_layout(cr, layout);
-      if (layout) lives_widget_object_unref(layout);
-    }
-    lives_painter_to_layer(layer, cr);
-    lives_painter_surface_t *surface = lives_painter_get_target(cr);
-    lives_painter_surface_destroy(surface);
-  }
+  /* if (!cr) { */
+  /*   cr = layer_to_lives_painter(layer); */
+  /*   if (!cr) return layer; ///< error occurred */
+  /*   layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, */
+  /*                              bg_col, center, rising, &top, &offsx, width, &height); */
+  /*   if (layout && LINGO_IS_LAYOUT(layout)) { */
+  /*     lingo_painter_show_layout(cr, layout); */
+  /*     if (layout) lives_widget_object_unref(layout); */
+  /*   } */
+  /*   lives_painter_to_layer(layer, cr); */
+  /*   lives_painter_surface_t *surface = lives_painter_get_target(cr); */
+  /*   lives_painter_surface_destroy(surface); */
+  /* } */
+
   if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
   return layer;
 }

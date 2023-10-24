@@ -1088,6 +1088,8 @@ typedef struct {
   boolean vj_mode;
   boolean ar_clipset;
 
+  int msg_routing;
+
   boolean show_msg_area;
   int msg_textsize;
   boolean pref_trash; ///< user prefers trash to delete (future / present swapped)

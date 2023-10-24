@@ -12,7 +12,7 @@
 #include "startup.h"
 #include "maths.h"
 
-#define STATS_NSEC BILLIONS(1)
+#define STATS_MSEC 2000.
 static double inst_fps = 0.;
 
 void print_diagnostics(uint64_t types) {
@@ -67,6 +67,7 @@ boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t 
 }
 
 LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
+  g_print("gifp1\n");
   static double last_curr_time = 0.;
   static ticks_t last_mini_ticks = 0;
   static frames_t last_mm = 0;
@@ -82,11 +83,11 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
     last_curr_time = currtime;
     last_mm = mainw->fps_mini_measure;
   } else {
-    if (currtime > last_curr_time + STATS_NSEC) {
+    if (currtime > last_curr_time + STATS_MSEC / 1000.) {
       mainw->inst_fps = inst_fps = ((double)(mainw->fps_mini_measure - last_mm)
                                     + (((double)(mainw->currticks - mainw->startticks))
                                        / TICKS_PER_SECOND_DBL / sfile->pb_fps))
-                                   / (currtime - last_curr_time) / ONE_BILLION;
+                                   / (currtime - last_curr_time);
       last_curr_time = currtime;
       last_mm = mainw->fps_mini_measure;
     }
@@ -229,6 +230,14 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
   double qual;
   char *tmp;
 
+  MSGMODE_SAVE;
+
+#ifdef DEBUG_RNG
+  MSGMODE_SET(DEBUG_INIT);
+#else
+  MSGMODE_ON(BLOCK);
+#endif
+
   n0 = (*rfunc)();
   rtot = get_onescount_64(n0);
   n1 = (*rfunc)();
@@ -363,6 +372,8 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
   lives_free(tmp);
 
   if (q) *q = qual;
+
+  MSGMODE_RESTORE;
 
   return rest;
 }
@@ -810,29 +821,29 @@ void test_random(void) {
   }
 
   prob = PMISS;
-  fprintf(stderr, "Checking statistical probabilities\n");
+  d_print("Checking statistical probabilities\n");
   for (x = 0; x < NITERS; x++) {
-    fprintf(stderr, "%d %.4f  ", x, 1. - prob);
+    d_print("%d %.4f  ", x, 1. - prob);
     prob *= prob;
   }
-  fprintf(stderr, "\n");
+  d_print("\n");
 
 
   /// results:
   for (d = 0; d < 64; d++) {
-    fprintf(stderr, "digit %d: score %d (%.2f%% 1s)\n", d, counter[d],
+    d_print("digit %d: score %d (%.2f%% 1s)\n", d, counter[d],
             ((double)counter[d] + (double)NITERS) / (double)NITERS * 50.);
-    fprintf(stderr, "buckets:  ");
-    for (x = 0; x < 4; x++) fprintf(stderr, "[%d]: %d    ", x, buckets[d][x]);
-    fprintf(stderr, "\n");
+    d_print("buckets:  ");
+    for (x = 0; x < 4; x++) d_print("[%d]: %d    ", x, buckets[d][x]);
+    d_print("\n");
   }
   for (d = 0; d < 8; d++) {
-    fprintf(stderr, "segment %d:  ", d);
+    d_print("segment %d:  ", d);
     for (x = 0; x < 256; x++) {
       dval = dist[d][x];
-      if (dval >= DTHRESH) fprintf(stderr, "val %d / %d hit %d times  ", d, x, dist[d][x]);
+      if (dval >= DTHRESH) d_print("val %d / %d hit %d times  ", d, x, dist[d][x]);
     }
-    fprintf(stderr, "\n");
+    d_print("\n");
   }
 }
 

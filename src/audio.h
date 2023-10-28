@@ -58,31 +58,19 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
 #define AV_CLIPS_EQUAL (get_aplay_clipno() == mainw->playing_file)
 
 #ifdef HAVE_PULSE_AUDIO
-#define IF_APLAYER_PULSE(code) \
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) { \
-    do {code;} while (0);}
-
-#define IF_AREADER_PULSE(code) \
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read != NULL) { \
-    do {code;} while (0);}
-
+#define IF_APLAYER_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed)_DW0(__VA_ARGS__););
+#define IF_AREADER_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read)_DW0(__VA_ARGS__););
 #else
-#define IF_APLAYER_PULSE(code) if (0);
-#define IF_AREADER_PULSE(code) if (0);
+#define IF_APLAYER_PULSE(...)if(0);
+#define IF_AREADER_PULSE(...)if(0);
 #endif
 
 #ifdef ENABLE_JACK
-#define IF_APLAYER_JACK(code) \
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) { \
-    do {code;} while(0);}
-
-#define IF_AREADER_JACK(code)						\
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read != NULL) { \
-    do {code;} while(0);}
-
+#define IF_APLAYER_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd)_DW0(__VA_ARGS__););
+#define IF_AREADER_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read)_DW0(__VA_ARGS__););
 #else
-#define IF_APLAYER_JACK(code) if (0);
-#define IF_AREADER_JACK(code) if (0);
+#define IF_APLAYER_JACK(...)if(0);
+#define IF_AREADER_JACK(...)if(0);
 #endif
 
 #define SAMPLE_MAX_16BIT_P  32767.4999999f

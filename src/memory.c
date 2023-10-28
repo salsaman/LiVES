@@ -872,7 +872,7 @@ static volatile int used[NBIGBLOCKS];
 static volatile int seqset[NBIGBLOCKS];
 
 #define NBAD_LIM 8
-#define BBL_TEST
+//A#define BBL_TEST
 #ifdef BBL_TEST
 static int bbused = 0;
 #endif
@@ -1002,13 +1002,13 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   else {
     i = used[0];
     max = NBBLOCKS - nblocks;
-    g_print("block 0 used %d blocks\n", used[0]);
+    //g_print("block 0 used %d blocks\n", used[0]);
   }
 
   while (i <= max) {
     for (j = nblocks - 1; j >= 0; j--) {
       int u = used[i + j];
-      g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
+      //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
         if (oblock != -1) return -1;
         i += u + j;
@@ -1033,7 +1033,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
 
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
   //g_print("ALLOBIG %p size %d\n", bigblocks[i], nblocks);
-  g_print("\n\nALLOCBIG has vals\t%d and \t%d\n", i, max);
+
   if (i <= max) return i;
 
   ///////////////////////////////////////////////////
@@ -1102,7 +1102,6 @@ void *malloc_bigblock(size_t xsize) {
   pthread_mutex_lock(&bigblock_mutex);
   bbidx = _alloc_bigblock(xsize, -1);
   pthread_mutex_unlock(&bigblock_mutex);
-  g_print("\ngot bbidx %d, so returning biblocks[%d], which is %p\n\n", bbidx, bbidx, bigblocks[bbidx]);
   if (bbidx >= 0) return bigblocks[bbidx];
   return NULL;
 }
@@ -1165,13 +1164,14 @@ void *free_bigblock(void *bstart) {
   bbused -= used[bbidx];
   g_print("bigblocks in use after free %d\n", bbused);
 #endif
+  seqset[bbidx] = 0;
   used[bbidx] = 0;
 #ifdef TRACE_BBALLOC
   lives_list_free_all(&ustacks[bbidx]);
   tuid[bbidx] = 0;
 #endif
   pthread_mutex_unlock(&bigblock_mutex);
-  g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
+  //g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
   return bstart;
 }
 

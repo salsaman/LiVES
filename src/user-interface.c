@@ -667,6 +667,8 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
 
+  lives_painter_surface_flush(surface);
+
   if (pixbuf) {
     //owidth =
     width = lives_pixbuf_get_width(pixbuf);
@@ -747,7 +749,9 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
   }
-  lives_painter_surface_flush(surface);
+
+  lives_painter_surface_mark_dirty(surface);
+
   lives_painter_fill(cr);
   lives_painter_destroy(cr);
   pthread_mutex_unlock(mutex);
@@ -964,7 +968,7 @@ LIVES_GLOBAL_INLINE int get_sepbar_height(void) {
 void get_gui_framesize(int *hsize, int *vsize) {
   int bx, by;
   int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = GUI_SCREEN_HEIGHT;
+  int scr_height = GUI_SCREEN_PHYS_HEIGHT;
   int vspace = get_sepbar_height();
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
@@ -1014,12 +1018,12 @@ static void _resize(double scale) {
   int hsize, vsize, xsize;
   int bx, by;
   int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = GUI_SCREEN_HEIGHT;
+  int scr_height = GUI_SCREEN_PHYS_HEIGHT;
 
   if (!prefs->show_gui || mainw->multitrack) return;
 
   //if (!mainw->go_away)
-  reset_mainwin_size();
+  //reset_mainwin_size();
 
   get_gui_framesize(&hsize, &vsize);
 
@@ -1180,7 +1184,7 @@ void reset_message_area(void) {
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
-  if (mainw->no_idlefuncs) return TRUE;
+  if (mainw->no_idlefuncs) return FALSE;
 
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;

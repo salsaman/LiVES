@@ -156,6 +156,8 @@ void pulse_tscale_reset(pulse_driver_t *);
 
 ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
+double lives_pulse_get_timing_ratio(pulse_driver_t *);
+
 double lives_pulse_get_pos(pulse_driver_t *);
 off_t lives_pulse_get_offset(pulse_driver_t *);
 

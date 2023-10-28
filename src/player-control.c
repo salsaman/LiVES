@@ -174,8 +174,8 @@ static void prep_audio_player(void) {
 
   if (CURRENT_CLIP_HAS_AUDIO) {
     // start up our audio player (jack or pulse)
-    IF_APLAYER_JACK(jack_aud_pb_ready(mainw->jackd, mainw->current_file));
-    IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file));
+    IF_APLAYER_JACK(jack_aud_pb_ready(mainw->jackd, mainw->current_file););
+    IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file););
   }
 
 
@@ -202,9 +202,10 @@ static void post_playback(void) {
       lives_widget_show(mainw->sep_image);
     }
 
-    if (prefs->show_msg_area && !mainw->multitrack) {
+    if (prefs->show_msg_area) MSGMODE_ON(DISPLAY);
+    if (!mainw->multitrack) {
       lives_widget_show_all(mainw->message_box);
-      reset_message_area(); ///< necessary
+      reset_message_area(); ///< necessary (?)
     }
 
     lives_widget_show(mainw->frame1);
@@ -423,7 +424,9 @@ static void pre_playback(void) {
       if (prefs->pb_hide_gui) hide_main_gui();
     }
 
-    if (prefs->msgs_nopbdis || (prefs->show_msg_area && mainw->double_size)) {
+    if (prefs->msgs_nopbdis) MSGMODE_OFF(DISPLAY);
+
+    if (prefs->show_msg_area && mainw->double_size) {
       lives_widget_hide(mainw->message_box);
     }
     lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), !mainw->double_size);
@@ -1033,7 +1036,7 @@ void play_file(void) {
 
         if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
           // if this is the final loop, protect this from being freed with track sources
-          // wee may neeed to keep it aropund if ther is a recording
+          // we may neeed to keep it aropund if there is a recording
           weed_instance_ref((weed_instance_t *)(get_primary_inst(cfile)));
         }
 
@@ -1096,9 +1099,6 @@ void play_file(void) {
   }
 
   if (mainw->loop_locked) unlock_loop_lock();
-  if (prefs->show_msg_area) {
-    lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
-  }
 
   mainw->jack_can_stop = FALSE;
   if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {
@@ -1531,12 +1531,12 @@ void play_file(void) {
     }
   }
 
-  if (prefs->show_msg_area) {
-    if (mainw->idlemax == 0) {
-      lives_idle_add(resize_message_area, NULL);
-    }
-    mainw->idlemax = DEF_IDLE_MAX;
-  }
+  /* if (prefs->show_msg_area) { */
+  /*   if (mainw->idlemax == 0) { */
+  /*     lives_idle_add(resize_message_area, NULL); */
+  /*   } */
+  /*   mainw->idlemax = DEF_IDLE_MAX; */
+  /* } */
 
   /// need to do this here, in case we want to preview with only
   // a generator and no other clips (which will soon close to -1)

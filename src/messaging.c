@@ -7,6 +7,8 @@
 #include "main.h"
 #include "interface.h"
 
+static pthread_mutex_t dprint_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 weed_plant_t *get_nth_info_message(int n) {
   weed_plant_t *msg = mainw->msg_list;
   const char *leaf;
@@ -80,11 +82,8 @@ void dump_messages(FILE *stream) {
 }
 
 
-
 static int log_msg(FILE *logfile, const char *text) {
-  if (text && logfile) {
-    lives_fputs(text, logfile);
-  }
+  if (text && logfile) lives_fputs(text, logfile);
   return 0;
 }
 
@@ -211,7 +210,6 @@ static weed_error_t _add_message_to_list(const char *text, boolean is_top) {
       }
       strg2 = lives_strdup_printf("%s%s", strg, lines[0]);
       weed_leaf_delete(end, LIVES_LEAF_MESSAGE_STRING);
-      //g_print("will set %s\n", strg2);
       weed_set_string_value(end, LIVES_LEAF_MESSAGE_STRING, strg2);
       /* g_print("GOT %s\n", */
       /*         weed_get_string_value(end, LIVES_LEAF_MESSAGE_STRING, NULL)); */
@@ -237,8 +235,6 @@ static weed_error_t _add_message_to_list(const char *text, boolean is_top) {
       lives_strfreev(lines);
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
-
-    if (mainw->debug) log_msg(mainw->debug_log, text);
 
     mainw->n_messages++;
 
@@ -282,12 +278,12 @@ weed_error_t add_message_to_list(const char *text) {return _add_message_to_list(
 
 lives_result_t add_message_first(const char *text) {
   MSGMODE_ON(STORE);
+  MSGMODE_OFF(CACHE);
   _add_message_to_list(text, TRUE);
   if (msgcache) {
     msgcache = lives_list_reverse(msgcache);
     for (LiVESList *list = msgcache; list; list = list->next) {
       if (list->data) {
-        //g_print("MSG: %s\n", (const char *)list->data);
         d_print((const char *)list->data);
         lives_free(list->data);
       }
@@ -295,6 +291,7 @@ lives_result_t add_message_first(const char *text) {
     lives_list_free(msgcache);
     msgcache = NULL;
   }
+  if (prefs->show_msg_area) MSGMODE_ON(DISPLAY);
   return LIVES_RESULT_SUCCESS;
 }
 
@@ -345,7 +342,54 @@ static void cache_msg(const char *text)
 {if (text) msgcache = lives_list_prepend(msgcache, (void *)text);}
 
 
-#define DPRINT_PREFIX "\n==============================\n"
+#define DPRINT_SEP "==============================\n"
+
+static void d_print_inner(const char *text) {
+  if (!prefs || !prefs->msg_routing || MSGMODE_HAS(CACHE)) {
+    cache_msg(text);
+    if (!prefs || !prefs->msg_routing) {
+      if (mainw && mainw->debug) {
+        fprintf(stderr, "%s", text);
+        if (mainw->debug_log) log_msg(mainw->debug_log, text);
+      }
+    }
+    return;
+  }
+
+  if (MSGMODE_HAS(STDERR)) fprintf(stderr, "%s", text);
+  if (MSGMODE_HAS(LOGFILE)) log_msg(mainw->debug_log, text);
+
+  if (MSGMODE_HAS(STORE)) {
+    if (MSGMODE_HAS(FANCY) && !mainw->no_switch_dprint) {
+      if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0
+          && !mainw->multitrack && (mainw->current_file == -1 || CURRENT_CLIP_IS_VALID)) {
+        char *swtext, *tmp;
+        if (CURRENT_CLIP_IS_VALID) {
+          char *xtmp = get_menu_name(cfile, TRUE);
+          tmp = lives_strdup_printf(_("clip %s"), xtmp);
+          lives_free(xtmp);
+        } else tmp = lives_strdup(_("empty clip"));
+
+        swtext = lives_strdup_printf(_("\n%s\nSwitched to %s\n"), DPRINT_SEP, tmp);
+        add_message_to_list(swtext);
+        lives_free(swtext); lives_free(tmp);
+      }
+    }
+
+    add_message_to_list(text);
+
+    if (MSGMODE_HAS(DISPLAY)) {
+      if (mainw->multitrack) {
+        msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
+        lives_widget_queue_draw_if_visible(mainw->multitrack->msg_area);
+      } else {
+        msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+        lives_widget_queue_draw_if_visible(mainw->msg_area);
+      }
+    }
+  }
+}
+
 
 void d_print(const char *fmt, ...) {
   // collect output for "show messages" and optionally for main message area
@@ -354,7 +398,7 @@ void d_print(const char *fmt, ...) {
   // initially, routing is set to MSG_ROUTE_CACHE. Messages sre stored in a linked list.
   // when add_message_first(text) is called routing is set to MSG_ROUTE_CACHE i cleared,  MSG_ROUTE_DISPLAY
   // (if msg area can be shown) is set,
-  // and possibly MSG_ROUTE_STDERR, MSG_ROUTE_DEBUG_LOG and (in future) MSG_ROUTE_LOGFILE
+  // and possibly MSG_ROUTE_STDERR, MSG_ROUTE_LOGFILE
   // and all cached messages are d_printed again.
   // At the end of the startup phase, MSG_ROUtE_FANCY is also set.
   //
@@ -371,64 +415,32 @@ void d_print(const char *fmt, ...) {
 
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
   va_list xargs;
-  lives_clip_t *sfile;
-  char *tmp, *text;
+  char *text;
 
   if (mainw && mainw->suppress_dprint) return;
-
-  if (MSGMODE_HAS(BLOCK)) return;
+  if (prefs && MSGMODE_HAS(BLOCK)) return;
 
   va_start(xargs, fmt);
   text = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  if (!prefs || !prefs->msg_routing || MSGMODE_HAS(CACHE)) cache_msg(text);
+  pthread_mutex_lock(&dprint_mutex);
 
-  if (MSGMODE_HAS(STDERR)) fprintf(stderr, "%s", text);
-
-  if (MSGMODE_HAS(DEBUG_LOG)) log_msg(mainw->debug_log, text);
-
-  if (MSGMODE_HAS(FANCY)) {
-    if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && !mainw->multitrack &&
-        (mainw->current_file == -1 || (sfile = RETURN_PHYSICAL_CLIP(mainw->current_file)) != NULL)
-        && !mainw->no_switch_dprint) {
-      if (sfile) {
-        char *swtext = lives_strdup_printf(_("%s\nSwitched to clip %s\n"),
-                                           DPRINT_PREFIX, tmp = get_menu_name(cfile, TRUE));
-        add_message_to_list(swtext);
-        lives_free(tmp); lives_free(swtext);
-      } else {
-        char *swtext = lives_strdup_printf(_("%s\nSwitched to empty clip\n"), DPRINT_PREFIX);
-        add_message_to_list(swtext);
-        lives_free(swtext);
-      }
-    }
-  }
-
-  if (MSGMODE_HAS(STORE)) {
-    //g_print("ADD msg %s\n", text);
-    add_message_to_list(text);
-    lives_free(text);
-  }
-
-  if (MSGMODE_HAS(DISPLAY)) {
-    if (!mainw->go_away && prefs->show_gui && prefs->show_msg_area
-        && ((!mainw->multitrack && mainw->msg_area && mainw->msg_adj)
-            || (mainw->multitrack && mainw->multitrack->msg_area
-                && mainw->multitrack->msg_adj))) {
-      if (mainw->multitrack) {
-        msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
-        lives_widget_queue_draw_if_visible(mainw->multitrack->msg_area);
-      } else {
-        msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
-        lives_widget_queue_draw_if_visible(mainw->msg_area);
-      }
-    }
-  }
+  d_print_inner(text);
 
   if (mainw && (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
       (!mainw->no_switch_dprint || mainw->current_file != 0))
     mainw->last_dprint_file = mainw->current_file;
+
+  pthread_mutex_unlock(&dprint_mutex);
+}
+
+
+void d_print_debug(const char *fmt, ...) {
+  va_list xargs;
+  va_start(xargs, fmt);
+  vfprintf(stderr, fmt, xargs);
+  va_end(xargs);
 }
 
 

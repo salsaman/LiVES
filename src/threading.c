@@ -3411,9 +3411,8 @@ static void *_lives_thread_data_create(void *pslot_id) {
   if (!tdata) {
 #if USE_RPMALLOC
     // must be done before anything else
-    if (!rpmalloc_is_thread_initialized()) {
+    if (!rpmalloc_is_thread_initialized())
       rpmalloc_thread_initialize();
-    }
 #endif
 
     tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));

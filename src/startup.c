@@ -151,6 +151,14 @@ capabilities *get_capabilities(void) {
 
   capable->mainpid = lives_getpid();
 
+  capable->locale.all = LIVES_ORIG_LC_ALL;
+  capable->locale.lang = LIVES_ORIG_LANG;
+  capable->locale.language = LIVES_ORIG_LANGUAGE;
+  capable->locale.numeric = LIVES_ORIG_NUMERIC;
+  capable->locale.dp = lconvx->decimal_point;
+  capable->locale.th_sep = lconvx->thousands_sep;
+  capable->locale.grping = lconvx->grouping;
+
   // cmds part 1
   get_location("cp", capable->cp_cmd, PATH_MAX);
   capable->sysbindir = get_dir(capable->cp_cmd);
@@ -1789,6 +1797,8 @@ static boolean lives_startup2(livespointer data) {
     MSGMODE_SAVE;
     MSGMODE_OFF(FANCY);
 
+    show_playbar_labels(mainw->current_file);
+
     if (mainw->current_file > -1 && !mainw->multitrack) {
       switch_clip(1, mainw->current_file, TRUE);
 #ifdef ENABLE_GIW
@@ -1819,10 +1829,10 @@ static boolean lives_startup2(livespointer data) {
   MSGMODE_RESTORE;
   d_print("");
 
-  if (MSGMODE_HAS(DEBUG_LOG)) {
+  if (MSGMODE_HAS(LOGFILE)) {
     close_logfile(mainw->debug_log);
     mainw->debug_log = NULL;
-    MSGMODE_OFF(DEBUG_LOG);
+    MSGMODE_OFF(LOGFILE);
   }
 
   MSGMODE_OFF(STDERR);
@@ -1893,8 +1903,6 @@ static boolean lives_startup2(livespointer data) {
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
   //lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
-  //resize_message_area(NULL);
-
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
 
@@ -1939,6 +1947,11 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   int xargc = argc;
 
   main_thread = pthread_self();
+#if USE_RPMALLOC
+  if (!rpmalloc_is_thread_initialized())
+    rpmalloc_thread_initialize();
+#endif
+
 
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
@@ -2788,7 +2801,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   if (mainw->debug) {
     mainw->debug_log = open_logfile(NULL);
-    MSGMODE_SET(DEBUG_INIT);
+    MSGMODE_SET(DEBUG_LOG);
   }
 
   // get capabilities and if OK set some initial prefs

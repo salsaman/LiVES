@@ -18,6 +18,8 @@
 #define THRESH_BASE 10000.
 #define THRESH_MAX 50000.
 
+static pthread_mutex_t xtra_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static pulse_driver_t pulsed;
 static pulse_driver_t pulsed_reader;
 
@@ -445,8 +447,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     return;
   }
 
+  pthread_mutex_lock(&xtra_mutex);
   pulsed->extrausec += ((double)nbytes / (double)(pulsed->out_arate) * (double)ONE_MILLION
-                        / (double)(pulsed->out_achans * (pulsed->out_asamps >> 3)) + .5);
+                        / ((double)(pulsed->out_achans * (pulsed->out_asamps >> 3))) + .5);
+  pthread_mutex_unlock(&xtra_mutex);
 
   /// handle control commands from the main (video) thread
   if ((msg = (aserver_message_t *)pulsed->msgq) != NULL) {
@@ -1492,9 +1496,12 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
       pa_stream_drop(pulsed->pstream);
     }
 
+    pthread_mutex_lock(&xtra_mutex);
     if (pulsed->in_use)
-      pulsed->extrausec += ((double)nbytes / (double)(pulsed->in_arate) * 1000000.
-                            / (double)(pulsed->in_achans * pulsed->in_asamps >> 3) + .5);
+      pulsed->extrausec += ((double)nbytes / (double)(pulsed->in_arate) * (double)ONE_MILLION
+                            / ((double)(pulsed->in_achans * (pulsed->in_asamps >> 3))) + .5);
+    pthread_mutex_unlock(&xtra_mutex);
+    g_print("XUS = %ld\n", pulsed->extrausec);
     lives_proc_thread_include_states(self, THRD_STATE_IDLING);
     lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     return;
@@ -1524,12 +1531,13 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   nframes = rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3);
 
-  if (!mainw->fs && !mainw->faded && !mainw->multitrack && mainw->ext_audio_mon)
+  if (mainw->ext_audio_mon && !mainw->fs && !mainw->faded && !mainw->multitrack)
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), (*(uint8_t *)data & 0x80) >> 7);
 
   // time interpolation
-  pulsed->extrausec += ((double)rbytes / (double)(pulsed->in_arate) * (double)ONE_MILLION
-                        / (double)(pulsed->in_achans * (pulsed->in_asamps >> 3)) + .5);
+  pthread_mutex_lock(&xtra_mutex);
+  pulsed->extrausec += nframes * ONE_MILLION;
+  pthread_mutex_unlock(&xtra_mutex);
 
   // should really be frames_read here
   if (!pulsed->is_paused) {
@@ -1967,7 +1975,7 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
 
 ///////////////////////////////////////////////////////////////
 static int64_t last_usec = -1, tot_extras = 0, tot_measured = 9;
-static int64_t sync_usec = 0, last_extra = 0, last_retval = 0;
+static int64_t last_extra = 0, last_retval = 0;
 static double sclf = 1.;
 
 
@@ -1998,15 +2006,14 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  pulsed->extrausec = 0;
-  last_usec = pulsed->usec_start;
-  tot_extras = tot_measured = 0;
-  sync_usec = last_extra = last_retval = 0;
-  sclf = 1.;
-
   lives_microsleep_while_true(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0);
 
-  pulsed->usec_start = usec - offset  / USEC_TO_TICKS;
+  pthread_mutex_lock(&xtra_mutex);
+  pulsed->extrausec = 0;
+  pthread_mutex_unlock(&xtra_mutex);
+  last_retval = 0;
+  sclf = 1.;
+  last_usec = pulsed->usec_start = usec - offset  / USEC_TO_TICKS;
   pulsed->frames_written = 0;
   return TRUE;
 }
@@ -2044,31 +2051,27 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     lives_microsleep;
   }
 
-  tot_extras += (pulsed->extrausec - last_extra) / sclf;
-  sync_usec += (pulsed->extrausec - last_extra) / sclf;
-  last_extra = pulsed->extrausec;
-
   if (!retval) {
     if (usec > last_usec) {
-      tot_measured += usec - last_usec;
-      if (tot_measured > (tot_extras << 1)) sclf = 0.5;
-      else if (tot_measured < (tot_extras >> 1)) sclf = 2.;
-      else sclf = (double)tot_extras / (double)tot_measured;
-
-      sync_usec -= (usec - last_usec);
-      if (sync_usec < usec - last_usec) sync_usec = usec - last_usec;
-
       last_usec = usec;
+      if (pulsed->extrausec) {
+        sclf = (double)pulsed->extrausec / (double)(usec - pulsed->usec_start);
+        g_print("ratio %.4f\n", sclf);
+      }
     }
   }
 
-  retval = (ticks_t)(last_usec + sync_usec - pulsed->usec_start) * USEC_TO_TICKS;
+  retval = (ticks_t)(usec - pulsed->usec_start) * USEC_TO_TICKS;
+  if (retval < last_retval) retval = last_retval;
 
   if (retval < 0) retval = 0;
-  if (retval < last_retval) last_retval = -1;
+  else last_retval = retval;
 
   return retval;
 }
+
+
+double lives_pulse_get_timing_ratio(pulse_driver_t *pulsed) {return sclf;}
 
 
 off_t lives_pulse_get_offset(pulse_driver_t *pulsed) {

@@ -101,6 +101,10 @@ void *(*lives_malloc)(size_t);
 void (*lives_free)(void *);
 void *(*lives_calloc)(size_t, size_t);
 
+struct lconv *lconvx;
+const char *LIVES_ORIG_LC_ALL, *LIVES_ORIG_LANG, *LIVES_ORIG_LANGUAGE, *LIVES_ORIG_NUMERIC;
+locale_t oloc, nloc;
+
 _palette *palette;
 ssize_t sizint, sizdbl, sizshrt;
 mainwindow *mainw;
@@ -656,11 +660,20 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   zargc = argc;
   zargv = argv;
 
-  //setlocale(LC_ALL, "");
+  oloc = uselocale((locale_t) 0);
+
+  lconvx = localeconv();
+  LIVES_ORIG_LC_ALL = getenv("LC_ALL");
+  LIVES_ORIG_NUMERIC = getenv("LC_NUMERIC");
+  LIVES_ORIG_LANG = getenv("LANG");
+  LIVES_ORIG_LANGUAGE = getenv("LANGUAGE");
 
   // force decimal point to be a "."
+
   putenv("LC_NUMERIC=C");
   setlocale(LC_NUMERIC, "C");
+
+  nloc = uselocale((locale_t) 0);
 
 #ifdef ENABLE_NLS
   textdomain(GETTEXT_PACKAGE);

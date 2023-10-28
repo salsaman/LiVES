@@ -33,7 +33,8 @@
 // model_for points to the weed_instance_t
 #define NODE_MODELS_PLUGIN		8
 
-// combos
+// combinations
+// (INTERN + PASSTHRU, EXTERN + OUTPUT and EXTERN + PASSTHRU are currently unused)
 
 #define NODE_MODELS_CLIP		(NODE_MODELS_EXTERN + NODE_INPUT)
 
@@ -69,115 +70,127 @@
 // normal cost types
 #define N_COST_TYPES		4
 
-/* OPERATION :: there are 5 phases  */
+/* OPERATION :: there are several phases  */
 
 /* - graph construction  :: create_nodes_model()*/
-// starting with an array of LAYERS of a size mainw->ntracks, which may include NULL values
-// we consider the array index to be a TRACK number
-// clip / frame numbers will correspond to mainw->clip_index and mainw->track_index
-// in corresponding oreder - a clip_index value < 0 representign a NULL layer
+// starting with an array mainw->clip_index, a number of tracks (0 - mainw->num_tracks)
+// - consider the array index to be a TRACK number
+//   clip_index value < 0 representing a NULL layer
+// and a temporaly ordered list of effect instances
+// and finally one or more output sinks (internal or plugins)
 
-// to construct the model we begin with a temporally ordered list of effect instances
-// for ech of these in turn we construct a node, then examine the in_tracks for the instance
+// for each filter in turn (excluding generators and audio effects)
+// we construct an inst_node; then examine the IN_TRACKS for the instance
 // for each of these we search for an unterminated node_chain in node_srcs - a linked list which is initially NULL
-// failing to locate such a node_chain, we then construct a node for the correspodning track
-// and prepend this to the instance node. In doing so, we also create a new node_chain with first_node = last_node
-// pointing the new source node, flagged as unterminated.
-// Now, finding a node_chain in node_srcs with track corresponding to the instance node
-// in_track and being flagged as unterminated, we prepend this node to the instance node, and extend the node_chain
-// updating last_node to point to the instance node.
+// Failing to locate such a node_chain, we then construct an inst_node for the correspodning track (layer)
+// depending on CLIP_TYPE for the clip this could be a CLIP type node, a GENERATOR or an internal SRC
+//
+// The source is  prepended to the filter inst_node. In doing so, we also create a new node_chain with first_node = last_node
+// pointing to the new source node, flagged as unterminated and return this.
+//
+// Finding a node_chain in node_srcs with track corresponding to the instance node
+// in_track and flagged as unterminated, we prepend this node to the instance node, and extend the node_chain
+// updating last_node to point to the instance node. We connect the first unused output from the src to the first unused
+// input with matching track number in the filter node.
+//
 // If we fail to find an unterminated node_chain for the track,
-// and the layer for the track number in question is NULL then we create a blank_frame source for the track.
+// and the clip_index value is < 0, we either disable the in channel (if optional), or we create a blank_frame source for the track.
 // and prepend that to the instance node, adding the blank_frame source to node_srcs.
 //
-// If a node has multiple inputs then we do this for each of the (non-cloned) inputs. We then examine the out_tracks
-// for the instance node. If an in_track has a correspondign out_track with equal track number then the node_chain
+// If a node has multiple inputs then we do this for each of the (non-cloned) inputs. A cloned input is one which has the same
+// track number as a connected input - in this case the input layer will be duplicated when running the effect.
+
+// Once all non cloned, non optional inputs for the nede have been connected, We then examine the out_tracks
+// for the filter node. If an in_track has a correspondign out_track with equal track number then the node_chain
 // is left as unterminated. If there is no out_track for an in_track, this is a terminator node for the node_chain
-// and we flag it as terminated, so it cannot be used as an input in any subsequent node
+// and we flag it as terminated, so it cannot be used as an input in any subsequent nodes. Should we later need an input
+// for this track, we can do this by cloning the output from the node feeding into the terminator node and this then becomes
+// the start of a new unterminated node_chain for that track.
+//
 // If we find an out_track with no corresponding in_track, this is a source node for the out_track. If there is
-// an unterminated node_chain already for that track, this is an ERROR - we cna never have more than one
-// unterminated node_chain for any given track.
+// an unterminated node_chain already for that track, this is an ERROR - we can never have more than one
+// unterminated node_chain active simultneously for any given track, unless one is cloned output of the other.
 //
 // if an instance node has the same track more than once in its in_tracks, all but the first are flagged as input CLONES
 // in this case we assume that the layer will be duplicated and sent to the instance channels. Clones are
 // ignored except for the fact the we can mark these inputs as filled.
 //
-// If the same track appears multiple times in out_tracks, then all but the first is an output clones.
-// Again we assume that the layer will be copied and the copies used as inputs to separate nodes
-// These are ignored for now, however when we reach the node for a clone input, we should find only terminated nodes
-// for the track, which will prompt the algorithm to back track until it finds the first unused output clone
-// which then becomes the input for that later node - this node will become a new source for the track,
-// creating an unterminated node_chain beginning from this node.
-//
-// This continues until we reach the end of the list of instances, and finally then, we create a node for the
-// sink (display) which has normally a single in_track, but its value is variable. We find the unterminated node_chain
+// If the same track appears multiple times in out_tracks, then all but the first is an output clone.
+// The layer will be copied and the copies used as inputs to separate nodes. Since we always connect the earliest unterminated
+// node chain, the clones are unconnected until earlier copies are terminated. generally we would only create an output clone
+// in the case where a track has only terminated node_chains, and we need to connect that track to a later input.
+
+// This continues until we reach the end of the list of instances, and finally, we create a node(s) for the
+// sink(s) (display) which has normally a single in_track, but its value is variable. We find the unterminated node_chain
 // with the lowest track number, and prepend it. In the unlikely case that we do not find such a node_chain,
-// we iterate through the layers array and create a source node for the first non-NULL layer we encounter
-// if all layers are NULL, then we create a blank frame source and prepend that.
+// we go theough the clip_index and create a source node for the first entry with clip number > 0
+// If there is no such track, then we create a blank frame source for track 0 and prepend that.
+
+// For source nodes, we do not have inputs, but we will instead have one or more clip_srcs. The combined set of clip_srcs
+// are contained in a clip srcgroup.
 
 /* check and prune - TODO*/
-/* here we iterate over the node_srcs list */
-/* if a node_chain is not flagged as terminated, */
-// then we jump to the first_node, locate the outptu corresponding to this track, and follow the route
-// down until we reach the last_node. We can free any node without without extra outputs or inputs.
-// IF the node has other outputs, we do not free it, but we flag our output as PRUNED. If there are other inputs
-// we go up one level to the input node, and apply the same rules, freeing or marking as pruned, nad ascending
-// inputs. on reaching the node_chain last-node, we stop and can remove the node_chain entriely from node_srcs.
-// outputs flegged as pruned are ignored during further processing.
+// in this step we will eliminate any remaining unterminated node_chains. This can occur in the unliely event that the ouput
+// from a node is never prepend to the input of a subsequent node. In this case we can trace the node_chain back to its origin
+// and mark the correponding outputs as unused. If we find a node with only unused outputs, then that node can be eliminated
+// from the model since it does not contibute to the output at a sink.
 
-/* least cost routing */
-// iterating ove node_srcs, we consider only nodes which have no inputs (true sources) ignoring any
-// first_nodes with inputs (instance sources)
+// Set initial sizes
+// Starting from src nodes, we check each output to see if it ha a fixed size. This size is defined for the srcgroup for the source
+// - every clip_src will first resize the frames it produces to this common size. These sizes are propogated down the tree towards
+// the sinks. Some inputs / outputs may already have fixed size pre-defined. If we encounter a node with multiple inputs, unless
+// it is flagged as sizes_may vary, we need to find a common size for all inputs / outputs. This is done useing a complex heuristic
+// which considers the current adaptive quality level as well as the letterboxing mode and other factors.
 
-// we begin by setting initial sizes, this is started when building the model and connecting nodes
-// if  we have a src with set dize, then this size is carried to the input of the next node.
+// Add missing sizes
+// Some input srcs may have variable size, in which case this cannot be propogated down
+// In this phae we begin with the sink sizes. If these are fixed, they are propogated upwards and ued to define
+// any ndefined size values. If a sink size is variable then we try to select an optimal  default value.
+// in this phase we also begin cost calculation. Downsizing a frame has a potential (deferred) cost which is only realised
+// if the frame is subsequently upscaled. The deferred costs from upscaling are propogate upwards and applied as real costs
+// at the point where the frame was downsized.
+//
 
-// since we may have some srcs with variable size, this cannot bes set descending. If we rach anode with multiple inputs
-// we compute the in and out sizes. If we multiple inputs, if any of them have a calulated size, then we set in / out
-// sizes using the sizes which we have.otherwise we continu down with undefined size.
+// least cost routing
+// after calculating size costs, then we move on to palette costs
+// traversing each node_chain, at each input we esitmate time / quality costs for each posssible in / out palette pair
+// For sources we consider the fraction of frames produced by eachc clip_src in the srcgroup and use this as a wighting factor
+// For each node we total the combined costs for all inputs, For each out palette we find the combination of output palettes
+// from previous nodes which produces the lowest value for each cost type.
+// To porperly calulate this, we need to know the realtive "ready time" of each node, whcih can only be found after the time
+// cost has been computed. Hence we do this step several times using the estimated time costs from the previous cycle
+// as the predicted ready_time.
 
-// then on the ascending wave we check if an output has undefined size,
-// this is set to size from the input it connects to
-// eventually definng sizes for src
-
-// on the descender,
-
-// when a layer is downsized this creates a virtual cost at the input equal to in_size / out_size
-// we also keep track of the "max_possible" size.
-
-// on the ascending wave if we find we upscale thenwe calc  cost for upscale
-// it and this valuie can be "spent"
-
-// the size contiues down until we have goen down all outputs
-// then ascending we want to do 2 things, set he sizes for any srcs with variable size, transfeer the size cost up
-// and convert vsize cost to real size cost
-// if we reach an output with virtual size cost this is converted to real size cost, until we exhaust the upscale cost
-// if we exhaust virtual cost we continue up until we hit a node with more virtual size cost
-// when calulate qloss cossts we multiply sizes for all inputs as with palette qlos, however, we also add ln(qloss)
-// for the next node/ Thus qloss for palettes occurs once, wheraas size qloss accumulates over each node until we get to
-// the sink. If we have vcost left anywhere this can be "spent" to reduce tcost, the same way as slack.
-// at the sink we multiply size qloss by a factor then multiply pal qloss and size qloss to give total qloss
-
-// after calulating size costs, then we move on to palette costs
-
-// we calculate costs for each palette available lat the source node, then recurse ove over all outputs
-// at the following node we add on the additional cost for each in / out combination, fidning the lowest cost
-// in palette per out palette.
+// calculating 'slack'
+// If a node has multiple inputs, it may be that some inputs are ready before others, having covnerted size and palette
+// The waiting time between an input being ready and all inputs being ready is known as "slack". This repreents a value
+// which can be discounted when optimising. Increasing a conversion time has no negative effects if it only uses up some of this
+// slack time. The slack value can be combined and propogated up the tree. If we have a node with multiple outputs, only the
+// minimum value can be propogated upwards.
 
 // reverse routing
-/* after calculating all the min_costs for each out palette / cost type, we start from sinks */
-/* (node-chain last_nodes with no outputs), and work backwards to the sources, tracing best palettes */
-/* for each cost type, recursing over each non-cloned input  */
-// this is fairly simple, we begin by finding the palette with least cost for each cost_type at the sink,
-// then iterate over all inputs, for each we know the palette which has least cost for the out palette
-// this is set in best_pal for the node / cost_type
-// on reaching a source node, if this is a true source, or if it is an instance source and we arrived
-// the second or higher output, then we stop
+// after calculating all the min_costs for each out palette / cost type, we start from sinks
+// and work backwards to the sources, tracing best palettes for each cot type
+// again, we total over all inputs. We already calulated the minimum values for each output palette.
+// for sinks we do not have ouputs, but the object it represents (plugin or internal output) will do
+// for each of these possible output palettes we find the min cost and pick the one with lowest combined cost for
+// that cost type. Then, having defined the palettes for each input we acend each input in turn, and knowing the ouput
+// palette for the output, we can find the optimal set of output palettes from the previous nodes. We continue this
+// recursively until we have traversed all inputs.
 
-// completed model
-// now we can use this info, we can find a node for any node source, descend the node_chains, etc
-// optionally we can restrict / relax  the model nodes and recalculate costs and re run reverse routing
-// to observe the changes in costs / palettes this causes
+// Model optimisations (TODO)
+// After defining the start values for sizes and palettes, we can try to optimise the model. Upscales and downscales can
+// moved to nodes furher up or down the tree, and we can test other palette combinations, since the minimal value at each
+// node may not guarantee minimal cost over the whole model. In this stage we alo consider "slack" which can be "spent"
+// to reduce increased time costs without affecting overall combined cost at the sink node.
+
+// Creating the plan
+// After building the nodemodel and optising it, we create a plan from it. In this operation we flattend the nodemodel
+// into time steps, each step becoming one operation (LOAD, CONVERT, APPLY_INSTANCE, etc).
+// Each step has in and out values (e.g the frame in / out size), and also a set of one or more prior steps whcih mut be completed
+// and a set of conditions (e.g. layer status == prepared). These prior steps must be flagged as completed or skipped and
+// the conditions satisfied before that step can be actioned. When the final step of the plan completes, the output will
+// be ready to send to the sink(s), and the cycle can be run again.
 
 // cost for node have been computed (used during cost calculation)
 #define NODEFLAG_PROCESSED		(1ull << 0)
@@ -568,12 +581,15 @@ typedef struct _inst_node {
   int model_type;
 
   // pointer to the object (template) being modelled by the node
+  // for CLIP points to sfile, for FILTER / GENERATOR points to filter, for OUTPUT points to plyback plugin
+  // for SRC, points to a static src (TODO), for INTERNAL, unused
   void *model_for;
 
   // pointer to the object instance being modelled by the node
   void *model_inst;
 
-  // for filters, the filter keymap key, for clip srcs, the clip number etc
+  // for filters, the filter keymap key,
+  // for clip srcs (and generators) the clip number etc
   int model_idx;
 
   int *in_count, *out_count;

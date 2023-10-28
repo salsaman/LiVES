@@ -202,18 +202,12 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_markup_printf_escaped(...) g_markup_printf_escaped(__VA_ARGS__)
 
-#define lives_print(...) g_print(__VA_ARGS__)
-#define lives_fprintf(...) fprintf(__VA_ARGS__)
-#define lives_printerr(...) g_printerr(__VA_ARGS__)
 #define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)
-#define lives_strdup_free(a, b) (lives_free_and_return((a)) ? NULL : lives_strdup(b))
-#define lives_strdup_printf_free(a, ...) (lives_free_and_return((a)) ? NULL : lives_strdup_printf(__VA_ARGS__))
 #define lives_strdup_vprintf(fmt, ...) g_strdup_vprintf(fmt, __VA_ARGS__)
 #define lives_strndup(a, b) g_strndup(a, b)
 #define lives_snprintf(a, b, ...) g_snprintf(a, b, __VA_ARGS__)
 #define lives_strsplit(a, b, c) g_strsplit(a, b, c)
 #define lives_strfreev(a) g_strfreev(a)
-#define lives_strdup(a) g_strdup(a)
 #define lives_ascii_strup(a, b) g_ascii_strup(a, b)
 #define lives_ascii_strdown(a, b) g_ascii_strdown(a, b)
 #define lives_ascii_strcasecmp(a, b) g_ascii_strcasecmp(a, b)

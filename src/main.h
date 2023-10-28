@@ -116,6 +116,10 @@ typedef LIVES_BOOLEAN_TYPE weed_boolean_t;
 #include <weed/weed-compat.h>
 #endif
 
+typedef weed_plant_t weed_layer_t;
+typedef weed_plant_t lives_layer_t;
+typedef weed_plant_t weed_param_t;
+
 weed_leaf_get_f _weed_leaf_get;
 weed_leaf_set_f _weed_leaf_set;
 #if WEED_ABI_CHECK_VERSION(202)
@@ -141,7 +145,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 // LiVES extensions (effects-weed.c)
 
-// uncahngeable even for host
+// unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
 
 // constant value and constant data
@@ -160,6 +164,17 @@ const char *weed_get_const_string_value(weed_plant_t *, const char *key, weed_er
 weed_size_t weed_leaf_const_string_len(weed_plant_t *, const char *key);
 boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
 
+weed_plant_t *lives_plant_copy(weed_plant_t *orig); // weed_plant_copy_clean
+void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plant_t *src);
+void weed_plant_dup_add_clean(weed_plant_t *dst, weed_plant_t *src);
+void weed_plant_sanitize(weed_plant_t *, boolean sterilize);
+boolean weed_leaf_autofree(weed_plant_t *, const char *key);
+
+int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);
+weed_error_t lives_leaf_copy_or_delete(weed_plant_t *dst, const char *key, weed_layer_t *src);
+weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n);
+weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf);
+weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key);
 
 #ifndef IGN_RET
 #define IGN_RET(a) ((void)((a) + 1))
@@ -178,10 +193,10 @@ boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
     weed_set_##vtype##_value(auditor_##audt, pkey, (val));		\
     lives_free(pkey);} while (0);
 
-#define REMOVE_AUDIT(audt, ptr) do {					\
-    if (auditor_##audt) {						\
-      char *pkey = lives_strdup_printf("%p", ptr);			\
-      weed_leaf_delete(auditor_##audt, pkey);				\
+#define REMOVE_AUDIT(audt, ptr) do {			\
+    if (auditor_##audt) {				\
+      char *pkey = lives_strdup_printf("%p", ptr);	\
+      weed_leaf_delete(auditor_##audt, pkey);		\
       lives_free(pkey);}} while (0);
 
 #define AUDIT_REFC 1
@@ -189,16 +204,15 @@ boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
 extern weed_plant_t *auditor_refc;
 #endif
 
-typedef weed_plant_t weed_layer_t;
-typedef weed_plant_t lives_layer_t;
-typedef weed_plant_t weed_param_t;
-
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 
 extern pthread_t main_thread;
 
 #include "support.h"
+
+extern struct lconv *lconvx;
+extern locale_t oloc, nloc;
 
 #include "widget-helper.h"
 
@@ -221,11 +235,13 @@ typedef enum {
 #include "startup.h"
 #include "filesystem.h"
 
-#define XCAPABLE(foo, EXE_FOO) \
-  (capable->has_##foo->present == INTERNAL ? PRESENT :  ((capable->has_##foo->present == UNCHECKED \
-							  ? ((capable->has_##foo->present = \
-							      (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
-							  capable->has_##foo->present) == PRESENT))
+#define XCAPABLE(foo, EXE_FOO)						\
+  (capable->has_##foo->present == INTERNAL				\
+   ? PRESENT :  ((capable->has_##foo->present == UNCHECKED		\
+		  ? ((capable->has_##foo->present =			\
+		      (has_executable(EXE_FOO) ? PRESENT : MISSING)))	\
+		  : capable->has_##foo->present) == PRESENT))
+
 #define GET_EXE(foo) QUOTEME(foo)
 #define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
 #define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
@@ -242,9 +258,9 @@ typedef enum {
 
 #define IS_AVAILABLE(item) (IS_PRESENT(item) || IS_LOCAL(item) || IS_INTERNAL(item))
 
-#define CHECK_AVAILABLE(item, EXEC) (IS_UNCHECKED(item) ? (((capable->has_##item = has_executable(EXEC)) \
-							    == PRESENT || IS_LOCAL(item)) ? TRUE : FALSE) \
-				     : IS_AVAILABLE(item))
+#define CHECK_AVAILABLE(item, EXEC)					\
+  (IS_UNCHECKED(item) ? (((capable->has_##item = has_executable(EXEC))	\
+			  == PRESENT || IS_LOCAL(item)) ? TRUE : FALSE) : IS_AVAILABLE(item))
 typedef struct {
   char wm_name[64];
   uint64_t ver_major;
@@ -361,8 +377,7 @@ typedef enum {
 
 /// cancel reason
 typedef enum {
-  /// no cancel
-  CANCEL_NONE,
+  CANCEL_NONE = 0,
 
   /// user pressed stop
   CANCEL_USER,
@@ -475,6 +490,18 @@ extern size_t dslen; // strlen(LIVES_DIR_SEP)
 
 // capabilities (MUST come after plugins.h)
 // TODO - move into capabilities.h
+
+extern const char *LIVES_ORIG_LC_ALL, *LIVES_ORIG_LANG, *LIVES_ORIG_LANGUAGE, *LIVES_ORIG_NUMERIC;
+
+typedef struct {
+  const char *all;
+  const char *lang;
+  const char *language;
+  const char *numeric;
+  const char *dp;
+  const char *th_sep;
+  const char *grping;
+} locale_dets;
 
 struct _capabilities {
   // the following can be assumed TRUE / PRESENT, they are checked on startup
@@ -624,6 +651,8 @@ struct _capabilities {
 
   char *mountpoint;  ///< utf-8
 
+  locale_dets locale;
+
   // move to os_caps_t
   char *os_name;
   char *os_release;
@@ -664,12 +693,6 @@ struct _capabilities {
 int orig_argc(void);
 char **orig_argv(void);
 
-// effects-weed.c
-weed_error_t lives_leaf_copy_or_delete(weed_plant_t *dst, const char *key, weed_layer_t *src);
-weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n);
-weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf);
-weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key);
-
 // main.c
 
 void set_signal_handlers(lives_sigfunc_t sigfunc);
@@ -682,16 +705,6 @@ void ign_signal_handlers(void);
 void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
 
-// effects-weed.c
-weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *, boolean state);
-weed_plant_t *lives_plant_copy(weed_plant_t *orig); // weed_plant_copy_clean
-void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plant_t *src);
-void weed_plant_dup_add_clean(weed_plant_t *dst, weed_plant_t *src);
-void weed_plant_sanitize(weed_plant_t *, boolean sterilize);
-boolean weed_leaf_autofree(weed_plant_t *, const char *key);
-
-int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);
-
 #include "osc_notify.h"
 
 // inlines
@@ -703,7 +716,7 @@ const char *dummystr;
 
 void break_me(const char *dtl);
 
-#define SHOW_LOCATION(text) \
+#define SHOW_LOCATION(text)						\
   fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_)
 
 #define LIVES_NO_DEBUG 1
@@ -745,9 +758,8 @@ void break_me(const char *dtl);
 
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(errmsg) do {					\
-    SHOW_LOCATION("LiVES CRITICAL:"); break_me((errmsg));			\
-    if (mainw) mainw->critical_errno = -1; lives_abort(errmsg);} while(0);
+#define LIVES_CRITICAL(errmsg)_DW0(SHOW_LOCATION("LiVES CRITICAL:");break_me((errmsg)); \
+				   if (mainw) mainw->critical_errno = -1; lives_abort(errmsg);)
 #else // LIVES_NO_CRITICAL
 #define LIVES_CRITICAL(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_CRITICAL
@@ -755,12 +767,10 @@ void break_me(const char *dtl);
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL // WARNING - defining LIVES_NO_FATAL may result in DANGEROUS behaviour !!
-#define LIVES_FATAL(errmsg) do {					\
-    SHOW_LOCATION("LiVES FATAL:"); fprintf(stderr, "%s", (errmsg));	\
-    if (mainw && pthread_self() != main_thread)				\
-      {pthread_kill(main_thread,LIVES_SIGABRT);				\
-	while(1) lives_spin();}						\
-    else abort();} while(0);
+#define LIVES_FATAL(errmsg)_DW0(SHOW_LOCATION("LiVES FATAL:"); fprintf(stderr, "%s", (errmsg));	\
+				if (mainw && pthread_self() != main_thread) \
+				  {pthread_kill(main_thread,LIVES_SIGABRT); \
+				    while(1) lives_spin();} else abort();)
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_FATAL

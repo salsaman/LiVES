@@ -100,6 +100,8 @@ weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int curr
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
 
+void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src, boolean full);
+
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_copy_slice(weed_layer_t *dlayer, weed_layer_t *slayer,
                                     int off_x, int off_y, int width, int height);

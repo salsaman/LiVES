@@ -8,6 +8,45 @@
 
 #define clear_mainw_msg() lives_memset(mainw->msg, 0, MAINW_MSG_SIZE)
 
+/////////////// unit formatting
+
+typedef struct {
+  uint64_t multiplier;
+  const char **big_units, * *small_units;
+} lives_unitdef_t;
+
+#define UNIT_FMT(utype, val, qshort, qlong, fix)			\
+  UNIT_VAL(utype,(val),UNIT_IDX(utype,(val)),fix,qshort,qlong)
+#define UNIT_FMT_LONG(utype, val, qshort, qlong, fix)			\
+  UNIT_VAL_LONG(utype,(val),UNIT_IDX(utype,(val)),fix,qshort,qlong)
+#define UNIT_IDX(utype, val) unit_idx(lives_unit_##utype,(double)(val))
+#define UNIT_VAL(utype, val, idx, fix, qs, ql) unit_val(lives_unit_##utype,(double)(val), idx, fix, qs, ql)
+#define UNIT_VAL_LONG(utype, val, idx, fix, qs, ql) \
+  unit_val_long(lives_unit_##utype,(double)(val), idx, fix, qs, ql)
+
+//////////////////
+
+typedef enum {lives_unit_SI, lives_unit_IEC, N_UNIT_TYPES} lives_unit_type_t;
+
+#define SI_UNITS_BIG "K", "M", "G", "T", "P", "E", "Z", "Y"
+#define SI_UNITS_SMALL "m", "u", "n", "p", "f", "a", "z", "y"
+#define SI_UNITS_X 1000
+
+#define IEC_UNITS_BIG "Ki", "Mi", "Gi", "Ti"
+#define IEC_UNITS_SMALL NULL
+#define IEC_UNITS_X 1024
+
+extern const lives_unitdef_t unitdefs[N_UNIT_TYPES];
+
+////////////////////////
+
+char *lives_format_storage_space_string(uint64_t space);
+char *lives_format_timing_string(double secs);
+char *lives_format_memory_size_string(uint64_t size);
+char *lives_format_storage_space_string_long(uint64_t space);
+
+char *commafmt(double val, int fix);
+
 ////////////// OS utils ///
 
 void lives_abort(const char *reason);

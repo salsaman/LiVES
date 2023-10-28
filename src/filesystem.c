@@ -2340,37 +2340,6 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   return TRUE;
 }
 
-//////////////////////////////////
-
-char *lives_format_storage_space_string(uint64_t space) {
-  char *fmt;
-
-  if (space >= lives_10pow(18)) {
-    // TRANSLATORS: Exabytes
-    fmt = lives_strdup_printf(_("%.2f EB"), (double)space / (double)lives_10pow(18));
-  } else if (space >= lives_10pow(15)) {
-    // TRANSLATORS: Petabytes
-    fmt = lives_strdup_printf(_("%.2f PB"), (double)space / (double)lives_10pow(15));
-  } else if (space >= lives_10pow(12)) {
-    // TRANSLATORS: Terabytes
-    fmt = lives_strdup_printf(_("%.2f TB"), (double)space / (double)lives_10pow(12));
-  } else if (space >= lives_10pow(9)) {
-    // TRANSLATORS: Gigabytes
-    fmt = lives_strdup_printf(_("%.2f GB"), (double)space / (double)lives_10pow(9));
-  } else if (space >= lives_10pow(6)) {
-    // TRANSLATORS: Megabytes
-    fmt = lives_strdup_printf(_("%.2f MB"), (double)space / (double)lives_10pow(6));
-  } else if (space >= 1024) {
-    // TRANSLATORS: Kilobytes (1024 bytes)
-    fmt = lives_strdup_printf(_("%.2f KiB"), (double)space / 1024.);
-  } else {
-    fmt = lives_strdup_printf(_("%d bytes"), space);
-  }
-
-  return fmt;
-}
-
-
 //////////////////////////// disk space monitor, size checking
 
 static int64_t result = -1;

@@ -152,7 +152,7 @@ void weed_functions_init(void) {
   }
 
 #if !USE_STD_MEMFUNCS
-#if xUSE_RPMALLOC
+#if USE_RPMALLOC
   libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
 #else
 #ifdef xENABLE_GSLICE
@@ -163,8 +163,7 @@ void weed_functions_init(void) {
   libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL, _lives_memcpy);
 #endif
 #else
-  //libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
-  libweed_set_memory_funcs(lives_malloc, lives_free, lives_calloc);
+  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
 #endif // DISABLE_GSLICE
 
 #endif // USE_RPMALLOC
@@ -2177,7 +2176,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
-    assert(weed_layer_get_pixel_data(channel) == weed_layer_get_pixel_data(layer));
   }
 
   for (i = 0; i < num_out_tracks + num_out_alpha; i++) {
@@ -2210,10 +2208,8 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         }
       }
 
-      weed_channel_set_gamma_type(channel, weed_layer_get_gamma(layer));
+      lives_layer_copy_metadata(channel, layer, FALSE);
 
-      // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
-      // and update width and height if necessary
       if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
         retval = FILTER_ERROR_MEMORY_ERROR;
         goto done_video;
@@ -2235,8 +2231,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
   for (k = 0; k < num_inc + num_in_alpha; k++) {
     channel = get_enabled_channel(inst, k, LIVES_INPUT);
-    // MUST do this, since  the nullify function cannot detect that channel is sharing with layer
-    // and would thus free pixel-data instead of nullifying
     weed_channel_set_pixel_data(channel, NULL);
     weed_layer_nullify_pixel_data(channel);
   }
@@ -2265,7 +2259,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     // output layer
     if (!inplace && !busy) {
-      weed_layer_pixel_data_free(layer);
       if (weed_pixel_data_share(layer, channel) != LIVES_RESULT_SUCCESS) {
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
@@ -4895,6 +4888,8 @@ void weed_load_all(void) {
   fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
   bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
 
+  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
+
   for (i = 0; i < FX_KEYS_MAX; i++) {
     if (i == FX_KEYS_MAX_VIRTUAL) max_modes = 1;
 
@@ -4932,15 +4927,13 @@ void weed_load_all(void) {
   numdirs = get_token_count(prefs->weed_plugin_path, ';');
   dirs = lives_strsplit(prefs->weed_plugin_path, ";", numdirs);
 #endif
-  //threaded_dialog_spin(0.);
 
-  // here we want to load all plants and leaves into std memory,
-  // otherwise we use up all allocated space for rpmalloc
-  // this is safe povided no other threads are active, and we use same functions when unloading
+  /* here we want to load all plants and leaves into std memory, */
+  /* otherwise we use up all allocated space for rpmalloc */
+  /* this is safe povided no other threads are active, and we use same functions when unloading */
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
-  libweed_set_memory_funcs(_lives_malloc, _lives_free, _lives_calloc);
-  //weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
+  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
 #endif
 #endif
 
@@ -4972,11 +4965,11 @@ void weed_load_all(void) {
       lives_free(plugin_ext);
       list = listnext;
       // threaded_dialog_spin(0.);
-#if USE_RPMALLOC
-      if (rpmalloc_is_thread_initialized()) {
-        rpmalloc_thread_collect();
-      }
-#endif
+      /* #if USE_RPMALLOC */
+      /*       if (rpmalloc_is_thread_initialized()) { */
+      /*         rpmalloc_thread_collect(); */
+      /*       } */
+      /* #endif */
     }
 
     // get 1 level of subdirs
@@ -5007,6 +5000,8 @@ void weed_load_all(void) {
 
   lives_strfreev(dirs);
 
+  ncompounds = load_compound_fx();
+
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
   libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
@@ -5016,7 +5011,6 @@ void weed_load_all(void) {
   d_print(_("Successfully loaded %d Weed filters\n"), num_weed_filters);
 
   //threaded_dialog_spin(0.);
-  //  ncompounds = load_compound_fx();
   //threaded_dialog_spin(0.);
 }
 
@@ -7779,7 +7773,6 @@ procfunc1:
 
   lives_layer_set_clip(layer, clipno);
 
-
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
   /* 	  weed_channel_get_palette(channel), weed_channel_get_pixel_data(channel)); */
   return LIVES_RESULT_SUCCESS;
@@ -8379,7 +8372,6 @@ deinit5:
 
         // open as a clip with 1 frame
         cfile->start = cfile->end = cfile->frames = 1;
-        track_source_free(1, mainw->blend_file);
         mainw->new_blend_file = mainw->blend_file = mainw->current_file;
         add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
         mainw->current_file = current_file;

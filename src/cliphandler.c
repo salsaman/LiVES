@@ -2367,12 +2367,10 @@ void switch_to_file(int old_file, int new_file) {
   lives_widget_show(mainw->hruler);
   lives_widget_show(mainw->vidbar);
   lives_widget_show(mainw->laudbar);
+  lives_widget_show(mainw->raudbar);
 
-  if (cfile->achans < 2) {
-    lives_widget_hide(mainw->raudbar);
-  } else {
-    lives_widget_show(mainw->raudbar);
-  }
+  if (cfile->achans < 2) lives_widget_set_opacity(mainw->raudbar, 0.);
+  else lives_widget_set_opacity(mainw->raudbar, 1.);
 
   if (cfile->redoable) {
     lives_widget_show(mainw->redo);
@@ -2406,13 +2404,13 @@ void switch_to_file(int old_file, int new_file) {
 
   if (mainw->is_ready) {
     if (!mainw->multitrack && !mainw->reconfig) {
-      if (prefs->show_msg_area && !mainw->only_close) {
-        reset_message_area(); // necessary
-        if (mainw->idlemax == 0) {
-          lives_idle_add(resize_message_area, NULL);
-        }
-        mainw->idlemax = DEF_IDLE_MAX;
-      }
+      /* if (prefs->show_msg_area && !mainw->only_close) { */
+      /*   reset_message_area(); // necessary */
+      /*   if (mainw->idlemax == 0) { */
+      /*     lives_idle_add(resize_message_area, NULL); */
+      /*   } */
+      /*   mainw->idlemax = DEF_IDLE_MAX; */
+      /* } */
       redraw_timeline(mainw->current_file);
     }
   }

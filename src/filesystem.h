@@ -206,12 +206,10 @@ typedef enum {
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
-/// TODO - do we really need 3 different functions ?
 boolean check_storage_space(int clipno, boolean is_processing);
 boolean check_for_disk_space(boolean fullcheck);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t resvd);
 
-char *lives_format_storage_space_string(uint64_t space);
 uint64_t get_ds_free(const char *dir);
 
 const char *get_shmdir(void);

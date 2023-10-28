@@ -495,6 +495,8 @@ void create_LiVES(void) {
     lives_widget_add_events(LIVES_MAIN_WINDOW_WIDGET, LIVES_KEY_PRESS_MASK | LIVES_KEY_RELEASE_MASK);
     mainw->config_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
                          LIVES_WIDGET_CONFIGURE_EVENT, LIVES_GUI_CALLBACK(config_event), NULL);
+    lives_widget_set_valign(LIVES_MAIN_WINDOW_WIDGET, LIVES_ALIGN_CENTER);
+    lives_widget_set_halign(LIVES_MAIN_WINDOW_WIDGET, LIVES_ALIGN_CENTER);
   }
   ////////////////////////////////////
 
@@ -554,6 +556,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->top_vbox), 0);
   lives_widget_set_app_paintable(mainw->top_vbox, TRUE);
+  //lives_widget_set_vexpand(mainw->top_vbox, TRUE);
 
   // top_vbox contains the following:
   // - menu_hbox -> menubar -> menuitems
@@ -3365,11 +3368,7 @@ void show_lives(void) {
   lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
   mainw->ignore_screen_size = FALSE;
 
-  if (check_can_show_msg_area()) MSGMODE_ON(DISPLAY);
-
-  mainw->ignore_screen_size = TRUE;
-  reset_mainwin_size();
-  mainw->ignore_screen_size = FALSE;
+  check_can_show_msg_area();
 
   if (prefs->show_gui) {
     if (palette->style & STYLE_1) {
@@ -3430,6 +3429,10 @@ void show_lives(void) {
       gtk_window_set_focus_on_map(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
+
+  mainw->ignore_screen_size = TRUE;
+  reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
 }
 
 

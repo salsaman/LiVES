@@ -2628,12 +2628,12 @@ int close_current_file(int file_to_switch_to) {
     //lives_widget_hide(mainw->playframe);
     load_start_image(0);
     load_end_image(0);
-    if (prefs->show_msg_area && !mainw->only_close) {
-      if (mainw->idlemax == 0) {
-        lives_idle_add(resize_message_area, NULL);
-      }
-      mainw->idlemax = DEF_IDLE_MAX;
-    }
+    /* if (prefs->show_msg_area && !mainw->only_close) { */
+    /*   if (mainw->idlemax == 0) { */
+    /*     lives_idle_add(resize_message_area, NULL); */
+    /*   } */
+    /*   mainw->idlemax = DEF_IDLE_MAX; */
+    /* } */
   }
 
   set_sel_label(mainw->sel_label);
@@ -2690,6 +2690,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   // we will reset these before returning
   mainw->is_ready = TRUE;
+
+  //resize_message_area(NULL);
+  msg_area_config(mainw->msg_area);
 
   if (mainw->multitrack) {
     if (mainw->multitrack->idlefunc > 0) {

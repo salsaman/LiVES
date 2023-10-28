@@ -2984,8 +2984,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   lives_free(lives_header);
 
   IF_APLAYER_JACK
-  (
-  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+  (if (!mainw->agen_key && !mainw->agen_needs_reinit) {
   if (aud_src == AUD_SRC_EXTERNAL) {
       jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
       mainw->jackd_read->is_paused = FALSE;
@@ -2995,11 +2994,10 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
     if (mainw->jackd) {
       jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
     }
-  });
+  })
 
   IF_APLAYER_PULSE
-  (
-  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+  (if (mainw->agen_key && !mainw->agen_needs_reinit) {
   if (aud_src == AUD_SRC_EXTERNAL) {
       pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
       mainw->pulsed_read->is_paused = FALSE;
@@ -3009,7 +3007,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
     if (mainw->pulsed) {
       pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
     }
-  });
+  })
 
   if (mainw->clip_header) fclose(mainw->clip_header);
   mainw->clip_header = NULL;
@@ -3017,8 +3015,8 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   if (aud_src == AUD_SRC_INTERNAL) {
     if (prefs->rec_opts & REC_AUDIO) {
       // recording INTERNAL audio
-      IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd););
-      IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed););
+      IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd);)
+      IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
     }
   }
 
@@ -3570,15 +3568,15 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
 void audio_sync_ready(void) {
   if (mainw->audio_seek_ready) return;
 
-  IF_APLAYER_JACK(
-    if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
-        && mainw->rec_aclip != mainw->ascrap_file)
-    jack_get_rec_avals(mainw->jackd);)
+  IF_APLAYER_JACK
+  (if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
+       && mainw->rec_aclip != mainw->ascrap_file)
+   jack_get_rec_avals(mainw->jackd);)
 
-    IF_APLAYER_PULSE(
-      if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
-          && mainw->rec_aclip != mainw->ascrap_file)
-      pulse_get_rec_avals(mainw->pulsed);)
+    IF_APLAYER_PULSE
+    (if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
+         && mainw->rec_aclip != mainw->ascrap_file)
+     pulse_get_rec_avals(mainw->pulsed);)
 
       mainw->audio_seek_ready = TRUE;
 }
@@ -3657,8 +3655,7 @@ boolean resync_audio(int clipno, double frameno) {
       || mainw->agen_key != 0 || mainw->agen_needs_reinit) return FALSE;
 
   IF_APLAYER_JACK
-  (
-  if (frameno) {
+  (if (frameno) {
   avsync_force();
     if (!jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps)) {
       if (jack_try_reconnect()) jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps);
@@ -3674,8 +3671,7 @@ boolean resync_audio(int clipno, double frameno) {
   retval = TRUE;)
 
   IF_APLAYER_PULSE
-  (
-  if (frameno) {
+  (if (frameno) {
   avsync_force();
     if (!pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps
                                          * sfile->arate / sfile->arps)) {
@@ -5142,13 +5138,13 @@ void show_aplayer_attribs(LiVESWidget * w, void **player) {
 lives_result_t  await_audio_queue(int64_t nsec) {
   lives_sys_alarm_set_timeout(audio_msgq_timeout, nsec);
 
-  IF_APLAYER_JACK(
-    lives_microsleep_while_true(jack_get_msgq(mainw->jackd) && !lives_sys_alarm_triggered(audio_msgq_timeout));
-    if (lives_sys_alarm_disarm(audio_msgq_timeout) && jack_get_msgq(mainw->jackd)) return LIVES_RESULT_FAIL;)
+  IF_APLAYER_JACK
+  (lives_microsleep_while_true(jack_get_msgq(mainw->jackd) && !lives_sys_alarm_triggered(audio_msgq_timeout));
+   if (lives_sys_alarm_disarm(audio_msgq_timeout) && jack_get_msgq(mainw->jackd)) return LIVES_RESULT_FAIL;)
 
-    IF_APLAYER_PULSE(
-      lives_microsleep_while_true(pulse_get_msgq(mainw->pulsed) && !lives_sys_alarm_triggered(audio_msgq_timeout));
-      if (lives_sys_alarm_disarm(audio_msgq_timeout) && pulse_get_msgq(mainw->pulsed)) return LIVES_RESULT_FAIL;)
+    IF_APLAYER_PULSE
+    (lives_microsleep_while_true(pulse_get_msgq(mainw->pulsed) && !lives_sys_alarm_triggered(audio_msgq_timeout));
+     if (lives_sys_alarm_disarm(audio_msgq_timeout) && pulse_get_msgq(mainw->pulsed)) return LIVES_RESULT_FAIL;)
 
       return LIVES_RESULT_SUCCESS;
 }

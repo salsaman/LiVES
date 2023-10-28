@@ -180,17 +180,14 @@ LIVES_GLOBAL_INLINE uint64_t lives_strtoul(const char *nptr) {
 
 LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
   if (!s) return NULL;
-#ifndef STD_STRINGFUNCS
+#ifndef zzSTD_STRINGFUNCS
   else {
     uint64_t *pi = (uint64_t *)s, nulmask, stlen;
-    if (!s) return NULL;
-    if ((void *)pi == (void *)s) {
-      while (!(nulmask = hasNulByte(*pi))) pi++;
-      stlen = (char *)pi - s + 1
-              + (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
-              ? getnulpos(nulmask) : getnulpos_be(nulmask);
-      return lives_memcpy(lives_malloc(stlen), s, stlen);
-    }
+    while (!(nulmask = hasNulByte(*pi))) pi++;
+    stlen = (char *)((char *)pi + (off_t)1
+                     + (off_t)((capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
+                               ? getnulpos(nulmask) : getnulpos_be(nulmask))) - s;
+    return lives_memcpy(lives_malloc(stlen), s, stlen);
   }
 #endif
   return lives_strdup(s);

@@ -219,7 +219,6 @@ boolean all_expose_overlay(LiVESWidget *, lives_painter_t *, livespointer psurf)
 boolean all_expose_nopb(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
 boolean config_event(LiVESWidget *, LiVESXEventConfigure *, livespointer);
-boolean config_event2(LiVESWidget *, LiVESXEventConfigure *, livespointer);
 
 void changed_fps_during_pb(LiVESSpinButton *, livespointer);
 

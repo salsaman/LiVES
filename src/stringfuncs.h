@@ -3,6 +3,20 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+// TODO - we should use str_free to free strings produced with
+// the following functions
+// lives_strconcat, strdup, strndup, lives_markup_escape_text, lives_strsplit
+
+#define str_free(str) default_free(str)
+
+#define lives_strdup(s) lives_strdup_quick(s)
+
+#define lives_strdup_free(a, b) (lives_free_and_return((a)) ? NULL : lives_strdup(b))
+#define lives_strdup_printf_free(a, ...) (lives_free_and_return((a)) ? NULL : lives_strdup_printf(__VA_ARGS__))
+
+char *lives_strdup_quick(const char *str);
+char *lives_strndup(const char *str, size_t len);
+
 char *lives_string_tolower(const char *);
 
 size_t lives_strlen(const char *);

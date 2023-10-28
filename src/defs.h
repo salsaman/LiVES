@@ -152,7 +152,7 @@ typedef pid_t lives_pid_t;
 #define QUOTEME(x) #x
 #define QUOTEME_ALL(...) QUOTEME(__VA_ARGS__)
 #define PREFIX_IT(A, B) QUOTEME_ALL(A B)
-#define _DW0(...) do {__VA_ARGS__;} while(0)
+#define _DW0(...) do {__VA_ARGS__} while(0)
 
 #ifdef __GNUC__
 #  define LIVES_WARN_UNUSED  __attribute__((warn_unused_result))
@@ -615,9 +615,9 @@ typedef enum {
 #define MILLIONS(n) (n##000000l)
 #define ONE_MILLION MILLIONS(1)
 
-#define BILLIONS_DBL(n) (n##000000000.f)
+#define BILLIONS_DBL(n) ((double)n##000000000.)
 #define ONE_BILLION_DBL BILLIONS_DBL(1)
-#define MILLIONS_DBL(n) (n##000000.)
+#define MILLIONS_DBL(n) ((double)n##000000.)
 #define ONE_MILLION_DBL MILLIONS_DBL(1)
 
 #endif

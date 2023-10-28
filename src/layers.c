@@ -89,7 +89,7 @@ LIVES_GLOBAL_INLINE lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *
 }
 
 
-static void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src, boolean full) {
+void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src, boolean full) {
   // copy width, height, clip, frame, full palette, etc
   // set full if pixdata is also beign copied
   if (src && dest) {
@@ -762,7 +762,6 @@ LIVES_GLOBAL_INLINE lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed
 
   weed_layer_pixel_data_free(dst);
   lives_layer_copy_metadata(dst, src, TRUE);
-  lives_leaf_dup(dst, src, WEED_LEAF_PIXEL_DATA);
   return LIVES_RESULT_SUCCESS;
 }
 

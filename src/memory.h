@@ -394,7 +394,7 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #ifndef _lives_malloc
 #define _lives_malloc default_malloc
 #endif
-#ifndef _lives_mclloc
+#ifndef _lives_calloc
 #define _lives_calloc default_calloc
 #endif
 #ifndef _lives_realloc

@@ -17,6 +17,132 @@
 #include "callbacks.h"
 #include "cvirtual.h"
 
+
+//////////////////////////////////
+
+static const char *si_units_big[] = {"", SI_UNITS_BIG, NULL};
+static const char *si_units_small[] = {SI_UNITS_SMALL, NULL};
+static const char *iec_units_big[] = {"", IEC_UNITS_BIG, NULL};
+static const char *iec_units_small[] = {IEC_UNITS_SMALL, NULL};
+const lives_unitdef_t unitdefs[] = {
+  {.multiplier = SI_UNITS_X, .big_units = si_units_big, .small_units = si_units_small},
+  {.multiplier = IEC_UNITS_X, .big_units = iec_units_big, .small_units = iec_units_small}
+};
+
+
+static int _unit_idx(const char **names, uint64_t X, double val) {
+  int idx = 0;
+  if (val >= 1.) {
+    uint64_t uval = (uint64_t)val, lim = X;
+    for (lim = X; names[idx++]; lim *= X) if (lim > uval) return idx;
+  } else {
+    double dX = (double)X, lim;
+    for (lim = 1. / dX; names[idx++]; lim /= dX) if (lim < val) return -idx;
+  }
+  return 0; // TOO BIG or SMALL !
+}
+
+
+static int unit_idx(lives_unit_type_t utype, double val) {
+  uint64_t X = unitdefs[utype].multiplier;
+  const char **names = val < 1. ? unitdefs[utype].small_units : unitdefs[utype].big_units;
+  return _unit_idx(names, X, fabs(val));
+}
+
+
+static char *unit_val(lives_unit_type_t utype, double val, int idx, int fix, const char *qs, const char *ql) {
+  if (!idx) return NULL;
+  if (val >= 1.) {
+    if (!ql) idx = 1;
+    else if (idx == 1) return lives_strdup_printf("%lu %s", (uint64_t)val, ql);
+  }
+  double X = (double)unitdefs[utype].multiplier, n = pow(X, idx >= 1 ? --idx : idx);
+  const char *prefix = idx >= 0 ? unitdefs[utype].big_units[idx] : unitdefs[utype].small_units[-++idx];
+  uint64_t fac = lives_10pow(fix), rnd = (uint64_t)(val / n * fac + (val > 0. ? 0.5 : -0.5));
+  return lives_strdup_printf("%.*f %s%s", fix, (double)rnd / (double)fac, prefix, qs);
+}
+
+
+static char *unit_val_long(lives_unit_type_t utype, double val, int idx, int fix, const char *qs, const char *ql) {
+  char *first = unit_val(utype, val, idx, fix, qs, ql), *ret = NULL;
+  if (first) {
+    if (idx > 1 && ql) {
+      ret = lives_strdup_printf("%s (%lu %s)", first, (uint64_t)val, ql);
+      lives_free(first);
+      return ret;
+    }
+  }
+  return first;
+}
+
+char *lives_format_storage_space_string(uint64_t space) {return UNIT_FMT(SI, space, "B", "bytes", 2);}
+char *lives_format_memory_size_string(uint64_t msize) {return UNIT_FMT(IEC, msize, "B", "bytes", 2);}
+char *lives_format_timing_string(double secs) {return UNIT_FMT(SI, secs, "sec", NULL, 2);}
+
+char *lives_format_storage_space_string_long(uint64_t space) {
+  return UNIT_FMT_LONG(IEC, space, "B", "bytes", 2);
+}
+
+//// number formatting
+
+LIVES_LOCAL_INLINE int next_group(char const **grouping) {
+  if ((*grouping)[1] == CHAR_MAX) return 0;
+  if ((*grouping)[1] != '\0') ++*grouping;
+  return **grouping;
+}
+
+
+static size_t _commafmt(char *buf, int bufsize, double val, int fix) {
+  char const *tsep = capable->locale.th_sep, *group = capable->locale.grping;
+  boolean neg = val < 0.;
+  uint64_t N = neg ? (uint64_t)(-val) : (uint64_t)val;
+  size_t sep_len = lives_strlen(tsep);
+  int places = (int) * group, len = 0, posn = 0;
+  char *ptr;
+
+  if (--bufsize < 1) return 0;
+  ptr = buf + bufsize;
+  *ptr-- = '\0';
+
+  while (1) {
+    *ptr-- = (char)((N % 10L) + '0');
+    if (++len >= bufsize) return 0;
+    if (!(N /= 10L)) break;
+    if (places && !(++posn % places)) {
+      places = next_group(&group);
+      for (int i = sep_len; i--; *ptr-- = tsep[i])
+        if (++len >= bufsize) return 0;
+    }
+  }
+
+  if (neg) {
+    if (++len >= bufsize) return 0;
+    *ptr-- = '-';
+  }
+
+  lives_memmove(buf, ++ptr, len + 1);
+
+  if (fix > 0) {
+    int fixlen;
+    val = !neg ? val - (double)((uint64_t)val) :
+          -(val + (double)((uint64_t) - val));
+    lives_snprintf(buf + len, bufsize - len, "%.*f", fix, val);
+    fixlen = lives_strlen(buf + len);
+    lives_memmove(buf + len, buf + len + 1, fixlen);
+  }
+
+  return (size_t)len;
+}
+
+
+char *commafmt(double val, int fix) {
+  char buff[1024];
+  size_t len = _commafmt(buff, 1024, val, fix);
+  return len ? lives_strdup(buff) : NULL;
+}
+
+///////////////////////
+
 /**
    @brief get next free file slot, or -1 if we are full
    can support MAX_FILES files (default 65536) */

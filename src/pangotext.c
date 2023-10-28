@@ -816,9 +816,9 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
         } else lives_memcpy(src + itop * row, pd, lheight * row);
       }
 
-      g_print("lsls %p %p\n", layer_slice, weed_layer_get_pixel_data(layer_slice));
+      //g_print("lsls %p %p\n", layer_slice, weed_layer_get_pixel_data(layer_slice));
       weed_layer_unref(layer_slice);
-      g_print("lsls22 %p\n", layer_slice);
+      //g_print("lsls22 %p\n", layer_slice);
     }
   }
 

@@ -7452,7 +7452,7 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
           if (palette->style & STYLE_1) {
             lives_widget_hide(mainw->sep_image);
           }
-          if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
+          //if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
         }
         lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
         resize(2.);
@@ -9518,11 +9518,6 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
   return TRUE;
 }
 
-boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
-  mainw->msg_area_configed = TRUE;
-  return TRUE;
-}
-
 
 static weed_plant_t *defer_plant = NULL;
 
@@ -9640,13 +9635,13 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
     int scr_width, scr_height;
     scr_width = GUI_SCREEN_PHYS_WIDTH;
-    scr_height = GUI_SCREEN_PHYS_HEIGHT;
+    scr_height = GUI_SCREEN_HEIGHT;
     if (event->width != scr_width || event->height != scr_height) {
       boolean iss = mainw->ignore_screen_size;
       mainw->ignore_screen_size = TRUE;
       get_monitors(FALSE);
       mainw->ignore_screen_size = iss;
-      if (scr_width != GUI_SCREEN_PHYS_WIDTH || scr_height != GUI_SCREEN_PHYS_HEIGHT) {
+      if (scr_width != GUI_SCREEN_PHYS_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
         if (!mainw->ignore_screen_size) {
           if (prefs->show_dev_opts) {
             g_printerr("screen resize: %d %d   %d %d   %d %d\n", event->width, event->height, scr_width, scr_height,
@@ -10924,7 +10919,6 @@ char *get_palette_name_for_clip(int clipno) {
 
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer keybd) {
-  g_print("\n\nSSSCCC\n\n");
   if (!LIVES_IS_PLAYING) return FALSE;
   if (!CURRENT_CLIP_HAS_VIDEO || CURRENT_CLIP_IS_CLIPBOARD) return FALSE;
 

@@ -4188,6 +4188,7 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
   mainw->startticks = 0;
 }
 
+double lives_jack_get_timing_ratio(jack_driver_t *jackd) {return 1.;}
 
 ticks_t lives_jack_get_time(jack_driver_t *jackd) {
   // get the time in ticks since playback started
@@ -4220,7 +4221,7 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
     } else jackd->frames_read = 0;
   }
   last_frames = frames;
-  return (double)(retframes - jackd->nframes_start) * (1000000. / srate) * USEC_TO_TICKS;
+  return (double)(retframes - jackd->nframes_start) * (ONE_MILLION_DBL / srate) * USEC_TO_TICKS;
 }
 
 

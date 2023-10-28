@@ -600,6 +600,7 @@ void show_playbar_labels(int clipno) {
   lives_free(tmp);
 
   if (sfile->achans > 1) {
+    lives_widget_set_opacity(mainw->raudbar, 1.);
     tmpch = get_achannel_name(sfile->achans, 1);
     if (sfile->opening_audio) {
       tmp = lives_strdup_printf(_("%s %s"), tmpch, str_opening);
@@ -610,19 +611,21 @@ void show_playbar_labels(int clipno) {
     lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
     lives_free(tmp);
     hra = FALSE;
+  } else {
+    lives_widget_set_opacity(mainw->raudbar, 0.);
   }
 
   lives_free(str_opening);
 
 showhide:
-  if (!hhr && !lives_widget_is_visible(mainw->hruler)) lives_widget_show(mainw->hruler);
-  else if (hhr && lives_widget_is_visible(mainw->hruler)) lives_widget_hide(mainw->hruler);
-  if (!hvb && !lives_widget_is_visible(mainw->vidbar)) lives_widget_show(mainw->vidbar);
-  else if (hvb && lives_widget_is_visible(mainw->vidbar)) lives_widget_hide(mainw->vidbar);
-  if (!hla && !lives_widget_is_visible(mainw->laudbar)) lives_widget_show(mainw->laudbar);
-  else if (hla && lives_widget_is_visible(mainw->laudbar)) lives_widget_hide(mainw->laudbar);
-  if (!hra && !lives_widget_is_visible(mainw->raudbar)) lives_widget_show(mainw->raudbar);
-  else if (hra && lives_widget_is_visible(mainw->raudbar)) lives_widget_hide(mainw->raudbar);
+  if (!hhr) lives_widget_set_opacity(mainw->hruler, 1.0);
+  else lives_widget_set_opacity(mainw->hruler, 0.0);
+  if (!hvb) lives_widget_set_opacity(mainw->vidbar, 1.0);
+  else lives_widget_set_opacity(mainw->vidbar, 0.0);
+  if (!hla) lives_widget_set_opacity(mainw->laudbar, 1.);
+  else lives_widget_set_opacity(mainw->laudbar, 0.);
+  if (!hra) lives_widget_set_opacity(mainw->raudbar, 1.);
+  else lives_widget_set_opacity(mainw->raudbar, 0.);
 }
 
 
@@ -8085,7 +8088,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   int width;
   int lineheight, llines, llast;
   int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = mainw->mgeom[0].phys_height;
+  int scr_height = GUI_SCREEN_HEIGHT;
   int bx, by, w = -1, h = -1, posx, posy;
   int overflowx = 0, overflowy = 0;
   int ww, hh, vvmin, hhmin;
@@ -8097,7 +8100,7 @@ boolean msg_area_config(LiVESWidget * widget) {
 
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
-  if (LIVES_IS_PLAYING && prefs->msgs_nopbdis) return FALSE;
+  //if (LIVES_IS_PLAYING && prefs->msgs_nopbdis) return FALSE;
 
   if (mainw->multitrack && lives_widget_get_allocation_height(mainw->multitrack->top_vbox) < 32)
     return FALSE;
@@ -8139,7 +8142,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   lives_xwindow_get_frame_extents(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &rect);
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-
+  by = 0;
   scr_height -= abs(by);
   scr_width -= abs(bx);
 
@@ -8293,9 +8296,11 @@ boolean msg_area_config(LiVESWidget * widget) {
       g_print("SIZE REQ: %d X %d and %d X %d\n", width, height, w, h);
 #endif
 
+      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
       // NECESSARY !
       //lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), abs(bx), abs(by), w - bx, h - by);
-      reset_mainwin_size();
+      //reset_mainwin_size();
 
       if (width + overflowx > scr_width) {
         lives_widget_set_size_request(widget, width, height);
@@ -8304,11 +8309,13 @@ boolean msg_area_config(LiVESWidget * widget) {
         lives_widget_set_size_request(widget, -1, height);
         reqwidth = width + overflowx;
       }
+
+      lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
       reqheight = height;
     }
 
-    if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
-    reset_mainwin_size();
+    //if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
+    //reset_mainwin_size();
   }
 
   opaisize = paisize;
@@ -8417,7 +8424,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
   if (!prefs->show_msg_area) return;
-  msg_area_scroll_to(widget, mainw->n_messages - 2, TRUE, adj);
+  msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
 }
 
 

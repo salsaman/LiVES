@@ -12,16 +12,13 @@
 #include "startup.h"
 #include "maths.h"
 
-#define STATS_MSEC 2000.
-static double inst_fps = 0.;
-
 void print_diagnostics(uint64_t types) {
   char *tmp;
   if (types & DIAG_APP_STATUS) {
     int64_t nsc, onsc;
     if (what_sup_now() == sup_ready) g_print("Startup complete\n");
     else switch (what_sup_now()) {
-      case nothing_sup: g_print("Early stage initt\n"); break;
+      case nothing_sup: g_print("Early stage init\n"); break;
       case run_program_sup: g_print("Startup: First stage, run_the_program\n"); break;
       case pre_init_sup: g_print("Startup: pre_init\n"); break;
       case run_program2_sup: g_print("Startup: run_the_program part 2\n"); break;
@@ -66,35 +63,26 @@ boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t 
   return TRUE;
 }
 
+#define STATS_MSEC 2000. // how often to update
+static double inst_fps = 0.;
+
 LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
-  g_print("gifp1\n");
-  static double last_curr_time = 0.;
+  static ticks_t last_curr_time = 0;
   static ticks_t last_mini_ticks = 0;
   static frames_t last_mm = 0;
-  double currtime;
-  lives_clip_t *sfile = RETURN_VALID_CLIP(mainw->playing_file);
-  if (!sfile) return 0.;
+  ticks_t currtime = mainw->clock_ticks;
+  boolean refresh = TRUE;
 
-  currtime = lives_get_session_time();
-
-  if (mainw->fps_mini_ticks != last_mini_ticks) {
-    // reset
-    inst_fps = 0.;
-    last_curr_time = currtime;
+  if (mainw->fps_mini_ticks == last_mini_ticks) {
+    double tdelta = (currtime - last_curr_time) / TICKS_PER_SECOND_DBL;
+    if (tdelta > STATS_MSEC / 1000.)
+      mainw->inst_fps = inst_fps = (double)(mainw->fps_mini_measure - last_mm) / tdelta;
+    else refresh = FALSE;
+  } else last_mini_ticks = mainw->fps_mini_ticks;
+  if (refresh) {
     last_mm = mainw->fps_mini_measure;
-  } else {
-    if (currtime > last_curr_time + STATS_MSEC / 1000.) {
-      mainw->inst_fps = inst_fps = ((double)(mainw->fps_mini_measure - last_mm)
-                                    + (((double)(mainw->currticks - mainw->startticks))
-                                       / TICKS_PER_SECOND_DBL / sfile->pb_fps))
-                                   / (currtime - last_curr_time);
-      last_curr_time = currtime;
-      last_mm = mainw->fps_mini_measure;
-    }
+    last_curr_time = currtime;
   }
-
-  last_mini_ticks = mainw->fps_mini_ticks;
-
   if (get_msg) get_stats_msg(TRUE);
   return inst_fps;
 }

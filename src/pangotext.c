@@ -638,8 +638,8 @@ LingoLayout *render_text_to_cr(LiVESWidget * widget, lives_painter_t *cr, const 
   }
 
   /*  lives_painter_new_path(cr);
-    lives_painter_rectangle(cr,offs_x,0,width,height);
-    lives_painter_clip(cr);*/
+      lives_painter_rectangle(cr,offs_x,0,width,height);
+      lives_painter_clip(cr);*/
 
   if (font) lingo_fontdesc_free(font);
 

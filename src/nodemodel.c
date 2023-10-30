@@ -124,7 +124,7 @@
 #include "cvirtual.h"
 #include "diagnostics.h"
 
-static int allpals[] = ALL_STANDARD_PALETTES;
+static int allpals[] = {_ALL_24BIT_PALETTES, _ALL_32BIT_PALETTES, WEED_PALETTE_END};
 static int n_allpals = 0;
 
 #define ANN_ERR_THRESH 0.05
@@ -140,7 +140,6 @@ static double ztime;
 // include provision  for deinterlace, subtitles
 // measure process_time
 // create model deltas, bypass nodes
-
 
 static inst_node_t *desc_and_add_steps(inst_node_t *, exec_plan_t *);
 static inst_node_t *desc_and_align(inst_node_t *, lives_nodemodel_t *);
@@ -164,7 +163,7 @@ static void reset_model(lives_nodemodel_t *nodemodel) {
 
 LIVES_LOCAL_INLINE boolean skip_ctmpl(weed_filter_t *filter, weed_chantmpl_t *ctmpl) {
   // returns TRUE if chentmpl is audio, is disabled. or is alpha only channel
-  return weed_chantmpl_is_audio(ctmpl) == WEED_TRUE || weed_chantmpl_is_disabled(ctmpl)
+  return weed_chantmpl_is_audio(ctmpl) || weed_chantmpl_is_disabled(ctmpl)
          || !has_non_alpha_palette(ctmpl, filter);
 }
 
@@ -195,26 +194,19 @@ static weed_chantmpl_t *get_nth_chantmpl(inst_node_t *n, int cn, int *counts, in
 }
 
 
-static int count_ctmpls(weed_filter_t *filter, int *counts, int direction) {
+static int count_ctmpls(weed_filter_t *filter, int direction) {
   // return the nth in or out chantmpl for filter.
   // ignoring audio chans, disabled chans, alpha chans
   // for some filters we have repeatable chantmpls, if counts is supplied, then a value > 1
   // indicates the number of copies of that chantmpl
   //
-  weed_chantmpl_t **ctmpls, *ctmpl = NULL;
-  int nctmpls, tot = 0, i;
-
-  if (direction == LIVES_INPUT) ctmpls = weed_filter_get_in_chantmpls(filter, &nctmpls);
-  else ctmpls = weed_filter_get_out_chantmpls(filter, &nctmpls);
-  if (!ctmpls) return 0;
-
-  for (i = 0; i < nctmpls; i++) {
-    ctmpl = ctmpls[i];
-    if (skip_ctmpl(filter, ctmpl)) continue;
-    if (counts) tot += counts[i];
-    else tot++;
+  int nctmpls, tot = 0;
+  weed_chantmpl_t **ctmpls = direction == LIVES_INPUT ? weed_filter_get_in_chantmpls(filter, &nctmpls)
+                             : weed_filter_get_out_chantmpls(filter, &nctmpls);
+  if (ctmpls) {
+    while (nctmpls) if (!skip_ctmpl(filter, ctmpls[--nctmpls])) tot++;
+    lives_free(ctmpls);
   }
-  lives_free(ctmpls);
   return tot;
 }
 
@@ -262,18 +254,13 @@ static lives_result_t get_op_order(int out_width, int out_height, int in_width, 
 
   // also, we can NEED resize / palconv / gamma
   uint64_t changemap = 0;
-  boolean resize_ops[N_OP_TYPES];
-  boolean ops_needed[N_OP_TYPES];
+  boolean resize_ops[N_OP_TYPES], ops_needed[N_OP_TYPES];
 
   boolean pconv_does_gamma = FALSE;
-  boolean is_upscale = FALSE;
-  boolean in_yuv = FALSE;
-  boolean out_yuv = FALSE;
-  boolean lbox = FALSE;
-  boolean explain = FALSE;
+  boolean is_upscale = FALSE, lbox = FALSE, explain = FALSE;
+  boolean in_yuv = FALSE, out_yuv = FALSE;
 
-  int out_size = out_width * out_height;
-  int in_size = in_width * in_height;
+  int out_size = out_width * out_height, in_size = in_width * in_height;
 
   if (flags & OPORD_LETTERBOX) lbox = TRUE;
   if (flags & OPORD_EXPLAIN) explain = TRUE;
@@ -1518,8 +1505,6 @@ static int check_step_condition(exec_plan_t *plan, plan_step_t *step, boolean ca
     }
 
     if (lives_proc_thread_is_done(lpt, FALSE)) {
-      d_print_debug("LPT %p is done\n", lpt);
-      lpt_desc_state(lpt);
       double xtime = lives_get_session_time();
       step->tdata->real_end = xtime;
       step->tdata->real_duration = 1000. * (step->tdata->real_end
@@ -1688,14 +1673,13 @@ static void run_plan(exec_plan_t *plan) {
   boolean got_act_st = FALSE;
   int error = 0, res;
   int lstatus, i, state;
-  int xsta = 0;
 
   if (!plan) return;
   if (!plan->layers) lives_abort("Null layers array passed when making plan_cycle");
 
   ____FUNC_ENTRY____(run_plan, NULL, "v");
 
-  bbsummary();
+  //bbsummary();
 
   //MSGMODE_ON(DEBUG);
 
@@ -1795,13 +1779,6 @@ static void run_plan(exec_plan_t *plan) {
         if (!error) d_print_debug("step encountered an ERROR st of loop:- %s",
                                     step->errmsg ? step->errmsg : "unspecified error");
         error = 2;
-      }
-
-      if (plan->layers[1]) {
-        if (lives_layer_get_status(plan->layers[1]) != xsta) {
-          xsta = lives_layer_get_status(plan->layers[1]);
-          d_print_debug("layer1 state == %d\n", xsta);
-        }
       }
 
       if (state == STEP_STATE_ERROR || state == STEP_STATE_FINISHED
@@ -3549,7 +3526,7 @@ node_chain_t *nchain;
 inst_node_t *n, *retn = NULL;
 boolean *used;
 
-MSGMODE_ON(DEBUG);
+//MSGMODE_ON(DEBUG);
 
 d_print_debug("%s @ %s\n", "align start", lives_format_timing_string(lives_get_session_time() - ztime));
 
@@ -3612,7 +3589,7 @@ do {
 
 reset_model(nodemodel);
 d_print_debug("%s @ %s\n", "align end", lives_format_timing_string(lives_get_session_time() - ztime));
-MSGMODE_ON(DEBUG);
+//MSGMODE_OFF(DEBUG);
 }
 
 
@@ -4553,19 +4530,15 @@ for (i = 0; i < n->n_inputs; i++) {
     int track = n->inputs[i]->track;
     node_chain_t *in_chain = get_node_chain(nodemodel, track);
     // if we have no src, return to caller so it can add a src for the track
-    if (prefs->dev_show_timing)
-      d_print_debug("searching for node_chain for track %d\n", track);
+    d_print_debug("searching for node_chain for track %d\n", track);
 
     if (!in_chain) {
-      if (prefs->dev_show_timing)
-        d_print_debug("not found, add a source for track %d\n", track);
+      d_print_debug("not found, add a source for track %d\n", track);
       return track;
     }
-    if (prefs->dev_show_timing)
-      d_print_debug("chain located ");
+    d_print_debug("chain located ");
     if (in_chain->terminated) {
-      if (prefs->dev_show_timing)
-        d_print_debug("but is terminated !\n");
+      d_print_debug("but is terminated !\n");
       // if we do have a node_chain for the track, but it is terminated
       // then we are going to back up one node and a clone output
       // this means that the track sources will fork, one output will go to
@@ -5650,9 +5623,11 @@ for (k = 0; k < N_COST_TYPES; k++) {
     }
   }
 }
-if (!ni) lives_free(conv);
-
-return best_tuples;
+if (!ni) {
+  lives_free(conv);
+  return best_tuples;
+}
+return NULL;
 }
 
 LIVES_LOCAL_INLINE cost_tuple_t **best_tuples(inst_node_t *n, double * factors) {
@@ -6566,6 +6541,7 @@ if (!sfile) {
       if (dplug) {
         lives_clip_data_t *cdata = dplug->cdata;
         in->pals = cdata->palettes;
+        for (int i = 0; in->pals[i] != WEED_PALETTE_END; i++) in->npals++;
         in->cpal = cdata->current_palette;
         in->width = cdata->width;
         in->height = cdata->height;
@@ -6861,8 +6837,8 @@ if (!mainw->multitrack) {
         } else continue;
 
         // create an input / output for each non (permanently) disabled channel
-        nins = count_ctmpls(filter, NULL, LIVES_INPUT);
-        nouts = count_ctmpls(filter, NULL, LIVES_OUTPUT);
+        nins = count_ctmpls(filter, LIVES_INPUT);
+        nouts = count_ctmpls(filter, LIVES_OUTPUT);
 
         if (LIVES_CE_PLAYBACK && nins > 1
             && (mainw->blend_file == -1 ||
@@ -6978,7 +6954,6 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
 LiVESList *list;
 node_chain_t *nchain;
 inst_node_t *n, *retn = NULL;
-boolean has_change;
 int flags = _FLG_GHOST_COSTS;
 
 // after constructin gthe treemodel by descending, we now proceed in phases
@@ -7030,50 +7005,19 @@ d_print_debug("%s @ %s\n", "pass 3 complete", lives_format_timing_string(lives_g
 
 // phase 4 descending
 
+
+// CALCULATE COST DELTAS NODE - NODE, for all palette pairings
 do {
-  // CALCULATE COST DELTAS NODE - NODE, for all palette pairings
-  do {
-    for (list = nodemodel->node_chains; list; list = list->next) {
-      nchain = (node_chain_t *)list->data;
-      n = nchain->first_node;
-      if (n->n_inputs) continue;
-      retn = desc_and_compute(n, nodemodel, flags, nodemodel->factors);
-    }
-  } while (retn);
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    nchain = (node_chain_t *)list->data;
+    n = nchain->first_node;
+    if (n->n_inputs) continue;
+    retn = desc_and_compute(n, nodemodel, flags, nodemodel->factors);
+  }
+} while (retn);
 
-  reset_model(nodemodel);
-
-  has_change = FALSE;
-
-  /* ccost = combined_cost(sink); */
-  /* if (ccost > lat_ccost) { */
-  /*   // restore prev model */
-
-  /* } */
-  /* // test alternatives */
-
-  /* // beginning from sink, remove palette conversions */
-  /* // i.e if we have src -> RGB24 -> convert -> RGB32 -> sink */
-  /* // we can try removing then conversion, to give src -> RGBA32 -> sink */
-  /* // this cn happen because we do not know input src_grup srcs palettes, thus we pick corresponging to */
-  /* // frequency of src pals. For yuv420p, RGB24 can appear more effiecient than RGBA32, sinc it ues less memory */
-  /* // this is calulated first, then the src node is prepended and a convert step to next node added */
-  /* // here w have a chance to adjust srgrp apparent_pal / gamma to align wirh next node */
-  /* // we can only do this if there is no qloss going from current apparetn_pal to new apparent_pal */
-  /* // */
-  /* // we will go through each src in turn, look at its fisrt output -> input and adjust */
-  /* for (list = nodemodel->node_chains; list; list = list->next) { */
-  /*   nchain = (node_chain_t *)list->data; */
-  /*   n = nchain->first_node; */
-  /*   if (n->n_inputs) continue; */
-  /*   if (adjust_apparent_pal(n)) { */
-  /* 	has_change = TRUE; */
-  /* 	break; */
-  /*   } */
-  /* } */
-  /* last_ccost = ccost; */
-  d_print_debug("%s @ %s\n", "pass 4 complete", lives_format_timing_string(lives_get_session_time() - ztime));
-} while (has_change);
+reset_model(nodemodel);
+d_print_debug("%s @ %s\n", "pass 4 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
 flags &= ~_FLG_GHOST_COSTS;
 
@@ -7095,8 +7039,7 @@ d_print_debug("%s @ %s\n", "pass 5 complete", lives_format_timing_string(lives_g
 //  then go back through, adding deltas and so on
 
 for (int cyc = 0; cyc < 4; cyc++) {
-  if (prefs->dev_show_timing)
-    d_print_debug("costing cycle %d\nfind best palettes\n", cyc);
+  d_print_debug("costing cycle %d\nfind best palettes\n", cyc);
   // phase 5 ascending
 
   // FIND LOWEST COST PALETTES for each cost type
@@ -7115,8 +7058,7 @@ for (int cyc = 0; cyc < 4; cyc++) {
   reset_model(nodemodel);
   d_print_debug("%s @ %s\n", "pass 5.1 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
-  if (prefs->dev_show_timing)
-    d_print_debug("assign abs costs\n");
+  d_print_debug("assign abs costs\n");
 
   // descend, using previously calculated best_pals, find the total costs
   // we pick one cost type to focus on (by default, COMBINED_COST)
@@ -7277,10 +7219,7 @@ for (i = 0; i < n->npals; i++) {
   if (pal_permitted(n, n->pals[i])) break;
 }
 if (i == n->npals) {
-  int allpals[] = ALL_STANDARD_PALETTES;
-  for (i = 0; i < n_allpals; i++) {
-    if (pal_permitted(n, allpals[i])) break;
-  }
+  for (i = 0; i < n_allpals; i++) if (pal_permitted(n, allpals[i])) break;
   if (allpals[i] == WEED_PALETTE_END) return LIVES_RESULT_ERROR;
   return LIVES_RESULT_FAIL;
 }
@@ -7338,7 +7277,7 @@ ____FUNC_ENTRY____(build_nodemodel, "", "viv");
 
 if (!glob_timing) glob_timing_init();
 
-MSGMODE_ON(DEBUG);
+//MSGMODE_ON(DEBUG);
 
 ztime = lives_get_session_time();
 
@@ -7440,7 +7379,7 @@ if (pnodemodel) {
 
   reset_model(nodemodel);
 }
-MSGMODE_OFF(DEBUG);
+//MSGMODE_OFF(DEBUG);
 
 ____FUNC_EXIT____;
 }

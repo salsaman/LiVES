@@ -233,7 +233,7 @@ void lives_exit(int signum) {
                 break;
 		// *INDENT-OFF*
               }}}}
-	  // *INDENT-ON*
+	// *INDENT-ON*
 
         // TODO *** - check for namespace collisions between sets in old dir and sets in new dir
         do_do_not_close_d();
@@ -7552,7 +7552,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
                   if (prefs->show_msg_area && !prefs->msgs_nopbdis) lives_widget_show_all(mainw->message_box);
 		  // *INDENT-OFF*
 		}}}}}
-	  // *INDENT-ON*
+	// *INDENT-ON*
         else {
           // multitrack
           if (mainw->play_window && !(mainw->ext_playback && mainw->vpp->fheight > -1
@@ -9521,6 +9521,17 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
 
 static weed_plant_t *defer_plant = NULL;
 
+static boolean all_config_defer(LiVESWidget * widget, void *ppsurf) {
+  boolean ret = TRUE;
+  //if (mainw->configured) return FALSE;
+  char *key = lives_strdup_printf("widg_%p", widget);
+  if (!defer_plant) defer_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
+  if (!weed_plant_has_leaf(defer_plant, key)) ret = FALSE;
+  weed_set_voidptr_value(defer_plant, key, ppsurf);
+  lives_free(key);
+  return ret;
+}
+
 /// generic func. to create surfaces
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   RECURSE_GUARD_START;
@@ -9581,19 +9592,7 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
 }
 
 
-boolean all_config_defer(LiVESWidget * widget, void *ppsurf) {
-  boolean ret = TRUE;
-  if (mainw->configured) return FALSE;
-  char *key = lives_strdup_printf("widg_%p", widget);
-  if (!defer_plant) defer_plant = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
-  if (!weed_plant_has_leaf(defer_plant, key)) ret = FALSE;
-  weed_set_voidptr_value(defer_plant, key, ppsurf);
-  lives_free(key);
-  return ret;
-}
-
-
-static void run_deferred_configs(void) {
+void run_deferred_configs(void) {
   if (defer_plant) {
     char **leaves = weed_plant_list_leaves(defer_plant, NULL);
     break_me("eunconfig");
@@ -9601,6 +9600,7 @@ static void run_deferred_configs(void) {
       LiVESWidget *widget = NULL;
       sscanf(leaves[i], "widg_%p", &widget);
       g_print("allconfig %p\n", widget);
+      SET_INT_DATA(widget, DEFER_KEY, 0);
       if (widget) all_config(widget, NULL, weed_get_voidptr_value(defer_plant, leaves[i], NULL));
       free(leaves[i]);
     }
@@ -9611,9 +9611,7 @@ static void run_deferred_configs(void) {
 }
 
 
-LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {
-  SET_INT_DATA(widget, DEFER_KEY, 1);
-}
+LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {SET_INT_DATA(widget, DEFER_KEY, 1);}
 
 
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
@@ -9643,11 +9641,20 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
       mainw->ignore_screen_size = iss;
       if (scr_width != GUI_SCREEN_PHYS_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
         if (!mainw->ignore_screen_size) {
-          if (prefs->show_dev_opts) {
+          if (1 || prefs->show_dev_opts) {
             g_printerr("screen resize: %d %d   %d %d   %d %d\n", event->width, event->height, scr_width, scr_height,
                        GUI_SCREEN_PHYS_WIDTH, GUI_SCREEN_PHYS_HEIGHT);
           }
+          set_gui_loop_tight(TRUE);
+          mainw->gui_much_events = TRUE;
           resize_widgets_for_monitor(FALSE);
+
+          lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+          mainw->ignore_screen_size = TRUE;
+          reset_mainwin_size();
+          mainw->ignore_screen_size = FALSE;
+          set_gui_loop_tight(FALSE);
+
           if (!CURRENT_CLIP_IS_VALID) {
             lives_ce_update_timeline(0, 0.);
 	    // *INDENT-OFF*
@@ -9656,7 +9663,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     }}
   // *INDENT-ON*
 
-  if (run_deferred) run_deferred_configs();
+  //if (run_deferred) run_deferred_configs();
   return FALSE;
 }
 

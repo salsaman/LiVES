@@ -99,7 +99,7 @@ LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
 // so we do x & 0xFFFFFFFF00000000, if this is zero then try x & 0xFFFF0000 and so on
 // values are in decimal just to look cool and mysterious
 #define getnulpos(nulmask) ((nulmask & 2155905152ul) ? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
-							   ((nulmask & 8388608ul) ? 2 : 3)) : (nulmask & 141287244169216ul) ? \
+							((nulmask & 8388608ul) ? 2 : 3)) : (nulmask & 141287244169216ul) ? \
 			    ((nulmask & 549755813888ul) ? 4 : 5) : ((nulmask & 36028797018963968ul) ? 6 : 7))
 
 #define getnulpos_be(nulmask) ((nulmask & 9259542121117908992ul) ? ((nulmask & 9259400833873739776ul) ? \
@@ -112,8 +112,8 @@ LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
 
 
 #define getnulbyte(nulmask) ((nulmask & 2155905152ul) ? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 1 : 2) : \
-							   ((nulmask & 8388608ul) ? 3 : 4)) : (nulmask & 141287244169216ul) ? \
-			    ((nulmask & 549755813888ul) ? 5 : ) : ((nulmask & 36028797018963968ul) ? 6 : 7))
+							 ((nulmask & 8388608ul) ? 3 : 4)) : (nulmask & 141287244169216ul) ? \
+			     ((nulmask & 549755813888ul) ? 5 : ) : ((nulmask & 36028797018963968ul) ? 6 : 7))
 
 
 /* #define BITMASKx(n, m)	0x##n#m */

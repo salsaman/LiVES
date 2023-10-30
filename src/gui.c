@@ -510,6 +510,9 @@ void create_LiVES(void) {
   mainw->start_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_sim), &mainw->si_surface);
   mainw->end_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_eim), &mainw->ei_surface);
 
+  defer_config(mainw->start_image);
+  defer_config(mainw->end_image);
+
   lives_widget_show(mainw->start_image);  // needed to get size
   lives_widget_show(mainw->end_image);  // needed to get size
 

@@ -2123,7 +2123,7 @@ boolean apply_prefs(boolean skip_warn) {
   uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000;
   uint64_t ds_crit_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds)) * 1000000;
 
-#define WARN_BIT(bname) boolean warn_##bname = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON\
+#define WARN_BIT(bname) boolean warn_##bname = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON \
 									      (prefsw->checkbutton_warn_##bname))
 
   WARN_BIT(fps); WARN_BIT(save_set); WARN_BIT(mplayer); WARN_BIT(missplugs); WARN_BIT(prefix); WARN_BIT(dup_set);

@@ -7950,7 +7950,7 @@ rec_args *do_rec_desk_dlg(void) {
 
 
 //// message area functions
-#define DEBUG_OVERFLOW
+//#define DEBUG_OVERFLOW
 
 static int vmin = -10000000;
 static int hmin = -10000000;

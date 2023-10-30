@@ -30,8 +30,8 @@ static void smallblocks_end(void);
 static int NBBLOCKS = 0;
 static char *bigblocks[NBIGBLOCKS];
 
-#define assert_no_bblock(p) do {		\
-    for (int i = 0; i < NBBLOCKS; i++) {	\
+#define assert_no_bblock(p) do {					\
+    for (int i = 0; i < NBBLOCKS; i++) {				\
       if (p >= bigblocks[i] && p < bigblocks[i] + BBLOCKSIZE) abort();	\
     }} while (0);
 
@@ -1355,9 +1355,9 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
         else {
           swab2(&buff2[end], &buff2[++start], 1);
           swab2(&buff2[start], &tmp2, 1);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
+		// *INDENT-OFF*
+	      }}}}
+	// *INDENT-ON*
 
   if (!count) return TRUE;
   return FALSE;

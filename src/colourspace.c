@@ -2292,9 +2292,9 @@ LIVES_LOCAL_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint
 }
 
 #define xyuv2rgb_with_gamma(y,u,v,r,g,b,lut) do				\
-    {								\
-      int yy = xRGB_Y[y];					\
-      *r = lut[(int)CLAMP0255f(spc_rnd(yy + xR_Cr[v]))];	\
+    {									\
+      int yy = xRGB_Y[y];						\
+      *r = lut[(int)CLAMP0255f(spc_rnd(yy + xR_Cr[v]))];		\
       *g = lut[(int)CLAMP0255f(spc_rnd(yy + xG_Cb[u] + xG_Cr[v]))];	\
       *b = lut[(int)CLAMP0255f(spc_rnd(yy + xB_Cb[u]))];} while (0);
 
@@ -11032,7 +11032,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-#define DEBUG_PCONV
+  //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),

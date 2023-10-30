@@ -2012,7 +2012,7 @@ static lives_clip_data_t *init_cdata(int clonetype) {
 static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata, int clonetype) {
   lives_clip_data_t *clone;
 
-  fprintf(stderr, "cloning decplug with type %d\n", clonetype);
+  //fprintf(stderr, "cloning decplug with type %d\n", clonetype);
 
   if (clonetype == 1) {
     // full clone
@@ -2036,14 +2036,14 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata, int clonetype) {
     dpriv->input_position = 0;
     dpriv->filesize = spriv->filesize;
   } else {
-    fprintf(stderr, "inittting with type %d\n", clonetype);
+    //fprintf(stderr, "inittting with type %d\n", clonetype);
     clone = init_cdata(clonetype);
     if (cdata->fps > 0. && cdata->nframes > 0) {
       clone->fps = cdata->fps;
       clone->nframes = cdata->nframes;
     }
 
-    fprintf(stderr, "ipal is %d and %d\n", clone->palettes[0], clone->palettes[1]);
+    //fprintf(stderr, "ipal is %d and %d\n", clone->palettes[0], clone->palettes[1]);
 
     if (cdata->palettes && cdata->palettes[0]
         != WEED_PALETTE_END) {

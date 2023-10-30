@@ -1752,7 +1752,7 @@ void rec_desk(void *args) {
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
   lives_sleep_while_false(!lives_alarm_check(alarm_handle) == 0
-			      || (self && lives_proc_thread_get_cancel_requested(self)));
+			  || (self && lives_proc_thread_get_cancel_requested(self)));
   lives_alarm_clear(alarm_handle);
 
   if (self && lives_proc_thread_get_cancel_requested(self)) goto done;
@@ -1770,11 +1770,11 @@ void rec_desk(void *args) {
       pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
     })
 
-  IF_APLAYER_JACK ({
-      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
-    })
+    IF_APLAYER_JACK ({
+	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
+      })
 
-  add_primary_src(recargs->clipno, NULL, LIVES_SRC_TYPE_RECORDER);
+    add_primary_src(recargs->clipno, NULL, LIVES_SRC_TYPE_RECORDER);
 
   mainw->rec_samples = -1; // record unlimited
   //
@@ -1853,11 +1853,11 @@ void rec_desk(void *args) {
     saveargs->fname = imname;
 
     saver_lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, layer_to_png_threaded,
-					     WEED_SEED_BOOLEAN, NULL, "v", saveargs);
+					 WEED_SEED_BOOLEAN, NULL, "v", saveargs);
 
     // TODO - check for timeout / cancel here too
     lives_sleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
-			       && (!self || !(cancelled = lives_proc_thread_get_cancel_requested(self))));
+			   && (!self || !(cancelled = lives_proc_thread_get_cancel_requested(self))));
     lives_alarm_clear(fps_alarm);
   }
   lives_alarm_clear(alarm_handle);
@@ -2046,8 +2046,8 @@ boolean lives_disable_screensaver(void) {
 #else
   if (capable->has_gconftool_2) {
     com = lives_strdup_printf("%s --set --type bool /apps/gnome-screensaver/"
-			       "idle_activation_enabled false 2>%s;",
-			       EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+			      "idle_activation_enabled false 2>%s;",
+			      EXEC_GCONFTOOL_2, LIVES_DEVNULL);
   } else com = lives_strdup("");
 #endif
 
@@ -2149,7 +2149,7 @@ char *wm_property_get(const char *key, int *type_guess) {
 	  }
 	  if (atoi(val)) {
 	    *type_guess = WEED_SEED_INT;
-	  // *INDENT-OFF*
+	    // *INDENT-OFF*
 	  }}}
       lives_strfreev(array);
     }}
@@ -2407,8 +2407,8 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *pref
   }
   if (!lives_file_test(res, LIVES_FILE_TEST_EXISTS)
       || lives_file_test(res, LIVES_FILE_TEST_IS_SYMLINK)) {
-      lives_free(res);
-      return NULL;
+    lives_free(res);
+    return NULL;
   }
   if (is_dir) {
     if (!is_writeable_dir(res)) {
@@ -2879,7 +2879,7 @@ double get_disk_load(const char *mp) {
   if (0 && !mp) return -1.;
   else {
 #if !IS_LINUX_GNU
-  return 0.;
+    return 0.;
 #else
 #define VM_STATS_FILE "/proc/vmstat"
 #define _VM_SEEKSTR_ "pgpg"
@@ -3022,7 +3022,7 @@ int64_t get_cpu_load(int cpun) {
   }
   if (!cpun) {
     if (fscanf(file,
-	     "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
+	       "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
 	       &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) <= 0) {
       fclose(file);
       return -1;
@@ -3116,7 +3116,7 @@ double analyse_cpu_stats(void) {
   // we should either create or update statsinst
   if (!statsinst) {
     const lives_obj_t *math_obj = lives_object_template_for_type(OBJECT_TYPE_MATH,
-								    MATH_OBJECT_SUBTYPE_STATS);
+								 MATH_OBJECT_SUBTYPE_STATS);
     // get the math.stats template
     // we want to know how to get an instantc of it, we can look for the transform for
     // the OBJ_INTENTION_CREATE_INSTANCE intent
@@ -3177,11 +3177,11 @@ static void show_info(void) {
 #define THE_TIMEY_WIMEY_KIND 1
 // check when nothing happens
 static uint64_t do_nothing(int what_type_of_nothing_did_you_expect, ticks_t the_start_of_nothing,
-			  ticks_t **when_nothing_will_end) {
+			   ticks_t **when_nothing_will_end) {
   uint64_t from_whence_you_came = THREADVAR(uid);
   if (what_type_of_nothing_did_you_expect == THE_TIMEY_WIMEY_KIND) {
     THREADVAR(ticks_to_activate) = lives_get_current_ticks() - the_start_of_nothing;
-  *when_nothing_will_end = &THREADVAR(round_trip_ticks);
+    *when_nothing_will_end = &THREADVAR(round_trip_ticks);
   }
   return from_whence_you_came;
 }

@@ -66,29 +66,29 @@ off_t sget_file_size(const char *name) {
 
 
 /**
-  @brief: return filename from an open fd, freeing val first
+   @brief: return filename from an open fd, freeing val first
 
-  in case of error function returns val
+   in case of error function returns val
 
-  if fd is a buffered file then the function just returns the known name,
-  else the name is procured from /proc
+   if fd is a buffered file then the function just returns the known name,
+   else the name is procured from /proc
 
-  call like: foo = filename_from_fd(foo,fd); lives_free(foo);
-  input param foo can be NULL or some (non-const) string buffer
-  if non-NULL the old value will be freed, so e.g
+   call like: foo = filename_from_fd(foo,fd); lives_free(foo);
+   input param foo can be NULL or some (non-const) string buffer
+   if non-NULL the old value will be freed, so e.g
 
-  char *badfile = NULL;
-  while (condition) {
-  ....
-      if (failed) badfile = filename_from_fd(badfile, fd);
-    }
-    if (badfile != NULL) lives_free(badfile);
+   char *badfile = NULL;
+   while (condition) {
+   ....
+   if (failed) badfile = filename_from_fd(badfile, fd);
+   }
+   if (badfile != NULL) lives_free(badfile);
 
-    or:
+   or:
 
-  char *badfile =  NULL;
-  badfile = filename_from_fd(badfile, fd);
-  if (badfile == NULL) // error getting filename
+   char *badfile =  NULL;
+   badfile = filename_from_fd(badfile, fd);
+   if (badfile == NULL) // error getting filename
 
 **/
 char *filename_from_fd(char *val, int fd) {
@@ -904,9 +904,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 
   if (fsize > 0) {
     // caller will wait until this thread goes to WAITING state, then do a sync_ready() and continue
-    g_print("22 %p syncing with %p\n", self, lives_proc_thread_get_dispatcher(self));
     lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 123, MM_IGNORE);
-    g_print("22 %p synced with %p\n", self, lives_proc_thread_get_dispatcher(self));
+
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
@@ -2390,7 +2389,7 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes = -1;
   //if (!disk_monitor_running(dir))
 
-  g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
+  //g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
 
   //if (!dircheck_state) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
@@ -2398,10 +2397,10 @@ int64_t disk_monitor_check_result(const char *dir) {
       return -1;
     }
     if (dircheck_state == 2) {
-      lpt_desc_state(running);
-      g_print("wait for diskmon res %p\n", running);
+      //lpt_desc_state(running);
+      //g_print("wait for diskmon res %p\n", running);
       bytes = result = lives_proc_thread_join_int64(running);
-      g_print("got for diskmon res\n");
+      //g_print("got for diskmon res\n");
       lives_proc_thread_unref(running);
       running = NULL;
       dircheck_state = 3;
@@ -2422,7 +2421,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
     return get_dir_size(dir);
   }
 
-  g_print("DISKMON sync, state is %d\n", dircheck_state);
+  //g_print("DISKMON sync, state is %d\n", dircheck_state);
 
   if (dircheck_state == 1) {
     GET_PROC_THREAD_SELF(self);
@@ -2435,7 +2434,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
         disk_monitor_forget();
         return -1;
       }
-      g_print("synced with diskmn, will get result now\n");
+      //g_print("synced with diskmn, will get result now\n");
       ds_syncwith = NULL;
     }
   }

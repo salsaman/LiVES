@@ -1569,8 +1569,8 @@ void switch_aud_to_none(boolean set_in_prefs) {
 
   if (mainw->is_ready) {
     /* //ubuntu has a hissy fit if you hide things in the menu
-      lives_widget_hide(mainw->vol_toolitem);
-      if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
+       lives_widget_hide(mainw->vol_toolitem);
+       if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
     */
     lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     // lives_widget_hide(mainw->recaudio_submenu);

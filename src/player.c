@@ -438,7 +438,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
             srcgrp->status = SRC_STATUS_READY;
             mainw->track_sources[i] = srcgrp;
             srcgrp->track = i;
-	  // *INDENT-OFF*
+	    // *INDENT-OFF*
           }}}}}
   // *INDENT-ON*
 
@@ -807,7 +807,8 @@ void reset_old_frame_layer(void) {
     mainw->debug_ptr = NULL;
     if (mainw->layers[0] != mainw->cached_frame
         && mainw->layers[0] != mainw->frame_layer_preload) {
-      g_print("unref old_frame %p and %p\n", mainw->layers[0], weed_layer_get_pixel_data(mainw->layers[0]));
+      /* g_print("unref old_frame %p and %p\n", mainw->layers[0], */
+      /* 	      weed_layer_get_pixel_data(mainw->layers[0])); */
       weed_layer_pixel_data_free(mainw->layers[0]);
     }
   }
@@ -1104,7 +1105,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
         g_print("plan CANCELLED during execution\n");
       else g_print("plan ERROR during execution\n");
       errpt = 4;
-      g_print("MWL is %p\n", mainw->layers);
       goto lfi_err;
     }
 
@@ -1120,7 +1120,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       // all our pixel_data should have been free'd already
       for (int i = 0; mainw->layers[i]; i++) {
         if (mainw->layers[i] != mainw->frame_layer) {
-          //g_print("unref layer %d with status %d\n", i, _lives_layer_get_status(mainw->layers[i]));
           weed_layer_pixel_data_free(mainw->layers[i]);
         }
       }
@@ -1165,7 +1164,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
         lives_freep((void **)&framecount);
       }
     }
-    g_print("plan done45\n");
 
     if (mainw->internal_messaging) {
       // this happens if we are calling from multitrack view frame,
@@ -1516,7 +1514,7 @@ lfi_done:
   }
 
   THREADVAR(rowstride_alignment_hint) = 0;
-  g_print("LFI done2\n");
+
   if (success) {
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor
@@ -1536,7 +1534,6 @@ lfi_done:
     if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
   }
 
-  g_print("LFI done 3\n");
   if (success && mainw->frame_layer) {
     // format is (int64_t)tc|(int32_t)nclips|(int32_t)clip|(int64_t)frame|.....|(double)pb_fps
     char *tmp, *msg;
@@ -1618,6 +1615,7 @@ get_time:
   mainw->clock_ticks = lives_get_relative_ticks(origticks) - susp_ticks;
   if (lclock_ticks < 0 || lclock_ticks > mainw->clock_ticks)
     lclock_ticks = mainw->clock_ticks;
+
   clock_delta = mainw->clock_ticks - lclock_ticks;
 
   if (clock_delta > DELTA_THRESH) {
@@ -1625,9 +1623,10 @@ get_time:
     susp_ticks += clock_delta;
     mainw->clock_ticks -= clock_delta;
     lclock_ticks = mainw->clock_ticks;
-    clock_delta = 0;
     goto get_time;
   }
+
+  lclock_ticks = mainw->clock_ticks;
 
   if (tsource == LIVES_TIME_SOURCE_EXTERNAL) tsource = LIVES_TIME_SOURCE_NONE;
 
@@ -2217,8 +2216,8 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
     }
     if ((best_frame - requested_frame) * dir > dropped) best_frame = requested_frame + dropped * dir;
     if ((best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir;
-    g_print("FRAMEVALS %d %d %d %d %d %d\n", best_frame, sfile->last_frameno, mainw->actual_frame, dir,
-            requested_frame, dropped);
+    /* g_print("FRAMEVALS %d %d %d %d %d %d\n", best_frame, sfile->last_frameno, mainw->actual_frame, dir, */
+    /*         requested_frame, dropped); */
   }
   return best_frame;
 }
@@ -3351,7 +3350,6 @@ update_effort:
       // otherwise, we skip past this and add one to spare_cycles
       // this may then cause the next frame or a getahead frame to be cached instead
 
-      g_print("here now\n");
       if (show_frame) {
         /// note the audio seek position at the current frame. We will use this when switching clips
         aplay_file = get_aplay_clipno();
@@ -3879,7 +3877,7 @@ play_frame:
 		else {
 		  getahead = -1;
 		}}}}}}}
-	  // *INDENT-ON*
+    // *INDENT-ON*
 #endif
 
 #ifdef ENABLE_PRECACHE
@@ -3931,13 +3929,13 @@ play_frame:
 #endif
 	  }}}}
 #endif
-	// *INDENT-ON*
+    // *INDENT-ON*
     if (mainw->video_seek_ready) {
       if (new_ticks > mainw->startticks) {
         mainw->last_startticks = mainw->startticks;
         mainw->startticks = new_ticks;
-	    // *INDENT-OFF*
-	  }}
+	// *INDENT-OFF*
+      }}
     // *INDENT-ON*
 
     sfile->last_req_frame = requested_frame;

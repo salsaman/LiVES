@@ -131,7 +131,6 @@ boolean cancel_request_other_lpt(lives_proc_thread_t self, lives_proc_thread_t o
 boolean hailmary_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
   // this is a 'cheat code', adding this callback to
   lives_proc_thread_exclude_states(other, THRD_STATE_DESTROYING);
-  g_print("HMtrig\n");
   return FALSE;
 }
 
@@ -145,7 +144,6 @@ boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
   if (!other) return FALSE;
   attrs = lives_proc_thread_get_attrs(other);
   lives_proc_thread_queue(other, attrs);
-  g_print("QOtrig\n");
   return FALSE;
 }
 
@@ -2294,27 +2292,26 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         return LIVES_RESULT_ERROR;
       }
 
-      g_print("synwith: check state of other (%p)\n", lpt);
-
-      g_print("get opause lock\n");
+      d_print_debug("syncwith: check state of other (%p)\n", lpt);
+      d_print_debug("get opause lock\n");
 
       // (A)
       pthread_mutex_lock(opause_mutex);
-      g_print("got opause lock\n");
+      d_print_debug("got opause lock\n");
 
       lives_proc_thread_set_sync_idx(sync_idx);
       osync_idx = lives_proc_thread_get_sync_idx(lpt);
 
       if (osync_idx == sync_idx) {
         gotmatch = TRUE;
-        g_print("synwith: idx matches\n");
-      } else g_print("synwith: no idx match, will wait\n");
+        d_print_debug("syncwith: idx matches\n");
+      } else d_print_debug("syncwith: no idx match, will wait\n");
       pthread_mutex_unlock(opause_mutex);
 
       // (B)
       pthread_mutex_lock(pause_mutex);
 
-      g_print("got PAuse mutex\n");
+      d_print_debug("got PAuse mutex\n");
 
       if (!gotmatch) {
         // check again but now with lock - either other has not yet reached (A), will block at (A)
@@ -2323,7 +2320,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         osync_idx = lives_proc_thread_get_sync_idx(lpt);
         if (osync_idx == sync_idx) {
           gotmatch = TRUE;
-          g_print("synwith: now we DID get match\n");
+          d_print_debug("syncwith: now we DID get match\n");
         }
       }
 
@@ -2338,16 +2335,16 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
           if (!lives_proc_thread_get_sync_idx(lpt)) goto synced;
           pthread_mutex_lock(opause_mutex);
           if (lives_proc_thread_is_paused(lpt)) {
-            g_print("synwith: other is paused, requesting resume\n");
+            d_print_debug("syncwith: other is paused, requesting resume\n");
             lives_proc_thread_set_sync_idx(sync_idx);
             _lives_proc_thread_request_resume(lpt, TRUE);
-            g_print("synwith: waiting foR other to reset sync_idx\n");
+            d_print_debug("syncwith: waiting foR other to reset sync_idx\n");
           }
           pthread_mutex_unlock(opause_mutex);
           lives_microsleep;
           osync_idx = lives_proc_thread_get_sync_idx(lpt);
           if (!osync_idx) {
-            g_print("synwith: other reset sync_idx, assume synced\n");
+            d_print_debug("syncwith: other reset sync_idx, assume synced\n");
             //pthread_mutex_unlock(pause_mutex);
             goto synced;
           }
@@ -2355,41 +2352,41 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
       }
       // non-match, pause / wait
       if (!timeout) {
-        g_print("synwith: pausing\n");
+        d_print_debug("syncwith: pausing\n");
         _lives_proc_thread_pause(self, TRUE);
         pthread_mutex_unlock(pause_mutex);
-        g_print("synwith: resumed, checking for match\n");
+        d_print_debug("syncwith: resumed, checking for match\n");
         if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
           pthread_mutex_unlock(pause_mutex);
           goto synced;
         }
-        g_print("no match after resuming - wrong thread woek us ?\n");
+        d_print_debug("no match after resuming - wrong thread woek us ?\n");
         lives_proc_thread_set_sync_idx(0);
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);
         return LIVES_RESULT_FAIL;
       } else {
-        g_print("synwith: waiting\n");
+        d_print_debug("syncwith: waiting\n");
         if (_lives_proc_thread_wait(self, timeout, TRUE)) {
           // timed out waiting
-          g_print("synwith: timed out waiting\n");
+          d_print_debug("syncwith: timed out waiting\n");
           if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
             pthread_mutex_unlock(pause_mutex);
-            g_print("synwith: synced anyway\n");
+            d_print_debug("syncwith: synced anyway\n");
             goto synced;
           }
-          g_print("syncwith: timed out, should retry");
+          d_print_debug("syncwith: timed out, should retry");
           lives_proc_thread_set_sync_idx(0);
           pthread_mutex_unlock(pause_mutex);
           lives_proc_thread_unref(lpt);
           return LIVES_RESULT_FAIL;
         }
-        g_print("synwith: resumed\n");
+        d_print_debug("syncwith: resumed\n");
         if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
           pthread_mutex_unlock(pause_mutex);
           goto synced;
         }
-        g_print("no match after resuming - wrong thread woek us ?\n");
+        d_print_debug("no match after resuming - wrong thread woek us ?\n");
         lives_proc_thread_set_sync_idx(0);
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);
@@ -2399,13 +2396,13 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
 synced:
       // if here, either - requested resume, or nrither paused, or thread resumed us
       // or timed out but sync_idx matched
-      g_print("synwith: %p SYNCED with %p!!\n", self, lpt);
+      d_print_debug("syncwith: %p SYNCED with %p!!\n", self, lpt);
       pthread_mutex_lock(opause_mutex);
       // lock to ensure other read our sync_idx before unlocking
       lives_proc_thread_set_sync_idx(0);
       pthread_mutex_unlock(opause_mutex);
       lives_proc_thread_unref(lpt);
-      g_print("synwith: DONE !!\n");
+      d_print_debug("syncwith: DONE !!\n");
       return LIVES_RESULT_SUCCESS;
       /* mismatch: */
       /*   lives_proc_thread_error(self, 0, "sync_idx mismatch, wating for %d and found %d\n", sync_idx, osync_idx); */
@@ -2581,7 +2578,6 @@ void pthread_cleanup_func(void *args) {
   // callbacks,
   // unless they need informing when this happens
   g_print("THREAD IS EXITING\n");
-  //if (is_fg_thread())
   lives_hooks_trigger(THREADVAR(hook_stacks), THREAD_EXIT_HOOK);
   g_print("THREAD IS FIN\n");
 }
@@ -2719,7 +2715,6 @@ static lives_proc_thread_t next_in_chain(lives_proc_thread_t olpt, lives_proc_th
     // clear any ATURREQUEU attribute.
     lives_proc_thread_add_hook(olpt, COMPLETED_HOOK, HOOK_OPT_ONESHOT, hailmary_other_lpt, olpt);
     lives_proc_thread_add_hook(olpt, FINISHED_HOOK, HOOK_OPT_ONESHOT, queue_other_lpt, olpt);
-    g_print("added HM and requ\n");
     return NULL;
   }
 

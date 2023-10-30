@@ -2217,7 +2217,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
-  break_me("runproc");
   // RUN THE INSTANCE //////////////
   retval = run_process_func(inst, tc);
   //////////////////////
@@ -4948,7 +4947,7 @@ void weed_load_all(void) {
       plugin_ext = get_extension(plugin_name);
       if (!lives_strcmp(plugin_ext, DLL_EXT)) {
         plugin_path = lives_build_filename(dirs[i], plugin_name, NULL);
-        g_printerr("\nloading %s\n", plugin_name);
+        d_print_debug("\nloading %s\n", plugin_name);
         load_weed_plugin(plugin_name, plugin_path, dirs[i]);
         lives_freep((void **)&plugin_name);
         lives_free(plugin_path);

@@ -665,7 +665,7 @@ LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
   if (vppw->rfx && mainw->textwidget_focus) {
     // make sure text widgets are updated if they activate the default
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
-                              TEXTWIDGET_KEY);
+									  TEXTWIDGET_KEY);
     after_param_text_changed(textwidget, vppw->rfx);
   }
 
@@ -677,9 +677,9 @@ LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
 
   if (vpp == mainw->vpp) {
     if (vppw->spinbuttonw) mainw->vpp->fwidth
-        = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
+			     = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
     if (vppw->spinbuttonh) mainw->vpp->fheight
-        = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
+			     = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
     if (vppw->apply_fx) mainw->fx1_bool = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(vppw->apply_fx));
     if (vppw->fps_entry) fixed_fps = lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry) {
@@ -1072,20 +1072,20 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
 
     hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth :
-            THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
+      THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
-                        hsize,
-                        4., MAX_FRAME_WIDTH, -4., 16., 0, LIVES_BOX(hbox), NULL);
+						       hsize,
+						       4., MAX_FRAME_WIDTH, -4., 16., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
     vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight :
-            THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
+      THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
-                        vsize,
-                        4., MAX_FRAME_HEIGHT, -4., 16., 0, LIVES_BOX(hbox), NULL);
+						       vsize,
+						       4., MAX_FRAME_HEIGHT, -4., 16., 0, LIVES_BOX(hbox), NULL);
 
     if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
       if (mainw->event_list) {
@@ -1094,7 +1094,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
         // add aspect ratio butto
         lives_special_aspect_t *aspect;
         aspect = (lives_special_aspect_t *)add_aspect_ratio_button(LIVES_SPIN_BUTTON(vppa->spinbuttonw),
-                 LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(hbox));
+								   LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(hbox));
         // don't reset the aspect params when we make_param_box
         aspect->no_reset = TRUE;
       }
@@ -1142,7 +1142,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   }
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"),
-                     FALSE, LIVES_BOX(dialog_vbox), NULL);
+						     FALSE, LIVES_BOX(dialog_vbox), NULL);
     if (mainw->event_list) lives_widget_set_no_show_all(widget_opts.last_container, TRUE);
   }
 
@@ -1185,19 +1185,19 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_CANCEL, NULL,
-                 LIVES_RESPONSE_CANCEL);
+						    LIVES_RESPONSE_CANCEL);
 
   lives_window_add_escape(LIVES_WINDOW(vppa->dialog), cancelbutton);
 
   if (THREAD_INTENTION == OBJ_INTENTION_PLAY) {
     savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_SAVE_AS, NULL,
-                 LIVES_RESPONSE_BROWSE);
+						    LIVES_RESPONSE_BROWSE);
 
     lives_widget_set_tooltip_text(savebutton, _("Save settings to an alternate file.\n"));
   }
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_OK, NULL,
-             LIVES_RESPONSE_OK);
+						LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
 
@@ -1239,7 +1239,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     THREAD_INTENTION = intention;
     THREAD_CAPACITIES = ocaps;
   }
- return vppa;
+  return vppa;
 }
 
 
@@ -2370,8 +2370,8 @@ static LiVESList *disable_decoders(LiVESList **dlistp) {
         if (!lives_strcmp(dpsys->soname, decid)) {
           list = lives_list_append_unique(list, dpsys);
           break;
-	    // *INDENT-OFF*
-	  }}}
+	  // *INDENT-OFF*
+	}}}
     // *INDENT-ON*
   }
   lives_list_free_all(dlistp);
@@ -2669,7 +2669,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
       if (xdis->data == dpsys) break;
     }
     if (xdis) continue;
-#define DEBUG_DECPLUG
+    //#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n", dpsys->id->name);
 #endif
@@ -4208,14 +4208,14 @@ LiVESList *hints_from_gui(lives_rfx_t *rfx, weed_plant_t *gui, LiVESList * hints
 /**
    @brief get the interface hints set by a Weed filter in the filter_class.
 
-    for a compound effect we get the gui elements from each internal filter in sequence,
-    inserting internal|nextfilter after each filter
+   for a compound effect we get the gui elements from each internal filter in sequence,
+   inserting internal|nextfilter after each filter
 
-    - the filter MUST have set LAYOUT_SCHEME to RFX in the filter class.
-    - it must have set the leaf RFX_DELIM with the string delimiter (and anything after the first character is ignored)
-    - the layout must be set in the RFX_STRINGS array, using the delimiter
+   - the filter MUST have set LAYOUT_SCHEME to RFX in the filter class.
+   - it must have set the leaf RFX_DELIM with the string delimiter (and anything after the first character is ignored)
+   - the layout must be set in the RFX_STRINGS array, using the delimiter
 
-    returns a LiVESList of the results
+   returns a LiVESList of the results
 */
 LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
   LiVESList *hints = NULL, *xhints;
@@ -4296,35 +4296,35 @@ LIVES_GLOBAL_INLINE LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const c
 /**
    @brief create an interface window for a plugin; possibly run it, and return the parameters
 
-    N.B. this is NOT for rendered effects, those have their own functions.
+   N.B. this is NOT for rendered effects, those have their own functions.
 
-    -- currently used for: encoder plugins and video playback plugins.
+   -- currently used for: encoder plugins and video playback plugins.
 
-    Given an RFX script in scrap_text, (generally retrieved by some means from the plugin),
-    will create an rfx effect, building the parameters from the <params> section of scrap_text,
-    using the layout hints (optional) from <param_window>, and construct a parameter interface.
+   Given an RFX script in scrap_text, (generally retrieved by some means from the plugin),
+   will create an rfx effect, building the parameters from the <params> section of scrap_text,
+   using the layout hints (optional) from <param_window>, and construct a parameter interface.
 
-    The function has two modes of operation:
+   The function has two modes of operation:
 
-    If vbox is not NULL it should point to a LiVESVBox into which the parameter box will be added.
-    The function will return NULL, and the rfx can be retrieved from ret_rfx.
+   If vbox is not NULL it should point to a LiVESVBox into which the parameter box will be added.
+   The function will return NULL, and the rfx can be retrieved from ret_rfx.
 
-    If vbox is NULL, the param window will be run, and if the user clicks "OK", the parameter values are returned in a marshalled list.
-    If the user closes the window with Cancel, NULL is returned instead.
+   If vbox is NULL, the param window will be run, and if the user clicks "OK", the parameter values are returned in a marshalled list.
+   If the user closes the window with Cancel, NULL is returned instead.
 
-    If the plugin has no user adjustable parameters, the an empty string is returned.
+   If the plugin has no user adjustable parameters, the an empty string is returned.
 
-    If <onchange> exists then the init | trigger will be run
-    to let the plugin update default values (for vpps only currently)
+   If <onchange> exists then the init | trigger will be run
+   to let the plugin update default values (for vpps only currently)
 
-    The onchange code is currently run by generating a perl scrap and running that. In future the code could
-    be run in different languages or internally by using a simple parser like the one in the data_processor plugin.
+   The onchange code is currently run by generating a perl scrap and running that. In future the code could
+   be run in different languages or internally by using a simple parser like the one in the data_processor plugin.
 
 
-    NOTE: if vbox is not NULL, we create the window inside vbox, without running it
-    in this case, vbox should be packed in its own dialog window, which should then be run
+   NOTE: if vbox is not NULL, we create the window inside vbox, without running it
+   in this case, vbox should be packed in its own dialog window, which should then be run
 
-    called from plugins.c (vpp opts) and saveplay.c (encoder opts) */
+   called from plugins.c (vpp opts) and saveplay.c (encoder opts) */
 char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
   FILE *sfile;
 

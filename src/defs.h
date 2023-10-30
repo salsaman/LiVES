@@ -595,11 +595,11 @@ typedef enum {
 #define RECURSE_GUARD_ARM do{pthread_mutex_trylock(&recursion_mutex);}while(0);
 #define RECURSE_GUARD_END do{pthread_mutex_trylock(&recursion_mutex);pthread_mutex_unlock(&recursion_mutex);}while(0);
 
-#define T_RECURSE_GUARD_START static uint32_t trec_token = 0; \
+#define T_RECURSE_GUARD_START static uint32_t trec_token = 0;	\
   if (!trec_token) {trec_token = (gen_unique_id() >> 32);}
 #define T_RETURN_IF_RECURSED do{if(have_recursion_token(trec_token))return;} while(0);
 #define T_RETURN_VAL_IF_RECURSED(val) do{if(have_recursion_token(trec_token))return (val);} while(0);
-#define T_RETURN_VAL_IF_RECURSED_CHECK(code, val) do{if(have_recursion_token(trec_token))\
+#define T_RETURN_VAL_IF_RECURSED_CHECK(code, val) do{if(have_recursion_token(trec_token)) \
       if ((code)) return (val);} while(0);
 #define T_RECURSE_GUARD_ARM do{push_recursion_token(trec_token);} while (0);
 #define T_RECURSE_GUARD_END do{remove_recursion_token(trec_token);} while (0);

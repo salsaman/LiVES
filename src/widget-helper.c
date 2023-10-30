@@ -2052,7 +2052,6 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   lives_widget_object_unref(dialog);
 
-  g_print("DLG RESPaa %d\n", resp);
   return resp;
 }
 
@@ -2060,18 +2059,15 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dialog) {
   LiVESResponseType resp = LIVES_RESPONSE_INVALID;
 #ifdef GUI_GTK
-  //resp = gtk_dialog_run(dialog);
   if (is_fg_thread()) {
     gtk_widget_show_all(GTK_WIDGET(dialog));
     _lives_widget_context_update();
-    //if (mainw->debug_ptr) gtk_test_widget_send_key(mainw->debug_ptr, LIVES_KEY_Return, 0);
     resp = gtk_dialog_run(dialog);
   } else {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
     main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
     BG_THREADVAR(hook_hints) = 0;
   }
-  g_print("DLG RESP %d\n", resp);
 #endif
   return resp;
 }

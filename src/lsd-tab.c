@@ -140,9 +140,9 @@ LIVES_GLOBAL_INLINE boolean lsd_structs_same_type(lsd_struct_def_t *lsd,
 }
 
 
-#define CHECK_VERBOSE 1
+//#define CHECK_VERBOSE 1
 #if CHECK_VERBOSE
-#define errprint(...) fprintf(stderr, __VA_ARGS__)
+#define errprint(...) _DW0(MSGMODE_ON(DEBUG); d_print_debug(__VA_ARGS__); MSGMODE_OFF(DEBUG);)
 #else
 #define errprint(...)
 #endif

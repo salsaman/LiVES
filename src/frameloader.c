@@ -2231,7 +2231,7 @@ fndone:
     }
     if (lives_layer_plan_controlled(layer)) {
       if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING) {
-        g_print("LOADED CB\n");
+        //g_print("LOADED CB\n");
         _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
       }
     } else _lives_layer_set_status(layer, LAYER_STATUS_READY);

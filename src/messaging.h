@@ -26,6 +26,7 @@
 #define MSG_ROUTE_STORE				(1 << 1)
 #define MSG_ROUTE_STDERR			(1 << 2)
 #define MSG_ROUTE_LOGFILE			(1 << 3)
+#define MSG_ROUTE_DEBUG				(1 << 4)
 
 #define MSG_ROUTE_DISPLAY			(1 << 8)
 #define MSG_ROUTE_FANCY				(1 << 9)
@@ -76,6 +77,8 @@ weed_error_t free_n_msgs(int frval);
 
 FILE *open_logfile(const char *logfilename);
 void close_logfile(FILE *logfile);
+
+void d_print_debug(const char *fmt, ...);
 
 // d_print shortcuts
 void d_print_cancelled(void);

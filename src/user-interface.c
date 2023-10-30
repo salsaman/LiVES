@@ -764,6 +764,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 
 void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   //static int old_pwidth = 0, old_pheight = 0;
+  static int old_pwidth = 0, old_pheight = 0;
   LiVESPixbuf *pixbuf;
   g_print("DRAW LAYER0\n");
 
@@ -779,26 +780,31 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   if (pixbuf) {
     LiVESWidget *widget = LIVES_WIDGET(darea);
 
-    /* if (widget == mainw->play_image) { */
-    /*   int pwidth = lives_widget_get_allocation_width(widget); */
-    /*   int pheight = lives_widget_get_allocation_height(widget); */
-    /*   if (pwidth < old_pwidth || pheight < old_pheight) */
-    /* 	clear_widget_bg(widget, surface); */
-    /*   old_pwidth = pwidth; */
-    /*   old_pheight = pheight; */
-    /* } */
+    if (widget == mainw->play_image) {
+      int pwidth = lives_widget_get_allocation_width(widget);
+      int pheight = lives_widget_get_allocation_height(widget);
+      if (pwidth < old_pwidth || pheight < old_pheight) {
+        lives_painter_surface_t *surface = NULL;
+        struct pbs_struct *pbs = (struct pbs_struct *)GET_VOIDP_DATA(widget, PBS_KEY);
+        if (pbs) {
+          lives_painter_surface_t **psurface = pbs->surfp;
+          if (psurface) surface = *psurface;
+        }
+        if (surface) clear_widget_bg(widget, surface);
+        old_pwidth = pwidth;
+        old_pheight = pheight;
+      }
+    }
+
     g_print("DRAW LAYER\n");
 
     set_drawing_area_from_pixbuf(darea, pixbuf);
     lives_widget_object_unref(pixbuf);
-
-    g_print("unref of pb %p, should still have 1 ref\n", pixbuf);
-
     lives_widget_queue_draw_and_update(widget);
   }
 
-  g_print("unref %p, nrefs is %d\n", layer, weed_layer_count_refs(layer));
-  g_print("if we free %p, here, it should remove proxy layer, unless it entered with copylist\n", layer);
+  /* g_print("unref %p, nrefs is %d\n", layer, weed_layer_count_refs(layer)); */
+  /* g_print("if we free %p, here, it should remove proxy layer, unless it entered with copylist\n", layer); */
   weed_layer_unref(layer);
 }
 
@@ -922,13 +928,13 @@ void reset_mainwin_size(void) {
 
   // resize the main window so it fits the gui monitor
   if (prefs->open_maximised) {
-    bx = by = 0;
+    //bx = by = 0;
     lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 
-    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), bx, by);
+    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
     lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   } else {

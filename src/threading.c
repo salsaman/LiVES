@@ -3755,7 +3755,7 @@ skip_over:
       // check attrs
       uint64_t attrs = lives_proc_thread_get_attrs(lpt);
       if (!(attrs & LIVES_THRDATTR_NO_UNREF)) lives_proc_thread_unref(lpt);
-      g_print("Will destroy %p\n", lpt);
+      //g_print("Will destroy %p\n", lpt);
     }
     // also sets 'active'
     lives_thread_set_prime(NULL);

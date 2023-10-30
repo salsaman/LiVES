@@ -73,7 +73,7 @@ lives_result_t lives_imgloader_srcfunc(weed_layer_t *layer, boolean async) {
 /*   lives_result_t res; */
 /*   lives_layer_set_status(layer, LAYER_STATUS_LOADING); */
 /*   res = load_from_scrap_file(layer, frame); */
-/*   if (!res) lives_layer_set_status(layer, LAYER_STATUS_INVALID); */
+/*   if (!res) weed_layer_set_invalid(layer, TRUE); */
 /*   else { */
 /*     // realign */
 /*     lives_layer_set_status(layer, LAYER_STATUS_LOADED); */
@@ -2225,13 +2225,15 @@ fndone:
     weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
     lock_layer_status(layer);
 
-    if (_lives_layer_get_status(layer) == LAYER_STATUS_INVALID) {
+    if (!_weed_layer_check_valid(layer)) {
       unlock_layer_status(layer);
       return FALSE;
     }
     if (lives_layer_plan_controlled(layer)) {
-      if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
+      if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING) {
+        g_print("LOADED CB\n");
         _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+      }
     } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
 
     unlock_layer_status(layer);
@@ -2266,13 +2268,18 @@ fndone:
     int clip;
     int clip_type;
     int lstatus = LAYER_STATUS_NONE;
+    int errpt = 0;
 
-    if (!layer) goto fail;
-
+    if (!layer) {
+      errpt = 1;
+      goto fail;
+    }
     weed_layer_ref(layer);
 
-    lstatus = lives_layer_get_status(layer);
-    if (lstatus == LAYER_STATUS_INVALID) goto fail;
+    if (!weed_layer_check_valid(layer)) {
+      errpt = 2;
+      goto fail;
+    }
 
     ____FUNC_ENTRY____(pull_frame_at_size, "b", "vvIiii");
 
@@ -2294,28 +2301,40 @@ fndone:
     if (!sfile) {
       if (target_palette != WEED_PALETTE_NONE && target_palette != WEED_PALETTE_ANY)
         weed_layer_set_palette(layer, target_palette);
+      errpt = 3;
       goto fail;
     }
 
-    if (lstatus != LAYER_STATUS_NONE) lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+    lock_layer_status(layer);
+    lstatus = _lives_layer_get_status(layer);
+    if (lstatus != LAYER_STATUS_NONE) _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+    unlock_layer_status(layer);
 
     clip_type = sfile->clip_type;
 
     switch (clip_type) {
     case CLIP_TYPE_NULL_VIDEO:
+      errpt = 4;
       goto fail;
     case CLIP_TYPE_DISK:
     case CLIP_TYPE_FILE:
       // frame number can be 0 during rendering
       if (frame == 0) {
+        errpt = 5;
         goto fail;
       } else {
+        lock_layer_status(layer);
+        lstatus = _lives_layer_get_status(layer);
         if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
-          lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+          _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+        unlock_layer_status(layer);
 
         if (clip == mainw->scrap_file) {
           boolean res = load_from_scrap_file(layer, frame);
-          if (!res) goto fail;
+          if (!res) {
+            errpt = 6;
+            goto fail;
+          }
           goto success;
         } else {
           frames_t xframe;
@@ -2371,6 +2390,7 @@ fndone:
               if (!dplug && get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
                 dplug = (lives_decoder_t *)get_primary_actor(sfile);
               if (!dplug || !dplug->cdata || xframe >= dplug->cdata->nframes) {
+                errpt = 7;
                 goto fail;
               }
 
@@ -2411,6 +2431,7 @@ fndone:
 #ifdef USE_REC_RS
                 weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
 #endif
+                errpt = 8;
                 goto fail;
               }
 
@@ -2421,14 +2442,18 @@ fndone:
                                                     dplug->cdata->YUV_subspace));
                 LIVES_WARN(msg);
                 lives_free(msg);
+                errpt = 9;
                 goto fail;
               }
 
               rowstrides = weed_layer_get_rowstrides(layer, NULL);
               pthread_mutex_lock(&dplug->mutex);
 
+              lock_layer_status(layer);
+              lstatus = _lives_layer_get_status(layer);
               if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
-                lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+                _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+              unlock_layer_status(layer);
 
               if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)xframe, rowstrides, sfile->vsize, pixel_data)) {
                 pthread_mutex_unlock(&dplug->mutex);
@@ -2443,6 +2468,7 @@ fndone:
                   lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
 #endif
                 // if get_frame fails, return a black frame
+                errpt = 10;
                 goto fail;
               } else {
                 pthread_mutex_unlock(&dplug->mutex);
@@ -2484,7 +2510,10 @@ fndone:
                   } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
                 }
               }
-              if (!res) goto fail;
+              if (!res) {
+                errpt = 11;
+                goto fail;
+              }
               goto success;
             }
           } else {
@@ -2501,8 +2530,10 @@ fndone:
             ret = weed_layer_create_from_file_progressive(layer, image_ext);
             img_decode_time = lives_get_session_time() - timex;
 
-            if (!ret) goto fail;
-
+            if (!ret) {
+              errpt = 12;
+              goto fail;
+            }
             if (!sfile->img_decode_time) sfile->img_decode_time = img_decode_time;
             else sfile->img_decode_time = (sfile->img_decode_time * 3 + img_decode_time) / 4.;
             if (LIVES_IS_PLAYING && prefs->skip_rpts) md5_frame(layer);
@@ -2514,8 +2545,11 @@ fndone:
       // handle other types of sources
 #ifdef HAVE_YUV4MPEG
     case CLIP_TYPE_YUV4MPEG:
+      lock_layer_status(layer);
+      lstatus = _lives_layer_get_status(layer);
       if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
-        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+        _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+      unlock_layer_status(layer);
       weed_layer_set_from_yuv4m(layer, sfile);
       if (sfile->deinterlace) {
         if (!is_thread) {
@@ -2526,8 +2560,11 @@ fndone:
 #endif
 #ifdef HAVE_UNICAP
     case CLIP_TYPE_VIDEODEV:
+      lock_layer_status(layer);
+      lstatus = _lives_layer_get_status(layer);
       if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
-        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+        _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+      unlock_layer_status(layer);
       weed_layer_set_from_lvdev(layer, sfile, 4. / cfile->pb_fps);
       if (sfile->deinterlace) {
         if (!is_thread) {
@@ -2537,8 +2574,11 @@ fndone:
       goto success;
 #endif
     case CLIP_TYPE_LIVES2LIVES:
+      lock_layer_status(layer);
+      lstatus = _lives_layer_get_status(layer);
       if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
-        lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+        _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+      unlock_layer_status(layer);
       weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)get_primary_actor(sfile));
       goto success;
     case CLIP_TYPE_GENERATOR: {
@@ -2547,8 +2587,10 @@ fndone:
       // never free it !
       lives_result_t res = LIVES_RESULT_FAIL;
       weed_plant_t *inst = (weed_instance_t *)get_primary_inst(sfile);
-      if (!inst) goto fail;
-
+      if (!inst) {
+        errpt = 13;
+        goto fail;
+      }
       weed_instance_ref(inst);
 
       int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
@@ -2560,7 +2602,10 @@ fndone:
       filter_mutex_unlock(key);
       weed_instance_unref(inst);
 
-      if (res != LIVES_RESULT_SUCCESS) goto fail;
+      if (res != LIVES_RESULT_SUCCESS) {
+        errpt = 14;
+        goto fail;
+      }
       goto success;
     }
     default: goto fail;
@@ -2592,7 +2637,11 @@ success:
     return TRUE;
 
 fail:
-    if (lstatus != LAYER_STATUS_NONE) lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+    g_print("FAILED to load frame error was %d\n", errpt);
+    lock_layer_status(layer);
+    lstatus = _lives_layer_get_status(layer);
+    if (lstatus != LAYER_STATUS_NONE) _weed_layer_set_invalid(layer, TRUE);
+    unlock_layer_status(layer);
 
     weed_layer_pixel_data_free(layer);
 
@@ -2624,7 +2673,7 @@ fail:
 
   LIVES_GLOBAL_INLINE boolean is_layer_ready(weed_layer_t *layer) {
     if (lives_layer_get_status(layer) == LAYER_STATUS_READY
-        || lives_layer_get_status(layer) == LAYER_STATUS_INVALID) {
+        || !weed_layer_check_valid(layer)) {
       wait_layer_ready(layer, FALSE);
       return TRUE;
     }
@@ -2668,23 +2717,23 @@ fail:
           }
           lock_layer_status(layer);
           lstatus = _lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_READY || lstatus == LAYER_STATUS_QUEUED) break;
+          if (lstatus == LAYER_STATUS_READY || lstatus == LAYER_STATUS_QUEUED) {
+            unlock_layer_status(layer);
+            break;
+          }
           if (!allow_loaded && lstatus == LAYER_STATUS_LOADED) {
-            lstatus = LAYER_STATUS_INVALID;
-            _lives_layer_set_status(layer, lstatus);
+            _weed_layer_set_invalid(layer, TRUE);
+          } else if (!mainw->plan_cycle && lstatus == LAYER_STATUS_PREPARED) {
+            _weed_layer_set_invalid(layer, TRUE);
           }
-          if (!mainw->plan_cycle && lstatus == LAYER_STATUS_PREPARED) {
-            lstatus = LAYER_STATUS_INVALID;
-            _lives_layer_set_status(layer, lstatus);
-          }
-          if (lstatus == LAYER_STATUS_INVALID) {
+          if (!_weed_layer_check_valid(layer)) {
+            unlock_layer_status(layer);
             res = LIVES_RESULT_FAIL;
             break;
           }
           unlock_layer_status(layer);
           lives_proc_thread_wait(self, 100000);
         }
-        unlock_layer_status(layer);
       }
     }
     return res;
@@ -2724,12 +2773,12 @@ fail:
       if (!tc) tc = timing_data[LAYER_STATUS_TREF] = timing_data[LAYER_STATUS_QUEUED];
       _set_layer_timing(layer, timing_data);
       lives_free(timing_data);
+      unlock_layer_status(layer);
 
       weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
       weed_layer_set_size(layer, width, height);
 
 #ifdef NO_FRAME_THREAD
-      unlock_layer_status(layer);
       if (!pull_frame(layer, tc)) return LIVES_RESULT_ERROR;
 #else
 
@@ -2740,7 +2789,6 @@ fail:
       lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, frame_loaded_cb, layer);
       lives_proc_thread_set_cancellable(lpt);
       weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
-      unlock_layer_status(layer);
       lives_proc_thread_queue(lpt, 0);
 #endif
       return LIVES_RESULT_SUCCESS;

@@ -2491,15 +2491,9 @@ int close_current_file(int file_to_switch_to) {
   if (mainw->blend_file == mainw->current_file) {
     need_new_blend_file = TRUE;
     // if closing a generator clip, it is better to reomve the track_source here,
-    // otherwise map_sources_to_tracks will try to fins a clip_srcgrp and make the track_source idle
+    // otherwise map_sources_to_tracks will try to find a clip_srcgrp and make the track_source idle
     track_source_free(1, mainw->blend_file);
-    if (!LIVES_IS_PLAYING) {
-      mainw->blend_file = -1;
-      if (mainw->blend_layer) {
-        weed_layer_unref(mainw->blend_layer);
-        mainw->blend_layer = NULL;
-      }
-    }
+    if (!LIVES_IS_PLAYING) mainw->blend_file = -1;
   } else if (mainw->current_file == mainw->playing_file) {
     track_source_free(0, mainw->current_file);
   }
@@ -2570,7 +2564,6 @@ int close_current_file(int file_to_switch_to) {
           if (file_to_switch_to != mainw->playing_file) {
             mainw->new_clip = file_to_switch_to;
             if (need_new_blend_file) {
-              weed_layer_set_invalid(mainw->blend_layer, TRUE);
               mainw->new_blend_file = file_to_switch_to;
             }
           } else mainw->current_file = file_to_switch_to;

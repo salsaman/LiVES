@@ -339,7 +339,7 @@ static const int32_t testint = 0x12345678;
 #endif
 
 typedef int64_t ticks_t;
-typedef int frames_t; // nb. will chenge to int64_t at some future point
+typedef int frames_t; // nb. will change to int64_t at some future point
 typedef int64_t frames64_t; // will become the new standard
 typedef void (*lives_funcptr_t)();
 
@@ -423,10 +423,10 @@ typedef struct {
 // directions
 /// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
 typedef enum {
-  LIVES_DIRECTION_ANTI_CLOCKWISE,
-  LIVES_DIRECTION_DOWN,
-  LIVES_DIRECTION_LEFT,
-  LIVES_DIRECTION_BACKWARD,
+  LIVES_DIRECTION_ANTI_CLOCKWISE = -4,
+  LIVES_DIRECTION_DOWN = -3,
+  LIVES_DIRECTION_LEFT = -2,
+  LIVES_DIRECTION_BACKWARD = -1,
   LIVES_DIRECTION_NONE = 0,
   LIVES_DIRECTION_FORWARD,
   LIVES_DIRECTION_RIGHT,
@@ -458,6 +458,25 @@ typedef enum {
 #define LIVES_INPUT			1
 #define LIVES_OUTPUT			2
 #define LIVES_INPUT_OUTPUT		3
+
+#define LIVES_DIRECTION_FWD_OR_REV(dir) ((dir) == LIVES_DIRECTION_BACKWARD ? LIVES_DIRECTION_REVERSE : (dir))
+
+/// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sigi((dir)))
+
+/// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((abs(dir)) & 1))
+
+#define LIVES_DIRECTION_CONTRARY(dir1, dir2)				\
+  (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED)	\
+   ? (dir2) == LIVES_DIR_FORWARD :					\
+   ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED)	\
+   ? (dir1) == LIVES_DIR_FORWARD : (dir1) == LIVES_DIR_LEFT ? (dir2) == LIVES_DIR_RIGHT \
+   : (dir1) == LIVES_DIR_RIGHT ? (dir2) == LIVES_DIR_LEFT : (dir1) == LIVES_DIR_UP \
+   ? (dir2) == LIVES_DIR_DOWN : (dir1) == LIVES_DIR_DOWN ? (dir2) == LIVES_DIR_UP \
+   : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
+   ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
+
 
 
 typedef enum {

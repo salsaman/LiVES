@@ -100,8 +100,8 @@ void lives_layer_copy_metadata(weed_layer_t *dest, weed_layer_t *src, boolean fu
     // copy rowstrides, though these may get overwritten if we create new pixel data
     lives_leaf_dup(dest, src, WEED_LEAF_ROWSTRIDES);
 
-    lives_leaf_copy_or_delete(dest, WEED_LEAF_CLIP, src);
-    lives_leaf_copy_or_delete(dest, WEED_LEAF_FRAME, src);
+    /* lives_leaf_copy_or_delete(dest, WEED_LEAF_CLIP, src); */
+    /* lives_leaf_copy_or_delete(dest, WEED_LEAF_FRAME, src); */
 
     lives_leaf_copy_or_delete(dest, WEED_LEAF_GAMMA_TYPE, src);
     lives_leaf_copy_or_delete(dest, LIVES_LEAF_HOST_FLAGS, src);
@@ -236,16 +236,33 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer,
 }
 
 
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_flags(weed_layer_t *layer, int flags) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+static weed_layer_t *_weed_layer_set_flags(weed_layer_t *layer, int flags) {
   weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
   return layer;
 }
 
+weed_layer_t *weed_layer_set_flags(weed_layer_t *layer, int flags) {
+  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  lock_layer_status(layer);
+  weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
+  unlock_layer_status(layer);
+  return layer;
+}
+
+
+static int _weed_layer_get_flags(weed_layer_t *layer) {
+  return weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
+}
+
 
 LIVES_GLOBAL_INLINE int weed_layer_get_flags(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
+  int ret = 0;
+  if (layer && WEED_IS_LAYER(layer)) {
+    lock_layer_status(layer);
+    ret = weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
+    unlock_layer_status(layer);
+  }
+  return ret;
 }
 
 
@@ -879,19 +896,42 @@ LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE void weed_layer_set_invalid(weed_layer_t *layer, boolean is) {
-  if (layer) {
-    if (is) {
-      (weed_layer_set_flags(layer, weed_layer_get_flags(layer) | LIVES_LAYER_INVALID));
-      lives_layer_unset_srcgrp(layer);
-    } else
-      weed_layer_set_flags(layer, weed_layer_get_flags(layer) & ~LIVES_LAYER_INVALID);
+void _weed_layer_set_invalid(weed_layer_t *layer, boolean is) {
+  if (is) {
+    _weed_layer_set_flags(layer, _weed_layer_get_flags(layer) | LIVES_LAYER_INVALID);
+    if (_lives_layer_get_status(layer) != LAYER_STATUS_NONE)
+      _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+    lives_layer_unset_srcgrp(layer);
+  } else {
+    _weed_layer_set_flags(layer, _weed_layer_get_flags(layer) & ~LIVES_LAYER_INVALID);
+    if (_lives_layer_get_status(layer) == LAYER_STATUS_INVALID)
+      _lives_layer_set_status(layer, LAYER_STATUS_NONE);
   }
 }
 
 
-LIVES_GLOBAL_INLINE boolean weed_layer_check_valid(weed_layer_t *layer) {
-  return layer ? !(weed_layer_get_flags(layer) & LIVES_LAYER_INVALID) : FALSE;
+void weed_layer_set_invalid(weed_layer_t *layer, boolean is) {
+  if (layer) {
+    lock_layer_status(layer);
+    _weed_layer_set_invalid(layer, is);
+    unlock_layer_status(layer);
+  }
+}
+
+
+boolean _weed_layer_check_valid(weed_layer_t *layer) {
+  return !(_weed_layer_get_flags(layer) & LIVES_LAYER_INVALID);
+}
+
+
+boolean weed_layer_check_valid(weed_layer_t *layer) {
+  boolean ret = FALSE;
+  if (layer) {
+    lock_layer_status(layer);
+    ret = _weed_layer_check_valid(layer);
+    unlock_layer_status(layer);
+  }
+  return ret;
 }
 
 /**

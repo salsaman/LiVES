@@ -1496,10 +1496,11 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
       pa_stream_drop(pulsed->pstream);
     }
 
+    nframes = rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3);
+
     pthread_mutex_lock(&xtra_mutex);
     if (pulsed->in_use)
-      pulsed->extrausec += ((double)nbytes / (double)(pulsed->in_arate) * (double)ONE_MILLION
-                            / ((double)(pulsed->in_achans * (pulsed->in_asamps >> 3))) + .5);
+      pulsed->extrausec += ((double)nframes / (double)pulsed->in_arate * ONE_MILLION_DBL + .5);
     pthread_mutex_unlock(&xtra_mutex);
     g_print("XUS = %ld\n", pulsed->extrausec);
     lives_proc_thread_include_states(self, THRD_STATE_IDLING);
@@ -1536,7 +1537,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   // time interpolation
   pthread_mutex_lock(&xtra_mutex);
-  pulsed->extrausec += nframes * ONE_MILLION;
+  pulsed->extrausec += ((double)nframes / (double)pulsed->in_arate * ONE_MILLION_DBL + .5);
   pthread_mutex_unlock(&xtra_mutex);
 
   // should really be frames_read here
@@ -1974,8 +1975,8 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
 
 
 ///////////////////////////////////////////////////////////////
-static int64_t last_usec = -1, tot_extras = 0, tot_measured = 9;
-static int64_t last_extra = 0, last_retval = 0;
+static int64_t last_usec = -1;
+static int64_t last_retval = 0;
 static double sclf = 1.;
 
 
@@ -2056,7 +2057,9 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
       last_usec = usec;
       if (pulsed->extrausec) {
         sclf = (double)pulsed->extrausec / (double)(usec - pulsed->usec_start);
-        g_print("ratio %.4f\n", sclf);
+        //g_print("ratio %.4f\n", sclf);
+        if (sclf > 1.2) sclf = 1.2;
+        if (sclf < 0.8) sclf = 0.8;
       }
     }
   }

@@ -1561,9 +1561,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
     dheight = slices_per_thread * vstep;
     heights[0] = dheight;
     weed_set_int_value(out_channels[i], WEED_LEAF_OFFSET, 0);
-    break_me("et");
-    weed_error_t err = weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
-    g_print("zNE is %d %d\n", weed_leaf_num_elements(out_channels[i], WEED_LEAF_HEIGHT), err);
+    weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
   }
 
   for (j = 0; j < to_use; j++) {
@@ -1578,7 +1576,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
     for (i = 0; i < nchannels; i++) {
       xchan = xchannels[i] = lives_plant_copy(out_channels[i]);
-      g_print("NE is %d\n", weed_leaf_num_elements(out_channels[i], WEED_LEAF_HEIGHT));
       xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
       height = xheights[1];
       dheight = xheights[0];

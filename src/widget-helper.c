@@ -1812,9 +1812,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_resize(LiVESWidget * widg
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget * widget, int width, int height) {
 #ifdef GUI_GTK
   if (mainw->mgeom) {
-    if (1 || !mainw->ignore_screen_size) {
+    if (!mainw->ignore_screen_size) {
       if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT) {
-        char *msg = lives_strdup_printf("Widget size (%d X %d0 too large for display (%d X %d) (sr!i) !",
+        char *msg = lives_strdup_printf("Widget size (%d X %d too large for display (%d X %d) (sr!i) !",
                                         width, height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
         lives_abort(msg);
         lives_free(msg);
@@ -3211,7 +3211,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow * window, in
         lives_abort("Widget size too large for display (winri) !");
     }
   }
-  if (GTK_WIDGET(window) == mainw->LiVES) break_me("res win");
+  //if (GTK_WIDGET(window) == mainw->LiVES) break_me("res win");
   gtk_window_resize(window, width, height);
   gtk_widget_set_size_request(GTK_WIDGET(window), width, height);
   return TRUE;

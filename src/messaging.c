@@ -438,9 +438,11 @@ void d_print(const char *fmt, ...) {
 
 void d_print_debug(const char *fmt, ...) {
   va_list xargs;
-  va_start(xargs, fmt);
-  vfprintf(stderr, fmt, xargs);
-  va_end(xargs);
+  if (MSGMODE_HAS(DEBUG)) {
+    va_start(xargs, fmt);
+    vfprintf(stderr, fmt, xargs);
+    va_end(xargs);
+  }
 }
 
 

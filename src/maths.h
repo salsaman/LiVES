@@ -79,6 +79,7 @@ typedef struct {
 #define squared(a)((a)*(a))
 
 #define sig(a) ((a) < 0. ? -1.0 : 1.0)
+#define sigi(a) ((a) < 0. ? -1 : 1)
 
 // round to nearest integer (positive values only)
 #define ROUND_I(a) ((int)((double)(a) + .5)) // double

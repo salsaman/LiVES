@@ -3429,10 +3429,6 @@ void show_lives(void) {
       gtk_window_set_focus_on_map(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
-
-  mainw->ignore_screen_size = TRUE;
-  reset_mainwin_size();
-  mainw->ignore_screen_size = FALSE;
 }
 
 

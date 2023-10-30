@@ -1025,9 +1025,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
             record_filter_init(key);
           }
         }
-
-
-
         weed_instance_unref(inst);
       } else {
         if (!(weed_init_effect(key))) {
@@ -1144,9 +1141,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
     mainw->force_show = TRUE;
 
   if (refresh_model) mainw->refresh_model = TRUE;
-
-
-
 
   return res;
 }

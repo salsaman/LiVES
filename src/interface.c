@@ -7950,7 +7950,7 @@ rec_args *do_rec_desk_dlg(void) {
 
 
 //// message area functions
-//#define DEBUG_OVERFLOW
+#define DEBUG_OVERFLOW
 
 static int vmin = -10000000;
 static int hmin = -10000000;
@@ -8292,11 +8292,15 @@ boolean msg_area_config(LiVESWidget * widget) {
         }
       }
 
+      h = ((h + 1) >> 1) << 1;
+
 #ifdef DEBUG_OVERFLOW
       g_print("SIZE REQ: %d X %d and %d X %d\n", width, height, w, h);
 #endif
 
+      mainw->ignore_screen_size = TRUE;
       lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      mainw->ignore_screen_size = FALSE;
       lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
       // NECESSARY !
       //lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), abs(bx), abs(by), w - bx, h - by);

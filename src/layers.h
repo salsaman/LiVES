@@ -63,7 +63,6 @@
 // layer pixel_data is fully ready
 #define LAYER_STATUS_READY		6
 
-// layer is invalid, do not use
 #define LAYER_STATUS_INVALID	       -1
 
 #define N_LAYER_STATUSES	    	7
@@ -141,7 +140,9 @@ lives_clipsrc_group_t *lives_layer_get_srcgrp(weed_layer_t *);
 void lives_layer_unset_srcgrp(weed_layer_t *);
 
 boolean weed_layer_check_valid(weed_layer_t *);
-void weed_layer_set_invalid(weed_layer_t *, boolean);
+boolean _weed_layer_check_valid(weed_layer_t *);
+void weed_layer_set_invalid(weed_layer_t *, boolean is);
+void _weed_layer_set_invalid(weed_layer_t *, boolean is);
 
 /// private flags
 #define LIVES_LAYER_LOAD_IF_NEEDS_RESIZE	1

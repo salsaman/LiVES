@@ -132,12 +132,13 @@ static int n_allpals = 0;
 
 static glob_timedata_t *glob_timing = NULL;
 
+static double ztime;
+
 // still to do:
 
 // elsewhere:
-// include provision  for deinterlace
-// measure actual timings
-
+// include provision  for deinterlace, subtitles
+// measure process_time
 // create model deltas, bypass nodes
 
 
@@ -1192,7 +1193,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
     if (inpalette != opalette) {
       if (!convert_layer_palette_full(layer, opalette, oclamping,
                                       osampling, osubspace, tgt_gamma)) {
-        char *msg = lives_strdup_printf("Invalid palette conversion %dx to %d\n", inpalette, opalette);
+        char *msg = lives_strdup_printf("Invalid palette conversion %d to %d\n", inpalette, opalette);
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         break_me("invpal");
         lives_proc_thread_error(self, (int)retval, LPT_ERR_MAJOR, "%s", msg);
@@ -1667,6 +1668,8 @@ static void extract_timedata(exec_plan_t *plan) {
   // *INDENT-ON*
 }
 
+#define SET_PLAN_STATE(xstate) _DW0(plan->state = PLAN_STATE_##xstate;	\
+				    if (plan->state == PLAN_STATE_CANCELLED) break_me("plan cancelled");)
 
 
 static void run_plan(exec_plan_t *plan) {
@@ -1694,6 +1697,8 @@ static void run_plan(exec_plan_t *plan) {
 
   bbsummary();
 
+  //MSGMODE_ON(DEBUG);
+
   if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
     glob_timing->tot_duration = 0.;
@@ -1711,7 +1716,7 @@ static void run_plan(exec_plan_t *plan) {
   pthread_mutex_lock(pause_mutex);
 
   if (!plan->tdata->trigger_time) {
-    plan->state = PLAN_STATE_WAITING;
+    SET_PLAN_STATE(WAITING);
 
     // if cycle has not yet been triggered, we are going to sleep until it is
     // however, if cancel is requested, when calling the pause_function,
@@ -1724,12 +1729,11 @@ static void run_plan(exec_plan_t *plan) {
   }
   pthread_mutex_unlock(pause_mutex);
 
-  plan->state = PLAN_STATE_RUNNING;
+  SET_PLAN_STATE(RUNNING);
 
   plan->tdata->start_wait = plan->tdata->trigger_time - plan->tdata->trun_time;
 
-  if (prefs->dev_show_timing)
-    d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
+  d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self))
     lives_proc_thread_cancel(self);
@@ -1770,8 +1774,8 @@ static void run_plan(exec_plan_t *plan) {
       if (lives_proc_thread_get_resume_requested(self)) {
         if (paused) {
           paused = FALSE;
-          if (!plan->nsteps_running) plan->state = PLAN_STATE_RUNNING;
-          else plan->state = PLAN_STATE_RESUMING;
+          if (!plan->nsteps_running) SET_PLAN_STATE(RUNNING);
+          else SET_PLAN_STATE(RESUMING);
         }
       }
 
@@ -1824,7 +1828,7 @@ static void run_plan(exec_plan_t *plan) {
           // ensure the layer exists and is in state PREPARED
           if (!plan->layers) {
             d_print_debug("no layers for plan2\n");
-            error = 1;
+            error = 3;
             continue;
           }
 
@@ -1836,9 +1840,8 @@ static void run_plan(exec_plan_t *plan) {
           }
 
           if (layer) {
-            lstatus = lives_layer_get_status(layer);
-            if (lstatus == LAYER_STATUS_INVALID) {
-              error = 2;
+            if (!weed_layer_check_valid(layer)) {
+              error = 4;
               step->state = STEP_STATE_ERROR;
               break;
             }
@@ -1855,7 +1858,7 @@ static void run_plan(exec_plan_t *plan) {
               // OK
               lock_layer_status(layer);
               if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADED)
-                lives_layer_set_status(layer, LAYER_STATUS_READY);
+                _lives_layer_set_status(layer, LAYER_STATUS_READY);
               unlock_layer_status(layer);
             }
 
@@ -1864,10 +1867,10 @@ static void run_plan(exec_plan_t *plan) {
             plan->template->frame_idx[step->track]
             = plan->frame_idx[step->track];
 
+            lstatus = lives_layer_get_status(layer);
             if (lstatus == LAYER_STATUS_READY || lstatus == LAYER_STATUS_LOADED) {
-              if (prefs->dev_show_timing)
-                d_print_debug("LOAD step skipped, frame appeared on track %d as if by magic !\n",
-                              step->track);
+              d_print_debug("LOAD step skipped, frame appeared on track %d as if by magic !\n",
+                            step->track);
               step->state = STEP_STATE_SKIPPED;
               continue;
             }
@@ -1935,19 +1938,17 @@ static void run_plan(exec_plan_t *plan) {
           else layer = NULL;
           if (!layer) {
             step->state = STEP_STATE_ERROR;
-            error = 1;
+            error = 5;
             break;
           }
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_INVALID) {
-            error = 2;
+          if (!weed_layer_check_valid(layer)) {
+            error = 6;
             step->state = STEP_STATE_ERROR;
             //weed_layer_unref(layer);
             break;
           }
-          if (prefs->dev_show_timing)
-            d_print_debug("step %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n", step_count,
-                          step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
+          d_print_debug("step %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n", step_count,
+                        step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
           step->tdata->real_start = xtime;
           step->state = STEP_STATE_RUNNING;
           plan->nsteps_running++;
@@ -1961,9 +1962,8 @@ static void run_plan(exec_plan_t *plan) {
         case STEP_TYPE_CONVERT: {
           layer = plan->layers[step->track];
           if (!layer) continue;
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_INVALID) {
-            error = 2;
+          if (!weed_layer_check_valid(layer)) {
+            error = 7;
             step->state = STEP_STATE_ERROR;
             break;
           }
@@ -2115,7 +2115,6 @@ static void run_plan(exec_plan_t *plan) {
             lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
           }
 
-          d_print_debug("\n");
           SET_LPT_VALUE(lpt, int, "interp", get_interp_value(prefs->pb_quality, TRUE));
 
           step->proc_thread = lpt;
@@ -2136,16 +2135,14 @@ static void run_plan(exec_plan_t *plan) {
 
         case STEP_TYPE_APPLY_INST: {
           if (!step->target) {
-            if (prefs->dev_show_timing)
-              d_print_debug("ttep %d: Output to sink ready @ %.2f msec\n", step_count, xtime * 1000.);
+            d_print_debug("step %d: Output to sink ready @ %.2f msec\n", step_count, xtime * 1000.);
             step->state = STEP_STATE_FINISHED;
             break;
           }
           step->tdata->real_start = xtime;
           if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
-            if (prefs->dev_show_timing)
-              d_print_debug("step %d: RUN APPLY_INST @ %.2f msec, pd i %p\n",
-                            step_count, xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
+            d_print_debug("step %d: RUN APPLY_INST @ %.2f msec, pd i %p\n",
+                          step_count, xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
             step->proc_thread =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                        run_apply_inst_step, WEED_SEED_INT, "v", step);
@@ -2175,14 +2172,12 @@ static void run_plan(exec_plan_t *plan) {
           layer = plan->layers[step->track];
           if (!layer) {
             step->state = STEP_STATE_ERROR;
-            error = 1;
+            error = 8;
             plan->nsteps_running--;
             xtime = lives_get_session_time();
-            if (prefs->dev_show_timing) {
-              d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                            step->tdata->real_duration);
-              d_print_debug("layer disappeared !\n");
-            }
+            d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+                          step->tdata->real_duration);
+            d_print_debug("layer disappeared !\n");
             if (!plan->nsteps_running) {
               plan->tdata->waiting_time -= xtime;
               if (!got_act_st) plan->tdata->active_pl_time += xtime;
@@ -2190,19 +2185,16 @@ static void run_plan(exec_plan_t *plan) {
               plan->tdata->concurrent_time += xtime;
             break;
           }
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_INVALID) {
-            error = 2;
+          if (!weed_layer_check_valid(layer)) {
+            error = 9;
             step->state = STEP_STATE_ERROR;
 
             //weed_layer_unref(layer);
             plan->nsteps_running--;
             xtime = lives_get_session_time();
-            if (prefs->dev_show_timing) {
-              d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                            step->tdata->real_duration);
-              d_print_debug("layer invalid !\n");
-            }
+            d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+                          step->tdata->real_duration);
+            d_print_debug("layer invalid !\n");
             if (!plan->nsteps_running) {
               plan->tdata->waiting_time -= xtime;
               if (!got_act_st) plan->tdata->active_pl_time += xtime;
@@ -2211,6 +2203,7 @@ static void run_plan(exec_plan_t *plan) {
             break;
           }
           lpt = lives_layer_get_procthread(layer);
+          lstatus = lives_layer_get_status(layer);
           if (lstatus == LAYER_STATUS_LOADING) {
             if (lpt) {
               if (error || cancelled) {
@@ -2248,11 +2241,9 @@ static void run_plan(exec_plan_t *plan) {
                   //weed_layer_unref(layer);
                   plan->nsteps_running--;
                   xtime = lives_get_session_time();
-                  if (prefs->dev_show_timing) {
-                    d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                                  step->tdata->real_duration);
-                    d_print_debug("plan cancelled !\n");
-                  }
+                  d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+                                step->tdata->real_duration);
+                  d_print_debug("plan cancelled !\n");
                   if (!plan->nsteps_running) {
                     plan->tdata->waiting_time -= xtime;
                     if (!got_act_st) plan->tdata->active_pl_time += xtime;
@@ -2281,6 +2272,7 @@ static void run_plan(exec_plan_t *plan) {
               }
             }
           }
+          lstatus = lives_layer_get_status(layer);
           if (lstatus == LAYER_STATUS_LOADED || lstatus == LAYER_STATUS_READY) {
             xtime = lives_get_session_time();
             step->tdata->real_end = xtime;
@@ -2290,9 +2282,8 @@ static void run_plan(exec_plan_t *plan) {
 
             if (!weed_layer_get_width(layer) || !weed_layer_get_height(layer)) break_me("size 0 layer");
 
-            if (prefs->dev_show_timing)
-              d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                            step->tdata->real_duration);
+            d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+                          step->tdata->real_duration);
             if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
               weed_instance_t *inst =
                 weed_instance_obtain(step->target_idx, rte_key_getmode(step->target_idx));
@@ -2321,14 +2312,12 @@ static void run_plan(exec_plan_t *plan) {
           double gstart;
           layer = plan->layers[step->track];
           if (!layer) {
-            if (prefs->dev_show_timing) {
-              d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                            step->tdata->real_end * 1000., step->tdata->real_duration);
-              d_print_debug("Something happened to layer !\n");
-            }
+            d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+                          step->tdata->real_end * 1000., step->tdata->real_duration);
+            d_print_debug("Something happened to layer !\n");
 
             step->state = STEP_STATE_ERROR;
-            error = 1;
+            error = 10;
             plan->nsteps_running--;
             xtime = lives_get_session_time();
             if (!plan->nsteps_running) {
@@ -2338,16 +2327,13 @@ static void run_plan(exec_plan_t *plan) {
               plan->tdata->concurrent_time += xtime;
             break;
           }
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_INVALID) {
+          if (!weed_layer_check_valid(layer)) {
             if (!cancelled && !error) {
-              if (prefs->dev_show_timing) {
-                d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                              step->tdata->real_end * 1000., step->tdata->real_duration);
-                d_print_debug("Layer became invalid !\n");
-              }
+              d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+                            step->tdata->real_end * 1000., step->tdata->real_duration);
+              d_print_debug("Layer became invalid !\n");
 
-              error = 2;
+              error = 11;
               step->state = STEP_STATE_ERROR;
               //weed_layer_unref(layer);
               plan->nsteps_running--;
@@ -2366,17 +2352,14 @@ static void run_plan(exec_plan_t *plan) {
               d_print_debug("step convert encountered an ERROR: %s\n",
                             step->errmsg ? step->errmsg : "unspecified error");
               if (layer) weed_layer_set_invalid(layer, TRUE);
-              error = 10;
+              error = 12;
             } else if (step->state == STEP_STATE_CANCELLED) {
               if (layer) weed_layer_set_invalid(layer, TRUE);
             } else {
-              if (prefs->dev_show_timing) {
-                d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                              step->tdata->real_end * 1000., step->tdata->real_duration);
-                d_print_debug("EST DURATION %f vs real duration %f\n", step->tdata->est_duration  * 1000.,
-                              step->tdata->real_duration);
-              }
-
+              d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+                            step->tdata->real_end * 1000., step->tdata->real_duration);
+              d_print_debug("EST DURATION %f vs real duration %f\n", step->tdata->est_duration  * 1000.,
+                            step->tdata->real_duration);
               if (weed_layer_check_valid(layer)) {
                 if (!(step->flags & STEP_FLAG_NO_READY_STAT))
                   lives_layer_set_status(layer, LAYER_STATUS_READY);
@@ -2410,14 +2393,13 @@ static void run_plan(exec_plan_t *plan) {
             if (step->state == STEP_STATE_ERROR) {
               d_print_debug("step appl inst encountered an ERROR: %s\n",
                             step->errmsg ? step->errmsg : "unspecified error");
-              error = 11;
+              error = 13;
             } else if (step->state == STEP_STATE_CANCELLED) {
               d_print_debug("step cancelled\n");
             } else {
               lives_filter_error_t filter_error;
-              if (prefs->dev_show_timing)
-                d_print_debug("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
-                              step->tdata->real_duration);
+              d_print_debug("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
+                            step->tdata->real_duration);
 
               // filter_errors include:
               /* FILTER_ERROR_INVALID_PLUGIN; */
@@ -2451,16 +2433,16 @@ static void run_plan(exec_plan_t *plan) {
 
     if (plan->state == PLAN_STATE_RESUMING && can_resume) {
       xtime = lives_get_session_time();
-      plan->state = PLAN_STATE_RUNNING;
+      SET_PLAN_STATE(RUNNING);
       plan->tdata->paused_time += xtime;
     }
 
     if (complete && paused) {
       xtime = lives_get_session_time();
       plan->tdata->paused_time -= xtime;
-      plan->state = PLAN_STATE_PAUSED;
+      SET_PLAN_STATE(PAUSED);
       lives_proc_thread_pause(self);
-      plan->state = PLAN_STATE_RESUMING;
+      SET_PLAN_STATE(RESUMING);
       complete = FALSE;
       paused = FALSE;
     }
@@ -2489,7 +2471,7 @@ static void run_plan(exec_plan_t *plan) {
         else {
           lock_layer_status(layer);
           if (_lives_layer_get_status(layer) != LAYER_STATUS_READY) {
-            _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+            _weed_layer_set_invalid(layer, TRUE);
           }
           unlock_layer_status(layer);
         }
@@ -2500,18 +2482,17 @@ static void run_plan(exec_plan_t *plan) {
   }
 
   if (cancelled) {
-    if (prefs->dev_show_timing)
-      d_print_debug("Cancel plan requested\n");
-    plan->state = PLAN_STATE_CANCELLED;
-    if (prefs->dev_show_timing)
-      d_print_debug("Cancelling plan @ %.2f\n", xtime * 1000.);
+    d_print_debug("Cancel plan requested\n");
+    SET_PLAN_STATE(CANCELLED);
+    d_print_debug("Cancelling plan @ %.2f\n", xtime * 1000.);
   } else if (error) {
-    plan->state = PLAN_STATE_ERROR;
+    SET_PLAN_STATE(ERROR);
+    g_print("PLAN error %d\n", error);
     lives_proc_thread_error(self, error, LPT_ERR_MAJOR, "%s", "plan error");
   } else {
     if (lives_proc_thread_get_cancel_requested(self)) {
       d_print_debug("Cancel requested, ignoring as we are done anyway !\n");
-      plan->state = PLAN_STATE_CANCELLED;
+      SET_PLAN_STATE(CANCELLED);
     }
   }
 
@@ -2564,23 +2545,22 @@ static void run_plan(exec_plan_t *plan) {
     d_print_debug("ann error is %f msec after %d generations\n", errval, glob_timing->ann->generations);
     glob_timing->tot_duration += plan->tdata->real_duration;
 
-    if (prefs->dev_show_timing)
-      d_print_debug("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%+.4f), average is %.4f\n"
-                    "sequential time %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n"
-                    "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
-                    "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f, "
-                    "waiting time = %.4f (%.2f %%)\n",
-                    1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
-                    1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
-                    1000. * glob_timing->tot_duration / (double)plan->iteration,
-                    plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
-                    1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.,
-                    1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
-                    plan->tdata->active_pl_time / plan->tdata->preload_time * 100.,
-                    1000. * plan->tdata->queued_time, plan->tdata->queued_time / plan->tdata->real_duration * 100.,
-                    1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
-                    1000. * plan->tdata->paused_time, 1000. * plan->tdata->waiting_time,
-                    plan->tdata->waiting_time / plan->tdata->real_duration * 100.);
+    d_print_debug("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%+.4f), average is %.4f\n"
+                  "sequential time %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n"
+                  "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
+                  "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f, "
+                  "waiting time = %.4f (%.2f %%)\n",
+                  1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
+                  1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
+                  1000. * glob_timing->tot_duration / (double)plan->iteration,
+                  plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
+                  1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.,
+                  1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
+                  plan->tdata->active_pl_time / plan->tdata->preload_time * 100.,
+                  1000. * plan->tdata->queued_time, plan->tdata->queued_time / plan->tdata->real_duration * 100.,
+                  1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
+                  1000. * plan->tdata->paused_time, 1000. * plan->tdata->waiting_time,
+                  plan->tdata->waiting_time / plan->tdata->real_duration * 100.);
 
     char *bps = NULL, *gbps = NULL;
 
@@ -2602,7 +2582,7 @@ static void run_plan(exec_plan_t *plan) {
         else {
           // after training the cost predictor once, we should rebeuild the model with updated values
           // we create new mainw->nodemodel, mainw->exec_plan
-          mainw->plan_cycle->state = PLAN_STATE_RESETTING;
+          SET_PLAN_STATE(RESETTING);
 
           if (mainw->exec_plan) exec_plan_free(mainw->exec_plan);
           mainw->exec_plan = NULL;
@@ -2627,8 +2607,9 @@ static void run_plan(exec_plan_t *plan) {
         }
       }
     }
-    plan->state = PLAN_STATE_COMPLETE;
+    SET_PLAN_STATE(COMPLETE);
   }
+  //MSGMODE_OFF(DEBUG);
 
   ____FUNC_EXIT____;
 
@@ -2707,15 +2688,13 @@ void plan_cycle_trigger(exec_plan_t *plan) {
 
 
 static boolean runner_cancelled_cb(void *lptp, void *planp) {
-  exec_plan_t *pcyc = (exec_plan_t *)planp;
-  if (pcyc) {
+  exec_plan_t *plan = (exec_plan_t *)planp;
+  if (plan) {
     double xtime = lives_get_session_time();
-    if (prefs->dev_show_timing) {
-      d_print_debug("plan cancelled @ %.2f msec\n", xtime * 1000.);
-      if (pcyc->state == PLAN_STATE_WAITING)
-        d_print_debug("(plan cancelled before running)\n");
-    }
-    pcyc->state = PLAN_STATE_CANCELLED;
+    d_print_debug("plan cancelled @ %.2f msec\n", xtime * 1000.);
+    if (plan->state == PLAN_STATE_WAITING)
+      d_print_debug("(plan cancelled before running)\n");
+    SET_PLAN_STATE(CANCELLED);
   }
   return FALSE;
 }
@@ -2737,7 +2716,7 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
 
     lives_proc_thread_set_cancellable(lpt);
     lives_proc_thread_set_pauseable(lpt, TRUE);
-    plan->state = PLAN_STATE_QUEUED;
+    SET_PLAN_STATE(QUEUED);
     plan->tdata->exec_time = lives_get_session_time();
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
   } else run_plan(plan);
@@ -3331,7 +3310,7 @@ void display_plan(exec_plan_t *plan) {
     d_print_debug("\n\n");
   }
   d_print_debug("END\n");
-  print_diagnostics(DIAG_ALL);
+  //print_diagnostics(DIAG_ALL);
 }
 
 
@@ -3570,6 +3549,10 @@ node_chain_t *nchain;
 inst_node_t *n, *retn = NULL;
 boolean *used;
 
+MSGMODE_ON(DEBUG);
+
+d_print_debug("%s @ %s\n", "align start", lives_format_timing_string(lives_get_session_time() - ztime));
+
 // used: // some tracks may be in clip_index, but they never actually connect to anything else
 // in this case we can set the clip_index val to -1, and this will umap the clip_src in the track_sources
 used = (boolean *)lives_calloc(nodemodel->ntracks, sizeof(boolean));
@@ -3628,6 +3611,8 @@ do {
 } while (retn);
 
 reset_model(nodemodel);
+d_print_debug("%s @ %s\n", "align end", lives_format_timing_string(lives_get_session_time() - ztime));
+MSGMODE_ON(DEBUG);
 }
 
 
@@ -4914,14 +4899,14 @@ return TRUE;
 }
 
 
-static LiVESList *_add_sorted_cdeltas(LiVESList * cdeltas, int out_pal, int in_pal,
-                                    double * costs,  int sort_by, boolean replace,
-                                    int out_gamma_type, int in_gamma_type) {
+static LiVESList *_add_cdeltas(LiVESList * cdeltas, int out_pal, int in_pal,
+                             double * costs,  int sort_by, boolean replace,
+                             int out_gamma_type, int in_gamma_type) {
 // update cdeltas for an input
 // if replace is set we find an old entry to remove and re-add
 // sort_by is the cost type to order the cdeltas
 
-LiVESList *list = NULL, *listend = NULL;
+LiVESList *list = NULL;
 cost_delta_t *cdelta = NULL;
 
 if (cdeltas) list = cdeltas;
@@ -4949,27 +4934,13 @@ if (!cdelta) cdelta = (cost_delta_t *)lives_calloc(1, sizeof(cost_delta_t));
 cdelta->out_pal = out_pal;
 cdelta->in_pal = in_pal;
 
-for (int i = 0; i < N_COST_TYPES; i++) {
-  cdelta->deltas[i] = costs[i];
-}
+lives_memcpy(cdelta->deltas, costs, N_COST_TYPES * sizdbl);
 
 cdelta->out_gamma_type = out_gamma_type;
 cdelta->in_gamma_type = in_gamma_type;
 
-if (!cdeltas) cdeltas = lives_list_append(cdeltas, (void *)cdelta);
-else {
-  for (list = cdeltas; list; list = list->next) {
-    cost_delta_t *xcdelta = (cost_delta_t *)list->data;
-    if (xcdelta->deltas[sort_by] > cdelta->deltas[sort_by]) {
-      list = lives_list_prepend(list, (void *)cdelta);
-      if (cdeltas == list->next) cdeltas = list;
-      break;
-    }
-    listend = list;
-  }
+cdeltas = lives_list_prepend(cdeltas, (void *)cdelta);
 
-  if (!list) listend = lives_list_append(listend, (void *)cdelta);
-}
 return cdeltas;
 }
 
@@ -5044,7 +5015,7 @@ int i, j, k, ni, no;
 /* 	} */
 /* 	costs[COST_TYPE_QLOSS_P] = gcost; */
 /* 	costs[COST_TYPE_COMBINED] = factors[COST_TYPE_QLOSS_P] * gcost; */
-/* 	out->cdeltas = _add_sorted_cdeltas(out->cdeltas, WEED_PALETTE_NONE, j, costs, */
+/* 	out->cdeltas = _add_cdeltas(out->cdeltas, WEED_PALETTE_NONE, j, costs, */
 /* 					   COST_TYPE_COMBINED, FALSE, n->gamma_type, n->gamma_type); */
 
 /*     } */
@@ -5134,11 +5105,11 @@ for (j = 0; j < n_allpals; j++) {
   for (no = 0; no < n->n_outputs; no++) {
     output_node_t *out = n->outputs[no];
     if (ghost)
-      out->cdeltas = _add_sorted_cdeltas(out->cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
-                                         n->gamma_type, n->gamma_type);
+      out->cdeltas = _add_cdeltas(out->cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
+                                  n->gamma_type, n->gamma_type);
     else
-      out->true_cdeltas = _add_sorted_cdeltas(out->true_cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
-                                              n->gamma_type, n->gamma_type);
+      out->true_cdeltas = _add_cdeltas(out->true_cdeltas, WEED_PALETTE_NONE, j, costs, COST_TYPE_COMBINED, FALSE,
+                                       n->gamma_type, n->gamma_type);
   }
 }
 lives_free(costs);
@@ -5301,11 +5272,11 @@ for (int i = 0; i < npals; i++) {
         clone_added = TRUE;
       }
       if (ghost)
-        xin->cdeltas = _add_sorted_cdeltas(xin->cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
-                                           igamma_type);
+        xin->cdeltas = _add_cdeltas(xin->cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                    igamma_type);
       else
-        xin->true_cdeltas = _add_sorted_cdeltas(xin->true_cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
-                                                igamma_type);
+        xin->true_cdeltas = _add_cdeltas(xin->true_cdeltas, j, i, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                         igamma_type);
 
     }
   }
@@ -5315,19 +5286,15 @@ for (int i = 0; i < npals; i++) {
   // add to cdeltas for input, sorted by increasing ccost
 
   if (ghost)
-    in->cdeltas = _add_sorted_cdeltas(in->cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
-                                      igamma_type);
+    in->cdeltas = _add_cdeltas(in->cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                               igamma_type);
   else
-    in->true_cdeltas = _add_sorted_cdeltas(in->true_cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
-                                           igamma_type);
+    in->true_cdeltas = _add_cdeltas(in->true_cdeltas, i, j, costs, COST_TYPE_COMBINED, FALSE, out_gamma_type,
+                                    igamma_type);
   //d_print_debug("ADD2 cdeltas for %d to %d\n", i, j);
 }
 
 lives_free(costs);
-if (flags & _FLG_ORD_DESC) {
-  if (ghost) in->cdeltas = lives_list_reverse(in->cdeltas);
-  else in->true_cdeltas = lives_list_reverse(in->true_cdeltas);
-}
 }
 
 
@@ -5425,51 +5392,6 @@ for (ni = 0; ni < n->n_inputs; ni++) {
 }
 
 
-static LiVESList *add_sorted_tuple(LiVESList * priolist, cost_tuple_t *tup, int ord_type) {
-LiVESList *lastl = NULL, *list;
-double mycost = tup->tot_cost[ord_type];
-for (list = priolist; list; list = list->next) {
-  cost_tuple_t *xtup = (cost_tuple_t *)list->data;
-  if (xtup->tot_cost[ord_type] > mycost) {
-    priolist = lives_list_prepend(list, (void *)tup);
-    break;
-  }
-  lastl = list;
-}
-if (!list) priolist = lives_list_append(lastl, (void *)tup);
-
-return priolist;
-}
-
-
-static cost_tuple_t *best_tuple_for(LiVESList * priolist, inst_node_t *n, int cost_type) {
-cost_tuple_t *mintup = NULL;
-double minval = 0;
-for (LiVESList *list = priolist; list; list = list->next) {
-  cost_tuple_t *xtup = (cost_tuple_t *)list->data;
-
-  // we may have some out / in palettes fixed. If so we need to check the values in the tuple for the corresponding
-  // cost_type and reject it
-  conversion_t *palconv = xtup->palconv;
-  for (int ni = 0; ni < n->n_inputs; ni++) {
-    if (n->inputs[ni]->best_out_pal[cost_type] != WEED_PALETTE_NONE
-        && n->inputs[ni]->best_out_pal[cost_type] != WEED_PALETTE_ANY
-        && palconv[ni].out_pal != n->inputs[ni]->best_out_pal[cost_type]) continue;
-
-    if (n->inputs[ni]->best_in_pal[cost_type] != WEED_PALETTE_NONE
-        && n->inputs[ni]->best_in_pal[cost_type] != WEED_PALETTE_ANY
-        && palconv[ni].in_pal != n->inputs[ni]->best_in_pal[cost_type]) continue;
-
-    if (!mintup || xtup->tot_cost[cost_type] < minval) {
-      minval = xtup->tot_cost[cost_type];
-      mintup = xtup;
-    }
-  }
-}
-return mintup;
-}
-
-
 static void free_tuple(cost_tuple_t *tup) {
 if (tup) {
   if (tup->palconv) lives_free(tup->palconv);
@@ -5477,11 +5399,15 @@ if (tup) {
 }
 }
 
-
-static void free_priolist(LiVESList * plist) {
-for (LiVESList *list = plist; list; list = list->next)
-  free_tuple((cost_tuple_t *)list->data);
-lives_list_free(plist);
+static cost_tuple_t *copy_tuple(cost_tuple_t *tup, int nins) {
+cost_tuple_t *newtup = NULL;
+if (tup) {
+  newtup = (cost_tuple_t *)lives_calloc(1, sizeof(cost_tuple_t));
+  lives_memcpy(newtup, tup, sizeof(cost_tuple_t));
+  newtup->palconv = (conversion_t *)lives_calloc(nins, sizeof(conversion_t));
+  lives_memcpy(newtup->palconv, tup->palconv, nins * sizeof(conversion_t));
+}
+return newtup;
 }
 
 
@@ -5569,13 +5495,13 @@ oabs_costs = (double **)lives_calloc(n->n_inputs, sizeof(double *));
 tup->palconv = (conversion_t *)lives_calloc(n->n_inputs, sizeof(conversion_t));
 
 tup->node = n;
+lives_memcpy(tup->palconv, conv, n->n_inputs * sizeof(conversion_t));
+
 for (int ni = 0; ni < n->n_inputs; ni++) {
   int ipal, opal;
   input_node_t *in = n->inputs[ni];
   inst_node_t *p;
   if (in->flags & NODEFLAGS_IO_SKIP) continue;
-
-  lives_memcpy(&tup->palconv[ni], &conv[ni], sizeof(conversion_t));
 
   opal = conv[ni].out_pal;
   ipal = conv[ni].in_pal;
@@ -5596,7 +5522,7 @@ return tup;
 }
 
 
-static LiVESList *backtrack(inst_node_t *n, int ni, double * factors) {
+static cost_tuple_t **backtrack(inst_node_t *n, int ni, double * factors) {
 // function is called recursively - first time with ni == 0
 // then from within the function we increment ni and call it again recursively
 // after going through all inputs, we produce an ouptut tuple and return one level
@@ -5616,31 +5542,36 @@ static LiVESList *backtrack(inst_node_t *n, int ni, double * factors) {
 // soulitions, and in addition there will be an optimisation stage where we may consider combinations other than the
 // minimal for a particular node, hence this is done once only.
 
-static int common = WEED_PALETTE_NONE;
-static conversion_t *conv = NULL;
-static LiVESList *priolist = NULL;
-static int depth;
+static cost_tuple_t **best_tuples;
+static conversion_t *conv;
+static double mincost[N_COST_TYPES];
+static int k;
 
 conversion_t *myconv;
 inst_node_t *p;
-input_node_t *in;
+input_node_t *in, *xin;
 output_node_t *out;
-int npals, *pals, onpals, *opals;
+int npals, *pals, onpals, *opals, i, xni;
 
 if (!n->n_inputs) return NULL;
 
-if (!conv) {
+if (!ni) {
   // reset first time this is called
-  depth = 0;
-  priolist = NULL;
   conv = (conversion_t *)lives_calloc(n->n_inputs, sizeof(conversion_t));
+  best_tuples = (cost_tuple_t **)lives_calloc(N_COST_TYPES, sizeof(cost_tuple_t));
+  for (i = 0; i < N_COST_TYPES; i++) mincost[i] = -1.;
 }
 
 if (ni >= n->n_inputs) {
   // we set values for all inputs, now we produce the tuple from the set of combinations
   cost_tuple_t *tup = make_tuple(n, conv, factors);
-  priolist = add_sorted_tuple(priolist, tup, COST_TYPE_COMBINED);
-  return priolist;
+  if (mincost[k] == -1. || tup->tot_cost[k] < mincost[k]) {
+    mincost[k] = tup->tot_cost[k];
+    if (best_tuples[k]) free_tuple(best_tuples[k]);
+    best_tuples[k] = copy_tuple(tup, n->n_inputs);
+  }
+  free_tuple(tup);
+  return NULL;
 }
 
 // this is done for each input n->inputs[ni]
@@ -5663,65 +5594,69 @@ myconv->lb_height = in->inner_height;
 myconv->out_gamma = p->gamma_type;
 myconv->in_gamma = n->gamma_type;
 
-if (out->npals) {
-  // if out palettes can vary, the palette is usually set by the host
-  // or by the filter, however we can still calculate it
-  onpals = out->npals;
-  opals = out->pals;
-} else {
-  onpals = p->npals;
-  opals = p->pals;
+for (xni = ni + 1; xni < n->n_inputs; xni++) {
+  xin = n->inputs[xni];
+  if (!(xin->flags & (NODEFLAGS_IO_SKIP | NODEFLAG_IO_CLONE))) break;
 }
 
-if (in->npals) {
-  npals = in->npals;
-  pals = in->pals;
-} else {
-  npals = n->npals;
-  pals = n->pals;
-}
-
-for (int j = 0; j < npals; j++) {
-  int pstart = 0, pend = onpals;
-  if (!ni) common = WEED_PALETTE_NONE;
-
-  if (!in->npals) {
-    if (common == WEED_PALETTE_NONE) common = j;
-    else j = npals = common;
-  }
-
-  for (ni++; ni < n->n_inputs; ni++) {
-    in = n->inputs[ni];
-    if (!(in->flags & (NODEFLAGS_IO_SKIP | NODEFLAG_IO_CLONE))) break;
-  }
-
-  myconv->in_pal = pals[j];
-
-  // test first, if we have an out / in palette in common
-  // this will always be the min cost
-  for (int i = 0; i < onpals; i++) {
-    if (opals[i] == pals[j]) {
-      pstart = i;
-      pend = i + 1;
-      break;
+for (k = 0; k < N_COST_TYPES; k++) {
+  if (out->npals) {
+    // if out palettes can vary, the palette is usually set by the host
+    // or by the filter, however we can still calculate it
+    onpals = out->npals;
+    opals = out->pals;
+  } else {
+    if (p->best_pal_up[k] == WEED_PALETTE_ANY ||
+        p->best_pal_up[k] == WEED_PALETTE_NONE) {
+      onpals = p->npals;
+      opals = p->pals;
+    } else {
+      onpals = 1;
+      opals = &p->pals[p->best_pal_up[k]];
     }
   }
 
-  for (int i = pstart; i < pend; i++) {
-    myconv->out_pal = opals[i];
-    if (myconv->in_pal == 0 || myconv->out_pal == 0) abort();
-    depth++;
-    priolist = backtrack(n, ni, factors);
-    depth--;
-    // TODO - test with in_gamma / out_gamma combos
+  if (in->npals) {
+    npals = in->npals;
+    pals = in->pals;
+  } else {
+    npals = 1;
+    pals = &n->pals[in->best_in_pal[k]];
+  }
+
+  for (int j = 0; j < npals; j++) {
+    int pstart = 0, pend = onpals;
+
+    myconv->in_pal = pals[j];
+
+    // test first, if we have an out / in palette in common
+    // this will always be the min cost
+    for (int i = 0; i < onpals; i++) {
+      if (opals[i] == pals[j]) {
+        pstart = i;
+        pend = i + 1;
+        break;
+      }
+    }
+
+    for (int i = pstart; i < pend; i++) {
+      myconv->out_pal = opals[i];
+      if (myconv->in_pal == WEED_PALETTE_NONE || myconv->out_pal == WEED_PALETTE_NONE) {
+        g_print("in pal for %d  %d  %d is %d, out pal i %d\n", ni, i, j, myconv->in_pal, myconv->out_pal);
+        lives_abort("Bad tuple palette");
+      }
+      backtrack(n, xni, factors);
+      // TODO - test with in_gamma / out_gamma combos
+    }
   }
 }
+if (!ni) lives_free(conv);
 
-if (!depth) {
-  lives_free(conv);
-  conv = NULL;
+return best_tuples;
 }
-return priolist;
+
+LIVES_LOCAL_INLINE cost_tuple_t **best_tuples(inst_node_t *n, double * factors) {
+return backtrack(n, 0, factors);
 }
 
 
@@ -5936,8 +5871,8 @@ if (oper > 0) {
           if (qloss_s) {
             double *costs = (double *)lives_calloc(N_COST_TYPES, sizdbl);
             costs[COST_TYPE_QLOSS_S] = qloss_s;
-            in->cdeltas = _add_sorted_cdeltas(in->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
-                                              costs, COST_TYPE_QLOSS_S, FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+            in->cdeltas = _add_cdeltas(in->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
+                                       costs, COST_TYPE_QLOSS_S, FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
             lives_free(costs);
             xmaxqls -= qloss_s;
           }
@@ -5951,9 +5886,9 @@ if (oper > 0) {
           // so we can find max for all outputs
           double *costs = (double *)lives_calloc(N_COST_TYPES, sizdbl);
           costs[COST_TYPE_QLOSS_S] = xmaxqls;
-          out->cdeltas = _add_sorted_cdeltas(out->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
-                                             costs, COST_TYPE_QLOSS_S,
-                                             FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
+          out->cdeltas = _add_cdeltas(out->cdeltas, WEED_PALETTE_NONE, WEED_PALETTE_NONE,
+                                      costs, COST_TYPE_QLOSS_S,
+                                      FALSE, WEED_GAMMA_UNKNOWN, WEED_GAMMA_UNKNOWN);
           lives_free(costs);
         }
       }
@@ -6011,7 +5946,6 @@ else {
     }
   } else {
     // has inputs
-    LiVESList *prio_list = backtrack(n, 0, factors);
     boolean is_converter = FALSE;
     if (n->flags & NODESRC_IS_CONVERTER) is_converter = TRUE;
 
@@ -6036,14 +5970,24 @@ else {
         //else
         in->best_out_pal[k] = WEED_PALETTE_NONE;
       }
-    }
 
-    // ....has inputs...
-    for (k = 0; k < N_COST_TYPES; k++) {
       // find a tuple with min cost for each type
       // given the limitations of best_in_pal[k], best_out_pal[k] already set
-      cost_tuple_t *tup = best_tuple_for(prio_list, n, k);
+
+      // for the given cost type, we want to find the best combination of in / out palettes
+      // for nodes with non variable palettes, all inputs have the same in palette
+      // this is out n->best_pal_up set from the node below
+      // for other types, one or more inputs can have its own palette list
+      // then for each node inputting, the same rule occurs, if it doe not have varaible out palettes
+      // then whichever node connects first can set its output palette; the vast majority of node are expected to have
+      // just one output, but we can optimise later
+      // if an output has variable palettes then we can optmise separately for each output
+    }
+
+    cost_tuple_t **tups = best_tuples(n, factors);
+    for (k = 0; k < N_COST_TYPES; k++) {
       //d_print_debug("got best tup %p for ct %d\n", tup, k);
+      cost_tuple_t *tup = tups[k];
       for (ni = 0; ni < n->n_inputs; ni++) {
         in = n->inputs[ni];
         if (in->flags & (NODEFLAGS_IO_SKIP | NODEFLAG_IO_CLONE)) continue;
@@ -6051,14 +5995,16 @@ else {
           in->best_in_pal[k] = tup->palconv[ni].in_pal;
         if (in->best_out_pal[k] == WEED_PALETTE_NONE)
           in->best_out_pal[k] = tup->palconv[ni].out_pal;
-
+        p = in->node;
+        if (p->best_pal_up[k] == WEED_PALETTE_NONE) {
+          p->best_pal_up[k] = tup->palconv[ni].out_pal;
+          if (k == COST_TYPE_COMBINED) p->optimal_pal = p->best_pal_up[k];
+        }
         if (k == COST_TYPE_COMBINED && in->npals) in->optimal_pal = in->best_in_pal[k];
       }
+      free_tuple(tup);
     }
-    if (prio_list) {
-      //d_print_debug("free priolis\n");
-      free_priolist(prio_list);
-    }
+    if (tups) lives_free(tups);
     // endif - has inputs
   }
   for (ni = 0; ni < n->n_inputs; ni++) {
@@ -6193,7 +6139,11 @@ if (do_what < 5 && n->n_inputs) {
     if (do_what == 0) {
       // calculate min costs for each pal / cost_type
       lives_nodemodel_t *nodemodel = (lives_nodemodel_t *)data;
-      if (n->n_inputs) compute_all_costs(nodemodel, n, COST_TYPE_COMBINED, factors, flags);
+      if (n->n_inputs) {
+        d_print_debug("%s @ %s\n", "CAC begin", lives_format_timing_string(lives_get_session_time() - ztime));
+        compute_all_costs(nodemodel, n, COST_TYPE_COMBINED, factors, flags);
+        d_print_debug("%s @ %s\n", "CAC end", lives_format_timing_string(lives_get_session_time() - ztime));
+      }
     } else if (do_what == 1) {
       // set init sizes
       lives_nodemodel_t *nodemodel = (lives_nodemodel_t *)data;
@@ -7062,6 +7012,7 @@ for (list = nodemodel->node_chains; list; list = list->next) {
 }
 
 reset_model(nodemodel);
+d_print_debug("%s @ %s\n", "pass 3 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
 // then we have all size costs set up, and the next wave is descending
 // we will calculate remaining costs going down the branches (edges) of the tree. We would like to
@@ -7121,6 +7072,7 @@ do {
   /*   } */
   /* } */
   /* last_ccost = ccost; */
+  d_print_debug("%s @ %s\n", "pass 4 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 } while (has_change);
 
 flags &= ~_FLG_GHOST_COSTS;
@@ -7135,6 +7087,7 @@ do {
 } while (retn);
 
 reset_model(nodemodel);
+d_print_debug("%s @ %s\n", "pass 5 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
 // we will do this in cycles - first we do not have any absolute timing values, but we just calulate using deltas.
 // this is then used to assign absolute times to the nodes, and the next cycle will use these absolute values
@@ -7160,6 +7113,7 @@ for (int cyc = 0; cyc < 4; cyc++) {
   }
 
   reset_model(nodemodel);
+  d_print_debug("%s @ %s\n", "pass 5.1 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
   if (prefs->dev_show_timing)
     d_print_debug("assign abs costs\n");
@@ -7200,10 +7154,10 @@ for (int cyc = 0; cyc < 4; cyc++) {
   } while (retn);
 
   reset_model(nodemodel);
+  d_print_debug("%s @ %s\n", "pass 5.2 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 }
 
 //// cyc loop done
-
 
 // ASCEND, TOTALING SLACK - here we ascend nodes and for each node with outputs we find min slack
 // over all outputs. This value is then added to outputs connected to the node inputs to give
@@ -7222,6 +7176,8 @@ for (list = nodemodel->node_chains; list; list = list->next) {
 }
 
 reset_model(nodemodel);
+
+d_print_debug("%s @ %s\n", "pass 6 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
 #ifdef OPTIM_MORE
 
@@ -7251,8 +7207,6 @@ LiVESList *list;
 node_chain_t *nchain;
 inst_node_t *n, *retn = NULL;
 
-reset_model(nodemodel);
-
 // pass 1 descending - set sizes for known objects
 d_print_debug("SET init node sizes\n");
 do {
@@ -7270,6 +7224,7 @@ if (prefs->dev_show_timing) {
   describe_chains(nodemodel);
   reset_model(nodemodel);
 }
+d_print_debug("%s @ %s\n", "pass 1 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
 // pass 2 ascending - set missing sizes
 d_print_debug("SET mising node sizes\n");
@@ -7284,11 +7239,13 @@ for (list = nodemodel->node_chains; list; list = list->next) {
 }
 
 reset_model(nodemodel);
+
 if (prefs->dev_show_timing) {
   // show model but with no costs yet
   describe_chains(nodemodel);
   reset_model(nodemodel);
 }
+d_print_debug("%s @ %s\n", "pass 2 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
 d_print_debug("all sizes set ! Ready for cost estimation\n");
 
@@ -7381,6 +7338,10 @@ ____FUNC_ENTRY____(build_nodemodel, "", "viv");
 
 if (!glob_timing) glob_timing_init();
 
+MSGMODE_ON(DEBUG);
+
+ztime = lives_get_session_time();
+
 if (pnodemodel) {
   lives_nodemodel_t *nodemodel;
 
@@ -7449,6 +7410,8 @@ if (pnodemodel) {
     reset_model(nodemodel);
   }
 
+  d_print_debug("%s @ %s\n", "made node model", lives_format_timing_string(lives_get_session_time() - ztime));
+
   // now we have all the details, we can calulate the costs for time and qloss
   // and then for combined costs. For each cost type, we find the sequence of palettes
   // which minimises the cost type. Mostly we are interested in the Combined Cost, but we will
@@ -7477,6 +7440,7 @@ if (pnodemodel) {
 
   reset_model(nodemodel);
 }
+MSGMODE_OFF(DEBUG);
 
 ____FUNC_EXIT____;
 }
@@ -7501,7 +7465,7 @@ if (mainw->layers) {
     if (mainw->layers[i]) {
       lock_layer_status(mainw->layers[i]);
       if (_lives_layer_get_status(mainw->layers[i]) != LAYER_STATUS_READY) {
-        _lives_layer_set_status(mainw->layers[i], LAYER_STATUS_INVALID);
+        _weed_layer_set_invalid(mainw->layers[i], TRUE);
       }
       unlock_layer_status(mainw->layers[i]);
     }
@@ -7536,12 +7500,12 @@ if (mainw->layers) {
   int maxl;
   if (*nodemodel) maxl = (*nodemodel)->ntracks;
   else maxl = mainw->num_tracks;
-  mainw->blend_layer = mainw->frame_layer = NULL;
+  mainw->frame_layer = NULL;
+  reset_old_frame_layer();
   for (int i = 0; i < maxl; i++) {
     if (mainw->layers[i]) {
       weed_layer_set_invalid(mainw->layers[i], TRUE);
-      //weed_layer_unref(mainw->layers[i]);
-      mainw->layers[i] = NULL;
+      weed_layer_unref(mainw->layers[i]);
     }
   }
   lives_free(mainw->layers);

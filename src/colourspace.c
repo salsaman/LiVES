@@ -11011,6 +11011,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   ____FUNC_ENTRY____(convert_layer_palette_full, "b", "viiiii");
 
   if (!layer || !weed_layer_get_pixel_data(layer)) {
+    abort();
     ____FUNC_EXIT_VAL____("b", FALSE);
     return FALSE;
   }
@@ -13599,7 +13600,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     return FALSE;
   }
-#define DEBUG_RESIZE
+  //#define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette, iclamping, 0), width, height,

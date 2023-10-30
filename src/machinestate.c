@@ -2593,8 +2593,8 @@ void get_monitors(boolean reset) {
 #if GTK_CHECK_VERSION(3, 4, 0)
         gdk_screen_get_monitor_workarea(screen, j, &(rect));
         mainw->mgeom[idx].width = rect.width;
-        mainw->mgeom[idx].height = rect.height;
 #endif
+	mainw->mgeom[idx].height = ((rect.height + 1) >> 1) << 1;
 #if LIVES_HAS_DEVICE_MANAGER
         // get (virtual) mouse device for this screen
         for (k = 0; k < lives_list_length(devlist); k++) {
@@ -2637,7 +2637,7 @@ void get_monitors(boolean reset) {
     mainw->mgeom[idx].scale = scale;
     gdk_monitor_get_workarea(moni, &(rect));
     mainw->mgeom[idx].width = rect.width;
-    mainw->mgeom[idx].height = rect.height;
+    mainw->mgeom[idx].height = ((rect.height + 1) >> 1) << 1;
     if (gdk_monitor_is_primary(moni)) {
       capable->primary_monitor = idx;
       mainw->mgeom[idx].primary = TRUE;

@@ -6,6 +6,7 @@
 
 #include "main.h"
 #include "interface.h"
+#include "htmsocket.h"
 
 static pthread_mutex_t dprint_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -52,7 +53,7 @@ char *_dump_messages(int start, int end) {
   int error;
 
   while (msg) {
-    msgtext = weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error);
+    msgtext = weed_get_const_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error);
     if (msgtext) {
       if (error != WEED_SUCCESS) break;
       if (msgno >= start) {
@@ -113,7 +114,7 @@ static weed_plant_t *make_msg(const char *text) {
     weed_plant_t *msg = lives_plant_new(LIVES_PLANT_MESSAGE);
     if (!msg) return NULL;
 
-    weed_set_string_value(msg, LIVES_LEAF_MESSAGE_STRING, text);
+    weed_set_const_string_value(msg, LIVES_LEAF_MESSAGE_STRING, text);
     //g_print("\n\ntext %d was %s\n", err, text);
     weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
     weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
@@ -203,17 +204,17 @@ static weed_error_t _add_message_to_list(const char *text, boolean is_top) {
     if (i == 0) {
       // append first line to text of last msg
       char *strg2;
-      const char *strg = weed_get_string_value(end, LIVES_LEAF_MESSAGE_STRING, &error);
+      const char *strg = weed_get_const_string_value(end, LIVES_LEAF_MESSAGE_STRING, &error);
       if (error != WEED_SUCCESS) {
         lives_strfreev(lines);
         return error;
       }
       strg2 = lives_strdup_printf("%s%s", strg, lines[0]);
       weed_leaf_delete(end, LIVES_LEAF_MESSAGE_STRING);
-      weed_set_string_value(end, LIVES_LEAF_MESSAGE_STRING, strg2);
+      weed_set_const_string_value(end, LIVES_LEAF_MESSAGE_STRING, strg2);
       /* g_print("GOT %s\n", */
       /*         weed_get_string_value(end, LIVES_LEAF_MESSAGE_STRING, NULL)); */
-      lives_free(strg2);
+      //lives_free(strg2);
       continue;
     }
 
@@ -280,18 +281,17 @@ lives_result_t add_message_first(const char *text) {
   MSGMODE_ON(STORE);
   MSGMODE_OFF(CACHE);
   _add_message_to_list(text, TRUE);
+  if (prefs->show_msg_area) MSGMODE_ON(DISPLAY);
   if (msgcache) {
     msgcache = lives_list_reverse(msgcache);
     for (LiVESList *list = msgcache; list; list = list->next) {
       if (list->data) {
         d_print((const char *)list->data);
-        lives_free(list->data);
       }
     }
     lives_list_free(msgcache);
     msgcache = NULL;
   }
-  if (prefs->show_msg_area) MSGMODE_ON(DISPLAY);
   return LIVES_RESULT_SUCCESS;
 }
 
@@ -337,15 +337,15 @@ boolean d_print_overlay(double timeout, const char *fmt, ...) {
   return FALSE;
 }
 
-
-static void cache_msg(const char *text)
+void cache_msg(const char *text)
 {if (text) msgcache = lives_list_prepend(msgcache, (void *)text);}
 
 
 #define DPRINT_SEP "==============================\n"
 
-static void d_print_inner(const char *text) {
-  if (!prefs || !prefs->msg_routing || MSGMODE_HAS(CACHE)) {
+static boolean d_print_inner(const char *text) {
+  boolean ret = TRUE;
+  if (MSGMODE_HAS(CACHE)) {
     cache_msg(text);
     if (!prefs || !prefs->msg_routing) {
       if (mainw && mainw->debug) {
@@ -353,11 +353,15 @@ static void d_print_inner(const char *text) {
         if (mainw->debug_log) log_msg(mainw->debug_log, text);
       }
     }
-    return;
   }
 
   if (MSGMODE_HAS(STDERR)) fprintf(stderr, "%s", text);
   if (MSGMODE_HAS(LOGFILE)) log_msg(mainw->debug_log, text);
+
+  if (MSGMODE_HAS(SOCKET)) {
+    void *socket = THREADVAR(msgsocket);
+    if (socket) ret = lives_stream_out(socket, lives_strlen(text) + 1, (void *)text);
+  }
 
   if (MSGMODE_HAS(STORE)) {
     if (MSGMODE_HAS(FANCY) && !mainw->no_switch_dprint) {
@@ -388,10 +392,11 @@ static void d_print_inner(const char *text) {
       }
     }
   }
+  return ret;
 }
 
 
-void d_print(const char *fmt, ...) {
+boolean d_print(const char *fmt, ...) {
   // collect output for "show messages" and optionally for main message area
   // (and other targets a defined by prefs->msg_routing)
 
@@ -416,9 +421,10 @@ void d_print(const char *fmt, ...) {
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
   va_list xargs;
   char *text;
+  boolean ret;
 
-  if (mainw && mainw->suppress_dprint) return;
-  if (prefs && MSGMODE_HAS(BLOCK)) return;
+  if (mainw && mainw->suppress_dprint) return FALSE;
+  if (prefs && MSGMODE_HAS(BLOCK)) return FALSE;
 
   va_start(xargs, fmt);
   text = lives_strdup_vprintf(fmt, xargs);
@@ -426,17 +432,19 @@ void d_print(const char *fmt, ...) {
 
   pthread_mutex_lock(&dprint_mutex);
 
-  d_print_inner(text);
+  ret = d_print_inner(text);
 
   if (mainw && (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
       (!mainw->no_switch_dprint || mainw->current_file != 0))
     mainw->last_dprint_file = mainw->current_file;
 
   pthread_mutex_unlock(&dprint_mutex);
+  return ret;
 }
 
 
-void d_print_debug(const char *fmt, ...) {
+LIVES_GLOBAL_INLINE void d_print_debug(const char *fmt, ...) {
+  // print out but only if MSGMODE_ON(DEBUG)
   va_list xargs;
   if (MSGMODE_HAS(DEBUG)) {
     va_start(xargs, fmt);
@@ -446,44 +454,25 @@ void d_print_debug(const char *fmt, ...) {
 }
 
 
-static void d_print_utility(const char *text, int osc_note, const char *osc_detail) {
-  boolean nsdp = mainw->no_switch_dprint;
-  mainw->no_switch_dprint = TRUE;
+void d_print_utility(const char *text) {
+  boolean nsdp = MSGMODE_HAS(FANCY);
+  if (nsdp) MSGMODE_OFF(FANCY);
   d_print(text);
-  if (osc_note != LIVES_OSC_NOTIFY_NONE) lives_notify(osc_note, osc_detail);
-  if (!nsdp) {
-    mainw->no_switch_dprint = FALSE;
+  if (nsdp) {
+    MSGMODE_ON(FANCY);
     d_print("");
   }
 }
 
+LIVES_GLOBAL_INLINE void d_print_done(void) {d_print_utility(_("done.\n"));}
 
-LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
-  d_print_utility(_("cancelled.\n"), LIVES_OSC_NOTIFY_CANCELLED, "");
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_failed(void) {
-  d_print_utility(_("failed.\n"), LIVES_OSC_NOTIFY_FAILED, "");
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_done(void) {
-  d_print_utility(_("done.\n"), 0, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
-  d_print_utility(_("error in file. Failed.\n"), 0, NULL);
-}
-
+LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {d_print_utility(_("error in file. Failed.\n"));}
 
 LIVES_GLOBAL_INLINE void d_print_enough(int frames) {
-  if (frames == 0) d_print_cancelled();
+  if (!frames) d_print_cancelled();
   else {
     char *msg = lives_strdup_printf(P_("%d frame is enough !\n", "%d frames are enough !\n", frames), frames);
-    d_print_utility(msg, 0, NULL);
+    d_print_utility(msg);
     lives_free(msg);
   }
 }
-

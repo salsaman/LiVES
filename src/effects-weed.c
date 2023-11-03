@@ -74,11 +74,6 @@ struct _procvals {
                              - sizeof(weed_timecode_t) - sizeof(weed_error_t)) % DEF_ALIGN)];
 };
 
-#define STATS_LIST		0
-#define STATS_FREQ		1
-
-static int statsmotive = STATS_LIST;
-static weed_plantptr_t statsplant = NULL;
 
 #ifndef VALGRIND_ON
 static int load_compound_fx(void);
@@ -191,8 +186,6 @@ void weed_functions_init(void) {
   _weed_leaf_seed_type = weed_leaf_seed_type;
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
-
-  statsplant = weed_plant_new(12345);
 }
 
 
@@ -3980,7 +3973,7 @@ LIVES_GLOBAL_INLINE const char *weed_get_const_string_value(weed_plant_t *plant,
     const char *key, weed_error_t *err) {
   weed_error_t xerr = WEED_SUCCESS;
   if (!plant) xerr = WEED_ERROR_NOSUCH_PLANT;
-  else if (!key || !!*key) xerr = WEED_ERROR_NOSUCH_LEAF;
+  else if (!key || !*key) xerr = WEED_ERROR_NOSUCH_LEAF;
   else if (!(weed_leaf_is_const_string(plant, key)))
     xerr = WEED_ERROR_WRONG_SEED_TYPE;
   if (xerr != WEED_SUCCESS) {
@@ -4149,16 +4142,6 @@ LIVES_GLOBAL_INLINE weed_error_t lives_leaf_set_rdonly(weed_plant_t *plant, cons
 }
 
 
-
-static void upd_statsplant(const char *key) {
-  int freq;
-  if (mainw->is_exiting) return;
-  if (!statsplant) statsplant = weed_plant_new(LIVES_PLANT_AUDIT);
-  _weed_leaf_get(statsplant, key, 0, &freq);
-  _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
-}
-
-
 // memory profiling for plugins
 
 void *lives_monitor_malloc(size_t size) {
@@ -4174,7 +4157,7 @@ void lives_monitor_free(void *p) {
 }
 
 
-weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems,
+weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, weed_seed_t seed_type, weed_size_t num_elems,
                                    void *values) {
   weed_error_t err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   g_print("PL setting %s in type %d\n", key, weed_plant_get_type(plant));
@@ -4183,70 +4166,12 @@ weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, uint32_
 }
 
 
-weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value) {
+weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, weed_size_t idx, void *value) {
   // plugins can be monitored for example
   weed_error_t err = _weed_leaf_get(plant, key, idx, value);
-  // and simulating bugs...
-  /* if (!strcmp(key, WEED_LEAF_WIDTH) && value) { */
-  /*   int *ww = (int *)value; */
-  /*   *ww -= 100; */
-  /* } */
-  upd_statsplant(key);
+  if (weed_leaf_seed_type(plant, key) == WEED_SEED_STRING)
+    upd_statsplant(key);
   return err;
-}
-
-
-void show_weed_stats(void) {
-  LiVESList *freq = NULL, *sorted = NULL, *list;
-  char **leaves;
-  int val, i, added = 0, min, lmin = 0;
-  weed_size_t nleaves;
-
-  if (!statsplant) return;
-  switch (statsmotive) {
-  case STATS_LIST:
-    list_leaves(statsplant);
-    break;
-  case STATS_FREQ:
-    leaves = weed_plant_list_leaves(statsplant, &nleaves);
-    /// sort in descending order
-    for (i = 0; i < nleaves; i++) {
-      int f = weed_get_int_value(statsplant, leaves[i], NULL);
-      freq = lives_list_prepend(freq, LIVES_INT_TO_POINTER(f));
-      //g_print("added %s with freq %d\n", leaves[i], f);
-    }
-    while (added < nleaves) {
-      min = LIVES_MAXINT32;
-      for (list = freq; list; list = list->next) {
-        val = LIVES_POINTER_TO_INT(list->data);
-        if (val < min && val > lmin) min = val;
-      }
-      //g_print("next min was %d\n", min);
-      i = nleaves - 1;
-      for (list = freq; list; list = list->next) {
-        val = LIVES_POINTER_TO_INT(list->data);
-        if (val == min) {
-          //g_print("prep. %d %s\n", i, leaves[i]);
-          sorted = lives_list_prepend(sorted, LIVES_INT_TO_POINTER(i));
-          if (++added == nleaves) break;
-        }
-        i--;
-      }
-      if (min == lmin) break;
-      lmin = min;
-    }
-    for (list = sorted; list; list = list->next) {
-      val = LIVES_POINTER_TO_INT(list->data);
-      g_print("STATS: %s : %d\n", leaves[val], weed_get_int_value(statsplant, leaves[val], NULL));
-      free(leaves[val]);
-    }
-    free(leaves);
-    lives_list_free(freq);
-    lives_list_free(sorted);
-    break;
-  default: break;
-  }
-  weed_plant_free(statsplant);
 }
 
 
@@ -5787,11 +5712,9 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 static int load_compound_fx(void) {
   LiVESList *compound_plugin_list;
 
-  int plugin_idx, onum_filters = num_weed_filters;
+  int onum_filters = num_weed_filters;
 
   char *lives_compound_plugin_path, *plugin_name, *plugin_path;
-
-  //  threaded_dialog_spin(0.);
 
   lives_compound_plugin_path = lives_build_path(prefs->config_datadir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM, TRUE, lives_compound_plugin_path, NULL);
@@ -5801,12 +5724,10 @@ static int load_compound_fx(void) {
     plugin_path = lives_build_path(lives_compound_plugin_path, plugin_name, NULL);
     load_compound_plugin(plugin_name, plugin_path);
     lives_free(plugin_path);
-    //threaded_dialog_spin(0.);
   }
 
   lives_list_free_all(&compound_plugin_list);
 
-  //threaded_dialog_spin(0.);
   lives_free(lives_compound_plugin_path);
 
   lives_compound_plugin_path = lives_build_path(prefs->prefix_dir, PLUGIN_COMPOUND_DIR,
@@ -5820,7 +5741,6 @@ static int load_compound_fx(void) {
     plugin_path = lives_build_path(lives_compound_plugin_path, plugin_name, NULL);
     load_compound_plugin(plugin_name, plugin_path);
     lives_free(plugin_path);
-    //threaded_dialog_spin(0.);
   }
 
   lives_list_free_all(&compound_plugin_list);
@@ -5830,7 +5750,6 @@ static int load_compound_fx(void) {
   }
 
   lives_free(lives_compound_plugin_path);
-  //  threaded_dialog_spin(0.);
   return num_weed_filters - onum_filters;
 }
 #endif
@@ -6764,11 +6683,10 @@ boolean weed_init_effect(int hotkey) {
       weed_plant_t *next_inst = NULL;
 start1:
       if ((error = weed_call_init_func(inst)) != WEED_SUCCESS) {
-        char *filter_name, *tmp;
+        char *filter_name;
         filter = weed_filters[idx];
         filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = weed_strerror(error)));
-        lives_free(tmp);
+        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, weed_strerror(error));
         lives_free(filter_name);
 deinit2:
 
@@ -7627,7 +7545,7 @@ lives_result_t lives_layer_fill_from_generator(weed_layer_t *layer, weed_instanc
     weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, sfile->pb_fps);
   } else {
     // we want to ue inst_fps wiht a slight increase, otherwise we can get into a cycle of slower and slower
-    double target_fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
+    //double target_fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
     /* if (prefs->pb_quality == PB_QUALITY_LOW && mainw->inst_fps > 0. && mainw->inst_fps < target_fps) */
     /*   weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, MIN(mainw->inst_fps * 1.5, target_fps)); */
     /* else {   */
@@ -8193,7 +8111,6 @@ boolean weed_playback_gen_start(void) {
       orig_inst = inst = weed_instance_obtain(fg_gen_to_start, key_modes[fg_gen_to_start]);
       // have 1 ref
       if (inst) {
-        char *tmp;
 geninit1:
         error = weed_call_init_func(inst);
 
@@ -8204,9 +8121,7 @@ geninit1:
           filter_mutex_unlock(fg_gen_to_start);
           filter = weed_instance_get_filter(inst, TRUE);
           filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-          d_print(_("Failed to start generator %s (%s)\n"), filter_name,
-                  (tmp = lives_strdup(weed_strerror(error))));
-          lives_free(tmp);
+          d_print(_("Failed to start generator %s (%s)\n"), filter_name, weed_strerror(error));
           lives_free(filter_name);
 
 deinit4:
@@ -8318,12 +8233,9 @@ undoit:
         }
         filter_mutex_unlock(bgs);
         if (inst) {
-          char *tmp;
           filter = weed_instance_get_filter(inst, TRUE);
           filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-          d_print(_("Failed to start generator %s, (%s)\n"), filter_name,
-                  (tmp = lives_strdup(weed_strerror(error))));
-          lives_free(tmp);
+          d_print(_("Failed to start generator %s, (%s)\n"), filter_name, weed_strerror(error));
           lives_free(filter_name);
 
 deinit5:

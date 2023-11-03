@@ -218,6 +218,17 @@ extern locale_t oloc, nloc;
 
 #include "user-interface.h"
 
+#define FEATURE_MACHINEDETS_1		(1ul << 0)
+#define FEATURE_MEMFUNCS		(1ul << 1)
+#define FEATURE_WEED			(1ul << 2)
+#define FEATURE_THREADPOOL		(1ul << 3)
+#define FEATURE_MACHINEDETS_2		(1ul << 4)
+#define FEATURE_SYSALARMS		(1ul << 5)
+#define FEATURE_COL_ENGINE		(1ul << 6)
+#define FEATURE_GUI_HELPER		(1ul << 7)
+#define FEATURE_RNG			(1ul << 8)
+#define FEATURE_THEMING			(1ul << 9)
+
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
@@ -606,6 +617,8 @@ struct _capabilities {
   char *myname_full;
   char *myname;
 
+  uint64_t features_ready;
+
   pid_t mainpid;
   pthread_t main_thread;
   pthread_t gui_thread;
@@ -719,14 +732,14 @@ void break_me(const char *dtl);
 #define SHOW_LOCATION(text)						\
   fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_)
 
-#define LIVES_NO_DEBUG 1
+#define LIVES_FULL_DEBUG 0
 
 #ifndef LIVES_DEBUG
-#ifndef LIVES_NO_DEBUG
-#define LIVES_DEBUG(errmsg)      fprintf(stderr, "LiVES debug: %s\n", x)
-#else // LIVES_NO_DEBUG
+#if LIVES_FULL_DEBUG
+#define LIVES_DEBUG(errmsg)      fprintf(stderr, "LiVES debug: %s\n", errmsg)
+#else // LIVES_FULL_DEBUG
 #define LIVES_DEBUG(errmsg)      dummystr = (errmsg)
-#endif // LIVES_NO_DEBUG
+#endif // LIVES_FULL_DEBUG
 #endif // LIVES_DEBUG
 
 #ifndef LIVES_INFO

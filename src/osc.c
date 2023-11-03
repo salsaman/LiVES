@@ -191,7 +191,12 @@ boolean lives_osc_notify(int msgnumber, const char *msgstring) {
     if (msgstring) {
       msg = lives_strdup_printf("%d|%s\n", msgnumber, msgstring);
     } else msg = lives_strdup_printf("%d\n", msgnumber);
-    retval = lives_stream_out(notify_socket, strlen(msg) + 1, (void *)msg);
+
+    MSGMODE_LOCAL;
+    MSGMODE_SET(SOCKET);
+    THREADVAR(msgsocket) = notify_socket;
+    retval = d_print(msg);
+    MSGMODE_GLOBAL;
     lives_free(msg);
     return retval;
   }

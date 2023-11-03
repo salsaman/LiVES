@@ -15,6 +15,11 @@
 
 #define LIVES_RESTRICT __restrict__
 
+#define CLAMP16bit(x) (x) >= 0.99999 ? 65535 : x < 0.00001 ? 0 : (uint16_t)(x * 65535.9999)
+#define CLAMP16biti(x) ((x) > 65535 ? 65535 : (x) < 0 ? 0 : (x))
+
+#define CLAMP16_240i(N) (N&0x80000000?0x10:((N&0x7FFFFF00)||((N&0xF0)==0xF0))?0xF0:(N&0xF0)?N:0x10)
+
 #define WEED_LAYER_ALPHA_PREMULT 1
 
 #define WEED_GAMMA_MONITOR 1024
@@ -90,8 +95,14 @@ struct _conv_array {
 #define YUV_CLAMP_MIN 16.
 #define YUV_CLAMP_MINI 16
 
+#define YUV_UCLAMP_MIN 0.
+#define YUV_UCLAMP_MINI 0
+
 #define Y_CLAMP_MAX 235.
 #define Y_CLAMP_MAXI 235
+
+#define YUV_UCLAMP_MAX 255.
+#define YUV_UCLAMP_MAXI 255
 
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240
@@ -99,8 +110,20 @@ struct _conv_array {
 #define Y_CLAMP_RANGE (Y_CLAMP_MAX - YUV_CLAMP_MIN)
 #define UV_CLAMP_RANGE (UV_CLAMP_MAX - YUV_CLAMP_MIN)
 
-#define CLAMP_FACTOR_Y (Y_CLAMP_RANGE / 255.) // unclamped -> clamped
-#define CLAMP_FACTOR_UV (UV_CLAMP_RANGE / 255.) // unclamped -> clamped
+#define Y_CLAMP_RANGEI (Y_CLAMP_MAXI - YUV_CLAMP_MINi)
+#define UV_CLAMP_RANGEI (UV_CLAMP_MAXI - YUV_CLAMP_MINI)
+
+#define YUV_UCLAMP_RANGE (YUV_UCLAMP_MAX - YUV_UCLAMP_MIN)
+#define YUV_UCLAMP_RANGEI (YUV_UCLAMP_MAXI - YUV_UCLAMP_MINI)
+
+#define CLAMP_FACTOR_Y (Y_CLAMP_RANGE / YUV_UCLAMP_RANGE) // unclamped -> clamped
+#define CLAMP_FACTOR_UV (UV_CLAMP_RANGE / YUV_UCLAMP_RANGE) // unclamped -> clamped
+
+#define UNCLAMP_Y(y) (((y) - YUV_CLAMP_MIN) / CLAMP_FACTOR_Y)
+#define UNCLAMP_UV(uv) (((uv) - YUV_CLAMP_MIN) / CLAMP_FACTOR_UV)
+
+#define CLAMP_Y(y) ((y) * CLAMP_FACTOR_Y + YUV_CLAMP_MIN)
+#define CLAMP_UV(uv) ((uv) * CLAMP_FACTOR_UV + YUV_CLAMP_MIN)
 
 #define UV_BIAS 128.
 
@@ -122,7 +145,7 @@ typedef struct {
   float offs, lin, thresh, pf;
 } gamma_const_t;
 
-// o = ((t/l) ^ 1/pf - t) / (1 - (t/l) ^1/pf)
+
 #define INIT_GAMMA(gtype) gamma_tx[gtype##_IDX] = (gamma_const_t) {0., GAMMA_CONSTS_##gtype}; \
   gamma_tx[gtype##_IDX].offs = (powf((gamma_tx[gtype##_IDX].thresh / gamma_tx[gtype##_IDX].lin), \
 				     (1. / gamma_tx[gtype##_IDX].pf)) - gamma_tx[gtype##_IDX].thresh) \
@@ -137,7 +160,7 @@ extern int gamma_idx[];
 #define GAMMA_CONSTS_WEED_GAMMA_SRGB 12.92, 0.04045, 2.4
 #define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.018, 1. / .45
 //#define GAMMA_CONSTS_MYGAMMA lin, thresh, pf
-// (offs will be derived as the point at which val_line(x) ~= val_pf(x)
+// (offs will be derived as the point at which val_lin(x) ~= val_pf(x)
 
 enum {
   WEED_GAMMA_SRGB_IDX,
@@ -210,7 +233,7 @@ typedef struct {
   int out_sampling;
   boolean alpha_first;
   boolean is_422;
-  uint8_t *lut;
+  uint16_t *lut;
   int thread_id;
   uint64_t padding[6];
 } lives_cc_params;

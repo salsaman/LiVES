@@ -65,11 +65,11 @@ typedef enum {
 
 // geneic
 
-boolean weed_leaf_autofree(weed_plant_t *plant, const char *key);
+boolean weed_leaf_autofree(weed_plant_t *, const char *key);
 void  weed_plant_autofree(weed_plant_t *);
 
 // for sterilzing "dormant" plants
-void weed_plant_sanitize(weed_plant_t *plant, boolean sterilize);
+void weed_plant_sanitize(weed_plant_t *, boolean sterilize);
 
 // plugin specific values
 #define WEED_LEAF_HOST_SUSPICIOUS "host_suspicious" // plugin is badly behaved
@@ -140,8 +140,8 @@ int *weed_get_indices_from_template(const char *package_name, const char *filter
 int weed_filter_highest_version(const char *pkg, const char *fxname, const char *auth, int *return_version);
 
 // plant may be filter or inst
-int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
-int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);
+int enabled_in_channels(weed_plant_t *, boolean count_repeats);
+int enabled_out_channels(weed_plant_t *, boolean count_repeats);
 
 weed_channel_t *get_enabled_channel(weed_instance_t *, int which, int direction);  ///< for FILTER_INST
 weed_channel_t *get_enabled_audio_channel(weed_instance_t *, int which, int direction);  ///< for FILTER_INST
@@ -161,7 +161,7 @@ weed_filter_t *weed_instance_get_filter(weed_instance_t *, boolean get_compound_
 weed_instance_t *get_next_compound_inst(weed_instance_t *);
 
 ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
-int num_compound_fx(weed_plant_t *plant);
+int num_compound_fx(weed_plant_t *);
 
 boolean has_non_alpha_palette(weed_chantmpl_t *, weed_filter_t *);
 boolean has_alpha_palette(weed_chantmpl_t *, weed_filter_t *);
@@ -178,8 +178,8 @@ boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///<
 boolean has_video_filters(boolean analysers_only);
 
 #ifdef HAS_LIVES_EFFECTS_H
-lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out_channels);
-lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt);
+lives_fx_cat_t weed_filter_categorise(weed_plant_t *, int in_channels, int out_channels);
+lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *, lives_fx_cat_t category, boolean count_opt);
 boolean has_audio_filters(lives_af_t af_type);
 #endif
 
@@ -217,22 +217,22 @@ int count_simple_params(weed_plant_t *);
 weed_plant_t **weed_params_create(weed_filter_t *, boolean in);
 int get_transition_param(weed_filter_t *, boolean skip_internal);
 int get_master_vol_param(weed_filter_t *, boolean skip_internal);
-boolean is_perchannel_multiw(weed_plant_t *param);
+boolean is_perchannel_multiw(weed_paramtmpl_t *);
 boolean has_perchannel_multiw(weed_filter_t *);
-boolean weed_parameter_has_variable_elements_strict(weed_instance_t *, weed_plant_t *ptmpl);
+boolean weed_parameter_has_variable_elements_strict(weed_instance_t *, weed_paramtmpl_t *ptmpl);
 
 void **get_easing_events(int *nev);
 
 /// parameter interpolation
-boolean interpolate_param(weed_plant_t *param, void *pchain, ticks_t tc);
+boolean interpolate_param(weed_param_t *, void *pchain, ticks_t tc);
 boolean interpolate_params(weed_instance_t *, void **pchains, ticks_t tc);
 
 int filter_mutex_lock(int key);  // 0 based key
 int filter_mutex_trylock(int key);  // 0 based key
 int filter_mutex_unlock(int key); // 0 based key
 
-size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
-weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *plant);
+size_t weed_plant_serialise(int fd, weed_plant_t *, unsigned char **mem);
+weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *);
 
 /// record a parameter value change in our event_list
 void rec_param_change(weed_instance_t *inst, int pnum);
@@ -392,7 +392,7 @@ boolean read_generator_sizes(int fd);
 void update_all_host_info(void);
 
 /// add default filler values to a parameter or pchange.
-void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
+void fill_param_vals_to(weed_param_t *, weed_paramtmpl_t *, int fill_slot);
 
 
 #ifdef DEBUG_FILTER_MUTEXES
@@ -425,18 +425,17 @@ weed_plant_t *weed_instance_obtain(int key, int mode);
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 
-weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *value);
-weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key);
+weed_error_t weed_leaf_set_host(weed_plant_t *, const char *key, weed_seed_t seed_type,
+                                weed_size_t num_elems, void *value);
+weed_error_t weed_leaf_delete_host(weed_plant_t *, const char *key);
+weed_error_t weed_leaf_get_monitor(weed_plant_t *, const char *key, weed_size_t idx, void *value);
 
 #if DEBUG_PLANTS
 #define weed_plant_new(type) FN_REF_TARGET(Xweed_plant_new,type)
 #define weed_plant_free(plant) FN_UNREF_TARGET(Xweed_plant_free,plant)
 #endif
 
-weed_error_t weed_plant_free_host(weed_plant_t *plant);
+weed_error_t weed_plant_free_host(weed_plant_t *);
 weed_plant_t *weed_plant_new_host(int type);
-//weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value);
-
-void show_weed_stats(void);
 
 #endif

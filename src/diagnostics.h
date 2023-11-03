@@ -89,4 +89,11 @@ void bundle_test(void);
 
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
 
+
+#define STATS_LIST		0
+#define STATS_FREQ		1
+
+void show_weed_stats(int oper);
+void upd_statsplant(const char *key);
+
 #endif

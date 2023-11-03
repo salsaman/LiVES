@@ -200,9 +200,11 @@ uint64_t lsd_check_struct(lsd_struct_def_t *lsd) {
 
 uint64_t lsd_check_match(lsd_struct_def_t *lsd1, lsd_struct_def_t *lsd2) {
   size_t sz1, sz2;
-  uint64_t err = 0, own1, own2, uidiff;
-
+  uint64_t err = 0, uidiff;
+#if CHECK_VERBOSE
+  uint64_t own1, own2;
   errprint("lsd_check: comparing lsd1 (%p) and lsd2 (%p)\n", lsd1, lsd2);
+#endif
 
   if (lsd1 == lsd2) {
     errprint("lsd_check: lsd1  == lsd2\n");
@@ -272,12 +274,13 @@ uint64_t lsd_check_match(lsd_struct_def_t *lsd1, lsd_struct_def_t *lsd2) {
   errprint("lsd_check: checking lsd2 (%p)\n", lsd2);
   err |= (lsd_check_struct(lsd2) << 48);
 
+#if CHECK_VERBOSE
   own1 = lsd_struct_get_owner_uid(lsd1);
   own2 = lsd_struct_get_owner_uid(lsd2);
 
   errprint("lsd_check: lsd (%p) has owner 0x%016lX, and lsd2 (%p) has owner 0x%016lX "
            "(not an error)\n", lsd1, own1, lsd2, own2);
-
+#endif
   return err;
 }
 

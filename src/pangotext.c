@@ -329,7 +329,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
   msg = get_nth_info_message(n);
   if (!msg) return NULL;
-  newtext = lives_strdup(weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
+  newtext = lives_strdup(weed_get_const_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
   if (error != WEED_SUCCESS) return NULL;
   if (!newtext) return NULL;
   slen = (int)lives_strlen(newtext);
@@ -348,13 +348,13 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
 #ifdef DEBUG_MSGS
   g_print("Want msg number %d at bottom\n%s", n,
-          weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
+          weed_get_const_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
 #endif
 
   while (1) {
     if (!newtext) {
       if (!msg) break;
-      newtext = lives_strdup(weed_get_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
+      newtext = lives_strdup(weed_get_const_string_value(msg, LIVES_LEAF_MESSAGE_STRING, &error));
       if (error != WEED_SUCCESS) break;
       if (!newtext) break;
       totlines += get_token_count(newtext, '\n');

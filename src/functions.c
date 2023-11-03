@@ -232,7 +232,7 @@ const char *get_funcname(lives_funcptr_t func) {
   char *key;
   if (!fn_looker) return NULL;
   key = lives_strdup_printf("function@%p", func);
-  fname = weed_get_voidptr_value(fn_looker, key, NULL);
+  fname = weed_get_const_string_value(fn_looker, key, NULL);
   lives_free(key);
   return fname;
 }
@@ -383,13 +383,13 @@ int get_funcsig_nparms(funcsig_t sig) {
 
 LIVES_GLOBAL_INLINE lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thread_t lpt) {
   lives_funcdef_t *fdef;
-  char *funcname, *args_fmt;
+  const char *funcname;
+  char *args_fmt;
   if (!lpt) return NULL;
   funcname = lives_proc_thread_get_funcname(lpt);
   args_fmt = lives_proc_thread_get_args_fmt(lpt);
   fdef = create_funcdef(funcname, weed_get_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, NULL),
                         weed_leaf_seed_type(lpt, _RV_), args_fmt, NULL, 0, NULL);
-  lives_free(funcname);
   lives_free(args_fmt);
   return fdef;
 }
@@ -821,15 +821,15 @@ char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
     char *fmtstring, *parvals;
     uint32_t ret_type = lives_proc_thread_get_rtype(lpt);
     funcsig_t sig = lives_proc_thread_get_funcsig(lpt);
-    char *funcname = lives_proc_thread_get_funcname(lpt);
+    const char *funcname = lives_proc_thread_get_funcname(lpt);
 
     parvals = lpt_paramstr(lpt, sig);
 
     if (ret_type) {
       fmtstring = lives_strdup_printf("(%s) %s(%s);",
-                                      weed_seed_to_ctype(ret_type, TRUE), funcname, parvals);
+                                      weed_seed_to_ctype(ret_type, FALSE), funcname, parvals);
     } else fmtstring = lives_strdup_printf("(void) %s(%s);", funcname, parvals);
-    lives_free(funcname); lives_free(parvals);
+    lives_free(parvals);
     return fmtstring;
   }
   return NULL;

@@ -9224,7 +9224,8 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
       load_preview_image(FALSE);
   }
 
-  if (!LIVES_IS_PLAYING) load_start_image(cfile->start);
+  if (!LIVES_IS_PLAYING && what_sup_now() == sup_ready)
+    load_start_image(cfile->start);
 
   if (cfile->start > cfile->end) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
@@ -9290,7 +9291,8 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
       load_preview_image(FALSE);
   }
 
-  if (!LIVES_IS_PLAYING) load_end_image(cfile->end);
+  if (!LIVES_IS_PLAYING && what_sup_now() == sup_ready)
+    load_end_image(cfile->end);
 
   if (cfile->end < cfile->start) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
@@ -9617,7 +9619,6 @@ LIVES_GLOBAL_INLINE void defer_config(LiVESWidget * widget) {SET_INT_DATA(widget
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   // code here stops the main window from "jiggling around" on startup ///
   static boolean no_config = FALSE;
-  boolean run_deferred = FALSE;
   if (!mainw->go_away) no_config = FALSE;
   if (no_config) return FALSE;
   if (!mainw->configured) {
@@ -9625,7 +9626,6 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
       // run this the first time it is called, but then not again until we explicitly call
       mainw->configured = TRUE;
       no_config = TRUE;
-      run_deferred = TRUE;
     }
   }
 
@@ -9663,7 +9663,6 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     }}
   // *INDENT-ON*
 
-  //if (run_deferred) run_deferred_configs();
   return FALSE;
 }
 

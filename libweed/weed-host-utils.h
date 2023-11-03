@@ -107,29 +107,29 @@ size_t weed_plant_weigh(weed_plant_t *); // get total size in bytes
 
 // set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
 // this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
-void weed_add_plant_flags(weed_plant_t *, uint32_t flags, const char *ign_prefix);
-void weed_clear_plant_flags(weed_plant_t *t, uint32_t flags, const char *ign_prefix);
+weed_error_t weed_add_plant_flags(weed_plant_t *, uint32_t flags, const char *ign_prefix);
+weed_error_t weed_clear_plant_flags(weed_plant_t *t, uint32_t flags, const char *ign_prefix);
 
 // add / clear bits for leaf flags, returns value of flags before alteration
-uint32_t weed_leaf_set_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< value ORed with flags
-uint32_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< ~value ANDed with flags
+weed_error_t weed_leaf_set_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< value ORed with flags
+weed_error_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< ~value ANDed with flags
 
 // make a whole plant deletable / undeletable
 weed_error_t weed_plant_set_undeletable(weed_plant_t *, int undeletable);
 int weed_plant_is_undeletable(weed_plant_t *);
 
 /* HOST_INFO functions */
-int weed_host_info_get_flags(weed_plant_t *host_info);
-void weed_host_info_set_flags(weed_plant_t *host_info, int flags);
-void weed_host_set_supports_linear_gamma(weed_plant_t *host_info);
-void weed_host_set_supports_premult_alpha(weed_plant_t *host_info);
-void weed_host_set_verbosity(weed_plant_t *host_info, int verbosityy);
+uint32_t weed_host_info_get_flags(weed_plant_t *host_info);
+weed_error_t weed_host_info_set_flags(weed_plant_t *host_info, uint32_t flags);
+weed_error_t weed_host_set_supports_linear_gamma(weed_plant_t *host_info);
+weed_error_t weed_host_set_supports_premult_alpha(weed_plant_t *host_info);
+weed_error_t weed_host_set_verbosity(weed_plant_t *host_info, int verbosityy);
 
 /* PLUGIN_INFO functions */
 char *weed_plugin_info_get_package_name(weed_plant_t *pinfo);
 
 /* FILTER functions */
-int weed_filter_get_flags(weed_filter_t *);
+uint32_t weed_filter_get_flags(weed_filter_t *);
 int weed_filter_is_resizer(weed_filter_t *);
 char *weed_filter_get_name(weed_filter_t *);
 weed_chantmpl_t **weed_filter_get_in_chantmpls(weed_filter_t *, int *ntmpls);
@@ -157,12 +157,12 @@ weed_channel_t **weed_instance_get_in_channels(weed_instance_t *, int *nchans);
 weed_param_t **weed_instance_get_in_params(weed_instance_t *, int *nparams);
 weed_param_t **weed_instance_get_out_params(weed_instance_t *, int *nparams);
 weed_gui_t *weed_instance_get_gui(weed_plant_t *inst, int create_if_not_exists);
-int weed_instance_get_flags(weed_instance_t *);
-void weed_instance_set_flags(weed_instance_t *, int flags);
+uint32_t weed_instance_get_flags(weed_instance_t *);
+weed_error_t weed_instance_set_flags(weed_instance_t *, uint32_t flags);
 
 /* CHANNEL_TEMPLATE functions */
 char *weed_chantmpl_get_name(weed_chantmpl_t *);
-int weed_chantmpl_get_flags(weed_chantmpl_t *);
+uint32_t weed_chantmpl_get_flags(weed_chantmpl_t *);
 int weed_chantmpl_is_optional(weed_chantmpl_t *);
 int weed_chantmpl_is_audio(weed_chantmpl_t *);
 int *weed_chantmpl_get_palette_list(weed_filter_t *, weed_chantmpl_t *, int *nvals);
@@ -197,10 +197,10 @@ int weed_channel_is_disabled(weed_channel_t *);
 weed_chantmpl_t *weed_channel_get_template(weed_channel_t *);
 
 /// width in macropixels
-void weed_channel_set_width(weed_channel_t *, int width);
-void weed_channel_set_height(weed_channel_t *, int height);
-void weed_channel_set_palette(weed_channel_t *, int palette);
-void weed_channel_set_palette_yuv(weed_channel_t *, int palette, int clamping,
+weed_error_t weed_channel_set_width(weed_channel_t *, int width);
+weed_error_t weed_channel_set_height(weed_channel_t *, int height);
+weed_error_t weed_channel_set_palette(weed_channel_t *, int palette);
+weed_error_t weed_channel_set_palette_yuv(weed_channel_t *, int palette, int clamping,
 				  int sampling, int subspace);
 
 // for the following 2 functions, if width is not a multiple of palette macropixel size
@@ -237,12 +237,12 @@ weed_channel_t *weed_channel_set_audio_data(weed_channel_t *, float **data, int 
 
 // paramtmpls
 weed_gui_t *weed_paramtmpl_get_gui(weed_paramtmpl_t *, int create_if_not_exists);
-int weed_paramtmpl_get_flags(weed_paramtmpl_t *);
+uint32_t weed_paramtmpl_get_flags(weed_paramtmpl_t *);
 char *weed_paramtmpl_get_name(weed_paramtmpl_t *);
 int weed_paramtmpl_get_type(weed_paramtmpl_t *);
 int weed_paramtmpl_has_variable_size(weed_paramtmpl_t *);
 int weed_paramtmpl_has_value_perchannel(weed_paramtmpl_t *);
-uint32_t weed_paramtmpl_value_type(weed_paramtmpl_t *);
+weed_seed_t weed_paramtmpl_value_type(weed_paramtmpl_t *);
 int weed_paramtmpl_does_wrap(weed_paramtmpl_t *);
 int weed_paramtmpl_hints_string_choice(weed_paramtmpl_t *);
 int weed_paramtmpl_hints_hidden(weed_paramtmpl_t *);
@@ -259,7 +259,7 @@ int weed_param_get_type(weed_param_t *);
 int weed_param_has_variable_size(weed_param_t *);
 int weed_param_has_value_perchannel(weed_param_t *);
 int weed_param_does_wrap(weed_param_t *);
-int weed_param_get_value_type(weed_param_t *);
+weed_seed_t weed_param_get_value_type(weed_param_t *);
 int weed_param_value_irrelevant(weed_param_t *);
 
 int weed_param_get_value_int(weed_param_t *);
@@ -280,16 +280,16 @@ weed_error_t weed_param_set_value_string(weed_param_t *, const char *val);
 int weed_param_get_nchoices(weed_param_t *);
 
 /// gui plants
-int weed_gui_get_flags(weed_gui_t *gui);
+uint32_t weed_gui_get_flags(weed_gui_t *gui);
 
 // utils
-const char *weed_seed_to_ctype(uint32_t st, int add_space);
-const char *weed_seed_to_short_text(uint32_t seed_type);
-char *weed_seed_to_text(uint32_t seed_type) WARN_UNUSED;
-char *weed_strerror(weed_error_t error) WARN_UNUSED;
-char *weed_error_to_literal(weed_error_t error) WARN_UNUSED;
+const char *weed_seed_to_ctype(weed_seed_t st, int add_space);
+const char *weed_seed_to_short_text(weed_seed_t seed_type);
+const char *weed_seed_to_text(weed_seed_t seed_type);
+const char *weed_strerror(weed_error_t error);
+const char *weed_error_to_literal(weed_error_t error);
 char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSED;
-uint32_t ctypes_to_weed_seed(const char *ctype);
+weed_seed_t ctype_to_weed_seed(const char *ctype);
 
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
@@ -362,7 +362,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *,
 typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
 
 /* set a host callback function to be called from within weed_bootstrap() */
-void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
+weed_error_t weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 
 /* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
 int check_weed_abi_compat(int32_t higher, int32_t lower);

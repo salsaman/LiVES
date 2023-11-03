@@ -3319,7 +3319,8 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
   //char *paramname;
   char *paramlabel;
 
-  char *ptype, *range;
+  const char *ptype;
+  char *range;
   char *array_type, *text;
 
   int defelems, pflags, stype;
@@ -3463,7 +3464,6 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
         text = lives_strdup_printf("%s\n (%s%s) %s", paramlabel, ptype, array_type, range);
         lives_free(paramlabel); lives_free(array_type); lives_free(range);
       }
-      lives_free(ptype);
       plist = lives_list_append(plist, text);
     }
 
@@ -4262,7 +4262,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
   LiVESWidget *scrolledwindow;
 
   char *channame, *pname, *fname;
-  char *ptype, *range;
+  const char *ptype;
+  char *range;
   char *array_type, *text, *tmp;
 
   boolean isfirst, no_autoscale = FALSE;
@@ -4460,7 +4461,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
           widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
           widget_opts.mnemonic_label = TRUE;
-          lives_free(text); lives_free(pname); lives_free(ptype);
+          lives_free(text); lives_free(pname);
           isfirst = FALSE;
         }
 
@@ -4523,7 +4524,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
           widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
           widget_opts.mnemonic_label = TRUE;
-          lives_free(text); lives_free(pname); lives_free(ptype);
+          lives_free(text); lives_free(pname);
           isfirst = FALSE;
         }
 

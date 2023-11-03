@@ -2385,9 +2385,7 @@ fndone:
                 }
               }
 
-              if (srcgrp) dplug = (lives_decoder_t *)(get_clip_src(srcgrp, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL)->actor);
-
-              if (!dplug && get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
+              if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
                 dplug = (lives_decoder_t *)get_primary_actor(sfile);
               if (!dplug || !dplug->cdata || xframe >= dplug->cdata->nframes) {
                 errpt = 7;

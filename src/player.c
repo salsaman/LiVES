@@ -1105,7 +1105,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
         g_print("plan CANCELLED during execution\n");
       else g_print("plan ERROR during execution\n");
       errpt = 4;
-      goto lfi_err;
     }
 
     if (lives_layer_get_clip(mainw->layers[0]) != mainw->playing_file) {
@@ -1113,40 +1112,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
               lives_layer_get_clip(mainw->frame_layer), mainw->playing_file);
       mainw->plan_cycle->state = PLAN_STATE_ERROR;
       errpt = 5;
-      goto lfi_err;
     }
 
-    if (mainw->layers) {
-      // all our pixel_data should have been free'd already
-      for (int i = 0; mainw->layers[i]; i++) {
-        if (mainw->layers[i] != mainw->frame_layer) {
-          weed_layer_pixel_data_free(mainw->layers[i]);
-        }
-      }
-    }
+    if (errpt) goto lfi_err;
 
-    exec_plan_free(mainw->plan_cycle);
-
-    // reset layers for next cycle
-
-    mainw->layers = map_sources_to_tracks(FALSE, TRUE);
-
-    mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
-
-    execute_plan(mainw->plan_cycle, TRUE);
-
-    if (mainw->blend_file != -1
-        && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
-      frames64_t blend_frame = get_blend_frame(mainw->currticks);
-      if (blend_frame > 0) {
-        mainw->plan_cycle->frame_idx[1] = blend_frame;
-        lives_layer_set_frame(mainw->layers[1], frame);
-        lives_layer_set_status(mainw->layers[1], LAYER_STATUS_PREPARED);
-      }
-    }
-
-    // trigger next plan cycle. We can start loading background frames while displaying current one
-    plan_cycle_trigger(mainw->plan_cycle);
+    run_next_cycle();
 
     ////////////////////////
 
@@ -1486,9 +1456,6 @@ lfi_err:
     }
   }
 
-  if (frame_layer == mainw->frame_layer) frame_layer = NULL;
-  mainw->frame_layer = NULL;
-
 lfi_done:
 
   if (frame_layer && frame_layer != mainw->frame_layer) {
@@ -1551,8 +1518,16 @@ lfi_done:
     lives_free(msg);
   }
 
+  frame_layer = mainw->frame_layer;
   mainw->frame_layer = NULL;
-  return mainw->layers[0];
+
+  if (!success) {
+    // free pixdata for frame_layer, then run the next cycle
+    frame_layer = NULL;
+    run_next_cycle();
+  }
+
+  return frame_layer;
 }
 
 
@@ -2462,14 +2437,12 @@ player_loop:
     build_nodemodel(&mainw->nodemodel);
     align_with_model(mainw->nodemodel);
     mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
-    mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
-    execute_plan(mainw->plan_cycle, TRUE);
+    mainw->refresh_model = FALSE;
 
     g_print("rebuilt model (pt 1), created new plan, made new plan-cycle, completed in %.6f millisec\n",
             1000. * (lives_get_session_time() - xtime));
 
-    mainw->refresh_model = FALSE;
   }
 
   //
@@ -3142,14 +3115,17 @@ switch_point:
         mainw->startticks = mainw->currticks;
         if (!mainw->video_seek_ready || !mainw->audio_seek_ready) video_sync_ready();
       }
-      /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_req_frame, */
-      /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
+#ifdef DEBUG_FRAME_TIMNING
+      lives_printerr("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_req_frame,
+                     (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
+#endif
       requested_frame = xrequested_frame
                         = calc_new_playback_position(mainw->playing_file, mainw->startticks,
                             &new_ticks);
 
-      //g_print("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead);
-
+#ifdef DEBUG_FRAME_TIMNING
+      lives_printerr("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead);
+#endif
       if (mainw->scratch == SCRATCH_JUMP) {
         avsync_force(); // should reset video_seek_ready
       }
@@ -3442,10 +3418,11 @@ play_frame:
 
           if (sfile->frames == 1) sfile->frameno = 1;
 
-          g_print("\nPLAY %d %d %d %d %ld %ld %d %d %.4f\n", sfile->frameno, requested_frame, sfile->last_frameno,
-                  mainw->actual_frame,
-                  mainw->currticks, mainw->startticks, mainw->video_seek_ready, mainw->audio_seek_ready, cpuloadval);
-
+#ifdef DEBUG_FRAME_TIMNING
+          lives_printerr("\nPLAY %d %d %d %d %ld %ld %d %d %.4f\n", sfile->frameno, requested_frame, sfile->last_frameno,
+                         mainw->actual_frame, mainw->currticks, mainw->startticks, mainw->video_seek_ready,
+                         mainw->audio_seek_ready, cpuloadval);
+#endif
 #ifndef REC_IDEAL
           can_rec = TRUE;
 #endif
@@ -3799,9 +3776,11 @@ play_frame:
             }
             if (sfile->clip_type == CLIP_TYPE_FILE) {
               lives_clipsrc_group_t *srcgrp = get_srcgrp(mainw->playing_file, 0, SRC_PURPOSE_PRECACHE);
-              if (srcgrp && srcgrp->n_srcs)
-                dplug = (lives_decoder_t *)(get_clip_src(srcgrp, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL)->actor);
-              else dplug = (lives_decoder_t *)(get_primary_actor(sfile));
+              if (srcgrp && srcgrp->n_srcs) {
+                lives_clip_src_t *src = get_clip_src(srcgrp, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL);
+                if (src) dplug = (lives_decoder_t *)(get_clip_src(srcgrp, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL)->actor);
+              }
+              if (!dplug) dplug = (lives_decoder_t *)(get_primary_actor(sfile));
               if (dplug) cdata = dplug->cdata;
             }
 

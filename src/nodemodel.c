@@ -1681,7 +1681,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  //MSGMODE_ON(DEBUG);
+  MSGMODE_ON(DEBUG);
 
   if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
@@ -2586,7 +2586,7 @@ static void run_plan(exec_plan_t *plan) {
     }
     SET_PLAN_STATE(COMPLETE);
   }
-  //MSGMODE_OFF(DEBUG);
+  MSGMODE_OFF(DEBUG);
 
   ____FUNC_EXIT____;
 
@@ -5045,7 +5045,7 @@ for (j = 0; j < n_allpals; j++) {
     for (i = 0; i < in->npals; i++) {
       // find costs to convert from width, height, ipal gamma_type to
       // owidth, oheight, opal, ogamma_type
-      for (k = 0; k < N_COST_TYPES; k++) {
+      for (k = 0; k < N_REAL_COST_TYPES; k++) {
         double cost;
         if (k == COST_TYPE_COMBINED) continue;
         // we dont know the out_size, so we assume the sfile size
@@ -5059,19 +5059,19 @@ for (j = 0; j < n_allpals; j++) {
           // TODO - do same for clipsrc cpal ->
         }
 
-        if (!i || cost < in->min_cost[j * N_COST_TYPES + k]) {
-          in->min_cost[j * N_COST_TYPES + k] = cost;
-          in->best_src_pal[j * N_COST_TYPES + k] = i;
+        if (!i || cost < in->min_cost[j * N_REAL_COST_TYPES + k]) {
+          in->min_cost[j * N_REAL_COST_TYPES + k] = cost;
+          in->best_src_pal[j * N_REAL_COST_TYPES + k] = i;
         }
         ccost += cost * factors[k];
       }
-      if (!i || ccost < in->min_cost[j * N_COST_TYPES + COST_TYPE_COMBINED]) {
-        in->min_cost[j * N_COST_TYPES + COST_TYPE_COMBINED] = ccost;
-        in->best_src_pal[j * N_COST_TYPES + COST_TYPE_COMBINED] = i;
+      if (!i || ccost < in->min_cost[j * N_REAL_COST_TYPES + COST_TYPE_COMBINED]) {
+        in->min_cost[j * N_REAL_COST_TYPES + COST_TYPE_COMBINED] = ccost;
+        in->best_src_pal[j * N_REAL_COST_TYPES + COST_TYPE_COMBINED] = i;
       }
     }
-    for (k = 0; k < N_COST_TYPES; k++) {
-      costs[k] += in->min_cost[j * N_COST_TYPES + k] * in->f_ratio;
+    for (k = 0; k < N_REAL_COST_TYPES; k++) {
+      costs[k] += in->min_cost[j * N_REAL_COST_TYPES + k] * in->f_ratio;
     }
   }
   // we now have costs for each cost type for this palette j
@@ -5189,7 +5189,7 @@ for (int i = 0; i < npals; i++) {
   // find cost_delta. This is computed according to
   // cost_type, in_pal, out_pal, out_pal_list, in size and out size
 
-  for (int k = 0; k < N_COST_TYPES; k++) {
+  for (int k = 0; k < N_REAL_COST_TYPES; k++) {
     double delta_cost = 0.;
     if (glob_mask[k]) costs[k] = glob_costs[k];
     else {
@@ -5360,7 +5360,7 @@ for (ni = 0; ni < n->n_inputs; ni++) {
     // factors are used to compute combined_cost
       _calc_costs_for_input(nodemodel, n, ni, pal_list, j, flags, glob_costs, glob_mask, factors);
       // *INDENT-OFF*
-  }}
+}}
 // *INDENT-ON*
 }
 
@@ -5376,6 +5376,7 @@ static cost_tuple_t *copy_tuple(cost_tuple_t *tup, int nins) {
 cost_tuple_t *newtup = NULL;
 if (tup) {
   newtup = (cost_tuple_t *)lives_calloc(1, sizeof(cost_tuple_t));
+  g_print("cop tup from %p to %p\n", tup, newtup);
   lives_memcpy(newtup, tup, sizeof(cost_tuple_t));
   newtup->palconv = (conversion_t *)lives_calloc(nins, sizeof(conversion_t));
   lives_memcpy(newtup->palconv, tup->palconv, nins * sizeof(conversion_t));
@@ -5404,7 +5405,7 @@ static double *total_costs(inst_node_t *n, int nvals, double **abs_costs, double
 // abs_costs are the value from the prveious node
 // for tcost, we take the max value, for qloss we multiply
 // then for combined we multiply by the factors and add
-double max[N_COST_TYPES];
+double max[N_REAL_COST_TYPES];
 
 if (!sumty) {
   // set summation methods and def values for cost types
@@ -5414,7 +5415,7 @@ if (!sumty) {
   cost_summation[COST_TYPE_QLOSS_S] = SUM_LN_ADD;
 }
 
-for (int k = 0; k < N_COST_TYPES; k++) {
+for (int k = 0; k < N_REAL_COST_TYPES; k++) {
   out_costs[k] = 0.;
   if (k == COST_TYPE_COMBINED) continue;
   for (int ni = 0; ni < nvals; ni++) {
@@ -5441,7 +5442,7 @@ for (int k = 0; k < N_COST_TYPES; k++) {
   }
 }
 
-for (int k = 0; k < N_COST_TYPES; k++) {
+for (int k = 0; k < N_REAL_COST_TYPES; k++) {
   if (k == COST_TYPE_COMBINED) continue;
   out_costs[COST_TYPE_COMBINED] += factors[k] * out_costs[k];
 }
@@ -5514,10 +5515,11 @@ static cost_tuple_t **backtrack(inst_node_t *n, int ni, double * factors) {
 // However there are issues with this - we could end up never finding an optimal solution, but simply flipping between
 // soulitions, and in addition there will be an optimisation stage where we may consider combinations other than the
 // minimal for a particular node, hence this is done once only.
+g_print("START BACKTRACK(%d) %p %p\n", ni, n, factors);
 
 static cost_tuple_t **best_tuples;
 static conversion_t *conv;
-static double mincost[N_COST_TYPES];
+static double mincost[N_REAL_COST_TYPES];
 static int k;
 
 conversion_t *myconv;
@@ -5525,26 +5527,30 @@ inst_node_t *p;
 input_node_t *in, *xin;
 output_node_t *out;
 int npals, *pals, onpals, *opals, i, xni;
+int k_start = 0, k_end = N_REAL_COST_TYPES;
 
 if (!n->n_inputs) return NULL;
 
 if (!ni) {
   // reset first time this is called
   conv = (conversion_t *)lives_calloc(n->n_inputs, sizeof(conversion_t));
-  best_tuples = (cost_tuple_t **)lives_calloc(N_COST_TYPES, sizeof(cost_tuple_t));
-  for (i = 0; i < N_COST_TYPES; i++) mincost[i] = -1.;
+  best_tuples = (cost_tuple_t **)lives_calloc(N_REAL_COST_TYPES, sizeof(cost_tuple_t *));
+  for (i = 0; i < N_REAL_COST_TYPES; i++) mincost[i] = -1.;
 }
 
 if (ni >= n->n_inputs) {
   // we set values for all inputs, now we produce the tuple from the set of combinations
   cost_tuple_t *tup = make_tuple(n, conv, factors);
+
   if (mincost[k] == -1. || tup->tot_cost[k] < mincost[k]) {
     mincost[k] = tup->tot_cost[k];
     if (best_tuples[k]) free_tuple(best_tuples[k]);
     best_tuples[k] = copy_tuple(tup, n->n_inputs);
   }
+
+  tup->palconv = NULL;
   free_tuple(tup);
-  return NULL;
+  return best_tuples;
 }
 
 // this is done for each input n->inputs[ni]
@@ -5572,7 +5578,12 @@ for (xni = ni + 1; xni < n->n_inputs; xni++) {
   if (!(xin->flags & (NODEFLAGS_IO_SKIP | NODEFLAG_IO_CLONE))) break;
 }
 
-for (k = 0; k < N_COST_TYPES; k++) {
+if (ni) {
+  k_start = k;
+  k_end = k + 1;
+}
+
+for (k = k_start; k < k_end; k++) {
   if (out->npals) {
     // if out palettes can vary, the palette is usually set by the host
     // or by the filter, however we can still calculate it
@@ -5625,14 +5636,13 @@ for (k = 0; k < N_COST_TYPES; k++) {
 }
 if (!ni) {
   lives_free(conv);
-  return best_tuples;
+  if (!best_tuples || !best_tuples[0]) abort();
 }
-return NULL;
+return best_tuples;
 }
 
-LIVES_LOCAL_INLINE cost_tuple_t **best_tuples(inst_node_t *n, double * factors) {
-return backtrack(n, 0, factors);
-}
+
+LIVES_LOCAL_INLINE cost_tuple_t **best_tuples(inst_node_t *n, double * factors) {return backtrack(n, 0, factors);}
 
 
 static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
@@ -5706,7 +5716,7 @@ if (n->n_outputs) {
     case 0:
       // set optimal pal for node or for output
       // data here is cost_type
-      for (k = 0; k < N_COST_TYPES; k++) {
+      for (k = 0; k < N_REAL_COST_TYPES; k++) {
         if (in->npals) pal = in->best_out_pal[k];
         else pal = out->node->best_pal_up[k];
         out->best_out_pal[k] = pal;
@@ -5909,10 +5919,10 @@ else {
       for (ni = 0; ni < n->n_clip_srcs; ni++) {
         in = n->inputs[ni];
         if (!in) break;
-        for (int k = 0; k < N_COST_TYPES; k++) {
+        for (int k = 0; k < N_REAL_COST_TYPES; k++) {
           int tpal = n->best_pal_up[k];
           in->best_in_pal[k] = tpal;
-          in->best_out_pal[k] = in->best_src_pal[tpal * N_COST_TYPES + k];
+          in->best_out_pal[k] = in->best_src_pal[tpal * N_REAL_COST_TYPES + k];
         }
         // this is the palette we will use for the clip_src
         in->optimal_pal = in->best_out_pal[COST_TYPE_COMBINED];
@@ -5924,7 +5934,7 @@ else {
     boolean is_converter = FALSE;
     if (n->flags & NODESRC_IS_CONVERTER) is_converter = TRUE;
 
-    for (k = 0; k < N_COST_TYPES; k++) {
+    for (k = 0; k < N_REAL_COST_TYPES; k++) {
       for (ni = 0; ni < n->n_inputs; ni++) {
         in = n->inputs[ni];
 
@@ -5960,7 +5970,7 @@ else {
     }
 
     cost_tuple_t **tups = best_tuples(n, factors);
-    for (k = 0; k < N_COST_TYPES; k++) {
+    for (k = 0; k < N_REAL_COST_TYPES; k++) {
       //d_print_debug("got best tup %p for ct %d\n", tup, k);
       cost_tuple_t *tup = tups[k];
       for (ni = 0; ni < n->n_inputs; ni++) {
@@ -7233,14 +7243,14 @@ return LIVES_RESULT_SUCCESS;
 /*   // TODO - we may not have abest pal in future, but rather a set of best_pals */
 /*   // for the inputs. Then we need to appl */
 /*   int pal; */
-/*   if (!n || cost_type < 0 || cost_type >= N_COST_TYPES) */
+/*   if (!n || cost_type < 0 || cost_type >= N_REAL_COST_TYPES) */
 /*     return -1.; */
 /*   return n->min_cost[cost_type]; */
 /* } */
 
 
 /* int get_best_palette(inst_node_t *n, int idx, int cost_type) { */
-/*   if (!n || cost_type < 0 || cost_type >= N_COST_TYPES) */
+/*   if (!n || cost_type < 0 || cost_type >= N_REAL_COST_TYPES) */
 /*     return WEED_PALETTE_INVALID; */
 /*   if (idx < 0 || idx >= n->n_inputs) */
 /*     return WEED_PALETTE_INVALID; */
@@ -7451,5 +7461,45 @@ if (mainw->layers) {
   mainw->layers = NULL;
 }
 if (*nodemodel) free_nodemodel(nodemodel);
+}
+
+
+lives_result_t run_next_cycle(void) {
+// run a fresh iteration of mainw->exec_plan
+// WARNING - will alter mainw->plan_cycle
+
+// free pixel data in all layers except mainw->frame_layer (nullify this to clear it, eg. on error)
+if (mainw->layers) {
+  // all our pixel_data should have been free'd already
+  for (int i = 0; mainw->layers[i]; i++) {
+    if (mainw->layers[i] != mainw->frame_layer) {
+      weed_layer_pixel_data_free(mainw->layers[i]);
+    }
+  }
+}
+
+exec_plan_free(mainw->plan_cycle);
+
+// reset layers for next cycle. Do NOT free them now
+mainw->layers = map_sources_to_tracks(FALSE, TRUE);
+
+mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
+
+execute_plan(mainw->plan_cycle, TRUE);
+
+if (mainw->blend_file != -1
+    && (prefs->tr_self || mainw->blend_file != mainw->playing_file)) {
+  frames64_t blend_frame = get_blend_frame(mainw->currticks);
+  if (blend_frame > 0) {
+    mainw->plan_cycle->frame_idx[1] = blend_frame;
+    lives_layer_set_frame(mainw->layers[1], blend_frame);
+    lives_layer_set_status(mainw->layers[1], LAYER_STATUS_PREPARED);
+  }
+}
+
+// trigger next plan cycle. We can start loading background frames while displaying current one
+plan_cycle_trigger(mainw->plan_cycle);
+
+return LIVES_RESULT_SUCCESS;
 }
 

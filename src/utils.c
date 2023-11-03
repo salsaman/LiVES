@@ -298,7 +298,7 @@ int lives_system(const char *com, boolean allow_error) {
         LIVES_ERROR(msg);
         response = do_system_failed_error(com, retval, NULL, TRUE, FALSE);
       }
-#ifndef LIVES_NO_DEBUG
+#if LIVES_FULL_DEBUG
       else {
         msg = lives_strdup_printf("lives_system failed with code %d: %s (not an error)", retval, com);
         LIVES_DEBUG(msg);
@@ -395,12 +395,12 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
         LIVES_WARN(msg);
         response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
       }
-      //#ifndef LIVES_NO_DEBUG
+#if LIVES_FULL_DEBUG
       else {
         msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
         LIVES_DEBUG(msg);
       }
-      //#endif
+#endif
       if (msg) lives_free(msg);
     }
   } while (response == LIVES_RESPONSE_RETRY);

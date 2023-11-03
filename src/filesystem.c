@@ -478,7 +478,7 @@ ssize_t lives_write(int fd, const void *buf, ssize_t count, boolean allow_fail) 
       LIVES_ERROR(msg);
       close(fd);
     }
-#ifndef LIVES_NO_DEBUG
+#if LIVES_FULL_DEBUG
     else {
       char *ffile = filename_from_fd(NULL, fd);
       if (retval >= 0)
@@ -634,7 +634,7 @@ ssize_t lives_read(int fd, void *buf, ssize_t count, boolean allow_less) {
       do_file_read_error(fd, retval, buf, count);
       close(fd);
     }
-#ifndef LIVES_NO_DEBUG
+#if LIVES_FULL_DEBUG
     else {
       char *msg = NULL;
       char *ffile = filename_from_fd(NULL, fd);

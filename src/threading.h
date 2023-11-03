@@ -153,6 +153,10 @@ typedef struct {
 
   lives_sync_list_t *var_simple_cmd_list;
 
+  // msgs
+  int *var_pmsgmode, var_msgmode;
+  void *var_msgsocket;
+
   // debugging
   lives_sync_list_t *var_func_stack;
   ticks_t var_timerinfo, var_round_trip_ticks, var_ticks_to_activate;
@@ -436,7 +440,7 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 // flags thread as externally created / controlled
 #define THRD_STATE_EXTERN	(1ull << 63)
 
-char *lives_proc_thread_get_funcname(lives_proc_thread_t);
+const char *lives_proc_thread_get_funcname(lives_proc_thread_t);
 uint32_t lives_proc_thread_get_rtype(lives_proc_thread_t);
 funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t);
 char *lives_proc_thread_get_args_fmt(lives_proc_thread_t);

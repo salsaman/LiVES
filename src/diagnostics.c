@@ -49,8 +49,8 @@ void print_diagnostics(uint64_t types) {
     bbsummary();
   }
   if (types & DIAG_THREADS) {
-    tmp = get_threadstats();
     g_print("THREADS\n");
+    tmp = get_threadstats();
     g_print("%s\n", tmp);
     lives_free(tmp);
   }
@@ -218,7 +218,7 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
   double qual;
   char *tmp;
 
-  MSGMODE_SAVE;
+  MSGMODE_LOCAL;
 
 #ifdef DEBUG_RNG
   MSGMODE_SET(DEBUG_INIT);
@@ -361,7 +361,7 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
 
   if (q) *q = qual;
 
-  MSGMODE_RESTORE;
+  MSGMODE_GLOBAL;
 
   return rest;
 }
@@ -977,9 +977,74 @@ LIVES_LOCAL_INLINE void show_quadstate(weed_plant_t *p) {
 }
 
 static inline void  werr_expl(weed_error_t werr) {
-  char *msg = weed_error_to_literal(werr);
+  const char *msg = weed_error_to_literal(werr);
   fprintf(stderr, "(%s)\n", msg);
-  lives_free(msg);
+}
+
+
+static weed_plantptr_t statsplant = NULL;
+
+void upd_statsplant(const char *key) {
+  int freq;
+  if (mainw->is_exiting) return;
+  if (!statsplant) statsplant = weed_plant_new(LIVES_PLANT_AUDIT);
+  _weed_leaf_get(statsplant, key, 0, &freq);
+  freq++;
+  _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
+}
+
+
+void show_weed_stats(int oper) {
+  LiVESList *freq = NULL, *sorted = NULL, *list;
+  char **leaves;
+  int val, i, added = 0, min, lmin = 0;
+  weed_size_t nleaves;
+
+  if (!statsplant) return;
+  switch (oper) {
+  case STATS_FREQ:
+    leaves = weed_plant_list_leaves(statsplant, &nleaves);
+    /// sort in descending order
+    for (i = 0; i < nleaves; i++) {
+      int f = weed_get_int_value(statsplant, leaves[i], NULL);
+      freq = lives_list_prepend(freq, LIVES_INT_TO_POINTER(f));
+      //g_print("added %s with freq %d\n", leaves[i], f);
+    }
+    while (added < nleaves) {
+      min = LIVES_MAXINT32;
+      for (list = freq; list; list = list->next) {
+        val = LIVES_POINTER_TO_INT(list->data);
+        if (val < min && val > lmin) min = val;
+      }
+      //g_print("next min was %d\n", min);
+      i = nleaves - 1;
+      for (list = freq; list; list = list->next) {
+        val = LIVES_POINTER_TO_INT(list->data);
+        if (val == min) {
+          //g_print("prep. %d %s\n", i, leaves[i]);
+          sorted = lives_list_prepend(sorted, LIVES_INT_TO_POINTER(i));
+          if (++added == nleaves) break;
+        }
+        i--;
+      }
+      if (min == lmin) break;
+      lmin = min;
+    }
+    for (list = sorted; list; list = list->next) {
+      val = LIVES_POINTER_TO_INT(list->data);
+      g_print("STATS: %s : %d\n", leaves[val], weed_get_int_value(statsplant, leaves[val], NULL));
+      free(leaves[val]);
+    }
+    free(leaves);
+    lives_list_free(freq);
+    lives_list_free(sorted);
+    break;
+  case STATS_LIST:
+  default:
+    list_leaves(statsplant);
+    break;
+  }
+  weed_plant_free(statsplant);
 }
 
 

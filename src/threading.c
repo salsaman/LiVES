@@ -515,7 +515,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 
   weed_set_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, (void *)hook_stacks);
   if (weed_get_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, NULL) != (void *)hook_stacks) abort();
-  weed_set_string_value(lpt, LIVES_LEAF_FUNC_NAME, fname);
+  weed_set_const_string_value(lpt, LIVES_LEAF_FUNC_NAME, fname);
 
   if (attrs && (*attrs & LIVES_THRDATTR_CREATE_REFFED)) lives_proc_thread_ref(lpt);
 
@@ -1363,8 +1363,8 @@ ticks_t lives_proc_thread_get_timing_info(lives_proc_thread_t lpt, int info_type
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_proc_thread_get_funcname(lives_proc_thread_t lpt) {
-  if (lpt) return weed_get_string_value(lpt, LIVES_LEAF_FUNC_NAME, NULL);
+LIVES_GLOBAL_INLINE const char *lives_proc_thread_get_funcname(lives_proc_thread_t lpt) {
+  if (lpt) return weed_get_const_string_value(lpt, LIVES_LEAF_FUNC_NAME, NULL);
   return NULL;
 }
 
@@ -3308,7 +3308,7 @@ lives_proc_thread_t lives_thread_get_prime(void) {
 LIVES_GLOBAL_INLINE lives_proc_thread_t lives_proc_thread_get_toplevel(lives_proc_thread_t lpt) {
   lives_thread_data_t *tdata = NULL;
   if (lpt) tdata = lives_proc_thread_get_thread_data(lpt);
-  return tdata ?  tdata->vars.var_prime_lpt : lpt;
+  return tdata ? tdata->vars.var_prime_lpt : lpt;
 }
 
 
@@ -3439,7 +3439,9 @@ static void *_lives_thread_data_create(void *pslot_id) {
       if (pthread_equal(pthread_self(), capable->main_thread)) {
         tdata->thrd_type = THRD_TYPE_MAIN;
       } else tdata->thrd_type = THRD_TYPE_EXTERN;
-    } else tdata->thrd_type = THRD_TYPE_WORKER;
+    } else {
+      tdata->thrd_type = THRD_TYPE_WORKER;
+    }
 
     tdata->vars.var_thrd_type = tdata->thrd_type;
     tdata->vars.var_slot_id = tdata->slot_id = slot_id;
@@ -3458,6 +3460,8 @@ static void *_lives_thread_data_create(void *pslot_id) {
     tdata->vars.var_sync_ready = TRUE;
 
     tdata->vars.var_loveliness = DEF_LOVELINESS;
+
+    tdata->vars.var_pmsgmode = &prefs->msg_routing;
 
     if (tdata->thrd_type < THRD_TYPE_EXTERN) {
       tdata->vars.var_guictx = lives_widget_context_new();
@@ -4259,6 +4263,12 @@ LiVESList *filter_unknown_threads(LiVESList * allthrds) {
   return allthrds;
 }
 
+static lives_result_t print_function(void *data) {
+  const char *funcdets = (const char *)data;
+  lives_printerr("%s\n", funcdets);
+  return LIVES_RESULT_FAIL;
+}
+
 
 char *get_threadstats(void) {
   int totthreads = 0, actthreads = 0;
@@ -4269,44 +4279,69 @@ char *get_threadstats(void) {
     char *notes = NULL, *tnum;
     lives_thread_data_t *tdata  = (lives_thread_data_t *)list->data;
     if (tdata) {
-      lives_proc_thread_t lpt = NULL;
+      lives_proc_thread_t prime_lpt, active_lpt, nxtlpt;
+      char *tmp;
+      ticks_t qtime, sytime, ptime;
       totthreads++;
-
-      /* pthread_mutex_lock(self_stack_mutex); */
-      /* lpt_self_stack = (LiVESList *)tdata->vars.var_self_stack; */
-      /* if (lpt_self_stack) lpt = (lives_proc_thread_t)lpt_self_stack->data; */
-      /* pthread_mutex_unlock(self_stack_mutex); */
 
       if (pthread_equal(tdata->thrd_self, capable->gui_thread)) notes = lives_strdup("GUI thread");
       else if (tdata->thrd_type >= THRD_TYPE_EXTERN) notes = lives_strdup("External");
       tnum = get_thread_id(tdata->vars.var_uid);
       g_printerr("\nThread %d %s(%s):\nType: %s\n", tdata->slot_id, tnum,
-                 notes ? notes : "-", THREADVAR(origin));
+                 notes ? notes : "-", tdata->vars.var_origin);
       lives_free(tnum);
-      if (!lpt) g_printerr("Waiting in threadpool\n");
+      pthread_mutex_t *alpt_mutex = &tdata->vars.var_active_lpt_mutex;
+      pthread_mutex_lock(alpt_mutex);
+      active_lpt = tdata->vars.var_active_lpt;
+      //pthread_mutex_unlock(alpt_mutex);
+      if (!active_lpt) g_printerr("Waiting in threadpool\n");
       else {
-        ticks_t ptime, sytime, qtime;
-        char *funcname = lives_proc_thread_get_funcname(lpt);
-        if (!funcname)
-          g_printerr("Running unknown function\n");
-        else {
-          char *tmp = lives_proc_thread_show_func_call(lpt);
-          g_printerr("Currently running: %s\n", tmp);
-          lives_free(tmp);
-          actthreads++;
+        actthreads++;
+        g_printerr("Running proc_thread, ");
+        prime_lpt = tdata->vars.var_prime_lpt;
+        nxtlpt = weed_get_plantptr_value(prime_lpt, LIVES_LEAF_FOLLOWER, NULL);
+        if (nxtlpt) {
+          if (active_lpt == prime_lpt) {
+            g_print("proc_thread is chain leader\n");
+          } else {
+            g_print("proc_thread is part of a chain\n");
+            while (prime_lpt != active_lpt) {
+              tmp = lives_proc_thread_show_func_call(prime_lpt);
+              g_printerr("\t%s\n", tmp);
+              lives_free(tmp);
+              prime_lpt = nxtlpt;
+              nxtlpt = weed_get_plantptr_value(prime_lpt, LIVES_LEAF_FOLLOWER, NULL);
+            }
+          }
         }
-        lives_free(funcname);
-        lpt_desc_state(lpt);
+        while (1) {
+          tmp = lives_proc_thread_show_func_call(prime_lpt);
+          g_printerr("\t%s%s\n", prime_lpt == active_lpt ? "Active: " : "", tmp);
+          lives_free(tmp);
+          if (prime_lpt == active_lpt) {
+            if (tdata->vars.var_func_stack) {
+              lives_sync_list_find(tdata->vars.var_func_stack, print_function);
+            } else lives_printerr("Running unknown function\n");
+          }
+          if (!nxtlpt) break;
+          prime_lpt = nxtlpt;
+          nxtlpt = weed_get_plantptr_value(prime_lpt, LIVES_LEAF_FOLLOWER, NULL);
+        }
+
+        lpt_desc_state(active_lpt);
+        pthread_mutex_unlock(alpt_mutex);
+
         g_printerr("Loveliness %.2f\n", tdata->vars.var_loveliness);
-        qtime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_QUEUE);
-        sytime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_SYNC_START);
-        ptime = lives_proc_thread_get_timing_info(lpt, TIME_TOT_PROC);
+        qtime = lives_proc_thread_get_timing_info(active_lpt, TIME_TOT_QUEUE);
+        sytime = lives_proc_thread_get_timing_info(active_lpt, TIME_TOT_SYNC_START);
+        ptime = lives_proc_thread_get_timing_info(active_lpt, TIME_TOT_PROC);
         g_printerr("\n[queue wait time %.4f usec, sync_wait time %.4f usec, "
                    "proc time %.4f usec]\n\n",
                    (double)qtime / (double)USEC_TO_TICKS,
                    (double)sytime / (double)USEC_TO_TICKS,
                    (double)ptime / (double)USEC_TO_TICKS);
       }
+      pthread_mutex_unlock(alpt_mutex);
     }
   }
   pthread_rwlock_unlock(&all_tdata_rwlock);

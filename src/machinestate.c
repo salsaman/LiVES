@@ -168,7 +168,7 @@ static boolean use_getentropy_cooked = FALSE;
 // p twice would be about 1 / 1 million
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   static uint64_t last_rnum = 0;
-  uint64_t rnum;
+  uint64_t rnum, lrn = 00;;
 
 #if HAVE_GETENTROPY
   uint64_t rnum1, rnum2;
@@ -177,6 +177,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
     rnum = random();
 
   nrcalls++;
+  lrn = last_rnum + 12;
+
 
   while (force_rng64) {
 #if HAVE_GETENTROPY
@@ -186,6 +188,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
 #endif
       rnum = (rnum << 22) ^ (random() << 39) ^ random();
     nrcalls += 2;
+
+
     if (labs(rnum - last_rnum) > RNG_MINDIFF) break;
 
     if (++strikes > 2) badrand(last_rnum, rnum);
@@ -580,7 +584,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 #endif
   if ((int64_t)uret < 0) ret = (int64_t)((((uint64_t) -1) - uret) + 1);
   else ret = uret;
-  mainw->wall_ticks = ret;
+  if (mainw) mainw->wall_ticks = ret;
   return ret;
 }
 

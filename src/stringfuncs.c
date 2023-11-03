@@ -234,6 +234,56 @@ LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
   return (*st1 > *st2) - (*st1 < *st2);
 }
 
+static char *_lives_strndup_printf_va(const char *fmt, int maxlen, va_list ap) {
+  int size = 0;
+  char *p = NULL;
+  va_list aq;
+
+  va_copy(aq, ap);
+  size = vsnprintf(p, size, fmt, aq);
+  va_end(aq);
+
+  if (size < 0) return NULL;
+
+  p = lives_malloc(++size);
+  if (!p) return NULL;
+
+  if (maxlen > 0 && size > maxlen) size = maxlen;
+
+  size = vsnprintf(p, size, fmt, ap);
+
+  if (size < 0) {
+    lives_free(p);
+    return NULL;
+  }
+
+  return p;
+}
+
+
+char *lives_strndup_printf(const char *fmt, int maxlen, ...) {
+  char *ret;
+  va_list ap;
+  va_start(ap, fmt);
+  ret = _lives_strndup_printf_va(fmt, maxlen, ap);
+  va_end(ap);
+  return ret;
+}
+
+
+char *lives_strdup_printf(const char *fmt, ...) {
+  char *ret;
+  va_list ap;
+  va_start(ap, fmt);
+  ret = _lives_strndup_printf_va(fmt, 0, ap);
+  va_end(ap);
+  return ret;
+}
+
+
+char *lives_strdup_vprintf(const char *fmt, va_list ap) {return _lives_strndup_printf_va(fmt, 0, ap);}
+
+
 /// returns FALSE if strings match
 LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size_t len) {
   if (!st1 || !st2) return (st1 != st2);

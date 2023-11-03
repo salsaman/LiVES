@@ -472,9 +472,6 @@ static boolean pre_init(void) {
 
   what_sup = pre_init_sup;
 
-  /// create context data for main thread; must be called before get_capabilities()
-  mainw->fg_tdata = lives_thread_data_create();
-
   // test the timer
   if (1) {
     d_print("Testing LiVES thread timers...");
@@ -1795,7 +1792,7 @@ static boolean lives_startup2(livespointer data) {
 
   if (prefs->startup_phase == 100) prefs->startup_phase = 0;
 
-  MSGMODE_SAVE;
+  MSGMODE_LOCAL;
   MSGMODE_OFF(FANCY);
 
   if (*devmap) on_devicemap_load_activate(NULL, devmap);
@@ -1808,7 +1805,7 @@ static boolean lives_startup2(livespointer data) {
   d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
   lives_free(ustr);
 
-  MSGMODE_RESTORE;
+  MSGMODE_GLOBAL;
   d_print("");
 
   if (MSGMODE_HAS(LOGFILE)) {
@@ -2595,6 +2592,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   char *tmp;
 
   main_thread = pthread_self();
+
 #if USE_RPMALLOC
   if (!rpmalloc_is_thread_initialized())
     rpmalloc_thread_initialize();
@@ -2617,6 +2615,19 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
+
+  mainw->fg_tdata = lives_thread_data_create();
+
+  cache_msg("Getting first stage hardware details...");
+  get_machine_dets(0);
+  capable->features_ready |= FEATURE_MACHINEDETS_1;
+  cache_msg("OK\n");
+
+  cache_msg("Initializing memory block allocators...");
+
+  init_memfuncs(1);
+  capable->features_ready |= FEATURE_MEMFUNCS;
+  cache_msg("OK\n");
 
   MSGMODE_SET(INIT);
 
@@ -2736,37 +2747,14 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_free(tmp);
   }
 
-  d_print("Getting first stage hardware details...");
-  get_machine_dets(0);
-  d_print("OK\n");
-
-  d_print("Initializing memory block allocators...");
-
-  init_memfuncs(1);
-  d_print("OK\n");
-
   d_print("Initializing Weed functions...");
   weed_functions_init();
-  d_print("OK\n");
-
-  //do_startup_diagnostics(test_opts);
-
-  d_print("Initializing threadpool...");
-  lives_threadpool_init();
-  d_print("OK\n");
-
-  d_print("Getting second stage hardware details...");
-  get_machine_dets(1);
-  d_print("OK\n");
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
 
   // allow us to delete undeletable leaves (plugins can't)
   weed_leaf_delete = weed_leaf_delete_host;
-
-  // allow us to set immutable values (plugins can't)
-  //weed_leaf_get = weed_leaf_get_monitor;
 
 #if DEBUG_PLANTS
   Xweed_plant_free = weed_plant_free_host;
@@ -2776,6 +2764,31 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_plant_free = weed_plant_free_host;
   weed_plant_new = weed_plant_new_host;
 #endif
+  weed_leaf_get = weed_leaf_get_monitor;
+  weed_threadsafe = FALSE;
+  test_plant = weed_plant_new(0);
+  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
+    weed_threadsafe = TRUE;
+  else weed_threadsafe = FALSE;
+
+  weed_plant_free(test_plant);
+
+  capable->features_ready |= FEATURE_WEED;
+  d_print("OK\n");
+
+  //do_startup_diagnostics(test_opts);
+
+  d_print("Analysing RNG...\n");
+  init_random();
+  capable->features_ready |= FEATURE_RNG;
+  d_print("\n");
+
+  mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
+
+  d_print("Getting second stage hardware details...");
+  get_machine_dets(1);
+  capable->features_ready |= FEATURE_MACHINEDETS_2;
+  d_print("OK\n");
 
   lives_alarms_init();
   // unblock just for calling thread (main thread)
@@ -2786,24 +2799,18 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_sys_alarm_set_timeout(test_timeout, 1000);
   lives_sys_alarm_wait(test_timeout);
   lives_sys_alarm_disarm(test_timeout);
+
+  capable->features_ready |= FEATURE_SYSALARMS;
   d_print("OK\n");
 
   d_print("Setting up colour engine...");
   init_colour_engine();
+  capable->features_ready |= FEATURE_COL_ENGINE;
   d_print("OK\n");
-
-  make_std_icaps();
-
-  weed_threadsafe = FALSE;
-  test_plant = weed_plant_new(0);
-  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
-    weed_threadsafe = TRUE;
-  else weed_threadsafe = FALSE;
-
-  weed_plant_free(test_plant);
 
   d_print("Readying GUI helper...");
   widget_helper_init();
+  capable->features_ready |= FEATURE_GUI_HELPER;
   d_print("OK\n");
 
 #ifdef WEED_WIDGETS
@@ -2811,12 +2818,11 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   //show_widgets_info();
 #endif
 
-  d_print("Analysing RNG...\n");
-  init_random();
-  d_print("\n");
+  make_std_icaps();
 
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
+  capable->features_ready |= FEATURE_THEMING;
 
   what_sup = run_program2_sup;
 
@@ -2847,6 +2853,11 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s", tmp);
     lives_free(tmp);
   }
+
+  d_print("Initializing threadpool...");
+  lives_threadpool_init();
+  capable->features_ready |= FEATURE_THREADPOOL;
+  d_print("OK\n");
 
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
   lives_idle_add(lives_startup, NULL);

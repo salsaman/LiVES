@@ -64,6 +64,9 @@
 // this is qloss due to palette changes
 #define COST_TYPE_QLOSS_P      	2
 
+// real cost types
+#define N_REAL_COST_TYPES	3
+
 // this is qloss due to resizing
 #define COST_TYPE_QLOSS_S      	3
 
@@ -907,6 +910,8 @@ struct _exec_plan {
 
   volatile uint64_t state;
 };
+
+lives_result_t run_next_cycle(void);
 
 void build_nodemodel(lives_nodemodel_t **);
 void free_nodemodel(lives_nodemodel_t **);

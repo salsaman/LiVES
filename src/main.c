@@ -173,7 +173,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
   }
 
   if (xlevel <= LIVES_LOG_LEVEL_DEBUG) {
-#ifdef LIVES_NO_DEBUG
+#if LIVES_FULL_DEBUG
     if (prefs && prefs->show_dev_opts)
       fprintf(stderr, "LiVES debug: %s\n", msg);
 #else
@@ -489,14 +489,14 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     }
 
 #ifdef USE_GLIB
-#ifdef LIVES_NO_DEBUG
+#if !LIVES_FULL_DEBUG
     if (mainw->debug) {
 #endif
 #ifdef HAVE_PRCTL
       prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
 #endif
       g_on_error_query(capable->myname_full);
-#ifdef LIVES_NO_DEBUG
+#if !LIVES_FULL_DEBUG
     }
 #endif
 #endif
@@ -689,8 +689,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   //gtk_window_set_interactive_debugging(TRUE);
-#ifndef LIVES_NO_DEBUG
-  g_printerr("FULL DEBUGGING IS ON !!\n");
+#if LIVES_FULL_DEBUG
+  fprintf(stderr, "FULL DEBUGGING IS ON !!\n");
 #endif
 #endif
 

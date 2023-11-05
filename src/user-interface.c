@@ -918,7 +918,7 @@ void reset_mainwin_size(void) {
 
   if (!mainw->hdrbar) {
     if (prefs->open_maximised && by > MENU_HIDE_LIM) {
-      break_me("mabr hide 1");
+      BREAK_ME("mabr hide 1");
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     }
   }
@@ -982,7 +982,7 @@ void get_gui_framesize(int *hsize, int *vsize) {
   by = abs(by);
 
   if (!mainw->hdrbar && by > MENU_HIDE_LIM) {
-    break_me("mabr hide 2");
+    BREAK_ME("mabr hide 2");
     lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
   }
   if (hsize) *hsize = (((scr_width - H_RESIZE_ADJUST * 3 + bx) / 3) >> 1) << 1;

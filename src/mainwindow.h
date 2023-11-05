@@ -1076,9 +1076,10 @@ typedef struct {
   // for the internal player
   LiVESWidget *play_image;
   LiVESWidget *play_window;
-  weed_plant_t *frame_layer;
+  weed_layer_t *frame_layer;
 
-  weed_plant_t *ext_layer; // can feed a layer to play
+  weed_layer_t *ext_layer; // can feed a layer to play
+  weed_layer_t *ext_player_layer;
 
   lives_painter_surface_t *play_surface;
   pthread_mutex_t play_surface_mutex;

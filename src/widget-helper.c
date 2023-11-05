@@ -817,7 +817,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref(livespointer object)
 #ifdef GUI_GTK
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Attempted ref of non-object");
-    break_me("ref of nonobj");
+    BREAK_ME("ref of nonobj");
     return FALSE;
   }
   g_object_ref(object);
@@ -831,7 +831,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
 #ifdef GUI_GTK
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Attempted unref of non-object");
-    break_me("unref of nonobj");
+    BREAK_ME("unref of nonobj");
     return FALSE;
   }
   g_object_unref(object);
@@ -846,7 +846,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer object) {
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Attempted ref_sink of non-object");
-    break_me("ref sink of nonobj");
+    BREAK_ME("ref sink of nonobj");
     return FALSE;
   }
   g_object_ref_sink(object);
@@ -879,7 +879,7 @@ static void sigdata_free(livespointer data, LiVESWidgetClosure * cl) {
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);
 
   if (sigdata->instance && !sigdata->callback) {
-    break_me("invalid sigdata");
+    BREAK_ME("invalid sigdata");
   }
 
   lives_proc_thread_ref((lpt = sigdata->proc));
@@ -897,7 +897,7 @@ static void sigdata_free(livespointer data, LiVESWidgetClosure * cl) {
   //}
   if (sigdata->detsig) lives_free(sigdata->detsig);
   if (sigdata->instance && !sigdata->callback) {
-    break_me("invalid sigdata");
+    BREAK_ME("invalid sigdata");
   }
   lives_freep((void **)&sigdata);
 }
@@ -1595,7 +1595,7 @@ static void _lives_menu_item_set_sensitive(LiVESWidget * item, boolean state) {
 
 
 WIDGET_HELPER_LOCAL_INLINE void _lives_widget_set_sensitive(LiVESWidget * widget, boolean state) {
-  if (!LIVES_IS_WIDGET(widget)) break_me("non widget in set_sensitive");
+  if (!LIVES_IS_WIDGET(widget)) BREAK_ME("non widget in set_sensitive");
 #ifdef GUI_GTK
 #ifdef GTK_SUBMENU_SENS_BUG
   if (GTK_IS_MENU_ITEM(widget)) {
@@ -1610,7 +1610,7 @@ WIDGET_HELPER_LOCAL_INLINE void _lives_widget_set_sensitive(LiVESWidget * widget
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget * widget, boolean state) {
 #ifdef GUI_GTK
-  if (!LIVES_IS_WIDGET(widget)) break_me("non widget in set_sensitive");
+  if (!LIVES_IS_WIDGET(widget)) BREAK_ME("non widget in set_sensitive");
   if (is_fg_thread()) _lives_widget_set_sensitive(widget, state);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
@@ -2243,7 +2243,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget * widget, LiVESWidgetSta
 #endif
       gtk_widget_set_name(widget, widget_name);
 #ifdef ORD_NAMES
-      if (widnum == brk_widnum) break_me("widnum");
+      if (widnum == brk_widnum) BREAK_ME("widnum");
 #endif
     }
   }
@@ -3207,7 +3207,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow * window, in
         lives_abort("Widget size too large for display (winri) !");
     }
   }
-  //if (GTK_WIDGET(window) == mainw->LiVES) break_me("res win");
+  //if (GTK_WIDGET(window) == mainw->LiVES) BREAK_ME("res win");
   gtk_window_resize(window, width, height);
   gtk_widget_set_size_request(GTK_WIDGET(window), width, height);
   return TRUE;
@@ -9192,7 +9192,7 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for button !");
+    if (img_tips) BREAK_ME("floating img tips for button !");
   }
 
 #ifdef USE_SPECIAL_BUTTONS
@@ -9921,7 +9921,7 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for switch !");
+    if (img_tips) BREAK_ME("floating img tips for switch !");
   }
 
   if (widget_opts.apply_theme) {
@@ -10040,7 +10040,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for chkbutton !");
+    if (img_tips) BREAK_ME("floating img tips for chkbutton !");
   }
 
   if (widget_opts.apply_theme) {
@@ -10258,7 +10258,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for radiobutton !");
+    if (img_tips) BREAK_ME("floating img tips for radiobutton !");
   }
 
   if (widget_opts.apply_theme) {
@@ -10509,7 +10509,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for spinbutton !");
+    if (img_tips) BREAK_ME("floating img tips for spinbutton !");
   }
 
   if (widget_opts.apply_theme) {
@@ -10656,7 +10656,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for combo !");
+    if (img_tips) BREAK_ME("floating img tips for combo !");
   }
 
   if (list) {
@@ -10809,7 +10809,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
   } else {
-    if (img_tips) break_me("floating img tips for entry !");
+    if (img_tips) BREAK_ME("floating img tips for entry !");
   }
 
   if (widget_opts.apply_theme) {

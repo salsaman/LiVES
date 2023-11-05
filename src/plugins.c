@@ -744,6 +744,7 @@ LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
               mainw->ext_audio = FALSE;
               pthread_mutex_unlock(&mainw->vpp_stream_mutex);
               lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
+	      //reset_ext_player_layer(TRUE);
               if (mainw->vpp->exit_screen) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
               }
@@ -1254,6 +1255,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
         mainw->ext_audio = FALSE;
         mainw->ext_playback = FALSE;
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+	//	reset_ext_player_layer(TRUE);
         if (mainw->vpp->exit_screen) {
           (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
         }
@@ -1669,6 +1671,7 @@ static void _vid_playback_plugin_exit(void) {
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
     lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
+    // reset_ext_player_layer(TRUE);
 
     if (mainw->vpp->exit_screen) {
       (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
@@ -2824,7 +2827,7 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   // TODO - use auto_dialog
   if (is_fg_thread()) fg_service_fulfill();
 
-  lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)try_decoder_plugins,
+  lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, try_decoder_plugins,
                                  WEED_SEED_VOIDPTR, "svv", (!fake_cdata || !use_fake_cdata) ? sfile->file_name
                                  : NULL, xdisabled, use_fake_cdata ? fake_cdata : NULL);
 

@@ -516,17 +516,20 @@ int32_t weed_get_plant_type(weed_plant_t *plant)
 {return plant ? weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) : WEED_PLANT_UNKNOWN;}
 
 
-#define _COPY_DATA(ctype, wtype, dst, src, keyt, keyf, n, err) do {	\
+#define _COPY_DATA_(ctype, st, dst, src, keyt, keyf, n, err) do {	\
     int num, num2;						\
-    ctype *vals = (ctype *)weed_get_arrayx(src, keyf, WEED_SEED_##wtype, &err, &num); \
+    ctype *vals = (ctype *)weed_get_arrayx(src, keyf, st, &err, &num); \
     if (err == WEED_SUCCESS) {						\
-      if (n < 0) err = weed_leaf_set(dst, keyt, WEED_SEED_##wtype, num, vals); \
+      if (n < 0) err = weed_leaf_set(dst, keyt, st, num, vals); \
       else {if (n >= num) err = WEED_ERROR_NOSUCH_ELEMENT;		\
-	else {ctype *vals2 = (ctype *)weed_get_arrayx(dst, keyt, WEED_SEED_##wtype, &err, &num2); \
+	else {ctype *vals2 = (ctype *)weed_get_arrayx(dst, keyt, st, &err, &num2); \
 	  if (err == WEED_SUCCESS) {       				\
 	    if (n >= num2) err = WEED_ERROR_NOSUCH_ELEMENT;		\
-	    else {vals2[n] = vals[n]; err = weed_leaf_set(dst, keyt, WEED_SEED_##wtype, num, vals);}} \
+	    else {vals2[n] = vals[n]; err = weed_leaf_set(dst, keyt, st, num, vals);}} \
 	  (*_free_func)(vals2);}}} (*_free_func)(vals);} while (0);
+
+#define _COPY_DATA(ctype, wtype, dst, src, keyt, keyf, n, err) \
+  _COPY_DATA_(ctype, WEED_SEED_##wtype, dst, src, keyt, keyf, n, err)	\
 
 weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n) {
   // copy a leaf from src to dest
@@ -559,7 +562,6 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
     case WEED_SEED_BOOLEAN: _COPY_DATA(weed_boolean_t, BOOLEAN, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_DOUBLE: _COPY_DATA(double, DOUBLE, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_FUNCPTR: _COPY_DATA(weed_funcptr_t, FUNCPTR, dst, src, keyt, keyf, n, err); break;
-    case WEED_SEED_CONST_CHARPTR:
     case WEED_SEED_VOIDPTR: _COPY_DATA(weed_voidptr_t, VOIDPTR, dst, src, keyt, keyf, n, err); break;
     case WEED_SEED_PLANTPTR: _COPY_DATA(weed_plantptr_t, PLANTPTR, dst, src, keyt, keyf, n, err); break;
 
@@ -587,6 +589,11 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
       (*_free_func)(datac);
     }
     break;
+
+    default:
+      if (WEED_SEED_IS_CUSTOM(seed_type) == WEED_TRUE)
+	_COPY_DATA_(weed_voidptr_t, seed_type, dst, src, keyt, keyf, n, err);
+      break;
     }
   }
   return err;

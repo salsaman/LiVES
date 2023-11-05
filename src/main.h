@@ -145,6 +145,8 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 // LiVES extensions (effects-weed.c)
 
+#define WEED_SEED_CONST_CHARPTR 1400
+
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
 
@@ -229,6 +231,7 @@ extern locale_t oloc, nloc;
 #define FEATURE_RNG			(1ul << 8)
 #define FEATURE_THEMING			(1ul << 9)
 
+#define FEATURE_RREADY(what) (capable->features_ready & FEATURE_##what)
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
@@ -727,7 +730,7 @@ void mt_sensitise(lives_mt *);
 
 const char *dummystr;
 
-void break_me(const char *dtl);
+void BREAK_ME(const char *dtl);
 
 #define SHOW_LOCATION(text)						\
   fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_)
@@ -762,8 +765,8 @@ void break_me(const char *dtl);
 // major error
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(errmsg)      {fprintf(stderr, "LiVES ERROR: %s\n", (errmsg)); break_me((errmsg));}
-#define LIVES_ERROR_NOBRK(errmsg) {fprintf(stderr, "LiVES ERROR: %s\n", (errmsg)); break_me((errmsg));}
+#define LIVES_ERROR(errmsg)      {fprintf(stderr, "LiVES ERROR: %s\n", (errmsg)); BREAK_ME((errmsg));}
+#define LIVES_ERROR_NOBRK(errmsg) {fprintf(stderr, "LiVES ERROR: %s\n", (errmsg)); BREAK_ME((errmsg));}
 #else // LIVES_NO_ERROR
 #define LIVES_ERROR(errmsg)      dummystr = (errmsg)
 #endif // LIVES_NO_ERROR
@@ -771,7 +774,7 @@ void break_me(const char *dtl);
 
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(errmsg)_DW0(SHOW_LOCATION("LiVES CRITICAL:");break_me((errmsg)); \
+#define LIVES_CRITICAL(errmsg)_DW0(SHOW_LOCATION("LiVES CRITICAL:");BREAK_ME((errmsg)); \
 				   if (mainw) mainw->critical_errno = -1; lives_abort(errmsg);)
 #else // LIVES_NO_CRITICAL
 #define LIVES_CRITICAL(errmsg)      dummystr = (errmsg)

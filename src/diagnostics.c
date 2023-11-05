@@ -59,7 +59,7 @@ void print_diagnostics(uint64_t types) {
 
 boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                        livespointer statep) {
-  break_me("debug_callback");
+  BREAK_ME("debug_callback");
   return TRUE;
 }
 
@@ -2285,19 +2285,19 @@ void do_lsd_tests(void) {
 
   g_print("test struct from template\n");
 
-  break_me("lsd0");
+  BREAK_ME("lsd0");
 
   fcd1 = lsd_struct_create(lsd);
 
   g_print("fcd1 is %p\n", fcd1);
 
-  break_me("lsd1");
+  BREAK_ME("lsd1");
 
   fcd2 = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
 
   g_print("fcd is %p\n", fcd2);
 
-  break_me("lsd2");
+  BREAK_ME("lsd2");
 
   g_print("check integrity\n");
 
@@ -2307,13 +2307,13 @@ void do_lsd_tests(void) {
 
   lsd_struct_unref(fcd2->lsd);
 
-  break_me("lsd3");
+  BREAK_ME("lsd3");
 
   g_print("check copy\n");
 
   fcd2 = lsd_struct_copy(fcd1->lsd);
 
-  break_me("lsd4");
+  BREAK_ME("lsd4");
 
   g_print("check integrity\n");
 

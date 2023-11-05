@@ -649,7 +649,7 @@ bundle_t *create_gen1_bundle_with_vargs(uint64_t bt, bundledef_t bundledef, va_l
         }
         if (err) {
           g_printerr("ERROR adding item '%s' to bundle, invalid item name\n", err_item);
-          break_me("invname 1");
+          BREAK_ME("invname 1");
           err = FALSE;
         }
       }
@@ -1682,12 +1682,12 @@ char *nirvascope_blueprint_to_header(bundle_t *bundle, const char *tname) {
       is_arr = stdef_is_array(stdef);
       if (sttype == STRAND_TYPE_CONST_BUNDLEPTR) {
         tp = "const bundle_t **";
-        if (is_arr) ar = lives_strdup_printf("[]");
+        if (is_arr) ar = lives_strdup("[]");
       } else {
         st = strand_type_to_weed_seed(sttype);
         tp = weed_seed_to_ctype(st, TRUE);
         if (sttype == WEED_SEED_PLANTPTR) tp = "bundle_t *";
-        if (is_arr) ar = lives_strdup_printf("[]");
+        if (is_arr) ar = lives_strdup("[]");
       }
       if (stdef_is_optional(stdef)) comment = lives_strdup("// optional");
       line = lives_strdup_printf("\n  %s%s%s;\t%s", tp, stname, ar ? ar : "",

@@ -120,6 +120,8 @@ const int *get_palette_list(void);
 /// host sets the palette used
 boolean set_palette(int palette);
 
+#define VPP_FLAG_PTR "processedp"
+
 /// host will call this
 uint64_t get_capabilities(int palette);
 
@@ -131,6 +133,9 @@ uint64_t get_capabilities(int palette);
 #define VPP_CAN_LETTERBOX     		(1<<5)   ///< player can center at xoffset, yoffset (values set in frame in play_frame)
 #define VPP_CAN_CHANGE_PALETTE 		(1<<6)   ///< host can switch palette overriding settings
 // bit combinations: 0 & 5: can resize and letterbox; 5 without 0: cannot resize image, but it can offset the top left pixel
+
+#define VPP_RETURN_AND_NOTIFY 		(1<<7)   ///< play_frame returns immediately and the player will set boolean value
+/// VPP_PROCESSED when layer pixel_data may be freed
 
 /// ready the screen to play (optional)
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);

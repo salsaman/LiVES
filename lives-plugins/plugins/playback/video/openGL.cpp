@@ -30,6 +30,10 @@ static const uint16_t RGBA2RGB[8] =  {1, 0, 2, 1, 3, 2, 0, 3};
 static boolean(*play_fn)(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 static boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 static boolean play_frame_unknown(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
+static void release_frame(weed_layer_t *frame);
+
+static void send_return_data(void);
+static void process_new_frame(void);
 
 static int palette_list[6];
 static int mypalette;
@@ -37,6 +41,9 @@ static int mypalette;
 static boolean inited = false;
 
 static boolean npot;
+
+static weed_layer_t *new_frame = NULL, *new_return = NULL;
+static uint64_t new_tc = 0;
 
 #include <math.h> // for sin and cos
 
@@ -108,8 +115,8 @@ static boolean use_pbo = FALSE;
 static float rquad;
 
 static pthread_t rthread;
+
 static pthread_mutex_t rthread_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t retthread_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_cond_t cond;
 static pthread_mutex_t cond_mutex;
@@ -255,7 +262,8 @@ const char *get_description(void) {
 
 
 uint64_t get_capabilities(int palette) {
-  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY | VPP_CAN_LETTERBOX | VPP_CAN_CHANGE_PALETTE;
+  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY | VPP_CAN_LETTERBOX
+         | VPP_CAN_CHANGE_PALETTE | VPP_RETURN_AND_NOTIFY;
 }
 
 
@@ -1912,28 +1920,25 @@ static int Upload(void) {
 
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
-  if (retdata) {
+  if (new_return) {
     // copy buffer to retbuf
-
-    pthread_mutex_lock(&retthread_mutex);
-
-    if (retbuf) {
-      buffer_free(retbuf);
-    }
-
+    if (retbuf) buffer_free(retbuf);
     retbuf = render_to_mainmem(type, imgRow, window_width, window_height);
-    return_ready = TRUE;
-    pthread_mutex_unlock(&retthread_mutex);
-
-    // tell main thread we are ready
-    pthread_mutex_lock(&cond_mutex);
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&cond_mutex);
+    send_return_data();
   }
 
   // time sync
   clock_gettime(CLOCK_MONOTONIC, &now);
   return (now.tv_sec * 1000 + now.tv_nsec / 1000000 - ticks) * 1000;
+}
+
+
+static void release_frame(weed_layer_t *frame) {
+  if (frame) {
+    void *vpp_flag_ptr = weed_get_voidptr_value(frame, VPP_FLAG_PTR, NULL);
+    fprintf(stderr, "got flagptr %p\n", vpp_flag_ptr);
+    weed_memset(vpp_flag_ptr, 1, 1);
+  }
 }
 
 
@@ -1955,25 +1960,43 @@ static void *render_thread_func(void *data) {
 
   while (playing) {
     pthread_mutex_lock(&cond_mutex);
-    while (!has_new_texture && playing) {
+    while (!new_frame && playing) {
       pthread_cond_wait(&cond, &cond_mutex);
       if (!playing) {
+        if (new_frame) {
+          release_frame(new_frame);
+          new_frame = NULL;
+        }
         rthread_ready = FALSE;
         break;
       }
     }
     pthread_mutex_unlock(&cond_mutex);
     if (!playing) break;
+    fprintf(stderr, "NEW_FRAME\n");
+    process_new_frame();
+    fprintf(stderr, "PROC _FRAME\n");
+    release_frame(new_frame);
+    new_frame = NULL;
+    fprintf(stderr, "REL _FRAME\n");
+    has_new_texture = TRUE;
     Upload();
+    fprintf(stderr, "RDY _FRAME\n");
+  }
+
+  if (new_return) {
+    release_frame(new_return);
+    new_return = NULL;
+  }
+  if (new_frame) {
+    release_frame(new_frame);
+    new_frame = NULL;
   }
 
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);
 
-  if (retbuf) {
-    buffer_free(retbuf);
-  }
-
+  if (retbuf) buffer_free(retbuf);
   retbuf = NULL;
 
   return NULL;
@@ -1981,22 +2004,56 @@ static void *render_thread_func(void *data) {
 
 
 boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
+  // copy values frame, tc, ret
+  // render thread will note new layer, proce it then set the 'procesed' value so the host can free it
+  // host will wait for this before freeing the layer
+  new_tc = tc;
+  new_return = ret;
+  pthread_mutex_lock(&cond_mutex);
+  new_frame = frame;
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+  return TRUE;
+}
+
+
+static void send_return_data(void) {
+  if (new_return) {
+    void **return_data = weed_get_voidptr_array(new_return, WEED_LEAF_PIXEL_DATA, NULL);
+    uint8_t *dst = (uint8_t *)return_data[0]; // host created space for return data
+    uint8_t *src = (uint8_t *)retbuf + (texHeight - 1) * texWidth;
+    int mwidth = texWidth;
+    int row = weed_get_int_value(new_return, WEED_LEAF_ROWSTRIDES, NULL);
+
+    if (mwidth > imgWidth * typesize) mwidth = imgWidth * typesize;
+    // texture is upside-down compared to image
+    for (int i = 0; i < texHeight; i++) {
+      weed_memcpy(dst, src, mwidth);
+
+      dst += row;
+      src -= texWidth;
+    }
+    weed_free(static_cast<void *>(const_cast<uint8_t *>(texturebuf)));
+    release_frame(new_return);
+    new_return = NULL;
+  }
+}
+
+
+static void process_new_frame(void) {
   //int hsize, int vsize, int xoffs, int yoffs, int *rs, void **pixel_data, void **return_data) {
   // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
   static int otypesize = typesize;
   static int otexRow = 0, otexHeight = 0;
-  /// until we get libweed-layer
+
+  weed_layer_t *frame = new_frame;
+  uint64_t tc = new_tc;
   int hsize = weed_channel_get_width(frame);
   int vsize = weed_channel_get_height(frame);
   int row = weed_channel_get_stride(frame);
   int rowz;
   void **return_data = NULL;
   void *pixel_data = weed_channel_get_pixel_data(frame);
-  int i;
-
-  if (ret) return_data = weed_get_voidptr_array(ret, WEED_LEAF_PIXEL_DATA, NULL);
-
-  pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
   x_range = y_range = 1.;
 
@@ -2035,60 +2092,13 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   if (texRow == imgRow && texHeight >= imgHeight) {
     weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);
   } else {
-    for (i = 0; i < imgHeight; i++) {
+    for (int i = 0; i < imgHeight; i++) {
       weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data + i * imgRow,
                   imgWidth * typesize);
     }
   }
 
-  if (return_data) {
-    uint8_t *dst, *src;
-    int mwidth;
-    return_ready = FALSE;
-    retdata = dst = (uint8_t *)return_data[0]; // host created space for return data
-
-    pthread_mutex_lock(&cond_mutex);
-    has_new_texture = TRUE;
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&cond_mutex);
-
-    pthread_mutex_unlock(&rthread_mutex);
-
-    pthread_mutex_lock(&cond_mutex);
-    // wait for render thread ready
-    while (!return_ready) {
-      pthread_cond_wait(&cond, &cond_mutex);
-    }
-    pthread_mutex_unlock(&cond_mutex);
-
-    if (dblbuf) {
-      //pthread_mutex_lock(&retthread_mutex);
-      //pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
-    }
-
-    retdata = NULL;
-
-    //if (texturebuf == (uint8_t *)pixel_data) texturebuf = NULL;
-    src = (uint8_t *)retbuf + (texHeight - 1) * texWidth;
-    mwidth = texWidth;
-    if (mwidth > imgWidth * typesize) mwidth = imgWidth * typesize;
-    // texture is upside-down compared to image
-    for (i = 0; i < texHeight; i++) {
-      weed_memcpy(dst, src, mwidth);
-      dst += row;
-      src -= texWidth;
-    }
-    weed_free(static_cast<void *>(const_cast<uint8_t *>(texturebuf)));
-  } else {
-    retdata = NULL;
-    pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
-    pthread_mutex_lock(&cond_mutex);
-    has_new_texture = TRUE;
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&cond_mutex);
-  }
   otypesize = typesize;
-  return TRUE;
 }
 
 

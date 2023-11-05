@@ -1353,7 +1353,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
       if (ts_running) goto ret_success;
     }
     if (!jackd->client_name) {
-      client_name = jackd->client_name = lives_strdup_printf("LiVES:transport");
+      client_name = jackd->client_name = lives_strdup("LiVES:transport");
     } else client_name = jackd->client_name;
 
     if (*future_prefs->jack_tserver_cname) server_name = lives_strdup(future_prefs->jack_tserver_cname);
@@ -1669,7 +1669,7 @@ retry_connect:
     //jackserver = jackctl_server_create2(NULL, NULL, NULL);
     jackserver = jackctl_server_create(NULL, NULL);
     if (!jackserver) {
-      logmsg = lives_strdup_printf("jackctl error: Could not create jackctl server object");
+      logmsg = lives_strdup("jackctl error: Could not create jackctl server object");
       jack_log_errmsg(jackd, logmsg);
       LIVES_ERROR(logmsg);
       lives_free(logmsg);
@@ -3914,7 +3914,7 @@ boolean jack_write_client_activate(jack_driver_t *jackd) {
   /* tell the JACK server that we are ready to roll */
   if (jack_activate(jackd->client)) {
     // let's hope IT is too...
-    logmsg = lives_strdup_printf("LiVES : Could not activate jack writer client");
+    logmsg = lives_strdup("LiVES : Could not activate jack writer client");
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
@@ -3927,7 +3927,7 @@ boolean jack_write_client_activate(jack_driver_t *jackd) {
   in_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
 
   if (!in_ports) {
-    logmsg = lives_strdup_printf("LiVES : No jack input ports available");
+    logmsg = lives_strdup("LiVES : No jack input ports available");
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
@@ -3961,7 +3961,7 @@ boolean jack_write_client_activate(jack_driver_t *jackd) {
 #ifdef DEBUG_JACK_PORTS
       lives_printerr("connection failed\n");
 #endif
-      logmsg = lives_strdup_printf("LiVES : Could not connect to port");
+      logmsg = lives_strdup("LiVES : Could not connect to port");
       jack_log_errmsg(jackd, logmsg);
       LIVES_ERROR(logmsg);
       lives_free(logmsg);
@@ -3973,7 +3973,7 @@ boolean jack_write_client_activate(jack_driver_t *jackd) {
   }
 
   if (j < nch) {
-    logmsg = lives_strdup_printf("LiVES : failed to auto connect all output ports");
+    logmsg = lives_strdup("LiVES : failed to auto connect all output ports");
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
   }
@@ -4004,7 +4004,7 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
   if (!jackd->is_active) {
     jack_set_process_callback(jackd->client, audio_read, jackd);
     if (jack_activate(jackd->client)) {
-      logmsg = lives_strdup_printf("LiVES : Could not activate jack reader client");
+      logmsg = lives_strdup("LiVES : Could not activate jack reader client");
       jack_log_errmsg(jackd, logmsg);
       LIVES_ERROR(logmsg);
       lives_free(logmsg);
@@ -4021,7 +4021,7 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
   out_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
 
   if (!out_ports) {
-    logmsg = lives_strdup_printf("LiVES : No jack output ports available");
+    logmsg = lives_strdup("LiVES : No jack output ports available");
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
@@ -4055,7 +4055,7 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
 #ifdef DEBUG_JACK_PORTS
       lives_printerr("connection failed\n");
 #endif
-      logmsg = lives_strdup_printf("LiVES : Could not connect to port");
+      logmsg = lives_strdup("LiVES : Could not connect to port");
       jack_log_errmsg(jackd, logmsg);
       LIVES_ERROR(logmsg);
       lives_free(logmsg);
@@ -4067,7 +4067,7 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
   }
 
   if (j < nch) {
-    logmsg = lives_strdup_printf("LiVES : failed to auto connect all input ports");
+    logmsg = lives_strdup("LiVES : failed to auto connect all input ports");
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
   }

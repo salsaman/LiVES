@@ -140,7 +140,7 @@ void tr_msg(void) {
 #endif
 
 
-void break_me(const char *brkstr) {
+void BREAK_ME(const char *brkstr) {
   if (prefs && prefs->show_dev_opts) {
     g_printerr("BANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
   }

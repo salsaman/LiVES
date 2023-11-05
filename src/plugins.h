@@ -850,7 +850,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 #define VPP_CAN_RESIZE_WINDOW          		(1 << 4)   /// can resize the image to fit the play window
 #define VPP_CAN_LETTERBOX                  	(1 << 5)
 #define VPP_CAN_CHANGE_PALETTE			(1 << 6)
-
+#define VPP_RETURN_AND_NOTIFY 			(1 << 7)   ///< play_frame returns immediately and the player will set boolean value
 // encoder
 //"general"
 #define HAS_RFX (1 << 0)
@@ -913,5 +913,7 @@ lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *, boolean readonly);
 
 #define LIVES_LEAF_RPAR "host_rpar"
 #define LIVES_LEAF_SOURCE "clip_source"
+
+#define LIVES_LEAF_VPP_PROCESSED_PTR "processedp"
 
 #endif

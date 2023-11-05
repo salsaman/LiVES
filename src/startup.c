@@ -151,14 +151,6 @@ capabilities *get_capabilities(void) {
 
   capable->mainpid = lives_getpid();
 
-  capable->locale.all = LIVES_ORIG_LC_ALL;
-  capable->locale.lang = LIVES_ORIG_LANG;
-  capable->locale.language = LIVES_ORIG_LANGUAGE;
-  capable->locale.numeric = LIVES_ORIG_NUMERIC;
-  capable->locale.dp = lconvx->decimal_point;
-  capable->locale.th_sep = lconvx->thousands_sep;
-  capable->locale.grping = lconvx->grouping;
-
   // cmds part 1
   get_location("cp", capable->cp_cmd, PATH_MAX);
   capable->sysbindir = get_dir(capable->cp_cmd);
@@ -338,22 +330,30 @@ retry_configfile:
     size_t dirlen = lives_strlen(dir);
     boolean dir_valid = TRUE;
 
-    if (dirlen && strncmp(dir, "(null)", 6)) {
+    if (dirlen && lives_strncmp(dir, "(null)", 6)) {
+      size_t slen = lives_strlen(optarg);
+      boolean toolong = FALSE;
+
       if (!mainw->old_vhash || !*mainw->old_vhash || !strcmp(mainw->old_vhash, "0")) {
         msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", dir, old_vhash);
         LIVES_WARN(msg);
         lives_free(msg);
       }
-
-      if (dirlen < PATH_MAX - MAX_SET_NAME_LEN * 2) {
-        ensure_isdir(dir);
-
-        if (dirlen >= PATH_MAX - MAX_SET_NAME_LEN * 2) {
-          dir_toolong_error(dir, (tmp = (_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
-          lives_free(tmp);
-          dir_valid = FALSE;
+      if (slen > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+        toolong = TRUE;
+      } else {
+        lives_snprintf(buff, slen, "%s", optarg);
+        if (!ensure_isdir(buff)
+            || lives_strlen(buff) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+          toolong = TRUE;
         }
-
+      }
+      if (toolong) {
+        /// FALSE => exit via startup_msg_fatal()
+        dir_toolong_error(optarg, _("working directory"), PATH_MAX, FALSE);
+        dir_valid = FALSE;
+      }
+      if (dir_valid) {
         if (!lives_make_writeable_dir(dir)) {
           do_dir_perm_error(dir, FALSE);
           if (!lives_make_writeable_dir(dir)) {
@@ -465,9 +465,7 @@ static boolean pre_init(void) {
   pthread_mutexattr_t mattr;
   lives_hook_stack_t **lpt_hooks, **thread_hooks;
   char *msg, *tmp, *tmp2, *cfgdir, *old_libdir = NULL;
-
   boolean needs_update = FALSE;
-
   int i;
 
   what_sup = pre_init_sup;
@@ -857,8 +855,10 @@ static boolean pre_init(void) {
     needs_update = TRUE;
   }
 
-  if (ensure_isdir(prefs->prefix_dir)) needs_update = TRUE;
-
+  tmp = lives_strdup(prefs->prefix_dir);
+  ensure_isdir(prefs->prefix_dir);
+  if (lives_strcmp(prefs->prefix_dir, tmp)) needs_update = TRUE;
+  lives_free(tmp);
   if (needs_update) set_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
 #ifdef GUI_GTK
@@ -896,7 +896,10 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", LIVES_LIBDIR);
     needs_update = TRUE;
   }
-  if (ensure_isdir(prefs->lib_dir)) needs_update = TRUE;
+  tmp = lives_strdup(prefs->lib_dir);
+  ensure_isdir(prefs->lib_dir);
+  if (lives_strcmp(prefs->lib_dir, tmp)) needs_update = TRUE;
+
   if (needs_update) set_string_pref(PREF_LIB_DIR, prefs->lib_dir);
 
   lives_memset(mainw->sepimg_path, 0, 1);
@@ -1933,12 +1936,13 @@ static boolean lives_startup2(livespointer data) {
 
 
 static void parse_init_opts(int argc, char *argv[]) {
+  char **xargv = argv;
+  int xargc = argc;
   wordexp_t extra_cmds;
+  char buff[PATH_MAX];
   char *extracmds_file;
   char *msg, *dir, *tmp;
   boolean toolong = FALSE;
-  char **xargv = argv;
-  int xargc = argc;
 
   capable->extracmds_file[0] = extracmds_file = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, EXTRA_CMD_FILE,
                                NULL);
@@ -2036,8 +2040,8 @@ static void parse_init_opts(int argc, char *argv[]) {
 
       int option_index = 0;
       const char *charopt;
-      int c;
-      int count = 0;
+      int c, count = 0;
+      size_t slen;
 
       while (1) {
         count++;
@@ -2051,7 +2055,7 @@ static void parse_init_opts(int argc, char *argv[]) {
           lives_free(msg);
           msg = NULL;
         }
-        if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
+        if (!lives_strcmp(charopt, "workdir") || !lives_strcmp(charopt, "tmpdir")) {
           if (!*optarg) {
             do_abortblank_error(charopt);
             continue;
@@ -2061,11 +2065,13 @@ static void parse_init_opts(int argc, char *argv[]) {
             optind--;
             continue;
           }
-          if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+          slen = lives_strlen(optarg);
+          if (slen > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
           } else {
-            ensure_isdir(optarg);
-            if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+            lives_snprintf(buff, slen, "%s", optarg);
+            if (!ensure_isdir(buff)
+                || lives_strlen(buff) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
               toolong = TRUE;
             }
           }
@@ -2077,7 +2083,7 @@ static void parse_init_opts(int argc, char *argv[]) {
           }
 
           mainw->has_session_workdir = TRUE;
-          lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
+          lives_snprintf(prefs->workdir, PATH_MAX, "%s", buff);
 
           if (!lives_make_writeable_dir(prefs->workdir)) {
             // abort if we cannot write to the specified workdir
@@ -2097,11 +2103,13 @@ static void parse_init_opts(int argc, char *argv[]) {
             optind--;
             continue;
           }
-          if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+          slen = lives_strlen(optarg);
+          if (slen > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
           } else {
-            ensure_isdir(optarg);
-            if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+            lives_snprintf(buff, slen, "%s", optarg);
+            if (!ensure_isdir(buff)
+                || lives_strlen(buff) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
               toolong = TRUE;
             }
           }
@@ -2111,6 +2119,7 @@ static void parse_init_opts(int argc, char *argv[]) {
             capable->can_write_to_workdir = FALSE;
             break;
           }
+          lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", buff);
           // check for subdirs decoders, effects/rendered, encoders, playback/video
           if (!check_for_plugins(optarg, FALSE)) lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", optarg);
           ign_opts.ign_libdir = TRUE;
@@ -2127,20 +2136,22 @@ static void parse_init_opts(int argc, char *argv[]) {
             optind--;
             continue;
           }
-          if (lives_strlen(optarg) > PATH_MAX - 64) {
+          slen = lives_strlen(optarg);
+          if (slen > PATH_MAX - 64) {
             toolong = TRUE;
           } else {
-            ensure_isdir(optarg);
-            if (lives_strlen(optarg) > PATH_MAX - 64) {
+            lives_snprintf(buff, slen, "%s", optarg);
+            if (!ensure_isdir(buff)
+                || lives_strlen(buff) > PATH_MAX - 64) {
               toolong = TRUE;
             }
           }
           if (toolong) {
             /// FALSE => exit via startup_msg_fatal()
             dir_toolong_error(optarg, _("config data directory"), PATH_MAX - 64, FALSE);
+            break;
           }
-
-          lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", optarg);
+          lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", buff);
           ign_opts.ign_config_datadir = TRUE;
           continue;
         }
@@ -2155,15 +2166,23 @@ static void parse_init_opts(int argc, char *argv[]) {
             optind--;
             continue;
           }
-          if (lives_strlen(optarg) > PATH_MAX - 64) {
+          slen = lives_strlen(optarg);
+          if (slen > PATH_MAX - 64) {
             toolong = TRUE;
+          } else {
+            lives_snprintf(buff, slen, "%s", optarg);
+            if (!ensure_isdir(buff)
+                || lives_strlen(buff) > PATH_MAX - 64) {
+              toolong = TRUE;
+            }
           }
           if (toolong) {
             /// FALSE => exit via startup_msg_fatal()
             filename_toolong_error(optarg, _("configuration file"), PATH_MAX, FALSE);
+            break;
           }
 
-          lives_snprintf(prefs->configfile, PATH_MAX, "%s", optarg);
+          lives_snprintf(prefs->configfile, PATH_MAX, "%s", buff);
           ign_opts.ign_configfile = TRUE;
           continue;
         }
@@ -2617,6 +2636,14 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
 
   mainw->fg_tdata = lives_thread_data_create();
+
+  capable->locale.all = LIVES_ORIG_LC_ALL;
+  capable->locale.lang = LIVES_ORIG_LANG;
+  capable->locale.language = LIVES_ORIG_LANGUAGE;
+  capable->locale.numeric = LIVES_ORIG_NUMERIC;
+  capable->locale.dp = lconvx->decimal_point;
+  capable->locale.th_sep = lconvx->thousands_sep;
+  capable->locale.grping = lconvx->grouping;
 
   cache_msg("Getting first stage hardware details...");
   get_machine_dets(0);

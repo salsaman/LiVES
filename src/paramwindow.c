@@ -53,7 +53,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
     type = lives_strdup(PLUGIN_RENDERED_EFFECTS_CUSTOM);
     break;
   default:
-    type = lives_strdup_printf(PLUGIN_RENDERED_EFFECTS_TEST);
+    type = lives_strdup(PLUGIN_RENDERED_EFFECTS_TEST);
     break;
   }
   if ((onchange = plugin_request_by_line(type, rfx->name, "get_onchange")) != NULL) {

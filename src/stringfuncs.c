@@ -178,29 +178,25 @@ LIVES_GLOBAL_INLINE uint64_t lives_strtoul(const char *nptr) {
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
-  if (!s) return NULL;
-#ifndef zzSTD_STRINGFUNCS
-  else {
-    uint64_t *pi = (uint64_t *)s, nulmask, stlen;
-    while (!(nulmask = hasNulByte(*pi))) pi++;
-    stlen = (char *)((char *)pi + (off_t)1
-                     + (off_t)((capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
-                               ? getnulpos(nulmask) : getnulpos_be(nulmask))) - s;
-    return lives_memcpy(lives_malloc(stlen), s, stlen);
+LIVES_GLOBAL_INLINE char *lives_strndup(const char *s, size_t maxlen) {
+  void *p = NULL;
+  if (s) {
+    size_t slen = lives_strlen(s) + 1;
+    if (maxlen && slen > maxlen) slen = maxlen;
+    p = lives_malloc(slen);
+    if (p) lives_memcpy(p, s, slen);
   }
-#endif
-  return lives_strdup(s);
+  return p;
 }
+
+
+LIVES_GLOBAL_INLINE char *lives_strdup(const char *s) {return lives_strndup(s, 0);}
 
 
 /// returns FALSE if strings match
 // safer version of strcmp, which can handle NULL strings
 LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
-  if (!st1 || !st2) return (st1 != st2);
-  else {
-    return strcmp(st1, st2);
-  }
+  return (!st1 || !st2) ? st1 != st2 : strcmp(st1, st2);
 }
 
 
@@ -238,25 +234,18 @@ static char *_lives_strndup_printf_va(const char *fmt, int maxlen, va_list ap) {
   int size = 0;
   char *p = NULL;
   va_list aq;
-
   va_copy(aq, ap);
   size = vsnprintf(p, size, fmt, aq);
   va_end(aq);
-
   if (size < 0) return NULL;
-
-  p = lives_malloc(++size);
+  p  = lives_malloc(++size);
   if (!p) return NULL;
-
   if (maxlen > 0 && size > maxlen) size = maxlen;
-
   size = vsnprintf(p, size, fmt, ap);
-
   if (size < 0) {
     lives_free(p);
     return NULL;
   }
-
   return p;
 }
 
@@ -264,7 +253,7 @@ static char *_lives_strndup_printf_va(const char *fmt, int maxlen, va_list ap) {
 char *lives_strndup_printf(const char *fmt, int maxlen, ...) {
   char *ret;
   va_list ap;
-  va_start(ap, fmt);
+  va_start(ap, maxlen);
   ret = _lives_strndup_printf_va(fmt, maxlen, ap);
   va_end(ap);
   return ret;
@@ -386,111 +375,46 @@ LIVES_GLOBAL_INLINE char *lives_strtrim(const char *buff) {
 char *subst(const char *xstring, const char *from, const char *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
-  char *ret = lives_calloc(INITSIZE, BSIZE);
-  uint64_t ubuff = 0;
-  char *buff;
 
-  const size_t fromlen = strlen(from);
-  const size_t tolen = strlen(to);
-  const size_t tolim = BSIZE - tolen;
-
-  size_t match = 0;
-  size_t xtolen = tolen;
-  size_t bufil = 0;
-  size_t retfil = 0;
-  size_t retsize = INITSIZE;
-  size_t retlimit = retsize - BSIZE;
-
-  buff = (char *)&ubuff;
-
-  for (char *cptr = (char *)xstring; *cptr; cptr++) {
-    if (*cptr == from[match++]) {
-      if (match == fromlen) {
-        // got complete match
-        match = 0;
-        if (bufil > tolim) xtolen = BSIZE - bufil;
-        lives_memcpy(buff + bufil, to, xtolen);
-        if ((bufil += xtolen) == BSIZE) {
-          if (retfil > retlimit) {
-            // increase size of return string
-            ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
-            retsize *= 2;
-            retlimit = (retsize - 1) *  BSIZE;
+  // - set 'start' to 0
+  // - parse input string uing strstr to find 'from'
+  // - length of piece is ptr - start
+  // - add len + to_len to tot
+  // - skip forward from_len in input, set start
+  // - continue until we reach end of input
+  // - add final length to tot and alloc size tot
+  // -- pass 2
+  // - as pass 1, except this time we copy piece followed by to
+  char *rstring = NULL;
+  if (xstring && from) {
+    size_t fromlen = lives_strlen(from);
+    if (fromlen) {
+      size_t tolen = to ? lives_strlen(to) : 0;
+      for (int pass = 0; pass < 2; pass++) {
+        char *start = (char *)xstring;
+        size_t tot = 0;
+        while (1) {
+          size_t len;
+          char *end = strstr(start, from);
+          if (!end) {
+            len = lives_strlen(start) + 1;
+            if (pass) lives_memcpy(rstring + tot, start, len);
+            else tot += len;
+            break;
           }
-          lives_memcpy(ret + retfil, buff, BSIZE);
-          retfil += BSIZE;
-          bufil = 0;
-          if (xtolen < tolen) {
-            lives_memcpy(buff, to + xtolen, tolen - xtolen);
-            bufil += tolen - xtolen;
-            xtolen = tolen;
+          len = end - start;
+          if (pass) {
+            if (end > start) lives_memcpy(rstring + tot, start, len);
+            if (tolen) lives_memcpy(rstring + tot + len, to, tolen);
           }
+          tot += len + tolen;
+          start = end + fromlen;
         }
+        if (!pass) rstring = lives_malloc(tot);
       }
-      continue;
-    }
-
-    if (--match > 0) {
-      xtolen = match;
-      if (bufil > BSIZE - match) xtolen = BSIZE - bufil;
-      lives_memcpy(buff + bufil, from, xtolen);
-      if ((bufil += xtolen) == BSIZE) {
-        if (retfil > retlimit) {
-          ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
-          retsize *= 2;
-          retlimit = (retsize - 1) *  BSIZE;
-        }
-        lives_memcpy(ret + retfil, buff, BSIZE);
-        retfil += BSIZE;
-        bufil = 0;
-        if (xtolen < fromlen) {
-          lives_memcpy(buff, from + xtolen, fromlen - xtolen);
-          bufil += fromlen - xtolen - match;
-          xtolen = tolen;
-        }
-      }
-      match = 0;
-    }
-    if (match < 0) match = 0;
-    buff[bufil] = *cptr;
-    if (++bufil == BSIZE) {
-      if (retfil > retlimit) {
-        ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
-        retsize *= 2;
-        retlimit = (retsize - 1) *  BSIZE;
-      }
-      lives_memcpy(ret + retfil, buff, BSIZE);
-      retfil += BSIZE;
-      bufil = 0;
     }
   }
-
-  if (bufil) {
-    if (retsize > retlimit) {
-      ret = lives_recalloc(ret, retsize + 1, retsize, BSIZE);
-      retsize++;
-    }
-    lives_memcpy(ret + retfil, buff, bufil);
-    retfil += bufil;
-  }
-  if (match) {
-    if (retsize > retlimit) {
-      ret = lives_recalloc(ret, retsize + 1, retsize, BSIZE);
-      retsize++;
-    }
-    lives_memcpy(ret + retsize, from, match);
-    retfil += match;
-  }
-  ret[retfil++] = 0;
-  retsize *= BSIZE;
-
-  if (retfil && retsize - retfil > (retsize >> 2)) {
-    char *tmp = lives_malloc(retfil);
-    lives_memcpy(tmp, ret, retfil);
-    lives_free(ret);
-    return tmp;
-  }
-  return ret;
+  return rstring;
 }
 
 

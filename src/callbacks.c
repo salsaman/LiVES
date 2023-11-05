@@ -152,6 +152,7 @@ void lives_exit(int signum) {
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         mainw->ext_audio = FALSE;
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+        reset_ext_player_layer(TRUE);
         if (mainw->vpp->exit_screen)(*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
         stop_audio_stream();
         mainw->stream_ticks = -1;
@@ -332,7 +333,7 @@ void lives_exit(int signum) {
                   fname = lives_build_filename(prefs->workdir, sfile->handle,
                                                LIVES_CLIP_HEADER, NULL);
                 if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-                  break_me("lives_header missing from clip");
+                  BREAK_ME("lives_header missing from clip");
                   save_clip_values(i);
                 }
                 lives_free(fname);
@@ -5884,7 +5885,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   tbuff = cleardisk_analyse(temp_backend, trashdir);
 
   // show results of analysis
-  break_me("diska");
+  BREAK_ME("diska");
   if (*mainw->msg && (ntok = get_token_count(mainw->msg, '|')) > 1) {
     char **array = lives_strsplit(mainw->msg, "|", 2);
     if (!strcmp(array[0], "completed")) {
@@ -5913,7 +5914,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // *INDENT-ON*
 
   tbuff = NULL;
-  break_me("cllnup ready");
+  BREAK_ME("cllnup ready");
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
   } else {
@@ -9597,7 +9598,6 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
 void run_deferred_configs(void) {
   if (defer_plant) {
     char **leaves = weed_plant_list_leaves(defer_plant, NULL);
-    break_me("eunconfig");
     for (int i = 0; leaves[i]; i++) {
       LiVESWidget *widget = NULL;
       sscanf(leaves[i], "widg_%p", &widget);

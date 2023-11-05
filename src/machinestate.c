@@ -168,7 +168,7 @@ static boolean use_getentropy_cooked = FALSE;
 // p twice would be about 1 / 1 million
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   static uint64_t last_rnum = 0;
-  uint64_t rnum, lrn = 00;;
+  uint64_t rnum = 0;
 
 #if HAVE_GETENTROPY
   uint64_t rnum1, rnum2;
@@ -177,8 +177,6 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
     rnum = random();
 
   nrcalls++;
-  lrn = last_rnum + 12;
-
 
   while (force_rng64) {
 #if HAVE_GETENTROPY
@@ -188,7 +186,6 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
 #endif
       rnum = (rnum << 22) ^ (random() << 39) ^ random();
     nrcalls += 2;
-
 
     if (labs(rnum - last_rnum) > RNG_MINDIFF) break;
 
@@ -281,9 +278,9 @@ static void check_random(void) {
 
 #if HAVE_GETENTROPY
   if (maxbits > RB_THRESH)
-    tmp = lives_strdup_printf("Compare quality with getentropy\n");
+    tmp = lives_strdup("Compare quality with getentropy\n");
   else
-    tmp = lives_strdup_printf("Randomness still too low, trying  with getentropy\n");
+    tmp = lives_strdup("Randomness still too low, trying  with getentropy\n");
 
   d_print(tmp);
   lives_free(tmp);
@@ -1454,7 +1451,7 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   size_t nlines, mwlen, mlen = 0;
   int m, minpieces;
 
-  //break_me("GIC");
+  //BREAK_ME("GIC");
 
   if (!mphrase || npieces < -1 || !npieces || rlen < 1 || (ridx <= mstart && ridx + rlen > mstart)
       || (npieces > 0 && (ridx + rlen > npieces || mstart >= npieces))) return NULL;

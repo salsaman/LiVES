@@ -364,6 +364,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
     }
     lives_layer_set_clip(layers[i], mainw->clip_index[i]);
     lives_layer_set_track(layers[i], i);
+    if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[i] = 0;
     if (map_only) lives_layer_set_srcgrp(layers[i], mainw->track_sources[i]);
   }
 
@@ -721,7 +722,8 @@ skip_precache:
           if (!mainw->frame_layer) {
             g_print("plan please load %d %d\n", frame, mainw->actual_frame);
             // if we didn't have a preloaded frame, we kick off a thread here to load it
-            mainw->plan_cycle->frame_idx[0] = frame;
+            if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[0] = frame;
+            lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
             lives_layer_set_frame(mainw->layers[0], frame);
             lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
 	    // *INDENT-OFF*
@@ -800,17 +802,37 @@ skip_precache:
 }
 
 
-weed_layer_t *get_old_frame_layer(void) {return mainw->layers ? mainw->layers[0] : NULL;}
+static weed_layer_t *old_frame_layer = NULL;
+
+weed_layer_t *get_old_frame_layer(void) {return mainw->layers ? old_frame_layer : NULL;}
 
 void reset_old_frame_layer(void) {
-  if (mainw->layers && mainw->layers[0]) {
+  if (old_frame_layer) {
     mainw->debug_ptr = NULL;
-    if (mainw->layers[0] != mainw->cached_frame
-        && mainw->layers[0] != mainw->frame_layer_preload) {
+    if (old_frame_layer != mainw->cached_frame
+        && old_frame_layer != mainw->frame_layer_preload) {
       /* g_print("unref old_frame %p and %p\n", mainw->layers[0], */
       /* 	      weed_layer_get_pixel_data(mainw->layers[0])); */
-      weed_layer_pixel_data_free(mainw->layers[0]);
+      weed_layer_unref(old_frame_layer);
     }
+    old_frame_layer = NULL;
+  }
+}
+
+
+static boolean vpp_processed_flag = FALSE;
+
+void reset_ext_player_layer(boolean ign_flag) {
+  if (mainw->ext_player_layer) {
+    if (!ign_flag)
+      lives_microsleep_while_false(vpp_processed_flag);
+    if (mainw->ext_player_layer != mainw->frame_layer
+        && mainw->ext_player_layer != old_frame_layer
+        && mainw->ext_player_layer != mainw->frame_layer_preload
+        && mainw->ext_player_layer != mainw->cached_frame)
+      weed_layer_unref(mainw->ext_player_layer);
+    mainw->ext_player_layer = NULL;
+    vpp_processed_flag = FALSE;
   }
 }
 
@@ -1046,8 +1068,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       mainw->plan_cycle->tdata->actual_start = lives_get_session_time();
     }
 
-    reset_old_frame_layer();
-
     do {
       // if we are playing a backend preview, we may need to call this several times until the
       // backend frame is rendered
@@ -1063,7 +1083,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
 
-    // TODO -> mainw->cancelled sshould cancel plan_cyycle
+    // TODO -> mainw->cancelled should cancel plan_cycle
     if (LIVES_UNLIKELY((mainw->cancelled != CANCEL_NONE))) {
       // NULL frame or user cancelled
       errpt = 3;
@@ -1074,12 +1094,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     ///////// EXECUTE PLAN CYCLE ////////////
 
-    /* if (!mainw->frame_layer) { */
-    /*   if (mainw->plan_cycle) mainw->plan_cycle->state = PLAN_STATE_ERROR; */
-    /*   break_me("no r layer\n"); */
-    /*   g_print("BOB 1\n"); */
-    /*   goto lfi_done; */
-    /* } */
     g_print("wating for plan to complete\n");
 
     // in render frame, we would have set all frames to either prepared or loaded
@@ -1280,12 +1294,15 @@ weed_layer_t *load_frame_image(frames_t frame) {
       lwidth = weed_layer_get_width(frame_layer);
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
 
-      // TODO -if return_layer i NULL,
-      // play async, add callback for "played" which would unref frame_layer
+      if (mainw->vpp->capabilities & VPP_RETURN_AND_NOTIFY) {
+        reset_ext_player_layer(FALSE);
+        mainw->ext_player_layer = frame_layer;
+        weed_set_voidptr_value(mainw->ext_player_layer, LIVES_LEAF_VPP_PROCESSED_PTR, &vpp_processed_flag);
+      }
+
       if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
           || (!player_v2 && !(*mainw->vpp->render_frame)(lwidth, weed_layer_get_height(frame_layer),
               mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params))) {
-        //vid_playback_plugin_exit();
         if (return_layer) {
           weed_layer_unref(return_layer);
           lives_free(retdata);
@@ -1304,6 +1321,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
         lives_free(retdata);
         return_layer = NULL;
       }
+      if (mainw->ext_player_layer == frame_layer) frame_layer = NULL;
+
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) goto lfi_done;
     } // EXT PB done
 
@@ -1458,7 +1477,8 @@ lfi_err:
 
 lfi_done:
 
-  if (frame_layer && frame_layer != mainw->frame_layer) {
+  if (frame_layer && frame_layer != mainw->frame_layer
+      && frame_layer != mainw->ext_player_layer) {
     weed_layer_unref(frame_layer);
     frame_layer = NULL;
   }
@@ -1518,16 +1538,18 @@ lfi_done:
     lives_free(msg);
   }
 
-  frame_layer = mainw->frame_layer;
+  reset_old_frame_layer();
+
+  old_frame_layer = mainw->frame_layer;
   mainw->frame_layer = NULL;
 
   if (!success) {
     // free pixdata for frame_layer, then run the next cycle
-    frame_layer = NULL;
+    old_frame_layer = NULL;
     run_next_cycle();
   }
 
-  return frame_layer;
+  return old_frame_layer;
 }
 
 
@@ -2494,7 +2516,6 @@ player_loop:
     /* } */
     //}
     //if (mainw->currticks < mainw->startticks) {
-    break_me("cur start");
   }
   //g_print("LOOP\n");
   if (mainw->currticks == -1) {
@@ -2712,7 +2733,7 @@ switch_point:
   }
 
   if (new_clip == mainw->playing_file) {
-    // playing_file must be valid. If we are told to witch to playing_file,
+    // playing_file must be valid. If we are told to switch to playing_file,
     // just do so quietly (i.e nothing changes)
     mainw->current_file = mainw->playing_file;
   } else {

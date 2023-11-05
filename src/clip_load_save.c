@@ -1137,7 +1137,7 @@ boolean get_temp_handle(int index) {
   boolean is_unique, create = FALSE;
 
   if (CURRENT_CLIP_IS_TEMP) {
-    break_me("temp clip in temp clip !!");
+    BREAK_ME("temp clip in temp clip !!");
     return TRUE;
   }
 
@@ -1799,7 +1799,7 @@ uint64_t restore_file(const char *file_name) {
   }
 
 #if 1
-  break_me("restoring");
+  BREAK_ME("restoring");
 
   com = lives_strdup_printf("%s restore_headers %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
@@ -1840,7 +1840,7 @@ uint64_t restore_file(const char *file_name) {
     return 0;
   }
 
-  break_me("restored");
+  BREAK_ME("restored");
 
 #endif
 
@@ -3289,14 +3289,6 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
       return FALSE;
     }
     recpid = atoi(mainw->msg);
-
-    if (recpid != 0) {
-      // TODO - we should be able to rebuild a partial recvery file from the layout_numbering file
-      // - if so then prompt user if they want to try to reload, and goto recheck
-      break_me("can recover");
-
-    }
-    // otherwise, clean up
   } else {
     recfname = lives_strdup_printf("%s.%d.%d.%d", RECOVERY_LITERAL, luid, lgid, recpid);
     recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);

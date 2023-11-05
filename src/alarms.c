@@ -12,7 +12,7 @@
 /*   lives_timeout_t *alarm; */
 /*   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) { */
 /*     LIVES_WARN("Invalid alarm handle"); */
-/*     break_me("inv alarm handle in lives_alarm_reset"); */
+/*     BREAK_ME("inv alarm handle in lives_alarm_reset"); */
 /*     return -1; */
 /*   } */
 
@@ -82,7 +82,7 @@
 /*   // invalid alarm number */
 /*   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) { */
 /*     LIVES_WARN("Invalid alarm handle"); */
-/*     break_me("inv alarm handle in lives_alarm_check"); */
+/*     BREAK_ME("inv alarm handle in lives_alarm_check"); */
 /*     return -1; */
 /*   } */
 

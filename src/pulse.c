@@ -39,7 +39,7 @@ static off_t fwd_seek_pos = 0;
 
 static void pa_mloop_lock(void) {
   if (!pa_threaded_mainloop_in_thread(pa_mloop)) {
-    if (lock_count) break_me("paloop locked");
+    if (lock_count) BREAK_ME("paloop locked");
     pa_threaded_mainloop_lock(pa_mloop);
     ++lock_count;
   } else {
@@ -89,7 +89,7 @@ static void stream_overflow_callback(pa_stream *s, void *userdata) {
   fprintf(stderr, "Stream overrun.\n");
   paop = pa_stream_flush(s, NULL, NULL);
   pa_operation_unref(paop);
-  //break_me();
+  //BREAK_ME();
 }
 
 
@@ -1502,7 +1502,6 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     if (pulsed->in_use)
       pulsed->extrausec += ((double)nframes / (double)pulsed->in_arate * ONE_MILLION_DBL + .5);
     pthread_mutex_unlock(&xtra_mutex);
-    g_print("XUS = %ld\n", pulsed->extrausec);
     lives_proc_thread_include_states(self, THRD_STATE_IDLING);
     lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
     return;

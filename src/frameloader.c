@@ -2027,7 +2027,7 @@ check_prcache:
 
 #ifdef PNG_BIO
     fd = lives_open_buffered_rdonly(fname);
-    if (fd < 0) break_me(fname);
+    if (fd < 0) BREAK_ME(fname);
     if (fd < 0) {
       if (fname) lives_free(fname);
       return FALSE;
@@ -2420,7 +2420,7 @@ fndone:
 #endif
               if (create_empty_pixel_data(layer, TRUE, TRUE)) {
                 if (!weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL))
-                  break_me("non contig");
+                  BREAK_ME("non contig");
 #ifdef USE_REC_RS
                 weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
 #endif
@@ -2458,7 +2458,7 @@ fndone:
                 if (prefs->show_dev_opts) {
                   g_print("Error loading frame %d (index value %d)\n", frame,
                           xframe);
-                  break_me("load error");
+                  BREAK_ME("load error");
                 }
 
 #ifdef USE_REC_RS

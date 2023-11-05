@@ -182,7 +182,7 @@ uint64_t lsd_check_struct(lsd_struct_def_t *lsd) {
   uid = lsd_struct_get_uid(lsd);
   if (!uid) {
     errprint("lsd_check: lsd (%p) has no unique_id\n", lsd);
-    break_me("no uid");
+    BREAK_ME("no uid");
     err |= (1ull << 3);
   } else if (uid < (1 << 20)) {
     errprint("lsd_check: lsd (%p) has unique_id 0X%016lX\n"

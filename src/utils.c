@@ -67,8 +67,9 @@ static char *unit_val_long(lives_unit_type_t utype, double val, int idx, int fix
   char *first = unit_val(utype, val, idx, fix, qs, ql), *ret = NULL;
   if (first) {
     if (idx > 1 && ql) {
-      ret = lives_strdup_printf("%s (%lu %s)", first, (uint64_t)val, ql);
-      lives_free(first);
+      char *fmtd = commafmt(val, 0);
+      ret = lives_strdup_printf("%s (%s %s)", first, fmtd, ql);
+      lives_free(first); lives_free(fmtd);
       return ret;
     }
   }
@@ -80,7 +81,7 @@ char *lives_format_memory_size_string(uint64_t msize) {return UNIT_FMT(IEC, msiz
 char *lives_format_timing_string(double secs) {return UNIT_FMT(SI, secs, "sec", NULL, 2);}
 
 char *lives_format_storage_space_string_long(uint64_t space) {
-  return UNIT_FMT_LONG(IEC, space, "B", "bytes", 2);
+  return UNIT_FMT_LONG(SI, space, "B", "bytes", 2);
 }
 
 //// number formatting
@@ -209,7 +210,7 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
 
   if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
-  break_me(reason);
+  BREAK_ME(reason);
   if (mainw && mainw->global_hook_stacks[FATAL_HOOK])
     lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
@@ -1914,7 +1915,7 @@ void wait_for_bg_audio_sync(int fileno) {
 
   lives_sleep_while_true(sget_file_size(afile) <= 0 && (timeout = lives_alarm_check(alarm_handle)) > 0);
 
-  if (!timeout) break_me("no audio found");
+  if (!timeout) BREAK_ME("no audio found");
   lives_alarm_clear(alarm_handle);
 
   lives_free(afile);
@@ -2000,31 +2001,18 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
 }
 
 
-int verhash(char *xv) {
-  char *version, *s;
+LIVES_GLOBAL_INLINE int verhash(const char *version) {
+  char **array;
   int major = 0, minor = 0, micro = 0;
-
-  if (!xv) return 0;
-
-  version = lives_strdup(xv);
-
-  if (!(*version)) {
-    lives_free(version);
-    return 0;
+  if (!version || !*version) return 0;
+  array = lives_strsplit(version, ".", -1);
+  major = atoi(array[0]);
+  if (array[1]) {
+    minor = atoi(array[1]);
+    if (array[2]) micro = atoi(array[2]);
   }
-
-  s = strtok(version, ".");
-  if (s) {
-    major = atoi(s);
-    s = strtok(NULL, ".");
-    if (s) {
-      minor = atoi(s);
-      s = strtok(NULL, ".");
-      if (s) micro = atoi(s);
-    }
-  }
-  lives_free(version);
-  return major * 1000000 + minor * 1000 + micro;
+  lives_strfreev(array);
+  return major * ONE_MILLION + minor * 1000 + micro;
 }
 
 

@@ -1747,7 +1747,7 @@ rhd_failed:
     if (lives_file_test(clip_stdir, LIVES_FILE_TEST_IS_DIR)) {
       char *clipdir = get_clip_dir(clipno);
       lives_free(stdir);
-      //break_me("ready");
+      //BREAK_ME("ready");
       lives_cp_noclobber(clip_stdir, clipdir);
       lives_rmdir(clip_stdir, TRUE);
       lives_free(stdir);
@@ -2991,7 +2991,7 @@ static lives_clip_src_t *_add_clip_src(lives_clip_t *sfile, int track, int purpo
                                        fingerprint_t *chksum, const char *ext_URI) {
   lives_clip_src_t *mysrc = NULL;
   if (sfile) {
-    if (sfile->clip_type == CLIP_TYPE_DISK && src_type != LIVES_SRC_TYPE_IMAGE) break_me("badsrctyp");
+    if (sfile->clip_type == CLIP_TYPE_DISK && src_type != LIVES_SRC_TYPE_IMAGE) BREAK_ME("badsrctyp");
     // find a clipsrc_group with purpose
     // if such does not exist we will clone primary and make one
     // then make a clip_src for source, and insert in src_group
@@ -3448,6 +3448,23 @@ void *get_primary_actor(lives_clip_t *sfile) {
     if (src) return src->actor;
   }
   return NULL;
+}
+
+
+boolean set_primary_inst(int nclip, void *inst) {
+  boolean ret = FALSE;
+  lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
+  if (sfile) {
+    lives_clip_src_t *src;
+    pthread_mutex_lock(&sfile->srcgrp_mutex);
+    src = _get_primary_src(sfile);
+    if (src) {
+      ret = TRUE;
+      src->actor_inst = inst;
+    }
+    pthread_mutex_unlock(&sfile->srcgrp_mutex);
+  }
+  return ret;
 }
 
 

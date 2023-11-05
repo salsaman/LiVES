@@ -1458,7 +1458,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (*cfile->staging_dir && lives_strncmp(cfile->info_file, cfile->staging_dir,
       lives_strlen(cfile->staging_dir))) {
-    break_me("Should not processing a clip while in staging !");
+    BREAK_ME("Should not processing a clip while in staging !");
     migrate_from_staging(mainw->current_file);
   }
 

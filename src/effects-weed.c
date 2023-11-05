@@ -181,6 +181,7 @@ void weed_functions_init(void) {
   _weed_ext_append_elements = weed_ext_append_elements;
   _weed_ext_attach_leaf = weed_ext_attach_leaf;
   _weed_ext_detach_leaf = weed_ext_detach_leaf;
+  _weed_ext_atomic_exchange = weed_ext_atomic_exchange;
 #endif
 
   _weed_leaf_seed_type = weed_leaf_seed_type;
@@ -198,6 +199,7 @@ LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
     }
     mainw->fx_mutex_nlocks[key]++;
   } else {
+    BREAK_ME("badlock");
     char *msg = lives_strdup_printf("attempted lock of bad fx key %d", key);
     LIVES_ERROR(msg);
     lives_free(msg);
@@ -4147,7 +4149,7 @@ LIVES_GLOBAL_INLINE weed_error_t lives_leaf_set_rdonly(weed_plant_t *plant, cons
 void *lives_monitor_malloc(size_t size) {
   void *p = malloc(size);
   fprintf(stderr, "plugin mallocing %ld bytes, got ptr %p\n", size, p);
-  if (size == 1024) break_me("monitor_malloc");
+  if (size == 1024) BREAK_ME("monitor_malloc");
   return NULL;
 }
 
@@ -4168,9 +4170,13 @@ weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, weed_se
 
 weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, weed_size_t idx, void *value) {
   // plugins can be monitored for example
+  static boolean on = FALSE;
   weed_error_t err = _weed_leaf_get(plant, key, idx, value);
-  if (weed_leaf_seed_type(plant, key) == WEED_SEED_STRING)
+  if (LIVES_IS_PLAYING) on = TRUE;
+  if (on && weed_leaf_seed_type(plant, key) == WEED_SEED_STRING) {
+    if (!strcmp(key, "name")) BREAK_ME("lab");
     upd_statsplant(key);
+  }
   return err;
 }
 
@@ -4278,6 +4284,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
     weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)_ext_calloc);
   } else {
     // id 100 is what we set for a playback plugin, openGL uses its own memory allocator in hardware
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)memset);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)malloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)free);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)realloc);
@@ -4285,7 +4292,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   }
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy_monitor);
   weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy);
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)lives_memset);
+  //weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)lives_memset);
   weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)lives_memmove);
 #endif
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)monitor_malloc);
@@ -4307,7 +4314,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   weed_set_int_value(xhost_info, WEED_LEAF_FLAGS, WEED_HOST_SUPPORTS_LINEAR_GAMMA
                      | WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);
 
-  if (fxname && !strcmp(fxname, "projectM")) {
+  if (fxname && !lives_strcmp(fxname, "projectM")) {
     //  weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)weed_leaf_set_monitor);
     //weed_set_int_value(xhost_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
   } else
@@ -4808,8 +4815,6 @@ void weed_load_all(void) {
 
   fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
   bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
-
-  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     if (i == FX_KEYS_MAX_VIRTUAL) max_modes = 1;
@@ -6543,11 +6548,10 @@ boolean weed_init_effect(int hotkey) {
       /////////////////////////////////////// if blend_file is a generator we should finish it
       if (bg_gen_to_start == -1) {
         weed_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
+        bg_generator_key = bg_generator_mode = -1;
+        weed_layer_set_invalid(mainw->blend_layer, TRUE);
+        mainw->new_blend_file = -1;
       }
-
-      bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
-      weed_layer_set_invalid(mainw->blend_layer, TRUE);
-      mainw->new_blend_file = -1;
     }
 
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR &&
@@ -7735,9 +7739,11 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (old_file != -1 && mainw->blend_file != -1 && mainw->blend_file != mainw->current_file &&
       mainw->num_tr_applied > 0 && IS_VALID_CLIP(mainw->blend_file) &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-    ////////////////////////// switching background generator: stop the old one first
-    weed_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
-    mainw->new_clip = mainw->blend_file;
+    if (bg_gen_to_start == -1) {
+      ////////////////////////// switching background generator: stop the old one first
+      weed_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
+      mainw->new_clip = mainw->blend_file;
+    }
   }
 
   // old_file can also be -1 if we are doing a fg_modeswitch
@@ -7992,14 +7998,18 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   if (is_bg) {
-    if (mainw->blend_file != mainw->current_file)
-      remove_primary_src(mainw->blend_file, LIVES_SRC_TYPE_GENERATOR);
-
+    if (mainw->blend_file != mainw->current_file) {
+      // do not remove if playback ended
+      if (LIVES_IS_PLAYING || mainw->blend_file == -1) {
+        bg_generator_key = bg_generator_mode = -1;
+        remove_primary_src(mainw->blend_file, LIVES_SRC_TYPE_GENERATOR);
+      } else set_primary_inst(mainw->blend_file, NULL);
+      bg_gen_to_start = -1;
+    }
     filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
     if (rte_key_is_enabled(bg_generator_key, FALSE)) mainw->rte &= ~(GU641 << bg_generator_key);
     filter_mutex_unlock(bg_generator_key);
-    bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
     mainw->pre_src_file = mainw->current_file;
   } else {
     filter_mutex_lock(fg_generator_key);
@@ -8050,7 +8060,7 @@ void weed_generator_end(weed_plant_t *inst) {
   } else {
     // close generator file and switch to original file if possible
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
-      break_me("close non-gen file");
+      BREAK_ME("close non-gen file");
       LIVES_WARN("Close non-generator file 2");
     } else {
       if (cfile->achans == 0) {
@@ -8102,7 +8112,7 @@ boolean weed_playback_gen_start(void) {
 
   if (cfile->frames == 0 && fg_gen_to_start == -1 && bg_gen_to_start != -1) {
     fg_gen_to_start = bg_gen_to_start;
-    bgs = bg_gen_to_start = -1;
+    bgs = -1;
   }
 
   if (fg_gen_to_start != -1) {
@@ -8175,37 +8185,36 @@ deinit4:
   inst = NULL;
 
   if (bgs != -1) {
+    lives_filter_error_t filt_error = FILTER_SUCCESS;
     filter_mutex_lock(bgs);
-
     // check is still gen
     if (mainw->num_tr_applied > 0
         && enabled_in_channels(weed_filters[key_to_fx[bgs][key_modes[bgs]]],
                                FALSE) == 0) {
       if ((inst = weed_instance_obtain(bgs, key_modes[bgs])) == NULL) {
         // restart bg generator
-        if (!weed_init_effect(bgs)) {
-          filter_mutex_unlock(bgs);
-          return TRUE;
-        }
+
+        if (!weed_init_effect(bgs)) filt_error = FILTER_ERROR_INVALID_INSTANCE;
         was_started = TRUE;
+        mainw->blend_file = mainw->new_blend_file;
       }
 
       if (!inst) inst = weed_instance_obtain(bgs, key_modes[bgs]);
 
       orig_inst = inst;
 
-      if (!inst) {
-        // 2nd playback
-        int playing_file = mainw->playing_file;
-        mainw->playing_file = -100; //kludge to stop playing a second time
-        if (!weed_init_effect(bgs)) {
-          error = WEED_ERROR_NOT_READY;
-        }
-        mainw->playing_file = playing_file;
-        orig_inst = weed_instance_obtain(bgs, key_modes[bgs]);
-      } else {
+      /* if (!inst) { */
+      /*   // 2nd playback */
+      /*   int playing_file = mainw->playing_file; */
+      /*   if (!weed_init_effect(bgs)) error = WEED_ERROR_NOT_READY; */
+      /*   mainw->playing_file = playing_file; */
+      /* 	if (error == WEED_SUCCESS) { */
+      /* 	  orig_inst = weed_instance_obtain(bgs, key_modes[bgs]); */
+      /* 	  mainw->blend_file = mainw->new_blend_file; */
+      /* 	} */
+      /* } */
+      if (1) {
         if (!was_started) {
-          orig_inst = inst;
 genstart2:
 
           // TODO - error check
@@ -8223,9 +8232,9 @@ genstart2:
 
       inst = orig_inst;
 
-      if (error != WEED_SUCCESS) {
+      if (filt_error != FILTER_SUCCESS) {
 undoit:
-        mainw->new_blend_file = -1;
+        mainw->new_blend_file = mainw->blend_file;
 
         if (key_to_instance[bgs][key_modes[bgs]] == inst) {
           key_to_instance[bgs][key_modes[bgs]] = NULL;
@@ -8254,6 +8263,7 @@ deinit5:
         }
 
         bg_gen_to_start = -1;
+        BREAK_ME("retfalse");
         return FALSE;
       }
 
@@ -8281,12 +8291,16 @@ deinit5:
         // open as a clip with 1 frame
         cfile->start = cfile->end = cfile->frames = 1;
         mainw->new_blend_file = mainw->blend_file = mainw->current_file;
-        add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
         mainw->current_file = current_file;
       }
+
+      filter = weed_instance_get_filter(orig_inst, TRUE);
+      add_primary_inst(mainw->new_blend_file, (void *)filter, (void *)orig_inst, LIVES_SRC_TYPE_GENERATOR);
     }
   }
 
+  // must do this last, else the code will try to create a new clip for the bg generator
+  // intead of reusing the current one
   bg_gen_to_start = -1;
 
   return TRUE;
@@ -9423,8 +9437,8 @@ int weed_add_effectkey_by_idx(int key, int idx) {
       }
       return i;
     }
-    if (key_to_instance[--key][0]) break_me("Instance leak");
-    if (key_to_fx[key][0] != -1) break_me("Filter leak");
+    if (key_to_instance[--key][0]) BREAK_ME("Instance leak");
+    if (key_to_fx[key][0] != -1) BREAK_ME("Filter leak");
     key_to_fx[key][0] = idx;
     return 0;
   }
@@ -10893,7 +10907,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
   int i = (int)nleaves;
   int pd_needed = 0, pd_reqs = 0;
 
-  if (!proplist) break_me("null proplist");
+  if (!proplist) BREAK_ME("null proplist");
 
   if (WEED_IS_LAYER(plant)) pd_needed = 1;
 
@@ -11167,7 +11181,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
                   st != WEED_SEED_STRING && st != WEED_SEED_VOIDPTR && st != WEED_SEED_PLANTPTR)) {
     if (prefs->show_dev_opts) {
       g_printerr("unknown seed type %d %s\n", st, mykey);
-      break_me("ink. seed type in w.l. deser");
+      BREAK_ME("ink. seed type in w.l. deser");
     }
     type = -6;
     goto done;

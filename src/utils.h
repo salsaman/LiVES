@@ -87,7 +87,7 @@ void restart_me(LiVESList *extra_argv, const char *xreason);
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
 char *unhash_version(uint64_t version);
-int verhash(char *version);
+int verhash(const char *version);
 
 /////////////////// clip and frame utils ////
 

@@ -10107,6 +10107,8 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *layer, int *nplanes) {
   int *rs, rowstride_alignment, max_ra = RA_MAX, npl;
   boolean compact = FALSE;
 
+  if (pal == WEED_PALETTE_NONE) return NULL;
+
   if (layer && weed_plant_has_leaf(layer, WEED_LEAF_ROWSTRIDES)
       && weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE)
     /// force use of fixed rowstrides, eg. decoder plugin
@@ -10117,6 +10119,7 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *layer, int *nplanes) {
 
   npl = weed_palette_get_nplanes(pal);
   if (nplanes) *nplanes = npl;
+  if (!npl) return NULL;
 
   rs = lives_calloc(npl, sizint);
 
@@ -10210,6 +10213,8 @@ LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int 
   int *rowstrides = calc_rowstrides(width, pal, NULL, &nplanes);
   size_t *plsz;
   size_t tot = 0;
+
+  if (!rowstrides) return 0;
 
   if (planes) {
     plsz = (size_t *)lives_calloc(nplanes + 1, sizeof(size_t));
@@ -10318,6 +10323,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   }
 
   rowstrides = calc_rowstrides(width, palette, layer, NULL);
+  if (!rowstrides) goto fail;
   rowstride = rowstrides[0];
 
   switch (palette) {
@@ -10747,7 +10753,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   default:
     lives_printerr("Warning: asked to create empty pixel_data for palette %d !\n", palette);
-    break_me("create_empty_pixel_data w. unknown pal");
+    BREAK_ME("create_empty_pixel_data w. unknown pal");
     goto fail;
   }
 
@@ -13581,7 +13587,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
   if (opal_hint == WEED_PALETTE_NONE) opal_hint = WEED_PALETTE_ANY;
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
-    break_me("null layer");
+    BREAK_ME("null layer");
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
     if (opal_hint != WEED_PALETTE_NONE && opal_hint != WEED_PALETTE_ANY) {
       weed_layer_set_palette(layer, opal_hint);
@@ -14028,7 +14034,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     break;
   default:
     lives_printerr("Warning: resizing unknown palette %d\n", palette);
-    break_me("resize_layer with unk. pal");
+    BREAK_ME("resize_layer with unk. pal");
     retval = FALSE;
   }
 
@@ -14192,7 +14198,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
         && weed_layer_get_height(cached_layers[i]) >= nheight
         && weed_layer_get_palette(cached_layers[i]) == pal) {
       int *inner_size = weed_get_int_array(cached_layers[i], WEED_LEAF_INNER_SIZE, NULL);
-      if (inner_size[0] > width || inner_size[2] > height)
+      if (inner_size[0] > width || inner_size[1] > height)
         weed_layer_clear_pixel_data(cached_layers[i]);
       inner_size[0] = width;
       inner_size[1] = height;

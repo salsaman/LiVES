@@ -18135,7 +18135,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
       continue;
     }
     if (tc < last_tc) {
-      break_me("oo event in event_list_rectify");
+      BREAK_ME("oo event in event_list_rectify");
       ebuf = rec_error_add(ebuf, "Out of order event", -1, tc);
       delete_event(event_list, event);
       event = event_next;
@@ -19389,7 +19389,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
       tmp = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, mt->layout_name, NULL);
       layout_file = ensure_extension(tmp, LIVES_FILE_EXT_LAYOUT);
       lives_free(tmp);
-      break_me("DEL");
+      BREAK_ME("DEL");
       lives_rm(layout_file);
       lives_free(lmap_file); lives_free(layout_file);
     } else {

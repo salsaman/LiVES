@@ -5086,7 +5086,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #ifdef ENABLE_JACK
   if (!has_ap_rec) audp = lives_list_append(audp, lives_strdup_printf("%s (%s)", AUDIO_PLAYER_JACK,
                             mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
-  else audp = lives_list_append(audp, lives_strdup_printf(AUDIO_PLAYER_JACK));
+  else audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_JACK));
   has_ap_rec = TRUE;
 #endif
 
@@ -5121,7 +5121,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     if (!has_ap_rec)
       prefsw->audp_name = lives_strdup_printf("%s (%s)", AUDIO_PLAYER_JACK,
                                               mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
-    else prefsw->audp_name = lives_strdup_printf(AUDIO_PLAYER_JACK);
+    else prefsw->audp_name = lives_strdup(AUDIO_PLAYER_JACK);
   }
   has_ap_rec = TRUE;
 #endif

@@ -581,7 +581,7 @@ LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(const char *fname, 
 lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attrs, lives_funcptr_t func,
     const char *fname, int return_type, const char *args_fmt, va_list xargs) {
   lives_proc_thread_t lpt = lives_proc_thread_new(fname, &attrs);
-  add_quick_fn(func, fname);
+  if (fname) add_quick_fn(func, fname);
   _proc_thread_params_from_vargs(lpt, func, return_type, args_fmt, xargs);
   lpt = lives_proc_thread_run(attrs, lpt, return_type);
   return lpt;
@@ -591,7 +591,7 @@ lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attrs, l
 lives_proc_thread_t _lives_proc_thread_create_nullvargs(lives_thread_attr_t attrs, lives_funcptr_t func,
     const char *fname, int return_type) {
   lives_proc_thread_t lpt = lives_proc_thread_new(fname, &attrs);
-  add_quick_fn(func, fname);
+  if (fname) add_quick_fn(func, fname);
   _proc_thread_params_from_nullvargs(lpt, func, return_type);
   return lives_proc_thread_run(attrs, lpt, return_type);
 }
@@ -975,8 +975,8 @@ if (lpt) {
       int64_t state;
       pthread_mutex_t *state_mutex;
       lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
-      //if (lpt == mainw->debug_ptr) break_me("lpt free");
-      if (lives_proc_thread_get_closure(lpt)) break_me("free lpt with closure !");
+      //if (lpt == mainw->debug_ptr) BREAK_ME("lpt free");
+      if (lives_proc_thread_get_closure(lpt)) BREAK_ME("free lpt with closure !");
 
       state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
 
@@ -1821,7 +1821,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_th
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t xself) {
-  if (xself == mainw->debug_ptr) break_me("cancelled");
+  if (xself == mainw->debug_ptr) BREAK_ME("cancelled");
   if (xself) {
     GET_PROC_THREAD_SELF(self);
     if (!xself || (self && xself != self) ||
@@ -4113,7 +4113,7 @@ LIVES_GLOBAL_INLINE int refcount_dec(lives_refcounter_t *refcount) {
     pthread_mutex_lock(&refcount->mutex);
     count = refcount->count;
     if (count > 0) count = --refcount->count;
-    else break_me("double unref");
+    else BREAK_ME("double unref");
     pthread_mutex_unlock(&refcount->mutex);
     return count;
   }

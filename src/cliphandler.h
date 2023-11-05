@@ -842,9 +842,12 @@ void srcgrps_free_all(int nclip);
 void *get_primary_actor(lives_clip_t *);
 void *get_primary_inst(lives_clip_t *);
 int get_primary_src_type(lives_clip_t *);
+
 lives_clip_src_t *get_primary_src(int nclip);
 lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type);
 lives_clip_src_t *add_primary_inst(int nclip, void *actor, void *actor_inst, int src_type);
+boolean set_primary_inst(int nclip, void *inst);
+
 void remove_primary_src(int nclip, int src_type);
 
 void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t pally, int gamma_type);

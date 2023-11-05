@@ -386,17 +386,17 @@ char *ensure_extension(const char *fname, const char *ext) {
 }
 
 
-boolean ensure_isdir(char *fname) {
+boolean ensure_isdir(const char *fname) {
   // ensure dirname ends in a single dir separator
   // any double file separators are replaced with single ones
   // fname should be char[PATH_MAX] (i.e max stlren should be PATH_MAX - 1 - strlen(dir_sep))
 
   // returns TRUE if fname was altered
 
-  char *tmp2, *tmp = fname;
-  size_t tlen, tlen2, olen;
+  char *tmp2, *tmp = lives_strdup(fname);
+  size_t tlen, tlen2;
 
-  olen = tlen2 = tlen = lives_strlen(fname);
+  tlen2 = tlen = lives_strlen(fname);
 
   while (1) {
     // recursively remove double DIR_SEP
@@ -405,14 +405,14 @@ boolean ensure_isdir(char *fname) {
       lives_free(tmp2);
       break;
     }
-    if (tmp != fname) lives_free(tmp);
+    lives_free(tmp);
     tmp = tmp2;
     tlen = tlen2;
   }
 
   if (!lives_str_starts_with(tmp, LIVES_DIR_SEP)) {
     tmp2 = lives_strdup_printf("%s%s", LIVES_DIR_SEP, tmp);
-    if (tmp != fname) lives_free(tmp);
+    lives_free(tmp);
     tmp = tmp2;
     tlen += dslen;
   }
@@ -425,17 +425,15 @@ boolean ensure_isdir(char *fname) {
 
   if (lives_strcmp(&tmp[tlen - dslen], LIVES_DIR_SEP)) {
     tmp2 = lives_strdup_printf("%s%s", tmp, LIVES_DIR_SEP);
-    if (tmp != fname) lives_free(tmp);
+    lives_free(tmp);
     tmp = tmp2;
     tlen += dslen;
   }
 
-  if (tmp != fname) {
-    lives_snprintf(fname, PATH_MAX, "%s", tmp);
-    lives_free(tmp);
-    olen = tlen;
-  }
-  return tlen != olen;
+  lives_snprintf((char *)fname, PATH_MAX, "%s", tmp);
+  lives_free(tmp);
+
+  return tlen < PATH_MAX;
 }
 
 
@@ -803,7 +801,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname, fbuff->pathname);
-      break_me("dupe fd in fbuffs");
+      BREAK_ME("dupe fd in fbuffs");
       LIVES_ERROR(msg);
       lives_free(msg);
       lives_close_buffered(idx);

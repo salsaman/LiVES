@@ -4376,12 +4376,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       /////////////////
       if (intimg) {
         if (!layer) {
-          break_me("miss lay");
+          BREAK_ME("miss lay");
           break;
         }
       } else {
         if (!pixbuf) {
-          break_me("miss pix");
+          BREAK_ME("miss pix");
           break;
         }
       }

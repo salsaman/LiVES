@@ -2269,7 +2269,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     }
   }
 
-  break_me("doshowall");
+  BREAK_ME("doshowall");
   lives_widget_show_now(vboxx);
 
   // has to be called AFTER show_all !

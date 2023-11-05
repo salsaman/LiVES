@@ -1182,7 +1182,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
                                       osampling, osubspace, tgt_gamma)) {
         char *msg = lives_strdup_printf("Invalid palette conversion %d to %d\n", inpalette, opalette);
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
-        break_me("invpal");
+        BREAK_ME("invpal");
         lives_proc_thread_error(self, (int)retval, LPT_ERR_MAJOR, "%s", msg);
         lives_free(msg);
         weed_layer_unref(layer);
@@ -1653,8 +1653,7 @@ static void extract_timedata(exec_plan_t *plan) {
   // *INDENT-ON*
 }
 
-#define SET_PLAN_STATE(xstate) _DW0(plan->state = PLAN_STATE_##xstate;	\
-				    if (plan->state == PLAN_STATE_CANCELLED) break_me("plan cancelled");)
+#define SET_PLAN_STATE(xstate) _DW0(plan->state = PLAN_STATE_##xstate;)
 
 
 static void run_plan(exec_plan_t *plan) {
@@ -1785,7 +1784,7 @@ static void run_plan(exec_plan_t *plan) {
           || state == STEP_STATE_SKIPPED || state == STEP_STATE_IGNORE
           || state == STEP_STATE_CANCELLED) continue;
 
-      // need to cehck if layer is in state LOADED and
+      // need to check if layer is in state LOADED and
       if (state != STEP_STATE_RUNNING && !(plan->state == STEP_STATE_RESUMING
                                            && step->state == STEP_STATE_PAUSED)) {
         if (cancelled || paused || error) {
@@ -1822,14 +1821,6 @@ static void run_plan(exec_plan_t *plan) {
               step->state = STEP_STATE_ERROR;
               break;
             }
-            if (!(step->flags & STEP_FLAG_TAGGED_LAYER)) {
-              weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
-              step->flags |= STEP_FLAG_TAGGED_LAYER;
-              lock_layer_status(layer);
-              if (_lives_layer_get_status(layer) == LAYER_STATUS_NONE)
-                _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
-              unlock_layer_status(layer);
-            }
 
             if (!(step->flags & STEP_FLAG_NO_READY_STAT)) {
               // OK
@@ -1852,6 +1843,12 @@ static void run_plan(exec_plan_t *plan) {
               continue;
             }
             if (lstatus != LAYER_STATUS_PREPARED) continue;
+
+            if (!(step->flags & STEP_FLAG_TAGGED_LAYER)) {
+              weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
+              step->flags |= STEP_FLAG_TAGGED_LAYER;
+              g_print("TAGGED layer\n");
+            }
 
             /* if (frame == plan->template->frame_idx[step->track]) { */
             /*   plan->layers[step->track] = get_cached_frame(step->track); */
@@ -1908,17 +1905,21 @@ static void run_plan(exec_plan_t *plan) {
 
         switch (step->st_type) {
         case STEP_TYPE_LOAD: {
+          g_print("ST type is load\n");
           lives_clip_t *sfile;
           int clipno = plan->model->clip_index[step->track];
           sfile = RETURN_VALID_CLIP(clipno);
           if (sfile) layer = plan->layers[step->track];
           else layer = NULL;
+
           if (!layer) {
+            g_print("layer invalid, sfile is %p\n", sfile);
             step->state = STEP_STATE_ERROR;
             error = 5;
             break;
           }
           if (!weed_layer_check_valid(layer)) {
+            g_print("layer no valid\n");
             error = 6;
             step->state = STEP_STATE_ERROR;
             //weed_layer_unref(layer);
@@ -1933,6 +1934,8 @@ static void run_plan(exec_plan_t *plan) {
             plan->tdata->waiting_time += xtime;
             if (!got_act_st) plan->tdata->active_pl_time -= xtime;
           } else plan->tdata->concurrent_time -= xtime;
+          g_print("layer will oady %d %d\n", lives_layer_get_clip(layer),
+                  lives_layer_get_frame(layer));
           pull_frame_threaded(layer, sfile->hsize, sfile->vsize);
         }
         break;
@@ -2257,7 +2260,7 @@ static void run_plan(exec_plan_t *plan) {
                                                   - step->tdata->paused_time);
             plan->tdata->sequential_time += step->tdata->real_duration;
 
-            if (!weed_layer_get_width(layer) || !weed_layer_get_height(layer)) break_me("size 0 layer");
+            if (!weed_layer_get_width(layer) || !weed_layer_get_height(layer)) BREAK_ME("size 0 layer");
 
             d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
                           step->tdata->real_duration);
@@ -5527,7 +5530,6 @@ inst_node_t *p;
 input_node_t *in, *xin;
 output_node_t *out;
 int npals, *pals, onpals, *opals, i, xni;
-int k_start = 0, k_end = N_REAL_COST_TYPES;
 
 if (!n->n_inputs) return NULL;
 
@@ -5536,6 +5538,7 @@ if (!ni) {
   conv = (conversion_t *)lives_calloc(n->n_inputs, sizeof(conversion_t));
   best_tuples = (cost_tuple_t **)lives_calloc(N_REAL_COST_TYPES, sizeof(cost_tuple_t *));
   for (i = 0; i < N_REAL_COST_TYPES; i++) mincost[i] = -1.;
+  k = 0;
 }
 
 if (ni >= n->n_inputs) {
@@ -5578,12 +5581,7 @@ for (xni = ni + 1; xni < n->n_inputs; xni++) {
   if (!(xin->flags & (NODEFLAGS_IO_SKIP | NODEFLAG_IO_CLONE))) break;
 }
 
-if (ni) {
-  k_start = k;
-  k_end = k + 1;
-}
-
-for (k = k_start; k < k_end; k++) {
+while (k < N_REAL_COST_TYPES) {
   if (out->npals) {
     // if out palettes can vary, the palette is usually set by the host
     // or by the filter, however we can still calculate it
@@ -5598,6 +5596,10 @@ for (k = k_start; k < k_end; k++) {
       onpals = 1;
       opals = &p->pals[p->best_pal_up[k]];
     }
+  }
+
+  if (!onpals) {
+    BREAK_ME("no output pals");
   }
 
   if (in->npals) {
@@ -5633,11 +5635,11 @@ for (k = k_start; k < k_end; k++) {
       // TODO - test with in_gamma / out_gamma combos
     }
   }
+  if (ni) return NULL;
+  k++;
 }
-if (!ni) {
-  lives_free(conv);
-  if (!best_tuples || !best_tuples[0]) abort();
-}
+
+lives_free(conv);
 return best_tuples;
 }
 
@@ -6669,7 +6671,7 @@ if (idx >= 0) {
     lives_free(node_dtl);
 
     if (svary) {
-      node_dtl = lives_strdup_printf("has variant ");
+      node_dtl = lives_strdup("has variant ");
       d_print_debug("%s", node_dtl);
       lives_free(node_dtl);
     }
@@ -6680,7 +6682,7 @@ if (idx >= 0) {
     lives_free(node_dtl);
 
     if (in->npals) {
-      node_dtl = lives_strdup_printf("has variant ");
+      node_dtl = lives_strdup("has variant ");
       d_print_debug("%s", node_dtl);
       lives_free(node_dtl);
     }
@@ -7471,10 +7473,11 @@ lives_result_t run_next_cycle(void) {
 // free pixel data in all layers except mainw->frame_layer (nullify this to clear it, eg. on error)
 if (mainw->layers) {
   // all our pixel_data should have been free'd already
-  for (int i = 0; mainw->layers[i]; i++) {
-    if (mainw->layers[i] != mainw->frame_layer) {
+  for (int i = 0; i < mainw->num_tracks; i++) {
+    if (mainw->layers[i] != mainw->frame_layer && mainw->layers[i] != get_old_frame_layer()
+        && mainw->layers[i] != mainw->cached_frame && mainw->layers[i] != mainw->frame_layer_preload) {
       weed_layer_pixel_data_free(mainw->layers[i]);
-    }
+    } else mainw->layers[i] = NULL;
   }
 }
 

@@ -212,29 +212,31 @@ static weed_plant_t *fn_looker = NULL;
 extern char *nirvascope_bundle_to_header(weed_plant_t *, const char *tname, int idx);
 
 void add_quick_fn(lives_funcptr_t func, const char *funcname) {
+  return;
   char *key, *xfuncname;
-  //g_print("ADDDDING fn %s\n", funcname);
+  g_print("ADDDDING fn %s\n", funcname);
   if (sizeof(lives_funcptr_t) != sizeof(void *)) return;
   key = lives_strdup_printf("function@%p", func);
   xfuncname = lives_strdup(funcname);
   if (!fn_looker) fn_looker = lives_plant_new(LIVES_PLANT_INDEX);
   weed_set_const_string_value(fn_looker, key, (void *)xfuncname);
   lives_free(key);
-#ifdef SHOW_KNOWN_FUNCS
-  if (fn_looker)
-    g_print("%s", nirvascope_bundle_to_header(fn_looker, 0, 0));
-#endif
+  /* #ifdef SHOW_KNOWN_FUNCS */
+  /*   if (fn_looker) */
+  /*     g_print("%s", nirvascope_bundle_to_header(fn_looker, 0, 0)); */
+  /* #endif */
 }
 
 
 const char *get_funcname(lives_funcptr_t func) {
-  const char *fname;
-  char *key;
-  if (!fn_looker) return NULL;
-  key = lives_strdup_printf("function@%p", func);
-  fname = weed_get_const_string_value(fn_looker, key, NULL);
-  lives_free(key);
-  return fname;
+  return NULL;
+  //  const char *fname;
+  /* char *key; */
+  /* if (!fn_looker) return NULL; */
+  /* key = lives_strdup_printf("function@%p", func); */
+  /* fname = weed_get_const_string_value(fn_looker, key, NULL); */
+  /* lives_free(key); */
+  /* return fname; */
 }
 
 
@@ -245,7 +247,7 @@ LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname,
   /* g_printerr("Thread 0x%lx in func %s at %s, line %d\n", */
   /*            THREADVAR(uid), funcname, file_ref, line_ref); */
 
-  lives_sync_list_push(THREADVAR(func_stack), (void *)lives_strdup(funcname));
+  //lives_sync_list_push(THREADVAR(func_stack), (void *)lives_strdup(funcname));
   add_quick_fn(func, funcname);
   /* add_fn_lookup(func, funcname, cat, rettype, args_fmt, file_ref, line_ref); */
 }

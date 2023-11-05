@@ -536,6 +536,9 @@ typedef enum {
 #endif
 
 #define USE_RPMALLOC 1
+#define MEM_USE_BIGBLOCKS 1
+#define MEM_USE_SMALLBLOCKS 0
+
 #define ALLOW_ORC_MEMCPY 1
 #define ALLOW_OIL_MEMCPY 1
 #endif

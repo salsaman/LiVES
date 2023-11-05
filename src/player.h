@@ -72,6 +72,8 @@ weed_layer_t *load_frame_image(frames_t frame);
 weed_layer_t *get_old_frame_layer(void);
 void reset_old_frame_layer(void);
 
+void reset_ext_player_layer(boolean ign_flag);
+
 frames_t clamp_frame(int clipno, frames_t nframe);
 
 void reset_playback_clock(ticks_t origticks);

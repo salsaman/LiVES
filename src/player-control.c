@@ -289,6 +289,8 @@ static void post_playback(void) {
 	}}}}
   // *INDENT-ON*
 
+  reset_ext_player_layer(TRUE);
+
   if (prefs->show_player_stats && mainw->fps_measure > 0)
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
             (double)lives_get_relative_ticks(mainw->origticks) / TICKS_PER_SECOND_DBL);
@@ -727,7 +729,9 @@ void play_file(void) {
   }
 
   mainw->actual_frame = cfile->frameno;
-  mainw->playing_file = mainw->current_file;
+  mainw->new_clip = mainw->playing_file = mainw->current_file;
+  mainw->new_blend_file = mainw->blend_file;
+  mainw->close_this_clip = -1;
 
   if (mainw->layers) {
     for (int i = 0; i < mainw->num_tracks; i++) {

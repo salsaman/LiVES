@@ -525,7 +525,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
     if (((width ^ pwidth) >> 2) || ((height ^ pheight) >> 1)) {
       if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) {
-        //break_me("tranres");
+        //BREAK_ME("tranres");
         goto tr_err;
       }
     }

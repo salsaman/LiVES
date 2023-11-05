@@ -34,7 +34,7 @@ boolean check_dir_access(const char *dir);
 
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
 
-boolean ensure_isdir(char *fname);
+boolean ensure_isdir(const char *fname);
 boolean dirs_equal(const char *dira, const char *dirb);
 
 char *get_extension(const char *filename);

@@ -953,7 +953,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 
     if (mainw->debug_ptr == layer) {
       g_print("FREE %p\n", layer);
-      break_me("free dbg");
+      BREAK_ME("free dbg");
       mainw->debug_ptr = NULL;
     }
     lock_layer_status(layer);
@@ -994,7 +994,7 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 #endif
 int refs = weed_refcount_dec(layer);
 if (layer == mainw->debug_ptr) {
-  break_me("unref dbg");
+  BREAK_ME("unref dbg");
   g_print("nrefs is %d\n", refs);
 }
 if (!refs) weed_layer_free(layer);
@@ -1014,12 +1014,12 @@ LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
 #if 0
 }
 #endif
-//if (!layer) break_me("null layer");
+//if (!layer) BREAK_ME("null layer");
 //g_print("refff layer %p\n", layer);
 #ifdef DEBUG_LAYER_REFS
 ____FUNC_EXIT____;
 #endif
-//if (LIVES_IS_PLAYING && mainw->layers && layer == mainw->layers[0]) break_me("ref mwfl");
+//if (LIVES_IS_PLAYING && mainw->layers && layer == mainw->layers[0]) BREAK_ME("ref mwfl");
 return weed_refcount_inc(layer);
 }
 
@@ -1124,7 +1124,7 @@ LIVES_GLOBAL_INLINE int weed_layer_get_gamma(weed_layer_t *layer) {
       gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
     }
     /* if (gamma_type == WEED_GAMMA_UNKNOWN) { */
-    /*   break_me("weed_layer_get_gamma with unk. gamma"); */
+    /*   BREAK_ME("weed_layer_get_gamma with unk. gamma"); */
     /*   LIVES_WARN("Layer with unknown gamma !!"); */
     /*   gamma_type = WEED_GAMMA_SRGB; */
     /* } */

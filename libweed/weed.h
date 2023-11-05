@@ -238,6 +238,9 @@ struct _weed_leaf_nopadding {
   /* CAUTION - only works with scalar values */
   typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 						    weed_voidptr_t new_value, weed_voidptr_t old_valptr);
+  /* CAUTION - allows recasting of WEED_SEED_STRING, WEED_SEED_VOIDPTR, or WEED_SEED_CUSTOM
+     to another WEED_SEED_CUSTOM type */
+  typedef weed_error_t (*weed_ext_recast_seed_type_f)(weed_plant_t *, const char *key, weed_seed_t new_st);
 #endif
 
   /* end extended functions */
@@ -261,6 +264,8 @@ struct _weed_leaf_nopadding {
   __WEED_FN_DEF__ weed_ext_set_element_size_f weed_ext_set_element_size;
   __WEED_FN_DEF__ weed_ext_append_elements_f weed_ext_append_elements;
   __WEED_FN_DEF__ weed_ext_atomic_exchange_f weed_ext_atomic_exchange;
+  __WEED_FN_DEF__ weed_ext_recast_seed_type_f weed_ext_recast_seed_type;
+
   /*------------------------------*/
 
 #ifndef WITHOUT_LIBWEED
@@ -441,17 +446,10 @@ struct _weed_leaf_nopadding {
 #define WEED_SEED_plantptr		WEED_SEED_PLANTPTR
 #define WEED_SEED_weed_plantptr_t      	WEED_SEED_PLANTPTR
 
-  // This is an alias of WEED_SEED_VOIDPTR, for pointers to rdonly strings, may avoid  malloc/memcpy/free
-  // - Consider Flagging the leaf IMMUTABLE once set, to make the pointer value const.
-  // - Avoid memory leaks, consider freeing the string prior to freeing the plant, deleting the leaf
-  // or amending its value. (ie. string is in stack & no other refs exist)
-  // - Optionally, enable weed extensions and store the string length in element size(s).
-#define WEED_SEED_CONST_CHARPTR		67 // pointer to READ-ONLY string
-
 #define WEED_SEED_FIRST_PTR_TYPE	WEED_SEED_FUNCPTR
-#define WEED_SEED_LAST_PTR_TYPE		WEED_SEED_CONST_CHARPTR
+#define WEED_SEED_LAST_PTR_TYPE		WEED_SEED_PLANTPTR
 
-#define WEED_SEED_FIRST_CUSTOM	1024
+#define WEED_SEED_FIRST_CUSTOM		1024
 
 #define WEED_SEED_IS_STANDARD(st)					\
   ((((st) >= WEED_SEED_FIRST_NON_PTR_TYPE && (st) <= WEED_SEED_LAST_NON_PTR_TYPE) \

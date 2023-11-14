@@ -346,7 +346,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
         // got a beat !
         beat_pulse = beat_hold = WEED_TRUE;
         if (verbosity > WEED_VERBOSITY_WARN)
-          fprintf(stderr, "PULSE !\n");
+	 fprintf(stderr, "PULSE !\n");
         break;
       }
     }

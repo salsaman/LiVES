@@ -126,7 +126,6 @@
    - functions which update values, eg. weed_leaf_set_flags, must have a writelock.
 */
 
-
 typedef struct {
   pthread_rwlock_t	chain_lock;
   pthread_rwlock_t	data_lock;
@@ -143,9 +142,10 @@ typedef struct {
 #ifndef HAVE_WEED_HASHFUNC
 
 /* this must be the hash value for WEED_LEAF_TYPE */
+
 #define WEED_MAGIC_HASH 0xB82E802F
 
-#define get16bits(d) (*((const uint16_t *) (d)))
+#define get16bits(d) (*((const uint16_t *)(d)))
 
 #define HASHROOT 5381
 // fast hash from: http://www.azillionmonkeys.com/qed/hash.html
@@ -178,10 +178,9 @@ static weed_hash_t def_weed_hash(const char *key) {
   return 0;
 }
 
-#ifndef weed_hash
-#define weed_hash def_weed_hash
-#endif
+#undef get16bits
 
+#define weed_hash def_weed_hash
 #endif
 
 #define is_plant(leaf) (leaf->key_hash == WEED_MAGIC_HASH)
@@ -247,8 +246,6 @@ static weed_hash_t def_weed_hash(const char *key) {
 #define ref_lock_readlock(obj) X_lock_readlock(obj, ref)
 
 #define ref_lock_try_writelock(obj) X_lock_try_writelock(obj, ref)
-
-#define structure_mutex_trylock(obj) ((obj) ? pthread_mutex_trylock(get_structure_mutex((obj))) : -1)
 
 #define structure_mutex_lock(obj) do {					\
     if ((obj)) pthread_mutex_lock(get_structure_mutex((obj)));} while (0)
@@ -558,6 +555,7 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
 #define _vs(a) WEED_VOIDPTR_SIZE
 #endif
 
+// internal data size
 #define weed_seed_get_size(seed_type, size)				\
   (seed_type == WEED_SEED_STRING ? size					\
    : seed_type == WEED_SEED_PLANTPTR ? _pptrsize			\
@@ -567,6 +565,10 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
    : (seed_type == WEED_SEED_DOUBLE || seed_type == WEED_SEED_FLOAT	\
       || seed_type == WEED_SEED_INT64 || seed_type == WEED_SEED_UINT64) ? 8 \
    : 0)
+
+// external data size
+#define weed_seed_get_offset(seed_type)					\
+  (seed_type == WEED_SEED_BOOLEAN ? sizeof(weed_boolean_t) : weed_seed_get_size(seed_type, 0))
 
 //#undef _vs
 
@@ -588,29 +590,44 @@ static inline weed_data_t *weed_data_new(weed_seed_t seed_type, weed_size_t num_
   if (!num_elems) return NULL;
   // for better performance, we allocate a block of memory to hold all data structs, ie
   // num_elements * sizeof(weed_data_t). This ensures all the values re localised when being fetched
-
   if (!(data = (weed_data_t *)weed_calloc(num_elems, sizeof(weed_data_t)))) return NULL;
-  char **valuec = (char **)values;
-  weed_voidptr_t *valuep = (weed_voidptr_t *)values;
-  //weed_funcptr_t *valuef = (weed_funcptr_t *)values;
-  int is_ptr = (weed_seed_is_ptr(seed_type));
-  for (int i = 0; i < num_elems; i++) {
-    if (seed_type == WEED_SEED_STRING) {
+
+  if (seed_type == WEED_SEED_STRING) {
+    char **valuec = (char **)values;
+    for (int i = 0; i < num_elems; i++)
       data[i].v.value = valuec ?
 	(weed_voidptr_t)(((data[i].size = weed_strlen(valuec[i])) > nullv) ?
 			 (weed_voidptr_t)weed_malloc_and_copy(data[i].size - nullv,
-							      valuec[i]) : NULL) : NULL; continue;}
-    data[i].size = weed_seed_get_size(seed_type, 0);
-    /* if (seed_type == WEED_SEED_FUNCPTR) { */
-    /* 	data[i].v.funcval = valuef ? valuef[i] : NULL; continue;} */
-    if (is_ptr) {data[i].v.value = valuep ? valuep[i] : NULL; continue;}
-    if (data[i].size <= WEED_VOIDPTR_SIZE) {
-      weed_memcpy(&data[i].v.storage, (char *)values + i * data[i].size, data[i].size); continue;}
-    data[i].v.value =
-      (weed_voidptr_t)(weed_malloc_and_copy(data[i].size, (char *)values + i * data[i].size));
-    if (!is_ptr && !data[i].v.value && data[i].size > nullv) //memory error
-      return weed_data_free(data, --i, num_elems, seed_type);} return data;}
-
+							      valuec[i]) : NULL) : NULL;
+  }
+  else {
+    int is_ptr = (weed_seed_is_ptr(seed_type));
+    weed_size_t esize = weed_seed_get_size(seed_type, 0);
+    if (is_ptr) {
+      weed_voidptr_t *valuep = (weed_voidptr_t *)values;
+      for (int i = 0; i < num_elems; i++) {
+	data[i].size = esize;
+	data[i].v.value = valuep ? valuep[i] : NULL;
+      }
+    }
+    else {
+      int off_size = weed_seed_get_offset(seed_type);
+      if (esize <= WEED_VOIDPTR_SIZE)
+	for (int i = 0; i < num_elems; i++) {
+	  data[i].size = esize;
+	  weed_memcpy(&data[i].v.storage, (char *)values + i * off_size, data[i].size);
+	}
+      else for (int i = 0; i < num_elems; i++) {
+	  data[i].size = esize;
+	  data[i].v.value = (weed_voidptr_t)(weed_malloc_and_copy(data[i].size,
+								  (char *)values + i * off_size));
+	  if (!data[i].v.value && data[i].size > nullv)
+	    return weed_data_free(data, --i, num_elems, seed_type);
+	}
+    }
+  }
+  return data;
+}
 
 static inline weed_data_t *weed_data_append(weed_leaf_t *leaf,
 					    weed_size_t new_elems, weed_data_t *add_data) {
@@ -995,8 +1012,9 @@ static weed_error_t _weed_data_get_all(weed_leaf_t *leaf, weed_voidptr_t rvals) 
 	  ((char **)rvals)[i][size] = 0;}}}
     else {
       weed_size_t esz = weed_seed_get_size(leaf->seed_type, sizeof(char *));
+      int osz = weed_seed_get_offset(leaf->seed_type);
       for (int i = 0; i < ne; i++)
-	weed_memcpy(rvals + i * esz, &(leaf->data[i].v.storage), esz);}}
+	weed_memcpy(rvals + i * osz, &(leaf->data[i].v.storage), esz);}}
   return WEED_SUCCESS;
 }
 

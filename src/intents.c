@@ -204,7 +204,7 @@ weed_plant_t *lives_obj_attr_new(const char *name, weed_seed_t st) {
 weed_plant_t *attr_grp_find_attr(weed_plant_t *attr_grp, const char *name) {
   char *aname = make_attr_name(name);
   weed_plant_t *attr = weed_get_plantptr_value(attr_grp, aname, NULL);
-  weed_free(aname);
+  lives_free(aname);
   return attr;
 }
 
@@ -277,6 +277,18 @@ lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi
   lives_add_subobj(attr_grp, aname, attr);
   lives_free(aname);
   return attr;
+}
+
+
+weed_error_t lives_obj_instance_set_attr_val(lives_obj_instance_t *loi, const char *name, ...) {
+  weed_plant_t *attr = lives_obj_instance_get_attribute(loi, name);
+  if (!attr) return -1; // invalid attribute
+  weed_seed_t attr_type = lives_attr_get_value_type(attr);
+  va_list ap;
+  va_start(ap, name);
+  weed_leaf_from_varg(attr, WEED_LEAF_VALUE, attr_type, (weed_size_t)(1), ap);
+  va_end(ap);
+  return WEED_SUCCESS;
 }
 
 

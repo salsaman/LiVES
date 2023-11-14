@@ -85,7 +85,6 @@ typedef struct {
 #define ROUND_I(a) ((int)((double)(a) + .5)) // double
 #define ROUND_IF(a) ((int)((float)(a) + .5)) // float
 
-#define CLAMP0255i(a)  ((a) > 255 ? (uint8_t)255 : (a) < 0 ? (uint8_t)0 : (uint8_t)a)
 #define CLAMP0255f(a)  ((a) >= 254.5 ? (uint8_t)255 : (a) < -0.5 ? (uint8_t)0 : (uint8_t)((a) + .5))
 
 // clamp a between 0 and b; both values rounded to nearest int

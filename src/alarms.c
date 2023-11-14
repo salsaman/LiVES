@@ -224,8 +224,19 @@ static int lives_timer_set_delay(lives_timer_t *xtimer, uint64_t delay) {
 
 
 void timer_handler(int sig, siginfo_t *si, void *uc) {
-  lives_sigatomic *ptrigger = (lives_sigatomic *)si->si_value.sival_ptr;
-  if (ptrigger) *ptrigger = 1;
+  lives_timer_t *timer = (lives_timer_t *)si->si_value.sival_ptr;
+  if (timer) {
+    timer->triggered = si->si_overrun + 1;
+#if _POSIX_TIMERS
+    if (timer->flags & TIMER_FLAG_GET_TIMING) {
+      timer->ended = lives_get_session_ticks();
+      if (timer->delay)
+        timer->ratio =
+          (double)(timer->ended
+                   - timer->started) / (double)timer->delay;
+    }
+#endif
+  }
 }
 
 
@@ -256,16 +267,22 @@ static lives_timer_t *lives_timer_create(lives_timer_t *xtimer) {
     sev.sigev_signo = LIVES_TIMER_SIG;
 
     // pass the created struct as data to callback
-    sev.sigev_value.sival_ptr = (void *)&xtimer->triggered;;
+    sev.sigev_value.sival_ptr = (void *)xtimer;
 
     // changes to CLOCK_REALTIME do not affect relative times
-    if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) return FALSE;
+    if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) return NULL;
     xtimer->tid = timerid;
   }
 
   xtimer->triggered = 0;
 
   if (lives_timer_set_delay(xtimer, xtimer->delay) == -1) return NULL;
+  thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);
+
+#if _POSIX_TIMERS
+  if (xtimer->flags & TIMER_FLAG_GET_TIMING)
+    xtimer->started = lives_get_session_ticks();
+#endif
 
   return xtimer;
 }
@@ -296,14 +313,19 @@ boolean lives_alarm_clear(int dummy) {
 }
 
 
-boolean lives_alarm_disarm(void)
-{return lives_timer_delete(&(THREADVAR(xtimer)));}
+boolean lives_alarm_disarm(void) {
+  thrd_signal_block(LIVES_TIMER_SIG, TRUE);
+  return lives_timer_delete(&(THREADVAR(xtimer)));
+}
 
-boolean lives_sys_alarm_disarm(alarm_name_t alaname) {
+
+boolean lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete) {
   boolean ret = FALSE;
   if (alaname > sys_alarms_min && alaname < sys_alarms_max) {
     lives_timer_t *timer = &app_timers[alaname];
     if (timer->tid) {
+      thrd_signal_block(LIVES_TIMER_SIG, TRUE);
+      if (delete) return lives_timer_delete(timer);
       if (!timer->triggered) lives_timer_set_delay(timer, 0);
       else ret = TRUE;
       timer->triggered = 0;
@@ -313,11 +335,32 @@ boolean lives_sys_alarm_disarm(alarm_name_t alaname) {
 }
 
 ///////////////////////////////////////////
-
 static void _lives_alarm_wait(lives_timer_t *timer) {
-  if (timer && timer->tid && !timer->triggered)
-    lives_microsleep_until_nonzero(timer->triggered);
-  lives_timer_delete(timer);
+  if (timer && timer->tid) {
+    thrd_signal_block(LIVES_TIMER_SIG, TRUE);
+    if (!timer->triggered) {
+      sigset_t sigset;
+      siginfo_t si;
+      sigemptyset(&sigset);
+      sigaddset(&sigset, LIVES_TIMER_SIG);
+      do {
+        //thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);
+        sigwaitinfo(&sigset, &si);
+        //thrd_signal_block(LIVES_TIMER_SIG, TRUE);
+      } while (!timer->triggered && si.si_value.sival_ptr != (void *)timer);
+#if _POSIX_TIMERS
+      if (timer->flags & TIMER_FLAG_GET_TIMING) {
+        timer->ended = lives_get_session_ticks();
+
+        if (timer->delay)
+          timer->ratio =
+            (double)(timer->ended
+                     - timer->started) / (double)timer->delay;
+      }
+#endif
+      timer->triggered = si.si_overrun + 1;
+    }
+  }
 }
 
 void lives_alarm_wait(void)
@@ -330,7 +373,6 @@ void lives_sys_alarm_wait(alarm_name_t alaname) {
 
 
 static lives_result_t _lives_alarm_set_timeout(lives_timer_t *timer, uint64_t nsec) {
-  lives_timer_delete(timer);
   if (!nsec) return LIVES_RESULT_INVALID;
   timer->delay = nsec;
   if (!lives_timer_create(timer)) return LIVES_RESULT_ERROR;
@@ -365,15 +407,44 @@ int lives_sys_alarm_get_state(alarm_name_t alaname) {
   return _get_alarm_state(&app_timers[alaname]);
 }
 
+int lives_sys_alarm_get_flags(alarm_name_t alaname) {
+  if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return TIMER_FLAG_INVALID;
+  return app_timers[alaname].flags;
+}
 
-// experimental
+lives_result_t lives_sys_alarm_set_flags(alarm_name_t alaname, int flags) {
+  if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return LIVES_RESULT_INVALID;
+  app_timers[alaname].flags = flags;
+  return LIVES_RESULT_SUCCESS;
+}
 
-/* lpt_mind_control(pthread_t target, int spell, void *data) { */
-/*   // surprise another thread... */
-/*   switch spell { */
-/*       case SIG_ACT_CMD: { */
-/* 	boolean rev = FALSE; */
-/* 	for (liVESList *lst = (LiVESList *)data; list; list = list->next) { */
-/* 	  if (!rev) list = lives-list_reverse(list); */
-/* 	  lives_sync_list_add(LPT_THREADVAR(simple_cmd_list), list->data); */
+static double tot_sig_time = 1., tot_clk_time = 1.;
+
+double alarm_measure_ratio(boolean reset) {
+  if (tot_sig_time > 0. &&  tot_clk_time > 0.)
+    return tot_clk_time / tot_sig_time;
+  return 0.;
+}
+
+
+double measure_t_ratio(uint64_t msec, boolean disarm) {
+  double ratio = 0.;
+  if (msec) {
+    uint64_t nsec = msec * ONE_MILLION;
+    double xtime = -lives_get_session_time(), dmsec;
+    for (int i = 2; --i;) {
+      if (lives_alarm_set_timeout(nsec) != LIVES_RESULT_SUCCESS)
+        lives_abort("Yardstick Timer failed");
+      lives_alarm_wait();
+    }
+    xtime += lives_get_session_time();
+    if (disarm) lives_alarm_disarm();
+    dmsec = (double)msec / 1000.;
+    ratio = xtime / dmsec;
+    tot_sig_time += dmsec;
+    tot_clk_time += xtime;
+    g_print("rvafd %.6f anf %.7f\n", dmsec, xtime);
+  }
+  return ratio;
+}
 

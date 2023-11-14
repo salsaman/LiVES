@@ -84,11 +84,9 @@ boolean lives_nullify_ptr_cb(void *dummy, void *xvpp) {
 }
 
 
-LIVES_GLOBAL_INLINE void *lives_steal_pointer(void **pptr) {
-  void *ret = NULL;
-  if (pptr && (ret = *pptr)) * pptr = NULL;
-  return ret;
-}
+LIVES_GLOBAL_INLINE void *lives_steal_pointer(void **pptr)
+{void *p =  SAFE_DEREF(pptr); if (p) *pptr = NULL; return p;}
+
 
 //#if 0
 /* typedef struct { */
@@ -170,6 +168,11 @@ LIVES_GLOBAL_INLINE void *lives_steal_pointer(void **pptr) {
 /* } */
 
 /* #endif */
+
+void lives_debug_free(void *p) {
+  if (mainw && p == mainw->debug_ptr) BREAK_ME("debgu free\n");
+  _lives_free(p);
+}
 
 LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with

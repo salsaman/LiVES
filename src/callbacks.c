@@ -4855,21 +4855,25 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       // recording is starting
       mainw->record_starting = TRUE;
       if (!record_setup(actual_ticks)) return;
-      toggle_record();
+      set_record_menutext(REC_ACTIVE);
       if ((prefs->rec_opts & REC_AUDIO_AUTOLOCK) && !(mainw->agen_key != 0 || mainw->agen_needs_reinit)) {
         // TODO - use pref_factory_bitmapped
         if (AUD_SRC_INTERNAL && AUD_SRC_REALTIME && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
           aud_lock_act(NULL, LIVES_INT_TO_POINTER(TRUE));
         }
       }
-      if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL || ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
-                                            && AUD_SRC_REALTIME)))
-        mainw->aud_rec_lpt = start_audio_rec(get_aplayer_instance(AUD_SRC_EXTERNAL));
+      if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL
+                                            || ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
+                                                && AUD_SRC_REALTIME))) {
+        if (mainw->aud_rec_lpt) lives_proc_thread_request_resume(mainw->aud_rec_lpt);
+        else mainw->aud_rec_lpt = start_audio_rec(get_aplayer_instance(AUD_SRC_EXTERNAL));
+      }
     } else {
       // end record during playback
+      lives_proc_thread_request_pause(mainw->aud_rec_lpt);
       event_list_add_end_events(mainw->event_list, FALSE);
       mainw->record_paused = TRUE; // pause recording of further events
-      enable_record();
+      set_record_menutext(REC_READY);
     }
     return;
   }
@@ -4881,7 +4885,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     d_print(_("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n"
               "(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
     mainw->record = TRUE;
-    toggle_record();
+    set_record_menutext(REC_ACTIVE);
     if (prefs->rec_opts & REC_AUDIO_AUTOLOCK) {
       // TODO - use pref_factory_bitmapped
       if (AUD_SRC_INTERNAL && is_realtime_aplayer(prefs->audio_player)
@@ -4892,7 +4896,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     get_play_times();
   } else {
     d_print(_("Record cancelled.\n"));
-    enable_record();
+    set_record_menutext(REC_READY);
     mainw->record = FALSE;
   }
 }
@@ -7259,7 +7263,6 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     // toggle can be overridden by setting user_data non-NULL
     mainw->fs = !mainw->fs;
   }
-  mainw->blend_palette = WEED_PALETTE_END;
 
   if (!mainw->fs) {
     lives_widget_set_tooltip_text(mainw->t_fullscreen, _("Fullscreen playback (f)"));
@@ -7438,7 +7441,6 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
   }
 
   if (!CURRENT_CLIP_IS_VALID) return;
-  mainw->blend_palette = WEED_PALETTE_END;
 
   mainw->opwx = mainw->opwy = -1;
 
@@ -7499,7 +7501,6 @@ void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
 
 static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->sep_win = !mainw->sep_win;
-  mainw->blend_palette = WEED_PALETTE_END;
 
   if (mainw->multitrack) {
     if (!LIVES_IS_PLAYING) return;
@@ -9601,7 +9602,6 @@ void run_deferred_configs(void) {
     for (int i = 0; leaves[i]; i++) {
       LiVESWidget *widget = NULL;
       sscanf(leaves[i], "widg_%p", &widget);
-      g_print("allconfig %p\n", widget);
       SET_INT_DATA(widget, DEFER_KEY, 0);
       if (widget) all_config(widget, NULL, weed_get_voidptr_value(defer_plant, leaves[i], NULL));
       free(leaves[i]);

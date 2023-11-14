@@ -42,6 +42,10 @@ static void _pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   }
 
   lives_widget_show_all(dialog);
+  if ((widget_opts.non_modal && !(prefs->focus_steal & FOCUS_STEAL_MSG)) ||
+      (!widget_opts.non_modal && !(prefs->focus_steal & (FOCUS_STEAL_BLOCKED
+                                   | FOCUS_STEAL_MSG))))
+    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
   lives_window_present(LIVES_WINDOW(dialog));
   lives_grab_add(dialog);
 }
@@ -58,7 +62,8 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
 
 // desktop window title ////////
 
-static char *win_title = NULL;
+#define MAX_TITLE_LEN 1024
+static char win_title[MAX_TITLE_LEN];
 
 void disp_main_title(void) {
 #if LIVES_HAS_HEADER_BAR_WIDGET
@@ -71,33 +76,39 @@ void disp_main_title(void) {
 }
 
 
+static pthread_mutex_t title_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void set_main_title(const char *file, int untitled) {
   char *tmp, *tmp2;
   char short_file[256];
 
-  if (win_title) lives_free(win_title);
+  pthread_mutex_lock(&title_mutex);
 
   if (file && CURRENT_CLIP_IS_VALID) {
     if (untitled) {
-      win_title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")), (tmp2 = get_untitled_name(untitled)),
-                                      cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+      lives_snprintf(win_title, MAX_TITLE_LEN, (tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")),
+                     (tmp2 = get_untitled_name(untitled)),  cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
     } else {
       lives_snprintf(short_file, 256, "%s", file);
       if (cfile->restoring || (cfile->opening && cfile->frames == 123456789)) {
-        win_title = lives_strdup_printf((tmp = _("<%s> %dx%d : ??? frames ??? bpp %.3f fps")),
-                                        (tmp2 = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
+        lives_snprintf(win_title, MAX_TITLE_LEN, (tmp = _("<%s> %dx%d : ??? frames ??? bpp %.3f fps")),
+                       (tmp2 = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
       } else {
-        win_title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")),
-                                        cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp2 = lives_path_get_basename(file))
-                                        : (tmp2 = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+        lives_snprintf(win_title, MAX_TITLE_LEN, (tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")),
+                       cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp2 = lives_path_get_basename(file))
+                       : (tmp2 = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       }
     }
 
     lives_free(tmp); lives_free(tmp2);
-  } else win_title = (_("<No File>"));
+  } else {
+    lives_snprintf(win_title, MAX_TITLE_LEN, "%s", (tmp = (_("<No File>"))));
+    lives_free(tmp);
+  }
 
-  if (!(LIVES_IS_PLAYING && mainw->fs && mainw->sepwin))
-    disp_main_title();
+  if (!(LIVES_IS_PLAYING && mainw->fs && mainw->sep_win)) disp_main_title();
+
+  pthread_mutex_unlock(&title_mutex);
 }
 
 
@@ -243,7 +254,8 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
   }
 
-  lives_widget_set_sensitive(mainw->rewind, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->real_pointer_time > 0.);
+  lives_widget_set_sensitive(mainw->rewind, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
+                             && cfile->real_pointer_time > 0.);
   lives_widget_set_sensitive(mainw->show_file_info, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->show_file_comments, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->full_screen, TRUE);
@@ -766,7 +778,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   //static int old_pwidth = 0, old_pheight = 0;
   static int old_pwidth = 0, old_pheight = 0;
   LiVESPixbuf *pixbuf;
-  g_print("DRAW LAYER0\n");
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
 
@@ -775,7 +786,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   if (!weed_layer_check_valid(layer)) return;
 
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
-  g_print("CONV layer %p to pixbuf %p\n", layer, pixbuf);
 
   if (pixbuf) {
     LiVESWidget *widget = LIVES_WIDGET(darea);
@@ -795,9 +805,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
         old_pheight = pheight;
       }
     }
-
-    g_print("DRAW LAYER\n");
-
     set_drawing_area_from_pixbuf(darea, pixbuf);
     lives_widget_object_unref(pixbuf);
     lives_widget_queue_draw_and_update(widget);
@@ -928,7 +935,7 @@ void reset_mainwin_size(void) {
 
   // resize the main window so it fits the gui monitor
   if (prefs->open_maximised) {
-    //bx = by = 0;
+    bx = by = 0;
     lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
@@ -954,9 +961,7 @@ void reset_mainwin_size(void) {
 
   if (!LIVES_IS_PLAYING) {
     mainw->gui_much_events = TRUE;
-    //lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    //mainw->gui_much_events = FALSE;
   }
 }
 

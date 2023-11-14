@@ -150,15 +150,6 @@ boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
 //////////////////////////////////////////////
 
 
-static boolean sync_hooks_done(lives_obj_t *obj, void *data) {
-  if (data) {
-    boolean *b = (boolean *)data;
-    *b = TRUE;
-  }
-  return FALSE;
-}
-
-
 LIVES_GLOBAL_INLINE thrd_work_t *lives_proc_thread_get_work(lives_proc_thread_t lpt) {
   return lpt ? ((thrd_work_t *)weed_get_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, NULL)) : NULL;
 }
@@ -228,144 +219,6 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
 // auto-pausse, returns TRUE if timedout, FALSE if another thread resumed it
 boolean lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec) {
   return _lives_proc_thread_wait(self, nanosec, FALSE);
-}
-
-
-// lives_proc_threads can call this when waiting for some other thread to sync
-// it has the following effects:
-// first if the thread work packet has the IGNORE_SYNC_POINTS flag set
-// thread will return immediately, otherwise,
-//
-// thread state flag THRD_STATE_WAITING will be added
-// thread state flag THRD_STATE_BUSY, will be set. This will exclude the wait time from
-// the time taken for timeout threads, preventing it from being culled if another thread delays it
-//
-// if trigger_sync_hooks is set, the thread will trigger any hook functions in its WAIT_SYNC_HOOKS stack
-//   (TODO - make the stack type selectable)
-// the thread will then loop until either: it is cancelled, another thread calls sync_ready(lpt), or it times out
-// the timeout limit is 0 *unlimited) by default, but this can be set (value in msec) in THREADVAR(sync_timeout)
-// if the timeout limit is reached or passed, the thread will effectivle call sync_ready() on itself,
-// with imeout is > 0 the thread will simply exit with value FALSE
-// if timeout is < 0, the timeout value  will be the positive value of this,
-// and if timed out, the thread state flags will gain THRD_STATE_TIMED_OUT
-// on timeout
-// if blimit msec passes, the thread will gain THRD_STATE_BLOCKED.
-// The default is 10 seconds, bu this can be altered via THREADVAR(blocked_limit)  (msec)
-// on exit the states WAITING and  BLOCKED will be cleared. BUSY will be cleared unless it was already set when the thread
-// entered.
-
-// Note: there are 4 entities invloved here: the base thread, which has the hook stack for SYNC_WAIT
-// self, which is the proc thread waiting on the task
-// lpt, the task (proc_thread) being monitored
-// poller, a further proc thread which triggers the callbacks in the SYNC_WAIT stack
-//  - if all callbacks return TRUE, then it will call finfunc(findata) before exiting
-//     one would normally pass control as findata, and finfunc would then set *findata to TRUE
-
-boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, volatile boolean *control) {
-  GET_PROC_THREAD_SELF(self);
-  thrd_work_t *work = NULL;
-  ticks_t timeout;
-  uint64_t ltimeout;
-  lives_proc_thread_t poller = NULL;
-  lives_hook_stack_t **hook_stacks;
-  uint64_t inc_states = THRD_STATE_WAITING, exc_states = inc_states;
-  int64_t msec = 0, blimit;
-  boolean retval = TRUE;
-  boolean can_set_blocked = FALSE;
-
-  // if control ariable not passed in, we will use a local variable instead
-  volatile boolean ws_hooks_done = FALSE;
-  if (!control) control = &ws_hooks_done;
-
-  if (full_sync) {
-    work = lives_proc_thread_get_work(lpt);
-    if (work && (work->flags & LIVES_THRDFLAG_IGNORE_SYNCPTS) == LIVES_THRDFLAG_IGNORE_SYNCPTS)
-      return TRUE;
-  }
-
-  if (lives_proc_thread_ref(lpt) < 2) lpt = NULL;
-
-  weed_set_voidptr_value(lpt, "_control", (void *)control);
-
-  blimit = THREADVAR(blocked_limit);
-  timeout = THREADVAR(sync_timeout);
-  ltimeout = labs(timeout);
-
-  if (self) {
-    // check which states are not set, we will exclude them again after
-    exc_states |= ~lives_proc_thread_get_state(self) & (THRD_STATE_BLOCKED | THRD_STATE_BUSY);
-    if (exc_states & THRD_STATE_BUSY) {
-      // STATE CHANGE - > adds BUSY, so timeout threads do not count time spent waiting
-      inc_states |= THRD_STATE_BUSY;
-    }
-    lives_proc_thread_include_states(lpt, inc_states);
-    if (blimit && (exc_states & THRD_STATE_BLOCKED)) can_set_blocked = TRUE;
-  }
-
-  hook_stacks = THREADVAR(hook_stacks);
-
-  // if we have callbacks in (thread statcks) SYNC_WAIT_HOOK,
-  // launch a bg thread which will call all SYNC_WAIT_HOOK callbacks in turn repetedly
-  // if all return TRUE, then the "poller" will run finfunc(findata)
-  // then sync_hooks_done(&ws_hooks_done), in thase case we pass sync_hooks_done and "control"
-  // 'control' need to become TRUE before we can return successfully
-  // sync_hooks_done simple sets the value and exits
-  // control can also be passed to th eother functions, allowing them to ovverride the full chack
-  // if control is passed as an argument to this funcion, this allows the loop to be terminated on demoand
-  // if the arg. is NULL, then a suitbale control var will be created
-
-  if (hook_stacks[SYNC_WAIT_HOOK]->stack)
-    poller = lives_hooks_trigger_async_sequential(hook_stacks, SYNC_WAIT_HOOK,
-             (hook_funcptr_t)sync_hooks_done, (void *)control);
-
-  //if (debug) g_print("\n\nCNTRL is %d\n\n\n", *control);
-
-  if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt)) \
-    check_pool_threads(FALSE);						\
-
-  while (!*control) {
-    if (self && lives_proc_thread_should_cancel(self)) {
-      if (lpt) lives_proc_thread_request_cancel(lpt, TRUE);
-      lives_proc_thread_cancel(self);
-      break;
-    }
-    lives_nanosleep(10000);
-    pthread_yield();
-    msec += 10;
-    if (timeout && msec >= ltimeout) {
-      if (timeout < 0) {
-        if (self) lives_proc_thread_include_states(self, THRD_STATE_TIMED_OUT);
-      }
-      retval = FALSE;
-      goto finish;
-    }
-    if (can_set_blocked && msec >= blimit) {
-      lives_proc_thread_include_states(self, THRD_STATE_BLOCKED);
-      can_set_blocked = FALSE;
-    }
-  }
-
-finish:
-  if (poller) {
-    lives_proc_thread_request_cancel(poller, FALSE);
-    lives_proc_thread_join(poller);
-  }
-  if (lpt) {
-    weed_leaf_delete(lpt, "_control");
-    lives_proc_thread_unref(lpt);
-  }
-  lives_hooks_clear(hook_stacks, SYNC_WAIT_HOOK);
-  if (self) {
-    if (exc_states) lives_proc_thread_exclude_states(self, exc_states);
-    if (lives_proc_thread_should_cancel(self)) {
-      if (lpt) {
-        unlock_lpt(lpt);
-        lives_proc_thread_unref(lpt);
-      }
-      lives_proc_thread_cancel(self);
-    }
-  }
-  return retval;
 }
 
 
@@ -607,10 +460,10 @@ lives_proc_thread_t lives_proc_thread_chain(lives_proc_thread_t lpt, ...) {
     uint64_t attrs = LIVES_THRDATTR_START_UNQUEUED | LIVES_THRDATTR_NXT_IMMEDIATE;
     int32_t rtype = va_arg(va, int32_t);
     const char *fname = get_funcname(func), *args_fmt = va_arg(va, const char *);
-    if (!args_fmt || !*args_fmt)
-      xlpt = _lives_proc_thread_create_nullvargs(attrs, func, fname, rtype);
-    else
+    if (args_fmt && *args_fmt)
       xlpt = _lives_proc_thread_create_vargs(attrs, func, fname, rtype, args_fmt, va);
+    else xlpt = _lives_proc_thread_create_nullvargs(attrs, func, fname, rtype);
+
     if (!lpt) lpt = xlpt;
     else lives_proc_thread_add_chain_next(lpt, xlpt);
   }
@@ -705,7 +558,7 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout_vargs
 
   mainw->cancelled = CANCEL_NONE;
 
-  if (args_fmt) {
+  if (args_fmt && *args_fmt) {
     lpt = _lives_proc_thread_create_vargs(attrs, func, func_name, return_type, args_fmt, xargs);
   } else lpt = _lives_proc_thread_create_nullvargs(attrs, func, func_name, return_type);
 
@@ -1973,6 +1826,18 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_pause(lives_proc_thread_t 
   lives_proc_thread_t xlpt;
   if (!lpt) return FALSE;
 
+  lives_proc_thread_t plpt = lives_proc_thread_get_chain_prime(lpt);
+  lives_closure_t *hook_closure = weed_get_voidptr_value(plpt, LIVES_LEAF_CLOSURE, NULL);
+  if (hook_closure) {
+    if (hook_closure->hook_type == DATA_READY_HOOK) {
+      // test will become --> async_callbacks
+      // for these, we cannot pause per se, or we would block the hook holder
+      // instead we will set state paused | idling, which will cause the callback to skipped over
+      lives_proc_thread_include_states(plpt, THRD_STATE_PAUSED | THRD_STATE_IDLING);
+      lives_proc_thread_exclude_states(plpt, THRD_STATE_PAUSE_REQUESTED);
+      return TRUE;
+    }
+  }
   tdata = lives_proc_thread_get_thread_data(lpt);
   if (tdata) {
     alpt_mutex = &tdata->vars.var_active_lpt_mutex;
@@ -2276,9 +2141,11 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
   // --   if this happens it will check for match, then reset its sync_idx, the same as if it were resumed
   // - so after resuming we wait for other thread to reset its sync_idx
 
+  //MSGMODE_ON(DEBUG);
+  d_print_debug("start sync\n");
   if (sync_idx == 0) sync_idx = -1;
-
   if (lives_proc_thread_ref(lpt) > 1)  {
+    d_print_debug("got ref\n");
     GET_PROC_THREAD_SELF(self);
     if (lpt != self) {
       volatile int osync_idx;
@@ -2288,6 +2155,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
                        *pause_mutex = &(THREADVAR(pause_mutex));
 
       if (!opause_mutex) {
+        d_print_debug("no pause mutex !! %p %p %p\n", lpt, mainw->def_lpt, get_thread_data_for_lpt(lpt));
         lives_proc_thread_unref(lpt);
         return LIVES_RESULT_ERROR;
       }
@@ -2390,6 +2258,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         lives_proc_thread_set_sync_idx(0);
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);
+        //MSGMODE_OFF(DEBUG);
         return LIVES_RESULT_FAIL;
       }
 
@@ -2403,15 +2272,19 @@ synced:
       pthread_mutex_unlock(opause_mutex);
       lives_proc_thread_unref(lpt);
       d_print_debug("syncwith: DONE !!\n");
+      //MSGMODE_OFF(DEBUG);
       return LIVES_RESULT_SUCCESS;
       /* mismatch: */
       /*   lives_proc_thread_error(self, 0, "sync_idx mismatch, wating for %d and found %d\n", sync_idx, osync_idx); */
       /*   lives_proc_thread_unref(lpt); */
       /*   return LIVES_RESULT_ERROR; */
-    }
+    } else d_print_debug("sync with self !\n");
+
     lives_proc_thread_unref(lpt);
+    //MSGMODE_OFF(DEBUG);
     return LIVES_RESULT_SUCCESS;
   }
+  //MSGMODE_OFF(DEBUG);
   return LIVES_RESULT_FAIL;
 }
 
@@ -2537,8 +2410,6 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t lpt) {
   if (lives_proc_thread_check_finished(lpt)) {
     // if the proc_thread already finished, we just unref it
     lives_proc_thread_unref(lpt);
-
-
     lives_proc_thread_unref(lpt);
     return FALSE;
   } else {
@@ -2568,21 +2439,6 @@ boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t lpt, void **thing
   }
   return FALSE;
 }
-
-
-void pthread_cleanup_func(void *args) {
-  // if the main_thread is ever cancelled by pthread_cancel, this will be triggered, and any hook callbacks
-  // added, to THREAD_EXIT_HOOK will be triggered
-  // this is also called after gtk_main() exits, thus on normal exit, any threads still running lpts
-  // with hook callbacks in the main thread THREAD_EXIT_HOOK should flush their ext_cb lists, or manually remove the
-  // callbacks,
-  // unless they need informing when this happens
-  g_print("THREAD IS EXITING\n");
-  lives_hooks_trigger(THREADVAR(hook_stacks), THREAD_EXIT_HOOK);
-  g_print("THREAD IS FIN\n");
-}
-
-
 // FINAL for a proc_thread will either be:
 //
 // the proc_thread was flagged DONTCARE, or has no monitored return
@@ -2982,7 +2838,7 @@ uint64_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
       lives_proc_thread_unref(lpt);
     }
     lpt = nxtlpt;
-    g_print("next in chain %s\n", lives_proc_thread_show_func_call(lpt));
+    //g_print("next in chain %s\n", lives_proc_thread_show_func_call(lpt));
   }
 
   if (!chain_leader) chain_leader = self;
@@ -3066,11 +2922,8 @@ boolean lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t att
   // (this can be done even if the proc_thread is not explicitly 'cancellable',
   // otherwise, in some circumstances,  there would be no way to prevent a proc_thread from being queued)
   if (lives_proc_thread_should_cancel(lpt)) {
-    if (!lives_proc_thread_was_cancelled(lpt)) {
-      lives_thread_set_active(lpt);
-      lives_proc_thread_cancel(lpt);
-      lives_thread_set_active(self);
-    }
+    if (!lives_proc_thread_was_cancelled(lpt))
+      lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
 
     state = lives_proc_thread_set_final_state(lpt);
     if ((state & THRD_STATE_WILL_DESTROY) != THRD_STATE_WILL_DESTROY) {
@@ -3234,7 +3087,7 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t lpt) {
   // otherwise will wait and only return when lpt has thread data (ie. is in running state)
   // should be called if the current state of lpt is not known
   lives_thread_data_t *tdata;
-  if (!lpt || lives_proc_thread_is_unqueued(lpt)) return NULL;
+  if (!lpt || (lives_proc_thread_is_unqueued(lpt) && lpt != mainw->def_lpt)) return NULL;
   tdata = lives_proc_thread_get_thread_data(lpt);
   if (!tdata)
     // ignore subrd check, since that requires tdata !
@@ -3333,16 +3186,7 @@ void lives_thread_set_active(lives_proc_thread_t lpt) {
 
   if (lpt) {
     lives_proc_thread_set_pthread(lpt, pthread_self());
-
-    // this value never changesm, even when lpt is inactive (in self_stack)
     weed_set_voidptr_value(lpt, LIVES_LEAF_THREAD_DATA, tdata);
-
-    /* if (lpt != tdata->vars.var_prime_lpt = lpt) { */
-    /*   // TODO */
-    /*   // set SUSP for prime */
-    /*   // set SUBORD for lpt */
-
-    /* } */
   }
   pthread_mutex_unlock(alpt_mutex);
 
@@ -3378,11 +3222,25 @@ static void lives_thread_data_destroy(void *data) {
     g_main_context_unref(tdata->vars.var_guictx);
   if (tdata->vars.var_guisource) g_source_unref(tdata->vars.var_guisource);
 
+  lives_free(tdata);
+
 #if USE_RPMALLOC
   if (rpmalloc_is_thread_initialized()) {
-    rpmalloc_thread_finalize(0);
+    rpmalloc_thread_finalize(1);
   }
 #endif
+}
+
+void pthread_cleanup_func(void *args) {
+  // if the main_thread is ever cancelled by pthread_cancel, this will be triggered, and any hook callbacks
+  // added, to THREAD_EXIT_HOOK will be triggered
+  // this is also called after gtk_main() exits, thus on normal exit, any threads still running lpts
+  // with hook callbacks in the main thread THREAD_EXIT_HOOK should flush their ext_cb lists, or manually remove the
+  // callbacks, unless they need informing when this happens
+
+  // this is called BEFORE thread data destroy
+
+  lives_hooks_trigger(THREADVAR(hook_stacks), THREAD_EXIT_HOOK);
 }
 
 
@@ -3415,8 +3273,6 @@ static void *_lives_thread_data_create(void *pslot_id) {
     (void)pthread_setspecific(tdata_key, tdata);
 
     tdata->uid = tdata->vars.var_uid = gen_unique_id();
-
-    //pthread_cleanup_push(pthread_cleanup_func, tdata);
 
 #if IS_LINUX_GNU
     tdata->vars.var_tid = gettid();
@@ -3505,33 +3361,41 @@ static void *_lives_thread_data_create(void *pslot_id) {
 #endif
 
     //make_thrdattrs(tdata);
-  } while (0);
+  }
 
   if (tdata->thrd_type >= THRD_TYPE_EXTERN) return tdata;
 
-  while (1) {
-    if (tdata->thrd_type != THRD_TYPE_WORKER && tdata->vars.var_guictx == g_main_context_default()) return tdata;
-    if (tdata->vars.var_guictx != g_main_context_default())
-      g_main_context_iteration(tdata->vars.var_guictx, TRUE);
-    if (tdata->vars.var_guictx != g_main_context_default()) break;
+  if (tdata->thrd_type != THRD_TYPE_WORKER && tdata->vars.var_guictx
+      == g_main_context_default()) return tdata;
 
-    // we can do this - thread with main ctx, hands over main ctx, by setting our threadvar gictx to default
-    // when we return from task, either completing or being ccancelled, we quit from here, ending the iteration
-    //
-    // force other thread to quit main loop, it will pop the old default ctx, find the loop and the source
-    // (or create new source)
-    // meanwhile:
-    // push def context to thread def.
-    // update loop and source
-    // run the main loop
+  pthread_cleanup_push(pthread_cleanup_func, tdata);
 
-    lives_widget_context_push_thread_default(g_main_context_default());
-    tdata->vars.var_guiloop = NULL;
-    tdata->vars.var_guisource = lives_idle_priority(fg_service_fulfill_cb, NULL);
-    g_main_context_iteration(g_main_context_default(), TRUE);
-  }
+  if (tdata->vars.var_guictx != g_main_context_default())
+    g_main_context_iteration(tdata->vars.var_guictx, TRUE);
 
-  g_print("THRD EXITING\n");
+  pthread_cleanup_pop(1);
+
+  /* while (1) { */
+  /*   if (tdata->vars.var_guictx != g_main_context_default()) */
+  /*     g_main_context_iteration(tdata->vars.var_guictx, TRUE); */
+  /*   if (tdata->vars.var_guictx != g_main_context_default()) break; */
+
+  /*   // we can do this - thread with main ctx, hands over main ctx, by setting our threadvar gictx to default */
+  /*   // when we return from task, either completing or being ccancelled, we quit from here, ending the iteration */
+  /*   // */
+  /*   // force other thread to quit main loop, it will pop the old default ctx, find the loop and the source */
+  /*   // (or create new source) */
+  /*   // meanwhile: */
+  /*   // push def context to thread def. */
+  /*   // update loop and source */
+  /*   // run the main loop */
+
+  /*   lives_widget_context_push_thread_default(g_main_context_default()); */
+  /*   tdata->vars.var_guiloop = NULL; */
+  /*   tdata->vars.var_guisource = lives_idle_priority(fg_service_fulfill_cb, NULL); */
+  /*   g_main_context_iteration(g_main_context_default(), TRUE); */
+  /* } */
+
   return NULL;
 }
 
@@ -3713,8 +3577,14 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
     // if prime is NULL, also sets that
     lives_thread_set_active(lpt);
     // check if lpt will be destroyed or cancelled
-    if (should_skip(lpt, mywork)) goto skip_over;
+    if (should_skip(lpt, mywork)) {
+      if (lives_proc_thread_should_cancel(lpt)
+          && !lives_proc_thread_was_cancelled(lpt))
+        lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
+      goto skip_over;
+    }
   }
+
   mywork->busy = tdata->uid;
 
   // STATE change - queued - queued / preparing
@@ -3725,8 +3595,13 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
 
   mywork->flags &= ~(LIVES_THRDFLAG_WAIT_START | LIVES_THRDFLAG_QUEUED_WAITING);
 
-  // check if lpt will be destroyed or cancelled
-  if (lpt && should_skip(lpt, mywork)) goto skip_over;
+  // recheck afer updating flag states
+  if (lpt && should_skip(lpt, mywork)) {
+    if (lives_proc_thread_should_cancel(lpt)
+        && !lives_proc_thread_was_cancelled(lpt))
+      lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
+    goto skip_over;
+  }
 
   // RUN TASK
   mywork->flags |= LIVES_THRDFLAG_RUNNING;
@@ -3789,7 +3664,7 @@ skip_over:
 }
 
 
-#define POOL_TIMEOUT_SEC 120
+#define POOL_TIMEOUT_SEC 200
 
 static boolean thrdpool(void *arg) {
   static struct timespec ts;
@@ -3799,7 +3674,7 @@ static boolean thrdpool(void *arg) {
 
   while (!threads_die) {
     if (!skip_wait) {
-      int lifetime = POOL_TIMEOUT_SEC + fastrand_int(60);
+      int lifetime = POOL_TIMEOUT_SEC + fastrand_int(30);
       clock_gettime(CLOCK_REALTIME, &ts);
       // add random factor so we dont get multiple threads all timing out at once
       ts.tv_sec += lifetime;
@@ -4293,8 +4168,7 @@ char *get_threadstats(void) {
       pthread_mutex_t *alpt_mutex = &tdata->vars.var_active_lpt_mutex;
       pthread_mutex_lock(alpt_mutex);
       active_lpt = tdata->vars.var_active_lpt;
-      //pthread_mutex_unlock(alpt_mutex);
-      if (!active_lpt) g_printerr("Waiting in threadpool\n");
+      if (!active_lpt) g_printerr("Idling in threadpool\n");
       else {
         actthreads++;
         g_printerr("Running proc_thread, ");

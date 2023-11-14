@@ -290,6 +290,7 @@ static void post_playback(void) {
   // *INDENT-ON*
 
   reset_ext_player_layer(TRUE);
+  reset_old_frame_layer();
 
   if (prefs->show_player_stats && mainw->fps_measure > 0)
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
@@ -339,6 +340,7 @@ static void post_playback(void) {
     set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
     lives_widget_set_opacity(mainw->play_image, 0.);
     lives_widget_set_opacity(mainw->playframe, 0.);
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   if (!mainw->multitrack) mainw->osc_block = FALSE;
@@ -374,7 +376,7 @@ static void pre_playback(void) {
   short audio_player = prefs->audio_player;
 
   if (!mainw->preview || !cfile->opening) {
-    enable_record();
+    set_record_menutext(REC_READY);
     desensitize();
 #ifdef ENABLE_JACK
     if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
@@ -630,14 +632,14 @@ void play_file(void) {
   mainw->pre_src_audio_file = mainw->current_file;
 
   /// enable the freeze button
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
-                            (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            (freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL)));
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
-                            (LiVESXModifierType)(LIVES_SHIFT_MASK), (LiVESAccelFlags)0,
-                            (bg_freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL)));
+  _lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
+                             (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                             (freeze_closure = _lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
+                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL)));
+  _lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
+                             (LiVESXModifierType)(LIVES_SHIFT_MASK), (LiVESAccelFlags)0,
+                             (bg_freeze_closure = _lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
+                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL)));
 
   /// disable ctrl-q since it can be activated by user error
   lives_accel_path_disconnect(mainw->accel_group, LIVES_ACCEL_PATH_QUIT);
@@ -766,7 +768,6 @@ void play_file(void) {
   mainw->reverse_pb = FALSE;
 
   mainw->swapped_clip = -1;
-  mainw->blend_palette = WEED_PALETTE_END;
 
   cfile->play_paused = FALSE;
 
@@ -887,6 +888,8 @@ void play_file(void) {
     })
 
     mainw->abufs_to_fill = 0;
+
+    if (!mainw->num_tracks) mainw->num_tracks = 1;
 
     lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_START_HOOK);
 
@@ -1285,30 +1288,6 @@ void play_file(void) {
     lives_system(EXEC_MIDISTOP, TRUE);
     mainw->cancelled = cancelled;
   }
-  // we could have started by playing a generator, which could've been closed
-  if (!mainw->files[current_file]) current_file = mainw->current_file;
-
-  if (IS_VALID_CLIP(mainw->close_this_clip)) {
-    // need to keep blend_file around until we check if it is a generator to close
-    int blend_file = mainw->blend_file;
-
-    current_file = mainw->current_file;
-    mainw->can_switch_clips = TRUE;
-    mainw->current_file = mainw->close_this_clip;
-    if (mainw->blend_file == mainw->current_file) blend_file = -1;
-    mainw->new_clip = close_current_file(current_file);
-    if (!IS_VALID_CLIP(current_file)) mainw->current_file = mainw->new_clip;
-    mainw->can_switch_clips = FALSE;
-    if (IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
-    else mainw->blend_file = -1;
-  }
-
-  mainw->close_this_clip = mainw->new_clip = -1;
-
-  if (IS_VALID_CLIP(mainw->scrap_file) && get_primary_src(mainw->scrap_file)) {
-    lives_close_buffered(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)->priv));
-    remove_primary_src(mainw->scrap_file, LIVES_SRC_TYPE_FILE_BUFF);
-  }
 
   if (mainw->foreign) {
     // recording from external window capture
@@ -1327,10 +1306,14 @@ void play_file(void) {
     return;
   }
 
-  disable_record();
+  // TODO - can this be done earlier ?
+  if (mainw->cancelled == CANCEL_APP_QUIT) on_quit_activate(NULL, NULL);
+
+  set_record_menutext(REC_PASSIVE);
+
   prefs->pb_quality = future_prefs->pb_quality;
   mainw->lockstats = FALSE;
-  mainw->blend_palette = WEED_PALETTE_END;
+
   mainw->audio_stretch = 1.;
 
   lives_hooks_trigger(NULL, COMPLETED_HOOK);
@@ -1392,20 +1375,31 @@ void play_file(void) {
     cliplist = cliplist->next;
   }
 
+  mainw->noswitch = FALSE;
+
   // join any threads created for this
   if (mainw->scrap_file > -1) flush_scrap_file();
 
-  if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
-
-  if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
-      && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-    current_file = mainw->current_file;
-    mainw->can_switch_clips = TRUE;
-    // TODO - make sure we dont remove this too soon
-    weed_bg_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
-    mainw->can_switch_clips = FALSE;
-    if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
+  if (IS_VALID_CLIP(mainw->scrap_file) && get_primary_src(mainw->scrap_file)) {
+    lives_close_buffered(LIVES_POINTER_TO_INT(get_primary_src(mainw->scrap_file)->priv));
+    remove_primary_src(mainw->scrap_file, LIVES_SRC_TYPE_FILE_BUFF);
   }
+
+  if (IS_VALID_CLIP(mainw->close_this_clip)) {
+    // need to check this in case a generator was closed right before playback stopped
+    int blend_file = mainw->blend_file;
+    current_file = mainw->current_file;
+    mainw->current_file = mainw->close_this_clip;
+    if (mainw->blend_file == mainw->current_file) blend_file = -1;
+    mainw->new_clip = close_current_file(current_file);
+    if (!IS_VALID_CLIP(current_file)) mainw->current_file = mainw->new_clip;
+    if (IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
+    else mainw->blend_file = -1;
+  }
+
+  mainw->close_this_clip = mainw->new_clip = -1;
+
+  if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
 
   mainw->filter_map = mainw->afilter_map = mainw->audio_event = NULL;
 
@@ -1431,14 +1425,16 @@ void play_file(void) {
       }
     }
   }
+
   mainw->size_warn = 0;
 
   // set processing state again if a previewe finished
   // CAUTION !!
   /////
-
   mainw->is_processing = mainw->preview;
   /////////////////
+  // we could have started by playing a generator, which could've been closed
+  if (IS_VALID_CLIP(current_file)) current_file = mainw->current_file;
 
   if (prefs->volume != (double)future_prefs->volume)
     pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
@@ -1452,41 +1448,22 @@ void play_file(void) {
     lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
   }
 
-  // TODO - can this be done earlier ?
-  if (mainw->cancelled == CANCEL_APP_QUIT) on_quit_activate(NULL, NULL);
+  if (AUD_SRC_INTERNAL) {
+    if (await_audio_queue(BILLIONS(10)) != LIVES_RESULT_SUCCESS)
+      handle_audio_timeout();
 
-  /// end record performance
-
-  // TODO - use awai_audio_queue
-
-#ifdef ENABLE_JACK
-  if (audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-    ticks_t timeout;
-    lives_alarm_t alarm_handle;
-    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    lives_sleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
-    lives_alarm_clear(alarm_handle);
-    if (timeout == 0) handle_audio_timeout();
-    if (has_audio_buffers) {
-      free_jack_audio_buffers();
+    IF_APLAYER_JACK
+    (if (has_audio_buffers) {
+    free_jack_audio_buffers();
       audio_free_fnames();
-    }
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-    ticks_t timeout;
-    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    lives_sleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
-                           && pulse_get_msgq(mainw->pulsed));
-    lives_alarm_clear(alarm_handle);
-    if (timeout == 0) handle_audio_timeout();
-    if (has_audio_buffers) {
-      free_pulse_audio_buffers();
+    })
+
+    IF_APLAYER_PULSE
+    (if (has_audio_buffers) {
+    free_pulse_audio_buffers();
       audio_free_fnames();
-    }
+    })
   }
-#endif
 
   if (THREADVAR(bad_aud_file)) {
     /// we got an error recording audio
@@ -1507,10 +1484,7 @@ void play_file(void) {
   }
 
   // allow the main thread to exit from its blocking loop, it will resume normal operations
-  lives_sleep_while_true(mainw->do_ctx_update);
-
-  /// re-enable generic clip switching
-  mainw->noswitch = FALSE;
+  lives_millisleep_while_true(mainw->do_ctx_update);
 
   // return to NORMAL GUi SERVICING
   set_gui_loop_tight(FALSE);
@@ -1535,13 +1509,6 @@ void play_file(void) {
     }
   }
 
-  /* if (prefs->show_msg_area) { */
-  /*   if (mainw->idlemax == 0) { */
-  /*     lives_idle_add(resize_message_area, NULL); */
-  /*   } */
-  /*   mainw->idlemax = DEF_IDLE_MAX; */
-  /* } */
-
   /// need to do this here, in case we want to preview with only
   // a generator and no other clips (which will soon close to -1)
   if (mainw->record || mainw->record_paused) {
@@ -1552,6 +1519,13 @@ void play_file(void) {
   }
 
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
+
+  if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
+      && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+    current_file = mainw->current_file;
+    weed_bg_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
+    if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
+  }
 
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */

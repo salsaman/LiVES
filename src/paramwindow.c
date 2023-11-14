@@ -2756,6 +2756,8 @@ void after_param_value_changed(LiVESSpinButton * spinbutton, lives_rfx_t *rfx) {
     return; // updates are blocked until all params are ready
   }
 
+  if (!param->value) return;
+
   if (param->dp > 0) {
     old_double = get_double_param(param->value);
     new_double = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));

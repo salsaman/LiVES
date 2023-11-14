@@ -213,13 +213,11 @@ extern char *nirvascope_bundle_to_header(weed_plant_t *, const char *tname, int 
 
 void add_quick_fn(lives_funcptr_t func, const char *funcname) {
   return;
-  char *key, *xfuncname;
-  g_print("ADDDDING fn %s\n", funcname);
+  char *key;
   if (sizeof(lives_funcptr_t) != sizeof(void *)) return;
   key = lives_strdup_printf("function@%p", func);
-  xfuncname = lives_strdup(funcname);
   if (!fn_looker) fn_looker = lives_plant_new(LIVES_PLANT_INDEX);
-  weed_set_const_string_value(fn_looker, key, (void *)xfuncname);
+  weed_set_const_string_value(fn_looker, key, (void *)funcname);
   lives_free(key);
   /* #ifdef SHOW_KNOWN_FUNCS */
   /*   if (fn_looker) */
@@ -298,10 +296,10 @@ static boolean is_child_of(LiVESWidget *w, LiVESContainer *C);
 static boolean fn_match_child(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2);
 
 static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const char *args_fmt, \
-    make_key_f param_name, va_list xargs) {
+    make_key_f param_name_func, va_list xargs) {
   int p = 0;
   for (const char *c = args_fmt; *c; c++) {
-    char *pkey = (*param_name)(p++);
+    char *pkey = (*param_name_func)(p++);
     uint32_t st = _char_to_st(*c);
     weed_error_t err = weed_leaf_from_varg(plant, pkey, st, 1, xargs);
     lives_free(pkey);
@@ -507,6 +505,7 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
     case FUNCSIG_VOIDP_DOUBLE_DOUBLE: {void *p0; double p1, p2; _DC_(3, voidptr, double, double);} break;
     case FUNCSIG_PLANTP_VOIDP_INT64: {weed_plant_t *p0; void *p1; int64_t p2; _DC_(3, plantptr, voidptr, int64);} break;
     case FUNCSIG_INT_INT_BOOL: {int p0, p1, p2; _DC_(3, int, int, boolean);} break;
+    case FUNCSIG_BOOL_INT_BOOL: {int p0, p1, p2; _DC_(3, boolean, int, boolean);} break;
     case FUNCSIG_STRING_INT_BOOL: {char *p0 = NULL; int p1, p2; _DC_(3, string, int, boolean); _IF_(p0);} break;
     case FUNCSIG_INT_INT64_VOIDP: {int p0; int64_t p1; void *p2; _DC_(3, int, int64, voidptr);} break;
     // undefined funcsig
@@ -1736,17 +1735,23 @@ int lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
     // REF
     if (!lpt || lives_proc_thread_ref(lpt) < 2) continue;
 
+
+    if (lives_proc_thread_paused_idling(lpt)) {
+      lives_proc_thread_unref(lpt);
+      continue;
+    }
+
     if (lives_proc_thread_was_cancelled(lpt)) {
       remove_from_hstack(hstack, list);
       continue;
-    } else {
-      lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
-                                       | THRD_STATE_FINISHED);
-      closure->flags |= HOOK_STATUS_RUNNING;
-      lives_proc_thread_queue(lpt, 0);
-      ncount++;
     }
-    // UNREF
+
+    lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
+                                     | THRD_STATE_FINISHED);
+    closure->flags |= HOOK_STATUS_RUNNING;
+    lives_proc_thread_queue(lpt, 0);
+    ncount++;
+
     lives_proc_thread_unref(lpt);
   }
   PTMUH;
@@ -1912,10 +1917,15 @@ boolean fn_data_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2, int ma
 
 static boolean is_child_of(LiVESWidget *w, LiVESContainer *C) {
   if ((LiVESWidget *)w == (LiVESWidget *)C) return TRUE;
-  for (LiVESList *list = lives_container_get_children(C); list; list = list->next) {
+  LiVESList *children = lives_container_get_children(C);
+  for (LiVESList *list = children; list; list = list->next) {
     LiVESWidget *x = (LiVESWidget *)list->data;
-    if (LIVES_IS_CONTAINER(x) && is_child_of(w, LIVES_CONTAINER(x))) return TRUE;
+    if (LIVES_IS_CONTAINER(x) && is_child_of(w, LIVES_CONTAINER(x))) {
+      lives_list_free(children);
+      return TRUE;
+    }
   }
+  if (children) lives_list_free(children);
   return FALSE;
 }
 

@@ -38,6 +38,8 @@ static void process_new_frame(void);
 static int palette_list[6];
 static int mypalette;
 
+static void *host_flag_ptr = NULL;
+
 static boolean inited = false;
 
 static boolean npot;
@@ -605,6 +607,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "openGL plugin error: No palette was set !\n");
     return FALSE;
   }
+
+  host_flag_ptr = NULL;
 
   xparms.width = width;
   xparms.height = height;
@@ -1934,11 +1938,9 @@ static int Upload(void) {
 
 
 static void release_frame(weed_layer_t *frame) {
-  if (frame) {
-    void *vpp_flag_ptr = weed_get_voidptr_value(frame, VPP_FLAG_PTR, NULL);
-    fprintf(stderr, "got flagptr %p\n", vpp_flag_ptr);
-    weed_memset(vpp_flag_ptr, 1, 1);
-  }
+  if (!frame) return;
+  if (!host_flag_ptr) host_flag_ptr = weed_get_voidptr_value(frame, VPP_FLAG_PTR, NULL);
+  if (host_flag_ptr) weed_memset(host_flag_ptr, 1, 1);
 }
 
 
@@ -1973,15 +1975,15 @@ static void *render_thread_func(void *data) {
     }
     pthread_mutex_unlock(&cond_mutex);
     if (!playing) break;
-    fprintf(stderr, "NEW_FRAME\n");
+    //fprintf(stderr, "NEW_FRAME\n");
     process_new_frame();
-    fprintf(stderr, "PROC _FRAME\n");
+    //fprintf(stderr, "PROC _FRAME\n");
     release_frame(new_frame);
     new_frame = NULL;
-    fprintf(stderr, "REL _FRAME\n");
+    //fprintf(stderr, "REL _FRAME\n");
     has_new_texture = TRUE;
     Upload();
-    fprintf(stderr, "RDY _FRAME\n");
+    //fprintf(stderr, "RDY _FRAME\n");
   }
 
   if (new_return) {
@@ -2153,6 +2155,8 @@ boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
 void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   playing = FALSE;
+
+  host_flag_ptr = NULL;
 
   pthread_mutex_lock(&cond_mutex);
   /// render thread can exi when we set playing == FALSE. so we need to check for that here else we can hang in pthread_cond_signal (!)

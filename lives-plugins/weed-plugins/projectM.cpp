@@ -798,7 +798,7 @@ static void *worker(void *data) {
       else if (sd->pidx == -1) {
         if (sd->bad_prog) {
 	  if (sd->bad_programs[sd->program] != 1 && !(sd->silent
-						      && sd->bad_programs[sd->program] == 3)) {
+					     && sd->bad_programs[sd->program] == 3)) {
 	    if (sd->silent) sd->bad_programs[sd->program] = 3;
 	    else sd->bad_programs[sd->program] = 1;
 	  }
@@ -1205,9 +1205,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
     pthread_mutex_lock(&sd->pcm_mutex);
     if (adlen > 0 && adata && adata[0]) {
-      if (!sd->audio || (sd->abufsize < (size_t)adlen)) {
-        if (sd->audio) weed_free(sd->audio);
-        sd->audio = (float *)weed_calloc(adlen, 4);
+      if (!sd->audio || ((size_t)adlen > sd->abufsize)) {
+        sd->audio = (float *)weed_realloc(sd->audio, adlen * sizeof(float));
         if (!sd->audio) {
 	  sd->abufsize = 0;
           sd->error = WEED_ERROR_MEMORY_ALLOCATION;
@@ -1217,7 +1216,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
         }
 	sd->abufsize = adlen;
       }
-      weed_memcpy(sd->audio, adata[0], adlen * 4);
+      weed_memcpy(sd->audio, adata[0], adlen * sizeof(float));
     } else adlen = 0;
 
     if (verbosity >= WEED_VERBOSITY_DEBUG)
@@ -1308,8 +1307,8 @@ WEED_SETUP_START(200, 200) {
 
   setup_display();
 
-  weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXWIDTH, scrwidth);
-  weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXHEIGHT, scrheight);
+  weed_set_int_value(filter_class, WEED_LEAF_MAXWIDTH, scrwidth);
+  weed_set_int_value(filter_class, WEED_LEAF_MAXHEIGHT, scrheight);
 
   weed_plugin_set_package_version(plugin_info, package_version);
 }

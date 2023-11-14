@@ -62,6 +62,9 @@ extern "C" {
 void lives_notify(int msgnumber, const char *msgstring);
 void lives_notify_int(int msgnumber, int msgint);
 
+// in osc.c
+char *osc_make_sync_msg(int *clip_index, frames64_t *frame_idx, double pb_time, int ntracks);
+
 #ifdef __cplusplus
 }
 #endif

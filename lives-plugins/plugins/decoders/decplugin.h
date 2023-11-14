@@ -307,8 +307,15 @@ void rip_audio_cleanup(const lives_clip_data_t *);
 
 void module_unload(void);
 
-double estimate_delay(const lives_clip_data_t *, int64_t tframe);
-double estimate_delay_full(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame, double *confidence);
+// estimate delay (secs) to decode tframe, assuming we just decooed from_frame
+// the estimate may include - jumping forwards or backwards to a keyframae
+// decoding the keyframe, then decoding or skipping over inter frames until we reach tframe
+// decoding tframe. The estimate may also include the time to read the data from the start of the block(s)
+// containing the keyframe until the end of the block(s) containing tframe and including inter frame blocks
+double estimate_delay(const lives_clip_data_t *, int64_t tframe,  int64_t from_frame, double *confidence);
+
+// if there are multiple decoders for the same source, then this function may be called to update common data
+// for that source
 int64_t update_stats(const lives_clip_data_t *);
 
 // little-endian

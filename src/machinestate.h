@@ -53,7 +53,8 @@ typedef struct {
 #define OOM_ADJ_RANGE 1000
   char *oom_adjust_file;
   int oom_adj_value;
-  uint64_t clock_res;
+  uint64_t rt_clock_res;
+  uint64_t mono_clock_res;
 } hw_caps_t;
 
 //////////////

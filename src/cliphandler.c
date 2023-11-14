@@ -2625,7 +2625,7 @@ void do_quick_switch(int new_file) {
       || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
       mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
 
-  if (mainw->noswitch && !mainw->can_switch_clips) {
+  if (mainw->noswitch) {
     mainw->new_clip = new_file;
     return;
   }
@@ -2856,7 +2856,6 @@ void switch_clip(int type, int newclip, boolean force) {
       if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
         ce_thumbs_highlight_current_clip();
       }
-      mainw->blend_palette = WEED_PALETTE_END;
     }
     return;
   }

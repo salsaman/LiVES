@@ -114,9 +114,9 @@ typedef PangoFontDescription LingoFontDesc;
 					     : WEED_PALETTE_BGRA32)
 #define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
 #endif
-#ifdef GUI_GTK
-#define lives_widget_create_lingo_context(a) gtk_widget_create_pango_context(a)
-#endif
+
+LingoContext *lives_widget_create_lingo_context(LiVESWidget *);
+
 #define lingo_layout_get_size(a, b, c) pango_layout_get_size(a, b, c)
 #define lingo_layout_new(a) pango_layout_new(a)
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
@@ -1050,13 +1050,22 @@ boolean lives_xwindow_get_origin(LiVESXWindow *, int *posx, int *posy);
 boolean lives_xwindow_get_frame_extents(LiVESXWindow *, lives_rect_t *);
 
 LiVESAccelGroup *lives_accel_group_new(void);
-boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,
-                                  LiVESWidgetClosure *closure);
+boolean _lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,
+                                   LiVESWidgetClosure *closure);
 boolean lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
 boolean lives_accel_groups_activate(LiVESWidgetObject *object, uint32_t key, LiVESXModifierType mod);
 
 boolean lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
                                      uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
+
+void lives_accel_group_connect(LiVESAccelGroup *accel_group, uint32_t keyval,
+                               GdkModifierType accel_mods,  GtkAccelFlags accel_flags,
+                               lives_funcptr_t func, void *user_data, GClosureNotify dest);
+
+void accel_act_special(void *obj, uint32_t key, GdkModifierType mods);
+
+boolean accel_act(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval,
+                  LiVESXModifierType mod, livespointer data);
 
 boolean lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
 boolean lives_widget_get_modmask(LiVESXDevice *, LiVESWidget *, LiVESXModifierType *modmask);

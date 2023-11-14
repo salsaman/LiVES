@@ -36,6 +36,24 @@ static boolean via_shortcut = FALSE;
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
 
+
+
+char *osc_make_sync_msg(int *clip_index, frames64_t *frame_idx, double pb_time, int ntracks) {
+  // format is (int64_t)tc|(int32_t)nclips|(int32_t)clip|(int64_t)frame|.....|(double)pb_fps
+  char *tmp, *msg;
+  double pb_fps = 0.;
+  int clip = clip_index[0];
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
+  if (sfile) pb_fps = sfile->pb_fps;
+  tmp = lives_strdup_printf("%.8f|%d|", pb_time, ntracks);
+  for (int i = 0; i < ntracks; i++)
+    tmp = lives_strdup_concat(tmp, "|", "%d|%ld", clip_index[i], frame_idx[i]);
+  msg = lives_strdup_printf("%s|%.3f", tmp, pb_fps);
+  lives_free(tmp);
+  return msg;
+}
+
+
 // TODO: replace mainw->osc_block with filter_mutex_lock()
 
 static boolean osc_init_generator(livespointer data) {

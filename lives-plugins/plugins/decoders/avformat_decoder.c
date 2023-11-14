@@ -1392,7 +1392,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe <= cdata->last_frame_decoded) rev = TRUE;
   if (cdata->last_frame_decoded > -1 && tframe > cdata->last_frame_decoded) {
-    double est = estimate_delay(cdata, tframe);
+    double est = estimate_delay(cdata, tframe, 0, NULL);
     if (est <= 0. || est_noseek <= 0.) {
       if (tframe - cdata->last_frame_decoded > cdata->jump_limit) do_seek = TRUE;
     } else if (est < est_noseek) do_seek = TRUE;
@@ -1837,8 +1837,8 @@ int64_t update_stats(const lives_clip_data_t *xcdata) {
 }
 
 
-double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int64_t last_frame,
-                           double *confidence) {
+double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t last_frame,
+                      double *confidence) {
   // return as accurate as we can, an estimate of the time (seconds) to decode and return frame tframe
   // - for the calculation we start by looking at last_frame (or if last_frame < 0, cdata->last_frame_decoded)
   // then, determine if we can reach target by decoding frames in sequence, or if we need to seek first
@@ -1955,11 +1955,6 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
   }
   //fprintf(stderr, "ESTIM is %f\n", est);
   return est;
-}
-
-
-double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe) {
-  return estimate_delay_full(xcdata, tframe, 0, NULL);
 }
 
 

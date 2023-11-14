@@ -171,9 +171,10 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   uint64_t rnum = 0;
 
 #if HAVE_GETENTROPY
-  uint64_t rnum1, rnum2;
+  uint64_t rnum1 = 0, rnum2 = 0;
   if (!use_getentropy_cooked || getentropy(&rnum, 4))
 #endif
+
     rnum = random();
 
   nrcalls++;
@@ -1328,7 +1329,6 @@ static double pop_flowstate(void) {
 
 void reset_effort(void) {
   prefs->pb_quality = future_prefs->pb_quality;
-  mainw->blend_palette = WEED_PALETTE_END;
   lives_memset(theflow, 0, sizeof(theflow));
   inited = TRUE;
   badthingcount = goodthingcount = 0.;
@@ -1434,7 +1434,8 @@ void update_effort(double nthings, boolean is_bad) {
   // *INDENT-ON
  tryset:
   if (pb_quality != future_prefs->pb_quality && (!mainw->frame_layer_preload || mainw->pred_frame == -1
-						 || is_layer_ready(mainw->frame_layer_preload))) {
+						 || is_layer_ready(mainw->frame_layer_preload)
+						 == LIVES_RESULT_SUCCESS)) {
     future_prefs->pb_quality = pb_quality;
     if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP_NORESYNC;
     mainw->refresh_model = TRUE;
@@ -2731,14 +2732,27 @@ int get_num_cpus(void) {
 boolean get_machine_dets(int phase) {
   struct timespec res;
   if (phase == 0) {
+    cache_msg("\n");
 #ifdef _SC_PAGESIZE
     capable->hw.pagesize = sysconf(_SC_PAGESIZE);
+    cache_msg("Memory page size is %d\n", capable->hw.pagesize);
 #endif
 #if IS_X86_64
     get_cpuinfo();
+    cache_msg("CPU cacheline size is %d\n", capable->hw.cacheline_size);
 #else
     capable->hw.cacheline_size = capable->hw.cpu_bits;
+    cache_msg("CPU cacheline size is %d (guessed from CPU bits)\n",
+	      capable->hw.cacheline_size);
 #endif
+
+  if (!clock_getres(CLOCK_REALTIME, &res))
+    capable->hw.rt_clock_res = res.tv_sec * ONE_BILLION + res.tv_nsec;
+  if (!clock_getres(CLOCK_MONOTONIC, &res))
+    capable->hw.mono_clock_res = res.tv_sec * ONE_BILLION + res.tv_nsec;
+  if (capable->hw.rt_clock_res)
+    cache_msg("Clock resolution is %s\n",
+	      lives_format_timing_string((double)capable->hw.rt_clock_res / ONE_BILLION_DBL));
     return TRUE;
   }
 
@@ -2769,9 +2783,6 @@ boolean get_machine_dets(int phase) {
 
   if (!mainw->debug && !strcmp(capable->os_hardware, "x86_64"))
     get_cpuinfo();
-
-  if (!clock_getres(CLOCK_REALTIME, &res))
-    capable->hw.clock_res = res.tv_sec * ONE_BILLION + res.tv_nsec;
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;

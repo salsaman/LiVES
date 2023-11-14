@@ -653,35 +653,35 @@ boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, cons
 boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int return_type, void *retloc);
 
 // real params, real ret_tpye
-#define MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, ...) do { \
-    if (!is_fg_thread())						\
-      _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, args_fmt, __VA_ARGS__); \
-    else *retloc = func(__VA_ARGS__);} while (0)
+#define MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, ...) \
+  _DW0(if (!is_fg_thread())						\
+	 _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, args_fmt, __VA_ARGS__); \
+       else *retloc = func(__VA_ARGS__);)
 
 // real params, ret_type 0
-#define MAIN_THREAD_EXECUTE_RVOID(func, args_fmt, ...) do {		\
-    if (!is_fg_thread())						\
-      _main_thread_execute((lives_funcptr_t)func, #func, WEED_SEED_VOID, NULL, args_fmt, __VA_ARGS__); \
-    else func(__VA_ARGS__);} while (0);
+#define MAIN_THREAD_EXECUTE_RVOID(func, args_fmt, ...) \
+  _DW0(if (!is_fg_thread())						\
+	 _main_thread_execute((lives_funcptr_t)func, #func, WEED_SEED_VOID, NULL, args_fmt, __VA_ARGS__); \
+       else func(__VA_ARGS__);)
 
 // real params, ret_type 0 or -1
-#define MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, ...) do { \
-    if (!is_fg_thread())						\
-      _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, args_fmt, __VA_ARGS__); \
-    else func(__VA_ARGS__);} while (0);
+#define MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, ...)	\
+  _DW0(if (!is_fg_thread())						\
+	 _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, args_fmt, __VA_ARGS__); \
+       else func(__VA_ARGS__);)
 
 
 // void params, real return_type
-#define MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc) do {	\
-    if (!is_fg_thread())						\
-      _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, "", NULL); \
-    else *retloc = func();} while (0)
+#define MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc)		\
+  _DW0(if (!is_fg_thread())						\
+	 _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, "", NULL); \
+       else *retloc = func();)
 
 // void params, ret_type 0 or 1
-#define MAIN_THREAD_EXECUTE_VOID(func, return_type) do {		\
-    if (!is_fg_thread())						\
-      _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, "", NULL); \
-    else func();} while (0)
+#define MAIN_THREAD_EXECUTE_VOID(func, return_type)		\
+  _DW0(if (!is_fg_thread())						\
+	 _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, "", NULL); \
+       else func();)
 
 #define main_thread_execute(func, return_type, retloc, args_fmt, ...)	\
   do {MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, __VA_ARGS__);} while (0)
@@ -694,6 +694,26 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 
 #define main_thread_execute_void(func, return_type)		\
   do {MAIN_THREAD_EXECUTE_VOID(func, return_type);} while (0)
+
+// e.g int var = pool_thread_execute(func, WEED_SEED_INT, "v", ptr)
+#define pool_thread_execute(func, rtype, args_fmt, ...)			\
+  (is_fg_thread()?lives_proc_thread_create(0,func,rtype,args_fmt,__VA_ARGS__)?var;var \
+   ;func(__VA_ARGS__))
+
+// e.g pool_thread_execute_rvoid(func, -1, "v", ptr)
+#define pool_thread_execute_rvoid(func, rtype, args_fmt, ...)		\
+  _DW0(if(is_fg_thread())lives_proc_thread_create(0,func,rtype,args_fmt,__VA_ARGS__); \
+       else func(__VA_ARGS__);)
+
+// e.g int var = pool_thread_execute_pvoid(func, WEED_SEED_INT)
+#define pool_thread_execute_pvoid(func, rtype)				\
+  (is_fg_thread()?lives_proc_thread_create(0,func,rtype,"")?var;var:func();)
+
+// e.g pool_thread_execute_rvoid_pvoid(func)
+#define pool_thread_execute_rvoid_pvoid(func, rtype)			\
+  _DW0(if(is_fg_thread())lives_proc_thread_create(0,func,rtype,NULL);else func();)
+
+#define pool_thread_execute_pvoid_rvoid(func, rtype) pool_thread_execute_rvoid_pvoid(func, rtype)
 
 uint64_t lives_proc_thread_execute(lives_proc_thread_t);
 
@@ -817,6 +837,7 @@ boolean lives_proc_thread_is_paused(lives_proc_thread_t);
 boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_idle_paused(lives_proc_thread_t);
 boolean lives_proc_thread_was_cancelled(lives_proc_thread_t);
+boolean lives_proc_thread_paused_idling(lives_proc_thread_t);
 
 // some state bits are copied from chain active to chain prime
 #define INC_TX_BITS (THRD_STATE_BLOCKED | THRD_STATE_TIMED_OUT		\
@@ -937,15 +958,6 @@ boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t, void **nullif);
 
 boolean lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec);
 boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, boolean have_lock);
-
-// soft wait (waiting thread remains active while waiting, can update state to blocked,
-// check if it has been cancelled, poll multiple functions, abort waiting by setting controlvar)
-
-// this is a self function for sync_wait hook
-// set control to TRUE to return - if all SYNC_WAIT_HOOK funcs return TRUE (polled for), control is also set to TRUE
-// if control is NULL, an internal variable will be used
-// proc_thread can add hook_callbacks to its SYNC_WAIT hook stack
-boolean thread_wait_loop(lives_proc_thread_t, boolean full_sync, volatile boolean *control);
 
 // ignore idx mismatch
 #define MM_IGNORE		0

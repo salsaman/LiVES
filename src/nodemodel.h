@@ -557,6 +557,8 @@ struct _output_node {
 typedef struct _inst_node {
   int idx;
 
+  lives_nodemodel_t *model;
+
   // this is an estimate of when the instance will begin processing
   // time == 0. represents the moment that the first intance node begins pprocessing
   // == ready_time of first node
@@ -774,6 +776,7 @@ typedef struct {
   int cpu_nsamples;
   float av_cpuload;
   double tot_duration;
+  double avg_duration;
   double bytes_per_sec;
   double gbytes_per_sec;
 } glob_timedata_t;
@@ -874,7 +877,7 @@ struct _plan_step {
 #define STEP_STATE_ERROR	PLAN_STATE_ERROR
 
 // state was skipped over (counted as FINISHED)
-#define STEP_STATE_SKIPPED	8
+#define STEP_STATE_SKIPPED	PLAN_STATE_DISCARD
 
 #define STEP_STATE_CANCELLED	PLAN_STATE_CANCELLED
 #define STEP_STATE_PAUSED	PLAN_STATE_PAUSED
@@ -910,6 +913,8 @@ struct _exec_plan {
 
   volatile uint64_t state;
 };
+
+double get_cycle_avg_time(void);
 
 lives_result_t run_next_cycle(void);
 

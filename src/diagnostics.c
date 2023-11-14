@@ -213,7 +213,7 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
   uint64_t tot_a = 0, tot_b_add = 0, tot_c = 0, rtot = 0, diff;
   int64_t tot_b_sub = 0;
   uint64_t n0, n1, n2, on0 = 0, par = 0;
-  int n1s, pmin = 100000, pmax = 0, pmin_and = 10000, pmax_and = 0, pavg, pavg_and, rmin, rmax, rest;
+  int n1s = 0, pmin = 100000, pmax = 0, pmin_and = 10000, pmax_and = 0, pavg, pavg_and, rmin, rmax, rest;
   double dtot_a, dtot_c, dtot_b_add, dtot_b_sub, drtot, axc, ppmin, ppmax, ppmin_and, ppmax_and;
   double qual;
   char *tmp;

@@ -230,15 +230,15 @@ void _ext_unmalloc_and_copy(size_t, void *);
 boolean init_memfuncs(int stage);
 void memory_cleanup(void);
 
-#define copy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
+#define copy_if_nonnull(d, s, size) ((d)?lives_memcpy((d),(s),(size)):(d))
 
 #define FREE_AND_RETURN(a) lives_free_and_return((a))
 #define FREE_AND_RETURN_VALUE(a, b) (!lives_free_and_return(((a)) ? (b) : (b))
 
 #define LIVES_MALLOC_AND_COPY(src, size) \
-  lives_memcpy(lives_malloc(size), src, size)
+  _DW0(lives_memcpy(lives_malloc((size)),(src),(size)))
 
-#define lives_nullify_ptr(void_ptr_ptr) do {if (void_ptr_ptr) *void_ptr_ptr = NULL;} while (0);
+#define lives_nullify_ptr(vpp) _DW0(if(vpp)*(vpp)=0;)
 
 // xvpp is cast from void **
 boolean lives_nullify_ptr_cb(void *dummy, void *xvpp);
@@ -415,6 +415,13 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #ifndef _lives_memmove
 #define _lives_memmove default_memmove
 #endif
+
+#define NULLIFY_COPY(v,p) _DW0((v)=(p);if((v))(p)=0;)
+
+#define SAFE_ADDROF(p)((void**)(p?&p:0))
+#define SAFE_DEREF(pp)(pp?*pp:pp)
+
+#define STEAL_POINTER(p) (lives_steal_pointer(SAFE_ADDROF(p)))
 
 #define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
 #define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))

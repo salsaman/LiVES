@@ -375,8 +375,6 @@ boolean lives_layer_check_remove_copylist(lives_layer_t *layer) {
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
 
-  wait_layer_ready(layer, TRUE);
-
   if (lives_layer_check_remove_copylist(layer)) return layer;
 
   if (weed_layer_get_pixel_data(layer)) {
@@ -563,37 +561,28 @@ lives_result_t copy_pixel_data_slice(weed_layer_t *dst, weed_layer_t *src,
 {return copy_pixel_data_full(dst, src, offs_x, offs_y, width, height, FALSE);}
 
 
-static boolean remove_lpt_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
-  // whenever an asyn op acts on a layer, we should set
-  //
-  // weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
-  // lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, remove_lpt_cb, layer);
-  // lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
-  //
-  // the proc_thread can then be queued, the status will change to busy,
-  //  then eveantually ready (or invalid)
-  lock_layer_status(layer);
-  if (lives_layer_plan_controlled(layer)) {
-    if (_lives_layer_get_status(layer) == LAYER_STATUS_BUSY
-        || _lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
-      _lives_layer_set_status(layer, LAYER_STATUS_READY);
+LIVES_GLOBAL_INLINE void lives_layer_set_proc_thread(lives_layer_t *layer, lives_proc_thread_t lpt) {
+  if (layer) {
+    lives_proc_thread_t  oldlpt = lives_layer_get_proc_thread(layer);
+    if (oldlpt) lives_proc_thread_unref(oldlpt);
+    if (lpt) lives_proc_thread_ref(lpt);
+    weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
   }
-  weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
-  unlock_layer_status(layer);
-  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE lives_proc_thread_t lives_layer_get_proc_thread(lives_layer_t *layer) {
+  return layer ? weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL) : NULL;
 }
 
 
 void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
   if (layer && lpt) {
-    lock_layer_status(layer);
-    _lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
-    weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
-    //lives_proc_thread_t hlpt =
-    lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, remove_lpt_cb, layer);
-    //if (!mainw->debug_ptr) mainw->debug_ptr = hlpt;
+    weed_layer_ref(layer);
+    lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
+    lives_layer_set_proc_thread(layer, lpt);
+    lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
-    unlock_layer_status(layer);
   }
 }
 
@@ -674,7 +663,7 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
   int xwidth = weed_layer_get_width(slayer);
   int xheight = weed_layer_get_height(slayer);
   int palette = weed_layer_get_palette(slayer);
-  int *rowstrides = weed_layer_get_rowstrides(slayer, NULL);
+  int *rowstrides;
 
   if (off_x > xwidth || (width > -1 && width + off_x > xwidth))
     return NULL;
@@ -682,8 +671,12 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
   if (off_y > xheight || (height > -1 && height + off_y > xheight))
     return NULL;
 
-  if (!rowstrides || !weed_palette_is_valid(palette))
+  rowstrides = weed_layer_get_rowstrides(slayer, NULL);
+  if (!rowstrides || !weed_palette_is_valid(palette)) {
+    if (rowstrides) lives_free(rowstrides);
     return NULL;
+  }
+  if (rowstrides) lives_free(rowstrides);
 
   if (!dlayer) {
     /// deep copy
@@ -726,6 +719,7 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
       for (int i = 0; i < nplanes; i++)
         pd[i] += (size_t)(rs[i] * off_y * weed_palette_get_plane_ratio_vertical(palette, i));
       weed_layer_set_pixel_data_planar(dlayer, (void **)pd, nplanes);
+      lives_free(rs);
     }
 
     pthread_mutex_lock(&copylist_mutex);
@@ -971,6 +965,8 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
       if (!weed_layer_unref(layer)) return NULL;
     }
 #endif
+    if (lives_layer_get_proc_thread(layer)) lives_layer_set_proc_thread(layer, NULL);
+
     if (weed_layer_get_pixel_data(layer)) weed_layer_pixel_data_free(layer);
     else weed_layer_nullify_pixel_data(layer);
 
@@ -1181,7 +1177,6 @@ int lives_layer_guess_palette(weed_layer_t *layer) {
         if (inst) {
           weed_channel_t *channel = get_enabled_channel(inst, 0, FALSE);
           if (channel) {
-            g_print("get pal for channel %p\n", channel);
             return weed_channel_get_palette(channel);
           }
         }

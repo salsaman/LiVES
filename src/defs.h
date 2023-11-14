@@ -221,10 +221,10 @@ typedef lives_result_t(*lives_condfunc_f)(void *);
 
 #define ENABLE_OSC2
 #define GUI_GTK
-#define LIVES_PAINTER_IS_CAIRO
-#define LIVES_LINGO_IS_PANGO
 
 #ifdef GUI_GTK
+#define LIVES_PAINTER_IS_CAIRO
+#define LIVES_LINGO_IS_PANGO 1
 #if LIVES_IS_WINDOWS
 #ifdef GDK_WINDOWING_WIN32
 #include <gdk/gdkwin32.h>

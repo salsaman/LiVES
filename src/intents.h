@@ -259,6 +259,9 @@ uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *);
 char *lives_attribute_get_value_string(lives_obj_attr_t *);
 char *lives_attr_get_value_string(lives_obj_t *, lives_obj_attr_t *);
 
+lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi,
+    const char *name, weed_seed_t st);
+
 // when creating the instance, we should set the intial STATE, and declare its attributes
 lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st);
 lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *, const char *name);
@@ -305,6 +308,8 @@ weed_plant_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *);
 lives_result_t lives_obj_instance_set_attr_group(lives_obj_instance_t *, weed_plant_t *attrgrp);
 weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *);
 weed_plant_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *, lives_obj_instance_t *src);
+
+weed_error_t lives_obj_instance_set_attr_val(lives_obj_instance_t *loi, const char *name, ...);
 
 void lives_obj_attribute_make_static(lives_obj_instance_t *loi, const char *name);
 

@@ -281,7 +281,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
 boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup);
 
-lives_result_t  await_audio_queue(int64_t nsec);
+lives_result_t await_audio_queue(uint64_t nsec);
 
 typedef enum {
   RECA_MONITOR = 0,

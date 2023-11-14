@@ -78,14 +78,32 @@ extern "C"
 #undef WEED_FALSE
 #endif
 
-#if defined(TRUE) && defined(FALSE)
-#define WEED_TRUE	TRUE
-#define WEED_FALSE	FALSE
-#else
-#define WEED_FALSE	0
-#define WEED_TRUE	(!WEED_FALSE)
+#ifdef _WEED_TRUE
+#undef _WEED_TRUE
+#endif
+#ifdef _WEED_FALSE
+#undef _WEED_FALSE
 #endif
 
+#ifdef __cplusplus
+#define WEED_TRUE ((weed_boolean_t)true)
+#define WEED_FALSE ((weed_boolean_t)false)
+#else
+
+#if defined(TRUE) && defined(FALSE)
+#define _WEED_TRUE	TRUE
+#define _WEED_FALSE	FALSE
+#endif
+
+#ifndef _WEED_FALSE
+#define _WEED_FALSE	0
+#define _WEED_TRUE	(!WEED_FALSE)
+#endif
+
+#define WEED_TRUE (weed_boolean_t)_WEED_TRUE
+#define WEED_FALSE (weed_boolean_t)_WEED_FALSE
+
+#endif
 #endif
 
 #define WEED_IS_TRUE(expression) ((expression) == WEED_TRUE)

@@ -7965,6 +7965,7 @@ boolean get_screen_usable_size(int *w, int *h) {
   return FALSE;
 }
 
+static pthread_mutex_t layout_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recompute, LiVESAdjustment * adj) {
   // "scroll" the message area so that the last message appears at the bottom
@@ -7993,6 +7994,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   if (reqwidth != -1) width = reqwidth;
   //g_print("GET  LINGO xx %d %d\n", width, height);
 
+  pthread_mutex_lock(&layout_mutex);
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
 
@@ -8001,6 +8003,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
     lives_widget_object_unref(layout);
     layout = NULL;
   }
+  pthread_mutex_unlock(&layout_mutex);
 
   if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
 
@@ -8051,7 +8054,10 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   widget_color_to_lives_rgba(&fg, &palette->info_text);
   widget_color_to_lives_rgba(&bg, &palette->info_base);
 
+  pthread_mutex_lock(&layout_mutex);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", layout);
+  pthread_mutex_unlock(&layout_mutex);
+
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_height", LIVES_INT_TO_POINTER(lh + .5));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
@@ -8106,8 +8112,6 @@ boolean msg_area_config(LiVESWidget * widget) {
     return FALSE;
 
   //lives_widget_set_vexpand(widget, TRUE);
-
-  layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
   if (last_textsize == -1) last_textsize = prefs->msg_textsize;
 
@@ -8325,15 +8329,18 @@ boolean msg_area_config(LiVESWidget * widget) {
   opaisize = paisize;
   paisize = lives_widget_get_allocation_width(lives_widget_get_parent(widget));
 
+  pthread_mutex_lock(&layout_mutex);
+  layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+  pthread_mutex_unlock(&layout_mutex);
+
   if (!layout || !LINGO_IS_LAYOUT(layout) || paisize != opaisize) {
     // this can happen e.g if we open the app. with no clips
     msg_area_scroll_to_end(widget, mainw->msg_adj);
 
-    // reget this as it may have changed
+    pthread_mutex_lock(&layout_mutex);
     layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
-    if (!layout || !LINGO_IS_LAYOUT(layout)) {
-      return FALSE;
-    }
+    pthread_mutex_unlock(&layout_mutex);
+    if (!layout || !LINGO_IS_LAYOUT(layout)) return FALSE;
   }
 
   if (!prefs->open_maximised && !mainw->multitrack && gui_posx < 1000000)
@@ -8373,7 +8380,9 @@ boolean msg_area_config(LiVESWidget * widget) {
       // recompute if the window grew or the text size changed
       last_textsize = prefs->msg_textsize;
       msg_area_scroll_to(widget, llast, TRUE, mainw->msg_adj); // window grew, re-get layout
+      pthread_mutex_lock(&layout_mutex);
       layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+      pthread_mutex_unlock(&layout_mutex);
       if (!layout || !LINGO_IS_LAYOUT(layout)) {
         return FALSE;
       }
@@ -8397,7 +8406,9 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
   if (!msgbar_configged) return FALSE;
 
+  pthread_mutex_lock(&layout_mutex);
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+  pthread_mutex_unlock(&layout_mutex);
 
   if (layout && LINGO_IS_LAYOUT(layout)) {
     lives_colRGBA64_t fg, bg;

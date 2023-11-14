@@ -3169,7 +3169,7 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
   LiVESWidget *tmp_img = NULL;
   static LiVESWidgetClosure *freeze_closure = NULL;
 
-  if (!freeze_closure) freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback), NULL, NULL);
+  if (!freeze_closure) freeze_closure = _lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback), NULL, NULL);
 
   if (put_pause) {
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -3187,8 +3187,8 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
     lives_signal_handlers_disconnect_by_func(mainw->m_playbutton, LIVES_GUI_CALLBACK(on_playall_activate), NULL);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_playall_activate), NULL);
-    lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace,
-                              (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0, freeze_closure);
+    _lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace,
+                               (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0, freeze_closure);
   } else {
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar2)));
     lives_menu_item_set_text(mt->playall, _("_Play from Timeline Position"), TRUE);

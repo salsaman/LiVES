@@ -61,6 +61,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
+
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
 #define EXCL_KEY "_wh_excl"
@@ -194,6 +195,29 @@ WIDGET_HELPER_GLOBAL_INLINE boolean is_standard_widget(LiVESWidget *widget) {
 WIDGET_HELPER_LOCAL_INLINE void set_standard_widget(LiVESWidget *widget, boolean is) {
   widget_opts.last_widget = widget;
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), STD_KEY, LIVES_INT_TO_POINTER(is));
+}
+
+
+LingoContext *_lives_widget_create_lingo_context(LiVESWidget *widget) {
+  LingoContext *lingot = NULL;
+#ifdef LIVES_LINGO_IS_PANGO
+#ifdef GUI_GTK
+  lingot = gtk_widget_create_pango_context(widget);
+#endif
+#endif
+  return lingot;
+}
+
+LingoContext *lives_widget_create_lingo_context(LiVESWidget *widget) {
+  LingoContext *lingot = NULL;
+#ifdef LIVES_LINGO_IS_PANGO
+#ifdef GUI_GTK
+  BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+  MAIN_THREAD_EXECUTE(_lives_widget_create_lingo_context, WEED_SEED_VOIDPTR, &lingot, "v", widget);
+  BG_THREADVAR(hook_hints) = 0;
+#endif
+#endif
+  return lingot;
 }
 
 
@@ -1152,8 +1176,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
   depth = g_main_depth();
 
   // just to be sure...
-  if (gui_loop_tight && depth > 1) return TRUE;
-
+  if (gui_loop_tight && depth > 1) {
+    return TRUE;
+  }
   do { // while (gui_loop_tight)
     // in t"tight' mode, we never exit form this idlefunc
     // this is used when we need more control over what events are received
@@ -1199,8 +1224,14 @@ boolean fg_service_fulfill_cb(void *dummy) {
       lives_microsleep;
     } else {
       //
-      lives_nanosleep(NSLEEP_TIME);
       //
+      /* if (gui_loop_tight) { */
+      /* 	lives_widget_context_iteration(NULL, FALSE); */
+      /* 	lives_millisleep; */
+      /* } */
+
+      lives_nanosleep(NSLEEP_TIME);
+
       if (cprio == PRIO_LOW) {
         for (int i = 0; i < sLO_FACTOR; i++) {
           if (cprio != PRIO_LOW) break;
@@ -1241,8 +1272,12 @@ boolean fg_service_fulfill_cb(void *dummy) {
         }
       }
     } else {
-      // in low prio mode we avoid loadin gthe cpu by just waiting
-      lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT);
+      // in low prio mode we avoid loading the cpu by just waiting
+      if (lives_widget_context_pending(NULL)) {
+        lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 1);
+        _lives_widget_context_update();
+        if (!lpttorun) lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 6);
+      } else lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT);
     }
   }
   mainw->do_ctx_update = FALSE;
@@ -1253,7 +1288,10 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
 boolean fg_service_ready_cb(void *dummy) {
   d_print("GUI thread active, providing service for all other threads\n\n");
-  fg_service_source = lives_idle_priority(fg_service_fulfill_cb, NULL);
+  lives_startup(NULL);
+  lives_startup2(NULL);
+
+  fg_service_source = THREADVAR(guisource) = lives_idle_priority(fg_service_fulfill_cb, NULL);
   return FALSE;
 }
 
@@ -1693,7 +1731,6 @@ static boolean _lives_widget_queue_draw_and_update(LiVESWidget * widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget * widget) {
   if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
   else {
-    //BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
     BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
@@ -2037,7 +2074,6 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   if (ATT_MESSAGE(dialog)) pop_to_front(LIVES_WIDGET(dialog), NULL);
 
   do {
-    //fg_service_fulfill();
     // TODO - only if focused / visible
     lives_widget_context_iteration(NULL, FALSE);
     pthread_yield();
@@ -2138,9 +2174,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response_for_widg
     LiVESList *children = lives_container_get_children(LIVES_CONTAINER(action)), *list = children;
     for (; list; list = list->next) {
       LiVESWidget *w = (LiVESWidget *)list->data;
-      if (w == widget) return LIVES_POINTER_TO_INT(lives_widget_object_get_data
-                                (LIVES_WIDGET_OBJECT(w), RESPONSE_KEY));
+      if (w == widget) {
+        lives_list_free(children);
+        return LIVES_POINTER_TO_INT(lives_widget_object_get_data
+                                    (LIVES_WIDGET_OBJECT(w), RESPONSE_KEY));
+      }
     }
+    if (children) lives_list_free(children);
   } else return gtk_dialog_get_response_for_widget(dialog, widget);
 #endif
   return LIVES_RESPONSE_NONE;
@@ -2155,8 +2195,12 @@ LiVESWidget *lives_dialog_get_widget_for_response(LiVESDialog * dialog, LiVESRes
     LiVESList *children = lives_container_get_children(LIVES_CONTAINER(action)), *list = children;
     for (; list; list = list->next) {
       LiVESWidget *w = (LiVESWidget *)list->data;
-      if (GET_INT_DATA(w, RESPONSE_KEY) == response) return w;
+      if (GET_INT_DATA(w, RESPONSE_KEY) == response) {
+        lives_list_free(children);
+        return w;
+      }
     }
+    if (children) lives_list_free(children);
     return NULL;
   } else return gtk_dialog_get_widget_for_response(dialog, response);
 #endif
@@ -3293,9 +3337,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
   _lives_widget_context_update();
 
   if (!was_modal) {
-    if (win) {
-      _lives_window_set_modal(win, FALSE, TRUE);
-    }
+    if (win) _lives_window_set_modal(win, FALSE, TRUE);
     if (modalold) lives_window_set_modal(modalold, TRUE);
   }
   return TRUE;
@@ -3322,24 +3364,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_update_noblock(LiVESWidget * widget) {
-#ifdef GUI_GTK
-  if (!LIVES_IS_WIDGET(widget)) {
-    LIVES_WARN("Draw queue invalid widget");
-    return FALSE;
-  }
-  if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
-  else {
-    BG_THREADVAR(hook_hints) |= HOOK_CB_PRIORITY  | HOOK_CB_TRANSFER_OWNER;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, "v", widget);
-    BG_THREADVAR(hook_hints) = 0;
-  }
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget * widget) {
   boolean ret;
   if (is_fg_thread()) return _lives_widget_process_updates(widget);
@@ -3353,9 +3377,127 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget * w
 typedef boolean(*accelfunc_f)(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t,
                               LiVESXModifierType, livespointer);
 
+typedef struct {
+  uint64_t flags;
+  uint32_t keyval;
+  LiVESXModifierType mod;
+  lives_funcptr_t func;
+  void *data;
+} lives_accel_map;
+
+static weed_plant_t *idx_plant = NULL;
+
+static weed_plant_t *get_plant_for_agrp(LiVESAccelGroup * accel_group) {
+  char *key = lives_strdup_printf("%p", accel_group);
+  if (!idx_plant) idx_plant = lives_plant_new(LIVES_PLANT_INDEX);
+  if (!weed_plant_has_leaf(idx_plant, key)) {
+    weed_plant_t *agrp = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
+    weed_set_plantptr_value(idx_plant, key, agrp);
+    return agrp;
+  }
+  return weed_get_plantptr_value(idx_plant, key, NULL);
+}
+
+
+void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
+                               GdkModifierType accel_mods,  GtkAccelFlags accel_flags,
+                               lives_funcptr_t func, void *user_data, GClosureNotify dest) {
+  weed_plant_t *agrp = get_plant_for_agrp(accel_group);
+  char *ukey = lives_strdup_printf(".%lu", gen_unique_id());
+  LIVES_CALLOC_TYPE(lives_accel_map, amap, 1);
+  amap->keyval = keyval;
+  amap->mod = accel_mods;
+  amap->flags = accel_flags;
+  amap->func = func;
+  amap->data = user_data;
+  weed_set_voidptr_value(agrp, ukey, amap);
+  _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags,
+                             _lives_cclosure_new(LIVES_GUI_CALLBACK(func), user_data, dest));
+}
+
+
+void accel_act_special(void *obj, uint32_t key, GdkModifierType mods) {
+  weed_plant_t *agrp = get_plant_for_agrp(mainw->accel_group);
+  char **leaves = weed_plant_list_leaves(agrp, NULL);
+  boolean found = FALSE;
+  for (int i = 1; leaves[i]; i++) {
+    if (leaves[i][0] == '.') {
+      lives_accel_map *amap = (lives_accel_map *)weed_get_voidptr_value(agrp, leaves[i], NULL);
+      if (!found) {
+        if (amap->keyval == key && amap->mod == mods) {
+          accelfunc_f afunc = (accelfunc_f)amap->func;
+          (*afunc)(mainw->accel_group, NULL, amap->keyval, amap->mod, amap->data);
+          found = TRUE;
+        }
+      }
+      lives_free(leaves[i]);
+    }
+  }
+  lives_free(leaves);
+}
+
+
+/* boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, */
+/*                       livespointer user_data) { */
+
+
+
+
+/* typedef { */
+/*   uint64_t uid; */
+/*   lives_sync_list_t windows; */
+/*   LiVESList *accel_maps; */
+/* } lives_smart_accelgrp; */
+
+/* void smart_accel_act(lives_smart_accelgrp *agrp, LiVESWidget *w, uint32_t keyval, LiVESXModifierType mod) { */
+/*   for (LiVESList *list =  agrp->accel_maps; list; lisst = list->?next) { */
+/*     lives_smart_accelmap *amap = (lives_smart_accemap *)lisst->data; */
+/*     if (amap && amap->keyval == keyval && amap->mod == mod) { */
+/*       if (amap->flags & AMAP_FLAG_RUN-BG) lives_proc_trhead_quque(amap->attrs, amap->lpt); */
+/*       else lives_proc_thread_execute(amap->lpt); */
+/*     } */
+/*   } */
+/* }  */
+
+
+/* boolean lives_window_add_smart_accelgrp(LiVESWindow *win, lives_smart_accelgrp *agrp) { */
+/*   if (agrp && win) { */
+/*     lives_sync_list_add(agrp->windows, win); */
+/*     return TRUE; */
+/*   } */
+/*   return FALSE; */
+/* } */
+
+
+/* boolean lives_window_remove_smart_accelgrp(LiVESWindow *win, lives_smart_accelgrp *agrp) { */
+/*   if (agrp && win) { */
+/*     lives_sync_list_remove(agrp->windows, win); */
+/*     return TRUE; */
+/*   } */
+/*   return FALSE; */
+/* } */
+
+
+/* smart_accel_group *smart_accel_group_new(void) { */
+/*   return LIVES_CALLOC_SIZEFOF(1, smart_accel_group); */
+/* } */
+
+/* boolean lives_group_connect(smart_accel_group *acrpg, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, */
+/* 			    lives_funcptr_t func, vod *data, void *unused) { */
+/*   LIVES_CALLOC_TYPE(smart_accelmap_t, amap, 1); */
+/*   amap->key = key; */
+/*   amap->mod = mod; */
+/*   amap->flags = flag; */
+/*   amap->func = func; */
+/*   amap-.data = data; */
+/*   lives_list_prepend(acrgp->  */
+/*   return TRUE; */
+/* } */
+
+
 #ifdef GUI_GTK
-static boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
-                         LiVESXModifierType mod, livespointer data) {
+boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
+                  LiVESXModifierType mod, livespointer data) {
   static boolean ret = TRUE;
   if (!ret) return FALSE;
   GET_PROC_THREAD_SELF(self);
@@ -3383,7 +3525,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_group_connect(LiVESAccelGroup * group, uint32_t key, LiVESXModifierType mod,
+WIDGET_HELPER_GLOBAL_INLINE boolean _lives_accel_group_connect(LiVESAccelGroup * group, uint32_t key, LiVESXModifierType mod,
     LiVESAccelFlags flags, LiVESWidgetClosure * closure) {
 #ifdef GUI_GTK
   gtk_accel_group_connect(group, key, mod, flags, closure);
@@ -9030,8 +9172,6 @@ void render_standard_button(LiVESButton * sbutt) {
         if (height < minheight) height = minheight;
         lives_widget_set_size_request(widget, width, height);
       }
-      //if (is_fg_thread())
-      //lives_widget_queue_draw_and_update(widget);
     }
   }
 }
@@ -10179,12 +10319,11 @@ LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget * icon, const cha
           list2 = list2->next;
         }
         lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-        list2 = list2->next;
-        lives_list_free(children2);
+        if (children2) lives_list_free(children2);
       }
       list = list->next;
     }
-    lives_list_free(children);
+    if (children) lives_list_free(children);
     set_css_value_direct(LIVES_WIDGET(toolitem), LIVES_WIDGET_STATE_NORMAL, "box *", "min-height", "0px");
   }
 #endif

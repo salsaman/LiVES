@@ -2052,7 +2052,7 @@ boolean open_ascrap_file(int clipno) {
       return FALSE;
     }
 
-    handle = get_worktmp("_ascrap");
+    handle = get_worktmp("_" ASCRAP_LITERAL);
     if (!handle) {
       workdir_warning();
       return FALSE;
@@ -2405,10 +2405,8 @@ int close_current_file(int file_to_switch_to) {
   // close the current file, and free the file struct and all sub storage
   LiVESList *list_index;
   char *com;
-  boolean need_new_blend_file = FALSE;
-  int index = -1;
-  int old_file = mainw->current_file;
-  int i;
+  boolean need_new_blend_file = FALSE, post_dprint = FALSE;
+  int index = -1, old_file = mainw->current_file;
 
   if (mainw->close_this_clip == mainw->current_file) mainw->close_this_clip = -1;
 
@@ -2419,7 +2417,7 @@ int close_current_file(int file_to_switch_to) {
     return file_to_switch_to;
   }
 
-  if (mainw->noswitch && !mainw->can_switch_clips) {
+  if (mainw->noswitch) {
     mainw->new_clip = file_to_switch_to;
     mainw->close_this_clip = mainw->current_file;
     return mainw->new_clip;
@@ -2428,6 +2426,7 @@ int close_current_file(int file_to_switch_to) {
   if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
       mainw->current_file != mainw->ascrap_file && mainw->current_file != 0 &&
       (!mainw->multitrack || mainw->current_file != mainw->multitrack->render_file)) {
+    post_dprint = TRUE;
     d_print(_("Closed clip %s\n"), cfile->file_name);
     lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");
   }
@@ -2467,7 +2466,7 @@ int close_current_file(int file_to_switch_to) {
     mainw->pr_fcache = NULL;
   }
 
-  for (i = 0; i < FN_KEYS - 1; i++) {
+  for (int i = 0; i < FN_KEYS - 1; i++) {
     if (mainw->clipstore[i][0] == mainw->current_file) mainw->clipstore[i][0] = -1;
   }
 
@@ -2534,7 +2533,7 @@ int close_current_file(int file_to_switch_to) {
 
   if (cfile->audio_waveform) {
     drawtl_cancel();
-    for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
+    for (int i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
     lives_freep((void **)&cfile->audio_waveform);
     lives_freep((void **)&cfile->aw_sizes);
     cfile->aw_sizes = NULL;
@@ -2559,7 +2558,7 @@ int close_current_file(int file_to_switch_to) {
         if (!LIVES_IS_PLAYING) {
           mainw->current_file = file_to_switch_to;
           switch_clip(1, file_to_switch_to, TRUE);
-          d_print("");
+          if (post_dprint) d_print("");
         } else {
           if (file_to_switch_to != mainw->playing_file) {
             mainw->new_clip = file_to_switch_to;
@@ -2580,9 +2579,7 @@ int close_current_file(int file_to_switch_to) {
 
   file_to_switch_to = find_next_clip(index, old_file);
 
-  if (mainw->noswitch) {
-    return file_to_switch_to;
-  }
+  if (LIVES_IS_PLAYING) return file_to_switch_to;
 
   if (CURRENT_CLIP_IS_VALID) return mainw->current_file;
 
@@ -2596,6 +2593,7 @@ int close_current_file(int file_to_switch_to) {
     load_preview_image(FALSE);
     resize_play_window();
   }
+
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
   lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
@@ -2612,8 +2610,6 @@ int close_current_file(int file_to_switch_to) {
   lives_widget_set_sensitive(mainw->undo, FALSE);
 
   if (!mainw->is_ready || mainw->recovering_files) return -1;
-
-  if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_GENERATOR_END;
 
   if (!mainw->multitrack) {
     //resize(1);
@@ -2636,7 +2632,7 @@ int close_current_file(int file_to_switch_to) {
 
   if (!mainw->only_close) {
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    if (!LIVES_IS_PLAYING) d_print("");
+    d_print("");
 
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
@@ -2645,7 +2641,7 @@ int close_current_file(int file_to_switch_to) {
       }
     }
   }
-  if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
+  if (!mainw->is_processing && !mainw->preview) {
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
         mt_sensitise(mainw->multitrack);
@@ -2776,6 +2772,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (!*buff) continue;
     lives_chomp(buff, FALSE);
+    if (!*buff) continue;
 
     if (buff[lives_strlen(buff) - 1] == '*') {
       boolean crash_recovery = prefs->crash_recovery;

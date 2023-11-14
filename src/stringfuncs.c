@@ -740,7 +740,7 @@ char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...) {
     out = tmp;
   } else {
     out = lives_strdup_printf("%s%s%s", str, (tmp && *tmp && sep) ? sep : "",
-                              (tmp && *tmp) ? tmp : "");
+                              tmp ? tmp : "");
     if (tmp) lives_free(tmp);
   }
   if (str) lives_free(str);

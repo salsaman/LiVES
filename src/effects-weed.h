@@ -241,6 +241,7 @@ void rec_param_change(weed_instance_t *inst, int pnum);
 int set_copy_to(weed_instance_t *inst, int pnum, lives_rfx_t *rfx, boolean update);
 
 void set_channel_size(weed_filter_t *, weed_channel_t *, int *width, int *height);
+void validate_channel_sizes(weed_filter_t *filter, weed_chantmpl_t *chantmpl, int *width, int *height);
 
 weed_plant_t *get_textparm();
 

@@ -15,9 +15,13 @@ void load_theme_images(void);
 void set_interactive(boolean interactive);
 char *get_menu_name(lives_clip_t *sfile, boolean add_set);
 int get_sepbar_height(void);
-void enable_record(void);
-void toggle_record(void);
-void disable_record(void);
+
+#define REC_PASSIVE	0
+#define REC_READY	1
+#define REC_ACTIVE	2
+
+void set_record_menutext(int state);
+
 void make_custom_submenus(void);
 void fade_background(void);
 void unfade_background(void);

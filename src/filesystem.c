@@ -92,34 +92,27 @@ off_t sget_file_size(const char *name) {
 
 **/
 char *filename_from_fd(char *val, int fd) {
+  char *fdpath;
+  char *fidi;
+  char rfdpath[PATH_MAX];
+  struct stat stb0, stb1;
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  if (fbuff) {
-    return lives_strdup(fbuff->pathname);
-  } else {
-    char *fdpath;
-    char *fidi;
-    char rfdpath[PATH_MAX];
-    struct stat stb0, stb1;
+  if (fbuff) return lives_strdup(fbuff->pathname);
 
-    ssize_t slen;
+  if (fstat(fd, &stb0)) return val;
 
-    if (fstat(fd, &stb0)) return val;
+  fidi = lives_strdup_printf("%d", fd);
+  fdpath = lives_build_filename("/proc", "self", "fd", fidi, NULL);
+  lives_free(fidi);
 
-    fidi = lives_strdup_printf("%d", fd);
-    fdpath = lives_build_filename("/proc", "self", "fd", fidi, NULL);
-    lives_free(fidi);
+  if (lives_readlink(fdpath, rfdpath) < 0) return val;
+  lives_free(fdpath);
 
-    if ((slen = lives_readlink(fdpath, rfdpath, PATH_MAX)) == -1) return val;
-    lives_free(fdpath);
-
-    lives_memset(rfdpath + slen, 0, 1);
-
-    if (stat(rfdpath, &stb1)) return val;
-    if (stb0.st_dev != stb1.st_dev) return val;
-    if (stb0.st_ino != stb1.st_ino) return val;
-    if (val) lives_free(val);
-    return lives_strdup(rfdpath);
-  }
+  if (stat(rfdpath, &stb1)) return val;
+  if (stb0.st_dev != stb1.st_dev) return val;
+  if (stb0.st_ino != stb1.st_ino) return val;
+  if (val) lives_free(val);
+  return lives_strdup(rfdpath);
 }
 
 
@@ -135,8 +128,10 @@ LIVES_GLOBAL_INLINE int lives_open2(const char *pathname, int flags) {
 }
 
 
-LIVES_GLOBAL_INLINE ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz) {
-  return readlink(path, buf, bufsiz);
+LIVES_GLOBAL_INLINE ssize_t lives_readlink(const char *path, char *buf) {
+  ssize_t slen = readlink(path, buf, sizeof(buf) - 1);
+  if (slen >= 0) buf[slen] = '\0';
+  return slen;
 }
 
 
@@ -901,8 +896,9 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   fsize = fbuff->orig_size - ABS(skip);
 
   if (fsize > 0) {
+    lives_proc_thread_t lpt = lives_proc_thread_get_dispatcher(self);
     // caller will wait until this thread goes to WAITING state, then do a sync_ready() and continue
-    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 123, MM_IGNORE);
+    lives_proc_thread_sync_with(lpt, 123, MM_IGNORE);
 
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
@@ -929,7 +925,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
           fbuff->flags &= ~FB_FLAG_INVALID;
           break; // file was closed
         }
-        // TOOD
+        // TODO
         //lives_nanosleep((10 - THREADVAR(loveliness)) * UGLY_SLOW);
         if (bufsize > fsize) bufsize = fsize;
         res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
@@ -1003,9 +999,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bytes = fbuff->offset = 0;
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    //g_print("%p syncing with %p\n", lives_thread_get_self(), lpt);
     lives_proc_thread_sync_with(lpt, 123, MM_IGNORE);
-    //g_print("%p synced with %p\n", lives_thread_get_self(), lpt);
     return TRUE;
   }
   return FALSE;
@@ -2366,6 +2360,11 @@ boolean disk_monitor_running(const char *dir) {
   return (dircheck_state == 1 && (!dir || !lives_strcmp(dir, running_for)));
 }
 
+boolean disk_monitor_ready(const char *dir) {
+  return (dircheck_state == 2 && (!dir || !lives_strcmp(dir, running_for))
+          &&  !ds_syncwith);
+}
+
 
 lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (disk_monitor_running(dir)) disk_monitor_forget();
@@ -2387,7 +2386,7 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes = -1;
   //if (!disk_monitor_running(dir))
 
-  //g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
+  g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
 
   //if (!dircheck_state) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
@@ -2413,6 +2412,7 @@ int64_t disk_monitor_check_result(const char *dir) {
 
 LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout) {
   // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
+  GET_PROC_THREAD_SELF(self);
 
   if (*running_for && lives_strcmp(dir, running_for)) {
     if (timeout) return -1;
@@ -2420,11 +2420,10 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
   }
 
   //g_print("DISKMON sync, state is %d\n", dircheck_state);
+  ds_syncwith = self;
 
   if (dircheck_state == 1) {
-    GET_PROC_THREAD_SELF(self);
     if (timeout < 0) timeout = BILLIONS(30); // TODO
-    ds_syncwith = self;
     if (dircheck_state == 1) {
       if (lives_proc_thread_sync_with_timeout(running, 0, MM_IGNORE, timeout)
           == LIVES_RESULT_FAIL) {

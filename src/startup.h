@@ -9,6 +9,32 @@
 #ifndef _HAS_STARTUP_H
 #define _HAS_STARTUP_H
 
+#define SPLASH_LEVEL_BEGIN .0
+#define SPLASH_LEVEL_START_GUI .2
+#define SPLASH_LEVEL_LOAD_RTE .4
+#define SPLASH_LEVEL_LOAD_APLAYER .6
+#define SPLASH_LEVEL_LOAD_RFX .8
+#define SPLASH_LEVEL_COMPLETE 1.
+
+/// startup overrides from commandline
+typedef struct {
+  boolean ign_clipset;
+  boolean ign_layout;
+  boolean ign_osc;
+  boolean ign_rte_keymodes;
+  boolean ign_libdir;
+  boolean ign_jackopts;
+  boolean ign_jackserver;
+  boolean ign_jackcfg;
+  boolean ign_aplayer;
+  boolean ign_asource;
+  boolean ign_stmode;
+  boolean ign_vppdefs;
+  boolean ign_vjmode;
+  boolean ign_dscrit;
+  boolean ign_configfile;
+  boolean ign_config_datadir;
+} _ign_opts;
 
 typedef enum startup_stages {
   nothing_sup,
@@ -24,6 +50,9 @@ typedef enum startup_stages {
 } sup_stage;
 
 extern sup_stage what_sup;
+
+boolean lives_startup(livespointer data);
+boolean lives_startup2(livespointer data);
 
 sup_stage what_sup_now(void);
 

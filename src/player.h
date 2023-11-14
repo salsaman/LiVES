@@ -58,6 +58,9 @@ int lives_unset_status(int status);
 boolean lives_has_status(int status);
 int lives_get_status(void);
 
+frames_t reachable_frame(int clipno, lives_decoder_t *dplug, frames_t stframe, frames_t enframe,
+                         frames_t base, double fps, frames_t pframe, double *ttime, double *tconf);
+
 void init_track_sources(void);
 void free_track_sources(void);
 
@@ -71,6 +74,7 @@ weed_layer_t *load_frame_image(frames_t frame);
 
 weed_layer_t *get_old_frame_layer(void);
 void reset_old_frame_layer(void);
+void free_old_frame_layer(void);
 
 void reset_ext_player_layer(boolean ign_flag);
 

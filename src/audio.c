@@ -2736,8 +2736,6 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   boolean out_unsigned, in_unsigned;
   boolean rev_endian = FALSE;
 
-  lives_proc_thread_set_cancellable(self);
-
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
 
   if (dets->bad_aud_file) return FALSE;
@@ -2960,7 +2958,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   // we record from the reader
   lives_proc_thread_t lpt;
   arec_details *dets;
-  char *lives_header;
+  char *lives_header, *audio_file;
   int aud_src;
 
   if (!aplayer) return NULL;
@@ -3022,6 +3020,11 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
 
   dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
   rec_ext_dets = dets;
+
+  audio_file = lives_get_audio_file_name(mainw->ascrap_file);
+  dets->fd = lives_open_buffered_writer(audio_file, DEF_FILE_PERMS, TRUE);
+  if (dets->fd == -1) return NULL;
+
   lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
                                         WEED_SEED_BOOLEAN, "pv", aplayer, dets);
   lives_proc_thread_set_cancellable(lpt);
@@ -5011,90 +5014,90 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
 int lives_aplayer_get_source(lives_obj_t *aplayer) {
   return GET_ATTR_VALUE(aplayer, int, ATTR_AUDIO_SOURCE);
 
-  //weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SOURCE);
+  //weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_SOURCE);
   // return lives_attribute_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source) {
   //mainw->debug = TRUE;
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SOURCE, source);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_SOURCE, source);
 }
 
 int lives_aplayer_get_arate(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_RATE);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_RATE);
   return lives_attribute_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_arate(lives_obj_t *aplayer, int arate) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_RATE, arate);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_RATE, arate);
 }
 
 int lives_aplayer_get_achans(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_CHANNELS);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_CHANNELS);
   return lives_attribute_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_achans(lives_obj_t *aplayer, int achans) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_CHANNELS, achans);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_CHANNELS, achans);
 }
 
 int lives_aplayer_get_sampsize(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SAMPSIZE);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_SAMPSIZE);
   return lives_attribute_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_sampsize(lives_obj_t *aplayer, int asamps) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SAMPSIZE, asamps);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_SAMPSIZE, asamps);
 }
 
 boolean lives_aplayer_get_signed(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SIGNED);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_SIGNED);
   return lives_attribute_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_signed(lives_obj_t *aplayer, boolean asigned) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SIGNED, asigned);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_SIGNED, asigned);
 }
 
 int lives_aplayer_get_endian(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_ENDIAN);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_ENDIAN);
   return lives_attribute_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_endian(lives_obj_t *aplayer, int aendian) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_ENDIAN, aendian);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_ENDIAN, aendian);
 }
 
 boolean lives_aplayer_get_float(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_FLOAT);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_FLOAT);
   return lives_attribute_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_FLOAT, is_float);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_FLOAT, is_float);
 }
 
 int64_t lives_aplayer_get_data_len(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA_LENGTH);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_DATA_LENGTH);
   return lives_attribute_get_value_int64(param);
 }
 
 weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int64_t alength) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_DATA_LENGTH, alength);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_DATA_LENGTH, alength);
 }
 
 boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_INTERLEAVED);
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_INTERLEAVED);
   return lives_attribute_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter) {
-  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_INTERLEAVED, ainter);
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_INTERLEAVED, ainter);
 }
 
 void *lives_aplayer_get_data(lives_obj_t *aplayer) {
   boolean inter = lives_aplayer_get_interleaved(aplayer);
-  weed_param_t *paramd = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA);
+  weed_param_t *paramd = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_DATA);
   if (inter) return weed_get_voidptr_value(paramd, WEED_LEAF_VALUE, NULL);
   return weed_get_voidptr_array(paramd, WEED_LEAF_VALUE, NULL);
 }
@@ -5103,10 +5106,10 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data) {
   int nchans = lives_aplayer_get_achans(aplayer);
   if (nchans) {
     boolean inter = lives_aplayer_get_interleaved(aplayer);
-    if (inter) return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_DATA, data);
+    if (inter) return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_DATA, data);
     else {
       // TODO - set_attribute_array
-      weed_param_t *paramd = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA);
+      weed_param_t *paramd = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_DATA);
       return weed_set_voidptr_array(paramd, WEED_LEAF_VALUE, nchans, data);
     }
   }
@@ -5135,16 +5138,16 @@ void show_aplayer_attribs(LiVESWidget * w, void **player) {
 }
 
 
-lives_result_t  await_audio_queue(int64_t nsec) {
+lives_result_t await_audio_queue(uint64_t nsec) {
   lives_sys_alarm_set_timeout(audio_msgq_timeout, nsec);
 
   IF_APLAYER_JACK
   (lives_microsleep_while_true(jack_get_msgq(mainw->jackd) && !lives_sys_alarm_triggered(audio_msgq_timeout));
-   if (lives_sys_alarm_disarm(audio_msgq_timeout) && jack_get_msgq(mainw->jackd)) return LIVES_RESULT_FAIL;)
+   if (lives_sys_alarm_disarm(audio_msgq_timeout, TRUE) && jack_get_msgq(mainw->jackd)) return LIVES_RESULT_FAIL;)
 
     IF_APLAYER_PULSE
     (lives_microsleep_while_true(pulse_get_msgq(mainw->pulsed) && !lives_sys_alarm_triggered(audio_msgq_timeout));
-     if (lives_sys_alarm_disarm(audio_msgq_timeout) && pulse_get_msgq(mainw->pulsed)) return LIVES_RESULT_FAIL;)
+     if (lives_sys_alarm_disarm(audio_msgq_timeout, TRUE) && pulse_get_msgq(mainw->pulsed)) return LIVES_RESULT_FAIL;)
 
       return LIVES_RESULT_SUCCESS;
 }

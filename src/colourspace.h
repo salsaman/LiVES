@@ -18,7 +18,11 @@
 #define CLAMP16bit(x) (x) >= 0.99999 ? 65535 : x < 0.00001 ? 0 : (uint16_t)(x * 65535.9999)
 #define CLAMP16biti(x) ((x) > 65535 ? 65535 : (x) < 0 ? 0 : (x))
 
-#define CLAMP16_240i(N) (N&0x80000000?0x10:((N&0x7FFFFF00)||((N&0xF0)==0xF0))?0xF0:(N&0xF0)?N:0x10)
+#define CLAMP16_240(N) (N&0x80000000?0x10:((N&0x7FFFFF00)||((N&0xF0)==0xF0))?0xF0:(N&0xF0)?N:0x10)
+#define CLAMP16_240i(f) CLAMP16_240((int)(f))
+
+#define CLAMP0_255(N) (N&0x80000000?0x00:N&0x7FFFFF00?0xFF:N)
+#define CLAMP0_255i(f) (uint8_t)CLAMP0_255((int)(f))
 
 #define WEED_LAYER_ALPHA_PREMULT 1
 
@@ -47,19 +51,19 @@
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits
 
+#define SCALE_FACTORX 65536.
+
 #ifdef USE_EXTEND
-/// (2 ^ 24 - 1) / (2 ^ 8 - 1), also 0xFF * SCALE_FACTOR = 0xFFFFFF
+/// (2 ^ 24 - 1) / (2 ^ 8 - 1), thus 0xFF * SCALE_FACTOR = 0xFFFFFF
 // so we have expanded range 0 - 0xFFFFFF instead of 0 to 0xFF0000
-// thus we can use (int)(val / 256.) instead of (int)(val / 256. + 5)
-// in the former 0.0 - 0.9999 -> 0, in the latter 0.0 - 0.49999 -> 0
-// so we have a while unit that maps to 0, instead of half a unit, and a whole unit which maps to 255,
-// instead of half a unit
-// we can take (float)a * 65793. then take (int). now we can add the valuess together, then take result >> 16
-// and get correct answers.
+// for low precision, we can sum values and still use int a = val >> 16
+// for higher precision, int a = (int)((float)val / 65739. + 0.5)
+// or better yet int a = (int)((float)val / 65536.) which automatically does the rounding
 #define SCALE_FACTOR 65793.
 #else
-#define SCALE_FACTOR (1 << FP_BITS)
+#define SCALE_FACTOR SCALE_FACTORX
 #endif
+
 
 struct _conv_array {
   int *Yx_R, *Yx_G, *Yx_B;
@@ -141,6 +145,13 @@ typedef union {
   int pal, clamping, sampling, subspace;
 } full_pal_t;
 
+#define L1_CONST .00885645168f
+#define L2_CONST .03296296296f
+#define L3_CONST .33333333333f
+#define L4_CONST .16f
+
+#define LIGHTNESS(y)((y)<L1_CONST?(y)*L2_CONST:pow((y),L3_CONST)*(1.+L4_CONST)-L4_CONST)
+
 typedef struct {
   float offs, lin, thresh, pf;
 } gamma_const_t;
@@ -159,6 +170,7 @@ extern int gamma_idx[];
 
 #define GAMMA_CONSTS_WEED_GAMMA_SRGB 12.92, 0.04045, 2.4
 #define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.018, 1. / .45
+
 //#define GAMMA_CONSTS_MYGAMMA lin, thresh, pf
 // (offs will be derived as the point at which val_lin(x) ~= val_pf(x)
 
@@ -215,6 +227,7 @@ typedef struct {
   void *srcp[4];
   size_t hsize;
   size_t vsize;
+  int y_delta;
   boolean is_bottom;
   size_t psize;
   size_t xoffset;
@@ -234,6 +247,7 @@ typedef struct {
   boolean alpha_first;
   boolean is_422;
   uint16_t *lut;
+  uint8_t *lut8;
   int thread_id;
   uint64_t padding[6];
 } lives_cc_params;

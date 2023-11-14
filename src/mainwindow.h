@@ -1121,13 +1121,6 @@ typedef struct {
   int blend_file, last_blend_file, new_blend_file;
   weed_plant_t *blend_layer;
 
-  /// here we can store the details of the blend file at the insertion point,
-  // if nothing changes we can target this to optimise
-  volatile int blend_palette;
-  int blend_width, blend_height;
-  int blend_clamping, blend_sampling, blend_subspace;
-  int blend_gamma;
-
   /// stored clips (bookmarks) [0] = clip, [1] = frame
   int clipstore[FN_KEYS - 1][2];
 
@@ -1165,7 +1158,6 @@ typedef struct {
   volatile boolean noswitch; /// set during playback, ensures that user clip switches change only mainw->new_clip
   volatile int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
   volatile int close_this_clip; // if not -1, when we switch clip at the player switch point, we also close the old clip
-  boolean can_switch_clips; // temp override for noswitch
 
   boolean preview_req; // preview requested
 
@@ -1790,13 +1782,6 @@ typedef struct {
 
   /// splash window
   LiVESWidget *splash_window, *splash_label, *splash_progress;
-
-#define SPLASH_LEVEL_BEGIN .0
-#define SPLASH_LEVEL_START_GUI .2
-#define SPLASH_LEVEL_LOAD_RTE .4
-#define SPLASH_LEVEL_LOAD_APLAYER .6
-#define SPLASH_LEVEL_LOAD_RFX .8
-#define SPLASH_LEVEL_COMPLETE 1.
 
   /// encoder text output
   LiVESIOChannel *iochan;

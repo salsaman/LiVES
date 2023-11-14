@@ -105,9 +105,8 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 
 
 static void switch_fx_state(int hotkey) {
-  // switch effect estate when a connection to ACTIVATE is present
+  // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
-
   // setting this causes SOFT_DEINIT
   if (LIVES_IS_PLAYING) THREADVAR(fx_is_auto) = TRUE;
   rte_on_off_callback_fg(NULL, LIVES_INT_TO_POINTER(hotkey));
@@ -1249,7 +1248,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     if (dparam == active_dummy) {
       // ACTIVATE / DEACTIVATE
       if (!autoscale) { // autoscale is now "user override"
-        int valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
+        boolean valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
         if ((valb == WEED_TRUE && !rte_key_is_enabled(key, FALSE)) ||
             (valb == WEED_FALSE && rte_key_is_enabled(key, FALSE))) {
           if (toggle_fx) *toggle_fx = TRUE;
@@ -1532,7 +1531,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
   for (i = start; i < nparams; i++) {
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
-      //#define DEBUG_PCONX
+      // #define DEBUG_PCONX
 #ifdef DEBUG_PCONX
       g_print("got pconx to %d %d %d from %d %d param %p\n", key, mode, i, okey, omode, oparam);
 #endif

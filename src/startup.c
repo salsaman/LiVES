@@ -99,8 +99,6 @@ static char start_file[PATH_MAX];
 static double start = 0.;
 static int end = 0;
 
-static boolean theme_error;
-
 static _ign_opts ign_opts;
 
 static int zargc;
@@ -453,84 +451,32 @@ retry_configfile:
 }
 
 
-static boolean pre_init(void) {
+static int load_theme(void) {
+  get_string_prefd(PREF_GUI_THEME, prefs->theme, 64, LIVES_DEF_THEME);
+
+  if (!(*prefs->theme)) {
+    lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
+  }
+
+  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+
+  if (!set_palette_colours(initial_startup_phase == -1)) {
+    lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
+    set_palette_colours(initial_startup_phase != -1);
+  }
+
+  if (lives_ascii_strcasecmp(prefs->theme, future_prefs->theme)) return TRUE;
+  return FALSE;
+}
+
+
+static void pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we got an error loading the theme
-#ifdef ENABLE_JACK
-  char jbuff[JACK_PARAM_STRING_MAX];
-#endif
-#ifdef GUI_GTK
-  LiVESPixbuf *iconpix;
-#endif
+  char *msg, *tmp, *tmp2;
   pthread_mutexattr_t mattr;
-  lives_hook_stack_t **lpt_hooks, **thread_hooks;
-  char *msg, *tmp, *tmp2, *cfgdir, *old_libdir = NULL;
-  boolean needs_update = FALSE;
-  int i;
 
   what_sup = pre_init_sup;
-
-  // test the timer
-  if (1) {
-    d_print("Testing LiVES thread timers...");
-    lives_alarm_set_timeout(10000);
-    lives_alarm_wait();
-    lives_alarm_disarm();
-    d_print("OK\n");
-  }
-
-  // create a proc_thread for the main_thread. Since it is not running any background tasks, create
-  // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
-  // linked to the proc_thread currently being actioned
-
-  // we have to do some manual actions which are normal done automaticlly when a thread is added to the pool
-  mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
-  lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
-
-  // set the active proc_thread for the main pthread
-  lives_thread_set_active(mainw->def_lpt);
-
-  // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
-  // to the thread hook_stacks instead
-
-  lpt_hooks = lives_proc_thread_get_hook_stacks(mainw->def_lpt);
-  lives_hooks_clear_all(lpt_hooks, N_GLOBAL_HOOKS);
-
-  thread_hooks = THREADVAR(hook_stacks);
-  for (i = 0; i < N_GLOBAL_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
-
-  mainw->global_hook_stacks = lpt_hooks;
-
-  // locate shell commands that may be used in processing
-  //
-  get_location("touch", capable->touch_cmd, PATH_MAX);
-  get_location("rm", capable->rm_cmd, PATH_MAX);
-  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
-  get_location("mv", capable->mv_cmd, PATH_MAX);
-  get_location("ln", capable->ln_cmd, PATH_MAX);
-  get_location("chmod", capable->chmod_cmd, PATH_MAX);
-  get_location("cat", capable->cat_cmd, PATH_MAX);
-  get_location("echo", capable->echo_cmd, PATH_MAX);
-
-  // need to create directory for configfile before calling get_capabilities()
-  // NOTE: this is the one and only time we reference cfgdir, other than this it should be considered sacrosanct
-  cfgdir = get_dir(prefs->configfile);
-  lives_make_writeable_dir(cfgdir);
-  lives_free(cfgdir);
-
-  // pre-checked conditions. We will check for these again
-  if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
-      capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
-      capable->has_smogrify && capable->smog_version_correct) {
-    // check the backend is there, get some system details and prefs
-    capable = get_capabilities();
-  }
-
-  capable->session_uid = gen_unique_id();
-
-  if (!prefs->show_dev_opts) {
-    g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
-  }
 
   //FATAL ERRORS
 
@@ -615,13 +561,6 @@ static boolean pre_init(void) {
   // now we can use PREFS properly
   mainw->prefs_cache = cache_file_contents(prefs->configfile);
 
-  capable->uid = get_int64_prefd(PREF_UID, 0);
-
-  if (!capable->uid) {
-    capable->uid = gen_unique_id();
-    set_int64_pref(PREF_UID, capable->uid);
-  }
-
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
   if (mainw->debug) prefs->show_dev_opts = TRUE;
 
@@ -700,17 +639,6 @@ static boolean pre_init(void) {
     check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
     check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL);
   }
-  mainw->mgeom = NULL;
-
-  prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
-  mainw->ignore_screen_size = FALSE;
-
-  capable->primary_monitor = 0;
-
-  // sets prefs->screen_scale, capable->nmonitors, mainw->mgeom, prefs->play_monitor, prefs->gui_monitor
-  // capable->can_show_msg_area, mainw->old_screen_height, mainw->old_screen_width
-  // widget_opts.monitor, widget_opts.screen and various widget_opts sizes
-  get_monitors(TRUE);
 
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
@@ -782,7 +710,6 @@ static boolean pre_init(void) {
   prefs->autotrans_amt = -1.;
 
   info_only = FALSE;
-  palette = (_palette *)(lives_calloc(1, sizeof(_palette)));
 
   prefs->sepwin_type = future_prefs->sepwin_type = get_int_prefd(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY);
 
@@ -790,15 +717,6 @@ static boolean pre_init(void) {
     prefs->audio_player = AUD_PLAYER_NONE;
     lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
   }
-
-  g_printerr("\n\nLoading realtime fx plugins...");
-
-  /////////
-  load_rte_plugins();
-  ////////
-
-  g_printerr("OK\n");
-  // up to here, do not launch any bg threads
 
   prefs->open_decorated = TRUE;
 
@@ -821,6 +739,16 @@ static boolean pre_init(void) {
   prefs->enc_letterbox = get_boolean_prefd(PREF_LETTERBOX_ENC, TRUE);
 
   prefs->no_lb_gens = get_boolean_prefd(PREF_NO_LB_GENS, TRUE);
+}
+
+
+static void pre_init2(void) {
+#ifdef ENABLE_JACK
+  char jbuff[JACK_PARAM_STRING_MAX];
+#endif
+#ifdef GUI_GTK
+  LiVESPixbuf *iconpix;
+#endif
 
   //////////////////////////
   load_prefs();
@@ -838,28 +766,10 @@ static boolean pre_init(void) {
   prefs->funky_widgets = FALSE;
 #endif
 
-  prefs->show_splash = TRUE;
   prefs->hide_framebar = FALSE;
 
   // get some prefs we need to set menu options
   future_prefs->show_recent = prefs->show_recent = get_boolean_prefd(PREF_SHOW_RECENT_FILES, TRUE);
-
-  get_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir, PATH_MAX);
-
-  if (!(*prefs->prefix_dir)) {
-    if (strcmp(PREFIX, "NONE")) {
-      lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", PREFIX);
-    } else {
-      lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", PREFIX_DEFAULT);
-    }
-    needs_update = TRUE;
-  }
-
-  tmp = lives_strdup(prefs->prefix_dir);
-  ensure_isdir(prefs->prefix_dir);
-  if (lives_strcmp(prefs->prefix_dir, tmp)) needs_update = TRUE;
-  lives_free(tmp);
-  if (needs_update) set_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
 #ifdef GUI_GTK
   iconpix = get_desktop_icon(ICON_DIR(16));
@@ -880,33 +790,6 @@ static boolean pre_init(void) {
 #endif
   mainw->first_free_file = 1;
 
-  needs_update = FALSE;
-
-  if (ign_opts.ign_libdir) old_libdir = lives_strdup(prefs->lib_dir);
-  get_string_pref(PREF_LIB_DIR, prefs->lib_dir, PATH_MAX);
-  if (old_libdir) {
-    if (lives_strcmp(old_libdir, prefs->lib_dir)) {
-      lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", old_libdir);
-      needs_update = TRUE;
-    }
-    lives_free(old_libdir);
-  }
-
-  if (!(*prefs->lib_dir)) {
-    lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", LIVES_LIBDIR);
-    needs_update = TRUE;
-  }
-  tmp = lives_strdup(prefs->lib_dir);
-  ensure_isdir(prefs->lib_dir);
-  if (lives_strcmp(prefs->lib_dir, tmp)) needs_update = TRUE;
-
-  if (needs_update) set_string_pref(PREF_LIB_DIR, prefs->lib_dir);
-
-  lives_memset(mainw->sepimg_path, 0, 1);
-  lives_memset(mainw->frameblank_path, 0, 1);
-
-  mainw->imsep = mainw->imframe = NULL;
-
   ////
 
   d_print("Activating message subsytem...");
@@ -926,25 +809,6 @@ static boolean pre_init(void) {
   add_message_first(_("Starting...\n"));
 
   //////////////////////////////////
-
-  get_string_prefd(PREF_GUI_THEME, prefs->theme, 64, LIVES_DEF_THEME);
-
-  if (!(*prefs->theme)) {
-    lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
-  }
-
-  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
-
-  if (!set_palette_colours(initial_startup_phase == -1)) {
-    lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
-    set_palette_colours(initial_startup_phase != -1);
-  } else if (palette->style & STYLE_1) {
-    widget_opts.apply_theme = 1;
-  }
-  if (!mainw->foreign) {
-    if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();
-    print_notice();
-  }
 
   get_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
 
@@ -1097,7 +961,7 @@ static boolean pre_init(void) {
     prefs->btgamma = get_boolean_prefd(PREF_BTGAMMA, FALSE);
   }
 
-  for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
+  for (int i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
     mainw->fx_candidates[i].list = NULL;
     mainw->fx_candidates[i].func = 0l;
@@ -1110,7 +974,7 @@ static boolean pre_init(void) {
 
   prefs->open_maximised = get_boolean_prefd(PREF_OPEN_MAXIMISED, TRUE);
 
-  for (i = 0; i < MAX_EXT_CNTL; i++) mainw->ext_cntl[i] = FALSE;
+  for (int i = 0; i < MAX_EXT_CNTL; i++) mainw->ext_cntl[i] = FALSE;
 
   prefs->omc_dev_opts = get_int_prefd(PREF_OMC_DEV_OPTS, 3);
 
@@ -1171,9 +1035,6 @@ static boolean pre_init(void) {
 
   prefs->show_asrc = get_boolean_prefd(PREF_SHOW_ASRC, TRUE);
   prefs->hfbwnp = get_boolean_prefd(PREF_HFBWNP, FALSE);
-
-  if (lives_ascii_strcasecmp(prefs->theme, future_prefs->theme)) return TRUE;
-  return FALSE;
 }
 
 
@@ -1351,13 +1212,185 @@ alldone:
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 static boolean got_files = FALSE;
-static boolean lives_startup2(livespointer data);
-static boolean lives_startup(livespointer data) {
+
+boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
+  weed_plant_t *test_plant;
+  lives_hook_stack_t **lpt_hooks, **thread_hooks;
   char *tmp, *msg;
+  char *old_libdir = NULL;
+  boolean theme_error, needs_update = FALSE;
+
   if (mainw->no_idlefuncs) return TRUE;
 
   what_sup = startup_sup;
+
+  d_print("Readying GUI helper...");
+  widget_helper_init();
+  capable->features_ready |= FEATURE_GUI_HELPER;
+  d_print("OK\n");
+
+  d_print("Setting up colour engine...");
+  init_colour_engine();
+  capable->features_ready |= FEATURE_COL_ENGINE;
+  d_print("OK\n");
+
+#ifdef WEED_WIDGETS
+  widget_klasses_init(LIVES_TOOLKIT_GTK);
+  //show_widgets_info();
+#endif
+
+  pre_init();
+
+  mainw->mgeom = NULL;
+
+  prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
+  mainw->ignore_screen_size = FALSE;
+
+  capable->primary_monitor = 0;
+
+  // sets prefs->screen_scale, capable->nmonitors, mainw->mgeom, prefs->play_monitor, prefs->gui_monitor
+  // capable->can_show_msg_area, mainw->old_screen_height, mainw->old_screen_width
+  // widget_opts.monitor, widget_opts.screen and various widget_opts sizes
+  get_monitors(TRUE);
+
+  widget_opts_set_scale(prefs->screen_scale);
+
+  get_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir, PATH_MAX);
+
+  if (!(*prefs->prefix_dir)) {
+    if (strcmp(PREFIX, "NONE")) {
+      lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", PREFIX);
+    } else {
+      lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", PREFIX_DEFAULT);
+    }
+    needs_update = TRUE;
+  }
+
+  tmp = lives_strdup(prefs->prefix_dir);
+  ensure_isdir(prefs->prefix_dir);
+  if (lives_strcmp(prefs->prefix_dir, tmp)) needs_update = TRUE;
+  lives_free(tmp);
+  if (needs_update) set_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
+
+  needs_update = FALSE;
+
+  if (ign_opts.ign_libdir) old_libdir = lives_strdup(prefs->lib_dir);
+  get_string_pref(PREF_LIB_DIR, prefs->lib_dir, PATH_MAX);
+  if (old_libdir) {
+    if (lives_strcmp(old_libdir, prefs->lib_dir)) {
+      lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", old_libdir);
+      needs_update = TRUE;
+    }
+    lives_free(old_libdir);
+  }
+
+  if (!(*prefs->lib_dir)) {
+    lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", LIVES_LIBDIR);
+    needs_update = TRUE;
+  }
+  tmp = lives_strdup(prefs->lib_dir);
+  ensure_isdir(prefs->lib_dir);
+  if (lives_strcmp(prefs->lib_dir, tmp)) needs_update = TRUE;
+
+  if (needs_update) set_string_pref(PREF_LIB_DIR, prefs->lib_dir);
+  needs_update = FALSE;
+
+  theme_error = load_theme();
+  if (!theme_error) capable->features_ready |= FEATURE_THEMING;
+
+  if (FEATURE_READY(THEMING) && palette->style & STYLE_1) {
+    widget_opts.apply_theme = 1;
+  }
+
+  cache_msg("Getting first stage hardware details...");
+  get_machine_dets(0);
+  capable->features_ready |= FEATURE_MACHINEDETS_1;
+  cache_msg("OK\n");
+
+  //do_startup_diagnostics(test_opts);
+  cache_msg("Analysing RNG...", .5);
+  init_random();
+  capable->features_ready |= FEATURE_RNG;
+  cache_msg("OK\n");
+
+  capable->uid = get_int64_prefd(PREF_UID, 0);
+
+  if (!capable->uid) {
+    capable->uid = gen_unique_id();
+    set_int64_pref(PREF_UID, capable->uid);
+  }
+
+  capable->session_uid = gen_unique_id();
+
+  if (!prefs->show_dev_opts) {
+    g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
+  }
+
+  cache_msg("Initializing memory block allocators...", .5);
+  init_memfuncs(1);
+  capable->features_ready |= FEATURE_MEMFUNCS;
+  cache_msg("OK\n");
+
+  cache_msg("Initializing Weed functions...", .5);
+  weed_functions_init();
+
+  // allow us to set immutable values (plugins can't)
+  weed_leaf_set = weed_leaf_set_host;
+
+  // allow us to delete undeletable leaves (plugins can't)
+  weed_leaf_delete = weed_leaf_delete_host;
+
+#if DEBUG_PLANTS
+  Xweed_plant_free = weed_plant_free_host;
+  Xweed_plant_new = weed_plant_new_host;
+#else
+  // allow us to free undeletable plants (plugins cant')
+  weed_plant_free = weed_plant_free_host;
+  weed_plant_new = weed_plant_new_host;
+#endif
+  weed_threadsafe = FALSE;
+  test_plant = weed_plant_new(0);
+  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
+    weed_threadsafe = TRUE;
+  else weed_threadsafe = FALSE;
+
+  weed_plant_free(test_plant);
+  cache_msg("OK\n");
+
+  capable->features_ready |= FEATURE_WEED;
+
+  if (!mainw->foreign) {
+    if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();
+    print_notice();
+  }
+
+  splash_msg("Getting second stage hardware details...", .5);
+  get_machine_dets(1);
+  capable->features_ready |= FEATURE_MACHINEDETS_2;
+
+  lives_alarms_init();
+  // unblock just for calling thread (main thread)
+
+  d_print("Testing lives sysalarms...");
+  d_print("pause for 1 millisecond...");
+
+  lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
+  if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION_DBL) != LIVES_RESULT_SUCCESS)
+    lives_abort("Timer failed");
+  lives_sys_alarm_wait(test_timeout);
+  lives_sys_alarm_disarm(test_timeout, TRUE);
+
+  d_print("timer ratio was %4f\n", app_timers[test_timeout].ratio);
+
+  capable->features_ready |= FEATURE_SYSALARMS;
+  d_print("OK\n");
+
+  // late tests (has prefs, has threadpool, has random, has gtk)
+  /* do_startup_diagnostics(test_opts); */
+  /* do_startup_diagnostics(test_opts); */
+
+  lives_memset(start_file, 0, 1);
 
   // check the working directory
   if (needs_workdir) {
@@ -1369,6 +1402,52 @@ static boolean lives_startup(livespointer data) {
       prefs->startup_phase = 2;
       set_int_pref(PREF_STARTUP_PHASE, 2);
     }
+  }
+
+  pre_init2();
+
+  // create a proc_thread for the main_thread. Since it is not running any background tasks, create
+  // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
+  // linked to the proc_thread currently being actioned
+
+  mainw->fg_tdata = lives_thread_data_create();
+
+  // we have to do some manual actions which are normal done automaticlly when a thread is added to the pool
+  mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
+  lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
+  mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
+
+  // set the active proc_thread for the main pthread
+  lives_thread_set_active(mainw->def_lpt);
+
+  // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
+  // to the thread hook_stacks instead
+
+  lpt_hooks = lives_proc_thread_get_hook_stacks(mainw->def_lpt);
+  lives_hooks_clear_all(lpt_hooks, N_GLOBAL_HOOKS);
+
+  thread_hooks = THREADVAR(hook_stacks);
+  for (int i = 0; i < N_GLOBAL_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
+
+  mainw->global_hook_stacks = lpt_hooks;
+
+  splash_msg("\n\nLoading realtime fx plugins...", .5);
+
+  /////////
+  load_rte_plugins();
+  ////////
+
+  splash_msg("Initializing threadpool...", .5);
+  lives_threadpool_init();
+  capable->features_ready |= FEATURE_THREADPOOL;
+
+  // test the timer
+  if (1) {
+    d_print("Testing LiVES thread timers...");
+    lives_alarm_set_timeout(10000);
+    lives_alarm_wait();
+    lives_alarm_disarm();
+    d_print("OK\n");
   }
 
   // will advance startup phase to 3, unless skipped
@@ -1469,7 +1548,7 @@ static boolean lives_startup(livespointer data) {
 
   create_fx_defs_menu();
 
-  if (theme_error && !mainw->foreign) {
+  if (!FEATURE_READY(THEMING)  && !mainw->foreign) {
     // non-fatal errors
     char *old_prefix_dir = lives_strdup(prefs->prefix_dir);
     char *themesdir = lives_build_path((tmp = lives_filename_to_utf8(prefs->prefix_dir,
@@ -1607,22 +1686,21 @@ static boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  //set_gui_loop_tight(TRUE);
-  lives_idle_priority(fg_service_ready_cb, NULL);
+  THREADVAR(guisource) = lives_idle_priority(fg_service_ready_cb, NULL);
 
   if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
     // still experimental
     switch_aud_to_none(FALSE);
   }
 
-  lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, 0, "v", NULL);
+  //lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, 0, "v", NULL);
   return FALSE;
 }
 
 
-static boolean lives_startup2(livespointer data) {
+boolean lives_startup2(livespointer data) {
   GET_PROC_THREAD_SELF(self);
-  uint64_t nsc, attrs;
+  uint64_t attrs;
   int64_t dsval;
   char *ustr, *tmp, *msg;
 
@@ -1631,8 +1709,8 @@ static boolean lives_startup2(livespointer data) {
 
   if (mainw->no_idlefuncs) return TRUE;
 
-  nsc = (uint64_t)mainw->n_service_calls;
-  if (!nsc) return TRUE;
+  /* nsc = (uint64_t)mainw->n_service_calls; */
+  /* if (!nsc) return TRUE; */
 
   if (!mainw->lives_shown) {
     mainw->is_ready = TRUE;
@@ -1654,7 +1732,7 @@ static boolean lives_startup2(livespointer data) {
 
 #ifndef VALGRIND_ON
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-    if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
+    if (lives_proc_thread_is_done(mainw->helper_procthreads[PT_CUSTOM_COLOURS], TRUE)) {
       double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
@@ -1685,16 +1763,19 @@ static boolean lives_startup2(livespointer data) {
 
   // DISKSPACE check - wait for monitor to complete
   if (!prefs->vj_mode && !needs_workdir && mainw->next_ds_warn_level > 0) {
-    if (!disk_monitor_running(prefs->workdir))
-      mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
+    if (disk_monitor_ready(prefs->workdir)) {
+      dsval = capable->ds_used = disk_monitor_check_result(prefs->workdir);
+    } else {
+      if (!disk_monitor_running(prefs->workdir))
+        mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
 
-    if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
-      if (disk_monitor_running(prefs->workdir)) {
-        dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
-        mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
+      if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
+        if (disk_monitor_running(prefs->workdir)) {
+          dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
+          mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
+        }
       }
     }
-
     // check now, if diskspace used value is ready
     check_storage_space(-1, FALSE);
 
@@ -1805,6 +1886,8 @@ static boolean lives_startup2(livespointer data) {
   else
     ustr = lives_strdup("");
 
+  make_std_icaps();
+
   d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
   lives_free(ustr);
 
@@ -1883,7 +1966,6 @@ static boolean lives_startup2(livespointer data) {
 #endif
 
   mainw->is_ready = TRUE;
-  lives_window_set_auto_startup_notification(TRUE);
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -2608,17 +2690,13 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_t mattr;
   ssize_t mynsize;
   char cdir[PATH_MAX];
-  char *tmp;
+  char *tmp, *cfgdir;
 
   main_thread = pthread_self();
 
 #if USE_RPMALLOC
   if (!rpmalloc_is_thread_initialized())
     rpmalloc_thread_initialize();
-#endif
-
-#ifndef IS_LIBLIVES
-  weed_plant_t *test_plant;
 #endif
 
   sizint = sizeof(int);
@@ -2635,8 +2713,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
 
-  mainw->fg_tdata = lives_thread_data_create();
-
   capable->locale.all = LIVES_ORIG_LC_ALL;
   capable->locale.lang = LIVES_ORIG_LANG;
   capable->locale.language = LIVES_ORIG_LANGUAGE;
@@ -2644,17 +2720,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   capable->locale.dp = lconvx->decimal_point;
   capable->locale.th_sep = lconvx->thousands_sep;
   capable->locale.grping = lconvx->grouping;
-
-  cache_msg("Getting first stage hardware details...");
-  get_machine_dets(0);
-  capable->features_ready |= FEATURE_MACHINEDETS_1;
-  cache_msg("OK\n");
-
-  cache_msg("Initializing memory block allocators...");
-
-  init_memfuncs(1);
-  capable->features_ready |= FEATURE_MEMFUNCS;
-  cache_msg("OK\n");
 
   MSGMODE_SET(INIT);
 
@@ -2681,9 +2746,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->configfile[0] = '\0';
 
   prefs->show_gui = TRUE;
-  prefs->show_splash = FALSE;
   prefs->show_playwin = TRUE;
   prefs->interactive = TRUE;
+  prefs->show_splash = TRUE;
 
   lives_snprintf(prefs->cmd_log, PATH_MAX, "%s", LIVES_DEVNULL);
 
@@ -2733,12 +2798,10 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // CMDS part 2
   ensure_isdir(capable->home_dir);
 
-  mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX);
-
   capable->myname_full = lives_find_program_in_path(argv[0]);
+  mynsize = lives_readlink(capable->myname_full, cdir);
 
   if (mynsize != -1) {
-    lives_memset(cdir + mynsize, 0, 1);
     lives_free(capable->myname_full);
     capable->myname_full = lives_strdup(cdir);
   }
@@ -2774,100 +2837,32 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_free(tmp);
   }
 
-  d_print("Initializing Weed functions...");
-  weed_functions_init();
+  palette = (_palette *)(lives_calloc(1, sizeof(_palette)));
 
-  // allow us to set immutable values (plugins can't)
-  weed_leaf_set = weed_leaf_set_host;
+  // locate shell commands that may be used in processing
+  //
+  get_location("touch", capable->touch_cmd, PATH_MAX);
+  get_location("rm", capable->rm_cmd, PATH_MAX);
+  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
+  get_location("mv", capable->mv_cmd, PATH_MAX);
+  get_location("ln", capable->ln_cmd, PATH_MAX);
+  get_location("chmod", capable->chmod_cmd, PATH_MAX);
+  get_location("cat", capable->cat_cmd, PATH_MAX);
+  get_location("echo", capable->echo_cmd, PATH_MAX);
 
-  // allow us to delete undeletable leaves (plugins can't)
-  weed_leaf_delete = weed_leaf_delete_host;
+  // need to create directory for configfile before calling get_capabilities()
+  // NOTE: this is the one and only time we reference cfgdir, other than this it should be considered sacrosanct
+  cfgdir = get_dir(prefs->configfile);
+  lives_make_writeable_dir(cfgdir);
+  lives_free(cfgdir);
 
-#if DEBUG_PLANTS
-  Xweed_plant_free = weed_plant_free_host;
-  Xweed_plant_new = weed_plant_new_host;
-#else
-  // allow us to free undeletable plants (plugins cant')
-  weed_plant_free = weed_plant_free_host;
-  weed_plant_new = weed_plant_new_host;
-#endif
-  weed_leaf_get = weed_leaf_get_monitor;
-  weed_threadsafe = FALSE;
-  test_plant = weed_plant_new(0);
-  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
-    weed_threadsafe = TRUE;
-  else weed_threadsafe = FALSE;
-
-  weed_plant_free(test_plant);
-
-  capable->features_ready |= FEATURE_WEED;
-  d_print("OK\n");
-
-  //do_startup_diagnostics(test_opts);
-
-  d_print("Analysing RNG...\n");
-  init_random();
-  capable->features_ready |= FEATURE_RNG;
-  d_print("\n");
-
-  mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
-
-  d_print("Getting second stage hardware details...");
-  get_machine_dets(1);
-  capable->features_ready |= FEATURE_MACHINEDETS_2;
-  d_print("OK\n");
-
-  lives_alarms_init();
-  // unblock just for calling thread (main thread)
-  thrd_signal_unblock(LIVES_TIMER_SIG, TRUE);
-
-  d_print("Testing lives sysalarms...");
-  d_print("pause for 1 microsecond...");
-  lives_sys_alarm_set_timeout(test_timeout, 1000);
-  lives_sys_alarm_wait(test_timeout);
-  lives_sys_alarm_disarm(test_timeout);
-
-  capable->features_ready |= FEATURE_SYSALARMS;
-  d_print("OK\n");
-
-  d_print("Setting up colour engine...");
-  init_colour_engine();
-  capable->features_ready |= FEATURE_COL_ENGINE;
-  d_print("OK\n");
-
-  d_print("Readying GUI helper...");
-  widget_helper_init();
-  capable->features_ready |= FEATURE_GUI_HELPER;
-  d_print("OK\n");
-
-#ifdef WEED_WIDGETS
-  widget_klasses_init(LIVES_TOOLKIT_GTK);
-  //show_widgets_info();
-#endif
-
-  make_std_icaps();
-
-  // get capabilities and if OK set some initial prefs
-  theme_error = pre_init();
-  capable->features_ready |= FEATURE_THEMING;
-
-  what_sup = run_program2_sup;
-
-  // late tests (has prefs, has threadpool, has random, has gtk)
-  /* do_startup_diagnostics(test_opts); */
-  /* do_startup_diagnostics(test_opts); */
-
-  //set_meta("status", "running");
-
-  /* widget_helper_suggest_icons("filter"); */
-  /* abort(); */
-
-  lives_memset(start_file, 0, 1);
-
-  mainw->libthread = gtk_thread;
-
-  // format is:
-  // lives [opts] [filename [start_time] [frames]]
+  // pre-checked conditions. We will check for these again
+  if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
+      capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
+      capable->has_smogrify && capable->smog_version_correct) {
+    // check the backend is there, get some system details and prefs
+    capable = get_capabilities();
+  }
 
   // need to do this here, before lives_startup but after setting ign_opts
   mainw->new_vpp = NULL;
@@ -2881,13 +2876,12 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_free(tmp);
   }
 
-  d_print("Initializing threadpool...");
-  lives_threadpool_init();
-  capable->features_ready |= FEATURE_THREADPOOL;
-  d_print("OK\n");
+  mainw->libthread = gtk_thread;
 
+  ///////
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
-  lives_idle_add(lives_startup, NULL);
+  THREADVAR(guisource) = lives_idle_priority(fg_service_ready_cb, NULL);
+  //lives_idle_add(lives_startup, NULL);
 
   what_sup = gtk_launch_sup;
 
@@ -3096,17 +3090,10 @@ static boolean lives_init(_ign_opts * ign_opts) {
   mainw->active_sa_clips = mainw->active_sa_fx = SCREEN_AREA_FOREGROUND;
 
   mainw->swapped_clip = -1;
-
-  mainw->blend_palette = WEED_PALETTE_END;
-
   mainw->audio_stretch = 1.0;
-
   mainw->record_frame = -1;
-
   mainw->pre_play_file = -1;
-
   mainw->num_sets = -1;
-
   mainw->drawsrc = -1;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
@@ -3551,8 +3538,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
                                    WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
     }
 #endif
-
-
 
     // replace any multi choice effects with their delegates
     replace_with_delegates();

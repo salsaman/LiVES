@@ -52,8 +52,8 @@ boolean flush_scrap_file(void);
 
 boolean pull_frame(weed_layer_t *, const char *img_ext, ticks_t tc);
 lives_result_t  pull_frame_threaded(weed_layer_t *, int width, int height);
-lives_proc_thread_t lives_layer_get_procthread(lives_layer_t *);
-boolean is_layer_ready(weed_layer_t *);
+
+lives_result_t is_layer_ready(weed_layer_t *);
 lives_result_t wait_layer_ready(weed_layer_t *, boolean allow_loaded);
 
 lives_result_t get_frames_sizes(int clipno, frames_t frame_to_test, int *hsize, int *vsize);
@@ -100,5 +100,7 @@ boolean pixbuf_to_png_threaded(savethread_priv_t *); // deprecated
 boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
 boolean layer_to_png(weed_layer_t *layer, const char *fname, int comp);
 boolean layer_to_png_threaded(savethread_priv_t *); // deprecated
+
+boolean layer_processed_cb(lives_proc_thread_t, lives_layer_t *);
 
 #endif// _FRAME_LOADER_H

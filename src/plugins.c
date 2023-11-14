@@ -2949,9 +2949,8 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
                      dlsym(dpsys->handle, "rip_audio");
   dpsys->rip_audio_cleanup = (void (*)(const lives_clip_data_t *))dlsym(dpsys->handle, "rip_audio_cleanup");
 
-  dpsys->estimate_delay = (double (*)(const lives_clip_data_t *, int64_t))dlsym(dpsys->handle, "estimate_delay");
-  dpsys->estimate_delay_full = (double (*)(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame,
-                                double * confidence))dlsym(dpsys->handle, "estimate_delay_full");
+  dpsys->estimate_delay = (double (*)(const lives_clip_data_t *, int64_t tframe,  int64_t from_frame,
+                                      double * confidence))dlsym(dpsys->handle, "estimate_delay");
 
   if (dpsys->module_check_init) {
     err = (*dpsys->module_check_init)();

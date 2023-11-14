@@ -284,7 +284,8 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_strerror(a) g_strerror(a)
 
-#define lives_cclosure_new(a, b, c) g_cclosure_new(a, b, c)
+#define _lives_cclosure_new(a, b, c) g_cclosure_new(a, b, c)
+#define lives_cclosure_new(a,b,c) a, b, c
 
 #define lives_path_get_dirname(a) g_path_get_dirname(a)
 

@@ -887,11 +887,25 @@ static frames64_t get_blend_frame_inner(weed_timecode_t tc) {
     } else {
       if (!cfile->play_paused) {
         frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
-      }
-    }
+        blend_file->last_req_frame = frameno;
+        int dir = sig(blend_file->pb_fps);
+        frames_t minfr = blend_file->last_frameno + dir;
+        frames_t maxfr = frameno;
+        if ((maxfr - minfr) * dir > 1) {
+          if (get_primary_src_type(blend_file) == LIVES_SRC_TYPE_DECODER) {
+            frames_t frame;
+            lives_decoder_t *dplug = (lives_decoder_t *)get_primary_actor(blend_file);
+            frame = reachable_frame(mainw->blend_file, dplug, minfr, maxfr,
+                                    blend_file->frameno, blend_file->pb_fps,
+                                    blend_file->frameno, NULL, NULL);
+            if (frame != -1) frameno = frame;
+	  // *INDENT-OFF*
+	  }}}}
+    // *INDENT-OFN*
     frameno = clamp_frame(mainw->blend_file, frameno);
     if (frameno != blend_file->frameno) {
-      blend_file->last_frameno = blend_file->last_req_frame = blend_file->frameno = frameno;
+      blend_file->last_frameno = blend_file->frameno;
+      blend_file->frameno = frameno;
       blend_tc = ntc;
     }
   }
@@ -992,9 +1006,8 @@ deint1:
 
 ////////////////////////////////////////////////////////////////////
 // keypresses
-// TODO - we should mutex lock mainw->rte
 
-static lives_result_t _rte_on_off(boolean from_menu, int key) {
+static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based
   // in automode we don't add the effect parameters in ce_thumbs mode, and we use SOFT_DEINIT
@@ -1020,6 +1033,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
         if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
+	    g_print("SOFT OFF\n");
           weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
           if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
             record_filter_init(key);
@@ -1078,12 +1092,13 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
       if (THREADVAR(fx_is_auto)) {
         // SOFT_DEINIT
         // if the change was caused by a data connection, the target may be toggled rapidly
-        // in this case we dont actually deinit / reinti the instance, we just flag it as ignored
+        // in this case we dont actually deinit / reinit the instance, we just flag it as ignored
         weed_plant_t *inst;
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
           int inc_count = enabled_in_channels(inst, FALSE);
           if (inc_count == 1) {
             weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, TRUE);
+	    g_print("SOFT ON\n");
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
@@ -1091,7 +1106,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
           }
           weed_instance_unref(inst);
         }
-        refresh_model = FALSE;
+        //refresh_model = FALSE;
       }
 
       if (!THREADVAR(fx_is_auto)) {
@@ -1127,7 +1142,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key) {
       else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
     }
 
-  if (key > 0 && !THREADVAR(fx_is_auto)) {
+  if (key > 0 && !is_auto) {
     // user override any ACTIVATE data connection
     // (return key to manual control, disable automatic mode)
     override_if_active_input(key);
@@ -1151,19 +1166,20 @@ static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
   uint64_t new_rte = GU641 << key;
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
   if (LIVES_IS_PLAYING) {
+    boolean is_auto = THREADVAR(fx_is_auto);
     if (key)
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, key);
+                                      _rte_on_off, WEED_SEED_BOOLEAN, "bib", from_menu, key, is_auto);
     else
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, 0);
+                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, 0, is_auto);
     mainw->rte_soft ^= new_rte;
     return LIVES_RESULT_SUCCESS;
   }
 
-  return _rte_on_off(from_menu, key);
+  return _rte_on_off(from_menu, key, FALSE);
 }
 
 // THIS is the correct function to call from code to toggle a rte key

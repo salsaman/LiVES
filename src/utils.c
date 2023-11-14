@@ -825,10 +825,9 @@ double find_nearest_ar(int width, int height, int *wm, int *hm) {
 // both thesse functions scale cwidth, cheight by the same factor
 // given a bounding box rwidth, rheight:
 //
-// maxspect keeps either rwidth or rheight constant, then shrinks the other value
-// to get ar cwidth: cheight - this is max size cwidth, cheight can be to keep its a.r and fit inside
-// rwidth, rheight
-// minspect does this by keeping either rwisth or rheight constant, and stretching the other
+// both functions maintain apect ratio cwidth X cheight
+// maxspect will fit it inside rwidth X rheight
+// minspect will fit rwidth x rheight inside cwidth, cheight
 
 // example uses: - find max size for a box, keeping its a.r but fittng in another box
 // - cwitdht, cheight are box size, rwidth, rheight are bounding box size, call maxspect, new dimensions are in
@@ -868,13 +867,12 @@ LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int
   // calculate minspect (minimum size which conforms to aspect ratio of
   // of cwidth, cheight) - which contains rwidth, rheight
   // (so either rwidth or rheight will increase)
+  // i.e. cwidth X cheight will grow or reduce to "shrink wrap" rwidth X rhgeight
 
-  // i.e both dimensions may grow, image size will never shrink
-  // (otherwise can use maxspect with boxes swapped)
+
   double caspect, raspect;
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
-  if (*cwidth >= rwidth && *cheight >= rheight) return;
 
   caspect = (double)(*cwidth) / (double)(*cheight);
   raspect = (double)(rwidth) / (double)(rheight);

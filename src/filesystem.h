@@ -20,7 +20,7 @@
 
 char *filename_from_fd(char *val, int fd);
 
-ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
+ssize_t lives_readlink(const char *path, char *buf);
 
 // check if existitng directory is writeable, but do not create
 boolean is_writeable_dir(const char *dir);
@@ -217,6 +217,7 @@ uint64_t get_fs_blocksize(const char *dir);
 
 lives_proc_thread_t disk_monitor_start(const char *dir);
 boolean disk_monitor_running(const char *dir);
+boolean disk_monitor_ready(const char *dir);
 int64_t disk_monitor_check_result(const char *dir);
 int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
 void disk_monitor_forget(void);

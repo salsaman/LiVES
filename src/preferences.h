@@ -1005,26 +1005,6 @@ typedef struct {
   boolean needs_restart;
 } _prefsw;
 
-/// startup overrides from commandline
-typedef struct {
-  boolean ign_clipset;
-  boolean ign_layout;
-  boolean ign_osc;
-  boolean ign_rte_keymodes;
-  boolean ign_libdir;
-  boolean ign_jackopts;
-  boolean ign_jackserver;
-  boolean ign_jackcfg;
-  boolean ign_aplayer;
-  boolean ign_asource;
-  boolean ign_stmode;
-  boolean ign_vppdefs;
-  boolean ign_vjmode;
-  boolean ign_dscrit;
-  boolean ign_configfile;
-  boolean ign_config_datadir;
-} _ign_opts;
-
 typedef struct {
   // if a pref also has an entry in future_prefs, be wary of changing its value
   // seek to understand why it has a variant value
@@ -1344,7 +1324,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define MSG_URGENCY_STARTUP	(1 << 2)
 
 #define ATT_MESSAGE(dialog) (prefs && GET_INT_DATA((dialog), URGENCY_KEY) \
-			     <= (prefs->focus_steal & FOCUS_LEVEL_MASK))
+			     >= (prefs->focus_steal & FOCUS_LEVEL_MASK))
 
 ////////// boolean values
 #define PREF_MT_EXIT_RENDER "mt_exit_render"

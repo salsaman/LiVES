@@ -453,9 +453,8 @@ typedef struct {
                        unsigned char **abuff);
   void (*rip_audio_cleanup)(const lives_clip_data_t *);
   void (*module_unload)(void);
-  double (*estimate_delay)(const lives_clip_data_t *, int64_t tframe);
-  double (*estimate_delay_full)(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame,
-                                double *confidence);
+  double (*estimate_delay)(const lives_clip_data_t *, int64_t tframe,  int64_t from_frame,
+                           double *confidence);
 } lives_decoder_sys_t;
 
 typedef struct {

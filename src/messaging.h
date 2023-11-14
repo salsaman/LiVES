@@ -22,15 +22,22 @@
 
 // print with translation
 #define _lives_print(fmt, ...) _DW0(char *tmp = lives_strdup_printf("%s%%s", _(fmt)), \
-				    tmp2 = lives_strdup_printf(tmp, __VA_ARGS_ ); \
-				    _lives_printerrX(tmp2, __VA_ARGS__); str_free(tmp); str_free(tmp2);)
+				    *tmp2 = lives_strdup_printf(tmp, __VA_ARGS_ ); \
+				    _lives_printerrX(tmp2, __VA_ARGS__); \
+				    lives_free(tmp); lives_free(tmp2);)
 
 #define lives_print(...) _lives_print(__VA_ARGS__, "")
 
-#define d_printerr(...) lives_printerr(__VA_ARGS__)
+#define d_printerr(...) _lives_printerr(__VA_ARGS__)
 
-// for use only during early startup
-void cache_msg(const char *);
+void _cache_msg(const char *fmt, ...);
+
+#define Xcache_msg(fmt, ...) _DW0(char *tmp = lives_strdup_printf("%s%%s", (fmt)), \
+				  *tmp2 = lives_strdup_printf(tmp, __VA_ARGS__);	\
+				  _cache_msg(tmp2, __VA_ARGS__); \
+				  lives_free(tmp); lives_free(tmp2);)
+
+#define cache_msg(...) Xcache_msg(__VA_ARGS__, "")
 
 #define LIVES_LEAF_MESSAGE_STRING "msg_string"
 

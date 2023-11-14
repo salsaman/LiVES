@@ -30,12 +30,18 @@ typedef struct {
   volatile ticks_t lastcheck;
 } lives_timeout_t;
 
+#define TIMER_FLAG_INVALID 		-1
+
+#define TIMER_FLAG_GET_TIMING 		(1 << 0)
+
 typedef struct {
   // sys timers
   timer_t tid;
   // initial value when set, only for info purposes
   uint64_t delay;
   lives_sigatomic triggered;
+  double started, ended, ratio;
+  int flags;
 } lives_timer_t;
 
 #define N_APP_TIMERS 1024
@@ -48,10 +54,10 @@ extern lives_timer_t app_timers[N_APP_TIMERS];
 boolean lives_alarm_clear(int dummy);
 
 // alarms -  new style
-#define LIVES_ALARM_INVALID	-1
-#define LIVES_ALARM_DISARMED	0
-#define LIVES_ALARM_ARMED	1
-#define LIVES_ALARM_TRIGGERED	2
+#define LIVES_ALARM_INVALID	LIVES_RESULT_INVALID
+#define LIVES_ALARM_DISARMED	LIVES_RESULT_FAIL
+#define LIVES_ALARM_ARMED	LIVES_RESULT_SUCCESS
+#define LIVES_ALARM_TRIGGERED	LIVES_RESULT_TIMEDOUT
 
 void lives_alarms_init(void);
 
@@ -76,11 +82,12 @@ int lives_alarm_get_state(void);
 typedef enum {
   thread_alarm = -1,
   sys_alarms_min = 0,
-  heartbeat_timeout,
+  yardstick_timer,
   urgent_msg_timeout,
   overlay_msg_timeout,
   audio_msgq_timeout,
   test_timeout,
+  heartbeat_timeout, // TODO
   sys_alarms_max = N_APP_TIMERS,
 } alarm_name_t;
 
@@ -90,10 +97,13 @@ typedef enum {
 
 lives_result_t lives_sys_alarm_set_timeout(alarm_name_t alaname, uint64_t nsec);
 // returns TRUE if alarm was triggered
-boolean lives_sys_alarm_disarm(alarm_name_t alaname);
+boolean lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete);
 
 void lives_sys_alarm_wait(alarm_name_t alaname);
 int lives_sys_alarm_get_state(alarm_name_t alaname);
+
+int lives_sys_alarm_get_flags(alarm_name_t alaname);
+lives_result_t lives_sys_alarm_set_flags(alarm_name_t alaname, int flags);
 
 #define lives_sys_alarm_triggered(alaname)		\
  (lives_sys_alarm_get_state(alaname) != LIVES_ALARM_ARMED)
@@ -113,7 +123,7 @@ void thrd_signal_block(int sig, boolean thrd_specific);
 ////////////////// spinwait /////
 
 // wait for 1 nsec
-#define lives_spin() do {lives_nanosleep(1);} while (0);
+#define lives_spin() lives_nanosleep(1)
 
 // for compatibility
 #define lives_usleep(a) lives_nanosleep(1000*(a))

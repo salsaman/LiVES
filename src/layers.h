@@ -160,9 +160,9 @@ int weed_layer_get_yuv_subspace(weed_layer_t *);
 uint8_t *weed_layer_get_pixel_data(weed_layer_t *);
 void **weed_layer_get_pixel_data_planar(weed_layer_t *, int *nplanes);
 float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
-int weed_layer_get_audio_rate(weed_layer_t *layer);
-int weed_layer_get_naudchans(weed_layer_t *layer);
-int weed_layer_get_audio_length(weed_layer_t *layer);
+int weed_layer_get_audio_rate(weed_layer_t *);
+int weed_layer_get_naudchans(weed_layer_t *);
+int weed_layer_get_audio_length(weed_layer_t *);
 int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_rowstride(weed_layer_t *); ///< for packed palettes
 int weed_layer_get_width(weed_layer_t *);
@@ -171,6 +171,9 @@ int weed_layer_get_height(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
 int weed_layer_get_gamma(weed_layer_t *);
 int weed_layer_get_flags(weed_layer_t *);
+
+void lives_layer_set_proc_thread(lives_layer_t *, lives_proc_thread_t);
+lives_proc_thread_t lives_layer_get_proc_thread(lives_layer_t *);
 
 // weed_layer_get_rowstride
 

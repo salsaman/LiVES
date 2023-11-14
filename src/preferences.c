@@ -7594,8 +7594,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
                               LIVES_GUI_CALLBACK(on_prefs_close_clicked), NULL);
 
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
   }
 
   prefsw->close_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -7633,6 +7633,14 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 }
 
 
+static void pref_dlg_loop(void *dlg) {
+  int resp;
+  do {
+    resp = lives_dialog_run(LIVES_DIALOG(dlg));
+  } while (resp != LIVES_RESPONSE_OK);
+}
+
+
 void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   LiVESWidget *saved_dialog = (LiVESWidget *)user_data;
   mt_needs_idlefunc = FALSE;
@@ -7663,8 +7671,9 @@ void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_widget_queue_draw(prefsw->prefs_dialog);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
-}
 
+  pool_thread_execute_rvoid(pref_dlg_loop, 0, "v", prefsw->prefs_dialog);
+}
 
 /*!
   Closes preferences dialog window
@@ -7917,8 +7926,6 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   on_preferences_activate(NULL, saved_dialog);
-
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 }
 
 

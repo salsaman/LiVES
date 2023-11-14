@@ -2752,7 +2752,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
     int64_t xtarget_pts = target_pts;
 
     if (!rev && cdata->last_frame_decoded > -1) {
-      est = estimate_delay(cdata, tframe);
+      est = estimate_delay(cdata, tframe, 0, NULL);
       if (!rev) {
         if (est <= 0. || priv->est_noseek <= 0.) {
           if (!cdata->kframes_complete || kf_before(cdata, tframe) > cdata->last_frame_decoded)
@@ -3055,10 +3055,10 @@ int64_t update_stats(const lives_clip_data_t *xcdata) {
 }
 
 
-double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int64_t last_frame,
-                           double *confidence) {
+double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t from_frame,
+                      double *confidence) {
   // return as accurate as we can, an estimate of the time (seconds) to decode and return frame tframe
-  // - for the calculation we start by looking at last_frame (or if last_frame < 0, cdata->last_frame_decoded)
+  // - for the calculation we start by looking at from_frame (or if from_frame < 0, cdata->last_frame_decoded)
   // then, determine if we can reach target by decoding frames in sequence, or if we need to seek first
   // if we need to seek then try to guess the keyframe we will seek to, then add the decode time from keyframe to target
   // for the former, the calculation is just delta X decode_time
@@ -3086,10 +3086,10 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
 
   priv->est_noseek = 0.;
 
-  if (last_frame <= 0) last_frame = cdata->last_frame_decoded;
-  if (last_frame < 0) last_frame = 0;
+  if (from_frame <= 0) from_frame = cdata->last_frame_decoded;
+  if (from_frame < 0) from_frame = 0;
 
-  delta = tframe - last_frame;
+  delta = tframe - from_frame;
 
   if (delta == 0 && priv->picture) est = abs(cdata->adv_timing.const_time);
   else {
@@ -3099,9 +3099,9 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
       if (cdata->kframes_complete) {
         yconf += .2;
         dconf += .1;
-        if (tframe > last_frame) {
+        if (delta > 0) {
           pthread_mutex_lock(&priv->idxc->mutex);
-          nks = count_between(priv->idxc, ((double)last_frame - .5) / cdata->fps * TIME_SCALE,
+          nks = count_between(priv->idxc, ((double)from_frame - .5) / cdata->fps * TIME_SCALE,
                               ((double)tframe - .5) / cdata->fps * TIME_SCALE, NULL);
           pthread_mutex_unlock(&priv->idxc->mutex);
         }
@@ -3184,7 +3184,7 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
 
         if (breadtime > 0) {
           int64_t bbytes = 0;
-          count_between(priv->idxb, last_frame, tframe, &bbytes);
+          count_between(priv->idxb, from_frame, tframe, &bbytes);
           priv->est_noseek += breadtime * bbytes;
           //fprintf(stderr, "ESTIMbb is %ld\n", bbytes);
         }
@@ -3229,11 +3229,6 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
   if (confidence) *confidence = conf;
 
   return est;
-}
-
-
-double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe) {
-  return estimate_delay_full(xcdata, tframe, 0, NULL);
 }
 
 

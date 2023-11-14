@@ -231,7 +231,7 @@ extern locale_t oloc, nloc;
 #define FEATURE_RNG			(1ul << 8)
 #define FEATURE_THEMING			(1ul << 9)
 
-#define FEATURE_RREADY(what) (capable->features_ready & FEATURE_##what)
+#define FEATURE_READY(what) (capable->features_ready & FEATURE_##what)
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
@@ -630,7 +630,6 @@ struct _capabilities {
 
   mode_t umask;
 
-  // TODO - move to hwcaps
   char *mach_name;
   int64_t boot_time;
   int xstdout;

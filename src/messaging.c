@@ -212,6 +212,7 @@ static weed_error_t _add_message_to_list(const char *text, boolean is_top) {
       strg2 = lives_strdup_printf("%s%s", strg, lines[0]);
       weed_leaf_delete(end, LIVES_LEAF_MESSAGE_STRING);
       weed_set_const_string_value(end, LIVES_LEAF_MESSAGE_STRING, strg2);
+      lives_free(strg2);
       /* g_print("GOT %s\n", */
       /*         weed_get_string_value(end, LIVES_LEAF_MESSAGE_STRING, NULL)); */
       //lives_free(strg2);
@@ -337,8 +338,16 @@ boolean d_print_overlay(double timeout, const char *fmt, ...) {
   return FALSE;
 }
 
-void cache_msg(const char *text)
-{if (text) msgcache = lives_list_prepend(msgcache, (void *)text);}
+LIVES_GLOBAL_INLINE void _cache_msg(const char *fmt, ...) {
+  va_list xargs;
+  char *text;
+
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  if (text) msgcache = lives_list_prepend(msgcache, (void *)text);
+}
 
 
 #define DPRINT_SEP "==============================\n"

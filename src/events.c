@@ -3488,9 +3488,9 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         if (new_file != mainw->scrap_file) {
           // switch to a new file
           // will reset ->next_event for old_file
-          mainw->can_switch_clips = TRUE;
+          mainw->noswitch = FALSE;
           do_quick_switch(new_file);
-          mainw->can_switch_clips = FALSE;
+          mainw->noswitch = TRUE;
           cfile->next_event = return_event;
         } else {
           /// load a frame from the scrap file

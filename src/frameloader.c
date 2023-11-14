@@ -1318,9 +1318,9 @@ check_prcache:
     return pdata_size;
   }
 
+  static weed_layer_t *orig_layer = NULL;
 
   int save_to_scrap_file(weed_layer_t *layer) {
-    static weed_layer_t *orig_layer = NULL;
     static boolean checked_disk = FALSE;
 
     lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
@@ -1341,6 +1341,8 @@ check_prcache:
       if (!check_for_disk_space(TRUE)) return scrapfile->frames;
     }
 
+    if (!orig_layer) orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+
     if (!mainw->scrap_file_proc) {
       mainw->scrap_file_proc =
         lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)_save_to_scrap_file,
@@ -1350,8 +1352,8 @@ check_prcache:
     checked_disk = FALSE;
     check_for_disk_space(FALSE);
 
-    // because fn does not return bool, +ve value is interpreted as TRUE and fn will complet
-    // however this is unimportant
+    // if saver thrd still busy, skip this frame
+    // TODO - should buffer a few frames
     if (!lives_proc_thread_is_unqueued(mainw->scrap_file_proc)
         && !lives_proc_thread_check_finished(mainw->scrap_file_proc)) {
       return scrapfile->frames;
@@ -1359,7 +1361,8 @@ check_prcache:
 
     if (lives_proc_thread_check_finished(mainw->scrap_file_proc))
       scrapfile->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
-    orig_layer = weed_layer_copy(NULL, layer);
+
+    weed_layer_copy(orig_layer, layer);
     lives_proc_thread_queue(mainw->scrap_file_proc, 0);
 
     if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
@@ -1393,6 +1396,10 @@ check_prcache:
       mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
       lives_proc_thread_unref(mainw->scrap_file_proc);
       mainw->scrap_file_proc = NULL;
+    }
+    if (orig_layer) {
+      weed_layer_unref(orig_layer);
+      orig_layer = NULL;
     }
     return TRUE;
   }
@@ -2221,24 +2228,28 @@ fndone:
   }
 
 
-  static boolean frame_loaded_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
-    weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
+  boolean layer_processed_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
     lock_layer_status(layer);
 
     if (!_weed_layer_check_valid(layer)) {
       unlock_layer_status(layer);
+      weed_layer_unref(layer);
       return FALSE;
     }
+
+    lives_layer_set_proc_thread(layer, NULL);
+
     if (lives_layer_plan_controlled(layer)) {
-      if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING) {
-        //g_print("LOADED CB\n");
+      if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
         _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-      }
-    } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
+      else _lives_layer_set_status(layer, LAYER_STATUS_READY);
+    }
 
     unlock_layer_status(layer);
+    weed_layer_unref(layer);
     return TRUE;
   }
+
 
 
   // callers: pull_frame, pth_thread. load_start_image, load_end_image
@@ -2294,7 +2305,7 @@ fndone:
       // the default unless overridden
       weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
-    if (lives_layer_get_procthread(layer)) is_thread = TRUE;
+    if (lives_layer_get_proc_thread(layer)) is_thread = TRUE;
 
     sfile = RETURN_VALID_CLIP(clip);
 
@@ -2624,7 +2635,8 @@ success:
         double xtime = (double)(frame - 1) / sfile->fps;
         render_subs_from_file(sfile, xtime, layer);
       }
-      frame_loaded_cb(NULL, layer);
+      weed_layer_ref(layer);
+      layer_processed_cb(NULL, layer);
     }
 
     if (weed_layer_count_refs(layer) <= 1) goto fail;
@@ -2669,19 +2681,11 @@ fail:
   }
 
 
-  LIVES_GLOBAL_INLINE boolean is_layer_ready(weed_layer_t *layer) {
-    if (lives_layer_get_status(layer) == LAYER_STATUS_READY
-        || !weed_layer_check_valid(layer)) {
-      wait_layer_ready(layer, FALSE);
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-
-  lives_proc_thread_t lives_layer_get_procthread(lives_layer_t *layer) {
-    if (layer) return weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
-    return NULL;
+  LIVES_GLOBAL_INLINE lives_result_t is_layer_ready(weed_layer_t *layer) {
+    if (!layer) return LIVES_RESULT_ERROR;
+    if (!weed_layer_check_valid(layer)) return LIVES_RESULT_INVALID;
+    if (lives_layer_get_status(layer) == LAYER_STATUS_READY) return LIVES_RESULT_SUCCESS;
+    return LIVES_RESULT_FAIL;
   }
 
 
@@ -2700,7 +2704,7 @@ fail:
       // spin while state is queued, prepared, loading, loaded, converting
       // if state is invalid, cancel any thread running
       //   completed - SUCCESS
-      lpt = lives_layer_get_procthread(layer);
+      lpt = lives_layer_get_proc_thread(layer);
 
       if (lives_proc_thread_ref(lpt) > 1) {
         if (lpt == self) {
@@ -2709,13 +2713,9 @@ fail:
         }
         while (1) {
           int lstatus;
-          if (lives_proc_thread_is_done(lpt, FALSE)) {
-            lives_proc_thread_unref(lpt);
-            return LIVES_RESULT_FAIL;
-          }
           lock_layer_status(layer);
           lstatus = _lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_READY || lstatus == LAYER_STATUS_QUEUED) {
+          if (lstatus == LAYER_STATUS_READY) {
             unlock_layer_status(layer);
             break;
           }
@@ -2732,6 +2732,7 @@ fail:
           unlock_layer_status(layer);
           lives_proc_thread_wait(self, 100000);
         }
+        lives_proc_thread_unref(lpt);
       }
     }
     return res;
@@ -2777,16 +2778,18 @@ fail:
       weed_layer_set_size(layer, width, height);
 
 #ifdef NO_FRAME_THREAD
-      if (!pull_frame(layer, tc)) return LIVES_RESULT_ERROR;
+      if (!pull_fram(layer, tc)) return LIVES_RESULT_ERROR;
 #else
 
       lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
                                      | LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)pft_thread,
                                      0, "vs", layer, img_ext);
 
-      lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, frame_loaded_cb, layer);
+      weed_layer_ref(layer);
+      lives_layer_set_proc_thread(layer, lpt);
+      lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
       lives_proc_thread_set_cancellable(lpt);
-      weed_set_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, lpt);
+      lives_layer_set_proc_thread(layer, lpt);
       lives_proc_thread_queue(lpt, 0);
 #endif
       return LIVES_RESULT_SUCCESS;

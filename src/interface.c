@@ -3019,6 +3019,7 @@ _entryw *create_entry_dialog(int type) {
   LiVESWidget *dialog_vbox, *hbox, *vbox;
   LiVESWidget *logo = NULL;
   LiVESWidget *label;
+  LiVESWidget *button;
   LiVESWidget *checkbutton;
   LiVESWidget *set_combo;
 
@@ -3091,12 +3092,21 @@ _entryw *create_entry_dialog(int type) {
                         "initial setup so that you can get the most from this application."));
     lives_box_pack_start(LIVES_BOX(vbox), entryw->ylabel, FALSE, FALSE, widget_opts.packing_height);
 
+    // TODO
+    /* widget_opts.use_markup = TRUE; */
+    /* button = lives_standard_button_new_from_stock_full */
+    /*   (LIVES_STOCK_PREFERENCES, _("<b>CLICK HERE TO ADJUST FONT AND WINDOW SCALING</b>"), */
+    /*    -1, -1, LIVES_BOX(vbox), FALSE, NULL); */
+    /* widget_opts.use_markup = FALSE; */
+
     widget_opts.use_markup = TRUE;
     entryw->xlabel = lives_standard_label_new
                      (_("First of all you need to <b>choose a working directory</b> for LiVES.\n"
                         "This should be a directory with plenty of disk space available."));
     widget_opts.use_markup = FALSE;
     lives_box_pack_end(LIVES_BOX(vbox), entryw->xlabel, FALSE, FALSE, widget_opts.packing_height);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   }
 
   if (type == ENTRYW_INIT_WORKDIR && mainw->is_ready) {

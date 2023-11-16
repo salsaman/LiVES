@@ -1287,8 +1287,15 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
 
 boolean fg_service_ready_cb(void *dummy) {
+  static boolean done = FALSE;
+  if (done) return FALSE;
+  done = TRUE;
+
   d_print("GUI thread active, providing service for all other threads\n\n");
   lives_startup(NULL);
+
+  while (fg_service_fulfill());
+
   lives_startup2(NULL);
 
   fg_service_source = THREADVAR(guisource) = lives_idle_priority(fg_service_fulfill_cb, NULL);
@@ -8955,6 +8962,7 @@ void render_standard_button(LiVESButton * sbutt) {
       boolean prelit = (state & LIVES_WIDGET_STATE_PRELIGHT) == 0 ? FALSE : TRUE;
       boolean insens = (state & LIVES_WIDGET_STATE_INSENSITIVE) == 0 ? FALSE : TRUE;
       boolean focused = lives_widget_is_focus(widget);
+      boolean dual = FALSE;
       uint32_t acc;
       int themetype = 0;
       int width, height, minwidth, minheight;
@@ -8962,7 +8970,7 @@ void render_standard_button(LiVESButton * sbutt) {
       int pbw = 0, pbh = 0;
 
       if (insens) prelit = focused = FALSE;
-
+      if (widget_opts.swap_label == 2) dual = TRUE;
       pab2.red = pab2.green = pab2.blue = 0;
       pab2.alpha = 1.;
 
@@ -9032,6 +9040,7 @@ void render_standard_button(LiVESButton * sbutt) {
                                 SBUTT_PIXBUF_KEY);
         if (pixbuf) {
           pbw = lives_pixbuf_get_width(pixbuf);
+          if (dual) pbw <<= 1;
           pbh = lives_pixbuf_get_height(pixbuf);
         }
       }
@@ -9050,7 +9059,6 @@ void render_standard_button(LiVESButton * sbutt) {
           else markup = (char *)text;
           full_markup = lives_strdup_printf("<span size=\"%s\">%s</span>", widget_opts.text_size,
                                             markup);
-
           lingo_layout_set_markup_with_accel(layout, full_markup, -1, '_', &acc);
           if (markup != text) lives_free(markup);
           lives_free(full_markup);
@@ -9062,7 +9070,7 @@ void render_standard_button(LiVESButton * sbutt) {
               LiVESAccelGroup *accel_group =
                 (LiVESAccelGroup *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl), BACCL_GROUP_KEY);
               if (!accel_group) {
-                lives_widget_object_set_data(LIVES_WIDGET_OBJECT(topl), BACCL_GROUP_KEY, accel_group);
+                SET_VOIDP_DATA(topl, BACCL_GROUP_KEY, accel_group);
                 accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
                 lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
               } else {
@@ -9073,7 +9081,7 @@ void render_standard_button(LiVESButton * sbutt) {
               }
               lives_widget_add_accelerator(widget, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                            acc, (LiVESXModifierType)LIVES_ALT_MASK, (LiVESAccelFlags)0);
-              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY, LIVES_INT_TO_POINTER(acc));
+              SET_INT_DATA(topl, BACCL_ACCL_KEY, acc);
             }
           }
           lingo_layout_get_size(layout, &w_, &h_);
@@ -9082,18 +9090,14 @@ void render_standard_button(LiVESButton * sbutt) {
           lw = ((double)w_) / (double)LINGO_SCALE;
           lh = ((double)h_) / (double)LINGO_SCALE;
 
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(da), SBUTT_LW_KEY,
-                                       LIVES_INT_TO_POINTER(lw));
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(da), SBUTT_LH_KEY,
-                                       LIVES_INT_TO_POINTER(lh));
+          SET_INT_DATA(da, SBUTT_LW_KEY, lw);
+          SET_INT_DATA(da, SBUTT_LH_KEY, lh);
           lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(widget), SBUTT_LAYOUT_KEY,
               (livespointer)layout);
         }
       } else {
-        lw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(da),
-                                  SBUTT_LW_KEY));
-        lh = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(da),
-                                  SBUTT_LH_KEY));
+        lw = GET_INT_DATA(da, SBUTT_LW_KEY);
+        lh = GET_INT_DATA(da, SBUTT_LH_KEY);
       }
 
       if (focused || fake_default || ((LiVESWidget *)sbutt == deflt && !defover)) {
@@ -9136,46 +9140,46 @@ void render_standard_button(LiVESButton * sbutt) {
                                 &bg, lw, lh, x_pos, y_pos, x_pos, y_pos);
         if (LINGO_IS_LAYOUT(layout))
           lingo_painter_show_layout(cr, layout);
-      }
-      if (pixbuf) {
-        if (lw && layout) {
-          // shift to get pixbuf pos
-          if (!widget_opts.swap_label) {
-            x_pos += (lw + widget_opts.packing_width);
-            if (x_pos + pbw + widget_opts.packing_width + widget_opts.border_width < width)
-              x_pos += widget_opts.packing_width;
-          } else {
-            x_pos -= (pbw + widget_opts.packing_width);
-            if (x_pos > widget_opts.packing_width + widget_opts.border_width)
-              x_pos -= widget_opts.packing_width;
-          }
-        } else x_pos -= pbw >> 1;
-        y_pos = (height - pbh) >> 1;
-        lives_painter_set_source_pixbuf(cr, pixbuf, x_pos, y_pos);
-        lives_painter_rectangle(cr, 0, 0, pbw, pbh);
-        lives_painter_paint(cr);
-      }
-      lives_painter_destroy(cr);
 
-      if (LIVES_EXPAND_WIDTH(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
-        minwidth = lw + (pbw ? pbw + widget_opts.packing_width
-                         : 0) + widget_opts.border_width * 4;
-      } else minwidth = lw;
-      if (LIVES_EXPAND_HEIGHT(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
-        minheight = lh + widget_opts.border_width * 2;
-      } else minheight = lh;
-      width = lives_widget_get_allocation_width(widget);
-      height = lives_widget_get_allocation_height(widget);
+        if (pixbuf) {
+          if (lw && layout) {
+            // shift to get pixbuf pos
+            if (!widget_opts.swap_label) {
+              x_pos += (lw + widget_opts.packing_width);
+              if (x_pos + pbw + widget_opts.packing_width + widget_opts.border_width < width)
+                x_pos += widget_opts.packing_width;
+            } else {
+              x_pos -= (pbw + widget_opts.packing_width);
+              if (x_pos > widget_opts.packing_width + widget_opts.border_width)
+                x_pos -= widget_opts.packing_width;
+            }
+          } else x_pos -= pbw >> 1;
+          y_pos = (height - pbh) >> 1;
+          lives_painter_set_source_pixbuf(cr, pixbuf, x_pos, y_pos);
+          lives_painter_rectangle(cr, 0, 0, pbw, pbh);
+          lives_painter_paint(cr);
+        }
+        lives_painter_destroy(cr);
 
-      if (width < minwidth || height < minheight) {
-        if (width < minwidth) width = minwidth;
-        if (height < minheight) height = minheight;
-        lives_widget_set_size_request(widget, width, height);
+        if (LIVES_EXPAND_WIDTH(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
+          minwidth = lw + (pbw ? pbw + widget_opts.packing_width
+                           : 0) + widget_opts.border_width * 4;
+        } else minwidth = lw;
+        if (LIVES_EXPAND_HEIGHT(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
+          minheight = lh + widget_opts.border_width * 2;
+        } else minheight = lh;
+        width = lives_widget_get_allocation_width(widget);
+        height = lives_widget_get_allocation_height(widget);
+
+        if (width < minwidth || height < minheight) {
+          if (width < minwidth) width = minwidth;
+          if (height < minheight) height = minheight;
+          lives_widget_set_size_request(widget, width, height);
+        }
       }
     }
   }
 }
-
 
 static void sbutt_render(LiVESButton * sbutt, LiVESWidgetState state, livespointer user_data) {
   render_standard_button(sbutt);

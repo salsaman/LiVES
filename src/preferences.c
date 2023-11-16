@@ -404,7 +404,7 @@ static LiVESResponseType get_pref_inner(const char *filename, const char *key, c
                               filename);
   }
 
-  lives_popen(com, TRUE, val, maxlen);
+  lives_popen(com, TRUE, val);
 
   lives_free(com);
   return LIVES_RESPONSE_NONE;
@@ -3514,7 +3514,7 @@ static void stream_audio_toggled(LiVESToggleButton * togglebutton, livespointer 
       com = lives_strdup_printf("\"%s\" check %lu", astreamer, tmpvpp->audio_codec);
       lives_free(astreamer);
 
-      rlen = lives_popen(com, TRUE, buf, 1024);
+      rlen = lives_popen(com, TRUE, buf);
       lives_free(com);
       if (rlen > 0) {
         lives_toggle_button_set_active(togglebutton, FALSE);
@@ -3814,7 +3814,7 @@ static void font_preview_clicked(LiVESButton * button, LiVESFontChooser * fontbu
     SET_INT_DATA(button, PREVIEW_KEY, TRUE);
   }
 
-  LiVESSpinButton *spin = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "spin");
+  LiVESSpinButton *spin = GET_VOIDP_DATA(button, SPIN_KEY);
   lives_font_chooser_set_font(fontbutton, capable->def_fontstring);
   lives_spin_button_set_value(spin, capable->font_size);
 }
@@ -4030,6 +4030,82 @@ static void show_tplay_opts(LiVESButton * button, livespointer data) {
 }
 #endif
 
+
+LiVESWidget *fontsel_layout(_prefsw * prefsw, LiVESBox * container, char *title_text) {
+  LiVESWidget *layout, *hbox, *label;
+#if GTK_CHECK_VERSION(3, 2, 0)
+  LiVESWidget *scale;
+#endif
+  char *tmp;
+
+  layout = lives_layout_new(container);
+  tmp = lives_big_and_bold(title_text);
+
+  widget_opts.use_markup = TRUE;
+  lives_layout_add_label(LIVES_LAYOUT(layout), tmp, TRUE);
+  lives_free(tmp);
+  widget_opts.use_markup = FALSE;
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  // prefsw->font_pre_button =
+  // prefsw->fontbutton = lives_standard_font_chooser_new(capable->font_name);
+  // prefsw->font_size_spin = lives_standard_spin_button_new(_("Size"), capable->font_size,
+  // prefsw->font_size_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->font_size_spin),
+
+#if GTK_CHECK_VERSION(3, 2, 0)
+  prefsw->font_pre_button =
+    lives_standard_button_new_from_stock_full(LIVES_STOCK_APPLY, NULL, -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->fontbutton = lives_standard_font_chooser_new(capable->font_name);
+  lives_standard_font_chooser_set_size(LIVES_FONT_CHOOSER(prefsw->fontbutton), capable->font_size);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->font_pre_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_preview_clicked), prefsw->fontbutton);
+
+  lives_layout_pack(LIVES_BOX(hbox), prefsw->fontbutton);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->font_size_spin = lives_standard_spin_button_new(_("Size"), capable->font_size,
+                           MIN_FONT_SIZE, MAX_FONT_SIZE, 1., 1, 0, LIVES_BOX(hbox), NULL);
+  SET_VOIDP_DATA(prefsw->font_pre_button, SPIN_KEY, prefsw->font_size_spin);
+  font_preview_clicked(LIVES_BUTTON(prefsw->font_pre_button), LIVES_FONT_CHOOSER(prefsw->fontbutton));
+
+  ACTIVE(fontbutton, FONT_SET);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->fontbutton), LIVES_WIDGET_FONT_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_set_cb), prefsw->font_size_spin);
+
+  ACTIVE(font_size_spin, VALUE_CHANGED);
+
+  prefsw->font_size_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->font_size_spin),
+                           LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                           LIVES_GUI_CALLBACK(font_size_cb),
+                           (livespointer)prefsw->fontbutton);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  scale = lives_standard_hscale_new(NULL);
+  lives_range_set_range(LIVES_RANGE(scale), 6., 24.);
+  lives_range_set_value(LIVES_RANGE(scale), capable->font_size);
+  label = lives_standard_label_new("6px");
+  lives_layout_pack(LIVES_BOX(hbox), label);
+  lives_layout_pack(LIVES_BOX(hbox), scale);
+  label = lives_standard_label_new("24px");
+  lives_layout_pack(LIVES_BOX(hbox), label);
+  lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_scale_changed), prefsw->font_size_spin);
+
+  lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(prefsw->font_size_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(font_spin_changed), scale);
+
+  return layout;
+}
+
+
 /*
   Function creates preferences dialog
 */
@@ -4076,9 +4152,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   LiVESWidget *advbutton;
   LiVESWidget *cmdhelp;
-#if GTK_CHECK_VERSION(3, 2, 0)
-  LiVESWidget *scale;
-#endif
 
   LiVESWidget *sp_red, *sp_green, *sp_blue;
 
@@ -4342,64 +4415,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->scrollw_right_gui = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_gui);
   prefsw->right_shown = prefsw->vbox_right_gui;
 
-  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
-  tmp = lives_big_and_bold(_("Default interface font"));
-  widget_opts.use_markup = TRUE;
-  lives_layout_add_label(LIVES_LAYOUT(layout), tmp, TRUE);
-  lives_free(tmp);
-  widget_opts.use_markup = FALSE;
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-#if GTK_CHECK_VERSION(3, 2, 0)
-  prefsw->font_pre_button =
-    lives_standard_button_new_from_stock_full(LIVES_STOCK_APPLY, NULL, -1, -1, LIVES_BOX(hbox), TRUE, NULL);
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-  prefsw->fontbutton = lives_standard_font_chooser_new(capable->font_name);
-  lives_standard_font_chooser_set_size(LIVES_FONT_CHOOSER(prefsw->fontbutton), capable->font_size);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->font_pre_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(font_preview_clicked), prefsw->fontbutton);
-
-  lives_layout_pack(LIVES_BOX(hbox), prefsw->fontbutton);
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  prefsw->font_size_spin = lives_standard_spin_button_new(_("Size"), capable->font_size,
-                           4., 128., 1., 1, 0, LIVES_BOX(hbox), NULL);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->font_pre_button), "spin",
-                               prefsw->font_size_spin);
-  font_preview_clicked(LIVES_BUTTON(prefsw->font_pre_button), LIVES_FONT_CHOOSER(prefsw->fontbutton));
-
-  ACTIVE(fontbutton, FONT_SET);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->fontbutton), LIVES_WIDGET_FONT_SET_SIGNAL,
-                            LIVES_GUI_CALLBACK(font_set_cb), prefsw->font_size_spin);
-
-  ACTIVE(font_size_spin, VALUE_CHANGED);
-
-  prefsw->font_size_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->font_size_spin),
-                           LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(font_size_cb),
-                           (livespointer)prefsw->fontbutton);
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  scale = lives_standard_hscale_new(NULL);
-  lives_range_set_range(LIVES_RANGE(scale), 6., 24.);
-  lives_range_set_value(LIVES_RANGE(scale), capable->font_size);
-  label = lives_standard_label_new("6px");
-  lives_layout_pack(LIVES_BOX(hbox), label);
-  lives_layout_pack(LIVES_BOX(hbox), scale);
-  label = lives_standard_label_new("24px");
-  lives_layout_pack(LIVES_BOX(hbox), label);
-  lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(font_scale_changed), prefsw->font_size_spin);
-
-  lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(prefsw->font_size_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(font_spin_changed), scale);
+  layout = fontsel_layout(prefsw, LIVES_BOX(prefsw->vbox_right_gui), _("Default interface font"));
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
 

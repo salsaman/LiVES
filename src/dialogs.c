@@ -43,7 +43,8 @@ static int64_t sttime;
 
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
-  uint64_t wmn = *(uint64_t *)user_data;
+  uint64_t wmn = GET_INT64_DATA(togglebutton, WARN_MASK_KEY);
+
   if (get_warn_mask_state(wmn) == RET_ALWAYS) {
     prefs->always_mask |= wmn;
   }
@@ -97,8 +98,10 @@ void add_warn_check(LiVESBox *box, uint64_t warn_mask_number, const char *detail
   lives_free(text); lives_free(tmp);
   if (xdetail != detail) lives_free(xdetail);
 
+  SET_INT64_DATA(checkbutton, WARN_MASK_KEY, warn_mask_number);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_warn_mask_toggled), (void *)&warn_mask_number);
+                            LIVES_GUI_CALLBACK(on_warn_mask_toggled), NULL);
 }
 
 
@@ -3432,7 +3435,7 @@ LIVES_GLOBAL_INLINE void do_vpp_fps_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
-  if (prefs->vj_mode || prefs->show_dev_opts || prefs->startup_phase != -1) return;
+  if (prefs->vj_mode || prefs->show_dev_opts || prefs->startup_phase) return;
   do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
                              WARN_MASK_CLEAN_AFTER_CRASH);
 }

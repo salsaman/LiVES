@@ -142,7 +142,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
   clear_mainw_msg();
 
   threaded_dialog_spin(0.);
-  lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, TRUE, mainw->msg);
   threaded_dialog_spin(0.);
   lives_free(com);
 

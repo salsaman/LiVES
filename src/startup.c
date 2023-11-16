@@ -107,6 +107,7 @@ static char **zargv;
 static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
+static boolean font_configured = TRUE;
 //static boolean ran_ds_dlg = FALSE;
 
 static char buff[256];
@@ -181,7 +182,7 @@ retry_configfile:
     capable->has_smogrify = UNCHECKED;
     lives_snprintf(command, PATH_MAX * 4, "%s version", prefs->backend_sync);
 
-    lives_popen(command, TRUE, buffer, PATH_MAX * 4);
+    lives_popen(command, TRUE, buffer);
 
     if (THREADVAR(com_failed)) {
       return capable;
@@ -223,7 +224,7 @@ retry_configfile:
   // check_settings:
 
   capable->has_smogrify = UNCHECKED;
-  lives_popen(command, TRUE, buffer, PATH_MAX * 4);
+  lives_popen(command, TRUE, buffer);
   if (THREADVAR(com_failed) || lives_strlen(buffer) < 6) return capable;
   capable->has_smogrify = PRESENT;
 
@@ -750,6 +751,8 @@ static void pre_init2(void) {
   LiVESPixbuf *iconpix;
 #endif
 
+  what_sup = pre_init2_sup;
+
   //////////////////////////
   load_prefs();
   //////////////////////////
@@ -815,6 +818,8 @@ static void pre_init2(void) {
   prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
   prefs->badfile_intent = get_int_prefd(PREF_BADFILE_INTENT, OBJ_INTENTION_UNKNOWN);
+
+  if (!has_pref(PREF_INTERFACE_FONT)) font_configured = FALSE;
 
   get_utf8_pref(PREF_INTERFACE_FONT, buff, 256);
 
@@ -1221,9 +1226,7 @@ boolean lives_startup(livespointer data) {
   char *old_libdir = NULL;
   boolean theme_error, needs_update = FALSE;
 
-  if (mainw->no_idlefuncs) return TRUE;
-
-  what_sup = startup_sup;
+  what_sup = startupA_sup;
 
   d_print("Readying GUI helper...");
   widget_helper_init();
@@ -1241,6 +1244,8 @@ boolean lives_startup(livespointer data) {
 #endif
 
   pre_init();
+
+  what_sup = startupB_sup;
 
   mainw->mgeom = NULL;
 
@@ -1303,16 +1308,16 @@ boolean lives_startup(livespointer data) {
     widget_opts.apply_theme = 1;
   }
 
-  cache_msg("Getting first stage hardware details...");
+  d_print("Getting first stage hardware details...");
   get_machine_dets(0);
   capable->features_ready |= FEATURE_MACHINEDETS_1;
-  cache_msg("OK\n");
+  d_print("OK\n");
 
   //do_startup_diagnostics(test_opts);
-  cache_msg("Analysing RNG...", .5);
+  d_print("Analysing RNG...");
   init_random();
   capable->features_ready |= FEATURE_RNG;
-  cache_msg("OK\n");
+  d_print("OK\n");
 
   capable->uid = get_int64_prefd(PREF_UID, 0);
 
@@ -1327,12 +1332,12 @@ boolean lives_startup(livespointer data) {
     g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
   }
 
-  cache_msg("Initializing memory block allocators...", .5);
+  d_print("Initializing memory block allocators...");
   init_memfuncs(1);
   capable->features_ready |= FEATURE_MEMFUNCS;
-  cache_msg("OK\n");
+  d_print("OK\n");
 
-  cache_msg("Initializing Weed functions...", .5);
+  d_print("Initializing Weed functions...");
   weed_functions_init();
 
   // allow us to set immutable values (plugins can't)
@@ -1356,7 +1361,7 @@ boolean lives_startup(livespointer data) {
   else weed_threadsafe = FALSE;
 
   weed_plant_free(test_plant);
-  cache_msg("OK\n");
+  d_print("OK\n");
 
   capable->features_ready |= FEATURE_WEED;
 
@@ -1376,7 +1381,7 @@ boolean lives_startup(livespointer data) {
   d_print("pause for 1 millisecond...");
 
   lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
-  if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION_DBL) != LIVES_RESULT_SUCCESS)
+  if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION) != LIVES_RESULT_SUCCESS)
     lives_abort("Timer failed");
   lives_sys_alarm_wait(test_timeout);
   lives_sys_alarm_disarm(test_timeout, TRUE);
@@ -1390,7 +1395,11 @@ boolean lives_startup(livespointer data) {
   /* do_startup_diagnostics(test_opts); */
   /* do_startup_diagnostics(test_opts); */
 
-  lives_memset(start_file, 0, 1);
+  /* if (!font_configured) { */
+  /*   if (!do_fontsel_query()) { */
+  /*     lives_exit(0); */
+  /*   } */
+  /* } */
 
   // check the working directory
   if (needs_workdir) {
@@ -1405,6 +1414,10 @@ boolean lives_startup(livespointer data) {
   }
 
   pre_init2();
+
+  // can now use standard d_print, etc
+
+  what_sup = startupC_sup;
 
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
@@ -1430,6 +1443,8 @@ boolean lives_startup(livespointer data) {
   for (int i = 0; i < N_GLOBAL_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
 
   mainw->global_hook_stacks = lpt_hooks;
+
+  make_std_icaps();
 
   splash_msg("\n\nLoading realtime fx plugins...", .5);
 
@@ -1466,6 +1481,21 @@ boolean lives_startup(livespointer data) {
     /// CREATE prefs->config_datadir, and default items inside it
     build_init_config(prefs->config_datadir, ign_opts.ign_config_datadir);
   }
+
+#ifndef VALGRIND_ON
+  /// generate some complementary colours
+  if (!prefs->vj_mode && !prefs->startup_phase && !mainw->debug) {
+    /// create thread to pick custom colours
+    double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
+    prefs->cptime = get_double_prefd(PREF_CPICK_TIME, DEF_CPICK_TIME);
+    if (cpvar <= 0.) cpvar = DEF_CPICK_VAR;
+
+    if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
+    mainw->helper_procthreads[PT_CUSTOM_COLOURS]
+      = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, pick_custom_colours,
+                                 WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
+  }
+#endif
 
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
 
@@ -1571,7 +1601,7 @@ boolean lives_startup(livespointer data) {
   if (!lives_init(&ign_opts)) return FALSE;
   // non-fatal errors
 
-  what_sup = startupB_sup;
+  what_sup = startupD_sup;
 
   if (!mainw->foreign) {
     if (*capable->startup_msg) {
@@ -1699,18 +1729,14 @@ boolean lives_startup(livespointer data) {
 
 
 boolean lives_startup2(livespointer data) {
-  GET_PROC_THREAD_SELF(self);
-  uint64_t attrs;
+  lives_proc_thread_t lpt;
   int64_t dsval;
   char *ustr, *tmp, *msg;
 
   boolean layout_recovered = FALSE;
   boolean do_show_quota = prefs->show_disk_quota;
 
-  if (mainw->no_idlefuncs) return TRUE;
-
-  /* nsc = (uint64_t)mainw->n_service_calls; */
-  /* if (!nsc) return TRUE; */
+  what_sup = startup2_sup;
 
   if (!mainw->lives_shown) {
     mainw->is_ready = TRUE;
@@ -1725,39 +1751,6 @@ boolean lives_startup2(livespointer data) {
     set_gui_loop_tight(FALSE);
   }
 
-  attrs = lives_proc_thread_get_attrs(self);
-  lives_proc_thread_set_attrs(self, attrs & ~LIVES_THRDATTR_AUTO_REQUEUE);
-
-  what_sup = startup2_sup;
-
-#ifndef VALGRIND_ON
-  if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-    if (lives_proc_thread_is_done(mainw->helper_procthreads[PT_CUSTOM_COLOURS], TRUE)) {
-      double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
-        prefs->cptime *= 1.1 + .2;
-        set_double_pref(PREF_CPICK_TIME, prefs->cptime);
-      }
-      set_double_pref(PREF_CPICK_VAR, fabs(cpvar));
-    } else {
-      prefs->cptime =
-        (double)(lives_get_current_ticks()
-                 - lives_proc_thread_get_start_ticks(mainw->helper_procthreads[PT_CUSTOM_COLOURS]))
-        / TICKS_PER_SECOND_DBL * .9;
-      set_double_pref(PREF_CPICK_TIME, prefs->cptime);
-      set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
-      lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
-
-      lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      // must take care to execute this here or in the function itself, otherwise
-      // gtk+ may crash later
-      main_thread_execute_void(set_extra_colours, 0);
-    }
-    mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
-  }
-#endif
   //  do_startup_diagnostics(test_opts);
   prefs->pb_quality = future_prefs->pb_quality = PB_QUALITY_MED;
 
@@ -1820,6 +1813,33 @@ boolean lives_startup2(livespointer data) {
       }
       do_show_quota = TRUE;
     }
+  }
+
+#ifndef VALGRIND_ON
+  // background process was started in lives_init()
+  // if it failed to complete, cancel it and reduxe the time allowancw do next startup
+  // else we can slightly increase the time allowance
+  lpt = STEAL_POINTER(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+  if (lpt) {
+    double cpvar;
+    prefs->cptime =
+      (double)(lives_get_current_ticks() - lives_proc_thread_get_start_ticks(lpt))
+      / TICKS_PER_SECOND_DBL * .9;
+    if (!lives_proc_thread_is_done(lpt, TRUE)) {
+      lives_proc_thread_request_cancel(lpt, FALSE);
+    }
+    cpvar = lives_proc_thread_join_double(lpt);
+    lives_proc_thread_unref(lpt);
+    set_extra_colours();
+    set_double_pref(PREF_CPICK_TIME, prefs->cptime);
+    set_double_pref(PREF_CPICK_VAR, cpvar);
+  }
+#endif
+
+  if (!prefs->vj_mode && !prefs->startup_phase) {
+    mainw->helper_procthreads[PT_LAZY_RFX] =
+      lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                               (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
   }
 
   // crash recovery - reload
@@ -1886,8 +1906,6 @@ boolean lives_startup2(livespointer data) {
   else
     ustr = lives_strdup("");
 
-  make_std_icaps();
-
   d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
   lives_free(ustr);
 
@@ -1921,12 +1939,6 @@ boolean lives_startup2(livespointer data) {
   }
   if (mainw->recording_recovered) {
     lives_idle_priority(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
-  }
-
-  if (!prefs->vj_mode && !prefs->startup_phase) {
-    mainw->helper_procthreads[PT_LAZY_RFX] =
-      lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                               (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
   }
 
   // TODO *** check if still working
@@ -2003,9 +2015,10 @@ boolean lives_startup2(livespointer data) {
   /*   redraw_timeline(mainw->current_file); */
 
   if (do_show_quota) {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK;
-    main_thread_execute_rvoid(run_diskspace_dialog, 0, "v", NULL);
-    BG_THREADVAR(hook_hints) = 0;
+    run_diskspace_dialog(NULL);
+    /* BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK; */
+    /* main_thread_execute_rvoid(run_diskspace_dialog, 0, "v", NULL); */
+    /* BG_THREADVAR(hook_hints) = 0; */
   }
 
   mainw->can_play = TRUE;
@@ -2787,6 +2800,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   umask(capable->umask);
   capable->umask = (0777 & ~capable->umask);
 
+  lives_memset(start_file, 0, 1);
+
 #ifdef GUI_GTK
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #else
@@ -2881,7 +2896,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ///////
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
   THREADVAR(guisource) = lives_idle_priority(fg_service_ready_cb, NULL);
-  //lives_idle_add(lives_startup, NULL);
 
   what_sup = gtk_launch_sup;
 
@@ -3523,21 +3537,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
         mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
       }
     }
-
-#ifndef VALGRIND_ON
-    /// generate some complementary colours
-    if (!prefs->vj_mode && !prefs->startup_phase && !mainw->debug) {
-      /// create thread to pick custom colours
-      double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
-
-      prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
-
-      if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
-      mainw->helper_procthreads[PT_CUSTOM_COLOURS]
-        = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, pick_custom_colours,
-                                   WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
-    }
-#endif
 
     // replace any multi choice effects with their delegates
     replace_with_delegates();
@@ -4294,6 +4293,10 @@ static void set_toolkit_theme(int prefer) {
 
 #ifndef VALGRIND_ON
 static void set_extra_colours(void) {
+  static boolean done = FALSE;
+  if (done) return;
+  done = TRUE;
+
   if (!mainw->debug && prefs->extra_colours && mainw->pretty_colours) {
     char *colref, *tmp;
     colref = gdk_rgba_to_string(&palette->nice1);
@@ -4321,22 +4324,40 @@ static void set_extra_colours(void) {
 
 
 double pick_custom_colours(double var, double timer) {
+  // the objective here is to find at least 2, possibly  3 complementary colours during startup
+  // the function is called in a bg thread with timer set to an estimate of how long
+  // we have until the proc_thread receives a cancel request
+  // For each colour some time must pass until we find a candidare, if we spend longer we can find
+  // succesuvely better candidates. The variable 'var' defines a threshold value to be considered 'success'
+  //
+  // First we try to get one colour within the time limit, if we succeed, then we try to
+  // get a second colour within the remaining time limit, and if we succeed, we try to get the third colour
+  // until we are cancelled
+  //
+  // if we fail to get the first colour within the allocated time,
+  // then we try again until either we get cancelled or a colour is found.
+  // Likewise, if we fail to find the second colour within the alloted time we retry until cancelled, or a candidate found
+  //
+  // The caller will measure the time between starting the proc_thread and reaching the point where it would be cancelled.
+  //
+  // Depending on how successful or unsuccesful we are, we adjust 'var' for the next time. If we fail to find candidates,
+  // the threshold is relaxed, conversely, if we finsh with time to spare, var can be reduced, tightenin the criteria.
+  // Thus we have a balance where var is constantly being reduced unless we fail, then it is increased.
+  // At the same time, we abandon unsuccdeful attempts so as to still complete the task even without reaching the thrshold.
+
   GET_PROC_THREAD_SELF(self);
-  ticks_t xtimerinfo, timerinfo, timeout;
+  ticks_t xtimerinfo, timeout;
   double lmin, lmax;
   uint8_t ncr, ncg, ncb;
-  boolean retried = FALSE, fixed = FALSE;
+  boolean res, cancelled;
   int ncols = 0;
 
-  if (timer > 0.) fixed = TRUE;
-  else timer = -timer;
-
   if (!(palette->style & STYLE_LIGHT)) {
-    lmin = .05; lmax = .25;
+    // dark
+    lmin = .15; lmax = .5;
   } else {
     lmin = .45; lmax = .6;
   }
-retry:
 
   lpt_desc_state(self);
   ncr = palette->menu_and_bars.red * 255.;
@@ -4347,91 +4368,128 @@ retry:
   if (self) lives_proc_thread_set_cancellable(self);
 
   timeout = (ticks_t)(timer * TICKS_PER_SECOND_DBL);
-  xtimerinfo = lives_get_current_ticks();
-  if (pick_nice_colour(timeout, palette->normal_back.red * 255., palette->normal_back.green * 255.,
-                       palette->normal_back.blue * 255., &ncr, &ncg, &ncb, .15 * var, .25, .75)) {
-    mainw->pretty_colours = TRUE;
-    if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 5) var *= 1.02;
-    //g_print("c1 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
+  xtimerinfo = -lives_get_session_ticks();
+
+  //g_print("c0 %ld %f\n", timeout, var);
+
+
+  res = pick_nice_colour(timeout / 3, palette->normal_back.red * 255., palette->normal_back.green * 255.,
+                         palette->normal_back.blue * 255., &ncr, &ncg, &ncb, .15 * var, .25, .75);
+
+  // failed to find first colour within threshold / time limit
+  while (!(cancelled = lives_proc_thread_get_cancel_requested(self)) && !res) {
+    var *= 1.02;
     if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
-    timeout -= (timerinfo - xtimerinfo);
-    xtimerinfo = timerinfo;
+    res = pick_nice_colour(0, palette->normal_back.red * 255., palette->normal_back.green * 255.,
+                           palette->normal_back.blue * 255., &ncr, &ncg, &ncb, .15 * var, .25, .75);
+  }
 
-    // nice1 - used for outlines
-    palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-    palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-    palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-    palette->nice1.alpha = 1.;
+  if (cancelled) {
+    var *= 1.02;
+    if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
+    if (res) {
+      lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
+      mainw->pretty_colours = TRUE;
+    }
+    goto windup;
+  }
 
-    ncr = palette->menu_and_bars.red * 255.;
-    ncg = palette->menu_and_bars.green * 255.;
-    ncb = palette->menu_and_bars.blue * 255.;
+  xtimerinfo += lives_get_session_ticks();
 
-    ncols++;
+  //g_print("c1 %ld %f %f\n", xtimerinfo, timeout, (double)(xtimerinfo) / (double)timeout, var);
+  timeout -= xtimerinfo;
 
-    if (self && lives_proc_thread_get_cancel_requested(self)) goto windup;
+  // nice1 - used for outlines
+  palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+  palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+  palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+  palette->nice1.alpha = 1.;
 
-    if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
-                         palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
-      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 2) var *= 1.02;
-      //g_print("c2 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
-      timeout -= (timerinfo - xtimerinfo);
-      xtimerinfo = timerinfo;
-      if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
-      // nice2 - alt for menu_and_bars
-      // insensitive colour ?
-      palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-      palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-      palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-      palette->nice2.alpha = 1.;
+  ncr = palette->menu_and_bars.red * 255.;
+  ncg = palette->menu_and_bars.green * 255.;
+  ncb = palette->menu_and_bars.blue * 255.;
+
+  ncols++;
+
+  if (timeout > 0) {
+    res = pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
+                           palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
+  } else res = FALSE;
+
+  while (!(cancelled = lives_proc_thread_get_cancel_requested(self)) && !res) {
+    var *= 1.02;
+    if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
+
+    res = pick_nice_colour(0, palette->nice1.red * 255., palette->nice1.green * 255.,
+                           palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
+  }
+
+  if (res) {
+    palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+    palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+    palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+    palette->nice2.alpha = 1.;
+
+    if (palette->nice2.red || palette->nice2.green || palette->nice2.blue) {
       mainw->pretty_colours = TRUE;
       ncols++;
-
-      if (self &&
-          lives_proc_thread_get_cancel_requested(self)) goto windup;
-
-      if (!(palette->style & STYLE_LIGHT)) {
-        lmin = .6; lmax = .8;
-      } else {
-        lmin = .2; lmax = .4;
-      }
-      if (pick_nice_colour(timeout, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
-                           palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
-        if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 4 * 3) var *= 1.02;
-        // nice3 - alt for menu_and_bars_fore
-        if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
-        //g_print("c3 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
-        palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-        palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-        palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-        palette->nice3.alpha = 1.;
-        ncols++;
-      } else if (!fixed) var = -var;
-#ifndef VALGRIND_ON
-      main_thread_execute_void(set_extra_colours, 0);
-#endif
     }
-  } else {
-    if (!retried) {
-      retried = TRUE;
-      var *= .98;
-      goto retry;
-    } else lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
+  }
+  if (ncols == 1) {
+    lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
+    mainw->pretty_colours = TRUE;
   }
 
-  lpt_desc_state(self);
-  if (lives_proc_thread_get_cancel_requested(self)) {
-    lives_proc_thread_cancel(self);
+  if (cancelled) {
+    var *= 1.02;
+    if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
+    goto windup;
   }
-  return var;
+
+  if (!(palette->style & STYLE_LIGHT)) {
+    // dark - pick a lighter colour now
+    lmin = .6; lmax = .8;
+  } else {
+    lmin = .2; lmax = .4;
+  }
+
+  res = FALSE;
+
+  while (!(cancelled = lives_proc_thread_get_cancel_requested(self)) && !res) {
+    res = pick_nice_colour(0, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
+                           palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
+    if (!res) {
+      var *= 1.02;
+      if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
+    }
+  }
+  if (res) {
+    // success !!
+    var *= 0.95;
+    palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+    palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+    palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+    palette->nice3.alpha = 1.;
+    if (palette->nice3.red || palette->nice3.green || palette->nice3.blue) {
+      ncols++;
+      d_print_debug("GOT ALL 3 colours, set var to %f\n", var);
+    }
+    mainw->pretty_colours = TRUE;
+    //else if (!fixed) var = -var; // ???
+#ifndef VALGRIND_ON
+    main_thread_execute_void(set_extra_colours, 0);
+#endif
+    return var;
+  }
 
 windup:
+  d_print_debug("GOT %d colours, set var to %f\n", ncols, var);
   if (ncols < 2) lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
   palette->nice3.red = palette->nice2.red;
   palette->nice3.green = palette->nice2.green;
   palette->nice3.blue = palette->nice2.blue;
   palette->nice3.alpha = 1.;
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  //if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   return var;
 }
 #endif

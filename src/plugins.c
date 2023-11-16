@@ -256,7 +256,7 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
   LiVESList *list = NULL;
   char buffer[65536];
 
-  lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
+  lives_popen(command, !mainw->is_ready && !list_plugins, buffer);
 
   if (THREADVAR(com_failed)) return NULL;
 
@@ -1726,7 +1726,7 @@ uint64_t get_best_audio(_vid_playback_plugin * vpp) {
     // create sfmts array and nfmts
 
     com = lives_strdup_printf("\"%s\" get_formats", astreamer);
-    lives_popen(com, FALSE, buf, 1024);
+    lives_popen(com, FALSE, buf);
     lives_free(com);
 
     nfmts = get_token_count(buf, '|');
@@ -1745,7 +1745,7 @@ uint64_t get_best_audio(_vid_playback_plugin * vpp) {
       if (int64_array_contains_value(sfmts, nfmts, fmts[i])) {
 
         com = lives_strdup_printf("\"%s\" check %lu", astreamer, fmts[i]);
-        lives_popen(com, FALSE, buf, 1024);
+        lives_popen(com, FALSE, buf);
         lives_free(com);
 
         if (THREADVAR(com_failed)) {
@@ -4425,7 +4425,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
     com = lives_strdup_printf("\"%s\" get_define", fnamex);
     lives_free(fnamex);
 
-    if (!lives_popen(com, TRUE, buff, 32)) {
+    if (!lives_popen(com, TRUE, buff)) {
       THREADVAR(com_failed) = TRUE;
     }
     lives_free(com);

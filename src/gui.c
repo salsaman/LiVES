@@ -4577,6 +4577,7 @@ static void _resize_play_window(void) {
     }
   } else {
     // not playing
+    BREAK_ME("SSSS");
     if (mainw->fs && mainw->playing_file == -2 && mainw->sep_win
         && prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
       if (mainw->ce_thumbs) {

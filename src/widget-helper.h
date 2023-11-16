@@ -335,6 +335,11 @@ void lives_widget_object_set_data_destroyable(LiVESWidgetObject *, const char *k
 #define GET_INT_DATA(widg, key) (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), (key))))
 #define SET_INT_DATA(widg, key, val) (lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), ((key)), LIVES_INT_TO_POINTER((val))))
 
+#define SET_INT64_DATA(widg, key, val) _DW0(lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), key "HI", LIVES_INT_TO_POINTER(((val) & 0xFFFFFFFF00000000) >> 32)); lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), key "LO", LIVES_INT_TO_POINTER((val) & 0xFFFFFFFF));)
+#define GET_INT64_DATA(widg, key) (((int64_t)((LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), \
+												key "HI")))) << 32) \
+				   + (int64_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), \
+												 key "LO"))))
 #define GET_VOIDP_DATA(widg, key) lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), (key))
 #define SET_VOIDP_DATA(widg, key, val) lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), ((key)), (val))
 

@@ -1178,7 +1178,6 @@ static int get_bblock_idx(void *bstart, off_t * offs, int *bbafter) {
 static int _alloc_bigblock(size_t sizeb, int oblock) {
   int nblocks = 1;
   int i, j, max;
-  prefs->show_dev_opts = TRUE;
   if (sizeb > bmemsize) {
     if (sizeb > (bmemsize >> 1)) {
       if (sizeb > (bmemsize >> 2)) {

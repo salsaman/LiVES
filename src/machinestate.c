@@ -693,7 +693,7 @@ boolean compress_files_in_dir(const char *dir, int method, void *data) {
       return FALSE;
     }
     com = lives_strdup_printf("%s * 2>&1", EXEC_GZIP);
-    lives_popen(com, TRUE, buff, 65536);
+    lives_popen(com, TRUE, buff);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
     else retval = TRUE;
@@ -1464,7 +1464,7 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   mwords = lives_strsplit(mphrase, " ", mwlen);
 
   if (!cmd || !mphrase || !*cmd || !*mphrase) goto grpcln;
-  lives_popen(cmd, FALSE, buff, 65536);
+  lives_popen(cmd, FALSE, buff);
   if (THREADVAR(com_failed)
       || (!*buff || !(nlines = get_token_count(buff, '\n')))) {
     THREADVAR(com_failed) = FALSE;
@@ -1540,7 +1540,7 @@ LIVES_LOCAL_INLINE char *mini_popen(char *cmd) {
   else {
     char buff[PATH_MAX];
     //char *com = lives_strdup_printf("%s $(%s)", capable->echo_cmd, EXEC_MKTEMP);
-    lives_popen(cmd, TRUE, buff, PATH_MAX);
+    lives_popen(cmd, TRUE, buff);
     lives_free(cmd);
     lives_chomp(buff, FALSE);
     return lives_strdup(buff);
@@ -1934,7 +1934,7 @@ char *get_wid_for_name(const char *wname) {
     size_t nlines;
     // returns a list, and we need to check each one
     cmd = lives_strdup_printf("%s search \"%s\"", EXEC_XDOTOOL, wname);
-    lives_popen(cmd, FALSE, buff, 65536);
+    lives_popen(cmd, FALSE, buff);
     lives_free(cmd);
     if (THREADVAR(com_failed)
 	|| (!*buff || !(nlines = get_token_count(buff, '\n')))) {
@@ -1947,7 +1947,7 @@ char *get_wid_for_name(const char *wname) {
       for (int l = 0; l < nlines; l++) {
 	if (!*lines[l]) continue;
 	cmd = lives_strdup_printf("%s getwindowname %s", EXEC_XDOTOOL, lines[l]);
-	lives_popen(cmd, FALSE, buff2, 1024);
+	lives_popen(cmd, FALSE, buff2);
 	lives_free(cmd);
 	if (THREADVAR(com_failed)) {
 	  THREADVAR(com_failed) = FALSE;
@@ -2333,7 +2333,7 @@ boolean get_x11_visible(const char *wname) {
 
     // returns a list, and we need to check each one
     cmd = lives_strdup_printf("%s search --all --onlyvisible \"%s\" 2>/dev/null", EXEC_XDOTOOL, wname);
-    lives_popen(cmd, FALSE, buff, 65536);
+    lives_popen(cmd, FALSE, buff);
     lives_free(cmd);
     if (THREADVAR(com_failed)
 	|| (!*buff || !(nlines = get_token_count(buff, '\n')))) {
@@ -2723,7 +2723,7 @@ int get_num_cpus(void) {
   lives_snprintf(command, PATH_MAX, "%s processor /proc/cpuinfo 2>/dev/null | %s -l 2>/dev/null",
                  capable->grep_cmd, capable->wc_cmd);
 #endif
-  lives_popen(command, TRUE, buffer, 1024);
+  lives_popen(command, TRUE, buffer);
   return atoi(buffer);
 #endif
 }

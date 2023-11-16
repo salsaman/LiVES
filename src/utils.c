@@ -315,7 +315,7 @@ int lives_system(const char *com, boolean allow_error) {
 }
 
 
-ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen) {
+ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t buflen) {
   // runs com, fills buff with a NUL terminated string (total length <= buflen)
   // returns number of bytes read. If an error occurs during popen or fread
   // then THREADVAR(com_failed) is set, and if allow_error is FALSE then an an error dialog is displayed to the user
@@ -339,7 +339,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
     buflen = get_read_buff_size(BUFF_SIZE_READ_LARGE);
     xbuff = (char *)lives_calloc(buflen, 1);
   } else {
-    xbuff = buff;
+    xbuff = (char *)buff;
     lives_memset(xbuff, 0, 1);
   }
   //g_print("doing: %s\n",com);
@@ -366,9 +366,8 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
       while (1) {
         strg = fgets(xbuff + totlen, tbuff ? buflen : buflen - totlen, fp);
         err = ferror(fp);
-        if (err || !strg || !*strg) break;
-
-        slen = lives_strlen(xbuff);
+        if (err || !strg || feof(fp)) break;
+        slen = lives_strlen(strg);
         if (tbuff) {
           lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(tbuff), &end_iter);
           lives_text_buffer_insert(LIVES_TEXT_BUFFER(tbuff), &end_iter, xbuff, slen);
@@ -409,6 +408,15 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   if (err != 0) return -ABS(err);
   return totlen;
+}
+
+
+/* ssize_t lives_popen(const char *com, boolean allow_error, const char *buff) { */
+/*   return _lives_popen(com, allow_error, (void *)buff, sizeof(buff)); */
+/* } */
+
+ssize_t lives_popen_txtbuf(const char *com, boolean allow_error, LiVESTextBuffer *tbuff) {
+  return _lives_popen(com, allow_error, (void *)tbuff, 0);
 }
 
 
@@ -1188,7 +1196,7 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   char **array;
   int ntok;
 
-  lives_popen(exe, TRUE, buff, 128);
+  lives_popen(exe, TRUE, buff);
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
     return -2;

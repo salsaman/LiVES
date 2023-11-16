@@ -9,6 +9,7 @@
 LiVESWindow *get_transient_full();
 
 #define URGENCY_KEY "_urgency"
+#define WARN_MASK_KEY "_warn_mask"
 
 /// generic ......
 

@@ -557,6 +557,9 @@ typedef struct {
 #define DEF_DISK_QUOTA 50  /// def 50 GiB
   uint64_t disk_quota; /// (SOFT LIMIT) max space we can use for all our files (0 means unlimited (up to ds_crtical, HARD LIMIT))
 
+#define MIN_FONT_SIZE 4.
+#define MAX_FONT_SIZE 128.
+
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
 #define DEF_MAX_MSGS 10000
 
@@ -1086,6 +1089,8 @@ void  rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data);
 
 void set_vpp(boolean set_in_prefs);
 
+LiVESWidget *fontsel_layout(_prefsw *, LiVESBox *container, char *title_text);
+
 _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog);
 boolean on_prefs_delete_event(LiVESWidget *, LiVESXEvent *, livespointer prefsw);
 void on_preferences_activate(LiVESMenuItem *, livespointer);
@@ -1495,6 +1500,7 @@ void optimize(void);
 
 // toggle for widget object data (widget is in preview state)
 #define PREVIEW_KEY "_prefw_preview"
+#define SPIN_KEY "_spin"
 
 // permissions
 

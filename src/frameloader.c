@@ -193,7 +193,7 @@ frames_t get_frame_count(int idx, int start) {
   char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
                                   get_image_ext_for_type(mainw->files[idx]->img_type), start);
 
-  bytes = lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  bytes = lives_popen(com, FALSE, mainw->msg);
   lives_free(com);
 
   if (THREADVAR(com_failed)) return 0;

@@ -2437,8 +2437,8 @@ player_loop:
   // cycle at the same time as fx instances are being executed for the current exec cycle.
 
   // TODO - make adjustable
-  //lives_nanosleep(1000);
-  lives_millisleep;
+
+  lives_microsleep;
 
   frame_invalid = FALSE;
 

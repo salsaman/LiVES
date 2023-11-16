@@ -706,7 +706,7 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
                                         get_image_ext_for_type(IMG_TYPE_BEST), mainw->opening_loc ? 3 :
                                         is_audio ? 2 : is_img ? 4 : 0);
   lives_free(tmp);
-  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, FALSE, mainw->msg);
   lives_free(com);
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
@@ -1587,7 +1587,7 @@ old_check:
       } else
         com = lives_strdup_printf("%s restore_details \"%s\" . 1", prefs->backend_sync, sfile->handle);
 
-      lives_popen(com, clipno != mainw->current_file, buff, 1024);
+      lives_popen(com, clipno != mainw->current_file, buff);
       lives_free(com);
 
       if (THREADVAR(com_failed)) {
@@ -1693,7 +1693,7 @@ old_check:
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                             !strcmp(file_name, "."));
 
-  lives_popen(com, FALSE, buff, 1024);
+  lives_popen(com, FALSE, buff);
   lives_free(com); lives_free(tmp);
 
   if (THREADVAR(com_failed)) {

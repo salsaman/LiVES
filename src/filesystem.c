@@ -2040,7 +2040,7 @@ off_t get_dir_size(const char *dirname) {
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
     char *com = lives_strdup_printf("%s -sB %d \"%s\"", EXEC_DU, DU_BLOCKSIZE, dirname);
-    lives_popen(com, TRUE, buff, PATH_MAX * 2);
+    lives_popen(com, TRUE, buff);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
     else dirsize = atol(buff) / DU_BLOCKSIZE;

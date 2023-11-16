@@ -78,7 +78,7 @@ boolean get_handle_from_info_file(int index) {
   else
     com = lives_strdup_printf("%s new", prefs->backend_sync);
 
-  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, FALSE, mainw->msg);
   lives_free(com);
 
   if (!lives_strncmp(mainw->msg, "error|", 6)) {
@@ -283,7 +283,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
         enc_exec_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR,
                                              PLUGIN_ENCODERS, prefs->encoder.name, NULL);
         com = lives_strdup_printf("\"%s\" init", enc_exec_name);
-        lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
+        lives_popen(com, TRUE, mainw->msg);
         lives_free(com);
 
         if (strcmp(mainw->msg, "initialised\n")) {
@@ -413,7 +413,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     if (debug_mode) {
       fprintf(stderr, "Running command: %s\n", com);
     }
-    lives_popen(com, TRUE, buff, 65536);
+    lives_popen(com, TRUE, buff);
     lives_free(com);
 
     if (!THREADVAR(com_failed)) {
@@ -2697,8 +2697,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   if (!auto_recover) {
     char *tmp;
 
-    lives_millisleep_while_false(mainw->pretty_colours);
-
     if (!do_yesno_dialogf_with_countdown
         (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\n"
                             "Do you want to attempt to recover them ?\n")))) {
@@ -3247,7 +3245,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
   char *recfname, *recfname2, *recfname3, *recfname4;
 
   boolean retval = FALSE;
-  boolean found = FALSE, found_recording = FALSE;
+  boolean found_clips = FALSE, found_recording = FALSE, found_layout = FALSE;
 
   int lgid = lives_getgid();
   int luid = lives_getuid();
@@ -3262,7 +3260,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
                             prefs->backend_sync, luid, lgid,
                             capable->myname, RECOVERY_LITERAL, capable->mainpid);
 
-  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, FALSE, mainw->msg);
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
@@ -3278,7 +3276,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
                               prefs->backend_sync, luid, lgid,
                               capable->myname, recfname4, capable->mainpid);
 
-    lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+    lives_popen(com, FALSE, mainw->msg);
     lives_free(com); lives_free(recfname4);
 
     if (THREADVAR(com_failed)) {
@@ -3297,6 +3295,8 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
     else lives_rm(recovery_file);
     lives_free(recovery_file);
+
+    found_clips = TRUE;
   }
 
   if (!retval || prefs->vj_mode) {
@@ -3358,24 +3358,24 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     recfname = lives_strdup_printf("%s.%d.%d.%d", LAYOUT_FILENAME, luid, lgid, recpid);
     recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
     if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
-      if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
-        lives_mkdir_with_parents(uldir, capable->umask);
-      }
       if (no_recover) {
+        if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+          lives_mkdir_with_parents(uldir, capable->umask);
+        }
         ulf = lives_strdup_printf("%s.%lu", recfname, uid);
         ulfile = lives_build_filename(uldir, ulf, NULL);
         lives_free(ulf); lives_free(recfname);
         lives_mv(recovery_file, ulfile);
         lives_free(ulfile);
-      } else found = TRUE;
+      } else found_layout = TRUE;
     }
     lives_free(recfname);
   } else {
     if (no_recover) lives_rm(recovery_file);
-    found = TRUE;
+    found_layout = TRUE;
   }
 
-  if (!found && !no_recover) {
+  if (!found_layout && !no_recover) {
     if (lives_file_test(recovery_numbering_file, LIVES_FILE_TEST_EXISTS)) {
       if (lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
         goto cleanse;
@@ -3383,9 +3383,9 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     }
   }
 
-  if (found) {
+  if (found_layout) {
     if (!lives_file_test(recovery_numbering_file, LIVES_FILE_TEST_EXISTS)) {
-      found = FALSE;
+      found_layout = FALSE;
     } else if (no_recover) {
       if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
         lives_mkdir_with_parents(uldir, capable->umask);
@@ -3419,7 +3419,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
       lives_mv(recording_numbering_file, ulfile);
       lives_free(ulfile);
     }
-    found = found_recording = FALSE;
+    found_layout = found_recording = FALSE;
   } else {
     if (prefs->rr_crash && lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
       if (lives_file_test(recording_numbering_file, LIVES_FILE_TEST_EXISTS)) {
@@ -3438,7 +3438,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     }
   }
 
-  if (found) {
+  if (found_layout) {
     // move files temporarily to stop them being cleansed
     xfile = lives_strdup_printf("%s/keep_%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid);
     lives_mv(recovery_file, xfile);
@@ -3452,7 +3452,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
 cleanse:
 
-  if (!found && !found_recording) {
+  if (!found_layout  && !found_recording) {
     if (mainw->scrap_file != -1) close_scrap_file(TRUE);
     if (mainw->ascrap_file != -1) close_ascrap_file(TRUE);
   }
@@ -3476,9 +3476,7 @@ cleanse:
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (no_recover) {
-    return FALSE;
-  }
+  if (no_recover) goto show_err;
 
   recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir,
                                       LAYOUT_FILENAME, luid, lgid, lpid, LIVES_FILE_EXT_LAYOUT);
@@ -3523,12 +3521,16 @@ cleanse:
     lives_hook_remove(rewrite_recovery_lpt);
   }
 
+show_err:
+
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
-    if (mainw->invalid_clips
-        && (prefs->warning_mask ^ (WARN_MASK_CLEAN_AFTER_CRASH | WARN_MASK_CLEAN_INVALID))
-        == WARN_MASK_CLEAN_INVALID) do_after_invalid_warning();
-    else do_after_crash_warning();
-    mainw->invalid_clips = FALSE;
+    if (found_clips) {
+      if (mainw->invalid_clips
+          && (prefs->warning_mask ^ (WARN_MASK_CLEAN_AFTER_CRASH | WARN_MASK_CLEAN_INVALID))
+          == WARN_MASK_CLEAN_INVALID) do_after_invalid_warning();
+      else do_after_crash_warning();
+      mainw->invalid_clips = FALSE;
+    }
   }
   return retval;
 }

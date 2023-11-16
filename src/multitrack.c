@@ -13770,7 +13770,7 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_NONE;
       com = lives_strdup_printf("%s backup_audio \"%s\"", temp_backend, mainw->files[mt->render_file]->handle);
-      lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
+      lives_popen(com, TRUE, mainw->msg);
       lives_free(com);
       lives_free(temp_backend);
       handle_backend_errors(FALSE);

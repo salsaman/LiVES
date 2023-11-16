@@ -457,6 +457,19 @@ static void workdir_entry_check(LiVESEntry * entry, livespointer data) {
 }
 
 
+static boolean do_fontsel_query(void) {
+  LiVESWidget *dialog_vbox;
+  _prefsw *prefsw = (_prefsw *)(lives_malloc(sizeof(_prefsw)));
+  prefsw->prefs_dialog = lives_standard_dialog_new(_("Adjust fonts"), TRUE, -1, -1);
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
+  fontsel_layout(prefsw, LIVES_BOX(dialog_vbox), NULL);
+  lives_dialog_run(LIVES_DIALOG(prefsw->prefs_dialog));
+  lives_widget_destroy(prefsw->prefs_dialog);
+  lives_free(prefsw);
+  return TRUE;
+}
+
+
 boolean do_workdir_query(void) {
   _entryw *wizard = create_entry_dialog(ENTRYW_INIT_WORKDIR);
   char *dirname = NULL, *mp;
@@ -479,6 +492,13 @@ boolean do_workdir_query(void) {
   do {
     lives_freep((void **)&dirname);
     response = lives_dialog_run(LIVES_DIALOG(wizard->dialog));
+    if (response == LIVES_RESPONSE_BROWSE) {
+      lives_widget_hide(wizard->dialog);
+      do_fontsel_query();
+      lives_widget_hide(wizard->dialog);
+      continue;
+    }
+
     if (response == LIVES_RESPONSE_CANCEL) {
       lives_widget_hide(wizard->dialog);
       if (confirm_exit()) {

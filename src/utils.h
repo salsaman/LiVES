@@ -51,7 +51,9 @@ char *commafmt(double val, int fix);
 
 void lives_abort(const char *reason);
 int lives_system(const char *com, boolean allow_error);
-ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen);
+ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t buflen);
+#define lives_popen(com, allow_error, buff) _lives_popen(com, allow_error, (void *)buff, sizeof(buff))
+ssize_t lives_popen_txtbuf(const char *com, boolean allow_error, LiVESTextBuffer *tbuff);
 lives_pid_t lives_fork(const char *com);
 boolean lives_fork_cb(lives_obj_t *dummy, void *com);
 

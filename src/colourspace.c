@@ -1384,24 +1384,42 @@ void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b) {
 #define GDEL_MIN 8
 #define BDEL_MIN 8
 
-#define RSCALE 1.3
+#define RSCALE 1.4
 #define GSCALE 0.7
-#define BSCALE 1.7
+#define BSCALE 1.4
 
 boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
                          double max, double lmin, double lmax) {
-  // given 2 colours a and b, calculate the cie94 distance (d) between them, then find a third colour
-  // first calc the avg, calc d(a, b) with threshold > 1.
-  // pick a random colour, the dist from avg must be approx. d(a, b) * max
-  // da / db must be > ,9 and db / da also
-  // finally luma should be between lmin and lmax
-  // restrictions are gradually loosened
+  // given 2 colours a and b, find a "harmonious" third colour.
+  // We can imagine a and b as two points in RGB space -> mapped to CIE space
+  // We arrange it so b is always lighter than a.
+  // the average point is the mid point between them.
+  // We pick a random colour and check if it lies within a sphere
+  // centered at avg, with radius max,
+  //
+  // da / db must be >= R and db / da also >= R where 0.0 < R < 1.0
+  // if we pick a point then we can calculate the shortest distance to the axis joining a and b
+  // then da ^ 2 = dx ^ 2 + dA ^ 2, and db ^ 2 = dx ^ 2 + dB ^ 2, where dx is the straight line distance to the axis
+  // and dA and dB are the distances from a and b respectively to the point of intersection.
+  // the restriction means that sqrt(dx ^ 2 + dA ^ 2) >= R X sqrt(dx ^ 2 + dB ^ 2) and vice versa
+  // when R == 1, dA == dB, which defines the plane bisecting a and b, when R == 0, both conditions are
+  // true for any point. This defines a region inside the sphere and also within the symmetrical parabolas
+  //
+  // finally luma should be between lmin and lmax - we can imagine 2 planes in luma space which slice through
+  // the inclusion zone.
+  //
+  // to get close to the target we restrict r,g, and b to min and max values based on the 2 input colours
+
+  // If the point is not in the target space we relax the restrictions a little
+  // the sphere around avg gets larger and the inclusion zones grow, whilst the luma slices move apart
+  //
   //#define __VOLA volatile // for testing
 #define __VOLA
 #define DIST_THRESH 10.
-#define RAT_START .9
-#define RAT_TIO  .9999999
+#define RAT_START .95
+#define RAT_TIO  .99999
 #define RAT_MIN .25
+  GET_PROC_THREAD_SELF(self);
   uint8_t xr0, xg0, xb0, xr1, xg1, xb1;
   if (get_luma8(r0, g0, b0) > get_luma8(*r1, *g1, *b1)) {
     xr0 = *r1; xg0 = *g1; xb0 = *b1;
@@ -1449,11 +1467,16 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
 
     bmax = (bmax < 128 ? bmax << 1 : 255) - bmin;
 
-    //g_print("max %d min %d\n", bmax, bmin);
+    //g_print("max %d min %d %d %ld\n", bmax, bmin ,lives_proc_thread_get_cancel_requested(self), timeout);
+    //g_print("cond %f %f %f\n", rat, rat * RAT_TIO, RAT_MIN);
 
-    while ((z = rat * RAT_TIO) > RAT_MIN && (!timeout || !lives_alarm_triggered())) {
+    /// check - cancelled too soon ?
+    while (!lives_proc_thread_get_cancel_requested(self)
+           && (z = rat * RAT_TIO) > RAT_MIN
+           && (!timeout || !lives_alarm_triggered())) {
       // rat is initialized to RAT_START (default .9)
-      // loop until timeout or rat * .9999 < RAT_MIN (def .25)
+      // loop until timeout or rat * RAT_IO < RAT_MIN
+      //g_print("2max %d min %d\n", bmax, bmin);
 
       rat = z;
       /// pick a random col
@@ -1461,7 +1484,7 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
       xg = fastrand_int(gmax) + gmin;
       xb = fastrand_int(bmax) + bmin;
 
-      // calc perceptual dist. to averages
+      // calc perceptual dist. to average
       da = cdist94(ar, ag, ab, xr, xg, xb) / 255.;
 
       //g_print("DA is %f; %f %f %f\n", da, max, rat, max / rat);
@@ -1474,17 +1497,17 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
       da = cdist94(xr0, xg0, xb0, xr, xg, xb);
       db = cdist94(xr1, xg1, xb1, xr, xg, xb);
 
-      //g_print("DA2 is %f; %f %f %f %f\n", da, db, da * rat * lmax, db * rat * lmax, da);
+      //g_print("DA2 is %f; %f %f %f %f %f\n", da, db, da * rat * lmax, db * rat, lmax, da);
 
       // next we only consider pts equidistant from the input colours
-      // we assume however, that col2 is brighter tha col1
+      // col2 is brighter tha col1
       // to help limit to lmax, da must be shorter than db in proportion
       // this gives a quick estimate of luma without having to calulate it each time
       // this check is loosened over cycles
 
       // if da X rat X lmax > db
       // or db X rat > da X lmax
-      if (da * rat > db * lmax || db * rat > da) {
+      if (da * rat * lmax > db || db * rat > da) {
         /* g_print("failed equi check\n"); */
         /* if (da * rat * lmax > db) g_print("cond1\n"); */
         /* if (db * rat > lmax * da) g_print("cond2\n"); */
@@ -1492,8 +1515,8 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
       }
       // if we pass all the checks then we do a proper check of luma
       l = get_luma8(CLAMP0255f(xr * RSCALE), CLAMP0255f(xg * GSCALE), CLAMP0255f(xb * BSCALE));
-      if (l < lmin || l > lmax) {
-        //g_print("failed luma check %f %f %f %d %d %d\n", l, lmax, lmin, xr, xg, xb);
+      if (l < lmin * rat || l > lmax / rat) {
+        //g_print("failed luma check %f %f %f %f %d %d %d\n", rat, l, lmax / rat, lmin * rat, xr, xg, xb);
         continue;
       }
       *r1 = xr; *g1 = xg; *b1 = xb;
@@ -12085,7 +12108,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   ____FUNC_ENTRY____(convert_layer_palette_full, "b", "viiiii");
 
   if (!layer || !weed_layer_get_pixel_data(layer)) {
-    abort();
     ____FUNC_EXIT_VAL____("b", FALSE);
     return FALSE;
   }

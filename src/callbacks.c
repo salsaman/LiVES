@@ -406,7 +406,7 @@ void lives_exit(int signum) {
           char *msg, *from;
           boolean abortit = FALSE;
           mainw->error = FALSE;
-          lives_popen(com, FALSE, log_buff, LOG_BUFF_SIZE);
+          lives_popen(com, FALSE, log_buff);
           lives_free(com);
           if (mainw->fx1_bool) {
             from = lives_strdup_printf(_("the set %s in directory %s"), mainw->set_name, prefs->workdir);
@@ -628,7 +628,7 @@ static boolean read_file_details_generic(const char *fname) {
   com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, dirname,
                             (tmp = lives_filename_from_utf8(fname, -1, NULL, NULL, NULL)),
                             get_image_ext_for_type(IMG_TYPE_BEST), 0);
-  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, FALSE, mainw->msg);
   lives_free(com); lives_free(dirname);
 
   lives_rmdir(tmpdir, TRUE);
@@ -1627,7 +1627,7 @@ void on_import_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!proj_file) return;
   com = lives_strdup_printf("%s get_proj_set \"%s\"", prefs->backend_sync, proj_file);
-  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, FALSE, mainw->msg);
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
@@ -5574,7 +5574,7 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
   clear_mainw_msg();
 
-  lives_popen(com, TRUE, (char *)tbuff, 0);
+  lives_popen_txtbuf(com, TRUE, tbuff);
   lives_free(com);
 
   // 4 refs !!!!
@@ -6108,7 +6108,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       lives_free(op);
       lives_free(remtrashdir);
 
-      lives_popen(com, TRUE, (char *)tbuff, 0);
+      lives_popen_txtbuf(com, TRUE, tbuff);
       lives_free(com);
       lives_proc_thread_join(lpt);
 
@@ -6586,7 +6586,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
                                   (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
         lives_free(tmp);
 
-        lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
+        lives_popen(com, TRUE, mainw->msg);
         lives_free(com);
         use_staging_dir_for(0);
 

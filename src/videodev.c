@@ -151,7 +151,7 @@ static void canikill(lives_vdev_t *ldev) {
   // then parse the pid, and "kill -9 <PID>"
   char cbuf[1024];
   char *com = lives_strdup_printf("fuser %s 2>%s", ldev->fname, LIVES_DEVNULL);
-  lives_popen(com, TRUE, cbuf, 1024);
+  lives_popen(com, TRUE, cbuf);
   if (THREADVAR(com_failed)) {
     BREAK_ME("comf");
     THREADVAR(com_failed) = FALSE;

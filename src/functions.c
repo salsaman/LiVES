@@ -622,11 +622,6 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt) {
 
   if (ret == LIVES_RESULT_ERROR) goto funcerr;
 
-  if (lives_proc_thread_get_cancel_requested(lpt)
-      && !lives_proc_thread_was_cancelled(lpt)) {
-    lives_proc_thread_cancel(lpt);
-  }
-
   if (err == WEED_SUCCESS) {
     if (lpt == mainw->debug_ptr)
       g_print("pt a1\n");

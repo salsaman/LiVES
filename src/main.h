@@ -179,7 +179,7 @@ weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *
 weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key);
 
 #ifndef IGN_RET
-#define IGN_RET(a) ((void)((a) + 1))
+#define IGN_RET(...) ((void)((__VA_ARGS__) + 1))
 #endif
 
 #define EXPECTED(x) __builtin_expect((x), 1)

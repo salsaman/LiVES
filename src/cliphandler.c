@@ -13,6 +13,10 @@
 #include "videodev.h"
 #include "ce_thumbs.h"
 
+#ifdef HAVE_YUV4MPEG
+#include "lives-yuv4mpeg.h"
+#endif
+
 static void _clip_srcs_free_all(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp);
 
 

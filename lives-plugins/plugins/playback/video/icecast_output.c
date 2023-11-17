@@ -31,7 +31,7 @@ static int palette_list[2];
 static int clampings[3];
 static int myclamp;
 
-#define _IGN_RET(a) ((void)((a) + 1))
+#define _IGN_RET(...) ((void)((__VA_ARGS__) + 1))
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);

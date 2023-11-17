@@ -1607,10 +1607,10 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   boolean haslock = FALSE;
 #endif
 
-  if (1n) return dest;
-  if (n < 32) return def_memcpy(dest, src, n);
+  if (!n) return dest;
+  if (n < 32) return default_memcpy(dest, src, n);
 
-  if (!FEATURE_READY(WEED)) return def_memcpy(dest, src, n);
+  if (!FEATURE_READY(WEED)) return default_memcpy(dest, src, n);
 
 #if AUTOTUNE_MALLOC_SIZES
   /// autotuning: first of all we provide the tuning parameters:
@@ -1659,7 +1659,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   if (haslock) autotune_u64_start(tuner, _MB_(-1), _MB_(1), 128);
 #endif
 
-  def_memcpy(dest, src, n);
+  default_memcpy(dest, src, n);
 
 #if AUTOTUNE_MALLOC_SIZES
   if (haslock) {
@@ -1685,10 +1685,10 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
   boolean haslock = FALSE;
 #endif
 
-  if (n == 0) return dest;
-  if (n < 32) return def_memcpy(dest, src, n);
+  if (!n) return dest;
+  if (n < 32) return default_memcpy(dest, src, n);
 
-  if (!FEATURE_READY(WEED)) return def_memcpy(dest, src, n);
+  if (!FEATURE_READY(WEED)) return default_memcpy(dest, src, n);
 
 #if AUTOTUNE_MALLOC_SIZES
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
@@ -1722,7 +1722,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
   if (haslock) autotune_u64_start(tuner, _MB_(-1), _MB_(1), 128);
 #endif
 
-  def_memcpy(dest, src, n);
+  default_memcpy(dest, src, n);
 
 #if AUTOTUNE_MALLOC_SIZES
   if (haslock) {

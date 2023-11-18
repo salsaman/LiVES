@@ -7,6 +7,6 @@ Name: libweed
 Description: libweed for hosts (package includes weed/weed.h and weed/weed-host.h) 
 Requires: 
 Requires.private: 
-Version: 2.0.2
+Version: 2.0.3
 Libs: -L${libdir} -lweed
 Cflags: -I${includedir}

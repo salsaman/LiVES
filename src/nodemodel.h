@@ -729,7 +729,7 @@ typedef struct {
   double start, end, paused, copy_time;
   int width, height;
   int pal, pb_quality;
-  double cpuload;
+  float cpuload;
 } exec_plan_substep_t;
 
 // letterboxing is represented as a resize followed by a memcpy

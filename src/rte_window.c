@@ -2508,6 +2508,7 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
       resize_play_window();
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(rte_window));
     }
+
   }
 }
 

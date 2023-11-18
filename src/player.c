@@ -618,6 +618,10 @@ static lives_result_t prepare_frames(frames_t frame) {
             lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
             goto skip_precache;
           }
+          if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
+            mainw->frame_layer = mainw->layers[0];
+            return LIVES_RESULT_SUCCESS;
+          }
 #ifdef ENABLE_PRECACHE
           // then check if we a have preloaded (cached) frame
           // there are two ways we an get a preload - either normal playback when we have spare cycles
@@ -761,7 +765,6 @@ no_precache:
 #else
           if (1) {
 #endif
-
 skip_precache:
           if (!mainw->frame_layer) {
             //d_print_debug("plan please load %d %d\n", frame, mainw->actual_frame);
@@ -775,7 +778,6 @@ skip_precache:
     // *INDENT-ON*
 
     if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
-
     if (mainw->frame_layer) lives_layer_set_track(mainw->frame_layer, 0);
   }
 
@@ -1661,8 +1663,8 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
 
 get_time:
   // clock time since playback started
-  // mainw->clock_ticks + mainw->origticks == session_ticks
-  mainw->clock_ticks = lives_get_relative_ticks(origticks) - susp_ticks;
+  //mainw->clock_ticks + mainw->origticks == session_ticks
+  mainw->clock_ticks = lives_get_current_ticks() - origticks - susp_ticks;
   if (lclock_ticks < 0 || lclock_ticks > mainw->clock_ticks)
     lclock_ticks = mainw->clock_ticks;
 
@@ -1753,6 +1755,13 @@ get_time:
       if (last_tsource == LIVES_TIME_SOURCE_SYSTEM) {
         prev_current = current - clock_delta * R;
       }
+
+      /* if (current < prev_current) { */
+      /* 	prev_current = current; */
+      /* 	baseItime = 0; */
+      /* 	clock_current = 0; */
+      /* } */
+
       if (!baseItime) {
         baseItime = Itime;
         base_current = prev_current;
@@ -1761,6 +1770,7 @@ get_time:
         clock_current = current;
         last_scticks = mainw->clock_ticks;
       }
+
       if (current > prev_current) {
         if (AUD_SRC_EXTERNAL) {
           IF_AREADER_PULSE
@@ -2339,7 +2349,7 @@ int process_one(boolean visible) {
   /* #if defined HAVE_PULSE_AUDIO || defined ENABLE_JACK */
   /*   static off_t last_aplay_offset = 0; */
   /* #endif */
-  volatile float *cpuload;
+  volatile float const *cpuload;
   //static lives_proc_thread_t gui_lpt = NULL;
   //double cpu_pressure;
   lives_clip_t *sfile = cfile;
@@ -3309,7 +3319,7 @@ play_frame:
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
         if (1) {
           boolean can_realign = FALSE;
-          float cpuloadval = 0.;
+          volatile float cpuloadval = 0.;
 
           if (!mainw->force_show) {
             cpuload = get_core_loadvar(0);

@@ -3296,6 +3296,34 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
       xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
       for (i = prefs->nfx_threads; i--;) {
         dheight = xdheight;
+        // divide the frame into horizontal stripes.
+        // each stripe is processed in pairs of rows, e.g
+        // 0,1		2,3		4,5 		6,7
+        // 8,9 		10,11 		12,13 		14,15
+        // however, there is a complication. We assume that the the chroma points lie sandwiched between luma points,
+        // i,e (going vertically) Y-U/V-YY-U/V-YY-U/V-YY-U/V-Y
+        // to smooth out the chroma (supersampling), ignoring the first and last rows, we have:
+        // ...U/V-Y   Y-U/V......U/V-Y   Y-U/V...
+        //		(same U/V)
+        // for the first Y we apply 2/3 previous U/V + 1/3 next U/V. for the second. 1/3 prev U/V + 2/3 next U/V
+        // thus we see the complication - the first and final Y rows have U/V points on only one side !
+        // To handle this, the first Y row gets 3/3 next U/V and the final row gets 3/3 prev U/V
+        // so in effect our pairs become:
+        // 0		1,2		3,4		5,6		7
+        // 8		9,10		11,12		13,14	 	15
+        // - now though, there it a problem - rows 7 and 8 will come out stripey !
+        // To avoid this, we shorten the first slice by one row, then shift all the remaining slices up by one row,
+        // add 1 to the length of the lowest slice. Now we get
+        // 0		1,2		3,4		5,6
+        // 7,8		9.10		11,12		13,14		(15)
+        // then add row 0 and any final odd numbered row as special cases
+        // NOTE: this is for 420p, for 422p the process is similar but here we have the (vertical) pattern:
+        // Y-U/V-Y-U/V-Y-... so each Y other than the top and bottom is simply (prev + next) / 2
+        // and there is no need to process rows in pairs
+        //
+        // horizontally we have a similar kind of pattern:
+        // Y--U/V--Y  Y--U/V--Y but we rearrange as follows: U/V-YY-U/V-YY
+        // and Y (U/V) * 0.5 * (Y)   (Y) * 0.5 (U/V)
 
         if ((src[0] + dheight * i * istrides[0]) < end) {
           ccparams[i].srcp[0] = src[0];
@@ -3304,6 +3332,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 
           ccparams[i].y_delta = dheight * i;
 
+          // shift all slices after the top one, up by one row
           if (i > 0) ccparams[i].y_delta--;
           ccparams[i].hsize = width;
 
@@ -3315,6 +3344,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 
           ccparams[i].vsize = dheight;
 
+          // adjust heights of top and bottom slices
           if (!i) ccparams[0].vsize--;
           if (i == prefs->nfx_threads - 1) ccparams[0].vsize++;
 
@@ -3373,7 +3403,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, v1, u1, jo = j * opsize;
 
           u1 = CLAMP16_240((this_u1 + last_u1) >> 1);
-          v1 = CLAMP16_240((this_u1 + last_u1) >> 1);
+          v1 = CLAMP16_240((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[jo], &dest[jo + 1],
@@ -3518,7 +3548,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, u1, v1, jo = j * opsize;
 
           u1 = CLAMP16_240((this_u1 + last_u1) >> 1);
-          v1 = CLAMP16_240((this_u1 + last_u1) >> 1);
+          v1 = CLAMP16_240((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3616,7 +3646,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, v1, u1, jo = j * opsize;
 
           u1 = CLAMP0_255((this_u1 + last_u1) >> 1);
-          v1 = CLAMP0_255((this_u1 + last_u1) >> 1);
+          v1 = CLAMP0_255((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[jo], &dest[jo + 1],
@@ -3761,7 +3791,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, u1, v1, jo = j * opsize;
 
           u1 = CLAMP0_255((this_u1 + last_u1) >> 1);
-          v1 = CLAMP0_255((this_u1 + last_u1) >> 1);
+          v1 = CLAMP0_255((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[ or + jo], &dest[ or + jo + 1],
@@ -4117,7 +4147,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, u1, v1, jo = j * opsize;
 
           u1 = CLAMP16_240((this_u1 + last_u1) >> 1);
-          v1 = CLAMP16_240((this_u1 + last_u1) >> 1);
+          v1 = CLAMP16_240((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[ or + jo + 2], &dest[ or + jo + 1],
@@ -4215,7 +4245,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, v1, u1, jo = j * opsize;
 
           u1 = CLAMP0_255((this_u1 + last_u1) >> 1);
-          v1 = CLAMP0_255((this_u1 + last_u1) >> 1);
+          v1 = CLAMP0_255((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[jo + 2], &dest[jo + 1],
@@ -4361,7 +4391,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           int jj = j >> 1, u1, v1, jo = j * opsize;
 
           u1 = CLAMP0_255((this_u1 + last_u1) >> 1);
-          v1 = CLAMP0_255((this_u1 + last_u1) >> 1);
+          v1 = CLAMP0_255((this_v1 + last_v1) >> 1);
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u1, v1, &dest[ or + jo + 2], &dest[ or + jo + 1],
@@ -4568,7 +4598,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           int jj = j >> 1, v1, u1, jo = j * opsize;
 
           u1 = CLAMP16_240((this_u1 + last_u1) >> 1);
-          v1 = CLAMP16_240((this_u1 + last_u1) >> 1);
+          v1 = CLAMP16_240((this_v1 + last_v1) >> 1);
 
           dest[jo] = 255;
           if (gamma_lut) {
@@ -4712,7 +4742,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           int jj = j >> 1, u1, v1, jo = j * opsize;
 
           u1 = CLAMP16_240((this_u1 + last_u1) >> 1);
-          v1 = CLAMP16_240((this_u1 + last_u1) >> 1);
+          v1 = CLAMP16_240((this_v1 + last_v1) >> 1);
 
           dest[jo] = 255;
           if (gamma_lut) {
@@ -4811,7 +4841,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           int jj = j >> 1, v1, u1, jo = j * opsize;
 
           u1 = CLAMP0_255((this_u1 + last_u1) >> 1);
-          v1 = CLAMP0_255((this_u1 + last_u1) >> 1);
+          v1 = CLAMP0_255((this_v1 + last_v1) >> 1);
 
           dest[jo] = 255;
           if (gamma_lut) {
@@ -4957,7 +4987,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           int jj = j >> 1, u1, v1, jo = j * opsize;
 
           u1 = CLAMP0_255((this_u1 + last_u1) >> 1);
-          v1 = CLAMP0_255((this_u1 + last_u1) >> 1);
+          v1 = CLAMP0_255((this_v1 + last_v1) >> 1);
 
           dest[jo] = 255;
           if (gamma_lut) {

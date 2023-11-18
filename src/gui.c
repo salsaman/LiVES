@@ -3733,7 +3733,7 @@ void fullscreen_internal(void) {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
 
-    height -= SCRN_BRDR * 16; // necessary, or screen expands too much (!?)
+    //height -= SCRN_BRDR * 16; // necessary, or screen expands too much (!?)
 
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
@@ -4577,7 +4577,6 @@ static void _resize_play_window(void) {
     }
   } else {
     // not playing
-    BREAK_ME("SSSS");
     if (mainw->fs && mainw->playing_file == -2 && mainw->sep_win
         && prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
       if (mainw->ce_thumbs) {
@@ -4651,26 +4650,31 @@ static void _resize_play_window(void) {
     }
   }
 
-  if (!LIVES_IS_PLAYING || !mainw->fs) {
-    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-    if (!rte_window_hidden()) {
-      nwidth >>= 1;
-      nheight >>= 1;
-      if (mainw->preview_image) lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
-      lives_widget_hide(mainw->play_window);
-    }
-
-    lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
-
-    if (!rte_window_hidden()) {
-      lives_widget_show(mainw->play_window);
-      lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
-      lives_window_move(LIVES_WINDOW(mainw->play_window), scr_width - nwidth - scr_width_safety,
-                        scr_height - nheight - scr_height_safety);
-    } else lives_window_center(LIVES_WINDOW(mainw->play_window));
-    mainw->pwidth = nwidth;
-    mainw->pheight = nheight;
+  //  if (!LIVES_IS_PLAYING) {
+  lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+  if (!rte_window_hidden()) {
+    nwidth >>= 1;
+    nheight >>= 1;
+    if (mainw->preview_image) lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
+    lives_widget_hide(mainw->play_window);
   }
+
+  mainw->ignore_screen_size = TRUE;
+  lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
+  mainw->ignore_screen_size = FALSE;
+
+  if (!rte_window_hidden()) {
+    lives_widget_show(mainw->play_window);
+    lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
+    lives_window_move(LIVES_WINDOW(mainw->play_window), scr_width - nwidth,
+                      scr_height - nheight);
+  } else {
+    lives_widget_queue_draw_and_update(mainw->play_window);
+    lives_window_center(LIVES_WINDOW(mainw->play_window));
+  }
+  lives_widget_queue_draw(mainw->play_window);
+  mainw->pwidth = nwidth;
+  mainw->pheight = nheight;
 
   if (!LIVES_IS_PLAYING) {
     if (pb_added && width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton) {

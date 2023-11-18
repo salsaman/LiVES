@@ -160,7 +160,7 @@ static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t tc) {
 }
 
 
-WEED_SETUP_START(200, 200) {
+WEED_SETUP_START(203, 202) {
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   weed_plant_t *filter_class;
   uint64_t unique_id;

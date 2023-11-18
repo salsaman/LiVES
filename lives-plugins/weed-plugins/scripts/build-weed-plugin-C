@@ -652,7 +652,7 @@ if (@disp) {
     &add_disp_func;
 }
 
-print OUT "\nWEED_SETUP_START(200, 200) {\n";
+print OUT "\nWEED_SETUP_START(203, 202) {\n";
 print OUT "  weed_plant_t *host_info = weed_get_host_info(plugin_info);\n";
 print OUT "  weed_plant_t *filter_class;\n";
 

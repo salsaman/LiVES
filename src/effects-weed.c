@@ -176,7 +176,7 @@ void weed_functions_init(void) {
   _weed_leaf_num_elements = weed_leaf_num_elements;
   _weed_leaf_element_size = weed_leaf_element_size;
 
-#if WEED_ABI_CHECK_VERSION(202)
+#if WEED_ABI_CHECK_VERSION(203)
   _weed_ext_set_element_size = weed_ext_set_element_size;
   _weed_ext_append_elements = weed_ext_append_elements;
   _weed_ext_attach_leaf = weed_ext_attach_leaf;
@@ -4467,7 +4467,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   plugin_info = (*setup_fn)(weed_bootstrap);
 
   if (!plugin_info || ((nf = filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1)) {
-    //g_print("vals for filt %p, %d\n", plugin_info, nf);
+    g_print("vals for filt %p, %d\n", plugin_info, nf);
     msg = lives_strdup_printf(_("No usable filters found in plugin:\n%s\n"), plugin_path);
     LIVES_INFO(msg);
     lives_free(msg);
@@ -4652,10 +4652,8 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
         lives_free(msg);
       }
     } else {
-#ifdef DEBUG_WEED
-      lives_printerr("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",
-                     filter_name, plugin_name, reason);
-#endif
+      d_print_debug("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",
+                    filter_name, plugin_name, reason);
     }
     lives_freep((void **)&filter_name);
   }
@@ -5032,7 +5030,6 @@ void load_rte_plugins(void) {
   lives_setenv("VISUAL_PLUGIN_PATH", prefs->libvis_path);
 #endif
 
-  splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
   weed_load_all();
 }
 
@@ -9338,6 +9335,8 @@ boolean rte_key_setmode(int key, int newmode) {
     if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key, TRUE);
   }
   mainw->whentostop = whentostop;
+
+  mainw->refresh_model = TRUE;
 
   return TRUE;
 }

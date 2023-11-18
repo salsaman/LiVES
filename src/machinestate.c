@@ -567,6 +567,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
 }
 
 
+/// during playback, only player should call this
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   uint64_t uret;
@@ -1385,7 +1386,7 @@ void update_effort(double nthings, boolean is_bad) {
   if (badthingcount <= 0.) {
     /// no badthings, good
     if (goodthingcount > EFFORT_RANGE_MAXD) goodthingcount = EFFORT_RANGE_MAXD;
-    if (--mainw->effort < -EFFORT_RANGE_MAXD) mainw->effort = -EFFORT_RANGE_MAXD;
+    if (--mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
   } else {
     if (badthingcount > EFFORT_RANGE_MAXD) badthingcount = EFFORT_RANGE_MAXD;
     mainw->effort = (int)(badthingcount + .5);
@@ -1394,9 +1395,7 @@ void update_effort(double nthings, boolean is_bad) {
   //g_print("vals2 %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
 
   if (mainw->effort < 0) {
-    if (struggling > -EFFORT_RANGE_MAX) {
-      struggling--;
-    }
+    if (struggling > -EFFORT_RANGE_MAX) struggling--;
     if (mainw->effort < -EFFORT_LIMIT_MED) {
       if (struggling == -EFFORT_RANGE_MAX && pb_quality < PB_QUALITY_HIGH) {
         pb_quality++;
@@ -2641,6 +2640,7 @@ void get_monitors(boolean reset) {
     mainw->mgeom[idx].width = rect.width;
     mainw->mgeom[idx].height = ((rect.height + 1) >> 1) << 1;
     if (gdk_monitor_is_primary(moni)) {
+      g_print("PTI\n");
       capable->primary_monitor = idx;
       mainw->mgeom[idx].primary = TRUE;
     } else if (play_moni == 1) play_moni = idx + 1;
@@ -2654,6 +2654,8 @@ void get_monitors(boolean reset) {
 
   prefs->gui_monitor = 0;
   prefs->play_monitor = play_moni;
+
+  g_print("PTI %d\n", play_moni);
 
   if (capable->nmonitors > 1) {
     get_string_pref(PREF_MONITORS, buff, 256);
@@ -2670,6 +2672,11 @@ void get_monitors(boolean reset) {
     if (prefs->gui_monitor > capable->nmonitors) prefs->gui_monitor = capable->nmonitors;
     if (prefs->play_monitor > capable->nmonitors) prefs->play_monitor = capable->nmonitors;
   }
+
+  /* /\* if (prefs->gui_monitor >= capable->nmonitors) *\/ */
+  /* /\*   prefs->gui_monitor = 0; *\/ */
+  /* /\* if (prefs->play_monitor >= capable->nmonitors) *\/ */
+  /* /\*   prefs->play_monitor = capable->nmonitors - 1; *\/ */
 
   widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
 
@@ -2996,123 +3003,119 @@ static LiVESList *cpuloadlist = NULL;
 
 #define CPU_STATS_FILE "/proc/stat"
 
-int64_t get_cpu_load(int cpun) {
-  /// return reported load for CPU cpun (% * 1 million)
-  /// as a bonus, if cpun == -1, returns boot time
-  // returns -1 if the value cannot be read
+static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
+  /// gets reported load for all CPUs (%)
+  /// and boot time
+  // returns FALSE if a value cannot be read
   oldvalues *ovals = NULL;
   FILE *file;
   char buffer[1024];
   unsigned long long boottime = 0;
   unsigned long long user = 0, nice = 0, system = 0, idle = 0;
   unsigned long long iowait = 0, irq = 0, softirq = 0, steal = 0;
+  float load;
   uint64_t idlet, sum, tot;
-  int64_t ret = -1;
   int xcpun = 0;
 
   if (!lives_file_test(CPU_STATS_FILE, LIVES_FILE_TEST_EXISTS)) return -1;
 
   file = fopen(CPU_STATS_FILE, "r");
-  if (!file) return -1;
+  if (!file) return FALSE;
 
-  if (cpun < 0) {
-    while (1) {
-      if (!fgets(buffer, 1024, file)) {
-	fclose(file);
-	return -1;
-      }
-      if (sscanf(buffer, "btime %16llu", &boottime) > 0) {
-	fclose(file);
-	return boottime;
-      }
-    }
-  }
+  if (!fgets(buffer, 1024, file)) goto err;
 
-  if (!fgets(buffer, 1024, file)) {
-    fclose(file);
-    return -1;
-  }
-  if (!cpun) {
-    if (fscanf(file,
-	       "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
-	       &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) <= 0) {
-      fclose(file);
-      return -1;
+  while (1) {
+    if (xcpun == ncpus && loadvals->boottime) break;
+
+    if (!fgets(buffer, 1024, file)) {
+      if (ferror(file)) goto err;
+      break;
     }
-  }
-  else {
-    while (1) {
-      if (!fgets(buffer, 1024, file)) {
-	fclose(file);
-	return -1;
-      }
+    if (xcpun < ncpus) {
       if (sscanf(buffer,
-		 "cpu%d %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
-		 &xcpun, &user, &nice, &system, &idle, &iowait, &irq,
-		 &softirq, &steal) < 0) {
-	fclose(file);
-	return -1;
+		 "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
+		 &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) > 0) {
+	idlet = idle + iowait;
+	sum = user + nice + system + irq + softirq + steal;
+	tot = sum + idlet;
+
+	if (idx_list_get_data(cpuloadlist, xcpun, (void **)&ovals)) {
+	  if (tot != ovals->tot) {
+	    float totd = (float)(tot - ovals->tot);
+	    float idled = (float)(idlet - ovals->idlet);
+	    load = (totd - idled) / totd;
+	  }
+	  else load = ovals->ret;
+	}
+	else ovals = (oldvalues *)lives_malloc(sizeof(oldvalues));
+	ovals->tot = tot;
+	ovals->idlet = idlet;
+	ovals->ret = load;
+	cpuloadlist = idx_list_update(cpuloadlist, xcpun, ovals);
+	loadvals->loads[xcpun++] = load * 100.;
+	continue;
       }
-      if (++xcpun == cpun) break;
+    }
+    if (!loadvals->boottime) {
+      if (sscanf(buffer, "btime %16llu", &boottime) > 0) {
+	loadvals->boottime = boottime;
+      }
     }
   }
   fclose(file);
+  return TRUE;
 
-  idlet = idle + iowait;
-  sum = user + nice + system + irq + softirq + steal;
-  tot = sum + idlet;
-
-  if (idx_list_get_data(cpuloadlist, cpun, (void **)&ovals)) {
-    if (tot != ovals->tot) {
-      float totd = (float)(tot - ovals->tot);
-      float idled = (float)(idlet - ovals->idlet);
-      float load = (totd - idled) / totd;
-      ret = load * (float)MILLIONS(1);
-    }
-    else ret = ovals->ret;
-  }
-  else ovals = (oldvalues *)lives_malloc(sizeof(oldvalues));
-  ovals->tot = tot;
-  ovals->idlet = idlet;
-  ovals->ret = ret;
-  cpuloadlist = idx_list_update(cpuloadlist, cpun, ovals);
-  return ret;
+ err:
+  fclose(file);
+  return FALSE;
 }
 
 #define N_CPU_MEAS 64
+#define CPU_MEAS_THRESH 1000000
 
-static volatile float **vals = NULL;
 static void *proc_load_stats = NULL;
-static size_t nfill = 0; // will go away
 
-volatile float **const get_proc_loads(boolean reset) {
+static cpuloadvals_t *cpu_stats = NULL;
+
+float *get_proc_loads(boolean reset) {
   // get processor load values, and keep a rolling average
-  boolean doinit = FALSE;
+  static cpuloadvals_t cpuvals;
+  static tab_data_t *cpuloadtab = NULL;
+  static ticks_t ltime = 0;
+  ticks_t ctime;
 
-  if (!vals || reset) {
-    running_average(NULL, capable->hw.ncpus + 1, &proc_load_stats);
-    running_average(NULL, N_CPU_MEAS, &proc_load_stats);
+  if (!cpuloadtab) {
+    cpuvals.loads =
+      (float *)lives_calloc(capable->hw.ncpus, sizeof(float));
+    cpuvals.avgs =
+      (float *)lives_calloc(capable->hw.ncpus, sizeof(float));
+    reset = TRUE;
   }
-  if (!vals) {
-    doinit = TRUE;
-    vals = (volatile float **)lives_calloc(sizeof(float *), capable->hw.ncpus + 1);
+
+  if (reset && cpuloadtab) cpuloadtab = free_tabdata(cpuloadtab);
+  if (!cpuloadtab) cpuloadtab = init_tab_data(capable->hw.ncpus, N_CPU_MEAS);
+
+  ctime = lives_get_session_ticks();
+  if (reset || ctime - ltime > CPU_MEAS_THRESH) {
+    ltime = ctime;
+    if (get_cpu_loads(&cpuvals, capable->hw.ncpus)) {
+      if (!cpu_stats) cpu_stats = &cpuvals;
+      tabdata_get_avgs(cpuloadtab, cpuvals.loads);
+      for (int i = capable->hw.ncpus; i--;) cpuvals.avgs[i] = cpuloadtab->avgs[i];
+    }
   }
-  for (int i = 0; i <= capable->hw.ncpus; i++) {
-    float load = (float)get_cpu_load(i) / (float)10000.;
-    nfill = running_average(&load, i, &proc_load_stats);
-    if (doinit) vals[i] = (volatile float *)lives_malloc(4);
-    *vals[i] = load;
-  }
-  //get_disk_load(0);
-  return vals;
+  return cpuvals.avgs;
 }
 
 
-volatile float *get_core_loadvar(int corenum) {
+volatile float const *get_core_loadvar(int corenum) {
   // return a pointer to the (static) array member containing the requested value
   // returning a pointer rather than the value allows for more in depth analysis
-  return vals[corenum];
+  float *vals = get_proc_loads(FALSE);
+  return &vals[corenum];
 }
+
+uint64_t get_boottime(void) {return cpu_stats ? cpu_stats->boottime : 0;}
 
 
 double analyse_cpu_stats(void) {

@@ -61,7 +61,8 @@ extern "C"
   // 201 -> 202 :: technical updates (see spec for details)
   // 201 - 202 :: weed_memory_funcs -> libweed_memory_funcs, added optional ext_funct
   //		added (7) mandatory functions for libweed implmentations, made more things #define-able
-#define WEED_ABI_VERSION 		202
+  // 203 - new baseline version - added weed_ext_* functions, extra symbols
+#define WEED_ABI_VERSION 		203
 #define WEED_API_VERSION 		WEED_ABI_VERSION
 
 #ifndef HAVE_WEED_BOOLEAN_T
@@ -234,7 +235,7 @@ struct _weed_leaf_nopadding {
   typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
   typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
-  /* API 202+ */
+  /* API 203 */
   /* "extended" functions - only enabled if WEED_INIT_EXTENDED_FUNCS is passed to libweed_init */
   /* functions may be dangerous if not used with caution */
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
@@ -338,6 +339,7 @@ struct _weed_leaf_nopadding {
   __WEED_FN_DEF__ weed_size_t _weed_intern_elem_sizes(weed_leaf_t *, weed_size_t *);
   __WEED_FN_DEF__ weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
   __WEED_FN_DEF__ weed_error_t _weed_intern_get_all(weed_leaf_t *, weed_voidptr_t retvals);
+  __WEED_FN_DEF__ weed_error_t _weed_intern_leaf_get(weed_leaf_t *, weed_size_t idx, weed_voidptr_t retval);
 
   // for plugin bootstrap, only relevent for libweed
   __WEED_FN_DEF__ weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,

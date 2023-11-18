@@ -40,7 +40,7 @@ extern "C"
 
 #include <inttypes.h>
 
-/* API version * 202 */
+  /* API version * 202 */
 #define WEED_FILTER_API_VERSION 202
 
 /* included features */

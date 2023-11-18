@@ -12,6 +12,23 @@
 #include "startup.h"
 #include "maths.h"
 
+
+/* void test_brkpt(void) { */
+/*   struct perf_event_attr pe; */
+/*   int bpfd; */
+
+/*   lives_memset(&pe, 0, sizeof(struct perf_event_pe)); */
+/*   pe.type = PERF_TYPE_BREAKPOINT; */
+/*   pe.bp_type = HW_BREAKPOINT_R; */
+/*   pe.bp_addr = 0xdeadbeef; */
+/*   pe.bp_addr = HW_BREAKPOINT_LEN_8  // 4,2,1 */
+/*     //prct(PR_TASK_PERF_EVENTS_ ENABLE, .............) */
+/*   bpfd = perf_event_open(&pe); */
+/*   ioctl(fd, PERF_EVENT_IOC_RESET, 0); */
+/*   ioctl(fd, PERF_EVENT_IOC_ENABLE, 0); */
+/* } */
+
+
 void print_diagnostics(uint64_t types) {
   char *tmp;
   if (types & DIAG_APP_STATUS) {
@@ -19,16 +36,19 @@ void print_diagnostics(uint64_t types) {
     if (what_sup_now() == sup_ready) g_print("Startup complete\n");
     else switch (what_sup_now()) {
       case nothing_sup: g_print("Early stage init\n"); break;
-      case run_program_sup: g_print("Startup: First stage, run_the_program\n"); break;
-      case pre_init_sup: g_print("Startup: pre_init\n"); break;
-      case run_program2_sup: g_print("Startup: run_the_program part 2\n"); break;
+      case run_program_sup: g_print("Startup: First stage, run_the_program, parse cmdline args\n"); break;
       case gtk_launch_sup: g_print("Startup: launch gtk_main\n"); break;
-      case startup_sup: g_print("Startup: lives_startup part A\n"); break;
-      case init_sup: g_print("Startup: pre_init\n"); break;
-      case startupB_sup: g_print("Startup: lives_startup part B\n"); break;
+      case startupA_sup: g_print("Startup: early startup, start GUI and colour engine\n"); break;
+      case pre_init_sup: g_print("Startup: pre_init - show non fatal warnings, set early prefs\n"); break;
+      case startupB_sup: g_print("Startup: hardware and OS details\n"); break;
+      case pre_init2_sup: g_print("Startup: load remaining prefs"); break;
+      case startupC_sup: g_print("Startup: launch GOI\n"); break;
+      case init_sup: g_print("Startup: init - more complex actions\n"); break;
+      case startupD_sup: g_print("Startup: final stage\n"); break;
       case startup2_sup: g_print("Startup: lives_startup2\n"); break;
       default: break;
       }
+
     nsc = mainw->n_service_calls;
     g_print("Number of sevice calls: %lu\n", nsc);
     g_print("checking service call frequency:\n");
@@ -367,91 +387,12 @@ int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
 }
 
 
-#ifdef TEST_RTM_CODE
-
-// Shared counter
-#include <immintrin.h> // For RTM
-#include <rtmintrin.h> // For RTM
-
-volatile int zzcounter = 0;
-static pthread_mutex_t fallback = PTHREAD_MUTEX_INITIALIZER;
-
-void *increment_counter(void *arg) {
-  int i;
-  for (i = 0; i < 100000; ++i) {
-    // Begin a hardware transaction
-    uint32_t status = _xbegin();
-
-    // Check if the transaction started successfully
-    if (status == _XBEGIN_STARTED) {
-      // Perform the memory operation
-      zzcounter++;
-
-      // Try to commit the transaction
-      _xend();
-    } else {
-      // Fallback code, if transaction fails
-      // In a real-world scenario, you'd use a traditional locking mechanism here
-      g_printerr("Transaction failed, fallback to normal increment\n");
-      pthread_mutex_lock(&fallback);
-      zzcounter++;
-      pthread_mutex_unlock(&fallback);
-    }
-  }
-  return NULL;
-}
-
-
-boolean check_rtm(void) {
-  // Check if the CPU supports RTM
-  if (!((1 << 11) & _xgetbv(0))) {
-    g_printerr("RTM not supported by this CPU.\n");
-    return FALSE;
-  }
-  return TRUE;
-}
-
-
-int test_rtm(void) {
-  // Create threads
-  pthread_t t1, t2;
-  if (pthread_create(&t1, NULL, increment_counter, NULL)) {
-    g_printerr("Error creating thread\n");
-    return 1;
-  }
-  if (pthread_create(&t2, NULL, increment_counter, NULL)) {
-    g_printerr("Error creating thread\n");
-    return 1;
-  }
-
-  // Wait for threads to finish
-  if (pthread_join(t1, NULL)) {
-    g_printerr("Error joining thread\n");
-    return 2;
-  }
-  if (pthread_join(t2, NULL)) {
-    g_printerr("Error joining thread\n");
-    return 2;
-  }
-
-  // Print counter value
-  g_printerr("Counter value: %d\n", zzcounter);
-  return 0;
-}
-
-
-void do_rtm_test(void) {
-  if (check_rtm()) test_rtm();
-}
-
-#endif
-
-
 char *get_stats_msg(boolean calc_only) {
   static double av_offs = 0.;
   static int last_pfile = -1;
   static int pseq = -1;
-  volatile float *load;
+  volatile float const *cpuload;
+  float load;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
   char *tmp, *tmp2;
@@ -466,7 +407,7 @@ char *get_stats_msg(boolean calc_only) {
     if (CLIP_HAS_AUDIO(clipno)) {
       lives_clip_t *afile = mainw->files[clipno];
       avsync = (double)get_aplay_offset()
-               / (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3)); //lives_pulse_get_pos(mainw->jackd
+               / (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3));
       avsync -= ((double)sfile->last_frameno - .5) / afile->fps
                 + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
@@ -484,7 +425,8 @@ char *get_stats_msg(boolean calc_only) {
   //currticks = lives_get_current_ticks();
 
   if (calc_only) return NULL;
-  load = get_core_loadvar(0);
+  cpuload = get_core_loadvar(0);
+  load = (float) * cpuload;
 
   if (!prefs->vj_mode) {
     if (have_avsync) {
@@ -510,14 +452,13 @@ char *get_stats_msg(boolean calc_only) {
     fgpal = get_palette_name_for_clip(mainw->current_file);
 
     msg = lives_strdup_printf(_("%sFrame %d / %d / %d, fps %.3f (target: %.3f)\n"
-                                "CPU load %.2f %% : Disk load: %f\n"
+                                "CPU load %.2f %%\n"
                                 "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
                                 "Fg clip: %d X %d, palette: %s\n%s\n%s"),
                               audmsg ? audmsg : "",
                               sfile->frameno, sfile->last_req_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              *load, mainw->disk_pressure,
-                              mainw->effort, EFFORT_RANGE_MAX,
+                              load, mainw->effort, EFFORT_RANGE_MAX,
                               prefs->pb_quality,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
                                     : prefs->pb_quality == 2 ? _("Med") : _("High")),
@@ -537,7 +478,7 @@ char *get_stats_msg(boolean calc_only) {
     msg = lives_strdup_printf("fg: %d/%d, fps %.3f / %.3f, CPU: %.2f, Eff. %d/%d, Q: %s %s",
                               mainw->actual_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              *load, mainw->effort, EFFORT_RANGE_MAX,
+                              load, mainw->effort, EFFORT_RANGE_MAX,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
                                     : prefs->pb_quality == 2 ? _("Med") : _("High")),
                               bgmsg ? bgmsg : "");
@@ -1230,6 +1171,22 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
+  fprintf(stderr, "Check long length key \n");
+  weed_set_int_value(plant, "abcdefghijklmnopqrstuvwxyz1234567890", 4321);
+  fprintf(stderr, "\n");
+
+  list_leaves(plant);
+
+  a = weed_get_int_value(plant, "abcdefghijklmnopqrstuvwxyz1234567890", NULL);
+  fprintf(stderr, "vakue read was %d, should be 4321\n", a);
+  werr_expl(werr);
+
+  fprintf(stderr, "Delete long  key \n");
+  werr = weed_leaf_delete(plant, "abcdefghijklmnopqrstuvwxyz1234567890");
+  werr_expl(werr);
+
+  list_leaves(plant);
+
   fprintf(stderr, "Check zero length key \n");
   type = weed_get_int_value(plant, "", &werr);
   werr_expl(werr);
@@ -1783,7 +1740,7 @@ int run_weed_startup_tests(void) {
   werr_expl(werr);
 
   ptr = weed_get_voidptr_value(plant, "nullptr", &werr);
-  fprintf(stderr, "get null vooid * returned (%p) %d\n", ptr, werr);
+  fprintf(stderr, "get null void * returned (%p) %d\n", ptr, werr);
   werr_expl(werr);
 
   ptr = weed_get_voidptr_value(plant, "nullptrxx", &werr);
@@ -1965,122 +1922,125 @@ int run_weed_startup_tests(void) {
 #ifdef CONCURRENCY_TST
   print_diagnostics(DIAG_MEMORY);
 
-  THREADVAR(timerinfo) = lives_get_current_ticks();
-  fprintf(stderr, "test random reads, writes and deletes\n");
-  plant = _weed_plant_new(123);
+  if (FEATURE_READY(THREADPOOL)) {
 
-  for (int tt = 0; tt < NCTHRD; tt++) {
-    lpts[tt] = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                        weed_concurrency_test, -1, "v", plant);
-  }
-  for (int tt = 0; tt < NCTHRD; tt++) {
-    lives_proc_thread_queue(lpts[tt], LIVES_THRDATTR_NONE);
-  }
+    THREADVAR(timerinfo) = lives_get_current_ticks();
+    fprintf(stderr, "test random reads, writes and deletes\n");
+    plant = _weed_plant_new(123);
 
-  for (int tt = 0; tt < NCTHRD; tt++) {
-    fprintf(stderr, "joining %d of %d\n", tt, NCTHRD);
-    lives_proc_thread_join(lpts[tt]);
-    fprintf(stderr, "done\n");
-  }
+    for (int tt = 0; tt < NCTHRD; tt++) {
+      lpts[tt] = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+                                          weed_concurrency_test, -1, "v", plant);
+    }
+    for (int tt = 0; tt < NCTHRD; tt++) {
+      lives_proc_thread_queue(lpts[tt], LIVES_THRDATTR_NONE);
+    }
 
-  fprintf(stderr, "tested random reads, writes and deletes\n");
-  fprintf(stderr, "%d threads running %d random read/writes/deletes with set of %d leaves\n",
-          NCTHRD, CONCYC, MAXLVS);
-  show_timer_info();
+    for (int tt = 0; tt < NCTHRD; tt++) {
+      fprintf(stderr, "joining %d of %d\n", tt, NCTHRD);
+      lives_proc_thread_join(lpts[tt]);
+      fprintf(stderr, "done\n");
+    }
 
-  fprintf(stderr, "final state is:\n");
+    fprintf(stderr, "tested random reads, writes and deletes\n");
+    fprintf(stderr, "%d threads running %d random read/writes/deletes with set of %d leaves\n",
+            NCTHRD, CONCYC, MAXLVS);
+    show_timer_info();
 
-  keys = _weed_plant_list_leaves(plant, &nleaves);
-  fprintf(stderr, "Plant has %d leaves\n", nleaves);
+    fprintf(stderr, "final state is:\n");
 
-  /* n = 0; */
-  /* for (n = 0; keys[n]; n++) { */
-  /*   //fprintf(stderr, "key %d is %s with val %d\n", n, keys[n], weed_get_int_value(plant, keys[n], NULL)); */
-  /*   free(keys[n]); */
-  /* } */
-  /* free(keys); */
-  print_diagnostics(DIAG_MEMORY);
-  _weed_plant_free(plant);
-  print_diagnostics(DIAG_MEMORY);
+    keys = _weed_plant_list_leaves(plant, &nleaves);
+    fprintf(stderr, "Plant has %d leaves\n", nleaves);
+
+    /* n = 0; */
+    /* for (n = 0; keys[n]; n++) { */
+    /*   //fprintf(stderr, "key %d is %s with val %d\n", n, keys[n], weed_get_int_value(plant, keys[n], NULL)); */
+    /*   free(keys[n]); */
+    /* } */
+    /* free(keys); */
+    print_diagnostics(DIAG_MEMORY);
+    _weed_plant_free(plant);
+    print_diagnostics(DIAG_MEMORY);
 #endif
 
 
-  /* #define BPLANT_LEAVES 100000 */
-  /* #define CYCLES 1000 */
-  /*   g_print("Big plant test: \n"); */
-  /*   g_print("adding %d leaves\n", BPLANT_LEAVES); */
-  /*   plant = _weed_plant_new(WEED_PLANT_EVENT); */
+    /* #define BPLANT_LEAVES 100000 */
+    /* #define CYCLES 1000 */
+    /*   g_print("Big plant test: \n"); */
+    /*   g_print("adding %d leaves\n", BPLANT_LEAVES); */
+    /*   plant = _weed_plant_new(WEED_PLANT_EVENT); */
 
-  /*   if (1) { */
-  /*     double time1, time2 = 0., dly = -1., tot1 = 0., totx = 0.; */
-  /*     int rnds = 3; */
-  /*     char *key; */
-  /*     int count = 0, cval = 1000; */
-  /*     int mm = CYCLES; */
+    /*   if (1) { */
+    /*     double time1, time2 = 0., dly = -1., tot1 = 0., totx = 0.; */
+    /*     int rnds = 3; */
+    /*     char *key; */
+    /*     int count = 0, cval = 1000; */
+    /*     int mm = CYCLES; */
 
-  /*     THREADVAR(timerinfo) = lives_get_current_ticks(); */
-  /*     for (int i = 1; i <= BPLANT_LEAVES; i++) { */
-  /*       key = lives_strdup_printf("%d%d", i * 917, i % 13); */
-  /*       weed_set_int_value(plant, key, i); */
-  /*       lives_free(key); */
-  /*       if (++count == cval) { */
-  /*         g_print("%d", i); */
-  /*         totx += show_timer_info(); */
-  /*         count = 0; */
-  /*       } */
-  /*     } */
+    /*     THREADVAR(timerinfo) = lives_get_current_ticks(); */
+    /*     for (int i = 1; i <= BPLANT_LEAVES; i++) { */
+    /*       key = lives_strdup_printf("%d%d", i * 917, i % 13); */
+    /*       weed_set_int_value(plant, key, i); */
+    /*       lives_free(key); */
+    /*       if (++count == cval) { */
+    /*         g_print("%d", i); */
+    /*         totx += show_timer_info(); */
+    /*         count = 0; */
+    /*       } */
+    /*     } */
 
-  /*     g_print("done in %.2f sec\n", totx); */
+    /*     g_print("done in %.2f sec\n", totx); */
 
-  /*     g_print("Find delay  to generate n random keys\n"); */
-  /*     show_timer_info(); */
-  /*     for (int i = 0; i < mm; i++) { */
-  /*       int x = fastrand_int(BPLANT_LEAVES); */
-  /*       char *key = lives_strdup_printf("%d%d", x * 917, x % 13); */
-  /*       free(key); */
-  /*     } */
-  /*     dly = show_timer_info(); */
-  /*     g_print("Delay is %.2f sec\n", dly); */
+    /*     g_print("Find delay  to generate n random keys\n"); */
+    /*     show_timer_info(); */
+    /*     for (int i = 0; i < mm; i++) { */
+    /*       int x = fastrand_int(BPLANT_LEAVES); */
+    /*       char *key = lives_strdup_printf("%d%d", x * 917, x % 13); */
+    /*       free(key); */
+    /*     } */
+    /*     dly = show_timer_info(); */
+    /*     g_print("Delay is %.2f sec\n", dly); */
 
-  /*     for (int vv = 0; vv < rnds; vv++) { */
-  /*       g_print("test %d random reads\n", mm); */
-  /*       for (int i = 0; i < mm; i++) { */
-  /*         int z; */
-  /*         int x = fastrand_int(BPLANT_LEAVES / 100); */
-  /*         char *key = lives_strdup_printf("%d%d", x * 917, x % 13); */
-  /*         z = weed_get_int_value(plant, key, &werr); */
-  /*         if (werr == WEED_SUCCESS) { */
-  /*           n++; */
-  /*           if (z != x) abort(); */
-  /*         } */
-  /*         free(key); */
-  /*       } */
+    /*     for (int vv = 0; vv < rnds; vv++) { */
+    /*       g_print("test %d random reads\n", mm); */
+    /*       for (int i = 0; i < mm; i++) { */
+    /*         int z; */
+    /*         int x = fastrand_int(BPLANT_LEAVES / 100); */
+    /*         char *key = lives_strdup_printf("%d%d", x * 917, x % 13); */
+    /*         z = weed_get_int_value(plant, key, &werr); */
+    /*         if (werr == WEED_SUCCESS) { */
+    /*           n++; */
+    /*           if (z != x) abort(); */
+    /*         } */
+    /*         free(key); */
+    /*       } */
 
-  /*       time1 = show_timer_info(); */
+    /*       time1 = show_timer_info(); */
 
-  /*       g_print("done, subtracting time to make random leaves\n"); */
+    /*       g_print("done, subtracting time to make random leaves\n"); */
 
-  /*       time1 -= dly; */
-  /*       tot1 += time1; */
+    /*       time1 -= dly; */
+    /*       tot1 += time1; */
 
-  /*       fprintf(stderr, "result for rnd %d is %.2f\n", vv, time1); */
+    /*       fprintf(stderr, "result for rnd %d is %.2f\n", vv, time1); */
 
-  /*       g_print("test %d last-leaf reads\n", mm); */
-  /*       key = lives_strdup_printf("%d%d", 917, 1); */
-  /*       for (int zz = 0; zz < mm; zz++) { */
-  /*         int z = weed_get_int_value(plant, key, &werr); */
-  /*       } */
-  /*       free(key); */
-  /*       time2 += show_timer_info(); */
-  /*     } */
-  /*     fprintf(stderr, */
-  /*             "avgs over %d rounds of %d cycles, : (nleaves = %d), random reads %.2f (%.2f usec each)  and last leaf reads %.2f, (%.2f usec each) ratio %.3f should be around 50 %%\n", */
-  /*             rnds, mm, BPLANT_LEAVES, tot1 / rnds, tot1 / rnds / mm * ONE_MILLION, time2 / rnds, */
-  /*             time2 / rnds / mm * ONE_MILLION, tot1 / time2 * 100.); */
-  /*   } */
+    /*       g_print("test %d last-leaf reads\n", mm); */
+    /*       key = lives_strdup_printf("%d%d", 917, 1); */
+    /*       for (int zz = 0; zz < mm; zz++) { */
+    /*         int z = weed_get_int_value(plant, key, &werr); */
+    /*       } */
+    /*       free(key); */
+    /*       time2 += show_timer_info(); */
+    /*     } */
+    /*     fprintf(stderr, */
+    /*             "avgs over %d rounds of %d cycles, : (nleaves = %d), random reads %.2f (%.2f usec each)  and last leaf reads %.2f, (%.2f usec each) ratio %.3f should be around 50 %%\n", */
+    /*             rnds, mm, BPLANT_LEAVES, tot1 / rnds, tot1 / rnds / mm * ONE_MILLION, time2 / rnds, */
+    /*             time2 / rnds / mm * ONE_MILLION, tot1 / time2 * 100.); */
+    /*   } */
 
-  /*   g_print("freeing big plant\n"); */
-  /*   _weed_plant_free(plant); */
+    /*   g_print("freeing big plant\n"); */
+    /*   _weed_plant_free(plant); */
+  }
   g_print("done\n");
   show_timer_info();
 
@@ -2460,13 +2420,8 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
   testpoint++;
 
   if (testpoint == 1) {
-    /* if (tests_to_run & TEST_WEED) */
-    /*   run_weed_startup_tests(); */
-
-#ifdef TEST_RTM_CODE
-    if (tests_to_run & TEST_RTM)
-      do_rtm_test();
-#endif
+    if (tests_to_run & TEST_WEED)
+      run_weed_startup_tests();
 
     if (tests_to_run & TEST_RNG)
       test_random();
@@ -2483,6 +2438,7 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
     if (tests_to_run & TEST_WEED_UTILS)
       weed_utils_test();
   }
+
   if (testpoint == 2) {
     if (tests_to_run & TEST_WEED)
       run_weed_startup_tests();

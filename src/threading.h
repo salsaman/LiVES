@@ -74,11 +74,6 @@ typedef struct {
 
   char var_origin[128]; // thread descriptive text eg "LiVES Worker Thread"
 
-  ucontext_t var_context;
-  ucontext_t var_context2;
-  ucontext_t *var_context_ptr;
-  ucontext_t *var_context_ptr2;
-
   weed_plant_t *var_ret_value;
 
   pthread_mutex_t var_active_lpt_mutex;
@@ -126,7 +121,6 @@ typedef struct {
   // graphical / ui
   boolean var_no_gui;
   LiVESWidgetContext *var_guictx;
-  LiVESWidgetLoop *var_guiloop;
   LiVESWidgetSource *var_guisource;
 
   // pixel conversions
@@ -446,6 +440,7 @@ funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t);
 char *lives_proc_thread_get_args_fmt(lives_proc_thread_t);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits);
+uint64_t _lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits); // pre-locked version
 uint64_t lives_proc_thread_has_states(lives_proc_thread_t, uint64_t state_bits);
 
 void lives_thread_set_active(lives_proc_thread_t);
@@ -481,6 +476,9 @@ boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other);
 
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t, uint64_t state_bits);
+
+lives_result_t lives_proc_thread_freeze_state(lives_proc_thread_t);
+lives_result_t lives_proc_thread_unfreeze_state(lives_proc_thread_t);
 
 uint64_t get_worker_id(lives_proc_thread_t);
 uint64_t get_worker_payload(uint64_t tid);
@@ -917,7 +915,12 @@ boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 // if thread is already set dontcare, value here is ignored.
 // For non-cancellable threads, this is ignored;  use lives_proc_thread_dontcare instead.
 boolean lives_proc_thread_request_cancel(lives_proc_thread_t, boolean dontcare);
-boolean lives_proc_thread_cancel_self(lives_proc_thread_t self);
+
+
+boolean _lives_proc_thread_cancel_self(lives_proc_thread_t self);
+#define lives_proc_thread_cancel_self(self) _lives_proc_thread_cancel_self(self, _FILE_REF_, _LINE_REF_ )
+
+
 #define lives_proc_thread_cancel(lpt) lives_proc_thread_cancel_self(lpt)
 boolean lives_proc_thread_get_cancel_requested(lives_proc_thread_t);
 

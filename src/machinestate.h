@@ -280,12 +280,18 @@ int get_num_cpus(void);
 double get_disk_load(const char *mp);
 double check_disk_pressure(double current);
 
-int64_t get_cpu_load(int cpun); ///< percent * 1 million
-volatile float **const get_proc_loads(boolean reset);
-
 int set_thread_cpuid(pthread_t pth);
 
-volatile float *get_core_loadvar(int corenum);
+typedef struct {
+  uint64_t boottime;
+  float *loads;
+  float *avgs;
+} cpuloadvals_t;
+
+float *get_proc_loads(boolean reset);
+volatile float const *get_core_loadvar(int corenum);
+
+uint64_t get_boottime(void);
 
 double analyse_cpu_stats(void);
 

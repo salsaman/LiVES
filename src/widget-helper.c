@@ -1016,7 +1016,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 
 
 boolean set_gui_loop_tight(boolean val) {
-  if (!is_fg_thread() || !val) gui_loop_tight = val;
+  //if (!is_fg_thread() || !val) gui_loop_tight = val;
   return TRUE;
 }
 
@@ -13922,7 +13922,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow * wi
   gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
   //gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
   get_border_size(LIVES_WIDGET(win), &wx, &wy);
-  if (x) *x = mainw->mgeom[widget_opts.monitor].width - (abs(wx) - rect.x) * 2;
+  if (x) *x = mainw->mgeom[widget_opts.monitor].width;// - (abs(wx) - rect.x) / 1.;
   if (y) *y = mainw->mgeom[widget_opts.monitor].height;
   return TRUE;
 #endif

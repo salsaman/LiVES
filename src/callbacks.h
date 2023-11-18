@@ -390,8 +390,6 @@ boolean voldown_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval
 
 boolean aud_lock_act(LiVESToggleToolButton *, livespointer statep);
 
-char *get_palette_name_for_clip(int clipno);
-
 boolean show_sync_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
 
 void on_open_vcd_activate(LiVESMenuItem *, livespointer int_type);

@@ -510,7 +510,7 @@ boolean save_clip_values(int which) {
 
         if (!save_clip_value(which, CLIP_DETAILS_UNIQUE_ID, &sfile->unique_id)) break;
         if (!save_clip_value(which, CLIP_DETAILS_FRAMES, &sfile->frames)) break;
-        if (sfile->clip_type == CLIP_TYPE_FILE && get_primary_src(which)) {
+        if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER) {
           lives_clip_data_t *cdata = get_clip_cdata(which);
           double dfps = (double)cdata->fps;
           if (!save_clip_value(which, CLIP_DETAILS_FPS, &dfps)) break;
@@ -540,7 +540,7 @@ boolean save_clip_values(int which) {
         if (!save_clip_value(which, CLIP_DETAILS_CLIPNAME, sfile->name)) break;
         if (!save_clip_value(which, CLIP_DETAILS_FILENAME, sfile->file_name)) break;
         if (!save_clip_value(which, CLIP_DETAILS_KEYWORDS, sfile->keywords)) break;
-        if (sfile->clip_type == CLIP_TYPE_FILE && get_primary_src(which)) {
+        if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER) {
           lives_decoder_t *dplug = (lives_decoder_t *)((get_primary_src(which))->actor);
           if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->dpsys->soname)) break;
           if (!save_clip_value(which, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) break;
@@ -652,6 +652,18 @@ boolean del_clip_value(int which, lives_clip_details_t what) {
   return TRUE;
 }
 
+
+char *get_palette_name_for_clip(int clipno) {
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  if (sfile) {
+    lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
+    if (srcgrp) {
+      int pal = srcgrp->apparent_pal;
+      return lives_strdup(weed_palette_get_name(pal));
+    }
+  }
+  return lives_strdup("??????");
+}
 
 
 size_t reget_afilesize(int fileno) {
@@ -1869,12 +1881,14 @@ void migrate_from_staging(int clipno) {
     if (*sfile->staging_dir) {
       char *old_clipdir, *new_clipdir, *stfile;
       old_clipdir = get_clip_dir(clipno);
-      if (sfile->achans && get_primary_src(clipno)) wait_for_bg_audio_sync(clipno);
+      if (sfile->achans && get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
+        wait_for_bg_audio_sync(clipno);
       pthread_mutex_lock(&sfile->transform_mutex);
       *sfile->staging_dir = 0;
       new_clipdir = get_clip_dir(clipno);
       lives_cp_noclobber(old_clipdir, new_clipdir);
-      if (sfile->achans && get_primary_src(clipno)) wait_for_bg_audio_sync(clipno);
+      if (sfile->achans && get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
+        wait_for_bg_audio_sync(clipno);
       lives_rmdir(old_clipdir, TRUE);
       lives_free(old_clipdir);
       stfile = lives_build_filename(new_clipdir, LIVES_STATUS_FILE_NAME, NULL);
@@ -2494,7 +2508,6 @@ if (new_file == aplay_file) return TRUE;
       jack_message2.next = NULL;
 
       mainw->jackd->msgq = &jack_message;
-
       mainw->jackd->in_use = TRUE;
 
       if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
@@ -2616,6 +2629,7 @@ void do_quick_switch(int new_file) {
   // it swaps to the other track or not
   lives_clip_t *sfile = NULL;
   boolean osc_block;
+
   int old_file = mainw->playing_file;
 
   if (!LIVES_IS_PLAYING) {
@@ -2638,63 +2652,25 @@ void do_quick_switch(int new_file) {
       && IS_VALID_CLIP(old_file))
     mainw->new_blend_file = old_file;
 
-  sfile = RETURN_VALID_CLIP(old_file);
-
   mainw->whentostop = NEVER_STOP;
 
   if (old_file != new_file) {
-    weed_layer_t *old_frame_layer = get_old_frame_layer();
-    if (old_frame_layer) weed_layer_set_invalid(old_frame_layer, TRUE);
-    if (mainw->cached_frame) {
-      weed_layer_set_invalid(mainw->cached_frame, TRUE);
-      if (mainw->cached_frame != mainw->frame_layer
-          && mainw->cached_frame != old_frame_layer) {
-        if (weed_layer_get_pixel_data(mainw->cached_frame)
-            == weed_layer_get_pixel_data(mainw->frame_layer))
-          weed_layer_nullify_pixel_data(mainw->cached_frame);
-        weed_layer_free(mainw->cached_frame);
-        mainw->cached_frame = NULL;
-      }
+    weed_layer_t *layer = get_old_frame_layer();
+    if (layer) weed_layer_set_invalid(layer, TRUE);
+
+    layer = STEAL_POINTER(mainw->cached_frame);
+    if (layer) {
+      weed_layer_set_invalid(layer, TRUE);
+      weed_layer_unref(layer);
     }
 
-    if (mainw->frame_layer) weed_layer_set_invalid(mainw->frame_layer, TRUE);
-
-    if (mainw->frame_layer_preload) {
-      // TODO - if we are preloading, find the thread loading the frame and cancel it
-      // then once cancelled, remove + free the srcgroup, we can do this async however
-      if (mainw->frame_layer_preload != mainw->frame_layer) {
-        weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
-
-        // TODO - avoid waiting, cancel thread, set layer invalid
-        // free srcgrp
-        weed_layer_unref(mainw->frame_layer_preload);
-        mainw->frame_layer_preload = NULL;
-        mainw->pred_clip = -1;
-        mainw->pred_frame = 0;
-      }
-    }
-  }
-
-  // TODO - do not invalidate the layers yet. Instead, update the clip_index and build a new nodemodel
-  // but do not update the plan. Then if the layer metadata does not change, simply relabel the layer
-  // otherwise check layer status. If it has none have yet reached LOADED,
-  // pause the loader threads, update metadata
-  // in the layers, relabel them, then resume the threads.
-  // Otherwise, one or more layers are already  being converted,
-  // - we should then run the this cycle with the current plan, allowing the layers to be converted
-  // according to the old plane, and only update the plan from the new nodemodel
-  // after this, for the following cycle.
-
-  if (mainw->blend_layer) {
-    // TODO - if swapping to fg,
-    // and status has not yet reached LOADED, we can now pause the thread,
-    // set new metadata (size, palette) for the layer, make it frame_layer,
-    // invalidate blend_layer, then resume the thread
-    weed_layer_set_invalid(mainw->blend_layer, TRUE);
+    if (mainw->frame_layer_preload)
+      weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
   }
 
   if (old_file != mainw->blend_file && !mainw->is_rendering) {
-    if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && get_primary_src(old_file)) {
+    sfile = RETURN_VALID_CLIP(old_file);
+    if (sfile && get_primary_src_type(sfile) == LIVES_SRC_TYPE_GENERATOR) {
       if (new_file != mainw->blend_file) {
         // switched from generator to another clip, end the generator
         // if we dont don this here, then this would happen on the next call to map_sources_to_tracks
@@ -2706,20 +2682,19 @@ void do_quick_switch(int new_file) {
       }
     }
 
-    if (new_file == mainw->blend_file
-        && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR
-        && get_primary_src(mainw->blend_file)) {
-      // swap fg / bg gen keys/modes
-      rte_swap_fg_bg();
+    if (new_file == mainw->blend_file) {
+      sfile = RETURN_VALID_CLIP(mainw->blend_file);
+      if (sfile && get_primary_src_type(mainw->files[mainw->blend_file])
+          == LIVES_SRC_TYPE_GENERATOR)
+        // swap fg / bg gen keys/modes
+        rte_swap_fg_bg();
     }
   }
 
   osc_block = mainw->osc_block;
   mainw->osc_block = TRUE;
 
-  if (mainw->loop_locked) {
-    unlock_loop_lock();
-  }
+  if (mainw->loop_locked) unlock_loop_lock();
 
   // this sets some minor features such as prevenitng render to same clip
   mainw->clip_switched = TRUE;
@@ -2752,13 +2727,6 @@ void do_quick_switch(int new_file) {
   set_main_title(cfile->name, 0);
 
   if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
-
-  if (CURRENT_CLIP_IS_NORMAL) {
-    char *tmp;
-    tmp = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
-    lives_snprintf(cfile->info_file, PATH_MAX, "%s", tmp);
-    lives_free(tmp);
-  }
 
   if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list && !mainw->record))
     mainw->play_end = INT_MAX;
@@ -3308,12 +3276,26 @@ LIVES_GLOBAL_INLINE void srcgrps_free_all(int nclip) {
 }
 
 
-void srcgrp_set_apparent(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, full_pal_t pally, int gamma_type) {
-  if (srcgrp && sfile) {
+void srcgrp_set_apparent(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, full_pal_t *pally, int gamma_type) {
+  if (sfile) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
-    srcgrp->apparent_pal = pally.pal;
+    srcgrp->apparent_pal = pally->pal;
     srcgrp->apparent_gamma = gamma_type;
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
+  }
+}
+
+
+void set_primary_apparent(int clipno, full_pal_t *pally, int gamma_type) {
+  lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
+  if (srcgrp) {
+    srcgrp->apparent_pal = pally->pal;
+    if (weed_palette_is_yuv(pally->pal)) {
+      srcgrp->apparent_pally.subspace = pally->subspace;
+      srcgrp->apparent_pally.sampling = pally->sampling;
+      srcgrp->apparent_pally.clamping = pally->clamping;
+    }
+    srcgrp->apparent_gamma = gamma_type;
   }
 }
 

@@ -119,8 +119,9 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
 
   if (nplanes > 1 && !ldev->is_really_grey) {
     boolean contig = FALSE;
-    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) contig = TRUE;
-    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize, ldev->palette, contig);
+    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL)) contig = TRUE;
+    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize,
+                                  ldev->palette, contig);
   } else {
     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) {
       int rowstride = weed_layer_get_rowstride(layer);
@@ -445,6 +446,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   lives_vdev_t *ldev = (lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
   unicap_property_t props[MAX_PROPS];
+  full_pal_t pally;
   lives_obj_t *obj;
   lives_rfx_t *rfx;
   double cpbytes;
@@ -554,6 +556,13 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   add_clip_src(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)ldev,
                LIVES_SRC_TYPE_DEVICE, 0, NULL, NULL);
+
+  pally.pal = ldev->palette;
+  pally.clamping = ldev->YUV_clamping;
+  pally.sampling = ldev->YUV_sampling;
+  pally.subspace = ldev->YUV_subspace;
+
+  set_primary_apparent(mainw->current_file, &pally, WEED_GAMMA_SRGB);
 
   ldev->buffer1.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
   ldev->buffer1.buffer_size = ldev->format->buffer_size;

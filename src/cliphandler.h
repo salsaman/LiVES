@@ -850,7 +850,9 @@ boolean set_primary_inst(int nclip, void *inst);
 
 void remove_primary_src(int nclip, int src_type);
 
-void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t pally, int gamma_type);
+void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t *pally, int gamma_type);
+
+void set_primary_apparent(int nclip, full_pal_t *pally, int gamma_type);
 
 // clip sources
 /* lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source, int src_type); */
@@ -898,6 +900,8 @@ boolean read_from_infofile(FILE *infofile);
 boolean do_delete_or_mark(int clipno, int typ);
 
 // query function //
+char *get_palette_name_for_clip(int clipno);
+
 boolean check_for_ratio_fps(double fps);
 
 double get_ratio_fps(const char *string);

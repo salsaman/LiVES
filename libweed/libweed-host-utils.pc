@@ -7,7 +7,7 @@ Name: libweed-host-utils
 Description: Host utilities for libweed
 Requires: 
 Requires.private: 
-Version: 0.1.15
+Version: 0.1.16
 Libs: -L${libdir} -lweed -lweed-utils -lweed-host-utils
 Static:
 Cflags: -I${includedir}

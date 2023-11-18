@@ -883,52 +883,78 @@ void lives_ann_free(lives_ann_t *ann) {
 /* } */
 
 
-typedef struct {
-  int nvals, maxsize;
-  size_t fill;
-  float **res;
-} tab_data;
+tab_data_t *init_tab_data(int arsize, int maxsize) {
+  LIVES_CALLOC_TYPE(tab_data_t, tabdata, 1);
+  if (tabdata) {
+    tabdata->arsize = arsize;
+    tabdata->maxsize = maxsize;
+    tabdata->res = LIVES_CALLOC_SIZEOF(float *, arsize);
+    if (!tabdata->res) goto err;
+    tabdata->tots = LIVES_CALLOC_SIZEOF(float, arsize);
+    if (!tabdata->tots) {
+      lives_free(tabdata->res);
+      goto err;
+    }
+    tabdata->avgs = LIVES_CALLOC_SIZEOF(float, arsize);
+    if (!tabdata->avgs) {
+      lives_free(tabdata->res);
+      lives_free(tabdata->tots);
+      goto err;
+    }
 
-// to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
-// the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
-// tab_data is used by the functionand not to be messed with
-size_t running_average(float * newval, int idx, void **data) {
-  size_t nfill;
-  if (!data) return 0;
-  else {
-    tab_data **tdatap = (tab_data **)data;
-    tab_data *tdata = *tdatap;
-    float tot = 0.;
-    if (!newval) {
-      if (!tdata) {
-        tdata = (tab_data *)lives_calloc(sizeof(tab_data), 1);
-        *tdatap = tdata;
-      }
-      if (!tdata->nvals) {
-        tdata->nvals = idx;
-        tdata->res = (float **)lives_calloc(sizeof(float *), tdata->nvals);
-      } else {
-        tdata->maxsize = idx;
-        for (int i = 0; i < tdata->nvals; i++) {
-          tdata->res[i] = (float *)lives_calloc(4, tdata->maxsize + 1);
+    else {
+      for (int i = 0; i < arsize; i++) {
+        tabdata->res[i] = LIVES_CALLOC_SIZEOF(float, maxsize);
+        if (!tabdata->res[i]) {
+          while (i--) lives_free(tabdata->res[i]);
+          lives_free(tabdata->res);
+          lives_free(tabdata->tots);
+          lives_free(tabdata->avgs);
+          goto err;
         }
       }
-      return 0;
     }
-    tot = tdata->res[idx][tdata->maxsize];
-    if (tdata->fill > tdata->maxsize - 2) {
-      tot -= tdata->res[idx][0];
-      lives_memmove(&tdata->res[idx][0], &tdata->res[idx][1], (tdata->maxsize - 1) * 4);
-    }
-    tot += *newval;
-    tdata->res[idx][tdata->fill] = *newval;
-    tdata->res[idx][tdata->maxsize] = tot;
-    *newval = tot / (tdata->fill + 1);
-    nfill = tdata->fill + 1;
-    if (idx == tdata->nvals - 1 && tdata->fill < tdata->maxsize - 1) tdata->fill++;
   }
-  return nfill;
+  return tabdata;
+
+err:
+  lives_free(tabdata);
+  return NULL;
 }
+
+
+LIVES_GLOBAL_INLINE tab_data_t *free_tabdata(tab_data_t *tabdata) {
+  if (tabdata) {
+    for (int i = 0; i < tabdata->arsize; i++)
+      lives_free(tabdata->res[i]);
+    lives_free(tabdata->res);
+    lives_free(tabdata->tots);
+    lives_free(tabdata->avgs);
+    lives_free(tabdata);
+  }
+  return NULL;
+}
+
+
+void tabdata_get_avgs(tab_data_t *tabdata, float * newvals) {
+  if (!tabdata) return;
+  if (newvals) {
+    int nvals = tabdata->nvals;
+    if (nvals == tabdata->maxsize) {
+      for (int i = tabdata->arsize; i--;) {
+        tabdata->tots[i] -= tabdata->res[i][0];
+        lives_memmove(tabdata->res[i], tabdata->res[i] + sizeof(float),
+                      (tabdata->maxsize - 1) * sizeof(float));
+      }
+    } else tabdata->nvals++;
+    for (int i = tabdata->arsize; i--;) {
+      tabdata->tots[i] += newvals[i];
+      tabdata->res[i][nvals] = newvals[i];
+      tabdata->avgs[i] = tabdata->tots[i] / tabdata->nvals;
+    }
+  }
+}
+
 
 
 lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent) {

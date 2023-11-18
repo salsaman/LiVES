@@ -30,8 +30,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts =
-  0;//TEST_WEED_UTILS;// | TEST_WEED | TEST_POINT_2 | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = 0;  //TEST_WEED | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -1179,7 +1178,10 @@ static boolean open_yuv4m_startup(livespointer data) {
 ///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
 void lazy_startup_checks(void) {
-  capable->boot_time = get_cpu_load(-1);
+  lives_proc_thread_t lpt;
+  GET_PROC_THREAD_SELF(self);
+
+  capable->boot_time = get_boottime();
 
   if (prefs->vj_mode) goto alldone;
 
@@ -1189,27 +1191,22 @@ void lazy_startup_checks(void) {
     lives_free(com);
   }
 
-  /* if (capable->has_plugins_libdir == UNCHECKED) { */
-  /*   if (check_for_plugins(prefs->lib_dir, FALSE)) { */
-  /*     mainw->helper_procthreads[PT_LAZY_RFX] = */
-  /* 	lives_proc_thread_create(LIVES_THRDATTR_NONE, */
-  /* 				 (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY); */
-  /*   } */
-  /* } */
-
-  /* while (mainw->helper_procthreads[PT_LAZY_RFX]) { */
-  /*   lives_proc_thread_pause(self); */
-  /* } */
-
-  /* /\* lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]); *\/ */
-  /* /\* mainw->helper_procthreads[PT_LAZY_RFX] = NULL; *\/ */
-  /* /\* lives_widget_destroy(mainw->ldg_menuitem); *\/ */
-  /* /\* mainw->ldg_menuitem = NULL; *\/ */
-
-  /* add_rfx_effects2(RFX_STATUS_ANY); */
-
-  //  if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
-
+  lpt = mainw->helper_procthreads[PT_LAZY_RFX];
+  if (lpt) {
+    if (lives_proc_thread_freeze_state(lpt) == LIVES_RESULT_SUCCESS) {
+      if (!_lives_proc_thread_check_states(lpt, THRD_STATE_COMPLETED)) {
+        lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, wake_other_lpt, self);
+        lives_proc_thread_unfreeze_state(lpt);
+        lives_proc_thread_pause(self);
+      } else lives_proc_thread_unfreeze_state(lpt);
+    }
+    lpt = STEAL_POINTER(mainw->helper_procthreads[PT_LAZY_RFX]);
+    lives_proc_thread_join_boolean(lpt);
+    lives_proc_thread_unref(lpt);
+    lives_widget_destroy(mainw->ldg_menuitem);
+    mainw->ldg_menuitem = NULL;
+    add_rfx_effects2(RFX_STATUS_ANY);
+  }
 alldone:
   mainw->lazy_starter = NULL;
 }
@@ -1219,7 +1216,6 @@ alldone:
 static boolean got_files = FALSE;
 
 boolean lives_startup(livespointer data) {
-  // this is run in an idlefunc
   weed_plant_t *test_plant;
   lives_hook_stack_t **lpt_hooks, **thread_hooks;
   char *tmp, *msg;
@@ -1370,7 +1366,7 @@ boolean lives_startup(livespointer data) {
     print_notice();
   }
 
-  splash_msg("Getting second stage hardware details...", .5);
+  splash_msg("Getting second stage hardware details...", SPLASH_LEVEL_PREP);
   get_machine_dets(1);
   capable->features_ready |= FEATURE_MACHINEDETS_2;
 
@@ -1392,7 +1388,7 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   // late tests (has prefs, has threadpool, has random, has gtk)
-  /* do_startup_diagnostics(test_opts); */
+  //do_startup_diagnostics(test_opts);
   /* do_startup_diagnostics(test_opts); */
 
   /* if (!font_configured) { */
@@ -1446,13 +1442,13 @@ boolean lives_startup(livespointer data) {
 
   make_std_icaps();
 
-  splash_msg("\n\nLoading realtime fx plugins...", .5);
+  splash_msg("\n\nLoading realtime fx plugins...", SPLASH_LEVEL_LOAD_RTE);
 
   /////////
   load_rte_plugins();
   ////////
 
-  splash_msg("Initializing threadpool...", .5);
+  splash_msg("Initializing threadpool...", SPLASH_LEVEL_PREP2);
   lives_threadpool_init();
   capable->features_ready |= FEATURE_THREADPOOL;
 
@@ -1472,7 +1468,6 @@ boolean lives_startup(livespointer data) {
     }
 
     if (prefs->startup_phase == 3) set_int_pref(PREF_STARTUP_PHASE, prefs->startup_phase);
-
     // we can show this now
     if (prefs->show_splash) splash_init();
   }
@@ -1567,7 +1562,7 @@ boolean lives_startup(livespointer data) {
 
   future_prefs->audio_src = prefs->audio_src;
 
-  splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
+  splash_msg(_("Starting GUI..."), SPLASH_LEVEL_START_GUI);
   LIVES_MAIN_WINDOW_WIDGET = NULL;
 
   create_LiVES();

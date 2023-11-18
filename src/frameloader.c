@@ -2232,6 +2232,7 @@ fndone:
     lock_layer_status(layer);
 
     if (!_weed_layer_check_valid(layer)) {
+      _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
       unlock_layer_status(layer);
       weed_layer_unref(layer);
       return FALSE;

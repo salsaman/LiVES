@@ -223,19 +223,17 @@ enum {
 const lives_obj_instance_t *maths_object_with_subtype(uint64_t subtype);
 lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent);
 
-// to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
-// the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
-// data is used by the functions and not to be messed with:
-//
-// static stats_pkt stats = NULL;
-// runung_average(NULL, 4, &stats);   // analyze 4 values
-// runung_average(NULL, 64, &stats); // use sliding window size 64
+typedef struct {
+  int nvals, maxsize;
+  int arsize;
+  float *avgs;
+  float *tots;
+  float **res;
+} tab_data_t;
 
-// then:
-// float fval = 0.5;
-// size_t nentries = running_average(&fval, 0, &stats);
-// appends value 0.5 to the series for variable 0. and returns the running avg in fval.
-
-size_t running_average(float *newval, int idx, void **data);
+//size_t running_average(float *newval, int idx, void **data);
+tab_data_t *init_tab_data(int arsize, int maxsize);
+void tabdata_get_avgs(tab_data_t *, float *newvals);
+tab_data_t *free_tabdata(tab_data_t *);
 
 #endif

@@ -549,33 +549,33 @@ static double get_resize_cost(int cost_type, int out_width, int out_height, int 
 
   case COST_TYPE_TIME: {
     double tcost = 1.;
-    if (glob_timing) {
-      volatile float *cpuload;
-      ann_testdata_t realdata;
+    /* if (glob_timing) { */
+    /*   volatile float *cpuload; */
+    /*   ann_testdata_t realdata; */
 
-      double outsize = (double)lives_frame_calc_bytesize(out_width, out_height, outpl, FALSE, NULL);
-      double insize = (double)lives_frame_calc_bytesize(in_width, in_height, inpl, FALSE, NULL);
+    /*   double outsize = (double)lives_frame_calc_bytesize(out_width, out_height, outpl, FALSE, NULL); */
+    /*   double insize = (double)lives_frame_calc_bytesize(in_width, in_height, inpl, FALSE, NULL); */
 
-      realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
+    /*   realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]); */
 
-      realdata.inputs[TIMING_ANN_OUTSIZE] = outsize / 1000000.;
-      realdata.inputs[TIMING_ANN_INSIZE] = insize / 1000000.;
+    /*   realdata.inputs[TIMING_ANN_OUTSIZE] = outsize / 1000000.; */
+    /*   realdata.inputs[TIMING_ANN_INSIZE] = insize / 1000000.; */
 
-      cpuload = get_core_loadvar(0);
-      realdata.inputs[TIMING_ANN_CPULOAD] = ((double) * cpuload) / 50.;
-      realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 100.;
-      if (outpl != inpl) {
-        double pval = 1.;
-        if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl))
-            || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) pval = 5;
-        realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval;
-        realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval;
-      }
-      pthread_mutex_lock(&glob_timing->ann_mutex);
-      tcost = lives_ann_predict_result(glob_timing->ann, &realdata) / 1000.;
-      pthread_mutex_unlock(&glob_timing->ann_mutex);
-      lives_free(realdata.inputs);
-    }
+    /*   cpuload = get_core_loadvar(0); */
+    /*   realdata.inputs[TIMING_ANN_CPULOAD] = ((double) * cpuload) / 50.; */
+    /*   realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 100.; */
+    /*   if (outpl != inpl) { */
+    /*     double pval = 1.; */
+    /*     if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl)) */
+    /*         || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) pval = 5; */
+    /*     realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval; */
+    /*     realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval; */
+    /*   } */
+    /*   pthread_mutex_lock(&glob_timing->ann_mutex); */
+    /*   tcost = lives_ann_predict_result(glob_timing->ann, &realdata) / 1000.; */
+    /*   pthread_mutex_unlock(&glob_timing->ann_mutex); */
+    /*   lives_free(realdata.inputs); */
+    /* } */
     return tcost;
   }
   default: break;
@@ -851,27 +851,27 @@ double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl,
     return get_qloss_p(outpl, inpl, inpals);
   if (cost_type == COST_TYPE_TIME) {
     double tcost = 0.01;
-    if (glob_timing) {
-      volatile float *cpuload;
-      ann_testdata_t realdata;
-      cpuload = get_core_loadvar(0);
+    /* if (glob_timing) { */
+    /*   volatile float *cpuload; */
+    /*   ann_testdata_t realdata; */
+    /*   cpuload = get_core_loadvar(0); */
 
-      realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
+    /* realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]); */
 
-      realdata.inputs[TIMING_ANN_CPULOAD] = ((double) * cpuload) / 50.;
-      realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 100.;
-      if (outpl != inpl) {
-        double pval = 1.;
-        if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl))
-            || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) pval = 5;
-        realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval;
-        realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval;
-      }
-      pthread_mutex_lock(&glob_timing->ann_mutex);
-      tcost = lives_ann_predict_result(glob_timing->ann, &realdata) / 1000.;
-      pthread_mutex_unlock(&glob_timing->ann_mutex);
-      lives_free(realdata.inputs);
-    }
+    /* realdata.inputs[TIMING_ANN_CPULOAD] = ((double) * cpuload) / 50.; */
+    /* realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 100.; */
+    /* if (outpl != inpl) { */
+    /*   double pval = 1.; */
+    /*   if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl)) */
+    /*       || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) pval = 5; */
+    /*   realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval; */
+    /*   realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval; */
+    /* } */
+    /* pthread_mutex_lock(&glob_timing->ann_mutex); */
+    /* tcost = lives_ann_predict_result(glob_timing->ann, &realdata) / 1000.; */
+    /* pthread_mutex_unlock(&glob_timing->ann_mutex); */
+    /* lives_free(realdata.inputs); */
+    //}
     return tcost;
   }
   return 0.;
@@ -1092,7 +1092,7 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
 
 static exec_plan_substep_t *make_substep(int op_idx, double st_time,
     int out_width, int out_height, int out_pal) {
-  volatile float *cpuload;
+  volatile float const *cpuload;
   LIVES_CALLOC_TYPE(exec_plan_substep_t, substep, 1);
   substep->op_idx = op_idx;
   substep->width = out_width;
@@ -1101,7 +1101,7 @@ static exec_plan_substep_t *make_substep(int op_idx, double st_time,
   substep->start = st_time;
   substep->pb_quality = prefs->pb_quality;
   cpuload = get_core_loadvar(0);
-  substep->cpuload = (double) * cpuload;
+  substep->cpuload = (float) * cpuload;
   glob_timing->cpu_nsamples++;
   glob_timing->av_cpuload += substep->cpuload;
   return substep;
@@ -1376,7 +1376,10 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step) {
     lives_clip_t *sfile;
     int clipno = plan->model->clip_index[step->track];
 
-    lives_layer_t *layer = plan->layers[step->track] = lives_layer_new_for_frame(clipno, 1);
+    lives_layer_t *layer;
+    layer = plan->layers[step->track];
+
+    if (!layer) layer = plan->layers[step->track] = lives_layer_new_for_frame(clipno, 1);
 
     if (prefs->dev_show_timing)
       d_print_debug("my clipno is %d\n", clipno);
@@ -3277,11 +3280,6 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
     input_node_t *in;
     int pal, cpal;
 
-    if (!n->n_inputs) {
-
-
-    }
-
     switch (n->model_type) {
     case NODE_MODELS_CLIP: {
       // for clip sources, set the clip_srcs with the correct palettes internally
@@ -3565,7 +3563,7 @@ do {
       pally.subspace = WEED_YUV_SUBSPACE_YUV;
     }
 
-    srcgrp_set_apparent(sfile, srcgrp, pally, n->gamma_type);
+    srcgrp_set_apparent(sfile, srcgrp, &pally, n->gamma_type);
     retn = desc_and_align(n, nodemodel);
   }
 } while (retn);
@@ -7548,13 +7546,20 @@ if (mainw->cancelled != CANCEL_NONE
         || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)))
   return LIVES_RESULT_INVALID;
 
-if (!IS_PHYSICAL_CLIP(mainw->playing_file))
+if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
   // trigger next plan cycle. We can start loading background frames while displaying current one
+  weed_set_boolean_value(mainw->layers[0], LIVES_LEAF_PLAN_CONTROL, TRUE);
   plan_cycle_trigger(mainw->plan_cycle);
+  lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
+  lives_layer_set_frame(mainw->layers[0], 1);
+  mainw->plan_cycle->frame_idx[1] = 1;
+  lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
+}
 
 if (mainw->blend_file != -1 && mainw->num_tracks > 1) {
   frames64_t blend_frame = get_blend_frame(mainw->currticks);
   if (blend_frame > 0) {
+    weed_set_boolean_value(mainw->layers[1], LIVES_LEAF_PLAN_CONTROL, TRUE);
     plan_cycle_trigger(mainw->plan_cycle);
     mainw->plan_cycle->frame_idx[1] = blend_frame;
     lives_layer_set_clip(mainw->layers[1], mainw->blend_file);

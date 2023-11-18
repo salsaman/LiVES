@@ -1066,7 +1066,7 @@ if test "$DISABLE_GSLICE" = "false"; then
 fi
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED, libweed >= 2.0.2, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
+PKG_CHECK_MODULES(WEED, libweed >= 2.0.3, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
 else
 echo "Check for system libweed is disabled"
 fi
@@ -1082,7 +1082,7 @@ fi
 AC_SUBST(WEED_CFLAGS)
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.2.2, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.2.3, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
 else
 echo "Check for system libweed-utils is disabled"
 fi
@@ -1095,7 +1095,7 @@ AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 0.1.15, NEED_LOCAL_WEED_HOST_UTILS=false, NEED_LOCAL_WEED_HOST_UTILS=true)
+PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 0.1.16, NEED_LOCAL_WEED_HOST_UTILS=false, NEED_LOCAL_WEED_HOST_UTILS=true)
 else
 echo "Check for system libweed-host-utils is disabled"
 fi

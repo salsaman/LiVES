@@ -3399,7 +3399,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 static int xrun_callback(void *arg) {
   jack_driver_t *jackd = (jack_driver_t *)arg;
   float delay = jack_get_xrun_delayed_usecs(jackd->client);
-  volatile float *load = get_core_loadvar(0);
+  volatile float const *load = get_core_loadvar(0);
   if (prefs->show_dev_opts) {
     g_print("\n\nXRUN: %f %f\n", delay, *load);
     //g_print("\n\nXRUN: %f\n", delay);

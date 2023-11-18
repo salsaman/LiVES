@@ -956,6 +956,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
       // cannot free layer if loading or converting, but when op is finsished,
       // caller must check refconut, and if 0 must lives_layer_free(layer)
       unlock_layer_status(layer);
+      BREAK_ME("badinv");
       LIVES_WARN("Attempt to free layer which is being converted or loading; INVALIDATE layer first please");
       return layer;
     }

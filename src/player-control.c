@@ -256,6 +256,7 @@ static void post_playback(void) {
         if (!mainw->preview_box) {
           // create the preview box that shows frames
           make_preview_box();
+          lives_window_center(LIVES_WINDOW(mainw->play_window));
         }
         // and add it to the play window
         if (!lives_widget_get_parent(mainw->preview_box)
@@ -789,7 +790,7 @@ void play_file(void) {
   cfile->play_paused = FALSE;
   mainw->actual_frame = 0;
 
-  mainw->effort = -EFFORT_RANGE_MAX;
+  mainw->effort = 0;
 
   find_when_to_stop();
 
@@ -1341,28 +1342,6 @@ void play_file(void) {
     mainw->frame_layer = NULL;
   }
 
-  /// free any pre-cached frame
-  if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
-    weed_layer_unref(mainw->frame_layer_preload);
-    if (mainw->frame_layer_preload == mainw->blend_layer)
-      mainw->blend_layer = NULL;
-  }
-  mainw->frame_layer_preload = NULL;
-
-  if (mainw->blend_layer) {
-    weed_layer_unref(mainw->blend_layer);
-    mainw->blend_layer = NULL;
-  }
-
-  /// free the last frame image(s)
-  reset_old_frame_layer();
-
-  if (mainw->nodemodel) {
-    // free the nodemodel
-    free_nodemodel(&mainw->nodemodel);
-    mainw->nodemodel = NULL;
-  }
-
   //show_weed_stats();
 
   cliplist = mainw->cliplist;
@@ -1519,6 +1498,23 @@ void play_file(void) {
   }
 
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
+
+  /// free any pre-cached frame
+  if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
+    wait_layer_ready(mainw->frame_layer_preload, TRUE);
+    weed_layer_unref(mainw->frame_layer_preload);
+  }
+  mainw->frame_layer_preload = NULL;
+
+  if (mainw->blend_layer) {
+    weed_layer_unref(mainw->blend_layer);
+    mainw->blend_layer = NULL;
+  }
+
+  /// free the last frame image(s)
+  reset_old_frame_layer();
+
+  if (mainw->nodemodel) cleanup_nodemodel(&mainw->nodemodel);
 
   if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
       && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {

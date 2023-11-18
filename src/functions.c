@@ -915,13 +915,9 @@ static void remove_ext_cb(lives_closure_t *cl) {
   // cl->adder is flushing its list
   if (cl) {
     lives_proc_thread_t lpt = cl->adder;
-    if (lpt) {
-      pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
-      if (state_mutex) {
-        pthread_mutex_lock(state_mutex);
-        if (cl->adder == lpt) _remove_ext_cb(lpt, cl);
-        pthread_mutex_unlock(state_mutex);
-      }
+    if (lives_proc_thread_freeze_state(lpt) == LIVES_RESULT_SUCCESS) {
+      if (cl->adder == lpt) _remove_ext_cb(lpt, cl);
+      lives_proc_thread_unfreeze_state(lpt);
     }
   }
 }
@@ -1008,11 +1004,10 @@ static boolean fn_data_replace(lives_proc_thread_t dst, lives_proc_thread_t src)
 
 static void add_to_cb_list(lives_proc_thread_t self, lives_closure_t *closure) {
   // when adding a hook cb to another hook stack, keep a pointert to it
-  pthread_mutex_t *state_mutex = weed_get_voidptr_value(self, LIVES_LEAF_STATE_MUTEX, NULL);
-  if (state_mutex && !pthread_mutex_lock(state_mutex)) {
+  if (lives_proc_thread_freeze_state(self) == LIVES_RESULT_SUCCESS) {
     LiVESList *ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
     weed_set_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, lives_list_prepend(ext_cbs, (void *)closure));
-    pthread_mutex_unlock(state_mutex);
+    lives_proc_thread_unfreeze_state(self);
   }
 }
 
@@ -1026,39 +1021,34 @@ void flush_cb_list(lives_proc_thread_t lpt) {
   // vice versa, when a lpt exits, it will lock its state, go throught the list
   // trylock for the first closure, on failing it will start over again
   // if it gets the lock it will set adder to null and flag for removel
-
-  pthread_mutex_t *state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
-  pthread_mutex_lock(state_mutex);
-
-  while (1) {
-    LiVESList *xlist = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
-    lives_closure_t *cl;
-    if (!xlist) break;
-    cl = (lives_closure_t *)xlist->data;
-    if (!cl) {
+  if (lives_proc_thread_freeze_state(lpt) == LIVES_RESULT_SUCCESS) {
+    while (1) {
+      LiVESList *xlist = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
+      lives_closure_t *cl;
+      if (!xlist) break;
+      cl = (lives_closure_t *)xlist->data;
+      if (!cl) {
+        xlist = lives_list_remove_node(xlist, xlist, FALSE);
+        weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, xlist);
+        continue;
+      }
+      // now we need to trylock the closure, if we cannot get it, it means the owner is about to
+      // delete the entry itself and is wating on state mutex
+      // so we will drop state_mutex, regain it, then start over parsing the list
+      if (pthread_mutex_trylock(&cl->mutex)) {
+        lives_proc_thread_unfreeze_state(lpt);
+        pthread_yield();
+        // allow the stack owner to delete this
+        lives_proc_thread_freeze_state(lpt);
+        continue;
+      }
+      cl->adder = NULL;
+      cl->flags |= HOOK_STATUS_REMOVE;
       xlist = lives_list_remove_node(xlist, xlist, FALSE);
       weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, xlist);
-      continue;
     }
-    // now we need to trylock the closure, if we cannot get it, it means the owner is about to
-    // delete the entry itself and is wating on state mutex
-    // so we will drop state_mutex, regain it, then start over parsing the list
-    if (pthread_mutex_trylock(&cl->mutex)) {
-      pthread_mutex_unlock(state_mutex);
-      pthread_yield();
-      // allow the stack owner to delete this
-      pthread_mutex_lock(state_mutex);
-      continue;
-    }
-    cl->adder = NULL;
-
-
-    cl->flags |= HOOK_STATUS_REMOVE;
-    pthread_mutex_unlock(&cl->mutex);
-    xlist = lives_list_remove_node(xlist, xlist, FALSE);
-    weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, xlist);
+    lives_proc_thread_unfreeze_state(lpt);
   }
-  pthread_mutex_unlock(state_mutex);
 }
 
 

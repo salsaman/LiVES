@@ -57,21 +57,11 @@ typedef void (*func_ptr)(void *);
 // Warning - CPU_BITS macro evaluates only at runtime (uses sizeof)
 #define CPU_BITS ((sizeof(void *)) << 3)
 
-#ifndef NEED_LOCAL_WEED
 #include <weed/weed-plugin.h>
 #include <weed/weed.h>
-#else
-#include "../../../../libweed/weed-plugin.h"
-#include "../../../../libweed/weed.h"
-#endif
-
-#ifndef NEED_LOCAL_WEED_UTILS
 #include <weed/weed-utils.h>
-#else
-#include "../../../../libweed/weed-utils.h"
-#endif
+#include <weed/weed-plugin-utils/weed-plugin-utils.c>
 
-#include "../../../weed-plugins/weed-plugin-utils.c"
 #define _EARLY_DEFS_
 #include "lives-plugin.h"
 #undef _EARLY_DEFS_

@@ -1,22 +1,24 @@
 dnl Process this file with autoconf to produce a configure script.
+
 AC_PREREQ(2.57)
+
+AC_PREFIX_DEFAULT(/usr)
 
 ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES, 3.2.1-pre, https://github.com/salsaman/LiVES/issues, , http://lives-video.com)
+AC_INIT(LiVES, 4.0.0-pre, https://github.com/salsaman/LiVES/issues, , http://lives-video.com)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_SUBDIRS([libweed])
+AC_CONFIG_AUX_DIR([.])
+
 AM_INIT_AUTOMAKE([dist-bzip2])
 
 AM_MAINTAINER_MODE
-AC_PREFIX_DEFAULT(/usr)
-
-dnl AM_INTL_SUBDIR
 
 AC_GNU_SOURCE
 AC_ISC_POSIX
@@ -24,9 +26,11 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
 
-AC_PROG_MKDIR_P
+AM_INTL_SUBDIR
 
 AC_CONFIG_MACRO_DIR([m4])
+
+AC_PROG_MKDIR_P
 
 AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
@@ -40,8 +44,7 @@ AC_SYS_LARGEFILE
 
 AM_PROG_AS
 
-dnl AC_DEFINE([LiVES_VERSION],[],[Description])
-dnl AC_CONFIG_HEADERS(config.h)
+PKG_PROG_PKG_CONFIG
 
 PTHREAD_OK="false"
 ACX_PTHREAD
@@ -440,26 +443,6 @@ AC_SUBST(GTK_LIBS_NODYNAMIC)
 PKG_CHECK_EXISTS([glib-2.0 >= 2.14.0],[HAVE_GLIB_VERSION214=true],[HAVE_GLIB_VERSION214=false])
 PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])
 
-
-DISABLE_GSLICE=true
-
-if test "$DISABLE_RPMALLOC" = "false"; then
-echo "using built-in rpmalloc memory allocator; not checking for glib-slice-allocator"
-
-else
-
-AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (only relevant if --disable-rpmalloc is also set)] , disable_gslice=yes)
-
-if test "$disable_gslice" = "yes" ; then
-DISABLE_GSLICE=false
-echo "glib-slice-allocator disabled"
-echo "*** will use only standard memory allocators ***"
-
-else
-
-echo "WARNING:  *** rpmalloc memory allocator disabled; falling back to glib-slice-allocator"
-echo "(include option --disable-glib-slice-allocator to disable this behaviour)"
-
 if test "x$HAVE_GLIB_VERSION24" = "xfalse"; then
 echo "***********************************************"
 echo "LiVES requires glib-2.0 version 2.4.0 or higher"
@@ -474,25 +457,14 @@ echo "***********************************************"
 fi
 fi
 
-fi
-fi
-
 if test "$HAVE_GTK_VERSION216" = "false"; then
 echo "***********************************************"
 echo "LiVES runs best with gtk+-2.0 version 2.16.0 or higher"
 echo "***********************************************"
 fi
 
-if test "$DISABLE_GSLICE" = "false"; then
-PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.14.0)
-else
-PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.4.0)
-fi
-
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-
-AM_CONDITIONAL(DISABLE_GSLICE, $DISABLE_GSLICE)
 
 dnl giw
 if test "x$HAVE_GTK_VERSION206" = "xfalse"; then
@@ -1042,121 +1014,54 @@ fi
 fi
 AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
-AC_ARG_ENABLE(system-weed, [  --disable-system-weed Disable check system weed.] , disable_system_weed=yes)
-if test "$IS_MINGW" = "false"; then
+PKG_CHECK_MODULES(WEED, libweed >= 4.0.0, HAVE_LIBWEED=true, HAVE_LIBWEED=false)
 
-if test "x$disable_system_weed" != "xyes"; then
-NEED_LOCAL_WEED=false
-NEED_LOCAL_WEED_UTILS=false
-NEED_LOCAL_WEED_COMPAT=false
-NEED_LOCAL_WEED_PLUGIN=false
-NEED_LOCAL_WEED_HOST_UTILS=false
-else
-NEED_LOCAL_WEED=true
-NEED_LOCAL_WEED_UTILS=true
-NEED_LOCAL_WEED_COMPAT=true
-NEED_LOCAL_WEED_PLUGIN=true
-NEED_LOCAL_WEED_HOST_UTILS=true
-fi
-
-DISABLE_GSLICE=true
-
-if test "$DISABLE_GSLICE" = "false"; then
-   DISABLE_GSLICE=false
-fi
-
-if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED, libweed >= 2.0.3, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
-else
-echo "Check for system libweed is disabled"
-fi
-
-if test "$NEED_LOCAL_WEED" = "true"; then
-echo "...will try to build from included sources"
+if test "$HAVE_LIBWEED" = "false"; then
+AC_MSG_ERROR([Required library libweed was not found. Please install it and try again.])
 fi
 
 AC_SUBST(WEED_LIBS)
-
-fi
-
 AC_SUBST(WEED_CFLAGS)
 
-if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.2.3, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
-else
-echo "Check for system libweed-utils is disabled"
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 4.0.0, HAVE_LIBWEED_UTILS=true, HAVE_LIBWEED_UTILS=false)
+
+if test "$HAVE_LIBWEED_UTILS" = "false"; then
+AC_MSG_ERROR([Required library libweed-utils was not found. Please install it and try again.])
 fi
 
-if test "$NEED_LOCAL_WEED_UTILS" = "true"; then
-echo "...will use weed-utils.h from included sources"
-fi
 
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
 
-if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 0.1.16, NEED_LOCAL_WEED_HOST_UTILS=false, NEED_LOCAL_WEED_HOST_UTILS=true)
-else
-echo "Check for system libweed-host-utils is disabled"
-fi
+PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 4.0.0, HAVE_LIBWEED_HOST_UTILS=true, HAVE_LIBWEED_HOST_UTILS=false)
 
-if test "$NEED_LOCAL_WEED_HOST_UTILS" = "true"; then
-echo "...will use weed-host-utils.h from included sources"
+if test "$HAVE_LIBWEED_HOST_UTILS" = "false"; then
+AC_MSG_ERROR([Required library libweed-host-utils was not found. Please install it and try again.])
 fi
 
 AC_SUBST(WEED_HOST_UTILS_CFLAGS)
 AC_SUBST(WEED_HOST_UTILS_LIBS)
 
-echo "weed_host_utils_libs is $WEED_HOST_UTILS_LIBS"
+PKG_CHECK_MODULES(WEED_EXTRAS, weed-extras >= 4.0.0, HAVE_WEED_EXTRAS=true, HAVE_WEED_EXTRAS=false)
 
-if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.14.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
-else
-echo "Check for system libweed-compat is disabled"
+if test "$HAVE_WEED_EXTRAS" = "false"; then
+AC_MSG_ERROR([weed-compat.h or weed-palettes.h appear to be missing or too old. Please install it and try again.])
 fi
 
-if test "$NEED_LOCAL_WEED_COMPAT" = "true"; then
-echo "...will use version from included sources"
+PKG_CHECK_MODULES(WEED_PLUGIN_UTILS, weed-plugin-utils >= 4.0.0, HAVE_WEED_PLUGIN_UTILS=true, HAVE_WEED_PLUGIN_UTULS=false)
+
+if test "$HAVE_WEED_PLUGIN_UTILS" = "false"; then
+AC_MSG_ERROR([weed-plugin-utils appear to be missing or too old. Please install it and try again.])
 fi
-
-AC_SUBST(WEED_COMPAT_CFLAGS)
-AC_SUBST(WEED_COMPAT_LIBS)
-
-if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.1.1, NEED_LOCAL_WEED_PLUGIN=false, NEED_LOCAL_WEED_PLUGIN=true)
-else
-echo "Check for system libweed-plugin is disabled"
-fi
-
-if test "$NEED_LOCAL_WEED_PLUGIN" = "true"; then
-echo "...plugins will be compiled with included sources"
-fi
-
-AC_SUBST(WEED_PLUGIN_CFLAGS)
-AC_SUBST(WEED_PLUGIN_LIBS)
-
-AM_CONDITIONAL(NEED_LOCAL_WEED,         	$NEED_LOCAL_WEED)
-AM_CONDITIONAL(DISABLE_GSLICE,  		$DISABLE_GSLICE)
-AM_CONDITIONAL(NEED_LOCAL_WEED_UTILS,   	$NEED_LOCAL_WEED_UTILS)
-AM_CONDITIONAL(NEED_LOCAL_WEED_HOST_UTILS,   	$NEED_LOCAL_WEED_HOST_UTILS)
-AM_CONDITIONAL(NEED_LOCAL_WEED_COMPAT,  	$NEED_LOCAL_WEED_COMPAT)
-AM_CONDITIONAL(NEED_LOCAL_WEED_PLUGIN,  	$NEED_LOCAL_WEED_PLUGIN)
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL, false)
 
 AC_ARG_ENABLE(liblives, [  --enable-liblives     Build additional liblives static library.] , liblives=yes, liblives=no)
 
-if test "$liblives" = "yes"; then
-if test "$disable_glslice" = "yes" ; then
-AC_MSG_ERROR("cannot disable glib-slice when building liblives")
-fi
-fi
-
 AM_CONDITIONAL(BUILD_LIBLIVES, test $liblives != no)
 
 dnl find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
 AC_CONFIG_FILES([
-libweed/Makefile
 libOSC/Makefile
 libOSC/client/Makefile
 libOSC/sendOSC/Makefile
@@ -1189,10 +1094,12 @@ lives-plugins/weed-plugins/gdk/Makefile
 lives-plugins/weed-plugins/cairo/Makefile
 lives-plugins/marcos-encoders/Makefile
 ])
-AC_OUTPUT
 
 dnl lives-plugins/weed-plugins/supercollider/Makefile
 dnl lives-plugins/weed-plugins/experimental/Makefile
+
+AC_OUTPUT
+
 
 if test "$HAVE_JACK" != "true"; then
 echo
@@ -1231,10 +1138,6 @@ fi
 
 echo "*******************************************************************"
 echo "LiVES is now configured and ready for building."
-echo "If you are building for MULTILIBS on a 64 bit system, "
-echo "you may wish to re-run this, e.g.: ./configure --libdir=/usr/lib64"
-echo "In this case you MUST also manually update the library paths in libweed/*.pc files."
-echo ""
-echo "Remember to do \"sudo ldconfig\" or equivalent after installing."
+echo
 echo  "*******************************************************************"
 

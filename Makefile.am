@@ -12,34 +12,10 @@ endif
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
                        stamp-h.in config.log config.cache config.status
 
-if !IS_MINGW
-
-if NEED_LOCAL_WEED
-WEED_SUBDIRS=libweed
-endif
-
-if NEED_LOCAL_WEED_UTILS
-WEED_SUBDIRS=libweed
-endif
-
-if NEED_LOCAL_WEED_HOST_UTILS
-WEED_SUBDIRS=libweed
-endif
-
-if NEED_LOCAL_WEED_COMPAT
-WEED_SUBDIRS=libweed
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-WEED_SUBDIRS=libweed
-endif
-
-endif
-
-SUBDIRS = $(OSC_SUBDIRS) $(WEED_SUBDIRS) src m4 lives-plugins po resources
+SUBDIRS = $(OSC_SUBDIRS)  src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
-docdir = "$(prefix)/share/doc/$(PACKAGE)"
+docdir = "$(prefix)/share/doc"
 sharedir = "$(prefix)/share"
 
 if HAVE_DOXYGEN
@@ -53,7 +29,6 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-#NOTE - if packaging libweed separately, weed-docs should go in libweed/Makefile.am
 doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS ChangeLog FEATURES GETTING.STARTED README OMC/lives-OMC.txt RFX/LiVES-Perl.odt  RFX/rfxbuilder.odt RFX/RFX.spec weed-docs/weedspec.txt weed-docs/weedevents.txt docs/clip_format.txt docs/c++-bindings.odt
 
 EXTRA_DIST = \
@@ -87,11 +62,9 @@ EXTRA_DIST = \
 	$(doc_DATA)
 
 installdirs: 
-	mkinstalldirs
-	"$(srcdir)/mkinstalldirs" \
-	$(MKDIR_P) "$(DESTDIR)$(bindir)" \
-	$(MKDIR_P) "$(DESTDIR)$(datadir)" \
-	$(MKDIR_P) "$(DESTDIR)$(docdir)" \
+	$(MKDIR_P) "$(DESTDIR)$(bindir)"
+	$(MKDIR_P) "$(DESTDIR)$(datadir)"
+	$(MKDIR_P) "$(DESTDIR)$(docdir)/$(PACKAGE)"
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/" \
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/pixmaps/" \
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/resources/" \
@@ -100,22 +73,15 @@ installdirs:
 install-data-local:
 	make docs-doxygen
 if HAVE_DOXYGEN
-	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/LiVES"
-	cp -rf "$(srcdir)/docs/doxygen/html/"* "$(DESTDIR)$(docdir)/html/LiVES"
+	$(MKDIR_P) "$(DESTDIR)$(docdir)/$(PACKAGE)/html"
+	cp -rf "$(srcdir)/docs/doxygen/html/" "$(DESTDIR)$(docdir)/$(PACKAGE)/html"
 if BUILD_LIBLIVES
-	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/liblives"
-	cp -rf "$(srcdir)/docs/doxygen/liblives/html/"* "$(DESTDIR)$(docdir)/html/liblives"
-endif
-#NOTE - if packaging libweed separately, this should go in libweed/Makefile.am
-	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/libweed"
-
-if NEED_LOCAL_WEED
-	cp -rf "$(srcdir)/weed-docs/doxygen/html/"* "$(DESTDIR)$(docdir)/html/libweed"
+	cp -rf "$(srcdir)/docs/doxygen/liblives/html/"* "$(DESTDIR)$(docdir)/$(PACKAGE)/html/liblives"
 endif
 
 endif
 	$(MKDIR_P) "$(DESTDIR)$(docdir)"
-	@echo $(VERSION) > "$(DESTDIR)$(docdir)/version"
+	@echo $(VERSION) > "$(DESTDIR)$(docdir)/$(PACKAGE)/version"
 
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/"
 	cp -f "$(srcdir)/menu-entries/LiVES.desktop" "$(DESTDIR)$(sharedir)/applications/"
@@ -145,7 +111,7 @@ endif
 	cp -f "$(srcdir)/resources/datacons.map" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
 
 install-exec-local:
-	rm -rf "$(DESTDIR)$(bindir)/lives"
+	rm -f "$(DESTDIR)$(bindir)/lives"
 	cp -f "$(srcdir)/smogrify" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/smogrify"
 	cp -f "$(srcdir)/midistart" "$(DESTDIR)$(bindir)/lives-midistart" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistart"
 	cp -f "$(srcdir)/midistop" "$(DESTDIR)$(bindir)/lives-midistop" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistop"
@@ -162,24 +128,25 @@ install-exec-hook:
 	$(LN_S) "lives-exe" "$(DESTDIR)$(bindir)/lives"
 
 uninstall-local:
-	rm -rf "$(bindir)/lives"
-	rm -rf "$(bindir)/lives-exe"
-	rm -rf "$(bindir)/smogrify"
-	rm -rf "$(bindir)/lives-midistart"
-	rm -rf "$(bindir)/lives-midistop"
-	rm -rf "$(bindir)/autolives.pl"
-	rm -rf "$(bindir)/build-lives-rfx-plugin"
-	rm -rf "$(bindir)/build-lives-rfx-plugin-multi"
+	rm -f "$(bindir)/lives"
+	rm -f "$(bindir)/lives-exe"
+	rm -f "$(bindir)/smogrify"
+	rm -f "$(bindir)/lives-midistart"
+	rm -f "$(bindir)/lives-midistop"
+	rm -f "$(bindir)/autolives.pl"
+	rm -f "$(bindir)/build-lives-rfx-plugin"
+	rm -f "$(bindir)/build-lives-rfx-plugin-multi"
 	rm -rf "$(datadir)/$(PACKAGE)"
 	rm -rf "$(libdir)/$(PACKAGE)"
 	rm -rf "$(sharedir)/$(PACKAGE)"
-	rm -rf "$(docdir)"
+	rm -rf "$(docdir)/$(PACKAGE)"
 	rm -rf "$(sharedir)/applications/LiVES.desktop"
 	rm -rf "$(sharedir)/pixmaps/lives.xmp"
 
 	@echo
 	@echo "		*** WARNING - user specific configuration files have NOT been removed."
 	@echo "		*** To complete uninstallation, you may wish to remove ~/.lives and ~/.lives-dir" 
+
 
 dist-hook:
 	"$(top_srcdir)/po/update_with_plugins.sh" dist "$(PACKAGE)" "$(prefix)"

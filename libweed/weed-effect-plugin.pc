@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+includedir=${prefix}/include/weed
+
+Name: weed-effect-plugin
+Description: Effect plugin headers and code for libweed
+
+Requires.private: libweed >= 4.0.0, libweed-utils >= 4.0.0
+Requires: weed-extras >= 4.0.0
+Version: 4.0.0
+Cflags: -I${includedir}

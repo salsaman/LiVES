@@ -38,14 +38,14 @@
 #define __LIBWEED__
 #define __WEED__HOST__
 
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
+#ifdef _BUILD_LOCAL_
 #include "weed.h"
 #include "weed-effects.h"
 #include "weed-utils.h"
+#else
+#include <weed/weed.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #endif
 
 /////////////////////////////////////////////////////////////////

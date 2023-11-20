@@ -1,20 +1,77 @@
-# NOTE - warnings about underlinking can safely be ignored, since the host will (MUST)
-# supply definitions of all missing (extern) symbols
-
-# this is deliberate to allow host and plugins to use different versions of the same 
-# functions, and to allow memory functions to be overloaded
-
-# NOTE also, only the host may (MUST) dynamically link libweed
-# plugins may statically link libweed-utils, etc.
-
 # see the Weed spec for more details
+
+## Process this file with automake to produce Makefile.in
+
+AUTOMAKE_OPTIONS = 1.7
+
+ACLOCAL_AMFLAGS = -I m4
+
+MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
+                       stamp-h.in config.log config.cache config.status
+
+WEED_SO_VERSION = 4:0:0
+
+WEED_HSO_VERSION = 4:0:0
+
+LIBPACKAGE = lib$(PACKAGE)
+
+LIBS =
 
 DOXYGEN = @DOXYGEN@
 
-install-data-local:
-	make docs-doxygen
-	$(MKDIR_P) "$(DESTDIR)$(libdir)/pkgconfig/"
-	cp -f libweed*.pc "$(DESTDIR)$(libdir)/pkgconfig/"
+distdir = $(LIBPACKAGE)-$(VERSION)
+
+sharedir = $(prefix)/share/
+docdir = $(sharedir)doc/$(PACKAGE)/
+includedir = $(prefix)/include/
+
+libdir = $(prefix)/lib/
+
+pkgconfigdir = $(libdir)$(host_cpu)-$(host_os)/pkgconfig/
+
+weed_includedir = $(includedir)$(PACKAGE)/
+weed_pluginutilsdir = $(weed_includedir)weed-plugin-utils/
+
+
+weed_headers = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h \
+	weed-effects.h weed-compat.h weed-plugin-utils.h weed-host-utils.h
+
+weed_pluginutils_files = weed-plugin-utils.c
+
+doc_DATA = docs/weedspec.txt docs/weedevents.txt docs/weedaudio.txt docs/weed-plugin-utils.txt \
+	docs/weed-utils.txt
+
+EXTRA_DIST = configure COPYING.LGPL README libweed.doxygen $(doc_DATA) weed-plugin-utils.c \
+	libweed.pc weed-effect-plugin.pc libweed-host-utils.pc libweed-utils.pc weed-extras.pc \
+	$(weed_headers)
+
+if IS_DARWIN
+extra_ldflags =  --tag=disable-static
+extra_cflags = -Wno-unused-function  -D_BUILD_LOCAL_
+else
+extra_ldflags = -fPIC -DPIC --tag=disable-static
+extra_cflags = -fPIC -DPIC -O3 -Wno-unused-function -D_BUILD_LOCAL_
+endif
+
+lib_LTLIBRARIES = libweed.la libweed-utils.la libweed-host-utils.la
+
+libweed_la_SOURCES = weed.c
+
+libweed_utils_la_SOURCES = weed-utils.c 
+
+libweed_host_utils_la_SOURCES = weed-host-utils.c
+
+libweed_la_CFLAGS = -fvisibility=hidden -pthread $(extra_cflags)
+libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) -pthread
+
+libweed_utils_la_CFLAGS = $(extra_cflags)
+libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
+
+libweed_host_utils_la_CFLAGS = $(extra_cflags)
+libweed_host_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_HSO_VERSION)
+
+
+#### targets
 
 if HAVE_DOXYGEN
 docs-doxygen:
@@ -24,84 +81,42 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-WEED_SO_VERSION = 2:0:2
-WEED_PSO_VERSION = 1:15:1
-WEED_HSO_VERSION = 1:15:1
 
-LIBS =
+installdirs:
+	$(MKDIR_P) "$(DESTDIR)$(docdir)"
+	$(MKDIR_P) "$(DESTDIR)$(weed_includedir)"
+	$(MKDIR_P) "$(DESTDIR)$(weed_pluginutilsdir)"
+	$(MKDIR_P) "$(DESTDIR)$(pkgconfigdir)"
 
-if IS_DARWIN
-extra_ldflags = 
+install-data-local:
+	make installdirs
 
-extra_cflags = -Wno-unused-function
+	make docs-doxygen
+if HAVE_DOXYGEN
+	cp -rf docs/doxygen/html "$(DESTDIR)$(docdir)"
+endif
+
+	cp -f $(weed_headers) "$(DESTDIR)$(weed_includedir)"
+
+	cp -f $(LIBPACKAGE)*.pc $(PACKAGE)*.pc "$(DESTDIR)$(pkgconfigdir)"
+
+	cp -f $(weed_pluginutils_files) "$(DESTDIR)$(weed_pluginutilsdir)"
+
+if HAVE_DOXYGEN
+docs-doxygen:
+	$(DOXYGEN) libweed.doxygen
 else
-extra_ldflags = -fPIC -DPIC
-
-extra_cflags = -fPIC -DPIC -O3 -Wno-unused-function -Wno-pointer-to-int-cast
+docs-doxygen:
+	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
-
-if NEED_LOCAL_WEED
-extra_cflags += -DNEED_LOCAL_WEED
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-extra_cflags += -DNEED_LOCAL_WEED_PLUGIN
-endif
-
-if NEED_LOCAL_WEED_HOST_UTILS
-extra_cflags += -DNEED_LOCAL_WEED_HOST_UTILS
-endif
-
-lib_LTLIBRARIES = libweed.la libweed-utils.la libweed-host-utils.la libweed-utils_scripting.la
-
-EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed-host-utils.pc libweed-utils.pc libweed-compat.pc
-
-libweed_la_SOURCES = weed.c
-
-libweed_utils_la_SOURCES = weed-utils.c 
-
-#libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
-
-libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
-
-libweed_host_utils_la_SOURCES = weed-host-utils.c
-
-libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
-	weed-compat.h weed-plugin-utils.h weed-host-utils.h
-
-libweedincludedir = "$(includedir)/weed"
-
-libweed_ladir = "$(libdir)/weed"
-libweed_scripting_ladir = "$(libdir)/weed"
-
-libweed_la_CFLAGS = -fvisibility=hidden $(extra_cflags) @TURBO_CFLAGS@
-
-shared_LDFLAGS = -shared --tag=disable-static
-
-libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION)
-
-libweed_la_LDFLAGS += -pthread
-libweed_la_CFLAGS += -pthread
-
-libweed_utils_la_CFLAGS = $(extra_cflags)
-libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
-
-libweed_host_utils_la_CFLAGS = $(extra_cflags)
-libweed_host_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_HSO_VERSION)
-
-#libweed_plugin_utils_la_CFLAGS =
-#libweed_plugin_utils_la_LDFLAGS = -version-info $(WEED_PSO_VERSION) -static
-
-libweed_utils_scripting_la_CFLAGS = $(extra_cflags) @GLIB_CFLAGS@
-libweed_utils_scripting_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS) @GLIB_LIBS@
 
 uninstall-local:
-	rm -rf "$(libweedincludedir)"
-	rm -rf "$(libweed_ladir)"
-	rm -rf "$(libdir)/libweed"*
-	rm -rf "$(libdir)/pkgconfig/libweed"*
+	rm -rf "$(docdir)"
+	rm -rf "$(weed_includedir)"
+	rm -f "$(pkgconfigdir)$(LIBPACKAGE)"*
+	rm -f "$(pkgconfigdir)$(PACKAGE)"*
+	rm -f "$(libdir)pkgconfig/libweed"*
 
 install-exec-hook:
-	rm -f /usr/lib/libweed*.la
-## The following is removed as it breaks packaging.
-#	/sbin/ldconfig
+	rm -f "$(libdir)$(LIBPACKAGE)"*.la
+	rm -f "$(libdir)$(LIBPACKAGE)"*.a

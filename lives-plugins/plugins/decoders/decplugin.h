@@ -49,25 +49,13 @@ extern "C"
 #endif
 #endif
 
-#ifndef NEED_LOCAL_WEED
 #include <weed/weed-plugin.h>
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#ifndef NEED_LOCAL_WEED_UTILS
 #include <weed/weed-utils.h>
-#else
-#include "../../../libweed/weed-utils.h"
-#endif
-#else
-#include "../../../libweed/weed-plugin.h"
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#include "../../../libweed/weed-utils.h"
-#endif
 
-#include "../../weed-plugins/weed-plugin-utils.c"
+#include <weed/weed-plugin-utils/weed-plugin-utils.c>
 
 #include "lives-plugin.h"
 

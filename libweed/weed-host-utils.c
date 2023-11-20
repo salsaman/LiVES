@@ -47,26 +47,18 @@
 #define __LIBWEED__
 #define __WEED__HOST__
 
-#if NEED_LOCAL_WEED
-#include "../libweed/weed-host.h"
-#include "../libweed/weed.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-host-utils.h"
+#ifdef _BUILD_LOCAL_
+#include "weed-host.h"
+#include "weed.h"
+#include "weed-utils.h"
+#include "weed-host-utils.h"
+#include "weed-effects.h"
+#include "weed-palettes.h"
 #else
 #include <weed/weed-host.h>
 #include <weed/weed.h>
-#if NEED_LOCAL_WEED_UTILS
-#include "../libweed/weed-utils.h"
-#else
 #include <weed/weed-utils.h>
-#endif
-#if NEED_LOCAL_WEED_HOST_UTILS
-#include "../libweed/weed-host-utils.h"
-#else
 #include <weed/weed-host-utils.h>
-#endif
 #include <weed/weed-effects.h>
 #include <weed/weed-palettes.h>
 #endif

@@ -14,21 +14,11 @@ static int package_version = 1; // version of this package
 
 #define NEED_AUDIO
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
-#ifndef NEED_LOCAL_WEED_UTILS
-#include <weed/weed-utils.h> // optional
-#else
-#include "../../libweed/weed-utils.h" // optional
-#endif
+#include <weed/weed-utils.h>
 #include <weed/weed-plugin-utils.h>
-#else
-#include "../../libweed/weed-plugin.h"
-#include "../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed-plugin-utils.h" // optional
-#endif
 
-#include "weed-plugin-utils.c" // optional
+#include <weed/weed-plugin-utils/weed-plugin-utils.c>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 

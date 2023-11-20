@@ -152,40 +152,10 @@ libexplain_LDADD = @LIBEXPLAIN_LIBS@
 libexplain_CFLAGS = @LIBEXPLAIN_CFLAGS@ -DHAVE_LIBEXPLAIN=1
 endif
 
-if !NEED_LOCAL_WEED
-libweed_LDADD = @WEED_LIBS@
+
+libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@ @WEED_HOST_UTILS_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@
-else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la
-libweed_CFLAGS = -DNEED_LOCAL_WEED=1
-endif
 
-if !NEED_LOCAL_WEED_UTILS
-libweed_LDADD += @WEED_UTILS_LIBS@
-else
-libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-utils.la
-libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
-endif
-
-if !NEED_LOCAL_WEED_HOST_UTILS
-libweed_LDADD += @WEED_HOST_UTILS_LIBS@
-else
-libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-host-utils.la
-libweed_CFLAGS += -DNEED_LOCAL_WEED_HOST_UTILS=1
-endif
-
-
-if DISABLE_GSLICE
-libweed_CFLAGS += -DDISABLE_GSLICE=1
-endif
-
-if NEED_LOCAL_WEED_UTILS
-libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
-endif
-
-if NEED_LOCAL_WEED_COMPAT
-libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
-endif
 
 if HAVE_PULSE_AUDIO
 pulse_LDADD = @PULSE_LIBS@
@@ -326,7 +296,7 @@ AM_CFLAGS += -fcommon -fPIE -Wstrict-aliasing=0 -Wall \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(freeBSD_CFLAGS) $(mingw_CFLAGS) \
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) \
-	$(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
+	$(libweed_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@ \
 	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) \
 	$(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS) $(pthread_CFLAGS)
@@ -401,15 +371,6 @@ extra_LDFLAGS = @X11_LIBS@ $(wayland_LIBS) @MJPEGTOOLS_LIBS@ \
 
 lives_exe_LDFLAGS += -shared $(extra_LDFLAGS)
 
-#if NEED_SCRIPTING_LIBS
-#if !NEED_LOCAL_WEED
-#libweed_scripting_LIBS = -lweed_gslice -lweed-utils
-#libweed_scripting_CFLAGS = @WEED_CFLAGS@
-#else
-#libweed_scripting_LIBS = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
-#libweed_scripting_CFLAGS = @WEED_CFLAGS@ -D__LIBWED__ -DNEED_LOCAL_WEED=1
-#endif
-#endif
 
 liblives_la_LDFLAGS = $(extra_LDFLAGS) -lOSC
 liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function

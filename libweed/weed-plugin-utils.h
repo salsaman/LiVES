@@ -42,17 +42,10 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#ifndef NEED_LOCAL_WEED
 #include <weed/weed-plugin.h>
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#else
-#include "weed-plugin.h"
-#include "weed.h"
-#include "weed-palettes.h"
-#include "weed-effects.h"
-#endif
 
 /* Define EXPORTED for any platform */
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW

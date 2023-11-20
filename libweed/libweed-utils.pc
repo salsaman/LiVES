@@ -3,11 +3,10 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include/weed
 
-Name: libweed-plugins
-Description: Common host/plugin utilities for libweed
-Requires: 
+Name: libweed-utils
+Description: base utilities for weed hosts
+Requires: libweed >= 4.0.0
 Requires.private: 
-Version: 2.2.3
+Version: 4.0.0
 Libs: -L${libdir} -lweed-utils
-Static: -L${libdir} -lweed-utils_scripting
 Cflags: -I${includedir}

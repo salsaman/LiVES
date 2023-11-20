@@ -39,7 +39,7 @@
 #define _WEED_ABI_VERSION_MAX_SUPPORTED 203
 #define _WEED_ABI_VERSION_MIN_SUPPORTED 200
 
-#ifndef NEED_LOCAL_WEED
+#ifdef _BUILD_LOCAL_
 #include <weed/weed.h>
 #else
 #include "weed.h"

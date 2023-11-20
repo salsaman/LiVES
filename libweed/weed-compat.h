@@ -49,7 +49,7 @@ extern "C"
 #endif
 
 #ifndef __WEED_PALETTES_H__
-#ifdef NEED_LOCAL_WEED
+#ifdef _BUILD_LOCAL_
 #include "weed-palettes.h"
 #else
 #include <weed/weed-palettes.h>
@@ -220,7 +220,7 @@ static inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced
 #include <libavutil/pixfmt.h>
 
 #ifndef __WEED_PALETTES_H__
-#ifdef NEED_LOCAL_WEED
+#ifdef _BUILD_LOCAL_
 #include "weed-palettes.h"
 #else
 #include <weed/weed-palettes.h>

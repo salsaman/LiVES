@@ -50,14 +50,14 @@ extern "C"
 #error This header is designed for Weed hosts. Plugins have their own utilities in weed-plugin-utils.h
 #endif
 
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-effects.h>
-#else
+#ifdef _BUILD_LOCAL_
 #include "weed.h"
 #include "weed-utils.h"
 #include "weed-effects.h"
+#else
+#include <weed/weed.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-effects.h>
 #endif
 
 #ifdef __GNUC__

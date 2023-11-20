@@ -1,0 +1,8 @@
+prefix=/usr
+includedir=${prefix}/include/weed
+
+Name: weed-extras
+Description: Extra headers for libweed (weed-palettes.h and weed-compat.h)
+Requires.private: libweed >= 4.0.0
+Version: 4.0.0
+Cflags: -I${includedir}

@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman+lives@gmail.com) 2003 - 2020
+// (c) G. Finch (salsaman+lives@gmail.com) 2003 - 2023
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -75,32 +75,13 @@
 #define HAVE_WEED_BOOLEAN_T
 typedef LIVES_BOOLEAN_TYPE weed_boolean_t;
 
-#if NEED_LOCAL_WEED
-#include "../libweed/weed-host.h"
-#include "../libweed/weed.h"
-#include "../libweed/weed-events.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-host-utils.h"
-#else
-
 #include <weed/weed-host.h>
 #include <weed/weed.h>
 #include <weed/weed-events.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#if NEED_LOCAL_WEED_UTILS
-#include "../libweed/weed-utils.h"
-#else
 #include <weed/weed-utils.h>
-#endif
-#if NEED_LOCAL_WEED_HOST_UTILS
-#include "../libweed/weed-host-utils.h"
-#else
 #include <weed/weed-host-utils.h>
-#endif
-#endif
 
 #ifdef USE_SWSCALE
 // for weed-compat.h
@@ -109,12 +90,7 @@ typedef LIVES_BOOLEAN_TYPE weed_boolean_t;
 #endif
 
 #define NEED_FOURCC_COMPAT
-
-#ifdef NEED_LOCAL_WEED_COMPAT
-#include "../libweed/weed-compat.h"
-#else
 #include <weed/weed-compat.h>
-#endif
 
 typedef weed_plant_t weed_layer_t;
 typedef weed_plant_t lives_layer_t;
@@ -122,7 +98,7 @@ typedef weed_plant_t weed_param_t;
 
 weed_leaf_get_f _weed_leaf_get;
 weed_leaf_set_f _weed_leaf_set;
-#if WEED_ABI_CHECK_VERSION(202)
+#if WEED_ABI_CHECK_VERSION(203)
 weed_ext_set_element_size_f _weed_ext_set_element_size;
 weed_ext_append_elements_f _weed_ext_append_elements;
 weed_ext_attach_leaf_f _weed_ext_attach_leaf;

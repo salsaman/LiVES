@@ -38,10 +38,10 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#else
+#ifdef _BUILD_LOCAL_
 #include "weed.h"
+#else
+#include <weed/weed.h>
 #endif
   
 /* some nice macros, e.g

@@ -1152,7 +1152,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
   short pbq = prefs->pb_quality;
 
   if (lives_proc_thread_get_cancel_requested(self))
-    lives_proc_thread_cancel_self(self);
+    lives_proc_thread_cancel_self();
 
   sfile = RETURN_PHYSICAL_CLIP(sclipno);
   if (!sfile) return -1;
@@ -1364,7 +1364,7 @@ queue_lpt:
   } else if (layer) weed_layer_unref(layer);
 
   if (lives_proc_thread_get_cancel_requested(sfile->pumper))
-    lives_proc_thread_cancel_self(self);
+    lives_proc_thread_cancel_self();
 
   return retval;
 }

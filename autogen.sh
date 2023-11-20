@@ -1566,13 +1566,8 @@ if test "x$config" = "x" -o ! -f "$config" ; then
 else
     $ECHO "The $PROJECT build system is now prepared.  To build here, run:"
     $ECHO "  $config"
-    $ECHO "  sudo make clean"
     $ECHO "  sudo make install"
     $ECHO
-    $ECHO "** On a fresh install / upgrade, the set of steps should be run TWO TIMES."
-    $ECHO "This is HIGHLY RECOMMENDED, as various libraries will be"
-    $ECHO "installed system wide during the first pass,"
-    $ECHO "then detected and linked to directly during subsequent passes. **"
 fi
 
 # Local Variables:

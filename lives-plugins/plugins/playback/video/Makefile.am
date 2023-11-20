@@ -4,30 +4,12 @@ LIBS =
 
 videopluginslibdir = "$(libdir)/$(PACKAGE)/plugins/playback/video"
 
-if NEED_LOCAL_WEED
-weed_cflags = -DNEED_LOCAL_WEED=1
-else
-weed_cflags =
-endif
-
-if NEED_LOCAL_WEED_UTILS
-weed_cflags += -DNEED_LOCAL_WEED_UTILS=1
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-weed_cflags += -DNEED_LOCAL_WEED_PLUGIN=1
-endif
-
-if NEED_LOCAL_WEED_COMPAT
-weed_cflags += -DNEED_LOCAL_WEED_COMPAT=1
-endif
-
 if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static
-shared_cflags = -fno-common -DIS_DARWIN=1 $(weed_cflags)
+shared_cflags = -fno-common -DIS_DARWIN=1
 else
 shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
-shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ -Wno-unused-variable $(weed_cflags)
+shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ -Wno-unused-variable
 endif
 
 if IS_IRIX
@@ -53,14 +35,6 @@ openGL_libs = openGL.la
 openGL_la_SOURCES = openGL.cpp glad.cpp glad_glx.cpp
 openGL_la_CPPFLAGS = $(shared_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ -pthread
 openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ -pthread -L/usr/lib/x86_64-linux-gnu
-
-if NEED_LOCAL_WEED
-openGL_la_CPPFLAGS += -DNEED_LOCAL_WEED
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-openGL_la_CPPFLAGS += -DNEED_LOCAL_WEED_PLUGIN
-endif
 
 endif
 endif

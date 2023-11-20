@@ -10884,8 +10884,8 @@ boolean voldown_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 }
 
 
-yboolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                            livespointer keybd) {
+boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                           livespointer keybd) {
   if (!LIVES_IS_PLAYING) return FALSE;
   if (!CURRENT_CLIP_HAS_VIDEO || CURRENT_CLIP_IS_CLIPBOARD) return FALSE;
 

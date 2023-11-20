@@ -878,7 +878,12 @@ lives_proc_thread_t lives_proc_thread_get_chain_prime(lives_proc_thread_t);
 #define LPT_ERR_DEADLY		5 // calls _exit() immediately
 
 // error handling
-boolean lives_proc_thread_error(lives_proc_thread_t self, int errnum, int severity, const char *fmt, ...);
+boolean _lives_proc_thread_error(lives_proc_thread_t self, char *file_ref, int line_ref,
+                                 int errnum, int severity, const char *fmt, ...);
+
+#define lives_proc_thread_error(self, errnum, severity, ...)	\
+  _lives_proc_thread_error(self, _FILE_REF_, _LINE_REF_, errnum, severity, __VA_ARGS__)
+
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
 
 int lives_proc_thread_get_errnum(lives_proc_thread_t);
@@ -917,11 +922,16 @@ boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_request_cancel(lives_proc_thread_t, boolean dontcare);
 
 
+boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
+                                  int line_ref);
+
 boolean _lives_proc_thread_cancel_self(lives_proc_thread_t self);
-#define lives_proc_thread_cancel_self(self) _lives_proc_thread_cancel_self(self, _FILE_REF_, _LINE_REF_ )
+#define lives_proc_thread_cancel_self() \
+  _lives_proc_thread_cancel(lives_thread_get_active(), _FILE_REF_, _LINE_REF_ )
 
+#define lives_proc_thread_cancel(lpt) \
+  _lives_proc_thread_cancel(lpt, _FILE_REF_, _LINE_REF_ )
 
-#define lives_proc_thread_cancel(lpt) lives_proc_thread_cancel_self(lpt)
 boolean lives_proc_thread_get_cancel_requested(lives_proc_thread_t);
 
 // self function for running proc_threads, sets pausable if not set already

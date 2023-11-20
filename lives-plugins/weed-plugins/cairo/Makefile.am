@@ -12,27 +12,13 @@ shared_ldflags = -shared -fPIC -DPIC -no-undefined -module -avoid-version --tag=
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
-if !NEED_LOCAL_WEED
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@
-weed_CFLAGS = 
-else
 if IS_MINGW
 AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -D IS_MINGW=1
 else
 AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@
 endif
-weed_CFLAGS = -DNEED_LOCAL_WEED
-endif
 
-if NEED_LOCAL_WEED_PLUGIN
-weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN
-endif
-
-if NEED_LOCAL_WEED_COMPAT
-weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
-endif
-
-AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@  @TURBO_CFLAGS@ -ffast-math -fno-math-errno
+AM_CFLAGS = $(shared_cflags) @GTK_CFLAGS@  @TURBO_CFLAGS@ -ffast-math -fno-math-errno
 AM_CXXFLAGS = AM_CFLAGS
 
 fxpluginslib_LTLIBRARIES = vector_visualiser.la

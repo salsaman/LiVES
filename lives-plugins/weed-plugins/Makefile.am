@@ -23,18 +23,6 @@ shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 shared_cflags = -fPIC -DPIC -Wno-unused-function -Wno-unused-variable
 endif
 
-if NEED_LOCAL_WEED
-shared_cflags += -DNEED_LOCAL_WEED=1
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-shared_cflags += -DNEED_LOCAL_WEED_PLUGIN=1
-endif
-
-if NEED_LOCAL_WEED_UTILS
-shared_cflags += -DNEED_LOCAL_WEED_UTILS=1
-endif
-
 if HAVE_SDL2
 CFLAGS_SDL = @SDL2_CFLAGS@ -DHAVE_SDL2
 LDFLAGS_SDL = @SDL2_LIBS@
@@ -62,18 +50,6 @@ endif
 AM_LDFLAGS = $(shared_ldflags)
 
 weed_CFLAGS = -Wno-unused-function
-
-if NEED_LOCAL_WEED
-weed_CFLAGS += -DNEED_LOCAL_WEED
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN
-endif
-
-if NEED_LOCAL_WEED_COMPAT
-weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
-endif
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall  @TURBO_CFLAGS@ -fno-math-errno
 AM_CPPFLAGS = $(AM_CFLAGS)

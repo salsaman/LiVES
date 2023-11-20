@@ -222,6 +222,9 @@ void reset_counter_cb(void *dummy, int *var);
 
 /// tracing / debugging tools //
 
+#define LIVES_LEAF_FILE_REF "file_ref"
+#define LIVES_LEAF_LINE_REF "line_ref"
+
 #ifdef __FILE__
 #define _FILE_REF_ __FILE__
 #else

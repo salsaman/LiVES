@@ -444,21 +444,11 @@ if ($adv_palettes) {
     print OUT "#define WEED_ADVANCED_PALETTES\n";
 }
 
-print OUT "\n#ifndef NEED_LOCAL_WEED_PLUGIN\n";
 print OUT "#include <weed/weed-plugin.h>\n";
-print OUT "#ifndef NEED_LOCAL_WEED_UTILS\n";
-print OUT "#include <weed/weed-utils.h> // optional\n";
-print OUT "#else\n";
-print OUT "#include \"../../libweed/weed-utils.h\" // optional\n";
-print OUT "#endif\n";
+print OUT "#include <weed/weed-utils.h>\n";
 print OUT "#include <weed/weed-plugin-utils.h>\n";
-print OUT "#else\n";
-print OUT "#include \"../../libweed/weed-plugin.h\"\n";
-print OUT "#include \"../../libweed/weed-utils.h\" // optional\n";
-print OUT "#include \"../../libweed/weed-plugin-utils.h\" // optional\n";
-print OUT "#endif\n\n";
 
-print OUT "#include \"weed-plugin-utils.c\"\n\n";
+print OUT "#include <weed/weed-plugin-utils/weed-plugin-utils.c>\n\n";
 
 print OUT "//////////////////////////////////////////////////////////////////\n\n";
 

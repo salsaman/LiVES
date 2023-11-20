@@ -4,26 +4,12 @@ LIBS=
 
 decoderpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/decoders"
 
-if NEED_LOCAL_WEED
-weed_cflags = -DNEED_LOCAL_WEED=1
-else
-weed_cflags =
-endif
-
-if NEED_LOCAL_WEED_COMPAT
-weed_cflags += -DNEED_LOCAL_WEED_COMPAT=1
-endif
-
-if NEED_LOCAL_WEED_PLUGIN
-weed_cflags += -DNEED_LOCAL_WEED_PLUGIN=1
-endif
-
 if IS_DARWIN
 shared_ldflags =  -lpthread -dynamiclib -module -avoid-version --tag=disable-static
-shared_cflags = -fno-common -DIS_DARWIN=1 -I /sw/include $(weed_cflags)
+shared_cflags = -fno-common -DIS_DARWIN=1 -I /sw/include
 else
 shared_ldflags =  -lpthread -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
-shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ $(weed_cflags)
+shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@
 endif
 
 if HAVE_LIBDV

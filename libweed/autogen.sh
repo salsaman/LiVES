@@ -1572,7 +1572,6 @@ else
     $ECHO "  should be run from the libweed source directory"
     $ECHO
     $ECHO "  $config"
-    $ECHO "  sudo make clean"
     $ECHO "  sudo make install"
 fi
 # Local Variables:

@@ -1693,39 +1693,50 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_th
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t xself) {
-  if (xself == mainw->debug_ptr) BREAK_ME("cancelled");
-  if (xself) {
-    GET_PROC_THREAD_SELF(self);
-    if (!xself || (self && xself != self) ||
-        lives_proc_thread_is_invalid(xself)) {
-      LIVES_WARN("Invalid thread cancelled !");
-      return FALSE;
-    }
-    if (lives_proc_thread_was_cancelled(xself)) {
-      LIVES_WARN("proc_thread cancelled > 1 times !");
-      return FALSE;
-    }
+boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
+                                  int line_ref) {
+  if (self == mainw->debug_ptr) BREAK_ME("cancelled");
+  GET_PROC_THREAD_SELF(xself);
+  if (!self) self = xself;
+  if (!xself || self != xself) {
+    LIVES_WARN("Invalid thread cancelled !");
+    return FALSE;
+  }
+  if (lives_proc_thread_was_cancelled(self)) {
+    LIVES_WARN("proc_thread cancelled > 1 times !");
+    return FALSE;
+  }
 
-    lives_proc_thread_include_states(xself, THRD_STATE_CANCELLED);
-    lives_proc_thread_exclude_states(xself, THRD_STATE_CANCEL_REQUESTED);
+  weed_set_string_value(self, LIVES_LEAF_FILE_REF, file_ref);
+  weed_set_int_value(self, LIVES_LEAF_LINE_REF, line_ref);
 
-    if (self) {
-      if (weed_plant_has_leaf(self, LIVES_LEAF_LONGJMP)) {
-        // prepare to jump into hyperspace...
-        jmp_buf *env = (jmp_buf *)weed_get_voidptr_value(self, LIVES_LEAF_LONGJMP, NULL);
-        if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
-        LIVES_WARN("canclled proc_thread had no longjmp destination");
-      }
+  lives_proc_thread_include_states(self, THRD_STATE_CANCELLED);
+  lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
+
+  if (self) {
+    if (weed_plant_has_leaf(self, LIVES_LEAF_LONGJMP)) {
+      // prepare to jump into hyperspace...
+      jmp_buf *env = (jmp_buf *)weed_get_voidptr_value(self, LIVES_LEAF_LONGJMP, NULL);
+      if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
+      LIVES_WARN("canclled proc_thread had no longjmp destination");
     }
   }
   return TRUE;
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_error(lives_proc_thread_t xself, int errnum, int severity,
-    const char *fmt, ...) {
+LIVES_GLOBAL_INLINE boolean _lives_proc_thread_error(lives_proc_thread_t self,
+    char *file_ref, int line_ref,
+    int errnum, int severity, const char *fmt, ...) {
   char *errmsg = NULL;
+
+  GET_PROC_THREAD_SELF(xself);
+  if (!self) self = xself;
+  if (!xself || self != xself) return FALSE;
+
+  weed_set_string_value(self, LIVES_LEAF_FILE_REF, file_ref);
+  weed_set_int_value(self, LIVES_LEAF_LINE_REF, line_ref);
+
   if (severity == LPT_ERR_DEADLY) _exit(errnum);
 
   if (severity == LPT_ERR_FATAL) LIVES_FATAL("-error-");
@@ -1739,23 +1750,16 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_error(lives_proc_thread_t xself, i
 
   if (severity == LPT_ERR_CRITICAL) LIVES_CRITICAL(errmsg);
 
-  // major, minor
-  if (xself) {
-    GET_PROC_THREAD_SELF(self);
+  if (errmsg) {
+    weed_set_string_value(self, LIVES_LEAF_ERRMSG, errmsg);
+    lives_free(errmsg);
+  }
 
-    if (errmsg) {
-      weed_set_string_value(xself, LIVES_LEAF_ERRMSG, errmsg);
-      lives_free(errmsg);
-    }
+  lives_proc_thread_include_states(self, THRD_STATE_ERROR);
 
-    lives_proc_thread_include_states(xself, THRD_STATE_ERROR);
-
-    if (severity == LPT_ERR_MAJOR) {
-      if (xself == self) {
-        lives_proc_thread_cancel(self);
-        // does not return !!
-      } else lives_proc_thread_request_cancel(xself, FALSE);
-    }
+  if (severity == LPT_ERR_MAJOR) {
+    lives_proc_thread_cancel(self);
+    // does not return !!
   }
   return TRUE;
 }
@@ -2875,9 +2879,12 @@ done:
     }
 
     if (lives_proc_thread_had_error(lpt))
-      lives_proc_thread_error(chain_leader, lives_proc_thread_get_errnum(lpt),
-                              lives_proc_thread_get_errsev(lpt), "%s",
-                              lives_proc_thread_get_errmsg(lpt));
+      _lives_proc_thread_error(chain_leader,
+                               weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
+                               weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
+                               lives_proc_thread_get_errnum(lpt),
+                               lives_proc_thread_get_errsev(lpt), "%s",
+                               lives_proc_thread_get_errmsg(lpt));
 
     lives_thread_set_active(chain_leader);
 

@@ -2166,7 +2166,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     layer = layers[in_tracks[i++]];
 
-    weed_layer_pixel_data_free(channel);
+    //    weed_layer_pixel_data_free(channel);
 
     if (weed_pixel_data_share(channel, layer) != LIVES_RESULT_SUCCESS) {
       retval = FILTER_ERROR_COPYING_FAILED;
@@ -2224,12 +2224,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     goto done_video;
   }
 
-  for (k = 0; k < num_inc + num_in_alpha; k++) {
-    channel = get_enabled_channel(inst, k, LIVES_INPUT);
-    weed_channel_set_pixel_data(channel, NULL);
-    weed_layer_nullify_pixel_data(channel);
-  }
-
   // now we write our out channels back to layers, leaving the palettes and sizes unchanged
 
   if (retval == FILTER_ERROR_BUSY) busy = TRUE;
@@ -2259,8 +2253,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         goto done_video;
       }
     }
-    weed_channel_set_pixel_data(channel, NULL);
-    weed_layer_nullify_pixel_data(channel);
   }
 
 done_video:
@@ -2268,13 +2260,19 @@ done_video:
   if (needs_reinit && retval == FILTER_SUCCESS)
     retval = FILTER_ERROR_NEEDS_REINIT;
 
-  for (i = 0; i < num_inc + num_in_alpha; i++) {
-    channel = in_channels[i];
+  for (i = k = 0; k < num_out_tracks + num_out_alpha; k++) {
+    weed_plant_t *channel = get_enabled_channel(inst, k, LIVES_OUTPUT);
     weed_channel_set_pixel_data(channel, NULL);
     weed_layer_nullify_pixel_data(channel);
-    if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
-      weed_set_boolean_value(in_channels[i], WEED_LEAF_DISABLED, WEED_FALSE);
-      weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
+  }
+
+  for (i = 0; i < num_inc + num_in_alpha; i++) {
+    channel = get_enabled_channel(inst, i, LIVES_INPUT);
+    weed_channel_set_pixel_data(channel, NULL);
+    weed_layer_nullify_pixel_data(channel);
+    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
+      weed_set_boolean_value(channel, WEED_LEAF_DISABLED, WEED_FALSE);
+      weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
     }
   }
 

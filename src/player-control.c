@@ -1260,7 +1260,7 @@ void play_file(void) {
   // nodemodel / plan
   cleanup_nodemodel(&mainw->nodemodel);
 
-  ann_roll_cancel();
+  //  ann_roll_cancel();
 
   // wait fro drawing operations to finish
   fg_stack_wait();

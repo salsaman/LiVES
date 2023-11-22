@@ -130,7 +130,7 @@ static int n_allpals = 0;
 #define ANN_ERR_THRESH 0.05
 #define ANN_GEN_LIMIT 50
 
-static glob_timedata_t *glob_timing = NULL;
+glob_timedata_t *glob_timing = NULL;
 
 static double ztime;
 
@@ -142,7 +142,21 @@ static double ztime;
 // create model deltas, bypass nodes
 
 
-LIVES_GLOBAL_INLINE double get_cycle_avg_time(void) {return glob_timing ? glob_timing->avg_duration : 0.;}
+LIVES_GLOBAL_INLINE double get_cycle_avg_time(double *dets) {
+  double ret = 0.;
+  if (glob_timing) {
+    pthread_mutex_lock(&glob_timing->upd_mutex);
+    ret = glob_timing->avg_duration;
+    if (dets) {
+      dets[0] = glob_timing->curr_cpuload;
+      dets[1] = glob_timing->last_cyc_duration;
+      dets[2] = glob_timing->tgt_duration;
+    }
+    pthread_mutex_unlock(&glob_timing->upd_mutex);
+  }
+  return ret;
+}
+
 
 static inst_node_t *desc_and_add_steps(inst_node_t *, exec_plan_t *);
 static inst_node_t *desc_and_align(inst_node_t *, lives_nodemodel_t *);
@@ -1103,7 +1117,7 @@ static exec_plan_substep_t *make_substep(int op_idx, double st_time,
   cpuload = get_core_loadvar(0);
   substep->cpuload = (float) * cpuload;
   glob_timing->cpu_nsamples++;
-  glob_timing->av_cpuload += substep->cpuload;
+  //glob_timing->av_cpuload += substep->cpuload;
   return substep;
 }
 
@@ -1357,7 +1371,7 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step) {
   lives_filter_error_t filter_error;
 
   weed_instance_t *inst =
-    weed_instance_obtain(step->target_idx, rte_key_getmode(step->target_idx));
+    weed_instance_obtain(step->target_idx, rte_key_getmode(step->target_idx + 1));
 
   if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
     return FILTER_INFO_BYPASSED;
@@ -1562,11 +1576,13 @@ static void glob_timing_init(void) {
   int lcounts[] = TIMING_ANN_LCOUNTS;
   glob_timing = LIVES_CALLOC_SIZEOF(glob_timedata_t, 1);
   glob_timing->ann = lives_ann_create(TIMING_ANN_NLAYERS, lcounts);
+  pthread_mutex_init(&glob_timing->upd_mutex, NULL);
   pthread_mutex_init(&glob_timing->ann_mutex, NULL);
   // the predictor is VERY sensitive to inital conditions
   // but with these values it can usually train itself in under 50 generations
   lives_ann_init_seed(glob_timing->ann, .001);
   lives_ann_set_variance(glob_timing->ann, 1.0, 1.0, 0.9999, 2);
+  glob_timing->cpuloadvar = get_core_loadvar(0);
   //ann_roll_launch();
 }
 
@@ -1595,6 +1611,9 @@ static void extract_timedata(exec_plan_t *plan) {
         for (LiVESList *sublist = step->substeps; sublist; sublist = sublist->next) {
           ann_testdata_t *tstdata;
           exec_plan_substep_t *substep = (exec_plan_substep_t *)sublist->data;
+          float cpuload = substep->cpuload;
+
+
           switch (substep->op_idx) {
           case OP_PCONV:
           case OP_RESIZE: {
@@ -1703,6 +1722,7 @@ static void run_plan(exec_plan_t *plan) {
   boolean got_act_st = FALSE;
   int error = 0, res;
   int lstatus, i, state;
+  int nloops = 0;
 
   mainw->debug_ptr = plan;
   if (!plan) return;
@@ -1763,14 +1783,27 @@ static void run_plan(exec_plan_t *plan) {
 
   plan->tdata->waiting_time = -plan->tdata->real_start;
 
-  glob_timing->cpu_nsamples = 0;
-  glob_timing->av_cpuload = 0.;
+  if (!glob_timing->cpuloadvar)
+    glob_timing->cpuloadvar = get_core_loadvar(0);
 
+  if (glob_timing->cpuloadvar) {
+    glob_timing->curr_cpuload = (float)(*glob_timing->cpuloadvar);
+    glob_timing->active = TRUE;
+  }
   do {
     int step_count = 0;
     boolean can_resume = TRUE;
     complete = TRUE;
 
+    if (nloops++ & 0x40) {
+      nloops = 0;
+      if (!glob_timing->cpuloadvar)
+        glob_timing->cpuloadvar = get_core_loadvar(0);
+      if (glob_timing->cpuloadvar) {
+        glob_timing->curr_cpuload = (float)(*glob_timing->cpuloadvar);
+        glob_timing->active = TRUE;
+      }
+    }
     for (LiVESList *steps = plan->steps; steps; steps = steps->next) {
       step_count++;
 
@@ -2425,19 +2458,12 @@ static void run_plan(exec_plan_t *plan) {
         paused = FALSE;
       }
     }
-    lives_microsleep;
+    _lives_microsleep(10);
   } while (!complete);
 
   xtime = lives_get_session_time();
   plan->tdata->real_end = xtime;
   plan->tdata->waiting_time += xtime;
-
-  if (plan->tdata->actual_start)
-    plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->actual_start
-                                 - plan->tdata->paused_time;
-  else
-    plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->real_start
-                                 - plan->tdata->paused_time;
 
   for (int i = 0; i < plan->model->ntracks; i++) {
     if (plan->layers) {
@@ -2521,8 +2547,26 @@ static void run_plan(exec_plan_t *plan) {
 
     errval = sqrt(glob_timing->ann->last_res);
     d_print_debug("ann error is %f msec after %d generations\n", errval, glob_timing->ann->generations);
+
+    pthread_mutex_lock(&glob_timing->upd_mutex);
+    // update: real_duration, tot_duration and avg_duration
+
+    if (plan->tdata->actual_start)
+      plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->actual_start
+                                   - plan->tdata->paused_time;
+    else
+      plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->real_start
+                                   - plan->tdata->paused_time;
+
     glob_timing->tot_duration += plan->tdata->real_duration;
+    glob_timing->last_cyc_duration = plan->tdata->real_duration;
+
+    glob_timing->tgt_duration = plan->tdata->tgt_time;
+
     glob_timing->avg_duration = glob_timing->tot_duration / (double)plan->iteration;
+
+    glob_timing->active = FALSE;
+    pthread_mutex_unlock(&glob_timing->upd_mutex);
 
     d_print_debug("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%+.4f), average is %.4f\n"
                   "sequential time %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n"
@@ -2545,8 +2589,7 @@ static void run_plan(exec_plan_t *plan) {
 
     if (glob_timing->bytes_per_sec) bps = lives_format_storage_space_string((uint64_t)glob_timing->bytes_per_sec);
     if (glob_timing->gbytes_per_sec) gbps = lives_format_storage_space_string((uint64_t)glob_timing->gbytes_per_sec);
-    if (glob_timing->cpu_nsamples)
-      d_print_debug("av cpuload was %.2f %%", glob_timing->av_cpuload / (float)glob_timing->cpu_nsamples);
+
     if (bps) d_print_debug(", memcpy speed is measured as %s per second", bps);
     if (gbps) d_print_debug(", gamma convert byterate is measured as %s per second", gbps);
     d_print_debug("\n\n\n");
@@ -2566,6 +2609,10 @@ static void run_plan(exec_plan_t *plan) {
     /*   } */
     /* } */
     SET_PLAN_STATE(COMPLETE);
+  } else {
+    pthread_mutex_lock(&glob_timing->upd_mutex);
+    glob_timing->active = FALSE;
+    pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
   //MSGMODE_OFF(DEBUG);
 
@@ -3097,7 +3144,7 @@ exec_plan_t *create_plan_from_model(lives_nodemodel_t *nodemodel) {
 
   plan->steps = lives_list_reverse(plan->steps);
   ///  if (prefs->dev_show_timing)
-  //  display_plan(plan);
+  display_plan(plan);
 
   if (nodemodel->flags & NODEMODEL_NEW) {
     pthread_mutex_lock(&glob_timing->ann_mutex);
@@ -6858,21 +6905,29 @@ if (!mainw->multitrack) {
     int nins, nouts;
     int *in_tracks = NULL, *out_tracks = NULL;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+      g_print("check key %d\n", i);
       if (rte_key_valid(i + 1, TRUE)) {
+        g_print("11check key %d\n", i);
         if (rte_key_is_enabled(i, TRUE)) {
+          g_print("22check key %d\n", i);
           // for clip editor we construct instance nodes according to the order of
           // mainw->rte_keys
           // for multitrack iterate over filter_map filter_init events (TODO)
-          filter = rte_keymode_get_filter(i + 1, rte_key_getmode(i));
+          filter = rte_keymode_get_filter(i + 1, rte_key_getmode(i + 1));
           if (!filter) continue;
+          g_print("33check key %d\n", i);
 
-          if (prefs->dev_show_timing)
-            d_print_debug("filt %p %d\n", filter, i);
+          d_print_debug("filt %p %d %d\n", filter, i, rte_key_getmode(i + 1));;
+          g_print("filt %p %d %d\n", filter, i, rte_key_getmode(i + 1));;
+
+          g_print("check key %d\n", i);
 
           if (is_pure_audio(filter, TRUE)) continue;
 
+          g_print("2check key %d\n", i);
+
           // check if we have an instance for this key
-          instance = weed_instance_obtain(i, rte_key_getmode(i));
+          instance = rte_keymode_get_instance(i + 1, rte_key_getmode(i + 1));
           if (instance) {
             // if we do have an instance, it may have been "soft deinited"
             // in this case, we act like there is no filter mapped for the key
@@ -6883,6 +6938,7 @@ if (!mainw->multitrack) {
             weed_instance_unref(instance);
           }
         } else continue;
+        g_print("3check key %d\n", i);
 
         // create an input / output for each non (permanently) disabled channel
         nins = count_ctmpls(filter, LIVES_INPUT);
@@ -6918,6 +6974,7 @@ if (!mainw->multitrack) {
           // TODO
         }
 
+        g_print("4check key %d\n", i);
         n = create_node(nodemodel, NODE_MODELS_FILTER, filter, nins, in_tracks, nouts, out_tracks);
         n->virtuals = virtuals;
         virtuals = NULL;

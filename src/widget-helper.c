@@ -16,8 +16,10 @@
 // how many do nothing cycles before switch to low prio
 // - should result in 1.0 - 0.1 second delay
 #define MISS_PRIO_THRESH 100000
+
 // nanosec to wait in loops - a value of about 500 seems to be optimal
 #define NSLEEP_TIME 500000
+
 // how much longer to wait in low prio mode, multilpier (sLo_FACTOR + 1)
 // gui_tight mode
 #define sLO_FACTOR 8
@@ -1016,7 +1018,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 
 
 boolean set_gui_loop_tight(boolean val) {
-  //if (!is_fg_thread() || !val) gui_loop_tight = val;
+  if (!is_fg_thread() || !val) gui_loop_tight = val;
   return TRUE;
 }
 

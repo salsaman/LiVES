@@ -194,7 +194,7 @@ uint32_t lives_string_hash(const char *) LIVES_PURE LIVES_HOT;
 uint32_t fast_hash(const char *, size_t strln) LIVES_PURE LIVES_HOT;
 uint64_t fast_hash64(const char *);
 
-void update_effort(double nthings, boolean is_bad);
+void update_effort(float impulse);
 void reset_effort(void);
 
 void free_fdets_list(LiVESList **);

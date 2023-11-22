@@ -1,20 +1,19 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
-
-AC_PREFIX_DEFAULT(/usr)
-
-ifdef([m4_pattern_allow],
-      [m4_pattern_allow([^AC_.*])])
-
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
 AC_INIT(LiVES, 4.0.0-pre, https://github.com/salsaman/LiVES/issues, , http://lives-video.com)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-AC_CONFIG_SUBDIRS([libweed])
 AC_CONFIG_AUX_DIR([.])
+
+AC_PREREQ(2.57)
+
+AC_PREFIX_DEFAULT(/usr)
+
+ifdef([m4_pattern_allow],
+      [m4_pattern_allow([^AC_.*])])
 
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -1014,45 +1013,101 @@ fi
 fi
 AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
-PKG_CHECK_MODULES(WEED, libweed >= 4.0.0, HAVE_LIBWEED=true, HAVE_LIBWEED=false)
+ALL_WEED_CPTS="true"
 
+PKG_CHECK_MODULES(WEED, libweed >= 4.0.0, HAVE_LIBWEED=true, HAVE_LIBWEED=false)
 if test "$HAVE_LIBWEED" = "false"; then
-AC_MSG_ERROR([Required library libweed was not found. Please install it and try again.])
+echo "Required library libweed >= 4.0.0 has not been installed."
+ALL_WEED_CPTS="false"
 fi
+
+
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 4.0.0, HAVE_LIBWEED_UTILS=true, HAVE_LIBWEED_UTILS=false)
+if test "$HAVE_LIBWEED_UTILS" = "false"; then
+echo "Required library libweed-utils >= 4.0.0 has not been installed."
+ALL_WEED_CPTS="false"
+fi
+
+
+PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 4.0.0, HAVE_LIBWEED_HOST_UTILS=true, HAVE_LIBWEED_HOST_UTILS=false)
+if test "$HAVE_LIBWEED_HOST_UTILS" = "false"; then
+echo "Required library libweed-host-utils >= 4.0.0 has not been installed."
+ALL_WEED_CPTS="false"
+fi
+
+
+PKG_CHECK_MODULES(WEED_EXTRAS, weed-extras >= 4.0.0, HAVE_WEED_EXTRAS=true, HAVE_WEED_EXTRAS=false)
+if test "$HAVE_WEED_EXTRAS" = "false"; then
+echo "weed/weed-compat.h or weed/weed-palettes.h appear to be missing or outdated.."
+ALL_WEED_CPTS="false"
+fi
+
+
+PKG_CHECK_MODULES(WEED_EFFECT_PLUGIN, weed-effect-plugin >= 4.0.0, HAVE_WEED_EFFECT_PLUGIN=true, HAVE_WEED_EFFECT_PLUGIN=false)
+if test "$HAVE_WEED_EFFECT_PLUGIN" = "false"; then
+echo "Components for building weed effect plugins appear to be missing or outdated."
+ALL_WEED_CPTS="false"
+fi
+
+
+if test "$ALL_WEED_CPTS" = "false"; then
+AC_CHECK_FILE(libweed/Makefile.am, [echo "Source subdirectory present, libraries will be built with main appLication."],
+[
+AC_MSG_ERROR([Library source not found. Please install missing libraries and run configure again.])
+])
+
+AC_CONFIG_SUBDIRS([libweed])
+
+old_PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
+
+export PKG_CONFIG_PATH="./libweed:${PKG_CONFIG_PATH}"
+
+PKG_CHECK_MODULES(WEED, libweed >= 4.0.0, HAVE_LIBWEED=true, HAVE_LIBWEED=false)
+if test "$HAVE_LIBWEED" = "false"; then
+   export PKG_CONFIG_PATH=$old_PKG_CONFIG_PATH
+   AC_MSG_ERROR([Required library libweed >= 4.0.0 still not found. Aborting build])
+fi
+
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 4.0.0, HAVE_LIBWEED_UTILS=true, HAVE_LIBWEED_UTILS=false)
+if test "$HAVE_LIBWEED_UTILS" = "false"; then
+   export PKG_CONFIG_PATH=$old_PKG_CONFIG_PATH
+   AC_MSG_ERROR([Required library libweed-utils >= 4.0.0 still not found. Aborting build])
+fi
+
+PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 4.0.0, HAVE_LIBWEED_HOST_UTILS=true, HAVE_LIBWEED_HOST_UTILS=false)
+if test "$HAVE_LIBWEED_HOST_UTILS" = "false"; then
+   export PKG_CONFIG_PATH=$old_PKG_CONFIG_PATH
+   AC_MSG_ERROR([Required library libweed-host-utils >= 4.0.0 still not found. Aborting build])
+fi
+
+PKG_CHECK_MODULES(WEED_EXTRAS, weed-extras >= 4.0.0, HAVE_WEED_EXTRAS=true, HAVE_WEED_EXTRAS=false)
+if test "$HAVE_WEED_EXTRAS" = "false"; then
+   export PKG_CONFIG_PATH=$old_PKG_CONFIG_PATH
+   AC_MSG_ERROR([Required weed-extras >= 4.0.0 still not found. Aborting build])
+fi
+
+PKG_CHECK_MODULES(WEED_EFFECT_PLUGIN, weed-effect-plugin >= 4.0.0, HAVE_WEED_EFFECT_PLUGIN=true, HAVE_WEED_EFFECT_PLUGIN=false)
+if test "$HAVE_WEED_EFFECT_PLUGIN" = "false"; then
+   export PKG_CONFIG_PATH="$old_PKG_CONFIG_PATH"
+   AC_MSG_ERROR([weed-effect-plugin >= 4.0.0 still not found. Aborting build])
+fi
+
+export PKG_CONFIG_PATH=$old_PKG_CONFIG_PATH
+fi
+
 
 AC_SUBST(WEED_LIBS)
 AC_SUBST(WEED_CFLAGS)
 
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 4.0.0, HAVE_LIBWEED_UTILS=true, HAVE_LIBWEED_UTILS=false)
-
-if test "$HAVE_LIBWEED_UTILS" = "false"; then
-AC_MSG_ERROR([Required library libweed-utils was not found. Please install it and try again.])
-fi
-
-
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
-
-PKG_CHECK_MODULES(WEED_HOST_UTILS, libweed-host-utils >= 4.0.0, HAVE_LIBWEED_HOST_UTILS=true, HAVE_LIBWEED_HOST_UTILS=false)
-
-if test "$HAVE_LIBWEED_HOST_UTILS" = "false"; then
-AC_MSG_ERROR([Required library libweed-host-utils was not found. Please install it and try again.])
-fi
 
 AC_SUBST(WEED_HOST_UTILS_CFLAGS)
 AC_SUBST(WEED_HOST_UTILS_LIBS)
 
-PKG_CHECK_MODULES(WEED_EXTRAS, weed-extras >= 4.0.0, HAVE_WEED_EXTRAS=true, HAVE_WEED_EXTRAS=false)
+AC_SUBST(WEED_EXTRAS_CFLAGS)
 
-if test "$HAVE_WEED_EXTRAS" = "false"; then
-AC_MSG_ERROR([weed-compat.h or weed-palettes.h appear to be missing or too old. Please install it and try again.])
-fi
-
-PKG_CHECK_MODULES(WEED_PLUGIN_UTILS, weed-plugin-utils >= 4.0.0, HAVE_WEED_PLUGIN_UTILS=true, HAVE_WEED_PLUGIN_UTULS=false)
-
-if test "$HAVE_WEED_PLUGIN_UTILS" = "false"; then
-AC_MSG_ERROR([weed-plugin-utils appear to be missing or too old. Please install it and try again.])
-fi
+AC_SUBST(WEED_EFFECT_PLUGIN_CFLAGS)
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL, false)
 

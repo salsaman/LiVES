@@ -40,9 +40,9 @@
 #define _WEED_ABI_VERSION_MIN_SUPPORTED 200
 
 #ifdef _BUILD_LOCAL_
-#include <weed/weed.h>
-#else
 #include "weed.h"
+#else
+#include <weed/weed.h>
 #endif
 
 #ifdef ENABLE_PROXIES

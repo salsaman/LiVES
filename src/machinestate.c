@@ -1312,36 +1312,29 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_refcount(int subtype) {
 ///////////////// to do - move to performance manager ////
 
 /// estimate the machine load
-static double theflow[EFFORT_RANGE_MAX];
-static int flowlen = 0;
 static boolean inited = FALSE;
 static int struggling = 0;
-static double badthingcount = 0.;
-static double goodthingcount = 0.;
-
-
-static double pop_flowstate(void) {
-  double ret = theflow[0];
-  flowlen--;
-  lives_memmove(theflow, theflow + sizdbl, flowlen * sizdbl);
-  return ret;
-}
-
+static tab_data_t *force = NULL;
 
 void reset_effort(void) {
+  if (force) {
+    free_tabdata(force);
+    force = NULL;
+  }
   prefs->pb_quality = future_prefs->pb_quality;
-  lives_memset(theflow, 0, sizeof(theflow));
   inited = TRUE;
-  badthingcount = goodthingcount = 0.;
   struggling = 0;
   if ((mainw->is_rendering || (mainw->multitrack
                                && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     mainw->effort = -EFFORT_RANGE_MAX;
-  else mainw->effort = 0;
+  else {
+    if (mainw->effort > EFFORT_LIMIT_MED) mainw->effort = EFFORT_LIMIT_MED;
+    if (mainw->effort < -EFFORT_LIMIT_MED) mainw->effort = -EFFORT_LIMIT_MED;
+  }
 }
 
 
-void update_effort(double nthings, boolean is_bad) {
+void update_effort(float impulse) {
   short pb_quality = prefs->pb_quality;
   double newthings;
 
@@ -1351,95 +1344,36 @@ void update_effort(double nthings, boolean is_bad) {
     return;
   }
 
-  if (!inited) reset_effort();
-  if (nthings <= 0.001) return;
+  if (!force) force = init_tab_data(1, EFFORT_RANGE_MAX);
 
-  if (nthings > EFFORT_RANGE_MAXD) nthings = EFFORT_RANGE_MAXD;
-  newthings = nthings;
+  tabdata_get_avgs(force, &impulse);
+  mainw->effort = force->tots[0];
 
-  //g_print("VALS %d %d %d %d %d\n", nthings, badthings, mainw->effort, badthingcount, goodthingcount);
-  if (is_bad)  {
-    badthingcount += newthings;
-    goodthingcount = 0.;
-    newthings = -1;
-  } else {
-    nthings = 1.;
-    goodthingcount += newthings;
-    if (goodthingcount > EFFORT_RANGE_MAXD) goodthingcount = EFFORT_RANGE_MAXD;
-  }
+  if (mainw->effort > EFFORT_RANGE_MAX) mainw->effort = EFFORT_RANGE_MAX;
+  if (mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
 
-  while (nthings-- > 0.) {
-    if (flowlen >= EFFORT_RANGE_MAX) {
-      /// +1 for each badthing, so when it pops out we subtract it
-      double res = pop_flowstate();
-      if (res > 0.) badthingcount -= res;
-      else goodthingcount += res;
-      //g_print("vals %f %f %f  ", res, badthingcount, goodthingcount);
-    }
-    /// - all the good things, so when it pops out we add it (i.e subtract the value)
-    theflow[flowlen] = -newthings;
-    flowlen++;
-  }
+  if (mainw->effort <= 0) struggling--;
+  else struggling++;
 
-  //g_print("vals2x %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
-
-  if (badthingcount <= 0.) {
-    /// no badthings, good
-    if (goodthingcount > EFFORT_RANGE_MAXD) goodthingcount = EFFORT_RANGE_MAXD;
-    if (--mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
-  } else {
-    if (badthingcount > EFFORT_RANGE_MAXD) badthingcount = EFFORT_RANGE_MAXD;
-    mainw->effort = (int)(badthingcount + .5);
-  }
-
-  //g_print("vals2 %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
-
-  if (mainw->effort < 0) {
-    if (struggling > -EFFORT_RANGE_MAX) struggling--;
-    if (mainw->effort < -EFFORT_LIMIT_MED) {
-      if (struggling == -EFFORT_RANGE_MAX && pb_quality < PB_QUALITY_HIGH) {
-        pb_quality++;
-      } else if (struggling < -EFFORT_LIMIT_MED && pb_quality < PB_QUALITY_MED) {
-        pb_quality++;
-      }
-    }
-  }
+  if (struggling > EFFORT_LIMIT_MED) struggling = EFFORT_LIMIT_MED;
+  if (struggling < -EFFORT_LIMIT_MED) struggling = -EFFORT_LIMIT_MED;
 
   if (mainw->effort > 0) {
-    if (pb_quality > future_prefs->pb_quality) {
-      pb_quality = future_prefs->pb_quality;
-      goto tryset;
-    }
-    if (struggling < EFFORT_RANGE_MAX) struggling++;
-
-    if (mainw->effort > EFFORT_LIMIT_MED ||
-        (struggling > EFFORT_LIMIT_MED && (mainw->effort > EFFORT_LIMIT_LOW))) {
-      if (struggling == EFFORT_RANGE_MAX) {
-        if (pb_quality > PB_QUALITY_LOW) {
-          pb_quality = PB_QUALITY_LOW;
-        } else if (mainw->effort > EFFORT_LIMIT_MED) {
-          if (pb_quality > PB_QUALITY_MED) {
-            pb_quality--;
-          }
-        }
-      } else {
-        if (pb_quality > future_prefs->pb_quality) {
-          pb_quality = future_prefs->pb_quality;
-        } else if (future_prefs->pb_quality > PB_QUALITY_LOW) {
-          pb_quality = future_prefs->pb_quality - 1;
-        }
-	// *INDENT-OFF*
-      }}}
-  // *INDENT-ON
- tryset:
-  if (pb_quality != future_prefs->pb_quality && (!mainw->frame_layer_preload || mainw->pred_frame == -1
-						 || is_layer_ready(mainw->frame_layer_preload)
-						 == LIVES_RESULT_SUCCESS)) {
-    future_prefs->pb_quality = pb_quality;
-    if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP_NORESYNC;
-    mainw->refresh_model = TRUE;
+    if (struggling >= EFFORT_LIMIT_MED && mainw->effort >= EFFORT_LIMIT_MED)
+      pb_quality = PB_QUALITY_LOW;
+    else if (struggling > 0 && pb_quality == PB_QUALITY_HIGH)
+      pb_quality = PB_QUALITY_MED;
   }
 
+  if (mainw->effort < 0) {
+    if (struggling <= -EFFORT_LIMIT_MED && mainw->effort <= EFFORT_LIMIT_MED)
+      pb_quality = PB_QUALITY_HIGH;
+    else if (struggling > 0 && pb_quality == PB_QUALITY_LOW)
+      pb_quality = PB_QUALITY_MED;
+  }
+
+  if (pb_quality != future_prefs->pb_quality)
+    future_prefs->pb_quality = pb_quality;
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
 }
 
@@ -1481,47 +1415,45 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
       char *tmp = lives_strdup(lines[l]);
       size_t llen = lives_strlen(tmp), tlen;
       while (1) {
-	wline = subst(tmp, "  ", " ");
-	lives_free(tmp);
-	if ((tlen = lives_strlen(wline)) == llen) break;
-	tmp = wline;
-	llen = tlen;
+        wline = subst(tmp, "  ", " ");
+        lives_free(tmp);
+        if ((tlen = lives_strlen(wline)) == llen) break;
+        tmp = wline;
+        llen = tlen;
       }
       //lives_free(tmp);
 
 
       if (*wline && get_token_count(wline, ' ') >= minpieces) {
-	words = lives_strsplit(wline, " ", npieces);
-	for (m = 0; m < mwlen; m++) {
-	  if (partial && m == mwlen - 1) {
-	    if (lives_strncmp(words[m + mstart], mwords[m], mlen)) break;
-	  }
-	  else if (lives_strcmp(words[m + mstart], mwords[m])) break;
-	}
-	if (m == mwlen) {
-	  match = lives_strdup(words[ridx]);
-	  for (int w = 1; w < rlen; w++) {
-	    char *tmp = lives_strdup_printf(" %s", words[ridx + w]);
-	    match = lives_concat(match, tmp);
-	  }
-	}
-	else {
-	  if (partial) {
-	    // check end as well
-	    if (!lives_strncmp(mphrase, wline + llen - mlen, mlen)) {
-	      match = lives_strdup(words[ridx]);
-	      break;
-	    }
-	  }
-	}
-	lives_strfreev(words);
+        words = lives_strsplit(wline, " ", npieces);
+        for (m = 0; m < mwlen; m++) {
+          if (partial && m == mwlen - 1) {
+            if (lives_strncmp(words[m + mstart], mwords[m], mlen)) break;
+          } else if (lives_strcmp(words[m + mstart], mwords[m])) break;
+        }
+        if (m == mwlen) {
+          match = lives_strdup(words[ridx]);
+          for (int w = 1; w < rlen; w++) {
+            char *tmp = lives_strdup_printf(" %s", words[ridx + w]);
+            match = lives_concat(match, tmp);
+          }
+        } else {
+          if (partial) {
+            // check end as well
+            if (!lives_strncmp(mphrase, wline + llen - mlen, mlen)) {
+              match = lives_strdup(words[ridx]);
+              break;
+            }
+          }
+        }
+        lives_strfreev(words);
       }
       //lives_free(wline);
       if (match) break;
     }
   }
   lives_strfreev(lines);
- grpcln:
+grpcln:
   lives_strfreev(mwords);
   return match;
 }
@@ -1557,72 +1489,71 @@ LiVESResponseType send_to_trash(const char *item) {
     if (check_for_executable(&capable->has_gio, EXEC_GIO) != PRESENT) {
       reason = lives_strdup_printf(_("%s was not found\n"), EXEC_GIO);
       retval = FALSE;
-    }
-    else {
+    } else {
       char *com = lives_strdup_printf("%s trash \"%s\"", EXEC_GIO, item);
       retval = mini_run(com);
     }
 #else
-    /// TODO *** - files should be moved to
-    /// 1) if not $HOME partition, capable->mountpoint/.Trash; also check all toplevels
-    /// check for sticky bit and also non symlink. Then create uid subdir
-    /// else try to create mountpoint / .Trash-$uid
-    /// else (or if in home dir):
-    /// capable->xdg_data_home/Trash/
+  /// TODO *** - files should be moved to
+  /// 1) if not $HOME partition, capable->mountpoint/.Trash; also check all toplevels
+  /// check for sticky bit and also non symlink. Then create uid subdir
+  /// else try to create mountpoint / .Trash-$uid
+  /// else (or if in home dir):
+  /// capable->xdg_data_home/Trash/
 
-    /// create an entry like info/foo1.trashinfo (O_EXCL)
+  /// create an entry like info/foo1.trashinfo (O_EXCL)
 
-    /// [Trash Info]
-    /// Path=/home/user/livesprojects/foo1
-    /// DeletionDate=2020-07-11T14:57:00
+  /// [Trash Info]
+  /// Path=/home/user/livesprojects/foo1
+  /// DeletionDate=2020-07-11T14:57:00
 
-    /// then move / copy file or dir to files/foo1
-    /// - if already exists, append .2, .3 etc.
-    // see: https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
-    int vnum = 0;
-    char *trashdir;
-    char *mp1 = get_mountpount_for(item);
-    char *mp2 = get_mountpount_for(capable->home_dir);
-    if (!lives_strcmp(mp1, mp2)) {
-      char *localshare = get_localsharedir(NULL);
-      trashdir = lives_build_path(localshare, "Trash", NULL);
-      lives_free(localshare);
-      trashinfodir = lives_build_path(trashdir, "info", NULL);
-      trashfilesdir = lives_build_path(trashdir, "files", NULL);
-      umask = capable->umask;
-      capable->umask = 0700;
-      if (!make_writeable_dir(trashinfodir)) {
-	retval = FALSE;
-	reason = lives_strdup_printf(_("Could not write to %s\n"), trashinfodir);
-      }
-      if (retval) {
-	if (!make_writeable_dir(trashfilesdir)) {
-	  retval = FALSE;
-	  reason = lives_strdup_printf(_("Could not write to %s\n"), trashfilesdir);
-	}
-      }
-      capable->umask = umask;
-      if (retval) {
-	char *trashinfo;
-	int fd;
-	while (1) {
-	  if (!vnum) trashinfo = lives_strdup_printf("%s.trashinfo", basenm);
-	  else trashinfo = lives_strdup_printf("%s.%d.trashinfo", basenm, vnum);
-	  fname = lives_build_filename(trashinfodir, trashinfo, NULL);
-	  fd = lives_open2(fname, O_CREAT | O_EXCL);
-	  if (fd) break;
-	  vnum++;
-	}
-	// TODO - write stuff, close, move item
-
-
+  /// then move / copy file or dir to files/foo1
+  /// - if already exists, append .2, .3 etc.
+  // see: https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
+  int vnum = 0;
+  char *trashdir;
+  char *mp1 = get_mountpount_for(item);
+  char *mp2 = get_mountpount_for(capable->home_dir);
+  if (!lives_strcmp(mp1, mp2)) {
+    char *localshare = get_localsharedir(NULL);
+    trashdir = lives_build_path(localshare, "Trash", NULL);
+    lives_free(localshare);
+    trashinfodir = lives_build_path(trashdir, "info", NULL);
+    trashfilesdir = lives_build_path(trashdir, "files", NULL);
+    umask = capable->umask;
+    capable->umask = 0700;
+    if (!make_writeable_dir(trashinfodir)) {
+      retval = FALSE;
+      reason = lives_strdup_printf(_("Could not write to %s\n"), trashinfodir);
+    }
+    if (retval) {
+      if (!make_writeable_dir(trashfilesdir)) {
+        retval = FALSE;
+        reason = lives_strdup_printf(_("Could not write to %s\n"), trashfilesdir);
       }
     }
-    /// TODO...
+    capable->umask = umask;
+    if (retval) {
+      char *trashinfo;
+      int fd;
+      while (1) {
+        if (!vnum) trashinfo = lives_strdup_printf("%s.trashinfo", basenm);
+        else trashinfo = lives_strdup_printf("%s.%d.trashinfo", basenm, vnum);
+        fname = lives_build_filename(trashinfodir, trashinfo, NULL);
+        fd = lives_open2(fname, O_CREAT | O_EXCL);
+        if (fd) break;
+        vnum++;
+      }
+      // TODO - write stuff, close, move item
+
+
+    }
+  }
+  /// TODO...
 #endif
     if (!retval) {
       char *msg = lives_strdup_printf(_("LiVES was unable to send the item to trash.\n%s"),
-				      reason ? reason : "");
+                                      reason ? reason : "");
       lives_freep((void **)&reason);
       resp = do_abort_retry_cancel_dialog(msg);
       lives_free(msg);
@@ -1665,7 +1596,7 @@ static boolean rec_desk_done(livespointer data) {
     add_to_clipmenu_any(recargs->clipno);
 
     do_info_dialogf(_("Grabbed %d frames in %s (average %.3f fps)"),
-		    sfile->frames, timestr, tsec ? (double)sfile->frames / tsec : 0.);
+                    sfile->frames, timestr, tsec ? (double)sfile->frames / tsec : 0.);
     lives_free(timestr);
 
     switch_clip(1, recargs->clipno, FALSE);
@@ -1700,11 +1631,11 @@ static boolean rec_desk_done(livespointer data) {
 
     return FALSE;
 
-  ohnoes:
+ohnoes:
     mainw->current_file = recargs->clipno;
     close_current_file(current_file);
     lives_free(recargs);
-  ohnoes2:
+ohnoes2:
     do_error_dialog(_("Screen grab failed"));
     lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   }
@@ -1753,7 +1684,7 @@ void rec_desk(void *args) {
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
   lives_sleep_while_false(!lives_alarm_check(alarm_handle) == 0
-			  || (self && lives_proc_thread_get_cancel_requested(self)));
+                          || (self && lives_proc_thread_get_cancel_requested(self)));
   lives_alarm_clear(alarm_handle);
 
   if (self && lives_proc_thread_get_cancel_requested(self)) goto done;
@@ -1767,15 +1698,15 @@ void rec_desk(void *args) {
   // temp kludge ahead !
   open_ascrap_file(recargs->clipno);
 
-  IF_APLAYER_PULSE ({
-      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
-    })
+  IF_APLAYER_PULSE({
+    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
+  })
 
-    IF_APLAYER_JACK ({
-	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
-      })
+  IF_APLAYER_JACK({
+    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
+  })
 
-    add_primary_src(recargs->clipno, NULL, LIVES_SRC_TYPE_RECORDER);
+  add_primary_src(recargs->clipno, NULL, LIVES_SRC_TYPE_RECORDER);
 
   mainw->rec_samples = -1; // record unlimited
   //
@@ -1783,7 +1714,7 @@ void rec_desk(void *args) {
 
   while (1) {
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	|| (self && (cancelled = lives_proc_thread_get_cancel_requested(self))))
+        || (self && (cancelled = lives_proc_thread_get_cancel_requested(self))))
       break;
 
     fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
@@ -1793,10 +1724,10 @@ void rec_desk(void *args) {
       lives_proc_thread_join(saver_lpt);
       saver_lpt = NULL;
       if (saveargs->error
-	  || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	      || (self && lives_proc_thread_get_cancel_requested(self)))) {
-	lives_alarm_clear(fps_alarm);
-	break;
+          || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
+              || (self && lives_proc_thread_get_cancel_requested(self)))) {
+        lives_alarm_clear(fps_alarm);
+        break;
       }
     }
 
@@ -1809,7 +1740,7 @@ void rec_desk(void *args) {
     lives_widget_context_update();
 #endif
 
-    pixbuf = gdk_pixbuf_get_from_window (capable->wm_caps.root_window, x, y, w, h);
+    pixbuf = gdk_pixbuf_get_from_window(capable->wm_caps.root_window, x, y, w, h);
     if (!pixbuf) {
       lives_alarm_clear(fps_alarm);
       break;
@@ -1836,10 +1767,10 @@ void rec_desk(void *args) {
 
     if (recargs->scale < 1.) {
       if (!resize_layer(layer, (double)w * recargs->scale, (double)h * recargs->scale,
-			LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
-	lives_alarm_clear(fps_alarm);
-	weed_layer_unref(layer);
-	break;
+                        LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
+        lives_alarm_clear(fps_alarm);
+        weed_layer_unref(layer);
+        break;
       }
     }
 
@@ -1854,11 +1785,11 @@ void rec_desk(void *args) {
     saveargs->fname = imname;
 
     saver_lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, layer_to_png_threaded,
-					 WEED_SEED_BOOLEAN, NULL, "v", saveargs);
+                                         WEED_SEED_BOOLEAN, NULL, "v", saveargs);
 
     // TODO - check for timeout / cancel here too
     lives_sleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
-			   && (!self || !(cancelled = lives_proc_thread_get_cancel_requested(self))));
+                           && (!self || !(cancelled = lives_proc_thread_get_cancel_requested(self))));
     lives_alarm_clear(fps_alarm);
   }
   lives_alarm_clear(alarm_handle);
@@ -1881,7 +1812,7 @@ void rec_desk(void *args) {
     lives_free(saveargs);
   }
 
- done: // timed out or cancelled
+done: // timed out or cancelled
   lives_signal_handler_block(mainw->desk_rec, mainw->desk_rec_func);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->desk_rec), FALSE);
   lives_signal_handler_unblock(mainw->desk_rec, mainw->desk_rec_func);
@@ -1936,27 +1867,26 @@ char *get_wid_for_name(const char *wname) {
     lives_popen(cmd, FALSE, buff);
     lives_free(cmd);
     if (THREADVAR(com_failed)
-	|| (!*buff || !(nlines = get_token_count(buff, '\n')))) {
+        || (!*buff || !(nlines = get_token_count(buff, '\n')))) {
       THREADVAR(com_failed) = FALSE;
       return wid;
-    }
-    else {
+    } else {
       char buff2[1024];
       char **lines = lives_strsplit(buff, "\n", nlines);
       for (int l = 0; l < nlines; l++) {
-	if (!*lines[l]) continue;
-	cmd = lives_strdup_printf("%s getwindowname %s", EXEC_XDOTOOL, lines[l]);
-	lives_popen(cmd, FALSE, buff2);
-	lives_free(cmd);
-	if (THREADVAR(com_failed)) {
-	  THREADVAR(com_failed) = FALSE;
-	  break;
-	}
-	lives_chomp(buff2, FALSE);
-	if (!lives_strcmp(wname, buff2)) {
-	  wid = lives_strdup_printf("0x%lX", lives_strtol(lines[l]));
-	  break;
-	}
+        if (!*lines[l]) continue;
+        cmd = lives_strdup_printf("%s getwindowname %s", EXEC_XDOTOOL, lines[l]);
+        lives_popen(cmd, FALSE, buff2);
+        lives_free(cmd);
+        if (THREADVAR(com_failed)) {
+          THREADVAR(com_failed) = FALSE;
+          break;
+        }
+        lives_chomp(buff2, FALSE);
+        if (!lives_strcmp(wname, buff2)) {
+          wid = lives_strdup_printf("0x%lX", lives_strtol(lines[l]));
+          break;
+        }
       }
       lives_strfreev(lines);
     }
@@ -1982,18 +1912,18 @@ boolean lives_reenable_screensaver(void) {
 #ifdef GDK_WINDOWING_X11
   uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
   com = lives_strdup_printf("%s s on 2>%s; %s +dpms 2>%s;",
-			    EXEC_XSET, LIVES_DEVNULL, EXEC_XSET, LIVES_DEVNULL);
+                            EXEC_XSET, LIVES_DEVNULL, EXEC_XSET, LIVES_DEVNULL);
   if (capable->has_gconftool_2) {
     char *xnew = lives_strdup_printf(" %s --set --type bool /apps/gnome-screensaver/"
-				     "idle_activation_enabled true 2>/dev/null ;",
-				     EXEC_GCONFTOOL_2);
+                                     "idle_activation_enabled true 2>/dev/null ;",
+                                     EXEC_GCONFTOOL_2);
     tmp = lives_strconcat(com, xnew, NULL);
     lives_free(com); lives_free(xnew);
     com = tmp;
   }
   if (capable->has_xdg_screensaver && awinid) {
     char *xnew = lives_strdup_printf(" %s resume %" PRIu64 " 2>%s;",
-				     EXEC_XDG_SCREENSAVER, awinid, LIVES_DEVNULL);
+                                     EXEC_XDG_SCREENSAVER, awinid, LIVES_DEVNULL);
     tmp = lives_strconcat(com, xnew, NULL);
     lives_free(com); lives_free(xnew);
     com = tmp;
@@ -2001,8 +1931,8 @@ boolean lives_reenable_screensaver(void) {
 #else
   if (capable->has_gconftool_2) {
     com = lives_strdup_printf("%s --set --type bool /apps/gnome-screensaver/"
-			      "idle_activation_enabled true 2>%s;",
-			      EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+                              "idle_activation_enabled true 2>%s;",
+                              EXEC_GCONFTOOL_2, LIVES_DEVNULL);
   } else com = lives_strdup("");
 #endif
 
@@ -2029,26 +1959,26 @@ boolean lives_disable_screensaver(void) {
   uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
 
   com = lives_strdup_printf("%s s off 2>%s; %s -dpms 2>%s;",
-			    EXEC_XSET, LIVES_DEVNULL, EXEC_XSET, LIVES_DEVNULL);
+                            EXEC_XSET, LIVES_DEVNULL, EXEC_XSET, LIVES_DEVNULL);
 
   if (capable->has_gconftool_2) {
     char *xnew = lives_strdup_printf(" %s --set --type bool /apps/gnome-screensaver/"
-				     "idle_activation_enabled false 2>%s;",
-				     EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+                                     "idle_activation_enabled false 2>%s;",
+                                     EXEC_GCONFTOOL_2, LIVES_DEVNULL);
     tmp = lives_concat(com, xnew);
     com = tmp;
   }
   if (capable->has_xdg_screensaver && awinid) {
     char *xnew = lives_strdup_printf(" %s suspend %" PRIu64 " 2>%s;",
-				     EXEC_XDG_SCREENSAVER, awinid, LIVES_DEVNULL);
+                                     EXEC_XDG_SCREENSAVER, awinid, LIVES_DEVNULL);
     tmp = lives_concat(com, xnew);
     com = tmp;
   }
 #else
   if (capable->has_gconftool_2) {
     com = lives_strdup_printf("%s --set --type bool /apps/gnome-screensaver/"
-			      "idle_activation_enabled false 2>%s;",
-			      EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+                              "idle_activation_enabled false 2>%s;",
+                              EXEC_GCONFTOOL_2, LIVES_DEVNULL);
   } else com = lives_strdup("");
 #endif
 
@@ -2059,10 +1989,9 @@ boolean lives_disable_screensaver(void) {
     mainw->cancelled = cancelled;
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
-    }
-    else {
+    } else {
       enable_ss_lpt = lives_hook_prepend_full(mainw->global_hook_stacks, FATAL_HOOK,
-					      0, enable_ss_cb, 0, "", NULL);
+                                              0, enable_ss_cb, 0, "", NULL);
     }
     return TRUE;
   }
@@ -2106,12 +2035,10 @@ boolean activate_x11_window(const char *wid) {
   if (capable->has_xdotool != MISSING) {
     if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
       cmd = lives_strdup_printf("%s windowactivate \"%s\" --sync", EXEC_XDOTOOL, wid);
-  }
-  else if (capable->has_wmctrl != MISSING) {
+  } else if (capable->has_wmctrl != MISSING) {
     if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL))
       cmd = lives_strdup_printf("%s -Fa \"%s\"", EXEC_WMCTRL, wid);
-  }
-  else return FALSE;
+  } else return FALSE;
   return mini_run(cmd);
 }
 
@@ -2132,24 +2059,22 @@ char *wm_property_get(const char *key, int *type_guess) {
     if (!*res) {
       lives_free(res);
       return NULL;
-    }
-    else {
+    } else {
       char *separ = lives_strdup_printf(" %s ", key);
       char **array = lives_strsplit(res, separ, 2);
       lives_free(separ);
       lives_free(res);
       if (*array[1] == '\'') {
-	val = lives_strndup(array[1] + 1, lives_strlen(array[1]) - 2);
-	if (type_guess) *type_guess = WEED_SEED_STRING;
-      }
-      else {
-	val = lives_strdup(array[1]);
-	if (type_guess) {
-	  if (!lives_strcmp(val, "true") || !lives_strcmp(val, "false")) {
-	    *type_guess = WEED_SEED_BOOLEAN;
-	  }
-	  if (atoi(val)) {
-	    *type_guess = WEED_SEED_INT;
+        val = lives_strndup(array[1] + 1, lives_strlen(array[1]) - 2);
+        if (type_guess) *type_guess = WEED_SEED_STRING;
+      } else {
+        val = lives_strdup(array[1]);
+        if (type_guess) {
+          if (!lives_strcmp(val, "true") || !lives_strcmp(val, "false")) {
+            *type_guess = WEED_SEED_BOOLEAN;
+          }
+          if (atoi(val)) {
+            *type_guess = WEED_SEED_INT;
 	    // *INDENT-OFF*
 	  }}}
       lives_strfreev(array);
@@ -3013,7 +2938,7 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
   unsigned long long boottime = 0;
   unsigned long long user = 0, nice = 0, system = 0, idle = 0;
   unsigned long long iowait = 0, irq = 0, softirq = 0, steal = 0;
-  float load;
+  float load = 0.;
   uint64_t idlet, sum, tot;
   int xcpun = 0;
 
@@ -3076,6 +3001,7 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
 static void *proc_load_stats = NULL;
 
 static cpuloadvals_t *cpu_stats = NULL;
+
 
 float *get_proc_loads(boolean reset) {
   // get processor load values, and keep a rolling average

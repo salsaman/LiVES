@@ -540,7 +540,7 @@ static weed_plant_t *weed_audio_channel_template_init(const char *name, int flag
   if (chantmpl) weed_leaf_set(chantmpl, WEED_LEAF_IS_AUDIO, WEED_SEED_BOOLEAN, 1, &wtrue);
   return chantmpl;
 }
-#endif
+#endif // NEED_AUDIO
 
 static inline int weed_is_threading(weed_plant_t *inst) {
   if (inst) {
@@ -583,7 +583,7 @@ static inline int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplan
 static inline void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes) {
   return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, nplanes);
 }
-#endif
+#endif // __WEED_UTILS_H__
 
 static inline int weed_param_has_value(weed_plant_t *param) {
   return _leaf_has_value(param, WEED_LEAF_VALUE) ? WEED_TRUE : WEED_FALSE;}
@@ -713,7 +713,7 @@ static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) 
   weed_free(dll);
   return count;
 }
-#endif
+#endif // NEED_ALPHA_SORT
 
 #ifdef NEED_RANDOM
 
@@ -783,7 +783,7 @@ static inline uint32_t fastrand_int_re(uint32_t range, weed_plant_t *inst, const
   return (uint32_t)fastrand_dbl_re((double)(++range), inst, leaf);
 }
 
-#endif
+#endif // NEED_RANDOM
 
 //utilities
 static inline int is_big_endian(void) {
@@ -897,7 +897,7 @@ static void blank_frame(void **pdata, int width, int height, int *rs, int pal, i
     for (j = 0; j < nplanes; j++) {pd2[j] += rs[j]; if (is_420 && !odd) break;}
   }
 }
-#endif
+#endif // NEED_PALETTE_UTILS
 
 #ifdef NEED_PALETTE_CONVERSIONS
 
@@ -998,7 +998,7 @@ static uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping) {
   } return 0;
 }
 
-#endif
+#endif // NEED_PALETTE_CONVERSIONS
 
 #ifdef NEED_FONT_UTILS
 #include <wchar.h>
@@ -1115,4 +1115,5 @@ fontdone:
 #define WEED_TICKS_PER_SECOND 100000000
 #endif
 
+#endif // __WEED_PLUGIN__
 #endif // __HAVE_WEED_PLUGIN_UTILS__

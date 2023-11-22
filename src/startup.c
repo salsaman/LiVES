@@ -1324,7 +1324,7 @@ boolean lives_startup(livespointer data) {
 
   capable->session_uid = gen_unique_id();
 
-  if (!prefs->show_dev_opts) {
+  if (1 || prefs->show_dev_opts) {
     g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
   }
 

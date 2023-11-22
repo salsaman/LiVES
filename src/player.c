@@ -17,6 +17,10 @@
 
 #define REC_IDEAL
 
+#define EFF_UPD_THRESH 0.5
+#define GOOD_EFF_MULT 1.0
+#define BAD_EFF_MULT 1.0
+
 #define ENABLE_PRECACHE
 
 #ifdef ENABLE_PRECACHE
@@ -2352,6 +2356,7 @@ int process_one(boolean visible) {
   volatile float const *cpuload;
   //static lives_proc_thread_t gui_lpt = NULL;
   //double cpu_pressure;
+  static double last_eff_upd_time = 0.;
   lives_clip_t *sfile = cfile;
   _vid_playback_plugin *old_vpp;
   ticks_t new_ticks;
@@ -2448,7 +2453,8 @@ player_loop:
 
   // TODO - make adjustable
 
-  lives_microsleep;
+  //lives_microsleep;
+  _lives_microsleep(10);
 
   frame_invalid = FALSE;
 
@@ -2554,6 +2560,7 @@ player_loop:
     mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
     mainw->last_startticks = mainw->startticks = mainw->currticks;
     mainw->fps_mini_ticks = lives_get_session_ticks();
+    last_eff_upd_time = mainw->wall_ticks / TICKS_PER_SECOND_DBL;
     mainw->last_startticks--;
     mainw->fps_mini_measure = 0;
     getahead = 0;
@@ -3072,7 +3079,6 @@ switch_point:
         mainw->scratch = SCRATCH_JUMP;
       } else sfile->fps_scale = 1.;
 
-
       // paused
       if (LIVES_UNLIKELY(sfile->play_paused)) {
         mainw->startticks = mainw->currticks;
@@ -3109,7 +3115,6 @@ switch_point:
 #ifdef ENABLE_PRECACHE
         if (spare_cycles > 0 && last_spare_cycles > 0) can_precache = TRUE;
 #endif
-        update_effort(spare_cycles + 1., FALSE);
         last_spare_cycles = spare_cycles;
         spare_cycles = 0;
       } else spare_cycles++;
@@ -3254,37 +3259,58 @@ switch_point:
         }
       }
 #endif
+    }
 
 update_effort:
-      if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
-        if (requested_frame != sfile->last_req_frame || sfile->frames == 1) {
-          if (sfile->frames == 1) {
-            if (!spare_cycles) {
-              //if (sfile->primary_src->src_type == LIVES_SRC_TYPE_FILTER) {
-              //weed_plant_t *inst = (weed_plant_t *)sfile->primary_src->source;
-              double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
-              if (target_fps) {
-                if (scratch == SCRATCH_NONE && mainw->inst_fps < target_fps) {
-                  update_effort(target_fps / mainw->inst_fps, TRUE);
-		  // *INDENT-OFF*
-		}}}}
-	  // *INDENT-ON*
-          else {
-            /// update the effort calculation with dropped frames and spare_cycles
-            update_effort(sfile->pb_fps / mainw->inst_fps, TRUE);
+    if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
+      // get the time for the last plan cycle, compare againsr current pb_fps
+      // - but only if equal to the actual fps.
+      //  otherwise we compare the time against the average
+      // obviously if we are trying to play at some very high fpd we will inevitably
+      // end up skipping frames, but this doesn't indicate a high load
+      //
 
-	    // *INDENT-OFF*
-          }}}
-      // *INDENT-ON*
+      // 0 == cpuload, 1 == last_cyc, 2 = tgt
+      if (mainw->wall_ticks  / TICKS_PER_SECOND_DBL - last_eff_upd_time > EFF_UPD_THRESH) {
+        double dets[3];
+        float friction;
+        double avg = get_cycle_avg_time(dets);
+        boolean calc = FALSE;
+        mainw->inst_fps = get_inst_fps(FALSE);
+        if (dets[1]) {
+          last_eff_upd_time = mainw->wall_ticks  / TICKS_PER_SECOND_DBL;
+          //if (sfile->pb_fps == sfile->fps && dets[2]) {
+          if (mainw->inst_fps && dets[1]) {
+            friction = (float)(dets[1] * mainw->inst_fps);
+            calc = TRUE;
+            ///	    g_print("eff fric %.8f\n", friction);
+          }
+          /* else if (avg) { */
+          /*   friction = (float)(dets[1] / avg); */
+          /*   calc = TRUE; */
+          /* } */
+          if (calc) {
+            if (friction > EFFORT_RANGE_MAX / 8.) friction = EFFORT_RANGE_MAX / 8.;
+            if (friction < 8. / EFFORT_RANGE_MAX) friction = 8. / EFFORT_RANGE_MAX;
 
-      // check model reubild from qchanges
+            if (friction > 0.5) friction *= BAD_EFF_MULT;
+            else friction = -GOOD_EFF_MULT / friction;
 
-      if (sfile->delivery == LIVES_DELIVERY_PUSH
-          || (sfile->delivery == LIVES_DELIVERY_PUSH_PULL && mainw->force_show)) {
-        show_frame = TRUE;
-        goto play_frame;
+            //g_print("eff2 fric %.8f\n", friction);
+            update_effort(friction);
+            if (prefs->pb_quality != future_prefs->pb_quality)
+              mainw->refresh_model = TRUE;
+          }
+        }
       }
+    }
+    if ((sfile->delivery == LIVES_DELIVERY_PUSH
+         || (sfile->delivery == LIVES_DELIVERY_PUSH_PULL && mainw->force_show))) {
+      show_frame = TRUE;
+      goto play_frame;
+    }
 
+    if (show_frame && sfile->delivery != LIVES_DELIVERY_PUSH) {
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
@@ -3319,11 +3345,19 @@ play_frame:
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
         if (1) {
           boolean can_realign = FALSE;
-          volatile float cpuloadval = 0.;
+          float cpuloadval = 0.;
 
           if (!mainw->force_show) {
-            cpuload = get_core_loadvar(0);
-            cpuloadval = *cpuload;
+            if (glob_timing) {
+              pthread_mutex_lock(&glob_timing->upd_mutex);
+              if (glob_timing->active)
+                cpuloadval = glob_timing->curr_cpuload;
+              pthread_mutex_unlock(&glob_timing->upd_mutex);
+            }
+            if (!cpuloadval) {
+              cpuload = get_core_loadvar(0);
+              cpuloadval = (float)(*cpuload);
+            }
           }
 
           //g_print("CCC %d %d %d %d\n", sfile->frameno, fixed_frame, mainw->actual_frame, best_frame);
@@ -3467,10 +3501,6 @@ play_frame:
           scratch = mainw->scratch;
           mainw->scratch = SCRATCH_NONE;
           fixed_frame = 0;
-
-          mainw->inst_fps = get_inst_fps(FALSE);
-          if (skipped > 0) update_effort((double)skipped / sfile->pb_fps, TRUE);
-          else update_effort(mainw->inst_fps / sfile->pb_fps, FALSE);
 
           if (prefs->show_player_stats) {
             mainw->fps_measure++;
@@ -3691,8 +3721,8 @@ play_frame:
       // time from past jumps, or if the decoder supports it, ask it to check the range going forward, and return
       // the nearest frame that we can reach before the play head arrives there (plus the extra frames)
       if (!mainw->multitrack && scratch == SCRATCH_NONE && IS_PHYSICAL_CLIP(mainw->playing_file)
-          && sfile->delivery != LIVES_DELIVERY_PUSH) {
-        double cycle_avg = get_cycle_avg_time();
+          && sfile->delivery != LIVES_DELIVERY_PUSH && !mainw->refresh_model) {
+        double cycle_avg = get_cycle_avg_time(NULL);
         if (!mainw->cached_frame
             && (!mainw->frame_layer_preload || (cleanup_preload
                                                 && is_layer_ready(mainw->frame_layer_preload)

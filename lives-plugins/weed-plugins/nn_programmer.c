@@ -233,6 +233,8 @@ WEED_SETUP_START(200, 200) {
            "whereas a fitness value of 1. will produce no variations.\n"
            "A Gaussian randomiser is used to vary the random factors.\n");
 
+  weed_filter_set_description(filter_class, desc);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);
 }

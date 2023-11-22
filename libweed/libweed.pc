@@ -5,8 +5,6 @@ includedir=${prefix}/include/weed
 
 Name: libweed
 Description: libweed for hosts (requires weed/weed.h and weed/weed-host.h) 
-Requires: 
-Requires.private: 
 Version: 4.0.0
 Libs: -L${libdir} -lweed
 Cflags: -I${includedir}

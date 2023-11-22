@@ -10,8 +10,50 @@
 # build-lives-rfx-plugin -get <section> <file>
 # and we then print the contents of section on stdout
 
+my %replace = (
+    MALLOC_FUNC =>			'weed_malloc',
+    MEMCPY_FUNC =>			'weed_memcpy',
+    FREE_FUNC =>	       		'weed_free',
+    YUV_MID => 				'YUV_BIAS'
+);
+
+
+#### sections ######
+#(M) indicates MANDATORY section
+#(W) indicares WARN if missing
+#(O) indicates optional section
+#	define			(M)
+#	unique_id		(W)
+#	name			(W)
+#	author			(W)
+#	license			(O)
+#	license_version		(O)
+#	language_code		(W)
+#	version			(O)
+#	description		(O)
+#	requires		(O)
+#	typedefs		(O)
+#	sdata			(O)
+#	filter_flags		(O)
+#	static			(O)	****
+#	palette_list		(W)
+#	in_chans		(O)
+#	out_chans		(O)
+#	params			(O)
+#	out_params		(O)
+#	param_window		(O)
+#	init			(O)
+#	process			(W)	****
+#	deinit			(O)	****
+#	setup			(O)	****
+#	display_vals		(O)
+
+
 ########################################################
 # this will auto-generate a Weed C plugin from the script info in $file
+
+use common::sense;
+
 #my $DEBUG = 1;
 my $USE_STRICT = 1;
 if ($USE_STRICT) {
@@ -23,8 +65,9 @@ if ($USE_WARNINGS) {
     use warnings;
 }
 
-my $builder_version = "3.2.1-pre";
-my $rfx_version = "1.8.3";
+my $builder_version = "4.0,0-pre";
+my $rfx_version = "1.8.5";
+my $version;
 
 ################################
 ## TODO - allow license, version, (c) author(s) and (c) yeasr to be overriden in script
@@ -35,7 +78,7 @@ my $license_version = "3 or higher";
 my $copyright_authors = "";
 my $copyright_years = "";
 
-my $CURRENT_YEAR = "2022"; ## TODO
+my $CURRENT_YEAR = "2023"; ## TODO
 ##################################
 
 my ($section, $file);
@@ -54,7 +97,7 @@ if ($ARGV[0] eq "-get") {
 $file = $ARGV[0];
 
 my $define = (&rc_read("define", $file))[0];
-if ($define eq "") {
+if (!$define) {
     print STDERR "Error  - <define> section missing from script file.\n";
     exit 5;
 }
@@ -73,6 +116,11 @@ if ($delim =~ /^[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]+/) {
     $delim = "\\" . $delim;
 }
 
+my $uid = (&rc_read("unique_id", $file))[0];
+if (!$uid) {
+    print STDERR "WARNING - no uid in $file\n";
+}
+
 my $pf_name = (&rc_read("name", $file))[0];
 if (!$pf_name) {
     print STDERR "WARNING - no 'name' in $file\n";
@@ -86,7 +134,7 @@ if (!$filter_name) {
 
 my @authors = &rc_read("author", $file);
 if (!@authors) {
-    print STDERR "WARNING - no lang_code in $file\n";
+    print STDERR "WARNING - no author in $file\n";
 }
 @pieces = split(/$delim/, @authors[0]);
 
@@ -97,14 +145,19 @@ if (@authors > 1) {
     $extra_authors = @authors[1];
 }
 
+my $xlicense = (&rc_read("license", $file))[0];
+if ($xlicense) {
+    $license_type = $xlicense;
+
+    my $xlicver = (&rc_read("license_version", $file))[0];
+    if ($xlicver) {
+	$license_version = $xlicver;
+    }
+}
+
 my $lang_code = (&rc_read("language_code", $file))[0];
 if (!$lang_code) {
     print STDERR "WARNING - no lang_code in $file\n";
-}
-
-my $uid = (&rc_read("unique_id", $file))[0];
-if (!$uid) {
-    print STDERR "WARNING - no uid in $file\n";
 }
 
 my $versions = (&rc_read("version", $file))[0];
@@ -163,6 +216,24 @@ unless ($lang_code eq "192" || hex($lang_code) == 192) {
 
 # generate into /tmp
 # LiVES will call this to generate in plugins/effects/rendered/test
+
+my $prefix_dir;
+my $plugin_file;
+my $DEBUG;
+my @dispfuncs;
+my $has_darray;
+my $has_iarray;
+my @in_planar;
+my @out_planar;
+my $i;
+my $version;
+my @pal_lists;
+my $need_font_utils;
+my $need_fourcc_compat;
+my $need_avstream_types;
+my $av_s;
+my $pde;
+my $listnamef;
 
 if (!defined($ARGV[1])) {
     if ($^O eq "MSWin32") {
@@ -386,7 +457,7 @@ foreach (@requires) {
 	next;
     }
     if ($_ eq "avstream_types") {
-	$need_avstrem_types = 1;
+	$need_avstream_types = 1;
 	next;
     }
     if ($_ eq "av_chanfmts") {
@@ -527,9 +598,9 @@ if ($has_init) {
 
     if (@init) {
 	## add main init code
-	print OUT "\n    if (1) {\n";
+	print OUT "\n    do {\n";
 	&gen_array(1, 6, @init);
-	print OUT "    }\n";
+	print OUT "    } while (0);\n";
     }
 
     print OUT "    weed_set_instance_data(inst, sdata);\n";
@@ -617,13 +688,13 @@ if ($may_thread && $num_outc == 1) {
 
 print OUT "\n";
 
-print OUT "$xspcs  if (1) {\n";
+print OUT "$xspcs  do {\n";
 my $indent = 4;
 if ($use_sdata) {
     $indent = 6;
 }
 &gen_array(3, $indent, @proc);
-print OUT "$xspcs  }\n";
+print OUT "$xspcs  } while (0);\n";
 
 if ($num_params) {
     &clean_params;
@@ -966,9 +1037,9 @@ if ($uid) {
 }
 
 if (@setup) {
-    print OUT "  if (1) {\n";
+    print OUT "  do {\n";
     &gen_array(5, 4, @setup);
-    print OUT "  }\n\n";
+    print OUT "  } while (0);\n\n";
 }
 
 print OUT "  weed_plugin_set_package_version(plugin_info, package_version);\n";
@@ -1055,9 +1126,15 @@ sub gen_array {
 	    print OUT "\n";
 	    next;
 	}
-	my $xspaces = &subst_macro($type, $nspaces, $_);
+
+	my $line = $_;
+
+	my $xspaces = &subst_macro($type, $nspaces, $line);
+
+	#$line = &repl_syms($line);
+
 	if ($xspaces eq "none") {
-	    print OUT " " x $nspaces . $_ . "\n";
+	    print OUT " " x $nspaces . $line . "\n";
 	}
 	else {
 	    $nspaces += $xspaces;
@@ -1550,4 +1627,13 @@ sub add_disp_func {
     }
     &disp_fn_end($wtype);
     print OUT "}\n\n";
+}
+
+
+
+
+sub repl_syms {
+    my $line = shift;
+    $line =~ s/(@{[join '|', map { quotemeta($line) } keys %replace]})/$replace{$1}/g;
+    $line;
 }

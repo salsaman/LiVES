@@ -5,7 +5,7 @@ includedir=${prefix}/include/weed
 
 Name: libweed-host-utils
 Description: Host utilities for libweed
-Requires: libweed >= 4.0,0, libweed-utils >= 4.0.0 weed-extras >= 4.0.0
+Requires: libweed >= 4.0.0, libweed-utils >= 4.0.0, weed-extras >= 4.0.0
 Version: 4.0.0
 Libs: -L${libdir} -lweed-host-utils
 Cflags: -I${includedir}

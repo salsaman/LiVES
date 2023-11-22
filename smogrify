@@ -3,7 +3,17 @@
 # smogrify - Copyright G. Finch (salsaman+lives@gmail.com) 2003 - 2018
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
+#use common::sense;
+
+our $CONFIGFILE;
+our $WORKDIR;
+
 my $USE_STRICT = 1;
+my $DEBUG_SM_CMDS;
+my $VERBOSE;
+my $DEBUG_OPEN;
+my $MPLAYER_EXTRA_OPEN_FRAME_BUG;
+
 if ($USE_STRICT) {use strict}
 
 my $USE_WARNINGS = 1;
@@ -52,7 +62,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.2.1-pre";
+my $version = "4.0.0-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -113,13 +123,140 @@ my $pidfile;
 my $curworkdir;
 my $workdir = "";
 my $handle;
+my $from_handle;
 my $statusfile;
 my $configfile = "";
 my $mplay_command = "";
 my $mp_command = "";
 my $is_mpv = 0;
+my $mute;
+my $undo_cut;
+my $asamps;
+my $signed;
+my $asigned;
+my $xsigned;
+my $endian;
+my $endian;
+my $aendian;
+my $aformat;
+my $af_size;
+my $audiofile;
+my $sfile;
+my $file;
+my $gamma_type;
+my $title;
+my $author;
+my $comment;
+my $type;
+my $stype;
+my $is_remote;
+my $syscom2;
+my $syscom3;
+my $syscomv;
+my $syscoma;
+my $syscomb;
+my $trimcom;
+my $loop;
+my $retval;
+my $hsize;
+my $vsize;
+my $start;
+my $end;
+my $audio_start;
+my $audio_end;
+my $audio_to;
+my $audio_in;
+my $audio_out;
+my $audio_effect;
+my $img_ext;
+my $img_ext2;
+my $ximg_ext;
+my $top;
+my $count;
+my $fps;
+my $xfps;
+my $f_size;
+my $size;
+my $arate;
+my $achans;
+my $xarate;
+my $xachans;
+my $bpp;
+my $xbpp;
+my $name;
+my $osd;
+my $img_fmt;
+my $threadopts;
+my $stframe;
+my $num_frames;
+my $new_frames;
+my $noframedrop;
+my $extra_params;
+my $audcom;
+my $aformnew;
+my $channs;
+my $opentest;
+my $quality;
+my $compression;
+my $frames;
+my $stframes;
+my $bandwidth;
+my $band;
+my $curtmpfile;
+my $sox_version;
+my $nodither;
+my $trashdir;
+my $pat;
+my $com;
+my $smerr;
+my $dir;
+my $plugin_name;
+my $only_first;
+my $output;
+my $areq;
+my $img_prefix;
+my $antialias;
+my $has_rec;
+my $imresact;
+my $img_type;
+my $exec_dir;
+my $script_dir;
+my $dwidth;
+my $dheight;
+my $width;
+my $height;
+my $fsize;
+my $afsize;
+my $frame;
+my $sframe;
+my $nfile;
+my $from_ext;
+my $to_ext;
+my $ext;
+my $out_ext;
+my $val;
+my $leave_headers;
+my $with_audio;
+my $allow_missing;
+my $where;
+my $times;
+my $track;
+my $res;
+my $bestvideo;
+my $xbestaudio;
+#my $;
+#my $;
+#my $;
+
+my $ALLOW_AUDIO32;
 
 my $DEFTRASH = "_Trash";
+
+my $alt_dir;
+my $alt_in_use;
+my $alt_clipdir;
+my $prefs_file;
+
 
 ###################################################################
 
@@ -746,7 +883,7 @@ if (1) {
 
 	if ($command eq "clear_tmp_files") {
 	    my $handle = $ARGV[1];
-	    $movetotrash = $ARGV[2];
+	    my $movetotrash = $ARGV[2];
 	    #clear old backups (e.g. when saving a set)
 	    $curworkdir = "$workdir/$handle";
 	    &clean_old($handle, $movetotrash);
@@ -4370,7 +4507,7 @@ if (1) {
 
 
 	    if ($noaudio) {
-		$xbestaudeo = "";
+		$xbestaudio = "";
 	    }
 
 	    else {

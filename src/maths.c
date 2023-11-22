@@ -941,9 +941,10 @@ void tabdata_get_avgs(tab_data_t *tabdata, float * newvals) {
   if (newvals) {
     int nvals = tabdata->nvals;
     if (nvals == tabdata->maxsize) {
+      nvals--;
       for (int i = tabdata->arsize; i--;) {
         tabdata->tots[i] -= tabdata->res[i][0];
-        lives_memmove(tabdata->res[i], tabdata->res[i] + sizeof(float),
+        lives_memmove(tabdata->res[i], tabdata->res[i] + 1,
                       (tabdata->maxsize - 1) * sizeof(float));
       }
     } else tabdata->nvals++;

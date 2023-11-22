@@ -309,6 +309,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int w
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!pixel_data) weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
   return layer;
 }

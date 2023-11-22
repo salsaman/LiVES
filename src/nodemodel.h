@@ -761,6 +761,28 @@ typedef struct {
 #define TIMING_ANN_OUT_PAL_BASE 5 //(base is 1)
 #define TIMING_ANN_IN_PAL_BASE 20 //(base is 1)
 
+// ann for optimiser. We have 8 rdonly inputs and 8 rw
+// we define a utility value based on for example display framerate
+// values are ser to rdonly inputs, the rw inputs are varied by the autotuner
+// as the ANN becomes more trained, it takes over from autotuner
+#define OPT_ANN_RDONLY_0		0 // cpuload
+#define OPT_ANN_RDONLY_1		1 // resvd for io thruput
+#define OPT_ANN_RDONLY_2		2 // etc
+#define OPT_ANN_RDONLY_3		3
+#define OPT_ANN_RDONLY_4		4
+#define OPT_ANN_RDONLY_5		5
+#define OPT_ANN_RDONLY_6		6
+#define OPT_ANN_RDONLY_7		7
+
+#define OPT_ANN_RDWR_0		8 // player loop wait time
+#define OPT_ANN_RDWR_1		9 // p;anner loop eait time
+#define OPT_ANN_RDWR_2		10 // fg_service_call wait time
+#define OPT_ANN_RDWR_3		11 // n gui events per cycle
+#define OPT_ANN_RDWR_4		12
+#define OPT_ANN_RDWR_5		13
+#define OPT_ANN_RDWR_6		14
+#define OPT_ANN_RDWR_7		15
+
 typedef struct {
   int filt_idx;
   int pal;
@@ -772,14 +794,22 @@ typedef struct {
   lives_ann_t *ann;
   int ann_gens;
   pthread_mutex_t ann_mutex;
+  pthread_mutex_t upd_mutex;
   LiVESList *proc_times;
   int cpu_nsamples;
-  float av_cpuload;
+  volatile float const *cpuloadvar;
+  float curr_cpuload;
+  double last_cyc_duration;
   double tot_duration;
   double avg_duration;
+  double tgt_duration;
   double bytes_per_sec;
   double gbytes_per_sec;
+  boolean active;
 } glob_timedata_t;
+
+extern glob_timedata_t *glob_timing;
+
 
 typedef struct _exec_plan exec_plan_t;
 
@@ -914,14 +944,14 @@ struct _exec_plan {
   volatile uint64_t state;
 };
 
-double get_cycle_avg_time(void);
+double get_cycle_avg_time(double *dets);
 
 lives_result_t run_next_cycle(void);
 
 void build_nodemodel(lives_nodemodel_t **);
 void free_nodemodel(lives_nodemodel_t **);
 
-void ann_roll_cancel(void);
+void optimiser_roll_cancel(void);
 
 void cleanup_nodemodel(lives_nodemodel_t **);
 
@@ -952,7 +982,5 @@ double get_min_cost_to_node(inst_node_t *, int cost_type);
 lives_result_t inst_node_set_flags(inst_node_t *n, uint64_t flags);
 
 void describe_chains(lives_nodemodel_t *);
-
-void ann_roll_cancel(void);
 
 #endif

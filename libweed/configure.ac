@@ -1,19 +1,21 @@
+AC_INIT([weed], [4.0.0])
 AC_PREREQ(2.57)
-
-ifdef([m4_pattern_allow],
-      [m4_pattern_allow([^AC_.*])])
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-
-AC_INIT([weed], [4.0.0])
 AC_CONFIG_AUX_DIR([.])
+
+ifdef([m4_pattern_allow],
+      [m4_pattern_allow([^AC_.*])])
+
 AM_MAINTAINER_MODE
 AM_INIT_AUTOMAKE([dist-bzip2])
 AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
+
+LT_INIT
 
 AC_PREFIX_DEFAULT(/usr)
 
@@ -22,8 +24,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_MKDIR_P
-
-AC_PROG_LIBTOOL
 
 IS_DARWIN="false"
 IS_IRIX="false"

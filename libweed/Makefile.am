@@ -27,7 +27,7 @@ includedir = $(prefix)/include/
 
 libdir = $(prefix)/lib/
 
-pkgconfigdir = $(libdir)$(host_cpu)-$(host_os)/pkgconfig/
+pkgconfigdir = $(libdir)$(target_cpu)-$(target_os)/pkgconfig/
 
 weed_includedir = $(includedir)$(PACKAGE)/
 weed_pluginutilsdir = $(weed_includedir)weed-plugin-utils/
@@ -41,7 +41,7 @@ weed_pluginutils_files = weed-plugin-utils.c
 doc_DATA = docs/weedspec.txt docs/weedevents.txt docs/weedaudio.txt docs/weed-plugin-utils.txt \
 	docs/weed-utils.txt
 
-EXTRA_DIST = configure COPYING.LGPL README libweed.doxygen $(doc_DATA) weed-plugin-utils.c \
+EXTRA_DIST = configure COPYING.LGPL README libweed.doxygen $(doc_DATA) $(weed_pluginutils_files) \
 	libweed.pc weed-effect-plugin.pc libweed-host-utils.pc libweed-utils.pc weed-extras.pc \
 	$(weed_headers)
 

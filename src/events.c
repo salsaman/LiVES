@@ -3290,8 +3290,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         // ...but playing at fixed fps, which is faster than mt fps
         mainw->pchains = pchains;
         if (prefs->pbq_adaptive) {
-          if (dframes > 0) update_effort(dframes, TRUE);
-          else update_effort(spare_cycles, FALSE);
+          if (dframes > 0) update_effort(dframes);
+          else update_effort(-spare_cycles);
           dframes = 0;
           spare_cycles = 0;
         }
@@ -3409,7 +3409,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 
         if (LIVES_IS_PLAYING) {
           if (prefs->pbq_adaptive) {
-            update_effort(dframes, TRUE);
+            update_effort(dframes);
             dframes = 0;
             spare_cycles = 0;
           }
@@ -3475,8 +3475,8 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
       if (new_file == -1) new_file = mainw->current_file;
       if (prefs->pbq_adaptive) {
-        if (dframes > 0) update_effort(dframes, TRUE);
-        else update_effort(spare_cycles, FALSE);
+        if (dframes > 0) update_effort(dframes);
+        else update_effort(-spare_cycles);
         dframes = 0;
       }
       if (!mainw->urgency_msg && weed_plant_has_leaf(next_event, WEED_LEAF_OVERLAY_TEXT)) {

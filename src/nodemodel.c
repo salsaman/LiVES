@@ -1371,7 +1371,7 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step) {
   lives_filter_error_t filter_error;
 
   weed_instance_t *inst =
-    weed_instance_obtain(step->target_idx, rte_key_getmode(step->target_idx + 1));
+    rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
 
   if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
     return FILTER_INFO_BYPASSED;
@@ -2309,7 +2309,7 @@ static void run_plan(exec_plan_t *plan) {
                           step->tdata->real_duration);
             if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
               weed_instance_t *inst =
-                weed_instance_obtain(step->target_idx, rte_key_getmode(step->target_idx));
+		rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
               int layer_gamma = weed_layer_get_gamma(layer);
               if (layer_gamma == WEED_GAMMA_LINEAR) {
                 // if we scaled params, scale them back so they are displayed correctly in interfaces
@@ -3381,7 +3381,7 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
     int nins, nouts, i = 0, k, cwidth, cheight;
 
     if (n->model_type == NODE_MODELS_FILTER)
-      inst = weed_instance_obtain(n->model_idx, rte_key_getmode(n->model_idx));
+      inst = rte_keymode_get_instance(n->model_idx + 1, rte_key_getmode(n->model_idx + 1));
     else {
       lives_clip_t *sfile = RETURN_VALID_CLIP(n->model_idx);
       inst = get_primary_inst(sfile);
@@ -3589,7 +3589,7 @@ do {
         inst_node_t *nxt = out->node;
         input_node_t *in = nxt->inputs[out->iidx];
         if (nxt->model_type == NODE_MODELS_FILTER) {
-          weed_instance_t *inst = weed_instance_obtain(n->model_idx, rte_key_getmode(n->model_idx));
+          weed_instance_t *inst = rte_keymode_get_instance(n->model_idx + 1, rte_key_getmode(n->model_idx + 1));
           if (inst) {
             weed_channel_t *channel = get_enabled_channel(inst, out->iidx, LIVES_INPUT);
             weed_chantmpl_t *chantmpl = weed_channel_get_template(channel);
@@ -6357,12 +6357,9 @@ if (do_what == 7) {
 if (do_what == 5) {
   // reinit fx
   lives_filter_error_t retval;
-  weed_instance_t *inst =
-    weed_instance_obtain(n->model_idx,
-                         rte_key_getmode(n->model_idx));
+  weed_instance_t *inst = rte_keymode_get_instance(n->model_idx + 1, rte_key_getmode(n->model_idx + 1));
   if (inst) {
-    if (prefs->dev_show_timing)
-      d_print_debug("REINIT key %d\n", n->model_idx);
+    d_print_debug("REINIT key %d\n", n->model_idx);
     if (!weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL))
       retval = weed_reinit_effect(inst, FALSE);
     else if (n->needs_reinit) retval = weed_reinit_effect(inst, TRUE);
@@ -6376,9 +6373,7 @@ if (do_what == 5) {
 
   for (LiVESList *list = n->virtuals; list; list = list->next) {
     inst_node_t *n = (inst_node_t *)list->data;
-    weed_instance_t *inst =
-      weed_instance_obtain(n->model_idx,
-                           rte_key_getmode(n->model_idx));
+    weed_instance_t *inst = rte_keymode_get_instance(n->model_idx + 1, rte_key_getmode(n->model_idx + 1));
     if (inst) {
       if (prefs->dev_show_timing)
         d_print_debug("REINIT key %d\n", n->model_idx);

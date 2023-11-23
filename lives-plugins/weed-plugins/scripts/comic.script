@@ -59,7 +59,7 @@ ALL_PLANAR_PALETTES
 </palette_list>
 
 <in_chans>
-in_channel0|unclamped, planar
+in_channel0|planar
 </in_chans>
 
 <out_chans>

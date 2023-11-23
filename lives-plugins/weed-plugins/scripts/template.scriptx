@@ -3,64 +3,97 @@
 <define>
 # MANDATORY
 # 1 char delimiter, followed by RFX API version
-|1.8.3
+
+|2.0.0
 </define>
+
 
 <name>
 # MANDATORY
 # filename (no spaces), optional menu name
+
 new_effect|new effect
 </name>
 
-<version>
+
+<package_version>
 # MANDATORY
 # package version, filter version
-1|1
-</version>
+
+1
+</package_version>
+
 
 <author>
 # MANDATORY
 # principle author
+
 effecTV
+
 #optional additional authors
-salsaman
+
+salsaman <salsaman@gmail.com>
 </author>
 
-<unique_id>
-# MANDATORY
-# a randomly generated 64 bit number, MUST not change. E.g:
-0X4847CA06EC91CD4A
-</unique_id>
-
-<description>
+<static>
 # OPTIONAL
-# free text description
-A filter which does something cool.
-</description>
+# static variables and functions for the plugin as a whole
+
+static const double scmax = exp(3.);
+static void foo(void) {
+  // code
+}
+</static>
+
+
+<license>
+# OPTIONAL
+# the license which the plugin will be released under
+# may be followed by license text, otherwise the builder may insert boilerplate text
+
+GPL
+See file COPYING for details
+</license>
+
+
+<license_version>
+# OPTIONAL
+# the license version (only valid if license is defined)
+
+3 or higher
+</license_version>
+
 
 <requires>
 # OPTIONAL
 # a combination of headers and features
+
 <math.h>
-putils
+@PUTILS@
 </requires>
+
 
 <language_code>
 # MANDATORY
 # always 0xC0 to generate C code
+
 0xC0
 </language_code>
+
 
 <typedefs>
 # OPTIONAL
 # typedefs which may then be used in sdata struct
+
 unsigned int|RGB32
 </typedefs>
+
 
 <sdata>
 # OPTIONAL
 # details for the sd struct (static per instance data), optionally followed by a free function
 # the following are all valid:
+
 int|phase, count|
 volatile int|wait|
 void *|buff|weed_free
@@ -71,101 +104,155 @@ double dphase
 RGB32 *|framebuff
 </sdata>
 
+
 <filter_flags>
 # OPTIONAL
 # keywords denoting WEED filter flag bits
-may_thread
-stateful
+
+$MAY_THREAD
+$STATEFUL
 </filter_flags>
+
 
 <palette_list>
 # OPTIONAL (MANDATORY for filters with video channels)
 # a list of WEED_PALETTES (e.g WEED_PALETTE_RGB24, or just RGB24), or a standard set starting with "ALL_"
 # e.g ALL_RGB_PALETTES
-ALL_PACKED_PALETTES_PLUS
+
+$ALL_PACKED_PALETTES_PLUS
 </palette_list>
+
+
+=== PER_FILTER_SECTION ===
+## if the script is for a single filter only, the tags <filte>, </filter> may be omitted
+## otherwise the sections are per filter in the plugin
+
+<filter>
+
+<filter_version>
+# version number of the filter, if different from the <package_version>
+
+2
+</filter_version>
+
+<unique_id>
+# MANDATORY
+# hexadecimal format
+# a randomly generated 64 bit number, MUST not change. E.g:
+
+0X4847CA06EC91CD4A
+</unique_id>
+
+
+<description>
+# OPTIONAL
+# free text description
+
+A filter which does something cool.
+</description>
+
 
 <in_chans>
 # OPTIONAL
 # names of any in_channels, 1 per line, each followed by flag keywords (optional)
-in_channel0|reinit_on_size_change
-in_channel1|unclamped, planar
+
+in_channel0|$REINIT_ON_SIZE_CHANGE
+in_channel1|$PLANAR
 </in_chans>
+
 
 <out_chans>
 # OPTIONAL
 # names of any out_channels, 1 per line, each followed by flag keywords (optional)
-out_channel0|inplace
+
+out_channel0|$INPLACE
 </out_chans>
+
 
 <params>
 # OPTIONAL
 # params: name, label, type, ... (following RFX standard)
+
 zoom|_Zoom value|num0|128|0|255|
 autozoom|_Auto zoom|bool|TRUE|
 opac|_Opacity|num2|1.|0.|1.|
 col|_Colour|colRGB24|0|0|255|
 </params>
 
+
 <param_window>
 # OPTIONAL
 # param window hints (following RFX standard)
+
 special|ignored|1|
 
 # here we link one or more params to display values (not part of RFX spec)
+
 special|display_val|log|0|
 </param_window>
+
 
 <out_params>
 # OPTIONAL
 # out params: name, type, default, [min, max]
+
 relative|num3|0|
 absolute|num3|0|
 since_reset|num3|0|
-was_reset|bool|WEED_FALSE|
+was_reset|bool|FALSE|
 </out_params>
 
-<static>
-# OPTIONAL
-# static variables and functions for the plugin as a whole
-static const double scmax = exp(3.);
-void foo(void) {
-  // code
-}
-</static>
 
 <init>
 # OPTIONAL
 # init function code
+# the builder will set some  standard variables, e.g width, height
+
 int video_area = width * height;
-size_t psize = pixel_size(pal) * 2;
-sdata->buffer = (RGB32 *)weed_calloc(video_area, psize);
-if (!sdata->buffer) {
-  weed_free(sdata);
-  return WEED_ERROR_MEMORY_ALLOCATION;
+size_t psize = $PIXEL_SIZE(pal) * 2;
+$SDATA->buffer = (RGB32 *)$CALLOC_FUNC(video_area, psize);
+if (!$SDATA->buffer) {
+  $FREE_FUNC($SDATA);
+  return $ERROR_MEMORY_ALLOCATION;
 }
 </init>
+
 
 <deinit>
 # OPTIONAL
 # deinit code
-if (sdata->buff3) weed_free(sdata->buff3);
+
+if ($SDATA->buff3) $FREE_FUNC($SDATA->buff3);
 </deinit>
+
 
 <process>
 # OPTIONAL
 # a mix of C code and MACROS
+
 int z = 0;
-START_STATEFUL_UPDATE ## for use with may_thread / stateful
-  sdata->phase++;
-END_STATEFUL_UPDATE
+
+@START_STATEFUL_UPDATE@ ## for use with may_thread / stateful
+  $SDATA->phase++;
+@END_STATEFUL_UPDATE@
 </process>
+
+</filter>
+
 
 <setup>
 # OPTIONAL
 # any extra setup code for all filters in plugin
+
 make_tables();
 </setup>
+
+
+<desetup>
+# OPTIONAL
+# code to be run before unloading the plugin
+</desetup>
+
 
 <display_vals>
 # OPTIONAL
@@ -183,3 +270,60 @@ val = log(val) + 1.;
 # code to convert display val to real val
 val = exp(val - 1.);
 </display_vals>
+
+
+
+Appendix A - list of symbols and macros for replacement
+
+$SDATA			:: struct holding static data for an instance of the filter
+			:: defined in <sdata> section. Created automatially in @INIT_FUNC
+			:: Retrieved in @PROCESS_FUNC
+			:: Freed in @DEINIT_FUNC
+
+
+Memory functions:
+$MALLOC_FUNC
+$CALLOC_FUNC
+$REALLOC_FUNC
+$FREE_FUNC
+$MEMCPY_FUNC
+$MEMSET_FUNC
+$MEMMOVE_FUNC
+
+Error codes:
+$ERROR_OK
+$ERROR_MEMORY_ALLOCATION
+
+Requirements:
+@PUTILS@			:: unlocks PUTILS functions (see below)
+
+
+
+filter flags:
+$MAY_THREAD
+$STATEFUL
+
+
+channel flags:
+$REINIT_ON_SIZE_CHANGE
+$REINIT_ON_ROWSTRIDES_CHANGE
+$REINIT_ON_PALETTE_CHANGE
+$PLANAR
+$INPLACE
+
+
+misc functions:
+$PIXEL_SIZE(pal) :: return (macro) pixel size in bytes
+
+
+
+
+code replacement macros:
+
+@START_STATEFUL_UPDATE@
+// marks sdata updates which should be done by the first thread only
+// other theads must not read $SDATA until END_STATEFUL_UPDATE
+// outside this section, $SDATA values are readonlt
+@END_STATEFUL_UPDATE@
+
+

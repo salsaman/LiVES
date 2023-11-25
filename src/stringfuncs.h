@@ -7,6 +7,8 @@
 // the following functions
 // lives_strconcat, strdup, strndup, lives_markup_escape_text, lives_strsplit
 
+#define VAL_AND_QUOTED(val) val, (const char *)#val
+
 #define str_free(str) default_free(str)
 
 #define lives_strdup(s) lives_strdup_quick(s)

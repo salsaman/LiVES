@@ -697,7 +697,7 @@ LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
   if (prefs->show_gui) {
     if (rdet && rdet->dialog) transient = LIVES_WINDOW(rdet->dialog);
     else if (prefsw && prefsw->prefs_dialog) transient = LIVES_WINDOW(prefsw->prefs_dialog);
-    else if (!rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
+    else if (rte_window_visible()) transient = LIVES_WINDOW(rte_window);
     else if (LIVES_MAIN_WINDOW_WIDGET && mainw->is_ready) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
   }
   return transient;
@@ -4520,6 +4520,42 @@ boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs,
         return FALSE;
       }
       return TRUE;
+    case LIVES_PERM_KILL_PIDS: {
+      LiVESList *pidlist = (LiVESList *)argv[1];
+      char *reason = (char *)argv[2];
+      char *outcome = (char *)argv[3];
+      int npids = lives_list_length(pidlist);
+      char *msg, *tmp;
+      boolean res = FALSE;
+      if (npids > 0) {
+	if (npids == 1) {
+	  msg = lives_strdup_printf((tmp = _("%s process %d.\nShall I terminate that process to %s ?")),
+				    reason, LIVES_POINTER_TO_INT(pidlist->data), outcome);
+	  lives_free(tmp);
+	}
+	else {
+	  msg = lives_strdup_printf((tmp = _("%s the following processes:\n")), reason);
+	  lives_free(tmp);
+	  msg = lives_concat_sep(msg, "", lives_strdup_printf("%d", LIVES_POINTER_TO_INT(pidlist->data)));
+	  for (LiVESList *list = pidlist->next; list; list = list->next) {
+	    if (list->next)
+	      msg = lives_concat_sep(msg, ", ", lives_strdup_printf("%d", LIVES_POINTER_TO_INT(list->data)));
+	    else {
+	      tmp = _(" and ");
+	      msg = lives_concat_sep(msg, tmp, lives_strdup_printf("%d", LIVES_POINTER_TO_INT(list->data)));
+	      lives_free(tmp);
+	    }
+	  }
+
+	  msg = lives_concat_sep(msg, "", lives_strdup_printf((tmp = _("\nShall I terminate the processes to %s ?")),
+							      outcome));
+	  lives_free(tmp);
+	}
+	res = do_yesno_dialog(msg);
+	lives_free(msg);
+      }
+      return res;
+    }
     default:
       break;
     }

@@ -53,11 +53,7 @@ static void check_clear_all_button(void);
 
 static boolean rte_window_is_hidden = TRUE;
 
-
-boolean rte_window_hidden(void) {
-  return rte_window_is_hidden;
-}
-
+boolean rte_window_visible(void) {return rte_window && !rte_window_is_hidden;}
 
 void rte_window_set_interactive(boolean interactive) {
   int i, j;
@@ -98,10 +94,12 @@ void rtew_set_key_check_state(void) {
   // set (delayed) keycheck state
   int i;
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
-    lives_signal_handler_block(key_checks[i], ch_fns[i]);
+    if (!rte_window_is_hidden)
+      lives_signal_handler_block(key_checks[i], ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
                                    GET_INT_DATA(key_checks[i], ACTIVE_KEY));
-    lives_signal_handler_unblock(key_checks[i], ch_fns[i]);
+    if (!rte_window_is_hidden)
+      lives_signal_handler_unblock(key_checks[i], ch_fns[i]);
   }
 }
 
@@ -2514,18 +2512,22 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
 
 
 void rtew_set_keych(int key, boolean on) {
-  lives_signal_handler_block(key_checks[key], ch_fns[key]);
+  if (!rte_window_is_hidden)
+    lives_signal_handler_block(key_checks[key], ch_fns[key]);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[key]), on);
-  lives_signal_handler_unblock(key_checks[key], ch_fns[key]);
+  if (!rte_window_is_hidden)
+    lives_signal_handler_unblock(key_checks[key], ch_fns[key]);
   SET_INT_DATA(key_checks[key], ACTIVE_KEY, on);
 }
 
 
 void rtew_set_keygr(int key) {
   if (key >= 0) {
-    lives_signal_handler_block(key_grabs[key], gr_fns[key]);
+    if (!rte_window_is_hidden)
+      lives_signal_handler_block(key_grabs[key], gr_fns[key]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[key]), TRUE);
-    lives_signal_handler_unblock(key_grabs[key], gr_fns[key]);
+    if (!rte_window_is_hidden)
+      lives_signal_handler_unblock(key_grabs[key], gr_fns[key]);
   } else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(dummy_radio), TRUE);
   }
@@ -2534,9 +2536,11 @@ void rtew_set_keygr(int key) {
 
 void rtew_set_mode_radio(int key, int mode) {
   int modes = rte_getmodespk();
-  lives_signal_handler_block(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
+    if (!rte_window_is_hidden)
+      lives_signal_handler_block(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[key * modes + mode]), TRUE);
-  lives_signal_handler_unblock(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
+    if (!rte_window_is_hidden)
+      lives_signal_handler_unblock(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
 }
 
 
@@ -2554,9 +2558,11 @@ void update_pwindow(int key, int i, LiVESList * list) {
       if (!(inst = rte_keymode_get_instance(key + 1, modew))) return;
       weed_instance_unref(inst);
       rfx = fx_dialog[1]->rfx;
-      mainw->block_param_updates = TRUE;
+      if (!rte_window_is_hidden)
+	mainw->block_param_updates = TRUE;
       list = set_param_from_list(list, &rfx->params[i], TRUE, TRUE);
-      mainw->block_param_updates = FALSE;
+      if (!rte_window_is_hidden)
+	mainw->block_param_updates = FALSE;
     }
   }
 }

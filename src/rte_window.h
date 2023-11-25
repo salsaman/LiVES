@@ -57,7 +57,7 @@ boolean on_clear_all_clicked(LiVESButton *, livespointer user_data);
 
 void on_clear_clicked(LiVESButton *, livespointer user_data);
 
-boolean rte_window_hidden(void);
+boolean rte_window_visible(void);
 
 LiVESWidget *refresh_rte_window(void);
 

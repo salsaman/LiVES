@@ -7603,15 +7603,15 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                             LIVES_GUI_CALLBACK(on_osc_enable_toggled),
                             (livespointer)prefsw->enable_OSC_start);
 #endif
-  if (saved_dialog == NULL) {
+  if (!saved_dialog) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->revertbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_prefs_revert_clicked), NULL);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
                               LIVES_GUI_CALLBACK(on_prefs_close_clicked), NULL);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
+			      LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
   }
 
   prefsw->close_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -7968,6 +7968,9 @@ boolean lives_ask_permission(char **argv, int argc, int offs) {
   case LIVES_PERM_COPY_LOCAL:
     if (argc >= 5 && strstr(argv[4], "_TRY_SUDO_")) sudocom = (const char *)argv[2];
     ret = ask_permission_dialog_complex(what, argv, argc, ++offs, sudocom);
+    return ret;
+  case LIVES_PERM_KILL_PIDS:
+    ret = ask_permission_dialog_complex(what, argv, argc, offs, NULL);
     return ret;
   default:
     msg = lives_strdup_printf("Unknown permission (%d) requested", what);

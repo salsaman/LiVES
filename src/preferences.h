@@ -1504,10 +1504,13 @@ void optimize(void);
 
 // permissions
 
-#define LIVES_PERM_INVALID 0
-#define LIVES_PERM_OSC_PORTS 1
-#define LIVES_PERM_DOWNLOAD_LOCAL 2
-#define LIVES_PERM_COPY_LOCAL 3
+enum {
+      LIVES_PERM_INVALID = 0,
+      LIVES_PERM_OSC_PORTS,
+      LIVES_PERM_DOWNLOAD_LOCAL,
+      LIVES_PERM_COPY_LOCAL,
+      LIVES_PERM_KILL_PIDS
+};
 
 boolean lives_ask_permission(char **argv, int argc, int offs);
 #endif

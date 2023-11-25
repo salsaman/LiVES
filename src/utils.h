@@ -65,6 +65,9 @@ void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
 int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pid_t pgrp, int sig);
+
+lives_result_t ask_to_kill(char *reason, char *outcome, LiVESList *pidlist);
+
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_unsetenv(const char *name);
 lives_result_t lives_rmdir(const char *dir, boolean force);

@@ -714,6 +714,23 @@ void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
 }
 
 
+LIVES_GLOBAL_INLINE lives_result_t ask_to_kill(char *reason, char *outcome, LiVESList *pidlist) {
+  char *argv[4];
+  argv[0] = lives_strdup_printf("%d", LIVES_PERM_KILL_PIDS);
+  argv[1] = (char *)pidlist;
+  argv[2] = reason;
+  argv[3] = outcome;
+  if (lives_ask_permission(argv, 0, 0)) {
+    lives_free(argv[0]);
+    for (LiVESList *list = pidlist; list; list = list->next)
+      lives_kill((lives_pid_t)LIVES_POINTER_TO_INT(list->data), LIVES_SIGKILL);
+    return LIVES_RESULT_SUCCESS;
+  }
+  lives_free(argv[0]);
+  return LIVES_RESULT_FAIL;
+}
+      
+
 void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   char *com;
   if (!suspend)

@@ -1341,7 +1341,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
             uint64_t new_rte = GU641 << key;
             weed_deinit_effect(key);
             mainw->rte &= ~new_rte;
-            if (rte_window) rtew_set_keych(key, FALSE);
+            if (rte_window_visible()) rtew_set_keych(key, FALSE);
             if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
             weed_instance_unref(inst);
             filter_mutex_unlock(key);
@@ -4862,7 +4862,6 @@ void weed_load_all(void) {
   libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
 #endif
 #endif
-
   for (i = numdirs - 1; i >= 0; i--) {
     // get list of all files
     LiVESList *list;
@@ -6480,7 +6479,7 @@ boolean weed_init_effect(int hotkey) {
         weed_deinit_effect(agen_key);
         // need to do this in case starting another audio gen caused us to come here
         mainw->rte &= ~(GU641 << agen_key);
-        if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
+        if (rte_window_visible() && !mainw->is_rendering && !mainw->multitrack) {
           rtew_set_keych(agen_key, FALSE);
         }
         if (mainw->ce_thumbs) ce_thumbs_set_keych(agen_key, FALSE);
@@ -6775,7 +6774,7 @@ deinit2:
       filter_mutex_lock(bg_generator_key);
       mainw->rte |= (GU641 << bg_generator_key);
       if (hotkey < prefs->rte_keys_virtual) {
-        if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
+        if (rte_window_visible() && !mainw->is_rendering && !mainw->multitrack) {
           rtew_set_keych(bg_generator_key, TRUE);
         }
         if (mainw->ce_thumbs) ce_thumbs_set_keych(bg_generator_key, TRUE);
@@ -7153,7 +7152,7 @@ deinit3:
         filter_mutex_lock(bgk);
         weed_deinit_effect(bgk);
         mainw->rte &= ~(GU641 << bgk);
-        if (rte_window) rtew_set_keych(bgk, FALSE);
+        if (rte_window_visible()) rtew_set_keych(bgk, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(bgk, FALSE);
         filter_mutex_unlock(bgk);
       }
@@ -7261,7 +7260,7 @@ void deinit_easing_effects(void) {
 void weed_deinit_all(boolean shutdown) {
   weed_plant_t *instance;
 
-  if (rte_window) rtew_set_keygr(-1);
+  if (rte_window_visible()) rtew_set_keygr(-1);
 
   mainw->rte_keys = -1;
   mainw->last_grabbable_effect = -1;
@@ -7284,7 +7283,7 @@ void weed_deinit_all(boolean shutdown) {
             || get_primary_inst(cfile) != (void *)instance) {
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
-          if (rte_window) rtew_set_keych(i, FALSE);
+          if (rte_window_visible()) rtew_set_keych(i, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_instance_unref(instance);
         }
@@ -7809,7 +7808,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     mainw->rte |= new_rte;
 
     mainw->last_grabbable_effect = key;
-    if (rte_window) rtew_set_keych(key, TRUE);
+    if (rte_window_visible()) rtew_set_keych(key, TRUE);
     if (mainw->ce_thumbs) {
       ce_thumbs_set_keych(key, TRUE);
 
@@ -7930,7 +7929,7 @@ void weed_generator_end(weed_plant_t *inst) {
 
   /////// update the key checkboxes //////
   /// TODO: do we want to do this if switching from one gen to another ?
-  if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
+  if (rte_window_visible() && !mainw->is_rendering && !mainw->multitrack) {
     // update real time effects window if we are showing it
     if (!is_bg) {
       rtew_set_keych(fg_generator_key, FALSE);
@@ -9286,7 +9285,7 @@ boolean rte_key_setmode(int key, int newmode) {
 
   if (newmode == oldmode) return FALSE;
 
-  if (rte_window) rtew_set_mode_radio(key, newmode);
+  if (rte_window_visible()) rtew_set_mode_radio(key, newmode);
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key, newmode);
 
   if ((inst = weed_instance_obtain(key, oldmode)) != NULL) {  // adds a ref
@@ -9388,7 +9387,7 @@ int weed_add_effectkey_by_idx(int key, int idx) {
       key_to_fx[key][i] = idx;
       filter_mutex_unlock(key);
 
-      if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
+      if (rte_window_visible() && !mainw->is_rendering && !mainw->multitrack) {
         // if rte window is visible add to combo box
         char *tmp;
         rtew_combo_set_text(key, i, (tmp = rte_keymode_get_filter_name(key + 1, i, FALSE)));

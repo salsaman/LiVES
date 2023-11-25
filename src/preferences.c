@@ -7611,7 +7611,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                               LIVES_GUI_CALLBACK(on_prefs_close_clicked), NULL);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
-			      LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
+                              LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
   }
 
   prefsw->close_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,

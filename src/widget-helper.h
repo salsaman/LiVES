@@ -299,6 +299,9 @@ lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t 
 lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *, lives_colRGB48_t *);
 LiVESWidgetColor *lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *, LiVESWidgetColor *);
 
+lives_painter_t *live_widget_begin_paint(LiVESWidget *);
+void lives_widget_end_paint(LiVESWidget *);
+
 boolean clear_widget_bg(LiVESWidget *widget, lives_painter_surface_t *);
 boolean clear_widget_bg_area(LiVESWidget *widget, lives_painter_surface_t *s,
                              double x, double y, double width, double height);
@@ -1717,6 +1720,8 @@ const widget_opts_t _def_widget_opts = {
 #define DEFER_KEY "_wh_defer"
 #define DEFERRED_KEY "_wh_deferred"
 #define LAYER_PROXY_KEY "proxy_layer"
+#define XWIN_KEY "_wh_xwin"
+#define GDK_CTX_KEY "gdk_ctx"
 
 #define MUTEX_KEY "_wh_mutex"
 #define PBS_KEY "_wh_pbs"

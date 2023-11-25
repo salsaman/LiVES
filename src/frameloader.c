@@ -331,7 +331,6 @@ void load_start_image(frames_t frame) {
 
   if (!prefs->show_gui) return;
   if (mainw->multitrack) return;
-  g_print("LSI\n");
 
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1) &&
@@ -625,8 +624,6 @@ check_stcache:
  }
 // *INDENT-ON*
   pthread_mutex_unlock(mutex);
-  g_print("LSI done\n");
-
 }
 
 void load_end_image(frames_t frame) {
@@ -658,7 +655,6 @@ void load_end_image(frames_t frame) {
     frame = -frame;
     expose = TRUE;
   }
-  g_print("LEI\n");
 
   lives_widget_set_opacity(mainw->end_image, 1.);
 
@@ -928,7 +924,8 @@ check_encache:
   }
   // *INDENT-ON*
     pthread_mutex_unlock(mutex);
-    g_print("LEI done \n");
+
+    mainw->debug_ptr = mainw->end_image;
   }
 
 

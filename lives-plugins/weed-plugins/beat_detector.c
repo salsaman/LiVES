@@ -109,26 +109,9 @@ static int create_plans(void) {
 
 
 static weed_error_t beat_init(weed_plant_t *inst) {
-  _sdata *sdata;
-  register int i, j;
+  _sdata *sdata = (_sdata *)weed_calloc(1, sizeof(_sdata));
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  sdata = (_sdata *)weed_malloc(sizeof(_sdata));
-  if (sdata == NULL) {
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
-
-  for (i = 0; i < NSLICES; i++) {
-    sdata->av[i] = 0.;
-    for (j = 0; j < BUFMAX; j++) {
-      sdata->buf[i][j] = 0.;
-    }
-  }
-
-  for (j = 0; j < BUFMAX; j++) {
-    sdata->bufsize[j] = 0;
-  }
-
-  sdata->totsamps = 0;
   sdata->bufidx = -1;
 
   weed_set_voidptr_value(inst, "plugin_data", sdata);
@@ -139,20 +122,16 @@ static weed_error_t beat_init(weed_plant_t *inst) {
 
 static weed_error_t beat_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
-  if (sdata != NULL) {
-    weed_free(sdata);
-  }
+  if (sdata) weed_free(sdata);
   weed_set_voidptr_value(inst, "plugin_data", NULL);
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int chans, nsamps, onsamps, base, rate, k;
-
+  int chans;
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
   float **src = (float **)weed_channel_get_audio_data(in_channel, &chans);
-
   if (chans) {
     weed_plant_t **in_params = weed_get_in_params(inst, NULL);
     weed_plant_t **out_params = weed_get_out_params(inst, NULL);
@@ -164,17 +143,19 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     int beat_pulse = WEED_FALSE, beat_hold = weed_param_get_value_boolean(out_params[1]);
     int has_data = WEED_FALSE;
+
+    int nsamps, onsamps, base, rate, k;
     int kmin, kmax, okmin, rkmin, rkmax;
+    int i, j, s;
 
     _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
 
     double var, av;
     float tot = 0., totx;
-    int i, j, s;
 
     weed_free(in_params);
 
-    if (beat_hold == WEED_TRUE) beat_hold = !reset;
+    if (beat_hold) beat_hold = !reset;
 
     onsamps = weed_channel_get_audio_length(in_channel);
 
@@ -192,10 +173,9 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
       for (i = 0; i < NSLICES; i++) {
         sdata->av[i] = 0.;
-        for (j = 0; j < sdata->bufidx; j++) {
-          sdata->buf[i][j] = sdata->buf[i][j + 1];
+	weed_memmove(sdata->buf[i], sdata->buf[i] + 1, sdata->bufidx * sizeof(float));
+        for (j = 0; j < sdata->bufidx; j++)
           if (sdata->buf[i][j] != -1.) sdata->av[i] += (double)sdata->buf[i][j];
-        }
       }
       has_data = WEED_TRUE;
     } else {
@@ -208,9 +188,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     sdata->totsamps += onsamps;
 
-    for (j = 0; j < sdata->bufidx; j++) {
-      sdata->bufsize[j] = sdata->bufsize[j + 1];
-    }
+    weed_memmove(sdata->bufsize, sdata->bufsize + 1, (sdata->bufidx - 1) * sizeof(int));
 
     sdata->bufsize[sdata->bufidx] = onsamps;
 

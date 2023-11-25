@@ -3291,7 +3291,7 @@ void set_primary_apparent(int clipno, full_pal_t *pally, int gamma_type) {
   lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
   if (srcgrp) {
     srcgrp->apparent_pal = pally->pal;
-    if (weed_palette_is_yuv(pally->pal)) { 
+    if (weed_palette_is_yuv(pally->pal)) {
       srcgrp->apparent_pally.subspace = pally->subspace;
       srcgrp->apparent_pally.sampling = pally->sampling;
       srcgrp->apparent_pally.clamping = pally->clamping;

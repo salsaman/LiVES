@@ -646,6 +646,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   lives_painter_surface_t **psurface, *surface;
   lives_painter_t *cr;
   int rwidth, rheight, width, height, cx, cy;
+  boolean del = TRUE;
   //int owidth, oheight;
 
   if (!da) return;
@@ -670,11 +671,21 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     return;
   }
 
-  cr = lives_painter_create_from_surface(surface);
+  if (1 ||					widget == mainw->play_image ||
+      widget == mainw->preview_image) {
+    cr = live_widget_begin_paint(widget);
+    del = FALSE;
+    surface = *psurface = lives_painter_get_target(cr);
+    lives_painter_surface_reference(surface);
+  } else cr = lives_painter_create_from_surface(surface);
+
   if (!cr) {
     pthread_mutex_unlock(mutex);
     return;
   }
+
+  //lives_painter_set_source(cr, surface);
+  //lives_painter_surface_reference(surface);
 
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
@@ -765,7 +776,12 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   lives_painter_surface_mark_dirty(surface);
 
   lives_painter_fill(cr);
-  lives_painter_destroy(cr);
+
+  if (del) lives_painter_destroy(cr);
+  else {
+    lives_widget_end_paint(widget);
+    lives_widget_queue_draw(widget);
+  }
   pthread_mutex_unlock(mutex);
 }
 

@@ -3023,7 +3023,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
       lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-      g_print("MWC is %d\n", mainw->current_file);
+      //g_print("MWC is %d\n", mainw->current_file);
       showclipimgs();
     } else {
       int current_file = mainw->current_file;

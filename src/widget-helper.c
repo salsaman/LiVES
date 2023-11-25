@@ -1,6 +1,6 @@
 // widget-helper.c
 // LiVES
-// (c) G. Finch 2012 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2012 - 2023 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -547,9 +547,46 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *live_widget_begin_paint(LiVESWidget * widget) {
+  lives_painter_t *cr = NULL;
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_region_t *reg;
+  cairo_rectangle_t rect;
+  rect.x = rect.y = 0;
+  rect.width = lives_widget_get_allocation_width(widget);
+  rect.height = lives_widget_get_allocation_height(widget);
+  reg = cairo_region_create_rectangle((const cairo_rectangle_int_t *)&rect);
+
+#ifdef GUI_GTK
+  GdkDrawingContext *gctx;
+  GdkWindow *xwin = lives_widget_get_xwindow(widget);
+  if (!xwin) return NULL;
+
+  gctx = gdk_window_begin_draw_frame(xwin, reg);
+  if (gctx) {
+    cr = gdk_drawing_context_get_cairo_context(gctx);
+    SET_VOIDP_DATA(widget, XWIN_KEY, xwin);
+    SET_VOIDP_DATA(widget, GDK_CTX_KEY, gctx);
+  }
+#endif
+#endif
+  return cr;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void lives_widget_end_paint(LiVESWidget * widget) {
+  GdkWindow *xwin =  GET_VOIDP_DATA(widget, XWIN_KEY);
+  GdkDrawingContext *gctx = GET_VOIDP_DATA(widget, GDK_CTX_KEY);
+  if (xwin && gctx) {
+    gdk_window_end_draw_frame(xwin, gctx);
+    SET_VOIDP_DATA(widget, XWIN_KEY, NULL);
+    SET_VOIDP_DATA(widget, GDK_CTX_KEY, NULL);
+  }
+}
+
+
 WIDGET_HELPER_LOCAL_INLINE void lives_painter_lozenge(lives_painter_t *cr, double offs_x, double offs_y, double width,
-    double height,
-    double rad) {
+    double height, double rad) {
   width += offs_x * 2;
   height += offs_y * 2;
 
@@ -9760,9 +9797,9 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
 #if GTK_CHECK_VERSION(4, 0, 0)
       gtk_drawing_area_set_draw_func(darea, callback, (livespointer)ppsurf, NULL);
 #else
-      lives_signal_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-                           LIVES_GUI_CALLBACK(callback),
-                           (livespointer)ppsurf);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+                                LIVES_GUI_CALLBACK(callback),
+                                (livespointer)ppsurf);
 #endif
   }
   //if (!mainw->configured) defer_config(darea);

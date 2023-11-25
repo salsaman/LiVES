@@ -166,17 +166,17 @@ static void canikill(lives_vdev_t *ldev) {
       for (int i = npids; i--;) {
         int pidd = atoi(pids[i]);
         if (pidd == capable->mainpid || !pidd) {
-	  npids--;
-	  continue;
-	}
-	pidlist = lives_list_prepend(pidlist, LIVES_INT_TO_POINTER(pidd));
+          npids--;
+          continue;
+        }
+        pidlist = lives_list_prepend(pidlist, LIVES_INT_TO_POINTER(pidd));
       }
       if (pidlist) {
-	char *reason = lives_strdup_printf((tmp = _("The device %s is in use by")), ldev->fname);
-	char *outcome = _("free up the device");
-	ask_to_kill(reason, outcome, pidlist);
-	lives_free(reason); lives_free(outcome);
-	lives_list_free(pidlist);
+        char *reason = lives_strdup_printf((tmp = _("The device %s is in use by")), ldev->fname);
+        char *outcome = _("free up the device");
+        ask_to_kill(reason, outcome, pidlist);
+        lives_free(reason); lives_free(outcome);
+        lives_list_free(pidlist);
       }
       lives_strfreev(pids);
     }

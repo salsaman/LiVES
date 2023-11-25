@@ -2333,15 +2333,13 @@ void create_LiVES(void) {
   }
 
   // the actual playback image for the internal player
-  mainw->play_image = lives_standard_drawing_area_new(NULL, &mainw->play_surface);
+  mainw->play_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->play_surface);
   lives_widget_show(mainw->play_image); // needed to get size
   lives_widget_apply_theme(mainw->play_image, LIVES_WIDGET_STATE_NORMAL);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_image), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(all_expose), (livespointer)&mainw->play_surface);
-
   lives_widget_object_ref(mainw->play_image);
   lives_widget_object_ref_sink(mainw->play_image);
+  lives_widget_set_app_paintable(mainw->play_image, TRUE);
 
   mainw->hbox3 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->hbox3, FALSE, FALSE, 0);
@@ -4652,7 +4650,7 @@ static void _resize_play_window(void) {
 
   //  if (!LIVES_IS_PLAYING) {
   lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-  if (!rte_window_hidden()) {
+  if (rte_window_visible()) {
     nwidth >>= 1;
     nheight >>= 1;
     if (mainw->preview_image) lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
@@ -4663,12 +4661,14 @@ static void _resize_play_window(void) {
   lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
   mainw->ignore_screen_size = FALSE;
 
-  if (!rte_window_hidden()) {
+  if (rte_window_visible()) {
     lives_widget_show(mainw->play_window);
     lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
     lives_window_move(LIVES_WINDOW(mainw->play_window), scr_width - nwidth,
                       scr_height - nheight);
   } else {
+    if (!mainw->fs)
+      lives_window_center(LIVES_WINDOW(mainw->play_window));
     lives_widget_queue_draw_and_update(mainw->play_window);
     lives_window_center(LIVES_WINDOW(mainw->play_window));
   }

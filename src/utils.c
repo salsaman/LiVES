@@ -729,7 +729,7 @@ LIVES_GLOBAL_INLINE lives_result_t ask_to_kill(char *reason, char *outcome, LiVE
   lives_free(argv[0]);
   return LIVES_RESULT_FAIL;
 }
-      
+
 
 void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   char *com;

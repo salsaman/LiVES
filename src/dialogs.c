@@ -4528,31 +4528,30 @@ boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs,
       char *msg, *tmp;
       boolean res = FALSE;
       if (npids > 0) {
-	if (npids == 1) {
-	  msg = lives_strdup_printf((tmp = _("%s process %d.\nShall I terminate that process to %s ?")),
-				    reason, LIVES_POINTER_TO_INT(pidlist->data), outcome);
-	  lives_free(tmp);
-	}
-	else {
-	  msg = lives_strdup_printf((tmp = _("%s the following processes:\n")), reason);
-	  lives_free(tmp);
-	  msg = lives_concat_sep(msg, "", lives_strdup_printf("%d", LIVES_POINTER_TO_INT(pidlist->data)));
-	  for (LiVESList *list = pidlist->next; list; list = list->next) {
-	    if (list->next)
-	      msg = lives_concat_sep(msg, ", ", lives_strdup_printf("%d", LIVES_POINTER_TO_INT(list->data)));
-	    else {
-	      tmp = _(" and ");
-	      msg = lives_concat_sep(msg, tmp, lives_strdup_printf("%d", LIVES_POINTER_TO_INT(list->data)));
-	      lives_free(tmp);
-	    }
-	  }
+        if (npids == 1) {
+          msg = lives_strdup_printf((tmp = _("%s process %d.\nShall I terminate that process to %s ?")),
+                                    reason, LIVES_POINTER_TO_INT(pidlist->data), outcome);
+          lives_free(tmp);
+        } else {
+          msg = lives_strdup_printf((tmp = _("%s the following processes:\n")), reason);
+          lives_free(tmp);
+          msg = lives_concat_sep(msg, "", lives_strdup_printf("%d", LIVES_POINTER_TO_INT(pidlist->data)));
+          for (LiVESList *list = pidlist->next; list; list = list->next) {
+            if (list->next)
+              msg = lives_concat_sep(msg, ", ", lives_strdup_printf("%d", LIVES_POINTER_TO_INT(list->data)));
+            else {
+              tmp = _(" and ");
+              msg = lives_concat_sep(msg, tmp, lives_strdup_printf("%d", LIVES_POINTER_TO_INT(list->data)));
+              lives_free(tmp);
+            }
+          }
 
-	  msg = lives_concat_sep(msg, "", lives_strdup_printf((tmp = _("\nShall I terminate the processes to %s ?")),
-							      outcome));
-	  lives_free(tmp);
-	}
-	res = do_yesno_dialog(msg);
-	lives_free(msg);
+          msg = lives_concat_sep(msg, "", lives_strdup_printf((tmp = _("\nShall I terminate the processes to %s ?")),
+                                 outcome));
+          lives_free(tmp);
+        }
+        res = do_yesno_dialog(msg);
+        lives_free(msg);
       }
       return res;
     }

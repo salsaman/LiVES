@@ -11,21 +11,13 @@ static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
-#ifndef NEED_LOCAL_WEED_UTILS
-#include <weed/weed-utils.h> // optional
-#else
-#include "../../libweed/weed-utils.h" // optional
-#endif
-#include <weed/weed-plugin-utils.h> // optional
-#else
-#include "../../libweed/weed-plugin.h"
-#include "../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed-plugin-utils.h" // optional
-#endif
+#include <weed/weed-utils.h>
+#include <weed/weed-plugin-utils.h>
 
-#include "weed-plugin-utils.c" // optional
+#include <weed/weed-plugin-utils/weed-plugin-utils.c>
+
+static int verbosity = WEED_VERBOSITY_ERROR;
 
 /////////////////////////////////////////////////////////////
 
@@ -383,7 +375,8 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
             if (rval < 0.) rval = 0.;
             else if (rval > 255.) rval = 255.;
             dst[d + i] += (unsigned char)rval;
-          }
+	    fprintf(stderr, "rval %d  ", (int)rval);
+           }
           if (b2) {
             gval = (float)(sdata->cache[k][s + i + 1] - yuvmin) * gxval + .5;
             if (gval < 0.)gval = 0.;
@@ -494,7 +487,7 @@ WEED_SETUP_START(200, 200) {
 
   in_params[205] = NULL;
 
-  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
+  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, 0, palette_list,
                                         RGBd_init, RGBd_process, RGBd_deinit, in_chantmpls, out_chantmpls,
                                         in_params, NULL);
 

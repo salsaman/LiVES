@@ -2536,11 +2536,11 @@ void rtew_set_keygr(int key) {
 
 void rtew_set_mode_radio(int key, int mode) {
   int modes = rte_getmodespk();
-    if (!rte_window_is_hidden)
-      lives_signal_handler_block(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
+  if (!rte_window_is_hidden)
+    lives_signal_handler_block(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[key * modes + mode]), TRUE);
-    if (!rte_window_is_hidden)
-      lives_signal_handler_unblock(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
+  if (!rte_window_is_hidden)
+    lives_signal_handler_unblock(mode_radios[key * modes + mode], mode_ra_fns[key * modes + mode]);
 }
 
 
@@ -2559,10 +2559,10 @@ void update_pwindow(int key, int i, LiVESList * list) {
       weed_instance_unref(inst);
       rfx = fx_dialog[1]->rfx;
       if (!rte_window_is_hidden)
-	mainw->block_param_updates = TRUE;
+        mainw->block_param_updates = TRUE;
       list = set_param_from_list(list, &rfx->params[i], TRUE, TRUE);
       if (!rte_window_is_hidden)
-	mainw->block_param_updates = FALSE;
+        mainw->block_param_updates = FALSE;
     }
   }
 }

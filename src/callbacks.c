@@ -7273,13 +7273,12 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
   }
 
   if (LIVES_IS_PLAYING) {
+    mainw->gui_much_events = TRUE;
     if (mainw->fs) {
       // switch TO full screen during pb
       if (!mainw->multitrack && !mainw->sep_win) {
         fullscreen_internal();
         fade_background();
-        //fullscreen_internal();
-        //fade_background();
       }
       if (mainw->sep_win) {
         mainw->ignore_screen_size = TRUE;
@@ -7322,6 +7321,8 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
           // multi monitors don't like this it seems, breaks the window
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
         }
+
+        mainw->gui_much_events = TRUE;
 
         //unfade_background();
         if (!mainw->faded) unfade_background();

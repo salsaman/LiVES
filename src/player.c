@@ -1125,8 +1125,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       goto lfi_err;
     }
 
-    if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
-
     // TODO -> mainw->cancelled should cancel plan_cycle
     if (LIVES_UNLIKELY((mainw->cancelled != CANCEL_NONE))) {
       // NULL frame or user cancelled
@@ -1160,6 +1158,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     lives_proc_thread_join(mainw->plan_runner_proc);
     mainw->plan_runner_proc = NULL;
+
+    if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
 
     if (lives_layer_get_status(mainw->frame_layer) != LAYER_STATUS_READY) {
       if (!(mainw->plan_cycle->state == PLAN_STATE_CANCELLED
@@ -1608,6 +1608,8 @@ lfi_done:
 
   reset_old_frame_layer();
   old_frame_layer = STEAL_POINTER(mainw->frame_layer);
+
+  //g_print("out of lfi at %s\n", lives_format_timing_string(lives_get_session_time()));
   return old_frame_layer;
 }
 

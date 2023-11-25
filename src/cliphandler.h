@@ -854,6 +854,8 @@ void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t *pa
 
 void set_primary_apparent(int nclip, full_pal_t *pally, int gamma_type);
 
+lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_type);
+
 // clip sources
 /* lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source, int src_type); */
 /* lives_clip_src_t *get_clip_source(int nclip, int track, int purpose); */

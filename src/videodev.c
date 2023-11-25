@@ -160,15 +160,23 @@ static void canikill(lives_vdev_t *ldev) {
   } else {
     int npids = get_token_count(cbuf, ' ') - 1;
     if (npids > 0) {
+      char *tmp;
+      LiVESList *pidlist = NULL;
       char **pids = lives_strsplit(cbuf, " ", npids);
-      for (int i = npids - 1; i >= 0; i--) {
+      for (int i = npids; i--;) {
         int pidd = atoi(pids[i]);
-        if (pidd == capable->mainpid || !pidd) continue;
-        if (do_yesno_dialogf("Can I free up %s by killing pid %d please ?",
-                             ldev->fname, pidd)) {
-          lives_kill((lives_pid_t)pidd, LIVES_SIGKILL);
-          break;
-        }
+        if (pidd == capable->mainpid || !pidd) {
+	  npids--;
+	  continue;
+	}
+	pidlist = lives_list_prepend(pidlist, LIVES_INT_TO_POINTER(pidd));
+      }
+      if (pidlist) {
+	char *reason = lives_strdup_printf((tmp = _("The device %s is in use by")), ldev->fname);
+	char *outcome = _("free up the device");
+	ask_to_kill(reason, outcome, pidlist);
+	lives_free(reason); lives_free(outcome);
+	lives_list_free(pidlist);
       }
       lives_strfreev(pids);
     }

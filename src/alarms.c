@@ -351,7 +351,6 @@ static void _lives_alarm_wait(lives_timer_t *timer) {
 #if _POSIX_TIMERS
       if (timer->flags & TIMER_FLAG_GET_TIMING) {
         timer->ended = lives_get_session_ticks();
-
         if (timer->delay)
           timer->ratio =
             (double)(timer->ended
@@ -368,7 +367,9 @@ void lives_alarm_wait(void)
 
 void lives_sys_alarm_wait(alarm_name_t alaname) {
   if (alaname <= sys_alarms_min || alaname >= sys_alarms_max) return;
+  thrd_signal_block(LIVES_TIMER_SIG, FALSE);
   _lives_alarm_wait(&app_timers[alaname]);
+  thrd_signal_unblock(LIVES_TIMER_SIG, FALSE);
 }
 
 

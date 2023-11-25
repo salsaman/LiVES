@@ -2751,7 +2751,8 @@ void do_quick_switch(int new_file) {
       && (!CURRENT_CLIP_IS_VALID
           || (sfile && (cfile->hsize != sfile->hsize
                         || cfile->vsize != sfile->vsize)))) {
-    clear_widget_bg(mainw->play_image, mainw->play_surface);
+
+    set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
   }
 #endif
 
@@ -3290,13 +3291,24 @@ void set_primary_apparent(int clipno, full_pal_t *pally, int gamma_type) {
   lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
   if (srcgrp) {
     srcgrp->apparent_pal = pally->pal;
-    if (weed_palette_is_yuv(pally->pal)) {
+    if (weed_palette_is_yuv(pally->pal)) { 
       srcgrp->apparent_pally.subspace = pally->subspace;
       srcgrp->apparent_pally.sampling = pally->sampling;
       srcgrp->apparent_pally.clamping = pally->clamping;
     }
     srcgrp->apparent_gamma = gamma_type;
   }
+}
+
+
+lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_type) {
+  lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
+  if (srcgrp) {
+    if (pally) lives_memcpy(pally, &srcgrp->apparent_pally, sizeof(full_pal_t));
+    if (gamma_type) *gamma_type = srcgrp->apparent_gamma;
+    return LIVES_RESULT_SUCCESS;
+  }
+  return LIVES_RESULT_FAIL;
 }
 
 

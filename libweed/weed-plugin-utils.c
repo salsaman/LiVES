@@ -600,42 +600,6 @@ static inline char *weed_param_get_value_string(weed_plant_t *param) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-#define LEAF_COPY(type) { \
-  type *data = (type *)weed_malloc(num * sizeof(type)); \
-  for (int i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &data[i]); \
-  weed_leaf_set(to, key, seed_type, num, data); weed_free(data);} break;
-
-
-static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *to) {
-  uint32_t seed_type = weed_leaf_seed_type(from, key);
-  weed_size_t num = wlne(from, key);
-  if (num == 0) weed_leaf_set(to, key, seed_type, 0, NULL);
-  else {
-    switch (seed_type) {
-    case WEED_SEED_BOOLEAN:
-    case WEED_SEED_INT: LEAF_COPY(int);
-    case WEED_SEED_INT64: LEAF_COPY(int64_t);
-    case WEED_SEED_DOUBLE: LEAF_COPY(double);
-    case WEED_SEED_FUNCPTR: LEAF_COPY(weed_funcptr_t);
-    case WEED_SEED_VOIDPTR: LEAF_COPY(void *);
-    case WEED_SEED_PLANTPTR: LEAF_COPY(weed_plantptr_t);
-    case WEED_SEED_STRING: {
-      weed_size_t stlen;
-      char **datac = (char **)weed_malloc(num * sizeof(char *));
-      for (weed_size_t i = 0; (weed_size_t)i < num; i++) {
-        stlen = weed_leaf_element_size(from, key, i);
-        datac[i] = (char *)weed_malloc(stlen + 1);
-        weed_leaf_get(from, key, i, &datac[i]);
-      }
-      weed_leaf_set(to, key, WEED_SEED_STRING, num, datac);
-      for (int i = 0; (weed_size_t)i < num; i++) weed_free(datac[i]);
-      weed_free(datac);
-      break;
-    }
-    default: break;
-    }
-  }
-}
 
 static weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
   //plants must be a NULL terminated array
@@ -646,29 +610,7 @@ static weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
   num_plants = i;
   ret = (weed_plant_t **)weed_malloc((num_plants + 1) * sizeof(weed_plant_t *));
   if (!ret) return NULL;
-
-  for (i = 0; i < num_plants; i++) {
-    weed_leaf_get(plants[i], WEED_LEAF_TYPE, 0, &type);
-    ret[i] = weed_plant_new(type);
-    if (!ret[i]) return NULL;
-
-    leaves = weed_plant_list_leaves(plants[i], NULL);
-    for (j = 0; leaves[j]; j++) {
-      if (!strcmp(leaves[j], WEED_LEAF_GUI)) {
-        weed_leaf_get(plants[i], WEED_LEAF_GUI, 0, &gui);
-        gui2 = weed_plant_new(WEED_PLANT_GUI);
-        weed_leaf_set(ret[i], WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &gui2);
-        leaves2 = weed_plant_list_leaves(gui, NULL);
-        for (k = 0; leaves2[k] != NULL; k++) {
-          _weed_clone_leaf(gui, leaves2[k], gui2);
-          free(leaves2[k]);
-        }
-        free(leaves2);
-      } else _weed_clone_leaf(plants[i], leaves[j], ret[i]);
-      free(leaves[j]);
-    }
-    free(leaves);
-  }
+  for (i = 0; i < num_plants; i++) ret[i] = weed_plant_copy(plants[i]);
   ret[i] = NULL;
   return ret;
 }

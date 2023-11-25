@@ -1566,6 +1566,7 @@ if test "x$config" = "x" -o ! -f "$config" ; then
 else
     $ECHO "The $PROJECT build system is now prepared.  To build here, run:"
     $ECHO "  $config"
+    $ECHO "  make"
     $ECHO "  sudo make install"
     $ECHO
 fi

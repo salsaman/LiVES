@@ -29,7 +29,7 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS ChangeLog FEATURES GETTING.STARTED README OMC/lives-OMC.txt RFX/LiVES-Perl.odt  RFX/rfxbuilder.odt RFX/RFX.spec weed-docs/weedspec.txt weed-docs/weedevents.txt docs/clip_format.txt docs/c++-bindings.odt
+doc_DATA = lives-plugins/marcos-encoders/README.multi_encoder AUTHORS ChangeLog FEATURES GETTING.STARTED README OMC/lives-OMC.txt RFX/LiVES-Perl.odt  RFX/rfxbuilder.odt RFX/RFX.spec docs/clip_format.txt docs/c++-bindings.odt
 
 EXTRA_DIST = \
 	configure \

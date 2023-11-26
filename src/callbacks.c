@@ -9471,23 +9471,29 @@ boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
   // TODO - should we invalidate drawables for all clips ?
   if (mainw->no_configs) return TRUE;
   if (!mainw->reconfig) return TRUE;
+  //
+  drawtl_cancel();
+
+  for (int i = 1; i < MAX_FILES; i++) {
+    if (IS_VALID_CLIP(i)) {
+      if (mainw->files[i]->laudio_drawable)
+	lives_painter_surface_destroy(mainw->files[i]->laudio_drawable);
+      mainw->files[i]->laudio_drawable = NULL;
+    }
+  }
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
-    lives_painter_surface_t *laudio_drawable;
-
     clear_widget_bg(widget, surf);
-    laudio_drawable = mainw->laudio_drawable;
     mainw->laudio_drawable = surf;
-
-    if (laudio_drawable) {
-      if (mainw->files[mainw->drawsrc]->laudio_drawable == laudio_drawable)
-        mainw->files[mainw->drawsrc]->laudio_drawable = NULL;
-      lives_painter_surface_destroy(laudio_drawable);
-    }
-    if (mainw->files[mainw->drawsrc]->laudio_drawable)
-      lives_painter_surface_destroy(mainw->files[mainw->drawsrc]->laudio_drawable);
-    mainw->files[mainw->drawsrc]->laudio_drawable = mainw->laudio_drawable;
+    mainw->files[mainw->drawsrc]->laudio_drawable
+      = mainw->laudio_drawable = surf;
   }
+  else mainw->laudio_drawable = NULL; 
+  unlock_timeline();
+  if (IS_VALID_CLIP(mainw->drawsrc))
+    redraw_timeline(mainw->drawsrc);
+  else if (mainw->current_file == -1)
+    redraw_timeline(-1);
   return TRUE;
 }
 
@@ -9503,23 +9509,28 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   if (mainw->no_configs) return TRUE;
   if (!mainw->reconfig) return TRUE;
+  //
+  drawtl_cancel();
+  for (int i = 1; i < MAX_FILES; i++) {
+    if (IS_VALID_CLIP(i)) {
+      if (mainw->files[i]->raudio_drawable)
+	lives_painter_surface_destroy(mainw->files[i]->raudio_drawable);
+      mainw->files[i]->raudio_drawable = NULL;
+    }
+  }
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
-    lives_painter_surface_t *raudio_drawable;
-
     clear_widget_bg(widget, surf);
-    raudio_drawable = mainw->raudio_drawable;
     mainw->raudio_drawable = surf;
-
-    if (raudio_drawable) {
-      if (mainw->files[mainw->drawsrc]->raudio_drawable == raudio_drawable)
-        mainw->files[mainw->drawsrc]->raudio_drawable = NULL;
-      lives_painter_surface_destroy(raudio_drawable);
-    }
-    if (mainw->files[mainw->drawsrc]->raudio_drawable)
-      lives_painter_surface_destroy(mainw->files[mainw->drawsrc]->raudio_drawable);
-    mainw->files[mainw->drawsrc]->raudio_drawable = mainw->raudio_drawable;
+    mainw->files[mainw->drawsrc]->raudio_drawable
+      = mainw->raudio_drawable = surf;
   }
+  else mainw->raudio_drawable = NULL;
+  unlock_timeline();
+  if (IS_VALID_CLIP(mainw->drawsrc))
+    redraw_timeline(mainw->drawsrc);
+  else if (mainw->current_file == -1)
+    redraw_timeline(-1);
   return TRUE;
 }
 

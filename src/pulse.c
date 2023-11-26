@@ -108,10 +108,8 @@ boolean lives_pulse_init(short startup_phase) {
   // startup pulseaudio server
   char *msg;
   pa_context_state_t pa_state;
-  ticks_t timeout;
-  lives_alarm_t alarm_handle;
   LiVESResponseType resp;
-  boolean retried = FALSE;
+  boolean retried = FALSE, is_ok = FALSE;
 
   if (pa_mloop) return TRUE;
 
@@ -128,20 +126,20 @@ retry:
   pa_state = pa_context_get_state(pcon);
   pa_mloop_unlock();
 
-  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-  while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
+  lives_alarm_set_timeout(BILLIONS(50));
+  while (!lives_alarm_triggered() && pa_state != PA_CONTEXT_READY) {
     lives_microsleep;
     pa_mloop_lock();
     pa_state = pa_context_get_state(pcon);
     pa_mloop_unlock();
   }
-  lives_alarm_clear(alarm_handle);
+  lives_alarm_disarm();
 
   pa_mloop_lock();
-  if (pa_context_get_state(pcon) == PA_CONTEXT_READY) timeout = 1;
+  if (pa_context_get_state(pcon) == PA_CONTEXT_READY) is_ok = TRUE;
   pa_mloop_unlock();
 
-  if (timeout == 0) {
+  if (!is_ok) {
     pa_context_unref(pcon);
     pcon = NULL;
     pulse_shutdown();
@@ -394,7 +392,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   int ret = 0;
 
   lives_proc_thread_t self = pulsed->inst;
-
+  //g_print("pa ping\n");
+  
   if (!tdata) {
     tdata = get_thread_data();
     lives_thread_set_active(self);
@@ -457,6 +456,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     got_cmd = TRUE;
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
+
       paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
       pa_operation_unref(paop);
       new_file = atoi((char *)msg->data);
@@ -472,17 +472,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           } else {
             filename = lives_get_audio_file_name(new_file);
             pulsed->fd = lives_open_buffered_rdonly(filename);
-            lives_buffered_rdonly_slurp(pulsed->fd, 0);
-            if (pulsed->fd == -1) {
-              // dont show gui errors - we are running in realtime thread
-              LIVES_ERROR("pulsed: error opening");
-              LIVES_ERROR(filename);
+            lives_buffered_rdonly_slurp(pulsed->fd, 0); 
+      if (pulsed->fd == -1) {
+	// dont show gui errors - we are running in realtime thread
+	LIVES_ERROR("pulsed: error opening");
+	LIVES_ERROR(filename);
               pulsed->playing_file = -1;
-            }
+      }
             lives_free(filename);
           }
-        }
-        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
+        } 
+      g_print("cmd 1434\n");
+       fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
         pulsed->playing_file = new_file;
         //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer
         break;
@@ -554,8 +555,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     sample_silence_pulse(pulsed, nbytes);
     in_ap = FALSE;
     lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-    return;
+    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); 
+   return;
   }
 
   /// this is the value we will return from pulse_get_rec_avals
@@ -765,8 +766,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   if (!pulsed->aPlayPtr->data)
                     pulsed->aPlayPtr->data = lives_calloc_safety(in_bytes / 4 + 1, 4);
                   if (pad_bytes) lives_memset((void *)pulsed->aPlayPtr->data, 0, pad_bytes);
-                  pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
-                                           (in_bytes  - pad_bytes), TRUE) + pad_bytes;
+
+
+		  g_print("read %ld\n", 
+		  pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
+							       (in_bytes  - pad_bytes), TRUE) + pad_bytes);
                 }
               }
             } else pulsed->aPlayPtr->size = in_bytes;
@@ -1807,10 +1811,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     // set write callback
     pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
-    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
-    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
-    pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
-    pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
+
+    /* pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver); */
+    /* pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver); */
+    /* pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver); */
+    /* pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver); */
 
 #if PA_SW_CONNECTION
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY |
@@ -1823,13 +1828,15 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     // calling this may cause other streams to be interrupted temporarily
     // it seems impossible to avoid this
-    pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(0
-                               | PA_STREAM_RELATIVE_VOLUME
-                               | PA_STREAM_INTERPOLATE_TIMING
-                               | PA_STREAM_START_CORKED
-                               | PA_STREAM_START_UNMUTED
-                               | PA_STREAM_NOT_MONOTONIC
-                               | PA_STREAM_AUTO_TIMING_UPDATE),
+    pa_stream_connect_playback(pdriver->pstream, NULL,
+			       &pa_battr, (pa_stream_flags_t)
+			       (0
+				| PA_STREAM_RELATIVE_VOLUME
+				| PA_STREAM_INTERPOLATE_TIMING
+				| PA_STREAM_START_CORKED
+				| PA_STREAM_START_UNMUTED
+				| PA_STREAM_NOT_MONOTONIC
+				| PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
     pa_mloop_unlock();
@@ -2131,10 +2138,14 @@ off_t pulse_audio_seek_bytes_velocity(pulse_driver_t *pulsed, off_t bytes, lives
   off_t seekstart;
 
   // set this here so so that pulse_get_rev_avals returns the forward seek position
+  if (pulsed->is_corked) pulse_driver_uncork(pulsed);
+
   if (!pulsed->is_corked) {
-    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT) || pulsed->playing_file == -1) {
+    g_print("start wait\n");
+    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT * 10) || pulsed->playing_file == -1) {
       if (pulsed->playing_file > -1) LIVES_WARN("Pulse connect timed out");
       seek_err = TRUE;
+      g_print("end wait\n");
       return 0;
     }
   }
@@ -2173,7 +2184,6 @@ LIVES_GLOBAL_INLINE off_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t
 
 
 boolean pulse_try_reconnect(void) {
-  lives_alarm_t alarm_handle;
   do_threaded_dialog(_("Resetting pulseaudio connection..."), FALSE);
 
   pulse_shutdown();
@@ -2183,12 +2193,7 @@ boolean pulse_try_reconnect(void) {
     lives_system(com, TRUE);
     lives_free(com);
   } else lives_system("pulseaudio -k", TRUE);
-  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-  while (lives_alarm_check(alarm_handle) > 0) {
-    lives_usleep(prefs->sleep_time);
-    threaded_dialog_spin(0.);
-  }
-  lives_alarm_clear(alarm_handle);
+  _lives_millisleep(5000);
   if (!lives_pulse_init(9999)) {
     end_threaded_dialog();
     goto err123; // init server failed
@@ -2279,16 +2284,23 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
   char *tmpfilename = NULL;
   lives_clip_t *sfile;
 
+  g_print("pttt ayy1\n");
+  
   if (!pulsed || !IS_VALID_CLIP(fileno)) return;
   lives_freep((void **)&pulsed->aPlayPtr->data);
   pulsed->aPlayPtr->size = pulsed->aPlayPtr->max_size = 0;
+  g_print("pttjty78i5jt a1\n");
 
   avsync_force();
+  g_print("pt564ytftt a1\n");
 
   // hmmm
-  if (pulsed) pulse_driver_uncork(pulsed);
+  if (pulsed && pulsed->is_corked) pulse_driver_uncork(pulsed);
 
   sfile = mainw->files[fileno];
+  g_print("pttlkljkt a1\n");
+
+
 
   if ((!mainw->multitrack || mainw->multitrack->is_rendering) &&
       (!mainw->event_list || mainw->record || (mainw->preview && mainw->is_processing))) {
@@ -2299,8 +2311,7 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
       pulse_message.data = lives_strdup_printf("%d", fileno);
       pulse_message.next = NULL;
       pulsed->msgq = &pulse_message;
-      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
-
+      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT * 10.)) seek_err = TRUE;
       if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
           (sfile->laudio_time > 0. || sfile->opening ||
            (mainw->multitrack && mainw->multitrack->is_rendering &&
@@ -2308,10 +2319,15 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
         lives_pulse_set_client_attributes(pulsed, fileno, TRUE, FALSE);
       }
 
+
+      g_print("ptttewr32 a1\n");
+
       pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile);
+  g_print("pttt a1\n");
 
       if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
     }
+  g_print("pttsdfsdfst a1\n");
 
     if (seek_err) {
       seek_err = FALSE;
@@ -2332,6 +2348,7 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
       mainw->rec_avel = fabs((double)pulsed->in_arate
                              / (double)afile->arps) * (double)afile->adirection;
     }
+  g_print("pttsdfsdft a1\n");
   }
 }
 

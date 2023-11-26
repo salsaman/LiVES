@@ -743,6 +743,7 @@ static void pre_init(void) {
 
 
 static void pre_init2(void) {
+  char *tmp;
 #ifdef ENABLE_JACK
   char jbuff[JACK_PARAM_STRING_MAX];
 #endif
@@ -755,6 +756,18 @@ static void pre_init2(void) {
   //////////////////////////
   load_prefs();
   //////////////////////////
+
+  capable->uid = get_int64_prefd(PREF_UID, 0);
+
+  if (!capable->uid) {
+    capable->uid = gen_unique_id();
+    set_int64_pref(PREF_UID, capable->uid);
+    tmp = _("from settings");
+  }
+  else tmp = _("newly generated");
+
+  d_print(_("Configuration uid is %lu (%s)\n"), capable->uid, tmp);
+  lives_free(tmp);
 
   prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL_EXTRA);
   if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;
@@ -1315,18 +1328,8 @@ boolean lives_startup(livespointer data) {
   capable->features_ready |= FEATURE_RNG;
   d_print("OK\n");
 
-  capable->uid = get_int64_prefd(PREF_UID, 0);
-
-  if (!capable->uid) {
-    capable->uid = gen_unique_id();
-    set_int64_pref(PREF_UID, capable->uid);
-  }
-
   capable->session_uid = gen_unique_id();
-
-  if (1 || prefs->show_dev_opts) {
-    g_printerr("Today's lucky number is 0X%08lX\n", capable->session_uid);
-  }
+  d_print(_("Session uid is 0X%08lX\n"), capable->session_uid);
 
   d_print("Initializing memory block allocators...");
   init_memfuncs(1);
@@ -1454,7 +1457,7 @@ boolean lives_startup(livespointer data) {
 
   // test the timer
   if (1) {
-    d_print("Testing LiVES thread timers...");
+    d_print("Testing per thread timers...pause for 10 usec...");
     lives_alarm_set_timeout(10000);
     lives_alarm_wait();
     lives_alarm_disarm();
@@ -2715,8 +2718,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = (mainwindow *)(_lives_calloc(1, sizeof(mainwindow)));
 
-  mainw->wall_ticks = -1;
-  mainw->initial_ticks = lives_get_current_ticks();
+  mainw->initial_time = lives_get_current_time();
 
   prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
@@ -2731,7 +2733,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   MSGMODE_SET(INIT);
 
-#ifdef VALGRIND_ON
+#ifndef VALGRIND_ON
   prefs->nfx_threads = 8;
 #else
   if (mainw->debug) prefs->nfx_threads = 2;
@@ -3528,7 +3530,8 @@ static boolean lives_init(_ign_opts * ign_opts) {
     if (!prefs->vj_mode) {
       /// BEGIN DISKPACE check
       if (!needs_workdir && initial_startup_phase == 0) {
-        // check diskspace, slow, reutls checked in lazy_startup_checks
+        // check diskspace,
+	g_print("start ds monitor\n");
         mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
       }
     }

@@ -2766,7 +2766,7 @@ void do_quick_switch(int new_file) {
     }
   } else resize(1);
 
-  if (!mainw->fs && !mainw->faded) showclipimgs();
+  if (!mainw->fs && !mainw->faded) main_thread_execute_void(showclipimgs, 0);
 
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);

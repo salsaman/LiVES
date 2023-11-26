@@ -127,14 +127,6 @@ char *get_fstype_for(const char *vol);
 
 boolean file_is_ours(const char *fname);
 
-ticks_t lives_get_relative_ticks(ticks_t origticks);
-ticks_t lives_get_current_ticks(void);
-ticks_t lives_get_session_ticks(void);
-double lives_get_session_time(void);
-char *lives_datetime(uint64_t secs, boolean use_local);
-char *lives_datetime_rel(const char *datetime);
-char *get_current_timestamp(void);
-
 // cancelation point for threads with deferred cancel type
 #define lives_cancel_point pthread_testcancel();
 

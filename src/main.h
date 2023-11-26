@@ -464,6 +464,7 @@ extern mainwindow *mainw;
 
 #include "clip_load_save.h"
 
+#include "timing.h"
 #include "player.h"
 #include "sethandler.h"
 #include "messaging.h"

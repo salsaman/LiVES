@@ -21,7 +21,10 @@ memmove_f lives_memmove;
 
 static size_t bmemsize;
 static void bigblocks_end(void);
+
+#if MEM_USE_SMALLBLOCKS
 static void smallblocks_end(void);
+#endif
 
 #define BB_CACHE 512 // frame cache size (MB)
 #define BBLOCK_SIZE 8 // bblocksize MB
@@ -413,7 +416,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     if (PAGESIZE && xsize >= PAGESIZE) return lives_malloc_medium(xsize);
     g_print("aa3\n");
     size_t xxsize = (xsize +  smblock_pool->chunk_size) / smblock_pool->chunk_size;
-    g_print("aa3 %d %ld %ld %d %d\n", xxsize, MAX_SIZE, TOO_BIG_SIZE, xxsize > MAX_SIZE, xxsize > TOO_BIG_SIZE);
+    //g_print("aa3 %d %ld %ld %d %d\n", xxsize, MAX_SIZE, TOO_BIG_SIZE, xxsize > MAX_SIZE, xxsize > TOO_BIG_SIZE);
     if (xxsize  > MAX_SIZE || (TOO_BIG_SIZE > 0 && xxsize >= TOO_BIG_SIZE)) return orig_malloc(xsize);
     pthread_mutex_lock(&(smblock_pool->mutex));
     g_print("hey 99zzzx\n");
@@ -778,6 +781,7 @@ static  void *speedy_realloc(void *op, size_t xsize) {
 #define BLK_COUNT 65536
 #define N_COUNTS 64
 
+#if MEM_USE_SMALLBLOCKS
 static void smallblocks_end(void) {
   pthread_mutex_lock(&(smblock_pool->mutex));
   lives_free = orig_free;
@@ -788,7 +792,7 @@ static void smallblocks_end(void) {
   munlock(smblock_pool->buffer, TOT_CHUNKS * CHUNK_SIZE);
   lives_free(smblock_pool->buffer);
 }
-
+#endif
 
 void smallblock_init(void) {
   size_t memsize;

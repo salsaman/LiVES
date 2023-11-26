@@ -179,39 +179,31 @@ LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
 // auto-pausse, returns TRUE if timedout, FALSE if another thread resumed it
 boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, boolean have_lock) {
   if (!nanosec) return TRUE;
-  pthread_mutex_t *pause_mutex = NULL;
-  pthread_cond_t *pcond = NULL;
   if (self) {
-    if (!pause_mutex)  pause_mutex = &(THREADVAR(pause_mutex));
-    if (!pcond) pcond = &(THREADVAR(pcond));
     uint64_t sec;
     int rc = 0;
     struct timespec ts;
+    pthread_mutex_t *pause_mutex = pause_mutex = &(THREADVAR(pause_mutex));
+    pthread_cond_t *pcond = &(THREADVAR(pcond));
     THREADVAR(sync_ready) = FALSE;
     clock_gettime(CLOCK_REALTIME, &ts);
+
     nanosec += ts.tv_nsec;
     sec = nanosec / ONE_BILLION;
     nanosec -= sec * ONE_BILLION;
     ts.tv_sec += sec;
     ts.tv_nsec = nanosec;
 
-    if (!have_lock)pthread_mutex_lock(pause_mutex);
+    if (!have_lock) pthread_mutex_lock(pause_mutex);
 
-    //lives_proc_thread_include_states(self, THRD_STATE_AUTO_PAUSED);
-    while (!rc //&& !lives_proc_thread_get_resume_requested(self)
+    while (!rc && !lives_proc_thread_get_resume_requested(self)
            && !lives_proc_thread_should_cancel(self)) {
-      rc = pthread_mutex_timedlock(pause_mutex, &ts);
+      rc = pthread_cond_timedwait(pcond, pause_mutex, &ts);
     }
 
     if (!have_lock) pthread_mutex_unlock(pause_mutex);
 
-    /* lives_proc_thread_resume(self); */
-    /* if (lives_proc_thread_get_cancel_requested(self)) { */
-    /*   if (have_lock) pthread_mutex_unlock(pause_mutex); */
-    /*   lives_proc_thread_cancel(self); */
-    /*   return FALSE; */
-    /* } */
-    /* if (rc == ETIMEDOUT) return TRUE; */
+    if (rc == ETIMEDOUT) return TRUE;
   }
   return FALSE;
 }
@@ -2156,7 +2148,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
   // - so after resuming we wait for other thread to reset its sync_idx
 
   //MSGMODE_ON(DEBUG);
-  d_print_debug("start sync\n");
+  d_print_debug("start sync %p -> %p\n");
   if (sync_idx == 0) sync_idx = -1;
   if (lives_proc_thread_ref(lpt) > 1)  {
     d_print_debug("got ref\n");
@@ -2170,6 +2162,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
 
       if (!opause_mutex) {
         d_print_debug("no pause mutex !! %p %p %p\n", lpt, mainw->def_lpt, get_thread_data_for_lpt(lpt));
+	BREAK_ME("nopause");
         lives_proc_thread_unref(lpt);
         return LIVES_RESULT_ERROR;
       }
@@ -2304,6 +2297,7 @@ synced:
 
 
 LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t lpt, int sync_idx, int mm_op) {
+  if (mainw->debug) g_print("async with\n");
   return lives_proc_thread_sync_with_timeout(lpt, sync_idx, mm_op, 0);
 }
 
@@ -3069,6 +3063,8 @@ char *lives_proc_thread_state_desc(uint64_t state) {
     fstr = lives_strdup_concat(fstr, ", ", "%s", "will exit when finished");
   if (state & THRD_BLOCK_HOOKS)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "hooks blocked");
+  if (state & THRD_STATE_EXTERN)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "is external");
 
   return fstr;
 }
@@ -3104,7 +3100,8 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t lpt) {
   // otherwise will wait and only return when lpt has thread data (ie. is in running state)
   // should be called if the current state of lpt is not known
   lives_thread_data_t *tdata;
-  if (!lpt || (lives_proc_thread_is_unqueued(lpt) && lpt != mainw->def_lpt)) return NULL;
+  if (!lpt || (lives_proc_thread_is_unqueued(lpt) && lpt != mainw->def_lpt
+	       && !lives_proc_thread_check_states(lpt, THRD_STATE_EXTERN))) return NULL;
   tdata = lives_proc_thread_get_thread_data(lpt);
   if (!tdata)
     // ignore subrd check, since that requires tdata !
@@ -3342,7 +3339,7 @@ static void *_lives_thread_data_create(void *pslot_id) {
       tdata->vars.var_rowstride_alignment = RS_ALIGN_DEF;
       tdata->vars.var_last_sws_block = -1;
     }
-
+    else 
     tdata->vars.var_blocked_limit = BLOCKED_LIMIT;
 
     lives_icap_init(&tdata->vars.var_intentcap);
@@ -3785,8 +3782,9 @@ LIVES_GLOBAL_INLINE void lives_thread_free(lives_thread_t *thread) {
 
 void check_pool_threads(boolean important) {
   static ticks_t last_check_ticks = 0;
-  if (!important && mainw->wall_ticks - last_check_ticks < POOL_CHK_THRESH) return;
-  last_check_ticks = mainw->wall_ticks;
+  if (!important && lives_get_relative_ticks_lax(last_check_ticks) < POOL_CHK_THRESH) return;
+  last_check_ticks = lives_get_current_ticks_lax();
+
   pthread_mutex_lock(&pool_mutex);
 
   while (ntasks >= npoolthreads && npoolthreads < rnpoolthreads) {
@@ -3818,6 +3816,7 @@ void check_pool_threads(boolean important) {
   } else {
     // we need more threads to service all tasks
     int extrs = MAX(MINPOOLTHREADS, ntasks - rnpoolthreads);
+    g_print("Adding %d poolthreads\n", extrs);
     //pthread_mutex_unlock(&twork_mutex);
     poolthrds =
       (pthread_t **)lives_realloc(poolthrds, (rnpoolthreads + extrs) * sizeof(pthread_t *));
@@ -4166,6 +4165,7 @@ char *get_threadstats(void) {
       lives_free(tnum);
       pthread_mutex_t *alpt_mutex = &tdata->vars.var_active_lpt_mutex;
       pthread_mutex_lock(alpt_mutex);
+
       active_lpt = tdata->vars.var_active_lpt;
       if (!active_lpt) g_printerr("Idling in threadpool\n");
       else {
@@ -4200,9 +4200,9 @@ char *get_threadstats(void) {
           prime_lpt = nxtlpt;
           nxtlpt = weed_get_plantptr_value(prime_lpt, LIVES_LEAF_FOLLOWER, NULL);
         }
+        pthread_mutex_unlock(alpt_mutex);
 
         lpt_desc_state(active_lpt);
-        pthread_mutex_unlock(alpt_mutex);
 
         g_printerr("Loveliness %.2f\n", tdata->vars.var_loveliness);
         qtime = lives_proc_thread_get_timing_info(active_lpt, TIME_TOT_QUEUE);

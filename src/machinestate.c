@@ -29,13 +29,6 @@
 // getrlimit RLIMIT_MEMLOCK, RLIMIT_AS, RLIMIT_NICE. RLIMIT_NPROC, RLIMIT_RTPRIO, RLIMIT_STACK
 //
 
-#ifdef _GNU_SOURCE
-#include <sched.h>
-#endif
-
-#include <time.h>
-#include <sys/statvfs.h>
-
 #include "main.h"
 #include "callbacks.h"
 #include "startup.h"
@@ -558,87 +551,6 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost) {
 
 LIVES_GLOBAL_INLINE char *get_md5sum(const char *filename) {
   return lives_md5_sum(filename, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
-  ticks_t ret = lives_get_current_ticks();
-  return ret - origticks;
-}
-
-
-/// during playback, only player should call this
-LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
-  //  return current (wallclock) time in ticks (units of 10 nanoseconds)
-  uint64_t uret;
-  ticks_t ret;
-#if _POSIX_TIMERS
-  struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  uret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec) / TICKS_TO_NANOSEC;
-#else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  uret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * USEC_TO_TICKS;
-#endif
-  if ((int64_t)uret < 0) ret = (int64_t)((((uint64_t) -1) - uret) + 1);
-  else ret = uret;
-  if (mainw) mainw->wall_ticks = ret;
-  return ret;
-}
-
-
-LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks(void) {
-  // return time since application was (re)started
-  return lives_get_relative_ticks(mainw->initial_ticks);
-}
-
-
-LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
-  // return time in seconds since application was (re)started
-  return lives_get_session_ticks() / TICKS_PER_SECOND_DBL;
-}
-
-
-#define SECS_IN_DAY 86400
-char *lives_datetime_rel(const char *datetime) {
-  /// replace date w. yesterday, today
-  char *dtxt;
-  char *today = NULL, *yesterday = NULL;
-  struct timeval otv;
-  gettimeofday(&otv, NULL);
-  today = lives_datetime(otv.tv_sec, TRUE);
-  yesterday = lives_datetime(otv.tv_sec - SECS_IN_DAY, TRUE);
-  if (!lives_strncmp(datetime, today, 10)) dtxt = lives_strdup_printf(_("Today %s"), datetime + 11);
-  else if (!lives_strncmp(datetime, yesterday, 10))
-    dtxt = lives_strdup_printf(_("Yesterday %s"), datetime + 11);
-  else dtxt = (char *)datetime;
-  if (today) lives_free(today);
-  if (yesterday) lives_free(yesterday);
-  return dtxt;
-}
-
-
-char *lives_datetime(uint64_t secs, boolean use_local) {
-  char buf[128];
-  char *datetime = NULL;
-  struct tm *gm = use_local ? localtime((time_t *)&secs) : gmtime((time_t *)&secs);
-  ssize_t written;
-
-  if (gm) {
-    written = (ssize_t)strftime(buf, 128, "%Y-%m-%d    %H:%M:%S", gm);
-    if ((written > 0) && ((size_t)written < 128)) {
-      datetime = lives_strdup(buf);
-    }
-  }
-  return datetime;
-}
-
-
-LIVES_GLOBAL_INLINE char *get_current_timestamp(void) {
-  struct timeval otv;
-  gettimeofday(&otv, NULL);
-  return lives_datetime(otv.tv_sec, TRUE);
 }
 
 
@@ -1336,7 +1248,6 @@ void reset_effort(void) {
 
 void update_effort(float impulse) {
   short pb_quality = prefs->pb_quality;
-  double newthings;
 
   if (LIVES_IS_RENDERING) {
     mainw->effort = -EFFORT_RANGE_MAX;
@@ -3114,7 +3025,7 @@ static void show_info(void) {
   lives_free(memstr); lives_free(thrdstr);
 }
 
-
+#if 0
 #define THE_TIMEY_WIMEY_KIND 1
 // check when nothing happens
 static uint64_t do_nothing(int what_type_of_nothing_did_you_expect, ticks_t the_start_of_nothing,
@@ -3136,7 +3047,7 @@ ticks_t check_thrd_latency(void) {
   *omega = lives_get_current_ticks() - alpha;
   return *omega;
 }
-
+#endif
 
 void perf_manager(void) {
   // this is designed to at some point be a self supporitn gobject

@@ -4302,8 +4302,6 @@ static void _resize_play_window(void) {
   fullscreen = FALSE;
 #endif
 
-  if (!mainw->play_window) return;
-
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
   scr_width_safety += 2 * abs(bx);
@@ -4687,13 +4685,20 @@ static void _resize_play_window(void) {
   clear_widget_bg(mainw->play_image, mainw->play_surface);
 }
 
+
+static pthread_mutex_t playwin_config_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void resize_play_window(void) {
-  if (is_fg_thread()) _resize_play_window();
-  else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_void(_resize_play_window, 0);
-    BG_THREADVAR(hook_hints) = 0;
+  pthread_mutex_lock(&playwin_config_mutex);
+  if (mainw->play_window) {
+    if (is_fg_thread()) _resize_play_window();
+    else {
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      main_thread_execute_void(_resize_play_window, 0);
+      BG_THREADVAR(hook_hints) = 0;
+    }
   }
+  pthread_mutex_unlock(&playwin_config_mutex);
 }
 
 
@@ -4732,14 +4737,17 @@ static void _kill_play_window(void) {
 }
 
 void kill_play_window(void) {
-  if (is_fg_thread()) _kill_play_window();
-  else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_void(_kill_play_window, 0);
-    BG_THREADVAR(hook_hints) = 0;
+  if (!pthread_mutex_trylock(&playwin_config_mutex)) {
+    if (is_fg_thread()) _kill_play_window();
+    else {
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      main_thread_execute_void(_kill_play_window, 0);
+      BG_THREADVAR(hook_hints) = 0;
+    }
+    pthread_mutex_unlock(&playwin_config_mutex);
   }
 }
-
+ 
 
 #define ASPECT_DIFF_LMT 0.01625f  // (fabs) ratio differences in aspect ratios within this limit considered irrelevant
 

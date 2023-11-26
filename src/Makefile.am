@@ -218,6 +218,7 @@ lives_exe_SOURCES = \
 	memory.c memory.h \
 	diagnostics.c diagnostics.h \
 	machinestate.c machinestate.h \
+	timing.c timing.h \
 	events.c events.h \
 	support.c support.h \
 	messaging.c messaging.h \

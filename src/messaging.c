@@ -455,7 +455,7 @@ boolean d_print(const char *fmt, ...) {
 LIVES_GLOBAL_INLINE void d_print_debug(const char *fmt, ...) {
   // print out but only if MSGMODE_ON(DEBUG)
   va_list xargs;
-  if (MSGMODE_HAS(DEBUG)) {
+  if (MSGMODE_HAS(DEBUG) || mainw->debug) {
     va_start(xargs, fmt);
     vfprintf(stderr, fmt, xargs);
     va_end(xargs);

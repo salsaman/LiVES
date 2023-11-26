@@ -24,13 +24,6 @@
 
 // hardware related prefs
 
-#define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second - GLOBAL TIMEBASE
-#define TICKS_PER_SECOND_DBL ((double)TICKS_PER_SECOND)   ///< actually microseconds / 100.
-#define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)
-#define MSEC_TO_TICKS (TICKS_PER_SECOND / 1000) ///< multiplying factor mSec -> ticks_t  (def. 100000)
-#define TICKS_TO_NANOSEC (ONE_BILLION / TICKS_PER_SECOND) /// multiplying factor ticks_t -> nSec (def 10)
-#define TICKS_TO_NSEC(ticks) ((uint64_t)(ticks) * TICKS_TO_NANOSEC)
-
 #define DEF_FPS 25.
 
 // soft limit
@@ -253,14 +246,6 @@ typedef enum {
   EXT_CNTL_MIDI,
   MAX_EXT_CNTL
 } lives_ext_cntl_t;
-
-/// timebase sources
-typedef enum {
-  LIVES_TIME_SOURCE_NONE = 0,
-  LIVES_TIME_SOURCE_SYSTEM,
-  LIVES_TIME_SOURCE_SOUNDCARD,
-  LIVES_TIME_SOURCE_EXTERNAL
-} lives_time_source_t;
 
 /// toy types
 typedef enum {
@@ -1132,7 +1117,9 @@ typedef struct {
   // ticks are measured in 1. / TICKS_PER_SECOND_DBL of a second (by default a tick is 10 nano seconds)
 
   // for the internal player
-  ticks_t initial_ticks; ///< set ASAP when app is (re)started
+  int64_t initial_time; ///< set ASAP when app is (re)started
+  int64_t wall_time; /// wall clock time, updated whenever lives_get_*_ticks is called
+
   volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
   ticks_t last_startticks; ///< effective ticks when last frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
@@ -1141,7 +1128,7 @@ typedef struct {
 
   ticks_t offsetticks; ///< offset for multitrack playback start
   volatile ticks_t clock_ticks; ///< unadjusted system time since pb start, measured concurrently with currticks
-  ticks_t wall_ticks; /// wall clock time, updated whenever lives_get_*_ticks is called
+
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   //ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources

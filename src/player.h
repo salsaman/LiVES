@@ -80,8 +80,6 @@ void reset_ext_player_layer(boolean ign_flag);
 
 frames_t clamp_frame(int clipno, frames_t nframe);
 
-void reset_playback_clock(ticks_t origticks);
-ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source);
 frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 

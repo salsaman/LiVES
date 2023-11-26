@@ -34,6 +34,7 @@ src/multitrack-gui.c
 src/transcode.c
 src/jack.c
 src/pulse.c
+src/timing.c
 src/colourspace.c
 src/cvirtual.c
 src/omc-learn.c

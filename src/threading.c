@@ -2003,13 +2003,13 @@ LIVES_GLOBAL_INLINE void set_interrupt_action(int action) {
   GET_PROC_THREAD_SELF(self);
   if (action != SIG_ACT_IGNORE) {
     THREADVAR(sig_act) = SIG_ACT_IGNORE;
-    thrd_signal_unblock(LIVES_INTERRUPT_SIG, TRUE);
+    thrd_signal_unblock(LIVES_INTERRUPT_SIG);
     THREADVAR(sig_act) = action;
     lives_proc_thread_include_states(self, THRD_OPT_CAN_INTERRUPT);
   } else {
     lives_proc_thread_exclude_states(self, THRD_OPT_CAN_INTERRUPT);
     THREADVAR(sig_act) = SIG_ACT_IGNORE;
-    thrd_signal_block(LIVES_INTERRUPT_SIG, TRUE);
+    thrd_signal_block(LIVES_INTERRUPT_SIG);
   }
 }
 
@@ -2148,11 +2148,11 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
   // - so after resuming we wait for other thread to reset its sync_idx
 
   //MSGMODE_ON(DEBUG);
-  d_print_debug("start sync %p -> %p\n");
+  GET_PROC_THREAD_SELF(self);
   if (sync_idx == 0) sync_idx = -1;
+  d_print_debug("syncwith: %p says: start sync with %p, sync identifier is %d\n", self, lpt, sync_idx);
   if (lives_proc_thread_ref(lpt) > 1)  {
-    d_print_debug("got ref\n");
-    GET_PROC_THREAD_SELF(self);
+    d_print_debug("syncwith: %p says: got ref on other\n", self);
     if (lpt != self) {
       volatile int osync_idx;
       boolean gotmatch = FALSE;
@@ -2161,32 +2161,39 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
                        *pause_mutex = &(THREADVAR(pause_mutex));
 
       if (!opause_mutex) {
-        d_print_debug("no pause mutex !! %p %p %p\n", lpt, mainw->def_lpt, get_thread_data_for_lpt(lpt));
-	BREAK_ME("nopause");
+        d_print_debug("syncwith: no pause mutex !! %p %p %p\n", lpt, mainw->def_lpt, get_thread_data_for_lpt(lpt));
+        BREAK_ME("nopause");
         lives_proc_thread_unref(lpt);
         return LIVES_RESULT_ERROR;
       }
 
-      d_print_debug("syncwith: check state of other (%p)\n", lpt);
-      d_print_debug("get opause lock\n");
+      d_print_debug("syncwith: %p says: got pause mutex of other (%p)\n", self, opause_mutex);
+      d_print_debug("syncwith: %p says: getting lock on other..", self);
 
       // (A)
       pthread_mutex_lock(opause_mutex);
-      d_print_debug("got opause lock\n");
+      d_print_debug("succeeded\n");
 
+      d_print_debug("syncwith: %p says: advertising sync idx %d\n", self, sync_idx);
       lives_proc_thread_set_sync_idx(sync_idx);
+
+      d_print_debug("syncwith: %p says: checking sync idx of other...", self);
       osync_idx = lives_proc_thread_get_sync_idx(lpt);
+      d_print_debug("got value %d\n", osync_idx);
 
       if (osync_idx == sync_idx) {
-        gotmatch = TRUE;
-        d_print_debug("syncwith: idx matches\n");
-      } else d_print_debug("syncwith: no idx match, will wait\n");
+        gotmatch = TRUE; 
+        d_print_debug("syncwith: %p says: idx matches !\n", self);
+      } else d_print_debug("syncwith: %p says:  no idx match, will wait\n", self);
+
+      d_print_debug("syncwith: %p says: unlocking pause mutex of other\n", self);
       pthread_mutex_unlock(opause_mutex);
 
+      d_print_debug("syncwith: %p says: get lock on self pause mutex...", self);
       // (B)
       pthread_mutex_lock(pause_mutex);
 
-      d_print_debug("got PAuse mutex\n");
+      d_print_debug("OK\n");
 
       if (!gotmatch) {
         // check again but now with lock - either other has not yet reached (A), will block at (A)
@@ -2195,11 +2202,13 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         osync_idx = lives_proc_thread_get_sync_idx(lpt);
         if (osync_idx == sync_idx) {
           gotmatch = TRUE;
-          d_print_debug("syncwith: now we DID get match\n");
+          d_print_debug("syncwith: %p says: recheched sync idx, "
+			"now we DID get match\n", self);
         }
       }
 
       if (gotmatch) {
+	boolean resrq = FALSE;
         // we got a match, then we wait for other to either pause / wait,
         // or to reset its sync-idx. While waitng we reset our sync_idx, so
         // if th eother notices this it can also reset its sync_idx
@@ -2209,17 +2218,18 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         while (1) {
           if (!lives_proc_thread_get_sync_idx(lpt)) goto synced;
           pthread_mutex_lock(opause_mutex);
-          if (lives_proc_thread_is_paused(lpt)) {
-            d_print_debug("syncwith: other is paused, requesting resume\n");
+          if (!resrq && lives_proc_thread_is_paused(lpt)) {
+            d_print_debug("syncwith: %p says: other is paused, requesting resume\n", self);
             lives_proc_thread_set_sync_idx(sync_idx);
             _lives_proc_thread_request_resume(lpt, TRUE);
-            d_print_debug("syncwith: waiting foR other to reset sync_idx\n");
+            d_print_debug("syncwith: %p says: waiting for other to reset sync_idx\n", self);
+	    resrq = TRUE;
           }
           pthread_mutex_unlock(opause_mutex);
           lives_microsleep;
           osync_idx = lives_proc_thread_get_sync_idx(lpt);
           if (!osync_idx) {
-            d_print_debug("syncwith: other reset sync_idx, assume synced\n");
+            d_print_debug("syncwith: %p says:  other reset sync_idx, assume synced\n", self);
             //pthread_mutex_unlock(pause_mutex);
             goto synced;
           }
@@ -2227,15 +2237,16 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
       }
       // non-match, pause / wait
       if (!timeout) {
-        d_print_debug("syncwith: pausing\n");
+        d_print_debug("syncwith: %p says: pausing...\n", self);
         _lives_proc_thread_pause(self, TRUE);
         pthread_mutex_unlock(pause_mutex);
-        d_print_debug("syncwith: resumed, checking for match\n");
+        d_print_debug("syncwith: %p says: resumed, checking for idx match\n", self);
         if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
           pthread_mutex_unlock(pause_mutex);
           goto synced;
         }
-        d_print_debug("no match after resuming - wrong thread woek us ?\n");
+        d_print_debug("syncwith: %p says: no match after resuming "
+		      "- wrong thread woke us ?\n", self);
         lives_proc_thread_set_sync_idx(0);
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);
@@ -2272,7 +2283,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
 synced:
       // if here, either - requested resume, or nrither paused, or thread resumed us
       // or timed out but sync_idx matched
-      d_print_debug("syncwith: %p SYNCED with %p!!\n", self, lpt);
+      d_print_debug("syncwith: %p says:  SYNCED with %p!!\n", self, lpt);
       pthread_mutex_lock(opause_mutex);
       // lock to ensure other read our sync_idx before unlocking
       lives_proc_thread_set_sync_idx(0);
@@ -3101,7 +3112,7 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t lpt) {
   // should be called if the current state of lpt is not known
   lives_thread_data_t *tdata;
   if (!lpt || (lives_proc_thread_is_unqueued(lpt) && lpt != mainw->def_lpt
-	       && !lives_proc_thread_check_states(lpt, THRD_STATE_EXTERN))) return NULL;
+               && !lives_proc_thread_check_states(lpt, THRD_STATE_EXTERN))) return NULL;
   tdata = lives_proc_thread_get_thread_data(lpt);
   if (!tdata)
     // ignore subrd check, since that requires tdata !
@@ -3276,6 +3287,8 @@ static void *_lives_thread_data_create(void *pslot_id) {
     if (!rpmalloc_is_thread_initialized())
       rpmalloc_thread_initialize();
 #endif
+    thrd_signal_block(LIVES_TICKER_SIG);
+    thrd_signal_block(LIVES_TIMER_SIG);
 
     tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
 
@@ -3338,14 +3351,13 @@ static void *_lives_thread_data_create(void *pslot_id) {
 
       tdata->vars.var_rowstride_alignment = RS_ALIGN_DEF;
       tdata->vars.var_last_sws_block = -1;
-    }
-    else 
-    tdata->vars.var_blocked_limit = BLOCKED_LIMIT;
+    } else
+      tdata->vars.var_blocked_limit = BLOCKED_LIMIT;
 
     lives_icap_init(&tdata->vars.var_intentcap);
 
     thread_signal_establish(LIVES_INTERRUPT_SIG, lives_proc_thread_signalled);
-    thrd_signal_block(LIVES_INTERRUPT_SIG, TRUE);
+    thrd_signal_block(LIVES_INTERRUPT_SIG);
 
 #ifndef NO_NP
     if (1) {
@@ -4219,7 +4231,7 @@ char *get_threadstats(void) {
   }
   pthread_rwlock_unlock(&all_tdata_rwlock);
   msg = lives_strdup_printf("Total threads in use: %d, (%d poolhtreads, %d other), "
-                            "active threads %d\n\n", totthreads, rnpoolthreads,
-                            totthreads - rnpoolthreads, actthreads);
+                            "active threads %d\n\n", totthreads, npoolthreads,
+                            totthreads - npoolthreads, actthreads);
   return msg;
 }

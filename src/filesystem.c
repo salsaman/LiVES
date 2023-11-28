@@ -916,9 +916,14 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       weed_set_voidptr_value(auditor, pkey, fbuff->ptr);
       lives_free(pkey);
 #endif
+      //fbuff->ptr = fbuff->buffer = lives_calloc_mapped(fsize, TRUE);
       fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
+
+      if (!fbuff->buffer) return FALSE;
+
       lseek(fd, offs, SEEK_SET);
       mlock(fbuff->buffer, fsize);
+
       //g_printerr("slurp for %d, %s with size %ld buffer is %p\n", fd, fbuff->pathname, fsize, fbuff->buffer);
       while (fsize > 0) {
         if (fbuff->flags & FB_FLAG_INVALID) {
@@ -1100,7 +1105,10 @@ ssize_t lives_close_buffered(int fd) {
       lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
     }
     should_close = FALSE;
+    //lives_free(fbuff->buffer);
     munlock(fbuff->buffer, fbuff->bytes);
+
+    //lives_uncalloc_mapped(fbuff->buffer, fbuff->bytes, TRUE);
   }
 
   lives_free(fbuff->pathname);
@@ -1552,8 +1560,8 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         fbuff->offset -= ocount;
         fbuff->ptr -= ocount;
       }
-      lives_sleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
-                             && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+      lives_millisleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
+				  && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
         pthread_mutex_lock(&fbuff->sync_mutex);
         fbuff->flags |= FB_FLAG_EOF;
@@ -2342,7 +2350,7 @@ lives_proc_thread_t ds_syncwith = NULL;
 static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
   dircheck_state = 2;
   if (ds_syncwith) {
-    lives_proc_thread_sync_with(ds_syncwith, 0, MM_IGNORE);
+    lives_proc_thread_sync_with(ds_syncwith, 201, MM_IGNORE);
     ds_syncwith = NULL;
   }
   return FALSE;
@@ -2425,13 +2433,13 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
   if (dircheck_state == 1) {
     if (timeout < 0) timeout = BILLIONS(30); // TODO
     if (dircheck_state == 1) {
-      if (lives_proc_thread_sync_with_timeout(running, 0, MM_IGNORE, timeout)
-          == LIVES_RESULT_FAIL) {
-        ds_syncwith = NULL;
+      if (lives_proc_thread_sync_with_timeout(running, 201, MM_IGNORE, timeout)
+          == LIVES_RESULT_FAIL) { 
+	ds_syncwith = NULL;
         disk_monitor_forget();
         return -1;
       }
-      //g_print("synced with diskmn, will get result now\n");
+      g_print("synced with diskmn, will get result now\n");
       ds_syncwith = NULL;
     }
   }

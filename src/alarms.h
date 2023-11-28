@@ -37,8 +37,11 @@ typedef struct {
 typedef struct {
   // sys timers
   timer_t tid;
-  // initial value when set, only for info purposes
+  int signo;
+  struct itimerspec its;
+  struct timespec timeout;
   uint64_t delay;
+  volatile int64_t overs;
   lives_sigatomic triggered;
   double started, ended, ratio;
   int flags;
@@ -68,6 +71,8 @@ void lives_alarms_init(void);
 // lives_microsleep_while_false((condition) || lives_alarm-triggered());
 // if (lives_alarm_disarm() && !(condition)) return LIVES_RESULT_TIMEDOUT;
 
+int64_t get_ticker_count(void);
+
 lives_result_t lives_alarm_set_timeout(uint64_t nsec);
 // returns TRUE if alarm was triggered
 boolean lives_alarm_disarm(void);
@@ -87,7 +92,7 @@ typedef enum {
   overlay_msg_timeout,
   audio_msgq_timeout,
   test_timeout,
-  heartbeat_timeout, // TODO
+  heartbeat_timer, // TODO
   sys_alarms_max = N_APP_TIMERS,
 } alarm_name_t;
 
@@ -114,11 +119,13 @@ typedef void (*lives_sigfunc_t)(int signum, siginfo_t *si, void *uc);
 
 #define LIVES_TIMER_SIG SIGRTMIN+8 // 42...
 
+#define LIVES_TICKER_SIG SIGRTMIN+10 // 44...
+
 void timer_handler(int sig, siginfo_t *si, void *uc);
 
 void thread_signal_establish(int sig, lives_sigfunc_t sigfunc);
-void thrd_signal_unblock(int sig, boolean thrd_specific);
-void thrd_signal_block(int sig, boolean thrd_specific);
+void thrd_signal_unblock(int sig);
+void thrd_signal_block(int sig);
 
 ////////////////// spinwait /////
 

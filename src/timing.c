@@ -327,9 +327,9 @@ get_time:
       }
 
       if (current < prev_current) {
-      	prev_current = current;
-      	baseItime = 0;
-      	clock_current = 0;
+        prev_current = current;
+        baseItime = 0;
+        clock_current = 0;
       }
 
       if (!baseItime) {

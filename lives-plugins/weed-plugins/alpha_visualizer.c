@@ -14,15 +14,11 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////////////////////
 
 #define _UNIQUE_ID_ "0X670BBDECB23F3DBE"
-#define NEED_PALETTE_UTILS
-#include <weed/weed-plugin.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-plugin-utils.h>
-#include <weed/weed-plugin-utils/weed-plugin-utils.c>
 
+#define NEED_PALETTE_UTILS
+#include <weed/weed-plugin-utils.h>
 //////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 

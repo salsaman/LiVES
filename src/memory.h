@@ -300,6 +300,14 @@ void *realloc_bigblock(void *, size_t s);
 void *lives_malloc_medium(size_t msize);
 void *lives_calloc_medium(size_t msize);
 
+
+void *lives_calloc_mapped_real(size_t memsize, boolean do_mlock, char *fref, int lref);
+
+#define lives_calloc_mapped(msize, do_lock)				\
+  (lives_calloc_mapped_real((msize), (do_lock), _FILE_REF_, _LINE_REF_))
+
+void lives_uncalloc_mapped(void *, size_t msize, boolean is_locked);
+
 //////////////////////////// utility functions ///
 
 void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize);

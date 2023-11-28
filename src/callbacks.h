@@ -138,7 +138,7 @@ void vj_mode_toggled(LiVESCheckMenuItem *, livespointer);
 
 void on_ok_button1_clicked(LiVESButton *, livespointer);
 
-void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);
+void on_ok_file_open_clicked(LiVESFileChooser *, LiVESList *fnames);
 
 void on_location_select(LiVESButton *button, _entryw *locw);
 
@@ -214,9 +214,11 @@ void on_preview_clicked(LiVESButton *, livespointer);
 
 void on_recent_activate(LiVESMenuItem *, livespointer);
 
-boolean all_expose_pb(LiVESWidget *, lives_painter_t *, livespointer psurf);
 boolean all_expose_overlay(LiVESWidget *, lives_painter_t *, livespointer psurf);
-boolean all_expose_nopb(LiVESWidget *, lives_painter_t *, livespointer psurf);
+void paint_tl_cursors(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
+
+/* boolean all_expose_nopb(LiVESWidget *, lives_painter_t *, livespointer psurf); */
+/* boolean all_expose_pb(LiVESWidget *, lives_painter_t *, livespointer psurf); */
 
 boolean config_event(LiVESWidget *, LiVESXEventConfigure *, livespointer);
 

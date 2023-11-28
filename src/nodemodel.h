@@ -817,6 +817,7 @@ struct _plan_step {
   int st_type;
   lives_proc_thread_t proc_thread;
   //
+  int count;
   int ndeps;
   plan_step_t **deps;
   size_t start_res[N_RES_TYPES], end_res[N_RES_TYPES];

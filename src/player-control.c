@@ -316,7 +316,13 @@ static void post_playback(void) {
     mainw->osc_block = FALSE;
   }
 
-  if (!mainw->multitrack) redraw_timeline(mainw->current_file);
+  if (!mainw->multitrack) {
+    if (*mainw->eb2_psurf) {
+      lives_painter_surface_destroy(*mainw->eb2_psurf);
+      *mainw->eb2_psurf = NULL;
+    }
+    redraw_timeline(mainw->current_file);
+  }
 
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
     sensitize();
@@ -721,8 +727,8 @@ void play_file(void) {
     mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
     if (!mainw->playing_sel) mainw->audio_end = 0;
 
-    cfile->aseek_pos = (off_t)((double)(mainw->audio_start - 1.)
-                               * cfile->fps * (double)cfile->arate)
+    cfile->aseek_pos = (off_t)(((double)(mainw->audio_start - 1.)
+                                / cfile->fps * (double)cfile->arate))
                        * cfile->achans * (cfile->asampsize >> 3);
     cfile->async_delta = 0;
   }

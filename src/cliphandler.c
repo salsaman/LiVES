@@ -810,9 +810,13 @@ static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
           _RELOAD(hsize); _RELOAD(vsize); _RELOAD(ratio_fps);
           _RELOAD(interlace); _RELOAD(bpp); _RELOAD(deinterlace);
           _RELOAD(gamma_type); _RELOAD(is_untitled);
-          _RELOAD_STRING(name, PATH_MAX); _RELOAD_STRING(save_file_name, PATH_MAX);
+          _RELOAD_STRING(name, PATH_MAX);
+          _RELOAD_STRING(save_file_name, PATH_MAX);
+          //
           _RELOAD_STRING(mime_type, 256); _RELOAD_STRING(type, 64);
-          _RELOAD(changed); _RELOAD(orig_file_name);
+          //
+          _RELOAD(changed); // ??
+          _RELOAD(orig_file_name);
           _RELOAD(was_renamed); _RELOAD(arps); _RELOAD(arate);
           _RELOAD(achans); _RELOAD(asampsize); _RELOAD(signed_endian);
           _RELOAD(vol); _RELOAD(afilesize); _RELOAD(f_size);
@@ -950,6 +954,8 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
         _RELOAD(pb_fps);
         if (missing < sizeof(double)) _RELOAD(target_framerate);
       }
+
+      if (sfile->vol <= 0.0001 || sfile->vol > prefs->max_clip_vol) sfile->vol = 1.;
 
       if (sfile->start < 1) sfile->start = 1;
       if (sfile->end < 1) sfile->end = sfile->frames;
@@ -2286,13 +2292,11 @@ void switch_to_file(int old_file, int new_file) {
     return;
   }
 
-  if (!LIVES_IS_PLAYING) {
-    if (old_file != new_file) {
-      if (CURRENT_CLIP_IS_VALID) {
-        mainw->laudio_drawable = cfile->laudio_drawable;
-        mainw->raudio_drawable = cfile->raudio_drawable;
-        mainw->drawsrc = mainw->current_file;
-      }
+  if (old_file != new_file) {
+    if (CURRENT_CLIP_IS_VALID) {
+      mainw->laudio_drawable = cfile->laudio_drawable;
+      mainw->raudio_drawable = cfile->raudio_drawable;
+      mainw->drawsrc = mainw->current_file;
     }
   }
 
@@ -2422,13 +2426,6 @@ void switch_to_file(int old_file, int new_file) {
 
   if (mainw->is_ready) {
     if (!mainw->multitrack && !mainw->reconfig) {
-      /* if (prefs->show_msg_area && !mainw->only_close) { */
-      /*   reset_message_area(); // necessary */
-      /*   if (mainw->idlemax == 0) { */
-      /*     lives_idle_add(resize_message_area, NULL); */
-      /*   } */
-      /*   mainw->idlemax = DEF_IDLE_MAX; */
-      /* } */
       redraw_timeline(mainw->current_file);
     }
   }
@@ -2631,12 +2628,14 @@ void do_quick_switch(int new_file) {
   boolean osc_block;
 
   int old_file = mainw->playing_file;
+  g_print("chkpr 1\n");
 
   if (!LIVES_IS_PLAYING) {
     switch_to_file(mainw->current_file, new_file);
     return;
   }
 
+  g_print("chfffryythyjujkpr 1\n");
   if (old_file == new_file || old_file < 1 || !IS_VALID_CLIP(new_file)) return;
 
   if (mainw->multitrack
@@ -2648,11 +2647,13 @@ void do_quick_switch(int new_file) {
     return;
   }
 
+  g_print("chk6666h67766747467pr 1\n");
   if (new_file == mainw->blend_file && mainw->new_blend_file == mainw->blend_file
       && IS_VALID_CLIP(old_file))
     mainw->new_blend_file = old_file;
 
   mainw->whentostop = NEVER_STOP;
+  g_print("chkpytytytytyr 1\n");
 
   if (old_file != new_file) {
     weed_layer_t *layer = get_old_frame_layer();
@@ -2668,6 +2669,7 @@ void do_quick_switch(int new_file) {
       weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
   }
 
+  g_print("chhhhhhhhhhhhhhhyyykpr 1\n");
   if (old_file != mainw->blend_file && !mainw->is_rendering) {
     sfile = RETURN_VALID_CLIP(old_file);
     if (sfile && get_primary_src_type(sfile) == LIVES_SRC_TYPE_GENERATOR) {
@@ -2681,6 +2683,7 @@ void do_quick_switch(int new_file) {
         rte_swap_fg_bg();
       }
     }
+    g_print("chkn nnnnpr 1\n");
 
     if (new_file == mainw->blend_file) {
       sfile = RETURN_VALID_CLIP(mainw->blend_file);
@@ -2693,6 +2696,7 @@ void do_quick_switch(int new_file) {
 
   osc_block = mainw->osc_block;
   mainw->osc_block = TRUE;
+  g_print("567676chkpr 1\n");
 
   if (mainw->loop_locked) unlock_loop_lock();
 
@@ -2706,6 +2710,7 @@ void do_quick_switch(int new_file) {
   // HERE we do the actual switchover
   mainw->drawsrc = mainw->playing_file = mainw->current_file = new_file;
   ///
+  g_print("chknnnnnnnnnpr 1\n");
 
   mainw->laudio_drawable = cfile->laudio_drawable;
   mainw->raudio_drawable = cfile->raudio_drawable;
@@ -2731,7 +2736,7 @@ void do_quick_switch(int new_file) {
   if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list && !mainw->record))
     mainw->play_end = INT_MAX;
 
-  // act like we are not playing a selection (but we will try to keep to
+  // act like we are not playnig a selection (but we will try to keep to
   // selection bounds)
   mainw->playing_sel = FALSE;
   find_when_to_stop();
@@ -2741,6 +2746,7 @@ void do_quick_switch(int new_file) {
       cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
     }
   }
+  g_print("ch56356kpr 1\n");
 
   changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
 
@@ -2755,6 +2761,7 @@ void do_quick_switch(int new_file) {
     set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
   }
 #endif
+  g_print("c55554hkpr 1\n");
 
   if (CURRENT_CLIP_HAS_VIDEO) {
     if (!mainw->fs && !mainw->faded) {
@@ -2771,11 +2778,20 @@ void do_quick_switch(int new_file) {
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
+  g_print("chkp3243r 1\n");
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
   mainw->ignore_screen_size = FALSE;
 
-  if (!mainw->fs && !mainw->fade) redraw_timeline(mainw->current_file);
+  if (!mainw->fs && !mainw->faded) {
+    if (*mainw->eb2_psurf) {
+      lives_painter_surface_destroy(*mainw->eb2_psurf);
+      *mainw->eb2_psurf = NULL;
+    }
+    redraw_timeline(mainw->current_file);
+    show_playbar_labels(mainw->current_file);
+  }
+  g_print("chkpdsadasr 1\n");
 }
 
 

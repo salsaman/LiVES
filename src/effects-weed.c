@@ -1770,29 +1770,14 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean needs_reinit = FALSE;
   boolean busy = FALSE;
-  int clip = -1;
-  int lcount = 0;
-  int width, height;
+  int clip = -1, lcount = 0;
+  int width, height, lstat;
   int num_ctmpl, num_inc, num_outc;
   int num_in_alpha = 0, num_out_alpha = 0;
   int num_in_tracks = 0, num_out_tracks;
   int nmandout = 0;
   int channel_flags;
   int i, j, k;
-
-  // this function is called 2 times when we rebuild the nodemodel
-
-  // dry run happens just before we apply the instance with new nodemodel
-  // having actual layers loaded we can now check yuv details - subspace, sampling, clamping
-  // we may reinit an instance
-
-  // When we apply the instance. we already know the palette and layer sizes
-  // from the nodemodel, sources should have been converted already, we just copy layers to channels and
-  // apply the instance, then after it returns, we begin converting output layers for their next instance
-
-  // SETUP:
-  // check some conditions
-  // set up in_tracks and out_tracks, count in channels and out channels, normaal and alpha palette versions
 
   if (prefs->dev_show_timing)
     g_printerr("apply inst @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -2166,7 +2151,19 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     layer = layers[in_tracks[i++]];
 
-    //    weed_layer_pixel_data_free(channel);
+    lock_layer_status(layer);
+    lstat = _lives_layer_get_status(layer);
+    if (lstat == LAYER_STATUS_INVALID) {
+      unlock_layer_status(layer);
+      retval = FILTER_ERROR_INVALID_LAYER;
+      goto done_video;
+    }
+
+    if (lstat == LAYER_STATUS_READY ||
+        lstat == LAYER_STATUS_LOADED)
+      _lives_layer_set_status(layer, LAYER_STATUS_BUSY);
+
+    unlock_layer_status(layer);
 
     if (weed_pixel_data_share(channel, layer) != LIVES_RESULT_SUCCESS) {
       retval = FILTER_ERROR_COPYING_FAILED;
@@ -2184,8 +2181,24 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
 
     chantmpl = weed_channel_get_template(channel);
     channel_flags = weed_chantmpl_get_flags(chantmpl);
+
+    layer = layers[out_tracks[i]];
+
+    lock_layer_status(layer);
+    lstat = _lives_layer_get_status(layer);
+    if (lstat == LAYER_STATUS_INVALID) {
+      unlock_layer_status(layer);
+      retval = FILTER_ERROR_INVALID_LAYER;
+      goto done_video;
+    }
+
+    if (lstat == LAYER_STATUS_READY ||
+        lstat == LAYER_STATUS_LOADED)
+      _lives_layer_set_status(layer, LAYER_STATUS_BUSY);
+
+    unlock_layer_status(layer);
+
     if (channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
-      layer = layers[out_tracks[i]];
       if (!weed_pixel_data_share(channel, layer)) {
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
@@ -2260,10 +2273,22 @@ done_video:
   if (needs_reinit && retval == FILTER_SUCCESS)
     retval = FILTER_ERROR_NEEDS_REINIT;
 
-  for (i = k = 0; k < num_out_tracks + num_out_alpha; k++) {
-    weed_plant_t *channel = get_enabled_channel(inst, k, LIVES_OUTPUT);
+  for (i = 0; i < num_out_tracks + num_out_alpha; i++) {
+    weed_plant_t *channel = get_enabled_channel(inst, i, LIVES_OUTPUT);
     weed_channel_set_pixel_data(channel, NULL);
     weed_layer_nullify_pixel_data(channel);
+
+    layer = layers[out_tracks[i]];
+    lock_layer_status(layer);
+    lstat = _lives_layer_get_status(layer);
+    if (lstat == LAYER_STATUS_INVALID) {
+      unlock_layer_status(layer);
+      retval = FILTER_ERROR_INVALID_LAYER;
+    } else {
+      if (lstat == LAYER_STATUS_BUSY)
+	_lives_layer_set_status(layer, LAYER_STATUS_READY);
+    }
+    unlock_layer_status(layer);
   }
 
   for (i = 0; i < num_inc + num_in_alpha; i++) {
@@ -2274,6 +2299,17 @@ done_video:
       weed_set_boolean_value(channel, WEED_LEAF_DISABLED, WEED_FALSE);
       weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
     }
+    layer = layers[in_tracks[i]];
+    lock_layer_status(layer);
+    lstat = _lives_layer_get_status(layer);
+    if (lstat == LAYER_STATUS_INVALID) {
+      unlock_layer_status(layer);
+      retval = FILTER_ERROR_INVALID_LAYER;
+    } else {
+      if (lstat == LAYER_STATUS_BUSY)
+	_lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+    }
+    unlock_layer_status(layer);
   }
 
   lives_freep((void **)&in_tracks);

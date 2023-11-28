@@ -233,8 +233,6 @@ static void check_random(void) {
   int maxbits;
   double qual, maxqual;
 
-  prefs->msg_routing |= MSG_ROUTE_STDERR;
-
   rbits1 = benchmark_rng(NR_TESTS, lives_random, &qual);
   maxqual = qual;
   maxbits = rbits1;
@@ -328,8 +326,6 @@ static void check_random(void) {
     d_print(tmp);
     lives_free(tmp);
   }
-
-  MSGMODE_OFF(STDERR);
 }
 
 
@@ -2476,7 +2472,6 @@ void get_monitors(boolean reset) {
     mainw->mgeom[idx].width = rect.width;
     mainw->mgeom[idx].height = ((rect.height + 1) >> 1) << 1;
     if (gdk_monitor_is_primary(moni)) {
-      g_print("PTI\n");
       capable->primary_monitor = idx;
       mainw->mgeom[idx].primary = TRUE;
     } else if (play_moni == 1) play_moni = idx + 1;
@@ -2490,8 +2485,6 @@ void get_monitors(boolean reset) {
 
   prefs->gui_monitor = 0;
   prefs->play_monitor = play_moni;
-
-  g_print("PTI %d\n", play_moni);
 
   if (capable->nmonitors > 1) {
     get_string_pref(PREF_MONITORS, buff, 256);
@@ -2909,10 +2902,7 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
 #define N_CPU_MEAS 64
 #define CPU_MEAS_THRESH 1000000
 
-static void *proc_load_stats = NULL;
-
 static cpuloadvals_t *cpu_stats = NULL;
-
 
 float *get_proc_loads(boolean reset) {
   // get processor load values, and keep a rolling average

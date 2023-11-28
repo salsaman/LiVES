@@ -806,88 +806,86 @@ void smallblock_init(void) {
 
   if (PAGESIZE) memsize = (size_t)(memsize / PAGESIZE) * PAGESIZE;
 
+
+  //smblock_pool->buffer = lives_calloc_mapped(memsize, TRUE);
   smblock_pool->buffer = lives_calloc_medium(memsize);
+  if (mlock(smblock_pool->buffer, memsize)) abort();
 
-  if (smblock_pool->buffer) {
-    if (mlock(smblock_pool->buffer, memsize)) {
-      lives_free(smblock_pool->buffer);
-      return;
-    }
+  if (!smblock_pool->buffer) return;
 
-    chunksize = hwlim;
+  chunksize = hwlim;
 
-    while (1) {
+  while (1) {
 #if MEM_USE_TINYBLOCKS
-      alloc_block_t *block;
-      size_t nchunks_req;
-      size_t nxtchunks;
+    alloc_block_t *block;
+    size_t nchunks_req;
+    size_t nxtchunks;
 #endif
-      smblock_pool->chunk_size = chunksize;
-      TOT_CHUNKS = memsize / chunksize;
+    smblock_pool->chunk_size = chunksize;
+    TOT_CHUNKS = memsize / chunksize;
 
-      //ynblocks >>= 1;
+    //ynblocks >>= 1;
 
-      /* g_print("MEMsize = %s, chunksize = %ld, tot chunks = %ld (%ld fullsize blocks)\n", */
-      /* 	      lives_format_storage_space_string_long(memsize), chunksize, TOT_CHUNKS, memsize / hwlim); */
+    /* g_print("MEMsize = %s, chunksize = %ld, tot chunks = %ld (%ld fullsize blocks)\n", */
+    /* 	      lives_format_storage_space_string_long(memsize), chunksize, TOT_CHUNKS, memsize / hwlim); */
 
-      if (PAGESIZE) MAX_SIZE = PAGESIZE / CHUNK_SIZE;
-      else MAX_SIZE = TOT_CHUNKS;
-      g_print("max is %ld\n", MAX_SIZE);
-      smblock_pool->toobig_size = MAX_SIZE;
+    if (PAGESIZE) MAX_SIZE = PAGESIZE / CHUNK_SIZE;
+    else MAX_SIZE = TOT_CHUNKS;
+    g_print("max is %ld\n", MAX_SIZE);
+    smblock_pool->toobig_size = MAX_SIZE;
 
-      smblock_pool->free_chunks = TOT_CHUNKS;
+    smblock_pool->free_chunks = TOT_CHUNKS;
 
-      pthread_mutex_init(&(smblock_pool->mutex), NULL);
+    pthread_mutex_init(&(smblock_pool->mutex), NULL);
 
-      alloc_block_t *block = make_alloc_block(smblock_pool->num_chunks, 0);
-      smblock_pool->first_avail_chunk = smblock_pool->chunk_list;
+    alloc_block_t *block = make_alloc_block(smblock_pool->num_chunks, 0);
+    smblock_pool->first_avail_chunk = smblock_pool->chunk_list;
 
-      smblock_pool->chunk_list = lives_list_append(NULL, block);
+    smblock_pool->chunk_list = lives_list_append(NULL, block);
 
 #if !MEM_USE_TINYBLOCKS
-      break;
+    break;
 #else
-      // start off with all memory unallocated
+    // start off with all memory unallocated
 
-      chunksize >>= 1;
-      if (chunksize < 4) break;
+    chunksize >>= 1;
+    if (chunksize < 4) break;
 
-      memsize = nblocks * BLK_COUNT * chunksize;
+    memsize = nblocks * BLK_COUNT * chunksize;
 
-      // allocate size from parent pool
-      smblock_pool->nxt_pool = (mem_pool_t *)lives_calloc(1, sizeof(mem_pool_t));
+    // allocate size from parent pool
+    smblock_pool->nxt_pool = (mem_pool_t *)lives_calloc(1, sizeof(mem_pool_t));
 
-      nchunks_req = chunksize * nblocks / hwlim;
+    nchunks_req = chunksize * nblocks / hwlim;
 
-      SET_BLOCK_SIZE(smblock_pool->chunk_list, -nchunks_req);
-      nxtchunks = TOT_CHUNKS - nchunks_req;
+    SET_BLOCK_SIZE(smblock_pool->chunk_list, -nchunks_req);
+    nxtchunks = TOT_CHUNKS - nchunks_req;
 
-      block = make_alloc_block(nxtchunks, nchunks_req);
-      smblock_pool->chunk_list = lives_list_append(smblock_pool->chunk_list, block);
-      smblock_pool->first_avail_chunk = smblock_pool->chunk_list->next;
-      smblock_pool->alloc_list  = lives_list_prepend(smblock_pool->alloc_list,
-                                  (void *)smblock_pool->chunk_list);
-      smblock_pool->free_chunks -= nxtchunks;
-      smblock_pool->toobig_size -= nxtchunks;
+    block = make_alloc_block(nxtchunks, nchunks_req);
+    smblock_pool->chunk_list = lives_list_append(smblock_pool->chunk_list, block);
+    smblock_pool->first_avail_chunk = smblock_pool->chunk_list->next;
+    smblock_pool->alloc_list  = lives_list_prepend(smblock_pool->alloc_list,
+						   (void *)smblock_pool->chunk_list);
+    smblock_pool->free_chunks -= nxtchunks;
+    smblock_pool->toobig_size -= nxtchunks;
 
-      smblock_pool = smblock_pool->nxt_pool;
+    smblock_pool = smblock_pool->nxt_pool;
 #endif
-    }
-
-    smblock_pool = &_smblock_pool;
-
-    pthread_mutex_lock(&(smblock_pool->mutex));
-    orig_free = lives_free;
-    orig_malloc = lives_malloc;
-    orig_calloc = lives_calloc;
-    orig_realloc = lives_realloc;
-
-    lives_free = speedy_free;
-    lives_malloc = speedy_malloc;
-    lives_calloc = speedy_calloc;
-    lives_realloc = speedy_realloc;
-    pthread_mutex_unlock(&(smblock_pool->mutex));
   }
+
+  smblock_pool = &_smblock_pool;
+
+  pthread_mutex_lock(&(smblock_pool->mutex));
+  orig_free = lives_free;
+  orig_malloc = lives_malloc;
+  orig_calloc = lives_calloc;
+  orig_realloc = lives_realloc;
+
+  lives_free = speedy_free;
+  lives_malloc = speedy_malloc;
+  lives_calloc = speedy_calloc;
+  lives_realloc = speedy_realloc;
+  pthread_mutex_unlock(&(smblock_pool->mutex));
 }
 
 
@@ -905,6 +903,47 @@ char *get_memstats(void) {
   else msg = lives_strdup("smallblock not in use\n");
   return msg;
 }
+
+/////////////////////// mapped allocators ////////////
+
+static void *lives_calloc_mapped_inner(size_t npages, boolean do_mlock,  char *fref, int lref) {
+  char errmsg[128];
+  void *p = mmap(NULL, npages * PAGESIZE, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if (!p || p == MAP_FAILED) { 
+    lives_snprintf(errmsg, 128, "Unable to mmap %lu pages at line %d, in %s\n",
+		   npages, lref, fref);
+    LIVES_WARN(errmsg);
+    return NULL;
+  }
+  
+  if (do_mlock && mlock(p, npages * PAGESIZE)) {  
+    lives_snprintf(errmsg, 128, "Unable to mlock %lu pages at line %d, in %s\n",
+		   npages, lref, fref);
+    munmap(p, npages * PAGESIZE);
+    return NULL;
+  }
+
+  return p;
+}
+
+
+LIVES_GLOBAL_INLINE void *lives_calloc_mapped_real(size_t memsize, boolean do_mlock, char *fref, int lref) {
+  char errmsg[128];
+  if (!PAGESIZE) {
+    lives_snprintf(errmsg, 128, "PAGESIZE undefined, mmap failed at line %d, in %s\n", lref, fref);
+    return NULL;
+  }
+  return lives_calloc_mapped_inner((memsize + PAGESIZE - 1) / PAGESIZE, do_mlock, fref, lref);
+}
+
+
+LIVES_GLOBAL_INLINE void lives_uncalloc_mapped(void *p, size_t msize, boolean is_locked) {
+  if (!p) return;
+  msize = (size_t)((msize + PAGESIZE - 1) / PAGESIZE) * PAGESIZE;
+  if (is_locked) munlock(p, msize);
+  munmap(p, msize);
+}
+
 
 /////////////////////// medium allocators ////////////
 
@@ -1129,16 +1168,10 @@ void bigblock_init(void) {
     }
   }
 
+  //bigblock_root = lives_calloc_mapped(bmemsize * NBIGBLOCKS, TRUE);
   bigblock_root = lives_calloc_medium(bmemsize * NBIGBLOCKS);
-  if (!bigblock_root) {
-    LIVES_WARN("Unable to allocate bigblock arena");
-    return;
-  }
-  if (mlock(bigblock_root, bmemsize * NBIGBLOCKS)) {
-    LIVES_WARN("Unable to mlock bigblock arena");
-    lives_free((void *)bigblock_root);
-    return;
-  }
+  if (!bigblock_root) return;
+  if (mlock(bigblock_root, bmemsize * NBIGBLOCKS)) return;
 
   ptr = (char *)bigblock_root;
 

@@ -1287,6 +1287,8 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
 }
 
 
+#define DEF_PROGRESS_SPEED 4.
+
 static int progress_count;
 static double progress_speed;
 static int prog_fs_check;
@@ -1307,12 +1309,12 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, doub
                         / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
       if (fdim(fraction_done, last_fraction_done) < 1.) progress_count = 0;
-      progress_speed = 4.;
+      progress_speed = DEF_PROGRESS_SPEED;
       last_fraction_done = fraction_done;
     } else {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
       progress_count = 0;
-      if (!mainw->is_rendering) progress_speed = 2.;
+      if (!mainw->is_rendering) progress_speed = DEF_PROGRESS_SPEED / 2.;
     }
   }
 
@@ -1397,13 +1399,14 @@ void cancel_process(boolean visible) {
       lives_rm(cfile->info_file);
     }
     if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
-    if (accelerators_swapped) {
-      if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button,
-            mainw->accel_group, LIVES_KEY_p,
-            (LiVESXModifierType)0);
-      accelerators_swapped = FALSE;
-    }
+  }
+
+  if (accelerators_swapped) {
+    if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
+    if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button,
+          mainw->accel_group, LIVES_KEY_p,
+          (LiVESXModifierType)0);
+    accelerators_swapped = FALSE;
   }
 
   if (mainw->proc_ptr) {
@@ -1491,7 +1494,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->cevent_tc = -1;
 
   progress_count = 0;
-  progress_speed = 4.;
+  progress_speed = DEF_PROGRESS_SPEED;
   prog_fs_check = 0;
 
   mainw->render_error = LIVES_RENDER_ERROR_NONE;
@@ -1542,6 +1545,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
     }
+
+    //////////////
 
     if (cfile->opening && ((prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) ||
                            (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed)) && !LIVES_IS_PLAYING) {
@@ -1866,6 +1871,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
         //lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+        ///
+        ///
+        ///
         lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
                                      mainw->accel_group, LIVES_KEY_p,
                                      (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -3578,9 +3586,10 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 static void _thdlg_auto_spin(void) {
   GET_PROC_THREAD_SELF(self);
   lives_proc_thread_set_cancellable(self);
-  lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 0, MM_IGNORE);
+  lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 101, MM_IGNORE);
+  THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;
   while (mainw->threaded_dialog && !lives_proc_thread_get_cancel_requested(self)) {
-    int count = 10000;
+    int count = 1000;
     boolean spun = FALSE;
     while (!lives_proc_thread_get_cancel_requested(self) && --count) {
       if (mainw->threaded_dialog && !mainw->cancelled && !spun && !FG_THREADVAR(fg_service)) {
@@ -3590,10 +3599,10 @@ static void _thdlg_auto_spin(void) {
       lives_nanosleep(100000);
       //g_print("ah %d", lives_proc_thread_get_cancel_requested(self));
     }
-  }
-  if (lives_proc_thread_get_cancel_requested(self)) {
+  } 
+  THREADVAR(perm_hook_hints) = 0;
+  if (lives_proc_thread_get_cancel_requested(self))
     lives_proc_thread_cancel(self);
-  }
 }
 
 
@@ -3602,7 +3611,7 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                            (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
-  lives_proc_thread_sync_with(mainw->dlg_spin_thread, 0, MM_IGNORE);
+  lives_proc_thread_sync_with(mainw->dlg_spin_thread, 101, MM_IGNORE);
 }
 
 

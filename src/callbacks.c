@@ -6884,16 +6884,15 @@ void on_open_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_ok_file_open_clicked(LiVESFileChooser * chooser, LiVESSList * fnames) {
+void on_ok_file_open_clicked(LiVESFileChooser * chooser, LiVESList * ofnames) {
   // this is also called from drag target
   char file_name[PATH_MAX];
-  LiVESSList *ofnames;
+  LiVESList *fnames;
 
   if (chooser) {
+    ofnames = NULL;
     fnames = lives_file_chooser_get_filenames(chooser);
-
     lives_widget_destroy(LIVES_WIDGET(chooser));
-
     if (!fnames) return;
 
     if (!fnames->data) {
@@ -6911,19 +6910,20 @@ void on_ok_file_open_clicked(LiVESFileChooser * chooser, LiVESSList * fnames) {
     }
 
     mainw->cancelled = CANCEL_NONE;
-  }
+  } else fnames = ofnames;
 
-  ofnames = fnames;
   mainw->img_concat_clip = -1;
 
   while (fnames && mainw->cancelled == CANCEL_NONE) {
-    lives_snprintf(file_name, PATH_MAX, "%s", (char *)fnames->data);
-    lives_free((livespointer)fnames->data);
-    open_file(file_name);
+    if (fnames->data) {
+      lives_snprintf(file_name, PATH_MAX, "%s", (char *)fnames->data);
+      if (!ofnames) lives_free((livespointer)fnames->data);
+      open_file(file_name);
+    }
     fnames = fnames->next;
   }
 
-  lives_slist_free(ofnames);
+  if (!ofnames) lives_list_free(fnames);
 
   mainw->opening_multi = FALSE;
   mainw->img_concat_clip = -1;
@@ -6942,7 +6942,7 @@ void on_ok_file_open_clicked(LiVESFileChooser * chooser, LiVESSList * fnames) {
 // files dragged onto target from outside - try to open them
 void drag_from_outside(LiVESWidget * widget, GdkDragContext * dcon, int x, int y,
                        GtkSelectionData * data, uint32_t info, uint32_t time, livespointer user_data) {
-  GSList *fnames = NULL;
+  LiVESList *fnames = NULL;
 #if GTK_CHECK_VERSION(3, 0, 0)
   char *filelist = (char *)gtk_selection_data_get_data(data);
 #else
@@ -6969,12 +6969,10 @@ void drag_from_outside(LiVESWidget * widget, GdkDragContext * dcon, int x, int y
   lives_free(nfilelist);
 
   for (i = 0; i < nfiles; i++) {
-    fnames = lives_slist_append(fnames, array[i]);
+    fnames = lives_list_append(fnames, array[i]);
   }
 
   on_ok_file_open_clicked(NULL, fnames);
-
-  // fn will free array elements and fnames
 
   lives_free(array);
 
@@ -9103,7 +9101,7 @@ void on_prv_link_toggled(LiVESToggleButton * togglebutton, livespointer user_dat
 void update_sel_menu(void) {
   if (mainw->multitrack || mainw->selwidth_locked) return;
 
-  if (!CURRENT_CLIP_HAS_VIDEO || LIVES_IS_PLAYING || CURRENT_CLIP_IS_CLIPBOARD || mainw->is_processing) {
+  if (!CURRENT_CLIP_HAS_VIDEO || CURRENT_CLIP_IS_CLIPBOARD || mainw->is_processing) {
     lives_widget_set_sensitive(mainw->select_invert, FALSE);
     lives_widget_set_sensitive(mainw->select_all, FALSE);
     lives_widget_set_sensitive(mainw->sa_button, FALSE);
@@ -9227,8 +9225,7 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
       load_preview_image(FALSE);
   }
 
-  if (!LIVES_IS_PLAYING && what_sup_now() == sup_ready)
-    load_start_image(cfile->start);
+  if (what_sup_now() == sup_ready) load_start_image(cfile->start);
 
   if (cfile->start > cfile->end) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
@@ -9294,8 +9291,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
       load_preview_image(FALSE);
   }
 
-  if (!LIVES_IS_PLAYING && what_sup_now() == sup_ready)
-    load_end_image(cfile->end);
+  if (what_sup_now() == sup_ready) load_end_image(cfile->end);
 
   if (cfile->end < cfile->start) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
@@ -9324,6 +9320,10 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
     lives_painter_set_source_surface(cr, *surf, 0., 0.);
     lives_painter_paint(cr);
     if (need_unlock) pthread_mutex_unlock(mlocked);
+  } else {
+    if (widget == mainw->eventbox2) {
+      paint_tl_cursors(widget, cr, NULL);
+    }
   }
   return TRUE;
 }
@@ -9339,104 +9339,104 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
   if (mainw->go_away) return FALSE;
   if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
-  else {
-    int bar_height;
-    int allocy;
-    double allocwidth = (double)lives_widget_get_allocation_width(mainw->video_draw), allocheight;
-    double offset;
-    double ptrtime = mainw->ptrtime;
-    frames_t frame;
-    int which = 0;
+  if (!LIVES_IS_PLAYING)
+    all_expose(widget, creb, psurf);
+  return TRUE;
+}
 
-    offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
 
-    lives_painter_set_line_width(creb, 1.);
+void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xpsurf) {
+  lives_painter_surface_t **psurf = (lives_painter_surface_t **)xpsurf;
+  lives_painter_t *creb = cr;
+  int bar_height;
+  int allocy;
+  double allocwidth = (double)lives_widget_get_allocation_width(mainw->video_draw), allocheight;
+  double offset;
+  double ptrtime = mainw->ptrtime;
+  frames_t frame;
+  int which = 0;
 
-    if (palette->style & STYLE_LIGHT) {
-      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->black);
-    } else {
-      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->white);
+  if (!creb) {
+    creb = live_widget_begin_paint(widget);
+    if (!*psurf) {
+      *psurf = lives_painter_get_target(creb);
+      lives_painter_surface_reference(*psurf);
     }
+  }
 
-    if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
-      frame = cfile->frames;
+  offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
 
-    if (cfile->frames > 0 && (which == 0 || which == 1)) {
-      if (mainw->video_drawable) {
-        bar_height = CE_VIDBAR_HEIGHT;
+  lives_painter_set_line_width(creb, 1.);
 
-        allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar)
-                      + bar_height + widget_opts.packing_height * 2.5;
-        allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
-        lives_painter_move_to(creb, offset, allocy);
-        lives_painter_line_to(creb, offset, allocy + allocheight);
-        lives_painter_stroke(creb);
-      }
+  if (palette->style & STYLE_LIGHT) {
+    lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->black);
+  } else {
+    lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->white);
+  }
+
+  if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
+    frame = cfile->frames;
+
+  if (cfile->frames > 0 && (which == 0 || which == 1)) {
+    if (mainw->video_drawable) {
+      bar_height = CE_VIDBAR_HEIGHT;
+
+      allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar)
+                    + bar_height + widget_opts.packing_height * 2.5;
+      allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
+      lives_painter_move_to(creb, offset, allocy);
+      lives_painter_line_to(creb, offset, allocy + allocheight);
+      lives_painter_stroke(creb);
     }
+  }
 
-    if (LIVES_IS_PLAYING) {
-      if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
-      if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
-        if (is_realtime_aplayer(prefs->audio_player) && (!mainw->event_list || !mainw->preview)) {
+  if (LIVES_IS_PLAYING) {
+    if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
+    if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
+      if (is_realtime_aplayer(prefs->audio_player) && (!mainw->event_list || !mainw->preview)) {
 #ifdef ENABLE_JACK
-          if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
-            offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
-                                   cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
-          }
+        if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
+          offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
+                                 cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
+        }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-          if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
-            offset = allocwidth * ((double)mainw->pulsed->seek_pos  / cfile->arps / cfile->achans /
-                                   cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
-          }
+        if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
+          offset = allocwidth * ((double)mainw->pulsed->seek_pos  / cfile->arps / cfile->achans /
+                                 cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
+        }
 #endif
-        } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CURRENT_CLIP_TOTAL_TIME;
-      }
-    } else {
-      offset = cfile->real_pointer_time / CURRENT_CLIP_TOTAL_TIME * allocwidth;
+      } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CURRENT_CLIP_TOTAL_TIME;
+    }
+  } else {
+    offset = cfile->real_pointer_time / CURRENT_CLIP_TOTAL_TIME * allocwidth;
+  }
+
+  if (cfile->achans > 0) {
+    bar_height = CE_AUDBAR_HEIGHT;
+    if (mainw->laudio_drawable && (which == 0 || which == 2)) {
+      allocheight = (double)lives_widget_get_allocation_height(mainw->laudbar) + bar_height
+                    + widget_opts.packing_height * 2.5;
+      allocy = lives_widget_get_allocation_y(mainw->laudbar) - widget_opts.packing_height;
+      lives_painter_move_to(creb, offset, allocy);
+      lives_painter_line_to(creb, offset, allocy + allocheight);
     }
 
-    if (cfile->achans > 0) {
-      bar_height = CE_AUDBAR_HEIGHT;
-      if (mainw->laudio_drawable && (which == 0 || which == 2)) {
-        allocheight = (double)lives_widget_get_allocation_height(mainw->laudbar) + bar_height
-                      + widget_opts.packing_height * 2.5;
-        allocy = lives_widget_get_allocation_y(mainw->laudbar) - widget_opts.packing_height;
+    if (cfile->achans > 1 && (which == 0 || which == 3)) {
+      if (mainw->raudio_drawable) {
+        allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar)
+                      + bar_height + widget_opts.packing_height * 2.5;
+        allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
         lives_painter_move_to(creb, offset, allocy);
         lives_painter_line_to(creb, offset, allocy + allocheight);
       }
-
-      if (cfile->achans > 1 && (which == 0 || which == 3)) {
-        if (mainw->raudio_drawable) {
-          allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar)
-                        + bar_height + widget_opts.packing_height * 2.5;
-          allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
-          lives_painter_move_to(creb, offset, allocy);
-          lives_painter_line_to(creb, offset, allocy + allocheight);
-        }
-      }
     }
-
-    lives_painter_stroke(creb);
-    return TRUE;
   }
+
+  lives_painter_stroke(creb);
+  if (creb != cr) lives_widget_end_paint(widget);
 }
 
-
-boolean all_expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
-  if (LIVES_IS_PLAYING) {
-    // all_expose(widget, cr, psurf);
-    lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                    HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                    all_expose, WEED_SEED_BOOLEAN, "vvv", widget, cr, psurf);
-  }
-  return TRUE;
-}
-
-boolean all_expose_nopb(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
-  if (!LIVES_IS_PLAYING) all_expose(widget, cr, psurf);
-  return TRUE;
-}
 
 boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   if (mainw->video_drawable) {
@@ -9445,6 +9445,7 @@ boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   }
   return TRUE;
 }
+
 
 boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   if (mainw->no_configs) return TRUE;
@@ -9458,6 +9459,7 @@ boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, live
   return TRUE;
 }
 
+
 boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   if (mainw->laudio_drawable) {
     lives_painter_set_source_surface(cr, mainw->laudio_drawable, 0., 0.);
@@ -9465,6 +9467,7 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
   }
   return FALSE;
 }
+
 
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   // this is used only when the mainwindow size changes
@@ -9477,7 +9480,7 @@ boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
   for (int i = 1; i < MAX_FILES; i++) {
     if (IS_VALID_CLIP(i)) {
       if (mainw->files[i]->laudio_drawable)
-	lives_painter_surface_destroy(mainw->files[i]->laudio_drawable);
+        lives_painter_surface_destroy(mainw->files[i]->laudio_drawable);
       mainw->files[i]->laudio_drawable = NULL;
     }
   }
@@ -9487,8 +9490,7 @@ boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
     mainw->laudio_drawable = surf;
     mainw->files[mainw->drawsrc]->laudio_drawable
       = mainw->laudio_drawable = surf;
-  }
-  else mainw->laudio_drawable = NULL; 
+  } else mainw->laudio_drawable = NULL;
   unlock_timeline();
   if (IS_VALID_CLIP(mainw->drawsrc))
     redraw_timeline(mainw->drawsrc);
@@ -9514,7 +9516,7 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
   for (int i = 1; i < MAX_FILES; i++) {
     if (IS_VALID_CLIP(i)) {
       if (mainw->files[i]->raudio_drawable)
-	lives_painter_surface_destroy(mainw->files[i]->raudio_drawable);
+        lives_painter_surface_destroy(mainw->files[i]->raudio_drawable);
       mainw->files[i]->raudio_drawable = NULL;
     }
   }
@@ -9524,8 +9526,7 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
     mainw->raudio_drawable = surf;
     mainw->files[mainw->drawsrc]->raudio_drawable
       = mainw->raudio_drawable = surf;
-  }
-  else mainw->raudio_drawable = NULL;
+  } else mainw->raudio_drawable = NULL;
   unlock_timeline();
   if (IS_VALID_CLIP(mainw->drawsrc))
     redraw_timeline(mainw->drawsrc);

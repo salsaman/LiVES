@@ -26,6 +26,7 @@
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
 #define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) {double a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_DOUBLE, &a, FLAGS);}
+#define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS) {float a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_FLOAT, &a, FLAGS);}
 #define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) {char *a = (PDEF); weed_plant_t *prefplant = \
 									    define_pref(PREF_##IDX, prefs->PR, WEED_SEED_STRING, \
 											&a, FLAGS); \
@@ -620,6 +621,7 @@ typedef struct {
   boolean show_asrc;
 
   float ahold_threshold;
+  float max_clip_vol;
 
   double screen_gamma;
 
@@ -1418,6 +1420,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 ///////// float values
 #define PREF_AHOLD_THRESHOLD "ahold_threshold"
 #define PREF_MASTER_VOLUME "master_volume"
+#define PREF_MAX_CLIP_VOL "max_clip_volume"
 
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"

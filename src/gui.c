@@ -2453,13 +2453,14 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->hruler, -1, CE_HRULE_HEIGHT);
 
   mainw->eventbox2 = lives_event_box_new();
+  mainw->eb2_psurf = lives_calloc(1, sizeof(lives_painter_surface_t *));
 
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_EXPOSE_EVENT,
-                                  LIVES_GUI_CALLBACK(all_expose_overlay), NULL);
+                                  LIVES_GUI_CALLBACK(all_expose_overlay), mainw->eb2_psurf);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->vidbar = lives_standard_label_new(_("Video"));
@@ -4747,7 +4748,7 @@ void kill_play_window(void) {
     pthread_mutex_unlock(&playwin_config_mutex);
   }
 }
- 
+
 
 #define ASPECT_DIFF_LMT 0.01625f  // (fabs) ratio differences in aspect ratios within this limit considered irrelevant
 
@@ -5071,6 +5072,11 @@ void splash_init(void) {
 
 
 void splash_msg(const char *msg, double pct) {
+  MSGMODE_LOCAL;
+  MSGMODE_SET(CONSOLE);
+  d_print("%s\n", msg);
+  MSGMODE_GLOBAL;
+
   if (mainw->foreign || !mainw->splash_window || !mainw->splash_label) return;
 
 #ifdef PROGBAR_IS_ENTRY

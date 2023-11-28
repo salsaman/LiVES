@@ -755,6 +755,10 @@ void redraw_timer_bars(double oldx, double newx, int which) {
   } else {
     update_timer_bars(mainw->current_file, ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
   }
+  lives_widget_queue_draw(mainw->video_draw);
+  lives_widget_queue_draw(mainw->laudio_draw);
+  lives_widget_queue_draw(mainw->raudio_draw);
+  lives_widget_queue_draw(mainw->eventbox2);
 }
 
 
@@ -765,19 +769,21 @@ static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, lives
 
 
 static void set_pb_active(LiVESWidget *fchoo, LiVESWidget *pbutton) {
-  LiVESSList *slist;
+  LiVESList *list;
   if (!LIVES_IS_FILE_CHOOSER(fchoo)) return;
-  slist = lives_file_chooser_get_filenames(LIVES_FILE_CHOOSER(fchoo));
+
+  list = lives_file_chooser_get_filenames(LIVES_FILE_CHOOSER(fchoo));
+
   end_fs_preview(LIVES_FILE_CHOOSER(fchoo), pbutton);
-  if (!slist || !slist->data || lives_slist_length(slist) > 1 ||
-      !(lives_file_test((char *)lives_slist_nth_data(slist, 0), LIVES_FILE_TEST_IS_REGULAR))) {
+  if (!list || !list->data || list->next ||
+      !(lives_file_test((char *)list->data, LIVES_FILE_TEST_IS_REGULAR))) {
     lives_widget_set_sensitive(pbutton, FALSE);
   } else lives_widget_set_sensitive(pbutton, TRUE);
 
-  lives_slist_free_all(&slist);
-  if (mainw->fs_playframe) {
+  lives_list_free_all(&list);
+
+  if (mainw->fs_playframe)
     lives_widget_show_all(lives_widget_get_parent(mainw->fs_playframe));
-  }
 }
 
 

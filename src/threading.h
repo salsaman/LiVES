@@ -682,16 +682,16 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
        else func();)
 
 #define main_thread_execute(func, return_type, retloc, args_fmt, ...)	\
-  do {MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, __VA_ARGS__);} while (0)
+  MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, __VA_ARGS__)
 
 #define main_thread_execute_rvoid(func, return_type, args_fmt, ...)	\
-  do {MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, __VA_ARGS__);} while (0)
+  MAIN_THREAD_EXECUTE_RVOIDx(func, return_type, args_fmt, __VA_ARGS__)
 
 #define main_thread_execute_pvoid(func, return_type, retloc)		\
-  do {MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc);} while (0)
+  MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc)
 
 #define main_thread_execute_void(func, return_type)		\
-  do {MAIN_THREAD_EXECUTE_VOID(func, return_type);} while (0)
+  MAIN_THREAD_EXECUTE_VOID(func, return_type)
 
 // e.g int var = pool_thread_execute(func, WEED_SEED_INT, "v", ptr)
 #define pool_thread_execute(func, rtype, args_fmt, ...)			\
@@ -1015,7 +1015,6 @@ void dump_fn_stack(LiVESList *fnstack);
 
 char *get_threadstats(void);
 void thread_stackdump(void);
-
 
 // utility funcs (called from widget-helper.c)
 boolean is_fg_thread(void);

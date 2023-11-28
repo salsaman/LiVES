@@ -1028,7 +1028,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
     key--;
     new_rte = GU641 << key;
 
-    if (!rte_key_is_enabled(key, !THREADVAR(fx_is_auto))) {
+    if (!rte_key_is_enabled(key, !is_auto)) {
       // switch is ON
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
@@ -1062,7 +1062,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
 
         // if effect was auto (from ACTIVATE data connection), leave all param boxes
         // otherwise, remove any which are not "pinned"
-        if (!THREADVAR(fx_is_auto)) ce_thumbs_add_param_box(key, TRUE);
+        if (!is_auto) ce_thumbs_add_param_box(key, TRUE);
       }
 
       filter_mutex_unlock(key);
@@ -1089,7 +1089,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
 
       filter_mutex_lock(key);
 
-      if (THREADVAR(fx_is_auto)) {
+      if (is_auto) {
         // SOFT_DEINIT
         // if the change was caused by a data connection, the target may be toggled rapidly
         // in this case we dont actually deinit / reinit the instance, we just flag it as ignored
@@ -1109,7 +1109,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
         //refresh_model = FALSE;
       }
 
-      if (!THREADVAR(fx_is_auto)) {
+      if (!is_auto) {
         // deinit effect
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;

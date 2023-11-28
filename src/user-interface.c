@@ -671,13 +671,13 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     return;
   }
 
-  if (1 ||					widget == mainw->play_image ||
-      widget == mainw->preview_image) {
-    cr = live_widget_begin_paint(widget);
-    del = FALSE;
-    surface = *psurface = lives_painter_get_target(cr);
-    lives_painter_surface_reference(surface);
-  } else cr = lives_painter_create_from_surface(surface);
+  /* if (1 ||					widget == mainw->play_image || */
+  /*     widget == mainw->preview_image) { */
+  cr = live_widget_begin_paint(widget);
+  del = FALSE;
+  surface = *psurface = lives_painter_get_target(cr);
+  lives_painter_surface_reference(surface);
+  //} else cr = lives_painter_create_from_surface(surface);
 
   if (!cr) {
     pthread_mutex_unlock(mutex);
@@ -780,7 +780,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   if (del) lives_painter_destroy(cr);
   else {
     lives_widget_end_paint(widget);
-    lives_widget_queue_draw(widget);
+    //lives_widget_queue_draw(widget);
   }
   pthread_mutex_unlock(mutex);
 }
@@ -823,7 +823,7 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
     }
     set_drawing_area_from_pixbuf(darea, pixbuf);
     lives_widget_object_unref(pixbuf);
-    lives_widget_queue_draw_and_update(widget);
+    //lives_widget_queue_draw_and_update(widget);
   }
 
   /* g_print("unref %p, nrefs is %d\n", layer, weed_layer_count_refs(layer)); */
@@ -1330,6 +1330,8 @@ static void redraw_timeline_inner(int clipno) {
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
 
   if (!sfile) return;
+
+  mainw->drawsrc = clipno;
 
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);

@@ -93,7 +93,7 @@ void init_prefs(void) {
   DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, 0);
   DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", 0);
 
-  DEFINE_PREF_INT(MSG_ROUTING, msg_routing, MSG_ROUTE_CACHE, 0);
+  DEFINE_PREF_FLOAT(MAX_CLIP_VOL, max_clip_vol, 2., 0);
 }
 
 
@@ -3924,7 +3924,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
 #define PANED_MIN 20
 
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
-  int pos;
+  int pos, maxpos, minpos;
   //lives_widget_show_now(w);
   lives_widget_context_update();
   pos = lives_paned_get_position(p);
@@ -3936,6 +3936,7 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
     //lives_widget_queue_draw_and_update(lives_widget_get_toplevel(w));
     lives_widget_context_update();
   }
+  minpos = pos;
   lives_paned_set_position(p, ++pos);
   if (gtk_widget_get_mapped(w)) {
     while (gtk_widget_get_mapped(w)) {
@@ -3944,7 +3945,8 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
       lives_widget_context_update();
     }
   }
-  lives_paned_set_position(p, pos + widget_opts.border_width);
+  maxpos = --pos;
+  lives_paned_set_position(p, ((maxpos + minpos) >> 1) + widget_opts.border_width);
 }
 
 

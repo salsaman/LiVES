@@ -374,7 +374,7 @@ void load_start_image(frames_t frame) {
     }
     pthread_mutex_unlock(mutex);
     set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->start_image), mainw->camframe);
-    lives_widget_queue_draw(mainw->start_image);
+    //lives_widget_queue_draw(mainw->start_image);
     return;
   }
 
@@ -390,7 +390,7 @@ void load_start_image(frames_t frame) {
     } else {
       lives_widget_set_opacity(mainw->start_image, 0.4);
     }
-    lives_widget_queue_draw(mainw->start_image);
+    //lives_widget_queue_draw(mainw->start_image);
     return;
   }
 
@@ -486,7 +486,7 @@ check_stcache:
       set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->start_image), start_pixbuf);
       if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, start_pixbuf)))
         lives_widget_object_unref(start_pixbuf);
-      lives_widget_queue_draw(mainw->start_image);
+      //lives_widget_queue_draw(mainw->start_image);
     } else cache_it = FALSE;
 
     if (!cache_it) {
@@ -578,11 +578,11 @@ check_stcache:
       pthread_mutex_unlock(mutex);
       set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->start_image), start_pixbuf);
       pthread_mutex_lock(mutex);
-      lives_widget_queue_draw(mainw->start_image);
+      //      lives_widget_queue_draw(mainw->start_image);
     }
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
-    lives_widget_queue_resize(mainw->start_image);
+    //lives_widget_queue_resize(mainw->start_image);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } while (rwidth != lives_widget_get_allocation_width(mainw->start_image) ||
            rheight != lives_widget_get_allocation_height(mainw->start_image));
@@ -685,7 +685,7 @@ void load_end_image(frames_t frame) {
     }
     pthread_mutex_unlock(mutex);
     set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->end_image), mainw->camframe);
-    lives_widget_queue_draw(mainw->end_image);
+    //lives_widget_queue_draw(mainw->end_image);
     return;
   }
 
@@ -701,7 +701,7 @@ void load_end_image(frames_t frame) {
     } else {
       lives_widget_set_opacity(mainw->end_image, 0.4);
     }
-    lives_widget_queue_draw(mainw->end_image);
+    //lives_widget_queue_draw(mainw->end_image);
     return;
   }
 
@@ -787,7 +787,7 @@ check_encache:
       set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->end_image), end_pixbuf);
       if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, end_pixbuf)))
         lives_widget_object_unref(end_pixbuf);
-      lives_widget_queue_draw(mainw->end_image);
+      //lives_widget_queue_draw(mainw->end_image);
     } else cache_it = FALSE;
 
     if (!cache_it) {
@@ -877,11 +877,11 @@ check_encache:
       pthread_mutex_unlock(mutex);
       set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->end_image), end_pixbuf);
       pthread_mutex_lock(mutex);
-      lives_widget_queue_draw(mainw->end_image);
+      //lives_widget_queue_draw(mainw->end_image);
     }
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
-    lives_widget_queue_resize(mainw->end_image);
+    //lives_widget_queue_resize(mainw->end_image);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) ||
            rheight != lives_widget_get_allocation_height(mainw->end_image));
@@ -961,7 +961,7 @@ check_encache:
       pixbuf = lives_pixbuf_scale_simple(mainw->camframe, mainw->pwidth, mainw->pheight, LIVES_INTERP_BEST);
       set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->preview_image), pixbuf);
       if (pixbuf) lives_widget_object_unref(pixbuf);
-      lives_widget_queue_draw(mainw->preview_image);
+      //lives_widget_queue_draw(mainw->preview_image);
       mainw->preview_frame = 1;
       lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton), 1, 1);
@@ -987,7 +987,7 @@ check_encache:
       } else {
         lives_widget_set_opacity(mainw->preview_image, 0.4);
       }
-      lives_widget_queue_draw(mainw->preview_image);
+      //lives_widget_queue_draw(mainw->preview_image);
       return;
     }
 
@@ -1129,7 +1129,7 @@ check_prcache:
           if (pr_pixbuf != pixbuf) lives_widget_object_unref(pr_pixbuf);
           if (!layer || !cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, pixbuf)))
             lives_widget_object_unref(pixbuf);
-          lives_widget_queue_draw(mainw->preview_image);
+          //lives_widget_queue_draw(mainw->preview_image);
         } else cache_it = FALSE;
       } else cache_it = FALSE;
     }
@@ -1171,7 +1171,7 @@ check_prcache:
           }
         }
         mainw->ptrtime = cfile->pointer_time;
-        lives_widget_queue_draw(mainw->eventbox2);
+        //lives_widget_queue_draw(mainw->eventbox2);
         break;
 
       case PRV_START:
@@ -1203,7 +1203,7 @@ check_prcache:
         }
         break;
       }
-      lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+      //lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
 

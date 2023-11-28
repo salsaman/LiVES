@@ -1045,7 +1045,7 @@ boolean lives_menu_set_title(LiVESMenu *, const char *title);
 int lives_display_get_n_screens(LiVESXDisplay *);
 
 char *lives_file_chooser_get_filename(LiVESFileChooser *);
-LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
+LiVESList *lives_file_chooser_get_filenames(LiVESFileChooser *);
 
 boolean lives_widget_grab_focus(LiVESWidget *);
 boolean lives_widget_grab_default(LiVESWidget *);

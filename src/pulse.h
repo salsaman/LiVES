@@ -56,12 +56,12 @@ typedef struct {
 
   // app side
   volatile int in_arate; /**< samples(frames) per second */
-  uint64_t in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
+  int in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
   uint64_t in_asamps;
 
   // server side
   int out_arate; /**< samples(frames) per second */
-  uint64_t out_achans; /**< number of output channels(1 is mono, 2 stereo etc..) */
+  int out_achans; /**< number of output channels(1 is mono, 2 stereo etc..) */
   uint64_t out_asamps;
 
   uint64_t out_chans_available;

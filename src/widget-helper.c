@@ -1257,18 +1257,11 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
     if (mainw->do_ctx_update) {
       // during playback this is where all callbacks such as key presses will happen
-      if (!is_active) _lives_widget_context_update();
+      if (1 || !is_active) _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
       pthread_yield();
       lives_microsleep;
     } else {
-      //
-      //
-      /* if (gui_loop_tight) { */
-      /* 	lives_widget_context_iteration(NULL, FALSE); */
-      /* 	lives_millisleep; */
-      /* } */
-
       lives_nanosleep(NSLEEP_TIME);
 
       if (cprio == PRIO_LOW) {
@@ -7556,12 +7549,25 @@ WIDGET_HELPER_GLOBAL_INLINE char *lives_file_chooser_get_filename(LiVESFileChoos
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser * chooser) {
-  LiVESSList *fnlist = NULL;
+WIDGET_HELPER_GLOBAL_INLINE
+LiVESList *lives_file_chooser_get_filenames(LiVESFileChooser * chooser) {
 #ifdef GUI_GTK
-  fnlist = gtk_file_chooser_get_filenames(chooser);
+  LiVESList *cpy_list = NULL;
+  LiVESSList *fnlist = gtk_file_chooser_get_filenames(chooser);
+  //
+  for (LiVESSList *list = fnlist; list; list = list->next) {
+    cpy_list = lives_list_prepend(cpy_list, lives_strdup((char *)list->data));
+    g_free(list->data);
+    list->data = NULL;
+  }
+
+  cpy_list = lives_list_prepend(cpy_list, NULL);
+  cpy_list = lives_list_reverse(cpy_list);
+
+  g_slist_free(fnlist);
+
 #endif
-  return fnlist;
+  return cpy_list;
 }
 
 

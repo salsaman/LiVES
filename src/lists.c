@@ -544,14 +544,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fw
 
 
 LIVES_GLOBAL_INLINE void lives_list_free_data(LiVESList *list)
-{LIVES_LIST_FOREACH(list); lives_freep((void **)&list->data);}
-
-
-LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
-  if (!list || !*list) return;
-  lives_list_free_data((LiVESList *)list);
-  lives_slist_free(lives_steal_pointer((void **)list));
-}
+{LIVES_LIST_FOREACH(list) lives_freep((void **)&list->data);}
 
 
 LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {

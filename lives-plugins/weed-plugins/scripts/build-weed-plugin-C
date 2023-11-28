@@ -66,7 +66,7 @@ if ($USE_WARNINGS) {
 }
 
 my $builder_version = "4.0,0-pre";
-my $rfx_version = "1.8.5";
+my $rfx_version = "2.0.0";
 my $version;
 
 ################################
@@ -403,7 +403,7 @@ print OUT "static int package_version = $pver; // version of this package\n\n";
 print OUT "/////////////////////////////////////////////////////////////////////////////\n";
 
 if ($uid) {
-    print OUT "\n#define _UNIQUE_ID_ \"$uid\"\n";
+    print OUT "\n#define _UNIQUE_ID_ \"$uid\"\n\n";
 }
 
 #add requirements
@@ -515,28 +515,16 @@ if ($adv_palettes) {
     print OUT "#define WEED_ADVANCED_PALETTES\n";
 }
 
-print OUT "#include <weed/weed-plugin.h>\n";
-print OUT "#include <weed/weed-utils.h>\n";
 print OUT "#include <weed/weed-plugin-utils.h>\n";
-
-print OUT "#include <weed/weed-plugin-utils/weed-plugin-utils.c>\n\n";
 
 print OUT "//////////////////////////////////////////////////////////////////\n\n";
 
 ## add includes
-my $inc_stdio = 0;
 
 foreach (@requires) {
     if ($_ =~ /^\</ || $_ =~ /^"/) {
 	print OUT "#include $_\n";
-	if ($_ eq "<stdio.h>") {
-	    $inc_stdio = 1;
-	}
     }
-}
-
-if ($uid && !$inc_stdio) {
-    print OUT "#include <stdio.h>\n";
 }
 
 print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n";

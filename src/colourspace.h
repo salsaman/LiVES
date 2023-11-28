@@ -64,7 +64,6 @@
 #define SCALE_FACTOR SCALE_FACTORX
 #endif
 
-
 struct _conv_array {
   int *Yx_R, *Yx_G, *Yx_B;
   int *Cbx_R, *Cbx_G, *Cbx_B;

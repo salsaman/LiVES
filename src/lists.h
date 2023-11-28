@@ -78,7 +78,6 @@ void lives_list_free_data(LiVESList *);
 #define lives_list_free_strings lives_list_free_data
 
 void lives_list_free_all(LiVESList **);
-void lives_slist_free_all(LiVESSList **);
 
 #define LIVES_CONST_LIST_FOREACH(const_list, list) for(LiVESList* list =(const_list);list;list = list->next)
 

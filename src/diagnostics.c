@@ -2432,8 +2432,8 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
     if (tests_to_run & TEST_PAL_CONV)
       test_palette_conversions();
 
-    if (tests_to_run & TEST_BUNDLES)
-      init_bundles();
+    /* if (tests_to_run & TEST_BUNDLES) */
+    /*   init_bundles(); */
 
     if (tests_to_run & TEST_WEED_UTILS)
       weed_utils_test();

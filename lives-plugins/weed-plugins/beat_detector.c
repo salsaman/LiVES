@@ -14,17 +14,11 @@ static int package_version = 1; // version of this package
 
 #define NEED_AUDIO
 
-#include <weed/weed-plugin.h>
-#include <weed/weed-utils.h>
 #include <weed/weed-plugin-utils.h>
-
-#include <weed/weed-plugin-utils/weed-plugin-utils.c>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
 /////////////////////////////////////////////////////////////////////////////////////
-
-#include <string.h>
 
 #include <fftw3.h>
 #include <math.h>
@@ -111,19 +105,16 @@ static int create_plans(void) {
 static weed_error_t beat_init(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_calloc(1, sizeof(_sdata));
   if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
-
   sdata->bufidx = -1;
-
-  weed_set_voidptr_value(inst, "plugin_data", sdata);
-
+  weed_set_instance_data(inst, sdata);
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t beat_deinit(weed_plant_t *inst) {
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
+  _sdata *sdata = weed_get_instance_data(inst, sdata);
   if (sdata) weed_free(sdata);
-  weed_set_voidptr_value(inst, "plugin_data", NULL);
+  weed_set_instance_data(inst, NULL);
   return WEED_SUCCESS;
 }
 
@@ -148,7 +139,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     int kmin, kmax, okmin, rkmin, rkmax;
     int i, j, s;
 
-    _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
+    _sdata *sdata = weed_get_instance_data(inst, sdata);
 
     double var, av;
     float tot = 0., totx;
@@ -173,7 +164,8 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
       for (i = 0; i < NSLICES; i++) {
         sdata->av[i] = 0.;
-	weed_memmove(sdata->buf[i], sdata->buf[i] + 1, sdata->bufidx * sizeof(float));
+	if (sdata->bufidx > 1)
+	  weed_memmove(sdata->buf[i], sdata->buf[i] + 1, sdata->bufidx * sizeof(float));
         for (j = 0; j < sdata->bufidx; j++)
           if (sdata->buf[i][j] != -1.) sdata->av[i] += (double)sdata->buf[i][j];
       }
@@ -188,7 +180,8 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     sdata->totsamps += onsamps;
 
-    weed_memmove(sdata->bufsize, sdata->bufsize + 1, (sdata->bufidx - 1) * sizeof(int));
+    if (sdata->bufidx > 1)
+      weed_memmove(sdata->bufsize, sdata->bufsize + 1, (sdata->bufidx - 1) * sizeof(int));
 
     sdata->bufsize[sdata->bufidx] = onsamps;
 

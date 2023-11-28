@@ -1136,6 +1136,10 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     ///////// EXECUTE PLAN CYCLE ////////////
 
+    THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+    main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf);
+    THREADVAR(hook_hints) = 0;
+
     //d_print_debug("wating for plan to complete\n");
     if (mainw->plan_cycle) {
       if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
@@ -1148,9 +1152,9 @@ weed_layer_t *load_frame_image(frames_t frame) {
     /* in render frame, we would have set all frames to either prepared or loaded */
     /* so the plan runner should have started loading them already */
     /* the reamining steps will be run, applying all fx instances until we are left with the single output layer */
-    lives_sleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
-                            || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
-                            || mainw->plan_cycle->state == PLAN_STATE_ERROR);
+    lives_millisleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
+				 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
+				 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
 
     osc_sync_msg = osc_make_sync_msg(mainw->clip_index, mainw->plan_cycle->frame_idx,
                                      (double)mainw->currticks / TICKS_PER_SECOND_DBL,
@@ -2174,7 +2178,7 @@ int process_one(boolean visible) {
   static frames_t best_frame = -1;
   frames_t xrequested_frame = -1;
   frames_t fixed_frame = 0;
-  double xtime;
+  //double xtime = 0.;
   boolean show_frame = FALSE, showed_frame = FALSE;
   boolean can_rec = FALSE;
   static boolean reset_on_tsource_change = FALSE;
@@ -2263,6 +2267,7 @@ player_loop:
   // TODO - make adjustable
 
   //lives_microsleep;
+  pthread_yield();
   _lives_microsleep(10);
 
   frame_invalid = FALSE;
@@ -2301,7 +2306,7 @@ player_loop:
     lives_microsleep_while_true(mainw->do_ctx_update);
 
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-    xtime = lives_get_session_time();
+    //xtime = lives_get_session_time();
 
     build_nodemodel(&mainw->nodemodel);
     align_with_model(mainw->nodemodel);
@@ -2737,7 +2742,7 @@ switch_point:
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
     ///
 
-    xtime = lives_get_session_time();
+    //xtime = lives_get_session_time();
     build_nodemodel(&mainw->nodemodel);
     align_with_model(mainw->nodemodel);
     mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
@@ -3085,22 +3090,13 @@ update_effort:
       if (lives_get_session_ticks_lax() - last_eff_upd_time > EFF_UPD_THRESH) {
         double dets[3];
         float friction;
-        double avg = get_cycle_avg_time(dets);
-        boolean calc = FALSE;
         mainw->inst_fps = get_inst_fps(FALSE);
+        get_cycle_avg_time(dets);
         if (dets[1]) {
           last_eff_upd_time = lives_get_session_ticks_lax();
           //if (sfile->pb_fps == sfile->fps && dets[2]) {
           if (mainw->inst_fps && dets[1]) {
             friction = (float)(dets[1] * mainw->inst_fps);
-            calc = TRUE;
-            ///	    g_print("eff fric %.8f\n", friction);
-          }
-          /* else if (avg) { */
-          /*   friction = (float)(dets[1] / avg); */
-          /*   calc = TRUE; */
-          /* } */
-          if (calc) {
             if (friction > EFFORT_RANGE_MAX / 8.) friction = EFFORT_RANGE_MAX / 8.;
             if (friction < 8. / EFFORT_RANGE_MAX) friction = 8. / EFFORT_RANGE_MAX;
 
@@ -3772,7 +3768,7 @@ proc_dialog:
               lives_microsleep_while_true(mainw->do_ctx_update);
 
               mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-              xtime = lives_get_session_time();
+              //xtime = lives_get_session_time();
 
               build_nodemodel(&mainw->nodemodel);
               align_with_model(mainw->nodemodel);

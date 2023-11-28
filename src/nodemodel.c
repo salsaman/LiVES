@@ -1367,16 +1367,20 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
 
 /////////////////////////////
 static lives_filter_error_t run_apply_inst_step(plan_step_t *step) {
+  double xtime;
   exec_plan_t *plan = step->plan;
   lives_filter_error_t filter_error;
 
   weed_instance_t *inst =
     rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
-
+  
   if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
+    d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
+		  step->count, step->track);
     return FILTER_INFO_BYPASSED;
   }
-  double xtime = lives_get_session_time();
+
+  xtime = lives_get_session_time();
   step->real_st = xtime;
 
   if (step->fin_gamma == WEED_GAMMA_LINEAR) {
@@ -1804,9 +1808,10 @@ static void run_plan(exec_plan_t *plan) {
         glob_timing->active = TRUE;
       }
     }
+
     for (LiVESList *steps = plan->steps; steps; steps = steps->next) {
       step_count++;
-
+      
       if (!plan->layers) {
         d_print_debug("no layers for plan\n");
         error = 1;
@@ -1841,6 +1846,7 @@ static void run_plan(exec_plan_t *plan) {
       if (!step) continue;
 
       state = step->state;
+      step->count = step_count;
 
       if (state == STEP_STATE_ERROR) {
         if (!error) d_print_debug("step encountered an ERROR st of loop:- %s",
@@ -2459,6 +2465,7 @@ static void run_plan(exec_plan_t *plan) {
         paused = FALSE;
       }
     }
+    pthread_yield();
     _lives_microsleep(10);
   } while (!complete);
 
@@ -3145,7 +3152,7 @@ exec_plan_t *create_plan_from_model(lives_nodemodel_t *nodemodel) {
 
   plan->steps = lives_list_reverse(plan->steps);
   ///  if (prefs->dev_show_timing)
-  display_plan(plan);
+  //display_plan(plan);
 
   if (nodemodel->flags & NODEMODEL_NEW) {
     pthread_mutex_lock(&glob_timing->ann_mutex);
@@ -3900,43 +3907,13 @@ if (nins > 1 && rmaxw > 0. && rmaxh > 0.) {
   } else {
     // for letterboxing: all layers keep their original a.r
     // we found rmaxw, rmaxh, we expand layers to fit inside this
-    // however we do not want to end up with a " + " shape, we either want a " = " or a " | "
-    // so we hav a choice - either expand all lyaers in the x axis to max width, or in y axis to max height
-    // when we do this, the layer must also expand in the other axis to keep its apect ratio
-    // thus we have a new bounding box
-    // Let us consider some example cases.
-    // We have two layers A and B. Let us define A as the widest layer, then B can eihter be taller or shorter than A
-    // If B is taller, then we must expand A vertically, or expand b horizontally.
-    // if we expand A vertically by a factor X (heightB / heightA), then the width of A also expands by X
-    // thus we end up with widthA * X, heightB, we get internal vertical banding of area (widthA * X - widthB) * heightB
-    //
-    // == (widthA * heightB / heightA - widthB) * heightB (1)
-    //
-    // alternately, we expand B horizontally by a factor Y (widthA / widthB), and its height further increases by factor y
-    // so we A gets horizontal banding inside B, with area (heightB * Y - heightA) * widthA
-    //
-    // == (heightB * widthA / widthB - height A) * widthA (20
-    //
-    // If B is shorter, then we must expand b vertically, or expand b horizontally
-    // if expand vertically then it height increases by a factor X (heightA / heightB) and its with by the same factor
-    // widthB * heightA / heightB. This may be < or >= widthA
-    // so our area is either:
-    // (widthB * heightA / heightB - widthA) * heightA (A now fits in expanded B)
-    // (note, this is equivalent to (1) with the layers swapped, ie expanding B vertically is equivalent to expanding a
-    // horzontally and keeping euql height)
-    // or
-    // (widthA - widthB * heightA / heightB) * heightA (ie. expanded B still fits inside A)
-    //
-    // expandingB vertically it is easy to see we get
-    //  abs(heightA - heightB * widthA / widthB) * widthA
-    //
-    // So to sum up, we pick one axis x or y, all layers increase in that dimension by a factor X
-    // max / layer value, their area increases by a factor X ^ 2, and the banding area is is
-    // abs (maxw X maxh - maxw * layerh), however maxw or maxh can grow
-    //
+    // we have two options - find the widest layer, then shrink / expand all other layers vertically
+    // to fit inside this - the widest layer now defines the new bounding box and all other layers fit inside
+    // or find tallest layer, set all to its width, find new tallest
+    // thus we may have 2 new bounding boxes, for each of these,
     // this new bounding box must then (eventually) fit inside output where it may gain additional banding
 
-    // ideally we pick the option which needs minimla banding internally, and min banding externally
+    // ideally we pick the option which needs minimal banding internally, and min banding externally
     // note first, all layers will have either same height or same width. The size in the other dimension will vary
     // we can take the (one or more layers) with max value in the unbounded dimension and call this the outer layer
     // Some quantity of other layers will have unbounded dimension < than this. These are inner layers
@@ -3965,18 +3942,32 @@ if (nins > 1 && rmaxw > 0. && rmaxh > 0.) {
     // suffix h is for horizontal banding, ie, y axis unbounded
     // suffix v is for vertical banding, ie, x axis unbounded
 
+    xmaxw = rmaxw;
+    xmaxh = rmaxh;
+
+
     for (ni = 0; ni < nins; ni++) {
       // calculate expanded bounding box
+      // find widest and tallest, note opposite directions, we will have rmaxw X xmaxh, xmaxw X rmaxh
       in = n->inputs[ni];
       if (in->flags & NODEFLAGS_IO_SKIP) continue;
       if (letterbox && in->node->model_type == NODE_MODELS_GENERATOR && prefs->no_lb_gens) continue;
       if (!in->width || !in->height) continue;
 
-      xwidth = in->width * (double)rmaxh / (double)in->height;
-      xheight = in->height * (double)rmaxw / (double)in->width;
+      if (in->width == rmaxw && in->height < xmaxh) xmaxh = in->height;
+      if (in->height == rmaxh && in->width < xmaxw) xmaxw = in->width;
+    }
+    // pass 2, set heights to xmaxh and update rmaxw, etc
+    for (ni = 0; ni < nins; ni++) {
+      // calculate expanded bounding box
+      // find widest and tallest, note opposite directions, we will have rmaxw X xmaxh, xmaxw X rmaxh
+      in = n->inputs[ni];
+      if (in->flags & NODEFLAGS_IO_SKIP) continue;
+      if (letterbox && in->node->model_type == NODE_MODELS_GENERATOR && prefs->no_lb_gens) continue;
+      if (!in->width || !in->height) continue;
 
-      if (xwidth > xmaxw) xmaxw = xwidth;
-      if (xheight > xmaxh) xmaxh = xheight;
+      if (in->width * xmaxh / in->height > rmaxw) rmaxw = in->width * xmaxh / in->height;
+      if (in->height * xmaxw / in->width > rmaxh) rmaxh = in->height * xmaxw / in->width;
     }
 
     // our bbox is now either rmaxw X xmaxh OR xmaxw x rmaxh
@@ -4081,7 +4072,7 @@ if (nins > 1 && rmaxw > 0. && rmaxh > 0.) {
 
   // if we are letterboxing and have layers that do not leetterbox, (e.g generators with pref no_lb_gens)
   // then we will take the new bounding box, create another box around this with a.r of output
-  // - this now bcomes the bounding box size. Layers which do not letterbox will then fill this
+  // - this now becomes the bounding box size. Layers which do not letterbox will then fill this
   // other layer will letterbox inside this. So all layers now get width, height of outer box
   // but keep the same inner_size. Layers which do not letterbox get inner size == outer size
 
@@ -4093,22 +4084,26 @@ if (nins > 1 && rmaxw > 0. && rmaxh > 0.) {
   if (has_non_lb_layers) {
     int xopwidth = opwidth, xopheight = opheight;
     d_print_debug("some layers do not letterbox, adjust size  %d X %d to ar %d X %d\n", width, height, opwidth, opheight);
+    // find min box with ar, opwidth, opheight which contains w, h
     calc_minspect(width, height, &opwidth, &opheight);
     d_print_debug("some layers do not letterbox, adjusted size to  %d X %d\n", opwidth, opheight);
-    if (prefs->pb_quality == PB_QUALITY_HIGH)
-      calc_minspect(xopwidth, xopheight, &opwidth, &opheight);
-    else if (opwidth > xopwidth || opheight > xopheight)
-      calc_maxspect(xopwidth, xopheight, &opwidth, &opheight);
-  } else {
+    if (prefs->pb_quality == PB_QUALITY_HIGH) {
+      if (opwidth < xopwidth || opheight < xopheight) {
+        opwidth = xopwidth;
+        opheight = xopheight;
+      }
+    } else if (opwidth > xopwidth || opheight > xopheight)
+      if (opwidth < xopwidth || opheight < xopheight) {
+        opwidth = xopwidth;
+        opheight = xopheight;
+      }
+  }  else {
     width = opwidth;
     height = opheight;
   }
 
   opwidth = (opwidth >> 2) << 2;
   opheight = (opheight >> 2) << 2;
-
-  width = (width >> 2) << 2;
-  height = (height >> 2) << 2;
 
   d_print_debug("Final bounding box size is %d X %d. Some layers may lb inside this\n", opwidth, opheight);
 
@@ -4128,23 +4123,14 @@ if (nins > 1 && rmaxw > 0. && rmaxh > 0.) {
     if (letterbox) {
       if (!(in->node->model_type == NODE_MODELS_GENERATOR && prefs->no_lb_gens)
           && !svary && rmaxw && rmaxh) {
-        if (xmaxh == rmaxh) {
-          in->inner_width = xwidth * height / xheight;
-          in->inner_height = height;
-        } else {
-          in->inner_height = xheight * width / xwidth;
-          in->inner_width = width;
-        }
-        if (in->inner_height > opheight) {
-          in->inner_width = (int)((double)in->inner_width
-                                  * (double)in->inner_height / (double)opheight + .5);
+        if (opwidth * xheight / xwidth > opheight) {
           in->inner_height = opheight;
-        }
-        if (in->inner_width > opwidth) {
-          in->inner_height = (int)((double)in->inner_height
-                                   * (double)in->inner_width / (double)opwidth + .5);
+          in->inner_width = opheight * xwidth / xheight;
+        } else {
           in->inner_width = opwidth;
+          in->inner_height = opwidth * xheight / xwidth;
         }
+
         in->inner_width = (in->inner_width >> 2) << 2;
         in->inner_height = (in->inner_height >> 2) << 2;
       }
@@ -5441,7 +5427,7 @@ for (ni = 0; ni < n->n_inputs; ni++) {
     // factors are used to compute combined_cost
       _calc_costs_for_input(nodemodel, n, ni, pal_list, j, flags, glob_costs, glob_mask, factors);
       // *INDENT-OFF*
-  }}
+}}
 // *INDENT-ON*
 }
 
@@ -6926,26 +6912,15 @@ if (!mainw->multitrack) {
     int nins, nouts;
     int *in_tracks = NULL, *out_tracks = NULL;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-      g_print("check key %d\n", i);
       if (rte_key_valid(i + 1, TRUE)) {
-        g_print("11check key %d\n", i);
         if (rte_key_is_enabled(i, TRUE)) {
-          g_print("22check key %d\n", i);
           // for clip editor we construct instance nodes according to the order of
           // mainw->rte_keys
           // for multitrack iterate over filter_map filter_init events (TODO)
           filter = rte_keymode_get_filter(i + 1, rte_key_getmode(i + 1));
           if (!filter) continue;
-          g_print("33check key %d\n", i);
-
-          d_print_debug("filt %p %d %d\n", filter, i, rte_key_getmode(i + 1));;
-          g_print("filt %p %d %d\n", filter, i, rte_key_getmode(i + 1));;
-
-          g_print("check key %d\n", i);
 
           if (is_pure_audio(filter, TRUE)) continue;
-
-          g_print("2check key %d\n", i);
 
           // check if we have an instance for this key
           instance = rte_keymode_get_instance(i + 1, rte_key_getmode(i + 1));
@@ -6959,7 +6934,6 @@ if (!mainw->multitrack) {
             weed_instance_unref(instance);
           }
         } else continue;
-        g_print("3check key %d\n", i);
 
         // create an input / output for each non (permanently) disabled channel
         nins = count_ctmpls(filter, LIVES_INPUT);
@@ -6995,7 +6969,6 @@ if (!mainw->multitrack) {
           // TODO
         }
 
-        g_print("4check key %d\n", i);
         n = create_node(nodemodel, NODE_MODELS_FILTER, filter, nins, in_tracks, nouts, out_tracks);
         n->virtuals = virtuals;
         virtuals = NULL;

@@ -750,7 +750,6 @@ static void pre_init2(void) {
 #ifdef GUI_GTK
   LiVESPixbuf *iconpix;
 #endif
-
   what_sup = pre_init2_sup;
 
   //////////////////////////
@@ -763,8 +762,7 @@ static void pre_init2(void) {
     capable->uid = gen_unique_id();
     set_int64_pref(PREF_UID, capable->uid);
     tmp = _("from settings");
-  }
-  else tmp = _("newly generated");
+  } else tmp = _("newly generated");
 
   d_print(_("Configuration uid is %lu (%s)\n"), capable->uid, tmp);
   lives_free(tmp);
@@ -1374,7 +1372,6 @@ boolean lives_startup(livespointer data) {
   capable->features_ready |= FEATURE_MACHINEDETS_2;
 
   lives_alarms_init();
-  // unblock just for calling thread (main thread)
 
   d_print("Testing lives sysalarms...");
   d_print("pause for 1 millisecond...");
@@ -1384,11 +1381,10 @@ boolean lives_startup(livespointer data) {
     lives_abort("Timer failed");
   lives_sys_alarm_wait(test_timeout);
   lives_sys_alarm_disarm(test_timeout, TRUE);
-
-  d_print("timer ratio was %4f\n", app_timers[test_timeout].ratio);
-
   capable->features_ready |= FEATURE_SYSALARMS;
   d_print("OK\n");
+
+  d_print("timer ratio was %4f\n", app_timers[test_timeout].ratio);
 
   // late tests (has prefs, has threadpool, has random, has gtk)
   //do_startup_diagnostics(test_opts);
@@ -1455,7 +1451,11 @@ boolean lives_startup(livespointer data) {
   lives_threadpool_init();
   capable->features_ready |= FEATURE_THREADPOOL;
 
-  // test the timer
+  // test the timers
+  d_print("Checking ticker timer...");
+  int64_t tocks = get_ticker_count();
+  d_print("got %lu heartbeats\n", tocks);
+
   if (1) {
     d_print("Testing per thread timers...pause for 10 usec...");
     lives_alarm_set_timeout(10000);
@@ -1463,6 +1463,10 @@ boolean lives_startup(livespointer data) {
     lives_alarm_disarm();
     d_print("OK\n");
   }
+
+  d_print("Rechecking ticker timer...");
+  tocks = get_ticker_count();
+  d_print("got %lu heartbeats\n", tocks);
 
   // will advance startup phase to 3, unless skipped
   if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
@@ -2733,6 +2737,10 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   MSGMODE_SET(INIT);
 
+  if (mainw->debug) {
+    MSGMODE_ON(STDERR);
+    MSGMODE_ON(DEBUG);
+  }
 #ifndef VALGRIND_ON
   prefs->nfx_threads = 8;
 #else
@@ -3531,7 +3539,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
       /// BEGIN DISKPACE check
       if (!needs_workdir && initial_startup_phase == 0) {
         // check diskspace,
-	g_print("start ds monitor\n");
         mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
       }
     }

@@ -2348,7 +2348,6 @@ manual_locate:
       }
     }
 
-    threaded_dialog_spin(0.);
     if (cdata != fake_cdata) unref_struct(fake_cdata->lsd);
     break;
   }
@@ -2723,7 +2722,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("\nRecovering files..."));
 
-  threaded_dialog_spin(0.);
+  threaded_dialog_auto_spin();
 
   mainw->suppress_dprint = TRUE;
   mainw->recovering_files = TRUE;
@@ -2736,11 +2735,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     defer_config(mainw->start_image);
     defer_config(mainw->end_image);
 
-    threaded_dialog_spin(0.);
-
     if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
-    //threaded_dialog_spin(0.);
     is_scrap = FALSE;
     is_ascrap = FALSE;
 
@@ -2749,7 +2745,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     if (recovery_file) {
       if (!lives_fgets(buff, 256, rfile)) {
         reset_clipmenu();
-        threaded_dialog_spin(0.);
         mainw->suppress_dprint = FALSE;
         if (THREADVAR(read_failed)) {
           d_print_failed();
@@ -2838,7 +2833,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (strstr(buffptr, "/" CLIPS_DIRNAME "/")) {
         char **array;
-        threaded_dialog_spin(0.);
         if (!load_from_set) continue;
         array = lives_strsplit(buffptr, "/" CLIPS_DIRNAME "/", -1);
         mainw->was_set = TRUE;
@@ -2857,7 +2851,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       /// create a new cfile and fill in the details
       if (!create_cfile(-1, buffptr, FALSE)) {
-        threaded_dialog_spin(0.);
         end_threaded_dialog();
         mainw->suppress_dprint = FALSE;
         d_print_failed();
@@ -2961,16 +2954,12 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
 
-    threaded_dialog_spin(0.);
-
     /** not really from a set, but let's pretend to get the details
         read the playback fps, play frame, and name */
 
     /// NEED TO maintain mainw->hdrs_cache when entering the function,
     /// else it will be considered a legacy file load
     open_set_file(++clipnum);
-
-    threaded_dialog_spin(0.);
 
     if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
@@ -3003,7 +2992,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
 
     // add to clip menu
-    threaded_dialog_spin(0.);
 
     add_to_clipmenu();
 
@@ -3042,8 +3030,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       mainw->current_file = current_file;
     }
-
-    threaded_dialog_spin(0.);
 
     if (cfile->frameno > cfile->frames && cfile->frameno > 1) cfile->frameno = cfile->frames;
     cfile->last_frameno = cfile->frameno;

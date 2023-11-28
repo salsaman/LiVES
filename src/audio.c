@@ -2844,6 +2844,12 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
 }
 
 
+	  /* sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, */
+	  /* 						 nsamples, pulsed->out_achans, FALSE, FALSE, 1.0); */
+
+
+//if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
+
 static boolean analyse_audio_rt(lives_obj_t *aplayer) {
   // this function may be added as a callback to an audio_player's DATA_READY hook stack
   // followin this, it will be triggered async each time a new packet of data has been read / written
@@ -2852,9 +2858,12 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
   // for filters with only audio in, and nothing else we push the new audio directly to them
   // since they should be running in the audio cycle
   GET_PROC_THREAD_SELF(self);
+  float maxvol_heard = 0.;
   size_t nframes;
-  int in_arate, in_achans;
+  int arate, nchans;
   boolean is_float;
+  boolean alock_mixer = FALSE;
+
   lives_proc_thread_set_cancellable(self);
 
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
@@ -2868,8 +2877,8 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
     if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
     return FALSE;
   }
-  in_achans = lives_aplayer_get_achans(aplayer);
-  in_arate = lives_aplayer_get_arate(aplayer);
+  nchans = lives_aplayer_get_achans(aplayer);
+  arate = lives_aplayer_get_arate(aplayer);
   is_float = lives_aplayer_get_float(aplayer);
 
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
@@ -2882,37 +2891,51 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
     else {
       // TODO - in_asamps != 2
       short *data = (short *)lives_aplayer_get_data(aplayer);
-      in_buffer = (float **)lives_calloc(in_achans, sizeof(float *));
-      for (int i = 0; i < in_achans; i++) {
-        in_buffer[i] = (float *)lives_calloc(nframes * 2, sizeof(float));
-        sample_move_d16_float(in_buffer[i], data + i, nframes, in_achans, FALSE, FALSE, 1.0);
+      in_buffer = (float **)lives_calloc(nchans, sizeof(float *));
+      for (int i = 0; i < nchans; i++) {
+	in_buffer[i] = (float *)lives_calloc(nframes * 2, sizeof(float));
+	if (alock_mixer) {
+	  float xshrink_factor = (float)mainw->alock_abuf->arate / (float)arate / mainw->audio_stretch;
+	  int64_t xin_framesd = fabs((double)xshrink_factor * (double)nframes);
+	  size_t xxin_bytes = (size_t)xin_framesd * mainw->alock_abuf->in_achans * (mainw->alock_abuf->in_asamps >> 3);
+	  off_t offs = mainw->alock_abuf->seek / (mainw->alock_abuf->in_achans
+						  * (mainw->alock_abuf->in_asamps >> 3));
+	  if (offs + nframes > mainw->alock_abuf->samp_space)
+	    offs = mainw->alock_abuf->seek = 0;
+
+	  sample_move_float_float(in_buffer[i], &mainw->alock_abuf->bufferf[i][offs],
+				  xin_framesd, xshrink_factor, 1, 1., nframes);
+	  if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
+	}
+	else {
+	  maxvol_heard =
+	    sample_move_d16_float(in_buffer[i], data + i, nframes, nchans, FALSE, FALSE, 1.0);
+	}
       }
     }
-
     if (mainw->afbuffer && AUD_SRC_EXTERNAL) {
       // if we have audio triggered gens., push audio to it
       // or if we want loopback to player
-      for (int i = 0; i < in_achans; i++) {
-        append_to_audio_bufferf(in_buffer[i], nframes, (i == in_achans - 1) ? -i - 1 : i + 1);
+      for (int i = 0; i < nchans; i++) {
+        append_to_audio_bufferf(in_buffer[i], nframes, (i == nchans - 1) ? -i - 1 : i + 1);
       }
     }
 
     // apply any audio effects with in_channels and no out_channels
-    weed_layer_set_audio_data(layer, in_buffer, in_arate, in_achans, nframes);
+    weed_layer_set_audio_data(layer, in_buffer, arate, nchans, nframes);
     weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
     weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
     weed_layer_unref(layer);
 
     if (!is_float) {
-      for (int i = 0; i < in_achans; i++) {
-        lives_free(in_buffer[i]);
-      }
+      for (int i = 0; i < nchans; i++) if (in_buffer[i]) lives_free(in_buffer[i]);
       lives_free(in_buffer);
     }
   }
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   return TRUE;
 }
+
 
 static lives_proc_thread_t ana_lpt = NULL;
 
@@ -3031,6 +3054,137 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   return lpt;
 }
 
+
+
+void fx_audio_apply(void) {
+  if (has_audio_filters(AF_TYPE_ANY));
+}
+
+
+void send_to_analysers(pulse_driver_t *pulsed, size_t nsamples) {
+  float **fltbuf = NULL;
+  boolean alock_mixer = FALSE;
+
+  
+  if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
+    boolean memok = TRUE;
+    fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
+    /// we have audio filters... convert to float, pass through any audio filters, then back to s16
+    for (int i = 0; i < pulsed->out_achans; i++) {
+      // convert s16 to non-interleaved float
+      fltbuf[i] = (float *)lives_calloc_safety(nsamples, sizeof(float));
+      if (!fltbuf[i]) {
+	memok = FALSE;
+	for (--i; i >= 0; i--) {
+	  lives_freep((void **)&fltbuf[i]);
+	}
+	lives_free(fltbuf);
+	fltbuf = NULL;
+	break;
+      }
+
+
+      else {
+	/// convert to float, and take the opportunity to find the max volume
+	/// (currently this is used to trigger recording start optionally)
+	pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
+							 nsamples, pulsed->out_achans, FALSE, FALSE, 1.0);
+      }
+    }
+  }
+}
+
+
+void send_audio_to_fx(pulse_driver_t *pulsed) {
+  float **fltbuf = NULL;
+  boolean memok = TRUE;
+  size_t nsamples = 0;
+  boolean alock_mixer = FALSE;
+  uint64_t numFramesToWrite = nsamples;
+  if (memok) {
+    ticks_t tc = mainw->currticks;
+    // apply any audio effects with in_channels
+
+    if (has_audio_filters(AF_TYPE_ANY)) {
+      /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
+	  to the in channel of the filter and then from the out channel back to the layer.
+	  IF the filter supports inplace then
+	  we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
+	  and feed the result to the player as usual */
+      weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+      weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, nsamples);
+      weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+      lives_free(fltbuf);
+      fltbuf = weed_layer_get_audio_data(layer, NULL);
+      weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+      weed_layer_unref(layer);
+    }
+
+    if (!alock_mixer) {
+      pthread_mutex_lock(&mainw->vpp_stream_mutex);
+      if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
+	(*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
+      }
+      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+
+      // convert float audio back to s16 in pulsed->sound_buffer
+      sample_move_float_int(pulsed->sound_buffer, fltbuf, nsamples, 1.0, pulsed->out_achans, PA_SAMPSIZE, 0,
+			    (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
+
+      for (int i = 0; i < pulsed->out_achans; i++) lives_free(fltbuf[i]);
+      lives_freep((void **)&fltbuf);
+    }
+  }
+}
+
+
+void send_audio_to_vpp(pulse_driver_t *pulsed) {
+  // apply any audio effects with in_channels
+  float **fltbuf = NULL;
+  ticks_t tc = mainw->currticks;
+  size_t nsamples = 0;
+  uint64_t numFramesToWrite = nsamples;
+  if (has_audio_filters(AF_TYPE_ANY)) {
+    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+    weed_layer_set_audio_data(layer, fltbuf,
+			      pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
+    weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+    lives_free(fltbuf);
+    fltbuf = weed_layer_get_audio_data(layer, NULL);
+    weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+    weed_layer_unref(layer);
+  }
+
+  // streaming - we can push float audio to the playback plugin
+  pthread_mutex_lock(&mainw->vpp_stream_mutex);
+  if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
+    (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
+  }
+  pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+
+#if !HAVE_PA_STREAM_BEGIN_WRITE
+  // copy effected audio back into pulsed->aPlayPtr->data
+  pulsed->sound_buffer = (uint8_t *)pulsed->aPlayPtr->data;
+#endif
+
+  sample_move_float_int(pulsed->sound_buffer, fltbuf, numFramesToWrite, 1.0,
+			pulsed->out_achans, PA_SAMPSIZE, 0, (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
+
+  if (fltbuf) {
+    for (int i = 0; i < pulsed->out_achans; i++) lives_freep((void **)&fltbuf[i]);
+    lives_free(fltbuf);
+    fltbuf = NULL;
+    /// pl_error
+  }
+}
+
+
+void send_audio_to_fifo(pulse_driver_t *pdriver) {
+
+
+
+
+}
 
 /////////////////////////////////////////////////////////////////
 

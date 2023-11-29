@@ -2628,14 +2628,12 @@ void do_quick_switch(int new_file) {
   boolean osc_block;
 
   int old_file = mainw->playing_file;
-  g_print("chkpr 1\n");
 
   if (!LIVES_IS_PLAYING) {
     switch_to_file(mainw->current_file, new_file);
     return;
   }
 
-  g_print("chfffryythyjujkpr 1\n");
   if (old_file == new_file || old_file < 1 || !IS_VALID_CLIP(new_file)) return;
 
   if (mainw->multitrack
@@ -2647,13 +2645,11 @@ void do_quick_switch(int new_file) {
     return;
   }
 
-  g_print("chk6666h67766747467pr 1\n");
   if (new_file == mainw->blend_file && mainw->new_blend_file == mainw->blend_file
       && IS_VALID_CLIP(old_file))
     mainw->new_blend_file = old_file;
 
   mainw->whentostop = NEVER_STOP;
-  g_print("chkpytytytytyr 1\n");
 
   if (old_file != new_file) {
     weed_layer_t *layer = get_old_frame_layer();
@@ -2669,7 +2665,6 @@ void do_quick_switch(int new_file) {
       weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
   }
 
-  g_print("chhhhhhhhhhhhhhhyyykpr 1\n");
   if (old_file != mainw->blend_file && !mainw->is_rendering) {
     sfile = RETURN_VALID_CLIP(old_file);
     if (sfile && get_primary_src_type(sfile) == LIVES_SRC_TYPE_GENERATOR) {
@@ -2683,8 +2678,6 @@ void do_quick_switch(int new_file) {
         rte_swap_fg_bg();
       }
     }
-    g_print("chkn nnnnpr 1\n");
-
     if (new_file == mainw->blend_file) {
       sfile = RETURN_VALID_CLIP(mainw->blend_file);
       if (sfile && get_primary_src_type(mainw->files[mainw->blend_file])
@@ -2696,7 +2689,6 @@ void do_quick_switch(int new_file) {
 
   osc_block = mainw->osc_block;
   mainw->osc_block = TRUE;
-  g_print("567676chkpr 1\n");
 
   if (mainw->loop_locked) unlock_loop_lock();
 
@@ -2710,7 +2702,6 @@ void do_quick_switch(int new_file) {
   // HERE we do the actual switchover
   mainw->drawsrc = mainw->playing_file = mainw->current_file = new_file;
   ///
-  g_print("chknnnnnnnnnpr 1\n");
 
   mainw->laudio_drawable = cfile->laudio_drawable;
   mainw->raudio_drawable = cfile->raudio_drawable;
@@ -2746,7 +2737,6 @@ void do_quick_switch(int new_file) {
       cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
     }
   }
-  g_print("ch56356kpr 1\n");
 
   changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
 
@@ -2761,13 +2751,11 @@ void do_quick_switch(int new_file) {
     set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
   }
 #endif
-  g_print("c55554hkpr 1\n");
 
   if (CURRENT_CLIP_HAS_VIDEO) {
     if (!mainw->fs && !mainw->faded) {
       set_start_end_spins(mainw->current_file);
       if (!mainw->play_window && mainw->double_size) {
-        //frame_size_update();
         resize(2.);
       } else resize(1);
     }
@@ -2778,7 +2766,6 @@ void do_quick_switch(int new_file) {
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
-  g_print("chkp3243r 1\n");
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
   mainw->ignore_screen_size = FALSE;
@@ -2791,7 +2778,6 @@ void do_quick_switch(int new_file) {
     redraw_timeline(mainw->current_file);
     show_playbar_labels(mainw->current_file);
   }
-  g_print("chkpdsadasr 1\n");
 }
 
 

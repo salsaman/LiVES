@@ -393,13 +393,6 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     signum = -signum;
   }
 
-  fprintf(stderr, "SIGNAL %d received\n", signum);
-  if (signum == LIVES_SIGSEGV) {
-    fprintf(stderr, "no worries\n");
-    thrd_signal_block(LIVES_SIGSEGV);
-    return;
-  }
-
   if (sigsrc == SIG_SRC_INTERN)
     fprintf(stderr, "Signal wass caught internally\n");
   if (sigsrc == SIG_SRC_EXTERN)

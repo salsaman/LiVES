@@ -4,7 +4,7 @@ install: generate dist
 
 dist: all-scripts
 	for script in $(SCRIPT_FILES); do \
-		./build-weed-plugin-C $$script; \
+		./build-weed-plugin-C $$script ..; \
 	done
 
 all: generate dist

@@ -1,0 +1,366 @@
+<define>
+|2.0.0
+</define>
+
+
+<name>
+kaleidoscope
+</name>
+
+
+<package_version>
+1|1
+</package_version>
+
+
+<author>
+salsaman <salsaman@gmail.com>
+</author>
+
+<static>
+
+\#define FIVE_PI3 5.23598775598f
+\#define FOUR_PI3 4.18879020479f
+
+\#define THREE_PI2 4.71238898038f
+
+\#define TWO_PI 6.28318530718f
+\#define TWO_PI3 2.09439510239f
+
+\#define ONE_PI2 1.57079632679f
+\#define ONE_PI3 1.0471975512f
+
+\#define RT2 1.41421356237f
+\#define RT3  1.73205080757f //sqrt(3)
+\#define RT32 0.86602540378f //sqrt(3)/2
+
+\#define RT322 0.43301270189f
+
+
+\#define calc_angle(y, x) ((x) > 0. ? ((y) >= 0. ? atanf((y) / (x)) : TWO_PI + atanf((y) / (x))) \
+			  : ((x) < 0. ? atanf((y) / (x)) + M_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
+
+
+\#define calc_dist(x, y) (sqrtf((x) * (x) + (y) * (y)))
+
+
+static void calc_center(float side, float j, float i, float *x, float *y) {
+  // find nearest hex center
+  int gridx, gridy;
+
+  float secx, secy;
+
+  float sidex = side * RT3; // 2 * side * cos(30)
+  float sidey = side * 1.5; // side + side * sin(30)
+
+  float hsidex = sidex / 2., hsidey = sidey / 2.;
+
+  i -= side / FIVE_PI3;
+
+  if (i > 0.) i += hsidey;
+  else i -= hsidey;
+  if (j > 0.) j += hsidex;
+  else j -= hsidex;
+
+  // find the square first
+  gridy = i / sidey;
+  gridx = j / sidex;
+
+  // center
+  *y = gridy * sidey;
+  *x = gridx * sidex;
+
+  secy = i - *y;
+  secx = j - *x;
+
+  if (secy < 0.) secy += sidey;
+  if (secx < 0.) secx += sidex;
+
+  if (!(gridy & 1)) {
+    // even row (inverted Y)
+    if (secy > (sidey - (hsidex - secx) * RT322)) {
+      *y += sidey;
+      *x -= hsidex;
+    } else if (secy > sidey - (secx - hsidex) * RT322) {
+      *y += sidey;
+      *x += hsidex;
+    }
+  } else {
+    // odd row, center is left or right (Y)
+    if (secx <= hsidex) {
+      if (secy < (sidey - secx * RT322)) {
+        *x -= hsidex;
+      } else *y += sidey;
+    } else {
+      if (secy < sidey - (sidex - secx) * RT322) {
+        *x += hsidex;
+      } else *y += sidey;
+    }
+  }
+}
+
+
+static inline void rotate(float r, float theta, float angle, float *x, float *y) {
+  theta += angle;
+  if (theta < 0.) theta += TWO_PI;
+  else if (theta >= TWO_PI) theta -= TWO_PI;
+  *x = r * cosf(theta);
+  *y = r * sinf(theta);
+}
+
+
+static int put_pixel(uint8_t *src, uint8_t *dst, int psize, float angle, float theta, float r, int irowstride, int hheight,
+                     int hwidth) {
+  // dest point is at i,j; r tells us which point to copy, and theta related to angle gives us the transform
+
+  // return 0 if src is oob
+
+  float adif = theta - angle;
+  float stheta;
+
+  int sx, sy;
+
+  if (adif < 0.) adif += TWO_PI;
+  else if (adif >= TWO_PI) adif -= TWO_PI;
+
+  theta -= angle;
+
+  if (theta < 0.) theta += TWO_PI;
+  else if (theta > TWO_PI) theta -= TWO_PI;
+
+  if (adif < ONE_PI3) {
+    stheta = theta;
+  }
+
+  else if (adif < TWO_PI3) {
+    // get coords of src point
+    stheta = TWO_PI3 - theta;
+  }
+
+  else if (adif < M_PI) {
+    // get coords of src point
+    stheta = theta - TWO_PI3;
+  }
+
+  else if (adif < FOUR_PI3) {
+    // get coords of src point
+    stheta = FOUR_PI3 - theta;
+  }
+
+  else if (adif < FIVE_PI3) {
+    // get coords of src point
+    stheta = theta - FOUR_PI3;
+  } else {
+    // get coords of src point
+    stheta = TWO_PI - theta;
+  }
+
+  stheta += angle;
+
+  sx = r * cosf(stheta) + .5;
+  sy = r * sinf(stheta) + .5;
+
+  if (sy < -hheight || sy >= hheight || sx < -hwidth || sx >= hwidth) {
+    return 0;
+  }
+
+  weed_memcpy(dst, &src[sx * psize - sy * irowstride], psize);
+  return 1;
+}
+
+</static>
+
+
+<license>
+GPL
+See file COPYING for details
+</license>
+
+
+<license_version>
+3 or higher
+</license_version>
+
+
+<requires>
+<math.h>
+@PUTILS@
+</requires>
+
+
+<language_code>
+0xC0
+</language_code>
+
+
+<sdata>
+weed_timecode_t|old_tc
+float|angle, xangle, side
+int|revrot, owidth, oheight
+</sdata>
+
+
+<filter_flags>
+$MAY_THREAD
+$STATEFUL
+</filter_flags>
+
+
+<palette_list>
+$ALL_PACKED_PALETTES_PLUS
+</palette_list>
+
+
+<unique_id>
+0X2DCBE6706618517E
+</unique_id>
+
+
+<in_chans>
+in_channel0
+</in_chans>
+
+
+<out_chans>
+out_channel0
+</out_chans>
+
+
+<params>
+sfac|_Size (log)|num2|5.62|2.|10.|.1
+angleoffs|_Offset angle|num0|0|0|359|
+anglerot|_Rotations per second|num2|0.2|0.|4.|.1
+acw|_Anti-clockwise|bool|1|1|
+cw|_Clockwise|bool|0|1|
+sizerev|S_witch direction on frame size change|bool|0|
+</params>
+
+
+<init>
+</init>
+
+
+<deinit>
+</deinit>
+
+
+<process>
+    double delta;
+    int hwidth = width >> 1, hheight = iheight >> 1;
+    int yuv_clamping = 0;
+
+    if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
+      yuv_clamping = weed_channel_get_yuv_clamping(in_chan);
+@START_STATEFUL_UPDATE@
+	float anglerot = 0.;
+	double dtime, sfac, angleoffs;
+	int sizerev;
+
+	// side is the length of the hexagon side, we fit it to the frame size
+	if (width < iheight) sdata->side = hwidth / RT32;
+	else sdata->side = hheight;
+
+	//sfac = quick_log(weed_param_get_value_double(in_params[0]));
+	sfac = log(weed_param_get_value_double(in_params[0])) / 2.;
+	angleoffs = weed_param_get_value_double(in_params[1]);
+
+	if (sdata->old_tc) {
+	  double dtime = (double)(timestamp - sdata->old_tc) / (double)WEED_TICKS_PER_SECOND;
+	  anglerot = (float)weed_param_get_value_double(in_params[2]);
+	  anglerot *= (float)dtime;
+	  while (anglerot >= TWO_PI) anglerot -= TWO_PI;
+	}
+	sdata->old_tc = timestamp;
+
+	if (!weed_param_get_value_boolean(in_params[4])) anglerot = -anglerot;
+	sizerev = weed_param_get_value_boolean(in_params[5]);
+	weed_free(in_params);
+
+	if (sdata->owidth != width || sdata->oheight != height) {
+	  if (sizerev  && sdata->owidth != 0 && sdata->oheight != 0)
+	    sdata->revrot = 1 - sdata->revrot;
+	  sdata->owidth = width;
+	  sdata->oheight = height;
+	}
+
+	if (sdata->revrot) anglerot = -anglerot;
+	
+	sdata->angle += anglerot * TWO_PI;
+	if (sdata->angle >= TWO_PI) sdata->angle -= TWO_PI;
+	else if (sdata->angle < 0.) sdata->angle += TWO_PI;
+
+	sdata->xangle = sdata->angle + (float)angleoffs / 360. * TWO_PI;
+	if (sdata->xangle >= TWO_PI) sdata->xangle -= TWO_PI;
+
+	sdata->side *= (float)sfac;
+@END_STATEFUL_UPDATE@
+
+    delta = sdata->xangle - ONE_PI2;
+    src += (hheight - offset) * irow + hwidth * psize;
+
+    /* since we may be threading, we calculate this in reverse - take each dst point and find the src point
+       which it maps FROM, in effect the mapping steps are reversed and negated.
+       The algorithm is:
+       - divide the frame into hexagons; start by dividing the frame into vertical strips
+		--  alternating strips have centres midway between those of the strip above and below.
+       - find the centre of the hexagon for each point.
+       		to make the shapes hexagonal rather than round, the nearest centre depends on the angle to the
+		centres. The circle is divided into 6 angular segments, the segment and the distances from 2 centres
+		define which hex the point belongs in.
+       - the point rotates around the hexagon centre
+       - the whole hexagonal grid rotates around the centre in the opposite direction
+       Thus to reverse the mapping, we rotate the point around the centre, then around the hex centre.
+       This give us the src point which maps to the given dst point.
+    */
+
+    for (int i = 0; i < height; i++) {
+      float fi = (float)i - hheight + offset;
+      int jj = orow * i;
+      float last_x = 0., last_y = 0.;
+      float last_theta = 0., last_r = 0.;
+      for (int j = -hwidth; j < hwidth; j++) {
+	// first find the nearest hex center to our input point
+	// hexes are rotating about the origin, this is equivalent to the point rotating
+	// in the opposite sense
+	float x, y, a, b;
+	float fj = (float)j;
+	float theta = calc_angle(fi, fj); // get angle of this point from origin
+	float r = calc_dist(fi, fj); // get dist of point from origin
+
+	rotate(r, theta, -delta, &a, &b); // rotate point around origin
+
+	// find nearest hex center and angle to it
+	calc_center(sdata->side, a, b, &x, &y);
+
+	// the hexes turn as they orbit, so calculating the angle to the center, we add the
+	// rotation amount to get the final mapping
+	if (x == last_x && y == last_y) {
+	  theta = last_theta;
+	  r = last_r;
+	} else {
+	  last_x = x;
+	  last_y = y;
+	  last_theta = theta = calc_angle(y, x);
+	  last_r = r = calc_dist(x, y);
+	}
+
+	rotate(r, theta, delta, &a, &b);
+
+	theta = calc_angle(fi - b, fj - a);
+	r = calc_dist(b - fi, a - fj);
+
+	if (r < 100.) r = 100.;
+
+	if (!put_pixel(src, &dst[jj], psize, sdata->xangle, theta, r, irow, hheight, hwidth)) {
+	  blank_pixel(&dst[jj], pal, yuv_clamping, &dst[jj]);
+	}
+	jj += psize;
+      }
+    }
+</process>
+
+
+<setup>
+  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[1]);
+  weed_set_boolean_value(gui, WEED_LEAF_WRAP, WEED_TRUE);
+</setup>

@@ -1,0 +1,114 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+plasma
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+w.p van paasen
+</author>
+
+<unique_id>
+0XA5478ADFCD0B956
+</unique_id>
+
+<description>
+Generates plasma pattern
+</description>
+
+<requires>
+<math.h>
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<sdata>
+uint16_t|pos1, pos2, pos3, pos4, tpos1, tpos2, tpos3, tpos4|
+</sdata>
+
+<static>
+
+typedef struct {
+  short r;
+  short g;
+  short b;
+} color_t;
+
+static int aSin[512];
+static color_t colors[256];
+
+static void plasma_prep(void) {
+  int i;
+  float rad;
+
+  for (i = 0; i < 512; i++) {
+    rad = ((float)i * 0.703125) * 0.0174532;
+    aSin[i] = sin(rad) * 1024;
+  }
+
+  for (i = 0; i < 64; ++i) {
+    colors[i].r = i << 2;
+    colors[i].g = 255 - ((i << 2) + 1);
+    colors[i + 64].r = 255;
+    colors[i + 64].g = (i << 2) + 1;
+    colors[i + 128].r = 255 - ((i << 2) + 1);
+    colors[i + 128].g = 255 - ((i << 2) + 1);
+    colors[i + 192].g = (i << 2) + 1;
+  }
+}
+</static>
+
+<palette_list>
+WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32
+</palette_list>
+
+<out_chans>
+out_channel0
+</out_chans>
+
+<process>
+  unsigned char *end;
+  uint8_t index;
+  int x, widthx = width * 3;
+  int offs = orow - widthx;
+
+  sdata->tpos4 = sdata->pos4;
+  sdata->tpos3 = sdata->pos3;
+
+  end = dst + height * widthx;
+
+  while (dst < end) {
+    sdata->tpos1 = sdata->pos1 + 5;
+    sdata->tpos2 = sdata->pos2 + 3;
+    sdata->tpos3 &= 511;
+    sdata->tpos4 &= 511;
+
+    for (int j = 0; j < width; ++j) {
+      sdata->tpos1 &= 511;
+      sdata->tpos2 &= 511;
+      x = aSin[sdata->tpos1] + aSin[sdata->tpos2] + aSin[sdata->tpos3] + aSin[sdata->tpos4];
+      index = 128 + (x >> 4);
+      *dst++ = colors[index].r;
+      *dst++ = colors[index].g;
+      *dst++ = 0;
+      if (pal == WEED_PALETTE_RGBA32) *dst++ = 255;
+      sdata->tpos1 += 5;
+      sdata->tpos2 += 3;
+    }
+    dst += offs;
+    sdata->tpos4 += 3;
+    sdata->tpos3 += 1;
+  }
+
+  sdata->pos1 += 9;
+  sdata->pos3 += 8;
+</process>

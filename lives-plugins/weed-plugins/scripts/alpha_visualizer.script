@@ -1,0 +1,90 @@
+<define>
+|1.8.5
+</define>
+
+<name>
+alpha_visualizer
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<unique_id>
+0X670BBDECB23F3DBE
+</unique_id>
+
+<description>
+Alpha visualizer can transform a separated alpha layer into RGB(A).\n
+It has one input channel which accepts frames containing 1 bit, 8 bit or float data\n
+The parameters red, green and blue define which channels in the generated output are set.\n
+Setting them all on produces black/white or greyscale output.\n\n
+For 1 bit input, the values of the selected output colour channels are set to maximum for a 1 in the input,\n
+and to minimum (0) for a 0 in the input.\n
+For 8 bit input, the values of the colours in the output are scaled in proportion [0 - 255] in the input.\n
+For float alpha input, the 4th and 5th parameters define minimum and maximum for the range of the floats\n
+The input values are clamped to within this range, and the output is scaled in proportion to\n
+(input - min) / (max - min). If max is <= min then a blank (black) frame is output.\n\n
+If the output has alpha, it will be set to opaque.\n
+</description>
+
+<requires>
+putils
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_list>
+ALL_RGB_PALETTES
+</palette_list>
+
+<params>
+r|_Red|switch|
+g
+b
+fmin
+fmax
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<static>
+static int getbit(uint8_t val, int bit) {
+  int x = 1;
+  for (int i = 0; i < bit; i++) x *= 2;
+  return val & x;
+}
+</static>
+
+
+<process>
+width *= psize;
+for (int j = 0; j < height; j++) {
+  for (int i = 0; i < width; i += 3) {
+    if (pal == WEED_PALETTE_ARGB32) {
+      dst[orow * j + i] = src[irow * j + i];
+      i++;
+    }
+    for (int k = 0; k < 3; k++) dst[orow * j + i + k] = 0xFF ^ src[irow * j + i + k];
+    if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32) {
+      dst[orow * j + i + 3] = src[irow * j + i + 3];
+      i++;
+    }
+  }
+}
+</process>

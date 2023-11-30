@@ -1327,7 +1327,8 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   capable->session_uid = gen_unique_id();
-  d_print(_("Session uid is 0X%08lX\n"), capable->session_uid);
+  if (1||prefs->show_dev_opts)
+    lives_printerr("Session uid is 0X%08lX\n", capable->session_uid);
 
   d_print("Initializing memory block allocators...");
   init_memfuncs(1);
@@ -1452,9 +1453,9 @@ boolean lives_startup(livespointer data) {
   capable->features_ready |= FEATURE_THREADPOOL;
 
   // test the timers
-  d_print("Checking ticker timer...");
-  int64_t tocks = get_ticker_count();
-  d_print("got %lu heartbeats\n", tocks);
+  /* d_print("Checking ticker timer..."); */
+  /* int64_t tocks = get_ticker_count(); */
+  /* d_print("got %lu heartbeats\n", tocks); */
 
   if (1) {
     d_print("Testing per thread timers...pause for 10 usec...");
@@ -1464,9 +1465,9 @@ boolean lives_startup(livespointer data) {
     d_print("OK\n");
   }
 
-  d_print("Rechecking ticker timer...");
-  tocks = get_ticker_count();
-  d_print("got %lu heartbeats\n", tocks);
+  /* d_print("Rechecking ticker timer..."); */
+  /* tocks = get_ticker_count(); */
+  /* d_print("got %lu heartbeats\n", tocks); */
 
   // will advance startup phase to 3, unless skipped
   if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
@@ -4364,7 +4365,7 @@ double pick_custom_colours(double var, double timer) {
     lmin = .45; lmax = .6;
   }
 
-  lpt_desc_state(self);
+  //lpt_desc_state(self);
   ncr = palette->menu_and_bars.red * 255.;
   ncg = palette->menu_and_bars.green * 255.;
   ncb = palette->menu_and_bars.blue * 255.;

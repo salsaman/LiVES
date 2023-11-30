@@ -1006,6 +1006,9 @@ deint1:
 
 ////////////////////////////////////////////////////////////////////
 // keypresses
+LIVES_LOCAL_INLINE boolean rte_key_real_enabled(int key) {
+  return !!(mainw->rte_real & (GU641 << key));
+}
 
 static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
   // this is the callback which happens when a rte is keyed
@@ -1028,23 +1031,25 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
     key--;
     new_rte = GU641 << key;
 
-    if (!rte_key_is_enabled(key, !is_auto)) {
+    if (!rte_key_is_enabled(key, FALSE)) { 
+      if (!rte_key_real_enabled(key)) return res;
       // switch is ON
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
         if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
-	    g_print("SOFT OFF\n");
+	    g_print("SOFT ON\n");
           weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
           if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
             record_filter_init(key);
           }
         }
         weed_instance_unref(inst);
+	refresh_model = FALSE;
       } else {
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
-          mainw->rte_soft &= ~new_rte;
+          mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
           filter_mutex_unlock(key);
@@ -1053,7 +1058,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
       }
 
       mainw->rte |= new_rte;
-      mainw->rte_soft |= new_rte;
+      mainw->rte_real |= new_rte;
 
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1072,10 +1077,12 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
           if (rte_key_valid(i + 1, TRUE))
-            if (!rte_key_is_enabled(i, FALSE))
+            if (!rte_key_is_enabled(i, TRUE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
     } else {
       // effect is OFF
+      if (rte_key_real_enabled(key)) return res;
+
       if (key == prefs->autotrans_key - 1 && prefs->autotrans_amt >= 0.) {
         prefs->autotrans_amt = -1.;
         filter_mutex_lock(key);
@@ -1098,22 +1105,21 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
           int inc_count = enabled_in_channels(inst, FALSE);
           if (inc_count == 1) {
             weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, TRUE);
-	    g_print("SOFT ON\n");
+	    g_print("SOFT OFF\n");
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
-            mainw->rte_soft &= ~new_rte;
+            mainw->rte_real &= ~new_rte;
           }
           weed_instance_unref(inst);
         }
-        //refresh_model = FALSE;
+        refresh_model = FALSE;
       }
-
-      if (!is_auto) {
+      else
         // deinit effect
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
-          mainw->rte_soft &= ~new_rte;
+          mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
@@ -1125,11 +1131,11 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
           if (rte_key_valid(i + 1, TRUE))
-            if (rte_key_is_enabled(i, FALSE))
+            if (rte_key_is_enabled(i, TRUE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
-    }
   }
+
 
   if (mainw->rendered_fx)
     // enable /disable menu option "Apply current realtime effects" in rendered fx menu
@@ -1175,7 +1181,7 @@ static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                       _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, 0, is_auto);
-    mainw->rte_soft ^= new_rte;
+    mainw->rte_real ^= new_rte;
     return LIVES_RESULT_SUCCESS;
   }
 
@@ -1206,20 +1212,15 @@ lives_result_t rte_key_toggle(int key) {
 }
 
 
-LIVES_LOCAL_INLINE boolean rte_key_soft_enabled(int key, boolean ign_soft_deinits) {
-  return !!(mainw->rte_soft & (GU641 << key));
-}
-
-
 boolean rte_key_on_off(int key, boolean on) {
   // key is 1 based
   // returns the state of the key afterwards
   boolean state;
   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
-  state = rte_key_soft_enabled(key - 1, FALSE);
+  state = rte_key_real_enabled(key - 1);
   if (state == on) return state;
   _rte_key_toggle(key, FALSE);
-  return rte_key_soft_enabled(key - 1, FALSE);
+  return rte_key_real_enabled(key - 1);
 }
 
 // callback from fx keys
@@ -1353,18 +1354,15 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits
   boolean enabled = !!(mainw->rte & (GU641 << key));
   if (ign_soft_deinits) return enabled;
   else {
-    if (!(mainw->rte & (GU641 << key))) return FALSE;
-    else {
-      weed_plant_t *inst;
-      enabled = TRUE;
-      filter_mutex_lock(key);
-      if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = FALSE;
-        weed_instance_unref(inst);
-      }
-      filter_mutex_unlock(key);
-      return enabled;
+    weed_plant_t *inst;
+    enabled = TRUE;
+    filter_mutex_lock(key);
+    if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = FALSE;
+      weed_instance_unref(inst);
     }
+    filter_mutex_unlock(key);
+    return enabled;
   }
 }
 

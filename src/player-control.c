@@ -722,20 +722,23 @@ void play_file(void) {
   }
 
   if (cfile->achans > 0) {
-    mainw->audio_start = calc_time_from_frame(mainw->current_file,
-                         mainw->play_start) * cfile->fps + 1.;
-    mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
-    if (!mainw->playing_sel) mainw->audio_end = 0;
-
+    if (mainw->playing_sel) {
+      mainw->audio_start = calc_time_from_frame(mainw->current_file,
+						mainw->play_start) * cfile->fps + 1.;
+      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
+    }
+    else {
+      mainw->audio_start = cfile->real_pointer_time * cfile->fps + 1;
+      mainw->audio_end = 0;
+    }
     cfile->aseek_pos = (off_t)(((double)(mainw->audio_start - 1.)
-                                / cfile->fps * (double)cfile->arate))
-                       * cfile->achans * (cfile->asampsize >> 3);
+				/ cfile->fps * (double)cfile->arate))
+      * cfile->achans * (cfile->asampsize >> 3);
+    if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
     cfile->async_delta = 0;
   }
 
-  if (prefs->stop_screensaver) {
-    lives_disable_screensaver();
-  }
+  if (prefs->stop_screensaver) lives_disable_screensaver();
 
   mainw->actual_frame = cfile->frameno;
   mainw->new_clip = mainw->playing_file = mainw->current_file;
@@ -972,6 +975,8 @@ void play_file(void) {
 
       if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
 
+      if (AUD_SRC_INTERNAL) audio_analyser_start(AUDIO_SRC_INT);
+
       //
 
       if (!reset_timebase()) {
@@ -1072,6 +1077,7 @@ void play_file(void) {
   mainw->abufs_to_fill = 0;
 
   if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT);
+  if (AUD_SRC_INTERNAL) audio_analyser_end(AUDIO_SRC_INT);
 
   if (mainw->ext_playback) {
 #ifndef IS_MINGW

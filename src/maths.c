@@ -57,21 +57,15 @@ LIVES_GLOBAL_INLINE uint64_t get_2pow_64(uint64_t x) {
 #define get_log2_8(x) ((x) >= 128 ? 7 : (x) >= 64 ? 6 : (x) >= 32 ? 5 : (x) >= 16 ? 4 \
 		       : (x) >= 8 ? 3 : (x) >= 4 ? 2 : (x) >= 2 ? 1 : 0)
 
-LIVES_LOCAL_INLINE uint32_t get_log2_16(uint16_t x) {
-  if (!x) return 0;
-  if (x & 0xFF00) return get_log2_8((x & 0xFF00) >> 8) + 8;
-  return get_log2_8(x & 0xFF);
-}
+LIVES_LOCAL_INLINE uint32_t get_log2_16(uint16_t x)
+{return !x ? 0 : x & 0xFF00 ? (get_log2_8(x & 0xFF00) >> 8) + 8 : get_log2_8(x & 0xFF);}
 
-LIVES_GLOBAL_INLINE uint32_t get_log2(uint32_t x) {
-  if (x & 0xFFFF0000) return get_log2_16((x & 0xFFFF0000) >> 16) + 16;
-  return get_log2_16(x & 0xFFFF);
-}
+LIVES_GLOBAL_INLINE uint32_t get_log2(uint32_t x)
+{return x & 0xFFFF0000 ? (get_log2_16(x & 0xFFFF0000) >> 16) + 16 : get_log2_16(x & 0xFFFF);}
 
-LIVES_GLOBAL_INLINE uint32_t get_log2_64(uint64_t x) {
-  if (x & 0xFFFFFFFF00000000) return get_log2((x & 0xFFFFFFFF00000000) >> 32) + 32;
-  return get_log2(x & 0xFFFFFFFF);
-}
+LIVES_GLOBAL_INLINE uint32_t get_log2_64(uint64_t x)
+{return x & 0xFFFFFFFF00000000 ? get_log2((x & 0xFFFFFFFF00000000) >> 32) + 32 : get_log2(x & 0xFFFFFFFF);}
+
 
 LIVES_GLOBAL_INLINE float get_approx_ln(uint32_t x) {
   return (float)get_log2(x) / LN_CONSTVAL;

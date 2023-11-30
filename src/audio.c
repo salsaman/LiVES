@@ -72,6 +72,16 @@ LIVES_GLOBAL_INLINE lives_obj_instance_t *get_aplayer_instance(int source) {
       aplayer = mainw->jackd_read->inst;
 #endif
   }
+  else {
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed)
+      aplayer = mainw->pulsed->inst;
+#endif
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd)
+      aplayer = mainw->jackd->inst;
+#endif
+  }
   return aplayer;
 }
 
@@ -2913,7 +2923,8 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 	}
       }
     }
-    if (mainw->afbuffer && AUD_SRC_EXTERNAL) {
+
+    if (mainw->afbuffer) {
       // if we have audio triggered gens., push audio to it
       // or if we want loopback to player
       for (int i = 0; i < nchans; i++) {
@@ -2937,7 +2948,9 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 }
 
 
+// TODO - make attributes of the aplayer
 static lives_proc_thread_t ana_lpt = NULL;
+static lives_proc_thread_t ana_lpt2 = NULL;
 
 void audio_analyser_start(int source) {
   if (source == AUDIO_SRC_EXT) {
@@ -2946,6 +2959,14 @@ void audio_analyser_start(int source) {
       ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
                 WEED_SEED_BOOLEAN, "p", aplayer);
       lives_proc_thread_set_cancellable(ana_lpt);
+    }
+  }
+  else {
+    if (!ana_lpt2) {
+      lives_obj_instance_t *aplayer = get_aplayer_instance(source);
+      ana_lpt2 = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
+                WEED_SEED_BOOLEAN, "p", aplayer);
+      lives_proc_thread_set_cancellable(ana_lpt2);
     }
   }
 }
@@ -2960,6 +2981,16 @@ void audio_analyser_end(int source) {
       // whichever happens next
       lives_proc_thread_request_cancel(ana_lpt, FALSE);
       ana_lpt = NULL;
+    }
+  }
+  else {
+    if (ana_lpt2) {
+      // all we need do here is request the proc_thread to cancel itself
+      // once it processes the request, it will cancel itself
+      // and then be removed from the hook_stack either when triggered or joined
+      // whichever happens next
+      lives_proc_thread_request_cancel(ana_lpt2, FALSE);
+      ana_lpt2 = NULL;
     }
   }
 }
@@ -3700,6 +3731,8 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
 
   // usually not called directly, instead set mainw->scratch = SCRATCH_JUMP and let the player
   // call this
+
+
 
   lives_clip_t *sfile = RETURN_NORMAL_CLIP(mainw->playing_file);
 

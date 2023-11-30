@@ -191,7 +191,7 @@
 // After building the nodemodel and optising it, we create a plan from it. In this operation we flattend the nodemodel
 // into time steps, each step becoming one operation (LOAD, CONVERT, APPLY_INSTANCE, etc).
 // Each step has in and out values (e.g the frame in / out size), and also a set of one or more prior steps whcih mut be completed
-// and a set of conditions (e.g. layer status == prepared). These prior steps must be flagged as completed or skipped and
+// and a set of conditions (e.g. layer status == prepared). These prior steps must be flagged as completed or skiypped and
 // the conditions satisfied before that step can be actioned. When the final step of the plan completes, the output will
 // be ready to send to the sink(s), and the cycle can be run again.
 

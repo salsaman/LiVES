@@ -11,8 +11,9 @@
 #include "functions.h"
 #include "callbacks.h"
 
-// max number of GUI events we process per update loop: 64 - 256 seems about right
+// max number of GUI events we process per update loop: 64 seems about right
 #define EV_LIM 64.
+
 // how many do nothing cycles before switch to low prio
 // - should result in 1.0 - 0.1 second delay
 #define MISS_PRIO_THRESH 100000
@@ -1257,12 +1258,13 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
     if (mainw->do_ctx_update) {
       // during playback this is where all callbacks such as key presses will happen
-      if (1 || !is_active) _lives_widget_context_update();
+      if (!is_active) _lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
       pthread_yield();
       lives_microsleep;
     } else {
       lives_nanosleep(NSLEEP_TIME);
+      //pthread_yield();
 
       if (cprio == PRIO_LOW) {
         for (int i = 0; i < sLO_FACTOR; i++) {

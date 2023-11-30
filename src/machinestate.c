@@ -2502,10 +2502,20 @@ void get_monitors(boolean reset) {
     if (prefs->play_monitor > capable->nmonitors) prefs->play_monitor = capable->nmonitors;
   }
 
-  /* /\* if (prefs->gui_monitor >= capable->nmonitors) *\/ */
-  /* /\*   prefs->gui_monitor = 0; *\/ */
-  /* /\* if (prefs->play_monitor >= capable->nmonitors) *\/ */
-  /* /\*   prefs->play_monitor = capable->nmonitors - 1; *\/ */
+  // generally we have = gui monitor == 1 or 0 (single monitor)
+  // widdet_opts.monitor == gui_monitor, or if gui_mon == 0, primary
+  //
+  // play_monitor == 1 (single monitor) or n (multihead)
+  // play_monitor 0 == fullscreen on all monitors
+
+  if (prefs->gui_monitor > capable->nmonitors || prefs->gui_monitor <= 0)
+    prefs->gui_monitor = capable->primary_monitor;
+  if (prefs->play_monitor > capable->nmonitors)
+    prefs->play_monitor = prefs->gui_monitor + 1;
+  if (prefs->play_monitor > capable->nmonitors)
+    prefs->play_monitor = capable->nmonitors - 1;
+  if (prefs->play_monitor < 0)
+    prefs->play_monitor = prefs->gui_monitor;
 
   widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
 

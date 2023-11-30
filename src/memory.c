@@ -908,7 +908,7 @@ char *get_memstats(void) {
 
 static void *lives_calloc_mapped_inner(size_t npages, boolean do_mlock,  char *fref, int lref) {
   char errmsg[128];
-  void *p = mmap(NULL, npages * PAGESIZE, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  void *p = mmap(NULL, npages * PAGESIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (!p || p == MAP_FAILED) { 
     lives_snprintf(errmsg, 128, "Unable to mmap %lu pages at line %d, in %s\n",
 		   npages, lref, fref);
@@ -1169,9 +1169,9 @@ void bigblock_init(void) {
   }
 
   //bigblock_root = lives_calloc_mapped(bmemsize * NBIGBLOCKS, TRUE);
-  bigblock_root = lives_calloc_medium(bmemsize * NBIGBLOCKS);
+  bigblock_root = lives_calloc_mapped(bmemsize * NBIGBLOCKS, TRUE);
   if (!bigblock_root) return;
-  if (mlock(bigblock_root, bmemsize * NBIGBLOCKS)) return;
+  //if (mlock(bigblock_root, bmemsize * NBIGBLOCKS)) return;
 
   ptr = (char *)bigblock_root;
 

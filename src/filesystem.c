@@ -1109,6 +1109,7 @@ ssize_t lives_close_buffered(int fd) {
     munlock(fbuff->buffer, fbuff->bytes);
 
     //lives_uncalloc_mapped(fbuff->buffer, fbuff->bytes, TRUE);
+    fbuff->buffer = NULL;
   }
 
   lives_free(fbuff->pathname);
@@ -2394,7 +2395,7 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes = -1;
   //if (!disk_monitor_running(dir))
 
-  g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
+  //g_print("diskmon check res diskmon is %p, state is %d\n", running, dircheck_state);
 
   //if (!dircheck_state) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {

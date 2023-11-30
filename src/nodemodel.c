@@ -1366,19 +1366,10 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
 
 
 /////////////////////////////
-static lives_filter_error_t run_apply_inst_step(plan_step_t *step) {
+static lives_filter_error_t run_apply_inst_step(plan_step_t *step, weed_instance_t *inst) {
   double xtime;
   exec_plan_t *plan = step->plan;
   lives_filter_error_t filter_error;
-
-  weed_instance_t *inst =
-    rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
-  
-  if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
-    d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
-		  step->count, step->track);
-    return FILTER_INFO_BYPASSED;
-  }
 
   xtime = lives_get_session_time();
   step->real_st = xtime;
@@ -2190,22 +2181,32 @@ static void run_plan(exec_plan_t *plan) {
         break;
 
         case STEP_TYPE_APPLY_INST: {
-          if (!step->target) {
+	  weed_instance_t *inst;
+	  if (!step->target) {
             d_print_debug("\nstep %d: Output to sink ready @ %.2f msec\n", step_count, xtime * 1000.);
             step->state = STEP_STATE_FINISHED;
-            dec_running_steps(step);
+            //dec_running_steps(step);
             break;
           }
           step->tdata->real_start = xtime;
+	  inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
           if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
             d_print_debug("\nstep %d: RUN APPLY_INST (%s) @ %.2f msec, pd i %p\n",
                           step_count, weed_filter_get_name((weed_filter_t *)step->target),
                           xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
+
+	    if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
+	      d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
+			    step->count, step->track);
+	      step->state = STEP_STATE_SKIPPED;
+ 	      break;
+	    }
+
             step->proc_thread =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                                       run_apply_inst_step, WEED_SEED_INT, "v", step);
+                                       run_apply_inst_step, WEED_SEED_INT, "vv", step, inst);
           } else {
-            run_apply_inst_step(step);
+            run_apply_inst_step(step, NULL);
             step->st_type = STEP_TYPE_LOAD;
           }
           step->state = STEP_STATE_RUNNING;
@@ -2441,6 +2442,9 @@ static void run_plan(exec_plan_t *plan) {
             d_print_debug("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
                           step->tdata->real_duration);
           } else {
+	    if ((cancelled || error) && step->proc_thread
+		&& !lives_proc_thread_should_cancel(step->proc_thread))
+	      lives_proc_thread_request_cancel(step->proc_thread, TRUE);
             complete = FALSE;
             if (res & 2) can_resume = FALSE;
           }
@@ -6913,7 +6917,7 @@ if (!mainw->multitrack) {
     int *in_tracks = NULL, *out_tracks = NULL;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
-        if (rte_key_is_enabled(i, TRUE)) {
+        if (rte_key_is_enabled(i, FALSE)) {
           // for clip editor we construct instance nodes according to the order of
           // mainw->rte_keys
           // for multitrack iterate over filter_map filter_init events (TODO)
@@ -6924,15 +6928,7 @@ if (!mainw->multitrack) {
 
           // check if we have an instance for this key
           instance = rte_keymode_get_instance(i + 1, rte_key_getmode(i + 1));
-          if (instance) {
-            // if we do have an instance, it may have been "soft deinited"
-            // in this case, we act like there is no filter mapped for the key
-            if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL)) {
-              weed_instance_unref(instance);
-              continue;
-            }
-            weed_instance_unref(instance);
-          }
+          if (instance) weed_instance_unref(instance);
         } else continue;
 
         // create an input / output for each non (permanently) disabled channel

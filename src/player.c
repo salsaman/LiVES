@@ -2662,7 +2662,9 @@ switch_point:
         }
       }
       sfile->sync_delta = 0;
-      avsync_force();
+
+      if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+	avsync_force();
 
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -2892,7 +2894,9 @@ switch_point:
         if (AUD_SRC_EXTERNAL) sfile->last_req_frame = sfile->last_frameno;
 
         drop_off = TRUE;
-        mainw->scratch = SCRATCH_JUMP;
+	if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+	  mainw->scratch = SCRATCH_JUMP_NORESYNC;
+        else mainw->scratch = SCRATCH_JUMP;
       } else sfile->fps_scale = 1.;
 
       // paused

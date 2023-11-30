@@ -4735,7 +4735,7 @@ void play_all(boolean from_menu) {
                             cfile->pointer_time);
       } else {
         mainw->play_start = calc_frame_from_time4(mainw->current_file,
-                            cfile->pointer_time);  // real_pointer_time ???
+                            cfile->pointer_time);
       }
       mainw->play_end = cfile->frames;
     }

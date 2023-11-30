@@ -3121,14 +3121,16 @@ lives_filter_error_t act_on_instance(weed_instance_t *instance, int key, lives_l
   weed_timecode_t tc = 0;
   lives_filter_error_t filter_error = FILTER_SUCCESS;
   int myeaseval = -1;
-
-  if ((mainw->is_rendering && !(mainw->proc_ptr && mainw->preview))) tc = mainw->cevent_tc;
-
+ 
   if (!instance) return FILTER_ERROR_INVALID_INSTANCE;
 
-  filter = weed_instance_get_filter(instance, TRUE);
 
+  filter = weed_instance_get_filter(instance, TRUE);
   if (is_pure_audio(filter, TRUE)) return FILTER_ERROR_IS_AUDIO;
+
+  tc = mainw->currticks;
+
+  if ((mainw->is_rendering && !(mainw->proc_ptr && mainw->preview))) tc = mainw->cevent_tc;
 
   if (mainw->multitrack && !mainw->unordered_blocks && pchains[key]) {
     tc = mainw->cevent_tc;
@@ -3387,7 +3389,6 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
 
         if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
           weed_instance_unref(instance);
-          g_print("unLOCKED1allllll %d\n", i);
           filter_mutex_unlock(i);
           continue;
         }
@@ -4501,7 +4502,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   plugin_info = (*setup_fn)(weed_bootstrap);
 
   if (!plugin_info || ((nf = filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1)) {
-    g_print("vals for filt %p, %d\n", plugin_info, nf);
     msg = lives_strdup_printf(_("No usable filters found in plugin:\n%s\n"), plugin_path);
     LIVES_INFO(msg);
     lives_free(msg);
@@ -7628,6 +7628,14 @@ matchvals:
   gui = weed_channel_get_gui(channel, TRUE);
 
 procfunc1:
+
+  // the timecode we get in the parameter will be the queued or "reference" time for the layer
+  // for realtime playback, better to use current tc
+  if (!mainw->preview && (!mainw->event_list || mainw->record || mainw->record_paused)) {
+    tc = mainw->currticks;
+    weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
+  }
+
   // get the current video data, then we will push an audio packet for the following frame
   ret = run_process_func(inst, tc);
 

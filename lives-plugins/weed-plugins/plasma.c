@@ -61,30 +61,17 @@ static void plasma_prep(void) {
 /////////////////////////////////////////////////////////////////////////////
 
 static weed_error_t plasma_init(weed_plant_t *inst) {
-  weed_plant_t *out_chan = weed_get_out_channel(inst, 0);
-  int width = weed_channel_get_width(out_chan);
-  int height = weed_channel_get_height(out_chan);
-  int orow = weed_channel_get_stride(out_chan);
-  const int pal = (const int)weed_channel_get_palette(out_chan);
-  const int psize = (const int)pixel_size((int)pal);
-  sdata_t *sdata;
-  if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
-    sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));
-    if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
-    weed_set_instance_data(inst, sdata);
-  }
-  else sdata = weed_get_instance_data(inst, sdata);
-
+  sdata_t *sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
+  weed_set_instance_data(inst, sdata);
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t plasma_deinit(weed_plant_t *inst) {
   sdata_t *sdata = weed_get_instance_data(inst, sdata);
-
   if (sdata) weed_free(sdata);
   weed_set_instance_data(inst, NULL);
-
   return WEED_SUCCESS;
 }
 

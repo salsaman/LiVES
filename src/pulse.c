@@ -303,10 +303,11 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
 
   pulsed->real_seek_pos = pulsed->seek_pos;
 
-  if (IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos < afile->afilesize)
-    afile->aseek_pos = pulsed->seek_pos;
+  /* if (LIVES_IS_PLAYING) { */
+  /*   if (IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos < afile->afilesize) */
+  /*     afile->aseek_pos = pulsed->seek_pos; */
 
-done:
+ done:
   return;
 }
 
@@ -482,9 +483,30 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             lives_free(filename);
           }
         }
-        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
+	fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
         pulsed->playing_file = new_file;
         //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer
+
+
+	/* pulsed->in_use = TRUE; */
+	/* paop = pa_stream_flush(pulsed->pstream, NULL, NULL); */
+	/* pa_operation_unref(paop); */
+
+	/* xseek = ALIGN_CEIL64(afile->aseek_pos, afile->achans * (afile->asampsize >> 3)); */
+	/* lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek); */
+	/* fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek; */
+	/* if (msg->extra) { */
+	/*   double ratio = lives_strtod(msg->extra); */
+	/*   pulse_set_avel(pulsed, pulsed->playing_file, ratio); */
+	/* } */
+	/* if (pulsed->playing_file == mainw->ascrap_file || afile->adirection == LIVES_DIRECTION_FORWARD) { */
+	/*   lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE); */
+	/* } else { */
+	/*   lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE); */
+	/* } */
+	/* pulsed->playing_file = new_file; */
+        /* fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos; */
+	/* //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer */
         break;
       }
     case ASERVER_CMD_FILE_CLOSE:
@@ -1266,13 +1288,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           bbsize = nbytes;
         }
 
-        lives_memcpy(back_buff, buffer, nbytes);
-        lives_aplayer_set_data_len(self, nsamples); 
-	lives_aplayer_set_data(self, (void *)back_buff);
-        // calling trigger_async directly gets count of callbacks
-	async_join = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+
       }
 #endif
+
+      lives_aplayer_set_data_len(self, nsamples); 
+      lives_aplayer_set_data(self, (void *)buffer);
+      // calling trigger_async directly gets count of callbacks
+      async_join = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
 
       /// Finally... we actually write to pulse buffers
 #if !HAVE_PA_STREAM_BEGIN_WRITE
@@ -1341,13 +1364,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       sample_silence_pulse(pulsed, pulseFramesAvailable * pulsed->out_achans * (pulsed->out_asamps >> 3));
       if (!pulsed->is_paused) pulsed->frames_written += pulseFramesAvailable;
     }
-  }
-  if (pulsed->playing_file > -1) {
-    afile->aseek_pos = pulsed->seek_pos;
+    if (LIVES_IS_PLAYING) afile->aseek_pos = pulsed->seek_pos;
   }
 #ifdef DEBUG_PULSE
   lives_printerr("done\n");
 #endif
+
 }
 
 
@@ -1664,9 +1686,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   }
 
   if (pdriver->is_output) {
-    pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
-    pa_battr.tlength = LIVES_PA_BUFF_TARGET;
-    pa_battr.minreq = LIVES_PA_BUFF_MINREQ * 4;
+    pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN >> 1;
+    pa_battr.tlength = LIVES_PA_BUFF_TARGET >> 2;
+    pa_battr.minreq = LIVES_PA_BUFF_MINREQ >> 1;
     pa_battr.prebuf = 0;  /// must set this to zero else we hang, since pa is waiting for the buffer to be filled first
   } else {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
@@ -1731,10 +1753,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                &pa_battr, (pa_stream_flags_t)
                                (0
                                 | PA_STREAM_RELATIVE_VOLUME
-                                | PA_STREAM_INTERPOLATE_TIMING
                                 | PA_STREAM_START_CORKED
+                                | PA_STREAM_INTERPOLATE_TIMING
                                 | PA_STREAM_START_UNMUTED
-                                | PA_STREAM_NOT_MONOTONIC
                                 | PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
@@ -2212,14 +2233,16 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
         lives_pulse_set_client_attributes(pulsed, fileno, TRUE, FALSE);
       }
 
-      pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile);
-      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
+      /* pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile); */
+      /* if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE; */
+
+
     }
 
-    if (seek_err) {
-      seek_err = FALSE;
-      if (pulse_try_reconnect()) pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile);
-    }
+    /* if (seek_err) { */
+    /*   seek_err = FALSE; */
+    /*   if (pulse_try_reconnect()) pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile); */
+    /* } */
 
     if (mainw->agen_key != 0 && !mainw->multitrack) pulsed->in_use = TRUE; // audio generator is active
     if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) register_audio_client(FALSE);

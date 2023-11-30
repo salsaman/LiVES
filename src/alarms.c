@@ -51,11 +51,11 @@ void lives_alarms_init(void) {
   lives_memset(app_timers, 0, N_APP_TIMERS * sizeof(lives_timer_t));
 
   thread_signal_establish(LIVES_TIMER_SIG, timer_handler);
-  thread_signal_establish(LIVES_TICKER_SIG, ticker_handler);
+  //thread_signal_establish(LIVES_TICKER_SIG, ticker_handler);
 
-  app_timers[heartbeat_timer].signo = LIVES_TICKER_SIG;
-  lives_timer_create(&app_timers[heartbeat_timer]);
-  lives_timer_set_delay(&app_timers[heartbeat_timer], 100000, TRUE);
+  /* app_timers[heartbeat_timer].signo = LIVES_TICKER_SIG; */
+  /* lives_timer_create(&app_timers[heartbeat_timer]); */
+  /* lives_timer_set_delay(&app_timers[heartbeat_timer], 100000, TRUE); */
 
   inited = TRUE;
 }

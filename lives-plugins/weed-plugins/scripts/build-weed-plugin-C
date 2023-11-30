@@ -24,18 +24,22 @@ my %replace = (
 #(O) indicates optional section
 #	define			(M)
 #	unique_id		(W)
-#	name			(W)
 #	author			(W)
 #	license			(O)
 #	license_version		(O)
 #	language_code		(W)
 #	version			(O)
-#	description		(O)
 #	requires		(O)
 #	typedefs		(O)
 #	sdata			(O)
-#	filter_flags		(O)
 #	static			(O)	****
+#	setup			(O)	****
+#	desetup			(O)	****
+#	display_vals		(O)
+
+#	name			(W)
+#	description		(O)
+#	filter_flags		(O)
 #	palette_list		(W)
 #	in_chans		(O)
 #	out_chans		(O)
@@ -45,8 +49,7 @@ my %replace = (
 #	init			(O)
 #	process			(W)	****
 #	deinit			(O)	****
-#	setup			(O)	****
-#	display_vals		(O)
+
 
 
 ########################################################
@@ -66,8 +69,7 @@ if ($USE_WARNINGS) {
 }
 
 my $builder_version = "4.0,0-pre";
-my $rfx_version = "2.0.0";
-my $version;
+my $current_script_version = "2.0.0";
 
 ################################
 ## TODO - allow license, version, (c) author(s) and (c) yeasr to be overriden in script
@@ -84,10 +86,61 @@ my $CURRENT_YEAR = "2023"; ## TODO
 my ($section, $file);
 my @pieces;
 
+my $plugin_name;
+
+my $num_inc;
+my $num_outc;
+my $num_params;
+my $num_oparams;
+my $incs;
+my $nwlines;
+
+my $glob_num_inc;
+my $glob_num_outc;
+my $glob_num_params;
+my $glob_num_oparams;
+my @glob_in_chans;
+my @glob_out_chans;
+my @glob_params;
+my @glob_oparams;
+my @glob_param_window;
+my $glob_nwlines;
+my $glob_num_inc;
+my $glob_num_outc;
+my $glob_num_params;
+my $glob_num_oparams;
+my $glob_nwlines;
+my @glob_in_planar;
+my @glob_out_planar;
+my @glob_filter_flags;
+my $glob_fflagstr;
+#
+my @init;
+my @proc;
+my @deinit;
+my $outcs;
+my $inps;
+my $outps;
+my $has_init;
+my $has_deinit;
+
+my $can_inplace;
+my $init_func;
+my $deinit_func;
+
+my $proc_func;
+
+my $multi = 0;
+
 if ($ARGV[0] eq "-get") {
     $section = $ARGV[1];
     $file = $ARGV[2];
-    my @result = &rc_read($section, $file);
+    my @cache = rc_load($file);
+    if (!@cache) {
+	print STDERR "Script file $file not found !\n";
+	exit 1;
+    }
+    my @result = &rc_read($section, @cache);
     foreach (@result) {
 	print STDOUT "$_\n";
     }
@@ -96,17 +149,27 @@ if ($ARGV[0] eq "-get") {
 
 $file = $ARGV[0];
 
-my $define = (&rc_read("define", $file))[0];
+my @cache = rc_load($file);
+
+if (!@cache) {
+    print STDERR "Script file $file not found !\n";
+    exit 1;
+}
+
+my $define = (rc_read("define", @cache))[0];
+
 if (!$define) {
     print STDERR "Error  - <define> section missing from script file.\n";
     exit 5;
 }
 
-my $plversion = substr($define, 1);
-my $plhversion = &make_ver_hash($plversion);
+my $scversion = substr($define, 1);
 
-unless ($plhversion <= &make_ver_hash($rfx_version)) {
-    print STDERR "\n\nError:  - Invalid script RFX version $version, this builder supports up to $rfx_version\n";
+my $script_version = &make_ver_hash($scversion);
+
+if ($script_version > &make_ver_hash($current_script_version)) {
+    print STDERR "\n\nEyrror:  - Invalid script version $script_version, this builder supports only " .
+	"up to $current_script_version\n";
     exit 4;
 }
 
@@ -116,23 +179,24 @@ if ($delim =~ /^[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]+/) {
     $delim = "\\" . $delim;
 }
 
-my $uid = (&rc_read("unique_id", $file))[0];
+my $uid = (&rc_read("unique_id", @cache))[0];
+    print STDERR "uid is $uid\n";
+
 if (!$uid) {
     print STDERR "WARNING - no uid in $file\n";
 }
 
-my $pf_name = (&rc_read("name", $file))[0];
-if (!$pf_name) {
-    print STDERR "WARNING - no 'name' in $file\n";
+if ($file =~ /(.*)\.script$/) {
+    $plugin_name = $1;
 }
-@pieces = split(/$delim/, $pf_name);
-my $plugin_name = @pieces[0];
-my $filter_name = @pieces[1];
-if (!$filter_name) {
-    $filter_name = $plugin_name;
+else {
+    print STDERR "Error ! Script names must be of the form plname.script\n";
+    exit 2;
 }
 
-my @authors = &rc_read("author", $file);
+my $filter_name = $plugin_name;
+
+my @authors = &rc_read("author", @cache);
 if (!@authors) {
     print STDERR "WARNING - no author in $file\n";
 }
@@ -145,70 +209,71 @@ if (@authors > 1) {
     $extra_authors = @authors[1];
 }
 
-my $xlicense = (&rc_read("license", $file))[0];
+my $xlicense = (&rc_read("license", @cache))[0];
 if ($xlicense) {
     $license_type = $xlicense;
 
-    my $xlicver = (&rc_read("license_version", $file))[0];
+    my $xlicver = (&rc_read("license_version", @cache))[0];
     if ($xlicver) {
 	$license_version = $xlicver;
     }
 }
 
-my $lang_code = (&rc_read("language_code", $file))[0];
+my $lang_code = (&rc_read("language_code", @cache))[0];
 if (!$lang_code) {
     print STDERR "WARNING - no lang_code in $file\n";
 }
 
-my $versions = (&rc_read("version", $file))[0];
-@pieces = split(/$delim/, $versions);
-my $pver = @pieces[0];
-my $fver = @pieces[1];
 
-my @description = (&rc_read("description", $file));
-my @requires=&rc_read("requires", $file);
+my ($pversion, $fversion);
 
-my @typedefs = &rc_read("typedefs", $file);
+my $versions = (&rc_read("version", @cache))[0];
+if ($versions) {
+    @pieces = split(/$delim/, $versions);
+    $pversion = @pieces[0];
+    $fversion = @pieces[1];
+}
+else {
+    $pversion = (&rc_read("package_version", @cache))[0];
+    $fversion = (&rc_read("filter_version", @cache))[0];    
+}
 
-my @sdata = &rc_read("sdata", $file);
+my @description = (&rc_read("description", @cache));
+my @requires=&rc_read("requires", @cache);
 
-my @filter_flags = &rc_read("filter_flags", $file);
-my $flagstr;
+my @typedefs = &rc_read("typedefs", @cache);
 
-my @static = &rc_read("static", $file);
+my @sdata = &rc_read("sdata", @cache);
 
-my @pal_list = &rc_read("palette_list", $file);
+my @static = &rc_read("static", @cache);
+
+my @pal_list = &rc_read("palette_list", @cache);
 
 if (!@pal_list) {
     print STDERR "WARNING - no palette_list section in $file\n";
 }
 
-my @in_chans = &rc_read("in_chans", $file);
-my @out_chans = &rc_read("out_chans", $file);
+my @in_chans = &rc_read("in_chans", @cache);
+my @out_chans = &rc_read("out_chans", @cache);
+my @params = &rc_read("params", @cache);
+my @oparams = &rc_read("out_params", @cache);
+my @param_window = &rc_read("param_window", @cache);
 
-my @params = &rc_read("params", $file);
-my @oparams = &rc_read("out_params", $file);
+my @setup = &rc_read("setup", @cache);
 
-my @param_window = &rc_read("param_window", $file);
-my $nwlines = @param_window;
-
-my @init = &rc_read("init", $file);
-my @proc= &rc_read("process", $file);
-if (!@proc) {
-    print STDERR "WARNING - no proc section in $file\n";
-}
-my @deinit = &rc_read("deinit", $file);
-
-my @setup= &rc_read("setup", $file);
+my @init = &rc_read("init", @cache);
+my @deinit = &rc_read("deinit", @cache);
+my @proc = &rc_read("process", @cache);
 
 #if (!@setup) {
 #    print STDERR "WARNING - no setup section in $file\n";
 #}
 
-my @disp = &rc_read("display_vals", $file);
+my @disp = &rc_read("display_vals", @cache);
 
-unless ($lang_code eq "192" || hex($lang_code) == 192) {
-    print STDERR "Error:  - Invalid language code for this builder !\n";
+unless ($lang_code eq "0xc0" || $lang_code eq "0XC0"
+	|| $lang_code eq "0Xc0" || $lang_code eq "0xC0") {
+    print STDERR "Error:  - Invalid language code $lang_code for this builder !\n";
     exit 3;
 }
 
@@ -262,17 +327,21 @@ my $num_outc = @out_chans;
 my $num_params = @params;
 my $num_oparams = @oparams;
 my $incs = "NULL";
+
 if ($num_inc) {
     $incs = "in_chantmpls";
 }
+
 my $outcs = "NULL";
 if ($num_outc) {
     $outcs = "out_chantmpls";
 }
+
 my $inps = "NULL";
 if ($num_params) {
     $inps = "in_paramtmpls";
 }
+
 my $outps = "NULL";
 if ($num_oparams) {
     $outps = "out_paramtmpls";
@@ -305,8 +374,11 @@ if ($use_sdata || @deinit) {
 my $pvary = 0;
 my $svary = 0;
 my $may_thread = 0;
+my $flagstr;
+my $fflagstr;
 
-my $fflagstr = "";
+my @filter_flags = &rc_read("filter_flags", @cache);
+
 foreach (@filter_flags) {
     if ($_ eq "may thread" || $_ eq "may_thread") {
 	$fflagstr .= " | WEED_FILTER_HINT_MAY_THREAD";
@@ -317,7 +389,7 @@ foreach (@filter_flags) {
     }
     elsif ($_ eq "sizes_vary") {
 	$fflagstr .= " | WEED_FILTER_CHANNEL_SIZES_MAY_VARY";
-	$svary = 1;
+h	$svary = 1;
     }
     elsif ($_ eq "palettes_vary") {
 	$fflagstr .= " | WEED_FILTER_CHANNEL_PALETTES_MAY_VARY";
@@ -368,19 +440,20 @@ foreach (@out_chans) {
 
 ########################################################
 
-open OUT, ">", $plugin_file;
+open my $OUT, ">", $plugin_file
+    or die "Unable to create output file $plugin_file: $!";
 
 chmod 0666, $plugin_file;
 
-print OUT "/////////////////////////////////////////////////////////////////////////////\n";
-print OUT "// Weed $plugin_name plugin, version $pver\n";
-print OUT "// Compiled with Builder version $builder_version\n";
-print OUT "// autogenerated from script @ARGV[0]\n";
+print $OUT "/////////////////////////////////////////////////////////////////////////////\n";
+print $OUT "// Weed $plugin_name plugin, version $pversion\n";
+print $OUT "// Compiled with Builder version $builder_version\n";
+print $OUT "// autogenerated from script @ARGV[0]\n";
 
-print OUT "\n// released under the $license_type version $license_version\n";
+print $OUT "\n// released under the $license_type version $license_version\n";
 
 if ($license_type eq "GNU GPL") {
-    print OUT "// see file COPYING or www.gnu.org for details\n";
+    print $OUT "// see file COPYING or www.gnu.org for details\n";
 }
 
 if (!$copyright_authors) {
@@ -396,14 +469,14 @@ if (!$copyright_years) {
     $copyright_years = $CURRENT_YEAR;
 }
 
-print OUT "\n// (c) $copyright_authors $copyright_years\n";
+print $OUT "\n// (c) $copyright_authors $copyright_years\n";
 
-print OUT "/////////////////////////////////////////////////////////////////////////////\n\n";
-print OUT "static int package_version = $pver; // version of this package\n\n";
-print OUT "/////////////////////////////////////////////////////////////////////////////\n";
+print $OUT "/////////////////////////////////////////////////////////////////////////////\n\n";
+print $OUT "static int package_version = $pversion; // version of this package\n\n";
+print $OUT "/////////////////////////////////////////////////////////////////////////////\n";
 
 if ($uid) {
-    print OUT "\n#define _UNIQUE_ID_ \"$uid\"\n\n";
+    print $OUT "\n#define _UNIQUE_ID_ \"$uid\"\n\n";
 }
 
 #add requirements
@@ -423,111 +496,115 @@ if ($pal_lists[0] =~ /^ALL/) {
     $need_putils = 1;
 }
 
-foreach (@requires) {
-    if ($_ eq "putils" || $_ eq "palette_utils") {
+foreach my $line (@requires) {
+    if ($line =~ /@(.*)@/) {
+	$line = $1;
+    }
+    
+    if ($line eq 'PUTILSJ' || $line eq "putils" || $line eq "palette_utils") {
 	$need_putils = 1;
 	next;
     }
-    if ($_ eq "pconv" || $_ eq "palette_conversions") {
+    if ($line eq 'PCONV' || $line eq "pconv" || $line eq "palette_conversions") {
 	$need_pconv = 1;
 	next;
     }
-    if ($_ eq "random") {
+    if ($line eq 'RAND' || $line eq "random") {
 	$need_random = 1;
 	next;
     }
-    if ($_ eq "fontutils") {
+    if ($line eq 'FONTS' || $line eq "fontutils") {
 	$need_font_utils = 1;
 	next;
     }
-    if ($_ eq "pango_compat") {
+    if ($line eq 'PANGO' || $line eq "pango_compat") {
 	$need_pango_compat = 1;
 	next;
     }
-    if ($_ eq "audio") {
+    if ($line eq '' || $line eq "audio") {
 	$need_audio = 1;
 	next;
     }
-    if ($_ eq "alpha_sort") {
+    if ($line eq 'ALPHA_SRT' || $line eq "alpha_sort") {
 	$need_alpha_sort = 1;
 	next;
     }
-    if ($_ eq "fourcc_compat") {
+    if ($line eq 'FOURCC' || $line eq "fourcc_compat") {
 	$need_fourcc_compat = 1;
 	next;
     }
-    if ($_ eq "avstream_types") {
+    if ($line eq 'STRM_TYPES' || $line eq "avstream_types") {
 	$need_avstream_types = 1;
 	next;
     }
-    if ($_ eq "av_chanfmts") {
+    if ($line eq 'CHAN_FMTS' || $line eq "av_chanfmts") {
 	$av_chanfmts = 1;
 	next;
     }
-    if ($_ eq "adv_palettes") {
+    if ($line eq 'ADV_PAL' || $line eq "adv_palettes") {
 	$av_s = 1;
 	next;
     }
 }
 
 if ($need_putils) {
-    print OUT "#define NEED_PALETTE_UTILS\n";
+    print $OUT "#define NEED_PALETTE_UTILS\n";
 }
 
 if ($need_random) {
-    print OUT "#define NEED_RANDOM\n";
+    print $OUT "#define NEED_RANDOM\n";
 }
 
 if ($need_pconv) {
-    print OUT "#define NEED_PALETTE_CONVERSIONS\n";
+    print $OUT "#define NEED_PALETTE_CONVERSIONS\n";
 }
 
 if ($need_fontutils) {
-    print OUT "#define NEED_FONT_UTILS\n";
+    print $OUT "#define NEED_FONT_UTILS\n";
 }
 
 if ($need_pango_compat) {
-    print OUT "#include <pango/pango-font.h>\n";
-    print OUT "#define NEED_PANGO_COMPAT\n";
+    print $OUT "#include <pango/pango-font.h>\n";
+    print $OUT "#define NEED_PANGO_COMPAT\n";
 }
 
 if ($need_audio) {
-    print OUT "#define NEED_AUDIO\n";
+    print $OUT "#define NEED_AUDIO\n";
 }
 
 if ($need_alpha_sort) {
-    print OUT "#define NEED_ALPHA_SORT\n";
+    print $OUT "#define NEED_ALPHA_SORT\n";
 }
 
 if ($need_fourcc) {
-    print OUT "#define NEED_FOURCC_COMPAT\n";
+    print $OUT "#define NEED_FOURCC_COMPAT\n";
 }
 
 if ($need_avstream) {
-    print OUT "#define NEED_AV_STREAM_TYPES\n";
+    print $OUT "#define NEED_AV_STREAM_TYPES\n";
 }
 
 if ($av_chanfmts) {
-    print OUT "#define USE_AVUTIL_CHANNEL_LAYOUTS\n";
+    print $OUT "#define USE_AVUTIL_CHANNEL_LAYOUTS\n";
 }
 
 if ($adv_palettes) {
-    print OUT "#define WEED_ADVANCED_PALETTES\n";
+    print $OUT "#define WEED_ADVANCED_PALETTES\n";
 }
 
-print OUT "#include <weed/weed-plugin-utils.h>\n";
+print $OUT "#include <weed/weed-plugin-utils.h>\n";
 
-print OUT "//////////////////////////////////////////////////////////////////\n\n";
+print $OUT "//////////////////////////////////////////////////////////////////\n\n";
 
 ## add includes
 
 foreach (@requires) {
     if ($_ =~ /^\</ || $_ =~ /^"/) {
-	print OUT "#include $_\n";
+	print $OUT "#include $_\n";
     }
 }
 
-print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n";
+print $OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n";
 
 if (@typedefs) {
     &add_typedefs;
@@ -538,204 +615,224 @@ if ($use_sdata) {
 }
 
 if ($num_params) {
-    print OUT "enum {\n";
+    print $OUT "enum {\n";
     
     foreach (@params) {
 	@pieces = split(/$delim/);
 	my $pname = @pieces[0];
-	print OUT "  P_$pname,\n";
+	print $OUT "  P_$pname,\n";
     }
 
-    print OUT "};\n";
+    print $OUT "};\n";
 }
 
 if (@static) {
     # add static funcs
-    print OUT "\n";
+    print $OUT "\n";
     &gen_array(0, 0, @static);
-    print OUT "\n/////////////////////////////////////////////////////////////////////////////\n";
+    print $OUT "\n/////////////////////////////////////////////////////////////////////////////\n";
 }
 
 # add init
 
 if ($has_init) {
-    print OUT "\nstatic weed_error_t $init_func(weed_plant_t *inst) {\n";
+    print $OUT "\nstatic weed_error_t $init_func(weed_plant_t *inst) {\n";
     ## TODO - variable palettes, variable sizes
     ## TODO - rows for planar palettes
     ## TODO - singleton check
 
-    &add_start(0);
+    if (@init) {
+	&add_start(0);
 
-    if ($num_params) {
-	&get_paramvals(1, 0);
-	&get_paramvals(0, 0);
+	if ($num_params) {
+	    &get_paramvals(1, 0);
+	    &get_paramvals(0, 0);
+	}
     }
 
-    ## gui only reinit
-    print OUT "  if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {\n";
-    
     if ($use_sdata) {
-	print OUT "    sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));\n";
-	print OUT "    if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;\n";
+	add_start2(0);
+
+	if (@init) {
+	    ## gui only reinit
+	    print $OUT ";\n  if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {\n";
+	    print $OUT "  sdata";
+	}
+	print $OUT " = (sdata_t *)weed_calloc(1, sizeof(sdata_t));\n";
+	if (@init) {
+	    print $OUT "  ";
+	}
+	print $OUT "  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;\n";
     }
 
     if ($need_random) {
-	print OUT "\n    weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,\n" .
-	    "        weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));\n";
+	print $OUT "\n    weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,\n" .
+	    "        weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));";
     }
 
     if (@init) {
 	## add main init code
-	print OUT "\n    do {\n";
+	print $OUT "\n    do {\n";
 	&gen_array(1, 6, @init);
-	print OUT "    } while (0);\n";
+	print $OUT "    } while (0);\n";
     }
 
-    print OUT "    weed_set_instance_data(inst, sdata);\n";
-    print OUT "  }\n";
-
     if ($use_sdata) {
-	print OUT "  else sdata = weed_get_instance_data(inst, sdata);\n";
+	if (@init) {
+	    print $OUT "  ";
+	}
+	print $OUT "  weed_set_instance_data(inst, sdata);\n";
+	if (@init) {
+	    print $OUT "  }\n";
+	    print $OUT "  else sdata = weed_get_instance_data(inst, sdata);\n";
+	}
     }
 
     ## add gui init code
+    if (@init) {
+	if ($num_params) {
+	    &clean_params;
+	}
+	
 
-    if ($num_params) {
-	&clean_params;
+	&add_end(0);
     }
-
-    &add_end(0);
-
-    print OUT "\n  return WEED_SUCCESS;\n";
-    print OUT "}\n\n";
+    print $OUT "  return WEED_SUCCESS;\n";
+    print $OUT "}\n\n";
 }
 
 if ($has_deinit) {
-    print OUT "\nstatic weed_error_t $deinit_func(weed_plant_t *inst) {\n";
+    print $OUT "\nstatic weed_error_t $deinit_func(weed_plant_t *inst) {\n";
 
     if ($use_sdata) {
-	print OUT "  sdata_t *sdata = weed_get_instance_data(inst, sdata);\n";
+	print $OUT "  sdata_t *sdata = weed_get_instance_data(inst, sdata);\n";
     }
 
     &gen_array(2, 2, @deinit);
     
     if ($use_sdata) {
 	my $has_destr = 0;
-	print OUT "\n  if (sdata) ";
+	print $OUT "  if (sdata) ";
 	foreach (@sdata) {
 	    @pieces = split(/$delim/);
 	    my $destr = @pieces[2];
 	    if ($destr) {
 		my $field = @pieces[1];
 		if (!$has_destr) {
-		    print OUT "{\n    ";
+		    print $OUT "{\n    ";
 		    $has_destr = 1;
 		}
-		print OUT "if (sdata->$field) $destr(sdata->$field);\n    ";
+		print $OUT "if (sdata->$field) $destr(sdata->$field);\n    ";
 	    }
 	}
-	print OUT "weed_free(sdata);\n";
+	print $OUT "weed_free(sdata);\n";
 	if ($has_destr) {
-	    print OUT "  }\n";
+	    print $OUT "  }\n";
 	}
-	print OUT "  weed_set_instance_data(inst, NULL);\n";
+	print $OUT "  weed_set_instance_data(inst, NULL);";
     }
 
-    print OUT "\n  return WEED_SUCCESS;\n";
-    print OUT "}\n\n";
+    print $OUT "\n  return WEED_SUCCESS;\n";
+    print $OUT "}\n\n";
 }
 
-print OUT "\nstatic weed_error_t $proc_func(weed_plant_t *inst, weed_timecode_t tc) {\n";
+if (@proc) {
+    print $OUT "\nstatic weed_error_t $proc_func(weed_plant_t *inst, weed_timecode_t tc) {\n";
 
-&add_start(1);
+    &add_start(1);
+    &add_start2(1);
 
-if ($num_params) {
-    &get_paramvals(1, 1);
-    &get_paramvals(0, 1);
-}
-
-my $xspcs = "";
-if ($use_sdata) {
-    $xspcs = "  ";
-}
-
-## add threading
-if ($may_thread && $num_outc == 1) {
-    print OUT "\n$xspcs  if (is_threading) {\n";
-    print OUT "$xspcs    offset = weed_channel_get_offset(out_chan);\n";
-    if ($num_inc == 1) {
-	print OUT "$xspcs    src += offset * irow;\n";
+    if ($num_params) {
+	&get_paramvals(1, 1);
+	&get_paramvals(0, 1);
     }
-    else {
-	print OUT "$xspcs    src0 += offset * irow0;\n";
-	print OUT "$xspcs    src1 += offset * irow1;\n";
+
+    my $xspcs = "";
+    if ($use_sdata) {
+	$xspcs = "  ";
     }
-    print OUT "$xspcs    dst += offset * orow;\n";
-    print OUT "$xspcs  }\n";
+
+    ## add threading
+    if ($may_thread && $num_outc == 1) {
+	print $OUT "\n$xspcs  if (is_threading) {\n";
+	print $OUT "$xspcs    offset = weed_channel_get_offset(out_chan);\n";
+	if ($num_inc == 1) {
+	    print $OUT "$xspcs    src += offset * irow;\n";
+	}
+	else {
+	    print $OUT "$xspcs    src0 += offset * irow0;\n";
+	    print $OUT "$xspcs    src1 += offset * irow1;\n";
+	}
+	print $OUT "$xspcs    dst += offset * orow;\n";
+	print $OUT "$xspcs  }\n";
+    }
+
+    print $OUT "\n";
+
+    print $OUT "$xspcs  do {\n";
+    my $indent = 4;
+    if ($use_sdata) {
+	$indent = 6;
+    }
+    &gen_array(3, $indent, @proc);
+    print $OUT "$xspcs  } while (0);\n";
+
+    if ($num_params) {
+	&clean_params;
+    }
+
+    &add_end(1);
+    if ($use_sdata) {
+	print $OUT "  }\n";
+    }
+    print $OUT "\n  return WEED_SUCCESS;\n";
+    print $OUT "}\n\n";
 }
-
-print OUT "\n";
-
-print OUT "$xspcs  do {\n";
-my $indent = 4;
-if ($use_sdata) {
-    $indent = 6;
-}
-&gen_array(3, $indent, @proc);
-print OUT "$xspcs  } while (0);\n";
-
-if ($num_params) {
-    &clean_params;
-}
-
-&add_end(1);
-if ($use_sdata) {
-    print OUT "  }\n";
-}
-print OUT "\n  return WEED_SUCCESS;\n";
-print OUT "}\n\n";
-
 
 ## add disp_func
 if (@disp) {
     &add_disp_func;
 }
 
-print OUT "\nWEED_SETUP_START(203, 202) {\n";
-print OUT "  weed_plant_t *host_info = weed_get_host_info(plugin_info);\n";
-print OUT "  weed_plant_t *filter_class;\n";
+print $OUT "\nWEED_SETUP_START(203, 202) {\n";
+print $OUT "  weed_plant_t *host_info = weed_get_host_info(plugin_info);\n";
+print $OUT "  weed_plant_t *filter_class;\n";
 
 if ($uid) {
-    print OUT "  uint64_t unique_id;\n";
+    print $OUT "  uint64_t unique_id;\n";
 }
 
 if (@pal_list) {
     ## setup palette_list
-    print OUT "  int palette_list[] = ";
+    print $OUT "  int palette_list[] = ";
+    if ($pal_list[0] =~ /^\$(.*)/) {
+	$pal_list[0] = $1;
+    }
     if ($pal_list[0] =~ /^ALL/) {
-	print OUT "$pal_list[0];\n";
+	print $OUT "$pal_list[0];\n";
     }
     else {
-	print OUT "{";
+	print $OUT "{";
 	foreach (@pal_list) {
 	    @pieces = split(/$delim/);
-	    foreach (@pieces) {
-		if ($_ =~ /^WEED_PALETTE_/) {
-		    print OUT $_ . ", ";
+	    foreach my $piece (@pieces) {
+		$piece =~ s/^\$//;
+		if ($piece =~ /^WEED_PALETTE_/) {
+		    print $OUT $piece . ", ";
 		}
 		else {
-		    print OUT "WEED_PALETTE_" . $_ . ", ";
+		    print $OUT "WEED_PALETTE_" . $piece . ", ";
 		}
 	    }
 	}
-	print OUT "WEED_PALETTE_END};\n";
+	print $OUT "WEED_PALETTE_END};\n";
     }
 }
 
 #setup in_chantmpls
 if ($num_inc) {
     my $cnum = 0;
-    print OUT "  weed_plant_t *$incs" . "[] = {\n      ";
+    print $OUT "  weed_plant_t *$incs" . "[] = {\n      ";
     foreach (@in_chans) {
 	$flagstr = "";
 	@pieces = split(/$delim/);
@@ -761,14 +858,14 @@ if ($num_inc) {
 	    }
 	    $cnum++;
 	}
-	print OUT "weed_channel_template_init(\"$chan_name\", ";
+	print $OUT "weed_channel_template_init(\"$chan_name\", ";
 	if ($flagstr) {
-	    print OUT substr($flagstr, 3);
+	    print $OUT substr($flagstr, 3);
 	}
 	else {
-	    print OUT "0";
+	    print $OUT "0";
 	}
-	print OUT "),\n      ";
+	print $OUT "),\n      ";
     }
     print OUT"NULL};\n";
 }
@@ -776,7 +873,7 @@ if ($num_inc) {
 #setup out_chantmpls
 if ($num_outc) {
     my $cnum = 0;
-    print OUT "  weed_plant_t *$outcs" . "[] = {\n      ";
+    print $OUT "  weed_plant_t *$outcs" . "[] = {\n      ";
     foreach (@out_chans) {
 	$flagstr = "";
 	@pieces = split(/$delim/);
@@ -801,14 +898,14 @@ if ($num_outc) {
 		push (@out_planar, $cnum);
 	    }
 	}
-	print OUT "weed_channel_template_init(\"$chan_name\", ";
+	print $OUT "weed_channel_template_init(\"$chan_name\", ";
 	if ($flagstr) {
-	    print OUT substr($flagstr, 3);
+	    print $OUT substr($flagstr, 3);
 	}
 	else {
-	    print OUT "0";
+	    print $OUT "0";
 	}
-	print OUT "),\n      ";
+	print $OUT "),\n      ";
 	$cnum++;
     }
     print OUT"NULL};\n";
@@ -816,7 +913,7 @@ if ($num_outc) {
 
 #setup in_paramtmpls
 if ($num_params) {
-    print OUT "  weed_plant_t *$inps" . "[] = {\n      ";
+    print $OUT "  weed_plant_t *$inps" . "[] = {\n      ";
     foreach (@params) {
 	@pieces = split(/$delim/);
 	my $pname = @pieces[0];
@@ -828,59 +925,59 @@ if ($num_params) {
 	    my $pmax = @pieces[5];
 	    my $dp = 0 + substr($type, 3);
 	    if (!$dp) {
-		print OUT "weed_integer_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
+		print $OUT "weed_integer_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
 	    }
 	    else {
-		print OUT "weed_float_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
+		print $OUT "weed_float_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
 	    }
 	}
 	elsif ($type eq "bool") {
 	    if (@pieces > 4) {
-		print OUT "weed_radio_init(\"$pname\", \"$plabel\", ";
+		print $OUT "weed_radio_init(\"$pname\", \"$plabel\", ";
 	    }
 	    else {
-		print OUT "weed_switch_init(\"$pname\", \"$plabel\", ";
+		print $OUT "weed_switch_init(\"$pname\", \"$plabel\", ";
 	    }
 
 	    if (@pieces[3] eq "1" || @pieces[3] eq "WEED_TRUE" || @pieces[3] eq "TRUE" || @pieces[3] eq "true") {
-		print OUT "WEED_TRUE";
+		print $OUT "WEED_TRUE";
 	    }
 	    else {
-		print OUT "WEED_FALSE";
+		print $OUT "WEED_FALSE";
 	    }
 	    if (@pieces > 4) {
-		print OUT ", @pieces[4]";
+		print $OUT ", @pieces[4]";
 	    }
-	    print OUT ")";
+	    print $OUT ")";
 	}
 	elsif ($type eq "string") {
 	    my $pdef = @pieces[3];
-	    print OUT "weed_text_init(\"$pname\", \"$plabel\", $pdef)";
+	    print $OUT "weed_text_init(\"$pname\", \"$plabel\", $pdef)";
 	}
 	elsif ($type eq "string_list") {
 	    my $pdef = @pieces[3];
-	    print OUT "weed_string_list_init(\"$pname\", \"$plabel\", $pde, $listnamef)";
+	    print $OUT "weed_string_list_init(\"$pname\", \"$plabel\", $pde, $listnamef)";
 	}
 	elsif ($type eq "colRGB24") {
 	    my $pred = @pieces[3];
 	    my $pgreen = @pieces[4];
 	    my $pblue = @pieces[5];
 	    if ($pred =~ /\./) {
-		print OUT "weed_colRGBd";
+		print $OUT "weed_colRGBd";
 	    }
 	    else {
-		print OUT "weed_colRGBi";
+		print $OUT "weed_colRGBi";
 	    }
-	    print OUT "_init(\"$pname\", \"$plabel\", $pred, $pgreen, $pblue)";
+	    print $OUT "_init(\"$pname\", \"$plabel\", $pred, $pgreen, $pblue)";
 	}
-	print OUT ",\n      ";
+	print $OUT ",\n      ";
     }
     print OUT"NULL};\n";
 }
 
 #setup out_paramtmpls
 if ($num_oparams) {
-    print OUT "  weed_plant_t *$outps" . "[] = {\n      ";
+    print $OUT "  weed_plant_t *$outps" . "[] = {\n      ";
     foreach (@oparams) {
 	@pieces = split(/$delim/);
 	my $pname = @pieces[0];
@@ -892,55 +989,55 @@ if ($num_oparams) {
 		if (@pieces > 3) {
 		    my $pmin = @pieces[3];
 		    my $pmax = @pieces[4];
-		    print OUT "weed_out_param_integer_init(\"$pname\", $pdef, $pmin, $pmax)";
+		    print $OUT "weed_out_param_integer_init(\"$pname\", $pdef, $pmin, $pmax)";
 		} else {
-		    print OUT "weed_out_param_integer_init_nominmax(\"$pname\", $pdef)";
+		    print $OUT "weed_out_param_integer_init_nominmax(\"$pname\", $pdef)";
 		}
 	    }
 	    else {
 		if (@pieces > 3) {
 		    my $pmin = @pieces[3];
 		    my $pmax = @pieces[4];
-		    print OUT "weed_out_param_float_init(\"$pname\", $pdef, $pmin, $pmax)";
+		    print $OUT "weed_out_param_float_init(\"$pname\", $pdef, $pmin, $pmax)";
 		} else {
-		    print OUT "weed_out_param_float_init_nominmax(\"$pname\", $pdef)";
+		    print $OUT "weed_out_param_float_init_nominmax(\"$pname\", $pdef)";
 		}
 	    }
 	}
 	elsif ($type eq "bool") {
-	    print OUT "weed_out_param_switch_init(\"$pname\",  ";
+	    print $OUT "weed_out_param_switch_init(\"$pname\",  ";
 	    if (!@pieces[3]) {
-		print OUT "WEED_FALSE";
+		print $OUT "WEED_FALSE";
 	    }
 	    else {
-		print OUT "WEED_TRUE";
+		print $OUT "WEED_TRUE";
 	    }
-	    print OUT ")";
+	    print $OUT ")";
 	}
 	elsif ($type eq "string") {
 	    my $pdef = @pieces[2];
-	    print OUT "weed_out_param_text_init(\"$pname\", $pdef)";
+	    print $OUT "weed_out_param_text_init(\"$pname\", $pdef)";
 	}
 	elsif ($type eq "colRGB24") {
 	    my $pred = @pieces[2];
 	    my $pgreen = @pieces[3];
 	    my $pblue = @pieces[4];
 	    if ($pred =~ /\./) {
-		print OUT "weed_out_param_colRGBd";
+		print $OUT "weed_out_param_colRGBd";
 	    }
 	    else {
-		print OUT "weed_out_param_colRGBi";
+		print $OUT "weed_out_param_colRGBi";
 	    }
-	    print OUT "_init(\"$pname\", $pred, $pgreen, $pblue)";
+	    print $OUT "_init(\"$pname\", $pred, $pgreen, $pblue)";
 	}
-	print OUT ",\n      ";
+	print $OUT ",\n      ";
     }
     print OUT"NULL};\n";
 }
 
 if (@param_window) {
-    print OUT "  weed_plant_t *gui;\n";
-    print OUT "  char *rfx_strings[] = {\n      ";
+    print $OUT "  weed_plant_t *gui;\n";
+    print $OUT "  char *rfx_strings[] = {\n      ";
     foreach (@param_window) {
 	@pieces = split(/$delim/);
 	if (@pieces[1] eq "display_val") {
@@ -948,9 +1045,9 @@ if (@param_window) {
 	    $nwlines--;
 	    next;
 	}
-	print OUT "\"" . $_ . "\",\n      ";
+	print $OUT "\"" . $_ . "\",\n      ";
     }
-    print OUT "NULL};\n";
+    print $OUT "NULL};\n";
 }
 
 if ($num_params) {
@@ -958,23 +1055,23 @@ if ($num_params) {
 }
 
 ## setup flags
-print OUT "  int filter_flags = ";
+print $OUT "  int filter_flags = ";
 
 if ($fflagstr) {
-    print OUT substr($fflagstr, 3);
+    print $OUT substr($fflagstr, 3);
 }
 else {
-    print OUT "0";
+    print $OUT "0";
 }
-print OUT ";\n";
+print $OUT ";\n";
 
-print OUT "\n";
+print $OUT "\n";
 
 ## set channel flags
 
 ## set param flags
 
-print OUT "  verbosity = weed_get_host_verbosity(host_info);\n";
+print $OUT "  verbosity = weed_get_host_verbosity(host_info);\n";
 
 my$addnl = 1;
 if ($num_params) {
@@ -982,7 +1079,7 @@ if ($num_params) {
 }
 
 if ($addnl) {
-    print OUT "\n";
+    print $OUT "\n";
 }
 
 my $pl = "NULL";
@@ -990,82 +1087,103 @@ if (@pal_list) {
     $pl = "palette_list";
 }
 
-print OUT "  filter_class = weed_filter_class_init(\"$filter_name\", \"$author\", $fver, filter_flags, " .
+print $OUT "  filter_class = weed_filter_class_init(\"$filter_name\", \"$author\", $fversion, filter_flags, " .
     "$pl,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n\n";
 
 if ($extra_authors) {
-    print OUT "  weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, \"@authors[1]\");\n";
+    print $OUT "  weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, \"@authors[1]\");\n";
 }
 
 ## set filter gui
 if (@param_window) {
-    print OUT "  gui = weed_filter_get_gui(filter_class);\n";
-    print OUT "  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, \"RFX\");\n";
-    print OUT "  weed_set_string_value(gui, \"layout_rfx_delim\", \"$delimit\");\n";
-    print OUT "  weed_set_string_array(gui, \"layout_rfx_strings\", " . $nwlines . ", rfx_strings);\n\n";
+    print $OUT "  gui = weed_filter_get_gui(filter_class);\n";
+    print $OUT "  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, \"RFX\");\n";
+    print $OUT "  weed_set_string_value(gui, \"layout_rfx_delim\", \"$delimit\");\n";
+    print $OUT "  weed_set_string_array(gui, \"layout_rfx_strings\", " . $nwlines . ", rfx_strings);\n\n";
 }
 
 if (@description) {
-    print OUT "  weed_filter_set_description(filter_class, \"@description[0]\"";
+    print $OUT "  weed_filter_set_description(filter_class, \"@description[0]\"";
     shift @description;
     foreach (@description) {
-	print OUT "\n\t\t\t\t\"$_\"";
+	print $OUT "\n\t\t\t\t\"$_\"";
     }
-    print OUT ");\n\n";
+    print $OUT ");\n\n";
 }
 
 ## set layout
 
-print OUT "  weed_plugin_info_add_filter_class(plugin_info, filter_class);\n";
+print $OUT "  weed_plugin_info_add_filter_class(plugin_info, filter_class);\n";
 
 if ($uid) {
-    print OUT "\n  if (!sscanf(_UNIQUE_ID_, \"0X%lX\", &unique_id) || !sscanf(_UNIQUE_ID_, \"0x%lx\", &unique_id)) {\n";
-    print OUT "    weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);\n";
-    print OUT "  }\n\n";
+    print $OUT "\n  if (!sscanf(_UNIQUE_ID_, \"0X%lX\", &unique_id) || !sscanf(_UNIQUE_ID_, \"0x%lx\", &unique_id)) {\n";
+    print $OUT "    weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);\n";
+    print $OUT "  }\n\n";
 }
 
 if (@setup) {
-    print OUT "  do {\n";
+    print $OUT "  do {\n";
     &gen_array(5, 4, @setup);
-    print OUT "  } while (0);\n\n";
+    print $OUT "  } while (0);\n\n";
 }
 
-print OUT "  weed_plugin_set_package_version(plugin_info, package_version);\n";
-print OUT "}\n";
-print OUT "WEED_SETUP_END;\n\n";
+print $OUT "  weed_plugin_set_package_version(plugin_info, package_version);\n";
+print $OUT "}\n";
+print $OUT "WEED_SETUP_END;\n\n";
 
 ## add desetup
 
 
 #######################################################3
 
+sub rc_load {
+    # return an array value from script file
+    my $scriptfile = shift;
+    my @fcache = ();
+
+    open my $IN, '<', $scriptfile
+	or die "Error:  - Unable to read values from script file, $scriptfile: $!";
+
+    while (<$IN>) {
+	my $zline = $_;
+	chomp $zline;
+	push (@fcache, $zline);
+    }
+
+    close $IN;
+    @fcache;
+}
+
+
 sub rc_read {
     # return an array value from script file
-    my ($key, $scriptfile) = @_;
-    my $string = "";
-    my (@result, $part);
+    my ($key, @fcache) = @_;
 
-    unless (defined(open IN, "$scriptfile")) {
-	print STDERR "Error:  - Unable to read values from script file,  $scriptfile\n";
-	exit 2;
-    }
-    $part = 0;
-    while (<IN>) {
-	next if ($_ =~ /#/);
-	if ($_ =~ /(.*)(<\/$key>)/) {
+    my $string = "";
+    my @result = ();
+
+    my $part = 0;
+    foreach (@fcache) {
+	my $zline = $_;
+	if ($_ =~ /#/) {
+	    if ($zline =~ /#/) {
+		next unless $zline =~ /\\#/;
+		$zline =~ s/\\#/#/;
+	    }
+	}
+	if ($zline =~ /(.*)(<\/$key>)/) {
 	    return @result;
 	}
-	if ($part == 1 || $_ =~ /(<$key>)(.*)/) {
+	if ($part == 1 || $zline =~ /(<$key>)(.*)/) {
 	    if ($part == 1) {
-		chomp($_);
-		$string = $_;
-		@result = (@result, $string);
+		push(@result, $zline);
 	    }
 	    else {
 		$part = 1;
 	    }}}
     return @result;
 }
+
 
 sub make_ver_hash {
     # turn a version like
@@ -1086,20 +1204,20 @@ sub subst_macro {
     my ($type, $nspaces, $line) = @_;
     if ($type == 3) {
 	## proc
-	if ($line eq "START_STATEFUL_UPDATE") {
-	    print OUT " " x $nspaces . "if (is_threading) {\n";
-	    print OUT " " x $nspaces . "  if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {\n";
-	    print OUT " " x $nspaces . "    return WEED_ERROR_FILTER_INVALID;\n"; 
-	    print OUT " " x $nspaces . "  }\n";
-	    print OUT " " x $nspaces . "  /* host should set this to WEED_FALSE for the first thread, then wait for WEED_TRUE */\n";
-	    print OUT " " x $nspaces . "  if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {\n";
+	if ($line =~ /\@START_STATEFUL_UPDATE\@/) {
+	    print $OUT " " x $nspaces . "if (is_threading) {\n";
+	    print $OUT " " x $nspaces . "  if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {\n";
+	    print $OUT " " x $nspaces . "    return WEED_ERROR_FILTER_INVALID;\n"; 
+	    print $OUT " " x $nspaces . "  }\n";
+	    print $OUT " " x $nspaces . "  /* host should set this to WEED_FALSE for the first thread, then wait for WEED_TRUE */\n";
+	    print $OUT " " x $nspaces . "  if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {\n";
 	    return 4;
 	}
-	if ($line eq "END_STATEFUL_UPDATE") {
+	if ($line =~ /\@END_STATEFUL_UPDATE\@/) {
 	    $nspaces -= 4;
-	    print OUT " " x $nspaces . "    weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);\n";
-	    print OUT " " x $nspaces . "  }\n";
-	    print OUT " " x $nspaces . "}\n";
+	    print $OUT " " x $nspaces . "    weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);\n";
+	    print $OUT " " x $nspaces . "  }\n";
+	    print $OUT " " x $nspaces . "}\n";
 	    return -4;
 	}
     }
@@ -1111,7 +1229,7 @@ sub gen_array {
     ## type: 0 = static, 1 = init, 2 = deinit, 3 = proc
     foreach (@array) {
 	if ($_ eq "") {
-	    print OUT "\n";
+	    print $OUT "\n";
 	    next;
 	}
 
@@ -1122,7 +1240,7 @@ sub gen_array {
 	#$line = &repl_syms($line);
 
 	if ($xspaces eq "none") {
-	    print OUT " " x $nspaces . $line . "\n";
+	    print $OUT " " x $nspaces . $line . "\n";
 	}
 	else {
 	    $nspaces += $xspaces;
@@ -1135,39 +1253,39 @@ sub add_start {
     
     if ($num_inc > 0) {
 	if ($num_inc == 1) {
-	    print OUT "  weed_plant_t *in_chan = weed_get_in_channel(inst, 0);\n";
+	    print $OUT "  weed_plant_t *in_chan = weed_get_in_channel(inst, 0);\n";
 	}
 	else {
-	    print OUT "  weed_plant_t **in_chans = weed_get_in_channels(inst, NULL);\n";
+	    print $OUT "  weed_plant_t **in_chans = weed_get_in_channels(inst, NULL);\n";
 	}
     }
 
     if ($num_outc > 0) {
 	if ($num_outc == 1) {
-	    print OUT "  weed_plant_t *out_chan = weed_get_out_channel(inst, 0);\n";
+	    print $OUT "  weed_plant_t *out_chan = weed_get_out_channel(inst, 0);\n";
 	}
 	else {
-	    print OUT "  weed_plant_t **out_chans = weed_get_out_channels(inst, NULL);\n";
+	    print $OUT "  weed_plant_t **out_chans = weed_get_out_channels(inst, NULL);\n";
 	}
     }
 
     if ($num_params) {
-	print OUT "  weed_plant_t **in_params = weed_get_in_params(inst, NULL);\n";
+	print $OUT "  weed_plant_t **in_params = weed_get_in_params(inst, NULL);\n";
     }
     if ($num_oparams) {
-	print OUT "  weed_plant_t **out_params = weed_get_out_params(inst, NULL);\n";
+	print $OUT "  weed_plant_t **out_params = weed_get_out_params(inst, NULL);\n";
     }
 
     if ($is_procfunc) {
 	if ($num_inc > 0) {
 	    if ($num_inc == 1) {
 		if (@in_planar) {
-		    print OUT "  unsigned char **srcp = " .
+		    print $OUT "  unsigned char **srcp = " .
 			"(unsigned char **)weed_channel_get_pixel_data_planar" .
 			"(in_chan, NULL);\n";
 		}
 		else {
-		    print OUT "  unsigned char *src = weed_channel_get_pixel_data(in_chan);\n";
+		    print $OUT "  unsigned char *src = weed_channel_get_pixel_data(in_chan);\n";
 		}
 	    }
 	    else {
@@ -1180,11 +1298,11 @@ sub add_start {
 			}
 		    }
 		    if (!$got_planar) {
-			print OUT "  unsigned char *src$i = weed_channel_get_pixel_data(" .
+			print $OUT "  unsigned char *src$i = weed_channel_get_pixel_data(" .
 			    "in_chans[$i]);\n";
 		    }
 		    else {
-			print OUT "  unsigned char **srcp$i = " .
+			print $OUT "  unsigned char **srcp$i = " .
 			    "(unsinged_char **)weed_channel_get_pixel_data_planar(" .
 			    "in_chans[$i]);\n";
 		    }
@@ -1195,12 +1313,12 @@ sub add_start {
 	if ($num_outc > 0) {
 	    if ($num_outc == 1) {
 		if (@out_planar) {
-		    print OUT "  unsigned char **dstp " .
+		    print $OUT "  unsigned char **dstp " .
 			"= (unsigned char **)weed_channel_get_pixel_data_planar" .
 			"(out_chan, NULL);\n";
 		}
 		else {
-		    print OUT "  unsigned char *dst = weed_channel_get_pixel_data(out_chan);\n";
+		    print $OUT "  unsigned char *dst = weed_channel_get_pixel_data(out_chan);\n";
 		}
 	    }
 	    else {
@@ -1213,11 +1331,11 @@ sub add_start {
 			}
 		    }
 		    if (!$got_planar) {
-			print OUT "  unsigned char *dst$i = weed_channel_get_pixel_data(" .
+			print $OUT "  unsigned char *dst$i = weed_channel_get_pixel_data(" .
 			    "out_chans[$i]);\n";
 		    }
 		    else {
-			print OUT "  unsigned char **dstp$i = " .
+			print $OUT "  unsigned char **dstp$i = " .
 			    "(unsigned char **)weed_channel_get_pixel_data_planar(" .
 			    "out_chans[$i], NULL);\n";
 		    }
@@ -1227,10 +1345,10 @@ sub add_start {
 
 	if ($can_inplace && $num_outc == 1) {
 	    if ($num_inc == 1) {
-		print OUT "  int inplace = (src == dst);\n";
+		print $OUT "  int inplace = (src == dst);\n";
 	    }
 	    elsif ($num_inc > 1) {
-		print OUT "  int inplace = (src0 == dst);\n";
+		print $OUT "  int inplace = (src0 == dst);\n";
 	    }
 	}
     }
@@ -1238,23 +1356,23 @@ sub add_start {
     if ($num_inc > 0) {
 	if ($num_inc == 1) {
 	    if (!$num_outc) {
-		print OUT "  int width = weed_channel_get_width(in_chan);\n";
-		print OUT "  int height = weed_channel_get_height(in_chan);\n";
+		print $OUT "  int width = weed_channel_get_width(in_chan);\n";
+		print $OUT "  int height = weed_channel_get_height(in_chan);\n";
 	    }
-	    print OUT "  const int pal = (const int)weed_channel_get_palette(in_chan);\n";
+	    print $OUT "  const int pal = (const int)weed_channel_get_palette(in_chan);\n";
 	    if (!@in_planar) {
-		print OUT "  int irow = weed_channel_get_stride(in_chan);\n";
+		print $OUT "  int irow = weed_channel_get_stride(in_chan);\n";
 	    }
 	    else {
-		print OUT "  int *irows = weed_channel_get_rowstrides(in_chan, NULL);\n";
+		print $OUT "  int *irows = weed_channel_get_rowstrides(in_chan, NULL);\n";
 	    }
 	}
 	else {
 	    if (!$num_outc) {
-		print OUT "  int width = weed_channel_get_width(in_chans[0]);\n";
-		print OUT "  int height = weed_channel_get_height(in_chans[0]);\n";
+		print $OUT "  int width = weed_channel_get_width(in_chans[0]);\n";
+		print $OUT "  int height = weed_channel_get_height(in_chans[0]);\n";
 	    }
-	    print OUT "  const int pal = (const int)weed_channel_get_palette(in_chans[0]);\n";
+	    print $OUT "  const int pal = (const int)weed_channel_get_palette(in_chans[0]);\n";
 	    for ($i = 0; $i < $num_inc; $i++) {
 		my $got_planar = 0;
 		foreach (@out_planar) {
@@ -1264,10 +1382,10 @@ sub add_start {
 		    }
 		}
 		if (!$got_planar) {
-		    print OUT "  int irow$i = weed_channel_get_stride(in_chans[$i]);\n";
+		    print $OUT "  int irow$i = weed_channel_get_stride(in_chans[$i]);\n";
 		}
 		else {
-		    print OUT "  int *irows$i = weed_channel_get_rowstrides(in_chans[$i], NULL);\n";
+		    print $OUT "  int *irows$i = weed_channel_get_rowstrides(in_chans[$i], NULL);\n";
 		}
 	    }
 	}
@@ -1277,33 +1395,33 @@ sub add_start {
 	if ($may_thread) {
 	    if ($num_outc == 1) {
 		if ($num_inc == 1) {
-		    print OUT "  int iheight = weed_channel_get_height(in_chan);\n";
+		    print $OUT "  int iheight = weed_channel_get_height(in_chan);\n";
 		}
 		else {
-		    print OUT "  int iheight = weed_channel_get_height(in_chans[0]);\n";
+		    print $OUT "  int iheight = weed_channel_get_height(in_chans[0]);\n";
 		}
-		print OUT "  int is_threading = weed_is_threading(inst);\n";
+		print $OUT "  int is_threading = weed_is_threading(inst);\n";
 	    }
-	    print OUT "  int offset = 0;\n";
+	    print $OUT "  int offset = 0;\n";
         }
     }
     if ($num_outc > 0) {
 	if ($num_outc == 1) {
-	    print OUT "  int width = weed_channel_get_width(out_chan);\n";
-	    print OUT "  int height = weed_channel_get_height(out_chan);\n";
+	    print $OUT "  int width = weed_channel_get_width(out_chan);\n";
+	    print $OUT "  int height = weed_channel_get_height(out_chan);\n";
 	    if (@out_planar) {
-		print OUT "  int *orows = weed_channel_get_rowstrides(out_chan, NULL);\n";
+		print $OUT "  int *orows = weed_channel_get_rowstrides(out_chan, NULL);\n";
 	    }
 	    else {
-		print OUT "  int orow = weed_channel_get_stride(out_chan);\n";
+		print $OUT "  int orow = weed_channel_get_stride(out_chan);\n";
 	    }
 	    if (!$num_inc) {
-		print OUT "  const int pal = (const int)weed_channel_get_palette(out_chan);\n";
+		print $OUT "  const int pal = (const int)weed_channel_get_palette(out_chan);\n";
 	    }
 	}
 	else {
-	    print OUT "  int width = weed_channel_get_width(out_chans[0]);\n";
-	    print OUT "  int height = weed_channel_get_height(out_chans[0]);\n";
+	    print $OUT "  int width = weed_channel_get_width(out_chans[0]);\n";
+	    print $OUT "  int height = weed_channel_get_height(out_chans[0]);\n";
 	    for (my $i = 0; $i < $num_inc; $i++) {
 		my $got_planar = 0;
 		foreach (@out_planar) {
@@ -1313,29 +1431,30 @@ sub add_start {
 		    }
 		}
 		if (!$got_planar) {
-		    print OUT "  int orow$i = weed_channel_get_stride(out_chans[$i]);\n";
+		    print $OUT "  int orow$i = weed_channel_get_stride(out_chans[$i]);\n";
 		}
 		else {
-		    print OUT "  int orows$i = weed_channel_get_rowstrides(out_chans[$i], NULL);\n";
+		    print $OUT "  int orows$i = weed_channel_get_rowstrides(out_chans[$i], NULL);\n";
 		}
 	    }
 	    if (!$num_inc) {
-		print OUT "  const int pal = (const int)weed_channel_get_palette(out_chans[0]);\n";
+		print $OUT "  const int pal = (const int)weed_channel_get_palette(out_chans[0]);\n";
 	    }
 	}
     }
     if ($need_putils && ($num_inc || $num_outc)) {
-	print OUT "  const int psize = (const int)pixel_size((int)pal);\n";
+	print $OUT "  const int psize = (const int)pixel_size((int)pal);\n";
     }
+}
+
+sub add_start2 {
+    my $is_procfunc = shift;
     if ($use_sdata) {
-	print OUT "  sdata_t *sdata";
+	print $OUT "  sdata_t *sdata";
 	if ($is_procfunc) {
-	    print OUT " = weed_get_instance_data(inst, sdata);\n";
-	    print OUT "  if (!sdata) return WEED_ERROR_REINIT_NEEDED;\n";
-	    print OUT "  else {\n";
-	}
-	else {
-	    print OUT ";\n";
+	    print $OUT " = weed_get_instance_data(inst, sdata);\n";
+	    print $OUT "  if (!sdata) return WEED_ERROR_REINIT_NEEDED;\n";
+	    print $OUT "  else {\n";
 	}
     }
 }
@@ -1345,33 +1464,33 @@ sub add_end {
     if ($is_procfunc) {
 	if (@in_planar) {
 	    if (@in_planar == 1) {
-		print OUT "  weed_free(srcp);\n";
+		print $OUT "  weed_free(srcp);\n";
 	    }
 	    else {
 		foreach (@in_planar) {
-		    print OUT "  weed_free(srcp$_);\n";
+		    print $OUT "  weed_free(srcp$_);\n";
 		}
 	    }
 	}
 	if (@out_planar) {
 	    if (@out_planar == 1) {
-		print OUT "  weed_free(dstp);\n";
+		print $OUT "  weed_free(dstp);\n";
 	    }
 	    else {
 		foreach (@in_planar) {
-		    print OUT "  weed_free(dstp$_);\n";
+		    print $OUT "  weed_free(dstp$_);\n";
 		}
 	    }
 	}
     }
     if ($num_oparams) {
-	print OUT "  weed_free(out_params);\n";
+	print $OUT "  weed_free(out_params);\n";
     }
     if ($num_inc > 1) {
-	print OUT "  weed_free(in_chans);\n";
+	print $OUT "  weed_free(in_chans);\n";
     }
     if ($num_outc > 1) {
-	print OUT "  weed_free(out_chans);\n";
+	print $OUT "  weed_free(out_chans);\n";
     }
 }
 
@@ -1380,28 +1499,28 @@ sub add_typedefs {
 	@pieces = split(/$delim/, $_);
 	my $p0 = @pieces[0];
 	my $p1 = @pieces[1];
-	print OUT "typedef $p0 $p1;\n";
+	print $OUT "typedef $p0 $p1;\n";
     }
 }
 
 sub add_sdata {
-    print OUT "\ntypedef struct {\n";
+    print $OUT "\ntypedef struct {\n";
     foreach (@sdata) {
 	@pieces = split(/$delim/);
 	my $spacer = " ";
 	if (@pieces[0] =~ /\*$/) {
 	    $spacer = "";
 	}
-	print OUT "  @pieces[0]$spacer@pieces[1];\n";
+	print $OUT "  @pieces[0]$spacer@pieces[1];\n";
     }
-    print OUT "} sdata_t;\n\n";
+    print $OUT "} sdata_t;\n\n";
 }
 
 sub get_paramvals {
     ## TODO - handle multi valued params
     my ($checkonly, $isproc) = @_;
     if (!$checkonly && !$isproc) {
-	print OUT "\n";
+	print $OUT "\n";
     }
     my $spcs = "";
     if ($isproc && $use_sdata) {
@@ -1417,34 +1536,34 @@ sub get_paramvals {
 		if (!$has_darray) {
 		    $has_darray = 1;
 		    if ($checkonly) {
-			print OUT "$spcs  double *darray;\n";
+			print $OUT "$spcs  double *darray;\n";
 		    }
 		}
 		if ($checkonly) {
-		    print OUT "$spcs  double $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n";
+		    print $OUT "$spcs  double $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n";
 		}
 		else {
-		    print OUT "$spcs  darray = weed_param_get_array_double(in_params[P_$pname], NULL);\n";
-		    print OUT "$spcs  $pname" . "_red = darray[0];\n";
-		    print OUT "$spcs  $pname" . "_green = darray[1];\n";
-		    print OUT "$spcs  $pname" . "_blue = darray[2];\n";
+		    print $OUT "$spcs  darray = weed_param_get_array_double(in_params[P_$pname], NULL);\n";
+		    print $OUT "$spcs  $pname" . "_red = darray[0];\n";
+		    print $OUT "$spcs  $pname" . "_green = darray[1];\n";
+		    print $OUT "$spcs  $pname" . "_blue = darray[2];\n";
 		}
 	    }
 	    else {
 		if (!$has_iarray) {
 		    $has_iarray = 1;
 		    if ($checkonly) {
-			print OUT "$spcs  int *iarray;\n";
+			print $OUT "$spcs  int *iarray;\n";
 		    }
 		}
 		if ($checkonly) {
-		    print OUT "$spcs  int $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n";
+		    print $OUT "$spcs  int $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n";
 		}
 		else {
-		    print OUT "$spcs  iarray = weed_param_get_array_int(in_params[P_$pname], NULL);\n";
-		    print OUT "$spcs  $pname" . "_red = iarray[0];\n";
-		    print OUT "$spcs  $pname" . "_green = iarray[1];\n";
-		    print OUT "$spcs  $pname" . "_blue = iarray[2];\n";
+		    print $OUT "$spcs  iarray = weed_param_get_array_int(in_params[P_$pname], NULL);\n";
+		    print $OUT "$spcs  $pname" . "_red = iarray[0];\n";
+		    print $OUT "$spcs  $pname" . "_green = iarray[1];\n";
+		    print $OUT "$spcs  $pname" . "_blue = iarray[2];\n";
 		}
 	    }
 	}
@@ -1452,32 +1571,32 @@ sub get_paramvals {
 	if ($type =~ /^num/) {
 	    my $dp = 0 + substr($type, 3);
 	    if (!$dp) {
-		print OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
+		print $OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
 	    }
 	    else {
-		print OUT "$spcs  double $pname = weed_param_get_value_double(in_params[P_$pname]);\n";
+		print $OUT "$spcs  double $pname = weed_param_get_value_double(in_params[P_$pname]);\n";
 	    }
 	}
 	elsif ($type eq "string_list") {
-	    print OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
+	    print $OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
 	}
 	elsif ($type eq "bool") {
-	    print OUT "$spcs  int $pname = weed_param_get_value_boolean(in_params[P_$pname]);\n";
+	    print $OUT "$spcs  int $pname = weed_param_get_value_boolean(in_params[P_$pname]);\n";
 	}
 	elsif ($type eq "string") {
-	    print OUT "$spcs  int $pname = weed_param_get_value_string(in_params[P_$pname]);\n";
+	    print $OUT "$spcs  int $pname = weed_param_get_value_string(in_params[P_$pname]);\n";
 	}
     }
     if (!$checkonly) {
 	if ($has_iarray) {
-	    print OUT "$spcs  weed_free(iarray);\n";
+	    print $OUT "$spcs  weed_free(iarray);\n";
 	}
 	if ($has_darray) {
-	    print OUT "$spcs  weed_free(darray);\n";
+	    print $OUT "$spcs  weed_free(darray);\n";
 	}
-	print OUT "$spcs  weed_free(in_params);\n";
+	print $OUT "$spcs  weed_free(in_params);\n";
 	if (!$isproc) {
-	    print OUT "\n";
+	    print $OUT "\n";
 	}
     }
 }
@@ -1490,7 +1609,7 @@ sub clean_params {
 	my $pname = @pieces[0];
 	my $type = @pieces[2];
 	if ($type eq "string") {
-	    print OUT "  weed_free($pname);\n";
+	    print $OUT "  weed_free($pname);\n";
 	}
     }
 }
@@ -1528,23 +1647,23 @@ sub add_pgui {
 	    $dp = 0 + substr($type, 3);
 	    if ($dp || $pstep || $mydispfunc) {
 		if ($checkonly) {
-		    print OUT "  weed_plant_t *pgui;\n";
+		    print $OUT "  weed_plant_t *pgui;\n";
 		    return;
 		}
-		print OUT "\n  pgui = weed_paramtmpl_get_gui(in_paramtmpls[P_$pname]);\n";
+		print $OUT "\n  pgui = weed_paramtmpl_get_gui(in_paramtmpls[P_$pname]);\n";
 	    }
 	    if ($dp) {
-		print OUT "  weed_set_int_value(pgui, WEED_LEAF_DECIMALS, $dp);\n";
+		print $OUT "  weed_set_int_value(pgui, WEED_LEAF_DECIMALS, $dp);\n";
 		if ($pstep) {
-		    print OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n";
+		    print $OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n";
 		}
 	    }
 	    elsif ($pstep) {
-		print OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n";
+		print $OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n";
 	    }
 	}
 	if ($mydispfunc) {
-	    print OUT "  weed_set_funcptr_value(pgui, WEED_LEAF_DISPLAY_VALUE_FUNC, " .
+	    print $OUT "  weed_set_funcptr_value(pgui, WEED_LEAF_DISPLAY_VALUE_FUNC, " .
 		"(weed_funcptr_t)$plugin_name" . "_disp_$mydispfunc);\n";
 	}
 	if ($dp || $pstep || $mydispfunc) {
@@ -1557,10 +1676,10 @@ sub add_pgui {
 
 sub disp_fn_end {
     my $wtype = shift;
-    print OUT "    }\n";
-    print OUT "    return weed_set_$wtype" . "_value(weed_param_get_gui(param), " .
+    print $OUT "    }\n";
+    print $OUT "    return weed_set_$wtype" . "_value(weed_param_get_gui(param), " .
 	"WEED_LEAF_DISPLAY_VALUE, val);\n";
-    print OUT "  }\n";
+    print $OUT "  }\n";
 }
 
 
@@ -1578,17 +1697,17 @@ sub add_disp_func {
 	    my $inv_fwd = @pieces[2];
 	    $inv_rev = @pieces[3];
 	    $wtype = $vtype;
-	    print OUT "\nstatic weed_error_t $plugin_name" .
+	    print $OUT "\nstatic weed_error_t $plugin_name" .
 		"_disp_$fname(weed_plant_t *inst, weed_plant_t *param, " .
 		"int inverse) {\n";
-	    print OUT "  if (!weed_plant_has_leaf(param, WEED_LEAF_VALUE)) " .
+	    print $OUT "  if (!weed_plant_has_leaf(param, WEED_LEAF_VALUE)) " .
 		"return WEED_ERROR_NOSUCH_LEAF;\n";
-	    print OUT "  else {\n";
+	    print $OUT "  else {\n";
 	    ## get val
-	    print OUT "    $vtype val = weed_param_get_value_$wtype(param);\n";
-	    print OUT "    if (inverse == WEED_FALSE) {\n";
+	    print $OUT "    $vtype val = weed_param_get_value_$wtype(param);\n";
+	    print $OUT "    if (inverse == WEED_FALSE) {\n";
 	    if ($inv_fwd) {
-		print OUT "      if ($inv_fwd) return WEED_ERROR_NOT_READY;\n";
+		print $OUT "      if ($inv_fwd) return WEED_ERROR_NOT_READY;\n";
 	    }
 	    $stage = 1;
 	    next;
@@ -1596,14 +1715,14 @@ sub add_disp_func {
 	if ($stage == 1) {
 	    if ($_ eq "~") {
 		$stage = 2;
-		print OUT "    }\n";
-		print OUT "    else {\n";
+		print $OUT "    }\n";
+		print $OUT "    else {\n";
 		if ($inv_rev) {
-		    print OUT "      if ($inv_rev) return WEED_ERROR_NOT_READY;\n";
+		    print $OUT "      if ($inv_rev) return WEED_ERROR_NOT_READY;\n";
 		}
 		next;
 	    }
-	    print OUT "      $_\n";
+	    print $OUT "      $_\n";
 	    next;
 	}
 	if ($_ eq "~") {
@@ -1611,10 +1730,10 @@ sub add_disp_func {
 	    $stage = 0;
 	    next;
 	}
-	print OUT "      $_\n";
+	print $OUT "      $_\n";
     }
     &disp_fn_end($wtype);
-    print OUT "}\n\n";
+    print $OUT "}\n\n";
 }
 
 

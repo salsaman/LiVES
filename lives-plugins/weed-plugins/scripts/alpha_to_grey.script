@@ -1,0 +1,67 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+alpha_to_grey|alpha to grey
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<unique_id>
+0XC54D97FB4F78A3C8
+</unique_id>
+
+<description>
+Sets the Red, Green and Blue values of each output pixel equal to the alpha value of the input.
+</description>
+
+<requires>
+putils
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_list>
+RGBA32|BGRA32|ARGB32
+</palette_list>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<process>
+int alpha = 3, offset = 0;
+uint8_t aval;
+
+if (pal == WEED_PALETTE_ARGB32) {
+  alpha = 0;
+  offset = 1;
+}
+
+width *= 4;
+
+for (int j = 0; j < height; j++) {
+  for (int i = 0; i < width; i += 4) {
+    aval = src[irow * j + i + alpha];
+    weed_memset(&dst[orow * j + i + offset], aval, 3);
+    dst[orow * j + i + alpha] = 255;
+  }
+}
+</process>

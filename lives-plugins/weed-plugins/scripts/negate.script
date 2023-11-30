@@ -1,0 +1,64 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+negate
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<unique_id>
+0XA6B186E9FD04FE51
+</unique_id>
+
+<description>
+Inverts the Red, Green and Blue values of each pixel.
+</description>
+
+<requires>
+putils
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_list>
+ALL_RGB_PALETTES
+</palette_list>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<process>
+width *= psize;
+for (int j = 0; j < height; j++) {
+  for (int i = 0; i < width; i += 3) {
+    if (pal == WEED_PALETTE_ARGB32) {
+      dst[orow * j + i] = src[irow * j + i];
+      i++;
+    }
+    for (int k = 0; k < 3; k++) dst[orow * j + i + k] = 0xFF ^ src[irow * j + i + k];
+    if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32) {
+      dst[orow * j + i + 3] = src[irow * j + i + 3];
+      i++;
+    }
+  }
+}
+</process>

@@ -1,0 +1,133 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+rotozoom
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+effecTV
+salsaman
+</author>
+
+<unique_id>
+0XB54A97FB2F71A6C8
+</unique_id>
+
+<description>
+Rotate and zoom images
+</description>
+
+<requires>
+<math.h>
+putils
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+stateful
+</filter_flags>
+
+<palette_list>
+ALL_PACKED_PALETTES_PLUS
+</palette_list>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0
+</out_chans>
+
+<params>
+zoom|_Zoom value|num0|128|0|255|
+autozoom|_Auto zoom|bool|WEED_TRUE|
+</params>
+
+<sdata>
+int path, zpath
+</sdata>
+
+<static>
+static int roto[256];
+static int roto2[256];
+
+/////////////////////////////////////////////////////////////
+
+static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsigned char *dst,
+                      int video_width, int irowstride, int orowstride, int video_height,
+                      int dheight, int offset, int psize) {
+  int x, y, xd, yd, a, b, sx = 0, sy = 0;
+  int origin, i, j;
+
+  xd = (stepx * zoom) >> 12;
+  yd = (stepy * zoom) >> 12;
+
+  sx = -yd * offset;
+  sy = xd * offset;
+
+  /* Stepping across and down the screen, each screen row has a
+     starting coordinate in the texture: (sx, sy).  As each screen
+     row is traversed, the current texture coordinate (x, y) is
+     modified by (xd, yd), which are (sin(rot), cos(rot)) multiplied
+     by the current zoom factor.  For each vertical step, (xd, yd)
+     is rotated 90 degrees, to become (-yd, xd).
+
+     More fun can be had by playing around with x, y, xd, and yd as
+     you move about the image.
+  */
+  for (j = 0; j < dheight; j++) {
+    x = sx;
+    y = sy;
+    for (i = 0; i < video_width; i++) {
+      a = ((x >> 12 & 255) * video_width) >> 8;
+      b = ((y >> 12 & 255) * video_height) >> 8;
+      origin = b * irowstride + a * psize;
+      weed_memcpy(&dst[orowstride * j + i * psize], &src[origin], psize);
+      x += xd;
+      y += yd;
+    }
+    sx -= yd;
+    sy += xd;
+  }
+}
+</static>
+
+<init>
+sdata->path = sdata->zpath = 0;
+</init>
+
+<process>
+START_STATEFUL_UPDATE
+if (autozoom == WEED_TRUE) {
+  sdata->zpath = (sdata->zpath + 1) & 255;
+} else {
+  sdata->zpath = zoom;
+}
+sdata->path = (sdata->path - 1) & 255;
+END_STATEFUL_UPDATE
+
+zoom = roto2[sdata->zpath];
+draw_tile(roto[sdata->path], roto[(sdata->path + 128) & 0xFF],
+  zoom, src - offset * irow, dst, width, irow, orow, iheight, height, offset, psize);
+</process>
+
+<setup>
+// static data for all instances
+for (int i = 0; i < 256; i++) {
+  float rad = (float)i * 1.41176 * 0.0174532;
+  float c = sin(rad);
+  roto[i] = (c + 0.8) * 4096.0;
+  roto2[i] = (2.0 * c) * 4096.0;
+}
+</setup>

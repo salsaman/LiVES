@@ -1,0 +1,140 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+shift
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<requires>
+putils
+</requires>
+
+<unique_id>
+0X50D8DEA3BA293FD4
+</unique_id>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_list>
+ALL_PACKED_PALETTES
+</palette_list>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0
+</out_chans>
+
+<params>
+xshift|_X shift (ratio)|num2|0.|-1.|1.|
+yshift|_Y shift (ratio)|num2|0.|-1.|1.|
+transbg|_Transparent edges|bool|WEED_FALSE|
+</params>
+
+<static>
+static void add_bg_pixel(unsigned char *ptr, int pal, int clamping, int trans) {
+  if (trans == WEED_TRUE) trans = 0;
+  else trans = 255;
+
+  switch (pal) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_BGR24:
+    weed_memset(ptr, 0, 3);
+    break;
+
+  case WEED_PALETTE_RGBA32:
+  case WEED_PALETTE_BGRA32:
+    weed_memset(ptr, 0, 3);
+    ptr[3] = trans;
+    break;
+
+  case WEED_PALETTE_ARGB32:
+    weed_memset(ptr + 1, 0, 3);
+    ptr[0] = trans;
+    break;
+
+  case WEED_PALETTE_YUV888:
+    if (clamping != WEED_YUV_CLAMPING_CLAMPED) ptr[0] = 0;
+    else ptr[0] = 16;
+    ptr[1] = ptr[2] = 128;
+    break;
+
+  case WEED_PALETTE_YUVA8888:
+    if (clamping != WEED_YUV_CLAMPING_CLAMPED) ptr[0] = 0;
+    else ptr[0] = 16;
+    ptr[1] = ptr[2] = 128;
+    ptr[3] = trans;
+    break;
+  }
+}
+
+
+static void add_bg_row(unsigned char *ptr, int xwidth, int pal, int clamping, int trans) {
+  int psize = pixel_size(pal);
+  for (int i = 0; i < xwidth; i += psize) add_bg_pixel(ptr + i, pal, clamping, trans);
+}
+</static>
+
+<process>
+int sx, sy, ypos;
+int istart, iend;
+int send = irow * iheight;
+int clamping = WEED_YUV_CLAMPING_CLAMPED;
+int x = (int)(xshift * (double)width + .5);
+int y = (int)(yshift * (double)iheight + .5) * irow;
+int offset = weed_channel_get_offset(out_chan);
+
+if (weed_palette_is_yuv(pal)) clamping = weed_channel_get_yuv_clamping(in_chan);
+x *= psize;
+width *= psize;
+
+if (x < 0) {
+  // shift left
+  istart = 0;
+  iend = width + x;
+  if (iend < 0) iend = 0;
+} else {
+  // shift right
+  if (x >= width) x = width;
+  istart = x;
+  iend = width;
+}
+
+for (int i = 0; i < height; i++) {
+  ypos = i * irow;
+  sy = ypos - y;
+
+  if (sy < 0 || sy >= send) {
+    add_bg_row(dst, width, pal, clamping, transbg);
+    continue;
+  }
+
+  if (x > 0) {
+    add_bg_row(dst, x, pal, clamping, transbg);
+    sx = 0;
+  } else sx = -x;
+
+  if (istart < iend) {
+    weed_memcpy(&dst[istart], src + sy + sx, iend - istart);
+  }
+
+  if (iend < width) add_bg_row(&dst[iend], width - iend, pal, clamping, transbg);
+}
+</process>

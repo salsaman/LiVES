@@ -2182,7 +2182,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
       d_print_debug("got value %d\n", osync_idx);
 
       if (osync_idx == sync_idx) {
-        gotmatch = TRUE; 
+        gotmatch = TRUE;
         d_print_debug("syncwith: %p says: idx matches !\n", self);
       } else d_print_debug("syncwith: %p says:  no idx match, will wait\n", self);
 
@@ -2203,12 +2203,12 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         if (osync_idx == sync_idx) {
           gotmatch = TRUE;
           d_print_debug("syncwith: %p says: recheched sync idx, "
-			"now we DID get match\n", self);
+                        "now we DID get match\n", self);
         }
       }
 
       if (gotmatch) {
-	boolean resrq = FALSE;
+        boolean resrq = FALSE;
         // we got a match, then we wait for other to either pause / wait,
         // or to reset its sync-idx. While waitng we reset our sync_idx, so
         // if th eother notices this it can also reset its sync_idx
@@ -2223,7 +2223,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
             lives_proc_thread_set_sync_idx(sync_idx);
             _lives_proc_thread_request_resume(lpt, TRUE);
             d_print_debug("syncwith: %p says: waiting for other to reset sync_idx\n", self);
-	    resrq = TRUE;
+            resrq = TRUE;
           }
           pthread_mutex_unlock(opause_mutex);
           lives_microsleep;
@@ -2246,7 +2246,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
           goto synced;
         }
         d_print_debug("syncwith: %p says: no match after resuming "
-		      "- wrong thread woke us ?\n", self);
+                      "- wrong thread woke us ?\n", self);
         lives_proc_thread_set_sync_idx(0);
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);

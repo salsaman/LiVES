@@ -1031,13 +1031,12 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
     key--;
     new_rte = GU641 << key;
 
-    if (!rte_key_is_enabled(key, FALSE)) { 
+    if (!rte_key_is_enabled(key, TRUE)) {
       if (!rte_key_real_enabled(key)) return res;
       // switch is ON
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
         if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
-	    g_print("SOFT ON\n");
           weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
           if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
             record_filter_init(key);
@@ -1105,7 +1104,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
           int inc_count = enabled_in_channels(inst, FALSE);
           if (inc_count == 1) {
             weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, TRUE);
-	    g_print("SOFT OFF\n");
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
@@ -1169,8 +1167,14 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
 
 static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
   //
-  uint64_t new_rte = GU641 << key;
+  uint64_t new_rte;
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
+
+  if (key > 0) {
+    new_rte = GU641 << (key - 1);
+    mainw->rte_real ^= new_rte;
+  }
+
   if (LIVES_IS_PLAYING) {
     boolean is_auto = THREADVAR(fx_is_auto);
     if (key)
@@ -1181,7 +1185,6 @@ static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
                                       HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
                                       _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, 0, is_auto);
-    mainw->rte_real ^= new_rte;
     return LIVES_RESULT_SUCCESS;
   }
 
@@ -1355,10 +1358,9 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits
   if (ign_soft_deinits) return enabled;
   else {
     weed_plant_t *inst;
-    enabled = TRUE;
     filter_mutex_lock(key);
     if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = FALSE;
+      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = TRUE;
       weed_instance_unref(inst);
     }
     filter_mutex_unlock(key);

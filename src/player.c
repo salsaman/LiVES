@@ -1153,8 +1153,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
     /* so the plan runner should have started loading them already */
     /* the reamining steps will be run, applying all fx instances until we are left with the single output layer */
     lives_millisleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
-				 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
-				 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
+                                 || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
+                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
 
     osc_sync_msg = osc_make_sync_msg(mainw->clip_index, mainw->plan_cycle->frame_idx,
                                      (double)mainw->currticks / TICKS_PER_SECOND_DBL,
@@ -2664,7 +2664,7 @@ switch_point:
       sfile->sync_delta = 0;
 
       if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
-	avsync_force();
+        avsync_force();
 
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -2894,8 +2894,8 @@ switch_point:
         if (AUD_SRC_EXTERNAL) sfile->last_req_frame = sfile->last_frameno;
 
         drop_off = TRUE;
-	if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
-	  mainw->scratch = SCRATCH_JUMP_NORESYNC;
+        if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+          mainw->scratch = SCRATCH_JUMP_NORESYNC;
         else mainw->scratch = SCRATCH_JUMP;
       } else sfile->fps_scale = 1.;
 

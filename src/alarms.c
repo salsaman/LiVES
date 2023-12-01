@@ -40,7 +40,7 @@ int64_t get_ticker_count(void) {
   int64_t overs;
   thrd_signal_unblock(LIVES_TICKER_SIG);
   lives_millisleep_until_nonzero((overs = app_timers[heartbeat_timer].overs));
-  app_timers[heartbeat_timer].overs = 0;  
+  app_timers[heartbeat_timer].overs = 0;
   thrd_signal_block(LIVES_TICKER_SIG);
   return overs;
 }
@@ -96,8 +96,7 @@ static int lives_timer_set_delay(lives_timer_t *xtimer, uint64_t delay, boolean 
   if (rpt) {
     xtimer->its.it_interval.tv_sec = delay / ONE_BILLION;
     xtimer->its.it_interval.tv_nsec = delay - xtimer->its.it_interval.tv_sec * ONE_BILLION;
-  }
-  else xtimer->its.it_interval.tv_sec = xtimer->its.it_interval.tv_nsec = 0;
+  } else xtimer->its.it_interval.tv_sec = xtimer->its.it_interval.tv_nsec = 0;
 
   xtimer->delay = delay;
   xtimer->triggered = 0;
@@ -119,8 +118,8 @@ void timer_handler(int sig, siginfo_t *si, void *uc) {
     if (timer->flags & TIMER_FLAG_GET_TIMING) {
       timer->ended = lives_get_session_ticks();
       if (timer->delay) timer->ratio =
-			  (double)(timer->ended - timer->started)
-			  / (double)timer->delay;
+          (double)(timer->ended - timer->started)
+          / (double)timer->delay;
     }
 #endif
   }
@@ -229,8 +228,8 @@ static void _lives_alarm_wait(lives_timer_t *timer) {
       timer->timeout.tv_nsec = timer->its.it_value.tv_nsec;
       do {
         sigtimedwait(&sigset, &si, &timer->timeout);
-	xtimer = si.si_value.sival_ptr;
-	if (xtimer) xtimer->triggered = 1;
+        xtimer = si.si_value.sival_ptr;
+        if (xtimer) xtimer->triggered = 1;
       } while (!timer->triggered);
 
 #if _POSIX_TIMERS

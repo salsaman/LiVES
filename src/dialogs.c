@@ -3599,7 +3599,7 @@ static void _thdlg_auto_spin(void) {
       lives_nanosleep(100000);
       //g_print("ah %d", lives_proc_thread_get_cancel_requested(self));
     }
-  } 
+  }
   THREADVAR(perm_hook_hints) = 0;
   if (lives_proc_thread_get_cancel_requested(self))
     lives_proc_thread_cancel(self);

@@ -49,11 +49,12 @@ ALL_RGB_PALETTES
 </palette_list>
 
 <params>
-r|_Red|switch|
-g
-b
-fmin
-fmax
+r|_Red|bool|1|
+g|_Green|bool|1|
+b|_Blue|bool|1|
+fmin|Float Mi_n|num1|0.|-1000000.|1000000.|1.|
+fmax|Float Ma_x|num1|1.|-1000000.|1000000.|1.|
+</params>
 
 <in_chans>
 in_channel0

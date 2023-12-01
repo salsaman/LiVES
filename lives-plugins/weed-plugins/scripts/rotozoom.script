@@ -108,14 +108,14 @@ sdata->path = sdata->zpath = 0;
 </init>
 
 <process>
-START_STATEFUL_UPDATE
+@START_STATEFUL_UPDATE@
 if (autozoom == WEED_TRUE) {
   sdata->zpath = (sdata->zpath + 1) & 255;
 } else {
   sdata->zpath = zoom;
 }
 sdata->path = (sdata->path - 1) & 255;
-END_STATEFUL_UPDATE
+@END_STATEFUL_UPDATE@
 
 zoom = roto2[sdata->zpath];
 draw_tile(roto[sdata->path], roto[(sdata->path + 128) & 0xFF],

@@ -2286,7 +2286,7 @@ done_video:
       retval = FILTER_ERROR_INVALID_LAYER;
     } else {
       if (lstat == LAYER_STATUS_BUSY)
-	_lives_layer_set_status(layer, LAYER_STATUS_READY);
+        _lives_layer_set_status(layer, LAYER_STATUS_READY);
     }
     unlock_layer_status(layer);
   }
@@ -2307,7 +2307,7 @@ done_video:
       retval = FILTER_ERROR_INVALID_LAYER;
     } else {
       if (lstat == LAYER_STATUS_BUSY)
-	_lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+        _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
     }
     unlock_layer_status(layer);
   }
@@ -3121,7 +3121,7 @@ lives_filter_error_t act_on_instance(weed_instance_t *instance, int key, lives_l
   weed_timecode_t tc = 0;
   lives_filter_error_t filter_error = FILTER_SUCCESS;
   int myeaseval = -1;
- 
+
   if (!instance) return FILTER_ERROR_INVALID_INSTANCE;
 
 
@@ -7319,6 +7319,7 @@ void weed_deinit_all(boolean shutdown) {
             || get_primary_inst(cfile) != (void *)instance) {
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
+          mainw->rte_real &= ~(GU641 << i);
           if (rte_window_visible()) rtew_set_keych(i, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_instance_unref(instance);

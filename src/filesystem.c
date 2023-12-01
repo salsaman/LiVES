@@ -1562,7 +1562,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         fbuff->ptr -= ocount;
       }
       lives_millisleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
-				  && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+                                  && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
         pthread_mutex_lock(&fbuff->sync_mutex);
         fbuff->flags |= FB_FLAG_EOF;
@@ -2435,8 +2435,8 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
     if (timeout < 0) timeout = BILLIONS(30); // TODO
     if (dircheck_state == 1) {
       if (lives_proc_thread_sync_with_timeout(running, 201, MM_IGNORE, timeout)
-          == LIVES_RESULT_FAIL) { 
-	ds_syncwith = NULL;
+          == LIVES_RESULT_FAIL) {
+        ds_syncwith = NULL;
         disk_monitor_forget();
         return -1;
       }

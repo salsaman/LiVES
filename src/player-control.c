@@ -724,16 +724,15 @@ void play_file(void) {
   if (cfile->achans > 0) {
     if (mainw->playing_sel) {
       mainw->audio_start = calc_time_from_frame(mainw->current_file,
-						mainw->play_start) * cfile->fps + 1.;
+                           mainw->play_start) * cfile->fps + 1.;
       mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
-    }
-    else {
+    } else {
       mainw->audio_start = cfile->real_pointer_time * cfile->fps + 1;
       mainw->audio_end = 0;
     }
     cfile->aseek_pos = (off_t)(((double)(mainw->audio_start - 1.)
-				/ cfile->fps * (double)cfile->arate))
-      * cfile->achans * (cfile->asampsize >> 3);
+                                / cfile->fps * (double)cfile->arate))
+                       * cfile->achans * (cfile->asampsize >> 3);
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
     cfile->async_delta = 0;
   }

@@ -865,7 +865,7 @@ void smallblock_init(void) {
     smblock_pool->chunk_list = lives_list_append(smblock_pool->chunk_list, block);
     smblock_pool->first_avail_chunk = smblock_pool->chunk_list->next;
     smblock_pool->alloc_list  = lives_list_prepend(smblock_pool->alloc_list,
-						   (void *)smblock_pool->chunk_list);
+                                (void *)smblock_pool->chunk_list);
     smblock_pool->free_chunks -= nxtchunks;
     smblock_pool->toobig_size -= nxtchunks;
 
@@ -909,16 +909,16 @@ char *get_memstats(void) {
 static void *lives_calloc_mapped_inner(size_t npages, boolean do_mlock,  char *fref, int lref) {
   char errmsg[128];
   void *p = mmap(NULL, npages * PAGESIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  if (!p || p == MAP_FAILED) { 
+  if (!p || p == MAP_FAILED) {
     lives_snprintf(errmsg, 128, "Unable to mmap %lu pages at line %d, in %s\n",
-		   npages, lref, fref);
+                   npages, lref, fref);
     LIVES_WARN(errmsg);
     return NULL;
   }
-  
-  if (do_mlock && mlock(p, npages * PAGESIZE)) {  
+
+  if (do_mlock && mlock(p, npages * PAGESIZE)) {
     lives_snprintf(errmsg, 128, "Unable to mlock %lu pages at line %d, in %s\n",
-		   npages, lref, fref);
+                   npages, lref, fref);
     munmap(p, npages * PAGESIZE);
     return NULL;
   }

@@ -1802,7 +1802,7 @@ static void run_plan(exec_plan_t *plan) {
 
     for (LiVESList *steps = plan->steps; steps; steps = steps->next) {
       step_count++;
-      
+
       if (!plan->layers) {
         d_print_debug("no layers for plan\n");
         error = 1;
@@ -2181,26 +2181,26 @@ static void run_plan(exec_plan_t *plan) {
         break;
 
         case STEP_TYPE_APPLY_INST: {
-	  weed_instance_t *inst;
-	  if (!step->target) {
+          weed_instance_t *inst;
+          if (!step->target) {
             d_print_debug("\nstep %d: Output to sink ready @ %.2f msec\n", step_count, xtime * 1000.);
             step->state = STEP_STATE_FINISHED;
             //dec_running_steps(step);
             break;
           }
           step->tdata->real_start = xtime;
-	  inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
+          inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
           if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
             d_print_debug("\nstep %d: RUN APPLY_INST (%s) @ %.2f msec, pd i %p\n",
                           step_count, weed_filter_get_name((weed_filter_t *)step->target),
                           xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
 
-	    if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
-	      d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
-			    step->count, step->track);
-	      step->state = STEP_STATE_SKIPPED;
- 	      break;
-	    }
+            if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
+              d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
+                            step->count, step->track);
+              step->state = STEP_STATE_SKIPPED;
+              break;
+            }
 
             step->proc_thread =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
@@ -2442,9 +2442,9 @@ static void run_plan(exec_plan_t *plan) {
             d_print_debug("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
                           step->tdata->real_duration);
           } else {
-	    if ((cancelled || error) && step->proc_thread
-		&& !lives_proc_thread_should_cancel(step->proc_thread))
-	      lives_proc_thread_request_cancel(step->proc_thread, TRUE);
+            if ((cancelled || error) && step->proc_thread
+                && !lives_proc_thread_should_cancel(step->proc_thread))
+              lives_proc_thread_request_cancel(step->proc_thread, TRUE);
             complete = FALSE;
             if (res & 2) can_resume = FALSE;
           }

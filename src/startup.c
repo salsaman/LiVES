@@ -1327,7 +1327,7 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   capable->session_uid = gen_unique_id();
-  if (1||prefs->show_dev_opts)
+  if (1 || prefs->show_dev_opts)
     lives_printerr("Session uid is 0X%08lX\n", capable->session_uid);
 
   d_print("Initializing memory block allocators...");

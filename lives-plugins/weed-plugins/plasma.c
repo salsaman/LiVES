@@ -15,7 +15,6 @@ static int package_version = 1; // version of this package
 
 #define _UNIQUE_ID_ "0XA5478ADFCD0B956"
 
-#define NEED_PALETTE_UTILS
 #include <weed/weed-plugin-utils.h>
 //////////////////////////////////////////////////////////////////
 
@@ -83,7 +82,6 @@ static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t tc) {
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
   const int pal = (const int)weed_channel_get_palette(out_chan);
-  const int psize = (const int)pixel_size((int)pal);
   sdata_t *sdata = weed_get_instance_data(inst, sdata);
   if (!sdata) return WEED_ERROR_REINIT_NEEDED;
   else {
@@ -91,7 +89,7 @@ static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t tc) {
     do {
         unsigned char *end;
         uint8_t index;
-        int x, widthx = width * psize;
+        int x, widthx = width * 3;
         int offs = orow - widthx;
 
         sdata->tpos4 = sdata->pos4;
@@ -154,10 +152,6 @@ WEED_SETUP_START(203, 202) {
   if (!sscanf(_UNIQUE_ID_, "0X%lX", &unique_id) || !sscanf(_UNIQUE_ID_, "0x%lx", &unique_id)) {
     weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);
   }
-
-  do {
-    plasma_prep();
-  } while (0);
 
   weed_plugin_set_package_version(plugin_info, package_version);
 }

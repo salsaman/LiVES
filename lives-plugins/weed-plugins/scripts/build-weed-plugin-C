@@ -180,7 +180,6 @@ if ($delim =~ /^[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]+/) {
 }
 
 my $uid = (&rc_read("unique_id", @cache))[0];
-    print STDERR "uid is $uid\n";
 
 if (!$uid) {
     print STDERR "WARNING - no uid in $file\n";
@@ -501,7 +500,7 @@ foreach my $line (@requires) {
 	$line = $1;
     }
     
-    if ($line eq 'PUTILSJ' || $line eq "putils" || $line eq "palette_utils") {
+    if ($line eq 'PUTILS' || $line eq "putils" || $line eq "palette_utils") {
 	$need_putils = 1;
 	next;
     }
@@ -521,7 +520,7 @@ foreach my $line (@requires) {
 	$need_pango_compat = 1;
 	next;
     }
-    if ($line eq '' || $line eq "audio") {
+    if ($line eq 'AUDIO' || $line eq "audio") {
 	$need_audio = 1;
 	next;
     }
@@ -867,7 +866,7 @@ if ($num_inc) {
 	}
 	print $OUT "),\n      ";
     }
-    print OUT"NULL};\n";
+    print $OUT "NULL};\n";
 }
 
 #setup out_chantmpls
@@ -908,7 +907,7 @@ if ($num_outc) {
 	print $OUT "),\n      ";
 	$cnum++;
     }
-    print OUT"NULL};\n";
+    print $OUT "NULL};\n";
 }
 
 #setup in_paramtmpls
@@ -972,7 +971,7 @@ if ($num_params) {
 	}
 	print $OUT ",\n      ";
     }
-    print OUT"NULL};\n";
+    print $OUT "NULL};\n";
 }
 
 #setup out_paramtmpls
@@ -1032,7 +1031,7 @@ if ($num_oparams) {
 	}
 	print $OUT ",\n      ";
     }
-    print OUT"NULL};\n";
+    print $OUT "NULL};\n";
 }
 
 if (@param_window) {
@@ -1234,7 +1233,7 @@ sub gen_array {
 	}
 
 	my $line = $_;
-
+	$line =~ s/^\t/\ \ \ \ \ \ \ \ /g;
 	my $xspaces = &subst_macro($type, $nspaces, $line);
 
 	#$line = &repl_syms($line);

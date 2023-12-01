@@ -14,6 +14,7 @@ static int package_version = 1; // version of this package
 
 #define _UNIQUE_ID_ "0X2DCBE6706618517E"
 
+#define NEED_PALETTE_UTILS
 #include <weed/weed-plugin-utils.h>
 //////////////////////////////////////////////////////////////////
 
@@ -55,10 +56,10 @@ enum {
 
 
 #define calc_angle(y, x) ((x) > 0. ? ((y) >= 0. ? atanf((y) / (x)) : TWO_PI + atanf((y) / (x))) \
-			  : ((x) < 0. ? atanf((y) / (x)) + M_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
+        		  : ((x) < 0. ? atanf((y) / (x)) + M_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
 
 
-#define calc_dist(x, y) (sqrtf((x) * (x) + (y) * (y)))
+#define calc_dist(x, y) ((x) * (x) + (y) * (y))
 
 
 static void calc_center(float side, float j, float i, float *x, float *y) {
@@ -121,8 +122,15 @@ static inline void rotate(float r, float theta, float angle, float *x, float *y)
   theta += angle;
   if (theta < 0.) theta += TWO_PI;
   else if (theta >= TWO_PI) theta -= TWO_PI;
-  *x = r * cosf(theta);
-  *y = r * sinf(theta);
+  float a = cosf(theta);
+  a *= r * a;
+  *x = sqrtf(a);
+  *y = sqrtf(r - a);
+  if (theta > M_PI) {
+    *y = -*y;
+    if (theta < THREE_PI2) *x = -*x;
+  }
+  else if (theta > ONE_PI2) *x = -*x;
 }
 
 
@@ -173,9 +181,17 @@ static int put_pixel(uint8_t *src, uint8_t *dst, int psize, float angle, float t
   }
 
   stheta += angle;
+  float a = cosf(stheta);
+  a *= r * a;
 
-  sx = r * cosf(stheta) + .5;
-  sy = r * sinf(stheta) + .5;
+  sx = sqrtf(a);
+  sy = sqrtf(r  - a);
+
+  if (stheta > M_PI) {
+    sy = -sy;
+    if (stheta < THREE_PI2) sx = -sx;
+  }
+  else if (stheta > ONE_PI2) sx = -sx;
 
   if (sy < -hheight || sy >= hheight || sx < -hwidth || sx >= hwidth) {
     return 0;
@@ -184,6 +200,7 @@ static int put_pixel(uint8_t *src, uint8_t *dst, int psize, float angle, float t
   weed_memcpy(dst, &src[sx * psize - sy * irowstride], psize);
   return 1;
 }
+
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -217,6 +234,7 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
   int width = weed_channel_get_width(out_chan);
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
+  const int psize = (const int)pixel_size((int)pal);
   sdata_t *sdata = weed_get_instance_data(inst, sdata);
   if (!sdata) return WEED_ERROR_REINIT_NEEDED;
   else {
@@ -241,7 +259,6 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
 
       if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
         yuv_clamping = weed_channel_get_yuv_clamping(in_chan);
-
       if (is_threading) {
         if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {
           return WEED_ERROR_FILTER_INVALID;
@@ -249,24 +266,22 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
         /* host should set this to WEED_FALSE for the first thread, then wait for WEED_TRUE */
         if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
           // side is the length of the hexagon side, we fit it to the frame size
-
           if (width < iheight) sdata->side = hwidth / RT32;
           else sdata->side = hheight;
 
           sfac = log(sfac) / 2.;
 
-          if (!sdata->old_tc) anglerot = 0.;
-          else {
-            double dtime = (double)(timestamp - sdata->old_tc) / (double)WEED_TICKS_PER_SECOND;
+          if (sdata->old_tc) {
+            double dtime = (double)(tc - sdata->old_tc) / (double)WEED_TICKS_PER_SECOND;
             anglerot *= (float)dtime;
             while (anglerot >= TWO_PI) anglerot -= TWO_PI;
           }
-          sdata->old_tc = timestamp;
+          sdata->old_tc = tc;
 
           if (!cw) anglerot = -anglerot;
 
           if (sdata->owidth != width || sdata->oheight != height) {
-            if (sizerev && sdata->owidth != 0 && sdata->oheight != 0)
+            if (sizerev  && sdata->owidth != 0 && sdata->oheight != 0)
               sdata->revrot = 1 - sdata->revrot;
             sdata->owidth = width;
             sdata->oheight = height;
@@ -292,12 +307,12 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
       /* since we may be threading, we calculate this in reverse - take each dst point and find the src point
          which it maps FROM, in effect the mapping steps are reversed and negated.
          The algorithm is:
-         - divide the frame into hexagons; start by dividing the frame into vertical strips
-          --  alternating strips have centres midway between those of the strip above and below.
+         - divnide the frame into hexagons; start by dividing the frame into vertical strips
+              -- alternating strips have centres midway between those of the strip above and below.
          - find the centre of the hexagon for each point.
-             to make the shapes hexagonal rather than round, the nearest centre depends on the angle to the
-          centres. The circle is divided into 6 angular segments, the segment and the distances from 2 centres
-          define which hex the point belongs in.
+              to make the shapes hexagonal rather than round, the nearest centre depends on the angle to the
+              centres. The circle is divided into 6 angular segments, the segment and the distances from 2 centres
+              define which hex the point belongs in.
          - the point rotates around the hexagon centre
          - the whole hexagonal grid rotates around the centre in the opposite direction
          Thus to reverse the mapping, we rotate the point around the centre, then around the hex centre.
@@ -340,7 +355,7 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
           theta = calc_angle(fi - b, fj - a);
           r = calc_dist(b - fi, a - fj);
 
-          if (r < 100.) r = 100.;
+          if (r < 10.) r = 10.;
 
           if (!put_pixel(src, &dst[jj], psize, sdata->xangle, theta, r, irow, hheight, hwidth)) {
             blank_pixel(&dst[jj], pal, yuv_clamping, &dst[jj]);
@@ -397,8 +412,8 @@ WEED_SETUP_START(203, 202) {
   }
 
   do {
-    pgui = weed_paramtmpl_get_gui(in_params[P_angleoffs]);
-    weed_set_boolean_value(pgui, WEED_LEAF_WRAP, TRUE);
+    pgui = weed_paramtmpl_get_gui(in_paramtmpls[P_angleoffs]);
+    weed_set_boolean_value(pgui, WEED_LEAF_WRAP, WEED_TRUE);
   } while (0);
 
   weed_plugin_set_package_version(plugin_info, package_version);

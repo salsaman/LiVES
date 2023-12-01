@@ -73,7 +73,7 @@ static const double scmax = exp(3.);
 int offsx, offsy, widthx, dx, dy, tt;
 double fscalex;
 
-START_STATEFUL_UPDATE
+@START_STATEFUL_UPDATE@
 if (trigger && !sdata->otrig) sdata->count = 0;
 sdata->otrig = trigger;
 if (sdata->count <= 0) {
@@ -133,7 +133,7 @@ if (sdata->cy < .5 / sdata->scale) sdata->cy = .5 / sdata->scale;
 if (sdata->cy > 1. - .5 / sdata->scale) sdata->cy = 1. - .5 / sdata->scale;
 
 sdata->count--;
-END_STATEFUL_UPDATE
+@END_STATEFUL_UPDATE@
 
 offsx = sdata->cx * width;
 offsy = sdata->cy * iheight;

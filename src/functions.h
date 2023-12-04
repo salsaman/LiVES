@@ -571,10 +571,10 @@ typedef struct _hstack_t {
 // the owner of the request queue responds to orinal request, accepting or denying it
 
 typedef enum {HOOK_PATTERN_INVALID = -1,
-	      HOOK_PATTERN_DATA,
-	      HOOK_PATTERN_REQUEST,
-	      HOOK_PATTERN_SPONTANEOUS
-} hookstack_pattern_t;
+              HOOK_PATTERN_DATA,
+              HOOK_PATTERN_REQUEST,
+              HOOK_PATTERN_SPONTANEOUS
+             } hookstack_pattern_t;
 
 typedef struct {
   int htype; // the hook type (e.g. COMPLETED, PREPARING)

@@ -4438,7 +4438,7 @@ static void _resize_play_window(void) {
 
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
-	mainw->gui_much_events = TRUE;
+        mainw->gui_much_events = TRUE;
         lives_widget_queue_draw_and_update(mainw->play_window);
         mainw->ignore_screen_size = FALSE;
       }

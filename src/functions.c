@@ -344,9 +344,9 @@ LIVES_GLOBAL_INLINE void _func_exit_val(weed_plant_t *pl, char *file_ref, int li
 
 boolean have_recursion_token(uint64_t token, void *dataptr) {
   LIVES_CONST_LIST_FOREACH((THREADVAR(trest_list)), list)
-    if (DATA_FIELD_IS(list, recursion_token, token, token)
-	&& DATA_FIELD_IS(list, recursion_token, dataptr, dataptr))
-      return TRUE;
+  if (DATA_FIELD_IS(list, recursion_token, token, token)
+      && DATA_FIELD_IS(list, recursion_token, dataptr, dataptr))
+    return TRUE;
   return FALSE;
 }
 
@@ -359,11 +359,11 @@ void push_recursion_token(recursion_token *rectok) {
 
 void remove_recursion_token(uint64_t token, void *dataptr) {
   LIVES_CONST_LIST_FOREACH((THREADVAR(trest_list)), list)
-    if (DATA_FIELD_IS(list, recursion_token, token, token)
-	&& DATA_FIELD_IS(list, recursion_token, dataptr, dataptr)) {
-      THREADVAR(trest_list) = lives_list_remove_node(THREADVAR(trest_list), list, TRUE);
-      return;
-    }
+  if (DATA_FIELD_IS(list, recursion_token, token, token)
+      && DATA_FIELD_IS(list, recursion_token, dataptr, dataptr)) {
+    THREADVAR(trest_list) = lives_list_remove_node(THREADVAR(trest_list), list, TRUE);
+    return;
+  }
 }
 
 
@@ -570,7 +570,8 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
     case FUNCSIG_VOIDP_BOOL: {void *p0; int p1; _DC_(2, voidptr, boolean);} break;
     case FUNCSIG_VOIDP_STRING: {void *p0; char *p1 = NULL; _DC_(2, voidptr, string); _IF_(p1);} break;
     // undefined funcsig
-    default: return LIVES_RESULT_ERROR;}
+    default: return LIVES_RESULT_ERROR;
+    }
     break;
 
   case 3:
@@ -587,7 +588,8 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
     case FUNCSIG_STRING_INT_BOOL: {char *p0 = NULL; int p1, p2; _DC_(3, string, int, boolean); _IF_(p0);} break;
     case FUNCSIG_INT_INT64_VOIDP: {int p0; int64_t p1; void *p2; _DC_(3, int, int64, voidptr);} break;
     // undefined funcsig
-    default: return LIVES_RESULT_ERROR;}
+    default: return LIVES_RESULT_ERROR;
+    }
     break;
 
   case 4:
@@ -600,7 +602,8 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
     case FUNCSIG_VOIDP_INT_FUNCP_VOIDP: {void *p0, *p3; int p1; weed_funcptr_t p2; _DC_(4, voidptr, int, funcptr, voidptr);}
       break;
     // undefined funcsig
-    default: return LIVES_RESULT_ERROR;}
+    default: return LIVES_RESULT_ERROR;
+    }
     break;
 
   case 5:
@@ -613,7 +616,8 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
     case FUNCSIG_VOIDP_INT_INT_INT_INT: {void *p0; int p1, p2, p3, p4; _DC_(5, voidptr, int, int, int, int);} break;
     case FUNCSIG_VOIDP_VOIDP_BOOL_BOOL_INT: {void *p0, *p1; int p2, p3, p4; _DC_(5, voidptr, voidptr, boolean, boolean, int);} break;
     /*   // undefined funcsig*/
-    default: return LIVES_RESULT_ERROR;}
+    default: return LIVES_RESULT_ERROR;
+    }
     break;
 
   case 6:
@@ -623,10 +627,12 @@ lives_result_t do_call(lives_proc_thread_t lpt) {
       _DC_(6, string, string, voidptr, int, string, voidptr); _IF_(p0); _IF_(p1); _IF_(p4);
     } break;
     // undefined funcsig
-    default: return LIVES_RESULT_ERROR;}
+    default: return LIVES_RESULT_ERROR;
+    }
     break;
   // invalid nparms
-  default: return LIVES_RESULT_ERROR;}
+  default: return LIVES_RESULT_ERROR;
+  }
 
 #if USE_RPMALLOC
   rpmalloc_thread_collect();
@@ -1141,7 +1147,7 @@ void remove_from_hstack(lives_hook_stack_t *hstack, LiVESList *list) {
   // lpt will be FREED unless reffed elsewhere !
   lives_closure_t *closure = (lives_closure_t *)list->data;
   hstack->stack = (volatile LiVESList *)lives_list_remove_node
-    ((LiVESList *)hstack->stack, list, FALSE);
+                  ((LiVESList *)hstack->stack, list, FALSE);
   lives_closure_free(closure);
 }
 
@@ -1518,7 +1524,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!hstacks) return TRUE;
     }
   }
-  
+
   if (hs_op_flags & HOOKSTACK_ASYNC_PARALLEL) {
     lives_hooks_trigger_async(hstacks, type);
     return TRUE;
@@ -1542,9 +1548,9 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     if (hstack->req_target_stacks)
       req_stack = hstack->req_target_stacks[hstack->req_target_type];
     if (!req_stack) {
-	PTMUH;
-	hmulocked = FALSE;
-	goto trigdone;
+      PTMUH;
+      hmulocked = FALSE;
+      goto trigdone;
     }
     pthread_mutex_lock(&req_stack->mutex);
   }
@@ -1611,14 +1617,14 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       }
 
       if (req_stack) {
-	int dflags = DTYPE_HAVE_LOCK | DTYPE_CLOSURE;
-	closure->flags &= ~HOOK_STATUS_ACTIONED;
-	if (closure->flags & HOOK_CB_PRIORITY) dflags |= DTYPE_PREPEND;
-	if (lives_hook_add(hstack->req_target_stacks, hstack->req_target_type,
-			   closure->flags, closure, dflags) != lpt)
-	  remove_from_hstack(hstack, list);
-	else hstack->stack = (volatile LiVESList *)lives_list_remove_node((LiVESList *)hstack->stack, list, FALSE);
-	continue;
+        int dflags = DTYPE_HAVE_LOCK | DTYPE_CLOSURE;
+        closure->flags &= ~HOOK_STATUS_ACTIONED;
+        if (closure->flags & HOOK_CB_PRIORITY) dflags |= DTYPE_PREPEND;
+        if (lives_hook_add(hstack->req_target_stacks, hstack->req_target_type,
+                           closure->flags, closure, dflags) != lpt)
+          remove_from_hstack(hstack, list);
+        else hstack->stack = (volatile LiVESList *)lives_list_remove_node((LiVESList *)hstack->stack, list, FALSE);
+        continue;
       }
 
       if (type == LIVES_GUI_HOOK) {
@@ -1654,7 +1660,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
                                        | THRD_STATE_FINISHED);
 
       if ((closure->flags & HOOK_OPT_REMOVE_ON_FALSE)
-	  && closure->fdef  && closure->fdef->return_type == WEED_SEED_BOOLEAN) {
+          && closure->fdef  && closure->fdef->return_type == WEED_SEED_BOOLEAN) {
         // test should be boolean_combined
         bret = TRUE; // set in case func is cancelled
         if (!closure->retloc) closure->retloc = &bret;
@@ -1691,7 +1697,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       hmulocked = TRUE;
 
       if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)
-	  || (hs_op_flags & HOOKSTACK_ALWAYS_ONESHOT)) {
+          || (hs_op_flags & HOOKSTACK_ALWAYS_ONESHOT)) {
         // remove our added ref UNLESS this is a blocking call, then blocked thread will do that
         // if it is blocking, then caller will be waiting and will unref it now
         // so we leave our added ref to compensate for one which will be removed as closure is freed
@@ -1733,12 +1739,12 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
       // will be be HOOK_DTL_SINGLE
       if (hs_op_flags & HOOKSTACK_RUN_SINGLE) {
-	//g_print("done single\n");
-	// UNREF
-	lives_proc_thread_unref(lpt);
-	list = NULL;
-	retval = TRUE;
-	break;
+        //g_print("done single\n");
+        // UNREF
+        lives_proc_thread_unref(lpt);
+        list = NULL;
+        retval = TRUE;
+        break;
       }
       // UNREF
       lives_proc_thread_unref(lpt);
@@ -1825,7 +1831,7 @@ int lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
     if ((closure->flags & HOOK_STATUS_BLOCKED) || (closure->flags & HOOK_STATUS_RUNNING)) continue;
 
     if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)
-	|| (hs_op_flags & HOOKSTACK_ALWAYS_ONESHOT)) {
+        || (hs_op_flags & HOOKSTACK_ALWAYS_ONESHOT)) {
       remove_from_hstack(hstack, list);
       continue;
     }
@@ -1843,7 +1849,7 @@ int lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
       remove_from_hstack(hstack, list);
       continue;
     }
- 
+
     hstacks[type]->flags |= STACK_TRIGGERING;
 
     lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
@@ -1970,7 +1976,9 @@ void lives_hooks_async_join(lives_hook_stack_t **hstacks, int htype) {
     }
   }
   hstack = hstacks[htype];
-  hmutex = &(hstack->mutex);  
+  if (!(hstacks[htype]->flags & STACK_TRIGGERING)) return;
+
+  hmutex = &(hstack->mutex);
   PTMLH;
   for (cblist = (LiVESList *)hstack->stack; cblist; cblist = cblist_next) {
     cblist_next = cblist->next;
@@ -1996,7 +2004,7 @@ void lives_hooks_async_join(lives_hook_stack_t **hstacks, int htype) {
       remove_from_hstack(hstack, cblist);
       continue;
     }
-  } 
+  }
   hstacks[htype]->flags &= ~STACK_TRIGGERING;
   PTMUH;
 }

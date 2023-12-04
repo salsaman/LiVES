@@ -727,11 +727,9 @@ LIVES_LOCAL_INLINE lives_proc_thread_t append_all_to_fg_deferral_stack(void) {
         // as in the usual case we need to add refs to lpt and lpt2
         xlpt = lpt2;
         lives_proc_thread_ref(lpt2);
-      }
-      else lives_proc_thread_unref(lpt);
+      } else lives_proc_thread_unref(lpt);
       lives_closure_free(cl);
-    }
-    else lives_proc_thread_unref(lpt);    
+    } else lives_proc_thread_unref(lpt);
   }
   lives_list_free((LiVESList *)hstacks[LIVES_GUI_HOOK]->stack);
   hstacks[LIVES_GUI_HOOK]->stack = NULL;
@@ -926,7 +924,7 @@ if (lpt) {
 
       fdef = (lives_funcdef_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, NULL);
       if (fdef) free_funcdef(fdef);
-      
+
       ////////
       weed_plant_free(lpt);
       ////////
@@ -1042,7 +1040,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   boolean is_fg_service = FALSE;
   boolean retval = TRUE;
   boolean is_fg = is_fg_thread();
-  
+
   // create a lives_proc_thread, which will either be run directly (fg thread)
   // passed to the fg thread
   // or queued for sequential execution (since we need to avoid nesting calls)
@@ -2144,7 +2142,7 @@ LIVES_GLOBAL_INLINE volatile uint64_t lives_proc_thread_get_sync_idx(lives_proc_
 
 
 LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t lpt,
-								       uint64_t sync_idx, int mm_op, int64_t timeout) {
+    uint64_t sync_idx, int mm_op, int64_t timeout) {
   // wait for sync with other lpt
   // we want to avoid two situations - both threads are waiting for each other
   // one thread continues and leaves the other waiting
@@ -2280,7 +2278,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
           // timed out waiting
           d_print_debug("syncwith: timed out waiting\n");
           if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
-	    // pthread_mutex_unlock(pause_mutex);
+            // pthread_mutex_unlock(pause_mutex);
             d_print_debug("syncwith: synced anyway\n");
             goto synced;
           }
@@ -2818,7 +2816,7 @@ uint64_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
   jmp_buf env;
 
   if (lpt != self && lives_proc_thread_ref(lpt) < 2) return THRD_STATE_INVALID;
-  
+
   sjval = sigsetjmp(env, 1);
   if (sjval) {
     // point of return for proc_threads if they cancel / error
@@ -2864,7 +2862,7 @@ uint64_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
     weed_leaf_delete(lpt, LIVES_LEAF_LONGJMP);
 
     lives_proc_thread_set_thread_data(lpt, NULL);
-    
+
     // for chained proc_threads, this returns next in chain
     nxtlpt = next_in_chain(chain_leader, lpt);
     if (!nxtlpt) break;
@@ -3267,9 +3265,9 @@ static void lives_thread_data_destroy(void *data) {
     // this will force other lpts to remove their pointers to callbacks in our stacks
     lives_hooks_clear_all(hook_stacks, -N_HOOK_POINTS);
   }
-  
+
   lives_uncalloc_mapped(tdata->vars.var_buffer, tdata->vars.var_buff_size, TRUE);
-  
+
   lives_free(tdata);
 
 #if USE_RPMALLOC
@@ -3351,7 +3349,7 @@ static void *_lives_thread_data_create(void *pslot_id) {
 
     tdata->vars.var_buff_size = 3600 * 1024;
     tdata->vars.var_buffer = lives_calloc_mapped(tdata->vars.var_buff_size, TRUE);
-    
+
     tdata->vars.var_thrd_type = tdata->thrd_type;
     tdata->vars.var_slot_id = tdata->slot_id = slot_id;
 

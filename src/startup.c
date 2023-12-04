@@ -1362,7 +1362,7 @@ boolean lives_startup(livespointer data) {
 
   capable->features_ready |= FEATURE_WEED;
 
-  do_startup_diagnostics(test_opts);
+  //do_startup_diagnostics(test_opts);
 
   if (!mainw->foreign) {
     if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();

@@ -38,6 +38,8 @@ enum {
   P_sizerev,
 };
 
+#define ONE_PI 3.141592653589f
+
 #define FIVE_PI3 5.23598775598f
 #define FOUR_PI3 4.18879020479f
 
@@ -54,10 +56,10 @@ enum {
 #define RT32 0.86602540378f //sqrt(3)/2
 
 #define RT322 0.43301270189f
-
+ 
 
 #define calc_angle(y, x) ((x) > 0. ? ((y) >= 0. ? atanf((y) / (x)) : TWO_PI + atanf((y) / (x))) \
-        		  : ((x) < 0. ? atanf((y) / (x)) + M_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
+        		  : ((x) < 0. ? atanf((y) / (x)) + ONE_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
 
 
 #define calc_dist(x, y) ((x) * (x) + (y) * (y))
@@ -127,7 +129,7 @@ static inline void rotate(float r, float theta, float angle, float *x, float *y)
   a *= r * a;
   *x = sqrtf(a);
   *y = sqrtf(r - a);
-  if (theta > M_PI) {
+  if (theta > ONE_PI) {
     *y = -*y;
     if (theta < THREE_PI2) *x = -*x;
   }
@@ -163,7 +165,7 @@ static int put_pixel(uint8_t *src, uint8_t *dst, int psize, float angle, float t
     stheta = TWO_PI3 - theta;
   }
 
-  else if (adif < M_PI) {
+  else if (adif < ONE_PI) {
     // get coords of src point
     stheta = theta - TWO_PI3;
   }
@@ -188,7 +190,7 @@ static int put_pixel(uint8_t *src, uint8_t *dst, int psize, float angle, float t
   sx = sqrtf(a);
   sy = sqrtf(r  - a);
 
-  if (stheta > M_PI) {
+  if (stheta > ONE_PI) {
     sy = -sy;
     if (stheta < THREE_PI2) sx = -sx;
   }

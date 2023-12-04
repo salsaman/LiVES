@@ -103,7 +103,7 @@ typedef struct {
 
   void *var_buffer;
   size_t var_buff_size;
-  
+
   // built in timer (per thread)
   lives_timer_t var_xtimer;
 
@@ -983,7 +983,7 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
 
 
 lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t,
-						   uint64_t sync_idx, int mm_op, int64_t timeout);
+    uint64_t sync_idx, int mm_op, int64_t timeout);
 lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t lpt, uint64_t sync_idx, int mm_op);
 
 void lives_proc_thread_set_sync_idx(uint64_t idx);

@@ -1153,7 +1153,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
     /* the reamining steps will be run, applying all fx instances until we are left with the single output layer */
     lives_millisleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
                                  || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
-                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR);
+                                 || mainw->plan_cycle->state == PLAN_STATE_ERROR
+                                 || mainw->cancelled != CANCEL_NONE);
 
     osc_sync_msg = osc_make_sync_msg(mainw->clip_index, mainw->plan_cycle->frame_idx,
                                      (double)mainw->currticks / TICKS_PER_SECOND_DBL,
@@ -1603,14 +1604,15 @@ lfi_done:
 
   lives_freep((void **)&osc_sync_msg);
   //
-  if (!success) {
+  if (!success || mainw->cancelled != CANCEL_NONE) {
     if (!mainw->refresh_model) {
       // free pixdata for frame_layer, then run the next cycle
       reset_old_frame_layer();
       //old_frame_layer = STEAL_POINTER(mainw->frame_layer);
       weed_layer_unref(mainw->frame_layer);
       mainw->frame_layer = NULL;
-      run_next_cycle();
+      if (mainw->cancelled == CANCEL_NONE)
+        run_next_cycle();
     } else mainw->frame_layer = NULL;
     return NULL;
   }
@@ -3793,19 +3795,17 @@ proc_dialog:
           if (!CURRENT_CLIP_IS_VALID) mainw->cancelled = CANCEL_INTERNAL_ERROR;
         }
       }
-      //else proc_file = THREADVAR(proc_file) = mainw->playing_file;
-      if (mainw->cancelled != CANCEL_NONE) {
-        retval = ONE_MILLION + mainw->cancelled;
-      } else if (!visible) goto player_loop;
-      goto err_end;
     }
-
-    if (LIVES_IS_PLAYING) mainw->jack_can_stop = FALSE;
-
-    retval = MILLIONS(2) + mainw->cancelled;
+    //else proc_file = THREADVAR(proc_file) = mainw->playing_file;
+    if (mainw->cancelled != CANCEL_NONE) {
+      retval = ONE_MILLION + mainw->cancelled;
+    } else if (!visible) goto player_loop;
     goto err_end;
   }
-  ////
+
+  if (LIVES_IS_PLAYING) mainw->jack_can_stop = FALSE;
+
+  retval = MILLIONS(2) + mainw->cancelled;
 
 err_end:
   /* if (retval) { */

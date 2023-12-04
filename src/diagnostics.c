@@ -2262,7 +2262,7 @@ void weed_utils_test(void) {
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
 
-    ap = weed_get_voidptr_array_counted(plant2, "voidptr2", &nvals);
+  ap = weed_get_voidptr_array_counted(plant2, "voidptr2", &nvals);
   g_print("get_counted returned %d\n", nvals);
 
   vp2 = weed_get_voidptr_value(plant2, WEED_LEAF_PIXEL_DATA, &err);

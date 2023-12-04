@@ -3106,8 +3106,7 @@ void send_to_analysers(pulse_driver_t *pulsed, size_t nsamples) {
         lives_free(fltbuf);
         fltbuf = NULL;
         break;
-      }
-      else {
+      } else {
         /// convert to float, and take the opportunity to find the max volume
         /// (currently this is used to trigger recording start optionally)
         pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
@@ -3150,7 +3149,7 @@ void send_audio_to_fx(pulse_driver_t *pulsed) {
 
     // convert float audio back to s16 in pulsed->sound_buffer
     sample_move_float_int(pulsed->sound_buffer, fltbuf, nsamples, 1.0, pulsed->out_achans, PA_SAMPSIZE, 0,
-			  (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
+                          (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
 
     for (int i = 0; i < pulsed->out_achans; i++) lives_free(fltbuf[i]);
     lives_freep((void **)&fltbuf);

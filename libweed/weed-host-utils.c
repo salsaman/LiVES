@@ -554,6 +554,15 @@ WEED_GLOBAL_INLINE weed_error_t weed_channel_set_pixel_data(weed_channel_t *chan
   return weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, pixel_data);
 }
 
+WEED_GLOBAL_INLINE weed_error_t weed_channel_set_pixel_data_planar(weed_channel_t *channel,
+								   void **pixel_data, int nplanes) {
+  if (!channel) return WEED_ERROR_NOSUCH_PLANT;
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return pixel_data ? weed_set_voidptr_array(channel, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data)
+    : weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
+}
+
+
 WEED_GLOBAL_INLINE void *weed_channel_get_pixel_data(weed_channel_t *channel) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
   return weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
@@ -562,7 +571,7 @@ WEED_GLOBAL_INLINE void *weed_channel_get_pixel_data(weed_channel_t *channel) {
 WEED_GLOBAL_INLINE void **weed_channel_get_pixel_data_planar(weed_channel_t *channel, int *nplanes) {
   if (nplanes) *nplanes = 0;
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
-  return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, NULL);
+  return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, nplanes);
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_width(weed_channel_t *channel) {

@@ -99,8 +99,11 @@ typedef struct {
   uint64_t var_blocked_limit;
   ticks_t var_event_ticks;
 
-  volatile int var_sync_idx;
+  volatile uint64_t var_sync_idx;
 
+  void *var_buffer;
+  size_t var_buff_size;
+  
   // built in timer (per thread)
   lives_timer_t var_xtimer;
 
@@ -550,8 +553,6 @@ uint64_t get_worker_status(uint64_t tid);
 
 #define LIVES_THRDATTR_NXT_IMMEDIATE (LIVES_THRDATTR_AUTO_REQUEUE | LIVES_THRDATTR_AUTO_PAUSE)
 
-//
-
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 32)
 #define LIVES_THRDATTR_NO_GUI			(1ull << 33)
@@ -721,7 +722,7 @@ boolean lives_proc_thread_queue(lives_proc_thread_t, lives_thread_attr_t);
 #ifdef DEBUG_LPT_REFS
 int _lives_proc_thread_ref(lives_proc_thread_t);
 boolean _lives_proc_thread_unref(lives_proc_thread_t);
-#define lives_proc_thread_ref(lpt) (FN_REF_TARGET(_lives_proc_thread_ref,(lpt)))
+#define lives_proc_thread_refb(lpt) (FN_REF_TARGET(_lives_proc_thread_ref,(lpt)))
 #define lives_proc_thread_unref(lpt) FN_UNREF_TARGET(_lives_proc_thread_unref,(lpt))
 #else
 int lives_proc_thread_ref(lives_proc_thread_t);
@@ -756,7 +757,6 @@ void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name
 #define DEF_SELF_VALUE(type, name) \
     weed_leaf_set(lives_proc_thread_ensure_book(self), name, val)
 
-
 #define DEL_SELF_VALUE(name)weed_leaf_delete(lives_proc_thread_get_data(self),name)
 
 #define SET_SELF_VALUE(type, name, val)					\
@@ -789,6 +789,8 @@ void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name
   (weed_get_string_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_int64_value(lpt, name)			\
   (weed_get_int64_value(lives_proc_thread_get_book(lpt), name, NULL))
+#define lives_proc_thread_get_uint64_value(lpt, name)			\
+  (weed_get_uint64_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_funcptr_value(lpt, name)			\
   (weed_get_funcptr_value(lives_proc_thread_get_book(lpt), name, NULL))
 #define lives_proc_thread_get_voidptr_value(lpt, name)			\
@@ -806,6 +808,8 @@ void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name
   (weed_get_string_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_int64_array(lpt, name, nvals)		\
   (weed_get_int64_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
+#define lives_proc_thread_get_uint64_array(lpt, name, nvals)		\
+  (weed_get_int64_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_funcptr_array(lpt, name, nvals)		\
   (weed_get_funcptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 #define lives_proc_thread_get_voidptr_array(lpt, name, nvals)		\
@@ -821,10 +825,6 @@ boolean lives_proc_thread_is_queued(lives_proc_thread_t);
 boolean lives_proc_thread_is_unqueued(lives_proc_thread_t);
 boolean lives_proc_thread_is_preparing(lives_proc_thread_t);
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
-
-lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t,
-    int sync_idx, int mm_op, int64_t timeout);
-lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t lpt, int sync_idx, int mm_op);
 
 boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
 
@@ -981,11 +981,13 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
 // error on mismatch
 #define MM_ERROR		3
 
-lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t, int sync_idx, int mm_op);
-lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t, int sync_idx, int mm_op,
-    int64_t timeout);
-void lives_proc_thread_set_sync_idx(int idx);
-int lives_proc_thread_get_sync_idx(lives_proc_thread_t lpt);
+
+lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t,
+						   uint64_t sync_idx, int mm_op, int64_t timeout);
+lives_result_t lives_proc_thread_sync_with(lives_proc_thread_t lpt, uint64_t sync_idx, int mm_op);
+
+void lives_proc_thread_set_sync_idx(uint64_t idx);
+uint64_t lives_proc_thread_get_sync_idx(lives_proc_thread_t lpt);
 
 // WARNING !! version without a return value will free lpt !
 void lives_proc_thread_join(lives_proc_thread_t);

@@ -1672,13 +1672,13 @@ NIRVA_ENUM(
 #define CASC_MATRIX_SET_OP		2
 
 // HOOK types
-//  there are 4 hook "models"
+//  there are 4 hook "patterns"
 
-NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_HOOK_MODEL_CONFIG,	\
-                   NIRVA_HOOK_MODEL_DATA, NIRVA_HOOK_MODEL_REQUEST,	\
-                   NIRVA_HOOK_MODEL_SPONTANEOUS, NIRVA_N_HOOK_MODELS);
+NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_HOOK_PATTERN_CONFIG,	\
+                   NIRVA_HOOK_PATTERN_DATA, NIRVA_HOOK_PATTERN_REQUEST,	\
+                   NIRVA_HOOK_PATTERN_SPONTANEOUS, NIRVA_N_HOOK_PATTERNS);
 
-// the model combined with HOOK_FLAGS defines the hook_type
+// the pattern combined with HOOK_FLAGS defines the hook_type
 // bundles can have one HOOK_STACK per hook_type, however these are only created on demand
 
 // this flag bit indicates that the hook should be triggered just prior to the triggering event (data change,
@@ -1711,8 +1711,8 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_HOOK_MODEL_CONFIG,	\
 
 NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    NO_HOOK = 0,
-                   /// CONFIG hook model
-                   // config hooks - these are based on other models, but given an omportant significance
+                   /// CONFIG hook pattern
+                   // config hooks - these are based on other patterns, but given an omportant significance
 
                    // transform suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
                    // hook_stack specifc to structure_app
@@ -1774,7 +1774,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    STRAND_DELETED_HOOK,
 
-                   // DATA_HOOK model
+                   // DATA_HOOK pattern
 
                    // for ARRAYs
 
@@ -1873,7 +1873,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    //
 
-                   // SPONTANEOUS HOOK model
+                   // SPONTANEOUS HOOK pattern
                    //
                    // spontaneous hooks are not triggered by data changes, but rather as a response to
                    // events, or at fixed points in a transform.
@@ -1970,7 +1970,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // the hook stack will be held in one or other structural subtypes
                    TRACE_HOOK, //47
 
-                   // REQUEST HOOK model -certain objects will provide request hook stacks, and requests
+                   // REQUEST HOOK pattern -certain objects will provide request hook stacks, and requests
                    // can be added to these
                    // sometimes requests will be responded to immediatel with YES, NO, or NEEDS_PRIVELEGE
                    // otherwise WAIT will be returned and the request result will be provided asyn via a

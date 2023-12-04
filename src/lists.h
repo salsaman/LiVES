@@ -79,7 +79,7 @@ void lives_list_free_data(LiVESList *);
 
 void lives_list_free_all(LiVESList **);
 
-#define LIVES_CONST_LIST_FOREACH(const_list, list) for(LiVESList* list =(const_list);list;list = list->next)
+#define LIVES_CONST_LIST_FOREACH(const_list, list) for(LiVESList* list=(const_list);list;list=list->next)
 
 #define LIVES_LIST_FOREACH(list) for(;list;list=list->next)
 
@@ -87,7 +87,7 @@ void lives_list_free_all(LiVESList **);
 
 #define FIND_BY_DATA(list, data) LIVES_LIST_FOREACH(list) if (DATA_IS(list, data)) break;
 
-#define DATA_FIELD_IS(l,t,f,x) ((void *)(((t *)(l##->data))->##f)==x)
+#define DATA_FIELD_IS(l,t,f,x) (((t *)(l->data))->f==x)
 
 #define FIND_BY_DATA_FIELD(list, struct_type, field, target) LIVES_LIST_FOREACH(list)	\
     if (DATA_FIELD_IS(list,structtype,field,target)) break;

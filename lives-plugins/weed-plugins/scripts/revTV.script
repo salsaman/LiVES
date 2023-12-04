@@ -27,9 +27,6 @@ salsaman
 putils
 </requires>
 
-<filter_flags>
-may_thread
-</filter_flags>
 
 <palette_list>
 ALL_PACKED_PALETTES
@@ -52,16 +49,7 @@ vscale|_Vertical scale factor|num2|2.|0.|4.|
 short val;
 int red = 0, green = 1, blue = 2, yoffset, yval;
 
-// split threads horizontally instead of vertically
-int offset = weed_channel_get_offset(out_chan);
-int xst = (offset * width / iheight) * psize;
-int xend = ((offset + height - 1) * width / iheight) * psize;
-if (xend > width * psize) xend = width * psize;
-
-height = iheight;
-
-src -= irow * offset;
-dst -= orow * offset;
+int widthx = width * psize;
 
 vscale /= 200.;
 if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
@@ -72,7 +60,7 @@ else if (pal == WEED_PALETTE_ARGB32) {
 }
 
 for (int y = 0; y < height; y += lspace) {
-  for (int x = xst; x < xend; x += psize) {
+  for (int x = 0; x < widthx; x += psize) {
     if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
       val = src[irow * y + x] * 7;
     else val = (short)((src[irow * y + x + red] << 1) + (src[irow * y + x + green] << 2)

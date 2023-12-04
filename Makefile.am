@@ -1,7 +1,7 @@
 
 ## Process this file with automake to produce Makefile.in
 
-AUTOMAKE_OPTIONS = 1.7
+AUTOMAKE_OPTIONS = 1.16.1
 
 DOXYGEN = @DOXYGEN@
 
@@ -12,7 +12,7 @@ endif
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
                        stamp-h.in config.log config.cache config.status
 
-SUBDIRS = $(OSC_SUBDIRS)  src m4 lives-plugins po resources
+SUBDIRS = $(OSC_SUBDIRS) src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
 docdir = "$(prefix)/share/doc"

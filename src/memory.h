@@ -282,6 +282,8 @@ void smallblock_init(void);
 void bigblock_init(void);
 void *alloc_bigblock(size_t s);
 
+double bigblock_occupancy(void);
+
 //#define DEBUG_BBLOCKS 1
 #ifdef DEBUG_BBLOCKS
 void *_calloc_bigblock(size_t s);

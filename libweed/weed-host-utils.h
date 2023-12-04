@@ -211,6 +211,7 @@ int weed_channel_set_pixel_width(weed_channel_t *, int width);
 int weed_channel_set_pixel_size(weed_channel_t *, int width, int height);
 
 weed_error_t weed_channel_set_pixel_data(weed_channel_t *, void *pixel_data);
+weed_error_t weed_channel_set_pixel_data_planar(weed_channel_t *, void **pixel_data, int nplanes);
 
 // for the following 2 functions, if width is not a multiple of new palette macropixel size
 // WEED_FALSE is returned and no changes are made

@@ -19,6 +19,7 @@ static int package_version = 1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #include <math.h>
+#include <immintrin.h>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
@@ -249,11 +250,10 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
     if (is_threading) {
       offset = weed_channel_get_offset(out_chan);
       src += offset * irow;
-      dst += offset * orow;
     }
 
     do {
-      double delta;
+      float delta;
       int hwidth = width >> 1, hheight = iheight >> 1;
       int yuv_clamping = 0;
 
@@ -320,7 +320,7 @@ static weed_error_t kaleidoscope_process(weed_plant_t *inst, weed_timecode_t tc)
       */
 
       for (int i = 0; i < height; i++) {
-        float fi = (float)i - hheight + offset;
+        const  float fi = (float)i - hheight + offset;
         int jj = orow * i;
         float last_x = 0., last_y = 0.;
         float last_theta = 0., last_r = 0.;

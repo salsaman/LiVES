@@ -591,21 +591,35 @@ typedef enum {
 // to return
 
 #define RECURSE_GUARD_START static pthread_mutex_t recursion_mutex=PTHREAD_MUTEX_INITIALIZER;
-#define RETURN_IF_RECURSED do{if(pthread_mutex_trylock(&recursion_mutex))return; \
-    pthread_mutex_unlock(&recursion_mutex);}while (0);
-#define RETURN_VAL_IF_RECURSED(val)do{if(pthread_mutex_trylock(&recursion_mutex))return val; \
-    pthread_mutex_unlock(&recursion_mutex);}while (0);
-#define RECURSE_GUARD_ARM do{pthread_mutex_trylock(&recursion_mutex);}while(0);
-#define RECURSE_GUARD_END do{pthread_mutex_trylock(&recursion_mutex);pthread_mutex_unlock(&recursion_mutex);}while(0);
+#define RETURN_IF_RECURSED _DW0(if(pthread_mutex_trylock(&recursion_mutex))return; \
+				pthread_mutex_unlock(&recursion_mutex);)
+#define RETURN_VAL_IF_RECURSED(val)_DW0(if(pthread_mutex_trylock(&recursion_mutex))return val; \
+					pthread_mutex_unlock(&recursion_mutex);)
+#define RECURSE_GUARD_ARM _DW0(pthread_mutex_trylock(&recursion_mutex);)
+#define RECURSE_GUARD_END _DW0(pthread_mutex_trylock(&recursion_mutex);	\
+			       pthread_mutex_unlock(&recursion_mutex);)
 
-#define T_RECURSE_GUARD_START static uint32_t trec_token = 0;	\
-  if (!trec_token) {trec_token = (gen_unique_id() >> 32);}
-#define T_RETURN_IF_RECURSED do{if(have_recursion_token(trec_token))return;} while(0);
-#define T_RETURN_VAL_IF_RECURSED(val) do{if(have_recursion_token(trec_token))return (val);} while(0);
-#define T_RETURN_VAL_IF_RECURSED_CHECK(code, val) do{if(have_recursion_token(trec_token)) \
-      if ((code)) return (val);} while(0);
-#define T_RECURSE_GUARD_ARM do{push_recursion_token(trec_token);} while (0);
-#define T_RECURSE_GUARD_END do{remove_recursion_token(trec_token);} while (0);
+typedef struct {
+  uint64_t token;
+  const void *dataptr;
+} recursion_token;
+
+
+#define T_RECURSE_GUARD_START static recursion_token trectok;	\
+  if (!trectok.token) {trectok.token = gen_unique_id();}
+
+#define T_RECURSE_GUARD_ARM_FOR_DATA(xdataptr)				\
+  _DW0(LIVES_CALLOC_TYPE(recursion_token,rectok,1); rectok->token = trectok.token; rectok->dataptr = xdataptr; \
+       push_recursion_token(rectok);)
+#define T_RECURSE_GUARD_END_FOR_DATA(dataptr) _DW0(remove_recursion_token(trectok.token, dataptr);)
+#define T_RETURN_IF_RECURSED_WITH_DATA(dataptr) _DW0(if(have_recursion_token(trectok.token, dataptr))return;)
+#define T_RETURN_VAL_IF_RECURSED_WITH_DATA(val, dataptr) _DW0(if(have_recursion_token(trectok.token, dataptr))return (val);)
+
+#define T_RETURN_IF_RECURSED T_RETURN_IF_RECURSED_WITH_DATA(NULL)
+#define T_RETURN_VAL_IF_RECURSED(val) T_RETURN_VAL_IF_RECURSED_WITH_DATA(val, NULL)
+
+#define T_RECURSE_GUARD_ARM T_RECURSE_GUARD_ARM_FOR_DATA(NULL)
+#define T_RECURSE_GUARD_END T_RECURSE_GUARD_END_FOR_DATA(NULL)
 
 /// global (shared) definitions
 

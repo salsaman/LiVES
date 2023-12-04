@@ -47,7 +47,7 @@ out_channel0|inplace
 </out_chans>
 
 <process>
-int alpha = 3, offset = 0;
+int alpha = 3;
 uint8_t aval;
 
 if (pal == WEED_PALETTE_ARGB32) {
@@ -60,7 +60,7 @@ width *= 4;
 for (int j = 0; j < height; j++) {
   for (int i = 0; i < width; i += 4) {
     aval = src[irow * j + i + alpha];
-    weed_memset(&dst[orow * j + i + offset], aval, 3);
+    weed_memset(&dst[orow * j + i], aval, 3);
     dst[orow * j + i + alpha] = 255;
   }
 }

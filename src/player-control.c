@@ -135,7 +135,12 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   // BLOCKING playback
   // - block until playback stops
   lives_proc_thread_t lpt;
+  lives_hook_stack_t **lpt_hooks;
   mainw->player_proc = lpt = lives_proc_thread_create(0, _start_playback, -1, "i", type);
+  lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
+  lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
+  lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
+
   // the main thread will block here, waiting for playback to end.
   // during this time, it will service only bg requests set via fg_service_call
   lives_proc_thread_join(lpt);
@@ -146,11 +151,16 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 lives_proc_thread_t start_playback_async(int type) {
   // nonblocking playback, player is launcehd in a pool thread, and this thread returns
   // immediately
+  lives_proc_thread_t lpt;
+  lives_hook_stack_t **lpt_hooks;
+  lives_thread_attr_t attrs = LIVES_THRDATTR_PRIORITY;
   if (mainw->player_proc || !mainw->can_play) return NULL;
   GET_PROC_THREAD_SELF(self);
-  lives_thread_attr_t attrs = LIVES_THRDATTR_PRIORITY;
   if (type == 6) attrs |= LIVES_THRDATTR_START_UNQUEUED;
-  mainw->player_proc = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
+  mainw->player_proc = lpt = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
+  lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
+  lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
+  lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
   if (type == 6) {
     lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, 0, queue_other_lpt,
                                mainw->player_proc);

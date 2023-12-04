@@ -879,6 +879,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   int fd = fbuff->fd;
   off_t fsize, bufsize = smedbytes, res;
   boolean retval = TRUE;
+  uint64_t syncid = GET_SELF_VALUE(uint64, "sync_idx"); 
 
   if (lives_proc_thread_get_cancel_requested(self)) {
     // if caller gets cancelled, then it will send a cancel_request to this thread
@@ -898,7 +899,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   if (fsize > 0) {
     lives_proc_thread_t lpt = lives_proc_thread_get_dispatcher(self);
     // caller will wait until this thread goes to WAITING state, then do a sync_ready() and continue
-    lives_proc_thread_sync_with(lpt, 123, MM_IGNORE);
+    lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
 
     // TODO - skip < 0 should truncate end bytes
 #if defined HAVE_POSIX_FADVISE
@@ -958,7 +959,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), 123, MM_IGNORE);
+    lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), syncid, MM_IGNORE);
   }
 
   fbuff->fd = -1;
@@ -984,12 +985,10 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return NULL;
   lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
                                  _lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
-  if (lpt) {
-    /* mainw->debug_ptr = lpt; */
-    /* g_print("CREATE %p\n", lpt); */
-    weed_set_voidptr_value(lpt, "_filebuff", (void *)fbuff);
-    lives_proc_thread_set_cancellable(lpt);
-  }
+
+  SET_LPT_VALUE(lpt, voidptr, "filebuff", (void *)fbuff);
+  lives_proc_thread_set_cancellable(lpt);
+
   return lpt;
 }
 
@@ -997,14 +996,17 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
 boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_file_buffer_t *fbuff =
-      (lives_file_buffer_t *)weed_get_voidptr_value(lpt, "_filebuff", NULL);
+      (lives_file_buffer_t *)GET_LPT_VALUE(lpt, voidptr, "filebuff");
+    // creating a data "book" for child
+    uint64_t syncid = gen_unique_id();
+    SET_LPT_VALUE(lpt, uint64, "sync_idx", syncid); 
     pthread_mutex_lock(&fbuff->sync_mutex);
     fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
     fbuff->flags |= FB_FLAG_BG_OP;
     fbuff->bytes = fbuff->offset = 0;
     pthread_mutex_unlock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
-    lives_proc_thread_sync_with(lpt, 123, MM_IGNORE);
+    lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
     return TRUE;
   }
   return FALSE;

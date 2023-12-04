@@ -1719,7 +1719,6 @@ static void run_plan(exec_plan_t *plan) {
   int lstatus, i, state;
   int nloops = 0;
 
-  mainw->debug_ptr = plan;
   if (!plan) return;
 
   ____FUNC_ENTRY____(run_plan, NULL, "v");

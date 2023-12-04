@@ -81,7 +81,7 @@ src -= offset * irow;
 
 for (int y = offset; y < height; y++) {
   dy = (int)(offsy + (float)(y - iheight / 2) / fscale + .5);
-  if (dy >= iheight) break;
+if (dy >= iheight) break;
   if (dy < 0) continue;
   for (int x = 0; x < widthx; x += psize) {
     dx = (int)(offsx + (float)(x - widthx / 2) / fscalex + .5);

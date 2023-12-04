@@ -30,7 +30,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = 0;  //TEST_WEED | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = 0;//TEST_WEED_UTILS | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -1320,7 +1320,6 @@ boolean lives_startup(livespointer data) {
   capable->features_ready |= FEATURE_MACHINEDETS_1;
   d_print("OK\n");
 
-  //do_startup_diagnostics(test_opts);
   d_print("Analysing RNG...");
   init_random();
   capable->features_ready |= FEATURE_RNG;
@@ -1362,6 +1361,8 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   capable->features_ready |= FEATURE_WEED;
+
+  do_startup_diagnostics(test_opts);
 
   if (!mainw->foreign) {
     if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();
@@ -1832,7 +1833,9 @@ boolean lives_startup2(livespointer data) {
       lives_proc_thread_request_cancel(lpt, FALSE);
     }
     cpvar = lives_proc_thread_join_double(lpt);
+
     lives_proc_thread_unref(lpt);
+
     set_extra_colours();
     set_double_pref(PREF_CPICK_TIME, prefs->cptime);
     set_double_pref(PREF_CPICK_VAR, cpvar);

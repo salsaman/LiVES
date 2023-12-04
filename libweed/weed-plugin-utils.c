@@ -340,12 +340,11 @@ static weed_plant_t *weed_string_list_init(const char *name, const char *label, 
   int i = 0;
   weed_plant_t *paramt, *gui;
   int min = 0;
-  while (list[i] != NULL) i++;
-  i--;
+  if (list) while (list[i++]);
   if (def <= -1) min = def = -1;
-  paramt = weed_integer_init(name, label, def, min, i);
+  paramt = weed_integer_init(name, label, def, min, --i);
   gui = weed_paramtmpl_get_gui(paramt);
-  weed_leaf_set(gui, WEED_LEAF_CHOICES, WEED_SEED_STRING, i + 1, list);
+  weed_leaf_set(gui, WEED_LEAF_CHOICES, WEED_SEED_STRING, ++i, list);
   return paramt;
 }
 

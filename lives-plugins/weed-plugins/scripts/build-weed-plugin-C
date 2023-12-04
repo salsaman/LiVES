@@ -762,7 +762,7 @@ if (@proc) {
 	    print $OUT "$xspcs    src0 += offset * irow0;\n";
 	    print $OUT "$xspcs    src1 += offset * irow1;\n";
 	}
-	print $OUT "$xspcs    dst += offset * orow;\n";
+##	print $OUT "$xspcs    dst += offset * orow;\n";
 	print $OUT "$xspcs  }\n";
     }
 

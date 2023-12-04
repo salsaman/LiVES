@@ -14,21 +14,7 @@ static int package_version = 1; // version of this package
 #define NEED_PALETTE_CONVERSIONS
 #define NEED_PALETTE_UTILS
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
-#include <weed/weed-plugin.h>
-#ifndef NEED_LOCAL_WEED_UTILS
-#include <weed/weed-utils.h> // optional
-#else
-#include "../../libweed/weed-utils.h" // optional
-#endif
 #include <weed/weed-plugin-utils.h>
-#else
-#include "../../libweed/weed-plugin.h"
-#include "../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed-plugin-utils.h" // optional
-#endif
-
-#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
@@ -104,7 +90,6 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
     offset = weed_channel_get_offset(out_channel);
     src1 += offset * irowstride1;
     src2 += offset * irowstride2;
-    dst += offset * orowstride;
   }
 
   if (type == 0) {

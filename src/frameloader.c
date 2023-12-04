@@ -925,7 +925,7 @@ check_encache:
   // *INDENT-ON*
     pthread_mutex_unlock(mutex);
 
-    mainw->debug_ptr = mainw->end_image;
+    //mainw->debug_ptr = mainw->end_image;
   }
 
 

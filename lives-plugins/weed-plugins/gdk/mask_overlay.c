@@ -13,21 +13,7 @@ static int package_version = 1; // version of this package
 
 #define NEED_PALETTE_UTILS
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
-#include <weed/weed-plugin.h>
-#ifndef NEED_LOCAL_WEED_UTILS
-#include <weed/weed-utils.h> // optional
-#else
-#include "../../../libweed/weed-utils.h" // optional
-#endif
 #include <weed/weed-plugin-utils.h>
-#else
-#include "../../../libweed/weed-plugin.h"
-#include "../../../libweed/weed-utils.h" // optional
-#include "../../../libweed/weed-plugin-utils.h" // optional
-#endif
-
-#include "../weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
@@ -230,7 +216,6 @@ static weed_error_t masko_process(weed_plant_t *inst, weed_timecode_t timestamp)
     offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
     int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
     height = offset + dheight;
-    dst += offset * orow;
     src1 += offset * irow1;
   }
 

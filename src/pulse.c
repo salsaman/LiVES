@@ -1284,8 +1284,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       lives_aplayer_set_data_len(self, nsamples);
       lives_aplayer_set_data(self, (void *)buffer);
-      // calling trigger_async directly gets count of callbacks
-      async_join = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
 
       /// Finally... we actually write to pulse buffers
 #if !HAVE_PA_STREAM_BEGIN_WRITE
@@ -1355,6 +1353,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     }
     if (LIVES_IS_PLAYING) afile->aseek_pos = pulsed->seek_pos;
   }
+
+  // calling trigger_async directly gets count of callbacks
+  async_join = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+
+
 #ifdef DEBUG_PULSE
   lives_printerr("done\n");
 #endif

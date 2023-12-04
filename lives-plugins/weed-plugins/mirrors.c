@@ -43,7 +43,6 @@ static weed_error_t mirrorx_process(weed_plant_t *inst, weed_timecode_t timestam
   if (is_threading) {
     offset = weed_channel_get_offset(out_chan);
     src += offset * irow;
-    dst += offset * orow;
   }
 
   do {

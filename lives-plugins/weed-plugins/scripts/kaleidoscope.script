@@ -17,6 +17,7 @@ kaleidoscope
 salsaman <salsaman@gmail.com>
 </author>
 
+
 <static>
 \#define FIVE_PI3 5.23598775598f
 \#define FOUR_PI3 4.18879020479f
@@ -199,6 +200,7 @@ See file COPYING for details
 <requires>
 <math.h>
 @PUTILS@
+<immintrin.h>
 </requires>
 
 
@@ -259,7 +261,7 @@ sizerev|S_witch direction on frame size change|bool|0|
 
 
 <process>
-double delta;
+float delta;
 int hwidth = width >> 1, hheight = iheight >> 1;
 int yuv_clamping = 0;
 
@@ -319,7 +321,7 @@ src += (hheight - offset) * irow + hwidth * psize;
 */
 
 for (int i = 0; i < height; i++) {
-  float fi = (float)i - hheight + offset;
+  const  float fi = (float)i - hheight + offset;
   int jj = orow * i;
   float last_x = 0., last_y = 0.;
   float last_theta = 0., last_r = 0.;

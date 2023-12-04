@@ -1285,8 +1285,8 @@ WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_RGB24, WEED_PALETTE_BGRA32,
                         WEED_PALETTE_BGR24, WEED_PALETTE_END};
 
-  const char *xlist[3] = {"- Random -", "Choose...", NULL};
-  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist),
+  //const char *xlist[3] = {"- Random -", "Choose...", NULL};
+  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, NULL),
                                weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change, -1 for auto changes)",
 						 -1, -1, 100000), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
@@ -1300,6 +1300,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
 
   weed_gui_set_flags(gui, WEED_GUI_CHOICES_SET_ON_INIT);
+
   weed_set_int_value(in_params[0], WEED_LEAF_MAX, INT_MAX);
   weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, PREF_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

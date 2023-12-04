@@ -592,6 +592,7 @@ PACKAGE_STRING='weed 4.0.0'
 PACKAGE_BUGREPORT=''
 PACKAGE_URL=''
 
+ac_default_prefix=/usr
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -628,7 +629,6 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_default_prefix=/usr
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
@@ -2292,6 +2292,8 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
 
 
 
@@ -15841,8 +15843,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Only expand once:
-
-
 
 
 

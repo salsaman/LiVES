@@ -859,7 +859,6 @@ weed_layer_t *get_old_frame_layer(void) {return mainw->layers ? old_frame_layer 
 void reset_old_frame_layer(void) {
   weed_layer_t *layer = (weed_layer_t *)STEAL_POINTER(old_frame_layer);
   if (layer) {
-    mainw->debug_ptr = NULL;
     if (layer != mainw->cached_frame && layer != mainw->frame_layer_preload
         && layer != mainw->ext_player_layer) {
       weed_layer_unref(layer);
@@ -1434,6 +1433,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
       frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(frame_layer, mainw->frame_layer);
     }
+    mainw->debug_ptr = frame_layer;
 
     // ensure previou frame has been displayed
     fg_stack_wait();
@@ -1441,11 +1441,12 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+                                      HOOK_CB_FG_THREAD,
                                       lives_layer_draw, 0, "vv", mainw->preview_image, frame_layer);
+
     } else {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+                                      HOOK_CB_FG_THREAD,
                                       lives_layer_draw, 0, "vv", mainw->play_image, frame_layer);
     }
 
@@ -1606,7 +1607,9 @@ lfi_done:
     if (!mainw->refresh_model) {
       // free pixdata for frame_layer, then run the next cycle
       reset_old_frame_layer();
-      old_frame_layer = STEAL_POINTER(mainw->frame_layer);
+      //old_frame_layer = STEAL_POINTER(mainw->frame_layer);
+      weed_layer_unref(mainw->frame_layer);
+      mainw->frame_layer = NULL;
       run_next_cycle();
     } else mainw->frame_layer = NULL;
     return NULL;

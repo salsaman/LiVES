@@ -21,21 +21,7 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
-#include <weed/weed-plugin.h>
-#ifndef NEED_LOCAL_WEED_UTILS
-#include <weed/weed-utils.h> // optional
-#else
-#include "../../libweed/weed-utils.h" // optional
-#endif
 #include <weed/weed-plugin-utils.h>
-#else
-#include "../../libweed/weed-plugin.h"
-#include "../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed-plugin-utils.h" // optional
-#endif
-
-#include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
@@ -211,8 +197,7 @@ int lifetv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   RGB32 pix;
 
   int width, height, video_area, irow, orow;
-
-  register int x, y;
+  int x, y;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);

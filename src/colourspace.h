@@ -248,6 +248,7 @@ typedef struct {
   uint16_t *lut;
   uint8_t *lut8;
   int thread_id;
+  boolean thread_local;
   uint64_t padding[6];
 } lives_cc_params;
 

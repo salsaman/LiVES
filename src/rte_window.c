@@ -1812,7 +1812,7 @@ void check_string_choice_params(weed_plant_t *inst) {
   for (int i = 0; i < nparams; i++) {
     if ((gui = weed_param_get_gui(in_params[i], FALSE)) != NULL && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) {
       tgui = weed_paramtmpl_get_gui(weed_param_get_template(in_params[i]), TRUE);
-      lives_leaf_copy(tgui, WEED_LEAF_CHOICES, gui, WEED_LEAF_CHOICES);
+      lives_leaf_dup(tgui, gui, WEED_LEAF_CHOICES);
     }
   }
   if (in_params) lives_free(in_params);

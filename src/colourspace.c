@@ -449,7 +449,6 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
   int max = MAX_THREADS + 1, minbnum = max, mingnum = minbnum, minanum = mingnum, num;
   int lastblock = THREADVAR(last_sws_block), j = 0, bestidx = -1;
 
-
   pthread_mutex_lock(&ctxcnt_mutex);
 
   if (nb) {
@@ -506,10 +505,8 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
 	  lastblock = nb - 1;
 	  j++;
 	  continue;
-	}
-      }
-    }
-  }
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
 
   if (minbnum < max || mingnum < max) {
@@ -3387,7 +3384,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
   // row 2 - y2 horiz avg u2, v2
   // avg row 1 - y1, avg u1, v1, u2, v2
   // 4. 3
-
+  
   if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
     if (!is_422) {
       height += y_delta;
@@ -3444,8 +3441,8 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
         uint8_t this_u1 = last_u1, this_v1 = last_v1, this_u2 = last_u2, this_v2 = last_v2;
         uint8_t next_u1 = last_u1, next_v1 = last_v1, next_u2 = last_u2, next_v2 = last_v2;
         int ii = irow * i, ii2 = ii + irow;
-        int or = orowstride * i;
-        //
+        int or = orowstride * i; 
+	//
 
         for (int j = 0; j < width; j += 2) {
           // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
@@ -3461,11 +3458,14 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u1 + last_u1;
           v2 = this_v2 + last_v2;
 
-          u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
 
-          v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	    v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3500,10 +3500,13 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u2 + next_u2;
           v2 = this_v2 + next_v2;
 
-          u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
-          v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
+	    v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3687,7 +3690,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
         uint8_t this_u1 = last_u1, this_v1 = last_v1, this_u2 = last_u2, this_v2 = last_v2;
         uint8_t next_u1 = last_u1, next_v1 = last_v1, next_u2 = last_u2, next_v2 = last_v2;
         int ii = irow * i, ii2 = ii + irow;
-        int or = orowstride * i;
+        int or = orowstride * i - y_delta;
         //
 
         for (int j = 0; j < width; j += 2) {
@@ -3704,11 +3707,14 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u1 + last_u1;
           v2 = this_v2 + last_v2;
 
-          u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
-
-          v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
+	    
+	    v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3743,10 +3749,13 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u2 + next_u2;
           v2 = this_v2 + next_v2;
 
-          u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
-          v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
+	    v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3876,14 +3885,23 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 }
 
 static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
+  //void *orig, *p;
   lives_cc_params *ccparams = (lives_cc_params *)data;
   lives_memcpy(&THREADVAR(conv_arrays), &ccparams->conv_arrays, sizeof(struct _conv_array));
+  /* if (ccparams->thread_local) { */
+  /*   orig = (uint8_t *)ccparams->dest + */
+  /*   ccparams->orowstrides[0] * ccparams->y_delta; */
+  /*   p = THREADVAR(buffer); */
+  /*   ccparams->dest = p; */
+  /* } */
   convert_yuv420p_to_rgb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize,
                                ccparams->y_delta, ccparams->irowstrides,
                                ccparams->orowstrides[0], (uint8_t *)ccparams->dest,
                                ccparams->out_alpha, ccparams->is_422, ccparams->in_sampling,
                                ccparams->in_clamping, ccparams->in_subspace, 0, 0,
                                ccparams->lut, ccparams->thread_id);
+  /* if (ccparams->thread_local) */
+  /*   lives_memcpy(orig, p,ccparams->orowstrides[0] * ccparams->vsize); */
   return NULL;
 }
 
@@ -4060,11 +4078,14 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u1 + last_u1;
           v2 = this_v2 + last_v2;
 
-          u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
 
-          v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	    v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u3, v3, &dest[ or + jo + 2], &dest[ or + jo + 1],
@@ -4099,10 +4120,13 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u2 + next_u2;
           v2 = this_v2 + next_v2;
 
-          u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
-          v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
+	    v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo + 2], &dest[ or + jo + 1],
@@ -4304,11 +4328,14 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u1 + last_u1;
           v2 = this_v2 + last_v2;
 
-          u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
 
-          v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	    v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u3, v3, &dest[ or + jo + 2], &dest[ or + jo + 1],
@@ -4343,10 +4370,13 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
           u2 = this_u2 + next_u2;
           v2 = this_v2 + next_v2;
 
-          u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
-          v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
+	    v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo + 2], &dest[ or + jo + 1],
@@ -4656,11 +4686,14 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           u2 = this_u1 + last_u1;
           v2 = this_v2 + last_v2;
 
-          u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
 
-          v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	    v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             dest[ or + jo] = 255;
@@ -4695,10 +4728,13 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           u2 = this_u2 + next_u2;
           v2 = this_v2 + next_v2;
 
-          u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
-          v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP16_240i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
+	    v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             dest[ or + jo] = 255;
@@ -4900,11 +4936,14 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           u2 = this_u1 + last_u1;
           v2 = this_v2 + last_v2;
 
-          u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
 
-          v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	    v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
 
           if (gamma_lut) {
             dest[ or + jo] = 255;
@@ -4939,11 +4978,13 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
           u2 = this_u2 + next_u2;
           v2 = this_v2 + next_v2;
 
-          u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
-          u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
-          v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
-          v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
-
+	  if (prefs->pb_quality != PB_QUALITY_LOW) {
+	    u3 = CLAMP0_255i((u1 + (u2 >> 1)) / 3. + .5);
+	    u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
+	    v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
+	    v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
+	  }
+	  else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
           if (gamma_lut) {
             dest[ or + jo] = 255;
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo + 1], &dest[ or + jo + 2],
@@ -15143,6 +15184,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     return TRUE;
   }
+  return FALSE;
 #endif
 
   // reget these after conversion, convert width from macropixels to pixels

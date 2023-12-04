@@ -566,10 +566,10 @@ boolean check_clip_integrity(int clipno, const lives_clip_data_t *cdata, frames_
     sfile->afilesize = reget_afilesize_inner(clipno);
     get_total_time(sfile);
     if (sfile->laudio_time - sfile->video_time > AV_TRACK_MIN_DIFF) {
-      if (prefs->show_dev_opts) {
-        g_printerr("AV timing mismatch: video time == %f sec, audio time == %f\n",
-                   sfile->video_time, sfile->laudio_time);
-      }
+      /* if (prefs->show_dev_opts) { */
+      /*   g_printerr("AV timing mismatch: video time == %f sec, audio time == %f\n", */
+      /*              sfile->video_time, sfile->laudio_time); */
+      /* } */
       binf = clip_forensic(clipno, NULL);
       if (binf && binf->frames) {
         if (binf->frames * sfile->fps == sfile->laudio_time
@@ -1281,7 +1281,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
           return -(i - 1);
         }
         if (intimg) {
-          if (saveargs->layer) weed_layer_free(saveargs->layer);
+          if (saveargs->layer) weed_layer_unref(saveargs->layer);
           saveargs->layer = NULL;
         } else {
           if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {

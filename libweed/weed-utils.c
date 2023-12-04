@@ -207,7 +207,7 @@ static inline weed_voidptr_t weed_get_arrayxy(weed_plant_t *plant, const char *k
 #if WEED_ABI_VERSION < 203
   fprintf(stderr, "This version of libweed-utils requires compilation with libweed WEED_ABI_VERSION 203 or higher\n");
   abort();
-#else
+#endif
   weed_error_t err = WEED_SUCCESS;
   weed_size_t num_elems = 0, totsize = 0, *sizes = NULL;
   weed_leaf_t *leaf = _weed_intern_freeze(plant, key);
@@ -261,10 +261,10 @@ static inline weed_voidptr_t weed_get_arrayxy(weed_plant_t *plant, const char *k
  exit:
   if (leaf) _weed_intern_unfreeze(leaf);
   if (sizes) (*_free_func)(sizes);
-  if (elems) *elems = (err == WEED_SUCCESS) ? num_elems : 0;
+  if (elems) *elems = (err == WEED_SUCCESS) ? num_elems : -err;
   if (tot_size) *tot_size = (err == WEED_SUCCESS) ? totsize : 0;
   if (error) *error = err;
-#endif
+  if (!num_elems) return NULL;
   return retvals;
 }
 

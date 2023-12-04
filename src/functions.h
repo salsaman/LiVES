@@ -8,9 +8,9 @@
 
 ///// low level operations //////
 
-boolean have_recursion_token(uint32_t tok);
-void push_recursion_token(uint32_t tok);
-void remove_recursion_token(uint32_t tok);
+boolean have_recursion_token(uint64_t token, void *dataptr);
+void push_recursion_token(recursion_token *);
+void remove_recursion_token(uint64_t token, void *dataptr);
 
 typedef int(*funcptr_int_t)();
 typedef double(*funcptr_dbl_t)();
@@ -167,6 +167,7 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_VOIDP_VOIDP_BOOL 		        		0X00000DD3
 #define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
+#define FUNCSIG_PLANTP_INT64_BOOL				       	0X00000E53
 #define FUNCSIG_INT_INT_BOOL	 		        		0X00000113
 #define FUNCSIG_BOOL_INT_BOOL	 		        		0X00000313
 #define FUNCSIG_STRING_INT_BOOL	 		        		0X00000413
@@ -176,6 +177,7 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_STRING_DOUBLE_INT_STRING       				0X00004214
 #define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
 #define FUNCSIG_VOIDP_INT_FUNCP_VOIDP				       	0X0000D1CD
+
 // 5p
 #define FUNCSIG_VOIDP_INT_INT_INT_INT					0X000D1111
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
@@ -537,10 +539,17 @@ void lives_closure_free(lives_closure_t *closure);
 #define LIVES_POST_HOOK		INTERNAL_HOOK_2
 
 typedef struct _hstack_t {
+  int type;
   volatile LiVESList *stack;
   pthread_mutex_t mutex;
   volatile uint64_t flags;
   lives_proc_thread_t owner;
+
+  // for hook stacks with pattern request,
+  // when triggered, the callbacks are not actioned, but instead
+  // transferred to req_targer as if the caller had added them there originally
+  lives_hook_stack_t **req_target_stacks;
+  int req_target_type;
 } lives_hook_stack_t;
 
 // hook_stack_flags
@@ -550,69 +559,95 @@ typedef struct _hstack_t {
 // callbacks are running now - used to prevnet multiple trigger instances
 #define STACK_TRIGGERING		(1ull < 1)
 
-// HOOK DETAILS - each hook stack TYPE (by enumeration) can have a hook details flag,
-// describing the operation of that hook_type
+// HOOK STACK_DESCRIPTORS - each hook stack type has an assosciated hook_descriptor
+// which defines wken the stack may be triggered and how callbacks are handled on trigged
+
+// data hooks are triggered before or after some item of data is added, altered or removed
+// spontaneous hooks are triggered on demand, by the owner of the stack
+// request hooks are a special type of spontaneous hook. When triggered, the callbacks are not
+// actioned directly, instead they are transferred to another hook stack (the req_target)
+// as if the original caller had added them there originally.
+// this allows for accumulation and filtering of callbacks prior to them being added to the target
+// the owner of the request queue responds to orinal request, accepting or denying it
+
+typedef enum {HOOK_PATTERN_INVALID = -1,
+	      HOOK_PATTERN_DATA,
+	      HOOK_PATTERN_REQUEST,
+	      HOOK_PATTERN_SPONTANEOUS
+} hookstack_pattern_t;
 
 typedef struct {
   int htype; // the hook type (e.g. COMPLETED, PREPARING)
-  // (data hooks are trigger before and after some item of data is added, altered or removed)
-  // spontaneous hooks are triggered on demand, by the same proc_thread holding the stack
-  // request hooks are in two parts - a callback is added to the request stack of another proc_thread
-  // the target proc_thread responds to the request, accepting or denying it
-  int model; // data, spontaneous, request
-  // conditional - for data hooks, defines the conditions which cause the hook to be triggered
-  // - the specific item triggering it, before or after, old value, new value
-  uint64_t trigger_details; // flags defining trigger operation
+  hookstack_pattern_t pattern; // base pattern data, spontaneous, request
+  uint64_t op_flags; // flags defining trigger operation
   lives_funcdef_t *cb_proto; // defines the callback function prototype
-} hook_descriptor_t;
+} hookstack_descriptor_t;
+
+uint64_t lives_hookstack_op_flags(int htype);
+hookstack_pattern_t lives_hookstack_pattern(int htype);
+
+hookstack_descriptor_t *get_hs_desc(void);
 
 // flagbits for trigger_details
 
-// denotes that the hook stack is in the thread, rather than in the proc_thread
-// only the thread itself may add / remove callbacks and trigger this
-#define HOOK_DTL_SELF			(1ull < 0)
+#define HOOKSTACK_INVALID		((uint64_t)-1)
+
+// denotes that callbacks in the stack are run once only and removed
+#define HOOKSTACK_ALWAYS_ONESHOT       	(1ull << 0)
 
 // hook callbacks should be run asyncronously in parallel
-#define HOOK_DTL_ASYNC_PARALLEL	     	(1ull < 1)
+#define HOOKSTACK_ASYNC_PARALLEL       	(1ull << 1)
 
-// the return type of the callbacks must be be boolean,
-// any which return FALSE will be blocked (ignored)
-// blocked callbacks can then either be removed, or unblocked
-#define HOOK_DTL_BLOCK_FALSE      	(1ull < 2)
+// denotes that if the stack triggerer is NOT the GUI thread,
+// flags should be ANDed with HOOKSTACK_MASK_NON_GUI
+#define HOOKSTACK_GUI_THREAD	       	(1ull << 7)
 
-// the return type of the callbacks must be boolean,
-// the callbacks are run as normal (depending on other flags)
-// the hook trigger function will return TRUE if and only if ALL callbacks return TRUE
-// FALSE if any return FALSE
-#define HOOK_DTL_COMBINED_BOOL      	(1ull < 3)
+#define HOOKSTACK_MASK_NON_GUI		((uint64_t)(~((uint64_t)0xFF00)))
+
+#define HOOKSTACK_FLAGS_ADJUST(flagvar, is_gui_thread)			\
+  _DW0(if(((flagvar)&HOOKSTACK_GUI_THREAD)&&!(is_gui_thread)) (flagvar)&=HOOKSTACK_MASK_NON_GUI;)
 
 // this flagbit denotes that triggering the hooks will run only the first callback on the stack and return
 // (when combined with ASYNC_POLL, the effect is to run a single iteration, all callbacks)
 // note:
 // the default stack order is  FIFO, however callbacks may be prepended in case LIFO is needed
-#define HOOK_DTL_SINGLE	 	      	(1ull < 4)
+#define HOOKSTACK_RUN_SINGLE      	(1ull << 8)
 
-// an async poller is created, it will trigger all callbacks in sequence, then after a short pause
-// repeat this process
-// the poller itself has hooks, so adding a callback to COMPLETED_HOOK can determine when it returns
-// - if COMBINED_BOOL is also in flags, polling will stop when TRUE is returned
-// - if SINGLE is in flags, the effect is to run a single iteration (all callbacks) once and return
-// - the poller MUST be cancellable and must return between triggering if cancelled
-// - the poller MUST be pausable and can pause between hook triggereing
-#define HOOK_DTL_ASYNC_POLL		       	(1ull < 5)
+// callbacks are normally removed when the entity which added them is invalidated / freed
+// setting this prevents that from happening, the callback remains in the stack beyond the lifetime of the adder
+#define HOOKSTACK_PERSISTENT	       	(1ull << 9)
 
-// callback payload should be passed to the main thread to be run
-#define HOOK_DTL_MAIN_THREAD	       	(1ull < 6)
+// if callbacks cannot be run immediately (because some other thread holds the mutex lock)
+// return immediately and do not run the callbacks
+#define HOOKSTACK_NOWAIT	       	(1ull << 10)
 
-// callbacks may be dded to the stack, but these wil not be triggered, instead of tirggering
-// at a later point they will be transferred to adifferent stack
-#define HOOK_DTL_INDIRECT	       	(1ull < 6)
+//
 
-/* #define HSTACK_FLAGS(DATA_READY_HOOK) HOOK_DTL_ASYNC_CALLBACKS */
-/* #define HSTACK_FLAGS(SYNC_WAIT_HOOK) HOOK_DTL_SELF | HOOK_DTL_ASYNC_TRIGGER | HOOK_DETAIL_COMBINED_BOOL | HOOK_DTL_BOOL_LOOP */
-/* #define HSTACK_FLAGS(INTERNAL_HOOK_0) HOOK_DETAIL_MAIN_THREAD | HOOK_DTL_SINGLE */
+#define HOOKSTACK_NATIVE	       	(1ull << 16)
 
-// low level flags used internally when adding callbackdddas*/
+// the return type of the callbacks must be be boolean,
+// any which return FALSE will be blocked (ignored)
+// blocked callbacks can then either be removed, or unblocked
+//#define HOOKSTACK_BLOCK_FALSE      	(1ull < 8)
+
+// the return type of the callbacks must be boolean,
+// the callbacks are run as normal (depending on other flags)
+// the hook trigger function will return TRUE if and only if ALL callbacks return TRUE
+//#define HOOKSTACK_COMBINED_BOOL      	(1ull < 9)
+
+#define HS_FLAGS_FATAL			(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)
+#define HS_FLAGS_THREAD_EXIT		(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE)
+#define HS_FLAGS_DATA_READY		(HOOKSTACK_ASYNC_PARALLEL)
+#define HS_FLAGS_LIVES_GUI		(HOOKSTACK_RUN_SINGLE | HOOKSTACK_GUI_THREAD | HOOKSTACK_ALWAYS_ONESHOT \
+ 							| HOOKSTACK_NOWAIT)
+#define HS_FLAGS_SYNC_ANNOUNCE		(HOOKSTACK_PERSISTENT | HOOKSTACK_ALWAYS_ONESHOT)
+#define HS_FLAGS_COMPLETED		(HOOKSTACK_ALWAYS_ONESHOT)
+#define HS_FLAGS_FINISHED		(HOOKSTACK_ALWAYS_ONESHOT)
+#define HS_FLAGS_CANCELLED		(HOOKSTACK_ALWAYS_ONESHOT)
+#define HS_FLAGS_ERROR			(HOOKSTACK_ALWAYS_ONESHOT)
+#define HS_FLAGS_DESTRUCTION		(HOOKSTACK_ALWAYS_ONESHOT)
+
+// low level flags used internally when adding callbacks*/
 
 #define DTYPE_PREPEND 		(1ull << 0) // unset == append
 #define DTYPE_CLOSURE 		(1ull << 1) // unset == lpt

@@ -65,16 +65,6 @@ static int ncbcalls = 0;
 
 static boolean fx_inited = FALSE;
 
-struct _procvals {
-  weed_process_f procfunc;
-  weed_plant_t *inst;
-  weed_timecode_t tc;
-  weed_error_t ret;
-  char padding[DEF_ALIGN - ((sizeof(weed_process_f) - sizeof(weed_plant_t *)
-                             - sizeof(weed_timecode_t) - sizeof(weed_error_t)) % DEF_ALIGN)];
-};
-
-
 #ifndef VALGRIND_ON
 static int load_compound_fx(void);
 #endif
@@ -305,7 +295,7 @@ static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
   // check (mandatory) output chans, see if any are non-alpha
   int nouts;
   weed_plant_t **ctmpls = weed_filter_get_out_chantmpls(filt, &nouts);
-  if (!nouts) return FALSE;
+  if (nouts <= 0) return FALSE;
   if (!ctmpls[0]) {
     lives_freep((void **)&ctmpls);
     return FALSE;
@@ -328,7 +318,7 @@ static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
   boolean has_mandatory_in = FALSE;
   int nins;
   weed_plant_t **ctmpls = weed_filter_get_in_chantmpls(filt, &nins);
-  if (nins == 0) return FALSE;
+  if (nins <= 0) return FALSE;
   if (!ctmpls[0]) {
     lives_free(ctmpls);
     return FALSE;
@@ -1341,6 +1331,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
             uint64_t new_rte = GU641 << key;
             weed_deinit_effect(key);
             mainw->rte &= ~new_rte;
+            mainw->rte_real &= ~new_rte;
             if (rte_window_visible()) rtew_set_keych(key, FALSE);
             if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
             weed_instance_unref(inst);
@@ -1477,10 +1468,58 @@ void weed_reinit_all(void) {
 }
 
 
-static void *thread_process_func(void *arg) {
-  struct _procvals *procvals = (struct _procvals *)arg;
-  procvals->ret = (*procvals->procfunc)(procvals->inst, procvals->tc);
-  return NULL;
+static weed_error_t thread_process_func(weed_instance_t *inst, weed_timecode_t tc, boolean thrd_local) {
+  int nchans;	 
+  weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
+  weed_process_f process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
+  weed_channel_t **out_channels = weed_instance_get_out_channels(inst, &nchans);
+  weed_error_t ret = WEED_SUCCESS;
+  void ***opd = NULL;
+
+  if (thrd_local) {
+    opd = LIVES_CALLOC_SIZEOF(void **, nchans);
+    void *buff = THREADVAR(buffer);
+    for (int i = 0; i < nchans; i++) {
+      int nplanes;
+      weed_channel_t *chan = out_channels[i];
+      void **pd = weed_channel_get_pixel_data_planar(chan, &nplanes);
+      int offset = weed_get_int_value(chan, WEED_LEAF_OFFSET, NULL);
+      int dheight = weed_channel_get_height(chan);
+      int *rows = weed_channel_get_rowstrides(chan, &nplanes);
+      int pal = weed_channel_get_palette(chan);
+      size_t totsize = 0;
+      opd[i] = weed_channel_get_pixel_data_planar(chan, &nplanes);
+      for (int p = 0; p < nplanes; p++) {
+	size_t bsize = rows[p] * dheight * weed_palette_get_plane_ratio_vertical(pal, p);
+	pd[p] = buff + totsize;
+	totsize += bsize;
+      }
+      weed_channel_set_pixel_data_planar(chan, (void **)pd, nplanes);
+      lives_free(pd); lives_free(rows);
+    }
+  }
+
+  ret = (*process_func)(inst, tc);
+
+  if (thrd_local) {
+    for (int i = 0; i < nchans; i++) {
+      int nplanes;
+      weed_channel_t *chan = out_channels[i];
+      void **pd = weed_channel_get_pixel_data_planar(chan, &nplanes);
+      int dheight = weed_channel_get_height(chan);
+      int *rows = weed_channel_get_rowstrides(chan, &nplanes);
+      int pal = weed_channel_get_palette(chan);
+      for (int p = 0; p < nplanes; p++) {
+	size_t bsize = rows[p] * dheight * weed_palette_get_plane_ratio_vertical(pal, p);
+	lives_memcpy(opd[i][p], pd[p], bsize);
+      }
+      lives_free(pd); lives_free(rows); lives_free(opd[i]);
+    }
+    lives_free(opd);
+  }
+
+    lives_free(out_channels);
+return ret;
 }
 
 
@@ -1488,12 +1527,15 @@ static void *thread_process_func(void *arg) {
 
 static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timecode_t tc) {
   // split output(s) into horizontal slices
-  struct _procvals *procvals;
-  lives_thread_t **dthreads = NULL;
+  lives_proc_thread_t *lpts = NULL;
   weed_plant_t **xinst = NULL;
   weed_plant_t **xchannels, *xchan;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
   weed_error_t retval;
+  void *buff = NULL;
+  void **pd;
+  int *rows;
+  size_t maxsize, totsize = 0;
   int nchannels;
   int pal;
   double vrt;
@@ -1504,18 +1546,16 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   boolean filter_busy = FALSE;
   boolean needs_reinit = FALSE;
   boolean wait_state_upd = FALSE, state_updated = FALSE;
+  boolean use_thrdlocal = FALSE, can_use_thrd_local = TRUE;
 
   int vstep = SLICE_ALIGN, minh;
   int slices, slices_per_thread, to_use;
-  int heights[2], *xheights;
-  int offset = 0;
+  int **xheights;
   int dheight, height, xheight = 0, cheight;
   int filter_flags;
   int nthreads = 0;
-
-  int i, j;
-
-  weed_process_f process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
+  int nplanes, xoffset;
+  int i, j, p;
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_VSTEP)) {
     minh = weed_get_int_value(filter, WEED_LEAF_VSTEP, NULL);
@@ -1527,18 +1567,20 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
       && weed_get_boolean_value(filter, LIVES_LEAF_IGNORE_STATE_UPDATES, NULL) == WEED_FALSE)
     wait_state_upd = TRUE;
 
+  xheights = LIVES_CALLOC_SIZEOF(int *, nchannels);
+  
   for (i = 0; i < nchannels; i++) {
     /// min height for slices (in all planes) is SLICE_ALIGN, unless an out channel has a larger vstep set
+    xheights[i] = LIVES_CALLOC_SIZEOF(int, 2);
     height = weed_channel_get_height(out_channels[i]);
     pal = weed_channel_get_palette(out_channels[i]);
-
-    for (j = 0; j < weed_palette_get_nplanes(pal); j++) {
-      vrt = weed_palette_get_plane_ratio_vertical(pal, j);
+    nplanes = weed_palette_get_nplanes(pal);
+    for (p = 0; p <nplanes; p++) {
+      vrt = weed_palette_get_plane_ratio_vertical(pal, p);
       cheight = height * vrt;
       if (xheight == 0 || cheight < xheight) xheight = cheight;
     }
   }
-
   if (xheight % vstep != 0) return FILTER_ERROR_DONT_THREAD;
 
   // slices = min height / step
@@ -1548,21 +1590,35 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   to_use = ALIGN_CEIL(slices, slices_per_thread) / slices_per_thread;
   if (to_use < 0) return FILTER_ERROR_DONT_THREAD;
 
-  procvals = (struct _procvals *)lives_calloc(to_use, sizeof(struct _procvals));
-  procvals->ret = WEED_SUCCESS;
   xinst = (weed_plant_t **)lives_calloc(to_use, sizeof(weed_plant_t *));
-  dthreads = (lives_thread_t **)lives_calloc(to_use, sizeof(lives_thread_t *));
+  lpts = (lives_proc_thread_t *)lives_calloc(to_use, sizeof(lives_proc_thread_t));
 
   for (i = 0; i < nchannels; i++) {
-    heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, NULL);
+    xheights[i][1] = height = weed_channel_get_height(out_channels[i]);
     slices = height / vstep;
     slices_per_thread = CEIL((double)slices / (double)to_use, 1.);
     dheight = slices_per_thread * vstep;
-    heights[0] = dheight;
-    weed_set_int_value(out_channels[i], WEED_LEAF_OFFSET, 0);
-    weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
+
+    /// min height for slices (in all planes) is SLICE_ALIGN, unless an out channel has a larger vstep set
+    rows = weed_channel_get_rowstrides(out_channels[i], &nplanes);
+    height = weed_channel_get_height(out_channels[i]);
+    pal = weed_channel_get_palette(out_channels[i]);
+
+    if (weed_get_boolean_value(out_channels[i], WEED_LEAF_HOST_INPLACE, NULL))
+      can_use_thrd_local = FALSE;
+    else {
+      for (p = 0; p <nplanes; p++)
+	totsize += rows[p] * dheight * weed_palette_get_plane_ratio_vertical(pal, p);
+    }
+    lives_free(rows);
+    xheights[i][0] = dheight;
   }
 
+  maxsize = THREADVAR(buff_size);
+  
+  if (can_use_thrd_local
+      && totsize  <= maxsize) use_thrdlocal = TRUE;
+ 
   for (j = 0; j < to_use; j++) {
     // each thread gets its own copy of the filter instance, with the following changes
     // - each copy has no refcount (since it is only used here)
@@ -1574,25 +1630,40 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
     xchannels = (weed_plant_t **)lives_calloc(nchannels, sizeof(weed_plant_t *));
 
     for (i = 0; i < nchannels; i++) {
+      dheight = xheights[i][0];
+      xoffset = dheight * j;
       xchan = xchannels[i] = lives_plant_copy(out_channels[i]);
-      xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
-      height = xheights[1];
-      dheight = xheights[0];
-      offset = dheight * j;
-      if ((height - offset) < dheight) dheight = height - offset;
-      xheights[0] = dheight;
-      weed_set_int_value(xchan, WEED_LEAF_OFFSET, offset);
-      weed_set_int_array(xchan, WEED_LEAF_HEIGHT, 2, xheights);
-      lives_free(xheights);
+      height = xheights[i][1];
+
+      if ((height - xoffset) < dheight) dheight = height - xoffset;
+      xheights[i][0] = dheight;
+
+      if (xchan) {
+	weed_set_int_value(xchan, WEED_LEAF_OFFSET, xoffset);
+	weed_set_int_array(xchan, WEED_LEAF_HEIGHT, 2, xheights[i]);
+      }
+      
+      rows = weed_channel_get_rowstrides(xchan, &nplanes);
+      pal = weed_channel_get_palette(xchan);
+
+      pd = weed_channel_get_pixel_data_planar(xchan, &nplanes);
+  
+      for (p = 0; p < nplanes; p++) {
+	pd[p] += (int)(xoffset * weed_palette_get_plane_ratio_vertical(pal, p))
+	  * rows[p];
+      }
+      weed_channel_set_pixel_data_planar(xchan, (void **)pd, nplanes);
+      if (pd) lives_free(pd);
+      if (rows) lives_free(rows);
     }
+
+    ///
 
     weed_set_plantptr_array(xinst[j], WEED_LEAF_OUT_CHANNELS, nchannels, xchannels);
     lives_freep((void **)&xchannels);
 
-    procvals[j].procfunc = process_func;
-    procvals[j].inst = xinst[j];
-    procvals[j].tc = tc; // use same timecode for all slices
-
+    ////
+    
     if (wait_state_upd) {
       // for stateful effects, the first thread is added with
       // with "state_updated" set to false/ The thread will check for this, do the updates, then signal
@@ -1602,17 +1673,18 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
       if (!state_updated) weed_set_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, WEED_FALSE);
       else weed_set_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, WEED_TRUE);
     }
-
+  
     // start a thread for processing
-    lives_thread_create(&dthreads[j], LIVES_THRDATTR_PRIORITY, thread_process_func, &procvals[j]);
+
+    lpts[j] = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY, thread_process_func, WEED_SEED_INT, "pIb",
+				       xinst[j], tc, use_thrdlocal);
     nthreads++; // actual number of threads used
 
     if (wait_state_upd && !state_updated) {
       //  one thread may update static data for all threads
       // in this case we wait here for the update to be performed
-      lives_nanosleep_until_nonzero(lives_thread_done(dthreads[j])
-                                    || weed_get_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, NULL)
-                                    == WEED_TRUE);
+      lives_nanosleep_until_nonzero(lives_proc_thread_is_done(lpts[j], FALSE)
+                                    || weed_get_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, NULL));
       if (weed_get_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
         weed_set_boolean_value(filter, LIVES_LEAF_IGNORE_STATE_UPDATES, WEED_TRUE);
         wait_state_upd = FALSE;
@@ -1622,8 +1694,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
   // wait for threads to finish
   for (j = 0; j < nthreads; j++) {
-    lives_thread_join(dthreads[j], NULL);
-    retval = procvals[j].ret;
+    retval = lives_proc_thread_join_int(lpts[j]);
+    lives_proc_thread_unref(lpts[j]);
     if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
     if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
     if (retval == WEED_ERROR_NOT_READY) filter_busy = TRUE;
@@ -1633,22 +1705,16 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
     for (i = 0; i < nchannels; i++) {
       if (xchannels[i]) weed_plant_free(xchannels[i]);
-    }
     lives_freep((void **)&xchannels);
+    }
     weed_plant_free(xinst[j]);
   }
 
-  for (i = 0; i < nchannels; i++) {
-    // reset the channel heights
-    xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
-    weed_set_int_value(out_channels[i], WEED_LEAF_HEIGHT, xheights[1]);
-    lives_free(xheights);
-    weed_leaf_delete(out_channels[i], WEED_LEAF_OFFSET);
-  }
+  for (i = 0; i < nchannels; i++) lives_free(xheights[i]);
 
-  lives_freep((void **)&procvals);
+  lives_freep((void **)&xheights);
   lives_freep((void **)&xinst);
-  lives_freep((void **)&dthreads);
+  lives_freep((void **)&lpts);
   lives_freep((void **)&out_channels);
 
   if (plugin_invalid) return FILTER_ERROR_INVALID_PLUGIN;
@@ -1706,6 +1772,11 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
 
   lives_freep((void **)&in_channels);
   return FILTER_SUCCESS;
+}
+
+static boolean can_thread(weed_filter_t *filt) {
+  return future_prefs->nfx_threads > 1
+    && (weed_filter_get_flags(filt) & WEED_FILTER_HINT_MAY_THREAD);
 }
 
 
@@ -2199,12 +2270,15 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     unlock_layer_status(layer);
 
     if (channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
-      if (!weed_pixel_data_share(channel, layer)) {
-        retval = FILTER_ERROR_COPYING_FAILED;
-        goto done_video;
+      // if the filter can thread, avoid doing inplace unless low on memory
+      if (!can_thread(filter) || bigblock_occupancy() > 50.) {
+	if (!weed_pixel_data_share(channel, layer)) {
+	  retval = FILTER_ERROR_COPYING_FAILED;
+	  goto done_video;
+	}
+	inplace = TRUE;
+	weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, TRUE);
       }
-      inplace = TRUE;
-      weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, TRUE);
     }
 
     if (!inplace) {
@@ -2417,13 +2491,12 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   weed_process_f process_func;
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean did_thread = FALSE;
-  int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
   //int64_t timex = lives_get_current_ticks();
 
   // see if we can multithread
-  if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
-      (filter_flags & WEED_FILTER_HINT_MAY_THREAD)) {
+  if (can_thread(filter)) {
     weed_plant_t **out_channels = weed_instance_get_out_channels(instance, NULL);
+    prefs->nfx_threads = future_prefs->nfx_threads;
     retval = process_func_threaded(instance, tc);
     lives_free(out_channels);
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
@@ -4211,6 +4284,7 @@ void lives_monitor_free(void *p) {
 weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, weed_seed_t seed_type, weed_size_t num_elems,
                                    void *values) {
   weed_error_t err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+  if (values && !num_elems) BREAK_ME("bas aeeat set\n");
   g_print("PL setting %s in type %d\n", key, weed_plant_get_type(plant));
   if (WEED_PLANT_IS_GUI(plant) && !strcmp(key, WEED_LEAF_FLAGS)) g_print("Err was %d\n", err);
   return err;
@@ -6515,6 +6589,7 @@ boolean weed_init_effect(int hotkey) {
         weed_deinit_effect(agen_key);
         // need to do this in case starting another audio gen caused us to come here
         mainw->rte &= ~(GU641 << agen_key);
+        mainw->rte_real &= ~(GU641 << agen_key);
         if (rte_window_visible() && !mainw->is_rendering && !mainw->multitrack) {
           rtew_set_keych(agen_key, FALSE);
         }
@@ -6803,12 +6878,14 @@ deinit2:
     }
     if (fg_generator_key != -1) {
       mainw->rte |= (GU641 << fg_generator_key);
+      mainw->rte_real |= (GU641 << fg_generator_key);
       mainw->clip_switched = TRUE;
       mainw->playing_sel = FALSE;
     }
     if (bg_generator_key != -1 && !fg_modeswitch) {
       filter_mutex_lock(bg_generator_key);
       mainw->rte |= (GU641 << bg_generator_key);
+      mainw->rte_real |= (GU641 << bg_generator_key);
       if (hotkey < prefs->rte_keys_virtual) {
         if (rte_window_visible() && !mainw->is_rendering && !mainw->multitrack) {
           rtew_set_keych(bg_generator_key, TRUE);
@@ -6820,6 +6897,8 @@ deinit2:
   }
 
   if (rte_keys == hotkey) {
+    mainw->rte_real |= (~mainw->rte_keys & rte_keys);
+    mainw->rte_real &= ~(mainw->rte_keys & ~rte_keys);
     mainw->rte_keys = rte_keys;
     mainw->blend_factor = weed_get_blend_factor(rte_keys);
   }
@@ -7042,6 +7121,7 @@ boolean weed_deinit_effect(int hotkey) {
       mainw->cancelled = CANCEL_GENERATOR_END; // will be unreffed on pb end
     } else {
       mainw->rte &= ~(GU641 << bg_generator_key);
+      mainw->rte_real &= ~(GU641 << bg_generator_key);
       weed_generator_end(instance); // removes 1 ref
     }
     return TRUE;
@@ -7188,6 +7268,7 @@ deinit3:
         filter_mutex_lock(bgk);
         weed_deinit_effect(bgk);
         mainw->rte &= ~(GU641 << bgk);
+        mainw->rte_real &= ~(GU641 << bgk);
         if (rte_window_visible()) rtew_set_keych(bgk, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(bgk, FALSE);
         filter_mutex_unlock(bgk);
@@ -7851,6 +7932,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
 
     new_rte = GU641 << key;
     mainw->rte |= new_rte;
+    mainw->rte_real |= new_rte;
 
     mainw->last_grabbable_effect = key;
     if (rte_window_visible()) rtew_set_keych(key, TRUE);
@@ -8004,13 +8086,19 @@ void weed_generator_end(weed_plant_t *inst) {
 
     filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
-    if (rte_key_is_enabled(bg_generator_key, FALSE)) mainw->rte &= ~(GU641 << bg_generator_key);
+    if (rte_key_is_enabled(bg_generator_key, FALSE)) {
+      mainw->rte &= ~(GU641 << bg_generator_key);
+      mainw->rte_real &= ~(GU641 << bg_generator_key);
+    }
     filter_mutex_unlock(bg_generator_key);
     mainw->pre_src_file = mainw->current_file;
     bg_generator_key = bg_generator_mode = -1;
   } else {
     filter_mutex_lock(fg_generator_key);
-    if (rte_key_is_enabled(fg_generator_key, FALSE)) mainw->rte &= ~(GU641 << fg_generator_key);
+    if (rte_key_is_enabled(fg_generator_key, FALSE)) {
+      mainw->rte &= ~(GU641 << fg_generator_key);
+      mainw->rte_real &= ~(GU641 << fg_generator_key);
+    }
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
     filter_mutex_unlock(fg_generator_key);
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
@@ -8244,8 +8332,11 @@ undoit:
 
         if (key_to_instance[bgs][key_modes[bgs]] == inst) {
           key_to_instance[bgs][key_modes[bgs]] = NULL;
-          if (rte_key_is_enabled(ABS(bgs), FALSE)) mainw->rte &= ~(GU641 << ABS(bgs));
-        }
+          if (rte_key_is_enabled(ABS(bgs), FALSE)) {
+	    mainw->rte &= ~(GU641 << ABS(bgs));
+	    mainw->rte_real &= ~(GU641 << ABS(bgs));
+	  }
+	}
         filter_mutex_unlock(bgs);
         if (inst) {
           filter = weed_instance_get_filter(inst, TRUE);
@@ -9370,6 +9461,7 @@ boolean rte_key_setmode(int key, int newmode) {
         mainw->whentostop = whentostop;
         key = real_key;
         mainw->rte &= ~(GU641 << key);
+        mainw->rte_real &= ~(GU641 << key);
         return FALSE;
       }
       weed_instance_unref(inst);

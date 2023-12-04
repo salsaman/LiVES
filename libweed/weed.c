@@ -570,7 +570,7 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
 
 // external data size
 #define weed_seed_get_offset(seed_type)					\
-  (seed_type == WEED_SEED_BOOLEAN ? sizeof(weed_boolean_t) : weed_seed_get_size(seed_type, 0))
+  (seed_type == WEED_SEED_BOOLEAN ? sizeof(weed_boolean_t) : weed_seed_get_size(seed_type, WEED_VOIDPTR_SIZE))
 
 //#undef _vs
 
@@ -1132,8 +1132,9 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
     num_elems += leaf->num_elements;
   }
 
-  leaf->data = data;
   leaf->num_elements = num_elems;
+  if (num_elems) leaf->data = data;
+  else leaf->data = NULL;
 
   // only now we unlock this, can any potential deleter delete this leaf
   data_lock_unlock(leaf);
@@ -1141,7 +1142,7 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
     *old_ret = old_data;
     *old_ne = old_num_elems;
   }
-
+  else weed_data_free(old_data, old_num_elems, old_num_elems, seed_type);
   return err;
 }
 
@@ -1359,7 +1360,7 @@ EXPORTED weed_size_t _weed_intern_elem_sizes(weed_leaf_t *leaf, weed_size_t *siz
     weed_size_t ne = leaf->num_elements;
     if (ne) {
       if (leaf->seed_type != WEED_SEED_STRING) {
-	weed_size_t esz = weed_seed_get_size(leaf->seed_type, WEED_VOIDPTR_SIZE);
+	weed_size_t esz = weed_seed_get_offset(leaf->seed_type);
 	totsize = ne * esz;
 	if (sizes) for (int i = 0; i < ne; i++) sizes[i] = esz;
       }

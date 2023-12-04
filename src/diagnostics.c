@@ -2163,27 +2163,61 @@ void weed_utils_test(void) {
   void *vp1, *vp2;
   weed_error_t err;
   int iv[4], *iv2;
+  void *vp[4], **ap;
+  int nvals;
+
   plant1 = weed_plant_new(123);
-  plant2 = weed_plant_new(123);
 
   iv[0] = 10;
   iv[1] = 20;
   iv[2] = 80;
   iv[3] = 50;
+
+  plant2 = weed_plant_new(123);
+
+  vp[0] = mainw;
+  vp[1] = prefs;
+  vp[2] = &plant1;
+  vp[3] = &plant2;
+
   weed_set_int_value(plant1, "test", 123);
   weed_set_int_array(plant1, "test", 4, iv);
   iv2 = weed_get_int_array(plant1, "test", 0);
   g_print("valzz %d and %d %d %d\n", iv2[0], iv2[1], iv2[2], iv2[3]);
 
-  vp1 = (void *)0x123;
+  vp1 = (void *)&plant1;
+  weed_set_voidptr_value(plant1, "vptr1", vp1);
+  g_print("set voidpter val to %p\n", vp1);
+  g_print("read voidpter val as %p\n", weed_get_voidptr_value(plant1, "vptr1", NULL));
+  g_print("check get_counted\n");
+
+  ap = weed_get_voidptr_array_counted(plant1, "vptr1", &nvals);
+  g_print("get_counted returned %d\n", nvals);
+
+  weed_set_voidptr_array(plant1, "vptr1", 0, vp);
+
+  g_print("read voidpter val as %p\n", weed_get_voidptr_value(plant1, "vptr1", NULL));
+  g_print("check get_counted\n");
+
+  ap = weed_get_voidptr_array_counted(plant1, "vptr1", &nvals);
+  g_print("get_counted returned %d \n", nvals);
+
+  g_print("got val %p\n", ap);
+
+  vp1 = (void *)&plant2;
+
   fprintf(stderr, "initial val will be %p\n", vp1);
   err = weed_set_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, vp1);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
+
   vp1 = weed_get_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, &err);
   fprintf(stderr, "initial val read; %p\n", vp1);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
+
+  ap = weed_get_voidptr_array_counted(plant1, WEED_LEAF_PIXEL_DATA, &nvals);
+  g_print("get_counted returned %d\n", nvals);
 
   fprintf(stderr, "copy from plant1; %p to plant2: %p\n", plant1, plant2);
   err = lives_leaf_copy(plant2, "voidptr2", plant1, WEED_LEAF_PIXEL_DATA);
@@ -2194,6 +2228,9 @@ void weed_utils_test(void) {
   fprintf(stderr, "copy val read; %p\n", vp2);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
+
+  ap = weed_get_voidptr_array_counted(plant2, "voidptr2", &nvals);
+  g_print("get_counted returned %d\n", nvals);
 
   vp1 = weed_get_voidptr_value(plant1, WEED_LEAF_PIXEL_DATA, &err);
   fprintf(stderr, "check orig val, val read; %p\n", vp1);
@@ -2224,6 +2261,9 @@ void weed_utils_test(void) {
   err = lives_leaf_dup(plant2, plant1, WEED_LEAF_PIXEL_DATA);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
+
+    ap = weed_get_voidptr_array_counted(plant2, "voidptr2", &nvals);
+  g_print("get_counted returned %d\n", nvals);
 
   vp2 = weed_get_voidptr_value(plant2, WEED_LEAF_PIXEL_DATA, &err);
   fprintf(stderr, "dup val read; %p\n", vp2);

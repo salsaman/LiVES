@@ -1115,10 +1115,7 @@ static volatile int used[NBIGBLOCKS];
 static volatile int seqset[NBIGBLOCKS];
 
 #define NBAD_LIM 8
-//A#define BBL_TEST
-#ifdef BBL_TEST
 static int bbused = 0;
-#endif
 
 static int nbads = 0;
 
@@ -1133,10 +1130,8 @@ static void bigblocks_end(void) {
 #endif
   }
 
-  if (bigblock_root) {
-    munlock(bigblock_root, NBIGBLOCKS * bmemsize);
-    lives_free((void *)bigblock_root);
-  }
+  if (bigblock_root)
+    lives_uncalloc_mapped((void *)bigblock_root, NBIGBLOCKS * bmemsize, TRUE);
 }
 
 
@@ -1227,9 +1222,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   }
 
   if (oblock >= 0 && nblocks <= used[oblock]) {
-#ifdef BBL_TEST
     bbused += nblocks - used[oblock];
-#endif
     used[oblock] = nblocks;
     return oblock;
   }
@@ -1261,9 +1254,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
       tuid[i] = THREADVAR(uid);
     }
 #endif
-#ifdef BBL_TEST
     bbused += nblocks - used[i];
-#endif
     used[i] = nblocks;
   }
 
@@ -1285,6 +1276,10 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   if (++nbads > NBAD_LIM) LIVES_FATAL("Aborting due to probable internal memory errors");
   ////////////////////////
   return -1;
+}
+
+LIVES_GLOBAL_INLINE double bigblock_occupancy(void) {
+  return (double)bbused / (double)NBBLOCKS * 100.;
 }
 
 
@@ -1396,8 +1391,8 @@ void *free_bigblock(void *bstart) {
     return NULL;
   }
 
-#ifdef BBL_TEST
   bbused -= used[bbidx];
+#ifdef BBL_TEST
   g_print("bigblocks in use after free %d\n", bbused);
 #endif
   seqset[bbidx] = 0;

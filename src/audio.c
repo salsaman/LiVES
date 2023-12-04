@@ -3094,14 +3094,12 @@ void send_to_analysers(pulse_driver_t *pulsed, size_t nsamples) {
 
 
   if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
-    boolean memok = TRUE;
     fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
     /// we have audio filters... convert to float, pass through any audio filters, then back to s16
     for (int i = 0; i < pulsed->out_achans; i++) {
       // convert s16 to non-interleaved float
       fltbuf[i] = (float *)lives_calloc_safety(nsamples, sizeof(float));
       if (!fltbuf[i]) {
-        memok = FALSE;
         for (--i; i >= 0; i--) {
           lives_freep((void **)&fltbuf[i]);
         }
@@ -3109,8 +3107,6 @@ void send_to_analysers(pulse_driver_t *pulsed, size_t nsamples) {
         fltbuf = NULL;
         break;
       }
-
-
       else {
         /// convert to float, and take the opportunity to find the max volume
         /// (currently this is used to trigger recording start optionally)
@@ -3124,43 +3120,40 @@ void send_to_analysers(pulse_driver_t *pulsed, size_t nsamples) {
 
 void send_audio_to_fx(pulse_driver_t *pulsed) {
   float **fltbuf = NULL;
-  boolean memok = TRUE;
   size_t nsamples = 0;
   boolean alock_mixer = FALSE;
   uint64_t numFramesToWrite = nsamples;
-  if (memok) {
-    ticks_t tc = mainw->currticks;
-    // apply any audio effects with in_channels
+  ticks_t tc = mainw->currticks;
+  // apply any audio effects with in_channels
 
-    if (has_audio_filters(AF_TYPE_ANY)) {
-      /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
+  if (has_audio_filters(AF_TYPE_ANY)) {
+    /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
         to the in channel of the filter and then from the out channel back to the layer.
         IF the filter supports inplace then
         we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
         and feed the result to the player as usual */
-      weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-      weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, nsamples);
-      weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
-      lives_free(fltbuf);
-      fltbuf = weed_layer_get_audio_data(layer, NULL);
-      weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-      weed_layer_unref(layer);
+    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+    weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, nsamples);
+    weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+    lives_free(fltbuf);
+    fltbuf = weed_layer_get_audio_data(layer, NULL);
+    weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+    weed_layer_unref(layer);
+  }
+
+  if (!alock_mixer) {
+    pthread_mutex_lock(&mainw->vpp_stream_mutex);
+    if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
+      (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
     }
+    pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 
-    if (!alock_mixer) {
-      pthread_mutex_lock(&mainw->vpp_stream_mutex);
-      if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
-        (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
-      }
-      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+    // convert float audio back to s16 in pulsed->sound_buffer
+    sample_move_float_int(pulsed->sound_buffer, fltbuf, nsamples, 1.0, pulsed->out_achans, PA_SAMPSIZE, 0,
+			  (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
 
-      // convert float audio back to s16 in pulsed->sound_buffer
-      sample_move_float_int(pulsed->sound_buffer, fltbuf, nsamples, 1.0, pulsed->out_achans, PA_SAMPSIZE, 0,
-                            (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
-
-      for (int i = 0; i < pulsed->out_achans; i++) lives_free(fltbuf[i]);
-      lives_freep((void **)&fltbuf);
-    }
+    for (int i = 0; i < pulsed->out_achans; i++) lives_free(fltbuf[i]);
+    lives_freep((void **)&fltbuf);
   }
 }
 

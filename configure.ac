@@ -1,16 +1,16 @@
 dnl Process this file with autoconf to produce a configure script.
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES, 4.0.0-pre, https://github.com/salsaman/LiVES/issues, , http://lives-video.com)
+AC_INIT([LiVES],[4.0.0-pre],[https://github.com/salsaman/LiVES/issues],[],[http://lives-video.com])
+
+AC_PREFIX_DEFAULT(/usr)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 AC_CONFIG_AUX_DIR([.])
 
-AC_PREREQ(2.57)
-
-AC_PREFIX_DEFAULT(/usr)
+AC_PREREQ([2.69])
 
 ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
@@ -19,8 +19,8 @@ AM_INIT_AUTOMAKE([dist-bzip2])
 
 AM_MAINTAINER_MODE
 
-AC_GNU_SOURCE
-AC_ISC_POSIX
+AC_USE_SYSTEM_EXTENSIONS
+AC_SEARCH_LIBS([strerror],[cposix])
 AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
@@ -31,8 +31,11 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_MKDIR_P
 
-AC_LIBTOOL_DLOPEN
-AC_PROG_LIBTOOL
+_LT_SET_OPTION([LT_INIT],[dlopen])
+AC_DIAGNOSE([obsolete],[AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
+put the 'dlopen' option into LT_INIT's first parameter.])
+
+LT_INIT
 AM_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
@@ -1051,10 +1054,12 @@ fi
 
 
 if test "$ALL_WEED_CPTS" = "false"; then
-AC_CHECK_FILE(libweed/Makefile.am, [echo "Source subdirectory present, libraries will be built with main appLication."],
+AC_CHECK_FILE(libweed/Makefile.am, [echo "Source subdirectory present; libraries will be built along with main appLication."],
 [
-AC_MSG_ERROR([Library source not found. Please install missing libraries and run configure again.])
+AC_MSG_ERROR([Libweed not installed and sourcecode not found. Please install missing libraries and run configure again.])
 ])
+
+echo "Re-checking with local build enabled"
 
 AC_CONFIG_SUBDIRS([libweed])
 

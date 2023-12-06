@@ -2225,23 +2225,6 @@ static void run_plan(exec_plan_t *plan) {
         // check if step has completed
         switch (step->st_type) {
         case STEP_TYPE_LOAD: {
-          if (step->proc_thread) {
-            exec_plan_substep_t *substep = NULL;
-            if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
-            lives_proc_thread_join(step->proc_thread);
-            d_print_debug("deinterlace completed @ \n", xtime * 1000.);
-            for (LiVESList *list = step->substeps; list; list = list->next) {
-              substep = (exec_plan_substep_t *)list->data;
-              substep->end = xtime;
-              if (substep->op_idx == OP_DEINTERLACE) break;
-              substep = NULL;
-            }
-            if (substep) {
-              double dur = xtime - substep->start;
-              d_print_debug("Done in %.2f msec\n", dur * 1000.);
-            }
-            lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-          }
           // finishes when state is LOADED or READY
           layer = plan->layers[step->track];
           if (!layer) {
@@ -2267,60 +2250,78 @@ static void run_plan(exec_plan_t *plan) {
 
             break;
           }
-          lpt = lives_layer_get_proc_thread(layer);
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_CONVERTING) {
-            if (lpt) {
-              if (error || cancelled) {
-                if (!lives_proc_thread_get_cancel_requested(lpt)) {
-                  weed_layer_set_invalid(layer, TRUE);
-                  lives_proc_thread_request_cancel(lpt, FALSE);
-                  if (lives_proc_thread_was_cancelled(lpt)) {
+          if (step->proc_thread) {
+            exec_plan_substep_t *substep = NULL;
+            if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
+            lives_proc_thread_join(step->proc_thread);
+            d_print_debug("deinterlace completed @ \n", xtime * 1000.);
+            for (LiVESList *list = step->substeps; list; list = list->next) {
+              substep = (exec_plan_substep_t *)list->data;
+              substep->end = xtime;
+              if (substep->op_idx == OP_DEINTERLACE) break;
+              substep = NULL;
+            }
+            if (substep) {
+              double dur = xtime - substep->start;
+              d_print_debug("Done in %.2f msec\n", dur * 1000.);
+            }
+            lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+          } else {
+            lpt = lives_layer_get_proc_thread(layer);
+            lstatus = lives_layer_get_status(layer);
+            if (lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_CONVERTING) {
+              if (lpt) {
+                if (error || cancelled) {
+                  if (!lives_proc_thread_get_cancel_requested(lpt)) {
                     weed_layer_set_invalid(layer, TRUE);
-                    step->state = STEP_STATE_CANCELLED;
-                  }
+                    lives_proc_thread_request_cancel(lpt, FALSE);
+                    if (lives_proc_thread_was_cancelled(lpt)) {
+                      weed_layer_set_invalid(layer, TRUE);
+                      step->state = STEP_STATE_CANCELLED;
+                    }
 
-                  dec_running_steps(step);
-                  break;
-                }
-                if (paused) {
-                  if (!lives_proc_thread_get_pause_requested(lpt))
-                    lives_proc_thread_request_pause(lpt);
-                  if (lives_proc_thread_is_paused(lpt)) {
-                    xtime = lives_get_session_time();
-                    step->state = STEP_STATE_PAUSED;
-                    xtime = lives_get_session_time();
-                    step->tdata->paused_time -= xtime;
-                  }
-                  break;
-                }
-                if (lives_proc_thread_was_cancelled(lpt)) {
-                  step->state = STEP_STATE_CANCELLED;
-                  weed_layer_set_invalid(layer, TRUE);
-
-                  xtime = dec_running_steps(step);
-                  d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                                step->tdata->real_duration);
-                  d_print_debug("plan cancelled !\n");
-                  break;
-                }
-                if (plan->state == STEP_STATE_RESUMING) {
-                  if (!lives_proc_thread_get_resume_requested(lpt))
-                    lives_proc_thread_request_resume(lpt);
-
-                  if (lives_proc_thread_is_paused(lpt)) {
-                    can_resume = FALSE;
+                    dec_running_steps(step);
                     break;
                   }
-                  xtime = lives_get_session_time();
-                  step->tdata->paused_time += xtime;
-                  step->state = STEP_STATE_RUNNING;
-                }
-                if (lives_proc_thread_is_paused(lpt)) {
-                  xtime = lives_get_session_time() ;
-                  step->tdata->paused_time += xtime;
-                  step->state = STEP_STATE_PAUSED;
-                  break;
+                  if (paused) {
+                    if (!lives_proc_thread_get_pause_requested(lpt))
+                      lives_proc_thread_request_pause(lpt);
+                    if (lives_proc_thread_is_paused(lpt)) {
+                      xtime = lives_get_session_time();
+                      step->state = STEP_STATE_PAUSED;
+                      xtime = lives_get_session_time();
+                      step->tdata->paused_time -= xtime;
+                    }
+                    break;
+                  }
+                  if (lives_proc_thread_was_cancelled(lpt)) {
+                    step->state = STEP_STATE_CANCELLED;
+                    weed_layer_set_invalid(layer, TRUE);
+
+                    xtime = dec_running_steps(step);
+                    d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+                                  step->tdata->real_duration);
+                    d_print_debug("plan cancelled !\n");
+                    break;
+                  }
+                  if (plan->state == STEP_STATE_RESUMING) {
+                    if (!lives_proc_thread_get_resume_requested(lpt))
+                      lives_proc_thread_request_resume(lpt);
+
+                    if (lives_proc_thread_is_paused(lpt)) {
+                      can_resume = FALSE;
+                      break;
+                    }
+                    xtime = lives_get_session_time();
+                    step->tdata->paused_time += xtime;
+                    step->state = STEP_STATE_RUNNING;
+                  }
+                  if (lives_proc_thread_is_paused(lpt)) {
+                    xtime = lives_get_session_time() ;
+                    step->tdata->paused_time += xtime;
+                    step->state = STEP_STATE_PAUSED;
+                    break;
+                  }
                 }
               }
             }

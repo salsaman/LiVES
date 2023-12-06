@@ -2262,6 +2262,7 @@ static void run_plan(exec_plan_t *plan) {
               substep = NULL;
             }
             if (substep) {
+	      xtime = lives_get_session_time();
               double dur = xtime - substep->start;
               d_print_debug("Done in %.2f msec\n", dur * 1000.);
             }

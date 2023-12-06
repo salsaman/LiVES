@@ -80,11 +80,14 @@ void init_prefs(void) {
   DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, 0);
   DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE, 0);
 
+  DEFINE_PREF_INT64(PBTIMER_MAXDIFF, pbtimer_maxdiff, 1000000, 0);
+  DEFINE_PREF_DOUBLE(PBTIMER_RESYNC_X, pbtimer_resync_factor, .001, 0);
+
   DEFINE_PREF_DOUBLE(REC_STOP_GB, rec_stop_gb, DEF_REC_STOP_GB, 0);
   DEFINE_PREF_INT(REC_STOP_QUOTA, rec_stop_quota, 90, 0);
   DEFINE_PREF_BOOL(REC_STOP_DWARN, rec_stop_dwarn, TRUE, 0);
 
-  DEFINE_PREF_INT(FOCUS_STEAL, focus_steal, FOCUS_STEAL_DEF, PREF_FLAG_INCOMPLETE)
+  DEFINE_PREF_INT(FOCUS_STEAL, focus_steal, FOCUS_STEAL_DEF, PREF_FLAG_INCOMPLETE);
 
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
@@ -139,6 +142,13 @@ void load_pref(const char *pref_idx) {
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
+    case WEED_SEED_INT64: {
+      int idef = weed_get_int64_value(prefplant, WEED_LEAF_DEFAULT, NULL);
+      if (flags & PREF_FLAG_INTERNAL) *(int *)ppref = idef;
+      else *(int *)ppref = get_int_prefd(pref_idx, idef);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+      break;
+    }
     case WEED_SEED_DOUBLE: {
       double ddef = weed_get_double_value(prefplant, WEED_LEAF_DEFAULT, NULL);
       if (flags & PREF_FLAG_INTERNAL) *(double *)ppref = ddef;
@@ -179,6 +189,7 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
     LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
     boolean bval;
     int ival;
+    int64_t i64val;
     double dval;
     if (widget || newval) {
       void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
@@ -208,6 +219,19 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
         if (ipref == ival) goto fail;
         *(int *)ppref = ival;
         goto int_success;
+      }
+      break;
+      case WEED_SEED_INT64: {
+        int64_t i64pref;
+        if (newval) i64val = *(int64_t *)newval;
+        else i64val = (int64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(widget));
+        /// any nonstandard updates here
+        pref_factory_int64(pref_idx, &i64pref, i64val, permanent);
+        ///
+        i64pref = *(int64_t *)ppref;
+        if (i64pref == i64val) goto fail;
+        *(int64_t *)ppref = i64val;
+        goto int64_success;
       }
       break;
       case WEED_SEED_DOUBLE: {
@@ -253,6 +277,18 @@ int_success:
       set_int_pref(pref_idx, ival);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
     } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
+    return TRUE;
+
+int64_success:
+    weed_set_int64_value(prefplant, WEED_LEAF_VALUE, i64val);
+    if (prefsw) {
+      lives_widget_process_updates(prefsw->prefs_dialog);
+      prefsw->ignore_apply = FALSE;
+    }
+    if (permanent) {
+      set_int64_pref(pref_idx, i64val);
+      weed_set_int64_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    } else weed_set_int64_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
     return TRUE;
 
 double_success:
@@ -486,7 +522,23 @@ LIVES_GLOBAL_INLINE int get_int_prefd(const char *key, int defval) {
 }
 
 
+LIVES_GLOBAL_INLINE int get_uint_prefd(const char *key, uint defval) {
+  char buffer[64];
+  get_string_pref(key, buffer, 64);
+  if (!(*buffer)) return defval;
+  return atoi(buffer);
+}
+
+
 LIVES_GLOBAL_INLINE int64_t get_int64_prefd(const char *key, int64_t defval) {
+  char buffer[64];
+  get_string_pref(key, buffer, 64);
+  if (!(*buffer)) return defval;
+  return atol(buffer);
+}
+
+
+LIVES_GLOBAL_INLINE int64_t get_uint64_prefd(const char *key, uint64_t defval) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
   if (!(*buffer)) return defval;
@@ -907,7 +959,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       else mainw->nullaudio_loop = AUDIO_LOOP_FORWARD;
 #endif
       update_all_host_info(); // let fx plugins know about the change
-      goto success1;
+      goto success;
     }
 
 #ifdef ENABLE_JACK
@@ -916,7 +968,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       if (!capable->has_jackd) {
         do_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\n"
                            "See %s\n"), AUDIO_PLAYER_JACK, EXEC_JACKD, JACK_URL);
-        goto fail1;
+        goto fail;
       }
       if (!switch_aud_to_jack(permanent)) {
         // failed
@@ -927,7 +979,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
           lives_widget_process_updates(prefsw->prefs_dialog);
         }
-        goto fail1;
+        goto fail;
       } else {
         // success
         if (mainw->loop_cont) {
@@ -936,9 +988,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
         }
         update_all_host_info(); // let fx plugins know about the change
-        goto success1;
+        goto success;
       }
-      goto fail1;
+      goto fail;
     }
 #endif
 
@@ -957,7 +1009,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
           lives_widget_process_updates(prefsw->prefs_dialog);
         }
-        goto fail1;
+        goto fail;
       } else {
         if (!switch_aud_to_pulse(permanent)) {
           // revert text
@@ -965,7 +1017,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
             lives_widget_process_updates(prefsw->prefs_dialog);
           }
-          goto fail1;
+          goto fail;
         } else {
           // success
           if (mainw->loop_cont) {
@@ -974,12 +1026,12 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
             else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
           }
           update_all_host_info(); // let fx plugins know about the change
-          goto success1;
+          goto success;
         }
       }
     }
 #endif
-    goto fail1;
+    goto fail;
   }
 
 #ifdef HAVE_PULSE_AUDIO
@@ -987,9 +1039,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     if (lives_strncmp(newval, prefs->pa_start_opts, 255)) {
       lives_snprintf(prefs->pa_start_opts, 255, "%s", newval);
       if (permanent) set_string_pref(PREF_PASTARTOPTS, prefs->pa_start_opts);
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 #endif
 
@@ -1006,9 +1058,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
       }
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_ACSERVER)) {
@@ -1023,9 +1075,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
       }
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_ASSERVER)) {
@@ -1042,9 +1094,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
       }
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
 #ifdef ENABLE_JACK_TRANSPORT
@@ -1060,9 +1112,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         set_string_pref(PREF_JACK_ACONFIG, prefs->jack_tserver_cfg);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
       }
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_TCSERVER)) {
@@ -1077,9 +1129,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         set_string_pref(PREF_JACK_ACSERVER, prefs->jack_tserver_cname);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
       }
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_TSSERVER)) {
@@ -1094,9 +1146,9 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         set_string_pref(PREF_JACK_TSSERVER, prefs->jack_tserver_sname);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
       }
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 #endif
 #endif
@@ -1106,14 +1158,14 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       if (prefs->midi_rcv_channel != -1) {
         prefs->midi_rcv_channel = -1;
         if (permanent) set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
-        goto success1;
+        goto success;
       }
     } else if (prefs->midi_rcv_channel != atoi(newval)) {
       prefs->midi_rcv_channel = atoi(newval);
       if (permanent) set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
 #ifdef ENABLE_JACK
@@ -1179,20 +1231,20 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 	      // *INDENT-OFF*
 	    }}}}
       // *INDENT-ON*
-      goto success1;
+      goto success;
     }
-    goto fail1;
+    goto fail;
   }
 
   // unfortunately we cannot automate setting the actual pref, we lack the pref buffer size
   set_string_pref(prefidx, newval);
   return TRUE;
 
-fail1:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success1:
+success:
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1273,107 +1325,107 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   if (prefsw) prefsw->ignore_apply = TRUE;
 
   if (!lives_strcmp(prefidx, PREF_SEPWIN)) {
-    if (mainw->sep_win == newval) goto fail2;
+    if (mainw->sep_win == newval) goto fail;
     on_sepwin_pressed(NULL, NULL);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRCRASH)) {
-    if (prefs->rr_crash == newval) goto fail2;
+    if (prefs->rr_crash == newval) goto fail;
     prefs->rr_crash = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRSUPER)) {
-    if (prefs->rr_super == newval) goto fail2;
+    if (prefs->rr_super == newval) goto fail;
     prefs->rr_super = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRPRESMOOTH)) {
-    if (prefs->rr_pre_smooth == newval) goto fail2;
+    if (prefs->rr_pre_smooth == newval) goto fail;
     prefs->rr_pre_smooth = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRQSMOOTH)) {
-    if (prefs->rr_qsmooth == newval) goto fail2;
+    if (prefs->rr_qsmooth == newval) goto fail;
     prefs->rr_qsmooth = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRAMICRO)) {
-    if (prefs->rr_amicro == newval) goto fail2;
+    if (prefs->rr_amicro == newval) goto fail;
     prefs->rr_amicro = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRRAMICRO)) {
-    if (prefs->rr_ramicro == newval) goto fail2;
+    if (prefs->rr_ramicro == newval) goto fail;
     prefs->rr_ramicro = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SHOW_QUOTA)) {
-    if (prefs->show_disk_quota == newval) goto fail2;
+    if (prefs->show_disk_quota == newval) goto fail;
     prefs->show_disk_quota = newval;
     /// allow dialog checkbutton to set permanent pref
     permanent = TRUE;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_MSG_START)) {
-    if (prefs->show_msgs_on_startup == newval) goto fail2;
+    if (prefs->show_msgs_on_startup == newval) goto fail;
     prefs->show_msgs_on_startup = newval;
     /// allow dialog checkbutton to set permanent pref
     permanent = TRUE;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_AUTOCLEAN_TRASH)) {
-    if (prefs->autoclean == newval) goto fail2;
+    if (prefs->autoclean == newval) goto fail;
     prefs->autoclean = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_MT_SHOW_CTX)) {
-    if (prefs->mt_show_ctx == newval) goto fail2;
+    if (prefs->mt_show_ctx == newval) goto fail;
     prefs->mt_show_ctx = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_PREF_TRASH)) {
-    if (prefs->pref_trash == newval) goto fail2;
+    if (prefs->pref_trash == newval) goto fail;
     prefs->pref_trash = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SHOW_BUTTON_ICONS)) {
-    if (prefs->show_button_images == newval) goto fail2;
+    if (prefs->show_button_images == newval) goto fail;
     prefs->show_button_images = widget_opts.show_button_images = newval;
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     if (prefsw) lives_widget_queue_draw(prefsw->prefs_dialog);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SHOW_MENU_ICONS)) {
-    if (prefs->show_menu_images == newval) goto fail2;
+    if (prefs->show_menu_images == newval) goto fail;
     prefs->show_menu_images = newval;
     mainw->prefs_changed |= PREFS_THEME_MINOR_CHANGE;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_EXTRA_COLOURS)) {
-    if (prefs->extra_colours == newval) goto fail2;
+    if (prefs->extra_colours == newval) goto fail;
     prefs->extra_colours = newval;
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     if (prefsw) lives_widget_queue_draw(prefsw->prefs_dialog);
-    goto success2;
+    goto success;
   }
 
   // show recent
   if (!lives_strcmp(prefidx, PREF_SHOW_RECENT_FILES)) {
-    if (prefs->show_recent == newval) goto fail2;
+    if (prefs->show_recent == newval) goto fail;
     prefs->show_recent = newval;
     if (newval) {
       lives_widget_set_no_show_all(mainw->recent_menu, FALSE);
@@ -1394,14 +1446,14 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   }
 
   if (!lives_strcmp(prefidx, PREF_MSG_NOPBDIS)) {
-    if (prefs->msgs_nopbdis == newval) goto fail2;
+    if (prefs->msgs_nopbdis == newval) goto fail;
     prefs->msgs_nopbdis = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_nopbdis), newval);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SHOW_MSGS)) {
-    if (future_prefs->show_msg_area == newval) goto fail2;
+    if (future_prefs->show_msg_area == newval) goto fail;
     future_prefs->show_msg_area = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), newval);
     if (!newval || capable->can_show_msg_area) {
@@ -1427,18 +1479,18 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
         }
       }
     }
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_USE_SCREEN_GAMMA)) {
-    if (prefs->use_screen_gamma == newval) goto fail2;
+    if (prefs->use_screen_gamma == newval) goto fail;
     prefs->use_screen_gamma = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_screengamma), newval);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_LETTERBOX)) {
-    if (prefs->letterbox == newval) goto fail2;
+    if (prefs->letterbox == newval) goto fail;
     prefs->letterbox = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb), newval);
     if (mainw->multitrack) {
@@ -1446,11 +1498,11 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->letter), newval);
       lives_signal_handler_unblock(mainw->letter, mainw->lb_func);
     }
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_LETTERBOX_MT)) {
-    if (prefs->letterbox_mt == newval) goto fail2;
+    if (prefs->letterbox_mt == newval) goto fail;
     prefs->letterbox_mt = newval;
     if (permanent) {
       future_prefs->letterbox_mt = newval;
@@ -1458,44 +1510,44 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     }
     if (mainw->multitrack && mainw->multitrack->event_list)
       mt_show_current_frame(mainw->multitrack, FALSE);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_NO_LB_GENS)) {
-    if (prefs->no_lb_gens == newval) goto fail2;
+    if (prefs->no_lb_gens == newval) goto fail;
     prefs->no_lb_gens = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->no_lb_gens), newval);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_LETTERBOX_ENC)) {
-    if (prefs->enc_letterbox == newval) goto fail2;
+    if (prefs->enc_letterbox == newval) goto fail;
     prefs->enc_letterbox = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbenc), newval);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_PBQ_ADAPTIVE)) {
-    if (prefs->pbq_adaptive == newval) goto fail2;
+    if (prefs->pbq_adaptive == newval) goto fail;
     prefs->pbq_adaptive = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pbq_adaptive), newval);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_VJMODE)) {
-    if (future_prefs->vj_mode == newval) goto fail2;
+    if (future_prefs->vj_mode == newval) goto fail;
     if (mainw && mainw->vj_mode)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->vj_mode), newval);
     future_prefs->vj_mode = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SHOW_DEVOPTS)) {
-    if (prefs->show_dev_opts == newval) goto fail2;
+    if (prefs->show_dev_opts == newval) goto fail;
     if (mainw && mainw->show_devopts)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), newval);
     prefs->show_dev_opts = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_REC_EXT_AUDIO)) {
@@ -1528,39 +1580,39 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
       lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton),
                                           prefs->audio_src == AUDIO_SRC_INT);
-      goto success2;
+      goto success;
     }
-    goto fail2;
+    goto fail;
   }
 
   if (!lives_strcmp(prefidx, PREF_MT_EXIT_RENDER)) {
-    if (prefs->mt_exit_render == newval) goto fail2;
+    if (prefs->mt_exit_render == newval) goto fail;
     prefs->mt_exit_render = newval;
     if (prefsw)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_PUSH_AUDIO_TO_GENS)) {
-    if (prefs->push_audio_to_gens == newval) goto fail2;
+    if (prefs->push_audio_to_gens == newval) goto fail;
     prefs->push_audio_to_gens = newval;
     if (prefsw)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens), prefs->push_audio_to_gens);
-    goto success2;
+    goto success;
   }
 
 #ifdef HAVE_PULSE_AUDIO
   if (!lives_strcmp(prefidx, PREF_PARESTART)) {
-    if (prefs->pa_restart == newval) goto fail2;
+    if (prefs->pa_restart == newval) goto fail;
     prefs->pa_restart = newval;
     if (prefsw)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefs->pa_restart);
-    goto success2;
+    goto success;
   }
 #endif
 
   if (!lives_strcmp(prefidx, PREF_SHOW_ASRC)) {
-    if (prefs->show_asrc == newval) goto fail2;
+    if (prefs->show_asrc == newval) goto fail;
     prefs->show_asrc = newval;
     if (prefsw)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc), prefs->show_asrc);
@@ -1577,11 +1629,11 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
       lives_widget_show(mainw->l2_tb);
       lives_widget_show(mainw->l3_tb);
     }
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SHOW_TOOLTIPS)) {
-    if (prefs->show_tooltips == newval) goto fail2;
+    if (prefs->show_tooltips == newval) goto fail;
     else {
       if (newval) prefs->show_tooltips = newval;
       if (prefsw) {
@@ -1597,11 +1649,11 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     }
     // turn off after, or we cannot nullify the ttips
     if (!newval) prefs->show_tooltips = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_HFBWNP)) {
-    if (prefs->hfbwnp == newval) goto fail2;
+    if (prefs->hfbwnp == newval) goto fail;
     prefs->hfbwnp = newval;
     if (prefsw)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp), prefs->hfbwnp);
@@ -1617,26 +1669,26 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
         lives_widget_show(mainw->framebar);
       }
     }
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_AR_CLIPSET)) {
-    if (prefs->ar_clipset == newval) goto fail2;
+    if (prefs->ar_clipset == newval) goto fail;
     prefs->ar_clipset = newval;
-    goto success2;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_AR_LAYOUT)) {
-    if (prefs->ar_layout == newval) goto fail2;
+    if (prefs->ar_layout == newval) goto fail;
     prefs->ar_layout = newval;
-    goto success2;
+    goto success;
   }
 
-fail2:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success2:
+success:
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1696,13 +1748,13 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
       else
         jack_transport_make_strict_slave(mainw->jackd_trans, TRUE);
 #endif
-      goto success3;
+      goto success;
     }
-    goto fail3;
+    goto fail;
   }
 #endif
 
-  if (pref && newval == *pref) goto fail3;
+  if (pref && newval == *pref) goto fail;
 
   if (!lives_strcmp(prefidx, PREF_MT_AUTO_BACK)) {
     if (mainw->multitrack) {
@@ -1720,21 +1772,21 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
         mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
       }
     }
-    goto success3;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RTE_KEYS_VIRTUAL)) {
     // if we are showing the rte window, we must destroy and recreate it
     prefs->rte_keys_virtual = newval;
     mainw->prefs_changed |= PREFS_RTE_KEYMODES_CHANGED;
-    goto success3;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_RTE_MODES_PERKEY)) {
     // if we are showing the rte window, we must destroy and recreate it
     prefs->rte_modes_per_key = newval;
     mainw->prefs_changed |= PREFS_RTE_KEYMODES_CHANGED;
-    goto success3;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_MAX_MSGS)) {
@@ -1743,7 +1795,7 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
       if (prefs->show_msg_area)
         msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
-    goto success3;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SEPWIN_TYPE)) {
@@ -1768,21 +1820,21 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
     }
 
     if (permanent) future_prefs->sepwin_type = newval;
-    goto success3;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_BADFILE_INTENT)) {
     permanent = FALSE;
-    goto success3;
+    goto success;
   }
 
-  goto success3;
+  goto success;
 
-fail3:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success3:
+success:
   if (pref) *pref = newval;
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
@@ -1791,6 +1843,7 @@ success3:
   if (permanent) set_int_pref(prefidx, newval);
   return TRUE;
 }
+
 
 boolean pref_factory_double(const char *prefidx, double * pref, double newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
@@ -1810,12 +1863,13 @@ fail:
   return FALSE;
 }
 
+
 boolean pref_factory_string_choice(const char *prefidx, LiVESList * list, const char *strval, boolean permanent) {
   int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (prefsw) prefsw->ignore_apply = TRUE;
 
   if (!lives_strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
-    if (idx == prefs->msg_textsize) goto fail4;
+    if (idx == prefs->msg_textsize) goto fail;
     prefs->msg_textsize = idx;
     if (permanent) future_prefs->msg_textsize = prefs->msg_textsize;
     if (prefs->show_msg_area) {
@@ -1824,14 +1878,14 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList * list, const 
       else
         msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
-    goto success4;
+    goto success;
   }
 
-fail4:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success4:
+success:
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1847,7 +1901,7 @@ boolean pref_factory_float(const char *prefidx, float newval, boolean permanent)
   if (!lives_strcmp(prefidx, PREF_MASTER_VOLUME)) {
     char *ttip;
     if ((LIVES_IS_PLAYING && future_prefs->volume == newval)
-        || (!LIVES_IS_PLAYING && prefs->volume == (double)newval)) goto fail5;
+        || (!LIVES_IS_PLAYING && prefs->volume == (double)newval)) goto fail;
     future_prefs->volume = newval;
     ttip = lives_strdup_printf(_("Audio volume (%.2f)"), newval);
     lives_widget_set_tooltip_text(mainw->vol_toolitem, _(ttip));
@@ -1860,26 +1914,26 @@ boolean pref_factory_float(const char *prefidx, float newval, boolean permanent)
     } else {
       lives_scale_button_set_value(LIVES_SCALE_BUTTON(mainw->volume_scale), newval);
     }
-    goto success5;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_AHOLD_THRESHOLD)) {
-    if (prefs->ahold_threshold == newval) goto fail5;
+    if (prefs->ahold_threshold == newval) goto fail;
     prefs->ahold_threshold = newval;
-    goto success5;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_SCREEN_GAMMA)) {
-    if (prefs->screen_gamma == newval) goto fail5;
+    if (prefs->screen_gamma == newval) goto fail;
     prefs->screen_gamma = newval;
-    goto success5;
+    goto success;
   }
 
-fail5:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success5:
+success:
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1895,7 +1949,7 @@ boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean n
   if (!lives_strcmp(prefidx, PREF_AUDIO_OPTS)) {
     if (newval && !(prefs->audio_opts & bitfield)) prefs->audio_opts |= bitfield;
     else if (!newval && (prefs->audio_opts & bitfield)) prefs->audio_opts &= ~bitfield;
-    else goto fail6;
+    else goto fail;
 
     if (permanent) set_int_pref(PREF_AUDIO_OPTS, prefs->audio_opts);
 
@@ -1949,13 +2003,13 @@ boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean n
       lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton),
                                           (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) ? TRUE : FALSE);
     }
-    goto success6;
+    goto success;
   }
 
   if (!lives_strcmp(prefidx, PREF_OMC_DEV_OPTS)) {
     if (newval && !(prefs->omc_dev_opts & bitfield)) prefs->audio_opts |= bitfield;
     else if (!newval && (prefs->omc_dev_opts & bitfield)) prefs->audio_opts &= ~bitfield;
-    else goto fail6;
+    else goto fail;
 
     if (permanent) set_int_pref(PREF_OMC_DEV_OPTS, prefs->omc_dev_opts);
 
@@ -1972,14 +2026,14 @@ boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean n
       prefs->alsa_midi_dummy = newval;
     }
 #endif
-    goto success6;
+    goto success;
   }
 
-fail6:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success6:
+success:
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1988,22 +2042,16 @@ success6:
 }
 
 
-boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent) {
+boolean pref_factory_int64(const char *prefidx, int64_t *pref, int64_t newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
 
-  if (!lives_strcmp(prefidx, PREF_DISK_QUOTA)) {
-    if (newval != prefs->disk_quota) {
-      future_prefs->disk_quota = prefs->disk_quota = newval;
-      goto success7;
-    }
-    goto fail7;
-  }
+  if (pref && newval == *pref) goto fail;
 
-fail7:
+fail:
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
-success7:
+  if (pref) *pref = newval;
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;

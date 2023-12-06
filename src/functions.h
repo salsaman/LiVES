@@ -6,35 +6,16 @@
 #ifndef _FUNCTIONS_H
 #define _FUNCTIONS_H
 
+#include "funcsigs.h"
+
 ///// low level operations //////
 
 boolean have_recursion_token(uint64_t token, void *dataptr);
 void push_recursion_token(recursion_token *);
 void remove_recursion_token(uint64_t token, void *dataptr);
 
-typedef int(*funcptr_int_t)();
-typedef double(*funcptr_dbl_t)();
-typedef int(*funcptr_bool_t)();
-typedef char *(*funcptr_string_t)();
-typedef int64_t(*funcptr_int64_t)();
-typedef weed_funcptr_t(*funcptr_funcptr_t)();
-typedef void *(*funcptr_voidptr_t)();
-typedef weed_plant_t *(*funcptr_plantptr_t)();
-
 typedef uint64_t lives_thread_attr_t;
 typedef LiVESList lives_thread_t;
-
-typedef union {
-  weed_funcptr_t func;
-  funcptr_int_t funcint;
-  funcptr_dbl_t funcdouble;
-  funcptr_bool_t funcboolean;
-  funcptr_int64_t funcint64;
-  funcptr_string_t funcstring;
-  funcptr_funcptr_t funcfuncptr;
-  funcptr_voidptr_t funcvoidptr;
-  funcptr_plantptr_t funcplantptr;
-} allfunc_t;
 
 typedef struct {
   char letter;
@@ -44,149 +25,49 @@ typedef struct {
   const char *fmtstr;
 } lookup_tab;
 
+void lpt_params_free(lives_proc_thread_t, boolean do_exec);
+
 extern const lookup_tab crossrefs[];
 
+#ifdef WEED_SEED_UINT
+#define XREFS_TAB_UINT {'u',  WEED_SEED_UINT, 		0x06, 	"UINT", "%u"},
+#else
+#define XREFS_TAB_UINT
+#endif
+#ifdef WEED_SEED_UINT64
+#define XREFS_TAB_UINT64  {'U',  WEED_SEED_UINT64,       	0x07, 	"UINT64", "%"PRIu64},
+#else
+#define XREFS_TAB_UINT64
+#endif
+#ifdef WEED_SEED_FLOAT
+#define XREFS_TAB_FLOAT  {'f',  WEED_SEED_FLOAT,        	0x08, 	"FLOAT", "%.4f"},
+#else
+#define XREFS_TAB_FLOAT
+#endif
+
+#define XREFS_TAB						\
+  {{'i',  WEED_SEED_INT,       	0x01, 	"INT", "%d"},	\
+  {'d',  WEED_SEED_DOUBLE, 	0x02, 	"DOUBLE", "%.4f"},	\
+  {'b',  WEED_SEED_BOOLEAN, 	0x03, 	"BOOL", "%d"},		\
+  {'s',  WEED_SEED_STRING, 	0x04, 	"STRING", "\"%s\""},		\
+  {'I',  WEED_SEED_INT64,      	0x05, 	"INT64", "%"PRIi64},	\
+  {'F',  WEED_SEED_FUNCPTR, 	0x0C, 	"FUNCP", "%p"},	\
+  {'v',  WEED_SEED_VOIDPTR, 	0x0D, 	"VOIDP", "%p"},	\
+  {'V',  WEED_SEED_VOIDPTR, 	0x0D, 	"VOIDP", "%p"},\
+  {'p',  WEED_SEED_PLANTPTR, 	0x0E, 	"PLANTP", "%p"},\
+  {'P',  WEED_SEED_PLANTPTR, 	0x0E, 	"PLANTP", "%p"},\
+    XREFS_TAB_UINT					\
+    XREFS_TAB_UINT64					\
+    XREFS_TAB_FLOAT					\
+  {'\0', WEED_SEED_VOID,       	0, 	"", ""} \
+}
+
 #define LIVES_LEAF_RETURN_VALUE "return_value"
+#define LIVES_LEAF_RETLOC "retloc"
 
 #define _RV_ LIVES_LEAF_RETURN_VALUE
 
 #define PROC_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  #n
-
-#define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
-
-// since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
-// however 8 is probably sufficient and looks neater
-// it is also possible to pass functions as parameters, using _FUNCP, so things like
-// FUNCSIG_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP
-// are a possibility
-
-#ifdef WEED_SEED_UINT
-#define _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)\
-  case(WEED_SEED_UINT):pre(pre2,pre3##uint##post(post2,post3,post4));break;
-#else
-#define _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)
-#endif
-#ifdef WEED_SEED_UINT64
-#define _CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4) \
-  case(WEED_SEED_UINT64):pre(pre2,pre3##uint64##post(post2,post3,post4));break;
-#else
-#define _CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)
-#endif
-
-#define FOR_ALL_SEED_TYPES(var, pre, pre2, pre3, post, post2, post3, post4)	\
-  do{switch(var){case(WEED_SEED_INT):pre(pre2,pre3##int##post(post2,post3,post4));break; \
-  case(WEED_SEED_INT64):pre(pre2,pre3##int64##post(post2,post3,post4));break;	\
- case(WEED_SEED_BOOLEAN):pre(pre2,pre3##boolean##post(post2,post3,post4));break; \
-    case(WEED_SEED_DOUBLE):pre(pre2,pre3##double##post(post2,post3,post4));break; \
- case(WEED_SEED_STRING):pre(pre2,pre3##string##post(post2,post3,post4));break; \
-    case(WEED_SEED_VOIDPTR):pre(pre2,pre3##voidptr##post(post2,post3,post4));break; \
- case(WEED_SEED_FUNCPTR):pre(pre2,pre3##funcptr##post(post2,post3,post4));break; \
-    case(WEED_SEED_PLANTPTR):pre(pre2,pre3##plantptr##post(post2,post3,post4));break; \
-      _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)		\
-	_CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)	\
-    default:break;}}while(0);
-
-#define GEN_SET(thing, wret, funcname, FUNCARGS) err = \
-  (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*(funcname)->funcint)(FUNCARGS)) : \
-     wret == WEED_SEED_DOUBLE ? weed_set_double_value((thing), _RV_, (*(funcname)->funcdouble)(FUNCARGS)) : \
-     wret == WEED_SEED_BOOLEAN ? weed_set_boolean_value((thing), _RV_, (*(funcname)->funcboolean)(FUNCARGS)) : \
-     wret == WEED_SEED_STRING ? weed_set_string_value((thing), _RV_, (*(funcname)->funcstring)(FUNCARGS)) : \
-     wret == WEED_SEED_INT64 ? weed_set_int64_value((thing), _RV_, (*(funcname)->funcint64)(FUNCARGS)) : \
-     wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*(funcname)->funcfuncptr)(FUNCARGS)) : \
-     wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
-     wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*(funcname)->funcplantptr)(FUNCARGS)) : \
-   WEED_ERROR_WRONG_SEED_TYPE)
-
-#define ARGS1(thing, t1) GETARG((thing), t1, 0)
-#define ARGS2(thing, t1, t2) ARGS1((thing), t1), GETARG((thing), t2, 1)
-#define ARGS3(thing, t1, t2, t3) ARGS2((thing), t1, t2), GETARG((thing), t3, 2)
-#define ARGS4(thing, t1, t2, t3, t4) ARGS3((thing), t1, t2, t3), GETARG((thing), t4, 3)
-#define ARGS5(thing, t1, t2, t3, t4, t5) ARGS4((thing), t1, t2, t3, t4), GETARG((thing), t5, 4)
-#define ARGS6(thing, t1, t2, t3, t4, t5, t6) ARGS5((thing), t1, t2, t3, t4, t5), GETARG((thing), t6, 5)
-#define ARGS7(thing, t1, t2, t3, t4, t5, t6, t7) ARGS6((thing), t1, t2, t3, t4, t5, t6), GETARG((thing), t7, 6)
-#define ARGS8(thing, t1, t2, t3, t4, t5, t6, t7, t8) ARGS7((thing), t1, t2, t3, t4, t5, t6, t7), GETARG((thing), t8, 7)
-
-// e.g ARGS(7, lpt, t8, t1, ,,,)
-#define _ARGS(n, thing, tn, ...) ARGS##n(thing, __VA_ARGS__), GETARG(thing, tn, n)
-#define CALL_VOID_8(thing, funcname, ...) (*(funcname)->func)(ARGS8((thing), __VA_ARGS__))
-#define CALL_VOID_7(thing, funcname, ...) (*(funcname)->func)(ARGS7((thing), __VA_ARGS__))
-#define CALL_VOID_6(thing, funcname, ...) (*(funcname)->func)(ARGS6((thing), __VA_ARGS__))
-#define CALL_VOID_5(thing, funcname, ...) (*(funcname)->func)(ARGS5((thing), __VA_ARGS__))
-#define CALL_VOID_4(thing, funcname, ...) (*(funcname)->func)(ARGS4((thing), __VA_ARGS__))
-#define CALL_VOID_3(thing, funcname, ...) (*(funcname)->func)(ARGS3((thing), __VA_ARGS__))
-#define CALL_VOID_2(thing, funcname, ...) (*(funcname)->func)(ARGS2((thing), __VA_ARGS__))
-#define CALL_VOID_1(thing, funcname, ...) (*(funcname)->func)(ARGS1((thing), __VA_ARGS__))
-#define CALL_VOID_0(thing, funcname, dummy) (*(funcname)->func)()
-#define XCALL_8(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7, t8)	\
-  GEN_SET(thing, wret, funcname, _ARGS(7, (thing), t8, t1, t2, t3, t4, t5, t6, t7))
-#define XCALL_7(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7)	\
-  GEN_SET(thing, wret, funcname, _ARGS(6, (thing), t7, t1, t2, t3, t4, t5, t6))
-#define XCALL_6(thing, wret, funcname, t1, t2, t3, t4, t5, t6)		\
-  GEN_SET(thing, wret, funcname, _ARGS(5, (thing), t6, t1, t2, t3, t4, t5))
-#define XCALL_5(thing, wret, funcname, t1, t2, t3, t4, t5)		\
-  GEN_SET(thing, wret, funcname, _ARGS(4, (thing), t5, t1, t2, t3, t4))
-#define XCALL_4(thing, wret, funcname, t1, t2, t3, t4)			\
-  GEN_SET(thing, wret, funcname, _ARGS(3, (thing), t4, t1, t2, t3))
-#define XCALL_3(thing, wret, funcname, t1, t2, t3)		\
-  GEN_SET(thing, wret, funcname, _ARGS(2, (thing), t3, t1, t2))
-#define XCALL_2(thing, wret, funcname, t1, t2)		\
-  GEN_SET(thing, wret, funcname, _ARGS(1, (thing), t2, t1))
-#define XCALL_1(thing, wret, funcname, t1)		\
-  GEN_SET(thing, wret, funcname, ARGS1((thing), t1))
-#define XCALL_0(thing, wret, funcname, dummy)	\
-  GEN_SET(thing, wret, funcname, )
-
-// 0p
-#define FUNCSIG_VOID				       			0X00000000
-// 1p
-#define FUNCSIG_INT 			       				0X00000001
-#define FUNCSIG_DOUBLE 				       			0X00000002
-#define FUNCSIG_BOOL 				       			0X00000003
-#define FUNCSIG_STRING 				       			0X00000004
-#define FUNCSIG_INT64 			       				0X00000005
-#define FUNCSIG_VOIDP 				       			0X0000000D
-#define FUNCSIG_PLANTP 				       			0X0000000E
-// 2p
-#define FUNCSIG_INT_INT 			       			0X00000011
-#define FUNCSIG_BOOL_INT 			       			0X00000031
-#define FUNCSIG_INT_VOIDP 			       			0X0000001D
-#define FUNCSIG_STRING_INT 			      			0X00000041
-#define FUNCSIG_STRING_BOOL 			      			0X00000043
-#define FUNCSIG_VOIDP_BOOL 				       		0X000000D3
-#define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
-#define FUNCSIG_PLANTP_VOIDP						0X000000ED
-#define FUNCSIG_VOIDP_STRING 				       		0X000000D4
-#define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
-#define FUNCSIG_VOIDP_INT 				       		0X000000D1
-#define FUNCSIG_VOIDP_INT64 				       		0X000000D5
-#define FUNCSIG_DOUBLE_DOUBLE 				       		0X00000022
-// 3p
-#define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
-#define FUNCSIG_VOIDP_DOUBLE_DOUBLE 		        		0X00000D22
-#define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
-#define FUNCSIG_VOIDP_VOIDP_BOOL 		        		0X00000DD3
-#define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD
-#define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
-#define FUNCSIG_PLANTP_INT64_BOOL				       	0X00000E53
-#define FUNCSIG_INT_INT_BOOL	 		        		0X00000113
-#define FUNCSIG_BOOL_INT_BOOL	 		        		0X00000313
-#define FUNCSIG_STRING_INT_BOOL	 		        		0X00000413
-#define FUNCSIG_INT_INT64_VOIDP			        		0X0000015D
-
-// 4p
-#define FUNCSIG_STRING_DOUBLE_INT_STRING       				0X00004214
-#define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
-#define FUNCSIG_VOIDP_INT_FUNCP_VOIDP				       	0X0000D1CD
-
-// 5p
-#define FUNCSIG_VOIDP_INT_INT_INT_INT					0X000D1111
-#define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
-#define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
-#define FUNCSIG_VOIDP_VOIDP_BOOL_BOOL_INT				0X000DD331
-// 6p
-#define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
-
-typedef uint64_t funcsig_t;
 
 #define LIVES_LEAF_LONGJMP "_longjmp_env_ptr"
 
@@ -195,14 +76,11 @@ lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, 
 boolean call_funcsig(lives_proc_thread_t);
 lives_result_t do_call(lives_proc_thread_t);
 
-#define LIVES_LEAF_RETLOC "retloc"
-
-// funcinst (future use) - an instnace of a funcdef, but with actual param / data values
-
 #define LIVES_LEAF_TEMPLATE "_template"
 #define LIVES_LEAF_FUNCSIG "_funcsig"
 #define LIVES_LEAF_FUNC_NAME "_funcname"
 #define LIVES_LEAF_FUNCDEF "_funcdef"
+#define LIVES_LEAF_FUNCINST "_funcinst"
 #define LIVES_LEAF_REPLACEMENT "_replacement"
 
 #define LIVES_PLANT_FUNCINST 150
@@ -238,8 +116,7 @@ void reset_counter_cb(void *dummy, int *var);
 #define _LINE_REF_ 0
 #endif
 
-typedef
-enum {
+typedef enum {
   // enum   // va_args for add_fn_note
   _FN_FREE, // fundef, ptr
   _FN_ALLOC, // fundef, ptr
@@ -361,8 +238,17 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 // ignored if retrun value is not boolean. If FALSE is returned, remove rom stack
 #define HOOK_OPT_REMOVE_ON_FALSE	(1ull << 3)
 
-// if this bit is set, then the callback will not be removed when the dispatcher is freed
-#define HOOK_CB_TRANSFER_OWNER		(1ull << 4)
+// this is intended for callbacks which have parameter values which need to be freed / unreffed even if the target func id not run
+// this includes - cases where the proc_thread is cancelled while still in the queue,
+//  - cases where the proc_thread is added with UNIQUE_DATA / UNIQUE_FUNC and the function data is replaced
+// When when adding the callback with this flagbit set, each parameter value is followed by an unqueued proc_thread
+// (which may be NULL), if non-null and the parameter data is replaced in the stack, or if the proc thread is cancelled before being run,
+// the proc thread free func will be executed directly, freeing or unreffing the parameter value
+// (assume this would normally be done in the target function or in a callback)
+// When the proc_thread is unreffed, any free_lpts are also unreffed, whether executed or
+#define HOOK_CB_HAS_FREEFUNCS		(1ull << 4)
+
+#define HOOK_CB_PERSISTENT		(1ull << 5)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 8) // force fg service run
@@ -387,7 +273,7 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 // else all parameters would be matched, and there would be no "data" to be replaced
 // (when prepending, this always succeeds to add, and expels other copies with identical func / data,
 // when appending, the callback will be blocked or added)
-#define HOOK_UNIQUE_DATA		(1ull << 17) // do not add if func / data already in hooks (UNIQUE_FUNC assumed)
+#define HOOK_UNIQUE_DATA		(1ull << 17)
 
 // change data of first func of same type, with n_match_params equal,  but leave func inplace,
 // (after adding, there will be only one copy of FUNC, with our data)
@@ -395,6 +281,12 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 // (when prepending, this always succeeds to add, and acts identically to unique_func,
 // when appending, the callback will replace data and be rejected, or if no match is found, appended)
 #define HOOK_UNIQUE_REPLACE		(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA)
+
+// Summary: hook_unique_func ensures there is only a single copy of func in the stack, with any data
+//          hook_unique_data ensures there is at most one copy func with matching data
+//          setting both flags ensures there is only one copy of func, and it will have our data
+//
+
 
 // NOTEs:
 //
@@ -458,7 +350,7 @@ typedef struct {
   const char *funcname; // optional
   //
   lives_funcptr_t function;
-  uint32_t return_type;
+  int return_type;
   // these are equivalent, but we add both for convenience
   const char *args_fmt;
   funcsig_t funcsig; //
@@ -550,14 +442,15 @@ typedef struct _hstack_t {
   // transferred to req_targer as if the caller had added them there originally
   lives_hook_stack_t **req_target_stacks;
   int req_target_type;
+  uint64_t req_target_set_flags;
 } lives_hook_stack_t;
 
 // hook_stack_flags
 
 // stack is for native thread
-#define STACK_NATIVE			(1ull < 0)
+#define STACK_NATIVE			(1ull << 0)
 // callbacks are running now - used to prevnet multiple trigger instances
-#define STACK_TRIGGERING		(1ull < 1)
+#define STACK_TRIGGERING		(1ull << 1)
 
 // HOOK STACK_DESCRIPTORS - each hook stack type has an assosciated hook_descriptor
 // which defines wken the stack may be triggered and how callbacks are handled on trigged
@@ -625,16 +518,6 @@ hookstack_descriptor_t *get_hs_desc(void);
 
 #define HOOKSTACK_NATIVE	       	(1ull << 16)
 
-// the return type of the callbacks must be be boolean,
-// any which return FALSE will be blocked (ignored)
-// blocked callbacks can then either be removed, or unblocked
-//#define HOOKSTACK_BLOCK_FALSE      	(1ull < 8)
-
-// the return type of the callbacks must be boolean,
-// the callbacks are run as normal (depending on other flags)
-// the hook trigger function will return TRUE if and only if ALL callbacks return TRUE
-//#define HOOKSTACK_COMBINED_BOOL      	(1ull < 9)
-
 #define HS_FLAGS_FATAL			(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)
 #define HS_FLAGS_THREAD_EXIT		(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE)
 #define HS_FLAGS_DATA_READY		(HOOKSTACK_ASYNC_PARALLEL)
@@ -692,6 +575,8 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **, int type, uint64_
 #define lives_hook_prepend(hooks, type, flags, lpt) lives_hook_add((hooks), (type), (flags),lpt, DTYPE_PREPEND)
 
 ////////////////////////////
+lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t, va_list xargs);
+
 
 void lives_hook_remove(lives_proc_thread_t lpt);
 
@@ -730,7 +615,7 @@ void dump_hook_stack_for(lives_proc_thread_t, int type);
 ///////////// funcdefs, funcinsts and funcsigs /////
 
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
-                                uint32_t return_type,  const char *args_fmt, const char *file, int line,
+                                int return_type,  const char *args_fmt, const char *file, int line,
                                 void *data);
 
 // can be used to link a file / line as being "inside" a function
@@ -745,12 +630,15 @@ lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thread_t);
 
 void free_funcdef(lives_funcdef_t *);
 
-// a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters
-// plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt
-lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...);
-void free_funcinst(lives_funcinst_t *);
+/* // a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters */
+/* // plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt */
+/* lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...); */
+/* void free_funcinst(lives_funcinst_t *); */
 
-lives_result_t weed_plant_params_from_vargs(weed_plant_t *plant, const char *args_fmt, va_list vargs);
+lives_funcinst_t *lives_funcinst_create(lives_funcdef_t *template, lives_proc_thread_t lpt,
+                                        lives_thread_attr_t attrs, va_list xargs);
+
+//lives_result_t weed_plant_params_from_vargs(weed_plant_t *plant, const char *args_fmt, va_list vargs);
 lives_result_t weed_plant_params_from_args_fmt(weed_plant_t *plant, const char *args_fmt, ...);
 
 funcsig_t funcsig_from_args_fmt(const char *args_fmt);

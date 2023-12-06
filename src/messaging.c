@@ -442,6 +442,7 @@ boolean d_print(const char *fmt, ...) {
   pthread_mutex_lock(&dprint_mutex);
 
   ret = d_print_inner(text);
+  lives_free(text);
 
   if (mainw && (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
       (!mainw->no_switch_dprint || mainw->current_file != 0))

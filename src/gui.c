@@ -643,14 +643,32 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->open, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_o, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
+
+  menuitem = lives_standard_menu_item_new_with_label(_("_Add Webcam/TV card..."));
+  mainw->unicap = lives_standard_menu_item_new_with_label(_("Add Webcam"));
+  mainw->firewire = lives_standard_menu_item_new_with_label(_("Add Live _Firewire Device"));
+  mainw->tvdev = lives_standard_menu_item_new_with_label(_("Add _TV Device"));
+
+#if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), menuitem);
+
+  submenu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
+
+#ifdef HAVE_UNICAP
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
+#endif
+
+  mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Import _Online Clip..."));
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc_menu);
+
   mainw->open_sel = lives_standard_menu_item_new_with_label(_("O_pen Part of File..."));
 
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_sel);
 
   mainw->open_loc = lives_standard_menu_item_new_with_label(_("Play Remote _Stream..."));
-
-  mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Online Clip..."));
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc_menu);
 
   mainw->open_loc_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_loc_menu), mainw->open_loc_submenu);
@@ -688,23 +706,6 @@ void create_LiVES(void) {
 #ifdef HAVE_LDVGRAB
   lives_container_add(LIVES_CONTAINER(mainw->open_device_submenu), mainw->open_firewire);
   lives_container_add(LIVES_CONTAINER(mainw->open_device_submenu), mainw->open_hfirewire);
-#endif
-
-  menuitem = lives_standard_menu_item_new_with_label(_("_Add Webcam/TV card..."));
-  mainw->unicap = lives_standard_menu_item_new_with_label(_("Add Webcam"));
-  mainw->firewire = lives_standard_menu_item_new_with_label(_("Add Live _Firewire Device"));
-  mainw->tvdev = lives_standard_menu_item_new_with_label(_("Add _TV Device"));
-
-#if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), menuitem);
-
-  submenu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
-
-#ifdef HAVE_UNICAP
-  lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
 #endif
 
 #ifdef HAVE_YUV4MPEG
@@ -751,6 +752,16 @@ void create_LiVES(void) {
   }
   widget_opts.mnemonic_label = TRUE;
 
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
+
+#ifdef LIBAV_TRANSCODE
+  mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode..."));
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->transcode);
+  lives_widget_set_sensitive(mainw->transcode, FALSE);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
+#endif
+
   mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
 
@@ -772,14 +783,6 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
-
-#ifdef LIBAV_TRANSCODE
-  mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode..."));
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->transcode);
-  lives_widget_set_sensitive(mainw->transcode, FALSE);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
-#endif
 
   mainw->save_as = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->save_as);

@@ -7373,7 +7373,8 @@ static void changequota_cb(LiVESWidget * butt, livespointer data) {
     lives_widget_show_all(dsq->resbutton);
     dsq->setting = TRUE;
   } else {
-    pref_factory_int64(PREF_DISK_QUOTA, future_prefs->disk_quota, TRUE);
+    // cast is safe; both variables are unsigned
+    pref_factory_int64(PREF_DISK_QUOTA, (int64_t *)&prefs->disk_quota, future_prefs->disk_quota, TRUE);
     dsu_set_toplabel();
     widget_opts.use_markup = TRUE;
     lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("<b>Updated !</b>"));

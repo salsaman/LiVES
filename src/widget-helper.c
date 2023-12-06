@@ -1170,6 +1170,7 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_widget_get_opacity(LiVESWidget * widget
   return FALSE;
 }
 
+
 // def is 8 msec
 #define LOW_PRIO_WAIT 8000000
 
@@ -1264,7 +1265,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       lives_microsleep;
     } else {
       lives_nanosleep(NSLEEP_TIME);
-      //pthread_yield();
+      pthread_yield();
 
       if (cprio == PRIO_LOW) {
         for (int i = 0; i < sLO_FACTOR; i++) {
@@ -1812,7 +1813,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget * widget) {
   if (LIVES_IS_WIDGET(widget)) {
     if (mainw && mainw->is_ready) {
       THREADVAR(hook_match_nparams) = 1;
-      THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD | HOOK_CB_TRANSFER_OWNER;
+      THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD | HOOK_CB_PERSISTENT;
       // do this even for main thread so we can invalidate data for other threads
       MAIN_THREAD_EXECUTE_RVOID(_lives_widget_destroy, "v", widget);
       THREADVAR(hook_hints) = 0;
@@ -3395,7 +3396,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
   }
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY | HOOK_CB_TRANSFER_OWNER;
+    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
     MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }

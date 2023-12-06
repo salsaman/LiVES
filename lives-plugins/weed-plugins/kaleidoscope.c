@@ -19,7 +19,6 @@ static int package_version = 1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #include <math.h>
-#include <immintrin.h>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
@@ -56,14 +55,11 @@ enum {
 #define RT32 0.86602540378f //sqrt(3)/2
 
 #define RT322 0.43301270189f
- 
 
 #define calc_angle(y, x) ((x) > 0. ? ((y) >= 0. ? atanf((y) / (x)) : TWO_PI + atanf((y) / (x))) \
         		  : ((x) < 0. ? atanf((y) / (x)) + ONE_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
 
-
 #define calc_dist(x, y) ((x) * (x) + (y) * (y))
-
 
 static void calc_center(float side, float j, float i, float *x, float *y) {
   // find nearest hex center

@@ -778,10 +778,8 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   lives_painter_fill(cr);
 
   if (del) lives_painter_destroy(cr);
-  else {
-    lives_widget_end_paint(widget);
-    //lives_widget_queue_draw(widget);
-  }
+  else lives_widget_end_paint(widget);
+
   pthread_mutex_unlock(mutex);
 }
 
@@ -796,8 +794,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   LiVESPixbuf *pixbuf;
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
-
-  wait_layer_ready(layer, FALSE);
 
   mainw->debug_ptr = NULL;
   if (!weed_layer_check_valid(layer)) return;

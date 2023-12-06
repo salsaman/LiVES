@@ -45,6 +45,14 @@ char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);
 
+double get_pbtimer_load(void);
+double get_pbtimer_avcycle(void);
+uint64_t get_pbtimer_ncalls(void);
+double get_pbtimer_clock_ratio(void);
+double get_pbtimer_drift(void);
+
+void show_pbtimer_stats(void);
+
 void reset_playback_clock(ticks_t origticks);
 ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source);
 

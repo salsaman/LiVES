@@ -59,6 +59,27 @@ lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
+#define	FXKEY_FLAG_ACTUAL_ON			(1ull << 0)
+#define	FXKEY_FLAG_DESIRED_ON			(1ull << 1)
+
+#define	FXKEY_FLAG_SOFT_DEINIT			(1ull << 8)
+
+typedef enum {
+  activator_ui,
+  activator_pconx,
+} activator_type;
+
+typedef struct {
+  uint64_t flags;
+  int nmodes;
+  int active_mode;
+  activator_type last_activator;
+  weed_instance_t *active_inst;
+  LiVESList *filter_bank;
+} rte_key_desc;
+
+void fx_keys_init(void);
+
 boolean textparm_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval,
                           LiVESXModifierType mod, livespointer user_data);
 
@@ -87,6 +108,8 @@ void rte_keymodes_backup(int nkeys);
 void rte_keymodes_restore(int nkeys);
 
 #define rte_keys_reset() rte_key_toggle(0)
+
+void rte_keys_update(void);
 
 // hotkey is 1 based
 lives_result_t rte_key_toggle(int key);

@@ -437,10 +437,14 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 // flags thread as externally created / controlled
 #define THRD_STATE_EXTERN	(1ull << 63)
 
+lives_funcdef_t *lives_proc_thread_get_funcdef(lives_proc_thread_t);
+
+lives_funcptr_t lives_proc_thread_get_function(lives_proc_thread_t);
 const char *lives_proc_thread_get_funcname(lives_proc_thread_t);
 uint32_t lives_proc_thread_get_rtype(lives_proc_thread_t);
 funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t);
 char *lives_proc_thread_get_args_fmt(lives_proc_thread_t);
+
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t _lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits); // pre-locked version
@@ -560,12 +564,14 @@ uint64_t get_worker_status(uint64_t tid);
 // create a proc thread for the gui thread to run
 // instead of being pushed to the poolthread queue, it will be pushed to
 // the main thread's stack
-// - this will go away, and be replaced by stack dtls
 #define LIVES_THRDATTR_FG_THREAD   		(1ull << 40)
 
 // light - indicates a trivial request, such as updating a spinbutton which can be carried out quickly
 // this will block and get executed as soon as possible
 #define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 41)
+
+// this is only set for hook callbacks added witj HOOK_CB_FREEFUNCS - see description there
+#define LIVES_THRDATTR_HAS_FREEFUNCS		(1ull << 42)
 
 // internal flagbits
 // internal value
@@ -609,10 +615,9 @@ uint64_t lives_proc_thread_get_attrs(lives_proc_thread_t);
 // ---> get timing info
 ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
-void _proc_thread_params_from_vargs(lives_proc_thread_t, lives_funcptr_t func, int return_type,
-                                    const char *args_fmt, va_list xargs);
+void _proc_thread_params_from_vargs(lives_proc_thread_t, int return_type, va_list xargs);
 
-void _proc_thread_params_from_nullvargs(lives_proc_thread_t, lives_funcptr_t func, int return_type);
+void _proc_thread_params_from_nullvargs(lives_proc_thread_t, int return_type);
 
 lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, const char *fname,
     int return_type, const char *args_fmt, ...);
@@ -886,6 +891,17 @@ boolean _lives_proc_thread_error(lives_proc_thread_t self, char *file_ref, int l
 
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
 
+typedef struct {
+  uint64_t uid;
+  int errnum;
+  int errsev;
+  int linenref;
+  char fileref[128];
+  char errmsg[128];
+} lpt_err_data;
+
+extern lpt_err_data obits[128];
+
 int lives_proc_thread_get_errnum(lives_proc_thread_t);
 char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
 int lives_proc_thread_get_errsev(lives_proc_thread_t);
@@ -1012,6 +1028,7 @@ char *lives_proc_thread_state_desc(uint64_t state);
 void lpt_desc_state(lives_proc_thread_t);
 
 char *get_thread_id(uint64_t uid);
+char *get_lpt_id(lives_proc_thread_t);
 
 void dump_fn_stack(LiVESList *fnstack);
 

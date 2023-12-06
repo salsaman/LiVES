@@ -2707,6 +2707,7 @@ static void parse_init_opts(int argc, char *argv[]) {
 int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // init prefs
   pthread_mutexattr_t mattr;
+  int64_t initial_time = lives_get_current_time();
   ssize_t mynsize;
   char cdir[PATH_MAX];
   char *tmp, *cfgdir;
@@ -2726,7 +2727,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = (mainwindow *)(_lives_calloc(1, sizeof(mainwindow)));
 
-  mainw->initial_time = lives_get_current_time();
+  *(int64_t *)&mainw->initial_time = initial_time;
 
   prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));

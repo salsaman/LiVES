@@ -1,4 +1,3 @@
-
 // preferences.h
 // LiVES (lives-exe)
 // (c) G. Finch (salsaman_lives@gmail.com) 2004 - 2023
@@ -23,14 +22,14 @@
 #define PREF_FLAG_EXPERIMENTAL		(1 << 8)
 #define PREF_FLAG_INCOMPLETE		(1 << 9)
 
-#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
-#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
-#define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) {double a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_DOUBLE, &a, FLAGS);}
-#define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS) {float a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_FLOAT, &a, FLAGS);}
-#define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) {char *a = (PDEF); weed_plant_t *prefplant = \
-									    define_pref(PREF_##IDX, prefs->PR, WEED_SEED_STRING, \
-											&a, FLAGS); \
-    weed_set_int_value(prefplant, WEED_LEAF_MAXCHARS, (SLEN));}
+#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) _DW0(boolean a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_BOOLEAN,&a,FLAGS);)
+#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) _DW0(int a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_INT,&a,FLAGS);)
+#define DEFINE_PREF_INT64(IDX, PR, PDEF, FLAGS) _DW0(int64_t a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_INT64,&a,FLAGS);)
+#define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) _DW0(double a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_DOUBLE,&a,FLAGS);)
+#define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS) _DW0(float a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_FLOAT,&a,FLAGS);)
+#define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) _DW0(char *a=(PDEF);weed_plant_t*p= \
+							    define_pref(PREF_##IDX,prefs->PR,WEED_SEED_STRING,&a,FLAGS); \
+							    weed_set_int_value(p,WEED_LEAF_MAXCHARS,(SLEN));)
 
 #define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
 #define GET_PREF_WIDGET(IDX) get_pref_widget(PREF_##IDX)
@@ -540,6 +539,9 @@ typedef struct {
   boolean genq_mode; // FALSE == speed, TRUE == quality
 
   boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
+
+  ticks_t pbtimer_maxdiff;
+  double pbtimer_resync_factor;
 
   boolean force64bit;
 
@@ -1417,6 +1419,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_CPICK_VAR "colour_pick_variance"
 #define PREF_CPICK_TIME "colour_pick_time"
 
+#define PREF_PBTIMER_MAXDIFF "pbtimer_maxdif"
+#define PREF_PBTIMER_RESYNC_X "pbtimer_resync_factor"
+
 ///////// float values
 #define PREF_AHOLD_THRESHOLD "ahold_threshold"
 #define PREF_MASTER_VOLUME "master_volume"
@@ -1442,12 +1447,12 @@ void invalidate_pref_widgets(LiVESWidget *top);
 void free_prefs(void);
 
 boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent);
+boolean pref_factory_int64(const char *prefidx, int64_t *pref, int64_t newval, boolean permanent);
 boolean pref_factory_double(const char *prefidx, double *pref, double newval, boolean permanent);
 
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
 boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean permanent);
-boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent);
 
 // for convenience - var is actually stored as double in config
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);

@@ -44,7 +44,7 @@ static int _unit_idx(const char **names, uint64_t X, double val) {
 
 
 static int unit_idx(lives_unit_type_t utype, double val) {
-  uint64_t X = unitdefs[utype].multiplier;
+  int64_t X = unitdefs[utype].multiplier;
   const char **names = val < 1. ? unitdefs[utype].small_units : unitdefs[utype].big_units;
   return _unit_idx(names, X, fabs(val));
 }
@@ -58,7 +58,7 @@ static char *unit_val(lives_unit_type_t utype, double val, int idx, int fix, con
   }
   double X = (double)unitdefs[utype].multiplier, n = pow(X, idx >= 1 ? --idx : idx);
   const char *prefix = idx >= 0 ? unitdefs[utype].big_units[idx] : unitdefs[utype].small_units[-++idx];
-  uint64_t fac = lives_10pow(fix), rnd = (uint64_t)(val / n * fac + (val > 0. ? 0.5 : -0.5));
+  int64_t fac = lives_10pow(fix), rnd = (int64_t)(val / n * fac + (val > 0. ? 0.5 : -0.5));
   return lives_strdup_printf("%.*f %s%s", fix, (double)rnd / (double)fac, prefix, qs);
 }
 

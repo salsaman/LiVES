@@ -185,13 +185,13 @@ typedef enum {
 // src is required to provide some frames for the clip, and is in the primary srcgroup
 // is hould only be freed when the clip is closed, or under special circumstance - e.g
 // to reload the src and clear and error condition
-#define SRC_FLAG_NOFREE			(1ull < 0)
+#define SRC_FLAG_NOFREE			(1ull << 0)
 
 // src can only load one layer pixel_data at a time, otherwise multiple layers can be filled in parallel
-#define SRC_FLAG_SINGLE			(1ull < 4)
+#define SRC_FLAG_SINGLE			(1ull << 4)
 
 // src can be slow to fill the pixel_data, running the action_func async is recommended
-#define SRC_FLAG_ASYNC			(1ull < 8)
+#define SRC_FLAG_ASYNC			(1ull << 8)
 
 typedef lives_result_t (*lives_clipsrc_func_t)(weed_layer_t *layer);
 

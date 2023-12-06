@@ -211,7 +211,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	audio.c audio.h \
 	threading.c threading.h \
-	functions.c functions.h \
+	functions.c functions.h funcsigs.h \
 	intents.c intents.h object-constants.h\
 	preferences.c preferences.h\
 	effects-weed.c effects-weed.h\

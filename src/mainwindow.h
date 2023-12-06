@@ -1117,8 +1117,10 @@ typedef struct {
   // ticks are measured in 1. / TICKS_PER_SECOND_DBL of a second (by default a tick is 10 nano seconds)
 
   // for the internal player
-  int64_t initial_time; ///< set ASAP when app is (re)started
-  int64_t wall_time; /// wall clock time, updated whenever lives_get_*_ticks is called
+  const int64_t initial_time; ///< set ASAP when app is (re)started
+  volatile int64_t wall_time; /// wall clock time, updated whenever lives_get_*_ticks is called
+
+  volatile ticks_t time_jump;
 
   volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
   ticks_t last_startticks; ///< effective ticks when last frame was (should have been) displayed

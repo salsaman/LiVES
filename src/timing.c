@@ -162,9 +162,12 @@ LIVES_GLOBAL_INLINE char *get_current_timestamp(void) {
 ///////////////// playback clock /////////////////////////////
 
 static ticks_t baseItime, Itime, susp_ticks;
-static double R = 1.;
+static double R, X;
 static int last_tsource;
 static ticks_t lclock_ticks, last_current, prev_current, clock_current, base_current, last_scticks;
+static ticks_t tot_deltas, av_delta, drift;
+static uint64_t ncalls;
+static volatile double timer_load;
 
 void reset_playback_clock(ticks_t origticks) {
   // susp_ticks = total suspended time
@@ -182,12 +185,40 @@ void reset_playback_clock(ticks_t origticks) {
   // clock_delta == clock_ticks - lclock_ticks
   // Itime + R * clock_delta == actual uncorrected time
 
-  R = 1.;
+  R = X = 1.;
   lclock_ticks = -1;
   last_tsource = LIVES_TIME_SOURCE_NONE;
   prev_current = last_current = clock_current = base_current = last_scticks = 0;
   Itime = baseItime = 0;
   susp_ticks = 0;
+  tot_deltas = av_delta = 0;
+  ncalls = 0;
+  timer_load = 1.;
+  drift = 0;
+}
+
+double get_pbtimer_load(void) {return timer_load * 100.;}
+
+double get_pbtimer_avcycle(void) {return av_delta / TICKS_PER_SECOND_DBL;}
+
+uint64_t get_pbtimer_ncalls(void) {return ncalls;}
+
+double get_pbtimer_clock_ratio(void) {return X * R;}
+
+double get_pbtimer_drift(void) {return drift / TICKS_PER_SECOND_DBL;}
+
+
+void show_pbtimer_stats(void) {
+  char *tmp, *tmp2;
+  g_printerr("Stats for pbtimer:\n");
+  g_printerr("After %lu calls, average cycle time is %s, current load is %.2f, "
+             "current clock ratio is %.4f, drift is %s\n",
+             ncalls,
+             (tmp = lives_format_timing_string(get_pbtimer_avcycle())),
+             get_pbtimer_load(),
+             get_pbtimer_clock_ratio(),
+             (tmp2 = lives_format_timing_string(get_pbtimer_drift())));
+  lives_free(tmp); lives_free(tmp2);
 }
 
 /// synchronised timing
@@ -224,31 +255,32 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t tsource;
-  ticks_t current = 0, clock_delta = 0;
-  double X = 1.;
-  //
+  ticks_t current = 0, clock_delta = 0, tdiff;
 
   if (time_source) tsource = *time_source;
   else tsource = LIVES_TIME_SOURCE_NONE;
+
+  mainw->time_jump = 0;
+  ncalls++;
 
 get_time:
   // clock time since playback started
   //mainw->clock_ticks + mainw->origticks == session_ticks
   mainw->clock_ticks = lives_get_current_ticks() - origticks - susp_ticks;
-  if (lclock_ticks < 0 || lclock_ticks > mainw->clock_ticks)
-    lclock_ticks = mainw->clock_ticks;
+
+  if (lclock_ticks < 0) lclock_ticks = mainw->clock_ticks;
 
   clock_delta = mainw->clock_ticks - lclock_ticks;
 
-  if (clock_delta > DELTA_THRESH) {
+  if (clock_delta > DELTA_THRESH || clock_delta < 0) {
     g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / TICKS_PER_SECOND_DBL);
-    clock_delta -= TICKS_PER_SECOND_DBL / 10.;
-    if (clock_delta > 0.) {
-      susp_ticks += clock_delta;
-      mainw->clock_ticks -= clock_delta;
-      lclock_ticks = mainw->clock_ticks;
-      goto get_time;
-    }
+    mainw->force_show = TRUE;
+    susp_ticks += clock_delta;
+    if (clock_delta > 0)  mainw->clock_ticks -= clock_delta;
+    lclock_ticks = mainw->clock_ticks;
+    mainw->time_jump = clock_delta;
+    ncalls--;
+    goto get_time;
   }
 
   lclock_ticks = mainw->clock_ticks;
@@ -342,30 +374,65 @@ get_time:
       }
 
       if (current > prev_current) {
-        if (AUD_SRC_EXTERNAL) {
-          IF_AREADER_PULSE
-          (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
-          IF_AREADER_JACK
-          (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
+        ticks_t scdelta = current - prev_current;
+        if (mainw->time_jump) {
+          // if the time jumped, it is possible the soundcard comntinued
+          // in which case we want to advance the timer by the sc time to keep in sync
+          if (scdelta > mainw->time_jump) scdelta = mainw->time_jump;
+          susp_ticks -= scdelta;
+          clock_delta += scdelta;
+          R = X = 1.;
         } else {
-          IF_APLAYER_PULSE
-          (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
-          IF_APLAYER_JACK
-          (R = lives_jack_get_timing_ratio(mainw->jackd);)
+          // audio drivers may do their own interolation
+          // so we get the ratio from them
+          if (AUD_SRC_EXTERNAL) {
+            IF_AREADER_PULSE
+            (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
+            IF_AREADER_JACK
+            (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
+          } else {
+            IF_APLAYER_PULSE
+            (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
+            IF_APLAYER_JACK
+            (R = lives_jack_get_timing_ratio(mainw->jackd);)
+          }
+
+          // check the calculated time against the measured time
+          // either slow down or speed up to align
+          scdelta = current - base_current;
+          ticks_t sctime = baseItime + scdelta; // measured time
+          ticks_t systime = Itime + clock_delta * R * X; // calculated time
+
+          // negative drift means measured < calculated
+          drift = systime - sctime;
+
+          if (drift < 0) {
+            if (X < 1.) X = 1.;
+            else X *= 1. + prefs->pbtimer_resync_factor;
+          } else if (drift > 0) {
+            if (X > 1.) X = 1.;
+            else X /= 1. + prefs->pbtimer_resync_factor;
+          }
         }
-        ticks_t scdelta = current - base_current;
-        ticks_t sctime = baseItime + scdelta;
-        ticks_t systime = Itime + clock_delta * R;
-
-        if (systime < sctime) X = 1.01;
-        else if (systime > sctime) X = .99;
-
         prev_current = current;
       }
     }
   }
 
-  Itime += clock_delta * R * X;
+  tdiff = clock_delta * R * X;
+
+  if (!mainw->time_jump && clock_delta) {
+    if (ncalls > 100000) {
+      tot_deltas += clock_delta;
+      av_delta = tot_deltas / ncalls;
+      timer_load = (double)clock_delta / (double)av_delta;
+    }
+    if (tdiff > (ticks_t)(prefs->pbtimer_maxdiff * X * R)) {
+      //g_print("tdiff was %ld, set to %ld\n",tdiff, (ticks_t)(prefs->pbtimer_maxdiff * X * R));
+      tdiff = prefs->pbtimer_maxdiff * X * R;
+    }
+  }
+  Itime += tdiff;
 
   if (tsource == LIVES_TIME_SOURCE_NONE) tsource = LIVES_TIME_SOURCE_SYSTEM;
 

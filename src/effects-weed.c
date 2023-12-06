@@ -9450,6 +9450,10 @@ boolean rte_key_setmode(int key, int newmode) {
 
   key_modes[real_key] = newmode;
 
+  if (mainw->rte_keys != -1) {
+    mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
+  }
+
   if (mainw->blend_file != blend_file) {
     weed_layer_set_invalid(mainw->blend_layer, TRUE);
     mainw->new_blend_file = blend_file;

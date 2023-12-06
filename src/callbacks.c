@@ -4959,11 +4959,8 @@ boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event,
 
 void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
-  // important here to set ONESHOT, TRANSFER_OWNER  and FG_THREAD
-
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY,
                                _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
@@ -7415,8 +7412,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC | HOOK_CB_PRIORITY,
                                _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
@@ -7484,8 +7480,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                               _on_double_size_activate, user_data);
+                               HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
 
@@ -7667,9 +7662,8 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
 void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                               _on_sepwin_activate, user_data);
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC
+                               | HOOK_CB_PRIORITY, _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
 
@@ -7740,8 +7734,7 @@ static void _on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_OPT_ONESHOT | HOOK_TOGGLE_FUNC | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY | HOOK_TOGGLE_FUNC,
                                _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
 }

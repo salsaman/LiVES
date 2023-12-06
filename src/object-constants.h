@@ -369,24 +369,24 @@ NIRVA_ENUM
 // object flags
 // object is static. It is always safe to reference via a pointer to it
 // can apply to templates as well as instances
-#define NIRVA_OBJ_FLAG_STATIC 			(1ull < 0)
+#define NIRVA_OBJ_FLAG_STATIC 			(1ull << 0)
 
 // object instance should only be created once as it has some application wide globals
 // this implies either it is a template which produces no instances
 // or else it is an instance created by a template and only a single instance may be instantiated
 // at any one time
-#define NIRVA_OBJ_FLAG_SINGLETON 		(1ull < 1)
+#define NIRVA_OBJ_FLAG_SINGLETON 		(1ull << 1)
 
 // do not create an object template, instead instances should be created directly
 // this is for trivial objects that dont need tracking by the broker
 // in this case the object can built directly from an object_instance bundle
 // there will be an attr bundle supplied in the template which should be created in each instance
-#define NIRVA_OBJ_FLAG_INSTANCES_ONLY 	       	(1ull < 2)
+#define NIRVA_OBJ_FLAG_INSTANCES_ONLY 	       	(1ull << 2)
 
 // indicates that a (native) thread should be assigned to run the instance
 // responding to hook callbacks
 // communicatuon is via request hooks and status change hooks
-#define NIRVA_OBJ_FLAG_ACTIVE 	     	  		(1ull < 4)
+#define NIRVA_OBJ_FLAG_ACTIVE 	     	  		(1ull << 4)
 
 // indicates that the object has been destroyed, (DESTRUCTION_HOOK has been triggerd),
 // but the 'shell' is left due to being ref counted

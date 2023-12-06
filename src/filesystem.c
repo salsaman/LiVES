@@ -917,8 +917,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       weed_set_voidptr_value(auditor, pkey, fbuff->ptr);
       lives_free(pkey);
 #endif
-      //fbuff->ptr = fbuff->buffer = lives_calloc_mapped(fsize, TRUE);
-      fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
+      fbuff->ptr = fbuff->buffer = lives_calloc_mapped(fsize, TRUE);
 
       if (!fbuff->buffer) return FALSE;
 
@@ -1108,9 +1107,9 @@ ssize_t lives_close_buffered(int fd) {
     }
     should_close = FALSE;
     //lives_free(fbuff->buffer);
-    munlock(fbuff->buffer, fbuff->bytes);
+    //munlock(fbuff->buffer, fbuff->bytes);
 
-    //lives_uncalloc_mapped(fbuff->buffer, fbuff->bytes, TRUE);
+    lives_uncalloc_mapped(fbuff->buffer, fbuff->bytes, TRUE);
     fbuff->buffer = NULL;
   }
 
@@ -2373,7 +2372,7 @@ boolean disk_monitor_running(const char *dir) {
 
 boolean disk_monitor_ready(const char *dir) {
   return (dircheck_state == 2 && (!dir || !lives_strcmp(dir, running_for))
-          &&  !ds_syncwith);
+          && !ds_syncwith);
 }
 
 
@@ -2405,8 +2404,6 @@ int64_t disk_monitor_check_result(const char *dir) {
       return -1;
     }
     if (dircheck_state == 2) {
-      //lpt_desc_state(running);
-      //g_print("wait for diskmon res %p\n", running);
       bytes = result = lives_proc_thread_join_int64(running);
       //g_print("got for diskmon res\n");
       lives_proc_thread_unref(running);

@@ -724,6 +724,8 @@ typedef struct {
 #define OP_APPLY_INST	16
 #define OP_LOAD		17
 
+#define OP_DEINTERLACE	32
+
 typedef struct {
   int op_idx;
   double start, end, paused, copy_time;

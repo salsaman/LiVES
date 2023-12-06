@@ -2240,8 +2240,7 @@ fndone:
     if (lives_layer_plan_controlled(layer)) {
       if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
         _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-      else _lives_layer_set_status(layer, LAYER_STATUS_READY);
-    }
+    } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
 
     unlock_layer_status(layer);
     weed_layer_unref(layer);
@@ -2274,10 +2273,11 @@ fndone:
     boolean is_thread = FALSE;
 
     frames_t frame;
-    int clip;
-    int clip_type;
+    int clip, clip_type, track;
     int lstatus = LAYER_STATUS_NONE;
     int errpt = 0;
+
+    ____FUNC_ENTRY____(pull_frame_at_size, "b", "vvIiii");
 
     if (!layer) {
       errpt = 1;
@@ -2285,19 +2285,19 @@ fndone:
     }
     weed_layer_ref(layer);
 
+    track = lives_layer_get_track(layer);
+    clip = lives_layer_get_clip(layer);
+    frame = lives_layer_get_frame(layer);
+
     if (!weed_layer_check_valid(layer)) {
+      g_printerr("layer on track %d (clip %d, frame %d) became invalid during loading\n",
+                 track, clip, frame);
       errpt = 2;
       goto fail;
     }
 
-    ____FUNC_ENTRY____(pull_frame_at_size, "b", "vvIiii");
-
     //weed_layer_pixel_data_free(layer);
-    if (width && height)
-      weed_layer_set_size(layer, width, height);
-
-    clip = lives_layer_get_clip(layer);
-    frame = lives_layer_get_frame(layer);
+    if (width && height) weed_layer_set_size(layer, width, height);
 
     if (weed_layer_get_gamma(layer) == WEED_GAMMA_UNKNOWN)
       // the default unless overridden
@@ -2387,7 +2387,6 @@ fndone:
 
               srcgrp = lives_layer_get_srcgrp(layer);
               if (!srcgrp) {
-                int track = lives_layer_get_track(layer);
                 if (track >= 0 && track < mainw->num_tracks) {
                   srcgrp = mainw->track_sources[track];
                   lives_layer_set_srcgrp(layer, srcgrp);
@@ -2576,7 +2575,7 @@ fndone:
       if (sfile->deinterlace) {
         if (!is_thread) {
           deinterlace_frame(layer, tc);
-        } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+        } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, TRUE);
       }
       goto success;
 #endif

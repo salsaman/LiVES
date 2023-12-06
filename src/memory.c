@@ -288,7 +288,10 @@ static size_t hwlim = 0;
 
 #define GET_BLOCK_PTR(node)  (char *)smblock_pool->buffer + GET_BLOCK_OFFS(node) * CHUNK_SIZE;
 
-#define GET_BLOCK_SIZE(node) (GET_BLOCK(node)->size)
+#define _GET_BLOCK_SIZE(node) (GET_BLOCK(node)->size)
+
+#define GET_BLOCK_SIZE(node) (abs(_GET_BLOCK_SIZE(node)))
+
 #define SET_BLOCK_SIZE(node, bsize) GET_BLOCK(node)->size = (bsize)
 
 #define GET_BLOCK_OFFS(node) (GET_BLOCK(node)->offs)
@@ -296,7 +299,7 @@ static size_t hwlim = 0;
 
 #define GET_BYTE_SIZE(node) (GET_BLOCK_SIZE(node) * CHUNK_SIZE)
 
-#define IS_FREE(node) (GET_BLOCK_SIZE(node) > 0)
+#define IS_FREE(node) (_GET_BLOCK_SIZE(node) > 0)
 
 typedef struct _mem_pool_t  mem_pool_t;
 
@@ -418,8 +421,12 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     size_t xxsize = (xsize +  smblock_pool->chunk_size) / smblock_pool->chunk_size;
     //g_print("aa3 %d %ld %ld %d %d\n", xxsize, MAX_SIZE, TOO_BIG_SIZE, xxsize > MAX_SIZE, xxsize > TOO_BIG_SIZE);
     if (xxsize  > MAX_SIZE || (TOO_BIG_SIZE > 0 && xxsize >= TOO_BIG_SIZE)) return orig_malloc(xsize);
+
+
     pthread_mutex_lock(&(smblock_pool->mutex));
     g_print("hey 99zzzx\n");
+
+
   } else {
     g_print("hey 99\n");
     if (PAGESIZE && xsize * nmemb  >= PAGESIZE) return lives_calloc_medium(nmemb * xsize);
@@ -508,16 +515,17 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     ptr = (char *)smblock_pool->buffer + offs * CHUNK_SIZE;
     if (nmemb) lives_memset(ptr, 0, nchunks_req * CHUNK_SIZE);
 
-    /* g_print("ALLOC of %d chunks @ %p, free space is %d of %d, %.2f %% used (%.2f MiB)\n", nchunks_req, ptr, */
-    /*         smblock_pool->num_chunks - smblock_pool->free_chunks, smblock_pool->num_chunks, */
-    /*         (double)(smblock_pool->num_chunks - smblock_pool->free_chunks) */
-    /*         / (double)smblock_pool->num_chunks * 100., */
-    /*         (smblock_pool->num_chunks - smblock_pool->free_chunks) / 1000000.); */
+    g_print("ALLOC of %d chunks @ %p, free space is %ld of %ld, %.2f %% used (%.2f MiB)\n", nchunks_req, ptr,
+            smblock_pool->free_chunks, smblock_pool->num_chunks,
+            (double)(smblock_pool->num_chunks - smblock_pool->free_chunks)
+            / (double)smblock_pool->num_chunks * 100.,
+            (smblock_pool->num_chunks - smblock_pool->free_chunks) / 1000000.);
 
     return  ptr;
   }
 
   // insufficient space
+
   smblock_pool->toobig_size = nchunks_req;
   pthread_mutex_unlock(&(smblock_pool->mutex));
   if (nchunks_req == 1) abort();

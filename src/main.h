@@ -405,6 +405,9 @@ typedef enum {
   /// video playback completed
   CANCEL_AUD_END,
 
+  // repeated errors running plan cycle
+  CANCEL_PLAN_ERROR,
+
   /// cancelled because of error
   CANCEL_ERROR,
 

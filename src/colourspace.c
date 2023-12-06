@@ -3464,7 +3464,12 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 
             v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
             v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
-          } else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
+          } else {
+            u3 = CLAMP16_240i(u1 >> 1);
+            u4 = CLAMP16_240i(u2 >> 1);
+            v3 = CLAMP16_240i(v1 >> 1);
+            v4 = CLAMP16_240i(v2 >> 1);
+          }
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3504,7 +3509,12 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
             u4 = CLAMP16_240i(((u1 >> 1) + u2) / 3. + .5);
             v3 = CLAMP16_240i((v1 + (v2 >> 1)) / 3. + .5);
             v4 = CLAMP16_240i(((v1 >> 1) + v2) / 3. + .5);
-          } else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
+          } else {
+            u3 = CLAMP16_240i(u1 >> 1);
+            u4 = CLAMP16_240i(u2 >> 1);
+            v3 = CLAMP16_240i(v1 >> 1);
+            v4 = CLAMP16_240i(v2 >> 1);
+          }
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3711,7 +3721,12 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 
             v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
             v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
-          } else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
+          } else {
+            u3 = CLAMP0_255i(u1 >> 1);
+            u4 = CLAMP0_255i(u2 >> 1);
+            v3 = CLAMP0_255i(v1 >> 1);
+            v4 = CLAMP0_255i(v2 >> 1);
+          }
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y1, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],
@@ -3751,7 +3766,12 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
             u4 = CLAMP0_255i(((u1 >> 1) + u2) / 3. + .5);
             v3 = CLAMP0_255i((v1 + (v2 >> 1)) / 3. + .5);
             v4 = CLAMP0_255i(((v1 >> 1) + v2) / 3. + .5);
-          } else {u3 = u1; u4 = u2; v3 = v1; v4 = v2;}
+          } else {
+            u3 = CLAMP0_255i(u1 >> 1);
+            u4 = CLAMP0_255i(u2 >> 1);
+            v3 = CLAMP0_255i(v1 >> 1);
+            v4 = CLAMP0_255i(v2 >> 1);
+          }
 
           if (gamma_lut) {
             xyuv2rgb_with_gamma(y2, u3, v3, &dest[ or + jo], &dest[ or + jo + 1],

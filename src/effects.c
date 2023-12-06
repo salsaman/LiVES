@@ -1006,11 +1006,20 @@ deint1:
 
 ////////////////////////////////////////////////////////////////////
 // keypresses
+
+static rte_key_desc fx_key_defs[FX_KEYS_MAX_VIRTUAL];
+
+
+void fx_keys_init(void) {
+  lives_memset(fx_key_defs, 0, sizeof(fx_key_defs));
+}
+
 LIVES_LOCAL_INLINE boolean rte_key_real_enabled(int key) {
   return !!(mainw->rte_real & (GU641 << key));
 }
 
-static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
+
+static lives_result_t rte_on_off(int key, int on_off) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based
   // in automode we don't add the effect parameters in ce_thumbs mode, and we use SOFT_DEINIT
@@ -1019,9 +1028,12 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
   uint64_t new_rte;
   boolean refresh_model = TRUE;
   lives_result_t res = LIVES_RESULT_SUCCESS;
+  boolean is_auto;
 
   if (mainw->go_away) return res;
-  if (!LIVES_IS_INTERACTIVE && from_menu) return res;
+  if (!LIVES_IS_INTERACTIVE && fx_key_defs[key].last_activator == activator_ui) return res;
+
+  is_auto = fx_key_defs[key].last_activator == activator_pconx;
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1048,7 +1060,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
-          mainw->rte_real &= ~new_rte;
+          //mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
           filter_mutex_unlock(key);
@@ -1057,7 +1069,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
       }
 
       mainw->rte |= new_rte;
-      mainw->rte_real |= new_rte;
+      //  mainw->rte_real |= new_rte;
 
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1107,7 +1119,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
-            mainw->rte_real &= ~new_rte;
+            //mainw->rte_real &= ~new_rte;
           }
           weed_instance_unref(inst);
         }
@@ -1117,7 +1129,7 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
         // deinit effect
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
-          mainw->rte_real &= ~new_rte;
+          //mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
@@ -1133,7 +1145,6 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
   }
-
 
   if (mainw->rendered_fx)
     // enable /disable menu option "Apply current realtime effects" in rendered fx menu
@@ -1165,30 +1176,38 @@ static lives_result_t _rte_on_off(boolean from_menu, int key, boolean is_auto) {
 }
 
 
+////////// keys //////////////////
+
+void rte_keys_update(void) {
+  // during  we do not
+  uint64_t real_rte = mainw->rte_real;
+  if (mainw->rte && !real_rte)
+    rte_on_off(0, LIVES_OFF);
+  else {
+    uint64_t ons = ~mainw->rte & real_rte;
+    uint64_t offs = mainw->rte & ~real_rte;
+    for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+      if (!rte_key_valid(i + 1, TRUE)) continue;
+      uint64_t new_rte = GU641 << i;
+      if (offs & new_rte) rte_on_off(i + 1, LIVES_OFF);
+      else if (ons & new_rte) rte_on_off(i + 1, LIVES_ON);
+    }
+  }
+}
+
+
 static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
-  //
   uint64_t new_rte;
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
-
+  if (THREADVAR(fx_is_auto)) fx_key_defs[key].last_activator = activator_pconx;
   if (key > 0) {
     new_rte = GU641 << (key - 1);
     mainw->rte_real ^= new_rte;
   }
-
-  if (LIVES_IS_PLAYING) {
-    boolean is_auto = THREADVAR(fx_is_auto);
-    if (key)
-      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                      _rte_on_off, WEED_SEED_BOOLEAN, "bib", from_menu, key, is_auto);
-    else
-      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                      HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
-                                      _rte_on_off, WEED_SEED_BOOLEAN, "bi", from_menu, 0, is_auto);
-    return LIVES_RESULT_SUCCESS;
-  }
-
-  return _rte_on_off(from_menu, key, FALSE);
+  else mainw->rte_real = 0;
+  if (LIVES_IS_PLAYING) return LIVES_RESULT_SUCCESS;
+  rte_keys_update();
+  return LIVES_RESULT_SUCCESS;
 }
 
 // THIS is the correct function to call from code to toggle a rte key
@@ -1209,15 +1228,10 @@ static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
 //     the current filter map is updated to include the new effect
 //  - the nodemodel is rebuilt, and new costs calculated, including or excluding the instance
 //  - new plan is created from the updated nodemodel which may include a step to apply the new instance
-lives_result_t rte_key_toggle(int key) {
-  // key is 1 based
-  return _rte_key_toggle(key, FALSE);
-}
-
 
 boolean rte_key_on_off(int key, boolean on) {
   // key is 1 based
-  // returns the state of the key afterwards
+  // returns the virtual state of the key afterwards
   boolean state;
   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
   state = rte_key_real_enabled(key - 1);
@@ -1225,6 +1239,13 @@ boolean rte_key_on_off(int key, boolean on) {
   _rte_key_toggle(key, FALSE);
   return rte_key_real_enabled(key - 1);
 }
+
+
+lives_result_t rte_key_toggle(int key) {
+  // key is 1 based
+ return  _rte_key_toggle(key, FALSE);
+}
+
 
 // callback from fx keys
 boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
@@ -1282,7 +1303,6 @@ boolean grabkeys_callback_hook(LiVESToggleButton * button, livespointer user_dat
 static boolean _rtemode_callback(int dirn) {
   if (mainw->rte_keys == -1) return TRUE;
   rte_key_setmode(0, dirn == LIVES_ACTION_PREV_MODE_CYCLE ? -2 : -1);
-  mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
   return TRUE;
 }
 
@@ -1293,8 +1313,7 @@ boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
   int dirn = LIVES_POINTER_TO_INT(user_data);
   if (!LIVES_IS_PLAYING) return _rtemode_callback(dirn);
   if (mainw->rte_keys == -1) return TRUE;
-  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                  HOOK_OPT_ONESHOT |  HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
                                   _rtemode_callback, WEED_SEED_BOOLEAN, "i", dirn);
   return TRUE;
 }
@@ -1308,8 +1327,7 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
   if (!lives_toggle_button_get_active(button)) return TRUE;
 
   if (!LIVES_IS_PLAYING) rte_key_setmode(key + 1, mode);
-  else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                         HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_CB_TRANSFER_OWNER,
+  else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
                                          rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
   return TRUE;
 }
@@ -1411,9 +1429,6 @@ void rte_keymodes_restore(int nkeys) {
     // activate the key
     if (rte_key_is_enabled(i, FALSE) != backup_keymode_states[i])
       rte_key_toggle(i + 1);
-  }
-  if (mainw->rte_keys != -1) {
-    mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
   }
 }
 

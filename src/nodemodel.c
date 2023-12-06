@@ -2251,8 +2251,10 @@ static void run_plan(exec_plan_t *plan) {
             break;
           }
           if (step->proc_thread) {
+            double xtime;
             exec_plan_substep_t *substep = NULL;
             if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
+            xtime = lives_get_session_time();
             lives_proc_thread_join(step->proc_thread);
             d_print_debug("deinterlace completed @ \n", xtime * 1000.);
             for (LiVESList *list = step->substeps; list; list = list->next) {
@@ -2262,7 +2264,6 @@ static void run_plan(exec_plan_t *plan) {
               substep = NULL;
             }
             if (substep) {
-	      xtime = lives_get_session_time();
               double dur = xtime - substep->start;
               d_print_debug("Done in %.2f msec\n", dur * 1000.);
             }

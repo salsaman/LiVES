@@ -1962,7 +1962,7 @@ static void run_plan(exec_plan_t *plan) {
             }
 
             if (!(state == STEP_STATE_FINISHED || state == STEP_STATE_SKIPPED
-                  || state == STEP_STATE_IGNORE))  continue;
+                  || state == STEP_STATE_IGNORE))  break;
           }
           if (i < step->ndeps) continue;
         }

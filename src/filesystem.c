@@ -922,7 +922,6 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       if (!fbuff->buffer) return FALSE;
 
       lseek(fd, offs, SEEK_SET);
-      mlock(fbuff->buffer, fsize);
 
       //g_printerr("slurp for %d, %s with size %ld buffer is %p\n", fd, fbuff->pathname, fsize, fbuff->buffer);
       while (fsize > 0) {

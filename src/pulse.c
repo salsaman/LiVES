@@ -378,7 +378,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   char *filename;
 
   static lives_thread_data_t *tdata = NULL;
-  static int async_join = 0;
+  static int async_writer_count = 0;
   static lives_proc_thread_t rec_lpt = NULL;
   static arec_details *dets = NULL;
 
@@ -417,11 +417,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     cancel_rec_lpt = TRUE;
   }
 
-  if (async_join) {
+  if (async_writer_count) {
     // here we make sure that the DATA_READY hook callbacks have all completed
     // we must do this before we can free the data from the previous cycle
     lives_hooks_async_join(NULL, DATA_READY_HOOK);
-    async_join = 0;
+    async_writer_count = 0;
   }
 
   lives_aplayer_set_data_len(self, 0);
@@ -1354,9 +1354,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     if (LIVES_IS_PLAYING) afile->aseek_pos = pulsed->seek_pos;
   }
 
-  // calling trigger_async directly gets count of callbacks
-  async_join = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
-
+  async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
 
 #ifdef DEBUG_PULSE
   lives_printerr("done\n");
@@ -1370,7 +1368,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   static lives_thread_data_t *tdata = NULL;
   static void *back_buff = NULL;
   static size_t bbsize = 0;
-  static int async_join = 0;
+  static int async_reader_count = 0;
 
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
   void *data;
@@ -1385,11 +1383,11 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
   }
 
-  if (async_join) {
+  if (async_reader_count) {
     // here we make sure that the DATA_READY hook callbacks have all completed
     // we must do this before we can free the data from the previous cycle
     lives_hooks_async_join(NULL, DATA_READY_HOOK);
-    async_join = 0;
+    async_reader_count = 0;
   }
 
   lives_aplayer_set_data_len(self, 0);
@@ -1472,8 +1470,8 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   lives_memcpy(back_buff, data, rbytes);
   lives_aplayer_set_data_len(self, nframes);
   lives_aplayer_set_data(self, (void *)back_buff);
-  // calling trigger_async directly gets count of callbacks
-  async_join = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+
+  async_reader_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
 
   pulsed->seek_pos += rbytes;
 

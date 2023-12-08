@@ -6999,11 +6999,14 @@ LIVES_LOCAL_INLINE char *dsu_label_notset(void) {return _("Value not set");}
 LIVES_LOCAL_INLINE char *dsu_label_calculating(void) {return _("Calculating....");}
 
 boolean update_dsu(livespointer data) {
+  RECURSE_GUARD_START;
   static boolean set_label = FALSE;
   int64_t dsu = -1;
   char *txt;
   char *xtarget = (char *)data;
-  if (mainw->no_idlefuncs) return TRUE;
+
+  RETURN_VAL_IF_RECURSED(TRUE);
+
   if (!xtarget) xtarget = prefs->workdir;
   if ((!dsq || dsq->scanning) && (dsu = disk_monitor_check_result(xtarget)) < 0) {
     if (!dsq || !dsq->visible) {
@@ -7014,7 +7017,8 @@ boolean update_dsu(livespointer data) {
       lives_label_set_text(LIVES_LABEL(dsq->used_label), (txt = dsu_label_calculating()));
       lives_free(txt);
     }
-  } else {
+  } else { 
+    RECURSE_GUARD_ARM;
     if (mainw->dsu_valid) {
       if (dsu > -1) capable->ds_used = dsu;
       dsu = capable->ds_used;
@@ -7038,6 +7042,8 @@ boolean update_dsu(livespointer data) {
       }
       set_label = FALSE;
       mainw->dsu_valid = TRUE;
+
+      RECURSE_GUARD_END;
       return FALSE;
     }
   }

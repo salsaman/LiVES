@@ -1616,8 +1616,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
   maxsize = THREADVAR(buff_size);
 
-  if (can_use_thrd_local
-      && totsize  <= maxsize) use_thrdlocal = TRUE;
+  if (can_use_thrd_local && totsize  <= maxsize) use_thrdlocal = TRUE;
 
   for (j = 0; j < to_use; j++) {
     // each thread gets its own copy of the filter instance, with the following changes
@@ -3678,18 +3677,14 @@ int num_out_params(weed_plant_t *plant) {
 
 
 boolean has_usable_palette(weed_plant_t *filter, weed_plant_t *chantmpl) {
-  int npals;
+  int npals, palette = WEED_PALETTE_END;
   int *palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
-  boolean retval = TRUE;
   for (int i = 0; i < npals; i++) {
-    if (palettes[i] == WEED_PALETTE_END) {
-      retval = FALSE;
-      break;
-    }
-    if (is_useable_palette(palettes[i])) break;
+    palette = palettes[i];
+    if (palette == WEED_PALETTE_END || is_useable_palette(palette)) break;
   }
   lives_free(palettes);
-  return retval;
+  return palette != WEED_PALETTE_END;
 }
 
 
@@ -3805,19 +3800,16 @@ int enabled_out_channels(weed_plant_t *plant, boolean count_repeats) {
 
 static int min_audio_chans(weed_plant_t *plant) {
   int *ents;
-  int ne;
-  int minas = 1, i;
+  int ne, minas = 0, i;
   ents = weed_get_int_array_counted(plant, WEED_LEAF_AUDIO_CHANNELS, &ne);
-  if (ne == 0) return 1;
-  for (i = 0; i < ne; i++) {
-    if (minas == 1 || (ents[i] > 0 && ents[i] < minas)) minas = ents[i];
-    if (minas == 1) {
-      lives_free(ents);
-      return 1;
+  if (ne) {
+    for (i = 0; i < ne; i++) {
+      if (!minas || (ents[i] > 0 && ents[i] < minas)) minas = ents[i];
+      if (minas == 1) break;
     }
+    lives_free(ents);
   }
-  lives_free(ents);
-  return minas;
+  return minas > 0 ? minas : 1;
 }
 
 

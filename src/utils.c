@@ -157,6 +157,28 @@ int get_next_free_file(void) {
 }
 
 
+const char *check_for_runners(void) {
+#if IS_LINUX_GNU
+  char buff[1024];
+  const char *runners[] = EXEC_RUNNERS;
+  char *cmdline = lives_strdup_printf("/proc/%d/cmdline", capable->ppid);
+  FILE *file = fopen(cmdline, "r");
+  lives_free(cmdline);
+  if (file) {
+    if (fgets(buff, 1024, file) > 0)
+      for (int i = 0; runners[i]; i++) {
+	if (strstr(buff, runners[i])) {
+	  fclose(file);
+	  return runners[i];
+	}
+      }
+    fclose(file);
+  }
+#endif
+  return NULL;
+}
+
+
 #ifdef ENABLE_OSC
 boolean lives_osc_notify_failure(void) WARN_UNUSED;
 #endif

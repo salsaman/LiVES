@@ -27,6 +27,7 @@ mainwindow *mainw;
 #include "rfx-builder.h"
 #include "multitrack-gui.h"
 #include "transcode.h"
+#include "utils.h"
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
@@ -2834,6 +2835,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_snprintf(cdir, PATH_MAX, "%s", capable->myname_full);
   get_basename(cdir);
   capable->myname = lives_strdup(cdir);
+
+  capable->ppid = getppid(); 
+  capable->runner = check_for_runners();
 
   // get opts first
   //

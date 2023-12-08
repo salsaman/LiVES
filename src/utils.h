@@ -175,6 +175,7 @@ void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
 void show_manual_section(const char *lang, const char *section);
 
 /////
+const char *check_for_runners(void);
 
 void maybe_add_mt_idlefunc(void);
 

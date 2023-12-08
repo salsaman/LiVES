@@ -167,6 +167,8 @@ int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_rowstride(weed_layer_t *); ///< for packed palettes
 int weed_layer_get_width(weed_layer_t *);
 int weed_layer_get_width_pixels(weed_layer_t *);
+int weed_layer_get_width_bytes(weed_layer_t *);
+int weed_layer_get_plane_size(weed_layer_t *, int nplane, boolean inc_rs);
 int weed_layer_get_height(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
 int weed_layer_get_gamma(weed_layer_t *);

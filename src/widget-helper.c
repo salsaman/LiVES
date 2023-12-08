@@ -1061,37 +1061,32 @@ boolean set_gui_loop_tight(boolean val) {
 }
 
 
+static boolean _lives_widget_context_iteration(LiVESWidgetContext * ctx, boolean may_block) {
+  boolean ret;
+  if (mainw->no_idlefuncs) return FALSE;
+  mainw->no_idlefuncs = TRUE;
+  ret = g_main_context_iteration(ctx, may_block); 
+  mainw->no_idlefuncs = FALSE;
+  return ret;
+}
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext * ctx, boolean may_block) {
-  T_RECURSE_GUARD_START;
+  if (mainw->no_idlefuncs) return FALSE;
   boolean ret = FALSE;
-  T_RETURN_VAL_IF_RECURSED(FALSE);
-  T_RECURSE_GUARD_ARM;
   if (!is_fg_thread()) {
     if (!gui_loop_tight) mainw->do_ctx_update = TRUE;
-    T_RECURSE_GUARD_END;
     return FALSE;
   } else {
-    boolean no_idlefuncs = FALSE;
-    if (mainw) {
-      no_idlefuncs = mainw->no_idlefuncs;
-      // block recursive calls to idlefunc fg_Service-fulfull_cb
-      mainw->no_idlefuncs = TRUE;
-      if (fg_service_source) {
-        if (cprio == PRIO_HIGH)
-          lives_source_set_priority(fg_service_source, PRIO_LOW);
-      }
-    }
+    if (mainw)
+      if (fg_service_source && cprio == PRIO_HIGH)
+	lives_source_set_priority(fg_service_source, PRIO_LOW);
 
-    if (!lpttorun) ret = g_main_context_iteration(ctx, may_block);
-    if (mainw) {
-      mainw->no_idlefuncs = no_idlefuncs;
-      if (fg_service_source) {
-        if (cprio == PRIO_HIGH)
-          lives_source_set_priority(fg_service_source, PRIO_HIGH);
-      }
-    }
+    if (!lpttorun) ret = _lives_widget_context_iteration(ctx, may_block);
+
+    if (mainw)
+      if (fg_service_source && cprio == PRIO_HIGH)
+	lives_source_set_priority(fg_service_source, PRIO_HIGH);
   }
-  T_RECURSE_GUARD_END;
   return ret;
 }
 
@@ -1197,12 +1192,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
   mainw->n_service_calls++;
 
-  if (mainw->no_idlefuncs) {
-    // callback has to be disabled during calls to g_main_context_iteration,
-    // to prevent that function from blocking, since we are running here as an idel function
-    // we could end up endlessly recursing
-    return TRUE;
-  }
+  if (mainw->no_idlefuncs) return TRUE;
 
   if (omode != gui_loop_tight || cprio != prio) {
     cprio = PRIO_HIGH;
@@ -1237,7 +1227,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       cprio = PRIO_HIGH;
       if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
           && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
-        lives_widget_context_iteration(NULL, FALSE);
+	lives_widget_context_iteration(NULL, FALSE);
         pthread_yield();
       }
       if (prio != PRIO_HIGH) {
@@ -1259,7 +1249,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
     if (mainw->do_ctx_update) {
       // during playback this is where all callbacks such as key presses will happen
-      if (!is_active) _lives_widget_context_update();
+      if (!is_active) {
+	lives_widget_context_update();
+      }
       mainw->do_ctx_update = FALSE;
       pthread_yield();
       lives_microsleep;
@@ -1274,7 +1266,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
           lives_nanosleep(NSLEEP_TIME);
         }
         // servicing modal windows
-        if (modalw) lives_widget_context_iteration(NULL, FALSE);
+        if (modalw) {
+	  lives_widget_context_iteration(NULL, FALSE);
+	}
       }
     }
   } while (gui_loop_tight);
@@ -1287,7 +1281,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (THREADVAR(fg_service)) {
       is_fg_service = TRUE;
     } else THREADVAR(fg_service) = TRUE;
-    _lives_widget_context_update();
+    lives_widget_context_update();
     mainw->do_ctx_update = FALSE;
     if (!is_fg_service) THREADVAR(fg_service) = FALSE;
     //
@@ -1310,7 +1304,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       // in low prio mode we avoid loading the cpu by just waiting
       if (lives_widget_context_pending(NULL)) {
         lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 1);
-        _lives_widget_context_update();
+        lives_widget_context_update();
         if (!lpttorun) lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 6);
       } else lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT);
     }
@@ -2139,7 +2133,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
 #ifdef GUI_GTK
   if (is_fg_thread()) {
     gtk_widget_show_all(GTK_WIDGET(dialog));
-    _lives_widget_context_update();
+    lives_widget_context_update();
     resp = gtk_dialog_run(dialog);
   } else {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
@@ -3376,7 +3370,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
     }
   }
 
-  _lives_widget_context_update();
+  lives_widget_context_update();
 
   if (!was_modal) {
     if (win) _lives_window_set_modal(win, FALSE, TRUE);
@@ -13624,7 +13618,7 @@ static boolean _lives_widget_context_update(void) {
   }
 
   while (count++ < limit && !mainw->is_exiting) {
-    lives_widget_context_iteration(NULL, FALSE);
+    _lives_widget_context_iteration(NULL, FALSE);
     if (!lives_widget_context_pending(NULL)) break;
     pthread_yield();
     lives_nanosleep(NSLEEP_TIME);

@@ -9577,9 +9577,9 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   else if (widget == mainw->preview_image)
     load_preview_image(FALSE);
   else if (widget == mainw->msg_area && !mainw->multitrack) {
-    RECURSE_GUARD_ARM;
+    //RECURSE_GUARD_ARM;
     msg_area_config(widget);
-    RECURSE_GUARD_END;
+    //RECURSE_GUARD_END;
   } else if (widget == mainw->dsu_widget)
     draw_dsu_widget(widget);
   else if (mainw->multitrack) {

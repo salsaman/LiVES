@@ -891,6 +891,8 @@ boolean _lives_proc_thread_error(lives_proc_thread_t self, char *file_ref, int l
 
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
 
+void lpt_error_handle(lives_proc_thread_t);
+
 typedef struct {
   uint64_t uid;
   int errnum;
@@ -905,6 +907,8 @@ extern lpt_err_data obits[128];
 int lives_proc_thread_get_errnum(lives_proc_thread_t);
 char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
 int lives_proc_thread_get_errsev(lives_proc_thread_t);
+char *lives_proc_thread_get_errfile(lives_proc_thread_t);
+int lives_proc_thread_get_errline(lives_proc_thread_t);
 
 // test if lpt is in a hook stack
 boolean lives_proc_thread_is_stacked(lives_proc_thread_t);

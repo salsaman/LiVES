@@ -33,45 +33,51 @@ void print_diagnostics(uint64_t types) {
   char *tmp;
   if (types & DIAG_APP_STATUS) {
     int64_t nsc, onsc;
-    if (what_sup_now() == sup_ready) g_print("Startup complete\n");
+    if (what_sup_now() == sup_ready) fprintf(stderr, "Startup complete\n");
     else switch (what_sup_now()) {
-      case nothing_sup: g_print("Early stage init\n"); break;
-      case run_program_sup: g_print("Startup: First stage, run_the_program, parse cmdline args\n"); break;
-      case gtk_launch_sup: g_print("Startup: launch gtk_main\n"); break;
-      case startupA_sup: g_print("Startup: early startup, start GUI and colour engine\n"); break;
-      case pre_init_sup: g_print("Startup: pre_init - show non fatal warnings, set early prefs\n"); break;
-      case startupB_sup: g_print("Startup: hardware and OS details\n"); break;
-      case pre_init2_sup: g_print("Startup: load remaining prefs"); break;
-      case startupC_sup: g_print("Startup: launch GOI\n"); break;
-      case init_sup: g_print("Startup: init - more complex actions\n"); break;
-      case startupD_sup: g_print("Startup: final stage\n"); break;
-      case startup2_sup: g_print("Startup: lives_startup2\n"); break;
+      case nothing_sup: fprintf(stderr, "Early stage init\n"); break;
+      case run_program_sup: fprintf(stderr, "Startup: First stage, run_the_program, parse cmdline args\n"); break;
+      case gtk_launch_sup: fprintf(stderr, "Startup: launch gtk_main\n"); break;
+      case startupA_sup: fprintf(stderr, "Startup: early startup, start GUI and colour engine\n"); break;
+      case pre_init_sup: fprintf(stderr, "Startup: pre_init - show non fatal warnings, set early prefs\n"); break;
+      case startupB_sup: fprintf(stderr, "Startup: hardware and OS details\n"); break;
+      case pre_init2_sup: fprintf(stderr, "Startup: load remaining prefs"); break;
+      case startupC_sup: fprintf(stderr, "Startup: launch GUI\n"); break;
+      case init_sup: fprintf(stderr, "Startup: init - more complex actions\n"); break;
+      case startupD_sup: fprintf(stderr, "Startup: final stage\n"); break;
+      case startup2_sup: fprintf(stderr, "Startup: lives_startup2\n"); break;
       default: break;
       }
 
     nsc = mainw->n_service_calls;
-    g_print("Number of sevice calls: %lu\n", nsc);
-    g_print("checking service call frequency:\n");
+    fprintf(stderr, "Number of sevice calls: %lu\n", nsc);
+    fprintf(stderr, "checking service call frequency:\n");
     onsc = nsc;
     lives_alarm_set_timeout(MILLIONS(100));
     while (!lives_alarm_triggered()) {
       nsc = mainw->n_service_calls;
-      if (nsc != onsc) g_print(".");
+      if (nsc != onsc) fprintf(stderr, ".");
     }
-    g_print("%lu calls in 0.1 sec\n", nsc - onsc);
+    fprintf(stderr, "%lu calls in 0.1 sec\n", nsc - onsc);
   }
   if (types & DIAG_MEMORY) {
     tmp = get_memstats();
-    g_print("MEMORY\n");
-    g_print("%s\n", tmp);
+    fprintf(stderr, "MEMORY\n");
+    if (get_memstatus()) {
+    fprintf(stderr, "Mem total %s, free %s, available %s, locked %s\n",
+	    lives_format_memory_size_string(capable->hw.memtotal),
+	    lives_format_memory_size_string(capable->hw.memfree),
+	    lives_format_memory_size_string(capable->hw.memavail),
+	    lives_format_memory_size_string(capable->hw.memlocked));
+    }
+    fprintf(stderr, "%s\n", tmp);
     lives_free(tmp);
-    g_print("\n\nbigblock mapping\n");
     bbsummary();
   }
   if (types & DIAG_THREADS) {
-    g_print("THREADS\n");
+    fprintf(stderr, "THREADS\n");
     tmp = get_threadstats();
-    g_print("%s\n", tmp);
+    fprintf(stderr, "%s\n", tmp);
     lives_free(tmp);
   }
 }

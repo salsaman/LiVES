@@ -1,4 +1,4 @@
-// colourspace.c
+/ colourspace.c
 // LiVES
 // (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
@@ -14018,24 +14018,24 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 
 static void *gamma_convert_layer_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  uint8_t *pixels = (uint8_t *)ccparams->src;
-  int rowstride = ccparams->orowstrides[0];
-  int psize = ccparams->psize, px = 3;
-  int widthx = ccparams->hsize * psize;
-  int start = ccparams->xoffset;
+  uint8_t * LIVES_RESTRICT pixels = (uint8_t *)ccparams->src;
+  const int rowstride = ccparams->orowstrides[0];
+  const int psize = ccparams->psize;
+  const int px = MIN(3, psize);
+  const int start = ccparams->alpha_first ? ccparams->xoffset + 1
+    : ccparams->xoffset;
+  const int end = start + ccparams->hsize * psize;;
 
-  uint8_t *gamma_lut8 = ccparams->lut8;
+  uint8_t * LIVES_RESTRICT gamma_lut8 = ccparams->lut8;
   if (!gamma_lut8) return NULL;
 
-  if (psize < px) px = psize;
-
-  if (ccparams->alpha_first) start += 1;
   for (int i = 0; i < ccparams->vsize; i++) {
+    const int irow = rowstride * i;
     //g_print("\n");
-    for (int j = start; j < start + widthx; j += psize) {
+    for (int j = start; j < end; j += psize) {
       for (int k = 0; k < px; k++) {
         //g_print("  PX %p + %d , %d  = %d\t", pixels, j + k, pixels[j + k], gamma_lut[pixels[k + j]]);
-        pixels[rowstride * i + j + k] = gamma_lut8[pixels[rowstride * i + j + k]];
+        pixels[irow + j + k] = gamma_lut8[pixels[irow + j + k]];
       }
       //g_print("\n");
     }
@@ -14048,6 +14048,8 @@ static void *gamma_convert_layer_thread(void *data) {
    @brief alter the transfer function of a Weed layer, from current value to gamma_type
 
 */
+
+
 boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *layer, int x, int y, int width, int height,
                                 boolean may_thread) {
   if (!prefs->apply_gamma) return TRUE;
@@ -14568,7 +14570,6 @@ lives_result_t get_resizable(int *ppalette, int *pxpal, int *oclamp_hint, int *o
   if (!weed_palette_is_resizable(palette, WEED_YUV_CLAMPING_UNCLAMPED, LIVES_INPUT))
     in_resizable = FALSE;
 
-
   if (!weed_palette_is_resizable(opal_hint, ocl, LIVES_OUTPUT))
     out_resizable = FALSE;
 
@@ -14654,26 +14655,60 @@ ok:
 
 #ifdef USE_SWSCALE
 #if USE_THREADS
+
+  /* LIVES_RESTRICT uint8_t *pixels = (uint8_t *)ccparams->src; */
+  /* const int rowstride = ccparams->orowstrides[0]; */
+  /* const int psize = ccparams->psize; */
+  /* const int px = MIN(3, psize); */
+  /* const int start = ccparams->alpha_first ? ccparams->xoffset + 1 */
+  /*   : ccparams->xoffset; */
+  /* const inr end = start + ccparams->hsize * psize;; */
+
 static void *swscale_threadfunc(void *arg) {
-  lives_sw_params *swparams = (lives_sw_params *)arg;
+  lives_cc_params *swparams = (lives_cc_params *)arg;
+  struct SwsContext *swscale = (struct SwsContext *)swparams->data;
+  void **opd = swparams->destp;
 #if USE_RESTHREAD
   int scan = 0;
   if (swparams->layer) {
-    int last = swparams->iheight * (swparams->thread_id + 1);
+    int last = swparams->vsize * (swparams->thread_id + 1);
     while ((scan = weed_get_int_value(swparams->layer, WEED_LEAF_PROGSCAN, NULL)) > 0
            && scan < last) {
       lives_nanosleep(100);
     }
   }
 #endif
-  swparams->ret = sws_scale(swparams->swscale, (const uint8_t *const *)swparams->ipd, swparams->irw,
-                            0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
-
-  if (swparams->file_gamma != 1.) {
-    gamma_convert_sub_layer(WEED_GAMMA_SRGB, 1. / swparams->file_gamma, swparams->layer, 0, 0, swparams->width,
-                            swparams->ret, FALSE);
+  if (swparams->thread_local) {
+    opd = LIVES_CALLOC_SIZEOF(void *, 4);
+    void *buff = THREADVAR(buffer);
+    size_t offset = 0;
+    int pal = swparams->new_pal;
+    for (int i = 0; i < swparams->nplanes; i++) {
+      opd[i] = buff + offset;
+      offset += swparams->orowstrides[i] * swparams->new_vsize *
+	weed_palette_get_plane_ratio_horizontal(pal, i)
+	* weed_palette_get_plane_ratio_vertical(pal, i);
+    }
   }
 
+  swparams->ret = sws_scale(swscale, (const uint8_t *const *)swparams->srcp, swparams->irowstrides,
+                            0, swparams->vsize, (uint8_t *const *)opd, swparams->orowstrides);
+
+  if (swparams->lut8) {
+    swparams->src = opd[0];
+    swparams->vsize = swparams->ret;
+    swparams->hsize = swparams->new_hsize;
+    gamma_convert_layer_thread(swparams);
+  }
+
+  if (swparams->thread_local) {
+    for (int i = 0; i < swparams->nplanes; i++) { 
+      size_t bsize = swparams->orowstrides[i] * swparams->vsize
+	* weed_palette_get_plane_ratio_vertical(swparams->new_pal, i);
+      lives_memcpy(swparams->destp[i], opd[i], bsize);
+      }
+    lives_free(opd);
+  }
   return NULL;
 }
 #endif
@@ -14887,25 +14922,22 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 #ifdef USE_SWSCALE
   if (iwidth > 1 && iheight > 1) {
     weed_layer_t *old_layer;
-
     void **in_pixel_data, **out_pixel_data;
-
     int *irowstrides, *orowstrides;
-
     //boolean store_ctx = FALSE;
-
     swpixfmt ipixfmt, opixfmt;
-
     int flags;
-
     const uint8_t *ipd[4], *opd[4];
     int irw[4], orw[4];
-
     int i;
     swsctx_block *ctxblock;
     int offset;
+    uint8_t *gamma_lut8 = NULL;
+    size_t bsize = 0;
+
 #if USE_THREADS
-    lives_sw_params *swparams;
+    boolean can_local = FALSE;
+    lives_cc_params *swparams;
     lives_thread_t *threads[prefs->nfx_threads];
     int nthrds = 1;
 #else
@@ -14998,7 +15030,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
       height >>= 1;
     }
     if (nthrds < 1) nthrds = 1;
-    swparams = (lives_sw_params *)lives_calloc(nthrds, sizeof(lives_sw_params));
+    swparams = (lives_cc_params *)lives_calloc(nthrds, sizeof(lives_cc_params));
 #else
     // TODO - can we set the gamma ?
     //g_print("iht is %d, height = %d\n", iheight, height);
@@ -15064,25 +15096,56 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     ctxblock = sws_getblock(nthrds, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
+    
+    if (tgt_gamma != WEED_GAMMA_UNKNOWN
+	&& weed_palette_is_rgb(opal_hint)) {
+      int lgamma_type = weed_layer_get_gamma(layer);
+      if (lgamma_type != WEED_GAMMA_UNKNOWN
+	  && lgamma_type != tgt_gamma) {
+	gamma_lut8 = create_gamma_lut8(1.0, lgamma_type, tgt_gamma);
+      }
+      weed_layer_set_gamma(layer, tgt_gamma);
+    }
+
+    for (int i = 0; i < oplanes; i++) {
+      bsize += orowstrides[i] * height
+	* weed_palette_get_plane_ratio_vertical(opal_hint, i);
+    }
+
+    //if (bsize < THREADVAR(buff_size)) can_local = TRUE;
 
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
-      swparams[sl].iheight = iheight;
-      swparams[sl].width = width;
+      swparams[sl].hsize = iwidth;
+      swparams[sl].vsize = iheight;
+
+      psize = pixel_size(pal);
+
+      
+      swparams[sl].new_hsize = width;
+      swparams[sl].new_vsize = height;
+
       swparams[sl].file_gamma = 1.;
+
+      swparams[sl].thread_local = can_local;
+      swparams[sl] = pixel_size(pal);
+      swparams[sl].nplanes = oplanes;
+
+      //swparams[sl].lut8 = gamma_lut8;
+      swparams[sl].new_pal = opal_hint;
+      swparams[sl].alpha_first = (opal_hint == WEED_PALETTE_ARGB32);
 
       /// swsfreeContext always seems to leak memory..
       //sws_freeContext(swscalep[sl + offset]);
       pthread_mutex_lock(&ctxcnt_mutex);
       if (!ctxblock->match)
-        swparams[sl].swscale = swscalep[sl + offset] =
-                                 sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
-                                     height, opixfmt, flags, NULL, NULL, NULL);
-      else
-        swparams[sl].swscale = swscalep[sl + offset];
+        swparams[sl].data = (void *)(swscalep[sl + offset] =
+				     sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
+							  height, opixfmt, flags, NULL, NULL, NULL));
+      else swparams[sl].data = (void *)swscalep[sl + offset];
       pthread_mutex_unlock(&ctxcnt_mutex);
 
-      if (!swparams[sl].swscale) {
+      if (!swparams[sl].data) {
         LIVES_DEBUG("swscale is NULL !!");
       } else {
         //if (progscan) {
@@ -15100,39 +15163,39 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
         swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
         if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
         else swparams[sl].layer = NULL;
-        sws_setColorspaceDetails(swparams[sl].swscale,
+        sws_setColorspaceDetails((struct SwsContext *)swparams->data,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                     ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
+						     ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                     ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
+						     ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
         for (i = 0; i < 4; i++) {
           // each thread gets a slice of the input / output images
-          if (i < inplanes) {
-            swparams[sl].ipd[i] =
-              ipd[i] + (size_t)(sl * irw[i] * iheight
-                                * weed_palette_get_plane_ratio_vertical(palette, i));
-            swparams[sl].opd[i] =
-              opd[i] + (size_t)(sl * orw[i] * height
-                                * weed_palette_get_plane_ratio_vertical(opal_hint, i));
+          if (i < inplanes)
+            swparams[sl].srcp[i] = (uint8_t *)ipd[i] + (size_t)(sl * irw[i] * iheight
+								* weed_palette_get_plane_ratio_vertical(palette, i));
+	  else swparams[sl].srcp[i] = NULL;
 
-          } else {
-            swparams[sl].ipd[i] = swparams[sl].opd[i] = NULL;
-          }
+          if (i < oplanes)
+	    swparams[sl].destp[i] = (uint8_t *)opd[i] + (size_t)(sl * orw[i] * height
+								 * weed_palette_get_plane_ratio_vertical(opal_hint, i));
+
+	  else swparams[sl].destp[i] = NULL;
         }
-        swparams[sl].irw = irw;
-        swparams[sl].orw = orw;
-        if (sl < nthrds - 1) {
-          lives_thread_create(&threads[sl], LIVES_THRDATTR_PRIORITY,
-                              swscale_threadfunc, &swparams[sl]);
-        } else swscale_threadfunc(&swparams[sl]);
+	for (i = 0; i < 4; i++) {
+	  swparams[sl].irowstrides[i] = irw[i];
+	  swparams[sl].orowstrides[i] = orw[i];
+	  if (sl < nthrds - 1) {
+	    lives_thread_create(&threads[sl], LIVES_THRDATTR_PRIORITY,
+				swscale_threadfunc, &swparams[sl]);
+	  } else swscale_threadfunc(&swparams[sl]);
+	}
       }
     }
     iheight = height;
-
     height = 0;
 
     for (int sl = 0; sl < nthrds; sl++) {
-      if (swparams[sl].swscale) {
+      if (swparams[sl].data) {
         if (sl < nthrds - 1) lives_thread_join(threads[sl], NULL);
         height += swparams[sl].ret;
       } else height += iheight;
@@ -15149,7 +15212,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 #endif
     height = sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight,
                        (uint8_t *const *)opd, orw);
-  }
+    }
 #endif
 
 #ifdef DEBUG_RESIZE
@@ -15530,7 +15593,7 @@ boolean unletterbox_layer(weed_layer_t *layer, int opwidth, int opheight, int to
     return FALSE;
   }
 
-  pal = weed_channel_get_palette(layer);
+  pal = weed_channel_get_palette(layer); 
   psize = pixel_size(pal);
   orow = weed_channel_get_rowstride(layer);
   irow = weed_layer_get_rowstride(newl);
@@ -15673,6 +15736,11 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   // layer_to_lives_painter - lives_painter_to_layer -> painter surface destroyed
   // pixdata restored to layer but in other palette, layer is unreffed
 
+  // NOTE -what we create from the layer is actually a (cairo) surface
+  // however we return a context (cr) as this is usable in more functions
+  // The layer is not destroyed, but is 'bound' to the surface and must not be freed or altered
+  // while in this state. The only two valid operations are - the surface is destroyed - this unrefs the layer
+
   lives_painter_surface_t *surf = NULL;
   lives_painter_t *cairo;
   lives_painter_format_t cform;
@@ -15764,13 +15832,10 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
 lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) {
   // if layer is NULL, create a new layer (deep copy) and unpremult alpha
   // otherwise make a shallow copy, destroying the surface in the process
+  // if layer was the one used to create the painter (surface),
+  // ir will not be destroyed, but the surface will be
 
-  // NOTE: if layer is the attacthed layer (i.e urface was created from layer)
-  // we can ref the layer, then destroy the surface. This will finish the surface, set pixdata for layer back
-  // then unref layer, removing the extra ref
-
-  // if layer is different layer we do the same, but then we copy attached layer to target layer,
-  // then free attached layer
+  // NOTE: the cr context is not destroyed, but its surfsce is reset
 
   lives_painter_surface_t *surface = lives_painter_get_target(cr);
   void *src = lives_painter_image_surface_get_data(surface);
@@ -15794,20 +15859,14 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
         weed_layer_copy(layer, xlayer);
         weed_layer_unref(xlayer);
       }
-      lives_painter_surface_finish(surface);
-      lives_painter_surface_destroy(surface);
-      lives_painter_set_source(cr, NULL);
-      goto finish;
     }
   }
-
+  else {
   // surface is an orginal surface, or layer will be a deep copy
-  if (!layer) {
     newlayer = TRUE;
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+    if (!src) return layer;
   }
-
-  if (!src) return layer;
 
   width = lives_painter_image_surface_get_width(surface);
   height = lives_painter_image_surface_get_height(surface);
@@ -15820,6 +15879,8 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
   case LIVES_PAINTER_FORMAT_ARGB32:
     pal = WEED_PALETTE_ARGB32;
     weed_layer_set_palette(layer, LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order));
+    if (lives_painter_check_swapped(cr))
+      weed_layer_set_palette(layer, swap_red_blue(weed_layer_get_palette(layer)));
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
     break;
 
@@ -15837,6 +15898,7 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
   }
 
   if (!newlayer) {
+    // transfer pixel data back to layer
     weed_layer_pixel_data_free(layer);
     weed_layer_set_pixel_data(layer, src);
     lives_painter_surface_destroy(surface);
@@ -15852,7 +15914,6 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
     lives_memcpy(dst, src, height * rowstride * psize);
   }
 
-finish:
   if (cform == LIVES_PAINTER_FORMAT_ARGB32) {
     if (prefs->alpha_post) {
       alpha_premult(layer, LIVES_DIRECTION_REVERSE);

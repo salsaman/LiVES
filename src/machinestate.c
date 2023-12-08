@@ -2674,17 +2674,18 @@ boolean parse_valfile(const char *fname, const char delim, const char **keys, ch
 #define MEM_CRIT 100000
 
 boolean get_memstatus(void) {
-#if !IS_LINUX_GNU
+#if IS_LINUX_GNU
   char *rets[4];
   const char *valx[] = {"MemTotal", "MemFree", "MemAvailable", "Mlocked", NULL};
   for (int i = 0; valx[i]; i++) rets[i] = NULL;
-  bret = parse_valfile(PROC_MEMINFO, ':', valx, rets);
-  capable->hw.memtotall = lives_strtol(rets[0]);
-  capable->hw.memfree = lives_strtol(rets[1]);
-  capable->hw.memavail = lives_strtol(rets[2]);
-  capable->hw.memlocked = lives_strtol(rets[3]);
-  for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
-  return TRUE;
+  if (parse_valfile(PROC_MEMINFO, ':', valx, rets)) {
+    capable->hw.memtotal = lives_strtol(rets[0]) * 1000;
+    capable->hw.memfree = lives_strtol(rets[1]) * 1000;
+    capable->hw.memavail = lives_strtol(rets[2]) * 1000;
+    capable->hw.memlocked = lives_strtol(rets[3]) * 1000;
+    for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
+    return TRUE;
+  }
 #else
   return FALSE;
 #endif

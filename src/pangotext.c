@@ -736,14 +736,9 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     // take a slice 4 pixels high
     gamma = weed_layer_get_gamma(layer);
 
-    lheight = height;
-    weed_layer_set_height(layer, 4);
-
     // make a copy of the layer slice
     // TODO - weed_layer_copy_slice(layer, rowstart, height);
-    test_layer = weed_layer_copy(NULL, layer);
-
-    weed_layer_set_height(layer, height);
+    test_layer = weed_layer_copy_slice(NULL, layer, 0, 0, -1, 4);
 
     cr = layer_to_lives_painter(test_layer);
 
@@ -751,7 +746,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
-    // will unref test_layer
+    // destroying painter will unref test_layer
 
     surf = lives_painter_get_target(cr);
     lives_painter_surface_destroy(surf);
@@ -805,15 +800,17 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
       lives_painter_destroy(cr);
 
+      // fix rs
       convert_layer_palette(layer_slice, pal, 0);
 
       pd = weed_layer_get_pixel_data(layer_slice);
+      width = weed_layer_get_width_bytes(layer_slice);
 
       if (pd && pd != xsrc) {
         int orow = weed_layer_get_rowstride(layer_slice);
         if (row != orow) {
           for (int i = itop; i < itop + lheight; i++)
-            lives_memcpy(&src[i * row], &pd[(i - itop) * orow], row);
+            lives_memcpy(&src[i * row], &pd[(i - itop) * orow], width);
         } else lives_memcpy(src + itop * row, pd, lheight * row);
       }
 

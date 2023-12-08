@@ -26,11 +26,24 @@ static void bigblocks_end(void);
 static void smallblocks_end(void);
 #endif
 
-#define BB_CACHE 512 // frame cache size (MB)
-#define BBLOCK_SIZE 8 // bblocksize MB
-#define BBLOCKSIZE (_MB_(BBLOCK_SIZE))
-#define NBIGBLOCKS (BB_CACHE / BBLOCK_SIZE) // make each block 32MB (def 16 blocks)
+//////// reference vals //////
+
+#define BB_CACHE_MB				512 // frame cache size (MB)
+
+#define BBLOCK_SIZE_MB 				8 // desired bblocksize MB
+
+////////////////////////////////// real vals (bytes)
+
+#define BBLOCKSIZE (_MB_(BBLOCK_SIZE_MB))
+#define BCACHESIZE (_MB_(BB_CACHE_MB))
+
+// estimated
+#define NBIGBLOCKS (BCACHESIZE / BBLOCKSIZE) // make each block 8MB (def 64 blocks)
+// we can also allocate pairs (16MB) and quads (32MB) if necessary
+
+// actual number after all adjustments
 static int NBBLOCKS = 0;
+
 static char *bigblocks[NBIGBLOCKS];
 
 #define assert_no_bblock(p) do {					\
@@ -1148,19 +1161,27 @@ static void bigblocks_end(void) {
 
 void bigblock_init(void) {
   char *ptr;
-  int64_t bbcachesize = BB_CACHE;
 
+  // cache size BYTES
+  int64_t bbcachesize = BCACHESIZE;
+
+  // desired block size .... BYTES
   bmemsize = BBLOCKSIZE;
 
+  // align block size to cacheline and page size
   hwlim = HW_ALIGNMENT;
   bmemsize = (size_t)(bmemsize / hwlim) * hwlim;
 
   if (PAGESIZE) bmemsize = (size_t)(bmemsize / PAGESIZE) * PAGESIZE;
 
   if (get_memstatus()) {
+
+    // cache size MB must not be > thresh (0.8) * avail size
+
     if (bbcachesize > (int64_t)((double)capable->hw.memavail * MEM_THRESH)) {
       bbcachesize = (int64_t)((double)capable->hw.memavail * MEM_THRESH);
     }
+    
     if (bbcachesize / bmemsize < MIN_BBLOCKS) {
       char *msg = lives_strdup_printf(_("Insufficient memory for big block allocator, "
                                         "need at least %ld bytes, but only %ld avaialble"), MIN_BBLOCKS * bmemsize,
@@ -1171,10 +1192,8 @@ void bigblock_init(void) {
     }
   }
 
-  //bigblock_root = lives_calloc_mapped(bmemsize * NBIGBLOCKS, TRUE);
   bigblock_root = lives_calloc_mapped(bmemsize * NBIGBLOCKS, TRUE);
   if (!bigblock_root) return;
-  //if (mlock(bigblock_root, bmemsize * NBIGBLOCKS)) return;
 
   ptr = (char *)bigblock_root;
 

@@ -383,6 +383,7 @@ static int sigsrc = SIG_SRC_KERNEL;
 
 //#define QUICK_EXIT
 void catch_sigint(int signum, siginfo_t *si, void *uc) {
+  static int printed = 0;
   // trap for ctrl-C and others
   // if (mainw->jackd) lives_jack_end();
   sigsrc = SIG_SRC_KERNEL;
@@ -445,42 +446,46 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 
   if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
     mainw->memok = FALSE;
+    if (!printed) {
+      printed = 1;
+      fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
+			"Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
+      fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
+			"distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
 
-    fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
-                      "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
-    fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
-                      "distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
-
-    if (signum == LIVES_SIGSEGV) {
-      fprintf(stderr, "Segmentation fault, ");
-      if (mainw->critical) {
-        fprintf(stderr, "raised by thread");
-        if (mainw->critical_thread)
-          fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
-        fprintf(stderr, "\n");
-        if (mainw->critical_errno) {
-          fprintf(stderr, "Error code was %d", mainw->critical_errno);
-          if (mainw->critical_errmsg)
-            fprintf(stderr, ", %s", mainw->critical_errmsg);
-          fprintf(stderr, "\n");
-        }
+      if (signum == LIVES_SIGSEGV) {
+	fprintf(stderr, "Segmentation fault, ");
+	if (mainw->critical) {
+	  fprintf(stderr, "raised by thread");
+	  if (mainw->critical_thread)
+	    fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
+	  fprintf(stderr, "\n");
+	  if (mainw->critical_errno) {
+	    fprintf(stderr, "Error code was %d", mainw->critical_errno);
+	    if (mainw->critical_errmsg)
+	      fprintf(stderr, ", %s", mainw->critical_errmsg);
+	    fprintf(stderr, "\n");
+	  }
+	} else {
+	  if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+	}
       } else {
-        if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+	if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
       }
-    } else {
-      if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
+
+      fprintf(stderr, "\n");
+
+      if (capable->has_gdb) {
+	if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
+	else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
+      } else {
+	fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option "
+				"to collect more information.\n\n"));
+      }
+
+      GET_PROC_THREAD_SELF(self);
+      if (self) lpt_error_handle(self);
     }
-
-    fprintf(stderr, "\n");
-
-    if (capable->has_gdb) {
-      if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
-      else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
-    } else {
-      fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option "
-                              "to collect more information.\n\n"));
-    }
-
 
     if (sigsrc == SIG_SRC_EXTERN) {
       fprintf(stderr, "External erros are ignored, continuing\n");

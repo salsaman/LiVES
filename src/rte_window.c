@@ -2154,6 +2154,7 @@ static LiVESWidget *create_rte_window(boolean reshow) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
+
   mainw->no_context_update = TRUE;
 
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
@@ -2453,6 +2454,8 @@ rte_window_ready:
   // TODO: ignore button clicks until window is fully shown
   rte_window_is_hidden = FALSE;
 
+  mainw->no_context_update = FALSE;
+
   if (reshow) {
     //lives_window_set_modal(LIVES_WINDOW(irte_window), TRUE);
     lives_widget_show_all(irte_window);
@@ -2468,7 +2471,6 @@ rte_window_ready:
 
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
-    mainw->no_context_update = FALSE;
   }
   return irte_window;
 }

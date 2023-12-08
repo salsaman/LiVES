@@ -10,9 +10,129 @@
 
 ///// low level operations //////
 
-boolean have_recursion_token(uint64_t token, void *dataptr);
-void push_recursion_token(recursion_token *);
-void remove_recursion_token(uint64_t token, void *dataptr);
+#define LIST_TYPE LiVESList *
+
+typedef struct {
+  uint64_t token;
+  const void *dataptr;
+} recursion_token;
+
+typedef struct {
+  uint64_t token;
+  LIST_TYPE list;
+  pthread_rwlock_t rwlock;
+} recursion_tokens;
+
+static inline boolean have_recursion_token(LIST_TYPE xlist, uint64_t token, void *dataptr) {
+  LIVES_CONST_LIST_FOREACH(xlist, list)
+    if (DATA_FIELD_IS(list, recursion_token, token, token)
+	&& DATA_FIELD_IS(list, recursion_token, dataptr, dataptr)) return TRUE;
+  return FALSE;
+}
+
+static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, void *dataptr) {
+  LIVES_CONST_LIST_FOREACH(xlist, list)
+    if (DATA_FIELD_IS(list, recursion_token, token, token)
+	&& DATA_FIELD_IS(list, recursion_token, dataptr, dataptr))
+      return lives_list_remove_node(xlist, list, TRUE);
+  return xlist;
+}
+
+#define RTOKENS trectoks
+
+#define _RECURSE_GUARD_START_ static recursion_tokens RTOKENS=(recursion_tokens){.token=0, .list=NULL}
+
+// global
+
+#define _RECURSE_GUARD_ARM_FOR_DATA_(rtokens, xdataptr)			\
+  _DW0(LIVES_CALLOC_TYPE(recursion_token,rectok,1);			\
+       if(!rtokens.token){RTOKENS.token=gen_unique_id();		\
+	 pthread_rwlock_init(&RTOKENS.rwlock, NULL);}			\
+       rectok->token=rtokens.token;rectok->dataptr=xdataptr;		\
+       pthread_rwlock_wrlock(&rtokens.rwlock);				\
+       rtokens.list=lives_list_prepend(rtokens.list,(void*)rectok);	\
+       pthread_rwlock_unlock(&rtokens.rwlock);)
+
+//
+
+#define RECURSE_GUARD_START _RECURSE_GUARD_START_
+
+#define RETURN_IF_RECURSED RETURN_IF_RECURSED_WITH_DATA(NULL)
+#define RETURN_VAL_IF_RECURSED(val) RETURN_VAL_IF_RECURSED_WITH_DATA(val, NULL) 
+
+#define RECURSE_GUARD_ARM RECURSE_GUARD_ARM_FOR_DATA(NULL)
+#define RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
+
+#define RETURN_IF_RECURSED_WITH_DATA(dataptr)				\
+  _DW0(if(!RTOKENS.token){RTOKENS.token=gen_unique_id();		\
+      pthread_rwlock_init(&RTOKENS.rwlock, NULL);}			\
+    else {								\
+      pthread_rwlock_rdlock(&RTOKENS.rwlock);				\
+      if(have_recursion_token(RTOKENS.list,RTOKENS.token,dataptr))	\
+	{pthread_rwlock_unlock(&RTOKENS.rwlock);return;}		\
+      pthread_rwlock_unlock(&RTOKENS.rwlock);})
+
+#define RETURN_VAL_IF_RECURSED_WITH_DATA(val, dataptr)			\
+  _DW0(if(!RTOKENS.token){RTOKENS.token=gen_unique_id();		\
+      pthread_rwlock_init(&RTOKENS.rwlock, NULL);}			\
+    else {								\
+      pthread_rwlock_rdlock(&RTOKENS.rwlock);				\
+      if(have_recursion_token(RTOKENS.list,RTOKENS.token,dataptr))	\
+	{pthread_rwlock_unlock(&RTOKENS.rwlock);return(val);}		\
+      pthread_rwlock_unlock(&RTOKENS.rwlock);})
+
+#define RECURSE_GUARD_ARM_FOR_DATA(dataptr) _RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,dataptr)
+#define RECURSE_GUARD_END_FOR_DATA(dataptr) _DW0(pthread_rwlock_wrlock(&RTOKENS.rwlock); \
+						 RTOKENS.list=remove_recursion_token(RTOKENS.list,RTOKENS.token,dataptr); \
+						 pthread_rwlock_unlock(&RTOKENS.rwlock);)
+
+// per thread
+
+#define _T_RECURSE_GUARD_ARM_FOR_DATA_(rtokens, xdataptr)		\
+  _DW0(LIVES_CALLOC_TYPE(recursion_token,rectok,1);			\
+       if(!rtokens.token){RTOKENS.token=gen_unique_id();		\
+	 pthread_rwlock_init(&RTOKENS.rwlock,NULL);}			\
+       rectok->token=rtokens.token;rectok->dataptr=xdataptr;		\
+ 	 pthread_rwlock_wrlock(&rtokens.rwlock);			\
+	 THREADVAR(trest_list)=lives_list_prepend(THREADVAR(trest_list),(void*)rectok); \
+       pthread_rwlock_unlock(&rtokens.rwlock);)
+
+//
+
+#define T_RECURSE_GUARD_START _RECURSE_GUARD_START_
+
+#define T_RETURN_IF_RECURSED T_RETURN_IF_RECURSED_WITH_DATA(NULL)
+#define T_RETURN_VAL_IF_RECURSED(val) T_RETURN_VAL_IF_RECURSED_WITH_DATA(val,NULL) 
+
+#define T_RECURSE_GUARD_ARM _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,NULL)
+#define T_RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
+
+#define T_RETURN_IF_RECURSED_WITH_DATA(dataptr)				\
+  _DW0(if(!RTOKENS.token){RTOKENS.token=gen_unique_id();		\
+   pthread_rwlock_init(&RTOKENS.rwlock, NULL);}				\
+   else {								\
+     pthread_rwlock_rdlock(&RTOKENS.rwlock);				\
+     if(have_recursion_token(THREADVAR(trest_list)),RTOKENS.token,dataptr) \
+       {pthread_rwlock_unlock(&RTOKENS.rwlock);return;}			\
+     pthread_rwlock_unlock(&RTOKENS.rwlock);})
+
+#define T_RETURN_VAL_IF_RECURSED_WITH_DATA(val, dataptr) _DW0		\
+  (if(!RTOKENS.token){RTOKENS.token=gen_unique_id();			\
+    pthread_rwlock_init(&RTOKENS.rwlock, NULL);}			\
+  else {								\
+    pthread_rwlock_rdlock(&RTOKENS.rwlock);				\
+    if(have_recursion_token(THREADVAR(trest_list),RTOKENS.token,dataptr)) \
+      {pthread_rwlock_unlock(&RTOKENS.rwlock);return(val);}		\
+    pthread_rwlock_unlock(&RTOKENS.rwlock);})
+
+#define T_RECURSE_GUARD_ARM_FOR_DATA(dataptr) _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,dataptr) 
+#define T_RECURSE_GUARD_END_FOR_DATA(dataptr) RECURSE_GUARD_END_FOR_DATA(dataptr) 
+
+///
+
+/* recursion_token *get_rec_token(vpod){return &trectoks;} */
+/* recursion_token *rtp = get_rec_token(); */
+/* recursion_token rtp = get_rec_token(); */
 
 typedef uint64_t lives_thread_attr_t;
 typedef LiVESList lives_thread_t;

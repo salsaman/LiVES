@@ -280,7 +280,6 @@ static void post_playback(void) {
 
         if (mainw->play_window) {
           if (prefs->show_playwin) {
-            //mainw->no_context_update = TRUE;
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
 
@@ -296,9 +295,7 @@ static void post_playback(void) {
               load_preview_image(FALSE);
             }
 	    // *INDENT-OFF*
-	  }
-	  //mainw->no_context_update = FALSE;
-	}}}}
+	  }}}}}
   // *INDENT-ON*
 
   reset_ext_player_layer(TRUE);

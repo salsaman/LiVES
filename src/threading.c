@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "effects-weed.h" // for LIVES_LEAF_CONST_VALUE
+#include "diagnostics.h"
 
 #ifdef AUDIT_REFC
 weed_plant_t *auditor_refc = NULL;
@@ -840,7 +841,7 @@ int lives_proc_thread_unref(lives_proc_thread_t lpt) {
 #if 0
 }
 #endif
-T_RECURSE_GUARD_START;
+ T_RECURSE_GUARD_START;
 if (lpt) {
   T_RETURN_VAL_IF_RECURSED_WITH_DATA(FALSE, lpt);
   pthread_rwlock_t *destruct_rwlock;
@@ -893,7 +894,9 @@ if (lpt) {
         lives_proc_thread_unref(nxtlpt);
       }
 
+      T_RECURSE_GUARD_ARM_FOR_DATA(lpt);
       lives_hooks_trigger(lpt_hooks, LIVES_GUI_HOOK);
+      T_RECURSE_GUARD_END_FOR_DATA(lpt);
 
       // cannot use include_states here, as that will try to ref / unref lpt !
       pthread_mutex_lock(state_mutex);
@@ -911,10 +914,9 @@ if (lpt) {
       }
 
       // this will force other lpts to remove their pointers to callbacks in our stacks
-      T_RECURSE_GUARD_ARM_FOR_DATA(lpt);
-      lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
-      T_RECURSE_GUARD_END_FOR_DATA(lpt);
 
+      lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
+  
       lives_free(lpt_hooks);
 
       // free any free calls which were added for param values
@@ -947,9 +949,9 @@ if (lpt) {
       lives_free(destruct_rwlock);
       return TRUE;
 	// *INDENT-OFF*
-      }}
-    else pthread_mutex_unlock(&ref_sync_mutex);
-  }
+    }}
+  else pthread_mutex_unlock(&ref_sync_mutex);
+ }
   // *INDENT-ON*
 return FALSE;
 }
@@ -1587,6 +1589,16 @@ LIVES_GLOBAL_INLINE int lives_proc_thread_get_errnum(lives_proc_thread_t lpt) {
 
 LIVES_GLOBAL_INLINE char *lives_proc_thread_get_errmsg(lives_proc_thread_t lpt) {
   return lpt ? weed_get_string_value(lpt, LIVES_LEAF_ERRMSG, NULL) : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_proc_thread_get_errfile(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL) : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_errline(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL) : 0;
 }
 
 
@@ -2721,32 +2733,56 @@ static void *proc_thread_worker_func(void *args) {
   return args;
 }
 
+
 void lpt_error_handle(lives_proc_thread_t lpt) {
   if (!lpt || !lives_proc_thread_had_error(lpt)) return;
   int sev = lives_proc_thread_get_errsev(lpt);
   int errnum = lives_proc_thread_get_errnum(lpt);
+  int errline = lives_proc_thread_get_errline(lpt);
+  const char *errfile = lives_proc_thread_get_errfile(lpt);
+  char *loc;
   // dont report minor errors
-  g_printerr("lives proc thread %p, (%s) got a %s error at line %d in file %s\n"
+  if (errfile) loc = lives_strdup_printf(" at line %d in file %s", errline, errfile);
+  fprintf(stderr, "lives proc thread %p, (%s) got a %s error%s\n"
              "Error code %d: %s\n",
              lpt, get_lpt_id(lpt), sev == 2 ? "major" : sev == 3 ? "critical"
-             : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown", 0, "", errnum,
+	  : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown", loc, errnum,
              lives_proc_thread_get_errmsg(lpt));
   switch (sev) {
   case (LPT_ERR_MAJOR) :
-    g_printerr("task was cancelled\n");
+    fprintf(stderr, "task was cancelled\n");
     break;
   case (LPT_ERR_CRITICAL) :
-    g_printerr("sendig signal 11\n");
+    fprintf(stderr, "sendig signal 11\n");
     break;
   case (LPT_ERR_FATAL) :
-    g_printerr("aborting\n");
+    fprintf(stderr, "aborting\n");
     break;
   case (LPT_ERR_DEADLY) :
-    g_printerr("bye\n");
+    fprintf(stderr, "bye\n");
     _exit(errnum);
     break;
   default: return;
   }
+
+  fprintf(stderr, "The thread was running the following function:\n");
+  fprintf(stderr, "%s\n", lives_proc_thread_show_func_call(lpt));
+
+  fprintf(stderr, "Application status was %d\n", lives_get_status());
+  
+  if (!mainw->multitrack && LIVES_IS_PLAYING) {
+    char *bgstr;
+    if (mainw->blend_file) bgstr = lives_strdup_printf(", background clip was %d", mainw->blend_file);
+    else bgstr = lives_strdup(", no background clip");
+    fprintf(stderr, "LiVES was playing file %d%s\n", mainw->playing_file, bgstr);
+    if (mainw->plan_cycle) {
+      fprintf(stderr, "Plan cycle was active, with state %lu\n", mainw->plan_cycle->state);
+      display_plan(mainw->plan_cycle);
+    }
+  }
+
+  print_diagnostics(DIAG_ALL);
+  fprintf(stderr, "Total run time: %s", lives_format_timing_string(lives_get_session_ticks()));  
 }
 
 
@@ -3342,6 +3378,12 @@ static void lives_thread_data_destroy(void *data) {
     // this will force other lpts to remove their pointers to callbacks in our stacks
     lives_hooks_clear_all(hook_stacks, -N_HOOK_POINTS);
   }
+
+  if (tdata->vars.var_func_stack) lives_sync_list_free(tdata->vars.var_func_stack, TRUE);
+
+  pthread_mutex_destroy(&tdata->vars.var_active_lpt_mutex);
+  pthread_mutex_destroy(&tdata->vars.var_pause_mutex);
+  pthread_cond_destroy(&tdata->vars.var_pcond);
 
   lives_uncalloc_mapped(tdata->vars.var_buffer, tdata->vars.var_buff_size, TRUE);
 

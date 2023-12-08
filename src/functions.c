@@ -292,32 +292,6 @@ LIVES_GLOBAL_INLINE void _func_exit_val(weed_plant_t *pl, char *file_ref, int li
   /* lives_list_free_all(&list); */
 }
 
-
-boolean have_recursion_token(uint64_t token, void *dataptr) {
-  LIVES_CONST_LIST_FOREACH((THREADVAR(trest_list)), list)
-  if (DATA_FIELD_IS(list, recursion_token, token, token)
-      && DATA_FIELD_IS(list, recursion_token, dataptr, dataptr))
-    return TRUE;
-  return FALSE;
-}
-
-
-void push_recursion_token(recursion_token *rectok) {
-  LiVESList *list = THREADVAR(trest_list);
-  THREADVAR(trest_list) = lives_list_prepend(list, (void *)rectok);
-}
-
-
-void remove_recursion_token(uint64_t token, void *dataptr) {
-  LIVES_CONST_LIST_FOREACH((THREADVAR(trest_list)), list)
-  if (DATA_FIELD_IS(list, recursion_token, token, token)
-      && DATA_FIELD_IS(list, recursion_token, dataptr, dataptr)) {
-    THREADVAR(trest_list) = lives_list_remove_node(THREADVAR(trest_list), list, TRUE);
-    return;
-  }
-}
-
-
 ///////////////////////////
 
 LIVES_LOCAL_INLINE char *make_std_pname(int pn) {return lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, pn);}
@@ -986,6 +960,7 @@ LIVES_GLOBAL_INLINE void lives_hooks_clear_all(lives_hook_stack_t **hstacks, int
   if (hstacks)
     for (int i = 0; i < ntypes; i++) {
       lives_hooks_clear(hstacks, i);
+      pthread_mutex_destroy(&hstacks[i]->mutex);
       lives_free(hstacks[i]);
     }
 }

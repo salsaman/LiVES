@@ -222,18 +222,23 @@ typedef struct {
 lives_pal_full_t *make_full_pal(int pal, int clamping, int sampling, int subspace, int gamme);
 
 typedef struct {
+  weed_layer_t *layer;
   void *src;
-  void *srcp[4];
-  size_t hsize;
-  size_t vsize;
+  void *srcp[WEED_MAXPPLANES];
+  int hsize;
+  int vsize;
+  int new_hsize;
+  int new_vsize;
+  int new_pal;
+  int nplanes;
   int y_delta;
   boolean is_bottom;
   size_t psize;
   size_t xoffset;
-  int irowstrides[4];
-  int orowstrides[4];
+  int irowstrides[WEED_MAXPPLANES];
+  int orowstrides[WEED_MAXPPLANES];
   void *dest;
-  void *destp[4];
+  void *destp[WEED_MAXPPLANES];
   struct _conv_array conv_arrays;
   boolean in_alpha;
   boolean out_alpha;
@@ -245,30 +250,17 @@ typedef struct {
   int out_sampling;
   boolean alpha_first;
   boolean is_422;
+  double file_gamma;
   uint16_t *lut;
   uint8_t *lut8;
   int thread_id;
   boolean thread_local;
-  uint64_t padding[6];
+  void *data;
+  int ret;
 } lives_cc_params;
 
 #ifdef USE_SWSCALE
 #include <libswscale/swscale.h>
-
-typedef struct {
-  weed_layer_t *layer;
-  int thread_id;
-  int iheight;
-  int width;
-  double file_gamma;
-  struct SwsContext *swscale;
-  const uint8_t *ipd[4];
-  const uint8_t  *opd[4];
-  const int *irw;
-  const int *orw;
-  int ret;
-} lives_sw_params;
-
 #endif
 
 struct XYZ {double x, y, z;};
@@ -361,8 +353,8 @@ double get_luma16(uint16_t r, uint16_t g, uint16_t b);
 
 boolean consider_swapping(int inpal, int outpal);
 
-#define is_useable_palette(p) (((p)==WEED_PALETTE_RGB24||(p)==WEED_PALETTE_RGBA32\
-				||(p)==WEED_PALETTE_BGR24||(p)==WEED_PALETTE_BGRA32||(p)==WEED_PALETTE_ARGB32\
+#define is_usable_palette(p) (((p)==WEED_PALETTE_RGB24||(p)==WEED_PALETTE_RGBA32\
+			       ||(p)==WEED_PALETTE_BGR24||(p)==WEED_PALETTE_BGRA32||(p)==WEED_PALETTE_ARGB32 \
 				||(p)==WEED_PALETTE_YUV888||(p)==WEED_PALETTE_YUVA8888||(p)==WEED_PALETTE_YUV422P\
 				||(p)==WEED_PALETTE_YUV420P||(p)==WEED_PALETTE_YVU420P||(p)==WEED_PALETTE_YUV411\
 				||(p)==WEED_PALETTE_YUV444P||(p)==WEED_PALETTE_YUVA4444P||(p)==WEED_PALETTE_YUV411\

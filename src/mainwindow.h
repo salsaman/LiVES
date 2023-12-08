@@ -461,7 +461,6 @@ enum {
 #define EXEC_DVGRAB "dvgrab"
 #define EXEC_CDDA2WAV "cdda2wav"
 #define EXEC_ICEDAX "icedax"
-#define EXEC_GDB "gdb"
 #define EXEC_XSET "xset"
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
@@ -479,6 +478,14 @@ enum {
 #define EXEC_GIO "gio"
 #define EXEC_NOTIFY_SEND "notify-send"
 #define EXEC_SNAP "snap"
+
+// runners
+#define EXEC_GDB "gdb"
+#define EXEC_VALGRIND "valgrind"
+
+#define EXEC_RUNNERS {EXEC_GDB, EXEC_VALGRIND, NULL}
+
+#define RUNNER_IS(what) (!lives_strcmp(capable->runner, #what))
 
 /// other executables
 #define EXEC_SUDO "sudo" /// for info mesages only; for security this is not called directly

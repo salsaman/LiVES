@@ -646,8 +646,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   lives_painter_surface_t **psurface, *surface;
   lives_painter_t *cr;
   int rwidth, rheight, width, height, cx, cy;
-  boolean del = TRUE;
-  //int owidth, oheight;
+  int owidth, oheight, oxrwidth, oxrheight;
 
   if (!da) return;
   widget = LIVES_WIDGET(da);
@@ -671,21 +670,14 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     return;
   }
 
-  /* if (1 ||					widget == mainw->play_image || */
-  /*     widget == mainw->preview_image) { */
   cr = live_widget_begin_paint(widget);
-  del = FALSE;
   surface = *psurface = lives_painter_get_target(cr);
   lives_painter_surface_reference(surface);
-  //} else cr = lives_painter_create_from_surface(surface);
 
   if (!cr) {
     pthread_mutex_unlock(mutex);
     return;
   }
-
-  //lives_painter_set_source(cr, surface);
-  //lives_painter_surface_reference(surface);
 
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
@@ -693,9 +685,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   lives_painter_surface_flush(surface);
 
   if (pixbuf) {
-    //owidth =
     width = lives_pixbuf_get_width(pixbuf);
-    //oheight =
     height = lives_pixbuf_get_height(pixbuf);
 
     cx = (rwidth - width) >> 1;
@@ -715,7 +705,20 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 
       xrwidth = lives_widget_get_allocation_width(p);
       xrheight = lives_widget_get_allocation_height(p);
-      lives_painter_render_background(p, cr, 0., 0., xrwidth, xrheight);
+
+      owidth = GET_INT_DATA(da, OWIDTH_KEY);
+      oheight = GET_INT_DATA(da, OHEIGHT_KEY);
+      oxrwidth = GET_INT_DATA(da, OXRWIDTH_KEY);
+      oxrheight = GET_INT_DATA(da, OXRHEIGHT_KEY);
+
+      if (width < owidth || height < oheight || xrwidth > oxrwidth || xrheight > oxrheight) {
+	lives_painter_render_background(p, cr, 0., 0., xrwidth, xrheight);
+      }
+
+      SET_INT_DATA(da, OWIDTH_KEY, owidth);
+      SET_INT_DATA(da, OHEIGHT_KEY, oheight);
+      SET_INT_DATA(da, OXRWIDTH_KEY, oxrwidth);
+      SET_INT_DATA(da, OXRHEIGHT_KEY, oxrheight);
 
       if (mainw->multitrack) {
         rwidth = xrwidth;
@@ -777,8 +780,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 
   lives_painter_fill(cr);
 
-  if (del) lives_painter_destroy(cr);
-  else lives_widget_end_paint(widget);
+  lives_widget_end_paint(widget);
 
   pthread_mutex_unlock(mutex);
 }
@@ -1206,15 +1208,16 @@ void reset_message_area(void) {
 
 
 boolean resize_message_area(livespointer data) {
-  // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
-  if (mainw->no_idlefuncs) return FALSE;
+  RECURSE_GUARD_START;
 
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
     mainw->idlemax = 0;
     return FALSE;
   }
+
+  RECURSE_GUARD_ARM;
 
   if (mainw->idlemax-- == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
 
@@ -1241,9 +1244,13 @@ boolean resize_message_area(livespointer data) {
     lives_widget_queue_draw_if_visible(mainw->msg_area);
     isfirst = FALSE;
   }
+
   resize(1.);
   if (mainw->msg_scrollbar) lives_widget_show(mainw->msg_scrollbar);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+
+  RECURSE_GUARD_END;
+
   return FALSE;
 }
 

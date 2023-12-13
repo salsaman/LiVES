@@ -3711,6 +3711,7 @@ void freeze_unfreeze_audio(boolean is_frozen) {
 
 
 LIVES_GLOBAL_INLINE boolean avsync_force(void) {
+  // this is called from the video player to
   /// force realignment of video and audio at current file->frameno / player->seek_pos
   /// a corresponding call to avsync_check (done automatically after loading /showing a frame) in the video thread
   //
@@ -3720,8 +3721,6 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
   // usually not called directly, instead set mainw->scratch = SCRATCH_JUMP and let the player
   // call this
 
-
-
   lives_clip_t *sfile = RETURN_NORMAL_CLIP(mainw->playing_file);
 
   lives_time_source_t time_source = LIVES_TIME_SOURCE_NONE;
@@ -3729,15 +3728,14 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
       || !APLAYER_REALTIME || mainw->foreign) {
     mainw->video_seek_ready = TRUE;
     video_sync_ready();
-    return FALSE;
+    return LIVES_RESULT_INVALID;
   }
 
   pthread_mutex_lock(&mainw->avseek_mutex);
   if (mainw->audio_seek_ready && mainw->video_seek_ready) {
     mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   }
-
-  mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
+  mainw->avsync_time = lives_get_session_ticks();
   pthread_mutex_unlock(&mainw->avseek_mutex);
   return TRUE;
 }
@@ -5223,6 +5221,15 @@ int lives_aplayer_get_sampsize(lives_obj_t *aplayer) {
 
 weed_error_t lives_aplayer_set_sampsize(lives_obj_t *aplayer, int asamps) {
   return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_SAMPSIZE, asamps);
+}
+
+int64_t lives_aplayer_get_status(lives_obj_t *aplayer) {
+  weed_param_t *param = lives_obj_instance_get_attribute(aplayer, ATTR_AUDIO_STATUS);
+  return lives_attribute_get_value_int64(param);
+}
+
+weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, int64_t status) {
+  return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_STATUS, status);
 }
 
 boolean lives_aplayer_get_signed(lives_obj_t *aplayer) {

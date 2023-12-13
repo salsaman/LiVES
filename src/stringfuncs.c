@@ -277,6 +277,17 @@ char *lives_strdup_printf(const char *fmt, ...) {
 
 char *lives_strdup_vprintf(const char *fmt, va_list ap) {return _lives_strndup_printf_va(fmt, 0, ap);}
 
+int lives_print_ret(const char *fmt, ...) {
+  char *ret;
+  va_list ap;
+  va_start(ap, fmt);
+  ret = _lives_strndup_printf_va(fmt, 0, ap);
+  va_end(ap);
+  fprintf(stderr, ret);
+  lives_free(ret);
+  return 1;
+}
+
 
 /// returns FALSE if strings match
 LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size_t len) {

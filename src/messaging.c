@@ -10,6 +10,7 @@
 
 static pthread_mutex_t dprint_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+
 weed_plant_t *get_nth_info_message(int n) {
   weed_plant_t *msg = mainw->msg_list;
   const char *leaf;
@@ -354,6 +355,11 @@ LIVES_GLOBAL_INLINE void _cache_msg(const char *fmt, ...) {
 
 static boolean d_print_inner(const char *text) {
   boolean ret = TRUE;
+  if (!prefs) {
+    fprintf(stderr, text);
+    return ret;
+  }
+
   if (MSGMODE_HAS(CACHE)) {
     cache_msg(text);
     if (!prefs || !prefs->msg_routing) {

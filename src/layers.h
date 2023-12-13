@@ -108,6 +108,9 @@ weed_layer_t *weed_layer_copy_slice(weed_layer_t *dlayer, weed_layer_t *slayer,
 weed_layer_t *weed_layer_free(weed_layer_t *);
 lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed_plant_t *src);
 
+
+void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int plane);
+
 //#define DEBUG_LAYER_REFS
 #ifdef DEBUG_LAYER_REFS
 int _weed_layer_unref(weed_layer_t *);
@@ -152,6 +155,7 @@ void _weed_layer_set_invalid(weed_layer_t *, boolean is);
 // layer info
 int weed_layer_is_video(weed_layer_t *);
 int weed_layer_is_audio(weed_layer_t *);
+boolean weed_layer_contiguous(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
 int weed_layer_get_palette_yuv(weed_layer_t *, int *clamping, int *sampling, int *subspace);
 int weed_layer_get_yuv_clamping(weed_layer_t *);

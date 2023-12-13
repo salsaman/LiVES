@@ -1224,7 +1224,8 @@ LIVES_GLOBAL_INLINE void make_cleanable(int clipno, boolean isit) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
+
+LIVES_GLOBAL_INLINE boolean should_ignore_clip(int clipno) {
   boolean do_ignore = TRUE;
   if (IS_VALID_CLIP(clipno)) {
     char *clipdir = get_clip_dir(clipno);
@@ -1234,6 +1235,31 @@ LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
     lives_free(clipdir);
   }
   return do_ignore;
+}
+
+
+
+
+LIVES_GLOBAL_INLINE boolean should_ignore_ext_clip(const char *handle) {
+  boolean bret = TRUE;
+  char *clipdir = lives_build_path(prefs->workdir, handle, NULL);
+  if (lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
+    char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+    if (!lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) bret = FALSE;
+    lives_free(ignore);
+  }
+  lives_free(clipdir);
+  return bret;
+}
+
+
+
+LIVES_GLOBAL_INLINE void ignore_clip(const char *clipdir) {
+  if (lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
+    char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+    lives_touch(ignore);
+    lives_free(ignore);
+  }
 }
 
 
@@ -1275,9 +1301,7 @@ boolean do_delete_or_mark(int clipno, int typ) {
     if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, OBJ_INTENTION_DELETE, TRUE);
     ret = TRUE;
   } else {
-    char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
-    lives_touch(ignore);
-    lives_free(ignore);
+    ignore_clip(clipdir);
     if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, OBJ_INTENTION_IGNORE, TRUE);
   }
   lives_free(clipdir);
@@ -2435,6 +2459,7 @@ void switch_to_file(int old_file, int new_file) {
 boolean switch_audio_clip(int new_file, boolean activate) {
   //ticks_t cticks;
   lives_clip_t *sfile;
+  int64_t astat;
   int aplay_file;
 
   if (AUD_SRC_EXTERNAL) return FALSE;
@@ -2458,9 +2483,10 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     mainw->scratch = SCRATCH_JUMP;
   }
 
+  astat = lives_aplayer_get_status(mainw->aplayer);
+
   IF_APLAYER_JACK
-  (
-    if (!activate) mainw->jackd->in_use = FALSE;
+    (if (!activate) mainw->jackd->in_use = FALSE;
 
   if (new_file != aplay_file) {
     if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
@@ -2484,19 +2510,19 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       }
     }
 
-  if (!IS_VALID_CLIP(new_file)) {
-  mainw->jackd->in_use = FALSE;
-  return FALSE;
-}
+   if (!IS_VALID_CLIP(new_file)) {
+     mainw->jackd->in_use = FALSE;
+     return FALSE;
+  }
 
-if (new_file == aplay_file) return TRUE;
+   if (new_file == aplay_file) return TRUE;
 
-  if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-    // tell jack server to open audio file and start playing it
+   if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+     // tell jack server to open audio file and start playing it
+     
+     jack_message.command = ASERVER_CMD_FILE_OPEN;
 
-    jack_message.command = ASERVER_CMD_FILE_OPEN;
-
-    jack_message.data = lives_strdup_printf("%d", new_file);
+     jack_message.data = lives_strdup_printf("%d", new_file);
 
       jack_message2.command = ASERVER_CMD_FILE_SEEK;
 
@@ -2521,8 +2547,7 @@ if (new_file == aplay_file) return TRUE;
     })
 
   IF_APLAYER_PULSE
-  (
-    if (!activate) mainw->pulsed->in_use = FALSE;
+  (if (!activate) mainw->pulsed->in_use = FALSE;
 
   if (new_file != aplay_file) {
     if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
@@ -2578,15 +2603,17 @@ if (new_file == aplay_file) return TRUE;
         pulse_message2.next = NULL;
 
         mainw->pulsed->msgq = &pulse_message;
-
         mainw->pulsed->is_paused = sfile->play_paused;
 
+	if (mainw->pulsed->is_paused) astat |= APLAYER_STATUS_PAUSED;
+	else astat &= ~APLAYER_STATUS_PAUSED;
         //pa_time_reset(mainw->pulsed, 0);
       } else {
         mainw->video_seek_ready = TRUE;
         video_sync_ready();
       }
-    })
+  })
+    lives_aplayer_set_status(mainw->aplayer, astat);
 
 #if 0
   if (prefs->audio_player == AUD_PLAYER_NONE) {

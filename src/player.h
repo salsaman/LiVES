@@ -14,6 +14,8 @@ struct timeval tv;
 #define PLAYER_SUBTYPE_VIDEO	IMkType("PLAY.vid")
 #define PLAYER_SUBTYPE_AUDIO	IMkType("PLAY.aud")
 
+lives_result_t video_sync_ready(void);
+
 lives_obj_instance_t *lives_player_inst_create(uint64_t subtype);
 
 #define LIVES_IS_IDLE (lives_get_status() == LIVES_STATUS_IDLE)

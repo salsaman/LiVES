@@ -111,24 +111,26 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button, FALSE);
   lives_dialog_make_widget_first(LIVES_DIALOG(dialog), button);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
 }
 
 
-static void add_clear_ds_adv(LiVESBox *box) {
+static void add_clear_ds_adv(LiVESDialog *dialog, LiVESBox *box) {
   // add a button which opens up  Recover/Repair widget
   LiVESWidget *button = lives_standard_button_new_with_label(_(" _Advanced Settings >>"),
                         DEF_BUTTON_WIDTH * 2,
                         DEF_BUTTON_HEIGHT);
-  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+  /* LiVESWidget *hbox = lives_hbox_new(FALSE, 0); */
 
-  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 2);
-  lives_box_pack_start(box, hbox, FALSE, FALSE, widget_opts.packing_height);
-  add_fill_to_box(LIVES_BOX(box));
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked), NULL);
+  /* lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 2); */
+  /* lives_box_pack_start(box, hbox, FALSE, FALSE, widget_opts.packing_height); */
+  /* add_fill_to_box(LIVES_BOX(box)); */
+  
+  lives_dialog_add_action_widget(dialog, button, LIVES_RESPONSE_SHOW_DETAILS);
+  
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL, */
+  /*                           LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked), NULL); */
 }
 
 
@@ -519,7 +521,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
   if (mainw) {
     if (mainw->add_clear_ds_adv) {
       mainw->add_clear_ds_adv = FALSE;
-      add_clear_ds_adv(LIVES_BOX(dialog_vbox));
+      add_clear_ds_adv(LIVES_DIALOG(dialog), LIVES_BOX(dialog_vbox));
     }
 
     if (warn_mask_number > 0) add_warn_check(LIVES_BOX(dialog_vbox), warn_mask_number, NULL);
@@ -563,9 +565,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
   if (!widget_opts.non_modal)
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
-  if (!transient) {
-    pop_to_front(dialog, NULL);
-  }
+  /* if (!transient) { */
+  /*   pop_to_front(dialog, NULL); */
+  /* } */
 
   if (cb_key) extra_cb(dialog, cb_key);
 
@@ -618,16 +620,18 @@ LIVES_GLOBAL_INLINE boolean do_warning_dialog(const char *text) {
 }
 
 
-boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
+int do_warning_dialog_with_check_inner(const char *text, uint64_t warn_mask_number) {
   // show OK/CANCEL, returns FALSE if cancelled
   LiVESWidget *warning;
   int response = 1;
   char *mytext;
 
-  if (warn_mask_number >= WARN_MASK_DEF_OFF) {
-    if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
-  } else {
-    if (prefs->warning_mask & warn_mask_number) return TRUE;
+  if (warn_mask_number) {
+    if (warn_mask_number >= WARN_MASK_DEF_OFF) {
+      if (!(prefs->warning_mask & warn_mask_number)) return LIVES_RESPONSE_OK;
+    } else {
+      if (prefs->warning_mask & warn_mask_number) return LIVES_RESPONSE_OK;
+    }
   }
 
   mytext = lives_strdup(text); // must copy this because of translation issues
@@ -640,8 +644,28 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   lives_freep((void **)&mytext);
 
+  return response;
+}
+
+
+boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
+  int response = do_warning_dialog_with_check_inner(text, warn_mask_number);
   return (response == LIVES_RESPONSE_OK);
 }
+
+
+int get_warning_dialogf_resp(const char *fmt, ...) {
+  va_list xargs;
+  int resp;
+  char *textx;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resp = do_warning_dialog_with_check_inner(textx, 0);
+  lives_free(textx);
+  return resp;
+}
+
 
 
 LIVES_GLOBAL_INLINE warn_mask_state get_warn_mask_state(uint64_t warn_mask_number) {
@@ -2986,7 +3010,7 @@ boolean do_jack_no_startup_warn(boolean is_trans) {
   if (!is_trans && !chkname) msg = lives_strdup_printf(_("%s"
                                      "Please ensure that %s is set up correctly on your machine\n"
                                      "and also that the soundcard is not being blocked by another program, "
-                                     "or another instance of jackd.\n\n"
+                                    "or another instance of jackd.\n\n"
                                      "Also make sure that LiVES is not trying to start up\n"
                                      "a server which is already running.\n\n"
                                      "%s%s"), msg1, (tmp3 = is_trans
@@ -3608,7 +3632,7 @@ static void _thdlg_auto_spin(void) {
 
 
 void threaded_dialog_auto_spin(void) {
-  uint64_t syncid;;
+  uint64_t syncid;
   lives_proc_thread_t lpt;
   if (!prefs->show_gui) return;
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;

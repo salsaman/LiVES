@@ -1205,7 +1205,7 @@ void lazy_startup_checks(void) {
 
   lpt = mainw->helper_procthreads[PT_LAZY_RFX];
   if (lpt) {
-    if (lives_proc_thread_freeze_state(lpt) == LIVES_RESULT_SUCCESS) {
+    if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
       if (!_lives_proc_thread_check_states(lpt, THRD_STATE_COMPLETED)) {
         lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, wake_other_lpt, self);
         lives_proc_thread_unfreeze_state(lpt);
@@ -1379,6 +1379,14 @@ boolean lives_startup(livespointer data) {
   d_print("Testing lives sysalarms...");
   d_print("pause for 1 millisecond...");
 
+  if (RUNNER_IS(gdb)) {
+    fprintf(stderr, "\tWhen running LiVES via gdb, you may wish to add "
+	    "the following lines to your gdb.ini file\n\n"
+	    "\t\thandle SIG42 nostop noprint\n"
+	    "\t\thandle SIG44 nostop noprint\n\n";
+	    }
+  }
+  
   lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
   if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION) != LIVES_RESULT_SUCCESS)
     lives_abort("Timer failed");
@@ -1851,7 +1859,8 @@ boolean lives_startup2(livespointer data) {
 
   // crash recovery - reload
 
-  if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
+  if (!mainw->cliplist)
+    if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   ///////////////
 
@@ -1864,7 +1873,7 @@ boolean lives_startup2(livespointer data) {
 
   if (prefs->show_disk_quota && !prefs->vj_mode) do_show_quota = TRUE;
 
-  if (!mainw->foreign && !got_files && prefs->ar_clipset) {
+  if (!mainw->foreign && !got_files && !mainw->cliplist && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file == -1) {
       set_string_pref(PREF_AR_CLIPSET, "");
@@ -2729,6 +2738,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw = (mainwindow *)(_lives_calloc(1, sizeof(mainwindow)));
 
   *(int64_t *)&mainw->initial_time = initial_time;
+  mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;
 
   prefs = (_prefs *)_lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)_lives_calloc(1, sizeof(_future_prefs));
@@ -2784,7 +2794,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->memok = TRUE;
   mainw->go_away = TRUE;
   mainw->current_file = -1;
-  mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;
   mainw->max_textsize = N_TEXT_SIZES;
 
   pthread_mutexattr_init(&mattr);
@@ -2838,7 +2847,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   capable->ppid = getppid(); 
   capable->runner = check_for_runners();
-
+  
   // get opts first
   //
   // we can read some pre-commands from a file, there is something of a chicken / egg problem as we dont know

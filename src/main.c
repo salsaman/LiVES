@@ -128,6 +128,8 @@ char **orig_argv(void) {return o_argv;}
 extern int run_weed_startup_tests(void);
 #endif
 
+static char errmsg[1024] = {'\0'}, errdets[1024] = {'\0'};
+
 /////////////////////////////////
 #ifdef NO_COMPILE // never compile this
 void tr_msg(void) {
@@ -142,9 +144,24 @@ void tr_msg(void) {
 
 void BREAK_ME(const char *brkstr) {
   if (prefs && prefs->show_dev_opts) {
-    g_printerr("BANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
+    g_printerr("\nBANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
   }
   // breakpoint for gdb
+}
+
+
+void lives_assert_failed(const char *cond, const char *file, int line) {
+  if (prefs) {
+    MSGMODE_LOCAL;
+    MSGMODE_SET(DEBUG_LOG);
+  }
+  lives_snprintf(errmsg, 1024, "\n\nFATAL: lives_assert failed in file %s, line %d:\n\n%s\n\n",  file, line, cond);
+
+  d_print(errmsg);
+
+  if (prefs) MSGMODE_GLOBAL;
+
+  lives_abort("Assertion failed");
 }
 
 
@@ -287,7 +304,6 @@ static GLogWriterOutput lives_log_writer(GLogLevelFlags log_level, const GLogFie
 #ifdef ENABLE_JACK
 boolean ret = TRUE;
 #endif
-static char errdets[512], errmsg[512];
 
 void defer_sigint(int signum, siginfo_t *si, void *uc) {
   // here we can prepare for and handle specific fn calls which we know may crash / abort
@@ -300,7 +316,7 @@ void defer_sigint(int signum, siginfo_t *si, void *uc) {
     if (mainw->err_funcdef) lives_snprintf(errdets, 512, " in function %s, %s line %d", mainw->err_funcdef->funcname,
                                              mainw->err_funcdef->file, mainw->err_funcdef->line);
 
-    lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
+    lives_snprintf(errmsg, 1024, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
                    *errdets ? errdets : NULL);
 
     fprintf(stderr, "%s", errmsg);
@@ -377,30 +393,38 @@ boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl) {
 
 #define SIG_SRC_KERNEL		0
 #define SIG_SRC_INTERN		1
-#define SIG_SRC_EXTERN		1
+#define SIG_SRC_EXTERN		2
 
 static int sigsrc = SIG_SRC_KERNEL;
 
 //#define QUICK_EXIT
 void catch_sigint(int signum, siginfo_t *si, void *uc) {
   static int printed = 0;
+  int only_print = 0;
+
+  fflush(stderr);
+
   // trap for ctrl-C and others
   // if (mainw->jackd) lives_jack_end();
-  sigsrc = SIG_SRC_KERNEL;
+  if (signum < 0) {
+    signum = -signum;
+  }
 
-  if (!uc) sigsrc = SIG_SRC_INTERN;
   if (signum < 0) {
     sigsrc = SIG_SRC_EXTERN;
     signum = -signum;
+    only_print = 1;
   }
+ 
+  if (!uc) sigsrc = SIG_SRC_INTERN;
 
   if (sigsrc == SIG_SRC_INTERN)
     fprintf(stderr, "Signal wass caught internally\n");
   if (sigsrc == SIG_SRC_EXTERN)
     fprintf(stderr, "Signal wass caught externally\n");
 
-#if !NO_SHOW_DIAG
-  if (mainw->debug) print_diagnostics(DIAG_ALL);
+#if NO_SHOW_DIAG
+  printed = 1;
 #endif
 
   if (mainw) mainw->critical = TRUE;
@@ -414,15 +438,14 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     g_print("%s\n", tnum);
     //if (mydata) {
     lives_proc_thread_set_signalled(self, signum, mydata);
-    pthread_detach(pthread_self());
+    if (!only_print) pthread_detach(pthread_self());
   }
 
   if (!mainw) {
     if (signum == LIVES_SIGSEGV) {
       fprintf(stderr, "Segfault at address %p\n", si->si_addr);
     }
-    fflush(stderr);
-    exit(signum);
+    if (!only_print) exit(signum);
   }
 
   //#ifdef QUICK_EXIT
@@ -431,27 +454,26 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
   /* fflush(stderr); */
 
   //#endif
-  lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
 
-  if (mainw->foreign) _exit(signum);
-
-  if (mainw->record) backup_recording(NULL, NULL);
-
-  if (signum == LIVES_SIGABRT) {
-    fprintf(stderr, "%s", _("Program aborted\n\n"));
-    _exit(signum);
+  if (!only_print) {
+    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
+    if (mainw->foreign) _exit(signum);
+    if (mainw->record) backup_recording(NULL, NULL);
+    if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
   }
 
-  if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
-
-  if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
-    mainw->memok = FALSE;
+  if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE || signum == LIVES_SIGABRT) {
+    if (signum == LIVES_SIGSEGV) mainw->memok = FALSE;
     if (!printed) {
       printed = 1;
+      if (signum == LIVES_SIGABRT) {
+	fprintf(stderr, "%s", _("\nProgram aborting...\n"));
+      }
+
       fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
 			"Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
       fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
-			"distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
+			"distribution,\nand the LiVES version (%s), plus any following informauion:\n"), LiVES_VERSION);
 
       if (signum == LIVES_SIGSEGV) {
 	fprintf(stderr, "Segmentation fault, ");
@@ -466,31 +488,41 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 	      fprintf(stderr, ", %s", mainw->critical_errmsg);
 	    fprintf(stderr, "\n");
 	  }
-	} else {
 	  if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+	} else if (signum == LIVES_SIGSEGV) {
+	  if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
 	}
-      } else {
-	if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
       }
 
       fprintf(stderr, "\n");
 
-      if (capable->has_gdb) {
-	if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
-	else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
-      } else {
-	fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option "
-				"to collect more information.\n\n"));
-      }
+      /* if (capable->has_gdb) { */
+      /* 	if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n")); */
+      /* 	else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n")); */
+      /* } else { */
+      /* 	fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option " */
+      /* 				"to collect more information.\n\n")); */
+      /* } */
 
       GET_PROC_THREAD_SELF(self);
-      if (self) lpt_error_handle(self);
+      lpt_error_handle(self);
+    }
+
+    if (*errmsg) fprintf(stderr, "%s", errmsg);
+    if (*errdets) fprintf(stderr, "%s", errdets);
+
+    if (signum == LIVES_SIGABRT) {
+      if (!only_print) {
+	fprintf(stderr, "%s", _("Program aborted\n\n"));
+	_exit(signum);
+      }
     }
 
     if (sigsrc == SIG_SRC_EXTERN) {
-      fprintf(stderr, "External erros are ignored, continuing\n");
-      return;
+      fprintf(stderr, "External errors are ignored, continuing\n");
     }
+
+    if (only_print) return;
 
 #ifdef USE_GLIB
 #if !LIVES_FULL_DEBUG
@@ -531,6 +563,7 @@ LIVES_GLOBAL_INLINE void ign_signal_handlers(void) {
   sigaddset(&sa.sa_mask, LIVES_SIGTERM);
   sigaddset(&sa.sa_mask, LIVES_SIGFPE);
   sigaddset(&sa.sa_mask, LIVES_SIGSEGV);
+  sigaddset(&sa.sa_mask, LIVES_SIGABRT);
 
   sa.sa_handler = SIG_IGN;
   sa.sa_flags = 0;
@@ -539,6 +572,7 @@ LIVES_GLOBAL_INLINE void ign_signal_handlers(void) {
   sigaction(LIVES_SIGTERM, &sa, NULL);
   sigaction(LIVES_SIGFPE, &sa, NULL);
   sigaction(LIVES_SIGSEGV, &sa, NULL);
+  sigaction(LIVES_SIGABRT, &sa, NULL);
 }
 
 
@@ -605,8 +639,8 @@ void set_signal_handlers(lives_sigfunc_t sigfunc) {
       mainw->signals_deferred = FALSE;
     }
   }
-  memset(errmsg, 0, 512);
-  memset(errdets, 0, 512);
+  /* memset(errmsg, 0, 1024); */
+  /* memset(errdets, 0, 1024); */
 }
 
 

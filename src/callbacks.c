@@ -5656,7 +5656,7 @@ static LiVESResponseType cleardisk_show_summary(LiVESTextBuffer * tbuff, int nit
     lives_button_box_set_child_non_homogeneous(LIVES_BUTTON_BOX(bbox), button, TRUE);
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_EDGE);
   }
-
+  
   retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
   lives_widget_destroy(textwindow->dialog);
   lives_free(textwindow);
@@ -5733,8 +5733,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   lives_file_dets_t *filedets;
   lives_proc_thread_t lpt;
 
-  LiVESList *lists[3];
-  LiVESList *list;
+  LiVESList *lists[4];
+  LiVESList *list, **ign_list;
 
   int64_t bytes = 0, fspace = -1;
   int64_t ds_warn_level = mainw->next_ds_warn_level;
@@ -5765,8 +5765,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   rec_list = &lists[0];
   rem_list = &lists[1];
   left_list = &lists[2];
+  ign_list = &lists[3];
 
-  *rec_list = *rem_list = *left_list = NULL;
+  *rec_list = *rem_list = *left_list = *ign_list = NULL;
 
   mainw->tried_ds_recover = TRUE; ///< indicates we tried ds recovery already
   mainw->add_clear_ds_adv = TRUE; ///< auto reset by do_warning_dialog()
@@ -5778,19 +5779,28 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
                "<b>You will also have an opportunity to view and revise the list of items to be removed "
                "before continuing.</b>\n"));
   }
-  widget_opts.use_markup = TRUE;
-  if (!do_warning_dialogf(
-        _("LiVES will attempt to recover some disk space.\n"
-          "Unnecessary files will be removed from %s\n"
-          "You should <b>ONLY</b> run this if you have no other copies of LiVES running on this machine.\n"
-          "%s\nClick OK to proceed.\n"), tmp = lives_markup_escape_text(prefs->workdir, -1), extra)) {
-    widget_opts.use_markup = FALSE;
+
+  do {
+    widget_opts.use_markup = TRUE;
+    resp = get_warning_dialogf_resp(_("LiVES will attempt to recover some disk space.\n"
+				      "Unnecessary files will be removed from %s\n"
+				      "You should <b>ONLY</b> run this if you have no other copies"
+				      "of LiVES running on this machine.\n"
+				      "%s\nClick OK to proceed.\n"),
+				    tmp = lives_markup_escape_text(prefs->workdir, -1), extra);
     lives_free(tmp);
-    lives_free(extra);
-    mainw->next_ds_warn_level = ds_warn_level;
-    goto end;
-  }
-  widget_opts.use_markup = FALSE;
+    widget_opts.use_markup = FALSE;
+    if (resp == LIVES_RESPONSE_CANCEL) {
+      widget_opts.use_markup = FALSE;
+      lives_free(extra);
+      mainw->next_ds_warn_level = ds_warn_level;
+      goto end;
+    }
+    if (resp == LIVES_RESPONSE_SHOW_DETAILS) {
+      on_cleardisk_advanced_clicked(NULL, NULL);
+    }
+  } while (resp != LIVES_RESPONSE_OK);
+
   lives_free(extra);
 
   if (CURRENT_CLIP_IS_VALID) cfile->cb_src = current_file;
@@ -5920,7 +5930,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     THREADVAR(com_failed) = FALSE;
   } else {
     lives_proc_thread_t recinfo = NULL, reminfo = NULL, leaveinfo = NULL;
-    char *remtrashdir, *op, *from, *to;
+    char *remtrashdir, *op, *from;
     int orig;
 
     if (nitems) {
@@ -5949,8 +5959,18 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
     retval = cleardisk_show_summary(tbuff, nitems);
 
+    if (what_sup_now() != sup_ready) {
+      for (i = 1; mainw->files[i]; i++) {
+	for (list = *rem_list; list; list = list->next) {
+	  lives_file_dets_t *filedets = (lives_file_dets_t *)(list->data);
+	  if (!lives_strcmp(filedets->name, mainw->files[i]->handle))
+	    *rem_list = lives_list_remove_node(*rem_list, list, TRUE);
+	}
+      }
+    }
+
     if (retval != LIVES_RESPONSE_CANCEL) {
-      retval = filter_cleanup(full_trashdir, rec_list, rem_list, left_list);
+      retval = filter_cleanup(full_trashdir, rec_list, rem_list, left_list, ign_list);
     }
 
     if (!nitems) {
@@ -5968,7 +5988,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       lives_free(com);
       goto cleanup;
     }
-
+ 
     /// user accepted
 
     // first we need to move some entries at the list starts
@@ -5976,46 +5996,49 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     // we can stop when orig == current list
 
     THREADVAR(com_failed) = FALSE;
+ 
+    for (int i = 0; i < 4; i++) {
+      for (list = lists[i]; list && list->data; list = list->next) {
+	filedets = (lives_file_dets_t *)list->data;
+	orig = filedets->type & ~LIVES_FILE_TYPE_FLAG_SPECIAL;
+	if (orig == i) break;
 
-    for (list = *rem_list; list && list->data; list = list->next) {
-      filedets = (lives_file_dets_t *)list->data;
-      orig = filedets->type & ~LIVES_FILE_TYPE_FLAG_SPECIAL;
-      if (orig == 1) break;
-      to = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
-      if (!orig) {
-        // moved from rec_list to rem_list
-        from = lives_build_path(full_trashdir, TRASH_RECOVER, filedets->name, NULL);
-      } else {
-        // moved from left_list to rem_list
-        from = lives_build_path(full_trashdir, TRASH_LEAVE, filedets->name, NULL);
-      }
-      lives_mv(from, to);
-      lives_free(from);
-      lives_free(to);
-      if (THREADVAR(com_failed)) {
-        THREADVAR(com_failed) = FALSE;
-        goto cleanup;
+	if (!orig) // moved from rec_list	
+	  from = lives_build_path(full_trashdir, TRASH_RECOVER, filedets->name, NULL);
+	else if (orig == 1) // moved from rec_list	
+	  from = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
+	else if (orig == 2) // moved from left_list
+	  from = lives_build_path(full_trashdir, TRASH_LEAVE, filedets->name, NULL);
+	else continue;
+ 
+	if (i == 1) {
+	  char *to = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
+	  lives_mv(from, to);
+	  lives_free(to);
+	}
+	else lives_rm(from);
+	lives_free(from);
+
+	if (THREADVAR(com_failed)) {
+	  THREADVAR(com_failed) = FALSE;
+	  goto cleanup;
+	}
       }
     }
 
-    for (list = *left_list; list && list->data; list = list->next) {
-      filedets = (lives_file_dets_t *)list->data;
-      orig = filedets->type;
-      if (orig == 2) break;
-      to = lives_build_path(full_trashdir, TRASH_LEAVE, filedets->name, NULL);
-      if (!orig) {
-        // moved from rec_list to left_list
-        from = lives_build_path(full_trashdir, TRASH_RECOVER, filedets->name, NULL);
-      } else {
-        // moved from rem_list to left_list
-        from = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
-      }
-      lives_mv(from, to);
-      lives_free(from);
-      lives_free(to);
-      if (THREADVAR(com_failed)) {
-        THREADVAR(com_failed) = FALSE;
-        goto cleanup;
+    list = *ign_list;
+
+    if (list && list->data) {
+      /// try to recover lost files first
+      // create a list with just the names
+      for (; list && list->data; list = list->next) {
+        filedets = (lives_file_dets_t *)list->data;
+        if (*filedets->name) {
+	  char *clipdir = lives_build_path(prefs->workdir, filedets->name, NULL);
+	  ignore_clip(clipdir);
+	  lives_free(clipdir);
+	}
+	*ign_list = lives_list_remove_node(*ign_list, list, TRUE);
       }
     }
 
@@ -6033,11 +6056,12 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       }
       recnlist = lives_list_reverse(recnlist);
 
-      // close the temporary clip
       close_temp_handle(current_file);
 
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+
       recover_lost_clips(recnlist);
+
       lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
       /// handle any remnants. Remove any entries from recnlist which are now loaded
@@ -6173,7 +6197,7 @@ cleanup:
       mainw->dsu_valid = TRUE;
       lives_idle_add(update_dsu, NULL);
     }
-    lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
+    //lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
   } else {
     if (!mainw->multitrack && !mainw->is_processing && !LIVES_IS_PLAYING) {
       sensitize();
@@ -7883,6 +7907,7 @@ boolean mute_audio_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 
 void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  int64_t astat;
 
   mainw->mute = !mainw->mute;
 
@@ -7893,80 +7918,83 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (mainw->preview_box) {
       lives_widget_set_opacity(mainw->p_mutebutton, 1.);
     }
-#ifdef ENABLE_JACK
-    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
-      if (LIVES_IS_PLAYING) {
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-          weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
-        }
-        mainw->jackd->mute = TRUE;
-        mainw->jackd->in_use = TRUE;
-      }
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (LIVES_IS_PLAYING) {
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-          weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
-        }
-        mainw->pulsed->mute = TRUE;
-        mainw->pulsed->in_use = TRUE;
-      }
-    }
-#endif
-    lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
+
+    IF_APLAYER_JACK
+      (if (LIVES_IS_PLAYING) {
+	if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+	  weed_plant_t *event = get_last_frame_event(mainw->event_list);
+	  insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
+	}
+	mainw->jackd->mute = TRUE;
+	mainw->jackd->in_use = TRUE;})
+
+      IF_APLAYER_PULSE
+      (if (LIVES_IS_PLAYING) {
+	if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+	  weed_plant_t *event = get_last_frame_event(mainw->event_list);
+	  insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+	}
+	mainw->pulsed->mute = TRUE;
+	mainw->pulsed->in_use = TRUE;})
+
+      lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
     if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));
   } else {
-#ifdef ENABLE_JACK
-    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
-      if (LIVES_IS_PLAYING) {
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+    IF_APLAYER_JACK
+      (if (LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused
+	    && (prefs->rec_opts & REC_AUDIO)) {
           jack_get_rec_avals(mainw->jackd);
         }
         mainw->jackd->mute = FALSE;
-        mainw->jackd->in_use = TRUE;
-      }
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (LIVES_IS_PLAYING) {
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+        mainw->jackd->in_use = TRUE;})
+
+      IF_APLAYER_PULSE
+      (if (LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused
+	    && (prefs->rec_opts & REC_AUDIO)) {
           pulse_get_rec_avals(mainw->pulsed);
         }
         mainw->pulsed->mute = FALSE;
-        mainw->pulsed->in_use = TRUE;
-      }
-    }
-#endif
-    lives_widget_set_opacity(mainw->m_mutebutton, .75);
+        mainw->pulsed->in_use = TRUE;})
+
+      lives_widget_set_opacity(mainw->m_mutebutton, .75);
     if (mainw->preview_box) {
       lives_widget_set_opacity(mainw->p_mutebutton, .75);
     }
 
     lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Mute the audio (z)"));
-    if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
+    if (mainw->preview_box)
+      lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
 
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && LIVES_IS_PLAYING && mainw->jackd) {
-      mainw->jackd->mute = mainw->mute;
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && LIVES_IS_PLAYING && mainw->pulsed) {
-      mainw->pulsed->mute = mainw->mute;
-    }
-#endif
-  }
+    IF_APLAYER_JACK
+      (if (LIVES_IS_PLAYING)
+	mainw->jackd->mute = mainw->mute;)
+
+      IF_APLAYER_PULSE
+      (if (LIVES_IS_PLAYING)
+	mainw->pulsed->mute = mainw->mute;)
+      }
+
+  astat = lives_aplayer_get_status(mainw->aplayer);
+  
+  IF_APLAYER_JACK
+    (if (mainw->jackd->mute) astat |= APLAYER_STATUS_MUTED;
+    else astat &= ~APLAYER_STATUS_MUTED;)
+    
+    IF_APLAYER_PULSE
+    (if (mainw->pulsed->mute) astat |= APLAYER_STATUS_MUTED;
+    else astat &= ~APLAYER_STATUS_MUTED;)
+
+    lives_aplayer_set_status(mainw->aplayer, astat);
 }
+
 
 #define GEN_SPB_LINK(n, bit) case n: mainw->fx##n##_##bit =		\
     lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)); break
 #define GEN_SPB_LINK_I(n, bit) case n: mainw->fx##n##_##bit =		\
     lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton)); break
+
 
 void on_spin_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   // TODO - use array

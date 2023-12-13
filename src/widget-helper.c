@@ -1221,6 +1221,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (mainw->critical) lives_abort(mainw->critical_errmsg);
 
     is_active = FALSE;
+
     if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
       is_active = fg_service_fulfill();
     if (is_active) {
@@ -1256,6 +1257,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
       pthread_yield();
       lives_microsleep;
     } else {
+      if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
+	continue;
+
       lives_nanosleep(NSLEEP_TIME);
       pthread_yield();
 

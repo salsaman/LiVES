@@ -94,7 +94,7 @@ typedef struct {
 
   pthread_mutex_t var_pause_mutex;
   pthread_cond_t var_pcond;
-
+  
   uint64_t var_sync_timeout;
   uint64_t var_blocked_limit;
   ticks_t var_event_ticks;
@@ -484,7 +484,7 @@ boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other);
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t, uint64_t state_bits);
 
-lives_result_t lives_proc_thread_freeze_state(lives_proc_thread_t);
+lives_result_t lives_proc_thread_freeze_state(lives_proc_thread_t, boolean rdonly);
 lives_result_t lives_proc_thread_unfreeze_state(lives_proc_thread_t);
 
 uint64_t get_worker_id(lives_proc_thread_t);
@@ -507,11 +507,12 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_THREAD_WORK "thread_work" // refers to underyling lives_thread
 #define LIVES_LEAF_THREAD_DATA "thread_data" // pointer to thread data area (proc_thread data, not pthread data !)
 
-#define LIVES_LEAF_STATE_MUTEX "state_mutex" ///< ensures state is accessed atomically
+#define LIVES_LEAF_STATE_RWLOCK "state_rwlock" ///< ensures state is accessed atomically
 #define LIVES_LEAF_DESTRUCT_RWLOCK "destruct_rwlock" ///< ensures destruct is accessed atomically
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
 #define LIVES_LEAF_EXT_CB_LIST "ext_cb_list" // list of closures added to other thread hook_stacks
+#define LIVES_LEAF_EXT_CB_MUTEX "ext_cb_mutex" // 
 #define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread
 #define LIVES_LEAF_RETOLhC "retloc" // pointer to variable to store retval in directly
 #define LIVES_LEAF_FOLLOWER "lpt_follower"  // proc_thread to be run after this one (for AUTO_REQUEUE & AUTO_PAUSE)
@@ -556,6 +557,8 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_AUTO_PAUSE   		(1ull << 17)
 
 #define LIVES_THRDATTR_NXT_IMMEDIATE (LIVES_THRDATTR_AUTO_REQUEUE | LIVES_THRDATTR_AUTO_PAUSE)
+
+#define LIVES_THRDATTR_FAST_QUEUE   		(1ull << 18)
 
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 32)

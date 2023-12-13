@@ -207,7 +207,7 @@ extern locale_t oloc, nloc;
 #define FEATURE_RNG			(1ul << 8)
 #define FEATURE_THEMING			(1ul << 9)
 
-#define FEATURE_READY(what) (capable->features_ready & FEATURE_##what)
+#define FEATURE_READY(what) (capable && (capable->features_ready & FEATURE_##what))
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
@@ -693,6 +693,7 @@ int orig_argc(void);
 char **orig_argv(void);
 
 // main.c
+void lives_assert_failed(const char *cond, const char *file, int line);
 
 void set_signal_handlers(lives_sigfunc_t sigfunc);
 void catch_sigint(int signum, siginfo_t *si, void *uc);
@@ -713,10 +714,14 @@ void mt_sensitise(lives_mt *);
 
 const char *dummystr;
 
-void BREAK_ME(const char *dtl);
+void __BREAK_ME(const char *dtl);
+
+#define BREAK_ME(label) SHOW_LOCATION("LiVES: hit breakpoint")
+
+#define TRACE_ME SHOW_LOCATION("LiVES: hit tracepoint")
 
 #define SHOW_LOCATION(text)						\
-  fprintf(stderr,"%s at %s, line %d\n",text,_FILE_REF_,_LINE_REF_)
+  fprintf(stderr,"\n%s at %s, line %d\n\n",text,_FILE_REF_,_LINE_REF_)
 
 #define LIVES_FULL_DEBUG 0
 

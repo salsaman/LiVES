@@ -4279,7 +4279,8 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 #define TEST_CE_THUMBS 0
 
 static void _resize_play_window(void) {
-  int opwx, opwy, pmonitor = prefs->play_monitor;
+  int opwx, opwy,
+    pmonitor = prefs->play_monitor;
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
 

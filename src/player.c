@@ -85,46 +85,54 @@ int lives_get_status(void) {
   return mainw->status & ACTIVE_STATUS;
 }
 
+#define AV_SYNC_LIMIT 10.
 
-boolean video_sync_ready(void) {
-  // can be cancelled by setting mainw->video_seek_ready to TRUE before calling
+lives_result_t video_sync_ready(void) {
+  // CALL to indicate then video is ready, will retutn
+  // LIVES_RESULT_SUCCESS, LIVES_RESULT_FAIL, LIVES_RESULT_TIMEOUT
+  double xtime;
+
   if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
       || !is_realtime_aplayer(prefs->audio_player) || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-    return TRUE;
+    mainw->avsync_time = 0.;
+    return LIVES_RESULT_SUCCESS;
   }
 
   IF_APLAYER_JACK
-  (
-    if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+  (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->jackd->is_paused)) {
   mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-  return TRUE;
-})
+  return LIVES_RESULT_SUCCESS;})
 
   IF_APLAYER_PULSE
-  (
-    if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+  (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->pulsed->is_paused)) {
   mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-  return TRUE;
-})
+  mainw->avsync_time = 0.;
+  return LIVES_RESULT_SUCCESS;})
 
   if (mainw->audio_seek_ready) {
-    mainw->video_seek_ready = TRUE;
-    return TRUE;
+    mainw->video_seek_ready = TRUE; 
+    mainw->avsync_time = 0.;
+    return LIVES_RESULT_SUCCESS;
   }
 
-  mainw->startticks -= lives_get_current_playback_ticks(mainw->origticks, NULL);
-  lives_microsleep_while_false(mainw->audio_seek_ready);
-  mainw->startticks += lives_get_current_playback_ticks(mainw->origticks, NULL);
+  xtime = (lives_get_session_time() - mainw->avsync_time) / ONE_BILLION_DBL;
+  if (xtime > AV_SYNC_LIMIT) {
+    mainw->sync_err = xtime;
+    return LIVES_RESULT_TIMEDOUT;
+  }
 
-  mainw->fps_mini_measure = 0;
-  mainw->fps_mini_ticks = lives_get_session_ticks();
-  mainw->last_startticks = mainw->startticks;
+  /* mainw->startticks -= lives_get_current_playback_ticks(mainw->origticks, NULL); */
+  /* lives_microsleep_while_false(mainw->audio_seek_ready); */
+  /* mainw->startticks += lives_get_current_playback_ticks(mainw->origticks, NULL); */
 
-  return TRUE;
+  /* mainw->fps_mini_measure = 0; */
+  /* mainw->fps_mini_ticks = lives_get_session_ticks(); */
+  /* mainw->last_startticks = mainw->startticks; */
+  return LIVES_RESULT_FAIL;
 }
 
 
@@ -194,7 +202,7 @@ LIVES_GLOBAL_INLINE void free_track_sources(void) {
     if (mainw->track_sources[i]) {
       mainw->old_active_track_list[i] = 0;
       track_source_free(i, mainw->active_track_list[i]);
-    }
+     }
   }
 }
 
@@ -1128,14 +1136,17 @@ weed_layer_t *load_frame_image(frames_t frame) {
       goto lfi_err;
     }
 
-    if (was_preview) lives_free(fname_next);
+    //MSGMODE_ON(DEBUG);
 
+    if (was_preview) lives_free(fname_next);
+ 
     ///////// EXECUTE PLAN CYCLE ////////////
 
-    THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
-    main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf);
-    THREADVAR(hook_hints) = 0;
-
+    if (!mainw->faded || (mainw->fs && (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor))) {
+      THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+      main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf);
+      THREADVAR(hook_hints) = 0;
+    }
     //d_print_debug("wating for plan to complete\n");
     if (mainw->plan_cycle) {
       if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
@@ -1153,6 +1164,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                  || mainw->plan_cycle->state == PLAN_STATE_ERROR
                                  || mainw->cancelled != CANCEL_NONE);
 
+
     osc_sync_msg = osc_make_sync_msg(mainw->clip_index, mainw->plan_cycle->frame_idx,
                                      (double)mainw->currticks / TICKS_PER_SECOND_DBL,
                                      mainw->num_tracks);
@@ -1166,7 +1178,6 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (!(mainw->plan_cycle->state == PLAN_STATE_CANCELLED
             || mainw->plan_cycle->state == PLAN_STATE_ERROR)) {
         mainw->plan_cycle->state = PLAN_STATE_ERROR;
-        d_print_debug("frame layer status not ready\n");
       }
     }
 
@@ -1628,6 +1639,7 @@ lfi_done:
       mainw->frame_layer = NULL;
       if (mainw->cancelled == CANCEL_NONE)
         run_next_cycle();
+      g_print("rnc\n");
     } else mainw->frame_layer = NULL;
     return NULL;
   }
@@ -3869,7 +3881,7 @@ boolean clip_can_reverse(int clipno) {
 
 
 // objects / intents
-
+// attributes are obj status, source, rate, channs, sampsize, is float, audio status, endian, interleaved, data len, data
 // TODO - will be part of OBJ_INTENTION_CREATE_INSTANCE (req == subtype)
 lives_obj_instance_t *lives_player_inst_create(uint64_t subtype) {
   char *choices[2];

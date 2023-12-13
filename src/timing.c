@@ -256,6 +256,9 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t tsource;
   ticks_t current = 0, clock_delta = 0, tdiff;
+  double thresh_factor = 1.;
+
+  if (RUNNER_IS(valgrind)) thresh_factor = 5.;
 
   if (time_source) tsource = *time_source;
   else tsource = LIVES_TIME_SOURCE_NONE;
@@ -263,7 +266,7 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
   mainw->time_jump = 0;
   ncalls++;
 
-get_time:
+ get_time:
   // clock time since playback started
   //mainw->clock_ticks + mainw->origticks == session_ticks
   mainw->clock_ticks = lives_get_current_ticks() - origticks - susp_ticks;
@@ -272,7 +275,7 @@ get_time:
 
   clock_delta = mainw->clock_ticks - lclock_ticks;
 
-  if (clock_delta > DELTA_THRESH || clock_delta < 0) {
+  if (clock_delta > DELTA_THRESH * thresh_factor || clock_delta < 0) {
     g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / TICKS_PER_SECOND_DBL);
     mainw->force_show = TRUE;
     susp_ticks += clock_delta;
@@ -305,140 +308,133 @@ get_time:
 #endif
 
   // generally tsource is set to NONE, - here we check first for soundcard time
-  if (is_realtime_aplayer(prefs->audio_player) && (tsource == LIVES_TIME_SOURCE_NONE ||
-      tsource == LIVES_TIME_SOURCE_SOUNDCARD) && !mainw->xrun_active) {
-    if ((!mainw->is_rendering || (mainw->multitrack && !cfile->opening && !mainw->multitrack->is_rendering)) &&
-        (!(mainw->fixed_fpsd > 0. || (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
-      // get time from soundcard
-      // this is done so as to synch video stream with the audio
-      // we do this in two cases:
-      // - for internal audio, playing back a clip with audio (writing)
-      // - or when audio source is set to external (reading), no internal audio generator is running
+  if (is_real_aplayer(prefs->audio_player) && (tsource == LIVES_TIME_SOURCE_NONE ||
+					       tsource == LIVES_TIME_SOURCE_SOUNDCARD) && !mainw->xrun_active)) {
+  if ((!mainw->is_rendering || (mainw->multitrack && !cfile->opening && !mainw->multitrack->is_rendering)) &&
+      (!(mainw->fixed_fpsd > 0. || (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
+    // get time from soundcard
+    // this is done so as to synch video stream with the audio
+    // we do this in two cases:
+    // - for internal audio, playing back a clip with audio (writing)
+    // - or when audio source is set to external (reading), no internal audio generator is running
 
-      // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
-      // in that case we will adjust the audio rate to fit the system clock
-      // or if we are rendering
+    // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
+    // in that case we will adjust the audio rate to fit the system clock
+    // or if we are rendering
 
-      // if the timecard cannot return current time we get a value of -1 back, and then fall back to system clock
+    // if the timecard cannot return current time we get a value of -1 back, and then fall back to system clock
 
-      IF_APLAYER_JACK
-      (
-        if ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use
-             && IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0)
-      || (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use)) {
-      tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+    IF_APLAYER_JACK
+      (if ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use
+	    && IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0)
+	   || (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use)) {
+	tsource = LIVES_TIME_SOURCE_SOUNDCARD;
+	if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_jack_get_time(mainw->jackd_read);
         else
           current = lives_jack_get_time(mainw->jackd);
       })
 
       IF_APLAYER_PULSE
-      (
-        if ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
-             ((mainw->multitrack && cfile->achans > 0)
-              || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                  && CLIP_HAS_AUDIO(mainw->pulsed->playing_file))))
-      || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use)) {
-      tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+      (if ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
+	    ((mainw->multitrack && cfile->achans > 0)
+	     || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file)
+		 && CLIP_HAS_AUDIO(mainw->pulsed->playing_file))))
+	   || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use)) {
+	tsource = LIVES_TIME_SOURCE_SOUNDCARD;
+	if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_pulse_get_time(mainw->pulsed_read);
         else
           current = lives_pulse_get_time(mainw->pulsed);
-      })
+      })}
+
+  if (tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
+    // what we do here - do not actually adjust Itime from souncard, instead we have 2 ratios:
+    // R: avg (scdelta / clockdelta) then clockdelta * R emulates sctime
+    // X: if Itime delta measured from some point > sctime delta from same point, we want to slow down
+    // so X == .99, otherwise speed up, so X = 1.01.
+
+    if (last_tsource == LIVES_TIME_SOURCE_SYSTEM) {
+      prev_current = current - clock_delta * R;
     }
 
-    if (tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
-      // what we do here - do not actually adjust Itime from souncard, instead we have 2 ratios:
-      // R: avg (scdelta / clockdelta) then clockdelta * R emulates sctime
-      // X: if Itime delta measured from some point > sctime delta from same point, we want to slow down
-      // so X == .99, otherwise speed up, so X = 1.01.
+    if (current < prev_current) {
+      prev_current = current;
+      baseItime = 0;
+      clock_current = 0;
+    }
 
-      if (last_tsource == LIVES_TIME_SOURCE_SYSTEM) {
-        prev_current = current - clock_delta * R;
-      }
+    if (!baseItime) {
+      baseItime = Itime;
+      base_current = prev_current;
+    }
+    if (!clock_current) {
+      clock_current = current;
+      last_scticks = mainw->clock_ticks;
+    }
 
-      if (current < prev_current) {
-        prev_current = current;
-        baseItime = 0;
-        clock_current = 0;
-      }
+    if (current > prev_current) {
+      ticks_t scdelta = current - prev_current;
+      // audio drivers may do their own interolation
+      // so we get the ratio from them
+      if (AUD_SRC_EXTERNAL) {
+	IF_AREADER_PULSE
+	  (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
+	  IF_AREADER_JACK
+	  (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
+	  } else {
+	IF_APLAYER_PULSE
+	  (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
+	  IF_APLAYER_JACK
+	  (R = lives_jack_get_timing_ratio(mainw->jackd);)
+	  }
 
-      if (!baseItime) {
-        baseItime = Itime;
-        base_current = prev_current;
-      }
-      if (!clock_current) {
-        clock_current = current;
-        last_scticks = mainw->clock_ticks;
-      }
+      // check the calculated time against the measured time
+      // either slow down or speed up to align
+      scdelta = current - base_current;
+      ticks_t sctime = baseItime + scdelta; // measured time
+      ticks_t systime = Itime + clock_delta * R * X; // calculated time
 
-      if (current > prev_current) {
-        ticks_t scdelta = current - prev_current;
-        if (mainw->time_jump) {
-          // if the time jumped, it is possible the soundcard comntinued
-          // in which case we want to advance the timer by the sc time to keep in sync
-          if (scdelta > mainw->time_jump) scdelta = mainw->time_jump;
-          susp_ticks -= scdelta;
-          clock_delta += scdelta;
-          R = X = 1.;
-        } else {
-          // audio drivers may do their own interolation
-          // so we get the ratio from them
-          if (AUD_SRC_EXTERNAL) {
-            IF_AREADER_PULSE
-            (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
-            IF_AREADER_JACK
-            (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
-          } else {
-            IF_APLAYER_PULSE
-            (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
-            IF_APLAYER_JACK
-            (R = lives_jack_get_timing_ratio(mainw->jackd);)
-          }
+      // negative drift means measured < calculated
+      drift = systime - sctime;
 
-          // check the calculated time against the measured time
-          // either slow down or speed up to align
-          scdelta = current - base_current;
-          ticks_t sctime = baseItime + scdelta; // measured time
-          ticks_t systime = Itime + clock_delta * R * X; // calculated time
-
-          // negative drift means measured < calculated
-          drift = systime - sctime;
-
-          if (drift < 0) {
-            if (X < 1.) X = 1.;
-            else X *= 1. + prefs->pbtimer_resync_factor;
-          } else if (drift > 0) {
-            if (X > 1.) X = 1.;
-            else X /= 1. + prefs->pbtimer_resync_factor;
-          }
-        }
-        prev_current = current;
+      if (drift < 0) {
+	if (X < 1.) X = 1.;
+	else X *= 1. + prefs->pbtimer_resync_factor;
+      } else if (drift > 0) {
+	if (X > 1.) X = 1.;
+	else X /= 1. + prefs->pbtimer_resync_factor;
       }
     }
+    prev_current = current;
   }
-
-  tdiff = clock_delta * R * X;
-
-  if (!mainw->time_jump && clock_delta) {
-    if (ncalls > 100000) {
-      tot_deltas += clock_delta;
-      av_delta = tot_deltas / ncalls;
-      timer_load = (double)clock_delta / (double)av_delta;
-    }
-    if (tdiff > (ticks_t)(prefs->pbtimer_maxdiff * X * R)) {
-      //g_print("tdiff was %ld, set to %ld\n",tdiff, (ticks_t)(prefs->pbtimer_maxdiff * X * R));
-      tdiff = prefs->pbtimer_maxdiff * X * R;
-    }
-  }
-  Itime += tdiff;
-
-  if (tsource == LIVES_TIME_SOURCE_NONE) tsource = LIVES_TIME_SOURCE_SYSTEM;
-
-  last_tsource = tsource;
-  if (time_source) *time_source = tsource;
-  return Itime;
 }
 
+tdiff = clock_delta * R * X;
+
+
+if (mainw->time_jump) {
+  if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / TICKS_PER_SECOND_DBL;
+ }
+ else  {
+   if (clock_delta) {
+     if (ncalls > 10000) {
+       tot_deltas += clock_delta;
+       av_delta = tot_deltas / ncalls;
+       timer_load = (double)clock_delta / (double)av_delta;
+     }
+     if (tdiff > (ticks_t)(prefs->pbtimer_maxdiff * X * R)) {
+       //g_print("tdiff was %ld, set to %ld\n",tdiff, (ticks_t)(prefs->pbtimer_maxdiff * X * R));
+       tdiff = prefs->pbtimer_maxdiff * X * R;
+     }
+   }
+   Itime += tdiff;
+
+   if (tsource == LIVES_TIME_SOURCE_NONE) tsource = LIVES_TIME_SOURCE_SYSTEM;
+
+   last_tsource = tsource;
+   if (time_source) *time_source = tsource;
+ }
+   return Itime;
+}
 

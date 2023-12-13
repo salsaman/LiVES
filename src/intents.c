@@ -1632,20 +1632,16 @@ weed_param_t *weed_param_from_attribute(lives_obj_instance_t *obj, const char *n
 }
 
 
-static boolean lives_transform_status_unref(lives_transform_status_t *st) {
-  // return FALSE if destroyedy
-  check_refcnt_init(&st->refcounter);
-  if (!refcount_dec(&st->refcounter)) {
-    lives_free(st);
-    return FALSE;
-  }
-  return TRUE;
-}
+/* static boolean lives_transform_status_unref(lives_transform_status_t *st) { */
+/*   // return FALSE if destroyedy */
+/*   check_refcnt_init(&st->refcounter); */
+/*   if (!refcount_dec(&st->refcounter)) { */
+/*     lives_free(st); */
+/*     return FALSE; */
+/*   } */
+/*   return TRUE; */
+/* } */
 
-
-boolean lives_transform_status_free(lives_transform_status_t *st) {
-  return lives_transform_status_unref(st);
-}
 
 
 lives_object_transform_t *find_transform_for_intentcaps(lives_obj_t *obj, lives_intentcap_t *icaps) {
@@ -1653,25 +1649,6 @@ lives_object_transform_t *find_transform_for_intentcaps(lives_obj_t *obj, lives_
   if (type == OBJECT_TYPE_MATH) {
     return math_transform_for_intent(obj, icaps->intent);
   }
-  return NULL;
-}
-
-
-lives_transform_status_t *transform(lives_object_transform_t *tx) {
-  /* lives_tx_param_t *iparam; */
-  /* lives_rules_t *prereq = tx->prereqs; */
-  /* for (int i = 0; (iparam = prereq->reqs->params[i]) != NULL; i++) { */
-  /*   int flags = weed_get_int_value(iparam, WEED_LEAF_FLAGS, NULL); */
-  /*   if (!(flags & PARAM_FLAG_VALUE_SET) && !(flags & PARAM_FLAG_OPTIONAL)) { */
-  /*     lives_tx_param_t *xparam = iparam_from_name(prereq->reqs->params, iparam->pname); */
-  /*     //lives_tx_param_t *xparam = iparam_from_name(tx->prereqs->oinst->params, iparam->name); */
-  /*     lives_leaf_dup(iparam, xparam, WEED_LEAF_VALUE); */
-  /*   } */
-
-  /*   switch ( */
-
-  /* pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function, */
-  /* 				       WEED_SEED_DOUBLE, args_fmt, xargs); */
   return NULL;
 }
 

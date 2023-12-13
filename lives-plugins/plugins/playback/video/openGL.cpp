@@ -648,8 +648,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   ntextures = ctexture = 0;
 
-  playing = TRUE;
-
   rthread_ready = FALSE;
   has_new_texture = FALSE;
   texturebuf = NULL;
@@ -662,17 +660,32 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   pthread_mutex_init(&cond_mutex, NULL);
   pthread_cond_init(&cond, NULL);
 
+  // wait for render thread ready
+  pthread_mutex_lock(&cond_mutex);
+
   pthread_create(&rthread, NULL, render_thread_func, &xparms);
 
   clock_gettime(CLOCK_REALTIME, &ts);
-  ts.tv_sec += 300;
+  ts.tv_sec += 30;
 
-  // wait for render thread ready
-  pthread_mutex_lock(&cond_mutex);
   while (!rthread_ready && rc == 0) {
     rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
   }
   pthread_mutex_unlock(&cond_mutex);
+
+  if (!rc) {
+    pthread_mutex_lock(&cond_mutex);
+    rthread_ready = FALSE;
+    playing = TRUE;
+    pthread_cond_signal(&cond);
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += 30;
+    while (!rthread_ready && rc == 0) {
+      rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+    }
+    pthread_mutex_unlock(&cond_mutex);
+  }
 
   if (!playing || (rc == ETIMEDOUT && !rthread_ready)) {
     std::cerr << "openGL plugin error: Failed to start render thread" << std::endl;
@@ -1937,8 +1950,8 @@ static int Upload(void) {
 }
 
 
-static void release_frame(weed_layer_t *frame) {
-  if (!frame) return;
+static void release_frame(weed_layer_t *frame) {  
+if (!frame) return;
   if (!host_flag_ptr) host_flag_ptr = weed_get_voidptr_value(frame, VPP_FLAG_PTR, NULL);
   if (host_flag_ptr) weed_memset(host_flag_ptr, 1, 1);
 }
@@ -1951,12 +1964,20 @@ static void *render_thread_func(void *data) {
 
   retbuf = NULL;
 
+  pthread_mutex_lock(&cond_mutex);
+  rthread_ready = TRUE;
+  pthread_cond_signal(&cond);
+  //pthread_mutex_unlock(&cond_mutex);
+
+  //pthread_mutex_lock(&cond_mutex);
+  while (!playing) pthread_cond_wait(&cond, &cond_mutex);
+  pthread_mutex_unlock(&cond_mutex);
+
   // width X height -> window size iff we create own window
   init_screen_inner(xparms->width, xparms->height, xparms->fullscreen, xparms->window_id, xparms->argc, xparms->argv);
 
-  rthread_ready = TRUE;
-
   pthread_mutex_lock(&cond_mutex);
+  rthread_ready = TRUE;
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
 

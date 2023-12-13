@@ -11,12 +11,16 @@
 #define SYNCLIST_FLAG_LILO		(1 << 0)
 #define SYNCLIST_FLAG_FREE_ON_EMPTY	(1 << 1)
 #define SYNCLIST_FLAG_POP_HEAD		(1 << 2)
+#define SYNCLIST_FLAG_FREE_PRIV		(1 << 3)
 
 typedef struct {
   pthread_rwlock_t lock;
+  int nvals;
   LiVESList *list;
   LiVESList *last;
   uint32_t flags;
+  pthread_rwlock_t priv_lock;
+  void *priv;
 } lives_sync_list_t;
 
 // versions beginning with underscore should be called if and only if synclist->mutex is locked
@@ -24,13 +28,24 @@ typedef struct {
 void lives_sync_list_set_lilo(lives_sync_list_t *, boolean lilo);
 void lives_sync_list_set_pop_head(lives_sync_list_t *, boolean yes);
 void lives_sync_list_free_on_empty(lives_sync_list_t *, boolean yes);
+void lives_sync_list_set_free_priv(lives_sync_list_t *, boolean yes);
+
 void lives_sync_list_wrlock(lives_sync_list_t *);
 void lives_sync_list_unlock(lives_sync_list_t *);
+
+int lives_sync_list_get_nvals(lives_sync_list_t *);
 
 lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *, void *data);
 
 LiVESList *_lives_sync_list_pop(lives_sync_list_t **);
 void *lives_sync_list_pop(lives_sync_list_t **);
+
+void lives_sync_list_set_priv(lives_sync_list_t *, void *priv);
+void *lives_sync_list_get_priv(lives_sync_list_t *);
+
+void lives_sync_list_readlock_priv(lives_sync_list_t *);
+void lives_sync_list_writelock_priv(lives_sync_list_t *);
+void lives_sync_list_unlock_priv(lives_sync_list_t *);
 
 void *_lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
 void *lives_sync_list_find(lives_sync_list_t *, lives_condfunc_f cond_func);
@@ -117,10 +132,6 @@ LiVESList *lives_list_remove_data(LiVESList *, livespointer data, boolean free_d
 // !! no checking is done to verify that 'node' is within list
 LiVESList *lives_list_detatch_node(LiVESList *, LiVESList *node);
 LiVESList *lives_list_detatch_data(LiVESList **, livespointer data);
-
-// trim list so last node is node before 'node', freeing the sublist starting from node
-// if node not in list, returns list unchanged. If node == list, returns NULL, otherwise returns list
-// !! no checking is done to verify that 'node' is within list
 LiVESList *lives_list_trim(LiVESList *, LiVESList *node, boolean free_data);
 
 // returns TRUE if found and removed

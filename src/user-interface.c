@@ -273,10 +273,10 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->import_proj, TRUE);
   }
 
-  if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
-    lives_widget_set_sensitive(mainw->int_audio_checkbutton, prefs->audio_src != AUDIO_SRC_INT);
-    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT);
-  }
+  /* if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) { */
+  /*   lives_widget_set_sensitive(mainw->int_audio_checkbutton, prefs->audio_src != AUDIO_SRC_INT); */
+  /*   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT); */
+  /* } */
 
   if (!prefs->vj_mode) {
     if (mainw->rfx_loaded) sensitize_rfx();

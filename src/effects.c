@@ -1149,12 +1149,13 @@ static lives_result_t rte_on_off(int key, int on_off) {
   if (mainw->rendered_fx)
     // enable /disable menu option "Apply current realtime effects" in rendered fx menu
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
-      if (!LIVES_IS_PLAYING
-          && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
-                                         || (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-                                             && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0))
-        lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, TRUE);
-      else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
+      if (!LIVES_IS_PLAYING) {
+	if (mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
+					|| (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+					    && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0))
+	  lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, TRUE);
+	else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
+      }
     }
 
   if (key > 0 && !is_auto) {

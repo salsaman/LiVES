@@ -4,23 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-// TODO - complete op ordering - add resize does gamma
-// add ordering for lbox
-// split lobx into resize / overlay
-
-// add node to ann_lpt for resize with gamma
-
-// check why gen size / pal not being set
-// check why sink pal not being set
-
-// check ann functioning
-
-// add estimates for proc_time
-
-///
-
-/////////
-//
 
 // node modelling - this is used to model the effect chain before it is appplied
 // in order to optimise the operational sequence and to compare hypothetical alternatives
@@ -29,100 +12,15 @@
 // and resizes
 // as layers pass through the effects chain from sources to display sink
 
-// prerequisites - before calling build_model, we must have the clip_index, and all clips must be created
-// e.g generators must have a clip
-// ideally map_sources_to_tracks ibs also run now, but this can be skipped if calculating a hypothetical model
-// after building the model, make_plan can be called at any time. Clip index must not have changed however and
-// each must point to a valid clip - except that index vals may be set to < 0 (NULL layer)
-// before or after creating plan, call align_with_model.
-// The plan can then be executed. Instances may be reinited on the first execution.
-// The layers will have been created from the clip_index, but frame numbers not set
-// as soon as frame is set, the source may begin loading.
-// The instances will be run in seuqence, and finally an output layer(s) will be ready to send to the sink
-// The plan will then be sent to the timing analyser. The plan is re-entrant / parallel, so at any moment it can be
-// executed again. This will create a new array of layer waiting for frame number to be created.
-// The only resstriction is tha an APPLY_INSTANCE or LOAD step from an earlier plan
-// must be finished before it can be run by the following plan. CONVERSION and LAYER_COPY_STEPS can be run out of sequence
-// provided the rlimits allow this. Before running any step we check to ensure there ar sufficient resources for the
-// prior plan to complete, otherwise the subsequent plan is paused.
-
-// thus the order is - get clip_index - (opt map_sources_to_tracks), build nodemodel - (opt, create instances),
-// build plan - align_with_model - (set instance channels, attach track_sources,
-// execute plan - set frames in layers
-
-// NOTES: - if we have output clones, we can send layer down multiple outs, provided it is not inplace
-// we can optionally replace a copy_laeyer with the cost to the next node for the parent or any clones
-//
-// then we can simply keep the layer around, so we can avoid a layer copy
-// w.g out 0 ---> inst A tcost = t0, qcost = q0
-// w.g out 1 ---> inst B tcost = t1, qcost = q1
-
-// normally we would add a layer_copy cost (tcost) to BOTH outputs,
-// instead we have options:
-// A can convert, B can set the out p
-
-// BUT if combined cost (A) < combined_cost(layer_copy), then we can send the layer to A,
-// wait for conversion (if there is any), then, if not  inplace,
-// the layer, provided it is not converted, and not inplace, can be used in B
-
-// so with copy we have:
-// A ->copy time -> conv cost -> apply inst
-// B ->copy time -> conv cost -> apply inst
-
-// if we eliminate copy then
-// A -> conv cost -> !inplace ?  -> apply inst  :  resv bb ?  make no inpl     :: suitable for B and B not inplace ? apply B
-// B                            -> inplace ? apply inst
-// or                                          -> conv cost -> apply inst
-
-// or do we have slack for B ? can we burn slack + elim copy and wait for conv (if A non inpl or rsv bb, and no B conv)
-// or wait for conv + apply inst + B conv cost from A conv Vs copy + conv from out pal
-
-// so cpy + conv B
-
-// or conv A      (both non inplace, B can use A conv)
-// or conv A, inst A, conv B   (b does conv, or fb7b62ca B cannot non inplace)
-// or conv A  apply inst B, appply inst A - b need no conv, b can non inplace, a is inplce
-
-// then: copy_layer OR conv A - can we non inplace A OR can B use cpal and is a proc_time < copy layer
-// if we can non inplace, then can we non inplace B ? if so  then is delta to rdy time + proc_cost < lct ?
-//     -- if yes then  wait for B rdy time, do non inplace but do not free, then do A inplace
-
-// A non inpl:
-//
-//    --  otherwise B has to wait for A, do its conve so is A conv + proc_time + A->B conve (discount slack)
-//  < copy cost + conv B
-
-// A inpl, B non inpl
-// is A conv + B proc < copy cost ?
-// is conv A < copy_cost
-
-// B, A ise same pla
-// both non inpl
-// conv A -> apply A
-
-// so - when we come to do a layer_copy, check - is the input node inplace ?
-// - if no, is inpal of orig equal to inpal of clone ?
-// - - if no - can we switch one or othe in pals at no cost ?
-// - - - if yes, switch it, proceed as yes
-// - - if yes, then is other output input inplace ?
-//  - - - if no, then elminate layer copy, dep is conv for orig
-// - - ---if yes, do we start it now ?
-// ......... if yes, can we reserve a bigblock ?
-// ............. if yes, reserve bigblock, make it non inplace, proceed as non inplace
-// ----------if no, keep as inplace,
-//-----------if not inplace - is ready time _ proc_time < dealine  ?
-// - - - - - if yes, eliminate layer_copy, apply inst orig becomes dep
-//  -------  if no, can we burn slack to wait for apply inst ?
-// ------------ if yes, reduce slack, eliminate layer_copy, apply inst orig becomes dep
-//
-
-
 #include "main.h"
 #include "nodemodel.h"
 #include "effects-weed.h"
 #include "effects.h"
 #include "cvirtual.h"
 #include "diagnostics.h"
+
+static volatile int nplans = 0;
+pthread_mutex_t nplans_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int allpals[] = {_ALL_24BIT_PALETTES, _ALL_32BIT_PALETTES, WEED_PALETTE_END};
 static int n_allpals = 0;
@@ -1673,6 +1571,7 @@ static double inc_running_steps(plan_step_t *step) {
     plan->tdata->waiting_time += xtime;
     if (plan->tdata->actual_start)  plan->tdata->active_pl_time -= xtime;
   } else plan->tdata->concurrent_time -= xtime;
+  step->tdata->real_start = xtime;
   return xtime;
 }
 
@@ -1720,11 +1619,13 @@ static void run_plan(exec_plan_t *plan) {
 
   if (!plan) return;
 
+  if (nplans > 1) lives_abort("multiple plans cannot be active simultaneously");
+  
   ____FUNC_ENTRY____(run_plan, NULL, "v");
 
   //bbsummary();
 
-  //MSGMODE_ON(DEBUG);
+  MSGMODE_ON(DEBUG);
 
   //if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
@@ -1734,7 +1635,6 @@ static void run_plan(exec_plan_t *plan) {
   }
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    SET_PLAN_STATE(CANCELLED);
     lives_proc_thread_cancel(self);
   }
 
@@ -1758,16 +1658,17 @@ static void run_plan(exec_plan_t *plan) {
   }
   pthread_mutex_unlock(pause_mutex);
 
-  SET_PLAN_STATE(RUNNING);
-
   plan->tdata->start_wait = plan->tdata->trigger_time - plan->tdata->trun_time;
 
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    SET_PLAN_STATE(CANCELLED);
+    MSGMODE_OFF(DEBUG);
+    ____FUNC_EXIT____;
     lives_proc_thread_cancel(self);
   }
+
+  SET_PLAN_STATE(RUNNING);
 
   plan->tdata->real_start = lives_get_session_time();
   plan->tdata->preload_time -= plan->tdata->real_start;
@@ -2003,7 +1904,6 @@ static void run_plan(exec_plan_t *plan) {
           xtime = inc_running_steps(step);
           d_print_debug("\nstep %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n", step_count,
                         step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
-          step->tdata->real_start = xtime;
           step->state = STEP_STATE_RUNNING;
           pull_frame_threaded(layer, sfile->hsize, sfile->vsize);
         }
@@ -2028,7 +1928,6 @@ static void run_plan(exec_plan_t *plan) {
                         step->track, 1000. * xtime, weed_palette_get_name(step->ini_pal), step->ini_width, step->ini_height,
                         weed_gamma_get_name(step->ini_gamma), weed_palette_get_name(step->fin_pal),
                         step->fin_width, step->fin_height, weed_gamma_get_name(step->fin_gamma));
-          step->tdata->real_start = xtime;
 
           // figure out the sequence of operations needed, construct a prochthread chain,
           // then queue it
@@ -2191,7 +2090,7 @@ static void run_plan(exec_plan_t *plan) {
             //dec_running_steps(step);
             break;
           }
-          step->tdata->real_start = xtime;
+
           inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
           if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
             d_print_debug("\nstep %d: RUN APPLY_INST (%s) @ %.2f msec, pd i %p\n",
@@ -2534,7 +2433,6 @@ static void run_plan(exec_plan_t *plan) {
 
   if (cancelled) {
     d_print_debug("Cancel plan requested\n");
-    SET_PLAN_STATE(CANCELLED);
     d_print_debug("Cancelling plan @ %.2f\n", xtime * 1000.);
   } else if (error) {
     SET_PLAN_STATE(ERROR);
@@ -2543,7 +2441,6 @@ static void run_plan(exec_plan_t *plan) {
   } else {
     if (lives_proc_thread_get_cancel_requested(self)) {
       d_print_debug("Cancel requested, ignoring as we are done anyway !\n");
-      SET_PLAN_STATE(CANCELLED);
     }
   }
 
@@ -2661,11 +2558,11 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->active = FALSE;
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
-  //MSGMODE_OFF(DEBUG);
+  MSGMODE_OFF(DEBUG);
 
   ____FUNC_EXIT____;
-
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
+  nplans--; 
 }
 
 
@@ -2674,12 +2571,15 @@ void plan_cycle_trigger(exec_plan_t *plan) {
 
   plan->tdata->trigger_time = lives_get_session_time();
 
-  lives_sleep_while_true(plan->state == PLAN_STATE_QUEUED);
+  // wait for queued plan to be picked up by a worker thread
+  lives_millisleep_while_true(plan->state == PLAN_STATE_QUEUED);
 
   if (plan->state == PLAN_STATE_WAITING) {
-    lives_millisleep_while_false(lives_proc_thread_is_paused(mainw->plan_runner_proc)
+    // now in the waiting state wait until it either pauses or gets cancelled
+    lives_microsleep_while_false(lives_proc_thread_is_paused(mainw->plan_runner_proc)
                                  || lives_proc_thread_was_cancelled(mainw->plan_runner_proc));
     if (lives_proc_thread_is_paused(mainw->plan_runner_proc))
+      // once paused, we send a resume request which will wake it
       lives_proc_thread_request_resume(mainw->plan_runner_proc);
   }
 }
@@ -2747,6 +2647,7 @@ static boolean runner_cancelled_cb(void *lptp, void *planp) {
     d_print_debug("plan cancelled @ %.2f msec\n", xtime * 1000.);
     if (plan->state == PLAN_STATE_WAITING || plan->state == PLAN_STATE_QUEUED)
       d_print_debug("(plan cancelled before running)\n");
+    nplans--;
     SET_PLAN_STATE(CANCELLED);
   }
   return FALSE;
@@ -2759,16 +2660,16 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
   lives_proc_thread_t lpt = NULL;
   if (async) {
     if (plan->state != PLAN_STATE_INERT) return mainw->plan_runner_proc;
+    SET_PLAN_STATE(QUEUED);
 
     mainw->plan_runner_proc = lpt
       = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_plan, -1, "v", plan);
-
     lives_proc_thread_add_hook(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
 
     lives_proc_thread_set_cancellable(lpt);
     lives_proc_thread_set_pauseable(lpt, TRUE);
-    SET_PLAN_STATE(QUEUED);
     plan->tdata->exec_time = lives_get_session_time();
+    nplans++;
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
   } else run_plan(plan);
   return lpt;
@@ -5005,7 +4906,7 @@ static LiVESList *_add_cdeltas(LiVESList * cdeltas, int out_pal, int in_pal,
       list->next = list->prev = NULL;
       cdelta = (cost_delta_t *)list->data;
       list->data = NULL;
-      lives_list_free(list);
+      lives_list_free_1(list);
     }
   }
 
@@ -7668,3 +7569,98 @@ lives_result_t run_next_cycle(void) {
   return LIVES_RESULT_SUCCESS;
 }
 
+// split lobx into resize / overlay
+// add node to ann_lpt for resize with gamma
+// check ann functioning
+// add estimates for proc_time + deinterlacing
+
+///
+
+/////////
+//
+// prerequisites - before calling build_model, we must have the clip_index, and all clips must be created
+// e.g generators must have a clip
+// ideally map_sources_to_tracks ibs also run now, but this can be skipped if calculating a hypothetical model
+// after building the model, make_plan can be called at any time. Clip index must not have changed however and
+// each must point to a valid clip - except that index vals may be set to < 0 (NULL layer)
+// before or after creating plan, call align_with_model.
+// The plan can then be executed. Instances may be reinited on the first execution.
+// The layers will have been created from the clip_index, but frame numbers not set
+// as soon as frame is set, the source may begin loading.
+// The instances will be run in seuqence, and finally an output layer(s) will be ready to send to the sink
+// The plan will then be sent to the timing analyser. The plan is re-entrant / parallel, so at any moment it can be
+// executed again. This will create a new array of layer waiting for frame number to be created.
+// The only resstriction is tha an APPLY_INSTANCE or LOAD step from an earlier plan
+// must be finished before it can be run by the following plan. CONVERSION and LAYER_COPY_STEPS can be run out of sequence
+// provided the rlimits allow this. Before running any step we check to ensure there ar sufficient resources for the
+// prior plan to complete, otherwise the subsequent plan is paused.
+
+// thus the order is - get clip_index - (opt map_sources_to_tracks), build nodemodel - (opt, create instances),
+// build plan - align_with_model - (set instance channels, attach track_sources,
+// execute plan - set frames in layers
+
+// NOTES: - if we have output clones, we can send layer down multiple outs, provided it is not inplace
+// we can optionally replace a copy_laeyer with the cost to the next node for the parent or any clones
+//
+// then we can simply keep the layer around, so we can avoid a layer copy
+// w.g out 0 ---> inst A tcost = t0, qcost = q0
+// w.g out 1 ---> inst B tcost = t1, qcost = q1
+
+// normally we would add a layer_copy cost (tcost) to BOTH outputs,
+// instead we have options:
+// A can convert, B can set the out p
+
+// BUT if combined cost (A) < combined_cost(layer_copy), then we can send the layer to A,
+// wait for conversion (if there is any), then, if not  inplace,
+// the layer, provided it is not converted, and not inplace, can be used in B
+
+// so with copy we have:
+// A ->copy time -> conv cost -> apply inst
+// B ->copy time -> conv cost -> apply inst
+
+// if we eliminate copy then
+// A -> conv cost -> !inplace ?  -> apply inst  :  resv bb ?  make no inpl     :: suitable for B and B not inplace ? apply B
+// B                            -> inplace ? apply inst
+// or                                          -> conv cost -> apply inst
+
+// or do we have slack for B ? can we burn slack + elim copy and wait for conv (if A non inpl or rsv bb, and no B conv)
+// or wait for conv + apply inst + B conv cost from A conv Vs copy + conv from out pal
+
+// so cpy + conv B
+
+// or conv A      (both non inplace, B can use A conv)
+// or conv A, inst A, conv B   (b does conv, or fb7b62ca B cannot non inplace)
+// or conv A  apply inst B, appply inst A - b need no conv, b can non inplace, a is inplce
+
+// then: copy_layer OR conv A - can we non inplace A OR can B use cpal and is a proc_time < copy layer
+// if we can non inplace, then can we non inplace B ? if so  then is delta to rdy time + proc_cost < lct ?
+//     -- if yes then  wait for B rdy time, do non inplace but do not free, then do A inplace
+
+// A non inpl:
+//
+//    --  otherwise B has to wait for A, do its conve so is A conv + proc_time + A->B conve (discount slack)
+//  < copy cost + conv B
+
+// A inpl, B non inpl
+// is A conv + B proc < copy cost ?
+// is conv A < copy_cost
+
+// B, A ise same pla
+// both non inpl
+// conv A -> apply A
+
+// so - when we come to do a layer_copy, check - is the input node inplace ?
+// - if no, is inpal of orig equal to inpal of clone ?
+// - - if no - can we switch one or othe in pals at no cost ?
+// - - - if yes, switch it, proceed as yes
+// - - if yes, then is other output input inplace ?
+//  - - - if no, then elminate layer copy, dep is conv for orig
+// - - ---if yes, do we start it now ?
+// ......... if yes, can we reserve a bigblock ?
+// ............. if yes, reserve bigblock, make it non inplace, proceed as non inplace
+// ----------if no, keep as inplace,
+//-----------if not inplace - is ready time _ proc_time < dealine  ?
+// - - - - - if yes, eliminate layer_copy, apply inst orig becomes dep
+//  -------  if no, can we burn slack to wait for apply inst ?
+// ------------ if yes, reduce slack, eliminate layer_copy, apply inst orig becomes dep
+//

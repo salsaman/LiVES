@@ -31,6 +31,8 @@ typedef struct {
 
 lives_obj_instance_t *get_aplayer_instance(int source);
 
+int64_t lives_aplayer_get_status(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, int64_t status);
 int lives_aplayer_get_source(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source);
 int lives_aplayer_get_arate(lives_obj_t *aplayer);
@@ -57,20 +59,30 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
 #define AUD_SRC_REALTIME (get_aplay_clipno() != -1)
 #define AV_CLIPS_EQUAL (get_aplay_clipno() == mainw->playing_file)
 
+#define IF_APLAYER_NULL(...)_DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
+#define IF_AREADER_NULL(...)_DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
+#define IF_AUDIO_NULL(...)_DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
+
 #ifdef HAVE_PULSE_AUDIO
 #define IF_APLAYER_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed)_DW0(__VA_ARGS__););
 #define IF_AREADER_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read)_DW0(__VA_ARGS__););
+#define IF_AUDIO_PULSE(...)_DW0(if((prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed) \
+				   || (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read))_DW0(__VA_ARGS__););
 #else
 #define IF_APLAYER_PULSE(...)if(0);
 #define IF_AREADER_PULSE(...)if(0);
+#define IF_AUDIO_PULSE(...)if(0);
 #endif
 
 #ifdef ENABLE_JACK
 #define IF_APLAYER_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd)_DW0(__VA_ARGS__););
 #define IF_AREADER_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read)_DW0(__VA_ARGS__););
+#define IF_AUDIO_JACK(...)_DW0(if((prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd) \
+				   || (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read))_DW0(__VA_ARGS__););
 #else
 #define IF_APLAYER_JACK(...)if(0);
 #define IF_AREADER_JACK(...)if(0);
+#define IF_AUDIO_JACK(...)if(0);
 #endif
 
 #define SAMPLE_MAX_16BIT_P  32767.4999999f
@@ -306,6 +318,7 @@ typedef enum {
 #define APLAYER_STATUS_SILENT		(1ull << 16)
 #define APLAYER_STATUS_PAUSED		(1ull << 17)
 #define APLAYER_STATUS_CORKED		(1ull << 18)
+#define APLAYER_STATUS_MUTED		(1ull << 19)
 
 #define APLAYER_STATUS_ERROR		(1ull << 32)
 #define APLAYER_STATUS_DISCONNECTED	(1ull << 33)
@@ -342,7 +355,6 @@ boolean resync_audio(int clipno, double frameno);
 boolean avsync_force(void);
 
 void audio_sync_ready(void);
-boolean video_sync_ready(void);
 
 void freeze_unfreeze_audio(boolean is_frozen);
 
@@ -360,7 +372,8 @@ void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
 
-#define is_realtime_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE))
+#define is_realtime_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NULL))
+#define is_real_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE)
 
 #define APLAYER_REALTIME (is_realtime_aplayer(prefs->audio_player))
 

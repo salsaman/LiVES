@@ -155,10 +155,9 @@ typedef struct {
 #ifdef _BASE_DEFS_ONLY_
 
 typedef lives_funcptr_t object_funcptr_t;
-typedef struct _object_t lives_object_t;
-typedef struct _object_t lives_object_instance_t;
 typedef weed_plant_t lives_obj_instance_t;
-typedef struct _obj_status_t lives_transform_status_t;
+
+//typedef struct _obj_status_t lives_transform_status_t;
 
 #undef _BASE_DEFS_ONLY_
 #else
@@ -554,7 +553,7 @@ get_transform_for(intentcap);
 
 // the return value belongs to the object, and should only be freed with lives_transform_status_free
 // will call check_requirements() then fill_requirements() if any mandatory values are missing
-lives_transform_status_t *transform(lives_object_transform_t *);
+//lives_transform_status_t *transform(lives_object_transform_t *);
 
 //////
 // derived functions

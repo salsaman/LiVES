@@ -7,15 +7,53 @@
 #include "maths.h"
 
 
+LIVES_GLOBAL_INLINE void lives_sync_list_readlock_priv(lives_sync_list_t *synclist) {
+  if (synclist) pthread_rwlock_rdlock(&synclist->priv_lock);
+}
+  
+
+LIVES_GLOBAL_INLINE void lives_sync_list_writelock_priv(lives_sync_list_t *synclist) {
+  if (synclist) pthread_rwlock_wrlock(&synclist->priv_lock);
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_unlock_priv(lives_sync_list_t *synclist) {
+  if (synclist) pthread_rwlock_unlock(&synclist->priv_lock);
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_set_priv(lives_sync_list_t *synclist, void *priv) {
+  if (synclist) synclist->priv = priv;
+}
+
+
+LIVES_GLOBAL_INLINE void *lives_sync_list_get_priv(lives_sync_list_t *synclist) {
+  return synclist ? synclist->priv : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_sync_list_get_nvals(lives_sync_list_t *synclist) {
+  return synclist ? synclist->nvals : 0;
+}
+
+
 LIVES_GLOBAL_INLINE void lives_sync_list_set_lilo(lives_sync_list_t *synclist, boolean lilo) {
   if (synclist) synclist->flags = lilo ? synclist->flags | SYNCLIST_FLAG_LILO
                                     : synclist->flags & ~SYNCLIST_FLAG_LILO;
 }
 
+
 LIVES_GLOBAL_INLINE void lives_sync_list_set_pop_head(lives_sync_list_t *synclist, boolean yes) {
   if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_POP_HEAD
                                     : synclist->flags & ~SYNCLIST_FLAG_POP_HEAD;
 }
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_set_free_priv(lives_sync_list_t *synclist, boolean yes) {
+  if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_FREE_PRIV
+                                    : synclist->flags & ~SYNCLIST_FLAG_FREE_PRIV;
+}
+
 
 LIVES_GLOBAL_INLINE void lives_sync_list_free_on_empty(lives_sync_list_t *synclist, boolean yes) {
   if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_FREE_ON_EMPTY
@@ -43,6 +81,7 @@ LIVES_GLOBAL_INLINE void lives_sync_list_unlock(lives_sync_list_t *synclist)
 LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
   LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
   pthread_rwlock_init(&synclist->lock, NULL);
+  pthread_rwlock_init(&synclist->priv_lock, NULL);
   synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY | SYNCLIST_FLAG_LILO
                     | SYNCLIST_FLAG_POP_HEAD;
   return synclist;
@@ -55,6 +94,7 @@ static void _lives_sync_list_append(lives_sync_list_t *synclist, LiVESList *node
     node->prev = synclist->last;
   } else synclist->list = node;;
   synclist->last = node;
+  synclist->nvals++;
 }
 
 static lives_sync_list_t *lives_sync_list_append(lives_sync_list_t *synclist, void *data) {
@@ -73,6 +113,7 @@ static void _lives_sync_list_prepend(lives_sync_list_t *synclist, LiVESList *nod
     node->next = synclist->list;
   } else synclist->last = node;
   synclist->list = node;
+  synclist->nvals++;
 }
 
 static lives_sync_list_t *lives_sync_list_prepend(lives_sync_list_t *synclist, void *data) {
@@ -149,7 +190,9 @@ LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t **synclist
     if (synclist->last) synclist->last->next = NULL;
     else synclist->list = NULL;
   }
-  list->prev = list->next = NULL;
+
+  lives_list_free_1(list);
+  synclist->nvals--;
 
   if (!synclist->list && (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY))
     *synclistp = _lives_sync_list_free(synclist, FALSE);
@@ -163,11 +206,8 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t **synclistp) {
   if (synclistp && *synclistp) {
     lives_sync_list_wrlock(*synclistp);
     list = _lives_sync_list_pop(synclistp);
+    data = list->data;
     if (*synclistp) lives_sync_list_unlock(*synclistp);
-    if (list) {
-      data = list->data;
-      lives_list_free(list);
-    }
   }
   return data;
 }
@@ -178,15 +218,16 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_remove(lives_sync_list_t
   if (synclist) {
     LiVESList *list = synclist->list;
     for (; list && list->data != data; list = list->next);
-    if (list) {
-      if (list->prev) list->prev->next = list->next;
-      else synclist->list = list->next;
-      if (list->next) list->next->prev = list->prev;
-      else synclist->last = list->prev;
-      list->prev = list->next = NULL;
-      lives_list_free(list);
-      if (do_free) lives_free(data);
-    }
+    if (!list) return synclist;
+    if (list->prev) list->prev->next = list->next;
+    else synclist->list = list->next;
+    if (list->next) list->next->prev = list->prev;
+    else synclist->last = list->prev;
+    list->prev = list->next = NULL;
+    lives_list_free_1(list);
+    if (do_free) lives_free(data);
+    synclist->nvals--;
+
     if (!synclist->list && (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY))
       synclist = _lives_sync_list_free(synclist, FALSE);
   }
@@ -209,6 +250,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_clear(lives_sync_list_t 
   if (free_data) lives_list_free_data(synclist->list);
   lives_list_free(synclist->list);
   synclist->list = NULL;
+  synclist->nvals = 0;
   if (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY)
     synclist = _lives_sync_list_free(synclist, FALSE);
   return synclist;
@@ -235,6 +277,9 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_free(lives_sync_list_t *
     synclist->list = NULL;
   }
   pthread_rwlock_unlock(&synclist->lock);
+
+  pthread_rwlock_destroy(&synclist->lock);
+  pthread_rwlock_destroy(&synclist->priv_lock);
   lives_free(synclist);
   return NULL;
 }
@@ -343,7 +388,7 @@ LiVESList *idx_list_remove(LiVESList *idxlist, int idx, boolean free_data) {
     else idxlist = lptr->next;
     if (lptr->next) lptr->next->prev = lptr->prev;
     lives_free(lptr->data);
-    lives_list_free(lptr);
+    lives_list_free_1(lptr);
   }
   return idxlist;
 }
@@ -431,7 +476,7 @@ LiVESList *lives_list_delete_string(LiVESList *list, const char *string) {
       else list = xlist->next;
       if (xlist->next) xlist->next->prev = xlist->prev;
       xlist->next = xlist->prev = NULL;
-      lives_list_free(xlist);
+      lives_list_free_1(xlist);
       return list;
     }
   }
@@ -571,17 +616,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_find_by_data(LiVESList *list, livespoi
 LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList *node, boolean free_data) {
   list = lives_list_detatch_node(list, node);
   if (node->data && free_data) lives_free(node->data);
-  lives_list_free(node);
-  return list;
-}
-
-
-LIVES_GLOBAL_INLINE LiVESList *lives_list_trim(LiVESList *list, LiVESList *node, boolean free_data) {
-  if (!node || !list) return list;
-  if (node->prev) node->prev = node->prev->next = NULL;
-  else if (node == list) list = NULL;
-  if (free_data) lives_list_free_data(node);
-  lives_list_free(node);
+  lives_list_free_1(node);
   return list;
 }
 

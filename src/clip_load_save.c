@@ -2244,7 +2244,6 @@ boolean reload_clip(int clipno, frames_t maxframe) {
   odeclist = lives_list_copy(capable->plugins_list[PLUGIN_TYPE_DECODER]);
 
   lives_chdir(clipdir, FALSE);
-  lives_free(clipdir);
 
   while (1) {
     fake_cdata->URI = lives_strdup(sfile->file_name);
@@ -2295,7 +2294,7 @@ manual_locate:
       }
       if (!retb) {
         if (ignore) {
-          ignore_clip(clipno);
+          ignore_clip(clipdir);
           lives_freep((void **)&mainw->files[clipno]);
         } else {
           current_file = mainw->current_file;
@@ -2308,6 +2307,7 @@ manual_locate:
       lives_free(orig_filename);
       lives_list_free(capable->plugins_list[PLUGIN_TYPE_DECODER]);
       capable->plugins_list[PLUGIN_TYPE_DECODER] = odeclist;
+      lives_free(clipdir);
       return retb;
     }
 
@@ -2655,7 +2655,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile = NULL;
 
   char buff[256], *buffptr;
-  char *clipdir, *ignore;
+  char *clipdir;
 
   LiVESResponseType resp;
 
@@ -2815,21 +2815,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         buffptr = buff;
       }
 
-      clipdir = lives_build_path(prefs->workdir, buffptr, NULL);
-
-      ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
-      if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
-        lives_free(clipdir);
-        lives_free(ignore);
-        continue;
-      }
-      lives_free(ignore);
-      ;
-      if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
-        lives_free(clipdir);
-        continue;
-      }
-      lives_free(clipdir);
+      if (should_ignore_ext_clip(buff)) continue;
 
       if (strstr(buffptr, "/" CLIPS_DIRNAME "/")) {
         char **array;

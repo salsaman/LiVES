@@ -184,12 +184,11 @@ static void prep_audio_player(void) {
   }
 
   if (CURRENT_CLIP_HAS_AUDIO) {
-    // start up our audio player (jack or pulse)
+    // start up our audio player
     IF_APLAYER_JACK(jack_aud_pb_ready(mainw->jackd, mainw->current_file););
     IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, mainw->current_file););
+    //IF_APLAYER_NULL(nullaudio_pb_ready(mainw->current_file););
   }
-
-
 }
 
 
@@ -547,49 +546,42 @@ static void pre_playback(void) {
 
 static boolean reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
+  boolean pa_reset = TRUE;
 
   mainw->origticks = lives_get_session_ticks();
 
-#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_src == AUDIO_SRC_INT) {
+    IF_APLAYER_PULSE
+      (if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
+	 pa_reset = FALSE;})
 
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    boolean pa_reset = TRUE;
-    if (prefs->audio_src == AUDIO_SRC_INT) {
-      if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
-        pa_reset = FALSE;
+      IF_APLAYER_JACK(jack_time_reset(mainw->jackd, 0);)
+      } else {
+    IF_AREADER_PULSE
+      (pulse_driver_uncork(mainw->pulsed_read);
+       if (!pa_time_reset(mainw->pulsed_read, 0)) {
+	 pa_reset = FALSE;
+       })
       }
-    } else {
-      if (mainw->pulsed_read) {
-        pulse_driver_uncork(mainw->pulsed_read);
-        if (!pa_time_reset(mainw->pulsed_read, 0)) {
-          pa_reset = FALSE;
-        }
-      }
-    }
-    if (!pa_reset) {
+
+  if (!pa_reset) {
       handle_audio_timeout();
       return FALSE;
     }
     if (mainw->event_list) {
       mainw->pulsed->in_use = TRUE;
     }
-  }
-#endif
+
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (mainw->jackd) {
-      jack_time_reset(mainw->jackd, 0);
-    }
     if (mainw->jackd_read) {
       jack_time_reset(mainw->jackd_read, 0);
     }
     if (mainw->jackd && mainw->event_list)
       mainw->jackd->in_use = TRUE;
-  }
 #endif
 
-  reset_playback_clock(mainw->origticks);
+    reset_playback_clock(mainw->origticks);
   return TRUE;
 }
 

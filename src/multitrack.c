@@ -18641,15 +18641,8 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
                     char *hdrfile;
                     int rnc = atoi(array[1]);
                     if (rnc == clip_index[i]) {
-                      char *chkpath = lives_build_path(prefs->workdir, lmap->entry->handle, NULL);
-                      if (LIVES_FILE_TEST(chkpath, LIVES_FILE_IS_DIR)) {
-                        char *ignore = lives_build_filename(chkpath, LIVES_FILENAME_IGNORE, NULL);
-                        if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
-                          lives_free(chkpath); lives_free(ignore);
-                          break;
-                        }
-                        lives_free(ignore);
-                        hdrfile = lives_build_filename(chkdir, LIVES_CLIP_HEADER, NULL);
+ 			if (should_ignore_ext(lmap->entry->handle)) break;
+			hdrfile = lives_build_filename(chkdir, LIVES_CLIP_HEADER, NULL);
                         if (lives_file_test(hdrfile, LIVES_FILE_TEST_EXISTS)) {
                           status[clip_index[i]] |= S_RECOVERABLE;
                           mhandles[clip_index[i]) = chkpath;

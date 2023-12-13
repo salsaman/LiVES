@@ -339,7 +339,7 @@ void run_diskspace_dialog_cb(LiVESWidget *, livespointer data);
 boolean run_diskspace_dialog_idle(livespointer data);
 
 LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
-                                 LiVESList **left_list);
+                                 LiVESList **left_list, LiVESList **ign_list);
 
 LiVESWidget *trash_rb(LiVESButtonBox *parent);
 

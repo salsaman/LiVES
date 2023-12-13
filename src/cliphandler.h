@@ -910,7 +910,11 @@ double get_ratio_fps(const char *string);
 
 boolean calc_ratio_fps(double fps, int *numer, int *denom);
 
-boolean ignore_clip(int which);
+boolean should_ignore_clip(int which);
+
+boolean should_ignore_ext_clip(const char *handle);
+
+void ignore_clip(const char *clipdir);
 
 void make_cleanable(int clipno, boolean isit);
 

@@ -628,4 +628,6 @@ typedef enum {
 #define MILLIONS_DBL(n) ((double)n##000000.)
 #define ONE_MILLION_DBL MILLIONS_DBL(1)
 
+#define LIVES_ASSERT(cond) _DW0(if(!(cond))lives_assert_failed(#cond, __FILE__, __LINE__);)
+
 #endif

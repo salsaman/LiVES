@@ -315,7 +315,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
         i = LIVES_POINTER_TO_INT(cliplist->data);
         if (IS_NORMAL_CLIP(i) && i != mainw->scrap_file && i != mainw->ascrap_file) {
           lives_clip_t *sfile;
-          if (ignore_clip(i)) continue;
+          if (should_ignore_clip(i)) continue;
           sfile = mainw->files[i];
           sfile->was_in_set = TRUE;
           dump_clip_binfmt(i);
@@ -840,15 +840,15 @@ boolean reload_set(const char *set_name) {
   lives_clip_t *sfile;
 
   char *msg, *com, *ordfile, *cwd, *clipdir, *handle = NULL;
-  char *ignore;
 
   boolean added_recovery = FALSE;
   boolean hadbad = FALSE;
   boolean use_dec;
+  boolean ignore_all = TRUE;
 
   int last_file = -1, new_file = -1;
   int start_clip = mainw->current_file == -1 ? 1 : mainw->current_file + 1;
-  int clipcount = start_clip, ignored = 0;
+  int clipcount = start_clip;
   frames_t maxframe;
 
   mainw->mt_needs_idlefunc = FALSE;
@@ -932,11 +932,9 @@ boolean reload_set(const char *set_name) {
         // if dir exists, and there are no subdirs, ask user if they want to delete
         if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
           //// todo test if no subdirs
-          if (ignored) {
+          if (ignore_all) {
             // if all files ignored, ignore the entire set
-            char *ignore = lives_build_filename(CURRENT_SET_DIR, LIVES_FILENAME_IGNORE, NULL);
-            lives_touch(ignore);
-            lives_free(ignore);
+	    ignore_clip(CURRENT_SET_DIR);
           } else {
             char *cdirname = CLIPS_DIR(set_name);
             if (lives_file_test(cdirname, LIVES_FILE_TEST_IS_DIR)) {
@@ -1003,18 +1001,12 @@ boolean reload_set(const char *set_name) {
     }
 
     clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
-    if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
+    if (should_ignore_ext_clip(mainw->msg)) {
       lives_free(clipdir);
       continue;
     }
 
-    ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
-    if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
-      ignored++;
-      lives_free(clipdir);
-      lives_free(ignore);
-      continue;
-    }
+    ignore_all = FALSE;
 
     if (orderfile) {
       // newer style (0.9.6+)
@@ -1032,7 +1024,6 @@ boolean reload_set(const char *set_name) {
 
     if (!sfile) {
       lives_free(clipdir);
-      lives_free(ignore);
       mainw->suppress_dprint = FALSE;
 
       if (!mainw->recovering_files) end_threaded_dialog();
@@ -1063,10 +1054,6 @@ boolean reload_set(const char *set_name) {
       /// set clip failed to load, when this happens
       // the user can choose to delete it or mark it as ignored
       /// else it will keep trying to reload each time.
-      if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
-        ignored++;
-      }
-      lives_free(ignore);
       lives_free(clipdir);
       lives_free(mainw->files[mainw->current_file]);
       mainw->files[mainw->current_file] = NULL;
@@ -1076,7 +1063,6 @@ boolean reload_set(const char *set_name) {
       continue;
     }
     lives_free(clipdir);
-    lives_free(ignore);
 
     threaded_dialog_spin(0.);
 

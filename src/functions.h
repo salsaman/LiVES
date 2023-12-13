@@ -125,10 +125,11 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
       {pthread_rwlock_unlock(&RTOKENS.rwlock);return(val);}		\
     pthread_rwlock_unlock(&RTOKENS.rwlock);})
 
-#define T_RECURSE_GUARD_ARM_FOR_DATA(dataptr) _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,dataptr) 
-#define T_RECURSE_GUARD_END_FOR_DATA(dataptr) RECURSE_GUARD_END_FOR_DATA(dataptr) 
-
-///
+#define T_RECURSE_GUARD_ARM_FOR_DATA(dataptr) _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,dataptr)
+#define T_RECURSE_GUARD_END_FOR_DATA(dataptr) _DW0(pthread_rwlock_wrlock(&RTOKENS.rwlock); \
+						   THREADVAR(trest_list) = remove_recursion_token(THREADVAR(trest_list), \
+												  RTOKENS.token,dataptr); \
+						   pthread_rwlock_unlock(&RTOKENS.rwlock);)
 
 /* recursion_token *get_rec_token(vpod){return &trectoks;} */
 /* recursion_token *rtp = get_rec_token(); */
@@ -370,6 +371,8 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 #define HOOK_CB_PERSISTENT		(1ull << 5)
 
+#define HOOK_CB_IGNORE			(1ull << 6)
+
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 8) // force fg service run
 
@@ -552,17 +555,22 @@ void lives_closure_free(lives_closure_t *closure);
 
 typedef struct _hstack_t {
   int type;
+  lives_hook_stack_t **parent_stacks;
   volatile LiVESList *stack;
   pthread_mutex_t mutex;
   volatile uint64_t flags;
-  lives_proc_thread_t owner;
-
+  union {
+    lives_proc_thread_t lpt;
+    pthread_t		thread;
+  } owner;
   // for hook stacks with pattern request,
   // when triggered, the callbacks are not actioned, but instead
   // transferred to req_targer as if the caller had added them there originally
+  // - except that the set_flags and unset_flags are applied before transfer
   lives_hook_stack_t **req_target_stacks;
   int req_target_type;
   uint64_t req_target_set_flags;
+  uint64_t req_target_unset_flags;
 } lives_hook_stack_t;
 
 // hook_stack_flags
@@ -602,6 +610,7 @@ hookstack_pattern_t lives_hookstack_pattern(int htype);
 hookstack_descriptor_t *get_hs_desc(void);
 
 // flagbits for trigger_details
+// the values are ORed with the callback flags
 
 #define HOOKSTACK_INVALID		((uint64_t)-1)
 

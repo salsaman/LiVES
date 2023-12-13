@@ -34,12 +34,10 @@ using namespace cv;
 ////////////////////////////////////////////////////////////////////////
 
 // leaves which should be deleted when nullifying pixel_data
-const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_BBLOCKALLOC,
-                                        LIVES_LEAF_PIXEL_DATA_CONTIGUOUS,
+const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_PIXEL_DATA_CONTIGUOUS,
                                         WEED_LEAF_HOST_ORIG_PDATA,
                                         LIVES_LEAF_PIXBUF_SRC,
                                         LIVES_LEAF_SURFACE_SRC,
-                                        LIVES_LEAF_REAL_PIXDATA,
 
                                         LIVES_LEAF_MD5SUM,
                                         LIVES_LEAF_MD5_CHKSIZE,
@@ -107,12 +105,14 @@ weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *ke
 }
 
 
-LIVES_GLOBAL_INLINE weed_error_t lives_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
-  // force overrride of IMMUTABLE dest leaves
+LIVES_GLOBAL_INLINE boolean lives_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
   if (!weed_plant_has_leaf(slayer, key)) {
     weed_leaf_set_undeletable(dlayer, key, FALSE);
-    return weed_leaf_delete(dlayer, key);
-  } else return lives_leaf_dup(dlayer, slayer, key);
+    weed_leaf_delete(dlayer, key);
+    return FALSE;
+  } else lives_leaf_dup(dlayer, slayer, key); // lives_leaf_dup forces overrride of IMMUTABLE dest leaves
+
+  return TRUE;
 }
 
 
@@ -1802,7 +1802,6 @@ static boolean can_thread(weed_filter_t *filt) {
 
 /**
    @brief process a single video filter instance
-
    If the filter was not Inplace then we need to copy the output channel back to the layer.
    Otherwise, the pixel data is already shared, so we can simply nullify it in the channel.
 
@@ -1840,7 +1839,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean needs_reinit = FALSE;
   boolean busy = FALSE;
-  int clip = -1, lcount = 0;
+  int clip = -1;
   int width, height, lstat;
   int num_ctmpl, num_inc, num_outc;
   int num_in_alpha = 0, num_out_alpha = 0;
@@ -2048,15 +2047,15 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
   }
 
   // count the actual layers fed in
-  while (layers[lcount]) {
-    layer = layers[lcount];
-    clip = lives_layer_get_clip(layer);
-    if (clip == mainw->scrap_file && num_in_tracks <= 1 && num_out_tracks <= 1) {
-      retval = FILTER_ERROR_IS_SCRAP_FILE;
-      goto done_video;
+  if (mainw->scrap_file != -1) {
+    for (i = 0; i < num_in_tracks; i++) {
+      layer = layers[i];
+      clip = lives_layer_get_clip(layer);
+      if (clip == mainw->scrap_file && num_in_tracks <= 1 && num_out_tracks <= 1) {
+	retval = FILTER_ERROR_IS_SCRAP_FILE;
+	goto done_video;
+      }
     }
-
-    lcount++;
   }
 
   for (k = i = 0; i < num_in_tracks; i++) {
@@ -2074,7 +2073,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
     channel = in_channels[k];
     weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
 
-    if (in_tracks[i] >= lcount) {
+    if (in_tracks[i] >= mainw->num_tracks) {
       /// here we have more in_tracks than actual layers (this can happen if we have blank frames)
       /// disable some optional channels if we can
       for (j = k; j < num_inc + num_in_alpha; j++) {
@@ -3681,7 +3680,7 @@ boolean has_usable_palette(weed_plant_t *filter, weed_plant_t *chantmpl) {
   int *palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
   for (int i = 0; i < npals; i++) {
     palette = palettes[i];
-    if (palette == WEED_PALETTE_END || is_useable_palette(palette)) break;
+    if (palette == WEED_PALETTE_END || is_usable_palette(palette)) break;
   }
   lives_free(palettes);
   return palette != WEED_PALETTE_END;

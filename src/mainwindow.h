@@ -1061,6 +1061,10 @@ typedef struct {
   pthread_mutex_t avseek_mutex;
   volatile boolean video_seek_ready;
   volatile boolean audio_seek_ready;
+  double avsync_time;
+  double sync_err;
+
+  lives_obj_instance_t *aplayer;
 
   /// which number file we are playing (or -1) [generally mainw->current_file]
   int playing_file;

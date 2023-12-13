@@ -19,6 +19,8 @@
 char *lives_strdup_quick(const char *str);
 char *lives_strndup(const char *str, size_t len);
 
+int lives_print_ret(const char *fmt, ...);
+
 char *lives_strndup_printf(const char *fmt, int maxlen, ...) WARN_UNUSED;
 char *lives_strdup_printf(const char *fmt, ...) WARN_UNUSED;
 char *lives_strdup_vprintf(const char *fmt, va_list ap) WARN_UNUSED;

@@ -1898,31 +1898,25 @@ LiVESWidget *trash_rb(LiVESButtonBox *parent) {
 }
 
 static LiVESResponseType filtresp;
-static char *rec_text = NULL, *rem_text = NULL, *leave_text = NULL;
+static char *rec_text = NULL, *rem_text = NULL, *leave_text = NULL, *ign_text = NULL;
 
 static void filt_cb_toggled(LiVESWidget *cb, lives_file_dets_t *filedets) {
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb))) {
-    if (filedets->widgets[1]) {
-      lives_widget_set_sensitive(filedets->widgets[1], TRUE);
-      if (lives_toggle_button_get_active(filedets->widgets[1]))
-        lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
-      else
-        lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
-    } else
+    if (filedets->widgets[1] && lives_toggle_button_get_active(filedets->widgets[1]))
+      lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
+    else
       lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
   } else {
-    if (filedets->widgets[1]) {
-      lives_widget_set_sensitive(filedets->widgets[1], FALSE);
-    }
-    lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), leave_text);
+    if (filedets->widgets[1] && lives_toggle_button_get_active(filedets->widgets[1]))
+      lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), ign_text);
+    else lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), leave_text);
   }
 }
 
 static void filt_sw_toggled(LiVESWidget *sw, lives_file_dets_t *filedets) {
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(sw)))
-    lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
-  else
-    lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(sw)))
+    lives_toggle_button_set_active(filedets->widgets[0], FALSE);
+  filt_cb_toggled(filedets->widgets[0], filedets);
 }
 
 static void filt_all_toggled(LiVESWidget *cb, LiVESList *list) {
@@ -2007,6 +2001,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
 
     if (!rec_text) rec_text = (_("Recover"));
     if (!rem_text) rem_text = (_("Delete"));
+    if (!ign_text) ign_text = (_("Ignore"));
     if (!leave_text) leave_text = (_("Leave"));
 
     dialog = lives_widget_get_toplevel(layout);
@@ -2224,7 +2219,7 @@ ffxdone:
 
 
 LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
-                                 LiVESList **left_list) {
+                                 LiVESList **left_list, LiVESList **ign_list) {
   LiVESWidget *dialog;
   LiVESWidget *layout, *layout_rec, *layout_rem, *layout_leave;
   LiVESWidget *top_vbox;
@@ -2235,7 +2230,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   LiVESWidget *vbox;
 
   int winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
-  int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY * 2;
+  int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY * 4;
   int rec_recheck, rem_recheck, leave_recheck;
   int pass = 0;
   int woat = widget_opts.apply_theme;
@@ -2357,6 +2352,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_layout_add_fill(LIVES_LAYOUT(layout_leave), FALSE);
 
+  lives_widget_set_maximum_size(dialog, winsize_h, winsize_v);
   lives_widget_show_all(dialog);
 
   do {
@@ -2412,52 +2408,46 @@ harlem_shuffle:
   if (filtresp != LIVES_RESPONSE_CANCEL && filtresp != LIVES_RESPONSE_OK) {
     // we need to shuffle the lists around before destroying the dialog; caller will move
     // actual pointer files
-    LiVESList *list, *listnext;
+    LiVESList *list, *listnext, **olist;
     lives_file_dets_t *filedets;
     lives_widget_hide(dialog);
     lives_widget_process_updates(dialog);
 
-    for (pass = 0; pass < 3; pass++) {
-      if (!pass) list = *rec_list;
-      else if (pass == 1) list = *rem_list;
-      else list = *left_list;
-      for (; list && list->data; list = listnext) {
+    for (pass = 0; pass < 4; pass++) {
+      if (!pass) olist = rec_list;
+      else if (pass == 1) olist = rem_list;
+      else if (pass == 2) olist = left_list;
+      else olist = ign_list;
+      for (list = *olist; list && list->data; list = listnext) {
         listnext = list->next;
         // entries can move to rem_list or left_list
         // we no longer care about type, so the field will be reused to
         // store the origin list number
-        // for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list
+        // for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list, 3 -> ign_list
         filedets = (lives_file_dets_t *)list->data;
-        if (filedets->type & LIVES_FILE_TYPE_FLAG_SPECIAL) continue;
-        filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_FLAG_SPECIAL);
-        if (!pass || pass == 2) {
-          if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
-            if (pass == 2 || !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
-              // move into delete from recover or leave
-              if (list->prev) list->prev->next = list->next;
-              if (list->next) list->next->prev = list->prev;
-              list->prev = NULL;
-              if (list == *rec_list) *rec_list = list->next;
-              else if (list == *left_list) *left_list = list->next;
-              list->next = *rem_list;
-              (*rem_list)->prev = list;
-              *rem_list = list;
-            }
-          }
-        }
-        if (pass != 2) {
-          if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
-            // move to leave, from rec or rem
-            if (list->prev) list->prev->next = list->next;
-            if (list->next) list->next->prev = list->prev;
-            list->prev = NULL;
-            if (list == *rec_list) *rec_list = list->next;
-            else if (list == *rem_list) *rem_list = list->next;
-            list->next = *left_list;
-            (*left_list)->prev = list;
-            *left_list = list;
-	    // *INDENT-OFF*
-	  }}}}}
+        if (!(filedets->type & LIVES_FILE_TYPE_FLAG_SPECIAL))
+	  filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_FLAG_SPECIAL);
+
+	if (list->prev) list->prev->next = list->next;
+	if (list->next) list->next->prev = list->prev;
+	if (list == *olist) *olist = list->next;
+	list->next = list->prev = NULL;
+
+	if (filedets->widgets[1] &&
+	    lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
+	    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0])))
+	      *rec_list = lives_list_prepend(*rec_list, list->data);
+	    else
+	      *ign_list = lives_list_prepend(*ign_list, list->data);
+	}
+	else {
+          if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0])))
+	    *rem_list = lives_list_prepend(*rem_list, list->data); 
+	  else
+	    *left_list = lives_list_prepend(*rem_list, list->data); 	   
+	}
+	lives_list_free_1(list);
+      }}}
   // *INDENT-ON*
   lives_widget_destroy(dialog);
   //lives_widget_context_update();
@@ -6987,6 +6977,9 @@ static void dsu_set_toplabel(void) {
       }
     }
   }
+
+  //lives_window_add_escape(LIVES_WINDOW(dialog), procw->cancel_button);
+
   if (!ltext) {
     ltext = lives_strdup(_("LiVES can help limit the amount of diskspace used by projects (sets)."));
   }

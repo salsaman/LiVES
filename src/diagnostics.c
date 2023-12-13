@@ -50,19 +50,21 @@ void print_diagnostics(uint64_t types) {
       }
 
     nsc = mainw->n_service_calls;
-    fprintf(stderr, "Number of sevice calls: %lu\n", nsc);
-    fprintf(stderr, "checking service call frequency:\n");
-    onsc = nsc;
-    lives_alarm_set_timeout(MILLIONS(100));
-    while (!lives_alarm_triggered()) {
-      nsc = mainw->n_service_calls;
-      if (nsc != onsc) fprintf(stderr, ".");
+    fprintf(stderr, "\nNumber of sevice calls: %lu\n", nsc);
+    if (FEATURE_READY(SYSALARMS)) {
+      fprintf(stderr, "\nchecking service call frequency:\n");
+      onsc = nsc;
+      lives_alarm_set_timeout(MILLIONS(100));
+      while (!lives_alarm_triggered()) {
+	nsc = mainw->n_service_calls;
+	if (nsc != onsc) fprintf(stderr, ".");
+      }
+      fprintf(stderr, "%lu calls in 0.1 sec\n", nsc - onsc);
     }
-    fprintf(stderr, "%lu calls in 0.1 sec\n", nsc - onsc);
   }
   if (types & DIAG_MEMORY) {
     tmp = get_memstats();
-    fprintf(stderr, "MEMORY\n");
+    fprintf(stderr, "\n\nMEMORY\n");
     if (get_memstatus()) {
     fprintf(stderr, "Mem total %s, free %s, available %s, locked %s\n",
 	    lives_format_memory_size_string(capable->hw.memtotal),
@@ -75,7 +77,7 @@ void print_diagnostics(uint64_t types) {
     bbsummary();
   }
   if (types & DIAG_THREADS) {
-    fprintf(stderr, "THREADS\n");
+    fprintf(stderr, "\n\nTHREADS\n");
     tmp = get_threadstats();
     fprintf(stderr, "%s\n", tmp);
     lives_free(tmp);

@@ -172,7 +172,7 @@ void pulse_set_avel(pulse_driver_t *, int clipno, double ratio);
 
 void pulse_get_rec_avals(pulse_driver_t *);
 
-void lives_pulse_set_client_attributes(pulse_driver_t *, int fileno, boolean activate, boolean running);
+//void lives_pulse_set_client_attributes(pulse_driver_t *, int fileno, boolean activate, boolean running);
 
 #endif
 

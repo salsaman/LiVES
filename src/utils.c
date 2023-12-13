@@ -219,13 +219,15 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   ign_signal_handlers();
 
   if (mainw && !pthread_equal(main_thread, pthread_self())) {
+    catch_sigint(-LIVES_SIGABRT, NULL, NULL);
     mainw->critical_errmsg = reason;
     mainw->critical_thread = THREADVAR(uid);
     mainw->critical = TRUE;
-    while (1) {
-      // sleep for 1 quadrillion nanoseconds
-      lives_nanosleep(BILLIONS(1000000));
-    }
+    pthread_detach(pthread_self());
+    /* while (1) { */
+    /*   // sleep for 1 quadrillion nanoseconds */
+    /*   lives_nanosleep(BILLIONS(1000000)); */
+    /* } */
   }
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
@@ -233,13 +235,14 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
   BREAK_ME(reason);
-  if (mainw && mainw->global_hook_stacks[FATAL_HOOK])
+  if (mainw && mainw->global_hook_stacks && mainw->global_hook_stacks[FATAL_HOOK])
     lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
 
   // this will actually call our default signal handler
-  abort();
+  catch_sigint(SIGABRT, NULL, NULL);
+  _exit(LIVES_SIGABRT);
 }
 
 

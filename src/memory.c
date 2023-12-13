@@ -389,7 +389,7 @@ static LiVESList *find_smblock(void *ptr, int *size_ret, off_t *offs_ret) {
       else smblock_pool->alloc_list = list->next;
       if (list->next) list->next->prev = list->prev;
       list->prev = list->next = NULL;
-      lives_list_free(list);
+      lives_list_free_1(list);
       if (offs_ret) *offs_ret = offs;
       if (size_ret) *size_ret = GET_BLOCK_SIZE(listx);
       return listx;
@@ -1159,6 +1159,21 @@ static void bigblocks_end(void) {
 #define MEM_THRESH .8
 #define MIN_BBLOCKS 16 // min is 16 * 8 = 128 MB
 
+#if MEM_USE_BIGBLOCKS
+
+LIVES_LOCAL_INLINE boolean is_bigblock(const char *p) {
+  return p >= bigblock_root && p < bigblock_root + bmemsize * NBIGBLOCKS;
+}
+
+
+void lives_free_maybe_big(void *p) {
+  if (is_bigblock(p)) free_bigblock(p);
+  else lives_free(p);
+}
+
+#endif
+
+
 void bigblock_init(void) {
   char *ptr;
 
@@ -1286,7 +1301,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   }
 
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
-  //g_print("ALLOBIG %p size %d\n", bigblocks[i], nblocks);
+  g_print("ALLOBIG %p size %d\n", bigblocks[i], nblocks);
 
   if (i <= max) return i;
 
@@ -1334,11 +1349,8 @@ void bbsummary(void) {
 }
 
 
-#ifdef DEBUG_BBLOCKS
-void *_calloc_bigblock(size_t xsize) {
-#else
+
 void *calloc_bigblock(size_t xsize) {
-#endif
   int bbidx;
   pthread_mutex_lock(&bigblock_mutex);
   bbidx = _alloc_bigblock(xsize, -1);
@@ -1351,11 +1363,8 @@ void *calloc_bigblock(size_t xsize) {
 }
 
 
-#ifdef DEBUG_BBLOCKS
+
 void *_malloc_bigblock(size_t xsize) {
-#else
-void *malloc_bigblock(size_t xsize) {
-#endif
   int bbidx;
   pthread_mutex_lock(&bigblock_mutex);
   bbidx = _alloc_bigblock(xsize, -1);
@@ -1429,7 +1438,7 @@ void *free_bigblock(void *bstart) {
   tuid[bbidx] = 0;
 #endif
   pthread_mutex_unlock(&bigblock_mutex);
-  //g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
+  g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
   return bstart;
 }
 

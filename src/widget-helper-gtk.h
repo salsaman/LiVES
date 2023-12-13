@@ -225,6 +225,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_list_nth_data(list, i) g_list_nth_data(list, i)
 #define lives_list_nth(list, i) g_list_nth(list, i)
 #define lives_list_length(list) g_list_length(list)
+#define lives_list_free_1(list) g_list_free_1(list)
 #define lives_list_free(list) g_list_free(list)
 #define _lives_list_free g_list_free
 #define lives_list_append(list, data) g_list_append(list, data)
@@ -318,8 +319,8 @@ typedef GtkOrientation LiVESOrientation;
 #define LIVES_ORIENTATION_HORIZONTAL GTK_ORIENTATION_HORIZONTAL
 #define LIVES_ORIENTATION_VERTICAL   GTK_ORIENTATION_VERTICAL
 
-typedef GdkEvent                          		LiVESXEvent;
-typedef GdkXEvent                         		LiVESXXEvent;
+typedef GdkEvent                       		LiVESXEvent;
+typedef GdkXEvent                      		LiVESXXEvent;
 typedef GdkEventButton                    	LiVESXEventButton;
 typedef GdkEventMotion                    	LiVESXEventMotion;
 typedef GdkEventScroll                    	LiVESXEventScroll;
@@ -328,13 +329,13 @@ typedef GdkEventCrossing                  	LiVESXEventCrossing;
 typedef GdkEventConfigure                 	LiVESXEventConfigure;
 typedef GdkEventFocus                     	LiVESXEventFocus;
 typedef GdkEventKey                       	LiVESXEventKey;
-typedef GdkEvent                          		LiVESXEventDelete;
-typedef GdkDisplay                        		LiVESXDisplay;
-typedef GdkScreen                         		LiVESXScreen;
+typedef GdkEvent                       		LiVESXEventDelete;
+typedef GdkDisplay                     		LiVESXDisplay;
+typedef GdkScreen                      		LiVESXScreen;
 #if GTK_CHECK_VERSION(3, 22, 0)
 typedef GdkMonitor                             	LiVESXMonitor;
 #endif
-typedef GdkDevice                         		LiVESXDevice;
+typedef GdkDevice                      		LiVESXDevice;
 
 #define LIVES_KEY_RELEASE GDK_KEY_RELEASE
 #define LIVES_KEY_PRESS GDK_KEY_PRESS

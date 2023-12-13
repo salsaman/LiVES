@@ -286,22 +286,30 @@ double bigblock_occupancy(void);
 
 //#define DEBUG_BBLOCKS 1
 #ifdef DEBUG_BBLOCKS
-void *_calloc_bigblock(size_t s);
+//void *_calloc_bigblock(size_t s);
 void *_free_bigblock(void *bstart);
+void lives_free_maybe_big(void *);
 #define calloc_bigblock(s) FN_ALLOC_TARGET(_calloc_bigblock,s)
 #define free_bigblock(p) FN_FREE_TARGET(_free_bigblock,p)
 #else
+//void *calloc_bigblock(size_t s);
 void *calloc_bigblock(size_t s);
-void *malloc_bigblock(size_t s);
+#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) ? _malloc_bigblock(s) : _malloc_bigblock(s)))
+void *_malloc_bigblock(size_t s);
 void *free_bigblock(void *bstart);
 void bbsummary(void);
 #endif
 
 void *realloc_bigblock(void *, size_t s);
 
+#if MEM_USE_BIGBLOCKS
+void lives_free_maybe_big(void *);
+#else
+#define lives_free_maybe_big(p) lives_free(p)
+#endif
+
 void *lives_malloc_medium(size_t msize);
 void *lives_calloc_medium(size_t msize);
-
 
 void *lives_calloc_mapped_real(size_t memsize, boolean do_mlock, char *fref, int lref);
 

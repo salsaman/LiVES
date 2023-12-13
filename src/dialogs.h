@@ -17,6 +17,7 @@ boolean do_warning_dialog(const char *text);
 boolean do_warning_dialogf(const char *fmt, ...);
 boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);
 boolean do_warning_dialog_with_checkf(uint64_t warn_mask_number, const char *fmt, ...);
+int get_warning_dialogf_resp(const char *fmt, ...);
 
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);

@@ -12200,6 +12200,9 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   }
   inpl = weed_layer_get_palette(layer);
 
+  void *pddd = weed_layer_get_pixel_data(layer);
+  g_print("layer pd is %p\n", pddd);
+
   if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SAMPLING))
     isampling = weed_layer_get_yuv_sampling(layer);
   else isampling = WEED_YUV_SAMPLING_DEFAULT;
@@ -12385,6 +12388,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
+	      mainw->debug_ptr = gudest;
               convert_swap3addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          gamma_lut8, -USE_THREADS);
 	      LIVES_ASSERT(weed_layer_get_pixel_data(orig_layer) !=
@@ -12423,6 +12427,8 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             if (weed_palettes_rbswapped(inpl, outpl)) {
               // brga -> rgb, rgba -> bgr
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+	      LIVES_ASSERT(weed_layer_get_pixel_data(orig_layer) !=
+			   weed_layer_get_pixel_data(layer));
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
               convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
@@ -12934,7 +12940,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
       weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags | LIVES_FLAG_CONST_VALUE);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
-      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);      
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       weed_layer_copy_single_plane(orig_layer, layer, 0);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
@@ -13579,25 +13585,14 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       // convert [1], [2]
 
       // etc for other palettes (TODO)
-      flags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
-      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags | LIVES_FLAG_CONST_VALUE);
-      create_empty_pixel_data(layer, FALSE, FALSE);
-      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, flags);
-
-      gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
-      if (!can_inplace) {
-        lives_free(gudest_array[0]);
-        gudest_array[0] = gusrc_array[0];
-        weed_layer_set_pixel_data_planar(layer, (void **)gudest_array, 3);
-        ostrides = weed_layer_get_rowstrides(layer, NULL);
-        convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamping);
-        gusrc_array[0] = NULL;
-        weed_layer_set_pixel_data_planar(orig_layer, (void **)gusrc_array, 3);
-      } else {
-        ostrides = weed_layer_get_rowstrides(layer, NULL);
-        lives_memcpy(gudest_array[0], gusrc_array[0], height * istrides[0]);
-        convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamping);
-      }
+      rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags | LIVES_FLAG_CONST_VALUE);
+      if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);
+      weed_layer_copy_single_plane(orig_layer, layer, 0);
+      ostrides = weed_layer_get_rowstrides(layer, NULL);
+      gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL); 
+      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamping);
       break;
     case WEED_PALETTE_YUV444P:
       rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
@@ -13870,6 +13865,12 @@ conv_done:
     /* g_print("bcontig b: %p %d, %p %d\n", orig_layer, */
     /*         weed_get_boolean_value(orig_layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL), */
     /*         layer, weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL)); */
+    g_print("%p %p %d %d\n",
+	    weed_layer_get_pixel_data(orig_layer),
+	    weed_layer_get_pixel_data(layer),
+	    lives_layer_has_copylist(orig_layer),
+	    weed_plant_has_leaf(orig_layer, LIVES_LEAF_COPYLIST));
+
     LIVES_ASSERT(weed_layer_get_pixel_data(orig_layer) !=
 		 weed_layer_get_pixel_data(layer)
 		 || lives_layer_has_copylist(orig_layer));
@@ -15381,10 +15382,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   /// no letterboxing needed - resize and return
   if (nheight == height && nwidth == width) {
     resize_layer(layer, width, height, interp, tpal, tclamp);
-    for (int i = NC_LAYERS; i--;) {
-      if (!cached_layers[i]) continue;
-      if (lives_layer_has_copylist(cached_layers[i])) continue;
-    }
     return TRUE;
   }
 
@@ -15424,11 +15421,14 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   for (int i = NC_LAYERS; i--;) {
     // with cache_mutex locked, no other thread can double assing a cehcd layer, but
     // a layer can be released, and once released there are no more copies that can be made
+    g_print("LBchk %d\n", i);
     if (!cached_layers[i]) {
+      g_print("LBchk my  %d\n", i);
       if (empty == -1) empty = i;
       continue;
     }
     if (lives_layer_has_copylist(cached_layers[i])) continue;
+    g_print("LBchk nobpp  %d\n", i);
 
     // we can reuse a frame if
     // rowstrides match and
@@ -15436,6 +15436,8 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     // or if offs_x <= old offs_x and offs_x + widtth >= old_offs _x + width and height >= old height
 
     if (using == -1) {
+          g_print("LBchk use  %d\n", i);
+
       int lbpal = weed_layer_get_palette(cached_layers[i]);
       if ((is_rgb && (lbpal == pal || consider_swapping(pal, lbpal)))
           || (!is_rgb && lbpal == pal
@@ -15446,6 +15448,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
           rowstrides = weed_layer_get_rowstrides(cached_layers[i], NULL);
           if (rowstrides[0] == irowstrides[0]) {
             if (lbpal != pal)  weed_layer_set_palette(cached_layers[i], pal);
+	    g_print("copy lb %d to layer\n", i);
             weed_layer_copy(layer, cached_layers[i]);
             last_used[i] = cycle_count;
             using = i;
@@ -15455,6 +15458,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
       }
     }
     if (cycle_count - last_used[i] > AGE_THRESH) {
+      g_print("unref lb %d\n", i);
       weed_layer_unref(cached_layers[i]);
       cached_layers[i] = NULL;
       if (empty == -1) empty = i;
@@ -15463,6 +15467,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   pthread_mutex_unlock(&cache_mutex);
 
   lives_free(irowstrides);
+    g_print("LBchk got  %d\n", using);
 
   if (using != -1) {
     int *inner_size = weed_get_int_array(cached_layers[using], WEED_LEAF_INNER_SIZE, NULL);
@@ -15498,6 +15503,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     //////////////////////////
 
     if (empty != -1) {
+      g_print("copy layer to empty %d\n", empty);
       cached_layers[empty] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       if (cached_layers[empty]) {
         int inner_size[2];
@@ -15559,6 +15565,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
 
   if (xtime) weed_set_double_value(layer, LIVES_LEAF_COPY_TIME, lives_get_session_time() - xtime);
 
+  g_print("unref old layer\n");
   weed_layer_unref(old_layer);
 
   lives_free(pixel_data);
@@ -15855,7 +15862,7 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
   // if layer was the one used to create the painter (surface),
   // ir will not be destroyed, but the surface will be
 
-  // NOTE: the cr context is not destroyed, but its surfsce is reset
+  // NOTE: the cr context is not destroyed, but its surface is reset
 
   lives_painter_surface_t *surface = lives_painter_get_target(cr);
   void *src = lives_painter_image_surface_get_data(surface);

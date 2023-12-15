@@ -214,7 +214,6 @@ void on_preview_clicked(LiVESButton *, livespointer);
 
 void on_recent_activate(LiVESMenuItem *, livespointer);
 
-boolean all_expose_overlay(LiVESWidget *, lives_painter_t *, livespointer psurf);
 void paint_tl_cursors(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
 
 /* boolean all_expose_nopb(LiVESWidget *, lives_painter_t *, livespointer psurf); */

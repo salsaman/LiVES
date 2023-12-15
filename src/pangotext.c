@@ -669,16 +669,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
     const char *font_name = capable->font_fam;
     int *colz = weed_get_int_array(layer, "fg_col", NULL);
     int font_size = weed_layer_get_width_pixels(layer) / scaling;
-    boolean fake_gamma = FALSE;
-
-    if (prefs->apply_gamma) {
-      // leave as linear gamma maybe
-      if (weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
-        // stops it getting converted
-        weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
-        fake_gamma = TRUE;
-      }
-    }
 
     if (colz) {
       fg_col.red = (short)colz[0];
@@ -698,8 +688,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
                                    LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
                                    &col_white, &col_black_a, TRUE, FALSE, 0.1);
     }
-    if (fake_gamma)
-      weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   }
   return layer;
 }
@@ -709,50 +697,42 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
                                    lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
-  //
-  lives_painter_t *cr = NULL;
-  LingoLayout *layout;
+  if (!layer) return NULL;
+  int pal = weed_layer_get_palette(layer);
+  if (weed_palette_is_rgb(pal)) {
+    lives_painter_t *cr = NULL;
+    LingoLayout *layout;
 
 #ifdef LIVES_PAINTER_IS_CAIRO
-  cairo_antialias_t antialias;
-  cairo_font_options_t *ftopts = cairo_font_options_create();
+    cairo_antialias_t antialias;
+    cairo_font_options_t *ftopts = cairo_font_options_create();
 #endif
 
-  int pal = weed_layer_get_palette(layer);
-  int width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);
-  int height = weed_layer_get_height(layer);
-  weed_layer_t *test_layer, *layer_slice;
-  uint8_t *src, *pd;
-  int row = weed_layer_get_rowstride(layer);
-  double ztop = 0.;
-  int lheight = height;
-  int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
-  int itop;
-
-  if (weed_palette_is_rgb(pal)) {
+    int width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);
+    int height = weed_layer_get_height(layer);
+    int row = weed_layer_get_rowstride(layer);
+    weed_layer_t *layer_slice;
+    uint8_t *src, *pd;
+    double ztop = 0.;
+    int lheight = height, offsx = 0, itop;
     lives_painter_surface_t *surf;
 
     // test first to get the layout coords; we just copy a tiny slice of the pixel data
     // take a slice 4 pixels high
-    gamma = weed_layer_get_gamma(layer);
+    int gamma = WEED_GAMMA_UNKNOWN;
 
-    lheight = height;
-    weed_layer_set_height(layer, 4);
+    if (prefs->apply_gamma) gamma = weed_layer_get_gamma(layer);
 
     // make a copy of the layer slice
-    // TODO - weed_layer_copy_slice(layer, rowstart, height);
-    test_layer = weed_layer_copy(NULL, layer);
+    layer_slice = weed_layer_copy_slice(NULL, layer, 0, 0, -1, 4);
 
-    weed_layer_set_height(layer, height);
-
-    cr = layer_to_lives_painter(test_layer);
+    cr = layer_to_lives_painter(layer_slice);
 
     layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
-    // will unref test_layer
-
+    // will unref layer_slice
     surf = lives_painter_get_target(cr);
     lives_painter_surface_destroy(surf);
     lives_painter_destroy(cr);
@@ -779,6 +759,10 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
       weed_layer_copy_slice(layer_slice, layer, 0, itop, -1, lheight);
       xsrc = weed_layer_get_pixel_data(layer_slice);
+
+      // stops it getting converted
+      if (gamma == WEED_GAMMA_LINEAR)
+	weed_layer_set_gamma(layer_slice, WEED_GAMMA_SRGB);
 
       // create a lives painter surface from layer_slice
       cr = layer_to_lives_painter(layer_slice);
@@ -813,13 +797,12 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
         int orow = weed_layer_get_rowstride(layer_slice);
         if (row != orow) {
           for (int i = itop; i < itop + lheight; i++)
-            lives_memcpy(&src[i * row], &pd[(i - itop) * orow], row);
+            lives_memcpy(&src[i * row], &pd[(i - itop) * orow], width);
         } else lives_memcpy(src + itop * row, pd, lheight * row);
       }
     }
+    weed_layer_unref(layer_slice);
   }
-
-  if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
   return layer;
 }
 

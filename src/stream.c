@@ -596,7 +596,7 @@ void lives2lives_read_stream(const char *host, int port) {
   cfile->hsize = lstream->hsize;
   cfile->vsize = lstream->vsize;
 
-  add_clip_src(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)lstream,
+  add_clip_src(mainw->current_file, -1, 0, (void *)lstream,
                LIVES_SRC_TYPE_STREAM, 0, NULL, NULL);
 
   switch_to_file((mainw->current_file = old_file), new_file);

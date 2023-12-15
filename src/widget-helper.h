@@ -1359,6 +1359,9 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, L
 boolean lives_widget_context_update(void);
 boolean lives_widget_context_iteration(LiVESWidgetContext *, boolean may_block);
 
+void lock_gmci(void);
+void unlock_gmci(void);
+
 LiVESWidget *lives_menu_add_separator(LiVESMenu *);
 
 void lives_menu_item_set_text(LiVESWidget *, const char *text, boolean use_mnemonic);

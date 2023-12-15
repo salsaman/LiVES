@@ -1496,7 +1496,7 @@ typedef struct {
   LiVESWidget *show_defgroup;
   LiVESWidget *eventbox;
   LiVESWidget *eventbox2;
-  lives_painter_surface_t **eb2_psurf;
+  lives_painter_surface_t *eb2_psurf;
   LiVESWidget *eventbox3;
   LiVESWidget *eventbox4;
   LiVESWidget *eventbox5;

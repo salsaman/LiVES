@@ -1159,20 +1159,6 @@ static void bigblocks_end(void) {
 #define MEM_THRESH .8
 #define MIN_BBLOCKS 16 // min is 16 * 8 = 128 MB
 
-#if MEM_USE_BIGBLOCKS
-
-LIVES_LOCAL_INLINE boolean is_bigblock(const char *p) {
-  return p >= bigblock_root && p < bigblock_root + bmemsize * NBIGBLOCKS;
-}
-
-
-void lives_free_maybe_big(void *p) {
-  if (is_bigblock(p)) free_bigblock(p);
-  else lives_free(p);
-}
-
-#endif
-
 
 void bigblock_init(void) {
   char *ptr;
@@ -1278,6 +1264,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
 
   while (i <= max) {
     for (j = nblocks - 1; j >= 0; j--) {
+      if (mainw->critical) return -1;
       int u = used[i + j];
       //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
@@ -1301,7 +1288,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   }
 
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
-  g_print("ALLOBIG %p size %d\n", bigblocks[i], nblocks);
+  g_print("ALLOBIG %p %d size %d\n", bigblocks[i], i, nblocks);
 
   if (i <= max) return i;
 
@@ -1386,9 +1373,9 @@ void *realloc_bigblock(void *p, size_t new_size) {
 
 
 #ifdef DEBUG_BBLOCKS
-void *_free_bigblock(void *bstart) {
+static void *_free_bigblock(void *bstart) {
 #else
-void *free_bigblock(void *bstart) {
+static void *free_bigblock(void *bstart) {
 #endif
   char *msg;
   off_t offs;
@@ -1441,6 +1428,22 @@ void *free_bigblock(void *bstart) {
   g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
   return bstart;
 }
+
+
+#if MEM_USE_BIGBLOCKS
+
+LIVES_LOCAL_INLINE boolean is_bigblock(const char *p) {
+  g_print("memcf %p %p %p\n", p, bigblock_root, bigblock_root + bmemsize * NBIGBLOCKS);
+  return p >= bigblock_root && p < bigblock_root + bmemsize * NBIGBLOCKS;
+}
+
+
+void lives_free_maybe_big(void *p) {
+  if (is_bigblock(p)) free_bigblock(p);
+  else lives_free(p);
+}
+
+#endif
 
 
 union split8 {

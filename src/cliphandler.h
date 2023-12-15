@@ -101,12 +101,18 @@ typedef enum {
 
 // static source types (actor == NULL)
 #define LIVES_SRC_TYPE_IMAGE		1
+#define CLASS_UID_IMG_DECODER		0X107FB866F433FF32
+#define ACTOR_UID_IMG_DECODER_PNG	0XA7508C6B207379A5
+#define ACTOR_UID_IMG_DECODER_JPEG	0X666A886F476FA9E4
+
 #define LIVES_SRC_TYPE_BLANK		2
 
 // non static source types
 
 // frame source is a video clip
 #define LIVES_SRC_TYPE_DECODER		64
+#define CLASS_UID_VIDEO_DECODER		0XC4258AA4EF8E625C
+
 
 // frame src is a filter instance (generator)
 #define LIVES_SRC_TYPE_GENERATOR	65
@@ -122,6 +128,8 @@ typedef enum {
 
 // frame source is a hardware device (e.g webcam)
 #define LIVES_SRC_TYPE_DEVICE		69
+#define CLASS_UID_VIDEO_DEVICE		0XFA47DD5D64DDE4F4
+#define ACTOR_UID_WEBCAM		0XFD6D15545BA70E08
 
 // frame src is a file buffer containing multiple frames
 // e.g a dump or raw frame data (scrap file)
@@ -329,6 +337,8 @@ typedef struct {
   // current gamm_type for the src
   int gamma_type;
 
+  double file_gamma;
+
   // external checksum for clip source (e.g md4sum, cert)
   fingerprint_t ext_checksum;
 
@@ -439,7 +449,7 @@ typedef struct _lives_clip_t {
 
   int bpp; ///< bits per pixel of the image frames, 24 or 32
 
-  int gamma_type;
+  int gamma_type; // set from apparent_gamma
 
   int arps; ///< audio physical sample rate (i.e the "normal" sample rate of the clip when played at 1,0 X velocity)
   int arate; ///< current audio playback rate (varies if the clip rate is changed)
@@ -821,10 +831,10 @@ lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives
 
 // create a clone of primary
 lives_clipsrc_group_t *clone_srcgrp(int sclip, int dclip, int track, int purpose);
-lives_clip_src_t *add_clip_src(int nclip, int track, int purpose, void *actor, int src_type,
+lives_clip_src_t *add_clip_src(int nclip, int track, uint64_t class_id, void *actor, int src_type,
                                uint64_t actor_uid, fingerprint_t *chksum, const char *ext_URI);
 
-lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *, uint64_t actor_uid, int src_type, const char *ext_URI,
+lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *, int clip, uint64_t actor_uid, int src_type, const char *ext_URI,
                                fingerprint_t *chksum);
 lives_clip_src_t *find_src_by_class_uid(lives_clipsrc_group_t *srcgrp, uint64_t class_uid);
 
@@ -832,6 +842,8 @@ lives_clipsrc_group_t *get_srcgrp(int nclip, int track, int purpose);
 lives_clipsrc_group_t *get_primary_srcgrp(int nclip);
 
 boolean swap_srcgrps(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
+
+void update_in_all_srcgrps(int clip, lives_clip_src_t *mysrc);
 
 void clip_src_free(int nclip,  lives_clipsrc_group_t *, lives_clip_src_t *);
 void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *);
@@ -843,7 +855,7 @@ void *get_primary_actor(lives_clip_t *);
 void *get_primary_inst(lives_clip_t *);
 int get_primary_src_type(lives_clip_t *);
 
-lives_clip_src_t *get_primary_src(int nclip);
+lives_clip_src_t * get_primary_src(int nclip);
 lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type);
 lives_clip_src_t *add_primary_inst(int nclip, void *actor, void *actor_inst, int src_type);
 boolean set_primary_inst(int nclip, void *inst);

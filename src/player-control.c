@@ -165,7 +165,6 @@ lives_proc_thread_t start_playback_async(int type) {
   if (type == 6) {
     lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, 0, queue_other_lpt,
                                mainw->player_proc);
-    lives_proc_thread_queue(mainw->player_proc, 0);
   }
   return mainw->player_proc;
 }
@@ -324,9 +323,9 @@ static void post_playback(void) {
   }
 
   if (!mainw->multitrack) {
-    if (*mainw->eb2_psurf) {
-      lives_painter_surface_destroy(*mainw->eb2_psurf);
-      *mainw->eb2_psurf = NULL;
+    if (mainw->eb2_psurf) {
+      lives_painter_surface_destroy(mainw->eb2_psurf);
+      mainw->eb2_psurf = NULL;
     }
     redraw_timeline(mainw->current_file);
   }
@@ -900,8 +899,6 @@ void play_file(void) {
 
     if (!mainw->num_tracks) mainw->num_tracks = 1;
 
-    lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_START_HOOK);
-
     //////////// PLAYBACK START ////////////////
 
     do {
@@ -1067,8 +1064,6 @@ void play_file(void) {
   // PLAYBACK END /////////////////////
 
   if (mainw->blend_layer) weed_layer_set_invalid(mainw->blend_layer, TRUE);
-
-  lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_END_HOOK);
 
   mainw->osc_block = TRUE;
   mainw->rte_textparm = NULL;
@@ -1266,7 +1261,9 @@ void play_file(void) {
   // terminate autolives if running
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
 
+  /// free the last frame image(s)
   reset_old_frame_layer();
+  if (mainw->ext_player_layer) reset_ext_player_layer(FALSE);
 
   // nodemodel / plan
   cleanup_nodemodel(&mainw->nodemodel);
@@ -1521,11 +1518,6 @@ void play_file(void) {
     weed_layer_unref(mainw->blend_layer);
     mainw->blend_layer = NULL;
   }
-
-  /// free the last frame image(s)
-  reset_old_frame_layer();
-
-  if (mainw->nodemodel) cleanup_nodemodel(&mainw->nodemodel);
 
   if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
       && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {

@@ -716,12 +716,11 @@ const char *dummystr;
 
 void __BREAK_ME(const char *dtl);
 
-#define BREAK_ME(label) SHOW_LOCATION("LiVES: hit breakpoint")
+#define BREAK_ME(label) _DW0(SHOW_LOCATION("LiVES: hit breakpoint"); __BREAK_ME(label);)
 
-#define TRACE_ME SHOW_LOCATION("LiVES: hit tracepoint")
+#define TRACE_ME _DW0(SHOW_LOCATION("LiVES: hit tracepoint"))
 
-#define SHOW_LOCATION(text)						\
-  fprintf(stderr,"\n%s at %s, line %d\n\n",text,_FILE_REF_,_LINE_REF_)
+#define SHOW_LOCATION(text) fprintf(stderr,"\n%s at %s, line %d\n\n",text,_FILE_REF_,_LINE_REF_)
 
 #define LIVES_FULL_DEBUG 0
 

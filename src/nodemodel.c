@@ -1278,26 +1278,26 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step, weed_instance
     gamma_conv_params(WEED_GAMMA_LINEAR, inst, FALSE);
   }
 
-  if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
-    lives_clip_t *sfile;
-    int clipno = plan->model->clip_index[step->track];
+  /* if (step->flags & STEP_FLAG_RUN_AS_LOAD) { */
+  /*   lives_clip_t *sfile; */
+  /*   int clipno = plan->model->clip_index[step->track]; */
 
-    lives_layer_t *layer;
-    layer = plan->layers[step->track];
+  /*   lives_layer_t *layer; */
+  /*   layer = plan->layers[step->track]; */
+    
+  /*   if (!layer) layer = plan->layers[step->track] = lives_layer_new_for_frame(clipno, 1); */
 
-    if (!layer) layer = plan->layers[step->track] = lives_layer_new_for_frame(clipno, 1);
+  /*   if (prefs->dev_show_timing) */
+  /*     d_print_debug("my clipno is %d\n", clipno); */
 
-    if (prefs->dev_show_timing)
-      d_print_debug("my clipno is %d\n", clipno);
+  /*   sfile = RETURN_VALID_CLIP(clipno); */
+  /*   if (!sfile) return FILTER_ERROR_INVALID_LAYER; */
 
-    sfile = RETURN_VALID_CLIP(clipno);
-    if (!sfile) return FILTER_ERROR_INVALID_LAYER;
-
-    // frame will be loaded from whatever clip_src
-    step->state = STEP_STATE_RUNNING;
-    pull_frame_threaded(layer, sfile->hsize, sfile->vsize);
-    return 0;
-  }
+  /*   // frame will be loaded from whatever clip_src */
+  /*   step->state = STEP_STATE_RUNNING; */
+  /*   pull_frame_threaded(layer, sfile->hsize, sfile->vsize); */
+  /*   return 0; */
+  /* } */
 
   filter_error = act_on_instance(inst, step->target_idx, plan->layers,
                                  plan->model->opwidth, plan->model->opheight);
@@ -1625,7 +1625,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  MSGMODE_ON(DEBUG);
+  //MSGMODE_ON(DEBUG);
 
   //if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
@@ -1663,7 +1663,7 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    MSGMODE_OFF(DEBUG);
+    //MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel(self);
   }
@@ -1891,7 +1891,7 @@ static void run_plan(exec_plan_t *plan) {
             step->state = STEP_STATE_ERROR;
             error = 5;
             break;
-          }
+         }
           if (!weed_layer_check_valid(layer)) {
             g_printerr("layer on track %d not valid\n", step->track);
             error = 6;
@@ -2108,7 +2108,7 @@ static void run_plan(exec_plan_t *plan) {
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                        run_apply_inst_step, WEED_SEED_INT, "vv", step, inst);
           } else {
-            run_apply_inst_step(step, NULL);
+            //run_apply_inst_step(step, NULL);
             step->st_type = STEP_TYPE_LOAD;
           }
           step->state = STEP_STATE_RUNNING;
@@ -2558,7 +2558,7 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->active = FALSE;
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
-  MSGMODE_OFF(DEBUG);
+  //MSGMODE_OFF(DEBUG);
 
   ____FUNC_EXIT____;
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
@@ -6833,6 +6833,7 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
   int *pxtracks;
   int xtrack, i;
   int model_type;
+  int nsinks = 0;
   LiVESList *virtuals = NULL;
 
   // - begin by creating the instance nodes for active fx, and link these in a chain
@@ -6938,12 +6939,23 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
 
   // finally we add one more node, this represents the display or sink
 
-  if (!mainw->ext_playback) model_type = NODE_MODELS_INTERNAL;
-  else {
+  nsinks = 0;
+  
+  if (!mainw->ext_playback) {
+    nsinks = 1;
+    model_type = NODE_MODELS_INTERNAL;
+    if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) nsinks = 2;
+  }
+  if (nsinks != 1) {
     model_type = NODE_MODELS_OUTPUT;
     model_for = (void *)mainw->vpp;
   }
 
+  if (nsinks == 2) {
+    // TODO - add a virtual 'splitter' node
+    // it eill have 1 input which will feed ditectly to ouy 0, which will connect to display node
+    // than we will also create a 2nd output which connects to a non-locsl pb plugin
+  }
   // create a node for each sink
   // for now we have only one sink,
   //
@@ -6983,6 +6995,9 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
       add_src_node(nodemodel, ln, xtrack);
     }
   } while (xtrack != -1);
+
+  if (prefs->use_screen_gamma)
+    n->gamma_type = WEED_GAMMA_MONITOR;
 
   // since we prepend sources as they are added, we reverse the ordeign so sources whcih are pulled earlier
   // appear earlier in the list
@@ -7508,6 +7523,32 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
 lives_result_t run_next_cycle(void) {
   // run a fresh iteration of mainw->exec_plan
   // WARNING - will alter mainw->plan_cycle
+  g_print("pt a1\n");
+  if (mainw->refresh_model) return LIVES_RESULT_INVALID; 
+  g_print("pt a12\n");
+  if (!mainw->exec_plan) return LIVES_RESULT_FAIL;
+  g_print("pt a133\n");
+  if (mainw->cancelled != CANCEL_NONE) return LIVES_RESULT_INVALID;
+  g_print("pt a155\n");
+  if (mainw->plan_runner_proc
+      && lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc))
+    return LIVES_RESULT_INVALID;
+  g_print("pt a16666\n");
+
+  if (mainw->plan_cycle) {
+    if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
+	|| mainw->plan_cycle->state == PLAN_STATE_WAITING
+	|| mainw->plan_cycle->state == PLAN_STATE_RUNNING
+	|| mainw->plan_cycle->state == PLAN_STATE_PAUSED
+	|| mainw->plan_cycle->state == PLAN_STATE_RESUMING) {
+      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+      lives_proc_thread_join(mainw->plan_runner_proc);
+      mainw->plan_runner_proc = NULL;
+
+      exec_plan_free(mainw->plan_cycle);
+      mainw->plan_cycle = NULL;
+    }
+  }
 
   // free pixel data in all layers except mainw->frame_layer (nullify this to clear it, eg. on error)
   if (mainw->layers) {
@@ -7518,23 +7559,19 @@ lives_result_t run_next_cycle(void) {
 	    && mainw->layers[i] != mainw->cached_frame && mainw->layers[i] != mainw->ext_player_layer
 	    && mainw->layers[i] != mainw->frame_layer_preload) {
 	  weed_layer_set_invalid(mainw->layers[i], TRUE);
+	  g_print("free layer on track %d\n", i);
 	  weed_layer_pixel_data_free(mainw->layers[i]);
 	} else mainw->layers[i] = NULL;
       }
     }
   }
 
-  if (mainw->plan_cycle) {
-    exec_plan_free(mainw->plan_cycle);
-    mainw->plan_cycle = NULL;
-  }
-
-  if (mainw->cancelled != CANCEL_NONE) return LIVES_RESULT_INVALID;
-
   // reset layers for next cycle. Do NOT free them now
   mainw->layers = map_sources_to_tracks(FALSE, TRUE);
+  g_print("pt a188866\n");
 
-  if (!mainw->exec_plan || !mainw->layers) return LIVES_RESULT_FAIL;
+  if (!mainw->layers) return LIVES_RESULT_FAIL;
+  g_print("pt a16sadsad666\n");
 
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
@@ -7544,6 +7581,7 @@ lives_result_t run_next_cycle(void) {
       || (!mainw->plan_runner_proc
 	  || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)))
     return LIVES_RESULT_INVALID;
+  g_print("pt a1666ssssssss6\n");
 
   if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
     // trigger next plan cycle. We can start loading background frames while displaying current one
@@ -7551,7 +7589,7 @@ lives_result_t run_next_cycle(void) {
     plan_cycle_trigger(mainw->plan_cycle);
     lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
     lives_layer_set_frame(mainw->layers[0], 1);
-    mainw->plan_cycle->frame_idx[1] = 1;
+    mainw->plan_cycle->frame_idx[0] = 1;
     lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
   }
 
@@ -7566,6 +7604,7 @@ lives_result_t run_next_cycle(void) {
       lives_layer_set_status(mainw->layers[1], LAYER_STATUS_PREPARED);
     }
   }
+  g_print("pt a111111111111111116666\n");
   return LIVES_RESULT_SUCCESS;
 }
 

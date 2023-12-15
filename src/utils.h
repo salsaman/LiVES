@@ -97,10 +97,10 @@ int verhash(const char *version);
 /////////////////// clip and frame utils ////
 
 double calc_time_from_frame(int clip, frames_t frame);
-frames_t calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
-frames_t calc_frame_from_time2(int filenum, double time);  ///< nearest frame [1, frames+1]
-frames_t calc_frame_from_time3(int filenum, double time);  ///< nearest frame rounded down, [1, frames+1]
-frames_t calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
+frames_t calc_frame_from_time(int clip, double time);   ///< nearest frame [1, frames]
+frames_t calc_frame_from_time2(int clip, double time);  ///< nearest frame [1, frames+1]
+frames_t calc_frame_from_time3(int clip, double time);  ///< nearest frame rounded down, [1, frames+1]
+frames_t calc_frame_from_time4(int clip, double time);  ///<  nearest frame, no maximum
 
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
 void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight);

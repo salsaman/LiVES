@@ -2338,6 +2338,7 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         goto done_video;
       }
     }
+    weed_layer_pixel_data_free(channel);
   }
 
 done_video:
@@ -2365,8 +2366,7 @@ done_video:
 
   for (i = 0; i < num_inc + num_in_alpha; i++) {
     channel = get_enabled_channel(inst, i, LIVES_INPUT);
-    weed_channel_set_pixel_data(channel, NULL);
-    weed_layer_nullify_pixel_data(channel);
+    weed_layer_pixel_data_free(channel);
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL)) {
       weed_set_boolean_value(channel, WEED_LEAF_DISABLED, WEED_FALSE);
       weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
@@ -7752,12 +7752,11 @@ procfunc1:
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
 
+  weed_layer_t *inter = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  weed_layer_copy(inter, layer);
   weed_pixel_data_share(layer, channel);
-  // MUST do this, since  the nullify function cannot detect that channel is sharing with layer
-  // and would thus free pixel-data instead of nullifying
-  weed_channel_set_pixel_data(channel, NULL);
-  weed_layer_nullify_pixel_data(channel);
-
+  weed_pixel_data_share(channel, inter);
+  weed_layer_free(inter);
   lives_layer_set_clip(layer, clipno);
 
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
@@ -7941,7 +7940,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     return -1;
   } else {
     // already playing
-    if (old_file != -1 && mainw->files[old_file]) {
+   if (old_file != -1 && mainw->files[old_file]) {
       if (IS_NORMAL_CLIP(old_file)) mainw->pre_src_file = old_file;
       mainw->current_file = old_file;
     }

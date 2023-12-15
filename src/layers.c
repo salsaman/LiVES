@@ -312,7 +312,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int w
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
   if (!pixel_data) weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
   return layer;
@@ -333,14 +332,13 @@ LIVES_LOCAL_INLINE lives_sync_list_t **lives_layer_get_copylist_array(lives_laye
 boolean lives_layer_has_copylist(lives_layer_t *layer) {
   if (layer && weed_plant_has_leaf(layer, LIVES_LEAF_COPYLIST)) {
     int i, j, nplanes, ntot = 0;
-    lives_sync_list_t **copylists;
-   
-    copylists = lives_layer_get_copylist_array(layer, &nplanes);
+    lives_sync_list_t **copylists = lives_layer_get_copylist_array(layer, &nplanes);
     LIVES_CALLOC_TYPE(int, nvals, nplanes);
     for (i = 0; i < nplanes; i++) {
       if (copylists[i]) {
 	nvals[i] = lives_sync_list_get_nvals(copylists[i]);
-	ntot += nvals[i];
+	// exclude 'self'
+	ntot += nvals[i] - 1;
       }
     }
     if (ntot && !(ntot & 1)) {
@@ -422,29 +420,34 @@ void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int pla
 
 // when freeing or nullifying pixel_data, we remove planes from copylists
 void lives_layer_check_remove_copylists(lives_layer_t *layer) {
+  if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) return;
   int nplanes;
   void **pd = weed_layer_get_pixel_data_planar(layer, &nplanes), *real;
   if (pd) {
-    lives_sync_list_t **copylists = lives_layer_get_copylist_array(layer, &nplanes);
+    lives_sync_list_t **copylists = lives_layer_get_copylist_array(layer, NULL);
     if (copylists) {
       for (int i = nplanes; i--;) {
 	real = NULL; 
 	if (copylists && copylists[i]) {
 	  real = lives_sync_list_get_priv(copylists[i]);
+	  g_print("check clist for %d\n", i);
 	  if ((copylists[i] = lives_sync_list_remove(copylists[i], layer, FALSE))) continue;
+	  g_print("now empty clist for %d\n", i);
 	}
 	else real = pd[i];
+	g_print("free clist for %d %p\n", i, real);
 	if (real) lives_free_maybe_big(real);
       }
       weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
-      lives_free(pd); lives_free(copylists);
+      lives_free(copylists);
     }
+    else for (int i = nplanes; i--;) if (pd[i]) lives_free_maybe_big(pd[i]);
+    lives_free(pd);
   }
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   lives_layer_check_remove_copylists(layer);
   weed_layer_set_pixel_data(layer, NULL);
   weed_plant_sanitize(layer, FALSE);
@@ -842,6 +845,36 @@ LIVES_GLOBAL_INLINE lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed
 
   weed_layer_pixel_data_free(dst);
   lives_layer_copy_metadata(dst, src, TRUE);
+
+  if (weed_layer_get_pixel_data(src)) {
+    int nplanes;
+    uint8_t **pd;
+    lives_sync_list_t **copylists;
+    int *irows = weed_layer_get_rowstrides(src, &nplanes);
+
+    copylists = lives_layer_get_copylist_array(src, &nplanes);
+    pd = (uint8_t **)weed_layer_get_pixel_data_planar(src, &nplanes);
+
+    if (!copylists) copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
+    
+    for (int i = 0; i < nplanes; i++) {
+      if (!copylists[i]) {
+	copylists[i] = lives_sync_list_push(NULL, (void *)src);
+	lives_sync_list_set_priv(copylists[i], pd[i]);
+      }
+      lives_sync_list_push(copylists[i], (void *)dst);
+    }
+    weed_set_voidptr_array(src, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
+
+    weed_layer_set_pixel_data_planar(dst, (void **)pd, nplanes);
+
+    // not part of the standard metadata set
+    lives_leaf_dup(dst, src, LIVES_LEAF_COPYLIST);
+    //pthread_mutex_unlock(&copylist_mutex);
+    lives_free(copylists);
+    lives_free(pd);
+    lives_free(irows);
+  }
   return LIVES_RESULT_SUCCESS;
 }
 
@@ -1016,11 +1049,12 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
       return layer;
     }
 
-    if (mainw->debug_ptr == layer) {
-      g_print("FREE %p\n", layer);
-      BREAK_ME("free dbg");
-      mainw->debug_ptr = NULL;
-    }
+    /* if (mainw->debug_ptr == layer) { */
+    /*   g_print("FREE %p\n", layer); */
+    /*   BREAK_ME("free dbg"); */
+    /*   mainw->debug_ptr = NULL; */
+    /* } */
+
     lock_layer_status(layer);
     lstatus = _lives_layer_get_status(layer);
     if (lstatus == LAYER_STATUS_CONVERTING || lstatus == LAYER_STATUS_LOADING) {
@@ -1061,6 +1095,7 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 }
 #endif
 int refs = weed_refcount_dec(layer);
+ LIVES_ASSERT(refs >= 0);
 if (layer == mainw->debug_ptr) {
   BREAK_ME("unref dbg");
   g_print("nrefs is %d\n", refs);
@@ -1098,11 +1133,12 @@ LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data_planar(weed_layer_t *layer,
   if (nplanes) *nplanes = 0;
   if (!layer) return NULL;
   pd = weed_get_voidptr_array_counted(layer, WEED_LEAF_PIXEL_DATA, &xnplanes);
-  if (nplanes) *nplanes = xnplanes;
-  if (xnplanes == 1 && !pd[0]) {
+  if (xnplanes == 1 && pd && !pd[0]) {
+    xnplanes = 0;
     lives_free(pd);
-    return NULL;
+    pd = NULL;
   }
+  if (nplanes && xnplanes > 0) *nplanes = xnplanes;
   return pd;
 }
 

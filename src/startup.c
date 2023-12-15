@@ -1215,8 +1215,6 @@ void lazy_startup_checks(void) {
     lpt = STEAL_POINTER(mainw->helper_procthreads[PT_LAZY_RFX]);
     lives_proc_thread_join_boolean(lpt);
     lives_proc_thread_unref(lpt);
-    lives_widget_destroy(mainw->ldg_menuitem);
-    mainw->ldg_menuitem = NULL;
     add_rfx_effects2(RFX_STATUS_ANY);
   }
 alldone:
@@ -1379,13 +1377,11 @@ boolean lives_startup(livespointer data) {
   d_print("Testing lives sysalarms...");
   d_print("pause for 1 millisecond...");
 
-  if (RUNNER_IS(gdb)) {
+  if (RUNNER_IS(gdb))
     fprintf(stderr, "\tWhen running LiVES via gdb, you may wish to add "
 	    "the following lines to your gdb.ini file\n\n"
 	    "\t\thandle SIG42 nostop noprint\n"
-	    "\t\thandle SIG44 nostop noprint\n\n";
-	    }
-  }
+	    "\t\thandle SIG44 nostop noprint\n\n");
   
   lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
   if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION) != LIVES_RESULT_SUCCESS)
@@ -1774,13 +1770,12 @@ boolean lives_startup2(livespointer data) {
     } else {
       if (!disk_monitor_running(prefs->workdir))
         mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
-
-      if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
-        if (disk_monitor_running(prefs->workdir)) {
-          dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
-          mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
-        }
+    }
+    if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
+      if (disk_monitor_running(prefs->workdir)) {
+	dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
       }
+      mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
     }
     // check now, if diskspace used value is ready
     check_storage_space(-1, FALSE);

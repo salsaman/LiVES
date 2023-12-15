@@ -36,6 +36,9 @@ static GSource *fg_service_source = NULL;
 
 static volatile boolean gui_loop_tight = FALSE;
 
+// set to block g_main_context_iteration
+static pthread_mutex_t gmci_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 // this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
 static volatile int cprio = PRIO_HIGH;
 static pthread_mutex_t lpt_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1061,12 +1064,18 @@ boolean set_gui_loop_tight(boolean val) {
 }
 
 
+void lock_gmci(void) {pthread_mutex_lock(&gmci_mutex);}
+void unlock_gmci(void) {pthread_mutex_unlock(&gmci_mutex);}
+
 static boolean _lives_widget_context_iteration(LiVESWidgetContext * ctx, boolean may_block) {
-  boolean ret;
+  boolean ret = FALSE;
   if (mainw->no_idlefuncs) return FALSE;
-  mainw->no_idlefuncs = TRUE;
-  ret = g_main_context_iteration(ctx, may_block); 
-  mainw->no_idlefuncs = FALSE;
+  if (!pthread_mutex_trylock(&gmci_mutex)) {
+    mainw->no_idlefuncs = TRUE;
+    ret = g_main_context_iteration(ctx, may_block);
+    mainw->no_idlefuncs = FALSE;
+    pthread_mutex_unlock(&gmci_mutex);
+  }
   return ret;
 }
 

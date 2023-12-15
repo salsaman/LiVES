@@ -4534,9 +4534,13 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   boolean is_startup = FALSE;
   int plugin_idx, tool_posn = RFX_TOOL_MENU_POSN;
 
+  lives_widget_destroy(mainw->ldg_menuitem);
+  mainw->ldg_menuitem = NULL;
+
   if (self && self == mainw->helper_procthreads[PT_LAZY_RFX]) {
     is_startup = TRUE;
     lives_proc_thread_set_pauseable(self, TRUE);
+    lock_gmci();
   }
 
   if (status == RFX_STATUS_ANY) {
@@ -4625,8 +4629,11 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   if (rfx_slot_count) {
     char *tmp;
     for (plugin_idx = 1; plugin_idx <= rfx_slot_count; plugin_idx++) {
-      if (is_startup && lives_proc_thread_get_pause_requested(self))
+      if (is_startup && lives_proc_thread_get_pause_requested(self)){
+	unlock_gmci();
 	lives_proc_thread_pause(self);
+	lock_gmci();
+      }
 
       rfx = mainw->rendered_fx[plugin_idx];
       if (status == RFX_STATUS_TEST && rfx->status == RFX_STATUS_BUILTIN) continue;
@@ -4739,12 +4746,17 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  if (is_startup && lives_proc_thread_get_pause_requested(self))
+  if (is_startup && lives_proc_thread_get_pause_requested(self)) {
+    unlock_gmci();
     lives_proc_thread_pause(self);
+    lock_gmci();
+  }
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   update_rfx_menus();
   BG_THREADVAR(hook_hints) = 0;
+
+  unlock_gmci();
 
   if (status != RFX_STATUS_ANY) {
     threaded_dialog_spin(0.);

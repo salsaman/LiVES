@@ -12,6 +12,14 @@ shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-stati
 shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ -Wno-unused-variable
 endif
 
+if IS_DARWIN
+weed_ldflags = @WEED_EFFECT_PLUGIN_LIBS@
+weed_cflags = @WEED_EFFECT_PLUGIN_CFLAGS@
+else
+weed_ldflags = @WEED_EFFECT_PLUGIN_LIBS@
+weed_cflags = @WEED_EFFECT_PLUGIN_CFLAGS@
+endif
+
 if IS_IRIX
 shared_cflags += -DIS_IRIX=1
 endif
@@ -33,8 +41,8 @@ if HAVE_X11
 if HAVE_OPENGL
 openGL_libs = openGL.la
 openGL_la_SOURCES = openGL.cpp glad.cpp glad_glx.cpp
-openGL_la_CPPFLAGS = $(shared_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ -pthread
-openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ -pthread -L/usr/lib/x86_64-linux-gnu
+openGL_la_CPPFLAGS = $(shared_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ -pthread $(weed_cflags) @GLX_CFLAGS@
+openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ -pthread -L/usr/lib/x86_64-linux-gnu $(weed_ldflags) @GLX_LIBS@
 
 endif
 endif

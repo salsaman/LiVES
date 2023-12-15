@@ -1047,6 +1047,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
       if (!rte_key_real_enabled(key)) return res;
       // switch is ON
       filter_mutex_lock(key);
+      mainw->rte |= new_rte;
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
         if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
           weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
@@ -1060,6 +1061,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
+          mainw->rte_real &= ~new_rte;
           //mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
@@ -1067,9 +1069,6 @@ static lives_result_t rte_on_off(int key, int on_off) {
           return res;
         }
       }
-
-      mainw->rte |= new_rte;
-      //  mainw->rte_real |= new_rte;
 
       mainw->last_grabbable_effect = key;
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1133,6 +1132,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
+	else mainw->rte &= ~new_rte;
       }
       filter_mutex_unlock(key);
 

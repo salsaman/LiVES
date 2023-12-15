@@ -261,7 +261,7 @@ static inline weed_voidptr_t weed_get_arrayxy(weed_plant_t *plant, const char *k
  exit:
   if (leaf) _weed_intern_unfreeze(leaf);
   if (sizes) (*_free_func)(sizes);
-  if (elems) *elems = (err == WEED_SUCCESS) ? num_elems : -err;
+  if (elems) *elems = (err == WEED_SUCCESS) ? num_elems : 0;
   if (tot_size) *tot_size = (err == WEED_SUCCESS) ? totsize : 0;
   if (error) *error = err;
   if (!num_elems) return NULL;

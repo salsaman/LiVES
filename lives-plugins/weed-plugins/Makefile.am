@@ -211,7 +211,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	warpTV.la \
 	xeffect.la
 
-EXTRA_DIST=data icons scripts syna.h weed-plugin-utils.c
+EXTRA_DIST=data icons scripts syna.h
 
 dist: distdir-am all
 

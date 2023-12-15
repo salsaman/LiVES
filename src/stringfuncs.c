@@ -283,7 +283,7 @@ int lives_print_ret(const char *fmt, ...) {
   va_start(ap, fmt);
   ret = _lives_strndup_printf_va(fmt, 0, ap);
   va_end(ap);
-  fprintf(stderr, ret);
+  fprintf(stderr, "%s", ret);
   lives_free(ret);
   return 1;
 }

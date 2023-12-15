@@ -2452,14 +2452,13 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->hruler, -1, CE_HRULE_HEIGHT);
 
   mainw->eventbox2 = lives_event_box_new();
-  mainw->eb2_psurf = lives_calloc(1, sizeof(lives_painter_surface_t *));
 
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_EXPOSE_EVENT,
-                                  LIVES_GUI_CALLBACK(all_expose_overlay), mainw->eb2_psurf);
+                                  LIVES_GUI_CALLBACK(all_expose), &mainw->eb2_psurf);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->vidbar = lives_standard_label_new(_("Video"));
@@ -4497,10 +4496,7 @@ static void _resize_play_window(void) {
           } else xwinid = 0;
         }
       }
-      if (mainw->ext_playback) {
-        //lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-        vid_playback_plugin_exit();
-      }
+      if (mainw->ext_playback) vid_playback_plugin_exit();
 #ifdef RT_AUDIO
       if (mainw->vpp->audio_codec != AUDIO_CODEC_NONE && prefs->stream_audio_out) {
         start_audio_stream();
@@ -4529,7 +4525,6 @@ static void _resize_play_window(void) {
 #endif
       }
       xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
-
       if (!mainw->vpp->init_screen || ((*mainw->vpp->init_screen)
                                        (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
                                         mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
@@ -4553,10 +4548,11 @@ static void _resize_play_window(void) {
         /*   lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL); */
         /*   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
         /* } */
-      } else if (mainw->vpp->init_screen) {
-        LIVES_ERROR("Failed to start playback plugin");
+      } else {
+	if (mainw->vpp->init_screen) {
+	  LIVES_ERROR("Failed to start playback plugin");
+	}
       }
-
       if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
                              prefs->play_monitor != 0 &&
                              capable->nmonitors > 1 && !mainw->multitrack)) {

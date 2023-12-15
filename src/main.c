@@ -142,7 +142,7 @@ void tr_msg(void) {
 #endif
 
 
-void BREAK_ME(const char *brkstr) {
+void __BREAK_ME(const char *brkstr) {
   if (prefs && prefs->show_dev_opts) {
     g_printerr("\nBANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
   }
@@ -161,6 +161,8 @@ void lives_assert_failed(const char *cond, const char *file, int line) {
 
   if (prefs) MSGMODE_GLOBAL;
 
+  BREAK_ME("assertfail");
+  
   lives_abort("Assertion failed");
 }
 
@@ -418,11 +420,6 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
  
   if (!uc) sigsrc = SIG_SRC_INTERN;
 
-  if (sigsrc == SIG_SRC_INTERN)
-    fprintf(stderr, "Signal wass caught internally\n");
-  if (sigsrc == SIG_SRC_EXTERN)
-    fprintf(stderr, "Signal wass caught externally\n");
-
 #if NO_SHOW_DIAG
   printed = 1;
 #endif
@@ -461,6 +458,11 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     if (mainw->record) backup_recording(NULL, NULL);
     if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
   }
+
+  if (sigsrc == SIG_SRC_INTERN)
+    fprintf(stderr, "Signal was caught internally\n");
+  if (sigsrc == SIG_SRC_EXTERN)
+    fprintf(stderr, "Signal was caught externally\n");
 
   if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE || signum == LIVES_SIGABRT) {
     if (signum == LIVES_SIGSEGV) mainw->memok = FALSE;

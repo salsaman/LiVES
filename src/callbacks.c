@@ -9343,30 +9343,16 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
     if (need_unlock) pthread_mutex_unlock(mlocked);
   } else {
     if (widget == mainw->eventbox2) {
-      paint_tl_cursors(widget, cr, NULL);
+      if (!LIVES_IS_PLAYING)
+	paint_tl_cursors(widget, cr, NULL);
     }
   }
   return TRUE;
 }
 
 
-boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
-  // draw the cursors during CE playback
-  // nomrally we would create a drawable (surface) for a clip in redraw_timeline
-  // then paint the video line and the audio waveforms
-  // here we just paint lines over the surface, and this is composited to cr
-  // during playback, we defer this function and it is called when the player is at the
-  // UI update point
-  if (mainw->go_away) return FALSE;
-  if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
-  if (!CURRENT_CLIP_IS_VALID) return FALSE;
-  if (!LIVES_IS_PLAYING)
-    all_expose(widget, creb, psurf);
-  return TRUE;
-}
-
-
 void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xpsurf) {
+  if (!CURRENT_CLIP_IS_NORMAL) return;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)xpsurf;
   lives_painter_t *creb = cr;
   int bar_height;
@@ -9454,8 +9440,9 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
     }
   }
 
-  lives_painter_stroke(creb);
+  lives_painter_stroke(creb); 
   if (creb != cr) lives_widget_end_paint(widget);
+  //if (creb != cr) lives_painter_destroy(creb);
 }
 
 

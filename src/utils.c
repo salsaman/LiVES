@@ -772,43 +772,55 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
 
 ///////////////////////////////////////////////////////////
 
-LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, frames_t frame) {return ((double)frame - 1.) / mainw->files[clip]->fps;}
-
-
-LIVES_GLOBAL_INLINE frames_t calc_frame_from_time(int filenum, double time) {
-  // return the nearest frame (rounded) for a given time, max is cfile->frames
-  frames_t frame = 0;
-  if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.49999);
-  return (frame < mainw->files[filenum]->frames) ? frame : mainw->files[filenum]->frames;
+LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, frames_t frame) {
+  lives_clip_t *sfile;
+  if (!(sfile = RETURN_VALID_CLIP(clip))) return 0.;
+  return ((double)frame - 1.) / mainw->files[clip]->fps;
 }
 
 
-LIVES_GLOBAL_INLINE frames_t calc_frame_from_time2(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time(int clip, double time) {
+  // return the nearest frame (rounded) for a given time, max is cfile->frames
+  frames_t frame = 0;
+  lives_clip_t *sfile;
+  if (!(sfile = RETURN_VALID_CLIP(clip))) return 0;
+  if (time < 0.) return sfile->frames ? 1 : 0;
+  frame = (frames_t)(time * sfile->fps + 1.49999);
+  return (frame < sfile->frames) ? frame : sfile->frames;
+}
+
+
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time2(int clip, double time) {
   // return the nearest frame (rounded) for a given time
   // allow max (frames+1)
   frames_t frame = 0;
-  if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.49999);
-  return (frame < mainw->files[filenum]->frames + 1) ? frame : mainw->files[filenum]->frames + 1;
+  lives_clip_t *sfile;
+  if (!(sfile = RETURN_VALID_CLIP(clip))) return 0;
+  if (time < 0.) return sfile->frames ? 1 : 0;
+  frame = (frames_t)(time * sfile->fps + 1.49999);
+  return (frame < sfile->frames + 1) ? frame : sfile->frames + 1;
 }
 
 
-LIVES_GLOBAL_INLINE frames_t calc_frame_from_time3(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time3(int clip, double time) {
   // return the nearest frame (floor) for a given time
   // allow max (frames+1)
   frames_t frame = 0;
-  if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.);
-  return (frame < mainw->files[filenum]->frames + 1) ? frame : mainw->files[filenum]->frames + 1;
+  lives_clip_t *sfile;
+  if (!(sfile = RETURN_VALID_CLIP(clip))) return 0;
+  if (time < 0.) return sfile->frames ? 1 : 0;
+  frame = (frames_t)(time * sfile->fps + 1.);
+  return (frame < sfile->frames + 1) ? frame : sfile->frames + 1;
 }
 
 
-LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int clip, double time) {
   // return the nearest frame (rounded) for a given time, no maximum
   frames_t frame = 0;
-  if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.49999);
+  lives_clip_t *sfile;
+  if (!(sfile = RETURN_VALID_CLIP(clip))) return 0.;
+  if (time < 0.) return sfile->frames ? 1 : 0;
+  frame = (frames_t)(time * sfile->fps + 1.49999);
   return frame;
 }
 

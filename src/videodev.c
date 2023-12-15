@@ -562,8 +562,8 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   lives_object_set_attribute_value(obj, VDEV_PROP_HEIGHT, cfile->vsize);
   //lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
 
-  add_clip_src(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, (void *)ldev,
-               LIVES_SRC_TYPE_DEVICE, 0, NULL, NULL);
+  add_clip_src(mainw->current_file, -1, CLASS_UID_VIDEO_DEVICE, (void *)ldev,
+               LIVES_SRC_TYPE_DEVICE, ACTOR_UID_WEBCAM, NULL, NULL);
 
   pally.pal = ldev->palette;
   pally.clamping = ldev->YUV_clamping;

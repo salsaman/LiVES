@@ -797,7 +797,7 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
 
-  mainw->debug_ptr = NULL;
+  //mainw->debug_ptr = NULL;
   if (!weed_layer_check_valid(layer)) return;
 
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);

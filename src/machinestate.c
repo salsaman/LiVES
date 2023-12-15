@@ -2686,9 +2686,8 @@ boolean get_memstatus(void) {
     for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
     return TRUE;
   }
-#else
-  return FALSE;
 #endif
+  return FALSE;
 }
 
 

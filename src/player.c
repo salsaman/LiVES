@@ -376,7 +376,6 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
 
   for (i = 0; i < mainw->num_tracks; i++) {
     if (!layers[i]) {
-      g_print("new lAYEW FIR RGJ %d\n", i);
       layers[i] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     }
     else {
@@ -743,9 +742,8 @@ static lives_result_t prepare_frames(frames_t frame) {
                   || mainw->layers[0] == mainw->cached_frame)
                 mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
 
-	      weed_layer_pixel_data_free(mainw->layers[0]);
-              weed_layer_copy(mainw->layers[0], mainw->frame_layer_preload);
-              weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload)); 
+              mainw->layers[0] = STEAL_POINTER(mainw->frame_layer_preload);
+
               mainw->frame_layer = mainw->layers[0];
 	      mainw->actual_frame = labs(mainw->pred_frame);
 
@@ -871,7 +869,8 @@ void reset_old_frame_layer(void) {
   if (layer) {
     if (layer != mainw->cached_frame && layer != mainw->frame_layer_preload) {
       weed_layer_unref(layer);
-      if (layer == mainw->frame_layer) mainw->frame_layer = NULL;
+      if (layer == mainw->frame_layer && (!mainw->ext_player_layer ||
+					  mainw->ext_player_layer == mainw->frame_layer)) mainw->frame_layer = NULL;
       if (mainw->layers && layer == mainw->layers[0]) mainw->layers[0] = NULL;
     }
   }
@@ -887,6 +886,7 @@ void reset_ext_player_layer(boolean ign_flag) {
       lives_microsleep_while_false(vpp_processed_flag);
       vpp_processed_flag = FALSE;
     }
+    weed_layer_unref(layer);
     weed_layer_unref(layer);
   }
 }
@@ -1269,11 +1269,13 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
         // render the timecode for multitrack playback
+  g_print("gensssssX\n");
         frame_layer = check_for_overlay_text(frame_layer);
         if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
           if (frame_layer == mainw->frame_layer) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
         }
+  g_print("gefdfsdfsdtnX\n");
       } else {
         if ((weed_palette_is_rgb(layer_palette) &&
              !(weed_palette_is_rgb(mainw->vpp->palette))) ||
@@ -1382,7 +1384,9 @@ weed_layer_t *load_frame_image(frames_t frame) {
 	if (mainw->ext_player_layer) reset_ext_player_layer(FALSE);
 	mainw->ext_player_layer = frame_layer;
 	weed_layer_ref(frame_layer);
+	weed_layer_ref(frame_layer);
         weed_set_voidptr_value(mainw->ext_player_layer, LIVES_LEAF_VPP_PROCESSED_PTR, &vpp_processed_flag);
+	//frame_layer = NULL;
       }
 
       if ((player_v2 && !(*mainw->vpp->play_frame)(mainw->ext_player_layer, mainw->currticks - mainw->stream_ticks, return_layer))
@@ -3619,7 +3623,7 @@ int process_one(boolean visible) {
                 frames_t obf = -1;
                 double tconf = 0.5;
                 for (int i = 0; i < NTRIES; i++) {
-                  frames_t min_frame = pbframe + dir * (MIN_JMP_THRESH + sfile->pb_fps * cycle_avg + bungle_frames);
+                  frames_t min_frame = pbframe + dir * (MIN_JMP_THRESH + sfile->pb_fps * cycle_avg + bungle_frames + dir);
                   frames_t max_frame = pbframe + dir * (MAX_JMP_THRESH + sfile->pb_fps * cycle_avg + bungle_frames);
                   best_frame = reachable_frame(mainw->playing_file, dplug,
                                                min_frame, max_frame, sfile->last_req_frame
@@ -3686,7 +3690,7 @@ int process_one(boolean visible) {
 
               /////////////// PRELOAD ////////////
               // g_print("pred frame %ld\n", mainw->pred_frame);
-              pull_frame_threaded(mainw->frame_layer_preload, 0, 0);
+              //pull_frame_threaded(mainw->frame_layer_preload, 0, 0);
               //////////////////////////////////////////////////
 
               if (mainw->pred_clip != -1) {

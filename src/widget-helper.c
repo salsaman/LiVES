@@ -573,6 +573,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *live_widget_begin_paint(LiVESWidget
     SET_VOIDP_DATA(widget, GDK_CTX_KEY, gctx);
   }
 #endif
+  cairo_region_destroy(reg);
 #endif
   return cr;
 }
@@ -773,6 +774,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_mark_dirty(lives_paint
 #endif
   return FALSE;
 }
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_mark_dirty_rectangle(lives_painter_surface_t *surf,
+									       int dx, int dy, int dw, int dh) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_surface_mark_dirty_rectangle(surf, dx, dy, dw, dh);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data,
@@ -1772,7 +1784,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget * widget) 
 
 static boolean _lives_widget_queue_draw_and_update(LiVESWidget * widget) {
   gtk_widget_queue_draw(widget);
-  _lives_widget_process_updates(widget);
+  if (!gui_loop_tight)
+    _lives_widget_process_updates(widget);
   return TRUE;
 }
 
@@ -12274,6 +12287,7 @@ const char *widget_helper_suggest_icons(const char *part, int idx) {
   // prefer icons starting with gtk-
   for (; list; list = list->next) {
     iname = (const char *)list->data;
+    if (!iname) continue;
     if (strncmp(iname, "gtk-", 4) && strstr(iname, part)) {
       if (!idx--) break;
       //g_print("suggest for %s icon: %s\n", part, iname);
@@ -12284,6 +12298,7 @@ const char *widget_helper_suggest_icons(const char *part, int idx) {
 #endif
   if (idx >= 0) {
     for (; list; list = list->next) {
+      if (!list->data) continue;
       if (strstr((iname = (const char *)list->data), part)) {
         if (!idx--) break;
         //g_print("suggest for %s icon: %s\n", part, iname);

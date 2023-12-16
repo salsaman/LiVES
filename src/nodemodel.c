@@ -58,6 +58,7 @@ LIVES_GLOBAL_INLINE double get_cycle_avg_time(double *dets) {
 
 static inst_node_t *desc_and_add_steps(inst_node_t *, exec_plan_t *);
 static inst_node_t *desc_and_align(inst_node_t *, lives_nodemodel_t *);
+static inst_node_t *desc_and_reinit(inst_node_t *n);
 
 static lives_result_t get_op_order(int out_width, int out_height, int in_width, int in_height,
                                    int flags, int outpl, int inpl,
@@ -215,7 +216,7 @@ static lives_result_t get_op_order(int out_width, int out_height, int in_width, 
     changemap |= GCONV_RGB_RGB;
     ops_needed[OP_GAMMA] = TRUE;
   } else if (out_yuv && !in_yuv && in_gamma_type != WEED_GAMMA_UNKNOWN
-             && in_gamma_type != WEED_GAMMA_SRGB) {
+             && in_gamma_type != out_gamma_type) {
     if (explain)
       d_print_debug("Needs gamma conversion because we are going from YUV (%s) to RGB (%s) and "
                     "we need gamma_type %s\n", weed_palette_get_name(outpl), weed_palette_get_name(inpl),
@@ -1587,12 +1588,11 @@ static double dec_running_steps(plan_step_t *step) {
       plan->tdata->active_pl_time += xtime;
   } else if (plan->nsteps_running >= 1)
     plan->tdata->concurrent_time += xtime;
-
+ 
   step->tdata->real_end = xtime;
   step->tdata->real_duration = 1000. * (step->tdata->real_end - step->tdata->real_start
                                         - step->tdata->paused_time);
   plan->tdata->sequential_time += step->tdata->real_duration;
-
   return xtime;
 }
 
@@ -1625,7 +1625,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  //MSGMODE_ON(DEBUG);
+  MSGMODE_ON(DEBUG);
 
   //if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
@@ -1663,7 +1663,7 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    //MSGMODE_OFF(DEBUG);
+    MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel(self);
   }
@@ -2558,7 +2558,7 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->active = FALSE;
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
-  //MSGMODE_OFF(DEBUG);
+  MSGMODE_OFF(DEBUG);
 
   ____FUNC_EXIT____;
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
@@ -3564,6 +3564,17 @@ void align_with_model(lives_nodemodel_t *nodemodel) {
   } while (retn);
 
   reset_model(nodemodel);
+
+  do {
+    for (LiVESList *list = nodemodel->node_chains; list; list = list->next) {
+      node_chain_t *nchain = (node_chain_t *)list->data;
+      inst_node_t *n = nchain->first_node;
+      retn = desc_and_reinit(n);
+    }
+  } while (retn);
+
+  reset_model(nodemodel);
+
   d_print_debug("%s @ %s\n", "align end", lives_format_timing_string(lives_get_session_time() - ztime));
   //MSGMODE_OFF(DEBUG);
 }
@@ -5027,7 +5038,7 @@ static void calc_costs_for_source(lives_nodemodel_t *nodemodel, inst_node_t *n, 
   for (j = 0; j < n_allpals; j++) {
     // step through list of ALL palettes
     double ccost = 0;
-    for (ni = 0; i < n->n_clip_srcs; ni++) {
+    for (ni = 0; ni < n->n_clip_srcs; ni++) {
       double gcost = 0.;
       input_node_t *in = n->inputs[ni];
       int cpal = WEED_PALETTE_NONE;
@@ -7434,15 +7445,15 @@ static void _build_nodemodel(lives_nodemodel_t **pnodemodel, int ntracks, int *c
     // instance cycle. In doing so we have the opportunity to reinit the instances asyn.
     nodemodel->flags |= NODEMODEL_NEW;
 
-    do {
-      for (LiVESList *list = nodemodel->node_chains; list; list = list->next) {
-	node_chain_t *nchain = (node_chain_t *)list->data;
-	inst_node_t *n = nchain->first_node;
-	retn = desc_and_reinit(n);
-      }
-    } while (retn);
+    /* do { */
+    /*   for (LiVESList *list = nodemodel->node_chains; list; list = list->next) { */
+    /* 	node_chain_t *nchain = (node_chain_t *)list->data; */
+    /* 	inst_node_t *n = nchain->first_node; */
+    /* 	retn = desc_and_reinit(n); */
+    /*   } */
+    /* } while (retn); */
 
-    reset_model(nodemodel);
+    /* reset_model(nodemodel); */
   }
   //MSGMODE_OFF(DEBUG);
 
@@ -7523,17 +7534,12 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
 lives_result_t run_next_cycle(void) {
   // run a fresh iteration of mainw->exec_plan
   // WARNING - will alter mainw->plan_cycle
-  g_print("pt a1\n");
   if (mainw->refresh_model) return LIVES_RESULT_INVALID; 
-  g_print("pt a12\n");
   if (!mainw->exec_plan) return LIVES_RESULT_FAIL;
-  g_print("pt a133\n");
   if (mainw->cancelled != CANCEL_NONE) return LIVES_RESULT_INVALID;
-  g_print("pt a155\n");
   if (mainw->plan_runner_proc
       && lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc))
     return LIVES_RESULT_INVALID;
-  g_print("pt a16666\n");
 
   if (mainw->plan_cycle) {
     if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
@@ -7559,7 +7565,6 @@ lives_result_t run_next_cycle(void) {
 	    && mainw->layers[i] != mainw->cached_frame && mainw->layers[i] != mainw->ext_player_layer
 	    && mainw->layers[i] != mainw->frame_layer_preload) {
 	  weed_layer_set_invalid(mainw->layers[i], TRUE);
-	  g_print("free layer on track %d\n", i);
 	  weed_layer_pixel_data_free(mainw->layers[i]);
 	} else mainw->layers[i] = NULL;
       }
@@ -7568,10 +7573,8 @@ lives_result_t run_next_cycle(void) {
 
   // reset layers for next cycle. Do NOT free them now
   mainw->layers = map_sources_to_tracks(FALSE, TRUE);
-  g_print("pt a188866\n");
 
   if (!mainw->layers) return LIVES_RESULT_FAIL;
-  g_print("pt a16sadsad666\n");
 
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
@@ -7581,7 +7584,6 @@ lives_result_t run_next_cycle(void) {
       || (!mainw->plan_runner_proc
 	  || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)))
     return LIVES_RESULT_INVALID;
-  g_print("pt a1666ssssssss6\n");
 
   if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
     // trigger next plan cycle. We can start loading background frames while displaying current one
@@ -7604,7 +7606,6 @@ lives_result_t run_next_cycle(void) {
       lives_layer_set_status(mainw->layers[1], LAYER_STATUS_PREPARED);
     }
   }
-  g_print("pt a111111111111111116666\n");
   return LIVES_RESULT_SUCCESS;
 }
 

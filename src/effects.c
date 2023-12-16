@@ -1054,15 +1054,14 @@ static lives_result_t rte_on_off(int key, int on_off) {
           if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
             record_filter_init(key);
           }
-        }
+	  refresh_model = FALSE;
+	}
         weed_instance_unref(inst);
-	refresh_model = FALSE;
       } else {
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
           mainw->rte_real &= ~new_rte;
-          //mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
           filter_mutex_unlock(key);
@@ -1118,21 +1117,21 @@ static lives_result_t rte_on_off(int key, int on_off) {
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
-            //mainw->rte_real &= ~new_rte;
           }
           weed_instance_unref(inst);
         }
         refresh_model = FALSE;
       }
-      else
+      else {
         // deinit effect
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
-          //mainw->rte_real &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
-	else mainw->rte &= ~new_rte;
+	else { 
+	  mainw->rte_real |= new_rte;
+	}
       }
       filter_mutex_unlock(key);
 
@@ -1144,6 +1143,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
             if (rte_key_is_enabled(i, TRUE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
+    }
   }
 
   if (mainw->rendered_fx)

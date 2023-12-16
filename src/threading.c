@@ -878,6 +878,7 @@ if (lpt) {
       weed_plant_t *data;
       int64_t state;
       pthread_rwlock_t *state_rwlock;
+      pthread_mutex_t *extcb_mutex;
       lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
       //if (lpt == mainw->debug_ptr) BREAK_ME("lpt free");
       if (lives_proc_thread_get_closure(lpt)) BREAK_ME("free lpt with closure !");
@@ -933,6 +934,9 @@ if (lpt) {
         if (!nr) weed_plant_free(data);
       }
 
+      lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, NULL);
+      if (fdef) free_funcdef(fdef);
+      
       if (tdata) {
         // GET_PROC_THREAD_SELF will now return NULL, until we call lives_thread_switch_self()
         tdata->vars.var_active_lpt = NULL;
@@ -949,6 +953,12 @@ if (lpt) {
       // dont end up with invalid objects
       pthread_mutex_lock(&ref_sync_mutex);
       pthread_mutex_unlock(&ref_sync_mutex);
+
+      extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
+      if (extcb_mutex) {
+	pthread_mutex_destroy(extcb_mutex);
+	lives_free(extcb_mutex);
+      }
 
       // we can now unlock the rwlock
       pthread_rwlock_unlock(destruct_rwlock);
@@ -2226,7 +2236,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
   // --   if this happens it will check for match, then reset its sync_idx, the same as if it were resumed
   // - so after resuming we wait for other thread to reset its sync_idx
 
-  MSGMODE_ON(DEBUG);
+  //MSGMODE_ON(DEBUG);
   GET_PROC_THREAD_SELF(self);
   if (sync_idx == 0) sync_idx = -1;
   d_print_debug("syncwith: %p says: start sync with %p, sync identifier is %d\n", self, lpt, sync_idx);
@@ -2957,8 +2967,10 @@ uint64_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
 
   if (lpt != self) {
     weed_set_plantptr_value(self, "subord", lpt);
+
     weed_set_plantptr_value(lpt, "parent", self);
     lives_thread_set_active(lpt);
+
     lives_proc_thread_share_book(self, lpt);
   }
 
@@ -4169,7 +4181,7 @@ uint64_t lives_thread_join(lives_thread_t *thread, void **retval) {
   nthrd = task->done;
 
   // thread has been joined, so now it can be freed
-  task->flags &= ~LIVES_THRDFLAG_NOFREE_LIST;
+  //task->flags &= ~LIVES_THRDFLAG_NOFREE_LIST;
   lives_thread_free(thread);
 
 #if USE_RPMALLOC

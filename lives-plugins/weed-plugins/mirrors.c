@@ -56,7 +56,7 @@ static weed_error_t mirrorx_process(weed_plant_t *inst, weed_timecode_t timestam
       dst += xwidth << 1;
       for (int i = 0; i < height; i++) {
 	const int xrow = i * orow;
-	for (int j = 0; j < xwidth; j += psize)
+	for (int j = 0; j <= xwidth; j += psize)
 	  weed_memcpy(dst + xrow - j, src + xrow + j, psize);
       }
     }
@@ -66,7 +66,7 @@ static weed_error_t mirrorx_process(weed_plant_t *inst, weed_timecode_t timestam
 	const int yrow = i * irow;
 	weed_memcpy(dst + xrow, src + yrow, xwidth);
 	xrow += xwidth << 1;
-	for (int j = 0; j < xwidth; j += psize)
+	for (int j = 0; j <= xwidth; j += psize)
 	  weed_memcpy(dst + xrow - j, src + yrow + j, psize); 
       }
     }

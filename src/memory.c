@@ -1235,8 +1235,8 @@ static int get_bblock_idx(void *bstart, off_t * offs, int *bbafter) {
 }
 
 
-static int _alloc_bigblock(size_t sizeb, int oblock) {
-  int nblocks = 1;
+static int _alloc_bigblock(size_t sizeb, int oblock) { 
+ int nblocks = 1;
   int i, j, max;
   if (sizeb > bmemsize) {
     if (sizeb > (bmemsize >> 1)) {
@@ -1287,8 +1287,9 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     used[i] = nblocks;
   }
 
+  g_print("ALLOCBBBB %d nnnn\n", i);
+  
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
-  g_print("ALLOBIG %p %d size %d\n", bigblocks[i], i, nblocks);
 
   if (i <= max) return i;
 
@@ -1337,7 +1338,7 @@ void bbsummary(void) {
 
 
 
-void *calloc_bigblock(size_t xsize) {
+void *_calloc_bigblock(size_t xsize) {
   int bbidx;
   pthread_mutex_lock(&bigblock_mutex);
   bbidx = _alloc_bigblock(xsize, -1);
@@ -1433,7 +1434,7 @@ static void *free_bigblock(void *bstart) {
 #if MEM_USE_BIGBLOCKS
 
 LIVES_LOCAL_INLINE boolean is_bigblock(const char *p) {
-  g_print("memcf %p %p %p\n", p, bigblock_root, bigblock_root + bmemsize * NBIGBLOCKS);
+  //g_print("memcf %p %p %p\n", p, bigblock_root, bigblock_root + bmemsize * NBIGBLOCKS);
   return p >= bigblock_root && p < bigblock_root + bmemsize * NBIGBLOCKS;
 }
 

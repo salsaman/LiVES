@@ -33,6 +33,8 @@
 #include "main.h"
 #include "nodemodel.h"
 
+#define malloc_bigblock(s) _malloc_bigblock(s)
+
 boolean weed_palette_is_sane(int pal);
 
 #define USE_THREADS 1 ///< set to 0 to disable threading for pixbuf operations, 1 to enable. Other values are invalid.
@@ -3255,8 +3257,8 @@ static void *convert_yuva8888_to_argb_frame_thread(void *data) {
   return NULL;
 }
 
-static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height,
-    int y_delta, int *istrides, int orowstride, uint8_t *LIVES_RESTRICT dest,
+static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height,
+    int y_delta, int *istrides, int orowstride, uint8_t *dest,
     boolean add_alpha,
     boolean is_422, int sampling, int clamping, int subspace,
     int gamma, int tgt_gamma, uint16_t *LIVES_RESTRICT gamma_lut,
@@ -9481,6 +9483,7 @@ static void convert_swap3addpost_frame(uint8_t *LIVES_RESTRICT src, int width, i
 
     for (i = 1; i < nthreads; i++) lives_thread_join(threads[i], NULL);
     lives_free(ccparams);
+    if (gamma_lut8) lives_gamma_lut8_free(gamma_lut8);
     return;
   }
 
@@ -9714,12 +9717,12 @@ static void _convert_swap3postalpha_frame(uint8_t *src, int width, int height, i
   }
 }
 
-static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride,
-    uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut8, int thread_id) {
-  _convert_swap3postalpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut8, thread_id);
-}
+/* static void convert_swap3postalpha_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int rowstride, int orowstride, */
+/*     uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut8, int thread_id) { */
+/*   _convert_swap3postalpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut8, thread_id); */
+/* } */
 
-static void convert_swap3postalpha_frameX(uint8_t *src, int width, int height, int rowstride, int orowstride,
+static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, int rowstride, int orowstride,
     uint8_t *dest, uint8_t *LIVES_RESTRICT gamma_lut8, int thread_id) {
   _convert_swap3postalpha_frame(src, width, height, rowstride, orowstride, dest, gamma_lut8, thread_id);
 }
@@ -11929,13 +11932,13 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       if (!i) lives_sync_list_set_priv(copylists[i], pd[0]);
     }
     weed_set_voidptr_array(layer, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
-    lives_free(copylists);
+    lives_free(copylists);lives_free(pd);
   }
 
 fail:
 
   if (realloced && weed_layer_get_pixel_data(layer) != realloced)
-    free_bigblock(realloced);
+    _lives_free_maybe_big(realloced);
 
   if (rowstrides) lives_free(rowstrides);
   if (fixed_rs) lives_free(fixed_rs);
@@ -12200,9 +12203,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   }
   inpl = weed_layer_get_palette(layer);
 
-  void *pddd = weed_layer_get_pixel_data(layer);
-  g_print("layer pd is %p\n", pddd);
-
   if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SAMPLING))
     isampling = weed_layer_get_yuv_sampling(layer);
   else isampling = WEED_YUV_SAMPLING_DEFAULT;
@@ -12218,7 +12218,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  #define DEBUG_PCONV
+  //  #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -12351,8 +12351,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   //g_print("clp full %p\n", orig_layer);
   weed_layer_copy(orig_layer, layer);
 
-  LIVES_ASSERT(lives_layer_has_copylist(orig_layer));
-
   if (!weed_layer_get_pixel_data(orig_layer) && weed_layer_get_pixel_data(layer)) {
     LIVES_WARN("Error copying layer in convert_layer_palette_full");
   }
@@ -12388,17 +12386,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
-	      mainw->debug_ptr = gudest;
               convert_swap3addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          gamma_lut8, -USE_THREADS);
-	      LIVES_ASSERT(weed_layer_get_pixel_data(orig_layer) !=
-			   weed_layer_get_pixel_data(layer)
-			   || lives_layer_has_copylist(orig_layer));
             } else {
               // rgb -> rgba, bgr -> bgra
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
-              //g_print("shlddd done\n");
               gudest = weed_layer_get_pixel_data(layer);
               convert_addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                     gamma_lut8, -USE_THREADS);
@@ -12447,7 +12440,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             if (can_inplace) {
               gudest = gusrc;
               orowstride = irowstride;
-              convert_swap3postalpha_frameX(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut8, -USE_THREADS);
+              convert_swap3postalpha_frame(gusrc, width, height, irowstride, orowstride, gudest, gamma_lut8, -USE_THREADS);
             } else {
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
@@ -13865,15 +13858,6 @@ conv_done:
     /* g_print("bcontig b: %p %d, %p %d\n", orig_layer, */
     /*         weed_get_boolean_value(orig_layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL), */
     /*         layer, weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL)); */
-    g_print("%p %p %d %d\n",
-	    weed_layer_get_pixel_data(orig_layer),
-	    weed_layer_get_pixel_data(layer),
-	    lives_layer_has_copylist(orig_layer),
-	    weed_plant_has_leaf(orig_layer, LIVES_LEAF_COPYLIST));
-
-    LIVES_ASSERT(weed_layer_get_pixel_data(orig_layer) !=
-		 weed_layer_get_pixel_data(layer)
-		 || lives_layer_has_copylist(orig_layer));
     weed_layer_unref(orig_layer);
     //g_print("unref of orig_layer %p\n", orig_layer);
   }
@@ -14041,9 +14025,10 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 
 static void *gamma_convert_layer_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  uint8_t * LIVES_RESTRICT pixels = (uint8_t *)ccparams->src;
+  uint8_t *pixels = (uint8_t *)ccparams->src;
   const int rowstride = ccparams->orowstrides[0];
   const int psize = ccparams->psize;
+  const int height = ccparams->vsize;
   const int px = MIN(3, psize);
   const int start = ccparams->alpha_first ? ccparams->xoffset + 1
     : ccparams->xoffset;
@@ -14052,12 +14037,12 @@ static void *gamma_convert_layer_thread(void *data) {
   uint8_t * LIVES_RESTRICT gamma_lut8 = ccparams->lut8;
   if (!gamma_lut8) return NULL;
 
-  for (int i = 0; i < ccparams->vsize; i++) {
+  for (int i = 0; i < height; i++) {
     const int irow = rowstride * i;
     //g_print("\n");
     for (int j = start; j < end; j += psize) {
       for (int k = 0; k < px; k++) {
-        //g_print("  PX %p + %d , %d  = %d\t", pixels, j + k, pixels[j + k], gamma_lut[pixels[k + j]]);
+        //g_print("  PX %p + %d , %d  = %d\t", pixels, j + k, pixels[j + k], gamma_lut[pixels[j + k]]);
         pixels[irow + j + k] = gamma_lut8[pixels[irow + j + k]];
       }
       //g_print("\n");
@@ -15077,17 +15062,18 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
        46  *
        47  * where Y = cr * R + cg * G + cb * B and cr + cg + cb = 1.
        48  */
-    // Y_R, Y_G, Y_B
+    // Y_R, Y_G, Y_
 
-    // colourspace here affects primaries, gamm tc and yuv constants
-    sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                             ? AVCOL_SPC_BT709 : AVCOL_SPC_BT470BG), iclamping,
-                             sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                 ?  : AVCOL_SPC_BT709 : AVCOL_SPC_BT470BG),
-                             oclamp_hint,  0, 1 << 16, 1 << 16);
     if (!swscale) {
       LIVES_DEBUG("swscale is NULL !!");
     } else {
+    // colourspace here affects primaries, gamm tc and yuv constants
+    sws_setColorspaceDetails(swscale,
+			     sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
+						 ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
+			     sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
+						 ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,
+			     0, 65536, 65536);
 #endif
 
 #ifdef DEBUG_RESIZE
@@ -15137,7 +15123,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 	* weed_palette_get_plane_ratio_vertical(opal_hint, i);
     }
 
-    //if (bsize < THREADVAR(buff_size)) can_local = TRUE;
+    if (bsize < THREADVAR(buff_size)) can_local = TRUE;
  
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
@@ -15421,14 +15407,11 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   for (int i = NC_LAYERS; i--;) {
     // with cache_mutex locked, no other thread can double assing a cehcd layer, but
     // a layer can be released, and once released there are no more copies that can be made
-    g_print("LBchk %d\n", i);
     if (!cached_layers[i]) {
-      g_print("LBchk my  %d\n", i);
       if (empty == -1) empty = i;
       continue;
     }
     if (lives_layer_has_copylist(cached_layers[i])) continue;
-    g_print("LBchk nobpp  %d\n", i);
 
     // we can reuse a frame if
     // rowstrides match and
@@ -15436,8 +15419,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     // or if offs_x <= old offs_x and offs_x + widtth >= old_offs _x + width and height >= old height
 
     if (using == -1) {
-          g_print("LBchk use  %d\n", i);
-
       int lbpal = weed_layer_get_palette(cached_layers[i]);
       if ((is_rgb && (lbpal == pal || consider_swapping(pal, lbpal)))
           || (!is_rgb && lbpal == pal
@@ -15448,7 +15429,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
           rowstrides = weed_layer_get_rowstrides(cached_layers[i], NULL);
           if (rowstrides[0] == irowstrides[0]) {
             if (lbpal != pal)  weed_layer_set_palette(cached_layers[i], pal);
-	    g_print("copy lb %d to layer\n", i);
             weed_layer_copy(layer, cached_layers[i]);
             last_used[i] = cycle_count;
             using = i;
@@ -15458,7 +15438,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
       }
     }
     if (cycle_count - last_used[i] > AGE_THRESH) {
-      g_print("unref lb %d\n", i);
       weed_layer_unref(cached_layers[i]);
       cached_layers[i] = NULL;
       if (empty == -1) empty = i;
@@ -15467,7 +15446,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   pthread_mutex_unlock(&cache_mutex);
 
   lives_free(irowstrides);
-    g_print("LBchk got  %d\n", using);
 
   if (using != -1) {
     int *inner_size = weed_get_int_array(cached_layers[using], WEED_LEAF_INNER_SIZE, NULL);
@@ -15496,14 +15474,12 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   weed_layer_set_size(layer, nwidth, nheight);
 
   if (using == -1) {
-    g_print("lb layer X\n");
 
     ///////////////////////
     if (!create_empty_pixel_data(layer, TRUE, TRUE)) goto memfail2;
     //////////////////////////
 
     if (empty != -1) {
-      g_print("copy layer to empty %d\n", empty);
       cached_layers[empty] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       if (cached_layers[empty]) {
         int inner_size[2];
@@ -15565,7 +15541,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
 
   if (xtime) weed_set_double_value(layer, LIVES_LEAF_COPY_TIME, lives_get_session_time() - xtime);
 
-  g_print("unref old layer\n");
   weed_layer_unref(old_layer);
 
   lives_free(pixel_data);
@@ -15926,8 +15901,6 @@ lives_layer_t *lives_painter_to_layer(weed_layer_t *layer, lives_painter_t *cr) 
 
   if (!newlayer) {
     // transfer pixel data back to layer
-    weed_layer_pixel_data_free(layer);
-    weed_layer_set_pixel_data(layer, src);
     lives_painter_surface_destroy(surface);
     lives_painter_set_source(cr, NULL);
   } else {

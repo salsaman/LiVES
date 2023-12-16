@@ -3723,7 +3723,6 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
 
   lives_clip_t *sfile = RETURN_NORMAL_CLIP(mainw->playing_file);
 
-  lives_time_source_t time_source = LIVES_TIME_SOURCE_NONE;
   if (!sfile || !AV_CLIPS_EQUAL || !LIVES_CE_PLAYBACK || AUD_SRC_EXTERNAL
       || !APLAYER_REALTIME || mainw->foreign) {
     mainw->video_seek_ready = TRUE;

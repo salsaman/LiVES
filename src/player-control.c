@@ -140,7 +140,7 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
-  lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_set_flags = HOOK_CB_FG_THREAD;;
+  lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_set_flags = HOOK_CB_FG_THREAD | HOOK_CB_PERSISTENT;
 
   // the main thread will block here, waiting for playback to end.
   // during this time, it will service only bg requests set via fg_service_call

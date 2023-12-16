@@ -2645,7 +2645,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     // special handling for clips where host controls size
     // Note: vlayer is actually the out channel of the generator, so we should
     // never free it !
-    lives_result_t res = LIVES_RESULT_FAIL;
+    lives_filter_error_t res = LIVES_RESULT_FAIL;
     weed_plant_t *inst = (weed_instance_t *)get_primary_inst(sfile);
     if (!inst) {
       errpt = 13;
@@ -2662,7 +2662,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     filter_mutex_unlock(key);
     weed_instance_unref(inst);
 
-    if (res != LIVES_RESULT_SUCCESS) {
+    if (res != FILTER_SUCCESS) {
       errpt = 14;
       goto fail;
     }
@@ -2693,6 +2693,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     if (weed_layer_count_refs(layer) <= 1) goto fail;
 
     weed_layer_unref(layer);
+
+if (track == 1) TRACE_ME("1 lof");
 
     ____FUNC_EXIT_VAL____("b", TRUE);
     return TRUE;

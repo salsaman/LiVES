@@ -284,24 +284,34 @@ void *alloc_bigblock(size_t s);
 
 double bigblock_occupancy(void);
 
+void *_malloc_bigblock(size_t s);
+void *_calloc_bigblock(size_t s);
+
 //#define DEBUG_BBLOCKS 1
 #ifdef DEBUG_BBLOCKS
-void lives_free_maybe_big(void *);
-#define calloc_bigblock(s) FN_ALLOC_TARGET(_calloc_bigblock,s)
-#else
-void *calloc_bigblock(size_t s);
-void *_malloc_bigblock(size_t s);
-void bbsummary(void);
+#define calloc_bigblock(s) FN_ALLOC_TARGET(_calloc_bigblock,s)#
+
+#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
+			     ? _malloc_bigblock(s) : _malloc_bigblock(s)))
+else
+#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
+			     ? _malloc_bigblock(s) : _malloc_bigblock(s)))
+  //#define malloc_bigblock(s) _malloc_bigblock(s)
+#define calloc_bigblock(s) _calloc_bigblock(s)
 #endif
 
-#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) ? _malloc_bigblock(s) : _malloc_bigblock(s)))
+void bbsummary(void);
 
 void *realloc_bigblock(void *, size_t s);
 
+void _lives_free_maybe_big(void *);
+
+
 #if MEM_USE_BIGBLOCKS
-void lives_free_maybe_big(void *);
+void _lives_free_maybe_big(void *);
 #else
-#define lives_free_maybe_big(p) lives_free(p)
+#define lives_free_maybe_big(p) _lives_free_maybe_big(p)
+
 #endif
 
 void *lives_malloc_medium(size_t msize);

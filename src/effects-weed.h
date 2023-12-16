@@ -34,7 +34,7 @@ typedef enum {
   FILTER_ERROR_COULD_NOT_REINIT,
   FILTER_ERROR_INVALID_PLUGIN,
   FILTER_ERROR_NEEDS_REINIT,   // TODO
-  FILTER_ERROR_NO_IN_CHANNELS,
+  FILTER_ERROR_NO_IN_CHANNELS, //10
   FILTER_ERROR_INVALID_TRACK,
   FILTER_ERROR_INTERPOLATION_FAILED,
   FILTER_ERROR_INVALID_INSTANCE,
@@ -44,7 +44,7 @@ typedef enum {
   FILTER_ERROR_IS_SCRAP_FILE,
   FILTER_ERROR_MISSING_CHANNEL,
   FILTER_ERROR_TEMPLATE_MISMATCH,
-  FILTER_ERROR_MEMORY_ERROR,
+  FILTER_ERROR_MEMORY_ERROR, //20
   FILTER_ERROR_DONT_THREAD,
   FILTER_ERROR_COPYING_FAILED,
   FILTER_ERROR_BUSY,
@@ -293,7 +293,7 @@ void weed_bg_generator_end(weed_instance_t *inst);
 void wge_inner(weed_instance_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
-lives_result_t lives_layer_fill_from_generator(weed_layer_t *, weed_instance_t *, weed_timecode_t tc);
+lives_filter_error_t lives_layer_fill_from_generator(weed_layer_t *, weed_instance_t *, weed_timecode_t tc);
 
 /// for multitrack
 void backup_weed_instances(void);

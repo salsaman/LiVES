@@ -1024,7 +1024,8 @@ static boolean fn_data_replace(lives_proc_thread_t dst, lives_proc_thread_t src)
 static void add_to_cb_list(lives_proc_thread_t self, lives_closure_t *closure) {
   // when adding a hook cb to another hook stack, keep a pointer to it
   pthread_mutex_t *extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_MUTEX, NULL);
-  LiVESList *ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
+  
+LiVESList *ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
   pthread_mutex_lock(extcb_mutex);
   weed_set_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, lives_list_prepend(ext_cbs, (void *)closure));
   pthread_mutex_unlock(extcb_mutex);

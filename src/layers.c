@@ -430,12 +430,12 @@ void lives_layer_check_remove_copylists(lives_layer_t *layer) {
 	real = NULL; 
 	if (copylists && copylists[i]) {
 	  real = lives_sync_list_get_priv(copylists[i]);
-	  g_print("check clist for %d\n", i);
+	  //g_print("check clist for %d\n", i);
 	  if ((copylists[i] = lives_sync_list_remove(copylists[i], layer, FALSE))) continue;
-	  g_print("now empty clist for %d\n", i);
+	  //g_print("now empty clist for %d\n", i);
 	}
 	else real = pd[i];
-	g_print("free clist for %d %p\n", i, real);
+	//g_print("free clist for %d %p\n", i, real);
 	if (real) lives_free_maybe_big(real);
       }
       weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);

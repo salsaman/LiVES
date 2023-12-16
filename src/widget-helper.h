@@ -236,6 +236,7 @@ boolean lives_painter_surface_finish(lives_painter_surface_t *);
 boolean lives_painter_surface_flush(lives_painter_surface_t *);
 
 boolean lives_painter_surface_mark_dirty(lives_painter_surface_t *);
+boolean lives_painter_surface_mark_dirty_rectangle(lives_painter_surface_t *, int dx, int dy, int dw, int dh);
 
 boolean lives_painter_destroy(lives_painter_t *);
 

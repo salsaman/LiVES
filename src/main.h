@@ -718,7 +718,7 @@ void __BREAK_ME(const char *dtl);
 
 #define BREAK_ME(label) _DW0(SHOW_LOCATION("LiVES: hit breakpoint"); __BREAK_ME(label);)
 
-#define TRACE_ME _DW0(SHOW_LOCATION("LiVES: hit tracepoint"))
+#define TRACE_ME(label) _DW0(SHOW_LOCATION("LiVES: hit tracepoint: " label);)
 
 #define SHOW_LOCATION(text) fprintf(stderr,"\n%s at %s, line %d\n\n",text,_FILE_REF_,_LINE_REF_)
 

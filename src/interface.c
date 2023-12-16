@@ -463,20 +463,22 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
 
   mainw->current_file = current_file;
 
-  if (which == 0 || which == 1) {
-    lives_widget_queue_draw_if_visible(mainw->video_draw);
-    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-  }
-  if (which == 0 || which == 2) {
-    lives_widget_queue_draw_if_visible(mainw->laudio_draw);
-    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
-  }
-  if (which == 0 || which == 3) {
-    lives_widget_queue_draw_if_visible(mainw->raudio_draw);
-    if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
-        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+  if (!LIVES_IS_PLAYING) {
+    if (which == 0 || which == 1) {
+      lives_widget_queue_draw_if_visible(mainw->video_draw);
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+	  || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+    }
+    if (which == 0 || which == 2) {
+      lives_widget_queue_draw_if_visible(mainw->laudio_draw);
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+	  || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+    }
+    if (which == 0 || which == 3) {
+      lives_widget_queue_draw_if_visible(mainw->raudio_draw);
+      if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
+	  || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+    }
   }
   return TRUE;
 

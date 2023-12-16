@@ -62,8 +62,8 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
                  *out_channel = weed_get_out_channel(inst, 0);
   weed_plant_t *in_param;
 
-  uint8_t *__restrict__ src1 = weed_channel_get_pixel_data(in_channels[0]);
-  uint8_t *__restrict__ src2 = weed_channel_get_pixel_data(in_channels[1]);
+  uint8_t *src1 = weed_channel_get_pixel_data(in_channels[0]);
+  uint8_t *src2 = weed_channel_get_pixel_data(in_channels[1]);
   uint8_t *dst = weed_channel_get_pixel_data(out_channel);
 
   uint8_t blendneg, blend_factor;
@@ -212,16 +212,27 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0),
                                   weed_channel_template_init("in channel 1", 0), NULL
                                  };
+  /* weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", */
+  /*                                  WEED_CHANNEL_CAN_DO_INPLACE), NULL */
+  /*                                 }; */
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
-                                   WEED_CHANNEL_CAN_DO_INPLACE), NULL
-                                  };
+							      0), NULL
+  };
+    
   weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
   weed_plant_t *in_params2[] = {weed_integer_init("threshold", "luma _threshold", 64, 0, 255), NULL};
 
+  /* weed_plant_t *filter_class */
+  /*   = weed_filter_class_init("chroma blend", "salsaman", 1, */
+  /*                            WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_STATEFUL */
+  /*                            | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list, */
+  /*                            chroma_init, chroma_process, chroma_deinit, */
+  /*                            in_chantmpls, out_chantmpls, in_params1, NULL); */
+
   weed_plant_t *filter_class
     = weed_filter_class_init("chroma blend", "salsaman", 1,
-                             WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_STATEFUL
-                             | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
+                             0//WEED_FILTER_HINT_STATEFUL
+                             ,palette_list,
                              chroma_init, chroma_process, chroma_deinit,
                              in_chantmpls, out_chantmpls, in_params1, NULL);
 

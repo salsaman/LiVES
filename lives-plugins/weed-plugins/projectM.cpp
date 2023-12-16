@@ -373,6 +373,10 @@ static int render_frame(_sdata *sd) {
   xscale = (float)maxwidth / sd->texsize * 2.;
   yscale = (float)maxheight / sd->texsize * 2.;
 
+  yscale *= (float)imgwidth / maxwidth;
+  
+  xscale *= (float)imgheight / maxheight;;
+  
 #ifdef HAVE_SDL2
   SDL_GL_MakeCurrent(sd->win, sd->glCtx);
 #endif
@@ -1249,10 +1253,21 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   //if (!sd->got_first) return WEED_ERROR_NOT_READY;
 
 copytodest:
+
+  if (1) {
+  const int offsx = (scrwidth - width) >> 1;
+  const int offsy = (scrheight - height) >> 1;
+  const int zheight = height;
+  const int zrow = rowstride;
+  const int zxr = xrowstride;
+
   pthread_mutex_lock(&buffer_mutex);
   if (height > scrheight) height = scrheight;
+
+  char *src = (char *)sd->fbuffer + offsx * psize + offsy * zxr;
+
   for (int yy = 0; yy < height; yy++) {
-    weed_memcpy(&dst[yy * rowstride], &sd->fbuffer[yy * xrowstride], xrowstride);
+    weed_memcpy(&dst[yy * zrow], &sd->fbuffer[yy * zxr], zxr);
   }
 
   sd->needs_more = true;
@@ -1275,7 +1290,7 @@ copytodest:
   }
 
   return WEED_SUCCESS;
-
+  }
  retnull:
   return WEED_ERROR_NOT_READY;
 }

@@ -21,6 +21,8 @@ using namespace cv;
 #include "effects.h"
 #include "nodemodel.h"
 
+#define calloc_bigblock(s) _calloc_bigblock(s)
+
 ///////////////////////////////////
 
 #include "callbacks.h"
@@ -7567,68 +7569,49 @@ boolean fill_audio_channel_aux(weed_plant_t *achan) {
 /////////////////////
 // special handling for generators (sources)
 
-lives_result_t lives_layer_fill_from_generator(weed_layer_t *layer, weed_instance_t *inst, weed_timecode_t tc) {
+lives_filter_error_t lives_layer_fill_from_generator(weed_layer_t *layer, weed_instance_t *inst, weed_timecode_t tc) {
   weed_filter_t *filter;
   weed_channel_t *channel, *achan;
   weed_gui_t *gui;
   lives_clip_t *sfile = NULL;
   char *cwd;
+  double tfps;
   boolean is_bg = TRUE, needs_reinit = FALSE, reinited = FALSE;
-  weed_error_t ret;
   lives_filter_error_t retval;
   int num_in_alpha = 0, clipno, i;
 
-  if (!layer || !inst) return LIVES_RESULT_ERROR;
+  if (!layer) return FILTER_ERROR_MISSING_LAYER;
+  if (!inst) {
+    return FILTER_ERROR_INVALID_INSTANCE;
+  }
 
   clipno = lives_layer_get_clip(layer);
+  sfile = RETURN_VALID_CLIP(clipno);
+  if (!sfile) return FILTER_ERROR_INVALID_INSTANCE;
 
   filter = weed_instance_get_filter(inst, FALSE);
 
-  if (clipno == mainw->playing_file) is_bg = FALSE;
-  sfile = RETURN_VALID_CLIP(clipno);
-
   mainw->inst_fps = get_inst_fps(FALSE);
-
-  if (IS_VALID_CLIP(mainw->blend_file) && mainw->playing_file != mainw->blend_file && !is_bg) {
-    if (!prefs->genq_mode) {
-      // prefer speed
-      if (IS_VALID_CLIP(mainw->blend_file)) {
-        double pb_fps = fabs(mainw->files[mainw->blend_file]->pb_fps);
-        if (pb_fps > sfile->pb_fps) sfile->pb_fps = pb_fps;
-      }
-    } else {
-      if (prefs->pb_quality != PB_QUALITY_HIGH && IS_VALID_CLIP(mainw->blend_file)
-          && sfile->pb_fps > mainw->files[mainw->blend_file]->pb_fps) {
-        sfile->pb_fps = mainw->files[mainw->blend_file]->pb_fps;
-      } else {
-        if (prefs->pb_quality == PB_QUALITY_LOW && sfile->pb_fps > sfile->fps / 2.) {
-          sfile->pb_fps *= .99;
-        } else if (prefs->pb_quality == PB_QUALITY_MED && sfile->pb_fps > sfile->fps) {
-          sfile->pb_fps *= .99;
-        }
-      }
-    }
-    weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, sfile->pb_fps);
+  if (!prefs->genq_mode) {
+    // prefer speed
+    tfps = mainw->inst_fps;
+    if (abs(sfile->pb_fps) > tfps) tfps = abs(sfile->pb_fps);
+    tfps += weed_get_double_value(filter, WEED_LEAF_PREFERRED_FPS, NULL);
+    tfps /= 2.;
   } else {
-    // we want to ue inst_fps wiht a slight increase, otherwise we can get into a cycle of slower and slower
-    //double target_fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
-    /* if (prefs->pb_quality == PB_QUALITY_LOW && mainw->inst_fps > 0. && mainw->inst_fps < target_fps) */
-    /*   weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, MIN(mainw->inst_fps * 1.5, target_fps)); */
-    /* else {   */
-    /*   if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS)) */
-    /*     lives_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS); */
-    /*   else if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS)) */
-    lives_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
-    //}
-    sfile->pb_fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
+    tfps = mainw->inst_fps;
+    if (abs(sfile->pb_fps) < tfps) tfps = abs(sfile->pb_fps);
+    tfps += weed_get_double_value(filter, WEED_LEAF_PREFERRED_FPS, NULL);
+    tfps /= 2.;
   }
 
   weed_set_double_value(inst, WEED_LEAF_FPS, mainw->inst_fps);
+  weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, tfps);
 
 matchvals:
 
   channel = get_enabled_channel(inst, 0, LIVES_OUTPUT);
-  if (!channel) return LIVES_RESULT_INVALID;
+  if (!channel) return FILTER_ERROR_MISSING_CHANNEL;
 
   if (!is_bg) {
     if (!get_primary_src(mainw->current_file))
@@ -7641,7 +7624,7 @@ matchvals:
   if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
     int num_inc;
     weed_plant_t **in_channels = weed_instance_get_in_channels(inst, &num_inc);
-    if (!in_channels) return LIVES_RESULT_INVALID;
+    if (!in_channels) return FILTER_ERROR_TEMPLATE_MISMATCH;
 
     for (i = 0; i < num_inc; i++) {
       if (weed_channel_is_alpha(in_channels[i]) && !weed_channel_is_disabled(in_channels[i]))
@@ -7653,7 +7636,7 @@ matchvals:
   if (num_in_alpha > 0) {
     // if we have mandatory alpha ins, make sure they are filled
     retval = check_cconx(inst, num_in_alpha, &needs_reinit);
-    if (retval != FILTER_SUCCESS) return LIVES_RESULT_INVALID;
+    if (retval != FILTER_SUCCESS) return FILTER_ERROR_COPYING_FAILED;
   }
 
   if (prefs->apply_gamma) {
@@ -7672,9 +7655,10 @@ matchvals:
   if (!weed_channel_get_pixel_data(channel)) {
     if (!create_empty_pixel_data(channel, TRUE, TRUE)) {
       g_print("NO PIXDATA\n");
-      return LIVES_RESULT_FAIL;
+      return FILTER_ERROR_MEMORY_ERROR;
     }
-    if (!weed_channel_get_pixel_data(channel)) lives_abort("Unable to allocate channel pixel_data");
+    if (!weed_channel_get_pixel_data(channel))
+      lives_abort("Unable to allocate channel pixel_data");
   }
 
   if (needs_reinit) {
@@ -7687,7 +7671,7 @@ matchvals:
     if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
         || retval == FILTER_ERROR_INVALID_FILTER) {
       weed_layer_pixel_data_free(channel);
-      return LIVES_RESULT_FAIL;
+      return retval;
     }
     goto matchvals;
   }
@@ -7710,7 +7694,7 @@ procfunc1:
   }
 
   // get the current video data, then we will push an audio packet for the following frame
-  ret = run_process_func(inst, tc);
+  retval = run_process_func(inst, tc);
 
   if (achan) {
     int nachans;
@@ -7720,16 +7704,16 @@ procfunc1:
     weed_channel_set_audio_data(achan, NULL, 0, 0, 0);
   }
 
-  if (ret == WEED_ERROR_REINIT_NEEDED) {
+  if (retval == WEED_ERROR_REINIT_NEEDED) {
     if (reinited) {
       weed_layer_pixel_data_free(channel);
-      return LIVES_RESULT_FAIL;
+      return  FILTER_ERROR_COULD_NOT_REINIT;
     }
     retval = weed_reinit_effect(inst, FALSE);
     if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
         || retval == FILTER_ERROR_INVALID_FILTER) {
       weed_layer_pixel_data_free(channel);
-      return LIVES_RESULT_TIMEDOUT;
+      return retval;
     }
     reinited = TRUE;
     goto procfunc1;
@@ -7739,8 +7723,7 @@ procfunc1:
     int btop = weed_get_int_value(gui, WEED_LEAF_BORDER_TOP, NULL);
     int bbot = weed_get_int_value(gui, WEED_LEAF_BORDER_BOTTOM, NULL);
     int bleft = weed_get_int_value(gui, WEED_LEAF_BORDER_LEFT, NULL);
-    int bright = weed_get_int_value(gui, WEED_LEAF_BORDER_RIGHT, NULL);
-    if (btop || bbot || bleft || bright) {
+    int bright = weed_get_int_value(gui, WEED_LEAF_BORDER_RIGHT, NULL);    if (btop || bbot || bleft || bright) {
       if (!unletterbox_layer(channel, -1, -1, btop, bbot, bleft, bright)) {
         weed_layer_pixel_data_free(channel);
         return LIVES_RESULT_FAIL;
@@ -7748,20 +7731,23 @@ procfunc1:
     }
   }
 
-
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
 
+  if (retval == FILTER_ERROR_BUSY) return retval;
+
+  g_print("genX\n");
   weed_layer_t *inter = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(inter, layer);
   weed_pixel_data_share(layer, channel);
   weed_pixel_data_share(channel, inter);
   weed_layer_free(inter);
   lives_layer_set_clip(layer, clipno);
+  g_print("genX over\n");
 
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
   /* 	  weed_channel_get_palette(channel), weed_channel_get_pixel_data(channel)); */
-  return LIVES_RESULT_SUCCESS;
+  return FILTER_SUCCESS;
 }
 
 

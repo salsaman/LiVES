@@ -273,10 +273,10 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->import_proj, TRUE);
   }
 
-  /* if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) { */
-  /*   lives_widget_set_sensitive(mainw->int_audio_checkbutton, prefs->audio_src != AUDIO_SRC_INT); */
-  /*   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT); */
-  /* } */
+  if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, prefs->audio_src != AUDIO_SRC_INT);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT);
+  }
 
   if (!prefs->vj_mode) {
     if (mainw->rfx_loaded) sensitize_rfx();
@@ -647,6 +647,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
   lives_painter_t *cr;
   int rwidth, rheight, width, height, cx, cy;
   int owidth, oheight, oxrwidth, oxrheight;
+  int dx = 0, dy = 0, dw = 0, dh = 0;
 
   if (!da) return;
   widget = LIVES_WIDGET(da);
@@ -713,6 +714,8 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 
       if (width < owidth || height < oheight || xrwidth > oxrwidth || xrheight > oxrheight) {
 	lives_painter_render_background(p, cr, 0., 0., xrwidth, xrheight);
+	dw = xrwidth;
+	dh = xrheight;
       }
 
       SET_INT_DATA(da, OWIDTH_KEY, owidth);
@@ -757,7 +760,17 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
           lives_painter_line_to(cr, rwidth, 0);
           lives_painter_move_to(cr, 0, rheight);
           lives_painter_line_to(cr, rwidth, rheight);
-        } else lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
+	  dw = rwidth;
+	  dh = rheight;
+        } else {
+	  lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
+	  if (!dw) {
+	    dw = width + 2;
+	    dh = height + 2;
+	    dx = cx - 1;
+	    dy = cy - 1;
+	  }
+	}
         // frame
         lives_painter_stroke(cr);
         cx += 2;
@@ -771,14 +784,20 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     /* else */
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr, cx, cy, rwidth - cx * 2, rheight + 2 - cy * 2);
+    if (dw < rwidth - cx * 2) dw = rwidth - cx * 2;
+    if (dh < rheight - cy * 2) dh = rheight - cy * 2;
+    if (dx > cx) dx = cx;
+    if (dy > cy) dy = cy;
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
+    dw = rwidth;
+    dh = rheight;
   }
 
   lives_painter_surface_mark_dirty(surface);
 
-  lives_painter_fill(cr);
+  lives_painter_paint(cr);
 
   lives_widget_end_paint(widget);
 

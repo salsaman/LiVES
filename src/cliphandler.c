@@ -2937,6 +2937,7 @@ static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile, int track, int pu
   pthread_mutex_init(&srcgrp->src_mutex, NULL);
   pthread_mutex_init(&srcgrp->refcnt_mutex, NULL);
   srcgrp->refcnt = 1;
+  g_print("nsrcgrps is %d\n", ngrps);
   sfile->src_groups = lives_recalloc(sfile->src_groups, ngrps + 1,
                                      ngrps, sizeof(lives_clipsrc_group_t *));
   sfile->src_groups[ngrps] = srcgrp;
@@ -2971,11 +2972,9 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
 
   pthread_mutex_lock(&srcgrp->src_mutex);
   nsrcs = srcgrp->n_srcs;
+  g_print("NSRCs is %d\n", nsrcs);
   srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs + 1, nsrcs, sizeof(lives_clip_src_t *));
-  for (int i = 0; i < nsrcs; i++) {
-    srcgrp->srcs[i + 1] = srcgrp->srcs[i];
-  }
-
+  lives_memmove(srcgrp->srcs + 1, srcgrp->srcs, nsrcs * sizeof(lives_clip_src_t *));
   srcgrp->srcs[0] = mysrc;
   srcgrp->n_srcs = ++nsrcs;
   pthread_mutex_unlock(&srcgrp->src_mutex);

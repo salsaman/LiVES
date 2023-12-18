@@ -261,17 +261,11 @@ const char *get_funcname(lives_funcptr_t func) {
 }
 
 
-LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int cat,
-                                     const char *rettype, const char *args_fmt,
-                                     char *file_ref, int line_ref) {
-
-  /* g_printerr("Thread 0x%lx in func %s at %s, line %d\n", */
-  /*            THREADVAR(uid), funcname, file_ref, line_ref); */
-
-  //lives_sync_list_push(THREADVAR(func_stack), (void *)lives_strdup(funcname));
+LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
+                                     const char *args_fmt, char *file_ref, int line_ref, uint64_t flags, ...) {
   add_quick_fn(func, funcname);
-  /* add_fn_lookup(func, funcname, cat, rettype, args_fmt, file_ref, line_ref); */
 }
+
 
 
 LIVES_GLOBAL_INLINE void _func_exit(char *file_ref, int line_ref) {
@@ -332,6 +326,44 @@ lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t lpt, va_list xa
                        make_std_pname, xargs);
   }
   return LIVES_RESULT_INVALID;
+}
+
+
+LIVES_GLOBAL_INLINE lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *fdef,
+    lives_thread_attr_t attrs, va_list vargs) {
+  return  _lives_proc_thread_create_vargs(attrs, fdef->function, fdef->funcname,
+                                          fdef->return_type, fdef->args_fmt, vargs);
+}
+
+
+LIVES_GLOBAL_INLINE lives_proc_thread_t lpt_from_funcdef(lives_funcdef_t *fdef, lives_thread_attr_t attrs, ...) {
+  lives_proc_thread_t lpt;
+  va_list ap;
+  va_start(ap, attrs);
+  lpt = lpt_from_funcdef_va(fdef, attrs, ap);
+  va_end(ap);
+  return lpt;
+}
+
+
+void *lives_proc_thread_execute_retvoidptr(weed_plant_t **plantp, lives_funcptr_t func, ...) {
+  uint64_t uid = gen_unique_id();
+  char *key = lives_strdup_printf("key_%lu", uid);
+  void *retval;
+  lives_proc_thread_t lpt;
+  lives_funcdef_t *fdef = NULL;//lookup_fdef(NULL, func);
+  va_list ap;
+  va_start(ap, func);
+  lpt = lpt_from_funcdef(fdef, LIVES_THRDATTR_START_UNQUEUED, ap);
+  va_end(ap);
+  lives_proc_thread_execute(lpt);
+  retval = lives_proc_thread_join_voidptr(lpt);
+  lives_proc_thread_unref(lpt);
+  if (!*plantp) *plantp = lives_plant_new(LIVES_PLANT_CLEANER);
+  weed_set_voidptr_value(*plantp, key, retval);
+  weed_leaf_set_autofree(*plantp, key, TRUE);
+  lives_free(key);
+  return retval;
 }
 
 
@@ -396,7 +428,7 @@ LIVES_GLOBAL_INLINE lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thr
   funcname = lives_proc_thread_get_funcname(lpt);
   args_fmt = lives_proc_thread_get_args_fmt(lpt);
   fdef = create_funcdef(funcname, weed_get_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, NULL),
-                        weed_leaf_seed_type(lpt, _RV_), args_fmt, NULL, 0, NULL);
+                        weed_leaf_seed_type(lpt, _RV_), args_fmt, NULL, 0, 0);
   if (args_fmt) lives_free(args_fmt);
   return fdef;
 }
@@ -648,7 +680,7 @@ funcerr2:
   if (!msg)
     msg = lives_strdup_printf("Got error %d running function with type 0x%016lX (%lu)", err, sig, sig);
 
-  lives_proc_thread_error(lpt, 0, LPT_ERR_CRITICAL, msg);
+  lives_proc_thread_error_full(lpt, NULL, 0, 123, LPT_ERR_CRITICAL, msg);
 
   /* LIVES_ERROR(msg); */
   /* lives_free(msg); */
@@ -1094,6 +1126,7 @@ void remove_from_hstack(lives_hook_stack_t *hstack, LiVESList *list) {
   // (which will unref the proc_thread in it)
   // lpt will be FREED unless reffed elsewhere !
   lives_closure_t *closure = (lives_closure_t *)list->data;
+
   hstack->stack = (volatile LiVESList *)lives_list_remove_node
                   ((LiVESList *)hstack->stack, list, FALSE);
   lives_closure_free(closure);
@@ -1462,7 +1495,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
   HOOKSTACK_FLAGS_ADJUST(hs_op_flags, is_fg_thread());
 
-  //if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
+  if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
 
   if (!hstacks) {
     if (hs_op_flags & HOOKSTACK_NATIVE) hstacks = THREADVAR(hook_stacks);
@@ -1574,10 +1607,13 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         closure->flags &= ~HOOK_STATUS_ACTIONED;
         closure->flags |= hstack->req_target_set_flags;
         if (closure->flags & HOOK_CB_PRIORITY) dflags |= DTYPE_PREPEND;
+        g_print("TRANSFER\n");
+        lives_proc_thread_show_func_call(closure->proc_thread);
         if (lives_hook_add(hstack->req_target_stacks, hstack->req_target_type,
                            closure->flags, closure, dflags) != lpt)
           remove_from_hstack(hstack, list);
         else hstack->stack = (volatile LiVESList *)lives_list_remove_node((LiVESList *)hstack->stack, list, FALSE);
+        lives_proc_thread_unref(lpt);
         continue;
       }
 
@@ -2192,7 +2228,7 @@ void dump_hook_stack_for(lives_proc_thread_t lpt, int type) {
 
 LIVES_GLOBAL_INLINE lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
     int32_t return_type,  const char *args_fmt,
-    const char *file, int line, void *data) {
+    const char *file, int line, uint64_t flags) {
   lives_funcdef_t *fdef = (lives_funcdef_t *)lives_calloc(1, sizeof(lives_funcdef_t));
   if (fdef) {
     if (return_type < 0) return_type = 0;
@@ -2204,12 +2240,8 @@ LIVES_GLOBAL_INLINE lives_funcdef_t *create_funcdef(const char *funcname, lives_
     if (args_fmt) fdef->args_fmt = lives_strdup(args_fmt);
     fdef->funcsig = funcsig_from_args_fmt(args_fmt);
     if (file) fdef->file = lives_strdup(file);
-    if (line < 0) {
-      line = -line;
-      fdef->flags |= FDEF_FLAG_INSIDE;
-    }
+    fdef->flags = flags;
     fdef->line = line;
-    fdef->data = data;
   }
   return fdef;
 }
@@ -2223,18 +2255,6 @@ LIVES_GLOBAL_INLINE void free_funcdef(lives_funcdef_t *fdef) {
       lives_free(fdef);
     }
   }
-}
-
-
-LIVES_GLOBAL_INLINE lives_funcinst_t *lives_funcinst_create(lives_funcdef_t *template, lives_proc_thread_t lpt,
-    lives_thread_attr_t attrs, va_list xargs) {
-  lives_funcinst_t *finst = lives_plant_new(LIVES_PLANT_FUNCINST);
-  if (finst) {
-    weed_set_voidptr_value(finst, LIVES_LEAF_TEMPLATE, template);
-    weed_set_int64_value(finst, LIVES_LEAF_THREAD_ATTRS, attrs);
-    weed_plant_params_from_valist(lpt, template->args_fmt, make_std_pname, xargs);
-  }
-  return finst;
 }
 
 
@@ -2258,16 +2278,6 @@ LIVES_GLOBAL_INLINE lives_funcinst_t *lives_funcinst_create(lives_funcdef_t *tem
 /*   } */
 /* } */
 
-
-lives_funcinst_t *funcinst_from_lpt(lives_funcdef_t *template, lives_proc_thread_t lpt) {
-  lives_funcinst_t *finst = lives_plant_new(LIVES_PLANT_FUNCINST);
-  if (finst) {
-    int nparams = get_funcsig_nparms(template->funcsig);
-    weed_set_voidptr_value(finst, LIVES_LEAF_TEMPLATE, template);
-    duplicate_params(finst, lpt, nparams);
-  }
-  return finst;
-}
 
 ///////////// lookup functions //////
 

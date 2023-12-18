@@ -112,10 +112,12 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
-                                        capable->nmonitors == 1) && (!mainw->ext_playback ||
-                                            (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
-  load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win
+                                        || ((widget_opts.monitor == prefs->play_monitor ||
+                                            capable->nmonitors == 1) && (!mainw->ext_playback ||
+                                                (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  if (!GET_INT_DATA(widget, DEFER_KEY))
+    load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
   lives_painter_set_source_surface(cr, mainw->si_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
@@ -123,10 +125,13 @@ boolean expose_sim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_
 
 boolean expose_eim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
-                                        capable->nmonitors == 1)  && (!mainw->ext_playback ||
-                                            (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
-  load_end_image(CURRENT_CLIP_IS_VALID ? cfile->end : 0);
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win
+                                        || ((widget_opts.monitor == prefs->play_monitor + 1 ||
+                                            capable->nmonitors == 1)  && (!mainw->ext_playback ||
+                                                (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+
+  if (!GET_INT_DATA(widget, DEFER_KEY))
+    load_end_image(CURRENT_CLIP_IS_VALID ? cfile->end : 0);
   lives_painter_set_source_surface(cr, mainw->ei_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
@@ -4555,7 +4560,7 @@ static void _resize_play_window(void) {
           LIVES_ERROR("Failed to start playback plugin");
         }
       }
-      if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
+      if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor + 1 &&
                              prefs->play_monitor != 0 &&
                              capable->nmonitors > 1 && !mainw->multitrack)) {
         start_ce_thumb_mode();
@@ -4611,7 +4616,7 @@ static void _resize_play_window(void) {
       nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
 
     pmonitor = prefs->play_monitor;
-    if ((pmonitor == 0 || pmonitor == widget_opts.monitor) || !LIVES_IS_PLAYING) {
+    if ((pmonitor == 0 || pmonitor == widget_opts.monitor + 1) || !LIVES_IS_PLAYING) {
       while (nwidth > GUI_SCREEN_WIDTH - scr_width_safety ||
              nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
         /* g_print("VALUES: %d %d and %d : %d %d and %d\n", nwidth, GUI_SCREEN_WIDTH, scr_width_safety, */
@@ -4633,7 +4638,7 @@ static void _resize_play_window(void) {
     xnwidth = nwidth;
     xnheight = nheight;
     calc_maxspect(mainw->pwidth, mainw->pheight, &xnwidth, &xnheight);
-    if ((pmonitor == 0 || pmonitor == widget_opts.monitor) || !LIVES_IS_PLAYING) {
+    if ((pmonitor == 0 || pmonitor == widget_opts.monitor + 1) || !LIVES_IS_PLAYING) {
       if (xnwidth <= GUI_SCREEN_WIDTH - scr_width_safety &&
           xnheight <= GUI_SCREEN_HEIGHT - scr_height_safety) {
         nwidth = xnwidth;

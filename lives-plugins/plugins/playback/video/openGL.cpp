@@ -237,7 +237,7 @@ static int get_texture_texID(int tnum) {
 
 const char *module_check_init(void) {
   XInitThreads();
-t
+  t
   pbo_available = FALSE;
 
   if (GL_ARB_pixel_buffer_object) {
@@ -1957,8 +1957,8 @@ static int Upload(void) {
 }
 
 
-static void release_frame(weed_layer_t *frame) {  
-if (!frame) return;
+static void release_frame(weed_layer_t *frame) {
+  if (!frame) return;
   if (!host_flag_ptr) host_flag_ptr = weed_get_voidptr_value(frame, VPP_FLAG_PTR, NULL);
   if (host_flag_ptr) weed_memset(host_flag_ptr, 1, 1);
 }

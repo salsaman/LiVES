@@ -76,6 +76,8 @@ typedef struct {
 
 #define LIVES_PLANT_INDEX 514
 
+#define LIVES_PLANT_CLEANER 515
+
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
 

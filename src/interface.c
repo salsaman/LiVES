@@ -4813,7 +4813,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
     if (w > scr_width - bx || h > scr_height - by) {
       if (w > scr_width - bx || h > scr_height - by) {
         int overflowx = w - (scr_width - bx);
-        int overflowy = h - (scr_height - by);
+        int overflowy = h - (scr_height);
 
         int mywidth = lives_widget_get_allocation_width(chooser);
         int myheight = lives_widget_get_allocation_height(chooser);
@@ -8113,7 +8113,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   int width;
   int lineheight, llines, llast;
   int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = GUI_SCREEN_HEIGHT;
+  int scr_height = GUI_SCREEN_PHYS_HEIGHT;
   int bx, by, w = -1, h = -1, posx, posy;
   int overflowx = 0, overflowy = 0;
   int ww, hh, vvmin, hhmin;
@@ -8178,7 +8178,7 @@ boolean msg_area_config(LiVESWidget * widget) {
 
   if (!mainw->multitrack) {
     overflowx = ww - scr_width;
-    overflowy = hh - scr_height;
+    overflowy = hh - by - scr_height;
 
 #ifdef DEBUG_OVERFLOW
     g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh,

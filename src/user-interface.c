@@ -956,7 +956,7 @@ void reset_mainwin_size(void) {
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
   bx = 2 * abs(bx);
   by = abs(by);
-
+  bx = by = 0;
   if (!mainw->hdrbar) {
     if (prefs->open_maximised && by > MENU_HIDE_LIM) {
       BREAK_ME("mabr hide 1");
@@ -969,13 +969,12 @@ void reset_mainwin_size(void) {
 
   // resize the main window so it fits the gui monitor
   if (prefs->open_maximised) {
-    bx = by = 0;
     lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
-    lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
+    //lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
     lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 
-    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
+    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, by);
     lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   } else {
@@ -1075,6 +1074,7 @@ static void _resize(double scale) {
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
   bx = 2 * abs(bx);
   by = abs(by);
+  bx = by = 0;
 
   if (scale < 0.) {
     // foreign capture

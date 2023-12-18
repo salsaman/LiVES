@@ -2012,6 +2012,10 @@ boolean lives_startup2(livespointer data) {
     lives_widget_queue_draw(mainw->sep_image);
   }
 
+  mainw->ignore_screen_size = TRUE;
+  reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
+
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   else

@@ -542,7 +542,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_CREATE_REFFED		(1ull << 1)
 #define LIVES_THRDATTR_START_REFFED		LIVES_THRDATTR_CREATE_REFFED
 
-// do not wait at sync points (??)
+// do not wait at sync points
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 4)
 
 // can be et when creating or when queueing
@@ -892,11 +892,14 @@ lives_proc_thread_t lives_proc_thread_get_chain_prime(lives_proc_thread_t);
 #define LPT_ERR_DEADLY		5 // calls _exit() immediately
 
 // error handling
-boolean _lives_proc_thread_error(lives_proc_thread_t self, char *file_ref, int line_ref,
+boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, int line_ref,
+                                     int errnum, int severity, char *errmsg);
+
+boolean _lives_proc_thread_error(char *file_ref, int line_ref,
                                  int errnum, int severity, const char *fmt, ...);
 
-#define lives_proc_thread_error(self, errnum, severity, ...)	\
-  _lives_proc_thread_error(self, _FILE_REF_, _LINE_REF_, errnum, severity, __VA_ARGS__)
+#define lives_proc_thread_error(errnum, severity, ...)	\
+  _lives_proc_thread_error(_FILE_REF_, _LINE_REF_, errnum, severity, __VA_ARGS__)
 
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
 
@@ -919,6 +922,10 @@ int lives_proc_thread_get_errsev(lives_proc_thread_t);
 char *lives_proc_thread_get_errfile(lives_proc_thread_t);
 int lives_proc_thread_get_errline(lives_proc_thread_t);
 
+void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num);
+void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg);
+void  lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev);
+
 // test if lpt is in a hook stack
 boolean lives_proc_thread_is_stacked(lives_proc_thread_t);
 boolean lives_proc_thread_is_invalid(lives_proc_thread_t);
@@ -940,6 +947,9 @@ boolean lives_proc_thread_set_signalled(lives_proc_thread_t, int signum, void *d
 int lives_proc_thread_get_signal_data(lives_proc_thread_t, uint64_t *tuid_return, void **data_return);
 
 void lives_proc_thread_set_loveliness(lives_proc_thread_t, double how_lovely_it_is);
+
+void lives_proc_thread_set_ignore_syncpts(lives_proc_thread_t, boolean ignore);
+boolean lives_proc_thread_get_ignore_syncpts(lives_proc_thread_t);
 
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
@@ -1004,7 +1014,7 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
 // ignore idx mismatch
 #define MM_IGNORE		0
 // wait for matching sync_idx
-#define MM_WAIT_MATCH	1
+#define MM_WAIT_MATCH		1
 // return on mismatch
 #define MM_RETURN		2
 // error on mismatch

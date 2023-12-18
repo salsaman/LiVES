@@ -13968,10 +13968,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow * wi
   GdkRectangle rect;
   gint wx, wy;
   gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
-  //gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
+  gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
   get_border_size(LIVES_WIDGET(win), &wx, &wy);
   if (x) *x = mainw->mgeom[widget_opts.monitor].width;// - (abs(wx) - rect.x) / 1.;
-  if (y) *y = mainw->mgeom[widget_opts.monitor].height;
+  if (y) *y = mainw->mgeom[widget_opts.monitor].height - wy;
   return TRUE;
 #endif
   return FALSE;
@@ -14015,11 +14015,11 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
     }
   }
   // x3, y3 give screen size minus panels
-  // x1, y1 should be equal to x1, y1 when window is maximised
+  // x1, y1 should be equal to x2, y2 when window is maximised
   // x3, y3 are calculated values for scr width / height - actual values; these should be 0, 0
   // x4 ???
 
-  //g_print("BORD size: 1- %d X %d, 2- %d X %d, 3- %d X %d, 4- %d X %d\n", px1, py1, px2, py2, px3, py3, px4, py4);
+  // g_print("BORD size: 1- %d X %d, 2- %d X %d, 3- %d X %d, 4- %d X %d\n", px1, py1, px2, py2, px3, py3, px4, py4);
 
   if (win == LIVES_MAIN_WINDOW_WIDGET) {
     if (px1 == px3 && px2 == 0 && py1 == py3 && py2 == 0) {
@@ -14033,6 +14033,10 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
     if (bx) *bx = px4;
     if (by) *by = py4;
   }
+
+  if (bx) *bx = px4;
+  if (by) *by = py3;
+
   return TRUE;
 #endif
   return FALSE;

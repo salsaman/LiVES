@@ -2576,28 +2576,28 @@ fndone:
               }
               goto success;
             }
-          } else {
-            // pull frame from decoded images
-            int64_t timex;
-            double img_decode_time;
-            boolean ret;
-
-            pthread_mutex_unlock(&sfile->frame_index_mutex);
-            xframe = -xframe;
-
-            timex = lives_get_session_time();
-
-            ret = weed_layer_create_from_file_progressive(layer, image_ext);
-            img_decode_time = lives_get_session_time() - timex;
-
-            if (!ret) {
-              errpt = 12;
-              goto fail;
-            }
-            if (!sfile->img_decode_time) sfile->img_decode_time = img_decode_time;
-            else sfile->img_decode_time = (sfile->img_decode_time * 3 + img_decode_time) / 4.;
-            if (LIVES_IS_PLAYING && prefs->skip_rpts) md5_frame(layer);
           }
+        } else {
+          // pull frame from decoded images
+          int64_t timex;
+          double img_decode_time;
+          boolean ret;
+
+          pthread_mutex_unlock(&sfile->frame_index_mutex);
+          xframe = -xframe;
+
+          timex = lives_get_session_time();
+
+          ret = weed_layer_create_from_file_progressive(layer, image_ext);
+          img_decode_time = lives_get_session_time() - timex;
+
+          if (!ret) {
+            errpt = 12;
+            goto fail;
+          }
+          if (!sfile->img_decode_time) sfile->img_decode_time = img_decode_time;
+          else sfile->img_decode_time = (sfile->img_decode_time * 3 + img_decode_time) / 4.;
+          if (LIVES_IS_PLAYING && prefs->skip_rpts) md5_frame(layer);
         }
       }
       goto success;

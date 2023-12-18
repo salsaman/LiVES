@@ -409,6 +409,14 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 
   lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED);
 
+#if 0
+  funcinst = LIVES_CALLOC_SIZEOF(lives_funcinst_t, 1);
+  funcinst->fdef = fdef;
+  funcist->dispatcher = self;
+  funcinst->lpt = lpt;
+  lives_proc_thread_set_funcinst(lpt, funcinst);
+#endif
+
   return lpt;
 }
 
@@ -468,13 +476,11 @@ LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(const char *fname, 
 
 lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attrs, lives_funcptr_t func,
     const char *fname, int return_type, const char *args_fmt, va_list xargs) {
+  lives_funcdef_t *fdef = create_funcdef(fname, func, return_type, args_fmt, NULL, 0, 0);
   lives_proc_thread_t lpt = lives_proc_thread_new(fname, &attrs);
-  lives_funcdef_t *fdef;
-  //lives_funcinst_t *finst;
   if (fname) add_quick_fn(func, fname);
   lives_proc_thread_set_attrs(lpt, attrs);
-  fdef = create_funcdef(fname, func, return_type, args_fmt, NULL, 0, NULL);
-  //finst = lives_funcinst_create(fdef, attrs);
+
   weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, fdef);
   _proc_thread_params_from_vargs(lpt, return_type, xargs);
   lpt = lives_proc_thread_run(lpt);
@@ -489,7 +495,7 @@ lives_proc_thread_t _lives_proc_thread_create_nullvargs(lives_thread_attr_t attr
   lives_funcdef_t *fdef;
   if (fname) add_quick_fn(func, fname);
   lives_proc_thread_set_attrs(lpt, attrs);
-  fdef = create_funcdef(fname, func, return_type, NULL, NULL, 0, NULL);
+  fdef = create_funcdef(fname, func, return_type, NULL, NULL, 0, 0);
   weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, fdef);
   _proc_thread_params_from_nullvargs(lpt, return_type);
   return lives_proc_thread_run(lpt);
@@ -1673,6 +1679,15 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t l
   if (lpt) lives_proc_thread_include_states(lpt, THRD_OPT_CANCELLABLE);
 }
 
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_ignore_syncpts(lives_proc_thread_t lpt, boolean ignore) {
+  if (lpt) lives_proc_thread_set_attrs(lpt, ignore ? lives_proc_thread_get_attrs(lpt) | LIVES_THRDATTR_IGNORE_SYNCPTS
+                                         : lives_proc_thread_get_attrs(lpt) & ~LIVES_THRDATTR_IGNORE_SYNCPTS);
+}
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_ignore_syncpts(lives_proc_thread_t lpt) {
+  return lpt ? !!(lives_proc_thread_get_attrs(lpt) & LIVES_THRDATTR_IGNORE_SYNCPTS) : FALSE;
+}
+
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_loveliness(lives_proc_thread_t lpt, double how_lovely_it_is) {
   if (lpt) {
@@ -1806,28 +1821,35 @@ boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
 }
 
 
-LIVES_GLOBAL_INLINE boolean _lives_proc_thread_error(lives_proc_thread_t self,
-    char *file_ref, int line_ref,
-    int errnum, int severity, const char *fmt, ...) {
-  char *errmsg = NULL;
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num) {
+  weed_set_int_value(self, LIVES_LEAF_ERRNUM, num);
+}
 
-  GET_PROC_THREAD_SELF(xself);
-  if (!self) self = xself;
-  if (!xself || self != xself) return FALSE;
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg) {
+  weed_set_string_value(self, LIVES_LEAF_ERRMSG, msg);
+}
+
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev) {
+  weed_set_int_value(self, LIVES_LEAF_ERRSEV, sev);
+}
+
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, int line_ref,
+    int errnum, int severity, char *errmsg) {
+  if (severity == LPT_ERR_DEADLY) _exit(errnum);
 
   weed_set_string_value(self, LIVES_LEAF_FILE_REF, file_ref);
   weed_set_int_value(self, LIVES_LEAF_LINE_REF, line_ref);
 
-  if (severity == LPT_ERR_DEADLY) _exit(errnum);
+  lives_proc_thread_set_errnum(self, errnum);
+  lives_proc_thread_set_errsev(self, severity);
+
+  lives_proc_thread_set_errmsg(self, errmsg);
 
   if (severity == LPT_ERR_FATAL) LIVES_FATAL("-error-");
-
-  if (fmt && *fmt) {
-    va_list vargs;
-    va_start(vargs, fmt);
-    errmsg = lives_strdup_vprintf(fmt, vargs);
-    va_end(vargs);
-  }
 
   if (severity == LPT_ERR_CRITICAL) LIVES_CRITICAL(errmsg);
 
@@ -1843,6 +1865,20 @@ LIVES_GLOBAL_INLINE boolean _lives_proc_thread_error(lives_proc_thread_t self,
     // does not return !!
   }
   return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean _lives_proc_thread_error(char *file_ref, int line_ref,
+    int errnum, int severity, const char *fmt, ...) {
+  GET_PROC_THREAD_SELF(self);
+  char *errmsg = NULL;
+  if (fmt && *fmt) {
+    va_list vargs;
+    va_start(vargs, fmt);
+    errmsg = lives_strdup_vprintf(fmt, vargs);
+    va_end(vargs);
+  }
+  return lives_proc_thread_error_full(self, file_ref, line_ref, errnum, severity, errmsg);
 }
 
 
@@ -2043,7 +2079,7 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
     int xerrno = weed_get_int_value(self, LIVES_LEAF_ERRNUM, NULL);
     int errsev = weed_get_int_value(self, LIVES_LEAF_ERRSEV, NULL);
     char *errmsg = weed_get_string_value(self, LIVES_LEAF_ERRMSG, NULL);
-    lives_proc_thread_error(self, xerrno, errsev, errmsg ? "%s" : NULL, errmsg);
+    lives_proc_thread_error_full(self, NULL, 0, xerrno, errsev, errmsg);
   }
   break;
   case SIG_ACT_HOLD:
@@ -2238,6 +2274,8 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
 
   //MSGMODE_ON(DEBUG);
   GET_PROC_THREAD_SELF(self);
+  uint64_t attrs = lives_proc_thread_get_attrs(self);
+  if (attrs & LIVES_THRDATTR_IGNORE_SYNCPTS) return LIVES_RESULT_SUCCESS;
   if (sync_idx == 0) sync_idx = -1;
   d_print_debug("syncwith: %p says: start sync with %p, sync identifier is %d\n", self, lpt, sync_idx);
   if (lives_proc_thread_ref(lpt) > 1)  {
@@ -2761,7 +2799,7 @@ void lpt_error_handle(lives_proc_thread_t lpt) {
       char *loc;
       // dont report minor errors
       if (errfile) loc = lives_strdup_printf(" at line %d in file %s", errline, errfile);
-      fprintf(stderr, "lives proc thread %p, (%s) got a %s error%s\n"
+      fprintf(stderr, "lives proc thread %p, (%s)\ngot a %s error%s\n"
               "Error code %d: %s\n",
               lpt, get_lpt_id(lpt), sev == 2 ? "major" : sev == 3 ? "critical"
               : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown", loc, errnum,
@@ -3045,12 +3083,12 @@ done:
     }
 
     if (lives_proc_thread_had_error(lpt)) {
-      _lives_proc_thread_error(chain_leader,
-                               weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
-                               weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
-                               lives_proc_thread_get_errnum(lpt),
-                               lives_proc_thread_get_errsev(lpt), "%s",
-                               lives_proc_thread_get_errmsg(lpt));
+      lives_proc_thread_error_full(chain_leader,
+                                   weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
+                                   weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
+                                   lives_proc_thread_get_errnum(lpt),
+                                   lives_proc_thread_get_errsev(lpt),
+                                   lives_proc_thread_get_errmsg(lpt));
     }
 
     lives_thread_set_active(chain_leader);
@@ -4348,13 +4386,13 @@ static char *id_from_tdata(lives_thread_data_t *tdata) {
   char *tnum;
   if (tdata) {
 #if IS_LINUX_GNU
-    tnum = lives_strdup_printf("uid: 0x%lx (Thread 0x%lx (LWP %d)) ",
+    tnum = lives_strdup_printf("uid: 0x%lx, Thread 0x%lx, LWP %d",
                                tdata->uid, tdata->vars.var_thrd_self, tdata->vars.var_tid);
 #else
-    tnum = lives_strdup_printf("uid: 0x%lx (Thread 0x%lx) ",
+    tnum = lives_strdup_printf("uid: 0x%lx, Thread 0x%lx",
                                tdata->uid, tdata->vars.var_thrd_self);
 #endif
-  } else tnum = lives_strdup(_("Unknown thread "));
+  } else tnum = lives_strdup(_("Unknown threadx"));
   return tnum;
 }
 

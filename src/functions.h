@@ -278,7 +278,7 @@ void dump_fn_notes(void);
 				  THREADVAR(uid), _FILE_REF_, _LINE_REF_)
 
 void _func_entry(lives_funcptr_t, const char *funcname, int category, const char *rettype,
-                 const char *args_fmt, char *file_ref, int line_ref);
+                 const char *args_fmt, char *file_ref, int line_ref, uint64_t flags, ...);
 void _func_exit(char *file_ref, int line_ref);
 
 void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
@@ -287,8 +287,13 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 // macro to be placeyd near start of "major" functions. It will prepend funcname to
 // a thread's 'func_stack', print out a debug line (optional), and also add fn lookup
 // to fn_store, e.g:   ____FUNC_ENTRY____(transcode_clip, "b", "iibs");
-#define ____FUNC_ENTRY____(func, rettype, args_fmt)			\
-  do {_func_entry((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_,_LINE_REF_);}while (0);
+
+#define ___FUNC_ENTRY_FULL___(func, rettype, args_fmt, flags, ...)	\
+  _DW0(_func_entry((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_,_LINE_REF_, \
+		  (flags & ~FDEF_NO_FLAGS) | FDEF_FLAG_INSIDE););
+
+#define ____FUNC_ENTRY____(func, rettype, ...) ___FUNC_ENTRY_FULL___(func, rettype, __VA_ARGS__, \
+								     FDEF_NO_FLAGS, 0)
 
 // macro to be placed near start of "major" functions, counterpart to ___FUNC_ENTRY___
 // It will remove top entry from a thread's 'func_stack', and print out a debug line (optional)
@@ -484,29 +489,61 @@ typedef struct {
   void *data; // optional data, may be NULL
 } lives_funcdef_t;
 
+typedef struct {
+  pthread_mutex_t *timer_mutex;
+  uint64_t ncalls;
+  uint64_t tot_time, last_time;
+  int nvaries;
+  uint64_t *vartimes;
+} fdef_timeinfo_t;
+
 // denotes a static funcdef - do not free during runtime
 #define FDEF_FLAG_STATIC		(1ull << 0)
 
 // denotes a line inside a function (i.e maybe far from entry point)
 #define FDEF_FLAG_INSIDE		(1ull << 1)
+// function can only be run by one thread at a time
+#define FDEF_FLAG_SINGLE		(1ull << 2)
+// function is non re-entrant (by same thread)
+#define FDEF_FLAG_NO_RECURSE		(1ull << 3)
 
-typedef weed_plant_t lives_funcinst_t;
+// function has timeinfo
+#define FDEF_FLAG_HAS_TIMEINFO		(1ull << 16)
+
+#define FDEF_NO_FLAGS			(1ull << 63)
+
+lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *, lives_thread_attr_t attrs, va_list vargs);
+
+lives_proc_thread_t lpt_from_funcdef(lives_funcdef_t *, lives_thread_attr_t attrs, ...);
+
+#define AUTO_PTRS_START weed_plant_t *cleaner = NULL
+#define AUTO_PTR(func, ...) (lives_proc_thread_execute_retvoidptr(&cleaner, func, __VA_ARGS__))
+#define AUTO_PTRS_CLEAN _DW0(if (cleaner) weed_plant_free(cleaner); cleaner = NULL;)
 
 typedef struct {
-  uint64_t idx;
   lives_funcdef_t *funcdef;
 
+  lives_proc_thread_t lpt;
+  lives_proc_thread_t dispatcher;
+
+  pthread_t runner;
+
   // description of each function param, funcsig order
-  // for variadic functions, we may have optional |param_goup, min_repeats, max_rrepeats|
+  // for variadic functions, we may have optional |param_goup, min_repeats, max_repeats|
   lives_param_t **func_params;
 
   // mapped from return val from func
   lives_param_t *out_param;
 
-  // optionally, we can describe the data to be passed in returned in the data book
+  // optionally, we can store actual values passed in / returned in a data book
   // (if function is run via a proc_thread)
-  lives_param_t **book_data;
-} lives_full_funcdef_t;
+  weed_plant_t *databook;
+
+  int variation;
+  int64_t st_time, end_time;
+
+  void *priv;
+} lives_funcinst_t;
 
 // when adding a hook callback, there are several methods
 // use a registered funcname, in this case the funcdef_t is looed up from funcname, and
@@ -742,13 +779,10 @@ void dump_hook_stack(lives_hook_stack_t **, int type);
 void dump_hook_stack_for(lives_proc_thread_t, int type);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
+#define create_funcdef_here(func) create_funcdef(#func, (lives_funcptr_t)func, 0, NULL, _FILE_REF_, _LINE_REF_, FDEF_FLAG_INSIDE)
 
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
-                                int return_type,  const char *args_fmt, const char *file, int line,
-                                void *data);
-
-// can be used to link a file / line as being "inside" a function
-#define create_funcdef_here(func) create_funcdef(#func, (lives_funcptr_t)func, 0, NULL, _FILE_REF_, -(_LINE_REF_), NULL)
+                                int return_type, const char *args_fmt, const char *file, int line, uint64_t flags);
 
 // for future use - we can "steal" the funcdef from a proc_thread, stor it in a hash store
 // then later do things like create a funcinst from a funcdef and params, then create a proc_thread from the funcinst
@@ -763,9 +797,6 @@ void free_funcdef(lives_funcdef_t *);
 /* // plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt */
 /* lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...); */
 /* void free_funcinst(lives_funcinst_t *); */
-
-lives_funcinst_t *lives_funcinst_create(lives_funcdef_t *template, lives_proc_thread_t lpt,
-                                        lives_thread_attr_t attrs, va_list xargs);
 
 //lives_result_t weed_plant_params_from_vargs(weed_plant_t *plant, const char *args_fmt, va_list vargs);
 lives_result_t weed_plant_params_from_args_fmt(weed_plant_t *plant, const char *args_fmt, ...);

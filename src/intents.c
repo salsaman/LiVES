@@ -562,7 +562,7 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int
                               WEED_SEED_VOIDPTR);
     uint32_t rtype = get_seedtype(rttype[0]);
 
-    funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, NULL);
+    funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, 0);
     ((lives_funcdef_t *)funcdef)->flags |= FDEF_FLAG_STATIC;
 
     lives_object_set_attr_value(dicto, xattr, funcdef);

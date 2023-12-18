@@ -736,7 +736,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     surf = lives_painter_get_target(cr);
     lives_painter_surface_destroy(surf);
     lives_painter_destroy(cr);
-    
+
     // we now have the layout, we can find its height, and we will just take the part of the layer it covers
     // convert that slice, render the layout, then convert back
 
@@ -762,7 +762,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
       // stops it getting converted
       if (gamma == WEED_GAMMA_LINEAR)
-	weed_layer_set_gamma(layer_slice, WEED_GAMMA_SRGB);
+        weed_layer_set_gamma(layer_slice, WEED_GAMMA_SRGB);
 
       // create a lives painter surface from layer_slice
       cr = layer_to_lives_painter(layer_slice);

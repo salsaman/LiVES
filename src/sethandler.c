@@ -934,7 +934,7 @@ boolean reload_set(const char *set_name) {
           //// todo test if no subdirs
           if (ignore_all) {
             // if all files ignored, ignore the entire set
-	    ignore_clip(CURRENT_SET_DIR);
+            ignore_clip(CURRENT_SET_DIR);
           } else {
             char *cdirname = CLIPS_DIR(set_name);
             if (lives_file_test(cdirname, LIVES_FILE_TEST_IS_DIR)) {

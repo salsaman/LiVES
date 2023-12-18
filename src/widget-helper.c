@@ -777,7 +777,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_mark_dirty(lives_paint
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_mark_dirty_rectangle(lives_painter_surface_t *surf,
-									       int dx, int dy, int dw, int dh) {
+    int dx, int dy, int dw, int dh) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_mark_dirty_rectangle(surf, dx, dy, dw, dh);
   return TRUE;
@@ -1100,13 +1100,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
   } else {
     if (mainw)
       if (fg_service_source && cprio == PRIO_HIGH)
-	lives_source_set_priority(fg_service_source, PRIO_LOW);
+        lives_source_set_priority(fg_service_source, PRIO_LOW);
 
     if (!lpttorun) ret = _lives_widget_context_iteration(ctx, may_block);
 
     if (mainw)
       if (fg_service_source && cprio == PRIO_HIGH)
-	lives_source_set_priority(fg_service_source, PRIO_HIGH);
+        lives_source_set_priority(fg_service_source, PRIO_HIGH);
   }
   return ret;
 }
@@ -1249,8 +1249,11 @@ boolean fg_service_fulfill_cb(void *dummy) {
       cprio = PRIO_HIGH;
       if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
           && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
-	lives_widget_context_iteration(NULL, FALSE);
-        pthread_yield();
+        if (!pthread_mutex_trylock(&lpt_mutex)) {
+          lives_widget_context_iteration(NULL, FALSE);
+          pthread_mutex_unlock(&lpt_mutex);
+          pthread_yield();
+        }
       }
       if (prio != PRIO_HIGH) {
         lives_source_set_priority(fg_service_source, cprio);
@@ -1272,14 +1275,14 @@ boolean fg_service_fulfill_cb(void *dummy) {
     if (mainw->do_ctx_update) {
       // during playback this is where all callbacks such as key presses will happen
       if (!is_active) {
-	lives_widget_context_update();
+        lives_widget_context_update();
       }
       mainw->do_ctx_update = FALSE;
       pthread_yield();
       lives_microsleep;
     } else {
       if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
-	continue;
+        continue;
 
       lives_nanosleep(NSLEEP_TIME);
       pthread_yield();
@@ -1292,8 +1295,8 @@ boolean fg_service_fulfill_cb(void *dummy) {
         }
         // servicing modal windows
         if (modalw) {
-	  lives_widget_context_iteration(NULL, FALSE);
-	}
+          lives_widget_context_iteration(NULL, FALSE);
+        }
       }
     }
   } while (gui_loop_tight);
@@ -1320,9 +1323,12 @@ boolean fg_service_fulfill_cb(void *dummy) {
       if (!lpttorun) {
         // skip if this if we a have a direct service to run
         if (!mainw->go_away && mainw->is_ready) {
-          lives_widget_context_iteration(NULL, FALSE);
-          pthread_yield();
-          lives_microsleep;
+          if (!pthread_mutex_trylock(&lpt_mutex)) {
+            lives_widget_context_iteration(NULL, FALSE);
+            pthread_mutex_unlock(&lpt_mutex);
+            pthread_yield();
+            lives_microsleep;
+          }
         }
       }
     } else {
@@ -3445,6 +3451,7 @@ typedef struct {
   LiVESXModifierType mod;
   lives_funcptr_t func;
   void *data;
+  GClosureNotify dest;
 } lives_accel_map;
 
 static weed_plant_t *idx_plant = NULL;
@@ -3459,7 +3466,6 @@ static weed_plant_t *get_plant_for_agrp(LiVESAccelGroup * accel_group) {
   }
   return weed_get_plantptr_value(idx_plant, key, NULL);
 }
-
 
 void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
                                GdkModifierType accel_mods,  GtkAccelFlags accel_flags,
@@ -3476,6 +3482,29 @@ void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
   _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags,
                              _lives_cclosure_new(LIVES_GUI_CALLBACK(func), user_data, dest));
 }
+
+
+// TODO - add accel_act as the callback, add with special mod mask
+// - query accel group to get quark, store quark, == in accel_act, user data us anap, call accelgroup activate with stored vals
+//
+/* void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval, */
+/*                                GdkModifierType accel_mods,  GtkAccelFlags accel_flags, */
+/*                                lives_funcptr_t func, void *user_data, GClosureNotify dest) { */
+/*   weed_plant_t *agrp = get_plant_for_agrp(accel_group); */
+/*   char *ukey = lives_strdup_printf(".%lu", gen_unique_id()); */
+/*   LiVESWidgetClosure *gui_closure = _lives_cclosure_new(LIVES_GUI_CALLBACK(func), user_data, dest); */
+
+/*   LIVES_CALLOC_TYPE(lives_accel_map, amap, 1); */
+/*   amap->keyval = keyval; */
+/*   amap->mod = accel_mods; */
+/*   amap->flags = accel_flags; */
+/*   amap->func = func; */
+/*   amap->data = user_data; */
+/*   weed_set_voidptr_value(agrp, ukey, amap); */
+/*   _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags, gui_closute); */
+/*   _lives_accel_group_connect(accel_group, keyval, accel_mods | LIVES_MO, accel_flags, */
+/* 			     _lives_cclosure_new(LIVES_GUI_CALLBACK(func), user_data, dest)); */
+/* } */
 
 
 void accel_act_special(void *obj, uint32_t key, GdkModifierType mods) {
@@ -3499,64 +3528,6 @@ void accel_act_special(void *obj, uint32_t key, GdkModifierType mods) {
 }
 
 
-/* boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, */
-/*                       livespointer user_data) { */
-
-
-
-
-/* typedef { */
-/*   uint64_t uid; */
-/*   lives_sync_list_t windows; */
-/*   LiVESList *accel_maps; */
-/* } lives_smart_accelgrp; */
-
-/* void smart_accel_act(lives_smart_accelgrp *agrp, LiVESWidget *w, uint32_t keyval, LiVESXModifierType mod) { */
-/*   for (LiVESList *list =  agrp->accel_maps; list; lisst = list->?next) { */
-/*     lives_smart_accelmap *amap = (lives_smart_accemap *)lisst->data; */
-/*     if (amap && amap->keyval == keyval && amap->mod == mod) { */
-/*       if (amap->flags & AMAP_FLAG_RUN-BG) lives_proc_trhead_quque(amap->attrs, amap->lpt); */
-/*       else lives_proc_thread_execute(amap->lpt); */
-/*     } */
-/*   } */
-/* }  */
-
-
-/* boolean lives_window_add_smart_accelgrp(LiVESWindow *win, lives_smart_accelgrp *agrp) { */
-/*   if (agrp && win) { */
-/*     lives_sync_list_add(agrp->windows, win); */
-/*     return TRUE; */
-/*   } */
-/*   return FALSE; */
-/* } */
-
-
-/* boolean lives_window_remove_smart_accelgrp(LiVESWindow *win, lives_smart_accelgrp *agrp) { */
-/*   if (agrp && win) { */
-/*     lives_sync_list_remove(agrp->windows, win); */
-/*     return TRUE; */
-/*   } */
-/*   return FALSE; */
-/* } */
-
-
-/* smart_accel_group *smart_accel_group_new(void) { */
-/*   return LIVES_CALLOC_SIZEFOF(1, smart_accel_group); */
-/* } */
-
-/* boolean lives_group_connect(smart_accel_group *acrpg, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, */
-/* 			    lives_funcptr_t func, vod *data, void *unused) { */
-/*   LIVES_CALLOC_TYPE(smart_accelmap_t, amap, 1); */
-/*   amap->key = key; */
-/*   amap->mod = mod; */
-/*   amap->flags = flag; */
-/*   amap->func = func; */
-/*   amap-.data = data; */
-/*   lives_list_prepend(acrgp->  */
-/*   return TRUE; */
-/* } */
-
-
 #ifdef GUI_GTK
 boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
                   LiVESXModifierType mod, livespointer data) {
@@ -3568,10 +3539,17 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   /*   g_print("playwin key %d\n", keyval); */
   /* } */
   ret = FALSE;
+  THREADVAR(accel_group) = group;
+  THREADVAR(accel_key) = keyval;
+  THREADVAR(accel_mod) = mod;
+  THREADVAR(accel_data) = data;
   lives_proc_thread_trigger_hooks(self, SEGMENT_START_HOOK);
   gtk_accel_groups_activate(obj, keyval, mod);
   lives_proc_thread_trigger_hooks(self, SEGMENT_END_HOOK);
-  ret = TRUE;
+  THREADVAR(accel_group) = NULL;
+  THREADVAR(accel_key) = 0;
+  THREADVAR(accel_mod) = 0;
+  THREADVAR(accel_data) = NULL;
   return ret;
 }
 #endif

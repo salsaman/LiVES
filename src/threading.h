@@ -94,7 +94,7 @@ typedef struct {
 
   pthread_mutex_t var_pause_mutex;
   pthread_cond_t var_pcond;
-  
+
   uint64_t var_sync_timeout;
   uint64_t var_blocked_limit;
   ticks_t var_event_ticks;
@@ -131,6 +131,12 @@ typedef struct {
   int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
+
+  // accel callbacks
+  LiVESAccelGroup *var_accel_group;
+  uint32_t var_accel_key;
+  LiVESXModifierType var_accel_mod;
+  livespointer var_accel_data;
 
   // misc
   boolean var_fx_is_auto;

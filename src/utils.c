@@ -167,10 +167,10 @@ const char *check_for_runners(void) {
   if (file) {
     if (fgets(buff, 1024, file) > 0)
       for (int i = 0; runners[i]; i++) {
-	if (strstr(buff, runners[i])) {
-	  fclose(file);
-	  return runners[i];
-	}
+        if (strstr(buff, runners[i])) {
+          fclose(file);
+          return runners[i];
+        }
       }
     fclose(file);
   }

@@ -162,7 +162,7 @@ void lives_assert_failed(const char *cond, const char *file, int line) {
   if (prefs) MSGMODE_GLOBAL;
 
   BREAK_ME("assertfail");
-  
+
   lives_abort("Assertion failed");
 }
 
@@ -417,7 +417,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     signum = -signum;
     only_print = 1;
   }
- 
+
   if (!uc) sigsrc = SIG_SRC_INTERN;
 
 #if NO_SHOW_DIAG
@@ -469,31 +469,31 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     if (!printed) {
       printed = 1;
       if (signum == LIVES_SIGABRT) {
-	fprintf(stderr, "%s", _("\nProgram aborting...\n"));
+        fprintf(stderr, "%s", _("\nProgram aborting...\n"));
       }
 
       fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
-			"Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
+                        "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
       fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
-			"distribution,\nand the LiVES version (%s), plus any following informauion:\n"), LiVES_VERSION);
+                        "distribution,\nand the LiVES version (%s), plus any following informauion:\n"), LiVES_VERSION);
 
       if (signum == LIVES_SIGSEGV) {
-	fprintf(stderr, "Segmentation fault, ");
-	if (mainw->critical) {
-	  fprintf(stderr, "raised by thread");
-	  if (mainw->critical_thread)
-	    fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
-	  fprintf(stderr, "\n");
-	  if (mainw->critical_errno) {
-	    fprintf(stderr, "Error code was %d", mainw->critical_errno);
-	    if (mainw->critical_errmsg)
-	      fprintf(stderr, ", %s", mainw->critical_errmsg);
-	    fprintf(stderr, "\n");
-	  }
-	  if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
-	} else if (signum == LIVES_SIGSEGV) {
-	  if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
-	}
+        fprintf(stderr, "Segmentation fault, ");
+        if (mainw->critical) {
+          fprintf(stderr, "raised by thread");
+          if (mainw->critical_thread)
+            fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
+          fprintf(stderr, "\n");
+          if (mainw->critical_errno) {
+            fprintf(stderr, "Error code was %d", mainw->critical_errno);
+            if (mainw->critical_errmsg)
+              fprintf(stderr, ", %s", mainw->critical_errmsg);
+            fprintf(stderr, "\n");
+          }
+          if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+        } else if (signum == LIVES_SIGSEGV) {
+          if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
+        }
       }
 
       fprintf(stderr, "\n");
@@ -515,8 +515,8 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 
     if (signum == LIVES_SIGABRT) {
       if (!only_print) {
-	fprintf(stderr, "%s", _("Program aborted\n\n"));
-	_exit(signum);
+        fprintf(stderr, "%s", _("Program aborted\n\n"));
+        _exit(signum);
       }
     }
 

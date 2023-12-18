@@ -600,7 +600,7 @@ struct _capabilities {
   char *myname_full;
   char *myname;
 
-  
+
   uint64_t features_ready;
 
   pid_t mainpid;
@@ -609,7 +609,7 @@ struct _capabilities {
   pthread_t gui_thread;
 
   const char *runner;
-  
+
   char *username;
 
   mode_t umask;

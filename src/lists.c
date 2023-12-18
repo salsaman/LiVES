@@ -10,7 +10,7 @@
 LIVES_GLOBAL_INLINE void lives_sync_list_readlock_priv(lives_sync_list_t *synclist) {
   if (synclist) pthread_rwlock_rdlock(&synclist->priv_lock);
 }
-  
+
 
 LIVES_GLOBAL_INLINE void lives_sync_list_writelock_priv(lives_sync_list_t *synclist) {
   if (synclist) pthread_rwlock_wrlock(&synclist->priv_lock);

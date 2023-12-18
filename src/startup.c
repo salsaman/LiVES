@@ -1379,10 +1379,10 @@ boolean lives_startup(livespointer data) {
 
   if (RUNNER_IS(gdb))
     fprintf(stderr, "\tWhen running LiVES via gdb, you may wish to add "
-	    "the following lines to your gdb.ini file\n\n"
-	    "\t\thandle SIG42 nostop noprint\n"
-	    "\t\thandle SIG44 nostop noprint\n\n");
-  
+            "the following lines to your gdb.ini file\n\n"
+            "\t\thandle SIG42 nostop noprint\n"
+            "\t\thandle SIG44 nostop noprint\n\n");
+
   lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
   if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION) != LIVES_RESULT_SUCCESS)
     lives_abort("Timer failed");
@@ -1773,7 +1773,7 @@ boolean lives_startup2(livespointer data) {
     }
     if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
       if (disk_monitor_running(prefs->workdir)) {
-	dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
+        dsval = capable->ds_used = disk_monitor_wait_result(prefs->workdir, 0);
       }
       mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
     }
@@ -2840,9 +2840,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   get_basename(cdir);
   capable->myname = lives_strdup(cdir);
 
-  capable->ppid = getppid(); 
+  capable->ppid = getppid();
   capable->runner = check_for_runners();
-  
+
   // get opts first
   //
   // we can read some pre-commands from a file, there is something of a chicken / egg problem as we dont know

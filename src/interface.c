@@ -467,17 +467,17 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
     if (which == 0 || which == 1) {
       lives_widget_queue_draw_if_visible(mainw->video_draw);
       if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
-	  || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
     }
     if (which == 0 || which == 2) {
       lives_widget_queue_draw_if_visible(mainw->laudio_draw);
       if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
-	  || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
     }
     if (which == 0 || which == 3) {
       lives_widget_queue_draw_if_visible(mainw->raudio_draw);
       if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
-	  || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
     }
   }
   return TRUE;
@@ -2428,28 +2428,29 @@ harlem_shuffle:
         // for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list, 3 -> ign_list
         filedets = (lives_file_dets_t *)list->data;
         if (!(filedets->type & LIVES_FILE_TYPE_FLAG_SPECIAL))
-	  filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_FLAG_SPECIAL);
+          filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_FLAG_SPECIAL);
 
-	if (list->prev) list->prev->next = list->next;
-	if (list->next) list->next->prev = list->prev;
-	if (list == *olist) *olist = list->next;
-	list->next = list->prev = NULL;
+        if (list->prev) list->prev->next = list->next;
+        if (list->next) list->next->prev = list->prev;
+        if (list == *olist) *olist = list->next;
+        list->next = list->prev = NULL;
 
-	if (filedets->widgets[1] &&
-	    lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
-	    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0])))
-	      *rec_list = lives_list_prepend(*rec_list, list->data);
-	    else
-	      *ign_list = lives_list_prepend(*ign_list, list->data);
-	}
-	else {
+        if (filedets->widgets[1] &&
+            lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
           if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0])))
-	    *rem_list = lives_list_prepend(*rem_list, list->data); 
-	  else
-	    *left_list = lives_list_prepend(*rem_list, list->data); 	   
-	}
-	lives_list_free_1(list);
-      }}}
+            *rec_list = lives_list_prepend(*rec_list, list->data);
+          else
+            *ign_list = lives_list_prepend(*ign_list, list->data);
+        } else {
+          if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0])))
+            *rem_list = lives_list_prepend(*rem_list, list->data);
+          else
+            *left_list = lives_list_prepend(*rem_list, list->data);
+        }
+        lives_list_free_1(list);
+      }
+    }
+  }
   // *INDENT-ON*
   lives_widget_destroy(dialog);
   //lives_widget_context_update();
@@ -2457,7 +2458,7 @@ harlem_shuffle:
 }
 
 
-static void set_maxflabel(opensel_win * oswin) {
+static void set_maxflabel(opensel_win *oswin) {
   double sttime = lives_spin_button_get_value(LIVES_SPIN_BUTTON(oswin->sp_start));
   frames_t nframes = oswin->frames - (frames_t)(sttime * oswin->fps + .99999);
   char *text = lives_strdup_printf(_("[ maximum =  %d ]"), nframes);
@@ -2467,7 +2468,7 @@ static void set_maxflabel(opensel_win * oswin) {
   lives_spin_button_update(LIVES_SPIN_BUTTON(oswin->sp_frames));
 }
 
-static void sp_start_changed(LiVESWidget * spb, opensel_win * oswin) {set_maxflabel(oswin);}
+static void sp_start_changed(LiVESWidget *spb, opensel_win *oswin) {set_maxflabel(oswin);}
 
 opensel_win *create_opensel_window(int frames, double fps) {
   opensel_win *openselwin;
@@ -2658,7 +2659,7 @@ static char *mkszlabel(const char *set, ssize_t size, int ccount, int lcount) {
 }
 
 
-static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
+static void on_set_exp(LiVESWidget *exp, _entryw *entryw) {
   lives_proc_thread_t layinfo = NULL, clipsinfo = NULL, sizinfo = NULL;
   LiVESList *lists[2];
   LiVESList **laylist = &lists[0], **clipslist = &lists[1];
@@ -3002,12 +3003,12 @@ thrdjoin:
 }
 
 
-static void close_expander(LiVESWidget * button, _entryw * entryw) {
+static void close_expander(LiVESWidget *button, _entryw *entryw) {
   if (lives_expander_get_expanded(LIVES_EXPANDER(entryw->expander)))
     lives_expander_set_expanded(LIVES_EXPANDER(entryw->expander), FALSE);
 }
 
-static void entryw_entry_changed(LiVESEntry * entry, LiVESWidget * other) {
+static void entryw_entry_changed(LiVESEntry *entry, LiVESWidget *other) {
   if (!*(lives_entry_get_text(entry))) lives_widget_set_sensitive(other, FALSE);
   else lives_widget_set_sensitive(other, TRUE);
 }
@@ -3294,7 +3295,7 @@ _entryw *create_entry_dialog(int type) {
 }
 
 
-void on_liveinp_advanced_clicked(LiVESButton * button, livespointer user_data) {
+void on_liveinp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   lives_tvcardw_t *tvcardw = (lives_tvcardw_t *)(user_data);
 
   tvcardw->use_advanced = !tvcardw->use_advanced;
@@ -3312,7 +3313,7 @@ void on_liveinp_advanced_clicked(LiVESButton * button, livespointer user_data) {
 }
 
 
-static void rb_tvcarddef_toggled(LiVESToggleButton * tbut, livespointer user_data) {
+static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, livespointer user_data) {
   lives_tvcardw_t *tvcardw = (lives_tvcardw_t *)(user_data);
 
   if (!lives_toggle_button_get_active(tbut)) {
@@ -3327,7 +3328,7 @@ static void rb_tvcarddef_toggled(LiVESToggleButton * tbut, livespointer user_dat
 }
 
 
-static void after_dialog_combo_changed(LiVESWidget * combo, livespointer plist) {
+static void after_dialog_combo_changed(LiVESWidget *combo, livespointer plist) {
   // set mainw->fx1_val to the index of combo text in plist
   LiVESList *list = (LiVESList *)plist;
   const char *etext = lives_combo_get_active_text(LIVES_COMBO(combo));
@@ -3335,7 +3336,7 @@ static void after_dialog_combo_changed(LiVESWidget * combo, livespointer plist) 
 }
 
 
-LiVESWidget *create_combo_dialog(int type, LiVESList * list) {
+LiVESWidget *create_combo_dialog(int type, LiVESList *list) {
   // create a dialog with combo box selector
 
   // type 1 == unicap device
@@ -3619,7 +3620,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 }
 
 
-static void on_avolch_ok(LiVESButton * button, livespointer data) {
+static void on_avolch_ok(LiVESButton *button, livespointer data) {
   if (fdim(cfile->vol, mainw->fx1_val) > .005) {
     uint32_t chk_mask = WARN_MASK_LAYOUT_ALTER_AUDIO;
     char *tmp = (_("Changing the audio volume"));
@@ -3663,7 +3664,7 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 // if there is a bg thread running this then we first cancel it, so it should be cancelled on return here
 
 
-boolean is_recurse(volatile boolean * var) {
+boolean is_recurse(volatile boolean *var) {
   static pthread_mutex_t recursion_mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_lock(&recursion_mutex);
   if (*var) {
@@ -3855,7 +3856,7 @@ void create_new_pb_speed(short type) {
 }
 
 
-static void rb_aud_sel_pressed(LiVESButton * button, livespointer user_data) {
+static void rb_aud_sel_pressed(LiVESButton *button, livespointer user_data) {
   aud_dialog_t *audd = (aud_dialog_t *)user_data;
   audd->is_sel = !audd->is_sel;
   lives_widget_set_sensitive(audd->time_spin, !audd->is_sel);
@@ -4086,7 +4087,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
 static char last_good_folder[PATH_MAX];
 
-static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data) {
+static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data) {
   char *cwd = lives_get_current_dir();
   char *new_dir;
 
@@ -4122,7 +4123,7 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
 }
 
 
-void restore_wm_stackpos(LiVESButton * button) {
+void restore_wm_stackpos(LiVESButton *button) {
   LiVESWindow *dialog;
   if ((dialog = (LiVESWindow *)lives_widget_object_get_data
                 (LIVES_WIDGET_OBJECT(button), KEEPABOVE_KEY)) != NULL) {
@@ -4140,7 +4141,7 @@ void restore_wm_stackpos(LiVESButton * button) {
    such buttons may be created independently (e.g for the RFX "fileread" / "filewrite" special types
    or via lives_standard_direntry_new() / lives_standard_fileentry_new()
 */
-void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
+void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *tentry = LIVES_WIDGET(user_data);
   lives_rfx_t *rfx;
   char **filt = NULL;
@@ -4318,7 +4319,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 #define DETECTOR_STRING "a0b1c2d3e4f5"
 #endif
 
-static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
+static void fc_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
   // what should happen with gtkfilechooser, but doesnt (!)
   // setting mode to CREATE_DIRECTORY should allow creating a new directory or entering an existing one
   //        - this is fine
@@ -4445,7 +4446,7 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 }
 
 
-static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data) {
+static void fc_folder_changed(LiVESFileChooser *chooser, livespointer user_data) {
   //struct fc_dissection *diss = (struct fc_dissection *)user_data;
   static boolean no = FALSE;
   if (no) {
@@ -4483,13 +4484,13 @@ static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data
 }
 
 
-static boolean dir_only_filt(const GtkFileFilterInfo * filter_info, livespointer data) {
+static boolean dir_only_filt(const GtkFileFilterInfo *filter_info, livespointer data) {
   return lives_file_test(filter_info->filename, LIVES_FILE_TEST_IS_DIR);
 }
 
 
 static char *_choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-                          const char *title, LiVESWidget * extra_widget) {
+                          const char *title, LiVESWidget *extra_widget) {
   // new style file chooser
   LiVESWidget *chooser, *action_box;
 
@@ -7012,7 +7013,7 @@ boolean update_dsu(livespointer data) {
       lives_label_set_text(LIVES_LABEL(dsq->used_label), (txt = dsu_label_calculating()));
       lives_free(txt);
     }
-  } else { 
+  } else {
     RECURSE_GUARD_ARM;
     if (mainw->dsu_valid) {
       if (dsu > -1) capable->ds_used = dsu;

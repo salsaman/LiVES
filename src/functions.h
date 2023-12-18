@@ -25,16 +25,16 @@ typedef struct {
 
 static inline boolean have_recursion_token(LIST_TYPE xlist, uint64_t token, void *dataptr) {
   LIVES_CONST_LIST_FOREACH(xlist, list)
-    if (DATA_FIELD_IS(list, recursion_token, token, token)
-	&& DATA_FIELD_IS(list, recursion_token, dataptr, dataptr)) return TRUE;
+  if (DATA_FIELD_IS(list, recursion_token, token, token)
+      && DATA_FIELD_IS(list, recursion_token, dataptr, dataptr)) return TRUE;
   return FALSE;
 }
 
 static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, void *dataptr) {
   LIVES_CONST_LIST_FOREACH(xlist, list)
-    if (DATA_FIELD_IS(list, recursion_token, token, token)
-	&& DATA_FIELD_IS(list, recursion_token, dataptr, dataptr))
-      return lives_list_remove_node(xlist, list, TRUE);
+  if (DATA_FIELD_IS(list, recursion_token, token, token)
+      && DATA_FIELD_IS(list, recursion_token, dataptr, dataptr))
+    return lives_list_remove_node(xlist, list, TRUE);
   return xlist;
 }
 
@@ -58,7 +58,7 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
 #define RECURSE_GUARD_START _RECURSE_GUARD_START_
 
 #define RETURN_IF_RECURSED RETURN_IF_RECURSED_WITH_DATA(NULL)
-#define RETURN_VAL_IF_RECURSED(val) RETURN_VAL_IF_RECURSED_WITH_DATA(val, NULL) 
+#define RETURN_VAL_IF_RECURSED(val) RETURN_VAL_IF_RECURSED_WITH_DATA(val, NULL)
 
 #define RECURSE_GUARD_ARM RECURSE_GUARD_ARM_FOR_DATA(NULL)
 #define RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
@@ -102,7 +102,7 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
 #define T_RECURSE_GUARD_START _RECURSE_GUARD_START_
 
 #define T_RETURN_IF_RECURSED T_RETURN_IF_RECURSED_WITH_DATA(NULL)
-#define T_RETURN_VAL_IF_RECURSED(val) T_RETURN_VAL_IF_RECURSED_WITH_DATA(val,NULL) 
+#define T_RETURN_VAL_IF_RECURSED(val) T_RETURN_VAL_IF_RECURSED_WITH_DATA(val,NULL)
 
 #define T_RECURSE_GUARD_ARM _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,NULL)
 #define T_RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)

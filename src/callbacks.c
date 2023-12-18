@@ -5656,7 +5656,7 @@ static LiVESResponseType cleardisk_show_summary(LiVESTextBuffer * tbuff, int nit
     lives_button_box_set_child_non_homogeneous(LIVES_BUTTON_BOX(bbox), button, TRUE);
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_EDGE);
   }
-  
+
   retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
   lives_widget_destroy(textwindow->dialog);
   lives_free(textwindow);
@@ -5783,11 +5783,11 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   do {
     widget_opts.use_markup = TRUE;
     resp = get_warning_dialogf_resp(_("LiVES will attempt to recover some disk space.\n"
-				      "Unnecessary files will be removed from %s\n"
-				      "You should <b>ONLY</b> run this if you have no other copies"
-				      "of LiVES running on this machine.\n"
-				      "%s\nClick OK to proceed.\n"),
-				    tmp = lives_markup_escape_text(prefs->workdir, -1), extra);
+                                      "Unnecessary files will be removed from %s\n"
+                                      "You should <b>ONLY</b> run this if you have no other copies"
+                                      "of LiVES running on this machine.\n"
+                                      "%s\nClick OK to proceed.\n"),
+                                    tmp = lives_markup_escape_text(prefs->workdir, -1), extra);
     lives_free(tmp);
     widget_opts.use_markup = FALSE;
     if (resp == LIVES_RESPONSE_CANCEL) {
@@ -5961,11 +5961,11 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
     if (what_sup_now() != sup_ready) {
       for (i = 1; mainw->files[i]; i++) {
-	for (list = *rem_list; list; list = list->next) {
-	  lives_file_dets_t *filedets = (lives_file_dets_t *)(list->data);
-	  if (!lives_strcmp(filedets->name, mainw->files[i]->handle))
-	    *rem_list = lives_list_remove_node(*rem_list, list, TRUE);
-	}
+        for (list = *rem_list; list; list = list->next) {
+          lives_file_dets_t *filedets = (lives_file_dets_t *)(list->data);
+          if (!lives_strcmp(filedets->name, mainw->files[i]->handle))
+            *rem_list = lives_list_remove_node(*rem_list, list, TRUE);
+        }
       }
     }
 
@@ -5988,7 +5988,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       lives_free(com);
       goto cleanup;
     }
- 
+
     /// user accepted
 
     // first we need to move some entries at the list starts
@@ -5996,33 +5996,32 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     // we can stop when orig == current list
 
     THREADVAR(com_failed) = FALSE;
- 
+
     for (int i = 0; i < 4; i++) {
       for (list = lists[i]; list && list->data; list = list->next) {
-	filedets = (lives_file_dets_t *)list->data;
-	orig = filedets->type & ~LIVES_FILE_TYPE_FLAG_SPECIAL;
-	if (orig == i) break;
+        filedets = (lives_file_dets_t *)list->data;
+        orig = filedets->type & ~LIVES_FILE_TYPE_FLAG_SPECIAL;
+        if (orig == i) break;
 
-	if (!orig) // moved from rec_list	
-	  from = lives_build_path(full_trashdir, TRASH_RECOVER, filedets->name, NULL);
-	else if (orig == 1) // moved from rec_list	
-	  from = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
-	else if (orig == 2) // moved from left_list
-	  from = lives_build_path(full_trashdir, TRASH_LEAVE, filedets->name, NULL);
-	else continue;
- 
-	if (i == 1) {
-	  char *to = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
-	  lives_mv(from, to);
-	  lives_free(to);
-	}
-	else lives_rm(from);
-	lives_free(from);
+        if (!orig) // moved from rec_list
+          from = lives_build_path(full_trashdir, TRASH_RECOVER, filedets->name, NULL);
+        else if (orig == 1) // moved from rec_list
+          from = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
+        else if (orig == 2) // moved from left_list
+          from = lives_build_path(full_trashdir, TRASH_LEAVE, filedets->name, NULL);
+        else continue;
 
-	if (THREADVAR(com_failed)) {
-	  THREADVAR(com_failed) = FALSE;
-	  goto cleanup;
-	}
+        if (i == 1) {
+          char *to = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
+          lives_mv(from, to);
+          lives_free(to);
+        } else lives_rm(from);
+        lives_free(from);
+
+        if (THREADVAR(com_failed)) {
+          THREADVAR(com_failed) = FALSE;
+          goto cleanup;
+        }
       }
     }
 
@@ -6034,11 +6033,11 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       for (; list && list->data; list = list->next) {
         filedets = (lives_file_dets_t *)list->data;
         if (*filedets->name) {
-	  char *clipdir = lives_build_path(prefs->workdir, filedets->name, NULL);
-	  ignore_clip(clipdir);
-	  lives_free(clipdir);
-	}
-	*ign_list = lives_list_remove_node(*ign_list, list, TRUE);
+          char *clipdir = lives_build_path(prefs->workdir, filedets->name, NULL);
+          ignore_clip(clipdir);
+          lives_free(clipdir);
+        }
+        *ign_list = lives_list_remove_node(*ign_list, list, TRUE);
       }
     }
 
@@ -7920,45 +7919,49 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     }
 
     IF_APLAYER_JACK
-      (if (LIVES_IS_PLAYING) {
-	if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-	  weed_plant_t *event = get_last_frame_event(mainw->event_list);
-	  insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
-	}
-	mainw->jackd->mute = TRUE;
-	mainw->jackd->in_use = TRUE;})
+    (if (LIVES_IS_PLAYING) {
+    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+        weed_plant_t *event = get_last_frame_event(mainw->event_list);
+        insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
+      }
+      mainw->jackd->mute = TRUE;
+      mainw->jackd->in_use = TRUE;
+    })
 
-      IF_APLAYER_PULSE
-      (if (LIVES_IS_PLAYING) {
-	if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-	  weed_plant_t *event = get_last_frame_event(mainw->event_list);
-	  insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
-	}
-	mainw->pulsed->mute = TRUE;
-	mainw->pulsed->in_use = TRUE;})
+    IF_APLAYER_PULSE
+    (if (LIVES_IS_PLAYING) {
+    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+        weed_plant_t *event = get_last_frame_event(mainw->event_list);
+        insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+      }
+      mainw->pulsed->mute = TRUE;
+      mainw->pulsed->in_use = TRUE;
+    })
 
-      lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
+    lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
     if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));
   } else {
     IF_APLAYER_JACK
-      (if (LIVES_IS_PLAYING) {
-        if (mainw->record && !mainw->record_paused
-	    && (prefs->rec_opts & REC_AUDIO)) {
-          jack_get_rec_avals(mainw->jackd);
-        }
-        mainw->jackd->mute = FALSE;
-        mainw->jackd->in_use = TRUE;})
+    (if (LIVES_IS_PLAYING) {
+    if (mainw->record && !mainw->record_paused
+          && (prefs->rec_opts & REC_AUDIO)) {
+        jack_get_rec_avals(mainw->jackd);
+      }
+      mainw->jackd->mute = FALSE;
+      mainw->jackd->in_use = TRUE;
+    })
 
-      IF_APLAYER_PULSE
-      (if (LIVES_IS_PLAYING) {
-        if (mainw->record && !mainw->record_paused
-	    && (prefs->rec_opts & REC_AUDIO)) {
-          pulse_get_rec_avals(mainw->pulsed);
-        }
-        mainw->pulsed->mute = FALSE;
-        mainw->pulsed->in_use = TRUE;})
+    IF_APLAYER_PULSE
+    (if (LIVES_IS_PLAYING) {
+    if (mainw->record && !mainw->record_paused
+          && (prefs->rec_opts & REC_AUDIO)) {
+        pulse_get_rec_avals(mainw->pulsed);
+      }
+      mainw->pulsed->mute = FALSE;
+      mainw->pulsed->in_use = TRUE;
+    })
 
-      lives_widget_set_opacity(mainw->m_mutebutton, .75);
+    lives_widget_set_opacity(mainw->m_mutebutton, .75);
     if (mainw->preview_box) {
       lives_widget_set_opacity(mainw->p_mutebutton, .75);
     }
@@ -7968,25 +7971,25 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
 
     IF_APLAYER_JACK
-      (if (LIVES_IS_PLAYING)
-	mainw->jackd->mute = mainw->mute;)
+    (if (LIVES_IS_PLAYING)
+     mainw->jackd->mute = mainw->mute;)
 
       IF_APLAYER_PULSE
       (if (LIVES_IS_PLAYING)
-	mainw->pulsed->mute = mainw->mute;)
+       mainw->pulsed->mute = mainw->mute;)
       }
 
   astat = lives_aplayer_get_status(mainw->aplayer);
-  
-  IF_APLAYER_JACK
-    (if (mainw->jackd->mute) astat |= APLAYER_STATUS_MUTED;
-    else astat &= ~APLAYER_STATUS_MUTED;)
-    
-    IF_APLAYER_PULSE
-    (if (mainw->pulsed->mute) astat |= APLAYER_STATUS_MUTED;
-    else astat &= ~APLAYER_STATUS_MUTED;)
 
-    lives_aplayer_set_status(mainw->aplayer, astat);
+  IF_APLAYER_JACK
+  (if (mainw->jackd->mute) astat |= APLAYER_STATUS_MUTED;
+   else astat &= ~APLAYER_STATUS_MUTED;)
+
+      IF_APLAYER_PULSE
+      (if (mainw->pulsed->mute) astat |= APLAYER_STATUS_MUTED;
+       else astat &= ~APLAYER_STATUS_MUTED;)
+
+          lives_aplayer_set_status(mainw->aplayer, astat);
 }
 
 
@@ -9344,7 +9347,7 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
   } else {
     if (widget == mainw->eventbox2) {
       if (!LIVES_IS_PLAYING)
-	paint_tl_cursors(widget, cr, NULL);
+        paint_tl_cursors(widget, cr, NULL);
     }
   }
   return TRUE;
@@ -9440,7 +9443,7 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
     }
   }
 
-  lives_painter_stroke(creb); 
+  lives_painter_stroke(creb);
   if (creb != cr) lives_widget_end_paint(widget);
   //if (creb != cr) lives_painter_destroy(creb);
 }

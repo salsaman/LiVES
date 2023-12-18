@@ -2054,8 +2054,8 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
       layer = layers[i];
       clip = lives_layer_get_clip(layer);
       if (clip == mainw->scrap_file && num_in_tracks <= 1 && num_out_tracks <= 1) {
-	retval = FILTER_ERROR_IS_SCRAP_FILE;
-	goto done_video;
+        retval = FILTER_ERROR_IS_SCRAP_FILE;
+        goto done_video;
       }
     }
   }
@@ -6653,6 +6653,7 @@ boolean weed_init_effect(int hotkey) {
       is_trans = TRUE;
     } else if (is_gen && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
       // aha - a generator
+
       if (!LIVES_IS_PLAYING) {
         // if we are not playing, we will postpone creating the instance
         // this is a workaround for a problem in libvisual
@@ -6849,18 +6850,18 @@ deinit2:
       return FALSE;
     }
 
-    if (!LIVES_IS_PLAYING && mainw->gen_started_play) {
-      // TODO - problem if modeswitch triggers playback
-      // hence we do not allow mixing of generators and non-gens on the same key
-      if (fg_modeswitch) {
-        mainw->num_tr_applied = num_tr_applied;
-        pthread_mutex_unlock(&mainw->trcount_mutex);
-      }
-      filter_mutex_lock(hotkey);
-      key_to_instance[hotkey][key_modes[hotkey]] = inst;
-      filter_mutex_unlock(hotkey);
-      return TRUE;
-    }
+    /* if (!LIVES_IS_PLAYING && mainw->gen_started_play) { */
+    /*   // TODO - problem if modeswitch triggers playback */
+    /*   // hence we do not allow mixing of generators and non-gens on the same key */
+    /*   if (fg_modeswitch) { */
+    /*     mainw->num_tr_applied = num_tr_applied; */
+    /*     pthread_mutex_unlock(&mainw->trcount_mutex); */
+    /*   } */
+    /*   filter_mutex_lock(hotkey); */
+    /*   key_to_instance[hotkey][key_modes[hotkey]] = inst; */
+    /*   filter_mutex_unlock(hotkey); */
+    /*   return TRUE; */
+    /* } */
 
     // weed_generator_start can change the instance
     //inst = weed_instance_obtain(hotkey, key_modes[hotkey]);/////
@@ -6871,7 +6872,7 @@ deinit2:
     }
     if (fg_generator_key != -1) {
       mainw->rte |= (GU641 << fg_generator_key);
-      mainw->rte_real |= (GU641 << fg_generator_key);
+      //mainw->rte_real |= (GU641 << fg_generator_key);
       mainw->clip_switched = TRUE;
       mainw->playing_sel = FALSE;
     }
@@ -6890,9 +6891,9 @@ deinit2:
   }
 
   if (rte_keys == hotkey) {
-    mainw->rte_real |= (~mainw->rte_keys & rte_keys);
-    mainw->rte_real &= ~(mainw->rte_keys & ~rte_keys);
-    mainw->rte_keys = rte_keys;
+    /* mainw->rte_real |= (~mainw->rte_keys & rte_keys); */
+    /* mainw->rte_real &= ~(mainw->rte_keys & ~rte_keys); */
+    //mainw->rte_keys = rte_keys;
     mainw->blend_factor = weed_get_blend_factor(rte_keys);
   }
 
@@ -7573,6 +7574,7 @@ lives_filter_error_t lives_layer_fill_from_generator(weed_layer_t *layer, weed_i
   weed_filter_t *filter;
   weed_channel_t *channel, *achan;
   weed_gui_t *gui;
+  weed_layer_t *inter;
   lives_clip_t *sfile = NULL;
   char *cwd;
   double tfps;
@@ -7719,31 +7721,31 @@ procfunc1:
     goto procfunc1;
   }
 
-  if (gui) {
-    int btop = weed_get_int_value(gui, WEED_LEAF_BORDER_TOP, NULL);
-    int bbot = weed_get_int_value(gui, WEED_LEAF_BORDER_BOTTOM, NULL);
-    int bleft = weed_get_int_value(gui, WEED_LEAF_BORDER_LEFT, NULL);
-    int bright = weed_get_int_value(gui, WEED_LEAF_BORDER_RIGHT, NULL);    if (btop || bbot || bleft || bright) {
-      if (!unletterbox_layer(channel, -1, -1, btop, bbot, bleft, bright)) {
-        weed_layer_pixel_data_free(channel);
-        return LIVES_RESULT_FAIL;
-      }
-    }
-  }
+  /* if (gui) { */
+  /*   int btop = weed_get_int_value(gui, WEED_LEAF_BORDER_TOP, NULL); */
+  /*   int bbot = weed_get_int_value(gui, WEED_LEAF_BORDER_BOTTOM, NULL); */
+  /*   int bleft = weed_get_int_value(gui, WEED_LEAF_BORDER_LEFT, NULL); */
+  /*   int bright = weed_get_int_value(gui, WEED_LEAF_BORDER_RIGHT, NULL); */
+  /*   if (btop || bbot || bleft || bright) { */
+  /*     g_print("Btio id %d\n", btop); */
+  /*     if (!unletterbox_layer(channel, -1, -1, btop, bbot, bleft, bright)) { */
+  /*       weed_layer_pixel_data_free(channel); */
+  /*       return LIVES_RESULT_FAIL; */
+  /*     } */
+  /*   } */
+  /* } */
 
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
 
   if (retval == FILTER_ERROR_BUSY) return retval;
 
-  g_print("genX\n");
-  weed_layer_t *inter = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  inter = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(inter, layer);
   weed_pixel_data_share(layer, channel);
   weed_pixel_data_share(channel, inter);
   weed_layer_free(inter);
   lives_layer_set_clip(layer, clipno);
-  g_print("genX over\n");
 
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
   /* 	  weed_channel_get_palette(channel), weed_channel_get_pixel_data(channel)); */
@@ -7922,11 +7924,12 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     if (mainw->play_window) {
       lives_widget_queue_draw(mainw->play_window);
     }
+
     start_playback_async(6);
     return -1;
   } else {
     // already playing
-   if (old_file != -1 && mainw->files[old_file]) {
+    if (old_file != -1 && mainw->files[old_file]) {
       if (IS_NORMAL_CLIP(old_file)) mainw->pre_src_file = old_file;
       mainw->current_file = old_file;
     }
@@ -8073,7 +8076,7 @@ void weed_generator_end(weed_plant_t *inst) {
     filter_mutex_lock(fg_generator_key);
     if (rte_key_is_enabled(fg_generator_key, FALSE)) {
       mainw->rte &= ~(GU641 << fg_generator_key);
-      mainw->rte_real &= ~(GU641 << fg_generator_key);
+      //mainw->rte_real &= ~(GU641 << fg_generator_key);
     }
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
     filter_mutex_unlock(fg_generator_key);

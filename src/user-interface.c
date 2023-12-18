@@ -713,9 +713,9 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
       oxrheight = GET_INT_DATA(da, OXRHEIGHT_KEY);
 
       if (width < owidth || height < oheight || xrwidth > oxrwidth || xrheight > oxrheight) {
-	lives_painter_render_background(p, cr, 0., 0., xrwidth, xrheight);
-	dw = xrwidth;
-	dh = xrheight;
+        lives_painter_render_background(p, cr, 0., 0., xrwidth, xrheight);
+        dw = xrwidth;
+        dh = xrheight;
       }
 
       SET_INT_DATA(da, OWIDTH_KEY, owidth);
@@ -760,17 +760,17 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
           lives_painter_line_to(cr, rwidth, 0);
           lives_painter_move_to(cr, 0, rheight);
           lives_painter_line_to(cr, rwidth, rheight);
-	  dw = rwidth;
-	  dh = rheight;
+          dw = rwidth;
+          dh = rheight;
         } else {
-	  lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
-	  if (!dw) {
-	    dw = width + 2;
-	    dh = height + 2;
-	    dx = cx - 1;
-	    dy = cy - 1;
-	  }
-	}
+          lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
+          if (!dw) {
+            dw = width + 2;
+            dh = height + 2;
+            dx = cx - 1;
+            dy = cy - 1;
+          }
+        }
         // frame
         lives_painter_stroke(cr);
         cx += 2;
@@ -795,7 +795,7 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     dh = rheight;
   }
 
-  lives_painter_surface_mark_dirty(surface);
+  lives_painter_surface_mark_dirty_rectangle(surface, dx, dy, dw, dh);
 
   lives_painter_paint(cr);
 

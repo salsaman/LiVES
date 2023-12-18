@@ -339,7 +339,7 @@ static pthread_rwlock_t *lives_proc_thread_get_state_rwlock(lives_proc_thread_t 
   pthread_rwlock_t *state_rwlock = NULL;
   //if (lives_proc_thread_ref(lpt) > 1)  {
   state_rwlock = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_RWLOCK, NULL);
-    // lives_proc_thread_unref(lpt);
+  // lives_proc_thread_unref(lpt);
   return state_rwlock;
 }
 
@@ -385,7 +385,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
   pthread_mutex_init(ext_cb_mutex, NULL);
   weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, ext_cb_mutex);
 
- if (!weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL)) {
+  if (!weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL)) {
     pthread_rwlock_t *destruct_rwlock = (pthread_rwlock_t *)lives_calloc(1, sizeof(pthread_rwlock_t));
     pthread_rwlock_init(destruct_rwlock, NULL);
     weed_set_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, destruct_rwlock);
@@ -847,7 +847,7 @@ int lives_proc_thread_unref(lives_proc_thread_t lpt) {
 #if 0
 }
 #endif
- T_RECURSE_GUARD_START;
+T_RECURSE_GUARD_START;
 if (lpt) {
   T_RETURN_VAL_IF_RECURSED_WITH_DATA(FALSE, lpt);
   pthread_rwlock_t *destruct_rwlock;
@@ -919,7 +919,7 @@ if (lpt) {
       // this will force other lpts to remove their pointers to callbacks in our stacks
 
       lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
-  
+
       lives_free(lpt_hooks);
 
       // free any free calls which were added for param values
@@ -936,7 +936,13 @@ if (lpt) {
 
       lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, NULL);
       if (fdef) free_funcdef(fdef);
-      
+
+      extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
+      if (extcb_mutex) {
+        pthread_mutex_destroy(extcb_mutex);
+        lives_free(extcb_mutex);
+      }
+
       if (tdata) {
         // GET_PROC_THREAD_SELF will now return NULL, until we call lives_thread_switch_self()
         tdata->vars.var_active_lpt = NULL;
@@ -953,12 +959,6 @@ if (lpt) {
       // dont end up with invalid objects
       pthread_mutex_lock(&ref_sync_mutex);
       pthread_mutex_unlock(&ref_sync_mutex);
-
-      extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
-      if (extcb_mutex) {
-	pthread_mutex_destroy(extcb_mutex);
-	lives_free(extcb_mutex);
-      }
 
       // we can now unlock the rwlock
       pthread_rwlock_unlock(destruct_rwlock);
@@ -2762,24 +2762,24 @@ void lpt_error_handle(lives_proc_thread_t lpt) {
       // dont report minor errors
       if (errfile) loc = lives_strdup_printf(" at line %d in file %s", errline, errfile);
       fprintf(stderr, "lives proc thread %p, (%s) got a %s error%s\n"
-	      "Error code %d: %s\n",
-	      lpt, get_lpt_id(lpt), sev == 2 ? "major" : sev == 3 ? "critical"
-	      : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown", loc, errnum,
-	      lives_proc_thread_get_errmsg(lpt));
+              "Error code %d: %s\n",
+              lpt, get_lpt_id(lpt), sev == 2 ? "major" : sev == 3 ? "critical"
+              : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown", loc, errnum,
+              lives_proc_thread_get_errmsg(lpt));
       switch (sev) {
       case (LPT_ERR_MAJOR) :
-	fprintf(stderr, "task was cancelled\n");
-	break;
+        fprintf(stderr, "task was cancelled\n");
+        break;
       case (LPT_ERR_CRITICAL) :
-	fprintf(stderr, "sendig signal 11\n");
-	break;
+        fprintf(stderr, "sendig signal 11\n");
+        break;
       case (LPT_ERR_FATAL) :
-	fprintf(stderr, "aborting\n");
-	break;
+        fprintf(stderr, "aborting\n");
+        break;
       case (LPT_ERR_DEADLY) :
-	fprintf(stderr, "bye\n");
-	_exit(errnum);
-	break;
+        fprintf(stderr, "bye\n");
+        _exit(errnum);
+        break;
       default: return;
       }
     }
@@ -2789,21 +2789,20 @@ void lpt_error_handle(lives_proc_thread_t lpt) {
 
   if (mainw) {
     fprintf(stderr, "\nApplication status was %d\n", lives_get_status());
-  
+
     if (!mainw->multitrack && LIVES_IS_PLAYING) {
       char *bgstr;
       if (mainw->blend_file) bgstr = lives_strdup_printf(", background clip was %d", mainw->blend_file);
       else bgstr = lives_strdup(", no background clip");
       fprintf(stderr, "LiVES was playing file %d%s\n", mainw->playing_file, bgstr);
       if (mainw->plan_cycle) {
-	fprintf(stderr, "Plan cycle was active, with state %lu\n", mainw->plan_cycle->state);
-	display_plan(mainw->plan_cycle);
+        fprintf(stderr, "Plan cycle was active, with state %lu\n", mainw->plan_cycle->state);
+        display_plan(mainw->plan_cycle);
       }
     }
     print_diagnostics(DIAG_ALL);
-    fprintf(stderr, "Total run time: %s\n", lives_format_timing_string(lives_get_session_time() / ONE_BILLION_DBL));  
-  }
-  else {
+    fprintf(stderr, "Total run time: %s\n", lives_format_timing_string(lives_get_session_time() / ONE_BILLION_DBL));
+  } else {
     fprintf(stderr, "mainw is NULL\n");
   }
 }
@@ -3042,15 +3041,17 @@ done:
     if (lives_proc_thread_was_cancelled(lpt)) {
       lives_thread_set_active(chain_leader);
       lives_proc_thread_cancel(chain_leader);
+
     }
 
-    if (lives_proc_thread_had_error(lpt))
+    if (lives_proc_thread_had_error(lpt)) {
       _lives_proc_thread_error(chain_leader,
                                weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
                                weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
                                lives_proc_thread_get_errnum(lpt),
                                lives_proc_thread_get_errsev(lpt), "%s",
                                lives_proc_thread_get_errmsg(lpt));
+    }
 
     lives_thread_set_active(chain_leader);
 
@@ -3076,7 +3077,7 @@ done:
       if (!(attrs & LIVES_THRDATTR_NO_UNREF)) lives_proc_thread_unref(lpt);
       //g_print("Will destroy %p\n", lpt);
     }
-    
+
     weed_leaf_delete(lpt, "parent");
     weed_leaf_delete(self, "subord");
 
@@ -3087,7 +3088,7 @@ done:
     lpt_params_free(lpt, TRUE);
 
     //g_print("nrefss ++++ = %d %p\n", lives_proc_thread_count_refs(lpt), lpt);
-    
+
     lives_thread_set_active(self);
     lives_proc_thread_unref(lpt);
   } else state = lives_proc_thread_get_state(self);
@@ -3491,7 +3492,7 @@ static void *_lives_thread_data_create(void *pslot_id) {
       tdata->vars.var_hook_stacks[i] =
         (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
       pthread_mutex_init(&tdata->vars.var_hook_stacks[i]->mutex, NULL);
-      tdata->vars.var_hook_stacks[i]->flags |= STACK_NATIVE; 
+      tdata->vars.var_hook_stacks[i]->flags |= STACK_NATIVE;
       tdata->vars.var_hook_stacks[i]->type = i;
       tdata->vars.var_hook_stacks[i]->parent_stacks = tdata->vars.var_hook_stacks;
       tdata->vars.var_hook_stacks[i]->owner.thread = pthread_self();
@@ -3745,7 +3746,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
   if ((LiVESList *)twork_last == list) twork_last = NULL;
   else twork_list->prev = NULL;
 
-    LIVES_ASSERT(!(twork_list && !twork_last));
+  LIVES_ASSERT(!(twork_list && !twork_last));
   LIVES_ASSERT(!(list->next && twork_last == list));
 
 
@@ -3774,7 +3775,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
 
   pthread_mutex_unlock(&twork_mutex);
   list->next = list->prev = NULL;
-  
+
   if (lpt) {
     // if prime is NULL, also sets that
     lives_thread_set_active(lpt);
@@ -3834,7 +3835,7 @@ skip_over:
       if (!(attrs & LIVES_THRDATTR_NO_UNREF)) lives_proc_thread_unref(lpt);
       //g_print("Will destroy %p\n", lpt);
     }
-    
+
     weed_leaf_delete(lpt, "parent");
 
     // also sets 'active'
@@ -3844,7 +3845,7 @@ skip_over:
     lpt_params_free(lpt, TRUE);
 
     //g_print("nrefss ++++ = %d %p\n", lives_proc_thread_count_refs(lpt), lpt);
-    
+
     // should have a ref on this
     lives_proc_thread_unref(lpt);
   }
@@ -3982,34 +3983,32 @@ LIVES_GLOBAL_INLINE void lives_thread_free(lives_thread_t *thread) {
     uint64_t flags = 0;
 
     if (thread->prev || thread->next || (lives_thread_t *)twork_last == thread
-	|| (lives_thread_t *)twork_list == thread) {
+        || (lives_thread_t *)twork_list == thread) {
       pthread_mutex_lock(&twork_mutex);
       if (thread->prev) {
-	thread->prev->next = thread->next;
-	if ((lives_thread_t *)twork_last == thread)
-	  twork_last = (volatile LiVESList *)thread->prev;
-	thread->prev = NULL;
-      }
-      else if ((lives_thread_t *)twork_list == thread)
-	twork_list = NULL;
+        thread->prev->next = thread->next;
+        if ((lives_thread_t *)twork_last == thread)
+          twork_last = (volatile LiVESList *)thread->prev;
+        thread->prev = NULL;
+      } else if ((lives_thread_t *)twork_list == thread)
+        twork_list = NULL;
 
       if (thread->next) {
-	thread->next->prev = thread->prev;
-	if ((lives_thread_t *)twork_list == thread)
-	  twork_list = (volatile LiVESList *)thread->next;
-	thread->next = NULL;
-      } 
-      else if ((lives_thread_t *)twork_last == thread)
-	twork_last = NULL;
+        thread->next->prev = thread->prev;
+        if ((lives_thread_t *)twork_list == thread)
+          twork_list = (volatile LiVESList *)thread->next;
+        thread->next = NULL;
+      } else if ((lives_thread_t *)twork_last == thread)
+        twork_last = NULL;
 
-  LIVES_ASSERT(!(twork_list && !twork_last));
-  LIVES_ASSERT(!(thread->next && twork_last == thread));
+      LIVES_ASSERT(!(twork_list && !twork_last));
+      LIVES_ASSERT(!(thread->next && twork_last == thread));
       pthread_mutex_unlock(&twork_mutex);
     }
 
     if (work) {
       flags = work->flags;
-      lives_free(work);    
+      lives_free(work);
     }
 
     if (!(flags & LIVES_THRDFLAG_NOFREE_LIST))
@@ -4129,7 +4128,7 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
   /*   twork_last = lives_list_append((LiVESList *)twork_last, (void *)work); */
   /*   if (!twork_list) twork_list = twork_last; */
   /*   if (threadptr) *threadptr = (lives_thread_t *)twork_last; */
-  
+
   /* } */
 
   if (!twork_list) {

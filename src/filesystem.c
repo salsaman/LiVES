@@ -1326,12 +1326,11 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
   }
   fbuff->nseqreads = 0;
 
-  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) { 
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     if (fbuff->offset + offset >= fbuff->orig_size - ABS(fbuff->skip)) {
-        offset = fbuff->orig_size - ABS(fbuff->skip) - fbuff->offset;
-	fbuff->flags |= FB_FLAG_EOF;
-    }
-    else fbuff->flags &= ~FB_FLAG_EOF;
+      offset = fbuff->orig_size - ABS(fbuff->skip) - fbuff->offset;
+      fbuff->flags |= FB_FLAG_EOF;
+    } else fbuff->flags &= ~FB_FLAG_EOF;
     if (offset < -fbuff->offset) offset = -fbuff->offset;
 
     fbuff->offset += offset;
@@ -1543,15 +1542,15 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   if (!buf) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
       if (count + fbuff->offset > fbuff->orig_size - ABS(fbuff->skip)) {
-	if (!allow_less) {
-	  // error
-	  do_file_read_error(fd, retval, NULL, ocount);
-	}
-	count = fbuff->orig_size - ABS(fbuff->skip) - fbuff->offset;
+        if (!allow_less) {
+          // error
+          do_file_read_error(fd, retval, NULL, ocount);
+        }
+        count = fbuff->orig_size - ABS(fbuff->skip) - fbuff->offset;
       }
       if (!allow_less) {
-	lives_millisleep_while_true(fbuff->bytes + fbuff->skip - fbuff->offset < count
-				    && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+        lives_millisleep_while_true(fbuff->bytes + fbuff->skip - fbuff->offset < count
+                                    && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       }
       return count;
     }
@@ -1580,7 +1579,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         if (ocount > fbuff->offset) ocount = fbuff->offset;
         fbuff->offset -= ocount;
         fbuff->ptr -= ocount;
-	if (fbuff->ptr < fbuff->buffer) abort();
+        if (fbuff->ptr < fbuff->buffer) abort();
       }
       lives_millisleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
                                   && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
@@ -1622,7 +1621,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       if (!(fbuff->flags & FB_FLAG_REVERSE)) {
         fbuff->offset += nbytes;
         fbuff->ptr += nbytes;
-	if (fbuff->ptr < fbuff->buffer) abort();
+        if (fbuff->ptr < fbuff->buffer) abort();
       }
       pthread_mutex_lock(&fbuff->sync_mutex);
       if (count > 0) fbuff->flags |= FB_FLAG_EOF;

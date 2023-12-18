@@ -24,8 +24,8 @@
 #define ENABLE_PRECACHE
 
 #ifdef ENABLE_PRECACHE
-#define MIN_JMP_THRESH (frames_t)((sfile->pb_fps / 8.) + dir)
-#define MAX_JMP_THRESH (frames_t)((sfile->pb_fps / 3.) + 2 * dir)
+#define MIN_JMP_THRESH (frames_t)((sfile->pb_fps / 16.) + dir)
+#define MAX_JMP_THRESH (frames_t)((sfile->pb_fps / 8.) + 2 * dir)
 #endif
 
 LIVES_GLOBAL_INLINE int lives_set_status(int status) {
@@ -101,23 +101,25 @@ lives_result_t video_sync_ready(void) {
   }
 
   IF_APLAYER_JACK
-    (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
-			&& !mainw->record_paused && mainw->jackd->is_paused)) {
-      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      return LIVES_RESULT_SUCCESS;})
+  (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+  && !mainw->record_paused && mainw->jackd->is_paused)) {
+  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  return LIVES_RESULT_SUCCESS;
+})
 
-    IF_APLAYER_PULSE
-    (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
-			&& !mainw->record_paused && mainw->pulsed->is_paused)) {
-      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      mainw->avsync_time = 0.;
-      return LIVES_RESULT_SUCCESS;})
+  IF_APLAYER_PULSE
+  (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+  && !mainw->record_paused && mainw->pulsed->is_paused)) {
+  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  mainw->avsync_time = 0.;
+  return LIVES_RESULT_SUCCESS;
+})
 
-    if (mainw->audio_seek_ready) {
-      mainw->video_seek_ready = TRUE; 
-      mainw->avsync_time = 0.;
-      return LIVES_RESULT_SUCCESS;
-    }
+  if (mainw->audio_seek_ready) {
+    mainw->video_seek_ready = TRUE;
+    mainw->avsync_time = 0.;
+    return LIVES_RESULT_SUCCESS;
+  }
 
   xtime = (lives_get_session_time() - mainw->avsync_time) / ONE_BILLION_DBL;
   if (xtime > AV_SYNC_LIMIT) {
@@ -250,7 +252,7 @@ static lives_layer_t *check_for_overlay_text(weed_layer_t *layer) {
       goto done;
     }
   }
- done:
+done:
   return xlayer ? xlayer : layer;
 }
 
@@ -377,8 +379,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
   for (i = 0; i < mainw->num_tracks; i++) {
     if (!layers[i]) {
       layers[i] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-    }
-    else {
+    } else {
       weed_layer_set_invalid(layers[i], FALSE);
       lives_layer_set_status(layers[i], LAYER_STATUS_NONE);
     }
@@ -639,10 +640,22 @@ static lives_result_t prepare_frames(frames_t frame) {
           // the frame number is in mainw->pred_frame
           // once the frame is loaded (is_layer_ready returns TRUE), we check it is within range
           // if it is behind mainw->actual_frame, then we discard it (set mainw->pred_frame == 0)
-          // otherwise, set mainw->pred_frame = -mainw->pred_frame
-          // if it is beyond requested_frame + LAGFRAME_TRIGGER / 2, it is too far ahead and we ignore it for now
-          // otherwise we play it; if it is <= requested_frame we know we will play it only once, so we
-          // steal the pixel_data and set mainw->pred_frame to 0, else we copy the pixel_data
+          // otherwise, we may use it
+          // we may have up to 4 frame numbers: last frame played, current frame, pred_frame, cached frame, requested frame
+          // (example for forwards playback)
+          // if we are ahead of req frame thwn we only play cached or pred if they are 'close', if cached < pred, play cached and cache pred
+          // othwequse, play pred
+
+          // close == between min jmp and max
+          frames_t ccframe = 0, lframe = sfile->last_frameno, rframe = sfile->last_req_frame, pframe = mainw->pred_frame;
+          boolean evict_cache = FALSE, use_cache = FALSE, cache_pre = FALSE;
+          if (mainw->cached_frame) {
+            int cclip = lives_layer_get_clip(mainw->cached_frame);
+            if (cclip == mainw->playing_file) {
+              ccframe = lives_layer_get_frame(mainw->cached_frame);
+              if (dir * (ccframe - lframe) < 0) evict_cache = TRUE;
+            } else evict_cache = TRUE;
+          }
           if (mainw->pred_frame && mainw->frame_layer_preload) {
             if (!weed_layer_check_valid(mainw->frame_layer_preload) || mainw->pred_clip != mainw->playing_file) {
               mainw->pred_frame = 0;
@@ -651,10 +664,12 @@ static lives_result_t prepare_frames(frames_t frame) {
 
             if (is_layer_ready(mainw->frame_layer_preload) != LIVES_RESULT_SUCCESS) goto no_precache;
 
-            delta_a = (labs(mainw->pred_frame) - sfile->last_req_frame) * dir;
-            delta_l = (labs(mainw->pred_frame) - sfile->last_frameno) * dir;
+            pframe = mainw->pred_frame;
+            mainw->pred_frame = -mainw->pred_frame;
+            delta_a = (pframe - rframe) * dir;
+            delta_l = (pframe - lframe) * dir;
 
-            d_print_debug("got preload, deltas are %d and %d\n", delta_a, delta_l);
+            d_print_debug("got ypreload, deltas are %d and %d\n", delta_a, delta_l);
             d_print_debug("THANKS for %p,! %d %ld, real was %d, range %d  --  %d\n",
                           mainw->frame_layer_preload, mainw->pred_clip,
                           labs(mainw->pred_frame), sfile->last_req_frame,
@@ -664,90 +679,93 @@ static lives_result_t prepare_frames(frames_t frame) {
             if (delta_l < 0) {
               // if before last_frame, or invalid,  we must discard
               d_print_debug("preload frame too early, must discard\n");
-              mainw->pred_frame = -labs(mainw->pred_frame);
               cache_misses++;
+              pframe = 0;
               goto no_precache;
             }
 
-            got_pc = TRUE;
+            //got_pc = TRUE;
 
             if (delta_a > MAX_JMP_THRESH) {
-              // if before last_frame, or invalid,  we must discard
-              d_print_debug("preload frame too late, will cache for later\n");
-              if (mainw->cached_frame)
-                d_print_debug("cached frame in use, can we release it now ?\n'");
+              // too far in future
+              pframe = 0;
+              d_print_debug("preload frame too late, may cache for later\n");
+              d_print_debug("cached frame in use, can we release it now ?\n'");
               cache_misses++;
+              if (!ccframe) cache_pre = TRUE;
+              else {
+                if ((pframe - ccframe) * dir > 0 &&
+                    (ccframe - lframe) * dir < MAX_JMP_THRESH) {
+                  use_cache = TRUE;
+                  cache_pre = TRUE;
+                } else {
+                  /* evict_cache = TRUE; */
+                  /* cache_pre = TRUE; */
+                }
+              }
             }
           }
-
-	no_precache:
-
-          if (mainw->cached_frame) {
-            int clip = lives_layer_get_clip(mainw->cached_frame);
-            if (clip == mainw->playing_file) {
-              frames_t frame = lives_layer_get_frame(mainw->cached_frame);
-              frames_t delta_lc = (frame - sfile->last_frameno) * dir;
-              if (delta_lc < 1) {
-                // discard cache if too early
-                if (mainw->cached_frame != get_old_frame_layer()
-                    && mainw->cached_frame != mainw->ext_player_layer) {
-                  weed_layer_unref(mainw->cached_frame);
-                }
-                mainw->cached_frame = NULL;
-              } else {
-                if ((!got_pc && delta_lc <= MAX_JMP_THRESH)
-                    || (got_pc && delta_lc < delta_l
-                        && delta_l + delta_lc <= (MAX_JMP_THRESH << 1))) {
-                  // we shouild never have both cached frame and preload
-                  rel_cache = TRUE;
-                }
-              }
+no_precache:
+          if (!pframe) {
+            if ((ccframe - lframe) * dir > 0 && (ccframe - rframe) * dir < MAX_JMP_THRESH) {
+              use_cache = TRUE;
             }
-            if (rel_cache) {
+
+            if (use_cache) {
               lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
-              if (!mainw->layers[0] || mainw->layers[0] == get_old_frame_layer()
-                  || mainw->layers[0] == mainw->ext_player_layer
-                  || mainw->layers[0] == mainw->cached_frame)
-                mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+              /* if (!mainw->layers[0] || mainw->layers[0] == get_old_frame_layer() */
+              /* 	|| mainw->layers[0] == mainw->ext_player_layer */
+              /* 	|| mainw->layers[0] == mainw->cached_frame) */
+              /*   mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO); */
 
               weed_layer_copy(mainw->layers[0], mainw->cached_frame);
               mainw->frame_layer = mainw->layers[0];
+              mainw->actual_frame = ccframe;
 
-              weed_layer_copy(mainw->layers[0], mainw->cached_frame);
-              mainw->frame_layer = mainw->layers[0];
-              if (mainw->cached_frame != get_old_frame_layer()
-                  && mainw->cached_frame != mainw->ext_player_layer) {
-                weed_layer_unref(mainw->cached_frame);
-              }
-              mainw->cached_frame = NULL;
               if (srcgrp) {
                 srcgrp->layer = NULL;
                 swap_srcgrps(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, 0, SRC_PURPOSE_PRECACHE);
                 srcgrp = get_primary_srcgrp(mainw->playing_file);
                 lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
               }
-              lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
+              evict_cache = TRUE;
             }
-          } else if (got_pc) {
-            if (delta_a < MIN_JMP_THRESH) {
-              // if before last_frame, or invalid,  we must discard
-              d_print_debug("preload frame too early, but OK to use\n");
+            if (evict_cache) {
+              if (mainw->cached_frame != get_old_frame_layer()
+                  && mainw->cached_frame != mainw->ext_player_layer) {
+                weed_layer_unref(mainw->cached_frame);
+              }
+              mainw->cached_frame = NULL;
+            }
+            if (cache_pre) {
+              got_pc = FALSE;
+              mainw->cached_frame = STEAL_POINTER(mainw->frame_layer_preload);
             }
 
-            if (delta_a <= MAX_JMP_THRESH) {
-              cache_hits++;
+            if (use_cache) lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
 
-              if (!mainw->layers[0] || mainw->layers[0] == get_old_frame_layer()
-                  || mainw->layers[0] == mainw->ext_player_layer
-                  || mainw->layers[0] == mainw->cached_frame)
-                mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+            if (pframe) {
+              if (delta_a < MIN_JMP_THRESH) {
+                // if before last_frame, or invalid,  we must discard
+                d_print_debug("preload frame too early, but OK to use\n");
+              }
 
-              mainw->layers[0] = STEAL_POINTER(mainw->frame_layer_preload);
+              if (delta_a <= MAX_JMP_THRESH) {
+                cache_hits++;
 
-              mainw->frame_layer = mainw->layers[0];
-	      mainw->actual_frame = labs(mainw->pred_frame);
+                /* if (mainw->layers[0] != get_old_frame_layer() */
+                /*     || mainw->layers[0] != mainw->ext_player_layer */
+                /*     || mainw->layers[0] != mainw->cached_frame) */
+                /*   weed_layer_unref(mainw->layers[0]); */
 
-              if (delta_a > MIN_JMP_THRESH) {
+                if (!mainw->layers[0]) mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+                weed_layer_copy(mainw->layers[0], mainw->frame_layer_preload);
+                weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
+
+                mainw->frame_layer = mainw->layers[0];
+                mainw->actual_frame = pframe;
+
+                //if (delta_a > MIN_JMP_THRESH) {
                 lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
                 if (srcgrp) {
                   srcgrp->layer = NULL;
@@ -755,39 +773,48 @@ static lives_result_t prepare_frames(frames_t frame) {
                   srcgrp = get_primary_srcgrp(mainw->playing_file);
                   lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
                 }
-              }
-              lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
-            }	      // depending on frame value we either make a deep or shallow copy of the cache frame
-            else {
-              // if pre frame is too far ahead, we will cache it, and continue playing normally
-              // unti we are in range
-              cache_misses++;
-              if (mainw->cached_frame) {
-                if (mainw->cached_frame != get_old_frame_layer())
-                  weed_layer_unref(mainw->cached_frame);
-              }
-              mainw->cached_frame = mainw->frame_layer_preload;
-              mainw->frame_layer_preload = NULL;
+                //}
+                lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
+              }	      // depending on frame value we either make a deep or shallow copy of the cache frame
+              /* else { */
+              /*   // if pre frame is too far ahead, we will cache it, and continue playing normally */
+              /*   // unti we are in range */
+              /*   cache_misses++; */
+              /*   if (mainw->cached_frame) { */
+              /* 	if (mainw->cached_frame != get_old_frame_layer()) */
+              /* 	  weed_layer_unref(mainw->cached_frame); */
+              /*   } */
+              /*   mainw->cached_frame = mainw->frame_layer_preload; */
+              /*   mainw->frame_layer_preload = NULL; */
+              /* } */
             }
-
           }
+        }
+      }
 #else
           if (1) {
 #endif
 #ifdef IGNORE_THIS
-	  }
+    }    // }
 #endif
-	skip_precache:
-	  if (!mainw->frame_layer) {
-            //d_print_debug("plan please load %d %d\n", frame, mainw->actual_frame);
-            // if we didn't have a preloaded frame, we kick off a thread here to load it
-            //if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[0] = frame;
-            lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
-            lives_layer_set_frame(mainw->layers[0], frame);
-            lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
-	    // *INDENT-OFF*
-	  }}}}
-    // *INDENT-ON*
+skip_precache:
+    if (!mainw->frame_layer) {
+      //d_print_debug("plan please load %d %d\n", frame, mainw->actual_frame);
+      // if we didn't have a preloaded frame, we kick off a thread here to load it
+
+      /* if (!mainw->layers[0] || mainw->layers[0] == get_old_frame_layer() */
+      /* 	|| mainw->layers[0] == mainw->ext_player_layer */
+      /* 	|| mainw->layers[0] == mainw->cached_frame) */
+      /*   mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO); */
+      /* mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO); */
+
+      lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
+      lives_layer_set_frame(mainw->layers[0], frame);
+      //if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[0] = frame;
+      lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
+    // *INDENT-OFF*
+  }
+  // *INDENT-ON*
 
     if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
     if (mainw->frame_layer) lives_layer_set_track(mainw->frame_layer, 0);
@@ -852,11 +879,11 @@ static lives_result_t prepare_frames(frames_t frame) {
       lives_freep((void **)&info_file);
       return LIVES_RESULT_FAIL;
       // *INDENT-OFF*
-    }}
+    }}}
   // *INDENT-ON*
 
-  if (!mainw->layers) return LIVES_RESULT_ERROR;
-  return LIVES_RESULT_SUCCESS;
+if (!mainw->layers) return LIVES_RESULT_ERROR;
+return LIVES_RESULT_SUCCESS;
 }
 
 
@@ -870,7 +897,7 @@ void reset_old_frame_layer(void) {
     if (layer != mainw->cached_frame && layer != mainw->frame_layer_preload) {
       weed_layer_unref(layer);
       if (layer == mainw->frame_layer && (!mainw->ext_player_layer ||
-					  mainw->ext_player_layer == mainw->frame_layer)) mainw->frame_layer = NULL;
+                                          mainw->ext_player_layer == mainw->frame_layer)) mainw->frame_layer = NULL;
       if (mainw->layers && layer == mainw->layers[0]) mainw->layers[0] = NULL;
     }
   }
@@ -886,7 +913,6 @@ void reset_ext_player_layer(boolean ign_flag) {
       lives_microsleep_while_false(vpp_processed_flag);
       vpp_processed_flag = FALSE;
     }
-    weed_layer_unref(layer);
     weed_layer_unref(layer);
   }
 }
@@ -939,7 +965,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
   int errpt = 0;
 
   LIVES_ASSERT(lives_proc_thread_get_hook_stacks(mainw->player_proc) != NULL);
-  
+
   framecount = NULL;
   fname_next = info_file = NULL;
   img_ext = NULL;
@@ -955,14 +981,14 @@ weed_layer_t *load_frame_image(frames_t frame) {
       // add blank frame
       weed_plant_t *event = get_last_event(mainw->event_list);
       weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list,
-							     lives_get_relative_ticks(mainw->origticks), &event);
+                                 lives_get_relative_ticks(mainw->origticks), &event);
       if (!mainw->event_list) mainw->event_list = event_list;
       if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting) {
         // we are recording, and the audio clip changed; add audio event
         if (mainw->rec_aclip == mainw->ascrap_file) {
           mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-	    (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
-		     mainw->files[mainw->ascrap_file]->asampsize >> 3);
+                             (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
+                                      mainw->files[mainw->ascrap_file]->asampsize >> 3);
           mainw->rec_avel = 1.;
         }
         if (!mainw->mute) {
@@ -978,9 +1004,9 @@ weed_layer_t *load_frame_image(frames_t frame) {
   if (!mainw->foreign) {
     // if autotransitioning from one clip to another, continue smooth transition
     if (prefs->autotrans_amt >= 0.) set_trans_amt(prefs->autotrans_key - 1,
-						  prefs->autotrans_mode >= 0 ? prefs->autotrans_mode
-						  : rte_key_getmode(prefs->autotrans_key - 1),
-						  &prefs->autotrans_amt);
+          prefs->autotrans_mode >= 0 ? prefs->autotrans_mode
+          : rte_key_getmode(prefs->autotrans_key - 1),
+          &prefs->autotrans_amt);
 
     mainw->actual_frame = frame;
     if (!mainw->preview_rendering && (!((was_preview = mainw->preview) || mainw->is_rendering))) {
@@ -1016,7 +1042,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (LIVES_IS_RECORDING) {
         int bg_file = (IS_VALID_CLIP(mainw->blend_file)
                        && (prefs->tr_self || (mainw->blend_file != mainw->playing_file)))
-	  ? mainw->blend_file : -1;
+                      ? mainw->blend_file : -1;
 
         // should we record the output from the playback plugin ?
         if (mainw->record && (prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
@@ -1058,7 +1084,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
           frame >= (mainw->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
         if (cfile->opening) {
           mainw->proc_ptr->frames_done = cfile->opening_frames
-	    = get_frame_count(mainw->current_file, cfile->opening_frames);
+                                         = get_frame_count(mainw->current_file, cfile->opening_frames);
         }
       }
       if (mainw->proc_ptr && mainw->proc_ptr->frames_done > 0 &&
@@ -1142,7 +1168,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     //MSGMODE_ON(DEBUG);
 
     if (was_preview) lives_free(fname_next);
- 
+
     ///////// EXECUTE PLAN CYCLE ////////////
 
     //d_print_debug("wating for plan to complete\n");
@@ -1157,7 +1183,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor))
-	&& mainw->current_file != mainw->scrap_file) {
+        && mainw->current_file != mainw->scrap_file) {
       THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
       main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, &mainw->eb2_psurf);
       THREADVAR(hook_hints) = 0;
@@ -1166,26 +1192,28 @@ weed_layer_t *load_frame_image(frames_t frame) {
     /* in render frame, we would have set all frames to either prepared or loaded */
     /* so the plan runner should have started loading them already */
     /* the reamining steps will be run, applying all fx instances until we are left with the single output layer */
-    lives_millisleep_while_false(mainw->plan_cycle->state == PLAN_STATE_COMPLETE
+    lives_millisleep_while_false(!mainw->plan_cycle || mainw->plan_cycle->state == PLAN_STATE_COMPLETE
                                  || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                  || mainw->plan_cycle->state == PLAN_STATE_ERROR
                                  || mainw->cancelled != CANCEL_NONE);
 
-
-    osc_sync_msg = osc_make_sync_msg(mainw->clip_index, mainw->plan_cycle->frame_idx,
-                                     (double)mainw->currticks / TICKS_PER_SECOND_DBL,
-                                     mainw->num_tracks);
-
-    lives_proc_thread_join(mainw->plan_runner_proc);
-    mainw->plan_runner_proc = NULL;
+    if (mainw->plan_runner_proc) {
+      lives_proc_thread_join(mainw->plan_runner_proc);
+      mainw->plan_runner_proc = NULL;
+    }
 
     if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
+
+    if (mainw->refresh_model) {
+      errpt = 7;
+      goto lfi_err;
+    }
 
     if (lives_layer_get_status(mainw->frame_layer) != LAYER_STATUS_READY) {
       if (!(mainw->plan_cycle->state == PLAN_STATE_CANCELLED
             || mainw->plan_cycle->state == PLAN_STATE_ERROR)) {
         mainw->plan_cycle->state = PLAN_STATE_ERROR;
-	g_print("bad layer status %d\n" ,lives_layer_get_status(mainw->frame_layer));
+        g_print("bad layer status %d\n", lives_layer_get_status(mainw->frame_layer));
       }
     }
 
@@ -1202,7 +1230,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     if (lives_layer_get_clip(mainw->layers[0]) != mainw->playing_file) {
       g_print("frame layer clip mismatch, clip was %d and we are playing %d\n",
-                    lives_layer_get_clip(mainw->frame_layer), mainw->playing_file);
+              lives_layer_get_clip(mainw->frame_layer), mainw->playing_file);
       mainw->plan_cycle->state = PLAN_STATE_ERROR;
       errpt = 5;
       goto lfi_err;
@@ -1224,14 +1252,16 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (mainw->rte != old_rte) mainw->refresh_model = TRUE;
     }
 
-    if (!mainw->refresh_model) {
-      if (run_next_cycle() != LIVES_RESULT_SUCCESS) {
-        errpt = 6;
-        goto lfi_err;
-      }
+    if (run_next_cycle() != LIVES_RESULT_SUCCESS) {
+      errpt = 6;
+      goto lfi_err;
     }
 
     ////////////////////////
+
+    osc_sync_msg = osc_make_sync_msg(mainw->clip_index, mainw->plan_cycle->frame_idx,
+                                     (double)mainw->currticks / TICKS_PER_SECOND_DBL,
+                                     mainw->num_tracks);
 
     // save to scrap_file now if we have to
     if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) {
@@ -1269,13 +1299,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
         // render the timecode for multitrack playback
-  g_print("gensssssX\n");
         frame_layer = check_for_overlay_text(frame_layer);
         if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
           if (frame_layer == mainw->frame_layer) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
         }
-  g_print("gefdfsdfsdtnX\n");
       } else {
         if ((weed_palette_is_rgb(layer_palette) &&
              !(weed_palette_is_rgb(mainw->vpp->palette))) ||
@@ -1303,7 +1331,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
                                         mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgt_gamma)) {
           if (!player_v2) THREADVAR(rowstride_alignment_hint) = rs_align;
-          errpt = 7;
+          errpt = 17;
           goto lfi_err;
         }
       }
@@ -1313,7 +1341,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
         if (frame_layer == mainw->frame_layer)
           frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
         if (!compact_rowstrides(frame_layer)) {
-          errpt = 8;
+          errpt = 18;
           goto lfi_err;
         }
       }
@@ -1381,24 +1409,23 @@ weed_layer_t *load_frame_image(frames_t frame) {
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
 
       if (mainw->vpp->capabilities & VPP_RETURN_AND_NOTIFY) {
-	if (mainw->ext_player_layer) reset_ext_player_layer(FALSE);
-	mainw->ext_player_layer = frame_layer;
-	weed_layer_ref(frame_layer);
-	weed_layer_ref(frame_layer);
+        if (mainw->ext_player_layer) reset_ext_player_layer(FALSE);
+        mainw->ext_player_layer = frame_layer;
+        weed_layer_ref(frame_layer);
         weed_set_voidptr_value(mainw->ext_player_layer, LIVES_LEAF_VPP_PROCESSED_PTR, &vpp_processed_flag);
-	//frame_layer = NULL;
+        //frame_layer = NULL;
       }
 
       if ((player_v2 && !(*mainw->vpp->play_frame)(mainw->ext_player_layer, mainw->currticks - mainw->stream_ticks, return_layer))
           || (!player_v2 && !(*mainw->vpp->render_frame)(lwidth, weed_layer_get_height(frame_layer),
-							 mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params))) {
+              mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params))) {
         if (return_layer) {
           weed_layer_unref(return_layer);
           lives_free(retdata);
           return_layer = NULL;
         }
         if (!player_v2) lives_free(pd_array);
-        errpt = 9;
+        errpt = 19;
         goto lfi_err;
       }
 
@@ -1418,14 +1445,14 @@ weed_layer_t *load_frame_image(frames_t frame) {
     // local display - either we are playing with no playback plugin, or else the playback plugin has no
     // local display of its own
 
-    
+
     if (!weed_layer_get_width(mainw->frame_layer)) {
-      errpt = 10;
+      errpt = 20;
       goto lfi_err;
     }
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
       // no display to output, skip the rest
-      errpt = 11;
+      errpt = 21;
       goto lfi_done;
     }
 
@@ -1461,7 +1488,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
     lives_proc_thread_t free_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-							    weed_layer_unref, 0, "v", frame_layer);
+                                   weed_layer_unref, 0, "v", frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
@@ -1497,7 +1524,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
       }
 
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d / %9d",
-											frame, mainw->rec_vid_frames)));
+                           frame, mainw->rec_vid_frames)));
       lives_free(tmp);
     }
 
@@ -1508,11 +1535,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
     if ((pixbuf = gdk_pixbuf_get_from_window(mainw->foreign_window, 0, 0, xwidth, xheight)))
 #else
 #if 0
-      ;
+    ;
 #endif
     gdk_window_get_size(mainw->foreign_window, &xwidth, &xheight);
     if ((pixbuf = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(mainw->foreign_window),
-					       mainw->foreign_cmap, 0, 0, 0, 0, xwidth, xheight)))
+                  mainw->foreign_cmap, 0, 0, 0, 0, xwidth, xheight)))
 #endif
 #if 0
       ;
@@ -1548,7 +1575,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     return NULL;
   }
 
- lfi_err:
+lfi_err:
   g_print("LFI error %d %p\n", errpt, mainw->layers);
   success = FALSE;
 
@@ -1557,31 +1584,31 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
   wait_layer_ready(mainw->frame_layer, FALSE);
 
-  if (errpt <= 5) {
+  if (errpt <= 15) {
     if (mainw->layers) {
       for (int i = 0; i < mainw->num_tracks; i++) {
-	weed_layer_set_invalid(mainw->layers[i], TRUE);
-	//g_print("unref layer %d with status %d\n", i, _lives_layer_get_status(mainw->layers[i]));
-	if (mainw->layers[i] != mainw->frame_layer) {
-	  weed_layer_pixel_data_free(mainw->layers[i]);
-	}
-      }  
+        weed_layer_set_invalid(mainw->layers[i], TRUE);
+        //g_print("unref layer %d with status %d\n", i, _lives_layer_get_status(mainw->layers[i]));
+        if (mainw->layers[i] != mainw->frame_layer) {
+          weed_layer_pixel_data_free(mainw->layers[i]);
+        }
+      }
     }
 
     if (rebuilt) {
       mainw->cancelled = CANCEL_PLAN_ERROR;
     } else {
       if (!mainw->refresh_model) {
-	if (run_next_cycle() != LIVES_RESULT_SUCCESS) {
-	  g_printerr("plan cycle failing\n");
-	  mainw->refresh_model = TRUE;
-	  rebuilt = TRUE;
-	}
+        if (run_next_cycle() != LIVES_RESULT_SUCCESS) {
+          g_printerr("plan cycle failing\n");
+          mainw->refresh_model = TRUE;
+          rebuilt = TRUE;
+        }
       }
     }
   }
 
- lfi_done:
+lfi_done:
   if (frame_layer && frame_layer != mainw->frame_layer) {
     weed_layer_unref(frame_layer);
     frame_layer = NULL;
@@ -1607,7 +1634,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     rebuilt = FALSE;
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor))
-	&& mainw->current_file != mainw->scrap_file) {
+        && mainw->current_file != mainw->scrap_file) {
       lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA,
                                       lives_widget_queue_draw_and_update, 0, "v", mainw->eventbox2);
     }
@@ -1637,35 +1664,35 @@ static boolean check_for_audio_stop(int clipno, frames_t first_frame, frames_t l
     lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
     if (mainw->loop_cont) return TRUE;
     IF_APLAYER_JACK
-      (if (mainw->jackd->playing_file == clipno) {
-	if (!mainw->loop || mainw->playing_sel) {
-	  if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
-	      || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001))
-	    return FALSE;
-	} else {
-	  if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
-	      (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(clipno, mainw->aframeno + 1.0001)
-	       >= sfile->laudio_time - 0.0001))
-	    return FALSE;
+    (if (mainw->jackd->playing_file == clipno) {
+    if (!mainw->loop || mainw->playing_sel) {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
+            || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001))
+          return FALSE;
+      } else {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
+            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(clipno, mainw->aframeno + 1.0001)
+             >= sfile->laudio_time - 0.0001))
+          return FALSE;
 	  // *INDENT-OFF*
 	}})
       // *INDENT-ON*
 
-      IF_APLAYER_PULSE
-      (if (mainw->pulsed->playing_file == clipno) {
-	if ((!mainw->loop || mainw->playing_sel)) {
-	  if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
-	      || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001))
-	    return FALSE;
-	} else {
-	  if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
-	      (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(clipno, mainw->aframeno + 1.0001)
-	       >= sfile->laudio_time - 0.0001))
-	    return FALSE;
+    IF_APLAYER_PULSE
+    (if (mainw->pulsed->playing_file == clipno) {
+    if ((!mainw->loop || mainw->playing_sel)) {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
+            || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001))
+          return FALSE;
+      } else {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
+            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(clipno, mainw->aframeno + 1.0001)
+             >= sfile->laudio_time - 0.0001))
+          return FALSE;
 	  // *INDENT-OFF*
 	}})
       // *INDENT-ON*
-      }
+  }
   return TRUE;
 }
 
@@ -1674,25 +1701,25 @@ LIVES_GLOBAL_INLINE void calc_aframeno(int clipno) {
   if (CLIP_HAS_AUDIO(clipno)) {
     lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
     IF_APLAYER_JACK
-      (if ((mainw->jackd && mainw->jackd->playing_file == clipno) ||
-	   (mainw->jackd_read && mainw->jackd_read->playing_file == clipno)) {
-	// get seek_pos from jack
-	if (mainw->jackd_read && mainw->jackd_read->playing_file == clipno)
-	  mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * sfile->fps + 1.;
-	else
-	  mainw->aframeno = lives_jack_get_pos(mainw->jackd) * sfile->fps + 1.;
-      })
+    (if ((mainw->jackd && mainw->jackd->playing_file == clipno) ||
+    (mainw->jackd_read && mainw->jackd_read->playing_file == clipno)) {
+    // get seek_pos from jack
+    if (mainw->jackd_read && mainw->jackd_read->playing_file == clipno)
+        mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * sfile->fps + 1.;
+      else
+        mainw->aframeno = lives_jack_get_pos(mainw->jackd) * sfile->fps + 1.;
+    })
 
-      IF_APLAYER_PULSE
-      (if ((mainw->pulsed && mainw->pulsed->playing_file == clipno) ||
-	   (mainw->pulsed_read && mainw->pulsed_read->playing_file == clipno)) {
-	// get seek_pos from pulse
-	if (mainw->pulsed_read && mainw->pulsed_read->playing_file == clipno)
-	  mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * sfile->fps + 1.;
-	else
-	  mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * sfile->fps + 1.;
-      })
-      }
+    IF_APLAYER_PULSE
+    (if ((mainw->pulsed && mainw->pulsed->playing_file == clipno) ||
+    (mainw->pulsed_read && mainw->pulsed_read->playing_file == clipno)) {
+    // get seek_pos from pulse
+    if (mainw->pulsed_read && mainw->pulsed_read->playing_file == clipno)
+        mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * sfile->fps + 1.;
+      else
+        mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * sfile->fps + 1.;
+    })
+  }
 }
 
 
@@ -2082,6 +2109,8 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
         || (dropped && dir * (requested_frame - sfile->last_frameno) < dropped))
       best_frame += dir;
 
+    if ((sfile->last_frameno - requested_frame) * dir > 0) best_frame = sfile->last_frameno + dir;
+
     if (sfile->pb_fps > 0. || clip_can_reverse(mainw->playing_file)) {
       if (jumplim > 0 && dir * (best_frame - sfile->last_frameno) > jumplim) {
         best_frame = sfile->last_frameno + dir * jumplim;
@@ -2089,6 +2118,7 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
       if ((best_frame - requested_frame) * dir > dropped) best_frame = requested_frame + dropped * dir;
       if ((best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir;
     }
+
     if (best_frame != clamp_frame(mainw->playing_file, best_frame)) best_frame = -1;
     else {
       lives_decoder_t *dplug = NULL;
@@ -2098,7 +2128,7 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
         dplug = (lives_decoder_t *)get_primary_actor(sfile);
       best_frame = reachable_frame(mainw->playing_file, dplug, best_frame,
                                    best_frame + dropped + MIN(LAGFRAME_TRIGGER,
-							      dir * (requested_frame - sfile->last_frameno))
+                                       dir * (requested_frame - sfile->last_frameno))
                                    / 2 * dir, sfile->last_frameno, sfile->pb_fps, sfile->last_frameno,
                                    &targ_time, &tconf);
       if ((best_frame - requested_frame) * dir > dropped) best_frame = requested_frame + dropped * dir;
@@ -2107,6 +2137,8 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
       /*         requested_frame, dropped); */
     }
   }
+  if (dir * (best_frame - sfile->last_frameno) <= MIN_JMP_THRESH)
+    best_frame = sfile->last_frameno + dir;
   return best_frame;
 }
 
@@ -2253,7 +2285,7 @@ int process_one(boolean visible) {
 
   mainw->pulsed_read->in_use = TRUE;
 
- player_loop:
+player_loop:
 
   // what we do first is execute the plan created from mainw->nodemodel
   // this will create threads for loading into layers
@@ -2395,7 +2427,7 @@ int process_one(boolean visible) {
     getahead = 0;
     test_getahead = -1;
     sfile->last_req_frame = sfile->last_frameno =
-      mainw->actual_frame = sfile->frameno;
+                              mainw->actual_frame = sfile->frameno;
     if (sfile->last_play_sequence != mainw->play_sequence && CLIP_HAS_VIDEO(mainw->playing_file)
         && !sfile->frameno) sfile->frameno = mainw->play_start;
 
@@ -2417,8 +2449,8 @@ int process_one(boolean visible) {
 
   if (mainw->record_starting) {
     IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd);)
-      IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
-      mainw->record_starting = FALSE;
+    IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
+    mainw->record_starting = FALSE;
   }
 
 #ifdef ADJUST_AUDIO_RATE
@@ -2428,21 +2460,21 @@ int process_one(boolean visible) {
   // - unless we are controlled externally (e.g. jack transport) or system clock is forced
   if (time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
     IF_APLAYER_JACK(calc_atretch = TRUE;)
-      IF_APLAYER_PULSE(calc_atretch = TRUE;)
-      if (calc_astretch) {
-	(double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
-	 if (AUD_SRC_INTERNAL && !LIVES_IS_RENDERING
-	     && (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10) {
-	   audio_stretch /= target_fps / mainw->inst_fps;
-	   // if too fast we increase the apparent sample rate so that it gets downsampled more
-	   // if too slow we decrease the apparent sample rate so that it gets upsampled more
-	   if (audio_stretch < 0.5) audio_stretch = 0.5;
-	   if (audio_stretch > 1.5) audio_stretch = 1.5;
-	   mainw->audio_stretch = audio_stretch;
-	   if (audio_stretch > 1.) audio_stretch = 1. + (audio_stretch - 1.) / 2.;
-	   else if (audio_stretch < 1.) audio_stretch = 1. - (1. - audio_stretch) / 2.;
-	 })
-	  }
+    IF_APLAYER_PULSE(calc_atretch = TRUE;)
+    if (calc_astretch) {
+      (double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
+       if (AUD_SRC_INTERNAL && !LIVES_IS_RENDERING
+      && (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10) {
+      audio_stretch /= target_fps / mainw->inst_fps;
+      // if too fast we increase the apparent sample rate so that it gets downsampled more
+      // if too slow we decrease the apparent sample rate so that it gets upsampled more
+      if (audio_stretch < 0.5) audio_stretch = 0.5;
+        if (audio_stretch > 1.5) audio_stretch = 1.5;
+        mainw->audio_stretch = audio_stretch;
+        if (audio_stretch > 1.) audio_stretch = 1. + (audio_stretch - 1.) / 2.;
+        else if (audio_stretch < 1.) audio_stretch = 1. - (1. - audio_stretch) / 2.;
+      })
+    }
   }
 #endif
 
@@ -2468,7 +2500,7 @@ int process_one(boolean visible) {
     old_vpp = mainw->vpp;
   }
 
- switch_point:
+switch_point:
   if (mainw->close_this_clip != -1 || mainw->new_clip != mainw->playing_file
       || mainw->new_blend_file != mainw->blend_file) {
     do {
@@ -2730,7 +2762,7 @@ int process_one(boolean visible) {
     last_time_source = time_source;
     time_source = LIVES_TIME_SOURCE_NONE;
     mainw->last_startticks = mainw->startticks = mainw->currticks
-      = lives_get_current_playback_ticks(mainw->origticks, &time_source);
+                             = lives_get_current_playback_ticks(mainw->origticks, &time_source);
     //g_print("SWITCH %d %d %d %d\n", sfile->frameno, requested_frame, sfile->last_frameno, mainw->actual_frame);
 
     if (new_blend_file != mainw->blend_file) {
@@ -2738,6 +2770,10 @@ int process_one(boolean visible) {
 
       if (IS_VALID_CLIP(new_blend_file)) {
         mainw->blend_file = new_blend_file;
+
+        if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND))
+          ce_thumbs_highlight_current_clip();
+
       } else mainw->new_blend_file = new_blend_file = mainw->blend_file = -1;
 
       old_current_file = mainw->current_file;
@@ -2761,9 +2797,7 @@ int process_one(boolean visible) {
     fg_stack_wait();
     lives_microsleep_while_true(mainw->do_ctx_update);
 
-    /////
     mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-    ///
 
     //xtime = lives_get_session_time();
     build_nodemodel(&mainw->nodemodel);
@@ -2816,8 +2850,10 @@ int process_one(boolean visible) {
       mainw->do_ctx_update = TRUE;
     }
 
-    if (mainw->cancelled == CANCEL_NONE) return 0;
-
+    if (mainw->cancelled == CANCEL_NONE) {
+      g_print("ret A5\n");
+      return 0;
+    }
     retval = mainw->cancelled;
     goto err_end;
   }
@@ -2848,7 +2884,7 @@ int process_one(boolean visible) {
 
   if (mainw->scratch != SCRATCH_NONE && time_source == LIVES_TIME_SOURCE_EXTERNAL) {
     sfile->frameno = sfile->last_frameno = calc_frame_from_time(mainw->playing_file,
-								mainw->currticks / TICKS_PER_SECOND_DBL);
+                                           mainw->currticks / TICKS_PER_SECOND_DBL);
     mainw->startticks = mainw->currticks;
     mainw->force_show = TRUE;
     fixed_frame = sfile->frameno;
@@ -2902,7 +2938,7 @@ int process_one(boolean visible) {
       if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
           || mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
         sfile->fps_scale = KEY_RPT_INTERVAL * prefs->scratchback_amount
-	  * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
+                           * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
         if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
           sfile->fps_scale = -sfile->fps_scale;
         }
@@ -2930,8 +2966,8 @@ int process_one(boolean visible) {
                      (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
 #endif
       requested_frame = xrequested_frame
-	= calc_new_playback_position(mainw->playing_file, mainw->startticks,
-				     &new_ticks);
+                        = calc_new_playback_position(mainw->playing_file, mainw->startticks,
+                            &new_ticks);
 
 #ifdef DEBUG_FRAME_TIMNING
       lives_printerr("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead);
@@ -2986,7 +3022,7 @@ int process_one(boolean visible) {
     // for realtime players, we did this in calc_new_playback_position()
     if (!is_realtime_aplayer(prefs->audio_player)) {
       if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
-								 sfile->laudio_time * sfile->fps)))) {
+                                              sfile->laudio_time * sfile->fps)))) {
         mainw->firstticks = mainw->clock_ticks;
       }
     }
@@ -3064,6 +3100,7 @@ int process_one(boolean visible) {
           retval = mainw->cancelled;
           goto err_end;
         }
+        g_print("ret A4\n");
         return 0;
       }
 
@@ -3102,7 +3139,7 @@ int process_one(boolean visible) {
 #endif
     }
 
-  update_effort:
+update_effort:
     if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
       // get the time for the last plan cycle, compare againsr current pb_fps
       // - but only if equal to the actual fps.
@@ -3173,7 +3210,7 @@ int process_one(boolean visible) {
         // but any large jumps must be done by pre-caching the frame (if predictive caching is enabled)
         // also, if the transient CPU load is above threshold then we will skip showing the frame until the
         // CPU is less over stretched
-      play_frame:
+play_frame:
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
         if (1) {
           boolean can_realign = FALSE;
@@ -3267,7 +3304,7 @@ int process_one(boolean visible) {
 #ifdef ENABLE_PRECACHE
               || (mainw->pred_frame && is_layer_ready(mainw->frame_layer_preload) == LIVES_RESULT_SUCCESS)
 #endif
-	      ) {
+             ) {
             weed_layer_t *frame_layer;
 
             // play a frame - on entry, sfile->frameno is the target frame we decided to play
@@ -3302,13 +3339,16 @@ int process_one(boolean visible) {
             if ((mainw->frame_layer_preload && !weed_layer_check_valid(mainw->frame_layer_preload))
                 || (!mainw->frame_layer_preload && mainw->pred_frame)) cleanup_preload = TRUE;
 
-            if (check_getahead) {
-              if (scratch == SCRATCH_NONE) {
-                // this is for predictive caching - if the predicted frame has just loaded,
-                // then we can re-calibrate based on the requested frame
-                recalc_bungle_frames = sfile->frameno;
+            if (mainw->pred_frame < 0) {
+              if (check_getahead) {
+                if (scratch == SCRATCH_NONE) {
+                  // this is for predictive caching - if the predicted frame has just loaded,
+                  // then we can re-calibrate based on the requested frame
+                  recalc_bungle_frames = -mainw->pred_frame;
+                }
+                check_getahead = FALSE;
               }
-              check_getahead = FALSE;
+              if (mainw->frame_layer_preload) mainw->pred_frame = - mainw->pred_frame;
             }
 
             if (frame_layer) {
@@ -3348,7 +3388,7 @@ int process_one(boolean visible) {
         int numframes, nev;
         int bg_file = (IS_VALID_CLIP(mainw->blend_file)
                        && (prefs->tr_self || (mainw->blend_file != mainw->playing_file)))
-	  ? mainw->blend_file : -1;
+                      ? mainw->blend_file : -1;
         if ((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
             (mainw->vpp->capabilities & VPP_CAN_RETURN)) {
           rec_after_pb = TRUE;
@@ -3385,7 +3425,7 @@ int process_one(boolean visible) {
           int fg_file = mainw->playing_file;
           frames_t fg_frame = mainw->record_frame;
           frames_t bg_frame = (bg_file > 0 && (prefs->tr_self || (bg_file != mainw->playing_file)))
-	    ? mainw->files[bg_file]->frameno : 0;
+                              ? mainw->files[bg_file]->frameno : 0;
 
 #define REC_IDEAL
 #ifdef REC_IDEAL
@@ -3445,9 +3485,9 @@ int process_one(boolean visible) {
                   if (AUD_SRC_INTERNAL || (mainw->rec_aclip == mainw->ascrap_file)) {
                     if (mainw->rec_aclip == mainw->ascrap_file) {
                       mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-			(double)(mainw->files[mainw->ascrap_file]->arps
-				 * mainw->files[mainw->ascrap_file]->achans *
-				 mainw->files[mainw->ascrap_file]->asampsize >> 3);
+                                         (double)(mainw->files[mainw->ascrap_file]->arps
+                                                  * mainw->files[mainw->ascrap_file]->achans *
+                                                  mainw->files[mainw->ascrap_file]->asampsize >> 3);
                       mainw->rec_avel = 1.;
                     } else {
                       if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) {
@@ -3458,8 +3498,8 @@ int process_one(boolean visible) {
                         }
                       }
                       IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd);)
-			IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
-			}
+                      IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
+                    }
                     insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
 		    // *INDENT-OFF*
 		  }}}}}
@@ -3498,7 +3538,6 @@ int process_one(boolean visible) {
         }
       }
 
-
       // PRE-CACHING //////
 
       best_frame = -1;
@@ -3519,7 +3558,7 @@ int process_one(boolean visible) {
       if (scratch == SCRATCH_NONE && IS_PHYSICAL_CLIP(mainw->playing_file)) {
         // check lat prediction v. reality. The error delta is encoded in bungle frames which we adjust post actively
         if (recalc_bungle_frames) {
-          delta = (requested_frame - test_getahead);
+          delta = (requested_frame - recalc_bungle_frames);
           recalc_bungle_frames = 0;
 
           if (1 || prefs->dev_show_caching) {
@@ -3690,7 +3729,7 @@ int process_one(boolean visible) {
 
               /////////////// PRELOAD ////////////
               // g_print("pred frame %ld\n", mainw->pred_frame);
-              //pull_frame_threaded(mainw->frame_layer_preload, 0, 0);
+              pull_frame_threaded(mainw->frame_layer_preload, 0, 0);
               //////////////////////////////////////////////////
 
               if (mainw->pred_clip != -1) {
@@ -3720,7 +3759,7 @@ int process_one(boolean visible) {
 
     cancelled = THREADVAR(cancelled) = mainw->cancelled;
 
-  proc_dialog:
+proc_dialog:
     if (visible) {
       proc_file = THREADVAR(proc_file) = mainw->current_file;
       sfile = mainw->files[proc_file];
@@ -3743,8 +3782,10 @@ int process_one(boolean visible) {
     cancelled = THREADVAR(cancelled) = mainw->cancelled;
 
     if (LIVES_LIKELY(cancelled == CANCEL_NONE)) {
-      if (proc_file != mainw->current_file) return 0;
-      else {
+      if (proc_file != mainw->current_file) {
+        g_print("ret A2\n");
+        return 0;
+      } else {
         lives_rfx_t *xrfx;
         // final section, then player_loop
         // VISUAL UPDATES
@@ -3826,7 +3867,7 @@ int process_one(boolean visible) {
 
   retval = MILLIONS(2) + mainw->cancelled;
 
- err_end:
+err_end:
   /* if (retval) { */
   /*   if (gui_lpt) { */
   /*     lives_proc_thread_request_cancel(gui_lpt, FALSE); */
@@ -3835,6 +3876,7 @@ int process_one(boolean visible) {
   /*     gui_lpt = NULL; */
   /*   } */
   /* } */
+  g_print("ret A\n");
   return retval;
 }
 

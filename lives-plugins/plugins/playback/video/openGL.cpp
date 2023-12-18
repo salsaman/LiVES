@@ -237,7 +237,7 @@ static int get_texture_texID(int tnum) {
 
 const char *module_check_init(void) {
   XInitThreads();
-
+t
   pbo_available = FALSE;
 
   if (GL_ARB_pixel_buffer_object) {
@@ -438,8 +438,10 @@ static void setWindowDecorations(void) {
 
 static void alwaysOnTop() {
   long propvalue = 12;
+  XLockDisplay(dpy);
   XChangeProperty(dpy, xWin, XA_WIN_LAYER, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&propvalue, 1);
   XRaiseWindow(dpy, xWin);
+  XUnlockDisplay(dpy);
 }
 
 
@@ -481,8 +483,10 @@ static void setFullScreen(void) {
     e.xclient.data.l[1] = XA_NET_WM_STATE_FULLSCREEN;
     e.xclient.data.l[3] = 0l;
 
+    XLockDisplay(dpy);
     XSendEvent(dpy, RootWindow(dpy, 0), 0,
                SubstructureNotifyMask | SubstructureRedirectMask, &e);
+    XUnlockDisplay(dpy);
   } else {
     int count = 0;
     Atom atoms[3];
@@ -490,8 +494,10 @@ static void setFullScreen(void) {
     atoms[count++] = XA_NET_WM_STATE_FULLSCREEN;
     atoms[count++] = XA_NET_WM_STATE_MAXIMIZED_VERT;
     atoms[count++] = XA_NET_WM_STATE_MAXIMIZED_HORZ;
+    XLockDisplay(dpy);
     XChangeProperty(dpy, xWin, XA_NET_WM_STATE, XA_ATOM, 32,
                     PropModeReplace, (unsigned char *)atoms, count);
+    XUnlockDisplay(dpy);
   }
 
   changes.x = 0;
@@ -501,9 +507,11 @@ static void setFullScreen(void) {
   changes.stack_mode = Above;
   valueMask |= CWStackMode;
 
+  XLockDisplay(dpy);
   XMapRaised(dpy, xWin);
   XConfigureWindow(dpy, xWin, valueMask, &changes);
-  XResizeWindow(dpy, xWin, m_WidthFS, m_HeightFS);
+  XResizeWindow(dpy, xWin, m_WidthFS, m_HeightFS)
+  XUnlockDisplay(dpy);
 
   alwaysOnTop();
 }
@@ -822,7 +830,6 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     /* Create an X colormap and window with a visual matching the first
     ** returned framebuffer config */
-    XLockDisplay(dpy);
     vInfo = glXGetVisualFromFBConfig(dpy, fbConfigs[0]);
 
     if (!vInfo) {

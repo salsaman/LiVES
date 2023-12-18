@@ -1054,6 +1054,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
           if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
             record_filter_init(key);
           }
+	  mainw->rte_real |= new_rte;
 	  refresh_model = FALSE;
 	}
         weed_instance_unref(inst);
@@ -1117,6 +1118,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
+            mainw->rte_real &= ~new_rte;
           }
           weed_instance_unref(inst);
         }
@@ -1146,10 +1148,10 @@ static lives_result_t rte_on_off(int key, int on_off) {
     }
   }
 
-  if (mainw->rendered_fx)
+  if (!LIVES_IS_PLAYING) {
+    if (mainw->rendered_fx) {
     // enable /disable menu option "Apply current realtime effects" in rendered fx menu
-    if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
-      if (!LIVES_IS_PLAYING) {
+      if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
 	if (mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
 					|| (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
 					    && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0))
@@ -1157,21 +1159,21 @@ static lives_result_t rte_on_off(int key, int on_off) {
 	else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
       }
     }
-
-  if (key > 0 && !is_auto) {
-    // user override any ACTIVATE data connection
-    // (return key to manual control, disable automatic mode)
-    override_if_active_input(key);
-
-    // if this is an outlet for ACTIVATE, disable the override now
-    // (re enable automatic mode)
-    end_override_if_activate_output(key);
   }
-
-  if (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused)
-    mainw->force_show = TRUE;
-
-  if (refresh_model) mainw->refresh_model = TRUE;
+  else {
+    if (key > 0 && !is_auto) {
+      // user override any ACTIVATE data connection
+      // (return key to manual control, disable automatic mode)
+      override_if_active_input(key);
+      // if this is an outlet for ACTIVATE, disable the override now
+      // (re enable automatic mode)
+      end_override_if_activate_output(key);
+      fx_key_defs[key].last_activator = activator_none;
+    }
+    if (CURRENT_CLIP_IS_VALID && cfile->play_paused)
+      mainw->force_show = TRUE;
+    if (refresh_model) mainw->refresh_model = TRUE;
+  }
 
   return res;
 }
@@ -1180,7 +1182,8 @@ static lives_result_t rte_on_off(int key, int on_off) {
 ////////// keys //////////////////
 
 void rte_keys_update(void) {
-  // during  we do not
+  // during playback we do not react immediately to fx key presses
+  // instead we defer updates until the designated 'safe point'
   uint64_t real_rte = mainw->rte_real;
   if (mainw->rte && !real_rte)
     rte_on_off(0, LIVES_OFF);
@@ -1200,7 +1203,11 @@ void rte_keys_update(void) {
 static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
   uint64_t new_rte;
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
-  if (THREADVAR(fx_is_auto)) fx_key_defs[key].last_activator = activator_pconx;
+  if (!THREADVAR(fx_is_auto))
+    fx_key_defs[key].last_activator = activator_ui;
+  else if (fx_key_defs[key].last_activator == activator_none)
+    fx_key_defs[key].last_activator = activator_pconx;
+
   if (key > 0) {
     new_rte = GU641 << (key - 1);
     mainw->rte_real ^= new_rte;
@@ -1357,10 +1364,6 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * acc, LiVESWidgetObject * o, uint32
 
   mainw->new_blend_file = mainw->playing_file;
   mainw->new_clip = mainw->blend_file;
-
-  /* if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND */
-  /*                          || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND)) */
-  /*   ce_thumbs_highlight_current_clip(); */
 
   return TRUE;
   // **TODO - for weed, invert all transition parameters for any active effects

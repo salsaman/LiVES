@@ -1182,7 +1182,7 @@ void bigblock_init(void) {
     if (bbcachesize > (int64_t)((double)capable->hw.memavail * MEM_THRESH)) {
       bbcachesize = (int64_t)((double)capable->hw.memavail * MEM_THRESH);
     }
-    
+
     if (bbcachesize / bmemsize < MIN_BBLOCKS) {
       char *msg = lives_strdup_printf(_("Insufficient memory for big block allocator, "
                                         "need at least %ld bytes, but only %ld avaialble"), MIN_BBLOCKS * bmemsize,
@@ -1235,9 +1235,12 @@ static int get_bblock_idx(void *bstart, off_t * offs, int *bbafter) {
 }
 
 
-static int _alloc_bigblock(size_t sizeb, int oblock) { 
- int nblocks = 1;
-  int i, j, max;
+static int _alloc_bigblock(size_t sizeb, int oblock) {
+  // use start to cycle thru blocks, this avoids immediately reallocating blocks which were just freed
+  // which facilitates debugging
+  static int start = 0;
+  int nblocks = 1;
+  int i, j, max, count = 0;
   if (sizeb > bmemsize) {
     if (sizeb > (bmemsize >> 1)) {
       if (sizeb > (bmemsize >> 2)) {
@@ -1255,15 +1258,21 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     return oblock;
   }
 
-  if (oblock >= 0) i = max = oblock;
-  else {
-    i = used[0];
+  if (oblock >= 0) {
+    i = oblock;
+    max = 1;
+  } else {
+    count = used[start];
+    i = start + count;
     max = NBBLOCKS - nblocks;
+    start += count + 1;
+    if (start > max) start = used[0];
     //g_print("block 0 used %d blocks\n", used[0]);
   }
 
-  while (i <= max) {
-    for (j = nblocks - 1; j >= 0; j--) {
+  while (count++ <= max) {
+    if (i > max) i = 0;
+    for (j = nblocks; j--;) {
       if (mainw->critical) return -1;
       int u = used[i + j];
       //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
@@ -1287,8 +1296,8 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     used[i] = nblocks;
   }
 
-  g_print("ALLOCBBBB %d nnnn\n", i);
-  
+  //g_print("ALLOCBBBB %d nnnn\n", i);
+
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
 
   if (i <= max) return i;
@@ -1426,7 +1435,7 @@ static void *free_bigblock(void *bstart) {
   tuid[bbidx] = 0;
 #endif
   pthread_mutex_unlock(&bigblock_mutex);
-  g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
+  //g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
   return bstart;
 }
 
@@ -1439,7 +1448,7 @@ LIVES_LOCAL_INLINE boolean is_bigblock(const char *p) {
 }
 
 
-void lives_free_maybe_big(void *p) {
+void _lives_free_maybe_big(void *p) {
   if (is_bigblock(p)) free_bigblock(p);
   else lives_free(p);
 }

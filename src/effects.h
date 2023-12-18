@@ -65,6 +65,7 @@ lives_render_error_t realfx_progress(boolean reset);
 #define	FXKEY_FLAG_SOFT_DEINIT			(1ull << 8)
 
 typedef enum {
+  activator_none,
   activator_ui,
   activator_pconx,
 } activator_type;

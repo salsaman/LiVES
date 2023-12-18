@@ -867,35 +867,102 @@ LIVES_GLOBAL_INLINE lives_closure_t *lives_proc_thread_get_closure(lives_proc_th
 
 
 
+void flush_cb_list(lives_proc_thread_t lpt) {
+  // -For callbacks added to another proc_thread's stack:
+  //   unless the stack descriptor is flagged as PERSISTENT, or unless the callback
+  //   was added with HOOK_CB_PERSISTENT, then the ADDING proc_thread maintains a pointer to
+  //   the each callback added, appending the address to its EXT_CB_LIST. Just before a proc_thread is freed,
+  //   the ext_cb_list will be cleared - each callback will be flagged for removal, and adder set to NULL
+  //
+  //  conversely if the callback closure  is to be freed - for example if it is a oneshot callback,
+  // or when the proc_thread owning the stack is being freed,
+  // we check if there is an 'adder' for the callback.
+  // This information is used to remove the callback from the ext_cb_list of the adder.
+  //
+  // A mutex lock is used to ensure single access to the cb_list
+  // however this creates a race condition - B reads closure and gets adder A
+  // A is freed, B attempts to find cb_list for A
+  //
+  // to prevent this we proceed as follows:
+  // B locks the closure, C
+  // B gets adder A from C
+  // B gets lock on A cb_list
+  // B removes C from A's list
+  // B unlocks A list
+  // B unlocks C
+  // meanwhile...
+  // A locks cb_list
+  // A gets lock on C
+  // A removes adder from C
+  // A unlocks C
+  // .. or
+  // A fails to get lock on C
+  // A must unlock cb_list, allowing B to remove C
+  // A reaquires cb_list lock
+  // A reparses list, starting from beginning
+
+  pthread_mutex_t *extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
+  boolean restart = FALSE;
+  LiVESList *list, *xlist;
+
+  do {
+    restart = FALSE;
+    pthread_mutex_lock(extcb_mutex);
+    xlist = list = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
+    while (list) {
+      LiVESList *listnext = list->next;
+      lives_closure_t *cl = (lives_closure_t *)list->data;
+      if (cl) {
+        if (pthread_mutex_trylock(&cl->mutex)) {
+          weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, xlist);
+          pthread_mutex_unlock(extcb_mutex);
+          restart = TRUE;
+          break;
+        }
+        cl->adder = NULL;
+        cl->flags |= HOOK_STATUS_REMOVE;
+        pthread_mutex_unlock(&cl->mutex);
+      }
+      xlist = lives_list_remove_node(xlist, list, FALSE);
+      list = listnext;
+    }
+  } while (restart);
+  weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
+  pthread_mutex_unlock(extcb_mutex);
+}
+
+
 static void remove_ext_cb_other(lives_proc_thread_t lpt, lives_closure_t *cl) {
   LiVESList *list = (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
   if (list) weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST,
-				   lives_list_remove_data(list, cl, FALSE));
-
+                                     lives_list_remove_data(list, cl, FALSE));
 }
 
 
 static void examine_ext_cb_other(lives_closure_t *cl) {
-  //   to avoid a race where
-  // cl->adder is flushing its list
-  // we work in this order
-  // - the closure mutex is locked - once we have the lock we can check the adder
-  // and flags
-  // if the adder is valid, then we wait to get lock on its ext_cb_mutex
-  // the other thread, failing to get lock on closure, will release the ext_cb_mutex and rescan the list
-  // thus we remove the closute from its list, and unlock the closute
-
   if (cl) {
     lives_proc_thread_t lpt = cl->adder;
     if (lpt) {
       pthread_mutex_t *extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value
-	(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
+                                     (lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
       pthread_mutex_lock(extcb_mutex);
       if (cl->adder == lpt) remove_ext_cb_other(lpt, cl);
       pthread_mutex_unlock(extcb_mutex);
     }
   }
 }
+
+
+static void add_to_cb_list(lives_proc_thread_t self, lives_closure_t *closure) {
+  // when adding a hook cb to another hook stack, keep a pointer to it
+  LiVESList *ext_cbs;
+  pthread_mutex_t *extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_MUTEX, NULL);
+  pthread_mutex_lock(extcb_mutex);
+  ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
+  weed_set_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, lives_list_prepend(ext_cbs, (void *)closure));
+  pthread_mutex_unlock(extcb_mutex);
+}
+
 
 
 LIVES_GLOBAL_INLINE void lives_closure_free(lives_closure_t *closure) {
@@ -943,8 +1010,8 @@ LIVES_GLOBAL_INLINE void lives_hooks_clear(lives_hook_stack_t **hstacks, int typ
       // if stack owner is self, we need to async_join
       GET_PROC_THREAD_SELF(self);
       if (hstack->owner.lpt == self) {
-	if (hstack->flags & STACK_TRIGGERING) PTMUH;
-	lives_hooks_async_join(NULL, type);
+        if (hstack->flags & STACK_TRIGGERING) PTMUH;
+        lives_hooks_async_join(NULL, type);
       }
     }
 
@@ -1018,51 +1085,6 @@ static boolean fn_data_replace(lives_proc_thread_t dst, lives_proc_thread_t src)
     return TRUE;
   }
   return FALSE;
-}
-
-
-static void add_to_cb_list(lives_proc_thread_t self, lives_closure_t *closure) {
-  // when adding a hook cb to another hook stack, keep a pointer to it
-  pthread_mutex_t *extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_MUTEX, NULL);
-  
-LiVESList *ext_cbs = (LiVESList *)weed_get_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, NULL);
-  pthread_mutex_lock(extcb_mutex);
-  weed_set_voidptr_value(self, LIVES_LEAF_EXT_CB_LIST, lives_list_prepend(ext_cbs, (void *)closure));
-  pthread_mutex_unlock(extcb_mutex);
-}
-
-
-
-void flush_cb_list(lives_proc_thread_t lpt) {
-  // need to call this when clearing a hook stack
-  // -- For callbacks added to another proc_thread's stack,
-  //   unless the stack descriptor is flagged as PERSISTENT, or unless the callback
-  //   was added with HOOK_CB_PERSISTENT, then the ADDING proc_thread maintains a pointer to
-  //   the callback, appending the address to its EXT_CB_LIST. Just before a proc_thread is freed,
-  //   the ext_cb_list will be cleared - each callback will be flagged for removal, and adder set to NULL
-  //
-  //  conversely when the proc_thread is freed it will clear its own hook stacks and retrieves the
-  // adders for the callbacks.  This information is used to remove the callback from the ext_cb_list of the adder
-  //
-  // A locking system is used to avoid the situation where  two oe more threads are cleared at around the same time
-  // and thread A is clearing its stacks and tries to remove the reference ftomr B' ext_cb_list coinciding with
-  // thread B attempting flush its own ext_cb list
-  pthread_mutex_t *extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
-  pthread_mutex_lock(extcb_mutex);
-  LiVESList *list =
-    (LiVESList *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
-  while (list) { 
-    lives_closure_t *cl = (lives_closure_t *)list->data;
-    if (cl) {
-      cl->adder = NULL;
-      cl->flags |= HOOK_STATUS_REMOVE;
-    }
-    list = list->next;
-    //list = lives_list_remove_node(list, list, FALSE);
-  }
-  if (list) lives_list_free(list);
-  weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_LIST, NULL);
-  pthread_mutex_unlock(extcb_mutex);
 }
 
 
@@ -1417,7 +1439,7 @@ static lives_proc_thread_t update_linked_stacks(lives_closure_t *cl, uint64_t fl
     }
   }
   pthread_mutex_unlock(&mainw->all_hstacks_mutex);
- return NULL;
+  return NULL;
 }
 
 
@@ -1478,7 +1500,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       req_stack = hstack->req_target_stacks[hstack->req_target_type];
     if (!req_stack) {
       if (type != FATAL_HOOK)
-	PTMUH;
+        PTMUH;
       hmulocked = FALSE;
       goto trigdone;
     }
@@ -1506,10 +1528,10 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     retval = FALSE;
     if (type != FATAL_HOOK)
       if (!hmulocked) {
-	if (hs_op_flags & HOOKSTACK_NOWAIT) {
-	  if (PTMTLH) goto trigdone;
-	} else PTMLH;
-	hmulocked = TRUE;
+        if (hs_op_flags & HOOKSTACK_NOWAIT) {
+          if (PTMTLH) goto trigdone;
+        } else PTMLH;
+        hmulocked = TRUE;
       }
 
     retval = TRUE;
@@ -1594,7 +1616,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if ((closure->flags & HOOK_OPT_REMOVE_ON_FALSE)
           && closure->fdef  && closure->fdef->return_type == WEED_SEED_BOOLEAN) {
         // test should be boolean_combined
-       bret = TRUE; // set in case func is cancelled
+        bret = TRUE; // set in case func is cancelled
         if (!closure->retloc) closure->retloc = &bret;
         //g_print("sync run: %s\n", lives_proc_thread_show_func_call(lpt));
       }
@@ -1603,8 +1625,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       //
       if (!(closure->flags & HOOK_CB_FG_THREAD) || is_fg_thread()) {
         GET_PROC_THREAD_SELF(self);
-	if (type != FATAL_HOOK)
-	  PTMUH;
+        if (type != FATAL_HOOK)
+          PTMUH;
         hmulocked = FALSE;
 
         weed_set_plantptr_value(lpt, LIVES_LEAF_DISPATCHER, self);
@@ -1618,8 +1640,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         /*         lives_proc_thread_count_refs(lpt), cl_flags_desc(closure->flags)); */
         //}
       } else {
-	if (type != FATAL_HOOK)
-	  PTMUH;
+        if (type != FATAL_HOOK)
+          PTMUH;
         hmulocked = FALSE;
         // this function will call fg_service_call directly,
         // block until the lpt completes or is cancelled
@@ -1628,7 +1650,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       }
 
       if (type != FATAL_HOOK)
-	PTMLH;
+        PTMLH;
       hmulocked = TRUE;
 
       if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)
@@ -1667,8 +1689,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
           // UNREF
 
           if (!(closure->flags & HOOK_CB_BLOCK)) lives_proc_thread_unref(lpt);
-	  if (type != FATAL_HOOK) remove_from_hstack(hstack, list);
-	  else closure->flags |= HOOK_CB_IGNORE;
+          if (type != FATAL_HOOK) remove_from_hstack(hstack, list);
+          else closure->flags |= HOOK_CB_IGNORE;
           break;
         }
       }
@@ -1706,7 +1728,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     }
     if (hmulocked) {
       if (type != FATAL_HOOK)
-	PTMUH;
+        PTMUH;
       hmulocked = FALSE;
     }
   } while (list);

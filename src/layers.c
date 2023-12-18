@@ -319,7 +319,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t 
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer, void *pixel_data) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
   return layer;
 }
@@ -336,24 +335,24 @@ boolean lives_layer_has_copylist(lives_layer_t *layer) {
     LIVES_CALLOC_TYPE(int, nvals, nplanes);
     for (i = 0; i < nplanes; i++) {
       if (copylists[i]) {
-	nvals[i] = lives_sync_list_get_nvals(copylists[i]);
-	// exclude 'self'
-	ntot += nvals[i] - 1;
+        nvals[i] = lives_sync_list_get_nvals(copylists[i]);
+        // exclude 'self'
+        ntot += nvals[i] - 1;
       }
     }
     if (ntot && !(ntot & 1)) {
       for (i = 0; i < nplanes; i++) {
-	if (nvals[i]) {
-	  for (j = i + 1; j < nplanes; j++) {
-	    if (copylists[i] == copylists[j]) {
-	      ntot -= 2;
-	      if (!ntot) break;
-	      nvals[i]--;
-	      nvals[j]--;
-	    }
-	  }
-	  if (!ntot) break;
-	}
+        if (nvals[i]) {
+          for (j = i + 1; j < nplanes; j++) {
+            if (copylists[i] == copylists[j]) {
+              ntot -= 2;
+              if (!ntot) break;
+              nvals[i]--;
+              nvals[j]--;
+            }
+          }
+          if (!ntot) break;
+        }
       }
     }
     ////
@@ -366,13 +365,13 @@ boolean lives_layer_has_copylist(lives_layer_t *layer) {
 
 
 void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int plane) {
-  int nplanes; 
+  int nplanes;
   lives_sync_list_t *copylist = NULL, **copylists;
   void **pd = weed_layer_get_pixel_data_planar(src, &nplanes);
   void *spd = NULL, *real = NULL;
 
   if (pd) {
-    copylists = lives_layer_get_copylist_array(src, &nplanes); 
+    copylists = lives_layer_get_copylist_array(src, &nplanes);
     spd = pd[plane];
 
     if (!copylists) copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
@@ -393,9 +392,8 @@ void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int pla
     if (copylists && copylists[plane]) {
       real = lives_sync_list_get_priv(copylists[plane]);
       if (copylists[plane] &&  lives_sync_list_remove(copylists[plane], dest, FALSE))
-	real = NULL;
-    }
-    else if (pd) real = pd[plane];
+        real = NULL;
+    } else if (pd) real = pd[plane];
   }
 
   ///////////
@@ -407,8 +405,7 @@ void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int pla
 
   if (!copylist) {
     pd[plane] = NULL;
-  }
-  else {
+  } else {
     pd[plane] = spd;
     copylists[plane] = copylist;
     weed_set_voidptr_array(dest, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
@@ -427,21 +424,19 @@ void lives_layer_check_remove_copylists(lives_layer_t *layer) {
     lives_sync_list_t **copylists = lives_layer_get_copylist_array(layer, NULL);
     if (copylists) {
       for (int i = nplanes; i--;) {
-	real = NULL; 
-	if (copylists && copylists[i]) {
-	  real = lives_sync_list_get_priv(copylists[i]);
-	  //g_print("check clist for %d\n", i);
-	  if ((copylists[i] = lives_sync_list_remove(copylists[i], layer, FALSE))) continue;
-	  //g_print("now empty clist for %d\n", i);
-	}
-	else real = pd[i];
-	//g_print("free clist for %d %p\n", i, real);
-	if (real) lives_free_maybe_big(real);
+        real = NULL;
+        if (copylists && copylists[i]) {
+          real = lives_sync_list_get_priv(copylists[i]);
+          //g_print("check clist for %d\n", i);
+          if ((copylists[i] = lives_sync_list_remove(copylists[i], layer, FALSE))) continue;
+          //g_print("now empty clist for %d\n", i);
+        } else real = pd[i];
+        //g_print("free clist for %d %p\n", i, real);
+        if (real) lives_free_maybe_big(real);
       }
       weed_leaf_delete(layer, LIVES_LEAF_COPYLIST);
       lives_free(copylists);
-    }
-    else for (int i = nplanes; i--;) if (pd[i]) lives_free_maybe_big(pd[i]);
+    } else for (int i = nplanes; i--;) if (pd[i]) lives_free_maybe_big(pd[i]);
     lives_free(pd);
   }
 }
@@ -559,28 +554,27 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
   if (!inc_rs) {
     rs_hint = THREADVAR(rowstride_alignment_hint);
     THREADVAR(rowstride_alignment_hint) = -1;
-  }
-  else {
+  } else {
     if (!(weed_leaf_get_flags(dst_layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE)
-	|| !weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
+        || !weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
       if (!(weed_leaf_get_flags(dst_layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE)) {
-	if (weed_leaf_get_flags(src_layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE)
-	  weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
+        if (weed_leaf_get_flags(src_layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE)
+          weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
       }
       if (!weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
-	rem_new_rs = TRUE;
-	lives_leaf_dup(dst_layer, src_layer, LIVES_LEAF_NEW_ROWSTRIDES);
-	if (!weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
-	  weed_set_int_array(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES, nplanes, rowstrides);
-	  weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);    
-	}
+        rem_new_rs = TRUE;
+        lives_leaf_dup(dst_layer, src_layer, LIVES_LEAF_NEW_ROWSTRIDES);
+        if (!weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
+          weed_set_int_array(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES, nplanes, rowstrides);
+          weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
+        }
       }
     }
   }
   // will free / nullify pixel_data for layer
   if (!create_empty_pixel_data(dst_layer, FALSE, TRUE)) {
     if (!inc_rs) THREADVAR(rowstride_alignment_hint) = rs_hint;
-    else if (rem_new_rs) weed_leaf_delete(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES); 
+    else if (rem_new_rs) weed_leaf_delete(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES);
     weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags);
     return LIVES_RESULT_FAIL;
   }
@@ -788,11 +782,11 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
     pd = (uint8_t **)weed_layer_get_pixel_data_planar(slayer, &nplanes);
 
     if (!copylists) copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
-    
+
     for (int i = 0; i < nplanes; i++) {
       if (!copylists[i]) {
-	copylists[i] = lives_sync_list_push(NULL, (void *)slayer);
-	lives_sync_list_set_priv(copylists[i], pd[i]);
+        copylists[i] = lives_sync_list_push(NULL, (void *)slayer);
+        lives_sync_list_set_priv(copylists[i], pd[i]);
       }
       pd[i] += irows[i] * off_y;
       lives_sync_list_push(copylists[i], (void *)dlayer);
@@ -856,17 +850,17 @@ LIVES_GLOBAL_INLINE lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed
     pd = (uint8_t **)weed_layer_get_pixel_data_planar(src, &nplanes);
 
     if (!copylists) copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
-    
+
     for (int i = 0; i < nplanes; i++) {
       if (!copylists[i]) {
-	copylists[i] = lives_sync_list_push(NULL, (void *)src);
-	lives_sync_list_set_priv(copylists[i], pd[i]);
+        copylists[i] = lives_sync_list_push(NULL, (void *)src);
+        lives_sync_list_set_priv(copylists[i], pd[i]);
       }
       lives_sync_list_push(copylists[i], (void *)dst);
     }
     weed_set_voidptr_array(src, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
 
-    weed_layer_set_pixel_data_planar(dst, (void **)pd, nplanes);
+    //weed_layer_set_pixel_data_planar(dst, (void **)pd, nplanes);
 
     // not part of the standard metadata set
     lives_leaf_dup(dst, src, LIVES_LEAF_COPYLIST);
@@ -1095,7 +1089,7 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 }
 #endif
 int refs = weed_refcount_dec(layer);
- LIVES_ASSERT(refs >= 0);
+LIVES_ASSERT(refs >= 0);
 if (layer == mainw->debug_ptr) {
   BREAK_ME("unref dbg");
   g_print("nrefs is %d\n", refs);
@@ -1173,7 +1167,7 @@ LIVES_GLOBAL_INLINE int weed_layer_get_width(weed_layer_t *layer)
 
 int weed_layer_get_width_bytes(weed_layer_t *layer) {
   return layer ? weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL)
-    * pixel_size(weed_layer_get_palette(layer)) : -1;
+         * pixel_size(weed_layer_get_palette(layer)) : -1;
 }
 
 
@@ -1184,14 +1178,14 @@ int weed_layer_get_plane_size(weed_layer_t *layer, int nplane, boolean inc_rs) {
       int xplanes;
       int *rs = weed_layer_get_rowstrides(layer, &xplanes);
       if (rs && xplanes > 0 && xplanes < WEED_MAXPPLANES
-	  && nplane < xplanes) {
-	int width = inc_rs ? weed_layer_get_width(layer)
-	  * pixel_size(weed_layer_get_palette(layer))
-	  * weed_palette_get_plane_ratio_horizontal(pal, nplane)
-	  : rs[nplane];
-	int height = weed_layer_get_height(layer)
-	  * weed_palette_get_plane_ratio_vertical(pal, nplane);
-	return width * height;
+          && nplane < xplanes) {
+        int width = inc_rs ? weed_layer_get_width(layer)
+                    * pixel_size(weed_layer_get_palette(layer))
+                    * weed_palette_get_plane_ratio_horizontal(pal, nplane)
+                    : rs[nplane];
+        int height = weed_layer_get_height(layer)
+                     * weed_palette_get_plane_ratio_vertical(pal, nplane);
+        return width * height;
       }
     }
   }

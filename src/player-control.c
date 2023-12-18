@@ -31,6 +31,7 @@ static boolean _start_playback(int play_type) {
   // 8 playall from menu
   int new_file, old_file;
   boolean flag = FALSE;
+  GET_PROC_THREAD_SELF(self);
 
   if (play_type != 6) {
     mainw->pre_play_file = mainw->current_file;
@@ -38,6 +39,8 @@ static boolean _start_playback(int play_type) {
 
   if (play_type != 8 && mainw->noswitch) return TRUE;
   player_desensitize();
+
+  mainw->player_proc = self;
 
   switch (play_type) {
   case 8: case 6: case 0:
@@ -156,17 +159,18 @@ lives_proc_thread_t start_playback_async(int type) {
   lives_hook_stack_t **lpt_hooks;
   lives_thread_attr_t attrs = LIVES_THRDATTR_PRIORITY;
   if (mainw->player_proc || !mainw->can_play) return NULL;
+
   GET_PROC_THREAD_SELF(self);
-  if (type == 6) attrs |= LIVES_THRDATTR_START_UNQUEUED;
-  mainw->player_proc = lpt = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
+  attrs |= LIVES_THRDATTR_START_UNQUEUED;
+  lpt = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
-  if (type == 6) {
-    lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, 0, queue_other_lpt,
-                               mainw->player_proc);
-  }
-  return mainw->player_proc;
+  if (type == 6 && THREADVAR(accel_group)) {
+    lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, HOOK_OPT_ONESHOT,
+                               queue_other_lpt, lpt);
+  } else lives_proc_thread_queue(lpt, 0);
+  return lpt;
 }
 
 
@@ -551,36 +555,37 @@ static boolean reset_timebase(void) {
 
   if (prefs->audio_src == AUDIO_SRC_INT) {
     IF_APLAYER_PULSE
-      (if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
-	 pa_reset = FALSE;})
+    (if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
+    pa_reset = FALSE;
+  })
 
-      IF_APLAYER_JACK(jack_time_reset(mainw->jackd, 0);)
-      } else {
+    IF_APLAYER_JACK(jack_time_reset(mainw->jackd, 0);)
+  } else {
     IF_AREADER_PULSE
-      (pulse_driver_uncork(mainw->pulsed_read);
-       if (!pa_time_reset(mainw->pulsed_read, 0)) {
-	 pa_reset = FALSE;
-       })
-      }
+    (pulse_driver_uncork(mainw->pulsed_read);
+    if (!pa_time_reset(mainw->pulsed_read, 0)) {
+    pa_reset = FALSE;
+  })
+  }
 
   if (!pa_reset) {
-      handle_audio_timeout();
-      return FALSE;
-    }
-    if (mainw->event_list) {
-      mainw->pulsed->in_use = TRUE;
-    }
+    handle_audio_timeout();
+    return FALSE;
+  }
+  if (mainw->event_list) {
+    mainw->pulsed->in_use = TRUE;
+  }
 
 
 #ifdef ENABLE_JACK
-    if (mainw->jackd_read) {
-      jack_time_reset(mainw->jackd_read, 0);
-    }
-    if (mainw->jackd && mainw->event_list)
-      mainw->jackd->in_use = TRUE;
+  if (mainw->jackd_read) {
+    jack_time_reset(mainw->jackd_read, 0);
+  }
+  if (mainw->jackd && mainw->event_list)
+    mainw->jackd->in_use = TRUE;
 #endif
 
-    reset_playback_clock(mainw->origticks);
+  reset_playback_clock(mainw->origticks);
   return TRUE;
 }
 
@@ -1298,6 +1303,8 @@ void play_file(void) {
     mainw->cancelled = cancelled;
   }
 
+  mainw->noswitch = FALSE;
+
   if (mainw->foreign) {
     // recording from external window capture
     mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
@@ -1361,8 +1368,6 @@ void play_file(void) {
     mainw->files[i]->adirection = LIVES_DIRECTION_FORWARD;
     cliplist = cliplist->next;
   }
-
-  mainw->noswitch = FALSE;
 
   // join any threads created for this
   if (mainw->scrap_file > -1) flush_scrap_file();

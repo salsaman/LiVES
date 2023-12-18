@@ -115,6 +115,7 @@ boolean expose_sim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1) && (!mainw->ext_playback ||
                                             (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
   lives_painter_set_source_surface(cr, mainw->si_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
@@ -125,6 +126,7 @@ boolean expose_eim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1)  && (!mainw->ext_playback ||
                                             (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  load_end_image(CURRENT_CLIP_IS_VALID ? cfile->end : 0);
   lives_painter_set_source_surface(cr, mainw->ei_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
@@ -4279,7 +4281,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 
 static void _resize_play_window(void) {
   int opwx, opwy,
-    pmonitor = prefs->play_monitor;
+      pmonitor = prefs->play_monitor;
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
 
@@ -4549,9 +4551,9 @@ static void _resize_play_window(void) {
         /*   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
         /* } */
       } else {
-	if (mainw->vpp->init_screen) {
-	  LIVES_ERROR("Failed to start playback plugin");
-	}
+        if (mainw->vpp->init_screen) {
+          LIVES_ERROR("Failed to start playback plugin");
+        }
       }
       if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
                              prefs->play_monitor != 0 &&

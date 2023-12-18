@@ -2486,7 +2486,7 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   astat = lives_aplayer_get_status(mainw->aplayer);
 
   IF_APLAYER_JACK
-    (if (!activate) mainw->jackd->in_use = FALSE;
+  (if (!activate) mainw->jackd->in_use = FALSE;
 
   if (new_file != aplay_file) {
     if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
@@ -2510,19 +2510,19 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       }
     }
 
-   if (!IS_VALID_CLIP(new_file)) {
-     mainw->jackd->in_use = FALSE;
-     return FALSE;
-  }
+  if (!IS_VALID_CLIP(new_file)) {
+  mainw->jackd->in_use = FALSE;
+  return FALSE;
+}
 
-   if (new_file == aplay_file) return TRUE;
+if (new_file == aplay_file) return TRUE;
 
-   if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-     // tell jack server to open audio file and start playing it
-     
-     jack_message.command = ASERVER_CMD_FILE_OPEN;
+  if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+    // tell jack server to open audio file and start playing it
 
-     jack_message.data = lives_strdup_printf("%d", new_file);
+    jack_message.command = ASERVER_CMD_FILE_OPEN;
+
+    jack_message.data = lives_strdup_printf("%d", new_file);
 
       jack_message2.command = ASERVER_CMD_FILE_SEEK;
 
@@ -2605,15 +2605,15 @@ boolean switch_audio_clip(int new_file, boolean activate) {
         mainw->pulsed->msgq = &pulse_message;
         mainw->pulsed->is_paused = sfile->play_paused;
 
-	if (mainw->pulsed->is_paused) astat |= APLAYER_STATUS_PAUSED;
-	else astat &= ~APLAYER_STATUS_PAUSED;
+        if (mainw->pulsed->is_paused) astat |= APLAYER_STATUS_PAUSED;
+        else astat &= ~APLAYER_STATUS_PAUSED;
         //pa_time_reset(mainw->pulsed, 0);
       } else {
         mainw->video_seek_ready = TRUE;
         video_sync_ready();
       }
-  })
-    lives_aplayer_set_status(mainw->aplayer, astat);
+    })
+  lives_aplayer_set_status(mainw->aplayer, astat);
 
 #if 0
   if (prefs->audio_player == AUD_PLAYER_NONE) {
@@ -2937,7 +2937,6 @@ static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile, int track, int pu
   pthread_mutex_init(&srcgrp->src_mutex, NULL);
   pthread_mutex_init(&srcgrp->refcnt_mutex, NULL);
   srcgrp->refcnt = 1;
-  g_print("nsrcgrps is %d\n", ngrps);
   sfile->src_groups = lives_recalloc(sfile->src_groups, ngrps + 1,
                                      ngrps, sizeof(lives_clipsrc_group_t *));
   sfile->src_groups[ngrps] = srcgrp;
@@ -2972,7 +2971,6 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
 
   pthread_mutex_lock(&srcgrp->src_mutex);
   nsrcs = srcgrp->n_srcs;
-  g_print("NSRCs is %d\n", nsrcs);
   srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs + 1, nsrcs, sizeof(lives_clip_src_t *));
   lives_memmove(srcgrp->srcs + 1, srcgrp->srcs, nsrcs * sizeof(lives_clip_src_t *));
   srcgrp->srcs[0] = mysrc;
@@ -3026,7 +3024,7 @@ static lives_clip_src_t *_get_clip_src(lives_clipsrc_group_t *srcgrp, uint64_t a
   // src_type can be undefined or defined
   // ext_URI can be NULL or a string
   // chksum may be NULL or a pointer to an indentifier
-  
+
   if (srcgrp) {
     int nsrcs = srcgrp->n_srcs;
     for (int i = 0; i < nsrcs; i++) {
@@ -3052,15 +3050,15 @@ void update_in_all_srcgrps(int clip, lives_clip_src_t *mysrc) {
       int nsrcgrps = sfile->n_src_groups;
       for (int i = 0; i < nsrcgrps; i++) {
         lives_clipsrc_group_t *srcgrp = sfile->src_groups[i];
-	int nsrcs = srcgrp->n_srcs;
-	for (int j = 0; j < nsrcs; j++) {
-	  lives_clip_src_t *src = srcgrp->srcs[j];
-	  if (src == mysrc) continue;
-	  if (src->src_type == mysrc->src_type
-	      && src->class_uid == mysrc->class_uid
-	      && src->actor_uid == mysrc->actor_uid) {
-	    src->gamma_type = mysrc->gamma_type;
-	  }
+        int nsrcs = srcgrp->n_srcs;
+        for (int j = 0; j < nsrcs; j++) {
+          lives_clip_src_t *src = srcgrp->srcs[j];
+          if (src == mysrc) continue;
+          if (src->src_type == mysrc->src_type
+              && src->class_uid == mysrc->class_uid
+              && src->actor_uid == mysrc->actor_uid) {
+            src->gamma_type = mysrc->gamma_type;
+          }
 	  // *INDENT-OFF*
 	}}
       pthread_mutex_unlock(&sfile->srcgrp_mutex);
@@ -3495,7 +3493,7 @@ void remove_primary_src(int nclip, int src_type) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
     for (int i = 0; i < sfile->n_src_groups; i++) {
       lives_clipsrc_group_t *srcgrp = sfile->src_groups[i];
-      lives_clip_src_t *mysrc = get_clip_src(srcgrp,nclip,  0, src_type, NULL, NULL);
+      lives_clip_src_t *mysrc = get_clip_src(srcgrp, nclip,  0, src_type, NULL, NULL);
       if (mysrc) clip_src_free(nclip, srcgrp, mysrc);
     }
     pthread_mutex_unlock(&sfile->srcgrp_mutex);

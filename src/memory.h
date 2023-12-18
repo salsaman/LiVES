@@ -300,18 +300,15 @@ else
 #define calloc_bigblock(s) _calloc_bigblock(s)
 #endif
 
-void bbsummary(void);
+  void bbsummary(void);
 
 void *realloc_bigblock(void *, size_t s);
 
-void _lives_free_maybe_big(void *);
-
-
 #if MEM_USE_BIGBLOCKS
 void _lives_free_maybe_big(void *);
+#define lives_free_maybe_big(p) _DW0(_lives_free_maybe_big(p);)
 #else
-#define lives_free_maybe_big(p) _lives_free_maybe_big(p)
-
+#define lives_free_maybe_big(p) _DW0(lives_free(p);)
 #endif
 
 void *lives_malloc_medium(size_t msize);
@@ -397,6 +394,22 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #endif
 #endif
 
+#define NULLIFY_COPY(v,p) _DW0((v)=(p);if((v))(p)=0;)
+
+#define SAFE_ADDROF(p)((void**)(p?&p:0))
+#define SAFE_DEREF(pp)(pp?*pp:pp)
+
+#define STEAL_POINTER(p) (lives_steal_pointer(SAFE_ADDROF(p)))
+
+#define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
+#define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))
+
+void speedy_free(void *ptr);
+void *speedy_calloc(size_t nm, size_t xsize);
+void *speedy_malloc(size_t xsize);
+
+void do_test(void);
+
 #endif // HAVE_MEMFUNC
 
 #else // FINALISE_MEMFUNCS
@@ -439,22 +452,6 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #ifndef _lives_memmove
 #define _lives_memmove default_memmove
 #endif
-
-#define NULLIFY_COPY(v,p) _DW0((v)=(p);if((v))(p)=0;)
-
-#define SAFE_ADDROF(p)((void**)(p?&p:0))
-#define SAFE_DEREF(pp)(pp?*pp:pp)
-
-#define STEAL_POINTER(p) (lives_steal_pointer(SAFE_ADDROF(p)))
-
-#define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
-#define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))
-
-void speedy_free(void *ptr);
-void *speedy_calloc(size_t nm, size_t xsize);
-void *speedy_malloc(size_t xsize);
-
-void do_test(void);
 
 /* static pthread_mutex_t weak_mutex = PTHREAD_MUTEX_INITIALIZER; */
 /* static LiVESList *WEAK_LIST = NULL; */

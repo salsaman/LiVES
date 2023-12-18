@@ -56,8 +56,8 @@ void print_diagnostics(uint64_t types) {
       onsc = nsc;
       lives_alarm_set_timeout(MILLIONS(100));
       while (!lives_alarm_triggered()) {
-	nsc = mainw->n_service_calls;
-	if (nsc != onsc) fprintf(stderr, ".");
+        nsc = mainw->n_service_calls;
+        if (nsc != onsc) fprintf(stderr, ".");
       }
       fprintf(stderr, "%lu calls in 0.1 sec\n", nsc - onsc);
     }
@@ -66,11 +66,11 @@ void print_diagnostics(uint64_t types) {
     tmp = get_memstats();
     fprintf(stderr, "\n\nMEMORY\n");
     if (get_memstatus()) {
-    fprintf(stderr, "Mem total %s, free %s, available %s, locked %s\n",
-	    lives_format_memory_size_string(capable->hw.memtotal),
-	    lives_format_memory_size_string(capable->hw.memfree),
-	    lives_format_memory_size_string(capable->hw.memavail),
-	    lives_format_memory_size_string(capable->hw.memlocked));
+      fprintf(stderr, "Mem total %s, free %s, available %s, locked %s\n",
+              lives_format_memory_size_string(capable->hw.memtotal),
+              lives_format_memory_size_string(capable->hw.memfree),
+              lives_format_memory_size_string(capable->hw.memavail),
+              lives_format_memory_size_string(capable->hw.memlocked));
     }
     fprintf(stderr, "%s\n", tmp);
     lives_free(tmp);

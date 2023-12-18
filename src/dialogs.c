@@ -112,7 +112,7 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
   lives_dialog_make_widget_first(LIVES_DIALOG(dialog), button);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
+                            LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
 }
 
 
@@ -126,9 +126,9 @@ static void add_clear_ds_adv(LiVESDialog *dialog, LiVESBox *box) {
   /* lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 2); */
   /* lives_box_pack_start(box, hbox, FALSE, FALSE, widget_opts.packing_height); */
   /* add_fill_to_box(LIVES_BOX(box)); */
-  
+
   lives_dialog_add_action_widget(dialog, button, LIVES_RESPONSE_SHOW_DETAILS);
-  
+
   /* lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL, */
   /*                           LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked), NULL); */
 }
@@ -3010,7 +3010,7 @@ boolean do_jack_no_startup_warn(boolean is_trans) {
   if (!is_trans && !chkname) msg = lives_strdup_printf(_("%s"
                                      "Please ensure that %s is set up correctly on your machine\n"
                                      "and also that the soundcard is not being blocked by another program, "
-                                    "or another instance of jackd.\n\n"
+                                     "or another instance of jackd.\n\n"
                                      "Also make sure that LiVES is not trying to start up\n"
                                      "a server which is already running.\n\n"
                                      "%s%s"), msg1, (tmp3 = is_trans

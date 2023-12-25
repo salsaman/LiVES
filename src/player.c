@@ -852,8 +852,8 @@ skip_precache:
     }}}
   // *INDENT-ON*
 
-  if (!mainw->layers) return LIVES_RESULT_ERROR;
-  return LIVES_RESULT_SUCCESS;
+if (!mainw->layers) return LIVES_RESULT_ERROR;
+return LIVES_RESULT_SUCCESS;
 }
 
 

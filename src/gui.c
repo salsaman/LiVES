@@ -112,12 +112,9 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win
-                                        || ((widget_opts.monitor == prefs->play_monitor ||
-                                            capable->nmonitors == 1) && (!mainw->ext_playback ||
-                                                (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
-  if (!GET_INT_DATA(widget, DEFER_KEY))
-    load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
+                                        capable->nmonitors == 1) && (!mainw->ext_playback ||
+                                            (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   lives_painter_set_source_surface(cr, mainw->si_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
@@ -125,13 +122,9 @@ boolean expose_sim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_
 
 boolean expose_eim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win
-                                        || ((widget_opts.monitor == prefs->play_monitor + 1 ||
-                                            capable->nmonitors == 1)  && (!mainw->ext_playback ||
-                                                (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
-
-  if (!GET_INT_DATA(widget, DEFER_KEY))
-    load_end_image(CURRENT_CLIP_IS_VALID ? cfile->end : 0);
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
+                                        capable->nmonitors == 1)  && (!mainw->ext_playback ||
+                                            (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   lives_painter_set_source_surface(cr, mainw->ei_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
@@ -650,32 +643,14 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->open, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_o, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
-
-  menuitem = lives_standard_menu_item_new_with_label(_("_Add Webcam/TV card..."));
-  mainw->unicap = lives_standard_menu_item_new_with_label(_("Add Webcam"));
-  mainw->firewire = lives_standard_menu_item_new_with_label(_("Add Live _Firewire Device"));
-  mainw->tvdev = lives_standard_menu_item_new_with_label(_("Add _TV Device"));
-
-#if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), menuitem);
-
-  submenu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
-
-#ifdef HAVE_UNICAP
-  lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
-#endif
-
-  mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Import _Online Clip..."));
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc_menu);
-
   mainw->open_sel = lives_standard_menu_item_new_with_label(_("O_pen Part of File..."));
 
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_sel);
 
   mainw->open_loc = lives_standard_menu_item_new_with_label(_("Play Remote _Stream..."));
+
+  mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Online Clip..."));
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc_menu);
 
   mainw->open_loc_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_loc_menu), mainw->open_loc_submenu);
@@ -713,6 +688,23 @@ void create_LiVES(void) {
 #ifdef HAVE_LDVGRAB
   lives_container_add(LIVES_CONTAINER(mainw->open_device_submenu), mainw->open_firewire);
   lives_container_add(LIVES_CONTAINER(mainw->open_device_submenu), mainw->open_hfirewire);
+#endif
+
+  menuitem = lives_standard_menu_item_new_with_label(_("_Add Webcam/TV card..."));
+  mainw->unicap = lives_standard_menu_item_new_with_label(_("Add Webcam"));
+  mainw->firewire = lives_standard_menu_item_new_with_label(_("Add Live _Firewire Device"));
+  mainw->tvdev = lives_standard_menu_item_new_with_label(_("Add _TV Device"));
+
+#if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), menuitem);
+
+  submenu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
+
+#ifdef HAVE_UNICAP
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
 #endif
 
 #ifdef HAVE_YUV4MPEG
@@ -759,16 +751,6 @@ void create_LiVES(void) {
   }
   widget_opts.mnemonic_label = TRUE;
 
-  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
-
-#ifdef LIBAV_TRANSCODE
-  mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode..."));
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->transcode);
-  lives_widget_set_sensitive(mainw->transcode, FALSE);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
-#endif
-
   mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
 
@@ -790,6 +772,14 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
+
+#ifdef LIBAV_TRANSCODE
+  mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode..."));
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->transcode);
+  lives_widget_set_sensitive(mainw->transcode, FALSE);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
+#endif
 
   mainw->save_as = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->save_as);
@@ -2459,13 +2449,14 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->hruler, -1, CE_HRULE_HEIGHT);
 
   mainw->eventbox2 = lives_event_box_new();
+  mainw->eb2_psurf = lives_calloc(1, sizeof(lives_painter_surface_t *));
 
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_EXPOSE_EVENT,
-                                  LIVES_GUI_CALLBACK(all_expose), &mainw->eb2_psurf);
+                                  LIVES_GUI_CALLBACK(all_expose), mainw->eb2_psurf);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->vidbar = lives_standard_label_new(_("Video"));
@@ -4237,7 +4228,7 @@ static void _make_play_window(void) {
   lives_widget_set_sensitive(mainw->play_window, TRUE);
 
   /// cannot do this, or it blocks ctrl-v window !!!
-  //lives_grab_add(mainw->play_window);
+  lives_grab_add(mainw->play_window);
 }
 
 void make_play_window(void) {
@@ -4249,44 +4240,10 @@ void make_play_window(void) {
   }
 }
 
-
-LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
-  // get the size of the screen / player in fullscreen / sepwin mode
-  // returns TRUE if we span multiple monitors, FALSE for single monitor mode
-
-  if (prefs->play_monitor == 0) {
-    if (capable->nmonitors > 1) {
-      // spread over all monitors
-#if !GTK_CHECK_VERSION(3, 22, 0)
-      *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-      *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-#else
-      /// TODO: no doubt this is wrong and should be done taking into account vertical monitor layouts as well
-      *opheight = mainw->mgeom[0].height;
-      *opwidth = 0;
-      for (int i = 0; i < capable->nmonitors; i++) {
-        *opwidth += mainw->mgeom[i].width;
-      }
-#endif
-      return TRUE;
-    } else {
-      // but we only have one...
-      *opwidth = mainw->mgeom[0].phys_width;
-      *opheight = mainw->mgeom[0].phys_height;
-    }
-  } else {
-    // single monitor
-    *opwidth = mainw->mgeom[prefs->play_monitor - 1].phys_width;
-    *opheight = mainw->mgeom[prefs->play_monitor - 1].phys_height;
-  }
-  return FALSE;
-}
-
 #define TEST_CE_THUMBS 0
 
 static void _resize_play_window(void) {
-  int opwx, opwy,
-      pmonitor = prefs->play_monitor;
+  int opwx, opwy, pmonitor = prefs->play_monitor;
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
 
@@ -4365,11 +4322,11 @@ static void _resize_play_window(void) {
       }
   } else {
     if ((((mainw->double_size || mainw->multitrack) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
-        (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
-         mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
+	(mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
+	 mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
       calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety,
-                    mainw->mgeom[pmonitor - 1].height - scr_height_safety,
-                    &mainw->pwidth, &mainw->pheight);
+		    mainw->mgeom[pmonitor - 1].height - scr_height_safety,
+		    &mainw->pwidth, &mainw->pheight);
     }
   }
 
@@ -4377,201 +4334,206 @@ static void _resize_play_window(void) {
     // fullscreen
     if (mainw->fs) {
       if (!lives_widget_is_visible(mainw->play_window)) {
-        if (prefs->show_playwin) {
-          lives_widget_show(mainw->play_window);
-        }
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-        mainw->opwx = mainw->opwy = -1;
+	if (prefs->show_playwin) {
+	  lives_widget_show(mainw->play_window);
+	}
+	lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+	mainw->opwx = mainw->opwy = -1;
       } else {
-        if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) {
-          mainw->opwx = (scr_width - mainw->pwidth) / 2;
-          mainw->opwy = (scr_height - mainw->pheight) / 2;
-        } else {
-          mainw->opwx = mainw->mgeom[pmonitor - 1].x + (mainw->mgeom[pmonitor - 1].width - mainw->pwidth) / 2;
-          mainw->opwy = mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->pheight) / 2;
-        }
+	if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) {
+	  mainw->opwx = (scr_width - mainw->pwidth) / 2;
+	  mainw->opwy = (scr_height - mainw->pheight) / 2;
+	} else {
+	  mainw->opwx = mainw->mgeom[pmonitor - 1].x + (mainw->mgeom[pmonitor - 1].width - mainw->pwidth) / 2;
+	  mainw->opwy = mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->pheight) / 2;
+	}
       }
       get_play_screen_size(&mainw->pwidth, &mainw->pheight);
 
       if (lives_widget_is_visible(mainw->play_window)) {
-        // store old position of window
-        lives_window_get_position(LIVES_WINDOW(mainw->play_window), &opwx, &opwy);
-        if (opwx * opwy > 0) {
-          mainw->opwx = opwx;
-          mainw->opwy = opwy;
-        }
+	// store old position of window
+	lives_window_get_position(LIVES_WINDOW(mainw->play_window), &opwx, &opwy);
+	if (opwx * opwy > 0) {
+	  mainw->opwx = opwx;
+	  mainw->opwy = opwy;
+	}
       }
 
       if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) {
-        if (mainw->vpp && mainw->vpp->fwidth > 0) {
-          lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->vpp->fwidth) / 2,
-                            (scr_height - mainw->vpp->fheight) / 2);
-        } else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
+	if (mainw->vpp && mainw->vpp->fwidth > 0) {
+	  lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->vpp->fwidth) / 2,
+			    (scr_height - mainw->vpp->fheight) / 2);
+	} else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
       } else {
-        lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-        if (mainw->vpp && mainw->vpp->fwidth > 0) {
-          lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x +
-                            (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2,
-                            mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2);
-        } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x,
-                                   mainw->mgeom[pmonitor - 1].y);
+	lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
+	if (mainw->vpp && mainw->vpp->fwidth > 0) {
+	  lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x +
+			    (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2,
+			    mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2);
+	} else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x,
+				 mainw->mgeom[pmonitor - 1].y);
       }
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-        mainw->ignore_screen_size = TRUE;
+	mainw->ignore_screen_size = TRUE;
 
-        if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-            && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-            capable->wm_caps.pan_res & RESTYPE_ACTION) {
-          hide_desktop_panel();
-        }
+	if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+	    && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+	    capable->wm_caps.pan_res & RESTYPE_ACTION) {
+	  hide_desktop_panel();
+	}
 #if GTK_CHECK_VERSION(3, 18, 0)
-        LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
-        if (pmonitor == 0) {
-          gdk_window_set_fullscreen_mode(xwin, GDK_FULLSCREEN_ON_ALL_MONITORS);
-          gtk_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window),
-                                           mainw->mgeom[widget_opts.monitor].screen, widget_opts.monitor);
-        } else {
-          gdk_window_set_fullscreen_mode(xwin, GDK_FULLSCREEN_ON_CURRENT_MONITOR);
-          gtk_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window),
-                                           mainw->mgeom[pmonitor - 1].screen, pmonitor - 1);
-        }
+	LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
+	if (pmonitor == 0) {
+	  gdk_window_set_fullscreen_mode(xwin, GDK_FULLSCREEN_ON_ALL_MONITORS);
+	  gtk_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window),
+					   mainw->mgeom[widget_opts.monitor].screen, widget_opts.monitor);
+	}
+	else {
+	  gdk_window_set_fullscreen_mode(xwin, GDK_FULLSCREEN_ON_CURRENT_MONITOR);
+	  gtk_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window),
+					   mainw->mgeom[pmonitor - 1].screen, pmonitor - 1);
+	}
 #else
-        lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-        lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
+	lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+	lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
-        lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+	lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
 
-        // must center first, then set pos to NONE
-        /* lives_window_center(LIVES_WINDOW(mainw->play_window)); */
-        /* lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE); */
+	// must center first, then set pos to NONE
+	lives_window_center(LIVES_WINDOW(mainw->play_window));
+	lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
 
-        lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
-        lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
-        mainw->gui_much_events = TRUE;
-        lives_widget_queue_draw_and_update(mainw->play_window);
-        mainw->ignore_screen_size = FALSE;
+	lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
+	lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
+	lives_widget_queue_draw_and_update(mainw->play_window);
+	mainw->ignore_screen_size = FALSE;
       }
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
       // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
       if (mainw->vpp && (!mainw->preview || ((mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
-                                             (mainw->multitrack || (mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
-        mainw->ptr_x = mainw->ptr_y = -1;
-        if (pmonitor == 0) {
-          // fullscreen playback on all screens (of first display)
-          // get mouse position to warp it back after playback ends
-          // in future we will handle multiple displays, so we will get the mouse device for the first screen of that display
-          LiVESXDevice *device = mainw->mgeom[0].mouse_device;
+					     (mainw->multitrack || (mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
+	mainw->ptr_x = mainw->ptr_y = -1;
+	if (pmonitor == 0) {
+	  // fullscreen playback on all screens (of first display)
+	  // get mouse position to warp it back after playback ends
+	  // in future we will handle multiple displays, so we will get the mouse device for the first screen of that display
+	  LiVESXDevice *device = mainw->mgeom[0].mouse_device;
 #if GTK_CHECK_VERSION(3, 0, 0)
-          if (device) {
+	  if (device) {
 #endif
-            LiVESXScreen *screen;
-            LiVESXDisplay *display = mainw->mgeom[0].disp;
-            lives_display_get_pointer(device, display, &screen, &mainw->ptr_x, &mainw->ptr_y, NULL);
+	    LiVESXScreen *screen;
+	    LiVESXDisplay *display = mainw->mgeom[0].disp;
+	    lives_display_get_pointer(device, display, &screen, &mainw->ptr_x, &mainw->ptr_y, NULL);
 #if GTK_CHECK_VERSION(3, 0, 0)
-          }
+	  }
 #endif
-        }
-      }
+	}}
       if (mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
-        // fixed o/p size for stream
-        if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
-          mainw->vpp->fwidth = cfile->hsize;
-          mainw->vpp->fheight = cfile->vsize;
-        }
-        if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-          mainw->pwidth = mainw->vpp->fwidth;
-          mainw->pheight = mainw->vpp->fheight;
+	// fixed o/p size for stream
+	if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
+	  mainw->vpp->fwidth = cfile->hsize;
+	  mainw->vpp->fheight = cfile->vsize;
+	}
+	if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+	  mainw->pwidth = mainw->vpp->fwidth;
+	  mainw->pheight = mainw->vpp->fheight;
 
-          // * leave this alone !
-          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-          lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
-          lives_widget_queue_resize(mainw->play_window);
-        }
+	  // * leave this alone !
+	  lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+	  lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
+	  lives_widget_queue_resize(mainw->play_window);
+	}
       }
 
       if (pmonitor != 0 && pmonitor != widget_opts.monitor + 1) {
-        fullscreen = FALSE;
-        if (mainw->play_window) {
-          if (prefs->show_playwin) {
-            xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
-            if (!xwinid) {
-              THREADVAR(hook_hints) = 0;
-              return;
-            }
-          } else xwinid = 0;
-        }
+	fullscreen = FALSE;
+	if (mainw->play_window) {
+	  if (prefs->show_playwin) {
+	    xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
+	    if (!xwinid) {
+	      THREADVAR(hook_hints) = 0;
+	      return;
+	    }
+	  } else xwinid = 0;
+	}
       }
-      if (mainw->ext_playback) vid_playback_plugin_exit();
+      if (mainw->ext_playback) {
+	//lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
+	vid_playback_plugin_exit();
+      }
 #ifdef RT_AUDIO
       if (mainw->vpp->audio_codec != AUDIO_CODEC_NONE && prefs->stream_audio_out) {
-        start_audio_stream();
+	start_audio_stream();
       } else {
-        //clear_audio_stream();
+	//clear_audio_stream();
       }
 #endif
-      if ((mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && pmonitor == 0)
-        lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
+      xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
+      if (!xwinid && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)
+      	  && (pmonitor == 0 || pmonitor == widget_opts.monitor + 1)) {
+      	lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
+      	lives_window_set_keep_below(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      }
 
       if (mainw->vpp->init_audio && prefs->stream_audio_out) {
 #ifdef HAVE_PULSE_AUDIO
-        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-          if ((*mainw->vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, mainw->vpp->extra_argc,
-                                        mainw->vpp->extra_argv))
-            ext_audio = TRUE;
-        }
+	if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
+	  if ((*mainw->vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, mainw->vpp->extra_argc,
+					mainw->vpp->extra_argv))
+	    ext_audio = TRUE;
+	}
 #endif
 #ifdef ENABLE_JACK
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-          if ((*mainw->vpp->init_audio)(mainw->jackd->sample_out_rate,
-                                        mainw->jackd->num_output_channels, mainw->vpp->extra_argc,
-                                        mainw->vpp->extra_argv))
-            ext_audio = TRUE;
-        }
+	if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
+	  if ((*mainw->vpp->init_audio)(mainw->jackd->sample_out_rate,
+					mainw->jackd->num_output_channels, mainw->vpp->extra_argc,
+					mainw->vpp->extra_argv))
+	    ext_audio = TRUE;
+	}
 #endif
       }
-      xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
+
       if (!mainw->vpp->init_screen || ((*mainw->vpp->init_screen)
-                                       (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
-                                        mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
-                                        fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
-        mainw->force_show = TRUE;
-        mainw->ext_playback = TRUE;
-        // the play window is still visible (in case it was 'always on top')
-        // start key polling from ext plugin
+				       (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
+					mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
+					fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
+	mainw->force_show = TRUE;
+	mainw->ext_playback = TRUE;
+	// the play window is still visible (in case it was 'always on top')
+	// start key polling from ext plugin
 
-        mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
+	mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
 
-        if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY
-            && (pmonitor == 0 || pmonitor == widget_opts.monitor + 1))
-          // ensure that keypresses are still sent to the main widget
-          lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
+	if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY
+	    && (pmonitor == 0 || pmonitor != widget_opts.monitor + 1))
+	  // ensure that keypresses are still sent to the main widget
+	  lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
 
-        // HIDE MAINWINDOW option
-        /* if (1) { */
-        /*   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
-        /*   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
-        /*   lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL); */
-        /*   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
-        /* } */
-      } else {
-        if (mainw->vpp->init_screen) {
-          LIVES_ERROR("Failed to start playback plugin");
-        }
+	// HIDE MAINWINDOW option
+	/* if (1) { */
+	/*   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
+	/*   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
+	/*   lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL); */
+	/*   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
+	/* } */
+      } else if (mainw->vpp->init_screen) {
+	LIVES_ERROR("Failed to start playback plugin");
       }
-      if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor + 1 &&
-                             prefs->play_monitor != 0 &&
-                             capable->nmonitors > 1 && !mainw->multitrack)) {
-        start_ce_thumb_mode();
+
+      if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
+			     prefs->play_monitor != 0 &&
+			     capable->nmonitors > 1 && !mainw->multitrack)) {
+	start_ce_thumb_mode();
       }
     } else {
       // NON fullscreen
       if (mainw->ce_thumbs) {
-        end_ce_thumb_mode();
+	end_ce_thumb_mode();
       }
       if (pmonitor != 0 && pmonitor != widget_opts.monitor + 1)
-        lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
+	lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
     }
     if (prefs->show_playwin) {
       lives_window_present(LIVES_WINDOW(mainw->play_window));
@@ -4580,28 +4542,28 @@ static void _resize_play_window(void) {
   } else {
     // not playing
     if (mainw->fs && mainw->playing_file == -2 && mainw->sep_win
-        && prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
+	&& prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
       if (mainw->ce_thumbs) {
-        end_ce_thumb_mode();
+	end_ce_thumb_mode();
       }
       if (!mainw->multitrack && mainw->opwx >= 0 && mainw->opwy >= 0) {
-        // move window back to its old position after play
-        if (pmonitor != 0 && pmonitor != widget_opts.monitor + 1)
-          lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-        lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
-        lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->opwx, mainw->opwy);
+	// move window back to its old position after play
+	if (pmonitor != 0 && pmonitor != widget_opts.monitor + 1)
+	  lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
+	lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
+	lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->opwx, mainw->opwy);
       } else {
-        if (pmonitor != 0) lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-        lives_window_center(LIVES_WINDOW(mainw->play_window));
+	if (pmonitor != 0) lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
+	lives_window_center(LIVES_WINDOW(mainw->play_window));
       }
     } else {
       if (pmonitor != 0 && pmonitor != widget_opts.monitor + 1)
-        lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
+	lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
       lives_window_center(LIVES_WINDOW(mainw->play_window));
     }
     mainw->opwx = mainw->opwy = -1;
   }
-
+    
   if (!LIVES_IS_PLAYING && (CURRENT_CLIP_IS_VALID && !cfile->opening)) {
     nheight = mainw->sepwin_minheight;
     if (mainw->pheight < MIN_SEPWIN_HEIGHT) nheight += MIN_SEPWIN_HEIGHT - mainw->pheight;
@@ -4616,39 +4578,39 @@ static void _resize_play_window(void) {
       nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
 
     pmonitor = prefs->play_monitor;
-    if ((pmonitor == 0 || pmonitor == widget_opts.monitor + 1) || !LIVES_IS_PLAYING) {
+    if ((pmonitor == 0 || pmonitor == widget_opts.monitor) || !LIVES_IS_PLAYING) {
       while (nwidth > GUI_SCREEN_WIDTH - scr_width_safety ||
-             nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
-        /* g_print("VALUES: %d %d and %d : %d %d and %d\n", nwidth, GUI_SCREEN_WIDTH, scr_width_safety, */
-        /*         nheight, GUI_SCREEN_HEIGHT, scr_height); */
-        nheight <<= 3;
-        nheight /= 10;
-        nwidth <<= 3;
-        nwidth /= 10;
+	     nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
+	/* g_print("VALUES: %d %d and %d : %d %d and %d\n", nwidth, GUI_SCREEN_WIDTH, scr_width_safety, */
+	/*         nheight, GUI_SCREEN_HEIGHT, scr_height); */
+	nheight <<= 3;
+	nheight /= 10;
+	nwidth <<= 3;
+	nwidth /= 10;
       }
     } else {
       while (nwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
-             nheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
-        nheight <<= 3;
-        nheight /= 10;
-        nwidth <<= 3;
-        nwidth /= 10;
+	     nheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
+	nheight <<= 3;
+	nheight /= 10;
+	nwidth <<= 3;
+	nwidth /= 10;
       }
     }
     xnwidth = nwidth;
     xnheight = nheight;
-    calc_maxspect(mainw->pwidth, mainw->pheight, &xnwidth, &xnheight);
-    if ((pmonitor == 0 || pmonitor == widget_opts.monitor + 1) || !LIVES_IS_PLAYING) {
+    calc_maxspect(mainw->pwidth, mainw->pheight, &xnwidth, &xnheight); 
+    if ((pmonitor == 0 || pmonitor == widget_opts.monitor) || !LIVES_IS_PLAYING) {
       if (xnwidth <= GUI_SCREEN_WIDTH - scr_width_safety &&
-          xnheight <= GUI_SCREEN_HEIGHT - scr_height_safety) {
-        nwidth = xnwidth;
-        nheight = xnheight;
+	  xnheight <= GUI_SCREEN_HEIGHT - scr_height_safety) {
+	nwidth = xnwidth;
+	nheight = xnheight;
       }
     } else {
       if (xnwidth <= mainw->mgeom[pmonitor - 1].width - scr_width_safety &&
-          nheight <= mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
-        nwidth = xnwidth;
-        nheight = xnheight;
+	  nheight <= mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
+	nwidth = xnwidth;
+	nheight = xnheight;
       }
     }
 
@@ -4669,7 +4631,7 @@ static void _resize_play_window(void) {
     lives_widget_show(mainw->play_window);
     lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
     lives_window_move(LIVES_WINDOW(mainw->play_window), scr_width - nwidth,
-                      scr_height - nheight);
+		      scr_height - nheight);
   } else {
     if (!mainw->fs)
       lives_window_center(LIVES_WINDOW(mainw->play_window));
@@ -4866,7 +4828,7 @@ void add_to_clipmenu_any(int clipno) {
 
   lives_widget_set_sensitive(sfile->menuentry, TRUE);
   sfile->menuentry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(sfile->menuentry), LIVES_WIDGET_TOGGLED_SIGNAL,
-                          LIVES_GUI_CALLBACK(switch_clip_activate), NULL);
+						    LIVES_GUI_CALLBACK(switch_clip_activate), NULL);
 
   SET_INT_DATA(sfile->menuentry, "clipno", clipno);
 

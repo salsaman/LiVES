@@ -1997,7 +1997,7 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
 
-  lives_microsleep_until_nonzero_timeout(MILLIONS(1),
+  lives_microsleep_until_nonzero_timeout(MILLIONS(5),
                                          pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
 
   pa_operation_unref(pa_op);
@@ -2251,8 +2251,8 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
     }
 
     /* pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile); */
-    /* if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE; */
 
+    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
 
     /* if (seek_err) { */
     /*   seek_err = FALSE; */

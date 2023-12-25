@@ -18,6 +18,7 @@ void procw_desensitize(void);
 void player_desensitize(void);
 
 void get_player_size(int *opwidth, int *opheight);
+boolean get_play_screen_size(int *opwidth, int *opheight);
 
 void set_drawing_area_from_pixbuf(LiVESDrawingArea *da, LiVESPixbuf *pixbuf);
 

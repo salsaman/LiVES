@@ -211,14 +211,13 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	audio.c audio.h \
 	threading.c threading.h \
-	functions.c functions.h funcsigs.h \
+	functions.c functions.h \
 	intents.c intents.h object-constants.h\
 	preferences.c preferences.h\
 	effects-weed.c effects-weed.h\
 	memory.c memory.h \
 	diagnostics.c diagnostics.h \
 	machinestate.c machinestate.h \
-	timing.c timing.h \
 	events.c events.h \
 	support.c support.h \
 	messaging.c messaging.h \

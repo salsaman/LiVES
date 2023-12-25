@@ -744,7 +744,7 @@ LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
               mainw->ext_audio = FALSE;
               pthread_mutex_unlock(&mainw->vpp_stream_mutex);
               lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-	      reset_ext_player_layer(TRUE);
+	      //reset_ext_player_layer(TRUE);
               if (mainw->vpp->exit_screen) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
               }
@@ -1255,6 +1255,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
         mainw->ext_audio = FALSE;
         mainw->ext_playback = FALSE;
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+	//	reset_ext_player_layer(TRUE);
         if (mainw->vpp->exit_screen) {
           (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
         }
@@ -1670,7 +1671,8 @@ static void _vid_playback_plugin_exit(void) {
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
     lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-    reset_ext_player_layer(TRUE);
+    // reset_ext_player_layer(TRUE);
+
     if (mainw->vpp->exit_screen) {
       (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
     }
@@ -2614,7 +2616,7 @@ lives_decoder_t *add_decoder_clone(int nclip, int track, int purpose) {
   if (IS_NORMAL_CLIP(nclip)) {
     lives_decoder_t *dplug = clone_decoder(nclip);
     if (dplug) {
-      add_clip_src(nclip, track, CLASS_UID_VIDEO_DECODER,
+      add_clip_src(nclip, track, purpose,
                    (void *)dplug, LIVES_SRC_TYPE_DECODER,
                    dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
       return dplug;
@@ -2634,7 +2636,7 @@ lives_clip_src_t *add_ext_decoder_clone(int dclip, int sclip, int track, int pur
   lives_clip_src_t *dsource = NULL;
   if (IS_NORMAL_CLIP(sclip)) {
     lives_decoder_t *dplug = clone_decoder(sclip);
-    if (dplug) dsource = add_clip_src(dclip, track, CLASS_UID_VIDEO_DECODER,
+    if (dplug) dsource = add_clip_src(dclip, track, purpose,
                                         (void *)dplug, LIVES_SRC_TYPE_DECODER,
                                         dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
   }
@@ -2837,7 +2839,7 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (dplug && dplug->dpsys && dplug->dpsys->id) {
-    add_clip_src(clipno, -1, CLASS_UID_VIDEO_DECODER,
+    add_clip_src(clipno, -1, SRC_PURPOSE_PRIMARY,
                  (void *)dplug, LIVES_SRC_TYPE_DECODER,
                  dplug->dpsys->id->uid, NULL, dplug->cdata->URI);
     sfile->old_dec_uid = sfile->decoder_uid = dplug->dpsys->id->uid;

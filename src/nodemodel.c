@@ -1625,7 +1625,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  MSGMODE_ON(DEBUG);
+  //MSGMODE_ON(DEBUG);
 
   //if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
@@ -1663,7 +1663,7 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    MSGMODE_OFF(DEBUG);
+    //MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel(self);
   }
@@ -1766,6 +1766,7 @@ static void run_plan(exec_plan_t *plan) {
         if (step->st_type == STEP_TYPE_LOAD) {
           frames64_t frame;
           // ensure the layer exists and is in state PREPARED
+	  // or if frame_idx is set
           if (!plan->layers) {
             d_print_debug("no layers for plan2\n");
             error = 3;
@@ -1780,40 +1781,47 @@ static void run_plan(exec_plan_t *plan) {
             continue;
           }
 
-          if (layer) {
-            if (!weed_layer_check_valid(layer)) {
+	  if (!layer) {
+	    frame = plan->frame_idx[step->track];
+	    if (!frame) continue;
+	    plan->template->frame_idx[step->track] = frame;
+
+	    layer = plan->layers[step->track]
+	      = lives_layer_new_for_frame(plan->model->clip_index[step->track], frame);
+	    lives_layer_set_srcgrp(layer, mainw->track_sources[step->track]);
+	    lives_layer_set_track(layer, step->track);
+	    lives_layer_set_status(layer, LAYER_STATUS_PREPARED);
+	    /* weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE); */
+	    /* step->flags |= STEP_FLAG_TAGGED_LAYER; */
+	  }
+	  else {
+	    if (!weed_layer_check_valid(layer)) {
               error = 4;
               step->state = STEP_STATE_ERROR;
               continue;
             }
+	  }
+ 
+	  lock_layer_status(layer);
+	  lstatus = _lives_layer_get_status(layer);
 
-            lock_layer_status(layer);
-            lstata = _lives_layer_get_status(layer))
+	  if (lstatus == LAYER_STATUS_READY || lstatus == LAYER_STATUS_LOADED) {
+	    if (step->flags & STEP_FLAG_NO_READY_STAT)
+	      _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+	    else _lives_layer_set_status(layer, LAYER_STATUS_READY);
+	    unlock_layer_status(layer);
+	    d_print_debug("\nstep %d LOAD skipped, frame appeared on track %d as if by magic !\n",
+			  step_count, step->track);
 
-            if (lstatus != LAYER_STATUS_READY && lstatus != LAYER_STATUS_LOADED
-                && lstatus != LAYER_STATUS_PREPARED) continue;
+	    step->state = STEP_STATE_SKIPPED;
+	    continue;
+	  }
 
-            if (lstatus != LAYER_STATUS_READY && lstatus != LAYER_STATUS_LOADED) {
-              frame = lives_layer_get_frame(layer);
-                plan->frame_idx[step->track] = frame;
-                plan->template->frame_idx[step->track] = plan->frame_idx[step->track];
-
-                if (!(step->flags & STEP_FLAG_NO_READY_STAT)) {
-                  if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADED)
-                    _lives_layer_set_status(layer, LAYER_STATUS_READY);
-                  unlock_layer_status(layer);
-                } else {
-                  _lives_layer_set_status(layer, LAYER_STATUS_READY);
-                }
-                unlock_layer_status(layer);
-                d_print_debug("\nstep %d LOAD skipped, frame appeared on track %d as if by magic !\n",
-                              step_count, step->track);
-
-                step->state = STEP_STATE_SKIPPED;
-                continue;
-              }
-
-            // PREPARED
+	  if (lstatus == LAYER_STATUS_PREPARED) {
+	    int clip = lives_layer_get_clip(layer);
+	    lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
+	    plan->template->frame_idx[step->track] = plan->frame_idx[step->track]
+	      = lives_layer_get_frame(layer);
             if (!(step->flags & STEP_FLAG_TAGGED_LAYER)) {
               weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
               step->flags |= STEP_FLAG_TAGGED_LAYER;
@@ -1823,570 +1831,521 @@ static void run_plan(exec_plan_t *plan) {
             d_print_debug("\nstep %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n", step_count,
                           step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
             step->state = STEP_STATE_RUNNING;
+	    unlock_layer_status(layer);
             pull_frame_threaded(layer, sfile->hsize, sfile->vsize);
             continue;
           }
+	  unlock_layer_status(layer);
+	  continue;
+	}
+	else {
+	  // check if all dependency steps are done
+	  for (i = 0; i < step->ndeps; i++) {
+	    plan_step_t *xstep = step->deps[i];
 
+	    int state = xstep->state;
+	    if (state == STEP_STATE_ERROR || state == STEP_STATE_CANCELLED
+		|| state == STEP_STATE_PAUSED) {
+	      if (state != STEP_STATE_PAUSED) step->state = STEP_STATE_SKIPPED;
+	      continue;
+	    }
 
+	    if (!(state == STEP_STATE_FINISHED || state == STEP_STATE_SKIPPED
+		  || state == STEP_STATE_IGNORE))  break;
+	  }
+	  if (i < step->ndeps) continue;
+	}
 
+	if (error || cancelled) {
+	  step->state = STEP_STATE_SKIPPED;
+	  continue;
+	}
 
+	xtime = lives_get_session_time();
 
+	switch (step->st_type) {
+	case STEP_TYPE_CONVERT: {
+	  layer = plan->layers[step->track];
+	  if (!layer) continue;
+	  if (!weed_layer_check_valid(layer)) {
+	    error = 7;
+	    g_printerr("layer on track %d not valid during conversion\n", step->track);
+	    if (step->state == STEP_STATE_RUNNING)
+	      dec_running_steps(step);
+	    step->state = STEP_STATE_ERROR;
+	    break;
+	  }
+	  step->ini_pal = weed_layer_get_palette(layer);
+	  step->ini_width = weed_layer_get_width(layer);
+	  step->ini_height = weed_layer_get_height(layer);
+	  step->ini_gamma = weed_layer_get_gamma(layer);
+	  d_print_debug("\nstep %d: RUN CONVERT (track %d) @ %.2f msec: "
+			"from pal %s, %d X %d, gamma %s ---> pal %s, %d X %d gamma %s\n", step_count,
+			step->track, 1000. * xtime, weed_palette_get_name(step->ini_pal), step->ini_width, step->ini_height,
+			weed_gamma_get_name(step->ini_gamma), weed_palette_get_name(step->fin_pal),
+			step->fin_width, step->fin_height, weed_gamma_get_name(step->fin_gamma));
 
+	  // figure out the sequence of operations needed, construct a prochthread chain,
+	  // then queue it
+	  //double est_dur;
+	  int op_order[N_OP_TYPES];
+	  int out_width = weed_layer_get_width(layer), out_height = weed_layer_get_height(layer);
+	  int in_width = step->fin_width, in_height = step->fin_height;
+	  int in_iwidth = step->fin_iwidth, in_iheight = step->fin_iheight;
+	  int outpl = weed_layer_get_palette(layer), inpl = step->fin_pal;
+	  int out_gamma_type = weed_layer_get_gamma(layer), in_gamma_type = step->fin_gamma;
+	  int flags = OPORD_EXPLAIN;
 
+	  if (in_iwidth < in_width || in_iheight < in_height)
+	    flags |= OPORD_LETTERBOX;
 
+	  // if this is a pre-conversion for a clip, we won't have a target pal or gamma
+	  // we have to get these from the srcgroup
 
+	  if (inpl == WEED_PALETTE_NONE) {
+	    lives_clipsrc_group_t *srcgrp = mainw->track_sources[step->track];
+	    int clipno = plan->model->clip_index[step->track];
+	    if (!srcgrp) srcgrp = get_primary_srcgrp(clipno);
+	    inpl = srcgrp->apparent_pal;
+	    in_gamma_type = srcgrp->apparent_gamma;
+	  }
 
+	  get_op_order(out_width, out_height, in_iwidth, in_iheight, flags, outpl, inpl,
+		       out_gamma_type, in_gamma_type, op_order);
 
+	  if (in_iwidth < in_width || in_iheight < in_height)
+	    d_print_debug("Needs letterbox, as we have outer size %d X %d and inner size %d X %d\n",
+			  in_width, in_height, in_iwidth, in_iheight);
 
+	  if (!op_order[OP_RESIZE] && !op_order[OP_PCONV] && !op_order[OP_GAMMA] && !op_order[OP_LETTERBOX]) {
+	    //if (prefs->dev_show_timing)
+	    d_print_debug("No conversion needed - skipping step\n");
+	    step->state = STEP_STATE_SKIPPED;
 
+	    dec_running_steps(step);
 
+	    if (weed_layer_check_valid(layer)) {
+	      if (!(step->flags & STEP_FLAG_NO_READY_STAT)) {
+		d_print_debug("set layer %d stat to ready\n", step->track);
+		lives_layer_set_status(layer, LAYER_STATUS_READY);
+	      } else {
+		d_print_debug("set layer %d stat to loaded\n", step->track);
+		lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+	      }
+	    }
+	    break;
+	  }
 
-          /* if (frame == plan->template->frame_idx[step->track]) { */
-          /*   plan->layers[step->track] = get_cached_frame(step->track); */
-          /*   // now skip set all deps as done up to point where frame was cached */
-          /*   // status should be READY */
-          /*   continue; */
-          /* } */
-        } else {
-          // !layer
-          frame = plan->frame_idx[step->track];
-          if (!frame) continue;
+	  lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
 
-          /* if (frame == plan->template->frame_idx[step->track]) { */
-          /*   plan->layers[step->track] = get_cached_frame(step->track); */
-          /*   // now skip set all deps as done up to point where frame was cached */
-          /*   // status should be READY */
-          /*   continue; */
-          /* } */
+	  /* est_dur = get_conversion_cost(COST_TYPE_TIME, out_width, out_height, */
+	  /*                               in_iwidth, in_iheight, letterbox, */
+	  /*                               outpl, inpl, NULL, */
+	  /*                               out_gamma_type, in_gamma_type, FALSE); */
 
-          plan->template->frame_idx[step->track] = frame;
+	  //d_print_debug("online estimate is %.4f msec\n", est_dur * 1000.);
 
-          layer = plan->layers[step->track]
-                  = lives_layer_new_for_frame(plan->model->clip_index[step->track],
-                                              plan->frame_idx[step->track]);
+	  d_print_debug("ORDER of ops is: (res %d, pconv %d, gamma %d, lb %d)\n",
+			op_order[OP_RESIZE], op_order[OP_PCONV], op_order[OP_GAMMA], op_order[OP_LETTERBOX]);
+	  if (op_order[OP_RESIZE] == 1) {
+	    // RESIZE IS 1
+	    d_print_debug("Resize");
+	    // check combined
+	    if (op_order[OP_PCONV] == 1)
+	      d_print_debug(" + palconv");
+	    if (op_order[OP_GAMMA] == 1)
+	      d_print_debug(" + gamma");
+	    if (op_order[OP_LETTERBOX] == 1)
+	      d_print_debug(" + letterbox");
 
-          lives_layer_set_srcgrp(layer, mainw->track_sources[step->track]);
-          lives_layer_set_track(layer, step->track);
-          weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
-          step->flags |= STEP_FLAG_TAGGED_LAYER;
-          lives_layer_set_status(layer, LAYER_STATUS_PREPARED);
-          // LOAD prep
-        }
-        plan->template->frame_idx[step->track] = frame;
-      } else {
-        // check if all dependency steps are done
-        for (i = 0; i < step->ndeps; i++) {
-          plan_step_t *xstep = step->deps[i];
+	    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+					   res_substep, WEED_SEED_INT, "v", step);
+	  } else if (op_order[OP_PCONV] == 1) {
+	    // pconv is 1
+	    d_print_debug("Palconv");
+	    if (op_order[OP_GAMMA] == 1)
+	      d_print_debug(" + gamma");
+	    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+					   pconv_substep, WEED_SEED_INT, "v", step);
+	  } else if (op_order[OP_LETTERBOX] == 1) {
+	    d_print_debug("Letterbox");
+	    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+					   lbox_substep, WEED_SEED_INT, "v", step);
+	  } else {
+	    d_print_debug("Gamma");
+	    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+					   gamma_substep, WEED_SEED_INT, "v", step);
+	  }
+	  //
+	  if (op_order[OP_RESIZE] == 2) {
+	    d_print_debug(", resize");
+	    if (op_order[OP_PCONV] == 2)
+	      d_print_debug(" + palconv");
+	    if (op_order[OP_GAMMA] == 2)
+	      d_print_debug(" + gamma");
+	    lives_proc_thread_chain(lpt, res_substep, WEED_SEED_INT, "v", step, NULL);
+	  } else if (op_order[OP_PCONV] == 2) {
+	    d_print_debug(", palconv");
+	    if (op_order[OP_GAMMA] == 2)
+	      d_print_debug(" + gamma");
+	    lives_proc_thread_chain(lpt, pconv_substep, WEED_SEED_INT, "v", step, NULL);
+	  } else if (op_order[OP_GAMMA] == 2) {
+	    d_print_debug(", gamma");
+	    lives_proc_thread_chain(lpt, gamma_substep, WEED_SEED_INT, "v", step, NULL);
+	  } else if (op_order[OP_LETTERBOX] == 2) {
+	    d_print_debug(", letterbox");
+	    lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
+	  }
 
-          int state = xstep->state;
-          if (state == STEP_STATE_ERROR || state == STEP_STATE_CANCELLED
-              || state == STEP_STATE_PAUSED) {
-            if (state != STEP_STATE_PAUSED) step->state = STEP_STATE_SKIPPED;
-            continue;
-          }
+	  if (op_order[OP_RESIZE] == 3) {
+	    d_print_debug(", resize");
+	    if (op_order[OP_PCONV] == 3)
+	      d_print_debug(" + palconv");
+	    if (op_order[OP_GAMMA] == 3)
+	      d_print_debug(" + gamma");
+	    lives_proc_thread_chain(lpt, res_substep, WEED_SEED_INT, "v", step, NULL);
+	  } else if (op_order[OP_PCONV] == 3) {
+	    if (op_order[OP_GAMMA] == 3) {
+	      d_print_debug(" + gamma");
+	      lives_proc_thread_chain(lpt, pconv_substep, WEED_SEED_INT, "v", step, NULL);
+	    }
+	  } else if (op_order[OP_GAMMA] == 3) {
+	    d_print_debug(", gamma");
+	    lives_proc_thread_chain(lpt, gamma_substep, WEED_SEED_INT, "v", step, NULL);
+	  } else if (op_order[OP_LETTERBOX] == 3) {
+	    d_print_debug(", letterbox");
+	    lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
+	  }
 
-          if (!(state == STEP_STATE_FINISHED || state == STEP_STATE_SKIPPED
-                || state == STEP_STATE_IGNORE))  break;
-        }
-        if (i < step->ndeps) continue;
+	  if (op_order[OP_LETTERBOX] == 4) {
+	    d_print_debug(", letterbox");
+	    lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
+	  }
+
+	  d_print_debug("\n");
+
+	  SET_LPT_VALUE(lpt, int, "interp", get_interp_value(prefs->pb_quality, TRUE));
+
+	  step->proc_thread = lpt;
+	  step->state = STEP_STATE_RUNNING;
+
+	  lives_proc_thread_set_cancellable(lpt);
+
+	  // queue lpt and have it remove proc_thread from layer after
+	  lives_layer_async_auto(layer, lpt);
+
+	  inc_running_steps(step);
+	}
+	  break;
+
+	case STEP_TYPE_APPLY_INST: {
+	  weed_instance_t *inst;
+	  if (!step->target) {
+	    d_print_debug("\nstep %d: Output to sink ready @ %.2f msec\n", step_count, xtime * 1000.);
+	    d_print_debug("\nMark all layers as ready\n");
+
+	    for (int i = 0; i < plan->model->ntracks; i++) {
+	      if (plan->layers[i])
+		lives_layer_set_status(plan->layers[i], LAYER_STATUS_READY);
+	    }
+	    step->state = STEP_STATE_FINISHED;
+	    break;
+	  }
+
+	  inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
+
+	  if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
+	    d_print_debug("\nstep %d: RUN APPLY_INST (%s) @ %.2f msec, pd i %p\n",
+			  step_count, weed_filter_get_name((weed_filter_t *)step->target),
+			  xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
+
+	    if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
+	      d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
+			    step->count, step->track);
+	      step->state = STEP_STATE_SKIPPED;
+	      break;
+	    }
+
+	    step->state = STEP_STATE_RUNNING;
+	    inc_running_steps(step);
+
+	    step->proc_thread =
+	      lives_proc_thread_create(LIVES_THRDATTR_NONE,
+				       run_apply_inst_step, WEED_SEED_INT, "vv", step, inst);
+	  } else {
+	    step->st_type = STEP_TYPE_LOAD;
+	  }
+	}
+	  break;
+	default: break;
+	}
       }
 
-      if (error || cancelled) {
-        step->state = STEP_STATE_SKIPPED;
-        continue;
-      }
+      if (state == STEP_STATE_RUNNING || (plan->state == STEP_STATE_RESUMING
+					  && step->state == STEP_STATE_PAUSED)) {
+	complete = FALSE;
+	// check if step has completed
+	switch (step->st_type) {
+	case STEP_TYPE_LOAD: {
+	  // finishes when state is LOADED or READY
+	  layer = plan->layers[step->track];
+	  if (!layer) {
+	    step->state = STEP_STATE_ERROR;
+	    error = 8;
+	    xtime = dec_running_steps(step);
+	    d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+			  step->tdata->real_duration);
+	    d_print_debug("layer disappeared !\n");
 
-      xtime = lives_get_session_time();
+	    break;
+	  }
+	  if (!weed_layer_check_valid(layer)) {
+	    error = 9;
+	    step->state = STEP_STATE_ERROR;
 
-      switch (step->st_type) {
-      case STEP_TYPE_LOAD: {
-      }
-      break;
-      case STEP_TYPE_CONVERT: {
-        layer = plan->layers[step->track];
-        if (!layer) continue;
-        if (!weed_layer_check_valid(layer)) {
-          error = 7;
-          g_printerr("layer on track %d not valid during conversion\n", step->track);
-          if (step->state == STEP_STATE_RUNNING)
-            dec_running_steps(step);
-          step->state = STEP_STATE_ERROR;
-          break;
-        }
-        step->ini_pal = weed_layer_get_palette(layer);
-        step->ini_width = weed_layer_get_width(layer);
-        step->ini_height = weed_layer_get_height(layer);
-        step->ini_gamma = weed_layer_get_gamma(layer);
-        d_print_debug("\nstep %d: RUN CONVERT (track %d) @ %.2f msec: "
-                      "from pal %s, %d X %d, gamma %s ---> pal %s, %d X %d gamma %s\n", step_count,
-                      step->track, 1000. * xtime, weed_palette_get_name(step->ini_pal), step->ini_width, step->ini_height,
-                      weed_gamma_get_name(step->ini_gamma), weed_palette_get_name(step->fin_pal),
-                      step->fin_width, step->fin_height, weed_gamma_get_name(step->fin_gamma));
+	    xtime = dec_running_steps(step);
 
-        // figure out the sequence of operations needed, construct a prochthread chain,
-        // then queue it
-        //double est_dur;
-        int op_order[N_OP_TYPES];
-        int out_width = weed_layer_get_width(layer), out_height = weed_layer_get_height(layer);
-        int in_width = step->fin_width, in_height = step->fin_height;
-        int in_iwidth = step->fin_iwidth, in_iheight = step->fin_iheight;
-        int outpl = weed_layer_get_palette(layer), inpl = step->fin_pal;
-        int out_gamma_type = weed_layer_get_gamma(layer), in_gamma_type = step->fin_gamma;
-        int flags = OPORD_EXPLAIN;
+	    d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+			  step->tdata->real_duration);
+	    d_print_debug("layer invalid !\n");
 
-        if (in_iwidth < in_width || in_iheight < in_height)
-          flags |= OPORD_LETTERBOX;
+	    break;
+	  }
+	  if (step->proc_thread) {
+	    double xtime;
+	    exec_plan_substep_t *substep = NULL;
+	    if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
+	    xtime = lives_get_session_time();
+	    lives_proc_thread_join(step->proc_thread);
+	    d_print_debug("deinterlace completed @ \n", xtime * 1000.);
+	    for (LiVESList *list = step->substeps; list; list = list->next) {
+	      substep = (exec_plan_substep_t *)list->data;
+	      substep->end = xtime;
+	      if (substep->op_idx == OP_DEINTERLACE) break;
+	      substep = NULL;
+	    }
+	    if (substep) {
+	      double dur = xtime - substep->start;
+	      d_print_debug("Done in %.2f msec\n", dur * 1000.);
+	    }
+	    lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+	  } else {
+	    lpt = lives_layer_get_proc_thread(layer);
+	    lstatus = lives_layer_get_status(layer);
+	    if (lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_CONVERTING) {
+	      if (lpt) {
+		if (error || cancelled) {
+		  if (!lives_proc_thread_get_cancel_requested(lpt)) {
+		    weed_layer_set_invalid(layer, TRUE);
+		    lives_proc_thread_request_cancel(lpt, FALSE);
+		  }
+		  if (lives_proc_thread_was_cancelled(lpt)) {
+		    weed_layer_set_invalid(layer, TRUE);
+		    step->state = STEP_STATE_CANCELLED;
+		    dec_running_steps(step);
+		  }
+		  break;
+		}
+		if (paused) {
+		  if (!lives_proc_thread_get_pause_requested(lpt))
+		    lives_proc_thread_request_pause(lpt);
+		  if (lives_proc_thread_is_paused(lpt)) {
+		    xtime = lives_get_session_time();
+		    step->state = STEP_STATE_PAUSED;
+		    xtime = lives_get_session_time();
+		    step->tdata->paused_time -= xtime;
+		  }
+		  break;
+		}
+		if (lives_proc_thread_was_cancelled(lpt)) {
+		  step->state = STEP_STATE_CANCELLED;
+		  weed_layer_set_invalid(layer, TRUE);
 
-        // if this is a pre-conversion for a clip, we won't have a target pal or gamma
-        // we have to get these from the srcgroup
+		  xtime = dec_running_steps(step);
+		  d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+				step->tdata->real_duration);
+		  d_print_debug("plan cancelled !\n");
+		  break;
+		}
+		if (plan->state == STEP_STATE_RESUMING) {
+		  if (!lives_proc_thread_get_resume_requested(lpt))
+		    lives_proc_thread_request_resume(lpt);
 
-        if (inpl == WEED_PALETTE_NONE) {
-          lives_clipsrc_group_t *srcgrp = mainw->track_sources[step->track];
-          int clipno = plan->model->clip_index[step->track];
-          if (!srcgrp) srcgrp = get_primary_srcgrp(clipno);
-          inpl = srcgrp->apparent_pal;
-          in_gamma_type = srcgrp->apparent_gamma;
-        }
+		  if (lives_proc_thread_is_paused(lpt)) {
+		    can_resume = FALSE;
+		    break;
+		  }
+		  xtime = lives_get_session_time();
+		  step->tdata->paused_time += xtime;
+		  step->state = STEP_STATE_RUNNING;
+		}
+		if (lives_proc_thread_is_paused(lpt)) {
+		  xtime = lives_get_session_time() ;
+		  step->tdata->paused_time += xtime;
+		  step->state = STEP_STATE_PAUSED;
+		  break;
+		}
+	      }
+	    }
+	    lstatus = lives_layer_get_status(layer);
+	    if (lstatus == LAYER_STATUS_LOADED || lstatus == LAYER_STATUS_READY) {
+	      xtime = lives_get_session_time();
 
-        get_op_order(out_width, out_height, in_iwidth, in_iheight, flags, outpl, inpl,
-                     out_gamma_type, in_gamma_type, op_order);
+	      if (!weed_layer_get_width(layer) || !weed_layer_get_height(layer)) BREAK_ME("size 0 layer");
 
-        if (in_iwidth < in_width || in_iheight < in_height)
-          d_print_debug("Needs letterbox, as we have outer size %d X %d and inner size %d X %d\n",
-                        in_width, in_height, in_iwidth, in_iheight);
+	      d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
+			    step->tdata->real_duration);
 
-        if (!op_order[OP_RESIZE] && !op_order[OP_PCONV] && !op_order[OP_GAMMA] && !op_order[OP_LETTERBOX]) {
-          //if (prefs->dev_show_timing)
-          d_print_debug("No conversion needed - skipping step\n");
-          step->state = STEP_STATE_SKIPPED;
+	      if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL)) {
+		exec_plan_substep_t *sub = make_substep(OP_DEINTERLACE, xtime, weed_layer_get_width(layer),
+							weed_layer_get_height(layer), weed_layer_get_palette(layer));
+		step->substeps = lives_list_append(step->substeps, (void *)sub);
+		d_print_debug("Layer needs deinterlacing\n");
+		lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
+		weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, FALSE);
+		step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE, deinterlace_frame, -1, "vI", layer,
+							     mainw->currticks);
+	      } else {
+		if (!(step->flags & STEP_FLAG_NO_READY_STAT))
+		  lives_layer_set_status(layer, LAYER_STATUS_READY);
+		else lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+		if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
+		  weed_instance_t *inst =
+		    rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
 
-          dec_running_steps(step);
-
-          if (weed_layer_check_valid(layer)) {
-            if (!(step->flags & STEP_FLAG_NO_READY_STAT)) {
-              d_print_debug("set layer %d stat to ready\n", step->track);
-              lives_layer_set_status(layer, LAYER_STATUS_READY);
-            } else {
-              d_print_debug("set layer %d stat to loaded\n", step->track);
-              lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-            }
-          }
-          break;
-        }
-
-        lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
-
-        /* est_dur = get_conversion_cost(COST_TYPE_TIME, out_width, out_height, */
-        /*                               in_iwidth, in_iheight, letterbox, */
-        /*                               outpl, inpl, NULL, */
-        /*                               out_gamma_type, in_gamma_type, FALSE); */
-
-        //d_print_debug("online estimate is %.4f msec\n", est_dur * 1000.);
-
-        d_print_debug("ORDER of ops is: (res %d, pconv %d, gamma %d, lb %d)\n",
-                      op_order[OP_RESIZE], op_order[OP_PCONV], op_order[OP_GAMMA], op_order[OP_LETTERBOX]);
-        if (op_order[OP_RESIZE] == 1) {
-          // RESIZE IS 1
-          d_print_debug("Resize");
-          // check combined
-          if (op_order[OP_PCONV] == 1)
-            d_print_debug(" + palconv");
-          if (op_order[OP_GAMMA] == 1)
-            d_print_debug(" + gamma");
-          if (op_order[OP_LETTERBOX] == 1)
-            d_print_debug(" + letterbox");
-
-          lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                         res_substep, WEED_SEED_INT, "v", step);
-        } else if (op_order[OP_PCONV] == 1) {
-          // pconv is 1
-          d_print_debug("Palconv");
-          if (op_order[OP_GAMMA] == 1)
-            d_print_debug(" + gamma");
-          lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                         pconv_substep, WEED_SEED_INT, "v", step);
-        } else if (op_order[OP_LETTERBOX] == 1) {
-          d_print_debug("Letterbox");
-          lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                         lbox_substep, WEED_SEED_INT, "v", step);
-        } else {
-          d_print_debug("Gamma");
-          lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                                         gamma_substep, WEED_SEED_INT, "v", step);
-        }
-        //
-        if (op_order[OP_RESIZE] == 2) {
-          d_print_debug(", resize");
-          if (op_order[OP_PCONV] == 2)
-            d_print_debug(" + palconv");
-          if (op_order[OP_GAMMA] == 2)
-            d_print_debug(" + gamma");
-          lives_proc_thread_chain(lpt, res_substep, WEED_SEED_INT, "v", step, NULL);
-        } else if (op_order[OP_PCONV] == 2) {
-          d_print_debug(", palconv");
-          if (op_order[OP_GAMMA] == 2)
-            d_print_debug(" + gamma");
-          lives_proc_thread_chain(lpt, pconv_substep, WEED_SEED_INT, "v", step, NULL);
-        } else if (op_order[OP_GAMMA] == 2) {
-          d_print_debug(", gamma");
-          lives_proc_thread_chain(lpt, gamma_substep, WEED_SEED_INT, "v", step, NULL);
-        } else if (op_order[OP_LETTERBOX] == 2) {
-          d_print_debug(", letterbox");
-          lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
-        }
-
-        if (op_order[OP_RESIZE] == 3) {
-          d_print_debug(", resize");
-          if (op_order[OP_PCONV] == 3)
-            d_print_debug(" + palconv");
-          if (op_order[OP_GAMMA] == 3)
-            d_print_debug(" + gamma");
-          lives_proc_thread_chain(lpt, res_substep, WEED_SEED_INT, "v", step, NULL);
-        } else if (op_order[OP_PCONV] == 3) {
-          if (op_order[OP_GAMMA] == 3) {
-            d_print_debug(" + gamma");
-            lives_proc_thread_chain(lpt, pconv_substep, WEED_SEED_INT, "v", step, NULL);
-          }
-        } else if (op_order[OP_GAMMA] == 3) {
-          d_print_debug(", gamma");
-          lives_proc_thread_chain(lpt, gamma_substep, WEED_SEED_INT, "v", step, NULL);
-        } else if (op_order[OP_LETTERBOX] == 3) {
-          d_print_debug(", letterbox");
-          lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
-        }
-
-        if (op_order[OP_LETTERBOX] == 4) {
-          d_print_debug(", letterbox");
-          lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
-        }
-
-        d_print_debug("\n");
-
-        SET_LPT_VALUE(lpt, int, "interp", get_interp_value(prefs->pb_quality, TRUE));
-
-        step->proc_thread = lpt;
-        step->state = STEP_STATE_RUNNING;
-
-        lives_proc_thread_set_cancellable(lpt);
-
-        // queue lpt and have it remove proc_thread from layer after
-        lives_layer_async_auto(layer, lpt);
-
-        inc_running_steps(step);
-      }
-      break;
-
-      case STEP_TYPE_APPLY_INST: {
-        weed_instance_t *inst;
-        if (!step->target) {
-          d_print_debug("\nstep %d: Output to sink ready @ %.2f msec\n", step_count, xtime * 1000.);
-
-          d_print_debug("\nMark all layers as ready\n");
-
-          for (int i = 0; i < plan->model->ntracks; i++) {
-            if (plan->layers[i]) {
-              g_print("layer %d\n", i);
-              lives_layer_set_status(plan->layers[i], LAYER_STATUS_READY);
-            }
-          }
-          step->state = STEP_STATE_FINISHED;
-          //dec_running_steps(step);
-          break;
-        }
-
-        inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
-
-        if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
-          d_print_debug("\nstep %d: RUN APPLY_INST (%s) @ %.2f msec, pd i %p\n",
-                        step_count, weed_filter_get_name((weed_filter_t *)step->target),
-                        xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
-
-          if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
-            d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
-                          step->count, step->track);
-            step->state = STEP_STATE_SKIPPED;
-            break;
-          }
-
-          step->state = STEP_STATE_RUNNING;
-          inc_running_steps(step);
-
-          step->proc_thread =
-            lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                                     run_apply_inst_step, WEED_SEED_INT, "vv", step, inst);
-        } else {
-          step->st_type = STEP_TYPE_LOAD;
-        }
-      }
-      break;
-      default: break;
-      }
-    }
-
-    if (state == STEP_STATE_RUNNING || (plan->state == STEP_STATE_RESUMING
-                                        && step->state == STEP_STATE_PAUSED)) {
-      complete = FALSE;
-      // check if step has completed
-      switch (step->st_type) {
-      case STEP_TYPE_LOAD: {
-        // finishes when state is LOADED or READY
-        layer = plan->layers[step->track];
-        if (!layer) {
-          step->state = STEP_STATE_ERROR;
-          error = 8;
-          xtime = dec_running_steps(step);
-          d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                        step->tdata->real_duration);
-          d_print_debug("layer disappeared !\n");
-
-          break;
-        }
-        if (!weed_layer_check_valid(layer)) {
-          error = 9;
-          step->state = STEP_STATE_ERROR;
-
-          xtime = dec_running_steps(step);
-
-          d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                        step->tdata->real_duration);
-          d_print_debug("layer invalid !\n");
-
-          break;
-        }
-        if (step->proc_thread) {
-          double xtime;
-          exec_plan_substep_t *substep = NULL;
-          if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
-          xtime = lives_get_session_time();
-          lives_proc_thread_join(step->proc_thread);
-          d_print_debug("deinterlace completed @ \n", xtime * 1000.);
-          for (LiVESList *list = step->substeps; list; list = list->next) {
-            substep = (exec_plan_substep_t *)list->data;
-            substep->end = xtime;
-            if (substep->op_idx == OP_DEINTERLACE) break;
-            substep = NULL;
-          }
-          if (substep) {
-            double dur = xtime - substep->start;
-            d_print_debug("Done in %.2f msec\n", dur * 1000.);
-          }
-          lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-        } else {
-          lpt = lives_layer_get_proc_thread(layer);
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_CONVERTING) {
-            if (lpt) {
-              if (error || cancelled) {
-                if (!lives_proc_thread_get_cancel_requested(lpt)) {
-                  weed_layer_set_invalid(layer, TRUE);
-                  lives_proc_thread_request_cancel(lpt, FALSE);
-                }
-                if (lives_proc_thread_was_cancelled(lpt)) {
-                  weed_layer_set_invalid(layer, TRUE);
-                  step->state = STEP_STATE_CANCELLED;
-                  dec_running_steps(step);
-                }
-                break;
-              }
-              if (paused) {
-                if (!lives_proc_thread_get_pause_requested(lpt))
-                  lives_proc_thread_request_pause(lpt);
-                if (lives_proc_thread_is_paused(lpt)) {
-                  xtime = lives_get_session_time();
-                  step->state = STEP_STATE_PAUSED;
-                  xtime = lives_get_session_time();
-                  step->tdata->paused_time -= xtime;
-                }
-                break;
-              }
-              if (lives_proc_thread_was_cancelled(lpt)) {
-                step->state = STEP_STATE_CANCELLED;
-                weed_layer_set_invalid(layer, TRUE);
-
-                xtime = dec_running_steps(step);
-                d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                              step->tdata->real_duration);
-                d_print_debug("plan cancelled !\n");
-                break;
-              }
-              if (plan->state == STEP_STATE_RESUMING) {
-                if (!lives_proc_thread_get_resume_requested(lpt))
-                  lives_proc_thread_request_resume(lpt);
-
-                if (lives_proc_thread_is_paused(lpt)) {
-                  can_resume = FALSE;
-                  break;
-                }
-                xtime = lives_get_session_time();
-                step->tdata->paused_time += xtime;
-                step->state = STEP_STATE_RUNNING;
-              }
-              if (lives_proc_thread_is_paused(lpt)) {
-                xtime = lives_get_session_time() ;
-                step->tdata->paused_time += xtime;
-                step->state = STEP_STATE_PAUSED;
-                break;
-              }
-            }
-          }
-          lstatus = lives_layer_get_status(layer);
-          if (lstatus == LAYER_STATUS_LOADED || lstatus == LAYER_STATUS_READY) {
-            xtime = lives_get_session_time();
-
-            if (!weed_layer_get_width(layer) || !weed_layer_get_height(layer)) BREAK_ME("size 0 layer");
-
-            d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                          step->tdata->real_duration);
-
-            if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL)) {
-              exec_plan_substep_t *sub = make_substep(OP_DEINTERLACE, xtime, weed_layer_get_width(layer),
-                                                      weed_layer_get_height(layer), weed_layer_get_palette(layer));
-              step->substeps = lives_list_append(step->substeps, (void *)sub);
-              d_print_debug("Layer needs deinterlacing\n");
-              lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
-              weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, FALSE);
-              step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE, deinterlace_frame, -1, "vI", layer,
-                                  mainw->currticks);
-            } else {
-              if (!(step->flags & STEP_FLAG_NO_READY_STAT))
-                lives_layer_set_status(layer, LAYER_STATUS_READY);
-              else lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-              if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
-                weed_instance_t *inst =
-                  rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
-
-                int layer_gamma = weed_layer_get_gamma(layer);
-                /* if (layer_gamma == WEED_GAMMA_LINEAR) { */
-                /*   // if we scaled params, scale them back so they are displayed correctly in interfaces */
-                /*   gamma_conv_params(WEED_GAMMA_SRGB, inst, TRUE); */
-                /*   gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE); */
-                /* } */
-              }
-              step->state = STEP_STATE_FINISHED;
-              dec_running_steps(step);
-            }
-            break;
-          }
-        }
-      }
+		  int layer_gamma = weed_layer_get_gamma(layer);
+		  /* if (layer_gamma == WEED_GAMMA_LINEAR) { */
+		  /*   // if we scaled params, scale them back so they are displayed correctly in interfaces */
+		  /*   gamma_conv_params(WEED_GAMMA_SRGB, inst, TRUE); */
+		  /*   gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE); */
+		  /* } */
+		}
+		step->state = STEP_STATE_FINISHED;
+		dec_running_steps(step);
+	      }
+	      break;
+	    }
+	  }
+	}
       break;
 
-      case STEP_TYPE_CONVERT: {
-        double gstart;
-        layer = plan->layers[step->track];
-        if (!layer) {
-          dec_running_steps(step);
-          d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                        step->tdata->real_end * 1000., step->tdata->real_duration);
-          d_print_debug("Something happened to layer !\n");
+	case STEP_TYPE_CONVERT: {
+	  double gstart;
+	  layer = plan->layers[step->track];
+	  if (!layer) {
+	    dec_running_steps(step);
+	    d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+			  step->tdata->real_end * 1000., step->tdata->real_duration);
+	    d_print_debug("Something happened to layer !\n");
 
-          step->state = STEP_STATE_ERROR;
-          error = 10;
-          break;
-        }
-        if (!weed_layer_check_valid(layer)) {
-          if (!cancelled && !error) {
-            dec_running_steps(step);
-            d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                          step->tdata->real_end * 1000., step->tdata->real_duration);
-            g_printerr("layer on track %d became invalid during conversion\n", step->track);
-            error = 11;
-            step->state = STEP_STATE_ERROR;
-            break;
-          }
-        }
-        res = check_step_condition(plan, step, cancelled, error, paused);
-        if (!res) {
-          if (step->state == STEP_STATE_ERROR) {
-            d_print_debug("step convert encountered an ERROR: %s\n",
-                          step->errmsg ? step->errmsg : "unspecified error");
-            if (layer) weed_layer_set_invalid(layer, TRUE);
-            error = 12;
-          } else if (step->state == STEP_STATE_CANCELLED) {
-            if (layer) weed_layer_set_invalid(layer, TRUE);
-          } else {
-            if (weed_layer_check_valid(layer)) {
-              if (!(step->flags & STEP_FLAG_NO_READY_STAT))
-                lives_layer_set_status(layer, LAYER_STATUS_READY);
-              else lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-            } else {
-              d_print_debug("Layer %d is invalid !!!!\n", step->track);
-              step->state = STEP_STATE_ERROR;
-            }
+	    step->state = STEP_STATE_ERROR;
+	    error = 10;
+	    break;
+	  }
+	  if (!weed_layer_check_valid(layer)) {
+	    if (!cancelled && !error) {
+	      dec_running_steps(step);
+	      d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+			    step->tdata->real_end * 1000., step->tdata->real_duration);
+	      g_printerr("layer on track %d became invalid during conversion\n", step->track);
+	      error = 11;
+	      step->state = STEP_STATE_ERROR;
+	      break;
+	    }
+	  }
+	  res = check_step_condition(plan, step, cancelled, error, paused);
+	  if (!res) {
+	    if (step->state == STEP_STATE_ERROR) {
+	      d_print_debug("step convert encountered an ERROR: %s\n",
+			    step->errmsg ? step->errmsg : "unspecified error");
+	      if (layer) weed_layer_set_invalid(layer, TRUE);
+	      error = 12;
+	    } else if (step->state == STEP_STATE_CANCELLED) {
+	      if (layer) weed_layer_set_invalid(layer, TRUE);
+	    } else {
+	      if (weed_layer_check_valid(layer)) {
+		if (!(step->flags & STEP_FLAG_NO_READY_STAT))
+		  lives_layer_set_status(layer, LAYER_STATUS_READY);
+		else lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+	      } else {
+		d_print_debug("Layer %d is invalid !!!!\n", step->track);
+		step->state = STEP_STATE_ERROR;
+	      }
 
-            lpt = step->proc_thread;
-            lives_proc_thread_join_int(lpt);
+	      lpt = step->proc_thread;
+	      lives_proc_thread_join_int(lpt);
 
-            gstart = lives_proc_thread_get_double_value(lpt, "gconv_start");
-            if (gstart) {
-              size_t frmsize = lives_frame_calc_bytesize(step->fin_width, step->fin_height,
-                               step->fin_pal, FALSE, NULL);
-              double gend = lives_proc_thread_get_double_value(lpt, "gconv_end");
-              glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
-            }
+	      gstart = lives_proc_thread_get_double_value(lpt, "gconv_start");
+	      if (gstart) {
+		size_t frmsize = lives_frame_calc_bytesize(step->fin_width, step->fin_height,
+							   step->fin_pal, FALSE, NULL);
+		double gend = lives_proc_thread_get_double_value(lpt, "gconv_end");
+		glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
+	      }
 
-            weed_leaf_delete(layer, LIVES_LEAF_PROC_THREAD);
+	      weed_leaf_delete(layer, LIVES_LEAF_PROC_THREAD);
 
-            step->proc_thread = NULL;
-            lives_proc_thread_unref(lpt);
-            dec_running_steps(step);
+	      step->proc_thread = NULL;
+	      lives_proc_thread_unref(lpt);
+	      dec_running_steps(step);
 
-            d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
-                          step->tdata->real_end * 1000., step->tdata->real_duration);
-            if (step->tdata->est_duration)
-              d_print_debug("EST DURATION %f vs real duration %f\n", step->tdata->est_duration  * 1000.,
-                            step->tdata->real_duration);
-          }
-        } else {
-          complete = FALSE;
-          if (res & 2) can_resume = FALSE;
-        }
-      }
-      break;
-      case STEP_TYPE_APPLY_INST:
-        res = check_step_condition(plan, step, cancelled, error, paused);
-        if (!res) {
-          if (step->state == STEP_STATE_ERROR) {
-            d_print_debug("step appl inst encountered an ERROR: %s\n",
-                          step->errmsg ? step->errmsg : "unspecified error");
-            error = 13;
-          } else if (step->state == STEP_STATE_CANCELLED) {
-            d_print_debug("step cancelled\n");
-          } else {
-            lives_filter_error_t filter_error;
+	      d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
+			    step->tdata->real_end * 1000., step->tdata->real_duration);
+	      if (step->tdata->est_duration)
+		d_print_debug("EST DURATION %f vs real duration %f\n", step->tdata->est_duration  * 1000.,
+			      step->tdata->real_duration);
+	    }
+	  } else {
+	    complete = FALSE;
+	    if (res & 2) can_resume = FALSE;
+	  }
+	}
+	  break;
+	case STEP_TYPE_APPLY_INST:
+	  res = check_step_condition(plan, step, cancelled, error, paused);
+	  if (!res) {
+	    if (step->state == STEP_STATE_ERROR) {
+	      d_print_debug("step appl inst encountered an ERROR: %s\n",
+			    step->errmsg ? step->errmsg : "unspecified error");
+	      error = 13;
+	    } else if (step->state == STEP_STATE_CANCELLED) {
+	      d_print_debug("step cancelled\n");
+	    } else {
+	      lives_filter_error_t filter_error;
 
-            // filter_errors include:
-            /* FILTER_ERROR_INVALID_PLUGIN; */
-            /* FILTER_ERROR_INVALID_FILTER; */
-            /* FILTER_ERROR_BUSY; */
-            /* FILTER_ERROR_NEEDS_REINIT; */
+	      // filter_errors include:
+	      /* FILTER_ERROR_INVALID_PLUGIN; */
+	      /* FILTER_ERROR_INVALID_FILTER; */
+	      /* FILTER_ERROR_BUSY; */
+	      /* FILTER_ERROR_NEEDS_REINIT; */
 
-            // thse should have been checked for already:
-            /* FILTER_ERROR_INVALID_INSTANCE - NULL instance */
-            /* FILTER_ERROR_IS_AUDIO */
+	      // thse should have been checked for already:
+	      /* FILTER_ERROR_INVALID_INSTANCE - NULL instance */
+	      /* FILTER_ERROR_IS_AUDIO */
 
-            filter_error = lives_proc_thread_join_int(step->proc_thread);
+	      filter_error = lives_proc_thread_join_int(step->proc_thread);
 
-            // grab all the juicy timing data from lpt and store it in the summary
-            lives_proc_thread_unref(step->proc_thread);
+	      // grab all the juicy timing data from lpt and store it in the summary
+	      lives_proc_thread_unref(step->proc_thread);
 
-            if (filter_error == FILTER_ERROR_INVALID_INSTANCE || filter_error == FILTER_ERROR_IS_AUDIO
-                || filter_error == FILTER_ERROR_BUSY || filter_error == FILTER_INFO_BYPASSED) {
-              step->state = STEP_STATE_SKIPPED;
-            }
-          }
-          dec_running_steps(step);
-          d_print_debug("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
-                        step->tdata->real_duration);
-        } else {
-          if ((cancelled || error) && step->proc_thread
-              && !lives_proc_thread_should_cancel(step->proc_thread))
-            lives_proc_thread_request_cancel(step->proc_thread, TRUE);
-          complete = FALSE;
-          if (res & 2) can_resume = FALSE;
-        }
-        break;
-      default: break;
+	      if (filter_error == FILTER_ERROR_INVALID_INSTANCE || filter_error == FILTER_ERROR_IS_AUDIO
+		  || filter_error == FILTER_ERROR_BUSY || filter_error == FILTER_INFO_BYPASSED) {
+		step->state = STEP_STATE_SKIPPED;
+	      }
+	    }
+	    dec_running_steps(step);
+	    d_print_debug("APPL inst done @ %.2f msec, duration %.2f msec\n", 1000. * step->tdata->real_end,
+			  step->tdata->real_duration);
+	  } else {
+	    if ((cancelled || error) && step->proc_thread
+		&& !lives_proc_thread_should_cancel(step->proc_thread))
+	      lives_proc_thread_request_cancel(step->proc_thread, TRUE);
+	    complete = FALSE;
+	    if (res & 2) can_resume = FALSE;
+	  }
+	  break;
+	default: break;
+	}
       }
     }
 
@@ -2405,167 +2364,166 @@ static void run_plan(exec_plan_t *plan) {
       complete = FALSE;
       paused = FALSE;
     }
-  }
-  pthread_yield();
-  _lives_microsleep(10);
-} while (!complete);
+    pthread_yield();
+    _lives_microsleep(10);
+  } while (!complete);
 
-xtime = lives_get_session_time();
-plan->tdata->real_end = xtime;
-plan->tdata->waiting_time += xtime;
+  xtime = lives_get_session_time();
+  plan->tdata->real_end = xtime;
+  plan->tdata->waiting_time += xtime;
 
-for (int i = 0; i < plan->model->ntracks; i++) {
-  if (plan->layers) {
-    layer = plan->layers[i];
-    //weed_layer_ref(layer);
-    if (layer) {
-      if (plan->state == PLAN_STATE_CANCELLED || plan->state == PLAN_STATE_ERROR)
-        weed_layer_set_invalid(layer, TRUE);
-      else {
-        lock_layer_status(layer);
-        if (_lives_layer_get_status(layer) != LAYER_STATUS_READY) {
-          _weed_layer_set_invalid(layer, TRUE);
-        }
-        unlock_layer_status(layer);
+  for (int i = 0; i < plan->model->ntracks; i++) {
+    if (plan->layers) {
+      layer = plan->layers[i];
+      //weed_layer_ref(layer);
+      if (layer) {
+	if (plan->state == PLAN_STATE_CANCELLED || plan->state == PLAN_STATE_ERROR)
+	  weed_layer_set_invalid(layer, TRUE);
+	else {
+	  lock_layer_status(layer);
+	  if (_lives_layer_get_status(layer) != LAYER_STATUS_READY) {
+	    _weed_layer_set_invalid(layer, TRUE);
+	  }
+	  unlock_layer_status(layer);
+	}
+	if (weed_plant_has_leaf(layer, LIVES_LEAF_PLAN_CONTROL))
+	  weed_leaf_delete(layer, LIVES_LEAF_PLAN_CONTROL);
       }
-      if (weed_plant_has_leaf(layer, LIVES_LEAF_PLAN_CONTROL))
-        weed_leaf_delete(layer, LIVES_LEAF_PLAN_CONTROL);
     }
   }
-}
 
-if (cancelled) {
-  d_print_debug("Cancel plan requested\n");
-  d_print_debug("Cancelling plan @ %.2f\n", xtime * 1000.);
-} else if (error) {
-  SET_PLAN_STATE(ERROR);
-  g_print("PLAN error %d\n", error);
-  lives_proc_thread_error(error, LPT_ERR_MAJOR, "plan error %d", error);
-} else {
-  if (lives_proc_thread_get_cancel_requested(self)) {
-    d_print_debug("Cancel requested, ignoring as we are done anyway !\n");
+  if (cancelled) {
+    d_print_debug("Cancel plan requested\n");
+    d_print_debug("Cancelling plan @ %.2f\n", xtime * 1000.);
+  } else if (error) {
+    SET_PLAN_STATE(ERROR);
+    g_print("PLAN error %d\n", error);
+    lives_proc_thread_error(error, LPT_ERR_MAJOR, "plan error %d", error);
+  } else {
+    if (lives_proc_thread_get_cancel_requested(self)) {
+      d_print_debug("Cancel requested, ignoring as we are done anyway !\n");
+    }
   }
-}
 
-if (plan->state == PLAN_STATE_RUNNING) {
-  int gtorun = 0;
-  //extract_timedata(plan);
-  /* d_print_debug("train nnet\n"); */
-  /* if (plan->iteration < 10) { */
-  /*   gtorun = plan->iteration; */
-  /* } else { */
-  /*   if (glob_timing->ann_gens < 200) gtorun = 200 - glob_timing->ann_gens; */
-  /*   else { */
-  /*     if (!glob_timing->ann->genstorun) { */
-  /*       if (glob_timing->ann->last_res > ANN_ERR_THRESH) */
-  /*         gtorun = 5; */
-  /*       else  gtorun = 1; */
-  /*     } */
-  /*   } */
-  /* } */
-  /* if (gtorun) glob_timing->ann->genstorun += gtorun; */
+  if (plan->state == PLAN_STATE_RUNNING) {
+    int gtorun = 0;
+    //extract_timedata(plan);
+    /* d_print_debug("train nnet\n"); */
+    /* if (plan->iteration < 10) { */
+    /*   gtorun = plan->iteration; */
+    /* } else { */
+    /*   if (glob_timing->ann_gens < 200) gtorun = 200 - glob_timing->ann_gens; */
+    /*   else { */
+    /*     if (!glob_timing->ann->genstorun) { */
+    /*       if (glob_timing->ann->last_res > ANN_ERR_THRESH) */
+    /*         gtorun = 5; */
+    /*       else  gtorun = 1; */
+    /*     } */
+    /*   } */
+    /* } */
+    /* if (gtorun) glob_timing->ann->genstorun += gtorun; */
 
-  /* do { */
-  /*   // train nnet. With very little data it trains easily */
-  /*   // but when we have varied data this is more difficult */
-  /*   // and it maybe overtrained */
-  /*   nns++; */
-  /*   errval = lives_ann_evolve(glob_timing->ann); */
-  /*   // want high varaince at first then reduce it */
-  /*   if ((mainw->nodemodel->flags & NODEMODEL_TRAINED)) { */
-  /*     if (glob_timing->ann->no_change_count > 1000) { */
-  /*       glob_timing->ann->nvary = 1; */
-  /*       glob_timing->ann->damp = 0.9999; */
-  /*     } */
-  /*   } */
-  /*   // when we get a new model, we do not want to train the estimator too much, else it can get overtrained */
-  /*   // on intitial values; however we want to gradually start increasing this until we get reasonable estimates */
-  /*   // then we can rebuild the nodemodel and plan with more accurate values */
-  /*   //  */
-  /* } while (nns <=  */
-  /* 	     && nns < ANN_GEN_LIMIT / 5); */
+    /* do { */
+    /*   // train nnet. With very little data it trains easily */
+    /*   // but when we have varied data this is more difficult */
+    /*   // and it maybe overtrained */
+    /*   nns++; */
+    /*   errval = lives_ann_evolve(glob_timing->ann); */
+    /*   // want high varaince at first then reduce it */
+    /*   if ((mainw->nodemodel->flags & NODEMODEL_TRAINED)) { */
+    /*     if (glob_timing->ann->no_change_count > 1000) { */
+    /*       glob_timing->ann->nvary = 1; */
+    /*       glob_timing->ann->damp = 0.9999; */
+    /*     } */
+    /*   } */
+    /*   // when we get a new model, we do not want to train the estimator too much, else it can get overtrained */
+    /*   // on intitial values; however we want to gradually start increasing this until we get reasonable estimates */
+    /*   // then we can rebuild the nodemodel and plan with more accurate values */
+    /*   //  */
+    /* } while (nns <=  */
+    /* 	     && nns < ANN_GEN_LIMIT / 5); */
 
-  /* if (nns == ANN_GEN_LIMIT) { */
-  /*   lives_ann_set_variance(glob_timing->ann, glob_timing->ann->maxr, glob_timing->ann->maxrb, */
-  /* 			     0.9999, 1); */
-  /* } */
-  /* if (errval <= ANN_ERR_THRESH) */
-  /*   glob_timing->ann->flags |= ANN_TRAINED; */
+    /* if (nns == ANN_GEN_LIMIT) { */
+    /*   lives_ann_set_variance(glob_timing->ann, glob_timing->ann->maxr, glob_timing->ann->maxrb, */
+    /* 			     0.9999, 1); */
+    /* } */
+    /* if (errval <= ANN_ERR_THRESH) */
+    /*   glob_timing->ann->flags |= ANN_TRAINED; */
 
-  errval = sqrt(glob_timing->ann->last_res);
-  d_print_debug("ann error is %f msec after %d generations\n", errval, glob_timing->ann->generations);
+    errval = sqrt(glob_timing->ann->last_res);
+    d_print_debug("ann error is %f msec after %d generations\n", errval, glob_timing->ann->generations);
 
-  pthread_mutex_lock(&glob_timing->upd_mutex);
-  // update: real_duration, tot_duration and avg_duration
+    pthread_mutex_lock(&glob_timing->upd_mutex);
+    // update: real_duration, tot_duration and avg_duration
 
-  if (plan->tdata->actual_start)
-    plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->actual_start
-                                 - plan->tdata->paused_time;
-  else
-    plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->real_start
-                                 - plan->tdata->paused_time;
+    if (plan->tdata->actual_start)
+      plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->actual_start
+	- plan->tdata->paused_time;
+    else
+      plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->real_start
+	- plan->tdata->paused_time;
 
-  glob_timing->tot_duration += plan->tdata->real_duration;
-  glob_timing->last_cyc_duration = plan->tdata->real_duration;
+    glob_timing->tot_duration += plan->tdata->real_duration;
+    glob_timing->last_cyc_duration = plan->tdata->real_duration;
 
-  glob_timing->tgt_duration = plan->tdata->tgt_time;
+    glob_timing->tgt_duration = plan->tdata->tgt_time;
 
-  glob_timing->avg_duration = glob_timing->tot_duration / (double)plan->iteration;
+    glob_timing->avg_duration = glob_timing->tot_duration / (double)plan->iteration;
 
-  glob_timing->active = FALSE;
-  pthread_mutex_unlock(&glob_timing->upd_mutex);
+    glob_timing->active = FALSE;
+    pthread_mutex_unlock(&glob_timing->upd_mutex);
 
-  d_print_debug("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%+.4f), average is %.4f\n"
-                "sequential time %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n"
-                "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
-                "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f, "
-                "waiting time = %.4f (%.2f %%)\n",
-                1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
-                1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
-                1000. * glob_timing->tot_duration / (double)plan->iteration,
-                plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
-                1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.,
-                1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
-                plan->tdata->active_pl_time / plan->tdata->preload_time * 100.,
-                1000. * plan->tdata->queued_time, plan->tdata->queued_time / plan->tdata->real_duration * 100.,
-                1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
-                1000. * plan->tdata->paused_time, 1000. * plan->tdata->waiting_time,
-                plan->tdata->waiting_time / plan->tdata->real_duration * 100.);
+    d_print_debug("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%+.4f), average is %.4f\n"
+		  "sequential time %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n"
+		  "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
+		  "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f, "
+		  "waiting time = %.4f (%.2f %%)\n",
+		  1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
+		  1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
+		  1000. * glob_timing->tot_duration / (double)plan->iteration,
+		  plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
+		  1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.,
+		  1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
+		  plan->tdata->active_pl_time / plan->tdata->preload_time * 100.,
+		  1000. * plan->tdata->queued_time, plan->tdata->queued_time / plan->tdata->real_duration * 100.,
+		  1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
+		  1000. * plan->tdata->paused_time, 1000. * plan->tdata->waiting_time,
+		  plan->tdata->waiting_time / plan->tdata->real_duration * 100.);
 
-  char *bps = NULL, *gbps = NULL;
+    char *bps = NULL, *gbps = NULL;
 
-  if (glob_timing->bytes_per_sec) bps = lives_format_storage_space_string((uint64_t)glob_timing->bytes_per_sec);
-  if (glob_timing->gbytes_per_sec) gbps = lives_format_storage_space_string((uint64_t)glob_timing->gbytes_per_sec);
+    if (glob_timing->bytes_per_sec) bps = lives_format_storage_space_string((uint64_t)glob_timing->bytes_per_sec);
+    if (glob_timing->gbytes_per_sec) gbps = lives_format_storage_space_string((uint64_t)glob_timing->gbytes_per_sec);
 
-  if (bps) d_print_debug(", memcpy speed is measured as %s per second", bps);
-  if (gbps) d_print_debug(", gamma convert byterate is measured as %s per second", gbps);
-  d_print_debug("\n\n\n");
-  if (bps) lives_free(bps);
-  if (gbps) lives_free(gbps);
+    if (bps) d_print_debug(", memcpy speed is measured as %s per second", bps);
+    if (gbps) d_print_debug(", gamma convert byterate is measured as %s per second", gbps);
+    d_print_debug("\n\n\n");
+    if (bps) lives_free(bps);
+    if (gbps) lives_free(gbps);
 
-  /* if (lives_proc_thread_is_paused(ann_proc)) lives_proc_thread_request_resume(ann_proc); */
+    /* if (lives_proc_thread_is_paused(ann_proc)) lives_proc_thread_request_resume(ann_proc); */
 
-  /* if (!(glob_timing->ann->flags & ANN_TRAINED)) { */
-  /*   // needs about 200 generations of testing */
-  /*   if (glob_timing->ann_gens > 200 || glob_timing->ann->no_change_count >= 50 */
-  /*       || errval <= ANN_ERR_THRESH) { */
-  /*     if (!lives_proc_thread_is_paused(ann_proc)) lives_proc_thread_request_pause(ann_proc); */
-  /* 	  mainw->refresh_model = TRUE; */
-  /*       glob_timing->ann->flags |= ANN_TRAINED; */
-  /*       lives_proc_thread_set_loveliness(ann_proc, DEF_LOVELINESS / 2.); */
-  /*   } */
-  /* } */
-  SET_PLAN_STATE(COMPLETE);
-} else {
-  pthread_mutex_lock(&glob_timing->upd_mutex);
-  glob_timing->active = FALSE;
-  pthread_mutex_unlock(&glob_timing->upd_mutex);
-}
-MSGMODE_OFF(DEBUG);
+    /* if (!(glob_timing->ann->flags & ANN_TRAINED)) { */
+    /*   // needs about 200 generations of testing */
+    /*   if (glob_timing->ann_gens > 200 || glob_timing->ann->no_change_count >= 50 */
+    /*       || errval <= ANN_ERR_THRESH) { */
+    /*     if (!lives_proc_thread_is_paused(ann_proc)) lives_proc_thread_request_pause(ann_proc); */
+    /* 	  mainw->refresh_model = TRUE; */
+    /*       glob_timing->ann->flags |= ANN_TRAINED; */
+    /*       lives_proc_thread_set_loveliness(ann_proc, DEF_LOVELINESS / 2.); */
+    /*   } */
+    /* } */
+    SET_PLAN_STATE(COMPLETE);
+  } else {
+    pthread_mutex_lock(&glob_timing->upd_mutex);
+    glob_timing->active = FALSE;
+    pthread_mutex_unlock(&glob_timing->upd_mutex);
+  }
+  //MSGMODE_OFF(DEBUG);
 
-____FUNC_EXIT____;
-if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
-nplans--;
+  ____FUNC_EXIT____;
+  if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
+  nplans--;
 }
 
 
@@ -2671,7 +2629,9 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
 
     lives_proc_thread_set_cancellable(lpt);
     lives_proc_thread_set_pauseable(lpt, TRUE);
-    plan->tdata->exec_time = lives_get_session_time();
+
+    if (plan->tdata)
+      plan->tdata->exec_time = lives_get_session_time();
     nplans++;
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
   } else run_plan(plan);
@@ -2729,6 +2689,7 @@ exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **layers) {
       *xstep = plan_step_copy(cycle, template, step);
       cycle->steps = lives_list_append(cycle->steps, (void *)xstep);
     }
+    cycle->tdata = LIVES_CALLOC_SIZEOF(timedata_t, 1);
   }
   return cycle;
 }
@@ -7132,8 +7093,9 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
   if (!mainw->ext_playback) {
     nsinks = 1;
     model_type = NODE_MODELS_INTERNAL;
-    if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) nsinks = 2;
   }
+  else if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) nsinks = 2;
+
   if (nsinks != 1) {
     model_type = NODE_MODELS_OUTPUT;
     model_for = (void *)mainw->vpp;
@@ -7724,12 +7686,23 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
 lives_result_t run_next_cycle(void) {
   // run a fresh iteration of mainw->exec_plan
   // WARNING - will alter mainw->plan_cycle
-  if (mainw->refresh_model) return LIVES_RESULT_INVALID;
-  if (!mainw->exec_plan) return LIVES_RESULT_FAIL;
-  if (mainw->cancelled != CANCEL_NONE) return LIVES_RESULT_INVALID;
-  if (mainw->plan_runner_proc
-      && lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc))
+  if (mainw->refresh_model) {
+    g_print("refresh model set, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
+  }
+  if (!mainw->exec_plan) {
+    g_print("no plan template, not running next cycle !\n");
+    return LIVES_RESULT_FAIL;
+  }
+  if (mainw->cancelled != CANCEL_NONE) {
+    g_print("playback cancelled, not running next cycle !\n");
+    return LIVES_RESULT_INVALID;
+  }
+  if (mainw->plan_runner_proc
+      && lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)) {
+    g_print("running plan cancelled, not running next cycle !\n");
+    return LIVES_RESULT_INVALID;
+  }
 
   if (mainw->plan_cycle) {
     if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
@@ -7764,16 +7737,20 @@ lives_result_t run_next_cycle(void) {
   // reset layers for next cycle. Do NOT free them now
   mainw->layers = map_sources_to_tracks(FALSE, TRUE);
 
-  if (!mainw->layers) return LIVES_RESULT_FAIL;
-
+  if (!mainw->layers) {
+    g_print("no layers, not running next cycle !\n");
+    return LIVES_RESULT_FAIL;
+  }
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
   execute_plan(mainw->plan_cycle, TRUE);
 
   if (mainw->cancelled != CANCEL_NONE
       || (!mainw->plan_runner_proc
-          || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)))
+          || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc))) {
+    g_print("no layers, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
+  }
 
   if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
     // trigger next plan cycle. We can start loading background frames while displaying current one

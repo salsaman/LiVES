@@ -49,7 +49,10 @@ char *commafmt(double val, int fix);
 
 ////////////// OS utils ///
 
-void lives_abort(const char *reason);
+void _lives_abort(const char *file, int line, const char *reason);
+
+#define lives_abort(reason) _lives_abort(_FILE_REF_, _LINE_REF_, reason)
+
 int lives_system(const char *com, boolean allow_error);
 ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t buflen);
 #define lives_popen(com, allow_error, buff) _lives_popen(com, allow_error, (void *)buff, sizeof(buff))

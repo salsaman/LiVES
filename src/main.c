@@ -424,7 +424,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
   printed = 1;
 #endif
 
-  if (mainw) mainw->critical = TRUE;
+  if (mainw && !mainw->critical) mainw->critical = 1;
 
   if (!pthread_equal(main_thread, pthread_self())) {
     // if we are not the main thread, just exit

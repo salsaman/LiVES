@@ -1495,7 +1495,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
   HOOKSTACK_FLAGS_ADJUST(hs_op_flags, is_fg_thread());
 
-  if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
+  //if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
 
   if (!hstacks) {
     if (hs_op_flags & HOOKSTACK_NATIVE) hstacks = THREADVAR(hook_stacks);
@@ -1607,7 +1607,6 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         closure->flags &= ~HOOK_STATUS_ACTIONED;
         closure->flags |= hstack->req_target_set_flags;
         if (closure->flags & HOOK_CB_PRIORITY) dflags |= DTYPE_PREPEND;
-        g_print("TRANSFER\n");
         lives_proc_thread_show_func_call(closure->proc_thread);
         if (lives_hook_add(hstack->req_target_stacks, hstack->req_target_type,
                            closure->flags, closure, dflags) != lpt)

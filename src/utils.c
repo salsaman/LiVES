@@ -214,15 +214,18 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
+void _lives_abort(const char *file, int line, const char *reason) {
   // ignore sigint, sigterm, sigsegv, sigfpe
   ign_signal_handlers();
 
+  if (!reason) reason = _("Aborting");
+  fprintf(stderr, "lives_abort called at %s line %d\n%s\n", file, line, reason);
+  mainw->critical = 2;
+  
   if (mainw && !pthread_equal(main_thread, pthread_self())) {
     catch_sigint(-LIVES_SIGABRT, NULL, NULL);
     mainw->critical_errmsg = reason;
     mainw->critical_thread = THREADVAR(uid);
-    mainw->critical = TRUE;
     pthread_detach(pthread_self());
     /* while (1) { */
     /*   // sleep for 1 quadrillion nanoseconds */
@@ -231,8 +234,7 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   }
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-
-  if (!reason) reason = _("Aborting");
+  
   lives_set_status(LIVES_STATUS_FATAL);
   BREAK_ME(reason);
   if (mainw && mainw->global_hook_stacks && mainw->global_hook_stacks[FATAL_HOOK])

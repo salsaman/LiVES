@@ -923,9 +923,9 @@ typedef struct {
   boolean can_play;
 
   boolean error; //  --> status
-  volatile boolean fatal; ///< got fatal signal --> status
+  volatile int fatal; ///< got fatal signal --> status
 
-  volatile boolean critical; ///< got critical signal --> status
+  volatile int critical; ///< got critical signal --> status
   uint64_t critical_thread;
   int critical_errno;
   const char *critical_errmsg;

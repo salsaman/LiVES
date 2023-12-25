@@ -1209,7 +1209,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
   boolean is_active;
   int depth;
 
-  if (mainw->critical) lives_abort(mainw->critical_errmsg);
+  if (mainw->critical == 1) lives_abort(mainw->critical_errmsg);
 
   mainw->n_service_calls++;
 
@@ -1239,7 +1239,8 @@ boolean fg_service_fulfill_cb(void *dummy) {
     // and so on. Thus things are turned inside out, instead of the gui toolkit calling
     // this function we trigger the gui loop for within it
 
-    if (mainw->critical) lives_abort(mainw->critical_errmsg);
+    if (mainw->critical > 1) exit(mainw->critical - 1);
+    if (mainw->critical == 1) lives_abort(mainw->critical_errmsg);
 
     is_active = FALSE;
 
@@ -3470,8 +3471,10 @@ static weed_plant_t *get_plant_for_agrp(LiVESAccelGroup * accel_group) {
 void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
                                GdkModifierType accel_mods,  GtkAccelFlags accel_flags,
                                lives_funcptr_t func, void *user_data, GClosureNotify dest) {
+  GtkAccelGroupEntry *entries;
   weed_plant_t *agrp = get_plant_for_agrp(accel_group);
   char *ukey = lives_strdup_printf(".%lu", gen_unique_id());
+  int nvals;
   LIVES_CALLOC_TYPE(lives_accel_map, amap, 1);
   amap->keyval = keyval;
   amap->mod = accel_mods;
@@ -3481,6 +3484,10 @@ void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
   weed_set_voidptr_value(agrp, ukey, amap);
   _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags,
                              _lives_cclosure_new(LIVES_GUI_CALLBACK(func), user_data, dest));
+  /* _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags, */
+  /*                            _lives_cclosure_new(LIVES_GUI_CALLBACK(accel_act), user_data, dest)); */
+  /* entries = gtk_accel_group_query(accel_group, keyval, accel_mods, &nvals); */
+  /* quark = entries[0]->accel_path_quark; */
 }
 
 
@@ -3544,13 +3551,13 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   THREADVAR(accel_mod) = mod;
   THREADVAR(accel_data) = data;
   lives_proc_thread_trigger_hooks(self, SEGMENT_START_HOOK);
-  gtk_accel_groups_activate(obj, keyval, mod);
+  gtk_accel_groups_activate(obj, keyval, mod | LIVES_SPECIAL_MASK);
   lives_proc_thread_trigger_hooks(self, SEGMENT_END_HOOK);
   THREADVAR(accel_group) = NULL;
   THREADVAR(accel_key) = 0;
   THREADVAR(accel_mod) = 0;
   THREADVAR(accel_data) = NULL;
-  return ret;
+  return TRUE;
 }
 #endif
 

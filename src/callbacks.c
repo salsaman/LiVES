@@ -7302,8 +7302,6 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         mainw->ignore_screen_size = TRUE;
         resize_play_window();
         mainw->ignore_screen_size = FALSE;
-        if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
-          lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
       }
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);

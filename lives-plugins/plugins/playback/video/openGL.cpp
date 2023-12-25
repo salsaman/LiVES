@@ -82,7 +82,7 @@ static Atom XA_WIN_LAYER;
 
 static Display *dpy;
 
-static Window xWin;
+static Window xWindow;
 static GLXWindow glxWin;
 static GLXContext context;
 
@@ -126,6 +126,7 @@ static pthread_mutex_t cond_mutex;
 static void *render_thread_func(void *data);
 
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
+  if (event->type == KeyPress) fprintf(stderr, "Key\n"); 
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
@@ -237,7 +238,7 @@ static int get_texture_texID(int tnum) {
 
 const char *module_check_init(void) {
   XInitThreads();
-  t
+
   pbo_available = FALSE;
 
   if (GL_ARB_pixel_buffer_object) {
@@ -391,7 +392,7 @@ static void setWindowDecorations(void) {
   XLockDisplay(dpy);
   WM_HINTS = XInternAtom(dpy, "_MOTIF_WM_HINTS", True);
   if (WM_HINTS != None) {
-    XGetWindowProperty(dpy, xWin, WM_HINTS, 0,
+    XGetWindowProperty(dpy, xWindow, WM_HINTS, 0,
                        sizeof(MotifWmHints) / sizeof(long),
                        False, AnyPropertyType, &typeAtom,
                        &iFormat, &ulItems, &ulBytesAfter, &pucData);
@@ -399,7 +400,7 @@ static void setWindowDecorations(void) {
     newHints.flags = MWM_HINTS_DECORATIONS;
     newHints.decorations = 0;
 
-    XChangeProperty(dpy, xWin, WM_HINTS, WM_HINTS,
+    XChangeProperty(dpy, xWindow, WM_HINTS, WM_HINTS,
                     32, PropModeReplace, (unsigned char *) &newHints,
                     sizeof(MotifWmHints) / sizeof(long));
 
@@ -411,7 +412,7 @@ static void setWindowDecorations(void) {
   if (WM_HINTS != None) {
     long KWMHints = 0;
 
-    XChangeProperty(dpy, xWin, WM_HINTS, WM_HINTS, 32,
+    XChangeProperty(dpy, xWindow, WM_HINTS, WM_HINTS, 32,
                     PropModeReplace,
                     (unsigned char *) &KWMHints,
                     sizeof(KWMHints) / 4);
@@ -422,7 +423,7 @@ static void setWindowDecorations(void) {
   if (WM_HINTS != None) {
     long GNOMEHints = 0;
 
-    XChangeProperty(dpy, xWin, WM_HINTS, WM_HINTS, 32,
+    XChangeProperty(dpy, xWindow, WM_HINTS, WM_HINTS, 32,
                     PropModeReplace,
                     (unsigned char *) &GNOMEHints,
                     sizeof(GNOMEHints) / 4);
@@ -430,7 +431,7 @@ static void setWindowDecorations(void) {
   }
   /* Finally set the transient hints if necessary */
   if (!set) {
-    XSetTransientForHint(dpy, xWin, RootWindow(dpy, DefaultScreen(dpy)));
+    XSetTransientForHint(dpy, xWindow, RootWindow(dpy, DefaultScreen(dpy)));
   }
   XUnlockDisplay(dpy);
 }
@@ -439,8 +440,8 @@ static void setWindowDecorations(void) {
 static void alwaysOnTop() {
   long propvalue = 12;
   XLockDisplay(dpy);
-  XChangeProperty(dpy, xWin, XA_WIN_LAYER, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&propvalue, 1);
-  XRaiseWindow(dpy, xWin);
+  XChangeProperty(dpy, xWindow, XA_WIN_LAYER, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&propvalue, 1);
+  XRaiseWindow(dpy, xWindow);
   XUnlockDisplay(dpy);
 }
 
@@ -448,7 +449,7 @@ static void alwaysOnTop() {
 static boolean isWindowMapped(void) {
   XWindowAttributes attr;
   XLockDisplay(dpy);
-  XGetWindowAttributes(dpy, xWin, &attr);
+  XGetWindowAttributes(dpy, xWindow, &attr);
   XUnlockDisplay(dpy);
   if (attr.map_state != IsUnmapped) {
     return TRUE;
@@ -478,7 +479,7 @@ static void setFullScreen(void) {
     e.xany.type = ClientMessage;
     e.xclient.message_type = XA_NET_WM_STATE;
     e.xclient.format = 32;
-    e.xclient.window = xWin;
+    e.xclient.window = xWindow;
     e.xclient.data.l[0] = XA_NET_WM_STATE_ADD;
     e.xclient.data.l[1] = XA_NET_WM_STATE_FULLSCREEN;
     e.xclient.data.l[3] = 0l;
@@ -495,7 +496,7 @@ static void setFullScreen(void) {
     atoms[count++] = XA_NET_WM_STATE_MAXIMIZED_VERT;
     atoms[count++] = XA_NET_WM_STATE_MAXIMIZED_HORZ;
     XLockDisplay(dpy);
-    XChangeProperty(dpy, xWin, XA_NET_WM_STATE, XA_ATOM, 32,
+    XChangeProperty(dpy, xWindow, XA_NET_WM_STATE, XA_ATOM, 32,
                     PropModeReplace, (unsigned char *)atoms, count);
     XUnlockDisplay(dpy);
   }
@@ -508,9 +509,9 @@ static void setFullScreen(void) {
   valueMask |= CWStackMode;
 
   XLockDisplay(dpy);
-  XMapRaised(dpy, xWin);
-  XConfigureWindow(dpy, xWin, valueMask, &changes);
-  XResizeWindow(dpy, xWin, m_WidthFS, m_HeightFS)
+  XMapRaised(dpy, xWindow);
+  XConfigureWindow(dpy, xWindow, valueMask, &changes);
+  XResizeWindow(dpy, xWindow, m_WidthFS, m_HeightFS);
   XUnlockDisplay(dpy);
 
   alwaysOnTop();
@@ -656,6 +657,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   ntextures = ctexture = 0;
 
+  playing = true;
+  
   rthread_ready = FALSE;
   has_new_texture = FALSE;
   texturebuf = NULL;
@@ -766,10 +769,10 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     XVisualInfo xvtmpl;
     XWindowAttributes attr;
 
-    xWin = (Window) window_id;
+    xWindow = (Window) window_id;
 
-    XGetWindowAttributes(dpy, xWin, &attr);
-    glxWin = xWin;
+    XGetWindowAttributes(dpy, xWindow, &attr);
+    glxWin = xWindow;
 
     xvtmpl.visual = attr.visual;
     xvtmpl.visualid = XVisualIDFromVisual(attr.visual);
@@ -852,7 +855,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     swa.border_pixel = 0;
 
-    xWin = XCreateWindow(dpy, RootWindow(dpy, vInfo->screen), 0, 0,
+    xWindow = XCreateWindow(dpy, RootWindow(dpy, vInfo->screen), 0, 0,
                          width, height,
                          0, vInfo->depth, InputOutput, vInfo->visual,
                          swaMask, &swa);
@@ -860,27 +863,28 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     XFreeColormap(dpy, swa.colormap);
 
     if (fullscreen) setFullScreen();
+  
+    XIfEvent(dpy, &event, WaitForNotify, (XPointer) xWindow);
 
-    XMapRaised(dpy, xWin);
-    if (fullscreen) setFullScreen();
-    XIfEvent(dpy, &event, WaitForNotify, (XPointer) xWin);
+    // XEvent event;
+    // XCheckWindowEvent(dpy, xWindow, XKeyPressedEvent, &event);
 
     /* Create a GLX context for OpenGL rendering */
     context = glXCreateNewContext(dpy, fbConfigs[0], GLX_RGBA_TYPE, NULL, True);
 
     /* Create a GLX window to associate the frame buffer configuration
     ** with the created X window */
-    glxWin = glXCreateWindow(dpy, fbConfigs[0], xWin, NULL);
+    glxWin = glXCreateWindow(dpy, fbConfigs[0], xWindow, NULL);
 
     XFree(vInfo);
     XFree(fbConfigs);
 
     black.red = black.green = black.blue = 0;
 
-    bitmapNoData = XCreateBitmapFromData(dpy, xWin, noData, 8, 8);
+    bitmapNoData = XCreateBitmapFromData(dpy, xWindow, noData, 8, 8);
     invisibleCursor = XCreatePixmapCursor(dpy, bitmapNoData, bitmapNoData,
                                           &black, &black, 0, 0);
-    XDefineCursor(dpy, xWin, invisibleCursor);
+    XDefineCursor(dpy, xWindow, invisibleCursor);
     XFreeCursor(dpy, invisibleCursor);
 
     is_ext = FALSE;
@@ -892,7 +896,6 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   if (!inited) {
     gladLoadGL();
   }
-
 
   error = glGetError();
   if (error != GL_NO_ERROR) {
@@ -943,17 +946,16 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
   rquad = 0.;
 
-  if (glXIsDirect(dpy, context))
-    is_direct = TRUE;
-  else
-    is_direct = FALSE;
+  if (glXIsDirect(dpy, context)) is_direct = TRUE;
+  else is_direct = FALSE;
 
   /*
     XMapWindow(dpy, xWin);
     XSync(dpy, xWin);
     XSetInputFocus(dpy, xWin, RevertToNone, CurrentTime);
-    XSelectInput(dpy, xWin, KeyPressMask | KeyReleaseMask);
   */
+
+  XSelectInput(dpy, xWindow, KeyPressMask | KeyReleaseMask);
   return TRUE;
 }
 
@@ -1034,7 +1036,7 @@ static int Upload(void) {
   ////////////////////////////////////////////////////////////
   // modes
   XLockDisplay(dpy);
-  XGetWindowAttributes(dpy, xWin, &attr);
+  XGetWindowAttributes(dpy, xWindow, &attr);
   XUnlockDisplay(dpy);
 
   window_width = attr.width;
@@ -1989,9 +1991,10 @@ static void *render_thread_func(void *data) {
   pthread_mutex_unlock(&cond_mutex);
 
   while (playing) {
-    pthread_mutex_lock(&cond_mutex);
     while (!new_frame && playing) {
+      pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (!playing) {
         if (new_frame) {
           release_frame(new_frame);
@@ -2001,7 +2004,6 @@ static void *render_thread_func(void *data) {
         break;
       }
     }
-    pthread_mutex_unlock(&cond_mutex);
     if (!playing) break;
     //fprintf(stderr, "NEW_FRAME\n");
     process_new_frame();
@@ -2011,6 +2013,12 @@ static void *render_thread_func(void *data) {
     //fprintf(stderr, "REL _FRAME\n");
     has_new_texture = TRUE;
     Upload();
+
+    XEvent event;
+    if (XCheckTypedEvent(dpy, KeyPress, &event)) {
+      XKeyEvent *xk = (XKeyEvent *)&event;
+      fprintf(stderr, "Got KEY %d\n", xk->keycode);
+    }
     //fprintf(stderr, "RDY _FRAME\n");
   }
 
@@ -2202,8 +2210,8 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   XLockDisplay(dpy);
   if (!is_ext) {
-    XUnmapWindow(dpy, xWin);
-    XDestroyWindow(dpy, xWin);
+    XUnmapWindow(dpy, xWindow);
+    XDestroyWindow(dpy, xWindow);
   }
 
   XFlush(dpy);

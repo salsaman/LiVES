@@ -851,6 +851,38 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
 
 // UI sizing functions ////
+LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
+  // get the size of the screen / player in fullscreen / sepwin mode
+  // returns TRUE if we span multiple monitors, FALSE for single monitor mode
+
+  if (prefs->play_monitor == 0) {
+    if (capable->nmonitors > 1) {
+      // spread over all monitors
+#if !GTK_CHECK_VERSION(3, 22, 0)
+      *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
+      *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
+#else
+      /// TODO: no doubt this is wrong and should be done taking into account vertical monitor layouts as well
+      *opheight = mainw->mgeom[0].height;
+      *opwidth = 0;
+      for (int i = 0; i < capable->nmonitors; i++) {
+        *opwidth += mainw->mgeom[i].width;
+      }
+#endif
+      return TRUE;
+    } else {
+      // but we only have one...
+      *opwidth = mainw->mgeom[0].phys_width;
+      *opheight = mainw->mgeom[0].phys_height;
+    }
+  } else {
+    // single monitor
+    *opwidth = mainw->mgeom[prefs->play_monitor - 1].phys_width;
+    *opheight = mainw->mgeom[prefs->play_monitor - 1].phys_height;
+  }
+  return FALSE;
+}
+
 
 void get_player_size(int *opwidth, int *opheight) {
   // calc output size for display

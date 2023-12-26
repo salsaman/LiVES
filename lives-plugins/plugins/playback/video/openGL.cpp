@@ -126,7 +126,7 @@ static pthread_mutex_t cond_mutex;
 static void *render_thread_func(void *data);
 
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
-  if (event->type == KeyPress) fprintf(stderr, "Key\n"); 
+  if (event->type == KeyPress) fprintf(stderr, "Key\n");
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
@@ -658,7 +658,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   ntextures = ctexture = 0;
 
   playing = true;
-  
+
   rthread_ready = FALSE;
   has_new_texture = FALSE;
   texturebuf = NULL;
@@ -856,14 +856,14 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     swa.border_pixel = 0;
 
     xWindow = XCreateWindow(dpy, RootWindow(dpy, vInfo->screen), 0, 0,
-                         width, height,
-                         0, vInfo->depth, InputOutput, vInfo->visual,
-                         swaMask, &swa);
+                            width, height,
+                            0, vInfo->depth, InputOutput, vInfo->visual,
+                            swaMask, &swa);
 
     XFreeColormap(dpy, swa.colormap);
 
     if (fullscreen) setFullScreen();
-  
+
     XIfEvent(dpy, &event, WaitForNotify, (XPointer) xWindow);
 
     // XEvent event;

@@ -221,7 +221,7 @@ void _lives_abort(const char *file, int line, const char *reason) {
   if (!reason) reason = _("Aborting");
   fprintf(stderr, "lives_abort called at %s line %d\n%s\n", file, line, reason);
   mainw->critical = 2;
-  
+
   if (mainw && !pthread_equal(main_thread, pthread_self())) {
     catch_sigint(-LIVES_SIGABRT, NULL, NULL);
     mainw->critical_errmsg = reason;
@@ -234,7 +234,7 @@ void _lives_abort(const char *file, int line, const char *reason) {
   }
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-  
+
   lives_set_status(LIVES_STATUS_FATAL);
   BREAK_ME(reason);
   if (mainw && mainw->global_hook_stacks && mainw->global_hook_stacks[FATAL_HOOK])

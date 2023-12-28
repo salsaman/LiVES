@@ -120,7 +120,7 @@ LIVES_GLOBAL_INLINE void really_deinit_effects(void) {
   for (int key = 0; key < FX_KEYS_MAX_VIRTUAL; key++) {
     if (key == rte_bg_gen_key()) continue;
     if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
+      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
         weed_deinit_effect(key);
         mainw->rte &= ~(GU641 << key);
         if (rte_window) rtew_set_keych(key, FALSE);

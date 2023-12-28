@@ -43,7 +43,22 @@ extern "C"
 #else
 #include <weed/weed.h>
 #endif
+
+extern weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,
+			    const char *,  weed_voidptr_t);
   
+#if WEED_ABI_CHECK_VERSION(203)
+// library functions to lock / unlock leaves for atomic operations
+extern weed_leaf_t *_weed_intern_freeze(weed_plant_t *, const char *);
+extern weed_error_t _weed_intern_unfreeze(weed_leaf_t *);
+extern weed_seed_t _weed_intern_seed_type(weed_leaf_t *);
+extern weed_size_t _weed_intern_num_elems(weed_leaf_t *);
+extern weed_size_t _weed_intern_elem_sizes(weed_leaf_t *, weed_size_t *);
+extern weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
+extern weed_error_t _weed_intern_get_all(weed_leaf_t *, weed_voidptr_t retvals);
+extern weed_error_t _weed_intern_get(weed_leaf_t *, weed_size_t idx, weed_voidptr_t retval);
+#endif
+
 /* some nice macros, e.g
   double x = WEED_LEAF_GET(myplant, "mykey", double);
 */

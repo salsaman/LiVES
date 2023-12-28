@@ -375,6 +375,8 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
   lives_hook_stack_t **hook_stacks;
   pthread_mutex_t *ext_cb_mutex;
 
+  weed_add_refcounter(lpt);
+
   if (!weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_RWLOCK, NULL)) {
     pthread_rwlock_t *state_rwlock = (pthread_rwlock_t *)lives_calloc(1, sizeof(pthread_rwlock_t));
     pthread_rwlock_init(state_rwlock, NULL);
@@ -4218,7 +4220,7 @@ uint64_t lives_thread_join(lives_thread_t *thread, void **retval) {
   nthrd = task->done;
 
   // thread has been joined, so now it can be freed
-  //task->flags &= ~LIVES_THRDFLAG_NOFREE_LIST;
+  task->flags &= ~LIVES_THRDFLAG_NOFREE_LIST;
   lives_thread_free(thread);
 
 #if USE_RPMALLOC

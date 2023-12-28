@@ -2676,8 +2676,7 @@ exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **layers) {
     cycle->template = template;
     cycle->iteration = ++template->iteration;
     cycle->layers = layers;
-    cycle->tdata = LIVES_CALLOC_SIZEOF(timedata_t, 1);
-    lives_memcpy(cycle->tdata, template->tdata, sizeof(timedata_t));
+
     cycle->frame_idx = (frames64_t *)lives_calloc(cycle->model->ntracks,
                        sizeof(frames64_t));
     cycle->steps = NULL;

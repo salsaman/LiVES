@@ -233,6 +233,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer,
     int arate, int naudchans, weed_size_t nsamps) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
+  else weed_set_voidptr_value(layer, WEED_LEAF_AUDIO_DATA, NULL);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
@@ -1067,9 +1068,18 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 #endif
     if (lives_layer_get_proc_thread(layer)) lives_layer_set_proc_thread(layer, NULL);
 
-    if (weed_layer_get_pixel_data(layer)) weed_layer_pixel_data_free(layer);
-    else weed_layer_nullify_pixel_data(layer);
-
+    if (weed_layer_get_type(layer) == WEED_LAYER_TYPE_VIDEO) {
+      if (weed_layer_get_pixel_data(layer)) weed_layer_pixel_data_free(layer);
+      else weed_layer_nullify_pixel_data(layer);
+    } else {
+      // audio layer
+      int naudchans;
+      float **adata = weed_layer_get_audio_data(layer, &naudchans);
+      if (adata) {
+        for (int i = 0; i < naudchans; i++) if (adata[i]) lives_free(adata[i]);
+        lives_free(adata);
+      }
+    }
     //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     mutexp = weed_get_voidptr_value(layer, LIVES_LEAF_LST_MUTEX, NULL);
     if (mutexp) lives_free(mutexp);

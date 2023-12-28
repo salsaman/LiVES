@@ -302,7 +302,8 @@ EXPORTED size_t weed_leaf_get_byte_size(weed_plant_t *, const char *key);
 EXPORTED size_t weed_plant_get_byte_size(weed_plant_t *);
 #endif
 
-/* weed--utils functions */
+#ifdef __LIBWEED_UTILS__
+
 EXPORTED  weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *, const char *, weed_voidptr_t);
 //
 #if WEED_ABI_CHECK_VERSION(203)
@@ -313,7 +314,9 @@ EXPORTED weed_size_t _weed_intern_num_elems(weed_leaf_t *);
 EXPORTED weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
 EXPORTED weed_size_t _weed_intern_elem_sizes(weed_leaf_t *, weed_size_t *);
 EXPORTED weed_error_t _weed_intern_get_all(weed_leaf_t *, weed_voidptr_t rvals);
-EXPORTED weed_error_t _weed_intern_leaf_get(weed_leaf_t *, weed_size_t idx, weed_voidptr_t retval);
+EXPORTED weed_error_t _weed_intern_get(weed_leaf_t *, weed_size_t idx, weed_voidptr_t retval);
+#endif
+
 #endif
 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) GNU_FLATTEN;
@@ -1361,9 +1364,9 @@ EXPORTED weed_error_t _weed_intern_unfreeze(weed_leaf_t *leaf)
 
 EXPORTED weed_size_t _weed_intern_num_elems(weed_leaf_t *leaf) {return leaf ? leaf->num_elements : 0;}
 
-EXPORTED weed_seed_t _weed_intern_seed_type(weed_leaf_t *leaf) {return leaf ? leaf->seed_type : 0;}
+EXPORTED weed_seed_t _weed_intern_seed_type(weed_leaf_t *leaf) {return leaf ? leaf->seed_type : WEED_SEED_INVALID;}
 
-EXPORTED weed_error_t _weed_intern_leaf_get(weed_leaf_t *leaf, weed_size_t idx, weed_voidptr_t retval) {
+EXPORTED weed_error_t _weed_intern_get(weed_leaf_t *leaf, weed_size_t idx, weed_voidptr_t retval) {
   if (idx >= leaf->num_elements) return WEED_ERROR_NOSUCH_ELEMENT;
   return retval ? _weed_data_get(leaf->data, leaf->seed_type, idx, retval) : WEED_SUCCESS;
 }

@@ -3803,15 +3803,16 @@ proc_dialog:
             // thread.
 
             if (sah->stack) {
-              rte_keys_update();
               lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
-              //all_updated = FALSE;
+              all_updated = FALSE;
               lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
             }
             // following this, whether or not there were updates, we allow the gui main loop to run
             // (async in the mmain thread)
             mainw->gui_much_events = TRUE;
             mainw->do_ctx_update = TRUE;
+
+            rte_keys_update();
 
             if (mainw->new_clip != mainw->playing_file || IS_VALID_CLIP(mainw->close_this_clip)
                 || mainw->new_blend_file != mainw->blend_file) goto switch_point;

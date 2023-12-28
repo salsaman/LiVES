@@ -330,26 +330,6 @@ struct _weed_leaf_nopadding {
 			  libweed_slab_alloc_and_copy_f);
   //
 
-#ifdef __LIBWEED__
-  // library functions to lock / unlock leaves for atomic operations
-  __WEED_FN_DEF__ weed_leaf_t *_weed_intern_freeze(weed_plant_t *, const char *);
-  __WEED_FN_DEF__ weed_error_t _weed_intern_unfreeze(weed_leaf_t *);
-  __WEED_FN_DEF__ weed_seed_t _weed_intern_seed_type(weed_leaf_t *);
-  __WEED_FN_DEF__ weed_size_t _weed_intern_num_elems(weed_leaf_t *);
-  __WEED_FN_DEF__ weed_size_t _weed_intern_elem_sizes(weed_leaf_t *, weed_size_t *);
-  __WEED_FN_DEF__ weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
-  __WEED_FN_DEF__ weed_error_t _weed_intern_get_all(weed_leaf_t *, weed_voidptr_t retvals);
-  __WEED_FN_DEF__ weed_error_t _weed_intern_leaf_get(weed_leaf_t *, weed_size_t idx, weed_voidptr_t retval);
-
-  // for plugin bootstrap, only relevent for libweed
-  __WEED_FN_DEF__ weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,
-				       const char *,  weed_voidptr_t);
-#else
-#ifndef _wbg
-#define _wbg(...) 2
-#endif
-#endif
-
 #endif // without libweed
 #endif // host only functions
 

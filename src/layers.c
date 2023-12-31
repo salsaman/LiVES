@@ -663,10 +663,8 @@ void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
 void lives_layer_reset_timing_data(weed_layer_t *layer) {
   if (layer) {
     weed_timecode_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
-    if (!timing_data) {
-      timing_data =
-        (weed_timecode_t *)lives_calloc(N_LAYER_STATUSES, sizeof(weed_timecode_t));
-    }
+    if (!timing_data)
+      timing_data = LIVES_CALLOC_SIZEOF(weed_timecode_t, N_LAYER_STATUSES);
     for (int i = 0; i < N_LAYER_STATUSES; i++) timing_data[i] = 0;
     weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
     lives_free(timing_data);
@@ -892,12 +890,12 @@ LIVES_GLOBAL_INLINE void unlock_layer_status(weed_layer_t *layer) {
 
 
 LIVES_GLOBAL_INLINE void _lives_layer_set_status(weed_layer_t *layer, int status) {
-  if (status >= 0) {
-    ticks_t *tm_data = _get_layer_timing(layer);
-    tm_data[status] = lives_get_session_time();
-    _set_layer_timing(layer, tm_data);
-    lives_free(tm_data);
-  }
+  /* if (status >= 0) { */
+  /*   ticks_t *tm_data = _get_layer_timing(layer); */
+  /*   tm_data[status] = lives_get_session_time(); */
+  /*   _set_layer_timing(layer, tm_data); */
+  /*   lives_free(tm_data); */
+  /* } */
   weed_set_int_value(layer, LIVES_LEAF_LAYER_STATUS, status);
 }
 
@@ -928,6 +926,7 @@ LIVES_GLOBAL_INLINE int lives_layer_get_status(weed_layer_t *layer) {
 }
 
 
+
 LIVES_GLOBAL_INLINE ticks_t *_get_layer_timing(lives_layer_t *layer) {
   ticks_t *timing_data = weed_get_int64_array(layer, LIVES_LEAF_TIMING_DATA, NULL);
   if (!timing_data) {
@@ -952,7 +951,6 @@ LIVES_GLOBAL_INLINE ticks_t *get_layer_timing(lives_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE void _set_layer_timing(lives_layer_t *layer, ticks_t *timing_data) {
   weed_set_int64_array(layer, LIVES_LEAF_TIMING_DATA, N_LAYER_STATUSES, timing_data);
-  weed_leaf_set_autofree(layer, LIVES_LEAF_TIMING_DATA, TRUE);
 }
 
 
@@ -966,7 +964,6 @@ LIVES_GLOBAL_INLINE void set_layer_timing(lives_layer_t *layer, ticks_t *timing_
 
 
 LIVES_GLOBAL_INLINE void _reset_layer_timing(lives_layer_t *layer) {
-
   ticks_t *timing_data = (ticks_t *)lives_calloc(N_LAYER_STATUSES, sizeof(ticks_t));
   _set_layer_timing(layer, timing_data);
   lives_free(timing_data);

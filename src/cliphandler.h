@@ -125,6 +125,8 @@ typedef enum {
 
 // frame src is a socket / network connection
 #define LIVES_SRC_TYPE_STREAM		68
+#define CLASS_UID_APP_STREAM		0X1CD391958CDB8E9D
+#define ACTOR_UID_LIVES2LIVES		0XFD6DCCCE5BA70E08
 
 // frame source is a hardware device (e.g webcam)
 #define LIVES_SRC_TYPE_DEVICE		69
@@ -831,7 +833,7 @@ lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives
 
 // create a clone of primary
 lives_clipsrc_group_t *clone_srcgrp(int sclip, int dclip, int track, int purpose);
-lives_clip_src_t *add_clip_src(int nclip, int track, uint64_t class_id, void *actor, int src_type,
+lives_clip_src_t *add_clip_src(int nclip, int track, int purpose, uint64_t class_id, void *actor, int src_type,
                                uint64_t actor_uid, fingerprint_t *chksum, const char *ext_URI);
 
 lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *, int clip, uint64_t actor_uid, int src_type, const char *ext_URI,
@@ -854,6 +856,8 @@ void srcgrps_free_all(int nclip);
 void *get_primary_actor(lives_clip_t *);
 void *get_primary_inst(lives_clip_t *);
 int get_primary_src_type(lives_clip_t *);
+
+uint64_t classuid_for_srctype(int src_rype);
 
 lives_clip_src_t *get_primary_src(int nclip);
 lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type);

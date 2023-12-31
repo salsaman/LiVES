@@ -378,7 +378,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
   weed_add_refcounter(lpt);
 
   if (!weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_RWLOCK, NULL)) {
-    pthread_rwlock_t *state_rwlock = (pthread_rwlock_t *)lives_calloc(1, sizeof(pthread_rwlock_t));
+    pthread_rwlock_t *state_rwlock = (pthread_rwlock_t *)lives_malloc(sizeof(pthread_rwlock_t));
     pthread_rwlock_init(state_rwlock, NULL);
     weed_set_voidptr_value(lpt, LIVES_LEAF_STATE_RWLOCK, state_rwlock);
   }
@@ -388,7 +388,8 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
   weed_set_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, ext_cb_mutex);
 
   if (!weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL)) {
-    pthread_rwlock_t *destruct_rwlock = (pthread_rwlock_t *)lives_calloc(1, sizeof(pthread_rwlock_t));
+    pthread_rwlock_t *destruct_rwlock =
+      (pthread_rwlock_t *)lives_malloc(sizeof(pthread_rwlock_t));
     pthread_rwlock_init(destruct_rwlock, NULL);
     weed_set_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, destruct_rwlock);
   }
@@ -1612,17 +1613,17 @@ LIVES_GLOBAL_INLINE int lives_proc_thread_get_errnum(lives_proc_thread_t lpt) {
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_proc_thread_get_errmsg(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_string_value(lpt, LIVES_LEAF_ERRMSG, NULL) : NULL;
+LIVES_GLOBAL_INLINE const char *lives_proc_thread_get_errmsg(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_const_string_value(lpt, LIVES_LEAF_ERRMSG, NULL) : NULL;
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_proc_thread_get_errfile(lives_proc_thread_t lpt) {
+LIVES_GLOBAL_INLINE char *lives_proc_thread_get_file_ref(lives_proc_thread_t lpt) {
   return lpt ? weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL) : NULL;
 }
 
 
-LIVES_GLOBAL_INLINE int lives_proc_thread_get_errline(lives_proc_thread_t lpt) {
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_line_ref(lives_proc_thread_t lpt) {
   return lpt ? weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL) : 0;
 }
 
@@ -1791,8 +1792,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_th
 }
 
 
-boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
-                                  int line_ref) {
+boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref, int line_ref) {
   if (self == mainw->debug_ptr) BREAK_ME("cancelled");
   GET_PROC_THREAD_SELF(xself);
   if (!self) self = xself;
@@ -1805,8 +1805,8 @@ boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
     return FALSE;
   }
 
-  weed_set_string_value(self, LIVES_LEAF_FILE_REF, file_ref);
-  weed_set_int_value(self, LIVES_LEAF_LINE_REF, line_ref);
+  lives_proc_thread_set_line_ref(self, line_ref, FALSE);
+  lives_proc_thread_set_file_ref(self, file_ref, FALSE);
 
   lives_proc_thread_include_states(self, THRD_STATE_CANCELLED);
   lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
@@ -1823,15 +1823,23 @@ boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
 }
 
 
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_line_ref(lives_proc_thread_t self, int line, boolean over) {
+  if (over || !weed_plant_has_leaf(self, LIVES_LEAF_LINE_REF))
+    weed_set_int_value(self, LIVES_LEAF_LINE_REF, line);
+}
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_file_ref(lives_proc_thread_t self, char *file, boolean over) {
+  if (over || !weed_plant_has_leaf(self, LIVES_LEAF_FILE_REF))
+    weed_set_string_value(self, LIVES_LEAF_FILE_REF, file);
+}
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num) {
   weed_set_int_value(self, LIVES_LEAF_ERRNUM, num);
 }
 
-
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg) {
-  weed_set_string_value(self, LIVES_LEAF_ERRMSG, msg);
+  weed_set_const_string_value(self, LIVES_LEAF_ERRMSG, msg);
 }
-
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev) {
   weed_set_int_value(self, LIVES_LEAF_ERRSEV, sev);
@@ -1840,25 +1848,18 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_errsev(lives_proc_thread_t self, 
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, int line_ref,
-    int errnum, int severity, char *errmsg) {
+    int errnum, int severity, const char *errmsg) {
   if (severity == LPT_ERR_DEADLY) _exit(errnum);
 
-  weed_set_string_value(self, LIVES_LEAF_FILE_REF, file_ref);
-  weed_set_int_value(self, LIVES_LEAF_LINE_REF, line_ref);
+  if (severity == LPT_ERR_FATAL) LIVES_FATAL(errmsg);
 
+  lives_proc_thread_set_line_ref(self, line_ref, TRUE);
+  lives_proc_thread_set_file_ref(self, file_ref, TRUE);
   lives_proc_thread_set_errnum(self, errnum);
   lives_proc_thread_set_errsev(self, severity);
-
   lives_proc_thread_set_errmsg(self, errmsg);
 
-  if (severity == LPT_ERR_FATAL) LIVES_FATAL("-error-");
-
   if (severity == LPT_ERR_CRITICAL) LIVES_CRITICAL(errmsg);
-
-  if (errmsg) {
-    weed_set_string_value(self, LIVES_LEAF_ERRMSG, errmsg);
-    lives_free(errmsg);
-  }
 
   lives_proc_thread_include_states(self, THRD_STATE_ERROR);
 
@@ -2077,13 +2078,6 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
     g_print("cancelling self !\n");
     lives_proc_thread_cancel(self);
     break;
-  case SIG_ACT_ERROR: {
-    int xerrno = weed_get_int_value(self, LIVES_LEAF_ERRNUM, NULL);
-    int errsev = weed_get_int_value(self, LIVES_LEAF_ERRSEV, NULL);
-    char *errmsg = weed_get_string_value(self, LIVES_LEAF_ERRMSG, NULL);
-    lives_proc_thread_error_full(self, NULL, 0, xerrno, errsev, errmsg);
-  }
-  break;
   case SIG_ACT_HOLD:
     // cancel immediate, sent form other thread
     lives_proc_thread_pause(self);
@@ -2796,8 +2790,8 @@ void lpt_error_handle(lives_proc_thread_t lpt) {
     if (lives_proc_thread_had_error(lpt)) {
       int sev = lives_proc_thread_get_errsev(lpt);
       int errnum = lives_proc_thread_get_errnum(lpt);
-      int errline = lives_proc_thread_get_errline(lpt);
-      const char *errfile = lives_proc_thread_get_errfile(lpt);
+      int errline = lives_proc_thread_get_line_ref(lpt);
+      const char *errfile = lives_proc_thread_get_file_ref(lpt);
       char *loc;
       // dont report minor errors
       if (errfile) loc = lives_strdup_printf(" at line %d in file %s", errline, errfile);
@@ -3468,7 +3462,7 @@ static void lives_thread_data_destroy(void *data) {
 
 #if USE_RPMALLOC
   if (rpmalloc_is_thread_initialized()) {
-    rpmalloc_thread_finalize(1);
+    rpmalloc_thread_finalize(0);
   }
 #endif
 }
@@ -4367,8 +4361,6 @@ LIVES_GLOBAL_INLINE lives_refcounter_t *weed_add_refcounter(weed_plant_t *plant)
 
 LIVES_GLOBAL_INLINE boolean weed_remove_refcounter(weed_plant_t *plant) {
   if (plant && weed_plant_has_leaf(plant, LIVES_LEAF_REFCOUNTER)) {
-    weed_leaf_set_undeletable(plant, LIVES_LEAF_REFCOUNTER, WEED_FALSE);
-    weed_leaf_autofree(plant, LIVES_LEAF_REFCOUNTER);
     if (weed_leaf_delete(plant, LIVES_LEAF_REFCOUNTER) == WEED_SUCCESS) return TRUE;
   }
   return FALSE;
@@ -4473,6 +4465,7 @@ char *get_threadstats(void) {
                  notes ? notes : "-", tdata->vars.var_origin);
       lives_free(tnum);
       pthread_mutex_t *alpt_mutex = &tdata->vars.var_active_lpt_mutex;
+
       pthread_mutex_lock(alpt_mutex);
 
       active_lpt = tdata->vars.var_active_lpt;
@@ -4496,6 +4489,7 @@ char *get_threadstats(void) {
             }
           }
         }
+
         while (1) {
           tmp = lives_proc_thread_show_func_call(prime_lpt);
           g_printerr("\t%s%s\n", prime_lpt == active_lpt ? "Active: " : "", tmp);
@@ -4509,7 +4503,6 @@ char *get_threadstats(void) {
           prime_lpt = nxtlpt;
           nxtlpt = weed_get_plantptr_value(prime_lpt, LIVES_LEAF_FOLLOWER, NULL);
         }
-        pthread_mutex_unlock(alpt_mutex);
 
         lpt_desc_state(active_lpt);
 
@@ -4523,6 +4516,7 @@ char *get_threadstats(void) {
                    (double)sytime / (double)USEC_TO_TICKS,
                    (double)ptime / (double)USEC_TO_TICKS);
       }
+
       pthread_mutex_unlock(alpt_mutex);
     }
   }

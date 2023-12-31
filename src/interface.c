@@ -462,7 +462,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
       || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
   mainw->current_file = current_file;
-
+  // CHECK
   if (!LIVES_IS_PLAYING) {
     if (which == 0 || which == 1) {
       lives_widget_queue_draw_if_visible(mainw->video_draw);
@@ -638,7 +638,7 @@ void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
 
   if (posx < 0) posx = 0;
   if (posy < 0) posy = 0;
-
+  // CHECK
   if (which == 0 || which == 2) {
     if (mainw->laudio_drawable) {
       clear_widget_bg_area(mainw->laudio_draw, mainw->laudio_drawable, posx, posy, width, height);

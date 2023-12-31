@@ -80,7 +80,7 @@ void init_prefs(void) {
   DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, 0);
   DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE, 0);
 
-  DEFINE_PREF_INT64(PBTIMER_MAXDIFF, pbtimer_maxdiff, 1000000, 0);
+  DEFINE_PREF_INT64(PBTIMER_MAXDIFF, pbtimer_maxdiff, 1200000, 0);
   DEFINE_PREF_DOUBLE(PBTIMER_RESYNC_X, pbtimer_resync_factor, .001, 0);
 
   DEFINE_PREF_DOUBLE(REC_STOP_GB, rec_stop_gb, DEF_REC_STOP_GB, 0);

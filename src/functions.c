@@ -1020,7 +1020,7 @@ LIVES_GLOBAL_INLINE void lives_closure_free(lives_closure_t *closure) {
   }
   /* if (closure->fdef) */
   /*   free_funcdef((lives_funcdef_t *)closure->fdef); */
-  pthread_mutex_unlock(&closure->mutex);
+
   lives_free(closure);
 }
 

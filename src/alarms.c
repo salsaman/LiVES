@@ -257,7 +257,8 @@ void lives_sys_alarm_wait(alarm_name_t alaname) {
 
 static lives_result_t _lives_alarm_set_timeout(lives_timer_t *timer, uint64_t nsec) {
   if (!nsec) return LIVES_RESULT_INVALID;
-  timer->delay = nsec;
+  if (RUNNER_IS(valgrind)) timer->delay = nsec * 10.;
+  else timer->delay = nsec;
   timer->signo = LIVES_TIMER_SIG;
   if (!lives_timer_create(timer)) return LIVES_RESULT_ERROR;
   thrd_signal_unblock(timer->signo);

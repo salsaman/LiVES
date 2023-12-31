@@ -356,7 +356,7 @@ LIVES_GLOBAL_INLINE void _cache_msg(const char *fmt, ...) {
 static boolean d_print_inner(const char *text) {
   boolean ret = TRUE;
   if (!prefs) {
-    fprintf(stderr, text);
+    fprintf(stderr, "%s", text);
     return ret;
   }
 

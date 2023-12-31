@@ -1007,7 +1007,7 @@ deint1:
 ////////////////////////////////////////////////////////////////////
 // keypresses
 
-static rte_key_desc fx_key_defs[FX_KEYS_MAX_VIRTUAL];
+rte_key_desc fx_key_defs[FX_KEYS_MAX_VIRTUAL];
 
 
 void fx_keys_init(void) {
@@ -1164,11 +1164,12 @@ static lives_result_t rte_on_off(int key, int on_off) {
     if (key > 0 && !is_auto) {
       // user override any ACTIVATE data connection
       // (return key to manual control, disable automatic mode)
+      // BUT we do NOT dusable src key -> it may have other connections
       override_if_active_input(key);
       // if this is an outlet for ACTIVATE, disable the override now
       // (re enable automatic mode)
+      // the user needs to deactivate then reactivate src key
       end_override_if_activate_output(key);
-      fx_key_defs[key].last_activator = activator_none;
     }
     if (CURRENT_CLIP_IS_VALID && cfile->play_paused)
       mainw->force_show = TRUE;
@@ -1180,22 +1181,24 @@ static lives_result_t rte_on_off(int key, int on_off) {
 
 
 ////////// keys //////////////////
+static const uint64_t phys_mask = (GU641 << FX_KEYS_PHYSICAL) - 1;
 
 void rte_keys_update(void) {
   // during playback we do not react immediately to fx key presses
   // instead we defer updates until the designated 'safe point'
   uint64_t real_rte = mainw->rte_real;
-  if (mainw->rte && !real_rte)
+  if ((mainw->rte & phys_mask)  && !(real_rte & phys_mask)) {
+    // need to distinguish between - user hit ctrl-0 --> disable all physical keys
+    // and - only non physicals keys were active and user disabled them
     rte_on_off(0, LIVES_OFF);
-  else {
-    uint64_t ons = ~mainw->rte & real_rte;
-    uint64_t offs = mainw->rte & ~real_rte;
-    for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-      if (!rte_key_valid(i + 1, TRUE)) continue;
-      uint64_t new_rte = GU641 << i;
-      if (offs & new_rte) rte_on_off(i + 1, LIVES_OFF);
-      else if (ons & new_rte) rte_on_off(i + 1, LIVES_ON);
-    }
+  }
+  uint64_t ons = ~mainw->rte & real_rte;
+  uint64_t offs = mainw->rte & ~real_rte;
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+    if (!rte_key_valid(i + 1, TRUE)) continue;
+    uint64_t new_rte = GU641 << i;
+    if (offs & new_rte) rte_on_off(i + 1, LIVES_OFF);
+    else if (ons & new_rte) rte_on_off(i + 1, LIVES_ON);
   }
 }
 
@@ -1205,14 +1208,17 @@ static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
   if (!THREADVAR(fx_is_auto))
     fx_key_defs[key].last_activator = activator_ui;
-  else if (fx_key_defs[key].last_activator == activator_none)
-    fx_key_defs[key].last_activator = activator_pconx;
-
+  else {
+    if (fx_key_defs[key].last_activator == activator_ui)
+      return LIVES_RESULT_FAIL;
+    if (fx_key_defs[key].last_activator == activator_none)
+      fx_key_defs[key].last_activator = activator_pconx;
+  }
   if (key > 0) {
     new_rte = GU641 << (key - 1);
     mainw->rte_real ^= new_rte;
   }
-  else mainw->rte_real = 0;
+  else mainw->rte_real &= ~phys_mask;
   if (LIVES_IS_PLAYING) return LIVES_RESULT_SUCCESS;
   rte_keys_update();
   return LIVES_RESULT_SUCCESS;
@@ -1251,7 +1257,7 @@ boolean rte_key_on_off(int key, boolean on) {
 
 lives_result_t rte_key_toggle(int key) {
   // key is 1 based
- return  _rte_key_toggle(key, FALSE);
+ return _rte_key_toggle(key, FALSE);
 }
 
 
@@ -1372,17 +1378,18 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * acc, LiVESWidgetObject * o, uint32
 
 //////////////////////////////////////////////////////////////
 
-
+// key base is 0
 LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits) {
-  // if ign_soft_deinits is FALSE, we return the real state, ignoring SOFT_DEINITS
-  // key starts at 0 (now)
+  // if ign_soft_deinits is FALSE, we return the real state
+  // if ign_soft_deinits is TRUE, we may return FALSE if the instance was soft disabled by an automation
+  // soft deinited fx are not applied, however they are reinited as necessary, maintaining soft state
   boolean enabled = !!(mainw->rte & (GU641 << key));
-  if (ign_soft_deinits) return enabled;
+  if (!ign_soft_deinits) return enabled;
   else {
     weed_plant_t *inst;
     filter_mutex_lock(key);
     if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = TRUE;
+      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = FALSE;
       weed_instance_unref(inst);
     }
     filter_mutex_unlock(key);

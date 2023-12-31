@@ -15013,7 +15013,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     // will free layer pd, old layer now has only copy
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
-      weed_layer_free(old_layer);
+      weed_layer_unref(old_layer);
       lives_free(irowstrides);
 
       ____FUNC_EXIT_VAL____("b", FALSE);
@@ -15237,7 +15237,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     /* } */
 
     //g_print("wlf old\n");
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     //g_print("wlf22 old\n");
 
     lives_free(out_pixel_data);

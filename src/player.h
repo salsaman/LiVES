@@ -16,6 +16,8 @@ struct timeval tv;
 
 lives_result_t video_sync_ready(void);
 
+boolean is_all_updated(void);
+
 lives_obj_instance_t *lives_player_inst_create(uint64_t subtype);
 
 #define LIVES_IS_IDLE (lives_get_status() == LIVES_STATUS_IDLE)

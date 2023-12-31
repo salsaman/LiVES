@@ -80,9 +80,12 @@ LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
 weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf) {
   // force overrride of IMMUTABLE dest leaves
   weed_flags_t flags = weed_leaf_get_flags(dst, keyt);
+  if (flags & LIVES_FLAG_FREE_ON_DELETE) {
+    weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_UNDELETABLE);
+    weed_leaf_autofree(dst, keyt);
+  }
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_copy(dst, keyt, src, keyf);
-  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags);
   return err;
 }
 
@@ -100,16 +103,19 @@ weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant
 weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key) {
   // force overrride of IMMUTABLE dest leaves
   weed_flags_t flags = weed_leaf_get_flags(dst, key);
+  if (flags & LIVES_FLAG_FREE_ON_DELETE) {
+    weed_leaf_set_flags(dst, key, flags & ~WEED_FLAG_UNDELETABLE);
+    weed_leaf_autofree(dst, key);
+  }
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, key, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_dup(dst, src, key);
-  if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, key, flags);
+  weed_leaf_set_flags(dst, key, weed_leaf_get_flags(src, key) & ~LIVES_FLAG_FREE_ON_DELETE);
   return err;
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
   if (!weed_plant_has_leaf(slayer, key)) {
-    weed_leaf_set_undeletable(dlayer, key, FALSE);
     weed_leaf_delete(dlayer, key);
     return FALSE;
   } else lives_leaf_dup(dlayer, slayer, key); // lives_leaf_dup forces overrride of IMMUTABLE dest leaves
@@ -3197,7 +3203,6 @@ lives_filter_error_t act_on_instance(weed_instance_t *instance, int key, lives_l
 
   if (!instance) return FILTER_ERROR_INVALID_INSTANCE;
 
-
   filter = weed_instance_get_filter(instance, TRUE);
   if (is_pure_audio(filter, TRUE)) return FILTER_ERROR_IS_AUDIO;
 
@@ -3427,143 +3432,94 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
     if (orig_inst) weed_instance_unref(orig_inst);
     orig_inst = NULL;
 
+    // we only apply pure audio filters here
+    idx = key_to_fx[i][key_modes[i]];
+    if (idx == -1) continue;
+
+    filter = weed_filters[idx];
+    if (!filter || !is_pure_audio(filter, FALSE)
+        || (analysers_only && has_audio_chans_out(filter, FALSE))) continue;
+
+    // chain input data, as this may enable / disable the active state
+    needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
+
     filter_mutex_lock(i);
 
-    if (rte_key_valid(i + 1, TRUE)) {
-      if (!(rte_key_is_enabled(i, FALSE))) {
-        // if anything is connected to ACTIVATE, the fx may be activated
-        if (is_audio_thread) {
-          filter_mutex_unlock(i);
-          pconx_chain_data(i, key_modes[i], TRUE);
-          filter_mutex_lock(i);
-        }
-        if (!(rte_key_is_enabled(i, TRUE))) {
-          filter_mutex_unlock(i);
-          continue;
-        }
-      }
+    // ignore soft deinited fx
+    if (!(rte_key_is_enabled(i, TRUE))) {
+      filter_mutex_unlock(i);
+      continue;
+    }
 
-      // do a quick check before locking the key mutex - this prevents us hanging for example if
-      // trying to lock a generator
-      idx = key_to_fx[i][key_modes[i]];
-      if (idx != -1) filter = weed_filters[idx];
-      else filter = NULL;
-      if (!filter || !has_audio_chans_in(filter, FALSE)
-          || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
-        filter_mutex_unlock(i);
+    if ((orig_inst = instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
+      filter_mutex_unlock(i);
+      continue;
+    }
+
+    filter_mutex_unlock(i);
+
+    if (mainw->multitrack && !mainw->unordered_blocks && mainw->pchains && mainw->pchains[i]) {
+      interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
+    }
+
+    if (needs_reinit) {
+      filter_error = weed_reinit_effect(instance, FALSE);
+      if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
+          || filter_error == FILTER_ERROR_INVALID_FILTER) {
         continue;
       }
-
-      if (rte_key_is_enabled(i, TRUE)) {
-        if ((orig_inst = instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
-          filter_mutex_unlock(i);
-          continue;
-        }
-
-        if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
-          weed_instance_unref(instance);
-          filter_mutex_unlock(i);
-          continue;
-        }
-
-        filter = weed_instance_get_filter(instance, FALSE);
-        filter_mutex_unlock(i);
-
-        if (!has_audio_chans_in(filter, FALSE) || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
-          continue;
-        }
-
-        if (analysers_only && has_audio_chans_out(filter, FALSE)) {
-          continue;
-        }
-
-        if (mainw->multitrack && !mainw->unordered_blocks && mainw->pchains && mainw->pchains[i]) {
-          interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
-        }
-
-        if (mainw->pconx && is_audio_thread) {
-          // chain any data pipelines
-          filter_mutex_lock(i);
-          needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
-          filter_mutex_unlock(i);
-
-          // if anything is connected to ACTIVATE, the fx may be deactivated
-          if ((new_inst = weed_instance_obtain(i, key_modes[i])) == NULL) {
-            continue;
-          }
-
-          // either we just added another ref, or we dont need this
-          // this should work both ways
-          weed_instance_unref(instance);
-
-          if (orig_inst == instance) orig_inst = new_inst;
-          instance = new_inst;
-
-          if (needs_reinit) {
-            filter_error = weed_reinit_effect(instance, FALSE);
-            if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
-                || filter_error == FILTER_ERROR_INVALID_FILTER) {
-              continue;
-	      // *INDENT-OFF*
-            }}}
-	// *INDENT-ON*
-
-        orig_inst = instance;
+      orig_inst = instance;
+    }
 
 apply_audio_inst2:
 
-        if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-          // chain any internal data pipelines for compound fx
-          needs_reinit = pconx_chain_data_internal(instance);
-          if (needs_reinit) {
-            filter_error = weed_reinit_effect(instance, FALSE);
-            if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
-                || filter_error == FILTER_ERROR_INVALID_FILTER) {
-              if (instance != orig_inst) weed_instance_unref(instance);
-              continue;
-            }
-          }
-        }
-
-        layers[0] = alayer;
-
-        filter_error = weed_apply_audio_instance(instance, layers, 0, nchans, nsamps, arate, tc, NULL);
-
-        if (filter_error == FILTER_SUCCESS && (new_inst = get_next_compound_inst(instance))) {
+    if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
+      // chain any internal data pipelines for compound fx
+      needs_reinit = pconx_chain_data_internal(instance);
+      if (needs_reinit) {
+        filter_error = weed_reinit_effect(instance, FALSE);
+        if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
+            || filter_error == FILTER_ERROR_INVALID_FILTER) {
           if (instance != orig_inst) weed_instance_unref(instance);
-          weed_instance_ref(new_inst);
-          instance = new_inst;
-          goto apply_audio_inst2;
-        }
-        if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
-          // TODO...
-        }
-
-        if (filter_error == FILTER_INFO_REINITED) update_widget_vis(NULL, i, key_modes[i]); // redraw our paramwindow
-#ifdef DEBUG_RTE
-        if (filter_error != FILTER_SUCCESS) lives_printerr("Render error was %d\n", filter_error);
-#endif
-
-        if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
-                             || filter_error == FILTER_INFO_REDRAWN)) {
-
-          new_inst = weed_instance_obtain(i, key_modes[i]);
-
-          filter_mutex_lock(i);
-          pconx_chain_data_omc(new_inst, i, key_modes[i]);
-          filter_mutex_unlock(i);
-
-          weed_instance_unref(instance);
-          if (orig_inst == instance) orig_inst = new_inst;
-          instance = new_inst;
-	  // *INDENT-OFF*
+          continue;
         }
       }
     }
-    else filter_mutex_unlock(i);
+
+    layers[0] = alayer;
+
+    filter_error = weed_apply_audio_instance(instance, layers, 0, nchans, nsamps, arate, tc, NULL);
+
+    if (filter_error == FILTER_SUCCESS && (new_inst = get_next_compound_inst(instance))) {
+      if (instance != orig_inst) weed_instance_unref(instance);
+      weed_instance_ref(new_inst);
+      instance = new_inst;
+      goto apply_audio_inst2;
+    }
+    if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
+      // TODO...
+    }
+
+    if (filter_error == FILTER_INFO_REINITED) update_widget_vis(NULL, i, key_modes[i]); // redraw our paramwindow
+#ifdef DEBUG_RTE
+    if (filter_error != FILTER_SUCCESS) lives_printerr("Render error was %d\n", filter_error);
+#endif
+
+    if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
+                         || filter_error == FILTER_INFO_REDRAWN)) {
+
+      new_inst = weed_instance_obtain(i, key_modes[i]);
+
+      filter_mutex_lock(i);
+      pconx_chain_data_omc(new_inst, i, key_modes[i]);
+      filter_mutex_unlock(i);
+
+      weed_instance_unref(instance);
+      if (orig_inst == instance) orig_inst = new_inst;
+      instance = new_inst;
+    }
   }
   if (orig_inst) weed_instance_unref(orig_inst);
-  // *INDENT-ON*
 }
 
 
@@ -4064,12 +4020,10 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
     lives_free(xstr);
     return err;
   }
-  err = weed_leaf_set_autofree(plant, key, TRUE);
-  if (err == WEED_SUCCESS)
-    err = weed_ext_set_element_size(plant, key, 0, lives_strlen(string));
-  if (err == WEED_SUCCESS)
-    err = lives_leaf_set_rdonly(plant, key, TRUE, TRUE);
 
+  // set flags so - autodelete on free, unchangeable
+  err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE | LIVES_FLAGS_RDONLY_HOST);
+  if (err == WEED_SUCCESS)  err = weed_ext_set_element_size(plant, key, 0, lives_strlen(string));
   return err;
 }
 
@@ -4106,7 +4060,9 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   // free data pointed to by leaves flagged as autofree
   // the leaf is not actually deleted, only the data
   // the undeletable flag bit must be cleared before calling this,
-  // and here we also clear ht autodelete bit
+  // (this is done automatically by LiVES if we get error undeletable
+  // when deleting a leaf or freeing a plant)
+  // and here we also clear the autodelete bit
   boolean bret = TRUE;
   if (plant) {
     int flags = weed_leaf_get_flags(plant, key);
@@ -4120,8 +4076,9 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
         for (int i = 0; i < nvals; i++) if (pls[i]) weed_plant_free(pls[i]);
         if (pls) lives_free(pls);
-        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
+        lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
         weed_set_plantptr_value(plant, key, NULL);
+        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
         bret = TRUE;
       }
       break;
@@ -4129,8 +4086,9 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         void **data = weed_get_voidptr_array_counted(plant, key, &nvals);
         for (int i = 0; i < nvals; i++) if (data[i]) lives_free(data[i]);
         if (data) lives_free(data);
-        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
+        lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
         weed_set_voidptr_value(plant, key, NULL);
+        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
         bret = TRUE;
       }
       break;
@@ -4138,8 +4096,9 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         void **data = weed_get_custom_array_counted(plant, key, WEED_SEED_CONST_CHARPTR, &nvals);
         for (int i = 0; i < nvals; i++) if (data[i]) lives_free(data[i]);
         if (data) lives_free(data);
-        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
+        lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
         weed_set_custom_value(plant, key, WEED_SEED_CONST_CHARPTR, NULL);
+        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
       }
       break;
       default: break;
@@ -4172,8 +4131,10 @@ void  weed_plant_autofree(weed_plant_t *plant) {
 
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, const char *key, boolean state) {
   // a leaf can be set to autofree, this can be done for a plantptr ot voidptr, array or scalar
+  // the leaf is also set immutable
+  // then when val is changed, we get error immutable, and will check for autofree.
   if (state)
-    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE);
   return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
 }
 
@@ -4228,6 +4189,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
                                 weed_size_t num_elems, void *values) {
   // change even immutable leaves
   // WEED_FLAG_RDONLY_HOST can also be set if we want to make a leaf self readonly
+  boolean autofree = FALSE;
   weed_error_t err;
 
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
@@ -4236,8 +4198,14 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
     int32_t flags = weed_leaf_get_flags(plant, key);
     if ((flags & LIVES_FLAGS_RDONLY_HOST) == LIVES_FLAGS_RDONLY_HOST) return err;
     flags &= ~WEED_FLAG_IMMUTABLE;
+    if (flags & LIVES_FLAG_FREE_ON_DELETE) {
+      flags &= ~WEED_FLAG_UNDELETABLE;
+      autofree = TRUE;
+    }
     weed_leaf_set_flags(plant, key, flags);
+    if (autofree) weed_leaf_autofree(plant, key);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+    if (autofree) flags |= LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE;
     flags |= WEED_FLAG_IMMUTABLE;
     weed_leaf_set_flags(plant, key, flags);
   }
@@ -5021,7 +4989,7 @@ void weed_load_all(void) {
 
   lives_strfreev(dirs);
 
-  ncompounds = load_compound_fx();
+  //ncompounds = load_compound_fx();
 
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
@@ -7380,7 +7348,7 @@ void weed_deinit_all(boolean shutdown) {
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
-      if (LIVES_IS_PLAYING && !shutdown && i >= FX_KEYS_PHYSICAL) {
+      if (LIVES_IS_PLAYING && i >= FX_KEYS_PHYSICAL) {
         // meta-physical  keys only shutdown through the interface or via easter-egg keys...
         return;
       }
@@ -7394,7 +7362,6 @@ void weed_deinit_all(boolean shutdown) {
             || get_primary_inst(cfile) != (void *)instance) {
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
-          mainw->rte_real &= ~(GU641 << i);
           if (rte_window_visible()) rtew_set_keych(i, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_instance_unref(instance);
@@ -8131,6 +8098,7 @@ void weed_generator_end(weed_plant_t *inst) {
       }
     }
   } else {
+
     // close generator file and switch to original file if possible
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       BREAK_ME("close non-gen file");
@@ -8372,7 +8340,7 @@ deinit5:
 
       filter = weed_instance_get_filter(orig_inst, TRUE);
       add_primary_inst(mainw->new_blend_file, (void *)filter, (void *)orig_inst, LIVES_SRC_TYPE_GENERATOR);
-    }
+    } else filter_mutex_unlock(bgs);
   }
 
   // must do this last, else the code will try to create a new clip for the bg generator
@@ -11086,7 +11054,7 @@ LIVES_GLOBAL_INLINE void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plan
   weed_plant_sanitize(dst, TRUE);
 }
 
-// duplicate / add, clean and reset refcount
+// duplicate / add, clean and reset refcountv
 LIVES_GLOBAL_INLINE void weed_plant_dup_add_clean(weed_plant_t *dst, weed_plant_t *src) {
   weed_plant_duplicate(dst, src, TRUE);
   weed_plant_sanitize(dst, TRUE);

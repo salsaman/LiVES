@@ -327,9 +327,9 @@ static void post_playback(void) {
   }
 
   if (!mainw->multitrack) {
-    if (mainw->eb2_psurf) {
-      lives_painter_surface_destroy(mainw->eb2_psurf);
-      mainw->eb2_psurf = NULL;
+    if (*mainw->eb2_psurf) {
+      //lives_painter_surface_destroy(*mainw->eb2_psurf);
+      *mainw->eb2_psurf = NULL;
     }
     redraw_timeline(mainw->current_file);
   }

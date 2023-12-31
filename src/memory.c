@@ -74,6 +74,13 @@ void dump_memstats(void) {
   g_print("Total allocated: %lu, total freed %lu\n", totalloc, totfree);
 }
 
+
+void *call0c(size_t nmemb, size_t size) {
+  void *p = calloc(nmemb, size);
+  return p ? lives_memset(p, 0, nmemb * size) : p;
+}
+
+
 void *lives_slice_alloc0(size_t sz) {
   totalloc += sz;
 #if GLIB_CHECK_VERSION(2, 10, 0)
@@ -436,7 +443,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     if (xxsize  > MAX_SIZE || (TOO_BIG_SIZE > 0 && xxsize >= TOO_BIG_SIZE)) return orig_malloc(xsize);
 
 
-    pthread_mutex_lock(&(smblock_pool->mutex));
+    //  pthread_mutex_lock(&(smblock_pool->mutex));
     g_print("hey 99zzzx\n");
 
 
@@ -448,7 +455,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
       return orig_calloc(nmemb, xsize);
     g_print("hey3\n");
 
-    pthread_mutex_lock(&(smblock_pool->mutex));
+    //  pthread_mutex_lock(&(smblock_pool->mutex));
     xsize *= nmemb;
     g_print("hey\n");
   }
@@ -522,7 +529,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
 
     smblock_pool->free_chunks -= nchunks_req;
 
-    pthread_mutex_unlock(&(smblock_pool->mutex));
+    //hread_mutex_unlock(&(smblock_pool->mutex));
 
     // zero out the newly allocated block
     ptr = (char *)smblock_pool->buffer + offs * CHUNK_SIZE;
@@ -540,7 +547,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
   // insufficient space
 
   smblock_pool->toobig_size = nchunks_req;
-  pthread_mutex_unlock(&(smblock_pool->mutex));
+  //pthread_mutex_unlock(&(smblock_pool->mutex));
   if (nchunks_req == 1) abort();
   if (!nmemb) return orig_malloc(xsize);
   return orig_calloc(nmemb, xsize / nmemb);
@@ -573,6 +580,9 @@ void speedy_free(void *ptr) {
   int nchunks = 0,  xxsize;
   off_t toffs = (((char *)ptr - (char *)smblock_pool->buffer)) / CHUNK_SIZE;
 
+  //if (ptr == mainw->debug_ptr) BREAK_ME("DVL GREE2");
+
+
   if (toffs >= 0 && (ssize_t)toffs < (ssize_t)TOT_CHUNKS) {
     pthread_mutex_lock(&(smblock_pool->mutex));
     list = find_smblock(ptr, &nchunks, &offs);
@@ -586,10 +596,11 @@ void speedy_free(void *ptr) {
 
   if (nchunks >= 0) {
     // double free or corruption...
+    BREAK_ME("DVL GREE");
     char *msg = lives_strdup_printf("Double free ot corruption in speedy_free, ptr %p points to "
                                     "a free block of size %d chunks\n", ptr, nchunks);
     pthread_mutex_unlock(&(smblock_pool->mutex));
-    LIVES_FATAL(msg);
+    //VES_FATAL(msg);
     return;
   }
 

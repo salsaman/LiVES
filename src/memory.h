@@ -74,6 +74,9 @@ typedef void (*lives_slice_unalloc_f)(size_t, void *);
 // slice_unalloc - reverse of above if it needs a special function (takes a size parameter)
 // slice_alloc_and_copy   - may be a single function, otherwise calls slice_alloc / memcpy
 
+
+void *call0c(size_t nmemb, size_t size);
+
 #if USE_STD_MEMFUNCS
 
 #ifdef default_malloc
@@ -111,7 +114,7 @@ typedef void (*lives_slice_unalloc_f)(size_t, void *);
 #define default_malloc malloc
 #endif
 #ifndef default_calloc
-#define default_calloc calloc
+#define default_calloc call0c
 #endif
 #ifndef default_realloc
 #define default_realloc realloc

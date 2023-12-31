@@ -2810,21 +2810,21 @@ fail:
 #ifndef NO_FRAME_THREAD
       lives_proc_thread_t lpt;
 #endif
-      weed_timecode_t tc;
+      weed_timecode_t tc = lives_get_session_ticks();
       ticks_t *timing_data;
       const char *img_ext = get_image_ext_for_type(sfile->img_type);
 
       lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
       weed_layer_pixel_data_free(layer);
-
       lock_layer_status(layer);
-      timing_data = _get_layer_timing(layer);
-      tc = timing_data[LAYER_STATUS_TREF];
-      if (!tc) tc = timing_data[LAYER_STATUS_TREF] = timing_data[LAYER_STATUS_QUEUED];
-      _set_layer_timing(layer, timing_data);
-      lives_free(timing_data);
-      unlock_layer_status(layer);
 
+      /* timing_data = _get_layer_timing(layer); */
+      /* tc = timing_data[LAYER_STATUS_TREF]; */
+      /* if (!tc) tc = timing_data[LAYER_STATUS_TREF] = timing_data[LAYER_STATUS_QUEUED]; */
+      /* _set_layer_timing(layer, timing_data); */
+      /* lives_free(timing_data); */
+
+      unlock_layer_status(layer);
       weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
       weed_layer_set_size(layer, width, height);
 
@@ -2835,7 +2835,6 @@ fail:
       lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
                                      | LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)pft_thread,
                                      0, "vs", layer, img_ext);
-
       weed_layer_ref(layer);
       lives_layer_set_proc_thread(layer, lpt);
       lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);

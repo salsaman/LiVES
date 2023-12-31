@@ -105,10 +105,7 @@ void lives_list_free_all(LiVESList **);
 #define DATA_FIELD_IS(l,t,f,x) (((t *)(l->data))->f==x)
 
 #define FIND_BY_DATA_FIELD(list, struct_type, field, target) LIVES_LIST_FOREACH(list)	\
-    if (DATA_FIELD_IS(list,structtype,field,target)) break;
-
-/* #define FIND_BY_DATA2_FIELD(list, struct_type, field, target) LIVES_LIST_FOREACH(list)	\ */
-/*     if (DATA_FIELD_IS(qlist,struct_type,field,target)||DATA_FIELD_IS(qlist,struct_type,field2,target)) break; */
+    if (DATA_FIELD_IS(list,struct_type,field,target)) break;
 
 // each data element is passed to a callbackj function, if the function returns TRUE then the
 //callback should be of the form: lives_result_t (*cond_func)(void *);
@@ -136,6 +133,14 @@ LiVESList *lives_list_trim(LiVESList *, LiVESList *node, boolean free_data);
 
 // returns TRUE if found and removed
 boolean lives_list_check_remove_data(LiVESList **, livespointer data, boolean free_data);
+
+#define lives_list_find_matching(xlist, struct_type, field, target) \
+  FIND_BY_DATA_FIELD(list, struct_type, field, target)
+
+#define lives_list_remove_matching(xlist, struct_type, field, target, free_func) _DW0 \
+  (LiVESList *list; FIND_BY_DATA_FIELD(list, struct_type, field, target); \
+   if (list) {if ((lives_funcptr_t)free_func) (*free_func)((struct_type *)list->data); \
+     xlist = lives_list_remove_node(xlist, list, FALSE);})
 
 LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data);
 LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data);

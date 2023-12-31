@@ -807,7 +807,6 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 
 void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
 
-  static int old_pwidth = 0, old_pheight = 0;
   LiVESPixbuf *pixbuf;
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
@@ -818,7 +817,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
 
   if (pixbuf) {
-    LiVESWidget *widget = LIVES_WIDGET(darea);
     set_drawing_area_from_pixbuf(darea, pixbuf);
     lives_widget_object_unref(pixbuf);
   }
@@ -1292,7 +1290,7 @@ static void redraw_timeline_inner(int clipno);
 
 // mainw->drawsrc :: cureent clip being drawn / last drawn
 
-static lives_proc_thread_t drawtl_thread;
+static lives_proc_thread_t drawtl_thread = NULL;
 static pthread_mutex_t tlthread_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -1306,9 +1304,9 @@ void drawtl_cancel(void) {
     pthread_mutex_unlock(&tlthread_mutex);
     lives_proc_thread_join(lpt);
     pthread_mutex_lock(&tlthread_mutex);
-    lives_proc_thread_unref(lpt);
-    drawtl_thread = NULL;
+    lives_proc_thread_unref(STEAL_POINTER(drawtl_thread));
   }
+  // exit with tlthread_mutex locked !!
 }
 
 

@@ -79,6 +79,9 @@ typedef struct {
   LiVESList *filter_bank;
 } rte_key_desc;
 
+
+extern rte_key_desc fx_key_defs[FX_KEYS_MAX_VIRTUAL];
+
 void fx_keys_init(void);
 
 boolean textparm_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval,

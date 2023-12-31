@@ -17,6 +17,8 @@
 #define FX_DATA_KEY_PLAYBACK_PLUGIN -2
 #define FX_DATA_KEY_OMC_MACRO -3
 
+#define FX_DATA_KEY_CONNECTABLE -9999
+
 #define EXTRA_PARAMS_OUT 1 ///< Activate
 #define EXTRA_PARAMS_IN 1 ///< Activated
 

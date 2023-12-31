@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef DEFS_H
-#define _DEFS_H 1
+#ifndef DEFS_H_
+#define _DEFS_H_
 
 //// The aim of this file is to have,, whrere practical,  all #defines in one location
 /// Also there good arguments to be made for using #if as opposed to #ifdef
@@ -438,8 +438,12 @@ typedef enum {
 } lives_direction_t;
 
 #define LIVES_DIRECTION_REVERSE		LIVES_DIRECTION_BACKWARD
+
 #define LIVES_DIRECTION_OUTWARD		LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_INWARD		LIVES_DIRECTION_BACKWARD
+
+#define LIVES_DIRECTION_OUT		LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_IN		LIVES_DIRECTION_BACKWARD
 
 #define LIVES_DIRECTION_STOPPED	     	LIVES_DIRECTION_NONE
 
@@ -540,7 +544,7 @@ typedef enum {
 
 #define USE_RPMALLOC 1
 #define MEM_USE_BIGBLOCKS 1
-#define MEM_USE_SMALLBLOCKS 0
+#define MEM_USE_SMALLBLOCKS 1
 
 #define ALLOW_ORC_MEMCPY 1
 #define ALLOW_OIL_MEMCPY 1

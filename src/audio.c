@@ -2922,6 +2922,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
       }
     }
 
+    pthread_mutex_lock(&mainw->abuf_mutex);
     if (mainw->afbuffer) {
       // if we have audio triggered gens., push audio to it
       // or if we want loopback to player
@@ -2929,6 +2930,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
         append_to_audio_bufferf(in_buffer[i], nframes, (i == nchans - 1) ? -i - 1 : i + 1);
       }
     }
+    pthread_mutex_unlock(&mainw->abuf_mutex);
 
     // apply any audio effects with in_channels and no out_channels
     weed_layer_set_audio_data(layer, in_buffer, arate, nchans, nframes);
@@ -2955,14 +2957,14 @@ void audio_analyser_start(int source) {
     if (!ana_lpt) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-                WEED_SEED_BOOLEAN, "p", aplayer);
+                WEED_SEED_BOOLEAN, "v", (void *)aplayer);
       lives_proc_thread_set_cancellable(ana_lpt);
     }
   } else {
     if (!ana_lpt2) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_lpt2 = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-                 WEED_SEED_BOOLEAN, "p", aplayer);
+                 WEED_SEED_BOOLEAN, "v", (void *)aplayer);
       lives_proc_thread_set_cancellable(ana_lpt2);
     }
   }
@@ -3076,7 +3078,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   if (dets->fd == -1) return NULL;
 
   lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
-                                        WEED_SEED_BOOLEAN, "pv", aplayer, dets);
+                                        WEED_SEED_BOOLEAN, "vv", (void *)aplayer, (void *)dets);
   lives_proc_thread_set_cancellable(lpt);
   return lpt;
 }
@@ -4458,7 +4460,7 @@ getaud1:
     weed_set_int_value(channel, WEED_LEAF_AUDIO_RATE, arate);
 
     if (mainw->agen_needs_reinit) {
-      // allow main thread to complete the reinit so we do not delay; just return silence
+      // allow ain thread to complete the reinit so we do not delay; just return silence
       weed_instance_unref(orig_inst);
       return FALSE;
     }

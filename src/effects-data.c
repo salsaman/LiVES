@@ -147,7 +147,7 @@ void override_if_active_input(int hotkey) {
       totcons += pconx->nconns[i];
       for (; j < totcons; j++) {
         if (pconx->ikey[j] == hotkey && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
-          // out param is "ACTIVATED"
+          // in param is "ACTIVATE"
           // abuse "autoscale" for this
           pconx->autoscale[j] = TRUE;
           return;
@@ -176,9 +176,10 @@ void end_override_if_activate_output(int hotkey) {
         totcons += pconx->nconns[i];
         for (; j < totcons; j++) {
           if (pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
+            fx_key_defs[pconx->ikey[j]].last_activator = activator_none;
             // abuse "autoscale" for this
             pconx->autoscale[j] = FALSE;
-	    // *INDENT-OFF*
+	  // *INDENT-OFF*
           }}}}
     // *INDENT-ON*
     pconx = pconx->next;
@@ -650,9 +651,88 @@ static lives_pconnect_t *pconx_add_connection_private(int okey, int omode, int o
   return pconx;
 }
 
-
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale) {
   pconx_add_connection_private(okey, omode, opnum, ikey, imode, ipnum, autoscale);
+}
+
+
+#define CONAB_FLAG_PULL			(1ull << 0)
+#define CONAB_FLAG_PUSH			(1ull << 1)
+#define CONAB_FLAG_AUDIO_CYCLE		(1ull << 2)
+#define CONAB_FLAG_AUTO_UPDATE		(1ull << 3)
+#define CONAB_FLAG_IMMEDIATE		(1ull << 4)
+#define CONAB_FLAG_AUTOSCALE_ALWAYS	(1ull << 5)
+#define CONAB_FLAG_FREE_ON_DISC		(1ull << 6)
+
+typedef struct {
+  uint64_t handle;
+  const char *name;
+  void *varptr;
+  weed_seed_t vartype;
+  uint64_t flags;
+} lives_connectable;
+
+static LiVESList *conab_list = NULL;
+
+lives_connectable *find_connectable_by_handle(uint64_t handle) {
+  LiVESList *list;
+  lives_list_find_matching(conab_list, lives_connectable, handle, handle);
+  if (list) return list->data;
+  return NULL;
+}
+
+
+void free_conab(lives_connectable * conab) {
+  if (conab) {
+    uint64_t flags = conab->flags;
+    if (flags & CONAB_FLAG_FREE_ON_DISC) {
+      lives_free(*(void **)conab->varptr);
+      *(void **)conab->varptr = NULL;
+    }
+    if (conab->name) lives_free((char *)conab->name);
+    lives_free(conab);
+  }
+}
+
+
+void conx_remove_connectable(uint64_t handle) {
+  lives_list_remove_matching(conab_list, lives_connectable,  handle, handle, free_conab);
+}
+
+
+lives_connectable *conx_connectable_set_flags(uint64_t handle, uint64_t flags) {
+  lives_connectable *conab = find_connectable_by_handle(handle);
+  if (conab) conab->flags = flags;
+  return conab;
+}
+
+
+uint64_t conx_connectable_get_flags(uint64_t handle) {
+  lives_connectable *conab = find_connectable_by_handle(handle);
+  return conab ? conab->flags : 0;
+}
+
+
+uint64_t conx_make_connectable(const char *name, void *varptr, weed_seed_t st, uint64_t flags) {
+  LIVES_CALLOC_TYPE(lives_connectable, conab, 1);
+  conab->handle = gen_unique_id();
+  conab->name = lives_strdup(name);
+  conab->varptr = varptr;
+  conab->vartype = st;
+  conab->flags = flags;
+  conab_list = lives_list_append(conab_list, (void *)conab);
+  return conab->handle;
+}
+
+
+void pconx_add_connection_generic(uint64_t handle, int key, int mode, int pnum, lives_direction_t dir) {
+  lives_connectable *conab = find_connectable_by_handle(handle);
+  uint64_t flags = conab->flags;
+  boolean autoscale = !!(flags & CONAB_FLAG_AUTOSCALE_ALWAYS);
+  if (dir == LIVES_DIRECTION_IN)
+    pconx_add_connection_private(FX_DATA_KEY_CONNECTABLE, handle >> 32, handle & 0xFFFFFFFF, key, mode, pnum, autoscale);
+  else
+    pconx_add_connection_private(key, mode, pnum, FX_DATA_KEY_CONNECTABLE, handle >> 32, handle & 0xFFFFFFFF, autoscale);
 }
 
 
@@ -1247,7 +1327,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     int *valsb;
     if (dparam == active_dummy) {
       // ACTIVATE / DEACTIVATE
-      if (!autoscale) { // autoscale is now "user override"
+      if (fx_key_defs[key].last_activator != activator_ui) {
+        //if (!autoscale) { // autoscale is now "user override"
         boolean valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
         if ((valb == WEED_TRUE && !rte_key_is_enabled(key, FALSE)) ||
             (valb == WEED_FALSE && rte_key_is_enabled(key, FALSE))) {
@@ -1486,6 +1567,13 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
 
 
 boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
+  // we use a pull method to update the values of any in params
+  // which have data connections from output params
+  // - we also have some additional non-fx param values
+  // - each fx has an activate input and activated output
+  // - entities other than effects can be connected, e.g. playback plugin, OMC messenger
+
+
   weed_plant_t **inparams = NULL;
   weed_plant_t *oparam, *inparam = NULL;
   weed_plant_t *inst = NULL, *oinst;

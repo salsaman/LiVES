@@ -1097,7 +1097,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
-    goto retnull;
+    goto doneded;
   }
 
   //std::cerr << scrwidth << " X " << scrheight << " and " << width << " X " << height << std::endl;
@@ -1233,6 +1233,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   /// optionally we could return WEED_ERROR_NOT_READY if there is no new frame
   //if (!sd->got_first) return WEED_ERROR_NOT_READY;
 
+ doneded:
+
   if (1) {
   const int offsx = (scrwidth - width) >> 1;
   const int offsy = (scrheight - height) >> 1;
@@ -1276,8 +1278,6 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   return WEED_SUCCESS;
   }
- retnull:
-  return WEED_ERROR_NOT_READY;
 }
 
 

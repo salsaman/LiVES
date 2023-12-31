@@ -2659,6 +2659,7 @@ boolean parse_valfile(const char *fname, const char delim, const char **keys, ch
       for (int i = 0; keys[i]; i++) {
 	if (!lives_strcmp(keys[i], array[0])) {
 	  vals[i] = lives_strdup(lives_strstrip(array[1]));
+	  if (!i) mainw->debug_ptr = vals[0];
 	}
       }
       lives_strfreev(array);
@@ -2683,7 +2684,7 @@ boolean get_memstatus(void) {
     capable->hw.memfree = lives_strtol(rets[1]) * 1000;
     capable->hw.memavail = lives_strtol(rets[2]) * 1000;
     capable->hw.memlocked = lives_strtol(rets[3]) * 1000;
-    for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
+    //for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
     return TRUE;
   }
 #endif

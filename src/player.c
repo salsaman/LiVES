@@ -45,6 +45,9 @@ static boolean updates_done(lives_proc_thread_t self, lives_proc_thread_t other)
   return TRUE;
 }
 
+
+boolean is_all_updated(void) {return all_updated;}
+
 LIVES_GLOBAL_INLINE boolean lives_has_status(int status) {return (mainw->status & status) ? TRUE : FALSE;}
 
 int lives_get_status(void) {
@@ -584,7 +587,7 @@ static lives_result_t prepare_frames(frames_t frame) {
           if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                   cfile->hsize, cfile->vsize, WEED_PALETTE_ANY)) {
             if (mainw->frame_layer) {
-              weed_layer_free(mainw->frame_layer);
+              weed_layer_unref(mainw->frame_layer);
               mainw->frame_layer = NULL;
             }
             if (cfile->clip_type == CLIP_TYPE_DISK &&
@@ -610,7 +613,7 @@ static lives_result_t prepare_frames(frames_t frame) {
             if (!mainw->layers[0]) mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
             weed_layer_copy(mainw->layers[0], mainw->ext_layer);
             mainw->frame_layer = mainw->layers[0];
-            weed_layer_free(mainw->ext_layer);
+            weed_layer_unref(mainw->ext_layer);
             mainw->ext_layer = NULL;
             lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
             goto skip_precache;
@@ -1119,6 +1122,7 @@ weed_layer_t *load_frame_image(frames_t frame) {
     }
 
     /////////////////// TRIGGER PLAN CYCLE //////////////////////////////
+lfi_loop:
 
     do {
       // if we are playing a backend preview, we may need to call this several times until the
@@ -1128,16 +1132,15 @@ weed_layer_t *load_frame_image(frames_t frame) {
     } while (res == LIVES_RESULT_FAIL && !mainw->frame_layer && mainw->cancelled == CANCEL_NONE
              && cfile->clip_type == CLIP_TYPE_DISK);
 
-    if (!mainw->layers) {
-      errpt = 2;
-      abort();
-      goto lfi_err;
-    }
-
     // TODO -> mainw->cancelled should cancel plan_cycle
     if (LIVES_UNLIKELY((mainw->cancelled != CANCEL_NONE))) {
       // NULL frame or user cancelled
       errpt = 3;
+      goto lfi_err;
+    }
+
+    if (!mainw->layers) {
+      errpt = 2;
       goto lfi_err;
     }
 
@@ -1147,6 +1150,11 @@ weed_layer_t *load_frame_image(frames_t frame) {
 
     ///////// EXECUTE PLAN CYCLE ////////////
 
+    if (planrunner_trylock()) {
+      errpt = 12;
+      goto lfi_err;
+    }
+
     //d_print_debug("wating for plan to complete\n");
     if (mainw->plan_cycle) {
       if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
@@ -1155,13 +1163,13 @@ weed_layer_t *load_frame_image(frames_t frame) {
       }
       mainw->plan_cycle->tdata->actual_start = lives_get_session_time();
     }
-
+    planrunner_unlock();
 
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor + 1))
         && mainw->current_file != mainw->scrap_file) {
       THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
-      main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, &mainw->eb2_psurf);
+      main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf);
       THREADVAR(hook_hints) = 0;
     }
 
@@ -1178,12 +1186,12 @@ weed_layer_t *load_frame_image(frames_t frame) {
       mainw->plan_runner_proc = NULL;
     }
 
-    if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
-
     if (mainw->refresh_model) {
       errpt = 7;
-      //goto lfi_err;
+      goto lfi_err;
     }
+
+    if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
 
     if (!mainw->plan_cycle) {
       errpt = 11;
@@ -1570,6 +1578,14 @@ lfi_err:
         if (mainw->layers[i] != mainw->frame_layer) {
           weed_layer_pixel_data_free(mainw->layers[i]);
         }
+      }
+    }
+
+    if (mainw->refresh_model) {
+      if (mainw->new_clip == mainw->playing_file && mainw->new_blend_file == mainw->blend_file
+          && mainw->close_this_clip == -1 && mainw->cancelled == CANCEL_NONE) {
+        rebuild_nodemodel();
+        goto lfi_loop;
       }
     }
 
@@ -2228,10 +2244,8 @@ int process_one(boolean visible) {
   int close_this_clip, new_clip, new_blend_file;
   boolean frame_invalid = FALSE;
 
-  lives_hook_stack_t *sah;
-
-  if (mainw->player_proc)
-    sah = lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
+  lives_hook_stack_t *sah =
+    lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
 
   // current video playback direction
   lives_direction_t dir = LIVES_DIRECTION_NONE;
@@ -2329,34 +2343,7 @@ player_loop:
     }
   }
 
-  if (mainw->refresh_model) {
-    //g_print("node model needs rebuilding\n");
-    mainw->refresh_model = FALSE;
-    cleanup_nodemodel(&mainw->nodemodel);
-    //g_print("prev plan cancelled, good to create new plan\n");
-    prefs->pb_quality = future_prefs->pb_quality;
-
-    //g_print("rebuilding model\n");
-
-    lives_microsleep_while_true(mainw->do_ctx_update || !all_updated);
-    mainw->gui_much_events = TRUE;
-    fg_stack_wait();
-    lives_microsleep_while_true(mainw->do_ctx_update);
-
-    mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-    //xtime = lives_get_session_time();
-
-    build_nodemodel(&mainw->nodemodel);
-    align_with_model(mainw->nodemodel);
-    mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
-
-    run_next_cycle();
-    /* g_print("rebuilt model (pt 1), created new plan, made new plan-cycle, completed in %.6f millisec\n", */
-    /*         1000. * (lives_get_session_time() - xtime)); */
-  }
-
-  //
-
+  if (mainw->refresh_model) rebuild_nodemodel();
   if (!mainw->plan_cycle) run_next_cycle();
 
   old_playing_file = mainw->playing_file;
@@ -2509,6 +2496,9 @@ switch_point:
       }
     } while (mainw->close_this_clip != close_this_clip || mainw->new_clip != new_clip
              || mainw->new_blend_file != new_blend_file);
+
+    //cancel running plan
+    cleanup_nodemodel(&mainw->nodemodel);
 
     if (IS_VALID_CLIP(close_this_clip)) {
       // first deal with the case where we are asked to CLOSE A CLIP
@@ -2776,27 +2766,7 @@ switch_point:
 
   if (!CURRENT_CLIP_IS_VALID) lives_abort("Invalid playback clip");
 
-  if (mainw->refresh_model) {
-    mainw->refresh_model = FALSE;
-    cleanup_nodemodel(&mainw->nodemodel);
-    //g_print("prev plan cancelled2, good to create new plan\n");
-
-    prefs->pb_quality = future_prefs->pb_quality;
-
-    lives_microsleep_while_true(mainw->do_ctx_update || !all_updated);
-    mainw->gui_much_events = TRUE;
-    fg_stack_wait();
-    lives_microsleep_while_true(mainw->do_ctx_update);
-
-    mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-
-    //xtime = lives_get_session_time();
-    build_nodemodel(&mainw->nodemodel);
-    align_with_model(mainw->nodemodel);
-    mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
-
-    run_next_cycle();
-  }
+  if (mainw->refresh_model) rebuild_nodemodel();
 
   // playing back an event_list
   // here we need to add mainw->offsetticks, to get the correct position when playing back in multitrack
@@ -3820,30 +3790,7 @@ proc_dialog:
             // if any player window config changes happened, we need to rebuild the nodemodel
             // with new player target
 
-            if (mainw->refresh_model) {
-              mainw->refresh_model = FALSE;
-              //g_print("prev plan cancelled5, good to create new plan\n");
-
-              lives_microsleep_while_true(mainw->do_ctx_update);
-              mainw->gui_much_events = TRUE;
-              fg_stack_wait();
-              lives_microsleep_while_true(mainw->do_ctx_update);
-
-              cleanup_nodemodel(&mainw->nodemodel);
-              prefs->pb_quality = future_prefs->pb_quality;
-
-              mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-              //xtime = lives_get_session_time();
-
-              build_nodemodel(&mainw->nodemodel);
-              align_with_model(mainw->nodemodel);
-              mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
-
-              /* g_print("rebuilt model (pt 3), created new plan, made new plan-cycle, completed in %.6f millisec\n", */
-              /* 	      1000. * (lives_get_session_time() - xtime)); */
-
-              run_next_cycle();
-            }
+            if (mainw->refresh_model) rebuild_nodemodel();
           }
 
           if (!CURRENT_CLIP_IS_VALID) mainw->cancelled = CANCEL_INTERNAL_ERROR;

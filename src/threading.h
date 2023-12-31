@@ -893,7 +893,7 @@ lives_proc_thread_t lives_proc_thread_get_chain_prime(lives_proc_thread_t);
 
 // error handling
 boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, int line_ref,
-                                     int errnum, int severity, char *errmsg);
+                                     int errnum, int severity, const char *errmsg);
 
 boolean _lives_proc_thread_error(char *file_ref, int line_ref,
                                  int errnum, int severity, const char *fmt, ...);
@@ -917,11 +917,13 @@ typedef struct {
 extern lpt_err_data obits[128];
 
 int lives_proc_thread_get_errnum(lives_proc_thread_t);
-char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
+const char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
 int lives_proc_thread_get_errsev(lives_proc_thread_t);
-char *lives_proc_thread_get_errfile(lives_proc_thread_t);
-int lives_proc_thread_get_errline(lives_proc_thread_t);
+char *lives_proc_thread_get_file_ref(lives_proc_thread_t);
+int lives_proc_thread_get_line_ref(lives_proc_thread_t);
 
+void lives_proc_thread_set_line_ref(lives_proc_thread_t self, int line, boolean over);
+void lives_proc_thread_set_file_ref(lives_proc_thread_t self, char *file, boolean over);
 void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num);
 void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg);
 void  lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev);

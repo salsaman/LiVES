@@ -1936,7 +1936,7 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
     return; // let it uncork in its own time...
   }
   pa_operation_unref(paop);
-  while (!await_audio_queue(LIVES_DEFAULT_TIMEOUT));
+  //while (!await_audio_queue(LIVES_DEFAULT_TIMEOUT));
 }
 
 
@@ -2252,7 +2252,7 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
 
     /* pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile); */
 
-    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
+    //if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
 
     /* if (seek_err) { */
     /*   seek_err = FALSE; */

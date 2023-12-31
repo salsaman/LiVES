@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-12-31 02:11-0300\n"
+"POT-Creation-Date: 2023-12-31 07:45-0300\n"
 "PO-Revision-Date: 2015-04-20 18:32+0000\n"
 "Last-Translator: Miguel Anxo Bouzada <mbouzada@gmail.com>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
@@ -9066,7 +9066,7 @@ msgstr ""
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9213
+#: src/effects-weed.c:9212
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -15663,14 +15663,14 @@ msgstr "feito.\n"
 msgid "error in file. Failed.\n"
 msgstr ""
 
-#: src/memory.c:1194
+#: src/memory.c:1198
 #, c-format
 msgid ""
 "Insufficient memory for big block allocator, need at least %ld bytes, but "
 "only %ld avaialble"
 msgstr ""
 
-#: src/threading.c:4391
+#: src/threading.c:4389
 #, fuzzy
 msgid "Unknown threadx"
 msgstr "Descoñecido"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-12-31 02:11-0300\n"
+"POT-Creation-Date: 2023-12-31 07:45-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -9528,7 +9528,7 @@ msgstr "ジェネレーター %s を開始できません。\n"
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:9213
+#: src/effects-weed.c:9212
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s [不安定]"
@@ -16547,14 +16547,14 @@ msgstr "完了。\n"
 msgid "error in file. Failed.\n"
 msgstr "ファイルのエラー。失敗しました。\n"
 
-#: src/memory.c:1194
+#: src/memory.c:1198
 #, c-format
 msgid ""
 "Insufficient memory for big block allocator, need at least %ld bytes, but "
 "only %ld avaialble"
 msgstr ""
 
-#: src/threading.c:4391
+#: src/threading.c:4389
 #, fuzzy
 msgid "Unknown threadx"
 msgstr "不明"

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-12-31 02:11-0300\n"
+"POT-Creation-Date: 2023-12-31 07:45-0300\n"
 "PO-Revision-Date: 2020-10-31 09:08+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -9645,7 +9645,7 @@ msgstr "Не вдалося запустити породжувач %s (%s)\n"
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Не вдалося запустити породжувач %s, (%s)\n"
 
-#: src/effects-weed.c:9213
+#: src/effects-weed.c:9212
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s [нестабільний]"
@@ -16565,14 +16565,14 @@ msgstr "виконано.\n"
 msgid "error in file. Failed.\n"
 msgstr "помилка у файлі. Виконання перервано.\n"
 
-#: src/memory.c:1194
+#: src/memory.c:1198
 #, c-format
 msgid ""
 "Insufficient memory for big block allocator, need at least %ld bytes, but "
 "only %ld avaialble"
 msgstr ""
 
-#: src/threading.c:4391
+#: src/threading.c:4389
 #, fuzzy
 msgid "Unknown threadx"
 msgstr "Невідома помилка"

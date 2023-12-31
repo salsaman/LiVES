@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-12-31 02:11-0300\n"
+"POT-Creation-Date: 2023-12-31 07:45-0300\n"
 "PO-Revision-Date: 2020-10-08 01:06+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -8979,7 +8979,7 @@ msgstr ""
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9213
+#: src/effects-weed.c:9212
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -15606,14 +15606,14 @@ msgstr "готово.\n"
 msgid "error in file. Failed.\n"
 msgstr "Ошибка в файле. Ошибка.\n"
 
-#: src/memory.c:1194
+#: src/memory.c:1198
 #, c-format
 msgid ""
 "Insufficient memory for big block allocator, need at least %ld bytes, but "
 "only %ld avaialble"
 msgstr ""
 
-#: src/threading.c:4391
+#: src/threading.c:4389
 #, fuzzy
 msgid "Unknown threadx"
 msgstr "Неизвестно"

@@ -1037,7 +1037,6 @@ static boolean do_opt_actions(plan_step_t *step, boolean check) {
   if (!sfile) {
     return FALSE;
   }
-
   /* if (step->st_type == STEP_TYPE_LOAD && !(step->flags & STEP_FLAG_RUN_AS_LOAD)) { */
   /*   // should be done in first conversion step after loading */
   /*   ticks_t tc; */
@@ -1098,7 +1097,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
         char *msg = lives_strdup_printf("Invalid palette conversion %d to %d\n", inpalette, opalette);
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         BREAK_ME("invpal");
-        lives_proc_thread_error((int)retval, LPT_ERR_MAJOR, "%s", msg);
+        lives_proc_thread_error((int)retval, LPT_ERR_MINOR, "%s", msg);
         lives_free(msg);
         weed_layer_unref(layer);
         lives_proc_thread_cancel(self);
@@ -1187,7 +1186,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
       fprintf(stderr, "failed %d X %d pal %d to %d X %d %d\n", weed_layer_get_width(layer),
               weed_layer_get_height(layer), weed_layer_get_palette(layer),
               width, height, opalette);
-      lives_proc_thread_error((int)retval, LPT_ERR_MAJOR, "%s", "Unable to resize");
+      lives_proc_thread_error((int)retval, LPT_ERR_MINOR, "%s", "Unable to resize");
     }
 
     xtime = lives_get_session_time();
@@ -1243,7 +1242,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
       d_print_debug("failed %d X %d pal %d to %d X %d (%d X %d) %d\n", weed_layer_get_width(layer),
                     weed_layer_get_height(layer), weed_layer_get_palette(layer),
                     width, height, xwidth, xheight, opalette);
-      lives_proc_thread_error((int)retval, LPT_ERR_MAJOR, "%s", "Unable to resize");
+      lives_proc_thread_error((int)retval, LPT_ERR_MINOR, "%s", "Unable to resize");
     }
 
     xtime = lives_get_session_time();
@@ -1748,7 +1747,7 @@ static void run_plan(exec_plan_t *plan) {
       if (state == STEP_STATE_ERROR) {
         if (!error) d_print_debug("step encountered an ERROR st of loop:- %s",
                                     step->errmsg ? step->errmsg : "unspecified error");
-        error = 2;
+        if (!error) error = 2;
       }
 
       if (state == STEP_STATE_ERROR || state == STEP_STATE_FINISHED
@@ -2066,9 +2065,6 @@ static void run_plan(exec_plan_t *plan) {
                           step_count, weed_filter_get_name((weed_filter_t *)step->target),
                           xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
 
-
-
-            /// hmmm....
             filter_mutex_lock(step->target_idx);
 
             if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
@@ -2086,8 +2082,6 @@ static void run_plan(exec_plan_t *plan) {
             step->proc_thread =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                        run_apply_inst_step, WEED_SEED_INT, "vv", step, inst);
-
-
             //
           } else {
             step->st_type = STEP_TYPE_LOAD;
@@ -2416,7 +2410,7 @@ static void run_plan(exec_plan_t *plan) {
   } else if (error) {
     SET_PLAN_STATE(ERROR);
     g_print("PLAN error %d\n", error);
-    lives_proc_thread_error(error, LPT_ERR_MAJOR, "plan error %d", error);
+    lives_proc_thread_error(error, LPT_ERR_MINOR, "plan error %d", error);
   } else {
     if (lives_proc_thread_get_cancel_requested(self)) {
       d_print_debug("Cancel requested, ignoring as we are done anyway !\n");
@@ -7662,26 +7656,11 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
                                     mainw->plan_cycle->state == PLAN_STATE_QUEUED);
       }
       lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
+      lives_microsleep_until_zero(nplans);
     }
 
     if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
     if (mainw->exec_plan) exec_plan_free(STEAL_POINTER(mainw->exec_plan));
-
-    if (mainw->layers) {
-      int maxl;
-
-      if (*nodemodel) maxl = (*nodemodel)->ntracks;
-      else maxl = mainw->num_tracks;
-      for (int i = 0; i < maxl; i++) {
-        if (mainw->layers[i]) {
-          lock_layer_status(mainw->layers[i]);
-          if (_lives_layer_get_status(mainw->layers[i]) != LAYER_STATUS_READY) {
-            _weed_layer_set_invalid(mainw->layers[i], TRUE);
-          }
-          unlock_layer_status(mainw->layers[i]);
-        }
-      }
-    }
 
     if (mainw->layers) {
       int maxl;
@@ -7735,23 +7714,20 @@ lives_result_t run_next_cycle(void) {
     g_print("playback cancelled, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
   }
-  if (mainw->plan_runner_proc
-      && lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)) {
-    pthread_mutex_unlock(&planrunner_mutex);
-    g_print("running plan cancelled, not running next cycle !\n");
-    return LIVES_RESULT_INVALID;
+
+  if (mainw->plan_runner_proc) {
+    if (lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)) {
+      pthread_mutex_unlock(&planrunner_mutex);
+      g_print("running plan cancelled, not running next cycle !\n");
+      return LIVES_RESULT_INVALID;
+    }
+    lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+    lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
+    lives_microsleep_until_zero(nplans);
   }
 
   if (mainw->plan_cycle) {
-    if (mainw->plan_cycle->state == PLAN_STATE_QUEUED
-        || mainw->plan_cycle->state == PLAN_STATE_WAITING
-        || mainw->plan_cycle->state == PLAN_STATE_RUNNING
-        || mainw->plan_cycle->state == PLAN_STATE_PAUSED
-        || mainw->plan_cycle->state == PLAN_STATE_RESUMING) {
-      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
-      lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
-      exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
-    }
+    exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
   }
 
   // free pixel data in all layers except mainw->frame_layer (nullify this to clear it, eg. on error)

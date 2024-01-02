@@ -496,6 +496,13 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
   return err;
 }
 
+// TODO -if n == -1
+// if dst is immutable, skip it and return weed_error_immutable,  unless both values equate
+// caller can delete these leaves and try again
+// - if dst leaf exists, and is not undel, we delete it before copying
+// - if undel, clear flagbit and retry
+// - if src does not exist, and dst !undeletabel, delete dst - otherwise caller can set no value or clear flagbit
+// - if src has no value and dst is undeletable leave dst unchanged
 
 weed_error_t weed_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf)
 {return weed_leaf_copy_nth(dst, keyt, src, keyf, -1);}
@@ -573,17 +580,15 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
   if (!plant) return NULL;
 
   proplist = weed_plant_list_leaves(src, NULL);
-  for (prop = proplist[0]; (prop = proplist[i]) != NULL && err == WEED_SUCCESS; i++) {
+  for (prop = proplist[1]; (prop = proplist[i]) != NULL && err == WEED_SUCCESS; i++) {
     if (err == WEED_SUCCESS) {
-      if (strcmp(prop, WEED_LEAF_TYPE)) {
-        err = weed_leaf_copy(plant, prop, src, prop);
-        if (err == WEED_ERROR_IMMUTABLE || err == WEED_ERROR_WRONG_SEED_TYPE) err = WEED_SUCCESS; // ignore these errors
-	else {
-	  if (weed_leaf_is_immutable(src, prop) == WEED_ERROR_IMMUTABLE)
-	    weed_leaf_set_immutable(plant, prop, WEED_TRUE);
-	  if (weed_leaf_is_undeletable(src, prop) == WEED_ERROR_UNDELETABLE)
-	    weed_leaf_set_undeletable(plant, prop, WEED_TRUE);
-	}
+      err = weed_leaf_copy(plant, prop, src, prop);
+      if (err == WEED_ERROR_IMMUTABLE || err == WEED_ERROR_WRONG_SEED_TYPE) err = WEED_SUCCESS; // ignore these errors
+      else {
+	if (weed_leaf_is_immutable(src, prop) == WEED_ERROR_IMMUTABLE)
+	  weed_leaf_set_immutable(plant, prop, WEED_TRUE);
+	if (weed_leaf_is_undeletable(src, prop) == WEED_ERROR_UNDELETABLE)
+	  weed_leaf_set_undeletable(plant, prop, WEED_TRUE);
       }
     }(*_free_func)(prop);
   }(*_free_func)(proplist);

@@ -564,7 +564,7 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
       }
       if (!weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
         rem_new_rs = TRUE;
-        lives_leaf_dup(dst_layer, src_layer, LIVES_LEAF_NEW_ROWSTRIDES);
+        lives_leaf_dup_nocheck(dst_layer, src_layer, LIVES_LEAF_NEW_ROWSTRIDES);
         if (!weed_plant_has_leaf(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
           weed_set_int_array(dst_layer, LIVES_LEAF_NEW_ROWSTRIDES, nplanes, rowstrides);
           weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
@@ -794,7 +794,7 @@ static weed_layer_t *_weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer
     weed_layer_set_pixel_data_planar(dlayer, (void **)pd, nplanes);
 
     // not part of the standard metadata set
-    lives_leaf_dup(dlayer, slayer, LIVES_LEAF_COPYLIST);
+    lives_leaf_dup_nocheck(dlayer, slayer, LIVES_LEAF_COPYLIST);
     //pthread_mutex_unlock(&copylist_mutex);
     lives_free(copylists);
     lives_free(pd);
@@ -862,7 +862,7 @@ LIVES_GLOBAL_INLINE lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed
     //weed_layer_set_pixel_data_planar(dst, (void **)pd, nplanes);
 
     // not part of the standard metadata set
-    lives_leaf_dup(dst, src, LIVES_LEAF_COPYLIST);
+    lives_leaf_dup_nocheck(dst, src, LIVES_LEAF_COPYLIST);
     //pthread_mutex_unlock(&copylist_mutex);
     lives_free(copylists);
     lives_free(pd);
@@ -1096,7 +1096,8 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 }
 #endif
 int refs = weed_refcount_dec(layer);
-LIVES_ASSERT(refs >= 0);
+ if (refs == 1 && layer == mainw->frame_layer_preload) __BREAK_ME("flpunr");
+ LIVES_ASSERT(refs >= 0);
 if (layer == mainw->debug_ptr) {
   BREAK_ME("unref dbg");
   g_print("nrefs is %d\n", refs);

@@ -930,7 +930,7 @@ if ($num_params) {
 		print $OUT "weed_float_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
 	    }
 	}
-	elsif ($type eq "bool") {
+	elsif ($type eq 'bool' || $type eq 'switch') {
 	    if (@pieces > 4) {
 		print $OUT "weed_radio_init(\"$pname\", \"$plabel\", ";
 	    }
@@ -949,7 +949,7 @@ if ($num_params) {
 	    }
 	    print $OUT ")";
 	}
-	elsif ($type eq "string") {
+	elsif ($type eq 'string' || $type eq 'text') {
 	    my $pdef = @pieces[3];
 	    print $OUT "weed_text_init(\"$pname\", \"$plabel\", $pdef)";
 	}
@@ -1003,7 +1003,7 @@ if ($num_oparams) {
 		}
 	    }
 	}
-	elsif ($type eq "bool") {
+	elsif ($type eq 'bool' || $type eq 'switch') {
 	    print $OUT "weed_out_param_switch_init(\"$pname\",  ";
 	    if (!@pieces[3]) {
 		print $OUT "WEED_FALSE";
@@ -1013,7 +1013,7 @@ if ($num_oparams) {
 	    }
 	    print $OUT ")";
 	}
-	elsif ($type eq "string") {
+	elsif ($type eq 'string' || $type eq 'text') {
 	    my $pdef = @pieces[2];
 	    print $OUT "weed_out_param_text_init(\"$pname\", $pdef)";
 	}
@@ -1579,11 +1579,11 @@ sub get_paramvals {
 	elsif ($type eq "string_list") {
 	    print $OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
 	}
-	elsif ($type eq "bool") {
+	elsif ($type eq 'bool'||  $type eq 'switch') {
 	    print $OUT "$spcs  int $pname = weed_param_get_value_boolean(in_params[P_$pname]);\n";
 	}
-	elsif ($type eq "string") {
-	    print $OUT "$spcs  int $pname = weed_param_get_value_string(in_params[P_$pname]);\n";
+	elsif ($type eq 'string' || $type eq 'text') {
+	    print $OUT "$spcs  char *$pname = weed_param_get_value_string(in_params[P_$pname]);\n";
 	}
     }
     if (!$checkonly) {
@@ -1607,7 +1607,7 @@ sub clean_params {
 	@pieces = split(/$delim/);
 	my $pname = @pieces[0];
 	my $type = @pieces[2];
-	if ($type eq "string") {
+	if ($type eq 'string' || $type eq 'text') {
 	    print $OUT "  weed_free($pname);\n";
 	}
     }
@@ -1636,11 +1636,30 @@ sub add_pgui {
 	    }
 	}
 	@pieces = split(/$delim/);
+	if ($checkonly) {
+	    for (my $i = 3; $i <= @pieces; $i++) {
+		if ($pieces[$i] =~ /^\$/) {
+		    print $OUT "  weed_plant_t *pgui;\n";
+		    return;
+		}
+	    }
+	}	
 	my $pname = @pieces[0];
 	my $type = @pieces[2];
-	if ($type =~ /^num/) {
+	if ($type eq 'string' || $type eq 'text') {
+	    if (@pieces > 4 && !(@pieces[4] =~ /^\$/)) {
+		if ($checkonly) {
+		    print $OUT "  weed_plant_t *pgui;\n";
+		    return;
+		}
+		my $maxchars = @pieces[4];
+		print $OUT "\n  pgui = weed_paramtmpl_get_gui(in_paramtmpls[P_$pname]);\n";
+		print $OUT "  weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, $maxchars);\n";
+	    }
+	}
+	elsif ($type =~ /^num/) {
 	    $pstep = 0;
-	    if (@pieces > 6) {
+	    if (@pieces > 6 && !(@pieces[6] =~ /^\$/)) {
 		$pstep = @pieces[6];
 	    }
 	    $dp = 0 + substr($type, 3);
@@ -1661,6 +1680,13 @@ sub add_pgui {
 		print $OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n";
 	    }
 	}
+	for (my $i = 3; $i <= @pieces; $i++) {
+	    if ($pieces[$i] eq '$hidden') {
+		print $OUT "  weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);\n";
+
+	    }
+	}
+
 	if ($mydispfunc) {
 	    print $OUT "  weed_set_funcptr_value(pgui, WEED_LEAF_DISPLAY_VALUE_FUNC, " .
 		"(weed_funcptr_t)$plugin_name" . "_disp_$mydispfunc);\n";

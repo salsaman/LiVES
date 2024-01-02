@@ -865,30 +865,32 @@ void get_player_size(int *opwidth, int *opheight) {
   // calc output size for display
 
   ///// external playback plugin
-  if (mainw->ext_playback) {
+  if (LIVES_IS_PLAYING && mainw->fs && mainw->play_window) {
     // playback plugin (therefore fullscreen / separate window)
-    if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
-      if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
-        // plugin can resize, max is the screen size
-        get_play_screen_size(opwidth, opheight);
+    if (mainw->vpp) {
+      if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+	if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
+	  // plugin can resize, max is the screen size
+	  get_play_screen_size(opwidth, opheight);
+	} else {
+	  // ext plugin can't resize, use its fixed size
+	  *opwidth = mainw->vpp->fwidth;
+	  *opheight = mainw->vpp->fheight;
+	}
       } else {
-        // ext plugin can't resize, use its fixed size
-        *opwidth = mainw->vpp->fwidth;
-        *opheight = mainw->vpp->fheight;
+	// remote display
+	if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+	  // cant resize, we use the width it gave us if it can't resize
+	  *opwidth = mainw->vpp->fwidth;
+	  *opheight = mainw->vpp->fheight;
+	} else {
+	  // else the clip size
+	  *opwidth = cfile->hsize;
+	  *opheight = cfile->vsize;
+	}
       }
-    } else {
-      // remote display
-      if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-        // cant resize, we use the width it gave us if it can't resize
-        *opwidth = mainw->vpp->fwidth;
-        *opheight = mainw->vpp->fheight;
-      } else {
-        // else the clip size
-        *opwidth = cfile->hsize;
-        *opheight = cfile->vsize;
-      }
+      goto align;
     }
-    goto align;
   }
 
   if (lives_get_status() != LIVES_STATUS_RENDERING && mainw->play_window

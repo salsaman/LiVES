@@ -4228,7 +4228,8 @@ static void _make_play_window(void) {
   lives_widget_set_sensitive(mainw->play_window, TRUE);
 
   /// cannot do this, or it blocks ctrl-v window !!!
-  lives_grab_add(mainw->play_window);
+  //lives_grab_add(mainw->play_window);
+  lives_widget_process_updates(mainw->play_window);
 }
 
 void make_play_window(void) {
@@ -4348,7 +4349,7 @@ static void _resize_play_window(void) {
           mainw->opwy = mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->pheight) / 2;
         }
       }
-      get_play_screen_size(&mainw->pwidth, &mainw->pheight);
+      get_player_size(&mainw->pwidth, &mainw->pheight);
 
       if (lives_widget_is_visible(mainw->play_window)) {
         // store old position of window
@@ -4398,13 +4399,13 @@ static void _resize_play_window(void) {
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
         lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+        lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
 
         // must center first, then set pos to NONE
         lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
 
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
-        lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
         lives_widget_queue_draw_and_update(mainw->play_window);
         mainw->ignore_screen_size = FALSE;
       }

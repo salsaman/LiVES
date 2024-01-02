@@ -7578,6 +7578,8 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
           }
           set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
         }
+
+	
         make_play_window();
 
         if (!mainw->play_window) return;

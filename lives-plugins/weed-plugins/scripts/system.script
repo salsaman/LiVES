@@ -1,0 +1,92 @@
+<define>
+|2.0.0
+</define>
+
+<name>
+system
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<unique_id>
+0X593467F522B7C47
+</unique_id>
+
+<description>
+This filter can run any commandline command, and return the output in a\n
+text parameter. The command will be run whenevr the trigger input changes state\n
+- the trigger direction(s) can be selected via input paramters.\n
+The filter also returns the exit status and any error value from running the command.
+</description>
+
+<requires>
+<stdio.h>
+<errno.h>
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<static>
+\#define BUFFLEN 65536
+</static>
+
+<sdata>
+int|oldval
+</sdata>
+
+<params>
+trigger|trigger|switch|FALSE|0|$HIDDEN|
+command|_Command to run|string|""|65536|
+trigt|Trigger on _FALSE -> TRUE|switch|TRUE|0|
+trigf|Trigger on _TRUE -> FALSE|switch|FALSE|0|
+</params>
+
+<out_params>
+Command output|text|""|
+Return value|num0|-1|-1|9999|
+Error code|num0|0|0|256
+</out_params>
+
+
+<process>
+if (sdata->oldval != trigger) {
+  if ((!sdata->oldval && trigt) || (sdata->oldval && trigf)) {
+    FILE *fp;
+    char buff[BUFFLEN];
+    size_t slen = 0;
+    int err = 0, res = -1;
+    fflush(NULL);
+    fp = popen(command, "r");
+    if (!fp) err = errno;
+    else {
+      char *strg = NULL;
+      while (1) {
+        strg = fgets(buff + slen, BUFFLEN - slen, fp);
+        err = ferror(fp);
+        if (strg) slen = strlen(buff);
+        if (err != 0 || !strg || !*strg) break;
+        if (slen >= BUFFLEN - 1) break;
+      }
+      res = pclose(fp);
+    }
+    if (err) {
+      if (verbosity >= WEED_VERBOSITY_WARN) {
+        fprintf(stderr, "Weed system plugin failed after %ld bytes with code %d: %s",
+          slen, err, command);
+      }
+      weed_set_string_value(out_params[0], WEED_LEAF_VALUE, NULL);
+    } else weed_set_string_value(out_params[0], WEED_LEAF_VALUE, buff);
+
+    weed_set_int_value(out_params[1], WEED_LEAF_VALUE, res);
+    weed_set_int_value(out_params[2], WEED_LEAF_VALUE, err);
+  }
+}
+</process>

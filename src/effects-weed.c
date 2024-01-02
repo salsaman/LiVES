@@ -40,7 +40,8 @@ const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_PIXEL_DATA_CONTIGUOUS,
                                         WEED_LEAF_HOST_ORIG_PDATA,
                                         LIVES_LEAF_PIXBUF_SRC,
                                         LIVES_LEAF_SURFACE_SRC,
-
+					LIVES_LEAF_PROC_THREAD,
+					LIVES_LEAF_PTHREAD_PTR,
                                         LIVES_LEAF_MD5SUM,
                                         LIVES_LEAF_MD5_CHKSIZE,
                                         NULL
@@ -76,14 +77,36 @@ LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
 #endif
 ////////////////////////////////////////////////////////////////////////////
 
+static boolean is_pixdata_nullify_leaf(const char *key) {
+  for (int i = 0; PIXDATA_NULLIFY_LEAVES[i]; i++)
+    if (!lives_strcmp(key, PIXDATA_NULLIFY_LEAVES[i]))
+      return TRUE;
+  return FALSE;
+}
+
+
+static boolean is_no_copy_leaf(const char *key) {
+  for (int i = 0; NO_COPY_LEAVES[i]; i++)
+    if (!lives_strcmp(key, NO_COPY_LEAVES[i])) return TRUE;
+  return FALSE;
+}
 
 weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf) {
   // force overrride of IMMUTABLE dest leaves
-  weed_flags_t flags = weed_leaf_get_flags(dst, keyt);
+  if (is_pixdata_nullify_leaf(keyf) || is_no_copy_leaf(keyf)) return WEED_SUCCESS;
+
+  weed_flags_t flags = weed_leaf_get_flags(src, keyf);
+  if (flags & LIVES_FLAG_FREE_ON_DELETE) {
+    g_print("copyinh autofree val %s\n", keyf);
+    abort();
+  }
+
+  flags = weed_leaf_get_flags(dst, keyt);
   if (flags & LIVES_FLAG_FREE_ON_DELETE) {
     weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_UNDELETABLE);
     weed_leaf_autofree(dst, keyt);
   }
+
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, keyt, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_copy(dst, keyt, src, keyf);
   return err;
@@ -100,9 +123,11 @@ weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant
 }
 
 
-weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key) {
+static weed_error_t _lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key, boolean lax) {
   // force overrride of IMMUTABLE dest leaves
+  if (!lax && (is_pixdata_nullify_leaf(key) || is_no_copy_leaf(key))) return WEED_SUCCESS;
   weed_flags_t flags = weed_leaf_get_flags(dst, key);
+
   if (flags & LIVES_FLAG_FREE_ON_DELETE) {
     weed_leaf_set_flags(dst, key, flags & ~WEED_FLAG_UNDELETABLE);
     weed_leaf_autofree(dst, key);
@@ -113,13 +138,20 @@ weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *ke
   return err;
 }
 
+weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key) {
+  return _lives_leaf_dup(dst, src, key, FALSE);
+}
+
+weed_error_t lives_leaf_dup_nocheck(weed_plant_t *dst, weed_plant_t *src, const char *key) {
+  return _lives_leaf_dup(dst, src, key, TRUE);
+}
+
 
 LIVES_GLOBAL_INLINE boolean lives_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {
   if (!weed_plant_has_leaf(slayer, key)) {
     weed_leaf_delete(dlayer, key);
     return FALSE;
-  } else lives_leaf_dup(dlayer, slayer, key); // lives_leaf_dup forces overrride of IMMUTABLE dest leaves
-
+  } else lives_leaf_dup_nocheck(dlayer, slayer, key); // lives_leaf_dup forces overrride of IMMUTABLE dest leaves
   return TRUE;
 }
 
@@ -3437,8 +3469,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
     if (idx == -1) continue;
 
     filter = weed_filters[idx];
-    if (!filter || !is_pure_audio(filter, FALSE)
-        || (analysers_only && has_audio_chans_out(filter, FALSE))) continue;
+    if (!filter || !is_pure_audio(filter, FALSE)) continue;
 
     // chain input data, as this may enable / disable the active state
     needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
@@ -4022,7 +4053,8 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
   }
 
   // set flags so - autodelete on free, unchangeable
-  err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE | LIVES_FLAGS_RDONLY_HOST);
+  err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE
+			       | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
   if (err == WEED_SUCCESS)  err = weed_ext_set_element_size(plant, key, 0, lives_strlen(string));
   return err;
 }
@@ -4063,10 +4095,22 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   // (this is done automatically by LiVES if we get error undeletable
   // when deleting a leaf or freeing a plant)
   // and here we also clear the autodelete bit
+
   boolean bret = TRUE;
   if (plant) {
     int flags = weed_leaf_get_flags(plant, key);
-    if (flags & WEED_FLAG_UNDELETABLE) return FALSE;
+    if (!lives_strcmp(key, LIVES_LEAF_REFCOUNTER)) {
+      lives_refcounter_t *refcount =(lives_refcounter_t *)
+	weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
+      pthread_mutex_destroy(&refcount->mutex);
+      lives_free(refcount); 
+      weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+      lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
+      weed_set_plantptr_value(plant, key, NULL);
+      lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
+      return TRUE;
+    }
+
     if (flags & LIVES_FLAG_FREE_ON_DELETE) {
       uint32_t st = weed_leaf_seed_type(plant, key);
       int nvals;
@@ -4121,9 +4165,9 @@ void  weed_plant_autofree(weed_plant_t *plant) {
         weed_leaf_set_undeletable(plant, leaves[i], WEED_FALSE);
         // act on FREE_ON_DELETE, remove flag
         weed_leaf_autofree(plant, leaves[i]);
-        free(leaves[i]);
+        lives_free(leaves[i]);
       }
-      free(leaves);
+      lives_free(leaves);
     }
   }
 }
@@ -4134,7 +4178,7 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, con
   // the leaf is also set immutable
   // then when val is changed, we get error immutable, and will check for autofree.
   if (state)
-    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE);
+    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_IMMUTABLE);
   return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
 }
 
@@ -8313,6 +8357,9 @@ deinit5:
 
       filter_mutex_unlock(bgs);
 
+      // re-reandomise
+      weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
+
       if (!IS_VALID_CLIP(mainw->blend_file)
           || (mainw->files[mainw->blend_file]->frames > 0
               && mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_GENERATOR)) {
@@ -11015,21 +11062,6 @@ LIVES_GLOBAL_INLINE int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t new
 }
 
 
-static boolean is_pixdata_nullify_leaf(const char *key) {
-  for (int i = 0; PIXDATA_NULLIFY_LEAVES[i]; i++)
-    if (!lives_strcmp(key, PIXDATA_NULLIFY_LEAVES[i]))
-      return TRUE;
-  return FALSE;
-}
-
-
-static boolean is_no_copy_leaf(const char *key) {
-  for (int i = 0; NO_COPY_LEAVES[i]; i++)
-    if (!lives_strcmp(key, NO_COPY_LEAVES[i])) return TRUE;
-  return FALSE;
-}
-
-
 LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean sterilize) {
   // sterilize should be used when dealing with a deserialized plant,
   // for nullifying the pixel_data of a "live" plant, 'sterilize' should not be set
@@ -11038,8 +11070,8 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
     char **leaves = weed_plant_list_leaves(plant, NULL);
     for (int i = 0; leaves[i]; i++) {
       if (is_pixdata_nullify_leaf(leaves[i]) || (sterilize && is_no_copy_leaf(leaves[i]))) {
-        if (weed_leaf_get_flags(plant, leaves[i]) & LIVES_FLAG_FREE_ON_DELETE)
-          weed_leaf_clear_flagbits(plant, leaves[i], LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+        //if (weed_leaf_get_flags(plant, leaves[i]) & LIVES_FLAG_FREE_ON_DELETE)
+	weed_leaf_clear_flagbits(plant, leaves[i], LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
         weed_leaf_delete(plant, leaves[i]);
       }
       free(leaves[i]);
@@ -11067,12 +11099,31 @@ LIVES_GLOBAL_INLINE void weed_plant_dup_add_sterilize(weed_plant_t *dst, weed_pl
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_copy(weed_plant_t *orig) {
-  weed_plant_t *plant = NULL;
-  if (orig) {
-    plant = weed_plant_copy(orig);
-    weed_plant_sanitize(plant, TRUE);
+LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_copy(weed_plant_t *src) {
+  weed_plant_t *plant;
+  weed_error_t err;
+  char **proplist;
+  char *prop;
+  int i = 0;
+
+  if (!src) return NULL;
+
+  plant = weed_plant_new(weed_get_int_value(src, WEED_LEAF_TYPE, &err));
+  if (!plant) return NULL;
+
+  proplist = weed_plant_list_leaves(src, NULL);
+  for (prop = proplist[1]; (prop = proplist[i]) != NULL && err == WEED_SUCCESS; i++) {
+    if (err == WEED_SUCCESS) {
+      err = lives_leaf_dup(plant, src, prop);
+    }
+    lives_free(prop);
+  } lives_free(proplist);
+
+  if (err == WEED_ERROR_MEMORY_ALLOCATION) {
+    //if (plant!=NULL) weed_plant_free(plant); // well, we should free the plant, but the plugins don't have this function...
+    return NULL;
   }
+
   return plant;
 }
 

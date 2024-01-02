@@ -153,6 +153,7 @@ weed_error_t lives_leaf_copy_or_delete(weed_plant_t *dst, const char *key, weed_
 weed_error_t lives_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf, int n);
 weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *src, const char *keyf);
 weed_error_t lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const char *key);
+weed_error_t lives_leaf_dup_nocheck(weed_plant_t *dst, weed_plant_t *src, const char *key);
 
 #ifndef IGN_RET
 #define IGN_RET(...) ((void)((__VA_ARGS__) + 1))

@@ -477,6 +477,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   pulsed->real_seek_pos = pulsed->seek_pos;
   pulsed->pstream = pstream;
 
+
+
+
+  
   if (rec_lpt && (!mainw->record || IS_VALID_CLIP(mainw->ascrap_file) || LIVES_IS_PLAYING)) {
     lives_proc_thread_request_cancel(rec_lpt, FALSE);
     cancel_rec_lpt = TRUE;
@@ -491,6 +495,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   lives_aplayer_set_data_len(self, 0);
   lives_aplayer_set_data(self, NULL);
+
+
+
+
 
   if (cancel_rec_lpt) {
     // since we cancelled rec_lpt, then called async_join, it should have been removed from the hook_stack
@@ -1191,8 +1199,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         }
 
 #if 0
+	////////////////////////////////////////
         // TODO - attach a callback to data_ready hook
-        if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
+	//////////////////////////////////////////////////////////
+
+
+	if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
           if (!rec_lpt) {
             dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
             ;	      /// if we are recording then write generated audio to ascrap_file
@@ -1205,6 +1217,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             // this ensures ana_lpt is not freed as soon as we cancel it
             lives_proc_thread_ref(rec_lpt);
           }
+
           /* // end from gen */
         }
 #endif
@@ -1276,6 +1289,22 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     buffer = pulsed->sound_buffer;
 #endif
 
+    ///
+    /// convert to float if necessary - e.g have fx. mixers, 
+
+    // send to fx as float
+
+
+    // convert back to s16, but keep float
+
+    // s16 -> pulse
+
+
+    
+
+
+
+    
     if (!pulsed->is_corked) {
 #if 0
       if (alock_mixer) {
@@ -1364,9 +1393,19 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       lives_aplayer_set_data_len(self, nsamples);
       lives_aplayer_set_data(self, (void *)buffer);
 
+      /// todo = call data ready cbs
+
+      ///
+
+      ///
+
+      ///
+
+
       /// Finally... we actually write to pulse buffers
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
+	async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
         pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
       } else pulse_buff_free(pulsed->aPlayPtr->data);
@@ -1376,6 +1415,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
         g_print("writing %ld bytes to pulse\n", nbytes);
 #endif
+	async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
       }
 #endif
@@ -1398,15 +1438,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           return;
         }
 
+	// convert float -> s16
         sample_move_abuf_int16(shortbuffer, pulsed->out_achans, (nbytes >> 1) / pulsed->out_achans, pulsed->out_arate);
         if (pulsed->astream_fd != -1) audio_stream(shortbuffer, nbytes, pulsed->astream_fd);
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
         if (!pulsed->is_corked) {
+	  async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
         } else pulse_buff_free(shortbuffer);
 #else
         if (!pulsed->is_corked) {
+	  async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 #endif
@@ -1432,8 +1475,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     }
     if (LIVES_IS_PLAYING) afile->aseek_pos = pulsed->seek_pos;
   }
-
-  async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
 
 #ifdef DEBUG_PULSE
   lives_printerr("done\n");
@@ -1754,7 +1795,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   }
 
   if (pdriver->is_output) {
-    pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN >> 1;
+    pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
     pa_battr.tlength = LIVES_PA_BUFF_TARGET >> 2;
     pa_battr.minreq = LIVES_PA_BUFF_MINREQ >> 1;
     pa_battr.prebuf = 0;  /// must set this to zero else we hang, since pa is waiting for the buffer to be filled first
@@ -1831,7 +1872,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 #endif
     pa_mloop_unlock();
 
-    lives_sleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
+    lives_millisleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
 
 #if PA_SW_CONNECTION
     // get the volume from the server
@@ -1872,7 +1913,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                  | PA_STREAM_NOT_MONOTONIC));
 
     pa_mloop_unlock();
-    lives_sleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
+    lives_millisleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
   }
 
   rfx = obj_attrs_to_rfx(pdriver->inst, TRUE);
@@ -1997,13 +2038,13 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
 
-  lives_microsleep_until_nonzero_timeout(MILLIONS(5),
+  lives_millisleep_until_nonzero_timeout(MILLIONS(50),
                                          pa_operation_get_state(pa_op) != PA_OPERATION_RUNNING);
 
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  lives_microsleep_while_true(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0);
+  lives_millisleep_while_true(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0);
 
   pthread_mutex_lock(&xtra_mutex);
   pulsed->extrausec = 0;
@@ -2051,12 +2092,14 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   if (!retval) {
     if (usec > last_usec) {
       last_usec = usec;
+      pthread_mutex_lock(&xtra_mutex);
       if (pulsed->extrausec) {
         sclf = (double)pulsed->extrausec / (double)(usec - pulsed->usec_start);
         //g_print("ratio %.4f\n", sclf);
         if (sclf > 1.2) sclf = 1.2;
         if (sclf < 0.8) sclf = 0.8;
       }
+      pthread_mutex_unlock(&xtra_mutex);
     }
   }
 

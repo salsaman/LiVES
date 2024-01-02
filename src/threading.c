@@ -375,8 +375,6 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
   lives_hook_stack_t **hook_stacks;
   pthread_mutex_t *ext_cb_mutex;
 
-  weed_add_refcounter(lpt);
-
   if (!weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_RWLOCK, NULL)) {
     pthread_rwlock_t *state_rwlock = (pthread_rwlock_t *)lives_malloc(sizeof(pthread_rwlock_t));
     pthread_rwlock_init(state_rwlock, NULL);
@@ -3072,26 +3070,25 @@ done:
     weed_leaf_delete(chain_leader, "subord");
     weed_leaf_delete(lpt, "parent");
 
-    if (lives_proc_thread_was_cancelled(lpt)) {
-      lives_thread_set_active(chain_leader);
-      lives_proc_thread_cancel(chain_leader);
+    if (chain_leader != mainw->def_lpt) {
+      if (lives_proc_thread_was_cancelled(lpt)) {
+	lives_thread_set_active(chain_leader);
+	lives_proc_thread_cancel(chain_leader);
+      }
 
-    }
-
-    if (lives_proc_thread_had_error(lpt)) {
-      lives_proc_thread_error_full(chain_leader,
-                                   weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
-                                   weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
-                                   lives_proc_thread_get_errnum(lpt),
-                                   lives_proc_thread_get_errsev(lpt),
-                                   lives_proc_thread_get_errmsg(lpt));
+      if (lives_proc_thread_had_error(lpt)) {
+	int sev = lives_proc_thread_get_errsev(lpt);
+	if (sev == LPT_ERR_MAJOR)
+	  lives_proc_thread_error_full(chain_leader,
+				       weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
+				       weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
+				       lives_proc_thread_get_errnum(lpt),
+				       sev, lives_proc_thread_get_errmsg(lpt));
+      }
     }
 
     lives_thread_set_active(chain_leader);
-
-    // unref lpt
-    // lives_proc_thread_unref(lpt);
-
+    lives_proc_thread_unref(lpt);
     lpt = chain_leader;
   }
 
@@ -3462,7 +3459,7 @@ static void lives_thread_data_destroy(void *data) {
 
 #if USE_RPMALLOC
   if (rpmalloc_is_thread_initialized()) {
-    rpmalloc_thread_finalize(0);
+    rpmalloc_thread_finalize(1);
   }
 #endif
 }
@@ -4285,7 +4282,7 @@ LIVES_GLOBAL_INLINE int refcount_dec(lives_refcounter_t *refcount) {
 }
 
 
-LIVES_GLOBAL_INLINE int refcount_query(obj_refcounter * refcount) {
+LIVES_LOCAL_INLINE int refcount_query(obj_refcounter * refcount) {
   if (check_refcnt_init(refcount)) {
     int count;
     pthread_mutex_lock(&refcount->mutex);
@@ -4350,7 +4347,8 @@ LIVES_GLOBAL_INLINE lives_refcounter_t *weed_add_refcounter(weed_plant_t *plant)
       refcount = (lives_refcounter_t *)lives_calloc(1, sizeof(lives_refcounter_t));
       if (refcount) {
         weed_set_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, refcount);
-        weed_leaf_set_autofree(plant, LIVES_LEAF_REFCOUNTER, TRUE);
+        weed_leaf_set_undeletable(plant, LIVES_LEAF_REFCOUNTER, TRUE);
+        weed_leaf_set_immutable(plant, LIVES_LEAF_REFCOUNTER, TRUE);
         check_refcnt_init(refcount);
       }
     }

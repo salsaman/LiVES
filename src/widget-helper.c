@@ -27,7 +27,7 @@
 // usec per cycle in low prio mode, absolute, gui slack mode
 #define LO_WAIT usleep(2048);
 // EV_LIM multipler when expecing large updates
-#define MUCH_EV_MPY 2.
+#define MUCH_EV_MPY 4.
 
 #define PRIO_HIGH LIVES_WIDGET_PRIORITY_HIGH
 #define PRIO_LOW LIVES_WIDGET_PRIORITY_LOW
@@ -1791,8 +1791,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget * widget) 
 
 static boolean _lives_widget_queue_draw_and_update(LiVESWidget * widget) {
   gtk_widget_queue_draw(widget);
-  if (!gui_loop_tight)
-    _lives_widget_process_updates(widget);
+  _lives_widget_process_updates(widget);
   return TRUE;
 }
 
@@ -3403,7 +3402,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
     }
   }
 
-  lives_widget_context_update();
+  _lives_widget_context_update();
 
   if (!was_modal) {
     if (win) _lives_window_set_modal(win, FALSE, TRUE);

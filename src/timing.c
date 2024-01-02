@@ -162,10 +162,10 @@ LIVES_GLOBAL_INLINE char *get_current_timestamp(void) {
 ///////////////// playback clock /////////////////////////////
 
 static ticks_t baseItime, Itime, susp_ticks;
-static double R, X;
+static double R, X, catchup;
 static int last_tsource;
 static ticks_t lclock_ticks, last_current, prev_current, clock_current, base_current, last_scticks;
-static ticks_t tot_deltas, av_delta, drift;
+static ticks_t tot_deltas, av_delta, drift, owed_ticks;
 static uint64_t ncalls;
 static volatile double timer_load;
 
@@ -195,6 +195,8 @@ void reset_playback_clock(ticks_t origticks) {
   ncalls = 0;
   timer_load = 1.;
   drift = 0;
+  owed_ticks = 0;
+  catchup = 0.1;
 }
 
 double get_pbtimer_load(void) {return timer_load * 100.;}
@@ -427,7 +429,7 @@ get_time:
           if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / TICKS_PER_SECOND_DBL;
           } else  {
             if (clock_delta) {
-              ticks_t toomuch = tdiff - (ticks_t)(prefs->pbtimer_maxdiff * X * R);
+              ticks_t toomuch = tdiff - (ticks_t)(prefs->pbtimer_maxdiff);
               if (ncalls > 10000) {
                 tot_deltas += clock_delta;
                 av_delta = tot_deltas / ncalls;
@@ -435,10 +437,22 @@ get_time:
               }
               if (toomuch > 0) {
                 //g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
-                susp_ticks -= toomuch;
+                owed_ticks += toomuch;
                 tdiff -= toomuch;
               }
-            }
+	      else {
+		ticks_t allowed;
+		if (!owed_ticks) catchup = .1;
+		allowed = tdiff * catchup;
+		if (allowed > owed_ticks) {
+		  allowed = owed_ticks;
+		  catchup = (double)allowed / (double)tdiff;
+		}
+		else catchup *= 1.1;
+		tdiff += allowed;
+		owed_ticks -= allowed;
+	      }
+	    }
 
             Itime += tdiff;
 

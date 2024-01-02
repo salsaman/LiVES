@@ -1078,15 +1078,16 @@ LiVESList *filter_unknown_threads(LiVESList *);
 
 typedef struct {
   int count; // if count < 0, object should be destroyed
-  pthread_mutex_t mutex;
   boolean mutex_inited;
+  const char padding[8];
+  pthread_mutex_t mutex;
+  const char padding2[8];
 } lives_refcounter_t;
 
 boolean check_refcnt_init(lives_refcounter_t *);
 
 int refcount_inc(lives_refcounter_t *);
 int refcount_dec(lives_refcounter_t *);
-int refcount_query(lives_refcounter_t *);
 
 int weed_refcount_inc(weed_plant_t *);
 int weed_refcount_dec(weed_plant_t *);

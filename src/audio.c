@@ -2874,65 +2874,28 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
   boolean alock_mixer = FALSE;
 
   lives_proc_thread_set_cancellable(self);
-
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
-
   if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) {
     return FALSE;
   }
 
-  nframes = lives_aplayer_get_data_len(aplayer);
-  if (nframes == 0) {
-    if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
-    return FALSE;
+
+  pthread_mutex_lock(&mainw->abuf_mutex);
+  if (mainw->afbuffer) {
+    // if we have audio triggered gens., push audio to it
+    // or if we want loopback to player
+    for (int i = 0; i < nchans; i++) {
+      append_to_audio_bufferf(in_buffer[i], nframes, (i == nchans - 1) ? -i - 1 : i + 1);
+    }
   }
-  nchans = lives_aplayer_get_achans(aplayer);
-  arate = lives_aplayer_get_arate(aplayer);
-  is_float = lives_aplayer_get_float(aplayer);
+  pthread_mutex_unlock(&mainw->abuf_mutex);
+}
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
 
-  if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no audio channels out)
-    ticks_t tc = mainw->currticks;
-    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-    float **in_buffer;
-    if (is_float) in_buffer = (float **)lives_aplayer_get_data(aplayer);
-    else {
-      // TODO - in_asamps != 2
-      short *data = (short *)lives_aplayer_get_data(aplayer);
-      in_buffer = (float **)lives_calloc(nchans, sizeof(float *));
-      for (int i = 0; i < nchans; i++) {
-        in_buffer[i] = (float *)lives_calloc(nframes * 2, sizeof(float));
-        if (alock_mixer) {
-          float xshrink_factor = (float)mainw->alock_abuf->arate / (float)arate / mainw->audio_stretch;
-          int64_t xin_framesd = fabs((double)xshrink_factor * (double)nframes);
-          size_t xxin_bytes = (size_t)xin_framesd * mainw->alock_abuf->in_achans * (mainw->alock_abuf->in_asamps >> 3);
-          off_t offs = mainw->alock_abuf->seek / (mainw->alock_abuf->in_achans
-                                                  * (mainw->alock_abuf->in_asamps >> 3));
-          if (offs + nframes > mainw->alock_abuf->samp_space)
-            offs = mainw->alock_abuf->seek = 0;
 
-          sample_move_float_float(in_buffer[i], &mainw->alock_abuf->bufferf[i][offs],
-                                  xin_framesd, xshrink_factor, 1, 1., nframes);
-          if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
-        } else {
-          maxvol_heard =
-            sample_move_d16_float(in_buffer[i], data + i, nframes, nchans, FALSE, FALSE, 1.0);
-        }
-      }
-    }
 
-    pthread_mutex_lock(&mainw->abuf_mutex);
-    if (mainw->afbuffer) {
-      // if we have audio triggered gens., push audio to it
-      // or if we want loopback to player
-      for (int i = 0; i < nchans; i++) {
-        append_to_audio_bufferf(in_buffer[i], nframes, (i == nchans - 1) ? -i - 1 : i + 1);
-      }
-    }
-    pthread_mutex_unlock(&mainw->abuf_mutex);
-
-    // apply any audio effects with in_channels and no out_channels
+fn2 {
+  // apply any audio effects with in_channels and no out_channels
     weed_layer_set_audio_data(layer, in_buffer, arate, nchans, nframes);
     weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
     weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
@@ -2943,6 +2906,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
       lives_free(in_buffer);
     }
   }
+
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
   return TRUE;
 }
@@ -2951,6 +2915,16 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 // TODO - make attributes of the aplayer
 static lives_proc_thread_t ana_lpt = NULL;
 static lives_proc_thread_t ana_lpt2 = NULL;
+
+boolean check_audio_cbs(void) {
+  if (AUD_SRC_EXTERNAL) {
+    if (has_audio_filters(AF_TYPE_A) && !ana_lpt2)
+      audio_analyser_start(AUDIO_SRC_EXT);
+  }
+  if (has_audio_filters(AF_TYPE_A) && !ana_lpt)
+    audio_analyser_start(AUDIO_SRC_INT);
+}
+
 
 void audio_analyser_start(int source) {
   if (source == AUDIO_SRC_EXT) {
@@ -3084,39 +3058,30 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
 }
 
 
-
-void fx_audio_apply(void) {
-  if (has_audio_filters(AF_TYPE_ANY));
-}
+void fx_audio_apply(void) {if (has_audio_filters(AF_TYPE_ANY));}
 
 
-void send_to_analysers(pulse_driver_t *pulsed, size_t nsamples) {
-  float **fltbuf = NULL;
+void convert_to_float(pulse_driver_t *pulsed, size_t nsamples) {
   boolean alock_mixer = FALSE;
-
-
-  if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
-    fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
-    /// we have audio filters... convert to float, pass through any audio filters, then back to s16
-    for (int i = 0; i < pulsed->out_achans; i++) {
-      // convert s16 to non-interleaved float
-      fltbuf[i] = (float *)lives_calloc_safety(nsamples, sizeof(float));
-      if (!fltbuf[i]) {
-        for (--i; i >= 0; i--) {
-          lives_freep((void **)&fltbuf[i]);
-        }
-        lives_free(fltbuf);
-        fltbuf = NULL;
-        break;
-      } else {
-        /// convert to float, and take the opportunity to find the max volume
-        /// (currently this is used to trigger recording start optionally)
-        pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
-                                   nsamples, pulsed->out_achans, FALSE, FALSE, 1.0);
-      }
+  float **fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
+  /// we have audio filters... convert to float, pass through any audio filters, then back to s16
+  for (int i = 0; i < pulsed->out_achans; i++) {
+    // convert s16 to non-interleaved float
+    fltbuf[i] = (float *)lives_calloc_safety(nsamples, sizeof(float));
+    if (!fltbuf[i]) {
+      for (--i; i >= 0; i--) lives_freep((void **)&fltbuf[i]);
+      lives_free(fltbuf);
+      fltbuf = NULL;
+      break;
+    } else {
+      /// convert to float, and take the opportunity to find the max volume
+      /// (currently this is used to trigger recording start optionally)
+      pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
+						       nsamples, pulsed->out_achans, FALSE, FALSE, 1.0);
     }
   }
 }
+
 
 
 void send_audio_to_fx(pulse_driver_t *pulsed) {

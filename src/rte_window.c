@@ -1548,6 +1548,16 @@ cleanup1:
 }
 
 
+static boolean showing_info = FALSE;
+
+static void info_close_clicked(LiVESButton * button, livespointer dlg) {
+  // destroy the button top-level and free data
+  lives_widget_destroy(LIVES_WIDGET(dlg));
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  showing_info = FALSE;
+}
+
+
 void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   weed_plant_t *filter;
 
@@ -1585,6 +1595,9 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
 
   if (!rte_keymode_valid(key + 1, mode, TRUE)) return;
 
+  if (showing_info) return;
+  showing_info = TRUE;
+  
   type = rte_keymode_get_type(key + 1, mode);
 
   plugin_name = rte_keymode_get_plugin_name(key + 1, mode);
@@ -1710,7 +1723,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   lives_button_grab_default_special(ok_button);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
+                            LIVES_GUI_CALLBACK(info_close_clicked), NULL);
 
   lives_free(filter_name);
   lives_free(filter_author);

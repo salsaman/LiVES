@@ -260,6 +260,9 @@ struct _weed_leaf_nopadding {
   /* CAUTION - allows recasting of WEED_SEED_STRING, WEED_SEED_VOIDPTR, or WEED_SEED_CUSTOM
      to another WEED_SEED_CUSTOM type */
   typedef weed_error_t (*weed_ext_recast_seed_type_f)(weed_plant_t *, const char *key, weed_seed_t new_st);
+
+  typedef weed_error_t (*weed_ext_leaf_set_proxy_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
+						    weed_size_t num_elems, weed_voidptr_t valuesptr);
 #endif
 
   /* end extended functions */
@@ -284,6 +287,7 @@ struct _weed_leaf_nopadding {
   __WEED_FN_DEF__ weed_ext_append_elements_f weed_ext_append_elements;
   __WEED_FN_DEF__ weed_ext_atomic_exchange_f weed_ext_atomic_exchange;
   __WEED_FN_DEF__ weed_ext_recast_seed_type_f weed_ext_recast_seed_type;
+  __WEED_FN_DEF__ weed_ext_leaf_set_proxy_f weed_ext_leaf_set_proxy;
 
   /*------------------------------*/
 
@@ -468,9 +472,9 @@ struct _weed_leaf_nopadding {
 #define WEED_FLAG_UNDELETABLE		(1 << 0)  // leaf value may be altered but it cannot be deleted
 #define WEED_FLAG_IMMUTABLE		(1 << 1)  // leaf value may not be changed, but it may be deleted
 #define WEED_FLAG_PROXY			(1 << 2)  // used for extended func weed_ext_attach_leaf
+#define WEED_FLAG_EXT_PROXY		(1 << 3)  // used for extended func weed_ext_attach_leaf
 
-#define WEED_FLAG_FIRST_RESERVED       	(1 << 3)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_11		(1 << 4)  // reserved for future use by Weed
+#define WEED_FLAG_FIRST_RESERVED       	(1 << 4)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_10		(1 << 5)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_9		(1 << 6)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_8		(1 << 7)  // reserved for future use by Weed

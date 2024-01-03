@@ -232,7 +232,7 @@ void _proc_thread_params_from_vargs(lives_proc_thread_t lpt, int return_type, va
   weed_set_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, fdef->function);
   if (return_type > 0) weed_leaf_set(lpt, _RV_, return_type, 0, NULL);
   else if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
-  weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, funcsig_from_args_fmt(fdef->args_fmt));
+  weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, fdef->funcsig);
   proc_thread_params_from_vargs(lpt, xargs);
 }
 
@@ -538,8 +538,6 @@ const lives_funcdef_t *lives_proc_thread_make_funcdef(lives_proc_thread_t lpt) {
     fdef->function = func;
     fdef->return_type = lives_proc_thread_get_rtype(lpt);
     fdef->funcsig = lives_proc_thread_get_funcsig(lpt);
-    fdef->args_fmt = args_fmt_from_funcsig(fdef->funcsig);
-
     //add_fdef_lookup(fdef);
     return (const lives_funcdef_t *)fdef;
   }
@@ -1332,7 +1330,7 @@ LIVES_GLOBAL_INLINE funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t 
 LIVES_GLOBAL_INLINE char *lives_proc_thread_get_args_fmt(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return lives_strdup(fdef->args_fmt);
+    if (fdef) return args_fmt_from_funcsig(fdef->funcsig);
     return args_fmt_from_funcsig(lives_proc_thread_get_funcsig(lpt));
   }
   return NULL;

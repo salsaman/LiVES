@@ -319,20 +319,30 @@ static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const c
 
 
 lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t lpt, va_list xargs) {
+  lives_result_t res = LIVES_RESULT_INVALID;
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return weed_plant_params_from_valist(lpt,
-                       fdef->args_fmt,
-                       make_std_pname, xargs);
+    if (fdef) {
+      char *args_fmt = args_fmt_from_funcsig(fdef->funcsig);
+      if (!args_fmt) return WEED_SUCCESS;
+      res = weed_plant_params_from_valist(lpt, args_fmt, make_std_pname, xargs);
+      lives_free(args_fmt);
+    }
   }
-  return LIVES_RESULT_INVALID;
+  return res;
 }
 
 
 LIVES_GLOBAL_INLINE lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *fdef,
-    lives_thread_attr_t attrs, va_list vargs) {
-  return  _lives_proc_thread_create_vargs(attrs, fdef->function, fdef->funcname,
-                                          fdef->return_type, fdef->args_fmt, vargs);
+							    lives_thread_attr_t attrs, va_list vargs) {
+  lives_proc_thread_t lpt = NULL;
+  if (fdef) {
+    char *args_fmt = args_fmt_from_funcsig(fdef->funcsig);
+    lpt =  _lives_proc_thread_create_vargs(attrs, fdef->function, fdef->funcname,
+					   fdef->return_type, args_fmt, vargs);
+    if (args_fmt) lives_free(args_fmt);
+  }
+  return lpt;
 }
 
 
@@ -2210,8 +2220,10 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
       g_print("No funcdef\n");
       continue;
     }
+    char *args_fmt = args_fmt_from_funcsig(fdef->funcsig);
     g_print("Funcdef: fname = %s, args_fmt '%s', return_type %u\n\n",
-            fdef->funcname, fdef->args_fmt, fdef->return_type);
+            fdef->funcname, args_fmt, fdef->return_type);
+    lives_free(args_fmt);
 #endif
   }
 done:
@@ -2236,7 +2248,6 @@ LIVES_GLOBAL_INLINE lives_funcdef_t *create_funcdef(const char *funcname, lives_
     fdef->uid = gen_unique_id();
     fdef->function = function;
     fdef->return_type = return_type;
-    if (args_fmt) fdef->args_fmt = lives_strdup(args_fmt);
     fdef->funcsig = funcsig_from_args_fmt(args_fmt);
     if (file) fdef->file = lives_strdup(file);
     fdef->flags = flags;
@@ -2250,32 +2261,45 @@ LIVES_GLOBAL_INLINE void free_funcdef(lives_funcdef_t *fdef) {
   if (fdef) {
     if (!(fdef->flags & FDEF_FLAG_STATIC)) {
       lives_freep((void **)&fdef->funcname);
-      lives_freep((void **)&fdef->args_fmt);
       lives_free(fdef);
     }
   }
 }
 
 
-/* LIVES_LOCAL_INLINE lives_funcinst_t *create_funcinst_nullvalist(lives_funcdef_t *template) { */
-/*   lives_funcinst_t *finst = lives_plant_new(LIVES_PLANT_FUNCINST); */
-/*   if (finst) { */
-/*     _proc_thread_params_from_nullvargs(finst, template->function, */
-/*                                        template->return_type ? template->return_type : -1); */
-/*     weed_set_voidptr_value(finst, LIVES_LEAF_TEMPLATE, template); */
-/*   } */
-/*   return finst; */
-/* } */
+lives_funcinst_t *lives_funcinst_create(lives_funcdef_t *tmpl, void *privdata) {
+  LIVES_CALLOC_TYPE(lives_funcinst_t, finst, 1);
+  if (finst) {
+    finst->funcdef = tmpl;
+    finst->priv = privdata;
+  }
+  return finst;
+}
 
 
+lives_result_t lives_funcinst_bind_param(lives_funcinst_t *finst, int idx, uint64_t flags, ...) {
+  // idx == -1 return loc (optional)
+  va_list ap;
+  void *valptr;
+  if (!finst || idx < -1) return LIVES_RESULT_INVALID;
+  lives_funcdef_t *fdef = finst->funcdef;
+  if (!fdef || !fdef->function) return LIVES_RESULT_INVALID;
+  int nparms = get_funcsig_nparms(fdef->funcsig);
+  if (idx >= nparms) return LIVES_RESULT_ERROR;
+  va_start(ap, flags);
+  if (idx == -1) {
+    if (!fdef->return_type) return LIVES_RESULT_ERROR;
+    // this will be a pointer to var to receive return value in
+    valptr = va_arg(ap, void *);
+    va_end(ap);
+    weed_set_voidptr_value(finst->out_params[0], "value_ptr", valptr);
+    return LIVES_RESULT_SUCCESS;
+  }
+  // get seed type
 
-/* LIVES_GLOBAL_INLINE void free_funcinst(lives_funcinst_t *finst) { */
-/*   if (finst) { */
-/*     lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(finst, LIVES_LEAF_TEMPLATE, NULL); */
-/*     if (fdef) free_funcdef(fdef); */
-/*     lives_free(finst); */
-/*   } */
-/* } */
+  va_end(ap);
+  return LIVES_RESULT_SUCCESS;
+}
 
 
 ///////////// lookup functions //////
@@ -2361,7 +2385,7 @@ void dump_fn_notes(void) {
 LIVES_GLOBAL_INLINE char *get_argstring_for_func(lives_funcptr_t func) {
   const lives_funcdef_t *fdef = get_template_for_func(func);
   if (!fdef) return NULL;
-  return funcsig_to_param_string(funcsig_from_args_fmt(fdef->args_fmt));
+  return funcsig_to_param_string(fdef->funcsig);
 }
 
 
@@ -2372,7 +2396,7 @@ char *lives_funcdef_explain(const lives_funcdef_t *funcdef) {
                           "\t%s %s(%s)\n function category is %d", funcdef->uid,
                           weed_seed_to_ctype(funcdef->return_type, FALSE),
                           funcdef->funcname ? funcdef->funcname : "??????",
-                          (tmp = funcsig_to_param_string(funcsig_from_args_fmt(funcdef->args_fmt))),
+                          (tmp = funcsig_to_param_string(funcdef->funcsig)),
                           funcdef->category);
     lives_free(tmp);
     return out;

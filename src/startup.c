@@ -1360,7 +1360,7 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   capable->features_ready |= FEATURE_WEED;
-
+  
   //do_startup_diagnostics(test_opts);
 
   if (!mainw->foreign) {

@@ -1079,9 +1079,7 @@ LiVESList *filter_unknown_threads(LiVESList *);
 typedef struct {
   int count; // if count < 0, object should be destroyed
   boolean mutex_inited;
-  const char padding[8];
   pthread_mutex_t mutex;
-  const char padding2[8];
 } lives_refcounter_t;
 
 boolean check_refcnt_init(lives_refcounter_t *);

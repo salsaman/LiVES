@@ -624,6 +624,8 @@ struct _param_t {
 
   void *value;  ///< current value(s); may be cast to poiner of appropriate type
 
+  void *value_ptr; // ptr to variable to read value from / to
+  
   // TODO - use union {}
   double min; //< display len for string
   double max; ///< for string this is max characters

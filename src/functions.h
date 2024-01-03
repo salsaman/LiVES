@@ -480,7 +480,7 @@ typedef struct {
   lives_funcptr_t function;
   int return_type;
   // these are equivalent, but we add both for convenience
-  const char *args_fmt;
+  //const char *args_fmt;
   funcsig_t funcsig; //
   // locator
   const char *file;
@@ -523,17 +523,7 @@ lives_proc_thread_t lpt_from_funcdef(lives_funcdef_t *, lives_thread_attr_t attr
 typedef struct {
   lives_funcdef_t *funcdef;
 
-  lives_proc_thread_t lpt;
-  lives_proc_thread_t dispatcher;
-
-  pthread_t runner;
-
-  // description of each function param, funcsig order
-  // for variadic functions, we may have optional |param_goup, min_repeats, max_repeats|
-  lives_param_t **func_params;
-
-  // mapped from return val from func
-  lives_param_t *out_param;
+  weed_plant_t **in_params, **out_params;
 
   // optionally, we can store actual values passed in / returned in a data book
   // (if function is run via a proc_thread)
@@ -571,6 +561,8 @@ typedef struct {
   // or it can be a pointer to a static funcdef
   // once registered, then we can simply add hooks using funcname, params
   // it also had a field for category
+
+  // TODO - alter to funcinst
   const lives_funcdef_t *fdef;
   volatile uint64_t flags; // HOOK_CB flags
   // how many params must be identical to count as a data match ?
@@ -783,6 +775,8 @@ void dump_hook_stack_for(lives_proc_thread_t, int type);
 
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 int return_type, const char *args_fmt, const char *file, int line, uint64_t flags);
+
+#define MAKE_FUNCDEF(func, rt, args) create_funcdef(#func, func, rt, args, NULL, 0, 0);
 
 // for future use - we can "steal" the funcdef from a proc_thread, stor it in a hash store
 // then later do things like create a funcinst from a funcdef and params, then create a proc_thread from the funcinst

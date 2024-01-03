@@ -3323,6 +3323,12 @@ version. as well as weed_display_func_f.
    Setting the value here rather than in the parameter GUI plant indicates a more structural type of setting,
    and thus it may not be overridden in the parameter GUI.
 
+   Setting the value here is more of a structural detail, Parameters created from these templates are designed to never
+   be displayed. The corresponding leaf in the parameter is more of an aesthetic touch, It may be that some parameters
+   are not relevant depending on the values of other parameters (mode selection for example), and unused parameters
+   may be hidden and later reshown.
+
+
    Example 2: in addition to the normal user interface, a filter has a "reset" parameter which is intended to be connected when
    running in a data processing mode. The plugin sets the value of "hidden" to WEED_TRUE in the parameter template GUI plant,
    to hint to the host that the parameter is not intended for display.

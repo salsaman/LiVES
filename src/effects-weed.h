@@ -439,4 +439,8 @@ weed_error_t weed_leaf_get_monitor(weed_plant_t *, const char *key, weed_size_t 
 weed_error_t weed_plant_free_host(weed_plant_t *);
 weed_plant_t *weed_plant_new_host(int type);
 
+#define BIND_SHADOW_PARAM(funcinst, idx, val) _DW0	\
+  (void *valps[1]; char *pkey = ; valps[0] = &val;\ 
+
+
 #endif

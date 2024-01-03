@@ -76,7 +76,7 @@ typedef struct {
 
 // space to reserve for the CE timeline
 // IMPORTANT to fine tune this - TODO
-#define CE_TIMELINE_VSPACE ((int)(_GUI_CONST_802 * widget_opts.scaleH * capable->font_size / 12.))
+#define CE_TIMELINE_VSPACE ((int)(_GUI_CONST_802 * widget_opts.scaleH * capable->font_size / 10.))
 
 /// char width of combo entries (default)
 #define COMBOWIDTHCHARS 12

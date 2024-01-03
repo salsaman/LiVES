@@ -516,6 +516,8 @@ lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *, lives_thread_attr_t a
 
 lives_proc_thread_t lpt_from_funcdef(lives_funcdef_t *, lives_thread_attr_t attrs, ...);
 
+#define FINST_FLAG_SHADOWED	  	(1ull << 8)
+
 #define AUTO_PTRS_START weed_plant_t *cleaner = NULL
 #define AUTO_PTR(func, ...) (lives_proc_thread_execute_retvoidptr(&cleaner, func, __VA_ARGS__))
 #define AUTO_PTRS_CLEAN _DW0(if (cleaner) weed_plant_free(cleaner); cleaner = NULL;)

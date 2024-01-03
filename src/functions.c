@@ -298,7 +298,7 @@ static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const c
   int p = 0;
   uint64_t attrs = lives_proc_thread_get_attrs(plant);
   for (const char *c = args_fmt; *c; c++) {
-    char *pkey = (*param_name_func)(p++);
+    char *pkey = (*param_name_func)(p);
     uint32_t st = _char_to_st(*c);
     weed_error_t err = weed_leaf_from_varg(plant, pkey, st, 1, xargs);
     lives_free(pkey);
@@ -313,6 +313,7 @@ static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const c
     if (err != WEED_SUCCESS) {
       return LIVES_RESULT_ERROR;
     }
+    p++;
   }
   return LIVES_RESULT_SUCCESS;
 }
@@ -802,6 +803,18 @@ char *funcsig_to_symstring(funcsig_t sig) {
     fmtstring = lives_strdup_concat(fmtstring, "_", "%s", get_symbolname(ch));
   }
   return fmtstring;
+}
+
+
+static weed_seed_t nth_seed_type(funcsig_t sig, int n) {
+  if (n >= 0) {
+    for (int i = 60; i >= 0; i -= 4) {
+      uint8_t ch = (sig >> i) & 0X0F;
+      if (!ch) continue;
+      if (!n--) return get_seedtype(ch);
+    }
+  }
+  return WEED_SEED_INVALID;
 }
 
 
@@ -2267,7 +2280,7 @@ LIVES_GLOBAL_INLINE void free_funcdef(lives_funcdef_t *fdef) {
 }
 
 
-lives_funcinst_t *lives_funcinst_create(lives_funcdef_t *tmpl, void *privdata) {
+lives_funcinst_t *create_funcinst(lives_funcdef_t *tmpl, void *privdata) {
   LIVES_CALLOC_TYPE(lives_funcinst_t, finst, 1);
   if (finst) {
     finst->funcdef = tmpl;
@@ -2289,16 +2302,24 @@ lives_result_t lives_funcinst_bind_param(lives_funcinst_t *finst, int idx, uint6
   va_start(ap, flags);
   if (idx == -1) {
     if (!fdef->return_type) return LIVES_RESULT_ERROR;
-    // this will be a pointer to var to receive return value in
+    // this will be a pointer to var to receive return value in 
     valptr = va_arg(ap, void *);
     va_end(ap);
     weed_set_voidptr_value(finst->out_params[0], "value_ptr", valptr);
     return LIVES_RESULT_SUCCESS;
   }
-  // get seed type
+  uint32_t st = nth_param_type(finst, idx);
+  char *pkey = make_std_pname(idx);
+  weed_error_t err;
 
+  if (flags & FINST_FLAG_SHADOWED) {
+    valptr = va_arg(ap, void *);
+    BIND_SHADOW_PARAM(finst. pkey, valptr);
+  }
+  else err = weed_leaf_from_varg(finst, pkey, st, 1, xargs);
+  lives_free(pkey);
   va_end(ap);
-  return LIVES_RESULT_SUCCESS;
+  return err;
 }
 
 

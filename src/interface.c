@@ -8085,7 +8085,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   return TRUE;
 }
 
-//#define DEBUG_OVERFLOW
+#define DEBUG_OVERFLOW
 static int height, lheight;
 static boolean msgbar_configged = FALSE;
 
@@ -8113,7 +8113,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   int width;
   int lineheight, llines, llast;
   int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = GUI_SCREEN_PHYS_HEIGHT;
+  int scr_height = GUI_SCREEN_HEIGHT;
   int bx, by, w = -1, h = -1, posx, posy;
   int overflowx = 0, overflowy = 0;
   int ww, hh, vvmin, hhmin;
@@ -8165,8 +8165,8 @@ boolean msg_area_config(LiVESWidget * widget) {
   lives_xwindow_get_frame_extents(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &rect);
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-  by = 0;
-  scr_height -= abs(by);
+  by >>= 1;
+  //scr_height -= abs(by);
   scr_width -= abs(bx);
 
   ww = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);

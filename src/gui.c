@@ -495,7 +495,7 @@ void create_LiVES(void) {
     lives_widget_add_events(LIVES_MAIN_WINDOW_WIDGET, LIVES_KEY_PRESS_MASK | LIVES_KEY_RELEASE_MASK);
     mainw->config_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
                          LIVES_WIDGET_CONFIGURE_EVENT, LIVES_GUI_CALLBACK(config_event), NULL);
-    lives_widget_set_valign(LIVES_MAIN_WINDOW_WIDGET, LIVES_ALIGN_CENTER);
+    lives_widget_set_valign(LIVES_MAIN_WINDOW_WIDGET, LIVES_ALIGN_FILL);
     lives_widget_set_halign(LIVES_MAIN_WINDOW_WIDGET, LIVES_ALIGN_CENTER);
   }
   ////////////////////////////////////

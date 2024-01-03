@@ -1029,6 +1029,7 @@ void get_gui_framesize(int *hsize, int *vsize) {
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
   bx = abs(bx);
   by = abs(by);
+  by = 0;
 
   if (!mainw->hdrbar && by > MENU_HIDE_LIM) {
     BREAK_ME("mabr hide 2");
@@ -1036,8 +1037,8 @@ void get_gui_framesize(int *hsize, int *vsize) {
   }
   if (hsize) *hsize = (((scr_width - H_RESIZE_ADJUST * 3 + bx) / 3) >> 1) << 1;
   if (vsize) *vsize = ((int)(scr_height - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
-                               / sqrt(widget_opts.scaleH) + vspace + by
-                               + (prefs->show_msg_area ? mainw->mbar_res : 0))) >> 1) << 1;
+                               / sqrt(widget_opts.scaleH) + by
+					   + (prefs->show_msg_area ? mainw->mbar_res : 0))) >> 1) << 1;
 }
 
 

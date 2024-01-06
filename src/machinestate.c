@@ -534,8 +534,8 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost) {
         //lives_list_prepend(tunables, tuned);
         weed_plant_free(*tuner);
         *tuner = NULL;
-        for (j = 0; j < nleaves; lives_free(res[j++]));
-        lives_free(res);
+        for (j = 0; j < nleaves; _ext_free(res[j++]));
+        _ext_free(res);
       }
       return val;
     }

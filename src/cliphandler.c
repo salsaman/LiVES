@@ -2833,15 +2833,15 @@ void switch_clip(int type, int newclip, boolean force) {
     // switch bg clip
     if (LIVES_IS_PLAYING) {
       mainw->new_blend_file = newclip;
-      weed_layer_set_invalid(mainw->blend_layer, TRUE);
+      //weed_layer_set_invalid(mainw->blend_layer, TRUE);
     } else {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
           && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
         weed_instance_t *inst = (weed_instance_t *)((get_primary_src(mainw->blend_file))->actor);
-        if (mainw->blend_layer) {
-          weed_layer_unref(mainw->blend_layer);
-          mainw->blend_layer = NULL;
-        }
+        /* if (mainw->blend_layer) { */
+        /*   weed_layer_unref(mainw->blend_layer); */
+        /*   mainw->blend_layer = NULL; */
+        /* } */
         if (inst) {
           if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
             int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
@@ -2954,6 +2954,20 @@ static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile, int track, int pu
 //
 
 
+static void _clip_src_insert(lives_clipsrc_group_t *srcgrp, lives_clip_src_t *mysrc, boolean prepend) {
+  int nsrcs;
+  pthread_mutex_lock(&srcgrp->src_mutex);
+  nsrcs = srcgrp->n_srcs;
+  srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs + 1, nsrcs, sizeof(lives_clip_src_t *));
+  if (prepend) {
+    lives_memmove(srcgrp->srcs + 1, srcgrp->srcs, nsrcs * sizeof(lives_clip_src_t *));
+    srcgrp->srcs[0] = mysrc;
+  } else srcgrp->srcs[nsrcs] = mysrc;
+  srcgrp->n_srcs = ++nsrcs;
+  pthread_mutex_unlock(&srcgrp->src_mutex);
+}
+
+
 static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, void *actor,
     void *actor_inst, int src_type, uint64_t actor_uid,
     fingerprint_t *chksum, const char *ext_URI) {
@@ -2969,16 +2983,10 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
   lives_memcpy(&mysrc->ext_checksum, &chksum, sizeof(fingerprint_t));
   if (ext_URI) mysrc->ext_URI = lives_strdup(ext_URI);
 
-  pthread_mutex_lock(&srcgrp->src_mutex);
-  nsrcs = srcgrp->n_srcs;
-  srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs + 1, nsrcs, sizeof(lives_clip_src_t *));
-  lives_memmove(srcgrp->srcs + 1, srcgrp->srcs, nsrcs * sizeof(lives_clip_src_t *));
-  srcgrp->srcs[0] = mysrc;
-  srcgrp->n_srcs = ++nsrcs;
-  pthread_mutex_unlock(&srcgrp->src_mutex);
-
   if (src_type == LIVES_SRC_TYPE_BLANK)
     mysrc->action_func = lives_blankframe_srcfunc;
+
+  _clip_src_insert(srcgrp, mysrc, TRUE);
 
   return mysrc;
 }
@@ -3042,7 +3050,7 @@ static lives_clip_src_t *_get_clip_src(lives_clipsrc_group_t *srcgrp, uint64_t a
 }
 
 
-void update_in_all_srcgrps(int clip, lives_clip_src_t *mysrc) {
+void update_gamma_in_all_srcgrps(int clip, lives_clip_src_t *mysrc) {
   lives_clip_t *sfile;
   if ((sfile = RETURN_VALID_CLIP(clip))) {
     if (!pthread_mutex_lock(&sfile->srcgrp_mutex)) {
@@ -3405,11 +3413,9 @@ lives_clip_src_t *get_primary_src(int nclip) {
 }
 
 
-lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc) {
-  lives_clip_src_t *outsrc;
+lives_clip_src_t *_clone_clipsrc(int nclip, lives_clip_src_t *insrc) {
   if (!insrc) return NULL;
-  if (insrc->actor_inst) return NULL;
-  outsrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
+  LIVES_CALLOC_TYPE(lives_clip_src_t, outsrc, 1);
   if (outsrc) {
     outsrc->uid = gen_unique_id();
     outsrc->class_uid = insrc->class_uid;
@@ -3439,9 +3445,9 @@ lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives
 
 lives_clip_src_t *clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc) {
   lives_clip_src_t *mysrc = NULL;
-  if (srcgrp && insrc && IS_VALID_CLIP(nclip)) {
+  if (srcgrp && insrc) {
     pthread_mutex_lock(&srcgrp->src_mutex);
-    mysrc = _clone_clipsrc(srcgrp, nclip, insrc);
+    mysrc = _clone_clipsrc(nclip, insrc);
     pthread_mutex_unlock(&srcgrp->src_mutex);
   }
   return mysrc;
@@ -3471,7 +3477,8 @@ lives_clip_src_t *add_primary_src(int nclip, void *actor, int src_type) {
     for (int i = 0; i < sfile->n_src_groups; i++) {
       lives_clipsrc_group_t *srcgrp = sfile->src_groups[i];
       if (srcgrp->purpose == SRC_PURPOSE_PRIMARY) continue;
-      _clone_clipsrc(srcgrp, nclip, mysrc);
+      lives_clip_src_t *xsrc = _clone_clipsrc(nclip, mysrc);
+      _clip_src_insert(srcgrp, xsrc, TRUE);
     }
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
@@ -3576,6 +3583,7 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
       // step trhough srcs, clone each one
       lives_clipsrc_group_t *xsrcgrp = _add_srcgrp(sfile, track, purpose);
       lives_memcpy(xsrcgrp, srcgrp, sizeof(lives_clipsrc_group_t));
+      xsrcgrp->srcs = LIVES_CALLOC_SIZEOF(lives_clip_src_t *, srcgrp->n_srcs);
       pthread_mutex_init(&xsrcgrp->src_mutex, NULL);
       pthread_mutex_init(&xsrcgrp->refcnt_mutex, NULL);
       xsrcgrp->refcnt = 1;
@@ -3584,7 +3592,7 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
       xsrcgrp->purpose = purpose;
       pthread_mutex_lock(&xsrcgrp->src_mutex);
       for (int i = 0; i < srcgrp->n_srcs; i++)
-        _clone_clipsrc(xsrcgrp, sclip, srcgrp->srcs[i]);
+        xsrcgrp->srcs[i] =  _clone_clipsrc(sclip, srcgrp->srcs[i]);
       pthread_mutex_unlock(&xsrcgrp->src_mutex);
       return xsrcgrp;
     }

@@ -480,7 +480,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
 
 
-  
+
   if (rec_lpt && (!mainw->record || IS_VALID_CLIP(mainw->ascrap_file) || LIVES_IS_PLAYING)) {
     lives_proc_thread_request_cancel(rec_lpt, FALSE);
     cancel_rec_lpt = TRUE;
@@ -1199,12 +1199,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         }
 
 #if 0
-	////////////////////////////////////////
+        ////////////////////////////////////////
         // TODO - attach a callback to data_ready hook
-	//////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////
 
 
-	if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
           if (!rec_lpt) {
             dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
             ;	      /// if we are recording then write generated audio to ascrap_file
@@ -1290,7 +1290,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
 
     ///
-    /// convert to float if necessary - e.g have fx. mixers, 
+    /// convert to float if necessary - e.g have fx. mixers,
 
     // send to fx as float
 
@@ -1300,11 +1300,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     // s16 -> pulse
 
 
-    
 
 
 
-    
+
+
     if (!pulsed->is_corked) {
 #if 0
       if (alock_mixer) {
@@ -1405,7 +1405,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       /// Finally... we actually write to pulse buffers
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
-	async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+        async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
         pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
       } else pulse_buff_free(pulsed->aPlayPtr->data);
@@ -1415,7 +1415,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
         g_print("writing %ld bytes to pulse\n", nbytes);
 #endif
-	async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+        async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
       }
 #endif
@@ -1438,18 +1438,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           return;
         }
 
-	// convert float -> s16
+        // convert float -> s16
         sample_move_abuf_int16(shortbuffer, pulsed->out_achans, (nbytes >> 1) / pulsed->out_achans, pulsed->out_arate);
         if (pulsed->astream_fd != -1) audio_stream(shortbuffer, nbytes, pulsed->astream_fd);
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
         if (!pulsed->is_corked) {
-	  async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+          async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
         } else pulse_buff_free(shortbuffer);
 #else
         if (!pulsed->is_corked) {
-	  async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
+          async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 #endif

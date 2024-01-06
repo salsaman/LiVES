@@ -590,8 +590,9 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
 	if (weed_leaf_is_undeletable(src, prop) == WEED_ERROR_UNDELETABLE)
 	  weed_leaf_set_undeletable(plant, prop, WEED_TRUE);
       }
-    }(*_free_func)(prop);
-  }(*_free_func)(proplist);
+    }
+  }
+  _weed_intern_leaves_list_free(proplist);
 
   if (err == WEED_ERROR_MEMORY_ALLOCATION) {
     //if (plant!=NULL) weed_plant_free(plant); // well, we should free the plant, but the plugins don't have this function...

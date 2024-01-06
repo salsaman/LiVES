@@ -314,7 +314,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int w
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
   if (!pixel_data) weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
-  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
+  else weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
   return layer;
 }
 
@@ -651,7 +651,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_layer_get_proc_thread(lives_layer_
 
 void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
   if (layer && lpt) {
-    weed_layer_ref(layer);
+    //weed_layer_ref(layer);
     lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
     lives_layer_set_proc_thread(layer, lpt);
     lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
@@ -1096,8 +1096,8 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 }
 #endif
 int refs = weed_refcount_dec(layer);
- if (refs == 1 && layer == mainw->frame_layer_preload) __BREAK_ME("flpunr");
- LIVES_ASSERT(refs >= 0);
+if (refs == 1 && layer == mainw->frame_layer_preload) __BREAK_ME("flpunr");
+LIVES_ASSERT(refs >= 0);
 if (layer == mainw->debug_ptr) {
   BREAK_ME("unref dbg");
   g_print("nrefs is %d\n", refs);

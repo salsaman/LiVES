@@ -410,14 +410,6 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 
   lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED);
 
-#if 0
-  funcinst = LIVES_CALLOC_SIZEOF(lives_funcinst_t, 1);
-  funcinst->fdef = fdef;
-  funcist->dispatcher = self;
-  funcinst->lpt = lpt;
-  lives_proc_thread_set_funcinst(lpt, funcinst);
-#endif
-
   return lpt;
 }
 
@@ -483,6 +475,8 @@ lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attrs, l
   lives_proc_thread_set_attrs(lpt, attrs);
 
   weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, fdef);
+  weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCINST, create_funcinst(fdef, NULL));
+
   _proc_thread_params_from_vargs(lpt, return_type, xargs);
   lpt = lives_proc_thread_run(lpt);
   return lpt;
@@ -941,6 +935,9 @@ if (lpt) {
 
       lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, NULL);
       if (fdef) free_funcdef(fdef);
+
+      lives_funcinst_t *finst = (lives_funcinst_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCINST, NULL);
+      if (finst) lives_free(finst);
 
       extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
       if (extcb_mutex) {
@@ -3070,18 +3067,18 @@ done:
 
     if (chain_leader != mainw->def_lpt) {
       if (lives_proc_thread_was_cancelled(lpt)) {
-	lives_thread_set_active(chain_leader);
-	lives_proc_thread_cancel(chain_leader);
+        lives_thread_set_active(chain_leader);
+        lives_proc_thread_cancel(chain_leader);
       }
 
       if (lives_proc_thread_had_error(lpt)) {
-	int sev = lives_proc_thread_get_errsev(lpt);
-	if (sev == LPT_ERR_MAJOR)
-	  lives_proc_thread_error_full(chain_leader,
-				       weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
-				       weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
-				       lives_proc_thread_get_errnum(lpt),
-				       sev, lives_proc_thread_get_errmsg(lpt));
+        int sev = lives_proc_thread_get_errsev(lpt);
+        if (sev == LPT_ERR_MAJOR)
+          lives_proc_thread_error_full(chain_leader,
+                                       weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL),
+                                       weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL),
+                                       lives_proc_thread_get_errnum(lpt),
+                                       sev, lives_proc_thread_get_errmsg(lpt));
       }
     }
 

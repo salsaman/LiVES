@@ -6296,7 +6296,7 @@ LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timeco
       for (i = 0; propnames[i]; i++) {
         if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_EVENT_TYPE) ||
             !lives_strcmp(propnames[i], WEED_LEAF_TIMECODE) || !strncmp(propnames[i], "host_", 5)) {
-          lives_free(propnames[i]);
+          _ext_free(propnames[i]);
           continue;
         }
         lives_tree_store_append(treestore, &iter2, &iter1);   /* Acquire a child iterator */
@@ -6483,10 +6483,10 @@ LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timeco
           break;
         default: break;
         }
-        lives_free(propnames[i]);
+        _ext_free(propnames[i]);
       }
 
-      lives_free(propnames);
+      _ext_free(propnames);
 
       // now add the new treeview
 

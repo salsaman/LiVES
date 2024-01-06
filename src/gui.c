@@ -3365,9 +3365,11 @@ void show_lives(void) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
   else lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
 
+  //lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+
   mainw->ignore_screen_size = TRUE;
   lives_widget_show_all(mainw->top_vbox);
-  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+  lives_widget_set_maximum_size(mainw->top_vbox, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
   mainw->ignore_screen_size = FALSE;
 
   check_can_show_msg_area();
@@ -3426,9 +3428,9 @@ void show_lives(void) {
   if (mainw->go_away)
     update_rfx_menus();
 
+  if (!(prefs->focus_steal & FOCUS_STEAL_STARTUP))
+    gtk_window_set_focus_on_map(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
   if (prefs->present && prefs->show_gui) {
-    if (!(prefs->focus_steal & FOCUS_STEAL_STARTUP))
-      gtk_window_set_focus_on_map(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 }

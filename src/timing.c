@@ -439,20 +439,18 @@ get_time:
                 //g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
                 owed_ticks += toomuch;
                 tdiff -= toomuch;
+              } else {
+                ticks_t allowed;
+                if (!owed_ticks) catchup = .1;
+                allowed = tdiff * catchup;
+                if (allowed > owed_ticks) {
+                  allowed = owed_ticks;
+                  catchup = (double)allowed / (double)tdiff;
+                } else catchup *= 1.1;
+                tdiff += allowed;
+                owed_ticks -= allowed;
               }
-	      else {
-		ticks_t allowed;
-		if (!owed_ticks) catchup = .1;
-		allowed = tdiff * catchup;
-		if (allowed > owed_ticks) {
-		  allowed = owed_ticks;
-		  catchup = (double)allowed / (double)tdiff;
-		}
-		else catchup *= 1.1;
-		tdiff += allowed;
-		owed_ticks -= allowed;
-	      }
-	    }
+            }
 
             Itime += tdiff;
 

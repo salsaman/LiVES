@@ -3101,7 +3101,7 @@ void convert_to_float(pulse_driver_t *pulsed, size_t nsamples) {
       /// convert to float, and take the opportunity to find the max volume
       /// (currently this is used to trigger recording start optionally)
       pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
-						       nsamples, pulsed->out_achans, FALSE, FALSE, 1.0);
+                                 nsamples, pulsed->out_achans, FALSE, FALSE, 1.0);
     }
   }
 }

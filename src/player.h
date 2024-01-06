@@ -63,7 +63,7 @@ boolean lives_has_status(int status);
 int lives_get_status(void);
 
 frames_t reachable_frame(int clipno, lives_decoder_t *dplug, frames_t stframe, frames_t enframe,
-                         frames_t base, double fps, frames_t pframe, double *ttime, double *tconf);
+                         frames_t base, double fps, double *ttime, double *tconf);
 
 void init_track_sources(void);
 void free_track_sources(void);
@@ -90,6 +90,8 @@ void calc_aframeno(int fileno);
 void ready_player_one(weed_timecode_t estart);
 
 int process_one(boolean visible);
+
+void clear_player_hooks(void);
 
 boolean clip_can_reverse(int clipno);
 

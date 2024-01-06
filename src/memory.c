@@ -1276,24 +1276,33 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     count = used[start];
     i = start + count;
     max = NBBLOCKS - nblocks;
-    start += count + 1;
+    start += count;
     if (start > max) start = used[0];
     //g_print("block 0 used %d blocks\n", used[0]);
   }
 
-  while (count++ <= max) {
+  while (count < NBBLOCKS) {
+    int u;
     if (i > max) i = 0;
-    for (j = nblocks; j--;) {
+    u = used[i];
+    if (u) {
+      count += u;
+      i += u;
+      continue;
+    }
+
+    for (j = 1; j < nblocks; j++) {
       if (mainw->critical) return -1;
-      int u = used[i + j];
+      u = used[i + j];
       //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
         if (oblock != -1) return -1;
         i += u + j;
+        count += u + j;
         break;
       }
     }
-    if (j < 0) break;
+    if (j == nblocks) break;
   }
 
   if (i <= max) {
@@ -1305,13 +1314,12 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
 #endif
     bbused += nblocks - used[i];
     used[i] = nblocks;
+    return i;
   }
 
   //g_print("ALLOCBBBB %d nnnn\n", i);
 
   //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
-
-  if (i <= max) return i;
 
   ///////////////////////////////////////////////////
   //  dump_fn_notes();

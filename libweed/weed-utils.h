@@ -44,19 +44,25 @@ extern "C"
 #include <weed/weed.h>
 #endif
 
+#ifdef __LIBWEED__
 extern weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,
 			    const char *,  weed_voidptr_t);
   
 #if WEED_ABI_CHECK_VERSION(203)
-// library functions to lock / unlock leaves for atomic operations
+// library only functions to lock / unlock leaves for atomic operations
 extern weed_leaf_t *_weed_intern_freeze(weed_plant_t *, const char *);
 extern weed_error_t _weed_intern_unfreeze(weed_leaf_t *);
+// library only functions to avoid finding a leaf multiple times
 extern weed_seed_t _weed_intern_seed_type(weed_leaf_t *);
 extern weed_size_t _weed_intern_num_elems(weed_leaf_t *);
 extern weed_size_t _weed_intern_elem_sizes(weed_leaf_t *, weed_size_t *);
 extern weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
 extern weed_error_t _weed_intern_get_all(weed_leaf_t *, weed_voidptr_t retvals);
 extern weed_error_t _weed_intern_get(weed_leaf_t *, weed_size_t idx, weed_voidptr_t retval);
+// free using the designated weed_free function
+extern void _weed_intern_leaves_list_free(char **leaveslist);
+#endif
+
 #endif
 
 /* some nice macros, e.g
@@ -67,7 +73,6 @@ extern weed_error_t _weed_intern_get(weed_leaf_t *, weed_size_t idx, weed_voidpt
 #define WEED_LEAF_SET(plant, key, type, value) weed_set_##type##_value(plant, key, value)
 #define WEED_LEAF_SET_ARRAY(plant, key, type, nvals, array) weed_set_##type##_array(plant, key, nvals, array)
 
-  //#if defined(__WEED_HOST__) || defined(__LIBWEED__)
 typedef int (*weed_memcmp_f)(const void *, const void *, size_t);
 
 void weed_utils_set_custom_memfuncs(weed_malloc_f malloc_func, weed_calloc_f calloc_func, weed_memcpy_f memcpy_func,

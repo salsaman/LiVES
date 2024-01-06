@@ -19886,7 +19886,7 @@ static uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list
     tot += 4; //number of leaves
     for (i = 0; leaves[i]; i++) {
       if (!nxprev && (!strcmp(leaves[i], WEED_LEAF_NEXT) || !strcmp(leaves[i], WEED_LEAF_PREVIOUS))) {
-        lives_free(leaves[i]);
+        _ext_free(leaves[i]);
         continue;
       }
       tot += 4 * 3 + strlen(leaves[i]); // key_length, seed_type, num_elements
@@ -19894,9 +19894,9 @@ static uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list
       st = weed_leaf_seed_type(event, leaves[i]);
       // sum data_len + data
       for (j = 0; j < ne; j++) tot += 4 + (st > 64 ? 8 : weed_leaf_element_size(event, leaves[i], j));
-      lives_free(leaves[i]);
+      _ext_free(leaves[i]);
     }
-    lives_free(leaves);
+    _ext_free(leaves);
     event = get_next_event(event);
   }
 
@@ -19910,9 +19910,9 @@ static uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list
       st = weed_leaf_seed_type(event, leaves[i]);
       // sum data_len + data
       for (j = 0; j < ne; j++) tot += 4 + (st > 64 ? 8 : weed_leaf_element_size(event, leaves[i], j));
-      lives_free(leaves[i]);
+      _ext_free(leaves[i]);
     }
-    lives_free(leaves);
+    _ext_free(leaves);
   }
   if (num_events) *num_events = tot_events;
   return tot;

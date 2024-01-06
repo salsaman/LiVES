@@ -1360,7 +1360,7 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   capable->features_ready |= FEATURE_WEED;
-  
+
   //do_startup_diagnostics(test_opts);
 
   if (!mainw->foreign) {
@@ -1732,10 +1732,23 @@ boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
+  if (!mainw->lives_shown) {
+    mainw->is_ready = TRUE;
+    show_lives();
+  }
+
   //lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, 0, "v", NULL);
   return FALSE;
 }
 
+
+boolean show_ui(void *data) {
+  mainw->ignore_screen_size = TRUE;
+  reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
+  main_thread_execute_rvoid(lives_startup2, 0, "v", NULL);
+  return FALSE;
+}
 
 boolean lives_startup2(livespointer data) {
   lives_proc_thread_t lpt;
@@ -1747,18 +1760,11 @@ boolean lives_startup2(livespointer data) {
 
   what_sup = startup2_sup;
 
-  if (!mainw->lives_shown) {
-    mainw->is_ready = TRUE;
-    set_gui_loop_tight(TRUE);
-    mainw->gui_much_events = TRUE;
-    show_lives();
-    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
-    mainw->ignore_screen_size = TRUE;
-    reset_mainwin_size();
-    mainw->ignore_screen_size = FALSE;
-    run_deferred_configs();
-    set_gui_loop_tight(FALSE);
-  }
+  mainw->ignore_screen_size = TRUE;
+  reset_mainwin_size();
+  mainw->ignore_screen_size = FALSE;
+
+  run_deferred_configs();
 
   //  do_startup_diagnostics(test_opts);
   prefs->pb_quality = future_prefs->pb_quality = PB_QUALITY_MED;
@@ -1973,8 +1979,6 @@ boolean lives_startup2(livespointer data) {
   lives_widget_set_opacity(mainw->m_loopbutton, .75);
 
   if (prefs->interactive) set_interactive(TRUE);
-
-  set_gui_loop_tight(FALSE);
 
 #if IS_LINUX_GNUbb
   capable->allthreads = allthrds_list();

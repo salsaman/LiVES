@@ -40,8 +40,8 @@ const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_PIXEL_DATA_CONTIGUOUS,
                                         WEED_LEAF_HOST_ORIG_PDATA,
                                         LIVES_LEAF_PIXBUF_SRC,
                                         LIVES_LEAF_SURFACE_SRC,
-					LIVES_LEAF_PROC_THREAD,
-					LIVES_LEAF_PTHREAD_PTR,
+                                        LIVES_LEAF_PROC_THREAD,
+                                        LIVES_LEAF_PTHREAD_PTR,
                                         LIVES_LEAF_MD5SUM,
                                         LIVES_LEAF_MD5_CHKSIZE,
                                         NULL
@@ -2378,7 +2378,6 @@ lives_filter_error_t weed_apply_instance(weed_instance_t *inst, weed_event_t *in
         goto done_video;
       }
     }
-    weed_layer_pixel_data_free(channel);
   }
 
 done_video:
@@ -2388,18 +2387,17 @@ done_video:
 
   for (i = 0; i < num_out_tracks + num_out_alpha; i++) {
     weed_plant_t *channel = get_enabled_channel(inst, i, LIVES_OUTPUT);
-    weed_channel_set_pixel_data(channel, NULL);
-    weed_layer_nullify_pixel_data(channel);
-
+    weed_layer_pixel_data_free(channel);
     layer = layers[out_tracks[i]];
     lock_layer_status(layer);
     lstat = _lives_layer_get_status(layer);
     if (lstat == LAYER_STATUS_INVALID) {
-      unlock_layer_status(layer);
       retval = FILTER_ERROR_INVALID_LAYER;
     } else {
-      if (lstat == LAYER_STATUS_BUSY)
-        _lives_layer_set_status(layer, LAYER_STATUS_READY);
+      if (!lives_layer_plan_controlled(layer)) {
+        if (lstat == LAYER_STATUS_BUSY)
+          _lives_layer_set_status(layer, LAYER_STATUS_READY);
+      }
     }
     unlock_layer_status(layer);
   }
@@ -2412,18 +2410,18 @@ done_video:
       weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, FALSE);
     }
     layer = layers[in_tracks[i]];
-    lock_layer_status(layer);
-    lstat = _lives_layer_get_status(layer);
-    if (lstat == LAYER_STATUS_INVALID) {
+    if (!lives_layer_plan_controlled(layer)) {
+      lock_layer_status(layer);
+      lstat = _lives_layer_get_status(layer);
+      if (lstat == LAYER_STATUS_INVALID) {
+        retval = FILTER_ERROR_INVALID_LAYER;
+      } else {
+        if (lstat == LAYER_STATUS_BUSY)
+          _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+      }
       unlock_layer_status(layer);
-      retval = FILTER_ERROR_INVALID_LAYER;
-    } else {
-      if (lstat == LAYER_STATUS_BUSY)
-        _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
     }
-    unlock_layer_status(layer);
   }
-
   lives_freep((void **)&in_tracks);
   lives_freep((void **)&out_tracks);
   lives_freep((void **)&in_channels);
@@ -4054,7 +4052,7 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
 
   // set flags so - autodelete on free, unchangeable
   err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE
-			       | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
+                               | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
   if (err == WEED_SUCCESS)  err = weed_ext_set_element_size(plant, key, 0, lives_strlen(string));
   return err;
 }
@@ -4100,10 +4098,10 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   if (plant) {
     int flags = weed_leaf_get_flags(plant, key);
     if (!lives_strcmp(key, LIVES_LEAF_REFCOUNTER)) {
-      lives_refcounter_t *refcount =(lives_refcounter_t *)
-	weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
+      lives_refcounter_t *refcount = (lives_refcounter_t *)
+                                     weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
       pthread_mutex_destroy(&refcount->mutex);
-      lives_free(refcount); 
+      lives_free(refcount);
       weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
       lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
       weed_set_plantptr_value(plant, key, NULL);
@@ -4165,9 +4163,9 @@ void  weed_plant_autofree(weed_plant_t *plant) {
         weed_leaf_set_undeletable(plant, leaves[i], WEED_FALSE);
         // act on FREE_ON_DELETE, remove flag
         weed_leaf_autofree(plant, leaves[i]);
-        lives_free(leaves[i]);
+        _ext_free(leaves[i]);
       }
-      lives_free(leaves);
+      _ext_free(leaves);
     }
   }
 }
@@ -6619,7 +6617,7 @@ boolean weed_init_effect(int hotkey) {
       if (bg_gen_to_start == -1) {
         weed_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
         bg_generator_key = bg_generator_mode = -1;
-        weed_layer_set_invalid(mainw->blend_layer, TRUE);
+        //weed_layer_set_invalid(mainw->blend_layer, TRUE);
         mainw->new_blend_file = -1;
       }
     }
@@ -7279,7 +7277,7 @@ deinit3:
         if (mainw->ce_thumbs) ce_thumbs_set_keych(bgk, FALSE);
         filter_mutex_unlock(bgk);
       }
-      weed_layer_set_invalid(mainw->blend_layer, TRUE);
+      //weed_layer_set_invalid(mainw->blend_layer, TRUE);
       mainw->new_blend_file = -1;
     }
   }
@@ -7951,7 +7949,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
         if (!is_bg && IS_VALID_CLIP(mainw->blend_file)) {
           mainw->new_blend_file = mainw->blend_file;
           if (!IS_VALID_CLIP(mainw->new_blend_file)) {
-            weed_layer_set_invalid(mainw->blend_layer, TRUE);
+            //weed_layer_set_invalid(mainw->blend_layer, TRUE);
             mainw->new_blend_file = -1;
           }
         }
@@ -7963,7 +7961,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     } else {
       if (IS_VALID_CLIP(new_file)) {
         if (mainw->blend_file != new_file) {
-          weed_layer_set_invalid(mainw->blend_layer, TRUE);
+          //          weed_layer_set_invalid(mainw->blend_layer, TRUE);
           mainw->new_blend_file = new_file;
         }
         if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
@@ -8094,10 +8092,10 @@ void weed_generator_end(weed_plant_t *inst) {
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
     if (mainw->blend_file == mainw->current_file) {
       if (mainw->noswitch) {
-        weed_layer_set_invalid(mainw->blend_layer, TRUE);
+        //weed_layer_set_invalid(mainw->blend_layer, TRUE);
         mainw->new_blend_file = mainw->current_file;
       } else {
-        weed_layer_set_invalid(mainw->blend_layer, TRUE);
+        //weed_layer_set_invalid(mainw->blend_layer, TRUE);
         mainw->new_blend_file = -1;
       }
     }
@@ -9449,7 +9447,7 @@ boolean rte_key_setmode(int key, int newmode) {
   }
 
   if (mainw->blend_file != blend_file) {
-    weed_layer_set_invalid(mainw->blend_layer, TRUE);
+    //weed_layer_set_invalid(mainw->blend_layer, TRUE);
     mainw->new_blend_file = blend_file;
   } else {
     if (inst) {
@@ -11017,7 +11015,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 
   // serialise the "type" leaf first, so that we know this is a new plant when deserialising
   totsize += weed_leaf_serialise(fd, plant, WEED_LEAF_TYPE, TRUE, mem);
-  lives_free(proplist[0]);
+  _ext_free(proplist[0]);
 
   for (i = 1; (prop = proplist[i]); i++) {
     // write each leaf and key
@@ -11027,7 +11025,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
         if (pd_reqs > 3) pd_needed = 0;
         else {
           ++pd_needed;
-          lives_free(prop);
+          _ext_free(prop);
           continue;
         }
       } else {
@@ -11036,7 +11034,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
                             || !strcmp(prop, WEED_LEAF_ROWSTRIDES))) {
           if (++pd_reqs == 4 && pd_needed > 1) {
             totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
-            lives_free(prop);
+            _ext_free(prop);
             totsize += weed_leaf_serialise(fd, plant, WEED_LEAF_PIXEL_DATA, TRUE, mem);
             pd_needed  = 0;
             continue;
@@ -11045,9 +11043,9 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
     // *INDENT-ON*
 
     totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
-    lives_free(prop);
+    _ext_free(prop);
   }
-  lives_freep((void **)&proplist);
+  if (proplist) _ext_free(proplist);
   return totsize;
 }
 
@@ -11071,12 +11069,12 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
     for (int i = 0; leaves[i]; i++) {
       if (is_pixdata_nullify_leaf(leaves[i]) || (sterilize && is_no_copy_leaf(leaves[i]))) {
         //if (weed_leaf_get_flags(plant, leaves[i]) & LIVES_FLAG_FREE_ON_DELETE)
-	weed_leaf_clear_flagbits(plant, leaves[i], LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+        weed_leaf_clear_flagbits(plant, leaves[i], LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
         weed_leaf_delete(plant, leaves[i]);
       }
-      free(leaves[i]);
+      _ext_free(leaves[i]);
     }
-    free(leaves);
+    _ext_free(leaves);
   }
 }
 
@@ -11116,8 +11114,8 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_copy(weed_plant_t *src) {
     if (err == WEED_SUCCESS) {
       err = lives_leaf_dup(plant, src, prop);
     }
-    lives_free(prop);
-  } lives_free(proplist);
+    _ext_free(prop);
+  } _ext_free(proplist);
 
   if (err == WEED_ERROR_MEMORY_ALLOCATION) {
     //if (plant!=NULL) weed_plant_free(plant); // well, we should free the plant, but the plugins don't have this function...
@@ -12374,7 +12372,7 @@ boolean set_autotrans(int clip) {
           inst = weed_instance_obtain(key, mode);
           if (inst) {
             if (mainw->blend_file != clip) {
-              weed_layer_set_invalid(mainw->blend_layer, TRUE);
+              //weed_layer_set_invalid(mainw->blend_layer, TRUE);
               mainw->new_blend_file = clip;
             }
             prefs->autotrans_amt = 0.;

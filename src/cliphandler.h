@@ -829,8 +829,6 @@ char *get_untitled_name(int number);
 
 // srcgrps
 
-lives_clip_src_t *_clone_clipsrc(lives_clipsrc_group_t *srcgrp, int nclip, lives_clip_src_t *insrc);
-
 // create a clone of primary
 lives_clipsrc_group_t *clone_srcgrp(int sclip, int dclip, int track, int purpose);
 lives_clip_src_t *add_clip_src(int nclip, int track, int purpose, uint64_t class_id, void *actor, int src_type,
@@ -845,7 +843,7 @@ lives_clipsrc_group_t *get_primary_srcgrp(int nclip);
 
 boolean swap_srcgrps(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
 
-void update_in_all_srcgrps(int clip, lives_clip_src_t *mysrc);
+void update_gamma_in_all_srcgrps(int clip, lives_clip_src_t *mysrc);
 
 void clip_src_free(int nclip,  lives_clipsrc_group_t *, lives_clip_src_t *);
 void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *);

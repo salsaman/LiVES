@@ -1909,6 +1909,7 @@ typedef struct {
   int idlemax;
 
   boolean configured;  // determines whether config_func is inital config or screen resize
+  boolean calibrated;
 
   boolean reconfig; ///< set to TRUE if a monitor / screen size change is detected
 

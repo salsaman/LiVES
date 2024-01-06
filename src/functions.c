@@ -335,12 +335,12 @@ lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t lpt, va_list xa
 
 
 LIVES_GLOBAL_INLINE lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *fdef,
-							    lives_thread_attr_t attrs, va_list vargs) {
+    lives_thread_attr_t attrs, va_list vargs) {
   lives_proc_thread_t lpt = NULL;
   if (fdef) {
     char *args_fmt = args_fmt_from_funcsig(fdef->funcsig);
     lpt =  _lives_proc_thread_create_vargs(attrs, fdef->function, fdef->funcname,
-					   fdef->return_type, args_fmt, vargs);
+                                           fdef->return_type, args_fmt, vargs);
     if (args_fmt) lives_free(args_fmt);
   }
   return lpt;
@@ -1511,8 +1511,10 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   boolean have_recheck_mutex = FALSE;
   boolean hmulocked = FALSE;
   lives_hook_stack_t *req_stack = NULL;
+  uint64_t myhints;
   uint64_t hs_op_flags = lives_hookstack_op_flags(type);
   hookstack_pattern_t hs_pattern = lives_hookstack_pattern(type);
+  boolean rerun = FALSE;
 
   if (hs_op_flags == HOOKSTACK_INVALID) return FALSE;
 
@@ -1543,8 +1545,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   hmulocked = TRUE;
 
   if (!hstack->stack || (hstack->flags & STACK_TRIGGERING)) {
-    if (type != FATAL_HOOK)
-      PTMUH;
+    if (type != FATAL_HOOK) PTMUH;
     hmulocked = FALSE;
     goto trigdone;
   }
@@ -1555,14 +1556,14 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     if (hstack->req_target_stacks)
       req_stack = hstack->req_target_stacks[hstack->req_target_type];
     if (!req_stack) {
-      if (type != FATAL_HOOK)
-        PTMUH;
+      if (type != FATAL_HOOK) PTMUH;
       hmulocked = FALSE;
       goto trigdone;
     }
     pthread_mutex_lock(&req_stack->mutex);
   }
 
+  myhints = THREADVAR(hook_hints);
   list = (LiVESList *)hstack->stack;
 
   // mark all entries in list at entry as "ACTIONED"
@@ -1581,11 +1582,12 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   }
 
   do {
+    rerun = FALSE;
     retval = FALSE;
     if (type != FATAL_HOOK)
       if (!hmulocked) {
         if (hs_op_flags & HOOKSTACK_NOWAIT) {
-          if (PTMTLH) goto trigdone;
+          if (PTMTLH) break;
         } else PTMLH;
         hmulocked = TRUE;
       }
@@ -1626,15 +1628,18 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       }
 
       if (req_stack) {
-        int dflags = DTYPE_HAVE_LOCK | DTYPE_CLOSURE;
-        closure->flags &= ~HOOK_STATUS_ACTIONED;
-        closure->flags |= hstack->req_target_set_flags;
-        if (closure->flags & HOOK_CB_PRIORITY) dflags |= DTYPE_PREPEND;
-        lives_proc_thread_show_func_call(closure->proc_thread);
-        if (lives_hook_add(hstack->req_target_stacks, hstack->req_target_type,
-                           closure->flags, closure, dflags) != lpt)
-          remove_from_hstack(hstack, list);
-        else hstack->stack = (volatile LiVESList *)lives_list_remove_node((LiVESList *)hstack->stack, list, FALSE);
+        if ((myhints & closure->flags) == myhints) {
+          int dflags = DTYPE_HAVE_LOCK | DTYPE_CLOSURE;
+          closure->flags &= ~HOOK_STATUS_ACTIONED;
+          closure->flags |= hstack->req_target_set_flags;
+          if (closure->flags & HOOK_CB_PRIORITY) dflags |= DTYPE_PREPEND;
+          lives_proc_thread_show_func_call(closure->proc_thread);
+          if (lives_hook_add(hstack->req_target_stacks, hstack->req_target_type,
+                             closure->flags, closure, dflags) != lpt)
+            remove_from_hstack(hstack, list);
+          else hstack->stack =
+              (volatile LiVESList *)lives_list_remove_node((LiVESList *)hstack->stack, list, FALSE);
+        }
         lives_proc_thread_unref(lpt);
         continue;
       }
@@ -1649,6 +1654,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
               lives_proc_thread_unref(lpt);
               lives_sleep_until_zero(pthread_mutex_trylock(&recheck_mutex));
               have_recheck_mutex = TRUE;
+              rerun = TRUE;
               break;
             }
           }
@@ -1657,9 +1663,9 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
           pthread_mutex_unlock(&recheck_mutex);
 
           if (wait_parent) {
-            // UNREF
             lives_proc_thread_unref(lpt);
             lives_proc_thread_wait_done(wait_parent, 0., FALSE);
+            rerun = TRUE;
             break;
           }
         }
@@ -1683,8 +1689,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       //
       if (!(closure->flags & HOOK_CB_FG_THREAD) || is_fg_thread()) {
         GET_PROC_THREAD_SELF(self);
-        if (type != FATAL_HOOK)
-          PTMUH;
+        if (type != FATAL_HOOK) PTMUH;
         hmulocked = FALSE;
 
         weed_set_plantptr_value(lpt, LIVES_LEAF_DISPATCHER, self);
@@ -1698,8 +1703,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         /*         lives_proc_thread_count_refs(lpt), cl_flags_desc(closure->flags)); */
         //}
       } else {
-        if (type != FATAL_HOOK)
-          PTMUH;
+        if (type != FATAL_HOOK) PTMUH;
         hmulocked = FALSE;
         // this function will call fg_service_call directly,
         // block until the lpt completes or is cancelled
@@ -1707,8 +1711,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         lives_proc_thread_queue(lpt, LIVES_THRDATTR_FG_THREAD | LIVES_THRDATTR_FG_LIGHT);
       }
 
-      if (type != FATAL_HOOK)
-        PTMLH;
+      if (type != FATAL_HOOK) PTMLH;
       hmulocked = TRUE;
 
       if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)
@@ -1719,6 +1722,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         // UNREF
         if (!(closure->flags & HOOK_CB_BLOCK)) lives_proc_thread_unref(lpt);
         remove_from_hstack(hstack, list);
+        rerun = TRUE;
         break;
       }
 
@@ -1738,17 +1742,14 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
             retval = FALSE;
 
             // exit on FALSE
-            // UNREF
             lives_proc_thread_unref(lpt);
-            list = NULL;
             break;
           }
           // remove on FALSE
-          // UNREF
-
           if (!(closure->flags & HOOK_CB_BLOCK)) lives_proc_thread_unref(lpt);
           if (type != FATAL_HOOK) remove_from_hstack(hstack, list);
           else closure->flags |= HOOK_CB_IGNORE;
+          rerun = TRUE;
           break;
         }
       }
@@ -1756,14 +1757,12 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       // will be be HOOK_DTL_SINGLE
       if (hs_op_flags & HOOKSTACK_RUN_SINGLE) {
         //g_print("done single\n");
-        // UNREF
         lives_proc_thread_unref(lpt);
-        list = NULL;
         retval = TRUE;
         break;
       }
-      // UNREF
       lives_proc_thread_unref(lpt);
+      rerun = TRUE;
       break;
     }
 
@@ -1789,7 +1788,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         PTMUH;
       hmulocked = FALSE;
     }
-  } while (list);
+  } while (rerun);
 
 trigdone:
 
@@ -2280,7 +2279,7 @@ LIVES_GLOBAL_INLINE void free_funcdef(lives_funcdef_t *fdef) {
 }
 
 
-lives_funcinst_t *create_funcinst(lives_funcdef_t *tmpl, void *privdata) {
+LIVES_GLOBAL_INLINE lives_funcinst_t *create_funcinst(lives_funcdef_t *tmpl, void *privdata) {
   LIVES_CALLOC_TYPE(lives_funcinst_t, finst, 1);
   if (finst) {
     finst->funcdef = tmpl;
@@ -2302,22 +2301,24 @@ lives_result_t lives_funcinst_bind_param(lives_funcinst_t *finst, int idx, uint6
   va_start(ap, flags);
   if (idx == -1) {
     if (!fdef->return_type) return LIVES_RESULT_ERROR;
-    // this will be a pointer to var to receive return value in 
+    // this will be a pointer to var to receive return value in
     valptr = va_arg(ap, void *);
     va_end(ap);
-    weed_set_voidptr_value(finst->out_params[0], "value_ptr", valptr);
+    weed_set_voidptr_value(finst->params, "retloc", valptr);
     return LIVES_RESULT_SUCCESS;
   }
-  uint32_t st = nth_param_type(finst, idx);
-  char *pkey = make_std_pname(idx);
+
+  uint32_t st = nth_seed_type(fdef->funcsig, idx);
   weed_error_t err;
 
   if (flags & FINST_FLAG_SHADOWED) {
     valptr = va_arg(ap, void *);
-    BIND_SHADOW_PARAM(finst. pkey, valptr);
+    BIND_SHADOW_PARAM(finst, idx, st, valptr);
+  } else {
+    char *pkey = make_std_pname(idx);
+    err = weed_leaf_from_varg(finst->params, pkey, st, idx, ap);
+    lives_free(pkey);
   }
-  else err = weed_leaf_from_varg(finst, pkey, st, 1, xargs);
-  lives_free(pkey);
   va_end(ap);
   return err;
 }
@@ -2396,9 +2397,9 @@ void dump_fn_notes(void) {
                 weed_get_string_value(note, "file", NULL), weed_get_int_value(note, "line", NULL),
                 weed_get_int_value(note, "count", NULL));
       }
-      lives_free(items[i]);
+      _ext_free(items[i]);
     }
-    lives_free(items);
+    _ext_free(items);
   }
 }
 

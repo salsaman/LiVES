@@ -8085,7 +8085,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   return TRUE;
 }
 
-#define DEBUG_OVERFLOW
+//#define DEBUG_OVERFLOW
 static int height, lheight;
 static boolean msgbar_configged = FALSE;
 
@@ -8106,7 +8106,8 @@ boolean msg_area_config(LiVESWidget * widget) {
   static int gui_posy = 1000000;
 
   LingoLayout *layout;
-  lives_rect_t rect;
+
+  LiVESWidget *pai;
 
   boolean mustret = FALSE;
 
@@ -8119,20 +8120,21 @@ boolean msg_area_config(LiVESWidget * widget) {
   int ww, hh, vvmin, hhmin;
   int paisize = 0, opaisize;
 
-  //if (g_main_depth() > 1) return FALSE;
-
   RETURN_VAL_IF_RECURSED(FALSE);
 
+  if (!mainw->calibrated) return FALSE;
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
-  //if (LIVES_IS_PLAYING && prefs->msgs_nopbdis) return FALSE;
+  if (LIVES_IS_PLAYING && prefs->msgs_nopbdis) return FALSE;
 
   if (mainw->multitrack && lives_widget_get_allocation_height(mainw->multitrack->top_vbox) < 32)
     return FALSE;
 
-  //lives_widget_set_vexpand(widget, TRUE);
+  lives_widget_set_vexpand(widget, TRUE);
 
   if (last_textsize == -1) last_textsize = prefs->msg_textsize;
+
+  pai = lives_widget_get_parent(widget);
 
   width = lives_widget_get_allocation_width(widget);
   height = lives_widget_get_allocation_height(widget);
@@ -8142,8 +8144,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   if (reqheight != -1) height = reqheight;
   reqheight = -1;
 
-  llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                               "layout_last"));
+  llast = GET_INT_DATA(widget, "layout_last");
 
   if (mainw->is_ready && (scr_width != old_scr_width || scr_height != old_scr_height)) {
     vmin = -10000000;
@@ -8162,12 +8163,8 @@ boolean msg_area_config(LiVESWidget * widget) {
     gui_posx = gui_posy = 1000000;
   }
 
-  lives_xwindow_get_frame_extents(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &rect);
-
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
   by >>= 1;
-  //scr_height -= abs(by);
-  scr_width -= abs(bx);
 
   ww = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   w = mainw->assumed_width;
@@ -8176,8 +8173,10 @@ boolean msg_area_config(LiVESWidget * widget) {
   h = mainw->assumed_height;
   if (h == -1) h = hh;
 
+  if (prefs->open_maximised) hh -= MIN_MSGBAR_HEIGHT;
+
   if (!mainw->multitrack) {
-    overflowx = ww - scr_width;
+    overflowx = ww - bx - scr_width;
     overflowy = hh - by - scr_height;
 
 #ifdef DEBUG_OVERFLOW
@@ -8192,9 +8191,9 @@ boolean msg_area_config(LiVESWidget * widget) {
     if (ABS(overflowy) <= vmin) overflowy = 0;
 
 #ifdef DEBUG_OVERFLOW
-    g_print("overflow2 is %d : %d %d %d X %d : %d %d %d [%d %d %d]\n", overflowx, w, scr_width, bx, overflowy,
+    g_print("overflow2 is %d : %d %d %d X %d : %d %d %d [%d %d]\n", overflowx, w, scr_width, bx, overflowy,
             h, scr_height, by, h,
-            rect.height, lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET));
+            lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET));
 #endif
 
     if (overflowx != 0 && w <= scr_width && ww <= scr_width && overflowx == last_overflowx) {
@@ -8282,8 +8281,8 @@ boolean msg_area_config(LiVESWidget * widget) {
       g_print("2MOVE to %d X %d\n", posx, posy);
 #endif
     } else {
-      mainw->assumed_width = w;//rect.width;// - overflowx;// - bx;
-      mainw->assumed_height = h;//rect.height;// - overflowy;// - by;
+      mainw->assumed_width = w;
+      mainw->assumed_height = h;
     }
 
     if (!prefs->open_maximised) {
@@ -8325,14 +8324,13 @@ boolean msg_area_config(LiVESWidget * widget) {
       lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
       mainw->ignore_screen_size = FALSE;
       lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
-      // NECESSARY !
-      //lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), abs(bx), abs(by), w - bx, h - by);
-      //reset_mainwin_size();
 
       if (width + overflowx > scr_width) {
+        lives_widget_set_size_request(pai, width, height);
         lives_widget_set_size_request(widget, width, height);
         reqwidth = width;
       } else {
+        lives_widget_set_size_request(pai, -1, height);
         lives_widget_set_size_request(widget, -1, height);
         reqwidth = width + overflowx;
       }
@@ -8340,13 +8338,10 @@ boolean msg_area_config(LiVESWidget * widget) {
       lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
       reqheight = height;
     }
-
-    //if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
-    //reset_mainwin_size();
   }
 
   opaisize = paisize;
-  paisize = lives_widget_get_allocation_width(lives_widget_get_parent(widget));
+  paisize = lives_widget_get_allocation_width(pai);
 
   pthread_mutex_lock(&layout_mutex);
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
@@ -8420,9 +8415,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   LingoLayout *layout;
 
   if (gtk_widget_get_state_flags(widget) & GTK_STATE_FLAG_BACKDROP) return FALSE;
-
   if (!prefs->show_msg_area) return TRUE;
-
   if (!msgbar_configged) return FALSE;
 
   pthread_mutex_lock(&layout_mutex);

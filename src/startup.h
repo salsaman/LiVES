@@ -80,6 +80,8 @@ double pick_custom_colours(double var, double timer);
 
 capabilities *get_capabilities(void);
 
+boolean show_ui(void *data) ;
+
 // checking for executables
 void get_location(const char *exe, char *val, int maxlen);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);

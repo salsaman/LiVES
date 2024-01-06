@@ -525,7 +525,7 @@ lives_proc_thread_t lpt_from_funcdef(lives_funcdef_t *, lives_thread_attr_t attr
 typedef struct {
   lives_funcdef_t *funcdef;
 
-  weed_plant_t **in_params, **out_params;
+  weed_plant_t *params;
 
   // optionally, we can store actual values passed in / returned in a data book
   // (if function is run via a proc_thread)
@@ -791,8 +791,14 @@ void free_funcdef(lives_funcdef_t *);
 
 /* // a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters */
 /* // plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt */
-/* lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...); */
 /* void free_funcinst(lives_funcinst_t *); */
+
+lives_funcinst_t *create_funcinst(lives_funcdef_t *tmpl, void *privdata);
+lives_result_t lives_funcinst_bind_param(lives_funcinst_t *finst, int idx, uint64_t flags, ...);
+
+#define BIND_SHADOW_PARAM(funcinst, idx, st, val) _DW0			\
+  (void *valps[1]; char *pkey = make_std_pname(idx); valps[0] = &val;	\
+   weed_ext_leaf_set_proxy(funcinst->params, pkey, st, 1, &valps); lives_free(pkey);)
 
 //lives_result_t weed_plant_params_from_vargs(weed_plant_t *plant, const char *args_fmt, va_list vargs);
 lives_result_t weed_plant_params_from_args_fmt(weed_plant_t *plant, const char *args_fmt, ...);
@@ -809,7 +815,7 @@ char *funcsig_to_symstring(funcsig_t sig);
 char *funcsig_to_param_string(funcsig_t sig);
 char *funcsig_to_short_param_string(funcsig_t sig);
 
-uint32_t get_seedtype(char c);
+weed_seed_t get_seedtype(char c);
 
 int fn_func_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2);
 boolean fn_data_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2, int maxp);

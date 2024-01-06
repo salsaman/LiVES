@@ -542,9 +542,9 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
       uint32_t st = weed_leaf_seed_type(plant, key);
       lives_obj_attr_t *attr = lives_object_declare_attribute(dicto, key, st);
       lives_leaf_copy(attr, WEED_LEAF_VALUE, plant, key);
-      lives_free(leaves[i]);
+      _ext_free(leaves[i]);
     }
-    lives_free(leaves);
+    _ext_free(leaves);
   }
   return dicto;
 }
@@ -1306,11 +1306,11 @@ int _count_caps(lives_capacities_t *caps, int limit) {
     if (limit == -1 || count < limit) {
       if (capnms[i]) {
         if (IS_CAPNAME(capnms[i])) count++;
-        lives_free(capnms[i]);
+        _ext_free(capnms[i]);
       }
     }
   }
-  lives_free(capnms);
+  _ext_free(capnms);
   return count;
 }
 
@@ -1333,11 +1333,11 @@ char *list_caps(lives_capacities_t *caps) {
         char *tmp = lives_strdup_printf("%s%s\n", out, capnms[i]);
         lives_free(out);
         out = tmp;
-        lives_free(capnms[i]);
+        _ext_free(capnms[i]);
       }
     }
   }
-  lives_free(capnms);
+  _ext_free(capnms);
   return out;
 }
 
@@ -1376,10 +1376,10 @@ int check_caps_match_caps(lives_capacities_t *a, lives_capacities_t *b, int max_
           if (++misses > max_misses) return misses;
         }
       }
-      lives_free(capnms[i]);
+      _ext_free(capnms[i]);
     }
   }
-  if (capnms) lives_free(capnms);
+  if (capnms) _ext_free(capnms);
   return misses;
 }
 
@@ -1528,9 +1528,9 @@ static void _caps_partition(int op, lives_capacities_t *caps_a, lives_capacities
             if (op & 4) return;
           }
         }
-        lives_free(acaps[i]);
+        _ext_free(acaps[i]);
       }
-      lives_free(acaps);
+      _ext_free(acaps);
     }
     // check b
     if (op != 6 && !nb && !b_only) return;
@@ -1550,9 +1550,9 @@ static void _caps_partition(int op, lives_capacities_t *caps_a, lives_capacities
               if (common) *common = _add_cap(*common, acaps[i]);
 	      // *INDENT-OFF*
             }}}
-        lives_free(acaps[i]);
+        _ext_free(acaps[i]);
       }
-      lives_free(acaps);
+      _ext_free(acaps);
     }}
   // *INDENT-OFF*
 }

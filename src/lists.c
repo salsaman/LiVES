@@ -760,10 +760,9 @@ LIVES_GLOBAL_INLINE void *get_from_hash_store_cbfunc(lives_hash_store_t *store, 
             found = TRUE;
           }
         }
-      }
-      lives_free(ll[i]);
+      } _ext_free(ll[i]);
     }
-    lives_free(ll);
+    _ext_free(ll);
   }
   return ret;
 }

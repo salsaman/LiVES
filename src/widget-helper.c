@@ -1357,7 +1357,9 @@ boolean fg_service_ready_cb(void *dummy) {
 
   while (fg_service_fulfill());
 
-  lives_startup2(NULL);
+  lives_proc_thread_create(0, show_ui, 0, "", NULL);
+
+  //lives_startup2(NULL);
 
   fg_service_source = THREADVAR(guisource) = lives_idle_priority(fg_service_fulfill_cb, NULL);
   return FALSE;
@@ -3241,7 +3243,12 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_window_get_title(LiVESWindow * win
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move(LiVESWindow * window, int x, int y) {
 #ifdef GUI_GTK
-  gtk_window_move(window, x, y);
+  if (is_fg_thread()) gtk_window_move(window, x, y);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_window_move, "vii", window, x, y);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -3527,10 +3534,10 @@ void accel_act_special(void *obj, uint32_t key, GdkModifierType mods) {
           found = TRUE;
         }
       }
-      lives_free(leaves[i]);
+      _ext_free(leaves[i]);
     }
   }
-  lives_free(leaves);
+  _ext_free(leaves);
 }
 
 
@@ -3550,6 +3557,7 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   THREADVAR(accel_mod) = mod;
   THREADVAR(accel_data) = data;
   lives_proc_thread_trigger_hooks(self, SEGMENT_START_HOOK);
+  // gtk_window_activate_key
   gtk_accel_groups_activate(obj, keyval, mod | LIVES_SPECIAL_MASK);
   lives_proc_thread_trigger_hooks(self, SEGMENT_END_HOOK);
   THREADVAR(accel_group) = NULL;
@@ -13995,9 +14003,9 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
       int xx, yy, xpx, xpy;
       gdk_window_get_root_origin(xwin, &xx, &yy);
       if (xx >= 0) xpx = xx;
-      else xpx = lives_widget_get_allocation_x(mainw->hdrbar) - xx;
+      else xpx = -xx;//lives_widget_get_allocation_x(mainw->hdrbar) - xx;
       if (yy >= 0) xpy = yy;
-      else xpy = lives_widget_get_allocation_y(mainw->hdrbar) - yy;
+      else xpy = -yy;//lives_widget_get_allocation_y(mainw->hdrbar) - yy;
       if (xpx < px) px1 = xpx;
       if (xpy < py) py1 = xpy;
     }
@@ -14025,7 +14033,7 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
   // x3, y3 are calculated values for scr width / height - actual values; these should be 0, 0
   // x4 ???
 
-  // g_print("BORD size: 1- %d X %d, 2- %d X %d, 3- %d X %d, 4- %d X %d\n", px1, py1, px2, py2, px3, py3, px4, py4);
+  //g_print("BORD size: 1- %d X %d, 2- %d X %d, 3- %d X %d, 4- %d X %d\n", px1, py1, px2, py2, px3, py3, px4, py4);
 
   if (win == LIVES_MAIN_WINDOW_WIDGET) {
     if (px1 == px3 && px2 == 0 && py1 == py3 && py2 == 0) {
@@ -14040,8 +14048,11 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
     if (by) *by = py4;
   }
 
-  if (bx) *bx = px4;
-  if (by) *by = py3;
+  if (bx) *bx = px1;
+  if (by) *by = py1;
+
+  if (bx) *bx = 0;
+  if (by) *by = 0;
 
   return TRUE;
 #endif
@@ -14706,9 +14717,9 @@ LiVESList *widget_klass_list_intentions(const lives_widget_klass_t *k, boolean l
     if (!lives_strncmp(leaves[--nleaves], LIVES_LEAF_INTENTION, intentlen)) {
       intentlist = lives_list_prepend(intentlist, LIVES_INT_TO_POINTER(atoi(leaves[nleaves] + fnlen)));
     }
-    free(leaves[nleaves]);
+    _ext_free(leaves[nleaves]);
   }
-  free(leaves);
+  _ext_free(leaves);
   intentlist = lives_list_reverse(intentlist);
   return intentlist;
 }

@@ -889,15 +889,15 @@ static frames64_t get_blend_frame_inner(weed_timecode_t tc) {
         frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
         blend_file->last_req_frame = frameno;
         int dir = sig(blend_file->pb_fps);
-        frames_t minfr = blend_file->last_frameno + dir;
-        frames_t maxfr = frameno;
+        frames_t minfr = frameno;
+        frames_t maxfr = blend_file->last_frameno + dir;
         if ((maxfr - minfr) * dir > 1) {
           if (get_primary_src_type(blend_file) == LIVES_SRC_TYPE_DECODER) {
             frames_t frame;
             lives_decoder_t *dplug = (lives_decoder_t *)get_primary_actor(blend_file);
             frame = reachable_frame(mainw->blend_file, dplug, minfr, maxfr,
                                     blend_file->frameno, blend_file->pb_fps,
-                                    blend_file->frameno, NULL, NULL);
+                                    NULL, NULL);
             if (frame != -1) frameno = frame;
 	  // *INDENT-OFF*
 	  }}}}

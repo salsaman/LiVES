@@ -1068,7 +1068,7 @@ void play_file(void) {
   }
   // PLAYBACK END /////////////////////
 
-  if (mainw->blend_layer) weed_layer_set_invalid(mainw->blend_layer, TRUE);
+  //if (mainw->blend_layer) weed_layer_set_invalid(mainw->blend_layer, TRUE);
 
   mainw->osc_block = TRUE;
   mainw->rte_textparm = NULL;
@@ -1076,7 +1076,7 @@ void play_file(void) {
   mainw->abufs_to_fill = 0;
 
   if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT);
-  if (AUD_SRC_INTERNAL) audio_analyser_end(AUDIO_SRC_INT);
+  else if (AUD_SRC_INTERNAL) audio_analyser_end(AUDIO_SRC_INT);
 
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -1352,8 +1352,8 @@ void play_file(void) {
     weed_layer_unref(mainw->frame_layer);
     if (mainw->frame_layer == mainw->frame_layer_preload)
       mainw->frame_layer_preload = NULL;
-    if (mainw->frame_layer == mainw->blend_layer)
-      mainw->blend_layer = NULL;
+    /* if (mainw->frame_layer == mainw->blend_layer) */
+    /*   mainw->blend_layer = NULL; */
     mainw->frame_layer = NULL;
   }
 
@@ -1519,10 +1519,10 @@ void play_file(void) {
   }
   mainw->frame_layer_preload = NULL;
 
-  if (mainw->blend_layer) {
-    weed_layer_unref(mainw->blend_layer);
-    mainw->blend_layer = NULL;
-  }
+  /* if (mainw->blend_layer) { */
+  /*   weed_layer_unref(mainw->blend_layer); */
+  /*   mainw->blend_layer = NULL; */
+  /* } */
 
   if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
       && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {

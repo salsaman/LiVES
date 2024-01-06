@@ -116,16 +116,14 @@ weed_error_t weed_add_plant_flags(weed_plant_t *plant, weed_flags_t flags, const
     char **leaves = weed_plant_list_leaves(plant, NULL);
     err = WEED_SUCCESS;
     if (leaves) {
-      free(leaves[0]);
       if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
       // ignore the "type" leaf
       for (int i = 1; leaves[i]; i++) {
         if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
           if (err == WEED_SUCCESS) err = weed_leaf_set_flagbits(plant, leaves[i], flags);
         }
-        free(leaves[i]);
       }
-      free(leaves);
+      _weed_intern_leaves_list_free(leaves);
     }
   }
   return err;
@@ -144,9 +142,8 @@ weed_error_t weed_clear_plant_flags(weed_plant_t *plant, uint32_t flags, const c
         if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
           if (err == WEED_SUCCESS) err = weed_leaf_clear_flagbits(plant, leaves[i], flags);
         }
-        free(leaves[i]);
       }
-      free(leaves);
+      _weed_intern_leaves_list_free(leaves);
     }
   }
   return err;
@@ -1170,27 +1167,27 @@ weed_error_t weed_plant_duplicate(weed_plant_t *dst, weed_plant_t *src, int add)
         }
       }
     }
+    _weed_intern_leaves_list_free(leaves);
   }
   if (err == WEED_SUCCESS) {
     int gottype = 0;
     leaves = weed_plant_list_leaves(src, NULL);
-    for (key = leaves[0]; (key = leaves[i]) != NULL && err == WEED_SUCCESS; i++) {
+    for (key = leaves[0]; (key = leaves[i]) != NULL && err == WEED_SUCCESS; i++)
       if (err == WEED_SUCCESS) {
         if (!gottype && !strcmp(key, WEED_LEAF_TYPE)) gottype = 1;
         else {
           err = weed_leaf_dup(dst, src, key);
           if (err == WEED_ERROR_IMMUTABLE || err == WEED_ERROR_WRONG_SEED_TYPE) err = WEED_SUCCESS; // ignore these errors
         }
-      } free(key);
-    } free(leaves);
+      }
+    _weed_intern_leaves_list_free(leaves);
   }
   return err;
 }
 
-size_t weed_plant_weigh(weed_plant_t *plant) {
-  return weed_plant_get_byte_size(plant);
-  return 0;
-}
+
+size_t weed_plant_weigh(weed_plant_t *plant) {return plant ? weed_plant_get_byte_size(plant) : 0;}
+
 
 WEED_GLOBAL_INLINE weed_error_t weed_plant_mutate_type(weed_plantptr_t plant, int32_t newtype) {
   weed_error_t err = WEED_ERROR_NOSUCH_PLANT;

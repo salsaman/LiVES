@@ -159,6 +159,9 @@ void lives_assert_failed(const char *cond, const char *file, int line) {
 
   d_print(errmsg);
 
+  GET_PROC_THREAD_SELF(self);
+  lpt_error_handle(self);
+
   if (prefs) MSGMODE_GLOBAL;
 
   BREAK_ME("assertfail");
@@ -184,7 +187,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
   if (level & LIVES_LOG_FATAL_MASK) {
 #ifndef IGNORE_FATAL_ERRORS
-    LIVES_FATAL(msg);
+    //LIVES_FATAL(msg);
 #else
     fprintf(tderr, "Fatal error: %s\n", msg);
 #endif

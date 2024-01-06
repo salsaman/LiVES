@@ -7579,7 +7579,7 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
           set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
         }
 
-	
+
         make_play_window();
 
         if (!mainw->play_window) return;
@@ -9628,9 +9628,9 @@ void run_deferred_configs(void) {
       sscanf(leaves[i], "widg_%p", &widget);
       SET_INT_DATA(widget, DEFER_KEY, 0);
       if (widget) all_config(widget, NULL, weed_get_voidptr_value(defer_plant, leaves[i], NULL));
-      free(leaves[i]);
+      _ext_free(leaves[i]);
     }
-    if (leaves) free(leaves);
+    if (leaves) _ext_free(leaves);
     weed_plant_free(defer_plant);
     defer_plant = NULL;
   }
@@ -9644,12 +9644,24 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
   // code here stops the main window from "jiggling around" on startup ///
   static boolean no_config = FALSE;
   if (!mainw->go_away) no_config = FALSE;
+  else {
+    if (widget == LIVES_MAIN_WINDOW_WIDGET) {
+      if (mainw->configured && !no_config && !mainw->calibrated) {
+        if (lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > 1) {
+          mainw->ignore_screen_size = TRUE;
+          reset_mainwin_size();
+          mainw->ignore_screen_size = FALSE;
+          if (mainw->calibrated) no_config = TRUE;
+
+        }
+      }
+    }
+  }
   if (no_config) return FALSE;
   if (!mainw->configured) {
     if (widget == LIVES_MAIN_WINDOW_WIDGET) {
       // run this the first time it is called, but then not again until we explicitly call
       mainw->configured = TRUE;
-      no_config = TRUE;
     }
   }
 

@@ -1597,7 +1597,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
 
   if (showing_info) return;
   showing_info = TRUE;
-  
+
   type = rte_keymode_get_type(key + 1, mode);
 
   plugin_name = rte_keymode_get_plugin_name(key + 1, mode);

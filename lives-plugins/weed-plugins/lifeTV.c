@@ -117,14 +117,14 @@ static weed_error_t lifetv_init(weed_plant_t *inst) {
   video_area = width * height;
 
   sdata->field = (unsigned char *)weed_calloc(video_area, 2);
-  if (sdata->field == NULL) {
+  if (!sdata->field) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   sdata->diff = (unsigned char *)weed_malloc(video_area * sizeof(unsigned char));
 
-  if (sdata->diff == NULL) {
+  if (!sdata->diff) {
     weed_free(sdata->field);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -132,7 +132,7 @@ static weed_error_t lifetv_init(weed_plant_t *inst) {
 
   sdata->diff2 = (unsigned char *)weed_malloc(video_area * sizeof(unsigned char));
 
-  if (sdata->diff2 == NULL) {
+  if (!sdata->diff2) {
     weed_free(sdata->diff);
     weed_free(sdata->field);
     weed_free(sdata);
@@ -141,15 +141,7 @@ static weed_error_t lifetv_init(weed_plant_t *inst) {
 
 
   sdata->background = (short *)weed_malloc(video_area * sizeof(short));
-  if (sdata->background == NULL) {
-    weed_free(sdata->field);
-    weed_free(sdata->diff);
-    weed_free(sdata->diff2);
-    weed_free(sdata);
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
-
-  if (sdata->background == NULL) {
+  if (!sdata->background) {
     weed_free(sdata->field);
     weed_free(sdata->diff);
     weed_free(sdata->diff2);
@@ -172,7 +164,7 @@ int lifetv_deinit(weed_plant_t *inst) {
   struct _sdata *sdata;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
+  if (sdata) {
     weed_free(sdata->background);
     weed_free(sdata->diff);
     weed_free(sdata->diff2);

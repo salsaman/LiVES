@@ -9689,8 +9689,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
           mainw->ignore_screen_size = TRUE;
           reset_mainwin_size();
           mainw->ignore_screen_size = FALSE;
-          set_gui_loop_tight(FALSE);
-
+	  if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
           if (!CURRENT_CLIP_IS_VALID) {
             lives_ce_update_timeline(0, 0.);
 	    // *INDENT-OFF*

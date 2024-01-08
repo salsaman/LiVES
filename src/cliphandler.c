@@ -2697,9 +2697,9 @@ void do_quick_switch(int new_file) {
     if (sfile && get_primary_src_type(sfile) == LIVES_SRC_TYPE_GENERATOR) {
       if (new_file != mainw->blend_file) {
         // switched from generator to another clip, end the generator
-        // if we dont don this here, then this would happen on the next call to map_sources_to_tracks
+        // if we dont do this here, then this would happen on the next call to map_sources_to_tracks
         // ie when nodemodel is rebuilt
-        remove_primary_src(mainw->blend_file, LIVES_SRC_TYPE_GENERATOR);
+        remove_primary_src(old_file, LIVES_SRC_TYPE_GENERATOR);
       } else {
         // swap fg / bg gen keys/modes
         rte_swap_fg_bg();
@@ -3507,13 +3507,11 @@ void remove_primary_src(int nclip, int src_type) {
   // TODO - remove from all srcgrps
   lives_clip_t *sfile = RETURN_VALID_CLIP(nclip);
   if (sfile) {
-    pthread_mutex_lock(&sfile->srcgrp_mutex);
     for (int i = 0; i < sfile->n_src_groups; i++) {
       lives_clipsrc_group_t *srcgrp = sfile->src_groups[i];
       lives_clip_src_t *mysrc = get_clip_src(srcgrp, nclip,  0, src_type, NULL, NULL);
       if (mysrc) clip_src_free(nclip, srcgrp, mysrc);
     }
-    pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
 }
 
@@ -3580,11 +3578,15 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
     lives_clipsrc_group_t *srcgrp = get_srcgrp(sclip, -1, SRC_PURPOSE_PRIMARY);
     if (srcgrp) {
       // create new grp, memcpy, adjust track and purpose and uid
-      // step trhough srcs, clone each one
+      // step trhough srcs, clone each one 
+      pthread_mutexattr_t mattr;
       lives_clipsrc_group_t *xsrcgrp = _add_srcgrp(sfile, track, purpose);
       lives_memcpy(xsrcgrp, srcgrp, sizeof(lives_clipsrc_group_t));
       xsrcgrp->srcs = LIVES_CALLOC_SIZEOF(lives_clip_src_t *, srcgrp->n_srcs);
-      pthread_mutex_init(&xsrcgrp->src_mutex, NULL);
+      pthread_mutexattr_init(&mattr);
+      pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
+      // needs to be recursive as we need to look up rhe sources when freeing them
+      pthread_mutex_init(&xsrcgrp->src_mutex, &mattr);
       pthread_mutex_init(&xsrcgrp->refcnt_mutex, NULL);
       xsrcgrp->refcnt = 1;
       // set again as memcpy will overwrite

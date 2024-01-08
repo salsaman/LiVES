@@ -1067,16 +1067,14 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 */
 lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir,
                                         const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                                  (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, _item_to_file_details, -1, "vssIi",
                                   listp, dir, orig_loc, extra, 0);
 }
 
 
 lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofname,
     const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                                  (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, _item_to_file_details, -1, "vssIi",
                                   listp, ofname, orig_loc, extra, 1);
 }
 

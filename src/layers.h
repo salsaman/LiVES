@@ -56,16 +56,19 @@
 // layer pixel_data is loaded, but may need conversion
 #define LAYER_STATUS_LOADED      	4
 
-// pixel_data is being converted
+// pixel_data is being converted / used in fx
 #define LAYER_STATUS_BUSY		5
 #define LAYER_STATUS_CONVERTING      	LAYER_STATUS_BUSY
 
+// conversion / fx completed, other steps may follow
+#define LAYER_STATUS_PROCESSED		6
+
 // layer pixel_data is fully ready
-#define LAYER_STATUS_READY		6
+#define LAYER_STATUS_READY		7
 
 #define LAYER_STATUS_INVALID	       -1
 
-#define N_LAYER_STATUSES	    	7
+#define N_LAYER_STATUSES	    	8
 
 #define WEED_IS_LAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER)
 

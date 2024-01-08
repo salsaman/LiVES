@@ -1365,7 +1365,7 @@ LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_check_states(lives_proc_thread_t 
       pthread_rwlock_unlock(state_rwlock);
     return tstate;
   }
-  return THRD_STATE_INVALID;
+  return state_bits & THRD_STATE_INVALID;
 }
 
 
@@ -1377,73 +1377,71 @@ LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_has_states(lives_proc_thread_t lp
 
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   uint64_t tstate = THRD_STATE_INVALID;
-  if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
-    uint64_t masked = 0;
-    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
-    // remove any bits from state_bits already in tstate
-    // so we can tell which ones changed
-    state_bits &= ~tstate;
-    if (tstate & THRD_STATE_IDLING) masked |= THRD_STATE_FINISHED;
-    tstate |= (state_bits & ~masked);
-    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
-    lives_proc_thread_ref(lpt);
-    lives_proc_thread_unfreeze_state(lpt);
+  lives_proc_thread_ref(lpt);
+  if (lpt) {
+    if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
+      uint64_t masked = 0;
+      tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+      // remove any bits from state_bits already in tstate
+      // so we can tell which ones changed
+      state_bits &= ~tstate;
+      if (tstate & THRD_STATE_IDLING) masked |= THRD_STATE_FINISHED;
+      tstate |= (state_bits & ~masked);
+      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
+      lives_proc_thread_unfreeze_state(lpt);
 
-    if (!(tstate & THRD_BLOCK_HOOKS)) {
-      lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
-      // only new bits
+      if (!(tstate & THRD_BLOCK_HOOKS)) {
+	lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
+	// only new bits
 
-      if (state_bits & THRD_STATE_PREPARING) {
-        lives_hooks_trigger(hook_stacks, PREPARING_HOOK);
+	if (state_bits & THRD_STATE_PREPARING) {
+	  lives_hooks_trigger(hook_stacks, PREPARING_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_RUNNING) {
+	  lives_hooks_trigger(hook_stacks, TX_START_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_IDLING) {
+	  lives_hooks_trigger(hook_stacks, IDLE_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_BLOCKED) {
+	  lives_hooks_trigger(hook_stacks, TX_BLOCKED_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_TIMED_OUT) {
+	  lives_hooks_trigger(hook_stacks, TIMED_OUT_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_ERROR) {
+	  lives_hooks_trigger(hook_stacks, ERROR_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_CANCELLED) {
+	  lives_hooks_trigger(hook_stacks, CANCELLED_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_COMPLETED) {
+	  // this hook is triggered when processing is complete
+	  // if combined with DESTROYING, the next hook point will be DESTROYED and then
+	  // lpt will be unreffed (*unless it gets a 'hailmary')
+	  // if combineding with IDLING, the next hook depends on external triggers
+	  // in all other cases the next and last hook will be FINISHED
+	  lives_hooks_trigger(hook_stacks, COMPLETED_HOOK);
+	}
+
+	if (state_bits & THRD_STATE_FINISHED) {
+	  lives_hooks_trigger(hook_stacks, FINISHED_HOOK);
+	}
       }
 
-      if (state_bits & THRD_STATE_RUNNING) {
-        lives_hooks_trigger(hook_stacks, TX_START_HOOK);
+      // some states are reflected in the prime_lpt
+      if (lives_proc_thread_is_subordinate(lpt)) {
+	uint64_t cstate = state_bits & INC_TX_BITS;
+	lives_proc_thread_t parent = weed_get_plantptr_value(lpt, "parent", NULL);
+	if (parent) lives_proc_thread_include_states(parent, cstate);
       }
-
-      if (state_bits & THRD_STATE_IDLING) {
-        lives_hooks_trigger(hook_stacks, IDLE_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_BLOCKED) {
-        lives_hooks_trigger(hook_stacks, TX_BLOCKED_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_TIMED_OUT) {
-        lives_hooks_trigger(hook_stacks, TIMED_OUT_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_ERROR) {
-        lives_hooks_trigger(hook_stacks, ERROR_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_CANCELLED) {
-        lives_hooks_trigger(hook_stacks, CANCELLED_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_PAUSED) {
-        lives_hooks_trigger(hook_stacks, PAUSED_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_COMPLETED) {
-        // this hook is triggered when processing is complete
-        // if combined with DESTROYING, the next hook point will be DESTROYED and then
-        // lpt will be unreffed (*unless it gets a 'hailmary')
-        // if combineding with IDLING, the next hook depends on external triggers
-        // in all other cases the next and last hook will be FINISHED
-        lives_hooks_trigger(hook_stacks, COMPLETED_HOOK);
-      }
-
-      if (state_bits & THRD_STATE_FINISHED) {
-        lives_hooks_trigger(hook_stacks, FINISHED_HOOK);
-      }
-    }
-
-    // some states are reflected in the prime_lpt
-    if (lives_proc_thread_is_subordinate(lpt)) {
-      uint64_t cstate = state_bits & INC_TX_BITS;
-      lives_proc_thread_t parent = weed_get_plantptr_value(lpt, "parent", NULL);
-      if (parent) lives_proc_thread_include_states(parent, cstate);
     }
     lives_proc_thread_unref(lpt);
   }
@@ -1452,10 +1450,10 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 
 
 
-uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
-  if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
-    uint64_t tstate;
-    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+  uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
+    if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
+      uint64_t tstate;
+      tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
     state_bits &= tstate;
     tstate &= ~state_bits;
     weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
@@ -2020,20 +2018,23 @@ boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock) {
       return FALSE;
     } else {
       pthread_cond_t *pcond = &(THREADVAR(pcond));
-      if (!have_lock) pthread_mutex_lock(pause_mutex);
-
-      // we will wait for this to be TRUE
-      THREADVAR(sync_ready) = FALSE;
-      lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
+      lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(self);
       lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
 
-      while (!THREADVAR(sync_ready)) {
-        pthread_cond_wait(pcond, pause_mutex);
+      lives_hooks_trigger(hook_stacks, PAUSED_HOOK);
+
+      lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
+      if (!lives_proc_thread_get_resume_requested(self)) {
+	if (!lives_proc_thread_get_cancel_requested(self)) {
+	  if (!have_lock) pthread_mutex_lock(pause_mutex);
+	  THREADVAR(sync_ready) = FALSE;
+	  while (!THREADVAR(sync_ready)) {
+	    pthread_cond_wait(pcond, pause_mutex);
+	  }
+	  lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
+	  if (!have_lock) pthread_mutex_unlock(pause_mutex);
+	}
       }
-      lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
-
-      if (!have_lock) pthread_mutex_unlock(pause_mutex);
-
       lives_proc_thread_resume(self);
       if (lives_proc_thread_get_cancel_requested(self)) {
         if (have_lock) pthread_mutex_unlock(pause_mutex);
@@ -2051,7 +2052,7 @@ boolean lives_proc_thread_pause(lives_proc_thread_t self)
 {return _lives_proc_thread_pause(self, FALSE);}
 
 
-static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
+ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
   // any proc__thread can be interrupted and end up here asynchronously
   // - thread establishes this as the signal handler for a specific signal
   // thread unblocks or blocks that signal

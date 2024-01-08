@@ -971,7 +971,7 @@ void reset_mainwin_size(void) {
     int ox, oy;
     RECURSE_GUARD_ARM;
 
-    set_gui_loop_tight(TRUE);
+    if (!LIVES_IS_PLAYING) set_gui_loop_tight(TRUE);
 
     gdk_window_get_root_origin(xwin, &ox, &oy);
 
@@ -1017,7 +1017,7 @@ void reset_mainwin_size(void) {
 
     mainw->calibrated = 1;
 
-    set_gui_loop_tight(FALSE);
+    if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
   }
   RECURSE_GUARD_END;
 }

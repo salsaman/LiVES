@@ -649,9 +649,34 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_layer_get_proc_thread(lives_layer_
 }
 
 
+boolean layer_processed_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
+  lock_layer_status(layer);
+
+  if (!_weed_layer_check_valid(layer)) {
+    _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+    unlock_layer_status(layer);
+    lives_layer_set_proc_thread(layer, NULL);
+    weed_layer_unref(layer);
+    return FALSE;
+  }
+
+  if (lives_layer_plan_controlled(layer)) {
+    if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
+      _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+    if (_lives_layer_get_status(layer) == LAYER_STATUS_PROCESSED)
+      _lives_layer_set_status(layer, LAYER_STATUS_READY);
+  } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
+
+  unlock_layer_status(layer);
+  lives_layer_set_proc_thread(layer, NULL);
+  weed_layer_unref(layer);
+  return TRUE;
+}
+
+
 void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
   if (layer && lpt) {
-    //weed_layer_ref(layer);
+    weed_layer_ref(layer);
     lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
     lives_layer_set_proc_thread(layer, lpt);
     lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
@@ -1119,7 +1144,6 @@ LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
 #if 0
 }
 #endif
-//if (!layer) BREAK_ME("null layer");
 //g_print("refff layer %p\n", layer);
 #ifdef DEBUG_LAYER_REFS
 ____FUNC_EXIT____;

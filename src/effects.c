@@ -1028,12 +1028,8 @@ static lives_result_t rte_on_off(int key, int on_off) {
   uint64_t new_rte;
   boolean refresh_model = TRUE;
   lives_result_t res = LIVES_RESULT_SUCCESS;
-  boolean is_auto;
 
   if (mainw->go_away) return res;
-  if (!LIVES_IS_INTERACTIVE && fx_key_defs[key].last_activator == activator_ui) return res;
-
-  is_auto = fx_key_defs[key].last_activator == activator_pconx;
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1049,9 +1045,10 @@ static lives_result_t rte_on_off(int key, int on_off) {
       filter_mutex_lock(key);
       mainw->rte |= new_rte;
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
-          weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
-          if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        if (fx_key_defs[key].flags & FXKEY_SOFT_DEINIT) {
+          fx_key_defs[key].flags &= ~FXKEY_SOFT_DEINIT;
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
+	      && (prefs->rec_opts & REC_EFFECTS)) {
             record_filter_init(key);
           }
 	  mainw->rte_real |= new_rte;
@@ -1070,14 +1067,17 @@ static lives_result_t rte_on_off(int key, int on_off) {
         }
       }
 
-      mainw->last_grabbable_effect = key;
-      if (rte_window) rtew_set_keych(key, TRUE);
-      if (mainw->ce_thumbs) {
-        ce_thumbs_set_keych(key, TRUE);
+      if (fx_key_defs[key].last_activator == activator_ui) {
+	push_fx_toggles(key, FALSE);
+	mainw->last_grabbable_effect = key;
+	if (rte_window) rtew_set_keych(key, TRUE);
+	if (mainw->ce_thumbs) {
+	  ce_thumbs_set_keych(key, TRUE);
 
-        // if effect was auto (from ACTIVATE data connection), leave all param boxes
-        // otherwise, remove any which are not "pinned"
-        if (!is_auto) ce_thumbs_add_param_box(key, TRUE);
+	  // if effect was auto (from ACTIVATE data connection), leave all param boxes
+	  // otherwise, remove any which are not "pinned"
+	  ce_thumbs_add_param_box(key, TRUE);
+	}
       }
 
       filter_mutex_unlock(key);
@@ -1106,7 +1106,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
 
       filter_mutex_lock(key);
 
-      if (is_auto) {
+      if (fx_key_defs[key].last_activator == activator_pconx) {
         // SOFT_DEINIT
         // if the change was caused by a data connection, the target may be toggled rapidly
         // in this case we dont actually deinit / reinit the instance, we just flag it as ignored
@@ -1114,8 +1114,9 @@ static lives_result_t rte_on_off(int key, int on_off) {
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
           int inc_count = enabled_in_channels(inst, FALSE);
           if (inc_count == 1) {
-            weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, TRUE);
-            if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
+	    fx_key_defs[key].flags |= FXKEY_SOFT_DEINIT;
+	    if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
+		&& (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
             mainw->rte &= ~new_rte;
             mainw->rte_real &= ~new_rte;
@@ -1161,16 +1162,6 @@ static lives_result_t rte_on_off(int key, int on_off) {
     }
   }
   else {
-    if (key > 0 && !is_auto) {
-      // user override any ACTIVATE data connection
-      // (return key to manual control, disable automatic mode)
-      // BUT we do NOT dusable src key -> it may have other connections
-      override_if_active_input(key);
-      // if this is an outlet for ACTIVATE, disable the override now
-      // (re enable automatic mode)
-      // the user needs to deactivate then reactivate src key
-      end_override_if_activate_output(key);
-    }
     if (CURRENT_CLIP_IS_VALID && cfile->play_paused)
       mainw->force_show = TRUE;
     if (refresh_model) mainw->refresh_model = TRUE;
@@ -1203,24 +1194,26 @@ void rte_keys_update(void) {
 }
 
 
-static lives_result_t _rte_key_toggle(int key, boolean from_menu) {
+lives_result_t _rte_key_toggle(int key, activator_type acti) {
   uint64_t new_rte;
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
-  if (!THREADVAR(fx_is_auto))
-    fx_key_defs[key].last_activator = activator_ui;
+  if (!key) mainw->rte_real &= ~phys_mask;
   else {
-    if (fx_key_defs[key].last_activator == activator_ui)
-      return LIVES_RESULT_FAIL;
-    if (fx_key_defs[key].last_activator == activator_none)
-      fx_key_defs[key].last_activator = activator_pconx;
-  }
-  if (key > 0) {
+    if (acti == activator_ui) {
+      if (!LIVES_IS_INTERACTIVE) return LIVES_RESULT_FAIL;
+      fx_key_defs[key].last_activator = acti;
+    }
+    else {
+      if (fx_key_defs[key].last_activator == activator_ui)
+	return LIVES_RESULT_FAIL;
+      if (fx_key_defs[key].last_activator == activator_none)
+	fx_key_defs[key].last_activator = acti;
+    }
     new_rte = GU641 << (key - 1);
     mainw->rte_real ^= new_rte;
   }
-  else mainw->rte_real &= ~phys_mask;
-  if (LIVES_IS_PLAYING) return LIVES_RESULT_SUCCESS;
-  rte_keys_update();
+
+  if (!LIVES_IS_PLAYING) rte_keys_update();
   return LIVES_RESULT_SUCCESS;
 }
 
@@ -1250,14 +1243,14 @@ boolean rte_key_on_off(int key, boolean on) {
   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
   state = rte_key_real_enabled(key - 1);
   if (state == on) return state;
-  _rte_key_toggle(key, FALSE);
+  _rte_key_toggle(key, activator_ui);
   return rte_key_real_enabled(key - 1);
 }
 
 
 lives_result_t rte_key_toggle(int key) {
   // key is 1 based
- return _rte_key_toggle(key, FALSE);
+  return _rte_key_toggle(key, activator_ui);
 }
 
 
@@ -1266,7 +1259,7 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
                             livespointer user_data) {
   // key is 1 based
   int key = LIVES_POINTER_TO_INT(user_data);
-  _rte_key_toggle(key, group != NULL);
+  _rte_key_toggle(key, activator_ui);
   return TRUE;
 }
 
@@ -1274,32 +1267,26 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
   // key is 1 based
   int key = LIVES_POINTER_TO_INT(user_data);
-  _rte_key_toggle(key, FALSE);
+  _rte_key_toggle(key, activator_ui);
   return TRUE;
 }
 
 
-boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                          livespointer user_data) {
+boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
+			  LiVESXModifierType mod, livespointer user_data) {
   // assign the keys to the last key-grabbable effect
   int fx = LIVES_POINTER_TO_INT(user_data);
-  if (fx != -1) {
-    mainw->last_grabbable_effect = fx;
-  }
+  if (fx != -1) mainw->last_grabbable_effect = fx;
   mainw->rte_keys = mainw->last_grabbable_effect;
-  if (rte_window) {
-    if (group) rtew_set_keygr(mainw->rte_keys);
-  }
-  if (mainw->rte_keys == -1) {
-    return TRUE;
-  }
+  if (rte_window && group) rtew_set_keygr(mainw->rte_keys);
+  if (mainw->rte_keys == -1) return TRUE;
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
   return TRUE;
 }
 
 
-boolean textparm_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                          livespointer user_data) {
+boolean textparm_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
+			  LiVESXModifierType mod, livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
   return TRUE;
@@ -1384,36 +1371,10 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits
   // if ign_soft_deinits is TRUE, we may return FALSE if the instance was soft disabled by an automation
   // soft deinited fx are not applied, however they are reinited as necessary, maintaining soft state
   boolean enabled = !!(mainw->rte & (GU641 << key));
-  if (!ign_soft_deinits) return enabled;
-  else {
-    weed_plant_t *inst;
-    filter_mutex_lock(key);
-    if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) enabled = FALSE;
-      weed_instance_unref(inst);
-    }
-    filter_mutex_unlock(key);
-    return enabled;
-  }
+  if (ign_soft_deinits && enabled && (fx_key_defs[key].flags & FXKEY_SOFT_DEINIT))
+    enabled = !enabled;
+  return enabled;
 }
-
-
-/* boolean rte_key_on_off(int key, boolean on) { */
-/*   // key is 1 based */
-/*   // returns the state of the key afterwards */
-/*   boolean state; */
-/*   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE; */
-/*   state = rte_key_is_enabled(key - 1, FALSE); */
-/*   if (state == on) return state; */
-/*   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key)); */
-/*   return rte_key_is_enabled(key - 1, FALSE); */
-/* } */
-
-
-/* LIVES_GLOBAL_INLINE void rte_keys_reset(void) { */
-/*   // switch off all realtime effects */
-/*   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(EFFECT_NONE)); */
-/* } */
 
 
 static int backup_key_modes[FX_KEYS_MAX_VIRTUAL];

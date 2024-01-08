@@ -17,6 +17,9 @@
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
 
+static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, weed_plant_t *dparam, int okey,
+                                        weed_plant_t *sparam, boolean autoscale, boolean * toggle_fx);
+
 static boolean do_chan_connected_query(lives_conx_w *, int okey, int omode, int ocnum, boolean is_same_key);
 static boolean do_param_connected_query(lives_conx_w *, int okey, int omode, int opnum, boolean is_same_key);
 static void do_param_incompatible_error(lives_conx_w *);
@@ -104,83 +107,58 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 }
 
 
-static void switch_fx_state(int hotkey) {
-  // switch effect state when a connection to ACTIVATE is present
-  uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
-  // setting this causes SOFT_DEINIT
-  if (LIVES_IS_PLAYING) THREADVAR(fx_is_auto) = TRUE;
-  rte_on_off_callback_fg(NULL, LIVES_INT_TO_POINTER(hotkey));
-  THREADVAR(fx_is_auto) = FALSE;
-  mainw->last_grabbable_effect = last_grabbable_effect;
-}
-
-
 LIVES_GLOBAL_INLINE void really_deinit_effects(void) {
   weed_plant_t *inst;
   for (int key = 0; key < FX_KEYS_MAX_VIRTUAL; key++) {
     if (key == rte_bg_gen_key()) continue;
     if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL)) {
+      if (fx_key_defs[key].flags & FXKEY_SOFT_DEINIT) {
         weed_deinit_effect(key);
         mainw->rte &= ~(GU641 << key);
         if (rte_window) rtew_set_keych(key, FALSE);
-      } else weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+      } else fx_key_defs[key].flags &= ~FXKEY_SOFT_DEINIT;
       weed_instance_unref(inst);
     }
   }
 }
 
 
-void override_if_active_input(int hotkey) {
-  // if we have a connection to ACTIVATE, allow override if the user changes the state from the kbd
+void push_fx_toggles(int okey, boolean update) {
+  // for out params which toggle fx on/off we do it via a quick route
+  // (soft deinit) just toggling a flagbit
+  //
+  // if update is FALSE the we clear the last activator from connected keys
+  // this allows those keys to be overriden, and then the override can be removed
+  // if the source fx is manually toggled on / off
   lives_pconnect_t *pconx = mainw->pconx;
+  int omode = rte_key_getmode(okey);
+  weed_instance_t *oinst = rte_keymode_get_instance(okey + 1, omode);
+  if (!oinst) return;
 
-  int totcons;
-  int imode = rte_key_getmode(hotkey);
-
-  int i, j;
-
-  while (pconx) {
-    totcons = 0;
-    j = 0;
-    for (i = 0; i < pconx->nparams; i++) {
-      totcons += pconx->nconns[i];
-      for (; j < totcons; j++) {
-        if (pconx->ikey[j] == hotkey && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
-          // in param is "ACTIVATE"
-          // abuse "autoscale" for this
-          pconx->autoscale[j] = TRUE;
-          return;
-	  // *INDENT-OFF*
-        }}}
-    pconx = pconx->next;
-    // *INDENT-ON*
+  pthread_mutex_lock(&mainw->fxd_active_mutex);
+  if (!active_dummy) {
+    active_dummy = weed_plant_new(WEED_PLANT_PARAMETER);
+    weed_set_plantptr_value(active_dummy, WEED_LEAF_TEMPLATE, NULL);
   }
-}
-
-
-void end_override_if_activate_output(int hotkey) {
-  // if we activate an effect and it is connected to ACTIVATE another effect, end any user override
-  lives_pconnect_t *pconx = mainw->pconx;
-
-  int totcons;
-  int omode = rte_key_getmode(hotkey);
-
-  int j;
+  pthread_mutex_unlock(&mainw->fxd_active_mutex);
 
   while (pconx) {
-    if (pconx->okey == hotkey && pconx->omode == omode) {
-      totcons = 0;
-      j = 0;
+    if (pconx->okey == okey && pconx->omode == omode) {
+      int totcons = 0, j = 0;
       for (int i = 0; i < pconx->nparams; i++) {
+	int pidx = pconx->params[i];
+	weed_plant_t *oparam;
+	if (pidx >= 0) oparam = weed_inst_out_param(oinst, pidx);
+	else oparam = active_dummy;
         totcons += pconx->nconns[i];
         for (; j < totcons; j++) {
-          if (pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
-            fx_key_defs[pconx->ikey[j]].last_activator = activator_none;
-            // abuse "autoscale" for this
-            pconx->autoscale[j] = FALSE;
-	  // *INDENT-OFF*
-          }}}}
+	  if (pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
+	    int ikey = pconx->ikey[j];
+	    if (!update) fx_key_defs[ikey].last_activator = activator_none;
+	    else pconx_convert_value_data(NULL, i, ikey, active_dummy, okey,
+					  oparam, FALSE, NULL);
+	    // *INDENT-OFF*
+	  }}}}
     // *INDENT-ON*
     pconx = pconx->next;
   }
@@ -656,6 +634,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 }
 
 
+#if 0
 #define CONAB_FLAG_PULL			(1ull << 0)
 #define CONAB_FLAG_PUSH			(1ull << 1)
 #define CONAB_FLAG_AUDIO_CYCLE		(1ull << 2)
@@ -666,9 +645,9 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 
 typedef struct {
   uint64_t handle;
-  const char *name;
-  void *varptr;
-  weed_seed_t vartype;
+  weed_plant_t plant;
+  const char *key;
+  lives_funcinst *finst;
   uint64_t flags;
 } lives_connectable;
 
@@ -734,7 +713,7 @@ void pconx_add_connection_generic(uint64_t handle, int key, int mode, int pnum, 
   else
     pconx_add_connection_private(key, mode, pnum, FX_DATA_KEY_CONNECTABLE, handle >> 32, handle & 0xFFFFFFFF, autoscale);
 }
-
+#endif
 
 static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipnum, int *okey, int *omode, int *opnum,
     int *autoscale) {
@@ -989,7 +968,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       lives_free(valss);
       lives_free(valsS);
     }
-    return TRUE;
+      return TRUE;
     default:
       return retval;
     }
@@ -1037,12 +1016,14 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
       if (retval) {
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(maxd); lives_free(mind); lives_free(valsD); lives_free(valsd);
       return retval;
@@ -1089,13 +1070,15 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
 
       if (retval) {
-        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);	
+	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(maxi); lives_free(mini); lives_free(valsD); lives_free(valsI); lives_free(valsi);
       return retval;
@@ -1152,7 +1135,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       lives_free(valss);
       lives_free(valsd);
     }
-    return TRUE;
+      return TRUE;
     default: break;
     }
 
@@ -1211,7 +1194,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       lives_free(valss);
       lives_free(valsi);
     }
-    return retval;
+      return retval;
     case WEED_SEED_DOUBLE: {
       int *valsi = weed_get_int_array(sparam, WEED_LEAF_VALUE, NULL);
       double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, NULL);
@@ -1255,17 +1238,19 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
       if (retval) {
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(maxd); lives_free(mind);
       lives_free(valsi); lives_free(valsd);
     }
-    return retval;
+      return retval;
 
     case WEED_SEED_INT: {
       int *valsI, *valsi, *maxi, *mini;
@@ -1309,17 +1294,19 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
       if (retval) {
         weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(maxi); lives_free(mini);
       lives_free(valsI); lives_free(valsi);
     }
-    return retval;
+      return retval;
     }
     break;
 
@@ -1328,12 +1315,9 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     if (dparam == active_dummy) {
       // ACTIVATE / DEACTIVATE
       if (fx_key_defs[key].last_activator != activator_ui) {
-        //if (!autoscale) { // autoscale is now "user override"
         boolean valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
-        if ((valb == WEED_TRUE && !rte_key_is_enabled(key, FALSE)) ||
-            (valb == WEED_FALSE && rte_key_is_enabled(key, FALSE))) {
-          if (toggle_fx) *toggle_fx = TRUE;
-        }
+        if ((valb != rte_key_is_enabled(key, TRUE)))
+	  _rte_key_toggle(key + 1, activator_pconx);
       }
       return retval;
     }
@@ -1388,7 +1372,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       lives_free(valss);
       lives_free(valsb);
     }
-    return retval;
+      return retval;
     case WEED_SEED_DOUBLE: {
       double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, NULL);
       double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, NULL);
@@ -1415,17 +1399,19 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
       if (retval) {
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+ 	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(maxd); lives_free(mind);
       lives_free(valsb); lives_free(valsd);
     }
-    return retval;
+      return retval;
     case WEED_SEED_INT: {
       int *valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, NULL);
       int *maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, NULL);
@@ -1450,17 +1436,19 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
       if (retval) {
         weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(maxi); lives_free(mini);
       lives_free(valsi); lives_free(valsb);
     }
-    return retval;
+      return retval;
 
     case WEED_SEED_BOOLEAN: {
       int *valsB = weed_get_boolean_array(dparam, WEED_LEAF_VALUE, NULL);
@@ -1475,17 +1463,19 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
       if (retval) {
         weed_set_boolean_array(dparam, WEED_LEAF_VALUE, ndvals, valsB);
-        copyto = set_copy_to(inst, pnum, NULL, TRUE);
-        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-          // if we are recording, add this change to our event_list
-          rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
-        }
+	if (inst) {
+	  copyto = set_copy_to(inst, pnum, NULL, TRUE);
+	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst, pnum);
+	    if (copyto != -1) rec_param_change(inst, copyto);
+	  }
+	}
       }
       lives_free(valsb);
       lives_free(valsB);
     }
-    return retval;
+      return retval;
     default:
       lives_free(valsb);
       break;
@@ -1530,9 +1520,9 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
         for (; j < totcons; j++) {
           if (pconx->ikey[j] == FX_DATA_KEY_OMC_MACRO) {
             // out param is "ACTIVATED"
-            if (pidx >= 0) {
+            if (pidx >= 0) { 
               weed_plant_t *oparam = weed_inst_out_param(inst, pidx);
-              switch (weed_leaf_seed_type(oparam, WEED_LEAF_VALUE)) {
+	      switch (weed_leaf_seed_type(oparam, WEED_LEAF_VALUE)) {
               case WEED_SEED_BOOLEAN:
                 cbval = weed_get_boolean_value(oparam, WEED_LEAF_VALUE, NULL);
                 if (cbval == WEED_TRUE && lbval == WEED_FALSE) {
@@ -1568,8 +1558,10 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
 
 boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   // we use a pull method to update the values of any in params
-  // which have data connections from output params
+  //   which have data connections from output params
   // - we also have some additional non-fx param values
+  //  these are "lives_connectables". In fact (WIP) any variable or leaf can be a connectable,
+  //  and a function may be triggered (i.e data_hook) when an out param value changes
   // - each fx has an activate input and activated output
   // - entities other than effects can be connected, e.g. playback plugin, OMC messenger
 
@@ -1598,10 +1590,8 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     start = -EXTRA_PARAMS_IN;
   }
 
-  if (inst) {
-    if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
-      inparams = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &nparams);
-  } else {
+  if (inst) inparams = weed_instance_get_in_params(inst, &nparams);
+  else {
     if (key >= 0) {
       filter_mutex_lock(key);
       if (rte_keymode_get_filter_idx(key + 1, mode) == -1) {
@@ -1634,11 +1624,9 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
       } else inparam = inparams[i];
 
       oinst = NULL;
-      /// we need to keep these locked for as little time as possible so as not to hang up the video / audio thread
 
       if (oparam != active_dummy) {
         oinst = rte_keymode_get_instance(okey + 1, omode);
-        if (weed_get_boolean_value(oinst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
           weed_instance_unref(oinst);
           oinst = NULL;
         }
@@ -1654,50 +1642,34 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
                                          ? (weed_plant_t *)pp_get_param(mainw->vpp->play_params, i)
                                          : inparam, okey, oparam, autoscale, &toggle_fx);
 
-      if (toggle_fx) {
-        if (is_audio_thread) {
-          // in the audio thread, don't activate / deactivate video fx. It could cause an underflow if it takes too long
-          // let the video thread handle it
-          weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
-          if (!is_pure_audio(filter, FALSE)) {
-            if (oinst) weed_instance_unref(oinst);
-            if (inst) weed_instance_unref(inst);
-            if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
-            THREADVAR(fx_is_audio) = FALSE;
-            return FALSE;
-          }
-        }
-        switch_fx_state(key + 1);
-        if (oinst) weed_instance_unref(oinst);
-        break;
-      } else {
-        if (oinst) weed_instance_unref(oinst);
-        if (changed && inst && key > -1) {
-          pflags = weed_get_int_value(inparams[i], WEED_LEAF_FLAGS, NULL);
-          if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
-          if (fx_dialog[1] && !reinit_inst) {
-            lives_rfx_t *rfx = fx_dialog[1]->rfx;
-            if (rfx) {
-              if (!rfx->is_template) {
-                int keyw = fx_dialog[1]->key;
-                int modew = fx_dialog[1]->mode;
-                if (keyw == key && modew == mode)
-                  // ask the main thread to update the param window
-                  mainw->vrfx_update = rfx;
-              }
-            }
-          }
-          if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key, mode);
-	  // *INDENT-OFF*
-        }}}}
+      if (oinst) weed_instance_unref(oinst);
+      if (changed && inst && key > -1) {
+	pflags = weed_get_int_value(inparams[i], WEED_LEAF_FLAGS, NULL);
+	if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
+	if (fx_dialog[1] && !reinit_inst) {
+	  lives_rfx_t *rfx = fx_dialog[1]->rfx;
+	  if (rfx) {
+	    if (!rfx->is_template) {
+	      int keyw = fx_dialog[1]->key;
+	      int modew = fx_dialog[1]->mode;
+	      if (keyw == key && modew == mode)
+		// ask the main thread to update the param window
+		mainw->vrfx_update = rfx;
+	    }
+	  }
+	}
+	if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key, mode);
+	// *INDENT-OFF*
+      }}
   // *INDENT-ON*
 
-  if (inst) {
-    weed_instance_unref(inst);
-  }
+  if (inst) weed_instance_unref(inst);
 
   if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
   THREADVAR(fx_is_audio) = FALSE;
+
+  push_fx_toggles(key, TRUE);
+
   return reinit_inst;
 }
 

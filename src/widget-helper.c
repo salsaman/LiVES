@@ -3086,10 +3086,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_transient_for(LiVESWindow *
 }
 
 
-static void modunmap(LiVESWindow * win, livespointer data) {if (win == modalw) {set_gui_loop_tight(FALSE); modalw = NULL;}}
-static void moddest(LiVESWindow * win, livespointer data) {if (win == modalw) {set_gui_loop_tight(FALSE); modalw = NULL;}}
+static void modunmap(LiVESWindow * win, livespointer data) {if (!LIVES_IS_PLAYING && win == modalw)
+    {set_gui_loop_tight(FALSE); modalw = NULL;}}
+static void moddest(LiVESWindow * win, livespointer data) {if (!LIVES_IS_PLAYING && win == modalw)
+    {set_gui_loop_tight(FALSE); modalw = NULL;}}
 static boolean moddelete(LiVESWindow * win, LiVESXEvent * event, livespointer data) {
-  if (win == modalw) {set_gui_loop_tight(FALSE); modalw = NULL;}
+  if (!LIVES_IS_PLAYING && win == modalw)
+    {set_gui_loop_tight(FALSE); modalw = NULL;}
   return TRUE;
 }
 
@@ -3110,7 +3113,7 @@ static boolean _lives_window_set_modal(LiVESWindow * window, boolean modal, bool
     lives_signal_handlers_sync_disconnect_by_func(LIVES_GUI_OBJECT(modalw), LIVES_GUI_CALLBACK(moddelete), NULL);
     lives_signal_handlers_sync_disconnect_by_func(LIVES_GUI_OBJECT(modalw), LIVES_GUI_CALLBACK(modunmap), NULL);
     modalw = NULL;
-    if (!no_slack) set_gui_loop_tight(FALSE);
+    if (!no_slack && !LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
   }
 
 #ifdef GUI_GTK

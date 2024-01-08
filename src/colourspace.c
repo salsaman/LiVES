@@ -14843,7 +14843,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     return FALSE;
   }
-  //#define DEBUG_RESIZE
+  //  #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette, iclamping, 0), width, height,
@@ -15242,7 +15242,9 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     /* } */
 
     //g_print("wlf old\n");
+
     weed_layer_unref(old_layer);
+
     //g_print("wlf22 old\n");
 
     lives_free(out_pixel_data);
@@ -15495,7 +15497,6 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
         weed_layer_copy(cached_layers[empty], layer);
         weed_set_int_array(cached_layers[empty], WEED_LEAF_INNER_SIZE, 2, inner_size);
         last_used[empty] = cycle_count;
-        //  g_print("cache lnb\n");
       }
     }
   }

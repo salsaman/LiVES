@@ -1274,17 +1274,18 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     max = 1;
   } else {
     count = used[start];
-    i = start + count;
+    //g_print("block %d used %d blocks\n", start, used[start]);
     max = NBBLOCKS - nblocks;
     start += count;
     if (start > max) start = used[0];
-    //g_print("block 0 used %d blocks\n", used[0]);
+    i = start;
   }
 
   while (count < NBBLOCKS) {
     int u;
     if (i > max) i = 0;
     u = used[i];
+    //g_print("block %d used %d blocks\n", i, used[i]);
     if (u) {
       count += u;
       i += u;
@@ -1294,7 +1295,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     for (j = 1; j < nblocks; j++) {
       if (mainw->critical) return -1;
       u = used[i + j];
-      //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
+      g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
         if (oblock != -1) return -1;
         i += u + j;
@@ -1312,14 +1313,11 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
       tuid[i] = THREADVAR(uid);
     }
 #endif
+    //g_print("ALLOCBBBB %d nnnn\n", i);
     bbused += nblocks - used[i];
     used[i] = nblocks;
     return i;
   }
-
-  //g_print("ALLOCBBBB %d nnnn\n", i);
-
-  //if (clear) lives_mesmset(bigblocks[i], 0, sizeb);
 
   ///////////////////////////////////////////////////
   //  dump_fn_notes();

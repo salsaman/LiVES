@@ -118,8 +118,6 @@ void weed_plant_sanitize(weed_plant_t *, boolean sterilize);
 
 #define LIVES_LEAF_IGNORE_STATE_UPDATES "host_ign_state_upd"
 
-#define LIVES_LEAF_SOFT_DEINIT "host_soft_deinit"
-
 #define LIVES_LEAF_NOQUANT "host_noquant"
 
 // compound plugins

@@ -44,14 +44,9 @@ static boolean all_updated = TRUE;
 
 static boolean updates_done(lives_proc_thread_t self, void *unused) {
   all_updated = TRUE;
-  if (mainw->plan_runner_proc
-      && lives_proc_thread_is_paused(mainw->plan_runner_proc)) {
-    if (!mainw->refresh_model)
-      lives_proc_thread_request_resume(mainw->plan_runner_proc);
-    else lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
-  }
   return TRUE;
 }
+
 
 void clear_player_hooks(void) {
   lives_hook_stack_t *sah =
@@ -375,7 +370,12 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
   }
 
   if (mainw->layers) {
-    //for (i = 0; i < mainw->num_tracks; i++) {}
+    for (i = 0; i < mainw->num_tracks; i++) {
+      if (mainw->layers[i]) {
+	weed_layer_unref(mainw->layers[i]);
+	mainw->layers[i] = NULL;
+      }
+    }
     lives_free(mainw->layers);
     mainw->layers = NULL;
   }
@@ -785,8 +785,6 @@ no_precache:
               weed_layer_copy(mainw->layers[0], mainw->frame_layer_preload);
               weed_leaf_dup(mainw->layers[0], mainw->frame_layer_preload, WEED_LEAF_CLIP);
               weed_leaf_dup(mainw->layers[0], mainw->frame_layer_preload, WEED_LEAF_FRAME);
-
-              g_print("nrefs is %d for %p\n", weed_layer_count_refs(mainw->frame_layer_preload), mainw->frame_layer_preload);
               ///
               weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
               ///
@@ -830,8 +828,6 @@ skip_precache:
       if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[0] = frame;
       //lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
     }
-    if (!mainw->frame_layer) mainw->frame_layer = mainw->layers[0];
-    if (mainw->frame_layer) lives_layer_set_track(mainw->frame_layer, 0);
   }
 
   if ((!cfile->next_event && mainw->is_rendering && !mainw->clip_switched &&
@@ -1214,15 +1210,12 @@ weed_layer_t *load_frame_image(frames_t frame) {
                                  || mainw->plan_cycle->state == PLAN_STATE_ERROR
                                  || mainw->cancelled != CANCEL_NONE);
 
-    if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
-
-    //
-
-
     if (mainw->plan_runner_proc) {
       lives_proc_thread_join(mainw->plan_runner_proc);
       mainw->plan_runner_proc = NULL;
     }
+
+    if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
 
     if (mainw->refresh_model) {
       errpt = 7;
@@ -1235,6 +1228,18 @@ weed_layer_t *load_frame_image(frames_t frame) {
       goto lfi_err;
     }
 
+    if (!mainw->layers || !mainw->layers[0]) {
+      if (!mainw->layers) g_print("no layers !\n");
+      else {
+	if (!mainw->layers[0]) g_print("no layer[0] !\n");
+	if (mainw->plan_cycle) {
+	  g_print("req frame %ld\n", mainw->plan_cycle->frame_idx[0]);
+	  g_print("plan state is %lu\n", mainw->plan_cycle->state);
+	}
+	else g_print("no plan cycle !\n");
+      }
+    }
+    
     if (lives_layer_get_status(mainw->frame_layer) != LAYER_STATUS_READY) {
       if (!(mainw->plan_cycle->state == PLAN_STATE_CANCELLED
             || mainw->plan_cycle->state == PLAN_STATE_ERROR)) {
@@ -1279,17 +1284,31 @@ weed_layer_t *load_frame_image(frames_t frame) {
     }
 
     lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
+
     fg_stack_wait();
     rte_keys_update();
 
-    if (mainw->refresh_model) {
-      errpt = 14;
-      goto lfi_err;
+    if (!mainw->refresh_model) {
+      lives_hook_stack_t *sah =
+	lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
+      if (sah->stack) {
+	all_updated = FALSE;
+	lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+	mainw->gui_much_events = TRUE;
+	mainw->do_ctx_update = TRUE;
+	lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+      }
     }
 
-    if (run_next_cycle() != LIVES_RESULT_SUCCESS) {
-      errpt = 6;
-      goto lfi_err;
+    if (mainw->refresh_model) {
+      g_print("node model invalidated, show frame then let's rebuild the model\n");
+      errpt = 14;
+    }
+    else {
+      if (run_next_cycle() != LIVES_RESULT_SUCCESS) {
+	errpt = 6;
+	goto lfi_err;
+      }
     }
 
     ////////////////////////
@@ -2382,6 +2401,8 @@ switch_point:
     //cancel running plan
     cleanup_nodemodel(&mainw->nodemodel);
 
+  close_clip:
+    
     if (IS_VALID_CLIP(close_this_clip)) {
       // first deal with the case where we are asked to CLOSE A CLIP
       // - currently this happens if and only if a generator / webcam etc.
@@ -2396,46 +2417,35 @@ switch_point:
       if (IS_VALID_CLIP(close_this_clip)) {
         mainw->refresh_model = TRUE;
 
-        // by default, switch to the currently playing clip, this will work if closing bg clip
-        new_clip = mainw->playing_file;
-        // if clip to be closed is fg clip, and we have a bg clip, we will switch to bg clip (making it fg clip)
-        if (close_this_clip == mainw->playing_file && mainw->blend_file != mainw->current_file
-            && mainw->blend_file != -1) new_clip = mainw->blend_file;
+	if (close_this_clip == mainw->playing_file) {
+	  // by default, switch to the currently playing clip, this will work if closing bg clip
+	  if (new_clip == mainw->playing_file || !IS_VALID_CLIP(new_clip)) {
+	    new_clip = -1;
+	    if (IS_VALID_CLIP(mainw->pre_src_file)) new_clip = mainw->pre_src_file;
+	    // if clip to be closed is fg clip, and we have a bg clip, we will switch to bg clip (making it fg clip)
+	    else if (mainw->blend_file != mainw->playing_file && IS_VALID_CLIP(mainw->blend_file))
+	      new_clip = mainw->blend_file;
+	  }
+	}
 
         // breifly set current_file to clip to be closed. After closing it, new_clip will be returned if valid
         // and we switch current_file (but NOT playing file)
         mainw->current_file = close_this_clip;
-        mainw->current_file = close_current_file(new_clip);
-
-        // if we did not close current_file, ignore all the above and just switch back to old current file
-        if (close_this_clip != old_current_file)
-          mainw->current_file = old_current_file;
-
-        // cannot switch to potentialky closed clip, so
-        if (new_clip == old_current_file)
-          new_clip = mainw->new_clip = mainw->current_file;
-      }
-
-      // we should not have changed playing-file, but just in case
-      // set it to old-playing file if that is valid,
-      // else we closed playing_file, and we are going to force switch to current_file (which may be
-      // blend file or soemthing else)
-      if (close_this_clip != old_playing_file)
-        mainw->playing_file = old_playing_file;
-      else {
-        new_clip = mainw->current_file;
-        mainw->current_file = mainw->playing_file;
+        mainw->noswitch = FALSE;
+        mainw->playing_file = mainw->current_file = close_current_file(new_clip);
+        mainw->noswitch = TRUE;
       }
 
       // if closed clip was going to be new blend_file
       // blend__file will be swithced to playing_file
       // if playing_file is invalid, playing_file, current-file and blend_file will all be changed
-      if (new_blend_file == close_this_clip) {
-        if (new_blend_file != mainw->blend_file) {
+      if (mainw->blend_file == close_this_clip) {
+	if (new_blend_file == close_this_clip) {
           new_blend_file = mainw->new_blend_file = mainw->playing_file;
-        } else {
-          mainw->new_blend_file = new_blend_file = -1;
         }
+      }
+      else if (new_blend_file == close_this_clip) {
+	new_blend_file = mainw->new_blend_file = mainw->blend_file;
       }
     }
 
@@ -2527,6 +2537,11 @@ switch_point:
 
         sfile = mainw->files[mainw->playing_file];
       }
+      // if we switch from a gnerator, we may need tp close it
+      if (IS_VALID_CLIP(mainw->close_this_clip)) {
+	close_this_clip = mainw->close_this_clip;
+	goto close_clip;
+      }
     }
 
     /* if (mainw->playing_file != old_playing_file) { */
@@ -2579,8 +2594,7 @@ switch_point:
     }
     sfile->sync_delta = 0;
 
-    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
-      avsync_force();
+    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) avsync_force();
 
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -2602,6 +2616,7 @@ switch_point:
       /* 	  mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
     }
 #endif
+
     cache_hits = cache_misses = 0;
 
     mainw->new_clip = new_clip = mainw->playing_file;
@@ -2628,6 +2643,8 @@ switch_point:
                              = lives_get_current_playback_ticks(mainw->origticks, &time_source);
     //g_print("SWITCH %d %d %d %d\n", sfile->frameno, requested_frame, sfile->last_frameno, mainw->actual_frame);
 
+    // switch blend file
+    
     if (new_blend_file != mainw->blend_file) {
       mainw->refresh_model = TRUE;
 
@@ -2831,8 +2848,8 @@ switch_point:
     // screen update during event playback
     if (!mainw->do_ctx_update && all_updated) {
       if (sah->stack) {
-        lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
         all_updated = FALSE;
+        lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
         lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
       }
       mainw->gui_much_events = TRUE;
@@ -3813,42 +3830,18 @@ proc_dialog:
             // type A - drawing updates, soft inits / deinits
             // type B - normal fx toggles, sepwin / fs, mode changes, clip switches
 
-            mainw->do_ctx_update = TRUE;
+	    if (sah->stack) {
+	      all_updated = FALSE;
+	      lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+					 HOOK_OPT_FG_LIGHT, updates_done, NULL);
+	      mainw->gui_much_events = TRUE;
+	      BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
+	      lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+	      BG_THREADVAR(hook_hints) = 0;
+	    }
+	  }
 
-            if (!mainw->plan_runner_proc
-                || lives_proc_thread_is_paused(mainw->plan_runner_proc)) {
-              rte_keys_update();
-              if (!mainw->refresh_model) {
-                if (sah->stack) {
-                  mainw->gui_much_events = TRUE;
-                  all_updated = FALSE;
-                  lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
-                  lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
-                } else if (lives_proc_thread_is_paused(mainw->plan_runner_proc)
-                           && mainw->plan_cycle && mainw->plan_cycle->state == PLAN_STATE_PAUSED)
-                  lives_proc_thread_request_resume(mainw->plan_runner_proc);
-              }
-            } else {
-              if (sah->stack) {
-                lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                           HOOK_OPT_FG_LIGHT, updates_done, NULL);
-                all_updated = FALSE;
-                BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
-                mainw->gui_much_events = TRUE;
-                lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
-                BG_THREADVAR(hook_hints) = 0;
-              }
-            }
-
-            if (sah->stack && all_updated && !mainw->refresh_model) {
-              // pause plan while we check running steps
-              if (mainw->plan_cycle && mainw->plan_cycle->state == PLAN_STATE_RUNNING) {
-                // pause plan
-                mainw->gui_much_events = TRUE;
-                lives_proc_thread_request_pause(mainw->plan_runner_proc);
-              }
-            }
-          }
+	  mainw->do_ctx_update = TRUE;
 
           if (mainw->new_clip != mainw->playing_file || IS_VALID_CLIP(mainw->close_this_clip)
               || mainw->new_blend_file != mainw->blend_file) goto switch_point;

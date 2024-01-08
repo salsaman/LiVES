@@ -59,10 +59,8 @@ lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
-#define	FXKEY_FLAG_ACTUAL_ON			(1ull << 0)
-#define	FXKEY_FLAG_DESIRED_ON			(1ull << 1)
 
-#define	FXKEY_FLAG_SOFT_DEINIT			(1ull << 8)
+#define	FXKEY_SOFT_DEINIT			(1ull << 0)
 
 typedef enum {
   activator_none,
@@ -70,15 +68,19 @@ typedef enum {
   activator_pconx,
 } activator_type;
 
+#define FX_KEY_PHYSICAL			1 // 1 ... prefs->n_fxkeys;
+#define FX_KET_VIRTUAL			2 // prefs->nfxkeys + 1 .... FX_KEYS_MAX_VIRTUAL
+
 typedef struct {
-  uint64_t flags;
+  uint64_t uid;
+  int type;
   int nmodes;
   int active_mode;
   activator_type last_activator;
-  weed_instance_t *active_inst;
-  LiVESList *filter_bank;
+  weed_instance_t *instances;
+  weed_filter_t *filters;
+  uint64_t flags;
 } rte_key_desc;
-
 
 extern rte_key_desc fx_key_defs[FX_KEYS_MAX_VIRTUAL];
 
@@ -117,6 +119,8 @@ void rte_keys_update(void);
 
 // hotkey is 1 based
 lives_result_t rte_key_toggle(int key);
+
+lives_result_t _rte_key_toggle(int key, activator_type acti);
 
 boolean rte_key_on_off(int key, boolean on);
 

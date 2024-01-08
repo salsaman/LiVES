@@ -1001,7 +1001,7 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
-      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_FALSE) {
+      if (!(fx_key_defs[i].flags & FXKEY_SOFT_DEINIT)) {
         if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
           if (!weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED))
             weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
@@ -1352,15 +1352,12 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   weed_instance_ref(inst);
 
-  if (weed_plant_has_leaf(inst, LIVES_LEAF_SOFT_DEINIT)) {
-    soft_deinit = weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL);
-    weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
-  }
-
   if (!mainw->multitrack) {
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
       key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
     if (key != -1) {
+      soft_deinit = !!(fx_key_defs[key].flags & FXKEY_SOFT_DEINIT);
+      fx_key_defs[key].flags &= ~FXKEY_SOFT_DEINIT;
       if (!weed_plant_has_leaf(inst, LIVES_LEAF_AUTO_EASING)) {
         weed_plant_t *gui;
         gui = weed_instance_get_gui(inst, FALSE);
@@ -1453,7 +1450,7 @@ reinit:
     }
   }
 re_done:
-  if (soft_deinit == WEED_TRUE) weed_set_boolean_value(orig_inst, LIVES_LEAF_SOFT_DEINIT, soft_deinit);
+  if (soft_deinit) fx_key_defs[key].flags |= FXKEY_SOFT_DEINIT;
 
   if (inst && inst != orig_inst) weed_instance_unref(inst);
   weed_instance_unref(orig_inst);
@@ -7073,7 +7070,8 @@ boolean weed_deinit_effect(int hotkey) {
   // adds a ref
   if (!(instance = weed_instance_obtain(hotkey, key_modes[hotkey]))) return TRUE;
 
-  if (weed_plant_has_leaf(instance, LIVES_LEAF_SOFT_DEINIT)) weed_leaf_delete(instance, LIVES_LEAF_SOFT_DEINIT);
+  if (fx_key_defs[hotkey].flags & FXKEY_SOFT_DEINIT)
+    fx_key_defs[hotkey].flags &= ~FXKEY_SOFT_DEINIT;
 
   if (LIVES_IS_PLAYING && hotkey < FX_KEYS_MAX_VIRTUAL) {
     if (prefs->allow_easing) {
@@ -8013,10 +8011,9 @@ void weed_generator_end(weed_plant_t *inst) {
   boolean playing_sel = mainw->playing_sel;
   int current_file = mainw->current_file;
 
-  weed_instance_ref(inst);
-
   RETURN_IF_RECURSED;
-  RECURSE_GUARD_ARM;
+
+  weed_instance_ref(inst);
 
   if (!inst) {
     LIVES_WARN("inst was NULL !");
@@ -8038,7 +8035,6 @@ void weed_generator_end(weed_plant_t *inst) {
     // we will close the file after playback stops
     // and also unref the instance
     mainw->cancelled = CANCEL_GENERATOR_END;
-    RECURSE_GUARD_END;
     return;
   }
 
@@ -8067,7 +8063,9 @@ void weed_generator_end(weed_plant_t *inst) {
       // do not remove if playback ended
       if (LIVES_IS_PLAYING || mainw->blend_file == -1) {
         //bg_generator_key = bg_generator_mode = -1;
+	RECURSE_GUARD_ARM;
         remove_primary_src(mainw->blend_file, LIVES_SRC_TYPE_GENERATOR);
+	RECURSE_GUARD_END;
       } else set_primary_inst(mainw->blend_file, NULL);
       bg_gen_to_start = -1;
     }
@@ -8085,7 +8083,7 @@ void weed_generator_end(weed_plant_t *inst) {
     filter_mutex_lock(fg_generator_key);
     if (rte_key_is_enabled(fg_generator_key, FALSE)) {
       mainw->rte &= ~(GU641 << fg_generator_key);
-      //mainw->rte_real &= ~(GU641 << fg_generator_key);
+      mainw->rte_real &= ~(GU641 << fg_generator_key);
     }
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
     filter_mutex_unlock(fg_generator_key);
@@ -8117,12 +8115,14 @@ void weed_generator_end(weed_plant_t *inst) {
   if (!is_bg && cfile->achans > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     // we started playing from an audio clip
     cfile->frames = cfile->start = cfile->end = 0;
+
+    RECURSE_GUARD_ARM;
     remove_primary_src(mainw->current_file, LIVES_SRC_TYPE_GENERATOR);
+    RECURSE_GUARD_END;
 
     cfile->clip_type = CLIP_TYPE_DISK;
     cfile->hsize = cfile->vsize = 0;
     cfile->pb_fps = cfile->fps = prefs->default_fps;
-    RECURSE_GUARD_END;
     return;
   }
 
@@ -8140,7 +8140,6 @@ void weed_generator_end(weed_plant_t *inst) {
       }
     }
   } else {
-
     // close generator file and switch to original file if possible
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       BREAK_ME("close non-gen file");
@@ -8162,7 +8161,6 @@ void weed_generator_end(weed_plant_t *inst) {
   // *INDENT-ON*
 
   if (!CURRENT_CLIP_IS_VALID) mainw->cancelled = CANCEL_GENERATOR_END;
-  RECURSE_GUARD_END;
 }
 
 

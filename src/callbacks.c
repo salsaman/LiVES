@@ -148,7 +148,7 @@ void lives_exit(int signum) {
 #ifdef VALGRIND_ON
     if (LIVES_IS_PLAYING) {
       lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-      if (mainw->ext_playback) {
+      if (mainw->ext_playback){
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         mainw->ext_audio = FALSE;
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);
@@ -9364,13 +9364,18 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
   double offset;
   double ptrtime = mainw->ptrtime;
   frames_t frame;
+  boolean endp = FALSE;
   int which = 0;
 
   if (!creb) {
-    creb = live_widget_begin_paint(widget);
-    if (!*psurf) {
-      *psurf = lives_painter_get_target(creb);
-      lives_painter_surface_reference(*psurf);
+    if (*psurf) creb = lives_painter_create_from_surface(*psurf);
+    else {
+      creb = lives_widget_begin_paint(widget);
+      endp = TRUE;
+      if (!*psurf) {
+	*psurf = lives_painter_get_target(creb);
+	lives_painter_surface_reference(*psurf);
+      }
     }
   }
 
@@ -9444,8 +9449,8 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
   }
 
   lives_painter_stroke(creb);
-  if (creb != cr) lives_widget_end_paint(widget);
-  //if (creb != cr) lives_painter_destroy(creb);
+  if (endp) lives_widget_end_paint(widget);
+  else if (!cr) lives_painter_destroy(creb);
 }
 
 
@@ -9574,6 +9579,12 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
 
   mutex = lives_widget_get_mutex(widget);
   pthread_mutex_lock(mutex);
+
+  if (*psurf) {
+    int refs = lives_painter_surface_get_reference_count(*psurf);
+    g_print("REFss is %d\n", refs);
+    if (refs != 1) BREAK_ME("aggg");
+  }
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
   pthread_mutex_unlock(mutex);

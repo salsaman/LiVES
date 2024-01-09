@@ -671,14 +671,16 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
     return;
   }
 
-  cr = live_widget_begin_paint(widget);
-  surface = *psurface = lives_painter_get_target(cr);
-  lives_painter_surface_reference(surface);
+  cr = lives_widget_begin_paint(widget);
 
   if (!cr) {
+    lives_widget_end_paint(widget);
     pthread_mutex_unlock(mutex);
     return;
   }
+
+  surface = *psurface = lives_painter_get_target(cr);
+  lives_painter_surface_reference(surface);
 
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
@@ -959,126 +961,58 @@ align:
 
 void reset_mainwin_size(void) {
   RECURSE_GUARD_START;
-  RETURN_IF_RECURSED;
-  int ww, hh, x, y, h, w;
+  static int ww, hh, ox, oy;
+  int  x, y, w, h;
+  int  x2, y2, w2, h2;
+  int ox2, oy2, ox1, oy1;
   int scr_width = GUI_SCREEN_WIDTH;
   int scr_height = GUI_SCREEN_HEIGHT;
 
+  RETURN_IF_RECURSED;
+  
   if (!prefs->show_gui) return;
 
   GdkWindow *xwin = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
   if (xwin) {
-    int ox, oy;
     RECURSE_GUARD_ARM;
-
     if (!LIVES_IS_PLAYING) set_gui_loop_tight(TRUE);
-
-    gdk_window_get_root_origin(xwin, &ox, &oy);
-
-    //if (lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) <= 1) return;
 
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
 
-#if LIVES_HAS_HEADER_BAR_WIDGET
-    //    gtk_window_set_titlebar(LIVES_MAIN_WINDOW_WIDGET, mainw->hdrbar);
-#endif
+    if (!mainw->calibrated) {
+      /* gdk_window_get_root_origin(xwin, &ox, &oy); */
 
-    /* lives_widget_show_all(mainw->hdrbar); */
-    /* lives_widget_context_update(); */
+      /* //if (lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) <= 1) return; */
 
-    x = lives_widget_get_allocation_x(LIVES_MAIN_WINDOW_WIDGET);
-    y = lives_widget_get_allocation_y(LIVES_MAIN_WINDOW_WIDGET);
+      /* x = lives_widget_get_allocation_x(LIVES_MAIN_WINDOW_WIDGET); */
+      /* y = lives_widget_get_allocation_y(LIVES_MAIN_WINDOW_WIDGET); */
+      
+      /* ox = x - ox; */
+      /* oy = y - oy; */
 
-    if (0 && ox < 0) ox = -ox - x;
-    else ox = 0;
+      /* if (ox < 0) ox = 0; */
+      /* if (oy < 0) oy = 0; */
 
-    oy = -oy - y;
+      ww = scr_width;// - ox;
+      hh = scr_height;// - oy;
 
-    if (ox < 0) ox = 0;
-    if (oy < 0) oy = 0;
+      lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), ww, hh);
+      lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, ww, hh);
 
-    ww = scr_width;
-    hh = scr_height;
+      mainw->calibrated = 1;
+    }
 
-    lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), ww, hh);
-    lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, ww, hh);
-
-    lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), ww, hh);
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
-    lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), ox, oy);//-x, -y);
-    lives_widget_context_update();
-
-    w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
-    h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
-    x = lives_widget_get_allocation_x(LIVES_MAIN_WINDOW_WIDGET);
-    y = lives_widget_get_allocation_y(LIVES_MAIN_WINDOW_WIDGET);
-
-    mainw->calibrated = 1;
 
     if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
-  }
-  RECURSE_GUARD_END;
-}
-
-
-//get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-
-#if 0
-
-
-while (1) {
-  lives_widget_context_iteration(NULL, FALSE);
-  lives_millisleep;
-}
-
-bx = 2 * abs(bx);
-by = abs(by);
-bx = 0;//by = 0;
-lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-}
-}
-if (!mainw->hdrbar) {
-  if (prefs->open_maximised && by > MENU_HIDE_LIM) {
-    BREAK_ME("mabr hide 1");
-    lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    RECURSE_GUARD_END;
   }
 }
-
-w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
-h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
-
-// resize the main window so it fits the gui monitor
-if (prefs->open_maximised) {
-  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
-  //lives_widget_set_minimum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
-  lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
-  lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-
-  lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, by);
-  lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), scr_width - bx, scr_height - by);
-  lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-} else {
-  if (w > scr_width - bx || h > scr_height - by) {
-    w = scr_width - bx;
-    h = scr_height - by;
-  }
-  lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-  lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, scr_width - bx, scr_height - by);
-  lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &x, &y);
-  if (x + w > scr_width - bx) x = scr_width - bx - w;
-  if (y + h > scr_height - by) y = scr_height - by - h;
-  lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), x, y);
-  lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-}
-
-if (!LIVES_IS_PLAYING) {
-  mainw->gui_much_events = TRUE;
-  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-}
-#endif
 
 
 LIVES_GLOBAL_INLINE int get_sepbar_height(void) {
@@ -1108,7 +1042,7 @@ void get_gui_framesize(int *hsize, int *vsize) {
   }
   if (hsize) *hsize = (((scr_width - H_RESIZE_ADJUST * 3 - bx) / 3) >> 1) << 1;
   if (vsize) *vsize = ((int)(scr_height - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
-                               / sqrt(widget_opts.scaleH) + by
+                               / sqrt(widget_opts.scaleH) + by + vspace
                                + (prefs->show_msg_area ? mainw->mbar_res : 0))) >> 1) << 1;
 }
 

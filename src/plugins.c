@@ -2839,6 +2839,8 @@ const lives_clip_data_t *get_decoder_cdata(int clipno, const lives_clip_data_t *
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (dplug && dplug->dpsys && dplug->dpsys->id) {
+    // must do this, otherwise adding decoder clipsrc is invalid
+    sfile->clip_type = CLIP_TYPE_FILE;
     add_clip_src(clipno, -1, SRC_PURPOSE_PRIMARY, CLASS_UID_VIDEO_DECODER,
                  (void *)dplug, LIVES_SRC_TYPE_DECODER,
                  dplug->dpsys->id->uid, NULL, dplug->cdata->URI);

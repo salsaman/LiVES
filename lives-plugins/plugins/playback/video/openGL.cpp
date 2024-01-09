@@ -2037,6 +2037,20 @@ static void *render_thread_func(void *data) {
   if (retbuf) buffer_free(retbuf);
   retbuf = NULL;
 
+  XLockDisplay(dpy);
+
+  if (!is_ext) {
+    XUnmapWindow(dpy, xWindow);
+    XDestroyWindow(dpy, xWindow);
+  }
+
+  XFlush(dpy);
+
+  XUnlockDisplay(dpy);
+  XCloseDisplay(dpy);
+
+  dpy = NULL;
+  
   return NULL;
 }
 
@@ -2207,18 +2221,6 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   texturebuf = NULL;
 
   free(textures);
-
-  XLockDisplay(dpy);
-  if (!is_ext) {
-    XUnmapWindow(dpy, xWindow);
-    XDestroyWindow(dpy, xWindow);
-  }
-
-  XFlush(dpy);
-
-  XUnlockDisplay(dpy);
-  XCloseDisplay(dpy);
-  dpy = NULL;
 
   pthread_mutex_destroy(&cond_mutex);
   pthread_cond_destroy(&cond);

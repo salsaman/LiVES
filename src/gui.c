@@ -2916,10 +2916,10 @@ void create_LiVES(void) {
   mainw->pb_fps_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
                        LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_open_activate), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_open_sel_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->open), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_sel_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_dvd), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_vcd_activate),
                        LIVES_INT_TO_POINTER(LIVES_DEVICE_DVD));
@@ -4477,7 +4477,7 @@ static void _resize_play_window(void) {
       if (!xwinid && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)
           && (pmonitor == 0 || pmonitor == widget_opts.monitor + 1)) {
         lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
-        lives_window_set_keep_below(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+        lives_window_set_keep_below(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
       }
 
       if (mainw->vpp->init_audio && prefs->stream_audio_out) {

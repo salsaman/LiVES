@@ -300,7 +300,7 @@ lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t 
 lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *, lives_colRGB48_t *);
 LiVESWidgetColor *lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *, LiVESWidgetColor *);
 
-lives_painter_t *live_widget_begin_paint(LiVESWidget *);
+lives_painter_t *lives_widget_begin_paint(LiVESWidget *);
 void lives_widget_end_paint(LiVESWidget *);
 
 boolean clear_widget_bg(LiVESWidget *widget, lives_painter_surface_t *);

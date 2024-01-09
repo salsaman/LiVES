@@ -1192,6 +1192,7 @@ static boolean open_yuv4m_startup(livespointer data) {
 void lazy_startup_checks(void) {
   lives_proc_thread_t lpt;
   GET_PROC_THREAD_SELF(self);
+  lives_proc_thread_set_pauseable(self, TRUE);
 
   capable->boot_time = get_boottime();
 
@@ -1215,6 +1216,8 @@ void lazy_startup_checks(void) {
     lpt = STEAL_POINTER(mainw->helper_procthreads[PT_LAZY_RFX]);
     lives_proc_thread_join_boolean(lpt);
     lives_proc_thread_unref(lpt);
+    if (lives_proc_thread_get_pause_requested(self))
+      lives_proc_thread_pause(self);
     add_rfx_effects2(RFX_STATUS_ANY);
   }
 alldone:

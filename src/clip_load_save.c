@@ -3712,7 +3712,6 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
         cfile->opening = TRUE;
 
         cfile->img_type = IMG_TYPE_BEST; // override the pref
-        cfile->clip_type = CLIP_TYPE_FILE;
 
         cfile->hsize = cdata->width;
         cfile->vsize = cdata->height;

@@ -4173,7 +4173,8 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, con
   // the leaf is also set immutable
   // then when val is changed, we get error immutable, and will check for autofree.
   if (state)
-    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_IMMUTABLE);
+    return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_IMMUTABLE
+				  | WEED_FLAG_UNDELETABLE);
   return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
 }
 

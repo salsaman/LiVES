@@ -109,19 +109,21 @@ typedef void *(*memmove_f)(void *, const void *, size_t);
 #else
 #include <sys/time.h>
 #endif
-static inline int64_t get_current_usec(void) {
+
+static inline int64_t get_current_nsec(void) {
   int64_t ret;
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  ret = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+  uret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec);
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  ret = tv.tv_sec * 1000000 + tv.tv_usec;
+  ret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * 1000;
 #endif
   return ret;
 }
+
 #endif
 
 #ifndef HAVE_GETENTROPY

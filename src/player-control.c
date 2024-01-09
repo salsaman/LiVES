@@ -986,7 +986,7 @@ void play_file(void) {
       }
 
       if (!mainw->multitrack || !mainw->multitrack->pb_start_event) {
-        do_progress_dialog(FALSE, FALSE, NULL);
+        begin_playback();
 
         // reset audio buffers
         IF_APLAYER_JACK
@@ -1018,7 +1018,7 @@ void play_file(void) {
                                          mainw->multitrack->exact_preview, NULL);
         }
 
-        do_progress_dialog(FALSE, FALSE, NULL);
+        begin_playback();
 
         // reset audio read buffers
         IF_APLAYER_JACK

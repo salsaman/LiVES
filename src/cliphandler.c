@@ -2450,7 +2450,12 @@ void switch_to_file(int old_file, int new_file) {
 
   if (mainw->is_ready) {
     if (!mainw->multitrack && !mainw->reconfig) {
+      if (!get_timeline_lock()) {
+	if (mainw->recovering_files) return;
+	lives_millisleep_while_false(get_timeline_lock());
+      }
       redraw_timeline(mainw->current_file);
+      unlock_timeline();
     }
   }
 }
@@ -2971,7 +2976,6 @@ static void _clip_src_insert(lives_clipsrc_group_t *srcgrp, lives_clip_src_t *my
 static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, void *actor,
     void *actor_inst, int src_type, uint64_t actor_uid,
     fingerprint_t *chksum, const char *ext_URI) {
-  int nsrcs;
   lives_clip_src_t *mysrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
 
   mysrc->uid = gen_unique_id();
@@ -3209,16 +3213,15 @@ static void _clip_src_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, l
     lives_free(mysrc);
 
     if (i < nsrcs) {
-      srcgrp->n_srcs = --nsrcs;
-      for (; i < nsrcs; i++) {
+      for (; i < nsrcs; i++)
         srcgrp->srcs[i] = srcgrp->srcs[i + 1];
-      }
-      if (nsrcs) srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs,
-                                  nsrcs + 1, sizeof(lives_clip_src_t *));
-      else {
-        lives_freep((void **)&srcgrp->srcs);
-      }
     }
+
+    srcgrp->n_srcs = --nsrcs;
+
+    if (nsrcs) srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs,
+                                  nsrcs + 1, sizeof(lives_clip_src_t *));
+    else lives_freep((void **)&srcgrp->srcs);
   }
 }
 
@@ -3269,8 +3272,13 @@ void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *srcgrp) {
 
 
 static void _srcgrp_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp) {
-  // free all srcs in srcgrp, then
+  // free all srcs in srcgrp, then srcgrp itself
   if (sfile && srcgrp) {
+    int track = srcgrp->track;
+    if (track != -1) {
+      mainw->track_sources[track] = NULL;
+      mainw->active_track_list[track] = mainw->old_active_track_list[track] = 0;
+    }
     if (srcgrp->n_srcs) _clip_srcs_free_all(sfile, srcgrp);
     lives_free(srcgrp);
   }
@@ -3387,12 +3395,10 @@ lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_t
 static lives_clip_src_t *_get_primary_src(lives_clip_t *sfile) {
   if (sfile) {
     lives_clipsrc_group_t *srcgrp = _get_srcgrp(sfile, -1, SRC_PURPOSE_PRIMARY);
-    if (srcgrp && srcgrp->n_srcs) {
-      for (int i = 0; i < srcgrp->n_srcs; i++) {
+    if (srcgrp && srcgrp->n_srcs) 
+      for (int i = 0; i < srcgrp->n_srcs; i++)
         if (srcgrp->srcs[i] && srcgrp->srcs[i]->actor)
           return srcgrp->srcs[i];
-      }
-    }
   }
   return NULL;
 }
@@ -3462,7 +3468,6 @@ LIVES_GLOBAL_INLINE uint64_t classuid_for_srctype(int src_type) {
   default: return 0;
   }
 }
-
 
 
 // a shortcut for adding a new clip_src to PRIMARY srcgrp
@@ -3579,19 +3584,17 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
     if (srcgrp) {
       // create new grp, memcpy, adjust track and purpose and uid
       // step trhough srcs, clone each one 
-      pthread_mutexattr_t mattr;
       lives_clipsrc_group_t *xsrcgrp = _add_srcgrp(sfile, track, purpose);
       lives_memcpy(xsrcgrp, srcgrp, sizeof(lives_clipsrc_group_t));
       xsrcgrp->srcs = LIVES_CALLOC_SIZEOF(lives_clip_src_t *, srcgrp->n_srcs);
-      pthread_mutexattr_init(&mattr);
-      pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
       // needs to be recursive as we need to look up rhe sources when freeing them
-      pthread_mutex_init(&xsrcgrp->src_mutex, &mattr);
+      pthread_mutex_init(&xsrcgrp->src_mutex, NULL);
       pthread_mutex_init(&xsrcgrp->refcnt_mutex, NULL);
       xsrcgrp->refcnt = 1;
       // set again as memcpy will overwrite
       xsrcgrp->track = track;
       xsrcgrp->purpose = purpose;
+      xsrcgrp->status = SRC_STATUS_IDLE;
       pthread_mutex_lock(&xsrcgrp->src_mutex);
       for (int i = 0; i < srcgrp->n_srcs; i++)
         xsrcgrp->srcs[i] =  _clone_clipsrc(sclip, srcgrp->srcs[i]);

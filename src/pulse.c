@@ -478,9 +478,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   pulsed->pstream = pstream;
 
 
-
-
-
   if (rec_lpt && (!mainw->record || IS_VALID_CLIP(mainw->ascrap_file) || LIVES_IS_PLAYING)) {
     lives_proc_thread_request_cancel(rec_lpt, FALSE);
     cancel_rec_lpt = TRUE;
@@ -2070,7 +2067,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // the value returned mut be monotonic after resset. Thus when we get a new reading we can only reduce extrausec by
   // (new_reading / old_reading). However we will keep track of the ratio extrausec / measured_usec, and we will
   // then start dividing extrausec by this value (clamped between 0.5 <= scale <= 2.0(
-
+  
   int64_t usec;
   ticks_t retval = -1;
   volatile aserver_message_t *msg = pulsed->msgq;

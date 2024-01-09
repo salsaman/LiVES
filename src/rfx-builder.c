@@ -465,7 +465,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   } else {
     lives_widget_grab_focus(rfxbuilder->name_entry);
   }
-
+  
   lives_widget_show_all(rfxbuilder->dialog);
 
   return rfxbuilder;
@@ -4497,6 +4497,9 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
 
   // now we need to add to the effects menu and set a callback
   for (plugin_idx = 1; plugin_idx < rfx_list_length; plugin_idx++) {
+    if (is_startup && lives_proc_thread_get_pause_requested(self))
+      lives_proc_thread_pause(self);
+
     rfx = mainw->rendered_fx[plugin_idx];
 
     if (status != RFX_STATUS_ANY && rfx->status != status) continue;
@@ -4521,6 +4524,9 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
     }
   }
 
+  if (is_startup && lives_proc_thread_get_pause_requested(self))
+    lives_proc_thread_pause(self);
+
   if (status != RFX_STATUS_ANY) add_rfx_effects2(status);
   return TRUE;
 }
@@ -4537,9 +4543,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   lives_widget_destroy(mainw->ldg_menuitem);
   mainw->ldg_menuitem = NULL;
 
-  if (self && self == mainw->helper_procthreads[PT_LAZY_RFX]) {
+  if (self && self == mainw->lazy_starter) {
     is_startup = TRUE;
-    lives_proc_thread_set_pauseable(self, TRUE);
     lock_gmci();
   }
 
@@ -4598,7 +4603,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lives_widget_set_sensitive(mainw->custom_effects_separator, FALSE);
   }
 
-  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+  //if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   if (status != RFX_STATUS_TEST) {
     // recreate menus for effects, utilities, generators
@@ -4621,7 +4626,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_gens_submenu), mainw->custom_gens_menu);
     lives_container_add(LIVES_CONTAINER(mainw->gens_menu), mainw->custom_gens_submenu);
 
-    if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+    //if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
     if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1) mainw->resize_menuitem = NULL;
   }
@@ -4638,7 +4643,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
       rfx = mainw->rendered_fx[plugin_idx];
       if (status == RFX_STATUS_TEST && rfx->status == RFX_STATUS_BUILTIN) continue;
 
-      if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+      //if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
       lives_snprintf(txt, 61, "_%s", (tmp = _(rfx->menu_text)));
       lives_free(tmp);
@@ -4744,7 +4749,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 	}}}}
   // *INDENT-ON*
 
-  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+  //if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   if (is_startup && lives_proc_thread_get_pause_requested(self)) {
     unlock_gmci();
@@ -4759,13 +4764,12 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   unlock_gmci();
 
   if (status != RFX_STATUS_ANY) {
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     if (CURRENT_CLIP_IS_VALID) {
       BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
       main_thread_execute_void(sensitize_rfx, 0);
       BG_THREADVAR(hook_hints) = 0;
     }
-    threaded_dialog_spin(0.);
   }
   mainw->rfx_loaded = TRUE;
 }

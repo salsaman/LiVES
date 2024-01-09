@@ -802,6 +802,9 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
     }
     weed_layer_unref(layer_slice);
+#ifdef LIVES_PAINTER_IS_CAIRO
+    if (ftopts) cairo_font_options_destroy(ftopts);
+#endif
   }
   return layer;
 }

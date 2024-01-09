@@ -7824,10 +7824,10 @@ void rebuild_nodemodel(void) {
   //g_print("node model needs rebuilding\n");
 
   cleanup_nodemodel(&mainw->nodemodel);
-  g_print("prev plan cancelled, good to create new plan\n");
+  d_print_debug("prev plan cancelled, good to create new plan\n");
   prefs->pb_quality = future_prefs->pb_quality;
 
-  g_print("rebuilding model\n");
+  d_print_debug("rebuilding model\n");
 
   clear_player_hooks();
 
@@ -7840,7 +7840,7 @@ void rebuild_nodemodel(void) {
   align_with_model(mainw->nodemodel);
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
   run_next_cycle();
-  g_print("rebuilt model (pt 1), created new plan, made new plan-cycle, completed in %.6f millisec\n",
+  g_print("rebuilt model (pt 1), created new plan, made new plan-cycle, completed in %.4f millisec\n",
            1000. * (lives_get_session_time() - xtime));
 }
 

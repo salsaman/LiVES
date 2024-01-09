@@ -30,7 +30,7 @@ LIVES_GLOBAL_INLINE int64_t lives_get_relative_time(int64_t origtime) {
 LIVES_GLOBAL_INLINE int64_t lives_get_current_time(void) {
   //  return current (wallclock) time in nsec, mapped to range 0 ... INT64_MAX
   uint64_t uret;
-  ticks_t ret;
+  ticks_t ret; 
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -429,7 +429,7 @@ get_time:
           if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / TICKS_PER_SECOND_DBL;
           } else  {
             if (clock_delta) {
-              ticks_t toomuch = tdiff - (ticks_t)(prefs->pbtimer_maxdiff);
+              ticks_t toomuch = 0;//tdiff - (ticks_t)(prefs->pbtimer_maxdiff);
               if (ncalls > 10000) {
                 tot_deltas += clock_delta;
                 av_delta = tot_deltas / ncalls;

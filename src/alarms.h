@@ -184,7 +184,7 @@ void thrd_signal_block(int sig);
 #define lives_microsleep_while_true_timeout(t,...)lives_microleep_until_zero_timeout(t,__VA_ARGS__)
 
 #define lives_millisleep_until_nonzero(condition)	\
-  {while (!(condition))lives_millisleep;}
+  _DW0({boolean fg = is_fg_thread(); while (!(condition)){lives_millisleep; if (fg) fg_service_fulfill();}})
 #define lives_millisleep_until_zero(condition)lives_millisleep_until_nonzero(!(condition))
 #define lives_millisleep_while_false(c)lives_millisleep_until_nonzero(c)
 #define lives_millisleep_while_true(c)lives_millisleep_until_zero(c)

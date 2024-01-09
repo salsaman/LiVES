@@ -89,7 +89,7 @@ void calc_aframeno(int fileno);
 
 void ready_player_one(weed_timecode_t estart);
 
-int process_one(boolean visible);
+int process_one(void);
 
 void clear_player_hooks(void);
 

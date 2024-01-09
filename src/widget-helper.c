@@ -551,7 +551,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *live_widget_begin_paint(LiVESWidget * widget) {
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_widget_begin_paint(LiVESWidget * widget) {
   lives_painter_t *cr = NULL;
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_region_t *reg;

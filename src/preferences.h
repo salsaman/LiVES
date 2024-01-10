@@ -18,9 +18,17 @@
 
 #define ALLOW_NONFREE_CODECS 1
 
+// internal application prefs, not intended to be altered by users
 #define PREF_FLAG_INTERNAL		(1 << 0)
+
+// developer prefs, set to enable test features 
 #define PREF_FLAG_EXPERIMENTAL		(1 << 8)
+
+// prefs thet are still Work In Progress
 #define PREF_FLAG_INCOMPLETE		(1 << 9)
+
+// complete, but needs  adding to the interface
+#define PREF_FLAG_UNDOCUMENTED		(1 << 16)
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) _DW0(boolean a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_BOOLEAN,&a,FLAGS);)
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) _DW0(int a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_INT,&a,FLAGS);)
@@ -259,6 +267,7 @@ typedef struct {
   boolean fileselmax;
   boolean show_recent;
   int warn_file_size;
+  boolean repl_missing_frames;
   boolean midisynch;
   int dl_bandwidth;
   boolean conserve_space; // deprecated (always FALSE)
@@ -1396,6 +1405,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_PREF_TRASH "prefer_trash" ///< prefer trash to delete
 #define PREF_MSG_START "show_msgs_on_startup" /// pop up msgs box on startup
 #define PREF_SHOW_QUOTA "show_quota_on_startup" /// pop up quota box on startup
+#define PREF_REPL_NULLFRAMES "repl_nullframes" /// whether to silently replace missing end frames with blanks
 
 #define PREF_RRCRASH "recrender_crash_protection" /// option for rendering recordings
 #define PREF_RRSUPER "recrender_super" /// option for rendering recordings

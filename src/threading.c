@@ -3440,7 +3440,7 @@ static void lives_thread_data_destroy(void *data) {
 
   if (hook_stacks) {
     // this will force other lpts to remove their pointers to callbacks in our stacks
-    lives_hooks_clear_all(hook_stacks, -N_HOOK_POINTS);
+    lives_hooks_clear_all(hook_stacks, N_HOOK_POINTS);
   }
 
   if (tdata->vars.var_func_stack) lives_sync_list_free(tdata->vars.var_func_stack, TRUE);
@@ -4343,8 +4343,7 @@ LIVES_GLOBAL_INLINE lives_refcounter_t *weed_add_refcounter(weed_plant_t *plant)
       refcount = (lives_refcounter_t *)lives_calloc(1, sizeof(lives_refcounter_t));
       if (refcount) {
         weed_set_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, refcount);
-        weed_leaf_set_undeletable(plant, LIVES_LEAF_REFCOUNTER, TRUE);
-        weed_leaf_set_immutable(plant, LIVES_LEAF_REFCOUNTER, TRUE);
+        weed_leaf_set_autofree(plant, LIVES_LEAF_REFCOUNTER, TRUE);
         check_refcnt_init(refcount);
       }
     }

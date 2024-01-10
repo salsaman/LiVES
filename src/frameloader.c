@@ -823,7 +823,7 @@ void load_end_image(frames_t frame) {
 
     calc_maxspect(rwidth, rheight, &width, &height);
     width = (width >> 2) << 2;
-    height = (height >> 2) << 2;
+    height = (height >> 1) << 1;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame)) {
@@ -1106,11 +1106,8 @@ void load_preview_image(boolean update_always) {
       } else weed_layer_set_invalid(layer, TRUE);
     }
 
-    if (!pixbuf || lives_pixbuf_get_width(pixbuf) != mainw->pwidth
-	|| lives_pixbuf_get_height(pixbuf) != mainw->pheight) {
-      if (!pixbuf) {
-	if (layer) pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
-      }
+    if (!pixbuf) {
+      if (layer) pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
 
     if (LIVES_IS_PIXBUF(pixbuf)) {
@@ -1126,7 +1123,6 @@ void load_preview_image(boolean update_always) {
 	if (pr_pixbuf != pixbuf) lives_widget_object_unref(pr_pixbuf);
 	if (!layer || !cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, pixbuf)))
 	  lives_widget_object_unref(pixbuf);
-	//lives_widget_queue_draw(mainw->preview_image);
       } else cache_it = FALSE;
     } else cache_it = FALSE;
   }
@@ -2324,6 +2320,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   clip_type = sfile->clip_type;
 
+ retry:
+  
   switch (clip_type) {
   case CLIP_TYPE_NULL_VIDEO:
     errpt = 4;
@@ -2390,11 +2388,25 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 	    }
 	  }
 
-	  if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
-	    dplug = (lives_decoder_t *)get_primary_actor(sfile);
+	  if (srcgrp) {
+	    lives_clip_src_t *mysrc = get_clip_src(srcgrp, clip, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL);
+	    if (mysrc) dplug = (lives_decoder_t *)mysrc->actor;
+	  }
+
+	  if (!dplug) {
+	    if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_DECODER)
+	      dplug = (lives_decoder_t *)get_primary_actor(sfile);
+	  }
+  
 	  if (!dplug || !dplug->cdata || xframe >= dplug->cdata->nframes) {
-	    errpt = 7;
-	    goto fail;
+	    if (dplug && dplug->cdata && xframe >= dplug->cdata->nframes) {
+	      if (frame > 1 && frame <= dplug->cdata->nframes
+		  && get_indexed_frame(clip, frame - 1) == frame - 1) xframe = frame;
+	    }
+	    else {
+	      errpt = 7;
+	      goto fail;
+	    }
 	  }
 
 	  dpsys = (const lives_decoder_sys_t *)dplug->dpsys;
@@ -2473,6 +2485,17 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 	    if (dplug->cdata->rec_rowstrides)
 	      lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
 #endif
+	    if (frame == cfile->frames) {
+	      if (prefs->repl_missing_frames) {
+		g_print("final frame missing for clip %d\n", clip);
+		g_print("replacing with blank image\n");
+		THREAD_INTENTION = OBJ_INTENTION_REPLACE;
+		insert_blank_frames(clip, 1, frame - 1, WEED_PALETTE_ANY);
+		THREAD_INTENTION = OBJ_INTENTION_NONE;
+		if (get_indexed_frame(clip, frame) < 0) goto retry;
+	      }
+	    }
+	    
 	    // if get_frame fails, return a black frame
 	    errpt = 10;
 	    goto fail;
@@ -2754,11 +2777,11 @@ lives_result_t pull_frame_threaded(weed_layer_t *layer, int width, int height) {
     weed_layer_pixel_data_free(layer);
     lock_layer_status(layer);
 
-    /* timing_data = _get_layer_timing(layer); */
-    /* tc = timing_data[LAYER_STATUS_TREF]; */
-    /* if (!tc) tc = timing_data[LAYER_STATUS_TREF] = timing_data[LAYER_STATUS_QUEUED]; */
-    /* _set_layer_timing(layer, timing_data); */
-    /* lives_free(timing_data); */
+    timing_data = _get_layer_timing(layer);
+    tc = timing_data[LAYER_STATUS_TREF];
+    if (!tc) tc = timing_data[LAYER_STATUS_TREF] = timing_data[LAYER_STATUS_QUEUED];
+    _set_layer_timing(layer, timing_data);
+    lives_free(timing_data);
 
     unlock_layer_status(layer);
     weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
@@ -2845,9 +2868,6 @@ boolean pixbuf_to_png(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t imgtyp
     char *qstr = lives_strdup_printf("%d", quality);
 #ifdef GUI_GTK
     gdk_pixbuf_save(pixbuf, fname, LIVES_IMAGE_TYPE_JPEG, gerrorptr, "quality", qstr, NULL);
-#endif
-#ifdef GUI_QT
-    qt_jpeg_save(pixbuf, fname, gerrorptr, quality);
 #endif
     lives_free(qstr);
   } else if (imgtype == IMG_TYPE_PNG) {

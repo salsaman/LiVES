@@ -650,26 +650,30 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_layer_get_proc_thread(lives_layer_
 
 
 boolean layer_processed_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
-  lock_layer_status(layer);
+  if (layer) {
+    lock_layer_status(layer);
 
-  if (!_weed_layer_check_valid(layer)) {
-    _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+    lives_layer_unset_srcgrp(layer);
+  
+    if (!_weed_layer_check_valid(layer)) {
+      _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
+      unlock_layer_status(layer);
+      lives_layer_set_proc_thread(layer, NULL);
+      weed_layer_unref(layer);
+      return FALSE;
+    }
+
+    if (lives_layer_plan_controlled(layer)) {
+      if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
+	_lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+      if (_lives_layer_get_status(layer) == LAYER_STATUS_PROCESSED)
+	_lives_layer_set_status(layer, LAYER_STATUS_READY);
+    } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
+
     unlock_layer_status(layer);
     lives_layer_set_proc_thread(layer, NULL);
     weed_layer_unref(layer);
-    return FALSE;
   }
-
-  if (lives_layer_plan_controlled(layer)) {
-    if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
-      _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-    if (_lives_layer_get_status(layer) == LAYER_STATUS_PROCESSED)
-      _lives_layer_set_status(layer, LAYER_STATUS_READY);
-  } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
-
-  unlock_layer_status(layer);
-  lives_layer_set_proc_thread(layer, NULL);
-  weed_layer_unref(layer);
   return TRUE;
 }
 
@@ -915,12 +919,12 @@ LIVES_GLOBAL_INLINE void unlock_layer_status(weed_layer_t *layer) {
 
 
 LIVES_GLOBAL_INLINE void _lives_layer_set_status(weed_layer_t *layer, int status) {
-  /* if (status >= 0) { */
-  /*   ticks_t *tm_data = _get_layer_timing(layer); */
-  /*   tm_data[status] = lives_get_session_time(); */
-  /*   _set_layer_timing(layer, tm_data); */
-  /*   lives_free(tm_data); */
-  /* } */
+  if (status >= 0) {
+    ticks_t *tm_data = _get_layer_timing(layer);
+    tm_data[status] = lives_get_session_time();
+    _set_layer_timing(layer, tm_data);
+    lives_free(tm_data);
+  }
   weed_set_int_value(layer, LIVES_LEAF_LAYER_STATUS, status);
 }
 
@@ -1060,6 +1064,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
     int lstatus;
     pthread_mutex_t *mutexp;
+    lives_clipsrc_group_t *srcgrp;
 
     if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
       LIVES_WARN("Attempt to free layer with active painter surface source");
@@ -1089,7 +1094,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
     }
 #endif
     if (lives_layer_get_proc_thread(layer)) lives_layer_set_proc_thread(layer, NULL);
-
+ 
+    lives_layer_unset_srcgrp(layer);
+    
     if (weed_layer_get_type(layer) == WEED_LAYER_TYPE_VIDEO) {
       if (weed_layer_get_pixel_data(layer)) weed_layer_pixel_data_free(layer);
       else weed_layer_nullify_pixel_data(layer);
@@ -1121,7 +1128,6 @@ LIVES_GLOBAL_INLINE int weed_layer_unref(weed_layer_t *layer) {
 }
 #endif
 int refs = weed_refcount_dec(layer);
-if (refs == 1 && layer == mainw->frame_layer_preload) __BREAK_ME("flpunr");
 LIVES_ASSERT(refs >= 0);
 if (layer == mainw->debug_ptr) {
   BREAK_ME("unref dbg");

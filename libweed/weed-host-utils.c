@@ -71,11 +71,6 @@
 #define WEED_LOCAL_INLINE static inline
 #endif
 
-WEED_GLOBAL_INLINE int32_t weed_plant_get_type(weed_plant_t *plant) {
-  if (!plant) return WEED_PLANT_UNKNOWN;
-  return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
-}
-
 WEED_GLOBAL_INLINE weed_error_t weed_leaf_set_flagbits(weed_plant_t *plant, const char *leaf, uint32_t flagbits) {
   weed_error_t err = WEED_ERROR_NOSUCH_PLANT;
   if (plant) {
@@ -107,6 +102,20 @@ WEED_GLOBAL_INLINE weed_error_t weed_plant_set_undeletable(weed_plant_t *plant, 
 WEED_GLOBAL_INLINE int weed_plant_is_undeletable(weed_plant_t *plant) {
   return plant && (weed_leaf_get_flags(plant, WEED_LEAF_TYPE) & WEED_FLAG_UNDELETABLE)
     ? WEED_TRUE : WEED_FALSE;
+}
+
+WEED_GLOBAL_INLINE weed_error_t weed_leaf_set_immutable(weed_plant_t *plant, const char *key, int state) {
+  return state == WEED_TRUE ? weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
+						  | WEED_FLAG_IMMUTABLE)
+    : weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
+			  & ~WEED_FLAG_IMMUTABLE);
+}
+
+WEED_GLOBAL_INLINE weed_error_t weed_leaf_set_undeletable(weed_plant_t *plant, const char *key, int state) {
+  return state == WEED_TRUE ? weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
+						  | WEED_FLAG_UNDELETABLE)
+    : weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
+			  & ~WEED_FLAG_UNDELETABLE);
 }
 
 weed_error_t weed_add_plant_flags(weed_plant_t *plant, weed_flags_t flags, const char *ign_prefix) {
@@ -1845,6 +1854,4 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
   }
   return host_info;
 }
-
-
 

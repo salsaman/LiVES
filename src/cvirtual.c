@@ -17,6 +17,7 @@
 #include "callbacks.h"
 #include "cvirtual.h"
 
+
 /** count virtual frames between start and end (inclusive) */
 frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end) {
   frames_t count = 0;
@@ -1742,22 +1743,32 @@ boolean is_virtual_frame(int sclipno, frames_t frame) {
 
 
 void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int palette) {
-  // insert blank frames in clip (only valid just after clip is opened)
+  // insert blank frames in clip (by defualt moving images after the insertion)
+  // if THREAD_INTENTION == OBJ_INTENTION_REPLACE, old frames are overwritten,
+  // (but will be cacked up temporarily)
 
-  // this is ugly, it should be moved to another file
+  // first frame is 1
 
   lives_clip_t *sfile;
-  LiVESPixbuf *blankp = NULL;
-  LiVESError *error = NULL;
-  char oname[PATH_MAX];
-  char nname[PATH_MAX];
+  weed_layer_t *layer = NULL;
+  boolean is_replace = FALSE;
+  char oname[PATH_MAX], nname[PATH_MAX];
   char *tmp;
 
   frames_t i;
 
   if (!IS_PHYSICAL_CLIP(sclipno)) return;
+
+  if (THREAD_INTENTION == OBJ_INTENTION_REPLACE)
+    is_replace = TRUE;
+
   sfile = mainw->files[sclipno];
 
+  if (palette == WEED_PALETTE_NONE || palette == WEED_PALETTE_ANY) {
+    if (sfile->bpp == 32) palette = WEED_PALETTE_RGBA32;
+    else palette = WEED_PALETTE_RGB24;
+  }
+  
   pthread_mutex_lock(&sfile->frame_index_mutex);
   for (i = after + 1; i <= sfile->frames; i++) {
     if (!sfile->frame_index || sfile->frame_index[i - 1] == -1) {
@@ -1765,7 +1776,10 @@ void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int pale
       lives_snprintf(oname, PATH_MAX, "%s", tmp);
       lives_free(tmp);
       if (lives_file_test(oname, LIVES_FILE_TEST_EXISTS)) {
-        tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
+	if (is_replace) 
+	  tmp = make_image_file_name(sfile, i, LIVES_FILE_EXT_BAK);
+	else
+	  tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
         lives_snprintf(nname, PATH_MAX, "%s", tmp);
         lives_free(tmp);
         lives_mv(oname, nname);
@@ -1780,14 +1794,20 @@ void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int pale
     tmp = make_image_file_name(sfile, i + 1, get_image_ext_for_type(sfile->img_type));
     lives_snprintf(oname, PATH_MAX, "%s", tmp);
     lives_free(tmp);
-    if (!blankp) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
-    pixbuf_to_png(blankp, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
-    if (error) {
+
+    if (!layer) {
+      layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+      create_blank_layer(layer, get_image_ext_for_type(sfile->img_type),
+			 sfile->hsize, sfile->vsize, palette);
+    }
+    if (!layer_to_png(layer, oname, 100. - prefs->ocp)) {
+      /* if (!blankp) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette); */
+      /* pixbuf_to_png(blankp, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error); */
+      /* if (error) { */
       char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"),
                                       sfile->hsize, sfile->vsize, oname);
       LIVES_ERROR(msg);
       lives_free(msg);
-      lives_error_free(error);
       break;
     }
   }
@@ -1798,7 +1818,13 @@ void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int pale
     insert_images_in_virtual(sclipno, after, nframes, NULL, 0);
 
   sfile->frames += nframes;
+
+  if (is_replace) {
+    delete_frames_from_virtual(sclipno, after + 1 + nframes, after + nframes + nframes);
+    sfile->frames -= nframes;
+  }
+
   pthread_mutex_unlock(&sfile->frame_index_mutex);
 
-  if (blankp) lives_widget_object_unref(blankp);
+  if (layer) weed_layer_unref(layer);
 }

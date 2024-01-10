@@ -19,11 +19,7 @@
 #include <libavcodec/version.h>
 #include <libavutil/mem.h>
 
-#ifdef NEED_LOCAL_WEED_COMPAT
-#include "../../../libweed/weed-compat.h"
-#else
 #include <weed/weed-compat.h>
-#endif
 
 /// this is unreliable for libav, it appears to leak memory after each seek
 /// but only when using send_packet / receive_frame
@@ -91,6 +87,26 @@ static inline void lives_avcodec_unlock(void) {pthread_mutex_unlock(&avcodec_mut
 /*   return rv; */
 /* } */
 
+//////////////////////////////////////////////
+
+static inline double to_sec(int64_t nsec) {return (double)nsec / 1000000000.;}
+
+static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame)
+{return (int64_t)((double)(frame) * AV_TIME_BASE / cdata->fps);}
+
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts)
+{ return (int64_t)((double)dts / AV_TIME_BASE * cdata->fps - .5);}
+
+//////////////////////////////////////////////
+
+static int64_t kframe_check_cb(int64_t tframe, lives_clip_data_t *cdata) {
+  int64_t dts = frame_to_dts(cdata, tframe);
+  lives_mkv_priv_t *priv = cdata->priv;
+  index_entry *idx;
+  idx = index_get(priv->idxc, dts);
+  return dts_to_frame(cdata, dts);
+}
+
 
 void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigned) {
   *asamps = av_get_bits_per_sample(sfmt);
@@ -114,7 +130,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
   // lframe is the frame we will check, olframe is the current seek base frame, maxframes is the largest found
   int64_t olframe = cdata->nframes - 1, lframe = olframe;
   int64_t timex;
-  long no_seek_limit = NO_SEEK_LIMIT * 1000;
+  long no_seek_limit = NO_SEEK_LIMIT * 1000000000;
 
   boolean have_upper_bound = FALSE;
   boolean have_lower_bound = FALSE;
@@ -145,7 +161,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
     fprintf(stderr, "will check frame %ld of (allegedly) %ld...", lframe - .5, cdata->nframes);
 #endif
 
-    timex = -get_current_usec();
+    timex = -get_current_nsec();
 
     // see if we can find lframe
     if (!get_frame(cdata, lframe, NULL, 0, NULL)) {
@@ -153,7 +169,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
       have_upper_bound = TRUE; // we got an upper bound
 
-      timex += get_current_usec();
+      timex += get_current_nsec();
 
       if (timex > no_seek_limit) {
         // seek took too long, give up
@@ -186,7 +202,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
       // we did find a frame
       have_lower_bound = TRUE;
 
-      timex += get_current_usec();
+      timex += get_current_nsec();
 
       if (timex > no_seek_limit) {
 #ifdef DEBUG_RLF
@@ -195,7 +211,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
         return -1;
       }
 
-      if (timex > FAST_SEEK_LIMIT * 1000) {
+      if (timex > FAST_SEEK_LIMIT * 1000000) {
         cdata->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
         cdata->jump_limit = JUMP_FRAMES_SLOW;
       }
@@ -1118,7 +1134,6 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
     priv->needs_packet = FALSE;
 
     if (priv->needs_pkt) {
-      int64_t blen;
       double readtime;
 
       if (priv->ovpdata) {
@@ -1129,10 +1144,8 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
       priv->avpkt.size = 0;
 
       if (seektime) {
-        blen = priv->input_position;
-        timex = get_current_usec();
+        timex = get_current_nsec();
       }
-      //matroska_read_packet(cdata, &priv->avpkt);
 
       ret = av_read_frame(priv->ic, &priv->packet);
 
@@ -1141,33 +1154,22 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
       priv->needs_pkt = FALSE;
 
       if (seektime) {
-        timex = get_current_usec() - timex;
+        timex = get_current_nsec() - timex;
         *seektime += timex;
-        blen = priv->input_position - blen;
-
-        if (blen) {
-          readtime = to_sec(timex);
-          readtime /= (double)blen;
-          index_add(priv->idxb, nextframe, blen);
-
-          if (cdata->adv_timing.blockread_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.blockread_time =
-              (cdata->adv_timing.blockread_time + readtime) / 2.;
-          else ((lives_clip_data_t *)cdata)->adv_timing.blockread_time = readtime;
-        }
       }
     }
-
 
     if (MyPts == -1) {
       index_entry *idx;
       MyPts = priv->packet.pts;
       MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
       priv->found_pts = MyPts; // PTS of start of frame, set so start_time is zero
+      pthread_mutex_lock(&priv->idxc->mutex);
       idx = index_get(priv->idxc, MyPts);
       if (!idx || idx->dts != MyPts)
         idx = index_add(priv->idxc, MyPts, tframe);
       else if (tframe > idx->offs) idx->offs = tframe;
+      pthread_mutex_unlock(&priv->idxc->mutex);
       //xframe = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5);
       //fprintf(stderr, "IDX ADD %ld, %ld %ld\n", MyPts, (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps), idx->offs);
     }
@@ -1178,7 +1180,6 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 #endif
     // decode any frames from this packet
     if (!priv->pFrame) priv->pFrame = av_frame_alloc();
-
 
 #ifdef HAVE_AVCODEC_SEND_PACKET
     ret = avcodec_send_packet(priv->ctx, &priv->avpkt);
@@ -1276,9 +1277,6 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 /* } */
 
 
-
-static double est_noseek;
-
 //#define DEBUG
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
@@ -1297,7 +1295,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   unsigned char *dst, *src;
 
   boolean hit_target = FALSE;
-  boolean do_seek = FALSE;
+  int delta = tframe - cdata->last_frame_decoded;
+  boolean rev = (delta <= 0);
+  boolean do_seek = rev;
   boolean did_seek = FALSE;
   boolean rev = FALSE;
   boolean is_keyframe;
@@ -1315,7 +1315,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int rowstride, xrowstride;
   int p, i;
 
-  timex = -get_current_usec();
+  timex = -get_current_nsec();
 
   // if pixel_data is NULL, just check if the frame exists
   if (tframe < 0 || ((tframe >= cdata->nframes || cdata->fps == 0.) && pixel_data != NULL)) {
@@ -1384,196 +1384,202 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   if (priv->pFrame) goto framedone2;
 #endif
 
+  /////////
+
   // same frame -> reuse priv-pFrame if we have it
-  if (tframe == cdata->last_frame_decoded && priv->pFrame && priv->pFrame->data[0]) {
-    xtimex = get_current_usec();
+  if (!delta && priv->pFrame && priv->pFrame->data[0]) {
+    xtimex = get_current_nsec();
     goto framedone;
-  }
+  } else {
+    int64_t xtarget_pts = target_pts;
 
-  if (tframe <= cdata->last_frame_decoded) rev = TRUE;
-  if (cdata->last_frame_decoded > -1 && tframe > cdata->last_frame_decoded) {
-    double est = estimate_delay(cdata, tframe, 0, NULL);
-    if (est <= 0. || est_noseek <= 0.) {
-      if (tframe - cdata->last_frame_decoded > cdata->jump_limit) do_seek = TRUE;
-    } else if (est < est_noseek) do_seek = TRUE;
-  }
-
-  if (cdata->last_frame_decoded == -1 || rev || do_seek) {
-    int64_t xtarget_pts;
-    xtimex = get_current_usec();
-
+    if (!rev && cdata->last_frame_decoded > -1) {
+      est = estimate_delay(cdata, tframe, 0, NULL);
+      if (!rev) {
+        if (est <= 0. || (priv->est_noseek > 0. && priv->est_noseek <= est)) {
+          if (kf_before(cdata, tframe) > cdata->last_frame_decoded)
+            if (cdata->jump_limit && delta > cdata->jump_limit) do_seek = TRUE;
+        } else {
+          if (est < priv->est_noseek) do_seek = TRUE;
+          else if (cdata->kframe_dist <= 0 && delta > cdata->jump_limit)
+            ((lives_clip_data_t *)cdata)->jump_limit = delta;
+        }
+      }
+    } else do_seek = TRUE;
+    
     // seek to new frame
     if (priv->pFrame) {
       av_frame_unref(priv->pFrame);
       priv->pFrame = NULL;
     }
 
-    if (tframe == cdata->last_frame_decoded) {
+    if (!delta) {
       // seek to same frame - we need to ensure we go back at least one frame, else we will
       // read the next packets and be one frame ahead
       if (cdata->fps)
         time = (tframe >= 0 ? (double)tframe : tframe - .5) / cdata->fps;
       xtarget_pts = time * (double)AV_TIME_BASE;
-    } else {
+    }
+
+    if (cdata->last_frame_decoded == -1 || rev || do_seek) {
       // try to seek straight to keyframe
       if (!(cdata->seek_flag & LIVES_SEEK_FAST_REV)
           && tframe < cdata->last_frame_decoded && priv->found_pts != -1
           && target_pts > priv->found_pts)
         xtarget_pts = priv->found_pts;
       else xtarget_pts = target_pts;
-    }
 
-    xtarget_pts += priv->ic->start_time;
+      xtarget_pts += priv->ic->start_time;
 
-    seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
-    if (seek_target < -priv->ic->start_time) seek_target = 0;
+      seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
+      if (seek_target < -priv->ic->start_time) seek_target = 0;
 
-    av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
+      av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
 #ifdef DEBUG
-    fprintf(stderr, "new seek: %ld %ld %ld\n", cdata->last_frame_decoded, seek_target, priv->ic->start_time);
+      fprintf(stderr, "new seek: %ld %ld %ld\n", cdata->last_frame_decoded, seek_target, priv->ic->start_time);
 #endif
-    if (priv->pkt_inited) {
-      // seems to be necessary before flushing buffers, but after doing seek
-      if (priv->ovpdata) {
-        priv->packet.data = priv->ovpdata;
-        av_packet_unref(&priv->packet);
+      if (priv->pkt_inited) {
+	// seems to be necessary before flushing buffers, but after doing seek
+	if (priv->ovpdata) {
+	  priv->packet.data = priv->ovpdata;
+	  av_packet_unref(&priv->packet);
+	}
+	priv->ovpdata = priv->packet.data = NULL;
+	priv->packet.size = 0;
       }
-      priv->ovpdata = priv->packet.data = NULL;
-      priv->packet.size = 0;
+
+      avcodec_flush_buffers(cc);
+
+      MyPts = -1;
+      priv->needs_packet = TRUE;
+      did_seek = TRUE;
+      xtimex = to_sec((timex = get_current_nsec()) - xtimex);
+      if (!rev)((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + xtimex) / 2;
+      else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time = (cdata->adv_timing.seekback_time + (double)xtimex) / 2.;
+    } else {
+      if (cdata->fps)
+	MyPts = priv->last_pts;//(double)(cdata->last_frame_decoded - .5) / cdata->fps * (double)AV_TIME_BASE;
+      timex = get_current_nsec();
     }
-
-    avcodec_flush_buffers(cc);
-
-    MyPts = -1;
-    priv->needs_packet = TRUE;
-    did_seek = TRUE;
-    xtimex = (timex = get_current_usec()) - xtimex;
-    if (!rev)((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + xtimex) / 2;
-    else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time = (cdata->adv_timing.seekback_time + (double)xtimex) / 2.;
-  } else {
-    if (cdata->fps)
-      MyPts = priv->last_pts;//(double)(cdata->last_frame_decoded - .5) / cdata->fps * (double)AV_TIME_BASE;
-    timex = get_current_usec();
-  }
 #ifdef HAVE_AVCODEC_SEND_PACKET
-  snderr = FALSE;
+    snderr = FALSE;
 #endif
-  //
-  xtimex = timex;
+    //
+    xtimex = timex;
 
-  do {
-
-    if (!decode_frame(cdata, nextframe, &readtime)) goto cleanup;
+    do {
+      if (!decode_frame(cdata, nextframe, &readtime)) goto cleanup;
 
 #ifdef DEBUG
-    fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame
-            ? (int64_t)(priv->pFrame->best_effort_timestamp
-                        * cdata->fps * s->time_base.num / s->time_base.den) : 0,
-            priv->pFrame->color_trc, priv->pFrame->color_range);
+      fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame
+	      ? (int64_t)(priv->pFrame->best_effort_timestamp
+			  * cdata->fps * s->time_base.num / s->time_base.den) : 0,
+	      priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
 
 #ifdef TEST_CACHING
-    if (gotFrame && priv->cachemax > 0) {
-      add_to_cache(priv, MyPts);
-      fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
-    }
+      if (gotFrame && priv->cachemax > 0) {
+	add_to_cache(priv, MyPts);
+	fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
+      }
 #endif
 
-    xtimex = (timex = get_current_usec()) - xtimex;
+      xtimex = to_sec((timex = get_current_nsec()) - xtimex);
 
-    if (cdata->max_decode_fps > 0.) {
-      ((lives_clip_data_t *)cdata)->max_decode_fps = (cdata->max_decode_fps + 1000000. / (double)xtimex) / 2.;
-    } else ((lives_clip_data_t *)cdata)->max_decode_fps = 1000000. / (double)xtimex;
+      if (cdata->max_decode_fps > 0.) {
+	((lives_clip_data_t *)cdata)->max_decode_fps = (cdata->max_decode_fps + (double)xtimex) / 2.;
+      } else ((lives_clip_data_t *)cdata)->max_decode_fps = (double)xtimex;
 
-    is_keyframe = FALSE;
+      is_keyframe = FALSE;
 
-    if (cdata->kframe_dist && cdata->fps) {
-      int64_t frame = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5) + 1;
-      if (!(frame % cdata->kframe_dist)) is_keyframe = TRUE;
-    }
-
-    if (did_seek) {
-      if (is_keyframe) {
-        if (cdata->adv_timing.k_time > 0.)
-          ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (cdata->adv_timing.ks_time + (double)xtimex) / 2.;
-        else
-          ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
-      } else {
-        if (cdata->adv_timing.ib_time > 0.)
-          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
-        else
-          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+      if (cdata->kframe_dist && cdata->fps) {
+	int64_t frame = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5) + 1;
+	if (!(frame % cdata->kframe_dist)) is_keyframe = TRUE;
       }
-    } else {
-      if (is_keyframe) {
-        if (cdata->adv_timing.k_time > 0.)
-          ((lives_clip_data_t *)cdata)->adv_timing.k_time = (cdata->adv_timing.k_time + (double)xtimex) / 2.;
-        else
-          ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
-      } else {
-        if (cdata->adv_timing.ib_time > 0.)
-          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
-        else
-          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
-      }
-    }
 
-    //fprintf(stderr, "VALS %ld -> %ld, %d\n", MyPts, target_pts, gotFrame);
-    if (cdata->fps && s->time_base.den) {
-      cframe = (int64_t)(priv->pFrame->best_effort_timestamp
-                         * cdata->fps * s->time_base.num / s->time_base.den) - 1;
-    } else cframe = -1;
-    if (cframe == tframe || MyPts >= target_pts - 1) {
-      //fprintf(stderr, "frame found !\n");
-      /* if (cdata->fps) { */
-      /*   MyPts += (double)AV_TIME_BASE / cdata->fps; */
-      priv->last_pts = MyPts;
-      //}
-      hit_target = TRUE;
+      if (did_seek) {
+	if (is_keyframe) {
+	  if (cdata->adv_timing.k_time > 0.)
+	    ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (cdata->adv_timing.ks_time + (double)xtimex) / 2.;
+	  else
+	    ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
+	} else {
+	  if (cdata->adv_timing.ib_time > 0.)
+	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
+	  else
+	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+	}
+      } else {
+	if (is_keyframe) {
+	  if (cdata->adv_timing.k_time > 0.)
+	    ((lives_clip_data_t *)cdata)->adv_timing.k_time = (cdata->adv_timing.k_time + (double)xtimex) / 2.;
+	  else
+	    ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
+	} else {
+	  if (cdata->adv_timing.ib_time > 0.)
+	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
+	  else
+	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+	}
+      }
+
+      //fprintf(stderr, "VALS %ld -> %ld, %d\n", MyPts, target_pts, gotFrame);
+      if (cdata->fps && s->time_base.den) {
+	cframe = (int64_t)(priv->pFrame->best_effort_timestamp
+			   * cdata->fps * s->time_base.num / s->time_base.den) - 1;
+      } else cframe = -1;
+      if (cframe == tframe || MyPts >= target_pts - 1) {
+	//fprintf(stderr, "frame found !\n");
+	/* if (cdata->fps) { */
+	/*   MyPts += (double)AV_TIME_BASE / cdata->fps; */
+	priv->last_pts = MyPts;
+	//}
+	hit_target = TRUE;
+	xtimex = timex;
+	break;
+      }
+
+      // otherwise discard this frame
+      if (cdata->fps) MyPts += (double)AV_TIME_BASE / cdata->fps;
+      //#ifndef TEST_CACHING
+      //av_frame_unref(priv->pFrame);
+      //#endif
+      priv->pFrame = NULL;
+      did_seek = FALSE;
       xtimex = timex;
-      break;
+    } while (!hit_target);
+
+    if (cdata->max_decode_fps > 0. && tframe > cdata->last_frame_decoded) {
+      int64_t jump_limit = (double)cdata->fwd_seek_time / 1000000000. / cdata->max_decode_fps + .5;
+      //fprintf(stderr, "JL is %ld %f %f\n", jump_limit, (double)cdata->fwd_seek_time, cdata->max_decode_fps);
+      if (jump_limit < 2) jump_limit = 2;
+      ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
     }
 
-    // otherwise discard this frame
-    if (cdata->fps) MyPts += (double)AV_TIME_BASE / cdata->fps;
-    //#ifndef TEST_CACHING
-    //av_frame_unref(priv->pFrame);
-    //#endif
-    priv->pFrame = NULL;
-    did_seek = FALSE;
-    xtimex = timex;
-  } while (!hit_target);
+    if (cdata->adv_timing.seekback_time <= 0.) sbtime = (double)cdata->fwd_seek_time;
+    else sbtime = cdata->adv_timing.seekback_time;
 
-  if (cdata->max_decode_fps > 0. && tframe > cdata->last_frame_decoded) {
-    int64_t jump_limit = (double)cdata->fwd_seek_time / 1000000. / cdata->max_decode_fps + .5;
-    //fprintf(stderr, "JL is %ld %f %f\n", jump_limit, (double)cdata->fwd_seek_time, cdata->max_decode_fps);
-    if (jump_limit < 2) jump_limit = 2;
-    ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
-  }
+    if (sbtime > 0. && sbtime > FAST_SEEK_LIMIT * 1000000)
+      ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST_REV;
+    else
+      ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST_REV;
 
-  if (cdata->adv_timing.seekback_time <= 0.) sbtime = (double)cdata->fwd_seek_time;
-  else sbtime = cdata->adv_timing.seekback_time;
-
-  if (sbtime > 0. && sbtime > FAST_SEEK_LIMIT * 1000)
-    ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST_REV;
-  else
-    ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST_REV;
-
-  if (cdata->fwd_seek_time && cdata->fwd_seek_time > FAST_SEEK_LIMIT) {
-    ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
-    ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST;
-  } else {
-    ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_NEEDS_CALCULATION;
-    ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
+    if (cdata->fwd_seek_time && cdata->fwd_seek_time > FAST_SEEK_LIMIT) {
+      ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
+      ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST;
+    } else {
+      ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_NEEDS_CALCULATION;
+      ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
+    }
   }
 
   /////////////////////////////////////////////////////
 
-framedone:
+ framedone:
   ((lives_clip_data_t *)cdata)->last_frame_decoded = tframe;
 
 #ifdef TEST_CACHING
-framedone2:
+ framedone2:
 #endif
   if (!priv->pFrame || !pixel_data) return TRUE;
 
@@ -1622,7 +1628,7 @@ framedone2:
     }
     if ((rowstride = rowstrides[p]) <= 0) {
       fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n"
-              "last frame decoded was %ld\n", rowstride, tframe, p, cdata->last_frame_decoded);
+	      "last frame decoded was %ld\n", rowstride, tframe, p, cdata->last_frame_decoded);
       if (did_seek) fprintf(stderr, "did seek to frame %ld\n", seek_target);
       goto cleanup;
     }
@@ -1632,16 +1638,16 @@ framedone2:
       bleft += xrowstride / (psize * 2);
       bright += xrowstride / (psize * 2);
       if (bleft < 0 && bright > 0) {
-        bright += bleft;
-        bleft = 0;
+	bright += bleft;
+	bleft = 0;
       }
       if (bright < 0 && bleft > 0) {
-        bleft += bright;
-        bright = 0;
+	bleft += bright;
+	bright = 0;
       }
       if (bleft < 0 || bright < 0) {
-        dstwidth += (bleft + bright) * psize;
-        bleft = bright = 0;
+	dstwidth += (bleft + bright) * psize;
+	bleft = bright = 0;
       }
     }
 
@@ -1656,7 +1662,7 @@ framedone2:
       (*cdata->ext_funcs.memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {
-        (*cdata->ext_funcs.memcpy)(&dst[rowstride * i], &src[priv->pFrame->linesize[p] * i], dstwidth);
+	(*cdata->ext_funcs.memcpy)(&dst[rowstride * i], &src[priv->pFrame->linesize[p] * i], dstwidth);
       }
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
@@ -1670,14 +1676,15 @@ framedone2:
     }
   }
 
-  xtimex = get_current_usec() - xtimex;
+  xtimex = to_sec(get_current_nsec() - xtimex);
+
   if (cdata->adv_timing.const_time > 0.)
     ((lives_clip_data_t *)cdata)->adv_timing.const_time = (cdata->adv_timing.const_time + (double)xtimex) / 2.;
   else
     ((lives_clip_data_t *)cdata)->adv_timing.const_time = (double)xtimex;
   return TRUE;
 
-cleanup:
+ cleanup:
   if (priv->ovpdata) {
     priv->packet.data = priv->ovpdata;
     av_packet_unref(&priv->packet);
@@ -1727,84 +1734,38 @@ void dump_kframes(const lives_clip_data_t *cdata) {
   }
 }
 
-static int64_t kf_regular(const lives_clip_data_t *cdata) {
-  lives_av_priv_t *priv = cdata->priv;
-  index_entry *xidx = priv->idxc->idxhh;
-  int64_t reg = 0, framea, frameb, diff;
-  double num, den;
-
-  framea = (double)xidx->dts / (double)AV_TIME_BASE * cdata->fps - .5 - 1;
-
-  while (xidx) {
-    //fprintf(stderr, "VALS %ld %ld\n", pts, xidx->dts);
-    //if (xidx->next)
-    //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
-    if (xidx->next) {
-      frameb = (double)xidx->next->dts / (double)AV_TIME_BASE * cdata->fps - .5;
-      //int64_t diff = xidx->next->dts - xidx->dts;
-      diff = frameb - framea;
-      if (!reg) reg = diff;
-      else {
-        num = (double)reg;
-        den = (double)diff;
-        //fprintf(stderr, "FRAC22 %f / %f\n", num,den);
-        if (fabs(num - den) < (double)AV_TIME_BASE) {
-          xidx = xidx->next;
-          continue;
-        }
-        if (!get_frac(&num, &den) || !num || !den) {
-          reg = 0;
-          break;
-        }
-        //fprintf(stderr, "FRAC %f / %f\n", num,den);
-        reg = (int64_t)((double)reg / num);
-      }
-    }
-    framea = frameb;
-    xidx = xidx->next;
-  }
-
-  //fprintf(stderr, "REGG is %ld\n", reg);
-  if (!reg) return 0;
-
-  //dump_kframes(cdata);
-
-  xidx = priv->idxc->idxhh;
-  while (xidx) {
-    double xtime = (double)xidx->dts / (double)AV_TIME_BASE;
-    framea = (int64_t)(xtime * cdata->fps - .5);
-    //fprintf(stderr, "CHECK %ld (%ld - %ld) vs %ld\n", xidx->offs - frame - .5, frame, xidx->offs, reg);
-    if (xidx->offs - framea + 1 > reg) return 0;
-    xidx = xidx->next;
-  }
-
-  //fprintf(stderr, "REGG2 is %ld\n", reg);
-  return reg;
-}
-
 
 static int64_t kf_before(const lives_clip_data_t *cdata, int64_t tframe) {
   index_entry *idx;
-  int64_t target_pts, kf = -1, reg;
-  double xtime;
-  lives_av_priv_t *priv = cdata->priv;
-  xtime = ((double)tframe - .5) / cdata->fps;
-  target_pts = xtime * (double)AV_TIME_BASE;
-  idx = index_get(priv->idxc, target_pts);
-  if (!idx) return -1;
-  //fprintf(stderr, "KF FOUND %ld %ld\n", (int64_t)((double)idx->dts / (double)AV_TIME_BASE * cdata->fps - .5), idx->offs);
-  if (idx->offs >= tframe) {
-    xtime = (double)idx->dts / (double)AV_TIME_BASE;
-    kf = (int64_t)(xtime * cdata->fps - .5);
-    if (kf > tframe) {
-      fprintf(stderr, "KF %ld %ld %ld\n", kf, tframe, idx->offs);
-      abort();
+  int64_t dts, kf = -1;
+  lives_mkv_priv_t *priv = cdata->priv;
+  if (priv->idxc) {
+    if (cdata->fps)((lives_clip_data_t *)cdata)->kframe_dist =
+		     idxc_analyse(priv->idxc, cdata->fps / AV_TIME_BASE,
+				  (kframe_check_cb_f)kframe_check_cb, (void *)cdata);
+    pthread_mutex_unlock(&priv->idxc->mutex);
+    ((lives_clip_data_t *)cdata)->kframes_complete = TRUE;
+  
+    if (cdata->kframe_dist > 0)
+      ((lives_clip_data_t *)cdata)->jump_limit = cdata->kframe_dist;
+    else
+      ((lives_clip_data_t *)cdata)->jump_limit = DEF_JUMPLIM;
+
+    dts = frame_to_dts(cdata, frame);
+    pthread_mutex_lock(&priv->idxc->mutex);
+    idx = index_get(priv->idxc, dts);
+    pthread_mutex_unlock(&priv->idxc->mutex);
+    if (idx) {
+      kf = dts_to_frame(cdata, idx->dts);
     }
-  } else if ((reg = kf_regular(cdata))) {
-    kf = (int64_t)(tframe / reg) * reg;
-    if (kf > tframe) abort();
-    ((lives_clip_data_t *)cdata)->kframe_dist = reg;
   }
+  if (cdata->kframe_dist > 0 && ((kf < 0 || tframe - kf > cdata->kframe_dist))) {
+    kf = (int64_t)(tframe / cdata->kframe_dist) * cdata->kframe_dist;
+  }
+  //fprintf(stderr, "KF for %ld is %ld\n", tframe, kf);
+  return kf;
+
+
   return kf;
 }
 
@@ -1824,11 +1785,11 @@ int64_t update_stats(const lives_clip_data_t *xcdata) {
 
   if (mdfps > 0.) {
     if (cdata->adv_timing.ib_time <= 0)
-      cdata->adv_timing.ib_time = -1000000. / mdfps;
+      cdata->adv_timing.ib_time = -1000000000. / mdfps;
     if (cdata->adv_timing.k_time <= 0)
-      cdata->adv_timing.k_time = -1000000. / mdfps;
+      cdata->adv_timing.k_time = -1000000000. / mdfps;
     if (cdata->adv_timing.k_time <= 0)
-      cdata->adv_timing.k_time = -1000000. / mdfps;
+      cdata->adv_timing.k_time = -1000000000. / mdfps;
   }
   if (cdata->adv_timing.seekback_time <= 0.)
     cdata->adv_timing.seekback_time = -cdata->fwd_seek_time;
@@ -1856,103 +1817,154 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t l
   // where c == 0. -> no confidence at all, and c >= 1. -> absolute certainty
   // if unable to estimate the confidence, then the value should not be touched
 
+
   lives_clip_data_t *cdata = (lives_clip_data_t *)xcdata;
-  lives_av_priv_t *priv;
+  lives_mkv_priv_t *priv;
   double est = -1.;
   double conf = .95, yconf = 0., dconf = 0.;
-  int64_t delta, kfd = 0, xkfd, kf;
+  int64_t delta, kfd = 0, xkfd = -1, kf, nks = -1;
 
   if (!cdata) return est;
 
-  est_noseek = 0.;
-
   priv = cdata->priv;
-  if (last_frame <= 0) last_frame = cdata->last_frame_decoded;
-  delta = tframe - last_frame;
 
-  if (delta == 0 && priv->pFrame) est = abs(cdata->adv_timing.const_time);
+  priv->est_noseek = -1.;
+
+  if (from_frame <= 0) from_frame = cdata->last_frame_decoded;
+  if (from_frame < 0) from_frame = 0;
+
+  delta = tframe - from_frame;
+
+  if (delta == 0 && priv->picture) est = abs(cdata->adv_timing.const_time);
   else {
     conf -= .05;
     if (cdata->fps) {
-      double sbtime, ibtime, ktime, kstime;
-      xkfd = cdata->kframe_dist;
-      if (xkfd <= 0) {
-        xkfd = cdata->jump_limit > 0 ? cdata->jump_limit : 8;
-        yconf -= .1;
+      double kbtime, ibtime, ktime, kstime;
+      if (cdata->kframes_complete) {
+        yconf += .2;
+        dconf += .1;
+        if (delta > 0) {
+          pthread_mutex_lock(&priv->idxc->mutex);
+          nks = count_between(priv->idxc, ((double)from_frame - .5) / cdata->fps * AV_TIME_BASE,
+                              ((double)tframe - .5) / cdata->fps * AV_TIME_BASE, NULL);
+          pthread_mutex_unlock(&priv->idxc->mutex);
+        }
+      } else {
+        //estimate with seek
+        xkfd = cdata->kframe_dist;
+        if (xkfd <= 0) {
+          xkfd = DEF_JUMPLIM * 2;
+          yconf -= .1;
+        }
       }
-      //estimate with seek
+
       kf = kf_before(cdata, tframe);
-      //fprintf(stderr, "KF is %ld for %ld %ld\n", kf, tframe, cdata->kframe_dist_max);
+      //fprintf(stderr, "KF is %ld for %ld\n", kf, tframe);
+
       if (kf < 0) {
         yconf -= .1;
-        if (xkfd != 0) {
-          if (delta < abs(xkfd)) kfd = delta;
-          else kfd = abs(xkfd);
+        if (xkfd > 0) {
+          if (delta < xkfd) kfd = delta;
+          else kfd = xkfd;
         }
-        //fprintf(stderr, "KFD1 is %ld\n", kfd);
       } else {
         kfd = tframe - kf;
-        if (xkfd != 0) {
-          if (kfd > abs(xkfd)) kfd = abs(xkfd);
+        //fprintf(stderr, "KFD0 is %ld\n", kfd);
+        if (xkfd >= 0) {
+          if (kfd > xkfd) kfd = xkfd;
+          //fprintf(stderr, "KFD1 is %ld\n", kfd);
         }
       }
 
       ibtime = cdata->adv_timing.ib_time;
       ktime = cdata->adv_timing.k_time;
       kstime = cdata->adv_timing.ks_time;
-      sbtime = cdata->adv_timing.seekback_time;
-
-      if (cdata->adv_timing.const_time == 0.) conf -= .1;
-      else if (cdata->adv_timing.const_time < 0.) conf -= .05;
-
-      if (kstime == 0.) yconf -= .1;
-      else if (kstime < 0.) yconf -= .05;
+      kbtime = cdata->adv_timing.kb_time;
 
       if (ibtime == 0.) conf -= .15;
       else if (ibtime < 0.) conf -= .1;
 
-      if (ktime == 0.) conf -= .1;
-      else if (ktime < 0.) conf -= .05;
+      if (!kbtime && kstime) kbtime = kstime;
+      else if (kbtime && !kstime) kstime = kbtime;
 
-      est = fabs(cdata->adv_timing.const_time) + fabs(kstime) + fabs(ktime) + kfd * abs(ibtime);
+      if (!ktime && ibtime) ktime = ibtime;
+      else if (ktime && !ibtime) ibtime = ktime;
 
-      if (delta > 0) est += (double)cdata->fwd_seek_time;
-      else {
-        if (sbtime == 0.) yconf -= .1;
-        else if (sbtime < 0.) yconf -= .05;
-        est += fabs(sbtime);
+      ibtime = fabs(ibtime);
+
+      if (delta < 1 || kfd < delta) {
+	// estimate with seek : seek and decode keyframe + decode to target frame
+	est = (kfd - 1) * ibtime;
+
+	//printf("EST 1 is %.4f %f\n",est, breadtime);
+
+	if (delta > 0) {
+	  if (kstime == 0.) yconf -= .1;
+	  else if (kstime < 0.) yconf -= .05;
+	  est += fabs(kstime);
+	} else {
+	  if (kbtime == 0.) yconf -= .1;
+	  else if (kbtime < 0.) yconf -= .05;
+	  est += fabs(kbtime);
+	}
       }
+      else est = -1.;
+      //printf("EST 2 is %.4f\n",est);
 
-      /* fprintf(stderr, "ESTIMa is %f %f %f %ld %f %ld %f\n", est, cdata->adv_timing.const_time, kstime, */
-      /* 	    kfd, ibtime, cdata->fwd_seek_time, sbtime); */
-      if (last_frame >= 0 && delta > 0) {
-        int nks = 0;
-        if (xkfd) nks = delta / xkfd;
+      //fprintf(stderr, "ESTIMa is %f %f %f %ld %f %.4f %.4f\n", est, cdata->adv_timing.const_time, kstime,
+      //      kfd, ibtime, cdata->adv_timing.ctiming_ratio,  kbtime);
 
-        est_noseek = fabs(cdata->adv_timing.const_time) + nks * fabs(ktime) + (delta - nks) * fabs(ibtime);
-        //fprintf(stderr, "ESTIMb is %f\n", est_noseek);
-        if (est_noseek < est) {
+      if (delta > 0) {
+        if (nks < 0) nks = delta / xkfd;
+
+        // non seek estimate is just num kframes * kframe decode time + num ib frames * ibdecode time
+        priv->est_noseek = nks * fabs(ktime) + (delta - nks) * ibtime;
+
+        //fprintf(stderr, "ESTIMb is %f\n", priv->est_noseek);
+
+        if (priv->est_noseek < est) {
+          // if it seems quicker without a seek, then use that
           if (ktime == 0.) conf -= .1;
           else if (ktime < 0.) conf -= .05;
           conf += dconf;
-          est = est_noseek;
+          est = priv->est_noseek;
         } else {
+          // otherwise use estimate with seek to keyframe
           conf += yconf;
         }
-        est_noseek *= cdata->adv_timing.ctiming_ratio / 1000000.;
+        //printf("EST 3 is %.4f\n",priv->est_noseek);
       }
     }
   }
 
-  if (est > 0.) est *= cdata->adv_timing.ctiming_ratio / 1000000.;
+  // add on the constant factor
+  if (cdata->adv_timing.const_time == 0.) conf -= .1;
+  else if (cdata->adv_timing.const_time < 0.) conf -= .05;
+  if (est > 0.) est += fabs(cdata->adv_timing.const_time);
+  if (priv->est_noseek > 0.) priv->est_noseek += fabs(cdata->adv_timing.const_time);
+
+  // multiply by transient load factor
+  //printf("estdel 1444 %.4f %.4f\n", est, priv->est_noseek);
+  //if (est > 0. && cdata->adv_timing.ctiming_ratio > 0.) est *= fabs(cdata->adv_timing.ctiming_ratio);
   if (fpclassify(est) != FP_NORMAL) est = -1.;
 
-  if (est < 0 || conf < 0.) conf = 0.;
+  /* if (priv->est_noseek > 0. && cdata->adv_timing.ctiming_ratio > 0.) */
+  /*   priv->est_noseek *= fabs(cdata->adv_timing.ctiming_ratio); */
+  if (fpclassify(priv->est_noseek) != FP_NORMAL) priv->est_noseek = -1.;
+
+  //printf("estdel 1444 %.4f %.4f %.4f\n", est, priv->est_noseek, conf);
+
+  if (est > 0.) est *= 1000.;
+  if (priv->est_noseek > 0.) priv->est_noseek *= 1000.;
+
+  if (est <= 0. || (priv->est_noseek > 0. && priv->est_noseek < est))
+    est = priv->est_noseek;
+  
+  if (est <= 0 || conf < 0.) conf = 0.;
   if (conf > 1.) conf = 1.;
 
-  if (confidence) {
-    *confidence = conf;
-  }
+  if (confidence) *confidence = conf;
+
   //fprintf(stderr, "ESTIM is %f\n", est);
   return est;
 }

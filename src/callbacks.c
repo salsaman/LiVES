@@ -9581,11 +9581,10 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   pthread_mutex_lock(mutex);
 
   if (*psurf) {
-    int refs = lives_painter_surface_get_reference_count(*psurf);
-    g_print("REFss is %d\n", refs);
-    if (refs != 1) BREAK_ME("aggg");
+    int nrefs = lives_painter_surface_get_reference_count(*psurf);
+    while (nrefs--)
+      lives_painter_surface_destroy(*psurf);
   }
-  if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
   pthread_mutex_unlock(mutex);
 

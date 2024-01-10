@@ -115,11 +115,11 @@ static inline int64_t get_current_nsec(void) {
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  uret = (ts.tv_sec * ONE_BILLION + ts.tv_nsec);
+  ret = (ts.tv_sec * 1000000000 + ts.tv_nsec);
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  ret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * 1000;
+  ret = (tv.tv_sec * 1000000 + tv.tv_usec)  * 1000;
 #endif
   return ret;
 }
@@ -565,27 +565,45 @@ typedef int64_t (*kframe_check_cb_f)(int64_t tframe, void *user_data);
 // pattern, any other value will be the distance, however if there are unmapped keyframes, then this could be
 // invalidated by discovery or non confroming or lack of conforming values
 // the value returned may be used to set cdata->kframe_dist in order to aid delay estimates
+//
+// algorithm: we have an index of found kframes (xidx), but it may be incomplete
+// we begin by taking the first non zero frame from the index, subtract 1 from the frame value
+// then ask the decoder to seek to that frame. Generally, the decoder will seek to the kframe
+// before the target. We find the frame that the decoder jumped to, and subtract this from the original
+// frame number to get a distance in frames.
+// We first check if both frame numbers are integer multiples of the distance, and if so then we check
+// all other frames in the index likewise. If we succeed, then we assume that we have a regular keyframe
+// distance
+
 static int64_t idxc_analyse(index_container_t *idxc, double fpsc, kframe_check_cb_f chk_cb, void *cb_data) {
   // fpsc is conversion factor, frame == floor(dts * fpsc)
-  int64_t frame, dist = 0;
+  int64_t frame, dist = 0, ndist;
   if (idxc && fpsc > 0.) {
     index_entry *xidx = idxc->idxhh;
     if (!xidx) return 0;
+    // walk xidx, converting dts to frame number, skip over 0 frames
     for (frame = (int64_t)(xidx->dts * fpsc - 0.5); !frame; frame = (int64_t)(xidx->dts * fpsc - 0.5)) {
       xidx = xidx->next;
       if (!xidx) return 0;
     }
+    // set dist == frame (eg. 64)
     dist = frame;
+    // subtract 1 from frame, and find kf for it (eg. 63 -> 48)
     frame = (*chk_cb)(--frame, cb_data);
     if (frame) {
+      // e.g 64 % 16
       if (dist % (dist - frame)) return 0;
       dist -= frame;
       if (frame % dist) return 0;
     }
-    frame += dist;
     for (xidx = xidx->next; xidx; xidx = xidx->next) {
       frame = (int64_t)(xidx->dts * fpsc - 0.5);
-      if (frame % dist) return 0;
+      ndist = frame % dist;
+      if (ndist) {
+	if (!(dist % ndist)) dist = ndist;
+	else return 0;
+      }
+      if (xidx->offs - frame > dist) return 0;
     }
   }
   return dist;

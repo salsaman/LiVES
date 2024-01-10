@@ -97,7 +97,7 @@ weed_error_t lives_leaf_copy(weed_plant_t *dst, const char *keyt, weed_plant_t *
 
   weed_flags_t flags = weed_leaf_get_flags(src, keyf);
   if (flags & LIVES_FLAG_FREE_ON_DELETE) {
-    g_print("copyinh autofree val %s\n", keyf);
+    g_print("copying autofree val %s\n", keyf);
     abort();
   }
 
@@ -134,7 +134,6 @@ static weed_error_t _lives_leaf_dup(weed_plant_t *dst, weed_plant_t *src, const 
   }
   if (flags & WEED_FLAG_IMMUTABLE) weed_leaf_set_flags(dst, key, flags & ~WEED_FLAG_IMMUTABLE);
   weed_error_t err = weed_leaf_dup(dst, src, key);
-  weed_leaf_set_flags(dst, key, weed_leaf_get_flags(src, key) & ~LIVES_FLAG_FREE_ON_DELETE);
   return err;
 }
 
@@ -1520,7 +1519,6 @@ static weed_error_t thread_process_func(weed_instance_t *inst, weed_timecode_t t
       int nplanes;
       weed_channel_t *chan = out_channels[i];
       void **pd = weed_channel_get_pixel_data_planar(chan, &nplanes);
-      int offset = weed_get_int_value(chan, WEED_LEAF_OFFSET, NULL);
       int dheight = weed_channel_get_height(chan);
       int *rows = weed_channel_get_rowstrides(chan, &nplanes);
       int pal = weed_channel_get_palette(chan);
@@ -1569,7 +1567,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   weed_plant_t **xchannels, *xchan;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
   weed_error_t retval;
-  void *buff = NULL;
   void **pd;
   int *rows;
   size_t maxsize, totsize = 0;
@@ -1583,7 +1580,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   boolean filter_busy = FALSE;
   boolean needs_reinit = FALSE;
   boolean wait_state_upd = FALSE, state_updated = FALSE;
-  boolean use_thrdlocal = FALSE, can_use_thrd_local = TRUE;
+  boolean use_thrdlocal = FALSE, can_use_thrd_local = FALSE;
 
   int vstep = SLICE_ALIGN, minh;
   int slices, slices_per_thread, to_use;
@@ -1641,12 +1638,12 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
     height = weed_channel_get_height(out_channels[i]);
     pal = weed_channel_get_palette(out_channels[i]);
 
-    if (weed_get_boolean_value(out_channels[i], WEED_LEAF_HOST_INPLACE, NULL))
-      can_use_thrd_local = FALSE;
-    else {
-      for (p = 0; p < nplanes; p++)
-        totsize += rows[p] * dheight * weed_palette_get_plane_ratio_vertical(pal, p);
-    }
+    /* if (weed_get_boolean_value(out_channels[i], WEED_LEAF_HOST_INPLACE, NULL)) */
+    /*   can_use_thrd_local = FALSE; */
+    /* else { */
+    /*   for (p = 0; p < nplanes; p++) */
+    /*     totsize += rows[p] * dheight * weed_palette_get_plane_ratio_vertical(pal, p); */
+    /* } */
     lives_free(rows);
     xheights[i][0] = dheight;
   }
@@ -4094,22 +4091,16 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
   boolean bret = TRUE;
   if (plant) {
     int flags = weed_leaf_get_flags(plant, key);
-    if (!lives_strcmp(key, LIVES_LEAF_REFCOUNTER)) {
-      lives_refcounter_t *refcount = (lives_refcounter_t *)
-                                     weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
-      pthread_mutex_destroy(&refcount->mutex);
-      lives_free(refcount);
-      weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
-      lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
-      weed_set_plantptr_value(plant, key, NULL);
-      lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
-      return TRUE;
-    }
 
     if (flags & LIVES_FLAG_FREE_ON_DELETE) {
       uint32_t st = weed_leaf_seed_type(plant, key);
       int nvals;
       bret = FALSE;
+      if (!lives_strcmp(key, LIVES_LEAF_REFCOUNTER)) {
+	lives_refcounter_t *refcount = (lives_refcounter_t *)
+	  weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
+	pthread_mutex_destroy(&refcount->mutex);
+      }
       switch (st) {
       case WEED_SEED_PLANTPTR: {
         weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
@@ -7581,7 +7572,6 @@ boolean fill_audio_channel_aux(weed_plant_t *achan) {
 lives_filter_error_t lives_layer_fill_from_generator(weed_layer_t *layer, weed_instance_t *inst, weed_timecode_t tc) {
   weed_filter_t *filter;
   weed_channel_t *channel, *achan;
-  weed_gui_t *gui;
   weed_layer_t *inter;
   lives_clip_t *sfile = NULL;
   char *cwd;
@@ -7692,7 +7682,6 @@ matchvals:
   }
 
   cwd = cd_to_plugin_dir(filter);
-  gui = weed_channel_get_gui(channel, TRUE);
 
 procfunc1:
 
@@ -7728,20 +7717,6 @@ procfunc1:
     reinited = TRUE;
     goto procfunc1;
   }
-
-  /* if (gui) { */
-  /*   int btop = weed_get_int_value(gui, WEED_LEAF_BORDER_TOP, NULL); */
-  /*   int bbot = weed_get_int_value(gui, WEED_LEAF_BORDER_BOTTOM, NULL); */
-  /*   int bleft = weed_get_int_value(gui, WEED_LEAF_BORDER_LEFT, NULL); */
-  /*   int bright = weed_get_int_value(gui, WEED_LEAF_BORDER_RIGHT, NULL); */
-  /*   if (btop || bbot || bleft || bright) { */
-  /*     g_print("Btio id %d\n", btop); */
-  /*     if (!unletterbox_layer(channel, -1, -1, btop, bbot, bleft, bright)) { */
-  /*       weed_layer_pixel_data_free(channel); */
-  /*       return LIVES_RESULT_FAIL; */
-  /*     } */
-  /*   } */
-  /* } */
 
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
@@ -9412,6 +9387,9 @@ boolean rte_key_setmode(int key, int newmode) {
 
   if (newmode == oldmode) return FALSE;
 
+  
+
+  
   if (rte_window_visible()) rtew_set_mode_radio(key, newmode);
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key, newmode);
 
@@ -9423,6 +9401,8 @@ boolean rte_key_setmode(int key, int newmode) {
     }
   }
 
+  postpone_planning();
+  
   blend_file = mainw->blend_file;
 
   if (inst) {
@@ -9450,13 +9430,13 @@ boolean rte_key_setmode(int key, int newmode) {
     mainw->new_blend_file = blend_file;
   } else {
     if (inst) {
-      mainw->refresh_model = TRUE;
       if (!weed_init_effect(key)) {
         weed_instance_unref(inst);
         mainw->whentostop = whentostop;
         key = real_key;
         mainw->rte &= ~(GU641 << key);
         mainw->rte_real &= ~(GU641 << key);
+	continue_planning();
         return FALSE;
       }
       weed_instance_unref(inst);
@@ -9465,7 +9445,7 @@ boolean rte_key_setmode(int key, int newmode) {
   }
   mainw->whentostop = whentostop;
 
-  mainw->refresh_model = TRUE;
+  continue_planning();
 
   return TRUE;
 }
@@ -12075,18 +12055,6 @@ boolean read_generator_sizes(int fd) {
     return FALSE;
   }
   return TRUE;
-}
-
-
-void reset_frame_and_clip_index(void) {
-  if (!mainw->clip_index) {
-    mainw->clip_index = (int *)lives_malloc(sizint);
-    mainw->clip_index[0] = -1;
-  }
-  if (!mainw->frame_index) {
-    mainw->frame_index = (int64_t *)lives_malloc(8);
-    mainw->frame_index[0] = 0;
-  }
 }
 
 // key/mode parameter defaults

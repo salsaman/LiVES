@@ -1613,6 +1613,32 @@ static double dec_running_steps(plan_step_t *step) {
   return xtime;
 }
 
+static pthread_mutex_t planrunner_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int planrunner_trylock(void) {
+  return pthread_mutex_trylock(&planrunner_mutex);
+}
+
+static int planrunner_lock(void) {
+  return pthread_mutex_lock(&planrunner_mutex);
+}
+
+static int planrunner_unlock(void) {
+  return pthread_mutex_unlock(&planrunner_mutex);
+}
+
+void postpone_planning(void) {
+ if (LIVES_IS_PLAYING) planrunner_lock();
+}
+ 
+void continue_planning(void) {
+  if (LIVES_IS_PLAYING) {
+    mainw->refresh_model = TRUE;
+    planrunner_unlock();
+  }
+}
+
+
 
 #define SET_PLAN_STATE(xstate) _DW0(plan->state = PLAN_STATE_##xstate;)
 
@@ -1644,15 +1670,18 @@ static void run_plan(exec_plan_t *plan) {
 
   //MSGMODE_ON(DEBUG);
 
+  planrunner_lock();
+
+  if (mainw->refresh_model ||
+      lives_proc_thread_get_cancel_requested(self)) {
+    lives_proc_thread_cancel(self);
+  }
+
   //if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
     glob_timing->tot_duration = glob_timing->avg_duration = 0.;
     if (ann_proc && (plan->model->flags & NODEMODEL_NEW))
       lives_proc_thread_set_loveliness(ann_proc, DEF_LOVELINESS);
-  }
-
-  if (lives_proc_thread_get_cancel_requested(self)) {
-    lives_proc_thread_cancel(self);
   }
 
   plan->tdata->trun_time = lives_get_session_time();
@@ -2565,14 +2594,14 @@ static void run_plan(exec_plan_t *plan) {
   ____FUNC_EXIT____;
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
   nplans--;
+  planrunner_unlock();
 }
 
 
 
 void plan_cycle_trigger(exec_plan_t *plan) {
-  if (plan->tdata->trigger_time) {
-    return;
-  }
+  if (plan->tdata->trigger_time) return;
+
   plan->tdata->trigger_time = lives_get_session_time();
 
   // wait for queued plan to be picked up by a worker thread
@@ -2645,6 +2674,7 @@ void plan_cycle_trigger(exec_plan_t *plan) {
 
 
 static boolean runner_cancelled_cb(void *lptp, void *planp) {
+  planrunner_trylock();
   exec_plan_t *plan = (exec_plan_t *)planp;
   if (plan) {
     double xtime = lives_get_session_time();
@@ -2654,6 +2684,7 @@ static boolean runner_cancelled_cb(void *lptp, void *planp) {
     nplans--;
     SET_PLAN_STATE(CANCELLED);
   }
+  planrunner_unlock();
   return FALSE;
 }
 
@@ -2664,6 +2695,9 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
   lives_proc_thread_t lpt = NULL;
   if (async) {
     if (plan->state != PLAN_STATE_INERT) return mainw->plan_runner_proc;
+
+    planrunner_lock();
+
     SET_PLAN_STATE(QUEUED);
 
     mainw->plan_runner_proc = lpt
@@ -2677,6 +2711,7 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
       plan->tdata->exec_time = lives_get_session_time();
     nplans++;
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
+    planrunner_unlock();
   } else run_plan(plan);
   return lpt;
 }
@@ -7659,66 +7694,51 @@ void build_nodemodel(lives_nodemodel_t **pnodemodel) {
 }
 
 
-static pthread_mutex_t planrunner_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
-int planrunner_trylock(void) {
-  return pthread_mutex_trylock(&planrunner_mutex);
-}
-
-void  planrunner_unlock(void) {
-  pthread_mutex_unlock(&planrunner_mutex);
-}
-
-
 void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
-  if (!pthread_mutex_trylock(&planrunner_mutex)) {
-    if (mainw->plan_runner_proc && !lives_proc_thread_is_done(mainw->plan_runner_proc, FALSE))
-      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+  if (mainw->plan_runner_proc && !lives_proc_thread_is_done(mainw->plan_runner_proc, FALSE))
+    lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
 
-    if (mainw->plan_runner_proc) {
-      if (mainw->plan_cycle) {
-        int state = mainw->plan_cycle->state;
-        if (state == PLAN_STATE_WAITING ||
-            state == PLAN_STATE_QUEUED)
-          plan_cycle_trigger(mainw->plan_cycle);
-        lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
-                                    mainw->plan_cycle->state == PLAN_STATE_QUEUED);
-      }
-      lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
-      lives_microsleep_until_zero(nplans);
+  if (mainw->plan_runner_proc) {
+    if (mainw->plan_cycle) {
+      int state = mainw->plan_cycle->state;
+      if (state == PLAN_STATE_WAITING ||
+	  state == PLAN_STATE_QUEUED)
+	plan_cycle_trigger(mainw->plan_cycle);
+      lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
+				  mainw->plan_cycle->state == PLAN_STATE_QUEUED);
     }
-
-    if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
-    if (mainw->exec_plan) exec_plan_free(STEAL_POINTER(mainw->exec_plan));
-
-    if (mainw->layers) {
-      int maxl;
-      if (*nodemodel) maxl = (*nodemodel)->ntracks;
-      else maxl = mainw->num_tracks;
-
-      for (int i = 0; i < maxl; i++) {
-        if (mainw->layers[i]
-            && mainw->layers[i] != mainw->ext_player_layer
-            && mainw->layers[i] != get_old_frame_layer()
-            && mainw->layers[i] != mainw->cached_frame) {
-          int lstatus = lives_layer_get_status(mainw->layers[i]);
-          lives_nanosleep_while_true(lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_BUSY);
-          weed_layer_unref(mainw->layers[i]);
-          mainw->layers[i] = NULL;
-        }
-      }
-
-      mainw->frame_layer = NULL;
-      reset_old_frame_layer();
-      reset_ext_player_layer(FALSE);
-
-      lives_free(mainw->layers);
-      mainw->layers = NULL;
-    }
-    if (*nodemodel) free_nodemodel(nodemodel);
-    pthread_mutex_unlock(&planrunner_mutex);
+    lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
+    lives_microsleep_until_zero(nplans);
   }
+
+  if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
+  if (mainw->exec_plan) exec_plan_free(STEAL_POINTER(mainw->exec_plan));
+
+  if (mainw->layers) {
+    int maxl;
+    if (*nodemodel) maxl = (*nodemodel)->ntracks;
+    else maxl = mainw->num_tracks;
+
+    for (int i = 0; i < maxl; i++) {
+      if (mainw->layers[i]
+	  && mainw->layers[i] != mainw->ext_player_layer
+	  && mainw->layers[i] != get_old_frame_layer()
+	  && mainw->layers[i] != mainw->cached_frame) {
+	int lstatus = lives_layer_get_status(mainw->layers[i]);
+	lives_nanosleep_while_true(lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_BUSY);
+	weed_layer_unref(mainw->layers[i]);
+	mainw->layers[i] = NULL;
+      }
+    }
+
+    mainw->frame_layer = NULL;
+    reset_old_frame_layer();
+    reset_ext_player_layer(FALSE);
+
+    lives_free(mainw->layers);
+    mainw->layers = NULL;
+  }
+  if (*nodemodel) free_nodemodel(nodemodel);
 }
 
 
@@ -7727,6 +7747,7 @@ lives_result_t run_next_cycle(void) {
   // WARNING - will alter mainw->plan_cycle
   if (pthread_mutex_trylock(&planrunner_mutex)) {
     g_print("planrunner_locked, not running next cycle !\n");
+    abort();
     return LIVES_RESULT_FAIL;
   }
   if (mainw->refresh_model) {
@@ -7788,12 +7809,13 @@ lives_result_t run_next_cycle(void) {
 
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
+  pthread_mutex_unlock(&planrunner_mutex);
+
   execute_plan(mainw->plan_cycle, TRUE);
 
   if (mainw->cancelled != CANCEL_NONE
       || (!mainw->plan_runner_proc
           || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc))) {
-    pthread_mutex_unlock(&planrunner_mutex);
     g_print("no layers, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
   }
@@ -7815,7 +7837,7 @@ lives_result_t run_next_cycle(void) {
       mainw->plan_cycle->frame_idx[1] = blend_frame;
     }
   }
-  pthread_mutex_unlock(&planrunner_mutex);
+
   return LIVES_RESULT_SUCCESS;
 }
 

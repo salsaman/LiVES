@@ -1253,10 +1253,10 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   int nblocks = 1;
   int i, j, max, count = 0;
   if (sizeb > bmemsize) {
-    if (sizeb > (bmemsize >> 1)) {
-      if (sizeb > (bmemsize >> 2)) {
+    if (sizeb > (bmemsize << 1)) {
+      if (sizeb > (bmemsize << 2)) {
         if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
-                                            sizeb, bmemsize >> 2);
+                                            sizeb, bmemsize << 2);
         return -2;
       }
       nblocks = 4;

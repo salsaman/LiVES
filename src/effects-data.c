@@ -1568,7 +1568,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
   weed_plant_t **inparams = NULL;
   weed_plant_t *oparam, *inparam = NULL;
-  weed_plant_t *inst = NULL, *oinst;
+  weed_plant_t *inst = NULL, *oinst = NULL;
 
   boolean changed, reinit_inst = FALSE;
 

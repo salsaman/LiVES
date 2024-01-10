@@ -65,9 +65,6 @@ extern "C"
 #else
 #  define WARN_UNUSED
 #endif
-  
-/* general Weed functions and definitions */
-int32_t weed_plant_get_type(weed_plant_t *);
 
 #define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_PLUGIN_INFO ? WEED_TRUE : \
 					  WEED_FALSE)
@@ -117,6 +114,13 @@ weed_error_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t
 // make a whole plant deletable / undeletable
 weed_error_t weed_plant_set_undeletable(weed_plant_t *, int undeletable);
 int weed_plant_is_undeletable(weed_plant_t *);
+
+// if state == WEED_TRUE, make the leaf value IMMUTABLE, else make it changeable
+// may return WEED_SUCCESS or WEED_ERROR_NOSUCH_LEAF
+weed_error_t weed_leaf_set_immutable(weed_plant_t *, const char *key, int state);
+
+//if state == WEED_TRUE, make the leaf UNDELETABLE, else make it deletable
+weed_error_t weed_leaf_set_undeletable(weed_plant_t *, const char *key, int state);
 
 /* HOST_INFO functions */
 uint32_t weed_host_info_get_flags(weed_plant_t *host_info);

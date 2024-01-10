@@ -369,23 +369,7 @@ weed_error_t weed_set_custom_array(weed_plant_t *plant, const char *key, weed_se
                                    weed_voidptr_t *values)
 {return weed_leaf_set(plant, key, seed_type, values ? num_elems : 1, (weed_voidptr_t)values);}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-weed_error_t weed_leaf_set_immutable(weed_plant_t *plant, const char *key, int state) {
-  return state == WEED_TRUE ? weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
-						  | WEED_FLAG_IMMUTABLE)
-    : weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
-			  & ~WEED_FLAG_IMMUTABLE);
-}
-
-
-weed_error_t weed_leaf_set_undeletable(weed_plant_t *plant, const char *key, int state) {
-  return state == WEED_TRUE ? weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
-						  | WEED_FLAG_UNDELETABLE)
-    : weed_leaf_set_flags(plant, key, weed_leaf_get_flags(plant, key)
-			  & ~WEED_FLAG_UNDELETABLE);
-}
-
+///
 
 weed_error_t weed_leaf_is_immutable(weed_plant_t *plant, const char *key) {
   if (!weed_plant_has_leaf(plant, key)) return WEED_ERROR_NOSUCH_LEAF;
@@ -400,10 +384,12 @@ weed_error_t weed_leaf_is_undeletable(weed_plant_t *plant, const char *key) {
   return WEED_SUCCESS;
 }
 
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int32_t weed_get_plant_type(weed_plant_t *plant)
+int32_t weed_plant_get_type(weed_plant_t *plant)
 {return plant ? weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) : WEED_PLANT_UNKNOWN;}
 
 
@@ -584,12 +570,6 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
     if (err == WEED_SUCCESS) {
       err = weed_leaf_copy(plant, prop, src, prop);
       if (err == WEED_ERROR_IMMUTABLE || err == WEED_ERROR_WRONG_SEED_TYPE) err = WEED_SUCCESS; // ignore these errors
-      else {
-	if (weed_leaf_is_immutable(src, prop) == WEED_ERROR_IMMUTABLE)
-	  weed_leaf_set_immutable(plant, prop, WEED_TRUE);
-	if (weed_leaf_is_undeletable(src, prop) == WEED_ERROR_UNDELETABLE)
-	  weed_leaf_set_undeletable(plant, prop, WEED_TRUE);
-      }
     }
   }
   _weed_intern_leaves_list_free(proplist);

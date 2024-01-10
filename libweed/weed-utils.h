@@ -144,18 +144,11 @@ weed_voidptr_t *weed_get_voidptr_array_counted(weed_plant_t *, const char *key, 
 weed_plant_t **weed_get_plantptr_array_counted(weed_plant_t *, const char *key, int *count);
 weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *, const char *key, uint32_t seed_type, int *count);
 
-  // if state == WEED_TRUE, make the leaf value IMMUTABLE, else make it changeable
-  // may return WEED_SUCCESS or WEED_ERROR_NOSUCH_LEAF
-weed_error_t weed_leaf_set_immutable(weed_plant_t *, const char *key, int state);
-
-  //if state == WEED_TRUE, make the leaf UNDELETABLE, else make it deletable
-weed_error_t weed_leaf_set_undeletable(weed_plant_t *, const char *key, int state);
-
   // check if leaf value can be changed: returns WEED_ERROR_IMMUTABLE, WEED_SUCCESS, or WEED_ERROR_NOSUCH_LEAF
 weed_error_t weed_leaf_is_immutable(weed_plant_t *, const char *key);
 
   // check if leaf value can be deleted: returns WEED_ERROR_UNDELETABLE, WEED_SUCCESS, or WEED_ERROR_NOSUCH_LEAF
-weed_error_t weed_leaf_set_undeletable(weed_plant_t *, const char *key, int state);
+weed_error_t weed_leaf_is_undeletable(weed_plant_t *, const char *key);
 
 /* make a copy dest leaf from src leaf. Pointers are copied by reference only, but strings are allocated */
 weed_error_t weed_leaf_copy(weed_plant_t *dest, const char *keyt, weed_plant_t *src, const char *keyf);
@@ -175,8 +168,10 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src);
 int weed_leaf_elements_equate(weed_plant_t *p0, const char *k0, weed_plant_t *p1, const char *k1, int elem);
 
 /* returns the value of the "type" leaf; returns WEED_PLANT_UNKNOWN if plant is NULL */
-int32_t weed_get_plant_type(weed_plant_t *);
+int32_t weed_plant_get_type(weed_plant_t *);
 
+#define weed_get_plant_type(p) weed_plant_get_type((p))
+  
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

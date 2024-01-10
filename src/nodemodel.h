@@ -960,15 +960,16 @@ void cleanup_nodemodel(lives_nodemodel_t **);
 
 void rebuild_nodemodel(void);
 
+void postpone_planning(void);
+void continue_planning(void);
+
 exec_plan_t *create_plan_from_model(lives_nodemodel_t *);
 void align_with_model(lives_nodemodel_t *);
 exec_plan_t *create_plan_cycle(exec_plan_t *template, lives_layer_t **);
 lives_proc_thread_t execute_plan(exec_plan_t *cycle, boolean async);
 void exec_plan_free(exec_plan_t *);
 
-int planrunner_trylock(void);
 void plan_cycle_trigger(exec_plan_t *cycle);
-void  planrunner_unlock(void);
 
 void display_plan(exec_plan_t *);
 

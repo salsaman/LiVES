@@ -59,11 +59,6 @@ void response_ok(LiVESButton *button, livespointer user_data);
 /////////// progress dialogs /////
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
 
-boolean begin_playback(void);
-
-void cancel_process(boolean visible);
-boolean get_accels_swapped(void);
-
 void update_progress(boolean visible, int clipno);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);

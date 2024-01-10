@@ -3179,8 +3179,8 @@ static void _clip_src_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, l
 
     switch (mysrc->src_type) {
     case LIVES_SRC_TYPE_DECODER: {
-      lives_decoder_t *dec = (lives_decoder_t *)mysrc->actor;
-      clip_decoder_free(sfile, dec);
+      lives_decoder_t *dplug = (lives_decoder_t *)mysrc->actor;
+      clip_decoder_free(sfile, dplug);
     }
     break;
     case LIVES_SRC_TYPE_FILE_BUFF:

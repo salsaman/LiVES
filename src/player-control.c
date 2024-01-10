@@ -1119,6 +1119,12 @@ void play_file(void) {
 
   if (mainw->loop_locked) unlock_loop_lock();
 
+  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
+      && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
+	   && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
+    lives_rm(cfile->info_file);
+  }
+
   mainw->jack_can_stop = FALSE;
   if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {
     cfile->pointer_time = pointer_time;
@@ -1500,6 +1506,8 @@ void play_file(void) {
       lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
     }
   }
+
+  if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
 
   /// need to do this here, in case we want to preview with only
   // a generator and no other clips (which will soon close to -1)

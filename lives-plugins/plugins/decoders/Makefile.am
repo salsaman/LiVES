@@ -132,12 +132,12 @@ mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h dec_helper.c
 mpegts_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(MPEGTSDEC_CFLAGS)
 mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 
-#zzavformat_libs = zzavformat_decoder.la
-#AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
-#AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
-#zzavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
-#zzavformat_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(AVIDEC_CFLAGS)
-#zzavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
+zzavformat_libs = zzavformat_decoder.la
+AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
+AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
+zzavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
+zzavformat_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(AVIDEC_CFLAGS)
+zzavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 endif
 endif

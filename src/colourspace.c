@@ -15130,7 +15130,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
                * weed_palette_get_plane_ratio_vertical(opal_hint, i);
     }
 
-    if (bsize < THREADVAR(buff_size)) can_local = TRUE;
+    //if (bsize < THREADVAR(buff_size)) can_local = TRUE;
 
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;

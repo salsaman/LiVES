@@ -703,8 +703,8 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
       int xrwidth, xrheight;
       LiVESWidget *p = widget;
 
-      if (mainw->multitrack || (!mainw->multitrack && widget != mainw->preview_image))
-        p = lives_widget_get_parent(widget);
+      /* if (mainw->multitrack || (!mainw->multitrack && widget != mainw->preview_image)) */
+      /*   p = lives_widget_get_parent(widget); */
 
       xrwidth = lives_widget_get_allocation_width(p);
       xrheight = lives_widget_get_allocation_height(p);
@@ -720,10 +720,10 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
         dh = xrheight;
       }
 
-      SET_INT_DATA(da, OWIDTH_KEY, owidth);
-      SET_INT_DATA(da, OHEIGHT_KEY, oheight);
-      SET_INT_DATA(da, OXRWIDTH_KEY, oxrwidth);
-      SET_INT_DATA(da, OXRHEIGHT_KEY, oxrheight);
+      SET_INT_DATA(da, OWIDTH_KEY, width);
+      SET_INT_DATA(da, OHEIGHT_KEY, height);
+      SET_INT_DATA(da, OXRWIDTH_KEY, xrwidth);
+      SET_INT_DATA(da, OXRHEIGHT_KEY, xrheight);
 
       if (mainw->multitrack) {
         rwidth = xrwidth;
@@ -961,12 +961,9 @@ align:
 
 void reset_mainwin_size(void) {
   RECURSE_GUARD_START;
-  static int ww, hh, ox, oy;
-  int  x, y, w, h;
-  int  x2, y2, w2, h2;
-  int ox2, oy2, ox1, oy1;
   int scr_width = GUI_SCREEN_WIDTH;
   int scr_height = GUI_SCREEN_HEIGHT;
+  int ww, hh;
 
   RETURN_IF_RECURSED;
   
@@ -982,21 +979,8 @@ void reset_mainwin_size(void) {
     lives_widget_context_update();
 
     if (!mainw->calibrated) {
-      /* gdk_window_get_root_origin(xwin, &ox, &oy); */
-
-      /* //if (lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) <= 1) return; */
-
-      /* x = lives_widget_get_allocation_x(LIVES_MAIN_WINDOW_WIDGET); */
-      /* y = lives_widget_get_allocation_y(LIVES_MAIN_WINDOW_WIDGET); */
-      
-      /* ox = x - ox; */
-      /* oy = y - oy; */
-
-      /* if (ox < 0) ox = 0; */
-      /* if (oy < 0) oy = 0; */
-
-      ww = scr_width;// - ox;
-      hh = scr_height;// - oy;
+      ww = scr_width;
+      hh = scr_height;
 
       lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), ww, hh);
       lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, ww, hh);

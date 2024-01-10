@@ -25,8 +25,6 @@
 #include "diagnostics.h"
 #include "startup.h"
 
-extern void reset_frame_and_clip_index(void);
-
 static void *extra_cb_data = NULL;
 static int extra_cb_key = 0;
 static int del_cb_key = 0;
@@ -1399,21 +1397,11 @@ void update_progress(boolean visible, int clipno) {
   }
 }
 
-
 static boolean accelerators_swapped;
-
 boolean get_accels_swapped(void) {return accelerators_swapped;}
 
-void cancel_process(boolean visible) {
+static void cancel_process(void) {
   if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
-  if (!visible) {
-    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
-        && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
-             && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
-      lives_rm(cfile->info_file);
-    }
-    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
-  }
 
   if (accelerators_swapped) {
     if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
@@ -1462,10 +1450,9 @@ void cancel_process(boolean visible) {
 }
 
 
-int prox_dialog(void) {
+static int prox_dialog(void) {
   int retval = 0;
   int proc_file = THREADVAR(proc_file) = mainw->current_file;
-  lives_clip_t *sfile = mainw->files[proc_file];
   lives_cancel_t cancelled = CANCEL_NONE;
 
   if (!mainw->proc_ptr) {
@@ -1488,7 +1475,7 @@ int prox_dialog(void) {
 }
 
 
-boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text) {
+boolean do_progress_dialog(boolean visiblex, boolean cancellable, const char *text) {
   // monitor progress, return FALSE if the operation was cancelled
 
   // this is the outer loop for playback and all kinds of processing
@@ -1496,7 +1483,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // visible is set for processing (progress dialog is visible)
   // or unset for video playback (progress dialog is not shown)
   char *mytext = NULL;
-  frames_t frames_done, frames;
+  frames_t frames_done;
   boolean got_err = FALSE;
   boolean markup = widget_opts.use_markup;
 
@@ -1518,7 +1505,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     on_cancel_keep_button_clicked(NULL, NULL);
     if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = cancelled;
     d_print_cancelled();
-    cancel_process(visible);
+    cancel_process();
     return FALSE;
   }
 
@@ -1577,8 +1564,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   //////////////
 
-  if (cfile->opening && ((prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) ||
-			 (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed)) && !LIVES_IS_PLAYING) {
+  if (cfile->opening) {
     if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
     lives_widget_add_accelerator(mainw->proc_ptr->preview_button,
@@ -1586,7 +1572,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 				 (LiVESXModifierType)0, (LiVESAccelFlags)0);
     accelerators_swapped = TRUE;
   }
-
 
   // mainw->origsecs, mainw->orignsecs is our base for quantising
   // (and is constant for each playback session)
@@ -1611,7 +1596,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
        end_threaded_dialog();
        mainw->proc_ptr = NULL;
        if (mainw->cancelled != CANCEL_NONE) {
-	 cancel_process(visible);
+	 cancel_process();
 	 return FALSE;
        }
      })
@@ -1635,7 +1620,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 	 }
 	 end_threaded_dialog();
 	 if (mainw->cancelled != CANCEL_NONE) {
-	   cancel_process(visible);
+	   cancel_process();
 	   return FALSE;
 	 }
        }
@@ -1649,7 +1634,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if ((mainw->disk_mon & MONITOR_QUOTA && prefs->disk_quota)) disk_monitor_start(prefs->workdir);
 
   proc_start_ticks = lives_get_current_ticks();
-
 
   if (!mainw->proc_ptr && cfile->next_event) {
     /// reset dropped frame count etc
@@ -1667,19 +1651,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
   while (1) {
-    while (!mainw->internal_messaging && ((!visible && (mainw->whentostop != STOP_ON_AUD_END ||
-							is_realtime_aplayer(prefs->audio_player))) ||
-					  !lives_file_test(cfile->info_file, LIVES_FILE_TEST_EXISTS))) {
+    while (!mainw->internal_messaging && !lives_file_test(cfile->info_file, LIVES_FILE_TEST_EXISTS)) {
       // just pulse the progress bar, or play video
       // returns a code if pb stopped
-      int ret;
-      if (visible) {
-	ret = prox_dialog();
-	mainw->noswitch = FALSE;
-      }
-      else ret = process_one();
+      int ret = prox_dialog();
+
       if (ret) {
-	cancel_process(visible);
+	cancel_process();
 	return FALSE;
       }
       
@@ -1698,11 +1676,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 	reinit_audio_gen();
       }
 
-      if ((visible && !mainw->internal_messaging)
-	  || (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused)) lives_usleep(prefs->sleep_time);
-
-      // normal playback, with realtime audio player
-      if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;
+      if (!mainw->internal_messaging) lives_usleep(prefs->sleep_time);
 
       if (mainw->iochan && !progress_count) {
 	// pump data from stdout to textbuffer
@@ -1752,9 +1726,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     if (mainw->preview_req) {
       mainw->preview_req = FALSE;
-      if (visible) mainw->noswitch = FALSE;
+      mainw->noswitch = FALSE;
       if (mainw->proc_ptr) on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
-      if (visible) mainw->noswitch = TRUE;
+      mainw->noswitch = TRUE;
     }
 
     //    #define DEBUG
@@ -1764,7 +1738,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     // we got a message from the backend...
 
-    if (visible && *mainw->msg && *mainw->msg != '!' && mainw->proc_ptr
+    if (*mainw->msg && *mainw->msg != '!' && mainw->proc_ptr
 	&& (!accelerators_swapped || cfile->opening) && cancellable
 	&& (!cfile->nopreview || cfile->keep_without_preview)) {
       if (!cfile->nopreview && !(cfile->opening && mainw->multitrack)) {
@@ -1793,24 +1767,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 	lives_widget_grab_focus(mainw->proc_ptr->preview_button);
 	if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
 	lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
-	//lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-	///
-	///
-	///
+
 	lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
 				     mainw->accel_group, LIVES_KEY_p,
 				     (LiVESXModifierType)0, (LiVESAccelFlags)0);
 	accelerators_swapped = TRUE;
       }
     }
-
     //    g_print("MSG is %s\n", mainw->msg);
 
     if (!*mainw->msg || (lives_strncmp(mainw->msg, "completed", 8) && strncmp(mainw->msg, "error", 5) &&
-			 strncmp(mainw->msg, "killed", 6) && (visible ||
-							      ((lives_strncmp(mainw->msg, "video_ended", 11) || mainw->whentostop != STOP_ON_VID_END)
-							       && (lives_strncmp(mainw->msg, "audio_ended", 11) || mainw->preview ||
-								   mainw->whentostop != STOP_ON_AUD_END))))) {
+			 strncmp(mainw->msg, "killed", 6))) {
       // processing not yet completed...
       if (*mainw->msg) {
 	// last frame processed ->> will go from cfile->start to cfile->end
@@ -1844,42 +1811,36 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 		  int frames_done = atoi(mainw->msg);
 		  if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
 		  // *INDENT-OFF*
-		}}}}}}}}
-  // *INDENT-ON*
+		}}}}}}
+      // *INDENT-ON*
 
-  // do a processing pass
-  if (process_one()) {
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-    mainw->noswitch = FALSE;
-    cancel_process(visible);
-    return FALSE;
-  }
+      // do a processing pass
+      if (prox_dialog()) {
+	lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+	mainw->noswitch = FALSE;
+	cancel_process();
+	return FALSE;
+      }
 
-  if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
-    int64_t dsused = disk_monitor_check_result(prefs->workdir);
-    if (dsused >= 0) {
-      capable->ds_used = dsused;
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
+	int64_t dsused = disk_monitor_check_result(prefs->workdir);
+	if (dsused >= 0) {
+	  capable->ds_used = dsused;
+	}
+	disk_monitor_start(prefs->workdir);
+	mainw->dsu_valid = FALSE;
+      }
+
+      if (mainw->iochan && progress_count == 0) {
+	// pump data from stdout to textbuffer
+	pump_io_chan(mainw->iochan);
+      }
+
+      if (!mainw->internal_messaging) {
+	lives_nanosleep(1000000);
+      }
     }
-    disk_monitor_start(prefs->workdir);
-    mainw->dsu_valid = FALSE;
   }
-
-  if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
-    // we are generating audio from a plugin and it needs reinit
-    // - we do it in this thread so as not to hold up the player thread
-    reinit_audio_gen();
-  }
-
-  if (mainw->iochan && progress_count == 0) {
-    // pump data from stdout to textbuffer
-    pump_io_chan(mainw->iochan);
-  }
-
-  if (!mainw->internal_messaging) {
-    lives_nanosleep(1000000);
-  }
-
-
 
 #ifdef DEBUG
   g_print("exit pt 3 %s\n", mainw->msg);
@@ -1887,40 +1848,34 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
  finish:
   //play/operation ended
-  cancel_process(visible);
+  cancel_process();
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   // get error message (if any)
   if (!strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors(FALSE);
     if (mainw->cancelled || mainw->error) {
-      mainw->noswitch = FALSE;
       return FALSE;
     }
   } else {
     if (!check_storage_space(mainw->current_file, FALSE)) {
-      mainw->noswitch = FALSE;
       return FALSE;
     }
   }
 
-  if (got_err) {
-    mainw->noswitch = FALSE;
-    return FALSE;
-  }
+  if (got_err) return FALSE;
 
 #ifdef DEBUG
   g_print("exiting progress dialog\n");
 #endif
-  mainw->noswitch = FALSE;
   return TRUE;
 }
 
 
 #define MIN_FLASH_TIME MILLIONS(100)
 
-  static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
-    // type 0 = normal auto_dialog
+static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
+  // type 0 = normal auto_dialog
     // type 1 = countdown dialog for audio recording
     // type 2 = normal with cancel
     GET_PROC_THREAD_SELF(self);

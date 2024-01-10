@@ -58,11 +58,7 @@
 #include <libavcodec/version.h>
 #include <libavutil/mem.h>
 
-#ifdef NEED_LOCAL_WEED_COMPAT
-#include "../../../libweed/weed-compat.h"
-#else
 #include <weed/weed-compat.h>
-#endif
 
 #define NEED_CLONEFUNC
 #define NEED_TIMING
@@ -87,7 +83,7 @@
 #define FAST_SEEK_LIMIT 50 // milliseconds (default 0.05 sec)
 #define FAST_SEEK_REV_LIMIT 200 // milliseconds (default 0.2 sec)
 
-#define TIME_SCALE (double)(priv->matroska.time_scale * 1000 / AV_TIME_BASE)
+#define TIME_SCALE (double)(((lives_mkv_priv_t *)cdata->priv)->matroska.time_scale * 1000. / AV_TIME_BASE)
 
 #define DEF_JUMPLIM 8
 
@@ -979,10 +975,10 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
 //////////////////////////////////////////////
 
 static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame)
-{return (int64_t)((double)(frame) * 1000. / cdata->fps);}
+{return (int64_t)((double)(frame) * TIME_SCALE / cdata->fps);}
 
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts)
-{ return (int64_t)((double)dts / 1000. * cdata->fps);}
+{ return (int64_t)((double)dts / TIME_SCALE * cdata->fps - .5);}
 
 //////////////////////////////////////////////////////////////////
 
@@ -1103,7 +1099,7 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
   }
 }
 
-static inline double to_sec(int64_t usec) {return (double)usec / 1000000.;}
+static inline double to_sec(int64_t nsec) {return (double)nsec / 1000000000.;}
 
 static int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
@@ -1128,7 +1124,7 @@ static int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 
   matroska_read_seek(cdata, ldts);
   pthread_mutex_unlock(&priv->idxc->mutex);
-  timex += get_current_usec();
+  timex += get_current_nsec();
 
   frames = dts_to_frame(cdata, ldts);
 
@@ -1148,7 +1144,7 @@ static int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   /*     priv->ovpdata = priv->avpkt.data = NULL; */
   /*     priv->avpkt.size = 0; */
 
-  /*     timex = -get_current_usec(); */
+  /*     timex = -get_current_nsec(); */
   /*     matroska_read_packet(cdata, &priv->avpkt); */
   /*     priv->ovpdata = priv->avpkt.data; */
   /*     if (priv->got_eof) { */
@@ -1162,7 +1158,7 @@ static int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   /*     avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size); */
   /* #endif */
 
-  /*     timex += get_current_usec(); */
+  /*     timex += get_current_nsec(); */
 
   /*     if (!cdata->max_decode_fps) cdata->max_decode_fps = 1000000. / (double)timex; */
   /*     else cdata->max_decode_fps = (cdata->max_decode_fps + 1000000. / (double)timex) / 2.; */
@@ -2543,20 +2539,17 @@ static int matroska_read_close(const lives_clip_data_t *cdata) {
 
 static int64_t kf_before(const lives_clip_data_t *cdata, int64_t tframe) {
   index_entry *idx;
-  int64_t target_pts, kf = -1;
-  double xtime;
+  int64_t dts, kf = -1;
   lives_mkv_priv_t *priv = cdata->priv;
   if (priv->idxc) {
-    xtime = ((double)tframe - .5) / cdata->fps;
-    target_pts = xtime * TIME_SCALE;
+    dts = frame_to_dts(cdata, tframe);
     pthread_mutex_lock(&priv->idxc->mutex);
-    idx = index_get(priv->idxc, target_pts);
+    idx = index_get(priv->idxc, dts);
+    pthread_mutex_unlock(&priv->idxc->mutex);
     if (idx) {
       //fprintf(stderr, "KF FOUND %ld %ld\n", (int64_t)((double)idx->dts / (double)AV_TIME_BASE * cdata->fps - .5), idx->offs);
-      xtime = (double)idx->dts / TIME_SCALE;
-      kf = (int64_t)(xtime * cdata->fps - .5);
+      kf = dts_to_frame(cdata, idx->dts);
     }
-    pthread_mutex_unlock(&priv->idxc->mutex);
   }
   if (cdata->kframe_dist > 0 && ((kf < 0 || tframe - kf > cdata->kframe_dist))) {
     kf = (int64_t)(tframe / cdata->kframe_dist) * cdata->kframe_dist;
@@ -2610,7 +2603,7 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 
       if (seektime) {
         blen = priv->input_position;
-        timex = get_current_usec();
+        timex = get_current_nsec();
       }
 
       // pulls one
@@ -2621,7 +2614,7 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
       priv->needs_pkt = FALSE;
 
       if (seektime) {
-        timex = get_current_usec() - timex;
+        timex = get_current_nsec() - timex;
         *seektime += timex;
         blen = priv->input_position - blen;
 
@@ -2746,7 +2739,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
 
   ////////////////////////////////////////////////////////////////////
   if (!delta && priv->picture) {
-    xtimex = get_current_usec();
+    xtimex = get_current_nsec();
     goto framedone;
   } else {
     int64_t xtarget_pts = target_pts;
@@ -2754,7 +2747,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
     if (!rev && cdata->last_frame_decoded > -1) {
       est = estimate_delay(cdata, tframe, 0, NULL);
       if (!rev) {
-        if (est <= 0. || priv->est_noseek <= 0.) {
+        if (est <= 0. || (priv->est_noseek > 0. && priv->est_noseek <= est)) {
           if (!cdata->kframes_complete || kf_before(cdata, tframe) > cdata->last_frame_decoded)
             if (cdata->jump_limit && delta > cdata->jump_limit) do_seek = TRUE;
         } else {
@@ -2774,12 +2767,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
       }
     }
 
-    utot_time = xtimex = get_current_usec();
+    utot_time = xtimex = get_current_nsec();
 
     if (cdata->last_frame_decoded == -1 || rev || do_seek) {
       //if (priv->picture) avcodec_flush_buffers(priv->ctx);
       pthread_mutex_lock(&priv->idxc->mutex);
-      timex = -get_current_usec();
+      timex = -get_current_nsec();
       idx = matroska_read_seek(cdata, xtarget_pts);
       //if (!idx) idx = index_add(priv->idxc, xtarget_pts, priv->input_position);
       pthread_mutex_unlock(&priv->idxc->mutex);
@@ -2800,7 +2793,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
       if (idx) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
 #endif
       did_seek = 2;
-      seektime = to_sec((timex = get_current_usec()) - xtimex);
+      seektime = to_sec((timex = get_current_nsec()) - xtimex);
       xtimex = timex;
     } else nextframe = cdata->last_frame_decoded + 1;
 
@@ -2813,7 +2806,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
     do {
       int64_t readtime = 0;
       if (!decode_frame(cdata, nextframe, &readtime)) goto cleanup;
-      xtimex = (timex = get_current_usec()) - xtimex - readtime;
+      xtimex = (timex = get_current_nsec()) - xtimex - readtime;
 
       ((lives_clip_data_t *)cdata)->last_frame_decoded = nextframe;
       nextframe++;
@@ -2822,8 +2815,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
 
       if (cdata->max_decode_fps > 0.) {
         ((lives_clip_data_t *)cdata)->max_decode_fps =
-          (cdata->max_decode_fps + 1000000. / (double)xtimex) / 2.;
-      } else ((lives_clip_data_t *)cdata)->max_decode_fps = 1000000. / (double)xtimex;
+          (cdata->max_decode_fps + 1000000000. / (double)xtimex) / 2.;
+      } else ((lives_clip_data_t *)cdata)->max_decode_fps = 1000000000. / (double)xtimex;
 
       is_keyframe = FALSE;
 
@@ -2994,7 +2987,7 @@ framedone2:
     }
   }
 
-  timex = get_current_usec();
+  timex = get_current_nsec();
   tot_time = to_sec(timex - utot_time);
   xtimex = timex - xtimex;
 
@@ -3045,11 +3038,11 @@ int64_t update_stats(const lives_clip_data_t *xcdata) {
 
   if (mdfps > 0.) {
     if (cdata->adv_timing.ib_time <= 0)
-      cdata->adv_timing.ib_time = -1000000. / mdfps;
+      cdata->adv_timing.ib_time = -1. / mdfps;
     if (cdata->adv_timing.k_time <= 0)
-      cdata->adv_timing.k_time = -1000000. / mdfps;
+      cdata->adv_timing.k_time = -1. / mdfps;
     if (cdata->adv_timing.k_time <= 0)
-      cdata->adv_timing.k_time = -1000000. / mdfps;
+      cdata->adv_timing.k_time = -1. / mdfps;
   }
   return cdata->last_frame_decoded;
 }
@@ -3084,7 +3077,7 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
 
   priv = cdata->priv;
 
-  priv->est_noseek = 0.;
+  priv->est_noseek = -1.;
 
   if (from_frame <= 0) from_frame = cdata->last_frame_decoded;
   if (from_frame < 0) from_frame = 0;
@@ -3149,28 +3142,30 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
 
       ibtime = fabs(ibtime);
 
-      // estimate with seek : seek and decode keyframe + decode to target frame
-      est = (kfd - 1) * ibtime;
+      if (delta < 1 || kfd < delta) {
+	// estimate with seek : seek and decode keyframe + decode to target frame
+	est = (kfd - 1) * ibtime;
 
-      if (breadtime > 0 && kf >= 0 && tframe > kf) {
-        int64_t bbytes = 0;
-        count_between(priv->idxb, kf + 1, tframe, &bbytes);
-        est += breadtime * bbytes;
-        //printf("EST 1vv is %.4f %f\n",est, breadtime);
+	if (breadtime > 0 && kf >= 0 && tframe > kf) {
+	  int64_t bbytes = 0;
+	  count_between(priv->idxb, kf + 1, tframe, &bbytes);
+	  est += breadtime * bbytes;
+	  //printf("EST 1vv is %.4f %f\n",est, breadtime);
+	}
+
+	//printf("EST 1 is %.4f %f\n",est, breadtime);
+
+	if (delta > 0) {
+	  if (kstime == 0.) yconf -= .1;
+	  else if (kstime < 0.) yconf -= .05;
+	  est += fabs(kstime);
+	} else {
+	  if (kbtime == 0.) yconf -= .1;
+	  else if (kbtime < 0.) yconf -= .05;
+	  est += fabs(kbtime);
+	}
       }
-
-      //printf("EST 1 is %.4f %f\n",est, breadtime);
-
-      if (delta > 0) {
-        if (kstime == 0.) yconf -= .1;
-        else if (kstime < 0.) yconf -= .05;
-        est += fabs(kstime);
-      } else {
-        if (kbtime == 0.) yconf -= .1;
-        else if (kbtime < 0.) yconf -= .05;
-        est += fabs(kbtime);
-      }
-
+      else est = -1.;
       //printf("EST 2 is %.4f\n",est);
 
       //fprintf(stderr, "ESTIMa is %f %f %f %ld %f %.4f %.4f\n", est, cdata->adv_timing.const_time, kstime,
@@ -3179,7 +3174,7 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
       if (delta > 0) {
         if (nks < 0) nks = delta / xkfd;
 
-        // non seek estimate is just num kfraems * kframe decode time + num ib frames * ibdecode time
+        // non seek estimate is just num kframes * kframe decode time + num ib frames * ibdecode time
         priv->est_noseek = nks * fabs(ktime) + (delta - nks) * ibtime;
 
         if (breadtime > 0) {
@@ -3209,20 +3204,23 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
   // add on the constant factor
   if (cdata->adv_timing.const_time == 0.) conf -= .1;
   else if (cdata->adv_timing.const_time < 0.) conf -= .05;
-  est += fabs(cdata->adv_timing.const_time);
-  priv->est_noseek += fabs(cdata->adv_timing.const_time);
+  if (est > 0.) est += fabs(cdata->adv_timing.const_time);
+  if (priv->est_noseek > 0.) priv->est_noseek += fabs(cdata->adv_timing.const_time);
 
   // multiply by transient load factor
   //printf("estdel 1444 %.4f %.4f\n", est, priv->est_noseek);
   //if (est > 0. && cdata->adv_timing.ctiming_ratio > 0.) est *= fabs(cdata->adv_timing.ctiming_ratio);
   if (fpclassify(est) != FP_NORMAL) est = -1.;
 
-  if (priv->est_noseek > 0. && cdata->adv_timing.ctiming_ratio > 0.)
-    priv->est_noseek *= fabs(cdata->adv_timing.ctiming_ratio);
+  /* if (priv->est_noseek > 0. && cdata->adv_timing.ctiming_ratio > 0.) */
+  /*   priv->est_noseek *= fabs(cdata->adv_timing.ctiming_ratio); */
   if (fpclassify(priv->est_noseek) != FP_NORMAL) priv->est_noseek = -1.;
 
   //printf("estdel 1444 %.4f %.4f %.4f\n", est, priv->est_noseek, conf);
 
+  if (est <= 0. || (priv->est_noseek > 0. && priv->est_noseek < est))
+    est = priv->est_noseek;
+  
   if (est <= 0 || conf < 0.) conf = 0.;
   if (conf > 1.) conf = 1.;
 

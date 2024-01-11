@@ -1347,21 +1347,37 @@ boolean fg_service_fulfill_cb(void *dummy) {
 }
 
 
+static void threadswap(void *data) {
+  lives_millisleep_while_true(mainw->do_ctx_update);
+
+  main_thread_execute_rvoid(lives_startup2, 0, "v", NULL);
+
+  mainw->do_ctx_update = TRUE;
+  mainw->gui_much_events = TRUE;
+
+  lives_millisleep_while_true(mainw->do_ctx_update);
+
+  gui_loop_tight = FALSE;
+}
+
+
 boolean fg_service_ready_cb(void *dummy) {
   static boolean done = FALSE;
   if (done) return FALSE;
   done = TRUE;
 
   d_print("GUI thread active, providing service for all other threads\n\n");
+
   lives_startup(NULL);
 
-  while (fg_service_fulfill());
+  gui_loop_tight = TRUE;
+  mainw->do_ctx_update = TRUE;
+  mainw->gui_much_events = TRUE;
 
-  lives_proc_thread_create(0, show_ui, 0, "", NULL);
-
-  //lives_startup2(NULL);
+  lives_proc_thread_create(0, threadswap, 0, "", NULL);
 
   fg_service_source = THREADVAR(guisource) = lives_idle_priority(fg_service_fulfill_cb, NULL);
+
   return FALSE;
 }
 
@@ -3086,13 +3102,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_transient_for(LiVESWindow *
 }
 
 
-static void modunmap(LiVESWindow * win, livespointer data) {if (!LIVES_IS_PLAYING && win == modalw)
-    {set_gui_loop_tight(FALSE); modalw = NULL;}}
-static void moddest(LiVESWindow * win, livespointer data) {if (!LIVES_IS_PLAYING && win == modalw)
-    {set_gui_loop_tight(FALSE); modalw = NULL;}}
+static void modunmap(LiVESWindow * win, livespointer data) {
+  if (!LIVES_IS_PLAYING && win == modalw)
+  {set_gui_loop_tight(FALSE); modalw = NULL;}
+}
+static void moddest(LiVESWindow * win, livespointer data) {
+  if (!LIVES_IS_PLAYING && win == modalw)
+  {set_gui_loop_tight(FALSE); modalw = NULL;}
+}
 static boolean moddelete(LiVESWindow * win, LiVESXEvent * event, livespointer data) {
   if (!LIVES_IS_PLAYING && win == modalw)
-    {set_gui_loop_tight(FALSE); modalw = NULL;}
+  {set_gui_loop_tight(FALSE); modalw = NULL;}
   return TRUE;
 }
 

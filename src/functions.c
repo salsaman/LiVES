@@ -1063,10 +1063,12 @@ LIVES_GLOBAL_INLINE void lives_hooks_clear(lives_hook_stack_t **hstacks, int typ
 
     if (hs_op_flags & HOOKSTACK_ASYNC_PARALLEL) {
       // if stack owner is self, we need to async_join
-      GET_PROC_THREAD_SELF(self);
-      if (hstack->owner.lpt == self) {
-        if (hstack->flags & STACK_TRIGGERING) PTMUH;
-        lives_hooks_async_join(NULL, type);
+      if (!(hstack->flags & HOOKSTACK_NATIVE)) {
+        GET_PROC_THREAD_SELF(self);
+        if (hstack->owner.lpt == self) {
+          if (hstack->flags & STACK_TRIGGERING) PTMUH;
+          lives_hooks_async_join(NULL, type);
+        }
       }
     }
 

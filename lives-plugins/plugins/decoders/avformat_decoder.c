@@ -1406,7 +1406,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         }
       }
     } else do_seek = TRUE;
-    
+
     // seek to new frame
     if (priv->pFrame) {
       av_frame_unref(priv->pFrame);
@@ -1439,13 +1439,13 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       fprintf(stderr, "new seek: %ld %ld %ld\n", cdata->last_frame_decoded, seek_target, priv->ic->start_time);
 #endif
       if (priv->pkt_inited) {
-	// seems to be necessary before flushing buffers, but after doing seek
-	if (priv->ovpdata) {
-	  priv->packet.data = priv->ovpdata;
-	  av_packet_unref(&priv->packet);
-	}
-	priv->ovpdata = priv->packet.data = NULL;
-	priv->packet.size = 0;
+        // seems to be necessary before flushing buffers, but after doing seek
+        if (priv->ovpdata) {
+          priv->packet.data = priv->ovpdata;
+          av_packet_unref(&priv->packet);
+        }
+        priv->ovpdata = priv->packet.data = NULL;
+        priv->packet.size = 0;
       }
 
       avcodec_flush_buffers(cc);
@@ -1458,7 +1458,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time = (cdata->adv_timing.seekback_time + (double)xtimex) / 2.;
     } else {
       if (cdata->fps)
-	MyPts = priv->last_pts;//(double)(cdata->last_frame_decoded - .5) / cdata->fps * (double)AV_TIME_BASE;
+        MyPts = priv->last_pts;//(double)(cdata->last_frame_decoded - .5) / cdata->fps * (double)AV_TIME_BASE;
       timex = get_current_nsec();
     }
 #ifdef HAVE_AVCODEC_SEND_PACKET
@@ -1472,71 +1472,71 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 #ifdef DEBUG
       fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame
-	      ? (int64_t)(priv->pFrame->best_effort_timestamp
-			  * cdata->fps * s->time_base.num / s->time_base.den) : 0,
-	      priv->pFrame->color_trc, priv->pFrame->color_range);
+              ? (int64_t)(priv->pFrame->best_effort_timestamp
+                          * cdata->fps * s->time_base.num / s->time_base.den) : 0,
+              priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
 
 #ifdef TEST_CACHING
       if (gotFrame && priv->cachemax > 0) {
-	add_to_cache(priv, MyPts);
-	fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
+        add_to_cache(priv, MyPts);
+        fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
       }
 #endif
 
       xtimex = to_sec((timex = get_current_nsec()) - xtimex);
 
       if (cdata->max_decode_fps > 0.) {
-	((lives_clip_data_t *)cdata)->max_decode_fps = (cdata->max_decode_fps + (double)xtimex) / 2.;
+        ((lives_clip_data_t *)cdata)->max_decode_fps = (cdata->max_decode_fps + (double)xtimex) / 2.;
       } else ((lives_clip_data_t *)cdata)->max_decode_fps = (double)xtimex;
 
       is_keyframe = FALSE;
 
       if (cdata->kframe_dist && cdata->fps) {
-	int64_t frame = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5) + 1;
-	if (!(frame % cdata->kframe_dist)) is_keyframe = TRUE;
+        int64_t frame = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5) + 1;
+        if (!(frame % cdata->kframe_dist)) is_keyframe = TRUE;
       }
 
       if (did_seek) {
-	if (is_keyframe) {
-	  if (cdata->adv_timing.k_time > 0.)
-	    ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (cdata->adv_timing.ks_time + (double)xtimex) / 2.;
-	  else
-	    ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
-	} else {
-	  if (cdata->adv_timing.ib_time > 0.)
-	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
-	  else
-	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
-	}
+        if (is_keyframe) {
+          if (cdata->adv_timing.k_time > 0.)
+            ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (cdata->adv_timing.ks_time + (double)xtimex) / 2.;
+          else
+            ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
+        } else {
+          if (cdata->adv_timing.ib_time > 0.)
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
+          else
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+        }
       } else {
-	if (is_keyframe) {
-	  if (cdata->adv_timing.k_time > 0.)
-	    ((lives_clip_data_t *)cdata)->adv_timing.k_time = (cdata->adv_timing.k_time + (double)xtimex) / 2.;
-	  else
-	    ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
-	} else {
-	  if (cdata->adv_timing.ib_time > 0.)
-	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
-	  else
-	    ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
-	}
+        if (is_keyframe) {
+          if (cdata->adv_timing.k_time > 0.)
+            ((lives_clip_data_t *)cdata)->adv_timing.k_time = (cdata->adv_timing.k_time + (double)xtimex) / 2.;
+          else
+            ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
+        } else {
+          if (cdata->adv_timing.ib_time > 0.)
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
+          else
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+        }
       }
 
       //fprintf(stderr, "VALS %ld -> %ld, %d\n", MyPts, target_pts, gotFrame);
       if (cdata->fps && s->time_base.den) {
-	cframe = (int64_t)(priv->pFrame->best_effort_timestamp
-			   * cdata->fps * s->time_base.num / s->time_base.den) - 1;
+        cframe = (int64_t)(priv->pFrame->best_effort_timestamp
+                           * cdata->fps * s->time_base.num / s->time_base.den) - 1;
       } else cframe = -1;
       if (cframe == tframe || MyPts >= target_pts - 1) {
-	//fprintf(stderr, "frame found !\n");
-	/* if (cdata->fps) { */
-	/*   MyPts += (double)AV_TIME_BASE / cdata->fps; */
-	priv->last_pts = MyPts;
-	//}
-	hit_target = TRUE;
-	xtimex = timex;
-	break;
+        //fprintf(stderr, "frame found !\n");
+        /* if (cdata->fps) { */
+        /*   MyPts += (double)AV_TIME_BASE / cdata->fps; */
+        priv->last_pts = MyPts;
+        //}
+        hit_target = TRUE;
+        xtimex = timex;
+        break;
       }
 
       // otherwise discard this frame
@@ -1575,11 +1575,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   /////////////////////////////////////////////////////
 
- framedone:
+framedone:
   ((lives_clip_data_t *)cdata)->last_frame_decoded = tframe;
 
 #ifdef TEST_CACHING
- framedone2:
+framedone2:
 #endif
   if (!priv->pFrame || !pixel_data) return TRUE;
 
@@ -1628,7 +1628,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
     if ((rowstride = rowstrides[p]) <= 0) {
       fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n"
-	      "last frame decoded was %ld\n", rowstride, tframe, p, cdata->last_frame_decoded);
+              "last frame decoded was %ld\n", rowstride, tframe, p, cdata->last_frame_decoded);
       if (did_seek) fprintf(stderr, "did seek to frame %ld\n", seek_target);
       goto cleanup;
     }
@@ -1638,16 +1638,16 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       bleft += xrowstride / (psize * 2);
       bright += xrowstride / (psize * 2);
       if (bleft < 0 && bright > 0) {
-	bright += bleft;
-	bleft = 0;
+        bright += bleft;
+        bleft = 0;
       }
       if (bright < 0 && bleft > 0) {
-	bleft += bright;
-	bright = 0;
+        bleft += bright;
+        bright = 0;
       }
       if (bleft < 0 || bright < 0) {
-	dstwidth += (bleft + bright) * psize;
-	bleft = bright = 0;
+        dstwidth += (bleft + bright) * psize;
+        bleft = bright = 0;
       }
     }
 
@@ -1662,7 +1662,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       (*cdata->ext_funcs.memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {
-	(*cdata->ext_funcs.memcpy)(&dst[rowstride * i], &src[priv->pFrame->linesize[p] * i], dstwidth);
+        (*cdata->ext_funcs.memcpy)(&dst[rowstride * i], &src[priv->pFrame->linesize[p] * i], dstwidth);
       }
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
@@ -1684,7 +1684,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     ((lives_clip_data_t *)cdata)->adv_timing.const_time = (double)xtimex;
   return TRUE;
 
- cleanup:
+cleanup:
   if (priv->ovpdata) {
     priv->packet.data = priv->ovpdata;
     av_packet_unref(&priv->packet);
@@ -1741,11 +1741,11 @@ static int64_t kf_before(const lives_clip_data_t *cdata, int64_t tframe) {
   lives_mkv_priv_t *priv = cdata->priv;
   if (priv->idxc) {
     if (cdata->fps)((lives_clip_data_t *)cdata)->kframe_dist =
-		     idxc_analyse(priv->idxc, cdata->fps / AV_TIME_BASE,
-				  (kframe_check_cb_f)kframe_check_cb, (void *)cdata);
+        idxc_analyse(priv->idxc, cdata->fps / AV_TIME_BASE,
+                     (kframe_check_cb_f)kframe_check_cb, (void *)cdata);
     pthread_mutex_unlock(&priv->idxc->mutex);
     ((lives_clip_data_t *)cdata)->kframes_complete = TRUE;
-  
+
     if (cdata->kframe_dist > 0)
       ((lives_clip_data_t *)cdata)->jump_limit = cdata->kframe_dist;
     else
@@ -1893,22 +1893,21 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t l
       ibtime = fabs(ibtime);
 
       if (delta < 1 || kfd < delta) {
-	// estimate with seek : seek and decode keyframe + decode to target frame
-	est = (kfd - 1) * ibtime;
+        // estimate with seek : seek and decode keyframe + decode to target frame
+        est = (kfd - 1) * ibtime;
 
-	//printf("EST 1 is %.4f %f\n",est, breadtime);
+        //printf("EST 1 is %.4f %f\n",est, breadtime);
 
-	if (delta > 0) {
-	  if (kstime == 0.) yconf -= .1;
-	  else if (kstime < 0.) yconf -= .05;
-	  est += fabs(kstime);
-	} else {
-	  if (kbtime == 0.) yconf -= .1;
-	  else if (kbtime < 0.) yconf -= .05;
-	  est += fabs(kbtime);
-	}
-      }
-      else est = -1.;
+        if (delta > 0) {
+          if (kstime == 0.) yconf -= .1;
+          else if (kstime < 0.) yconf -= .05;
+          est += fabs(kstime);
+        } else {
+          if (kbtime == 0.) yconf -= .1;
+          else if (kbtime < 0.) yconf -= .05;
+          est += fabs(kbtime);
+        }
+      } else est = -1.;
       //printf("EST 2 is %.4f\n",est);
 
       //fprintf(stderr, "ESTIMa is %f %f %f %ld %f %.4f %.4f\n", est, cdata->adv_timing.const_time, kstime,
@@ -1959,7 +1958,7 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t l
 
   if (est <= 0. || (priv->est_noseek > 0. && priv->est_noseek < est))
     est = priv->est_noseek;
-  
+
   if (est <= 0 || conf < 0.) conf = 0.;
   if (conf > 1.) conf = 1.;
 

@@ -55,7 +55,7 @@ extern "C"
 #include <weed/weed-effects.h>
 #include <weed/weed-utils.h>
 
-#include <weed/weed-plugin-utils/weed-plugin-utils.c>
+#include <weed/weed-plugin-utils.h>
 
 #include "lives-plugin.h"
 
@@ -600,8 +600,8 @@ static int64_t idxc_analyse(index_container_t *idxc, double fpsc, kframe_check_c
       frame = (int64_t)(xidx->dts * fpsc - 0.5);
       ndist = frame % dist;
       if (ndist) {
-	if (!(dist % ndist)) dist = ndist;
-	else return 0;
+        if (!(dist % ndist)) dist = ndist;
+        else return 0;
       }
       if (xidx->offs - frame > dist) return 0;
     }

@@ -7821,7 +7821,7 @@ void run_diskspace_dialog(const char *target) {
 
   qslider_changed(dsq->slider, NULL);
 
-  if (prefs->startup_phase) {
+  if (1 || prefs->startup_phase) {
     char *wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
     if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
     lives_dialog_run(LIVES_DIALOG(dialog));

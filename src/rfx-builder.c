@@ -465,7 +465,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   } else {
     lives_widget_grab_focus(rfxbuilder->name_entry);
   }
-  
+
   lives_widget_show_all(rfxbuilder->dialog);
 
   return rfxbuilder;

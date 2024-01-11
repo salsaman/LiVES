@@ -1745,14 +1745,6 @@ boolean lives_startup(livespointer data) {
 }
 
 
-boolean show_ui(void *data) {
-  mainw->ignore_screen_size = TRUE;
-  reset_mainwin_size();
-  mainw->ignore_screen_size = FALSE;
-  main_thread_execute_rvoid(lives_startup2, 0, "v", NULL);
-  return FALSE;
-}
-
 boolean lives_startup2(livespointer data) {
   lives_proc_thread_t lpt;
   int64_t dsval;
@@ -1865,6 +1857,11 @@ boolean lives_startup2(livespointer data) {
 
   if (!mainw->cliplist)
     if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
+
+  /* for (int i = 0; i < 1000; i++) { */
+  /*   clone_srcgrp(2, 2, i, SRC_PURPOSE_PRECACHE); */
+  /*   srcgrp_remove(2, i, SRC_PURPOSE_PRECACHE);  */
+  /* } */
 
   ///////////////
 
@@ -1994,7 +1991,6 @@ boolean lives_startup2(livespointer data) {
 #ifdef DUMPMSGS
   dump_messages(NULL);
 #endif
-
   mainw->is_ready = TRUE;
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);

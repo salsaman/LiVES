@@ -2050,7 +2050,7 @@ static void *render_thread_func(void *data) {
   XCloseDisplay(dpy);
 
   dpy = NULL;
-  
+
   return NULL;
 }
 

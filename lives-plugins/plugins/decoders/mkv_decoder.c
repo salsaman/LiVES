@@ -1637,8 +1637,13 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   if (priv->ctx) {
     avcodec_close(priv->ctx);
+    avcodec_free_context(&priv->ctx);
     av_free(priv->ctx);
   }
+
+  av_packet_unref(priv->avpkt);
+
+  avformat_free_context(priv->s);
 
   if (priv->vidst) avcodec_close(priv->vidst->codec);
 
@@ -3143,29 +3148,28 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
       ibtime = fabs(ibtime);
 
       if (delta < 1 || kfd < delta) {
-	// estimate with seek : seek and decode keyframe + decode to target frame
-	est = (kfd - 1) * ibtime;
+        // estimate with seek : seek and decode keyframe + decode to target frame
+        est = (kfd - 1) * ibtime;
 
-	if (breadtime > 0 && kf >= 0 && tframe > kf) {
-	  int64_t bbytes = 0;
-	  count_between(priv->idxb, kf + 1, tframe, &bbytes);
-	  est += breadtime * bbytes;
-	  //printf("EST 1vv is %.4f %f\n",est, breadtime);
-	}
+        if (breadtime > 0 && kf >= 0 && tframe > kf) {
+          int64_t bbytes = 0;
+          count_between(priv->idxb, kf + 1, tframe, &bbytes);
+          est += breadtime * bbytes;
+          //printf("EST 1vv is %.4f %f\n",est, breadtime);
+        }
 
-	//printf("EST 1 is %.4f %f\n",est, breadtime);
+        //printf("EST 1 is %.4f %f\n",est, breadtime);
 
-	if (delta > 0) {
-	  if (kstime == 0.) yconf -= .1;
-	  else if (kstime < 0.) yconf -= .05;
-	  est += fabs(kstime);
-	} else {
-	  if (kbtime == 0.) yconf -= .1;
-	  else if (kbtime < 0.) yconf -= .05;
-	  est += fabs(kbtime);
-	}
-      }
-      else est = -1.;
+        if (delta > 0) {
+          if (kstime == 0.) yconf -= .1;
+          else if (kstime < 0.) yconf -= .05;
+          est += fabs(kstime);
+        } else {
+          if (kbtime == 0.) yconf -= .1;
+          else if (kbtime < 0.) yconf -= .05;
+          est += fabs(kbtime);
+        }
+      } else est = -1.;
       //printf("EST 2 is %.4f\n",est);
 
       //fprintf(stderr, "ESTIMa is %f %f %f %ld %f %.4f %.4f\n", est, cdata->adv_timing.const_time, kstime,
@@ -3220,7 +3224,7 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
 
   if (est <= 0. || (priv->est_noseek > 0. && priv->est_noseek < est))
     est = priv->est_noseek;
-  
+
   if (est <= 0 || conf < 0.) conf = 0.;
   if (conf > 1.) conf = 1.;
 

@@ -2451,8 +2451,8 @@ void switch_to_file(int old_file, int new_file) {
   if (mainw->is_ready) {
     if (!mainw->multitrack && !mainw->reconfig) {
       if (!get_timeline_lock()) {
-	if (mainw->recovering_files) return;
-	lives_millisleep_while_false(get_timeline_lock());
+        if (mainw->recovering_files) return;
+        lives_millisleep_while_false(get_timeline_lock());
       }
       redraw_timeline(mainw->current_file);
       unlock_timeline();
@@ -2941,7 +2941,7 @@ static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile, int track, int pu
 
   pthread_mutex_init(&srcgrp->src_mutex, NULL);
   pthread_mutex_init(&srcgrp->refcnt_mutex, NULL);
-  srcgrp->refcnt = 1;
+  //srcgrp->refcnt = 1;
   sfile->src_groups = lives_recalloc(sfile->src_groups, ngrps + 1,
                                      ngrps, sizeof(lives_clipsrc_group_t *));
   sfile->src_groups[ngrps] = srcgrp;
@@ -3220,7 +3220,7 @@ static void _clip_src_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, l
     srcgrp->n_srcs = --nsrcs;
 
     if (nsrcs) srcgrp->srcs = lives_recalloc(srcgrp->srcs, nsrcs,
-                                  nsrcs + 1, sizeof(lives_clip_src_t *));
+                                nsrcs + 1, sizeof(lives_clip_src_t *));
     else lives_freep((void **)&srcgrp->srcs);
   }
 }
@@ -3274,10 +3274,16 @@ void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *srcgrp) {
 static void _srcgrp_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp) {
   // free all srcs in srcgrp, then srcgrp itself
   if (sfile && srcgrp) {
+    weed_layer_t *layer;
     int track = srcgrp->track;
     if (track != -1) {
       mainw->track_sources[track] = NULL;
       mainw->active_track_list[track] = mainw->old_active_track_list[track] = 0;
+    }
+    layer = srcgrp->layer;
+    if (layer) {
+      lives_layer_unset_srcgrp(layer);
+      srcgrp->layer = NULL;
     }
     if (srcgrp->n_srcs) _clip_srcs_free_all(sfile, srcgrp);
     lives_free(srcgrp);
@@ -3331,7 +3337,7 @@ void srcgrp_remove(int nclip, int track, int purpose) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
     srcgrp = _get_srcgrp(sfile, track, purpose);
     if (srcgrp) {
-      if (purpose == SRC_PURPOSE_ANY || srcgrp->purpose != SRC_PURPOSE_PRIMARY) {
+      if (purpose == SRC_PURPOSE_ANY || srcgrp->purpose == purpose) {
         _srcgrp_remove(sfile, srcgrp);
         _srcgrp_free(sfile, srcgrp);
       }
@@ -3395,7 +3401,7 @@ lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_t
 static lives_clip_src_t *_get_primary_src(lives_clip_t *sfile) {
   if (sfile) {
     lives_clipsrc_group_t *srcgrp = _get_srcgrp(sfile, -1, SRC_PURPOSE_PRIMARY);
-    if (srcgrp && srcgrp->n_srcs) 
+    if (srcgrp && srcgrp->n_srcs)
       for (int i = 0; i < srcgrp->n_srcs; i++)
         if (srcgrp->srcs[i] && srcgrp->srcs[i]->actor)
           return srcgrp->srcs[i];
@@ -3575,7 +3581,7 @@ int get_primary_src_type(lives_clip_t *sfile) {
 
 
 lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose) {
-  // create a clone of PRIMARY with track and purpose
+  // create a clone of PRIMARY with different track and purpose
   // from sclip to dclip (dclip can == sclip)
   // clip_srcs which have actor_inst defined will not be copied
   lives_clip_t *sfile = RETURN_VALID_CLIP(sclip);
@@ -3583,7 +3589,7 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
     lives_clipsrc_group_t *srcgrp = get_srcgrp(sclip, -1, SRC_PURPOSE_PRIMARY);
     if (srcgrp) {
       // create new grp, memcpy, adjust track and purpose and uid
-      // step trhough srcs, clone each one 
+      // step trhough srcs, clone each one
       lives_clipsrc_group_t *xsrcgrp = _add_srcgrp(sfile, track, purpose);
       lives_memcpy(xsrcgrp, srcgrp, sizeof(lives_clipsrc_group_t));
       xsrcgrp->srcs = LIVES_CALLOC_SIZEOF(lives_clip_src_t *, srcgrp->n_srcs);

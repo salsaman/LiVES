@@ -2261,7 +2261,7 @@ void aud_fade(int fileno, double startt, double endt, double startv, double endv
 }
 
 
-void preview_audio(void) {
+void preview_audio(frames_t aframeno) {
   // start a minimalistic player with only audio
   mainw->play_start = cfile->start;
   mainw->play_end = cfile->end;
@@ -2307,8 +2307,8 @@ void preview_audio(void) {
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
       && mainw->jackd->playing_file > -1) {
-    if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
-      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
+    if (!jack_audio_seek_frame(mainw->jackd, aframeno)) {
+      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, aframeno);
       else avsync_force();
     }
   }
@@ -2317,7 +2317,7 @@ void preview_audio(void) {
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed
       && mainw->pulsed->playing_file > -1) {
-    if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
+    if (!pulse_audio_seek_frame(mainw->pulsed, aframeno)) {
       handle_audio_timeout();
       return;
     }
@@ -2416,10 +2416,10 @@ void preview_audio(void) {
 }
 
 
-void preview_aud_vol(void) {
+void preview_aud_vol(frames_t aframeno) {
   float ovol = cfile->vol;
   cfile->vol = (float)mainw->fx1_val;
-  preview_audio();
+  preview_audio(aframeno);
   cfile->vol = ovol;
   mainw->cancelled = CANCEL_NONE;
   mainw->error = FALSE;

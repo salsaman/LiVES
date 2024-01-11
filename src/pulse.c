@@ -356,6 +356,7 @@ static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno
         else pulsed->loop = AUDIO_LOOP_FORWARD;
       } else pulsed->loop = AUDIO_LOOP_NONE;
 
+
       if ((activate || running) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
         if (!sfile->play_paused)
           pulsed->in_arate = myround(sfile->arate * sfile->pb_fps / sfile->fps);
@@ -2067,7 +2068,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // the value returned mut be monotonic after resset. Thus when we get a new reading we can only reduce extrausec by
   // (new_reading / old_reading). However we will keep track of the ratio extrausec / measured_usec, and we will
   // then start dividing extrausec by this value (clamped between 0.5 <= scale <= 2.0(
-  
+
   int64_t usec;
   ticks_t retval = -1;
   volatile aserver_message_t *msg = pulsed->msgq;

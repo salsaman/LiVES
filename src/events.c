@@ -3435,7 +3435,6 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       } else spare_cycles++;
     } else {
-
       // check clip_index vs nodemodel->clip_index
       // if anything changed, we need to rebuild nodemodel
 
@@ -3498,7 +3497,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
           mainw->files[new_file]->vsize = cfile->vsize;
           current_file = mainw->current_file;
           mainw->current_file = new_file;
-          mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
+          //mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
           if (prefs->show_player_stats) {
@@ -3510,21 +3509,12 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         break;
       } else {
         cfile->frameno = mainw->frame_index[i - 1];
-        mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
+        //mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
         mainw->pchains = pchains;
         load_frame_image(cfile->frameno);
         mainw->pchains = NULL;
       }
     }
-
-
-
-
-
-
-
-
-
 
 
     cfile->next_event = get_next_event(next_event);

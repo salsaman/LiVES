@@ -4097,9 +4097,9 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
       int nvals;
       bret = FALSE;
       if (!lives_strcmp(key, LIVES_LEAF_REFCOUNTER)) {
-	lives_refcounter_t *refcount = (lives_refcounter_t *)
-	  weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
-	pthread_mutex_destroy(&refcount->mutex);
+        lives_refcounter_t *refcount = (lives_refcounter_t *)
+                                       weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
+        pthread_mutex_destroy(&refcount->mutex);
       }
       switch (st) {
       case WEED_SEED_PLANTPTR: {
@@ -4165,7 +4165,7 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, con
   // then when val is changed, we get error immutable, and will check for autofree.
   if (state)
     return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_IMMUTABLE
-				  | WEED_FLAG_UNDELETABLE);
+                                  | WEED_FLAG_UNDELETABLE);
   return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
 }
 
@@ -8039,9 +8039,9 @@ void weed_generator_end(weed_plant_t *inst) {
       // do not remove if playback ended
       if (LIVES_IS_PLAYING || mainw->blend_file == -1) {
         //bg_generator_key = bg_generator_mode = -1;
-	RECURSE_GUARD_ARM;
+        RECURSE_GUARD_ARM;
         remove_primary_src(mainw->blend_file, LIVES_SRC_TYPE_GENERATOR);
-	RECURSE_GUARD_END;
+        RECURSE_GUARD_END;
       } else set_primary_inst(mainw->blend_file, NULL);
       bg_gen_to_start = -1;
     }
@@ -9387,9 +9387,9 @@ boolean rte_key_setmode(int key, int newmode) {
 
   if (newmode == oldmode) return FALSE;
 
-  
 
-  
+
+
   if (rte_window_visible()) rtew_set_mode_radio(key, newmode);
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key, newmode);
 
@@ -9402,7 +9402,7 @@ boolean rte_key_setmode(int key, int newmode) {
   }
 
   postpone_planning();
-  
+
   blend_file = mainw->blend_file;
 
   if (inst) {
@@ -9436,7 +9436,7 @@ boolean rte_key_setmode(int key, int newmode) {
         key = real_key;
         mainw->rte &= ~(GU641 << key);
         mainw->rte_real &= ~(GU641 << key);
-	continue_planning();
+        continue_planning();
         return FALSE;
       }
       weed_instance_unref(inst);

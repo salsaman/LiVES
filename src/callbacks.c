@@ -148,7 +148,7 @@ void lives_exit(int signum) {
 #ifdef VALGRIND_ON
     if (LIVES_IS_PLAYING) {
       lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-      if (mainw->ext_playback){
+      if (mainw->ext_playback) {
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         mainw->ext_audio = FALSE;
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);
@@ -9373,8 +9373,8 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
       creb = lives_widget_begin_paint(widget);
       endp = TRUE;
       if (!*psurf) {
-	*psurf = lives_painter_get_target(creb);
-	lives_painter_surface_reference(*psurf);
+        *psurf = lives_painter_get_target(creb);
+        lives_painter_surface_reference(*psurf);
       }
     }
   }
@@ -9421,7 +9421,7 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
                                  cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
         }
 #endif
-      } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CURRENT_CLIP_TOTAL_TIME;
+      }
     }
   } else {
     offset = cfile->real_pointer_time / CURRENT_CLIP_TOTAL_TIME * allocwidth;
@@ -9699,7 +9699,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
           mainw->ignore_screen_size = TRUE;
           reset_mainwin_size();
           mainw->ignore_screen_size = FALSE;
-	  if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
+          if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
           if (!CURRENT_CLIP_IS_VALID) {
             lives_ce_update_timeline(0, 0.);
 	    // *INDENT-OFF*

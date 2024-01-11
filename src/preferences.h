@@ -21,7 +21,7 @@
 // internal application prefs, not intended to be altered by users
 #define PREF_FLAG_INTERNAL		(1 << 0)
 
-// developer prefs, set to enable test features 
+// developer prefs, set to enable test features
 #define PREF_FLAG_EXPERIMENTAL		(1 << 8)
 
 // prefs thet are still Work In Progress

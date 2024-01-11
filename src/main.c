@@ -407,6 +407,8 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
   static int printed = 0;
   int only_print = 0;
 
+  if (mainw->foreign) _exit(signum);
+
   fflush(stderr);
 
   // trap for ctrl-C and others
@@ -455,12 +457,6 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 
   //#endif
 
-  if (!only_print) {
-    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
-    if (mainw->foreign) _exit(signum);
-    if (mainw->record) backup_recording(NULL, NULL);
-    if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
-  }
 
   if (sigsrc == SIG_SRC_INTERN)
     fprintf(stderr, "Signal was caught internally\n");

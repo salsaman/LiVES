@@ -759,6 +759,8 @@ void play_file(void) {
 
   mainw->refresh_model = TRUE;
 
+  fg_service_wake();
+
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_void(pre_playback, 0);
   BG_THREADVAR(hook_hints) = 0;
@@ -766,6 +768,9 @@ void play_file(void) {
   // setting this forces the main thread to block in a loop and only update
   // ths gui context on request (via update_gui in player.c)
   set_gui_loop_tight(TRUE);
+  mainw->gui_much_events = TRUE;
+  mainw->do_ctx_update = TRUE;
+
 
   //arate = cfile->arate;
   mute = mainw->mute;
@@ -1099,10 +1104,6 @@ void play_file(void) {
 
   mainw->osc_auto = 0;
 
-  if (mainw->nodemodel) {
-    cleanup_nodemodel(&mainw->nodemodel);
-  }
-
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
   if (mainw->record && !mainw->record_paused)
     event_list_add_end_events(mainw->event_list, TRUE);
@@ -1121,7 +1122,7 @@ void play_file(void) {
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
       && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
-	   && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
+           && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
     lives_rm(cfile->info_file);
   }
 
@@ -1277,11 +1278,11 @@ void play_file(void) {
   if (mainw->ext_player_layer) reset_ext_player_layer(FALSE);
 
   // nodemodel / plan
-  cleanup_nodemodel(&mainw->nodemodel);
+  if (mainw->nodemodel) cleanup_nodemodel(&mainw->nodemodel);
 
   //  ann_roll_cancel();
 
-  // wait fro drawing operations to finish
+  // wait for drawing operations to finish
   fg_stack_wait();
   lives_microsleep_while_true(mainw->do_ctx_update);
 

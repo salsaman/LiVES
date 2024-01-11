@@ -2917,9 +2917,9 @@ void create_LiVES(void) {
                        LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open), LIVES_WIDGET_ACTIVATE_SIGNAL,
-		       LIVES_GUI_CALLBACK(on_open_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_open_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
-		       LIVES_GUI_CALLBACK(on_open_sel_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_open_sel_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_dvd), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_vcd_activate),
                        LIVES_INT_TO_POINTER(LIVES_DEVICE_DVD));

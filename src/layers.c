@@ -654,7 +654,7 @@ boolean layer_processed_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
     lock_layer_status(layer);
 
     lives_layer_unset_srcgrp(layer);
-  
+
     if (!_weed_layer_check_valid(layer)) {
       _lives_layer_set_status(layer, LAYER_STATUS_INVALID);
       unlock_layer_status(layer);
@@ -665,9 +665,9 @@ boolean layer_processed_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
 
     if (lives_layer_plan_controlled(layer)) {
       if (_lives_layer_get_status(layer) == LAYER_STATUS_LOADING)
-	_lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+        _lives_layer_set_status(layer, LAYER_STATUS_LOADED);
       if (_lives_layer_get_status(layer) == LAYER_STATUS_PROCESSED)
-	_lives_layer_set_status(layer, LAYER_STATUS_READY);
+        _lives_layer_set_status(layer, LAYER_STATUS_READY);
     } else _lives_layer_set_status(layer, LAYER_STATUS_READY);
 
     unlock_layer_status(layer);
@@ -1094,9 +1094,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
     }
 #endif
     if (lives_layer_get_proc_thread(layer)) lives_layer_set_proc_thread(layer, NULL);
- 
+
     lives_layer_unset_srcgrp(layer);
-    
+
     if (weed_layer_get_type(layer) == WEED_LAYER_TYPE_VIDEO) {
       if (weed_layer_get_pixel_data(layer)) weed_layer_pixel_data_free(layer);
       else weed_layer_nullify_pixel_data(layer);

@@ -1097,7 +1097,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
         BREAK_ME("invpal");
         lives_proc_thread_error((int)retval, LPT_ERR_MINOR, "%s", msg);
         lives_free(msg);
-	weed_layer_set_invalid(layer, TRUE);
+        weed_layer_set_invalid(layer, TRUE);
         weed_layer_unref(layer);
         lives_proc_thread_cancel(self);
       }
@@ -1628,16 +1628,15 @@ static int planrunner_unlock(void) {
 }
 
 void postpone_planning(void) {
- if (LIVES_IS_PLAYING) planrunner_lock();
+  if (LIVES_IS_PLAYING) planrunner_lock();
 }
- 
+
 void continue_planning(void) {
   if (LIVES_IS_PLAYING) {
     mainw->refresh_model = TRUE;
     planrunner_unlock();
   }
 }
-
 
 
 #define SET_PLAN_STATE(xstate) _DW0(plan->state = PLAN_STATE_##xstate;)
@@ -1896,7 +1895,7 @@ static void run_plan(exec_plan_t *plan) {
             int clip = lives_layer_get_clip(layer);
             lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
             plan->template->frame_idx[step->track] = plan->frame_idx[step->track]
-	      = lives_layer_get_frame(layer);
+            = lives_layer_get_frame(layer);
             xtime = inc_running_steps(step);
             d_print_debug("\nstep %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n", step_count,
                           step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
@@ -1920,15 +1919,13 @@ static void run_plan(exec_plan_t *plan) {
             }
 
             if (!(state == STEP_STATE_FINISHED || state == STEP_STATE_SKIPPED
-                  || state == STEP_STATE_IGNORE))  {
-              break;
-            }
+                  || state == STEP_STATE_IGNORE)) break;
           }
           if (i < step->ndeps) continue;
-	}
+        }
 
         if ((error || cancelled) && step->state != STEP_STATE_RUNNING) {
-	  step->state = STEP_STATE_CANCELLED;
+          step->state = STEP_STATE_CANCELLED;
           continue;
         }
 
@@ -1950,6 +1947,7 @@ static void run_plan(exec_plan_t *plan) {
           step->ini_width = weed_layer_get_width(layer);
           step->ini_height = weed_layer_get_height(layer);
           step->ini_gamma = weed_layer_get_gamma(layer);
+
           d_print_debug("\nstep %d: RUN CONVERT (track %d) @ %.2f msec: "
                         "from pal %s, %d X %d, gamma %s ---> pal %s, %d X %d gamma %s\n", step_count,
                         step->track, 1000. * xtime, weed_palette_get_name(step->ini_pal), step->ini_width, step->ini_height,
@@ -1992,8 +1990,6 @@ static void run_plan(exec_plan_t *plan) {
             //if (prefs->dev_show_timing)
             d_print_debug("No conversion needed - skipping step\n");
             step->state = STEP_STATE_SKIPPED;
-
-            //dec_running_steps(step);
 
             if (weed_layer_check_valid(layer)) {
               if (!(step->flags & STEP_FLAG_NO_READY_STAT)) {
@@ -2106,7 +2102,7 @@ static void run_plan(exec_plan_t *plan) {
           lives_layer_async_auto(layer, lpt);
 
           inc_running_steps(step);
-	  complete = FALSE;
+          complete = FALSE;
           break;
         }
 
@@ -2118,47 +2114,47 @@ static void run_plan(exec_plan_t *plan) {
 
             for (int i = 0; i < plan->model->ntracks; i++) {
               if (plan->layers[i]) {
-		if (weed_layer_check_valid(plan->layers[i]))
-		  lives_layer_set_status(plan->layers[i], LAYER_STATUS_READY);
-	      }
-	    }
-	    step->state = STEP_STATE_FINISHED;
-	    break;
-	  }
-	      
-	  inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
+                if (weed_layer_check_valid(plan->layers[i]))
+                  lives_layer_set_status(plan->layers[i], LAYER_STATUS_READY);
+              }
+            }
+            step->state = STEP_STATE_FINISHED;
+            break;
+          }
 
-	  if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
+          inst = rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
+
+          if (!(step->flags & STEP_FLAG_RUN_AS_LOAD)) {
             d_print_debug("\nstep %d: RUN APPLY_INST (%s) @ %.2f msec, pd i %p\n",
                           step_count, weed_filter_get_name((weed_filter_t *)step->target),
                           xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
 
-	    if (fx_key_defs[step->target_idx].flags & FXKEY_SOFT_DEINIT) {
+            if (fx_key_defs[step->target_idx].flags & FXKEY_SOFT_DEINIT) {
               d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
                             step->count, step->track);
               step->state = STEP_STATE_SKIPPED;
+              weed_instance_unref(inst);
               break;
             }
 
             step->state = STEP_STATE_RUNNING;
             inc_running_steps(step);
-	    complete = FALSE;
+            complete = FALSE;
 
             step->proc_thread =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                        run_apply_inst_step, WEED_SEED_INT, "vv", step, inst);
+            weed_instance_unref(inst);
             //
           } else {
-	    if (step->fin_gamma == WEED_GAMMA_LINEAR) {
-	      weed_instance_t *inst =
-		rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
-	      // if we scaled params, scale them back so they are displayed correctly in interfaces
-	      gamma_conv_params(WEED_GAMMA_LINEAR, inst, TRUE);
-	      gamma_conv_params(WEED_GAMMA_LINEAR, inst, FALSE);
-	      weed_instance_unref(inst);
-	    }
+            if (step->fin_gamma == WEED_GAMMA_LINEAR) {
+              // if we scaled params, scale them back so they are displayed correctly in interfaces
+              gamma_conv_params(WEED_GAMMA_LINEAR, inst, TRUE);
+              gamma_conv_params(WEED_GAMMA_LINEAR, inst, FALSE);
+            }
             step->st_type = STEP_TYPE_LOAD;
-	    complete = FALSE;
+            weed_instance_unref(inst);
+            complete = FALSE;
           }
           break;
         }
@@ -2167,7 +2163,7 @@ static void run_plan(exec_plan_t *plan) {
       }
 
       if (state == STEP_STATE_RUNNING) {
-	complete = FALSE;
+        complete = FALSE;
         if (paused) {
           lpt = step->proc_thread;
           if (!lpt) {
@@ -2222,7 +2218,10 @@ static void run_plan(exec_plan_t *plan) {
             if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
             xtime = lives_get_session_time();
             lives_proc_thread_join(step->proc_thread);
+            lives_proc_thread_unref(step->proc_thread);
+
             d_print_debug("deinterlace completed @ \n", xtime * 1000.);
+
             for (LiVESList *list = step->substeps; list; list = list->next) {
               substep = (exec_plan_substep_t *)list->data;
               substep->end = xtime;
@@ -2285,7 +2284,7 @@ static void run_plan(exec_plan_t *plan) {
                   gamma_conv_params(WEED_GAMMA_SRGB, inst, TRUE);
                   gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE);
                 }
-		weed_instance_unref(inst);
+                weed_instance_unref(inst);
               }
               step->state = STEP_STATE_FINISHED;
               dec_running_steps(step);
@@ -2328,7 +2327,7 @@ static void run_plan(exec_plan_t *plan) {
             } else if (step->state == STEP_STATE_CANCELLED) {
               if (layer) weed_layer_set_invalid(layer, TRUE);
               dec_running_steps(step);
-	    } else {
+            } else {
               if (weed_layer_check_valid(layer)) {
                 if (!(step->flags & STEP_FLAG_NO_READY_STAT))
                   lives_layer_set_status(layer, LAYER_STATUS_READY);
@@ -2354,7 +2353,7 @@ static void run_plan(exec_plan_t *plan) {
               step->proc_thread = NULL;
               lives_proc_thread_unref(lpt);
               dec_running_steps(step);
-	      
+
               d_print_debug("CONVERT (track %d) done @ %.2f msec, duration %.2f\n", step->track,
                             step->tdata->real_end * 1000., step->tdata->real_duration);
               if (step->tdata->est_duration)
@@ -2591,10 +2590,11 @@ static void run_plan(exec_plan_t *plan) {
   }
   //MSGMODE_OFF(DEBUG);
 
-  ____FUNC_EXIT____;
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
   nplans--;
   planrunner_unlock();
+
+  ____FUNC_EXIT____;
 }
 
 
@@ -3152,6 +3152,7 @@ exec_plan_t *create_plan_from_model(lives_nodemodel_t *nodemodel) {
 
 
 static void plan_step_free(plan_step_t *step) {
+  // free: tdata, deps, substeps
   if (step) {
     if (step->tdata) lives_free(step->tdata);
     if (step->deps) lives_free(step->deps);
@@ -3162,6 +3163,7 @@ static void plan_step_free(plan_step_t *step) {
 
 
 void exec_plan_free(exec_plan_t *plan) {
+  // free: frame_idx, tdata, steps
   if (plan) {
     if (plan->frame_idx) lives_free(plan->frame_idx);
     if (plan->tdata) lives_free(plan->tdata);
@@ -7702,10 +7704,10 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
     if (mainw->plan_cycle) {
       int state = mainw->plan_cycle->state;
       if (state == PLAN_STATE_WAITING ||
-	  state == PLAN_STATE_QUEUED)
-	plan_cycle_trigger(mainw->plan_cycle);
+          state == PLAN_STATE_QUEUED)
+        plan_cycle_trigger(mainw->plan_cycle);
       lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
-				  mainw->plan_cycle->state == PLAN_STATE_QUEUED);
+                                  mainw->plan_cycle->state == PLAN_STATE_QUEUED);
     }
     lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
     lives_microsleep_until_zero(nplans);
@@ -7721,13 +7723,13 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
 
     for (int i = 0; i < maxl; i++) {
       if (mainw->layers[i]
-	  && mainw->layers[i] != mainw->ext_player_layer
-	  && mainw->layers[i] != get_old_frame_layer()
-	  && mainw->layers[i] != mainw->cached_frame) {
-	int lstatus = lives_layer_get_status(mainw->layers[i]);
-	lives_nanosleep_while_true(lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_BUSY);
-	weed_layer_unref(mainw->layers[i]);
-	mainw->layers[i] = NULL;
+          && mainw->layers[i] != mainw->ext_player_layer
+          && mainw->layers[i] != get_old_frame_layer()
+          && mainw->layers[i] != mainw->cached_frame) {
+        int lstatus = lives_layer_get_status(mainw->layers[i]);
+        lives_nanosleep_while_true(lstatus == LAYER_STATUS_LOADING || lstatus == LAYER_STATUS_BUSY);
+        weed_layer_unref(mainw->layers[i]);
+        mainw->layers[i] = NULL;
       }
     }
 
@@ -7739,6 +7741,7 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
     mainw->layers = NULL;
   }
   if (*nodemodel) free_nodemodel(nodemodel);
+  mainw->refresh_model = TRUE;
 }
 
 
@@ -7843,9 +7846,11 @@ lives_result_t run_next_cycle(void) {
 
 
 void rebuild_nodemodel(void) {
+  double xtime;
   //g_print("node model needs rebuilding\n");
 
   cleanup_nodemodel(&mainw->nodemodel);
+
   d_print_debug("prev plan cancelled, good to create new plan\n");
   prefs->pb_quality = future_prefs->pb_quality;
 
@@ -7856,14 +7861,16 @@ void rebuild_nodemodel(void) {
   mainw->refresh_model = FALSE;
 
   mainw->layers = map_sources_to_tracks(FALSE, FALSE);
-  double xtime = lives_get_session_time();
+
+  xtime = lives_get_session_time();
 
   build_nodemodel(&mainw->nodemodel);
   align_with_model(mainw->nodemodel);
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
+
   run_next_cycle();
   g_print("rebuilt model (pt 1), created new plan, made new plan-cycle, completed in %.4f millisec\n",
-           1000. * (lives_get_session_time() - xtime));
+          1000. * (lives_get_session_time() - xtime));
 }
 
 

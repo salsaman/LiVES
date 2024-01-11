@@ -377,7 +377,7 @@ void audio_free_fnames(void);
 
 #define APLAYER_REALTIME (is_realtime_aplayer(prefs->audio_player))
 
-void preview_aud_vol(void);
+void preview_aud_vol(frames_t aframeno);
 
 lives_audio_buf_t *audio_cache_init(void);
 void audio_cache_end(void);

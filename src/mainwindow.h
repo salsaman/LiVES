@@ -1091,9 +1091,6 @@ typedef struct {
   /// actual / last frame being displayed
   frames_t actual_frame;
 
-  /// and the audio 'frame' for when we are looping
-  double aframeno;
-
   frames_t record_frame; ///< frame number to insert in recording
 
   /// recording values - to be inserted at the following video frame

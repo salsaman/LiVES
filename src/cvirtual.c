@@ -1768,7 +1768,7 @@ void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int pale
     if (sfile->bpp == 32) palette = WEED_PALETTE_RGBA32;
     else palette = WEED_PALETTE_RGB24;
   }
-  
+
   pthread_mutex_lock(&sfile->frame_index_mutex);
   for (i = after + 1; i <= sfile->frames; i++) {
     if (!sfile->frame_index || sfile->frame_index[i - 1] == -1) {
@@ -1776,10 +1776,10 @@ void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int pale
       lives_snprintf(oname, PATH_MAX, "%s", tmp);
       lives_free(tmp);
       if (lives_file_test(oname, LIVES_FILE_TEST_EXISTS)) {
-	if (is_replace) 
-	  tmp = make_image_file_name(sfile, i, LIVES_FILE_EXT_BAK);
-	else
-	  tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
+        if (is_replace)
+          tmp = make_image_file_name(sfile, i, LIVES_FILE_EXT_BAK);
+        else
+          tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
         lives_snprintf(nname, PATH_MAX, "%s", tmp);
         lives_free(tmp);
         lives_mv(oname, nname);
@@ -1798,7 +1798,7 @@ void insert_blank_frames(int sclipno, frames_t nframes, frames_t after, int pale
     if (!layer) {
       layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       create_blank_layer(layer, get_image_ext_for_type(sfile->img_type),
-			 sfile->hsize, sfile->vsize, palette);
+                         sfile->hsize, sfile->vsize, palette);
     }
     if (!layer_to_png(layer, oname, 100. - prefs->ocp)) {
       /* if (!blankp) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette); */

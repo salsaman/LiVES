@@ -966,13 +966,13 @@ void reset_mainwin_size(void) {
   int ww, hh;
 
   RETURN_IF_RECURSED;
-  
+
   if (!prefs->show_gui) return;
 
   GdkWindow *xwin = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
   if (xwin) {
     RECURSE_GUARD_ARM;
-    if (!LIVES_IS_PLAYING) set_gui_loop_tight(TRUE);
+    //if (!LIVES_IS_PLAYING) set_gui_loop_tight(TRUE);
 
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
@@ -993,7 +993,7 @@ void reset_mainwin_size(void) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
 
-    if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
+    //if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
     RECURSE_GUARD_END;
   }
 }

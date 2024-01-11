@@ -458,11 +458,11 @@ char *get_stats_msg(boolean calc_only) {
     }
 
     fgpal = get_palette_name_for_clip(mainw->current_file);
-    
+
     msg = lives_strdup_printf((tmp3 = _("%sFrame %d / %d / %d, fps %.3f (target: %.3f)\n"
-				       "CPU load %.2f %%\n"
-				       "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
-				       "Fg clip: %d X %d, palette: %s\n%s\n%s")),
+                                        "CPU load %.2f %%\n"
+                                        "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
+                                        "Fg clip: %d X %d, palette: %s\n%s\n%s")),
                               audmsg ? audmsg : "",
                               sfile->frameno, sfile->last_req_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,

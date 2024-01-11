@@ -69,7 +69,6 @@ DEF_FN weed_plant_t *gg_p(weed_plant_t *p, const char *w, int i)
 {weed_plant_t *v, **vp = (weed_plant_t **)gg(p, w, i, &v); return vp ? v : 0;}
 DEF_FN int64_t gg_i64(weed_plant_t *p, const char *w)
 {int64_t v, *vp = (int64_t *)gg(p, w, 0, &v); return vp ? v : 0;}
-DEF_FN int weed_plant_get_type(weed_plant_t *p) {return gg_i(p, WEED_LEAF_TYPE);}
 DEF_FN weed_plant_t *_weed_get_gui(weed_plant_t *p) {
   weed_plant_t *g = NULL; int t = weed_plant_get_type(p);
   if (t != __WPFC__ && t != __WPPT__ && t != __WPP__ && t != __WPC__ && t != __WPFI__) return NULL;

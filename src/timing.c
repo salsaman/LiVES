@@ -30,7 +30,7 @@ LIVES_GLOBAL_INLINE int64_t lives_get_relative_time(int64_t origtime) {
 LIVES_GLOBAL_INLINE int64_t lives_get_current_time(void) {
   //  return current (wallclock) time in nsec, mapped to range 0 ... INT64_MAX
   uint64_t uret;
-  ticks_t ret; 
+  ticks_t ret;
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);

@@ -1064,7 +1064,6 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
   if (layer) {
     int lstatus;
     pthread_mutex_t *mutexp;
-    lives_clipsrc_group_t *srcgrp;
 
     if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
       LIVES_WARN("Attempt to free layer with active painter surface source");

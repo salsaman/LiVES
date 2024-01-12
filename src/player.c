@@ -373,13 +373,10 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
 
   if (mainw->layers) {
     for (i = 0; i < mainw->num_tracks; i++) {
-      if (mainw->layers[i]) {
-        weed_layer_unref(mainw->layers[i]);
-        mainw->layers[i] = NULL;
-      }
+      if (mainw->layers[i])
+        weed_layer_unref(STEAL_POINTER(mainw->layers[i]));
     }
-    lives_free(mainw->layers);
-    mainw->layers = NULL;
+    lives_free(STEAL_POINTER(mainw->layers));
   }
 
   if (!rndr) {
@@ -626,10 +623,9 @@ static lives_result_t prepare_frames(frames_t frame) {
           // TODO - use imgdec clipsrc
           if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                   cfile->hsize, cfile->vsize, WEED_PALETTE_ANY)) {
-            if (mainw->frame_layer) {
-              weed_layer_unref(mainw->frame_layer);
-              mainw->frame_layer = NULL;
-            }
+            if (mainw->frame_layer)
+              weed_layer_unref(STEAL_POINTER(mainw->frame_layer));
+
             if (cfile->clip_type == CLIP_TYPE_DISK &&
                 cfile->opening && cfile->img_type == IMG_TYPE_PNG
                 && sget_file_size(fname_next) <= 0) {
@@ -646,14 +642,13 @@ static lives_result_t prepare_frames(frames_t frame) {
           // if so, just copy it (deep) to mainw->frame_layer
 
           int dir = sig(sfile->pb_fps);
-          frames_t delta_a = 0., delta_l = 0.;
+          frames_t delta_a = 0, delta_l = 0, delta_r = 0;
 
           if (mainw->ext_layer) {
             if (!mainw->layers[0]) mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
             weed_layer_copy(mainw->layers[0], mainw->ext_layer);
             mainw->frame_layer = mainw->layers[0];
-            weed_layer_unref(mainw->ext_layer);
-            mainw->ext_layer = NULL;
+            weed_layer_unref(STEAL_POINTER(mainw->ext_layer));
             lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
             goto skip_precache;
           }
@@ -697,6 +692,7 @@ static lives_result_t prepare_frames(frames_t frame) {
             pframe = mainw->pred_frame;
             delta_a = (pframe - rframe) * dir;
             delta_l = (pframe - lframe) * dir;
+            delta_r = (lframe - rframe) * dir;
 
             d_print_debug("got ypreload, deltas are %d and %d\n", delta_a, delta_l);
             d_print_debug("THANKS for %p,! %d %ld, real was %d, range %d  --  %d\n",
@@ -707,7 +703,7 @@ static lives_result_t prepare_frames(frames_t frame) {
 
             if (delta_l <= 0) {
               // if before last_frame, or invalid,  we must discard
-              d_print_debug("preload frame too early, must discard\n");
+              //g_print("preload frame too early, must discard %d %d %d\n", pframe, lframe, rframe);
               weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
               cache_misses++;
               pframe = 0;
@@ -716,11 +712,11 @@ static lives_result_t prepare_frames(frames_t frame) {
 
             //got_pc = TRUE;
 
-            if (delta_a > MAX_JMP_THRESH) {
+            if (delta_a > MAX_JMP_THRESH || delta_r > MIN_JMP_THRESH) {
               // too far in future
               pframe = 0;
-              d_print_debug("preload frame too late, may cache for later\n");
-              d_print_debug("cached frame in use, can we release it now ?\n'");
+              g_print("preload frame too far ahead, may cache for later %d %d %d\n", pframe, lframe, rframe);
+              g_print("cached frame in use, can we release it now ?\n'");
               cache_misses++;
               if (!ccframe) cache_pre = TRUE;
               else {
@@ -728,54 +724,40 @@ static lives_result_t prepare_frames(frames_t frame) {
                     (ccframe - lframe) * dir < MAX_JMP_THRESH) {
                   use_cache = TRUE;
                   cache_pre = TRUE;
-                } else {
-                  /* evict_cache = TRUE; */
-                  /* cache_pre = TRUE; */
                 }
               }
             }
           }
 no_precache:
           if (!pframe) {
-            if (ccframe && (ccframe - lframe) * dir > 0 && (ccframe - rframe) * dir < MAX_JMP_THRESH) {
+            if (ccframe && (ccframe - lframe) * dir > 0 && (ccframe - rframe) * dir <= MIN_JMP_THRESH) {
               use_cache = TRUE;
             }
-
-            if (use_cache) {
-              lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
-              /* if (!mainw->layers[0] || mainw->layers[0] == get_old_frame_layer() */
-              /* 	|| mainw->layers[0] == mainw->ext_player_layer */
-              /* 	|| mainw->layers[0] == mainw->cached_frame) */
-              /*   mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO); */
-
-              weed_layer_copy(mainw->layers[0], mainw->cached_frame);
-              weed_leaf_dup(mainw->layers[0], mainw->cached_frame, WEED_LEAF_CLIP);
-              weed_leaf_dup(mainw->layers[0], mainw->cached_frame, WEED_LEAF_FRAME);
-              mainw->frame_layer = mainw->layers[0];
-              mainw->actual_frame = ccframe;
-
-              if (srcgrp) {
-                srcgrp->layer = NULL;
-                swap_srcgrps(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, 0, SRC_PURPOSE_PRECACHE);
-                srcgrp = get_primary_srcgrp(mainw->playing_file);
-                lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
-              }
-              evict_cache = TRUE;
-            }
-            if (evict_cache) {
-              if (mainw->cached_frame != get_old_frame_layer()
-                  && mainw->cached_frame != mainw->ext_player_layer) {
-                weed_layer_unref(mainw->cached_frame);
-              }
-              mainw->cached_frame = NULL;
-            }
-            if (cache_pre) {
-              mainw->cached_frame = STEAL_POINTER(mainw->frame_layer_preload);
-              pframe = 0;
-            }
-
-            if (use_cache) lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
           }
+          if (use_cache) {
+            if (!mainw->layers[0]) mainw->layers[0] =
+                lives_layer_new_for_frame(lives_layer_get_clip(mainw->cached_frame),
+                                          lives_layer_get_frame(mainw->cached_frame));
+
+            weed_layer_copy(mainw->layers[0], mainw->cached_frame);
+            ///
+            weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
+            ///
+            mainw->frame_layer = mainw->layers[0];
+            mainw->actual_frame = pframe;
+            mainw->frame_layer = mainw->layers[0];
+            mainw->actual_frame = ccframe;
+          }
+
+          if (evict_cache)
+            weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
+
+          if (cache_pre) {
+            mainw->cached_frame = STEAL_POINTER(mainw->frame_layer_preload);
+            pframe = 0;
+          }
+
+          if (use_cache) lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
 
           if (pframe) {
             if (delta_a < MIN_JMP_THRESH) {
@@ -786,15 +768,10 @@ no_precache:
             if (delta_a <= MAX_JMP_THRESH) {
               cache_hits++;
 
-              /* if (mainw->layers[0] != get_old_frame_layer() */
-              /*     || mainw->layers[0] != mainw->ext_player_layer */
-              /*     || mainw->layers[0] != mainw->cached_frame) */
-              /*   weed_layer_unref(mainw->layers[0]); */
-
-              if (!mainw->layers[0]) mainw->layers[0] = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+              if (!mainw->layers[0]) mainw->layers[0] =
+                  lives_layer_new_for_frame(lives_layer_get_clip(mainw->frame_layer_preload),
+                                            lives_layer_get_frame(mainw->frame_layer_preload));
               weed_layer_copy(mainw->layers[0], mainw->frame_layer_preload);
-              weed_leaf_dup(mainw->layers[0], mainw->frame_layer_preload, WEED_LEAF_CLIP);
-              weed_leaf_dup(mainw->layers[0], mainw->frame_layer_preload, WEED_LEAF_FRAME);
               ///
               weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
               ///
@@ -1536,7 +1513,8 @@ weed_layer_t *load_frame_image(frames_t frame) {
       frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(frame_layer, mainw->frame_layer);
     }
-    //mainw->debug_ptr = frame_layer;
+    if (!mainw->debug_ptr)
+      mainw->debug_ptr = frame_layer;
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
@@ -2098,7 +2076,7 @@ static frames_t find_best_frame(lives_decoder_t *dplug, frames_t requested_frame
 
       if (fpfx < 1.) {
         slo = 1. / -fpfx;
-	if (slo < 0.95) slo = 0.95;
+        if (slo < 0.95) slo = 0.95;
         return sfile->last_frameno + dir;
       }
 
@@ -2109,7 +2087,46 @@ static frames_t find_best_frame(lives_decoder_t *dplug, frames_t requested_frame
 
       best_frame = sfile->last_frameno + dir * (frames_t)(fpf + .5);
       fpf -= (frames_t)fpf;
+
+      if (mainw->frame_layer_preload && weed_layer_check_valid(mainw->frame_layer_preload)
+          && mainw->pred_frame > 0) {
+        frames_t pdelta = dir * (mainw->pred_frame - sfile->last_frameno);
+        if (pdelta > 0) {
+          frames_t bdelta = dir * (best_frame - sfile->last_frameno);
+          if (bdelta < MIN_JMP_THRESH) bdelta = MIN_JMP_THRESH;
+          if (mainw->cached_frame) {
+            frames_t cdelta = dir * (lives_layer_get_frame(mainw->cached_frame) - sfile->last_frameno);
+            if (cdelta > 0 && bdelta > cdelta) bdelta = cdelta;
+          }
+          pdelta >>= 1;
+          if (bdelta >= pdelta) {
+            bdelta = pdelta;
+          }
+          if (!bdelta) bdelta = 1;
+          best_frame = sfile->last_frameno + dir * bdelta;
+        }
+      }
+    } else {
+      double targ_time;
+      double tconf = 0.5;
+      frames_t max = MIN(LAGFRAME_TRIGGER, dir * (requested_frame - sfile->last_frameno)) / 2;
+      if (max < 0) max = 0;
+      max += best_frame;
+      max += dropped;
+
+      if ((max - requested_frame) * dir > dropped) max = requested_frame + dir * dropped;
+      if ((max - sfile->last_frameno) * dir > MAX_JMP_THRESH) max = sfile->last_frameno
+            + MAX_JMP_THRESH * dir;
+      if (dir * (max - best_frame) <= 0) return max;
+
+      best_frame = reachable_frame(mainw->playing_file, dplug, best_frame,
+                                   max, sfile->last_frameno,
+                                   sfile->pb_fps, &targ_time, &tconf);
+      /* g_print("FRAMEVALS %d %d %d %d %d %d\n", best_frame, sfile->last_frameno, mainw->actual_frame, dir, */
+      /*         requested_frame, dropped); */
     }
+
+    if (!best_frame || (best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir;
 
     if (dir * (best_frame - sfile->last_req_frame) > MAX_JMP_THRESH)
       best_frame = sfile->last_req_frame + MAX_JMP_THRESH;
@@ -2128,19 +2145,6 @@ static frames_t find_best_frame(lives_decoder_t *dplug, frames_t requested_frame
       if ((best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir;
     }
 
-    if (mainw->frame_layer_preload && weed_layer_check_valid(mainw->frame_layer_preload)
-        && mainw->pred_frame > 0) {
-      frames_t pdelta = dir * (mainw->pred_frame - sfile->last_frameno);
-      if (pdelta > 0) {
-        frames_t bdelta = dir * (best_frame - sfile->last_frameno);
-        pdelta >>= 1;
-        if (bdelta >= pdelta) {
-          bdelta = pdelta;
-          if (!bdelta) bdelta = 1;
-          best_frame = sfile->last_frameno + dir * bdelta;
-        }
-      }
-    }
     if (mainw->cached_frame) {
       frames_t cdelta = dir * (lives_layer_get_frame(mainw->cached_frame) - sfile->last_frameno);
       if (cdelta > 0) {
@@ -2155,27 +2159,6 @@ static frames_t find_best_frame(lives_decoder_t *dplug, frames_t requested_frame
     }
 
     if (best_frame != clamp_frame(mainw->playing_file, best_frame)) best_frame = -1;
-    /*   else { */
-    /*     double targ_time; */
-    /*     double tconf = 0.5; */
-    /*     frames_t max = MIN(LAGFRAME_TRIGGER, dir * (requested_frame - sfile->last_frameno)) / 2; */
-    /*     if (max < 0) max = 0; */
-    /*     max += best_frame; */
-    /*     max += dropped; */
-
-    /*     if ((max - requested_frame) * dir > dropped) max = requested_frame + dir * dropped; */
-    /*     if ((max - sfile->last_frameno) * dir > MAX_JMP_THRESH) max = sfile->last_frameno */
-    /*           + MAX_JMP_THRESH * dir; */
-    /*     if (dir * (max - best_frame) <= 0) return max; */
-
-    /*     best_frame = reachable_frame(mainw->playing_file, dplug, best_frame, */
-    /*                                  max, sfile->last_frameno, */
-    /*                                  sfile->pb_fps, &targ_time, &tconf); */
-    /*     if (!best_frame || (best_frame - sfile->last_frameno) * dir < 1) best_frame = sfile->last_frameno + dir; */
-    /*     /\* g_print("FRAMEVALS %d %d %d %d %d %d\n", best_frame, sfile->last_frameno, mainw->actual_frame, dir, *\/ */
-    /*     /\*         requested_frame, dropped); *\/ */
-    /*   } */
-    /* } */
   }
   return best_frame;
 }
@@ -2643,11 +2626,9 @@ close_clip:
         old_current_file = mainw->current_file;
         old_playing_file = mainw->playing_file;
 
-        if (mainw->frame_layer_preload) weed_layer_set_invalid(mainw->frame_layer_preload, FALSE);
-        if (mainw->cached_frame) {
-          weed_layer_unref(mainw->cached_frame);
-          mainw->cached_frame = NULL;
-        }
+        if (mainw->frame_layer_preload)
+          weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
+        if (mainw->cached_frame) weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
 
         /* if (sfile->arate) */
         /*   g_print("seek vals: vid %d %d %ld = %f %d %f\n", sfile->last_frameno, sfile->frameno, sfile->aseek_pos, */
@@ -3110,6 +3091,7 @@ close_clip:
             dplug = (lives_decoder_t *)get_primary_actor(sfile);
         }
         best_frame = find_best_frame(dplug, -requested_frame, dropped, jumplim, dir);
+        //g_print("bf1 = %d\n", best_frame);
       }
     }
 
@@ -3338,7 +3320,7 @@ update_effort:
       if (can_realign || fixed_frame != sfile->frameno) {
         sfile->frameno = fixed_frame;
         if (mainw->frame_layer_preload)
-          weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
+          weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
         requested_frame = sfile->last_req_frame = sfile->frameno;
         mainw->scratch = SCRATCH_JUMP_NORESYNC;
       }
@@ -3394,15 +3376,22 @@ update_effort:
 
         fixed_frame = 0;
 
-        if (mainw->pred_frame < 0) {
-          if (check_getahead) {
-            if (scratch == SCRATCH_NONE) {
-              // this is for predictive caching - if the predicted frame has just loaded,
-              // then we can re-calibrate based on the requested frame
-              recalc_bungle_frames = -mainw->pred_frame;
-            }
-            check_getahead = FALSE;
+        if (getahead > 0 && mainw->pred_frame == getahead) {
+          if (!mainw->frame_layer_preload) {
+            //g_print("cache hit ! %ld, %d\n", mainw->pred_frame, requested_frame);
+            getahead = -1;
+          } else if (!weed_layer_check_valid(mainw->frame_layer_preload)) {
+            //g_print("cache miss ! %ld, %d\n", mainw->pred_frame, requested_frame);
+            getahead = -1;
           }
+          /* if (check_getahead) { */
+          /*   if (scratch == SCRATCH_NONE) { */
+          /*     // this is for predictive caching - if the predicted frame has just loaded, */
+          /*     // then we can re-calibrate based on the requested frame */
+          /*     recalc_bungle_frames = -mainw->pred_frame; */
+          /*   } */
+          /*   check_getahead = FALSE; */
+          /* } */
         }
         // the player will check the preload frame, and either consume it and set frame_layer_preload to NULL
 
@@ -3418,9 +3407,6 @@ update_effort:
         if (!frame_layer || !weed_layer_check_valid(frame_layer))
           frame_invalid = TRUE;
         else frame_invalid = FALSE;
-
-        // ???
-        if (getahead > 0 && !mainw->frame_layer_preload && !mainw->cached_frame) getahead = -getahead;
 
         if (mainw->force_show) {
 #ifdef REC_IDEAL
@@ -3618,10 +3604,8 @@ update_effort:
 #ifdef ENABLE_PRECACHE
     if (cleanup_preload ||
         (mainw->frame_layer_preload && !weed_layer_check_valid(mainw->frame_layer_preload))) {
-      if (mainw->frame_layer_preload) {
-        weed_layer_unref(mainw->frame_layer_preload);
-        mainw->frame_layer_preload = NULL;
-      }
+      if (mainw->frame_layer_preload)
+        weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
       mainw->pred_frame = 0;
       mainw->pred_clip = 0;
       cleanup_preload = FALSE;
@@ -3672,14 +3656,8 @@ update_effort:
           double targ_time = 0.;
 
           if (LIVES_UNLIKELY(!drop_off && ((sfile->pb_fps < 0. && !clip_can_reverse(mainw->playing_file)) ||
-                                           sfile->last_req_frame - sfile->last_frameno >= sfile->pb_fps / 6.))) {
-            //
+                                           sfile->last_req_frame - sfile->last_frameno >= MAX_JMP_THRESH))) {
             lives_decoder_t *dplug = NULL;
-
-            /* if (getahead > 0) { */
-            /*   frames_t pframes = sfile->last_frameno - lpframe; */
-            /*   frames_t tframes = sfile->last_req_frame - lrframe; */
-            /* } */
 
             if (sfile->clip_type == CLIP_TYPE_FILE) {
               lives_clipsrc_group_t *srcgrp = get_srcgrp(mainw->playing_file, 0, SRC_PURPOSE_PRECACHE);
@@ -3718,7 +3696,10 @@ update_effort:
               }
             }
           }
-          if (getahead > 0) best_frame = getahead;
+          if (getahead > 0) {
+            best_frame = getahead;
+            //g_print("bf2 = %d\n", best_frame);
+          }
         }
 
         if (getahead <= 0 && can_precache && !showed_frame && best_frame > 0) {
@@ -3738,7 +3719,8 @@ update_effort:
           best_frame = find_best_frame(dplug, requested_frame, dropped, jumplim, dir);
           if (dir * (best_frame - sfile->last_frameno) < MIN_JMP_THRESH)
             can_precache = FALSE;
-        }
+          //else g_print("bf3 = %d\n", best_frame);
+        } else can_precache = FALSE;
 
         if (getahead > 0 || can_precache) {
           /* if (best_frame == -1 && (triggered || (!spare_cycles && can_precache) */
@@ -3780,7 +3762,7 @@ update_effort:
             /* 	    mainw->pred_frame, best_frame, sfile->last_req_frame, sfile->last_frameno, getahead); */
             /* 	  g_print("prel\n"); */
 
-            if (mainw->frame_layer_preload) weed_layer_unref(mainw->frame_layer_preload);
+            if (mainw->frame_layer_preload) weed_layer_unref(STEAL_POINTER(mainw->frame_layer_preload));
 
             mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
             if (sfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->playing_file, mainw->pred_frame)) {

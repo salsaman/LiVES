@@ -12121,6 +12121,7 @@ static void swap_chroma_planes(weed_layer_t *layer) {
   rtmp = rowstrides[1];
   rowstrides[1] = rowstrides[2];
   rowstrides[2] = rtmp;
+  lives_free(pd_array);
 }
 
 

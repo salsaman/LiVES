@@ -1329,7 +1329,6 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step, weed_instance
     gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE);
   }
 
-  weed_instance_unref(inst);
   return filter_error;
 }
 
@@ -1852,8 +1851,7 @@ static void run_plan(exec_plan_t *plan) {
 
             plan->template->frame_idx[step->track] = frame;
 
-            layer = plan->layers[step->track]
-                    = lives_layer_new_for_frame(plan->model->clip_index[step->track], frame);
+            layer = lives_layer_new_for_frame(plan->model->clip_index[step->track], frame);
 
             weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
             step->flags |= STEP_FLAG_TAGGED_LAYER;
@@ -1862,6 +1860,7 @@ static void run_plan(exec_plan_t *plan) {
             lives_layer_set_srcgrp(layer, mainw->track_sources[step->track]);
             lives_layer_set_track(layer, step->track);
             lives_layer_set_status(layer, LAYER_STATUS_PREPARED);
+            plan->layers[step->track] = layer;
           } else {
             if (!weed_layer_check_valid(layer)) {
               error = 4;
@@ -7710,8 +7709,9 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
                                   mainw->plan_cycle->state == PLAN_STATE_QUEUED);
     }
     lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
-    lives_microsleep_until_zero(nplans);
   }
+
+  planrunner_lock();
 
   if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
   if (mainw->exec_plan) exec_plan_free(STEAL_POINTER(mainw->exec_plan));
@@ -7742,28 +7742,32 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
   }
   if (*nodemodel) free_nodemodel(nodemodel);
   mainw->refresh_model = TRUE;
+
+  planrunner_unlock();
 }
 
 
 lives_result_t run_next_cycle(void) {
   // run a fresh iteration of mainw->exec_plan
   // WARNING - will alter mainw->plan_cycle
-  if (pthread_mutex_trylock(&planrunner_mutex)) {
+  if (planrunner_trylock()) {
     g_print("planrunner_locked, not running next cycle !\n");
     abort();
     return LIVES_RESULT_FAIL;
   }
   if (mainw->refresh_model) {
-    pthread_mutex_unlock(&planrunner_mutex);
+    planrunner_unlock();
     g_print("refresh model set, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
   }
   if (!mainw->exec_plan) {
+    planrunner_unlock();
     pthread_mutex_unlock(&planrunner_mutex);
     g_print("no plan template, not running next cycle !\n");
     return LIVES_RESULT_FAIL;
   }
   if (mainw->cancelled != CANCEL_NONE) {
+    planrunner_unlock();
     pthread_mutex_unlock(&planrunner_mutex);
     g_print("playback cancelled, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
@@ -7771,13 +7775,14 @@ lives_result_t run_next_cycle(void) {
 
   if (mainw->plan_runner_proc) {
     if (lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)) {
+      planrunner_unlock();
       pthread_mutex_unlock(&planrunner_mutex);
       g_print("running plan cancelled, not running next cycle !\n");
       return LIVES_RESULT_INVALID;
     }
     lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
     lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
-    lives_microsleep_until_zero(nplans);
+    planrunner_lock();
   }
 
   if (mainw->plan_cycle) {
@@ -7805,14 +7810,14 @@ lives_result_t run_next_cycle(void) {
   mainw->layers = map_sources_to_tracks(FALSE, TRUE);
 
   if (!mainw->layers) {
-    pthread_mutex_unlock(&planrunner_mutex);
+    planrunner_unlock();
     g_print("no layers, not running next cycle !\n");
     return LIVES_RESULT_FAIL;
   }
 
   mainw->plan_cycle = create_plan_cycle(mainw->exec_plan, mainw->layers);
 
-  pthread_mutex_unlock(&planrunner_mutex);
+  planrunner_unlock();
 
   execute_plan(mainw->plan_cycle, TRUE);
 
@@ -7826,18 +7831,18 @@ lives_result_t run_next_cycle(void) {
   if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
     // trigger next plan cycle. We can start loading background frames while displaying current one
     weed_set_boolean_value(mainw->layers[0], LIVES_LEAF_PLAN_CONTROL, TRUE);
-    plan_cycle_trigger(mainw->plan_cycle);
     lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
     lives_layer_set_frame(mainw->layers[0], 1);
     mainw->plan_cycle->frame_idx[0] = 1;
     lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
+    plan_cycle_trigger(mainw->plan_cycle);
   }
 
   if (mainw->blend_file != -1 && mainw->num_tracks > 1) {
     frames64_t blend_frame = get_blend_frame(mainw->currticks);
     if (blend_frame > 0) {
-      plan_cycle_trigger(mainw->plan_cycle);
       mainw->plan_cycle->frame_idx[1] = blend_frame;
+      plan_cycle_trigger(mainw->plan_cycle);
     }
   }
 
@@ -7850,7 +7855,7 @@ void rebuild_nodemodel(void) {
   //g_print("node model needs rebuilding\n");
 
   cleanup_nodemodel(&mainw->nodemodel);
-
+  planrunner_lock();
   d_print_debug("prev plan cancelled, good to create new plan\n");
   prefs->pb_quality = future_prefs->pb_quality;
 
@@ -7868,6 +7873,7 @@ void rebuild_nodemodel(void) {
   align_with_model(mainw->nodemodel);
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
 
+  planrunner_unlock();
   run_next_cycle();
   g_print("rebuilt model (pt 1), created new plan, made new plan-cycle, completed in %.4f millisec\n",
           1000. * (lives_get_session_time() - xtime));

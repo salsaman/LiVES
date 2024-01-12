@@ -154,6 +154,8 @@ typedef pid_t lives_pid_t;
 #define PREFIX_IT(A, B) QUOTEME_ALL(A B)
 #define _DW0(...) do {__VA_ARGS__} while(0)
 
+#define LIVES_RESTRICT __restrict__
+
 #ifdef __GNUC__
 #  define LIVES_WARN_UNUSED  __attribute__((warn_unused_result))
 #  define LIVES_ALLOW_UNUSED  __attribute__((unused))

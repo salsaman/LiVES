@@ -70,6 +70,10 @@ typedef struct {
 #define LIVES_PLANT_PROC_THREAD 4
 #define LIVES_PLANT_PREFERENCE 5
 
+#define LIVES_PLANT_FUNCPARAMS 128
+
+#define LIVES_PLANT_DATA_BOOK 140
+
 #define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
 #define LIVES_PLANT_HASH_STORE 513

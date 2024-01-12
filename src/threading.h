@@ -916,6 +916,9 @@ typedef struct {
 
 extern lpt_err_data obits[128];
 
+lives_funcinst_t *lives_proc_thread_get_funcinst(lives_proc_thread_t);
+lives_funcdef_t *lives_proc_thread_get_funcdef(lives_proc_thread_t);
+
 int lives_proc_thread_get_errnum(lives_proc_thread_t);
 const char *lives_proc_thread_get_errmsg(lives_proc_thread_t);
 int lives_proc_thread_get_errsev(lives_proc_thread_t);

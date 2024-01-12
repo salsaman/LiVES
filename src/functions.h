@@ -197,10 +197,6 @@ lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, 
 boolean call_funcsig(lives_proc_thread_t);
 lives_result_t do_call(lives_proc_thread_t);
 
-#define LIVES_LEAF_TEMPLATE "_template"
-#define LIVES_LEAF_FUNCSIG "_funcsig"
-#define LIVES_LEAF_FUNC_NAME "_funcname"
-#define LIVES_LEAF_FUNCDEF "_funcdef"
 #define LIVES_LEAF_FUNCINST "_funcinst"
 #define LIVES_LEAF_REPLACEMENT "_replacement"
 
@@ -527,10 +523,6 @@ typedef struct {
 
   weed_plant_t *params;
 
-  // optionally, we can store actual values passed in / returned in a data book
-  // (if function is run via a proc_thread)
-  weed_plant_t *databook;
-
   int variation;
   int64_t st_time, end_time;
 
@@ -565,7 +557,6 @@ typedef struct {
   // it also had a field for category
 
   // TODO - alter to funcinst
-  const lives_funcdef_t *fdef;
   volatile uint64_t flags; // HOOK_CB flags
   // how many params must be identical to count as a data match ?
   // default is 0, all params
@@ -737,7 +728,6 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **, int type, uint64_
 ////////////////////////////
 lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t, va_list xargs);
 
-
 void lives_hook_remove(lives_proc_thread_t lpt);
 
 void lives_hook_remove_by_data(lives_hook_stack_t **, int type, lives_funcptr_t func, void *data);
@@ -780,21 +770,14 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
 
 #define MAKE_FUNCDEF(func, rt, args) create_funcdef(#func, func, rt, args, NULL, 0, 0);
 
-// for future use - we can "steal" the funcdef from a proc_thread, stor it in a hash store
-// then later do things like create a funcinst from a funcdef and params, then create a proc_thread from the funcinst
-// so it then becomes like a template for factory producing proc_threads
-// or, we could make a funcinst (snapshot) from a proc_thread, then use that to produce clones with the same param values
-// as well as file / line ref of function (if known)
-lives_funcdef_t *lives_proc_thread_to_funcdef(lives_proc_thread_t);
-
-void free_funcdef(lives_funcdef_t *);
+void lives_funcdef_free(lives_funcdef_t *);
 
 /* // a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters */
 /* // plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt */
-/* void free_funcinst(lives_funcinst_t *); */
 
-lives_funcinst_t *create_funcinst(lives_funcdef_t *tmpl, void *privdata);
-lives_result_t lives_funcinst_bind_param(lives_funcinst_t *finst, int idx, uint64_t flags, ...);
+lives_funcinst_t *create_funcinst(lives_funcdef_t *, void *privdata);
+lives_result_t lives_funcinst_bind_param(lives_funcinst_t *, int idx, uint64_t flags, ...);
+void lives_funcinst_free(lives_funcinst_t *);
 
 #define BIND_SHADOW_PARAM(funcinst, idx, st, val) _DW0			\
   (void *valps[1]; char *pkey = make_std_pname(idx); valps[0] = &val;	\

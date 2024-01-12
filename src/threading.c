@@ -218,21 +218,12 @@ boolean lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec) {
 
 
 void _proc_thread_params_from_nullvargs(lives_proc_thread_t lpt, int return_type) {
-  lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-  weed_set_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, fdef->function);
-  // set the type of the return_value, but not the return_value itself yet
-  if (fdef->return_type > 0) weed_leaf_set(lpt, _RV_, return_type, 0, NULL);
-  else if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
-  weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, FUNCSIG_VOID);
+  if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
 }
 
 
 void _proc_thread_params_from_vargs(lives_proc_thread_t lpt, int return_type, va_list xargs) {
-  lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-  weed_set_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, fdef->function);
-  if (return_type > 0) weed_leaf_set(lpt, _RV_, return_type, 0, NULL);
-  else if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
-  weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, fdef->funcsig);
+  if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
   proc_thread_params_from_vargs(lpt, xargs);
 }
 
@@ -245,7 +236,6 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_attrs(lives_proc_thread_t lpt, ui
 LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_attrs(lives_proc_thread_t lpt) {
   return  lpt ? weed_get_int64_value(lpt, LIVES_LEAF_THREAD_ATTRS, NULL) : 0;
 }
-
 
 
 static lives_proc_thread_t lives_proc_thread_run(lives_proc_thread_t lpt) {
@@ -285,7 +275,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_proc_thread_ensure_book(lives_proc_threa
   if (lpt) {
     weed_plant_t *book = weed_get_plantptr_value(lpt, LIVES_LEAF_LPT_BOOK, NULL);
     if (!book) {
-      book = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
+      book = lives_plant_new(LIVES_PLANT_DATA_BOOK);
       lives_proc_thread_set_book(lpt, book);
     }
     return book;
@@ -404,7 +394,6 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt, const char *fname, live
 
   weed_set_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, (void *)hook_stacks);
   if (weed_get_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, NULL) != (void *)hook_stacks) abort();
-  weed_set_const_string_value(lpt, LIVES_LEAF_FUNC_NAME, fname);
 
   if (attrs && (*attrs & LIVES_THRDATTR_CREATE_REFFED)) lives_proc_thread_ref(lpt);
 
@@ -467,14 +456,24 @@ LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(const char *fname, 
 }
 
 
+LIVES_GLOBAL_INLINE lives_funcinst_t *lives_proc_thread_get_funcinst(lives_proc_thread_t lpt) {
+  return lpt ? (lives_funcinst_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCINST, NULL) : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE lives_funcdef_t *lives_proc_thread_get_funcdef(lives_proc_thread_t lpt) {
+  lives_funcinst_t *finst = lives_proc_thread_get_funcinst(lpt);
+  return finst ? finst->funcdef : NULL;
+}
+
+
 lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attrs, lives_funcptr_t func,
     const char *fname, int return_type, const char *args_fmt, va_list xargs) {
-  lives_funcdef_t *fdef = create_funcdef(fname, func, return_type, args_fmt, NULL, 0, 0);
+  lives_funcdef_t *fdef = create_funcdef(fname, func, return_type > 0 ? return_type : 0, args_fmt, NULL, 0, 0);
   lives_proc_thread_t lpt = lives_proc_thread_new(fname, &attrs);
   if (fname) add_quick_fn(func, fname);
   lives_proc_thread_set_attrs(lpt, attrs);
 
-  weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, fdef);
   weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCINST, create_funcinst(fdef, NULL));
 
   _proc_thread_params_from_vargs(lpt, return_type, xargs);
@@ -490,14 +489,17 @@ lives_proc_thread_t _lives_proc_thread_create_nullvargs(lives_thread_attr_t attr
   lives_funcdef_t *fdef;
   if (fname) add_quick_fn(func, fname);
   lives_proc_thread_set_attrs(lpt, attrs);
-  fdef = create_funcdef(fname, func, return_type, NULL, NULL, 0, 0);
-  weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, fdef);
+  fdef = create_funcdef(fname, func, return_type > 0 ? return_type : 0, NULL, NULL, 0, 0);
+
+  weed_set_voidptr_value(lpt, LIVES_LEAF_FUNCINST, create_funcinst(fdef, NULL));
+
   _proc_thread_params_from_nullvargs(lpt, return_type);
   return lives_proc_thread_run(lpt);
 }
 
 
 lives_proc_thread_t lives_proc_thread_chain(lives_proc_thread_t lpt, ...) {
+  // make another funcinst
   va_list va;
   va_start(va, lpt);
   while (1) {
@@ -872,9 +874,10 @@ if (lpt) {
     if (!pthread_rwlock_wrlock(destruct_rwlock)) {
       // cna't use get_thread_data_for_lpt() here, since we have passed the "compleeted" / "finished"
       // status, and that function will return NULL
+      lives_funcinst_t *finst;
       lives_thread_data_t *tdata = lives_proc_thread_get_thread_data(lpt);
       lives_proc_thread_t nxtlpt;
-      weed_plant_t *data;
+      weed_plant_t *databook;
       int64_t state;
       pthread_rwlock_t *state_rwlock;
       pthread_mutex_t *extcb_mutex;
@@ -927,17 +930,18 @@ if (lpt) {
       // remove any callbacks from stacks in other lpts / threads
       flush_cb_list(lpt);
 
-      data = lives_proc_thread_get_book(lpt);
-      if (data) {
-        int nr = weed_refcount_dec(data);
-        if (!nr) weed_plant_free(data);
+      databook = lives_proc_thread_get_book(lpt);
+      if (databook) {
+        int nr = weed_refcount_dec(databook);
+        if (!nr) weed_plant_free(databook);
       }
 
-      lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, NULL);
-      if (fdef) free_funcdef(fdef);
-
-      lives_funcinst_t *finst = (lives_funcinst_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCINST, NULL);
-      if (finst) lives_free(finst);
+      finst = lives_proc_thread_get_funcinst(lpt);
+      if (finst) {
+        lives_funcdef_t *fdef = finst->funcdef;
+        if (fdef) lives_funcdef_free(fdef);
+        lives_funcinst_free(finst);
+      }
 
       extcb_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_EXT_CB_MUTEX, NULL);
       if (extcb_mutex) {
@@ -1285,20 +1289,10 @@ ticks_t lives_proc_thread_get_timing_info(lives_proc_thread_t lpt, int info_type
 }
 
 
-LIVES_GLOBAL_INLINE lives_funcdef_t *lives_proc_thread_get_funcdef(lives_proc_thread_t lpt) {
-  if (lpt) {
-    lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_FUNCDEF, NULL);
-    return fdef;
-  }
-  return NULL;
-}
-
-
 LIVES_GLOBAL_INLINE const char *lives_proc_thread_get_funcname(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return fdef->funcname;
-    return weed_get_const_string_value(lpt, LIVES_LEAF_FUNC_NAME, NULL);
+    return fdef->funcname;
   }
   return NULL;
 }
@@ -1307,8 +1301,7 @@ LIVES_GLOBAL_INLINE const char *lives_proc_thread_get_funcname(lives_proc_thread
 LIVES_GLOBAL_INLINE lives_funcptr_t lives_proc_thread_get_function(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return fdef->function;
-    return weed_get_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, NULL);
+    return fdef->function;
   }
   return NULL;
 }
@@ -1317,8 +1310,7 @@ LIVES_GLOBAL_INLINE lives_funcptr_t lives_proc_thread_get_function(lives_proc_th
 LIVES_GLOBAL_INLINE funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return fdef->funcsig;
-    return weed_get_int64_value(lpt, LIVES_LEAF_FUNCSIG, NULL);
+    return fdef->funcsig;
   }
   return 0;
 }
@@ -1327,8 +1319,7 @@ LIVES_GLOBAL_INLINE funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t 
 LIVES_GLOBAL_INLINE char *lives_proc_thread_get_args_fmt(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return args_fmt_from_funcsig(fdef->funcsig);
-    return args_fmt_from_funcsig(lives_proc_thread_get_funcsig(lpt));
+    return args_fmt_from_funcsig(fdef->funcsig);
   }
   return NULL;
 }
@@ -1337,8 +1328,7 @@ LIVES_GLOBAL_INLINE char *lives_proc_thread_get_args_fmt(lives_proc_thread_t lpt
 LIVES_GLOBAL_INLINE uint32_t lives_proc_thread_get_rtype(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcdef_t *fdef = lives_proc_thread_get_funcdef(lpt);
-    if (fdef) return fdef->return_type;
-    return weed_leaf_seed_type(lpt, _RV_);
+    return fdef->return_type;
   }
   return 0;
 }
@@ -1346,11 +1336,7 @@ LIVES_GLOBAL_INLINE uint32_t lives_proc_thread_get_rtype(lives_proc_thread_t lpt
 
 // check any of states (c.f has_states)
 LIVES_GLOBAL_INLINE uint64_t _lives_proc_thread_check_states(lives_proc_thread_t lpt, uint64_t state_bits) {
-  if (lpt) {
-    uint64_t tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
-    return tstate & state_bits;
-  }
-  return THRD_STATE_INVALID;
+  return lpt ? weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL) & state_bits : THRD_STATE_INVALID;
 }
 
 
@@ -1358,11 +1344,9 @@ LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_check_states(lives_proc_thread_t 
   pthread_rwlock_t *state_rwlock = lives_proc_thread_get_state_rwlock(lpt);
   if (state_rwlock) {
     uint64_t tstate;
-    if (state_bits != THRD_STATE_INVALID)
-      pthread_rwlock_rdlock(state_rwlock);
+    if (state_bits != THRD_STATE_INVALID) pthread_rwlock_rdlock(state_rwlock);
     tstate = _lives_proc_thread_check_states(lpt, state_bits);
-    if (state_bits != THRD_STATE_INVALID)
-      pthread_rwlock_unlock(state_rwlock);
+    if (state_bits != THRD_STATE_INVALID) pthread_rwlock_unlock(state_rwlock);
     return tstate;
   }
   return state_bits & THRD_STATE_INVALID;
@@ -1371,7 +1355,7 @@ LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_check_states(lives_proc_thread_t 
 
 LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_has_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   // test if ALL states in state_bits are set (cf. check_states)
-  return (lpt && lives_proc_thread_check_states(lpt, state_bits) == state_bits);
+  return lpt && lives_proc_thread_check_states(lpt, state_bits) == state_bits;
 }
 
 
@@ -4519,6 +4503,7 @@ char *get_threadstats(void) {
       pthread_mutex_unlock(alpt_mutex);
     }
   }
+
   pthread_rwlock_unlock(&all_tdata_rwlock);
   msg = lives_strdup_printf("Total threads in use: %d, (%d poolhtreads, %d other), "
                             "active threads %d\n\n", totthreads, npoolthreads,

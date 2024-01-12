@@ -13,8 +13,6 @@
 #define USE_EXTEND
 //#endif
 
-#define LIVES_RESTRICT __restrict__
-
 #define CLAMP16bit(x) (x) >= 0.99999 ? 65535 : x < 0.00001 ? 0 : (uint16_t)(x * 65535.9999)
 #define CLAMP16biti(x) ((x) > 65535 ? 65535 : (x) < 0 ? 0 : (x))
 

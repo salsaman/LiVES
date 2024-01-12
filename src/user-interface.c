@@ -808,12 +808,10 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
 
 
 void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
-
   LiVESPixbuf *pixbuf;
 
   if (!LIVES_IS_DRAWING_AREA(darea)) return;
 
-  //mainw->debug_ptr = NULL;
   if (!weed_layer_check_valid(layer)) return;
 
   pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
@@ -824,7 +822,6 @@ void lives_layer_draw(LiVESDrawingArea * darea, weed_layer_t *layer) {
   }
 
   /* g_print("unref %p, nrefs is %d\n", layer, weed_layer_count_refs(layer)); */
-  /* g_print("if we free %p, here, it should remove proxy layer, unless it entered with copylist\n", layer); */
   weed_layer_unref(layer);
 }
 

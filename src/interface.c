@@ -32,6 +32,7 @@ void cancel_cleanup(void) {
     lives_painter_destroy(cr);
   }
   if (afd) lives_close_buffered(afd - 1);
+  unlock_timeline();
 }
 
 

@@ -2276,7 +2276,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   boolean is_thread = FALSE;
 
   frames_t frame;
-  int clip, clip_type, track;
+  int clip, clip_type = CLIP_TYPE_NULL_VIDEO, track;
   int lstatus = LAYER_STATUS_NONE;
   int errpt = 0;
 
@@ -2307,32 +2307,32 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   if (lives_layer_get_proc_thread(layer)) is_thread = TRUE;
 
-  sfile = RETURN_VALID_CLIP(clip);
+  if (clip != -1) {
+    sfile = RETURN_VALID_CLIP(clip);
 
-  if (!sfile) {
-    if (target_palette != WEED_PALETTE_NONE && target_palette != WEED_PALETTE_ANY)
-      weed_layer_set_palette(layer, target_palette);
-    errpt = 3;
-    goto fail;
+    if (!sfile) {
+      if (target_palette != WEED_PALETTE_NONE && target_palette != WEED_PALETTE_ANY)
+	weed_layer_set_palette(layer, target_palette);
+      errpt = 3;
+      goto fail;
+    }
+
+    lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+
+    clip_type = sfile->clip_type;
   }
 
-  lives_layer_set_status(layer, LAYER_STATUS_LOADING);
-
-  clip_type = sfile->clip_type;
-
+  if (clip_type == CLIP_TYPE_NULL_VIDEO || !frame) {
+    create_blank_layer(layer, image_ext, width, height, target_palette);
+    goto success;
+  }
+  
 retry:
 
   switch (clip_type) {
-  case CLIP_TYPE_NULL_VIDEO:
-    errpt = 4;
-    goto fail;
   case CLIP_TYPE_DISK:
   case CLIP_TYPE_FILE:
     // frame number can be 0 during rendering
-    if (frame == 0) {
-      errpt = 5;
-      goto fail;
-    }
     if (clip == mainw->scrap_file) {
       boolean res = load_from_scrap_file(layer, frame);
       if (res) goto success;
@@ -2639,11 +2639,11 @@ retry:
     goto success;
   }
   default: goto fail;
-  }
+	}
 
 success:
 
-  if (!is_thread) {
+  if (!lives_layer_plan_controlled(layer)) {
     if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) {
       weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
       deinterlace_frame(layer, tc);
@@ -2669,7 +2669,6 @@ fail:
   if (lstatus != LAYER_STATUS_NONE) _weed_layer_set_invalid(layer, TRUE);
   unlock_layer_status(layer);
 
-  weed_layer_pixel_data_free(layer);
   create_blank_layer(layer, image_ext, width, height, target_palette);
 
   ____FUNC_EXIT_VAL____("b", FALSE);

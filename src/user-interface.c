@@ -703,8 +703,9 @@ void set_drawing_area_from_pixbuf(LiVESDrawingArea * da, LiVESPixbuf * pixbuf) {
       int xrwidth, xrheight;
       LiVESWidget *p = widget;
 
-      /* if (mainw->multitrack || (!mainw->multitrack && widget != mainw->preview_image)) */
-      /*   p = lives_widget_get_parent(widget); */
+      if (mainw->multitrack || (!mainw->multitrack && widget != mainw->preview_image
+				&& widget != mainw->play_image))
+        p = lives_widget_get_parent(widget);
 
       xrwidth = lives_widget_get_allocation_width(p);
       xrheight = lives_widget_get_allocation_height(p);
@@ -928,11 +929,7 @@ void get_player_size(int *opwidth, int *opheight) {
   if (lives_get_status() == LIVES_STATUS_RENDERING) {
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
-    *opwidth = (*opwidth >> 2) << 2;
-    *opheight = (*opheight >> 1) << 1;
-    mainw->pwidth = *opwidth;
-    mainw->pheight = *opheight;
-    return;
+    goto align;
   }
 
   if (!mainw->fs) {
@@ -949,7 +946,7 @@ void get_player_size(int *opwidth, int *opheight) {
   }
 
 align:
-  *opwidth = (*opwidth >> 3) << 3;
+  *opwidth = (*opwidth >> 2) << 2;
   *opheight = (*opheight >> 1) << 1;
   mainw->pwidth = *opwidth;
   mainw->pheight = *opheight;
@@ -973,7 +970,8 @@ void reset_mainwin_size(void) {
 
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
+
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
     if (!mainw->calibrated) {
       ww = scr_width;
@@ -988,7 +986,7 @@ void reset_mainwin_size(void) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
     //if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
     RECURSE_GUARD_END;
@@ -1080,6 +1078,9 @@ static void _resize(double scale) {
     hsize = (scr_width - H_RESIZE_ADJUST - bx) / scale;
     vsize = (scr_height - V_RESIZE_ADJUST - by) / scale;
   }
+
+  hsize = (hsize >> 2) << 2;
+  vsize = (vsize >> 1) << 1;
 
   mainw->ce_frame_width = hsize;
   mainw->ce_frame_height = vsize;

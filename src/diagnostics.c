@@ -484,7 +484,7 @@ char *get_stats_msg(boolean calc_only) {
                                   mainw->files[mainw->blend_file]->frames);
 
     msg = lives_strdup_printf("fg: %d/%d, fps %.3f / %.3f, CPU: %.2f, Eff. %d/%d, Q: %s %s",
-                              mainw->actual_frame, sfile->frames,
+                              sfile->last_frameno, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
                               load, mainw->effort, EFFORT_RANGE_MAX,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")

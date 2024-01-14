@@ -1398,6 +1398,8 @@ void update_progress(boolean visible, int clipno) {
 }
 
 static boolean accelerators_swapped;
+
+// called from keyboard.c (check for preview - TODO - FIXME)
 boolean get_accels_swapped(void) {return accelerators_swapped;}
 
 static void cancel_process(void) {

@@ -340,6 +340,10 @@ typedef struct {
   // list of node_chains, first node will either be a src_node, or a src_inst
   // last node will either be a sink_inst or a sink_node
   int flags;
+
+  // tracker of construction phases
+  int phase;
+
   double factors[N_COST_TYPES];
   int opwidth, opheight;
 
@@ -432,7 +436,9 @@ struct _input_node {
 
   int cpal; // current palette for the input
 
-  // detials for yuv_clamping, sampling, subspace
+  int maxwidth, maxheight, minwidth, minheight;
+
+  // details for yuv_clamping, sampling, subspace
   // when we set a yuv palette, these will be set to defaults
   // unless filter overrides this.
   // if we do not have npals then we use gloobal vals
@@ -714,6 +720,8 @@ typedef struct {
   waiting_time; // after triggering, time when no steps were running
 } timedata_t;
 
+#define OP_NULL		-1
+
 #define OP_RESIZE	0
 #define OP_PCONV	1
 #define OP_GAMMA	2
@@ -725,6 +733,7 @@ typedef struct {
 #define OP_LOAD		17
 
 #define OP_DEINTERLACE	32
+#define OP_SUBTITLES	33
 
 typedef struct {
   int op_idx;

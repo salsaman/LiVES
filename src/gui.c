@@ -3639,7 +3639,7 @@ void fade_background(void) {
 
   lives_widget_queue_draw(mainw->top_vbox);
   lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 
@@ -3698,7 +3698,7 @@ void unfade_background(void) {
 
   set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,
               &palette->info_base, &palette->info_text);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 #define SCRN_BRDR 2.
@@ -3735,7 +3735,7 @@ void fullscreen_internal(void) {
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
     lives_widget_queue_resize(mainw->top_vbox);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
     // this and pf_grid should be the only other widgets still visible
     if (prefs->show_tool) height -= lives_widget_get_allocation_height(mainw->tb_hbox);
@@ -3755,7 +3755,7 @@ void fullscreen_internal(void) {
     lives_widget_set_margin_right(mainw->playframe, 0);
 
     lives_widget_queue_resize(mainw->pf_grid);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
   } else {
     make_play_window();
   }
@@ -4231,7 +4231,7 @@ static void _make_play_window(void) {
 
   /// cannot do this, or it blocks ctrl-v window !!!
   //lives_grab_add(mainw->play_window);
-  lives_widget_process_updates(mainw->play_window);
+  lives_widget_queue_draw_and_update(mainw->play_window);
 }
 
 void make_play_window(void) {
@@ -4340,7 +4340,7 @@ static void _resize_play_window(void) {
         if (prefs->show_playwin) {
           lives_widget_show(mainw->play_window);
         }
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+        lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
         mainw->opwx = mainw->opwy = -1;
       } else {
         if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) {
@@ -4362,20 +4362,6 @@ static void _resize_play_window(void) {
         }
       }
 
-      if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) {
-        if (mainw->vpp && mainw->vpp->fwidth > 0) {
-          lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->vpp->fwidth) / 2,
-                            (scr_height - mainw->vpp->fheight) / 2);
-        } else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
-      } else {
-        lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-        if (mainw->vpp && mainw->vpp->fwidth > 0) {
-          lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x +
-                            (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2,
-                            mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2);
-        } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x,
-                                   mainw->mgeom[pmonitor - 1].y);
-      }
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         mainw->ignore_screen_size = TRUE;
@@ -4408,9 +4394,27 @@ static void _resize_play_window(void) {
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
 
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
+        lives_widget_queue_resize(mainw->play_window);
         lives_widget_queue_draw_and_update(mainw->play_window);
         mainw->ignore_screen_size = FALSE;
       }
+
+
+      /* if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) { */
+      /*   if (mainw->vpp && mainw->vpp->fwidth > 0) { */
+      /*     lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->vpp->fwidth) / 2, */
+      /*                       (scr_height - mainw->vpp->fheight) / 2); */
+      /*   } else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0); */
+      /* } else { */
+      /*   lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1); */
+      /*   if (mainw->vpp && mainw->vpp->fwidth > 0) { */
+      /*     lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x + */
+      /*                       (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2, */
+      /*                       mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2); */
+      /*   } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x, */
+      /*                              mainw->mgeom[pmonitor - 1].y); */
+      /* 	lives_widget_queue_draw_and_update(mainw->play_window); */
+      /* } */
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
       // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
@@ -4653,7 +4657,10 @@ static void _resize_play_window(void) {
     }
     play_window_set_title();
   }
+  
+  lives_widget_queue_draw_and_update(mainw->play_window);
   clear_widget_bg(mainw->play_image, mainw->play_surface);
+  lives_widget_queue_draw_and_update(mainw->play_window);
 }
 
 

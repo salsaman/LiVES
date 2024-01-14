@@ -283,45 +283,51 @@ typedef lives_result_t (*clipsrc_action_func_t)(lives_layer_t *, boolean async);
 // in parallel
 // if this is not the case, the src must provide a function for creating a copy (clone) of an existing "actor"
 typedef void *(*clipsrc_clone_func_t)(void *actor, const char *URI);
+
+
+
+
 // normally, actor would be NULL, and URI would be set. To create a clone, URI is NULL and actor is set
 // to create a clone from a sanpshot, actor will be set with snapshot adn URI set with the URI for
 // which the snapshot was created
 
-// other functions will exst to int / deinit the src factory
+// other functions will exist to int / deinit the src factory
 
 // and a further function to return a snapshot of the current src state,
 // to make it possible to reload the src in a future session
+
+// we will have an array of these, representing all static clipsrcs
+// when creating a clipsrc, we check src_type
+// we look this up to see if it is a static clipsrc. If so we create the clipsrc. setting
+// details as contained in the template for that src_type
+// all fields are copied from template to clipsrc
+// the clone
+typedef struct {
+  uint64_t uid; // instance uid
+
+  int src_type;
+  uint64_t class_uid;
+  uint64_t actor_uid;
+
+  clipsrc_action_func_t action_func; // layer - fill layer pixel_data
+  clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
+  //clipsrc_init_func_t create_func;  // (ext_URI) - return instance of actor
+
+  //clipsrc_snapshot_func_t snapshot_func; // create a snapshot of state for faster reloading
+  //clipsrc_destroy_func_t destroy_func; // actor - frees actor
+
+  uint64_t flags;
+} lives_clipsrc_template;
 
 typedef struct {
   // unique id for this clip src in srcgrp - clones get differetn values
   uint64_t uid;
 
-  // unique id for this clip src in srcgrp - clones get same value
-  uint64_t class_uid;
+  int src_type; // e.g DECODER
+  uint64_t class_uid; // e.g VIDEO_DECODER
+  uint64_t actor_uid; // e.g MKV_DECODEF
 
-  ////////////////////////////// template part
-  int src_type;
-
-  // for plugins (eg. decodder pllugins, this would be the plugin uid)
-  // for filters (e.g. generators, the filter plugin uid)
-  uint64_t actor_uid;
-
-  //clipsrc_init_func_t create_func;  // (ext_URI) - return instance of actor
-
-  // in future all actor tamplates will have a single mandatory function:
-  // action_func. This should point to a function of type lives_result_t action_func(lives_layer_t *)
-  // the function is expected to read the "clip" amnd "frame" values for the layer
-  // and optionally, width, height, current_palette, gamma_in,
-  // s well is desired size, desired palette, gama etc, then fucniton should try to comply but
-  // if not, the layer will be converted automatically
-  // if the layer has pixel_data defined, it should be used, else should be allocated.
-  clipsrc_action_func_t action_func; // layer - fill layer pixel_data
-
-  //clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
-  //clipsrc_snapshot_func_t snapshot_func; // create a snapshot of strate for faster reloading
-  //clipsrc_destroy_func_t destroy_func; // actor - frees actor
-
-  uint64_t flags;
+  // TODO - point to a clipsrc template
 
   //////////////////////////////////
 
@@ -333,12 +339,13 @@ typedef struct {
 
   // cpal and gaama will be converted first to srcgroup appatent_pal, apparent_gamma
 
+  // palette, gamma_type for this clipsrc, will be converted to
+  // apparent_pal, apparent_gamma for the srcgrp
+  
   // current palette in use
   int cpal;
-
   // current gamm_type for the src
   int gamma_type;
-
   double file_gamma;
 
   // external checksum for clip source (e.g md4sum, cert)
@@ -347,22 +354,13 @@ typedef struct {
   // URI of external source
   char *ext_URI;
 
+  uint64_t flags;
+
+  // TODO - can be idle, loading, loaded, error, invalid
+  uint64_t status;
+  
   void *priv; // private data for the source
 } lives_clip_src_t;
-
-// we will have an array of these, representing all static clipsrcs
-// when creating a clipsrc, we check src_type
-// we look this up to see if it is a static clipsrc. If so we create the clipsrc. setting
-// details as contained in the template for that src_type
-// all fields are copied from template to clipsrc
-// the clone
-typedef struct {
-  int src_type;
-  uint64_t actor_uid;
-  clipsrc_action_func_t action_func; // layer - fill layer pixel_data
-  clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
-  uint64_t flags;
-} lives_clipsrc_template;
 
 // clip_srcs are contained in clipsrc_groups. Clips  can have one or more clipsrc groups
 // the default group is the PRIMARY group, but we can ausiliar groups
@@ -423,6 +421,14 @@ typedef struct {
   int purpose; // the src_group purpose, for locating it
   int status; // group status, same codes as for clip_src
 } lives_clipsrc_group_t;
+
+/// clipsrc delivery types
+typedef enum {
+  LIVES_DELIVERY_UNDEFINED,
+  LIVES_DELIVERY_PULL, // normal delivery, pull frane as required
+  LIVES_DELIVERY_PUSH, // src will push frame to player to play
+  LIVES_DELIVERY_PUSH_PULL, // hybrid - player requests frame, src pushes when ready
+} lives_delivery_t;
 
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
@@ -617,6 +623,7 @@ typedef struct _lives_clip_t {
   pthread_mutex_t transform_mutex;
 
   // can be PUSH, PULL or PUSH_PULL
+  // (may depend on active clipsrc)
   lives_delivery_t delivery;
 
   char **frame_md5s[2]; // we have two arrays, 0 == decoded frames,

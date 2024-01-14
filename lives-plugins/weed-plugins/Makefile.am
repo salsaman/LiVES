@@ -203,7 +203,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	softlight.la \
 	system.la \
 	targeted_zoom.la \
-	pan_and_zoom.la \
+	pan_and_zoomy.la \
 	textfun.la \
 	tone_gen.la \
 	tvpic.la \

@@ -59,8 +59,7 @@ lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
-
-#define	FXKEY_SOFT_DEINIT			(1ull << 0)
+#define	FXKEY_NEEDS_REINIT			(1ull << 0)
 
 typedef enum {
   activator_none,
@@ -76,7 +75,7 @@ typedef struct {
   int type;
   int nmodes;
   int active_mode;
-  activator_type last_activator;
+  volatile activator_type last_activator;
   weed_instance_t *instances;
   weed_filter_t *filters;
   uint64_t flags;
@@ -117,15 +116,17 @@ void rte_keymodes_restore(int nkeys);
 
 void rte_keys_update(void);
 
-// hotkey is 1 based
-lives_result_t rte_key_toggle(int key);
+void really_deinit_effects(void);
+void really_deinit_effect(int key0);
 
-lives_result_t _rte_key_toggle(int key, activator_type acti);
+// key is 1 based
+lives_result_t rte_key_toggle(int key1); // key accels
+lives_result_t rte_key_pconx_toggle(int key1); // data connections
 
-boolean rte_key_on_off(int key, boolean on);
+boolean rte_key_on_off(int key1, boolean on);
 
-// key is 0 based (now)
-boolean rte_key_is_enabled(int key, boolean ign_soft_deinits);
+boolean rte_key_is_enabled(int key0, boolean ign_soft_deinits);
+boolean rte_key_soft_deinited(int key0);
 
 #define rte_getmodespk() prefs->rte_modes_per_key
 

@@ -22,43 +22,43 @@ static lives_proc_thread_t ldev_free_lpt = NULL;
 static lives_obj_instance_t *lives_videodev_inst_create(uint64_t subtype);
 
 
-static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
+static lives_result_t lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
-  unicap_status_t status;
-  lives_alarm_t alarm_handle = lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
-  int ncount;
-
+  lives_alarm_set_timeout(timeout * ONE_BILLION_DBL);
+  
   do {
-    status = unicap_poll_buffer(ldev->handle, &ncount);
+    int ncount;
+    unicap_status_t status = unicap_poll_buffer(ldev->handle, &ncount);
 
 #ifdef DEBUG_UNICAP
     if (status != STATUS_SUCCESS) lives_printerr("Unicap poll failed with status %d\n", status);
 #endif
     if (ncount >= 0) {
-      lives_alarm_clear(alarm_handle);
-      if (!SUCCESS(unicap_wait_buffer(ldev->handle, buff))) return FALSE;
-      return TRUE;
+      lives_alarm_disarm();
+      if (!SUCCESS(unicap_wait_buffer(ldev->handle, buff))) return LIVES_RESULT_FAIL;
+      return LIVES_RESULT_SUCCESS;
     }
-  } while (lives_alarm_check(alarm_handle) > 0);
+  } while (!lives_alarm_triggered());
+  lives_alarm_disarm();
 
-  return FALSE;
+  return LIVES_RESULT_TIMEDOUT;
 }
 
 
 static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
-  // wait for SYSTEM type buffer
-  lives_alarm_t alarm_handle = lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
+  lives_alarm_set_timeout(timeout * ONE_BILLION_DBL);
 
   do {
     if (ldev->buffer_ready) {
-      lives_alarm_clear(alarm_handle);
-      return TRUE;
+      lives_alarm_disarm();
+      return LIVES_RESULT_SUCCESS;
     }
-    lives_nanosleep(1000);
-  } while (lives_alarm_check(alarm_handle) > 0);
-  lives_alarm_clear(alarm_handle);
+    lives_microsleep;
+  } while (!lives_alarm_triggered());
 
-  return FALSE;
+  lives_alarm_disarm();
+
+  return LIVES_RESULT_TIMEDOUT;
 }
 
 
@@ -83,25 +83,22 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
 
 
 boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, double timeoutsecs) {
+  static weed_layer_t *srclayer = NULL;
   lives_vdev_t *ldev = (lives_vdev_t *)get_primary_actor(sfile);
   unicap_data_buffer_t *returned_buffer = NULL;
-  void **pixel_data;
-  int nplanes;
-  weed_layer_set_size(layer, sfile->hsize / weed_palette_get_pixels_per_macropixel(ldev->palette),
-                      sfile->vsize);
-  weed_layer_set_palette_yuv(layer, ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace,
-                             ldev->YUV_clamping);
 
-  create_empty_pixel_data(layer, TRUE, TRUE);
+  int nplanes;
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
-    if (!lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)) {
+    if (lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)
+	!= LIVES_RESULT_SUCCESS) {
 #ifdef DEBUG_UNICAP
       lives_printerr("Failed to wait for user buffer!\n");
+#endif
       unicap_stop_capture(ldev->handle);
       unicap_dequeue_buffer(ldev->handle, &returned_buffer);
+      unicap_queue_buffer(ldev->handle, returned_buffer);
       unicap_start_capture(ldev->handle);
-#endif
       return FALSE;
     }
   } else {
@@ -115,28 +112,41 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     else returned_buffer = &ldev->buffer2;
   }
 
-  pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
-
-  if (nplanes > 1 && !ldev->is_really_grey) {
-    boolean contig = FALSE;
-    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL)) contig = TRUE;
-    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize,
-                                  ldev->palette, contig);
-  } else {
-    if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) {
-      int rowstride = weed_layer_get_rowstride(layer);
-      size_t bsize = rowstride * sfile->vsize;
-      if (bsize > returned_buffer->buffer_size) {
-#ifdef DEBUG_UNICAP
-        lives_printerr("Warning - returned buffer size too small !\n");
-#endif
-        bsize = returned_buffer->buffer_size;
-      }
-      lives_memcpy(pixel_data[0], returned_buffer->data, bsize);
-    }
+  if (!srclayer) {
+    int *irows = rowstrides_from_bufsize(returned_buffer->buffer_size, ldev->pally.pal, sfile->hsize, sfile->vsize, &nplanes);
+    srclayer = weed_layer_create_full(sfile->hsize, sfile->vsize, irows, ldev->pally.pal, ldev->pally.clamping,
+				      ldev->pally.sampling, ldev->pally.subspace, WEED_GAMMA_SRGB);
+    weed_set_boolean_value(srclayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, TRUE);
+    lives_free(irows);
   }
 
-  lives_free(pixel_data);
+  //if (nplanes > 1 && !ldev->is_really_grey) {
+
+  if (1) {//nplanes > 1) {
+    weed_layer_t *xlayer;
+    void *pd[1];
+    pd[0] = returned_buffer->data;
+    weed_layer_set_pixel_data_planar(srclayer, pd, -nplanes);
+    xlayer = weed_layer_copy(NULL, srclayer);
+    weed_layer_copy(layer, xlayer);
+    weed_layer_unref(xlayer);
+  }
+
+  /* else { */
+/*     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) { */
+/*       int rowstride = weed_layer_get_rowstride(layer); */
+/*       size_t bsize = rowstride * sfile->vsize; */
+/*       if (bsize > returned_buffer->buffer_size) { */
+/* #ifdef DEBUG_UNICAP */
+/*         lives_printerr("Warning - returned buffer size too small !\n"); */
+/* #endif */
+/*         bsize = returned_buffer->buffer_size; */
+/*       } */
+/*       lives_memcpy(pixel_data[0], returned_buffer->data, bsize); */
+/*     } */
+/*   } */
+
+  //lives_free(pixel_data);
 
   if (ldev->buffer_type != UNICAP_BUFFER_TYPE_SYSTEM) {
     unicap_queue_buffer(ldev->handle, returned_buffer);
@@ -188,7 +198,7 @@ static void canikill(lives_vdev_t *ldev) {
 static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, lives_vdev_t *ldev,
     int palette, lives_match_t matmet, int width, int height) {
   // get nearest format for given palette, width and height
-  // if palette is WEED_PALETTE_END, or cannot be matched, get best quality palette (preferring RGB)
+  // if palette is WEED_PALETTE_ANY, or cannot be matched, get best quality palette (preferring RGB)
   // width and height must be set, actual width and height will be set as near to this as possible
   // giving preference to larger frame size
 
@@ -198,7 +208,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 
   unicap_format_t *format;
   int f = -1;
-  int bestp = WEED_PALETTE_END;
+  int bestp = WEED_PALETTE_NONE;
   int bestw = 0, besth = 0;
   double cpbytes;
   int cpal;
@@ -217,7 +227,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 
     g_print("Palette description is %s\n", format->identifier);
 
-    if (cpal == WEED_PALETTE_END || weed_palette_is_alpha(cpal)) {
+    if (cpal == WEED_PALETTE_NONE || weed_palette_is_alpha(cpal)) {
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
       unicap_set_format(ldev->handle, format);
@@ -229,14 +239,14 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 
     cpbytes = weed_palette_get_bytes_per_pixel(cpal);
 
-    if (bestp == WEED_PALETTE_END || cpal == palette || weed_palette_is_alpha(bestp) ||
+    if (bestp == WEED_PALETTE_NONE || cpal == palette || weed_palette_is_alpha(bestp) ||
         /// test if cpal is higher or same quality
         weed_palette_is_lower_quality(bestp, cpal) ||
         (weed_palette_is_yuv(bestp) && weed_palette_is_rgb(cpal))) {
       // got better palette, or exact match
 
       // prefer exact match on target palette if we have it
-      if (palette != WEED_PALETTE_END && bestp == palette && cpal != palette) continue;
+      if (palette != WEED_PALETTE_ANY && bestp == palette && cpal != palette) continue;
 
       // TODO - try to minimise aspect delta
       // for now we just go with the smallest size >= target (or largest frame size if none are >= target)
@@ -422,7 +432,7 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
 /* static void set_palette_desc(lives_obj_t *obj, lives_obj_attr_t *attr) { */
 /*   lives_param_t *rpar; */
 /*   lives_vdev_t *ldev = (lives_vdev_t *)weed_get_voidptr_value(obj, "priv", NULL); */
-/*   char *palname = weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace); */
+/*   char *palname = weed_palette_get_name_full(ldev->pally.pal, ldev->pally.clamping, ldev->pally.subspace); */
 /*   weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL); */
 /*   if (!gui) { */
 /*     gui = weed_plant_new(WEED_PLANT_GUI); */
@@ -478,7 +488,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   unicap_lock_stream(ldev->handle);
 
-  ldev->format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END,
+  ldev->format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_ANY,
                                        matmet, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
 
   if (!ldev->format) {
@@ -495,7 +505,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
     g_print("NB is %d\n", ldev->format->system_buffer_count);
     ldev->format->buffer_type = UNICAP_BUFFER_TYPE_SYSTEM;
 
-    cfile->delivery = LIVES_DELIVERY_PUSH_PULL;
+    cfile->delivery = LIVES_DELIVERY_PUSH;
 
     // set a callback for new frame
     unicap_register_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME, (unicap_callback_t) new_frame_cb,
@@ -508,13 +518,13 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   ldev->buffer_type = ldev->format->buffer_type;
 
   // ignore YUV subspace for now
-  ldev->palette = fourccp_to_weedp(ldev->format->fourcc, ldev->format->bpp, (int *)&cfile->interlace,
-                                   &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
-  cpbytes = weed_palette_get_bytes_per_pixel(ldev->palette);
+  ldev->pally.pal = fourccp_to_weedp(ldev->format->fourcc, ldev->format->bpp, (int *)&cfile->interlace,
+                                   &ldev->pally.sampling, &ldev->pally.subspace, &ldev->pally.clamping);
+  cpbytes = weed_palette_get_bytes_per_pixel(ldev->pally.pal);
 
 #ifdef DEBUG_UNICAP
   lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n", ldev->format->fourcc,
-                 weed_palette_get_name(ldev->palette));
+                 weed_palette_get_name(ldev->pally.pal));
 #endif
 
   if (!SUCCESS(unicap_set_format(ldev->handle, ldev->format))) {
@@ -528,7 +538,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   g_print("ALLX %ld %d %d %d %d\n", ldev->format->buffer_size, ldev->format->size.width, ldev->format->size.height,
           weed_palette_get_bits_per_macropixel(
-            ldev->palette), weed_palette_get_pixels_per_macropixel(ldev->palette));
+            ldev->pally.pal), weed_palette_get_pixels_per_macropixel(ldev->pally.pal));
 
   if (ldev->format->buffer_size < (size_t)((double)(ldev->format->size.width * ldev->format->size.height) * cpbytes)) {
     int wwidth = ldev->format->size.width, awidth;
@@ -565,12 +575,25 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   add_clip_src(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, CLASS_UID_VIDEO_DEVICE, (void *)ldev,
                LIVES_SRC_TYPE_DEVICE, ACTOR_UID_WEBCAM, NULL, NULL);
 
-  pally.pal = ldev->palette;
-  pally.clamping = ldev->YUV_clamping;
-  pally.sampling = ldev->YUV_sampling;
-  pally.subspace = ldev->YUV_subspace;
+  pally.pal = ldev->pally.pal;
+  pally.clamping = ldev->pally.clamping;
+  pally.sampling = ldev->pally.sampling;
+  pally.subspace = ldev->pally.subspace;
 
   set_primary_apparent(mainw->current_file, &pally, WEED_GAMMA_SRGB);
+
+  /* ldev->buffer1 = unicap_data_buffer_new(ldev->format); */
+  /* ldev->buffer2 = unicap_data_buffer_new(ldev->format); */
+
+  /* ldev->init_data.free_func = bufdata_free; */
+  /* ldev->init_data.free_func_data = NULL; */
+  /* ldev->init_data.ref_func = bufdata_ref; */
+  /* ldev->init_data.ref_func_data = NULL; */
+  /* ldev->init_data.unref_func = bufdata_unref; */
+  /* ldev->init_data.unref_func_data = NULL; */
+
+  /* unicap_data_buffer_init(&ldev->buffer1, ldev->format, &ldev->init_data); */
+  /* unicap_data_buffer_init(&ldev->buffer2, ldev->format, &ldev->init_data); */
 
   ldev->buffer1.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
   ldev->buffer1.buffer_size = ldev->format->buffer_size;
@@ -676,14 +699,14 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   }
 
   // if it is greyscale, we will add fake U and V planes
-  if (ldev->palette == WEED_PALETTE_A8) {
-    ldev->palette = WEED_PALETTE_YUV444P;
+  if (ldev->pally.pal == WEED_PALETTE_A8) {
+    ldev->pally.pal = WEED_PALETTE_YUV444P;
     ldev->is_really_grey = TRUE;
   } else ldev->is_really_grey = FALSE;
 
   //lives_attribute_append_listener(obj, VDEV_PROP_PALETTE, set_palette_desc);
   lives_attribute_set_param_type(obj, VDEV_PROP_PALETTE, _("Colourspace"), WEED_PARAM_INTEGER);
-  lives_object_set_attribute_value(obj, VDEV_PROP_PALETTE, ldev->palette);
+  lives_object_set_attribute_value(obj, VDEV_PROP_PALETTE, ldev->pally.pal);
   // lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
 
   //

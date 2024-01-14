@@ -368,14 +368,6 @@ typedef enum {
 #define MATCH_TYPE_ENABLED 1
 #define MATCH_TYPE_DEFAULT 2
 
-/// delivery types
-typedef enum {
-  LIVES_DELIVERY_UNDEFINED,
-  LIVES_DELIVERY_PULL,
-  LIVES_DELIVERY_PUSH,
-  LIVES_DELIVERY_PUSH_PULL,
-} lives_delivery_t;
-
 typedef struct {
   lives_colRGB48_t fg;
   lives_colRGB48_t bg;

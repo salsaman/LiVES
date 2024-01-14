@@ -1095,6 +1095,7 @@ if ($extra_authors) {
 
 ## set filter gui
 if (@param_window) {
+    my $nwlines = @param_window;
     print $OUT "  gui = weed_filter_get_gui(filter_class);\n";
     print $OUT "  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, \"RFX\");\n";
     print $OUT "  weed_set_string_value(gui, \"layout_rfx_delim\", \"$delimit\");\n";

@@ -199,6 +199,4 @@ boolean feeds_to_audio_filters(int okey, int omode);
 
 void push_fx_toggles(int okey, boolean update);
 
-void really_deinit_effects(void);
-
 #endif

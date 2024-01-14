@@ -17,6 +17,7 @@
 #include "functions.h"
 #include "callbacks.h"
 #include "effects-weed.h"
+#include "effects.h"
 #include "resample.h"
 #include "clip_load_save.h"
 #include "nodemodel.h"
@@ -615,6 +616,8 @@ void play_file(void) {
 
   int current_file;
 
+  lives_clip_t *sfile = RETURN_VALID_CLIP(mainw->current_file);
+
   //int arate;
 
   ____FUNC_ENTRY____(play_file, "", "");
@@ -699,16 +702,16 @@ void play_file(void) {
       d_print(_("Recording performance..."));
       needsadone = TRUE;
       // TODO
-      if (mainw->current_file > 0 && (cfile->undo_action == UNDO_RESAMPLE
-                                      || cfile->undo_action == UNDO_RENDER)) {
+      if (mainw->current_file > 0 && (sfile->undo_action == UNDO_RESAMPLE
+                                      || sfile->undo_action == UNDO_RENDER)) {
         lives_widget_set_sensitive(mainw->undo, FALSE);
         lives_widget_set_sensitive(mainw->redo, FALSE);
-        cfile->undoable = cfile->redoable = FALSE;
+        sfile->undoable = sfile->redoable = FALSE;
       }
     }
   }
   /// set performance at right place
-  else if (mainw->event_list) cfile->next_event = get_first_event(mainw->event_list);
+  else if (mainw->event_list) sfile->next_event = get_first_event(mainw->event_list);
 
   if (!mainw->multitrack) {
 #ifdef ENABLE_JACK_TRANSPORT
@@ -716,34 +719,33 @@ void play_file(void) {
         && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_SLAVE))) {
       // calculate the start position from jack transport
       double sttime = (double)jack_transport_get_current_ticks(mainw->jackd_trans) / TICKS_PER_SECOND_DBL;
-      cfile->pointer_time = cfile->real_pointer_time = sttime;
-      if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
-        cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
-      if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
-      mainw->play_start = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+      sfile->pointer_time = sfile->real_pointer_time = sttime;
+      if (sfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
+        sfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
+      if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
+      mainw->play_start = calc_frame_from_time(mainw->current_file, sfile->pointer_time);
     }
 #endif
   }
 
-  if (cfile->achans > 0) {
+  if (sfile->achans > 0) {
     if (mainw->playing_sel) {
       mainw->audio_start = calc_time_from_frame(mainw->current_file,
-                           mainw->play_start) * cfile->fps + 1.;
-      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
+                           mainw->play_start) * sfile->fps + 1.;
+      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * sfile->fps + 1.;
     } else {
-      mainw->audio_start = cfile->real_pointer_time * cfile->fps + 1;
+      mainw->audio_start = sfile->real_pointer_time * sfile->fps + 1;
       mainw->audio_end = 0;
     }
-    cfile->aseek_pos = (off_t)(((double)(mainw->audio_start - 1.)
-                                / cfile->fps * (double)cfile->arate))
-                       * cfile->achans * (cfile->asampsize >> 3);
-    if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
-    cfile->async_delta = 0;
+    sfile->aseek_pos = (off_t)(((double)(mainw->audio_start - 1.)
+                                / sfile->fps * (double)sfile->arate))
+                       * sfile->achans * (sfile->asampsize >> 3);
+    if (sfile->aseek_pos > sfile->afilesize) sfile->aseek_pos = 0.;
+    sfile->async_delta = 0;
   }
 
   if (prefs->stop_screensaver) lives_disable_screensaver();
 
-  mainw->actual_frame = cfile->frameno;
   mainw->new_clip = mainw->playing_file = mainw->current_file;
   mainw->new_blend_file = mainw->blend_file;
   mainw->close_this_clip = -1;
@@ -772,22 +774,22 @@ void play_file(void) {
   mainw->do_ctx_update = TRUE;
 
 
-  //arate = cfile->arate;
+  //arate = sfile->arate;
   mute = mainw->mute;
 
-  cfile->frameno = mainw->play_start;
-  cfile->pb_fps = cfile->fps;
+  sfile->frameno = mainw->play_start;
+  sfile->pb_fps = sfile->fps;
 
   if (mainw->reverse_pb) {
-    cfile->pb_fps = -cfile->pb_fps;
-    cfile->frameno = mainw->play_end;
+    sfile->pb_fps = -sfile->pb_fps;
+    sfile->frameno = mainw->play_end;
   }
-  cfile->last_frameno = cfile->last_req_frame = cfile->frameno;
+  sfile->last_frameno = sfile->last_req_frame = sfile->frameno;
   mainw->reverse_pb = FALSE;
 
   mainw->swapped_clip = -1;
 
-  cfile->play_paused = FALSE;
+  sfile->play_paused = FALSE;
 
   if ((audio_player == AUD_PLAYER_JACK && AUD_SRC_INTERNAL)
       || (mainw->event_list && (!mainw->is_rendering || !mainw->preview || mainw->preview_rendering)))
@@ -804,8 +806,7 @@ void play_file(void) {
     mainw->record_starting = TRUE;
   }
 
-  cfile->play_paused = FALSE;
-  mainw->actual_frame = 0;
+  sfile->play_paused = FALSE;
 
   mainw->effort = 0;
 
@@ -890,7 +891,7 @@ void play_file(void) {
           && !(mainw->preview && mainw->is_processing &&
     !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering))) {
     // if playing an event list, we switch to audio memory buffer mode
-    if (mainw->multitrack) init_jack_audio_buffers(cfile->achans, cfile->arate, exact_preview);
+    if (mainw->multitrack) init_jack_audio_buffers(sfile->achans, sfile->arate, exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE);
       has_audio_buffers = TRUE;
     })
@@ -900,7 +901,7 @@ void play_file(void) {
           !(mainw->preview && mainw->is_processing &&
     !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering))) {
     // if playing an event list, we switch to audio memory buffer mode
-    if (mainw->multitrack) init_pulse_audio_buffers(cfile->achans, cfile->arate, exact_preview);
+    if (mainw->multitrack) init_pulse_audio_buffers(sfile->achans, sfile->arate, exact_preview);
       else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE);
       has_audio_buffers = TRUE;
     })
@@ -934,12 +935,12 @@ void play_file(void) {
             // this will also get our effects state
 
             // reset because audio sync may have set it
-            if (mainw->multitrack) mainw->jackd->abufs[0]->arate = cfile->arate;
+            if (mainw->multitrack) mainw->jackd->abufs[0]->arate = sfile->arate;
             else mainw->jackd->abufs[0]->arate = mainw->jackd->sample_out_rate;
               fill_abuffer_from(mainw->jackd->abufs[0], mainw->event_list, pb_start_event, exact_preview);
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               // reset because audio sync may have set it
-              if (mainw->multitrack) mainw->jackd->abufs[i]->arate = cfile->arate;
+              if (mainw->multitrack) mainw->jackd->abufs[i]->arate = sfile->arate;
                 else mainw->jackd->abufs[i]->arate = mainw->jackd->sample_out_rate;
                 fill_abuffer_from(mainw->jackd->abufs[i], mainw->event_list, NULL, FALSE);
               }
@@ -958,7 +959,7 @@ void play_file(void) {
               /// this will also get our effects state
 
               /// this is the IN rate, everything is resampled to this rate and then to output rate
-              if (mainw->multitrack) mainw->pulsed->abufs[0]->arate = cfile->arate;
+              if (mainw->multitrack) mainw->pulsed->abufs[0]->arate = sfile->arate;
               else mainw->pulsed->abufs[0]->arate = mainw->pulsed->out_arate;
 
                 /// need to set asamps, in case padding with silence is needed
@@ -966,7 +967,7 @@ void play_file(void) {
 
                 fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
               for (i = 1; i < prefs->num_rtaudiobufs; i++) {
-                if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = cfile->arate;
+                if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = sfile->arate;
                   else mainw->pulsed->abufs[i]->arate = mainw->pulsed->out_arate;
                   mainw->pulsed->abufs[i]->out_asamps = mainw->pulsed->out_asamps;
                   fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE);
@@ -1012,7 +1013,7 @@ void play_file(void) {
         )
       } else {
         // play from middle of mt timeline
-        cfile->next_event = mainw->multitrack->pb_start_event;
+        sfile->next_event = mainw->multitrack->pb_start_event;
 
         if (!has_audio_buffers) {
           // no audio buffering
@@ -1045,7 +1046,7 @@ void play_file(void) {
         // realtime effects off (for multitrack and event_list preview)
         deinit_render_effects();
 
-        cfile->next_event = NULL;
+        sfile->next_event = NULL;
         // multitrack loop - go back to loop start position unless external transport moved us
         if (mainw->scratch == SCRATCH_NONE) {
           mainw->multitrack->pb_start_event = mainw->multitrack->pb_loop_event;
@@ -1059,10 +1060,10 @@ void play_file(void) {
       if (!(mainw->multitrack && mainw->loop_cont &&
             (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END))) {
 
-        if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+        if (!mainw->preview && CURRENT_CLIP_IS_VALID && sfile->clip_type == CLIP_TYPE_GENERATOR) {
           // if this is the final loop, protect this from being freed with track sources
           // we may neeed to keep it aropund if there is a recording
-          weed_instance_ref((weed_instance_t *)(get_primary_inst(cfile)));
+          weed_instance_ref((weed_instance_t *)(get_primary_inst(sfile)));
         }
 
         if (!mainw->preview && (!mainw->multitrack || !mainw->multitrack->is_rendering))
@@ -1111,7 +1112,6 @@ void play_file(void) {
   if (!mainw->foreign) {
     /// deinit any active real time effects
     really_deinit_effects();
-
     if (prefs->allow_easing && !mainw->multitrack) {
       // any effects which were "easing out" should be deinited now
       deinit_easing_effects();
@@ -1120,16 +1120,16 @@ void play_file(void) {
 
   if (mainw->loop_locked) unlock_loop_lock();
 
-  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
+  if (CURRENT_CLIP_IS_VALID && sfile->clip_type == CLIP_TYPE_DISK
       && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
-           && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
-    lives_rm(cfile->info_file);
+           && mainw->cancelled != CANCEL_USER) || !sfile->opening)) {
+    lives_rm(sfile->info_file);
   }
 
   mainw->jack_can_stop = FALSE;
   if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {
-    cfile->pointer_time = pointer_time;
-    cfile->real_pointer_time = real_pointer_time;
+    sfile->pointer_time = pointer_time;
+    sfile->real_pointer_time = real_pointer_time;
   }
 
   // tell the audio cache thread to terminate, else we can get in a deadlock where the player is waiting for
@@ -1167,7 +1167,7 @@ void play_file(void) {
                 && !((mainw->cancelled == CANCEL_NONE
                       || mainw->cancelled == CANCEL_NO_MORE_PREVIEW)
                      && mainw->multitrack->is_paused))) {
-          jack_transport_update(mainw->jackd_trans, cfile->real_pointer_time);
+          jack_transport_update(mainw->jackd_trans, sfile->real_pointer_time);
         }
       }
     }
@@ -1243,7 +1243,6 @@ void play_file(void) {
 #endif
 
       lives_freep((void **)&mainw->urgency_msg);
-      mainw->actual_frame = 0;
 
       lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED, "");
 
@@ -1317,8 +1316,8 @@ void play_file(void) {
     mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
     mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
 
-    cfile->hsize = mainw->pwidth;
-    cfile->vsize = mainw->pheight;
+    sfile->hsize = mainw->pwidth;
+    sfile->vsize = mainw->pheight;
 
     lives_xwindow_set_keep_above(mainw->foreign_window, FALSE);
 
@@ -1398,7 +1397,7 @@ void play_file(void) {
 
   mainw->close_this_clip = mainw->new_clip = -1;
 
-  if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
+  if (CURRENT_CLIP_IS_VALID) sfile->play_paused = FALSE;
 
   mainw->filter_map = mainw->afilter_map = mainw->audio_event = NULL;
 
@@ -1438,8 +1437,8 @@ void play_file(void) {
   if (prefs->volume != (double)future_prefs->volume)
     pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
 
-  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
-      && cfile->frames == 0 && mainw->record_perf) {
+  if (CURRENT_CLIP_IS_VALID && sfile->clip_type == CLIP_TYPE_DISK
+      && sfile->frames == 0 && mainw->record_perf) {
     // this is needed in the case where a video generator was recorded using audio
     // from a clip with no video frames
     lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);

@@ -1350,14 +1350,17 @@ boolean fg_service_fulfill_cb(void *dummy) {
 static void threadswap(void *data) {
   lives_millisleep_while_true(mainw->do_ctx_update);
 
-  main_thread_execute_rvoid(lives_startup2, 0, "v", NULL);
+  lives_millisleep_while_true(mainw->do_ctx_update);
 
   mainw->do_ctx_update = TRUE;
   mainw->gui_much_events = TRUE;
 
-  lives_millisleep_while_true(mainw->do_ctx_update);
+  fg_stack_wait();
+
+  main_thread_execute_rvoid(lives_startup2, 0, "v", NULL);
 
   gui_loop_tight = FALSE;
+
 }
 
 
@@ -1375,7 +1378,6 @@ boolean fg_service_ready_cb(void *dummy) {
   mainw->gui_much_events = TRUE;
 
   lives_proc_thread_create(0, threadswap, 0, "", NULL);
-
   fg_service_source = THREADVAR(guisource) = lives_idle_priority(fg_service_fulfill_cb, NULL);
 
   return FALSE;
@@ -2146,7 +2148,7 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
                                          LIVES_GUI_CALLBACK(_dialog_resp_set), NULL);
   ulong dfunc = lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
                                           LIVES_GUI_CALLBACK(lives_dialog_destroyed), NULL);
-  boolean dest;
+  boolean dest, no_idlefuncs = mainw->no_idlefuncs;
 
   if (!GET_INT_DATA(dialog, URGENCY_KEY)) {
     if (!mainw->is_ready) SET_INT_DATA(dialog, URGENCY_KEY, MSG_URGENCY_STARTUP);
@@ -2161,7 +2163,9 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
 
   do {
     // TODO - only if focused / visible
+    mainw->no_idlefuncs = FALSE;
     lives_widget_context_iteration(NULL, FALSE);
+    mainw->no_idlefuncs = no_idlefuncs;
     pthread_yield();
     lives_millisleep;
     resp = GET_INT_DATA(dialog, RESPONSE_KEY);
@@ -3417,7 +3421,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
 #ifdef GUI_GTK
   LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
-
+  
   if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else if (LIVES_IS_WIDGET(widget))
     win = lives_widget_get_window(widget);
@@ -3464,6 +3468,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget * widget) {
   boolean ret;
+  if (mainw->no_idlefuncs) return FALSE;
   if (is_fg_thread()) return _lives_widget_process_updates(widget);
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_DATA;
   main_thread_execute(_lives_widget_process_updates, WEED_SEED_BOOLEAN, &ret, "v", widget);
@@ -13660,11 +13665,14 @@ static boolean _lives_widget_context_update(void) {
     limit *= MUCH_EV_MPY;
   }
 
-  while (count++ < limit && !mainw->is_exiting) {
+  while (count < limit && !mainw->is_exiting) {
     _lives_widget_context_iteration(NULL, FALSE);
     if (!lives_widget_context_pending(NULL)) break;
-    pthread_yield();
-    lives_nanosleep(NSLEEP_TIME);
+    if (!LIVES_IS_PLAYING && what_sup_now() == sup_ready) {
+      pthread_yield();
+      lives_nanosleep(NSLEEP_TIME);
+    }
+    count++;
   }
 
   if (!is_fg_service) THREADVAR(fg_service) = FALSE;

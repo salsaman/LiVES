@@ -18,7 +18,7 @@ static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
 
 static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, weed_plant_t *dparam, int okey,
-                                        weed_plant_t *sparam, boolean autoscale, boolean *toggle_fx);
+                                        weed_plant_t *sparam, boolean autoscale);
 
 static boolean do_chan_connected_query(lives_conx_w *, int okey, int omode, int ocnum, boolean is_same_key);
 static boolean do_param_connected_query(lives_conx_w *, int okey, int omode, int opnum, boolean is_same_key);
@@ -107,29 +107,17 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 }
 
 
-LIVES_GLOBAL_INLINE void really_deinit_effects(void) {
-  weed_plant_t *inst;
-  for (int key = 0; key < FX_KEYS_MAX_VIRTUAL; key++) {
-    if (key == rte_bg_gen_key()) continue;
-    if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-      if (fx_key_defs[key].flags & FXKEY_SOFT_DEINIT) {
-        weed_deinit_effect(key);
-        mainw->rte &= ~(GU641 << key);
-        if (rte_window) rtew_set_keych(key, FALSE);
-      } else fx_key_defs[key].flags &= ~FXKEY_SOFT_DEINIT;
-      weed_instance_unref(inst);
-    }
-  }
-}
-
-
 void push_fx_toggles(int okey, boolean update) {
-  // for out params which toggle fx on/off we do it via a quick route
-  // (soft deinit) just toggling a flagbit
+  // check for out params which toggle an active state
   //
-  // if update is FALSE the we clear the last activator from connected keys
-  // this allows those keys to be overriden, and then the override can be removed
-  // if the source fx is manually toggled on / off
+  // if update is TRUE, then we toggle the target state, unless the last_activator was
+  // activator_ui. This permits the user to override the automation by manually toggling the
+  // the target fx.
+  // - if we are playing then this will take effect when rte_keys_update is called
+  //
+  // if update is FALSE we clear the last_activator from connected keys
+  // this removes any manual overrides which may be in place and returns
+  // them to automation mode
   lives_pconnect_t *pconx = mainw->pconx;
   int omode = rte_key_getmode(okey);
   weed_instance_t *oinst = rte_keymode_get_instance(okey + 1, omode);
@@ -156,7 +144,7 @@ void push_fx_toggles(int okey, boolean update) {
             int ikey = pconx->ikey[j];
             if (!update) fx_key_defs[ikey].last_activator = activator_none;
             else pconx_convert_value_data(NULL, i, ikey, active_dummy, okey,
-                                            oparam, FALSE, NULL);
+					  oparam, FALSE);
 	    // *INDENT-OFF*
 	  }}}}
     // *INDENT-ON*
@@ -879,7 +867,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
 
 static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, weed_plant_t *dparam, int okey,
-                                        weed_plant_t *sparam, boolean autoscale, boolean * toggle_fx) {
+                                        weed_plant_t *sparam, boolean autoscale) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl = NULL, *sptmpl;
 
@@ -895,8 +883,6 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
   boolean retval = FALSE;
 
   int i;
-
-  if (toggle_fx) *toggle_fx = FALSE;
 
   if (dparam == sparam && (dparam != active_dummy || !active_dummy)) return FALSE;
 
@@ -1316,8 +1302,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       // ACTIVATE / DEACTIVATE
       if (fx_key_defs[key].last_activator != activator_ui) {
         boolean valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
-        if ((valb != rte_key_is_enabled(key, TRUE)))
-          _rte_key_toggle(key + 1, activator_pconx);
+        if (valb != rte_key_is_enabled(key, TRUE))
+          rte_key_pconx_toggle(key + 1);
       }
       return retval;
     }
@@ -1576,8 +1562,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   int autoscale;
   int pflags;
   int okey, omode, i;
-  boolean toggle_fx = FALSE;
-
+ 
   if (mainw->is_rendering) return FALSE;
 
   if (key == FX_DATA_KEY_PLAYBACK_PLUGIN) {
@@ -1623,6 +1608,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
         pthread_mutex_unlock(&mainw->fxd_active_mutex);
       } else inparam = inparams[i];
 
+      if (!inparam) continue;
       oinst = NULL;
 
       if (oparam != active_dummy) {
@@ -1640,7 +1626,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
     changed = pconx_convert_value_data(inst, i, key, key == FX_DATA_KEY_PLAYBACK_PLUGIN
                                        ? (weed_plant_t *)pp_get_param(mainw->vpp->play_params, i)
-                                       : inparam, okey, oparam, autoscale, &toggle_fx);
+                                       : inparam, okey, oparam, autoscale);
 
     if (oinst) weed_instance_unref(oinst);
     if (changed && inst && key > -1) {
@@ -1694,7 +1680,7 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
           weed_get_boolean_value(in_params[i],
                                  WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, NULL) == WEED_TRUE) autoscale = TRUE;
       if (pconx_convert_value_data(inst, i, -1, in_params[i], -1, weed_get_plantptr_value(in_params[i],
-                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL), autoscale, NULL)) {
+                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL), autoscale)) {
 
         pflags = weed_get_int_value(in_params[i], WEED_LEAF_FLAGS, NULL);
         if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;

@@ -987,6 +987,7 @@ typedef struct {
 
   volatile uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
   volatile uint64_t rte_real; ///< keeps track of rte keys during a play cycle
+  volatile uint64_t rte_soft_mask; ///< keeps track of rte keys which are soft disabled
 
   uint32_t last_grabbable_effect; // (spelt wrong but I like it this way)
   int rte_keys; ///< which effect is bound to keyboard (m) modechange and ctrl-alt-up-arrow / ctrl-alt-down-arrow param changes
@@ -1087,9 +1088,6 @@ typedef struct {
   weed_plant_t *frame_layer_preload;
   frames64_t pred_frame;
   int pred_clip;
-
-  /// actual / last frame being displayed
-  frames_t actual_frame;
 
   frames_t record_frame; ///< frame number to insert in recording
 

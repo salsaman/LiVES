@@ -635,11 +635,11 @@ static void pre_init(void) {
   // get some prefs we need to set menu options
   prefs->gui_monitor = -1;
 
-  if (prefs->vj_mode) {
+  //if (prefs->vj_mode) {
     check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL);
     check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
     check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL);
-  }
+    //}
 
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
@@ -2041,8 +2041,11 @@ boolean lives_startup2(livespointer data) {
 
   mainw->can_play = TRUE;
 
-  fg_service_wake();
   what_sup = sup_ready;
+
+  fg_service_wake();
+  mainw->do_ctx_update = TRUE;
+  mainw->gui_much_events = TRUE;
 
   return FALSE;
 } // end lives_startup2()

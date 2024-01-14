@@ -36,23 +36,22 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
 
 
 LIVES_GLOBAL_INLINE boolean lives_layer_plan_controlled(lives_layer_t *layer) {
-  if (!layer) return FALSE;
-  return weed_get_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, NULL);
+  return layer ? weed_get_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, NULL) : FALSE;
 }
 
 LIVES_GLOBAL_INLINE void lives_layer_set_frame(weed_layer_t *layer, frames_t frame) {
   // TODO -> int64
-  weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
+  if (layer) weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
 }
 
 
 LIVES_GLOBAL_INLINE void lives_layer_set_clip(weed_layer_t *layer, int clip) {
-  weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
+  if (layer) weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
 }
 
 
 LIVES_GLOBAL_INLINE void lives_layer_set_track(weed_layer_t *layer, int track) {
-  weed_set_int_value(layer, LIVES_LEAF_TRACK, track);
+  if (layer) weed_set_int_value(layer, LIVES_LEAF_TRACK, track);
 }
 
 
@@ -201,6 +200,7 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
 // leave them as set, then clear the flagbit
 weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
                                  int width, int height, int target_palette) {
+  // TODO - if pal has alpha,  should we make it transparent ?
   return _create_blank_layer(layer, image_ext, width, height, NULL, WEED_GAMMA_UNKNOWN, target_palette);
 }
 
@@ -314,7 +314,32 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int w
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
   if (!pixel_data) weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
-  else weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
+  else {
+    if (nplanes > 0) weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
+    else {
+      int *rows = weed_layer_get_rowstrides(layer, &nplanes);
+      int height = weed_layer_get_height(layer);
+      LIVES_CALLOC_TYPE(void *, pd, nplanes);
+      int pal = weed_layer_get_palette(layer);
+      void *p = pd[0] = pixel_data[0] + rows[0] * height;
+      for (int i = 1; i < nplanes; i++) {
+	pd[1] = p;
+	p += (off_t)(rows[i] * height * weed_palette_get_plane_ratio_vertical(pal, i));
+      }
+      weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pd);
+      if (nplanes > 1) {
+	lives_sync_list_t **copylists  = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes), *copylist = NULL;
+	for (int i = 0; i < nplanes; i++) {
+	  copylist = lives_sync_list_push(copylist, (void *)layer);
+	  copylists[i] = copylist;
+	  if (!i) lives_sync_list_set_priv(copylists[i], pd[0]);
+	}
+	weed_set_voidptr_array(layer, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
+	lives_free(copylists);
+      }
+      lives_free(pd);
+    }
+  }
   return layer;
 }
 
@@ -521,7 +546,7 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
   int *rowstrides, *orows;;
   weed_flags_t lflags;
   void **pixel_data, **npixel_data;
-  int pal, xheight, xwidth, nplanes, rs_hint = 0;
+  int pal, xheight, xwidth, nplanes, rs_hint = 0, i;
   boolean rem_new_rs = FALSE;
 
   if (!src_layer || !dst_layer) return LIVES_RESULT_ERROR;
@@ -587,7 +612,19 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
   npixel_data = weed_layer_get_pixel_data_planar(dst_layer, &nplanes);
   orows = weed_layer_get_rowstrides(src_layer, &nplanes);
 
-  for (int i = 0; i < nplanes; i++) {
+  if (!x_off && !y_off && xwidth == width && xheight == height
+      && weed_layer_contiguous(dst_layer) && weed_layer_contiguous(src_layer)) {
+    // copy in one go
+    for (i = 0; i < nplanes; i++)
+      if (orows[i] != rowstrides[i]) break;
+    if (i == nplanes) {
+      size_t fsize = lives_frame_calc_bytesize(width, height, pal, TRUE, orows, NULL);
+      lives_memcpy(npixel_data[0], pixel_data[0], fsize);
+      goto done;
+    }
+  }
+
+  for (i = 0; i < nplanes; i++) {
     void *src = pixel_data[i] + y_off * rowstrides[i];
     void *dst = npixel_data[i];
 
@@ -606,6 +643,7 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
     }
   }
 
+ done:
   lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
   lives_freep((void **)&rowstrides);
@@ -682,6 +720,7 @@ void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
   if (layer && lpt) {
     weed_layer_ref(layer);
     lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
+    weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
     lives_layer_set_proc_thread(layer, lpt);
     lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
     lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);

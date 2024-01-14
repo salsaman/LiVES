@@ -5240,21 +5240,22 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
                                 livespointer area_enum) {
 
   //if (!clip_can_reverse(mainw->current_file)) return TRUE;
-
-  if (!mainw->loop_locked && loop_lock_frame == -1) loop_lock_frame = mainw->actual_frame;
+  lives_clip_t *sfile = RETURN_NORMAL_CLIP(mainw->playing_file);
+  if (!sfile) return FALSE;
+  if (!mainw->loop_locked && loop_lock_frame == -1) loop_lock_frame = sfile->last_frameno;
   else {
     // temporary loop_cont / ping-pong
     // TODO: dont do this
     mainw->clip_switched = !mainw->playing_sel;
     mainw->playing_sel = TRUE;
-    if ((!mainw->loop_locked && mainw->actual_frame < loop_lock_frame) || (mainw->loop_locked && cfile->pb_fps < 0)) {
-      if (!mainw->loop_locked || mainw->play_end - mainw->actual_frame > LOOP_LOCK_MIN_FRAMES)
-        mainw->play_start = mainw->actual_frame;
+    if ((!mainw->loop_locked && sfile->last_frameno < loop_lock_frame) || (mainw->loop_locked && sfile->pb_fps < 0)) {
+      if (!mainw->loop_locked || mainw->play_end - sfile->last_frameno > LOOP_LOCK_MIN_FRAMES)
+        mainw->play_start = sfile->last_frameno;
       if (!mainw->loop_locked) mainw->play_end = loop_lock_frame;
     } else {
       if (!mainw->loop_locked) mainw->play_start = loop_lock_frame;
-      if (!mainw->loop_locked || mainw->actual_frame - mainw->play_start > LOOP_LOCK_MIN_FRAMES)
-        mainw->play_end = mainw->actual_frame;
+      if (!mainw->loop_locked || sfile->last_frameno - mainw->play_start > LOOP_LOCK_MIN_FRAMES)
+        mainw->play_end = sfile->last_frameno;
     }
     if (!mainw->loop_locked) {
       mainw->oloop = mainw->loop;
@@ -5262,16 +5263,16 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
       mainw->oping_pong = mainw->ping_pong;
       /// store original direction so when we unlock loop lock we come out with original
       /// this is reversed because we already had one reversal
-      ofwd = cfile->pb_fps < 0. ? LIVES_DIRECTION_FORWARD : LIVES_DIRECTION_BACKWARD;
+      ofwd = sfile->pb_fps < 0. ? LIVES_DIRECTION_FORWARD : LIVES_DIRECTION_BACKWARD;
     }
     mainw->loop_cont = TRUE;
-    if (clip_can_reverse(mainw->current_file))
+    if (clip_can_reverse(mainw->playing_file))
       mainw->ping_pong = TRUE;
     mainw->loop = FALSE;
     mainw->loop_locked = TRUE;
     loop_lock_frame = -1;
   }
-  if (clip_can_reverse(mainw->current_file))
+  if (clip_can_reverse(mainw->playing_file))
     return dirchange_callback(group, obj, keyval, mod, area_enum);
   return TRUE;
 }
@@ -7294,15 +7295,16 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     mainw->gui_much_events = TRUE;
     if (mainw->fs) {
       // switch TO full screen during pb
-      if (!mainw->multitrack && !mainw->sep_win) {
-        fullscreen_internal();
-        fade_background();
-      }
       if (mainw->sep_win) {
         mainw->ignore_screen_size = TRUE;
         resize_play_window();
         mainw->ignore_screen_size = FALSE;
       }
+      else if (!mainw->multitrack) {
+        fullscreen_internal();
+        fade_background();
+      }
+
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       }
@@ -7340,7 +7342,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 
         mainw->gui_much_events = TRUE;
 
-        //unfade_background();
+        unfade_background();
         if (!mainw->faded) unfade_background();
         mainw->ignore_screen_size = TRUE;
         resize_play_window();
@@ -7415,16 +7417,20 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
+
   if (mainw->multitrack && mainw->fs && mainw->play_window && LIVES_IS_PLAYING) {
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     lives_window_center(LIVES_WINDOW(mainw->play_window));
   }
-  disp_main_title();
+
+  if (!mainw->fs || !LIVES_IS_PLAYING) disp_main_title();
 
   if (LIVES_IS_PLAYING) {
     // since the output size may change, we need to rebuild nodesmodel, taking into account
     // the new player size
     // since the player plugin may change, we also need to do this
+    mainw->do_ctx_update = TRUE;
+    mainw->gui_much_events = TRUE;
     mainw->refresh_model = TRUE;
   }
 }
@@ -7433,7 +7439,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC | HOOK_CB_PRIORITY,
+    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC,
                                _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
@@ -10932,13 +10938,15 @@ boolean voldown_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer keybd) {
   if (!LIVES_IS_PLAYING) return FALSE;
-  if (!CURRENT_CLIP_HAS_VIDEO || CURRENT_CLIP_IS_CLIPBOARD) return FALSE;
+  if (!CLIP_HAS_VIDEO(mainw->playing_file) || mainw->playing_file == CLIPBOARD_FILE) return FALSE;
 
   if (!prefs->show_dev_opts) {
+    lives_clip_t *sfile = RETURN_VALID_CLIP(mainw->playing_file);
+    if (!sfile) return FALSE;
     int last_dprint_file = mainw->last_dprint_file;
     mainw->no_switch_dprint = TRUE;
     d_print_overlay(2.0, _("Playing frame %d / %d, at fps %.3f\n"),
-                    mainw->actual_frame, cfile->frames, cfile->pb_fps);
+                    sfile->last_frameno, sfile->frames, sfile->pb_fps);
     mainw->no_switch_dprint = FALSE;
     mainw->last_dprint_file = last_dprint_file;
     return FALSE;

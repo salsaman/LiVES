@@ -1947,7 +1947,7 @@ boolean lives_osc_cb_clip_getframe(void *context, int arglen, const void *vargs,
   if (mainw->current_file < 1 || (mainw->preview || (!mainw->multitrack && mainw->event_list && !mainw->record)) ||
       mainw->playing_file < 1) return lives_status_send("0");
   else {
-    lives_status_send((tmp = lives_strdup_printf("%d", mainw->actual_frame)));
+    lives_status_send((tmp = lives_strdup_printf("%d", cfile->last_frameno)));
     lives_free(tmp);
   }
   return TRUE;

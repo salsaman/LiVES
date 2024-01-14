@@ -74,7 +74,7 @@ boolean record_setup(ticks_t actual_ticks);
 
 weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only);
 
-weed_layer_t *load_frame_image(frames_t frame);
+frames_t load_frame_image(frames_t frame);
 
 weed_layer_t *get_old_frame_layer(void);
 void reset_old_frame_layer(void);
@@ -85,12 +85,10 @@ void reset_ext_player_layer(boolean ign_flag);
 frames_t clamp_frame(int clipno, frames_t nframe);
 
 frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
-void calc_aframeno(int fileno);
 
 void ready_player_one(weed_timecode_t estart);
 
 boolean begin_playback(void);
-boolean get_accels_swapped(void);
 
 void clear_player_hooks(void);
 

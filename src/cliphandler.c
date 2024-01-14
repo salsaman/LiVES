@@ -2754,7 +2754,8 @@ void do_quick_switch(int new_file) {
 
   set_main_title(cfile->name, 0);
 
-  if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
+  if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND)
+    ce_thumbs_highlight_current_clip();
 
   if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list && !mainw->record))
     mainw->play_end = INT_MAX;
@@ -2987,8 +2988,8 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
   lives_memcpy(&mysrc->ext_checksum, &chksum, sizeof(fingerprint_t));
   if (ext_URI) mysrc->ext_URI = lives_strdup(ext_URI);
 
-  if (src_type == LIVES_SRC_TYPE_BLANK)
-    mysrc->action_func = lives_blankframe_srcfunc;
+  //  if (src_type == LIVES_SRC_TYPE_BLANK)
+    //mysrc->action_func = lives_blankframe_srcfunc;
 
   _clip_src_insert(srcgrp, mysrc, TRUE);
 

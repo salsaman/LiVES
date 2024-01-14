@@ -1009,10 +1009,39 @@ deint1:
 
 rte_key_desc fx_key_defs[FX_KEYS_MAX_VIRTUAL];
 
+static const uint64_t phys_mask = (GU641 << FX_KEYS_PHYSICAL) - 1;
 
 void fx_keys_init(void) {
   lives_memset(fx_key_defs, 0, sizeof(fx_key_defs));
 }
+
+
+LIVES_GLOBAL_INLINE boolean rte_key_soft_deinited(int key) {
+  uint64_t rte_key = (GU641 << key);
+  return !!(mainw->rte_soft_mask & rte_key);
+}
+
+
+LIVES_GLOBAL_INLINE void really_deinit_effect(int key) {
+  weed_plant_t *inst;
+  uint64_t rte_key = (GU641 << key);
+  mainw->rte_soft_mask &= ~rte_key;
+  if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+    weed_deinit_effect(key);
+    weed_instance_unref(inst);
+  }
+  mainw->rte &= ~rte_key;
+  mainw->rte_real &= ~rte_key;
+}
+
+
+
+LIVES_GLOBAL_INLINE void really_deinit_effects(void) {
+  for (int key = 0; key < FX_KEYS_MAX_VIRTUAL; key++)
+    if (rte_key_soft_deinited(key))
+      really_deinit_effect(key);
+}
+
 
 LIVES_LOCAL_INLINE boolean rte_key_real_enabled(int key) {
   return !!(mainw->rte_real & (GU641 << key));
@@ -1026,7 +1055,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
   uint64_t new_rte;
-  boolean refresh_model = TRUE;
+  boolean refresh_model = FALSE;
   lives_result_t res = LIVES_RESULT_SUCCESS;
 
   if (mainw->go_away) return res;
@@ -1035,116 +1064,98 @@ static lives_result_t rte_on_off(int key, int on_off) {
     // switch off real time effects
     // also switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
+    refresh_model = TRUE;
   } else {
     key--;
     new_rte = GU641 << key;
 
-    if (!rte_key_is_enabled(key, TRUE)) {
-      if (!rte_key_real_enabled(key)) return res;
+    if (on_off == LIVES_ON) {
       // switch is ON
+      
       filter_mutex_lock(key);
-      mainw->rte |= new_rte;
-      if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-        if (fx_key_defs[key].flags & FXKEY_SOFT_DEINIT) {
-          fx_key_defs[key].flags &= ~FXKEY_SOFT_DEINIT;
-	  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
-	      && (prefs->rec_opts & REC_EFFECTS)) {
-            record_filter_init(key);
-          }
-	  mainw->rte_real |= new_rte;
-	  refresh_model = FALSE;
-	}
-        weed_instance_unref(inst);
-      } else {
+      if (mainw->rte_soft_mask & new_rte) {
+	mainw->rte_soft_mask &= ~new_rte;
+	if (mainw->ce_thumbs) ce_thumbs_set_keych(key, TRUE);
+	if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
+	    && (prefs->rec_opts & REC_EFFECTS))
+	  record_filter_init(key);
+      }
+      else {
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
-          mainw->rte &= ~new_rte;
           mainw->rte_real &= ~new_rte;
-          if (rte_window) rtew_set_keych(key, FALSE);
-          if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+	  //if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
           filter_mutex_unlock(key);
           return res;
         }
+	ce_thumbs_add_param_box(key, TRUE);
+	mainw->rte |= new_rte;
+	refresh_model = TRUE;
       }
 
-      if (fx_key_defs[key].last_activator == activator_ui) {
-	push_fx_toggles(key, FALSE);
+      if (fx_key_defs[key].last_activator == activator_pconx) {
 	mainw->last_grabbable_effect = key;
-	if (rte_window) rtew_set_keych(key, TRUE);
-	if (mainw->ce_thumbs) {
-	  ce_thumbs_set_keych(key, TRUE);
-
-	  // if effect was auto (from ACTIVATE data connection), leave all param boxes
-	  // otherwise, remove any which are not "pinned"
-	  ce_thumbs_add_param_box(key, TRUE);
-	}
+	// if effect was auto (from ACTIVATE data connection), leave all param boxes
+	// otherwise, remove any which are not "pinned"
       }
 
+      if (rte_window) rtew_set_keych(key, TRUE);
       filter_mutex_unlock(key);
 
       if (!LIVES_IS_PLAYING)
-        // if anything is connected to ACTIVATE, the fx may be activated
-        // during playback this is checked when we play a frame
-        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
-          if (rte_key_valid(i + 1, TRUE))
-            if (!rte_key_is_enabled(i, TRUE))
-              pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
+	// if anything is connected to ACTIVATE, the fx may be activated
+	// during playback this is checked when we play a frame
+	for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+	  if (rte_key_valid(i + 1, TRUE))
+	    if (!rte_key_is_enabled(i, TRUE))
+	      pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
     } else {
       // effect is OFF
-      if (rte_key_real_enabled(key)) return res;
-
-      if (key == prefs->autotrans_key - 1 && prefs->autotrans_amt >= 0.) {
-        prefs->autotrans_amt = -1.;
-        filter_mutex_lock(key);
-        if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-          apply_key_defaults(inst, key, rte_key_getmode(key + 1));
-          weed_instance_unref(inst);
-        }
-        filter_mutex_unlock(key);
-        return res;
-      }
-
       filter_mutex_lock(key);
 
+      if (key == prefs->autotrans_key - 1 && prefs->autotrans_amt >= 0.) {
+	prefs->autotrans_amt = -1.;
+	filter_mutex_lock(key);
+	if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+	  apply_key_defaults(inst, key, rte_key_getmode(key + 1));
+	  weed_instance_unref(inst);
+	}
+	filter_mutex_unlock(key);
+	return res;
+      }
+
       if (fx_key_defs[key].last_activator == activator_pconx) {
-        // SOFT_DEINIT
-        // if the change was caused by a data connection, the target may be toggled rapidly
-        // in this case we dont actually deinit / reinit the instance, we just flag it as ignored
-        weed_plant_t *inst;
-        if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-          int inc_count = enabled_in_channels(inst, FALSE);
-          if (inc_count == 1) {
-	    fx_key_defs[key].flags |= FXKEY_SOFT_DEINIT;
-	    if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
-		&& (prefs->rec_opts & REC_EFFECTS))
-              record_filter_deinit(key);
-            mainw->rte &= ~new_rte;
-            mainw->rte_real &= ~new_rte;
-          }
-          weed_instance_unref(inst);
-        }
-        refresh_model = FALSE;
+	// SOFT_DEINIT
+	// if the change was caused by a data connection, the target may be toggled rapidly
+	// in this case we dont actually deinit / reinit the instance, we just flag it as ignored
+	mainw->rte_soft_mask |= new_rte;
+	if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
+	    && (prefs->rec_opts & REC_EFFECTS))
+	  record_filter_deinit(key);
       }
       else {
-        // deinit effect
-        if (weed_deinit_effect(key)) {
-          mainw->rte &= ~new_rte;
-          if (rte_window) rtew_set_keych(key, FALSE);
-          if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
-        }
-	else { 
+	// deinit effect
+	if (!weed_deinit_effect(key)) {
 	  mainw->rte_real |= new_rte;
+	  filter_mutex_unlock(key);
+	  return res;
 	}
+	mainw->rte_soft_mask &= ~new_rte;
+	mainw->rte &= ~new_rte;
+	refresh_model = TRUE;
       }
+
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+      if (rte_window) rtew_set_keych(key, FALSE);
       filter_mutex_unlock(key);
 
       if (!LIVES_IS_PLAYING) {
-        // if anything is connected to ACTIVATE, the target may be activated / de-activated
-        // during playback this is checked when we play a frame
-        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
-          if (rte_key_valid(i + 1, TRUE))
-            if (rte_key_is_enabled(i, TRUE))
-              pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
+	// if anything is connected to ACTIVATE, the target may be activated / de-activated
+	// during playback this is checked when we play a frame
+	for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+	  if (rte_key_valid(i + 1, TRUE))
+	    if (rte_key_is_enabled(i, TRUE))
+	      pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
     }
   }
@@ -1172,44 +1183,59 @@ static lives_result_t rte_on_off(int key, int on_off) {
 
 
 ////////// keys //////////////////
-static const uint64_t phys_mask = (GU641 << FX_KEYS_PHYSICAL) - 1;
 
 void rte_keys_update(void) {
   // during playback we do not react immediately to fx key presses
   // instead we defer updates until the designated 'safe point'
+  //
+  // masks - phys_mask - used for "deinit_all" - we only want to deinit keys 1 - 9,
+  // this leaves 10 and 11 always on, resetable by the uset
+  // - so if rte (current values) & phys_mask != 0,
+  // and rte_real (adjusted values) & phys_mask == 0
+  // this implies deinit all.
+  //
+  // However, soft deinited keys are always on in mainw->rte
+  // yet we want to be able to toggle them
+  // thus, whenever we have soft deinit, the corresponding bit is set in soft_mask
+  // otherwise, rte would be non zero, and of rte_real became 9, this would
+  // deinit all, including soft deinited fx, which we want to avoid
+  // so we here take rte ^ soft_mask
+  
   uint64_t real_rte = mainw->rte_real;
-  if ((mainw->rte & phys_mask)  && !(real_rte & phys_mask)) {
+  uint64_t rte = mainw->rte & ~mainw->rte_soft_mask;
+  if ((rte & phys_mask) && !((real_rte & phys_mask))) {
     // need to distinguish between - user hit ctrl-0 --> disable all physical keys
     // and - only non physicals keys were active and user disabled them
     rte_on_off(0, LIVES_OFF);
+    return;
   }
-  uint64_t ons = ~mainw->rte & real_rte;
-  uint64_t offs = mainw->rte & ~real_rte;
+  uint64_t ons = ~rte & real_rte;
+  uint64_t offs = rte & ~real_rte;
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (!rte_key_valid(i + 1, TRUE)) continue;
-    uint64_t new_rte = GU641 << i;
-    if (offs & new_rte) rte_on_off(i + 1, LIVES_OFF);
-    else if (ons & new_rte) rte_on_off(i + 1, LIVES_ON);
+    uint64_t rte_key = GU641 << i;
+    if (offs & rte_key) rte_on_off(i + 1, LIVES_OFF);
+    else if (ons & rte_key) rte_on_off(i + 1, LIVES_ON);
   }
 }
 
 
 lives_result_t _rte_key_toggle(int key, activator_type acti) {
   uint64_t new_rte;
+  if (acti == activator_ui && !LIVES_IS_INTERACTIVE)
+    return LIVES_RESULT_FAIL;
+
   if (key < 0 || key > FX_KEYS_MAX_VIRTUAL) return LIVES_RESULT_ERROR;
-  if (!key) mainw->rte_real &= ~phys_mask;
+
+  if (!key)mainw->rte_real &= ~phys_mask;
   else {
-    if (acti == activator_ui) {
-      if (!LIVES_IS_INTERACTIVE) return LIVES_RESULT_FAIL;
-      fx_key_defs[key].last_activator = acti;
-    }
-    else {
-      if (fx_key_defs[key].last_activator == activator_ui)
-	return LIVES_RESULT_FAIL;
-      if (fx_key_defs[key].last_activator == activator_none)
-	fx_key_defs[key].last_activator = acti;
-    }
+    if (acti == activator_pconx
+	&& fx_key_defs[key - 1].last_activator == activator_ui)
+      return LIVES_RESULT_FAIL; 
+
     new_rte = GU641 << (key - 1);
+    fx_key_defs[key - 1].last_activator = acti;
+
     mainw->rte_real ^= new_rte;
   }
 
@@ -1248,15 +1274,23 @@ boolean rte_key_on_off(int key, boolean on) {
 }
 
 
+// called from functions
 lives_result_t rte_key_toggle(int key) {
   // key is 1 based
   return _rte_key_toggle(key, activator_ui);
 }
 
 
-// callback from fx keys
+// called from data connections
+lives_result_t rte_key_pconx_toggle(int key) {
+  // key is 1 based
+  return _rte_key_toggle(key, activator_pconx);
+}
+
+
 boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
+  // callback from key presses
   // key is 1 based
   int key = LIVES_POINTER_TO_INT(user_data);
   _rte_key_toggle(key, activator_ui);
@@ -1265,6 +1299,7 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
+  // callback from toggles in rte window
   // key is 1 based
   int key = LIVES_POINTER_TO_INT(user_data);
   _rte_key_toggle(key, activator_ui);
@@ -1366,14 +1401,14 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * acc, LiVESWidgetObject * o, uint32
 //////////////////////////////////////////////////////////////
 
 // key base is 0
-LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits) {
+LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean apply_soft_deinits) {
   // if ign_soft_deinits is FALSE, we return the real state
   // if ign_soft_deinits is TRUE, we may return FALSE if the instance was soft disabled by an automation
   // soft deinited fx are not applied, however they are reinited as necessary, maintaining soft state
-  boolean enabled = !!(mainw->rte & (GU641 << key));
-  if (ign_soft_deinits && enabled && (fx_key_defs[key].flags & FXKEY_SOFT_DEINIT))
-    enabled = !enabled;
-  return enabled;
+  uint64_t rte = mainw->rte;
+  if (!rte_key_valid(key + 1, TRUE)) return FALSE;
+  if (apply_soft_deinits) rte &= ~mainw->rte_soft_mask;
+  return !!(rte & (GU641 << key));
 }
 
 

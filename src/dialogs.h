@@ -13,6 +13,8 @@ LiVESWindow *get_transient_full();
 
 /// generic ......
 
+boolean get_accels_swapped(void);
+
 boolean do_warning_dialog(const char *text);
 boolean do_warning_dialogf(const char *fmt, ...);
 boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);

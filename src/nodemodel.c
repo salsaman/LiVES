@@ -501,7 +501,7 @@ static double get_resize_cost(int cost_type, int out_width, int out_height, int 
 static double get_layer_copy_cost(int cost_type, int width, int height, int pal) {
   if (cost_type != COST_TYPE_TIME) return 0.;
   if (!glob_timing->bytes_per_sec) return 0.;
-  size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL);
+  size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL, NULL);
   return bytes / glob_timing->bytes_per_sec;
 }
 
@@ -530,11 +530,11 @@ static double get_gamma_cost(int cost_type, int width, int height, int pal, int 
   }
   if (cost_type == COST_TYPE_TIME) {
     if (glob_timing->gbytes_per_sec) {
-      size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL);
+      size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL, NULL);
       return bytes / glob_timing->gbytes_per_sec;
     } else {
       if (glob_timing->bytes_per_sec) {
-        size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL);
+        size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL, NULL);
         return bytes / glob_timing->bytes_per_sec;
       }
     }
@@ -1072,9 +1072,9 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
     GET_PROC_THREAD_SELF(self);
     exec_plan_substep_t *sub;
     int tgt_gamma = step->fin_gamma;
+    int oclamping = step->fin_clamping;
     int osampling = step->fin_sampling;
     int osubspace = step->fin_subspace;
-    int oclamping = step->fin_sampling;
     int opalette = step->fin_pal;
     weed_layer_ref(layer);
     int inpalette = weed_layer_get_palette(layer);
@@ -1159,12 +1159,15 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     exec_plan_substep_t *sub;
     //double lb_time = 0.;
     int interp = GET_SELF_VALUE(int, "interp");
-    int oclamping = step->fin_sampling;
+    int oclamping = step->fin_clamping;
+    int osampling = step->fin_sampling;
+    int osubspace = step->fin_subspace;
     int opalette = step->fin_pal;
     int xwidth = step->fin_iwidth;
     int xheight = step->fin_iheight;
     int width = step->fin_width;
     int height = step->fin_height;
+    int tgt_gamma = step->fin_gamma;
     boolean resized = FALSE;
 
     double xtime = lives_get_session_time();
@@ -1184,7 +1187,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
 
     lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
 
-    resized = resize_layer(layer, xwidth, xheight, interp, opalette, oclamping);
+    resized = resize_layer_full(layer, xwidth, xheight, interp, opalette, oclamping, osampling, osubspace, tgt_gamma);
 
     if (!resized) {
       retval = FILTER_ERROR_UNABLE_TO_RESIZE;
@@ -1287,13 +1290,13 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step, weed_instance
   double xtime;
   exec_plan_t *plan = step->plan;
   lives_filter_error_t filter_error;
+  int key = step->target_idx;
 
   xtime = lives_get_session_time();
   step->real_st = xtime;
 
-  if (fx_key_defs[step->target_idx].flags & FXKEY_SOFT_DEINIT) {
-    filter_error = FILTER_INFO_BYPASSED;
-  }
+  if (rte_key_soft_deinited(key))
+    return FILTER_INFO_BYPASSED;
 
   if (step->fin_gamma == WEED_GAMMA_LINEAR) {
     // if we have RGBA type in / out params, and instance runs with linear gamma
@@ -1302,21 +1305,21 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step, weed_instance
     gamma_conv_params(WEED_GAMMA_LINEAR, inst, FALSE);
   }
 
-  filter_mutex_lock(step->target_idx);
-  filter_error = act_on_instance(inst, step->target_idx, plan->layers,
+  filter_mutex_lock(key);
+  filter_error = act_on_instance(inst, key, plan->layers,
                                  plan->model->opwidth, plan->model->opheight);
-  filter_mutex_unlock(step->target_idx);
+  filter_mutex_unlock(key);
 
   if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
     d_print_debug("NEEDS reinit\n");
     weed_reinit_effect(inst, TRUE);
-    if (fx_key_defs[step->target_idx].flags & FXKEY_SOFT_DEINIT) {
+    if (rte_key_soft_deinited(key))
       filter_error = FILTER_INFO_BYPASSED;
-    } else {
-      filter_mutex_lock(step->target_idx);
-      filter_error = act_on_instance(inst, step->target_idx, plan->layers,
+    else {
+      filter_mutex_lock(key);
+      filter_error = act_on_instance(inst, key, plan->layers,
                                      plan->model->opwidth, plan->model->opheight);
-      filter_mutex_unlock(step->target_idx);
+      filter_mutex_unlock(key);
       if (filter_error != FILTER_SUCCESS)
         mainw->refresh_model = TRUE;
       filter_error = FILTER_ERROR_INVALID_FILTER;
@@ -1522,13 +1525,13 @@ static void extract_timedata(exec_plan_t *plan) {
           exec_plan_substep_t *substep = (exec_plan_substep_t *)sublist->data;
           float cpuload = substep->cpuload;
 
-
           switch (substep->op_idx) {
           case OP_PCONV:
           case OP_RESIZE: {
-            double outsize = (double)lives_frame_calc_bytesize(substep->width, substep->height, substep->pal, FALSE, NULL);
+            double outsize = (double)lives_frame_calc_bytesize(substep->width, substep->height,
+							       substep->pal, FALSE, NULL, NULL);
             double insize = (double)lives_frame_calc_bytesize(step->fin_iwidth, step->fin_iheight,
-                            step->fin_pal, FALSE, NULL);
+                            step->fin_pal, FALSE, NULL, NULL);
             tstdata  = LIVES_CALLOC_SIZEOF(ann_testdata_t, 1);
             tstdata->inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
 
@@ -1654,6 +1657,7 @@ static void run_plan(exec_plan_t *plan) {
   boolean cancelled = FALSE;
   boolean paused = FALSE;
   boolean got_act_st = FALSE;
+  char *tmp;
   int error = 0, res;
   int lstatus, i, state;
   int nloops = 0;
@@ -1666,7 +1670,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  //MSGMODE_ON(DEBUG);
+  MSGMODE_ON(DEBUG);
 
   planrunner_lock();
 
@@ -1707,7 +1711,7 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    //MSGMODE_OFF(DEBUG);
+    MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel(self);
   }
@@ -1846,7 +1850,7 @@ static void run_plan(exec_plan_t *plan) {
           /* } */
 
           if (!layer) {
-            frame = plan->frame_idx[step->track];
+	    frame = plan->frame_idx[step->track];
             if (!frame) continue;
 
             plan->template->frame_idx[step->track] = frame;
@@ -1894,7 +1898,21 @@ static void run_plan(exec_plan_t *plan) {
             int clip = lives_layer_get_clip(layer);
             lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
             plan->template->frame_idx[step->track] = plan->frame_idx[step->track]
-            = lives_layer_get_frame(layer);
+	      = lives_layer_get_frame(layer);
+	    if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
+	      if (rte_key_soft_deinited(step->target_idx)) {
+		if (!step->track) lives_layer_set_frame(layer, 0);
+		else {
+		  xtime = lives_get_session_time();
+		  step->state = STEP_STATE_SKIPPED;
+		  unlock_layer_status(layer);
+		  d_print_debug("\nstep %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n"
+				"SKIPPED - soft deinited\n", step_count,
+				step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
+		  continue;
+		}
+	      }
+	    }
             xtime = inc_running_steps(step);
             d_print_debug("\nstep %d; RUN LOAD - track %d, clip %d, frame %ld, @ %.2f msec\n", step_count,
                           step->track, step->target_idx, plan->frame_idx[step->track], xtime * 1000.);
@@ -1957,11 +1975,11 @@ static void run_plan(exec_plan_t *plan) {
           // then queue it
           //double est_dur;
           int op_order[N_OP_TYPES];
-          int out_width = weed_layer_get_width(layer), out_height = weed_layer_get_height(layer);
+          int out_width = step->ini_width, out_height = step->ini_height;
           int in_width = step->fin_width, in_height = step->fin_height;
           int in_iwidth = step->fin_iwidth, in_iheight = step->fin_iheight;
-          int outpl = weed_layer_get_palette(layer), inpl = step->fin_pal;
-          int out_gamma_type = weed_layer_get_gamma(layer), in_gamma_type = step->fin_gamma;
+          int outpl = step->ini_pal, inpl = step->fin_pal;
+          int out_gamma_type = step->ini_gamma, in_gamma_type = step->fin_gamma;
           int flags = OPORD_EXPLAIN;
 
           if (in_iwidth < in_width || in_iheight < in_height)
@@ -2128,7 +2146,7 @@ static void run_plan(exec_plan_t *plan) {
                           step_count, weed_filter_get_name((weed_filter_t *)step->target),
                           xtime * 1000., weed_layer_get_pixel_data(plan->layers[0]));
 
-            if (fx_key_defs[step->target_idx].flags & FXKEY_SOFT_DEINIT) {
+            if (rte_key_soft_deinited(step->target_idx)) {
               d_print_debug("\nstep %d APPLY INST  skipped, soft deinit !\n",
                             step->count, step->track);
               step->state = STEP_STATE_SKIPPED;
@@ -2214,23 +2232,36 @@ static void run_plan(exec_plan_t *plan) {
           if (step->proc_thread) {
             double xtime;
             exec_plan_substep_t *substep = NULL;
+	    int op_idx = OP_NULL;
             if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
             xtime = lives_get_session_time();
             lives_proc_thread_join(step->proc_thread);
+
+	    if (!lives_strcmp(lives_proc_thread_get_funcname(step->proc_thread),
+			      "deinterlace_frame")) {
+	      op_idx = OP_DEINTERLACE;
+	      d_print_debug("deinterlace completed @ \n", xtime * 1000.);
+	    }
+	    else if (!lives_strcmp(lives_proc_thread_get_funcname(step->proc_thread),
+				   "render_subs_from_file")) {
+	      op_idx = OP_SUBTITLES;
+	      weed_set_boolean_value(layer, "subs_done", TRUE);
+	      d_print_debug("render subs completed @ \n", xtime * 1000.);
+	    }
             lives_proc_thread_unref(step->proc_thread);
 
-            d_print_debug("deinterlace completed @ \n", xtime * 1000.);
-
-            for (LiVESList *list = step->substeps; list; list = list->next) {
-              substep = (exec_plan_substep_t *)list->data;
-              substep->end = xtime;
-              if (substep->op_idx == OP_DEINTERLACE) break;
-              substep = NULL;
-            }
-            if (substep) {
-              double dur = xtime - substep->start;
-              d_print_debug("Done in %.2f msec\n", dur * 1000.);
-            }
+	    if (op_idx != OP_NULL) {
+	      for (LiVESList *list = step->substeps; list; list = list->next) {
+		substep = (exec_plan_substep_t *)list->data;
+		substep->end = xtime;
+		if (substep->op_idx == op_idx) break;
+		substep = NULL;
+	      }
+	      if (substep) {
+		double dur = xtime - substep->start;
+		d_print_debug("Done in %.2f msec\n", dur * 1000.);
+	      }
+	    }
             lives_layer_set_status(layer, LAYER_STATUS_LOADED);
           }
 
@@ -2259,8 +2290,10 @@ static void run_plan(exec_plan_t *plan) {
 
             if (!weed_layer_get_width(layer) || !weed_layer_get_height(layer)) BREAK_ME("size 0 layer");
 
-            d_print_debug("LOAD (track %d) done @ %.2f msec, duration %.2f\n", step->track, xtime * 1000.,
-                          step->tdata->real_duration);
+	    step->tdata->real_duration = 1000. * (xtime - step->tdata->real_start - step->tdata->paused_time);
+            d_print_debug("LOAD (track %d) done @ %.2f msec, duration %s\n", step->track, 1000. * xtime,
+			  (tmp = lives_format_timing_string(step->tdata->real_duration / 1000.)));
+	    lives_free(tmp);
 
             if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL)) {
               exec_plan_substep_t *sub = make_substep(OP_DEINTERLACE, xtime, weed_layer_get_width(layer),
@@ -2272,23 +2305,39 @@ static void run_plan(exec_plan_t *plan) {
               step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE, deinterlace_frame, -1, "vI", layer,
                                   mainw->currticks);
             } else {
-              if (!(step->flags & STEP_FLAG_NO_READY_STAT))
-                lives_layer_set_status(layer, LAYER_STATUS_READY);
-              else lives_layer_set_status(layer, LAYER_STATUS_LOADED);
-              if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
-                weed_instance_t *inst =
-                  rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
-                if (step->fin_gamma == WEED_GAMMA_LINEAR) {
-                  // if we scaled params, scale them back so they are displayed correctly in interfaces
-                  gamma_conv_params(WEED_GAMMA_SRGB, inst, TRUE);
-                  gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE);
-                }
-                weed_instance_unref(inst);
-              }
-              step->state = STEP_STATE_FINISHED;
-              dec_running_steps(step);
-            }
-          }
+	      // render subtitles from file
+	      lives_clip_t *sfile = RETURN_VALID_CLIP(step->target_idx);
+	      if (prefs->show_subtitles && sfile->subt && sfile->subt->tfile > 0
+		  && !weed_get_boolean_value(layer, "subs_done", NULL)) {
+		exec_plan_substep_t *sub = make_substep(OP_SUBTITLES, xtime, weed_layer_get_width(layer),
+							weed_layer_get_height(layer), weed_layer_get_palette(layer));
+		step->substeps = lives_list_append(step->substeps, (void *)sub);	
+		d_print_debug("Layer needs subtitling\n");
+		lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
+		xtime = (double)(lives_layer_get_frame(layer) - 1) / sfile->fps;
+		step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+							     render_subs_from_file, -1, "vdv",
+							     sfile, xtime, layer);
+	      }
+	      else {
+		if (!(step->flags & STEP_FLAG_NO_READY_STAT))
+		  lives_layer_set_status(layer, LAYER_STATUS_READY);
+		else lives_layer_set_status(layer, LAYER_STATUS_LOADED);
+		if (step->flags & STEP_FLAG_RUN_AS_LOAD) {
+		  weed_instance_t *inst =
+		    rte_keymode_get_instance(step->target_idx + 1, rte_key_getmode(step->target_idx + 1));
+		  if (step->fin_gamma == WEED_GAMMA_LINEAR) {
+		    // if we scaled params, scale them back so they are displayed correctly in interfaces
+		    gamma_conv_params(WEED_GAMMA_SRGB, inst, TRUE);
+		    gamma_conv_params(WEED_GAMMA_SRGB, inst, FALSE);
+		  }
+		  weed_instance_unref(inst);
+		}
+		step->state = STEP_STATE_FINISHED;
+		dec_running_steps(step);
+	      }
+	    }
+	  }
           break;
         }
         case STEP_TYPE_CONVERT: {
@@ -2342,7 +2391,7 @@ static void run_plan(exec_plan_t *plan) {
               gstart = lives_proc_thread_get_double_value(lpt, "gconv_start");
               if (gstart) {
                 size_t frmsize = lives_frame_calc_bytesize(step->fin_width, step->fin_height,
-                                 step->fin_pal, FALSE, NULL);
+							   step->fin_pal, FALSE, NULL, NULL);
                 double gend = lives_proc_thread_get_double_value(lpt, "gconv_end");
                 glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
               }
@@ -2413,7 +2462,7 @@ static void run_plan(exec_plan_t *plan) {
         default: break;
         }
       }
-    }
+      }
 
     if (plan->state == PLAN_STATE_RESUMING && can_resume) {
       xtime = lives_get_session_time();
@@ -2434,7 +2483,7 @@ static void run_plan(exec_plan_t *plan) {
 
     pthread_yield();
     _lives_microsleep(10);
-  } while (!complete || plan->nsteps_running);
+    } while (!complete || plan->nsteps_running);
 
   xtime = lives_get_session_time();
   plan->tdata->real_end = xtime;
@@ -2587,7 +2636,7 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->active = FALSE;
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
-  //MSGMODE_OFF(DEBUG);
+  MSGMODE_OFF(DEBUG);
 
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
   nplans--;
@@ -2854,7 +2903,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       step->start_res[RES_TYPE_THRD] += 1;
       if (step->fin_pal)
         step->end_res[RES_TYPE_MEM] =
-          lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, FALSE, NULL);
+          lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, FALSE, NULL, NULL);
       step->end_res[RES_TYPE_BBLOCK] = 1;
     }
     break;
@@ -2963,12 +3012,12 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       if (!inplace || !step->start_res[RES_TYPE_MEM]) {
         if (!step->start_res[RES_TYPE_MEM])
           step->start_res[RES_TYPE_MEM] =
-            lives_frame_calc_bytesize(out->width, out->height, opal, FALSE, NULL);
+            lives_frame_calc_bytesize(out->width, out->height, opal, FALSE, NULL, NULL);
 
         step->start_res[RES_TYPE_MEM] +=
-          lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, FALSE, NULL);
+          lives_frame_calc_bytesize(step->fin_width, step->fin_height, step->fin_pal, FALSE, NULL, NULL);
         step->end_res[RES_TYPE_MEM] = step->start_res[RES_TYPE_MEM]
-                                      - lives_frame_calc_bytesize(out->width, out->height, opal, FALSE, NULL);
+                                      - lives_frame_calc_bytesize(out->width, out->height, opal, FALSE, NULL, NULL);
         step->start_res[RES_TYPE_BBLOCK]++;
         step->end_res[RES_TYPE_BBLOCK] = 1;
       }
@@ -2987,7 +3036,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         step->schan = in->origin;
         step->dchan = idx;
         step->start_res[RES_TYPE_MEM] +=
-          lives_frame_calc_bytesize(orig->width, orig->height, pal, FALSE, NULL);
+          lives_frame_calc_bytesize(orig->width, orig->height, pal, FALSE, NULL, NULL);
         step->tdata->est_duration = get_layer_copy_cost(COST_TYPE_TIME, orig->width, orig->height, pal);
       } else {
         output_node_t *orig = n->outputs[out->origin];
@@ -2997,7 +3046,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         step->schan = out->origin;
         step->dchan = idx;
         step->start_res[RES_TYPE_MEM] +=
-          lives_frame_calc_bytesize(orig->width, orig->height, pal, FALSE, NULL);
+          lives_frame_calc_bytesize(orig->width, orig->height, pal, FALSE, NULL, NULL);
         step->tdata->est_duration = get_layer_copy_cost(COST_TYPE_TIME, orig->width, orig->height, pal);
       }
 
@@ -3035,7 +3084,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
           if (out->flags & NODEFLAGS_IO_SKIP) continue;
           if (out->npals) pal = out->optimal_pal;
           else pal = n->optimal_pal;
-          memused += lives_frame_calc_bytesize(out->width, out->height, pal, FALSE, NULL);
+          memused += lives_frame_calc_bytesize(out->width, out->height, pal, FALSE, NULL, NULL);
         }
 
         step->start_res[RES_TYPE_MEM] += memused;
@@ -3054,7 +3103,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         in = n->inputs[0];
         pal = n->optimal_pal;
         if (pal)
-          memused = lives_frame_calc_bytesize(in->width, in->height, pal, FALSE, NULL);
+          memused = lives_frame_calc_bytesize(in->width, in->height, pal, FALSE, NULL, NULL);
         step->start_res[RES_TYPE_THRD] = step->end_res[RES_TYPE_THRD] = 0;
         step->end_res[RES_TYPE_MEM] = memused;
         step->end_res[RES_TYPE_BBLOCK] = 1;
@@ -3739,6 +3788,10 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
   // at sink,we will strech or expand to fit in sink
   // if sink is a pb plugin and can letterbox, we do not add blank bars. If sink can resize
 
+  // PROPOGATE SMALLER SIZES
+  // if model->phase == 4, we 
+
+  
   input_node_t *in;
   output_node_t *out;
 
@@ -3748,6 +3801,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
   int opwidth = nodemodel->opwidth;
   int opheight = nodemodel->opheight;
   int width, height;
+  int pbq = prefs->pb_quality;
 
   double op_ar = (double)opwidth / (double)opheight;
 
@@ -3854,16 +3908,34 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         // output CAN resize, if not letterboxing we can
         // just use out_size
         if (!letterbox || can_letterbox) {
-          in->inner_width = in->width = out->width;
-          in->inner_height = in->height = out->height;
+	  if (pbq != PB_QUALITY_LOW || (out->width < in->width && out->height < in->height)) {
+	    in->inner_width = in->width = out->width;
+	    in->inner_height = in->height = out->height;
+	  }
+	  else {
+	    out->width = in->inner_width = in->width;
+	    out->height = in->inner_height = in->height;
+	  }
         } else {
-          // can resize, but cannot letterbox, and banindg to get ar of output
+          // can resize, but cannot letterbox, add banding to get ar of output
           width = in->inner_width = out->width;
           height = in->inner_height = out->height;
           calc_minspect(opwidth, opheight, &width, &height);
           in->width = width;
           in->height = height;
-        }
+	  if (pbq != PB_QUALITY_HIGH) {
+	    if (in->width > opwidth || in->height > opheight) {
+	      in->width = opwidth;
+	      in->height = opheight;
+	    }
+	    if (in->inner_width > in->width ||
+		in->inner_height > in->height) {
+	      calc_maxspect(in->width, in->height,
+			    &in->inner_width, &in->inner_height);
+
+	    }	
+	  }
+	}
       }
       break;
     }
@@ -4939,7 +5011,10 @@ static inst_node_t *create_node(lives_nodemodel_t *nodemodel, int model_type, vo
       n->flags |= NODESRC_LINEAR_GAMMA;
       n->gamma_type = WEED_GAMMA_LINEAR;
     }
-    //if (prefs->hdtv) n->gamma_type = WEED_GAMMA_BT709;
+    else {
+      n->gamma_type = WEED_GAMMA_SRGB;
+      //if (prefs->hdtv) n->gamma_type = WEED_GAMMA_BT709;
+    }
   }
   break;
 
@@ -5879,8 +5954,9 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
 
   // oper can be: 	0 - map lc palettes
   //			1 - accumulate_slack
-  // 			2  set_missing_sizes
-  //			3 -  consolidate_size_costs
+  // 			2 - set_missing_sizes
+  //			3 - consolidate_size_costs
+  //			4 - propogate_small_stizes
 
   static int depth = 0;
   static boolean flag_nodisplay = FALSE;
@@ -5915,6 +5991,7 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
   // processs outputs
   if (n->n_outputs) {
     boolean is_first = TRUE;
+
     if (oper == 1 || oper == 3 || oper == 0) {
       for (no = 0; no < n->n_outputs; no++) {
         out = n->outputs[no];
@@ -5927,6 +6004,67 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
         // but we check for svary
         if (!(out->flags & NODEFLAG_PROCESSED)) return;
       }
+    }
+    else if (oper == 4) {
+      boolean fixed = FALSE;
+      int minwidth = 0, minheight = 0;
+      for (no = 0; no < n->n_outputs; no++) {
+        out = n->outputs[no];
+        if (out->flags & NODEFLAGS_IO_SKIP) continue;
+	if (!(out->flags & NODEFLAG_PROCESSED)) {
+	  if (!fixed) fixed = TRUE;
+	  else return;
+	}
+	if ((out->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) return;
+	in = out->node->inputs[out->iidx];
+	if (!minwidth || (in->width < minwidth && in->height < minheight)) {
+	  minwidth = in->width;
+	  minheight = in->height;
+	}
+      }
+
+      for (int i = 0; i < 2; i++) {
+	for (no = 0; no < n->n_outputs; no++) {
+	  out = n->outputs[no];
+	  if (out->flags & NODEFLAGS_IO_SKIP) continue;
+	  if (out->minwidth && out->minwidth > minwidth) minwidth = out->minwidth;
+	  if (out->minheight && out->minheight > minheight) minheight = out->minheight;
+	  if (minwidth >= out->width || minheight >= out->height) return;
+	}	
+	for (no = 0; no < n->n_outputs; no++) {
+	  out = n->outputs[no];
+	  if (out->flags & NODEFLAGS_IO_SKIP) continue;
+	  if (out->maxwidth && out->maxwidth < minwidth) return;
+	  if (out->maxheight && out->maxheight < minheight) return;
+	}
+	for (ni = 0; ni < n->n_inputs; ni++) {
+	  in = n->inputs[ni];
+	  if (in->flags & NODEFLAGS_IO_SKIP) continue;
+	  if ((in->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) return;
+	  if (in->minwidth && in->minwidth > minwidth) minwidth = in->minwidth;
+	  if (in->minheight && in->minheight > minheight) minheight = in->minheight;
+	  if (minwidth >= in->width || minheight >= in->height) return;
+	}
+	for (ni = 0; ni < n->n_inputs; ni++) {
+	  if (in->flags & NODEFLAGS_IO_SKIP) continue;
+	  if (in->maxwidth && in->maxwidth < minwidth) return;
+	  if (in->maxheight && in->maxheight < minheight) return;
+	}
+      }
+      for (no = 0; no < n->n_outputs; no++) {
+	out = n->outputs[no];
+	if (out->flags & NODEFLAGS_IO_SKIP) continue;
+	out->width = minwidth;
+	out->height = minheight;
+      }
+      for (ni = 0; ni < n->n_inputs; ni++) {
+	in = n->inputs[ni];
+	if (in->flags & NODEFLAGS_IO_SKIP) continue;
+	in->width = minwidth;
+	in->height = minheight;
+	calc_maxspect(in->width, in->height, &in->inner_width, &in->inner_height);
+      }
+      goto go_up;
     }
 
     for (no = 0; no < n->n_outputs; no++) {
@@ -6252,6 +6390,8 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
       if (tups) lives_free(tups);
       // endif - has inputs
     }
+
+  go_up:
     for (ni = 0; ni < n->n_inputs; ni++) {
       in = n->inputs[ni];
       // again, we ignore cloned inputs, they don't affect the previous palette
@@ -6305,6 +6445,12 @@ static void accumulate_slack(inst_node_t *n) {
 static void set_missing_sizes(inst_node_t *n) {
   // ascend filling in missing sizes
   ascend_tree(n, 2, NULL, 0);
+}
+
+
+static void propogate_small_sizes(inst_node_t *n) {
+  // for low quality, propogate smaller sizes up the tree
+  ascend_tree(n, 4, NULL, 0);
 }
 
 
@@ -6529,35 +6675,36 @@ static inst_node_t *desc_and_do_something(int do_what, inst_node_t *n, inst_node
   if (do_what == 5) {
     // reinit fx
     lives_filter_error_t retval;
-    weed_instance_t *inst = rte_keymode_get_instance(n->model_idx + 1, rte_key_getmode(n->model_idx + 1));
+    int key = n->model_idx;
+    weed_instance_t *inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1));
     if (inst) {
-      d_print_debug("REINIT key %d\n", n->model_idx);
-      if (!weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL))
+      d_print_debug("REINIT key %d\n", key);
+      if (n->needs_reinit || (fx_key_defs[key].flags & FXKEY_NEEDS_REINIT)
+	  || !weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL))
         retval = weed_reinit_effect(inst, FALSE);
-      else if (n->needs_reinit) retval = weed_reinit_effect(inst, TRUE);
-      n->needs_reinit = FALSE;
       weed_instance_unref(inst);
     }
-    /* if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN */
-    /* 	  || retval == FILTER_ERROR_INVALID_FILTER) { */
-    /* 	weed_instance_unref(inst); */
-    /* } */
+    n->needs_reinit = FALSE;
+    fx_key_defs[key].flags &= ~FXKEY_NEEDS_REINIT;
 
+    // 'virtuals' represent analyser instances with no connected outputs
+    // hence they are not really part of the nodemodel
+    // nevertheless, they may need to be reinited, so we check fot that
     for (LiVESList *list = n->virtuals; list; list = list->next) {
-      inst_node_t *n = (inst_node_t *)list->data;
-      weed_instance_t *inst = rte_keymode_get_instance(n->model_idx + 1, rte_key_getmode(n->model_idx + 1));
+      n = (inst_node_t *)list->data;
+      key = n->model_idx;
+      inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1));
       if (inst) {
-        if (prefs->dev_show_timing)
-          d_print_debug("REINIT key %d\n", n->model_idx);
-        if (!weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL))
-          retval = weed_reinit_effect(inst, FALSE);
-        else if (n->needs_reinit) retval = weed_reinit_effect(inst, TRUE);
-        weed_instance_unref(inst);
+	d_print_debug("REINIT key %d\n", key);
+	if (n->needs_reinit || (fx_key_defs[key].flags & FXKEY_NEEDS_REINIT)
+	    || !weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL))
+	  retval = weed_reinit_effect(inst, FALSE);
+	weed_instance_unref(inst);
       }
-      IGN_RET(retval);
-
       n->needs_reinit = FALSE;
+      fx_key_defs[key].flags &= ~FXKEY_NEEDS_REINIT;
     }
+    IGN_RET(retval);
   }
 
   // recurse: for each output, we descend until we the sink node
@@ -7097,7 +7244,7 @@ static void _make_nodes_model(lives_nodemodel_t *nodemodel) {
       int *in_tracks = NULL, *out_tracks = NULL;
       for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
         if (rte_key_valid(i + 1, TRUE)) {
-          if (rte_key_is_enabled(i, TRUE)) { // ignore soft deinits
+          if (rte_key_is_enabled(i, FALSE)) { // soft deinits not applied
             // for clip editor we construct instance nodes according to the order of
             // mainw->rte_keys
             // for multitrack iterate over filter_map filter_init events (TODO)
@@ -7264,7 +7411,9 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   // on another ascending wave we note anywhere we upscale and calculate the cost adding to carried cost (qloss_size)
   // if we reach a node with qloss from a downscale
 
-  // phase 3 ascending
+  // phase 5 ascending
+
+  nodemodel->phase = 5;
 
   for (list = nodemodel->node_chains; list; list = list->next) {
     nchain = (node_chain_t *)list->data;
@@ -7293,8 +7442,9 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   // (size, palette, gamma change) going from output to input. There is an additional cost for T at each node,
   // i.e proc_time.
 
-  // phase 4 descending
+  // phase 6 descending
 
+  nodemodel->phase = 7;
 
   // CALCULATE COST DELTAS NODE - NODE, for all palette pairings
   do {
@@ -7309,6 +7459,8 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   reset_model(nodemodel);
   d_print_debug("%s @ %s\n", "pass 4 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
+  nodemodel->phase = 8;
+  
   flags &= ~_FLG_GHOST_COSTS;
 
   do {
@@ -7328,10 +7480,12 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   // and add deltas. This may give different results, and again we use the best values to recalulate aboslute imtes
   //  then go back through, adding deltas and so on
 
+  nodemodel->phase = 8;
+
   for (int cyc = 0; cyc < 4; cyc++) {
     d_print_debug("costing cycle %d\nfind best palettes\n", cyc);
-    // phase 5 ascending
-
+    // phase 9 ascending
+    // also phases 11,13,15
     // FIND LOWEST COST PALETTES for each cost type
     for (list = nodemodel->node_chains; list; list = list->next) {
       nchain = (node_chain_t *)list->data;
@@ -7376,6 +7530,9 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
 
     // now when computing abs values we need the versions without these (i.e treu costs)
 
+    // phases 10,12,14,16
+    nodemodel->phase++;
+
     do {
       for (list = nodemodel->node_chains; list; list = list->next) {
         nchain = (node_chain_t *)list->data;
@@ -7395,7 +7552,8 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
   // over all outputs. This value is then added to outputs connected to the node inputs to give
   // total slack for that output
 
-  // phase 7 ascending
+  // phase 17
+  nodemodel->phase++;
 
   for (list = nodemodel->node_chains; list; list = list->next) {
     nchain = (node_chain_t *)list->data;
@@ -7413,7 +7571,9 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
 
 #ifdef OPTIM_MORE
 
-  // phase 8 - descend, creating tuples and prio list. We can "spend" slack to reduce tcost at the sink node
+  nodemodel->phase++;
+
+  // phase 18 - descend, creating tuples and prio list. We can "spend" slack to reduce tcost at the sink node
   do {
     for (list = nodemodel->node_chains; list; list = list->next) {
       nchain = (node_chain_t *)list->data;
@@ -7439,7 +7599,9 @@ void find_best_routes(lives_nodemodel_t *nodemodel, double * thresh) {
   node_chain_t *nchain;
   inst_node_t *n, *retn = NULL;
 
-  // pass 1 descending - set sizes for known objects
+  nodemodel->phase = 2;
+
+  // pass 2 descending - set sizes for known objects
   d_print_debug("SET init node sizes\n");
   do {
     for (list = nodemodel->node_chains; list; list = list->next) {
@@ -7458,7 +7620,9 @@ void find_best_routes(lives_nodemodel_t *nodemodel, double * thresh) {
   }
   d_print_debug("%s @ %s\n", "pass 1 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
-  // pass 2 ascending - set missing sizes
+  nodemodel->phase = 3;
+
+  // pass 3 ascending - set missing sizes
   d_print_debug("SET mising node sizes\n");
   for (list = nodemodel->node_chains; list; list = list->next) {
     nchain = (node_chain_t *)list->data;
@@ -7472,6 +7636,29 @@ void find_best_routes(lives_nodemodel_t *nodemodel, double * thresh) {
 
   reset_model(nodemodel);
 
+  nodemodel->phase = 4;
+
+  // descend and set sizes with updated vals
+  for (list = nodemodel->node_chains; list; list = list->next) {
+    nchain = (node_chain_t *)list->data;
+    n = nchain->last_node;
+    if (!NODE_IS_SINK(n) && n->n_outputs) continue;
+    if (n->flags & NODEFLAG_PROCESSED) continue;
+
+    n->flags |= NODEFLAG_PROCESSED;
+    propogate_small_sizes(n);
+  }
+
+  reset_model(nodemodel);
+
+  if (prefs->dev_show_timing) {
+    // show model but with no costs yet
+    describe_chains(nodemodel);
+    reset_model(nodemodel);
+  }
+   
+  nodemodel->phase = 5;
+
   // descend and set sizes with updated vals
   do {
     for (list = nodemodel->node_chains; list; list = list->next) {
@@ -7484,11 +7671,6 @@ void find_best_routes(lives_nodemodel_t *nodemodel, double * thresh) {
 
   reset_model(nodemodel);
 
-  if (prefs->dev_show_timing) {
-    // show model but with no costs yet
-    describe_chains(nodemodel);
-    reset_model(nodemodel);
-  }
   d_print_debug("%s @ %s\n", "pass 2 complete", lives_format_timing_string(lives_get_session_time() - ztime));
 
   d_print_debug("all sizes set ! Ready for cost estimation\n");
@@ -7643,6 +7825,8 @@ static void _build_nodemodel(lives_nodemodel_t **pnodemodel, int ntracks, int *c
     // then we could have multiple root nodes, and these would connect either to the same tree or to  multiple trees.
     //
 
+    nodemodel->phase = 1;
+
     _make_nodes_model(nodemodel);
 
     if (prefs->dev_show_timing) {
@@ -7744,6 +7928,8 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
   mainw->refresh_model = TRUE;
 
   planrunner_unlock();
+
+  clear_player_hooks();
 }
 
 
@@ -7819,23 +8005,37 @@ lives_result_t run_next_cycle(void) {
 
   planrunner_unlock();
 
+  if (mainw->cancelled != CANCEL_NONE) {
+    g_print("playback cancelled, not running next cycle !\n");
+    return LIVES_RESULT_INVALID;
+  }
+
+  // check if any fx need reinit 
+  inst_node_t *retn = NULL;
+  do {
+    for (LiVESList *list = mainw->nodemodel->node_chains; list; list = list->next) {
+      node_chain_t *nchain = (node_chain_t *)list->data;
+      inst_node_t *n = nchain->first_node;
+      retn = desc_and_reinit(n);
+    }
+  } while (retn);
+
+  reset_model(mainw->nodemodel);
+  
   execute_plan(mainw->plan_cycle, TRUE);
 
-  if (mainw->cancelled != CANCEL_NONE
-      || (!mainw->plan_runner_proc
-          || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc))) {
-    g_print("no layers, not running next cycle !\n");
+
+  if (!mainw->plan_runner_proc
+      || lives_proc_thread_get_cancel_requested(mainw->plan_runner_proc)) {
+    g_print("plan runner cancelled, not running next cycle !\n");
     return LIVES_RESULT_INVALID;
   }
 
   if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
     // trigger next plan cycle. We can start loading background frames while displaying current one
-    weed_set_boolean_value(mainw->layers[0], LIVES_LEAF_PLAN_CONTROL, TRUE);
-    lives_layer_set_clip(mainw->layers[0], mainw->playing_file);
-    lives_layer_set_frame(mainw->layers[0], 1);
     mainw->plan_cycle->frame_idx[0] = 1;
-    lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
     plan_cycle_trigger(mainw->plan_cycle);
+
   }
 
   if (mainw->blend_file != -1 && mainw->num_tracks > 1) {
@@ -7855,14 +8055,13 @@ void rebuild_nodemodel(void) {
   //g_print("node model needs rebuilding\n");
 
   cleanup_nodemodel(&mainw->nodemodel);
-  planrunner_lock();
+
   d_print_debug("prev plan cancelled, good to create new plan\n");
   prefs->pb_quality = future_prefs->pb_quality;
 
   d_print_debug("rebuilding model\n");
 
-  clear_player_hooks();
-
+  planrunner_lock();
   mainw->refresh_model = FALSE;
 
   mainw->layers = map_sources_to_tracks(FALSE, FALSE);

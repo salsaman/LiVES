@@ -2775,7 +2775,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
     utot_time = xtimex = get_current_nsec();
 
     if (cdata->last_frame_decoded == -1 || rev || do_seek) {
-      //if (priv->picture) avcodec_flush_buffers(priv->ctx);
+      avcodec_flush_buffers(priv->ctx);
       pthread_mutex_lock(&priv->idxc->mutex);
       timex = -get_current_nsec();
       idx = matroska_read_seek(cdata, xtarget_pts);
@@ -2792,6 +2792,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
       /* priv->avpkt.size = 0; */
 
       //av_packet_unref(priv->avpkt);
+
       priv->needs_pkt = TRUE;
 
 #ifdef DEBUG_KFRAMES

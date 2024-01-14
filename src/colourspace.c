@@ -1792,7 +1792,6 @@ LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_pixel_planar(int pal, int plan
     tot += sval;
   }
 
-
   return (double)all * num / tot;
 }
 
@@ -2705,6 +2704,8 @@ void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, i
   // convert contiguous memory block planes to planar data
   // size is the byte size of the Y plane (width*height in pixels)
 
+
+  
   switch (palette) {
   case WEED_PALETTE_YUV444P:
     if (contig) lives_memcpy(pixel_data[0], data, size * 3);
@@ -11244,6 +11245,35 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
 }
 
 
+int *rowstrides_from_bufsize(size_t bufsize, int pal, int width, int height, int *xplanes) {
+  int *rows = NULL;
+  int xw, xh, xbufsize;
+  int th = height;
+  int nplanes = weed_palette_get_nplanes(pal);
+  if (xplanes) *xplanes = nplanes;
+  if (!nplanes) return NULL;
+
+  bufsize -= width * height;
+
+  for (int i = 1; i < nplanes; i++) {
+    xw = width * weed_palette_get_plane_ratio_horizontal(pal, i);
+    xh = height * weed_palette_get_plane_ratio_vertical(pal, i);
+    bufsize -= xw * xh;
+    th += xh;
+  }
+  if (bufsize < 0) return NULL;
+  xbufsize = bufsize / th;
+  if (!(bufsize - xbufsize * th)) {
+    rows = LIVES_CALLOC_SIZEOF(int, nplanes);
+    rows[0] = width + xbufsize;
+    for (int i = 1; i < nplanes; i++) {
+      rows[i] = (width * weed_palette_get_plane_ratio_horizontal(pal, i))
+	+ xbufsize;
+    }
+  }
+  return rows;
+}
+
 // returns int strides[], array should be freed after use; terminated with a 0
 // layer is needed if it has foxed rpwstides
 // width is in PIXELS, not macropixels of palette
@@ -11367,17 +11397,21 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *layer, int *nplanes) {
 
 
 LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int pal, boolean inc_rowstrides,
-    size_t **planes) {
+						     int *rowstrides, size_t **planes) {
   // calc total frame size in bytes
   // if planes is non NULL, it is set to an array of sizes, one per plane, terminated by a size of zero
 
   // get rowstrides first, then multiply each by plane height
-  int nplanes, i;
-  int *rowstrides = calc_rowstrides(width, pal, NULL, &nplanes);
-  size_t *plsz;
+  int nplanes = -1, i;
+  size_t *plsz = NULL;
   size_t tot = 0;
 
-  if (!rowstrides) return 0;
+  if (inc_rowstrides) {
+    if (!rowstrides) rowstrides = calc_rowstrides(width, pal, NULL, &nplanes);
+    if (!rowstrides) return 0;
+  }
+  if (nplanes == -1) nplanes = weed_palette_get_nplanes(pal);
+  if (!nplanes) return 0;
 
   if (planes) {
     plsz = (size_t *)lives_calloc(nplanes + 1, sizeof(size_t));
@@ -11385,8 +11419,9 @@ LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int 
   }
 
   for (i = 0; i < nplanes; i++) {
-    size_t pl_size = (inc_rowstrides ? rowstrides[i] : width)  * height
-                     * weed_palette_get_plane_ratio_vertical(pal, i);
+    size_t pl_size = (inc_rowstrides ? rowstrides[i]
+		      : width * weed_palette_get_plane_ratio_horizontal(pal, i))
+      * height * weed_palette_get_plane_ratio_vertical(pal, i);
     if (planes) plsz[i] = pl_size;
     tot += pl_size;
   }
@@ -11930,7 +11965,6 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     if (nplanes > 1) {
       lives_sync_list_t **copylists  = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes), *copylist = NULL;
       for (int i = 0; i < nplanes; i++) {
-
         copylist = lives_sync_list_push(copylist, (void *)layer);
         copylists[i] = copylist;
         if (!i) lives_sync_list_set_priv(copylists[i], pd[0]);
@@ -14049,9 +14083,11 @@ static void *gamma_convert_layer_thread(void *data) {
     const int irow = rowstride * i;
     //g_print("\n");
     for (int j = start; j < end; j += psize) {
+      int z = irow + j;
       for (int k = 0; k < px; k++) {
         //g_print("  PX %p + %d , %d  = %d\t", pixels, j + k, pixels[j + k], gamma_lut[pixels[j + k]]);
-        pixels[irow + j + k] = gamma_lut8[pixels[irow + j + k]];
+        pixels[z] = gamma_lut8[pixels[z]];
+	z++;
       }
       //g_print("\n");
     }
@@ -14134,7 +14170,7 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
         lives_free(ccparams);
         lives_gamma_lut8_free(gamma_lut8);
         if (gamma_type != WEED_GAMMA_VARIANT)
-          weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
+          weed_layer_set_gamma(layer, gamma_type);
 
         return TRUE;
 	// *INDENT-OFF*
@@ -14695,18 +14731,6 @@ static void *swscale_threadfunc(void *arg) {
     }
   }
 #endif
-  if (swparams->thread_local) {
-    opd = LIVES_CALLOC_SIZEOF(void *, 4);
-    void *buff = THREADVAR(buffer);
-    size_t offset = 0;
-    int pal = swparams->new_pal;
-    for (int i = 0; i < swparams->nplanes; i++) {
-      opd[i] = buff + offset;
-      offset += swparams->orowstrides[i] * swparams->new_vsize *
-                weed_palette_get_plane_ratio_horizontal(pal, i)
-                * weed_palette_get_plane_ratio_vertical(pal, i);
-    }
-  }
 
   swparams->ret = sws_scale(swscale, (const uint8_t *const *)swparams->srcp, swparams->irowstrides,
                             0, swparams->vsize, (uint8_t *const *)opd, swparams->orowstrides);
@@ -14715,18 +14739,8 @@ static void *swscale_threadfunc(void *arg) {
   swparams->vsize = swparams->ret;
   swparams->hsize = swparams->new_hsize;
 
-  if (swparams->lut8) {
-    gamma_convert_layer_thread(swparams);
-  }
+  if (swparams->lut8) gamma_convert_layer_thread(swparams);
 
-  if (swparams->thread_local) {
-    for (int i = 0; i < swparams->nplanes; i++) {
-      size_t bsize = swparams->orowstrides[i] * swparams->vsize
-                     * weed_palette_get_plane_ratio_vertical(swparams->new_pal, i);
-      lives_memcpy(swparams->destp[i], opd[i], bsize);
-    }
-    lives_free(opd);
-  }
   return NULL;
 }
 #endif
@@ -15218,7 +15232,11 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     sws_freeblock(ctxblock);
     lives_free(swparams);
-
+ 
+    if (gamma_lut8) {
+      weed_layer_set_gamma(layer, tgt_gamma);
+      lives_gamma_lut8_free(gamma_lut8);
+    }
 #else
 #if USE_RESTHREAD
     if (progscan)

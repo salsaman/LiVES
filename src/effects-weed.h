@@ -190,8 +190,8 @@ weed_error_t weed_call_deinit_func(weed_instance_t *);
 lives_filter_error_t run_process_func(weed_instance_t *, weed_timecode_t tc);
 
 char *cd_to_plugin_dir(weed_filter_t *);
-boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
-boolean  weed_deinit_effect(int hotkey); ///< hotkey starts at 1
+boolean weed_init_effect(int key1);
+boolean  weed_deinit_effect(int key1);
 weed_plant_t *weed_instance_from_filter(weed_filter_t *);
 void weed_in_parameters_free(weed_instance_t *);
 void weed_in_params_free(weed_plant_t **parameters, int num_parameters);
@@ -225,9 +225,9 @@ void **get_easing_events(int *nev);
 boolean interpolate_param(weed_param_t *, void *pchain, ticks_t tc);
 boolean interpolate_params(weed_instance_t *, void **pchains, ticks_t tc);
 
-int filter_mutex_lock(int key);  // 0 based key
-int filter_mutex_trylock(int key);  // 0 based key
-int filter_mutex_unlock(int key); // 0 based key
+int filter_mutex_lock(int key0);
+int filter_mutex_trylock(int key0);
+int filter_mutex_unlock(int key0);
 
 size_t weed_plant_serialise(int fd, weed_plant_t *, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *);
@@ -243,8 +243,8 @@ void validate_channel_sizes(weed_filter_t *filter, weed_chantmpl_t *chantmpl, in
 
 weed_plant_t *get_textparm();
 
-void weed_set_blend_factor(int hotkey);  // 0 based key
-int weed_get_blend_factor(int hotkey); // 0 based key
+void weed_set_blend_factor(int key0);  // 0 based key
+int weed_get_blend_factor(int key9); // 0 based key
 
 void weed_functions_init(void); ///< call weed_init() to set our weed core functions
 
@@ -258,7 +258,7 @@ void create_fx_defs_menu(void);
 
 void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
-lives_filter_error_t act_on_instance(weed_instance_t *, int key, lives_layer_t **,
+lives_filter_error_t act_on_instance(weed_instance_t *, int key0, lives_layer_t **,
                                      int opwidth, int opheight);
 
 weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, ticks_t tc, int opwidth, int opheight,
@@ -284,7 +284,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
     int64_t nsamps,
     double arate, ticks_t tc, double *vis);
 
-int weed_generator_start(weed_instance_t *inst, int key);  // 0 based key
+int weed_generator_start(weed_instance_t *inst, int key0);  // 0 based key
 void weed_generator_end(weed_instance_t *inst);
 boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_instance_t *inst);
@@ -300,44 +300,44 @@ void restore_weed_instances(void);
 //////////////////////////////////////////////////////////
 // WARNING !! "key" here starts at 1, "mode" starts at 0
 
-boolean rte_key_valid(int key, boolean is_userkey);  ///< returns TRUE if there is a filter bound to active mode of hotkey
-boolean rte_keymode_valid(int key, int mode,
+boolean rte_key_valid(int key1, boolean is_userkey);  ///< returns TRUE if there is a filter bound to active mode of hotkey
+boolean rte_keymode_valid(int key1, int mode,
                           boolean is_userkey);  ///< returns TRUE if a filter_class is bound to key/mode, is_userkey should be
 ///< set to TRUE
-int rte_keymode_get_filter_idx(int key, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
-char *rte_keymode_get_filter_name(int key, int mode,
+int rte_keymode_get_filter_idx(int key1, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
+char *rte_keymode_get_filter_name(int key1, int mode,
                                   boolean add_notes) WARN_UNUSED;  ///< returns name of filter_class bound to key/mode (or "")
-char *rte_keymode_get_plugin_name(int key,
+char *rte_keymode_get_plugin_name(int key1,
                                   int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
-char *rte_keymode_get_type(int key, int mode) WARN_UNUSED;  ///< returns a string filter/instance type (or "")
+char *rte_keymode_get_type(int key1, int mode) WARN_UNUSED;  ///< returns a string filter/instance type (or "")
 
 #ifdef HAS_LIVES_EFFECTS_H
-lives_fx_cat_t rte_keymode_get_category(int key, int mode);
+lives_fx_cat_t rte_keymode_get_category(int key1, int mode);
 #endif
 
-weed_plant_t *rte_keymode_get_instance(int key, int mode); ///< returns refcounted filter_instance bound to key/mode (or NULL)
-weed_plant_t *rte_keymode_get_filter(int key, int mode); ///< returns filter_class bound to key/mode (or NULL)
+weed_plant_t *rte_keymode_get_instance(int key1, int mode); ///< returns refcounted filter_instance bound to key/mode (or NULL)
+weed_plant_t *rte_keymode_get_filter(int key1, int mode); ///< returns filter_class bound to key/mode (or NULL)
 
-boolean weed_delete_effectkey(int key, int mode);  ///< unbinds a filter_class from a key/mode
-int weed_add_effectkey(int key, const char *hashname,
+boolean weed_delete_effectkey(int key1, int mode);  ///< unbinds a filter_class from a key/mode
+int weed_add_effectkey(int key1, const char *hashname,
                        boolean fullname);  ///< bind a filter_class to key/mode using its hashname
 
-int weed_add_effectkey_by_idx(int key, int idx);  ///< see description
+int weed_add_effectkey_by_idx(int key1, int idx);  ///< see description
 
 int rte_key_getmode(int key);  ///< returns current active mode for a key (or -1)
 int rte_key_getmaxmode(int key); ///< returns highest mode which is set
 
 int rte_key_num_modes(int key); ///< max, set or not
 
-weed_instance_t *get_new_inst_for_keymode(int key, int mode); ///< get new refcounted inst (during recording playback)
+weed_instance_t *get_new_inst_for_keymode(int key1, int mode); ///< get new refcounted inst (during recording playback)
 
-boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; if key==0 then the active key is used
+boolean rte_key_setmode(int key1, int newmode);  ///< set mode for a given key; if key==0 then the active key is used
 
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
-int rte_switch_keymode(int key, int mode, const char *hashname);
+int rte_switch_keymode(int key1, int mode, const char *hashname);
 
 boolean set_autotrans(int clip);
-void set_trans_amt(int key, int mode, double *amt);
+void set_trans_amt(int key1, int mode, double *amt);
 
 /////////////////////////////////////////////////////////////
 
@@ -346,13 +346,12 @@ int rte_get_numfilters(void);
 int weed_get_sorted_filter(int i);
 
 /////////////////////////////////////////////////////////
-// key starts at 0
 
-void free_key_defaults(int key, int mode);
-void apply_key_defaults(weed_instance_t *inst, int key, int mode);
-void write_key_defaults(int fd, int key, int mode);
-boolean read_key_defaults(int fd, int nparams, int key, int mode, int version);
-void set_key_defaults(weed_instance_t *inst, int key, int mode);
+void free_key_defaults(int key0, int mode);
+void apply_key_defaults(weed_instance_t *inst, int key0, int mode);
+void write_key_defaults(int fd, int key0, int mode);
+boolean read_key_defaults(int fd, int nparams, int key0, int mode, int version);
+void set_key_defaults(weed_instance_t *inst, int key0, int mode);
 boolean has_key_defaults(void);
 
 //////////////////////////////////////////////////////
@@ -395,13 +394,13 @@ void fill_param_vals_to(weed_param_t *, weed_paramtmpl_t *, int fill_slot);
 
 
 #ifdef DEBUG_FILTER_MUTEXES
-#define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); \
-  if (key >= 0 && key < FX_KEYS_MAX) {if (pthread_mutex_trylock(&mainw->fx_mutex[key])) { \
-      g_print("BLOCKED\n"); pthread_mutex_lock(&mainw->fx_mutex[key]);} \
+#define filter_mutex_lock(key0) {g_print ("lock %d at line %d in file %s\n",key0,__LINE__,__FILE__); \
+  if (key0 >= 0 && key0 < FX_KEYS_MAX) {if (pthread_mutex_trylock(&mainw->fx_mutex[key0])) { \
+      g_print("BLOCKED\n"); pthread_mutex_lock(&mainw->fx_mutex[key0]);} \
     g_print("done\n");}}
 
-#define filter_mutex_unlock(key) {g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__); \
-    if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
+#define filter_mutex_unlock(key0) {g_print ("unlock %d at line %d in file %s\n\n",key0,__LINE__,__FILE__); \
+    if (key0 >= 0 && key0 < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key0]); g_print("done\n");}
 #endif
 
 int check_ninstrefs(void);
@@ -414,12 +413,12 @@ int check_ninstrefs(void);
 
 int _weed_instance_ref(weed_instance_t *inst);
 int _weed_instance_unref(weed_instance_t *inst);
-weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode);
+weed_plant_t *_weed_instance_obtain(int line, char *file, int key0, int mode);
 
 #ifndef DEBUG_REFCOUNT
 int weed_instance_ref(weed_instance_t *inst);
 int weed_instance_unref(weed_instance_t *inst);
-weed_plant_t *weed_instance_obtain(int key, int mode);
+weed_plant_t *weed_instance_obtain(int key0, int mode);
 #endif
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);

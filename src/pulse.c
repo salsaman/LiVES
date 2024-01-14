@@ -429,7 +429,16 @@ static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno
    - audio effects could be applied separately to the mix channels, or to the overal mix
 
 */
-static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
+
+
+//static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
+static void pulse_audio_write_process(pa_stream *pstream, ...) {
+  va_list ap;
+  va_start(ap, pstream);
+  size_t nbytes = va_arg(ap, size_t);
+  void *arg = va_arg(ap, void *);
+  va_end(ap);
+
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
   pa_operation *paop;
   aserver_message_t *msg;
@@ -1840,8 +1849,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     lives_aplayer_set_sampsize(pdriver->inst, pdriver->out_asamps);
 
     // set write callback
-    pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
-
+    pa_stream_set_write_callback(pdriver->pstream, (pa_stream_request_cb_t)pulse_audio_write_process, pdriver);
+    
     /* pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver); */
     /* pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver); */
     /* pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver); */
@@ -1852,6 +1861,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_START_CORKED |
                                PA_STREAM_AUTO_TIMING_UPDATE), NULL, NULL);
 #else
+
     pdriver->volume_linear = future_prefs->volume;
     pavol = pa_sw_volume_from_linear(pdriver->volume_linear);
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);

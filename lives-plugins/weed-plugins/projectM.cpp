@@ -791,6 +791,14 @@ static void *worker(void *data) {
 	if (sd->bad_programs[sd->program] == 0) sd->checkforblanks = true;
       }
     } else if (sd->pidx != sd->opidx) {
+      delete (sd->globalPM);
+
+      sd->globalPM = new projectM(settings, 0);
+      //std::cerr << "worker start 3a" << std::endl;
+      sd->textureHandle = sd->globalPM->initRenderToTexture();
+      //std::cerr << "worker start 3b" << std::endl;
+      sd->globalPM->setPresetLock(true);
+
       sd->globalPM->setPresetLock(true);
       sd->globalPM->selectPreset(sd->pidx);
     }
@@ -818,7 +826,7 @@ static void *worker(void *data) {
 	}
       }
     }
-    usleep(1000);
+    usleep(10000);
     //std::cerr << "worker start 14" << std::endl;
   }
 

@@ -3412,10 +3412,37 @@ void lives_thread_set_prime(lives_proc_thread_t lpt) {
   }
 }
 
+static pthread_mutex_t blmutex = PTHREAD_MUTEX_INITIALIZER;
+
+static LiVESList *blocklist = NULL;
+
+static void add_to_blocklist(pthread_t self) {
+  pthread_mutex_lock(&blmutex);
+  blocklist = lives_list_prepend(blocklist, (void *)self);
+  pthread_mutex_unlock(&blmutex);
+}
+static void rem_from_blocklist(pthread_t self) {
+  pthread_mutex_lock(&blmutex);
+  blocklist = lives_list_remove_data(blocklist, (void *)self, FALSE);
+  pthread_mutex_unlock(&blmutex);
+}
+static boolean is_in_blocklist(void *self) {
+  return !!lives_list_find_by_data(blocklist, self);
+}
+
+
 static void lives_thread_data_destroy(void *data) {
+  add_to_blocklist(pthread_self());
+
+  if (!is_in_blocklist((void *)(pthread_self()))) abort();
+  
+  pthread_rwlock_wrlock(&all_tdata_rwlock);
+  all_tdatas = lives_list_remove_data(all_tdatas, tdata, FALSE);
+  pthread_rwlock_unlock(&all_tdata_rwlock);
+
   lives_thread_data_t *tdata = (lives_thread_data_t *)data;
   lives_hook_stack_t **hook_stacks = tdata->vars.var_hook_stacks;
-
+ 
   if (is_fg_thread()) {
     lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
     if (mainw->record) backup_recording(NULL, NULL);
@@ -3423,10 +3450,6 @@ static void lives_thread_data_destroy(void *data) {
   }
 
   lives_list_free((LiVESList *)tdata->vars.var_trest_list);
-
-  pthread_rwlock_wrlock(&all_tdata_rwlock);
-  all_tdatas = lives_list_remove_data(all_tdatas, tdata, FALSE);
-  pthread_rwlock_unlock(&all_tdata_rwlock);
 
   if (hook_stacks) {
     // this will force other lpts to remove their pointers to callbacks in our stacks
@@ -3439,8 +3462,6 @@ static void lives_thread_data_destroy(void *data) {
   pthread_mutex_destroy(&tdata->vars.var_pause_mutex);
   pthread_cond_destroy(&tdata->vars.var_pcond);
 
-  lives_uncalloc_mapped(tdata->vars.var_buffer, tdata->vars.var_buff_size, TRUE);
-
   lives_free(tdata);
 
 #if USE_RPMALLOC
@@ -3448,6 +3469,7 @@ static void lives_thread_data_destroy(void *data) {
     rpmalloc_thread_finalize(1);
   }
 #endif
+  rem_from_blocklist(pthread_self());
 }
 
 void pthread_cleanup_func(void *args) {
@@ -3522,9 +3544,6 @@ static void *_lives_thread_data_create(void *pslot_id) {
     } else {
       tdata->thrd_type = THRD_TYPE_WORKER;
     }
-
-    tdata->vars.var_buff_size = 3600 * 1024;
-    tdata->vars.var_buffer = lives_calloc_mapped(tdata->vars.var_buff_size, TRUE);
 
     tdata->vars.var_thrd_type = tdata->thrd_type;
     tdata->vars.var_slot_id = tdata->slot_id = slot_id;
@@ -3623,6 +3642,9 @@ lives_thread_data_t *get_thread_data(void) {
   static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
   lives_thread_data_t *tdata;
   pthread_once(&do_once, make_pth_key);
+
+  if (is_in_blocklist((void *)pthread_self())) return NULL;
+
   tdata = pthread_getspecific(tdata_key);
   if (!tdata) {
     pthread_mutex_lock(&mutex);

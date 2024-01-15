@@ -2376,10 +2376,10 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
           continue;
       }
 
-      // fixed it for you...
+      /// better make sure we free all this somewhere...
+      // sp we alloc pkt, and then we are going to copy pkt_data into pkt->data
       pkt = av_packet_alloc();
 
-      /* XXX: prevent data copy... */
       if (av_new_packet(pkt, pkt_size + offset) < 0) {
         av_packet_free(&pkt);
         res = AVERROR(ENOMEM);
@@ -2390,6 +2390,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 
       memcpy(pkt->data + offset, pkt_data, pkt_size);
 
+      // ok so we have it in pkt->data now, except if it is 'data'
       if (pkt_data != data)
         free(pkt_data);
 
@@ -2399,6 +2400,8 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       pkt->dts = pkt->pts = timecode;
       pkt->pos = pos;
 
+      index_add(priv->idxc, timecode, pos);
+      
       if (st->codec->codec_id == AV_CODEC_ID_TEXT)
         pkt->convergence_duration = duration;
 
@@ -2408,6 +2411,9 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       if (st->codec->codec_id == AV_CODEC_ID_SSA)
         matroska_fix_ass_packet(matroska, pkt, duration);
 
+      // uuhh so we have pkt, pkt_data, and pkt->data
+      // that is not at all confusing
+      
       if (matroska->prev_pkt &&
           timecode != AV_NOPTS_VALUE &&
           matroska->prev_pkt->pts == timecode &&
@@ -3100,8 +3106,8 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t f
         dconf += .1;
         if (delta > 0) {
           pthread_mutex_lock(&priv->idxc->mutex);
-          nks = count_between(priv->idxc, ((double)from_frame - .5) / cdata->fps * TIME_SCALE,
-                              ((double)tframe - .5) / cdata->fps * TIME_SCALE, NULL);
+          nks = count_between(priv->idxc, (double)from_frame / cdata->fps * TIME_SCALE,
+                              (double)tframe / cdata->fps * TIME_SCALE, NULL);
           pthread_mutex_unlock(&priv->idxc->mutex);
         }
       } else {

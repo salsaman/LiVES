@@ -4395,10 +4395,9 @@ static void _resize_play_window(void) {
 
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_widget_queue_resize(mainw->play_window);
-        lives_widget_queue_draw_and_update(mainw->play_window);
+        //lives_widget_queue_draw_and_update(mainw->play_window);
         mainw->ignore_screen_size = FALSE;
       }
-
 
       /* if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) { */
       /*   if (mainw->vpp && mainw->vpp->fwidth > 0) { */
@@ -4645,7 +4644,7 @@ static void _resize_play_window(void) {
     lives_widget_queue_draw_and_update(mainw->play_window);
     lives_window_center(LIVES_WINDOW(mainw->play_window));
   }
-  lives_widget_queue_draw(mainw->play_window);
+  //lives_widget_queue_draw(mainw->play_window);
   mainw->pwidth = nwidth;
   mainw->pheight = nheight;
 
@@ -4658,9 +4657,12 @@ static void _resize_play_window(void) {
     play_window_set_title();
   }
   
-  lives_widget_queue_draw_and_update(mainw->play_window);
+  lives_widget_hide(mainw->play_window);
+  lives_widget_show(mainw->play_window);
+
+  //lives_widget_queue_draw_and_update(mainw->play_window);
   clear_widget_bg(mainw->play_image, mainw->play_surface);
-  lives_widget_queue_draw_and_update(mainw->play_window);
+  //lives_widget_queue_draw_and_update(mainw->play_window);
 }
 
 

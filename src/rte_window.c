@@ -1832,8 +1832,8 @@ void check_string_choice_params(weed_plant_t *inst) {
 }
 
 
-static void on_params_clicked(LiVESButton * button, livespointer user_data) {
-  int idx = LIVES_POINTER_TO_INT(user_data);
+static void _on_params_clicked(LiVESButton * button, livespointer user_data) {
+    int idx = LIVES_POINTER_TO_INT(user_data);
   int modes = rte_getmodespk();
   int key = (int)(idx / modes);
   int mode = idx - key * modes;
@@ -1887,6 +1887,12 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   fx_dialog[1]->mode = mode;
   fx_dialog[1]->rfx = rfx;
 }
+
+
+static void on_params_clicked(LiVESButton * button, livespointer user_data) {
+  lives_proc_thread_create(0, _on_params_clicked, 0, "vv", button, user_data);
+}
+
 
 
 boolean on_rtew_delete_event(LiVESWidget * widget, LiVESXEventDelete * event, livespointer user_data) {

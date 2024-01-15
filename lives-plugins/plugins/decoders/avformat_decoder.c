@@ -101,7 +101,7 @@ static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts)
 
 static int64_t kframe_check_cb(int64_t tframe, lives_clip_data_t *cdata) {
   int64_t dts = frame_to_dts(cdata, tframe);
-  lives_mkv_priv_t *priv = cdata->priv;
+  lives_av_priv_t *priv = cdata->priv;
   index_entry *idx;
   idx = index_get(priv->idxc, dts);
   return dts_to_frame(cdata, dts);
@@ -752,7 +752,7 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->last_frame_decoded = -1;
 
   priv->fd = -1;
-  //priv->needs_pkt = 1;
+  //priv->needs_packet = 1;
 
   cdata->asigned = TRUE;
   cdata->ainterleaf = TRUE;
@@ -1106,8 +1106,8 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 
   while (!got_picture) {
 #ifndef HAVE_AVCODEC_SEND_PACKET
-    if (priv->avpkt.size == 0) priv->needs_pkt = TRUE;
-    else priv->needs_pkt = FALSE;
+    if (priv->pkt.size == 0) priv->needs_packet = TRUE;
+    else priv->needs_packet = FALSE;
 #endif
     if (!priv->pkt_inited) {
       av_init_packet(&priv->packet);
@@ -1133,15 +1133,15 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
     } while (priv->packet.stream_index != priv->vstream);
     priv->needs_packet = FALSE;
 
-    if (priv->needs_pkt) {
+    if (priv->needs_packet) {
       double readtime;
 
       if (priv->ovpdata) {
-        priv->avpkt.data = priv->ovpdata;
-        av_packet_unref(&priv->avpkt);
+        priv->pkt.data = priv->ovpdata;
+        av_packet_unref(&priv->pkt);
       }
-      priv->ovpdata = priv->avpkt.data = NULL;
-      priv->avpkt.size = 0;
+      priv->ovpdata = priv->pkt.data = NULL;
+      priv->pkt.size = 0;
 
       if (seektime) {
         timex = get_current_nsec();
@@ -1149,9 +1149,9 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 
       ret = av_read_frame(priv->ic, &priv->packet);
 
-      priv->ovpdata = priv->avpkt.data;
+      priv->ovpdata = priv->pkt.data;
       if (priv->got_eof) return FALSE;
-      priv->needs_pkt = FALSE;
+      priv->needs_packet = FALSE;
 
       if (seektime) {
         timex = get_current_nsec() - timex;
@@ -1182,14 +1182,14 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
     if (!priv->pFrame) priv->pFrame = av_frame_alloc();
 
 #ifdef HAVE_AVCODEC_SEND_PACKET
-    ret = avcodec_send_packet(priv->ctx, &priv->avpkt);
-    priv->needs_pkt = TRUE;
+    ret = avcodec_send_packet(priv->ctx, &priv->pkt);
+    priv->needs_packet = TRUE;
     if (ret == AVERROR_EOF) {
       priv->got_eof = TRUE;
       return FALSE;
     }
     if (!ret || (!snderr && ret == AVERROR(EAGAIN))) {
-      if (ret) priv->needs_pkt = FALSE;
+      if (ret) priv->needs_packet = FALSE;
       ret = avcodec_receive_frame(priv->ctx, priv->picture);
       if (ret) {
         //avcodec_flush_buffers(priv->ctx);
@@ -1209,17 +1209,17 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
 #else
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    ret = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+    ret = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->pkt);
     if (ret < 0) {
       fprintf(stderr, "avcode_decode_video2 returned %d for frame %ld !\n", ret, tframe);
       return FALSE;
     }
-    ret = FFMIN(ret, priv->avpkt.size);
-    priv->avpkt.data += ret;
-    priv->avpkt.size -= ret;
+    ret = FFMIN(ret, priv->pkt.size);
+    priv->pkt.data += ret;
+    priv->pkt.size -= ret;
 #else
     avcodec_decode_video(priv->ctx, priv->picture, &got_picture,
-                         priv->avpkt.data, priv->avpkt.size);
+                         priv->pkt.data, priv->pkt.size);
 #endif
 #endif
   }
@@ -1738,7 +1738,7 @@ void dump_kframes(const lives_clip_data_t *cdata) {
 static int64_t kf_before(const lives_clip_data_t *cdata, int64_t tframe) {
   index_entry *idx;
   int64_t dts, kf = -1;
-  lives_mkv_priv_t *priv = cdata->priv;
+  lives_av_priv_t *priv = cdata->priv;
   if (priv->idxc) {
     if (cdata->fps)((lives_clip_data_t *)cdata)->kframe_dist =
         idxc_analyse(priv->idxc, cdata->fps / AV_TIME_BASE,
@@ -1819,7 +1819,7 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe, int64_t l
 
 
   lives_clip_data_t *cdata = (lives_clip_data_t *)xcdata;
-  lives_mkv_priv_t *priv;
+  lives_av_priv_t *priv;
   double est = -1.;
   double conf = .95, yconf = 0., dconf = 0.;
   int64_t delta, kfd = 0, xkfd = -1, kf, nks = -1;

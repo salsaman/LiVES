@@ -6006,6 +6006,8 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
       }
     }
     else if (oper == 4) {
+      return;
+      if (!n->n_outputs) goto go_up;
       boolean fixed = FALSE;
       int minwidth = 0, minheight = 0;
       for (no = 0; no < n->n_outputs; no++) {
@@ -6013,9 +6015,9 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
         if (out->flags & NODEFLAGS_IO_SKIP) continue;
 	if (!(out->flags & NODEFLAG_PROCESSED)) {
 	  if (!fixed) fixed = TRUE;
-	  else return;
+	  else goto go_up;;
 	}
-	if ((out->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) return;
+	if ((out->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) goto go_up;;
 	in = out->node->inputs[out->iidx];
 	if (!minwidth || (in->width < minwidth && in->height < minheight)) {
 	  minwidth = in->width;
@@ -6029,26 +6031,26 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
 	  if (out->flags & NODEFLAGS_IO_SKIP) continue;
 	  if (out->minwidth && out->minwidth > minwidth) minwidth = out->minwidth;
 	  if (out->minheight && out->minheight > minheight) minheight = out->minheight;
-	  if (minwidth >= out->width || minheight >= out->height) return;
+	  //if (minwidth >= out->width || minheight >= out->height) goto go_up;;
 	}	
 	for (no = 0; no < n->n_outputs; no++) {
 	  out = n->outputs[no];
 	  if (out->flags & NODEFLAGS_IO_SKIP) continue;
-	  if (out->maxwidth && out->maxwidth < minwidth) return;
-	  if (out->maxheight && out->maxheight < minheight) return;
+	  if (out->maxwidth && out->maxwidth < minwidth) goto go_up;;
+	  if (out->maxheight && out->maxheight < minheight) goto go_up;;
 	}
 	for (ni = 0; ni < n->n_inputs; ni++) {
 	  in = n->inputs[ni];
 	  if (in->flags & NODEFLAGS_IO_SKIP) continue;
-	  if ((in->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) return;
+	  if ((in->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) goto go_up;;
 	  if (in->minwidth && in->minwidth > minwidth) minwidth = in->minwidth;
 	  if (in->minheight && in->minheight > minheight) minheight = in->minheight;
-	  if (minwidth >= in->width || minheight >= in->height) return;
+	  if (minwidth >= in->width || minheight >= in->height) goto go_up;;
 	}
 	for (ni = 0; ni < n->n_inputs; ni++) {
 	  if (in->flags & NODEFLAGS_IO_SKIP) continue;
-	  if (in->maxwidth && in->maxwidth < minwidth) return;
-	  if (in->maxheight && in->maxheight < minheight) return;
+	  if (in->maxwidth && in->maxwidth < minwidth) goto go_up;;
+	  if (in->maxheight && in->maxheight < minheight) goto go_up;;
 	}
       }
       for (no = 0; no < n->n_outputs; no++) {

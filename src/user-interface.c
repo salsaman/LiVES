@@ -1292,9 +1292,8 @@ void drawtl_cancel(void) {
     lives_proc_thread_request_cancel(lpt, FALSE);
     lives_proc_thread_try_interrupt(lpt);
     pthread_mutex_unlock(&tlthread_mutex);
-    lives_proc_thread_join(lpt);
+    lives_proc_thread_join(STEAL_POINTER(drawtl_thread));
     pthread_mutex_lock(&tlthread_mutex);
-    lives_proc_thread_unref(STEAL_POINTER(drawtl_thread));
   }
   // exit with tlthread_mutex locked !!
 }
@@ -1328,7 +1327,6 @@ boolean get_timeline_lock(void) {
         pthread_mutex_unlock(&tlthread_mutex);
         lives_proc_thread_join(lpt);
         pthread_mutex_lock(&tlthread_mutex);
-        lives_proc_thread_unref(lpt);
         drawtl_thread = NULL;
         return TRUE;
       }

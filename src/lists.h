@@ -25,6 +25,10 @@ typedef struct {
 
 // versions beginning with underscore should be called if and only if synclist->mutex is locked
 
+// sync_list is a variety of double ended priotity queue; a rwlock ensures data consistency
+// can be created by pushing or adding to a NULL sync_list
+// by default, ehrn the last value is popped or removed, the sync_list is freed, and NULL is returned
+
 void lives_sync_list_set_lilo(lives_sync_list_t *, boolean lilo);
 void lives_sync_list_set_pop_head(lives_sync_list_t *, boolean yes);
 void lives_sync_list_free_on_empty(lives_sync_list_t *, boolean yes);
@@ -142,8 +146,18 @@ boolean lives_list_check_remove_data(LiVESList **, livespointer data, boolean fr
    if (list) {if ((lives_funcptr_t)free_func) (*free_func)((struct_type *)list->data); \
      xlist = lives_list_remove_node(xlist, list, FALSE);})
 
-LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data);
-LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data);
+// idx_list pairs data eith an order value. Values can be unique or multi
+// default order is DESCENDING
+// get and remove operate on the first value encountered in the case of multi
+// get date returns TRUE if therr id data corresponging to val, in returns the data
+// in val_locn is non NULL it will be set to point to data (or NULL if there is no matching data)
+
+typedef struct {
+  int64_t idx;
+  void *data;
+} idx_list_data_t;
+
+LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data, boolean allow_multi);
 LiVESList *idx_list_remove(LiVESList *, int idx, boolean free_data);
 boolean idx_list_get_data(LiVESList *, int idx, void **val_locn);
 
@@ -167,3 +181,5 @@ lives_hash_store_t *remove_from_hash_store_i(lives_hash_store_t *, uint64_t key)
 lives_hash_store_t *remove_from_hash_store(lives_hash_store_t *, const char *key);
 const char *hash_key_from_leaf_name(const char *name);
 #endif
+
+

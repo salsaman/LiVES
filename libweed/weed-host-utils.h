@@ -88,9 +88,6 @@ extern "C"
 
 #define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? WEED_TRUE : WEED_FALSE)
 
-#define WEED_ERROR_WRONG_PLANT_TYPE	256
-#define WEED_ERROR_NOSUCH_PLANT		257
-
   // duplicate leaves of src plant to dst. If add == WEED_TRUE, then the original dst leaves will be left or
   // overwritten, otherwisee all original leaves will be romeved, with the exception od any flagged as UNDELETABEL
   // leaves comon to both plants will be ovewritten in dst, with the exception of any flagged as IMMUTABLE

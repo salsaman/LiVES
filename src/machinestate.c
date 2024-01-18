@@ -1197,7 +1197,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int subtype) {
   weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
   weed_set_int_value(plant, WEED_LEAF_LIVES_SUBTYPE, subtype);
   weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
-  //weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, NULL);
+  lives_leaf_set_rdonly(plant, LIVES_LEAF_UID, TRUE, TRUE);
   return plant;
 }
 
@@ -2657,7 +2657,7 @@ boolean parse_valfile(const char *fname, const char delim, const char **keys, ch
       for (int i = 0; keys[i]; i++) {
 	if (!lives_strcmp(keys[i], array[0])) {
 	  vals[i] = lives_strdup(lives_strstrip(array[1]));
-	  if (!i) mainw->debug_ptr = vals[0];
+	  //if (!i) mainw->debug_ptr = vals[0];
 	}
       }
       lives_strfreev(array);
@@ -2889,7 +2889,7 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
 	ovals->tot = tot;
 	ovals->idlet = idlet;
 	ovals->ret = load;
-	cpuloadlist = idx_list_update(cpuloadlist, xcpun, ovals);
+	cpuloadlist = idx_list_update(cpuloadlist, xcpun, ovals, FALSE);
 	loadvals->loads[xcpun++] = load * 100.;
 	continue;
       }

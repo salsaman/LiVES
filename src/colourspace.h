@@ -13,7 +13,17 @@
 #define USE_EXTEND
 //#endif
 
-#define CLAMP16bit(x) (x) >= 0.99999 ? 65535 : x < 0.00001 ? 0 : (uint16_t)(x * 65535.9999)
+#ifdef INLINE_CODE
+#define CLAMP16bit(x) _INLINE_(typeof ((x)) xx = (x); xx >= 0.99999 ? 65535 : xx < 0.00001 ? 0 : (uint16_t)(xx * 65535.9999);)
+#define CLAMP16biti(x) _INLINE_(typeof (x) xx = (x); xx > 65535 ? 65535 : xx < 0 ? 0 : xx;)
+
+#define CLAMP16_240(N) _INLINE_(typeof ((N)) NN = (N); NN&0x80000000?0x10:((NN&0x7FFFFF00)||((NN&0xF0)==0xF0))?0xF0:(NN&0xF0)?N:0x10;)
+#define CLAMP16_240i(f) CLAMP16_240((int)(f))
+
+#define CLAMP0_255(N) _INLINE_(typeof ((N)) NN = (N); NN&0x80000000?0x00:NN&0x7FFFFF00?0xFF:NN;)
+#define CLAMP0_255i(f) (uint8_t)CLAMP0_255((int)(f))
+#else
+#define CLAMP16bit(x) (x) >= 0.99999 ? 65535 : (x) < 0.00001 ? 0 : (uint16_t)((x) * 65535.9999)
 #define CLAMP16biti(x) ((x) > 65535 ? 65535 : (x) < 0 ? 0 : (x))
 
 #define CLAMP16_240(N) (N&0x80000000?0x10:((N&0x7FFFFF00)||((N&0xF0)==0xF0))?0xF0:(N&0xF0)?N:0x10)
@@ -21,6 +31,7 @@
 
 #define CLAMP0_255(N) (N&0x80000000?0x00:N&0x7FFFFF00?0xFF:N)
 #define CLAMP0_255i(f) (uint8_t)CLAMP0_255((int)(f))
+#endif
 
 #define WEED_LAYER_ALPHA_PREMULT 1
 
@@ -28,7 +39,6 @@
 #define WEED_GAMMA_FILE 1025
 #define WEED_GAMMA_VARIANT 2048
 
-#define LIVES_LEAF_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define LIVES_LEAF_PIXBUF_SRC "host_pixbuf_src"
 #define LIVES_LEAF_SURFACE_SRC "host_surface_src"
 #define LIVES_LEAF_PIXEL_BITS "pixel_bits"
@@ -373,10 +383,12 @@ void lives_painter_surface_check(lives_painter_surface_t *, int chkval);
 
 // pixel_data
 /// layer should be pre-set with palette, width in MACROPIXELS, and height
-/// gamma_type will be set WEED_GAMMA_SRGB, old pixel_data will not be freed.
-boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
-void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
+/// gamma_type will be set WEED_GAMMA_SRGB, old pixel_data will be unreffed
+boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill);
+
 void weed_layer_pixel_data_free(weed_layer_t *);
+
+void add_internal_copylists(weed_layer_t *layer);
 
 // layer needed only if fixed rs
 int *calc_rowstrides(int width, int pal, weed_layer_t *, int *nplanes);

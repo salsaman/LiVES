@@ -281,38 +281,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	LIVES_HOT;
 ///////////////////////// special allocators //////////
 
 void smallblock_init(void);
-
 void bigblock_init(void);
-void *alloc_bigblock(size_t s);
-
-double bigblock_occupancy(void);
-
-void *_malloc_bigblock(size_t s);
-void *_calloc_bigblock(size_t s);
-
-//#define DEBUG_BBLOCKS 1
-#ifdef DEBUG_BBLOCKS
-#define calloc_bigblock(s) FN_ALLOC_TARGET(_calloc_bigblock,s)#
-
-#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
-			     ? _malloc_bigblock(s) : _malloc_bigblock(s)))
-else
-#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
-			     ? _malloc_bigblock(s) : _malloc_bigblock(s)))
-  //#define malloc_bigblock(s) _malloc_bigblock(s)
-#define calloc_bigblock(s) _calloc_bigblock(s)
-#endif
-
-  void bbsummary(void);
-
-void *realloc_bigblock(void *, size_t s);
-
-#if MEM_USE_BIGBLOCKS
-void _lives_free_maybe_big(void *);
-#define lives_free_maybe_big(p) _DW0(_lives_free_maybe_big(p);)
-#else
-#define lives_free_maybe_big(p) _DW0(lives_free(p);)
-#endif
 
 void *lives_malloc_medium(size_t msize);
 void *lives_calloc_medium(size_t msize);
@@ -456,6 +425,38 @@ void do_test(void);
 #define _lives_memmove default_memmove
 #endif
 
+#if MEM_USE_BIGBLOCKS
+void *alloc_bigblock(size_t s);
+
+double bigblock_occupancy(void);
+
+void *_malloc_bigblock(size_t s);
+void *_calloc_bigblock(size_t s);
+
+//#define DEBUG_BBLOCKS 1
+#ifdef DEBUG_BBLOCKS
+#define malloc_bigblock(s) ((lives_print_ret("bbmalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
+			     ? _malloc_bigblock(s) : _malloc_bigblock(s)))
+#define calloc_bigblock(s) ((lives_print_ret("bbcalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
+			     ? _calloc_bigblock(s) : _calloc_bigblock(s)))
+else
+djsiodjaiodjaiojdoiasjdi
+#define malloc_bigblock(s) _malloc_bigblock(s);
+#define calloc_bigblock(s) _calloc_bigblock(s)
+#endif
+
+void bbsummary(void);
+
+void *realloc_bigblock(void *, size_t s);
+void _lives_free_maybe_big(void *);
+#define lives_free_maybe_big(p) _DW0(_lives_free_maybe_big(p);)
+
+#else
+
+#define lives_free_maybe_big(p) _DW0(lives_free(p);)
+
+#endif
+
 /* static pthread_mutex_t weak_mutex = PTHREAD_MUTEX_INITIALIZER; */
 /* static LiVESList *WEAK_LIST = NULL; */
 
@@ -563,13 +564,6 @@ static void (*_lsd_free)(void *ptr) = _ext_free;
 #endif
 
 #undef OVERRIDE_MEMFUNCS
-
-/* #if USE_RPMALLOC */
-/* #define OVERRIDE_CALLOC_ALIGNED */
-/* #endif */
-
-///////////////////// here we can set ultimate overrides
-
 
 ////////////////// test functions /////
 

@@ -170,6 +170,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   char *clipdir, *lives_header = NULL;
   char *val, *key, *tmp;
   uint32_t st = 1;
+  boolean nofree = FALSE;
 
   int retval2 = LIVES_RESPONSE_NONE;
 
@@ -225,6 +226,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     val = get_val_from_cached_list(key, maxlen, mainw->hdrs_cache);
     lives_free(key);
     if (!val) return FALSE;
+    //nofree = TRUE;
   } else {
     val = (char *)lives_malloc(maxlen);
     if (!val) return FALSE;
@@ -234,7 +236,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   }
 
   if (retval2 == LIVES_RESPONSE_CANCEL) {
-    lives_free(val);
+    if (!nofree) lives_free(val);
     return FALSE;
   }
 
@@ -304,7 +306,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     st = WEED_SEED_INT64;
     break;
   default:
-    lives_free(val);
+    if (!nofree) lives_free(val);
     return FALSE;
   }
   (void)st;
@@ -313,7 +315,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   /* if (st == WEED_SEED_INT) { */
   // add clip detail as attribute
   /* } */
-  lives_free(val);
+  if (!nofree) lives_free(val);
   return TRUE;
 }
 

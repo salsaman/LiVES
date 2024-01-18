@@ -1330,7 +1330,7 @@ boolean lives_startup(livespointer data) {
   capable->session_uid = gen_unique_id();
   if (1 || prefs->show_dev_opts)
     lives_printerr("Session uid is 0X%08lX\n", capable->session_uid);
-
+  
   d_print("Initializing memory block allocators...");
   init_memfuncs(1);
   capable->features_ready |= FEATURE_MEMFUNCS;
@@ -1432,6 +1432,7 @@ boolean lives_startup(livespointer data) {
 
   // we have to do some manual actions which are normal done automaticlly when a thread is added to the pool
   mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
+
   lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
   mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
 
@@ -1507,6 +1508,8 @@ boolean lives_startup(livespointer data) {
       = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, pick_custom_colours,
                                  WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
   }
+
+
 #endif
 
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
@@ -4749,12 +4752,12 @@ boolean set_palette_colours(boolean force_reload) {
     /// get mandatory details
 
     if (!is_OK || !(pstyle = get_val_from_cached_list(THEME_DETAIL_STYLE, 8, mainw->gen_cache))) {
-      if (pstyle) lives_free(pstyle);
+      //if (pstyle) lives_free(pstyle);
       is_OK = FALSE;
       set_toolkit_theme(0);
     } else {
       palette->style = atoi(pstyle);
-      lives_free(pstyle);
+      //lives_free(pstyle);
       if (!(palette->style & STYLE_LIGHT)) {
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
         if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.8);
@@ -4796,7 +4799,8 @@ boolean set_palette_colours(boolean force_reload) {
 
     if (!is_OK) {
       if (cached) {
-        lives_list_free_all(&mainw->gen_cache);
+	//lives_list_free_all(&mainw->gen_cache);
+	cached_list_free(&mainw->gen_cache);
         mainw->gen_cache = cache_backup;
         themefile = othemefile;
       }
@@ -4828,7 +4832,8 @@ boolean set_palette_colours(boolean force_reload) {
     get_theme_colour_pref(THEME_DETAIL_CE_UNSEL, &palette->ce_unsel);
 
     if (cached) {
-      lives_list_free_all(&mainw->gen_cache);
+      cached_list_free(&mainw->gen_cache);
+      //lives_list_free_all(&mainw->gen_cache);
       mainw->gen_cache = cache_backup;
       themefile = othemefile;
     }
@@ -5050,3 +5055,4 @@ boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
 #endif
 return (*cap == PRESENT || *cap == LOCAL);
 }
+

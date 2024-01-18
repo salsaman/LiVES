@@ -136,6 +136,8 @@ extern "C"
 #define WEED_VOIDPTR_SIZE	sizeof(weed_voidptr_t)
 #define WEED_FUNCPTR_SIZE	sizeof(weed_funcptr_t)
 
+  // TODO - try to remove this from the spec header and add to libweed specific header
+  
 #ifndef HAVE_WEED_STORRAGE_U
 #define HAVE_WEED_STORAGE_U
   typedef union _weed_storage_u weed_storage_u;
@@ -212,6 +214,8 @@ struct _weed_leaf_nopadding {
 #define weed_get_leaf_t_size() ((size_t)(libweed_get_leaf_t_size()))
 #define weed_get_data_t_size() ((size_t)(libweed_get_data_t_size()))
 
+  // end libspecific
+  
   typedef void *(*weed_malloc_f)(size_t);
   typedef void (*weed_free_f)(void *);
   typedef void *(*weed_memset_f)(void *, int, size_t);
@@ -235,6 +239,8 @@ struct _weed_leaf_nopadding {
   typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
   typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
+  // TODO - add extended funcs to libweed header
+  
   /* API 203 */
   /* "extended" functions - only enabled if WEED_INIT_EXTENDED_FUNCS is passed to libweed_init */
   /* functions may be dangerous if not used with caution */
@@ -363,11 +369,12 @@ struct _weed_leaf_nopadding {
 #endif
 
   /* plant types */
-#define WEED_PLANT_UNKNOWN 0
-#define WEED_PLANT_FIRST_CUSTOM 16384
+#define WEED_PLANT_UNKNOWN	0
 
-  /* type 'irrelevant' */
-#define WEED_PLANT_GENERIC (WEED_PLANT_FIRST_CUSTOM - 1)
+  // type reserved for "temporary" "on-the-fly" plants
+#define WEED_PLANT_TMP		123
+
+#define WEED_PLANT_FIRST_CUSTOM 16384
 
   /* Weed errors */
 #define WEED_SUCCESS 			0
@@ -379,6 +386,10 @@ struct _weed_leaf_nopadding {
 #define WEED_ERROR_UNDELETABLE		6
 #define WEED_ERROR_CONCURRENCY		7
 #define WEED_ERROR_BADVERSION		8
+
+  /* utility errors */
+#define WEED_ERROR_NOSUCH_PLANT		16
+#define WEED_ERROR_WRONG_PLANT_TYPE	17
 
 #define WEED_ERROR_FIRST_CUSTOM 1024
 

@@ -15,6 +15,7 @@
 #include "support.h"
 #include "main.h"
 
+glob_timedata_t *glob_timing = NULL;
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   return lives_get_current_ticks() - origticks;
@@ -296,7 +297,8 @@ get_time:
   if (tsource == LIVES_TIME_SOURCE_EXTERNAL) tsource = LIVES_TIME_SOURCE_NONE;
 
   // force system clock
-  if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && AUD_SRC_EXTERNAL)) {
+  if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && AUD_SRC_EXTERNAL)
+      || tsource == LIVES_TIME_SOURCE_SYSTEM) {
     tsource = LIVES_TIME_SOURCE_SYSTEM;
     current = mainw->clock_ticks;
   }
@@ -357,12 +359,12 @@ get_time:
   }
 
   if (tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
-  // what we do here - do not actually adjust Itime from souncard, instead we have 2 ratios:
-  // R: avg (scdelta / clockdelta) then clockdelta * R emulates sctime
-  // X: if Itime delta measured from some point > sctime delta from same point, we want to slow down
-  // so X == .99, otherwise speed up, so X = 1.01.
+    // what we do here - do not actually adjust Itime from souncard, instead we have 2 ratios:
+    // R: avg (scdelta / clockdelta) then clockdelta * R emulates sctime
+    // X: if Itime delta measured from some point > sctime delta from same point, we want to slow down
+    // so X == .99, otherwise speed up, so X = 1.01.
 
-  if (last_tsource == LIVES_TIME_SOURCE_SYSTEM) {
+    if (last_tsource == LIVES_TIME_SOURCE_SYSTEM) {
       prev_current = current - clock_delta * R;
     }
 
@@ -387,15 +389,15 @@ get_time:
       // so we get the ratio from them
       if (AUD_SRC_EXTERNAL) {
         IF_AREADER_PULSE
-        (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
-        IF_AREADER_JACK
-        (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
-      } else {
+	  (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
+	  IF_AREADER_JACK
+	  (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
+	  } else {
         IF_APLAYER_PULSE
-        (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
-        IF_APLAYER_JACK
-        (R = lives_jack_get_timing_ratio(mainw->jackd);)
-      }
+	  (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
+	  IF_APLAYER_JACK
+	  (R = lives_jack_get_timing_ratio(mainw->jackd);)
+	  }
 
       // check the calculated time against the measured time
       // either slow down or speed up to align

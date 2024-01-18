@@ -327,11 +327,6 @@ LiVESList *array_to_string_list(const char **array, int offset, int len) {
 }
 
 
-typedef struct {
-  int64_t idx;
-  void *data;
-} idx_list_data_t;
-
 LIVES_LOCAL_INLINE
 LiVESList *create_idx_list_element(int idx, void *data) {
   idx_list_data_t *newdata = (idx_list_data_t *)lives_malloc(sizeof(idx_list_data_t));
@@ -342,7 +337,7 @@ LiVESList *create_idx_list_element(int idx, void *data) {
 }
 
 
-LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data) {
+LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data, boolean allow_multi) {
   LiVESList *lptr = idxlist, *lptrnext, *newlist;
   idx_list_data_t *ldata;
 
@@ -353,7 +348,7 @@ LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data) {
       if (!lptrnext) break;
       continue;
     }
-    if (ldata->idx == idx) {
+    if (!allow_multi && ldata->idx == idx) {
       ldata->data = data;
       return idxlist;
     } else {
@@ -766,3 +761,4 @@ LIVES_GLOBAL_INLINE void *get_from_hash_store_cbfunc(lives_hash_store_t *store, 
   }
   return ret;
 }
+

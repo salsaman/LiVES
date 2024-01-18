@@ -1747,7 +1747,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     }
   }
 
-  if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
+  if (!create_empty_pixel_data(layer, FALSE)) {
     create_blank_layer(layer, LIVES_FILE_EXT_PNG, width, height, weed_layer_get_palette(layer));
 #ifndef PNG_BIO
     fclose(fp);
@@ -2273,12 +2273,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   //
   RECURSE_GUARD_START;
   lives_clip_t *sfile = NULL;
-  boolean is_thread = FALSE;
+  lives_clipsrc_group_t *srcgrp;
 
   frames_t frame;
   int clip, clip_type = CLIP_TYPE_NULL_VIDEO, track;
   int lstatus = LAYER_STATUS_NONE;
   int errpt = 0;
+  boolean pcontrol = lives_layer_plan_controlled(layer);
 
   ____FUNC_ENTRY____(pull_frame_at_size, "b", "vvIiii");
 
@@ -2297,15 +2298,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     errpt = 2;
     goto fail;
   }
-
+  
   //weed_layer_pixel_data_free(layer);
   if (width && height) weed_layer_set_size(layer, width, height);
 
   if (weed_layer_get_gamma(layer) == WEED_GAMMA_UNKNOWN)
     // the default unless overridden
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
-
-  if (lives_layer_get_proc_thread(layer)) is_thread = TRUE;
 
   if (clip != -1) {
     sfile = RETURN_VALID_CLIP(clip);
@@ -2317,10 +2316,16 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       goto fail;
     }
 
-    lives_layer_set_status(layer, LAYER_STATUS_LOADING);
-
     clip_type = sfile->clip_type;
+    if (sfile->deinterlace) weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, TRUE);
   }
+
+
+  lock_layer_status(layer);
+  lstatus = _lives_layer_get_status(layer);
+  if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
+    _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
+  unlock_layer_status(layer);
 
   if (clip_type == CLIP_TYPE_NULL_VIDEO || !frame) {
     create_blank_layer(layer, image_ext, width, height, target_palette);
@@ -2329,11 +2334,35 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   
 retry:
 
+  // TODO:
+  // - get srcgrp for layer
+  // - check in extended frame ref and locate src type for frame
+  // - set src status to loading / active
+  // switch should be by src type, not clip type, or perhaps not needed
+  // find action_func for src from src template
+  // call err = (template->action_func)(layer);
+   
+  srcgrp = lives_layer_get_srcgrp(layer);
+  if (!srcgrp) {
+    if (track >= 0 && track < mainw->num_tracks) {
+      srcgrp = mainw->track_sources[track];
+      lives_layer_set_srcgrp(layer, srcgrp);
+    }
+  }
+
+  /* class_uid = class_uid_for_frame(clip, frame); */
+  /* lives_clip_src_t *mysrc = find_src_by_class_uid(srcgrp, class_uid); */
+  /* lives_clipsrc_template_t *tmpl = mysrc->template; */
+  /* errpt = (tmpl->action_func)(layer); */
+
+  // instead of this:
+  
   switch (clip_type) {
   case CLIP_TYPE_DISK:
   case CLIP_TYPE_FILE:
     // frame number can be 0 during rendering
     if (clip == mainw->scrap_file) {
+      // SRC_TYPE_FILE_BUFFER
       boolean res = load_from_scrap_file(layer, frame);
       if (res) goto success;
       errpt = 6;
@@ -2373,20 +2402,11 @@ retry:
 #endif
           lives_decoder_t *dplug = NULL;
           const lives_decoder_sys_t *dpsys;
-          lives_clipsrc_group_t *srcgrp;
           void **pixel_data;
           int *rowstrides;
           uint64_t dec_uid;
           int cpal, layer_gamma;
           boolean res = TRUE;
-
-          srcgrp = lives_layer_get_srcgrp(layer);
-          if (!srcgrp) {
-            if (track >= 0 && track < mainw->num_tracks) {
-              srcgrp = mainw->track_sources[track];
-              lives_layer_set_srcgrp(layer, srcgrp);
-            }
-          }
 
           if (srcgrp) {
             lives_clip_src_t *mysrc = get_clip_src(srcgrp, clip, 0, LIVES_SRC_TYPE_DECODER, NULL, NULL);
@@ -2437,9 +2457,7 @@ retry:
             }
           }
 #endif
-          if (create_empty_pixel_data(layer, TRUE, TRUE)) {
-            if (!weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL))
-              BREAK_ME("non contig");
+          if (create_empty_pixel_data(layer, TRUE)) {
 #ifdef USE_REC_RS
             weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
 #endif
@@ -2465,12 +2483,6 @@ retry:
 
           rowstrides = weed_layer_get_rowstrides(layer, NULL);
           pthread_mutex_lock(&dplug->mutex);
-
-          lock_layer_status(layer);
-          lstatus = _lives_layer_get_status(layer);
-          if (lstatus != LAYER_STATUS_NONE && lstatus != LAYER_STATUS_LOADING)
-            _lives_layer_set_status(layer, LAYER_STATUS_LOADING);
-          unlock_layer_status(layer);
 
           if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)xframe, rowstrides, sfile->vsize, pixel_data)) {
             pthread_mutex_unlock(&dplug->mutex);
@@ -2549,12 +2561,9 @@ retry:
                 }
               }
               // deinterlace
-              if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
-                if (!is_thread) {
-                  deinterlace_frame(layer, tc);
-                } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
-              }
-            }
+	      if (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)
+		weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, TRUE);
+	    }
             if (!res) {
               errpt = 11;
               goto fail;
@@ -2591,21 +2600,11 @@ retry:
 #ifdef HAVE_YUV4MPEG
   case CLIP_TYPE_YUV4MPEG:
     weed_layer_set_from_yuv4m(layer, sfile);
-    if (sfile->deinterlace) {
-      if (!is_thread) {
-        deinterlace_frame(layer, tc);
-      } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
-    }
     goto success;
 #endif
 #ifdef HAVE_UNICAP
   case CLIP_TYPE_VIDEODEV:
-    weed_layer_set_from_lvdev(layer, sfile, 4. / cfile->pb_fps);
-    if (sfile->deinterlace) {
-      if (!is_thread) {
-        deinterlace_frame(layer, tc);
-      } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, TRUE);
-    }
+    weed_layer_set_from_lvdev(layer, sfile, 4. / sfile->pb_fps);
     goto success;
 #endif
   case CLIP_TYPE_LIVES2LIVES:
@@ -2639,15 +2638,13 @@ retry:
     goto success;
   }
   default: goto fail;
-	}
+  }
 
 success:
-
-  if (!lives_layer_plan_controlled(layer)) {
-    if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) {
+  if (!pcontrol) {
+    if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL)) {
       weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
       deinterlace_frame(layer, tc);
-      weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
     }
 
     // render subtitles from file
@@ -2748,7 +2745,7 @@ lives_result_t wait_layer_ready(weed_layer_t *layer, boolean allow_loaded) {
 
 
 static void pft_thread(weed_layer_t *layer, const char *img_ext) {
-  weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_TIMECODE, NULL);
+  weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
   pull_frame_at_size(layer, img_ext, tc, width, height, WEED_PALETTE_ANY);
@@ -2788,10 +2785,12 @@ lives_result_t pull_frame_threaded(weed_layer_t *layer, int width, int height) {
 #ifdef NO_FRAME_THREAD
     if (!pull_fram(layer, tc)) return LIVES_RESULT_ERROR;
 #else
+  BREAK_ME("pft");
 
     lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
                                    | LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)pft_thread,
                                    0, "vs", layer, img_ext);
+    if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
     lives_layer_async_auto(layer, lpt);
 
 #endif

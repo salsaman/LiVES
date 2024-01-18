@@ -24,7 +24,7 @@
 #define ENABLE_PRECACHE
 
 #ifdef ENABLE_PRECACHE
-#define MIN_JMP_THRESH ((frames_t)(sfile->pb_fps * dir) < 16 ? 2		\
+#define MIN_JMP_THRESH ((frames_t)(sfile->pb_fps * dir) < 16 ? 2	\
 			: (frames_t)(sfile->pb_fps / 16.) + 2)
 #define MAX_JMP_THRESH ((frames_t)(sfile->pb_fps / 4.) * dir + 2)
 #endif
@@ -980,7 +980,7 @@ frames_t load_frame_image(frames_t frame) {
     if (!mainw->fs && !mainw->faded) get_play_times();
     return 0;
   }
-
+ 
   if (!mainw->foreign) {
     // if autotransitioning from one clip to another, continue smooth transition
     if (prefs->autotrans_amt >= 0.) set_trans_amt(prefs->autotrans_key - 1,
@@ -1012,7 +1012,7 @@ frames_t load_frame_image(frames_t frame) {
       }
 
       /////////////////////////////////////////////////
-
+      
       // record performance
       if (LIVES_IS_RECORDING) {
         int bg_file = (IS_VALID_CLIP(mainw->blend_file)
@@ -1155,9 +1155,11 @@ frames_t load_frame_image(frames_t frame) {
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor + 1))
         && mainw->current_file != mainw->scrap_file) {
-      THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
-      main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf);
-      THREADVAR(hook_hints) = 0;
+      /* THREADVAR(hook_hints) = HOOK_CB_PRIORITY; */
+      
+      /* main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf); */
+
+      /* THREADVAR(hook_hints) = 0; */
     }
 
     /* in render frame, we would have set all frames to either prepared or loaded */
@@ -1368,7 +1370,7 @@ frames_t load_frame_image(frames_t frame) {
 
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         //if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
-        if (create_empty_pixel_data(return_layer, FALSE, TRUE))
+        if (create_empty_pixel_data(return_layer, FALSE))
           retdata = weed_layer_get_pixel_data_planar(return_layer, NULL);
         else return_layer = NULL;
       }
@@ -1602,7 +1604,7 @@ lfi_done:
     if ((!mainw->fs || (prefs->play_monitor != 0 &&
                         prefs->play_monitor != widget_opts.monitor + 1))
         && !prefs->hide_framebar)
-      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);                             ;
     lives_free(framecount);
     framecount = NULL;
   }
@@ -2641,8 +2643,14 @@ close_clip:
   //   from the card
   //g_print("process_one @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
+#if USE_RPMALLOC
+  if (rpmalloc_is_thread_initialized())
+    rpmalloc_thread_collect();
+#endif
+
   last_time_source = time_source;
   time_source = LIVES_TIME_SOURCE_NONE;
+  if (!CURRENT_CLIP_IS_PHYSICAL) time_source = LIVES_TIME_SOURCE_SYSTEM;
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
   if (mainw->currticks < mainw->startticks) {
@@ -2873,7 +2881,11 @@ close_clip:
   if (sfile->pb_fps != 0.) {
     dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
     if (sfile->delivery == LIVES_DELIVERY_PUSH) {
-      if (mainw->force_show) goto update_effort;
+      if (mainw->force_show) {
+	show_frame = TRUE;
+	goto update_effort;
+      }
+      else goto skip_load;
     } else {
       // calc_new_playback_position returns a frame request based on the player mode and the time delta
       //
@@ -2890,17 +2902,28 @@ close_clip:
       // the exception to this is if the requested frame is out of range - then we may adjust it to within bounds,
 
       // clips can set a target_fps, which is the
-      if (sfile->delivery == LIVES_DELIVERY_PUSH_PULL) {
-        if (mainw->force_show) {
-	  if (sfile->target_framerate) {
-	    if (mainw->inst_fps > sfile->target_framerate) {
-	      sfile->pb_fps *= .99;
-	    } else if (mainw->inst_fps < sfile->target_framerate) {
-	      sfile->pb_fps *= 1.01;
+
+      if (sfile->delivery == LIVES_DELIVERY_PUSH ||
+	  sfile->delivery == LIVES_DELIVERY_PUSH_PULL) {
+	if (mainw->force_show) {
+	  show_frame = TRUE;
+	  if (sfile->delivery == LIVES_DELIVERY_PUSH_PULL) {
+	    if (sfile->target_framerate) {
+	      if (mainw->inst_fps > sfile->target_framerate) {
+		sfile->pb_fps *= .99;
+	      } else if (mainw->inst_fps < sfile->target_framerate) {
+		sfile->pb_fps *= 1.01;
+	      }
 	    }
-	    goto update_effort;
 	  }
-        }
+	  goto update_effort;
+	}
+	else {
+	  if (sfile->delivery == LIVES_DELIVERY_PUSH
+	      || (sfile->delivery == LIVES_DELIVERY_PUSH_PULL
+		  && mainw->plan_cycle && mainw->plan_cycle->frame_idx[0]))
+	    goto skip_load;
+	}
       }
 
 #ifdef ENABLE_PRECACHE
@@ -3055,7 +3078,7 @@ close_clip:
       }
     }
 
-    if (show_frame && sfile->delivery != LIVES_DELIVERY_PUSH) {
+    if (show_frame) {
       if (best_frame != -1 && !fixed_frame) {
         sfile->frameno = best_frame;
       }
@@ -3177,14 +3200,7 @@ update_effort:
       }
     }
 
-    if ((sfile->delivery == LIVES_DELIVERY_PUSH_PULL
-	 || sfile->delivery == LIVES_DELIVERY_PUSH)
-	&& mainw->force_show) {
-      show_frame = TRUE;
-    }
-
     if (show_frame) {
-
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
@@ -3307,7 +3323,15 @@ update_effort:
 	if (dir * (sfile->frameno - sfile->last_frameno) < 1
 	    && scratch != SCRATCH_JUMP && scratch != SCRATCH_JUMP_NORESYNC)
 	  sfile->frameno = sfile->last_frameno + dir;
-	
+
+	if (sfile->delivery == LIVES_DELIVERY_PUSH_PULL) {
+	  if (!mainw->force_show) {
+	    if (mainw->plan_cycle && !mainw->plan_cycle->frame_idx[0])
+	      mainw->plan_cycle->frame_idx[0] = (frames64_t)sfile->frameno;
+	  }
+	  if (!mainw->force_show) goto skip_load;
+	}
+
         // play a frame - on entry, sfile->frameno is the target frame we decided to play
         // sfile->last_frameno is the previous frame played, i.e. the timebase frame
 
@@ -3560,7 +3584,7 @@ update_effort:
     }
 
     if (scratch == SCRATCH_NONE && IS_PHYSICAL_CLIP(mainw->playing_file)) {
-      if (!mainw->multitrack && sfile->delivery != LIVES_DELIVERY_PUSH && !mainw->refresh_model
+      if (!mainw->multitrack && !mainw->refresh_model
           && !mainw->frame_layer_preload && getahead <= 0) {
 
 	// try to predict the next frame for the player, we use this to try to calibrate our predictions
@@ -3730,6 +3754,9 @@ update_effort:
       }}
     // *INDENT-ON*
   }
+
+  // for PUSH delivery, either we go to update_effort oy to skip_load
+ skip_load:
 
   cancelled = THREADVAR(cancelled) = mainw->cancelled;
   proc_file = THREADVAR(proc_file) = mainw->playing_file;

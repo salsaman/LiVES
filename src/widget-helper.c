@@ -1120,12 +1120,12 @@ boolean fg_service_fulfill(void) {
 
   if (lptr) {
     if (lives_proc_thread_ref(lptr) > 1) {
-      if (mainw->debug) {
-        char *fcall = lives_proc_thread_show_func_call(lptr);
-        g_print("fulfill %s\n", fcall);
-        lives_free(fcall);
-        //mainw->debug_ptr = lptr;
-      }
+      /* if (mainw->debug) { */
+      /*   char *fcall = lives_proc_thread_show_func_call(lptr); */
+      /*   g_print("fulfill %s\n", fcall); */
+      /*   lives_free(fcall); */
+      /*   //mainw->debug_ptr = lptr; */
+      /* } */
       if (!lives_proc_thread_is_queued(lptr)) {
         lives_proc_thread_unref(lptr);
         lptr = NULL;
@@ -1173,6 +1173,10 @@ boolean fg_service_fulfill(void) {
   //
 
   lives_proc_thread_unref(lptr);
+#if USE_RPMALLOC
+  if (rpmalloc_is_thread_initialized())
+    rpmalloc_thread_collect();
+#endif
   return TRUE;
 }
 

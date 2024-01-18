@@ -154,6 +154,17 @@ typedef pid_t lives_pid_t;
 #define PREFIX_IT(A, B) QUOTEME_ALL(A B)
 #define _DW0(...) do {__VA_ARGS__} while(0)
 
+#define _NOTHING_ _DW0(if(0);)
+#define _NOTHING_MORE_(...) _NOTHING_
+
+#ifdef __GNUC__
+#define INLINE_CODE 1
+#define _INLINE_(code) ({code})
+#else
+#define INLINE_CODE 0
+#define _INLINE_(code)  NOTHING
+#endif
+
 #define LIVES_RESTRICT __restrict__
 
 #ifdef __GNUC__
@@ -443,6 +454,9 @@ typedef enum {
 
 #define LIVES_DIRECTION_DECREASING	LIVES_DIRECTION_BACKWARD
 #define LIVES_DIRECTION_INCREASING	LIVES_DIRECTION_FORWARD
+
+#define LIVES_DIRECTION_DESCENDING	LIVES_DIRECTION_BACKWARD
+#define LIVES_DIRECTION_ASCENDING	LIVES_DIRECTION_FORWARD
 
 #define LIVES_DIRECTION_LESS		LIVES_DIRECTION_BACKWARD
 #define LIVES_DIRECTION_MORE		LIVES_DIRECTION_FORWARD

@@ -2242,7 +2242,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     return FALSE;
   }
 
-  create_empty_pixel_data(dchan, FALSE, TRUE);
+  create_empty_pixel_data(dchan, FALSE);
   dpdata = (uint8_t *)weed_get_voidptr_value(dchan, WEED_LEAF_PIXEL_DATA, NULL);
 
   orow = weed_get_int_value(dchan, WEED_LEAF_ROWSTRIDES, NULL);

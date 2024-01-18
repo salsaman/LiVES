@@ -21,6 +21,7 @@ static lives_proc_thread_t ldev_free_lpt = NULL;
 
 static lives_obj_instance_t *lives_videodev_inst_create(uint64_t subtype);
 
+static weed_layer_t *srclayer = NULL;
 
 static lives_result_t lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
@@ -65,29 +66,32 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
 static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
                          unicap_data_buffer_t *buffer, void *usr_data) {
   lives_vdev_t *ldev = (lives_vdev_t *)usr_data;
+
   if (!LIVES_IS_PLAYING || (mainw->playing_file != ldev->fileno
                             && mainw->blend_file != ldev->fileno)) {
     ldev->buffer_ready = 0;
     return;
   }
-  lives_get_current_ticks();
+
   if (ldev->buffer_ready != 1) {
-    lives_memcpy(ldev->buffer1.data, buffer->data, ldev->buffer1.buffer_size);
+    lives_memcpy(ldev->buffer1.data, buffer->data, ldev->buffer1.buffer_size);  
+    ldev->buffer = &ldev->buffer1;
     ldev->buffer_ready = 1;
   } else {
     lives_memcpy(ldev->buffer2.data, buffer->data, ldev->buffer2.buffer_size);
+    ldev->buffer = &ldev->buffer2;
     ldev->buffer_ready = 2;
   }
+ 
   mainw->force_show = TRUE;
 }
 
 
 boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, double timeoutsecs) {
-  static weed_layer_t *srclayer = NULL;
   lives_vdev_t *ldev = (lives_vdev_t *)get_primary_actor(sfile);
   unicap_data_buffer_t *returned_buffer = NULL;
-
-  int nplanes;
+  void *pd[1];
+  weed_layer_t *xlayer;
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
     if (lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)
@@ -111,26 +115,12 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     if (ldev->buffer_ready == 1) returned_buffer = &ldev->buffer1;
     else returned_buffer = &ldev->buffer2;
   }
-
-  if (!srclayer) {
-    int *irows = rowstrides_from_bufsize(returned_buffer->buffer_size, ldev->pally.pal, sfile->hsize, sfile->vsize, &nplanes);
-    srclayer = weed_layer_create_full(sfile->hsize, sfile->vsize, irows, ldev->pally.pal, ldev->pally.clamping,
-				      ldev->pally.sampling, ldev->pally.subspace, WEED_GAMMA_SRGB);
-    weed_set_boolean_value(srclayer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, TRUE);
-    lives_free(irows);
-  }
-
-  //if (nplanes > 1 && !ldev->is_really_grey) {
-
-  if (1) {//nplanes > 1) {
-    weed_layer_t *xlayer;
-    void *pd[1];
-    pd[0] = returned_buffer->data;
-    weed_layer_set_pixel_data_planar(srclayer, pd, -nplanes);
-    xlayer = weed_layer_copy(NULL, srclayer);
-    weed_layer_copy(layer, xlayer);
-    weed_layer_unref(xlayer);
-  }
+  
+  pd[0] = returned_buffer->data;
+  weed_layer_set_pixel_data_planar(srclayer, -ldev->nplanes, pd);
+  xlayer = weed_layer_copy(NULL, srclayer);
+  weed_layer_copy(layer, xlayer);
+  weed_layer_unref(xlayer);
 
   /* else { */
 /*     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) { */
@@ -467,11 +457,10 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   full_pal_t pally;
   lives_obj_t *obj;
   lives_rfx_t *rfx;
+  weed_flags_t lflags;
+  int *irows;
   double cpbytes;
   int prop_count, nprops;
-
-  // make sure we close the stream even on abort
-  ldev_free_lpt = lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, lives_ldev_free_cb, (void *)&ldev);
 
   // open dev
   unicap_open(&ldev->handle, device);
@@ -482,6 +471,9 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
     lives_free(ldev);
     return FALSE;
   }
+
+  // make sure we close the stream even on abort
+  ldev_free_lpt = lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, lives_ldev_free_cb, (void *)&ldev);
 
   if (*device->device) ldev->fname = lives_strdup(device->device);
   else ldev->fname = lives_strdup(device->identifier);
@@ -582,28 +574,21 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   set_primary_apparent(mainw->current_file, &pally, WEED_GAMMA_SRGB);
 
-  /* ldev->buffer1 = unicap_data_buffer_new(ldev->format); */
-  /* ldev->buffer2 = unicap_data_buffer_new(ldev->format); */
-
-  /* ldev->init_data.free_func = bufdata_free; */
-  /* ldev->init_data.free_func_data = NULL; */
-  /* ldev->init_data.ref_func = bufdata_ref; */
-  /* ldev->init_data.ref_func_data = NULL; */
-  /* ldev->init_data.unref_func = bufdata_unref; */
-  /* ldev->init_data.unref_func_data = NULL; */
-
-  /* unicap_data_buffer_init(&ldev->buffer1, ldev->format, &ldev->init_data); */
-  /* unicap_data_buffer_init(&ldev->buffer2, ldev->format, &ldev->init_data); */
-
-  ldev->buffer1.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
+  ldev->buffer1.data = (unsigned char *)lives_calloc_mapped(ldev->format->buffer_size, TRUE);
   ldev->buffer1.buffer_size = ldev->format->buffer_size;
-  ldev->buffer2.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
+  ldev->buffer2.data = (unsigned char *)lives_calloc_mapped(ldev->format->buffer_size, TRUE);
   ldev->buffer2.buffer_size = ldev->format->buffer_size;
 
-  if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
-    unicap_queue_buffer(ldev->handle, &ldev->buffer1);
-    unicap_queue_buffer(ldev->handle, &ldev->buffer2);
-  }
+  unicap_queue_buffer(ldev->handle, &ldev->buffer1);
+  unicap_queue_buffer(ldev->handle, &ldev->buffer2);
+
+  irows = rowstrides_from_bufsize(ldev->format->buffer_size, ldev->pally.pal, cfile->hsize, cfile->vsize, &ldev->nplanes);
+  srclayer = weed_layer_create_full(cfile->hsize, cfile->vsize, irows, ldev->pally.pal, ldev->pally.clamping,
+				    ldev->pally.sampling, ldev->pally.subspace, WEED_GAMMA_SRGB);
+  lflags = weed_leaf_get_flags(srclayer, WEED_LEAF_ROWSTRIDES);
+  weed_leaf_set_flags(srclayer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
+
+  lives_free(irows);
 
   ldev->buffer_ready = 0;
   ldev->fileno = mainw->current_file;
@@ -740,15 +725,18 @@ void lives_vdev_free(lives_vdev_t *ldev) {
   unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
   if (ldev->buffer1.data) {
-    lives_free(ldev->buffer1.data);
+    lives_uncalloc_mapped(ldev->buffer1.data, ldev->format->buffer_size, TRUE);
     ldev->buffer1.data = NULL;
   }
   if (ldev->buffer2.data) {
-    lives_free(ldev->buffer2.data);
+    lives_uncalloc_mapped(ldev->buffer2.data, ldev->format->buffer_size, TRUE);
     ldev->buffer2.data = NULL;
   }
   lives_object_instance_destroy(ldev->object);
   lives_free(ldev);
+  if (srclayer) weed_layer_set_pixel_data(srclayer, NULL);
+  weed_layer_unref(srclayer);
+  srclayer = NULL;
 }
 
 

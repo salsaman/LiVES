@@ -12,6 +12,17 @@
 
 #define LIST_TYPE LiVESList *
 
+// suppose we have 5 args here - a,b,c,d,e this will map to a,b,c,d,e,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+#define VARNAMES(a,...) _VARNAMES(a,__VA_ARGS__,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"END")
+
+// this then maps to "a","b","c","d","e","NULL","NULL","NULL",NULL,NULL,NULL,NULL,NULL,"END"
+#define _VARNAMES(a,b,c,d,e,f,g,h,...) __VARNAMES(#a,#b,#c,#d,#e,#f,#g,#h, __VA_ARGS__)
+
+// we read in a, then the va_args, we count the number of NULLS before "END", and this tells us
+// the number of params (in the example, 5)
+// in this case we would return an array with 6 elements, values a..e and a final NULL
+char** __VARNAMES(char *a, ...);
+
 typedef struct {
   uint64_t token;
   const void *dataptr;
@@ -135,6 +146,9 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
 /* recursion_token *rtp = get_rec_token(); */
 /* recursion_token rtp = get_rec_token(); */
 
+
+char *make_std_pname(int pn);
+
 typedef uint64_t lives_thread_attr_t;
 typedef LiVESList lives_thread_t;
 
@@ -197,10 +211,7 @@ lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, 
 boolean call_funcsig(lives_proc_thread_t);
 lives_result_t do_call(lives_proc_thread_t);
 
-#define LIVES_LEAF_FUNCINST "_funcinst"
 #define LIVES_LEAF_REPLACEMENT "_replacement"
-
-#define LIVES_PLANT_FUNCINST 150
 
 #define LIVES_LEAF_CLOSURE "_closure"
 
@@ -510,17 +521,23 @@ typedef struct {
 
 lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *, lives_thread_attr_t attrs, va_list vargs);
 
-lives_proc_thread_t lpt_from_funcdef(lives_funcdef_t *, lives_thread_attr_t attrs, ...);
+lives_proc_thread_t _lpt_from_funcdefX(lives_funcdef_t *, char **anames, lives_thread_attr_t attrs, ...);
+
+#define lpt_from_funcdef(f, a, ...) _lpt_from_funcdefX(f, VARNAMES(__VA_ARGS__), a, __VA_ARGS__)
+
 
 #define FINST_FLAG_SHADOWED	  	(1ull << 8)
 
 #define AUTO_PTRS_START weed_plant_t *cleaner = NULL
-#define AUTO_PTR(func, ...) (lives_proc_thread_execute_retvoidptr(&cleaner, func, __VA_ARGS__))
+#define AUTO_PTR(func, ...) (lives_proc_thread_execute_retvoidptr(&cleaner, VARNAMES(__VA_ARGS__, func, __VA_ARGS__))
 #define AUTO_PTRS_CLEAN _DW0(if (cleaner) weed_plant_free(cleaner); cleaner = NULL;)
 
 typedef struct {
   lives_funcdef_t *funcdef;
 
+  uint64_t attrs;
+  
+  char **paramnames;
   weed_plant_t *params;
 
   int variation;
@@ -694,8 +711,11 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 lives_proc_thread_t lives_hook_add(lives_hook_stack_t **, int type, uint64_t flags, livespointer data, uint64_t dtype);
 
 // lpt like
-lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **, int type, uint64_t flags, lives_funcptr_t func,
-                                        const char *fname, int return_type, const char *args_fmt, ...);
+lives_proc_thread_t _lives_hook_add_fullX(lives_hook_stack_t **, int type, uint64_t flags, lives_funcptr_t func,
+					  const char *fname, int return_type, char **anames, const char *args_fmt, ...);
+
+#define lives_hook_add_full(hs, type, flags, func, fname, rtype, afmt, ...) \
+  _lives_hook_add_fullX(hs, type, flags, func, fname, rtype, VARNAMES(__VA_ARGS__), afmt, __VA_ARGS__)
 
 // fixed cb type
 #define lives_hook_append(hooks, type, flags, func, data) \
@@ -726,7 +746,7 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **, int type, uint64_
 #define lives_hook_prepend(hooks, type, flags, lpt) lives_hook_add((hooks), (type), (flags),lpt, DTYPE_PREPEND)
 
 ////////////////////////////
-lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t, va_list xargs);
+  lives_result_t proc_thread_params_from_vargs(lives_proc_thread_t, uint64_t attrs, va_list xargs);
 
 void lives_hook_remove(lives_proc_thread_t lpt);
 
@@ -755,12 +775,7 @@ void lives_hooks_async_join(lives_hook_stack_t **, int htype);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 
-char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
-
 char *cl_flags_desc(uint64_t clflags);
-
-void dump_hook_stack(lives_hook_stack_t **, int type);
-void dump_hook_stack_for(lives_proc_thread_t, int type);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 #define create_funcdef_here(func) create_funcdef(#func, (lives_funcptr_t)func, 0, NULL, _FILE_REF_, _LINE_REF_, FDEF_FLAG_INSIDE)
@@ -771,6 +786,9 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
 #define MAKE_FUNCDEF(func, rt, args) create_funcdef(#func, func, rt, args, NULL, 0, 0);
 
 void lives_funcdef_free(lives_funcdef_t *);
+
+// DISPLAY FUNCDEF INFO
+char *lives_funcdef_explain(const lives_funcdef_t *);
 
 /* // a funcinst bears some similarity to a proc_thread, except it has only leaves for the paramters */
 /* // plus a pointer to funcdef, in funcdef we can have uid, flags, cat, function, funcneme, ret_type, args_fmt */
@@ -808,6 +826,7 @@ int get_funcsig_nparms(funcsig_t sig);
 
 const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
 char *get_argstring_for_func(lives_funcptr_t func);
-char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
+
+char *lpt_paramstr(lives_proc_thread_t, funcsig_t sig);
 
 #endif

@@ -31,8 +31,8 @@ typedef struct {
   unicap_data_buffer_t buffer1;
   unicap_data_buffer_t buffer2;
   unicap_data_buffer_init_data_t init_data;
+  int nplanes;
   full_pal_t pally;
-  int palette;
   boolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
   lives_obj_instance_t *object;
 } lives_vdev_t;

@@ -2175,7 +2175,11 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
 
   if (matroska->num_packets > 0) {
     memcpy(pkt, matroska->packets[0], sizeof(AVPacket));
-    free(matroska->packets[0]);
+
+    // 
+    av_free(matroska->packets[0]);
+
+    //
     if (matroska->num_packets > 1) {
       void *newpackets;
       memmove(&matroska->packets[0], &matroska->packets[1],
@@ -2391,8 +2395,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       memcpy(pkt->data + offset, pkt_data, pkt_size);
 
       // ok so we have it in pkt->data now, except if it is 'data'
-      if (pkt_data != data)
-        free(pkt_data);
+      if (pkt_data != data) free(pkt_data);
 
       if (n == 0) pkt->flags = is_keyframe;
 
@@ -2400,7 +2403,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       pkt->dts = pkt->pts = timecode;
       pkt->pos = pos;
 
-      index_add(priv->idxc, timecode, pos);
+      //index_add(priv->idxc, timecode * priv->index_scale, pos);
       
       if (st->codec->codec_id == AV_CODEC_ID_TEXT)
         pkt->convergence_duration = duration;
@@ -2511,6 +2514,7 @@ static index_entry *matroska_read_seek(const lives_clip_data_t *cdata, int64_t t
 
   idx = index_get(priv->idxc, timestamp);
   //fprintf(stderr, "got idx %p at tc %ld\n", idx, timestamp);
+
   matroska_clear_queue(matroska);
   //av_packet_unref(priv->avpkt);
 
@@ -2645,7 +2649,9 @@ static boolean decode_frame(const lives_clip_data_t *cdata, int64_t nextframe, i
     if (!priv->picture) priv->picture = av_frame_alloc();
 
 #ifdef HAVE_AVCODEC_SEND_PACKET
+    // looks like it unrefs avpkt
     ret = avcodec_send_packet(priv->ctx, priv->avpkt);
+
     priv->needs_pkt = TRUE;
     if (ret == AVERROR_EOF) {
       priv->got_eof = TRUE;
@@ -2784,6 +2790,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
       avcodec_flush_buffers(priv->ctx);
       pthread_mutex_lock(&priv->idxc->mutex);
       timex = -get_current_nsec();
+      //matroska_clear_queue(&priv->matroska);
       idx = matroska_read_seek(cdata, xtarget_pts);
       //if (!idx) idx = index_add(priv->idxc, xtarget_pts, priv->input_position);
       pthread_mutex_unlock(&priv->idxc->mutex);

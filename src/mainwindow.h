@@ -1789,7 +1789,7 @@ typedef struct {
 
   boolean debug; ///< debug crashes and asserts
   FILE *debug_log;
-  void *debug_ptr;
+  volatile void *debug_ptr;
 
   char *subt_save_file; ///< name of file to save subtitles to
 

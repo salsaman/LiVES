@@ -122,6 +122,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 // LiVES extensions (effects-weed.c)
 
 #define WEED_SEED_CONST_CHARPTR 1400
+#define WEED_SEED_BLOB_DATA 1401
 
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
@@ -139,8 +140,13 @@ weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean sta
 
 weed_error_t weed_set_const_string_value(weed_plant_t *, const char *key, const char *);
 const char *weed_get_const_string_value(weed_plant_t *, const char *key, weed_error_t *);
-weed_size_t weed_leaf_const_string_len(weed_plant_t *, const char *key);
+weed_size_t weed_get_const_string_len(weed_plant_t *, const char *key);
 boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
+
+weed_error_t weed_set_blob_value(weed_plant_t *, const char *key, weed_size_t len, void *);
+void *weed_get_blob_value(weed_plant_t *, const char *key, boolean byref, weed_error_t *);
+weed_size_t weed_get_blob_data_len(weed_plant_t *, const char *key);
+boolean weed_leaf_is_blob_data(weed_plant_t *, const char *key);
 
 weed_plant_t *lives_plant_copy(weed_plant_t *orig); // weed_plant_copy_clean
 void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plant_t *src);

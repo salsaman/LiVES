@@ -266,7 +266,7 @@ void weed_layer_set_from_yuv4m(weed_layer_t *layer, lives_clip_t *sfile) {
   weed_layer_set_size(layer, sfile->hsize, sfile->vsize);
   weed_layer_set_palette(layer, WEED_PALETTE_YUV420P);
 
-  create_empty_pixel_data(layer, TRUE, TRUE);
+  create_empty_pixel_data(layer, TRUE);
 
   if (!yuv4mpeg->ready) {
     return;

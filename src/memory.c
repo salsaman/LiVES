@@ -1334,10 +1334,14 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   return -1;
 }
 
+
 LIVES_GLOBAL_INLINE double bigblock_occupancy(void) {
   return (double)bbused / (double)NBBLOCKS * 100.;
 }
 
+
+#define calloc_bigblovk_relaxed(size) \
+  bigblock_pressure ? lives_calloc_medium(size) : bigblock_calloc(size);
 
 void bbsummary(void) {
   static int seq = 0;

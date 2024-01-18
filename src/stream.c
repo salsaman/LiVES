@@ -807,7 +807,7 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
       weed_set_int_value(layer, WEED_LEAF_HEIGHT, lstream->vsize);
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, lstream->palette);
       weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, lstream->YUV_clamping);
-      create_empty_pixel_data(layer, FALSE, TRUE);
+      create_empty_pixel_data(layer, FALSE);
     }
 
     pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, NULL);

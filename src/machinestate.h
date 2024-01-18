@@ -64,6 +64,8 @@ typedef struct {
 // weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
 #define WEED_PLANT_LIVES 31337
 
+#define IS_LIVES_PLANT(type) ((type) == WEED_PLANT_LIVES)
+
 #define LIVES_PLANT_MESSAGE 1
 #define LIVES_PLANT_WIDGET 2
 #define LIVES_PLANT_TUNABLE 3
@@ -84,6 +86,8 @@ typedef struct {
 
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
+
+#define IS_PROC_THREAD(type, subtype) (IS_LIVES_PLANT(type) && (subtype) == LIVES_PLANT_PROC_THREAD)
 
 #define LIVES_PROC_DIR "/proc/self/task"
 

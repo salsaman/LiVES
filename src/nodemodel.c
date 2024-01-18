@@ -28,8 +28,6 @@ static int n_allpals = 0;
 #define ANN_ERR_THRESH 0.05
 #define ANN_GEN_LIMIT 50
 
-glob_timedata_t *glob_timing = NULL;
-
 static double ztime;
 
 // still to do:
@@ -1746,7 +1744,7 @@ static void run_plan(exec_plan_t *plan) {
         glob_timing->active = TRUE;
       }
     }
-
+    
     for (LiVESList *steps = plan->steps; steps; steps = steps->next) {
       lives_microsleep;
       step_count++;
@@ -2396,7 +2394,8 @@ static void run_plan(exec_plan_t *plan) {
                 glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
               }
 
-              weed_leaf_delete(layer, LIVES_LEAF_PROC_THREAD);
+	      lives_layer_set_proc_thread(layer, NULL);
+              //weed_leaf_delete(layer, LIVES_LEAF_PROC_THREAD);
 
               step->proc_thread = NULL;
               lives_proc_thread_unref(lpt);
@@ -2606,7 +2605,8 @@ static void run_plan(exec_plan_t *plan) {
                   1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
                   1000. * plan->tdata->paused_time, 1000. * plan->tdata->waiting_time,
                   plan->tdata->waiting_time / plan->tdata->real_duration * 100.);
-
+  done:
+    if (0);
     char *bps = NULL, *gbps = NULL;
 
     if (glob_timing->bytes_per_sec) bps = lives_format_storage_space_string((uint64_t)glob_timing->bytes_per_sec);
@@ -2636,6 +2636,7 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->active = FALSE;
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
+
   MSGMODE_OFF(DEBUG);
 
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
@@ -2916,7 +2917,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       boolean letterbox = FALSE;
 
       // for srcs we want to ad a "pre" convert to srcgroup
-      if (n->model_type == NODE_MODELS_CLIP && step_number == 1) {
+      if (NODE_IS_SOURCE(n) && step_number == 1) {
         // convert to the track_source srcgroup
         lives_clipsrc_group_t *srcgrp;
         lives_clip_t *sfile;
@@ -7064,6 +7065,9 @@ static void explain_node(inst_node_t *n, int idx) {
   int pal, i;
   boolean svary = FALSE;
 
+  MSGMODE_LOCAL;
+  MSGMODE_SET(CONSOLE);
+
   if (n->flags & NODESRC_ANY_SIZE) svary = TRUE;
 
   // what we want to do is - if we arrived from an unprocessed input, describe the input and the node
@@ -7093,23 +7097,23 @@ static void explain_node(inst_node_t *n, int idx) {
       in->flags |= NODEFLAG_PROCESSED;
 
       node_dtl = lives_strdup_printf("input %d of %d, ", idx + 1, n->n_inputs);
-      d_print_debug("%s", node_dtl);
+      d_print("%s", node_dtl);
       lives_free(node_dtl);
 
       if (svary) {
         node_dtl = lives_strdup("has variant ");
-        d_print_debug("%s", node_dtl);
+        d_print("%s", node_dtl);
         lives_free(node_dtl);
       }
 
       node_dtl = lives_strdup_printf("size %d X %d (%d X %d) ",
                                      in->width, in->height, in->inner_width, in->inner_height);
-      d_print_debug("%s", node_dtl);
+      d_print("%s", node_dtl);
       lives_free(node_dtl);
 
       if (in->npals) {
         node_dtl = lives_strdup("has variant ");
-        d_print_debug("%s", node_dtl);
+        d_print("%s", node_dtl);
         lives_free(node_dtl);
       }
 
@@ -7117,7 +7121,7 @@ static void explain_node(inst_node_t *n, int idx) {
       else pal = n->pals[n->optimal_pal];
 
       node_dtl = lives_strdup_printf("palette %s ", weed_palette_get_name(pal));
-      d_print_debug("%s", node_dtl);
+      d_print("%s", node_dtl);
       lives_free(node_dtl);
 
       print_node_dtl(n);
@@ -7167,19 +7171,26 @@ static void explain_node(inst_node_t *n, int idx) {
                                    "qloss = %.4f, combined = %.4f] ", i + 1, n->n_outputs,
                                    out->width, out->height, n->abs_cost[COST_TYPE_TIME],
                                    n->abs_cost[COST_TYPE_QLOSS_P], n->abs_cost[COST_TYPE_COMBINED]);
-    d_print_debug("%s", node_dtl);
+    d_print("%s", node_dtl);
     lives_free(node_dtl);
 
-    d_print_debug("\n\t\t====>");
-
+    d_print("\n\t\t====>");
+    
+    MSGMODE_GLOBAL;
     explain_node(out->node, out->iidx);
+    MSGMODE_LOCAL;
+    MSGMODE_SET(CONSOLE);
   }
 
+  MSGMODE_GLOBAL;
   n->flags |= NODEFLAG_PROCESSED;
 }
 
 
 void describe_chains(lives_nodemodel_t *nodemodel) {
+  MSGMODE_LOCAL;
+  MSGMODE_SET(CONSOLE);
+    
   for (LiVESList *list = nodemodel->node_chains; list; list = list->next) {
     node_chain_t *nch = (node_chain_t *)list->data;
     if (nch) {
@@ -7187,17 +7198,23 @@ void describe_chains(lives_nodemodel_t *nodemodel) {
       int track = nch->track;
       if (n->n_inputs) continue;
 
-      d_print_debug("Found %s node_chain for track %d\n", nch->terminated
+      d_print("Found %s node_chain for track %d\n", nch->terminated
                     ? "terminated" : "unterminated", track);
-      d_print_debug("Showing palette computation for COST_TYPE_COMBINED\n");
+      d_print("Showing palette computation for COST_TYPE_COMBINED\n");
+      MSGMODE_GLOBAL;
       explain_node(n, -1);
+      MSGMODE_LOCAL;
+      MSGMODE_SET(CONSOLE);
       break;
     }
   }
 
-  d_print_debug("No more node_chains. Finished.\n\n");
+  d_print("No more node_chains. Finished.\n\n");
+  MSGMODE_GLOBAL;
 
   reset_model(nodemodel);
+
+
 }
 
 

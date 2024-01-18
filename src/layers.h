@@ -204,12 +204,14 @@ weed_layer_t *weed_layer_set_rowstride(weed_layer_t *, int rowstride);
 
 weed_layer_t *weed_layer_set_flags(weed_layer_t *, int flags);
 
-weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *, void **pixel_data, int nplanes);
+weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *, int nplanes, void **pixel_data);
 weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
 
 lives_result_t copy_pixel_data(weed_layer_t *dst, weed_layer_t *src);
+
+lives_sync_list_t **lives_layer_get_copylist_array(lives_layer_t *, int *nplanes);
 
 boolean lives_layer_check_remove_copylist(lives_layer_t *);
 boolean lives_layer_has_copylist(lives_layer_t *);

@@ -10,11 +10,23 @@
 #ifdef MIN
 #undef MIN
 #endif
+
+#if INLINE_CODE
+#define MIN _INLINE_(typeof ((a)) aa = (a); typeof ((b)) bb = b;\
+		    aa <= bb ? aa : bb;)
+#else		    
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#endif
+
 #ifdef MAX
 #undef MAX
 #endif
+#if INLINE_CODE
+#define MAX _INLINE_(typeof ((a)) aa = (a); typeof ((b)) bb = b;\
+		    aa >= bb ? aa : bb;)
+#else		    
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#endif
 
 // math macros / functions
 #define MASK64_h32	0xFFFFFFFF00000000
@@ -85,7 +97,11 @@ typedef struct {
 #define ROUND_I(a) ((int)((double)(a) + .5)) // double
 #define ROUND_IF(a) ((int)((float)(a) + .5)) // float
 
+#if INLINE_CODE
+#define CLAMP0255f(a)  _INLINE_(typeof ((a)) aa = a; aa >= 254.5 ? (uint8_t)255 : aa < -0.5 ? (uint8_t)0 : (uint8_t)(aa + .5);)
+#else
 #define CLAMP0255f(a)  ((a) >= 254.5 ? (uint8_t)255 : (a) < -0.5 ? (uint8_t)0 : (uint8_t)((a) + .5))
+#endif
 
 // clamp a between 0 and b; both values rounded to nearest int
 #define NORMAL_CLAMP(a, b) (ROUND_I((a))  < 0 ? 0 : ROUND_I((a)) > ROUND_I((b)) ? ROUND_I((b)) : ROUND_I((a)))

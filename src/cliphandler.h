@@ -284,9 +284,6 @@ typedef lives_result_t (*clipsrc_action_func_t)(lives_layer_t *, boolean async);
 // if this is not the case, the src must provide a function for creating a copy (clone) of an existing "actor"
 typedef void *(*clipsrc_clone_func_t)(void *actor, const char *URI);
 
-
-
-
 // normally, actor would be NULL, and URI would be set. To create a clone, URI is NULL and actor is set
 // to create a clone from a sanpshot, actor will be set with snapshot adn URI set with the URI for
 // which the snapshot was created
@@ -317,7 +314,7 @@ typedef struct {
   //clipsrc_destroy_func_t destroy_func; // actor - frees actor
 
   uint64_t flags;
-} lives_clipsrc_template;
+} lives_clipsrc_template_t;
 
 typedef struct {
   // unique id for this clip src in srcgrp - clones get differetn values
@@ -328,6 +325,7 @@ typedef struct {
   uint64_t actor_uid; // e.g MKV_DECODEF
 
   // TODO - point to a clipsrc template
+  lives_clipsrc_template_t *template;
 
   //////////////////////////////////
 

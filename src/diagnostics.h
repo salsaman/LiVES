@@ -37,7 +37,7 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 
 void print_diagnostics(uint64_t types);
 
-//
+//////////////////////////////////
 
 void test_procthreads(void);
 
@@ -87,13 +87,24 @@ void do_lsd_tests(void) LIVES_NEVER_INLINE;
 
 void bundle_test(void);
 
-char *weed_plant_to_header(weed_plant_t *, const char *tname);
-
-
 #define STATS_LIST		0
 #define STATS_FREQ		1
 
 void show_weed_stats(int oper);
 void upd_statsplant(const char *key);
+
+void add_to_audit(weed_plant_t *);
+void remove_from_audit(weed_plant_t *);
+
+////////////////// INFO /////////////////
+
+void lpt_desc_state(lives_proc_thread_t);
+char *weed_plant_to_header(weed_plant_t *, const char *tname);
+
+char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
+void dump_hook_stack(lives_hook_stack_t **, int type);
+void dump_hook_stack_for(lives_proc_thread_t, int type);
+
+void examine_plant(weed_plant_t *);
 
 #endif

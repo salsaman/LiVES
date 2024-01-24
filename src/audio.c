@@ -4294,7 +4294,7 @@ lives_audio_buf_t *audio_cache_init(void) {
 
   // init the audio caching thread for rt playback
   athread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI,
-                                     (lives_funcptr_t)cache_my_audio, -1, "v", &cache_buffer);
+                                     cache_my_audio, -1, "v", &cache_buffer);
   return cache_buffer;
 }
 
@@ -4313,7 +4313,8 @@ void audio_cache_finish(void) {
 
 void audio_cache_end(void) {
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
-  lives_proc_thread_join(athread);
+  lives_proc_thread_join_void(athread);
+  lives_proc_thread_unref(athread);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
   pthread_mutex_lock(&mainw->cache_buffer_mutex);

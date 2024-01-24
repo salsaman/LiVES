@@ -80,20 +80,11 @@ LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_attr_group(lives_obj_i
 /* y */
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_create(uint64_t type, uint64_t subtype) {
-  // this is a stopgap until eventually we transition to Nirva object instances
-  // for now object instances can be treated exactly like lives_proc_htreads,
-  // except that they are not queued, and do not have a target func
-  // however, things like hook_stacks and mutexes, and states are the same
-  // the states have aliases
-  // in addition, whreer proc_threads have a data "book" which may be passed from thread to thread
-  // obj instances hava an attr_group
-  // and whrera in proc_threads the entries in the book are imple leaves, entries in attr_group
-  // are themelves weed plants, of type attribute.
-  lives_obj_instance_t *loi = weed_plant_new(LIVES_PLANT_OBJECT);
+  lives_obj_instance_t *loi = lives_plant_new(LIVES_PLANT_OBJECT);
   weed_set_int64_value(loi, LIVES_LEAF_UID, gen_unique_id());
   weed_set_int64_value(loi, LIVES_LEAF_OBJ_TYPE, type);
   weed_set_int64_value(loi, LIVES_LEAF_OBJ_SUBTYPE, subtype);
-  add_garnish(loi, NULL, 0);
+  add_garnish(loi);
   return loi;
 }
 

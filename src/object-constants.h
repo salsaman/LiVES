@@ -171,15 +171,16 @@ NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_native_function_t,)
 
 // responses to nirva_request hooks
 
-#define NIRVA_REQUEST_INVALID		NIRVA_COND_INVALID
-#define NIRVA_REQUEST_ERROR		NIRVA_COND_ERROR
+#define NIRVA_REPLY_NONE		NIRVA_COND_FAIL
 
-#define NIRVA_REQUEST_NO		NIRVA_COND_FAIL
-#define NIRVA_REQUEST_YES		NIRVA_COND_SUCCESS
+#define NIRVA_REPLY_NO			NIRVA_COND_INVALID
+#define NIRVA_REPLY_YES			NIRVA_COND_WAIT_RETRY
+#define NIRVA_REPLY_FULFILLED		NIRVA_COND_SUCCESS_
+#define NIRVA_REPLY_ERROR		NIRVA_COND_ERROR
+#define NIRVA_REPLY_CANCELLED		NIRVA_COND_ABANDON
 // cannot be responded to immediately, response will be received via hook callback
-#define NIRVA_REQUEST_WAIT		NIRVA_COND_WAIT_RETRY
 // security check failed, request is denied
-#define NIRVA_REQUEST_NEEDS_PRIVELEGE  	NIRVA_COND_ABANDON
+#define NIRVA_REPLY_NEEDS_PRIVELEGE  	NIRVA_COND_FORCE
 
 // return values for non-conditional hook cbs
 #define NIRVA_HOOK_CB_LAST		NIRVA_COND_FAIL
@@ -218,7 +219,33 @@ NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_native_function_t,)
 
 #define OBJ_INTENTION_NONE 0
 
-// INTENTIONS
+// INTENTS
+
+// there are 3 basic intents;
+// create_bundle
+// update_value
+// run_transform
+//
+// each intent is actioned by adding a request callback to some bundle's request hook stack
+// only 3 tyoes if bundle by default have hook_stacks - object template, object instance, and attibute
+// object templates and instances respond to the create bundle and run transform intents
+// attributes respond to update value requests
+// each intent us accompanied by some data itemss - the capacities
+// for create bundle, the data would include at least a bundle type / subtype
+// for update value, the data can be active (pushing a new value), or passive, requesting that the data be actualised and returned
+// for run transform, the data may be mor complex and reuqires a contract, which may need negotiation or not
+// all intent requests require an agreed contract, although many contracts are flagged as no-negotiate
+// the reqyestm aking wuth data and the contract are affef ti the bundle request queue and and a response will be returnes asyncronously
+// the response can be yes, no, retry, needs data, invalid, or proxied
+//  depending on the details of the accompanyinf data requiremnts, effects of the request, capacities,
+// we can subdiviide these basic intents into more refined valuses via a process known as "cascading"
+// when a request is satisfied, this will genetate a repsonse to the requestot, and may invoke truggering of hooks
+//
+// note also, some intent / caps are sent internally, and these can also trigger hooks. For example, if an active transform encounters an error this may
+// generate an internal value update request, and when actioned this can trigger a data hook for the transform status,
+// and since tge status is chaged to error, the data hook can be casceded to an error hook.
+
+
 NIRVA_ENUM
 (
   // some common intentions
@@ -243,7 +270,7 @@ NIRVA_ENUM
   // no negotiate, mandatory intent will trigger the corresponding request hook
   // in the target. This may be called for a strand, or for an object attribute
   // (target determined by CAPS)
-  OBJ_INTENTION_REQUEST_UPDATE,
+  OBJ_INTENTION_UPDATE_VALUE,
 
   // active intents - there is only 1 active intent, which can be further deliniated by
   // the hoks required / provided:
@@ -362,7 +389,7 @@ NIRVA_ENUM
 
 #define OBJ_INTENTION_DELETE OBJ_INTENTION_DESTROY_INSTANCE
 
-#define OBJ_INTENTION_UPDATE OBJ_INTENTION_REQUEST_UPDATE
+#define OBJ_INTENTION_UPDATE OBJ_INTENTION_UPDATE_VALUE
 
 #define OBJ_INTENTION_REPLACE OBJ_INTENTION_DELETE
 
@@ -1538,8 +1565,11 @@ NIRVA_ENUM(_ICAP_IDLE = 0, _ICAP_DOWNLOAD, _ICAP_LOAD, N_STD_ICAPS)
 
 NIRVA_ENUM(
   FUNC_CATEGORY_GENERAL,	// uncategorised
-  FUNC_CATEGORY_CORE,	// marks an IMPL function
-  FUNC_CATEGORY_TX_SEGMENT,	// function contained in a transform. segment
+  FUNC_CATEGORY_MAJOR,	// a significant functoional component, principle element of a segment or transform
+  FUNC_CATEGORY_PREP,	// a functional which carries out pre processing for a major
+  FUNC_CATEGORY_CLEANUP,	// a functional which concludes the state after a major has run
+  FUNC_CATEGORY_AUX,	// an auxiliary function which may be essential for a large part of a major
+  FUNC_CATEGORY_TX_SEGMENT,	// minor functional contained in a transform. segment
   FUNC_CATEGORY_HELPER,	// a helper function in a segment, whoch should not be run in the sequence (e.g calc_array_size)
   // represents "static" transform in structurals, this means:
   // - the contract is not held in an object, but in the static lookup table
@@ -1714,6 +1744,8 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    /// CONFIG hook pattern
                    // config hooks - these are based on other patterns, but given an omportant significance
 
+		   // DATA hooks for native threads
+		   
                    // transform suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
                    // hook_stack specifc to structure_app
                    FATAL_HOOK,
@@ -1818,6 +1850,9 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    TX_START_HOOK, /// any -> running //25
 
+		   
+		   // the following are actually data hooks for status changes
+
                    ///
                    PAUSED_HOOK, ///< transform was paused via pause_hook **
 
@@ -1870,6 +1905,11 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // if avaialble, to complete the transform
 
                    TX_BLOCKED_HOOK,
+
+		   // thread can set busy state to avoid being timed out
+		   // busy time is subtracted from timeout
+		   TX_BUSY_HOOK,
+		   TX_UNBUSY_HOOK,
 
                    //
 
@@ -1980,7 +2020,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // step in and action the transform itself
                    //
                    // the callback function added is designed to receive the request response
-                   // if the reequest is responded to YES or NO immediately, the callback is not added
+                   // if the reequest is responded to YE or NO immediately, the callback is not addeSd
                    // if the response is wait or proxy, then the callback will be added and triggered on YES or NO
 
                    // these are similar to no negotiate contracts, however requests can be made even whilst

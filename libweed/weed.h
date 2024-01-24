@@ -137,6 +137,27 @@ extern "C"
 #define WEED_FUNCPTR_SIZE	sizeof(weed_funcptr_t)
 
   // TODO - try to remove this from the spec header and add to libweed specific header
+
+  // #ifndef _HAVE_WEED_DEFS_
+  // #ifdef _WITHOUT_LIBWEED_
+  // #error need defs
+  // #endif
+  // #ifndef _LIBWEED_DEFS_ONLY_
+  // #define _LIBWEED_DEFS_ONLY_
+  // #endif
+  // #include <libweed.h>
+
+  /// in libweed.h
+  // #ifdef _LIBWEED_DEFS_ONLY_
+  // #ifndef _HAVE_WEED_DEFS_
+  // #define _HAVE_WEED_DEFS_
+  // ...
+  // #endif  
+  // #else
+  // #endif
+
+  //#undef _LIBWEED_DEFS_ONLY
+  //#endif
   
 #ifndef HAVE_WEED_STORRAGE_U
 #define HAVE_WEED_STORAGE_U
@@ -144,6 +165,7 @@ extern "C"
 #ifdef __LIBWEED__
   union _weed_storage_u {
     weed_voidptr_t	value;
+    weed_vfuncptr_t	fvalue;
     char storage[WEED_VOIDPTR_SIZE];
   };
 #endif
@@ -227,19 +249,37 @@ struct _weed_leaf_nopadding {
   typedef void *(*weed_memmove_f)(void *, const void *, size_t);
 
   typedef weed_plant_t *(*weed_plant_new_f)(int32_t plant_type);
+
+  /* TODO: weed_plant_get_nleaves; weed_plant_get_leaf_namws; */
+  
   typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *, weed_size_t *nleaves);
   typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 					  weed_size_t num_elems, weed_voidptr_t values);
   typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, weed_size_t idx, weed_voidptr_t value);
   typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key);
   typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx);
+  /* typedef weed_error_t (*weed_leaf_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx, */
+  /* 						      weed_size_t new_size); */
 
   typedef weed_seed_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
   typedef weed_flags_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
   typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
   typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
+  
+  /////////////
 
-  // TODO - add extended funcs to libweed header
+  // TODO - MOVE ALL THIS INRO LIBWEED.H
+
+  /// set this flagbit to enable potential backported bugfixes which may
+  /// theoretically impact existing behaviour
+#define WEED_INIT_ALLBUGFIXES			(1<<0)
+
+  /// set this to expose extra debug functions
+#define WEED_INIT_DEBUGMODE			(1<<1)
+
+  /// set this to enable non core "extended" functions
+#define WEED_INIT_EXTENDED_FUNCS	       	(1<<2)
+
   
   /* API 203 */
   /* "extended" functions - only enabled if WEED_INIT_EXTENDED_FUNCS is passed to libweed_init */
@@ -256,24 +296,26 @@ struct _weed_leaf_nopadding {
 
   typedef weed_error_t (*weed_ext_detach_leaf_f)(weed_plant_t *, const char *key);
 
-  /* CAUTION - no checking is done to ensure size is correct or target is still valid */
-  typedef weed_error_t (*weed_ext_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
-						      weed_size_t new_size);
-
   /* CAUTION - only works with scalar values */
   typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 						    weed_voidptr_t new_value, weed_voidptr_t old_valptr);
-  /* CAUTION - allows recasting of WEED_SEED_STRING, WEED_SEED_VOIDPTR, or WEED_SEED_CUSTOM
-     to another WEED_SEED_CUSTOM type */
+  //
+
+  // remove
+  typedef weed_error_t (*weed_ext_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
+   						      weed_size_t new_size);
+
+  // remove
   typedef weed_error_t (*weed_ext_recast_seed_type_f)(weed_plant_t *, const char *key, weed_seed_t new_st);
 
+  // remove
   typedef weed_error_t (*weed_ext_leaf_set_proxy_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 						    weed_size_t num_elems, weed_voidptr_t valuesptr);
 #endif
 
   /* end extended functions */
 
-  /////////////////////////////
+  ///////////////////////////////////////////////////////////////
 
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
   /* host only functions */
@@ -286,6 +328,7 @@ struct _weed_leaf_nopadding {
   __WEED_FN_DEF__ weed_leaf_set_private_data_f weed_leaf_set_private_data;
   __WEED_FN_DEF__ weed_leaf_get_private_data_f weed_leaf_get_private_data;
 
+  /////////////////////// TODOl MOVE INTO libweed.h
   /* extenended functions */
   __WEED_FN_DEF__ weed_ext_attach_leaf_f  weed_ext_attach_leaf;
   __WEED_FN_DEF__ weed_ext_detach_leaf_f  weed_ext_detach_leaf;
@@ -297,21 +340,13 @@ struct _weed_leaf_nopadding {
 
   /*------------------------------*/
 
+  /////////////////////////////////////////////////////////////
+  
 #ifndef WITHOUT_LIBWEED
   /// MANDATORY functions for libweed implementations
 
   __WEED_FN_DEF__ size_t weed_leaf_get_byte_size(weed_plant_t *, const char *key);
   __WEED_FN_DEF__ size_t weed_plant_get_byte_size(weed_plant_t *);
-
-  /// set this flagbit to enable potential backported bugfixes which may
-  /// theoretically impact existing behaviour
-#define WEED_INIT_ALLBUGFIXES			(1<<0)
-
-  /// set this to expose extra debug functions
-#define WEED_INIT_DEBUGMODE			(1<<1)
-
-  /// set this to enable non core "extended" functions
-#define WEED_INIT_EXTENDED_FUNCS	       	(1<<2)
 
   /* flag bits >= 32 are reserved for library specific features */
 
@@ -391,41 +426,44 @@ struct _weed_leaf_nopadding {
 #define WEED_ERROR_NOSUCH_PLANT		16
 #define WEED_ERROR_WRONG_PLANT_TYPE	17
 
-#define WEED_ERROR_FIRST_CUSTOM 1024
+#define WEED_ERROR_UNSPECIFIED		512
+
+#define WEED_ERROR_FIRST_CUSTOM 	1024
 
   /* Seed types */
+  /* 0 can be invalid or void depending on context */
 #define WEED_SEED_INVALID		0
+#define WEED_SEED_VOID			0
 
-  /* Fundamental seeds */
-#define WEED_SEED_INT			1 // int32_t / uint_32t
-
+  /* Fundamental seeds - default storage type*/
+#define WEED_SEED_INT			1 // 32 bit signed inteher
+  /* aliases */
 #define WEED_SEED_INT32			WEED_SEED_INT
 #define WEED_SEED_int			WEED_SEED_INT
 #define WEED_SEED_int32			WEED_SEED_INT
 #define WEED_SEED_int32_t      		WEED_SEED_INT
 
 #define WEED_SEED_DOUBLE		2 // 64 bit signed double
-
+  /* aliases */
 #define WEED_SEED_double		WEED_SEED_DOUBLE
 
-  // was int32_t: restrict to values WEED_TRUE or WEED_FALSE
-#define WEED_SEED_BOOLEAN		3 // weed_boolean__t: restrict to values WEED_TRUE or WEED_FALSE
-
+#define WEED_SEED_BOOLEAN		3 // weed_boolean_t -32 bit signed integer  (& 0xFF)
+  /* aliases */
 #define WEED_SEED_boolean		WEED_SEED_BOOLEAN
 
-#define WEED_SEED_STRING		4 // NUL terminated array of char
-
+#define WEED_SEED_STRING		4 // NUL terminated array of 8 bit char
+  /* aliases */
 #define WEED_SEED_string		WEED_SEED_STRING
 #define WEED_SEED_charptr		WEED_SEED_STRING
 
-#define WEED_SEED_INT64			5 // int64_t
-
+#define WEED_SEED_INT64			5 // 64 bit signed integer
+  /* aliases */
 #define WEED_SEED_int64			WEED_SEED_INT64
 #define WEED_SEED_int64_t		WEED_SEED_INT64
 
-  // annotation types
-#define WEED_SEED_VOID			0
-
+  /* annotation types - these types may be treated internally as the aliased type,
+     and cast to/from the anootation type externally*/
+#define HAVE_WEED_SEED_UINT		WEED_TRUE
 #define WEED_SEED_UINT			6 // alias for WEED_SEED_INT
 
 #define WEED_SEED_UINT32		WEED_SEED_UINT
@@ -433,19 +471,23 @@ struct _weed_leaf_nopadding {
 #define WEED_SEED_uint32       		WEED_SEED_UINT
 #define WEED_SEED_uint32_t     		WEED_SEED_UINT
 
+#define HAVE_WEED_SEED_UINT64		WEED_TRUE
 #define WEED_SEED_UINT64		7 // alias for WEED_SEED_INT64
 
 #define WEED_SEED_uint64		WEED_SEED_UINT64
 #define WEED_SEED_uint64_t		WEED_SEED_UINT64
 
+#define HAVE_WEED_SEED_FLOAT		WEED_TRUE
 #define WEED_SEED_FLOAT			8 // alias for WEED_SEED_DOUBLE
 
 #define WEED_SEED_float			WEED_SEED_FLOAT
 
+  /* end annotation types */
+  
 #define WEED_SEED_FIRST_NON_PTR_TYPE	WEED_SEED_INT
 #define WEED_SEED_LAST_NON_PTR_TYPE	WEED_SEED_UINT64
 
-  /* Pointer seeds */
+  /* Pointer types */
 #define WEED_SEED_FUNCPTR		64 // weed_funcptr_t
 
 #define WEED_SEED_funcptr		WEED_SEED_FUNCPTR
@@ -482,10 +524,10 @@ struct _weed_leaf_nopadding {
   /* flag bits */
 #define WEED_FLAG_UNDELETABLE		(1 << 0)  // leaf value may be altered but it cannot be deleted
 #define WEED_FLAG_IMMUTABLE		(1 << 1)  // leaf value may not be changed, but it may be deleted
-#define WEED_FLAG_PROXY			(1 << 2)  // used for extended func weed_ext_attach_leaf
-#define WEED_FLAG_EXT_PROXY		(1 << 3)  // used for extended func weed_ext_attach_leaf
 
-#define WEED_FLAG_FIRST_RESERVED       	(1 << 4)  // reserved for future use by Weed
+#define WEED_FLAG_FIRST_RESERVED       	(1 << 2)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_12		(1 << 4)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_11		(1 << 4)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_10		(1 << 5)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_9		(1 << 6)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_8		(1 << 7)  // reserved for future use by Weed

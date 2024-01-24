@@ -4335,7 +4335,7 @@ img_load:
   // TODO - prompt for copy to origs (unless it is already there)
 
   if (prefs->show_recent && !mainw->is_generating) {
-    lives_proc_thread_create(0, (lives_funcptr_t)add_to_recent, 0, "sdis",
+    lives_proc_thread_create(LIVES_THRDATTR_DONTCARE, (lives_funcptr_t)add_to_recent, 0, "sdis",
                              file_name, start, frames, mainw->file_open_params);
   }
 

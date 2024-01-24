@@ -1313,7 +1313,7 @@ void redraw_timeline(int clipno) {
 
   mainw->drawsrc = clipno;
 
-  drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_SET_CANCELLABLE,
+  drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE,
                   (lives_funcptr_t)redraw_timeline_inner, -1, "i", clipno);
   pthread_mutex_unlock(&tlthread_mutex);
 }

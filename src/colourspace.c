@@ -33,7 +33,7 @@
 #include "main.h"
 #include "nodemodel.h"
 
-#ifdef MEM_USE_BIGBLOCKS 1
+#ifdef MEM_USE_BIGBLOCKS
 #define malloc_bigblock(s) _malloc_bigblock(s)
 #endif
 

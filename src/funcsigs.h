@@ -1,4 +1,4 @@
-// functions.h
+// funcsigsns.h
 // (c) G. Finch 2002 - 2022 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
@@ -150,7 +150,7 @@ typedef union {
 #define XCALL_0(thing, wret, funcname, dummy)	\
   GEN_SET(thing, wret, funcname, )
 #if FIX_INDENT_IGNORE_THIS
-}
+       }
 #endif
 
 #define FUNCSIG_VOID				       			0
@@ -176,7 +176,7 @@ typedef union {
 #define FUNCSIG7(a,b,c,d,e,f,g) JOIN2(FUNCSIG_##a,FUNCSIG6(b,c,d,e,f,g))
 #define FUNCSIG8(a,b,c,d,e,f,g,h) JOIN2(FUNCSIG_##a,FUNCSIG7(b,c,d,e,f,g,h))
 #if FIX_INDENT_IGNORE_THIS
-}
+  }
 #endif
 
 #define MAKE_HEX(a) JOIN2(0X,a)
@@ -251,15 +251,26 @@ typedef union {
 
 #define FREE_CHARPTRS(n,...) FREE_CHARPTRS##n(__VA_ARGS__)
 
-#define ADD_FUNCSIG(n,...) case FUNCSIG(n,__VA_ARGS__): {DEF_VARS(n,__VA_ARGS__) \
-      _DC_(n,GET_CTYPES(n,__VA_ARGS__));FREE_CHARPTRS(n,__VA_ARGS__)} break;
+#define VARNAMES(a,...)_VARNAMES(a,__VA_ARGS__,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, \
+				 NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"X")
+#define _VARNAMES(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,...)			\
+  __VARNAMES(#a,#b,#c,#d,#e,#f,#g,#h,#i,#j,#k,#l,#m,#n,#o,#p,__VA_ARGS__)
+char**__VARNAMES(char *a,...);
+#define VARNAME_FUNC char** __VARNAMES(char*a,...){char*x;va_list b,c;int n=0; \
+    va_start(b,a);va_copy(c,b);do{if(!(x=va_arg(b,char*)))n++;}while(!(x&&*x=='X')); \
+    va_end(b);LIVES_CALLOC_TYPE(char*,r,n+1);r[0]=strdup(a);		\
+    for(int i=1;i<n;i++)r[i]=strdup(va_arg(c,char*));va_end(c);return r;}
 
 typedef uint64_t funcsig_t;
 
+void reg_funcsigs(int n, ...);
+#define ADD_FUNCSIG(n,...) reg_funcsig(n, __VARNAMES(__VA_ARGS__));
+
+/////////////////////////////////////////////////////////////////////
 // to make a function callable as a proc_thread or a hook callback, it is only necessary to add the funcsig here
 
 #define ONE_PARAM_FUNCSIGS			\
-  ADD_FUNCSIG(1,INT);				\
+  ADD_FUNCSIG(1,INT)				\
   ADD_FUNCSIG(1,BOOL)				\
   ADD_FUNCSIG(1,INT64)				\
   ADD_FUNCSIG(1,DOUBLE)				\
@@ -315,5 +326,15 @@ typedef uint64_t funcsig_t;
 #define SEVEN_PARAM_FUNCSIGS
 
 #define EIGHT_PARAM_FUNCSIGS
+
+//////////////////////////////////////////////////////////////
+  
+#define REG_FUNCSIGS				\
+  ONE_PARAM_FUNCSIGS				\
+  TWO_PARAM_FUNCSIGS
+
+#undef ADD_FUNCSIG
+#define ADD_FUNCSIG(n,...) case FUNCSIG(n,__VA_ARGS__): {DEF_VARS(n,__VA_ARGS__) \
+      _DC_(n,GET_CTYPES(n,__VA_ARGS__));FREE_CHARPTRS(n,__VA_ARGS__)} break;
 
 #endif

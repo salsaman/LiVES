@@ -1890,7 +1890,7 @@ static void _on_params_clicked(LiVESButton * button, livespointer user_data) {
 
 
 static void on_params_clicked(LiVESButton * button, livespointer user_data) {
-  lives_proc_thread_create(0, _on_params_clicked, 0, "vv", button, user_data);
+  lives_proc_thread_create(LIVES_THRDATTR_DONTCARE, _on_params_clicked, 0, "vv", button, user_data);
 }
 
 

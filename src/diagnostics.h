@@ -97,11 +97,22 @@ void add_to_audit(weed_plant_t *);
 void remove_from_audit(weed_plant_t *);
 
 ////////////////// INFO /////////////////
+char *cl_flags_desc(uint64_t clflags);
+char *hs_op_flags_desc(uint64_t opflags);
 
 void lpt_desc_state(lives_proc_thread_t);
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
 
+char *lives_funcinst_show_func_call(lives_funcinst_t *finst);
+
 char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
+
+char *funcinst_paramstr(lives_funcinst_t *, funcsig_t sig);
+
+lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type);
+
+const char *hs_pattern_name(hookstack_pattern_t pattern);
+
 void dump_hook_stack(lives_hook_stack_t **, int type);
 void dump_hook_stack_for(lives_proc_thread_t, int type);
 

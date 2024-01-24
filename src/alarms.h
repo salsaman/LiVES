@@ -74,8 +74,8 @@ void lives_alarms_init(void);
 int64_t get_ticker_count(void);
 
 lives_result_t lives_alarm_set_timeout(uint64_t nsec);
-// returns TRUE if alarm was triggered
-boolean lives_alarm_disarm(void);
+// returns nsec remaining
+uint64_t lives_alarm_disarm(void);
 
 void lives_alarm_wait(void);
 int lives_alarm_get_state(void);
@@ -102,7 +102,7 @@ typedef enum {
 
 lives_result_t lives_sys_alarm_set_timeout(alarm_name_t alaname, uint64_t nsec);
 // returns TRUE if alarm was triggered
-boolean lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete);
+uint64_t lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete);
 
 void lives_sys_alarm_wait(alarm_name_t alaname);
 int lives_sys_alarm_get_state(alarm_name_t alaname);

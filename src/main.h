@@ -21,7 +21,7 @@
 /*
   NO WARRANTY
 
-  BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+  BECA,USE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
   FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
   OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
   PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
@@ -121,8 +121,17 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 // LiVES extensions (effects-weed.c)
 
-#define WEED_SEED_CONST_CHARPTR 1400
-#define WEED_SEED_BLOB_DATA 1401
+// a pointer type to lives_proxy_data_t
+// the real st, flags and ne are held in proxy data
+// the data inside points to the real data location and data size
+// we can retrieve size, location, and get a copy of data pointed to
+// for const charptr: we get value only, no copying, and size is the strlen
+// proxy flags set to immutable, undeletable, free on delete
+// for blob_data, size is set when setting data, we can get value and size (by ref)
+// or a copy of data (deep copy). Proxy flags can optionally be set to free on delete
+// for pdata, real flags are readonly, undeletable, free on delete
+#define WEED_SEED_PROXY 1400
+#define WEED_SEED_CONST_CHARPTR 1401
 
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
@@ -170,6 +179,13 @@ weed_error_t lives_leaf_dup_nocheck(weed_plant_t *dst, weed_plant_t *src, const 
 
 #define LIVES_UNLIKELY(a) UNEXPECTED(a)
 #define LIVES_LIKELY(a) EXPECTED(a)
+
+typedef enum {
+  CANCEL_KILL = 0, ///< normal - kill background processes working on current clip
+  CANCEL_INTERRUPT,     ///< midway between KILL and SOFT
+  CANCEL_SOFT,     ///< just cancel in GUI (for keep, etc)
+  CANCEL_DONTCARE, ///< send cancel request then ignore target
+} lives_cancel_type_t;
 
 #define ADD_AUDIT(audt, ptr, vtype, val) do {				\
     char *pkey;								\
@@ -433,12 +449,6 @@ typedef enum {
   /// special cancel for TV toy
   CANCEL_KEEP_LOOPING,
 } lives_cancel_t;
-
-typedef enum {
-  CANCEL_KILL = 0, ///< normal - kill background processes working on current clip
-  CANCEL_INTERRUPT,     ///< midway between KILL and SOFT
-  CANCEL_SOFT     ///< just cancel in GUI (for keep, etc)
-} lives_cancel_type_t;
 
 #define IMG_TYPE_BEST IMG_TYPE_PNG
 

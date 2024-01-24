@@ -1411,7 +1411,7 @@ WIDGET_HELPER_GLOBAL_INLINE void fg_stack_wait(void) {
 
 
 static void async_sig_handler(livespointer instance, livespointer data) {
-  lives_thread_attr_t attr = 0;//LIVES_THRDATTR_WAIT_SYNC;
+  lives_thread_attr_t attr = LIVES_THRDATTR_DONTCARE;
   lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
   lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
   sigdata->detsig = NULL;
@@ -1432,7 +1432,7 @@ static void async_sig_handler(livespointer instance, livespointer data) {
 
 static void async_sig_handler3(livespointer instance, livespointer extra, livespointer data) {
   lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
-  lives_thread_attr_t attr = 0;//LIVES_THRDATTR_WAIT_SYNC;
+  lives_thread_attr_t attr = LIVES_THRDATTR_DONTCARE;
   lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
   sigdata->detsig = NULL;
   if (sigdata->instance != instance) {
@@ -3588,10 +3588,10 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   THREADVAR(accel_key) = keyval;
   THREADVAR(accel_mod) = mod;
   THREADVAR(accel_data) = data;
-  lives_proc_thread_trigger_hooks(self, SEGMENT_START_HOOK);
+  lives_proc_thread_trigger_hooks(self, ACCEL_START_HOOK);
   // gtk_window_activate_key
   gtk_accel_groups_activate(obj, keyval, mod | LIVES_SPECIAL_MASK);
-  lives_proc_thread_trigger_hooks(self, SEGMENT_END_HOOK);
+  lives_proc_thread_trigger_hooks(self, ACCEL_END_HOOK);
   THREADVAR(accel_group) = NULL;
   THREADVAR(accel_key) = 0;
   THREADVAR(accel_mod) = 0;
@@ -14706,8 +14706,9 @@ double widget_func_double(lives_widget_instance_t *winst, lives_intention intent
       va_list xargs;
       double dval;
       va_start(xargs, functype);
-      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function,
-                                           WEED_SEED_DOUBLE, funcinf->args_fmt, xargs);
+      
+      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD |LIVES_THRDATTR_DONTCARE,
+					   funcinf->function, WEED_SEED_DOUBLE, funcinf->args_fmt, xargs);
       call_funcsig(pth);
       va_end(xargs);
       dval = lives_proc_thread_join_double(pth);

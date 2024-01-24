@@ -80,6 +80,8 @@
 #define GNU_PURE
 #endif
 
+#define WEED_FLAG_PROXY			(1 << 2)  // used for extended func weed_ext_attach_leaf
+
 // Define EXPORTED for any platform
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
 #ifdef WIN_EXPORT
@@ -569,16 +571,26 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
 
 #define weed_seed_is_ptr(seed_type) ((seed_type) >= WEED_SEED_FIRST_PTR_TYPE ? 1 : 0)
 
+static int buhgixes = 0;
+
 #if WEED_ABI_CHECK_VERSION(202)
 #define _vs(a) a
 #else
 #define _vs(a) WEED_VOIDPTR_SIZE
 #endif
 
+#if WEED_ABI_CHECK_VERSION(203)
+#define IS_FUNCPTR(seed_type) ((seed_type) == WEED_SEED_FUNCPTR)
+#else
+#define IS_FUNCPTR(seed_type) 0
+#endif
+
 // internal data size
 #define weed_seed_get_size(seed_type, size)				\
-  (seed_type == WEED_SEED_STRING ? size					\
+  (WEED_SEED_IS_CUSTOM(seed_type) ? size				\
+   : seed_type == WEED_SEED_STRING ? size				\
    : seed_type == WEED_SEED_PLANTPTR ? _pptrsize			\
+   : IS_FUNCPTR(seed_type) ? WEED_FUNCPTR_SIZE				\
    : (weed_seed_is_ptr(seed_type)) ? _vs(size)				\
    : (seed_type == WEED_SEED_INT || seed_type == WEED_SEED_UINT) ? 4	\
    : seed_type == WEED_SEED_BOOLEAN ? 1					\
@@ -623,29 +635,36 @@ static inline weed_data_t *weed_data_new(weed_seed_t seed_type, weed_size_t num_
   else {
     int is_ptr = (weed_seed_is_ptr(seed_type));
     weed_size_t esize = weed_seed_get_size(seed_type, 0);
-    if (is_ptr) {
-      weed_voidptr_t *valuep = (weed_voidptr_t *)values;
+    if (IS_FUNCPTR(seed_type)) {
+      weed_funcptr_t *valuef = (weed_funcptr_t *)values;
       for (int i = 0; i < num_elems; i++) {
 	data[i].size = esize;
-	data[i].v.value = valuep ? valuep[i] : NULL;
+	data[i].v.fvalue = valuef ? valuef[i] : NULL;
       }
     }
     else {
-      int off_size = weed_seed_get_offset(seed_type);
-      if (esize <= WEED_VOIDPTR_SIZE)
+      if (is_ptr) {
+	weed_voidptr_t *valuep = (weed_voidptr_t *)values;
 	for (int i = 0; i < num_elems; i++) {
 	  data[i].size = esize;
-	  weed_memcpy(&data[i].v.storage, (char *)values + i * off_size, data[i].size);
+	  data[i].v.value = valuep ? valuep[i] : NULL;
 	}
-      else for (int i = 0; i < num_elems; i++) {
-	  data[i].size = esize;
-	  data[i].v.value = (weed_voidptr_t)(weed_malloc_and_copy(data[i].size,
-								  (char *)values + i * off_size));
-	  if (!data[i].v.value && data[i].size > nullv)
-	    return weed_data_free(data, --i, num_elems, seed_type);
-	}
-    }
-  }
+      }
+      else {
+	int off_size = weed_seed_get_offset(seed_type);
+	if (esize <= WEED_VOIDPTR_SIZE)
+	  for (int i = 0; i < num_elems; i++) {
+	    data[i].size = esize;
+	    weed_memcpy(&data[i].v.storage, (char *)values + i * off_size, data[i].size);
+	  }
+	else for (int i = 0; i < num_elems; i++) {
+	    data[i].size = esize;
+	    data[i].v.value = (weed_voidptr_t)(weed_malloc_and_copy(data[i].size,
+								    (char *)values + i * off_size));
+	    if (!data[i].v.value && data[i].size > nullv)
+	      return weed_data_free(data, --i, num_elems, seed_type);
+	  }
+      }}}
   return data;
 }
 
@@ -1019,10 +1038,9 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant, weed_size_t *nleaves)
 
 static weed_error_t _weed_data_get(weed_data_t *data, weed_seed_t type, weed_size_t idx,
 				   weed_voidptr_t value) {
-  if (0 && type == WEED_SEED_FUNCPTR) *((weed_funcptr_t *)value) = 0;//data[idx].funcval;
+  if (IS_FUNCPTR(type)) *((weed_funcptr_t *)value) = data[idx].fvalue;
   else {
-    if (weed_seed_is_ptr(type)) {
-      *((weed_voidptr_t *)value) = data[idx].v.value;}
+    if (weed_seed_is_ptr(type)) *((weed_voidptr_t *)value) = data[idx].v.value;
     else {
       if (type == WEED_SEED_STRING) {
 	weed_size_t size = (size_t)data[idx].size;
@@ -1043,23 +1061,27 @@ static weed_error_t _weed_data_get(weed_data_t *data, weed_seed_t type, weed_siz
 static weed_error_t _weed_data_get_all(weed_leaf_t *leaf, weed_voidptr_t rvals) {
   weed_size_t ne = leaf->num_elements;
   weed_seed_t type = leaf->seed_type;
-  if (weed_seed_is_ptr(type)) {
-    for (int i = 0; i < ne; i++)
-      (((weed_voidptr_t *)rvals))[i] = leaf->data[i].v.value;}
+  if (IS_FUNCPTR(type)) *((weed_funcptr_t *)value) = data[idx].fvalue;
+  for (int i = 0; i < ne; i++)
+    (((weed_funcptr_t *)rvals))[i] = leaf->data[i].v.fvalue;
   else {
-    if (type == WEED_SEED_STRING) {
-      for (int i = 0; i < ne; i++) {
-	weed_size_t size = (size_t)leaf->data[i].size;
-	if (nullv && leaf->data[i].size < nullv) ((char **)rvals)[i] = NULL;
-	else {
-	  size -= nullv;
-	  if (size > 0) weed_memcpy(((char **)rvals)[i], leaf->data[i].v.value, size);
-	  ((char **)rvals)[i][size] = 0;}}}
-    else {
-      weed_size_t esz = weed_seed_get_size(leaf->seed_type, sizeof(char *));
-      int osz = weed_seed_get_offset(leaf->seed_type);
+    if (weed_seed_is_ptr(type))
       for (int i = 0; i < ne; i++)
-	weed_memcpy(rvals + i * osz, &(leaf->data[i].v.storage), esz);}}
+	(((weed_voidptr_t *)rvals))[i] = leaf->data[i].v.value;
+    else {
+      if (type == WEED_SEED_STRING) {
+	for (int i = 0; i < ne; i++) {
+	  weed_size_t size = (size_t)leaf->data[i].size;
+	  if (nullv && leaf->data[i].size < nullv) ((char **)rvals)[i] = NULL;
+	  else {
+	    size -= nullv;
+	    if (size > 0) weed_memcpy(((char **)rvals)[i], leaf->data[i].v.value, size);
+	    ((char **)rvals)[i][size] = 0;}}}
+      else {
+	weed_size_t esz = weed_seed_get_size(leaf->seed_type, sizeof(char *));
+	int osz = weed_seed_get_offset(leaf->seed_type);
+	for (int i = 0; i < ne; i++)
+	  weed_memcpy(rvals + i * osz, &(leaf->data[i].v.storage), data[i].size);}}}
   return WEED_SUCCESS;
 }
 #endif
@@ -1382,7 +1404,8 @@ static inline size_t _get_leaf_size(weed_plant_t *plant, weed_leaf_t *leaf) {
 	  <= WEED_SEED_LAST_NON_PTR_TYPE
 	  && weed_seed_get_size(leaf->seed_type, 0) > WEED_VOIDPTR_SIZE))
     for (int i = 0; i < ne; i++) size += leaf->data[i].size;
- return size + ne * (libweed_get_data_t_size());
+  // for other types, value size is already included in data_t size
+  return size + ne * (libweed_get_data_t_size());
 }
 
 EXPORTED size_t weed_leaf_get_byte_size(weed_plant_t *plant, const char *key) {

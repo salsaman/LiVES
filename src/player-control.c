@@ -162,14 +162,15 @@ lives_proc_thread_t start_playback_async(int type) {
   if (mainw->player_proc || !mainw->can_play) return NULL;
 
   GET_PROC_THREAD_SELF(self);
-  attrs |= LIVES_THRDATTR_START_UNQUEUED;
+  attrs |= LIVES_THRDATTR_START_UNQUEUED | LIVES_THRDATTR_DONTCARE;
   lpt = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
+
   if (type == 6 && THREADVAR(accel_group)) {
-    lives_proc_thread_add_hook(self, SEGMENT_END_HOOK, HOOK_OPT_ONESHOT,
-                               queue_other_lpt, lpt);
+    lives_proc_thread_add_hook(self, ACCEL_END_HOOK, HOOK_OPT_ONESHOT,
+                               queue_funcinst, lpt);
   } else lives_proc_thread_queue(lpt, 0);
   return lpt;
 }

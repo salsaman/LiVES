@@ -503,10 +503,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   lives_aplayer_set_data_len(self, 0);
   lives_aplayer_set_data(self, NULL);
 
-
-
-
-
   if (cancel_rec_lpt) {
     // since we cancelled rec_lpt, then called async_join, it should have been removed from the hook_stack
     // we can now unref it, and it should be freed

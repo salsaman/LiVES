@@ -213,6 +213,27 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t **synclistp) {
 }
 
 
+LIVES_GLOBAL_INLINE void *_lives_sync_list_peek(lives_sync_list_t *synclist) {
+  LiVESList *list;
+  if (synclist->flags & SYNCLIST_FLAG_POP_HEAD) {
+    list = synclist->list;
+  } else {
+    list = synclist->last;
+  }
+  return list->data;
+}
+
+LIVES_GLOBAL_INLINE void *lives_sync_list_peek(lives_sync_list_t *synclist) {
+  void *data = NULL;
+  if (synclist) {
+    lives_sync_list_rdlock(synclist);
+    data = _lives_sync_list_peek(synclist);
+    lives_sync_list_unlock(synclist);
+  }
+  return data;
+}
+
+
 LIVES_GLOBAL_INLINE lives_sync_list_t *_lives_sync_list_remove(lives_sync_list_t *synclist,
     void *data, boolean do_free) {
   if (synclist) {

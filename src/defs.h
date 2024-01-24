@@ -221,10 +221,12 @@ typedef volatile int lives_sigatomic;
 
 #define LIVES_RESULT_SUCCESS	1
 #define LIVES_RESULT_FAIL	0
+#define LIVES_RESULT_FAILED	LIVES_RESULT_FAIL
 
-#define LIVES_RESULT_INVALID	-1 // EINVAL
+#define LIVES_RESULT_INVALID	-1
 #define LIVES_RESULT_ERROR	-2
-#define LIVES_RESULT_TIMEDOUT	-3
+#define LIVES_RESULT_CANCELLED	-3
+#define LIVES_RESULT_TIMEDOUT	-4
 
 typedef int lives_result_t;
 

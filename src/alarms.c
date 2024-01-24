@@ -168,19 +168,22 @@ static lives_timer_t *lives_timer_create(lives_timer_t *xtimer) {
 }
 
 
-static boolean lives_timer_delete(lives_timer_t *xtimer) {
-  boolean ret = FALSE;
+static uint64_t lives_timer_delete(lives_timer_t *xtimer) {
+  uint64_t res = 0;
   if (xtimer) {
     if (xtimer->tid) {
       // disarm first
+      struct itimerspec its;
+      timer_gettime(timer->tid, &its);
+      res = its.it_value.tv_sec * ONE_BILLION + its.it_value.tv_nsec;
       if (!xtimer->triggered) lives_timer_set_delay(xtimer, 0, FALSE);
-      else ret = TRUE;
+      else rea = 0;
       timer_delete(xtimer->tid);
       xtimer->tid = 0;
     }
     xtimer->triggered = 0;
   }
-  return ret;
+  return res;
 }
 
 // alarms -  new style ///
@@ -193,25 +196,28 @@ boolean lives_alarm_clear(int dummy) {
 }
 
 
-boolean lives_alarm_disarm(void) {
+uint64_t lives_alarm_disarm(void) {
   thrd_signal_block(LIVES_TIMER_SIG);
   return lives_timer_delete(&(THREADVAR(xtimer)));
 }
 
 
-boolean lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete) {
-  boolean ret = FALSE;
+uint64_t lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete) {
+  uint64_t res = 0;
   if (alaname > sys_alarms_min && alaname < sys_alarms_max) {
     lives_timer_t *timer = &app_timers[alaname];
     if (timer->tid) {
+      struct itimerspec its;
       thrd_signal_block(timer->signo);
+      timer_gettime(timer->tid, &its);
+      res = its.it_value.tv_sec * ONE_BILLION + its.it_value.tv_nsec;
       if (delete) return lives_timer_delete(timer);
       if (!timer->triggered) lives_timer_set_delay(timer, 0, FALSE);
-      else ret = TRUE;
+      else ret = 0;
       timer->triggered = 0;
     }
   }
-  return ret;
+  return res;
 }
 
 ///////////////////////////////////////////

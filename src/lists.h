@@ -44,6 +44,9 @@ lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *, void *data);
 LiVESList *_lives_sync_list_pop(lives_sync_list_t **);
 void *lives_sync_list_pop(lives_sync_list_t **);
 
+void *_lives_sync_list_peek(lives_sync_list_t *);
+void *lives_sync_list_peek(lives_sync_list_t *);
+  
 void lives_sync_list_set_priv(lives_sync_list_t *, void *priv);
 void *lives_sync_list_get_priv(lives_sync_list_t *);
 

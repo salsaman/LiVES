@@ -14,24 +14,46 @@
 
 //////////////// info functions
 
-#define PTMLH do {pthread_mutex_lock(hmutex);} while (0)
-#define PTMUH do {pthread_mutex_unlock(hmutex);} while (0)
+#define PTMLH _DW0(pthread_mutex_lock(hmutex);)
+#define PTMUH _DW0(pthread_mutex_unlock(hmutex);)
 #define PTMTLH pthread_mutex_trylock(hmutex)
+  
+
+char *funcinst_paramstr(lives_funcinst_t *finst, funcsig_t sig) {
+  // create a string with the ctypes for a funcinst
+  int pn = 0;
+  char *pstr = NULL, *pname, *fmtstr = lives_strdup("");
+  const char *ctype;
+  uint32_t ne, st;
+
+  for (int i = 60; i >= 0; i -= 4) {
+    uint8_t ch = (sig >> i) & 0X0F;
+    if (!ch) continue;
+    st = get_seedtype(ch);
+    pname = make_std_pname(pn++);
+    ne = weed_leaf_num_elements(finst->params, pname);
+    ctype = weed_seed_to_ctype(st, FALSE);
+    if (ne > 1) pstr = lives_strdup_printf("%s[%d]", ctype, ne);
+    else pstr = lives_strdup_printf("(%s)", ctype);
+    fmtstr = lives_strdup_concat(fmtstr, ", ", "%s", pstr);
+    lives_freep((void **)&pstr); lives_free(pname);
+  }
+  return fmtstr;
+}
 
 
-// show func call for lpt
-
-char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
-  if (lpt) {
+char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
+  if (finst) {
     char *fmtstring, *parvals;
-    uint32_t ret_type = lives_proc_thread_get_rtype(lpt);
-    funcsig_t sig = lives_proc_thread_get_funcsig(lpt);
-    const char *funcname = lives_proc_thread_get_funcname(lpt);
+    lives_funcdef_t *fdef = finst->funcdef;
+    weed_seed_t _t ret_type = fdef->return_type;
+    funcsig_t sig = fdef->funcsig;
+    const char *funcname = fdef->funcname;
     weed_seed_t st;
 
-    g_print("\nLiVES Proc Thread call details:\n");
+    g_print("\nLiVES funcinst call details:\n");
     
-    parvals = lpt_paramstr(lpt, sig);
+    parvals = funcinst_paramstr(finst, sig);
 
     g_print("Function %s with the following prototype wes called\n", funcname);
 
@@ -43,7 +65,7 @@ char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
 
     g_print("%s\n", fmtstring);
 
-    lives_funcinst_t *finst = lives_proc_thread_get_funcinst(lpt);
+    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
 
     if (finst && finst->paramnames) {
       int pn = 0;
@@ -81,6 +103,11 @@ char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
 }
 
 
+LIVES_GLOBAL_INLINE char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
+  return lives_func_inst_show_func_call(lives_proc_thread_get_initial_func_inst(lpt));
+}
+
+
 // show running state for an lpt
 
 LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
@@ -92,12 +119,163 @@ LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
 }
 
 
+#define ADD_FLAG_EXPL(flags, flagbit, desc)				\
+  _DW0(if (flags & flagbit) fstr = lives_strdup_concat(fstr, ", ", "%s", desc);)
+
+
+char *cl_flags_desc(uint64_t clflags) {
+  char *fstr = lives_strdup("");
+  if (clflags & HOOK_CB_BLOCK)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKING");
+  if (clflags & HOOK_CB_PRIORITY)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "PRIORITY");
+  if (clflags & HOOK_OPT_ONESHOT)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "ONESHOT");
+  if (clflags & HOOK_OPT_PERSISTENT)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "PERSISTENT");
+  if (clflags & HOOK_OPT_IGNORE_AFTER_FALSE)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "IGNORE AFTER FALSE RETURN");
+  if (clflags & HOOK_CB_IGNORE)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "IGNORE (skip)");
+  if (clflags & HOOK_CB_FG_THREAD)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_THREAD");
+  if (clflags & HOOK_OPT_FG_LIGHT)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_LIGHT");
+  if (clflags & HOOK_UNIQUE_FUNC)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_FUNC");
+  if (clflags & HOOK_UNIQUE_DATA)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_DATA");
+  if (clflags & HOOK_INVALIDATE_DATA)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "INVALIDATE_DATA");
+  if (clflags & HOOK_OPT_MATCH_CHILD)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "MATCH_CHILD");
+  if (clflags & HOOK_TOGGLE_FUNC)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "TOGGLE_FUNC");
+  if (clflags & HOOK_STATUS_BLOCKED)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKED");
+  if (clflags & HOOK_STATUS_RUNNING)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "RUNNING");
+  if (clflags & HOOK_STATUS_ACTIONED)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "ACTIONED");
+  if (clflags & HOOK_STATUS_REMOVE)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "REMOVE");
+  return fstr;
+}
+
+
+LIVES_GLOBAL_INLINE char *hs_op_flags_desc(uint64_t opflags) {
+  char *fstr = lives_strdup("");
+
+  if (opflags & HOOKSTACK_INVALID) {
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "INVALID");
+    return fstr;
+  }
+
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_NATIVE, "NATIVE");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_ALWAYS_ONESHOT, "ALWAYS ONESHOT");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_ASYNC, "TRIGGER ASYNC");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_PARALLEL, "RUN_PARALLEL");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_SELF_ONLY, "ONLY SELF CAN ADD");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_COMBINED_BOOL, "COMBINED BOOLEAN RESULT");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_RUN_SINGLE, "NRUN SINGLE");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_PERSISTENT, "PERSISTEMT");
+  ADD_FLAG_EXPL(opflags, HOOKSTACK_NOWAIT, "NOWAIT");
+  return fstr;
+}
+
+
+LIVES_GLOBAL_INLINE const char *hs_pattern_name(hookstack_pattern_t pattern) {
+  switch (pattern) {
+  case HOOK_PATTERN_DATA:
+    return "data hook pattern";
+  case  HOOK_PATTERN_REQUEST:
+    return "request hook pattern";
+  case HOOK_PATTERN_SPONTANEOUS:
+    return "spontaneous hook pattern";
+  default: break;
+  }
+  return "undefined hook pattern";
+}
+
+
+lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type) {
+  lives_hook_stack_t *hstack;
+  uint64_t hsflags;
+  boolean native = FALSE;
+
+  if (!hstacks) {
+    g_print("ERROR: no stacks !\n");
+    return LIVES_RESULT_INVALID;
+  }
+  hstack = hstacks[type];
+  if (!hstack) {
+    g_print("hstacks[%d] is NULL !!\n", type);
+    return LIVES_RESULT_INVALID;
+  }
+
+  g_print("Showing details for hook stack type %d (%p) in stacks %p\n", type, hstack, hstacks);
+
+  hsflags = hstack->desc->op_flags;
+  if (hsflags & HOOKSTACK_NATIVE) native = TRUE;
+
+  if (native) {
+    g_print("Stack type native, owner is pthread %s\n", get_thread_id(hstack->owner.thread));
+  }
+  else {
+    lives_proc_thread_t lppt = hstack->owner.lpt;
+    xfinst = lives_proc_thread_get_initial_funcinst(lpt);
+    g_print("Stack type proc_thraad, owner is proc_thread %p\n", lpt);
+    lpt_desc_state(lpt);
+    g_print("%s\n", lives_funcinst_show_func_call(xfinst));
+  }
+  
+  g_print("\n");
+
+  g_print("hook stack pattern is %s", hs_pattern_name(hstack->hsdesc->pattern));
+
+  if (ret_type == 0 && !args_fmt_start) proto = lives_strdup("unspecified");
+  else {
+    const char *ctype;
+    if (hstack->hsdesc->ret_type)
+      ctype = weed_seed_to_ctype(hstack->hsdesc->ret_type, FALSE);
+    if (args_fmt_start) {
+      char *pstr = funcsig_to_param_string(funcsig_from_args_fmt(hstack->hsdesc->args_fmt_start));
+      if (!hstack->hsdesc->ret_type)
+	proto = lives_strdup("Parameters must start with %s, return_type unspecified", pstr);
+      else proto = lives_strdup("%s (*cb_func)(%s, ...)", ctype, pstr);
+      lives_free(proto);
+    }
+    else proto = lives_strdup("Return type %s, parameters unspecified", ctype);
+  }
+  g_print("Callback prototype: %s", proto);
+  lives_free(proto);
+
+  g_print("Hook stack operation flags are:\n");
+  opflags = hstack->hsdesc->op_flags;
+  hs_op_flags_desc(opflags);
+
+  if (hstack->hs_desc->req_target_stacks) {
+    g_print("Stack is a staging stack for target:\n");
+    lives_describe_hook_stack(hstack->req_target_stacks, hstack->req_target_stacks);
+    if (hstack->hsdesc->req_target_set_flags) {
+      g_print("The following CALLBACK flagbits are set when forwarding:\n");
+      cl_flags_desc(hstack->req_target_set_flags)
+    }
+    if (hstack->hsdesc->req_target_unset_flags) {
+      g_print("The following CALLBACK flagbits are set when forwarding:\n");
+      cl_flags_desc(hstack->req_target_set_flags)
+    }
+  }
+  return LIVES_RESULT_SUCCESS;
+}
+
+
 // show callbacks in a hook stack
 
 void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
   lives_hook_stack_t *hstack;
   pthread_mutex_t *hmutex;
-  lives_closure_t *closure;
+  lives_funcinst_t *finst, *xfinst;
 #ifdef SHOW_FDEFS
   lives_funcdef_t *fdef;
 #endif
@@ -105,61 +283,40 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
   int64_t sta;
   int x = 0;
 
-  if (!hstacks) {
-    g_print("NO stacks !\n");
-    return;
-  }
-  hstack = hstacks[type];
-  if (!hstack) {
-    g_print("hstacks[%d] is NULL !!\n", type);
-    return;
-  }
+  if (lives_describe_hook_stack(hstacks, type) != LIVES_SUCCESS) return;
+  
   hmutex = &(hstack->mutex);
   PTMLH;
+  
   if (!hstack->stack) {
     g_print("Stack empty\n");
     goto done;
   }
   for (LiVESList *cblist = (LiVESList *)hstack->stack; cblist; cblist = cblist->next) {
     g_print("Item %d:\n", x++);
-    closure = (lives_closure_t *)cblist->data;
-    if (!closure) {
-      g_print("NO CLOSURE !!\n");
+
+    finst = (lives_funcinst_t *)cblist->data;
+    if (!finst) {
+      g_print("NO FUNCINST !!\n");
       continue;
     }
-    g_print("retloc = %p, closure flags: 0X%016lX\n", closure->retloc, closure->flags);
-    g_print("%s\n", cl_flags_desc(closure->flags));
-    lpt = closure->proc_thread;
-    if (!lpt) {
-      g_print("NO PROC_THREAD !!\n");
-      continue;
+
+    while ((xfinst = CL_DATA(xfinst, replacement)));
+
+    if (xfinst != finst) {
+      g_print("\t\t------- REPLACED BY FUNCINST %p\n", xfinst);
+      finst = xfinst;
     }
-    if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) {
-      while (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) {
-        lpt =  weed_get_plantptr_value(lpt, LIVES_LEAF_REPLACEMENT, 0);
-      }
-      g_print("\t\t------- REPLACED BY LPT %p\n",
-              weed_get_plantptr_value(lpt, LIVES_LEAF_REPLACEMENT, 0));
-    }
-    sta = lives_proc_thread_get_state(lpt);
-    g_print("lpt: %p, state: 0X%016lX\n(%s)\nfunc call: ",
-            lpt, sta, sta ? lives_proc_thread_state_desc(sta) : "NONE");
-    g_print("%s\n\n", lives_proc_thread_show_func_call(lpt));
-#ifdef SHOW_FDEFS
-    fdef = lives_proc_thread_get_funcdef(lpt);
-    if (!fdef) {
-      g_print("No funcdef\n");
-      continue;
-    }
-    char *args_fmt = args_fmt_from_funcsig(fdef->funcsig);
-    g_print("Funcdef: fname = %s, args_fmt '%s', return_type %u\n\n",
-            fdef->funcname, args_fmt, fdef->return_type);
-    lives_free(args_fmt);
-#endif
+
+    g_print("retloc = %p, callback flags: 0X%016lX\n",
+	    CL_DATA(finst, retloc), CL_DATA(finst, retloc), CL_DATA(finst, cb_flags));
+
+    g_print("%s\n", cl_flags_desc(CL_DATA(finst, cb_flags)));
+    g_print("%s\n\n", lives_funcinst_show_func_call(finst));
   }
-done:
+
+ done:
   PTMUH;
-  return;
 }
 
 

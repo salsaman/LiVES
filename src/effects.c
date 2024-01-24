@@ -40,7 +40,7 @@ static boolean apply_audio_fx;
 char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
   // return value should be free'd after use
   switch (cat) {
-  // main categories
+    // main categories
   case LIVES_FX_CAT_VIDEO_GENERATOR:
     if (!plural) return ((_("generator")));
     else return ((_("Generators")));
@@ -87,7 +87,7 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
     if (!plural) return ((_("analyser")));
     else return ((_("Analysers")));
 
-  // subcategories
+    // subcategories
   case LIVES_FX_CAT_AV_TRANSITION:
     if (!plural) return ((_("audio/video")));
     else return ((_("Audio/Video Transitions")));
@@ -159,27 +159,23 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     }
   }
 
+ 
   if (rfx->num_in_channels > 0) {
-    if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
+    //yif (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
       // start decoding frames for the rendered effect plugins to start processing
       if (!cfile->pumper) {
         if (rfx->props & RFX_PROPS_MAY_RESIZE)
-          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY
-                          | LIVES_THRDATTR_START_UNQUEUED,
-                          (lives_funcptr_t)virtual_to_images,
-                          -1, "iiibV", mainw->current_file,
-                          1, cfile->frames, FALSE, NULL);
+          cfile->pumper =
+      	    lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_START_CANCELLABLE
+				     | LIVES_THRDATTR_START_PAUSEABLE, virtual_to_images, -1,
+				     "iiibV", mainw->current_file, 1, cfile->frames, FALSE, NULL);
         else
-          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY
-                          | LIVES_THRDATTR_START_UNQUEUED,
-                          (lives_funcptr_t)virtual_to_images,
-                          -1, "iiibV", mainw->current_file,
-                          cfile->undo_start, cfile->undo_end, FALSE, NULL);
-        lives_proc_thread_set_cancellable(cfile->pumper);
-        lives_proc_thread_queue(cfile->pumper, 0);
+          cfile->pumper =
+      	    lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_START_CANCELLABLE
+				     | LIVES_THRDATTR_START_PAUSEABLE, virtual_to_images, -1, "iiibV",
+				     mainw->current_file, cfile->undo_start, cfile->undo_end, FALSE, NULL);
       }
     }
-  }
 
   else if (!is_preview) current_file = mainw->pre_src_file;
 
@@ -309,7 +305,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
     if (cfile->pumper) {
       lives_proc_thread_request_cancel(cfile->pumper, FALSE);
-      lives_proc_thread_join(cfile->pumper);
+      lives_proc_thread_join_boolean(cfile->pumper);
+      lives_proc_thread_unref(cfile->pumper);
       cfile->pumper = NULL;
     }
     mainw->last_dprint_file = ldfile;
@@ -899,7 +896,7 @@ static frames64_t get_blend_frame_inner(weed_timecode_t tc) {
                                     blend_file->frameno, blend_file->pb_fps,
                                     NULL, NULL);
             if (frame != -1) frameno = frame;
-	  // *INDENT-OFF*
+	    // *INDENT-OFF*
 	  }}}}
     // *INDENT-OFN*
     frameno = clamp_frame(mainw->blend_file, frameno);
@@ -971,7 +968,7 @@ void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
   if (mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate == -1) return;
 
   deint_idx = LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
-                                   mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
+						       mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
 
   deint_filter = get_weed_filter(deint_idx);
 
@@ -985,7 +982,7 @@ void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
   weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
   weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
 
-deint1:
+ deint1:
 
   weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc);
   weed_call_deinit_func(deint_instance);
@@ -1162,7 +1159,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
 
   if (!LIVES_IS_PLAYING) {
     if (mainw->rendered_fx) {
-    // enable /disable menu option "Apply current realtime effects" in rendered fx menu
+      // enable /disable menu option "Apply current realtime effects" in rendered fx menu
       if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
 	if (mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
 					|| (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
@@ -1364,7 +1361,7 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
 
   if (!LIVES_IS_PLAYING) rte_key_setmode(key + 1, mode);
   else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
-                                         rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
+				       rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
   return TRUE;
 }
 

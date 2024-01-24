@@ -1966,7 +1966,7 @@ boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   mainw->lazy_starter =
-    lives_proc_thread_create(0, lazy_startup_checks, 0, "", NULL);
+    lives_proc_thread_create(LIVES_THRDATTR_DONTCARE, lazy_startup_checks, 0, "", NULL);
 
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 

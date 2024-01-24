@@ -1190,10 +1190,10 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
   saveargs->height = sfile->vsize;
 
   if (intimg) {
-    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
-                       layer_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
+    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
+						layer_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   } else {
-    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+    saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                        pixbuf_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   }
 
@@ -1203,11 +1203,12 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
     retval = i;
 
     if (sfile->pumper) {
-      if (mainw->effects_paused || mainw->preview) {
-        lives_sleep_while_true((mainw->effects_paused || mainw->preview)
-                               && !lives_proc_thread_get_cancel_requested(sfile->pumper));
-      }
+      /* if (mainw->effects_paused || mainw->preview) { */
+      /*   lives_sleep_while_true((mainw->effects_paused || mainw->preview) */
+      /*                          && !lives_proc_thread_get_cancel_requested(sfile->pumper)); */
+      /* } */
       if (lives_proc_thread_get_cancel_requested(self)) break;
+      if (lives_proc_thread_get_pause_requested(self)) lives_proc_thread_pause();
     }
 
     if (update_progress) {

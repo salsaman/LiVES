@@ -11,6 +11,8 @@
 weed_plant_t *auditor_refc = NULL;
 #endif
 
+static lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t, timeout_data *);
+
 
 /**
    lives_proc_threads API
@@ -590,26 +592,6 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(uint64_t to_nsec, liv
 }
 
 
-lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t lpt, timeout_data *to_data) {
-  if (to_data->dontcare) return NULL;
-  lives_result_t res = lives_proc_thread_wait_finished(lpt, to_data);
-  if (res != LIVES_RESULT_TIMEDOUT) {
-    return res;
-  }
-
-  if (to_data->dontcare) return res;
-
-  if (to_data->cancel_type == CANCEL_DONTCARE) {
-    lives_proc_thread_request_cancel(lpt, TRUE);
-    return res;
-  }
-  
-  lives_proc_threwa_cancel_innediate(lpt, to_data->cancel_type);
-  return res;
-}
-
-
-
 boolean is_fg_thread(void) {
   if (!main_thread) return TRUE;
   return pthread_equal(pthread_self(), main_thread);
@@ -1077,31 +1059,31 @@ mte_dne2:
 }
 
 
-boolean _main_thread_executeX(lives_funcptr_t func, const char *fname, int return_type,
+boolean _main_thread_execute(lives_funcptr_t func, const char *fname, int return_type,
 			      void *retval, char **anames, const char *args_fmt, ...) {
   boolean bret;
   va_list xargs;
   if (!args_fmt || !*args_fmt) return _main_thread_execute_vargsX(func, fname, return_type, retval, NULL, "", NULL);
   va_start(xargs, args_fmt);
-  bret = _main_thread_execute_vargsX(func, fname, return_type, retval, anames, args_fmt, xargs);
+  bret = _main_thread_execute_vargs(func, fname, return_type, retval, anames, args_fmt, xargs);
   va_end(xargs);
   return bret;
 }
 
 
-boolean _main_thread_execute_rvoidX(lives_funcptr_t func, const char *fname, char **anames, const char *args_fmt, ...) {
+boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, char **anames, const char *args_fmt, ...) {
   boolean bret;
   va_list xargs;
   if (!args_fmt || !*args_fmt) return _main_thread_execute_vargsX(func, fname, WEED_SEED_VOID, NULL, NULL, "", NULL);
   va_start(xargs, args_fmt);
-  bret = _main_thread_execute_vargsX(func, fname, WEED_SEED_VOID, NULL, anames, args_fmt, xargs);
+  bret = _main_thread_execute_vargs(func, fname, WEED_SEED_VOID, NULL, anames, args_fmt, xargs);
   va_end(xargs);
   return bret;
 }
 
 
 boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int return_type, void *retloc) {
-  return _main_thread_executeX(func, fname, return_type, retloc, NULL, "", NULL);
+  return _main_thread_execute(func, fname, return_type, retloc, NULL, "", NULL);
 }
 
 
@@ -1425,78 +1407,17 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_waiting(lives_proc_thread_t lpt
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_had_error(lives_proc_thread_t lpt) {
-  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_ERROR)));
-}
-
-
-LIVES_GLOBAL_INLINE int lives_proc_thread_get_errnum(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_ERRNUM, NULL) : 0;
-}
-
-
-LIVES_GLOBAL_INLINE const char *lives_proc_thread_get_errmsg(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_const_string_value(lpt, LIVES_LEAF_ERRMSG, NULL) : NULL;
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_proc_thread_get_file_ref(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL) : NULL;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_proc_thread_get_line_ref(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL) : 0;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_proc_thread_get_errsev(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_ERRSEV, NULL) : 0;
-}
-
-
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_signalled(lives_proc_thread_t lpt) {
-  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_SIGNALLED)));
-}
-
-
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_suspended(lives_proc_thread_t lpt) {
-  if (lpt) {
-    lives_thread_data_t *tdata = lives_proc_thread_get_thread_data(lpt);
-    /* if (tdata && lpt == tdata->vars.var_prime_lpt) { */
-    /*   pthread_mutex_t *alpt_mutex = &tdata->vars.var_active_lpt_mutex; */
-    /*   lives_proc_thread_t active_lpt; */
-    /*   pthread_mutex_lock(alpt_mutex); */
-    /*   active_lpt = tdata->vars.var_active_lpt; */
-    /*   pthread_mutex_unlock(alpt_mutex); */
-    /*   if (active_lpt != lpt) return TRUE; */
-    /* } */
-  }
-  return FALSE;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_proc_thread_get_signal_data(lives_proc_thread_t lpt, uint64_t *tuid, void **data) {
-  lives_thread_data_t *tdata
-    = (lives_thread_data_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, NULL);
-  if (data) *data = tdata;
-  if (tdata) {
-    if (tuid) *tuid = tdata->uid;
-    return tdata->signum;
-  }
-  return 0;
-}
-
-
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t lpt) {
   if (lpt) lives_proc_thread_set_attrs(lpt, lives_proc_thread_get_attrs(lpt)
 				       | LIVES_THRDATTR_CANCELLABLE);
 }
 
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_ignore_syncpts(lives_proc_thread_t lpt, boolean ignore) {
   if (lpt) lives_proc_thread_set_attrs(lpt, ignore ? lives_proc_thread_get_attrs(lpt) | LIVES_THRDATTR_IGNORE_SYNCPTS
                                          : lives_proc_thread_get_attrs(lpt) & ~LIVES_THRDATTR_IGNORE_SYNCPTS);
 }
+
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_ignore_syncpts(lives_proc_thread_t lpt) {
   return lpt ? !!(lives_proc_thread_get_attrs(lpt) & LIVES_THRDATTR_IGNORE_SYNCPTS) : FALSE;
@@ -1549,119 +1470,6 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_cancel(lives_proc_thread_t
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancel_requested(lives_proc_thread_t lpt) {
   return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_CANCEL_REQUESTED)));
-}
-
-
-boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref, int line_ref) {
-  lives_funcinst_t *finst;
-
-  GET_PROC_THREAD_SELF(xself);
-  if (self == mainw->debug_ptr) BREAK_ME("cancelled");
-  if (!self) self = xself;
-  if (!xself || self != xself) {
-    LIVES_WARN("Invalid thread cancelled !");
-    return FALSE;
-  }
-
-  finst = lives_proc_thread_get_active_funcinst(self);
-  if (MODULE_TYPE_ID(finst, HOOK_STACK)) is_stacked = TRUE;
-
-  if (lives_proc_thread_was_cancelled(self)) {
-    LIVES_WARN("proc_thread cancelled > 1 times !");
-    return FALSE;
-  }
-
-  lives_proc_thread_set_line_ref(self, line_ref, FALSE);
-  lives_proc_thread_set_file_ref(self, file_ref, FALSE);
-
-  lives_proc_thread_include_states(self, THRD_STATE_CANCELLED);
-  lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
-
-  if (finst && finst->lj_stack) {
-    jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
-    if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
-  }
-  LIVES_WARN("canclled proc_thread had no longjmp destination");
-  return FALSE;
-}
-
-
-LIVES_GLOBAL_INLINE void lives_proc_thread_set_line_ref(lives_proc_thread_t self, int line, boolean over) {
-  if (over || !weed_plant_has_leaf(self, LIVES_LEAF_LINE_REF))
-    weed_set_int_value(self, LIVES_LEAF_LINE_REF, line);
-}
-
-LIVES_GLOBAL_INLINE void lives_proc_thread_set_file_ref(lives_proc_thread_t self, char *file, boolean over) {
-  if (over || !weed_plant_has_leaf(self, LIVES_LEAF_FILE_REF))
-    weed_set_string_value(self, LIVES_LEAF_FILE_REF, file);
-}
-
-LIVES_GLOBAL_INLINE void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num) {
-  weed_set_int_value(self, LIVES_LEAF_ERRNUM, num);
-}
-
-LIVES_GLOBAL_INLINE void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg) {
-  weed_set_const_string_value(self, LIVES_LEAF_ERRMSG, msg);
-}
-
-LIVES_GLOBAL_INLINE void lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev) {
-  weed_set_int_value(self, LIVES_LEAF_ERRSEV, sev);
-}
-
-
-
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, int line_ref,
-    int errnum, int severity, const char *errmsg) {
-  if (severity == LPT_ERR_DEADLY) _exit(errnum);
-
-  if (severity == LPT_ERR_FATAL) LIVES_FATAL(errmsg);
-
-  if (severity == LPT_ERR_MINOR) {
-    
-    // for minor errors we just cancel the active func_indt
-    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
-
-    if (finst->disposition == DISPOSITION_STACKED)
-      live_request_send_reply(LIVES_REPLY_ERROR);								    
-    else lives_funcinst_set_disposition(finst, DISPOSITION_ERROR);
-
-    if (finst->lj_stack) {
-      jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
-      if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
-    }
-    LIVES_WARN("canclled proc_thread had no longjmp destination");
-    return FALSE;
-  }
-
-  lives_proc_thread_set_line_ref(self, line_ref, TRUE);
-  lives_proc_thread_set_file_ref(self, file_ref, TRUE);
-  lives_proc_thread_set_errnum(self, errnum);
-  lives_proc_thread_set_errsev(self, severity);
-  lives_proc_thread_set_errmsg(self, errmsg);
-  
-  if (severity == LPT_ERR_CRITICAL) LIVES_CRITICAL(errmsg);
-
-  lives_proc_thread_include_states(self, THRD_STATE_ERROR);
-
-  if (severity == LPT_ERR_MAJOR) {
-    lives_proc_thread_cancel(self);
-    // does not return !!
-  }
-  return TRUE;
-}
-
-
-LIVES_GLOBAL_INLINE boolean _lives_proc_thread_error(char *file_ref, int line_ref,
-    int errnum, int severity, const char *fmt, ...) {
-  GET_PROC_THREAD_SELF(self);
-  char *errmsg = NULL;
-  if (fmt && *fmt) {
-    va_list vargs;
-    va_start(vargs, fmt);
-    errmsg = lives_strdup_vprintf(fmt, vargs);
-    va_end(vargs);
-  }
-  return lives_proc_thread_error_full(self, file_ref, line_ref, errnum, severity, errmsg);
 }
 
 
@@ -1829,111 +1637,6 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_pause(void){
 }
 
 
-static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
-  // any proc__thread can be interrupted and end up here asynchronously
-  // - thread establishes this as the signal handler for a specific signal
-  // thread unblocks or blocks that signal
-  // another thread can call pthread_kill providing the signal number, if other thread has the signal unblocked it
-  // will end up here
-  // TODO - check for deffered signals
-  //
-  // WE GOT SIGNAL !
-
-  int sig_act = THREADVAR(sig_act);
-
-  switch (sig_act) {
-  case SIG_ACT_IGNORE: return;
-  case SIG_ACT_CANCEL:
-    // cancel immediate, sent form other thread
-    g_print("cancelling self !\n");
-    lives_proc_thread_cancel(self);
-    break;
-  case SIG_ACT_HOLD:
-    // cancel immediate, sent form other thread
-    lives_proc_thread_pause(self);
-    break;
-  case SIG_ACT_REPORT: {
-    // describe self
-    if (tdata) {
-      lives_proc_thread_t active = tdata->vars.var_active_lpt;
-      g_print("Hello, I am thread;\n%s\n", get_thread_id(tdata->uid));
-      if (active) {
-        g_print("I am currently busy with proc_thread %p:\n", active);
-        g_print("\t%s\n", lives_proc_thread_show_func_call(active));
-        lpt_desc_state(active);
-        if (tdata->vars.var_func_stack && tdata->vars.var_func_stack->list) {
-          char *fname = lives_sync_list_pop(&tdata->vars.var_func_stack);
-          if (fname)
-            g_print("Last func entry recorded was %s\n", fname);
-        }
-      } else g_print("I am curently hanging out in the thread pool\n");
-    }
-  }
-  break;
-  case SIG_ACT_CMD: {
-    while (tdata->vars.var_simple_cmd_list) {
-      LiVESList *list = lives_sync_list_pop(&tdata->vars.var_simple_cmd_list);
-      if (list) {
-        lives_proc_thread_t lpt = (lives_proc_thread_t)list->data;
-        // we can execute some simple tasks, but from a signal handler, only asyn safe functions may be used
-        // this is the most basic method of running an lpt
-        if (lpt) do_call(lpt);
-        lives_list_free(list);
-      }
-    }
-  }
-  break;
-  default: break;
-  }
-}
-
-
-lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t lpt) {
-  if (!lpt) return LIVES_RESULT_ERROR;
-  pthread_t pth = lives_proc_thread_get_pthread(lpt);
-  if (!pth) return LIVES_RESULT_INVALID;
-  if (!lives_proc_thread_can_interrupt(lpt)) return LIVES_RESULT_FAIL;
-  pthread_kill(pth, LIVES_INTERRUPT_SIG);
-  return LIVES_RESULT_SUCCESS;
-}
-
-
-// calls pthread_cancel on underlying thread
-// - cleanup function casues the thread to the normal post cleanup, so lives_proc_thread_join_*
-// will work as normal (though the values returned will not be valid)
-// however this should still be called, and the proc_thread freed as normal
-// (except for auto / dontcare proc_threads)
-// there is a small chance the cancellation could occur either before or after the function is called
-LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_cancel_immediate(lives_proc_thread_t lpt, lives_cnancel_type_t cancel_type) {
-  void *res;
-  if (!lpt) return LIVES_RESULT_ERROR;
-  lives_proc_thread_request_cancel(lpt);
-  if (cancel_type == CANCEL_SOFT) return LIVES_RESULT_SUCCESS;
-
-  lives_millisleep(100);
-  
-  if (lives_proc_thread_was_cancelled(lpt)) return LIVES_RESULT_SUCCESS;
-
-  // if that fails, try an inrerrupt
-  pthread_t pth = lives_proc_thread_get_pthread(lpt);
-  if (!pth) return LIVES_RESULT_FAIL;
-
-  if (lives_proc_thread_can_interrupt(lpt)) {
-    pthread_kill(pth, LIVES_INTERRUPT_SIG);
-    if (cancel_type == CANCEL_INTERRUPT) return LIVES_RESULT_SUCCESS;
-    lives_millisleep(100);
-    if (lives_proc_thread_was_cancelled(lpt)) return LIVES_RESULT_SUCCESS;
-  }
-
-  if (cancel_type == CANCEL_INTERRUPT) return LIVES_RESULT_FAIL;
-
-  // if that fails, cancel the pthread
-  pthread_cancel(pth);
-  pthread_join(pth, &res);
-  if (res != PTHREAD_CANCELED) return LIVES_RESULT_FAIL;
-  return LIVES_RESULT_SUCCESS;
-}
-
 
 LIVES_GLOBAL_INLINE ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t lpt) {
   if (lives_proc_thread_is_queued(lpt)) check_pool_threads(FALSE);
@@ -1945,26 +1648,6 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_running(lives_proc_thread_t lpt
   if (lpt && lives_proc_thread_is_queued(lpt) && !lives_proc_thread_is_preparing(lpt))
     check_pool_threads(FALSE);
   return (!lpt || (lives_proc_thread_has_states(lpt, THRD_STATE_RUNNING)));
-}
-
-
-LIVES_GLOBAL_INLINE lives_proc_thread_t lives_proc_thread_get_chain_next(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_plantptr_value(lpt, LIVES_LEAF_FOLLOWER, NULL) : NULL;
-}
-
-
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t lpt, int signum, void *data) {
-  if (!lpt) return FALSE;
-  if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
-    lives_thread_data_t *mydata = (lives_thread_data_t *)data;
-    uint64_t tstate;
-    if (mydata) mydata->signum = signum;
-    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
-    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | THRD_STATE_SIGNALLED);
-    weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, data);
-    lives_proc_thread_unfreeze_state(lpt);
-  }
-  return TRUE;
 }
 
 
@@ -2221,7 +1904,7 @@ static boolean timeout_dontcare(void *lpt, void *data) {
 }
 
 
-LIVES_LOCAL_INLINE lives_result_t lives_proc_thread_wait_finished(lives_proc_thread_t lpt, timeout_data *to_data) {
+static  lives_result_t _lives_proc_thread_wait_finished(lives_proc_thread_t lpt, timeout_data *to_data) {
   if (!lpt) return LIVES_RESULT_INVALID;
   boolean is_fg = is_fg_thread();
   lives_result_t res = LIVES_RESULT_SUCCESS;
@@ -2285,6 +1968,11 @@ LIVES_LOCAL_INLINE lives_result_t lives_proc_thread_wait_finished(lives_proc_thr
 }
 
 
+  lives_result_t lives_proc_thread_wait_finished(lives_proc_thread_t lpt) {
+  return lives_proc_thread_wait_finished(lpt, NULL);
+}
+
+  
 #define _join(lpt, stype, nullv) {					\
     return (lpt && lives_proc_thread_wait_finished(lpt, 0.) == LIVES_RESULT_SUCCESS \
 	    && weed_plant_has_leaf(lpt, _RV_))				\
@@ -2341,13 +2029,6 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t lpt) {
 }
 
 
-boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t lpt, void **thing) {
-  if (lpt) {
-    lives_proc_thread_add_hook(lpt, DESTRUCTION_HOOK, 0, lives_nullify_ptr_cb, (void *)thing);
-    return lives_proc_thread_dontcare(lpt);
-  }
-  return FALSE;
-}
 // FINAL for a proc_thread will either be:
 //
 // the proc_thread was flagged DONTCARE, or has no monitored return
@@ -2422,73 +2103,213 @@ static uint64_t lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
   return lives_proc_thread_get_state(lpt);
 }
 
-// get next lpt in chain (if apause or aqueue are set)
-// if both are set, a "followup" must be supplied and it will be executed immediately
-// in this case folloup cannot be self, but may be prime lpt
-//
-// if only one or other (apuse, aqueue) are set, the followup is always SELF.
-// olpt is the prime proc_thread, lpt is the one just finished (can be == olpt)
-// if lpt != olpt, lpt is unreffed here, removing the ref we added.
-// if lpt is cancelled, caller must unref it
-//
-// if there is a nxtlpt be run, this will be reffed and returned. caller will check if this is cancelled
-//
-static lives_proc_thread_t next_in_chain(lives_proc_thread_t olpt, lives_proc_thread_t lpt) {
-  lives_proc_thread_t nxtlpt = NULL;
-  boolean debug = FALSE;
-  boolean apause = FALSE, arq = FALSE;
-  uint64_t attrs;
 
-  attrs = lives_proc_thread_get_attrs(lpt);
-  if (attrs & LIVES_THRDATTR_AUTO_REQUEUE) arq = TRUE;
-  if (attrs & LIVES_THRDATTR_AUTO_PAUSE) apause = TRUE;
+// signals,  error handling and cancelling /////////////
 
-  if (!apause && !arq) {
-    // if neither auto_pause nor auto_queue, just exit
-    return NULL;
-  }
-
-  if (debug) g_print("running chain lpt 0 %d %d\n", apause, arq);
-
-  if (apause && arq) {
-    // run followup immed.
-    nxtlpt = weed_get_plantptr_value(lpt, LIVES_LEAF_FOLLOWER, NULL);
-    if (nxtlpt == lpt) nxtlpt = NULL;
-    else if (nxtlpt && lives_proc_thread_ref(nxtlpt) < 2) nxtlpt = NULL;
-    return nxtlpt;
-  }
-
-  // queue or pause - same lpt
-  lives_proc_thread_include_states(olpt, THRD_STATE_IDLING);
-
-  if (!apause) {
-    // auto requeue, but not autopause - requeue self via normal queue
-    // or we had autopause / autorequeue and nxtlpt was invalid
-    // - state is IDLING, it will go to IDLING | COMPLETED when done
-    // state won't go to finished unless cancelled, but we still call FINAL_HOOK
-    // even though it wont get final state,
-    // one  other thing we need to do, since we are requeuing the same proc_thread, it cannot
-    // be deleted even if set to DONTCARE. So we add a 'hailmary' oneshot to completed hook
-    // the effect will be to clear the DESTROYING flag bit, thus saving it from certain doom
-    // we could also set attribute LIVES_THRDATTR_NO_UNREF, but that would be a permanent
-    // flag change. we want to make it easy so when the lpt is not to be requeud any more it can just
-    // clear any ATURREQUEU attribute.
-    lives_proc_thread_add_hook(olpt, COMPLETED_HOOK, HOOK_OPT_ONESHOT, hailmary_other_lpt, olpt);
-    lives_proc_thread_add_hook(olpt, FINISHED_HOOK, HOOK_OPT_ONESHOT, queue_other_lpt, olpt);
-    return NULL;
-  }
-
-  // auto pause, but no auto requeue
-  // function will wait for resume_request, and then run lives_proc_thread_resume()
-  // and then re-run self
-
-  lives_proc_thread_pause(lpt);
-  if (debug) g_print("pause no chain lpt %p\n", olpt);
-  return olpt;
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_had_error(lives_proc_thread_t lpt) {
+  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_ERROR)));
 }
 
 
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_errnum(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_ERRNUM, NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE const char *lives_proc_thread_get_errmsg(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_const_string_value(lpt, LIVES_LEAF_ERRMSG, NULL) : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_proc_thread_get_file_ref(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_string_value(lpt, LIVES_LEAF_FILE_REF, NULL) : NULL;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_line_ref(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_LINE_REF, NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_errsev(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_int_value(lpt, LIVES_LEAF_ERRSEV, NULL) : 0;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_signalled(lives_proc_thread_t lpt) {
+  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_SIGNALLED)));
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_signal_data(lives_proc_thread_t lpt, uint64_t *tuid, void **data) {
+  lives_thread_data_t *tdata
+    = (lives_thread_data_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, NULL);
+  if (data) *data = tdata;
+  if (tdata) {
+    if (tuid) *tuid = tdata->uid;
+    return tdata->signum;
+  }
+  return 0;
+}
+
+
+static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
+  // any proc__thread can be interrupted and end up here asynchronously
+  // - thread establishes this as the signal handler for a specific signal
+  // thread unblocks or blocks that signal
+  // another thread can call pthread_kill providing the signal number, if other thread has the signal unblocked it
+  // will end up here
+  // TODO - check for deffered signals
+  //
+  // WE GOT SIGNAL !
+
+  int sig_act = THREADVAR(sig_act);
+
+  switch (sig_act) {
+  case SIG_ACT_IGNORE: return;
+  case SIG_ACT_CANCEL:
+    // cancel immediate, sent form other thread
+    g_print("cancelling self !\n");
+    lives_proc_thread_cancel(self);
+    break;
+  case SIG_ACT_HOLD:
+    // cancel immediate, sent form other thread
+    lives_proc_thread_pause(self);
+    break;
+  case SIG_ACT_REPORT: {
+    // describe self
+    if (tdata) {
+      lives_proc_thread_t active = tdata->vars.var_active_lpt;
+      g_print("Hello, I am thread;\n%s\n", get_thread_id(tdata->uid));
+      if (active) {
+        g_print("I am currently busy with proc_thread %p:\n", active);
+        g_print("\t%s\n", lives_proc_thread_show_func_call(active));
+        lpt_desc_state(active);
+        if (tdata->vars.var_func_stack && tdata->vars.var_func_stack->list) {
+          char *fname = lives_sync_list_pop(&tdata->vars.var_func_stack);
+          if (fname)
+            g_print("Last func entry recorded was %s\n", fname);
+        }
+      } else g_print("I am curently hanging out in the thread pool\n");
+    }
+  }
+  break;
+  case SIG_ACT_CMD: {
+    while (tdata->vars.var_simple_cmd_list) {
+      LiVESList *list = lives_sync_list_pop(&tdata->vars.var_simple_cmd_list);
+      if (list) {
+        lives_proc_thread_t lpt = (lives_proc_thread_t)list->data;
+        // we can execute some simple tasks, but from a signal handler, only asyn safe functions may be used
+        // this is the most basic method of running an lpt
+        if (lpt) do_call(lpt);
+        lives_list_free(list);
+      }
+    }
+  }
+  break;
+  default: break;
+  }
+}
+
+
+lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t lpt) {
+  if (!lpt) return LIVES_RESULT_ERROR;
+  pthread_t pth = lives_proc_thread_get_pthread(lpt);
+  if (!pth) return LIVES_RESULT_INVALID;
+  if (!lives_proc_thread_can_interrupt(lpt)) return LIVES_RESULT_FAIL;
+  pthread_kill(pth, LIVES_INTERRUPT_SIG);
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t lpt, int signum, void *data) {
+  if (!lpt) return FALSE;
+  if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
+    lives_thread_data_t *mydata = (lives_thread_data_t *)data;
+    uint64_t tstate;
+    if (mydata) mydata->signum = signum;
+    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | THRD_STATE_SIGNALLED);
+    weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, data);
+    lives_proc_thread_unfreeze_state(lpt);
+  }
+  return TRUE;
+}
+
+
+// calls pthread_cancel on underlying thread
+// - cleanup function casues the thread to the normal post cleanup, so lives_proc_thread_join_*
+// will work as normal (though the values returned will not be valid)
+// however this should still be called, and the proc_thread freed as normal
+// (except for auto / dontcare proc_threads)
+// there is a small chance the cancellation could occur either before or after the function is called
+LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_cancel_immediate(lives_proc_thread_t lpt, lives_cnancel_type_t cancel_type) {
+  void *res;
+  if (!lpt) return LIVES_RESULT_ERROR;
+  lives_proc_thread_request_cancel(lpt);
+  if (cancel_type == CANCEL_SOFT) return LIVES_RESULT_SUCCESS;
+
+  lives_millisleep(100);
+  
+  if (lives_proc_thread_was_cancelled(lpt)) return LIVES_RESULT_SUCCESS;
+
+  // if that fails, try an inrerrupt
+  pthread_t pth = lives_proc_thread_get_pthread(lpt);
+  if (!pth) return LIVES_RESULT_FAIL;
+
+  if (lives_proc_thread_can_interrupt(lpt)) {
+    pthread_kill(pth, LIVES_INTERRUPT_SIG);
+    if (cancel_type == CANCEL_INTERRUPT) return LIVES_RESULT_SUCCESS;
+    lives_millisleep(100);
+    if (lives_proc_thread_was_cancelled(lpt)) return LIVES_RESULT_SUCCESS;
+  }
+
+  if (cancel_type == CANCEL_INTERRUPT) return LIVES_RESULT_FAIL;
+
+  // if that fails, cancel the pthread
+  pthread_cancel(pth);
+  pthread_join(pth, &res);
+  if (res != PTHREAD_CANCELED) return LIVES_RESULT_FAIL;
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+static lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t lpt, timeout_data *to_data) {
+  if (to_data->dontcare) return NULL;
+  lives_result_t res = lives_proc_thread_wait_finished(lpt, to_data);
+  if (res != LIVES_RESULT_TIMEDOUT) {
+    return res;
+  }
+
+  if (to_data->dontcare) return res;
+
+  if (to_data->cancel_type == CANCEL_DONTCARE) {
+    lives_proc_thread_request_cancel(lpt, TRUE);
+    return res;
+  }
+  
+  lives_proc_threwa_cancel_innediate(lpt, to_data->cancel_type);
+  return res;
+}
+
+ 
+ void  lives_make_errmsg(char *errfile, int errline, int sev, int errnum, char *errmsg) {
+  if (!errfile)
+     lives_snprintf(errmsg, 1024, "lives proc thread %p, (%s)\ngot a %s error\n"
+	   "Error code %d: %s\n",
+	   lpt, get_lpt_id(lpt), sev == 2 ? "major" : sev == 3 ? "critical"
+	   : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown", errnum, errmsg);
+   e;se 
+     lives_snprintf(errmsg, 1024, "lives proc thread %p, (%s)\ngot a %s error"
+		    "at line %d in file %s\nerror code %d: %s\n",
+		    lpt, get_lpt_id(lpt), sev == 2 ? "major" : sev == 3 ? "critical"
+		    : sev == 4 ? "fatal" : sev == 5 ? "deadly" : "unknown",
+		    errline, errfile, errnum, errmsg);
+}
+
+ 
 void lpt_error_handle(lives_proc_thread_t lpt, int sev) {
+  // this is called from the signal handler
   if (lpt) {
     if (sev == LPT_ERR_MINOR) {
       lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
@@ -2529,6 +2350,7 @@ void lpt_error_handle(lives_proc_thread_t lpt, int sev) {
       default: return;
       }
     }
+
     fprintf(stderr, "The current thread was running ");
     fprintf(stderr, "%s\n", lives_proc_thread_show_func_call(lpt));
   }
@@ -2554,7 +2376,135 @@ void lpt_error_handle(lives_proc_thread_t lpt, int sev) {
 }
 
 
-lives_funcinst_t * lives_proc_thread_pop_active_funcinst(lives_proc_thread_t lpt) {
+
+boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref, int line_ref) {
+  lives_funcinst_t *finst;
+
+  GET_PROC_THREAD_SELF(xself);
+  if (self == mainw->debug_ptr) BREAK_ME("cancelled");
+  if (!self) self = xself;
+  if (!xself || self != xself) {
+    LIVES_WARN("Invalid thread cancelled !");
+    return FALSE;
+  }
+
+  finst = lives_proc_thread_get_active_funcinst(self);
+  if (MODULE_TYPE_ID(finst, HOOK_STACK)) is_stacked = TRUE;
+
+  if (lives_proc_thread_was_cancelled(self)) {
+    LIVES_WARN("proc_thread cancelled > 1 times !");
+    return FALSE;
+  }
+
+  lives_proc_thread_set_line_ref(self, line_ref, FALSE);
+  lives_proc_thread_set_file_ref(self, file_ref, FALSE);
+
+  lives_proc_thread_include_states(self, THRD_STATE_CANCELLED);
+  lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
+
+  if (finst && finst->lj_stack) {
+    jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
+    if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
+  }
+  LIVES_WARN("canclled proc_thread had no longjmp destination");
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_line_ref(lives_proc_thread_t self, int line, boolean over) {
+  if (over || !weed_plant_has_leaf(self, LIVES_LEAF_LINE_REF))
+    weed_set_int_value(self, LIVES_LEAF_LINE_REF, line);
+}
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_file_ref(lives_proc_thread_t self, char *file, boolean over) {
+  if (over || !weed_plant_has_leaf(self, LIVES_LEAF_FILE_REF))
+    weed_set_string_value(self, LIVES_LEAF_FILE_REF, file);
+}
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num) {
+  weed_set_int_value(self, LIVES_LEAF_ERRNUM, num);
+}
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg) {
+  weed_set_const_string_value(self, LIVES_LEAF_ERRMSG, msg);
+}
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev) {
+  weed_set_int_value(self, LIVES_LEAF_ERRSEV, sev);
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, int line_ref,
+    int errnum, int severity, const char *errmsg) {
+  if (severity == LPT_ERR_DEADLY) _exit(errnum);
+
+  if (severity == LPT_ERR_FATAL) LIVES_FATAL(errmsg);
+
+  if (severity == LPT_ERR_MINOR) {    
+    // for minor errors we just cancel the active func_indt
+    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
+    if (finst->disposition == DISPOSITION_STACKED)
+      live_request_send_reply(LIVES_REPLY_ERROR);								    
+    else lives_funcinst_set_disposition(finst, DISPOSITION_ERROR);
+
+    if (finst->lj_stack) {
+      jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
+      if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
+    }
+    LIVES_WARN("canclled proc_thread had no longjmp destination");
+    return FALSE;
+  }
+
+  lives_proc_thread_set_line_ref(self, line_ref, TRUE);
+  lives_proc_thread_set_file_ref(self, file_ref, TRUE);
+  lives_proc_thread_set_errnum(self, errnum);
+  lives_proc_thread_set_errsev(self, severity);
+  lives_proc_thread_set_errmsg(self, errmsg);
+  
+  if (severity == LPT_ERR_CRITICAL) LIVES_CRITICAL(errmsg);
+
+  lives_proc_thread_include_states(self, THRD_STATE_ERROR);
+
+  if (severity == LPT_ERR_MAJOR) {
+    // for amjor errors, in case we are running a chain we will j
+    // for minor errors we just cancel the active func_indt
+    lives_funcinst_t *finst = lives_proc_thread_get_active _funcinst(self);
+    if (finst->disposition == DISPOSITION_STACKED)
+      live_request_send_reply(LIVES_REPLY_ERROR);								    
+    else lives_funcinst_set_disposition(finst, DISPOSITION_ERROR);
+
+    // inwind to chain head
+    while ((finst = finst->prev));
+    
+    if (finst->lj_stack) {
+      jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
+      if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
+    }
+
+    LIVES_WARN("canclled proc_thread had no longjmp destination");
+    return FALSE;
+  }
+  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean _lives_proc_thread_error(char *file_ref, int line_ref,
+    int errnum, int severity, const char *fmt, ...) {
+  GET_PROC_THREAD_SELF(self);
+  char *errmsg = NULL;
+  if (fmt && *fmt) {
+    va_list vargs;
+    va_start(vargs, fmt);
+    errmsg = lives_strdup_vprintf(fmt, vargs);
+    va_end(vargs);
+  }
+  return lives_proc_thread_error_full(self, file_ref, line_ref, errnum, severity, errmsg);
+}
+
+
+// funcinst /////////////
+
+ lives_funcinst_t * lives_proc_thread_pop_active_funcinst(lives_proc_thread_t lpt) {
   lives_sync_list_t sync_list = lives_proc_thread_get_active_finst_list(lpt);
   lives_funcinst_t *finst = NULL;
   if (sync_list) finst = lives_sync_list_pop(&sync_list);

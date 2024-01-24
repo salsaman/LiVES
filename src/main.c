@@ -128,7 +128,7 @@ char **orig_argv(void) {return o_argv;}
 extern int run_weed_startup_tests(void);
 #endif
 
-static char errmsg[1024] = {'\0'}, errdets[1024] = {'\0'};
+char errmsg[1024] = {'\0'}, errdets[1024] = {'\0'};
 
 /////////////////////////////////
 #ifdef NO_COMPILE // never compile this

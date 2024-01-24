@@ -1892,7 +1892,20 @@ lives_result_t lives_hook_cb_invalidate(lives_funcinst_t *finst) {
 }
 
 
-void lives_hooks_async_join(lives_hook_stack_t **hstacks, int htype) {
+
+ void  lives_hook_cb__wait_fulfilled(lives_funcinst_t *finst) {
+  boolean is_fg = is_fg_thread();
+  int tcount = 0;
+   if (is_fg && ++count == 1000) {
+     count = 0;
+     fg_service_fulfill();
+   }
+   lives_microsleep;
+ }
+
+ 
+
+ void lives_hooks_async_join(lives_hook_stack_t **hstacks, int htype) {
   lives_closure_t *closure;
   pthread_mutex_t *hmutex;
   lives_proc_thread_t lpt;

@@ -796,6 +796,8 @@ void __BREAK_ME(const char *dtl);
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
 
+extarn char errmsg[1024], errdets[1024];
+
 #define FINALISE_MEMFUNCS
 #include "memory.h"
 

@@ -97,24 +97,6 @@ static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-
-lives_proc_thread_t  get_proc_thread_self(void) {
-  lives_proc_thread_t self = NULL;
-  int stack_type = 0;
-  lives_proc_thread_t lpt = lives_thread_get_proc_thread();
-  if (lpt) {
-    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
-    if (finst) {
-      if (finst->mod_type == MODULE_DATA_TYPE_HOOK_STACK)
-	stack_type = CL_DATA(finst, hook_type);
-      if (stack_type > N_GLOBAL_HOOKS) self = CL_DATA(finst, hook_stacks)[stack_type]->owner.lpt;
-      else self = lives_thread_get_proc_thread();
-    }
-  }
-  return self;
-}
-
-
 ////////////// GENERIC HOOK CALLBACKS ////
 
 /// useful hook callbacks for proc_thread magic
@@ -817,7 +799,7 @@ if (lpt) {
       pthread_mutex_unlock(&mainw->all_hstacks_mutex);
       
       T_RECURSE_GUARD_ARM_FOR_DATA(lpt);
-      lives_hooks_trigger(lpt_hooks, LIVES_GUI_HOOK);
+      lives_hook_trigger(lpt_hooks, LIVES_GUI_HOOK);
       T_RECURSE_GUARD_END_FOR_DATA(lpt);
 
       // cannot use include_states here, as that will try to ref / unref lpt !
@@ -829,11 +811,11 @@ if (lpt) {
       pthread_rwlock_unlock(state_rwlock);
 
       //lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYED);
-      lives_hooks_trigger(lpt_hooks, DESTRUCTION_HOOK);
+      lives_hook_trigger(lpt_hooks, DESTRUCTION_HOOK);
 
       // this will force other lpts to remove their pointers to callbacks in our stacks
 
-      lives_hooks_clear_all(lpt_hooks, N_HOOK_POINTS);
+      lives_hook_stacks_clear_all(lpt_hooks, N_HOOK_POINTS);
 
       lives_free(lpt_hooks);
 
@@ -1032,7 +1014,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
       } else {
         if (hook_hints & HOOK_CB_PRIORITY) {
           GET_PROC_THREAD_SELF(self);
-          lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
+          lives_proc_thread_trigger_hook(self, LIVES_GUI_HOOK);
         } else {
           tinst = append_all_to_fg_deferral_stack();
 	  lives_proc_thead_pause(self);
@@ -1209,35 +1191,35 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 	  // only new bits
 
 	  if (state_bits & THRD_STATE_PREPARING) {
-	    lives_hooks_trigger(hook_stacks, PREPARING_HOOK);
+	    lives_hook_trigger(hook_stacks, PREPARING_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_RUNNING) {
-	    lives_hooks_trigger(hook_stacks, TX_START_HOOK);
+	    lives_hook_trigger(hook_stacks, TX_START_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_IDLING) {
-	    lives_hooks_trigger(hook_stacks, IDLE_HOOK);
+	    lives_hook_trigger(hook_stacks, IDLE_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_BLOCKED) {
-	    lives_hooks_trigger(hook_stacks, TX_BLOCKED_HOOK);
+	    lives_hook_trigger(hook_stacks, TX_BLOCKED_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_TIMED_OUT) {
-	    lives_hooks_trigger(hook_stacks, TIMED_OUT_HOOK);
+	    lives_hook_trigger(hook_stacks, TIMED_OUT_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_BUSY) {
-	    lives_hooks_trigger(hook_stacks, BUSY_HOOK);
+	    lives_hook_trigger(hook_stacks, BUSY_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_ERROR) {
-	    lives_hooks_trigger(hook_stacks, ERROR_HOOK);
+	    lives_hook_trigger(hook_stacks, ERROR_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_CANCELLED) {
-	    lives_hooks_trigger(hook_stacks, CANCELLED_HOOK);
+	    lives_hook_trigger(hook_stacks, CANCELLED_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_COMPLETED) {
@@ -1246,11 +1228,11 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 	    // lpt will be unreffed (*unless it gets a 'hailmary')
 	    // if combineding with IDLING, the next hook depends on external triggers
 	    // in all other cases the next and last hook will be FINISHED
-	    lives_hooks_trigger(hook_stacks, COMPLETED_HOOK);
+	    lives_hook_trigger(hook_stacks, COMPLETED_HOOK);
 	  }
 
 	  if (state_bits & THRD_STATE_FINISHED) {
-	    lives_hooks_trigger(hook_stacks, FINISHED_HOOK);
+	    lives_hook_trigger(hook_stacks, FINISHED_HOOK);
 	  }
 	}
       }
@@ -1283,7 +1265,7 @@ uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t stat
 
     if (state_bits & THRD_STATE_BUSY) {
       lives_cancel_point;
-      lives_hooks_trigger(hook_stacks, UNBUSY_HOOK);
+      lives_hook_trigger(hook_stacks, UNBUSY_HOOK);
     }
     return tstate;
   }
@@ -1547,7 +1529,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_resume(lives_proc_thread_t self) {
     lives_proc_thread_exclude_states(self, THRD_STATE_PAUSED | THRD_STATE_UNQUEUED |
                                      THRD_STATE_IDLING | THRD_STATE_AUTO_PAUSED |
                                      THRD_STATE_RESUME_REQUESTED);
-    lives_hooks_trigger(hstacks, RESUMING_HOOK);
+    lives_hook_trigger(hstacks, RESUMING_HOOK);
   }
   return TRUE;
 }
@@ -1604,7 +1586,7 @@ boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock) {
       lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(self);
       lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
 
-      lives_hooks_trigger(hook_stacks, PAUSED_HOOK);
+      lives_hook_trigger(hook_stacks, PAUSED_HOOK);
 
       lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
       if (!lives_proc_thread_get_resume_requested(self)) {
@@ -2019,7 +2001,7 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t lpt) {
       else {
 	uint64_t attrs = lives_proc_thread_get_attrs(lpt);
 	lives_proc_thread_set_attrs(lpt, attrs | LIVES_THRDATTR_DONTCARE);
-	lives_hooks_trigger(lives_proc_thread_get_hook_stacks(lpt), ATTRS_UPDATED_HOOK);
+	lives_hook_trigger(lives_proc_thread_get_hook_stacks(lpt), ATTRS_UPDATED_HOOK);
       }
       lives_proc_thread_unref(lpt);
       return TRUE;
@@ -2293,7 +2275,7 @@ static lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t lpt, time
 }
 
  
- void  lives_make_errmsg(char *errfile, int errline, int sev, int errnum, char *errmsg) {
+ void lives_make_errmsg_full(char *errfile, int errline, int sev, int errnum, char *errmsg) {
   if (!errfile)
      lives_snprintf(errmsg, 1024, "lives proc thread %p, (%s)\ngot a %s error\n"
 	   "Error code %d: %s\n",
@@ -2376,7 +2358,6 @@ void lpt_error_handle(lives_proc_thread_t lpt, int sev) {
 }
 
 
-
 boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref, int line_ref) {
   lives_funcinst_t *finst;
 
@@ -2447,13 +2428,20 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_error_full(lives_proc_thread_t sel
       live_request_send_reply(LIVES_REPLY_ERROR);								    
     else lives_funcinst_set_disposition(finst, DISPOSITION_ERROR);
 
+    lives_make_errmsg_full(errfile, errline, sev, errnum, errmsg);
+    d_print_debug("%s\n", errmsg);
+    lives_memset(errmsg, 0, 1);
+      
     if (finst->lj_stack) {
       jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
       if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
     }
+
     LIVES_WARN("canclled proc_thread had no longjmp destination");
     return FALSE;
   }
+
+  lives_proc_thread_include_states(self, THRD_STATE_ERROR);
 
   lives_proc_thread_set_line_ref(self, line_ref, TRUE);
   lives_proc_thread_set_file_ref(self, file_ref, TRUE);
@@ -2463,19 +2451,22 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_error_full(lives_proc_thread_t sel
   
   if (severity == LPT_ERR_CRITICAL) LIVES_CRITICAL(errmsg);
 
-  lives_proc_thread_include_states(self, THRD_STATE_ERROR);
-
   if (severity == LPT_ERR_MAJOR) {
     // for amjor errors, in case we are running a chain we will j
-    // for minor errors we just cancel the active func_indt
     lives_funcinst_t *finst = lives_proc_thread_get_active _funcinst(self);
     if (finst->disposition == DISPOSITION_STACKED)
       live_request_send_reply(LIVES_REPLY_ERROR);								    
     else lives_funcinst_set_disposition(finst, DISPOSITION_ERROR);
 
-    // inwind to chain head
-    while ((finst = finst->prev));
-    
+    // unnwind to chain head
+    while ((finstlist = finst->prev)) {
+      if (finst->lj_stack)
+	lives_sync_list_pop(finst->lj_stack);
+      finst = lives_sync_list_peek(finstlist);
+      if (finst->disposition == DISPOSITION_STACKED)
+	live_request_send_reply(LIVES_REPLY_ERROR);								    
+      else lives_funcinst_set_disposition(finst, DISPOSITION_ERROR);
+    }
     if (finst->lj_stack) {
       jmp_buf *env = (jmp_buf *)lives_sync_list_peek(finst->lj_stack);
       if (env) siglongjmp(*env, THRD_STATE_CANCELLED >> 32);
@@ -2972,7 +2963,7 @@ static void lives_thread_data_destroy(void *data) {
   lives_hook_stack_t **hook_stacks = tdata->vars.var_hook_stacks;
  
   if (is_fg_thread()) {
-    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
+    lives_hook_trigger(mainw->global_hook_stacks, FATAL_HOOK);
     if (mainw->record) backup_recording(NULL, NULL);
     if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
   }
@@ -2981,7 +2972,7 @@ static void lives_thread_data_destroy(void *data) {
 
   if (hook_stacks) {
     // this will force other lpts to remove their pointers to callbacks in our stacks
-    lives_hooks_clear_all(hook_stacks, N_GLOBAL_HOOKS);
+    lives_hook_stacks_clear_all(hook_stacks, N_GLOBAL_HOOKS);
   }
 
   if (tdata->vars.var_func_stack) lives_sync_list_free(tdata->vars.var_func_stack, TRUE);
@@ -3010,7 +3001,7 @@ void pthread_cleanup_func(void *args) {
 
   // this is called BEFORE thread data destroy
 
-  lives_hooks_trigger(THREADVAR(hook_stacks), THREAD_EXIT_HOOK);
+  lives_hook_trigger(THREADVAR(hook_stacks), THREAD_EXIT_HOOK);
 }
 
 
@@ -3411,11 +3402,6 @@ skip_over:
   }
 
   //mainw->debug_ptr = NULL;
-
-  // clear all hook stacks for the thread (self hooks)
-  for (int i = N_GLOBAL_HOOKS + 1; i < N_HOOK_POINTS; i++) {
-    lives_hooks_clear(tdata->vars.var_hook_stacks, i);
-  }
 
   pthread_mutex_lock(&twork_mutex);
   ntasks--;

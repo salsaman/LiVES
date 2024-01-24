@@ -443,7 +443,7 @@ lives_proc_thread_t lives_thread_get_proc_thread();
 
 lives_proc_thread_t  get_proc_thread_self(void);
 
-#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self =  get_proc_thread_self();
+#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_proc_thread()
 
   void lives_proc_thread_set_pthread(lives_proc_thread_t, pthread_t pthread);
 pthread_t lives_proc_thread_get_pthread(lives_proc_thread_t);
@@ -868,6 +868,8 @@ boolean _lives_proc_thread_error(char *file_ref, int line_ref,
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
 
 void lpt_error_handle(lives_proc_thread_t);
+
+void lives_make_errmsg_full(char *errfile, int errline, int sev, int errnum, char *errmsg);
 
 typedef struct {
   uint64_t uid;

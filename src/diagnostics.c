@@ -184,6 +184,22 @@ LIVES_GLOBAL_INLINE char *hs_op_flags_desc(uint64_t opflags) {
 }
 
 
+char *lives_funcdef_explain(const lives_funcdef_t *funcdef) {
+  if (funcdef) {
+    char *tmp, *out =
+      lives_strdup_printf("Function with uid 0X%016lX has prototype:\n"
+			  "\t%s %s(%s)\n function category is %d", funcdef->uid,
+			  weed_seed_to_ctype(funcdef->return_type, FALSE),
+			  funcdef->funcname ? funcdef->funcname : "??????",
+			  (tmp = funcsig_to_param_string(funcdef->funcsig)),
+			  funcdef->category);
+    lives_free(tmp);
+    return out;
+  }
+  return NULL;
+}
+
+
 LIVES_GLOBAL_INLINE const char *hs_pattern_name(hookstack_pattern_t pattern) {
   switch (pattern) {
   case HOOK_PATTERN_DATA:

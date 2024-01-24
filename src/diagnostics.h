@@ -103,6 +103,8 @@ char *hs_op_flags_desc(uint64_t opflags);
 void lpt_desc_state(lives_proc_thread_t);
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
 
+char *lives_funcdef_explain(const lives_funcdef_t *);
+
 char *lives_funcinst_show_func_call(lives_funcinst_t *finst);
 
 char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);

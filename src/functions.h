@@ -382,9 +382,6 @@ void lives_hook_cb_wake_waiters(LiVESList *list);
 N// callback will only be run at most one time, and then removed from the stack
 #define HOOK_OPT_ONESHOT		(1ull << 2)
 
-// if this flagbit is set, then the return type of callbacks must be boolean
-// any callback which returns FALSE will be blocked / ignored until either unblocked or invalidated
-#define HOOK_OPT_IGNORE_AFTER_FALSE	(1ull << 3)
 
 // this is intended for callbacks which have parameter values which need to be freed / unreffed even if the target func id not run
 // this includes - cases where the proc_thread is cancelled while still in the queue,
@@ -693,15 +690,15 @@ typedef enum {HOOK_PATTERN_INVALID = -1,
               HOOK_PATTERN_DATA,
               HOOK_PATTERN_REQUEST,
               HOOK_PATTERN_SPONTANEOUS
-             } hookstack_pattern_t;
+} hook_stack_pattern_t;
 
 typedef struct {
   int htype; // the hook type (e.g. COMPLETED, PREPARING)
-  hookstack_pattern_t pattern; // base pattern data, spontaneous, request
+  hook_stack_pattern_t pattern; // base pattern data, spontaneous, request
   uint64_t op_flags; // flags defining trigger operation
   
-  // optional cond for accepting in stack
-  char **condition;
+  // optional condition for accepting in stack (NULL == COND_TRUE)
+  char **accept_cond;
   
   // cb_prototype
   // initial part of cb func must match this
@@ -717,9 +714,9 @@ typedef struct {
   // text description of all params in funcinst_start (e.g."owner proc_thread of hook stack"
   // (may be NULL))
   const char **pdesc;  
-} hookstack_descriptor_t;
+} hook_stack_descriptor_t;
 
-const hookstack_descriptor_t *get_hs_desc(int hstype);
+const hook_stack_descriptor_t *get_hs_desc(int hstype);
 
 #define HS_FLAG_TRIGGERING	(1ull << 0)
 #define HS_FLAG_INVALID		(1ull << 1)
@@ -728,8 +725,11 @@ typedef struct _hstack_t {
   int type;
   lives_hook_stack_t **parent_stacks;
 
-  const hookstack_descriptor_t *hsdesc;
+  const hook_stack_descriptor_t *hsdesc;
 
+  // optional condition for rejecting from  stack (NULL == COND_FALSE)
+  char **reject_cond;
+  
   volatile LiVESList *stack;
   pthread_mutex_t mutex;
 
@@ -764,15 +764,23 @@ typedef struct _hstack_t {
 // hook callbacks should be run asyncronously in parallel
 #define HOOKSTACK_ASYNC		       	(1ull << 2)
 
+// modifies asymc behaviour
 #define HOOKSTACK_PARALLEL	       	(1ull << 3)
 
 // only the hook stack owner may add callbacks for this hook
 #define HOOKSTACK_SELF_ONLY       	(1ull << 4)
 
+// if this flagbit is set, then the return type of callbacks must be boolean
+// any callback which returns FALSE will be blocked / ignored until either unblocked or invalidated
+#define HSTACK_REMOVE_ON_FALSE		(1ull << 5)
+
+// if the trigger condition (if present) fails, then the callback will be removed rather than skipped over
+#define HSTACK_REMOVE_ON_COND_FAIL		(1ull << 6)
+
 // triggering will stop of any (boolean) callback returns FALSE
 // if all return TRUE, then all req_replies will be set to fulfilled
 // after this, the stack will 
-#define HOOKSTACK_COMBINED_BOOL	       	(1ull << 5)
+#define HOOKSTACK_COMBINED_BOOL	       	(1ull << 7)
 
 #define HOOKSTACK_FLAGS_ADJUST(flags)  _DW0(flags &= THREADVAR(hs_flag_mask);)
 
@@ -782,15 +790,15 @@ typedef struct _hstack_t {
 // (when combined with ASYNC_POLL, the effect is to run a single iteration, all callbacks)
 // note:
 // the default stack order is  FIFO, however callbacks may be prepended in case LIFO is needed
-#define HOOKSTACK_RUN_SINGLE      	(1ull << 8)
+#define HOOKSTACK_RUN_SINGLE      	(1ull << 16)
 
 // callbacks are normally removed when the entity which added them is invalidated / freed
 // setting this prevents that from happening, the callback remains in the stack beyond the lifetime of the adder
-#define HOOKSTACK_PERSISTENT	       	(1ull << 9)
+#define HOOKSTACK_PERSISTENT	       	(1ull << 17)
 
 // if callbacks cannot be run immediately (because some other thread holds the mutex lock)
 // return immediately and do not run the callbacks
-#define HOOKSTACK_NOWAIT	       	(1ull << 10)
+#define HOOKSTACK_NOWAIT	       	(1ull << 18)
 
 // p0 == hstack->owner.lpt, funcsig_start == "v", 
 
@@ -928,9 +936,6 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
 #define MAKE_FUNCDEF(func, rt, args) create_funcdef(#func, func, rt, args, NULL, 0, 0);
 
 void lives_funcdef_free(lives_funcdef_t *);
-
-// DISPLAY FUNCDEF INFO
-char *lives_funcdef_explain(const lives_funcdef_t *);
 
 // funcinst is the variable part of a function call
 

@@ -1406,11 +1406,17 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
 
       /// Finally... we actually write to pulse buffers
+      // TODO - use double buffering - fill a, (async join b), send a to async cbs - fill b
+      // - async join a, send b to cbs, fill a, etc
+
+      // async_join here
+      
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
         async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
         pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
+	// switch buffers
       } else pulse_buff_free(pulsed->aPlayPtr->data);
 #else
       buffer = NULL;
@@ -1420,6 +1426,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #endif
         async_writer_count = lives_hooks_trigger_async(NULL, DATA_READY_HOOK);
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
+	// switch buffers
       }
 #endif
     } else {

@@ -1439,14 +1439,14 @@ boolean lives_startup(livespointer data) {
   // set the active proc_thread for the main pthread
   lives_thread_set_active(mainw->def_lpt);
 
-  // for the main thread, the hook_stacks become maine->global_hook_stacks, but for GLOBAL_HOOKS we will point these
+  // for the main thread, the hook_stacks become maine->global_hook_stacks, but for NATIVE_HOOKS we will point these
   // to the thread hook_stacks instead
 
   lpt_hooks = lives_proc_thread_get_hook_stacks(mainw->def_lpt);
-  lives_hooks_clear_all(lpt_hooks, N_GLOBAL_HOOKS);
+  lives_hooks_clear_all(lpt_hooks, N_NATIVE_HOOKS);
 
   thread_hooks = THREADVAR(hook_stacks);
-  for (int i = 0; i < N_GLOBAL_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
+  for (int i = 0; i < N_NATIVE_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
 
   mainw->global_hook_stacks = lpt_hooks;
 

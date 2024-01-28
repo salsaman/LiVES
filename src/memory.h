@@ -22,6 +22,15 @@ extern size_t PAGESIZE;
 
 #define EXTRA_BYTES (HW_ALIGNMENT * 4)
 
+#define AUTO_PTR(vp)							\
+  (!THREADVAR(gcol) ? (weed_set_value_free_key(voidptr, (THREADVAR(gcol)=lives_plant_new(LIVES_PLANT_CLEANER)), \
+					       lives_strdup_printf("ptr_%p",vp),vp)?vp:vp \
+		       weed_set_value_free_key(voidptr,THREADVAR(gcol),lives_strdup_printf("ptr_%p",vp),vp))?vp:vp)
+
+#define GC_COLLECT _DW0(if (THREADVAR(gcol)) {weed_plant_free(THREADVAR(gcol)); THREADVAR(gcol) = NULL;})
+
+int weed_set_value_free_key(weed_plant_t *pl, char *key, weed_seed_t st,  ...) LIVES_NEVER_INLINE;
+
 typedef void *(*malloc_f)(size_t);
 typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*realloc_f)(void *, size_t);

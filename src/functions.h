@@ -201,17 +201,12 @@ lives_result_t weed_leaf_from_vap(weed_plant_t *, const char *key, weed_seed_t s
 lives_result_t update_params_from_proxies(lives_funcinst_t *finst);
 
 boolean call_funcsig(lives_proc_thread_t);
-lives_result_t do_call(lives_funcinst_t);
+lives_result_t do_call(lives_funcinst_t *);
 
-#define LIVES_LEAF_REPLACEMENT "_replacement"
-
-#define LIVES_LEAF_XLIST_STACKS "xlist_stacks"
-#define LIVES_LEAF_XLIST_TYPE "xlist_type"
-#define LIVES_LEAF_XLIST_LIST "xlist_list"
+#define LIVES_LEAF_CB_ADDED_LIST "cb_add_list"
 
 #define FUNC_CATEGORY_HOOK_CALLBACK FUNC_CATEGORY_CALLBACK
 
-//#define FUNC_CATEGORY_EXTERNAL
 //#define FUNC_CATEGORY_EXTERNAL
 
 #define FUNC_CATEGORY_ASYNC_HOOK 	(N_STD_FUNC_CATEGORIES + 101)
@@ -350,26 +345,88 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 // when adding to the LIVES_GUI_STACK, generally the callback is actioned immediately
 //
+// callback_receipt
+// when an attempt is made to add a cb to a stack, a callback_receipt is created, attached to the funcinst
+// "receipts" list, and returned.
+// the receipt contains a req_reply. If the callback was added the reply will be yes, otherwise no or invalid.
+// if the reply is yes, the adder must then include the receipt in its add_cb_list
+// the adder confirms receipt by setting "adder" to self. When the funcinst (callback) is triggered,
+// if the receipt is not in a cb_add_list, it will be "expired" (unless it is a "persistent" callback)
+// if the stack owner wants to remove the callback, it will also "expire" the receipt, by sending reply invalid
+// adder may set a callback to receive reply updates. If the adder has such a function, when it recevies a reply
+// other than yes (except no for ingonred callbacks), it can remove the recipt ftom its list
+// when a recipt is expired it will be detached from the funcinst and if the funcinst has no recipts.
+// it will be flagged for removal
+//
+// 
+// if the funcinst is replaced, and there is a reply_sent callback,
+// the receipt will be moved and appended to the replacement list otherwise it wiil be expired and detached
+// 
+//
+// if adder wants further tracking (e.g. blocking callback),
+// it can set a reply_sent callback before setting the in_list flag
+//
+//	boolean (reply_sent_cb)(void *receipt, void *user_data);
+//
+// to summarise:
+// adder wants to add a callback to a stack
+// if the reuqst is invalid, reply invalid is sent, the receipt is expired
+// and when hook is triggered it will be detached, and since not in add_cb_List, will be freed
+// the process for NO is similar, but the recipt is not expired immediately, however once adder confirms recipt by
+// setting "adder", since will not be in cb_add_list, it weill be detached, expired and freed
+// if yes is returned, adder can optionally add a resply_sent callback, will include it in its add_cb_list,
+// before setting "adder"
+//
+// when an adder wants to withdraw a callback, it simply removes the receipt from its add_cb_List.
+// if the hook is triggered, it will be expired, detached and freed (unless the callback is flagged "persistent",
+// in which case removing it from the add_cb_list does not cause it to be expired)
+// if stack owner wants to remove the callback, it sends reply invalid, expires all receipts and flags it for removal
+// callnacks flagged for removal but haveing receipts in lists are only phtsically removed and freed when they have no
+// receipts which are still incb_add_lista and where the adder has a callback
+//
+// if a callback has no receipts, it will be flagged for removal
+// 
 
-// for blocking callbacks, the dispatcher will add this to the funcinst "waiters" queue
-// if the funcinst is blocked or replaced, this will be appended to the replacement
-// - if the replacement is non blocking then the prescence of this makes it so
-// when a callback completes, if there are any no expired of these, the trigger thead will
-// resume request the dispatcher and toggle woken. When dispatcher wakes (either by being resumed
-// or by being cancelled / timed out, it will toggle expired
+typedef boolean (*reply_sent_cb_f)(void *receipt, void *user_data);
 
 typedef struct {
   pthread_mutex_t mutex;
-  lives_proc_thread_t dispatcher;
-  volatile boolean woken;
+  lives_proc_thread_t adder;
   volatile boolean expired;
-} lives_wait_obj;
+  volatile boolean in_list;
+  ///
+  int req_reply;
+  reply_sent_cb_f  *reply_cb;
+  void *reply_cb_data;
+  int nrefs;
+  ///
+} hook_cb_receipt;
 
-#define LIVES_LEAF_WAITER "waiter_obj"
+lives_proc_thread_t lives_cb_receipt_get_adder(void *hook_cb_receipt);
+int lives_cb_receipt_get_req_reply(void *hook_cb_receipt);
+int lives_cb_receipt_get_nrefs(void *hook_cb_receipt);
+int lives_cb_receipt_ref(void *hook_cb_receipt);
+int lives_cb_receipt_unref(void *hook_cb_receipt);
+boolean lives_cb_receipt_check_expired(void *hook_cb_receipt);
+boolean lives_cb_receipt_is_in_list(void *hook_cb_receipt);
 
-lives_wait_obj *lives_proc_thread_create_wait_object(lives_proc_thread_t self);
-void lives_proc_thread_expire_wait_object(lives_proc_thread_t self);
-void lives_hook_cb_wake_waiters(LiVESList *list);
+// add remove from self cb_added list
+void lives_cb_receipt_add_to_list(void *hook_cb_receipt);
+void lives_cb_receipt_remove_from_list(void *hook_cb_receipt);
+#define lives_hook_cb_remove(receipt) lives_cb_receipt_remove_from_list((receipt))
+
+void lives_cb_receipt_set_adder(void *hook_cb_receipt, lives_proc_thread_t);
+void lives_cb_receipt_set_reply(void *hook_cb_receipt, int reply);
+void lives_cb_receipt_set_expired(void *hook_cb_receipt);
+void lives_cb_receipt_set_in_list(void *hook_cb_receipt, boolean in_list);
+void lives_cb_receipt_set_reply_callback(void *hook_cb_receipt, reply_sent_cb_f *, void *user_data);
+boolean lives_cb_receipt_has_reply_callback(void *hook_cb_receipt);
+boolean lives_cb_receipt_call_reply_callback(void *hook_cb_receipt);
+
+void *lives_cb_receipt_new(void);
+
+void lives_cb_receipt_free(void *receipt);
+LiVESList *lives_funcinst_move_receipts(lives_funcinst_t *dst, lives_funcinst_t *src);
 
 //< caller will block when adding the hook and only return when the hook callback has returned
 // if the cb function is barred by another (due to uniqueness constraints),
@@ -379,9 +436,14 @@ void lives_hook_cb_wake_waiters(LiVESList *list);
 // hook should be run as soon as possible when the hook trigger point is reached
 #define HOOK_CB_PRIORITY		(1ull << 1) // prepend, not append
 
-N// callback will only be run at most one time, and then removed from the stack
+// callback will only be run at most one time, and then removed from the stack
 #define HOOK_OPT_ONESHOT		(1ull << 2)
 
+// this option can be set for a stack or for a callback
+// when the callback is triggered, if the adder is paused, it will get a resume request and a notification to run the cb
+// if not paused, the adder will get an interrupt signal with data notifying it to run the callback itself
+// the adder will notify receipt holders by updating the req_reply rather than the triggerer doing this
+#define HOOK_OPT_ADDER_RUNS		(1ull << 3)
 
 // this is intended for callbacks which have parameter values which need to be freed / unreffed even if the target func id not run
 // this includes - cases where the proc_thread is cancelled while still in the queue,
@@ -405,28 +467,35 @@ N// callback will only be run at most one time, and then removed from the stack
 
 /// the following bits define how hooks should be added to the stack
 // in case of duplicate functions / data
+///
 // after adding, ensure only a single copy of FUNC in the stack, with whatever data
+//
 // (when prepending, this always succeeds to add, and expels other copies of same func,
-// when appending, the callback will be blocked or added)
+// when appending, the callback will leave first matching func in place, and expel all others,
+// and deny the new callback. except if no match is found, will be appended)
 #define HOOK_UNIQUE_FUNC		(1ull << 16) // do not add if func already in hooks
-
+///
 // after adding, ensure only a single copy of FUNC  / DATA in stack
-// may be other copies of func with other data
-
+// there may be other copies of func with non matching data
+//
 // NOTE: for data matching, it is sometimes desirable to match only the first n paramaeters, with the remainder
-// being the data to be replaced
-// in this case,   THREADVAR(hook_match_nparams) cant be set to the number to match. If set to 0, the default,
-// all params must be matched. Thus HOOK_UNIQUE_REPLACE only makes sense with a non zero value
-// else all parameters would be matched, and there would be no "data" to be replaced
+// being the data to be replaced or ignored
+// in this case, THREADVAR(hook_match_nparams) cant be set to the number to match. If set to 0, the default,
+// all params must be matched.
+// 
 // (when prepending, this always succeeds to add, and expels other copies with identical func / data,
-// when appending, the callback will be blocked or added)
+// when appending, the callback will replace the first matching func / data , and expel it and any other matches
+// if no match is found, append
 #define HOOK_UNIQUE_DATA		(1ull << 17)
 
-// change data of first func of same type, with n_match_params equal,  but leave func inplace,
-// (after adding, there will be only one copy of FUNC, with our data)
+//
+// after adding, ensure only a single copy of func,  and with our data
+// 
+///
 // * copies of the func in linked_stacks must also be removed
-// (when prepending, this always succeeds to add, and acts identically to unique_func,
-// when appending, the callback will replace data and be rejected, or if no match is found, appended)
+// (when prepending, this always succeeds to add, and expels anything with same func
+// when appending, the callback will replace the first matching func, and expel it and all other func matches
+// or if no match is found, append
 #define HOOK_UNIQUE_REPLACE		(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA)
 
 // Summary: hook_unique_func ensures there is only a single copy of func in the stack, with any data
@@ -457,18 +526,22 @@ N// callback will only be run at most one time, and then removed from the stack
 //
 
 // when prepended to a stack, it will eliminate any entries with matching data
-// when triggered, it will eliminate matching data from all thread hook_stacks
-// NB. it is important to specify the number of matching data params, otherwise ALL params will be matched
+// when appending, if we find an existing cb with this set, the callback will be rejected
+// when triggered, it will eliminate matching data from ALL thread hook_stacks of indentical type
+///
+// NB. it is important to specify the number of matching data params, otherwise ALL params will be considered matching
 // - this is designed for functions which free DATA
 
 #define HOOK_INVALIDATE_DATA			(1ull << 18)
 
 // this is a special modifier for INVALIDATE_DATA
-// if set then data will also match "child" data (for some deifnition of "child")
+// if set then data will also match "child" data (for some definition of "child")
 #define HOOK_OPT_MATCH_CHILD			(1ull << 19)
 
-// similar to unique_function, however, if the function is already in the stack we also remove it
+// similar to unique_function (which is implicitly set),
+// however, if the function is already in the stack we also remove it
 // and do not add.
+// combined with UNIQUE_DATA, we only toggle if data matches as well as func
 #define HOOK_TOGGLE_FUNC			(1ull << 24)
 
 ///////////////////
@@ -481,9 +554,6 @@ N// callback will only be run at most one time, and then removed from the stack
 
 // hook was 'removed' whilst running, delay removal until return
 #define HOOK_STATUS_REMOVE			(1ull << 35)
-
-// values higher than this are reserved for closure flags
-#define HOOK_CB_FLAG_MAX			(1ull << 35)
 
 typedef weed_plant_t lives_obj_t;
 typedef boolean(*hook_funcptr_t)(lives_obj_t *, void *);
@@ -538,7 +608,6 @@ lives_proc_thread_t _lpt_from_funcdefX(lives_funcdef_t *, char **anames, lives_t
 
 #define lpt_from_funcdef(f, a, ...) _lpt_from_funcdefX(f, VARNAMES(__VA_ARGS__), a, __VA_ARGS__)
 
-
 typedef enum {
 	      // not attached to a proc_thread, not stacked
 	      DISPOSITION_INERT = 0,
@@ -563,68 +632,66 @@ typedef enum {
 
 #define module_any	       -1
 #define module_none		0
-#define module_lpt		1
-#define module_hook_stack	2
 
-#define MODULE_DATA_TYPE_LPT		module_lpt
-#define MODULE_DATA_TYPE_HOOK_STACK	module_hook_stack
+#define module_lpt		1
+#define module_hook_cb		2
+
+#define MODULE_TYPE_LPT module_lpt
+#define MODULE_DATA_TYPE_LPT proc_thrd_data
+
+#define MODULE_TYPE_HOOK_STACK 	module_hook_cb
+#define MODULE_DATA_TYPE_HOOK_STACK hook_cb_data
 
 #define MODULE_DATA_TYPE(n) MODULE_DATA_TYPE_##n
+#define MODULE_TYPE(n) MODULE_TYPE_##n
 
-#define MODULE_TYPE_IS(finst, type) ((finst)->module_type == MODULE_DATA_TYPE_##type)
+#define MODULE_TYPE_IS(finst, type) ((finst)->mod_type == MODULE_TYPE(type))
 
-#define MODULE_TYPE_1 proc_thrd_data
 typedef struct {
 // for DISPOSITION_QUEUED / ACTIVE
-  uint64_t thrd_attrs;
+  uint64_t func_attrs;
   // stack of longjump env buffers
   lives_sync_list_t *lj_stack;
   // pointer to the proc_thread which queued or stacked this
   lives_proc_thread_t dispatcher;
   // pointer to the proc_thread which is running this
   lives_proc_thread_t runner;
-} MODULE_DATA_TYPE_1;
+} MODULE_DATA_TYPE_LPT;
 
-#define MODULE_TYPE_2 hook_cb_data
 typedef struct {
 // for DISPOSITION_STACKED
   uint64_t cb_flags;
-  char **condition; // condition for riggering
+  char **trigger_cond; // condition for triggering
   pthread_mutex_t mutex;
-  lives_hook_stack_t **hook_stacks;
-  int hook_type;
+  lives_hook_stack_t *hook_stacks;
   void *retloc;
   lives_proc_thread_t adder;
-  //lives_hook_stack_t *replied_hook;  
-  int req_reply;
   int nmatch_params;
-  lives_funcinst_t *replacement;
-  volatile LiVESList *waiters;
-} MODULE_DATA_TYPE_2;
+  volatile LiVESList *receipts;
+} MODULE_DATA_TYPE_HOOK_STACK;
 
 /* add more modules if desired */
 
-#define LPT_DATA(finst, field)  (((MODULE_DATA_TYPE_1 *)(finst->module))->field)
-#define CL_DATA(finst, field)  (((MODULE_DATA_TYPE_2 *)(finst->module))->field)
+#define LPT_DATA(finst, field)  (((MODULE_DATA_TYPE_LPT *)(finst->module))->field)
+#define CL_DATA(finst, field)  (((MODULE_DATA_TYPE_HOOK_STACK *)(finst->module))->field)
 
 typedef int funcinst_module_type;
 
-#define module_type_for_dispossition(dis)				\
-  ((dis) == DISPOSTION_STACKED ? module_hook_stack			\
+#define module_type_for_disposition(dis)				\
+  ((dis) == DISPOSTION_STACKED ? module_hook_cb			\
    : ((dis) == DISPOSTION_WAITING || (dis) == DISPOSTION_ACTIVE) ? module_lpt \
    : module_any)
 
 #define CALLOC_MODULE(j) \
-  (j == module_lpt ? LIVES_CALLOC_SIZEOF(MODULE_TYPE(module_lpt), 1)	\
-   j == module_hook_stacks ? LIVES_CALLOC_SIZEOF(MODULE_TYPE(module_hook_stack), 1) \
-   : NULL)
+  (j == module_lpt ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_LPT, 1) \
+   : j == module_hook_cb ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_HOOK_STACK, 1) : NULL)
 
 struct _funcinst {
   uint64_t uid;
   lives_funcdef_t *funcdef;
 
   volatile funcinst_disposition disposition;
-  //lives_hook_stack_t *disposition_changed;
+  //disposition_changed_cb
 
   char **paramnames;
   weed_plant_t *params;
@@ -651,10 +718,6 @@ weed_error_t copy_leaf_value(weed_plant_t *pl, const char *key, int idx, weed_se
 
 #define FINST_FLAG_STATIC	  	(1ull << 8)
 #define FINST_FLAG_NOFREE_RETLOC  	(1ull << 1)
-
-#define AUTO_PTRS_START weed_plant_t *cleaner = NULL
-#define AUTO_PTR(func, ...) (lives_proc_thread_execute_retvoidptr(&cleaner, VARNAMES(__VA_ARGS__, func, __VA_ARGS__))
-#define AUTO_PTRS_CLEAN _DW0(if (cleaner) weed_plant_free(cleaner); cleaner = NULL;)
 
 // when adding a hook callback, there are several methods
 // use a registered funcname, in this case the funcdef_t is looed up from funcname, and
@@ -686,7 +749,8 @@ weed_error_t copy_leaf_value(weed_plant_t *pl, const char *key, int idx, weed_se
 // this allows for accumulation and filtering of callbacks prior to them being added to the target
 // the owner of the request queue responds to orinal request, accepting or denying it
 
-typedef enum {HOOK_PATTERN_INVALID = -1,
+typedef enum {
+	      HOOK_PATTERN_INVALID = -1,
               HOOK_PATTERN_DATA,
               HOOK_PATTERN_REQUEST,
               HOOK_PATTERN_SPONTANEOUS
@@ -756,6 +820,11 @@ typedef struct _hstack_t {
 
 // hook_stack_flags
 
+#define HS_MASK_GUI		0xFFFFFFFFFFFF00FF
+#define HS_MASK_WORKER		0xFFFFFFFF0000FFFF
+
+#define HOOKSTACK_FLAGS_ADJUST(flags)  _DW0(flags &= THREADVAR(hs_flag_mask);)
+
 #define HOOKSTACK_NATIVE	       	(1ull << 0)
 
 // denotes that callbacks in the stack are run once only and removed
@@ -772,19 +841,21 @@ typedef struct _hstack_t {
 
 // if this flagbit is set, then the return type of callbacks must be boolean
 // any callback which returns FALSE will be blocked / ignored until either unblocked or invalidated
-#define HSTACK_REMOVE_ON_FALSE		(1ull << 5)
+#define HOOKSTACK_REMOVE_ON_FALSE	(1ull << 5)
 
 // if the trigger condition (if present) fails, then the callback will be removed rather than skipped over
-#define HSTACK_REMOVE_ON_COND_FAIL		(1ull << 6)
+#define HOOKSTACK_REMOVE_ON_COND_FAIL	(1ull << 6)
 
 // triggering will stop of any (boolean) callback returns FALSE
 // if all return TRUE, then all req_replies will be set to fulfilled
 // after this, the stack will 
 #define HOOKSTACK_COMBINED_BOOL	       	(1ull << 7)
 
-#define HOOKSTACK_FLAGS_ADJUST(flags)  _DW0(flags &= THREADVAR(hs_flag_mask);)
+// MASKED OUT FOR GUI THREAD
 
-// these flagbits are masked out for non fg threads running gui hook
+#define HOOKSTACK_GUI_THREAD		(1ull << 8)
+
+// MASKED OUT FOR WORKER THREADS
 
 // this flagbit denotes that triggering the hooks will run only the first callback on the stack and return
 // (when combined with ASYNC_POLL, the effect is to run a single iteration, all callbacks)
@@ -800,11 +871,22 @@ typedef struct _hstack_t {
 // return immediately and do not run the callbacks
 #define HOOKSTACK_NOWAIT	       	(1ull << 18)
 
+// see HOOK_OPT_ADDER_RUNS
+#define HOOKSTACK_ADDER_RUNS	       	(1ull << 32)
+
+// usually hook stack triggering can only be effected by the stack owner
+// if this flag is set, then any thread may trigger the stack (and probably run the callbacks itself,
+// unless flags dictate otherwise)
+#define HOOKSTACK_ANON_TRIGGER	       	(1ull << 33)
+
 // p0 == hstack->owner.lpt, funcsig_start == "v", 
 
 #define HS_FLAGS_FATAL			(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)
 #define HS_FLAGS_THREAD_EXIT		(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE)
-#define HS_FLAGS_DATA_READY		(HOOKSTACK_ASYNC_PARALLEL)
+
+#define HS_FLAGS_DATA_READY		(HOOKSTACK_ASYNC | HOOKSTACK_PARALLEL | HOOKSTACK_REMOVE_ON_FALSE)
+#define HS_RET_TYPE_DATA_READY		WEED_SEED_BOOLEAN
+
 #define HS_FLAGS_LIVES_GUI		(HOOKSTACK_RUN_SINGLE | HOOKSTACK_GUI_THREAD | HOOKSTACK_ALWAYS_ONESHOT \
  							| HOOKSTACK_NOWAIT)
 #define HS_FLAGS_SYNC_ANNOUNCE		(HOOKSTACK_PERSISTENT | HOOKSTACK_ALWAYS_ONESHOT)
@@ -822,14 +904,20 @@ typedef struct _hstack_t {
 
 // low level flags used internally when adding callbacks*/
 
-#define DTYPE_PREPEND 		(1ull << 0) // unset == append
-#define DTYPE_NOADD 		(1ull << 2) // remove others only, no add
-#define DTYPE_HAVE_LOCK 	(1ull << 8) // mutex already locked
 
+#define _DTYPE_NORCPT 		(1ull << 0) // do not create a requst receipt,
+#define _DTYPE_HAVE_LOCK 	(1ull << 1) // mutex locked
+#define _DTYPE_NOADD	 	(1ull << 2) // remove others only, no add, force prepend
+#define _DTYPE_FORCE_PREPEND	(1ull << 3) // act as if prepending
+
+#define DTYPE_TRANSFER 		(_DTYPE_NORCPT | _DTYPE_HAVE_LOCK)
+#define DTYPE_UPD_LINKED	(DTYPE_TRANSFER | _DTYPE_NOADD | _DTYPE_FORCE_PREPEND
+  
 void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 
 // initial value, no reply received yet
 #define LIVES_REPLY_NONE	NIRVA_REPLY_NONE
+#define LIVES_REPLY_INVALID	LIVES_REPLY_NONE
 
 // reuest denied (possibly due to uniqueness conditions,
 // or invalid request oaraneters)
@@ -848,43 +936,45 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 // request ran but was cancelled
 #define LIVES_REPLY_CANCELLED 	NIRVA_REPLY_CANCELLED
 
-// all dtypes
-lives_funcinst_t lives_hook_add(lives_hook_stack_t **, int type, uint64_t flags, livespointer data, uint64_t dtype);
-
 // lpt like
-lives_proc_thread_t _lives_hook_add_fullX(lives_hook_stack_t **, int type, uint64_t flags, lives_funcptr_t func,
-					  const char *fname, int return_type, char **anames, const char *args_fmt, ...);
+void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t flags, lives_funcptr_t func,
+			      const char *fname, int return_type, char **anames, const char *args_fmt, ...);
 
-#define lives_hook_add_full(hs, type, flags, func, fname, rtype, afmt, ...) \
-  _lives_hook_add_fullX(hs, type, flags, func, fname, rtype, VARNAMES(__VA_ARGS__), afmt, __VA_ARGS__)
+void *lives_hook_cb_add_locked(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst);
+void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst);
 
-// fixed cb type
-#define lives_hook_append(hooks, type, flags, func, data) \
-  lives_hook_add_full((hooks), (type), (flags),				\
-		       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-		       "vv", NULL, (void *)(data))
+#define lives_hook_cb_add_full(hs, type, flags, func, fname, rtype, afmt, ...) \
+  _lives_hook_cb_add_full((hs), (type), (flags), func, fname, (rtype), VARNAMES(__VA_ARGS__), {afmt}, __VA_ARGS__)
 
-#define lives_proc_thread_add_hook(lpt, type, flags, func, data)	\
-  lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
-		      (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-		      "vv", (void *)lpt, (void *)(data))
+//fixed cb type
+#define lives_hook_cb_append(hooks, type, flags, func, datam,...))	\
+  _lives_hook_cb_add_full((hooks), (type), (flags),			\
+			  (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+			  VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
+
+#define lives_proc_thread_add_hook_cb(lpt, type, flags, func, data,...)	\
+  lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
+			 (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+			 VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
 
 // any func
 
-#define lives_proc_thread_add_hook_full(lpt, type, flags, func, rtype, args_fmt, ...) \
-  lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
-		       (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
+#define lives_proc_thread_add_hook_cb_full(lpt, type, flags, func, rtype, args_fmt, ...) \
+  lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
+			 (lives_funcptr_t)(func), #func, (rtype),	\
+			 VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
 
-#define lives_hook_append_full(hooks, type, flags, func, rtype, args_fmt, ...) \
-  lives_hook_add_full((hooks), (type), (flags), (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
+#define lives_hook_cb_append_full(hooks, type, flags, func, rtype, args_fmt, ...) \
+  lives_hook_cb_add_full((hooks), (type), (flags), (lives_funcptr_t)(func), #func, (rtype), \
+			 VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
 
 #define lives_hook_prepend_full(hooks, type, flags, func, rtype, args_fmt, ...) \
- lives_hook_add_full((hooks), (type), (flags) | HOOK_CB_PRIORITY, (lives_funcptr_t)(func), #func, rtype, \
-		       args_fmt, __VA_ARGS__)
+  lives_hook_cb_add_full((hooks), (type), (flags) | HOOK_CB_PRIORITY,	\
+			 (lives_funcptr_t)(func), #func, (rtype),	\
+			 VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
 
-// lpt arg
-
-#define lives_hook_prepend(hooks, type, flags, lpt) lives_hook_add((hooks), (type), (flags),lpt, DTYPE_PREPEND)
+/* // lpt arg */
+#define lives_hook_cb_prepend(hooks, type, flags, finst) lives_hook_cb_add((hooks), (type), (flags), (finst), DTYPE_PREPEND)
 
 ////////////////////////////
 
@@ -899,7 +989,7 @@ lives_proc_thread_t _lives_hook_add_fullX(lives_hook_stack_t **, int type, uint6
 /* #define SRUCT_VAL_UPD(e,f,n) UPDATE_VALUE(e,f,0,STRUCT_VALUE_SET, STRUCT_VALUE_GET, nv) */
 
 // invalidate a callback, so that the next time it is triggered it will be removed and not run
-// voluntary invalidation is only allowed for the callback adder
+ // this removes from add_cb_list AND sets expired so we can force remove even persistent cbs
 lives_result_t lives_hook_cb_invalidate(lives_funcinst_t *finst);
 
 // blocks a callback, so that it will be ignored instead of running
@@ -907,11 +997,13 @@ lives_result_t lives_hook_cb_invalidate(lives_funcinst_t *finst);
 lives_result_t lives_hook_cb_block(lives_funcinst_t *finst);
 lives_result_t lives_hook_cb_unblock(lives_funcinst_t *finst);
 
-void flush_cb_list(lives_proc_thread_t self);
+void flush_cb_added_list(lives_proc_thread_t lpt, boolean all);
+void ref_cb_added_list(lives_proc_thread_t self);
+void unref_cb_added_list(lives_proc_thread_t self);
 
 uint64_t get_hs_op_flags(lives_hook_stack_t *);
 
-  void lives_hook_stack_clear(lives_hook_stack_t **, int type);
+void lives_hook_stack_clear(lives_hook_stack_t **, int type);
 void lives_hook_stacks_clear_all(lives_hook_stack_t **, int ntypes);
 
 boolean lives_hook_trigger(lives_hook_stack_t **, int type);

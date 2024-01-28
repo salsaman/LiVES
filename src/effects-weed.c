@@ -1651,10 +1651,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
     if (wait_state_upd && !state_updated) {
       //  one thread may update static data for all threads
       // in this case we wait here for the update to be performed
-      lives_nanosleep_until_nonzero(lives_proc_thread_is_done(lpts[j], FALSE)
+      lives_nanosleep_until_nonzero(lives_proc_thread_check_finished(lpts[j])
                                     || weed_get_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, NULL));
-      if (weed_get_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
-        weed_set_boolean_value(filter, LIVES_LEAF_IGNORE_STATE_UPDATES, WEED_TRUE);
+      if (!weed_get_boolean_value(xinst[j], WEED_LEAF_STATE_UPDATED, NULL)) {
+        weed_set_boolean_value(filter, LIVES_LEAF_IGNORE_STATE_UPDATES, TRUE);
         wait_state_upd = FALSE;
       } else state_updated = TRUE;
     }

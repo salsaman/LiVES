@@ -258,6 +258,17 @@ void _ext_free(void *p) {
 #endif
 }
 
+
+int weed_set_value_free_key(weed_plant_t *pl, char *key, weed_seed_t st,  ...) {
+  va_list va;
+  va_start(va, st);
+  weed_leaf_from_varg(pl, (const char *)key, st, 1, va);
+  va_end(va);
+  if (st == WEED_SEED_VOIDOTR || st == WEED_SEED_PLANTPTR) weed_leaf_autofree(pl, key);
+  lives_free(key);
+  return 0;
+}
+
 void *_ext_free_and_return(void *p) {if (p) _ext_free(p); return NULL;}
 
 void *_ext_memcpy(void *dest, const void *src, size_t n) {return _lives_memcpy(dest, src, n);}

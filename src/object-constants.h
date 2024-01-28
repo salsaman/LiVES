@@ -1740,7 +1740,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_HOOK_PATTERN_CONFIG,	\
 #define NIRVA_HOOK_DTL_NATIVE         	(1ull << 7)
 
 NIRVA_TYPEDEF_ENUM(nirva_hook_number,
-                   NO_HOOK = 0,
+                   NO_HOOK = -1,
                    /// CONFIG hook pattern
                    // config hooks - these are based on other patterns, but given an omportant significance
 
@@ -1748,7 +1748,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 		   
                    // transform suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
                    // hook_stack specifc to structure_app
-                   FATAL_HOOK,
+                   FATAL_HOOK = 0,
 
                    // state changing from normal -> not ready, i.e. restarting
                    // this is specific to structure_app
@@ -1766,8 +1766,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // DTL_NATIVE
                    THREAD_EXIT_HOOK,
 
-                   // for an APPLICATION instance, these are GLOBAL HOOKS
-                   N_GLOBAL_HOOKS,// 5
+#define N_NATIVE_HOOKS 4
 
                    // The following are the standard hook points in the system
                    // all DATA_HOOKS must return "immedaitely"
@@ -1782,7 +1781,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    // the hook_stacks for these are in the structure, adding removing, triggering
                    // is done via a structure transform
-                   OBJECT_CREATED_HOOK, // object state / after
+                   OBJECT_CREATED_HOOK, // object state / after (4)
 
                    INSTANCE_COPIED_HOOK,
 
@@ -1798,7 +1797,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // add strand is triggered when data is to be appended to a non existent strand, ie old value is absent
                    // delete strand is triggered from delete_strand, ie. new_value is absent
 
-                   ADDING_STRAND_HOOK, // 12
+                   ADDING_STRAND_HOOK, // 10
 
                    DELETING_STRAND_HOOK,
 
@@ -1868,7 +1867,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // and mey be actioned again
                    IDLE_HOOK,
 
-                   TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
+                   TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused (30)
 
                    ///< error occured during the transform
                    // if the object has a transform to change the status
@@ -1939,8 +1938,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    // functionals may trigger sync announcements at key points during their processing
                    // other threads can add callbacks for this and be advised when such a point is reached
-                   // hook_stack is in the thread instance
-                   // hook is triggered by functional code
+		   // or it can be set up as a staging hook for a target stack
                    SYNC_ANNOUNCE_HOOK, ///< synchronisation point, transform is waitng until
 
                    /// tx transition from one trajectory segment to the next
@@ -1952,17 +1950,14 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    SEGMENT_END_HOOK,
 
                    // this is triggered when a new trajectory segment is about to begin
-                   // for the inital segment, TX_START is triggered instead
-                   // for segment end, FINISHED_HOOK runs instead
-                   // hook_stack is in the transform bundle
+                   // for the inital segment, TX_START is triggered first
+                   // for segment end, TX_END is run after
+                   // objects with sufficient permissions may change the segment to be run
                    SEGMENT_START_HOOK, // 40
 
-                   // this hook may be triggered after a transform completes
-                   // it will highlight any IN_OUT attrs which have been altered
-                   // and any OUTPUT attrs which may have been created
-                   // i.e it collates any hook_callbacks for the array in TX_ATTRS
-                   // for the FUNC_DATA bundle
-                   // hook_stack is in the attr_group bundle
+                   // this hook may be triggered after the values of multiple attributes
+		   // in an attr_group have been updated
+		   // data passed includes the attr_group containing the attributes
                    ATTRS_UPDATED_HOOK,
 
                    // calbacks for the following two hooks are allowed to block "briefly"
@@ -1989,22 +1984,10 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // a hook stack in the same bundle, the target_hook_type can be specified ot can be all
                    HOOK_CB_DETACHING_HOOK,
 
-                   // this is called automatically when a callback is added to any hook_stack
-                   // all request hooks are cascaded versions of this, depending on the stack
-                   // added to, e.g add a callback (request) to the data request queue
-                   // this triggers hook attached callback
-                   // there is an automation callback (run last),
-                   // which when triggered, cascades the trigger using the
-                   // hook_stack parameter, and triggers a follow on trigger "data_request"
-                   //
-                   // which is a virutal hook, that in turn toggles a flag bit for the attribute
-                   // thus the thread actioning the transform can add a callback to the hook_cb_attached hook
-                   // a.k.a REQUEST_HOOK, specifying the request_type (e.g. data_request), target_item (attribute_name)
-                   // and respond directly, otherwise, the structure will repsond on the thread's behalf
-                   // the request will remain in the data_request hook_stack. At some later point, the thread
-                   // can trigger data_ready, and all appropriate cllbacks in the data_request stack are actioned
-                   // in this way, threads can be notified instantly of requests, or async via
-                   HOOK_CB_ATTACHED_HOOK,
+		   // if target stack is request and target is waiting, the target can set a wakeup callback hete
+		   // the hook is triggered when a callback is added to any request hook
+		   // the target can check which stack after waking and trigger it
+                   HOOK_CB_ADDED_HOOK,
 
                    // this can be used for debugging, in a function put NIRVA_CALL(trace, "Reason")
                    // the hook stack will be held in one or other structural subtypes
@@ -2012,33 +1995,25 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    // REQUEST HOOK pattern -certain objects will provide request hook stacks, and requests
                    // can be added to these
-                   // sometimes requests will be responded to immediatel with YES, NO, or NEEDS_PRIVELEGE
-                   // otherwise WAIT will be returned and the request result will be provided asyn via a
-                   // callback function supplie with the hook request
-                   //
-                   // if the target object is not active, or is busy, the automation may
-                   // step in and action the transform itself
-                   //
-                   // the callback function added is designed to receive the request response
-                   // if the reequest is responded to YE or NO immediately, the callback is not addeSd
-                   // if the response is wait or proxy, then the callback will be added and triggered on YES or NO
+                   // when a callback is added, WAIT_RETRY, YES, NO, or NEEDS_PRIVELEGE is returned
+		   // if the initial reply is WAIT_RETRY, caller can attempt the request again.
+		   // the reply can further be tracked by providing a callback function for reply_sent
+		   // YES is a provisional reply,
+		   // NO, FULFILLED, ERROR and CANCELLED are final replies
 
-                   // these are similar to no negotiate contracts, however requests can be made even whilst
-                   // another transform is already running, and there are no requirement to try to
-                   // add a callback (although the request may be rejected, and some requests require PRIV levels)
-
-                   // requests are cascade values of the HOOK_ATTACHED_HOOK
+                   // requests are cascaded values of the CB_ATTACHED_HOOK
                    // a request is made by adding a request_bundle to the target's request hook
-                   // the result is to trigger a hook_attached_hook. If this is not reponded to (ie. no callbacks exist),
-                   // then wait_retry
-                   // will be returned. The object thread will at some later point, check the request stacks,
-                   // and respond by changing transform state, or triggering another hook (e.g. data_ready)
-                   // at that point, any requests in the request stacks will be responded to (request_yes)
-                   // thus when making a request, the requester can provide a callback function - if the response is
-                   // wait_retry or proxied, the caller can do something else until the callback is triggered
-                   // this is simailar to adding a callback except that the automation will ensure only the most recent
-                   // request for a particular emmision is retained in the request stack. In addition the running thread
-                   // will know to trigger something becuase there are callbacks in a request stack
+                   // the result is to trigger the object's callback_attached_hook.
+		   // this may alter target;s status flags
+		   // If the object is inactive this may wake the object
+		   // the object can then (or at any time), trigger the respective request hook and the object
+		   // cab act on the request and send final replies to the adders,
+		   // (triggering reply sent callbacks), remove the request from the request stack
+		   // thus if a reply is important, the adder can wait fot reply_sent callback and check the req_reply
+
+		   
+		   // 
+		   // 
 
                    DATA_REQUEST_HOOK,
 

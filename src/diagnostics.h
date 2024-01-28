@@ -113,7 +113,7 @@ char *funcinst_paramstr(lives_funcinst_t *, funcsig_t sig);
 
 lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type);
 
-const char *hs_pattern_name(hookstack_pattern_t pattern);
+const char *hs_pattern_name(hook_stack_pattern_t pattern);
 
 void dump_hook_stack(lives_hook_stack_t **, int type);
 void dump_hook_stack_for(lives_proc_thread_t, int type);

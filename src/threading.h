@@ -98,11 +98,13 @@ typedef struct {
   // built in timer (per thread)
   lives_timer_t var_xtimer;
 
+  weed_plant_t *gcol; // per thread garbage collector
+  
   // hooks
   volatile boolean var_fg_service;
   uint64_t var_hook_hints, var_perm_hook_hints;
   int var_hook_match_nparams;
-  lives_hook_stack_t *var_hook_stacks[N_GLOBAL_HOOKS];
+  lives_hook_stack_t *var_hook_stacks[N_NATIVE_HOOKS];
   uint64_t hs_flag_mask;
 
   // error handling
@@ -432,9 +434,15 @@ lives_funcinst_t * lives_proc_thread_pop_active_funcinst(lives_proc_thread_t);
 lives_funcinst_t *lives_proc_thread_get_active_funcinst(lives_proc_thread_t);
 lives_funcinst_t *lives_proc_thread_set_active_funcinst(lives_proc_thread_t, lives_funcinst_t *);
 
-lives_funcinst_t lives_proc_thread_get_top_funcinst(lives_proc_thread_t, int chain_idx);
+lives_funcinst_t *lives_proc_thread_get_initial_funcinst(lives_proc_thread_t);
 
-lives_funcinst_t *lives_funcinst_set_next(lives_funcinst_t *, lives_funcinst_t *);
+void lives_funcinst_append(lives_funcinst_t *f1, lives_funcinst_t *f2);
+
+void lives_proc_thread_set_active_finstlist(lives_proc_thread_t, lives_sync_list_t *);
+lives_sync_list_t *lives_proc_thread_get_active_finstlist(lives_proc_thread_t);
+
+void lives_proc_thread_set_initial_finstlist(lives_proc_thread_t, lives_sync_list_t *);
+lives_sync_list_t *lives_proc_thread_get_initial_finstlist(lives_proc_thread_t);
 
 int lives_proc_thread_get_chain_idx(lives_proc_thread_t);
 int lives_proc_thread_get_stack_depth(lives_proc_thread_t);
@@ -622,16 +630,16 @@ typedef struct {
 } timeout_data;
 
 
-LiVESList * _lives_funcinst_create_va(lives_thread_attr_t attrs, lives_funcptr_t func,
-					const char *fname, int return_type, char **anames
-				      , const char *args_fmt, va_list xargs);
+lives_funcinst_t * _lives_funcinst_create_va(lives_funcptr_t func,
+				      const char *fname, int return_type, char **anames,
+				      const char *args_fmt, va_list xargs);
 
-LiVESList *_lives_funcinst_create(lives_thread_attr_t attrs, lives_funcptr_t func,
+lives_funcinst_t *_lives_funcinst_create(lives_funcptr_t func,
 				  const char *fname, int return_type, char **anames,
 				  const char *args_fmt, ...);
 
-#define lives_funcinst_create(attrs, func, rtype, af, ...)		\
-  (_lives_funcinst_create((attrs), (lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), (af), __VA_ARGS__))
+#define lives_funcinst_create(func, rtype, af, ...)		\
+  (_lives_funcinst_create((lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), (af), __VA_ARGS__))
 
 lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs);
 
@@ -732,7 +740,8 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 
 #define pool_thread_execute_pvoid_rvoid(func, rtype) pool_thread_execute_rvoid_pvoid(func, rtype)
 
-uint64_t lives_proc_thread_execute(lives_proc_thread_t);
+lives_result_t lives_proc_thread_execute(lives_proc_thread_t);
+lives_result_t lives_funcinst_execute(lives_funcinst_t *finst);
 
 boolean lives_proc_thread_queue(lives_proc_thread_t, lives_thread_attr_t);
 

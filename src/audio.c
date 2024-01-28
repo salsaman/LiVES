@@ -2950,19 +2950,20 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 static lives_proc_thread_t ana_lpt = NULL;
 static lives_proc_thread_t ana_lpt2 = NULL;
 
+
 void audio_analyser_start(int source) {
   if (source == AUDIO_SRC_EXT) {
     if (!ana_lpt) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-                WEED_SEED_BOOLEAN, "p", aplayer);
+						WEED_SEED_BOOLEAN, "v");
       lives_proc_thread_set_cancellable(ana_lpt);
     }
   } else {
     if (!ana_lpt2) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_lpt2 = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-                 WEED_SEED_BOOLEAN, "p", aplayer);
+						 WEED_SEED_BOOLEAN, "v");
       lives_proc_thread_set_cancellable(ana_lpt2);
     }
   }

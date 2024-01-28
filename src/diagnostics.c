@@ -46,7 +46,7 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
   if (finst) {
     char *fmtstring, *parvals;
     lives_funcdef_t *fdef = finst->funcdef;
-    weed_seed_t _t ret_type = fdef->return_type;
+    weed_seed_t ret_type = fdef->return_type;
     funcsig_t sig = fdef->funcsig;
     const char *funcname = fdef->funcname;
     weed_seed_t st;
@@ -64,8 +64,6 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
     lives_free(parvals);
 
     g_print("%s\n", fmtstring);
-
-    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
 
     if (finst && finst->paramnames) {
       int pn = 0;
@@ -104,7 +102,7 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
 
 
 LIVES_GLOBAL_INLINE char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
-  return lives_func_inst_show_func_call(lives_proc_thread_get_initial_func_inst(lpt));
+  return lives_funcinst_show_func_call(lives_proc_thread_get_initial_funcinst(lpt));
 }
 
 
@@ -131,7 +129,7 @@ char *cl_flags_desc(uint64_t clflags) {
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PRIORITY");
   if (clflags & HOOK_OPT_ONESHOT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "ONESHOT");
-  if (clflags & HOOK_OPT_PERSISTENT)
+  if (clflags & HOOK_CB_PERSISTENT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PERSISTENT");
   if (clflags & HOOK_OPT_IGNORE_AFTER_FALSE)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "IGNORE AFTER FALSE RETURN");

@@ -58,6 +58,8 @@ typedef struct {
 #include "widget-helper-gtk.h"
 #endif
 
+
+#
 /////////////// GUI threading parts ////////////////
 
 typedef weed_plantptr_t lives_proc_thread_t;
@@ -66,7 +68,7 @@ void unlock_lpt(lives_proc_thread_t);
 
 // fg service calls //
 
-void fg_service_call(lives_proc_thread_t, void *retval);
+void fg_service_call(lives_funcinst_t *);
 
 boolean fg_service_fulfill(void);
 boolean fg_service_fulfill_cb(void *dummy);

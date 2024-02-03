@@ -41,8 +41,8 @@ static pthread_mutex_t gmci_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
 static volatile int cprio = PRIO_HIGH;
-static pthread_mutex_t lpt_mutex = PTHREAD_MUTEX_INITIALIZER;
-static volatile lives_proc_thread_t lpttorun = NULL;
+static pthread_mutex_t finst_mutex = PTHREAD_MUTEX_INITIALIZER;
+static volatile lives_funcinst_t *finsttorun = NULL;
 
 static boolean _lives_widget_context_update(void);
 static boolean _lives_widget_process_updates(LiVESWidget *);
@@ -1102,7 +1102,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
       if (fg_service_source && cprio == PRIO_HIGH)
         lives_source_set_priority(fg_service_source, PRIO_LOW);
 
-    if (!lpttorun) ret = _lives_widget_context_iteration(ctx, may_block);
+    if (!finsttorun) ret = _lives_widget_context_iteration(ctx, may_block);
 
     if (mainw)
       if (fg_service_source && cprio == PRIO_HIGH)
@@ -1113,71 +1113,37 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
 
 
 boolean fg_service_fulfill(void) {
-  lives_proc_thread_t lptr = NULL;
-  boolean is_fg_service = FALSE;
+  lives_funcinst_t *finst = finsttorun;
 
-  lptr = lpttorun;
-
-  if (lptr) {
-    if (lives_proc_thread_ref(lptr) > 1) {
-      /* if (mainw->debug) { */
-      /*   char *fcall = lives_proc_thread_show_func_call(lptr); */
-      /*   g_print("fulfill %s\n", fcall); */
-      /*   lives_free(fcall); */
-      /*   //mainw->debug_ptr = lptr; */
-      /* } */
-      if (!lives_proc_thread_is_queued(lptr)) {
-        lives_proc_thread_unref(lptr);
-        lptr = NULL;
-      }
-    } else lptr = NULL;
+  if (finst) {
+    lives_proc_thread_t lpt;
+    lives_funcinst_execute(finst);
+    if (finst->disposition == DISPOSITION_STACKED)
+      lpt = CL_DATA(finst, adder);
+    else lpt = LPT_DATA(finst, dispatcher);
+    lives_proc_thread_force_resume(lpt);
+    finsttorun = NULL;
+    return TRUE;
   }
 
-  if (!lptr || lives_proc_thread_is_running(lptr)
-      || lives_proc_thread_is_done(lptr, FALSE)) {
-    if (lptr) lives_proc_thread_unref(lptr);
-
-    if (mainw->global_hook_stacks) {
-      if (!pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
-        if (mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
-          boolean is_active;
-          pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
-          if (THREADVAR(fg_service)) {
-            is_fg_service = TRUE;
-          } else THREADVAR(fg_service) = TRUE;
-          is_active = lives_hooks_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK);
-          if (!is_fg_service) THREADVAR(fg_service) = FALSE;
-          return is_active;
-        }
-        pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
-        return FALSE;
+  if (mainw->global_hook_stacks) {
+    if (!pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
+      if (mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
+	boolean is_active;
+	boolean is_fg_service = THREADVAR(fg_service);
+	pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+	if (!is_fg_service) THREADVAR(fg_service) = TRUE;
+	is_active = lives_hooks_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK);
+	if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+	return is_active;
       }
-      // if we cannot get a lock on the hook_stack, we assume it is busy
-      return TRUE;
+      pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+      return FALSE;
     }
-    return FALSE;
+    // if we cannot get a lock on the hook_stack, we assume it is busy
+    return TRUE;
   }
-
-  if (THREADVAR(fg_service)) is_fg_service = TRUE;
-  else THREADVAR(fg_service) = TRUE;
-
-  lpttorun = NULL;
-  lives_proc_thread_execute(lptr);
-
-  if (!is_fg_service) THREADVAR(fg_service) = FALSE;
-  if (!pthread_mutex_trylock(&lpt_mutex)) {
-    if (lpttorun == lptr) lpttorun = NULL;
-    pthread_mutex_unlock(&lpt_mutex);
-  }
-
-  //
-
-  lives_proc_thread_unref(lptr);
-#if USE_RPMALLOC
-  if (rpmalloc_is_thread_initialized())
-    rpmalloc_thread_collect();
-#endif
-  return TRUE;
+  return FALSE;
 }
 
 
@@ -1248,11 +1214,11 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
     is_active = FALSE;
 
-    if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
+    if (finsttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
       is_active = fg_service_fulfill();
     if (is_active) {
       cprio = PRIO_HIGH;
-      if (gui_loop_tight && !mainw->do_ctx_update && !lpttorun
+      if (gui_loop_tight && !mainw->do_ctx_update && !finsttorun
           && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
         if (!pthread_mutex_trylock(&lpt_mutex)) {
           lives_widget_context_iteration(NULL, FALSE);
@@ -1286,7 +1252,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       pthread_yield();
       lives_microsleep;
     } else {
-      if (lpttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
+      if (finsttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
         continue;
 
       lives_nanosleep(NSLEEP_TIME);
@@ -1325,7 +1291,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       // we have and lkow priority
       // idling for some time will switch to low,
       // activity, or request by bg threadd will kick back up to high
-      if (!lpttorun) {
+      if (!finsttorun) {
         // skip if this if we a have a direct service to run
         if (!mainw->go_away && mainw->is_ready) {
           if (!pthread_mutex_trylock(&lpt_mutex)) {
@@ -1341,7 +1307,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
       if (lives_widget_context_pending(NULL)) {
         lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 1);
         lives_widget_context_update();
-        if (!lpttorun) lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 6);
+        if (!finsttorun) lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT << 6);
       } else lives_proc_thread_wait(mainw->def_lpt, LOW_PRIO_WAIT);
     }
   }
@@ -2017,45 +1983,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget * 
 }
 
 
-void unlock_lpt(lives_proc_thread_t lpt) {
-  if (!pthread_mutex_trylock(&lpt_mutex)) {
-    if (lpttorun == lpt) lpttorun = NULL;
-    pthread_mutex_unlock(&lpt_mutex);
-  }
-}
-
-static void wait_for_fg_response(lives_proc_thread_t lpt) {
+static void wait_for_fg_response(void) {
   GET_PROC_THREAD_SELF(self);
-  //volatile boolean bvar = FALSE;
-  boolean do_cancel = FALSE;
-
-  //lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
-
-  // setting this, we trigger the main thread to run lpt in fg_service_fulfill)
-  lpttorun = lpt;
-
-  // wait for main thread to pick it up and set PREPARING state
-  lives_microsleep_until_nonzero((do_cancel = lives_proc_thread_should_cancel(lpt))
-                                 || lives_proc_thread_is_preparing(lpt)
-                                 || lives_proc_thread_is_running(lpt)
-                                 || lives_proc_thread_is_done(lpt, FALSE));
-
-  // once we unlock this, a) main thread can complete lpttorun and nullify lpttorun
-  // this means it already made a local copy of lpttorun; it will oly nullify lpttoru if it
-  // still has the saem value
-  //
-  // another bg thread can now grab lpt_mutex, and it will set lpttorun to NULL, then to its lpt
-  // this is fine, it will block waiting for PREPARING, with mutex locked
-  pthread_mutex_unlock(&lpt_mutex);
-
-  // now we wait for our lpt to finish
-  lives_microsleep_while_false(do_cancel || lives_proc_thread_should_cancel(self) || lives_proc_thread_is_done(lpt, FALSE));
-
-  // if we dont get mutex lock, then either main_thread will reset it or another bg thread has lock and will reset it
-  // try to lock lpt_mutex, if we succeed, check if lpttorun == lpt, if so set lpttorun to NULL, unlock lpt_mutex
-  // main thread should have set lpttorun to NULL after executing it, but it is possible the whole process
-  // finsihed before we unlocked, so that would have been skipped
-  if (lpt) unlock_lpt(lpt);
+  // now we pause - main thread will wake either adder or dispatcher after running the task
+  if (!lives_proc_thread_get_resume_requested(self)) lives_proc_thread_pause();
+  else lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
 }
 
 
@@ -2205,50 +2137,58 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
 
 // the purpose of this function is to force a lives_proc_thread to be run by the foreground
 // (i.e graphics) thread. Background threads which need to do GUI updates should use this
-// to run a lpt. Also note that fg service calls may not be nested,
-// instead the calls may be deferred and run in sequence
-void fg_service_call(lives_proc_thread_t lpt, void *retloc) {
-  lives_proc_thread_ref(lpt);
-  if (!lpt) return;
+// to run a lpt.
+void fg_service_call(lives_funcinst_t *finst) {
+  static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
+  boolean is_quick = FALSE;
+  // we may have either of 2 types of funcinst
+  // - stacked, which originate from a proc_thread deferral gui hook
+  // -- for example when a proc thread is exiting, these are low priotity
+  // - waiting - these are for trivial calls like updating a label text
+  //  - as soom as we get this type it is executed, these should all be oneshot so
+G1  // funcinst is freed automatically
+  //
+  // we want to favour the latter type, so before trying for the mutex
+  // - the latter type writelock a rwlock, lock the mutex then unlock rwlock
+  // - the former type try rdlock, and if they get it, trylock mutex, unlock rwlock until they get mutex
 
-  if (is_fg_thread()) {
-    // should not happen, but just in case
-    lives_proc_thread_execute(lpt);
-    lives_proc_thread_unref(lpt);
-    return;
-  } else {
-    GET_PROC_THREAD_SELF(self);
-    fg_service_wake();
-    // wait here until we get the mutex - this means any thread ahead of us has waited
-    // its lpt has passed at least to prepared, or it is locked transiently while lpttorun is nullified
-    while (pthread_mutex_trylock(&lpt_mutex)) {
-      if (lives_proc_thread_get_cancel_requested(lpt)
-          || lives_proc_thread_get_cancel_requested(self)) {
-        //lives_proc_thread_cancel(lpt);
-        lives_proc_thread_unref(lpt);
-        return;
-      }
-      lives_microsleep;
-    }
-    // once we have lock, no other thread can reset lpttotrun so we will do that here
-    // then in wati_for_fg_response, we will set lpttorun to our lpt, and block until
-    // state is at least PREPENDING (or CANCELLED !)
+  
+  if (!finst) return;
 
-    // resetting this avoids main_thread rechecking the completed request
-    lpttorun = NULL;
+  fg_service_wake();
 
-    if (lives_proc_thread_should_cancel(lpt)) {
-      lives_proc_thread_unref(lpt);
-      pthread_mutex_unlock(&lpt_mutex);
-      return;
-    }
-
-    weed_set_voidptr_value(lpt, LIVES_LEAF_RETLOC, retloc);
-    weed_set_plantptr_value(lpt, LIVES_LEAF_DISPATCHER, self);
-    wait_for_fg_response(lpt);
-
-    lives_proc_thread_unref(lpt);
+  if (finst->disposition == DISPOSITION_WAITING) {
+    is_quick = TRUE;
+    pthread_rwlock_wrlock(&rwlock);
   }
+
+  while (1) {
+    if (is_quick || !pthread_rwlock_tryrdlock(&rwlock)) { 
+      if (!pthread_mutex_trylock(&finst_mutex)) {
+	pthread_rwlock_unlock(&rwlock);
+	break;
+      }
+      if (!is_quick) pthread_rwlock_unlock(&rwlock);
+      if (lives_proc_thread_get_cancel_requested(self)) {
+	if (is_quick) pthread_rwlock_unlock(&rwlock);
+	return;
+      }
+    }
+    lives_microsleep;
+  }
+
+  // once we have lock, no other thread can reset finsttotrun so we will do that here
+  // then call wait_for_fg_response
+
+  if (lives_proc_thread_should_cancel(self)) {
+    pthread_mutex_unlock(&finst_mutex);
+    return;
+  }
+
+  finsttorun = finst;
+
+  wait_for_fg_response(finst); 
+  pthread_mutex_unlock(&finst_mutex);
 }
 
 
@@ -13700,7 +13640,7 @@ boolean lives_widget_context_update(void) {
       return FALSE;
     } else {
       GET_PROC_THREAD_SELF(self);
-      lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(self);
+      lives_hook_stack_t **lpt_hooks = my_hook_stacks();
       // trip gui loop to high prio
       fg_service_wake();
       if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) {

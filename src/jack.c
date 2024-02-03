@@ -3653,7 +3653,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   lives_aplayer_set_data_len(jackd->inst, nframes);
   lives_aplayer_set_data(jackd->inst, (void *)back_buff);
 
-  lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), DATA_READY_HOOK);
+  lives_hooks_trigger(my_hook_stacks(), DATA_READY_HOOK);
 
   rbytes = nframes * jackd->num_input_channels * 4;
   jackd->seek_pos += rbytes;

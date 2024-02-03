@@ -311,7 +311,7 @@ void pre_analyse(weed_plant_t *elist) {
 
   for (; event; event = get_next_event(event)) {
     if (WEED_EVENT_IS_MARKER(event)) {
-      int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      int marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
       if (marker_type == EVENT_MARKER_RECORD_START) {
         // reset at recording break
         lives_freep((void **)&ststate);
@@ -353,7 +353,7 @@ void pre_analyse(weed_plant_t *elist) {
 
   for (; event; event = get_next_event(event)) {
     if (WEED_EVENT_IS_MARKER(event)) {
-      int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      int marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
       if (marker_type == EVENT_MARKER_RECORD_START) {
         // reset at recording break
         lives_freep((void **)&ststate);
@@ -478,7 +478,7 @@ void pre_analyse(weed_plant_t *elist) {
 static boolean has_recstart_between(weed_event_t *event, weed_event_t *nframe_event) {
   for (event = get_next_event(event); event != nframe_event; event = get_next_event(event)) {
     if (WEED_EVENT_IS_MARKER(event)) {
-      int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      int marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
       if (marker_type == EVENT_MARKER_RECORD_START) return TRUE;
     }
   }
@@ -656,7 +656,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         switch (etype) {
         case WEED_EVENT_TYPE_MARKER: {
-          int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+          int marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
           if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED
               || marker_type == EVENT_MARKER_RECORD_START) {
             // if event_list started as a recording then this will have been set for

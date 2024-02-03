@@ -89,6 +89,5 @@ char *dir_to_pieces(const char *dirnm);
 
 char *md5_print(void *md5sum);
 
-
 // experimental
 //size_t lives_strlen128(const char *s);

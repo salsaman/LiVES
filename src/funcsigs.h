@@ -328,13 +328,18 @@ void reg_funcsigs(int n, ...);
 #define EIGHT_PARAM_FUNCSIGS
 
 //////////////////////////////////////////////////////////////
-  
-#define REG_FUNCSIGS				\
-  ONE_PARAM_FUNCSIGS				\
-  TWO_PARAM_FUNCSIGS
 
 #undef ADD_FUNCSIG
 #define ADD_FUNCSIG(n,...) case FUNCSIG(n,__VA_ARGS__): {DEF_VARS(n,__VA_ARGS__) \
       _DC_(n,GET_CTYPES(n,__VA_ARGS__));FREE_CHARPTRS(n,__VA_ARGS__)} break;
+
+#define REG_FUNCSIGS ONE_PARAM_FUNCSIGS	TWO_PARAM_FUNCSIGS
+
+#define type_name(expr) (_Generic((expr), \
+				  boolean: "b", char*: "S", uint32_t: "u", int32_t: "i", \
+				  uint64_t: "U", int64_t: "I", float: "f", double: "d", \
+				  void*: "V", weed_funcptr_t: "F", const char *: "C", \
+				  weed_plant_t *: "P", default: "?"))
+// proxy = "X", blob = "B"
 
 #endif

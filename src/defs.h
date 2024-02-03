@@ -297,7 +297,7 @@ typedef lives_result_t(*lives_condfunc_f)(void *);
 #endif
 
 #define LIVES_DIR_SEP "/"
-#define LIVES_COPYRIGHT_YEARS "2002 - 2023"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2024"
 
 #if defined (IS_DARWIN) || defined (IS_FREEBSD)
 #ifndef off64_t
@@ -616,8 +616,9 @@ typedef enum {
 #define LIVES_LEAF_UID "uid"
 
 // TODO WEED_LEAF -> LIVES_LEAF
-#define WEED_LEAF_LIVES_TYPE "lives_type"
-#define WEED_LEAF_LIVES_SUBTYPE "subtype"
+#define LIVES_LEAF_TYPE "lives_type"
+#define LIVES_LEAF_SUBTYPE "subtype"
+//
 #define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
 #define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
 

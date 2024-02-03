@@ -41,8 +41,10 @@ typedef pthread_attr_t native_attr_t;
 #define LIVES_INTERRUPT_SIG SIGRTMIN+6 // 40
 
 void set_interrupt_action(int action);
-lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t);
+lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t, weed_plant_t *data);
 boolean lives_proc_thread_can_interrupt(lives_proc_thread_t);
+
+#define THRDNATIVE_CAN_INTERRUPT (1ull << 0)
 
 #define THRDNATIVE_CAN_CORRECT (1ull << 0)
 
@@ -105,7 +107,7 @@ typedef struct {
   uint64_t var_hook_hints, var_perm_hook_hints;
   int var_hook_match_nparams;
   lives_hook_stack_t *var_hook_stacks[N_NATIVE_HOOKS];
-  uint64_t hs_flag_mask;
+  uint64_t var_hs_flag_mask;
 
   // error handling
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
@@ -409,6 +411,9 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 // called with invalid args_fmt
 #define THRD_STATE_INVALID 	(1ull << 40)
 
+// if set, indicates that the pthread has interrupt (signals) unblocked
+#define THRD_OPT_CAN_INTERRUPT	(1ull << 48)
+
 // can be set to prevent state change hooks from being triggered
 #define THRD_BLOCK_HOOKS	(1ull << 60)
 
@@ -500,13 +505,12 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_ACTIVE_FUNCINST "actve_finst"
 #define LIVES_LEAF_INIT_FINSTLIST "int_finstlist"
 #define LIVES_LEAF_ACTIVE_FINSTLIST "act_finstlist"
-
+#define LIVES_LEAF_DISPATCHER "_dispatcher"
+  
 #define LIVES_LEAF_STATE_RWLOCK "state_rwlock" ///< ensures state is accessed atomically
 #define LIVES_LEAF_DESTRUCT_RWLOCK "destruct_rwlock" ///< ensures destruct is accessed atomically
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
-#define LIVES_LEAF_EXT_CB_LIST "ext_cb_list" // list of closures added to other thread hook_stacks
-#define LIVES_LEAF_EXT_CB_MUTEX "ext_cb_mutex" // 
 #define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread
 #define LIVES_LEAF_DATA_BOOK "data_book" // scratch data area for proc_threads
 
@@ -527,10 +531,6 @@ uint64_t get_worker_status(uint64_t tid);
 
 // this is only set for hook callbacks added witj HOOK_CB_FREEFUNCS - see description there
 #define LIVES_THRDATTR_HAS_FREEFUNCS		(1ull << 2)
-
-// if set, the thread will respond to interrupt signals
-// this has to be set on a per function basis
-#define THRD_OPT_CAN_INTERRUPT 			(1ull << 3)
 
 // do not wait at sync points
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 16)
@@ -622,7 +622,7 @@ ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
 typedef struct {
   uint64_t nsec;
-  boolean ignore_busy;
+  boolean ign_busy;
   volatile boolean dontcare;
   boolean is_busy;
   lives_cancel_type_t cancel_type; // hard, normal, dontcare
@@ -743,7 +743,7 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 lives_result_t lives_proc_thread_execute(lives_proc_thread_t);
 lives_result_t lives_funcinst_execute(lives_funcinst_t *finst);
 
-boolean lives_proc_thread_queue(lives_proc_thread_t, lives_thread_attr_t);
+boolean lives_proc_thread_queue(lives_proc_thread_t);
 
 //#define DEBUG_LPT_REFS
 #ifdef DEBUG_LPT_REFS
@@ -855,7 +855,6 @@ boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_idle_paused(lives_proc_thread_t);
 boolean lives_proc_thread_was_cancelled(lives_proc_thread_t);
 boolean lives_proc_thread_paused_idling(lives_proc_thread_t);
-boolean lives_proc_thread_is_subordinate(lives_proc_thread_t);
 
 #define LPT_ERR_NONE		0 // no error
 #define LPT_ERR_MINOR		1 // minor errors do not stop processing
@@ -901,7 +900,7 @@ void lives_proc_thread_set_line_ref(lives_proc_thread_t self, int line, boolean 
 void lives_proc_thread_set_file_ref(lives_proc_thread_t self, char *file, boolean over);
 void lives_proc_thread_set_errnum(lives_proc_thread_t self, int num);
 void lives_proc_thread_set_errmsg(lives_proc_thread_t self, const char *msg);
-void  lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev);
+void lives_proc_thread_set_errsev(lives_proc_thread_t self, int sev);
 
 // test if lpt is in a hook stack
 boolean lives_proc_thread_is_stacked(lives_proc_thread_t);
@@ -937,7 +936,6 @@ boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 // For non-cancellable threads, this is ignored;  use lives_proc_thread_dontcare instead.
 boolean lives_proc_thread_request_cancel(lives_proc_thread_t, boolean dontcare);
 
-
 boolean _lives_proc_thread_cancel(lives_proc_thread_t self, char *file_ref,
                                   int line_ref);
 
@@ -967,6 +965,12 @@ boolean lives_proc_thread_get_pause_requested(lives_proc_thread_t);
 // ask a paused proc_thread to resume. Processing only continues after this has been called, and any
 // paused and unpaused hook callbacks have returned
 boolean lives_proc_thread_request_resume(lives_proc_thread_t);
+
+// this is used in the case where we know target may pause and we want to wake it or prevent it
+// from pausing, - if not paused, the resume request state is left active
+// if target decides not to pause, it should check and clear this state
+boolean lives_proc_thread_force_resume(lives_proc_thread_t);
+
 boolean lives_proc_thread_get_resume_requested(lives_proc_thread_t);
 boolean lives_proc_thread_resume(lives_proc_thread_t self);
 
@@ -982,9 +986,6 @@ boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
 // if called on a proc_thread which is running a hook callback, the callback will be removed from the stack
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
-// as above but takes address of ptr to be nullified when the thread is about to be freed
-boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t, void **nullif);
-
 boolean lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec);
 boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, boolean have_lock);
 
@@ -996,7 +997,6 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
 #define MM_RETURN		2
 // error on mismatch
 #define MM_ERROR		3
-
 
 lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t,
     uint64_t sync_idx, int mm_op, int64_t timeout_nsec);

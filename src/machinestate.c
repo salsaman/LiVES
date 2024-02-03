@@ -1193,11 +1193,19 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
 
 /////////////// move to other file ////
 
+
+LIVES_GLOBAL_INLINE weed_plant_t *weed_plant_t *lives_plant_get_subtype(weed_plant_t *plant, int subtype) {
+  if (!IS_LIVES_PLANT(plant)) return 0;
+  return weed_get_int64_vaue(plant. LIVES_LEAF_SUBTYPE, NULL);
+}
+
+
 LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int subtype) {
   weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
-  weed_set_int_value(plant, WEED_LEAF_LIVES_SUBTYPE, subtype);
+  weed_set_int64_value(plant, LIVES_LEAF_SUBTYPE, subtype);
   weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
   lives_leaf_set_rdonly(plant, LIVES_LEAF_UID, TRUE, TRUE);
+  weed_leaf_set_undeleteable(plant, LIVES_LEAF_UID, TRUE);
   return plant;
 }
 

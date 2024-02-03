@@ -64,7 +64,9 @@ typedef struct {
 // weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
 #define WEED_PLANT_LIVES 31337
 
-#define IS_LIVES_PLANT(type) ((type) == WEED_PLANT_LIVES)
+#define IS_LIVES_PLANT_TYPE(type) ((type) == WEED_PLANT_LIVES)
+
+#define IS_LIVES_PLANT(plant) (plant && IS_LIVES_PLANT_TYPE(weed_plant_get_type(plant)))
 
 #define LIVES_PLANT_MESSAGE 1
 #define LIVES_PLANT_WIDGET 2
@@ -87,13 +89,21 @@ typedef struct {
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
 
-#define IS_PROC_THREAD(type, subtype) (IS_LIVES_PLANT(type) && (subtype) == LIVES_PLANT_PROC_THREAD)
+#define LIVES_PLANT_BLUEPRINT 2048
+#define LIVES_PLANT_VALUE 2049
+
+// valplant_details
+#define STRUCT_ADAPTOR 999
+
+#define IS_PROC_THREAD(type, subtype) (IS_LIVES_PLANT_TYPE(type) && (subtype) == LIVES_PLANT_PROC_THREAD)
 
 #define LIVES_PROC_DIR "/proc/self/task"
 
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 weed_plant_t *lives_plant_new_with_refcount(int subtype);
+
+weed_plant_t *lives_plant_get_subtype(weed_plant_t *, int subtype);
 
 void lives_get_randbytes(void *ptr, size_t size);
 

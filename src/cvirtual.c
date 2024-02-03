@@ -1304,7 +1304,7 @@ queue_lpt:
       } else {
         saveargs->pixbuf = pixbuf;
       }
-      lives_proc_thread_queue(saver_procthread, 0);
+      lives_proc_thread_queue(saver_procthread);
 
       if (++count == STRG_CHECK) {
         if (!check_storage_space(-1, TRUE)) break;

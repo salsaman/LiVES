@@ -85,6 +85,8 @@ typedef weed_plant_t lives_contract_t;
 
 #define LIVES_PLANT_BUNDLE 21212
 
+weed_plant_t *valplant_for_struct(const char *stname, void *struc);
+
 #define HOOKFUNCS_ONLY
 #include "threading.h"
 #ifdef HOOKFUNCS_ONLY

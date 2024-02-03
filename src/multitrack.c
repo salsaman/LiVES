@@ -7590,11 +7590,11 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
     event = get_first_event(mt->event_list);
     while (event) {
       if (WEED_EVENT_IS_MARKER(event)) {
-        if (weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL) == EVENT_MARKER_BLOCK_START) {
+        if (weed_get_int_value(event, LIVES_LEAF_TYPE, NULL) == EVENT_MARKER_BLOCK_START) {
           block_marker_tc = get_event_timecode(event);
           lives_freep((void **)&block_marker_tracks);
           block_marker_tracks = weed_get_int_array(event, WEED_LEAF_TRACKS, NULL);
-        } else if (weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL)
+        } else if (weed_get_int_value(event, LIVES_LEAF_TYPE, NULL)
                    == EVENT_MARKER_BLOCK_UNORDERED) {
           block_marker_uo_tc = get_event_timecode(event);
           lives_freep((void **)&block_marker_uo_tracks);
@@ -18800,12 +18800,12 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
 
     case WEED_EVENT_TYPE_MARKER:
       // check marker values
-      if (!weed_plant_has_leaf(event, WEED_LEAF_LIVES_TYPE)) {
+      if (!weed_plant_has_leaf(event, LIVES_LEAF_TYPE)) {
         ebuf = rec_error_add(ebuf, "Unknown marker type", -1, tc);
         delete_event(event_list, event);
         was_deleted = TRUE;
       } else {
-        marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+        marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
         if (marker_type != EVENT_MARKER_BLOCK_START && marker_type != EVENT_MARKER_BLOCK_UNORDERED &&
             marker_type != EVENT_MARKER_RECORD_END && marker_type != EVENT_MARKER_RECORD_START) {
           ebuf = rec_error_add(ebuf, "Unknown marker type", marker_type, tc);
@@ -19291,7 +19291,7 @@ void remove_markers(weed_plant_t *event_list) {
   while (event) {
     event_next = get_next_event(event);
     if (WEED_EVENT_IS_MARKER(event)) {
-      marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
       if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
         delete_event(event_list, event);
       }

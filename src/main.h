@@ -132,6 +132,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 // for pdata, real flags are readonly, undeletable, free on delete
 #define WEED_SEED_PROXY 1400
 #define WEED_SEED_CONST_CHARPTR 1401
+#define WEED_SEED_BLOB_DATA 1402
 
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
@@ -214,6 +215,89 @@ extern pthread_t main_thread;
 
 extern struct lconv *lconvx;
 extern locale_t oloc, nloc;
+
+typedef int funcinst_module_type;
+
+#include "funcsigs.h"
+
+typedef enum {
+	      // not attached to a proc_thread, not stacked
+	      DISPOSITION_INERT = 0,
+	      // queued and wull be acttioned unless cancelled / removed
+	      DISPOSITION_WAITING,
+	      // being executed by a thread
+	      DISPOSITION_ACTIVE,
+	      // has completed bur is waiting on some condition (eg. chain completion)
+	      DISPOSITION_IDLING,
+	      // is has been added as a hook callback
+	      DISPOSITION_STACKED,
+	      // will only be activated under certain circumstances (e.g am error handler)
+	      DISPOSITION_CONDITIONAL,
+	      // either the funcinst has been processed or been discarded / replaced
+	      // the valye of requesr_response indicates the outcome
+	      DISPOSITION_CONSUMED,
+	      DISPOSITION_CANCELLED,
+	      DISPOSITION_ERROR,
+} funcinst_disposition;
+
+typedef struct {
+  uint64_t uid;
+  uint64_t flags; // flags can include static (do not free)
+  int category; // category type for function (0 for general)
+
+  const char *funcname; // optional
+  char *desc; // optional func description
+  //
+  lives_funcptr_t function;
+
+  int return_type;
+
+  funcsig_t funcsig; //
+  char **paramdesc; // optional param descriprions
+  
+  // locator
+  const char *file;
+  int line;
+} lives_funcdef_t;
+
+//typedef struct _funcinst lives_funcinst_t;
+
+//struct _funcinst {
+
+#define DEF_STRUCT(stname, sttype, ...)			\
+  typedef struct stname {				\
+    __VA_ARGS__						\
+  } sttype;						\
+  const char  *sttype##_strcrdef = #__VA_ARGS__;
+
+
+DEF_STRUCT(_funcinst, lives_funcinst_t, 
+	   uint64_t uid;
+	   lives_funcdef_t *funcdef;
+
+	   volatile funcinst_disposition disposition;
+	   //disposition_changed_cb
+
+	   uint64_t flags;
+  
+	   char **paramnames;
+	   weed_plant_t *params;
+
+	   // can be a pointer to a variable to return value in
+	   // if NULL,will be allocated and return value copied
+	   // value can be read in completed hook for queud funcinst
+	   // or between hook triggers for stacked funcinst
+	   void *retloc;
+
+	   void *next, *prev;
+
+	   int depth, chain_idx;
+  
+	   // depending on the intended DISPOSITION, one of several modules can be attached to
+	   // the funcinst. The modules provide addutuinal information once a funcinst becomes active
+	   funcinst_module_type mod_type;
+	   void *module;)
+//};
 
 #include "widget-helper.h"
 

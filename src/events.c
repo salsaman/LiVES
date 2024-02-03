@@ -1425,7 +1425,7 @@ weed_event_list_t *append_marker_event(weed_event_list_t *event_list,
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
   weed_set_int_value(event, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_MARKER);
 
-  weed_set_int_value(event, WEED_LEAF_LIVES_TYPE, marker_type);
+  weed_set_int_value(event, LIVES_LEAF_TYPE, marker_type);
 
 #ifdef DEBUG_EVENTS
   g_print("adding marker event %p at tc %"PRId64"\n", event, tc);
@@ -1445,7 +1445,7 @@ weed_plant_t *insert_marker_event_at(weed_event_list_t *event_list, weed_plant_t
   int i;
 
   weed_set_int_value(event, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_MARKER);
-  weed_set_int_value(event, WEED_LEAF_LIVES_TYPE, marker_type);
+  weed_set_int_value(event, LIVES_LEAF_TYPE, marker_type);
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
 
   if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
@@ -1459,7 +1459,7 @@ weed_plant_t *insert_marker_event_at(weed_event_list_t *event_list, weed_plant_t
     switch (marker_type) {
     case EVENT_MARKER_BLOCK_START:
     case EVENT_MARKER_BLOCK_UNORDERED:
-      if (WEED_EVENT_IS_MARKER(at_event) && (weed_get_int_value(at_event, WEED_LEAF_LIVES_TYPE, NULL) == marker_type)) {
+      if (WEED_EVENT_IS_MARKER(at_event) && (weed_get_int_value(at_event, LIVES_LEAF_TYPE, NULL) == marker_type)) {
         // add to existing event
         int num_tracks;
         int *tracks = weed_get_int_array_counted(at_event, WEED_LEAF_TRACKS, &num_tracks);
@@ -2602,7 +2602,7 @@ static void event_list_close_gaps(weed_event_list_t *event_list, frames_t play_s
     }
 
     if (WEED_EVENT_IS_MARKER(event)) {
-      marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
       if (marker_type == EVENT_MARKER_RECORD_END) {
         rec_end_tc = tc;
         delete_event(event_list, event);
@@ -3889,7 +3889,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     rec_delta_tc = 0;
     event = cfile->next_event;
     if (WEED_EVENT_IS_MARKER(event)) {
-      if (weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, &weed_error) == EVENT_MARKER_RECORD_START) {
+      if (weed_get_int_value(event, LIVES_LEAF_TYPE, &weed_error) == EVENT_MARKER_RECORD_START) {
         if (cfile->old_frames > 0) {
           /// tc delta is only used if we are rendering to an existing clip; otherwise resampling should have removed the event
           /// but just in case, we ignore it
@@ -4002,7 +4002,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
     switch (etype) {
     case WEED_EVENT_TYPE_MARKER: {
-      int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, &weed_error);
+      int marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, &weed_error);
       if (marker_type == EVENT_MARKER_RECORD_START) {
         /// tc delta is only used if we are rendering to an existing clip; otherwise resampling should have removed the event
         /// but just in case, we ignore it
@@ -4940,7 +4940,7 @@ frames_t count_resampled_events(weed_event_list_t *event_list, double fps) {
       }
     } else {
       if (etype == WEED_EVENT_TYPE_MARKER) {
-        marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+        marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
         if (marker_type == EVENT_MARKER_RECORD_END) {
           // add (resampled) frames for one recording stretch
           if (seg_start) rframes += 1 + ((double)(seg_end_tc - seg_start_tc)) / TICKS_PER_SECOND_DBL * fps;
@@ -6251,7 +6251,7 @@ LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timeco
 
     etype = get_event_type(event);
     if (etype == WEED_EVENT_TYPE_MARKER) {
-      //int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      //int marker_type = weed_get_int_value(event, LIVES_LEAF_TYPE, NULL);
       /*   if (marker_type == EVENT_MARKER_BLOCK_START) { */
       /*     ref_tc = tc; */
       /*     event = get_next_event(event); */

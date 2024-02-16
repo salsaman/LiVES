@@ -481,8 +481,13 @@ struct _weed_leaf_nopadding {
 #define WEED_SEED_FLOAT			8 // alias for WEED_SEED_DOUBLE
 
 #define WEED_SEED_float			WEED_SEED_FLOAT
-
   /* end annotation types */
+
+  /* informational types - convenience values */
+  /* for internal use by applications - not valid for libweed functions */
+#define WEED_SEED_VARIADIC		32
+#define WEED_SEED_VA_LIST		33
+  /* end informational types */
   
 #define WEED_SEED_FIRST_NON_PTR_TYPE	WEED_SEED_INT
 #define WEED_SEED_LAST_NON_PTR_TYPE	WEED_SEED_UINT64

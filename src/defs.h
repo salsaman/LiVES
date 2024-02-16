@@ -227,7 +227,10 @@ typedef volatile int lives_sigatomic;
 #define LIVES_RESULT_ERROR	-2
 #define LIVES_RESULT_CANCELLED	-3
 #define LIVES_RESULT_TIMEDOUT	-4
-#define LIVES_RESULT_NOPERM	-5S
+#define LIVES_RESULT_NOPERM	-5
+
+// return value that is not returned
+#define LIVES_RESULT_MU	((lives_result_t) (nan("OM")) / 0.)
 
 typedef int lives_result_t;
 

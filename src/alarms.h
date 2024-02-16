@@ -127,6 +127,9 @@ void thread_signal_establish(int sig, lives_sigfunc_t sigfunc);
 void thrd_signal_unblock(int sig);
 void thrd_signal_block(int sig);
 
+#define _AW(is_fg) _DW0(if (is_fg) fg_service_fulfill(); lives_millisleep;)
+#define LIVES_ACTIVE_WAIT_FOR(...)_DW0(boolean fg=is_fg_thread();while(!(__VA_ARGS__))_AW(fg))
+
 ////////////////// spinwait /////
 
 // wait for 1 nsec

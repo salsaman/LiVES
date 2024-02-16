@@ -25,6 +25,8 @@ char *lives_strndup_printf(const char *fmt, int maxlen, ...) WARN_UNUSED;
 char *lives_strdup_printf(const char *fmt, ...) WARN_UNUSED;
 char *lives_strdup_vprintf(const char *fmt, va_list ap) WARN_UNUSED;
 
+#define LSPF(fmt, ...) (lives_strdup_printf((fmt), __VA_ARGS__))
+
 char *lives_string_tolower(const char *);
 
 size_t lives_strlen(const char *);

@@ -1194,13 +1194,13 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
 /////////////// move to other file ////
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *weed_plant_t *lives_plant_get_subtype(weed_plant_t *plant, int subtype) {
+LIVES_GLOBAL_INLINE int64_t weed_plant_t *lives_plant_get_subtype(weed_plant_t *plant) {
   if (!IS_LIVES_PLANT(plant)) return 0;
   return weed_get_int64_vaue(plant. LIVES_LEAF_SUBTYPE, NULL);
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int subtype) {
+LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int64_t subtype) {
   weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
   weed_set_int64_value(plant, LIVES_LEAF_SUBTYPE, subtype);
   weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
@@ -1210,14 +1210,14 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int subtype) {
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index) {
+LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int64_t subtype, int64_t index) {
   weed_plant_t *plant = lives_plant_new(subtype);
   weed_set_int64_value(plant, WEED_LEAF_INDEX, index);
   return plant;
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_refcount(int subtype) {
+LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_refcount(int64_t subtype) {
   weed_plant_t *plant = lives_plant_new(subtype);
   weed_add_refcounter(plant);
   return plant;

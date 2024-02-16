@@ -148,10 +148,10 @@ NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_native_function_t,)
 
 // condition_check results
 
-// indicates an invalid / empty cond
-#define NIRVA_COND_INVALID		-2
 // error occured while evalutaing a condition
-#define NIRVA_COND_ERROR		-1
+#define NIRVA_COND_ERROR		-2
+// indicates an invalid / empty cond
+#define NIRVA_COND_INVALID		-1
 // condition failed
 #define NIRVA_COND_FAIL			0
 // condition succeeded
@@ -167,20 +167,23 @@ NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_native_function_t,)
 #define NIRVA_COND_FORCE		16
 // force condition fail, exit and do not retry
 #define NIRVA_COND_ABANDON		17
-/////
+
+///// max 255
 
 // responses to nirva_request hooks
 
-#define NIRVA_REPLY_NONE		NIRVA_COND_FAIL
-
-#define NIRVA_REPLY_NO			NIRVA_COND_INVALID
-#define NIRVA_REPLY_YES			NIRVA_COND_WAIT_RETRY
-#define NIRVA_REPLY_FULFILLED		NIRVA_COND_SUCCESS_
-#define NIRVA_REPLY_ERROR		NIRVA_COND_ERROR
-#define NIRVA_REPLY_CANCELLED		NIRVA_COND_ABANDON
 // cannot be responded to immediately, response will be received via hook callback
 // security check failed, request is denied
-#define NIRVA_REPLY_NEEDS_PRIVELEGE  	NIRVA_COND_FORCE
+#define NIRVA_REPLY_NEEDS_PRIVELEGE  	-4
+#define NIRVA_REPLY_CANCELLED		-3
+#define NIRVA_REPLY_ERROR		-2
+#define NIRVA_REPLY_INVALID		-1
+
+#define NIRVA_REPLY_NO			0
+#define NIRVA_REPLY_YES			1
+#define NIRVA_REPLY_FULFILLED		2
+//
+#define NIRVA_REPLY_WAIT_RETRY		16
 
 // return values for non-conditional hook cbs
 #define NIRVA_HOOK_CB_LAST		NIRVA_COND_FAIL
@@ -1760,13 +1763,29 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // this is actually the HOOK_CB_REMOVED hook for the stack
                    // - all callbacks are force removed when an object is about to be recycled
                    // hook_stack is created on demand when a callback is added
-                   DESTRUCTION_HOOK, // hook_cb_remove, bundle_type == object_instance
 
                    // thread running the transform received a fatal signal
                    // DTL_NATIVE
                    THREAD_EXIT_HOOK,
 
-#define N_NATIVE_HOOKS 4
+#define N_NATIVE_HOOKS 3
+		   //
+		   // aside from native hooks and spontaneous hooks, there
+		   // are really only 3 actual hook stacks:
+		   DATA_CHANGE_HOOK,
+		   REQUEST_HOOK,
+                   CB_ADDED_HOOK,
+		   /* spontaneous hooks
+                   CONTRACT_BREACHED_HOOK,
+                   SYNC_ANNOUNCE_HOOK,
+                   SEGMENT_END_HOOK,
+                   SEGMENT_START_HOOK,
+                   ATTRS_UPDATED_HOOK,
+                   DATA_PREVIEW_HOOK,
+                   DATA_READY_HOOK,
+                   TRACE_HOOK,
+		   // total 14
+		   */
 
                    // The following are the standard hook points in the system
                    // all DATA_HOOKS must return "immedaitely"
@@ -1781,7 +1800,8 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    // the hook_stacks for these are in the structure, adding removing, triggering
                    // is done via a structure transform
-                   OBJECT_CREATED_HOOK, // object state / after (4)
+
+		   OBJECT_CREATED_HOOK, // object state / after (4)
 
                    INSTANCE_COPIED_HOOK,
 
@@ -1825,7 +1845,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    UPDATING_VALUE_HOOK,
 
                    VALUE_UPDATED_HOOK, //21,
-
+		   
                    // TRANSFORM lifecycle hooks
                    // these are triggered by transform state changes
                    // transforms begin in state UNQUEUED,
@@ -1842,14 +1862,13 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // after this, the transform will be returned to the caller with TX_RESULT updated
 
                    // these hook stacks are created on demand when a callback is added to a transform bundle
-
+		   
                    PREPARING_HOOK,  /// none or queued -> prepare **
 
                    PREPARED_HOOK,  /// prepare -> running ??
 
                    TX_START_HOOK, /// any -> running //25
 
-		   
 		   // the following are actually data hooks for status changes
 
                    ///
@@ -1862,6 +1881,8 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    COMPLETED_HOOK,   /// 27 running -> finished
 
                    FINISHED_HOOK,
+
+		   DESTRUCTION_HOOK,
 
                    /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
                    // and mey be actioned again
@@ -1928,14 +1949,6 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // attributes include the transform bundle, and details of the breach
                    CONTRACT_BREACHED_HOOK,
 
-                   //
-                   // this is a "self hook" meaning the object running the transform only should append to this
-                   // the calling thread will block until either: all callbacks return TRUE, or a "control variable" is set to TRUE
-                   // callbacks for this hook number must return boolean
-                   // hook_stack is in the thread instance, as it is a self hook, callbacks are added via functional code
-                   // and triggered by functional code
-                   SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until **
-
                    // functionals may trigger sync announcements at key points during their processing
                    // other threads can add callbacks for this and be advised when such a point is reached
 		   // or it can be set up as a staging hook for a target stack
@@ -1980,19 +1993,6 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // this hook_stack is held in the transform bundle
                    DATA_READY_HOOK,
 
-                   // adding a callback here will cause it to be called when a callback is removed (detached) from
-                   // a hook stack in the same bundle, the target_hook_type can be specified ot can be all
-                   HOOK_CB_DETACHING_HOOK,
-
-		   // if target stack is request and target is waiting, the target can set a wakeup callback hete
-		   // the hook is triggered when a callback is added to any request hook
-		   // the target can check which stack after waking and trigger it
-                   HOOK_CB_ADDED_HOOK,
-
-                   // this can be used for debugging, in a function put NIRVA_CALL(trace, "Reason")
-                   // the hook stack will be held in one or other structural subtypes
-                   TRACE_HOOK, //47
-
                    // REQUEST HOOK pattern -certain objects will provide request hook stacks, and requests
                    // can be added to these
                    // when a callback is added, WAIT_RETRY, YES, NO, or NEEDS_PRIVELEGE is returned
@@ -2010,7 +2010,6 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 		   // cab act on the request and send final replies to the adders,
 		   // (triggering reply sent callbacks), remove the request from the request stack
 		   // thus if a reply is important, the adder can wait fot reply_sent callback and check the req_reply
-
 		   
 		   // 
 		   // 

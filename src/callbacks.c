@@ -539,7 +539,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  lives_hooks_trigger(mainw->global_hook_stacks, DESTRUCTION_HOOK);
+  lives_hook_trigger(mainw->global_hook_stacks, DESTRUCTION_HOOK);
 
   if (prefs->workdir_tx_intent == OBJ_INTENTION_DELETE) {
     // delete the old workdir
@@ -10073,7 +10073,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_rvoid(mt_post_playback, -1, "v", mainw->multitrack);
+    main_thread_execute_rvoiud(mt_post_playback, "v", mainw->multitrack);
     BG_THREADVAR(hook_hints) = 0;
     mainw->current_file = current_file;
   }

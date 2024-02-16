@@ -15,6 +15,31 @@ typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
 typedef weed_plant_t *(*funcptr_plantptr_t)();
 
+/* typedef struct { */
+/*   weed_seed_t st; */
+/*   va_list vava; */
+/* } va_va; */
+
+/* va_va *make_va_va(weed_seed_t st, ...) { */
+/*   // params are st, new val, va_va */
+/*   // alloc a new va_va add st, set va_va */
+/*   LIVES_CALLOC_TYPE(va_va, vav, 1); */
+/*   va_list va; */
+/*   vav->st = st; */
+/*   va_start(st, va); */
+/*   vav->vava = va; */
+/*   return vav; */
+/* } */
+
+/* va_va *va_va_params(funcsig_t funcsig, weed_plant_t *params) { */
+/*   int nparams = funcsig_nparams(funcsig); */
+/*   for (int i = 0; i < nparams; i++) { */
+/*     // get st from funcsig */
+/*     vav = make_va_va(st, val, vav); */
+/*   } */
+/*   return vav; */
+/* } */
+
 typedef union {
   weed_funcptr_t func;
   funcptr_int_t funcint;
@@ -26,6 +51,27 @@ typedef union {
   funcptr_voidptr_t funcvoidptr;
   funcptr_plantptr_t funcplantptr;
 } allfunc_t;
+
+typedef union {
+  weed_seed_t stype;
+  weed_size_t size;
+  //
+  uint32_t u;
+  int32_t i;
+  uint64_t U;
+  int64_t I;
+  boolean b;
+  char *S;
+  const char *C;
+  float f;
+  double d;
+  void *V;
+  lives_funcptr_t F;
+  weed_plant_t *P;
+} allvalues_t;
+
+#define GET_ALLVALUE(avp, plant, key) _DW0(weed_seed_t st = weed_leaf_seed_type(plant, key);\
+					   FOR_ALL_SEED_TYPES2(st, (avp)->, =, weed_get_, _value, (plant), (key), NULL);)
 
 #define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
 
@@ -87,8 +133,8 @@ typedef union {
 #define CPTRTYPE(type) CPTRTYPE_##type
 #define WEED_TYPE(type) WEED_SEED_##type
 
-#define FOR_ALL_SEED_TYPES(var, pre, pre2, pre3, post, post2, post3, post4) \
-  do{switch(var){case(WEED_SEED_INT):pre(pre2,pre3##int##post(post2,post3,post4));break; \
+#define FOR_ALL_SEED_TYPES(st, pre, pre2, pre3, post, post2, post3, post4) \
+  _DW0(switch(st){case(WEED_SEED_INT):pre(pre2,pre3##int##post(post2,post3,post4));break; \
     case(WEED_SEED_INT64):pre(pre2,pre3##int64##post(post2,post3,post4));break;	\
     case(WEED_SEED_BOOLEAN):pre(pre2,pre3##boolean##post(post2,post3,post4));break; \
     case(WEED_SEED_DOUBLE):pre(pre2,pre3##double##post(post2,post3,post4));break; \
@@ -98,7 +144,18 @@ typedef union {
     case(WEED_SEED_PLANTPTR):pre(pre2,pre3##plantptr##post(post2,post3,post4));break; \
       _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)		\
 	_CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)	\
-    default:break;}}while(0);
+    default:if(st > 66)pre(pre2,pre3##custom##post(post2,post3,st,post4));break;})
+
+#define FOR_ALL_SEED_TYPES2(st, pre, op, pre3, post, post2, post3, post4) \
+  _DW0(switch(st){case(WEED_SEED_INT):pre i op pre3##int##post(post2,post3,post4);break; \
+    case(WEED_SEED_INT64):pre I op pre3##int64##post(post2,post3,post4);break; \
+    case(WEED_SEED_BOOLEAN):pre b op pre3##boolean##post(post2,post3,post4);break; \
+    case(WEED_SEED_DOUBLE):pre d op pre3##double##post(post2,post3,post4);break; \
+    case(WEED_SEED_STRING):pre S op pre3##string##post(post2,post3,post4);break; \
+    case(WEED_SEED_VOIDPTR):pre V op pre3##voidptr##post(post2,post3,post4);break; \
+    case(WEED_SEED_FUNCPTR):pre F op pre3##funcptr##post(post2,post3,post4);break; \
+    case(WEED_SEED_PLANTPTR):pre P op pre3##plantptr##post(post2,post3,post4);break; \
+    default:break;})
 
 #define GEN_SET(thing, wret, funcname, FUNCARGS) err =			\
     (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*(funcname)->funcint)(FUNCARGS)) : \
@@ -109,6 +166,7 @@ typedef union {
      wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*(funcname)->funcfuncptr)(FUNCARGS)) : \
      wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
      wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*(funcname)->funcplantptr)(FUNCARGS)) : \
+     wret > 66 ? weed_set_custom_value((thing), _RV_, wret, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
      WEED_ERROR_WRONG_SEED_TYPE)
 
 #define ARGS1(thing, t1) GETARG((thing), t1, 0)
@@ -163,6 +221,8 @@ typedef union {
 #define FUNCSIG_FUNCP 				       			C
 #define FUNCSIG_VOIDP 				       			D
 #define FUNCSIG_PLANTP 				       			E
+#define FUNCSIG_VARIADIC 				       		*
+#define FUNCSIG_FUNCINST 				       		^
 
 #define _JOIN2(a,b) a##b
 #define JOIN2(a,b) _JOIN2(a,b)
@@ -255,11 +315,11 @@ typedef union {
 				 NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"X")
 #define _VARNAMES(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,...)			\
   __VARNAMES(#a,#b,#c,#d,#e,#f,#g,#h,#i,#j,#k,#l,#m,#n,#o,#p,__VA_ARGS__)
-char**__VARNAMES(char *a,...);
-#define VARNAME_FUNC char** __VARNAMES(char*a,...){char*x;va_list b,c;int n=0; \
+const char**__VARNAMES(char *a,...);
+#define VARNAME_FUNC const char** __VARNAMES(char*a,...){char*x;va_list b,c;int n=0; \
     va_start(b,a);va_copy(c,b);do{if(!(x=va_arg(b,char*)))n++;}while(!(x&&*x=='X')); \
-    va_end(b);LIVES_CALLOC_TYPE(char*,r,n+1);r[0]=strdup(a);		\
-    for(int i=1;i<n;i++)r[i]=strdup(va_arg(c,char*));va_end(c);return r;}
+    va_end(b);LIVES_CALLOC_TYPE(const char*,r,n+1);r[0]=strdup(a);		\
+    for(int i=1;i<n;i++)r[i]=(const char *)strdup(va_arg(c,char*));va_end(c);return r;}
 
 typedef uint64_t funcsig_t;
 
@@ -340,6 +400,13 @@ void reg_funcsigs(int n, ...);
 				  uint64_t: "U", int64_t: "I", float: "f", double: "d", \
 				  void*: "V", weed_funcptr_t: "F", const char *: "C", \
 				  weed_plant_t *: "P", default: "?"))
+
+#define get_allval(allvals, ctype) (_Generic((ctype),			\
+					     boolean: allvals->b, char*: allvals->S, uint32_t: allvals->u, \
+					     int32_t: allvals->i, uint64_t: allvals->U, int64_t: allvals->I, \
+					     float: allvals->f, double: allvals->d, void*: allvals->V,\
+					     weed_funcptr_t: allvals->F, const char *: allvals->C, \
+					     weed_plant_t *: allvals->P, default: 0))
 // proxy = "X", blob = "B"
 
 #endif

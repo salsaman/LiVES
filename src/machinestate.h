@@ -99,11 +99,11 @@ typedef struct {
 
 #define LIVES_PROC_DIR "/proc/self/task"
 
-weed_plant_t *lives_plant_new(int subtype);
-weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
-weed_plant_t *lives_plant_new_with_refcount(int subtype);
+weed_plant_t *lives_plant_new(int64_t subtype);
+weed_plant_t *lives_plant_new_with_index(int64_t subtype, int64_t index);
+weed_plant_t *lives_plant_new_with_refcount(int64_t subtype);
 
-weed_plant_t *lives_plant_get_subtype(weed_plant_t *, int subtype);
+int64_t lives_plant_get_subtype(weed_plant_t *);
 
 void lives_get_randbytes(void *ptr, size_t size);
 

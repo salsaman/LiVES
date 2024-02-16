@@ -177,6 +177,7 @@ extern const lookup_tab crossrefs[];
   {'V',  WEED_SEED_VOIDPTR, 	0x0D, 	"VOIDP", "%p"},\
   {'p',  WEED_SEED_PLANTPTR, 	0x0E, 	"PLANTP", "%p"},\
   {'P',  WEED_SEED_PLANTPTR, 	0x0E, 	"PLANTP", "%p"},\
+  {'*',  WEED_SEED_VARIADIC, 	0x0F, 	"VARIADIC", "..."},\
     XREFS_TAB_UINT					\
     XREFS_TAB_UINT64					\
     XREFS_TAB_FLOAT					\
@@ -184,6 +185,8 @@ extern const lookup_tab crossrefs[];
 }
 
 #define LIVES_LEAF_RETURN_VALUE "return_value"
+
+#define LIVES_LEAF_ARGS_FMT "args_fmt"
 
 #define _RV_ LIVES_LEAF_RETURN_VALUE
 
@@ -260,6 +263,11 @@ typedef enum {
 void add_quick_fn(lives_funcptr_t func, const char *funcname);
 const char *get_funcname(lives_funcptr_t);
 
+boolean args_fmt_match(const char *def, const char *inst);
+
+const char *get_args_fmt(weed_plant_t *);
+void set_args_fmt(weed_plant_t *plant, const char *args_fmt);
+
 // add a note to to ftrace_store, va_args depend on fn_type
 void *add_fn_note(fn_type_t, ...);
 
@@ -327,6 +335,30 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 //////////
 
+// conditions (Work in progress)
+
+typedef char ** lives_condition;
+
+lives_result_t eval_condition(lives_condition);
+lives_condition make_condition(const char *cond_start, ...);
+
+/* #define ACCEPT_COND(seed_type) \ */
+/*   make_condition("COND_START". "COND_EQUALS", "COND_INT_VAR", "@container/funcdef/return_type", \ */
+/* 		  "COND_INT_CONST", seed_type, "COND_END"); */
+/* #define _COND_REMOVE_ALWAYS						\ */
+/*   make_condition("COND_START". "COND_TRUE", "COND_END"); */
+
+///
+
+typedef union {
+    lives_proc_thread_t lpt;
+    pthread_t		thread;
+} action_source;
+
+#define ACTION_SOURCE_NONE 	0
+#define ACTION_SOURCE_LPT 	1
+#define ACTION_SOURCE_THREAD 	2
+
 /// HOOK FUNCTIONS ///////
 
 #define LIVES_LEAF_HOOK_STACKS "hook_stacks"
@@ -366,6 +398,7 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 // it can set a reply_sent callback before setting the in_list flag
 //
 //	boolean (reply_sent_cb)(void *receipt, void *user_data);
+//		- returning TRUE forces the reply to be resent until FALSE is returned
 //
 // to summarise:
 // adder wants to add a callback to a stack
@@ -404,8 +437,8 @@ typedef struct {
 lives_proc_thread_t lives_cb_receipt_get_adder(void *hook_cb_receipt);
 int lives_cb_receipt_get_req_reply(void *hook_cb_receipt);
 int lives_cb_receipt_get_nrefs(void *hook_cb_receipt);
-int lives_cb_receipt_ref(void *hook_cb_receipt);
-int lives_cb_receipt_unref(void *hook_cb_receipt);
+void lives_cb_receipt_ref(void *hook_cb_receipt);
+void lives_cb_receipt_unref(void *hook_cb_receipt);
 boolean lives_cb_receipt_check_expired(void *hook_cb_receipt);
 boolean lives_cb_receipt_is_in_list(void *hook_cb_receipt);
 
@@ -416,16 +449,13 @@ void lives_cb_receipt_remove_from_list(void *hook_cb_receipt);
 
 void lives_cb_receipt_set_adder(void *hook_cb_receipt, lives_proc_thread_t);
 void lives_cb_receipt_set_reply(void *hook_cb_receipt, int reply);
-void lives_cb_receipt_set_expired(void *hook_cb_receipt);
+void *lives_cb_receipt_set_expired(void *hook_cb_receipt);
 void lives_cb_receipt_set_in_list(void *hook_cb_receipt, boolean in_list);
 void lives_cb_receipt_set_reply_callback(void *hook_cb_receipt, reply_sent_cb_f *, void *user_data);
 boolean lives_cb_receipt_has_reply_callback(void *hook_cb_receipt);
 boolean lives_cb_receipt_call_reply_callback(void *hook_cb_receipt);
 
 void *lives_cb_receipt_new(void);
-
-void lives_cb_receipt_free(void *receipt);
-LiVESList *lives_funcinst_move_receipts(lives_funcinst_t *dst, lives_funcinst_t *src);
 
 //< caller will block when adding the hook and only return when the hook callback has returned
 // if the cb function is barred by another (due to uniqueness constraints),
@@ -464,6 +494,7 @@ LiVESList *lives_funcinst_move_receipts(lives_funcinst_t *dst, lives_funcinst_t 
 // the following corresponds directly to LIVES_THRDATTR_LIGHT
 #define HOOK_OPT_FG_LIGHT		(1ull << 9)
 
+#define HOOK_OPT_REMOVE_ON_FALSE	(1ull << 10)
 /// the following bits define how hooks should be added to the stack
 // in case of duplicate functions / data
 ///
@@ -583,7 +614,7 @@ typedef struct {
 
 lives_proc_thread_t lpt_from_funcdef_va(lives_funcdef_t *, lives_thread_attr_t attrs, va_list vargs);
 
-lives_proc_thread_t _lpt_from_funcdefX(lives_funcdef_t *, char **anames, lives_thread_attr_t attrs, ...);
+lives_proc_thread_t _lpt_from_funcdefX(lives_funcdef_t *, const char **anames, lives_thread_attr_t attrs, ...);
 
 #define lpt_from_funcdef(f, a, ...) _lpt_from_funcdefX(f, VARNAMES(__VA_ARGS__), a, __VA_ARGS__)
 
@@ -594,12 +625,16 @@ lives_proc_thread_t _lpt_from_funcdefX(lives_funcdef_t *, char **anames, lives_t
 
 #define module_lpt		1
 #define module_hook_cb		2
+#define module_contingency	3
 
 #define MODULE_TYPE_LPT module_lpt
 #define MODULE_DATA_TYPE_LPT proc_thrd_data
 
 #define MODULE_TYPE_HOOK_STACK 	module_hook_cb
 #define MODULE_DATA_TYPE_HOOK_STACK hook_cb_data
+
+#define MODULE_TYPE_CONTINGENCY	module_contingency
+#define MODULE_DATA_TYPE_CONTINGENCY contingency_data
 
 #define MODULE_DATA_TYPE(n) MODULE_DATA_TYPE_##n
 #define MODULE_TYPE(n) MODULE_TYPE_##n
@@ -620,29 +655,72 @@ typedef struct {
 typedef struct {
 // for DISPOSITION_STACKED
   uint64_t cb_flags;
-  char **trigger_cond; // condition for triggering
+  lives_condition trigger_cond; // condition for triggering
   pthread_mutex_t mutex;
   lives_hook_stack_t *hook_stack;
-  void *retloc;
+  // analogous to the lpt module's dispatcher / runner
+  // here we have adder / triggerer
   lives_proc_thread_t adder;
+  int trigger_act_src_type;
+  action_source triggerer;
   int nmatch_params;
   volatile LiVESList *receipts;
 } MODULE_DATA_TYPE_HOOK_STACK;
+
+#define CONTINGENCY_BEHAVIOUR_NO_FREE_ON_IDLE		(1ull << 0)
+#define CONTINGENCY_BEHAVIOUR_NO_FREE_ON_EXPIRED	(1ull << 1)
+
+// repeating contingencies
+#define CONTINGENCY_BEHAVIOUR_READY_ON_IDLE		(1ull << 8)
+
+// contingencies may be added to any struct which has a structdef
+// a contingency has a condition, which is checked whenever any field in the managed struct is changed
+// if the condition passes, the contingency is triggered. Thid is similar to data change hook, but it can be used
+// for structs instead of plants
+
+typedef struct {
+  // for DISPOSITION_CONTINGENCY
+  // same value as for clip_srcs
+  // may be
+  // NOT_SET - initial value
+  // READY ready for contingency activation
+  // RUNNING - currently active
+  // IDLE - was executed and finished
+  // EXPIRED - no longer required
+  // DELETED - parent object has been freed
+  // ERROR
+
+  int src_status;
+
+  // the target is a lives_struct_t *
+  lives_struct_t *target;
+
+  lives_condition run_cond;
+
+  // behaviour flags - funcinst is normally freed after status becomes EXPIRED or IDLE
+  // but this can be overridden
+  uint64_t flags;
+} MODULE_DATA_TYPE_CONTINGENCY;
 
 /* add more modules if desired */
 
 #define LPT_DATA(finst, field)  (((MODULE_DATA_TYPE_LPT *)(finst->module))->field)
 #define CL_DATA(finst, field)  (((MODULE_DATA_TYPE_HOOK_STACK *)(finst->module))->field)
+#define CONTINGENCY_DATA(finst, field)  (((MODULE_DATA_TYPE_CONTINGENCY *)(finst->module))->field)
 
+// dispositions that have a module type other than any are BASE dispositions
+// if a funcinst gains a base disposition with a new module type
+// the old module is pushed to the modules sync_list and popped instead of freeing the funcinst
 #define module_type_for_disposition(dis)				\
   ((dis) == DISPOSITION_STACKED ? module_hook_cb			\
-   : ((dis) == DISPOSITION_WAITING || (dis) == DISPOSITION_ACTIVE) ? module_lpt \
-   : module_any)
+    : ((dis) == DISPOSITION_CONTINGENCY ? module_contingency		\
+       : ((dis) == DISPOSITION_WAITING || (dis) == DISPOSITION_ACTIVE) ? module_lpt \
+       : module_any))
 
 #define CALLOC_MODULE(j) \
   (j == module_lpt ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_LPT, 1) \
-   : j == module_hook_cb ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_HOOK_STACK, 1) : NULL)
-
+   : j == module_hook_cb ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_HOOK_STACK, 1) \
+   : j == module_contingency ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_CONTINGENCY, 1) : NULL)
 
 weed_error_t copy_leaf_value(weed_plant_t *pl, const char *key, int idx, weed_seed_t xst, void **retlocp);
 
@@ -681,12 +759,17 @@ weed_error_t copy_leaf_value(weed_plant_t *pl, const char *key, int idx, weed_se
 // which defines wken the stack may be triggered and how callbacks are handled on trigged
 
 // data hooks are triggered before or after some item of data is added, altered or removed
-// spontaneous hooks are triggered on demand, by the owner of the stack
-// request hooks are a special type of spontaneous hook. When triggered, the callbacks are not
-// actioned directly, instead they are transferred to another hook stack (the req_target)
-// as if the original caller had added them there originally.
-// this allows for accumulation and filtering of callbacks prior to them being added to the target
-// the owner of the request queue responds to orinal request, accepting or denying it
+//
+// spontaneous hooks are triggered on demand, usually at fixed function points
+// or in response to some event - normally by the owner of the stack, unless anon_trigger is flagged
+//
+// request hooks allow the threads to make requests to other threads
+// the "callback" differs in that it has no target function
+// there are 2 types of request stacks, realtime and non realtime
+// if a proc_thread supports realtime requests, it will unblock interrupt singnals
+// add a callback to its own "callback_added" hook
+// when this is triggered, if the target stack is a realtime request, the adder will send an interrupt
+// to the owner, and the owner will reply "quickly"
 
 typedef enum {
 	      HOOK_PATTERN_INVALID = -1,
@@ -701,13 +784,13 @@ typedef struct {
   uint64_t op_flags; // flags defining trigger operation
   
   // optional condition for accepting in stack (NULL == COND_TRUE)
-  char **accept_cond;
+  lives_condition accept_cond;
   
-  // cb_prototype
-  // initial part of cb func must match this
-  // additional parameters /  values may be added in the funcinst / funcdef
-  // if 0, then trigger does not supply any data
-  const char *args_fmt_start;
+  // cb_prototype parameters. Empty string means no parameters
+  // if the final character is '*', callbacks may append bound parameters in
+  // funcinst->params
+  // NULL means any params (equivalent to "*")
+  const char *def_args_fmt;
 
   // some callbacks require return type to be boolean
   // if 0 then any return type can be used
@@ -718,6 +801,38 @@ typedef struct {
   // (may be NULL))
   const char **pdesc;  
 } hook_stack_descriptor_t;
+
+#if HAS_COND_EVAL
+// TODO:
+// for data_hooks, there are really only 2 types - pre and post
+// then depending on a conditions check, this will cascade to another hook value
+// the item name must match, eg "attrs"
+// the pre_cond defines some conditione the pre change value must have
+// the post_cond defines some condition the post value must have
+// the default params for the data pattern are owner, item, pre_val, post_val
+// for add: owner, item, post_val
+// for del: owner, item, ore_val
+
+#define _TRIGGER_ON_PRE		1
+#define _TRIGGER_ON_ADD		2
+#define _TRIGGER_ON_DEL 	4
+
+#define POST_TRIGGER		0
+#define PRE_TRIGGER		_TRIGGER_ON_PRE
+#define ADDED_TRIGGER		_TRIGGER_ON_ADD
+#define DELETING_TRIGGER	(_TRIGGER_ON_DEL | _TRIGGER_ON_PRE)
+
+struct {
+  const char *item_name;
+  weed_seed_t item_type;
+  int when;
+  // ignored for add
+  lives_condition pre_cond;
+  // ignored for del
+  lives_condition post_cond;
+  int new_hook_type;
+}
+#endif
 
 const hook_stack_descriptor_t *get_hs_desc(int hstype);
 
@@ -731,17 +846,16 @@ typedef struct _hstack_t {
   const hook_stack_descriptor_t *hsdesc;
 
   // optional condition for rejecting from  stack (NULL == COND_FALSE)
-  char **reject_cond;
+  lives_condition reject_cond;
   
   volatile LiVESList *stack;
   pthread_mutex_t mutex;
 
-  union {
-    lives_proc_thread_t lpt;
-    pthread_t		thread;
-    void *		object;
-  } owner;
-
+  // for native stacks, the action_source owner will be thread
+  // for other standard stacks, the owner will be will be lives_proc_thread
+  int owner_act_src_type;
+  action_source owner;
+  
   uint64_t flags;
 
   // for hook stacks with pattern request,
@@ -769,9 +883,6 @@ typedef struct _hstack_t {
 // denotes that callbacks in the stack are run once only and removed
 #define HOOKSTACK_ALWAYS_ONESHOT       	(1ull << 1)
 
-#define _COND_REMOVE_ALWAYS						\
-  lives_cond_make("COND_START". "COND_TRUE", "COND_END");
-
 // hook callbacks should be run asyncronously in parallel
 #define HOOKSTACK_ASYNC		       	(1ull << 2)
 
@@ -784,10 +895,6 @@ typedef struct _hstack_t {
 // if this flagbit is set, then the return type of callbacks must be boolean
 // any callback which returns FALSE will be blocked / ignored until either unblocked or invalidated
 #define HOOKSTACK_REMOVE_ON_FALSE	(1ull << 5)
-
-#define ACCEPT_COND(seed_type) \
-  lives_cond_make("COND_START". "COND_EQUALS", "COND_INT_VAR", "@container/funcdef/return_type", \
-		  "COND_INT_CONST", seed_type, "COND_END");
 
 // if the trigger condition (if present) fails, then the callback will be removed rather than skipped over
 #define HOOKSTACK_REMOVE_ON_COND_FAIL	(1ull << 6)
@@ -827,6 +934,8 @@ typedef struct _hstack_t {
 
 // p0 == hstack->owner.lpt, funcsig_start == "v", 
 
+#define HS_FLAGS_CB_ADDED		(HOOKSTACK_SELF_ONLY)
+  
 #define HS_FLAGS_FATAL			(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)
 #define HS_FLAGS_THREAD_EXIT		(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE)
 
@@ -868,11 +977,8 @@ typedef struct _hstack_t {
   // remove conflicting callbacks, do not add
 #define ADDMODE_UPD_LINKED	(ADDMODE_TRANSFER | _ADDMODE_NOADD | _ADDMODE_FORCE_PREPEND)
   
-void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
-
 // initial value, no reply received yet
-#define LIVES_REPLY_NONE	NIRVA_REPLY_NONE
-#define LIVES_REPLY_INVALID	LIVES_REPLY_NONE
+#define LIVES_REPLY_INVALID	NIRVA_REPLY_INVALID
 
 // reuest denied (possibly due to uniqueness conditions,
 // or invalid request oaraneters)
@@ -895,13 +1001,13 @@ void *lives_hook_cb_add_funcinst(lives_hook_stack_t **, int type, uint64_t cbfla
 
 // lpt like
 void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t flags, lives_funcptr_t func,
-			      const char *fname, int return_type, char **anames, const char *args_fmt, ...);
+			      const char *fname, int return_type, const char **anames, const char *args_fmt, ...);
 
 void *lives_hook_cb_add_locked(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst);
 void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst, uint64_t addmode);
 
 #define lives_hook_cb_add_full(hs, type, flags, func, fname, rtype, afmt, ...) \
-  _lives_hook_cb_add_full((hs), (type), (flags), func, fname, (rtype), VARNAMES(__VA_ARGS__), {afmt}, __VA_ARGS__)
+  _lives_hook_cb_add_full((hs), (type), (flags), func, fname, (rtype), VARNAMES(__VA_ARGS__), (afmt), __VA_ARGS__)
 
 //fixed cb type
 #define lives_hook_cb_append(hooks, type, flags, func, datam,...))	\
@@ -910,25 +1016,25 @@ void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *
 			  VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
 
 #define lives_proc_thread_add_hook_cb(lpt, type, flags, func, data,...)	\
-  lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
-			 (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-			 VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
+  _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
+			  (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+			  VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
 
 // any func
 
 #define lives_proc_thread_add_hook_cb_full(lpt, type, flags, func, rtype, args_fmt, ...) \
-  lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
-			 (lives_funcptr_t)(func), #func, (rtype),	\
-			 VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
+  _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), \
+			  (lives_funcptr_t)(func), #func, (rtype),	\
+			  VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
 
 #define lives_hook_cb_append_full(hooks, type, flags, func, rtype, args_fmt, ...) \
-  lives_hook_cb_add_full((hooks), (type), (flags), (lives_funcptr_t)(func), #func, (rtype), \
-			 VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
+  _lives_hook_cb_add_full((hooks), (type), (flags), (lives_funcptr_t)(func), #func, (rtype), \
+			  VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
 
 #define lives_hook_prepend_full(hooks, type, flags, func, rtype, args_fmt, ...) \
-  lives_hook_cb_add_full((hooks), (type), (flags) | HOOK_CB_PRIORITY,	\
-			 (lives_funcptr_t)(func), #func, (rtype),	\
-			 VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
+  _lives_hook_cb_add_full((hooks), (type), (flags) | HOOK_CB_PRIORITY,	\
+			  (lives_funcptr_t)(func), #func, (rtype),	\
+			  VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
 
 /* // lpt arg */
 #define lives_hook_cb_prepend(hooks, type, flags, finst) \
@@ -992,13 +1098,20 @@ void lives_funcdef_free(lives_funcdef_t *);
 
 lives_funcinst_t *lives_funcinst_new(lives_funcdef_t *);
 
+lives_funcinst_t * lives_funcinst_create_va(lives_funcptr_t func,
+					    const char *fname, int return_type, const char **anames,
+					    const char *args_fmt, va_list xargs);
+
+// if funcinst already has base disposition, it will be pushed to the modules sync_list
 void lives_funcinst_set_disposition(lives_funcinst_t *, funcinst_disposition disposition, ...);
 
-lives_result_t funcinst_params_from_vargs(lives_funcinst_t *,  va_list xargs);
+lives_result_t funcinst_params_from_vargs(lives_funcinst_t *,  const char *args_fmt, va_list xargs);
 
 void lives_funcinst_free(lives_funcinst_t *);
 
-boolean cleanup_receipts(lives_funcinst_t *);
+boolean cleanup_funcinst_receipts(lives_funcinst_t *);
+
+boolean cleanup_self_receipts(void);
 
 // proxy values
 
@@ -1020,16 +1133,32 @@ lives_result_t weed_plant_params_from_args_fmt(weed_plant_t *plant, const char *
 funcsig_t funcsig_from_args_fmt(const char *args_fmt);
 char *args_fmt_from_funcsig(funcsig_t funcsig);
 
+void lives_funcinst_send_replies(lives_funcinst_t *finst, int reply);
+
 //
+#if 0
+// todo:
+// bound params - takes a param number (pnum) and target (eg. "funcinst/retloc")
+// when the funcinst params are created a placeholder value is added
+// when the funcinst is executed, unbound placeholder values will be located via structdef magic
+// the seedtype will be set and the values will then be updated prior to each funcinst call
+// - these are valid for funcdefs, and if the funcdef allows additional params, the funcinst
+// may append further bound values
+// -- the args_fmt in funcinst->params will not include bound values,
+// however, the funcsig will be "edited" befor the func call, and the bound value types shall be inserted
 
-#define COND_BEGIN "COND_BEGIN"
-#define COND_BIT_SET "TEST", 12
-#define UINT64_VAR(v) "U64S", #v
-#define UINTl64_CONST(v) "U64V", v
-#define COND_END "COND_END"
+typedef struct {
+  int pnum;
+  const char *target;
+  weed_seed_t st;
+  // value_plant:
+  // name, type, flags, value
+  weed_plant_t *value;
+} funcinst_param_t;
 
-lives_result_t eval_condition(char **cond);
-char **make_condition(char *cond_begin, ...);
+void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *target);
+void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
+#endif
 
 const char get_typeletter(uint8_t val);
 uint8_t get_typecode(char c);
@@ -1041,6 +1170,8 @@ char *funcsig_to_symstring(funcsig_t sig);
 char *funcsig_to_param_string(funcsig_t sig);
 char *funcsig_to_short_param_string(funcsig_t sig);
 
+char *args_fmt_to_param_string(const char *args_fmt);
+
 weed_seed_t get_seedtype(char c);
 
 int fn_func_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2);
@@ -1051,6 +1182,6 @@ int get_funcsig_nparms(funcsig_t sig);
 const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
 char *get_argstring_for_func(lives_funcptr_t func);
 
-char *lpt_paramstr(lives_proc_thread_t, funcsig_t sig);
+char *finst_paramstr(lives_proc_thread_t, funcsig_t sig);
 
 #endif

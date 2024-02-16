@@ -121,6 +121,9 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 // LiVES extensions (effects-weed.c)
 
+// marker for variadic functions
+#define WEED_SEED_VARIADIC 32
+
 // a pointer type to lives_proxy_data_t
 // the real st, flags and ne are held in proxy data
 // the data inside points to the real data location and data size
@@ -232,9 +235,12 @@ typedef enum {
 	      // is has been added as a hook callback
 	      DISPOSITION_STACKED,
 	      // will only be activated under certain circumstances (e.g am error handler)
-	      DISPOSITION_CONDITIONAL,
+	      // ie. a free standing, sunordinate  funcinst, not part of a hook stack or the main active
+	      // funcinst for a procthread
+	      DISPOSITION_CONTINGENCY,
 	      // either the funcinst has been processed or been discarded / replaced
-	      // the valye of requesr_response indicates the outcome
+	      // for stacked funcinst, this is not used, instead, the value of
+	      // req_reply in the callback receipt indicates the outcome
 	      DISPOSITION_CONSUMED,
 	      DISPOSITION_CANCELLED,
 	      DISPOSITION_ERROR,
@@ -253,6 +259,9 @@ typedef struct {
   int return_type;
 
   funcsig_t funcsig; //
+
+  //LiVESList *bound_params;
+
   char **paramdesc; // optional param descriprions
   
   // locator
@@ -260,18 +269,52 @@ typedef struct {
   int line;
 } lives_funcdef_t;
 
-//typedef struct _funcinst lives_funcinst_t;
+typedef struct _lives_funcinst lives_funcinst_t;
 
-//struct _funcinst {
-
-#define DEF_STRUCT(stname, sttype, ...)			\
-  typedef struct stname {				\
-    __VA_ARGS__						\
-  } sttype;						\
-  const char  *sttype##_strcrdef = #__VA_ARGS__;
+#include "widget-helper.h"
+#include "lists.h"
 
 
-DEF_STRUCT(_funcinst, lives_funcinst_t, 
+#define DEF_STRUCT(stname, ...)				\
+  const char *stname##_strctdef = #__VA_ARGS__;		\
+  typedef struct _##stname {__VA_ARGS__} stname;	\
+  const size_t stname##_size = sizeof(stname);
+
+typedef struct {
+  const char *name;
+  off_t offset;
+  weed_seed_t type;
+  weed_size_t n_elems;
+} strctdef_field;
+
+typedef struct {
+  uint64_t uid;
+  char *struct_name;
+  size_t st_size;
+  LiVESList *fields;
+} lives_structdef;
+
+typedef struct {
+  lives_structdef *stdef;
+  void *strct;
+  weed_plant_t *plant;
+} lives_struct_t;
+ 
+lives_struct_t *lives_struct_new(char *stname);
+
+// make_allvals will update bound params for plant, then return an allvalue set from plant, field
+// then get_allval returns a value type ctype from allvalues
+#define LIVES_STRUCT_GET(strct, field, ctype) (get_allval(&(make_allvals(strct->plant, field))))
+
+lives_structdef *parse_structdef(const char *stname, const char *stdefdata, size_t stsize);
+#define PARSE_STRUCTDEF(stname) parse_structdef(#stname, stname_strctdef, stname_size)
+
+typedef struct {
+  funcinst_module_type mod_type;
+  void *module_data;
+} funcinst_module_t;
+
+DEF_STRUCT(lives_funcinst, 
 	   uint64_t uid;
 	   lives_funcdef_t *funcdef;
 
@@ -279,9 +322,13 @@ DEF_STRUCT(_funcinst, lives_funcinst_t,
 	   //disposition_changed_cb
 
 	   uint64_t flags;
-  
-	   char **paramnames;
+
+	   // contains p0, p1, etc, plus const char **pnames
+	   // p0_free, p1_free. etc.
+	   // plus extra_funcsig - if funcdef->funcsig ends with
 	   weed_plant_t *params;
+
+	   const char **paramnames;
 
 	   // can be a pointer to a variable to return value in
 	   // if NULL,will be allocated and return value copied
@@ -292,14 +339,22 @@ DEF_STRUCT(_funcinst, lives_funcinst_t,
 	   void *next, *prev;
 
 	   int depth, chain_idx;
-  
-	   // depending on the intended DISPOSITION, one of several modules can be attached to
-	   // the funcinst. The modules provide addutuinal information once a funcinst becomes active
-	   funcinst_module_type mod_type;
-	   void *module;)
-//};
 
-#include "widget-helper.h"
+	   // depending on the intended DISPOSITION, one of several modules can be attached to
+	   // the funcinst. The modules provide additional information once a funcinst becomes active
+
+	   // a funcinst may have a stack of modules, for example. a callback added to an async hook stack
+	   // gains a callback data module
+	   // then when queued for execution it gains a proc_thread module (via set disposition)
+	   // when execution finishes, the async callbacks can be joined, which normally would pop and free
+	   // the active funcinst for the proc_thread, however instead of being freed, it
+	   // pops the callback module back
+
+	   // mirrors of the current sync_list top
+	   funcinst_module_type mod_type;
+	   void *module;
+
+	   lives_sync_list_t *modules;)
 
 #include "user-interface.h"
 
@@ -442,7 +497,6 @@ extern uint64_t test_opts;
 
 #include "functions.h"
 #include "alarms.h"
-#include "lists.h"
 #include "intents.h"
 #include "maths.h"
 #include "colourspace.h"

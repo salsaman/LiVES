@@ -32,7 +32,9 @@ static size_t dict_size = 0;
 
 // a "value" has 4 leaves, but we dont know how to make one yet !
 // so let's fake it
-#define LIVES_VALUE_BLUEPRINT(name, vtype, flags, ne, value)		\
+#define LIVES_BLUEPRINT(bltype, ...) LIVES_BLUEPRINT_##bltype(__VA_ARGS__)
+
+#define LIVES_BLUEPRINT_VALUE(name, vtype, flags, ne, value)		\
   LIVES_PLANT_VALUE, "name", WEED_SEED_CONST_CHARPTR, BLU_SCALAR, name, "vtype", WEED_SEED_INT, BLU_SCALAR, (weed_seed_t)(vtype), \
     "flags", WEED_SEED_UINT64, BLU_SCALAR, (flags), "value", vtype, (uint64_t)0, (weed_size_t)(ne), (value), NULL
 
@@ -78,9 +80,9 @@ static weed_plant_t *make_bluprint(int nleaves, int pltype, ...) {
     uint64_t flags = va_arg(va, uint64_t);
     if (!(flags & BLU_SCALAR)){
       ne = va_arg(va, weed_size_t);
-      defs[i] = plant_from_tmpl(LIVES_VALUE_BLUEPRINT(name, st, flags, ne, va));
+      defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, ne, va));
     }
-    else defs[i] = plant_from_tmpl(LIVES_VALUE_BLUEPRINT(name, st, flags, 1, va));
+    else defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, 1, va));
   }
   va_end(va);
   weed_set_int_value(pl, "pl_type", pltype);
@@ -90,10 +92,11 @@ static weed_plant_t *make_bluprint(int nleaves, int pltype, ...) {
 
 // now lets make a blueprint fot value
 static weed_plant_t *make_value_blu(void) {
-  weed_plant_t *valblu = make_bluprint(4, LIVES_VALUE_BLUEPRINT("val_bluprint", 0, 0, 1, "dummy"));
+  weed_plant_t *valblu = make_bluprint(4, LIVES_BLUEPRINT(VALUE, "val_bluprint", 0, 0, 1, "dummy"));
   return valblu;
 }
 
+#define PLANT_FROM_BLU(bltype, ...) plant_from_blu(LIVES_PLANT_##bltype, __VA_ARGS__)
 
 // now make a plant from its bluprint
 static weed_plant_t *plant_from_blu(int pltype, ...) {
@@ -124,7 +127,7 @@ static weed_plant_t *plant_from_blu(int pltype, ...) {
 ////////////////////////////
 
 weed_plant_t *valplant_for_struct(const char *stname, void *struc) {
-  weed_plant_t *vpl = plant_from_blu(LIVES_PLANT_VALUE, stname, WEED_SEED_VOIDPTR, 1, struc);
+  weed_plant_t *vpl = PLANT_FROM_BLU(VALUE, stname, WEED_SEED_VOIDPTR, BLU_SCALAR, struc);
   weed_set_int_value(vpl, "val_dtl", STRUCT_ADAPTOR);
   return vpl;
 }

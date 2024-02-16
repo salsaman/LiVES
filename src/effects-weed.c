@@ -3968,7 +3968,8 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 
 
 // Weed function overrides /////////////////
-
+// const string is a custom type, when setting we strdup the stting, set custom value to the
+// the result, set custom element size to strlen, set autofree
 weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, const char *string) {
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   if (!key || !*key) return WEED_ERROR_NOSUCH_LEAF;
@@ -3979,9 +3980,7 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
     return err;
   }
 
-  // set flags so - autodelete on free, unchangeable
-  err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE
-                               | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
+  err = weed_leaf_set_autofree(plant, key, TRUE);
   if (err == WEED_SUCCESS) err = weed_ext_set_element_size(plant, key, 0, lives_strlen(string));
   return err;
 }
@@ -4099,7 +4098,6 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         if (pls) lives_free(pls);
         lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
         weed_set_plantptr_value(plant, key, NULL);
-        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
         bret = TRUE;
       }
       break;
@@ -4109,7 +4107,6 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         if (data) lives_free(data);
         lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
         weed_set_voidptr_value(plant, key, NULL);
-        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
         bret = TRUE;
       }
       break;
@@ -4119,7 +4116,6 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         if (data) lives_free(data);
         lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
         weed_set_custom_value(plant, key, WEED_SEED_CONST_CHARPTR, NULL);
-        lives_leaf_set_rdonly(plant, key, FALSE, flags & WEED_FLAG_IMMUTABLE);
       }
       break;
       default: break;
@@ -4157,9 +4153,10 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, con
   if (state)
     return weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_IMMUTABLE
                                   | WEED_FLAG_UNDELETABLE);
-  return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE);
+  // when unset, we leave undeleteable / immutable set
+  return weed_leaf_clear_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE  | WEED_FLAG_IMMUTABLE
+                                  | WEED_FLAG_UNDELETABLE);
 }
-
 //static int nplants = 0;
 
 weed_error_t weed_plant_free_host(weed_plant_t *plant) {
@@ -4223,9 +4220,9 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
     flags &= ~WEED_FLAG_IMMUTABLE;
     if (flags & LIVES_FLAG_FREE_ON_DELETE) {
       flags &= ~WEED_FLAG_UNDELETABLE;
+      weed_leaf_set_flags(plant, key, flags);
       autofree = TRUE;
     }
-    weed_leaf_set_flags(plant, key, flags);
     if (autofree) weed_leaf_autofree(plant, key);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
     if (autofree) flags |= LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE;

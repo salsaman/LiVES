@@ -8,6 +8,11 @@
 
 lives_timer_t app_timers[N_APP_TIMERS];
 
+void lives_active_wait(void) {
+  boolean is_fg = is_fg_thread();
+  wh
+
+
 static int lives_timer_set_delay(lives_timer_t *, uint64_t delay, boolean rpt);
 static lives_timer_t *lives_timer_create(lives_timer_t *);
 

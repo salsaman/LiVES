@@ -1346,8 +1346,8 @@ boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
   int dirn = LIVES_POINTER_TO_INT(user_data);
   if (!LIVES_IS_PLAYING) return _rtemode_callback(dirn);
   if (mainw->rte_keys == -1) return TRUE;
-  lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
-                                  _rtemode_callback, WEED_SEED_BOOLEAN, "i", dirn);
+  lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
+				     _rtemode_callback, WEED_SEED_BOOLEAN, "i", dirn);
   return TRUE;
 }
 
@@ -1360,8 +1360,8 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
   if (!lives_toggle_button_get_active(button)) return TRUE;
 
   if (!LIVES_IS_PLAYING) rte_key_setmode(key + 1, mode);
-  else lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
-				       rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
+  else lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0,
+					  rte_key_setmode, WEED_SEED_BOOLEAN, "ii", key + 1, mode);
   return TRUE;
 }
 

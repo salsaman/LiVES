@@ -4419,7 +4419,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           saveargs->height = cfile->vsize;
         }
       } else {
-        lives_proc_thread_join(saver_lpt);
+        lives_proc_thread_join_void(saver_lpt);
+        lives_proc_thread_unref(saver_lpt);
         while (saveargs->error || THREADVAR(write_failed)) {
           if (saveargs->error) {
             retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);

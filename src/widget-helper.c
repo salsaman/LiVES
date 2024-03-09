@@ -42,7 +42,9 @@ static pthread_mutex_t gmci_mutex = PTHREAD_MUTEX_INITIALIZER;
 // this is set when actioning: lives_widget_context_iteration, when in _dialog_run, and
 static volatile int cprio = PRIO_HIGH;
 static pthread_mutex_t finst_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static volatile lives_funcinst_t *finsttorun = NULL;
+static volatile lives_proc_thread_t finstwaiter = NULL;
 
 static boolean _lives_widget_context_update(void);
 static boolean _lives_widget_process_updates(LiVESWidget *);
@@ -1113,15 +1115,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetCo
 
 
 boolean fg_service_fulfill(void) {
-  lives_funcinst_t *finst = finsttorun;
+  lives_funcinst_t *finst = (lives_funcinst_t *)finsttorun;
 
   if (finst) {
-    lives_proc_thread_t lpt;
     lives_funcinst_execute(finst);
-    if (finst->disposition == DISPOSITION_STACKED)
-      lpt = CL_DATA(finst, adder);
-    else lpt = LPT_DATA(finst, dispatcher);
-    lives_proc_thread_force_resume(lpt);
+    if (finstwaiter) {
+      lives_proc_thread_force_resume(finstwaiter);
+      finstwaiter = NULL;
+    }
     finsttorun = NULL;
     return TRUE;
   }
@@ -1133,7 +1134,7 @@ boolean fg_service_fulfill(void) {
 	boolean is_fg_service = THREADVAR(fg_service);
 	pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 	if (!is_fg_service) THREADVAR(fg_service) = TRUE;
-	is_active = lives_hooks_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK);
+	is_active = lives_hook_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK);
 	if (!is_fg_service) THREADVAR(fg_service) = FALSE;
 	return is_active;
       }
@@ -1220,9 +1221,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
       cprio = PRIO_HIGH;
       if (gui_loop_tight && !mainw->do_ctx_update && !finsttorun
           && !mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
-        if (!pthread_mutex_trylock(&lpt_mutex)) {
+        if (!pthread_mutex_trylock(&finst_mutex)) {
           lives_widget_context_iteration(NULL, FALSE);
-          pthread_mutex_unlock(&lpt_mutex);
+          pthread_mutex_unlock(&finst_mutex);
           pthread_yield();
         }
       }
@@ -1294,9 +1295,9 @@ boolean fg_service_fulfill_cb(void *dummy) {
       if (!finsttorun) {
         // skip if this if we a have a direct service to run
         if (!mainw->go_away && mainw->is_ready) {
-          if (!pthread_mutex_trylock(&lpt_mutex)) {
+          if (!pthread_mutex_trylock(&finst_mutex)) {
             lives_widget_context_iteration(NULL, FALSE);
-            pthread_mutex_unlock(&lpt_mutex);
+            pthread_mutex_unlock(&finst_mutex);
             pthread_yield();
             lives_microsleep;
           }
@@ -1327,10 +1328,9 @@ static void threadswap(void *data) {
 
   fg_stack_wait();
 
-  main_thread_execute_rvoid(lives_startup2, 0, "v", NULL);
+  main_thread_execute_void(lives_startup2);
 
   gui_loop_tight = FALSE;
-
 }
 
 
@@ -1370,7 +1370,7 @@ WIDGET_HELPER_GLOBAL_INLINE void fg_stack_wait(void) {
   // - the mutex unlock should always return 0, then negated this becomes 1, so we loop again
   lives_microsleep_until_zero(pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex) // a;lways 0 to pass
                               && !(!(mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack != NULL
-                                     && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) ||
+                                     && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) ||
                                    pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)));
   pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 }
@@ -2146,7 +2146,7 @@ void fg_service_call(lives_funcinst_t *finst) {
   // -- for example when a proc thread is exiting, these are low priotity
   // - waiting - these are for trivial calls like updating a label text
   //  - as soom as we get this type it is executed, these should all be oneshot so
-G1  // funcinst is freed automatically
+  // funcinst is freed automatically
   //
   // we want to favour the latter type, so before trying for the mutex
   // - the latter type writelock a rwlock, lock the mutex then unlock rwlock
@@ -2154,6 +2154,8 @@ G1  // funcinst is freed automatically
 
   
   if (!finst) return;
+
+ GET_PROC_THREAD_SELF(self);
 
   fg_service_wake();
 
@@ -2185,9 +2187,10 @@ G1  // funcinst is freed automatically
     return;
   }
 
+  finstwaiter = self;
   finsttorun = finst;
 
-  wait_for_fg_response(finst); 
+  wait_for_fg_response(); 
   pthread_mutex_unlock(&finst_mutex);
 }
 
@@ -3449,10 +3452,10 @@ static weed_plant_t *get_plant_for_agrp(LiVESAccelGroup * accel_group) {
 void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
                                GdkModifierType accel_mods,  GtkAccelFlags accel_flags,
                                lives_funcptr_t func, void *user_data, GClosureNotify dest) {
-  GtkAccelGroupEntry *entries;
+  //GtkAccelGroupEntry *entries;
   weed_plant_t *agrp = get_plant_for_agrp(accel_group);
   char *ukey = lives_strdup_printf(".%lu", gen_unique_id());
-  int nvals;
+  //int nvals;
   LIVES_CALLOC_TYPE(lives_accel_map, amap, 1);
   amap->keyval = keyval;
   amap->mod = accel_mods;
@@ -3528,10 +3531,10 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   THREADVAR(accel_key) = keyval;
   THREADVAR(accel_mod) = mod;
   THREADVAR(accel_data) = data;
-  lives_proc_thread_trigger_hooks(self, ACCEL_START_HOOK);
+  lives_proc_thread_trigger_hook(self, ACCEL_START_HOOK);
   // gtk_window_activate_key
   gtk_accel_groups_activate(obj, keyval, mod | LIVES_SPECIAL_MASK);
-  lives_proc_thread_trigger_hooks(self, ACCEL_END_HOOK);
+  lives_proc_thread_trigger_hook(self, ACCEL_END_HOOK);
   THREADVAR(accel_group) = NULL;
   THREADVAR(accel_key) = 0;
   THREADVAR(accel_mod) = 0;
@@ -13643,7 +13646,7 @@ boolean lives_widget_context_update(void) {
       lives_hook_stack_t **lpt_hooks = my_hook_stacks();
       // trip gui loop to high prio
       fg_service_wake();
-      if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & STACK_TRIGGERING)) {
+      if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) {
         // action any deferred updates first
         if (lpt_hooks[LIVES_GUI_HOOK]->stack) {
           pthread_mutex_lock(&mainw->all_hstacks_mutex);

@@ -19,6 +19,13 @@
 #define PTMTLH pthread_mutex_trylock(hmutex)
   
 
+char *md5_print(void *md5sum) {
+  char *cc = (char *)md5sum;
+  char *qq = lives_strdup("0x");
+  for (int i = 0; i < 16; i++) qq = lives_strdup_concat(qq, "", "%02x", cc++);
+  return qq;
+}
+
 char *funcinst_paramstr(lives_funcinst_t *finst, funcsig_t sig) {
   // create a string with the ctypes for a funcinst
   int pn = 0;
@@ -251,23 +258,19 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   g_print("hook stack pattern is %s", hs_pattern_name(hstack->hsdesc->pattern));
 
-  if (hstack->hsdesc->ret_type == 0 && !hstack->hsdesc->def_args_fmt)
+  if (!hstack->hsdesc->accept_cond && !hstack->hsdesc->def_args_fmt)
     proto = lives_strdup("unspecified");
   else {
-    const char *ctype;
-    if (hstack->hsdesc->ret_type)
-      ctype = weed_seed_to_ctype(hstack->hsdesc->ret_type, FALSE);
     if (hstack->hsdesc->def_args_fmt) {
       char *pstr = args_fmt_to_param_string(hstack->hsdesc->def_args_fmt);
-      if (!hstack->hsdesc->ret_type)
-	proto = lives_strdup_printf("Parameters must match %s, return_type unspecified", pstr);
-      else proto = lives_strdup_printf("%s (*cb_func)(%s)", ctype, pstr);
-      lives_free(proto);
+      proto = lives_strdup_printf("Parameters must match %s", pstr);
     }
-    else proto = lives_strdup_printf("Return type %s, parameters unspecified", ctype);
+    else proto = lives_strdup_printf("Parameters unspecified");
   }
-  g_print("Callback prototype: %s", proto);
+  g_print("Callback prototype: %s\n", proto);
   lives_free(proto);
+
+  g_print("Accept conditions: %s\n", lives_cond_desc(hstack->hsdesc->accept_cond));
 
   g_print("Hook stack operation flags are:\n");
   opflags = hstack->hsdesc->op_flags;
@@ -301,6 +304,7 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
   int x = 0;
 
   if (lives_describe_hook_stack(hstacks, type) != LIVES_RESULT_SUCCESS) return;
+  hstack = hstacks[type];
   
   hmutex = &(hstack->mutex);
   PTMLH;
@@ -2862,7 +2866,8 @@ void test_procthreads(void) {
   lives_proc_thread_t pth;
   lives_snprintf((char *)testv, 100, "hi there");
   pth = lives_proc_thread_create(0, pth_testfunc, -1, "V", testv);
-  lives_proc_thread_join(pth);
+  lives_proc_thread_join_void(pth);
+  lives_proc_thread_unref(pth);
 }
 
 

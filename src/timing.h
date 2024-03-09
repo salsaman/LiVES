@@ -3,6 +3,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+char *format_tstr(double xtime, int minlim);
+
 #define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second - GLOBAL TIMEBASE
 #define TICKS_PER_SECOND_DBL ((double)TICKS_PER_SECOND)   ///< actually microseconds / 100.
 #define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)

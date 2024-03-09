@@ -733,8 +733,9 @@ void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
     lives_layer_set_status(layer, LAYER_STATUS_QUEUED);
     weed_set_boolean_value(layer, LIVES_LEAF_PLAN_CONTROL, TRUE);
     lives_layer_set_proc_thread(layer, lpt);
-    lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
-    lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
+    lives_proc_thread_add_hook_cb(lpt, COMPLETED_HOOK, 0, layer_processed_cb, layer);
+    lives_proc_thread_set_attrs(lpt, LIVES_THRDATTR_PRIORITY);
+    lives_proc_thread_queue(lpt);
   }
 }
 

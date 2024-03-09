@@ -28,15 +28,13 @@ static size_t dict_size = 0;
 
 ///////// blueprints
 
-#define BLU_SCALAR		(1ull << 0)
-
 // a "value" has 4 leaves, but we dont know how to make one yet !
 // so let's fake it
 #define LIVES_BLUEPRINT(bltype, ...) LIVES_BLUEPRINT_##bltype(__VA_ARGS__)
 
 #define LIVES_BLUEPRINT_VALUE(name, vtype, flags, ne, value)		\
-  LIVES_PLANT_VALUE, "name", WEED_SEED_CONST_CHARPTR, BLU_SCALAR, name, "vtype", WEED_SEED_INT, BLU_SCALAR, (weed_seed_t)(vtype), \
-    "flags", WEED_SEED_UINT64, BLU_SCALAR, (flags), "value", vtype, (uint64_t)0, (weed_size_t)(ne), (value), NULL
+  LIVES_PLANT_VALUE, "name", WEED_SEED_CONST_CHARPTR, 0, name, "vtype", WEED_SEED_INT, 0, (weed_seed_t)(vtype), \
+    "flags", WEED_SEED_UINT64, 0, (flags), "value", vtype, 0, (weed_size_t)(ne), (value), NULL
 
 
 // a blueprint is an araay of values, so lets make a blueprint for value...but wait, we need values to make a value blueprint
@@ -52,7 +50,7 @@ static weed_plant_t *plant_from_tmpl(int pltype, ...) {
     if (!name) break;
     weed_seed_t st = va_arg(va, weed_seed_t);
     uint64_t flags = va_arg(va, uint64_t);
-    if (!(flags & BLU_SCALAR)) ne = va_arg(va, weed_size_t);
+    if (flags & PARAM_FLAG_ARRAY) ne = va_arg(va, weed_size_t);
     if (!st) {
       // if we get st 0, we set a placeholder string
       weed_leaf_from_varg(pl, name, WEED_SEED_STRING, 1, va);
@@ -78,7 +76,7 @@ static weed_plant_t *make_bluprint(int nleaves, int pltype, ...) {
     if (!st) break;
     const char *name = va_arg(va, const char *);
     uint64_t flags = va_arg(va, uint64_t);
-    if (!(flags & BLU_SCALAR)){
+    if (flags & PARAM_FLAG_ARRAY){
       ne = va_arg(va, weed_size_t);
       defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, ne, va));
     }
@@ -117,7 +115,7 @@ static weed_plant_t *plant_from_blu(int pltype, ...) {
     uint64_t flags = weed_get_uint64_value(defs[i], "flags", NULL);
     weed_size_t ne = 1;
     if (!st) st = va_arg(va, weed_seed_t);
-    if (!flags & BLU_SCALAR) st = va_arg(va, weed_size_t);
+    if (flags & PARAM_FLAG_ARRAY) ne = va_arg(va, weed_size_t);
     weed_leaf_from_varg(opl, name, st, ne, va);
   }
   va_end(va);
@@ -127,7 +125,7 @@ static weed_plant_t *plant_from_blu(int pltype, ...) {
 ////////////////////////////
 
 weed_plant_t *valplant_for_struct(const char *stname, void *struc) {
-  weed_plant_t *vpl = PLANT_FROM_BLU(VALUE, stname, WEED_SEED_VOIDPTR, BLU_SCALAR, struc);
+  weed_plant_t *vpl = PLANT_FROM_BLU(VALUE, stname, WEED_SEED_VOIDPTR, 0, struc);
   weed_set_int_value(vpl, "val_dtl", STRUCT_ADAPTOR);
   return vpl;
 }
@@ -998,7 +996,7 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
       uint32_t st = weed_leaf_seed_type(attrs[count], WEED_LEAF_VALUE);
       int type = 0, subtype = 0;
       if (ne) {
-        if (weed_get_int_value(attrs[count], WEED_LEAF_FLAGS, NULL) & WEED_PARAM_FLAG_READ_ONLY)
+        if (weed_get_int_value(attrs[count], WEED_LEAF_FLAGS, NULL) & PARAM_FLAG_READONLY)
           notes = " (readonly)";
         else notes = "";
         obs = "";

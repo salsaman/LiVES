@@ -214,15 +214,11 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t **synclistp) {
 
 
 LIVES_GLOBAL_INLINE void *lives_sync_list_pop_to_last(lives_sync_list_t **synclistp) {
-  LiVESList *list = NULL;
   void *data = NULL;
   if (synclistp && *synclistp) {
     lives_sync_list_wrlock(*synclistp);
-    while (*synclistp->nvals > 1) _lives_sync_list_pop(synclistp);
-    if (*synclistp) {
-      data = *synclistp->data;
-      lives_sync_list_unlock(*synclistp);
-    }
+    while ((*synclistp)->nvals > 1) data = _lives_sync_list_pop(synclistp);
+    if (*synclistp) lives_sync_list_unlock(*synclistp);
   }
   return data;
 }

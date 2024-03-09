@@ -1680,7 +1680,7 @@ static void select_block(lives_mt * mt) {
   if (is_fg_thread()) _select_block(mt);
   else {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_rvoid(_select_block, 0, "v", mt);
+    main_thread_execute_rvoid(_select_block, "v", mt);
     BG_THREADVAR(hook_hints) = 0;
   }
 }
@@ -9403,7 +9403,7 @@ static void _clear_context(lives_mt * mt) {
 }
 
 void clear_context(lives_mt * mt) {
-  main_thread_execute_rvoid(_clear_context, 0, "v", mt);
+  main_thread_execute_rvoid(_clear_context, "v", mt);
 }
 
 
@@ -11867,7 +11867,7 @@ static void _animate_multitrack(lives_mt * mt) {
 
 
 void animate_multitrack(lives_mt * mt) {
-  main_thread_execute_rvoid(_animate_multitrack, 0, "v", mt);
+  main_thread_execute_rvoid(_animate_multitrack, "v", mt);
 }
 
 ////////////////////////////////////////////////////
@@ -14725,7 +14725,7 @@ void multitrack_playall(lives_mt * mt) {
     boolean had_audio = mt->has_audio_file;
     mt->pb_start_event = NULL;
     mt->has_audio_file = TRUE;
-    main_thread_execute_rvoid(on_preview_clicked, 0, "vv", LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
+    main_thread_execute_rvoid(on_preview_clicked, "vv", LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
     //on_preview_clicked(LIVES_BUTTON(
     mt->has_audio_file = had_audio;
   } else {

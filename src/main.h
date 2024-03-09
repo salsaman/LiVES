@@ -185,10 +185,10 @@ weed_error_t lives_leaf_dup_nocheck(weed_plant_t *dst, weed_plant_t *src, const 
 #define LIVES_LIKELY(a) EXPECTED(a)
 
 typedef enum {
-  CANCEL_KILL = 0, ///< normal - kill background processes working on current clip
-  CANCEL_INTERRUPT,     ///< midway between KILL and SOFT
-  CANCEL_SOFT,     ///< just cancel in GUI (for keep, etc)
-  CANCEL_DONTCARE, ///< send cancel request then ignore target
+  CANCEL_TYPE_KILL = 0, ///< DEFAULT, kill background processes working on current clip
+  CANCEL_TYPE_INTERRUPT,     ///< midway between KILL and SOFT
+  CANCEL_TYPE_SOFT,     ///< just cancel in GUI (for keep, etc)
+  CANCEL_TYPE_DONTCARE, ///< send cancel request then ignore target
 } lives_cancel_type_t;
 
 #define ADD_AUDIT(audt, ptr, vtype, val) do {				\
@@ -221,8 +221,6 @@ extern locale_t oloc, nloc;
 
 typedef int funcinst_module_type;
 
-#include "funcsigs.h"
-
 typedef enum {
 	      // not attached to a proc_thread, not stacked
 	      DISPOSITION_INERT = 0,
@@ -246,6 +244,13 @@ typedef enum {
 	      DISPOSITION_ERROR,
 } funcinst_disposition;
 
+typedef struct _lives_funcinst lives_funcinst_t;
+
+#include "widget-helper.h"
+#include "lists.h"
+
+#include "funcsigs.h"
+
 typedef struct {
   uint64_t uid;
   uint64_t flags; // flags can include static (do not free)
@@ -268,17 +273,6 @@ typedef struct {
   const char *file;
   int line;
 } lives_funcdef_t;
-
-typedef struct _lives_funcinst lives_funcinst_t;
-
-#include "widget-helper.h"
-#include "lists.h"
-
-
-#define DEF_STRUCT(stname, ...)				\
-  const char *stname##_strctdef = #__VA_ARGS__;		\
-  typedef struct _##stname {__VA_ARGS__} stname;	\
-  const size_t stname##_size = sizeof(stname);
 
 typedef struct {
   const char *name;
@@ -304,12 +298,13 @@ lives_struct_t *lives_struct_new(char *stname);
 
 // make_allvals will update bound params for plant, then return an allvalue set from plant, field
 // then get_allval returns a value type ctype from allvalues
-#define LIVES_STRUCT_GET(strct, field, ctype) (get_allval(&(make_allvals(strct->plant, field))))
+#define LIVES_STRUCT_GET(var, strct, field) (var, get_allval(&(make_allvals(strct->plant, field))))
 
 lives_structdef *parse_structdef(const char *stname, const char *stdefdata, size_t stsize);
 #define PARSE_STRUCTDEF(stname) parse_structdef(#stname, stname_strctdef, stname_size)
 
 typedef struct {
+  funcinst_disposition disposition;
   funcinst_module_type mod_type;
   void *module_data;
 } funcinst_module_t;
@@ -317,6 +312,8 @@ typedef struct {
 DEF_STRUCT(lives_funcinst, 
 	   uint64_t uid;
 	   lives_funcdef_t *funcdef;
+
+	   pthread_rwlock_t dispolock;
 
 	   volatile funcinst_disposition disposition;
 	   //disposition_changed_cb

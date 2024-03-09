@@ -85,11 +85,7 @@ char *lives_ellipsize(char *, size_t maxlen, LiVESEllipsizeMode mode);
 char *lives_pad(char *, size_t minlen, int align);
 char *lives_pad_ellipsize(char *, size_t fixlen, int padlen, LiVESEllipsizeMode mode);
 
-char *format_tstr(double xtime, int minlim);
-
 char *dir_to_pieces(const char *dirnm);
-
-char *md5_print(void *md5sum);
 
 // experimental
 //size_t lives_strlen128(const char *s);

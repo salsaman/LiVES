@@ -3813,7 +3813,7 @@ uint64_t open_file_sel(const char *file_name, double start, frames_t frames) {
             }
 
             // cancelled
-            if (mainw->cancelled != CANCEL_ERROR && mainw->cancel_type != CANCEL_INTERRUPT) {
+            if (mainw->cancelled != CANCEL_ERROR && mainw->cancel_type != CANCEL_TYPE_INTERRUPT) {
               lives_kill_subprocesses(cfile->handle, TRUE);
             }
 

@@ -4365,7 +4365,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
 
     for (;; rfx_list = rfx_list->next) {
       if (is_startup && lives_proc_thread_get_pause_requested(self))
-	lives_proc_thread_pause(self);
+	lives_proc_thread_pause();
 
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 #if !BG_LOAD_RFX
@@ -4498,7 +4498,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   // now we need to add to the effects menu and set a callback
   for (plugin_idx = 1; plugin_idx < rfx_list_length; plugin_idx++) {
     if (is_startup && lives_proc_thread_get_pause_requested(self))
-      lives_proc_thread_pause(self);
+      lives_proc_thread_pause();
 
     rfx = mainw->rendered_fx[plugin_idx];
 
@@ -4525,7 +4525,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   }
 
   if (is_startup && lives_proc_thread_get_pause_requested(self))
-    lives_proc_thread_pause(self);
+    lives_proc_thread_pause();
 
   if (status != RFX_STATUS_ANY) add_rfx_effects2(status);
   return TRUE;
@@ -4636,7 +4636,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     for (plugin_idx = 1; plugin_idx <= rfx_slot_count; plugin_idx++) {
       if (is_startup && lives_proc_thread_get_pause_requested(self)){
 	unlock_gmci();
-	lives_proc_thread_pause(self);
+	lives_proc_thread_pause();
 	lock_gmci();
       }
 
@@ -4753,7 +4753,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
   if (is_startup && lives_proc_thread_get_pause_requested(self)) {
     unlock_gmci();
-    lives_proc_thread_pause(self);
+    lives_proc_thread_pause();
     lock_gmci();
   }
 
@@ -4767,7 +4767,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     //threaded_dialog_spin(0.);
     if (CURRENT_CLIP_IS_VALID) {
       BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-      main_thread_execute_void(sensitize_rfx, 0);
+      main_thread_execute_void(sensitize_rfx);
       BG_THREADVAR(hook_hints) = 0;
     }
   }

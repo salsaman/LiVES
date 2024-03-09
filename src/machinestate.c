@@ -1194,9 +1194,9 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
 /////////////// move to other file ////
 
 
-LIVES_GLOBAL_INLINE int64_t weed_plant_t *lives_plant_get_subtype(weed_plant_t *plant) {
+LIVES_GLOBAL_INLINE int64_t lives_plant_get_subtype(weed_plant_t *plant) {
   if (!IS_LIVES_PLANT(plant)) return 0;
-  return weed_get_int64_vaue(plant. LIVES_LEAF_SUBTYPE, NULL);
+  return weed_get_int64_value(plant, LIVES_LEAF_SUBTYPE, NULL);
 }
 
 
@@ -1205,7 +1205,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int64_t subtype) {
   weed_set_int64_value(plant, LIVES_LEAF_SUBTYPE, subtype);
   weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
   lives_leaf_set_rdonly(plant, LIVES_LEAF_UID, TRUE, TRUE);
-  weed_leaf_set_undeleteable(plant, LIVES_LEAF_UID, TRUE);
+  weed_leaf_set_undeletable(plant, LIVES_LEAF_UID, TRUE);
   return plant;
 }
 
@@ -1634,7 +1634,8 @@ void rec_desk(void *args) {
 
     // TODO - use idle proc_thread
     if (saver_lpt) {
-      lives_proc_thread_join(saver_lpt);
+      lives_proc_thread_join_void(saver_lpt);
+      lives_proc_thread_unref(saver_lpt);
       saver_lpt = NULL;
       if (saveargs->error
           || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
@@ -1717,7 +1718,10 @@ void rec_desk(void *args) {
   mainw->ext_layer = NULL;
 #endif
 
-  if (saver_lpt) lives_proc_thread_join(saver_lpt);
+  if (saver_lpt) {
+    lives_proc_thread_join_void(saver_lpt);
+    lives_proc_thread_unref(saver_lpt);
+  }
 
   if (saveargs) {
     if (saveargs->layer) weed_layer_unref(saveargs->layer);
@@ -1849,7 +1853,7 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
-  lives_hook_remove(enable_ss_lpt);
+  lives_hook_cb_remove(enable_ss_lpt);
 
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -2126,7 +2130,7 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
-    lives_hook_remove(show_dpanel_lpt);
+    lives_hook_cb_remove(show_dpanel_lpt);
   }
 #endif
   return ret;

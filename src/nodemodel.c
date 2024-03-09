@@ -1097,7 +1097,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
         lives_free(msg);
         weed_layer_set_invalid(layer, TRUE);
         weed_layer_unref(layer);
-        lives_proc_thread_cancel(self);
+        lives_proc_thread_cancel();
       }
     }
     xtime = lives_get_session_time();
@@ -1198,7 +1198,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
       lives_proc_thread_error((int)retval, LPT_ERR_MINOR, "%s", "Unable to resize");
       weed_layer_set_invalid(layer, TRUE);
       weed_layer_unref(layer);
-      lives_proc_thread_cancel(self);
+      lives_proc_thread_cancel();
     }
 
     xtime = lives_get_session_time();
@@ -1262,7 +1262,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
       lives_proc_thread_error((int)retval, LPT_ERR_MINOR, "%s", "Unable to apply letterboxing");
       weed_layer_set_invalid(layer, TRUE);
       weed_layer_unref(layer);
-      lives_proc_thread_cancel(self);
+      lives_proc_thread_cancel();
     }
 
     xtime = lives_get_session_time();
@@ -1378,10 +1378,10 @@ static boolean ann_roll(void) {
       genstorun = 0;
     }
     if (lives_proc_thread_get_cancel_requested(self)) {
-      lives_proc_thread_cancel(self);
+      lives_proc_thread_cancel();
     }
     if (lives_proc_thread_get_pause_requested(self))
-      lives_proc_thread_pause(self);
+      lives_proc_thread_pause();
   }
   return TRUE;
 }
@@ -1432,7 +1432,7 @@ static int check_step_condition(exec_plan_t *plan, plan_step_t *step, boolean ca
       return 1;
     }
 
-    if (!lives_proc_thread_is_done(lpt, FALSE)) return 1;
+    if (!lives_proc_thread_is_done(lpt)) return 1;
   }
 
   xtime = lives_get_session_time();
@@ -1471,13 +1471,13 @@ void ann_roll_cancel(void) {
 
 static void ann_roll_launch(void) {
   if (ann_proc) return;
-  ann_proc =  lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+  ann_proc =  lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                        ann_roll, WEED_SEED_BOOLEAN, "", NULL);
-  lives_proc_thread_auto_nullify(ann_proc, TRUE);
+  //lives_proc_thread_auto_nullify(ann_proc, TRUE);
   lives_proc_thread_set_pauseable(ann_proc, TRUE);
   lives_proc_thread_set_cancellable(ann_proc);
   //mainw->debug_ptr = ann_proc;
-  lives_proc_thread_queue(ann_proc, 0);
+  lives_proc_thread_queue(ann_proc);
 }
 
 
@@ -1521,7 +1521,7 @@ static void extract_timedata(exec_plan_t *plan) {
         for (LiVESList *sublist = step->substeps; sublist; sublist = sublist->next) {
           ann_testdata_t *tstdata;
           exec_plan_substep_t *substep = (exec_plan_substep_t *)sublist->data;
-          float cpuload = substep->cpuload;
+          //float cpuload = substep->cpuload;
 
           switch (substep->op_idx) {
           case OP_PCONV:
@@ -1674,7 +1674,7 @@ static void run_plan(exec_plan_t *plan) {
 
   if (mainw->refresh_model ||
       lives_proc_thread_get_cancel_requested(self)) {
-    lives_proc_thread_cancel(self);
+    lives_proc_thread_cancel();
   }
 
   //if (!ann_proc) ann_roll_launch();
@@ -1711,7 +1711,7 @@ static void run_plan(exec_plan_t *plan) {
   if (lives_proc_thread_get_cancel_requested(self)) {
     MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
-    lives_proc_thread_cancel(self);
+    lives_proc_thread_cancel();
   }
 
   SET_PLAN_STATE(RUNNING);
@@ -2040,22 +2040,22 @@ static void run_plan(exec_plan_t *plan) {
             if (op_order[OP_LETTERBOX] == 1)
               d_print_debug(" + letterbox");
 
-            lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+            lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                            res_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 1) {
             // pconv is 1
             d_print_debug("Palconv");
             if (op_order[OP_GAMMA] == 1)
               d_print_debug(" + gamma");
-            lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+            lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                            pconv_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 1) {
             d_print_debug("Letterbox");
-            lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+            lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                            lbox_substep, WEED_SEED_INT, "v", step);
           } else {
             d_print_debug("Gamma");
-            lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+            lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                            gamma_substep, WEED_SEED_INT, "v", step);
           }
           //
@@ -2231,9 +2231,11 @@ static void run_plan(exec_plan_t *plan) {
             double xtime;
             exec_plan_substep_t *substep = NULL;
 	    int op_idx = OP_NULL;
-            if (!lives_proc_thread_is_done(step->proc_thread, FALSE)) break;
+            if (!lives_proc_thread_is_done(step->proc_thread)) break;
             xtime = lives_get_session_time();
-            lives_proc_thread_join(step->proc_thread);
+            lives_proc_thread_join_void(step->proc_thread);
+            lives_proc_thread_unref(step->proc_thread);
+            step->proc_thread = NULL;
 
 	    if (!lives_strcmp(lives_proc_thread_get_funcname(step->proc_thread),
 			      "deinterlace_frame")) {
@@ -2474,7 +2476,7 @@ static void run_plan(exec_plan_t *plan) {
       xtime = lives_get_session_time();
       plan->tdata->paused_time -= xtime;
       SET_PLAN_STATE(PAUSED);
-      lives_proc_thread_pause(self);
+      lives_proc_thread_pause();
       SET_PLAN_STATE(RESUMING);
       complete = FALSE;
       paused = FALSE;
@@ -2605,7 +2607,7 @@ static void run_plan(exec_plan_t *plan) {
                   1000. * plan->tdata->start_wait, plan->tdata->start_wait / plan->tdata->real_duration * 100.,
                   1000. * plan->tdata->paused_time, 1000. * plan->tdata->waiting_time,
                   plan->tdata->waiting_time / plan->tdata->real_duration * 100.);
-  done:
+    //  done:
     if (0);
     char *bps = NULL, *gbps = NULL;
 
@@ -2639,7 +2641,7 @@ static void run_plan(exec_plan_t *plan) {
 
   MSGMODE_OFF(DEBUG);
 
-  if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel(self);
+  if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel();
   nplans--;
   planrunner_unlock();
 
@@ -2750,8 +2752,8 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
     SET_PLAN_STATE(QUEUED);
 
     mainw->plan_runner_proc = lpt
-                              = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_plan, -1, "v", plan);
-    lives_proc_thread_add_hook(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
+                              = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, -1, "v", plan);
+    lives_proc_thread_add_hook_cb(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
 
     lives_proc_thread_set_cancellable(lpt);
     lives_proc_thread_set_pauseable(lpt, TRUE);
@@ -2759,7 +2761,8 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
     if (plan->tdata)
       plan->tdata->exec_time = lives_get_session_time();
     nplans++;
-    lives_proc_thread_queue(lpt, LIVES_THRDATTR_PRIORITY);
+    lives_proc_thread_set_attrs(lpt, LIVES_THRDATTR_PRIORITY);
+    lives_proc_thread_queue(lpt);
     planrunner_unlock();
   } else run_plan(plan);
   return lpt;
@@ -7899,7 +7902,7 @@ void build_nodemodel(lives_nodemodel_t **pnodemodel) {
 
 
 void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
-  if (mainw->plan_runner_proc && !lives_proc_thread_is_done(mainw->plan_runner_proc, FALSE))
+  if (mainw->plan_runner_proc && !lives_proc_thread_is_done(mainw->plan_runner_proc))
     lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
 
   if (mainw->plan_runner_proc) {

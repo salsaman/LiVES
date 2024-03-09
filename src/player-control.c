@@ -148,7 +148,8 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 
   // the main thread will block here, waiting for playback to end.
   // during this time, it will service only bg requests set via fg_service_call
-  lives_proc_thread_join(lpt);
+  lives_proc_thread_join_void(lpt);
+  lives_proc_thread_unref(lpt);
   return FALSE;
 }
 
@@ -162,16 +163,16 @@ lives_proc_thread_t start_playback_async(int type) {
   if (mainw->player_proc || !mainw->can_play) return NULL;
 
   GET_PROC_THREAD_SELF(self);
-  attrs |= LIVES_THRDATTR_START_UNQUEUED | LIVES_THRDATTR_DONTCARE;
+  attrs |= LIVES_THRDATTR_CREATE_UNQUEUED | LIVES_THRDATTR_DONTCARE;
   lpt = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
 
   if (type == 6 && THREADVAR(accel_group)) {
-    lives_proc_thread_add_hook(self, ACCEL_END_HOOK, HOOK_OPT_ONESHOT,
-                               queue_funcinst, lpt);
-  } else lives_proc_thread_queue(lpt, 0);
+    lives_proc_thread_add_hook_cb_full(self, ACCEL_END_HOOK, HOOK_OPT_ONESHOT,
+				       lives_proc_thread_queue, 0, "p", lpt);
+  } else lives_proc_thread_queue(lpt);
   return lpt;
 }
 
@@ -765,7 +766,7 @@ void play_file(void) {
   fg_service_wake();
 
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  main_thread_execute_void(pre_playback, 0);
+  main_thread_execute_void(pre_playback);
   BG_THREADVAR(hook_hints) = 0;
 
   // setting this forces the main thread to block in a loop and only update
@@ -1339,7 +1340,7 @@ void play_file(void) {
 
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(NULL, COMPLETED_HOOK);
+  lives_hook_trigger(NULL, COMPLETED_HOOK);
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
   ofl = get_old_frame_layer();
@@ -1491,7 +1492,7 @@ void play_file(void) {
   // clean up the interface, this has to be executed by the main (gui) thread
   // due to restrictions in gtk+
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  main_thread_execute_void(post_playback, 0);
+  main_thread_execute_void(post_playback);
   BG_THREADVAR(hook_hints) = 0;
 
   // and startup helpers which were paused during playback may now resume

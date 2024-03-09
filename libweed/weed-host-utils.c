@@ -953,7 +953,7 @@ const char *weed_seed_to_ctype(weed_seed_t st, int add_space) {
   switch (st) {
   case WEED_SEED_VOID: return "void";
   case WEED_SEED_STRING: return "char *";
-  case WEED_SEED_FUNCPTR: return "lives_func_t *";
+  case WEED_SEED_FUNCPTR: return "weed_func_t *";
   case WEED_SEED_VOIDPTR: return "void *";
   case WEED_SEED_PLANTPTR: return "weed_plant_t *";
 #ifdef WEED_SEED_VARIADIC
@@ -965,7 +965,7 @@ const char *weed_seed_to_ctype(weed_seed_t st, int add_space) {
       switch (st) {
       case WEED_SEED_INT: return "int ";
       case WEED_SEED_UINT: return "uint32_t ";
-      case WEED_SEED_BOOLEAN: return "boolean ";
+      case WEED_SEED_BOOLEAN: return "weed_boolean_t ";
       case WEED_SEED_DOUBLE: return "double ";
       case WEED_SEED_FLOAT: return "float ";
       case WEED_SEED_INT64: return "int64_t ";
@@ -975,7 +975,7 @@ const char *weed_seed_to_ctype(weed_seed_t st, int add_space) {
       switch (st) {
       case WEED_SEED_INT: return "int";
       case WEED_SEED_UINT: return "uint32_t";
-      case WEED_SEED_BOOLEAN: return "boolean";
+      case WEED_SEED_BOOLEAN: return "weed_boolean_t";
       case WEED_SEED_DOUBLE: return "double";
       case WEED_SEED_FLOAT: return "float";
       case WEED_SEED_INT64: return "int64_t";
@@ -1009,11 +1009,9 @@ weed_seed_t ctype_to_weed_seed(const char *ctype) {
   if (!strcmp(ctype, "uint64_t"))
     return WEED_SEED_UINT64;
   if (!strcmp(ctype, "void *")
-      || !strcmp(ctype, "weed_voidptr_t")
-      || !strcmp(ctype, "livespointer"))
+      || !strcmp(ctype, "weed_voidptr_t"))
     return WEED_SEED_VOIDPTR;
-  if (!strcmp(ctype, "lives_funcptr_t")
-      || !strcmp(ctype, "weed_funcptr_t"))
+  if (!strcmp(ctype, "weed_funcptr_t"))
     return WEED_SEED_FUNCPTR;
   if (!strcmp(ctype, "weed_plant_t *")
       || !strcmp(ctype, "weed_plantptr_t"))

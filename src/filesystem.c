@@ -890,7 +890,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
     if (!retval) fbuff->flags |= FB_FLAG_INVALID;
     fbuff->flags &= ~FB_FLAG_BG_OP;
     pthread_mutex_unlock(&fbuff->sync_mutex);
-    lives_proc_thread_cancel(self);
+    lives_proc_thread_cancel();
   }
 
   fbuff->orig_size = get_file_size(fd, TRUE);
@@ -952,7 +952,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #endif
       }
     }
-    if (retval) lives_hooks_trigger(my_hook_stacks(self), DATA_PREVIEW_HOOK);
+    if (retval) lives_hook_trigger(my_hook_stacks(), DATA_PREVIEW_HOOK);
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
@@ -980,7 +980,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   lives_proc_thread_t lpt;
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return NULL;
-  lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+  lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                  _lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
 
   SET_LPT_VALUE(lpt, voidptr, "filebuff", (void *)fbuff);
@@ -1001,7 +1001,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
     fbuff->flags |= FB_FLAG_BG_OP;
     pthread_mutex_unlock(&fbuff->sync_mutex);
-    lives_proc_thread_queue(lpt, 0);
+    lives_proc_thread_queue(lpt);
     lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
     return TRUE;
   }
@@ -2400,15 +2400,15 @@ boolean disk_monitor_ready(const char *dir) {
 
 lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (disk_monitor_running(dir)) disk_monitor_forget();
-  running = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+  running = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                      get_dir_size, WEED_SEED_INT64, "s", dir);
-  lives_proc_thread_add_hook(running, COMPLETED_HOOK, 0, dirsize_done_cb, &result);
+  lives_proc_thread_add_hook_cb(running, COMPLETED_HOOK, 0, dirsize_done_cb, &result);
 
   mainw->dsu_valid = TRUE;
   if (running_for) lives_free(running_for);
   running_for = lives_strdup(dir);
   dircheck_state = 1;
-  lives_proc_thread_queue(running, 0);
+  lives_proc_thread_queue(running);
   return running;
 }
 

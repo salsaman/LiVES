@@ -1429,7 +1429,7 @@ static void cancel_process(void) {
           && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
         notify_user(mainw->proc_ptr->text);
       }
-      lives_hooks_trigger(NULL, COMPLETED_HOOK);
+      lives_hook_trigger(NULL, COMPLETED_HOOK);
       lives_freep((void **)&mainw->proc_ptr->text);
       lives_widget_destroy(mainw->proc_ptr->processing);
       mainw->proc_ptr->processing = NULL;;
@@ -1905,7 +1905,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   if (type == 2) {
     lives_widget_show_all(mainw->proc_ptr->cancel_button);
     lives_widget_hide(mainw->proc_ptr->pause_button);
-    mainw->cancel_type = CANCEL_SOFT;
+    mainw->cancel_type = CANCEL_TYPE_SOFT;
   }
   if (type == 0) {
     lives_widget_hide(mainw->proc_ptr->cancel_button);
@@ -1985,11 +1985,11 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
     mainw->proc_ptr = NULL;
   }
 
-  if (type == 2) mainw->cancel_type = CANCEL_KILL;
+  if (type == 2) mainw->cancel_type = CANCEL_TYPE_KILL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (self && lives_proc_thread_get_cancel_requested(self)) {
-    lives_proc_thread_cancel(self);
+    lives_proc_thread_cancel();
     return FALSE;
   }
 
@@ -3420,7 +3420,7 @@ void threaded_dialog_spin(double fraction) {
       || !mainw->is_ready || !prefs->show_gui) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
     if (THREADVAR(no_gui)) return;
-    main_thread_execute_rvoid(_threaded_dialog_spin, 0, "d", fraction);
+    main_thread_execute_rvoid(_threaded_dialog_spin, "d", fraction);
   } else _threaded_dialog_spin(fraction);
 }
 
@@ -3446,7 +3446,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   if (mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   if (!mainw->is_exiting) {
     if (!!is_fg_thread()) {
-      main_thread_execute_rvoid(_do_threaded_dialog, 0, "sb", trans_text, has_cancel);
+      main_thread_execute_rvoid(_do_threaded_dialog, "sb", trans_text, has_cancel);
     } else _do_threaded_dialog(trans_text, has_cancel);
   }
 }
@@ -3472,7 +3472,7 @@ static void _thdlg_auto_spin(void) {
   }
   THREADVAR(perm_hook_hints) = 0;
   if (lives_proc_thread_get_cancel_requested(self))
-    lives_proc_thread_cancel(self);
+    lives_proc_thread_cancel();
 }
 
 
@@ -3482,11 +3482,11 @@ void threaded_dialog_auto_spin(void) {
   if (!prefs->show_gui) return;
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   syncid = gen_unique_id();
-  lpt = mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+  lpt = mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                  (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
   SET_LPT_VALUE(lpt, uint64, "sync_idx", syncid);
 
-  lives_proc_thread_queue(lpt, 0);
+  lives_proc_thread_queue(lpt);
   lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
 }
 
@@ -3505,7 +3505,7 @@ static void _end_threaded_dialog(void) {
 
   if (mainw->dlg_spin_thread) threaded_dialog_stop_spin();
 
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
 
   if (mainw->proc_ptr && mainw->proc_ptr->processing) {
     lives_widget_destroy(mainw->proc_ptr->processing);
@@ -3538,7 +3538,7 @@ void end_threaded_dialog(void) {
   if (!mainw->threaded_dialog) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_void(_end_threaded_dialog, 0);
+    main_thread_execute_void(_end_threaded_dialog);
     BG_THREADVAR(hook_hints) = 0;
   } else _end_threaded_dialog();
 }

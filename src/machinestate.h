@@ -74,6 +74,8 @@ typedef struct {
 #define LIVES_PLANT_PROC_THREAD 4
 #define LIVES_PLANT_PREFERENCE 5
 
+#define LIVES_PLANT_TMP 64
+
 #define LIVES_PLANT_FUNCPARAMS 128
 
 #define LIVES_PLANT_DATA_BOOK 140
@@ -86,6 +88,8 @@ typedef struct {
 
 #define LIVES_PLANT_CLEANER 515
 
+#define LIVES_PLANT_STRUCT_MIRROR 516
+  
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
 

@@ -1208,16 +1208,16 @@ void lazy_startup_checks(void) {
   if (lpt) {
     if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
       if (!_lives_proc_thread_check_states(lpt, THRD_STATE_COMPLETED)) {
-        lives_proc_thread_add_hook(lpt, COMPLETED_HOOK, 0, wake_other_lpt, self);
+        lives_proc_thread_add_hook_cb(lpt, COMPLETED_HOOK, 0, wake_other_lpt, self);
         lives_proc_thread_unfreeze_state(lpt);
-        lives_proc_thread_pause(self);
+        lives_proc_thread_pause();
       } else lives_proc_thread_unfreeze_state(lpt);
     }
     lpt = STEAL_POINTER(mainw->helper_procthreads[PT_LAZY_RFX]);
     lives_proc_thread_join_boolean(lpt);
     lives_proc_thread_unref(lpt);
     if (lives_proc_thread_get_pause_requested(self))
-      lives_proc_thread_pause(self);
+      lives_proc_thread_pause();
     add_rfx_effects2(RFX_STATUS_ANY);
   }
 alldone:
@@ -1431,19 +1431,19 @@ boolean lives_startup(livespointer data) {
   mainw->fg_tdata = lives_thread_data_create();
 
   // we have to do some manual actions which are normal done automaticlly when a thread is added to the pool
-  mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, run_the_program, 0, "", NULL);
+  mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_the_program, 0, "", NULL);
 
   lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
   mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
 
   // set the active proc_thread for the main pthread
-  lives_thread_set_active(mainw->def_lpt);
+  lives_thread_set_proc_thread(mainw->def_lpt);
 
   // for the main thread, the hook_stacks become maine->global_hook_stacks, but for NATIVE_HOOKS we will point these
   // to the thread hook_stacks instead
 
   lpt_hooks = lives_proc_thread_get_hook_stacks(mainw->def_lpt);
-  lives_hooks_clear_all(lpt_hooks, N_NATIVE_HOOKS);
+  lives_hook_stacks_clear_all(lpt_hooks, N_NATIVE_HOOKS);
 
   thread_hooks = THREADVAR(hook_stacks);
   for (int i = 0; i < N_NATIVE_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
@@ -1748,7 +1748,7 @@ boolean lives_startup(livespointer data) {
 }
 
 
-boolean lives_startup2(livespointer data) {
+void lives_startup2(void) {
   lives_proc_thread_t lpt;
   int64_t dsval;
   char *ustr, *tmp, *msg;
@@ -1837,9 +1837,8 @@ boolean lives_startup2(livespointer data) {
     prefs->cptime =
       (double)(lives_get_current_ticks() - lives_proc_thread_get_start_ticks(lpt))
       / TICKS_PER_SECOND_DBL * .9;
-    if (!lives_proc_thread_is_done(lpt, TRUE)) {
-      lives_proc_thread_request_cancel(lpt, FALSE);
-    }
+    if (!lives_proc_thread_is_done(lpt)) lives_proc_thread_request_cancel(lpt, FALSE);
+
     cpvar = lives_proc_thread_join_double(lpt);
 
     lives_proc_thread_unref(lpt);
@@ -2049,8 +2048,6 @@ boolean lives_startup2(livespointer data) {
   fg_service_wake();
   mainw->do_ctx_update = TRUE;
   mainw->gui_much_events = TRUE;
-
-  return FALSE;
 } // end lives_startup2()
 
 
@@ -3002,7 +2999,7 @@ static boolean lives_init(_ign_opts * ign_opts) {
 
 #ifdef ENABLE_JACK
   boolean success;
-  lives_proc_thread_t info;
+  lives_proc_thread_t lpt;
   ticks_t timeout;
   int orig_err = 0;
   boolean jack_read_start = FALSE;
@@ -3055,7 +3052,7 @@ static boolean lives_init(_ign_opts * ign_opts) {
   mainw->fixed_fpsd = -1.;
 
   mainw->cancelled = CANCEL_NONE;
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
 
   // setting this to TRUE can possibly increase smoothness for lower framerates
   // needs more testing and a preference in prefs window- TODO
@@ -3662,15 +3659,14 @@ jack_tcl_try:
       success = TRUE;
       timeout = LIVES_SHORT_TIMEOUT;
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
-      if (!(info = lives_proc_thread_create_with_timeout(timeout, 0, lives_jack_init, WEED_SEED_BOOLEAN, "iv",
-                   JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
-        if (mainw->cancelled) {
-          lives_exit(0);
-        }
+      if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
+							 lives_jack_init, WEED_SEED_BOOLEAN, "iv",
+							 JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
+        if (mainw->cancelled) lives_exit(0);
         return FALSE;
       }
-      success = lives_proc_thread_join_boolean(info);
-      lives_proc_thread_unref(info);
+      success = lives_proc_thread_join_boolean(lpt);
+      lives_proc_thread_unref(lpt);
 
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
         if (prefs->startup_phase) {
@@ -3761,11 +3757,12 @@ jack_acl_try:
         success = TRUE;
         timeout = LIVES_SHORTEST_TIMEOUT;
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
-        if (!(info = lives_proc_thread_create_with_timeout(timeout, 0, (lives_funcptr_t)jack_create_client_writer,
-                     WEED_SEED_BOOLEAN, "v", mainw->jackd))) return FALSE;
 
-        success = lives_proc_thread_join_boolean(info);
-        lives_proc_thread_unref(info);
+	if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
+							   jack_create_client_writer, WEED_SEED_BOOLEAN, "v",
+							   mainw->jackd))) return FALSE;
+        success = lives_proc_thread_join_boolean(lpt);
+        lives_proc_thread_unref(lpt);
 
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
           // dont clear TEST till here
@@ -3802,13 +3799,12 @@ jack_acl_try:
               mainw->jackd->whentostop = &mainw->whentostop;
               mainw->jackd->cancelled = &mainw->cancelled;
               mainw->jackd->in_use = FALSE;
-              if (!(info =
-                      lives_proc_thread_create_with_timeout(timeout, 0, (lives_funcptr_t)jack_write_client_activate,
-                          WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
-                success = FALSE;
-              } else {
-                success = lives_proc_thread_join_boolean(info);
-                lives_proc_thread_unref(info);
+	      if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
+								jack_write_client_activate, WEED_SEED_BOOLEAN, "v",
+								mainw->jackd))) success = FALSE;
+              else {
+                success = lives_proc_thread_join_boolean(lpt);
+                lives_proc_thread_unref(lpt);
 		// *INDENT-OFF*
               }}}}
 	// *INDENT-ON*
@@ -4508,7 +4504,7 @@ double pick_custom_colours(double var, double timer) {
     mainw->pretty_colours = TRUE;
     //else if (!fixed) var = -var; // ???
 #ifndef VALGRIND_ON
-    main_thread_execute_void(set_extra_colours, 0);
+    main_thread_execute_void(set_extra_colours);
 #endif
     return var;
   }

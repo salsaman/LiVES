@@ -374,7 +374,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
     weed_layer_set_palette_yuv(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace);
 
-    mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
+    mainw->cancel_type = CANCEL_TYPE_SOFT; // force "Enough" button to be shown
 
     msg = lives_strdup_printf(_("Quick transcoding to %s..."), pname);
     do_threaded_dialog(msg, TRUE);
@@ -582,7 +582,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 tr_err:
   if (internal && frame_layer) weed_layer_unref(frame_layer);
 
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
   prefs->pb_quality = pbq;
 
   mainw->fx1_bool = fx1_bool;

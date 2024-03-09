@@ -981,7 +981,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   if (has_cancel) {
-    if (CURRENT_CLIP_IS_VALID && mainw->cancel_type == CANCEL_SOFT) {
+    if (CURRENT_CLIP_IS_VALID && mainw->cancel_type == CANCEL_TYPE_SOFT) {
       LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
                                   NULL, _("_Enough"), LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);

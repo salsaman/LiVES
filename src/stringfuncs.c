@@ -647,46 +647,6 @@ LIVES_GLOBAL_INLINE char *lives_pad_ellipsize(char *txt, size_t fixlen, int pali
 }
 
 
-char *format_tstr(double xtime, int minlim) {
-  // format xtime (secs) as h/min/secs
-  // if minlim > 0 then for mins >= minlim we don't show secs.
-  char *tstr;
-  int hrs = (int64_t)xtime / 3600, min;
-  xtime -= hrs * 3600;
-  min = (int64_t)xtime / 60;
-  xtime -= min * 60;
-  if (xtime >= 60.) {
-    min++;
-    xtime -= 60.;
-  }
-  if (min >= 60) {
-    hrs++;
-    min -= 60;
-  }
-  if (hrs > 0) {
-    // TRANSLATORS: h(ours) min(utes)
-    if (minlim) tstr = lives_strdup_printf(_("%d h %d min"), hrs, min);
-    // TRANSLATORS: h(ours) min(utes) sec(onds)
-    else tstr = lives_strdup_printf("%d h %d min %.2f sec", hrs, min, xtime);
-  } else {
-    if (min > 0) {
-      if (minlim) {
-        // TRANSLATORS: min(utes)
-        if (min >= minlim) tstr = lives_strdup_printf(_("%d min"), min);
-        // TRANSLATORS: min(utes) sec(onds)
-        else tstr = lives_strdup_printf("%d min %d sec", min, (int)(xtime + .5));
-      }
-      // TRANSLATORS: min(utes) sec(onds)
-      else tstr = lives_strdup_printf("%d min %.2f sec", min, xtime);
-    } else {
-      if (minlim) tstr = lives_strdup_printf("%d sec", (int)(xtime + .5));
-      else tstr = lives_strdup_printf("%.2f sec", xtime);
-    }
-  }
-  return tstr;
-}
-
-
 LIVES_GLOBAL_INLINE char *lives_concat_sep(char *st, const char *sep, char *x) {
   /// nb: lives strconcat
   // uses realloc / memcpy, frees x; st becomes invalid
@@ -780,10 +740,3 @@ char *dir_to_pieces(const char *dirnm) {
   return pcs2;
 }
 
-
-char *md5_print(void *md5sum) {
-  char *cc = (char *)md5sum;
-  char *qq = lives_strdup("0x");
-  for (int i = 0; i < 16; i++) qq = lives_strdup_concat(qq, "", "%02x", cc++);
-  return qq;
-}

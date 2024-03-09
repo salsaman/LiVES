@@ -4699,7 +4699,9 @@ filterinit2:
     /// no more events or audio to flush, rendering complete
 #ifdef SAVE_THREAD
     if (saver_lpt) {
-      lives_proc_thread_join(saver_lpt);
+      lives_proc_thread_join_void(saver_lpt);
+      lives_proc_thread_unref(saver_lpt);
+
       while (saveargs->error) {
         retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
         lives_error_free(saveargs->error);
@@ -4791,10 +4793,10 @@ static boolean do_xdg_opt(lives_obj_t *obj, void *data) {
 
 static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
   if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
-    LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
+    LiVESWidget *cbut = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
-    lives_widget_object_ref(cb);
-    lives_hook_append(NULL, COMPLETED_HOOK, 0, do_xdg_opt, cb);
+    lives_widget_object_ref(cbut);
+    lives_hook_cb_append(NULL, COMPLETED_HOOK, 0, do_xdg_opt, cbut);
   }
   return FALSE;
 }
@@ -4846,7 +4848,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE && render_vid) {
-    lives_hook_append(NULL, SYNC_ANNOUNCE_HOOK, 0, add_xdg_opt, NULL);
+    lives_hook_cb_append(NULL, SYNC_ANNOUNCE_HOOK, 0, add_xdg_opt, NULL);
   }
 
   // play back the file as fast as possible, each time calling render_events()
@@ -4856,7 +4858,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
        && mainw->cancelled != CANCEL_KEEP) || mainw->error
       || mainw->render_error >= LIVES_RENDER_ERROR) {
     mainw->disk_mon = 0;
-    mainw->cancel_type = CANCEL_KILL;
+    mainw->cancel_type = CANCEL_TYPE_KILL;
     mainw->cancelled = CANCEL_NONE;
     cfile->nopreview = FALSE;
 
@@ -4878,7 +4880,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
 
   cfile->nopreview = FALSE;
   mainw->disk_mon = 0;
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
   mainw->cancelled = CANCEL_NONE;
   cfile->changed = TRUE;
   reget_afilesize(mainw->current_file);
@@ -5361,7 +5363,7 @@ boolean render_to_clip(boolean new_clip) {
       = lives_proc_thread_create(0, transcode_clip,
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
-    lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
+    //lives_hook_cb_append(NULL, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
     //lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     g_print("wait for transcoder ready\n");

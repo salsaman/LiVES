@@ -138,8 +138,10 @@ typedef struct {
 
 /* Parameter template flags */
 #define WEED_PARAM_FLAG_READ_ONLY     		(1 << 0)
-#define WEED_PARAM_FLAG_VALUE_CHANGED           (1 << 1)
-  
+#define WEED_PARAM_FLAG_VALUE_CHANGED		(1 << 1)
+
+#define WEED_PARAM_FLAG_FIRST_CUSTOM		(1 << 8)
+
 /* Parameter template GUI flags */
 #define WEED_GUI_REINIT_ON_VALUE_CHANGE		(1 << 0)
 #define WEED_GUI_CHOICES_SET_ON_INIT	      	(1 << 1)

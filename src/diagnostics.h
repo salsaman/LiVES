@@ -37,6 +37,8 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 
 void print_diagnostics(uint64_t types);
 
+char *md5_print(void *md5sum);
+
 //////////////////////////////////
 
 void test_procthreads(void);

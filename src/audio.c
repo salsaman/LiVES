@@ -2533,7 +2533,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   if (rec_type == RECA_WINDOW_GRAB || rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) return;
 
   mainw->cancelled = CANCEL_NONE;
-  mainw->cancel_type = CANCEL_SOFT;
+  mainw->cancel_type = CANCEL_TYPE_SOFT;
   // show countdown/stop dialog
   mainw->suppress_dprint = FALSE;
   d_print(_("Recording audio..."));
@@ -2549,7 +2549,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     on_playsel_activate(NULL, NULL);
     mainw->current_file = current_file;
   }
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
   jack_rec_audio_end(TRUE);
 }
 
@@ -2673,7 +2673,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
       || rec_type == RECA_MIXED || rec_type == RECA_DESKTOP_GRAB_INT || rec_type == RECA_DESKTOP_GRAB_EXT) return;
 
   mainw->cancelled = CANCEL_NONE;
-  mainw->cancel_type = CANCEL_SOFT;
+  mainw->cancel_type = CANCEL_TYPE_SOFT;
   // show countdown/stop dialog
   mainw->suppress_dprint = FALSE;
   d_print(_("Recording audio..."));
@@ -2689,7 +2689,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
     on_playsel_activate(NULL, NULL);
     mainw->current_file = current_file;
   }
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
   pulse_rec_audio_end(TRUE);
 }
 
@@ -2745,7 +2745,7 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   boolean out_unsigned, in_unsigned;
   boolean rev_endian = FALSE;
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
 
   if (dets->bad_aud_file) return FALSE;
   if (dets->rec_samples == 0) return FALSE;
@@ -2847,7 +2847,7 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
     lives_free(holding_buff);
   lives_free(out_buff);
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
   //return actual_bytes;
   return TRUE;
 }
@@ -2875,7 +2875,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 
   lives_proc_thread_set_cancellable(self);
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
 
   if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) {
     return FALSE;
@@ -2883,14 +2883,14 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 
   nframes = lives_aplayer_get_data_len(aplayer);
   if (nframes == 0) {
-    if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+    if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
     return FALSE;
   }
   nchans = lives_aplayer_get_achans(aplayer);
   arate = lives_aplayer_get_arate(aplayer);
   is_float = lives_aplayer_get_float(aplayer);
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
 
   if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no audio channels out)
     ticks_t tc = mainw->currticks;
@@ -2941,7 +2941,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
       lives_free(in_buffer);
     }
   }
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel(self);
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
   return TRUE;
 }
 
@@ -2955,15 +2955,15 @@ void audio_analyser_start(int source) {
   if (source == AUDIO_SRC_EXT) {
     if (!ana_lpt) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
-      ana_lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-						WEED_SEED_BOOLEAN, "v");
+      ana_lpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
+						   WEED_SEED_BOOLEAN, "v", aplayer);
       lives_proc_thread_set_cancellable(ana_lpt);
     }
   } else {
     if (!ana_lpt2) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
-      ana_lpt2 = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-						 WEED_SEED_BOOLEAN, "v");
+      ana_lpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
+						    WEED_SEED_BOOLEAN, "v", aplayer);
       lives_proc_thread_set_cancellable(ana_lpt2);
     }
   }
@@ -3076,8 +3076,8 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   dets->fd = lives_open_buffered_writer(audio_file, DEF_FILE_PERMS, TRUE);
   if (dets->fd == -1) return NULL;
 
-  lpt = lives_proc_thread_add_hook_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
-                                        WEED_SEED_BOOLEAN, "vv", (void *)aplayer, (void *)dets);
+  lpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
+					   WEED_SEED_BOOLEAN, "vv", (void *)aplayer, (void *)dets);
   lives_proc_thread_set_cancellable(lpt);
   return lpt;
 }

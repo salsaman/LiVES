@@ -58,7 +58,7 @@ typedef enum startup_stages {
 extern sup_stage what_sup;
 
 boolean lives_startup(livespointer data);
-boolean lives_startup2(livespointer data);
+void lives_startup2(void);
 
 sup_stage what_sup_now(void);
 

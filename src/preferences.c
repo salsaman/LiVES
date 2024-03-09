@@ -3966,7 +3966,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
     lives_free(config_dir);
     return;
   }
-  lives_hook_append(mainw->global_hook_stacks, DESTRUCTION_HOOK, 0, _full_reset, (void *)&config_dir);
+  lives_hook_cb_append(mainw->global_hook_stacks, DESTRUCTION_HOOK, 0, _full_reset, (void *)&config_dir);
   lives_exit(0);
 }
 
@@ -7740,7 +7740,7 @@ void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
 
-  pool_thread_execute_rvoid(pref_dlg_loop, 0, "v", prefsw->prefs_dialog);
+  pool_thread_execute_rvoid(pref_dlg_loop, "v", prefsw->prefs_dialog);
 }
 
 /*!

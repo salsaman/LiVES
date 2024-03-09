@@ -86,7 +86,7 @@ lives_result_t lives_imgloader_srcfunc(weed_layer_t *layer, boolean async) {
 /* lives_result_t lives_filebuff_srcfunc(weed_layer_t *layer) { */
 /*   boolean res; */
 /*   frames_t frame = lives_layer_get_frame(layer); */
-/*   lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, */
+/*   lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, */
 /* 				 (lives_funcptr_t)scrapfile_loader, */
 /* 				 0, "vi", &orig_layer); */
 /* } */
@@ -1335,7 +1335,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   if (!mainw->scrap_file_proc) {
     mainw->scrap_file_proc =
-      lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)_save_to_scrap_file,
+      lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, (lives_funcptr_t)_save_to_scrap_file,
                                WEED_SEED_INT64, "v", &orig_layer);
   }
 
@@ -1353,7 +1353,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
     scrapfile->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
 
   weed_layer_copy(orig_layer, layer);
-  lives_proc_thread_queue(mainw->scrap_file_proc, 0);
+  lives_proc_thread_queue(mainw->scrap_file_proc);
 
   if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
       && !prefs->hide_framebar && !mainw->faded) {
@@ -2788,7 +2788,7 @@ lives_result_t pull_frame_threaded(weed_layer_t *layer, int width, int height) {
   BREAK_ME("pft");
 
     lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
-                                   | LIVES_THRDATTR_START_UNQUEUED, (lives_funcptr_t)pft_thread,
+                                   | LIVES_THRDATTR_CREATE_UNQUEUED, (lives_funcptr_t)pft_thread,
                                    0, "vs", layer, img_ext);
     if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
     lives_layer_async_auto(layer, lpt);

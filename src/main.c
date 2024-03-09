@@ -160,7 +160,7 @@ void lives_assert_failed(const char *cond, const char *file, int line) {
   d_print(errmsg);
 
   GET_PROC_THREAD_SELF(self);
-  lpt_error_handle(self);
+  lpt_error_handle(self, LPT_ERR_FATAL);
 
   if (prefs) MSGMODE_GLOBAL;
 
@@ -406,6 +406,7 @@ static int sigsrc = SIG_SRC_KERNEL;
 void catch_sigint(int signum, siginfo_t *si, void *uc) {
   static int printed = 0;
   int only_print = 0;
+  int sev = LPT_ERR_CRITICAL;
 
   if (mainw->foreign) _exit(signum);
 
@@ -439,7 +440,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     char *tnum = get_thread_id(mydata->vars.var_uid);
     g_print("%s\n", tnum);
     //if (mydata) {
-    lives_proc_thread_set_signalled(self, signum, mydata);
+    lives_proc_thread_set_signalled(self, signum, NULL);
     if (!only_print) pthread_detach(pthread_self());
   }
 
@@ -457,13 +458,13 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 
   //#endif
 
-
   if (sigsrc == SIG_SRC_INTERN)
     fprintf(stderr, "Signal was caught internally\n");
   if (sigsrc == SIG_SRC_EXTERN)
     fprintf(stderr, "Signal was caught externally\n");
 
   if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE || signum == LIVES_SIGABRT) {
+    sev = LPT_ERR_CRITICAL;
     if (signum == LIVES_SIGSEGV) mainw->memok = FALSE;
     if (!printed) {
       printed = 1;
@@ -506,7 +507,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
       /* } */
 
       GET_PROC_THREAD_SELF(self);
-      lpt_error_handle(self);
+      lpt_error_handle(self, sev);
     }
 
     if (*errmsg) fprintf(stderr, "%s", errmsg);

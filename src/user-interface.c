@@ -55,7 +55,7 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   // high level, pop dialog to front of dektop stack
   //
   if (!mainw->is_ready && !is_fg_thread()) {
-    main_thread_execute_rvoid(_pop_to_front, 0, "vv", dialog, extra);
+    main_thread_execute_rvoid(_pop_to_front, "vv", dialog, extra);
   } else _pop_to_front(dialog, extra);
 }
 
@@ -1184,7 +1184,7 @@ void resize(double scale) {
   if (is_fg_thread()) _resize(scale);
   else {
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_rvoid(_resize, 0, "d", scale);
+    main_thread_execute_rvoid(_resize, "d", scale);
     BG_THREADVAR(hook_hints) = 0;
   }
 }
@@ -1287,13 +1287,12 @@ static pthread_mutex_t tlthread_mutex = PTHREAD_MUTEX_INITIALIZER;
 void drawtl_cancel(void) {
   // must call unlock_timline()
   pthread_mutex_lock(&tlthread_mutex);
-  if (drawtl_thread) {
-    lives_proc_thread_t lpt = drawtl_thread;
+  lives_proc_thread_t lpt = STEAL_POINTER(drawtl_thread);
+  if (lpt) {
     lives_proc_thread_request_cancel(lpt, FALSE);
-    lives_proc_thread_try_interrupt(lpt);
-    pthread_mutex_unlock(&tlthread_mutex);
-    lives_proc_thread_join(STEAL_POINTER(drawtl_thread));
-    pthread_mutex_lock(&tlthread_mutex);
+    lives_proc_thread_try_interrupt(lpt, NULL);
+    lives_proc_thread_join_void(lpt);
+    lives_proc_thread_unref(lpt);
   }
   // exit with tlthread_mutex locked !!
 }
@@ -1320,20 +1319,16 @@ void redraw_timeline(int clipno) {
 
 boolean get_timeline_lock(void) {
   if (!pthread_mutex_trylock(&tlthread_mutex)) {
-    if (drawtl_thread) {
-      lives_proc_thread_t lpt = drawtl_thread;
-      if (lives_proc_thread_check_finished(lpt)
-          && !lives_proc_thread_should_cancel(lpt)) {
-        pthread_mutex_unlock(&tlthread_mutex);
-        lives_proc_thread_join(lpt);
-        pthread_mutex_lock(&tlthread_mutex);
-        drawtl_thread = NULL;
-        return TRUE;
-      }
+    lives_proc_thread_t lpt = drawtl_thread;
+    if (lpt && lives_proc_thread_check_finished(lpt)
+	&& !lives_proc_thread_should_cancel(lpt)) {
+      lpt = STEAL_POINTER(drawtl_thread);
       pthread_mutex_unlock(&tlthread_mutex);
-      return FALSE;
+      lives_proc_thread_join_void(lpt);
+      lives_proc_thread_unref(lpt);
+      return TRUE;
     }
-    return TRUE;
+    pthread_mutex_unlock(&tlthread_mutex);
   }
   return FALSE;
 }

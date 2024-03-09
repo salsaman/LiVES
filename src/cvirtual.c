@@ -1153,7 +1153,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
   short pbq = prefs->pb_quality;
 
   if (lives_proc_thread_get_cancel_requested(self))
-    lives_proc_thread_cancel_self();
+    lives_proc_thread_cancel();
 
   sfile = RETURN_PHYSICAL_CLIP(sclipno);
   if (!sfile) return -1;
@@ -1366,7 +1366,7 @@ queue_lpt:
   } else if (layer) weed_layer_unref(layer);
 
   if (lives_proc_thread_get_cancel_requested(sfile->pumper))
-    lives_proc_thread_cancel_self();
+    lives_proc_thread_cancel();
 
   return retval;
 }
@@ -1452,10 +1452,10 @@ frames_t realize_all_frames(int clipno, const char *msg, boolean enough, frames_
     mainw->current_file = clipno;
     sfile->progress_start = start;
     sfile->progress_end = count_virtual_frames(sfile->frame_index, start, end);
-    if (enough) mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
+    if (enough) mainw->cancel_type = CANCEL_TYPE_SOFT; // force "Enough" button to be shown
     do_threaded_dialog((char *)msg, TRUE);
     lives_widget_show_all(mainw->proc_ptr->processing);
-    mainw->cancel_type = CANCEL_KILL;
+    mainw->cancel_type = CANCEL_TYPE_KILL;
     ret = virtual_to_images(clipno, start, end, TRUE, NULL);
     end_threaded_dialog();
     mainw->current_file = current_file;

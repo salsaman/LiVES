@@ -1213,7 +1213,7 @@ lives_remote_clip_request_t *utube_dl2(lives_remote_clip_request_t *req, const c
   char *full_dfile, *msg2, *msg;
   boolean bres;
   if (req->duration == 0.) {
-    mainw->cancel_type = CANCEL_INTERRUPT;
+    mainw->cancel_type = CANCEL_TYPE_INTERRUPT;
     // force the "Enough" button to show
     cfile->opening_loc = TRUE;
     cfile->keep_without_preview = TRUE;
@@ -1241,7 +1241,7 @@ lives_remote_clip_request_t *utube_dl3(lives_remote_clip_request_t *req, const c
   char *dest = NULL;
 
   cfile->no_proc_sys_errors = FALSE;
-  mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_TYPE_KILL;
   if (mainw->cancelled == CANCEL_KEEP) {
     mainw->cancelled = CANCEL_NONE;
     mainw->error = FALSE;
@@ -1464,7 +1464,7 @@ void on_stop_clicked(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (CURRENT_CLIP_IS_VALID) {
     lives_kill_subprocesses(cfile->handle, FALSE);
-    if (mainw->cancel_type == CANCEL_INTERRUPT) mainw->cancelled = CANCEL_KEEP;
+    if (mainw->cancel_type == CANCEL_TYPE_INTERRUPT) mainw->cancelled = CANCEL_KEEP;
     if (mainw->proc_ptr) {
       if (mainw->proc_ptr->stop_button)
         lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
@@ -4759,7 +4759,7 @@ void play_all(boolean from_menu) {
     //}
     if (from_menu) {
       BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-      main_thread_execute_rvoid(switch_clip, 0, "iib", 1, mainw->pre_src_file, TRUE);
+      main_thread_execute_rvoid(switch_clip, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
       BG_THREADVAR(hook_hints) = 0;
     }
@@ -7155,13 +7155,13 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
       (mainw->multitrack && (!mainw->multitrack->is_rendering ||
                              !mainw->preview)))) {
     // Cancel
-    if (mainw->cancel_type == CANCEL_SOFT) {
+    if (mainw->cancel_type == CANCEL_TYPE_SOFT) {
       // cancel in record audio
       mainw->effects_paused = FALSE;
       mainw->cancelled = CANCEL_USER;
       d_print_cancelled();
       return;
-    } else if (mainw->cancel_type == CANCEL_KILL) {
+    } else if (mainw->cancel_type == CANCEL_TYPE_KILL) {
       // kill processes and subprocesses working on cfile
       killprocs = TRUE;
     }
@@ -7192,7 +7192,7 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
     } else {
       // see if there was a message from backend
 
-      if (mainw->cancel_type != CANCEL_SOFT) {
+      if (mainw->cancel_type != CANCEL_TYPE_SOFT) {
         lives_fread_string(mainw->msg, MAINW_MSG_SIZE, cfile->info_file);
         if (lives_strncmp(mainw->msg, "completed", 9)) {
           d_print_cancelled();
@@ -7204,7 +7204,7 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
     }
   } else {
     // Keep
-    if (mainw->cancel_type == CANCEL_SOFT) {
+    if (mainw->cancel_type == CANCEL_TYPE_SOFT) {
       mainw->cancelled = CANCEL_KEEP;
       mainw->effects_paused = FALSE;
       return;
@@ -10073,7 +10073,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-    main_thread_execute_rvoiud(mt_post_playback, "v", mainw->multitrack);
+    main_thread_execute_rvoid(mt_post_playback, "v", mainw->multitrack);
     BG_THREADVAR(hook_hints) = 0;
     mainw->current_file = current_file;
   }

@@ -8,11 +8,6 @@
 
 lives_timer_t app_timers[N_APP_TIMERS];
 
-void lives_active_wait(void) {
-  boolean is_fg = is_fg_thread();
-  wh
-
-
 static int lives_timer_set_delay(lives_timer_t *, uint64_t delay, boolean rpt);
 static lives_timer_t *lives_timer_create(lives_timer_t *);
 
@@ -179,10 +174,10 @@ static uint64_t lives_timer_delete(lives_timer_t *xtimer) {
     if (xtimer->tid) {
       // disarm first
       struct itimerspec its;
-      timer_gettime(timer->tid, &its);
+      timer_gettime(xtimer->tid, &its);
       res = its.it_value.tv_sec * ONE_BILLION + its.it_value.tv_nsec;
       if (!xtimer->triggered) lives_timer_set_delay(xtimer, 0, FALSE);
-      else rea = 0;
+      else res = 0;
       timer_delete(xtimer->tid);
       xtimer->tid = 0;
     }
@@ -218,7 +213,7 @@ uint64_t lives_sys_alarm_disarm(alarm_name_t alaname, boolean delete) {
       res = its.it_value.tv_sec * ONE_BILLION + its.it_value.tv_nsec;
       if (delete) return lives_timer_delete(timer);
       if (!timer->triggered) lives_timer_set_delay(timer, 0, FALSE);
-      else ret = 0;
+      else res = 0;
       timer->triggered = 0;
     }
   }

@@ -57,10 +57,10 @@ void clear_player_hooks(void) {
   rte_keys_update();
   if (sah->stack && all_updated) {
     all_updated = FALSE;
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
     mainw->gui_much_events = TRUE;
     mainw->do_ctx_update = TRUE;
-    lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+    lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
     lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
     fg_stack_wait();
   }
@@ -1171,7 +1171,8 @@ frames_t load_frame_image(frames_t frame) {
                                  || mainw->cancelled != CANCEL_NONE);
 
     if (mainw->plan_runner_proc) {
-      lives_proc_thread_join(mainw->plan_runner_proc);
+      lives_proc_thread_join_void(mainw->plan_runner_proc);
+      lives_proc_thread_unref(mainw->plan_runner_proc);
       mainw->plan_runner_proc = NULL;
     }
 
@@ -1248,10 +1249,10 @@ frames_t load_frame_image(frames_t frame) {
         lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
       if (sah->stack) {
         all_updated = FALSE;
-        lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+        lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
         mainw->gui_much_events = TRUE;
         mainw->do_ctx_update = TRUE;
-        lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+        lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
       }
     }
 
@@ -1493,18 +1494,18 @@ frames_t load_frame_image(frames_t frame) {
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
-    lives_proc_thread_t free_lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+    lives_proc_thread_t free_lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                    weed_layer_unref, 0, "v", frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
-      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                      HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-                                      lives_layer_draw, 0, "vv", mainw->preview_image, NULL, frame_layer, free_lpt);
+      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+					 HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
+					 lives_layer_draw, 0, "vv", mainw->preview_image, NULL, frame_layer, free_lpt);
 
     } else {
-      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
-                                      HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-                                      lives_layer_draw, 0, "vv", mainw->play_image, NULL, frame_layer, free_lpt);
+      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
+					 HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
+					 lives_layer_draw, 0, "vv", mainw->play_image, NULL, frame_layer, free_lpt);
     }
 
     frame_layer = NULL;
@@ -1613,14 +1614,13 @@ lfi_done:
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor + 1))
         && mainw->current_file != mainw->scrap_file) {
-      lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_OPT_FG_LIGHT,
-                                      lives_widget_queue_draw, 0, "v", mainw->eventbox2);
+      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_OPT_FG_LIGHT,
+					 lives_widget_queue_draw, 0, "v", mainw->eventbox2);
     }
     if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
 
-    if (mainw->frame_layer) {
+    if (mainw->frame_layer)
       lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)osc_sync_msg);
-    }
   }
 
   lives_freep((void **)&osc_sync_msg);
@@ -2802,8 +2802,8 @@ close_clip:
     if (!mainw->do_ctx_update && all_updated) {
       if (sah->stack) {
         all_updated = FALSE;
-        lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
-        lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+        lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
+        lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
       }
       mainw->gui_much_events = TRUE;
     }

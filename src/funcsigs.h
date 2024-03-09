@@ -6,6 +6,30 @@
 #ifndef _FUNCSIGS_H
 #define _FUNCSIGS_H
 
+#ifdef ADD_STRUCT_DTLS
+
+#define DEF_STRUCT(stname, ...)				\
+  const char *stname##_strctdef = #__VA_ARGS__;		\
+  typedef struct _##stname {__VA_ARGS__} stname;	\
+  const size_t stname##_size = sizeof(stname);
+
+// same as struct, except all offsets are 0
+#define DEF_UNION(uniname, ...)				\
+  const char *uniname##_unidef = #__VA_ARGS__;		\
+  typedef union _##uniname {__VA_ARGS__} uniname;	\
+  const size_t uniname##_size = sizeof(uniname);
+
+#else
+
+#define DEF_STRUCT(stname, ...)				\
+  typedef struct _##stname {__VA_ARGS__} stname;	\
+
+// same as struct, except all offsets are 0
+#define DEF_UNION(uniname, ...)				\
+  typedef union _##uniname {__VA_ARGS__} uniname;	\
+
+#endif
+
 typedef int(*funcptr_int_t)();
 typedef double(*funcptr_dbl_t)();
 typedef int(*funcptr_bool_t)();
@@ -40,38 +64,66 @@ typedef weed_plant_t *(*funcptr_plantptr_t)();
 /*   return vav; */
 /* } */
 
-typedef union {
-  weed_funcptr_t func;
-  funcptr_int_t funcint;
-  funcptr_dbl_t funcdouble;
-  funcptr_bool_t funcboolean;
-  funcptr_int64_t funcint64;
-  funcptr_string_t funcstring;
-  funcptr_funcptr_t funcfuncptr;
-  funcptr_voidptr_t funcvoidptr;
-  funcptr_plantptr_t funcplantptr;
-} allfunc_t;
+  
+DEF_UNION(allfunc_t,
+	  weed_funcptr_t func;
+	  funcptr_int_t funcint;
+	  funcptr_dbl_t funcdouble;
+	  funcptr_bool_t funcboolean;
+	  funcptr_int64_t funcint64;
+	  funcptr_string_t funcstring;
+	  funcptr_funcptr_t funcfuncptr;
+	  funcptr_voidptr_t funcvoidptr;
+	  funcptr_plantptr_t funcplantptr;)
 
-typedef union {
-  weed_seed_t stype;
-  weed_size_t size;
-  //
-  uint32_t u;
-  int32_t i;
-  uint64_t U;
-  int64_t I;
-  boolean b;
-  char *S;
-  const char *C;
-  float f;
-  double d;
-  void *V;
-  lives_funcptr_t F;
-  weed_plant_t *P;
-} allvalues_t;
+  DEF_UNION(allval_t,
+	    uint32_t *u;
+	    int32_t *i;
+	    uint64_t *U;
+	    int64_t *I;
+	    boolean *b;
+	    char **S;
+	    const char **C;
+	    float *f;
+	    double *d;
+	    void **V;
+	    lives_funcptr_t *F;
+	    weed_plant_t **P;
+	    )
 
-#define GET_ALLVALUE(avp, plant, key) _DW0(weed_seed_t st = weed_leaf_seed_type(plant, key);\
-					   FOR_ALL_SEED_TYPES2(st, (avp)->, =, weed_get_, _value, (plant), (key), NULL);)
+  DEF_STRUCT(allvalues_t,
+	     //@TYPEDEF u weed_seed_t
+	     //@TYPEDEF u weed_size_t
+	     //@TYPEDEF v LiVESList *
+	     //@UNION allval_t
+	     char *aname; // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
+	     weed_seed_t stype;
+	     weed_size_t ne; // num elements - always 1 if ARRAY not set
+	     weed_size_t size;
+	     int flags;
+	     allval_t values;
+	     LiVESList *contingencies;
+	     )
+
+/* static void make_allval(allvalues_t *avp, weed_seed_t stype, ...) { */
+/*   va_list(ap); va_start(ap, stype); */
+/*   switch(stype) { */
+/*   case WEED_SEED_INT: avp->i = va_arg(ap, int); break; */
+/*   case WEED_SEED_BOOLEAN: avp->b = va_arg(ap, int); break; */
+/*   case WEED_SEED_DOUBLE: avp->d = va_arg(ap, double); break; */
+/*   case WEED_SEED_INT64: avp->I = va_arg(ap, int64_t); break; */
+/*   case WEED_SEED_STRING: avp->S = va_arg(ap, char *); break; */
+/*   case WEED_SEED_VOIDPTR: avp->V = va_arg(ap, void *); break; */
+/*   case WEED_SEED_FUNCPTR: avp->F = va_arg(ap, weed_funcptr_t); break; */
+/*   case WEED_SEED_PLANTPTR: avp->P = va_arg(ap, weed_plantptr_t); break; */
+/*   default: break; */
+/*   } */
+/*   va_end(ap); */
+/* } */
+
+#define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
+						     FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_, \
+									 _array_counted, (plant), (key), &(ne));)
 
 #define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
 
@@ -227,20 +279,21 @@ typedef union {
 #define _JOIN2(a,b) a##b
 #define JOIN2(a,b) _JOIN2(a,b)
 
-#define FUNCSIG1(a) FUNCSIG_##a
-#define FUNCSIG2(a,b) JOIN2(FUNCSIG_##a,FUNCSIG_##b)
-#define FUNCSIG3(a,b,c) JOIN2(FUNCSIG_##a,FUNCSIG2(b,c))
-#define FUNCSIG4(a,b,c,d) JOIN2(FUNCSIG_##a,FUNCSIG3(b,c,d))
-#define FUNCSIG5(a,b,c,d,e) JOIN2(FUNCSIG_##a,FUNCSIG4(b,c,d,e))
-#define FUNCSIG6(a,b,c,d,e,f) JOIN2(FUNCSIG_##a,FUNCSIG5(b,c,d,e,f))
-#define FUNCSIG7(a,b,c,d,e,f,g) JOIN2(FUNCSIG_##a,FUNCSIG6(b,c,d,e,f,g))
-#define FUNCSIG8(a,b,c,d,e,f,g,h) JOIN2(FUNCSIG_##a,FUNCSIG7(b,c,d,e,f,g,h))
+#define _FUNCSIG1(a) FUNCSIG_##a
+#define _FUNCSIG2(a,b) JOIN2(FUNCSIG_##a,FUNCSIG_##b)
+#define _FUNCSIG3(a,b,c) JOIN2(FUNCSIG_##a,_FUNCSIG2(b,c))
+#define _FUNCSIG4(a,b,c,d) JOIN2(FUNCSIG_##a,_FUNCSIG3(b,c,d))
+#define _FUNCSIG5(a,b,c,d,e) JOIN2(FUNCSIG_##a,_FUNCSIG4(b,c,d,e))
+#define _FUNCSIG6(a,b,c,d,e,f) JOIN2(FUNCSIG_##a,_FUNCSIG5(b,c,d,e,f))
+#define _FUNCSIG7(a,b,c,d,e,f,g) JOIN2(FUNCSIG_##a,_FUNCSIG6(b,c,d,e,f,g))
+#define _FUNCSIG8(a,b,c,d,e,f,g,h) JOIN2(FUNCSIG_##a,_FUNCSIG7(b,c,d,e,f,g,h))
 #if FIX_INDENT_IGNORE_THIS
   }
 #endif
 
 #define MAKE_HEX(a) JOIN2(0X,a)
-#define FUNCSIG(n,...) MAKE_HEX(FUNCSIG##n(__VA_ARGS__))
+#define _FUNCSIG(n,...) MAKE_HEX(_FUNCSIG##n(__VA_ARGS__))
+#define FUNCSIG(n) MAKE_HEX(FUNCSIG_##n)
 
 #define DEF_VAR_INT(n) int p##n;
 #define DEF_VAR_BOOL(n) boolean p##n;
@@ -315,6 +368,7 @@ typedef union {
 				 NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"X")
 #define _VARNAMES(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,...)			\
   __VARNAMES(#a,#b,#c,#d,#e,#f,#g,#h,#i,#j,#k,#l,#m,#n,#o,#p,__VA_ARGS__)
+
 const char**__VARNAMES(char *a,...);
 #define VARNAME_FUNC const char** __VARNAMES(char*a,...){char*x;va_list b,c;int n=0; \
     va_start(b,a);va_copy(c,b);do{if(!(x=va_arg(b,char*)))n++;}while(!(x&&*x=='X')); \
@@ -340,18 +394,23 @@ void reg_funcsigs(int n, ...);
 
 #define TWO_PARAM_FUNCSIGS			\
   ADD_FUNCSIG(2,INT,INT)			\
-  ADD_FUNCSIG(2,BOOL,INT)			\
+  ADD_FUNCSIG(2,BOOL,BOOL)			\
+  ADD_FUNCSIG(2,INT64,INT64)			\
+  ADD_FUNCSIG(2,STRING,STRING)			\
+  ADD_FUNCSIG(2,DOUBLE,DOUBLE)			\
+  ADD_FUNCSIG(2,VOIDP,VOIDP)			\
+  ADD_FUNCSIG(2,PLANTP,PLANTP)			\
+  ADD_FUNCSIG(2,FUNCP,FUNCP)			\
   ADD_FUNCSIG(2,INT,VOIDP)			\
   ADD_FUNCSIG(2,STRING,INT)			\
   ADD_FUNCSIG(2,STRING,BOOL)			\
-  ADD_FUNCSIG(2,DOUBLE,DOUBLE)			\
+  ADD_FUNCSIG(2,BOOL,INT)			\
   ADD_FUNCSIG(2,VOIDP,DOUBLE)			\
   ADD_FUNCSIG(2,VOIDP,INT)			\
   ADD_FUNCSIG(2,VOIDP,INT64)			\
-  ADD_FUNCSIG(2,VOIDP,VOIDP)			\
-  ADD_FUNCSIG(2,PLANTP,VOIDP)			\
   ADD_FUNCSIG(2,VOIDP,BOOL)			\
   ADD_FUNCSIG(2,VOIDP,STRING)			\
+  ADD_FUNCSIG(2,PLANTP,VOIDP)			\
   ADD_FUNCSIG(2,PLANTP,INT64)
 
 #define THREE_PARAM_FUNCSIGS			\
@@ -390,7 +449,7 @@ void reg_funcsigs(int n, ...);
 //////////////////////////////////////////////////////////////
 
 #undef ADD_FUNCSIG
-#define ADD_FUNCSIG(n,...) case FUNCSIG(n,__VA_ARGS__): {DEF_VARS(n,__VA_ARGS__) \
+#define ADD_FUNCSIG(n,...) case _FUNCSIG(n,__VA_ARGS__): {DEF_VARS(n,__VA_ARGS__) \
       _DC_(n,GET_CTYPES(n,__VA_ARGS__));FREE_CHARPTRS(n,__VA_ARGS__)} break;
 
 #define REG_FUNCSIGS ONE_PARAM_FUNCSIGS	TWO_PARAM_FUNCSIGS
@@ -401,12 +460,20 @@ void reg_funcsigs(int n, ...);
 				  void*: "V", weed_funcptr_t: "F", const char *: "C", \
 				  weed_plant_t *: "P", default: "?"))
 
-#define get_allval(allvals, ctype) (_Generic((ctype),			\
-					     boolean: allvals->b, char*: allvals->S, uint32_t: allvals->u, \
-					     int32_t: allvals->i, uint64_t: allvals->U, int64_t: allvals->I, \
-					     float: allvals->f, double: allvals->d, void*: allvals->V,\
-					     weed_funcptr_t: allvals->F, const char *: allvals->C, \
-					     weed_plant_t *: allvals->P, default: 0))
+#define get_allval(var, allvals) (_Generic((var),			\
+					   boolean: *allvals->b, char*: *allvals->S, uint32_t: *allvals->u, \
+					   int32_t: *allvals->i, uint64_t: *allvals->U, int64_t: *allvals->I, \
+					   float: *allvals->f, double: *allvals->d, void*: *allvals->V,	\
+					   weed_funcptr_t: *allvals->F, const char *: *allvals->C, \
+					   weed_plant_t *: *allvals->P, default: 0))
+
+#define get_allval_array(var, allvals) (_Generic((var),			\
+						 boolean *: allvals->b, char**: allvals->S, uint32_t *: allvals->u, \
+						 int32_t *: allvals->i, uint64_t *: allvals->U, int64_t *: allvals->I, \
+						 float *: allvals->f, double *: allvals->d, void**: allvals->V, \
+						 weed_funcptr_t *: allvals->F, const char **: allvals->C, \
+						 weed_plant_t **: allvals->P, default: NULL))
+
 // proxy = "X", blob = "B"
 
 #endif

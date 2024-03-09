@@ -567,15 +567,21 @@ typedef enum {
   LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO
 } lives_param_special_t;
 
-/// parameter is for display only
-#define PARAM_FLAG_READONLY 	0x00000001
-// parameter is "optional"
-#define PARAM_FLAG_OPTIONAL 	0x10000000
 // the 'value' has been set (after being initialised to "default"
-#define PARAM_FLAG_VALUE_SET	0x20000000
+#define PARAM_FLAG_VALUE_SET		(1 << 0)
+#define PARAM_FLAG_VALUE_CHANGED        (1 << 1)
 
-#define PARAM_FLAG_IS_INPUT	0x10000
-#define PARAM_FLAG_IS_OUTPUT	0x20000
+#define PARAM_FLAG_READONLY	      	(1 << 8)
+
+// value is an array type
+#define PARAM_FLAG_ARRAY	      	(1 << 9)
+
+// value is pointer to a variable
+#define PARAM_FLAG_BOUND 		(1 << 10)
+
+#define PARAM_FLAG_IS_INPUT		(1 << 16)
+#define PARAM_FLAG_IS_OUTPUT		(1 << 17)
+#define PARAM_FLAG_OPTIONAL 		(1 << 18)
 
 struct _param_t {
   // weed style part

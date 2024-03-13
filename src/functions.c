@@ -12,8 +12,14 @@
 static hook_stack_descriptor_t hs_desc[N_HOOK_POINTS];
 
 static boolean hs_inited = FALSE;
+static boolean hsn_inited = FALSE;
 
 VARNAME_FUNC
+
+char **lives_cond_create(const char *condition, ...) {
+  // place holder
+  return NULL;
+}
 
 #if 0
 ///////////////////////////////////////////////
@@ -84,6 +90,7 @@ static lives_funcdef_t *find_or_make_fundef(const char *funcname,
   if (!fdef) fdef = MAKE_FUNCDEF(func, ret_type, args_fmt);
   return fdef;
 }
+
 
 
 lives_condition_t _lives_cond_create(const char *condition, ...) {
@@ -477,58 +484,68 @@ lives_structdef *parse_structdef(const char *stname, const char *stdefdata, size
 ////////////////////////////
 
 static void init_hook_stacks(void) {
-  if (hs_inited) return;
-  hs_inited = TRUE;
+  if (hs_inited && hsn_inited) return;
   for (int i = 0; i < N_HOOK_POINTS; i++) {
     uint64_t flags = 0;
     hook_stack_pattern_t pat = HOOK_PATTERN_DATA;
     hook_stack_descriptor_t *xhs = (hook_stack_descriptor_t *)&hs_desc[i];
     xhs->htype = i;
-    switch (i) {
-    case COMPLETED_HOOK:
-      hs_desc[i] = HS_DETAILS(COMPLETED);
-      return;
-    case FATAL_HOOK:
-      flags = HS_FLAGS_FATAL;
-      pat = HOOK_PATTERN_SPONTANEOUS;
-      break;
-    case THREAD_EXIT_HOOK:
-      flags = HS_FLAGS_THREAD_EXIT;
-      pat = HOOK_PATTERN_SPONTANEOUS;
-      break;
-    case DATA_READY_HOOK:
-      flags = HS_FLAGS_DATA_READY;
-      pat = HOOK_PATTERN_SPONTANEOUS;
-      break;
-    case LIVES_GUI_HOOK:
-      flags = HS_FLAGS_LIVES_GUI;
-      pat = HOOK_PATTERN_SPONTANEOUS;
-      break;
-    case SYNC_ANNOUNCE_HOOK:
-      flags = HS_FLAGS_SYNC_ANNOUNCE;
-      pat = HOOK_PATTERN_REQUEST;
-      break;
-    case FINISHED_HOOK:
-      flags = HS_FLAGS_FINISHED;
-      //trigger = LIVES_LEAF_THRD_STATE;
-      break;
-    case ERROR_HOOK:
-      flags = HS_FLAGS_ERROR;
-      //trigger = LIVES_LEAF_THRD_STATE;
-      break;
-    case CANCELLED_HOOK:
-      flags = HS_FLAGS_CANCELLED;
-      // trigger = LIVES_LEAF_THRD_STATE;
-      break;
-    case DESTRUCTION_HOOK:
-      flags = HS_FLAGS_DESTRUCTION;
-      //trigger = LIVES_LEAF_THRD_STATE;
-      break;
-    case CB_ADDED_HOOK:
-      flags = HS_FLAGS_CB_ADDED;
-      pat = HOOK_PATTERN_SPONTANEOUS;
-      break;
-    default: break;
+
+    if (!hsn_inited) {
+      hsn_inited = TRUE;
+      switch (i) {
+      case FATAL_HOOK:
+	flags = HS_FLAGS_FATAL;
+	pat = HOOK_PATTERN_SPONTANEOUS;
+	break;
+      case THREAD_EXIT_HOOK:
+	flags = HS_FLAGS_THREAD_EXIT;
+	pat = HOOK_PATTERN_SPONTANEOUS;
+	break;
+      default: break;
+      }
+    }
+      
+    if (FEATURE_READY(WEED)) {
+      hs_inited = TRUE;
+      switch (i) {
+      case COMPLETED_HOOK:
+	hs_desc[i] = HS_DETAILS(COMPLETED);
+	return;
+      case DATA_READY_HOOK:
+	flags = HS_FLAGS_DATA_READY;
+	pat = HOOK_PATTERN_SPONTANEOUS;
+	break;
+      case LIVES_GUI_HOOK:
+	flags = HS_FLAGS_LIVES_GUI;
+	pat = HOOK_PATTERN_SPONTANEOUS;
+	break;
+      case SYNC_ANNOUNCE_HOOK:
+	flags = HS_FLAGS_SYNC_ANNOUNCE;
+	pat = HOOK_PATTERN_REQUEST;
+	break;
+      case FINISHED_HOOK:
+	flags = HS_FLAGS_FINISHED;
+	//trigger = LIVES_LEAF_THRD_STATE;
+	break;
+      case ERROR_HOOK:
+	flags = HS_FLAGS_ERROR;
+	//trigger = LIVES_LEAF_THRD_STATE;
+	break;
+      case CANCELLED_HOOK:
+	flags = HS_FLAGS_CANCELLED;
+	// trigger = LIVES_LEAF_THRD_STATE;
+	break;
+      case DESTRUCTION_HOOK:
+	flags = HS_FLAGS_DESTRUCTION;
+	//trigger = LIVES_LEAF_THRD_STATE;
+	break;
+      case CB_ADDED_HOOK:
+	flags = HS_FLAGS_CB_ADDED;
+	pat = HOOK_PATTERN_SPONTANEOUS;
+	break;
+      default: break;
+      }
     }
 
     xhs->pattern = pat;
@@ -538,7 +555,7 @@ static void init_hook_stacks(void) {
 
 
 const hook_stack_descriptor_t *get_hs_desc(int hstype) {
-  if (!hs_inited) init_hook_stacks();
+  if (!hs_inited || !hsn_inited) init_hook_stacks();
   return &hs_desc[hstype];
 }
 
@@ -824,7 +841,7 @@ char *make_proxy_pname(int pn) {return lives_strdup_printf("%s%d_proxy", LIVES_L
 static boolean is_child_of(LiVESWidget *w, LiVESContainer *C);
 static boolean fn_match_child(lives_funcinst_t *finst1, lives_funcinst_t *finst2);
 
-static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, uint64_t attrs, const char *args_fmt, \
+static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const char *args_fmt, \
 						    make_key_f param_name_func, va_list xargs) {
   int p = 0;
   for (const char *c = args_fmt; *c; c++) {
@@ -857,6 +874,7 @@ boolean args_fmt_match(const char *def, const char *inst) {
     if (!--deflen) return TRUE;
     variad = TRUE;
   }
+  instlen = lives_strlen(inst);
   if (instlen < deflen || (!variad && instlen > deflen)) return FALSE;
   if (deflen > 0 && lives_strncmp(def, inst, deflen)) return FALSE;
   return TRUE;
@@ -869,10 +887,9 @@ lives_result_t funcinst_params_from_vargs(lives_funcinst_t *finst,  const char *
     lives_funcdef_t *fdef = finst->funcdef;
     if (!args_fmt_match(args_fmt, args_fmt_from_funcsig(fdef->funcsig)))
       return LIVES_RESULT_ERROR;
-    uint64_t attrs = lives_funcinst_get_attrs(finst);
     if (!args_fmt) return LIVES_RESULT_SUCCESS;
     if (!finst->params) finst->params = lives_plant_new(LIVES_PLANT_FUNCPARAMS);
-    res = weed_plant_params_from_valist(finst->params, attrs, args_fmt, make_std_pname, xargs);
+    res = weed_plant_params_from_valist(finst->params, args_fmt, make_std_pname, xargs);
   }
   return res;
 }
@@ -1157,7 +1174,7 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
   weed_error_t err = WEED_SUCCESS;
   funcsig_t sig;
   lives_funcinst_t *finst;
-  lives_result_t ret;
+  lives_result_t res;
   char *msg;
   int nparms;
 
@@ -1184,10 +1201,8 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
 
   if (lpt == mainw->debug_ptr) g_print("nrefs PPPmmmmm = %d\n", lives_proc_thread_count_refs(lpt));
 
-  // set a longjump pointer. if the we then error or cancel while running the funcion,
-  // we will jump back to this point
-
-
+  res = do_call(finst);
+  
   if (lpt == mainw->debug_ptr) g_print("nrefss AAAAmmmmm = %d\n", lives_proc_thread_count_refs(lpt));
 
   lives_proc_thread_exclude_states(lpt, THRD_STATE_RUNNING);
@@ -1196,9 +1211,9 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
     weed_set_int64_value(lpt, LIVES_LEAF_END_TICKS, lives_get_current_ticks());
   }
 
-  if (ret == LIVES_RESULT_ERROR) goto funcerr;
+  if (res == LIVES_RESULT_INVALID) goto funcerr;
 
-  if (err == WEED_SUCCESS) {
+  if (res == LIVES_RESULT_SUCCESS) {
     if (lpt == mainw->debug_ptr)
       g_print("pt a1\n");
 
@@ -1230,6 +1245,7 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
       char *filen = lives_strdup("funcsigs.h");
       const char *funcname = finst->funcdef->funcname;
       if (finst->paramnames) {
+	symstr = lives_strdup("");
 	for (int i = 0; i < nparms; i++)
 	  symstr = lives_strdup_concat(symstr, ", ", "%s", finst->paramnames[i] ? finst->paramnames[i] : "");
       }
@@ -1952,7 +1968,6 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
     lives_funcinst_send_replies(finst, LIVES_REPLY_NO);
     lives_cb_receipt_set_expired(receipt);
     if (finst) finst->flags |= FINST_FLAG_NOPERM;
-    if (!have_lock) PTMUH;
     return receipt;  
   }
 
@@ -1971,7 +1986,6 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
     lives_funcinst_send_replies(finst, LIVES_REPLY_NO);
     lives_cb_receipt_set_expired(receipt);
     if (finst) finst->flags |= FINST_FLAG_NOT_ACCEPTED;
-    if (!have_lock) PTMUH;
     return receipt;  
   }
 #endif
@@ -2132,7 +2146,7 @@ void *_lives_hook_cb_add_full(lives_hook_stack_t **hooks, int type, uint64_t cbf
   if (args_fmt && *args_fmt) {
     va_list va;;
     va_start(va, args_fmt);
-    finst = _lives_funcinst_create_va(func ,fname, return_type, anames, args_fmt, va);
+    finst = lives_funcinst_create_va(func ,fname, return_type, anames, args_fmt, va);
 
     if (cbflags & HOOK_CB_HAS_FREEFUNCS) {
       lives_hook_stack_t *hstack = hooks[type];
@@ -2154,7 +2168,7 @@ void *_lives_hook_cb_add_full(lives_hook_stack_t **hooks, int type, uint64_t cbf
       va_end(va);
     }
   }
-  else finst = _lives_funcinst_create_va(func ,fname, return_type, NULL, NULL, NULL);
+  else finst = lives_funcinst_create_va(func ,fname, return_type, NULL, NULL, NULL);
 
   if (finst) lives_funcinst_set_disposition(finst, FALSE, DISPOSITION_STACKED);
 
@@ -2205,7 +2219,6 @@ static lives_proc_thread_t update_linked_stacks(lives_funcinst_t *finst) {
 lives_result_t lives_hook_trigger(lives_hook_stack_t **hstacks, int type) {
   static pthread_mutex_t recheck_mutex = PTHREAD_MUTEX_INITIALIZER;
   lives_hook_stack_t *hstack;
-  lives_proc_thread_t lpt;
   LiVESList *list, *listnext;
   pthread_mutex_t *hmutex;
   boolean bret;
@@ -2292,25 +2305,30 @@ lives_result_t lives_hook_trigger(lives_hook_stack_t **hstacks, int type) {
 
     retval = TRUE;
 
-    list = (LiVESList *)hstack->stack;
-
-    for (; list; list = listnext) {
+    for (list = (LiVESList *)hstack->stack; list; list = listnext) {
       boolean rem_on_false = FALSE;
       lives_funcinst_t *finst = (lives_funcinst_t *)list->data;
       listnext = list->next;
       if (!finst) continue;
 
+      pthread_rwlock_rdlock(&finst->dispolock);
+      if (finst->disposition != DISPOSITION_STACKED) {
+	// if being run by another thread, it will have pushed CL_DATA module and added LPT_DATA
+	pthread_rwlock_unlock(&finst->dispolock);
+	continue;
+      }
+
+      pthread_rwlock_unlock(&finst->dispolock);
+      
       cbflags = CL_DATA(finst, cb_flags);
 
-      if (cbflags & HOOK_OPT_ADDER_RUNS) {
-	if (cbflags & HOOK_STATUS_RUNNING) {
-	  // if being run by another thread, it will have pushed CL_DATA module and added LPT_DATA
-			
-			if (lives_proc_thread_get_active_funcinst(lpt) == finst) continue;
-	}
-	cbflags &= ~HOOK_STATUS_RUNNING;
-	CL_DATA(finst, triggerer.lpt) = ACTION_SOURCE_NONE;
-      }
+      /* if (cbflags & HOOK_OPT_ADDER_RUNS) { */
+      /* 	if (cbflags & HOOK_STATUS_RUNNING) { */
+      /* 	  if (lives_proc_thread_get_active_funcinst(lpt) == finst) continue; */
+      /* 	} */
+      /* 	cbflags &= ~HOOK_STATUS_RUNNING; */
+      /* 	CL_DATA(finst, triggerer.lpt) = ACTION_SOURCE_NONE; */
+      /* } */
       
       if (cbflags & (HOOK_STATUS_BLOCKED | HOOK_CB_IGNORE)) {
 	lives_funcinst_send_replies(finst, LIVES_REPLY_NO);
@@ -2519,7 +2537,6 @@ lives_result_t lives_hook_trigger(lives_hook_stack_t **hstacks, int type) {
 
 
 int lives_hook_trigger_async(lives_hook_stack_t **hstacks, int type) {
-  lives_proc_thread_t lpt;
   LiVESList *list, *listnext;
   pthread_mutex_t *hmutex;
   lives_hook_stack_t *hstack;
@@ -2586,10 +2603,6 @@ int lives_hook_trigger_async(lives_hook_stack_t **hstacks, int type) {
     }
 
     hstack->flags |= HS_FLAG_TRIGGERING;
-
-    lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
-				     | THRD_STATE_FINISHED);
-
     cbflags |= HOOK_STATUS_RUNNING;
     CL_DATA(finst, cb_flags) = cbflags;
 
@@ -2707,7 +2720,6 @@ static void finst_disposition_pop(lives_funcinst_t *finst) {
 
 void lives_hook_async_join(lives_hook_stack_t **hstacks, int htype) {
   pthread_mutex_t *hmutex;
-  lives_proc_thread_t lpt;
   LiVESList *cblist, *cblist_next;
   lives_hook_stack_t *hstack;
   uint64_t hs_op_flags, cbflags;
@@ -2791,12 +2803,6 @@ void lives_hook_async_join(lives_hook_stack_t **hstacks, int htype) {
 
     cbflags &= ~HOOK_STATUS_RUNNING;
     CL_DATA(finst, cb_flags) = cbflags;
-
-    if (lives_proc_thread_was_cancelled(lpt)) {
-      remove_from_hstack(hstack, cblist);
-      lives_funcinst_free(finst);
-      continue;
-    }
   }
   hstacks[htype]->flags &= ~HS_FLAG_TRIGGERING;
   PTMUH;

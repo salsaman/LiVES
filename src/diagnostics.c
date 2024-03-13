@@ -270,7 +270,7 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
   g_print("Callback prototype: %s\n", proto);
   lives_free(proto);
 
-  g_print("Accept conditions: %s\n", lives_cond_desc(hstack->hsdesc->accept_cond));
+  //g_print("Accept conditions: %s\n", lives_cond_desc(hstack->hsdesc->accept_cond));
 
   g_print("Hook stack operation flags are:\n");
   opflags = hstack->hsdesc->op_flags;
@@ -2384,7 +2384,7 @@ int run_weed_startup_tests(void) {
       lpts[tt] = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                           weed_concurrency_test, -1, "v", plant);
 
-    for (int tt = 0; tt < NCTHRD; tt++) lives_proc_thread_queue(lpts[tt]);
+    for (int tt = 0; tt < NCTHRD; tt++) lives_proc_thread_dispatch(lpts[tt]);
 
     for (int tt = 0; tt < NCTHRD; tt++) {
       fprintf(stderr, "joining %d of %d\n", tt, NCTHRD);

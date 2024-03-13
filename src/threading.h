@@ -442,7 +442,7 @@ void lives_proc_thread_set_active_funcinst(lives_proc_thread_t, lives_funcinst_t
 
 lives_funcinst_t *lives_proc_thread_get_initial_funcinst(lives_proc_thread_t);
 
-void lives_funcinst_append(lives_funcinst_t *f1, lives_funcinst_t *f2);
+void lives_funcinst_append_chain(lives_funcinst_t *f1, lives_funcinst_t *f2);
 
 void lives_proc_thread_set_active_finstlist(lives_proc_thread_t, lives_sync_list_t *);
 lives_sync_list_t *lives_proc_thread_get_active_finstlist(lives_proc_thread_t);
@@ -637,7 +637,7 @@ typedef struct {
   uint64_t min_resume;
 } timeout_data;
 
-lives_funcinst_t * _lives_funcinst_create_va(lives_funcptr_t func,
+lives_funcinst_t *lives_funcinst_create_va(lives_funcptr_t func,
 				      const char *fname, int return_type, const char **anames,
 				      const char *args_fmt, va_list xargs);
 
@@ -746,7 +746,7 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 lives_result_t lives_proc_thread_execute(lives_proc_thread_t);
 lives_result_t lives_funcinst_execute(lives_funcinst_t *finst);
 
-boolean lives_proc_thread_queue(lives_proc_thread_t);
+boolean lives_proc_thread_dispatch(lives_proc_thread_t);
 
 //#define DEBUG_LPT_REFS
 #ifdef DEBUG_LPT_REFS

@@ -49,7 +49,7 @@ static lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t, timeout_
    rather than at the tail end
    - AUTODELETE - tells the underlying thread to free it's resources automatically there is no need to set this for proc threads
    is this done in the create function
-   - WAIT_START - the proc_thread will be created, but the caller will block in lives_proc_thread_queue
+   - WAIT_START - the proc_thread will be created, but the caller will block in lives_proc_thread_dispatch
    until a worker begins processing
 
    - SET_CANCELLABLE - set the proc_thread cancellablke state to TRUE
@@ -71,7 +71,7 @@ static lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t, timeout_
    This is intended for functions which are dual purpose and can be run in the foreground
    with interface, or in the background with no interface.
 
-   - START_UNQUEUED: - create the thread but do not queue it for executuion. lives_proc_thread_queue(lpt) can be called
+   - START_UNQUEUED: - create the thread but do not queue it for executuion. lives_proc_thread_dispatchlpt) can be called
    later to add the
 
    - NOTE_TIMINGS - thread will record timestanps in ticks in 3 or 4 values, the time when added to the worker queue
@@ -162,7 +162,7 @@ boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
   //lives_proc_thread_add_hook(self, FINISHED_HOOK, 0, queue_other_lpt, other);
   // queue attrs will be taken from other attrs
   if (!other) return FALSE;
-  lives_proc_thread_queue(other);
+  lives_proc_thread_dispatch(other);
   return FALSE;
 }
 
@@ -237,7 +237,12 @@ LIVES_GLOBAL_INLINE uint64_t lives_funcinst_get_attrs(lives_funcinst_t *finst) {
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_attrs(lives_proc_thread_t lpt, uint64_t attrs) {
   if (lpt) {
     lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
-    LPT_DATA(finst, func_attrs) = attrs & LIVES_THRDATTR_FUNCINST_MASK;
+    pthread_rwlock_rdlock(&finst->dispolock);
+    if (MODULE_TYPE_IS(finst, LPT)) {
+      LPT_DATA(finst, func_attrs) = attrs & LIVES_THRDATTR_FUNCINST_MASK;      
+      pthread_rwlock_unlock(&finst->dispolock);    
+    } 
+    else pthread_rwlock_unlock(&finst->dispolock);    
     weed_set_int64_value(lpt, LIVES_LEAF_THRDATTRS, attrs & LIVES_THRDATTR_PROC_THREAD_MASK); 
   }
 }
@@ -549,10 +554,10 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
   }
   else finst = lives_funcinst_create_va(func, fname, return_type, NULL, NULL, NULL);
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
-  if (lpt) {
+  if (lpt && !(attrs & LIVES_THRDATTR_CREATE_UNQUEUED)) {
     GET_PROC_THREAD_SELF(self);
     lives_funcinst_set_disposition(finst, FALSE, DISPOSITION_WAITING, self, attrs);
-    lives_proc_thread_queue(lpt);
+    lives_proc_thread_dispatch(lpt);
   }
   return lpt;
 }
@@ -579,7 +584,13 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(uint64_t to_nsec, liv
     va_end(xargs);
   }
   else finst = lives_funcinst_create_va(func, funcname, return_type, NULL, NULL, NULL);
+
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
+  if (lpt) {
+    GET_PROC_THREAD_SELF(self);
+    lives_funcinst_set_disposition(finst, FALSE, DISPOSITION_WAITING, self, attrs);
+    lives_proc_thread_dispatch(lpt);
+  }
 
   res = lives_proc_thread_guillotine(lpt, to_data);
   lives_free(to_data);
@@ -592,8 +603,8 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(uint64_t to_nsec, liv
 
 
 boolean is_fg_thread(void) {
-  if (!main_thread) return TRUE;
-  return pthread_equal(pthread_self(), main_thread);
+  if (!capable) return TRUE;
+  return pthread_equal(pthread_self(), capable->gui_thread);
 }
 
 
@@ -888,7 +899,7 @@ void lives_funcinst_queue(lives_funcinst_t *finst, uint64_t attrs) {
     GET_PROC_THREAD_SELF(self);
     lives_proc_thread_t lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
     lives_funcinst_set_disposition(finst, TRUE, DISPOSITION_WAITING, self, lpt, attrs);
-    lives_proc_thread_queue(lpt);
+    lives_proc_thread_dispatch(lpt);
   }
 }
 
@@ -931,7 +942,6 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   // or queued for sequential execution (since we need to avoid nesting calls)
 
   if (args_fmt && *args_fmt) {
-    va_list xargs;
     finst = lives_funcinst_create_va(func, fname, return_type, anames, args_fmt, xargs);
   }
   else finst = lives_funcinst_create_va(func, fname, return_type, NULL, NULL, NULL);
@@ -1931,6 +1941,15 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_join_void(lives_proc_thread_t lpt)
   return (lpt && lives_proc_thread_wait_finished(lpt) == LIVES_RESULT_SUCCESS) ? TRUE : FALSE;
 }
 
+LIVES_GLOBAL_INLINE allvalues_t *lives_proc_thread_join_any(lives_proc_thread_t lpt) {
+  if (lpt && lives_proc_thread_wait_finished(lpt) == LIVES_RESULT_SUCCESS) {
+    allvalues_t *allvp = allvalue_from_leaf(lpt, _RV_);
+    return allvp;
+  }
+  return NULL;
+}
+
+
 LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t lpt)  _join(lpt, int, 0)
   LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t lpt) _join(lpt, double, 0.)
   LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t lpt)  _join(lpt, boolean, FALSE)
@@ -2708,17 +2727,12 @@ lives_result_t lives_funcinst_execute(lives_funcinst_t *finst) {
 
 lives_result_t lives_proc_thread_execute(lives_proc_thread_t lpt) {return _lives_funcinst_execute();}
 
-
-/// (re)submission point, the function call is added to the threadpool tasklist
-/// if we have sufficient threads the task will be run at once,
-// if all threads are busy then MINPOOLTHREADS new threads will be created
-/// and added to the pool
-// THRD_ATTR_WAIT_START can be provided at this point if not already specified
-// returns TRUE if queueing was succesful, FALSE if the lpt was cancelled before being queued
-// NB: some attrs alter the proc_thread attrs, some change lpt state
-// others amend the work flags (for the worker thread)
-// additionally, some attrs only take effect when the proc_thread is created
-boolean lives_proc_thread_queue(lives_proc_thread_t lpt) {
+// dispatch a lives_proc_thread to the worker queue
+// the proc_thread should have an active_funcinst which will be executed as the payload
+// unless dispatched as DONTCARE, or DONTCARE is set during execution, the lpt must be joined
+// according to return type
+// and then should be unreffed if no longer needed
+boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
   GET_PROC_THREAD_SELF(self);
   thrd_work_t *mywork;
   uint64_t lpt_attrs = lives_proc_thread_get_attrs(lpt);
@@ -3341,6 +3355,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
 
   // STATE change - queued - queued / preparing
   if (lpt) {
+    lives_thread_set_proc_thread(lpt);
     lives_proc_thread_include_states(lpt, THRD_STATE_PREPARING);
     lives_proc_thread_exclude_states(lpt, THRD_STATE_QUEUED);
   }

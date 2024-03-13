@@ -1001,7 +1001,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
     fbuff->flags |= FB_FLAG_BG_OP;
     pthread_mutex_unlock(&fbuff->sync_mutex);
-    lives_proc_thread_queue(lpt);
+    lives_proc_thread_dispatch(lpt);
     lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
     return TRUE;
   }
@@ -2408,7 +2408,7 @@ lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (running_for) lives_free(running_for);
   running_for = lives_strdup(dir);
   dircheck_state = 1;
-  lives_proc_thread_queue(running);
+  lives_proc_thread_dispatch(running);
   return running;
 }
 

@@ -222,10 +222,10 @@ void _lives_abort(const char *file, int line, const char *reason) {
   fprintf(stderr, "lives_abort called at %s line %d\n%s\n", file, line, reason);
   mainw->critical = 2;
 
-  if (mainw && !pthread_equal(main_thread, pthread_self())) {
+  if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     catch_sigint(-LIVES_SIGABRT, NULL, NULL);
     mainw->critical_errmsg = reason;
-    mainw->critical_thread = THREADVAR(uid);
+    if (FEATURE_READY(WEED)) mainw->critical_thread = THREADVAR(uid);
     pthread_detach(pthread_self());
     /* while (1) { */
     /*   // sleep for 1 quadrillion nanoseconds */
@@ -238,7 +238,7 @@ void _lives_abort(const char *file, int line, const char *reason) {
   lives_set_status(LIVES_STATUS_FATAL);
   BREAK_ME(reason);
   if (mainw && mainw->global_hook_stacks && mainw->global_hook_stacks[FATAL_HOOK])
-    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
+    lives_hook_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
 
@@ -267,7 +267,7 @@ void restart_me(LiVESList *extra_argv, const char *xreason) {
     }
     new_argv[i] = NULL;
   }
-  if (mainw) lives_hooks_trigger(mainw->global_hook_stacks, RESTART_HOOK);
+  if (mainw) lives_hook_trigger(mainw->global_hook_stacks, RESTART_HOOK);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, xreason ? xreason : "");
   execve(orig_argv()[0], argv, environ);
 #ifdef ENABLE_OSC
@@ -276,7 +276,7 @@ void restart_me(LiVESList *extra_argv, const char *xreason) {
   fprintf(stderr, "FAILED TO RESTART LiVES, aborting instead !");
   if (mainw) {
     mainw->error = TRUE;
-    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
+    lives_hook_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   }
   abort();
 }
@@ -309,12 +309,12 @@ int lives_system(const char *com, boolean allow_error) {
   mainw->cancelled = CANCEL_NONE;
 
   do {
-    THREADVAR(com_failed) = FALSE;
+    if (FEATURE_READY(WEED)) THREADVAR(com_failed) = FALSE;
     response = LIVES_RESPONSE_NONE;
     retval = system(com);
     if (retval) {
       char *msg = NULL;
-      THREADVAR(com_failed) = TRUE;
+      if (FEATURE_READY(WEED)) THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
         msg = lives_strdup_printf("lives_system failed with code %d: %s\n%s", retval, com,
 #ifdef HAVE_LIBEXPLAIN
@@ -384,7 +384,7 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
   do {
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
-    THREADVAR(com_failed) = FALSE;
+    if (FEATURE_READY(WEED)) THREADVAR(com_failed) = FALSE;
     fflush(NULL);
     fp = popen(com, "r");
     if (!fp) {
@@ -393,7 +393,7 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
       while (1) {
         strg = fgets(xbuff + totlen, tbuff ? buflen : buflen - totlen, fp);
         err = ferror(fp);
-        if (err || !strg || feof(fp)) break;
+        if (err || !strg) break;
         slen = lives_strlen(strg);
         if (tbuff) {
           lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(tbuff), &end_iter);
@@ -404,6 +404,7 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
           totlen += slen;
           if (totlen >= buflen - 1) break;
         }
+	if (feof(fp)) break;
       }
       pclose(fp);
     }
@@ -414,18 +415,18 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
     }
 
     if (err) {
-      char *msg = NULL;
-      THREADVAR(com_failed) = TRUE;
+      char *msg = NULL; 
+      if (FEATURE_READY(WEED)) THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
-        msg = lives_strdup_printf("lives_popen failed p after %ld bytes with code %d: %s",
-                                  !strg ? 0 : lives_strlen(strg), err, com);
-        LIVES_WARN(msg);
-        response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
+	msg = lives_strdup_printf("lives_popen failed p after %ld bytes with code %d: %s",
+				  !strg ? 0 : lives_strlen(strg), err, com);
+	LIVES_WARN(msg);
+	response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
       }
 #if LIVES_FULL_DEBUG
       else {
-        msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
-        LIVES_DEBUG(msg);
+	msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
+	LIVES_DEBUG(msg);
       }
 #endif
       if (msg) lives_free(msg);
@@ -487,7 +488,7 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
 
   if (retval) {
     char *msg = lives_strdup_printf("Chdir failed to: %s", path);
-    THREADVAR(chdir_failed) = TRUE;
+    if (FEATURE_READY(WEED)) THREADVAR(chdir_failed) = TRUE;
     if (!no_error_dlg) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
@@ -1253,9 +1254,11 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   int ntok;
 
   lives_popen(exe, TRUE, buff);
-  if (THREADVAR(com_failed)) {
-    THREADVAR(com_failed) = FALSE;
-    return -2;
+  if (FEATURE_READY(WEED)) {
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+      return -2;
+    }
   }
   ntok = get_token_count(buff, sep[0]);
   if (ntok < piece) return -1;

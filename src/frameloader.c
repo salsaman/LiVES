@@ -1353,7 +1353,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
     scrapfile->f_size += lives_proc_thread_join_int64(mainw->scrap_file_proc);
 
   weed_layer_copy(orig_layer, layer);
-  lives_proc_thread_queue(mainw->scrap_file_proc);
+  lives_proc_thread_dispatch(mainw->scrap_file_proc);
 
   if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
       && !prefs->hide_framebar && !mainw->faded) {
@@ -1830,9 +1830,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
       if (tpalette != WEED_PALETTE_YUV420P) tpalette = WEED_PALETTE_YUV444P;
     }
 #if USE_RESTHREAD
-    if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
-      lives_proc_thread_join(resthread);
-      weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
+    resthread = weed_ext_atomic_exchange(layer, WEED_LEAF_RESIZE_THREAD, WEED_SEED_VOIDPTR, NULL, &resthread);
+    if (resthread) {
+      lives_proc_thread_join_void(resthread);
       lives_proc_thread_unref(resthread);
     }
 #endif

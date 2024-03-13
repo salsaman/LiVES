@@ -88,6 +88,8 @@ static boolean info_only;
 
 static char *newconfigfile = NULL;
 
+static LiVESWidgetSource *guisource = NULL;
+
 #ifdef GUI_GTK
 static LiVESTargetEntry target_table[]  = {
   { "STRING",                     GTK_TARGET_OTHER_APP, 0 },
@@ -129,6 +131,7 @@ capabilities *get_capabilities(void) {
   char command[PATH_MAX * 4];
   char dir[PATH_MAX];
   int numtok;
+  ssize_t bsize;
   size_t xs;
 
 #ifdef IS_DARWIN
@@ -182,9 +185,11 @@ retry_configfile:
     capable->has_smogrify = UNCHECKED;
     lives_snprintf(command, PATH_MAX * 4, "%s version", prefs->backend_sync);
 
-    lives_popen(command, TRUE, buffer);
+    bsize = lives_popen(command, TRUE, buffer);
 
-    if (THREADVAR(com_failed)) {
+    // cant check this as we dont have threadvars yet
+    //if (THREADVAR(com_failed)) {
+    if (bsize <= 0) {
       return capable;
     }
 
@@ -224,8 +229,10 @@ retry_configfile:
   // check_settings:
 
   capable->has_smogrify = UNCHECKED;
-  lives_popen(command, TRUE, buffer);
-  if (THREADVAR(com_failed) || lives_strlen(buffer) < 6) return capable;
+  bsize = lives_popen(command, TRUE, buffer);
+
+  if (bsize < 6) return capable;
+
   capable->has_smogrify = PRESENT;
 
   numtok = get_token_count(buffer, '|');
@@ -515,8 +522,7 @@ static void pre_init(void) {
               _("\nAn error occurred when writing to the configuration files\n%s*\n\n"
                 "Please check the file permissions for this file and directory\nand try again.\n"),
               (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(prefs->configfile,
-                                              -1, NULL, NULL, NULL)),
-                                       LIVES_FILE_EXT_NEW)));
+                                              -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
       lives_free(tmp);
       lives_free(tmp2);
       startup_message_fatal(msg);
@@ -1364,6 +1370,17 @@ boolean lives_startup(livespointer data) {
 
   capable->features_ready |= FEATURE_WEED;
 
+  THREADVAR(guisource) = guisource;
+  
+  // problem - we want tdata
+
+  MSGMODE_SET(INIT);
+
+  if (mainw->debug) {
+    MSGMODE_ON(STDERR);
+    MSGMODE_ON(DEBUG);
+  }
+
   //do_startup_diagnostics(test_opts);
 
   if (!mainw->foreign) {
@@ -1731,8 +1748,6 @@ boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  THREADVAR(guisource) = lives_idle_priority(fg_service_ready_cb, NULL);
-
   if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
     // still experimental
     switch_aud_to_none(FALSE);
@@ -1743,7 +1758,6 @@ boolean lives_startup(livespointer data) {
     show_lives();
   }
 
-  //lives_proc_thread_create(LIVES_THRDATTR_AUTO_REQUEUE, lives_startup2, 0, "v", NULL);
   return FALSE;
 }
 
@@ -1837,7 +1851,7 @@ void lives_startup2(void) {
     prefs->cptime =
       (double)(lives_get_current_ticks() - lives_proc_thread_get_start_ticks(lpt))
       / TICKS_PER_SECOND_DBL * .9;
-    if (!lives_proc_thread_is_done(lpt)) lives_proc_thread_request_cancel(lpt, FALSE);
+    if (!lives_proc_thread_check_finished(lpt)) lives_proc_thread_request_cancel(lpt, FALSE);
 
     cpvar = lives_proc_thread_join_double(lpt);
 
@@ -1860,11 +1874,6 @@ void lives_startup2(void) {
   if (!mainw->cliplist)
     if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
-  /* for (int i = 0; i < 1000; i++) { */
-  /*   clone_srcgrp(2, 2, i, SRC_PURPOSE_PRECACHE); */
-  /*   srcgrp_remove(2, i, SRC_PURPOSE_PRECACHE);  */
-  /* } */
-
   ///////////////
 
   if (mainw->ascrap_file != -1 && !mainw->event_list) {
@@ -1877,7 +1886,7 @@ void lives_startup2(void) {
   if (prefs->show_disk_quota && !prefs->vj_mode) do_show_quota = TRUE;
 
   if (!mainw->foreign && !got_files && !mainw->cliplist && prefs->ar_clipset) {
-    d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
+    d_print(_("Autoloading set %s..."), prefs->ar_clipset_name);
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file == -1) {
       set_string_pref(PREF_AR_CLIPSET, "");
       prefs->ar_clipset = FALSE;
@@ -1922,8 +1931,7 @@ void lives_startup2(void) {
 
   if (capable->username)
     ustr = lives_strdup_printf(", %s", capable->username);
-  else
-    ustr = lives_strdup("");
+  else ustr = lives_strdup("");
 
   d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
   lives_free(ustr);
@@ -2727,8 +2735,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   char cdir[PATH_MAX];
   char *tmp, *cfgdir;
 
-  main_thread = pthread_self();
-
 #if USE_RPMALLOC
   if (!rpmalloc_is_thread_initialized())
     rpmalloc_thread_initialize();
@@ -2756,12 +2762,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   capable->locale.th_sep = lconvx->thousands_sep;
   capable->locale.grping = lconvx->grouping;
 
-  MSGMODE_SET(INIT);
-
-  if (mainw->debug) {
-    MSGMODE_ON(STDERR);
-    MSGMODE_ON(DEBUG);
-  }
 #ifndef VALGRIND_ON
   prefs->nfx_threads = 8;
 #else
@@ -2923,7 +2923,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   ///////
   if (prefs->startup_phase == -1) prefs->startup_phase = 1;
-  THREADVAR(guisource) = lives_idle_priority(fg_service_ready_cb, NULL);
+
+  guisource = lives_idle_priority(fg_service_ready_cb, NULL);
 
   what_sup = gtk_launch_sup;
 

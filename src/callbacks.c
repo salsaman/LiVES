@@ -550,10 +550,8 @@ void lives_exit(int signum) {
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
   lives_free(tmp);
 
+  if (FEATURE_READY(MEMFUNCS)) memory_cleanup();
 
-  if (main_thread) {
-    memory_cleanup();
-  }
   exit(0);
 }
 
@@ -4960,8 +4958,8 @@ boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event,
 void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY,
-                               _on_stop_activate, user_data);
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY,
+				  _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
 
@@ -5583,7 +5581,8 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
   //if (lpt != mainw->debug_ptr) abort();
   g_print("lpt has4 %d refs\n", lives_proc_thread_count_refs(lpt));
   //mainw->debug_ptr = NULL;
-  lives_proc_thread_join(lpt);
+  lives_proc_thread_join_void(lpt);
+  lives_proc_thread_unref(lpt);
 
   lives_widget_context_update();
 
@@ -5889,7 +5888,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   lives_system(com, FALSE);
   lives_free(com);
 
-  lives_proc_thread_join(lpt);
+  lives_proc_thread_join_void(lpt);
+  lives_proc_thread_unref(lpt);
 
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
 
@@ -6131,7 +6131,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
       lives_popen_txtbuf(com, TRUE, tbuff);
       lives_free(com);
-      lives_proc_thread_join(lpt);
+
+      lives_proc_thread_join_void(lpt);
+      lives_proc_thread_unref(lpt);
 
       if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
     }
@@ -7439,8 +7441,8 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC,
-                               _on_full_screen_activate, user_data);
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC,
+				  _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
 
@@ -7506,8 +7508,8 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
 void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-                               HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+				  HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
 
@@ -7691,8 +7693,8 @@ static void _on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data
 void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC
-                               | HOOK_CB_PRIORITY, _on_sepwin_activate, user_data);
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC
+				  | HOOK_CB_PRIORITY, _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
 
@@ -7763,8 +7765,8 @@ static void _on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY | HOOK_TOGGLE_FUNC,
-                               _on_fade_activate, user_data);
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY | HOOK_TOGGLE_FUNC,
+				  _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
 }
 
@@ -10898,8 +10900,8 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
           lives_proc_thread_t lpt;
           mainw->alock_abuf->fileno = mainw->playing_file;
           lpt = lives_buffered_rdonly_slurp_prep(mainw->alock_abuf->_fd, 0);
-          lives_hook_append(lives_proc_thread_get_hook_stacks(lpt), DATA_PREVIEW_HOOK, 0,
-                            resample_to_float, &mainw->alock_abuf);
+          lives_hook_cb_append(lives_proc_thread_get_hook_stacks(lpt), DATA_PREVIEW_HOOK, 0,
+			       resample_to_float, &mainw->alock_abuf);
           lives_buffered_rdonly_slurp_ready(lpt);
         }
       }

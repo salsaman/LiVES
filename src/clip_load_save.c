@@ -3207,7 +3207,7 @@ static boolean rewrite_recovery_file_cb(lives_obj_t *obj, void *data) {
   return FALSE;
 }
 
-static lives_proc_thread_t rewrite_recovery_lpt = NULL;
+static void *rewrite_recovery_rcpt = NULL;
 
 boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
   uint32_t recpid = 0;
@@ -3301,7 +3301,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   /// CRITICAL: make sure this gets called even on system failure and abort
   if (prefs->crash_recovery && !no_recover)
-    rewrite_recovery_lpt = lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
+    rewrite_recovery_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
 
   // check for layout recovery file
   recfname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,
@@ -3438,7 +3438,7 @@ cleanse:
 
   if (THREADVAR(com_failed) && prefs->crash_recovery && !no_recover) {
     rewrite_recovery_file();
-    lives_hook_remove(rewrite_recovery_lpt);
+    lives_hook_cb_remove(rewrite_recovery_rcpt);
     return FALSE;
   }
 
@@ -3490,7 +3490,10 @@ cleanse:
 
   if (prefs->crash_recovery) {
     rewrite_recovery_file();
-    lives_hook_remove(rewrite_recovery_lpt);
+    if (rewrite_recovery_rcpt) {
+      lives_hook_cb_remove(rewrite_recovery_rcpt);
+      rewrite_recovery_rcpt = NULL;
+    }
   }
 
 show_err:

@@ -654,6 +654,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs = NULL;
   capable = NULL;
 
+  main_thread = pthread_self();
+
 #ifdef GDK_WINDOWING_X11
   XInitThreads();
 #endif
@@ -693,9 +695,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   else
     capable->hw.byte_order = LIVES_LITTLE_ENDIAN;
 
-  main_thread = pthread_self();
-  capable->main_thread = pthread_self();
-  capable->gui_thread = pthread_self();
+  capable->main_thread = main_thread;
 
   zargc = argc;
   zargv = argv;

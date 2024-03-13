@@ -146,10 +146,11 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     if (!mainw->keep_pre) {
       lives_kill_subprocesses(cfile->handle, TRUE);
 
-      if (cfile->pumper) {
-        lives_proc_thread_request_cancel(cfile->pumper, FALSE);
-        lives_proc_thread_join(cfile->pumper);
-        cfile->pumper = NULL;
+      lives_proc_thread_t lpt = STEAL_POINTER(cfile->pumper);
+      if (lpt) {
+	lives_proc_thread_request_cancel(lpt, FALSE);
+	lives_proc_thread_join_void(lpt);
+	lives_proc_thread_unref(lpt);
       }
 
       if (cfile->start == 0) {

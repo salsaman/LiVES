@@ -1341,6 +1341,8 @@ boolean fg_service_ready_cb(void *dummy) {
 
   d_print("GUI thread active, providing service for all other threads\n\n");
 
+  capable->gui_thread = pthread_self();
+
   lives_startup(NULL);
 
   gui_loop_tight = TRUE;
@@ -13653,7 +13655,7 @@ boolean lives_widget_context_update(void) {
           mainw->all_hstacks =
             lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
           pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-          lives_proc_thread_trigger_hooks(self, LIVES_GUI_HOOK);
+          lives_proc_thread_trigger_hook(self, LIVES_GUI_HOOK);
         }
       }
       // trigger gui loop update

@@ -3794,11 +3794,11 @@ update_effort:
         if (sah->stack) {
           all_updated = FALSE;
           // here we trigger only "light" updates, e.g drawing updates
-          lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                     HOOK_OPT_FG_LIGHT, updates_done, NULL);
+          lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+					HOOK_OPT_FG_LIGHT, updates_done, NULL);
           mainw->gui_much_events = TRUE;
           BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
-          lives_proc_thread_trigger_hooks(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+          lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
           BG_THREADVAR(hook_hints) = 0;
         }
       }

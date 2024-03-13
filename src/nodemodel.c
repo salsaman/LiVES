@@ -1432,7 +1432,7 @@ static int check_step_condition(exec_plan_t *plan, plan_step_t *step, boolean ca
       return 1;
     }
 
-    if (!lives_proc_thread_is_done(lpt)) return 1;
+    if (!lives_proc_thread_check_finished(lpt)) return 1;
   }
 
   xtime = lives_get_session_time();
@@ -1477,7 +1477,7 @@ static void ann_roll_launch(void) {
   lives_proc_thread_set_pauseable(ann_proc, TRUE);
   lives_proc_thread_set_cancellable(ann_proc);
   //mainw->debug_ptr = ann_proc;
-  lives_proc_thread_queue(ann_proc);
+  lives_proc_thread_dispatch(ann_proc);
 }
 
 
@@ -1948,6 +1948,7 @@ static void run_plan(exec_plan_t *plan) {
 
         switch (step->st_type) {
         case STEP_TYPE_CONVERT: {
+	  lives_funcinst_t *ofinst = NULL, *nfinst = NULL;
           layer = plan->layers[step->track];
           if (!layer) continue;
           if (!weed_layer_check_valid(layer)) {
@@ -2059,51 +2060,72 @@ static void run_plan(exec_plan_t *plan) {
                                            gamma_substep, WEED_SEED_INT, "v", step);
           }
           //
-          if (op_order[OP_RESIZE] == 2) {
+
+	  ofinst = lives_proc_thread_get_active_funcinst(lpt);
+
+	  if (op_order[OP_RESIZE] == 2) {
             d_print_debug(", resize");
             if (op_order[OP_PCONV] == 2)
               d_print_debug(" + palconv");
             if (op_order[OP_GAMMA] == 2)
               d_print_debug(" + gamma");
-            lives_proc_thread_chain(lpt, res_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 2) {
             d_print_debug(", palconv");
             if (op_order[OP_GAMMA] == 2)
               d_print_debug(" + gamma");
-            lives_proc_thread_chain(lpt, pconv_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(pconv_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_GAMMA] == 2) {
             d_print_debug(", gamma");
-            lives_proc_thread_chain(lpt, gamma_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(gamma_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 2) {
             d_print_debug(", letterbox");
-            lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(lbox_substep, WEED_SEED_INT, "v", step);
           }
 
+	  if (nfinst) {
+	    lives_funcinst_append_chain(ofinst, nfinst);
+	    ofinst = nfinst;
+	    nfinst = NULL;
+	  }
+	  
           if (op_order[OP_RESIZE] == 3) {
             d_print_debug(", resize");
             if (op_order[OP_PCONV] == 3)
               d_print_debug(" + palconv");
             if (op_order[OP_GAMMA] == 3)
               d_print_debug(" + gamma");
-            lives_proc_thread_chain(lpt, res_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 3) {
             if (op_order[OP_GAMMA] == 3) {
               d_print_debug(" + gamma");
-              lives_proc_thread_chain(lpt, pconv_substep, WEED_SEED_INT, "v", step, NULL);
+	      nfinst = lives_funcinst_create(pconv_substep, WEED_SEED_INT, "v", step);
             }
           } else if (op_order[OP_GAMMA] == 3) {
             d_print_debug(", gamma");
-            lives_proc_thread_chain(lpt, gamma_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(gamma_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 3) {
             d_print_debug(", letterbox");
-            lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(lbox_substep, WEED_SEED_INT, "v", step);
           }
 
+	  if (nfinst) {
+	    lives_funcinst_append_chain(ofinst, nfinst);
+	    ofinst = nfinst;
+	    nfinst = NULL;
+	  }
+	  
           if (op_order[OP_LETTERBOX] == 4) {
             d_print_debug(", letterbox");
-            lpt = lives_proc_thread_chain(lpt, lbox_substep, WEED_SEED_INT, "v", step, NULL);
+	    nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
           }
 
+	  if (nfinst) {
+	    lives_funcinst_append_chain(ofinst, nfinst);
+	    ofinst = nfinst;
+	    nfinst = NULL;
+	  }
+	  
           d_print_debug("\n");
 
           SET_LPT_VALUE(lpt, int, "interp", get_interp_value(prefs->pb_quality, TRUE));
@@ -2231,11 +2253,13 @@ static void run_plan(exec_plan_t *plan) {
             double xtime;
             exec_plan_substep_t *substep = NULL;
 	    int op_idx = OP_NULL;
-            if (!lives_proc_thread_is_done(step->proc_thread)) break;
+            if (!lives_proc_thread_check_finished(step->proc_thread)) break;
             xtime = lives_get_session_time();
-            lives_proc_thread_join_void(step->proc_thread);
-            lives_proc_thread_unref(step->proc_thread);
-            step->proc_thread = NULL;
+	    lives_proc_thread_t lpt = STEAL_POINTER(step->proc_thread);
+	    if (lpt) {
+	      lives_proc_thread_join_void(lpt);
+	      lives_proc_thread_unref(lpt);
+	    }
 
 	    if (!lives_strcmp(lives_proc_thread_get_funcname(step->proc_thread),
 			      "deinterlace_frame")) {
@@ -2762,7 +2786,7 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
       plan->tdata->exec_time = lives_get_session_time();
     nplans++;
     lives_proc_thread_set_attrs(lpt, LIVES_THRDATTR_PRIORITY);
-    lives_proc_thread_queue(lpt);
+    lives_proc_thread_dispatch(lpt);
     planrunner_unlock();
   } else run_plan(plan);
   return lpt;
@@ -7902,7 +7926,7 @@ void build_nodemodel(lives_nodemodel_t **pnodemodel) {
 
 
 void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
-  if (mainw->plan_runner_proc && !lives_proc_thread_is_done(mainw->plan_runner_proc))
+  if (mainw->plan_runner_proc && !lives_proc_thread_check_finished(mainw->plan_runner_proc))
     lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
 
   if (mainw->plan_runner_proc) {
@@ -7914,7 +7938,11 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
       lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
                                   mainw->plan_cycle->state == PLAN_STATE_QUEUED);
     }
-    lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
+    lives_proc_thread_t lpt = STEAL_POINTER(mainw->plan_runner_proc);
+    if (lpt) {
+      lives_proc_thread_join_void(lpt);
+      lives_proc_thread_unref(lpt);
+    }
   }
 
   planrunner_lock();
@@ -7989,7 +8017,11 @@ lives_result_t run_next_cycle(void) {
       return LIVES_RESULT_INVALID;
     }
     lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
-    lives_proc_thread_join(STEAL_POINTER(mainw->plan_runner_proc));
+    lives_proc_thread_t lpt = STEAL_POINTER(mainw->plan_runner_proc);
+    if (lpt) {
+      lives_proc_thread_join_void(lpt);
+      lives_proc_thread_unref(lpt);
+    }
     planrunner_lock();
   }
 

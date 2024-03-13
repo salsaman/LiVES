@@ -3486,16 +3486,17 @@ void threaded_dialog_auto_spin(void) {
                                  (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
   SET_LPT_VALUE(lpt, uint64, "sync_idx", syncid);
 
-  lives_proc_thread_queue(lpt);
+  lives_proc_thread_dispatch(lpt);
   lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
 }
 
 
 void threaded_dialog_stop_spin(void) {
-  if (mainw->dlg_spin_thread) {
-    lives_proc_thread_request_cancel(mainw->dlg_spin_thread, FALSE);
-    lives_proc_thread_join(mainw->dlg_spin_thread);
-    mainw->dlg_spin_thread = NULL;
+  lives_proc_thread_t lpt = STEAL_POINTER(mainw->dlg_spin_thread);
+  if (lpt) {
+    lives_proc_thread_request_cancel(lpt, FALSE);
+    lives_proc_thread_join_void(lpt);
+    lives_proc_thread_unref(lpt);
   }
 }
 

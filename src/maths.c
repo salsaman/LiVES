@@ -415,7 +415,7 @@ uint64_t factorial_div(int n, int m) {return --n == m ? n + 1 : n * factorial_di
 
 static boolean est_fraction(double val, uint32_t *numer, uint32_t *denom, double limit, int cycles) {
   double res;
-  int a = 0, b = 1, c = 1, d = 1, m, n, i;
+  int a = 0, b = 1, c = 1, d = 1, m = 1, n = 2, i;
   for (i = 0; i < cycles; i++) {
     m = a + b; n = c + d;
     res = (double)m / (double)n;

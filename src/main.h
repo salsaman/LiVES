@@ -212,8 +212,6 @@ extern weed_plant_t *auditor_refc;
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 
-extern pthread_t main_thread;
-
 #include "support.h"
 
 extern struct lconv *lconvx;
@@ -923,8 +921,8 @@ void __BREAK_ME(const char *dtl);
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL // WARNING - defining LIVES_NO_FATAL may result in DANGEROUS behaviour !!
 #define LIVES_FATAL(errmsg)_DW0(SHOW_LOCATION("LiVES FATAL:"); fprintf(stderr, "%s", (errmsg));	\
-				if (mainw && pthread_self() != main_thread) \
-				  {pthread_kill(main_thread,LIVES_SIGABRT); \
+				if (capable && pthread_self() != capable->main_thread) \
+				  {pthread_kill(capable->main_thread,LIVES_SIGABRT); \
 				    while(1) lives_spin();} else abort();)
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(errmsg)      dummystr = (errmsg)

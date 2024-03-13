@@ -5525,8 +5525,8 @@ rtc_done:
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     if (mainw->transrend_proc) {
       lives_proc_thread_request_cancel(mainw->transrend_proc, FALSE);
-      lives_proc_thread_join(mainw->transrend_proc);
-      mainw->transrend_proc = NULL;
+      lives_proc_thread_join_void(mainw->transrend_proc);
+      lives_proc_thread_unref(STEAL_POINTER(mainw->transrend_proc));
     }
   }
 
@@ -5829,8 +5829,8 @@ static boolean _deal_with_render_choice(void) {
       mainw->play_start = 1; ///< new clip frames always start  at 1
       if (info) {
         //lives_sleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
-        lives_proc_thread_join(info);
-        info = NULL;
+        lives_proc_thread_join_void(info);
+	lives_proc_thread_unref(STEAL_POINTER(info));
       }
 
       if (!render_to_clip(TRUE) || render_choice == RENDER_CHOICE_TRANSCODE) {
@@ -5858,8 +5858,8 @@ static boolean _deal_with_render_choice(void) {
       //cfile->undo_end = cfile->undo_start = oplay_start; ///< same clip frames start where recording started
       cfile->undo_end = cfile->undo_start = -1;
       if (info) {
-        lives_proc_thread_join(info);
-        info = NULL;
+        lives_proc_thread_join_void(info);
+	lives_proc_thread_unref(STEAL_POINTER(info));
       }
       caps = lives_capacities_new();
       THREAD_INTENTION = OBJ_INTENTION_RENDER;
@@ -5892,8 +5892,8 @@ static boolean _deal_with_render_choice(void) {
       mainw->unordered_blocks = TRUE;
       pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, future_prefs->sepwin_type, FALSE);
       if (info) {
-        lives_proc_thread_join(info);
-        info = NULL;
+        lives_proc_thread_join_void(info);
+	lives_proc_thread_unref(STEAL_POINTER(info));
       }
       prefs->letterbox_mt = prefs->letterbox;
       if (on_multitrack_activate(NULL, (weed_plant_t *)mainw->event_list)) {
@@ -5930,8 +5930,8 @@ static boolean _deal_with_render_choice(void) {
   mainw->no_interp = FALSE;
 
   if (info) {
-    lives_proc_thread_join(info);
-    info = NULL;
+    lives_proc_thread_join_void(info);
+    lives_proc_thread_unref(STEAL_POINTER(info));
   }
 
   if (esave_file) lives_rm(esave_file);

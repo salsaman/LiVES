@@ -2326,8 +2326,8 @@ static void run_plan(exec_plan_t *plan) {
               d_print_debug("Layer needs deinterlacing\n");
               lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
               weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, FALSE);
-              step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE, deinterlace_frame, -1, "vI", layer,
-                                  mainw->currticks);
+              step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE, deinterlace_frame, WEED_SEED_VOID,
+							   "vI", layer, mainw->currticks);
             } else {
 	      // render subtitles from file
 	      lives_clip_t *sfile = RETURN_VALID_CLIP(step->target_idx);
@@ -2339,9 +2339,8 @@ static void run_plan(exec_plan_t *plan) {
 		d_print_debug("Layer needs subtitling\n");
 		lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
 		xtime = (double)(lives_layer_get_frame(layer) - 1) / sfile->fps;
-		step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-							     render_subs_from_file, -1, "vdv",
-							     sfile, xtime, layer);
+		step->proc_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE, render_subs_from_file, WEED_SEED_VOID,
+							     "vdv", sfile, xtime, layer);
 	      }
 	      else {
 		if (!(step->flags & STEP_FLAG_NO_READY_STAT))
@@ -2776,7 +2775,8 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
     SET_PLAN_STATE(QUEUED);
 
     mainw->plan_runner_proc = lpt
-                              = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, -1, "v", plan);
+                              = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, WEED_SEED_VOID,
+							 "v", plan);
     lives_proc_thread_add_hook_cb(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
 
     lives_proc_thread_set_cancellable(lpt);

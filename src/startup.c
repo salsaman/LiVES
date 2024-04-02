@@ -1151,7 +1151,7 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
               "\t\t\t\t\t\t(audio options are ignored if audio player is not jack)\n"
               "\tUseful combinations include:\t\t    0 - do not start any servers; only connect audio; no transport client\n"
               "\t\t\t\t\t   16 - start audio server if connection fails; no transport client\n"
-              "\t\t\t\t\t 1024 - create audio and transport clients; only connect\n"
+              "\t\t\ty\t\t 1024 - create audio and transport clients; only connect\n"
               "\t\t\t\t\t 1028 - create audio and transport clients; transport client may start a server\n"
               "\t\t\t\t\t\t\t\tif it fails to connect,\n"
              ));
@@ -1212,9 +1212,11 @@ void lazy_startup_checks(void) {
 
   lpt = mainw->helper_procthreads[PT_LAZY_RFX];
   if (lpt) {
+    //mainw->debug_ptr = lpt;
     if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
       if (!_lives_proc_thread_check_states(lpt, THRD_STATE_COMPLETED)) {
         lives_proc_thread_add_hook_cb(lpt, COMPLETED_HOOK, 0, wake_other_lpt, self);
+
         lives_proc_thread_unfreeze_state(lpt);
         lives_proc_thread_pause();
       } else lives_proc_thread_unfreeze_state(lpt);
@@ -1224,11 +1226,28 @@ void lazy_startup_checks(void) {
     lives_proc_thread_unref(lpt);
     if (lives_proc_thread_get_pause_requested(self))
       lives_proc_thread_pause();
-    add_rfx_effects2(RFX_STATUS_ANY);
+    main_thread_execute_rvoid(add_rfx_effects2, "i", RFX_STATUS_ANY);
   }
 alldone:
   mainw->lazy_starter = NULL;
 }
+
+
+
+void reg_funcsig(int nparms, const char **symnames) {
+  //g_print("REGISTERED funcsig with %d params: ", nparms);
+  funcsig_t fsig = 0;
+  LIVES_CALLOC_TYPE(funcsig_t, fsigp, 1); 
+  for (int i = 0; i < nparms; i++) {
+    fsig <<= 4;;
+    fsig |= symname_to_sigbits(symnames[i]);
+  }
+
+  *fsigp = fsig;
+  capable->known_funcsigs = lives_list_prepend(capable->known_funcsigs, (void *)fsigp);
+}
+
+REG_FUNCSIGS
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1370,9 +1389,11 @@ boolean lives_startup(livespointer data) {
 
   capable->features_ready |= FEATURE_WEED;
 
-  THREADVAR(guisource) = guisource;
+  // CAN NOW USE THREADVARS
   
-  // problem - we want tdata
+  capable->features_ready |= FEATURE_THREADVARS | FEATURE_CONDITIONALS;
+
+  THREADVAR(guisource) = guisource;
 
   MSGMODE_SET(INIT);
 
@@ -1397,12 +1418,15 @@ boolean lives_startup(livespointer data) {
   d_print("Testing lives sysalarms...");
   d_print("pause for 1 millisecond...");
 
+  // set up capable->known_funcsigs
+  reg_known_funcsigs();
+
   if (RUNNER_IS(gdb))
     fprintf(stderr, "\tWhen running LiVES via gdb, you may wish to add "
             "the following lines to your gdb.ini file\n\n"
             "\t\thandle SIG42 nostop noprint\n"
             "\t\thandle SIG44 nostop noprint\n\n");
-
+  
   lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
   if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION) != LIVES_RESULT_SUCCESS)
     lives_abort("Timer failed");
@@ -1525,8 +1549,6 @@ boolean lives_startup(livespointer data) {
       = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, pick_custom_colours,
                                  WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
   }
-
-
 #endif
 
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
@@ -1866,7 +1888,7 @@ void lives_startup2(void) {
   if (!prefs->vj_mode && !prefs->startup_phase) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                               (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
+                               add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
   }
 
   // crash recovery - reload
@@ -4505,7 +4527,7 @@ double pick_custom_colours(double var, double timer) {
     mainw->pretty_colours = TRUE;
     //else if (!fixed) var = -var; // ???
 #ifndef VALGRIND_ON
-    main_thread_execute_void(set_extra_colours);
+    //main_thread_execute_void(set_extra_colours);
 #endif
     return var;
   }

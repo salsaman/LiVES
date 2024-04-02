@@ -19,6 +19,7 @@
 #include "interface.h"
 #include "multitrack-gui.h"
 #include "startup.h"
+#include "diagnostics.h"
 
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
@@ -4338,7 +4339,7 @@ img_load:
   // TODO - prompt for copy to origs (unless it is already there)
 
   if (prefs->show_recent && !mainw->is_generating) {
-    lives_proc_thread_create(LIVES_THRDATTR_DONTCARE, (lives_funcptr_t)add_to_recent, 0, "sdis",
+    lives_proc_thread_create(LIVES_THRDATTR_DONTCARE, add_to_recent, 0, "sdis",
                              file_name, start, frames, mainw->file_open_params);
   }
 
@@ -4434,7 +4435,7 @@ load_done:
   }
 
   if (*cfile->staging_dir) {
-    lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)migrate_from_staging,
+    lives_proc_thread_create(LIVES_THRDATTR_NONE, migrate_from_staging,
                              0, "i", mainw->current_file);
   }
 

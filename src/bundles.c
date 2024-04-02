@@ -1767,7 +1767,7 @@ char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname, int idx) 
           val = lives_strdup_printf("\t (%p)", vs);
         }
         break;
-        case WEED_SEED_CONST_CHARPTR: {
+        case LIVES_SEED_CONST_CHARPTR: {
           const char *vs = weed_get_custom_value(bundle, leaves[i], st, NULL);
           val = lives_strdup_printf("\t (%s)", vs);
         }

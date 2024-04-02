@@ -57,12 +57,10 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
     funcsig_t sig = fdef->funcsig;
     const char *funcname = fdef->funcname;
     weed_seed_t st;
-
-    g_print("\nLiVES funcinst call details:\n");
     
     parvals = funcinst_paramstr(finst, sig);
 
-    g_print("Function %s with the following prototype wes called\n", funcname);
+    g_print("function %s with the following prototype\n", funcname);
 
     if (ret_type) {
       fmtstring = lives_strdup_printf("(%s) %s(%s);",
@@ -72,38 +70,38 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
 
     g_print("%s\n", fmtstring);
 
-    if (finst && finst->paramnames) {
-      int pn = 0;
-      g_print("Function params at call time:\n");
+    /* if (finst && finst->paramnames) { */
+    /*   int pn = 0; */
+    /*   g_print("Function params have the following values\n"); */
     
-      for (int i = 60; i >= 0; i -= 4) {
-	uint8_t ch = (sig >> i) & 0X0F;
-	char *pname, *parname, *pstr;
-	const char *ctype;
-	int ne;
-	if (!ch) continue;
-	st = get_seedtype(ch);
-	pname = make_std_pname(pn);
-	ne = weed_leaf_num_elements(finst->params, pname);
-	ctype = weed_seed_to_ctype(st, FALSE);
-	if (finst && finst->paramnames && finst->paramnames[pn])
-	  parname = lives_strdup(finst->paramnames[pn]);
-	else parname = lives_strdup_printf("param %d", pn);
-	if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne);
-	else {
-	  char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st));
-	  char *xpstr = NULL;;
-	  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, finst->params, pname, NULL);
-	  lives_free(fmtpstr);
-	  pstr = lives_strdup_printf("\t(%s)%s\t\thad value %s", ctype, finst->paramnames[pn], xpstr);
-	  lives_free(xpstr);
-	}
-	g_print("%s\n",pstr);
-	pn++;
-      }
-    }
+    /*   for (int i = 60; i >= 0; i -= 4) { */
+    /* 	uint8_t ch = (sig >> i) & 0X0F; */
+    /* 	char *pname, *parname; */
+    /* 	const char *ctype; */
+    /* 	int ne; */
+    /* 	if (!ch) continue; */
+    /* 	st = get_seedtype(ch); */
+    /* 	pname = make_std_pname(pn); */
+    /* 	ne = weed_leaf_num_elements(finst->params, pname); */
+    /* 	ctype = weed_seed_to_ctype(st, FALSE); */
+    /* 	if (finst && finst->paramnames && finst->paramnames[pn]) */
+    /* 	  parname = lives_strdup(finst->paramnames[pn]); */
+    /* 	else parname = lives_strdup_printf("param %d", pn); */
+    /* 	if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne); */
+    /* 	else { */
+    /* 	  char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st)); */
+    /* 	  char *xpstr = NULL;; */
+    /* 	  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, finst->params, pname, NULL); */
+    /* 	  lives_free(fmtpstr); */
+    /* 	  pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr); */
+    /* 	  lives_free(xpstr); */
+    /* 	} */
+    /* 	//g_print("%s\n",pstr); */
+    /* 	pn++; */
+    /*   } */
+    /* } */
     return fmtstring;
-  } 
+  }
   return NULL;
 }
 
@@ -181,7 +179,6 @@ LIVES_GLOBAL_INLINE char *hs_op_flags_desc(uint64_t opflags) {
   ADD_FLAG_EXPL(opflags, HOOKSTACK_ADDER_RUNS, "ADDER RUNS OWN CALLBACKS");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_SELF_ONLY, "ANON_TRIGGER - ANY THREAD CAN TRIGGER");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_SELF_ONLY, "ONLY SELF CAN ADD");
-  ADD_FLAG_EXPL(opflags, HOOKSTACK_COMBINED_BOOL, "COMBINED BOOLEAN RESULT");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_GUI_THREAD, "GUI_THREAD");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_RUN_SINGLE, "RUN SINGLE");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_PERSISTENT, "PERSISTENT");
@@ -228,6 +225,8 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
   boolean native = FALSE;
   char *proto;
 
+  g_print("\n\n");
+  
   if (!hstacks) {
     g_print("ERROR: no stacks !\n");
     return LIVES_RESULT_INVALID;
@@ -238,7 +237,7 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
     return LIVES_RESULT_INVALID;
   }
 
-  g_print("Showing details for hook stack type %d (%p) in stacks %p\n", type, hstack, hstacks);
+  g_print("Showing details for hook stack type %d\n(%p) in stacks %p\n", type, hstack, hstacks);
 
   hsflags = hstack->hsdesc->op_flags;
   if (hsflags & HOOKSTACK_NATIVE) native = TRUE;
@@ -249,14 +248,14 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
   else {
     lives_proc_thread_t lpt = hstack->owner.lpt;
     lives_funcinst_t *xfinst = lives_proc_thread_get_initial_funcinst(lpt);
-    g_print("Stack type proc_thraad, owner is proc_thread %p\n", lpt);
+    g_print("Stack type proc_thread, owner is proc_thread %p\n", lpt);
     lpt_desc_state(lpt);
     g_print("%s\n", lives_funcinst_show_func_call(xfinst));
   }
   
   g_print("\n");
 
-  g_print("hook stack pattern is %s", hs_pattern_name(hstack->hsdesc->pattern));
+  g_print("hook stack pattern is %s\n", hs_pattern_name(hstack->hsdesc->pattern));
 
   if (!hstack->hsdesc->accept_cond && !hstack->hsdesc->def_args_fmt)
     proto = lives_strdup("unspecified");
@@ -274,7 +273,8 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   g_print("Hook stack operation flags are:\n");
   opflags = hstack->hsdesc->op_flags;
-  hs_op_flags_desc(opflags);
+  if (opflags) hs_op_flags_desc(opflags);
+  else g_print("None");
 
   if (hstack->req_target_stacks) {
     g_print("Stack is a staging stack for target:\n");

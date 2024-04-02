@@ -70,8 +70,34 @@ void threaded_dialog_push(void);
 void threaded_dialog_pop(void);
 void threaded_dialog_auto_spin(void);
 
+typedef struct {
+  void *data;
+  lives_proc_thread_t self;
+  FILE *infofile;
+} stdstopfuncdata_t;
+
+// functions may return LIVES_RESULT_SUCCESS - successful completion
+// LIVES_RESULT_FAILED - still going
+// LIVES_RESULT_CANCELLED, LIVES_RESULT_TIMEDOUT - return but show for at least MIN_FLASH_SEC
+// LIVES_RESULT_ERROR - immediate return
+typedef lives_result_t (*autodlg_stopfunc_t)(void *);
+
 boolean do_auto_dialog(const char *text, int type);
 lives_proc_thread_t do_auto_dialog_async(const char *text, int type);
+
+// spin an auto dialog until stopcond evaluates to COND_PASS.
+// override will intially be set to LIVES_RESULT_FAIL,
+// a stopfunc will evaluate the cond, if it returns COND_PASS, then the function will return TRUE
+// and the dialog destroyed. If mainw->cancelled is set or the proc_thread gets a cancel_request
+// FALSE is returned. If mainw->error is set, FALSE is returned
+// true and false are represented in sync mode as self (true) and NULL (false)
+// in async mode, the dialog is run in a background thread, hook callbacks may be added to
+// the finished, error, cancelled etc hooks. once done, lives_proc_thread_join_boolean(lpt)
+// should be called, unless it was dontcared
+
+
+lives_proc_thread_t do_auto_dialog_full(const char *text, int type, boolean async,
+					lives_condition stopcond, lives_result_t *override);
 
 void do_splash_progress(void);
 

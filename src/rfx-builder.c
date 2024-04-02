@@ -4527,7 +4527,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   if (is_startup && lives_proc_thread_get_pause_requested(self))
     lives_proc_thread_pause();
 
-  if (status != RFX_STATUS_ANY) add_rfx_effects2(status);
+  if (status != RFX_STATUS_ANY) main_thread_execute_rvoid(add_rfx_effects2, "i", status);
   return TRUE;
 }
 
@@ -4576,7 +4576,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   }
   else lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
 
-  if (status != RFX_STATUS_TEST) make_custom_submenus();
+  if (status != RFX_STATUS_TEST)
+    main_thread_execute_void(make_custom_submenus);
 
   if (status == RFX_STATUS_TEST && mainw->run_test_rfx_menu) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), NULL);

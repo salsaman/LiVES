@@ -25,6 +25,11 @@ typedef struct {
 
 // versions beginning with underscore should be called if and only if synclist->mutex is locked
 
+// appends elem to array of <size> elements, increments size
+#define lives_dynarray_append(array, size, elem) _DW0			\
+  (array = ((typeof(elem) *)lives_realloc(array, (size + 1) * sizeof(elem))); \
+   array[size++] = elem;)
+
 // sync_list is a variety of double ended priotity queue; a rwlock ensures data consistency
 // can be created by pushing or adding to a NULL sync_list
 // by default, ehrn the last value is popped or removed, the sync_list is freed, and NULL is returned
@@ -41,7 +46,7 @@ int lives_sync_list_get_nvals(lives_sync_list_t *);
 
 lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *, void *data);
 
-LiVESList *_lives_sync_list_pop(lives_sync_list_t **);
+void *_lives_sync_list_pop(lives_sync_list_t **);
 void *lives_sync_list_pop(lives_sync_list_t **);
 void *lives_sync_list_pop_to_last(lives_sync_list_t **);
 

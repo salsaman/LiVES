@@ -26,14 +26,12 @@ lives_objstore_t *bdef_store = NULL;
 
 static size_t dict_size = 0;
 
-///////// blueprints
-
 // a "value" has 4 leaves, but we dont know how to make one yet !
 // so let's fake it
 #define LIVES_BLUEPRINT(bltype, ...) LIVES_BLUEPRINT_##bltype(__VA_ARGS__)
 
 #define LIVES_BLUEPRINT_VALUE(name, vtype, flags, ne, value)		\
-  LIVES_PLANT_VALUE, "name", WEED_SEED_CONST_CHARPTR, 0, name, "vtype", WEED_SEED_INT, 0, (weed_seed_t)(vtype), \
+  LIVES_PLANT_VALUE, "name", LIVES_SEED_CONST_CHARPTR, 0, name, "vtype", WEED_SEED_INT, 0, (weed_seed_t)(vtype), \
     "flags", WEED_SEED_UINT64, 0, (flags), "value", vtype, 0, (weed_size_t)(ne), (value), NULL
 
 

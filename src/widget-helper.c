@@ -43,6 +43,8 @@ static pthread_mutex_t gmci_mutex = PTHREAD_MUTEX_INITIALIZER;
 static volatile int cprio = PRIO_HIGH;
 static pthread_mutex_t finst_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+static boolean fg_can_service = FALSE;
+
 static volatile lives_funcinst_t *finsttorun = NULL;
 static volatile lives_proc_thread_t finstwaiter = NULL;
 
@@ -1118,14 +1120,13 @@ boolean fg_service_fulfill(void) {
   lives_funcinst_t *finst = (lives_funcinst_t *)finsttorun;
 
   if (finst) {
-    lives_funcinst_execute(finst);
-    if (finstwaiter) {
-      lives_proc_thread_force_resume(finstwaiter);
-      finstwaiter = NULL;
-    }
     finsttorun = NULL;
+    lives_funcinst_execute(finst);
+    finstwaiter = NULL;
     return TRUE;
   }
+
+  if (!fg_can_service) return FALSE;
 
   if (mainw->global_hook_stacks) {
     if (!pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
@@ -1319,8 +1320,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
 
 static void threadswap(void *data) {
-  lives_millisleep_while_true(mainw->do_ctx_update);
-
+  lives_funcinst_t *finst;
   lives_millisleep_while_true(mainw->do_ctx_update);
 
   mainw->do_ctx_update = TRUE;
@@ -1328,7 +1328,11 @@ static void threadswap(void *data) {
 
   fg_stack_wait();
 
-  main_thread_execute_void(lives_startup2);
+  finst = lives_funcinst_create_va(lives_startup2, "lives_startup2", WEED_SEED_VOID,
+				   NULL, NULL, NULL); 
+  fg_can_service = TRUE;
+  lives_funcinst_queue(finst, LIVES_THRDATTR_FG_THREAD);
+  lives_funcinst_free(finst);
 
   gui_loop_tight = FALSE;
 }
@@ -1349,7 +1353,7 @@ boolean fg_service_ready_cb(void *dummy) {
   mainw->do_ctx_update = TRUE;
   mainw->gui_much_events = TRUE;
 
-  lives_proc_thread_create(0, threadswap, 0, "", NULL);
+  lives_proc_thread_create_void(LIVES_THRDATTR_NONE, threadswap);
   fg_service_source = THREADVAR(guisource) = lives_idle_priority(fg_service_fulfill_cb, NULL);
 
   return FALSE;
@@ -1388,10 +1392,10 @@ static void async_sig_handler(livespointer instance, livespointer data) {
     return;
   }
   if (sigdata->swapped) {
-    lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, 0, "vv",
+    lives_proc_thread_create(attr, sigdata->callback, 0, "vv",
                              sigdata->user_data, instance);
   } else {
-    lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, 0, "vv",
+    lives_proc_thread_create(attr, sigdata->callback, 0, "vv",
                              instance, sigdata->user_data);
   }
   sigdata_free(sigdata, NULL);
@@ -1985,13 +1989,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget * 
 }
 
 
-static void wait_for_fg_response(void) {
-  GET_PROC_THREAD_SELF(self);
-  // now we pause - main thread will wake either adder or dispatcher after running the task
-  if (!lives_proc_thread_get_resume_requested(self)) lives_proc_thread_pause();
-  else lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
-}
-
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_origin(LiVESXWindow * xwin, int *posx, int *posy) {
 #ifdef GUI_GTK
@@ -2066,13 +2063,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget * widge
 }
 
 
-static void _dialog_resp_set(LiVESDialog * dlg, int resp, livespointer data) {
-  SET_INT_DATA(dlg, RESPONSE_KEY, resp);
+static void _dialog_resp_set(LiVESDialog *dlg, int resp, livespointer data) {
+  GET_PROC_THREAD_SELF(self);
+  SET_SELF_VALUE(int, "dlg_resp", resp);
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog * dlg) {
-  return GET_INT_DATA(dlg, RESPONSE_KEY);
+WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog *dlg) {
+  GET_PROC_THREAD_SELF(self);
+  return GET_SELF_VALUE(int, "dlg_resp");
 }
 
 static boolean lives_dialog_destroyed(LiVESWidget * dialog, void *data) {
@@ -2094,7 +2093,7 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   if (!ATT_MESSAGE(dialog)) gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
 
   lives_widget_object_ref(dialog);
-  SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
+  _dialog_resp_set(dialog, LIVES_RESPONSE_INVALID, NULL);
   _lives_widget_show_all(LIVES_WIDGET(dialog));
 
   if (ATT_MESSAGE(dialog)) pop_to_front(LIVES_WIDGET(dialog), NULL);
@@ -2103,10 +2102,11 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
     // TODO - only if focused / visible
     mainw->no_idlefuncs = FALSE;
     lives_widget_context_iteration(NULL, FALSE);
-    mainw->no_idlefuncs = no_idlefuncs;
+    mainw->no_idlefuncs = no_idlefuncs; 
+    resp = lives_dialog_get_response(dialog);
+    if (resp != LIVES_RESPONSE_INVALID) break;
     pthread_yield();
     lives_millisleep;
-    resp = GET_INT_DATA(dialog, RESPONSE_KEY);
   } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
 
   if (!dest) {
@@ -2115,7 +2115,7 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   }
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   lives_widget_object_unref(dialog);
-
+  g_print("resp A is %d\n", resp);
   return resp;
 }
 
@@ -2131,6 +2131,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
     main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
     BG_THREADVAR(hook_hints) = 0;
+    g_print("resp is %d\n", resp);
   }
 #endif
   return resp;
@@ -2191,8 +2192,7 @@ void fg_service_call(lives_funcinst_t *finst) {
 
   finstwaiter = self;
   finsttorun = finst;
-
-  wait_for_fg_response(); 
+  lives_millisleep_until_zero(finstwaiter == self);
   pthread_mutex_unlock(&finst_mutex);
 }
 
@@ -3529,14 +3529,24 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   /*   g_print("playwin key %d\n", keyval); */
   /* } */
   ret = FALSE;
+
+  // create a DATA_BOOK for this proc thread and flag it as PASS_ON_DISPATCH
+  // then any subsequent dispatched proc_thread will get the book
+
+  /* weed_plant_t *book = MAKE_DATA_BOOK(); */
+
+  /* SET_BOOK_VALUE(book, int, "test", 123); */
+  /* int c = GET_BOOK_VALUE(book, int, "test"); */
+  /* g_print("got nookval %d\n", c); */
+
   THREADVAR(accel_group) = group;
   THREADVAR(accel_key) = keyval;
   THREADVAR(accel_mod) = mod;
   THREADVAR(accel_data) = data;
-  lives_proc_thread_trigger_hook(self, ACCEL_START_HOOK);
+  lives_proc_thread_trigger_hook(ACCEL_START_HOOK);
   // gtk_window_activate_key
   gtk_accel_groups_activate(obj, keyval, mod | LIVES_SPECIAL_MASK);
-  lives_proc_thread_trigger_hook(self, ACCEL_END_HOOK);
+  lives_proc_thread_trigger_hook(ACCEL_END_HOOK);
   THREADVAR(accel_group) = NULL;
   THREADVAR(accel_key) = 0;
   THREADVAR(accel_mod) = 0;
@@ -3735,7 +3745,7 @@ WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_pixbuf_get_pixels(const LiVESPixbuf *
 
 WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf * pixbuf) {
 #ifdef GUI_GTK
-  return gdk_pixbuf_get_pixels(pixbuf);
+  return gdk_pixbuf_read_pixels(pixbuf);
 #endif
 }
 
@@ -13645,7 +13655,7 @@ boolean lives_widget_context_update(void) {
       return FALSE;
     } else {
       GET_PROC_THREAD_SELF(self);
-      lives_hook_stack_t **lpt_hooks = my_hook_stacks();
+      lives_hook_stack_t **lpt_hooks = self_hook_stacks();
       // trip gui loop to high prio
       fg_service_wake();
       if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) {
@@ -13655,7 +13665,7 @@ boolean lives_widget_context_update(void) {
           mainw->all_hstacks =
             lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
           pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-          lives_proc_thread_trigger_hook(self, LIVES_GUI_HOOK);
+          lives_proc_thread_trigger_hook(LIVES_GUI_HOOK);
         }
       }
       // trigger gui loop update
@@ -14058,8 +14068,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVES
 
 void lives_general_button_clicked(LiVESButton * button, livespointer data_to_free) {
   // destroy the button top-level and free data
-  if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
-    lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
+  LiVESWidget *w = lives_widget_get_toplevel(LIVES_WIDGET(button));
+  if (LIVES_IS_WIDGET(w)) {
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } else lives_abort("Invalid toplevel widget for clicked button");
   if (data_to_free) lives_free(data_to_free);

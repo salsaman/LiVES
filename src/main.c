@@ -475,7 +475,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
       fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
                         "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
       fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
-                        "distribution,\nand the LiVES version (%s), plus any following informauion:\n"), LiVES_VERSION);
+                        "distribution,\nand the LiVES version (%s), plus any following information:\n"), LiVES_VERSION);
 
       if (signum == LIVES_SIGSEGV) {
         fprintf(stderr, "Segmentation fault, ");

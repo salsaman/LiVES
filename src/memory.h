@@ -259,6 +259,8 @@ void *lives_free_and_return(void *);
 
 boolean lives_freep(void **);
 
+void lives_freep_multi(LiVESList **vptptr_list);
+
 boolean lives_free_if_non_null(void *);
 
 void *lives_steal_pointer(void **);

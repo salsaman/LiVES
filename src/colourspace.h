@@ -410,8 +410,6 @@ boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_s
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgt_gamma);
 boolean weed_layer_clear_pixel_data(weed_layer_t *);
 
-void lives_layer_set_opaque(weed_layer_t *);
-
 boolean can_inline_gamma(int inpl, int opal);
 boolean pconv_can_inplace(int inpl, int outpl);
 

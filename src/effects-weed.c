@@ -3974,7 +3974,7 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   if (!key || !*key) return WEED_ERROR_NOSUCH_LEAF;
   char *xstr = lives_strdup(string);
-  weed_error_t err = weed_set_custom_value(plant, key, WEED_SEED_CONST_CHARPTR, xstr);
+  weed_error_t err = weed_set_custom_value(plant, key, LIVES_SEED_CONST_CHARPTR, xstr);
   if (err != WEED_SUCCESS) {
     lives_free(xstr);
     return err;
@@ -3987,7 +3987,7 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
 
 
 LIVES_GLOBAL_INLINE boolean weed_leaf_is_const_string(weed_plant_t *plant, const char *key) {
-  return plant ? weed_leaf_seed_type(plant, key) == WEED_SEED_CONST_CHARPTR : FALSE;
+  return plant ? weed_leaf_seed_type(plant, key) == LIVES_SEED_CONST_CHARPTR : FALSE;
 }
 
 
@@ -4002,7 +4002,7 @@ LIVES_GLOBAL_INLINE const char *weed_get_const_string_value(weed_plant_t *plant,
     if (err) *err = xerr;
     return NULL;
   }
-  return weed_get_custom_value(plant, key, WEED_SEED_CONST_CHARPTR, err);
+  return weed_get_custom_value(plant, key, LIVES_SEED_CONST_CHARPTR, err);
 }
 
 
@@ -4020,7 +4020,7 @@ weed_error_t weed_set_blob_value(weed_plant_t *plant, const char *key, weed_size
     if (!p) return WEED_ERROR_MEMORY_ALLOCATION;
     lives_memcpy(p, ptr, len);
   }
-  weed_error_t err = weed_set_custom_value(plant, key, WEED_SEED_BLOB_DATA, p);
+  weed_error_t err = weed_set_custom_value(plant, key, LIVES_SEED_BLOB_DATA, p);
   if (err != WEED_SUCCESS) {
     lives_free(p);
     return err;
@@ -4035,7 +4035,7 @@ weed_error_t weed_set_blob_value(weed_plant_t *plant, const char *key, weed_size
 
 
 LIVES_GLOBAL_INLINE boolean weed_leaf_is_blob_data(weed_plant_t *plant, const char *key) {
-  return plant ? weed_leaf_seed_type(plant, key) == WEED_SEED_BLOB_DATA : FALSE;
+  return plant ? weed_leaf_seed_type(plant, key) == LIVES_SEED_BLOB_DATA : FALSE;
 }
 
 
@@ -4051,7 +4051,7 @@ LIVES_GLOBAL_INLINE void *weed_get_blob_value(weed_plant_t *plant, const char *k
     if (err) *err = xerr;
     return NULL;
   }
-  p = weed_get_custom_value(plant, key, WEED_SEED_BLOB_DATA, err);
+  p = weed_get_custom_value(plant, key, LIVES_SEED_BLOB_DATA, err);
   if (!byref) {
     weed_size_t blen = weed_get_blob_data_len(plant, key);
     if (blen) {
@@ -4110,12 +4110,12 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
         bret = TRUE;
       }
       break;
-      case WEED_SEED_CONST_CHARPTR: {
-        void **data = weed_get_custom_array_counted(plant, key, WEED_SEED_CONST_CHARPTR, &nvals);
+      case LIVES_SEED_CONST_CHARPTR: {
+        void **data = weed_get_custom_array_counted(plant, key, LIVES_SEED_CONST_CHARPTR, &nvals);
         for (int i = 0; i < nvals; i++) if (data[i]) lives_free(data[i]);
         if (data) lives_free(data);
         lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
-        weed_set_custom_value(plant, key, WEED_SEED_CONST_CHARPTR, NULL);
+        weed_set_custom_value(plant, key, LIVES_SEED_CONST_CHARPTR, NULL);
       }
       break;
       default: break;
@@ -4220,9 +4220,9 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
     flags &= ~WEED_FLAG_IMMUTABLE;
     if (flags & LIVES_FLAG_FREE_ON_DELETE) {
       flags &= ~WEED_FLAG_UNDELETABLE;
-      weed_leaf_set_flags(plant, key, flags);
       autofree = TRUE;
     }
+    weed_leaf_set_flags(plant, key, flags);
     if (autofree) weed_leaf_autofree(plant, key);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
     if (autofree) flags |= LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE;
@@ -7645,6 +7645,17 @@ matchvals:
   }
 
   if (!weed_channel_get_pixel_data(channel)) {
+    // somehow, we can end up with NULL pixel_data and with it flagged as CONST_DATA !
+    // so we need to clear the flags else we cannot set a new value
+    weed_leaf_clear_flagbits(channel, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
+    weed_leaf_clear_flagbits(channel, WEED_LEAF_PIXEL_DATA, (LIVES_FLAG_CONST_VALUE | LIVES_FLAG_CONST_DATA));
+
+    weed_error_t err = weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, 0);
+    g_print("FLAGS: %d %d\n", weed_leaf_get_flags(channel, WEED_LEAF_PIXEL_DATA), err);
+
+    
+
+    BREAK_ME("gen");
     if (!create_empty_pixel_data(channel, TRUE)) {
       g_print("NO PIXDATA\n");
       return FILTER_ERROR_MEMORY_ERROR;

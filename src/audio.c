@@ -2946,25 +2946,22 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
 }
 
 
-// TODO - make attributes of the aplayer
-static lives_proc_thread_t ana_lpt = NULL;
-static lives_proc_thread_t ana_lpt2 = NULL;
+static void *ana_rcpt = NULL;
+static void *ana_rcpt2 = NULL;
 
 
 void audio_analyser_start(int source) {
   if (source == AUDIO_SRC_EXT) {
-    if (!ana_lpt) {
+    if (!ana_rcpt) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
-      ana_lpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
+      ana_rcpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
 						   WEED_SEED_BOOLEAN, "v", aplayer);
-      lives_proc_thread_set_cancellable(ana_lpt);
     }
   } else {
-    if (!ana_lpt2) {
+    if (!ana_rcpt2) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
-      ana_lpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
+      ana_rcpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
 						    WEED_SEED_BOOLEAN, "v", aplayer);
-      lives_proc_thread_set_cancellable(ana_lpt2);
     }
   }
 }
@@ -2972,22 +2969,14 @@ void audio_analyser_start(int source) {
 
 void audio_analyser_end(int source) {
   if (source == AUDIO_SRC_EXT) {
-    if (ana_lpt) {
-      // all we need do here is request the proc_thread to cancel itself
-      // once it processes the request, it will cancel itself
-      // and then be removed from the hook_stack either when triggered or joined
-      // whichever happens next
-      lives_proc_thread_request_cancel(ana_lpt, FALSE);
-      ana_lpt = NULL;
+    if (ana_rcpt) {
+      lives_hook_cb_remove(ana_rcpt);
+      ana_rcpt = NULL;
     }
   } else {
-    if (ana_lpt2) {
-      // all we need do here is request the proc_thread to cancel itself
-      // once it processes the request, it will cancel itself
-      // and then be removed from the hook_stack either when triggered or joined
-      // whichever happens next
-      lives_proc_thread_request_cancel(ana_lpt2, FALSE);
-      ana_lpt2 = NULL;
+    if (ana_rcpt2) {
+      lives_hook_cb_remove(ana_rcpt2);
+      ana_rcpt2 = NULL;
     }
   }
 }

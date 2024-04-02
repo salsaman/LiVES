@@ -366,14 +366,18 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 #define THRD_STATE_SYNC_WAITING 	(1ull << 15)
 
 // temporary states (with PREPARING or RUNNING)
-#define THRD_STATE_BUSY 	(1ull << 16)
+#define THRD_STATE_BUSY 		(1ull << 16)
 // waiting for condition(s) to become TRUE
-#define THRD_STATE_WAITING 	(1ull << 17)
+#define THRD_STATE_WAITING 		(1ull << 17)
 // blimit passed, blocked waiting in sync_point
-#define THRD_STATE_BLOCKED 	(1ull << 18)
+#define THRD_STATE_BLOCKED 		(1ull << 18)
 // thread is paused for a short time and will resume automatically
 // or can be requested to resume immediately
-#define THRD_STATE_AUTO_PAUSED	(1ull << 19)
+#define THRD_STATE_AUTO_PAUSED		(1ull << 19)
+
+// proc_thread is running a secondary funcinst, the original state is backed up
+// and replaced with this, then restored when initial funcinst is popped back
+#define THRD_STATE_SWAPPED		(1ull << 20)
 
 // requested states
 // request to pause - ignored for non pauseable threads
@@ -386,7 +390,7 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 #define THRD_STATE_CANCEL_REQUESTED 	(1ull << 27)
 
 // cancelled by request, this is not a final state until acompanied by completed
-#define THRD_STATE_CANCELLED 	(1ull << 32)
+#define THRD_STATE_CANCELLED 		(1ull << 32)
 
 // bits 0,1,2,3,4,5 and 16,17,18,19,20,21,22
 #define THRD_TRANSIENT_STATES  0X007F003F
@@ -434,13 +438,14 @@ uint32_t lives_proc_thread_get_rtype(lives_proc_thread_t);
 char *lives_proc_thread_get_args_fmt(lives_proc_thread_t);
 funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t);
 
-void lives_proc_thread_push_active_funcinst(lives_funcinst_t *);
-lives_funcinst_t * lives_proc_thread_pop_active_funcinst(void);
+//void lives_proc_thread_push_active_funcinst(lives_funcinst_t *);
+//lives_funcinst_t * lives_proc_thread_pop_active_funcinst(void);
 
 lives_funcinst_t *lives_proc_thread_get_active_funcinst(lives_proc_thread_t);
-void lives_proc_thread_set_active_funcinst(lives_proc_thread_t, lives_funcinst_t *);
+//void lives_proc_thread_set_active_funcinst(lives_proc_thread_t, lives_funcinst_t *);
 
 lives_funcinst_t *lives_proc_thread_get_initial_funcinst(lives_proc_thread_t);
+void lives_proc_thread_set_initial_funcinst(lives_proc_thread_t, lives_funcinst_t *);
 
 void lives_funcinst_append_chain(lives_funcinst_t *f1, lives_funcinst_t *f2);
 
@@ -453,7 +458,9 @@ lives_sync_list_t *lives_proc_thread_get_initial_finstlist(lives_proc_thread_t);
 int lives_proc_thread_get_chain_idx(lives_proc_thread_t);
 int lives_proc_thread_get_stack_depth(lives_proc_thread_t);
 
-void lives_funcinst_queue(lives_funcinst_t *finst, uint64_t attrs);
+boolean lives_proc_thread_is_original(lives_proc_thread_t lpt);
+
+lives_proc_thread_t lives_funcinst_queue(lives_funcinst_t *finst, uint64_t attrs);
 
 void lives_funcinst_set_disposition(lives_funcinst_t *, boolean incl_stacked, funcinst_disposition disposition, ...);
 void finst_module_free(void *module, funcinst_module_type mod_type);
@@ -507,9 +514,9 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_THREAD_DATA "thread_data" // pointer to thread data area (proc_thread data, not pthread data !)
 
 #define LIVES_LEAF_THRDATTRS "thread_attrs" // thread attributes (combine with funcinst
-#define LIVES_LEAF_INIT_FUNCINST "actve_finst"
-#define LIVES_LEAF_ACTIVE_FUNCINST "actve_finst"
-#define LIVES_LEAF_INIT_FINSTLIST "int_finstlist"
+#define LIVES_LEAF_INIT_FUNCINST "init_finst"
+#define LIVES_LEAF_ACTIVE_FUNCINST "active_finst"
+#define LIVES_LEAF_INIT_FINSTLIST "init_finstlist"
 #define LIVES_LEAF_ACTIVE_FINSTLIST "act_finstlist"
 
 #define LIVES_LEAF_STACK_DEPTH "stck_depth"
@@ -665,10 +672,11 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
 #define lives_proc_thread_create_rvoid(a, f, af, ...) _lives_proc_thread_create(NULL, (a) | LIVES_THRDATTR_DONTCARE, \
 										(lives_funcptr_t)f, #f, \
 										WEED_SEED_VOID, VARNAMES(__VA_ARGS__), (af), __VA_ARGS__)
-#define lives_proc_thread_create_pvoid_rvoid(attrs, f) _lives_proc_thread_create(NULL, (atttrs) | LIVES_THRATTR_DONTCARE, \
-										 (lives_funcptr_t)f, #f, \
-										 WEED_SEED_VOID, NULL, "", NULL)
-#define lives_proc_thread_create_rvoid_pvoid(attrs, f) lives_proc_thread_create_pvoid_rvoid(attrs, f) _
+#define lives_proc_thread_create_pvoid_rvoid(attrs, f) _lives_proc_thread_create(NULL, (attrs) | LIVES_THRDATTR_DONTCARE, \
+										 (lives_funcptr_t)f, #f, WEED_SEED_VOID, NULL, "", NULL)
+
+#define lives_proc_thread_create_rvoid_pvoid(attrs, f) lives_proc_thread_create_pvoid_rvoid(attrs, f)
+#define lives_proc_thread_create_void(attrs, f) lives_proc_thread_create_pvoid_rvoid(attrs, f)
 
 lives_proc_thread_t _lives_proc_thread_create_with_timeout(uint64_t to_nsec, lives_cancel_type_t to_ctype,
 							   boolean ign_busy, uint64_t min_res,
@@ -763,22 +771,6 @@ int lives_proc_thread_count_refs(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 
-// each lpt has a "data" area. Any type of data can be written here
-// and later recalled
-// live_proc-thread_steal_data will return the data area (plant) and set the dat ain lpt to NULL
-weed_error_t lives_proc_thread_set_book(lives_proc_thread_t, weed_plant_t *book);
-weed_plant_t *lives_proc_thread_get_book(lives_proc_thread_t);
-weed_plant_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
-weed_plant_t *lives_proc_thread_share_book(lives_proc_thread_t dst,
-    lives_proc_thread_t src);
-
-void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name);
-
-#define mk_data_name(name) "data_" #name
-
-#define DEF_SELF_VALUE(type, name) \
-    weed_leaf_set(lives_proc_thread_ensure_book(self), name, val)
-
 #define DEL_SELF_VALUE(name)weed_leaf_delete(lives_proc_thread_get_data(self),name)
 
 #define SET_SELF_VALUE(type, name, val)					\
@@ -839,7 +831,32 @@ void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name
 #define lives_proc_thread_get_plantptr_array(lpt, name, nvals)		\
   (weed_get_plantptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
 
+/// data book
+
+// each lpt has a "data" area. Any type of data can be written here
+// and later recalled
+// live_proc-thread_steal_data will return the data area (plant) and set the dat ain lpt to NULL
+weed_error_t lives_proc_thread_set_book(lives_proc_thread_t, weed_plant_t *book);
+weed_plant_t *lives_proc_thread_get_book(lives_proc_thread_t);
+weed_plant_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
+weed_plant_t *lives_proc_thread_share_book(lives_proc_thread_t dst,
+    lives_proc_thread_t src);
+
+#define mk_data_name(name) "data_" #name
+#define mk_data_namex(name) "data_" name
+
+#define SET_BOOK_VALUE(book, type, name, val) _DW0(weed_set_##type##_value(book, mk_data_namex(name), val);)
+#define SET_BOOK_ARRAY(book, type, name, nvals, valsptr) _DW0(weed_set_##type##_array(book, mk_data_namex(name), nvals, valsptr);)
+#define GET_BOOK_VALUE(book, type, name) weed_get_##type##_value(book, mk_data_namex(name), NULL)
+#define GET_BOOK_ARRAY(book, type, name, nvals)	weed_get_##type##_array_counted(book, mk_data_namex(name), &nvals)
+
+void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name);
+
+#define MAKE_DATA_BOOK() lives_plant_new(LIVES_PLANT_DATA_BOOK)
+
 lives_proc_thread_t lives_proc_thread_get_dispatcher(lives_proc_thread_t);
+
+#define WAS_DISPATCHED_HERE(lpt) (!lives_strcmp(lives_proc_thread_get_active_funcinst(lpt)->funcdef->funcname, _FUNC_REF_))
 
 // test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);
@@ -873,8 +890,8 @@ boolean lives_proc_thread_error_full(lives_proc_thread_t self, char *file_ref, i
 boolean _lives_proc_thread_error(char *file_ref, int line_ref,
                                  int errnum, int severity, const char *fmt, ...);
 
-#define lives_proc_thread_error(errnum, severity, ...)	\
-  _lives_proc_thread_error(_FILE_REF_, _LINE_REF_, errnum, severity, __VA_ARGS__)
+#define lives_proc_thread_error(errnum, severity, fmtstr, ...)		\
+  _lives_proc_thread_error(_FILE_REF_, _LINE_REF_, errnum, severity, fmtstr __VA_OPT__(,) __VA_ARGS__, NULL)
 
 boolean lives_proc_thread_had_error(lives_proc_thread_t);
 
@@ -921,6 +938,11 @@ boolean lives_proc_thread_will_destroy(lives_proc_thread_t);
 boolean lives_proc_thread_should_cancel(lives_proc_thread_t);
 
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
+boolean lives_proc_thread_check_completed(lives_proc_thread_t);
+
+// va_list of &(void *)vars, all vars are freed / nullified when lpt completes
+// (NOT finishes, so we can catch dontcare proc_threads
+void lives_proc_thread_autofree(lives_proc_thread_t, ...);
 
 boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
 boolean lives_proc_thread_set_signalled(lives_proc_thread_t, int signum, weed_plant_t *data);

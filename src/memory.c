@@ -215,6 +215,14 @@ LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
 }
 
 
+void lives_freep_multi(LiVESList **vpplist) {
+  if (!vpplist) return;
+  for (LiVESList *list = *vpplist; list; list = list->next)
+    lives_freep((void **)list->data);
+  lives_list_free_all(vpplist);
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_free_if_non_null(void *p) {
   if (p) {
     lives_free(p);

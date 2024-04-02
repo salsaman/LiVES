@@ -471,9 +471,9 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   if (!tdata) {
     tdata = get_thread_data();
     lives_thread_set_proc_thread(self);
-    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Reader Thread");
+    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
-    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
+    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
 
   }
 
@@ -496,7 +496,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   if (async_writer_count) {
     // here we make sure that the DATA_READY hook callbacks have all completed
     // we must do this before we can free the data from the previous cycle
-    lives_hook_async_join(NULL, DATA_READY_HOOK);
+    lives_hook_async_join(DATA_READY_HOOK);
     async_writer_count = 0;
   }
 
@@ -1404,7 +1404,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
       ///
 
-
       /// Finally... we actually write to pulse buffers
       // TODO - use double buffering - fill a, (async join b), send a to async cbs - fill b
       // - async join a, send b to cbs, fill a, etc
@@ -1413,7 +1412,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
-        async_writer_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
+        async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
         pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
 	// switch buffers
@@ -1424,7 +1423,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #ifdef DEBUG_PULSE
         g_print("writing %ld bytes to pulse\n", nbytes);
 #endif
-        async_writer_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
+        async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
 	// switch buffers
       }
@@ -1454,12 +1453,12 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
         if (!pulsed->is_corked) {
-          async_writer_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
+          async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
         } else pulse_buff_free(shortbuffer);
 #else
         if (!pulsed->is_corked) {
-          async_writer_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
+          async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 #endif
@@ -1508,15 +1507,15 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   if (!tdata) {
     tdata = get_thread_data();
     lives_thread_set_proc_thread(self);
-    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Writer Thread");
+    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Reader Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
-    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
+    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
   }
 
   if (async_reader_count) {
     // here we make sure that the DATA_READY hook callbacks have all completed
     // we must do this before we can free the data from the previous cycle
-    lives_hook_async_join(NULL, DATA_READY_HOOK);
+    lives_hook_async_join(DATA_READY_HOOK);
     async_reader_count = 0;
   }
 
@@ -1601,7 +1600,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   lives_aplayer_set_data_len(self, nframes);
   lives_aplayer_set_data(self, (void *)back_buff);
 
-  async_reader_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
+  async_reader_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
 
   pulsed->seek_pos += rbytes;
 

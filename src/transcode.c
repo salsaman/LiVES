@@ -557,7 +557,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
       copy_frame_layer = apply_watermark(copy_frame_layer, currticks);
 
-      coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)send_layer,
+      coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, send_layer,
                                        WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
     }
 

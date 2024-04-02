@@ -140,7 +140,7 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   // - block until playback stops
   lives_proc_thread_t lpt;
   lives_hook_stack_t **lpt_hooks;
-  mainw->player_proc = lpt = lives_proc_thread_create(0, _start_playback, -1, "i", type);
+  mainw->player_proc = lpt = lives_proc_thread_create(0, _start_playback, WEED_SEED_VOID, "i", type);
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;

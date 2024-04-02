@@ -709,7 +709,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
       fbuff->ring_buffer = fbuff->buffer;
       fbuff->rbf_size = fbuff->bytes;
       lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                               (lives_funcptr_t)lives_write_cb, 0, "V", fbuff);
+                               lives_write_cb, 0, "V", fbuff);
       if (fbuff->bufsztype == BUFF_SIZE_WRITE_CUSTOM)
         buffsize = fbuff->custom_size;
       else buffsize = get_write_buff_size(fbuff->bufsztype);
@@ -952,7 +952,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #endif
       }
     }
-    if (retval) lives_hook_trigger(my_hook_stacks(), DATA_PREVIEW_HOOK);
+    if (retval) lives_hook_trigger(self_hook_stacks(), DATA_PREVIEW_HOOK);
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
@@ -984,6 +984,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
                                  _lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
 
   SET_LPT_VALUE(lpt, voidptr, "filebuff", (void *)fbuff);
+
   lives_proc_thread_set_cancellable(lpt);
 
   return lpt;
@@ -2368,15 +2369,19 @@ boolean check_storage_space(int clipno, boolean is_processing) {
 static int64_t result = -1;
 static volatile lives_proc_thread_t running = NULL;
 static char *running_for = NULL;
-static int dircheck_state = 0;
-lives_proc_thread_t ds_syncwith = NULL;
+static volatile int dircheck_state = 0;
+static volatile lives_proc_thread_t ds_syncwith = NULL;
+pthread_mutex_t ds_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
+  pthread_mutex_lock(&ds_mutex);
   dircheck_state = 2;
   if (ds_syncwith) {
+    pthread_mutex_unlock(&ds_mutex);
     lives_proc_thread_sync_with(ds_syncwith, 201, MM_IGNORE);
     ds_syncwith = NULL;
   }
+  else pthread_mutex_unlock(&ds_mutex);
   return FALSE;
 }
 
@@ -2408,6 +2413,7 @@ lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (running_for) lives_free(running_for);
   running_for = lives_strdup(dir);
   dircheck_state = 1;
+
   lives_proc_thread_dispatch(running);
   return running;
 }
@@ -2446,22 +2452,22 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
     return get_dir_size(dir);
   }
 
+  pthread_mutex_lock(&ds_mutex);
   //g_print("DISKMON sync, state is %d\n", dircheck_state);
   ds_syncwith = self;
-
-  if (dircheck_state == 1) {
+  if (dircheck_state == 2) {
     if (timeout < 0) timeout = BILLIONS(30); // TODO
-    if (dircheck_state == 1) {
-      if (lives_proc_thread_sync_with_timeout(running, 201, MM_IGNORE, timeout)
-          == LIVES_RESULT_FAIL) {
-        ds_syncwith = NULL;
-        disk_monitor_forget();
-        return -1;
-      }
-      g_print("synced with diskmn, will get result now\n");
+    if (lives_proc_thread_sync_with_timeout(running, 201, MM_IGNORE, timeout)
+	== LIVES_RESULT_FAIL) {
       ds_syncwith = NULL;
+      disk_monitor_forget();
+      pthread_mutex_unlock(&ds_mutex);
+      return -1;
     }
+    g_print("synced with diskmn, will get result now\n");
+    ds_syncwith = NULL;
   }
+  pthread_mutex_unlock(&ds_mutex);
   return disk_monitor_check_result(dir);
 }
 

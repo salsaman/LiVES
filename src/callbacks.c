@@ -5726,7 +5726,7 @@ static void cleardisk_show_results(LiVESTextBuffer * tbuff, int64_t bytes) {
 }
 
 
-void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
+void _on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // recover disk space
   LiVESTextBuffer *tbuff;
   lives_clip_t *sfile;
@@ -5760,8 +5760,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   mainw->next_ds_warn_level = 0; /// < avoid nested warnings
 
-  if (user_data) lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
-
   rec_list = &lists[0];
   rem_list = &lists[1];
   left_list = &lists[2];
@@ -5790,6 +5788,10 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
                                     tmp = lives_markup_escape_text(prefs->workdir, -1), extra);
     lives_free(tmp);
     widget_opts.use_markup = FALSE;
+
+
+    g_print("resp was %d\n", resp);
+    
     if (resp == LIVES_RESPONSE_CANCEL) {
       widget_opts.use_markup = FALSE;
       lives_free(extra);
@@ -5883,6 +5885,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   use_staging_dir_for(0);
 
+  // if this is fg thread and we call do_auto_dialog_async. then it
+  // is going to be calling fg_service_call a lot
   lpt = do_auto_dialog_async(_("Removing general trash"), 0);
 
   lives_system(com, FALSE);
@@ -6213,6 +6217,12 @@ end:
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
+}
+
+void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
+  if (user_data) lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
+  lives_proc_thread_create(LIVES_THRDATTR_WAIT_START | LIVES_THRDATTR_DONTCARE,
+			   _on_cleardisk_activate, WEED_SEED_VOID, "VV", widget, user_data);
 }
 
 
@@ -11092,7 +11102,7 @@ void rec_desktop(LiVESMenuItem * menuitem, livespointer user_data) {
     recargs->clipno = new_file;
   }
   lives_widget_context_update();
-  lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)rec_desk, -1, "v", recargs);
+  lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, rec_desk, -1, "v", recargs);
 }
 
 

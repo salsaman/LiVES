@@ -1313,22 +1313,23 @@ void redraw_timeline(int clipno) {
   mainw->drawsrc = clipno;
 
   drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE,
-                  (lives_funcptr_t)redraw_timeline_inner, -1, "i", clipno);
+                  redraw_timeline_inner, WEED_SEED_VOID, "i", clipno);
   pthread_mutex_unlock(&tlthread_mutex);
 }
 
 boolean get_timeline_lock(void) {
-  if (!pthread_mutex_trylock(&tlthread_mutex)) {
-    lives_proc_thread_t lpt = drawtl_thread;
-    if (lpt && lives_proc_thread_check_finished(lpt)
-	&& !lives_proc_thread_should_cancel(lpt)) {
+  lives_proc_thread_t lpt = NULL;
+  while(1) {
+    if (!pthread_mutex_trylock(&tlthread_mutex)) return TRUE;
+    if (lpt) break;
+    if (drawtl_thread) lpt = drawtl_thread;
+    if (lpt && !lives_proc_thread_check_finished(lpt)
+	&& lives_proc_thread_should_cancel(lpt)) {
       lpt = STEAL_POINTER(drawtl_thread);
-      pthread_mutex_unlock(&tlthread_mutex);
       lives_proc_thread_join_void(lpt);
       lives_proc_thread_unref(lpt);
-      return TRUE;
     }
-    pthread_mutex_unlock(&tlthread_mutex);
+    else break;
   }
   return FALSE;
 }
@@ -1348,12 +1349,16 @@ static void redraw_timeline_inner(int clipno) {
 
   mainw->drawsrc = clipno;
 
+  get_timeline_lock();
+
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
   }
   // returns FALSE if cancel requested
-  if (!update_timer_bars(clipno, 0, 0, 0, 0, 1)) return;
-
+  if (!update_timer_bars(clipno, 0, 0, 0, 0, 1)) {
+    unlock_timeline();
+    return;
+  }
   // Left / mono audio
 
   if (!sfile->laudio_drawable) {
@@ -1363,8 +1368,10 @@ static void redraw_timeline_inner(int clipno) {
   } else {
     mainw->laudio_drawable = sfile->laudio_drawable;
   }
-  if (!update_timer_bars(clipno, 0, 0, 0, 0, 2)) return;
-
+  if (!update_timer_bars(clipno, 0, 0, 0, 0, 2)) {
+    unlock_timeline();
+    return;
+  }
   // right audio
 
   if (!sfile->raudio_drawable) {
@@ -1374,10 +1381,14 @@ static void redraw_timeline_inner(int clipno) {
   } else {
     mainw->raudio_drawable = sfile->raudio_drawable;
   }
-  if (!update_timer_bars(clipno, 0, 0, 0, 0, 3)) return;
+  if (!update_timer_bars(clipno, 0, 0, 0, 0, 3)) {
+    unlock_timeline();
+    return;
+  }
 
   lives_widget_queue_draw(mainw->video_draw);
   lives_widget_queue_draw(mainw->laudio_draw);
   lives_widget_queue_draw(mainw->raudio_draw);
   lives_widget_queue_draw(mainw->eventbox2);
+  unlock_timeline();
 }

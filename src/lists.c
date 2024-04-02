@@ -176,9 +176,10 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_find(lives_sync_list_t *synclist, live
 }
 
 
-LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t **synclistp) {
+LIVES_GLOBAL_INLINE void *_lives_sync_list_pop(lives_sync_list_t **synclistp) {
   lives_sync_list_t *synclist = *synclistp;
   LiVESList *list;
+  void *data;
   if (synclist->flags & SYNCLIST_FLAG_POP_HEAD) {
     list = synclist->list;
     synclist->list = list->next;
@@ -191,22 +192,21 @@ LIVES_GLOBAL_INLINE LiVESList *_lives_sync_list_pop(lives_sync_list_t **synclist
     else synclist->list = NULL;
   }
 
+  data = list->data;
   lives_list_free_1(list);
   synclist->nvals--;
 
   if (!synclist->list && (synclist->flags & SYNCLIST_FLAG_FREE_ON_EMPTY))
     *synclistp = _lives_sync_list_free(synclist, FALSE);
 
-  return list;
+  return data;
 }
 
 LIVES_GLOBAL_INLINE void *lives_sync_list_pop(lives_sync_list_t **synclistp) {
-  LiVESList *list = NULL;
   void *data = NULL;
   if (synclistp && *synclistp) {
     lives_sync_list_wrlock(*synclistp);
-    list = _lives_sync_list_pop(synclistp);
-    data = list->data;
+    data = _lives_sync_list_pop(synclistp);
     if (*synclistp) lives_sync_list_unlock(*synclistp);
   }
   return data;

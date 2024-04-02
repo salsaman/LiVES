@@ -185,6 +185,9 @@ NIRVA_FUNC_TYPE_DEF(NIRVA_NO_RETURN, nirva_native_function_t,)
 //
 #define NIRVA_REPLY_WAIT_RETRY		16
 
+// return value that is never returned (WARNING: actually returning this may lead to undefined behaviour)
+#define NIRVA_REPLY_MU	((nan("OM")) / 0.)
+
 // return values for non-conditional hook cbs
 #define NIRVA_HOOK_CB_LAST		NIRVA_COND_FAIL
 #define NIRVA_HOOK_CB_AGAIN		NIRVA_COND_SUCCESS

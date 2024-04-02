@@ -121,9 +121,6 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 // LiVES extensions (effects-weed.c)
 
-// marker for variadic functions
-#define WEED_SEED_VARIADIC 32
-
 // a pointer type to lives_proxy_data_t
 // the real st, flags and ne are held in proxy data
 // the data inside points to the real data location and data size
@@ -133,9 +130,9 @@ weed_leaf_delete_f _weed_leaf_delete;
 // for blob_data, size is set when setting data, we can get value and size (by ref)
 // or a copy of data (deep copy). Proxy flags can optionally be set to free on delete
 // for pdata, real flags are readonly, undeletable, free on delete
-#define WEED_SEED_PROXY 1400
-#define WEED_SEED_CONST_CHARPTR 1401
-#define WEED_SEED_BLOB_DATA 1402
+#define LIVES_SEED_PROXY 1400
+#define LIVES_SEED_CONST_CHARPTR 1401
+#define LIVES_SEED_BLOB_DATA 1402
 
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
@@ -220,11 +217,12 @@ extern locale_t oloc, nloc;
 typedef int funcinst_module_type;
 
 typedef enum {
-	      // not attached to a proc_thread, not stacked
+	      // the normal flow is inert -> (set as active finst in lpt) -> ready
+	      // (dispatch) -> waiting -> (picked up by pool thread) -> active
+	      // -> consumed or error or cancelled
 	      DISPOSITION_INERT = 0,
-	      // queued and wull be acttioned unless cancelled / removed
+	      DISPOSITION_READY,
 	      DISPOSITION_WAITING,
-	      // being executed by a thread
 	      DISPOSITION_ACTIVE,
 	      // has completed bur is waiting on some condition (eg. chain completion)
 	      DISPOSITION_IDLING,
@@ -246,6 +244,9 @@ typedef struct _lives_funcinst lives_funcinst_t;
 
 #include "widget-helper.h"
 #include "lists.h"
+
+#define NATIVE_THREAD_TYPE pthread
+#define NATIVE_MUTEX_TYPE pthread_mutex_t
 
 #include "funcsigs.h"
 
@@ -318,18 +319,34 @@ DEF_STRUCT(lives_funcinst,
 
 	   uint64_t flags;
 
-	   // contains p0, p1, etc, plus const char **pnames
-	   // p0_free, p1_free. etc.
-	   // plus extra_funcsig - if funcdef->funcsig ends with
+	   /* // contains p0, p1, etc, plus const char **pnames */
+	   /* // p0_free, p1_free. etc. */
+	   /* // and return_val */
+	   /* // plus extra_funcsig - if funcdef->funcsig ends with "*" */
+	   /* // */
 	   weed_plant_t *params;
 
 	   const char **paramnames;
 
-	   // can be a pointer to a variable to return value in
-	   // if NULL,will be allocated and return value copied
-	   // value can be read in completed hook for queud funcinst
-	   // or between hook triggers for stacked funcinst
+	   /* // can be a pointer to a variable to return value in */
+	   /* // if NULL,will be allocated and return value copied */
+	   /* // value can be read in completed hook for queud funcinst */
+	   /* // or between hook triggers for stacked funcinst */
 	   void *retloc;
+
+	   // TODO:
+	   // data book contains all local values for the funcinst
+	   // including param values, real_funcsig, return_value
+	   // param_data_free funcs and also combines the module
+	   // - a proc_thread will jave a leaf - local_data_source
+	   // which by default points to active_funcinst->data_book
+	   // then when a condition is evaluated, local_data_source is where we look to find
+	   // COND_SYMBOL, symname
+	   //
+	   // each value is actually a voidptr to an allfunc_t *
+	   // when setting a value we can use macro SET_SELF_VALUE
+	   
+	   //weed_plant_t *data_book;
 
 	   void *next, *prev;
 
@@ -353,18 +370,22 @@ DEF_STRUCT(lives_funcinst,
 
 #include "user-interface.h"
 
+// startup features
 #define FEATURE_MACHINEDETS_1		(1ul << 0)
 #define FEATURE_MEMFUNCS		(1ul << 1)
 #define FEATURE_WEED			(1ul << 2)
-#define FEATURE_THREADPOOL		(1ul << 3)
-#define FEATURE_MACHINEDETS_2		(1ul << 4)
-#define FEATURE_SYSALARMS		(1ul << 5)
-#define FEATURE_COL_ENGINE		(1ul << 6)
-#define FEATURE_GUI_HELPER		(1ul << 7)
-#define FEATURE_RNG			(1ul << 8)
-#define FEATURE_THEMING			(1ul << 9)
+#define FEATURE_THREADVARS		(1ul << 3)
+#define FEATURE_CONDITIONALS		(1ul << 4)
+#define FEATURE_THREADPOOL		(1ul << 5)
+#define FEATURE_MACHINEDETS_2		(1ul << 6)
+#define FEATURE_SYSALARMS		(1ul << 7)
+#define FEATURE_COL_ENGINE		(1ul << 8)
+#define FEATURE_GUI_HELPER		(1ul << 9)
+#define FEATURE_RNG			(1ul << 10)
+#define FEATURE_THEMING			(1ul << 11)
 
 #define FEATURE_READY(what) (capable && (capable->features_ready & FEATURE_##what))
+
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
@@ -771,6 +792,8 @@ struct _capabilities {
   int primary_monitor;
   boolean can_show_msg_area;
 
+  LiVESList *known_funcsigs;
+  
   int64_t ds_used, ds_free, ds_tot;
   lives_storage_status_t ds_status;
 
@@ -870,7 +893,7 @@ void __BREAK_ME(const char *dtl);
 
 #define TRACE_ME(label) _DW0(SHOW_LOCATION("LiVES: hit tracepoint: " label);)
 
-#define SHOW_LOCATION(text) fprintf(stderr,"\n%s at %s, line %d\n\n",text,_FILE_REF_,_LINE_REF_)
+#define SHOW_LOCATION(text) fprintf(stderr,"\n%s at %s, line %d\n\n",text,_FILE_REF_ ? _FILE_REF_ : "????",_LINE_REF_)
 
 #define LIVES_FULL_DEBUG 0
 

@@ -1067,14 +1067,14 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 */
 lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir,
                                         const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE, _item_to_file_details, -1, "vssIi",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, _item_to_file_details, WEED_SEED_VOID, "vssIi",
                                   listp, dir, orig_loc, extra, 0);
 }
 
 
 lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofname,
     const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE, _item_to_file_details, -1, "vssIi",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, _item_to_file_details, WEED_SEED_VOID, "vssIi",
                                   listp, ofname, orig_loc, extra, 1);
 }
 
@@ -2713,7 +2713,7 @@ boolean check_mem_status(void) {
     if (LIVES_IS_PLAYING && mainw->record) {
       if (prefs->crash_recovery && prefs->rr_crash) {
 	lives_proc_thread_create(LIVES_THRDATTR_NO_GUI | LIVES_THRDATTR_PRIORITY,
-				 (lives_funcptr_t)backup_recording, 0, "vv", NULL, NULL);
+				 backup_recording, 0, "vv", NULL, NULL);
       }
     }
     for (LiVESList *list = mainw->cliplist; list; list = list->next) {

@@ -55,12 +55,13 @@ void clear_player_hooks(void) {
   lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
   fg_stack_wait();
   rte_keys_update();
-  if (sah->stack && all_updated) {
+  if (sah->stack && all_updated) { 
+    GET_PROC_THREAD_SELF(self);
     all_updated = FALSE;
-    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+    lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
     mainw->gui_much_events = TRUE;
     mainw->do_ctx_update = TRUE;
-    lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+    lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
     lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
     fg_stack_wait();
   }
@@ -843,8 +844,8 @@ skip_precache:
           }
         }
         mainw->preview = FALSE;
-      } else lives_nanosleep(LIVES_FORTY_WINKS);
-    } else lives_nanosleep(LIVES_FORTY_WINKS);
+      } else LIVES_HAVEANAP;
+    } else LIVES_HAVEANAP;
 
     // or we reached the end of the preview
     if ((!cfile->opening && frame >= (mainw->proc_ptr->frames_done
@@ -1248,11 +1249,12 @@ frames_t load_frame_image(frames_t frame) {
       lives_hook_stack_t *sah =
         lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
       if (sah->stack) {
+	GET_PROC_THREAD_SELF(self);
         all_updated = FALSE;
-        lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
         mainw->gui_much_events = TRUE;
         mainw->do_ctx_update = TRUE;
-        lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+        lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
       }
     }
 
@@ -1494,18 +1496,17 @@ frames_t load_frame_image(frames_t frame) {
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
-    lives_proc_thread_t free_lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
-                                   weed_layer_unref, 0, "v", frame_layer);
+    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, WEED_SEED_VOID, "v", frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
 					 HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-					 lives_layer_draw, 0, "vv", mainw->preview_image, NULL, frame_layer, free_lpt);
+					 lives_layer_draw, WEED_SEED_VOID, "vv", mainw->preview_image, NULL, frame_layer, free_finst);
 
     } else {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
 					 HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-					 lives_layer_draw, 0, "vv", mainw->play_image, NULL, frame_layer, free_lpt);
+					 lives_layer_draw, WEED_SEED_VOID, "vv", mainw->play_image, NULL, frame_layer, free_finst);
     }
 
     frame_layer = NULL;
@@ -2801,9 +2802,10 @@ close_clip:
     // screen update during event playback
     if (!mainw->do_ctx_update && all_updated) {
       if (sah->stack) {
+	GET_PROC_THREAD_SELF(self);
         all_updated = FALSE;
-        lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
-        lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
+        lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
       }
       mainw->gui_much_events = TRUE;
     }
@@ -3792,13 +3794,14 @@ update_effort:
         // type B - normal fx toggles, sepwin / fs, mode changes, clip switches
 
         if (sah->stack) {
+	  GET_PROC_THREAD_SELF(self);
           all_updated = FALSE;
           // here we trigger only "light" updates, e.g drawing updates
-          lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+          lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK,
 					HOOK_OPT_FG_LIGHT, updates_done, NULL);
           mainw->gui_much_events = TRUE;
           BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
-          lives_proc_thread_trigger_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK);
+          lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
           BG_THREADVAR(hook_hints) = 0;
         }
       }

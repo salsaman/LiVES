@@ -194,7 +194,7 @@ static weed_layer_t *_create_blank_layer(weed_layer_t *layer, const char *image_
   }
 
   if (!create_empty_pixel_data(layer, TRUE)) weed_layer_nullify_pixel_data(layer);
-  weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
+  else weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
 
   if (prefs->apply_gamma) {
     if (tgt_gamma != WEED_GAMMA_UNKNOWN)
@@ -487,7 +487,9 @@ void lives_layer_check_remove_copylists(lives_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {  
+  weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
+  weed_leaf_clear_flagbits(layer, WEED_LEAF_PIXEL_DATA, (LIVES_FLAG_CONST_VALUE | LIVES_FLAG_CONST_DATA));
   lives_layer_check_remove_copylists(layer);
   weed_layer_set_pixel_data(layer, NULL);
   weed_plant_sanitize(layer, FALSE);
@@ -672,7 +674,7 @@ lives_result_t copy_pixel_data_slice(weed_layer_t *dst, weed_layer_t *src,
 // layer must be created prior, any existing pixel_data will be freed or nullified
 // if inc_rs is TRUE, pad rows with rowstrides
 // LIVES_LEAF_NEW_ROWSTRIDES may be set in dst_layer to force a specific value
-// CONST_VALUE flag may be et in src t force dst to adopt same rowstrides
+// CONST_VALUE flag may be set in src t force dst to adopt same rowstrides
 // otherwise rowstrides are set according to width and src layer palette
 // if inc_rs is not set, rowstrides are set to width * pixel_size
 // width, height of -1 will copy to the end from  dst (adjusting for non zero off_x, off_y)
@@ -727,7 +729,7 @@ boolean layer_processed_cb(lives_proc_thread_t lpt, lives_layer_t *layer) {
 
 
 void lives_layer_async_auto(lives_layer_t *layer, lives_proc_thread_t lpt) {
-  if (lpt == mainw->debug_ptr) BREAK_ME("setcb");
+  //if (lpt == mainw->debug_ptr) BREAK_ME("setcb");
   if (layer && lpt) {
     weed_layer_ref(layer);
     lives_layer_set_status(layer, LAYER_STATUS_QUEUED);

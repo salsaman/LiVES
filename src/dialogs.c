@@ -1392,10 +1392,10 @@ void update_progress(boolean visible, int clipno) {
       }
     }
     shown_paused_frames = mainw->effects_paused;
-  } else {
-    lives_nanosleep(LIVES_FORTY_WINKS);
-  }
+  } else LIVES_HAVEANAP;
+    
 }
+
 
 static boolean accelerators_swapped;
 
@@ -1874,21 +1874,51 @@ finish:
 }
 
 
-#define MIN_FLASH_TIME MILLIONS(100)
+#define MIN_FLASH_SEC 1.
 
-static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
-  // type 0 = normal auto_dialog
-  // type 1 = countdown dialog for audio recording
+lives_result_t std_stopfunc(void *data) {
+  stdstopfuncdata_t *sfdata = (stdstopfuncdata_t *)data;
+  if (mainw->error) return LIVES_RESULT_ERROR;
+  if (mainw->cancelled != CANCEL_NONE
+      || (sfdata->self && lives_proc_thread_get_cancel_requested(sfdata->self)))
+    return LIVES_RESULT_CANCELLED;
+  
+  if (sfdata->infofile
+      || (sfdata->infofile = fopen(cfile->info_file, "r")))
+    return LIVES_RESULT_SUCCESS;
+  return LIVES_RESULT_FAILED;
+}
+
+
+lives_result_t condchk_stopfunc(void *data) {
+  return LIVES_RESULT_SUCCESS;
+}
+
+
+static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t stopfunc, void *stfuncdata) {
+  // THIS WILL REPLACE do_progress_dialog()
+  //
+  // type 0 = normal auto_dialog - run until (*stopfunc)(stfuncdata) returns TRUE
+  // AND dialog has been visible for at least MIN_FLASH_SEC seconds
+
+  //  either proc_thread gets a cancel request (async)
+  // or until mainw->cancelled is set, or we can fopen cfile->infofile
+  //
   // type 2 = normal with cancel
+  //
+  // type 1 = countdown dialog for audio recording
+  stdstopfuncdata_t sfdata;
   GET_PROC_THREAD_SELF(self);
-  FILE *infofile = NULL;
   uint64_t time = 0, stime = 0;
 
   char *label_text;
   char *mytext = lives_strdup(text);
 
   double time_rem, last_time_rem = 10000000.;
-  lives_alarm_t alarm_handle = 0;
+
+  sfdata.data = stfuncdata;
+  sfdata.self = self;
+  sfdata.infofile = NULL;
 
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
@@ -1899,6 +1929,7 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   mainw->proc_ptr = create_processing(mytext);
 
   lives_freep((void **)&mytext);
+
   if (mainw->proc_ptr->stop_button)
     lives_widget_hide(mainw->proc_ptr->stop_button);
 
@@ -1907,19 +1938,14 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
     lives_widget_hide(mainw->proc_ptr->pause_button);
     mainw->cancel_type = CANCEL_TYPE_SOFT;
   }
-  if (type == 0) {
-    lives_widget_hide(mainw->proc_ptr->cancel_button);
-  }
+  else if (type == 0) lives_widget_hide(mainw->proc_ptr->cancel_button);
 
   lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar), .01);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->proc_ptr->processing);
 
-  if (type == 0 || type == 2) {
-    clear_mainw_msg();
-    alarm_handle = lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
-  } else if (type == 1) {
+  if (type == 1) {
     // show buttons
     if (mainw->proc_ptr->stop_button)
       lives_widget_show_all(mainw->proc_ptr->stop_button);
@@ -1929,16 +1955,19 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
       pulse_driver_uncork(mainw->pulsed_read);
     }
 #endif
-    if (mainw->rec_samples != 0) {
-      lives_usleep(prefs->sleep_time);
-    }
+    if (mainw->rec_samples) lives_millisleep;
   }
 
-  while (mainw->cancelled == CANCEL_NONE && (!self || !lives_proc_thread_get_cancel_requested(self))
-         && !(infofile = fopen(cfile->info_file, "r"))) {
+  lives_widget_context_update();
+
+  if (type == 0 || type == 2)
+    lives_alarm_set_timeout(MIN_FLASH_SEC * ONE_BILLION_DBL); // don't want to flash too fast...
+
+  while( (*stopfunc)((void *)&stfuncdata) == LIVES_RESULT_FAILED) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     lives_widget_context_update();
-    lives_usleep(prefs->sleep_time);
+    lives_millisleep;
+
     if (type == 1 && mainw->rec_end_time != -1.) {
       time = lives_get_current_ticks();
 
@@ -1957,25 +1986,23 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
     }
   }
 
-  if (!mainw->cancelled && (!self || !lives_proc_thread_get_cancel_requested(self))) {
-    if (infofile) {
+  while ((*stopfunc)((void *)&stfuncdata) == LIVES_RESULT_SUCCESS) {
+    if (sfdata.infofile) {
       if (type == 0 || type == 2) {
-        read_from_infofile(infofile);
+        read_from_infofile(sfdata.infofile);
         if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-        if (alarm_handle > 0) {
-          ticks_t tl;
-          while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
-            lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-            lives_widget_process_updates(mainw->proc_ptr->processing);
-            // need to recheck after calling process_updates
-            if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
-            lives_nanosleep(LIVES_FORTY_WINKS);
-          }
-          lives_alarm_clear(alarm_handle);
-        }
-      } else fclose(infofile);
+	while (!lives_alarm_triggered() && (*stopfunc)((void *)&stfuncdata) != LIVES_RESULT_ERROR) {
+	  lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
+	  lives_widget_process_updates(mainw->proc_ptr->processing);
+	  // need to recheck after calling process_updates
+	  if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
+	  LIVES_HAVEANAP;
+	}
+      } else fclose(sfdata.infofile);
     }
   }
+
+  if (type == 0 || type == 2) lives_alarm_disarm();
 
   if (mainw->proc_ptr) {
     if (mainw->proc_ptr->processing)
@@ -1988,17 +2015,15 @@ static boolean _do_auto_dialog(const char *text, int type, boolean is_async) {
   if (type == 2) mainw->cancel_type = CANCEL_TYPE_KILL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (self && lives_proc_thread_get_cancel_requested(self)) {
-    lives_proc_thread_cancel();
+  if (WAS_DISPATCHED_HERE(self) && lives_proc_thread_get_cancel_requested(self)) {
+    lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
     return FALSE;
   }
-
-  if (mainw->cancelled) return FALSE;
 
   // get error message (if any)
   if (type != 1 && !strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors(FALSE);
-    if (mainw->cancelled || mainw->error) return FALSE;
+    if ((*stopfunc)((void *)&stfuncdata) != LIVES_RESULT_SUCCESS) return FALSE;
   } else {
     if (CURRENT_CLIP_IS_VALID)
       if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
@@ -2020,7 +2045,7 @@ boolean do_auto_dialog(const char *text, int type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
-  return _do_auto_dialog(text, type, FALSE);
+  return _do_auto_dialog(text, type, std_stopfunc, NULL);
 }
 
 
@@ -2029,10 +2054,39 @@ lives_proc_thread_t do_auto_dialog_async(const char *text, int type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
-  lives_proc_thread_t lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_do_auto_dialog,
-                            WEED_SEED_BOOLEAN, "sib", text, type, TRUE);
+  lives_proc_thread_t lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, _do_auto_dialog,
+						     WEED_SEED_BOOLEAN, "SiFV", text, type, std_stopfunc, NULL);
   return lpt;
 }
+
+
+typedef struct {
+  lives_condition cond;
+  lives_result_t *over;
+} cchkstopfuncdata_t;
+
+
+lives_proc_thread_t do_auto_dialog_full(const char *text, int type, boolean async,
+					lives_condition stopcond, lives_result_t *override) {
+  lives_proc_thread_t lpt = NULL;
+  LIVES_CALLOC_TYPE(cchkstopfuncdata_t, ccsfdata, 1);
+  ccsfdata->cond = stopcond;
+  ccsfdata->over = override;
+  if (async) {
+    lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, _do_auto_dialog,
+				   WEED_SEED_BOOLEAN, "SiFV", text, type, condchk_stopfunc, ccsfdata);
+    lives_proc_thread_autofree(lpt, ccsfdata, NULL);
+
+  }
+  else {
+    if (_do_auto_dialog(text, type, condchk_stopfunc, ccsfdata)) {
+      GET_PROC_THREAD_SELF(self);
+      lpt = self;
+    }
+  }
+  return lpt;
+}
+
 
 ///// TODO: end processing.c /////
 
@@ -3483,7 +3537,7 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   syncid = gen_unique_id();
   lpt = mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
-                                 (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
+                                 _thdlg_auto_spin, -1, "", NULL);
   SET_LPT_VALUE(lpt, uint64, "sync_idx", syncid);
 
   lives_proc_thread_dispatch(lpt);

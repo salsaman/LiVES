@@ -87,7 +87,7 @@ lives_result_t lives_imgloader_srcfunc(weed_layer_t *layer, boolean async) {
 /*   boolean res; */
 /*   frames_t frame = lives_layer_get_frame(layer); */
 /*   lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, */
-/* 				 (lives_funcptr_t)scrapfile_loader, */
+/* 				 scrapfile_loader, */
 /* 				 0, "vi", &orig_layer); */
 /* } */
 
@@ -1335,7 +1335,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   if (!mainw->scrap_file_proc) {
     mainw->scrap_file_proc =
-      lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, (lives_funcptr_t)_save_to_scrap_file,
+      lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, _save_to_scrap_file,
                                WEED_SEED_INT64, "v", &orig_layer);
   }
 
@@ -1508,7 +1508,7 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
   priv->interp = interp;
   priv->pal = tpalette;
   priv->clamp = clamp;
-  resthread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)res_thrdfunc, -1, "v", priv);
+  resthread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, res_thrdfunc, -1, "v", priv);
   weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, resthread);
 }
 #endif
@@ -2785,12 +2785,11 @@ lives_result_t pull_frame_threaded(weed_layer_t *layer, int width, int height) {
 #ifdef NO_FRAME_THREAD
     if (!pull_fram(layer, tc)) return LIVES_RESULT_ERROR;
 #else
-  BREAK_ME("pft");
 
     lpt = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_NO_GUI
-                                   | LIVES_THRDATTR_CREATE_UNQUEUED, (lives_funcptr_t)pft_thread,
+                                   | LIVES_THRDATTR_CREATE_UNQUEUED, pft_thread,
                                    0, "vs", layer, img_ext);
-    if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
+    //if (!mainw->debug_ptr) mainw->debug_ptr = lpt;
     lives_layer_async_auto(layer, lpt);
 
 #endif

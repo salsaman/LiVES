@@ -138,51 +138,7 @@ char *make_std_pname(int pn);
 typedef uint64_t lives_thread_attr_t;
 typedef LiVESList lives_thread_t;
 
-typedef struct {
-  char letter;
-  weed_seed_t seed_btype;
-  uint8_t sigbits;
-  const char *symname;
-  const char *fmtstr;
-} lookup_tab;
-
 void lpt_params_free(lives_proc_thread_t, boolean do_exec);
-
-extern const lookup_tab crossrefs[];
-
-#if HAVE_WEED_SEED_UINT
-#define XREFS_TAB_UINT {'u',  WEED_SEED_UINT, 		0x06, 	"UINT", "%u"},
-#else
-#define XREFS_TAB_UINT
-#endif
-#if HAVE_WEED_SEED_UINT64
-#define XREFS_TAB_UINT64  {'U',  WEED_SEED_UINT64,       	0x07, 	"UINT64", "%"PRIu64},
-#else
-#define XREFS_TAB_UINT64
-#endif
-#if HAVE_WEED_SEED_FLOAT
-#define XREFS_TAB_FLOAT  {'f',  WEED_SEED_FLOAT,        	0x08, 	"FLOAT", "%.4f"},
-#else
-#define XREFS_TAB_FLOAT
-#endif
-
-#define XREFS_TAB							\
-  {{'i',  WEED_SEED_INT,       	FUNCSIG(INT), 		"INT", "%d"}	\
-    ,{'d',  WEED_SEED_DOUBLE, 	FUNCSIG(DOUBLE), 	"DOUBLE", "%.4f"} \
-    ,{'b',  WEED_SEED_BOOLEAN, 	FUNCSIG(BOOL),	 	"BOOL", "%d"}	\
-    ,{'s',  WEED_SEED_STRING, 	FUNCSIG(STRING), 	"STRING", "\"%s\""} \
-    ,{'I',  WEED_SEED_INT64,    FUNCSIG(INT64), 	"INT64", "%"PRIi64} \
-    ,{'F',  WEED_SEED_FUNCPTR, 	FUNCSIG(FUNCP), 	"FUNCP", "%p"}	\
-    ,{'v',  WEED_SEED_VOIDPTR, 	FUNCSIG(VOIDP), 	"VOIDP", "%p"}	\
-    ,{'V',  WEED_SEED_VOIDPTR, 	FUNCSIG(VOIDP), 	"VOIDP", "%p"}	\
-    ,{'p',  WEED_SEED_PLANTPTR, FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
-    ,{'P',  WEED_SEED_PLANTPTR, FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
-    ,{'*',  WEED_SEED_VARIADIC, FUNCSIG(PLANTP), 	"VARIADIC", "..."}, \
-       XREFS_TAB_UINT							\
-	 XREFS_TAB_UINT64						\
-	 XREFS_TAB_FLOAT						\
-       {'\0', WEED_SEED_VOID,       	0, 	"", ""}			\
-  }
 
 #define LIVES_LEAF_RETURN_VALUE "retval"
 #define LIVES_LEAF_ARGS_FMT "args_fmt"
@@ -225,18 +181,24 @@ void reset_counter_cb(void *dummy, int *var);
 
 #ifdef __FILE__
 #define _FILE_REF_ __FILE__
+#define _ORIG_FILE_REF_ __FILE__
 #else
 #define _FILE_REF_ ""
+#define _ORIG_FILE_REF_ ""
 #endif
 #ifdef __LINE__
 #define _LINE_REF_ __LINE__
+#define _ORIG_LINE_REF_ __LINE__
 #else
 #define _LINE_REF_ 0
+#define _ORIG_LINE_REF_ 0
 #endif
 #ifdef __func__
 #define _FUNC_REF_ __func__
+#define _ORIG_FUNC_REF_ __func__
 #else
 #define _FUNC_REF_ "??????"
+#define _ORIG_FUNC_REF_ "??????"
 #endif
 
 typedef enum {
@@ -343,54 +305,40 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 typedef char ** lives_condition;
 
+#define MAKE_COND_OPFUNC(func) cond_fdefs[i++] = MAKE_FUNCDEF(cond_##func, VOIDPTR, "iV")
+#define MAKE_COND_VALFUNC(func) cond_fdefs[i++] = MAKE_FUNCDEF(cond_##func, VOIDPTR, "S")
+
 #define COND_PFX "COND_"
 #define COND_PFXLEN 5
 
-#define _COND_BEGIN	"COND_START"
-#define _COND_FINISH	"COND_END"
-#define _COND_POPEN	"COND_PARENS_OPEN"
-#define _COND_PCLOSE	"COND_PARENS_CLOSE"
-
-#define COND_INT_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_INT, cnst)
-#define COND_UINT_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_INT, cnst)
-#define COND_INT64_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_INT64, cnst)
-#define COND_UINT64_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_INT64, cnst)
-#define COND_BOOLEAN_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_BOOLEAN, cnst)
-#define COND_DOUBLE_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_DOUBLE, cnst)
-#define COND_FLOAT_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_FLOAT, cnst)
-#define COND_STRING_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_CONST_CHARPTR, cnst)
-#define COND_VOIDPTR_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_VOIDPTR, cnst)
-#define COND_FUNCPTR_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_FUNCPTR, cnst)
-#define COND_PLANTPTR_CONSTVAL(cnst) MAKE_ALLVALUE(WEED_SEED_PLANTPTR, cnst)
+#define _COND_BEGIN		"COND_START"
+#define _COND_FINISH		"COND_END"
+#define _COND_POPEN		"COND_PARENS_OPEN"
+#define _COND_PCLOSE		"COND_PARENS_CLOSE"
+#define _COND_LIST_OPEN		"COND_LIST_START"
+#define _COND_LIST_CLOSE	"COND_LIST_END"
 
 #define COND_TESTFUNC_CONSTVAL(func, args_fmt) find_or_make_funcdef(#func, func, WEED_SEED_BOOLEAN, args_fmt)
 
 void lives_conditions_init(void);
 
 typedef struct {
-  char *args_fmt;
-  char *funcname;
-} funcopt_t;
-
-typedef char *(lives_condhelper_f)(char *stfmt, char *nxttok);
-
-typedef struct {
-  const char *sym; // text to be replaced
+  const char *sym; // symbol text
   const char *fmt; // internal fmt
   const char *subst; // text subst
-  const char *nxt_fmt; // fmt for next item
-  // list of funcopt_t *
-  LiVESList *funcopts;
-  lives_condhelper_f *valfunc;
-  lives_condhelper_f *dispvalfunc;
+  const char *desc; // descriptive text
+  // value function, either allvalues_t *valfunc(const char *valstr)
+  // or allvalues_t *(int nvals, allvalues_t **vals);
+  lives_funcdef_t *funcdef;
+  const char *constval;
 } cond_trans;
+
+#define LIVES_COND(...) (_COND_BEGIN "," #__VA_ARGS__ ","  _COND_FINISH)
 
 lives_funcdef_t *find_or_make_fundef(const char *funcname,
 				     lives_funcptr_t func, weed_seed_t ret_type, const char *args_fmt);  
 
 lives_condition lives_cond_create(const char *condstring, ...);
-
-#define LIVES_COND(...) (_COND_BEGIN "," #__VA_ARGS__ ","  _COND_FINISH)
 
 lives_result_t lives_cond_eval(lives_condition);
 char *lives_cond_desc(lives_condition);
@@ -423,59 +371,102 @@ typedef union {
 
 // when adding to the LIVES_GUI_STACK, generally the callback is actioned immediately
 //
-// callback_receipt
-// when an attempt is made to add a cb to a stack, a callback_receipt is created, attached to the funcinst
-// "receipts" list, and returned.
-// the receipt contains a req_reply. If the callback was added the reply will be yes, otherwise no or invalid.
-// if the reply is yes, the adder must then include the receipt in its add_cb_list
-// the adder confirms receipt by setting "adder" to self. When the funcinst (callback) is triggered,
-// if the receipt is not in a cb_add_list, it will be "expired" (unless it is a "persistent" callback)
-// if the stack owner wants to remove the callback, it will also "expire" the receipt, by sending reply invalid
-// adder may set a callback to receive reply updates. If the adder has such a function, when it recevies a reply
-// other than yes (except no for ingonred callbacks), it can remove the recipt ftom its list
-// when a recipt is expired it will be detached from the funcinst and if the funcinst has no recipts.
-// it will be flagged for removal
+// HOOK CALLBACK RECEIPTS
 //
+// When an attempt is made to add a funcinst as cb to a stack, a callback_receipt is created and returned
+// if the funcinst cannot be added, then the receipt is returned expired the caller should simply
+// l set itself as receipt adder and then free the receipt
+//
+// Otherwise:
+// in the majority of cases, the receipt becomes the first receipt in receipts list for the provided funcinst
+// which is then appended or pepended to the hook stack
+//
+// in some cases, the add is preempted by another funcinst - in this case the receipt is appended to the receipts
+// list of the pre-empting funcinst, and the supplied funcinst with no receipts can be freed
+//
+// if adding was successful, the adding proc_thread must include the returned receipt
+// in its cb_add_list before setting receipt adder to self
+//
+// Every receipt has a req_reply field. The adder may optionally provide a callback funtion which will be called when the
+// the req_reply value changes. This should be set ptior to setting the receipt adder to self.
+// In some cases this is done automatically, for example, blocking callbacks when added to a stack
+// cause the adder to pause, and the req_reply callback will wake the thread when the funcinst is run / cancelled / errored
+//
+// When a hook callback funcinst is to be removed by the owner, all receipts in the receipts list are sent the req_reply INVALID,
+// are flagged as EXPIRED
+//
+// When a proc_thread is to be freed, it will flush all receipts from its cb_add_list
+//
+// A receipt will automatically be freed if and only if three conditions are true:
+// the receipt has an adder, the receipt is not in a proc_thread cb_add_list, and the receipt is expired
+//
+// when a receipt is expired by the stack owner, whether in a cb_add_list or not, it is removed from the funcinst recepits
+// when a hook is triggered, any receipts that are no longer in a cb_add_list are expired, with the exceprion of PERSISTENT
+// callbacks. Thus to remove a callback from a stack, the adder simply needs to remove the receipt from its cb_add_list
+//
+// Persistent callbacks can be force removed by removing the receipt from cb_add_list, then setting the receipt to expired,
+// but ensuring it is not freed. This casuses the triggerer to ignore the persistent flag,
+// and to act as if it added the expired flag itself.
+//
+// If a callback funcinst has no receipts because all have been removed, then the funcinst will no longer be actioned and can
+// be removed from the hook stack.
+//
+// if a funcinst is to be removed from a stack, before expiring all receipts, the req_reply INVALID is set for all receipts
+// in its list and which are also in cb_add_lists. If the adder set a callback for req_reply changes, it can remove the
+// receipt from its cb_add_list when the req_reply becomes invalid.
+// Alternately, a proc thread can periodically call cleanup_self_list(), which will free any expired receipts
+// In any case, when the proc_thread is freed, all receipts are flushed from its cb_add_list.
 // 
-// if the funcinst is replaced, and there is a reply_sent callback,
-// the receipt will be moved and appended to the replacement list otherwise it wiil be expired and detached
-// 
+// Finally, if a stacked funcinst is replaced (preempted), any receipts with no req_reply callbacks are expired
+// and any which do have req_reply callbacks are silently migrated and appended to the receipts of the
+// replacement funcinst, and the original funcinst, since it no longer has receipts will be removed from the stack
+// and possibly freed
 //
-// if adder wants further tracking (e.g. blocking callback),
-// it can set a reply_sent callback before setting the in_list flag
-//
+// the format of the req_reply callback is:
 //	boolean (reply_sent_cb)(void *receipt, void *user_data);
 //		- returning TRUE forces the reply to be resent until FALSE is returned
 //
-// to summarise:
-// adder wants to add a callback to a stack
-// if the reuqst is invalid, reply invalid is sent, the receipt is expired
-// and when hook is triggered it will be detached, and since not in add_cb_List, will be freed
-// the process for NO is similar, but the recipt is not expired immediately, however once adder confirms recipt by
-// setting "adder", since will not be in cb_add_list, it weill be detached, expired and freed
-// if yes is returned, adder can optionally add a resply_sent callback, will include it in its add_cb_list,
-// before setting "adder"
+// In the general case, all of the underlying details are handled automatically. In app code one would simply
+// add a function call as a hook cb, and receive a
+// (void *)receipt back, with a NULL receipt indicating that adding was nor possible.
 //
-// when an adder wants to withdraw a callback, it simply removes the receipt from its add_cb_List.
-// if the hook is triggered, it will be expired, detached and freed (unless the callback is flagged "persistent",
-// in which case removing it from the add_cb_list does not cause it to be expired)
-// if stack owner wants to remove the callback, it sends reply invalid, expires all receipts and flags it for removal
-// callnacks flagged for removal but haveing receipts in lists are only phtsically removed and freed when they have no
-// receipts which are still incb_add_lista and where the adder has a callback
+// A non-NULL receipt can later be used to remove the callback. via:
 //
-// if a callback has no receipts, it will be flagged for removal
-// 
+// lives_hook_cb_remove(receipt);
+//
+// however, note that if the added funcinst preempted other funcinsts and gained additional receipts.
+// the callback can only be removed this way if there are no other receipts with req_reply callbacks
+// (This is a safety mechanism, e.g. there could be other proc_threads which are paused waiting foe the
+// callback to complete.)
 
 typedef boolean (*reply_sent_cb_f)(void *receipt, void *user_data);
 
+#define RCPT_IN_LIST		(1ull << 0) // is in a proc_thread cb_add_list
+#define RCPT_EXPIRED		(1ull << 1) // has been disassciated from a funcinst
+#define RCPT_HAS_ADDER		(1ull << 2) // is in a proc_thread cb_add_list
+
+#define RCPT_PERSISTENT		(1ull << 16) // do not expire just because IN_LIST is absent
+
+#define RCPT_CAN_FREE(flags) (((flags) & (RCPT_EXPIRED | RCPT_HAS_ADDER | RCPT_IN_LIST)) \
+			      == (RCPT_EXPIRED | RCPT_HAS_ADDER))
+
+#define RCPT_SHOULD_EXPIRE(flags, canxtra) (((flags) & (RCPT_EXPIRED | RCPT_PERSISTENT \
+							| RCPT_HAS_ADDER | (canxtra ? 0 : RCPT_IN_LIST))) == RCPT_HAS_ADDER)
+
+#define RCPT_SHOULD_REMOVE(flags) (((flags) & (RCPT_EXPIRED | RCPT_HAS_ADDER | RCPT_IN_LIST)) \
+				   == (RCPT_EXPIRED | RCPT_HAS_ADDER | RCPT_IN_LIST))
+
 typedef struct {
-  pthread_mutex_t mutex;
+  pthread_mutex_t *status_mutex;
+  volatile uint64_t status;
 
   lives_proc_thread_t adder;
+
+  
   volatile boolean expired;
   volatile boolean in_list;
   ///
-  int req_reply;
+  volatile int req_reply;
   reply_sent_cb_f reply_cb;
   void *reply_cb_data;
   int nrefs;
@@ -666,8 +657,10 @@ typedef struct {
 
 // denotes a line inside a function (i.e maybe far from entry point)
 #define FDEF_FLAG_INSIDE		(1ull << 1)
+
 // function can only be run by one thread at a time
 #define FDEF_FLAG_SINGLE		(1ull << 2)
+
 // function is non re-entrant (by same thread)
 #define FDEF_FLAG_NO_RECURSE		(1ull << 3)
 
@@ -700,7 +693,7 @@ typedef struct {
 #define MODULE_TYPE_IS(finst, type) ((finst)->mod_type == MODULE_TYPE(type))
 
 typedef struct {
-// for DISPOSITION_QUEUED / ACTIVE
+// for DISPOSITION_WAITING / ACTIVE
   uint64_t func_attrs;
   // stack of longjump env buffers
   lives_sync_list_t *lj_stack;
@@ -769,9 +762,9 @@ typedef struct {
 // the old module is pushed to the modules sync_list and popped instead of freeing the funcinst
 #define module_type_for_disposition(dis)				\
   ((dis) == DISPOSITION_STACKED ? module_hook_cb			\
-    : ((dis) == DISPOSITION_CONTINGENCY ? module_contingency		\
-       : ((dis) == DISPOSITION_WAITING || (dis) == DISPOSITION_ACTIVE) ? module_lpt \
-       : module_any))
+   : ((dis) == DISPOSITION_CONTINGENCY ? module_contingency		\
+      : ((dis) == DISPOSITION_WAITING || (dis) == DISPOSITION_ACTIVE	\
+	 || (dis) == DISPOSITION_READY) ? module_lpt : module_any))
 
 #define CALLOC_MODULE(j) \
   (j == module_lpt ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_LPT, 1) \
@@ -959,11 +952,6 @@ typedef struct _hstack_t {
 // if the trigger condition (if present) fails, then the callback will be removed rather than skipped over
 #define HOOKSTACK_REMOVE_ON_COND_FAIL	(1ull << 6)
 
-// triggering will stop of any (boolean) callback returns FALSE
-// if all return TRUE, then all req_replies will be set to fulfilled
-// after this, the stack will 
-#define HOOKSTACK_COMBINED_BOOL	       	(1ull << 7)
-
 // MASKED OUT FOR GUI THREAD
 
 #define HOOKSTACK_GUI_THREAD		(1ull << 8)
@@ -971,13 +959,11 @@ typedef struct _hstack_t {
 // MASKED OUT FOR WORKER THREADS
 
 // this flagbit denotes that triggering the hooks will run only the first callback on the stack and return
-// (when combined with ASYNC_POLL, the effect is to run a single iteration, all callbacks)
-// note:
-// the default stack order is  FIFO, however callbacks may be prepended in case LIFO is needed
+// this only makes sense when combined with always_oneshot
 #define HOOKSTACK_RUN_SINGLE      	(1ull << 16)
 
-// callbacks are normally removed when the entity which added them is invalidated / freed
-// setting this prevents that from happening, the callback remains in the stack beyond the lifetime of the adder
+  // callback receipts are usually expired when they have been removed from the addet;s cb_add_list
+  // setting this prevents that, allowing callbacks to persist beyond the lifetime of the addery 
 #define HOOKSTACK_PERSISTENT	       	(1ull << 17)
 
 // if callbacks cannot be run immediately (because some other thread holds the mutex lock)
@@ -1011,18 +997,18 @@ typedef struct _hstack_t {
 
 #define HS_DETAILS(type) HS_DETAILS_##type##_HOOK
 
-#define COND_RET_BOOLEAN LIVES_COND(COND_EQUALS, COND_INT_VAR, COND_SYM_SRC_ITEM/funcdef/return_type, COND_INT_CONST), \
-    COND_INT_CONSTVAL(WEED_SEED_BOOLEAN)
+#define COND_RET_BOOLEAN "COND_EQUALS, COND_INT_VAR, COND_SYM_SRC_ITEM/funcdef/return_type,"\
+  "COND_INT_CONST, %ld", WEED_SEED_BOOLEAN
 
 #define HS_DETAILS_COMPLETED_HOOK ((hook_stack_descriptor_t)		\
   {.htype = COMPLETED_HOOK, .pattern = HOOK_PATTERN_DATA,		\
      .cascade = {							\
 		 .target_item = LIVES_LEAF_THRD_STATE,			\
 		 .when = LIVES_POST_HOOK,				\
-		 .pre_cond = lives_cond_create(LIVES_COND(COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, COND_UINT64_CONST), \
-					       COND_UINT64_CONSTVAL(THRD_STATE_COMPLETED)), \
-		 .post_cond = lives_cond_create(LIVES_COND(COND_BIT_SET, COND_SYM_NEW_VALUE, COND_UINT64_CONST), \
-						COND_UINT64_CONSTVAL(THRD_STATE_COMPLETED)) \
+		 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, "\
+					       "COND_UINT64_CONST, %lu", THRD_STATE_COMPLETED),	\
+		 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+						"COND_UINT64_CONST, %lu", THRD_STATE_COMPLETED) \
 		 },							\
      .op_flags = HOOKSTACK_ALWAYS_ONESHOT,				\
      .accept_cond = lives_cond_create(COND_RET_BOOLEAN),		\
@@ -1069,6 +1055,8 @@ typedef struct _hstack_t {
 // request ran but was cancelled
 #define LIVES_REPLY_CANCELLED 	NIRVA_REPLY_CANCELLED
 
+#define LIVES_REPLY_MU 	NIRVA_REPLY_MU
+  
 void *lives_hook_cb_add_funcinst(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcinst_t *);
 
 // lpt like
@@ -1123,6 +1111,7 @@ lives_result_t lives_hook_cb_unblock(lives_funcinst_t *finst);
 
 void flush_cb_added_list(lives_proc_thread_t lpt, boolean all);
 void ref_cb_added_list(void);
+
 void unref_cb_added_list(void);
 
 uint64_t get_hs_op_flags(lives_hook_stack_t *);
@@ -1132,17 +1121,24 @@ void lives_hook_stacks_clear_all(lives_hook_stack_t **, int ntypes);
 
 lives_result_t lives_hook_trigger(lives_hook_stack_t **, int type);
 
-lives_result_t lives_proc_thread_trigger_hook(lives_proc_thread_t, int type);
+lives_result_t lives_proc_thread_trigger_hook(int type);
 
-int lives_hook_trigger_async(lives_hook_stack_t **, int type);
+int lives_hook_trigger_async(int type, lives_proc_thread_t **);
 
-lives_proc_thread_t lives_hook_trigger_async_sequential(lives_hook_stack_t **hstacks, int type,
-							hook_funcptr_t finfunc, void *findata);
+// start a bg thread which triggers the hook, running each callback in sequence
+// if there are no callbacks in the stack, the proc thread completes
+// a common use would be to configure the stack to reject any funcinst without a boolean return type
+// optionally set the stack to run_single
+// then configure each thread with a condition 'COND_EQUALS, COND_SYM_RETVAL, COND_FALSE", and set remove on condfail
+// 
+lives_proc_thread_t lives_hook_trigger_async_sequential(int type, uint64_t delay);
 
-void lives_hook_async_join(lives_hook_stack_t **, int htype);
+
+void lives_hook_async_join(int htype);
+void lives_hook_async_cancel(int htype);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
-lives_hook_stack_t **my_hook_stacks(void);
+lives_hook_stack_t **self_hook_stacks(void);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
@@ -1162,8 +1158,6 @@ lives_funcinst_t *lives_funcinst_new(lives_funcdef_t *);
 lives_result_t funcinst_params_from_vargs(lives_funcinst_t *,  const char *args_fmt, va_list xargs);
 
 void lives_funcinst_free(lives_funcinst_t *);
-
-boolean cleanup_funcinst_receipts(lives_funcinst_t *);
 
 void cleanup_self_receipts(void);
 
@@ -1232,13 +1226,18 @@ void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *
 void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
 #endif
 
-allvalues_t *_make_allval(weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
+allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
 
-#define MAKE_ALLVALUE(stype, val) (_make_allval(stype, 1, 0, #val, (val)))
-#define MAKE_ALLVALUE_BOUND(stype, variable) (_make_allval(stype, 1, PARAM_FLAG_BOUND, #variable, &(variable)))
-#define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval(stype, ne, 0, #vals, (vals)))
+#define MAKE_ALLVALUE(stype, val) (_make_allval(NULL, stype, 1, 0, #val, (val)))
+#define MAKE_ALLVALUE_BOUND(stype, variable) (_make_allval(NULL, stype, 1, PARAM_FLAG_BOUND, #variable, &(variable)))
+#define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval(NULL, stype, ne, 0, #vals, (vals)))
 
-void allvalue_free(allvalues_t *);
+#define SET_ALLVALUE(avp, stype, val) (_make_allval(avp, stype, 1, 0, #val, (val)))
+#define SET_ALLVALUE_BOUND(avp, stype, variable) (_make_allval(avp, stype, 1, PARAM_FLAG_BOUND, #variable, &(variable)))
+#define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
+#define set_allvp_value(allvp, value) _DW0(SET_ALLVALUE(allvp, get_seedtype(type_name((value))), value);)
+
+  void allvalue_free(allvalues_t *);
 
 lives_funcinst_t *_funcinst_from_allvals(lives_funcdef_t *fdef, lives_funcptr_t func,
 					 const char *funcname, weed_seed_t ret_type,
@@ -1247,7 +1246,7 @@ lives_funcinst_t *_funcinst_from_allvals(lives_funcdef_t *fdef, lives_funcptr_t 
 #define finst_from_allvals(func, rtype, nvals, pvals) _funcinst_from_allvals(NULL, func, #func, rtype, nvals, pvals)
 #define finst_from_fdef_allvals(fdef, nvals, pvals) _funcinst_from_allvals(fdef, NULL, NULL, 0, nvals, pvals)
 
-allvalues_t *allvalue_from_leaf(weed_plant_t *, const char *key);
+allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const char *key);
 
 const char get_typeletter(uint8_t val);
 uint8_t get_typecode(char c);
@@ -1268,6 +1267,10 @@ int fn_func_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2);
 boolean fn_data_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2, int maxp);
 
 int get_funcsig_nparms(funcsig_t sig);
+
+funcsig_t short_params_to_funcsig(int nvals, const char **symnames);
+
+uint8_t symname_to_sigbits(const char *symname);
 
 const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
 char *get_argstring_for_func(lives_funcptr_t func);

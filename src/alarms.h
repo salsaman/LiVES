@@ -150,6 +150,7 @@ void thrd_signal_block(int sig);
 
 #define _lives_millisleep(msec) lives_nanosleep(MILLIONS(msec))
 #define lives_millisleep _lives_millisleep(1)
+#define lives_millisleep_for(msec) lives_nanosleep(MILLIONS(msec))
 
 #define lives_nanosleep_until_nonzero(condition){while(!(condition))lives_spin();}
 #define lives_nanosleep_until_zero(condition)lives_nanosleep_until_nonzero(!(condition))
@@ -222,7 +223,7 @@ void thrd_signal_block(int sig);
 
 #define return_val_if_triggered(v)do{if(lives_alarm_triggered()){lives_alarm_disarm();return(v);}}while (0);
 
-#define LIVES_FORTY_WINKS MILLIONS(40) // 40 mSec
-#define LIVES_WAIT_A_SEC ONE_BILLION // 1 second
+#define LIVES_HAVEANAP lives_millisleep_for(40)
+#define LIVES_WAITASEC lives_millisleep_for(1000)
 
 #endif

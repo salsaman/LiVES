@@ -225,7 +225,7 @@ void _lives_abort(const char *file, int line, const char *reason) {
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     catch_sigint(-LIVES_SIGABRT, NULL, NULL);
     mainw->critical_errmsg = reason;
-    if (FEATURE_READY(WEED)) mainw->critical_thread = THREADVAR(uid);
+    if (FEATURE_READY(THREADVARS)) mainw->critical_thread = THREADVAR(uid);
     pthread_detach(pthread_self());
     /* while (1) { */
     /*   // sleep for 1 quadrillion nanoseconds */
@@ -309,12 +309,12 @@ int lives_system(const char *com, boolean allow_error) {
   mainw->cancelled = CANCEL_NONE;
 
   do {
-    if (FEATURE_READY(WEED)) THREADVAR(com_failed) = FALSE;
+    if (FEATURE_READY(THREADVARS)) THREADVAR(com_failed) = FALSE;
     response = LIVES_RESPONSE_NONE;
     retval = system(com);
     if (retval) {
       char *msg = NULL;
-      if (FEATURE_READY(WEED)) THREADVAR(com_failed) = TRUE;
+      if (FEATURE_READY(THREADVARS)) THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
         msg = lives_strdup_printf("lives_system failed with code %d: %s\n%s", retval, com,
 #ifdef HAVE_LIBEXPLAIN
@@ -384,7 +384,7 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
   do {
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
-    if (FEATURE_READY(WEED)) THREADVAR(com_failed) = FALSE;
+    if (FEATURE_READY(THREADVARS)) THREADVAR(com_failed) = FALSE;
     fflush(NULL);
     fp = popen(com, "r");
     if (!fp) {
@@ -416,7 +416,7 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
 
     if (err) {
       char *msg = NULL; 
-      if (FEATURE_READY(WEED)) THREADVAR(com_failed) = TRUE;
+      if (FEATURE_READY(THREADVARS)) THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
 	msg = lives_strdup_printf("lives_popen failed p after %ld bytes with code %d: %s",
 				  !strg ? 0 : lives_strlen(strg), err, com);
@@ -488,7 +488,7 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
 
   if (retval) {
     char *msg = lives_strdup_printf("Chdir failed to: %s", path);
-    if (FEATURE_READY(WEED)) THREADVAR(chdir_failed) = TRUE;
+    if (FEATURE_READY(THREADVARS)) THREADVAR(chdir_failed) = TRUE;
     if (!no_error_dlg) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
@@ -1254,7 +1254,7 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   int ntok;
 
   lives_popen(exe, TRUE, buff);
-  if (FEATURE_READY(WEED)) {
+  if (FEATURE_READY(THREADVARS)) {
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
       return -2;

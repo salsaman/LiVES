@@ -1647,7 +1647,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
       if (!pidchk) {
 	if (self) lives_proc_thread_include_states(self, THRD_STATE_BUSY);
 	if (con_attempts > 1) {
-	  lives_nanosleep(LIVES_WAIT_A_SEC);
+	  LIVES_WAITASEC;
 	  if (self) lives_proc_thread_exclude_states(self, THRD_STATE_BUSY);
 	}
 
@@ -2493,8 +2493,9 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     // but is held in an external hook_stack
     self = jackd->inst;
     lives_thread_set_proc_thread(self);
-    lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
+    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Jack Writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
+    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
   }
 
   lives_proc_thread_include_states(self, THRD_STATE_RUNNING);
@@ -3133,7 +3134,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
               // BAD - non realtime
               if (wait_cache_buffer) {
                 while (!cache_buffer->is_ready && !cache_buffer->die) {
-                  lives_nanosleep(LIVES_FORTY_WINKS);
+                  LIVES_HAVEANAP;
                   if (mainw->is_exiting) cache_buffer->die = TRUE;
                 }
                 wait_cache_buffer = FALSE;
@@ -3470,114 +3471,119 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
   return 0;
 }
 
-size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, float **in_buffer) {
-  return 0;
-  lives_clip_t *ofile;
-  void *holding_buff, *holding_buff2;;
-  size_t target_bytes;
-  ssize_t actual_bytes;
-  int64_t frames_out;
+/* size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, float **in_buffer) { */
+/*   return 0; */
+/*   lives_clip_t *ofile; */
+/*   void *holding_buff, *holding_buff2;; */
+/*   size_t target_bytes; */
+/*   ssize_t actual_bytes; */
+/*   int64_t frames_out; */
 
-  static int async_writer_count = 0;
+/*   static int async_writer_count = 0; */
 
-  boolean is_float = FALSE;
-  boolean rev_endian = FALSE;
-  boolean out_unsigned;
+/*   boolean is_float = FALSE; */
+/*   boolean rev_endian = FALSE; */
+/*   boolean out_unsigned; */
 
-  int sampsize;
-  int swap_sign;
+/*   int sampsize; */
+/*   int swap_sign; */
 
-  if (THREADVAR(bad_aud_file)) return 0;
-  if (mainw->rec_samples == 0) return 0;
-  if (nframes == 0) return 0;
-  if (!IS_VALID_CLIP(fileno)) return 0;
+/*   lives_proc_thread_t self = jackd->inst; */
 
-  ofile = mainw->files[fileno];
-  sampsize = ofile->asampsize >> 3;
+/*   if (THREADVAR(bad_aud_file)) return 0; */
+/*   if (mainw->rec_samples == 0) return 0; */
+/*   if (nframes == 0) return 0; */
+/*   if (!IS_VALID_CLIP(fileno)) return 0; */
 
-  if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) achans <<= 1;
+/*   ofile = mainw->files[fileno]; */
+/*   sampsize = ofile->asampsize >> 3; */
 
-  frames_out = (int64_t)((double)nframes / out_scale + .49999);
-  holding_buff = lives_calloc(frames_out, achans * sampsize);
+/*   if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) achans <<= 1; */
 
-  if (!holding_buff) return 0;
+/*   frames_out = (int64_t)((double)nframes / out_scale + .49999); */
+/*   holding_buff = lives_calloc(frames_out, achans * sampsize); */
 
-  out_unsigned = ofile->signed_endian & AFORM_UNSIGNED;
+/*   if (!holding_buff) return 0; */
 
-  if (!is_float) {
-    if (ofile->asampsize == 16) {
-      int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
-      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
-          || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
-        rev_endian = TRUE;
-    }
-    frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, achans,
-                                       ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.);
-  }
-  else frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, achans, 1.);
+/*   out_unsigned = ofile->signed_endian & AFORM_UNSIGNED; */
 
-  frames_out /= achans;
+/*   if (!is_float) { */
+/*     if (ofile->asampsize == 16) { */
+/*       int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN); */
+/*       if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) */
+/*           || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN))) */
+/*         rev_endian = TRUE; */
+/*     } */
+/*     frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, achans, */
+/*                                        ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.); */
+/*   } */
+/*   else frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, achans, 1.); */
 
-  if (mainw->rec_samples > 0) {
-    if (frames_out > mainw->rec_samples * achans) frames_out = mainw->rec_samples * achans;
-    mainw->rec_samples -= frames_out / achans;
-  }
-  // for 16bit, generally we use S16, so if we want U16, we should change it
-  swap_sign = ofile->signed_endian & AFORM_UNSIGNED;
+/*   frames_out /= achans; */
 
-  if (ofile->asampsize == 16) {
-    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
-    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
-        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
-      rev_endian = TRUE;
-  }
+/*   if (mainw->rec_samples > 0) { */
+/*     if (frames_out > mainw->rec_samples * achans) frames_out = mainw->rec_samples * achans; */
+/*     mainw->rec_samples -= frames_out / achans; */
+/*   } */
+/*   // for 16bit, generally we use S16, so if we want U16, we should change it */
+/*   swap_sign = ofile->signed_endian & AFORM_UNSIGNED; */
 
-  target_bytes = frames_out * ofile->achans * (ofile->asampsize >> 3);
+/*   if (ofile->asampsize == 16) { */
+/*     int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN); */
+/*     if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) */
+/*         || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN))) */
+/*       rev_endian = TRUE; */
+/*   } */
 
-  holding_buff2 = lives_malloc(target_bytes * 4);
-  if (!holding_buff2) {
-    lives_free(holding_buff);
-    return 0;
-  }
+/*   target_bytes = frames_out * ofile->achans * (ofile->asampsize >> 3); */
 
-  if (ofile->asampsize == 16) {
-    sample_move_d16_d16((short *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans,
-                        rev_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0);
-  } else {
-    sample_move_d16_d8((uint8_t *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans,
-                       swap_sign ? SWAP_S_TO_U : 0);
-  }
+/*   holding_buff2 = lives_malloc(target_bytes * 4); */
+/*   if (!holding_buff2) { */
+/*     lives_free(holding_buff); */
+/*     return 0; */
+/*   } */
 
-  if (async_writer_count) {
-    // here we make sure that the DATA_READY hook callbacks have all completed
-    // we must do this before we can free the data from the previous cycle
-    lives_hook_async_join(NULL, DATA_READY_HOOK);
-    async_writer_count = 0;
-  }
+/*   if (ofile->asampsize == 16) { */
+/*     sample_move_d16_d16((short *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans, */
+/*                         rev_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0); */
+/*   } else { */
+/*     sample_move_d16_d8((uint8_t *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans, */
+/*                        swap_sign ? SWAP_S_TO_U : 0); */
+/*   } */
 
-  if (mainw->rec_samples > 0) {
-    if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples;
-    mainw->rec_samples -= frames_out;
-    async_writer_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
-    actual_bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff2, target_bytes, TRUE);
-  }
+/*   if (async_writer_count) { */
+/*     // here we make sure that the DATA_READY hook callbacks have all completed */
+/*     // we must do this before we can free the data from the previous cycle */
+/*     lives_hook_async_join(DATA_READY_HOOK); */
+/*     async_writer_count = 0; */
+/*   } */
 
-  if (actual_bytes > 0) {
-    uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
-    mainw->aud_data_written += actual_bytes;
-    if (fileno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes);
-    check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
-    ofile->aseek_pos += actual_bytes;
-  }
+/*   lives_aplayer_set_data_len(self, 0); */
+/*   lives_aplayer_set_data(self, NULL); */
 
-  if (actual_bytes < target_bytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
+/*   if (mainw->rec_samples > 0) { */
+/*     if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples; */
+/*     mainw->rec_samples -= frames_out; */
+/*     async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL); */
+/*     actual_bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff2, target_bytes, TRUE); */
+/*   } */
 
-  //if (holding_buff != data)
-  lives_free(holding_buff2);
-  lives_free(holding_buff);
+/*   if (actual_bytes > 0) { */
+/*     uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK); */
+/*     mainw->aud_data_written += actual_bytes; */
+/*     if (fileno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes); */
+/*     check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk); */
+/*     ofile->aseek_pos += actual_bytes; */
+/*   } */
 
-  return actual_bytes;
-}
+/*   if (actual_bytes < target_bytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd); */
+
+/*   //if (holding_buff != data) */
+/*   lives_free(holding_buff2); */
+/*   lives_free(holding_buff); */
+
+/*   return actual_bytes; */
+/* } */
 
 
 static float **back_buff = NULL;
@@ -3612,8 +3618,9 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
     // in the sense that it runs this function, but by being "queued" by an external entity
     self = jackd->inst;
     lives_thread_set_proc_thread(self);
-    lives_snprintf(tdata->vars.var_origin, 128, "%s", "pulseaudio writer Thread");
+    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Jack Reader Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
+    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
   }
 
   lives_proc_thread_include_states(self, THRD_STATE_RUNNING);
@@ -3663,14 +3670,17 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   if (async_reader_count) {
     // here we make sure that the DATA_READY hook callbacks have all completed
     // we must do this before we can free the data from the previous cycle
-    lives_hook_async_join(NULL, DATA_READY_HOOK);
+    lives_hook_async_join(DATA_READY_HOOK);
     async_reader_count = 0;
   }
 
+  lives_aplayer_set_data_len(self, 0);
+  lives_aplayer_set_data(self, NULL);
+  //
   lives_aplayer_set_data_len(jackd->inst, nframes);
   lives_aplayer_set_data(jackd->inst, (void *)back_buff);
 
-  async_reader_count = lives_hook_trigger_async(NULL, DATA_READY_HOOK);
+  async_reader_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
 
   rbytes = nframes * jackd->num_input_channels * 4;
   jackd->seek_pos += rbytes;
@@ -4553,7 +4563,7 @@ boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, 
         if (retries-- > 0) {
           int pidchk = lives_kill(iop_pid, 0);
           if (!pidchk) {
-            lives_nanosleep(LIVES_WAIT_A_SEC);
+            LIVES_WAITASEC;
             goto retry;
           }
         }

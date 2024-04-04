@@ -1115,9 +1115,6 @@ xprocess *create_processing(const char *text) {
 
   widget_opts.last_container = vbox3;
 
-  // ????
-  lives_hook_trigger(NULL, SYNC_ANNOUNCE_HOOK);
-
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));

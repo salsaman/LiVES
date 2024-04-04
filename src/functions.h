@@ -716,16 +716,14 @@ typedef struct {
   volatile LiVESList *receipts;
 } MODULE_DATA_TYPE_HOOK_STACK;
 
-#define CONTINGENCY_BEHAVIOUR_NO_FREE_ON_IDLE		(1ull << 0)
+// definition of contingencies is still a little vague
+// edtablished so far
+
+#define CONTINGENCY_BEHAVIOUR_EXPIRE_ON_EXEC		(1ull << 0)
 #define CONTINGENCY_BEHAVIOUR_NO_FREE_ON_EXPIRED	(1ull << 1)
 
 // repeating contingencies
 #define CONTINGENCY_BEHAVIOUR_READY_ON_IDLE		(1ull << 8)
-
-// contingencies may be added to any struct which has a structdef
-// a contingency has a condition, which is checked whenever any field in the managed struct is changed
-// if the condition passes, the contingency is triggered. Thid is similar to data change hook, but it can be used
-// for structs instead of plants
 
 typedef struct {
   // for DISPOSITION_CONTINGENCY

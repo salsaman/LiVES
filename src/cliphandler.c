@@ -72,12 +72,13 @@ LIVES_GLOBAL_INLINE boolean read_from_infofile(FILE *infofile) {
   if (!infofile) infofile = fopen(cfile->info_file, "r");
   if (!infofile) return FALSE;
   THREADVAR(read_failed) = FALSE;
-  bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-  fclose(infofile);
+  bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE - 1, infofile);
   if (ferror(infofile)) {
+    fclose(infofile);
     THREADVAR(read_failed) = TRUE;
     return FALSE;
   }
+  fclose(infofile);
   lives_memset(mainw->msg + bread, 0, 1);
   return TRUE;
 }
@@ -2454,7 +2455,11 @@ void switch_to_file(int old_file, int new_file) {
     if (!mainw->multitrack && !mainw->reconfig) {
       if (!get_timeline_lock()) {
         if (mainw->recovering_files) return;
-        lives_millisleep_while_false(get_timeline_lock());
+	boolean is_fg = is_fg_thread();
+	while (!(get_timeline_lock())) {
+	  if (is_fg) fg_service_fulfill();
+	  lives_microsleep;
+	}
       }
       redraw_timeline(mainw->current_file);
       unlock_timeline();

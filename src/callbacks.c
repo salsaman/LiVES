@@ -5896,12 +5896,13 @@ void _on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   lives_proc_thread_unref(lpt);
 
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
+  BREAK_ME("diska");
 
   // show auto dialog
   tbuff = cleardisk_analyse(temp_backend, trashdir);
 
   // show results of analysis
-  BREAK_ME("diska");
+
   if (*mainw->msg && (ntok = get_token_count(mainw->msg, '|')) > 1) {
     char **array = lives_strsplit(mainw->msg, "|", 2);
     if (!strcmp(array[0], "completed")) {

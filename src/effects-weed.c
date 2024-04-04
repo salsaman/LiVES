@@ -7650,22 +7650,12 @@ matchvals:
     weed_leaf_clear_flagbits(channel, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
     weed_leaf_clear_flagbits(channel, WEED_LEAF_PIXEL_DATA, (LIVES_FLAG_CONST_VALUE | LIVES_FLAG_CONST_DATA));
 
-    weed_error_t err = weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, 0);
-    g_print("FLAGS: %d %d\n", weed_leaf_get_flags(channel, WEED_LEAF_PIXEL_DATA), err);
-
-    
-
-    BREAK_ME("gen");
     if (!create_empty_pixel_data(channel, TRUE)) {
-      g_print("NO PIXDATA\n");
       return FILTER_ERROR_MEMORY_ERROR;
     }
-    if (!weed_channel_get_pixel_data(channel))
-      lives_abort("Unable to allocate channel pixel_data");
   }
 
   if (needs_reinit) {
-    g_print("RENITT\n");
     weed_layer_pixel_data_free(channel);
     needs_reinit = FALSE;
     // could recalculate palette costs here

@@ -1247,7 +1247,7 @@ frames_t load_frame_image(frames_t frame) {
 
     if (!mainw->refresh_model) {
       lives_hook_stack_t *sah =
-        lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
+        self_hook_stacks()[SYNC_ANNOUNCE_HOOK];
       if (sah->stack) {
 	GET_PROC_THREAD_SELF(self);
         all_updated = FALSE;
@@ -1501,12 +1501,12 @@ frames_t load_frame_image(frames_t frame) {
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
 					 HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-					 lives_layer_draw, WEED_SEED_VOID, "vv", mainw->preview_image, NULL, frame_layer, free_finst);
+					 lives_layer_draw, WEED_SEED_VOID, "vv", mainw->preview_image, frame_layer, NULL, free_finst);
 
     } else {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
 					 HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-					 lives_layer_draw, WEED_SEED_VOID, "vv", mainw->play_image, NULL, frame_layer, free_finst);
+					 lives_layer_draw, WEED_SEED_VOID, "vv", mainw->play_image, frame_layer, NULL, free_finst);
     }
 
     frame_layer = NULL;

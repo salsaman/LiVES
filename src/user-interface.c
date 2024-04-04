@@ -1322,14 +1322,19 @@ boolean get_timeline_lock(void) {
   while(1) {
     if (!pthread_mutex_trylock(&tlthread_mutex)) return TRUE;
     if (lpt) break;
+    lives_proc_thread_ref(drawtl_thread);
     if (drawtl_thread) lpt = drawtl_thread;
     if (lpt && !lives_proc_thread_check_finished(lpt)
 	&& lives_proc_thread_should_cancel(lpt)) {
       lpt = STEAL_POINTER(drawtl_thread);
       lives_proc_thread_join_void(lpt);
       lives_proc_thread_unref(lpt);
+      lives_proc_thread_unref(lpt);
     }
-    else break;
+    else {
+      lives_proc_thread_unref(lpt);
+      break;
+    }
   }
   return FALSE;
 }

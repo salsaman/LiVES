@@ -152,14 +152,6 @@ lives_condition_t _lives_cond_create(const char *condition, ...) {
 
   if (!condstrsize) return NULL:
 
-		      // first apply any preprocessing tokens (fmt == 'Z')
-		      // search for "COND_", check for match and replace token
-		      for (int i = 0; i < condstrlen - COND_PFXLEN; i++) {
-			if (!lives_strncmp(condstr[i], COND_PFX, COND_PFXLEN)) {
-			  // todo - replace tokens
-			}
-		      }
-
   va_start(ap, condition);
   condstr = lives_strdup_vprintf(condition, ap);
   va_end(ap);
@@ -240,15 +232,19 @@ lives_condition_t _lives_cond_create(const char *condition, ...) {
 void register_cond_sym(const char *sym, const char *fmt, ...) {
   va_list ap;
   LIVES_CALLOC_TYPE(cond_trans, ctrans, 1);
-  if (*fmt == 'X') ctrans->sym = lives_strdup(sym);
-  else ctrans->sym = LSPF(sym, COND_PFX "%s", sym);
 
   ctrans->fmt = fmt;
-  if (*fmt == '@') goto done;
-
+  if (*fmt == '@') { 
+    ctrans->sym = lives_strdup(sym);
+    goto done;
+  }
   va_start(ap, fmt);
-  if (*fmt == 'X') ctrans->subst = lives_strdup(va_arg(ap, char *));
+  if (*fmt == 'X') {
+    ctrans->sym = lives_strdup(sym);
+    ctrans->subst = lives_strdup(va_arg(ap, char *));
+  }
   else {
+    ctrans->sym = LSPF(sym, COND_PFX "%s", sym);
     ctrans->desc = lives_strdup(va_arg(ap, char *));
     funcname = lives_strdup(va_arg(ap, char *));
     ctrans->funcdef = funcdef_for(funcname);
@@ -338,8 +334,19 @@ void lives_conditions_init(void) {
   register_cond_sym(_COND_BEGIN,	"X",   	_COND_POPEN);
   register_cond_sym(_COND_FINISH, 	"X",   	_COND_PCLOSE);
 
-  register_cond_sym("COND_INT_VAR", "X", COND_SYMBOL);
-  
+  register_cond_sym("COND_INT_VAR", "X", COND_SYMBOL); 
+  register_cond_sym("COND_UINT_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_INT64_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_UINT64_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_BOOLEAN_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_BOOL_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_DOUBLE_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_FLOAT_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_STRING_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_VOIDPTR_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_FUNCPTR_VAR", "X", COND_SYMBOL);
+  register_cond_sym("COND_PLANTPTR_VAR", "X", COND_SYMBOL);
+ 
   // these are the evaluation functions, each corresponds to a funcdef
   // the params for each are "S", so we will pass piece 1 as data
   // e.g "COND_INT_CONST", "2", ...  -> "COND_INT_CONST|2"
@@ -350,6 +357,7 @@ void lives_conditions_init(void) {
   register_cond_sym("INT64_CONST", "S", "", "cond_allv_I", NULL);
   register_cond_sym("UINT64_CONST", "S", "",  "cond_allv_U", NULL);
   register_cond_sym("BOOL_CONST", "S", "", "cond_allv_b", NULL);
+  register_cond_sym("BOOLEAN_CONST", "S", "", "cond_allv_b", NULL);
   register_cond_sym("DOUBLE_CONST", "S", "",  "cond_allv_d", NULL);
   register_cond_sym("FLOAT_CONST", "S", "", "cond_allv_f", NULL);
   register_cond_sym("STRING_CONST", "S", "",  "cond_allv_S", NULL);
@@ -909,16 +917,13 @@ void set_args_fmt(weed_plant_t *plant, const char *args_fmt) {
 
 
 boolean args_fmt_match(const char *def, const char *inst) {
-  if ((!inst || !*inst) &&  (!def || !*def)) return TRUE;
-  size_t deflen = lives_strlen(def), instlen;
-  boolean variad = FALSE;
-  if (def[deflen - 1] == '*') {
-    if (!--deflen) return TRUE;
-    variad = TRUE;
+  if ((!inst || !*inst) && (!def || !*def || !strcmp(def, "*"))) return TRUE;
+  if (!inst || !def) return FALSE;
+  for (int i = 0; def[i]; i++) {
+    if (def[i] == '*') return TRUE;
+    if (!inst[i]) return FALSE;
+    if (get_typecode(inst[i]) != get_typecode(def[i])) return FALSE;
   }
-  instlen = lives_strlen(inst);
-  if (instlen < deflen || (!variad && instlen > deflen)) return FALSE;
-  if (deflen > 0 && lives_strncmp(def, inst, deflen)) return FALSE;
   return TRUE;
 }
 
@@ -997,20 +1002,53 @@ char *make_pdef(funcsig_t sig) {
 }
 
 
-#if 0
-static char *make_pfree(funcsig_t sig) {
-  char *str = lives_strdup("");
-  if (sig) {
-    int pn = 0;
-    for (int i = 60; i >= 0; i -= 4) {
-      uint8_t ch = (sig >> i) & 0X0F;
-      if (get_seedtype(ch) != WEED_SEED_STRING) continue;
-      str = lives_strdup_concat(str, " ", "lives_free(p%d);",  pn++);
+static void call_free_func(lives_funcinst_t *finst, int i, boolean do_exec) {
+  // todo
+  char *pkey = lives_strdup_printf("p%d_free", i);
+  lives_funcinst_t *free_finst =
+    (lives_funcinst_t *)weed_get_voidptr_value(finst->params, pkey, NULL);
+  if (free_finst) {
+    weed_leaf_delete(finst->params, pkey);
+    lives_free(pkey);
+    if (do_exec) {
+      CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_RUNNING;
+      lives_funcinst_execute(free_finst);
+      if (CONTINGENCY_DATA(free_finst, flags) & CONTINGENCY_BEHAVIOUR_READY_ON_IDLE) {
+	CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_READY;
+	return;
+      }
+      CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_IDLE;
+      /* if (CONTINGENCY_DATA(free_finst, flags) & CONTINGENCY_BEHAVIOUR_NO_FREE_ON_IDLE) */
+      /* 	return; */
     }
+    else {
+      CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_EXPIRED;
+      if (CONTINGENCY_DATA(free_finst, flags) & CONTINGENCY_BEHAVIOUR_NO_FREE_ON_EXPIRED)
+	return;
+    }
+    lives_funcinst_free(free_finst);
   }
-  return str;
+  else lives_free(pkey);
 }
-#endif
+
+
+static boolean free_finst_paramdata(lives_funcinst_t *finst, boolean do_exec) {
+  funcsig_t funcsig = funcsig_from_args_fmt(get_args_fmt(finst->params));
+  int nparams = get_funcsig_nparms(funcsig);
+  int nstdparams = 0;
+  pthread_rwlock_rdlock(&finst->dispolock);
+  if (finst->disposition == DISPOSITION_STACKED) {
+    const hook_stack_descriptor_t *hsdesc;
+    pthread_rwlock_unlock(&finst->dispolock);
+    hsdesc = get_hs_desc((CL_DATA(finst, hook_stack))->type);
+    nstdparams = get_funcsig_nparms(funcsig_from_args_fmt(hsdesc->def_args_fmt));
+    for (int i = nstdparams; i < nparams; i++) call_free_func(finst, i, do_exec);
+    return FALSE;
+  }
+  pthread_rwlock_unlock(&finst->dispolock);
+  return TRUE;
+}
+
 
 int get_funcsig_nparms(funcsig_t sig) {
   int nparms = 0;
@@ -1193,7 +1231,6 @@ lives_result_t do_call(lives_funcinst_t *finst) {
   /* point of return for threads if they cancel / error */
 
   if (lives_funcinst_error_state(finst) || err != WEED_SUCCESS) {
-    g_print("got %d and %d\n" ,lives_funcinst_error_state(finst), err);
     res = LIVES_RESULT_ERROR;
     if (!is_stacked) {
       lives_proc_thread_t lpt = LPT_DATA(finst, runner);
@@ -1204,7 +1241,6 @@ lives_result_t do_call(lives_funcinst_t *finst) {
 	int errline = lives_proc_thread_get_line_ref(lpt);
 	const char *errfile = lives_proc_thread_get_file_ref(lpt);
 	lives_make_errmsg_full(lpt, errfile, errline, errsev, errnum, errmsg);
-	g_print("Error during funcinst execution:\n%s\n", errmsg);
       }
       else res = LIVES_RESULT_CANCELLED;
     }
@@ -1217,18 +1253,14 @@ lives_result_t do_call(lives_funcinst_t *finst) {
 #endif
 
   if (res != LIVES_RESULT_SUCCESS) return res;
-      g_print("RETLOC11\n");
 
   if (finst->retloc) {
-      g_print("RETLOC222\n");
-    // funcinsts which are not r
     if (weed_plant_has_leaf(finst->params, _RV_)) {
-      //finst->flags |= FINST_FLAG_NOFREE_RETLOC;
-      //copy_leaf_value(finst->params, _RV_, 0, fdef->return_type, &finst->retloc);
       weed_leaf_get(finst->params, _RV_, 0, finst->retloc);
-      g_print("RETLOC444y\n"); 
    }
   }
+
+  free_finst_paramdata(finst, FALSE); 
   return LIVES_RESULT_SUCCESS;
 }
 
@@ -1263,7 +1295,7 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
     return FALSE;
   }
 
-  g_print("func call is %s\n", lives_funcinst_show_func_call(finst));
+  //g_print("func call is %s\n", lives_funcinst_show_func_call(finst));
 
   // STATE CHANGED - queued / preparing -> running
   lives_proc_thread_include_states(lpt, THRD_STATE_RUNNING);
@@ -1277,7 +1309,7 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
 
   res = do_call(finst);
 
-  g_print("func call was %s\nres was %d\n", lives_funcinst_show_func_call(finst), res);
+  //g_print("func call was %s\n", lives_funcinst_show_func_call(finst));
   
   if (lpt == mainw->debug_ptr) g_print("nrefss AAAAmmmmm = %d\n", lives_proc_thread_count_refs(lpt));
 
@@ -1613,8 +1645,10 @@ LIVES_GLOBAL_INLINE void lives_hook_stack_clear(lives_hook_stack_t **hstacks, in
     LiVESList *cblist, *cb_next;
 
     while (1) {
+
       // caution - as the stacks can stay triggered for a long time
       lives_microsleep_until_zero(hstack->flags & HS_FLAG_TRIGGERING);
+
       PTMLH;
       if (hstack->flags & HS_FLAG_TRIGGERING) PTMUH;
       else break;
@@ -1657,55 +1691,6 @@ LIVES_GLOBAL_INLINE void lives_hook_stacks_clear_all(lives_hook_stack_t **hstack
 	hstacks[i] = NULL;
       }
     }
-}
-
-
-static void call_free_func(lives_funcinst_t *finst, int i, boolean do_exec) {
-  // todo
-  char *pkey = lives_strdup_printf("p%d_free", i);
-  lives_funcinst_t *free_finst =
-    (lives_funcinst_t *)weed_get_voidptr_value(finst->params, pkey, NULL);
-  if (free_finst) {
-    weed_leaf_delete(finst->params, pkey);
-    lives_free(pkey);
-    if (do_exec) {
-      CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_RUNNING;
-      lives_funcinst_execute(free_finst);
-      g_print("EXEC cibtubdgfg $%s\n", lives_funcinst_show_func_call(free_finst));
-      if (CONTINGENCY_DATA(free_finst, flags) & CONTINGENCY_BEHAVIOUR_READY_ON_IDLE) {
-	CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_READY;
-	return;
-      }
-      CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_IDLE;
-      if (CONTINGENCY_DATA(free_finst, flags) & CONTINGENCY_BEHAVIOUR_NO_FREE_ON_IDLE)
-	return;
-    }
-    else {
-      CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_EXPIRED;
-      if (CONTINGENCY_DATA(free_finst, flags) & CONTINGENCY_BEHAVIOUR_NO_FREE_ON_EXPIRED)
-	return;
-    }
-    lives_funcinst_free(free_finst);
-  }
-  else lives_free(pkey);
-}
-
-
-boolean free_finst_paramdata(lives_funcinst_t *finst, boolean do_exec) {
-  funcsig_t funcsig = funcsig_from_args_fmt(get_args_fmt(finst->params));
-  int nparams = get_funcsig_nparms(funcsig);
-  int nstdparams = 0;
-  pthread_rwlock_rdlock(&finst->dispolock);
-  if (finst->disposition == DISPOSITION_STACKED) {
-    const hook_stack_descriptor_t *hsdesc;
-    pthread_rwlock_unlock(&finst->dispolock);
-    hsdesc = get_hs_desc((CL_DATA(finst, hook_stack))->type);
-    nstdparams = get_funcsig_nparms(funcsig_from_args_fmt(hsdesc->def_args_fmt));
-    for (int i = nstdparams; i < nparams; i++) call_free_func(finst, i, do_exec);
-    return FALSE;
-  }
-  pthread_rwlock_unlock(&finst->dispolock);
-  return TRUE;
 }
 
 
@@ -2239,7 +2224,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
     return receipt;
   }
 
-  if (CL_DATA(finst, cb_flags) & HOOK_CB_PERSISTENT) {
+  if (receipt && (CL_DATA(finst, cb_flags) & HOOK_CB_PERSISTENT)) {
     hook_cb_receipt *xrcpt = (hook_cb_receipt *)receipt;
     xrcpt->status |= RCPT_PERSISTENT;
   }
@@ -2359,7 +2344,7 @@ static lives_proc_thread_t update_linked_stacks(lives_funcinst_t *finst) {
     for (LiVESList *links = mainw->all_hstacks; links; links = links->next) {
       lives_hook_stack_t **xhs = (lives_hook_stack_t **)links->data;
       lives_microsleep_until_zero(pthread_mutex_lock(&xhs[LIVES_GUI_HOOK]->mutex));
-      if (xhs[LIVES_GUI_HOOK]->flags &  HS_FLAG_TRIGGERING) {
+      if (xhs[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING) {
 	pthread_mutex_unlock(&xhs[LIVES_GUI_HOOK]->mutex);
 	continue;
       }
@@ -2387,7 +2372,7 @@ lives_result_t lives_hook_trigger(lives_hook_stack_t **hstacks, int type) {
   uint64_t hs_op_flags, cbflags;
   boolean rerun = FALSE;
 
-  //if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
+  if (type == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, type);
 
   hstack = hstacks[type];
   if (hstack->flags & HS_FLAG_INVALID) return LIVES_RESULT_INVALID;
@@ -2743,7 +2728,9 @@ int lives_hook_trigger_async(int type, lives_proc_thread_t **xlpts) {
     // assuming FG_THREAD is not set, then this will wrap finst in a lpt
     // and dispatch it to pool thread
 
-    lpt = lives_funcinst_queue(finst, LIVES_THRDATTR_FAST_QUEUE);
+    // NOTE: abscence of LIVES_THRDATT_FG_THREAD ensures this is sent to pool threads
+    // and not to fg thread
+    lpt = lives_funcinst_queue(finst, LIVES_THRDATTR_FAST_QUEUE | LIVES_THRDATTR_NO_HOOKS);
     if (xlpts) lives_dynarray_append(lpts, ncount, lpt);
     else ncount++;
   }
@@ -2756,40 +2743,6 @@ int lives_hook_trigger_async(int type, lives_proc_thread_t **xlpts) {
 lives_result_t lives_proc_thread_trigger_hook(int type) {
   return lives_hook_trigger(self_hook_stacks(), type);
 }
-
-
-/* static void _lives_hook_tr_seq(lives_hook_stack_t **hstacks, int type,  hook_funcptr_t finfunc, */
-/* 			       void *findata) { */
-/*   GET_PROC_THREAD_SELF(self); */
-/*   while (1) { */
-/*     if (lives_proc_thread_get_cancel_requested(self)) { */
-/*       lives_proc_thread_cancel(self); */
-/*       return; */
-/*     } */
-/*     if (lives_hook_trigger(hstacks, type)) { */
-/*       // if all functions return TRUE, execute finfunc, and exit */
-/*       if (finfunc)((*finfunc)(NULL, findata)); */
-/*       if (lives_proc_thread_get_cancel_requested(self)) { */
-/* 	lives_proc_thread_cancel(self); */
-/*       } */
-/*       return; */
-/*     } */
-/*     if (lives_proc_thread_get_cancel_requested(self)) { */
-/*       lives_proc_thread_cancel(self); */
-/*       return; */
-/*     } */
-/*     lives_nanosleep(SYNC_CHECK_TIME); */
-/*   } */
-/* } */
-
-
-/* lives_proc_thread_t lives_hook_trigger_async_sequential(lives_hook_stack_t **hstacks, int type, */
-/* 							hook_funcptr_t finfunc, void *findata) { */
-/*   lives_proc_thread_t poller = lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE, */
-/* 							(lives_funcptr_t)_lives_hook_tr_seq, -1, "viFv", */
-/* 							hstacks, type, (weed_funcptr_t)finfunc, findata);; */
-/*   return poller; */
-/* } */
 
 
 LIVES_GLOBAL_INLINE lives_result_t lives_hook_cb_invalidate(void *rcpt) {

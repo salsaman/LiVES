@@ -1340,8 +1340,6 @@ void play_file(void) {
 
   mainw->audio_stretch = 1.;
 
-  lives_hook_trigger(NULL, COMPLETED_HOOK);
-
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
   ofl = get_old_frame_layer();
 

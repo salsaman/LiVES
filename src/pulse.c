@@ -1394,15 +1394,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #endif
 
       lives_aplayer_set_data_len(self, nsamples);
-      lives_aplayer_set_data(self, (void *)buffer);
-
-      /// todo = call data ready cbs
-
-      ///
-
-      ///
-
-      ///
 
       /// Finally... we actually write to pulse buffers
       // TODO - use double buffering - fill a, (async join b), send a to async cbs - fill b
@@ -1412,6 +1403,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
+	lives_aplayer_set_data(self, (void *)buffer);
         async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
         pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
@@ -1423,6 +1415,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #ifdef DEBUG_PULSE
         g_print("writing %ld bytes to pulse\n", nbytes);
 #endif
+	lives_aplayer_set_data(self, (void *)pulsed->sound_buffer);
         async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
 	// switch buffers
@@ -1512,13 +1505,6 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
   }
 
-  if (async_reader_count) {
-    // here we make sure that the DATA_READY hook callbacks have all completed
-    // we must do this before we can free the data from the previous cycle
-    lives_hook_async_join(DATA_READY_HOOK);
-    async_reader_count = 0;
-  }
-
   lives_aplayer_set_data_len(self, 0);
   lives_aplayer_set_data(self, NULL);
 
@@ -1587,6 +1573,13 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     pulsed->frames_written += nframes;
   }
 
+  if (async_reader_count) {
+    // here we make sure that the DATA_READY hook callbacks have all completed
+    // we must do this before we can free the data from the previous cycle
+    lives_hook_async_join(DATA_READY_HOOK);
+    async_reader_count = 0;
+  }
+  
   // the DATA_READY_HOOKs are run as async_callbacks, so there is zero blocking here !
   // however we must ensure that back_buff is not freed until the next cycle has called async_hook_join()
 
@@ -1597,7 +1590,9 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   }
 
   lives_memcpy(back_buff, data, rbytes);
+
   lives_aplayer_set_data_len(self, nframes);
+
   lives_aplayer_set_data(self, (void *)back_buff);
 
   async_reader_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);

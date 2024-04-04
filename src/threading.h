@@ -425,6 +425,8 @@ lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 // flags thread as externally created / controlled
 #define THRD_STATE_EXTERN	(1ull << 63)
 
+#define SUB_INST_STATES (THRD_STATE_SWAPPED | THRD_STATE_PAUSED | THRD_STATE_RESUME_REQUESTED)
+
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t _lives_proc_thread_check_states(lives_proc_thread_t, uint64_t state_bits); // pre-locked version
@@ -538,19 +540,23 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_FUNCINST_MASK		0xFFFF
 #define LIVES_THRDATTR_PROC_THREAD_MASK 	0xFFFFFFFFFFFF0000
 
+//////// these bits are stored in the funcinst ///////////
+
 // can be cancelled by calling proc_thread_cancel
 #define LIVES_THRDATTR_CANCELLABLE 		(1ull << 0)
 
-// can be cancelled by calling proc_thread_cancel
+// can be paused by calling proc_thread_pause
 #define LIVES_THRDATTR_PAUSEABLE 		(1ull << 1)
 
-// this is only set for hook callbacks added witj HOOK_CB_FREEFUNCS - see description there
+// this is only set for hook callbacks added with HOOK_CB_FREEFUNCS - see description there
 #define LIVES_THRDATTR_HAS_FREEFUNCS		(1ull << 2)
+
+///////////////////////////////////////////////////////////
 
 // do not wait at sync points
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 16)
 
-// can be et when creating or when queueing
+// can be set when creating or when queueing
 // -----------------
 // the proc_thread will be destryoed when the original funcinst returns
 // no need to join
@@ -568,13 +574,9 @@ uint64_t get_worker_status(uint64_t tid);
 // set cancelable before queueing
 #define LIVES_THRDATTR_START_PAUSEABLE     	(1ull << 25)
 
-// after completion, a follow on proc_thread will be run
-// by default this will be the same proc thread, but an alternate proc_thread can be prepared unqued and
-#define LIVES_THRDATTR_AUTO_REQUEUE		(1ull << 26)
-
-// after completion, thread will pause, can be resumed
-// when combined with auto requeue, the thread will pause  until joined
-#define LIVES_THRDATTR_AUTO_PAUSE   		(1ull << 27)
+// proc thread does not call hooks on status changes
+// for example async_hook callbacks - sets state THRD_BLOCK_HOOKS
+#define LIVES_THRDATTR_NO_HOOKS		     	(1ull << 26)
 
 // do not check pool threads
 #define LIVES_THRDATTR_FAST_QUEUE   		(1ull << 28)

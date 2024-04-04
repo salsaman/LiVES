@@ -1895,7 +1895,7 @@ lives_result_t condchk_stopfunc(void *data) {
 }
 
 
-static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t stopfunc, void *stfuncdata) {
+static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopfunc, void *stfuncdata) {
   // THIS WILL REPLACE do_progress_dialog()
   //
   // type 0 = normal auto_dialog - run until (*stopfunc)(stfuncdata) returns TRUE
@@ -1907,6 +1907,8 @@ static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t st
   // type 2 = normal with cancel
   //
   // type 1 = countdown dialog for audio recording
+
+  autodlg_stopfunc_t stopfunc = (autodlg_stopfunc_t)xstopfunc;
   stdstopfuncdata_t sfdata;
   GET_PROC_THREAD_SELF(self);
   uint64_t time = 0, stime = 0;
@@ -1916,6 +1918,10 @@ static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t st
 
   double time_rem, last_time_rem = 10000000.;
 
+  g_print("TYPE IS %d\n", type);
+
+  LIVES_ASSERT(type >= 0 && type <= 2);
+  
   sfdata.data = stfuncdata;
   sfdata.self = self;
   sfdata.infofile = NULL;
@@ -1963,7 +1969,9 @@ static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t st
   if (type == 0 || type == 2)
     lives_alarm_set_timeout(MIN_FLASH_SEC * ONE_BILLION_DBL); // don't want to flash too fast...
 
-  while( (*stopfunc)((void *)&stfuncdata) == LIVES_RESULT_FAILED) {
+
+  // spin until cancelled or we read from backend
+  while ((std_stopfunc)((void *)&sfdata) == LIVES_RESULT_FAILED) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     lives_widget_context_update();
     lives_millisleep;
@@ -1986,27 +1994,28 @@ static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t st
     }
   }
 
-  while ((*stopfunc)((void *)&stfuncdata) == LIVES_RESULT_SUCCESS) {
-    if (sfdata.infofile) {
-      if (type == 0 || type == 2) {
-        read_from_infofile(sfdata.infofile);
-        if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-	while (!lives_alarm_triggered() && (*stopfunc)((void *)&stfuncdata) != LIVES_RESULT_ERROR) {
-	  lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-	  lives_widget_process_updates(mainw->proc_ptr->processing);
-	  // need to recheck after calling process_updates
-	  if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
-	  LIVES_HAVEANAP;
-	}
-      } else fclose(sfdata.infofile);
-    }
+  if (sfdata.infofile) {
+    if (type == 0 || type == 2) read_from_infofile(sfdata.infofile);
+    else fclose(sfdata.infofile);
+  }
+
+  if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
+
+  while (!lives_alarm_triggered() && (std_stopfunc)((void *)&sfdata) != LIVES_RESULT_ERROR) {
+    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
+    lives_widget_process_updates(mainw->proc_ptr->processing);
+    // need to recheck after calling process_updates
+    if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
+    LIVES_HAVEANAP;
   }
 
   if (type == 0 || type == 2) lives_alarm_disarm();
 
   if (mainw->proc_ptr) {
-    if (mainw->proc_ptr->processing)
+    if (mainw->proc_ptr->processing) {
+      lives_widget_hide(mainw->proc_ptr->processing);
       lives_widget_destroy(mainw->proc_ptr->processing);
+    }
     lives_freep((void **)&mainw->proc_ptr->text);
     lives_free(mainw->proc_ptr);
     mainw->proc_ptr = NULL;
@@ -2023,7 +2032,7 @@ static boolean _do_auto_dialog(const char *text, int type, autodlg_stopfunc_t st
   // get error message (if any)
   if (type != 1 && !strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors(FALSE);
-    if ((*stopfunc)((void *)&stfuncdata) != LIVES_RESULT_SUCCESS) return FALSE;
+    if ((std_stopfunc)((void *)&sfdata) != LIVES_RESULT_SUCCESS) return FALSE;
   } else {
     if (CURRENT_CLIP_IS_VALID)
       if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
@@ -2055,7 +2064,7 @@ lives_proc_thread_t do_auto_dialog_async(const char *text, int type) {
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
   lives_proc_thread_t lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, _do_auto_dialog,
-						     WEED_SEED_BOOLEAN, "SiFV", text, type, std_stopfunc, NULL);
+						     WEED_SEED_BOOLEAN, "siFV", text, type, std_stopfunc, NULL);
   return lpt;
 }
 
@@ -2074,7 +2083,7 @@ lives_proc_thread_t do_auto_dialog_full(const char *text, int type, boolean asyn
   ccsfdata->over = override;
   if (async) {
     lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, _do_auto_dialog,
-				   WEED_SEED_BOOLEAN, "SiFV", text, type, condchk_stopfunc, ccsfdata);
+				   WEED_SEED_BOOLEAN, "siFV", text, type, condchk_stopfunc, ccsfdata);
     lives_proc_thread_autofree(lpt, ccsfdata, NULL);
 
   }

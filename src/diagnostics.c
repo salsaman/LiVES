@@ -70,36 +70,37 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
 
     g_print("%s\n", fmtstring);
 
-    /* if (finst && finst->paramnames) { */
-    /*   int pn = 0; */
-    /*   g_print("Function params have the following values\n"); */
+    if (finst && finst->paramnames) {
+      char *pstr;
+      int pn = 0;
+      g_print("Function params have the following values\n");
     
-    /*   for (int i = 60; i >= 0; i -= 4) { */
-    /* 	uint8_t ch = (sig >> i) & 0X0F; */
-    /* 	char *pname, *parname; */
-    /* 	const char *ctype; */
-    /* 	int ne; */
-    /* 	if (!ch) continue; */
-    /* 	st = get_seedtype(ch); */
-    /* 	pname = make_std_pname(pn); */
-    /* 	ne = weed_leaf_num_elements(finst->params, pname); */
-    /* 	ctype = weed_seed_to_ctype(st, FALSE); */
-    /* 	if (finst && finst->paramnames && finst->paramnames[pn]) */
-    /* 	  parname = lives_strdup(finst->paramnames[pn]); */
-    /* 	else parname = lives_strdup_printf("param %d", pn); */
-    /* 	if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne); */
-    /* 	else { */
-    /* 	  char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st)); */
-    /* 	  char *xpstr = NULL;; */
-    /* 	  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, finst->params, pname, NULL); */
-    /* 	  lives_free(fmtpstr); */
-    /* 	  pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr); */
-    /* 	  lives_free(xpstr); */
-    /* 	} */
-    /* 	//g_print("%s\n",pstr); */
-    /* 	pn++; */
-    /*   } */
-    /* } */
+      for (int i = 60; i >= 0; i -= 4) {
+    	uint8_t ch = (sig >> i) & 0X0F;
+    	char *pname, *parname;
+    	const char *ctype;
+    	int ne;
+    	if (!ch) continue;
+    	st = get_seedtype(ch);
+    	pname = make_std_pname(pn);
+    	ne = weed_leaf_num_elements(finst->params, pname);
+    	ctype = weed_seed_to_ctype(st, FALSE);
+    	if (finst && finst->paramnames && finst->paramnames[pn])
+    	  parname = lives_strdup(finst->paramnames[pn]);
+    	else parname = lives_strdup_printf("param %d", pn);
+    	if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne);
+    	else {
+    	  char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st));
+    	  char *xpstr = NULL;;
+    	  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, finst->params, pname, NULL);
+    	  lives_free(fmtpstr);
+    	  pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr);
+    	  lives_free(xpstr);
+    	}
+    	g_print("%s\n",pstr);
+    	pn++;
+      }
+    }
     return fmtstring;
   }
   return NULL;
@@ -461,7 +462,7 @@ void print_diagnostics(uint64_t types) {
       lives_alarm_set_timeout(MILLIONS(100));
       while (!lives_alarm_triggered()) {
         nsc = mainw->n_service_calls;
-        if (nsc != onsc) fprintf(stderr, ".");
+        //if (nsc != onsc) fprintf(stderr, ".");
       }
       fprintf(stderr, "%lu calls in 0.1 sec\n", nsc - onsc);
     }

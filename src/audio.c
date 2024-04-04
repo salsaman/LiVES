@@ -224,14 +224,14 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
     increment = TRUE;
   }
 
-  if (!abuf->bufferf || channum > abuf->out_achans) {
+  if (!abuf->bufferf || channum >= abuf->out_achans) {
     if (!abuf->bufferf) abuf->write_pos = abuf->vclient_readpos = abuf->vclient_readlevel
                                             = abuf->aclient_readpos = abuf->aclient_readlevel = 0;
     abuf->bufferf = (float **)lives_realloc(abuf->bufferf, (channum + 1) * sizeof(float *));
-    for (int i = abuf->out_achans; i < channum; i++) {
+    for (int i = abuf->out_achans; i <= channum; i++) {
       abuf->bufferf[i] = (float *)lives_calloc(ABUF_ARENA_SIZE, 4);
     }
-    abuf->out_achans = channum;
+    abuf->out_achans = channum + 1;
   }
 
   channum--;
@@ -2916,6 +2916,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
                                   xin_framesd, xshrink_factor, 1, 1., nframes);
           if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
         } else {
+	  if (in_buffer[i])
           maxvol_heard =
             sample_move_d16_float(in_buffer[i], data + i, nframes, nchans, FALSE, FALSE, 1.0);
         }

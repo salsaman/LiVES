@@ -53,7 +53,7 @@ static lives_result_t lives_proc_thread_guillotine(lives_proc_thread_t, timeout_
 
    proc_threads differ from normal lives_threads in several ways:
 
-   h   - proc_threads can call any function as long as the funcsig / return value has a mapping
+      - proc_threads can call any function as long as the funcsig / return value has a mapping
    - lives_threads are intended for lightweight function calls which may be split and run in parallel
    (e.g palette conversions)
    - proc_threads are for more heavyweight functions where an etire function is wrapped to be run in the bg
@@ -340,7 +340,7 @@ LIVES_GLOBAL_INLINE void lives_funcinst_set_attrs(lives_funcinst_t *finst, uint6
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_funcinst_get_attrs(lives_funcinst_t *finst) {
-  return finst ? LPT_DATA(finst, func_attrs) : 0;
+  return finst ? LPT_DATA(finst, func_attrs) & LIVES_THRDATTR_FUNCINST_MASK : 0;
 }
 
 
@@ -349,19 +349,25 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_attrs(lives_proc_thread_t lpt, ui
     lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
     pthread_rwlock_rdlock(&finst->dispolock);
     if (MODULE_TYPE_IS(finst, LPT)) {
-      // if we created the lpt UNQUEUED, it won't yet have a disposition
-      // 
-      LPT_DATA(finst, func_attrs) = attrs & LIVES_THRDATTR_FUNCINST_MASK;      
+      // if we created the lpt UNQUEUED, it won't yet have a module
+      lives_funcinst_set_attrs(finst, attrs);
       pthread_rwlock_unlock(&finst->dispolock);    
     } 
-    else pthread_rwlock_unlock(&finst->dispolock);    
-    weed_set_int64_value(lpt, LIVES_LEAF_THRDATTRS, attrs & LIVES_THRDATTR_PROC_THREAD_MASK); 
+    else pthread_rwlock_unlock(&finst->dispolock);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRDATTRS, attrs);
   }
 }
 
 
 LIVES_GLOBAL_INLINE  uint64_t lives_proc_thread_get_attrs(lives_proc_thread_t lpt) {
-  return lpt ? (weed_get_int64_value(lpt, LIVES_LEAF_THRDATTRS, NULL) & LIVES_THRDATTR_PROC_THREAD_MASK) : 0;
+  if (!lpt) return 0;
+  lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
+  uint64_t attrs = weed_get_int64_value(lpt, LIVES_LEAF_THRDATTRS, NULL);
+  if (finst) {
+    attrs &= LIVES_THRDATTR_PROC_THREAD_MASK;
+    attrs |= lives_funcinst_get_attrs(finst);
+  }
+  return attrs;
 }
 
 
@@ -1017,7 +1023,6 @@ lives_proc_thread_t lives_funcinst_queue(lives_funcinst_t *finst, uint64_t attrs
   else {
     // for async_trigger
     lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
-    //lives_funcinst_set_disposition(finst, TRUE, DISPOSITION_WAITING, self, attrs);
     lives_proc_thread_dispatch(lpt);
   }
   if (!is_static) finst->flags &= ~FINST_FLAG_STATIC;
@@ -1293,85 +1298,85 @@ boolean lives_proc_thread_is_original(lives_proc_thread_t lpt) {
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   uint64_t tstate = THRD_STATE_INVALID;
   if (!lpt) return tstate;
-  if (!lives_proc_thread_is_original(lpt)) return THRD_STATE_SWAPPED;
+  uint64_t allowed = (uint64_t)-1;
+  if (!lives_proc_thread_is_original(lpt)) allowed = SUB_INST_STATES;
   //if (lpt == mainw->debug_ptr) BREAK_ME("inc st");
   lives_proc_thread_ref(lpt);
   if (lpt) {
-    if (lives_proc_thread_is_original(lpt)) {
-      if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
-	uint64_t masked = 0;
-	tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
-	// remove any bits from state_bits already in tstate
-	// so we can tell which ones changed
-	state_bits &= ~tstate;
-	if (tstate & THRD_STATE_IDLING) masked |= THRD_STATE_FINISHED;
-	tstate |= (state_bits & ~masked);
-	weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
-	lives_proc_thread_unfreeze_state(lpt);
+    if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
+      uint64_t masked = 0;
+      tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+      // remove any bits from state_bits already in tstate
+      // so we can tell which ones changed
+      state_bits &= ~tstate;
+      if (tstate & THRD_STATE_IDLING) masked |= THRD_STATE_FINISHED;
+      tstate |= (state_bits & ~masked & allowed);
+      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
+      lives_proc_thread_unfreeze_state(lpt);
 
-	if (!(tstate & THRD_BLOCK_HOOKS)) {
-	  lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
-	  // only new bits
+      if (!(tstate & THRD_BLOCK_HOOKS)) {
+	lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
+	// only new bits
 
-	  if (state_bits & THRD_STATE_PREPARING) {
-	    lives_hook_trigger(hook_stacks, PREPARING_HOOK);
-	  }
+	if (state_bits & THRD_STATE_PREPARING) {
+	  lives_hook_trigger(hook_stacks, PREPARING_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_RUNNING) {
-	    lives_hook_trigger(hook_stacks, TX_START_HOOK);
-	  }
+	if (state_bits & THRD_STATE_RUNNING) {
+	  lives_hook_trigger(hook_stacks, TX_START_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_IDLING) {
-	    lives_hook_trigger(hook_stacks, IDLE_HOOK);
-	  }
+	if (state_bits & THRD_STATE_IDLING) {
+	  lives_hook_trigger(hook_stacks, IDLE_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_BLOCKED) {
-	    lives_hook_trigger(hook_stacks, TX_BLOCKED_HOOK);
-	  }
+	if (state_bits & THRD_STATE_BLOCKED) {
+	  lives_hook_trigger(hook_stacks, TX_BLOCKED_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_TIMED_OUT) {
-	    lives_hook_trigger(hook_stacks, TIMED_OUT_HOOK);
-	  }
+	if (state_bits & THRD_STATE_TIMED_OUT) {
+	  lives_hook_trigger(hook_stacks, TIMED_OUT_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_BUSY) {
-	    lives_hook_trigger(hook_stacks, BUSY_HOOK);
-	  }
+	if (state_bits & THRD_STATE_BUSY) {
+	  lives_hook_trigger(hook_stacks, BUSY_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_ERROR) {
-	    lives_hook_trigger(hook_stacks, ERROR_HOOK);
-	  }
+	if (state_bits & THRD_STATE_ERROR) {
+	  lives_hook_trigger(hook_stacks, ERROR_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_CANCELLED) {
-	    lives_hook_trigger(hook_stacks, CANCELLED_HOOK);
-	  }
+	if (state_bits & THRD_STATE_CANCELLED) {
+	  lives_hook_trigger(hook_stacks, CANCELLED_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_COMPLETED) {
-	    // this hook is triggered when processing is complete
-	    // if combined with DESTROYING, the next hook point will be DESTROYED and then
-	    // lpt will be unreffed (*unless it gets a 'hailmary')
-	    // if combined with IDLING, the next hook depends on external triggers
-	    // in all other cases the next and final hook will be FINISHED
-	    g_print("RUN completed hook !\n");
-	    lives_hook_trigger(hook_stacks, COMPLETED_HOOK);
-	  }
+	if (state_bits & THRD_STATE_COMPLETED) {
+	  // this hook is triggered when processing is complete
+	  // if combined with DESTROYING, the next hook point will be DESTROYED and then
+	  // lpt will be unreffed (*unless it gets a 'hailmary')
+	  // if combined with IDLING, the next hook depends on external triggers
+	  // in all other cases the next and final hook will be FINISHED
+	  g_print("RUN completed hook !\n");
+	  lives_hook_trigger(hook_stacks, COMPLETED_HOOK);
+	}
 
-	  if (state_bits & THRD_STATE_FINISHED)
-	    lives_hook_trigger(hook_stacks, FINISHED_HOOK);
-	  // *INDENT-OFF*
-	}}}
+	if (state_bits & THRD_STATE_FINISHED)
+	  lives_hook_trigger(hook_stacks, FINISHED_HOOK);
+	// *INDENT-OFF*
+      }}
     // *INDENT-ON*
     lives_proc_thread_unref(lpt);
   }
-  return tstate;
+  return tstate & allowed;
 }
 
 
 uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
-  if (!lives_proc_thread_is_original(lpt) && state_bits != THRD_STATE_SWAPPED)
-    return THRD_STATE_SWAPPED;
+  uint64_t allowed = (uint64_t)-1;
+  if (!lives_proc_thread_is_original(lpt)) allowed = SUB_INST_STATES;
   if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
     uint64_t tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
-    state_bits &= tstate;
+    state_bits &= tstate & allowed;
     tstate &= ~state_bits;
     weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
     lives_proc_thread_ref(lpt);
@@ -1382,7 +1387,7 @@ uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t stat
       lives_cancel_point;
       lives_hook_trigger(lives_proc_thread_get_hook_stacks(lpt), UNBUSY_HOOK);
     }
-    return tstate;
+    return tstate & allowed;
   }
   return THRD_STATE_INVALID;
 }
@@ -1845,7 +1850,11 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         //pthread_mutex_unlock(pause_mutex);
         //
         while (1) {
-          if (!lives_proc_thread_get_sync_idx(lpt)) goto synced;
+          osync_idx = lives_proc_thread_get_sync_idx(lpt);
+          if (!osync_idx) {
+            d_print_debug("syncwith: %p says:  other reset sync_idx, assume synced\n", self);
+	    goto synced;
+	  }
           pthread_mutex_lock(opause_mutex);
           if (!resrq && lives_proc_thread_is_paused(lpt)) {
             d_print_debug("syncwith: %p says: other is paused, requesting resume\n", self);
@@ -1854,17 +1863,8 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
             d_print_debug("syncwith: %p says: waiting for other to reset sync_idx\n", self);
             resrq = TRUE;
           }
-
           pthread_mutex_unlock(opause_mutex);
           lives_microsleep;
-
-          osync_idx = lives_proc_thread_get_sync_idx(lpt);
-
-          if (!osync_idx) {
-            d_print_debug("syncwith: %p says:  other reset sync_idx, assume synced\n", self);
-            //pthread_mutex_unlock(pause_mutex);
-            goto synced;
-          }
         }
       }
       // non-match, pause / wait
@@ -2820,9 +2820,7 @@ lives_result_t lives_funcinst_execute(lives_funcinst_t *finst) {
   GET_PROC_THREAD_SELF(self);
   LIVES_ASSERT(self);
 
-  uint64_t state = lives_proc_thread_get_state(self);
-  weed_set_int64_value(self, "back_state", state);
-  lives_proc_thread_set_state(self, THRD_STATE_SWAPPED);
+  lives_proc_thread_include_states(self, THRD_STATE_SWAPPED);
 
   lives_proc_thread_push_active_funcinst(self, finst);
 
@@ -2830,8 +2828,8 @@ lives_result_t lives_funcinst_execute(lives_funcinst_t *finst) {
 
   lives_proc_thread_pop_active_funcinst();
 
-  lives_proc_thread_set_state(self, weed_get_int64_value(self, "back_state", NULL));
-  weed_leaf_delete(self, "back_state");
+  lives_proc_thread_exclude_states(self, THRD_STATE_SWAPPED);
+
   return res;
 }
 
@@ -2860,7 +2858,7 @@ lives_result_t lives_proc_thread_execute(lives_proc_thread_t lpt) {
 
 // dispatch a lives_proc_thread to the worker queue
 // the proc_thread should have an active_funcinst which will be executed as the payload
-// unless dispatched as DONTCARE, or DONTCARE is set during execution, the lpt must be joined
+// Unless dispatched as DONTCARE, or DONTCARE is set during execution, the lpt must be joined
 // according to return type
 // and then should be unreffed if no longer needed
 boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
@@ -2871,14 +2869,17 @@ boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
   lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
   uint64_t attrs = lives_proc_thread_get_attrs(lpt);
 
-  lives_funcinst_set_disposition(finst, FALSE, DISPOSITION_WAITING, self, attrs);
+  // TRUE here allows overriding of DISPOSITION_STACKED for async hook callbacks
+  // the prior disposition is pushed and will be popped back when the callback is async_join()ed
+
+  // some of the lpt attrs are passed on to funcinst, e.g. cancellable, pausable
+  lives_funcinst_set_disposition(finst, TRUE, DISPOSITION_WAITING, self, attrs);
 
   //g_print("QUEUEING LPT  %p\n", lpt);
 
-  // if we have BOTH cancelled and cancel_requested, this means the proc_thread was
-  // cancelled BEFORE being queued, (if it were from a previous run, we would have only one or the other)
+  // if we have cancel_requested, this means the proc_thread was
+  // cancelled BEFORE being queued,
   // (this can be done even if the proc_thread is not explicitly 'cancellable',
-  // otherwise, in some circumstances,  there would be no way to prevent a proc_thread from being queued)
   if (lives_proc_thread_should_cancel(lpt)) {
     if (!lives_proc_thread_was_cancelled(lpt))
       lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
@@ -3185,7 +3186,6 @@ static void *_lives_thread_data_create(void *pslot_id) {
       tdata->vars.var_hook_stacks[i] =
         (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
       pthread_mutex_init(&tdata->vars.var_hook_stacks[i]->mutex, NULL);
-      tdata->vars.var_hook_stacks[i]->flags |= HOOKSTACK_NATIVE;
       tdata->vars.var_hook_stacks[i]->type = i;
       tdata->vars.var_hook_stacks[i]->parent_stacks = tdata->vars.var_hook_stacks;
       tdata->vars.var_hook_stacks[i]->owner_act_src_type = ACTION_SOURCE_THREAD;
@@ -3534,7 +3534,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
     //g_print("nrefss ++++ = %d %p\n", lives_proc_thread_count_refs(lpt), lpt);
 
     // should have a ref on this
-    g_print("unref %p\n", lpt);
+    //g_print("unref %p\n", lpt);
     lives_proc_thread_unref(lpt);
   }
 
@@ -3809,7 +3809,6 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
     if (threadptr) *threadptr = (lives_thread_t *)twork_last;
   }
 
-  g_print("twk vals: %p %p %p %p %p\n", twork_list, twork_last, work, ((LiVESList *)work)->next, twork_last->next);
   LIVES_ASSERT(!(twork_list && !twork_last));
   LIVES_ASSERT(!(twork_last && twork_last->next));
 

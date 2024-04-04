@@ -352,6 +352,7 @@ extern const lookup_tab crossrefs[];
     ,{'d',  WEED_SEED_DOUBLE, 		FUNCSIG(DOUBLE), 	"DOUBLE", "%.4f"} \
     ,{'b',  WEED_SEED_BOOLEAN, 		FUNCSIG(BOOL),	 	"BOOL", "%d"} \
     ,{'s',  WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
+    ,{'S',  WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
     ,{'I',  WEED_SEED_INT64,    	FUNCSIG(INT64), 	"INT64", "%"PRIi64} \
     ,{'F',  WEED_SEED_FUNCPTR, 		FUNCSIG(FUNCP), 	"FUNCP", "%p"} \
     ,{'v',  WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \

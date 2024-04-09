@@ -1017,7 +1017,7 @@ weed_seed_t ctype_to_weed_seed(const char *ctype) {
       || !strcmp(ctype, "weed_plantptr_t"))
     return WEED_SEED_PLANTPTR;
 #ifdef WEED_SEED_VARIADIC
-  if (!strcmp(ctype, "...")
+  if (!strcmp(ctype, "..."))
     return WEED_SEED_VARIADIC;
 #endif
   return WEED_SEED_INVALID;

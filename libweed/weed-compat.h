@@ -139,7 +139,7 @@ static inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced
     return WEED_PALETTE_RGBA32;
 
   case MK_FOURCC('B', 'A', '2', '4'):
-    return WEED_PALETTE_BGBA32;
+    return WEED_PALETTE_BGRA32;
 
   case MK_FOURCC('A', 'R', '2', '4'):
     return WEED_PALETTE_ARGB32;

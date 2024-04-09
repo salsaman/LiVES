@@ -2801,7 +2801,7 @@ int lives_hook_trigger_async(int type, lives_proc_thread_t **xlpts) {
     // NOTE: abscence of LIVES_THRDATT_FG_THREAD ensures this is sent to pool threads
     // and not to fg thread
     lpt = lives_funcinst_queue(finst, LIVES_THRDATTR_FAST_QUEUE | LIVES_THRDATTR_NO_HOOKS);
-    g_print("queued finst %p\n", finst);
+    //g_print("queued finst %p\n", finst);
 
     if (xlpts) lives_dynarray_append(lpts, ncount, lpt);
     else ncount++;
@@ -2892,7 +2892,7 @@ static void _lives_hook_async_join(int htype, boolean cancel) {
 
     pthread_rwlock_rdlock(&finst->dispolock);
 
-    g_print("check finst %p, disp us %d\n", finst, finst->disposition);
+    //g_print("check finst %p, disp us %d\n", finst, finst->disposition);
 
     if (finst->disposition != DISPOSITION_STACKED) {
       lives_proc_thread_t lpt = LPT_DATA(finst, runner);

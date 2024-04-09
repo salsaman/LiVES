@@ -91,15 +91,8 @@ extern "C"
 #define WEED_FALSE ((weed_boolean_t)false)
 #else
 
-#if defined(TRUE) && defined(FALSE)
-#define _WEED_TRUE	TRUE
 #define _WEED_FALSE	FALSE
-#endif
-
-#ifndef _WEED_FALSE
-#define _WEED_FALSE	0
 #define _WEED_TRUE	(!WEED_FALSE)
-#endif
 
 #define WEED_TRUE (weed_boolean_t)_WEED_TRUE
 #define WEED_FALSE (weed_boolean_t)_WEED_FALSE
@@ -165,7 +158,7 @@ extern "C"
 #ifdef __LIBWEED__
   union _weed_storage_u {
     weed_voidptr_t	value;
-    weed_vfuncptr_t	fvalue;
+    weed_funcptr_t	fvalue;
     char storage[WEED_VOIDPTR_SIZE];
   };
 #endif
@@ -304,13 +297,6 @@ struct _weed_leaf_nopadding {
   // remove
   typedef weed_error_t (*weed_ext_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
    						      weed_size_t new_size);
-
-  // remove
-  typedef weed_error_t (*weed_ext_recast_seed_type_f)(weed_plant_t *, const char *key, weed_seed_t new_st);
-
-  // remove
-  typedef weed_error_t (*weed_ext_leaf_set_proxy_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
-						    weed_size_t num_elems, weed_voidptr_t valuesptr);
 #endif
 
   /* end extended functions */
@@ -335,8 +321,6 @@ struct _weed_leaf_nopadding {
   __WEED_FN_DEF__ weed_ext_set_element_size_f weed_ext_set_element_size;
   __WEED_FN_DEF__ weed_ext_append_elements_f weed_ext_append_elements;
   __WEED_FN_DEF__ weed_ext_atomic_exchange_f weed_ext_atomic_exchange;
-  __WEED_FN_DEF__ weed_ext_recast_seed_type_f weed_ext_recast_seed_type;
-  __WEED_FN_DEF__ weed_ext_leaf_set_proxy_f weed_ext_leaf_set_proxy;
 
   /*------------------------------*/
 
@@ -463,7 +447,7 @@ struct _weed_leaf_nopadding {
 
   /* annotation types - these types may be treated internally as the aliased type,
      and cast to/from the anootation type externally*/
-#define HAVE_WEED_SEED_UINT		WEED_TRUE
+#define HAVE_WEED_SEED_UINT		1
 #define WEED_SEED_UINT			6 // alias for WEED_SEED_INT
 
 #define WEED_SEED_UINT32		WEED_SEED_UINT
@@ -471,13 +455,13 @@ struct _weed_leaf_nopadding {
 #define WEED_SEED_uint32       		WEED_SEED_UINT
 #define WEED_SEED_uint32_t     		WEED_SEED_UINT
 
-#define HAVE_WEED_SEED_UINT64		WEED_TRUE
+#define HAVE_WEED_SEED_UINT64		1
 #define WEED_SEED_UINT64		7 // alias for WEED_SEED_INT64
 
 #define WEED_SEED_uint64		WEED_SEED_UINT64
 #define WEED_SEED_uint64_t		WEED_SEED_UINT64
 
-#define HAVE_WEED_SEED_FLOAT		WEED_TRUE
+#define HAVE_WEED_SEED_FLOAT		1
 #define WEED_SEED_FLOAT			8 // alias for WEED_SEED_DOUBLE
 
 #define WEED_SEED_float			WEED_SEED_FLOAT

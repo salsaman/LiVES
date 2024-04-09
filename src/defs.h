@@ -616,7 +616,6 @@ typedef enum {
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
 #define LIVES_LEAF_MD5SUM "md5sum"
 #define LIVES_LEAF_MD5_CHKSIZE "md5_chksize"
-#define LIVES_LEAF_UID "uid"
 
 // TODO WEED_LEAF -> LIVES_LEAF
 #define LIVES_LEAF_TYPE "lives_type"
@@ -647,6 +646,8 @@ typedef enum {
 #define MILLIONS_DBL(n) ((double)n##000000.)
 #define ONE_MILLION_DBL MILLIONS_DBL(1)
 
-#define LIVES_ASSERT(cond) _DW0(if(!(cond))lives_assert_failed(#cond, __FILE__, __LINE__);)
+#define _LIVES_ASSERT(cond, fmt, ...) _DW0(if(!(cond))lives_assert_failed(#cond, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__);)
+
+#define LIVES_ASSERT(cond, ...) _LIVES_ASSERT(cond __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #endif

@@ -47,32 +47,33 @@ typedef int64_t(*funcptr_int64_t)();
 typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
 typedef weed_plant_t *(*funcptr_plantptr_t)();
-  
-DEF_UNION(allfunc_t,
-	  weed_funcptr_t func;
-	  funcptr_int_t funcint;
-	  funcptr_dbl_t funcdouble;
-	  funcptr_bool_t funcboolean;
-	  funcptr_int64_t funcint64;
-	  funcptr_string_t funcstring;
-	  funcptr_funcptr_t funcfuncptr;
-	  funcptr_voidptr_t funcvoidptr;
-	  funcptr_plantptr_t funcplantptr;)
 
-  DEF_UNION(allval_t,
-	    uint32_t *u;
-	    int32_t *i;
-	    uint64_t *U;
-	    int64_t *I;
-	    boolean *b;
-	    char **S;
-	    const char **C;
-	    float *f;
-	    double *d;
-	    void **V;
-	    lives_funcptr_t *F;
-	    weed_plant_t **P;
-	    )
+DEF_UNION(allfunc_t,
+          weed_funcptr_t func;
+          funcptr_int_t funcint;
+          funcptr_dbl_t funcdouble;
+          funcptr_bool_t funcboolean;
+          funcptr_int64_t funcint64;
+          funcptr_string_t funcstring;
+          funcptr_funcptr_t funcfuncptr;
+          funcptr_voidptr_t funcvoidptr;
+          funcptr_plantptr_t funcplantptr;)
+
+DEF_UNION(allval_t,
+          uint32_t *u;
+          int32_t *i;
+          uint64_t *U;
+          int64_t *I;
+          boolean *b;
+          char **S;
+          char **s;
+          const char **C;
+          float *f;
+          double *d;
+          void **V;
+          lives_funcptr_t *F;
+          weed_plant_t **P;
+         )
 
 // values->* is a pointer to type rather than array of type
 #define ALLV_FLAG_POINTER		(1ull << 0)
@@ -82,23 +83,26 @@ DEF_UNION(allfunc_t,
 // error flagbits
 // unrecognised seed_type when setting val
 #define ALLV_ERR_STYPE		(1ull << 32)
-  
-  DEF_STRUCT(allvalues_t,
-	     //@TYPEDEF u weed_seed_t
-	     //@TYPEDEF u weed_size_t
-	     //@TYPEDEF v LiVESList *
-	     //@UNION allval_t
-	     char *aname; // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
-	     weed_seed_t stype;
-	     weed_size_t ne; // num elements - always 1 if ARRAY not set
-	     weed_size_t size;
-	     uint64_t flags;
+
+// attempt to bind to array (only scalars can be bound)
+#define ALLV_ERR_NVALS		(1ull << 33)
+
+DEF_STRUCT(allvalues_t,
+           //@TYPEDEF u weed_seed_t
+           //@TYPEDEF u weed_size_t
+           //@TYPEDEF v LiVESList *
+           //@UNION allval_t
+           char *aname; // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
+           weed_seed_t stype;
+           weed_size_t ne; // num elements - always 1 if ARRAY not set
+           weed_size_t size;
+           uint64_t flags;
 #ifdef NATIVE_MUTEX_TYPE
-	     NATIVE_MUTEX_TYPE mutex;
+           NATIVE_MUTEX_TYPE mutex;
 #endif
-	     allval_t values;
-	     LiVESList *contingencies;
-	     )
+           allval_t values;
+           LiVESList *contingencies;
+          )
 
 #define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
 						     FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_, \
@@ -255,7 +259,7 @@ DEF_UNION(allfunc_t,
 #define XCALL_0(thing, wret, funcname, dummy)	\
   GEN_SET(thing, wret, funcname, )
 #if FIX_INDENT_IGNORE_THIS
-       }
+}
 #endif
 
 #define FUNCSIG_VOID				       			0
@@ -290,7 +294,7 @@ DEF_UNION(allfunc_t,
 #define _FUNCSIG7(a,b,c,d,e,f,g) JOIN2(FUNCSIG_##a,_FUNCSIG6(b,c,d,e,f,g))
 #define _FUNCSIG8(a,b,c,d,e,f,g,h) JOIN2(FUNCSIG_##a,_FUNCSIG7(b,c,d,e,f,g,h))
 #if FIX_INDENT_IGNORE_THIS
-  }
+}
 #endif
 
 #define MAKE_HEX(a) JOIN2(0X,a)
@@ -419,7 +423,7 @@ extern const lookup_tab crossrefs[];
 #define _VARNAMES(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,...)			\
   __VARNAMES(#a,#b,#c,#d,#e,#f,#g,#h,#i,#j,#k,#l,#m,#n,#o,#p,__VA_ARGS__)
 
-const char**__VARNAMES(char *a,...);
+const char **__VARNAMES(char *a, ...);
 #define VARNAME_FUNC const char** __VARNAMES(char*a,...){char*x;va_list b,c;int n=0; \
     va_start(b,a);va_copy(c,b);do{if(!(x=va_arg(b,char*)))n++;}while(!(x&&*x=='X')); \
     va_end(b);LIVES_CALLOC_TYPE(const char*,r,n+1);r[0]=strdup(a);		\

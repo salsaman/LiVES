@@ -642,10 +642,10 @@ static void pre_init(void) {
   prefs->gui_monitor = -1;
 
   //if (prefs->vj_mode) {
-    check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL);
-    check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
-    check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL);
-    //}
+  check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL);
+  check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
+  check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL);
+  //}
 
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
@@ -1237,7 +1237,7 @@ alldone:
 void reg_funcsig(int nparms, const char **symnames) {
   //g_print("REGISTERED funcsig with %d params: ", nparms);
   funcsig_t fsig = 0;
-  LIVES_CALLOC_TYPE(funcsig_t, fsigp, 1); 
+  LIVES_CALLOC_TYPE(funcsig_t, fsigp, 1);
   for (int i = 0; i < nparms; i++) {
     fsig <<= 4;;
     fsig |= symname_to_sigbits(symnames[i]);
@@ -1254,6 +1254,7 @@ REG_FUNCSIGS
 static boolean got_files = FALSE;
 
 boolean lives_startup(livespointer data) {
+  lives_proc_thread_t self = NULL;
   weed_plant_t *test_plant;
   lives_hook_stack_t **lpt_hooks, **thread_hooks;
   char *tmp, *msg;
@@ -1355,7 +1356,7 @@ boolean lives_startup(livespointer data) {
   capable->session_uid = gen_unique_id();
   if (1 || prefs->show_dev_opts)
     lives_printerr("Session uid is 0X%08lX\n", capable->session_uid);
-  
+
   d_print("Initializing memory block allocators...");
   init_memfuncs(1);
   capable->features_ready |= FEATURE_MEMFUNCS;
@@ -1390,7 +1391,7 @@ boolean lives_startup(livespointer data) {
   capable->features_ready |= FEATURE_WEED;
 
   // CAN NOW USE THREADVARS
-  
+
   capable->features_ready |= FEATURE_THREADVARS | FEATURE_CONDITIONALS;
 
   THREADVAR(guisource) = guisource;
@@ -1426,7 +1427,7 @@ boolean lives_startup(livespointer data) {
             "the following lines to your gdb.ini file\n\n"
             "\t\thandle SIG42 nostop noprint\n"
             "\t\thandle SIG44 nostop noprint\n\n");
-  
+
   lives_sys_alarm_set_flags(test_timeout, TIMER_FLAG_GET_TIMING);
   if (lives_sys_alarm_set_timeout(test_timeout, ONE_MILLION) != LIVES_RESULT_SUCCESS)
     lives_abort("Timer failed");
@@ -1472,13 +1473,15 @@ boolean lives_startup(livespointer data) {
   mainw->fg_tdata = lives_thread_data_create();
 
   // we have to do some manual actions which are normal done automaticlly when a thread is added to the pool
-  mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_the_program, 0, "", NULL);
+  self = mainw->def_lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_the_program, WEED_SEED_VOID, "", NULL);
 
   lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
   mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
 
   // set the active proc_thread for the main pthread
   lives_thread_set_proc_thread(mainw->def_lpt);
+
+  mainw->top_funcinst = lives_proc_thread_get_initial_funcinst(self);
 
   // for the main thread, the hook_stacks become maine->global_hook_stacks, but for NATIVE_HOOKS we will point these
   // to the thread hook_stacks instead
@@ -1794,6 +1797,8 @@ void lives_startup2(void) {
 
   what_sup = startup2_sup;
 
+  list_prefs();
+
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
   mainw->ignore_screen_size = FALSE;
@@ -1893,17 +1898,18 @@ void lives_startup2(void) {
 
   // crash recovery - reload
 
+  prefs->skip_ign = FALSE;
   if (!mainw->cliplist)
     if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   ///////////////
 
-  if (mainw->ascrap_file != -1 && !mainw->event_list) {
-    int current_file = mainw->current_file;
-    mainw->current_file = mainw->ascrap_file;
-    close_current_file(current_file);
-    mainw->ascrap_file = -1;
-  }
+  /* if (mainw->ascrap_file != -1 && !mainw->event_list) { */
+  /*   int current_file = mainw->current_file; */
+  /*   mainw->current_file = mainw->ascrap_file; */
+  /*   close_current_file(current_file); */
+  /*   mainw->ascrap_file = -1; */
+  /* } */
 
   if (prefs->show_disk_quota && !prefs->vj_mode) do_show_quota = TRUE;
 
@@ -3683,8 +3689,8 @@ jack_tcl_try:
       timeout = LIVES_SHORT_TIMEOUT;
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
       if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
-							 lives_jack_init, WEED_SEED_BOOLEAN, "iv",
-							 JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
+                  lives_jack_init, WEED_SEED_BOOLEAN, "iv",
+                  JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
         if (mainw->cancelled) lives_exit(0);
         return FALSE;
       }
@@ -3781,9 +3787,9 @@ jack_acl_try:
         timeout = LIVES_SHORTEST_TIMEOUT;
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
 
-	if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
-							   jack_create_client_writer, WEED_SEED_BOOLEAN, "v",
-							   mainw->jackd))) return FALSE;
+        if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
+                    jack_create_client_writer, WEED_SEED_BOOLEAN, "v",
+                    mainw->jackd))) return FALSE;
         success = lives_proc_thread_join_boolean(lpt);
         lives_proc_thread_unref(lpt);
 
@@ -3822,9 +3828,9 @@ jack_acl_try:
               mainw->jackd->whentostop = &mainw->whentostop;
               mainw->jackd->cancelled = &mainw->cancelled;
               mainw->jackd->in_use = FALSE;
-	      if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
-								jack_write_client_activate, WEED_SEED_BOOLEAN, "v",
-								mainw->jackd))) success = FALSE;
+              if (!(lpt = lives_proc_thread_create_with_timeout(timeout, CANCEL_TYPE_KILL, FALSE, BILLIONS(10), 0,
+                          jack_write_client_activate, WEED_SEED_BOOLEAN, "v",
+                          mainw->jackd))) success = FALSE;
               else {
                 success = lives_proc_thread_join_boolean(lpt);
                 lives_proc_thread_unref(lpt);
@@ -4818,8 +4824,8 @@ boolean set_palette_colours(boolean force_reload) {
 
     if (!is_OK) {
       if (cached) {
-	//lives_list_free_all(&mainw->gen_cache);
-	cached_list_free(&mainw->gen_cache);
+        //lives_list_free_all(&mainw->gen_cache);
+        cached_list_free(&mainw->gen_cache);
         mainw->gen_cache = cache_backup;
         themefile = othemefile;
       }

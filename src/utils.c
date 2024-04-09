@@ -404,7 +404,7 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
           totlen += slen;
           if (totlen >= buflen - 1) break;
         }
-	if (feof(fp)) break;
+        if (feof(fp)) break;
       }
       pclose(fp);
     }
@@ -415,18 +415,18 @@ ssize_t _lives_popen(const char *com, boolean allow_error, void  *buff, size_t b
     }
 
     if (err) {
-      char *msg = NULL; 
+      char *msg = NULL;
       if (FEATURE_READY(THREADVARS)) THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
-	msg = lives_strdup_printf("lives_popen failed p after %ld bytes with code %d: %s",
-				  !strg ? 0 : lives_strlen(strg), err, com);
-	LIVES_WARN(msg);
-	response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
+        msg = lives_strdup_printf("lives_popen failed p after %ld bytes with code %d: %s",
+                                  !strg ? 0 : lives_strlen(strg), err, com);
+        LIVES_WARN(msg);
+        response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
       }
 #if LIVES_FULL_DEBUG
       else {
-	msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
-	LIVES_DEBUG(msg);
+        msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
+        LIVES_DEBUG(msg);
       }
 #endif
       if (msg) lives_free(msg);

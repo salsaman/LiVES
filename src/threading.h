@@ -101,7 +101,7 @@ typedef struct {
   lives_timer_t var_xtimer;
 
   weed_plant_t *gcol; // per thread garbage collector
-  
+
   // hooks
   volatile boolean var_fg_service;
   uint64_t var_hook_hints, var_perm_hook_hints;
@@ -481,13 +481,14 @@ boolean pause_request_other_lpt(lives_proc_thread_t self, lives_proc_thread_t ot
 boolean cancel_request_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other);
 boolean queue_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other);
 
-// because of hook triggers, there is no set_state, instead use lives_proc_thread_include_states(lives_proc_t
-// i.e.
+// sets the state, ttiggering hooks
 // exclude anything in state which is not in new_state, then include anything in new_state which is not in state
 #define lives_proc_thread_set_state(lpt, new_state)			\
   lives_proc_thread_include_states(lpt,	new_state & ~(lives_proc_thread_exclude_states \
 						      (lpt, lives_proc_thread_get_state(lpt) \
 						       & ~new_state)))
+// sets the state, wuthout ttiggering hooks
+void lives_proc_thread_restore_state(lives_proc_thread_t, uint64_t tstate);
 
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t, uint64_t state_bits);
@@ -551,6 +552,10 @@ uint64_t get_worker_status(uint64_t tid);
 // this is only set for hook callbacks added with HOOK_CB_FREEFUNCS - see description there
 #define LIVES_THRDATTR_HAS_FREEFUNCS		(1ull << 2)
 
+// proc thread does not call hooks on status changes
+// for example async_hook callbacks - sets state THRD_BLOCK_HOOKS
+#define LIVES_THRDATTR_NO_HOOKS		     	(1ull << 3)
+
 ///////////////////////////////////////////////////////////
 
 // do not wait at sync points
@@ -573,10 +578,6 @@ uint64_t get_worker_status(uint64_t tid);
 
 // set cancelable before queueing
 #define LIVES_THRDATTR_START_PAUSEABLE     	(1ull << 25)
-
-// proc thread does not call hooks on status changes
-// for example async_hook callbacks - sets state THRD_BLOCK_HOOKS
-#define LIVES_THRDATTR_NO_HOOKS		     	(1ull << 26)
 
 // do not check pool threads
 #define LIVES_THRDATTR_FAST_QUEUE   		(1ull << 28)
@@ -647,22 +648,23 @@ typedef struct {
 } timeout_data;
 
 lives_funcinst_t *lives_funcinst_create_va(lives_funcptr_t func,
-				      const char *fname, int return_type, const char **anames,
-				      const char *args_fmt, va_list xargs);
+    const char *fname, int return_type, const char **anames,
+    const char *args_fmt, va_list xargs);
 
 lives_funcinst_t *_lives_funcinst_create(lives_funcptr_t func,
-				  const char *fname, int return_type, const char **anames,
-				  const char *args_fmt, ...);
+    const char *fname, int return_type, const char **anames,
+    const char *args_fmt, ...);
 
 #define lives_funcinst_create(func, rtype, af, ...)		\
   (_lives_funcinst_create((lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), (af), __VA_ARGS__))
 
-#define lives_funcinst_from_allvals(func, nvals, allvals) _lives_funcinst_from_allvals(func, #func, nvals, allvals) 
+#define lives_funcinst_from_allvals(func, nvals, allvals) _lives_funcinst_from_allvals(func, #func, nvals, allvals)
 
 lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs);
 
-lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_thread_attr_t attrs, lives_funcptr_t func, const char *fname,
-					      int return_type, const char **anames, const char *args_fmt, ...);
+lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_thread_attr_t attrs, lives_funcptr_t func,
+    const char *fname,
+    int return_type, const char **anames, const char *args_fmt, ...);
 
 #define lives_proc_thread_create(attrs, func,rtype, af, ...)		\
   (_lives_proc_thread_create(NULL, (attrs), (lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), \
@@ -681,10 +683,10 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
 #define lives_proc_thread_create_void(attrs, f) lives_proc_thread_create_pvoid_rvoid(attrs, f)
 
 lives_proc_thread_t _lives_proc_thread_create_with_timeout(uint64_t to_nsec, lives_cancel_type_t to_ctype,
-							   boolean ign_busy, uint64_t min_res,
-							   lives_thread_attr_t attr, lives_funcptr_t func,
-							   const char *funcname, int return_type, const char **anames,
-							   const char *args_fmt, ...);
+    boolean ign_busy, uint64_t min_res,
+    lives_thread_attr_t attr, lives_funcptr_t func,
+    const char *funcname, int return_type, const char **anames,
+    const char *args_fmt, ...);
 
 #define lives_proc_thread_create_with_timeout(to_nsec, to_ctype, to_ign_busy, to_min_res, attrs, func, return_type, args_fmt, ...) \
   _lives_proc_thread_create_with_timeout((to_nsec), (to_ctype), (to_ign_busy), (to_min_res), (attrs), \
@@ -695,7 +697,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t);
 boolean lives_proc_thread_unref(lives_proc_thread_t);
 
 boolean _main_thread_execute(lives_funcptr_t, const char *fname, int return_type, void *retloc, const char **anames,
-			      const char *args_fmt, ...);
+                             const char *args_fmt, ...);
 boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char **anames, const char *args_fmt, ...) ;
 boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int return_type, void *retloc);
 
@@ -900,7 +902,7 @@ boolean lives_proc_thread_had_error(lives_proc_thread_t);
 void lpt_error_handle(lives_proc_thread_t, int sev);
 
 void lives_make_errmsg_full(lives_proc_thread_t lpt, const char *errfile, int errline,
-			    int sev, int errnum, const char *errmsg);
+                            int sev, int errnum, const char *errmsg);
 
 typedef struct {
   uint64_t uid;
@@ -1037,7 +1039,7 @@ uint64_t lives_proc_thread_get_sync_idx(lives_proc_thread_t lpt);
 lives_result_t lives_proc_thread_wait_finished(lives_proc_thread_t);
 
 // proc_thread should ne unreffed after calling these
-// should 
+// should
 boolean lives_proc_thread_join_void(lives_proc_thread_t);
 int lives_proc_thread_join_int(lives_proc_thread_t);
 double lives_proc_thread_join_double(lives_proc_thread_t);

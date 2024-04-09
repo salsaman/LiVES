@@ -2816,7 +2816,10 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         buffptr = buff;
       }
 
-      if (should_ignore_ext_clip(buff)) continue;
+      if (should_ignore_ext_clip(buff)) {
+        // TODO - keep in recovery list
+        continue;
+      }
 
       if (strstr(buffptr, "/" CLIPS_DIRNAME "/")) {
         char **array;
@@ -2938,6 +2941,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
     }
 
+    g_print("pt a17\n");
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
 

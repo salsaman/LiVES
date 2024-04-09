@@ -275,7 +275,7 @@ char *lives_strdup_printf(const char *fmt, ...) {
 }
 
 
-char *lives_strdup_vprintf(const char *fmt, va_list ap) {return _lives_strndup_printf_va(fmt, 0, ap);}
+char *lives_strdup_vprintf(const char *fmt, va_list ap) {return fmt ? _lives_strndup_printf_va(fmt, 0, ap) : NULL;}
 
 int lives_print_ret(const char *fmt, ...) {
   char *ret;

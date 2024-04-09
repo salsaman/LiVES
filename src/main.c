@@ -142,7 +142,7 @@ void tr_msg(void) {
 #endif
 
 
-void __BREAK_ME(const char *brkstr) {
+LIVES_ALWAYS_INLINE void __BREAK_ME(const char *brkstr) {
   if (prefs && prefs->show_dev_opts) {
     g_printerr("\nBANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
   }
@@ -150,12 +150,21 @@ void __BREAK_ME(const char *brkstr) {
 }
 
 
-void lives_assert_failed(const char *cond, const char *file, int line) {
+void lives_assert_failed(const char *cond, const char *file, int line, ...) {
+  const char *fmt;
+  char *msg;
+  va_list va;
   if (prefs) {
     MSGMODE_LOCAL;
     MSGMODE_SET(DEBUG_LOG);
   }
-  lives_snprintf(errmsg, 1024, "\n\nFATAL: lives_assert failed in file %s, line %d:\n\n%s\n\n",  file, line, cond);
+  va_start(va, line);
+  fmt = va_arg(va, const char *);
+  if (fmt) msg = LSPF("%s\n", lives_strdup_vprintf(fmt, va));
+  else msg = lives_strdup("");
+  va_end(va);
+  lives_snprintf(errmsg, 1024, "\n\nFATAL: lives_assert failed in file %s, line %d:\n\n%s\n%s\n",  file, line, cond, msg);
+  lives_free(msg);
 
   d_print(errmsg);
 
@@ -163,6 +172,8 @@ void lives_assert_failed(const char *cond, const char *file, int line) {
   lpt_error_handle(self, LPT_ERR_FATAL);
 
   if (prefs) MSGMODE_GLOBAL;
+
+  d_print(errmsg);
 
   BREAK_ME("assertfail");
 

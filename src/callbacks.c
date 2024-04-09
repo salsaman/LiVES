@@ -4959,7 +4959,7 @@ void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY,
-				  _on_stop_activate, user_data);
+                                  _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
 
@@ -5791,7 +5791,7 @@ void _on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
 
     g_print("resp was %d\n", resp);
-    
+
     if (resp == LIVES_RESPONSE_CANCEL) {
       widget_opts.use_markup = FALSE;
       lives_free(extra);
@@ -6223,7 +6223,7 @@ end:
 void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   if (user_data) lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
   lives_proc_thread_create(LIVES_THRDATTR_WAIT_START | LIVES_THRDATTR_DONTCARE,
-			   _on_cleardisk_activate, WEED_SEED_VOID, "VV", widget, user_data);
+                           _on_cleardisk_activate, WEED_SEED_VOID, "VV", widget, user_data);
 }
 
 
@@ -7312,8 +7312,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         mainw->ignore_screen_size = TRUE;
         resize_play_window();
         mainw->ignore_screen_size = FALSE;
-      }
-      else if (!mainw->multitrack) {
+      } else if (!mainw->multitrack) {
         fullscreen_internal();
         fade_background();
       }
@@ -7453,7 +7452,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC,
-				  _on_full_screen_activate, user_data);
+                                  _on_full_screen_activate, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
 
@@ -7520,7 +7519,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
-				  HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
+                                  HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
 
@@ -7705,7 +7704,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC
-				  | HOOK_CB_PRIORITY, _on_sepwin_activate, user_data);
+                                  | HOOK_CB_PRIORITY, _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
 
@@ -7777,7 +7776,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY | HOOK_TOGGLE_FUNC,
-				  _on_fade_activate, user_data);
+                                  _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
 }
 
@@ -10912,7 +10911,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
           mainw->alock_abuf->fileno = mainw->playing_file;
           lpt = lives_buffered_rdonly_slurp_prep(mainw->alock_abuf->_fd, 0);
           lives_hook_cb_append(lives_proc_thread_get_hook_stacks(lpt), DATA_PREVIEW_HOOK, 0,
-			       resample_to_float, &mainw->alock_abuf);
+                               resample_to_float, &mainw->alock_abuf);
           lives_buffered_rdonly_slurp_ready(lpt);
         }
       }

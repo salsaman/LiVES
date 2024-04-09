@@ -14,7 +14,7 @@
 #if INLINE_CODE
 #define MIN _INLINE_(typeof ((a)) aa = (a); typeof ((b)) bb = b;\
 		    aa <= bb ? aa : bb;)
-#else		    
+#else
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #endif
 
@@ -24,7 +24,7 @@
 #if INLINE_CODE
 #define MAX _INLINE_(typeof ((a)) aa = (a); typeof ((b)) bb = b;\
 		    aa >= bb ? aa : bb;)
-#else		    
+#else
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 #endif
 

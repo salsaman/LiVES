@@ -171,7 +171,7 @@ lives_proc_thread_t start_playback_async(int type) {
 
   if (type == 6 && THREADVAR(accel_group)) {
     lives_proc_thread_add_hook_cb_full(self, ACCEL_END_HOOK, HOOK_OPT_ONESHOT,
-				       lives_proc_thread_dispatch, 0, "p", lpt);
+                                       lives_proc_thread_dispatch, 0, "p", lpt);
   } else lives_proc_thread_dispatch(lpt);
   return lpt;
 }

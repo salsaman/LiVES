@@ -144,7 +144,7 @@ void push_fx_toggles(int okey, boolean update) {
             int ikey = pconx->ikey[j];
             if (!update) fx_key_defs[ikey].last_activator = activator_none;
             else pconx_convert_value_data(NULL, i, ikey, active_dummy, okey,
-					  oparam, FALSE);
+                                            oparam, FALSE);
 	    // *INDENT-OFF*
 	  }}}}
     // *INDENT-ON*
@@ -1562,7 +1562,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   int autoscale;
   int pflags;
   int okey, omode, i;
- 
+
   if (mainw->is_rendering) return FALSE;
 
   if (key == FX_DATA_KEY_PLAYBACK_PLUGIN) {

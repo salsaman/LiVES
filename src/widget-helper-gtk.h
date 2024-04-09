@@ -443,7 +443,6 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_WIDGET_EXPOSE_EVENT "expose_event"
 #endif
 
-#define lives_widget_object_set_data(a, b, c) g_object_set_data(a, b, c)
 #define lives_widget_object_set_data_full(a, b, c, d) g_object_set_data_full(a, b, c, d)
 #define lives_widget_object_get_data(a, b) g_object_get_data(a, b)
 #define lives_widget_object_steal_data(a, b) g_object_steal_data(a, b)

@@ -1833,7 +1833,7 @@ void check_string_choice_params(weed_plant_t *inst) {
 
 
 static void _on_params_clicked(LiVESButton * button, livespointer user_data) {
-    int idx = LIVES_POINTER_TO_INT(user_data);
+  int idx = LIVES_POINTER_TO_INT(user_data);
   int modes = rte_getmodespk();
   int key = (int)(idx / modes);
   int mode = idx - key * modes;

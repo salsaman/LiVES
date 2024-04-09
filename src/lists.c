@@ -82,8 +82,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
   LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
   pthread_rwlock_init(&synclist->lock, NULL);
   pthread_rwlock_init(&synclist->priv_lock, NULL);
-  synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY | SYNCLIST_FLAG_LILO
-                    | SYNCLIST_FLAG_POP_HEAD;
+  synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY | SYNCLIST_FLAG_POP_HEAD;
   return synclist;
 }
 
@@ -234,6 +233,7 @@ LIVES_GLOBAL_INLINE void *_lives_sync_list_peek(lives_sync_list_t *synclist) {
   return list->data;
 }
 
+
 LIVES_GLOBAL_INLINE void *lives_sync_list_peek(lives_sync_list_t *synclist) {
   void *data = NULL;
   if (synclist) {
@@ -242,6 +242,16 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_peek(lives_sync_list_t *synclist) {
     lives_sync_list_unlock(synclist);
   }
   return data;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_sync_list_dump(lives_sync_list_t *synclist) {
+  g_print("Dump synclist %p\n", synclist);
+  if (synclist) {
+    lives_sync_list_rdlock(synclist);
+    for (LiVESList *list = synclist->list; list; list = list->next) g_print("%p\n", list->data);
+    lives_sync_list_unlock(synclist);
+  }
 }
 
 

@@ -34,58 +34,78 @@ static uint32_t prefs_current_page;
 
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
-static LiVESList *allprefs = NULL;
+// new prefs model:
+// all prefs are stored in allprefs plant, which is LIVES_PLANT_INDEX plant
+// in an index plant, we can store leaves which start with a prefix (here "PREF_")
+// and are of the sane type (here, weed_plantptr_t, with type LIVES_PLANT, subtype LIVES_PLANT_PREFERENCE
+// there will be a blueprint for LIVES_PLANT_PREFERENCE, currently it has the format:
+// WEED_LEAF_DEFAULT
+// WEED_LEAF_VALUE - allvalues_t *, cast to WEED_SEED_VOIDPTR
+// this is bound to a prefs->XXX variable, in the allvalues_t *, aname is set to 'prefname' and bound to prefs->prefname
+// allvp->stype is set to weed_seed type of target. Default is a leaf of this type
+// in the preferences plant we also have FLAGS and STATUS
+// there is also a leaf type const chsrpointer - KEYNAME
 
+static weed_plant_t *allprefs = NULL;
 
-// new prefs model. All prefs will be stored in WEED plants, with
+weed_plant_t *get_allprefs(void) {return allprefs;}
 
+#define define_pref(idx, prefnm, vtype, flags, pdef)			\
+  _define_pref(PREF_PREFIX #idx, PREF_##idx, MAKE_ALLVALUE_BOUND(vtype, prefs->prefnm), flags, pdef)
 
-static weed_plant_t *define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
-  // TODO...
-  /* lives_object_instance_t *pref = lives_pref_inst_create(PLAYER_SUBTYPE_AUDIO); */
-  /// -> lives_object_declare_attribute(pref, PREF_ATTR_IDX, WEED_SEED_STRING);
-  /// -> lives_object_declare_attribute(pref, PREF_ATTR_VALUE, WEED_SEED_VOIDPTR);
-  /* lives_pref_set_idx(pref, pref_idx); */
-  /* lives_pref_set_varptr(pref, prefptr); */
-  /* lives_pref_set_widget(pref, widget); */
-  // OR
-  // lives_attribute_set_param_type(pref, PREF_ATTR_VARPTR, label, WEED_PARAM_INTEGER);
-  // txfuncs: OBJ_INTENTION_BACKUP, RESTORE, SET_VALUE, GET_VALUE,
-
+//static weed_plant_t *_define_pref(const char *pref_idx, void *pref_ptr, weed_seed_t vtype, void *pdef, uint32_t flags) {
+static weed_plant_t *_define_pref(const char *idxnm, const char *keyname, allvalues_t *allvp, uint32_t flags, ...) {
+  // VALUE is now an allvalues_t *, bound to pref->whatever
+  va_list va;
   weed_plant_t *prefplant = lives_plant_new(LIVES_PLANT_PREFERENCE);
-  weed_set_const_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
-  weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr);
-  weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef);
+  weed_seed_t vtype = allvp->stype;
+  va_start(va, flags);
+  weed_leaf_from_varg(prefplant, WEED_LEAF_DEFAULT, vtype, 1, va);
+  va_end(va);
+  weed_set_const_string_value(prefplant, LIVES_LEAF_KEYNAME, keyname);
+  weed_set_voidptr_value(prefplant, WEED_LEAF_VALUE, (void *)allvp);
   weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_UNSET);
   weed_set_int_value(prefplant, WEED_LEAF_FLAGS, flags);
-  allprefs = lives_list_append(allprefs, prefplant);
+  weed_set_plantptr_value(allprefs, idxnm, prefplant);
   return prefplant;
 }
 
 
 void free_prefs(void) {
-  for (LiVESList *list = allprefs; list; list = list->next) {
-    weed_plant_t *plant = (weed_plant_t *)list->data;
-    weed_plant_free(plant);
-    list->data = NULL;
+  char **prefnames = weed_plant_list_leaves(allprefs, NULL);
+  for (int i = 0; prefnames[i]; i++) {
+    if (lives_str_starts_with(prefnames[i], PREF_PREFIX)) {
+      weed_plant_t *prefplant = weed_get_plantptr_value(allprefs, prefnames[i], NULL);
+      weed_plant_free(prefplant);
+    }
+    _ext_free(prefnames[i]);
   }
-  lives_list_free_all(&allprefs);
+  _ext_free(prefnames);
+  weed_plant_free(allprefs);
+  allprefs = NULL;
 }
 
 
 void init_prefs(void) {
   if (allprefs) return;
 
+  allprefs = lives_plant_new(LIVES_PLANT_INDEX);
+  weed_set_const_string_value(allprefs, LIVES_LEAF_PREFIX, PREF_PREFIX);
+  weed_set_int_value(allprefs, LIVES_LEAF_DATA_TYPE, WEED_SEED_PLANTPTR);
+
   // PRREF_IDX, pref-><...>, default
-  DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, 0);
-  DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE, 0);
+  DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, PREF_FLAGS_NONE);
+  DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE, PREF_FLAGS_NONE);
 
-  DEFINE_PREF_INT64(PBTIMER_MAXDIFF, pbtimer_maxdiff, 1200000, 0);
-  DEFINE_PREF_DOUBLE(PBTIMER_RESYNC_X, pbtimer_resync_factor, .001, 0);
+  DEFINE_PREF_BOOL(AUTO_REC_CLIPS, auto_rec_clips, FALSE, PREF_FLAGS_NONE);
+  DEFINE_PREF_BOOL(SKIP_IGN, skip_ign, TRUE, PREF_FLAGS_NONE);
 
-  DEFINE_PREF_DOUBLE(REC_STOP_GB, rec_stop_gb, DEF_REC_STOP_GB, 0);
-  DEFINE_PREF_INT(REC_STOP_QUOTA, rec_stop_quota, 90, 0);
-  DEFINE_PREF_BOOL(REC_STOP_DWARN, rec_stop_dwarn, TRUE, 0);
+  DEFINE_PREF_INT64(PBTIMER_MAXDIFF, pbtimer_maxdiff, 1200000, PREF_FLAGS_NONE);
+  DEFINE_PREF_DOUBLE(PBTIMER_RESYNC_X, pbtimer_resync_factor, .001, PREF_FLAGS_NONE);
+
+  DEFINE_PREF_DOUBLE(REC_STOP_GB, rec_stop_gb, DEF_REC_STOP_GB, PREF_FLAGS_NONE);
+  DEFINE_PREF_INT(REC_STOP_QUOTA, rec_stop_quota, 90, PREF_FLAGS_NONE);
+  DEFINE_PREF_BOOL(REC_STOP_DWARN, rec_stop_dwarn, TRUE, PREF_FLAGS_NONE);
 
   DEFINE_PREF_BOOL(REPL_NULLFRAMES, repl_missing_frames, TRUE, PREF_FLAG_UNDOCUMENTED);
 
@@ -94,29 +114,24 @@ void init_prefs(void) {
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
-  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, 0);
-  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, 0);
-  DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", 0);
+  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, PREF_FLAGS_NONE);
+  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, PREF_FLAGS_NONE);
+  DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", PREF_FLAGS_NONE);
 
-  DEFINE_PREF_FLOAT(MAX_CLIP_VOL, max_clip_vol, 2., 0);
+  DEFINE_PREF_FLOAT(MAX_CLIP_VOL, max_clip_vol, 2., PREF_FLAGS_NONE);
 }
 
 
 
-static weed_plant_t *find_pref(const char *pref_idx) {
-  for (LiVESList *list = allprefs; list; list = list->next) {
-    weed_plant_t *prefplant = (weed_plant_t *)list->data;
-    const char *xpref_idx = weed_get_const_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
-    if (!lives_strcmp(xpref_idx, pref_idx)) return list->data;
-  }
-  return NULL;
+LIVES_GLOBAL_INLINE weed_plant_t *find_pref(const char *pref_idx) {
+  return allprefs ? weed_get_plantptr_value(allprefs, pref_idx, NULL) : NULL;
 }
 
 
 static void remove_pref(const char *pref_idx) {
   weed_plant_t *prefplant = find_pref(pref_idx);
   if (prefplant) {
-    allprefs = lives_list_remove_data(allprefs, prefplant, FALSE);
+    weed_leaf_delete(allprefs, pref_idx);
     weed_plant_free(prefplant);
   }
 }
@@ -126,44 +141,55 @@ void load_pref(const char *pref_idx) {
   weed_plant_t *prefplant = find_pref(pref_idx);
   if (!prefplant) return;
   else {
-    void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
-    int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+    //void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
+    //int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+    allvalues_t *allvp = (allvalues_t *)weed_get_voidptr_value(prefplant, WEED_LEAF_VALUE, NULL);
     int flags = weed_get_int_value(prefplant, WEED_LEAF_FLAGS, NULL);
+    weed_seed_t type = allvp->stype;
+    // TODO - if the default is used, set status to TEMP
     switch (type) {
     case WEED_SEED_BOOLEAN: {
-      boolean bdef = weed_get_boolean_value(prefplant, WEED_LEAF_DEFAULT, NULL);
-      if (flags & PREF_FLAG_INTERNAL) *(boolean *)ppref = bdef;
-      else *(boolean *)ppref = get_boolean_prefd(pref_idx, bdef);
+      boolean bdef = weed_get_boolean_value(prefplant, WEED_LEAF_DEFAULT, NULL), bval;
+      if (flags & PREF_FLAG_INTERNAL) bval = bdef;
+      else bval = get_boolean_prefd(pref_idx, bdef);
+      *allvp->values.b = bval;
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
     case WEED_SEED_INT: {
-      int idef = weed_get_int_value(prefplant, WEED_LEAF_DEFAULT, NULL);
-      if (flags & PREF_FLAG_INTERNAL) *(int *)ppref = idef;
-      else *(int *)ppref = get_int_prefd(pref_idx, idef);
+      int idef = weed_get_int_value(prefplant, WEED_LEAF_DEFAULT, NULL), ival;
+      if (flags & PREF_FLAG_INTERNAL) ival = idef;
+      else ival = get_int_prefd(pref_idx, idef);
+      *allvp->values.i = ival;
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
     case WEED_SEED_INT64: {
-      int idef = weed_get_int64_value(prefplant, WEED_LEAF_DEFAULT, NULL);
-      if (flags & PREF_FLAG_INTERNAL) *(int *)ppref = idef;
-      else *(int *)ppref = get_int_prefd(pref_idx, idef);
+      int64_t i64def = weed_get_int64_value(prefplant, WEED_LEAF_DEFAULT, NULL), i64val;
+      if (flags & PREF_FLAG_INTERNAL) i64val = i64def;
+      else i64val = get_int64_prefd(pref_idx, i64def);
+      *allvp->values.I = i64val;
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
     case WEED_SEED_DOUBLE: {
-      double ddef = weed_get_double_value(prefplant, WEED_LEAF_DEFAULT, NULL);
-      if (flags & PREF_FLAG_INTERNAL) *(double *)ppref = ddef;
-      else *(double *)ppref = get_double_prefd(pref_idx, ddef);
+      double ddef = weed_get_double_value(prefplant, WEED_LEAF_DEFAULT, NULL), dval;
+      if (flags & PREF_FLAG_INTERNAL) dval = ddef;
+      else dval = get_double_prefd(pref_idx, ddef);
+      *allvp->values.d = dval;
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
     case WEED_SEED_STRING: {
       int slen = weed_get_int_value(prefplant, WEED_LEAF_MAXCHARS, NULL);
       char *sdef = weed_get_string_value(prefplant, WEED_LEAF_DEFAULT, NULL);
-      if (flags & PREF_FLAG_INTERNAL) ppref = lives_strdup(sdef);
-      else get_string_prefd(pref_idx, (char *)ppref, slen, sdef);
-      lives_free(sdef);
+      if (flags & PREF_FLAG_INTERNAL) *allvp->values.s = sdef;
+      else {
+        char *sval = lives_malloc(slen);
+        get_string_prefd(pref_idx, sval, slen, sdef);
+        *allvp->values.s = sval;
+        lives_free(sdef);
+      }
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
@@ -175,13 +201,17 @@ void load_pref(const char *pref_idx) {
 
 void load_prefs(void) {
   if (!allprefs) init_prefs();
-  for (LiVESList *list = allprefs; list; list = list->next) {
-    weed_plant_t *prefplant = (weed_plant_t *)list->data;
-    if (weed_get_int_value(prefplant, LIVES_LEAF_STATUS, NULL) == PREFSTATUS_UNSET) {
-      const char *xpref_idx = weed_get_const_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
-      load_pref(xpref_idx);
+  char **prefnames = weed_plant_list_leaves(allprefs, NULL);
+  for (int i = 0; prefnames[i]; i++) {
+    if (lives_str_starts_with(prefnames[i], PREF_PREFIX)) {
+      weed_plant_t *prefplant = weed_get_plantptr_value(allprefs, prefnames[i], NULL);
+      if (weed_get_int_value(prefplant, LIVES_LEAF_STATUS, NULL) == PREFSTATUS_UNSET) {
+        load_pref(prefnames[i]);
+      }
     }
+    _ext_free(prefnames[i]);
   }
+  _ext_free(prefnames);
 }
 
 
@@ -189,13 +219,15 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
   weed_plant_t *prefplant = find_pref(pref_idx);
   if (prefplant) {
     LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
+    allvalues_t *allvp = (allvalues_t *)weed_get_voidptr_value(prefplant, WEED_LEAF_VALUE, NULL);
     boolean bval;
     int ival;
     int64_t i64val;
     double dval;
+    char *sval;
     if (widget || newval) {
-      void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
-      int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+      //void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
+      weed_seed_t type = allvp->stype;
       switch (type) {
       case WEED_SEED_BOOLEAN: {
         boolean bpref;
@@ -204,9 +236,9 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
         /// any nonstandard updates here
         pref_factory_bool(pref_idx, bval, permanent);
         ///
-        bpref = *(boolean *)ppref;
+        bpref = *allvp->values.b;
         if (bpref == bval) goto fail;
-        *(boolean *)ppref = bval;
+        *allvp->values.b = bval;
         goto bool_success;
       }
       break;
@@ -217,9 +249,9 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
         /// any nonstandard updates here
         pref_factory_int(pref_idx, &ipref, ival, permanent);
         ///
-        ipref = *(int *)ppref;
+        ipref = *allvp->values.i;
         if (ipref == ival) goto fail;
-        *(int *)ppref = ival;
+        *allvp->values.i = ival;
         goto int_success;
       }
       break;
@@ -230,9 +262,9 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
         /// any nonstandard updates here
         pref_factory_int64(pref_idx, &i64pref, i64val, permanent);
         ///
-        i64pref = *(int64_t *)ppref;
+        i64pref = *allvp->values.I;
         if (i64pref == i64val) goto fail;
-        *(int64_t *)ppref = i64val;
+        *allvp->values.I = i64val;
         goto int64_success;
       }
       break;
@@ -243,10 +275,27 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
         /// any nonstandard updates here
         pref_factory_double(pref_idx, &dpref, dval, permanent);
         ///
-        dpref = *(double *)ppref;
+        dpref = *allvp->values.d;
         if (dpref == dval) goto fail;
-        *(double *)ppref = dval;
+        *allvp->values.d = dval;
         goto double_success;
+      }
+      break;
+      case WEED_SEED_STRING: {
+        char *spref;
+        int slen = 0;
+        if (newval) sval = *(char **)newval;
+        else {
+          if (LIVES_IS_ENTRY(widget));
+          sval = NULL;
+        }
+        /// any nonstandard updates here
+        pref_factory_string(pref_idx, sval, permanent);
+        ///
+        spref = *allvp->values.s;
+        if (!lives_strcmp(spref, sval)) goto fail;
+        *allvp->values.s = lives_strdup(sval);
+        goto string_success;
       }
       break;
       default: break;
@@ -258,7 +307,6 @@ fail:
     return FALSE;
 
 bool_success:
-    weed_set_boolean_value(prefplant, WEED_LEAF_VALUE, bval);
     if (prefsw) {
       lives_widget_process_updates(prefsw->prefs_dialog);
       prefsw->ignore_apply = FALSE;
@@ -270,7 +318,6 @@ bool_success:
     return TRUE;
 
 int_success:
-    weed_set_int_value(prefplant, WEED_LEAF_VALUE, ival);
     if (prefsw) {
       lives_widget_process_updates(prefsw->prefs_dialog);
       prefsw->ignore_apply = FALSE;
@@ -282,7 +329,6 @@ int_success:
     return TRUE;
 
 int64_success:
-    weed_set_int64_value(prefplant, WEED_LEAF_VALUE, i64val);
     if (prefsw) {
       lives_widget_process_updates(prefsw->prefs_dialog);
       prefsw->ignore_apply = FALSE;
@@ -294,13 +340,23 @@ int64_success:
     return TRUE;
 
 double_success:
-    weed_set_double_value(prefplant, WEED_LEAF_VALUE, dval);
     if (prefsw) {
       lives_widget_process_updates(prefsw->prefs_dialog);
       prefsw->ignore_apply = FALSE;
     }
     if (permanent) {
       set_double_pref(pref_idx, dval);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
+    return TRUE;
+
+string_success:
+    if (prefsw) {
+      lives_widget_process_updates(prefsw->prefs_dialog);
+      prefsw->ignore_apply = FALSE;
+    }
+    if (permanent) {
+      set_string_pref(pref_idx, sval);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
     } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
     return TRUE;
@@ -318,14 +374,18 @@ int get_pref_status(const char *pref_idx) {
 
 
 static void update_prefs(void) {
-  const char *pref_idx;
-  for (LiVESList *list = allprefs; list; list = list->next) {
-    weed_plant_t *plant = (weed_plant_t *)list->data;
-    if (weed_get_int_value(plant, WEED_LEAF_FLAGS, NULL) & PREF_FLAG_INTERNAL)
-      continue;
-    pref_idx = weed_get_const_string_value(plant, LIVES_LEAF_PREF_IDX, NULL);
-    update_pref(pref_idx, NULL, TRUE);
+  char **prefnames = weed_plant_list_leaves(allprefs, NULL);
+  for (int i = 0; prefnames[i]; i++) {
+    if (lives_str_starts_with(prefnames[i], "PREF_")) {
+      weed_plant_t *prefplant = weed_get_plantptr_value(allprefs, prefnames[i], NULL);
+      if (weed_get_int_value(prefplant, WEED_LEAF_FLAGS, NULL) & PREF_FLAG_INTERNAL)
+        continue;
+      const char *keyname = weed_get_const_string_value(prefplant, LIVES_LEAF_KEYNAME, NULL);
+      update_pref(keyname, NULL, TRUE);
+    }
+    _ext_free(prefnames[i]);
   }
+  _ext_free(prefnames);
 }
 
 
@@ -341,7 +401,7 @@ boolean update_double_pref(const char *pref_idx, double val, boolean permanent) 
   return update_pref(pref_idx, (void *)&val, permanent);
 }
 
-static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
+LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
   weed_plant_t *prefplant = find_pref(pref_idx);
   uint32_t flags = 0;
   if (!prefplant) return NULL;
@@ -379,14 +439,14 @@ static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
 
 
 void invalidate_pref_widgets(LiVESWidget *top) {
-  for (LiVESList *list = allprefs; list; list = list->next) {
-    weed_plant_t *prefplant = (weed_plant_t *)list->data;
-    LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
-    if (widget && (widget == top || lives_widget_is_ancestor(widget, top))) {
-      const char *pref_idx = weed_get_const_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
-      set_pref_widget(pref_idx, NULL);
-    }
-  }
+  /* for (LiVESList *list = allprefs; list; list = list->next) { */
+  /*   weed_plant_t *prefplant = (weed_plant_t *)list->data; */
+  /*   LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL); */
+  /*   if (widget && (widget == top || lives_widget_is_ancestor(widget, top))) { */
+  /*     const char *pref_idx = weed_get_const_string_value(prefplant, LIVES_LEAF_PREF_I, NULL); */
+  /*     set_pref_widget(pref_idx, NULL); */
+  /*   } */
+  /* } */
 }
 
 

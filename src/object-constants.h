@@ -1750,8 +1750,8 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    /// CONFIG hook pattern
                    // config hooks - these are based on other patterns, but given an omportant significance
 
-		   // DATA hooks for native threads
-		   
+                   // DATA hooks for native threads
+
                    // transform suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
                    // hook_stack specifc to structure_app
                    FATAL_HOOK = 0,
@@ -1772,23 +1772,23 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    THREAD_EXIT_HOOK,
 
 #define N_NATIVE_HOOKS 3
-		   //
-		   // aside from native hooks and spontaneous hooks, there
-		   // are really only 3 actual hook stacks:
-		   DATA_CHANGE_HOOK,
-		   REQUEST_HOOK,
+                   //
+                   // aside from native hooks and spontaneous hooks, there
+                   // are really only 3 actual hook stacks:
+                   DATA_CHANGE_HOOK,
+                   REQUEST_HOOK,
                    CB_ADDED_HOOK,
-		   /* spontaneous hooks
-                   CONTRACT_BREACHED_HOOK,
-                   SYNC_ANNOUNCE_HOOK,
-                   SEGMENT_END_HOOK,
-                   SEGMENT_START_HOOK,
-                   ATTRS_UPDATED_HOOK,
-                   DATA_PREVIEW_HOOK,
-                   DATA_READY_HOOK,
-                   TRACE_HOOK,
-		   // total 14
-		   */
+                   /* spontaneous hooks
+                               CONTRACT_BREACHED_HOOK,
+                               SYNC_ANNOUNCE_HOOK,
+                               SEGMENT_END_HOOK,
+                               SEGMENT_START_HOOK,
+                               ATTRS_UPDATED_HOOK,
+                               DATA_PREVIEW_HOOK,
+                               DATA_READY_HOOK,
+                               TRACE_HOOK,
+                     // total 14
+                   */
 
                    // The following are the standard hook points in the system
                    // all DATA_HOOKS must return "immedaitely"
@@ -1804,7 +1804,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // the hook_stacks for these are in the structure, adding removing, triggering
                    // is done via a structure transform
 
-		   OBJECT_CREATED_HOOK, // object state / after (4)
+                   OBJECT_CREATED_HOOK, // object state / after (4)
 
                    INSTANCE_COPIED_HOOK,
 
@@ -1848,7 +1848,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    UPDATING_VALUE_HOOK,
 
                    VALUE_UPDATED_HOOK, //21,
-		   
+
                    // TRANSFORM lifecycle hooks
                    // these are triggered by transform state changes
                    // transforms begin in state UNQUEUED,
@@ -1865,14 +1865,14 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // after this, the transform will be returned to the caller with TX_RESULT updated
 
                    // these hook stacks are created on demand when a callback is added to a transform bundle
-		   
+
                    PREPARING_HOOK,  /// none or queued -> prepare **
 
                    PREPARED_HOOK,  /// prepare -> running ??
 
                    TX_START_HOOK, /// any -> running //25
 
-		   // the following are actually data hooks for status changes
+                   // the following are actually data hooks for status changes
 
                    ///
                    PAUSED_HOOK, ///< transform was paused via pause_hook **
@@ -1885,7 +1885,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    FINISHED_HOOK,
 
-		   DESTRUCTION_HOOK,
+                   DESTRUCTION_HOOK,
 
                    /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
                    // and mey be actioned again
@@ -1929,10 +1929,10 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    TX_BLOCKED_HOOK,
 
-		   // thread can set busy state to avoid being timed out
-		   // busy time is subtracted from timeout
-		   TX_BUSY_HOOK,
-		   TX_UNBUSY_HOOK,
+                   // thread can set busy state to avoid being timed out
+                   // busy time is subtracted from timeout
+                   TX_BUSY_HOOK,
+                   TX_UNBUSY_HOOK,
 
                    //
 
@@ -1954,7 +1954,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    // functionals may trigger sync announcements at key points during their processing
                    // other threads can add callbacks for this and be advised when such a point is reached
-		   // or it can be set up as a staging hook for a target stack
+                   // or it can be set up as a staging hook for a target stack
                    SYNC_ANNOUNCE_HOOK, ///< synchronisation point, transform is waitng until
 
                    /// tx transition from one trajectory segment to the next
@@ -1972,8 +1972,8 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    SEGMENT_START_HOOK, // 40
 
                    // this hook may be triggered after the values of multiple attributes
-		   // in an attr_group have been updated
-		   // data passed includes the attr_group containing the attributes
+                   // in an attr_group have been updated
+                   // data passed includes the attr_group containing the attributes
                    ATTRS_UPDATED_HOOK,
 
                    // calbacks for the following two hooks are allowed to block "briefly"
@@ -1999,23 +1999,23 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // REQUEST HOOK pattern -certain objects will provide request hook stacks, and requests
                    // can be added to these
                    // when a callback is added, WAIT_RETRY, YES, NO, or NEEDS_PRIVELEGE is returned
-		   // if the initial reply is WAIT_RETRY, caller can attempt the request again.
-		   // the reply can further be tracked by providing a callback function for reply_sent
-		   // YES is a provisional reply,
-		   // NO, FULFILLED, ERROR and CANCELLED are final replies
+                   // if the initial reply is WAIT_RETRY, caller can attempt the request again.
+                   // the reply can further be tracked by providing a callback function for reply_sent
+                   // YES is a provisional reply,
+                   // NO, FULFILLED, ERROR and CANCELLED are final replies
 
                    // requests are cascaded values of the CB_ATTACHED_HOOK
                    // a request is made by adding a request_bundle to the target's request hook
                    // the result is to trigger the object's callback_attached_hook.
-		   // this may alter target;s status flags
-		   // If the object is inactive this may wake the object
-		   // the object can then (or at any time), trigger the respective request hook and the object
-		   // cab act on the request and send final replies to the adders,
-		   // (triggering reply sent callbacks), remove the request from the request stack
-		   // thus if a reply is important, the adder can wait fot reply_sent callback and check the req_reply
-		   
-		   // 
-		   // 
+                   // this may alter target;s status flags
+                   // If the object is inactive this may wake the object
+                   // the object can then (or at any time), trigger the respective request hook and the object
+                   // cab act on the request and send final replies to the adders,
+                   // (triggering reply sent callbacks), remove the request from the request stack
+                   // thus if a reply is important, the adder can wait fot reply_sent callback and check the req_reply
+
+                   //
+                   //
 
                    DATA_REQUEST_HOOK,
 

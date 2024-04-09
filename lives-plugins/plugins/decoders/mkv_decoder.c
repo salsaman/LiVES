@@ -2176,7 +2176,7 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
   if (matroska->num_packets > 0) {
     memcpy(pkt, matroska->packets[0], sizeof(AVPacket));
 
-    // 
+    //
     av_free(matroska->packets[0]);
 
     //
@@ -2404,7 +2404,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       pkt->pos = pos;
 
       //index_add(priv->idxc, timecode * priv->index_scale, pos);
-      
+
       if (st->codec->codec_id == AV_CODEC_ID_TEXT)
         pkt->convergence_duration = duration;
 
@@ -2416,7 +2416,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 
       // uuhh so we have pkt, pkt_data, and pkt->data
       // that is not at all confusing
-      
+
       if (matroska->prev_pkt &&
           timecode != AV_NOPTS_VALUE &&
           matroska->prev_pkt->pts == timecode &&

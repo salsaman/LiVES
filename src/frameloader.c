@@ -2298,7 +2298,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     errpt = 2;
     goto fail;
   }
-  
+
   //weed_layer_pixel_data_free(layer);
   if (width && height) weed_layer_set_size(layer, width, height);
 
@@ -2311,7 +2311,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
     if (!sfile) {
       if (target_palette != WEED_PALETTE_NONE && target_palette != WEED_PALETTE_ANY)
-	weed_layer_set_palette(layer, target_palette);
+        weed_layer_set_palette(layer, target_palette);
       errpt = 3;
       goto fail;
     }
@@ -2331,7 +2331,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     create_blank_layer(layer, image_ext, width, height, target_palette);
     goto success;
   }
-  
+
 retry:
 
   // TODO:
@@ -2341,7 +2341,7 @@ retry:
   // switch should be by src type, not clip type, or perhaps not needed
   // find action_func for src from src template
   // call err = (template->action_func)(layer);
-   
+
   srcgrp = lives_layer_get_srcgrp(layer);
   if (!srcgrp) {
     if (track >= 0 && track < mainw->num_tracks) {
@@ -2356,7 +2356,7 @@ retry:
   /* errpt = (tmpl->action_func)(layer); */
 
   // instead of this:
-  
+
   switch (clip_type) {
   case CLIP_TYPE_DISK:
   case CLIP_TYPE_FILE:
@@ -2561,9 +2561,9 @@ retry:
                 }
               }
               // deinterlace
-	      if (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)
-		weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, TRUE);
-	    }
+              if (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)
+                weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, TRUE);
+            }
             if (!res) {
               errpt = 11;
               goto fail;

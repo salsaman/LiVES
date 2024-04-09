@@ -1393,7 +1393,7 @@ void update_progress(boolean visible, int clipno) {
     }
     shown_paused_frames = mainw->effects_paused;
   } else LIVES_HAVEANAP;
-    
+
 }
 
 
@@ -1882,7 +1882,7 @@ lives_result_t std_stopfunc(void *data) {
   if (mainw->cancelled != CANCEL_NONE
       || (sfdata->self && lives_proc_thread_get_cancel_requested(sfdata->self)))
     return LIVES_RESULT_CANCELLED;
-  
+
   if (sfdata->infofile
       || (sfdata->infofile = fopen(cfile->info_file, "r")))
     return LIVES_RESULT_SUCCESS;
@@ -1921,7 +1921,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
   g_print("TYPE IS %d\n", type);
 
   LIVES_ASSERT(type >= 0 && type <= 2);
-  
+
   sfdata.data = stfuncdata;
   sfdata.self = self;
   sfdata.infofile = NULL;
@@ -1943,8 +1943,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
     lives_widget_show_all(mainw->proc_ptr->cancel_button);
     lives_widget_hide(mainw->proc_ptr->pause_button);
     mainw->cancel_type = CANCEL_TYPE_SOFT;
-  }
-  else if (type == 0) lives_widget_hide(mainw->proc_ptr->cancel_button);
+  } else if (type == 0) lives_widget_hide(mainw->proc_ptr->cancel_button);
 
   lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar), .01);
 
@@ -2054,7 +2053,7 @@ boolean do_auto_dialog(const char *text, int type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
-  return _do_auto_dialog(text, type, std_stopfunc, NULL);
+  return _do_auto_dialog(text, type, (weed_funcptr_t)std_stopfunc, NULL);
 }
 
 
@@ -2064,7 +2063,7 @@ lives_proc_thread_t do_auto_dialog_async(const char *text, int type) {
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
   lives_proc_thread_t lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, _do_auto_dialog,
-						     WEED_SEED_BOOLEAN, "siFV", text, type, std_stopfunc, NULL);
+                            WEED_SEED_BOOLEAN, "siFV", text, type, (weed_funcptr_t)std_stopfunc, NULL);
   return lpt;
 }
 
@@ -2076,19 +2075,18 @@ typedef struct {
 
 
 lives_proc_thread_t do_auto_dialog_full(const char *text, int type, boolean async,
-					lives_condition stopcond, lives_result_t *override) {
+                                        lives_condition stopcond, lives_result_t *override) {
   lives_proc_thread_t lpt = NULL;
   LIVES_CALLOC_TYPE(cchkstopfuncdata_t, ccsfdata, 1);
   ccsfdata->cond = stopcond;
   ccsfdata->over = override;
   if (async) {
     lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, _do_auto_dialog,
-				   WEED_SEED_BOOLEAN, "siFV", text, type, condchk_stopfunc, ccsfdata);
+                                   WEED_SEED_BOOLEAN, "siFV", text, type, (weed_funcptr_t)condchk_stopfunc, ccsfdata);
     lives_proc_thread_autofree(lpt, ccsfdata, NULL);
 
-  }
-  else {
-    if (_do_auto_dialog(text, type, condchk_stopfunc, ccsfdata)) {
+  } else {
+    if (_do_auto_dialog(text, type, (weed_funcptr_t)condchk_stopfunc, ccsfdata)) {
       GET_PROC_THREAD_SELF(self);
       lpt = self;
     }
@@ -3546,10 +3544,11 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   syncid = gen_unique_id();
   lpt = mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
-                                 _thdlg_auto_spin, -1, "", NULL);
+                                 _thdlg_auto_spin, WEED_SEED_VOID, "", NULL);
   SET_LPT_VALUE(lpt, uint64, "sync_idx", syncid);
 
   lives_proc_thread_dispatch(lpt);
+
   lives_proc_thread_sync_with(lpt, syncid, MM_IGNORE);
 }
 

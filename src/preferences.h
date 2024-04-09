@@ -18,6 +18,10 @@
 
 #define ALLOW_NONFREE_CODECS 1
 
+#define PREF_PREFIX "PREF_"
+
+#define PREF_FLAGS_NONE			0
+
 // internal application prefs, not intended to be altered by users
 #define PREF_FLAG_INTERNAL		(1 << 0)
 
@@ -30,27 +34,42 @@
 // complete, but needs  adding to the interface
 #define PREF_FLAG_UNDOCUMENTED		(1 << 16)
 
-#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) _DW0(boolean a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_BOOLEAN,&a,FLAGS);)
-#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) _DW0(int a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_INT,&a,FLAGS);)
-#define DEFINE_PREF_INT64(IDX, PR, PDEF, FLAGS) _DW0(int64_t a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_INT64,&a,FLAGS);)
-#define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) _DW0(double a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_DOUBLE,&a,FLAGS);)
-#define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS) _DW0(float a=(PDEF);define_pref(PREF_##IDX,&prefs->PR,WEED_SEED_FLOAT,&a,FLAGS);)
-#define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) _DW0(char *a=(PDEF);weed_plant_t*p= \
-							    define_pref(PREF_##IDX,prefs->PR,WEED_SEED_STRING,&a,FLAGS); \
+#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_BOOLEAN,FLAGS,PDEF);)
+#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_INT,FLAGS,PDEF);)
+#define DEFINE_PREF_INT64(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_INT64,FLAGS,PDEF);)
+#define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_DOUBLE,FLAGS,PDEF);)
+#define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_FLOAT,FLAGS,PDEF);)
+#define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) _DW0(weed_plant_t*p= \
+							    define_pref(IDX,PR,WEED_SEED_STRING,FLAGS,PDEF); \
 							    weed_set_int_value(p,WEED_LEAF_MAXCHARS,(SLEN));)
+#define SET_PREF_WIDGET(IDX, WIDGET) (set_pref_widget(PREF_##IDX, (WIDGET)) ? SET_VOIDP_DATA(WIDGET, PREFIDX_KEY, PREF_PREFIX #IDX) \
+				      : SET_VOIDP_DATA(WIDGET, PREFIDX_KEY, PREF_PREFIX #IDX))
 
-#define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
-#define GET_PREF_WIDGET(IDX) get_pref_widget(PREF_##IDX)
+#define GET_PREF_WIDGET(IDX) get_pref_widget(PREF_PREFIX #IDX)
 
-#define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
-							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+#define GET_PREFIDX_FOR_WIDGET(WIDGET) ((const char *)GET_VOIDP_DATA(WIDGET, PREFIDX_KEY))
+
+#define ACTIVE(widget, signal) _DW0(uint64_t fn = lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
+									    _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL); \
+				    const char *idx = GET_PREFIDX_FOR_WIDGET(prefsw->widget); if (idx) {weed_plant_t *prefplant = find_pref(idx); \
+				      weed_set_int64_value(prefplant, LIVES_LEAF_ACT_FUNC, fn);})
+
 #define ACTIVE_W(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT((widget)), LIVES_WIDGET_ ##signal## \
 							   _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
 
-#define LIVES_LEAF_PREF_IDX "pref_idx"
-#define LIVES_LEAF_WIDGET "widget"
-#define LIVES_LEAF_STATUS "status"
-#define LIVES_LEAF_VARPTR "p_variable"
+#define CONNECT_BOOL_PREF(IDX, label)					\
+  _DW0(weed_plant_t *prefplant = find_pref(PREF_PREFIX #IDX);		\
+       weed_set_int64_value(prefplant, LIVES_LEAF_ACT_FUNC,		\
+			    lives_signal_sync_connect(LIVES_GUI_OBJECT(SET_PREF_WIDGET(IDX, \
+										       lives_standard_check_menu_item_new_with_label(_(label), \
+																     *((allvalues_t *)weed_get_voidptr_value(prefplant, WEED_LEAF_VALUE, NULL))->values.b))), \
+						      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_PREFIX #IDX));)
+
+#define LIVES_LEAF_PREF_IDX "_pref_idx"
+#define LIVES_LEAF_STATUS "_status"
+#define LIVES_LEAF_ACT_FUNC "act_func"
+#define LIVES_LEAF_WIDGET "_widget"
+#define LIVES_LEAF_KEYNAME "_keyname"
 
 #define PREFSTATUS_UNKNOWN	OBJECT_STATE_UNDEFINED	///< unknown PREF_IDX (use old API)
 #define PREFSTATUS_UNSET	OBJECT_STATE_NOT_READY	///< esists, but value has not been set
@@ -421,7 +440,10 @@ typedef struct {
   boolean pogo_mode;   /// allow mixing of locked audio with current clip audio (experimental, in progress)
 
   boolean event_window_show_frame_events;
+
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
+  boolean auto_rec_clips; ///< TRUE==autorecover clips
+  boolean skip_ign; ///< TRUE==skip clips flagged as 'ignore'
 
   boolean show_rdet; ///< show render details (frame size, encoder type) before saving to file
 
@@ -1422,6 +1444,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_POGO_MODE "pogo_mode"
 
+#define PREF_AUTO_REC_CLIPS "auto_recover_clips"
+#define PREF_SKIP_IGN "skip_ignored_clips"
+
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
 #define PREF_DEFAULT_FPS "default_fps"
@@ -1443,11 +1468,15 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"
 
+weed_plant_t *get_allprefs(void);
+
 char *get_meta(const char *key);
 void set_meta(const char *key, const char *value);
 
 void load_prefs(void);
 void load_pref(const char *pref_idx);
+weed_plant_t *find_pref(const char *pref_idx);
+LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *);
 LiVESWidget *get_pref_widget(const char *pref_idx);
 boolean update_pref(const char *pref_idx, void *newval, boolean permanent);
 
@@ -1522,6 +1551,7 @@ void optimize(void);
 // toggle for widget object data (widget is in preview state)
 #define PREVIEW_KEY "_prefw_preview"
 #define SPIN_KEY "_spin"
+#define PREFIDX_KEY "_prefidx"
 
 // permissions
 

@@ -217,27 +217,27 @@ extern locale_t oloc, nloc;
 typedef int funcinst_module_type;
 
 typedef enum {
-	      // the normal flow is inert -> (set as active finst in lpt) -> ready
-	      // (dispatch) -> waiting -> (picked up by pool thread) -> active
-	      // -> consumed or error or cancelled
-	      DISPOSITION_INERT = 0,
-	      DISPOSITION_READY,
-	      DISPOSITION_WAITING,
-	      DISPOSITION_ACTIVE,
-	      // has completed bur is waiting on some condition (eg. chain completion)
-	      DISPOSITION_IDLING,
-	      // is has been added as a hook callback
-	      DISPOSITION_STACKED,
-	      // will only be activated under certain circumstances (e.g am error handler)
-	      // ie. a free standing, sunordinate  funcinst, not part of a hook stack or the main active
-	      // funcinst for a procthread
-	      DISPOSITION_CONTINGENCY,
-	      // either the funcinst has been processed or been discarded / replaced
-	      // for stacked funcinst, this is not used, instead, the value of
-	      // req_reply in the callback receipt indicates the outcome
-	      DISPOSITION_CONSUMED,
-	      DISPOSITION_CANCELLED,
-	      DISPOSITION_ERROR,
+  // the normal flow is inert -> (set as active finst in lpt) -> ready
+  // (dispatch) -> waiting -> (picked up by pool thread) -> active
+  // -> consumed or error or cancelled
+  DISPOSITION_INERT = 0,
+  DISPOSITION_READY,
+  DISPOSITION_WAITING,
+  DISPOSITION_ACTIVE,
+  // has completed bur is waiting on some condition (eg. chain completion)
+  DISPOSITION_IDLING,
+  // is has been added as a hook callback
+  DISPOSITION_STACKED,
+  // will only be activated under certain circumstances (e.g am error handler)
+  // ie. a free standing, sunordinate  funcinst, not part of a hook stack or the main active
+  // funcinst for a procthread
+  DISPOSITION_CONTINGENCY,
+  // either the funcinst has been processed or been discarded / replaced
+  // for stacked funcinst, this is not used, instead, the value of
+  // req_reply in the callback receipt indicates the outcome
+  DISPOSITION_CONSUMED,
+  DISPOSITION_CANCELLED,
+  DISPOSITION_ERROR,
 } funcinst_disposition;
 
 typedef struct _lives_funcinst lives_funcinst_t;
@@ -267,7 +267,7 @@ typedef struct {
   //LiVESList *bound_params;
 
   char **paramdesc; // optional param descriprions
-  
+
   // locator
   const char *file;
   int line;
@@ -292,7 +292,7 @@ typedef struct {
   void *strct;
   weed_plant_t *plant;
 } lives_struct_t;
- 
+
 lives_struct_t *lives_struct_new(char *stname);
 
 // make_allvals will update bound params for plant, then return an allvalue set from plant, field
@@ -308,65 +308,65 @@ typedef struct {
   void *module_data;
 } funcinst_module_t;
 
-DEF_STRUCT(lives_funcinst, 
-	   uint64_t uid;
-	   lives_funcdef_t *funcdef;
+DEF_STRUCT(lives_funcinst,
+           uint64_t uid;
+           lives_funcdef_t *funcdef;
 
-	   pthread_rwlock_t dispolock;
+           pthread_rwlock_t dispolock;
 
-	   volatile funcinst_disposition disposition;
-	   //disposition_changed_cb
+           volatile funcinst_disposition disposition;
+           //disposition_changed_cb
 
-	   uint64_t flags;
+           uint64_t flags;
 
-	   /* // contains p0, p1, etc, plus const char **pnames */
-	   /* // p0_free, p1_free. etc. */
-	   /* // and return_val */
-	   /* // plus extra_funcsig - if funcdef->funcsig ends with "*" */
-	   /* // */
-	   weed_plant_t *params;
+           /* // contains p0, p1, etc, plus const char **pnames */
+           /* // p0_free, p1_free. etc. */
+           /* // and return_val */
+           /* // plus extra_funcsig - if funcdef->funcsig ends with "*" */
+           /* // */
+           weed_plant_t *params;
 
-	   const char **paramnames;
+           const char **paramnames;
 
-	   /* // can be a pointer to a variable to return value in */
-	   /* // if NULL,will be allocated and return value copied */
-	   /* // value can be read in completed hook for queud funcinst */
-	   /* // or between hook triggers for stacked funcinst */
-	   void *retloc;
+           /* // can be a pointer to a variable to return value in */
+           /* // if NULL,will be allocated and return value copied */
+           /* // value can be read in completed hook for queud funcinst */
+           /* // or between hook triggers for stacked funcinst */
+           void *retloc;
 
-	   // TODO:
-	   // data book contains all local values for the funcinst
-	   // including param values, real_funcsig, return_value
-	   // param_data_free funcs and also combines the module
-	   // - a proc_thread will jave a leaf - local_data_source
-	   // which by default points to active_funcinst->data_book
-	   // then when a condition is evaluated, local_data_source is where we look to find
-	   // COND_SYMBOL, symname
-	   //
-	   // each value is actually a voidptr to an allfunc_t *
-	   // when setting a value we can use macro SET_SELF_VALUE
-	   
-	   //weed_plant_t *data_book;
+           // TODO:
+           // data book contains all local values for the funcinst
+           // including param values, real_funcsig, return_value
+           // param_data_free funcs and also combines the module
+           // - a proc_thread will jave a leaf - local_data_source
+           // which by default points to active_funcinst->data_book
+           // then when a condition is evaluated, local_data_source is where we look to find
+           // COND_SYMBOL, symname
+           //
+           // each value is actually a voidptr to an allfunc_t *
+           // when setting a value we can use macro SET_SELF_VALUE
 
-	   void *next, *prev;
+           //weed_plant_t *data_book;
 
-	   int depth, chain_idx;
+           void *next, *prev;
 
-	   // depending on the intended DISPOSITION, one of several modules can be attached to
-	   // the funcinst. The modules provide additional information once a funcinst becomes active
+           int depth, chain_idx;
 
-	   // a funcinst may have a stack of modules, for example. a callback added to an async hook stack
-	   // gains a callback data module
-	   // then when queued for execution it gains a proc_thread module (via set disposition)
-	   // when execution finishes, the async callbacks can be joined, which normally would pop and free
-	   // the active funcinst for the proc_thread, however instead of being freed, it
-	   // pops the callback module back
+           // depending on the intended DISPOSITION, one of several modules can be attached to
+           // the funcinst. The modules provide additional information once a funcinst becomes active
 
-	   // mirrors of the current sync_list top
-	   funcinst_module_type mod_type;
-	   void *module;
+           // a funcinst may have a stack of modules, for example. a callback added to an async hook stack
+           // gains a callback data module
+           // then when queued for execution it gains a proc_thread module (via set disposition)
+           // when execution finishes, the async callbacks can be joined, which normally would pop and free
+           // the active funcinst for the proc_thread, however instead of being freed, it
+           // pops the callback module back
 
-	   lives_sync_list_t *modules;)
+           // mirrors of the current sync_list top
+           funcinst_module_type mod_type;
+           void *module;
+
+           lives_sync_list_t *modules;)
 
 #include "user-interface.h"
 
@@ -793,7 +793,7 @@ struct _capabilities {
   boolean can_show_msg_area;
 
   LiVESList *known_funcsigs;
-  
+
   int64_t ds_used, ds_free, ds_tot;
   lives_storage_status_t ds_status;
 
@@ -866,7 +866,7 @@ int orig_argc(void);
 char **orig_argv(void);
 
 // main.c
-void lives_assert_failed(const char *cond, const char *file, int line);
+void lives_assert_failed(const char *cond, const char *file, int line, ...);
 
 void set_signal_handlers(lives_sigfunc_t sigfunc);
 void catch_sigint(int signum, siginfo_t *si, void *uc);

@@ -34,6 +34,8 @@ typedef struct {
 // can be created by pushing or adding to a NULL sync_list
 // by default, ehrn the last value is popped or removed, the sync_list is freed, and NULL is returned
 
+void lives_sync_list_dump(lives_sync_list_t *);
+
 void lives_sync_list_set_lilo(lives_sync_list_t *, boolean lilo);
 void lives_sync_list_set_pop_head(lives_sync_list_t *, boolean yes);
 void lives_sync_list_free_on_empty(lives_sync_list_t *, boolean yes);
@@ -52,7 +54,7 @@ void *lives_sync_list_pop_to_last(lives_sync_list_t **);
 
 void *_lives_sync_list_peek(lives_sync_list_t *);
 void *lives_sync_list_peek(lives_sync_list_t *);
-  
+
 void lives_sync_list_set_priv(lives_sync_list_t *, void *priv);
 void *lives_sync_list_get_priv(lives_sync_list_t *);
 

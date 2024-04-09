@@ -1251,6 +1251,11 @@ typedef struct {
   LiVESWidget *open_loc_menu;
   LiVESWidget *open_loc_submenu;
   LiVESWidget *open_yuv4m;
+  LiVESWidget *crec_menu;
+  LiVESWidget *crec_submenu;
+  LiVESWidget *crec_ena;
+  LiVESWidget *crec_auto;
+  LiVESWidget *crec_ign;
   LiVESWidget *open_lives2lives;
   LiVESWidget *send_lives2lives;
   LiVESWidget *open_device_menu;
@@ -1617,6 +1622,7 @@ typedef struct {
 
   lives_thread_data_t *fg_tdata;
   lives_proc_thread_t def_lpt;
+  lives_funcinst_t *top_funcinst;
   lives_hook_stack_t **global_hook_stacks;
   LiVESList *all_hstacks;
 

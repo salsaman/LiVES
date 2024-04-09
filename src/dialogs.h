@@ -97,7 +97,7 @@ lives_proc_thread_t do_auto_dialog_async(const char *text, int type);
 
 
 lives_proc_thread_t do_auto_dialog_full(const char *text, int type, boolean async,
-					lives_condition stopcond, lives_result_t *override);
+                                        lives_condition stopcond, lives_result_t *override);
 
 void do_splash_progress(void);
 

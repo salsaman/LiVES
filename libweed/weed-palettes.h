@@ -233,7 +233,7 @@
 #define WEED_VCHAN_DESC_FP		(1 << 1) ///< floating point type
 #define WEED_VCHAN_DESC_BE		(1 << 2) ///< pixel data is big endian (within each component)
 
-#define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 16) ///< floating point type
+#define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 16)
 
 typedef struct {
   uint16_t ext_ref;  ///< link to an enumerated type

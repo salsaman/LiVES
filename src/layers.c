@@ -337,8 +337,8 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t 
       void *p = pd[0] = pixel_data[0];
       p += rows[0] * height;
       for (int i = 1; i < nplanes; i++) {
-	pd[i] = p;
-	p += (off_t)(rows[i] * height * weed_palette_get_plane_ratio_vertical(pal, i));
+        pd[i] = p;
+        p += (off_t)(rows[i] * height * weed_palette_get_plane_ratio_vertical(pal, i));
       }
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pd);
       add_internal_copylists(layer);
@@ -402,18 +402,18 @@ void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int pla
   void *spd = NULL, *real = NULL;
 
   LIVES_ASSERT(nplanes > 1);
-  
+
   if (pd) {
     spd = pd[plane];
     if (spd) {
       copylists = lives_layer_get_copylist_array(src, &nplanes);
       if (!copylists) {
-	copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
-	for (int i = 0; i < nplanes; i++) {
-	  copylists[i] = lives_sync_list_push(NULL, (void *)src);
-	  lives_sync_list_set_priv(copylists[i], pd[i]);
-	}
-	weed_set_voidptr_array(src, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
+        copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
+        for (int i = 0; i < nplanes; i++) {
+          copylists[i] = lives_sync_list_push(NULL, (void *)src);
+          lives_sync_list_set_priv(copylists[i], pd[i]);
+        }
+        weed_set_voidptr_array(src, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
       }
     }
     copylist = lives_sync_list_push(copylists[plane], (void *)dest);
@@ -440,9 +440,9 @@ void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int pla
     if (!copylists) {
       copylists = LIVES_CALLOC_SIZEOF(lives_sync_list_t *, nplanes);
       for (int i = 0; i < nplanes; i++) {
-	if (i == plane) continue;
-	copylists[i] = lives_sync_list_push(NULL, (void *)dest);
-	lives_sync_list_set_priv(copylists[i], pd[i]);
+        if (i == plane) continue;
+        copylists[i] = lives_sync_list_push(NULL, (void *)dest);
+        lives_sync_list_set_priv(copylists[i], pd[i]);
       }
       weed_set_voidptr_array(dest, LIVES_LEAF_COPYLIST, nplanes, (void **)copylists);
     }
@@ -487,7 +487,7 @@ void lives_layer_check_remove_copylists(lives_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {  
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_CONST_VALUE);
   weed_leaf_clear_flagbits(layer, WEED_LEAF_PIXEL_DATA, (LIVES_FLAG_CONST_VALUE | LIVES_FLAG_CONST_DATA));
   lives_layer_check_remove_copylists(layer);
@@ -604,10 +604,9 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
     if (weed_plant_has_leaf(src_layer, LIVES_LEAF_NEW_ROWSTRIDES)) {
       lives_leaf_copy(dst_layer, WEED_LEAF_ROWSTRIDES, src_layer, LIVES_LEAF_NEW_ROWSTRIDES);
       weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
-    }
-    else {
+    } else {
       if (weed_leaf_get_flags(src_layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_CONST_VALUE)
-      weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
+        weed_leaf_set_flags(dst_layer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
     }
   }
 
@@ -637,7 +636,7 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
 
   for (i = 0; i < nplanes; i++) {
     void *src = pixel_data[i]
-      + (off_t)(y_off * weed_palette_get_plane_ratio_vertical(pal, i)) * rowstrides[i];
+                + (off_t)(y_off * weed_palette_get_plane_ratio_vertical(pal, i)) * rowstrides[i];
     void *dst = npixel_data[i];
 
     xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
@@ -655,7 +654,7 @@ static lives_result_t copy_pixel_data_full(weed_layer_t *dst_layer, weed_layer_t
     }
   }
 
- done:
+done:
   lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
   lives_freep((void **)&rowstrides);

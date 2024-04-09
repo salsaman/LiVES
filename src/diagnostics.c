@@ -17,7 +17,7 @@
 #define PTMLH _DW0(pthread_mutex_lock(hmutex);)
 #define PTMUH _DW0(pthread_mutex_unlock(hmutex);)
 #define PTMTLH pthread_mutex_trylock(hmutex)
-  
+
 
 char *md5_print(void *md5sum) {
   char *cc = (char *)md5sum;
@@ -49,6 +49,16 @@ char *funcinst_paramstr(lives_funcinst_t *finst, funcsig_t sig) {
 }
 
 
+LIVES_GLOBAL_INLINE char *weed_leaf_stringify(weed_plant_t *pl, const char *key) {
+  char *xpstr = NULL;
+  weed_seed_t st = weed_leaf_seed_type(pl, key);
+  char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st));
+  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, pl, key, NULL);
+  lives_free(fmtpstr);
+  return xpstr;
+}
+
+
 char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
   if (finst) {
     char *fmtstring, *parvals;
@@ -57,7 +67,7 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
     funcsig_t sig = fdef->funcsig;
     const char *funcname = fdef->funcname;
     weed_seed_t st;
-    
+
     parvals = funcinst_paramstr(finst, sig);
 
     g_print("function %s with the following prototype\n", funcname);
@@ -74,31 +84,28 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
       char *pstr;
       int pn = 0;
       g_print("Function params have the following values\n");
-    
+
       for (int i = 60; i >= 0; i -= 4) {
-    	uint8_t ch = (sig >> i) & 0X0F;
-    	char *pname, *parname;
-    	const char *ctype;
-    	int ne;
-    	if (!ch) continue;
-    	st = get_seedtype(ch);
-    	pname = make_std_pname(pn);
-    	ne = weed_leaf_num_elements(finst->params, pname);
-    	ctype = weed_seed_to_ctype(st, FALSE);
-    	if (finst && finst->paramnames && finst->paramnames[pn])
-    	  parname = lives_strdup(finst->paramnames[pn]);
-    	else parname = lives_strdup_printf("param %d", pn);
-    	if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne);
-    	else {
-    	  char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st));
-    	  char *xpstr = NULL;;
-    	  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, finst->params, pname, NULL);
-    	  lives_free(fmtpstr);
-    	  pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr);
-    	  lives_free(xpstr);
-    	}
-    	g_print("%s\n",pstr);
-    	pn++;
+        uint8_t ch = (sig >> i) & 0X0F;
+        char *pname, *parname;
+        const char *ctype;
+        int ne;
+        if (!ch) continue;
+        st = get_seedtype(ch);
+        pname = make_std_pname(pn);
+        ne = weed_leaf_num_elements(finst->params, pname);
+        ctype = weed_seed_to_ctype(st, FALSE);
+        if (finst && finst->paramnames && finst->paramnames[pn])
+          parname = lives_strdup(finst->paramnames[pn]);
+        else parname = lives_strdup_printf("param %d", pn);
+        if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne);
+        else {
+          char *xpstr = weed_leaf_stringify(finst->params, pname);
+          pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr);
+          lives_free(xpstr);
+        }
+        g_print("%s\n", pstr);
+        pn++;
       }
     }
     return fmtstring;
@@ -194,11 +201,11 @@ char *lives_funcdef_explain(const lives_funcdef_t *funcdef) {
   if (funcdef) {
     char *tmp, *out =
       lives_strdup_printf("Function with uid 0X%016lX has prototype:\n"
-			  "\t%s %s(%s)\n function category is %d", funcdef->uid,
-			  weed_seed_to_ctype(funcdef->return_type, FALSE),
-			  funcdef->funcname ? funcdef->funcname : "??????",
-			  (tmp = funcsig_to_param_string(funcdef->funcsig)),
-			  funcdef->category);
+                          "\t%s %s(%s)\n function category is %d", funcdef->uid,
+                          weed_seed_to_ctype(funcdef->return_type, FALSE),
+                          funcdef->funcname ? funcdef->funcname : "??????",
+                          (tmp = funcsig_to_param_string(funcdef->funcsig)),
+                          funcdef->category);
     lives_free(tmp);
     return out;
   }
@@ -227,7 +234,7 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
   char *proto;
 
   g_print("\n\n");
-  
+
   if (!hstacks) {
     g_print("ERROR: no stacks !\n");
     return LIVES_RESULT_INVALID;
@@ -245,15 +252,14 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   if (native) {
     g_print("Stack type native, owner is pthread %s\n", get_thread_id(hstack->owner.thread));
-  }
-  else {
+  } else {
     lives_proc_thread_t lpt = hstack->owner.lpt;
     lives_funcinst_t *xfinst = lives_proc_thread_get_initial_funcinst(lpt);
     g_print("Stack type proc_thread, owner is proc_thread %p\n", lpt);
     lpt_desc_state(lpt);
     g_print("%s\n", lives_funcinst_show_func_call(xfinst));
   }
-  
+
   g_print("\n");
 
   g_print("hook stack pattern is %s\n", hs_pattern_name(hstack->hsdesc->pattern));
@@ -264,8 +270,7 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
     if (hstack->hsdesc->def_args_fmt) {
       char *pstr = args_fmt_to_param_string(hstack->hsdesc->def_args_fmt);
       proto = lives_strdup_printf("Parameters must match %s", pstr);
-    }
-    else proto = lives_strdup_printf("Parameters unspecified");
+    } else proto = lives_strdup_printf("Parameters unspecified");
   }
   g_print("Callback prototype: %s\n", proto);
   lives_free(proto);
@@ -306,10 +311,10 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
 
   if (lives_describe_hook_stack(hstacks, type) != LIVES_RESULT_SUCCESS) return;
   hstack = hstacks[type];
-  
+
   hmutex = &(hstack->mutex);
   PTMLH;
-  
+
   if (!hstack->stack) {
     g_print("Stack empty\n");
     goto done;
@@ -324,13 +329,13 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
     }
 
     g_print("retloc = %p, callback flags: 0X%016lX\n",
-	    finst->retloc, CL_DATA(finst, cb_flags));
+            finst->retloc, CL_DATA(finst, cb_flags));
 
     g_print("%s\n", cl_flags_desc(CL_DATA(finst, cb_flags)));
     g_print("%s\n\n", lives_funcinst_show_func_call(finst));
   }
 
- done:
+done:
   PTMUH;
 }
 
@@ -341,29 +346,6 @@ void dump_hook_stack_for(lives_proc_thread_t lpt, int type) {
 
 
 void list_leaves(weed_plant_t *plant) {
-  weed_size_t nleaves;
-  char **keys = _weed_plant_list_leaves(plant, &nleaves);
-  fprintf(stderr, "Plant %p has %d leaves\n", plant, nleaves);
-  if (!keys) {
-    fprintf(stderr, "keys are NULL\n");
-    return;
-  } else {
-    if (!nleaves) {
-      fprintf(stderr, "plant has no leaves\n");
-      return;
-    } else {
-      for (int n = 0;  keys[n]; n++) {
-        fprintf(stderr, "key %d is %s\n", n, keys[n]);
-        _ext_free(keys[n]);
-      }
-      _ext_free(keys);
-    }
-    fprintf(stderr, "\n");
-  }
-}
-
-
-void examine_plant(weed_plant_t *plant) {
   weed_size_t nleaves;
   char **keys = _weed_plant_list_leaves(plant, &nleaves);
   fprintf(stderr, "Displaying all %d leaf values in plant %p\n",  nleaves, plant);
@@ -391,11 +373,6 @@ void examine_plant(weed_plant_t *plant) {
     }
   }
 }
-  /* char *info; */
-  /* lives_dicto_t *dicto  = weed_plant_to_dicto(plant); */
-  /* info = lives_object_dump_attributes(dicto); */
-  /* g_print("%s", info); */
-  /* lives_free(info); */
 
 
 
@@ -419,7 +396,7 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
       lives_free(ar);
       ar = NULL;
     }
-   _ext_free(leaves[i]);
+    _ext_free(leaves[i]);
   }
   _ext_free(leaves);
 
@@ -428,7 +405,7 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
   else
     line = lives_strdup_printf("\n} %s;", tname);
   lives_concat(hdr, line);
-  g_print("%s",hdr);
+  g_print("%s", hdr);
   return hdr;
 }
 
@@ -521,24 +498,73 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
 }
 
 
-void analyse_weed_plant(weed_plant_t *pl, int *xtype, int *xsubtype) {
+void analyse_weed_plant(weed_plant_t *pl, int *xtype, int64_t *xsubtype) {
   int type = 0, subtype = 0;
   if (xtype) *xtype = 0;
-  if (xsubtype) *xtype = 0;
+  if (xsubtype) *xsubtype = 0;
   if (!pl) return;
   type = weed_get_int_value(pl, WEED_LEAF_TYPE, NULL);
   if (xtype) *xtype = type;
   switch (type) {
   case WEED_PLANT_LIVES:
-    g_print("plant with uid %" PRIu64 " is of type WEED_PLANT_LIVES ",
-	    (uint64_t)weed_get_int64_value(pl, LIVES_LEAF_UID, NULL));
-    subtype = weed_get_int_value(pl, LIVES_LEAF_SUBTYPE, NULL);
+    g_print("plant with uid  0X%016lX is of type WEED_PLANT_LIVES, subtype ",
+            (uint64_t)weed_get_int64_value(pl, WEED_LEAF_UNIQUE_ID, NULL));
+    subtype = weed_get_int64_value(pl, LIVES_LEAF_SUBTYPE, NULL);
     if (xsubtype) *xsubtype = subtype;
     switch (subtype) {
     case LIVES_PLANT_PROC_THREAD:
       g_print("subtype PROC_THREAD\n\n");
       break;
+    case LIVES_PLANT_INDEX: {
+      const char *prefix = weed_get_const_string_value(pl, LIVES_LEAF_PREFIX, NULL);
+      weed_seed_t dtype = weed_get_int_value(pl, LIVES_LEAF_DATA_TYPE, NULL);
+      char **names = weed_plant_list_leaves(pl, NULL);
+      int i, j = 0;
+      g_print("LIVES_PLANT_INDEX\n");
+      g_print("Prefix is \"%s\", datatype is %s\n\n", prefix, weed_seed_to_text(dtype));
+      for (i = 0; names[i]; i++) {
+        if (lives_str_starts_with(names[i], prefix)) {
+          g_print("\nItem %d (%s)", j++, names[i]);
+          if (dtype == WEED_SEED_PLANTPTR) {
+            weed_plant_t *xp = weed_get_plantptr_value(pl, names[i], NULL);
+            g_print(":\n");
+            analyse_weed_plant(xp, NULL, NULL);
+          } else g_print("\n");
+        }
+        _ext_free(names[i]);
+      }
+      _ext_free(names);
+    }
+    break;
+    case LIVES_PLANT_PREFERENCE: {
+      allvalues_t *allvp = (allvalues_t *)weed_get_voidptr_value(pl, WEED_LEAF_VALUE, NULL);
+      const char *keyname = weed_get_const_string_value(pl, LIVES_LEAF_KEYNAME, NULL);
+      g_print("LIVES_PLANT_PREFERENCE\n");
+      g_print("keyname <%s>\n", keyname);
+      g_print("Value is bound to %s variable %s\n", weed_seed_to_text(allvp->stype), allvp->aname);
+      g_print("Current value is: ");
+      switch (allvp->stype) {
+      case WEED_SEED_INT: g_print("%d", *allvp->values.i); break;
+      case WEED_SEED_INT64: g_print("%ld", *allvp->values.I); break;
+      case WEED_SEED_BOOLEAN: g_print("%s", *allvp->values.b ? "TRUE" : "FALSE"); break;
+      case WEED_SEED_DOUBLE: g_print("%f", *allvp->values.d); break;
+      case WEED_SEED_STRING: g_print("%s", *allvp->values.s); break;
+      default: g_print("??????"); break;
+      }
+      g_print("\n");
+      char *xpstr = weed_leaf_stringify(pl, WEED_LEAF_DEFAULT);
+      g_print("default: %s\n", xpstr);
+      lives_free(xpstr);
+      int flags = weed_get_int_value(pl, WEED_LEAF_FLAGS, NULL);
+      int status = weed_get_int_value(pl, LIVES_LEAF_STATUS, NULL);
+      g_print("Flags %d, status %d\n", flags, status);
+      LiVESWidget *w = GET_PREF_WIDGET(pl);
+      if (w) g_print("has active widget %p\n", w);
+      else g_print("no active widget\n");
+    }
+    break;
     default:
+      g_print("unknown subtype %d\n", subtype);
       break;
     }
     break;
@@ -548,17 +574,28 @@ void analyse_weed_plant(weed_plant_t *pl, int *xtype, int *xsubtype) {
 }
 
 
+LIVES_GLOBAL_INLINE void list_prefs(void) {
+  weed_plant_t *allprefs = get_allprefs();
+  if (!allprefs) {
+    g_print("No preferences defined !\n");
+    return;
+  }
+  g_print("\n\nListing all defined prefs utilising the LiVESPref API\n\n");
+  analyse_weed_plant(allprefs, NULL, NULL);
+}
+
+
 LiVESList *sort_leaves_by_val(weed_plant_t *pl, const char *prefix,
-			      lives_direction_t dir) {
+                              lives_direction_t dir) {
   LiVESList *sorted = NULL;
   if (pl) {
     weed_size_t nleaves;
     char **keys = _weed_plant_list_leaves(pl, &nleaves);
     for (int n = 1;  keys[n]; n++) {
       if (lives_str_starts_with(keys[n], prefix)) {
-	char *data = lives_strdup(keys[n]);
-	int64_t count = weed_get_int64_value(pl, keys[n], NULL);
-	sorted = idx_list_update(sorted, count, data, TRUE);
+        char *data = lives_strdup(keys[n]);
+        int64_t count = weed_get_int64_value(pl, keys[n], NULL);
+        sorted = idx_list_update(sorted, count, data, TRUE);
       }
       _ext_free(keys[n]);
     }
@@ -585,38 +622,39 @@ void show_audit(weed_plant_t *plant) {
     return;
   }
   if (!nleaves) {
-      fprintf(stderr, "plant has no leaves\n");
-      return;
+    fprintf(stderr, "plant has no leaves\n");
+    return;
   }
   // skip "type" leaf
   for (int n = 1;  keys[n]; n++) {
     int st = weed_leaf_seed_type(plant, keys[n]);
     switch (st) {
     case WEED_SEED_PLANTPTR: {
-      int type, subtype;
+      int type;
+      int64_t subtype;
       if (!lives_strncmp(keys[n], "plant_", 6)) {
-	weed_plant_t *pl = weed_get_plantptr_value(plant, keys[n], NULL);
-	fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
-	analyse_weed_plant(pl, &type, &subtype);
-	if (IS_PROC_THREAD(type, subtype)) {
-	  char *fnamex = lives_strdup_printf("func_%s", lives_proc_thread_get_funcname(pl));
-	  lives_proc_thread_show_func_call(pl);
-	  if (!ledger) {
-	    ledger = weed_plant_new(123);
-	    ord_prefix = "func_";
-	  }
-	  weed_set_int64_value(ledger, fnamex, weed_get_int64_value(ledger, fnamex, NULL) + 1);
-	  lives_free(fnamex);
-	}
+        weed_plant_t *pl = weed_get_plantptr_value(plant, keys[n], NULL);
+        fprintf(stderr, "plant %d is at %s\n", n, keys[n]);
+        analyse_weed_plant(pl, &type, &subtype);
+        if (IS_PROC_THREAD(type, subtype)) {
+          char *fnamex = lives_strdup_printf("func_%s", lives_proc_thread_get_funcname(pl));
+          lives_proc_thread_show_func_call(pl);
+          if (!ledger) {
+            ledger = weed_plant_new(123);
+            ord_prefix = "func_";
+          }
+          weed_set_int64_value(ledger, fnamex, weed_get_int64_value(ledger, fnamex, NULL) + 1);
+          lives_free(fnamex);
+        }
       }
     }
-      break;
+    break;
     case WEED_SEED_VOIDPTR: {
       if (lives_strtol(keys[n] + 2)) {
-	fprintf(stderr, "voidptr %d is at %s\n", n, keys[n]);
+        fprintf(stderr, "voidptr %d is at %s\n", n, keys[n]);
       }
     }
-      break;
+    break;
     default: break;
     }
     _ext_free(keys[n]);
@@ -627,14 +665,14 @@ void show_audit(weed_plant_t *plant) {
     if (ord_prefix) {
       LiVESList *sorted = sort_leaves_by_val(ledger, ord_prefix, ord_dir);
       if (sorted) {
-	g_print("\n\nLPT leak check:\n");
-	for (LiVESList *list = sorted; list; list = list->next) {
-	  idx_list_data_t *vs = (idx_list_data_t *)list->data;
-	  char *fname = (char *)vs->data;
-	  int64_t ntimes = vs->idx;
-	  g_print("func %s occured %" PRId64 " times\n", fname + 5, ntimes);
-	}
-	lives_list_free_all(&sorted);
+        g_print("\n\nLPT leak check:\n");
+        for (LiVESList *list = sorted; list; list = list->next) {
+          idx_list_data_t *vs = (idx_list_data_t *)list->data;
+          char *fname = (char *)vs->data;
+          int64_t ntimes = vs->idx;
+          g_print("func %s occured %" PRId64 " times\n", fname + 5, ntimes);
+        }
+        lives_list_free_all(&sorted);
       }
     }
     weed_plant_free(ledger);

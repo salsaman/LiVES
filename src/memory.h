@@ -451,12 +451,12 @@ void *_calloc_bigblock(size_t s);
 #define calloc_bigblock(s) ((lives_print_ret("bbcalloc %s, %d\n",_FILE_REF_, _LINE_REF_) \
 			     ? _calloc_bigblock(s) : _calloc_bigblock(s)))
 else
-djsiodjaiodjaiojdoiasjdi
+  djsiodjaiodjaiojdoiasjdi
 #define malloc_bigblock(s) _malloc_bigblock(s);
 #define calloc_bigblock(s) _calloc_bigblock(s)
 #endif
 
-void bbsummary(void);
+  void bbsummary(void);
 
 void *realloc_bigblock(void *, size_t s);
 void _lives_free_maybe_big(void *);

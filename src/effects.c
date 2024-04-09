@@ -40,7 +40,7 @@ static boolean apply_audio_fx;
 char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
   // return value should be free'd after use
   switch (cat) {
-    // main categories
+  // main categories
   case LIVES_FX_CAT_VIDEO_GENERATOR:
     if (!plural) return ((_("generator")));
     else return ((_("Generators")));
@@ -87,7 +87,7 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
     if (!plural) return ((_("analyser")));
     else return ((_("Analysers")));
 
-    // subcategories
+  // subcategories
   case LIVES_FX_CAT_AV_TRANSITION:
     if (!plural) return ((_("audio/video")));
     else return ((_("Audio/Video Transitions")));
@@ -159,23 +159,23 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     }
   }
 
- 
+
   if (rfx->num_in_channels > 0) {
     //yif (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
-      // start decoding frames for the rendered effect plugins to start processing
-      if (!cfile->pumper) {
-        if (rfx->props & RFX_PROPS_MAY_RESIZE)
-          cfile->pumper =
-      	    lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_START_CANCELLABLE
-				     | LIVES_THRDATTR_START_PAUSEABLE, virtual_to_images, -1,
-				     "iiibV", mainw->current_file, 1, cfile->frames, FALSE, NULL);
-        else
-          cfile->pumper =
-      	    lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_START_CANCELLABLE
-				     | LIVES_THRDATTR_START_PAUSEABLE, virtual_to_images, -1, "iiibV",
-				     mainw->current_file, cfile->undo_start, cfile->undo_end, FALSE, NULL);
-      }
+    // start decoding frames for the rendered effect plugins to start processing
+    if (!cfile->pumper) {
+      if (rfx->props & RFX_PROPS_MAY_RESIZE)
+        cfile->pumper =
+          lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_START_CANCELLABLE
+                                   | LIVES_THRDATTR_START_PAUSEABLE, virtual_to_images, -1,
+                                   "iiibV", mainw->current_file, 1, cfile->frames, FALSE, NULL);
+      else
+        cfile->pumper =
+          lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_START_CANCELLABLE
+                                   | LIVES_THRDATTR_START_PAUSEABLE, virtual_to_images, -1, "iiibV",
+                                   mainw->current_file, cfile->undo_start, cfile->undo_end, FALSE, NULL);
     }
+  }
 
   else if (!is_preview) current_file = mainw->pre_src_file;
 
@@ -1068,7 +1068,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
 
     if (on_off == LIVES_ON) {
       // switch is ON
-      
+
       filter_mutex_lock(key);
       if (mainw->rte_soft_mask & new_rte) {
 	mainw->rte_soft_mask &= ~new_rte;
@@ -1197,7 +1197,7 @@ void rte_keys_update(void) {
   // otherwise, rte would be non zero, and of rte_real became 9, this would
   // deinit all, including soft deinited fx, which we want to avoid
   // so we here take rte ^ soft_mask
-  
+
   uint64_t real_rte = mainw->rte_real;
   uint64_t rte = mainw->rte & ~mainw->rte_soft_mask;
   if ((rte & phys_mask) && !((real_rte & phys_mask))) {

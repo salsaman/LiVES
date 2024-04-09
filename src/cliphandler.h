@@ -339,7 +339,7 @@ typedef struct {
 
   // palette, gamma_type for this clipsrc, will be converted to
   // apparent_pal, apparent_gamma for the srcgrp
-  
+
   // current palette in use
   int cpal;
   // current gamm_type for the src
@@ -356,7 +356,7 @@ typedef struct {
 
   // TODO - can be idle, loading, loaded, error, invalid
   uint64_t status;
-  
+
   void *priv; // private data for the source
 } lives_clip_src_t;
 

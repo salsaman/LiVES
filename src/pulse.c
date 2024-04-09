@@ -454,13 +454,13 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
   static lives_thread_data_t *tdata = NULL;
   static int async_writer_count = 0;
-  static lives_proc_thread_t rec_lpt = NULL;
+  static void *rec_rcpt = NULL;
   static arec_details *dets = NULL;
 
   boolean got_cmd = FALSE;
   boolean from_memory = FALSE;
   boolean needs_free = FALSE;
-  boolean cancel_rec_lpt = FALSE;
+  boolean cancel_rec_rcpt = FALSE;
 
   int new_file;
   int ret = 0;
@@ -487,10 +487,9 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   pulsed->real_seek_pos = pulsed->seek_pos;
   pulsed->pstream = pstream;
 
-
-  if (rec_lpt && (!mainw->record || IS_VALID_CLIP(mainw->ascrap_file) || LIVES_IS_PLAYING)) {
-    lives_proc_thread_request_cancel(rec_lpt, FALSE);
-    cancel_rec_lpt = TRUE;
+  if (rec_rcpt && (!mainw->record || !IS_VALID_CLIP(mainw->ascrap_file) || !LIVES_IS_PLAYING)) {
+    lives_hook_cb_remove(rec_rcpt);
+    cancel_rec_rcpt = TRUE;
   }
 
   if (async_writer_count) {
@@ -498,16 +497,12 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     // we must do this before we can free the data from the previous cycle
     lives_hook_async_join(DATA_READY_HOOK);
     async_writer_count = 0;
+    cleanup_self_receipts();
   }
 
-  lives_aplayer_set_data_len(self, 0);
-  lives_aplayer_set_data(self, NULL);
-
-  if (cancel_rec_lpt) {
-    // since we cancelled rec_lpt, then called async_join, it should have been removed from the hook_stack
+  if (cancel_rec_rcpt) {
+    // since we cancelled rec_rcpt, then called async_join, it should have been removed from the hook_stack
     // we can now unref it, and it should be freed
-    lives_proc_thread_unref(rec_lpt);
-    rec_lpt = NULL;
     lives_free(dets);
     dets = NULL;
   }
@@ -1201,29 +1196,21 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           if (pl_error) nbytes = 0;
         }
 
-#if 0
-        ////////////////////////////////////////
-        // TODO - attach a callback to data_ready hook
-        //////////////////////////////////////////////////////////
-
-
         if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
-          if (!rec_lpt) {
+          if (!rec_rcpt) {
             dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
             ;	      /// if we are recording then write generated audio to ascrap_file
             dets->clipno = mainw->ascrap_file;
             dets->fd = mainw->aud_rec_fd;
             dets->rec_samples = -1;
 
-            rec_lpt = lives_proc_thread_add_hook_cb_full(NULL, DATA_READY_HOOK, 0, write_aud_data_cb,
-                      WEED_SEED_BOOLEAN, "pv", self, dets);
-            // this ensures ana_lpt is not freed as soon as we cancel it
-            lives_proc_thread_ref(rec_lpt);
+            rec_rcpt = lives_proc_thread_add_hook_cb_full(NULL, DATA_READY_HOOK, 0, write_aud_data_cb,
+                       WEED_SEED_BOOLEAN, "pv", self, dets);
           }
 
           /* // end from gen */
         }
-#endif
+
         pulseFramesAvailable -= numFramesToWrite;
 
 #ifdef DEBUG_PULSE
@@ -1291,22 +1278,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #if HAVE_PA_STREAM_BEGIN_WRITE
     buffer = pulsed->sound_buffer;
 #endif
-
-    ///
-    /// convert to float if necessary - e.g have fx. mixers,
-
-    // send to fx as float
-
-
-    // convert back to s16, but keep float
-
-    // s16 -> pulse
-
-
-
-
-
-
 
     if (!pulsed->is_corked) {
 #if 0
@@ -1400,14 +1371,14 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       // - async join a, send b to cbs, fill a, etc
 
       // async_join here
-      
+
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
-	lives_aplayer_set_data(self, (void *)buffer);
+        lives_aplayer_set_data(self, (void *)buffer);
         async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
         pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
-	// switch buffers
+        // switch buffers
       } else pulse_buff_free(pulsed->aPlayPtr->data);
 #else
       buffer = NULL;
@@ -1415,10 +1386,10 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #ifdef DEBUG_PULSE
         g_print("writing %ld bytes to pulse\n", nbytes);
 #endif
-	lives_aplayer_set_data(self, (void *)pulsed->sound_buffer);
+        lives_aplayer_set_data(self, (void *)pulsed->sound_buffer);
         async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
-	// switch buffers
+        // switch buffers
       }
 #endif
     } else {
@@ -1505,9 +1476,6 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
   }
 
-  lives_aplayer_set_data_len(self, 0);
-  lives_aplayer_set_data(self, NULL);
-
   if (pulsed->is_corked) {
     lives_proc_thread_include_states(self, THRD_STATE_IDLING | THRD_STATE_BLOCKED);
     return;
@@ -1578,10 +1546,8 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     // we must do this before we can free the data from the previous cycle
     lives_hook_async_join(DATA_READY_HOOK);
     async_reader_count = 0;
+    cleanup_self_receipts();
   }
-  
-  // the DATA_READY_HOOKs are run as async_callbacks, so there is zero blocking here !
-  // however we must ensure that back_buff is not freed until the next cycle has called async_hook_join()
 
   if (bbsize < rbytes) {
     if (back_buff) lives_free(back_buff);
@@ -1592,9 +1558,10 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   lives_memcpy(back_buff, data, rbytes);
 
   lives_aplayer_set_data_len(self, nframes);
-
   lives_aplayer_set_data(self, (void *)back_buff);
 
+  // the DATA_READY_HOOK callbacks are run async parallel, so there is zero blocking here !
+  // however we must ensure that back_buff is not freed until the next cycle has called lives_hook_async_join()
   async_reader_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
 
   pulsed->seek_pos += rbytes;
@@ -1847,7 +1814,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     // set write callback
     pa_stream_set_write_callback(pdriver->pstream, (pa_stream_request_cb_t)pulse_audio_write_process, pdriver);
-    
+
     /* pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver); */
     /* pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver); */
     /* pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver); */

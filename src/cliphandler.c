@@ -1244,14 +1244,16 @@ LIVES_GLOBAL_INLINE boolean should_ignore_clip(int clipno) {
 
 
 LIVES_GLOBAL_INLINE boolean should_ignore_ext_clip(const char *handle) {
-  boolean bret = TRUE;
-  char *clipdir = lives_build_path(prefs->workdir, handle, NULL);
-  if (lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
-    char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
-    if (!lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) bret = FALSE;
-    lives_free(ignore);
+  boolean bret = FALSE;
+  if (prefs->skip_ign) {
+    char *clipdir = lives_build_path(prefs->workdir, handle, NULL);
+    if (lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
+      char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+      if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) bret = TRUE;
+      lives_free(ignore);
+    }
+    lives_free(clipdir);
   }
-  lives_free(clipdir);
   return bret;
 }
 
@@ -2455,11 +2457,11 @@ void switch_to_file(int old_file, int new_file) {
     if (!mainw->multitrack && !mainw->reconfig) {
       if (!get_timeline_lock()) {
         if (mainw->recovering_files) return;
-	boolean is_fg = is_fg_thread();
-	while (!(get_timeline_lock())) {
-	  if (is_fg) fg_service_fulfill();
-	  lives_microsleep;
-	}
+        boolean is_fg = is_fg_thread();
+        while (!(get_timeline_lock())) {
+          if (is_fg) fg_service_fulfill();
+          lives_microsleep;
+        }
       }
       redraw_timeline(mainw->current_file);
       unlock_timeline();
@@ -2996,7 +2998,7 @@ static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_gr
   if (ext_URI) mysrc->ext_URI = lives_strdup(ext_URI);
 
   //  if (src_type == LIVES_SRC_TYPE_BLANK)
-    //mysrc->action_func = lives_blankframe_srcfunc;
+  //mysrc->action_func = lives_blankframe_srcfunc;
 
   _clip_src_insert(srcgrp, mysrc, TRUE);
 

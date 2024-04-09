@@ -751,6 +751,29 @@ void create_LiVES(void) {
   }
   widget_opts.mnemonic_label = TRUE;
 
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
+
+  mainw->crec_menu = lives_standard_menu_item_new_with_label(_("_Crash Recovery..."));
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->crec_menu);
+
+  mainw->crec_submenu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->crec_menu), mainw->crec_submenu);
+
+  mainw->crec_ena = lives_standard_check_menu_item_new_with_label(_("Crash Recovery Enabled"), TRUE);
+  lives_container_add(LIVES_CONTAINER(mainw->crec_submenu), mainw->crec_ena);
+  lives_widget_set_sensitive(mainw->crec_ena, FALSE);
+
+  /* CONNECT_BOOL_PREF(AUTO_REC_CLIPS, "Auto Reload Clips after Crash"); */
+  /* lives_container_add(LIVES_CONTAINER(mainw->crec_submenu), GET_PREF_WIDGET(AUTO_REC_CLIPS)); */
+
+  /* CONNECT_BOOL_PREF(SKIP_IGN, "Skip Clips Flagged as Ignore"); */
+  /* lives_container_add(LIVES_CONTAINER(mainw->crec_submenu), GET_PREF_WIDGET(SKIP_IGN)); */
+
+  mainw->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace / Recover Missing Clips"));
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->clear_ds);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
+
   mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
 
@@ -817,9 +840,6 @@ void create_LiVES(void) {
                                LIVES_KEY_r, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
-
-  mainw->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace / Recover Missing Clips"));
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->clear_ds);
 
   mainw->quit = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_QUIT, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->quit);
@@ -4656,7 +4676,7 @@ static void _resize_play_window(void) {
     }
     play_window_set_title();
   }
-  
+
   lives_widget_hide(mainw->play_window);
   lives_widget_show(mainw->play_window);
 

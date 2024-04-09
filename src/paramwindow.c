@@ -148,9 +148,9 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
       lives_proc_thread_t lpt = STEAL_POINTER(cfile->pumper);
       if (lpt) {
-	lives_proc_thread_request_cancel(lpt, FALSE);
-	lives_proc_thread_join_void(lpt);
-	lives_proc_thread_unref(lpt);
+        lives_proc_thread_request_cancel(lpt, FALSE);
+        lives_proc_thread_join_void(lpt);
+        lives_proc_thread_unref(lpt);
       }
 
       if (cfile->start == 0) {

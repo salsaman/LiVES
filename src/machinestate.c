@@ -1203,9 +1203,9 @@ LIVES_GLOBAL_INLINE int64_t lives_plant_get_subtype(weed_plant_t *plant) {
 LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int64_t subtype) {
   weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
   weed_set_int64_value(plant, LIVES_LEAF_SUBTYPE, subtype);
-  weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
-  lives_leaf_set_rdonly(plant, LIVES_LEAF_UID, TRUE, TRUE);
-  weed_leaf_set_undeletable(plant, LIVES_LEAF_UID, TRUE);
+  weed_set_int64_value(plant, WEED_LEAF_UNIQUE_ID, gen_unique_id());
+  lives_leaf_set_rdonly(plant, WEED_LEAF_UNIQUE_ID, TRUE, TRUE);
+  weed_leaf_set_undeletable(plant, WEED_LEAF_UNIQUE_ID, TRUE);
   return plant;
 }
 
@@ -1907,8 +1907,8 @@ boolean lives_disable_screensaver(void) {
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
     } else {
-      enable_ss_lpt = lives_hook_prepend_full(mainw->global_hook_stacks, FATAL_HOOK,
-                                              0, enable_ss_cb, 0, "", NULL);
+      enable_ss_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
+                      HOOK_CB_PRIORITY, enable_ss_cb, WEED_SEED_VOID, "", NULL);
     }
     return TRUE;
   }
@@ -2144,8 +2144,8 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
-    show_dpanel_lpt = lives_hook_prepend_full(mainw->global_hook_stacks, FATAL_HOOK,
-					      0, show_dpanel_cb, 0, "", NULL);
+    show_dpanel_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
+						HOOK_CB_PRIORITY, show_dpanel_cb, WEED_SEED_VOID, "", NULL);
   }
 #endif
   return ret;

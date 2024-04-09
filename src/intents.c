@@ -52,8 +52,7 @@ static weed_plant_t *plant_from_tmpl(int pltype, ...) {
     if (!st) {
       // if we get st 0, we set a placeholder string
       weed_leaf_from_varg(pl, name, WEED_SEED_STRING, 1, va);
-    }
-    else {
+    } else {
       weed_leaf_from_varg(pl, name, st, ne, va);
     }
   }
@@ -74,11 +73,10 @@ static weed_plant_t *make_bluprint(int nleaves, int pltype, ...) {
     if (!st) break;
     const char *name = va_arg(va, const char *);
     uint64_t flags = va_arg(va, uint64_t);
-    if (flags & PARAM_FLAG_ARRAY){
+    if (flags & PARAM_FLAG_ARRAY) {
       ne = va_arg(va, weed_size_t);
       defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, ne, va));
-    }
-    else defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, 1, va));
+    } else defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, 1, va));
   }
   va_end(va);
   weed_set_int_value(pl, "pl_type", pltype);
@@ -184,7 +182,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_attr_group(lives_obj_i
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_create(uint64_t type, uint64_t subtype) {
   lives_obj_instance_t *loi = lives_plant_new(LIVES_PLANT_OBJECT);
-  weed_set_int64_value(loi, LIVES_LEAF_UID, gen_unique_id());
+  weed_set_int64_value(loi, WEED_LEAF_UNIQUE_ID, gen_unique_id());
   weed_set_int64_value(loi, LIVES_LEAF_OBJ_TYPE, type);
   weed_set_int64_value(loi, LIVES_LEAF_OBJ_SUBTYPE, subtype);
   add_garnish(loi);
@@ -463,7 +461,7 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(lives_obj_t *obj) {
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_uid(lives_obj_t *obj) {
-  return obj ? weed_get_int64_value(obj, LIVES_LEAF_UID, NULL) : 0;
+  return obj ? weed_get_int64_value(obj, WEED_LEAF_UNIQUE_ID, NULL) : 0;
 }
 
 
@@ -603,10 +601,10 @@ uint64_t add_weed_plant_to_objstore(weed_plant_t *plant) {
   // only add if not there
   lives_dicto_t *dicto;
   weed_error_t err;
-  uint64_t uid = weed_get_uint64_value(plant, LIVES_LEAF_UID, &err);
+  uint64_t uid = weed_get_uint64_value(plant, WEED_LEAF_UNIQUE_ID, &err);
   if (err == WEED_ERROR_NOSUCH_LEAF) {
     uid = gen_unique_id();
-    weed_set_uint64_value(plant, LIVES_LEAF_UID, uid);
+    weed_set_uint64_value(plant, WEED_LEAF_UNIQUE_ID, uid);
   } else if (err != WEED_SUCCESS) return 0;
   dicto  = weed_plant_to_dicto(plant);
   dict_size += weed_plant_weigh(plant);
@@ -992,7 +990,8 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
       weed_size_t ne = weed_leaf_num_elements(attrs[count], WEED_LEAF_VALUE);
       char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
       uint32_t st = weed_leaf_seed_type(attrs[count], WEED_LEAF_VALUE);
-      int type = 0, subtype = 0;
+      int type = 0;
+      int64_t subtype = 0;
       if (ne) {
         if (weed_get_int_value(attrs[count], WEED_LEAF_FLAGS, NULL) & PARAM_FLAG_READONLY)
           notes = " (readonly)";
@@ -1006,8 +1005,14 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
         int ival = lives_attribute_get_value_int(attrs[count]);
         valstr = lives_strdup_printf("%d", ival);
         if (!strcmp(pname, WEED_LEAF_TYPE)) type = ival;
-        else if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = ival;
+        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = ival;
       }
+      if (st == WEED_SEED_INT64 && ne == 1) {
+        int64_t i64val = lives_attribute_get_value_int64(attrs[count]);
+        valstr = lives_strdup_printf("%ld", i64val);
+        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = i64val;
+      }
+
       out = lives_strdup_concat(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
                                 weed_seed_to_ctype(weed_leaf_seed_type(attrs[count],
                                     WEED_LEAF_VALUE), FALSE), obs, valstr);

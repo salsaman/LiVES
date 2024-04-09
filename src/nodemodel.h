@@ -699,25 +699,29 @@ typedef struct {
   est_end,
   deadline;
   //
+  // some of these are absolute tines (session times)
+  // some are durations (totals)
   double
-  est_duration,
-  real_start,
+  // step + plan timings
+  real_start, // latest of trigger time, trun_time
   real_end,
+  est_duration,
   paused_time,
   real_duration,
-  // plan only
-  actual_start,
-  preload_time, // actual_start - real_start
+  // plan timings
+  actual_start, // ?
+  // durations
+  preload_time, // actual_start - real_start (d)
   active_pl_time, // step time until actual_start
   tgt_time, // 1. / pb_fps
   concurrent_time, // total time when > 1 steps were active
   sequential_time, // sum of all steps if run sequentially
-  exec_time,
-  trun_time,
+  exec_time, // dispatch time (a)
+  trun_time, // thread run time (a)
   queued_time, // trun_time - exec_time
-  trigger_time,
-  start_wait, // time between thread running and trigger (trigger - trun)
-  waiting_time; // after triggering, time when no steps were running
+  trigger_time, // time when plan is triggered - allowed to run (a)
+  start_wait, // time between thread running and trigger (trigger - trun) (d)
+  waiting_time; // after triggering, time when no steps were running (idle time - d)
 } timedata_t;
 
 #define OP_NULL		-1

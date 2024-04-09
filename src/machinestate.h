@@ -86,10 +86,13 @@ typedef struct {
 
 #define LIVES_PLANT_INDEX 514
 
+#define LIVES_LEAF_PREFIX "_prefix"
+#define LIVES_LEAF_DATA_TYPE "_data_type"
+
 #define LIVES_PLANT_CLEANER 515
 
 #define LIVES_PLANT_STRUCT_MIRROR 516
-  
+
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
 

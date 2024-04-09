@@ -998,14 +998,14 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
       if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
-	if (!weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED))
-	  weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
-	event_list = append_filter_init_event(event_list, tc,
-					      (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
-	init_events[i] = get_last_event(event_list);
-	ntracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
-	// add values from inst
-	pchains[i] = filter_init_add_pchanges(event_list, inst, init_events[i], ntracks, 0);
+        if (!weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED))
+          weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
+        event_list = append_filter_init_event(event_list, tc,
+                                              (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
+        init_events[i] = get_last_event(event_list);
+        ntracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
+        // add values from inst
+        pchains[i] = filter_init_add_pchanges(event_list, inst, init_events[i], ntracks, 0);
       }
       weed_instance_unref(inst);
     }
@@ -4040,7 +4040,7 @@ LIVES_GLOBAL_INLINE boolean weed_leaf_is_blob_data(weed_plant_t *plant, const ch
 
 
 LIVES_GLOBAL_INLINE void *weed_get_blob_value(weed_plant_t *plant, const char *key,
-					      boolean byref, weed_error_t *err) {
+    boolean byref, weed_error_t *err) {
   void *p;
   weed_error_t xerr = WEED_SUCCESS;
   if (!plant) xerr = WEED_ERROR_NOSUCH_PLANT;
@@ -7102,12 +7102,12 @@ boolean weed_deinit_effect(int hotkey) {
       weed_instance_unref(instance); // remove ref from weed instance obtain
       /////////////////////////////////// deinit a (video) generator
       if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && (hotkey != bg_generator_key)) {
-	mainw->cancelled = CANCEL_GENERATOR_END; // will be unreffed on pb end
+        mainw->cancelled = CANCEL_GENERATOR_END; // will be unreffed on pb end
       } else {
-	mainw->rte_soft_mask &= ~(GU641 << bg_generator_key);
-	mainw->rte &= ~(GU641 << bg_generator_key);
-	mainw->rte_real &= ~(GU641 << bg_generator_key);
-	weed_generator_end(instance); // removes 1 ref
+        mainw->rte_soft_mask &= ~(GU641 << bg_generator_key);
+        mainw->rte &= ~(GU641 << bg_generator_key);
+        mainw->rte_real &= ~(GU641 << bg_generator_key);
+        weed_generator_end(instance); // removes 1 ref
       }
     }
     return TRUE;
@@ -9533,7 +9533,7 @@ int rte_switch_keymode(int key, int mode, const char *hashname) {
 
   if (rte_key_soft_deinited(key))
     really_deinit_effect(key);
-  
+
   if ((inst = weed_instance_obtain(key, mode)) != NULL) {
     // deinit any old instance and init the new one
     int oldkeymode = key_modes[key];
@@ -10855,7 +10855,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
     //
     // in the current version, there may also be a string array type leaf (which may contain 0s)
     // called "md5_check". Each "string" will be of length 128 bytes and will contain the m5sum of each plane
-    // pixel data. 
+    // pixel data.
     lives_write_le_buffered(fd, &ival, 4, TRUE);
     ival = WEED_LAYER_MARKER;
     lives_write_le_buffered(fd, &ival, 4, TRUE);
@@ -10865,7 +10865,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
     lives_write_le_buffered(fd, &pal, 4, TRUE);
     lives_write_le_buffered(fd, &width, 4, TRUE);
     lives_write_le_buffered(fd, &height, 4, TRUE);
- 
+
     for (j = 0; j < nplanes; j++) {
       vlen = (weed_size_t)((double)height * weed_palette_get_plane_ratio_vertical(pal, j) * (double)rowstrides[j]);
       lives_write_le_buffered(fd, &rowstrides[j], 4, TRUE);
@@ -11266,13 +11266,12 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       type = -11;
       goto done;
     }
-  }
-  else {
+  } else {
     if (ne > 0) {
       values = (void **)lives_malloc(ne * sizeof(void *));
       if (!values) {
-	type = -5;
-	goto done;
+        type = -5;
+        goto done;
       }
     } else values = NULL;
   }
@@ -11312,7 +11311,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
       if (j == 0 && vlen == 0) {
         int id;
-	weed_flags_t rflags;
+        weed_flags_t rflags;
 
         bytes = lives_read_le_buffered(fd, &id, 4, TRUE);
         if (id == 0x44454557) {
@@ -11348,45 +11347,45 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           weed_layer_set_rowstrides(layer, rs, nplanes);
           lives_free(rs);
 
-	  rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
-	  weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags | LIVES_FLAG_CONST_VALUE);
-	  create_empty_pixel_data(layer, FALSE);
-	  weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);
-	  pd = weed_layer_get_pixel_data_planar(layer, NULL);
+          rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
+          weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags | LIVES_FLAG_CONST_VALUE);
+          create_empty_pixel_data(layer, FALSE);
+          weed_leaf_set_flags(layer, WEED_LEAF_ROWSTRIDES, rflags);
+          pd = weed_layer_get_pixel_data_planar(layer, NULL);
 
-	  for (j = 0; j < nplanes; j++) {
-	    if (lives_read_buffered(fd, pd[j], vlen64[j], TRUE) != vlen64_tot) {
-	      ///// do something
-	      lives_free(pd);
-	      weed_layer_pixel_data_free(layer);
-	      weed_layer_set_invalid(layer, TRUE);
-	      type = -4;
-	      goto done;
-	    }
-	  }
-	} else {
+          for (j = 0; j < nplanes; j++) {
+            if (lives_read_buffered(fd, pd[j], vlen64[j], TRUE) != vlen64_tot) {
+              ///// do something
+              lives_free(pd);
+              weed_layer_pixel_data_free(layer);
+              weed_layer_set_invalid(layer, TRUE);
+              type = -4;
+              goto done;
+            }
+          }
+        } else {
           type = -12;
           goto done;
         }
-	lives_free(pd);
-	goto done;
+        lives_free(pd);
+        goto done;
       } else {
         //g_print("vlen was %d\n", vlen);
-        if (vlen > MAX_FRAME_SIZE) { 
-	  weed_layer_pixel_data_free(layer);
-	  weed_layer_set_invalid(layer, TRUE);
+        if (vlen > MAX_FRAME_SIZE) {
+          weed_layer_pixel_data_free(layer);
+          weed_layer_set_invalid(layer, TRUE);
           type = -11;
           goto done;
         }
 
-	if (!j) {
-	  pd = (void **)lives_malloc(ne * sizeof(void *));
-	  if (!pd) {
-	    type = -5;
-	    goto done;
-	  }
-	}
-	
+        if (!j) {
+          pd = (void **)lives_malloc(ne * sizeof(void *));
+          if (!pd) {
+            type = -5;
+            goto done;
+          }
+        }
+
         if (rs && vlen != rs[j] * height * weed_palette_get_plane_ratio_vertical(pal, j)) {
           int xrs, xw, xh, psize = pixel_size(pal);
           xrs = vlen / height;
@@ -11404,11 +11403,11 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           weed_layer_set_rowstrides(layer, rs, nplanes);
         }
 
-	if (lives_read_buffered(fd, pd[j], vlen, TRUE) != vlen) {
-	  for (; j--;) lives_free(pd[j]);
+        if (lives_read_buffered(fd, pd[j], vlen, TRUE) != vlen) {
+          for (; j--;) lives_free(pd[j]);
           type = -11;
-	  lives_free(pd);
-	  lives_free(rs);
+          lives_free(pd);
+          lives_free(rs);
           goto done;
         }
         if (j >= nplanes) lives_free(pd[j]);

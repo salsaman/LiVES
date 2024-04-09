@@ -2687,7 +2687,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     ////////////
     mainw->crash_possible = 16;
     defer_sigint_rcpt = lives_hook_cb_append(NULL, THREAD_EXIT_HOOK, 0,
-					     defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                        defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     set_signal_handlers((lives_sigfunc_t)defer_sigint);
 

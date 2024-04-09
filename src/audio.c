@@ -2916,9 +2916,8 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
                                   xin_framesd, xshrink_factor, 1, 1., nframes);
           if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
         } else {
-	  if (in_buffer[i])
-          maxvol_heard =
-            sample_move_d16_float(in_buffer[i], data + i, nframes, nchans, FALSE, FALSE, 1.0);
+          if (in_buffer[i])
+            maxvol_heard = sample_move_d16_float(in_buffer[i], data + i, nframes, nchans, FALSE, FALSE, 1.0);
         }
       }
     }
@@ -2943,6 +2942,7 @@ static boolean analyse_audio_rt(lives_obj_t *aplayer) {
     }
   }
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
+
   return TRUE;
 }
 
@@ -2956,13 +2956,13 @@ void audio_analyser_start(int source) {
     if (!ana_rcpt) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_rcpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-						   WEED_SEED_BOOLEAN, "v", aplayer);
+                 WEED_SEED_BOOLEAN, "v", aplayer);
     }
   } else {
     if (!ana_rcpt2) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(source);
       ana_rcpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-						    WEED_SEED_BOOLEAN, "v", aplayer);
+                  WEED_SEED_BOOLEAN, "v", aplayer);
     }
   }
 }
@@ -3067,7 +3067,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   if (dets->fd == -1) return NULL;
 
   lpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
-					   WEED_SEED_BOOLEAN, "vv", (void *)aplayer, (void *)dets);
+        WEED_SEED_BOOLEAN, "vv", (void *)aplayer, (void *)dets);
   lives_proc_thread_set_cancellable(lpt);
   return lpt;
 }

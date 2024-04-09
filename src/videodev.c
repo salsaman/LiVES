@@ -26,7 +26,7 @@ static weed_layer_t *srclayer = NULL;
 static lives_result_t lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
   lives_alarm_set_timeout(timeout * ONE_BILLION_DBL);
-  
+
   do {
     int ncount;
     unicap_status_t status = unicap_poll_buffer(ldev->handle, &ncount);
@@ -74,7 +74,7 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
   }
 
   if (ldev->buffer_ready != 1) {
-    lives_memcpy(ldev->buffer1.data, buffer->data, ldev->buffer1.buffer_size);  
+    lives_memcpy(ldev->buffer1.data, buffer->data, ldev->buffer1.buffer_size);
     ldev->buffer = &ldev->buffer1;
     ldev->buffer_ready = 1;
   } else {
@@ -82,7 +82,7 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
     ldev->buffer = &ldev->buffer2;
     ldev->buffer_ready = 2;
   }
- 
+
   mainw->force_show = TRUE;
 }
 
@@ -95,7 +95,7 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
     if (lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)
-	!= LIVES_RESULT_SUCCESS) {
+        != LIVES_RESULT_SUCCESS) {
 #ifdef DEBUG_UNICAP
       lives_printerr("Failed to wait for user buffer!\n");
 #endif
@@ -115,7 +115,7 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     if (ldev->buffer_ready == 1) returned_buffer = &ldev->buffer1;
     else returned_buffer = &ldev->buffer2;
   }
-  
+
   pd[0] = returned_buffer->data;
   weed_layer_set_pixel_data_planar(srclayer, -ldev->nplanes, pd);
   xlayer = weed_layer_copy(NULL, srclayer);
@@ -123,18 +123,18 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
   weed_layer_unref(xlayer);
 
   /* else { */
-/*     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) { */
-/*       int rowstride = weed_layer_get_rowstride(layer); */
-/*       size_t bsize = rowstride * sfile->vsize; */
-/*       if (bsize > returned_buffer->buffer_size) { */
-/* #ifdef DEBUG_UNICAP */
-/*         lives_printerr("Warning - returned buffer size too small !\n"); */
-/* #endif */
-/*         bsize = returned_buffer->buffer_size; */
-/*       } */
-/*       lives_memcpy(pixel_data[0], returned_buffer->data, bsize); */
-/*     } */
-/*   } */
+  /*     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) { */
+  /*       int rowstride = weed_layer_get_rowstride(layer); */
+  /*       size_t bsize = rowstride * sfile->vsize; */
+  /*       if (bsize > returned_buffer->buffer_size) { */
+  /* #ifdef DEBUG_UNICAP */
+  /*         lives_printerr("Warning - returned buffer size too small !\n"); */
+  /* #endif */
+  /*         bsize = returned_buffer->buffer_size; */
+  /*       } */
+  /*       lives_memcpy(pixel_data[0], returned_buffer->data, bsize); */
+  /*     } */
+  /*   } */
 
   //lives_free(pixel_data);
 
@@ -512,7 +512,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   // ignore YUV subspace for now
   ldev->pally.pal = fourccp_to_weedp(ldev->format->fourcc, ldev->format->bpp, (int *)&cfile->interlace,
-                                   &ldev->pally.sampling, &ldev->pally.subspace, &ldev->pally.clamping);
+                                     &ldev->pally.sampling, &ldev->pally.subspace, &ldev->pally.clamping);
   cpbytes = weed_palette_get_bytes_per_pixel(ldev->pally.pal);
 
 #ifdef DEBUG_UNICAP
@@ -585,7 +585,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   irows = rowstrides_from_bufsize(ldev->format->buffer_size, ldev->pally.pal, cfile->hsize, cfile->vsize, &ldev->nplanes);
   srclayer = weed_layer_create_full(cfile->hsize, cfile->vsize, irows, ldev->pally.pal, ldev->pally.clamping,
-				    ldev->pally.sampling, ldev->pally.subspace, WEED_GAMMA_SRGB);
+                                    ldev->pally.sampling, ldev->pally.subspace, WEED_GAMMA_SRGB);
   lflags = weed_leaf_get_flags(srclayer, WEED_LEAF_ROWSTRIDES);
   weed_leaf_set_flags(srclayer, WEED_LEAF_ROWSTRIDES, lflags | LIVES_FLAG_CONST_VALUE);
 

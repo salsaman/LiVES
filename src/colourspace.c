@@ -11225,7 +11225,7 @@ int *rowstrides_from_bufsize(size_t bufsize, int pal, int width, int height, int
     rows[0] = width + xbufsize;
     for (int i = 1; i < nplanes; i++) {
       rows[i] = (width * weed_palette_get_plane_ratio_horizontal(pal, i))
-	+ xbufsize;
+                + xbufsize;
     }
   }
   return rows;
@@ -11354,7 +11354,7 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *layer, int *nplanes) {
 
 
 LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int pal, boolean inc_rowstrides,
-						     int *rowstrides, size_t **planes) {
+    int *rowstrides, size_t **planes) {
   // calc total frame size in bytes
   // if planes is non NULL, it is set to an array of sizes, one per plane, terminated by a size of zero
 
@@ -11378,8 +11378,8 @@ LIVES_GLOBAL_INLINE size_t lives_frame_calc_bytesize(int width, int height, int 
 
   for (i = 0; i < nplanes; i++) {
     size_t pl_size = (inc_rowstrides ? rows[i]
-		      : width * weed_palette_get_plane_ratio_horizontal(pal, i))
-      * height * weed_palette_get_plane_ratio_vertical(pal, i);
+                      : width * weed_palette_get_plane_ratio_horizontal(pal, i))
+                     * height * weed_palette_get_plane_ratio_vertical(pal, i);
     if (planes) plsz[i] = pl_size;
     tot += pl_size;
   }
@@ -11397,15 +11397,15 @@ LIVES_GLOBAL_INLINE void add_internal_copylists(weed_layer_t *layer) {
   uint8_t **pd_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, &nplanes);
   if (nplanes > 1) {
     /********************
-	We always create CONTIGUOUS planar pixel data 
-	(meaning we only allocated a single block, and planes are just offsets in this))
+      We always create CONTIGUOUS planar pixel data
+      (meaning we only allocated a single block, and planes are just offsets in this))
      	We now add an internal copylist -> planes 1 and 2 are set as "offset shared copies" of plane 0
      	This ensures that plane 0 data is only freed when both planes 1 and 2 are also freed
-	There are several advantages to this: - allocation only requires a single block of memory;
-	when copying pixel data, this can be done with a single memcpy
-	when copying by reference, the copy layer simply adds its plane copies to the original copylist
-	The address of the allocatedd block is stored in the priv_data of the copylist, so when the last plane is
-	"freed", we can free the entire block.
+      There are several advantages to this: - allocation only requires a single block of memory;
+      when copying pixel data, this can be done with a single memcpy
+      when copying by reference, the copy layer simply adds its plane copies to the original copylist
+      The address of the allocatedd block is stored in the priv_data of the copylist, so when the last plane is
+      "freed", we can free the entire block.
      	This innovation also allows us to transpose or replace a single plane.
      	since each plane effectively has a refcounted link to the start of its contiguous block.
     **************************/
@@ -11812,8 +11812,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill) {
   if (weed_layer_get_gamma(layer) == WEED_GAMMA_UNKNOWN)
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
-  
- fail:
+
+fail:
 
   if (rowstrides) lives_free(rowstrides);
   if (fixed_rs) lives_free(fixed_rs);
@@ -11994,7 +11994,7 @@ static void swap_layer_planes(weed_layer_t *layer, int l1, int l2) {
   tmp = pd_array[l1];
   pd_array[l1] = pd_array[l2];
   pd_array[l2] = tmp;
-  
+
   weed_layer_set_pixel_data_planar(layer, nplanes, pd_array);
   lives_free(pd_array);
 
@@ -12244,7 +12244,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   if (get_advanced_palette(inpl)->chantype[1] == WEED_VCHAN_V) swap_layer_planes(layer, 1, 2);
 
   if (lives_layer_has_copylist(layer)) can_inplace = FALSE;
-  
+
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   //g_print("clp full %p\n", orig_layer);
   weed_layer_copy(orig_layer, layer);
@@ -13791,7 +13791,7 @@ memfail:
   ____FUNC_EXIT_VAL____("b", FALSE);
 
   return FALSE;
-	}
+}
 
 
 boolean convert_layer_palette(weed_layer_t *layer, int outpl, int op_clamping) {
@@ -13919,7 +13919,7 @@ static void *gamma_convert_layer_thread(void *data) {
       for (int k = 0; k < px; k++) {
         //g_print("  PX %p + %d , %d  = %d\t", pixels, j + k, pixels[j + k], gamma_lut[pixels[j + k]]);
         pixels[z] = gamma_lut8[pixels[z]];
-	z++;
+        z++;
       }
       //g_print("\n");
     }
@@ -14657,7 +14657,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     return FALSE;
   }
-   #define DEBUG_RESIZE
+#define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette, iclamping, 0), width, height,
@@ -14712,7 +14712,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
     osubs_hint = WEED_YUV_SUBSPACE_BT709;
 
   if (!weed_palette_is_yuv(palette)) iclamping = oclamp_hint;
-  
+
   if (resolved != palette || oclamp_hint != iclamping) {
 #ifdef DEBUG_RESIZE
     if (resolved != palette) g_print("Before resize, must convert to %s\n", weed_palette_get_name(resolved));
@@ -15033,7 +15033,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     sws_freeblock(ctxblock);
     lives_free(swparams);
- 
+
     if (gamma_lut8) {
       weed_layer_set_gamma(layer, tgt_gamma);
       lives_gamma_lut8_free(gamma_lut8);
@@ -15608,7 +15608,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   if (cform == LIVES_PAINTER_FORMAT_ARGB32) {
     int pflags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
     if ((pflags & LIVES_FLAG_CONST_DATA)
-	|| irowstride != orowstride || lives_layer_has_copylist(layer)) {
+        || irowstride != orowstride || lives_layer_has_copylist(layer)) {
       // if layer has copylist or rowstrides mismatch, we cannot do inplace
       weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags | LIVES_FLAG_CONST_DATA);
       // we want to make sure output has orowstride

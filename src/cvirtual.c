@@ -1191,7 +1191,7 @@ frames_t virtual_to_images(int sclipno, frames_t sframe, frames_t eframe, boolea
 
   if (intimg) {
     saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
-						layer_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
+                       layer_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);
   } else {
     saver_procthread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                        pixbuf_to_png_threaded, WEED_SEED_BOOLEAN, "v", saveargs);

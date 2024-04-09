@@ -320,6 +320,8 @@ boolean lives_widget_object_unref(livespointer); ///< decrease refcount by one: 
 // remove any "floating" reference and add a new ref
 boolean lives_widget_object_ref_sink(livespointer);
 
+LiVESWidgetObject *lives_widget_object_set_data(LiVESWidgetObject *, const char *key, livespointer data);
+
 // set string data and free it later
 void lives_widget_object_set_data_auto(LiVESWidgetObject *, const char *key, livespointer data);
 

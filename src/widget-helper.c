@@ -336,12 +336,21 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
 #endif
 
 
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetObject *lives_widget_object_set_data(LiVESWidgetObject * obj, const char *key,
+    livespointer data) {
+#ifdef GUI_GTK
+  g_object_set_data(obj, key, data);
+  return obj;
+#endif
+  return NULL;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_auto(LiVESWidgetObject * obj, const char *key,
     livespointer data) {
   // free data on obj destroy
   lives_widget_object_set_data_full(obj, key, data, lives_free);
 }
-
 
 typedef struct {
   LiVESWidgetObject *obj;
@@ -1131,13 +1140,13 @@ boolean fg_service_fulfill(void) {
   if (mainw->global_hook_stacks) {
     if (!pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
       if (mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack) {
-	boolean is_active;
-	boolean is_fg_service = THREADVAR(fg_service);
-	pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
-	if (!is_fg_service) THREADVAR(fg_service) = TRUE;
-	is_active = lives_hook_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK);
-	if (!is_fg_service) THREADVAR(fg_service) = FALSE;
-	return is_active;
+        boolean is_active;
+        boolean is_fg_service = THREADVAR(fg_service);
+        pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
+        if (!is_fg_service) THREADVAR(fg_service) = TRUE;
+        is_active = lives_hook_trigger(mainw->global_hook_stacks, LIVES_GUI_HOOK);
+        if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+        return is_active;
       }
       pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
       return FALSE;
@@ -1327,7 +1336,7 @@ static void threadswap(void *data) {
 
   fg_stack_wait();
 
-  fg_can_service = TRUE; 
+  fg_can_service = TRUE;
   lives_startup2();
   gui_loop_tight = FALSE;
 }
@@ -1364,18 +1373,17 @@ void fg_service_wake(void) {
 
 WIDGET_HELPER_GLOBAL_INLINE void fg_stack_wait(void) {
   // test fo nonzero-ness: if the trylock fails we try again
-  // when trylock succeeds and returns 0, then we proceed to the next part of the &&
+  // when trylock succeeds and returns 0, then we proceed to the next part of the ||
   // we negate the next part, if the (anti)condition is FALSE, the other part of the || is irrelevant
   // (the mutex unlock) and the loop finshes, then we just need to ensure the mutex unlock happens
   // if the (anti)condition is TRUE, then the other part of the || is checked
   // - the mutex unlock should always return 0, then negated this becomes 1, so we loop again
   lives_microsleep_until_zero(pthread_mutex_trylock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex) // always 0 to pass
                               || ! // must be 1 to pass
-
-			      // if first part is zero, ie !(true), then we check 2nd part, which is always 0
-			      (!(mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack != NULL
-				 && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) ||
-			       pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)));
+                              // if first part is zero, ie !(true), then we check 2nd part, which is always 0
+                              (!(mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack != NULL
+                                 && (mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) ||
+                               pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex)));
   pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 }
 
@@ -2061,13 +2069,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget * widge
 }
 
 
-static void _dialog_resp_set(LiVESDialog *dlg, int resp, livespointer data) {
+static void _dialog_resp_set(LiVESDialog * dlg, int resp, livespointer data) {
   GET_PROC_THREAD_SELF(self);
   SET_SELF_VALUE(int, "dlg_resp", resp);
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog *dlg) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog * dlg) {
   GET_PROC_THREAD_SELF(self);
   return GET_SELF_VALUE(int, "dlg_resp");
 }
@@ -2091,6 +2099,7 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   if (!ATT_MESSAGE(dialog)) gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
 
   lives_widget_object_ref(dialog);
+
   _dialog_resp_set(dialog, LIVES_RESPONSE_INVALID, NULL);
   _lives_widget_show_all(LIVES_WIDGET(dialog));
 
@@ -2099,10 +2108,10 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   do {
     // TODO - only if focused / visible
     mainw->no_idlefuncs = FALSE;
-    //lives_widget_context_iteration(NULL, FALSE);
-    g_main_context_iteration(NULL, FALSE);
-    if (finsttorun) fg_service_fulfill();
-    mainw->no_idlefuncs = no_idlefuncs; 
+    lives_widget_context_iteration(NULL, FALSE);
+    /* g_main_context_iteration(NULL, FALSE); */
+    /* if (finsttorun) fg_service_fulfill(); */
+    mainw->no_idlefuncs = no_idlefuncs;
     resp = lives_dialog_get_response(dialog);
     if (resp != LIVES_RESPONSE_INVALID) break;
     pthread_yield();
@@ -2117,9 +2126,8 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   _dialog_resp_set(NULL, LIVES_RESPONSE_INVALID, NULL);
   lives_widget_object_unref(dialog);
 
-  lives_widget_context_update();
+  //lives_widget_context_update();
 
-  g_print("resp A is %d\n", resp);
   return resp;
 }
 
@@ -2135,7 +2143,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
     BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
     main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
     BG_THREADVAR(hook_hints) = 0;
-    g_print("resp is %d\n", resp);
   }
 #endif
   return resp;
@@ -2159,10 +2166,10 @@ void fg_service_call(lives_funcinst_t *finst) {
   // - the latter type writelock a rwlock, lock the mutex then unlock rwlock
   // - the former type try rdlock, and if they get it, trylock mutex, unlock rwlock until they get mutex
 
-  
+
   if (!finst) return;
 
- GET_PROC_THREAD_SELF(self);
+  GET_PROC_THREAD_SELF(self);
 
   fg_service_wake();
 
@@ -2172,15 +2179,15 @@ void fg_service_call(lives_funcinst_t *finst) {
   }
 
   while (1) {
-    if (is_quick || !pthread_rwlock_tryrdlock(&rwlock)) { 
+    if (is_quick || !pthread_rwlock_tryrdlock(&rwlock)) {
       if (!pthread_mutex_trylock(&finst_mutex)) {
-	pthread_rwlock_unlock(&rwlock);
-	break;
+        pthread_rwlock_unlock(&rwlock);
+        break;
       }
       if (!is_quick) pthread_rwlock_unlock(&rwlock);
       if (lives_proc_thread_get_cancel_requested(self)) {
-	if (is_quick) pthread_rwlock_unlock(&rwlock);
-	return;
+        if (is_quick) pthread_rwlock_unlock(&rwlock);
+        return;
       }
     }
     lives_microsleep;
@@ -3374,7 +3381,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
 #ifdef GUI_GTK
   LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
-  
+
   if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else if (LIVES_IS_WIDGET(widget))
     win = lives_widget_get_window(widget);
@@ -7879,7 +7886,7 @@ typedef struct {
 } at_opts;
 
 
-static boolean _lives_table_attach(LiVESTable * table, LiVESWidget * child, at_opts *ato) {
+static boolean _lives_table_attach(LiVESTable * table, LiVESWidget * child, at_opts * ato) {
 #ifdef GUI_GTK
 #if LIVES_TABLE_IS_GRID  // required for grid remove row
   gtk_grid_attach(table, child, ato->left, ato->top, ato->right - ato->left, ato->bottom - ato->top);
@@ -7898,7 +7905,8 @@ static boolean _lives_table_attach(LiVESTable * table, LiVESWidget * child, at_o
   lives_widget_set_margin_top(child, ato->ypad);
   lives_widget_set_margin_bottom(child, ato->ypad);
 #else
-  gtk_table_attach(table, child, ato->left, ato->right, ato->top, ato->bottom, ato->xoptions, ato->yoptions, ato->xpad, ato->ypad);
+  gtk_table_attach(table, child, ato->left, ato->right, ato->top, ato->bottom, ato->xoptions, ato->yoptions, ato->xpad,
+                   ato->ypad);
 #endif
   return TRUE;
 #endif
@@ -7907,8 +7915,8 @@ static boolean _lives_table_attach(LiVESTable * table, LiVESWidget * child, at_o
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_attach(LiVESTable * table, LiVESWidget * child, uint32_t left, uint32_t right,
-						       uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
-						       uint32_t xpad, uint32_t ypad) {
+    uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
+    uint32_t xpad, uint32_t ypad) {
   boolean bret;
   at_opts ato;
   ato.left = left;
@@ -13687,7 +13695,7 @@ boolean lives_widget_context_update(void) {
       mainw->do_ctx_update = TRUE;
       return FALSE;
     } else {
-      lives_hook_stack_t **lpt_hooks = self_hook_stacks();
+      lives_hook_stack_t **lpt_hooks = self_hook_stacks(LIVES_GUI_HOOK);
       // trip gui loop to high prio
       fg_service_wake();
       if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) {
@@ -14694,9 +14702,9 @@ double widget_func_double(lives_widget_instance_t *winst, lives_intention intent
       va_list xargs;
       double dval;
       va_start(xargs, functype);
-      
-      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD |LIVES_THRDATTR_DONTCARE,
-					   funcinf->function, WEED_SEED_DOUBLE, funcinf->args_fmt, xargs);
+
+      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD | LIVES_THRDATTR_DONTCARE,
+                                           funcinf->function, WEED_SEED_DOUBLE, funcinf->args_fmt, xargs);
       call_funcsig(pth);
       va_end(xargs);
       dval = lives_proc_thread_join_double(pth);

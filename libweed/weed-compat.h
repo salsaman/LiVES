@@ -112,6 +112,9 @@ static inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced
     if (bpp == 32) return WEED_PALETTE_BGRA32;
     break;
 
+  case MK_FOURCC('B', 'G', '2', '4'):
+    return WEED_PALETTE_BGR24;
+
   case 0x00000000: // BI_RGB - RGB or BGR ???
   case MK_FOURCC('r', 'a', 'w', '2'): // raw2 - RGB or BGR ???
 
@@ -122,12 +125,24 @@ static inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced
     if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
 
+  case MK_FOURCC('R', 'G', '2', '4'):
+    return WEED_PALETTE_RGB24;
+
   case MK_FOURCC('R', 'G', 'B', 'A'):
     if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
   case MK_FOURCC('A', 'R', 'G', 'B'): /* ARGB, not sure if exists */
     if (bpp == 32) return WEED_PALETTE_ARGB32;
     break;
+
+  case MK_FOURCC('R', 'A', '2', '4'):
+    return WEED_PALETTE_RGBA32;
+
+  case MK_FOURCC('B', 'A', '2', '4'):
+    return WEED_PALETTE_BGBA32;
+
+  case MK_FOURCC('A', 'R', '2', '4'):
+    return WEED_PALETTE_ARGB32;
 
   // YUV packed formats
 

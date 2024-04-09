@@ -4794,7 +4794,7 @@ static boolean do_xdg_opt(lives_obj_t *obj, void *data) {
 static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
   if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
     LiVESWidget *cbut = lives_standard_check_button_new(_("Preview in default video player afterwards"),
-                      FALSE, LIVES_BOX(widget_opts.last_container), NULL);
+                        FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cbut);
     lives_hook_cb_append(NULL, COMPLETED_HOOK, 0, do_xdg_opt, cbut);
   }
@@ -5830,7 +5830,7 @@ static boolean _deal_with_render_choice(void) {
       if (info) {
         //lives_sleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
         lives_proc_thread_join_void(info);
-	lives_proc_thread_unref(STEAL_POINTER(info));
+        lives_proc_thread_unref(STEAL_POINTER(info));
       }
 
       if (!render_to_clip(TRUE) || render_choice == RENDER_CHOICE_TRANSCODE) {
@@ -5859,7 +5859,7 @@ static boolean _deal_with_render_choice(void) {
       cfile->undo_end = cfile->undo_start = -1;
       if (info) {
         lives_proc_thread_join_void(info);
-	lives_proc_thread_unref(STEAL_POINTER(info));
+        lives_proc_thread_unref(STEAL_POINTER(info));
       }
       caps = lives_capacities_new();
       THREAD_INTENTION = OBJ_INTENTION_RENDER;
@@ -5893,7 +5893,7 @@ static boolean _deal_with_render_choice(void) {
       pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, future_prefs->sepwin_type, FALSE);
       if (info) {
         lives_proc_thread_join_void(info);
-	lives_proc_thread_unref(STEAL_POINTER(info));
+        lives_proc_thread_unref(STEAL_POINTER(info));
       }
       prefs->letterbox_mt = prefs->letterbox;
       if (on_multitrack_activate(NULL, (weed_plant_t *)mainw->event_list)) {

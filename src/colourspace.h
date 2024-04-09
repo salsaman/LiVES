@@ -396,7 +396,7 @@ int *calc_rowstrides(int width, int pal, weed_layer_t *, int *nplanes);
 int *rowstrides_from_bufsize(size_t bufsize, int pal, int width, int height, int *xplanes);
 
 size_t lives_frame_calc_bytesize(int width, int height, int pal, boolean inc_rowstrides,
-				 int *rowstrides, size_t **planes);
+                                 int *rowstrides, size_t **planes);
 
 // direction - LIVES_DIRECTION_FOREWARD / LIVES_DIRECTION_REVERSE
 void alpha_premult(weed_layer_t *, int direction);

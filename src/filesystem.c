@@ -952,7 +952,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #endif
       }
     }
-    if (retval) lives_hook_trigger(self_hook_stacks(), DATA_PREVIEW_HOOK);
+    if (retval) lives_hook_trigger(self_hook_stacks(DATA_PREVIEW_HOOK), DATA_PREVIEW_HOOK);
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
@@ -2380,8 +2380,7 @@ static boolean dirsize_done_cb(lives_proc_thread_t lpt, void *data) {
     pthread_mutex_unlock(&ds_mutex);
     lives_proc_thread_sync_with(ds_syncwith, 201, MM_IGNORE);
     ds_syncwith = NULL;
-  }
-  else pthread_mutex_unlock(&ds_mutex);
+  } else pthread_mutex_unlock(&ds_mutex);
   return FALSE;
 }
 
@@ -2458,7 +2457,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
   if (dircheck_state == 2) {
     if (timeout < 0) timeout = BILLIONS(30); // TODO
     if (lives_proc_thread_sync_with_timeout(running, 201, MM_IGNORE, timeout)
-	== LIVES_RESULT_FAIL) {
+        == LIVES_RESULT_FAIL) {
       ds_syncwith = NULL;
       disk_monitor_forget();
       pthread_mutex_unlock(&ds_mutex);

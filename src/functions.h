@@ -152,11 +152,6 @@ void lpt_params_free(lives_proc_thread_t, boolean do_exec);
 weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
 lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, ...);
 
-weed_error_t weed_leaf_from_vargp(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
-lives_result_t weed_leaf_from_vap(weed_plant_t *, const char *key, weed_seed_t st, ...);
-
-lives_result_t update_params_from_proxies(lives_funcinst_t *finst);
-
 boolean call_funcsig(lives_proc_thread_t);
 lives_result_t do_call(lives_funcinst_t *);
 
@@ -169,15 +164,11 @@ lives_result_t do_call(lives_funcinst_t *);
 #define FUNC_CATEGORY_ASYNC_HOOK 	(N_STD_FUNC_CATEGORIES + 101)
 #define FUNC_CATEGORY_HOOK_GUI	 	(N_STD_FUNC_CATEGORIES + 102)
 
-void toggle_var_cb(void *dummy, boolean *var);
-void inc_counter_cb(void *dummy, int *var);
-void dec_counter_cb(void *dummy, int *var);
-void reset_counter_cb(void *dummy, int *var);
-
 /// tracing / debugging tools //
 
 #define LIVES_LEAF_FILE_REF "file_ref"
 #define LIVES_LEAF_LINE_REF "line_ref"
+#define LIVES_LEAF_FUNC_REF "func_ref"
 
 #ifdef __FILE__
 #define _FILE_REF_ __FILE__
@@ -193,9 +184,9 @@ void reset_counter_cb(void *dummy, int *var);
 #define _LINE_REF_ 0
 #define _ORIG_LINE_REF_ 0
 #endif
-#ifdef __func__
-#define _FUNC_REF_ __func__
-#define _ORIG_FUNC_REF_ __func__
+#ifdef __FUNC__
+#define _FUNC_REF_ __FUNC__
+#define _ORIG_FUNC_REF_ __FUNC__
 #else
 #define _FUNC_REF_ "??????"
 #define _ORIG_FUNC_REF_ "??????"
@@ -208,6 +199,10 @@ typedef enum {
   _FN_REF, // fundef, ptr - returns (int)func(ptr)
   _FN_UNREF, // fundef, ptr
 } fn_type_t;
+
+
+// creates an audit tag in threadvars with NULL data
+boolean record_loc(const char *func, const char *file, int line);
 
 #define _FUNCREF(fn,f,l)((void *)(create_funcdef(#fn,(lives_funcptr_t)fn,0,0,f,l,0)))
 
@@ -305,20 +300,12 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 typedef char **lives_condition;
 
-#define MAKE_COND_OPFUNC(func) cond_fdefs[i++] = MAKE_FUNCDEF(cond_##func, VOIDPTR, "iV")
-#define MAKE_COND_VALFUNC(func) cond_fdefs[i++] = MAKE_FUNCDEF(cond_##func, VOIDPTR, "S")
-
 #define COND_PFX "COND_"
 #define COND_PFXLEN 5
 
-#define _COND_BEGIN		"COND_START"
-#define _COND_FINISH		"COND_END"
-#define _COND_POPEN		"COND_PARENS_OPEN"
-#define _COND_PCLOSE		"COND_PARENS_CLOSE"
-#define _COND_LIST_OPEN		"COND_LIST_START"
-#define _COND_LIST_CLOSE	"COND_LIST_END"
+#Ddefine COND(TOKEN) #COND_##TOKEN
 
-#define COND_TESTFUNC_CONSTVAL(func, args_fmt) find_or_make_funcdef(#func, func, WEED_SEED_BOOLEAN, args_fmt)
+//#define COND_TESTFUNC_CONSTVAL(func, args_fmt) find_or_make_funcdef(#func, func, WEED_SEED_BOOLEAN, args_fmt)
 
 void lives_conditions_init(void);
 
@@ -329,14 +316,9 @@ typedef struct {
   const char *desc; // descriptive text
   // value function, either allvalues_t *valfunc(const char *valstr)
   // or allvalues_t *(int nvals, allvalues_t **vals);
-  lives_funcdef_t *funcdef;
+  lives_function_t *function;
   const char *constval;
 } cond_trans;
-
-#define LIVES_COND(...) (_COND_BEGIN "," #__VA_ARGS__ ","  _COND_FINISH)
-
-lives_funcdef_t *find_or_make_fundef(const char *funcname,
-                                     lives_funcptr_t func, weed_seed_t ret_type, const char *args_fmt);
 
 lives_condition lives_cond_create(const char *condstring, ...);
 
@@ -498,15 +480,18 @@ void *lives_cb_receipt_new(void);
 
 void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 
+  // hsdescriptor flags
+
 //< caller will block when adding the hook and only return when the hook callback has returned
 // if the cb function is barred by another (due to uniqueness constraints),
 // the the thread will block until the imposing function returns
-#define HOOK_CB_BLOCK       		(1ull << 0)
+#define HOOK_CB_BLOCKING       		(1ull << 0)
 
 // hook should be run as soon as possible when the hook trigger point is reached
-#define HOOK_CB_PRIORITY		(1ull << 1) // prepend, not append
+#define HOOK_OPT_PRIORITY		(1ull << 1) // prepend, not append
 
 // callback will only be run at most one time, and then removed from the stack
+// TODO: deprecate and just send cond_remove to COND_ALWAYS
 #define HOOK_OPT_ONESHOT		(1ull << 2)
 
 // this option can be set for a stack or for a callback
@@ -516,7 +501,7 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 //
 // It is invalid to combine this with uniqueness constraints - the reason being that such a constraint can
 // cause receipts to be collected, and then it may not be clear who "adder" refers to.
-#define HOOK_OPT_ADDER_RUNS		(1ull << 3)
+#define HOOK_CB_ADDER_RUNS		(1ull << 3)
 
 // this is intended for callbacks which have parameter values which need to be freed / unreffed even if the target func id not run
 // this includes - cases where the proc_thread is cancelled while still in the queue,
@@ -529,9 +514,14 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 // TODO - this will be deprecated and replaced with CONTINGENCIES
 #define HOOK_CB_HAS_FREEFUNCS		(1ull << 4)
 
+// normally when a hook is triggered, we check the receipts and expire any which have been removed from the adder's
+// cb_add_list, freeing the receipt, and possibly the funcinst. This prevents that from happening. The receipts can
+// only be expired by a proc_thread deliberately removing the receipt (as opposed to being flushed when proc_thread is freed)
+// or by the the callback's remove_condition passing, or when the stack owner is freed
 #define HOOK_CB_PERSISTENT		(1ull << 5)
 
 // can be set to temporarily "block" a callback, in this case LIVES_REPLY_NO will be sent to receipts
+// TODO: deprecate and prepend or remove ("COND_NEVER, COND_AND") to/from trigger_cond
 #define HOOK_CB_IGNORE			(1ull << 7)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
@@ -539,9 +529,6 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 
 // the following corresponds directly to LIVES_THRDATTR_LIGHT
 #define HOOK_OPT_FG_LIGHT		(1ull << 9)
-
-// TODO - will be replaced with remove on condition failed, and condition set to test return value
-#define HOOK_OPT_REMOVE_ON_FALSE	(1ull << 10)
 
 // UNIQUENESS constraints:
 /// the following bits define how hooks should be added to the stack
@@ -554,7 +541,8 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 //
 // (when prepending, this always succeeds to add, and expels other copies of same func,
 // when appending, the callback will leave first matching func in place, and expel all others,
-// and deny the new callback. except if no match is found, will be appended)
+// and reject the new callback.
+// if no match is found, the callback is appended
 #define HOOK_UNIQUE_FUNC		(1ull << 16) // do not add if func already in hooks
 ///
 // after adding, ensure only a single copy of FUNC  / DATA in stack
@@ -562,22 +550,22 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 //
 // NOTE: for data matching, it is sometimes desirable to match only the first n paramaeters, with the remainder
 // being the data to be replaced or ignored
-// in this case, THREADVAR(hook_match_nparams) cant be set to the number to match. If set to 0, the default,
+// in this case, THREADVAR(nmatch_params) cant be set to the number to match. If set to 0, the default,
 // all params must be matched.
 //
 // (when prepending, this always succeeds to add, and expels other copies with identical func / data,
 // when appending, the callback will replace the first matching func / data , and expel it and any other matches
-// if no match is found, append
+// if no match is found, the callback is appended
 #define HOOK_UNIQUE_DATA		(1ull << 17)
 
 //
-// after adding, ensure only a single copy of func,  and with our data
+// after adding, ensure only a single copy of func,  and that copy will have  our data
 //
 ///
 // * copies of the func in linked_stacks must also be removed
 // (when prepending, this always succeeds to add, and expels anything with same func
 // when appending, the callback will replace the first matching func, and expel it and all other func matches
-// or if no match is found, append
+// if no match is found, the callback is appended
 #define HOOK_UNIQUE_REPLACE		(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA)
 
 // Summary: hook_unique_func ensures there is only a single copy of func in the stack, with any data
@@ -586,44 +574,31 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 //
 
 // NOTEs:
+// 1) if a callback is expelled, any receipts with req_reply callbacks (this includes blocking callbacks) are migrated
+// to the expeller, and any withour such callbacks are expired.
+// Effectively this means a thread waiting on the expelled func inst is now waiting on the expeller
 //
-// 1) when prepending, for uniqueness purposes, the prepended callback can replace (and remove) others already in the stack
-//
-// 2) when appending unique_func and/or unique_data to the main GUI stack,
-// the new callback can be blocked or added
-// If blocked, all subsequent matching callbacks must be replaced / removed in the stack
-// as if the blocking callback had just been prepended to the stack.
-//
-// 3) if a TRIGGERED callback has invalidate data, we should replace (or remove)
-// any other callbacks in ALL stacks (fg and bg) with matching data, as if the callback were being prepended to those
-// stacks.
-//
-// 4) before removing a callback, check if it was added with HOOK_CB_BLOCK
-// if so, the proc_thread must not be unreffed as a thread will be waiting on it,
-// instead set a leaf LIVES_LEAF_REPLACEMENT in the proc thread being replaced, pointing the newly added callback
-// the blocked thread should detect this, unref the original blocker, and continue waiting instead for the new callback
-// the replacement callback can also be replaced, so the sequence must be followed until reaching a non replaced cb,
-// or one which has. The proc_thread which is the repalcement msut get an added reference, as the blocked thread will
-// unref it once it completes.
-//
-
+// 2) if a TRIGGERED callback has invalidate data, we should replace (or remove)
+// any other callbacks in ALL stacks (fg and bg) of the same type,
+// with matching data, as if the callback were being prepended to those stacks.
 // when prepended to a stack, it will eliminate any entries with matching data
 // when appending, if we find an existing cb with this set, the callback will be rejected
-// when triggered, it will eliminate matching data from ALL thread hook_stacks of indentical type
 ///
 // NB. it is important to specify the number of matching data params, otherwise ALL params will be considered matching
-// - this is designed for functions which free DATA
+// - this is designed for functions which free DATA (eg gtk_widget_destroy will do this to ensure there is nothing in a
+// GUI stack which refers to widget)
 
 #define HOOK_INVALIDATE_DATA			(1ull << 18)
 
 // this is a special modifier for INVALIDATE_DATA
 // if set then data will also match "child" data (for some definition of "child")
+// eg. for gtk_widget_destroy we also remove references to child widgets of the widget being destroyed
 #define HOOK_OPT_MATCH_CHILD			(1ull << 19)
 
 // similar to unique_function (which is implicitly set),
-// however, if the function is already in the stack we also remove it
-// and do not add.
-// combined with UNIQUE_DATA, we only toggle if data matches as well as func
+// however, on a match we reject the new callback,
+// and do not prepend, replace or append
+// combined with UNIQUE_DATA, the data must match as well as func
 #define HOOK_TOGGLE_FUNC			(1ull << 24)
 
 ///////////////////
@@ -708,7 +683,16 @@ typedef struct {
 typedef struct {
   // for DISPOSITION_STACKED
   uint64_t cb_flags;
-  lives_condition trigger_cond; // condition for triggering
+
+  //
+  // condition for triggering, checked pre trigger
+  // defaults to COND_ALWAYS
+  lives_condition trigger_cond;
+
+  // condition for removing, checked post trigger
+  // defaults to COND_NEVER
+  // for one-shot, is set to COND_ALWAYS
+  lives_condition remove_cond;
   pthread_mutex_t mutex;
   lives_hook_stack_t **hstacks;
   int hstype;
@@ -871,16 +855,36 @@ typedef struct {
   uint64_t op_flags; // flags defining trigger operation
 
   // conditions for accepting a func_inst in the stack
+  // if NULL, defaults to COND_ALWAYS
   lives_condition accept_cond;
 
-  // cb_prototype parameters. Empty string means no parameters
-  // if the final character is '*', callbacks may append bound parameters in
-  // funcinst->params
-  // NULL means any params (equivalent to "*")
-  const char *def_args_fmt;
+  // this part is a little complex to describe but easier in practice
+  // each callback in a hook stack can call any compatible function
+  // "compatible" here refers to the format of the parameters and the return value type
+  //
+  // the paramaters passed are derived thus:
+  // [fixed (mapped data) consts + input consts] + [fixed (mapped data) vars + input vars]
+  // + [extra consts] + [extra vars]
+  //
+  // the first part, [fixed (mapped data) consts + input consts] is declared in const_data_srcs
+  // these are not strictly "const" values, however the values are set (readonly) when the callback is added
+  // if const_data_srcs is NULL, there are no const params, otherwise
+  // it is a NULL terminated array of strings. Each value can map to an item in the global data book
+  // local data book or an input (supplied) value
+  // fmt of each is eg "V|$data" - local book value 'data'
+  // or "V|@data" - global book value 'data'
+  // or "V|-data" input value must be passed in args_fmt + va_args, mapping keeps same order
+  // but mapped and input values can be alternated
+  // if the final array value is "*" - extra const params can passed in args_fmt and va_args
+  // - these are appended after fixed const params and fixed var params
+  ///   but before extra var params
+  const char **const_data_srcs;
 
-  // mapping of def_args_fmt_params to rcpt values
-  const char **bindings;
+  // same as const, but value is set at trigger time
+  // optionally, one value can start with a '>' to indicate the function return should
+  // be mapped back to and update this value. For this reason, any input vars or extra vars passed in at trigger time MUST
+  // be passed as BIND_VALUE(typecode, var) e.g BIND_VALUE("V", data) rather than just 'data' 
+  const char **var_data_srcs;
 } hook_stack_descriptor_t;
 
 const hook_stack_descriptor_t *get_hs_desc(int hstype);
@@ -946,12 +950,8 @@ typedef struct _hstack_t {
 // only the hook stack owner may add callbacks for this hook
 #define HOOKSTACK_SELF_ONLY       	(1ull << 4)
 
-// if this flagbit is set, then the return type of callbacks must be boolean
-// any callback which returns FALSE will be blocked / ignored until either unblocked or invalidated
-#define HOOKSTACK_REMOVE_ON_FALSE	(1ull << 5)
-
-// if the trigger condition (if present) fails, then the callback will be removed rather than skipped over
-#define HOOKSTACK_REMOVE_ON_COND_FAIL	(1ull << 6)
+// for data_pattern, run callbacks pre update, otherwise, post
+#define HOOKSTACK_RUN_BEFORE       	(1ull << 5)
 
 // MASKED OUT FOR GUI THREAD
 
@@ -974,47 +974,129 @@ typedef struct _hstack_t {
 // see HOOK_OPT_ADDER_RUNS
 #define HOOKSTACK_ADDER_RUNS	       	(1ull << 32)
 
-// usually hook stack triggering can only be effected by the stack owner
-// if this flag is set, then any thread may trigger the stack (and probably run the callbacks itself,
-// unless flags dictate otherwise)
-#define HOOKSTACK_ANON_TRIGGER	       	(1ull << 33)
-
-#define HS_FLAGS_CB_ADDED		(HOOKSTACK_SELF_ONLY)
-
-#define HS_FLAGS_FATAL			(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)
-#define HS_FLAGS_THREAD_EXIT		(HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE)
-
-#define HS_FLAGS_DATA_READY		(HOOKSTACK_ASYNC | HOOKSTACK_PARALLEL | HOOKSTACK_REMOVE_ON_FALSE)
-#define HS_RET_TYPE_DATA_READY		WEED_SEED_BOOLEAN
-
-#define HS_FLAGS_LIVES_GUI		(HOOKSTACK_RUN_SINGLE | HOOKSTACK_GUI_THREAD | HOOKSTACK_ALWAYS_ONESHOT \
- 							| HOOKSTACK_NOWAIT)
-#define HS_FLAGS_SYNC_ANNOUNCE		(HOOKSTACK_PERSISTENT | HOOKSTACK_ALWAYS_ONESHOT)
-#define HS_FLAGS_COMPLETED		(HOOKSTACK_ALWAYS_ONESHOT)
-#define HS_FLAGS_FINISHED		(HOOKSTACK_ALWAYS_ONESHOT)
-#define HS_FLAGS_CANCELLED		(HOOKSTACK_ALWAYS_ONESHOT)
-#define HS_FLAGS_ERROR			(HOOKSTACK_ALWAYS_ONESHOT)
-#define HS_FLAGS_DESTRUCTION		(HOOKSTACK_ALWAYS_ONESHOT)
+//#define HS_FLAGS_CB_ADDED		(HOOKSTACK_SELF_ONLY)
 
 #define HS_DETAILS(type) HS_DETAILS_##type##_HOOK
 
-#define COND_RET_BOOLEAN "COND_EQUALS, COND_INT_VAR, COND_SYM_SRC_ITEM/funcdef/return_type,"\
-  "COND_INT_CONST, %ld", WEED_SEED_BOOLEAN
+#define HS_DETAILS_FATAL_HOOK ((hook_stack_descriptor_t)		\
+			       {.htype = FATAL_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+				  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT), \
+				  .const_data_srcs = (const char *[]){"*"}})
+
+#define HS_DETAILS_RESETTING_HOOK ((hook_stack_descriptor_t)		\
+				   {.htype = RESETTING_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+				      .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT), \
+				      .const_data_srcs = (const char *[]){"*"}})
+  
+#define HS_DETAILS_THREAD_EXIT_HOOK ((hook_stack_descriptor_t)		\
+				     {.htype = THREAD_EXIT_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+					.op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE), \
+					.const_data_srcs = (const char *[]){"*"}})
+
+#define HS_DETAILS_DATA_PREVIEW_HOOK ((hook_stack_descriptor_t)		\
+				      {.htype = DATA_PREVIEW_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+					 .const_data_srcs = (const char *[]){"P|$target_object", NULL}, \
+					 .var_data_srcs = (const char *[]){">V|-data", NULL}})
+
+#define HS_DETAILS_DATA_READY_HOOK ((hook_stack_descriptor_t)		\
+				    {.htype = DATA_READY_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+				       .op_flags = (HOOKSTACK_ASYNC | HOOKSTACK_PARALLEL), \
+				       .const_data_srcs = (const char *[]){"P|$target_object", NULL}, \
+				       .var_data_srcs = (const char *[]){"V|-data", NULL}})
+
+#define HS_DETAILS_LIVES_GUI_HOOK ((hook_stack_descriptor_t)		\
+				   {.htype = LIVES_GUI_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+				      .op_flags = (HOOKSTACK_RUN_SINGLE | HOOKSTACK_GUI_THREAD \
+						   | HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NOWAIT), \
+				      .const_data_srcs = (const char *[]){"*"}})
+
+#define HS_DETAILS_SYNC_ANNOUNCE_HOOK ((hook_stack_descriptor_t)		\
+				       {.htype = SYNC_ANNOUNCE_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+					  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT), \
+					  .const_data_srcs = (const char *[]){"*"}})
 
 #define HS_DETAILS_COMPLETED_HOOK ((hook_stack_descriptor_t)		\
-  {.htype = COMPLETED_HOOK, .pattern = HOOK_PATTERN_DATA,		\
-     .cascade = {							\
-		 .target_item = LIVES_LEAF_THRD_STATE,			\
-		 .when = LIVES_POST_HOOK,				\
-		 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, "\
-					       "COND_UINT64_CONST, %lu", THRD_STATE_COMPLETED),	\
-		 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-						"COND_UINT64_CONST, %lu", THRD_STATE_COMPLETED) \
-		 },							\
-     .op_flags = HOOKSTACK_ALWAYS_ONESHOT,				\
-     .accept_cond = lives_cond_create(COND_RET_BOOLEAN),		\
-     .def_args_fmt = "v*",						\
-     .bindings = (const char *[]){"target_object"}})
+				   {.htype = COMPLETED_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				      .cascade = {			\
+						  .target_item = LIVES_LEAF_THRD_STATE,	\
+						  .when = LIVES_POST_HOOK, \
+						  .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
+										"COND_UINT64_CONST", "%lu", THRD_STATE_COMPLETED), \
+						  .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+										 "COND_UINT64_CONST", "%lu", THRD_STATE_COMPLETED) \
+						  },			\
+				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				      .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+
+#define HS_DETAILS_FINISHED_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = FINISHED_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				     .cascade = {			\
+						 .target_item = LIVES_LEAF_THRD_STATE, \
+						 .when = LIVES_POST_HOOK, \
+						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
+									       "COND_UINT64_CONST", "%lu", THRD_STATE_FINISHED), \
+						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+										"COND_UINT64_CONST", "%lu", THRD_STATE_FINISHED) \
+						 },			\
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+
+#define HS_DETAILS_CANCELLED_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = CANCELLED_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				     .cascade = {			\
+						 .target_item = LIVES_LEAF_THRD_STATE, \
+						 .when = LIVES_PRE_HOOK, \
+						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
+									       "COND_UINT64_CONST", "%lu", THRD_STATE_CANCELLED), \
+						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+										"COND_UINT64_CONST", "%lu", THRD_STATE_CANCELLED) \
+						 },			\
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+
+#define HS_DETAILS_ERROR_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = ERROR_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				     .cascade = {			\
+						 .target_item = LIVES_LEAF_THRD_STATE, \
+						 .when = LIVES_PRE_HOOK, \
+						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
+									       "COND_UINT64_CONST", "%lu", THRD_STATE_ERROR), \
+						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+										"COND_UINT64_CONST", "%lu", THRD_STATE_ERROR) \
+						 },			\
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+
+#define HS_DETAILS_PAUSED_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = PAUSED_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				     .cascade = {			\
+						 .target_item = LIVES_LEAF_THRD_STATE, \
+						 .when = LIVES_POST_HOOK, \
+						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
+									       "COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED), \
+						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+										"COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED) \
+						 },			\
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+
+#define HS_DETAILS_RESUMING_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = RESUMING_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				     .cascade = {			\
+						 .target_item = LIVES_LEAF_THRD_STATE, \
+						 .when = LIVES_POST_HOOK, \
+						 .pre_cond = lives_cond_create("COND_BIT_SET, COND_SYM_OLD_VALUE, " \
+									       "COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED), \
+						 .post_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_NEW_VALUE, " \
+										"COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED) \
+						 },			\
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+
+#define HS_DETAILS_DESTRUCTION_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = DESTRUCTION_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
 
 // low level flags used internally when adding callbacks*/
 
@@ -1058,6 +1140,8 @@ typedef struct _hstack_t {
 #define LIVES_REPLY_CANCELLED 	NIRVA_REPLY_CANCELLED
 
 #define LIVES_REPLY_MU 	NIRVA_REPLY_MU
+
+void fg_deferral_remove_persistent(void);
 
 // normal funcs, but not called directly
 void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
@@ -1113,20 +1197,14 @@ void unref_cb_added_list(void);
 void lives_hook_stack_clear(lives_hook_stack_t **, int hstype);
 void lives_hook_stacks_clear_all(lives_hook_stack_t **, int ntypes);
 
-lives_result_t lives_hook_trigger(lives_hook_stack_t **, int hstype);
+lives_result_t _lives_hook_trigger(lives_hook_stack_t **, int hstype, ...);
+#define lives_hook_trigger(hstack, ...) _lives_hook_trigger(hstack, __VA_ARGS__, NULL)
 
-lives_result_t lives_proc_thread_trigger_hook(int hstype);
+lives_result_t _lives_proc_thread_trigger_hook(int hstype, ...);
+#define lives_proc_thread_trigger_hook(...) _lives_proc_thread_trigger_hook(__VA_ARGS__, NULL)
 
-int lives_hook_trigger_async(int hstype, lives_proc_thread_t **);
-
-// start a bg thread which triggers the hook, running each callback in sequence
-// if there are no callbacks in the stack, the proc thread completes
-// a common use would be to configure the stack to reject any funcinst without a boolean return type
-// optionally set the stack to run_single
-// then configure each thread with a condition 'COND_EQUALS, COND_SYM_RETVAL, COND_FALSE", and set remove on condfail
-//
-lives_proc_thread_t lives_hook_trigger_async_sequential(int hstype, uint64_t delay);
-
+int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **, ...);
+#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstack, __VA_ARGS__, NULL)
 
 void lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
@@ -1138,10 +1216,10 @@ lives_hook_stack_t **self_hook_stacks(int hstype);
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 int return_type, const char *args_fmt, const char *file, int line, uint64_t flags);
 
-#define create_funcdef_here(func) create_funcdef(#func, (lives_funcptr_t)func, 0, NULL,	\
-						 _FILE_REF_, _LINE_REF_, FDEF_FLAG_INSIDE)
+#define create_funcdef_here(func, rtype, args_fmt) create_funcdef(#func, (lives_funcptr_t)func, (rtype) , (args_fmt), \
+								  _FILE_REF_, _LINE_REF_, FDEF_FLAG_INSIDE)
 
-#define MAKE_FUNCDEF(func, rt, args) create_funcdef(#func, func, WEED_SEED_##rt, args, NULL, 0, 0);
+#define MAKE_FUNCDEF(func, rt, args_fmt) create_funcdef(#func, func, WEED_SEED_##rt, (args_fmt), NULL, 0, 0);
 
 void lives_funcdef_free(lives_funcdef_t *);
 
@@ -1154,23 +1232,6 @@ lives_result_t funcinst_params_from_vargs(lives_funcinst_t *,  const char *args_
 void lives_funcinst_free(lives_funcinst_t *);
 
 void cleanup_self_receipts(void);
-
-// proxy values
-
-#define WEED_BIND_VALUE(pl, key, st, var) weed_leaf_bind_value(pl, key, st, &var, sizeof(var))
-
-void *lives_proxy_data_get_value(weed_plant_t *pl, const char *key, int idx, void **retlocp,
-                                 boolean copy, weed_error_t *errp);
-
-lives_result_t lives_funcinst_bind_param(lives_funcinst_t *finst, int idx, void *locn, weed_size_t size);
-
-weed_error_t update_param_from_proxy(weed_plant_t *, const char *key, int idx, const char *real_key);
-
-weed_error_t copy_leaf_value(weed_plant_t *, const char *key, int idx, weed_seed_t xst, void **retlocp);
-
-weed_size_t lives_proxy_data_get_size(weed_plant_t *, const char *key, int idx, weed_error_t *errp);
-
-lives_result_t weed_plant_params_from_args_fmt(weed_plant_t *plant, const char *args_fmt, ...);
 
 funcsig_t funcsig_from_args_fmt(const char *args_fmt);
 char *args_fmt_from_funcsig(funcsig_t funcsig);
@@ -1200,36 +1261,34 @@ typedef struct {
 
   uint64_t flags;
 
-  lives_hook_stack_t *data_hook;
-
-  weed_plant_t *value;
-  // value "value" is a CUSTOM (WEED_SEED_PROXY)
-  // value that points to &(allv.value)
-  // from there we read stype, flags, ne
-
   // equivalent of value plant, but as an array
   // allv.value.X can point to ext value(s)
   allvalues_t *allv;
 
-  // VALUE plant can be passed to anything that needs a weed_plant_t * as input
-  // allv can be passed to any function which needs an array as input
-  // allv.value.V for example can be a void * param for a function / funcinst
+
+  LiVESList *contingencies;
 } funcinst_param_t;
 
 void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *target);
 void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
 #endif
 
+allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
 allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
 
 #define MAKE_ALLVALUE(stype, val) (_make_allval(NULL, stype, 1, 0, #val, (val)))
 #define MAKE_ALLVALUE_BOUND(stype, variable) (_make_allval(NULL, stype, 1, PARAM_FLAG_BOUND, #variable, (void *)&(variable)))
+#define MAKE_ALLVALUE_VA(stype, va) (_make_allval_va(NULL, stype, 1, 0, va))
 #define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval(NULL, stype, ne, 0, #vals, (vals)))
+#define MAKE_ALLVALUE_ARRAY_VA(stype, ne, va) (_make_allval_va(NULL, stype, ne, 0, va))
+
+#define BIND_VALUE(typecode, var) MAKE_ALLVALUE_BOUND(get_seedtype(typecode), var)
 
 #define SET_ALLVALUE(avp, stype, val) (_make_allval(avp, stype, 1, 0, #val, (val)))
+#define SET_ALLVALUE_VA(avp, stype, va) (_make_allval_va(avp, stype, 1, 0, va))
 #define SET_ALLVALUE_BOUND(avp, stype, variable) (_make_allval(avp, stype, 1, PARAM_FLAG_BOUND, #variable, (void *)&(variable)))
 #define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
-#define set_allvp_value(allvp, value) _DW0(SET_ALLVALUE(allvp, get_seedtype(type_name((value))), value);)
+#define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_va(avp, stype, ne, 0, va))
 
 void allvalue_free(allvalues_t *);
 
@@ -1259,6 +1318,8 @@ weed_seed_t get_seedtype(char c);
 
 int fn_func_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2);
 boolean fn_data_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2, int maxp);
+
+int get_funcinst_nparams(lives_funcinst_t *);
 
 int get_funcsig_nparms(funcsig_t sig);
 

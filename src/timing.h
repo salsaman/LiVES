@@ -3,7 +3,12 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifndef _TIMING_H
+#define _TIMING_H
+
 char *format_tstr(double xtime, int minlim);
+
+#define THE_TIMEY_WIMEY_KIND 1
 
 #define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second - GLOBAL TIMEBASE
 #define TICKS_PER_SECOND_DBL ((double)TICKS_PER_SECOND)   ///< actually microseconds / 100.
@@ -13,6 +18,9 @@ char *format_tstr(double xtime, int minlim);
 
 #define TICKS_TO_NSEC(ticks) ((uint64_t)(ticks) * TICKS_TO_NANOSEC)
 #define NSEC_TO_TICKS(nsec) ((uint64_t)(nsec) / TICKS_TO_NANOSEC)
+
+double  reset_timer_info(void);
+double show_timer_info(void);
 
 typedef enum {
   LIVES_TIME_SOURCE_NONE = 0,
@@ -58,3 +66,6 @@ void show_pbtimer_stats(void);
 void reset_playback_clock(ticks_t origticks);
 ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source);
 
+double do_nothing(int type_of_nothing);
+
+#endif

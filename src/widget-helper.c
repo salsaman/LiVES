@@ -501,7 +501,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
-  if (!gui_loop_tight || is_fg_thread()) cairo_stroke(cr);
+  if (is_fg_thread()) cairo_stroke(cr);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
     MAIN_THREAD_EXECUTE_RVOID(cairo_stroke, "v", cr);
@@ -1780,7 +1780,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget * widget) 
       if (LIVES_IS_DIALOG(widget) && mainw->mgeom) lives_window_center(LIVES_WINDOW(widget));
     }
   } else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
     MAIN_THREAD_EXECUTE(_lives_widget_show_all, WEED_SEED_BOOLEAN, &retloc, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -1801,7 +1801,7 @@ static boolean _lives_widget_queue_draw_and_update(LiVESWidget * widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget * widget) {
   if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCKING;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -1823,7 +1823,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget * widget) 
   // run in main thread as it seems to give a smoother result
   boolean ret;
   if (is_fg_thread()) return _lives_widget_show_now(widget);
-  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
+  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCKING;
   main_thread_execute(_lives_widget_show_now, WEED_SEED_BOOLEAN, &ret, "v", widget);
   BG_THREADVAR(hook_hints) = 0;
   return ret;
@@ -1843,6 +1843,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget * widget) {
       THREADVAR(hook_match_nparams) = 1;
       THREADVAR(hook_hints) |= HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD | HOOK_CB_PERSISTENT;
       // do this even for main thread so we can invalidate data for other threads
+      // also for this reason, we avoid setting HOOK_OPT_FG_LIGHT which bypasses queueing
       MAIN_THREAD_EXECUTE_RVOID(_lives_widget_destroy, "v", widget);
       THREADVAR(hook_hints) = 0;
       THREADVAR(hook_match_nparams) = 0;
@@ -1883,7 +1884,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget * widget
   }
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCKING;
     MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -2140,7 +2141,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
     lives_widget_context_update();
     resp = gtk_dialog_run(dialog);
   } else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
     main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -2200,6 +2201,8 @@ void fg_service_call(lives_funcinst_t *finst) {
     pthread_mutex_unlock(&finst_mutex);
     return;
   }
+
+  // problem - 
 
   finstwaiter = self;
   finsttorun = finst;
@@ -3430,7 +3433,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget * w
   boolean ret;
   if (mainw->no_idlefuncs) return FALSE;
   if (is_fg_thread()) return _lives_widget_process_updates(widget);
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_DATA;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_CB_PRIORITY | HOOK_UNIQUE_DATA;
   main_thread_execute(_lives_widget_process_updates, WEED_SEED_BOOLEAN, &ret, "v", widget);
   BG_THREADVAR(hook_hints) = 0;
   return ret;
@@ -3549,6 +3552,8 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   /* int c = GET_BOOK_VALUE(book, int, "test"); */
   /* g_print("got nookval %d\n", c); */
 
+  if (mainw->block_accels) return FALSE;
+  
   THREADVAR(accel_group) = group;
   THREADVAR(accel_key) = keyval;
   THREADVAR(accel_mod) = mod;
@@ -12711,6 +12716,7 @@ boolean lives_window_center(LiVESWindow * window) {
     ycen = mainw->mgeom[widget_opts.monitor].y + ((mainw->mgeom[widget_opts.monitor].height - height) >> 1);
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
   }
+  lives_widget_process_updates(LIVES_WIDGET(window));
   return TRUE;
 }
 
@@ -14628,7 +14634,7 @@ boolean widget_klasses_init(lives_toolkit_t tk) {
     lives_free(lname);
 
     // SET_VALUE
-    BG_THREADVAR(hook_hints) |= HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) |= HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
     add_method(k, OBJ_INTENTION_SET_VALUE, (lives_funcptr_t)lives_spin_button_set_value,
                WEED_SEED_BOOLEAN, "Vd");
     BG_THREADVAR(hook_hints) = 0;

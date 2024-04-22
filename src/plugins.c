@@ -778,7 +778,7 @@ LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
 #ifdef HAVE_PULSE_AUDIO
                 if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
                   if ((*vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, vpp->extra_argc, vpp->extra_argv))
-                    mainw->ext_audio = TRUE;
+                    ext_audio = TRUE;
                 }
 #endif
 #ifdef ENABLE_JACK
@@ -2691,7 +2691,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     set_signal_handlers((lives_sigfunc_t)defer_sigint);
 
-    mainw->err_funcdef = create_funcdef_here(try_decoder_plugins);
+    mainw->err_funcdef = create_funcdef_here(try_decoder_plugins, WEED_SEED_VOIDPTR, "VVV");
 
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 

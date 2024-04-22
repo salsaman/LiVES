@@ -40,6 +40,7 @@ void print_diagnostics(uint64_t types);
 char *md5_print(void *md5sum);
 
 //////////////////////////////////
+double check_thrd_latency(double *act_time);
 
 void test_procthreads(void);
 
@@ -48,8 +49,22 @@ boolean debug_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, 
 
 void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 
-void show_all_leaves(weed_plant_t *);
+// auditing
+#define STATS_LIST		0
+#define STATS_FREQ		1
+#define STATS_ATAG		2
+
+void show_weed_stats(int oper);
+void upd_statsplant(const char *key);
+
+void add_to_audit(audit_tag *, void *data); 
+void remove_from_audit(void *);
+
 void show_audit(weed_plant_t *);
+
+//////////////////////
+
+void show_all_leaves(weed_plant_t *);
 
 void run_diagnostic(LiVESWidget *, const char *testname);
 
@@ -57,9 +72,6 @@ void list_leaves(weed_plant_t *);
 
 char *get_stats_msg(boolean calc_only);
 double get_inst_fps(boolean get_msg);
-
-void reset_timer_info(void);
-double show_timer_info(void);
 
 int run_weed_startup_tests(void);
 
@@ -88,15 +100,6 @@ void show_struct_sizes(void);
 void do_lsd_tests(void) LIVES_NEVER_INLINE;
 
 void bundle_test(void);
-
-#define STATS_LIST		0
-#define STATS_FREQ		1
-
-void show_weed_stats(int oper);
-void upd_statsplant(const char *key);
-
-void add_to_audit(weed_plant_t *);
-void remove_from_audit(weed_plant_t *);
 
 ////////////////// INFO /////////////////
 char *cl_flags_desc(uint64_t clflags);
@@ -128,5 +131,7 @@ void analyse_weed_plant(weed_plant_t *, int *xtype, int64_t *xsubtype);
 void list_prefs(void);
 
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
+
+boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames);
 
 #endif

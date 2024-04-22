@@ -26,107 +26,6 @@ lives_objstore_t *bdef_store = NULL;
 
 static size_t dict_size = 0;
 
-// a "value" has 4 leaves, but we dont know how to make one yet !
-// so let's fake it
-#define LIVES_BLUEPRINT(bltype, ...) LIVES_BLUEPRINT_##bltype(__VA_ARGS__)
-
-#define LIVES_BLUEPRINT_VALUE(name, vtype, flags, ne, value)		\
-  LIVES_PLANT_VALUE, "name", LIVES_SEED_CONST_CHARPTR, 0, name, "vtype", WEED_SEED_INT, 0, (weed_seed_t)(vtype), \
-    "flags", WEED_SEED_UINT64, 0, (flags), "value", vtype, 0, (weed_size_t)(ne), (value), NULL
-
-
-// a blueprint is an araay of values, so lets make a blueprint for value...but wait, we need values to make a value blueprint
-// sp lets do this
-static weed_plant_t *plant_from_tmpl(int pltype, ...) {
-  // make leaves until we get to NULL name
-  weed_plant_t *pl = lives_plant_new(pltype);
-  va_list va;
-  va_start(va, pltype);
-  while (1) {
-    weed_size_t ne = 1;
-    const char *name = va_arg(va, const char *);
-    if (!name) break;
-    weed_seed_t st = va_arg(va, weed_seed_t);
-    uint64_t flags = va_arg(va, uint64_t);
-    if (flags & PARAM_FLAG_ARRAY) ne = va_arg(va, weed_size_t);
-    if (!st) {
-      // if we get st 0, we set a placeholder string
-      weed_leaf_from_varg(pl, name, WEED_SEED_STRING, 1, va);
-    } else {
-      weed_leaf_from_varg(pl, name, st, ne, va);
-    }
-  }
-  va_end(va);
-  return pl;
-}
-
-// now lets maks a bluprint for value from values
-static weed_plant_t *make_bluprint(int nleaves, int pltype, ...) {
-  // same as plant_from tmpl. but we instead of leaves we make an array of value plants
-  weed_plant_t *pl = lives_plant_new(pltype);
-  weed_plant_t *defs[nleaves];
-  va_list va;
-  va_start(va, pltype);
-  for (int i = 0; i < nleaves; i++) {
-    weed_size_t ne = 1;
-    weed_seed_t st = va_arg(va, int);
-    if (!st) break;
-    const char *name = va_arg(va, const char *);
-    uint64_t flags = va_arg(va, uint64_t);
-    if (flags & PARAM_FLAG_ARRAY) {
-      ne = va_arg(va, weed_size_t);
-      defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, ne, va));
-    } else defs[i] = plant_from_tmpl(LIVES_BLUEPRINT(VALUE, name, st, flags, 1, va));
-  }
-  va_end(va);
-  weed_set_int_value(pl, "pl_type", pltype);
-  weed_set_plantptr_array(pl, "defs", nleaves, defs);
-  return pl;
-}
-
-// now lets make a blueprint fot value
-static weed_plant_t *make_value_blu(void) {
-  weed_plant_t *valblu = make_bluprint(4, LIVES_BLUEPRINT(VALUE, "val_bluprint", 0, 0, 1, "dummy"));
-  return valblu;
-}
-
-#define PLANT_FROM_BLU(bltype, ...) plant_from_blu(LIVES_PLANT_##bltype, __VA_ARGS__)
-
-// now make a plant from its bluprint
-static weed_plant_t *plant_from_blu(int pltype, ...) {
-  weed_plant_t *blu = NULL;
-  va_list va;
-  if (pltype == LIVES_PLANT_VALUE) blu = make_value_blu();
-  // now for each value, we will make a leaf in pl_out, reading va_value
-  // if st is 0, we read a seed_type, if flag ! scalar we read ne
-  if (!blu) return NULL;
-  int ndefs;
-  weed_plant_t **defs = weed_get_plantptr_array_counted(blu, "defs", &ndefs);
-  weed_plant_t *opl = lives_plant_new(pltype);
-  va_start(va, pltype);
-  for (int i = 0; i < ndefs; i++) {
-    // now we will make a real leaf (not a value) in opl
-    const char *name = weed_get_const_string_value(defs[i], "name", NULL);
-    weed_seed_t st = weed_get_int_value(defs[i], "vtype", NULL);
-    uint64_t flags = weed_get_uint64_value(defs[i], "flags", NULL);
-    weed_size_t ne = 1;
-    if (!st) st = va_arg(va, weed_seed_t);
-    if (flags & PARAM_FLAG_ARRAY) ne = va_arg(va, weed_size_t);
-    weed_leaf_from_varg(opl, name, st, ne, va);
-  }
-  va_end(va);
-  return opl;
-}
-
-////////////////////////////
-
-weed_plant_t *valplant_for_struct(const char *stname, void *struc) {
-  weed_plant_t *vpl = PLANT_FROM_BLU(VALUE, stname, WEED_SEED_VOIDPTR, 0, struc);
-  weed_set_int_value(vpl, "val_dtl", STRUCT_ADAPTOR);
-  return vpl;
-}
-
-
 ////////////////////////////////
 // object attr groups. For now we use the smae mechanism as the data "book" for proc_threads
 
@@ -1589,8 +1488,6 @@ void make_thrdattrs(lives_thread_data_t *tdata) {
   MK_ATTR(int, core_id);
   MK_ATTR(weed_voidptr_t, stackaddr);
   MK_ATTR(size_t, stacksize);
-  MK_ATTR(int64_t, round_trip_ticks);
-  MK_ATTR(size_t, ticks_to_activate);
 }
 
 static void _caps_partition(int op, lives_capacities_t *caps_a, lives_capacities_t *caps_b, lives_capacities_t **a_only,

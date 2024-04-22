@@ -14657,7 +14657,7 @@ boolean resize_layer_full(weed_layer_t *layer, int width, int height,
 
     return FALSE;
   }
-#define DEBUG_RESIZE
+  //#define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette, iclamping, 0), width, height,
@@ -15578,7 +15578,6 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   boolean new_alpha = FALSE, canswap = FALSE;
   int irowstride, orowstride, lform;
   int flags = weed_layer_get_flags(layer);
-  int pflags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
   int rflags = weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES);
   int width, height, pal;
 

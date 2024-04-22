@@ -1668,7 +1668,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  MSGMODE_ON(DEBUG);
+  //MSGMODE_ON(DEBUG);
 
   planrunner_lock();
 
@@ -1709,7 +1709,7 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    MSGMODE_OFF(DEBUG);
+    //MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel();
   }
@@ -1963,7 +1963,7 @@ static void run_plan(exec_plan_t *plan) {
           step->ini_width = weed_layer_get_width(layer);
           step->ini_height = weed_layer_get_height(layer);
           step->ini_gamma = weed_layer_get_gamma(layer);
-          xtime;
+
           d_print_debug("\nstep %d: RUN CONVERT (track %d) @ %.2f msec: "
                         "from pal %s, %d X %d, gamma %s ---> pal %s, %d X %d gamma %s\n", step_count,
                         step->track, 1000. * xtime, weed_palette_get_name(step->ini_pal), step->ini_width, step->ini_height,
@@ -2663,7 +2663,7 @@ static void run_plan(exec_plan_t *plan) {
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
 
-  MSGMODE_OFF(DEBUG);
+  //MSGMODE_OFF(DEBUG);
 
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel();
   nplans--;
@@ -2779,8 +2779,8 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
     SET_PLAN_STATE(QUEUED);
 
     mainw->plan_runner_proc = lpt
-                              = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, WEED_SEED_VOID,
-                                  "v", plan);
+      = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, WEED_SEED_VOID,
+				 "v", plan);
     lives_proc_thread_add_hook_cb(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
 
     lives_proc_thread_set_cancellable(lpt);
@@ -3626,7 +3626,7 @@ void align_with_model(lives_nodemodel_t *nodemodel) {
   inst_node_t *n, *retn = NULL;
   boolean *used;
 
-  //MSGMODE_ON(DEBUG);
+  //MSGMyODE_ON(DEBUG);
 
   d_print_debug("%s @ %s\n", "align start", lives_format_timing_string(lives_get_session_time() - ztime));
 

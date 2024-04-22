@@ -490,7 +490,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
         if (!internal) {
           if (mainw->fx1_bool) {
             // apply any audio effects with in_channels
-            if (has_audio_filters(AF_TYPE_ANY)) {
+            if (has_audio_filters(AF_TYPE_NONA)) {
               weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
               weed_layer_set_audio_data(layer, fltbuf, cfile->arate, cfile->achans, nsamps);
               weed_apply_audio_effects_rt(layer, currticks, FALSE, FALSE);

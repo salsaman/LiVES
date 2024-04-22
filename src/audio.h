@@ -252,7 +252,7 @@ boolean normalise_audio(int fnum, double start, double end, float thresh);
 
 void sample_silence_dS(float *dst, size64_t nsamples);
 
-void sample_silence_stream(int nchans, int64_t nframes);
+void sample_silence_stream(int nchans, int64_t nsamples);
 
 boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
                        boolean big_endian);
@@ -275,7 +275,7 @@ float sample_move_d16_float(float *dst, short *src, size_t nsamples, size_t src_
                             float vol) GNU_HOT;
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
-                              int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns frames output
+                              int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns samples output
 
 int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
 
@@ -386,10 +386,10 @@ lives_audio_buf_t *audio_cache_get_buffer(void);
 
 boolean apply_rte_audio_init(void);
 void apply_rte_audio_end(boolean del);
-boolean apply_rte_audio(int64_t nframes);
+boolean apply_rte_audio(int64_t nsamples);
 
-void init_audio_frame_buffers(short aplayer);
-void init_aux_audio_frame_buffers(short aplayer);
+lives_audio_buf_t *init_audio_frame_buffers(lives_obj_instance_t *aplayer);
+
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);
 void append_to_audio_bufferf(float *src, size64_t nsamples, int channum);
 void append_to_aux_audio_bufferf(float *src, size64_t nsamples, int channum);
@@ -417,5 +417,7 @@ int find_standard_arate(int rate);
 LiVESList *get_std_arates(void);
 
 void show_aplayer_attribs(LiVESWidget *, void **player);
+
+lives_obj_instance_t *get_current_aplayer(void);
 
 #endif

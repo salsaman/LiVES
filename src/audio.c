@@ -297,13 +297,13 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
   }
 
   if (!abuf->buffer16 || nchans > abuf->out_achans) {
-    if (!abuf->buffer16) abuf->buffer16 = (short **)lives_calloc(1, sizeof(short *));
-    abuf->buffer16[0] = (short *)lives_recalloc(abuf->buffer16[0], ABUF_ARENA_SIZE * nchans, ABUF_ARENA_SIZE * abuf->out_achans, 2);
+    if (!abuf->buffer16) abuf->buffer16 = (int16_t **)lives_calloc(1, sizeof(int16_t *));
+    abuf->buffer16[0] = (int16_t *)lives_recalloc(abuf->buffer16[0], ABUF_ARENA_SIZE * nchans, ABUF_ARENA_SIZE * abuf->out_achans, 2);
     abuf->out_achans = nchans;
   }
 
   if (!abuf->buffer16[0]) {
-    abuf->buffer16[0] = (short *)lives_calloc(ABUF_ARENA_SIZE, 2 * nchans);
+    abuf->buffer16[0] = (int16_t *)lives_calloc(ABUF_ARENA_SIZE, 2 * nchans);
     abuf->write_pos = 0;
   }
 
@@ -311,15 +311,21 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
   abuf->write_pos = write_offset;
   //#define DEBUG_AFB
 #ifdef DEBUG_AFB
-  g_print("append16 %lu to afb %p and %p %d %lu\n", nsamples, abuf, abuf->buffer16, ((short *)src)[0], write_offset);
+  g_print("append16 %lu to afb %p and %p %d %lu\n", nsamples, abuf, abuf->buffer16, ((int16_t *)src)[0], write_offset);
 #endif
 }
 
 
-void init_audio_frame_buffers(short aplayer) {
+lives_audio_buf_t *init_audio_frame_buffers(lives_obj_instance_t *aplayer) {
   // function should be called when the first video generator with audio input is enabled
   // (or audio player needing external audio)
-  lives_audio_buf_t *abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
+
+  LIVES_CALLOC_TYPE(lives_audio_buf_t, abuf, 1);
+
+  int nchans = lives_aplayer_get_achans(aplayer);
+  int arate = lives_aplayer_get_arate(aplayer);
+  int sampsize = lives_aplayer_get_sampsize(aplayer);
+  int interleaved = lives_aplayer_get_interleaved(aplayer);
 
   abuf->samples_filled = 0;
   abuf->swap_endian = FALSE;
@@ -327,90 +333,17 @@ void init_audio_frame_buffers(short aplayer) {
   abuf->start_sample = 0;
   abuf->write_pos = 0;
 
-  switch (aplayer) {
-#ifdef HAVE_PULSE_AUDIO
-  case AUD_PLAYER_PULSE:
-    abuf->in_interleaf = abuf->out_interleaf = TRUE;
-    abuf->s16_signed = TRUE;
-    if (mainw->pulsed_read) {
-      abuf->in_achans = abuf->out_achans = mainw->pulsed_read->in_achans;
-      abuf->arate = mainw->pulsed_read->in_arate;
-    } else if (mainw->pulsed) {
-      abuf->in_achans = abuf->out_achans = mainw->pulsed->out_achans;
-      abuf->arate = mainw->pulsed->out_arate;
-    }
-    break;
-#endif
-#ifdef ENABLE_JACK
-  case AUD_PLAYER_JACK:
-    abuf->in_interleaf = abuf->out_interleaf = FALSE;
-    if (mainw->jackd_read && mainw->jackd_read->in_use) {
-      abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
-      abuf->arate = mainw->jackd_read->sample_in_rate;
-    } else if (mainw->jackd) {
-      abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
-      abuf->arate = mainw->jackd->sample_out_rate;
-    }
-    break;
-#endif
-  default:
-    break;
-  }
-  mainw->afbuffer = abuf;
+  abuf->in_interleaf = abuf->out_interleaf = interleaved;
+  if (sampsize == 16) abuf->s16_signed = TRUE;
+  abuf->in_achans = abuf->out_achans = nchans;
+  abuf->arate = arate;
 
 #ifdef DEBUG_AFB
   g_print("init afb\n");
 #endif
+  return abuf;
 }
 
-
-void init_aux_audio_frame_buffers(short aplayer) {
-  for (int i = 0; i < 2; i++) {
-    lives_audio_buf_t *abuf;
-    mainw->afb_aux[i] = abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
-
-    abuf->samples_filled = 0;
-    abuf->swap_endian = FALSE;
-    abuf->out_achans = 0;
-    abuf->start_sample = 0;
-
-    switch (aplayer) {
-#ifdef HAVE_PULSE_AUDIO
-    case AUD_PLAYER_PULSE:
-      abuf->in_interleaf = abuf->out_interleaf = TRUE;
-      abuf->s16_signed = TRUE;
-      if (mainw->pulsed_read) {
-        abuf->in_achans = abuf->out_achans = mainw->pulsed_read->in_achans;
-        abuf->arate = mainw->pulsed_read->in_arate;
-      } else if (mainw->pulsed) {
-        abuf->in_achans = abuf->out_achans = mainw->pulsed->out_achans;
-        abuf->arate = mainw->pulsed->out_arate;
-      }
-      break;
-#endif
-#ifdef ENABLE_JACK
-    case AUD_PLAYER_JACK:
-      abuf->in_interleaf = abuf->out_interleaf = FALSE;
-      if (mainw->jackd_read && mainw->jackd_read->in_use) {
-        abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
-        abuf->arate = mainw->jackd_read->sample_in_rate;
-      } else if (mainw->jackd) {
-        abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
-        abuf->arate = mainw->jackd->sample_out_rate;
-      }
-      break;
-#endif
-    default:
-      break;
-    }
-  }
-
-  mainw->audio_frame_buffer_aux = mainw->afb_aux[0];
-
-#ifdef DEBUG_AFB
-  g_print("init afb_aux\n");
-#endif
-}
 
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
@@ -673,19 +606,19 @@ LIVES_GLOBAL_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
 }
 
 
-void sample_silence_stream(int nchans, int64_t nframes) {
+void sample_silence_stream(int nchans, int64_t nsamples) {
   float **fbuff = (float **)lives_calloc(nchans, sizeof(float *));
   boolean memok = TRUE;
   int i;
 
   for (i = 0; i < nchans; i++) {
-    fbuff[i] = (float *)lives_calloc(nframes, sizeof(float));
+    fbuff[i] = (float *)lives_calloc(nsamples, sizeof(float));
     if (!fbuff[i]) memok = FALSE;
   }
   if (memok) {
     pthread_mutex_lock(&mainw->vpp_stream_mutex);
     if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
-      (*mainw->vpp->render_audio_frame_float)(fbuff, nframes);
+      (*mainw->vpp->render_audio_frame_float)(fbuff, nsamples);
     }
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
   }
@@ -711,15 +644,15 @@ void sample_silence_stream(int nchans, int64_t nframes) {
 
 
 // TODO: going from >1 channels to 1, we should average
-void sample_move_d8_d16(short *dst, uint8_t *src,
+void sample_move_d8_d16(int16_t *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, double scale,
                         int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
 
   // endianness will be machine endian
   double src_offset_d = 0.;
-  unsigned char *ptr;
-  unsigned char *src_end;
+  uint8_t *ptr;
+  uint8_t *src_end;
   off_t src_offset_i = 0;
   int ccount;
   int nSrcCount, nDstCount;
@@ -748,8 +681,8 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
       ptr = ptr > src ? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
 
       if (!swap_sign) *(dst++) = *(ptr) << 8;
-      else if (swap_sign == SWAP_U_TO_S) *(dst++) = ((short)(*(ptr)) - 128) << 8;
-      else *((unsigned short *)(dst++)) = ((short)(*(ptr)) + 128) << 8;
+      else if (swap_sign == SWAP_U_TO_S) *(dst++) = ((int16_t)(*(ptr)) - 128) << 8;
+      else *((uint16_t *)(dst++)) = ((int16_t)(*(ptr)) + 128) << 8;
       ccount++;
 
       /* if we ran out of source channels but not destination channels */
@@ -861,12 +794,12 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 /**
    @brief convert from any number of source channels to any number of destination channels - 8 bit output
 */
-void sample_move_d16_d8(uint8_t *dst, short *src,
+void sample_move_d16_d8(uint8_t *dst, int16_t *src,
                         uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
   double src_offset_d = 0.;
-  short *ptr;
-  short *src_end;
+  int16_t *ptr;
+  int16_t *src_end;
   off_t src_offset_i = 0;
   int ccount = 0;
   int nSrcCount, nDstCount;
@@ -878,7 +811,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
-  src_end = src + tbytes / sizeof(short) - nSrcChannels;
+  src_end = src + tbytes / sizeof(int16_t) - nSrcChannels;
 
   while (nsamples--) {
     nSrcCount = nSrcChannels;
@@ -915,7 +848,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 }
 
 
-float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
+float sample_move_d16_float(float *dst, int16_t *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) {
   // convert 16 bit audio to float audio
   // NO RESAMPLING
@@ -931,12 +864,12 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 #else
   float val;
   float maxval = 0.;
-  short valss;
+  int16_t valss;
 #endif
 
   uint8_t srcx[2];
-  short srcxs;
-  short *srcp;
+  int16_t srcxs;
+  int16_t *srcp;
 
   svolp = vol / SAMPLE_MAX_16BIT_P;
   svoln = vol / SAMPLE_MAX_16BIT_N;
@@ -958,17 +891,15 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_s16(&val, srcp, 1, &y, val > 0 ? &xp : &xn);
 #else
-      if ((val = (float)((float)(*srcp) * (*srcp > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
-      else if (val < -1.0f) val = -1.0f;
+      val = (float)(*srcp) * (*srcp > 0 ? svolp : svoln);
 #endif
     } else {
 #ifdef ENABLE_OIL
-      oil_scaleconv_f32_u16(&val, (unsigned short *)srcp, 1, &y, &xa);
+      oil_scaleconv_f32_u16(&val, (uint16_t *)srcp, 1, &y, &xa);
       val -= vol;
 #else
-      valss = (unsigned short) * srcp - SAMPLE_MAX_16BITI;
-      if ((val = (float)((float)(valss) * (valss > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
-      else if (val < -1.0f) val = -1.0f;
+      valss = (uint16_t)*srcp - SAMPLE_MAX_16BITI;
+      val = (float)(valss) * (valss > 0 ? svolp : svoln);
 #endif
     }
 
@@ -982,7 +913,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 }
 
 
-float sample_move_d16_float_arena(float *dst, short *src, size_t offset, uint64_t nsamples, uint64_t src_skip,
+float sample_move_d16_float_arena(float *dst, int16_t *src, size_t offset, uint64_t nsamples, uint64_t src_skip,
                                   int is_unsigned, boolean rev_endian, float vol) {
   // convert 16 bit audio to float audio
 
@@ -999,12 +930,12 @@ float sample_move_d16_float_arena(float *dst, short *src, size_t offset, uint64_
 #else
   float val;
   float maxval = 0.;
-  short valss;
+  int16_t valss;
 #endif
   size_t xoffs = offset;
   uint8_t srcx[2];
-  short srcxs;
-  short *srcp;
+  int16_t srcxs;
+  int16_t *srcp;
 
   if (vol == 0.) vol = 0.0000001f;
   svolp = SAMPLE_MAX_16BIT_P / vol;
@@ -1027,17 +958,15 @@ float sample_move_d16_float_arena(float *dst, short *src, size_t offset, uint64_
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_s16(&val, srcp, 1, &y, val > 0 ? &xp : &xn);
 #else
-      if ((val = (float)((float)(*srcp) / (*srcp > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
-      else if (val < -1.0f) val = -1.0f;
+      val = (float)(*srcp) / (*srcp > 0 ? svolp : svoln);
 #endif
     } else {
 #ifdef ENABLE_OIL
-      oil_scaleconv_f32_u16(&val, (unsigned short *)srcp, 1, &y, &xa);
+      oil_scaleconv_f32_u16(&val, (uint16_t *)srcp, 1, &y, &xa);
       val -= vol;
 #else
-      valss = (unsigned short) * srcp - SAMPLE_MAX_16BITI;
-      if ((val = (float)((float)(valss) / (valss > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
-      else if (val < -1.0f) val = -1.0f;
+      valss = (uint16_t)*srcp - SAMPLE_MAX_16BITI;
+      val = (float)(valss) / (valss > 0 ? svolp : svoln);
 #endif
     }
 
@@ -1176,7 +1105,7 @@ static size64_t sample_move_float_float_arena(float *dst, float *src, size_t off
    scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
    nsamps is number of out samples, asamps is out sample bit size (8 or 16)
    output is in holding_buff which can be cast to uint8_t *, int16_t *, or uint16_t *
-   returns number of frames out (total for all chans)
+   returns number of samples out (total for all chans)
 
    clipping is applied so that -1.0 <= fval <= 1.0
    the clipping value is applied linearly to vol (as a divisor), and if not reset it will decay so
@@ -1187,18 +1116,18 @@ static size64_t sample_move_float_float_arena(float *dst, float *src, size_t off
 */
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
-  int64_t frames_out = 0l;
+  int64_t samples_out = 0l;
   int i;
   off_t offs = 0, coffs = 0, lcoffs = -1;
 
   static double coffs_d = 0.f;
   const double add = (1.0 - CLIP_DECAY);
 
-  short *hbuffs = (short *)holding_buff;
-  unsigned short *hbuffu = (unsigned short *)holding_buff;
-  unsigned char *hbuffc = (unsigned char *)holding_buff;
-  short val[chans];
-  unsigned short valu[chans];
+  int16_t *hbuffs = (int16_t *)holding_buff;
+  uint16_t *hbuffu = (uint16_t *)holding_buff;
+  uint8_t *hbuffc = (uint8_t *)holding_buff;
+  int16_t val[chans];
+  uint16_t valu[chans];
   static float clip = CLIP_LIMIT;
   float ovalf[chans], valf[chans], fval;
   float volx = vol, ovolx = -1.;
@@ -1208,7 +1137,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
 
   if (clip > CLIP_LIMIT) checklim = TRUE;
 
-  while ((nsamps * chans - frames_out) > 0) {
+  while ((nsamps * chans - samples_out) > 0) {
     if (checklim) {
       if (clip > CLIP_LIMIT)  {
         clip = clip * CLIP_DECAY + add;
@@ -1226,7 +1155,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
           clip = fval;
           checklim = TRUE;
           volx = (vol / clip);
-          frames_out -= i;
+          samples_out -= i;
           offs -= i;
           i = -1;
           continue;
@@ -1237,7 +1166,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
         if (valf[i] > vol * CLIP_LIMIT) valf[i] = vol * CLIP_LIMIT;
         else if (valf[i] < -vol) valf[i] = -vol;
         ovolx = volx;
-        val[i] = (short)(valf[i] * (valf[i] > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
+        val[i] = (int16_t)(valf[i] * (valf[i] > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
         if (usigned) valu[i] = (val[i] + SAMPLE_MAX_16BITI);
       }
 
@@ -1255,10 +1184,10 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
           }
         }
       } else {
-        *(hbuffc + offs) = (unsigned char)(valu[i] >> 8);
+        *(hbuffc + offs) = (uint8_t)(valu[i] >> 8);
       }
       offs++;
-      frames_out++;
+      samples_out++;
     }
     lcoffs = coffs;
     if (scale < 0.) coffs = (off_t)((coffs_d += scale) - .4999);
@@ -1266,14 +1195,14 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   }
   coffs_d -= (double)coffs;
   if (prefs->show_dev_opts) {
-    if (frames_out != nsamps * chans) {
+    if (samples_out != nsamps * chans) {
       char *msg = lives_strdup_printf("audio float -> int: buffer mismatch of %ld samples\n",
-                                      frames_out - nsamps * chans);
+                                      samples_out - nsamps * chans);
       LIVES_WARN(msg);
       lives_free(msg);
     }
   }
-  return frames_out;
+  return samples_out;
 }
 
 
@@ -1390,7 +1319,7 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
    - int 16 version (e.g. pulseaudio)
    nchans, nsamps. out_arate all refer to player values
 */
-int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) {
+int64_t sample_move_abuf_int16(int16_t *obuf, int nchans, int nsamps, int out_arate) {
   int samples_out = 0;
 
 #ifdef HAVE_PULSE_AUDIO
@@ -1549,14 +1478,14 @@ size64_t float_interleave(float *out, float **in, size64_t nsamps, double scale,
 // for pulse audio we use S16LE interleaved, and the volume is adjusted later
 
 static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
-  int64_t frames_out;
+  int64_t samples_out;
   int chans = abuf->out_achans;
   size_t offs = abuf->samples_filled * chans;
 
-  frames_out = sample_move_float_int(abuf->buffer16[0] + offs, float_buffer, nsamps, 1., chans, 16,
+  samples_out = sample_move_float_int(abuf->buffer16[0] + offs, float_buffer, nsamps, 1., chans, 16,
                                      0, 0, 0, 1.0);
 
-  return (size_t)frames_out / chans;
+  return (size_t)samples_out / chans;
 }
 
 
@@ -1689,14 +1618,14 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   // TODO - allow MAX_AUDIO_MEM to be configurable; currently this is fixed at 8 MB
   // 16 or 32 may be a more sensible default for realtime previewing
-  // return (audio) frames rendered
+  // return (audio) samples rendered
 
   weed_plant_t *shortcut = NULL;
   lives_clip_t *outfile = to_file > -1 ? mainw->files[to_file] : NULL;
   uint8_t *in_buff;
   void *finish_buff = NULL;  ///< only used if we are writing output to a file
   double *vis = NULL;
-  short *holding_buff;
+  int16_t *holding_buff;
   weed_layer_t **layers = NULL;
   char *infilename, *outfilename;
   off64_t seekstart[nfiles];
@@ -1716,7 +1645,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   ssize_t bytes_read;
 
-  uint64_t nframes;
+  uint64_t nsamples;
 
   weed_timecode_t tc = tc_start;
 
@@ -1745,11 +1674,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   int i;
 
-  int64_t frames_out = 0;
+  int64_t samples_out = 0;
   int64_t ins_size = 0l, cur_size;
   int64_t tsamples = ((double)(tc_end - tc_start) / TICKS_PER_SECOND_DBL * (double)out_arate + .5);
   int64_t blocksize, zsamples, xsamples;
-  int64_t tot_frames = 0l;
+  int64_t tot_samples = 0l;
 
   float *float_buffer[out_achans * nfiles];
   float *chunk_float_buffer[out_achans * nfiles];
@@ -1939,7 +1868,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   xsamples = zsamples + (tsamples - (max_segments * zsamples)); // e.g 10 + 30 - 3 * 10 == 10
 
-  holding_buff = (short *)lives_calloc_safety(xsamples * out_achans,  sizeof(short));
+  holding_buff = (int16_t *)lives_calloc_safety(xsamples * out_achans,  sizeof(int16_t));
 
   for (i = 0; i < out_achans * nfiles; i++) {
     float_buffer[i] = (float *)lives_calloc_safety(xsamples, sizeof(float));
@@ -2024,7 +1953,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       // should be approximately = xsamples, I believe
-      nframes = (tbytes / (in_asamps[track]) / in_achans[track] / fabs(zavel) + .001);
+      nsamples = (tbytes / (in_asamps[track]) / in_achans[track] / fabs(zavel) + .001);
 
       /// convert to float
       zzavel = zavel;
@@ -2040,24 +1969,24 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
         for (c = 0; c < out_achans; c++) {
           float_deinterleave(float_buffer[track * out_achans + c], ((float *)in_buff + (c % in_achans[track])),
-                             nframes * zavel, zavel, in_achans[track], clip_vol * (use_live_chvols ? 1. : chvol[track]));
+                             nsamples * zavel, zavel, in_achans[track], clip_vol * (use_live_chvols ? 1. : chvol[track]));
         }
       } else {
         /// - first we convert to 16 bit stereo (if it was 8 bit and / or mono) and we resample
-        /// input is tbytes bytes at rate * velocity, and we should get out nframes audio frames at out_arate. out_achans
+        /// input is tbytes bytes at rate * velocity, and we should get out nsamples audio samples at out_arate. out_achans
         /// result is in holding_buff
         if (in_asamps[track] == 1) {
           if (zavel < 0.) {
             if (reverse_buffer(in_buff, tbytes, in_achans[track]))
               zavel = -zavel;
           }
-          sample_move_d8_d16(holding_buff, (uint8_t *)in_buff, nframes, tbytes, zavel, out_achans, in_achans[track], 0);
+          sample_move_d8_d16(holding_buff, (uint8_t *)in_buff, nsamples, tbytes, zavel, out_achans, in_achans[track], 0);
         } else {
           if (zavel < 0.) {
             if (reverse_buffer(in_buff, tbytes, in_achans[track] * 2))
               zavel = -zavel;
           }
-          sample_move_d16_d16(holding_buff, (short *)in_buff, nframes, tbytes, zavel, out_achans,
+          sample_move_d16_d16(holding_buff, (int16_t *)in_buff, nsamples, tbytes, zavel, out_achans,
                               in_achans[track], in_reverse_endian[track] ? SWAP_X_TO_L : 0, 0);
         }
         /// if we are previewing a rendering, we would get double the volume adjustment, once from the rendering and again from
@@ -2066,7 +1995,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
         for (c = 0; c < out_achans; c++) {
           /// now we convert to holding_buff to float in float_buffer and adjust the track volume
-          sample_move_d16_float(float_buffer[track * out_achans + c], holding_buff + c, nframes,
+          sample_move_d16_float(float_buffer[track * out_achans + c], holding_buff + c, nsamples,
                                 out_achans, in_unsigned[track], FALSE, clip_vol * (use_live_chvols ? 1. : chvol[track]));
         }
       }
@@ -2162,7 +2091,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       if (!mainw->multitrack && opvol_end != opvol_start) {
-        time += (double)frames_out / (double)out_arate / out_achans;
+        time += (double)samples_out / (double)out_arate / out_achans;
         opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / TICKS_PER_SECOND_DBL));
         opvol = lives_vol_from_linear(opvol);
       }
@@ -2170,11 +2099,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (is_fade) {
         // output to file
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
-        frames_out = sample_move_float_int((void *)finish_buff, chunk_float_buffer, blocksize, 1., out_achans,
+        samples_out = sample_move_float_int((void *)finish_buff, chunk_float_buffer, blocksize, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
-        lives_write_buffered(out_fd, finish_buff, frames_out * out_asamps, TRUE);
+        lives_write_buffered(out_fd, finish_buff, samples_out * out_asamps, TRUE);
         threaded_dialog_spin(0.);
-        tot_frames += frames_out;
+        tot_samples += samples_out;
 #ifdef DEBUG_ARENDER
         g_print(".");
 #endif
@@ -2187,26 +2116,26 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (to_file > -1) {
         /// output to file:
         if (out_asamps == 4)
-          frames_out = float_interleave((float *)finish_buff, float_buffer, xsamples, 1., out_achans, opvol);
+          samples_out = float_interleave((float *)finish_buff, float_buffer, xsamples, 1., out_achans, opvol);
         else
           /// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
-          frames_out = sample_move_float_int((void *)finish_buff, float_buffer, xsamples, 1., out_achans,
+          samples_out = sample_move_float_int((void *)finish_buff, float_buffer, xsamples, 1., out_achans,
                                              out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
 
-        lives_write_buffered(out_fd, finish_buff, frames_out * out_asamps, TRUE);
+        lives_write_buffered(out_fd, finish_buff, samples_out * out_asamps, TRUE);
 #ifdef DEBUG_ARENDER
         g_print(".");
 #endif
-        tot_frames += frames_out / out_achans;
+        tot_samples += samples_out / out_achans;
       } else {
         /// output to memory buffer; for jack we retain the float audio, for pulse we use int16_t
         if (prefs->audio_player == AUD_PLAYER_JACK) {
-          frames_out = chunk_to_float_abuf(obuf, float_buffer, xsamples);
+          samples_out = chunk_to_float_abuf(obuf, float_buffer, xsamples);
         } else {
-          frames_out = chunk_to_int16_abuf(obuf, float_buffer, xsamples);
+          samples_out = chunk_to_int16_abuf(obuf, float_buffer, xsamples);
         }
-        obuf->samples_filled += frames_out;
-        tot_frames += frames_out;
+        obuf->samples_filled += samples_out;
+        tot_samples += samples_out;
       }
     }
     xsamples = zsamples;
@@ -2235,7 +2164,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     lives_close_buffered(out_fd);
   }
 
-  return tot_frames;
+  return tot_samples;
 }
 
 
@@ -2591,7 +2520,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
     if (!mainw->pulsed_read) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
       mainw->pulsed_read->playing_file = -1;
-      mainw->pulsed_read->frames_written = 0;
+      mainw->pulsed_read->samples_written = 0;
       mainw->pulsed_read->reverse_endian = FALSE;
       mainw->aud_rec_fd = -1;
       pulse_driver_activate(mainw->pulsed_read);
@@ -2627,7 +2556,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
     if (rec_type == RECA_EXTERNAL) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
       mainw->pulsed_read->playing_file = clipno;
-      mainw->pulsed_read->frames_written = 0;
+      mainw->pulsed_read->samples_written = 0;
     }
   }
 
@@ -2646,7 +2575,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
       outfile->signed_endian = get_signed_endian(mainw->pulsed_read->in_signed != AFORM_UNSIGNED,
                                mainw->pulsed_read->in_endian != AFORM_BIG_ENDIAN);
 
-      mainw->pulsed_read->frames_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
+      mainw->pulsed_read->samples_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
     } else {
       mainw->pulsed->reverse_endian = FALSE;
       outfile->arate = outfile->arps = mainw->pulsed->out_arate;
@@ -2721,266 +2650,39 @@ void pulse_rec_audio_end(boolean close_fd) {
 #endif
 
 
-boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
-  // this function is similar to push_audio_to_channel, except that it pushes to a file,
-  // and it runs during the audio cycle
-  // this can be added as a callback for a player's DATA_READY_HOOK, so it can be run in parallel
-  // with data analysis, and will not hold up the audio player, since these callbacks are run async / parallel
-  // dets->fd is a FILE * to the file being written to
-  // generally we would write to the ascrap_file
+/* static void *ana_rcpt = NULL; */
+/* static void *ana_rcpt2 = NULL; */
 
-  arec_details *dets = (arec_details *)xdets;
-  GET_PROC_THREAD_SELF(self);
-  lives_clip_t *ofile;
-  void *holding_buff = NULL, *out_buff;
-  size_t nframes, frames_out, target_bytes, rbytes;
-  ssize_t actual_bytes;
-  float out_scale;
-  int in_achans, out_achans;
-  int in_arate, out_arate;
-  int in_sampsize, out_sampsize;
-  int swap_sign = 0;
-  boolean in_float, out_float = FALSE;
-  boolean in_interleaved = TRUE;
-  boolean out_unsigned, in_unsigned;
-  boolean rev_endian = FALSE;
-
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-
-  if (dets->bad_aud_file) return FALSE;
-  if (dets->rec_samples == 0) return FALSE;
-  if (!IS_VALID_CLIP(dets->clipno)) return FALSE;
-
-  if (mainw->record_paused) return TRUE;
-
-  nframes = lives_aplayer_get_data_len(aplayer);
-  if (!nframes) return FALSE;
-
-  in_float = lives_aplayer_get_float(aplayer);
-  in_achans = lives_aplayer_get_achans(aplayer);
-  in_arate = lives_aplayer_get_arate(aplayer);
-  in_sampsize = lives_aplayer_get_sampsize(aplayer) >> 3;
-  in_unsigned = !lives_aplayer_get_signed(aplayer);
-  in_interleaved = lives_aplayer_get_interleaved(aplayer);
-
-  ofile = mainw->files[dets->clipno];
-
-  out_sampsize = ofile->asampsize >> 3;
-  out_achans = ofile->achans;
-  out_arate = ofile->arate;
-  out_unsigned = ofile->signed_endian & AFORM_UNSIGNED;
-
-  if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) in_achans <<= 1;
-
-  out_scale = out_arate / in_arate;
-  frames_out = (int64_t)((double)nframes / out_scale + .49999);
-
-  if (out_sampsize == 2) {
-    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
-    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
-        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
-      rev_endian = TRUE;
-  }
-
-  if (in_float) {
-    holding_buff = lives_calloc(frames_out, out_achans * out_sampsize);
-    if (!holding_buff) return FALSE;
-    if (!in_interleaved) {
-      float **in_buffer = (float **)lives_aplayer_get_data(aplayer);
-      if (!out_float) {
-        frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, in_achans,
-                                           out_sampsize * 8, out_unsigned, rev_endian, FALSE, 1.);
-        rev_endian = FALSE;
-        in_unsigned = FALSE;
-        in_sampsize = 2;
-      } else frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, in_achans, 1.);
-      out_scale = 1.;
-    } else {
-      /// TODO
-    }
-    frames_out /= in_achans;
-  }
-
-  if (dets->rec_samples > 0) {
-    if (frames_out > dets->rec_samples) frames_out = mainw->rec_samples;
-    dets->rec_samples -= frames_out;
-  }
-
-  rbytes = frames_out * in_achans * in_sampsize;
-  frames_out = (size_t)((double)(rbytes / out_sampsize / out_achans) / (double)out_scale);
-  target_bytes = frames_out * out_achans * out_sampsize;
-  g_print("REC2: %ld %ld %ld\n", rbytes, target_bytes, frames_out);
-  out_buff = lives_calloc(target_bytes, 4);
-
-  if (!out_buff) {
-    if (holding_buff) lives_free(holding_buff);
-    return FALSE;
-  }
-  if (!holding_buff) holding_buff = lives_aplayer_get_data(aplayer);
-
-  if (!in_unsigned && out_unsigned) swap_sign = SWAP_S_TO_U;
-  else if (in_unsigned && !out_unsigned) swap_sign = SWAP_U_TO_S;
-
-  if (out_sampsize == 2) {
-    sample_move_d16_d16((short *)out_buff, holding_buff, frames_out, target_bytes, out_scale,
-                        out_achans, in_achans, rev_endian ? SWAP_L_TO_X : 0, swap_sign);
-  } else {
-    sample_move_d16_d8((uint8_t *)out_buff, holding_buff, frames_out, target_bytes, out_scale,
-                       out_achans, in_achans, swap_sign);
-  }
-
-  actual_bytes = lives_write_buffered(dets->fd, out_buff, target_bytes, TRUE);
-
-  if (actual_bytes > 0) {
-    //uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
-
-    mainw->aud_data_written += actual_bytes;
-
-    if (dets->clipno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes);
-    //check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
-    ofile->aseek_pos += actual_bytes;
-  }
-  if (actual_bytes < target_bytes) dets->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
-
-  //if (holding_buff != data)
-  if (holding_buff != lives_aplayer_get_data(aplayer))
-    lives_free(holding_buff);
-  lives_free(out_buff);
-
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-  //return actual_bytes;
-  return TRUE;
-}
+/* void audio_analyser_start(int source) { */
+/*   if (source == AUDIO_SRC_EXT) { */
+/*     if (!ana_rcpt) { */
+/*       lives_obj_instance_t *aplayer = get_aplayer_instance(source); */
+/*       ana_rcpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt, */
+/*                  WEED_SEED_BOOLEAN, "v", aplayer); */
+/*     } */
+/*   } else { */
+/*     if (!ana_rcpt2) { */
+/*       lives_obj_instance_t *aplayer = get_aplayer_instance(source); */
+/*       ana_rcpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt, */
+/*                   WEED_SEED_BOOLEAN, "v", aplayer); */
+/*     } */
+/*   } */
+/* } */
 
 
-/* sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, */
-/* 						 nsamples, pulsed->out_achans, FALSE, FALSE, 1.0); */
-
-
-//if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
-
-static boolean analyse_audio_rt(lives_obj_t *aplayer) {
-  // this function may be added as a callback to an audio_player's DATA_READY hook stack
-  // followin this, it will be triggered async each time a new packet of data has been read / written
-  // here we do two things - for mixed a / v filters, the audio is appended to the arena store, to be read
-  // during the video fx cycle
-  // for filters with only audio in, and nothing else we push the new audio directly to them
-  // since they should be running in the audio cycle
-  GET_PROC_THREAD_SELF(self);
-  float maxvol_heard = 0.;
-  size_t nframes;
-  int arate, nchans;
-  boolean is_float;
-  boolean alock_mixer = FALSE;
-
-  lives_proc_thread_set_cancellable(self);
-
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-
-  if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) {
-    return FALSE;
-  }
-
-  nframes = lives_aplayer_get_data_len(aplayer);
-  if (nframes == 0) {
-    if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-    return FALSE;
-  }
-  nchans = lives_aplayer_get_achans(aplayer);
-  arate = lives_aplayer_get_arate(aplayer);
-  is_float = lives_aplayer_get_float(aplayer);
-
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-
-  if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no audio channels out)
-    ticks_t tc = mainw->currticks;
-    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-    float **in_buffer;
-    if (is_float) in_buffer = (float **)lives_aplayer_get_data(aplayer);
-    else {
-      // TODO - in_asamps != 2
-      short *data = (short *)lives_aplayer_get_data(aplayer);
-      in_buffer = (float **)lives_calloc(nchans, sizeof(float *));
-      for (int i = 0; i < nchans; i++) {
-        in_buffer[i] = (float *)lives_calloc(nframes * 2, sizeof(float));
-        if (alock_mixer) {
-          float xshrink_factor = (float)mainw->alock_abuf->arate / (float)arate / mainw->audio_stretch;
-          int64_t xin_framesd = fabs((double)xshrink_factor * (double)nframes);
-          size_t xxin_bytes = (size_t)xin_framesd * mainw->alock_abuf->in_achans * (mainw->alock_abuf->in_asamps >> 3);
-          off_t offs = mainw->alock_abuf->seek / (mainw->alock_abuf->in_achans
-                                                  * (mainw->alock_abuf->in_asamps >> 3));
-          if (offs + nframes > mainw->alock_abuf->samp_space)
-            offs = mainw->alock_abuf->seek = 0;
-
-          sample_move_float_float(in_buffer[i], &mainw->alock_abuf->bufferf[i][offs],
-                                  xin_framesd, xshrink_factor, 1, 1., nframes);
-          if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
-        } else {
-          if (in_buffer[i])
-            maxvol_heard = sample_move_d16_float(in_buffer[i], data + i, nframes, nchans, FALSE, FALSE, 1.0);
-        }
-      }
-    }
-
-    if (mainw->afbuffer) {
-      // if we have audio triggered gens., push audio to it
-      // or if we want loopback to player
-      for (int i = 0; i < nchans; i++) {
-        append_to_audio_bufferf(in_buffer[i], nframes, (i == nchans - 1) ? -i - 1 : i + 1);
-      }
-    }
-
-    // apply any audio effects with in_channels and no out_channels
-    weed_layer_set_audio_data(layer, in_buffer, arate, nchans, nframes);
-    weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
-    weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-    weed_layer_unref(layer);
-
-    if (!is_float) {
-      for (int i = 0; i < nchans; i++) if (in_buffer[i]) lives_free(in_buffer[i]);
-      lives_free(in_buffer);
-    }
-  }
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-
-  return TRUE;
-}
-
-
-static void *ana_rcpt = NULL;
-static void *ana_rcpt2 = NULL;
-
-
-void audio_analyser_start(int source) {
-  if (source == AUDIO_SRC_EXT) {
-    if (!ana_rcpt) {
-      lives_obj_instance_t *aplayer = get_aplayer_instance(source);
-      ana_rcpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-                 WEED_SEED_BOOLEAN, "v", aplayer);
-    }
-  } else {
-    if (!ana_rcpt2) {
-      lives_obj_instance_t *aplayer = get_aplayer_instance(source);
-      ana_rcpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt,
-                  WEED_SEED_BOOLEAN, "v", aplayer);
-    }
-  }
-}
-
-
-void audio_analyser_end(int source) {
-  if (source == AUDIO_SRC_EXT) {
-    if (ana_rcpt) {
-      lives_hook_cb_remove(ana_rcpt);
-      ana_rcpt = NULL;
-    }
-  } else {
-    if (ana_rcpt2) {
-      lives_hook_cb_remove(ana_rcpt2);
-      ana_rcpt2 = NULL;
-    }
-  }
-}
+/* void audio_analyser_end(int source) { */
+/*   if (source == AUDIO_SRC_EXT) { */
+/*     if (ana_rcpt) { */
+/*       lives_hook_cb_remove(ana_rcpt); */
+/*       ana_rcpt = NULL; */
+/*     } */
+/*   } else { */
+/*     if (ana_rcpt2) { */
+/*       lives_hook_cb_remove(ana_rcpt2); */
+/*       ana_rcpt2 = NULL; */
+/*     } */
+/*   } */
+/* } */
 
 
 lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
@@ -3073,14 +2775,14 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
 }
 
 
-void fx_audio_apply(void) {if (has_audio_filters(AF_TYPE_ANY));}
-
-
-void convert_to_float(pulse_driver_t *pulsed, size_t nsamples) {
+float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
   boolean alock_mixer = FALSE;
-  float **fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
+  int nchans = lives_aplayer_get_achans(aplayer);
+  int arate = lives_aplayer_get_arate(aplayer);
+
+  float **fltbuf = (float **)lives_calloc(nchans, sizeof(float *));
   /// we have audio filters... convert to float, pass through any audio filters, then back to s16
-  for (int i = 0; i < pulsed->out_achans; i++) {
+  for (int i = 0; i < nchans; i++) {
     // convert s16 to non-interleaved float
     fltbuf[i] = (float *)lives_calloc_safety(nsamples, sizeof(float));
     if (!fltbuf[i]) {
@@ -3091,101 +2793,286 @@ void convert_to_float(pulse_driver_t *pulsed, size_t nsamples) {
     } else {
       /// convert to float, and take the opportunity to find the max volume
       /// (currently this is used to trigger recording start optionally)
-      pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
-                                 nsamples, pulsed->out_achans, FALSE, FALSE, 1.0);
+      int16_t *adata = (int16_t *)lives_aplayer_get_data(aplayer);
+      fltbuf = (float **)lives_calloc(nchans, sizeof(float *));
+      for (int i = 0; i < nchans; i++) {
+        fltbuf[i] = (float *)lives_calloc(nsamples * 2, sizeof(float));
+        if (alock_mixer) {
+          float xshrink_factor = (float)mainw->alock_abuf->arate / (float)arate / mainw->audio_stretch;
+          int64_t xin_samplesd = fabs((double)xshrink_factor * (double)nsamples);
+          size_t xxin_bytes = (size_t)xin_samplesd * mainw->alock_abuf->in_achans * (mainw->alock_abuf->in_asamps >> 3);
+          off_t offs = mainw->alock_abuf->seek / (mainw->alock_abuf->in_achans
+                                                  * (mainw->alock_abuf->in_asamps >> 3));
+          if (offs + nsamples > mainw->alock_abuf->samp_space)
+            offs = mainw->alock_abuf->seek = 0;
+
+          sample_move_float_float(fltbuf[i], &mainw->alock_abuf->bufferf[i][offs],
+                                  xin_samplesd, xshrink_factor, 1, 1., nsamples);
+          if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
+        } else {
+          if (fltbuf[i])
+            //maxvol_heard =
+	    sample_move_d16_float(fltbuf[i], adata + i,
+				  nsamples, nchans, FALSE, FALSE, 1.0);
+        }
+      }
     }
   }
+  return fltbuf;
 }
 
 
-
-void send_audio_to_fx(pulse_driver_t *pulsed) {
-  float **fltbuf = NULL;
-  size_t nsamples = 0;
-  boolean alock_mixer = FALSE;
-  uint64_t numFramesToWrite = nsamples;
+float **send_audio_to_fx(lives_obj_t *aplayer, float **fltbuf, lives_af_t af_type) {
+  // af_type can be AF_TYPE_NONA
+  // this should be eithet the only callback in the audio player's data_preview stack
+  // or if there is a mixer callback 
+  // AF_TYPE_A
+  // analysers - should be added as a DATA_READY_HOOK
+  //boolean alock_mixer = FALSE;
   ticks_t tc = mainw->currticks;
-  // apply any audio effects with in_channels
+ 
+  //boolean in_float = lives_aplayer_get_float(aplayer); 
+  int nchans = lives_aplayer_get_achans(aplayer); 
+  int arate = lives_aplayer_get_arate(aplayer);
+  size_t nsamples = lives_aplayer_get_data_len(aplayer);
 
-  if (has_audio_filters(AF_TYPE_ANY)) {
+  if (has_audio_filters(af_type)) {
     /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
         to the in channel of the filter and then from the out channel back to the layer.
         IF the filter supports inplace then
         we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
         and feed the result to the player as usual */
     weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-    weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, nsamples);
-    weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
-    lives_free(fltbuf);
-    fltbuf = weed_layer_get_audio_data(layer, NULL);
-    weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-    weed_layer_unref(layer);
-  }
-
-  if (!alock_mixer) {
-    pthread_mutex_lock(&mainw->vpp_stream_mutex);
-    if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
-      (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
+    fltbuf = convert_to_float(aplayer, nsamples);
+    weed_layer_set_audio_data(layer, fltbuf, arate, nchans, nsamples);
+    weed_apply_audio_effects_rt(layer, tc, af_type == AF_TYPE_A, TRUE);
+    if (af_type == AF_TYPE_NONA) {
+      lives_free(fltbuf);
+      fltbuf = weed_layer_get_audio_data(layer, NULL);
+      weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+      weed_layer_unref(layer);
     }
-    pthread_mutex_unlock(&mainw->vpp_stream_mutex);
-
-    // convert float audio back to s16 in pulsed->sound_buffer
-    sample_move_float_int(pulsed->sound_buffer, fltbuf, nsamples, 1.0, pulsed->out_achans, PA_SAMPSIZE, 0,
-                          (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
-
-    for (int i = 0; i < pulsed->out_achans; i++) lives_free(fltbuf[i]);
-    lives_freep((void **)&fltbuf);
   }
+  return fltbuf;
 }
 
 
-void send_audio_to_vpp(pulse_driver_t *pulsed) {
-  // apply any audio effects with in_channels
-  float **fltbuf = NULL;
-  ticks_t tc = mainw->currticks;
-  size_t nsamples = 0;
-  uint64_t numFramesToWrite = nsamples;
-  if (has_audio_filters(AF_TYPE_ANY)) {
-    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-    weed_layer_set_audio_data(layer, fltbuf,
-                              pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
-    weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
-    lives_free(fltbuf);
-    fltbuf = weed_layer_get_audio_data(layer, NULL);
-    weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-    weed_layer_unref(layer);
-  }
+/////////////////
 
+// data_preview hook cbd
+
+float **send_audio_to_rte(lives_obj_t *aplayer, float **fltbuf) {
+  return send_audio_to_fx(aplayer, fltbuf, AF_TYPE_NONA);
+}
+
+
+// data ready hook callbacks
+
+void send_audio_to_analysers(lives_obj_t *aplayer, float **fltbuf) {
+ send_audio_to_fx(aplayer, fltbuf, AF_TYPE_A);
+}
+
+
+void send_audio_to_vpp(lives_obj_t *aplayer, float **fltbuf) {
   // streaming - we can push float audio to the playback plugin
+  size_t nsamples = lives_aplayer_get_data_len(aplayer);
   pthread_mutex_lock(&mainw->vpp_stream_mutex);
   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
-    (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
+    (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamples);
   }
   pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+}
 
-#if !HAVE_PA_STREAM_BEGIN_WRITE
-  // copy effected audio back into pulsed->aPlayPtr->data
-  pulsed->sound_buffer = (uint8_t *)pulsed->aPlayPtr->data;
-#endif
 
-  sample_move_float_int(pulsed->sound_buffer, fltbuf, numFramesToWrite, 1.0,
-                        pulsed->out_achans, PA_SAMPSIZE, 0, (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
-
-  if (fltbuf) {
-    for (int i = 0; i < pulsed->out_achans; i++) lives_freep((void **)&fltbuf[i]);
-    lives_free(fltbuf);
-    fltbuf = NULL;
-    /// pl_error
-  }
+void send_audio_to_afbuffer(lives_obj_t *aplayer, float **fltbuf) {
+  // if we have fx with mixed audio / video, eg audio triggered gens
+  // or if we want loopback to player
+  // append the audio to the float arena
+  // - these things are running at a different cycle rate, so we must buffer
+  size_t nsamples = lives_aplayer_get_data_len(aplayer);  
+  int nchans = lives_aplayer_get_achans(aplayer);
+  for (int i = 0; i < nchans; i++)
+    append_to_audio_bufferf(fltbuf[i], nsamples, (i == nchans - 1) ? -i - 1 : i + 1);
 }
 
 
 void send_audio_to_fifo(pulse_driver_t *pdriver) {
-
-
-
-
+  //
 }
+
+
+float **rt_mix_audio(lives_obj_t *aplayer, float **fltbuf) {
+  // this is a callback for audio player data_preview hook
+  // we mix in registered sources with pre or post effected audio
+  // we will pull audio from each source, resample etc
+  // each source will providde vol. levels for its channels
+  // we apply auto gain to each audio source then mix them all
+  //
+  //
+  boolean alock_mixer = FALSE;
+  if (alock_mixer) { 
+    size_t nsamples = lives_aplayer_get_data_len(aplayer);  
+    if (nsamples && !pthread_mutex_trylock(&mainw->alock_mutex)) {
+      float **xfltbuf;
+      float xshrink_factor = 1.;
+      int64_t xin_samplesd;
+      size_t xxin_bytes;
+      int arate = lives_aplayer_get_arate(aplayer);
+      int nchans = lives_aplayer_get_achans(aplayer);
+      off_t offs = mainw->alock_abuf->seek / (mainw->alock_abuf->in_achans
+					      * (mainw->alock_abuf->in_asamps >> 3));
+      xshrink_factor = (float)mainw->alock_abuf->arate / (float)arate / mainw->audio_stretch;
+      xfltbuf = lives_calloc(nchans, sizeof(float *));
+      if (offs + nsamples > mainw->alock_abuf->samp_space) {
+	offs = mainw->alock_abuf->seek = 0;
+      }
+      for (int i = 0; i < nchans; i++) {
+	if (i > mainw->alock_abuf->in_achans) break;
+	xfltbuf[i] = &mainw->alock_abuf->bufferf[i][offs];
+      }
+
+      xin_samplesd = fabs((double)xshrink_factor * (double)nsamples);
+      xxin_bytes = (size_t)(xin_samplesd * mainw->alock_abuf->in_achans * (mainw->alock_abuf->in_asamps >> 3));
+
+      mainw->alock_abuf->seek += xxin_bytes;
+      pthread_mutex_unlock(&mainw->alock_mutex);
+    }
+  }
+  return fltbuf;
+}
+
+
+boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
+  // this function is similar to push_audio_to_channel, except that it pushes to a file,
+  // and it runs during the audio cycle
+  // this can be added as a callback for a player's DATA_READY_HOOK, so it can be run in parallel
+  // with data analysis, and will not hold up the audio player, since these callbacks are run async / parallel
+  // dets->fd is a FILE * to the file being written to
+  // generally we would write to the ascrap_file
+
+  arec_details *dets = (arec_details *)xdets;
+  GET_PROC_THREAD_SELF(self);
+  lives_clip_t *ofile;
+  void *holding_buff = NULL, *out_buff;
+  size_t nsamples, samples_out, target_bytes, rbytes;
+  ssize_t actual_bytes;
+  float out_scale;
+  int in_achans, out_achans;
+  int in_arate, out_arate;
+  int in_sampsize, out_sampsize;
+  int swap_sign = 0;
+  boolean in_float, out_float = FALSE;
+  boolean in_interleaved = TRUE;
+  boolean out_unsigned, in_unsigned;
+  boolean rev_endian = FALSE;
+
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
+
+  if (dets->bad_aud_file) return FALSE;
+  if (dets->rec_samples == 0) return FALSE;
+  if (!IS_VALID_CLIP(dets->clipno)) return FALSE;
+
+  if (mainw->record_paused) return TRUE;
+
+  nsamples = lives_aplayer_get_data_len(aplayer);
+  if (!nsamples) return FALSE;
+
+  in_float = lives_aplayer_get_float(aplayer);
+  in_achans = lives_aplayer_get_achans(aplayer);
+  in_arate = lives_aplayer_get_arate(aplayer);
+  in_sampsize = lives_aplayer_get_sampsize(aplayer) >> 3;
+  in_unsigned = !lives_aplayer_get_signed(aplayer);
+  in_interleaved = lives_aplayer_get_interleaved(aplayer);
+
+  ofile = mainw->files[dets->clipno];
+
+  out_sampsize = ofile->asampsize >> 3;
+  out_achans = ofile->achans;
+  out_arate = ofile->arate;
+  out_unsigned = ofile->signed_endian & AFORM_UNSIGNED;
+
+  if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) in_achans <<= 1;
+
+  out_scale = out_arate / in_arate;
+  samples_out = (int64_t)((double)nsamples / out_scale + .49999);
+
+  if (out_sampsize == 2) {
+    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
+    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
+        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+      rev_endian = TRUE;
+  }
+
+  if (in_float) {
+    holding_buff = lives_calloc(samples_out, out_achans * out_sampsize);
+    if (!holding_buff) return FALSE;
+    if (!in_interleaved) {
+      float **in_buffer = (float **)lives_aplayer_get_data(aplayer);
+      if (!out_float) {
+        samples_out = sample_move_float_int(holding_buff, in_buffer, samples_out, out_scale, in_achans,
+                                           out_sampsize * 8, out_unsigned, rev_endian, FALSE, 1.);
+        rev_endian = FALSE;
+        in_unsigned = FALSE;
+        in_sampsize = 2;
+      } else samples_out = float_interleave(holding_buff, in_buffer, samples_out, out_scale, in_achans, 1.);
+      out_scale = 1.;
+    } else {
+      /// TODO
+    }
+    samples_out /= in_achans;
+  }
+
+  if (dets->rec_samples > 0) {
+    if (samples_out > dets->rec_samples) samples_out = mainw->rec_samples;
+    dets->rec_samples -= samples_out;
+  }
+
+  rbytes = samples_out * in_achans * in_sampsize;
+  samples_out = (size_t)((double)(rbytes / out_sampsize / out_achans) / (double)out_scale);
+  target_bytes = samples_out * out_achans * out_sampsize;
+  g_print("REC2: %ld %ld %ld\n", rbytes, target_bytes, samples_out);
+  out_buff = lives_calloc(target_bytes, 4);
+
+  if (!out_buff) {
+    if (holding_buff) lives_free(holding_buff);
+    return FALSE;
+  }
+  if (!holding_buff) holding_buff = lives_aplayer_get_data(aplayer);
+
+  if (!in_unsigned && out_unsigned) swap_sign = SWAP_S_TO_U;
+  else if (in_unsigned && !out_unsigned) swap_sign = SWAP_U_TO_S;
+
+  if (out_sampsize == 2) {
+    sample_move_d16_d16((int16_t *)out_buff, holding_buff, samples_out, target_bytes, out_scale,
+                        out_achans, in_achans, rev_endian ? SWAP_L_TO_X : 0, swap_sign);
+  } else {
+    sample_move_d16_d8((uint8_t *)out_buff, holding_buff, samples_out, target_bytes, out_scale,
+                       out_achans, in_achans, swap_sign);
+  }
+
+  actual_bytes = lives_write_buffered(dets->fd, out_buff, target_bytes, TRUE);
+
+  if (actual_bytes > 0) {
+    //uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
+
+    mainw->aud_data_written += actual_bytes;
+
+    if (dets->clipno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes);
+    //check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
+    ofile->aseek_pos += actual_bytes;
+  }
+  if (actual_bytes < target_bytes) dets->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
+
+  //if (holding_buff != data)
+  if (holding_buff != lives_aplayer_get_data(aplayer))
+    lives_free(holding_buff);
+  lives_free(out_buff);
+
+  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
+  //return actual_bytes;
+  return TRUE;
+}
+
 
 /////////////////////////////////////////////////////////////////
 
@@ -3248,7 +3135,7 @@ LIVES_GLOBAL_INLINE lives_audio_track_state_t *audio_frame_to_atstate(weed_event
    (state being effects and filter maps, audio tracks / positions)
 
    if st_event is NULL, this is a continuation, and we get the audio state only at timecode tc
-   similar to quantise_events(), except we don't produce output frames
+   similar to quantise_events(), except we don't produce output samples
 */
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
     weed_timecode_t fill_tc, int what_to_get, boolean exact, int *xntracks) {
@@ -3575,9 +3462,9 @@ void init_pulse_audio_buffers(int achans, int arate, boolean exact) {
     mainw->pulsed->abufs[i]->arate = arate;
     mainw->pulsed->abufs[i]->start_sample = 0;
     mainw->pulsed->abufs[i]->samp_space = XSAMPLES / prefs->num_rtaudiobufs; // samp_space here is in stereo samples
-    mainw->pulsed->abufs[i]->buffer16 = (short **)lives_calloc(1, sizeof(short *));
-    mainw->pulsed->abufs[i]->buffer16[0] = (short *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs,
-                                           achans * sizeof(short));
+    mainw->pulsed->abufs[i]->buffer16 = (int16_t **)lives_calloc(1, sizeof(int16_t *));
+    mainw->pulsed->abufs[i]->buffer16[0] = (int16_t *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs,
+                                           achans * sizeof(int16_t));
   }
 #endif
 }
@@ -3970,9 +3857,9 @@ static void *cache_my_audio(void *arg) {
 
         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) {
           // output channels increased
-          cbuffer->buffer16 = (short **)
+          cbuffer->buffer16 = (int16_t **)
                               lives_realloc(cbuffer->buffer16,
-                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(short *));
+                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *));
           for (i = (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans);
                i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) {
             cbuffer->buffer16[i] = NULL;
@@ -3981,7 +3868,7 @@ static void *cache_my_audio(void *arg) {
 
         for (i = 0; i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) {
           // realloc existing channels and add new ones
-          cbuffer->buffer16[i] = (short *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(short) *
+          cbuffer->buffer16[i] = (int16_t *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(int16_t) *
                                  (cbuffer->out_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES);
         }
 
@@ -3994,9 +3881,9 @@ static void *cache_my_audio(void *arg) {
 
         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) {
           // output channels decreased
-          cbuffer->buffer16 = (short **)
+          cbuffer->buffer16 = (int16_t **)
                               lives_realloc(cbuffer->buffer16,
-                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(short *));
+                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *));
         }
       }
 
@@ -4013,9 +3900,9 @@ static void *cache_my_audio(void *arg) {
 
         if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)) {
           // output channels increased
-          cbuffer->buffer16 = (short **)
+          cbuffer->buffer16 = (int16_t **)
                               lives_realloc(cbuffer->buffer16,
-                                            (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(short *));
+                                            (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *));
           for (i = (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans);
                i < (cbuffer->in_interleaf ? 1 : cbuffer->out_achans); i++) {
             cbuffer->buffer16[i] = NULL;
@@ -4024,7 +3911,7 @@ static void *cache_my_audio(void *arg) {
 
         for (i = 0; i < (cbuffer->in_interleaf ? 1 : cbuffer->out_achans); i++) {
           // realloc existing channels and add new ones
-          cbuffer->buffer16[i] = (short *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(short) *
+          cbuffer->buffer16[i] = (int16_t *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(int16_t) *
                                  (cbuffer->in_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES);
         }
 
@@ -4036,9 +3923,9 @@ static void *cache_my_audio(void *arg) {
 
         if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) < (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)) {
           // output channels decreased
-          cbuffer->buffer16 = (short **)
+          cbuffer->buffer16 = (int16_t **)
                               lives_realloc(cbuffer->buffer16,
-                                            (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(short *));
+                                            (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *));
         }
       }
 
@@ -4207,7 +4094,7 @@ static void *cache_my_audio(void *arg) {
           if (reverse_buffer(cbuffer->_filebuffer, cbuffer->bytesize, cbuffer->in_achans * 2))
             cbuffer->shrink_factor = -cbuffer->shrink_factor;
         }
-        sample_move_d16_d16(cbuffer->buffer16[0], (short *)cbuffer->_filebuffer, cbuffer->samp_space, cbuffer->bytesize,
+        sample_move_d16_d16(cbuffer->buffer16[0], (int16_t *)cbuffer->_filebuffer, cbuffer->samp_space, cbuffer->bytesize,
                             cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans,
                             cbuffer->swap_endian ? SWAP_X_TO_L : 0, 0);
       } else {
@@ -4557,10 +4444,10 @@ void apply_rte_audio_end(boolean del) {
 }
 
 
-boolean apply_rte_audio(int64_t nframes) {
+boolean apply_rte_audio(int64_t nsamples) {
   // CALLED When we are rendering audio to a file
 
-  // - read nframes from clip or generator
+  // - read nsamples from clip or generator
   // - convert to float if necessary
   // - send to rte audio effects
   // - convert back to s16 or s8
@@ -4569,34 +4456,34 @@ boolean apply_rte_audio(int64_t nframes) {
   size_t tbytes;
   uint8_t *in_buff;
   float **fltbuf, *fltbufni = NULL;
-  short *shortbuf = NULL;
+  int16_t *shortbuf = NULL;
   boolean rev_endian = FALSE;
 
   int i;
 
   int abigendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
-  int onframes;
+  int onsamples;
 
-  // read nframes of audio from clip or generator
+  // read nsamples of audio from clip or generator
 
   if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN) || (!abigendian &&
       capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
 
-  tbytes = nframes * cfile->achans * cfile->asampsize / 8;
+  tbytes = nsamples * cfile->achans * cfile->asampsize / 8;
 
   if (mainw->agen_key == 0) {
     if (tbytes + audio_pos > cfile->afilesize) tbytes = cfile->afilesize - audio_pos;
     if (tbytes <= 0) return TRUE;
-    nframes = tbytes / cfile->achans / (cfile->asampsize / 8);
+    nsamples = tbytes / cfile->achans / (cfile->asampsize / 8);
   }
 
-  onframes = nframes;
+  onsamples = nsamples;
 
   in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
   if (!in_buff) return FALSE;
 
   if (cfile->asampsize == 8) {
-    shortbuf = (short *)lives_calloc_safety(tbytes / sizeof(short), sizeof(short));
+    shortbuf = (int16_t *)lives_calloc_safety(tbytes / sizeof(int16_t), sizeof(int16_t));
     if (!shortbuf) {
       lives_free(in_buff);
       return FALSE;
@@ -4621,41 +4508,41 @@ boolean apply_rte_audio(int64_t nframes) {
     }
 
     if (cfile->asampsize == 8) {
-      sample_move_d8_d16(shortbuf, in_buff, nframes, tbytes,
+      sample_move_d8_d16(shortbuf, in_buff, nsamples, tbytes,
                          1.0, cfile->achans, cfile->achans, 0);
-    } else shortbuf = (short *)in_buff;
+    } else shortbuf = (int16_t *)in_buff;
 
-    nframes = tbytes / cfile->achans / (cfile->asampsize / 8);
+    nsamples = tbytes / cfile->achans / (cfile->asampsize / 8);
 
     // convert to float
 
     for (i = 0; i < cfile->achans; i++) {
       // convert s16 to non-interleaved float
-      fltbuf[i] = (float *)lives_calloc(nframes, sizeof(float));
+      fltbuf[i] = (float *)lives_calloc(nsamples, sizeof(float));
       if (!fltbuf[i]) {
         while (i--) lives_free(fltbuf[i]);
         lives_free(fltbuf);
-        if (shortbuf != (short *)in_buff) lives_free(shortbuf);
+        if (shortbuf != (int16_t *)in_buff) lives_free(shortbuf);
         lives_free(in_buff);
         return FALSE;
       }
-      lives_memset(fltbuf[i], 0, nframes * sizeof(float));
-      if (nframes > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nframes, cfile->achans, \
+      lives_memset(fltbuf[i], 0, nsamples * sizeof(float));
+      if (nsamples > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nsamples, cfile->achans, \
                                                (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
                                                lives_vol_from_linear(cfile->vol));
     }
   } else {
     // read from plugin. This should already be float.
-    get_audio_from_plugin(fltbuf, cfile->achans, cfile->arate, nframes, FALSE);
+    get_audio_from_plugin(fltbuf, cfile->achans, cfile->arate, nsamples, FALSE);
   }
 
   // apply any audio effects
 
-  aud_tc += (double)onframes / (double)cfile->arate * TICKS_PER_SECOND_DBL;
+  aud_tc += (double)onsamples / (double)cfile->arate * TICKS_PER_SECOND_DBL;
   // apply any audio effects with in_channels
 
   layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-  weed_layer_set_audio_data(layer, fltbuf, cfile->arate, cfile->achans, onframes);
+  weed_layer_set_audio_data(layer, fltbuf, cfile->arate, cfile->achans, onsamples);
   weed_apply_audio_effects_rt(layer, aud_tc, FALSE, FALSE);
   lives_free(fltbuf);
   fltbuf = weed_layer_get_audio_data(layer, NULL);
@@ -4676,14 +4563,14 @@ boolean apply_rte_audio(int64_t nframes) {
 
     lives_free(fltbuf);
 
-    if (shortbuf != (short *)in_buff) lives_free(shortbuf);
+    if (shortbuf != (int16_t *)in_buff) lives_free(shortbuf);
     lives_free(in_buff);
 
     return TRUE;
   }
 
   // convert float audio back to int
-  sample_move_float_int(in_buff, fltbuf, onframes, 1.0, cfile->achans, cfile->asampsize, (cfile->signed_endian & AFORM_UNSIGNED),
+  sample_move_float_int(in_buff, fltbuf, onsamples, 1.0, cfile->achans, cfile->asampsize, (cfile->signed_endian & AFORM_UNSIGNED),
                         !(cfile->signed_endian & AFORM_BIG_ENDIAN), FALSE, 1.0);
 
   if (!fltbufni) {
@@ -4697,12 +4584,12 @@ boolean apply_rte_audio(int64_t nframes) {
   if (audio_fd >= 0) {
     // save to file
     lives_lseek_buffered_writer(audio_fd, audio_pos);
-    tbytes = onframes * cfile->achans * cfile->asampsize / 8;
+    tbytes = onsamples * cfile->achans * cfile->asampsize / 8;
     lives_write_buffered(audio_fd, (const char *)in_buff, tbytes, FALSE);
     audio_pos += tbytes;
   }
 
-  if (shortbuf != (short *)in_buff) lives_free(shortbuf);
+  if (shortbuf != (int16_t *)in_buff) lives_free(shortbuf);
   lives_free(in_buff);
 
   if (THREADVAR(write_failed) == audio_fd + 1) {
@@ -4814,10 +4701,10 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
       int swap = 0;
       if (!abuf->s8_signed) swap = SWAP_U_TO_S;
       abuf->s16_signed = TRUE;
-      abuf->buffer16 = (short **)lives_calloc(abuf->out_achans, sizeof(short *));
+      abuf->buffer16 = (int16_t **)lives_calloc(abuf->out_achans, sizeof(int16_t *));
       for (i = 0; i < abuf->out_achans; i++) {
-        abuf->buffer16[i] = (short *)lives_calloc_safety(samps, sizeof(short));
-        sample_move_d8_d16(abuf->buffer16[i], &abuf->buffer8[i][offs], samps, samps * sizeof(short),
+        abuf->buffer16[i] = (int16_t *)lives_calloc_safety(samps, sizeof(int16_t));
+        sample_move_d8_d16(abuf->buffer16[i], &abuf->buffer8[i][offs], samps, samps * sizeof(int16_t),
                            1.0, abuf->out_achans, abuf->out_achans, swap);
 
       }

@@ -526,7 +526,7 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost) {
         val = bestval;
         if (prefs->show_dev_opts)
           g_printerr("\n\n *** value of %s tuned to %lu ***\n\n\n",
-                     get_tunert(weed_get_int64_value(*tuner, WEED_LEAF_INDEX, NULL)), val);
+                     get_tunert(weed_get_int64_value(*tuner, LIVES_LEAF_SERIALNO, NULL)), val);
         // TODO: store value so we can recalibrate again later
         //tuned = (struct tuna *)lives_malloc(sizeof(tuna));
         //tuna->wptpp = tuner;
@@ -693,6 +693,7 @@ boolean is_empty_dir(const char *dirname) {
   return empty;
 }
 
+#define LIVES_PROC_DIR "/proc/self/task"
 
 LiVESList *allthrds_list(void) {
   LiVESList *allthrds = NULL;
@@ -1188,39 +1189,6 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
     lives_free(str1); lives_free(str2);
   }
   return hash64;
-}
-
-
-/////////////// move to other file ////
-
-
-LIVES_GLOBAL_INLINE int64_t lives_plant_get_subtype(weed_plant_t *plant) {
-  if (!IS_LIVES_PLANT(plant)) return 0;
-  return weed_get_int64_value(plant, LIVES_LEAF_SUBTYPE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int64_t subtype) {
-  weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
-  weed_set_int64_value(plant, LIVES_LEAF_SUBTYPE, subtype);
-  weed_set_int64_value(plant, WEED_LEAF_UNIQUE_ID, gen_unique_id());
-  lives_leaf_set_rdonly(plant, WEED_LEAF_UNIQUE_ID, TRUE, TRUE);
-  weed_leaf_set_undeletable(plant, WEED_LEAF_UNIQUE_ID, TRUE);
-  return plant;
-}
-
-
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int64_t subtype, int64_t index) {
-  weed_plant_t *plant = lives_plant_new(subtype);
-  weed_set_int64_value(plant, WEED_LEAF_INDEX, index);
-  return plant;
-}
-
-
-LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_refcount(int64_t subtype) {
-  weed_plant_t *plant = lives_plant_new(subtype);
-  weed_add_refcounter(plant);
-  return plant;
 }
 
 ///////////////// to do - move to performance manager ////
@@ -3036,29 +3004,6 @@ static void show_info(void) {
   lives_free(memstr); lives_free(thrdstr);
 }
 
-#if 0
-#define THE_TIMEY_WIMEY_KIND 1
-// check when nothing happens
-static uint64_t do_nothing(int what_type_of_nothing_did_you_expect, ticks_t the_start_of_nothing,
-			   ticks_t **when_nothing_will_end) {
-  uint64_t from_whence_you_came = THREADVAR(uid);
-  if (what_type_of_nothing_did_you_expect == THE_TIMEY_WIMEY_KIND) {
-    THREADVAR(ticks_to_activate) = lives_get_current_ticks() - the_start_of_nothing;
-    *when_nothing_will_end = &THREADVAR(round_trip_ticks);
-  }
-  return from_whence_you_came;
-}
-
-
-ticks_t check_thrd_latency(void) {
-  // ask a thread to do nothing, and then time how long i takes
-  ticks_t alpha = lives_get_current_ticks(), *omega;
-  /* lives_proc_thread_t lpt = lives_proc_thread_create(0, do_nothing, WEED_SEED_INT, "iIV", */
-  /* 						     THE_TIMEY_WIMEY_KIND, alpha, &omega); */
-  *omega = lives_get_current_ticks() - alpha;
-  return *omega;
-}
-#endif
 
 void perf_manager(void) {
   // this is designed to at some point be a self supporitn gobject

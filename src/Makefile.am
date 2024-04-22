@@ -253,6 +253,7 @@ lives_exe_SOURCES = \
 	paramspecial.c paramspecial.h\
 	rfx-builder.c rfx-builder.h\
 	$(yuv4mpeg_SOURCES)\
+	lives_plants.c lives_plants.h \
 	rte_window.c rte_window.h\
 	user-interface.c user-interface.h \
 	frameloader.c frameloader.h \

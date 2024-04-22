@@ -2492,7 +2492,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     // in the sense that it runs this function as a funcinst,
     // but is held in an external hook_stack
     self = jackd->inst;
-    lives_thread_set_proc_thread(self);
+    lives_proc_thread_set_thread_data(self, tdata);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Jack Writer Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
@@ -3090,7 +3090,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 }
               }
               //}
-              if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
+              if (!pl_error && has_audio_filters(AF_TYPE_NONA)) {
                 float **xfltbuf;
                 ticks_t tc = mainw->currticks;
                 // apply inplace any effects with audio in_channels, result goes to jack
@@ -3179,7 +3179,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
                 jackFramesAvailable = 0;
 
-                if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
+                if (has_audio_filters(AF_TYPE_NONA) && jackd->playing_file != mainw->ascrap_file) {
                   float **xfltbuf;
                   ticks_t tc = mainw->currticks;
                   // apply inplace any effects with audio in_channels
@@ -3617,7 +3617,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
     // as a stopgap, we can treat the aplayer instance as a lives_proc_thread
     // in the sense that it runs this function, but by being "queued" by an external entity
     self = jackd->inst;
-    lives_thread_set_proc_thread(self);
+    lives_proc_thread_set_thread_data(self, tdata);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Jack Reader Thread");
     lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;

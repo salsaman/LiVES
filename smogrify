@@ -1734,7 +1734,7 @@ if (1) {
 			unless ($showed_err) {
 			    print STDERR "Error playing audio !\n";
 			    print STDERR "Failed command was: $syscom2\n";
-			    smog_system("$syscom2");
+			    smog_system($syscom2);
 			    $showed_err = 1;
 			}
 		    }

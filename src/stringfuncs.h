@@ -67,9 +67,9 @@ int lives_strcmp_ordered(const char *, const char *);
 char *lives_chomp(char *, boolean multi);
 char *lives_strtrim(const char *);
 
-boolean lives_str_starts_with(const char *st1, const char *st2);
+boolean lives_str_starts_with(const char *string, const char *start);
 boolean lives_str_ends_with(const char *, const char *fmt, ...);
-const char *lives_str_starts_with_skip(const char *st1, const char *st2);
+const char *lives_str_starts_with_skip(const char *string, const char *start);
 
 size_t get_token_count(const char *, int delim);
 LiVESList *get_token_count_split(char *, int delim, size_t *ntoks);

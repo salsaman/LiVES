@@ -59,31 +59,20 @@ DEF_UNION(allfunc_t,
           funcptr_voidptr_t funcvoidptr;
           funcptr_plantptr_t funcplantptr;)
 
-DEF_UNION(allval_t,
-          uint32_t *u;
-          int32_t *i;
-          uint64_t *U;
-          int64_t *I;
-          boolean *b;
-          char **S;
-          char **s;
-          const char **C;
-          float *f;
-          double *d;
-          void **V;
-          lives_funcptr_t *F;
-          weed_plant_t **P;
-         )
+DEF_UNION(allval_t,uint32_t *u;int32_t *i;
+          uint64_t *U; int64_t *I; boolean *b;
+          char **S; char **s; const char **C;
+          float *f; double *d;
+          void **V; weed_funcptr_t *F;
+          weed_plant_t **P;)
 
 // values->* is a pointer to type rather than array of type
 #define ALLV_FLAG_POINTER		(1ull << 0)
-
 #define ALLV_FLAG_RDONLY		(1ull << 1)
 
 // error flagbits
 // unrecognised seed_type when setting val
 #define ALLV_ERR_STYPE		(1ull << 32)
-
 // attempt to bind to array (only scalars can be bound)
 #define ALLV_ERR_NVALS		(1ull << 33)
 
@@ -101,13 +90,13 @@ DEF_STRUCT(allvalues_t,
            NATIVE_MUTEX_TYPE mutex;
 #endif
            allval_t values;
-           LiVESList *contingencies;
-          )
+           LiVESList *contingencies;)
 
 #define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
 						     FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_, \
 									 _array_counted, (plant), (key), &(ne));)
 
+// we need to set p##n here because if we have a string param, this needs to be freed after the func call
 #define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
 
 // since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
@@ -137,7 +126,7 @@ DEF_STRUCT(allvalues_t,
 #define CTYPE_FLOAT float
 #define CTYPE_STRING char *
 #define CTYPE_VOIDPTR void *
-#define CTYPE_FUNCPTR lives_funcptr_t
+#define CTYPE_FUNCPTR weed_funcptr_t
 #define CTYPE_PLANTPTR weed_plantptr_t
 
 #define CTYPE_int int32_t
@@ -157,8 +146,8 @@ DEF_STRUCT(allvalues_t,
 #define CTYPE_float float
 #define CPTRTYPE_float float *
 
-#define CTYPE_funcptr lives_funcptr_t
-#define CPTRTYPE_funcptr lives_funcptr_t *
+#define CTYPE_funcptr weed_funcptr_t
+#define CPTRTYPE_funcptr weed_funcptr_t *
 #define CTYPE_voidptr void *
 #define CPTRTYPE_voidptr void **
 #define CTYPE_plantptr weed_plantptr_t
@@ -170,6 +159,7 @@ DEF_STRUCT(allvalues_t,
 
 // marker for variadic functions
 #define LIVES_SEED_VARIADIC 32
+#define LIVES_SEED_VALIST 64
 #define LIVES_SEED_ALLVALUES_T 512
 
 #define FOR_ALL_SEED_TYPES(st, pre, pre2, pre3, post, post2, post3, post4) \
@@ -272,14 +262,15 @@ DEF_STRUCT(allvalues_t,
 // 6,7,8 reserved for uint, uint64, float
 
 // nonstd
-#define FUNCSIG_ALLVALUES_T 				       		A
-#define FUNCSIG_VARIADIC 				       		B
+#define FUNCSIG_CONST_CHARP 				       		9
+#define FUNCSIG_VARIADIC 				       		A
+#define FUNCSIG_VALIST	 				       		B
 
 #define FUNCSIG_FUNCP 				       			C
 #define FUNCSIG_VOIDP 				       			D
 #define FUNCSIG_PLANTP 				       			E
 
-#define FUNCSIG_OTHER							9
+#define FUNCSIG_OTHER							F
 
 #define _JOIN2(a,b) a##b
 #define JOIN2(a,b) _JOIN2(a,b)
@@ -308,7 +299,7 @@ DEF_STRUCT(allvalues_t,
 #define DEF_VAR_INT64(n) int64_t p##n;
 #define DEF_VAR_VOIDP(n) void *p##n;
 #define DEF_VAR_PLANTP(n) weed_plantptr_t p##n;
-#define DEF_VAR_FUNCP(n) lives_funcptr_t p##n;
+#define DEF_VAR_FUNCP(n) weed_funcptr_t p##n;
 
 #define DEF_VAR(a,b) DEF_VAR_##a(b)
 #define DEF_VARS1(a) DEF_VAR(a, 0)
@@ -324,7 +315,7 @@ DEF_STRUCT(allvalues_t,
 #endif
 
 typedef struct {
-  char letter;
+  char typeletter;
   weed_seed_t seed_btype;
   uint8_t sigbits;
   const char *symname;
@@ -350,7 +341,7 @@ extern const lookup_tab crossrefs[];
 #endif
 
 // args_fmt letter (char), seed_type (uint32), funcsig value (4 bits), short name, prinf fmt
-// LIVES_SEED_* types aew only for convenience and cannot be used in function calls
+// LIVES_SEED_* types aew only for convenience and cannot be used in actual function calls (yet)
 #define XREFS_TAB							\
   {{'i',  WEED_SEED_INT,       		FUNCSIG(INT), 		"INT", "%d"} \
     ,{'d',  WEED_SEED_DOUBLE, 		FUNCSIG(DOUBLE), 	"DOUBLE", "%.4f"} \
@@ -363,9 +354,10 @@ extern const lookup_tab crossrefs[];
     ,{'V',  WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \
     ,{'p',  WEED_SEED_PLANTPTR, 	FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
     ,{'P',  WEED_SEED_PLANTPTR, 	FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
-    ,{'$',  LIVES_SEED_CONST_CHARPTR,	0x09,			"CONSTCHAR", "%s"} \
+    ,{'$',  LIVES_SEED_CONST_CHARPTR,	FUNCSIG(CONST_CHARP),	"CONSTCHARP", "%s"} \
+    ,{'_',  LIVES_SEED_VALIST,       	FUNCSIG(VALIST), 	"VALIST", NULL} \
     ,{'*',  LIVES_SEED_VARIADIC,       	FUNCSIG(VARIADIC), 	"VARIADIC", "..."} \
-    ,{'A',  LIVES_SEED_ALLVALUES_T,	FUNCSIG(VOIDP),		"ALLVAL", "%p"} \
+    ,{'A',  LIVES_SEED_ALLVALUES_T,	FUNCSIG(VOIDP),		"ALLVALSP", "%p"} \
     XREFS_TAB_UINT							\
       XREFS_TAB_UINT64							\
       XREFS_TAB_FLOAT							\
@@ -373,26 +365,26 @@ extern const lookup_tab crossrefs[];
 
 #define DEF_VARS(n,...) DEF_VARS##n(__VA_ARGS__)
 
-#define GET_CTYPE_INT int
-#define GET_CTYPE_BOOL boolean
-#define GET_CTYPE_DOUBLE double
-#define GET_CTYPE_STRING string
-#define GET_CTYPE_INT64 int64
-#define GET_CTYPE_VOIDP voidptr
-#define GET_CTYPE_PLANTP plantptr
-#define GET_CTYPE_FUNCP funcptr
+#define GET_WTYPE_INT int
+#define GET_WTYPE_BOOL boolean
+#define GET_WTYPE_DOUBLE double
+#define GET_WTYPE_STRING string
+#define GET_WTYPE_INT64 int64
+#define GET_WTYPE_VOIDP voidptr
+#define GET_WTYPE_PLANTP plantptr
+#define GET_WTYPE_FUNCP funcptr
 
-#define GET_CTYPE(a) GET_CTYPE_##a
-#define GET_CTYPES1(a) GET_CTYPE(a)
-#define GET_CTYPES2(a,b) GET_CTYPE(a), GET_CTYPE(b)
-#define GET_CTYPES3(a,b,c) GET_CTYPES2(a,b), GET_CTYPE(c)
-#define GET_CTYPES4(a,b,c,d) GET_CTYPES3(a,b,c), GET_CTYPE(d)
-#define GET_CTYPES5(a,b,c,d,e) GET_CTYPES4(a,b,c,d), GET_CTYPE(e)
-#define GET_CTYPES6(a,b,c,d,e,f) GET_CTYPES5(a,b,c,d,e), GET_CTYPE(f)
-#define GET_CTYPES7(a,b,c,d,e,f,g) GET_CTYPES6(a,b,c,d,e,f), GET_CTYPE(g)
-#define GET_CTYPES8(a,b,c,d,e,f,g,h) GET_CTYPES7(a,b,c,d,e,f,g), GET_CTYPE(h)
+#define GET_WTYPE(a) GET_WTYPE_##a
+#define GET_WTYPES1(a) GET_WTYPE(a)
+#define GET_WTYPES2(a,b) GET_WTYPE(a), GET_WTYPE(b)
+#define GET_WTYPES3(a,b,c) GET_WTYPES2(a,b), GET_WTYPE(c)
+#define GET_WTYPES4(a,b,c,d) GET_WTYPES3(a,b,c), GET_WTYPE(d)
+#define GET_WTYPES5(a,b,c,d,e) GET_WTYPES4(a,b,c,d), GET_WTYPE(e)
+#define GET_WTYPES6(a,b,c,d,e,f) GET_WTYPES5(a,b,c,d,e), GET_WTYPE(f)
+#define GET_WTYPES7(a,b,c,d,e,f,g) GET_WTYPES6(a,b,c,d,e,f), GET_WTYPE(g)
+#define GET_WTYPES8(a,b,c,d,e,f,g,h) GET_WTYPES7(a,b,c,d,e,f,g), GET_WTYPE(h)
 
-#define GET_CTYPES(n,...) GET_CTYPES##n(__VA_ARGS__)
+#define GET_WTYPES(n,...) GET_WTYPES##n(__VA_ARGS__)
 
 #define FREE_CHARPTR_INT(n)
 #define FREE_CHARPTR_BOOL(n)
@@ -429,18 +421,6 @@ const char **__VARNAMES(char *a, ...);
     va_end(b);LIVES_CALLOC_TYPE(const char*,r,n+1);r[0]=strdup(a);		\
     for(int i=1;i<n;i++)r[i]=(const char *)strdup(va_arg(c,char*));va_end(c);return r;}
 
-#define allvp_get_value(var, avp) get_allv_for_st(var, (allvalues_t *)avp, ((allvalues_t *)avp)->stype, 0)
-
-// since boolean is a typedef of int, we never get b, but always get i !
-// however, since values are a union, read/write .b[n] is equivalent to read / write .i[n]
-// however we should note when converting between plants and allvals, WEED_SEED_BOOLEAN if uncorected wull
-// be recast to WEED_SEED_INT
-#define type_name(expr) \
-  (_Generic((expr), char*: 'S', uint32_t: 'u', int32_t: 'i', \
-	    uint64_t: 'U', int64_t: 'I', float: 'f', double: 'd',	\
-	    void*: 'V', weed_funcptr_t: 'F', const char *: 'C',		\
-	    weed_plant_t *: 'P', default: '?'))
-
 #define ADD_FUNCSIG(n,...) reg_funcsig(n, VARNAMES(__VA_ARGS__));
 
 void reg_funcsig(int nparms, const char **anames);
@@ -458,7 +438,7 @@ void reg_known_funcsigs(void);
 #endif
 
 #define ADD_FUNCSIG(n,...) case _FUNCSIG(n,__VA_ARGS__): {DEF_VARS(n,__VA_ARGS__) \
-      _DC_(n,GET_CTYPES(n,__VA_ARGS__));FREE_CHARPTRS(n,__VA_ARGS__)} break;
+      _DC_(n,GET_WTYPES(n,__VA_ARGS__));FREE_CHARPTRS(n,__VA_ARGS__)} break;
 
 #endif // NEED_FSIG_CASES
 

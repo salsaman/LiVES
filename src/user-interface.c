@@ -136,7 +136,7 @@ void sensitize_rfx(void) {
       if (menuitem && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
           && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
               (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-               && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
+               && has_audio_filters(AF_TYPE_NONA)) || mainw->agen_key != 0)) {
         lives_widget_set_sensitive(menuitem, TRUE);
       }
 

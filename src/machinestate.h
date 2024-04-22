@@ -59,59 +59,6 @@ typedef struct {
 
 //////////////
 
-/// TODO - move elsewhere, does not really belong here
-///
-// weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
-#define WEED_PLANT_LIVES 31337
-
-#define IS_LIVES_PLANT_TYPE(type) ((type) == WEED_PLANT_LIVES)
-
-#define IS_LIVES_PLANT(plant) (plant && IS_LIVES_PLANT_TYPE(weed_plant_get_type(plant)))
-
-#define LIVES_PLANT_MESSAGE 1
-#define LIVES_PLANT_WIDGET 2
-#define LIVES_PLANT_TUNABLE 3
-#define LIVES_PLANT_PROC_THREAD 4
-#define LIVES_PLANT_PREFERENCE 5
-
-#define LIVES_PLANT_TMP 64
-
-#define LIVES_PLANT_FUNCPARAMS 128
-
-#define LIVES_PLANT_DATA_BOOK 140
-
-#define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
-
-#define LIVES_PLANT_HASH_STORE 513
-
-#define LIVES_PLANT_INDEX 514
-
-#define LIVES_LEAF_PREFIX "_prefix"
-#define LIVES_LEAF_DATA_TYPE "_data_type"
-
-#define LIVES_PLANT_CLEANER 515
-
-#define LIVES_PLANT_STRUCT_MIRROR 516
-
-// used for debugging purposes
-#define LIVES_PLANT_AUDIT 1024
-
-#define LIVES_PLANT_BLUEPRINT 2048
-#define LIVES_PLANT_VALUE 2049
-
-// valplant_details
-#define STRUCT_ADAPTOR 999
-
-#define IS_PROC_THREAD(type, subtype) (IS_LIVES_PLANT_TYPE(type) && (subtype) == LIVES_PLANT_PROC_THREAD)
-
-#define LIVES_PROC_DIR "/proc/self/task"
-
-weed_plant_t *lives_plant_new(int64_t subtype);
-weed_plant_t *lives_plant_new_with_index(int64_t subtype, int64_t index);
-weed_plant_t *lives_plant_new_with_refcount(int64_t subtype);
-
-int64_t lives_plant_get_subtype(weed_plant_t *);
-
 void lives_get_randbytes(void *ptr, size_t size);
 
 #define LIVES_LEAF_TRIALS "trials"
@@ -124,9 +71,8 @@ void lives_get_randbytes(void *ptr, size_t size);
 #define LIVES_LEAF_CYCLES "cycles"
 
 LiVESList *allthrds_list(void);
-LiVESList *cull_unknown_threads(LiVESList *cull_list);
 
-void autotune_u64_start(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials);
+void autotune_u64_start(weed_plant_t *tuner, uint64_t min, uint64_t max, int ntrials);
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost);
 
 void init_random(void);

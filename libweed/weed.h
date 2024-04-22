@@ -53,6 +53,7 @@ extern "C"
 #define __need_NULL
 #include <stddef.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
   /* API / ABI version * 202 */
   // changes in 200 -> 201: weed_leaf_element_size now returns (strlen + 1) for WEED_SEED_STRING values,
@@ -67,7 +68,7 @@ extern "C"
 
 #ifndef HAVE_WEED_BOOLEAN_T
 #define HAVE_WEED_BOOLEAN_T
-  typedef int32_t weed_boolean_t;
+  typedef bool weed_boolean_t;
 #endif
   
 #if !defined(WEED_TRUE) || !defined(WEED_FALSE)
@@ -91,8 +92,8 @@ extern "C"
 #define WEED_FALSE ((weed_boolean_t)false)
 #else
 
-#define _WEED_FALSE	FALSE
-#define _WEED_TRUE	(!WEED_FALSE)
+#define _WEED_FALSE	false
+#define _WEED_TRUE	true
 
 #define WEED_TRUE (weed_boolean_t)_WEED_TRUE
 #define WEED_FALSE (weed_boolean_t)_WEED_FALSE
@@ -242,8 +243,6 @@ struct _weed_leaf_nopadding {
   typedef void *(*weed_memmove_f)(void *, const void *, size_t);
 
   typedef weed_plant_t *(*weed_plant_new_f)(int32_t plant_type);
-
-  /* TODO: weed_plant_get_nleaves; weed_plant_get_leaf_namws; */
   
   typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *, weed_size_t *nleaves);
   typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
@@ -251,8 +250,6 @@ struct _weed_leaf_nopadding {
   typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, weed_size_t idx, weed_voidptr_t value);
   typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key);
   typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx);
-  /* typedef weed_error_t (*weed_leaf_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx, */
-  /* 						      weed_size_t new_size); */
 
   typedef weed_seed_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
   typedef weed_flags_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
@@ -292,11 +289,6 @@ struct _weed_leaf_nopadding {
   /* CAUTION - only works with scalar values */
   typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 						    weed_voidptr_t new_value, weed_voidptr_t old_valptr);
-  //
-
-  // remove
-  typedef weed_error_t (*weed_ext_set_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
-   						      weed_size_t new_size);
 #endif
 
   /* end extended functions */
@@ -307,18 +299,24 @@ struct _weed_leaf_nopadding {
   /* host only functions */
 
   typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, weed_flags_t flags);
+
+  // this is a new function in API 203 - for custom seed types only, the size of an element can be set
+  // manually; this can be useful to indicate the size of an object pointed to.
+  // Changing the value does not alter the internal size, which is always WEED_VOIDPTR_SIZE
+  typedef weed_error_t (*weed_set_custom_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx,
+							 weed_size_t new_size);
   typedef weed_error_t (*weed_leaf_set_private_data_f)(weed_plant_t *, const char *key, void *data);
   typedef weed_error_t (*weed_leaf_get_private_data_f)(weed_plant_t *, const char *key, void **ret_loc);
 
   __WEED_FN_DEF__ weed_leaf_set_flags_f weed_leaf_set_flags;
+  __WEED_FN_DEF__ weed_set_custom_element_size_f weed_set_custom_element_size;
   __WEED_FN_DEF__ weed_leaf_set_private_data_f weed_leaf_set_private_data;
   __WEED_FN_DEF__ weed_leaf_get_private_data_f weed_leaf_get_private_data;
 
-  /////////////////////// TODOl MOVE INTO libweed.h
+  /////////////////////// TODO: MOVE INTO libweed.h
   /* extenended functions */
   __WEED_FN_DEF__ weed_ext_attach_leaf_f  weed_ext_attach_leaf;
   __WEED_FN_DEF__ weed_ext_detach_leaf_f  weed_ext_detach_leaf;
-  __WEED_FN_DEF__ weed_ext_set_element_size_f weed_ext_set_element_size;
   __WEED_FN_DEF__ weed_ext_append_elements_f weed_ext_append_elements;
   __WEED_FN_DEF__ weed_ext_atomic_exchange_f weed_ext_atomic_exchange;
 

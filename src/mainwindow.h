@@ -1894,6 +1894,7 @@ typedef struct {
   boolean gui_much_events;
   volatile boolean do_ctx_update;
   boolean no_context_update; ///< may be set temporarily to block wodget context updates
+  boolean block_accels;
 
   weed_plant_t *msg_list;
   weed_plant_t *ref_message; // weak ref

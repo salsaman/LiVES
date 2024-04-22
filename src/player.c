@@ -1174,6 +1174,7 @@ frames_t load_frame_image(frames_t frame) {
       lives_proc_thread_join_void(mainw->plan_runner_proc);
       lives_proc_thread_unref(mainw->plan_runner_proc);
       mainw->plan_runner_proc = NULL;
+      //mainw->debug_ptr = mainw->plan_runner_proc;
     }
 
     if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
@@ -1490,8 +1491,8 @@ frames_t load_frame_image(frames_t frame) {
       frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(frame_layer, mainw->frame_layer);
     }
-    if (!mainw->debug_ptr)
-      mainw->debug_ptr = frame_layer;
+    /* if (!mainw->debug_ptr) */
+    /*   mainw->debug_ptr = frame_layer; */
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed

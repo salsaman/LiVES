@@ -769,7 +769,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
   apply_audio_fx = FALSE;
 
-  if (type == 0 && ((cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
+  if (type == 0 && ((cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_NONA)) ||
                     mainw->agen_key != 0)) {
     if (mainw->agen_key != 0 && cfile->achans == 0) {
       // apply audio gen to clip with no audio - prompt for audio settings
@@ -1090,10 +1090,8 @@ static lives_result_t rte_on_off(int key, int on_off) {
 	refresh_model = TRUE;
       }
 
-      if (fx_key_defs[key].last_activator == activator_pconx) {
+      if (fx_key_defs[key].last_activator == activator_ui) {
 	mainw->last_grabbable_effect = key;
-	// if effect was auto (from ACTIVATE data connection), leave all param boxes
-	// otherwise, remove any which are not "pinned"
       }
 
       if (rte_window) rtew_set_keych(key, TRUE);
@@ -1163,7 +1161,7 @@ static lives_result_t rte_on_off(int key, int on_off) {
       if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
 	if (mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
 					|| (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-					    && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0))
+					    && has_audio_filters(AF_TYPE_NONA)) || mainw->agen_key != 0))
 	  lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, TRUE);
 	else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
       }

@@ -203,7 +203,7 @@ void weed_functions_init(void) {
   _weed_leaf_element_size = weed_leaf_element_size;
 
 #if WEED_ABI_CHECK_VERSION(203)
-  _weed_ext_set_element_size = weed_ext_set_element_size;
+  _weed_set_custom_element_size = weed_set_custom_element_size;
   _weed_ext_append_elements = weed_ext_append_elements;
   _weed_ext_attach_leaf = weed_ext_attach_leaf;
   _weed_ext_detach_leaf = weed_ext_detach_leaf;
@@ -3484,10 +3484,46 @@ apply_audio_inst2:
 boolean has_audio_filters(lives_af_t af_type) {
   // do we have any active audio filters (excluding audio generators) ?
   // called from audio thread during playback
+  // test can be for various filter types + pseudo filter types
+  // AF_TYPE_MIXED - filters which have mixed audio and video channels
+  // - these run within the video player cycle and so audio is sent to the
+  // arena float buffer and read on demand
+  // AF_TYPE_VPP_SEND - some video playback plugins also require an audio stream
+  // - audio is converted to float and pushed in the audio cycle
+  // AF_TYPE_A
+  // audio analyser filters - have audio in, but no out
+  // - they receive a copy of the post fx audio, run in audio cycle
+  // AF_TYPE_NONA
+  // these are pure audio filters with audio in and out
+  // - they receive pre fx audio and are applied in sequence
+  //
+  // there are 2 types - pre fx targets, post fx targets
+  // pre-fx:
+  // these are triggered by the data preview hook for audio
+  // there are 3 callbacks  - pre fx mixing - anything which wants to mix audio with
+  //   the prefx stream can register as a mix producer, all mixing sources are normalised and combined
+  // fx - the fx chain is run, but only for AF_TYPE_NONA
+  // post fx mixing
+  //
+  // if there are any mixers or filters, the audio is converted to float first
+  //
+  // - post fx - these are readonly and so can be run async parallel
+  // if we dont have float audio, and there are any callbacks,
+  // audio is converted to float first
+  // these are divided into two sets - instant and buffered
+  // - instant receives the current audio
+  // - buffered - these read from the float arena - here we just puah audio to the arena
+  // clients read from the arena asynchronously (normally during the video fx chain) and
+  // maintain their own read levels in the arena buffer
+  // these are served by the arena write callback
+  
   weed_plant_t *filter;
   int idx;
 
-  if (af_type == AF_TYPE_A && mainw->afbuffer) return TRUE;
+  if (af_type == AF_TYPE_MIXED && mainw->afbuffer) return TRUE;
+
+  if (af_type == AF_TYPE_VPP_SEND)
+    if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) return TRUE;
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
@@ -3981,7 +4017,7 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
   }
 
   err = weed_leaf_set_autofree(plant, key, TRUE);
-  if (err == WEED_SUCCESS) err = weed_ext_set_element_size(plant, key, 0, lives_strlen(string));
+  if (err == WEED_SUCCESS) err = weed_set_custom_element_size(plant, key, 0, lives_strlen(string));
   return err;
 }
 
@@ -4029,7 +4065,7 @@ weed_error_t weed_set_blob_value(weed_plant_t *plant, const char *key, weed_size
   // set flags so - autodelete on free, unchangeable
   err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE
                                | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
-  if (err == WEED_SUCCESS) err = weed_ext_set_element_size(plant, key, 0, len);
+  if (err == WEED_SUCCESS) err = weed_set_custom_element_size(plant, key, 0, len);
   return err;
 }
 
@@ -4053,11 +4089,11 @@ LIVES_GLOBAL_INLINE void *weed_get_blob_value(weed_plant_t *plant, const char *k
   }
   p = weed_get_custom_value(plant, key, LIVES_SEED_BLOB_DATA, err);
   if (!byref) {
-    weed_size_t blen = weed_get_blob_data_len(plant, key);
+    weed_size_t bsize = weed_get_blob_data_size(plant, key);
     if (blen) {
-      void *ptr = lives_malloc(blen);
+      void *ptr = lives_malloc(bsize);
       if (!ptr) return NULL;
-      lives_memcpy(ptr, p, blen);
+      lives_memcpy(ptr, p, bsize);
       p = ptr;
     }
   }
@@ -4065,7 +4101,7 @@ LIVES_GLOBAL_INLINE void *weed_get_blob_value(weed_plant_t *plant, const char *k
 }
 
 
-LIVES_GLOBAL_INLINE weed_size_t weed_get_blob_data_len(weed_plant_t *plant, const char *key) {
+LIVES_GLOBAL_INLINE weed_size_t weed_get_blob_data_size(weed_plant_t *plant, const char *key) {
   return weed_leaf_is_blob_data(plant, key) ? weed_leaf_element_size(plant, key, 0) : 0;
 }
 
@@ -7411,7 +7447,7 @@ int register_audio_client(boolean is_vid) {
   }
 
   if (!mainw->afbuffer) {
-    init_audio_frame_buffers(prefs->audio_player);
+    mainw->afbuffer = init_audio_frame_buffers(prefs->audio_player);
     mainw->afbuffer->aclients = mainw->afbuffer->vclients = 0;
     mainw->afbuffer->aclients_read = mainw->afbuffer->vclients_read = 0;
   }

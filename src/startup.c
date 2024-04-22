@@ -31,7 +31,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = 0;//TEST_WEED_UTILS | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = TEST_WEED_UTILS | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -1390,6 +1390,9 @@ boolean lives_startup(livespointer data) {
 
   capable->features_ready |= FEATURE_WEED;
 
+  // now we can register specialised plants created from blueprints
+  register_blueprints();
+
   // CAN NOW USE THREADVARS
 
   capable->features_ready |= FEATURE_THREADVARS | FEATURE_CONDITIONALS;
@@ -1477,9 +1480,6 @@ boolean lives_startup(livespointer data) {
 
   lives_proc_thread_set_thread_data(mainw->def_lpt, mainw->fg_tdata);
   mainw->fg_tdata->uid = mainw->fg_tdata->vars.var_uid = gen_unique_id();
-
-  // set the active proc_thread for the main pthread
-  lives_thread_set_proc_thread(mainw->def_lpt);
 
   mainw->top_funcinst = lives_proc_thread_get_initial_funcinst(self);
 
@@ -1797,7 +1797,7 @@ void lives_startup2(void) {
 
   what_sup = startup2_sup;
 
-  list_prefs();
+  //list_prefs();
 
   mainw->ignore_screen_size = TRUE;
   reset_mainwin_size();
@@ -1889,12 +1889,6 @@ void lives_startup2(void) {
     set_double_pref(PREF_CPICK_VAR, cpvar);
   }
 #endif
-
-  if (!prefs->vj_mode && !prefs->startup_phase) {
-    mainw->helper_procthreads[PT_LAZY_RFX] =
-      lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                               add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
-  }
 
   // crash recovery - reload
 

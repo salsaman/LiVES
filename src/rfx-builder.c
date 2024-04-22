@@ -4565,7 +4565,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
     if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_NORMAL &&
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
-         (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
+         (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_NONA)) ||
          mainw->agen_key != 0)) {
     }
   }

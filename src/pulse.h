@@ -91,7 +91,7 @@ typedef struct {
   /**< linked list of messages we are sending to the callback process */
   volatile aserver_message_t   *msgq;
 
-  volatile uint64_t frames_written;
+  volatile uint64_t samples_written;
 
   boolean is_paused;
 

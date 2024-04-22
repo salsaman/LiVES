@@ -119,20 +119,14 @@ weed_leaf_get_flags_f _weed_leaf_get_flags;
 weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
 
-// LiVES extensions (effects-weed.c)
+// custom seed_types
+#define LIVES_SEED_CONST_CHARPTR 1400
+#define LIVES_SEED_BLOB_DATA 1401
 
-// a pointer type to lives_proxy_data_t
-// the real st, flags and ne are held in proxy data
-// the data inside points to the real data location and data size
-// we can retrieve size, location, and get a copy of data pointed to
-// for const charptr: we get value only, no copying, and size is the strlen
-// proxy flags set to immutable, undeletable, free on delete
-// for blob_data, size is set when setting data, we can get value and size (by ref)
-// or a copy of data (deep copy). Proxy flags can optionally be set to free on delete
-// for pdata, real flags are readonly, undeletable, free on delete
-#define LIVES_SEED_PROXY 1400
-#define LIVES_SEED_CONST_CHARPTR 1401
-#define LIVES_SEED_BLOB_DATA 1402
+// NOTE ALSO (funcsigs.h)
+/* #define LIVES_SEED_VARIADIC 32 */
+/* #define LIVES_SEED_VALIST 64 */
+/* #define LIVES_SEED_ALLVALUES_T 512 */
 
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
@@ -153,9 +147,9 @@ const char *weed_get_const_string_value(weed_plant_t *, const char *key, weed_er
 weed_size_t weed_get_const_string_len(weed_plant_t *, const char *key);
 boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
 
-weed_error_t weed_set_blob_value(weed_plant_t *, const char *key, weed_size_t len, void *);
+weed_error_t weed_set_blob_value(weed_plant_t *, const char *key, weed_size_t size, void *);
 void *weed_get_blob_value(weed_plant_t *, const char *key, boolean byref, weed_error_t *);
-weed_size_t weed_get_blob_data_len(weed_plant_t *, const char *key);
+weed_size_t weed_get_blob_data_size(weed_plant_t *, const char *key);
 boolean weed_leaf_is_blob_data(weed_plant_t *, const char *key);
 
 weed_plant_t *lives_plant_copy(weed_plant_t *orig); // weed_plant_copy_clean
@@ -367,6 +361,12 @@ DEF_STRUCT(lives_funcinst,
            void *module;
 
            lives_sync_list_t *modules;)
+
+typedef struct {
+  char *func;
+  char *file;
+  int line;
+} audit_tag;
 
 #include "user-interface.h"
 

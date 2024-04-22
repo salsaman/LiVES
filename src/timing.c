@@ -17,6 +17,14 @@
 
 glob_timedata_t *glob_timing = NULL;
 
+// do nothing and see how long it takes to do it
+double do_nothing(int type_of_nothing) {
+  double from_whence_you_came = 0.;
+  if (type_of_nothing  == THE_TIMEY_WIMEY_KIND)
+    from_whence_you_came = lives_get_session_time();
+  return from_whence_you_came;
+}
+
 char *format_tstr(double xtime, int minlim) {
   // format xtime (secs) as h/min/secs
   // if minlim > 0 then for mins >= minlim we don't show secs.
@@ -56,6 +64,22 @@ char *format_tstr(double xtime, int minlim) {
   return tstr;
 }
 
+
+LIVES_GLOBAL_INLINE double reset_timer_info(void) {
+  double timenow = lives_get_session_time();
+  g_print("\n\nAction start @ %.8f\n\n", timenow);
+  THREADVAR(timerinfo) = timenow;
+  return timenow;
+}
+
+LIVES_GLOBAL_INLINE double show_timer_info(void) {
+  double timesecs = lives_get_session_time(), tottime = timesecs - THREADVAR(timerinfo);
+  char *tstr = lives_format_timing_string(tottime);
+  g_print("\n\nAction completed in %s\n\n", tstr);
+  lives_free(tstr);
+  THREADVAR(timerinfo) = timesecs;
+  return timesecs;
+}
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   return lives_get_current_ticks() - origticks;

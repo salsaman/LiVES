@@ -980,13 +980,11 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
   lives_proc_thread_t lpt;
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return NULL;
-  lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
-                                 _lives_buffered_rdonly_slurp, 0, "vI", fbuff, skip);
-
+  lpt = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED | LIVES_THRDATTR_DONTCARE,
+                                 _lives_buffered_rdonly_slurp, WEED_SEED_VOID, "vI", fbuff, skip);
   SET_LPT_VALUE(lpt, voidptr, "filebuff", (void *)fbuff);
-
   lives_proc_thread_set_cancellable(lpt);
-
+  g_print("slurp lpt %p\n", lpt);
   return lpt;
 }
 
@@ -1210,16 +1208,16 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
 #if AUTOTUNE_FILEBUFF_SIZES
   if (autotune) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
-      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 3);
+      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_serialno(LIVES_PLANT_TUNABLE, 3);
       autotune_u64_start(tuners, TUNABLE_SMALLFILE_FLUSH_RANGEMIN, TUNABLE_SMALLFILE_FLUSH_RANGEMAX, 64);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
-      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 4);
+      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_serialno(LIVES_PLANT_TUNABLE, 4);
       autotune_u64_start(tunersm, TUNABLE_SMEDFILE_FLUSH_RANGEMIN, TUNABLE_SMEDFILE_FLUSH_RANGEMAX, 32);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
-      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 5);
+      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_serialno(LIVES_PLANT_TUNABLE, 5);
       autotune_u64_start(tunerm, TUNABLE_MEDFILE_FLUSH_RANGEMIN, TUNABLE_MEDFILE_FLUSH_RANGEMAX, 32);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) {
-      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 6);
+      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_serialno(LIVES_PLANT_TUNABLE, 6);
       autotune_u64_start(tunerl, TUNABLE_LARGEFILE_FLUSH_RANGEMIN, TUNABLE_LARGEFILE_FLUSH_RANGEMAX, 32);
     }
   }

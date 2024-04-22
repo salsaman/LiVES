@@ -164,14 +164,14 @@ lives_proc_thread_t start_playback_async(int type) {
 
   GET_PROC_THREAD_SELF(self);
   attrs |= LIVES_THRDATTR_CREATE_UNQUEUED | LIVES_THRDATTR_DONTCARE;
-  lpt = lives_proc_thread_create(attrs, _start_playback, 0, "i", type);
+  lpt = lives_proc_thread_create(attrs, _start_playback, WEED_SEED_VOID, "i", type);
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
 
   if (type == 6 && THREADVAR(accel_group)) {
     lives_proc_thread_add_hook_cb_full(self, ACCEL_END_HOOK, HOOK_OPT_ONESHOT,
-                                       lives_proc_thread_dispatch, 0, "p", lpt);
+                                       lives_proc_thread_dispatch, WEED_SEED_VOID, "p", lpt);
   } else lives_proc_thread_dispatch(lpt);
   return lpt;
 }
@@ -335,6 +335,8 @@ static void post_playback(void) {
       *mainw->eb2_psurf = NULL;
     }
     redraw_timeline(mainw->current_file);
+    lives_millisleep_while_false(get_timeline_lock());
+    unlock_timeline();
   }
 
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
@@ -1335,6 +1337,10 @@ void play_file(void) {
 
   set_record_menutext(REC_PASSIVE);
 
+  lives_hook_stack_clear(self_hook_stacks(SYNC_ANNOUNCE_HOOK), SYNC_ANNOUNCE_HOOK);
+  fg_deferral_remove_persistent();
+  clear_player_hooks();
+  
   prefs->pb_quality = future_prefs->pb_quality;
   mainw->lockstats = FALSE;
 
@@ -1484,6 +1490,8 @@ void play_file(void) {
   // allow the main thread to exit from its blocking loop, it will resume normal operations
   lives_millisleep_while_true(mainw->do_ctx_update);
 
+  mainw->block_accels = TRUE;
+  
   // return to NORMAL GUi SERVICING
   set_gui_loop_tight(FALSE);
 
@@ -1538,6 +1546,8 @@ void play_file(void) {
     weed_bg_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
     if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
   }
+
+  mainw->block_accels = FALSE;
 
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */

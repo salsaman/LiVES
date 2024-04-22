@@ -18,6 +18,45 @@
 #define PTMUH _DW0(pthread_mutex_unlock(hmutex);)
 #define PTMTLH pthread_mutex_trylock(hmutex)
 
+LIVES_GLOBAL_INLINE double check_thrd_latency(double *act_time) {
+  // ask a thread to do nothing, and then time how long it takes
+  double start = lives_get_session_time(), end, mid;
+  lives_proc_thread_t lpt =
+    lives_proc_thread_create(0, do_nothing, WEED_SEED_DOUBLE,
+			     "i", THE_TIMEY_WIMEY_KIND);
+  mid = lives_proc_thread_join_double(lpt);
+  end = lives_get_session_time(); 
+  if (act_time) *act_time = mid - start;
+  return end - start;
+}
+
+#define FSIG_HDR "funcsigs.h"
+
+boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames) {
+  funcsig_t fsig = funcsig_from_args_fmt(args_fmt);
+
+  for (LiVESList *list = capable->known_funcsigs; list; list = list->next)
+    if (fsig == *(funcsig_t *)list->data) return TRUE;
+
+  char *symstr, *msg;
+  int nparms = get_funcsig_nparms(fsig);
+  char *pnmstr = lives_strdup("");
+
+  if (pnames) {
+    for (int i = 0; i < nparms; i++)
+      pnmstr = lives_strdup_concat(pnmstr, ", ", "%s", pnames[i] ? pnames[i] : "");
+  }
+  
+  symstr = funcsig_to_symstring(fsig);
+  msg = lives_strdup_printf("\n\bUnrecognised args_fmt \"%s\" in call to %s(%s).\n"
+			    "Please add the following line in %s, in the appropriate #define:\n\n"
+			    "\tADD_FUNCSIG(%d,%s)\n\n", args_fmt, funcname, pnmstr, FSIG_HDR, nparms, symstr);
+  g_print("%s", msg);
+  lives_free(symstr); lives_free(pnmstr); lives_free(msg);
+  lives_abort("Unrecognised args_fmt");
+  return FALSE;
+}
+
 
 char *md5_print(void *md5sum) {
   char *cc = (char *)md5sum;
@@ -25,6 +64,7 @@ char *md5_print(void *md5sum) {
   for (int i = 0; i < 16; i++) qq = lives_strdup_concat(qq, "", "%02x", cc++);
   return qq;
 }
+
 
 char *funcinst_paramstr(lives_funcinst_t *finst, funcsig_t sig) {
   // create a string with the ctypes for a funcinst
@@ -1282,19 +1322,6 @@ void test_random(void) {
 
 //static int test_palette_conversions(void);
 
-void reset_timer_info(void) {
-  THREADVAR(timerinfo) = lives_get_current_ticks();
-}
-
-double show_timer_info(void) {
-  ticks_t xti = lives_get_current_ticks();
-  double timesecs;
-  g_print("\n\nTest completed in %.4f seconds\n\n",
-          (timesecs = ((double)xti - (double)THREADVAR(timerinfo)) / TICKS_PER_SECOND_DBL));
-  THREADVAR(timerinfo) = xti;
-  return timesecs;
-}
-
 static char *randstrg(size_t len) {
   char *strg = lives_calloc(1, len), *ptr = strg;
   for (int i = 1; i < len; i++) *(ptr++) = ((lives_random() & 63) + 32);
@@ -1433,21 +1460,24 @@ void upd_statsplant(const char *key) {
 }
 
 
-void add_to_audit(weed_plant_t *plant) {
-  char *key = lives_strdup_printf("plant_%p", plant);
+void add_to_audit(audit_tag *atag, void *data) {
+  char *key = lives_strdup_printf("data_%p", data);
+  LIVES_CALLOC_TYPE(audit_tag, xatag, 1);
+  xatag->func = lives_strdup(atag->func);
+  xatag->file = lives_strdup(atag->file);
+  xatag->line = atag->line;
   if (!statsplant) statsplant = weed_plant_new(LIVES_PLANT_AUDIT);
-  weed_set_plantptr_value(statsplant, key, plant);
+  weed_set_voidptr_value(statsplant, key, xatag);
   lives_free(key);
 }
 
-void remove_from_audit(weed_plant_t *plant) {
+void remove_from_audit(void *data) {
   if (statsplant) {
-    char *key = lives_strdup_printf("plant_%p", plant);
+    char *key = lives_strdup_printf("data_%p", data);
     if (weed_plant_has_leaf(statsplant, key)) weed_leaf_delete(statsplant, key);
     lives_free(key);
   }
 }
-
 
 
 void show_weed_stats(int oper) {
@@ -1495,7 +1525,22 @@ void show_weed_stats(int oper) {
     lives_list_free(freq);
     lives_list_free(sorted);
     break;
-  case STATS_LIST:
+  case STATS_ATAG: {
+    char **nm;
+    weed_size_t nl;
+    nm = weed_plant_list_leaves(statsplant, &nl);
+    g_print("statsplant has %u values\n", nl);
+    for (int i = 0; nm[i]; i++) {
+      if (lives_str_starts_with(nm[i], "data_")) {
+	audit_tag *atag = (audit_tag *)weed_get_voidptr_value(statsplant, nm[i], NULL);
+	g_print("func %s. at %s, line %d\n", atag->func, atag->file, atag->line);
+	lives_free(atag);
+      }
+      _ext_free(nm[i]);
+    }
+    _ext_free(nm);
+    break;
+  }
   default:
     list_leaves(statsplant);
     break;
@@ -1763,10 +1808,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   weed_set_string_value(plant, "Test2", NULL);
   str = weed_get_string_value(plant, "Test2", &werr);
@@ -1779,10 +1824,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
@@ -1798,10 +1843,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   werr = weed_set_string_value(plant, "Test2", "");
   fprintf(stderr, "value 5 set err was %d\n", werr);
@@ -1816,10 +1861,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   weed_set_string_value(plant, "Test2", "xyzabc");
   str = weed_get_string_value(plant, "Test2", &werr);
@@ -1832,10 +1877,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   werr = weed_set_string_value(plant, "Test2", "");
   fprintf(stderr, "value 5b set err was %d\n", werr);
@@ -1851,10 +1896,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   weed_set_string_value(plant, "Test2", NULL);
 
@@ -1873,10 +1918,10 @@ int run_weed_startup_tests(void) {
 
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
@@ -1892,10 +1937,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
@@ -1911,10 +1956,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
@@ -2059,10 +2104,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   weed_set_string_value(plant, "Test2", "888888");
   str = weed_get_string_value(plant, "Test2", &werr);
@@ -2126,10 +2171,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   ////
   fprintf(stderr, "deleting string1\n");
@@ -2148,10 +2193,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   str = weed_get_string_value(plant, "string1", &werr);
   fprintf(stderr, "value for deleted leaf returned %s, err was %d\n", str, werr);
@@ -2201,10 +2246,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   str = weed_get_string_value(plant, "Test2", &werr);
   fprintf(stderr, "Get undel. val %s from undel plant, returned %d\n", str, werr);
@@ -2254,10 +2299,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   /// WILL segfault, programmer error
   /* werr = _weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 1, NULL); */
@@ -2280,7 +2325,7 @@ int run_weed_startup_tests(void) {
   ptra[2] = NULL;
   ptra[3] = &ptra[3];
 
-  _weed_leaf_set(plant, "ptrs", WEED_SEED_VOIDPTR, 4, &ptra);
+  _weed_leaf_set(plant, "ptrs", WEED_SEED_VOIDPTR, 4, ptra);
   fprintf(stderr, "set null array elem ptra returned %d\n", werr);
   werr_expl(werr);
 
@@ -2323,10 +2368,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   flags = _weed_leaf_get_flags(plant, "Test2");
   fprintf(stderr, "get flags for Test2returned %d\n", flags);
@@ -2356,10 +2401,10 @@ int run_weed_startup_tests(void) {
   n = 0;
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
-    free(keys[n]);
+    _ext_free(keys[n]);
     n++;
   }
-  free(keys);
+  _ext_free(keys);
 
   werr = _weed_leaf_set_flags(plant, "type", WEED_FLAG_IMMUTABLE);
   flags = _weed_leaf_get_flags(plant, "type");
@@ -2445,9 +2490,9 @@ int run_weed_startup_tests(void) {
     /* n = 0; */
     /* for (n = 0; keys[n]; n++) { */
     /*   //fprintf(stderr, "key %d is %s with val %d\n", n, keys[n], weed_get_int_value(plant, keys[n], NULL)); */
-    /*   free(keys[n]); */
+    /*   _ext_free(keys[n]); */
     /* } */
-    /* free(keys); */
+    /* _ext_free(keys); */
     print_diagnostics(DIAG_MEMORY);
     _weed_plant_free(plant);
     print_diagnostics(DIAG_MEMORY);
@@ -2471,7 +2516,7 @@ int run_weed_startup_tests(void) {
     /*     for (int i = 1; i <= BPLANT_LEAVES; i++) { */
     /*       key = lives_strdup_printf("%d%d", i * 917, i % 13); */
     /*       weed_set_int_value(plant, key, i); */
-    /*       lives_free(key); */
+    /*       lives__ext_free(key); */
     /*       if (++count == cval) { */
     /*         g_print("%d", i); */
     /*         totx += show_timer_info(); */
@@ -2486,7 +2531,7 @@ int run_weed_startup_tests(void) {
     /*     for (int i = 0; i < mm; i++) { */
     /*       int x = fastrand_int(BPLANT_LEAVES); */
     /*       char *key = lives_strdup_printf("%d%d", x * 917, x % 13); */
-    /*       free(key); */
+    /*       _ext_free(key); */
     /*     } */
     /*     dly = show_timer_info(); */
     /*     g_print("Delay is %.2f sec\n", dly); */
@@ -2502,7 +2547,7 @@ int run_weed_startup_tests(void) {
     /*           n++; */
     /*           if (z != x) abort(); */
     /*         } */
-    /*         free(key); */
+    /*         _ext_free(key); */
     /*       } */
 
     /*       time1 = show_timer_info(); */
@@ -2519,7 +2564,7 @@ int run_weed_startup_tests(void) {
     /*       for (int zz = 0; zz < mm; zz++) { */
     /*         int z = weed_get_int_value(plant, key, &werr); */
     /*       } */
-    /*       free(key); */
+    /*       _ext_free(key); */
     /*       time2 += show_timer_info(); */
     /*     } */
     /*     fprintf(stderr, */

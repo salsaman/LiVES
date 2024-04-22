@@ -6,12 +6,7 @@
 
 // specialised weed_plants for use in LiVES
 
-// we have a few special types which are used commonly in the app
-// LIVES_PLANT_INDEX
-// this is a specialised plant which can hold various items of data
-// it has a const char *prefix and an int item_type
-// data to be stored in the index must be all of type item_tyoe
-// prefix is prepended to the item name to distinguish data items from internal leaves
+#include "main.h"
 
 LIVES_GLOBAL_INLINE int64_t lives_plant_get_subtype(weed_plant_t *plant) {
   if (!IS_LIVES_PLANT(plant)) return 0;

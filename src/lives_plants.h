@@ -1,3 +1,24 @@
+// lives_plants.h
+// LiVES
+// (c) G. Finch 2019 - 2024 <salsaman+lives@gmail.com>
+// released under the GNU GPL 3 or later
+// see file ../COPYING for licensing details
+
+// specialised weed_plants for use in LiVES
+//
+// LIVES_PLANT_BLUEPRINT
+// plant which contains construction details for other lives plants
+//
+
+// LIVES_PLANT_INDEX
+// this is a specialised plant which can hold various items of data
+// it has a const char *prefix and an int item_type
+// data to be stored in the index must be all of type item_tyoe
+// prefix is prepended to the item name to distinguish data items from internal leaves
+
+#ifndef _HAVE_LIVES_PLANTS_H
+#define _HAVE_LIVES_PLANTS_H
+
 // weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
 #define WEED_PLANT_LIVES 31337
 
@@ -142,3 +163,5 @@ lives_result_t lives_data_book_set_item_type(lives_databook_t *book, const char 
 #define REGISTER_ALL_BLUEPRINTS BOOTSTRAP_BLUEPRINTS REGISTER_BLUEPRINT(INDEX)
 
 void register_blueprints(void);
+
+#endif

@@ -54,6 +54,7 @@ DEF_UNION(allfunc_t,
           funcptr_dbl_t funcdouble;
           funcptr_bool_t funcboolean;
           funcptr_int64_t funcint64;
+
           funcptr_string_t funcstring;
           funcptr_funcptr_t funcfuncptr;
           funcptr_voidptr_t funcvoidptr;
@@ -69,6 +70,7 @@ DEF_UNION(allval_t,uint32_t *u;int32_t *i;
 // values->* is a pointer to type rather than array of type
 #define ALLV_FLAG_POINTER		(1ull << 0)
 #define ALLV_FLAG_RDONLY		(1ull << 1)
+#define ALLV_FLAG_TYPE_ONLY		(1ull << 2)
 
 // error flagbits
 // unrecognised seed_type when setting val
@@ -83,18 +85,52 @@ DEF_STRUCT(allvalues_t,
            //@UNION allval_t
            char *aname; // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
            weed_seed_t stype;
-           weed_size_t ne; // num elements - always 1 if ARRAY not set
+           weed_size_t ne; // num elements - always 1 if POINTER set
            weed_size_t size;
            uint64_t flags;
 #ifdef NATIVE_MUTEX_TYPE
            NATIVE_MUTEX_TYPE mutex;
 #endif
            allval_t values;
+	   va_list va_lisr;
+	   lives_funcinst_t *funcinst;
            LiVESList *contingencies;)
 
 #define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
 						     FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_, \
 									 _array_counted, (plant), (key), &(ne));)
+
+#define LEAF_FROM_ALLV(plant, key, allv)				\
+  _DW0(									\
+       weed_leaf_set(plant, key, allv->stype, allv->ne,			\
+		     allv->ne > 1 ?					\
+		     (allv->stype == WEED_SEED_INT ? &allv->values.i	\
+		      : allv->stype == WEED_SEED_BOOLEAN ? &allv->values.b \
+		      : allv->stype == WEED_SEED_INT64 ? &allv->values.I \
+		      : allv->stype == WEED_SEED_DOUBLE ? &allv->values.d \
+		      : allv->stype == WEED_SEED_STRING ? &allv->values.s \
+		      : allv->stype == WEED_SEED_VOIDPTR ? &allv->values.V \
+		      : allv->stype == WEED_SEED_FUNCPTR ? &allv->values.F \
+		      : allv->stype == WEED_SEED_PLANTPTR ? &allv->values.P) \
+		     :							\
+		     allvp->flags & ALLV_FLAG_POINTER ?			\
+		     (allv->stype == WEED_SEED_INT ? allv->values.i	\
+		      : allv->stype == WEED_SEED_BOOLEAN ? allv->values.b \
+		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
+		      : allv->stype == WEED_SEED_DOUBLE ? allv->values.d \
+		      : allv->stype == WEED_SEED_STRING ? allv->values.s \
+		      : allv->stype == WEED_SEED_VOIDPTR ? allv->values.V \
+		      : allv->stype == WEED_SEED_FUNCPTR ? allv->values.F \
+		      : allv->stype == WEED_SEED_PLANTPTR ? allv->values.P) \
+		     :							\
+		     (allv->stype == WEED_SEED_INT ? allv->values.i	\
+		      : allv->stype == WEED_SEED_BOOLEAN ? allv->values.b \
+y		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
+		      : allv->stype == WEED_SEED_DOUBLE ? allv->values.d \
+		      : allv->stype == WEED_SEED_STRING ? allv->values.s \
+		      : allv->stype == WEED_SEED_VOIDPTR ? allv->values.V \
+		      : allv->stype == WEED_SEED_FUNCPTR ? allv->values.F \
+		      : allv->stype == WEED_SEED_PLANTPTR ? allv->values.P)))
 
 // we need to set p##n here because if we have a string param, this needs to be freed after the func call
 #define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
@@ -160,7 +196,8 @@ DEF_STRUCT(allvalues_t,
 // marker for variadic functions
 #define LIVES_SEED_VARIADIC 32
 #define LIVES_SEED_VALIST 64
-#define LIVES_SEED_ALLVALUES_T 512
+#define LIVES_SEED_ALLVALUES 2048
+#define LIVES_SEED_FUNCINST 2049
 
 #define FOR_ALL_SEED_TYPES(st, pre, pre2, pre3, post, post2, post3, post4) \
   _DW0(switch(st){case(WEED_SEED_INT):pre(pre2,pre3##int##post(post2,post3,post4));break; \
@@ -357,7 +394,7 @@ extern const lookup_tab crossrefs[];
     ,{'$',  LIVES_SEED_CONST_CHARPTR,	FUNCSIG(CONST_CHARP),	"CONSTCHARP", "%s"} \
     ,{'_',  LIVES_SEED_VALIST,       	FUNCSIG(VALIST), 	"VALIST", NULL} \
     ,{'*',  LIVES_SEED_VARIADIC,       	FUNCSIG(VARIADIC), 	"VARIADIC", "..."} \
-    ,{'A',  LIVES_SEED_ALLVALUES_T,	FUNCSIG(VOIDP),		"ALLVALSP", "%p"} \
+    ,{'A',  LIVES_SEED_ALLVALUES,	FUNCSIG(VOIDP),		"ALLVALSP", "%p"} \
     XREFS_TAB_UINT							\
       XREFS_TAB_UINT64							\
       XREFS_TAB_FLOAT							\

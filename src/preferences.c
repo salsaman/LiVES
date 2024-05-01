@@ -89,7 +89,7 @@ void free_prefs(void) {
 void init_prefs(void) {
   if (allprefs) return;
 
-  allprefs = lives_index_new(PREF_PREFIX, WEED_SEED_PLANTPTR);
+  allprefs = lives_index_new(idx_type_prefs, PREF_PREFIX, WEED_SEED_PLANTPTR);
 
   // PRREF_IDX, pref-><...>, default
   DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, PREF_FLAGS_NONE);

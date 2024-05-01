@@ -99,7 +99,7 @@ typedef weed_plant_t weed_param_t;
 weed_leaf_get_f _weed_leaf_get;
 weed_leaf_set_f _weed_leaf_set;
 #if WEED_ABI_CHECK_VERSION(203)
-weed_ext_set_element_size_f _weed_ext_set_element_size;
+weed_set_custom_element_size_f _weed_set_custom_element_size;
 weed_ext_append_elements_f _weed_ext_append_elements;
 weed_ext_attach_leaf_f _weed_ext_attach_leaf;
 weed_ext_detach_leaf_f _weed_ext_detach_leaf;
@@ -511,6 +511,7 @@ typedef struct _param_t lives_param_t;
 extern uint64_t test_opts;
 #endif
 
+#include "lives_plants.h"
 #include "functions.h"
 #include "alarms.h"
 #include "intents.h"

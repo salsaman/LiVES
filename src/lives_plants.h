@@ -40,6 +40,7 @@
 #define LIVES_PLANT_TMP 64
 
 #define LIVES_PLANT_INDEX 128
+#define LIVES_PLANT_DATA_BOOK 129
 
 #define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
@@ -60,7 +61,7 @@ weed_plant_t *lives_plant_new_with_refcount(int64_t subtype);
 
 int64_t lives_plant_get_subtype(weed_plant_t *);
 
-// blueprints
+// LIVES_PLANT_BLUEPRINT
 
 // only used for bootstrapping
 typedef struct {
@@ -92,6 +93,8 @@ typedef struct {
 #define LIVES_BLUEPRINT_BLUEPRINT					\
   LIVES_STD_LEAVES, LIVES_LEAF_BLUEPRINT_IDX, WEED_SEED_UINT64, BLU_FLAG_CONST, LIVES_LEAF_LEAF_DEFS, WEED_SEED_PLANTPTR, BLU_FLAG_ARRAY
 
+void register_blueprints(void);
+
 // LIVES_PLANT_INDEX
 
 #define LIVES_INDEX_BLUEPRINT						\
@@ -99,8 +102,10 @@ typedef struct {
     LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAG_CONST
 
 typedef enum {
-	      idx_type_anon,
-	      idx_type_data_book,
+	      idx_type_anon = -1,
+	      idx_type_data_book = 0,
+	      idx_type_prefs,
+	      idx_type_max,
 } index_type;
 
 #define LIVES_LEAF_INDEX_TYPE "_index_type"
@@ -108,6 +113,9 @@ typedef enum {
 #define LIVES_LEAF_ITEM_TYPE "_data_type"
 
 typedef weed_plant_t lives_index_t;
+
+#define LIVES_MAKE_INDEX(idxtype, prefix, itemtype)				\
+  PLANT_FROM_BLUEPRINT(INDEX, LIVES_LEAF_INDEX_TYPE, idxtype, LIVES_LEAF_PREFIX, prefix, LIVES_LEAF_ITEM_TYPE, itemtype)
 
 weed_plant_t *lives_index_new(index_type idxtype, const char *prefix, weed_seed_t itemtype);
 index_type lives_index_get_idxtype(lives_index_t *);
@@ -139,18 +147,28 @@ weed_error_t lives_index_get_value(void *retloc, lives_index_t *, const char *ke
 // (the original version). This will delete all items not flagged as undeleteable, and only return WEED_SUCCESS if all leaves were freed.
 
 #define DATA_BOOK_PREFIX "data_"
-#define MAKE_DATA_BOOK lives_index_new(idx_type_data_book, DATA_BOOK_PREFIX, LIVES_SEED_ALLVALUES)
+#define LIVES_MAKE_DATA_BOOK lives_index_new(idx_type_data_book, DATA_BOOK_PREFIX, LIVES_SEED_ALLVALUES)
 
-weed_seed_t lives_data_book_get_item_type(lives_databook_t *book, const char *item);
-lives_result_t lives_data_book_set_item_type(lives_databook_t *book, const char *item, weed_seed_t itype);
+typedef weed_plant_t lives_databook_t;
 
-#define SET_BOOK_DATATYPE(book, name, type) _DW0(lives_data_book_set_item_type((book), (item), (itype)))
-#define GET_BOOK_DATATYPE(book, name) 
+weed_seed_t lives_databook_get_item_type(lives_databook_t *book, const char *item);
+lives_result_t lives_databook_set_item_type(lives_databook_t *book, const char *item, weed_seed_t itype);
 
-#define SET_BOOK_VALUE(book, type, name, val) _DW0(set_value(book, type, name, val);)
-#define SET_BOOK_ARRAY(book, type, name, nvals, valsptr) _DW0(lives_index_set_array(book, type, name, nvals, valsptr);)
-#define GET_BOOK_VALUE(book, type, name) weed_get_##type##_value(book, mk_data_namex(name), NULL)
-#define GET_BOOK_ARRAY(book, type, name, nvals)	weed_get_##type##_array_counted(book, mk_data_namex(name), &nvals)
+weed_seed_t lives_databook_get_datatype(lives_databook_t *book, const char *itemnm);
+
+allvalues_t *get_local_book_value(const char *item);
+allvalues_t *get_global_book_value(const char *item);
+
+#define SET_BOOK_DATATYPE(book, name, itype) _DW0(lives_data_book_set_datatype((book), (item), (itype));)
+#define GET_BOOK_DATATYPE(book, name) lives_databook_get_datatype((book), (name))
+
+#define SET_BOOK_VALUE(book, type, name, val) _DW0(lives_databook_set_value((book), (type), (name), (val));)
+#define SET_BOOK_ARRAY(book, type, name, nvals, valsptr) _DW0(lives_databook_set_array((book), (type), (name), (nvals), (valsptr));)
+
+#define GET_BOOK_VALUE(retval, book, itype, name) lives_databook_get_value(&(retval), (book), (itype), (name));)
+#define GET_BOOK_ARRAY(retval, book, name, itype, nvalsp) lives_databook_get_array(&(retval), (book), (name), (itype), (nvalsp))
+
+// GLOBAL objects
 
 // must maintain this order: we register INDEX as a template, then create an index plant
 // this gives us somewhere to store templates and blueprints
@@ -162,6 +180,6 @@ lives_result_t lives_data_book_set_item_type(lives_databook_t *book, const char 
 
 #define REGISTER_ALL_BLUEPRINTS BOOTSTRAP_BLUEPRINTS REGISTER_BLUEPRINT(INDEX)
 
-void register_blueprints(void);
+extern lives_index_t *indices[idx_type_max];
 
 #endif

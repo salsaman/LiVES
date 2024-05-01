@@ -771,15 +771,16 @@ no_precache:
               mainw->frame_layer = mainw->layers[0];
               frame = pframe;
 
-              //if (delta_a > MIN_JMP_THRESH) {
-              lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
-              if (srcgrp) {
-                srcgrp->layer = NULL;
-                swap_srcgrps(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, 0, SRC_PURPOSE_PRECACHE);
-                srcgrp = get_primary_srcgrp(mainw->playing_file);
-                lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
-              }
-              //}
+	      if (is_virtual_frame(mainw->playing_file, pfrane)) {
+		//if (delta_a > MIN_JMP_THRESH) {
+		lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
+		if (srcgrp) {
+		  srcgrp->layer = NULL;
+		  swap_srcgrps(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, 0, SRC_PURPOSE_PRECACHE);
+		  srcgrp = get_primary_srcgrp(mainw->playing_file);
+		  lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
+		}
+	      }
               lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
             }
           }
@@ -1155,7 +1156,7 @@ frames_t load_frame_image(frames_t frame) {
     if (!mainw->multitrack &&
         !mainw->faded && (!mainw->fs || (prefs->play_monitor != 0 && prefs->play_monitor != widget_opts.monitor + 1))
         && mainw->current_file != mainw->scrap_file) {
-      /* THREADVAR(hook_hints) = HOOK_CB_PRIORITY; */
+      /* THREADVAR(hook_hints) = HOOK_OPT_PRIORITY; */
 
       /* main_thread_execute_rvoid(paint_tl_cursors, 0, "vvv", mainw->eventbox2, NULL, mainw->eb2_psurf); */
 
@@ -1504,7 +1505,7 @@ frames_t load_frame_image(frames_t frame) {
                                          lives_layer_draw, WEED_SEED_VOID, "vv", mainw->preview_image, frame_layer, NULL, free_finst);
 
     } else {
-      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY |
+      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_OPT_PRIORITY |
                                          HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
                                          lives_layer_draw, WEED_SEED_VOID, "vv", mainw->play_image, frame_layer, NULL, free_finst);
     }

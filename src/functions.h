@@ -226,8 +226,8 @@ const char *get_funcname(lives_funcptr_t);
 
 boolean args_fmt_match(const char *def, const char *inst);
 
-const char *get_args_fmt(weed_plant_t *);
-void set_args_fmt(weed_plant_t *plant, const char *args_fmt);
+// get args_fmt from a plant with params
+char *get_args_fmt(weed_plant_t *);
 
 // add a note to to ftrace_store, va_args depend on fn_type
 void *add_fn_note(fn_type_t, ...);
@@ -298,34 +298,54 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 // conditions (Work in progress)
 
-typedef char **lives_condition;
+//typedef char **lives_condition;
+typedef allvalues_t* lives_condition;
+
+typedef struct {va_list va;} va_surprise;
 
 #define COND_PFX "COND_"
 #define COND_PFXLEN 5
+    
+#define _COND_POPEN  		COND_PFX "POPEN"
+#define _COND_PCLOSE  		COND_PFX "PCLOSE"
+#define _COND_LIST_BEGIN  	COND_PFX "LIST_BEGIN"
+#define _COND_LIST_END  	COND_PFX "LIST_END"
 
-#Ddefine COND(TOKEN) #COND_##TOKEN
+#define COND(TOKEN) COND_PFX #TOKEN
 
 //#define COND_TESTFUNC_CONSTVAL(func, args_fmt) find_or_make_funcdef(#func, func, WEED_SEED_BOOLEAN, args_fmt)
 
 void lives_conditions_init(void);
 
 typedef struct {
-  const char *sym; // symbol text
-  const char *fmt; // internal fmt
-  const char *subst; // text subst
+  const char *token; // token text
+  char fmt; // internal fmt
   const char *desc; // descriptive text
-  // value function, either allvalues_t *valfunc(const char *valstr)
-  // or allvalues_t *(int nvals, allvalues_t **vals);
-  lives_function_t *function;
-  const char *constval;
+  lives_funcinst_t *funcinst;
 } cond_trans;
 
-lives_condition lives_cond_create(const char *condstring, ...);
+// initial state (after popen, or eval RHS)
+#define COND_SYNTAX_0 "C", "V", "U", _COND_POPEN, _COND_PCLOSE, NULL
 
-lives_result_t lives_cond_eval(lives_condition);
+// state after C or V or PCLOSE
+#define COND_SYNTAX_1 "O", "U", _COND_PCLOSE, NULL
+
+// state after "U" or "O"
+#define COND_SYNTAX_2 "C", "V", "U", _COND_POPEN, NULL
+
+typedef boolean lives_cond_result;
+
+#define LIVES_COND_PASS TRUE
+#define LIVES_COND_FAIL FALSE
+
+lives_condition _lives_cond_create(const char *cond_start, ...);
+#define lives_cond_create(...) _lives_cond_create(_COND_POPEN __VA_OPT__(,) __VA_ARGS__, _COND_PCLOSE)
+
+lives_cond_result lives_cond_eval(lives_condition);
+
 char *lives_cond_desc(lives_condition);
 
-///
+/////////////////////////////////////////
 
 typedef union {
   lives_proc_thread_t lpt;
@@ -888,7 +908,6 @@ typedef struct {
 } hook_stack_descriptor_t;
 
 const hook_stack_descriptor_t *get_hs_desc(int hstype);
-const char *get_def_args_fmt(lives_hook_stack_t **, int hstype);
 uint64_t get_hs_op_flags(int hstype);
 
 #define HS_FLAG_TRIGGERING	(1ull << 0)
@@ -1216,6 +1235,8 @@ lives_hook_stack_t **self_hook_stacks(int hstype);
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 int return_type, const char *args_fmt, const char *file, int line, uint64_t flags);
 
+lives_funcdef_t *lives_funcdef_copy(lives_funcdef_t *);
+
 #define create_funcdef_here(func, rtype, args_fmt) create_funcdef(#func, (lives_funcptr_t)func, (rtype) , (args_fmt), \
 								  _FILE_REF_, _LINE_REF_, FDEF_FLAG_INSIDE)
 
@@ -1226,6 +1247,8 @@ void lives_funcdef_free(lives_funcdef_t *);
 // funcinst is the variable part of a function call
 
 lives_funcinst_t *lives_funcinst_new(lives_funcdef_t *);
+
+lives_funcinst_t *lives_funcinst_copy(lives_funcinst_t *);
 
 lives_result_t funcinst_params_from_vargs(lives_funcinst_t *,  const char *args_fmt, va_list xargs);
 
@@ -1250,7 +1273,6 @@ void lives_funcinst_send_replies(lives_funcinst_t *finst, int reply);
 // -- the args_fmt in funcinst->params will not include bound values,
 // however, the funcsig will be "edited" befor the func call, and the bound value types shall be inserted
 
-
 // can be used in funcsigs, obj attributes, fields in a lives_struct_t
 // the allvalue can be used to bootstrap plant blueprints
 //
@@ -1264,7 +1286,6 @@ typedef struct {
   // equivalent of value plant, but as an array
   // allv.value.X can point to ext value(s)
   allvalues_t *allv;
-
 
   LiVESList *contingencies;
 } funcinst_param_t;
@@ -1281,6 +1302,7 @@ allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int 
 #define MAKE_ALLVALUE_VA(stype, va) (_make_allval_va(NULL, stype, 1, 0, va))
 #define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval(NULL, stype, ne, 0, #vals, (vals)))
 #define MAKE_ALLVALUE_ARRAY_VA(stype, ne, va) (_make_allval_va(NULL, stype, ne, 0, va))
+#define MAKE_ALLVALUE_FINST(stype, va) (_make_allval_va(NULL, stype, 1, 0, va))
 
 #define BIND_VALUE(typecode, var) MAKE_ALLVALUE_BOUND(get_seedtype(typecode), var)
 
@@ -1290,7 +1312,8 @@ allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int 
 #define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
 #define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_va(avp, stype, ne, 0, va))
 
-void allvalue_free(allvalues_t *);
+void allvalues_free(allvalues_t *);
+allvalues_t *allvalues_copy(allvalues_t *);
 
 lives_funcinst_t *_funcinst_from_allvals(lives_funcdef_t *fdef, lives_funcptr_t func,
     const char *funcname, weed_seed_t ret_type,

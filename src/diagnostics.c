@@ -176,23 +176,21 @@ LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
 
 char *cl_flags_desc(uint64_t clflags) {
   char *fstr = lives_strdup("");
-  if (clflags & HOOK_CB_BLOCK)
+  if (clflags & HOOK_CB_BLOCKING)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKING");
-  if (clflags & HOOK_CB_PRIORITY)
+  if (clflags & HOOK_OPT_PRIORITY)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PRIORITY");
   if (clflags & HOOK_OPT_ONESHOT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "ONESHOT");
   if (clflags & HOOK_CB_PERSISTENT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PERSISTENT");
-  if (clflags & HOOK_OPT_REMOVE_ON_FALSE)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "REMOVE CALLBACK IF FALSE RETURNED");
   if (clflags & HOOK_CB_IGNORE)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "IGNORE (skip)");
   if (clflags & HOOK_CB_FG_THREAD)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_THREAD");
   if (clflags & HOOK_OPT_FG_LIGHT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_LIGHT");
-  if (clflags & HOOK_OPT_ADDER_RUNS)
+  if (clflags & HOOK_CB_ADDER_RUNS)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "ADDER_RUNS");
   if (clflags & HOOK_CB_HAS_FREEFUNCS)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "HAS FREE FUNCS");
@@ -225,13 +223,10 @@ LIVES_GLOBAL_INLINE char *hs_op_flags_desc(uint64_t opflags) {
   ADD_FLAG_EXPL(opflags, HOOKSTACK_ASYNC, "TRIGGER ASYNC");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_PARALLEL, "RUN_PARALLEL");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_ADDER_RUNS, "ADDER RUNS OWN CALLBACKS");
-  ADD_FLAG_EXPL(opflags, HOOKSTACK_SELF_ONLY, "ANON_TRIGGER - ANY THREAD CAN TRIGGER");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_SELF_ONLY, "ONLY SELF CAN ADD");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_GUI_THREAD, "GUI_THREAD");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_RUN_SINGLE, "RUN SINGLE");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_PERSISTENT, "PERSISTENT");
-  ADD_FLAG_EXPL(opflags, HOOKSTACK_REMOVE_ON_COND_FAIL, "REMOVE_ON_COND_FAIL");
-  ADD_FLAG_EXPL(opflags, HOOKSTACK_REMOVE_ON_FALSE, "REMOVE_ON_FALSE");
   ADD_FLAG_EXPL(opflags, HOOKSTACK_NOWAIT, "NOWAIT");
   return fstr;
 }
@@ -270,8 +265,7 @@ LIVES_GLOBAL_INLINE const char *hs_pattern_name(hook_stack_pattern_t pattern) {
 lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type) {
   lives_hook_stack_t *hstack;
   uint64_t hsflags, opflags;
-  boolean native = FALSE;
-  char *proto;
+  boolean native = FALSE, variadic = FALSE, varivar = FALSE;
 
   g_print("\n\n");
 
@@ -287,7 +281,8 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   g_print("Showing details for hook stack type %d\n(%p) in stacks %p\n", type, hstack, hstacks);
 
-  hsflags = hstack->hsdesc->op_flags;
+  const hook_stack_descriptor_t *hsdesc = get_hs_desc(type);
+  hsflags = hsdesc->op_flags;
   if (hsflags & HOOKSTACK_NATIVE) native = TRUE;
 
   if (native) {
@@ -302,23 +297,100 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   g_print("\n");
 
-  g_print("hook stack pattern is %s\n", hs_pattern_name(hstack->hsdesc->pattern));
+  g_print("hook stack pattern is %s\n", hs_pattern_name(hsdesc->pattern));
 
-  if (!hstack->hsdesc->accept_cond && !hstack->hsdesc->def_args_fmt)
-    proto = lives_strdup("unspecified");
-  else {
-    if (hstack->hsdesc->def_args_fmt) {
-      char *pstr = args_fmt_to_param_string(hstack->hsdesc->def_args_fmt);
-      proto = lives_strdup_printf("Parameters must match %s", pstr);
-    } else proto = lives_strdup_printf("Parameters unspecified");
+  if (hsdesc->const_data_srcs) {  
+    g_print("\nSome parameters are set or supplied when adding callbacks to the stack\n");
+    for (int i = 0; hsdesc->const_data_srcs[i]; i++) {
+      const char *datasrc;
+      weed_seed_t st;
+      // format is "X|Ysrcname", where X is seed_type, Y is origin 
+      datasrc = hsdesc->const_data_srcs[i];
+      if (!datasrc) continue;
+      if (datasrc[0] == '*') {
+	variadic = TRUE;
+	break;
+      }
+      if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
+      if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
+      st = get_seedtype(datasrc[0]);
+      if (st == WEED_SEED_INVALID) continue;
+
+      switch (datasrc[2]) {
+      case '-': {
+	g_print("User supplied value ");
+	break;
+      }
+      case '$': {
+	const char *item = (const char *)(datasrc + 3);
+	g_print("local databook value: %s ", item);
+	break;
+      }
+      case '@': {
+	// data comes from global data book
+	const char *item = (const char *)(datasrc + 3);	
+	g_print("global databook value: %s ", item);
+	break;
+      }
+      default: break;
+      }
+      g_print(" (%s)\n", weed_seed_to_ctype(st, FALSE));
+    }
+    
+    if (variadic) g_print("Adder may pass addition params when adding the callback\n");
   }
-  g_print("Callback prototype: %s\n", proto);
-  lives_free(proto);
 
-  //g_print("Accept conditions: %s\n", lives_cond_desc(hstack->hsdesc->accept_cond));
+  if (hsdesc->var_data_srcs) { 
+    g_print("\nSome parameters are set or supplied when the callback is triggered\n");
+    for (int i = 0; hsdesc->var_data_srcs[i]; i++) {
+      const char *datasrc;
+      weed_seed_t st;
+      boolean lback = FALSE;
+      // format is "X|Ysrcname", where X is seed_type, Y is origin 
+      datasrc = hsdesc->var_data_srcs[i];
+      if (!datasrc) continue;
+      if (datasrc[0] == '*') {
+	varivar = TRUE;
+	break;
+      }
+      if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
+      if (datasrc[0] == '>') {
+	datasrc++;
+	lback = TRUE;
+      }
+      if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
+      st = get_seedtype(datasrc[0]);
+      if (st == WEED_SEED_INVALID) continue;
+
+      switch (datasrc[2]) {
+      case '-': {
+	g_print("User supplied value ");
+	break;
+      }
+      case '$': {
+	const char *item = (const char *)(datasrc + 3);
+	g_print("local databook value: %s ", item);
+	break;
+      }
+      case '@': {
+	// data comes from global data book
+	const char *item = (const char *)(datasrc + 3);	
+	g_print("global databook value: %s ", item);
+	break;
+      }
+      default: break;
+      }
+      g_print(" (%s)\n", weed_seed_to_ctype(st, FALSE));
+
+      if (lback) g_print("(Value is looped back from return val\n");
+    }
+    if (varivar) g_print("Triggerer may pass additional params when triggering the callback\n");
+  }
+
+  //g_print("Accept conditions: %s\n", lives_cond_desc(hsdesc->accept_cond));
 
   g_print("Hook stack operation flags are:\n");
-  opflags = hstack->hsdesc->op_flags;
+  opflags = hsdesc->op_flags;
   if (opflags) hs_op_flags_desc(opflags);
   else g_print("None");
 
@@ -556,11 +628,12 @@ void analyse_weed_plant(weed_plant_t *pl, int *xtype, int64_t *xsubtype) {
       g_print("subtype PROC_THREAD\n\n");
       break;
     case LIVES_PLANT_INDEX: {
-      const char *prefix = weed_get_const_string_value(pl, LIVES_LEAF_PREFIX, NULL);
-      weed_seed_t dtype = weed_get_int_value(pl, LIVES_LEAF_DATA_TYPE, NULL);
+      index_type idxt = lives_index_get_idxtype(pl);
+      const char *prefix = lives_index_get_prefix(pl);
+      weed_seed_t dtype = lives_index_get_itemtype(pl);
       char **names = weed_plant_list_leaves(pl, NULL);
       int i, j = 0;
-      g_print("LIVES_PLANT_INDEX\n");
+      g_print("LIVES_PLANT_INDEX - (type %d)\n", (int)idxt);
       g_print("Prefix is \"%s\", datatype is %s\n\n", prefix, weed_seed_to_text(dtype));
       for (i = 0; names[i]; i++) {
         if (lives_str_starts_with(names[i], prefix)) {

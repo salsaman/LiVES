@@ -5019,7 +5019,7 @@ boolean render_to_clip(boolean new_clip) {
   if (new_clip) {
     if (prefs->render_prompt) {
       //set file details
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
       main_thread_execute(create_render_details, WEED_SEED_VOIDPTR, &rdet, "i",
                           (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? 5 : 2));
       BG_THREADVAR(hook_hints) = 0;
@@ -5616,7 +5616,7 @@ static LiVESResponseType _show_rc_dlg(void) {
 
 static LiVESResponseType show_rc_dlg(void) {
   LiVESResponseType resp, *presp = &resp;
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
   main_thread_execute_pvoid(_show_rc_dlg, WEED_SEED_INT, presp);
   BG_THREADVAR(hook_hints) = 0;
   return resp;

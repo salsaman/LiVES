@@ -4090,7 +4090,7 @@ LIVES_GLOBAL_INLINE void *weed_get_blob_value(weed_plant_t *plant, const char *k
   p = weed_get_custom_value(plant, key, LIVES_SEED_BLOB_DATA, err);
   if (!byref) {
     weed_size_t bsize = weed_get_blob_data_size(plant, key);
-    if (blen) {
+    if (bsize) {
       void *ptr = lives_malloc(bsize);
       if (!ptr) return NULL;
       lives_memcpy(ptr, p, bsize);

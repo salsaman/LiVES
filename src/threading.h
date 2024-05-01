@@ -522,6 +522,8 @@ uint64_t get_worker_status(uint64_t tid);
 
 #define LIVES_LEAF_PROC_THREAD "proc_thread"
 
+#define LIVES_LEAF_MAXPARAM "_maxparam"
+
 #define lpt_param_name(i) lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, (i))
 
 #define LIVES_LEAF_THREAD_WORK "thread_work" // refers to underyling lives_thread
@@ -660,8 +662,7 @@ typedef struct {
 } timeout_data;
 
 lives_funcinst_t *lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_t func,
-    const char *fname, int return_type, const char **anames,
-    const char *args_fmt, va_list xargs);
+    const char *fname, int return_type, const char **anames, const char *args_fmt, va_list xargs);
 
 lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t func,
     const char *fname, int return_type, const char **anames, const char *args_fmt, ...);

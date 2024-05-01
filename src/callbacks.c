@@ -4756,7 +4756,7 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
       main_thread_execute_rvoid(switch_clip, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
       BG_THREADVAR(hook_hints) = 0;
@@ -4958,7 +4958,7 @@ boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event,
 void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY,
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_PRIORITY,
                                   _on_stop_activate, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
@@ -7518,7 +7518,7 @@ static void _on_double_size_activate(LiVESMenuItem * menuitem, livespointer user
 void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY |
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_PRIORITY |
                                   HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
@@ -7704,7 +7704,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC
-                                  | HOOK_CB_PRIORITY, _on_sepwin_activate, user_data);
+                                  | HOOK_OPT_PRIORITY, _on_sepwin_activate, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
 
@@ -7775,7 +7775,7 @@ static void _on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_CB_PRIORITY | HOOK_TOGGLE_FUNC,
+    lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_PRIORITY | HOOK_TOGGLE_FUNC,
                                   _on_fade_activate, user_data);
   else _on_fade_activate(menuitem, user_data);
 }
@@ -10084,7 +10084,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
   if (mainw->multitrack) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
     main_thread_execute_rvoid(mt_post_playback, "v", mainw->multitrack);
     BG_THREADVAR(hook_hints) = 0;
     mainw->current_file = current_file;

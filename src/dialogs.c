@@ -3600,7 +3600,7 @@ void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
   if (!mainw->threaded_dialog) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
     main_thread_execute_void(_end_threaded_dialog);
     BG_THREADVAR(hook_hints) = 0;
   } else _end_threaded_dialog();

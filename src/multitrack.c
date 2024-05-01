@@ -1679,7 +1679,7 @@ static void _select_block(lives_mt * mt) {
 static void select_block(lives_mt * mt) {
   if (is_fg_thread()) _select_block(mt);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
     main_thread_execute_rvoid(_select_block, "v", mt);
     BG_THREADVAR(hook_hints) = 0;
   }

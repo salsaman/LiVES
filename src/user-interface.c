@@ -1183,7 +1183,7 @@ static void _resize(double scale) {
 void resize(double scale) {
   if (is_fg_thread()) _resize(scale);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
     main_thread_execute_rvoid(_resize, "d", scale);
     BG_THREADVAR(hook_hints) = 0;
   }

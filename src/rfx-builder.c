@@ -4758,7 +4758,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lock_gmci();
   }
 
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
   update_rfx_menus();
   BG_THREADVAR(hook_hints) = 0;
 
@@ -4767,7 +4767,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   if (status != RFX_STATUS_ANY) {
     //threaded_dialog_spin(0.);
     if (CURRENT_CLIP_IS_VALID) {
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
       main_thread_execute_void(sensitize_rfx);
       BG_THREADVAR(hook_hints) = 0;
     }

@@ -807,6 +807,8 @@ typedef struct {
 
 
 typedef struct {
+  lives_databook_t *global_databook;
+
   char msg[MAINW_MSG_SIZE];
 
   // clip files

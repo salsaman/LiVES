@@ -767,7 +767,7 @@ void play_file(void) {
 
   fg_service_wake();
 
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
   main_thread_execute_void(pre_playback);
   BG_THREADVAR(hook_hints) = 0;
 
@@ -1497,7 +1497,7 @@ void play_file(void) {
 
   // clean up the interface, this has to be executed by the main (gui) thread
   // due to restrictions in gtk+
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
   main_thread_execute_void(post_playback);
   BG_THREADVAR(hook_hints) = 0;
 

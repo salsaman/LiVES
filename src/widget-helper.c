@@ -1780,7 +1780,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget * widget) 
       if (LIVES_IS_DIALOG(widget) && mainw->mgeom) lives_window_center(LIVES_WINDOW(widget));
     }
   } else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
     MAIN_THREAD_EXECUTE(_lives_widget_show_all, WEED_SEED_BOOLEAN, &retloc, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -1801,7 +1801,7 @@ static boolean _lives_widget_queue_draw_and_update(LiVESWidget * widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget * widget) {
   if (is_fg_thread()) _lives_widget_queue_draw_and_update(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCKING;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_OPT_PRIORITY | HOOK_CB_BLOCKING;
     MAIN_THREAD_EXECUTE_RVOID(_lives_widget_queue_draw_and_update, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -1823,7 +1823,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget * widget) 
   // run in main thread as it seems to give a smoother result
   boolean ret;
   if (is_fg_thread()) return _lives_widget_show_now(widget);
-  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCKING;
+  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_OPT_PRIORITY | HOOK_CB_BLOCKING;
   main_thread_execute(_lives_widget_show_now, WEED_SEED_BOOLEAN, &ret, "v", widget);
   BG_THREADVAR(hook_hints) = 0;
   return ret;
@@ -1884,7 +1884,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget * widget
   }
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCKING;
+    BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_OPT_PRIORITY | HOOK_CB_BLOCKING;
     MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -2141,7 +2141,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog * dia
     lives_widget_context_update();
     resp = gtk_dialog_run(dialog);
   } else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
     main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -3419,7 +3419,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_noblock(LiVESWidget 
   }
   if (is_fg_thread()) gtk_widget_queue_draw(widget);
   else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_OPT_PRIORITY;
     MAIN_THREAD_EXECUTE_RVOID(gtk_widget_queue_draw, "v", widget);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -3433,7 +3433,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget * w
   boolean ret;
   if (mainw->no_idlefuncs) return FALSE;
   if (is_fg_thread()) return _lives_widget_process_updates(widget);
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_CB_PRIORITY | HOOK_UNIQUE_DATA;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY | HOOK_UNIQUE_DATA;
   main_thread_execute(_lives_widget_process_updates, WEED_SEED_BOOLEAN, &ret, "v", widget);
   BG_THREADVAR(hook_hints) = 0;
   return ret;
@@ -14634,7 +14634,7 @@ boolean widget_klasses_init(lives_toolkit_t tk) {
     lives_free(lname);
 
     // SET_VALUE
-    BG_THREADVAR(hook_hints) |= HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
+    BG_THREADVAR(hook_hints) |= HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
     add_method(k, OBJ_INTENTION_SET_VALUE, (lives_funcptr_t)lives_spin_button_set_value,
                WEED_SEED_BOOLEAN, "Vd");
     BG_THREADVAR(hook_hints) = 0;

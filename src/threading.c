@@ -496,11 +496,13 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt) {
 }
 
 
-lives_funcinst_t *lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_t func,const char *fname, int return_type,
-					   const char **anames, const char *args_fmt, va_list xargs) {
-  validate_args_fmt(args_fmt, fname, anames);
-  if (!fdef) fdef = create_funcdef(fname, func, return_type, args_fmt, NULL, 0, 0);
-  if (fname) add_quick_fn(func, fname);
+static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
+						      const char **anames, const char *args_fmt, va_list xargs) {
+  if (func) validate_args_fmt(args_fmt, fname, anames);
+  if (func && !fdef) {
+    fdef = create_funcdef(fname, func, return_type, args_fmt, NULL, 0, 0);
+    if (fname) add_quick_fn(func, fname);
+  }
   lives_funcinst_t *finst = lives_funcinst_new(fdef);
   if (args_fmt && *args_fmt) {
     funcinst_params_from_vargs(finst, args_fmt, xargs);
@@ -508,23 +510,29 @@ lives_funcinst_t *lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_
   }
   // still need this to hold retval
   else finst->params = lives_plant_new(LIVES_PLANT_FUNCPARAMS);
-  set_args_fmt(finst->params, args_fmt);
   if (!mainw->debug_ptr) mainw->debug_ptr = finst->params;
   return finst;
 }
 
 
-lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
-    const char **anames, const char *args_fmt, ...) {
+lives_funcinst_t *lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
+					   const char **anames, const char *args_fmt, va_list va) {
   lives_funcinst_t *finst;
-  if (args_fmt && *args_fmt) {
-    va_list va;
-    va_start(va, args_fmt);
-    finst = lives_funcinst_create_va(fdef, func, fname, return_type, anames, args_fmt, va);
-    va_end(va);
-  } else finst = lives_funcinst_create_va(fdef, func, fname, return_type, NULL, NULL, NULL);
-  validate_args_fmt(get_args_fmt(finst->params), finst->funcdef->funcname, finst->paramnames);
+  if (args_fmt && *args_fmt)
+    finst = lives_funcinst_create_valist(fdef, func, fname, return_type, anames, args_fmt, va);
+  else finst = lives_funcinst_create_valist(fdef, func, fname, return_type, NULL, NULL, NULL);
   return finst;
+}
+
+
+lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
+					 const char **anames, const char *args_fmt, ...) {
+  lives_funcinst_t *ret;
+  va_list va;
+  va_start(va, args_fmt);
+  ret = lives_funcinst_create_va(fdef, func, fname, return_type, anames, args_fmt, va);
+  va_end(va);
+  return ret;
 }
 
 
@@ -669,12 +677,12 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
     int return_type, const char **anames, const char *args_fmt, ...) {
   lives_proc_thread_t lpt;
   lives_funcinst_t *finst;
-  if (args_fmt && *args_fmt) {
-    va_list xargs;
-    va_start(xargs, args_fmt);
-    finst = lives_funcinst_create_va(NULL, func, fname, return_type, anames, args_fmt, xargs);
-    va_end(xargs);
-  } else finst = lives_funcinst_create_va(NULL, func, fname, return_type, NULL, NULL, NULL);
+  va_list xargs;
+
+  va_start(xargs, args_fmt);
+  finst = lives_funcinst_create_va(NULL, func, fname, return_type, anames, args_fmt, xargs);
+  va_end(xargs);
+
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
   if (lpt) {
     if (attrs & LIVES_THRDATTR_CREATE_UNQUEUED)
@@ -700,11 +708,10 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(uint64_t to_nsec, liv
   to_data->cancel_type = to_ctype;
   to_data->ign_busy = to_ign_busy;
   to_data->min_resume = to_min_res;
-  if (args_fmt && *args_fmt) {
-    va_start(xargs, args_fmt);
-    finst = lives_funcinst_create_va(NULL, func, funcname, return_type, anames, args_fmt, xargs);
-    va_end(xargs);
-  } else finst = lives_funcinst_create_va(NULL, func, funcname, return_type, NULL, NULL, NULL);
+
+  va_start(xargs, args_fmt);
+  finst = lives_funcinst_create_va(NULL, func, funcname, return_type, anames, args_fmt, xargs);
+  va_end(xargs);
 
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
   if (lpt) {
@@ -793,7 +800,7 @@ LIVES_LOCAL_INLINE void prepend_all_to_fg_deferral_stack(void) {
     lives_funcinst_t *finst = (lives_funcinst_t *)cblist->data;
     uint64_t cbflags = CL_DATA(finst, cb_flags);
     cbprev = cblist->prev;
-    CL_DATA(finst, cb_flags) |= HOOK_CB_PRIORITY;
+    CL_DATA(finst, cb_flags) |= HOOK_OPT_PRIORITY;
     lives_hook_cb_add(mainw->global_hook_stacks, LIVES_GUI_HOOK, finst, cbflags, ADDMODE_TRANSFER);
     if (finst->flags & FINST_FLAG_REJECTED)
       remove_from_hstack(hstack, cblist);
@@ -1018,9 +1025,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   // passed to the fg thread
   // or queued for sequential execution (since we need to avoid nesting calls)
 
-  if (args_fmt && *args_fmt) {
-    finst = lives_funcinst_create_va(NULL, func, fname, return_type, anames, args_fmt, xargs);
-  } else finst = lives_funcinst_create_va(NULL, func, fname, return_type, NULL, NULL, NULL);
+  finst = _lives_funcinst_create(NULL, func, fname, return_type, anames, args_fmt, xargs);
 
   if (retloc) {
     finst->retloc = retloc;
@@ -1047,7 +1052,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
     }
     else {
       if (add_to_deferral_stack(finst, hook_hints)) {
-	if (hook_hints & HOOK_CB_PRIORITY) {
+	if (hook_hints & HOOK_OPT_PRIORITY) {
 	  prepend_all_to_fg_deferral_stack();
 	  fg_service_wake();
 	} else {
@@ -1155,7 +1160,7 @@ LIVES_GLOBAL_INLINE funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t 
 LIVES_GLOBAL_INLINE char *lives_proc_thread_get_args_fmt(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(lpt);
-    if (finst) return args_fmt_from_funcsig(finst->funcdef->funcsig);
+    if (finst) return get_args_fmt(finst->params);
   }
   return NULL;
 }
@@ -2178,25 +2183,17 @@ static void lives_proc_thread_signalled(int sig, siginfo_t *si, void *uc) {
   if (IS_LIVES_PLANT(plant)) {
     int64_t subtype = lives_plant_get_subtype(plant);
     switch (subtype) {
-    case LIVES_PLANT_VALUE: {
-      allvalues_t *avp = allvalues_from_leaf(NULL, plant, LIVES_LEAF_VALUE);
-      int dtl = weed_get_int_value(plant, "val_dtl", NULL);
-      switch (dtl) {
-      case STRUCT_ADAPTOR: {
-        const char *structype = weed_get_const_string_value(plant, WEED_LEAF_NAME, NULL);
-        if (!lives_strcmp(structype, "lives_funcinst_t")) {
-          lives_funcinst_t *finst = *(lives_funcinst_t **)avp->values.V;
-          allvalue_free(avp);
-          lives_funcinst_execute(finst);
-          weed_plant_free(plant);
-          return;
-        }
-        break;
-      }
-      default: break;
-      }
-      break;
-    }
+    /* case STRUCT_ADAPTOR: { */
+    /*   const char *structype = weed_get_const_string_value(plant, WEED_LEAF_NAME, NULL); */
+    /*   if (!lives_strcmp(structype, "lives_funcinst_t")) { */
+    /* 	lives_funcinst_t *finst = *(lives_funcinst_t **)avp->values.V; */
+    /* 	allvalue_free(avp); */
+    /* 	lives_funcinst_execute(finst); */
+    /* 	weed_plant_free(plant); */
+    /* 	return; */
+    /*   } */
+    /*   break; */
+    /* } */
     default: break;
     }
   }

@@ -767,7 +767,7 @@ void play_file(void) {
 
   fg_service_wake();
 
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
   main_thread_execute_void(pre_playback);
   BG_THREADVAR(hook_hints) = 0;
 
@@ -984,9 +984,9 @@ void play_file(void) {
         }
       }
 
-      if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
+      //if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
 
-      if (AUD_SRC_INTERNAL) audio_analyser_start(AUDIO_SRC_INT);
+      //if (AUD_SRC_INTERNAL) audio_analyser_start(AUDIO_SRC_INT);
 
       //
 
@@ -1085,8 +1085,8 @@ void play_file(void) {
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
 
-  if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT);
-  else if (AUD_SRC_INTERNAL) audio_analyser_end(AUDIO_SRC_INT);
+  /* if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT); */
+  /* else if (AUD_SRC_INTERNAL) audio_analyser_end(AUDIO_SRC_INT); */
 
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -1497,7 +1497,7 @@ void play_file(void) {
 
   // clean up the interface, this has to be executed by the main (gui) thread
   // due to restrictions in gtk+
-  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
   main_thread_execute_void(post_playback);
   BG_THREADVAR(hook_hints) = 0;
 

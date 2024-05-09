@@ -4756,7 +4756,7 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
       main_thread_execute_rvoid(switch_clip, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
       BG_THREADVAR(hook_hints) = 0;
@@ -10084,7 +10084,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
   if (mainw->multitrack) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
     main_thread_execute_rvoid(mt_post_playback, "v", mainw->multitrack);
     BG_THREADVAR(hook_hints) = 0;
     mainw->current_file = current_file;

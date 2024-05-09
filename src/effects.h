@@ -8,7 +8,7 @@
 #define HAS_LIVES_EFFECTS_H
 
 // general effects
-typedef enum {
+DEF_ENUM(lives_fx_cat_t,
   LIVES_FX_CAT_NONE = 0,
   LIVES_FX_CAT_VIDEO_GENERATOR,
   LIVES_FX_CAT_AV_GENERATOR,
@@ -33,8 +33,7 @@ typedef enum {
   LIVES_FX_CAT_AUDIO_VOL,
   LIVES_FX_CAT_ANALYSER,
   LIVES_FX_CAT_VIDEO_ANALYSER,
-  LIVES_FX_CAT_AUDIO_ANALYSER
-} lives_fx_cat_t;
+  LIVES_FX_CAT_AUDIO_ANALYSER)
 
 /// audio filter type (any, analyser only, non analyser only)
 typedef enum { 

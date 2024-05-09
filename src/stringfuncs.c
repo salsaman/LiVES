@@ -182,7 +182,7 @@ LIVES_GLOBAL_INLINE char *lives_strndup(const char *s, size_t maxlen) {
   void *p = NULL;
   if (s) {
     size_t slen = lives_strlen(s) + 1;
-    if (maxlen && slen > maxlen) slen = maxlen;
+    if (maxlen && slen > maxlen) slen = maxlen + 1;
     else maxlen = 0;
     p = lives_malloc(slen);
     if (p) {

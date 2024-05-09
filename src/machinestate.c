@@ -526,7 +526,7 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost) {
         val = bestval;
         if (prefs->show_dev_opts)
           g_printerr("\n\n *** value of %s tuned to %lu ***\n\n\n",
-                     get_tunert(weed_get_int64_value(*tuner, LIVES_LEAF_SERIALNO, NULL)), val);
+                     get_tunert(weed_get_int64_value(*tuner, LIVES_LEAF_SERIAL_NUMBER, NULL)), val);
         // TODO: store value so we can recalibrate again later
         //tuned = (struct tuna *)lives_malloc(sizeof(tuna));
         //tuna->wptpp = tuner;

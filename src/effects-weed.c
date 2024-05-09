@@ -327,7 +327,7 @@ LIVES_GLOBAL_INLINE boolean weed_channel_is_alpha(weed_channel_t *chan) {
 }
 
 
-static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
+boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
   // check (mandatory) output chans, see if any are non-alpha
   int nouts;
   weed_plant_t **ctmpls = weed_filter_get_out_chantmpls(filt, &nouts);
@@ -348,7 +348,7 @@ static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
 }
 
 
-static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
+boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
   // check mandatory input chans, see if any are non-alpha
   // if there are no mandatory inputs, we check optional (even if ign_opt is TRUE)
   boolean has_mandatory_in = FALSE;
@@ -379,84 +379,6 @@ static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
   }
   lives_free(ctmpls);
   return FALSE;
-}
-
-
-lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out_channels) {
-  weed_plant_t *filt = pl;
-
-  boolean has_out_params = FALSE;
-  boolean has_in_params = FALSE;
-  boolean all_out_alpha = TRUE;
-  boolean all_in_alpha = TRUE;
-  boolean has_in_alpha = FALSE;
-
-  int filter_flags;
-
-  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt = weed_instance_get_filter(pl, TRUE);
-
-  all_out_alpha = all_outs_alpha(filt, TRUE);
-  all_in_alpha = all_ins_alpha(filt, TRUE);
-
-  filter_flags = weed_get_int_value(filt, WEED_LEAF_FLAGS, NULL);
-  if (weed_plant_has_leaf(filt, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) has_out_params = TRUE;
-  if (weed_plant_has_leaf(filt, WEED_LEAF_IN_PARAMETER_TEMPLATES)) has_in_params = TRUE;
-  if (filter_flags & WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTER;
-  if (in_channels == 0 && out_channels > 0 && all_out_alpha) return LIVES_FX_CAT_DATA_GENERATOR;
-  if (in_channels == 0 && out_channels > 0) {
-    if (!has_audio_chans_out(filt, TRUE)) return LIVES_FX_CAT_VIDEO_GENERATOR;
-    else if (has_video_chans_out(filt, TRUE)) return LIVES_FX_CAT_AV_GENERATOR;
-    else return LIVES_FX_CAT_AUDIO_GENERATOR;
-  }
-  if (out_channels >= 1 && in_channels >= 1 && (all_in_alpha || has_in_alpha) && !all_out_alpha)
-    return LIVES_FX_CAT_DATA_VISUALISER;
-  if (out_channels >= 1 && all_out_alpha) return LIVES_FX_CAT_ANALYSER;
-  if (out_channels > 1) return LIVES_FX_CAT_SPLITTER;
-
-  if (in_channels > 2 && out_channels == 1) {
-    return LIVES_FX_CAT_COMPOSITOR;
-  }
-  if (in_channels == 2 && out_channels == 1) return LIVES_FX_CAT_TRANSITION;
-  if (in_channels == 1 && out_channels == 1 && !(has_video_chans_in(filt, TRUE)) &&
-      !(has_video_chans_out(filt, TRUE))) return LIVES_FX_CAT_AUDIO_EFFECT;
-  if (in_channels == 1 && out_channels == 1) return LIVES_FX_CAT_EFFECT;
-  if (in_channels > 0 && out_channels == 0 && has_out_params) return LIVES_FX_CAT_ANALYSER;
-  if (in_channels > 0 && out_channels == 0) return LIVES_FX_CAT_TAP;
-  if (in_channels == 0 && out_channels == 0 && has_out_params && has_in_params) return LIVES_FX_CAT_DATA_PROCESSOR;
-  if (in_channels == 0 && out_channels == 0 && has_out_params) return LIVES_FX_CAT_DATA_SOURCE;
-  if (in_channels == 0 && out_channels == 0) return LIVES_FX_CAT_UTILITY;
-  return LIVES_FX_CAT_NONE;
-}
-
-
-lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt) {
-  weed_plant_t *filt = pl;
-  boolean has_video_chansi;
-
-  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt = weed_instance_get_filter(pl, TRUE);
-
-  if (category == LIVES_FX_CAT_COMPOSITOR) count_opt = TRUE;
-
-  has_video_chansi = has_video_chans_in(filt, count_opt);
-
-  if (category == LIVES_FX_CAT_TRANSITION) {
-    if (get_transition_param(filt, FALSE) != -1) {
-      if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_TRANSITION;
-      return LIVES_FX_CAT_AV_TRANSITION;
-    }
-    return LIVES_FX_CAT_VIDEO_TRANSITION;
-  }
-
-  if (category == LIVES_FX_CAT_COMPOSITOR && !has_video_chansi) return LIVES_FX_CAT_AUDIO_MIXER;
-  if (category == LIVES_FX_CAT_EFFECT && !has_video_chansi) return LIVES_FX_CAT_AUDIO_EFFECT;
-  if (category == LIVES_FX_CAT_CONVERTER && !has_video_chansi) return LIVES_FX_CAT_AUDIO_VOL;
-
-  if (category == LIVES_FX_CAT_ANALYSER) {
-    if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_ANALYSER;
-    return LIVES_FX_CAT_VIDEO_ANALYSER;
-  }
-
-  return LIVES_FX_CAT_NONE;
 }
 
 
@@ -7447,7 +7369,8 @@ int register_audio_client(boolean is_vid) {
   }
 
   if (!mainw->afbuffer) {
-    mainw->afbuffer = init_audio_frame_buffers(prefs->audio_player);
+    lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+    mainw->afbuffer = init_audio_frame_buffers(aplayer);
     mainw->afbuffer->aclients = mainw->afbuffer->vclients = 0;
     mainw->afbuffer->aclients_read = mainw->afbuffer->vclients_read = 0;
   }
@@ -7517,10 +7440,10 @@ int register_aux_audio_channels(int nchannels) {
   }
   if (nchannels <= 0) return mainw->afbuffer_aux_clients;
   pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
-  if (mainw->afbuffer_aux_clients == 0) {
-    init_aux_audio_frame_buffers(prefs->audio_player);
-    mainw->afbuffer_aux_clients_read = 0;
-  }
+  /* if (mainw->afbuffer_aux_clients == 0) { */
+  /*   init_aux_audio_frame_buffers(prefs->audio_player); */
+  /*   mainw->afbuffer_aux_clients_read = 0; */
+  /* } */
   mainw->afbuffer_aux_clients += nchannels;
   pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
   return mainw->afbuffer_aux_clients;

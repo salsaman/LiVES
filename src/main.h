@@ -241,8 +241,11 @@ typedef struct _lives_funcinst lives_funcinst_t;
 
 #define NATIVE_THREAD_TYPE pthread
 #define NATIVE_MUTEX_TYPE pthread_mutex_t
+#define NATIVE_RWLOCK_TYPE pthread_rwlock_t
 
 #include "funcsigs.h"
+
+#include "lives_plants.h"
 
 typedef struct {
   uint64_t uid;
@@ -294,7 +297,7 @@ lives_struct_t *lives_struct_new(char *stname);
 #define LIVES_STRUCT_GET(var, strct, field) (var, get_allval(&(make_allvals(strct->plant, field))))
 
 lives_structdef *parse_structdef(const char *stname, const char *stdefdata, size_t stsize);
-#define PARSE_STRUCTDEF(stname) parse_structdef(#stname, stname_strctdef, stname_size)
+#define PARSE_STRUCTDEF(stname) parse_structdef(#stname, stname##_strctdef, stname##_size)
 
 typedef struct {
   funcinst_disposition disposition;
@@ -511,7 +514,6 @@ typedef struct _param_t lives_param_t;
 extern uint64_t test_opts;
 #endif
 
-#include "lives_plants.h"
 #include "functions.h"
 #include "alarms.h"
 #include "intents.h"
@@ -957,6 +959,8 @@ extern char errmsg[1024], errdets[1024];
 
 #define FINALISE_MEMFUNCS
 #include "memory.h"
+
+lives_result_t nofunc(void);
 
 #endif // #ifndef HAS_LIVES_MAIN_H
 

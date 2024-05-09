@@ -452,6 +452,8 @@ void lives_proc_thread_set_initial_funcinst(lives_proc_thread_t, lives_funcinst_
 
 void lives_funcinst_append_chain(lives_funcinst_t *f1, lives_funcinst_t *f2);
 
+#define SET_RETVAR(finst, retvar) _DW0(finst->retloc =&retvar;finst->flags|=FINST_FLAG_NOFREE_RETLOC;)
+
 void lives_proc_thread_set_active_finstlist(lives_proc_thread_t, lives_sync_list_t *);
 lives_sync_list_t *lives_proc_thread_get_active_finstlist(lives_proc_thread_t);
 
@@ -661,14 +663,17 @@ typedef struct {
   uint64_t min_resume;
 } timeout_data;
 
-lives_funcinst_t *lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_t func,
+lives_funcinst_t *_lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_t func,
     const char *fname, int return_type, const char **anames, const char *args_fmt, va_list xargs);
 
 lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t func,
     const char *fname, int return_type, const char **anames, const char *args_fmt, ...);
 
 #define lives_funcinst_create(func, rtype, af, ...)		\
-  (_lives_funcinst_create(NULL, (lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), (af), __VA_ARGS__))
+  (_lives_funcinst_create(NULL, (lives_funcptr_t)func, #func, (rtype), __VA_OPT__(VARNAMES(__VA_ARGS__),) (af) __VA_OPT__(,) __VA_ARGS__))
+
+#define lives_funcinst_create_va(func, rtype, af, va)		\
+  (_lives_funcinst_create_va(NULL, (lives_funcptr_t)func, #func, (rtype), NULL, (af), (va)))
 
 #define lives_funcinst_create_for_funcdef(fdef, af, ...)		\
   (_lives_funcinst_create(fdef, (lives_funcptr_t)fdef->function, fdef->funcname, fdef->return_type, VARNAMES(__VA_ARGS__), (af), __VA_ARGS__))

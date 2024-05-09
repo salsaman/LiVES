@@ -93,6 +93,9 @@ boolean lists_differ(LiVESList *, LiVESList *, boolean ordered);
 LiVESList *lives_list_append_unique_str(LiVESList *, const char *add);
 LiVESList *lives_list_append_unique(LiVESList *, livespointer add);
 
+LiVESList *strings_to_list(int dummy, ...);
+LiVESList *chars_to_list(int dummy, ...);
+
 LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
 int lives_list_strcmp_index(LiVESList *, livesconstpointer data, boolean case_sensitive);
 

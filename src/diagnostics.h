@@ -133,5 +133,6 @@ void list_prefs(void);
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
 
 boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames);
+char *args_fmt_filter(const char *args_fmt, boolean strict);
 
 #endif

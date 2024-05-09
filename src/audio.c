@@ -4967,7 +4967,7 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
 
 #if 0
 void nullaudio_time_reset(int64_t offset) {
-  mainw->nullaudo_startticks = lives_get_current_ticks();
+  mainw->nullaudo_startticks = lives_get_session_ticks();
   mainw->nullaudio_seek_posn = 0;
   mainw->nullaudio_arate = DEF_AUDIO_RATE;
   mainw->nullaudio_playing_file = -1;
@@ -4991,10 +4991,10 @@ void nullaudio_clip_set(int clipno) {
 }
 
 
-int64_t nullaudio_update_seek_posn() {
+int64_t nullaudio_update_seek_posn(void) {
   if (!CURRENT_CLIP_HAS_AUDIO) return mainw->nullaudio_seek_posn;
   else {
-    ticks_t current_ticks = lives_get_current_ticks();
+    ticks_t current_ticks = lives_get_session_ticks();
     mainw->nullaudio_seek_posn += ((int64_t)((double)(current_ticks - mainw->nullaudio_start_ticks) / USEC_TO_TICKS / ONE_MILLION. *
                                    mainw->nullaudio_arate)) * afile->achans * (afile->asampsize >> 3);
     mainw->nullaudo_startticks = current_ticks;
@@ -5027,6 +5027,7 @@ int64_t nullaudio_update_seek_posn() {
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
+  
 }
 
 
@@ -5049,6 +5050,20 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
   }
 }
 
+void nullaudio_play_loop(void) {
+  // here we simulate an audio player
+  // every time period (1 msec). we check for cmds
+  // open - we just get the filesize - so we know when to loop
+  // seek - set virtual posn
+  // close - just keep time
+  //
+  // if there are no commands we update pos in file, av seek just holds postion
+  // if we reach a bound, we check the loop mode and adjust video player
+  // rev playback , scratch , fps changes affect pos and velocity
+
+  nullaudio_update_seek_posn();
+}
+  
 #endif
 
 //////////// objects / intents //////

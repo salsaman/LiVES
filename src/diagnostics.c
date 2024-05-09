@@ -11,6 +11,7 @@
 #include "callbacks.h"
 #include "startup.h"
 #include "maths.h"
+#include "effects.h"
 
 //////////////// info functions
 
@@ -30,13 +31,127 @@ LIVES_GLOBAL_INLINE double check_thrd_latency(double *act_time) {
   return end - start;
 }
 
+
+lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out_channels) {
+  weed_plant_t *filt = pl;
+
+  boolean has_out_params = FALSE;
+  boolean has_in_params = FALSE;
+  boolean all_out_alpha = TRUE;
+  boolean all_in_alpha = TRUE;
+  boolean has_in_alpha = FALSE;
+
+  int filter_flags;
+
+  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt = weed_instance_get_filter(pl, TRUE);
+
+  all_out_alpha = all_outs_alpha(filt, TRUE);
+  all_in_alpha = all_ins_alpha(filt, TRUE);
+
+  filter_flags = weed_get_int_value(filt, WEED_LEAF_FLAGS, NULL);
+  if (weed_plant_has_leaf(filt, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) has_out_params = TRUE;
+  if (weed_plant_has_leaf(filt, WEED_LEAF_IN_PARAMETER_TEMPLATES)) has_in_params = TRUE;
+  if (filter_flags & WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTER;
+  if (in_channels == 0 && out_channels > 0 && all_out_alpha) return LIVES_FX_CAT_DATA_GENERATOR;
+  if (in_channels == 0 && out_channels > 0) {
+    if (!has_audio_chans_out(filt, TRUE)) return LIVES_FX_CAT_VIDEO_GENERATOR;
+    else if (has_video_chans_out(filt, TRUE)) return LIVES_FX_CAT_AV_GENERATOR;
+    else return LIVES_FX_CAT_AUDIO_GENERATOR;
+  }
+  if (out_channels >= 1 && in_channels >= 1 && (all_in_alpha || has_in_alpha) && !all_out_alpha)
+    return LIVES_FX_CAT_DATA_VISUALISER;
+  if (out_channels >= 1 && all_out_alpha) return LIVES_FX_CAT_ANALYSER;
+  if (out_channels > 1) return LIVES_FX_CAT_SPLITTER;
+
+  if (in_channels > 2 && out_channels == 1) {
+    return LIVES_FX_CAT_COMPOSITOR;
+  }
+  if (in_channels == 2 && out_channels == 1) return LIVES_FX_CAT_TRANSITION;
+  if (in_channels == 1 && out_channels == 1 && !(has_video_chans_in(filt, TRUE)) &&
+      !(has_video_chans_out(filt, TRUE))) return LIVES_FX_CAT_AUDIO_EFFECT;
+  if (in_channels == 1 && out_channels == 1) return LIVES_FX_CAT_EFFECT;
+  if (in_channels > 0 && out_channels == 0 && has_out_params) return LIVES_FX_CAT_ANALYSER;
+  if (in_channels > 0 && out_channels == 0) return LIVES_FX_CAT_TAP;
+  if (in_channels == 0 && out_channels == 0 && has_out_params && has_in_params) return LIVES_FX_CAT_DATA_PROCESSOR;
+  if (in_channels == 0 && out_channels == 0 && has_out_params) return LIVES_FX_CAT_DATA_SOURCE;
+  if (in_channels == 0 && out_channels == 0) return LIVES_FX_CAT_UTILITY;
+  return LIVES_FX_CAT_NONE;
+}
+
+
+lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt) {
+  weed_plant_t *filt = pl;
+  boolean has_video_chansi;
+
+  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt = weed_instance_get_filter(pl, TRUE);
+
+  if (category == LIVES_FX_CAT_COMPOSITOR) count_opt = TRUE;
+
+  has_video_chansi = has_video_chans_in(filt, count_opt);
+
+  if (category == LIVES_FX_CAT_TRANSITION) {
+    if (get_transition_param(filt, FALSE) != -1) {
+      if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_TRANSITION;
+      return LIVES_FX_CAT_AV_TRANSITION;
+    }
+    return LIVES_FX_CAT_VIDEO_TRANSITION;
+  }
+
+  if (category == LIVES_FX_CAT_COMPOSITOR && !has_video_chansi) return LIVES_FX_CAT_AUDIO_MIXER;
+  if (category == LIVES_FX_CAT_EFFECT && !has_video_chansi) return LIVES_FX_CAT_AUDIO_EFFECT;
+  if (category == LIVES_FX_CAT_CONVERTER && !has_video_chansi) return LIVES_FX_CAT_AUDIO_VOL;
+
+  if (category == LIVES_FX_CAT_ANALYSER) {
+    if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_ANALYSER;
+    return LIVES_FX_CAT_VIDEO_ANALYSER;
+  }
+
+  return LIVES_FX_CAT_NONE;
+}
+
+
 #define FSIG_HDR "funcsigs.h"
 
+static LiVESList *aletters_list = NULL;
+
+char *args_fmt_filter(const char *args_fmt, boolean strict) {
+  char *xafmt = NULL;
+  if (!aletters_list) aletters_list = chars_to_list(0, ARGS_FMT_REAL);
+  for (const char *c = args_fmt; *c; c++) {
+    if (!strict && *c == ARGS_FMT_VARIADIC) {
+      char *fmt = LSPF("%c", *c);
+      xafmt = lives_strcollate(&xafmt, NULL, (const char *)fmt);
+      lives_free(fmt);
+      continue;
+    }
+    for (LiVESList *list = aletters_list; list; list = list->next) {
+      if (*c == *(const char *)list->data) {
+	char *fmt = LSPF("%c", *c);
+	xafmt = lives_strcollate(&xafmt, NULL, (const char *)fmt);
+	lives_free(fmt);
+	break;
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+  return xafmt;
+}
+
+
 boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames) {
-  funcsig_t fsig = funcsig_from_args_fmt(args_fmt);
+  if (!args_fmt) return TRUE;
+
+  char *xargs_fmt = args_fmt_filter(args_fmt, TRUE);
+
+  funcsig_t fsig = funcsig_from_args_fmt(xargs_fmt);
+  if (!fsig) return TRUE;
 
   for (LiVESList *list = capable->known_funcsigs; list; list = list->next)
-    if (fsig == *(funcsig_t *)list->data) return TRUE;
+    if (fsig == *(funcsig_t *)list->data) {
+      lives_free(xargs_fmt);
+      return TRUE;
+    }
+
+  lives_free(xargs_fmt);
 
   char *symstr, *msg;
   int nparms = get_funcsig_nparms(fsig);
@@ -307,7 +422,7 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
       // format is "X|Ysrcname", where X is seed_type, Y is origin 
       datasrc = hsdesc->const_data_srcs[i];
       if (!datasrc) continue;
-      if (datasrc[0] == '*') {
+      if (datasrc[0] == ARGS_FMT_VARIADIC) {
 	variadic = TRUE;
 	break;
       }
@@ -471,9 +586,7 @@ void list_leaves(weed_plant_t *plant) {
     } else {
       for (int n = 0;  keys[n]; n++) {
         int st = weed_leaf_seed_type(plant, keys[n]);
-        const char *fmt = get_fmtstr_for_st(st);
-        char *txt = NULL;
-        FOR_ALL_SEED_TYPES(st, txt = lives_strdup_printf, fmt, weed_get_, _value, plant, keys[n], NULL);
+        char *txt = weed_leaf_stringify(plant, keys[n]);
         if (txt) {
           g_print("\n%s %s has value: %s\n", weed_seed_to_ctype(st, FALSE), keys[n], txt);
           lives_free(txt);
@@ -485,7 +598,6 @@ void list_leaves(weed_plant_t *plant) {
     }
   }
 }
-
 
 
 char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {

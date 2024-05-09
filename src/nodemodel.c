@@ -7827,7 +7827,7 @@ static void _build_nodemodel(lives_nodemodel_t **pnodemodel, int ntracks, int *c
     get_player_size(&nodemodel->opwidth, &nodemodel->opheight);
     while (nodemodel->opwidth < 4) {
       if (LIVES_IS_PLAYING) {
-        BG_THREADVAR(hook_hints) = HOOK_OPT_PRIORITY | HOOK_CB_BLOCK;
+        BG_THREADVAR(hook_hints) = HOOK_OPT_PRIORITY | HOOK_CB_BLOCKING;
         if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
           MAIN_THREAD_EXECUTE_RVOID(lives_layer_draw, "vv", LIVES_DRAWING_AREA(mainw->preview_image), NULL);
         } else {

@@ -771,7 +771,7 @@ no_precache:
               mainw->frame_layer = mainw->layers[0];
               frame = pframe;
 
-	      if (is_virtual_frame(mainw->playing_file, pfrane)) {
+	      if (is_virtual_frame(mainw->playing_file, pframe)) {
 		//if (delta_a > MIN_JMP_THRESH) {
 		lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
 		if (srcgrp) {

@@ -28,6 +28,10 @@ typedef uint64_t funcsig_t;
   typedef union _##uniname {__VA_ARGS__} uniname;	\
   const size_t uniname##_size = sizeof(uniname);
 
+#define DEF_ENUM(enumtype, ...)				\
+  const char *enumtype##_enumdef = #__VA_ARGS__;		\
+  typedef enum {__VA_ARGS__} enumtype;				\
+
 #else
 
 #define DEF_STRUCT(stname, ...)				\
@@ -36,6 +40,9 @@ typedef uint64_t funcsig_t;
 // same as struct, except all offsets are 0
 #define DEF_UNION(uniname, ...)				\
   typedef union _##uniname {__VA_ARGS__} uniname;	\
+
+#define DEF_ENUM(enumtype, ...)				\
+  typedef enum {__VA_ARGS__} enumtype;
 
 #endif
 
@@ -69,8 +76,10 @@ DEF_UNION(allval_t,uint32_t *u;int32_t *i;
 
 // values->* is a pointer to type rather than array of type
 #define ALLV_FLAG_POINTER		(1ull << 0)
-#define ALLV_FLAG_RDONLY		(1ull << 1)
+#define ALLV_FLAG_RDWRITE		(1ull << 1)
 #define ALLV_FLAG_TYPE_ONLY		(1ull << 2)
+#define ALLV_FLAG_FREE_VALUE		(1ull << 3)
+#define ALLV_FLAG_RWLOCK		(1ull << 4)
 
 // error flagbits
 // unrecognised seed_type when setting val
@@ -82,19 +91,22 @@ DEF_STRUCT(allvalues_t,
            //@TYPEDEF u weed_seed_t
            //@TYPEDEF u weed_size_t
            //@TYPEDEF v LiVESList *
-           //@UNION allval_t
-           char *aname; // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
+           //@UNION allval_t 
+	   // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
+	   // or func name fpr fncinst
+	   char *aname;
            weed_seed_t stype;
            weed_size_t ne; // num elements - always 1 if POINTER set
            weed_size_t size;
            uint64_t flags;
-#ifdef NATIVE_MUTEX_TYPE
-           NATIVE_MUTEX_TYPE mutex;
+#ifdef NATIVE_RWLOCK_TYPE
+           NATIVE_RWLOCK_TYPE *rwlock;
 #endif
            allval_t values;
 	   va_list va_lisr;
 	   lives_funcinst_t *funcinst;
-           LiVESList *contingencies;)
+           LiVESList *contingencies;
+	   void *priv_data;)
 
 #define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
 						     FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_, \
@@ -104,33 +116,29 @@ DEF_STRUCT(allvalues_t,
   _DW0(									\
        weed_leaf_set(plant, key, allv->stype, allv->ne,			\
 		     allv->ne > 1 ?					\
-		     (allv->stype == WEED_SEED_INT ? &allv->values.i	\
-		      : allv->stype == WEED_SEED_BOOLEAN ? &allv->values.b \
-		      : allv->stype == WEED_SEED_INT64 ? &allv->values.I \
-		      : allv->stype == WEED_SEED_DOUBLE ? &allv->values.d \
-		      : allv->stype == WEED_SEED_STRING ? &allv->values.s \
-		      : allv->stype == WEED_SEED_VOIDPTR ? &allv->values.V \
-		      : allv->stype == WEED_SEED_FUNCPTR ? &allv->values.F \
-		      : allv->stype == WEED_SEED_PLANTPTR ? &allv->values.P) \
+		     (allv->stype == WEED_SEED_INT ? (void *)&allv->values.i \
+		      : allv->stype == WEED_SEED_UINT ? (void *)&allv->values.u \
+		      : allv->stype == WEED_SEED_BOOLEAN ? (void *)&allv->values.b \
+		      : allv->stype == WEED_SEED_INT64 ? (void *)&allv->values.I \
+		      : allv->stype == WEED_SEED_UINT64 ? (void *)&allv->values.U \
+		      : allv->stype == WEED_SEED_DOUBLE ? (void *)&allv->values.d \
+		      : allv->stype == WEED_SEED_FLOAT ? (void *)&allv->values.f \
+		      : allv->stype == WEED_SEED_STRING ? (void *)&allv->values.s \
+		      : allv->stype == WEED_SEED_VOIDPTR ? (void *)&allv->values.V \
+		      : allv->stype == WEED_SEED_FUNCPTR ? (void *)&allv->values.F \
+		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)&allv->values.P : NULL) \
 		     :							\
-		     allvp->flags & ALLV_FLAG_POINTER ?			\
-		     (allv->stype == WEED_SEED_INT ? allv->values.i	\
-		      : allv->stype == WEED_SEED_BOOLEAN ? allv->values.b \
-		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
-		      : allv->stype == WEED_SEED_DOUBLE ? allv->values.d \
-		      : allv->stype == WEED_SEED_STRING ? allv->values.s \
-		      : allv->stype == WEED_SEED_VOIDPTR ? allv->values.V \
-		      : allv->stype == WEED_SEED_FUNCPTR ? allv->values.F \
-		      : allv->stype == WEED_SEED_PLANTPTR ? allv->values.P) \
-		     :							\
-		     (allv->stype == WEED_SEED_INT ? allv->values.i	\
-		      : allv->stype == WEED_SEED_BOOLEAN ? allv->values.b \
-y		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
-		      : allv->stype == WEED_SEED_DOUBLE ? allv->values.d \
-		      : allv->stype == WEED_SEED_STRING ? allv->values.s \
-		      : allv->stype == WEED_SEED_VOIDPTR ? allv->values.V \
-		      : allv->stype == WEED_SEED_FUNCPTR ? allv->values.F \
-		      : allv->stype == WEED_SEED_PLANTPTR ? allv->values.P)))
+		     (allv->stype == WEED_SEED_INT ? (void *)allv->values.i \
+		      : allv->stype == WEED_SEED_UINT ? (void *)&allv->values.u[0] \
+		      : allv->stype == WEED_SEED_BOOLEAN ? (void *)allv->values.b \
+		      : allv->stype == WEED_SEED_INT64 ? (void *)&allv->values.I[0] \
+		      : allv->stype == WEED_SEED_UINT64 ? (void *)&allv->values.U[0] \
+		      : allv->stype == WEED_SEED_DOUBLE ? (void *)&allv->values.d[0] \
+		      : allv->stype == WEED_SEED_FLOAT ? (void *)&allv->values.f[0] \
+		      : allv->stype == WEED_SEED_STRING ? (void *)&allv->values.s[0] \
+		      : allv->stype == WEED_SEED_VOIDPTR ? (void *)&allv->values.V[0] \
+		      : allv->stype == WEED_SEED_FUNCPTR ? (void *)&allv->values.F[0] \
+		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)&allv->values.P[0] : NULL));)
 
 // we need to set p##n here because if we have a string param, this needs to be freed after the func call
 #define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), PROC_THREAD_PARAM(n), type))
@@ -144,15 +152,30 @@ y		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
 #ifdef WEED_SEED_UINT
 #define _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)		\
   case(WEED_SEED_UINT):pre(pre2,pre3##uint##post(post2,post3,post4));break;
+#define _CASE2_UINT(pre, op, pre2, post, post2, post3, post4)		\
+  case(WEED_SEED_UINT):pre u op pre2##uint##post(post2,post3,post4);break;
 #else
 #define _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)
+#define _CASE2_UINT(pre, op, pre2, post, post2, post3, post4)
 #endif
 #ifdef WEED_SEED_UINT64
 #define _CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)	\
   case(WEED_SEED_UINT64):pre(pre2,pre3##uint64##post(post2,post3,post4));break;
+#define _CASE2_UINT64(pre, op, pre2, post, post2, post3, post4)		\
+  case(WEED_SEED_UINT64):pre U op pre2##uint64##post(post2,post3,post4);break;
 #else
 #define _CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)
+#define _CASE2_UINT64(pre, op, pre2, post, post2, post3, post4)
 #endif
+/* #ifdef WEED_SEED_FLOAT */
+/* #define _CASE_FLOAT(pre, pre2, pre3, post, post2, post3, post4)		\ */
+/*   case(WEED_SEED_FLOAT):pre(pre2,pre3##float##post(post2,post3,post4));break; */
+/* #define _CASE2_FLOAT(pre, op, pre2, post, post2, post3, post4)		\ */
+/*   case(WEED_SEED_FLOAT):pre f op pre2##float##post(post2,post3,post4);break; */
+/* #else */
+#define _CASE_FLOAT(pre, pre2, pre3, post, post2, post3, post4)
+#define _CASE2_FLOAT(pre, op, pre2, post, post2, post3, post4)
+/* #endif */
 
 #define CTYPE_INT int32_t
 #define CTYPE_UINT uint32_t
@@ -210,28 +233,33 @@ y		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
     case(WEED_SEED_PLANTPTR):pre(pre2,pre3##plantptr##post(post2,post3,post4));break; \
       _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)		\
 	_CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)	\
-    default:if(st > 66)pre(pre2,pre3##custom##post(post2,post3,st,post4));break;})
+	_CASE_FLOAT(pre, pre2, pre3, post, post2, post3, post4)	\
+    default:if(st > WEED_SEED_PLANTPTR)pre(pre2,pre3##custom##post(post2,post3,st,post4));break;})
 
-#define FOR_ALL_SEED_TYPES2(st, pre, op, pre3, post, post2, post3, post4) \
-  _DW0(switch(st){case(WEED_SEED_INT):pre i op pre3##int##post(post2,post3,post4);break; \
-    case(WEED_SEED_INT64):pre I op pre3##int64##post(post2,post3,post4);break; \
-    case(WEED_SEED_BOOLEAN):pre b op pre3##boolean##post(post2,post3,post4);break; \
-    case(WEED_SEED_DOUBLE):pre d op pre3##double##post(post2,post3,post4);break; \
-    case(WEED_SEED_STRING):pre S op pre3##string##post(post2,post3,post4);break; \
-    case(WEED_SEED_VOIDPTR):pre V op pre3##voidptr##post(post2,post3,post4);break; \
-    case(WEED_SEED_FUNCPTR):pre F op pre3##funcptr##post(post2,post3,post4);break; \
-    case(WEED_SEED_PLANTPTR):pre P op pre3##plantptr##post(post2,post3,post4);break; \
+#define FOR_ALL_SEED_TYPES2(st, pre, op, pre2, post, post2, post3, post4) \
+  _DW0(switch(st){case(WEED_SEED_INT):pre i op pre2##int##post(post2,post3,post4);break; \
+    case(WEED_SEED_INT64):pre I op pre2##int64##post(post2,post3,post4);break; \
+    case(WEED_SEED_BOOLEAN):pre b op pre2##boolean##post(post2,post3,post4);break; \
+    case(WEED_SEED_DOUBLE):pre d op pre2##double##post(post2,post3,post4);break; \
+    case(WEED_SEED_STRING):pre s op pre2##string##post(post2,post3,post4);break; \
+    case(WEED_SEED_VOIDPTR):pre V op pre2##voidptr##post(post2,post3,post4);break; \
+    case(WEED_SEED_FUNCPTR):pre F op pre2##funcptr##post(post2,post3,post4);break; \
+    case(WEED_SEED_PLANTPTR):pre P op pre2##plantptr##post(post2,post3,post4);break; \
+  _CASE2_UINT(pre, op, pre2, post, post2, post3, post4)		\
+    _CASE2_UINT64(pre, op, pre2, post, post2, post3, post4)		\
+    _CASE2_FLOAT(pre, op, pre2, post, post2, post3, post4)		\
     default:break;})
 
-#define FOR_ALL_SEED_TYPES3(hdr, st, pre, post)		\
-  hdr							\
-  (st == WEED_SEED_INT ? pre i post			\
-    :st == WEED_SEED_INT64 ? pre I post 		\
-    :st == WEED_SEED_DOUBLE ? pre d post 		\
-    :st == WEED_SEED_STRING ? pre S post 		\
-    :st == WEED_SEED_VOIDPTR ? pre V post		\
-    :st == WEED_SEED_FUNCPTR ? pre F post		\
-   :pre P post)
+#define FOR_ALL_SEED_TYPES3(hdr, st, pre, post)	\
+  hdr						\
+  (st == WEED_SEED_INT ? pre i post		\
+    (st == WEED_SEED_BOOLEAN ? pre b post	\
+     :st == WEED_SEED_INT64 ? pre I post	\
+     :st == WEED_SEED_DOUBLE ? pre d post	\
+     :st == WEED_SEED_STRING ? pre s post	\
+     :st == WEED_SEED_FUNCPTR ? pre F post	\
+     :st == WEED_SEED_PLANTPTR ? pre P post	\
+     :pre V post)
 
 #define get_allv_for_st(var, avp, st, idx) FOR_ALL_SEED_TYPES3(var =, st,(avp)->values., [(idx)])
 
@@ -244,7 +272,7 @@ y		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
      wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*(funcname)->funcfuncptr)(FUNCARGS)) : \
      wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
      wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*(funcname)->funcplantptr)(FUNCARGS)) : \
-     wret > 66 ? weed_set_custom_value((thing), _RV_, wret, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
+     wret > WEED_SEED_PLANTPTR ? weed_set_custom_value((thing), _RV_, wret, (*(funcname)->funcvoidptr)(FUNCARGS)) : \
      WEED_ERROR_WRONG_SEED_TYPE)
 
 #define ARGS1(thing, t1) GETARG((thing), t1, 0)
@@ -351,6 +379,28 @@ y		      : allv->stype == WEED_SEED_INT64 ? allv->values.I \
 }
 #endif
 
+#define ARGS_FMT_INT		'i'
+#define ARGS_FMT_DOUBLE		'd'
+#define ARGS_FMT_BOOLEAN	'b'
+#define ARGS_FMT_INT64		'I'
+#define ARGS_FMT_STRING		's'
+#define ARGS_FMT_STRING_ALT	'S'
+#define ARGS_FMT_VOIDPTR	'V'
+#define ARGS_FMT_VOIDPTR_ALT	'v'
+#define ARGS_FMT_FUNCPTR	'F'
+#define ARGS_FMT_PLANTPTR	'P'
+#define ARGS_FMT_PLANTPTR_ALT	'p'
+
+#define ARGS_FMT_CONST_CHARPTR	'$'
+#define ARGS_FMT_VALIST		'_'
+#define ARGS_FMT_VARIADIC	'*'
+#define ARGS_FMT_ALLVALUES	'^'
+
+#define ARGS_FMT_VASTART	'('
+#define ARGS_FMT_VAEND		')'
+
+#define ARGS_FMT_UNKNOWN	'?'
+
 typedef struct {
   char typeletter;
   weed_seed_t seed_btype;
@@ -362,43 +412,59 @@ typedef struct {
 extern const lookup_tab crossrefs[];
 
 #if HAVE_WEED_SEED_UINT
-#define XREFS_TAB_UINT ,{'u',  WEED_SEED_UINT, 		0x06, 	"UINT", "%u"}
+#define ARGS_FMT_UINT		'u'
+#define XREFS_TAB_UINT ,{ARGS_FMT_UINT,  WEED_SEED_UINT, 		0x06, 	"UINT", "%u"}
 #else
-#define XREFS_TAB_UINT
+#define XREFS_TAB_UINT		'?'
 #endif
 #if HAVE_WEED_SEED_UINT64
-#define XREFS_TAB_UINT64  ,{'U',  WEED_SEED_UINT64,       	0x07, 	"UINT64", "%"PRIu64}
+#define ARGS_FMT_UINT64		'U'
+#define XREFS_TAB_UINT64  ,{ARGS_FMT_UINT64,  WEED_SEED_UINT64,       	0x07, 	"UINT64", "%"PRIu64}
 #else
+#define ARGS_FMT_UINT64		'?'
 #define XREFS_TAB_UINT64
 #endif
 #if HAVE_WEED_SEED_FLOAT
-#define XREFS_TAB_FLOAT  ,{'f',  WEED_SEED_FLOAT,        	0x08, 	"FLOAT", "%.4f"}
+#define ARGS_FMT_FLOAT		'f'
+#define XREFS_TAB_FLOAT  ,{ARGS_FMT_FLOAT,  WEED_SEED_FLOAT,        	0x08, 	"FLOAT", "%.4f"}
 #else
+#define ARGS_FMT_FLOAT		'?'
 #define XREFS_TAB_FLOAT
 #endif
 
+#define ARGS_FMT_REAL (int)ARGS_FMT_INT, (int)ARGS_FMT_DOUBLE, (int)ARGS_FMT_BOOLEAN,	\
+    (int)ARGS_FMT_INT64, (int)ARGS_FMT_STRING, (int)ARGS_FMT_STRING_ALT,		\
+    (int)ARGS_FMT_VOIDPTR, (int)ARGS_FMT_VOIDPTR_ALT, (int)ARGS_FMT_FUNCPTR,		\
+    (int)ARGS_FMT_PLANTPTR, (int)ARGS_FMT_PLANTPTR_ALT, (int)ARGS_FMT_FLOAT,		\
+    (int)ARGS_FMT_UINT, (int)ARGS_FMT_UINT64, 0
+  
 // args_fmt letter (char), seed_type (uint32), funcsig value (4 bits), short name, prinf fmt
 // LIVES_SEED_* types aew only for convenience and cannot be used in actual function calls (yet)
 #define XREFS_TAB							\
-  {{'i',  WEED_SEED_INT,       		FUNCSIG(INT), 		"INT", "%d"} \
-    ,{'d',  WEED_SEED_DOUBLE, 		FUNCSIG(DOUBLE), 	"DOUBLE", "%.4f"} \
-    ,{'b',  WEED_SEED_BOOLEAN, 		FUNCSIG(BOOL),	 	"BOOL", "%d"} \
-    ,{'s',  WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
-    ,{'S',  WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
-    ,{'I',  WEED_SEED_INT64,    	FUNCSIG(INT64), 	"INT64", "%"PRIi64} \
-    ,{'F',  WEED_SEED_FUNCPTR, 		FUNCSIG(FUNCP), 	"FUNCP", "%p"} \
-    ,{'v',  WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \
-    ,{'V',  WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \
-    ,{'p',  WEED_SEED_PLANTPTR, 	FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
-    ,{'P',  WEED_SEED_PLANTPTR, 	FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
-    ,{'$',  LIVES_SEED_CONST_CHARPTR,	FUNCSIG(CONST_CHARP),	"CONSTCHARP", "%s"} \
-    ,{'_',  LIVES_SEED_VALIST,       	FUNCSIG(VALIST), 	"VALIST", NULL} \
-    ,{'*',  LIVES_SEED_VARIADIC,       	FUNCSIG(VARIADIC), 	"VARIADIC", "..."} \
-    ,{'A',  LIVES_SEED_ALLVALUES,	FUNCSIG(VOIDP),		"ALLVALSP", "%p"} \
+  {{ARGS_FMT_INT,  WEED_SEED_INT,       		FUNCSIG(INT), 		"INT", "%d"} \
+    ,{ARGS_FMT_DOUBLE,  WEED_SEED_DOUBLE, 		FUNCSIG(DOUBLE), 	"DOUBLE", "%.4f"} \
+    ,{ARGS_FMT_BOOLEAN,  WEED_SEED_BOOLEAN, 		FUNCSIG(BOOL),	 	"BOOL", "%d"} \
+    ,{ARGS_FMT_STRING,  WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
+    ,{ARGS_FMT_STRING_ALT,  WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
+    ,{ARGS_FMT_INT64,  WEED_SEED_INT64, 	   	FUNCSIG(INT64), 	"INT64", "%"PRIi64} \
+    ,{ARGS_FMT_FUNCPTR,  WEED_SEED_FUNCPTR, 		FUNCSIG(FUNCP), 	"FUNCP", "%p"} \
+    ,{ARGS_FMT_VOIDPTR,  WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \
+    ,{ARGS_FMT_VOIDPTR_ALT,  WEED_SEED_VOIDPTR, 	FUNCSIG(VOIDP), 	"VOIDP", "%p"} \
+    ,{ARGS_FMT_PLANTPTR,  WEED_SEED_PLANTPTR, 		FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
+    ,{ARGS_FMT_PLANTPTR_ALT,  WEED_SEED_PLANTPTR, 	FUNCSIG(PLANTP), 	"PLANTP", "%p"}	\
+    ,{ARGS_FMT_CONST_CHARPTR,  LIVES_SEED_CONST_CHARPTR,FUNCSIG(CONST_CHARP),	"CONSTCHARP", "%s"} \
+    ,{ARGS_FMT_VALIST,  LIVES_SEED_VALIST,       	FUNCSIG(VALIST), 	"VALIST", NULL} \
+    ,{ARGS_FMT_VARIADIC,  LIVES_SEED_VARIADIC,       	FUNCSIG(VARIADIC), 	"VARIADIC", "..."} \
+    ,{ARGS_FMT_ALLVALUES,  LIVES_SEED_ALLVALUES,	FUNCSIG(VOIDP),		"ALLVALSP", "%p"} \
     XREFS_TAB_UINT							\
       XREFS_TAB_UINT64							\
       XREFS_TAB_FLOAT							\
       ,{'\0', WEED_SEED_VOID,       	0, 	"", ""}}
+
+  /* if we have an _ va_lsy in an args_fmt string, this can be followed by a descriptio of
+     the types held in the va_list, eg. _(iV) indicates a va_list containing an int and a void *
+     this can be useful when passing variable types with an args_fmt,, the referenced values can be pulled
+     from the valist and set in params */
 
 #define DEF_VARS(n,...) DEF_VARS##n(__VA_ARGS__)
 

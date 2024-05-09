@@ -425,14 +425,29 @@ static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno
    for pogo mode, we need to store clip/track/velocity/offsets fro both audio, as well as the relaitve volume
 
    - for in / out mode, we can treat the input audio as coming from a generator and use the same recording logic
-
-   - audio effects could be applied separately to the mix channels, or to the overal mix
-
 */
 
+/* this is now the model for a generic audio player,, steps are:
+   - handle commands for open/close/seek
+   - check if we need to resync with video
+   - check if the player is inactive / muted
+   - check if we are playing from a filebuffer or from memory
+   - for file audio. calculate limits and looping mode
+   - calc amount of audio to read, and read it
+   - convert format to player format
+   - pad or truncate as necessary
+   - if we have data_preview callbacks, we need to ensure we also have float audio
+   - apply data_preview callbacks
+   - copy float audio back to player format
+   - join async_callbacks from last cycle
+   - if we have data_ready callbacks, copy to float unless we already have float
+   - call data_ready hooks (async parallel)
+   - send data to audio server
+*/
 
 //static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
 static void pulse_audio_write_process(pa_stream *pstream, ...) {
+#if 0
   va_list ap;
   va_start(ap, pstream);
   size_t nbytes = va_arg(ap, size_t);
@@ -467,6 +482,8 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
   lives_proc_thread_t self = pulsed->inst;
   //g_print("pa ping\n");
+
+  lives_hook_stack_t **mystacks = self_hook_stacks(DATA_PREVIEW_HOOK);
 
   if (!tdata) {
     tdata = get_thread_data();
@@ -572,27 +589,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           }
           fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
           pulsed->playing_file = new_file;
-          //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer
-
-          /* pulsed->in_use = TRUE; */
-          /* paop = pa_stream_flush(pulsed->pstream, NULL, NULL); */
-          /* pa_operation_unref(paop); */
-
-          /* xseek = ALIGN_CEIL64(afile->aseek_pos, afile->achans * (afile->asampsize >> 3)); */
-          /* lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek); */
-          /* fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek; */
-          /* if (msg->extra) { */
-          /*   double ratio = lives_strtod(msg->extra); */
-          /*   pulse_set_avel(pulsed, pulsed->playing_file, ratio); */
-          /* } */
-          /* if (pulsed->playing_file == mainw->ascrap_file || afile->adirection == LIVES_DIRECTION_FORWARD) { */
-          /*   lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE); */
-          /* } else { */
-          /*   lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE); */
-          /* } */
-          /* pulsed->playing_file = new_file; */
-          /* fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos; */
-          /* //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer */
           break;
         }
       case ASERVER_CMD_FILE_CLOSE:
@@ -680,7 +676,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     double in_samplesd = 0.;
     float clip_vol = 1.;
     size_t in_bytes = 0, xin_bytes = 0;
-    /** the ratio of samples in : samples out - may be negative. This is NOT the same as the velocity as it incluides a resampling factor */
+    /* the ratio of samples in : samples out - may be negative. This is NOT the same as the velocity as it incluides a resampling factor */
     float shrink_factor = 1.f;
     int swap_sign;
     int qnt = 1;
@@ -819,7 +815,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           shrink_factor = (float)pulsed->in_arate / (float)pulsed->out_arate / mainw->audio_stretch;
           in_samplesd = fabs((double)shrink_factor * (double)pulseSamplesAvailable);
 
-          // add in a small random factor so on longer timescales we aren't losing or gaining samples
+          // add in a small random factor to account for rounding, so on longer timescales we aren't losing or gaining samples
           in_bytes = (size_t)(in_samplesd + fastrand_dbl(1.)) * pulsed->in_achans * (pulsed->in_asamps >> 3);
           xin_bytes = (size_t)in_samplesd * pulsed->in_achans * (pulsed->in_asamps >> 3);
 
@@ -1201,6 +1197,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           // get back non-interleaved float fbuffer; rate and channels should match
           if (pl_error) nbytes = 0;
 	
+	  // TODO -add callback in player
 	  /* if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) { */
 	  /*   if (!rec_rcpt) { */
 	  /*     dets = (arec_details *)lives_calloc(1, sizeof(arec_details)); */
@@ -1223,7 +1220,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #endif
       }
 
-      if (has_cbs) {
+      if (has_cbs(mystacks, DATA_PREVIEW_HOOK)) {
 	if (!fltbuf) {
 	  lives_aplayer_set_data_len(self, nsamples);
 	  fltbuffer = convert_to_float(self, nsamples);
@@ -1235,7 +1232,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 	  // if we have > 0 callbacks, ensure we have float audio
 
 	  // the trigger requires an extra param, data, and it has to be BOUND so the value becomes r/w
-	  lives_hook_trigger(self_hook_stacks(DATA_PREVIEW_HOOK), DATA_PREVIEW_HOOK, "V", BIND_VALUE("V", data));
+	  lives_hook_trigger(mystacks, DATA_PREVIEW_HOOK, "V", BIND_VALUE("V", data));
 	}}
 
       if (fltbuf)
@@ -1276,80 +1273,42 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
         // do nothing
       }
 #endif
-      else {
+    else {
 #if !HAVE_PA_STREAM_BEGIN_WRITE
-        buffer = (uint8_t *)lives_calloc(1, nbytes);
-        //
-        if (!buffer) {
-          sample_silence_pulse(pulsed, nbytes);
-          in_ap = FALSE;
-          if (fltbuf) {
-            for (int i = 0; i < pulsed->out_achans; i++) lives_freep((void **)&fltbuf[i]);
-            lives_free(fltbuf);
-            fltbuf = NULL;
-          }
-          in_ap = FALSE;
-          lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-          lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-          return;
-        }
-#endif
+      buffer = (uint8_t *)lives_calloc(1, nbytes);
+      //
+      if (!buffer) {
+	sample_silence_pulse(pulsed, nbytes);
+	in_ap = FALSE;
+	if (fltbuf) {
+	  for (int i = 0; i < pulsed->out_achans; i++) lives_freep((void **)&fltbuf[i]);
+	  lives_free(fltbuf);
+	  fltbuf = NULL;
+	}
+	in_ap = FALSE;
+	lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+	lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+	return;
       }
+#endif
+
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       lives_memcpy(buffer, pulsed->sound_buffer, nbytes);
       needs_free = TRUE;
 #endif
     }
 #if HAVE_PA_STREAM_BEGIN_WRITE
-    buffer = pulsed->sound_buffer;
+      buffer = pulsed->sound_buffer;
 #endif
-    //
 
-    //
-    
-
-#if 0
-      if (fbdata) {
-        for (int zz = 0; zz < nbytes / 2; zz++) {
-          if (prefs->pogo_mode)
-            ((int16_t *)(buffer))[zz] = ((int16_t *)buffer)[zz] / 2 + fbdata[zz] / 2;
-          else
-            ((int16_t *)(buffer))[zz] = fbdata[zz];
-        }
-        lives_free(fbdata);
-        fbdata = NULL;
-      }
-
-      ////
-      if (mainw->alock_abuf && mainw->alock_abuf->is_ready && mainw->alock_abuf->_fd == -1) {
-        if (mainw->record && !mainw->record_paused && sfile && LIVES_IS_PLAYING) {
-          /// if we are recording then write mixed audio to ascrap_file
-          rec_output = TRUE;
-        }
-      } else if (get_primary_src_type(sfile) == LIVES_SRC_TYPE_RECORDER) {
-        // here we are recording for the desktop grabber
-        rec_output = TRUE;
-      }
-#endif
-#if 0
-      if (rec_output) {
-        if (bbsize < nbytes) {
-          if (back_buff) lives_free(back_buff);
-          back_buff = lives_malloc(nbytes);
-          bbsize = nbytes;
-        }
-      }
-#endif
-      
       // if we have any callbacks for the DATA_READY hook, we need float audio
       // we may already have this
 
-      if (has_cbs && !fltbuffer) {
+      if (has_cbs(mystacks, DATA_READY_HOOK) && !fltbuffer) {
 	lives_aplayer_set_data_len(self, nsamples);
 	fltbuffer = convert_to_float(self);
       }
 
-      
       sample_move_float_int((void *)fbdata, fltbuf, xin_samplesd, xshrink_factor,
 			    pulsed->out_achans, PA_SAMPSIZE, 0, (capable->hw.byte_order == LIVES_LITTLE_ENDIAN),
 			    FALSE, 1.0);
@@ -1363,62 +1322,63 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 #if !HAVE_PA_STREAM_BEGIN_WRITE
       if (!pulsed->is_corked) {
 	async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, fltbuf);
-        pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
-                        pulse_buff_free, 0, PA_SEEK_RELATIVE);
-        // switch buffers
+	pa_stream_write(pulsed->pstream, buffer, nbytes, buffer == pulsed->aPlayPtr->data ? NULL :
+			pulse_buff_free, 0, PA_SEEK_RELATIVE);
+	// switch buffers
       } else pulse_buff_free(pulsed->aPlayPtr->data);
 #else
       buffer = NULL;
       if (!pulsed->is_corked) {
 #ifdef DEBUG_PULSE
-        g_print("writing %ld bytes to pulse\n", nbytes);
+	g_print("writing %ld bytes to pulse\n", nbytes);
 #endif
-        lives_aplayer_set_data(self, (void *)pulsed->sound_buffer);
-        async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, self, fltbuf);
-        pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
-        // switch buffers
+	lives_aplayer_set_data(self, (void *)pulsed->sound_buffer);
+	async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, self, fltbuf);
+	pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
+	// switch buffers
       }
 #endif
     } else {
       // from memory (e,g multitrack)
       if (pulsed->read_abuf > -1 && !pulsed->mute) {
 #if HAVE_PA_STREAM_BEGIN_WRITE
-        xbytes = -1;
-        ret = pa_stream_begin_write(pulsed->pstream, (void **)&shortbuffer, &xbytes);
-        if (xbytes < nbytes) nbytes = xbytes;
+	xbytes = -1;
+	ret = pa_stream_begin_write(pulsed->pstream, (void **)&shortbuffer, &xbytes);
+	if (xbytes < nbytes) nbytes = xbytes;
 #else
-        shortbuffer = (short *)lives_calloc(nbytes, 2);
+	shortbuffer = (short *)lives_calloc(nbytes, 2);
 #endif
-        if (ret || !shortbuffer) {
-          sample_silence_pulse(pulsed, nbytes);
-          in_ap = FALSE;
-          lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-          lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-          if (fbdata) lives_free(fbdata);
-          return;
-        }
+	if (ret || !shortbuffer) {
+	  sample_silence_pulse(pulsed, nbytes);
+	  in_ap = FALSE;
+	  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+	  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+	  if (fbdata) lives_free(fbdata);
+	  return;
+	}
 
-        // convert float -> s16
-        sample_move_abuf_int16(shortbuffer, pulsed->out_achans, (nbytes >> 1) / pulsed->out_achans, pulsed->out_arate);
-        if (pulsed->astream_fd != -1) audio_stream(shortbuffer, nbytes, pulsed->astream_fd);
+	// convert float -> s16
+	sample_move_abuf_int16(shortbuffer, pulsed->out_achans, (nbytes >> 1) / pulsed->out_achans, pulsed->out_arate);
+	if (pulsed->astream_fd != -1) audio_stream(shortbuffer, nbytes, pulsed->astream_fd);
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
-        if (!pulsed->is_corked) {
-          async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
-          pa_stream_write(pulsed->pstream, shortbuffer, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
-        } else pulse_buff_free(shortbuffer);
+	if (!pulsed->is_corked) {
+	  async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
+	  pa_stream_write(pulsed->pstream, shortbuffer, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
+	} else pulse_buff_free(shortbuffer);
 #else
-        if (!pulsed->is_corked) {
-          async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
-          pa_stream_write(pulsed->pstream, shortbuffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
-        }
+	if (!pulsed->is_corked) {
+	  async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
+	  pa_stream_write(pulsed->pstream, shortbuffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
+	}
 #endif
-        pulsed->samples_written += nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
+	pulsed->samples_written += nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
       } else {
-        sample_silence_pulse(pulsed, nbytes);
+	sample_silence_pulse(pulsed, nbytes);
       }
       pulseSamplesAvailable = 0;
     }
+
     if (needs_free && pulsed->sound_buffer != pulsed->aPlayPtr->data && pulsed->sound_buffer) {
       lives_freep((void **)&pulsed->sound_buffer);
     }
@@ -1434,12 +1394,12 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       if (!pulsed->is_paused) pulsed->samples_written += pulseSamplesAvailable;
     }
     if (LIVES_IS_PLAYING) afile->aseek_pos = pulsed->seek_pos;
-  }
 
 #ifdef DEBUG_PULSE
-  lives_printerr("done\n");
+    lives_printerr("done\n");
 #endif
   }
+  #endif
 }
 
 
@@ -1551,7 +1511,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   // the DATA_READY_HOOK callbacks are run async parallel, so there is zero blocking here !
   // however we must ensure that back_buff is not freed until the next cycle has called lives_hook_async_join()
   async_reader_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL);
-
+  
   pulsed->seek_pos += rbytes;
 
   pa_stream_drop(pulsed->pstream);

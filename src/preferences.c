@@ -51,7 +51,7 @@ static weed_plant_t *allprefs = NULL;
 weed_plant_t *get_allprefs(void) {return allprefs;}
 
 #define define_pref(idx, prefnm, vtype, flags, pdef)			\
-  _define_pref(PREF_PREFIX #idx, PREF_##idx, MAKE_ALLVALUE_BOUND(vtype, prefs->prefnm), flags, pdef)
+  _define_pref(PREF_PREFIX #idx, PREF_##idx, MAKE_ALLVALUE_BOUND(vtype, &prefs->prefnm), flags, pdef)
 
 //static weed_plant_t *_define_pref(const char *pref_idx, void *pref_ptr, weed_seed_t vtype, void *pdef, uint32_t flags) {
 static weed_plant_t *_define_pref(const char *idxnm, const char *keyname, allvalues_t *allvp, uint32_t flags, ...) {
@@ -89,7 +89,7 @@ void free_prefs(void) {
 void init_prefs(void) {
   if (allprefs) return;
 
-  allprefs = lives_index_new(idx_type_prefs, PREF_PREFIX, WEED_SEED_PLANTPTR);
+  allprefs = LIVES_MAKE_INDEX(idx_type_prefs, WEED_SEED_PLANTPTR);
 
   // PRREF_IDX, pref-><...>, default
   DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, PREF_FLAGS_NONE);

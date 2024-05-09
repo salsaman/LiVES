@@ -4257,7 +4257,7 @@ static void _make_play_window(void) {
 void make_play_window(void) {
   if (is_fg_thread()) _make_play_window();
   else {
-    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+    BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
     main_thread_execute_void(_make_play_window);
     BG_THREADVAR(hook_hints) = 0;
   }
@@ -4693,7 +4693,7 @@ void resize_play_window(void) {
   if (mainw->play_window) {
     if (is_fg_thread()) _resize_play_window();
     else {
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
       main_thread_execute_void(_resize_play_window);
       BG_THREADVAR(hook_hints) = 0;
     }
@@ -4740,7 +4740,7 @@ void kill_play_window(void) {
   if (!pthread_mutex_trylock(&playwin_config_mutex)) {
     if (is_fg_thread()) _kill_play_window();
     else {
-      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_OPT_PRIORITY;
+      BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
       main_thread_execute_void(_kill_play_window);
       BG_THREADVAR(hook_hints) = 0;
     }

@@ -170,6 +170,9 @@ boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///<
 
 boolean has_video_filters(boolean analysers_only);
 
+boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt);
+boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt);
+
 #ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t weed_filter_categorise(weed_plant_t *, int in_channels, int out_channels);
 lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *, lives_fx_cat_t category, boolean count_opt);

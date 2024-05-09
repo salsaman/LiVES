@@ -445,6 +445,35 @@ boolean idx_list_get_data(LiVESList *idxlist, int idx, void **val_locn) {
 }
 
 
+LiVESList *strings_to_list(int dummy, ...) {
+  LiVESList *list = NULL;
+  va_list va;
+  va_start(va, dummy);
+  while (1) {
+    char * thing = va_arg(va, char *);
+    if (!thing) break;
+    list = lives_list_prepend(list, (void *)thing);
+  }
+  va_end(va);
+  return lives_list_reverse(list);
+}
+
+
+LiVESList *chars_to_list(int dummy, ...) {
+  LiVESList *list = NULL;
+  va_list va;
+  va_start(va, dummy);
+  while (1) {
+    char thing = (char)va_arg(va, int), *thingy;
+    if (!thing) break;
+    thingy = LSPF("%c", thing);
+    list = lives_list_prepend(list, (void *)thingy);
+  }
+  va_end(va);
+  return lives_list_reverse(list);
+}
+
+
 #define BL_LIM 128
 LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip) {
   LiVESList *list = NULL;

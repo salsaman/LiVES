@@ -184,6 +184,7 @@ lives_result_t do_call(lives_funcinst_t *);
 #define _LINE_REF_ 0
 #define _ORIG_LINE_REF_ 0
 #endif
+// this is only available for c++, it seems
 #ifdef __FUNC__
 #define _FUNC_REF_ __FUNC__
 #define _ORIG_FUNC_REF_ __FUNC__
@@ -317,20 +318,26 @@ typedef struct {va_list va;} va_surprise;
 
 void lives_conditions_init(void);
 
+#define Xregister_cond_token(token, fmt, p0, p1, ...)			\
+  _register_cond_token(token, fmt, p0, p1, #p1 __VA_OPT__(,) __VA_ARGS__)
+
+#define register_cond_token(token, fmt, ...)			\
+  Xregister_cond_token(token, fmt, __VA_ARGS__, nofunc, NULL); 
 typedef struct {
   const char *token; // token text
   char fmt; // internal fmt
   const char *desc; // descriptive text
+  const char *funcname;
   lives_funcinst_t *funcinst;
 } cond_trans;
 
-// initial state (after popen, or eval RHS)
+// initial state (after popen)
 #define COND_SYNTAX_0 "C", "V", "U", _COND_POPEN, _COND_PCLOSE, NULL
 
-// state after C or V or PCLOSE
-#define COND_SYNTAX_1 "O", "U", _COND_PCLOSE, NULL
+// state after C or V or PCLOSE OR  RETURN FROM 'O'
+#define COND_SYNTAX_1 "O", _COND_PCLOSE, NULL
 
-// state after "U" or "O"
+// INITIALstate FOR PARTIAL
 #define COND_SYNTAX_2 "C", "V", "U", _COND_POPEN, NULL
 
 typedef boolean lives_cond_result;
@@ -338,12 +345,19 @@ typedef boolean lives_cond_result;
 #define LIVES_COND_PASS TRUE
 #define LIVES_COND_FAIL FALSE
 
+#define CONDRES_NAME(res) (res) == LIVES_COND_PASS ? "LIVES_COND_PASS (TRUE)" : "LIVES_COND_FAIL (FALSE)"
+
 lives_condition _lives_cond_create(const char *cond_start, ...);
+
 #define lives_cond_create(...) _lives_cond_create(_COND_POPEN __VA_OPT__(,) __VA_ARGS__, _COND_PCLOSE)
 
 lives_cond_result lives_cond_eval(lives_condition);
 
-char *lives_cond_desc(lives_condition);
+lives_condition lives_cond_copy(lives_condition);
+
+void lives_cond_free(lives_condition);
+
+void lives_cond_desc(lives_condition);
 
 /////////////////////////////////////////
 
@@ -1039,10 +1053,10 @@ typedef struct _hstack_t {
 				      .cascade = {			\
 						  .target_item = LIVES_LEAF_THRD_STATE,	\
 						  .when = LIVES_POST_HOOK, \
-						  .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
-										"COND_UINT64_CONST", "%lu", THRD_STATE_COMPLETED), \
-						  .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-										 "COND_UINT64_CONST", "%lu", THRD_STATE_COMPLETED) \
+						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_CONST", THRD_STATE_COMPLETED, ")"), \
+						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
+										 "COND_UINT64_CONST", THRD_STATE_COMPLETED) \
 						  },			\
 				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
 				      .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
@@ -1052,10 +1066,10 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
-						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
-									       "COND_UINT64_CONST", "%lu", THRD_STATE_FINISHED), \
-						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-										"COND_UINT64_CONST", "%lu", THRD_STATE_FINISHED) \
+						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_CONST", THRD_STATE_FINISHED, ")"), \
+						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
+										 "COND_UINT64_CONST", THRD_STATE_FINISHED) \
 						 },			\
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
 				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
@@ -1065,10 +1079,10 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_PRE_HOOK, \
-						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
-									       "COND_UINT64_CONST", "%lu", THRD_STATE_CANCELLED), \
-						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-										"COND_UINT64_CONST", "%lu", THRD_STATE_CANCELLED) \
+						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_CONST", THRD_STATE_CANCELLED, ")"), \
+						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
+										 "COND_UINT64_CONST", THRD_STATE_CANCELLED) \
 						 },			\
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
 				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
@@ -1078,10 +1092,10 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_PRE_HOOK, \
-						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
-									       "COND_UINT64_CONST", "%lu", THRD_STATE_ERROR), \
-						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-										"COND_UINT64_CONST", "%lu", THRD_STATE_ERROR) \
+						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_CONST", THRD_STATE_ERROR, ")"), \
+						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
+										 "COND_UINT64_CONST", THRD_STATE_ERROR) \
 						 },			\
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
 				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
@@ -1091,10 +1105,10 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
-						 .pre_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_OLD_VALUE, " \
-									       "COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED), \
-						 .post_cond = lives_cond_create("COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-										"COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED) \
+						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_CONST", THRD_STATE_PAUSED, ")"), \
+						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
+										 "COND_UINT64_CONST", THRD_STATE_PAUSED) \
 						 },			\
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
 				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
@@ -1104,12 +1118,12 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
-						 .pre_cond = lives_cond_create("COND_BIT_SET, COND_SYM_OLD_VALUE, " \
-									       "COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED), \
-						 .post_cond = lives_cond_create("COND_NOT, COND_BIT_SET, COND_SYM_NEW_VALUE, " \
-										"COND_UINT64_CONST", "%lu", THRD_STATE_PAUSED) \
+						 .pre_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+									       "COND_UINT64_CONST", THRD_STATE_PAUSED), \
+						  .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+										 "COND_UINT64_CONST", THRD_STATE_PAUSED, ")"), \
 						 },			\
-				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
+				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
 				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
 
 #define HS_DETAILS_DESTRUCTION_HOOK ((hook_stack_descriptor_t)		\
@@ -1223,7 +1237,7 @@ lives_result_t _lives_proc_thread_trigger_hook(int hstype, ...);
 #define lives_proc_thread_trigger_hook(...) _lives_proc_thread_trigger_hook(__VA_ARGS__, NULL)
 
 int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **, ...);
-#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstack, __VA_ARGS__, NULL)
+#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstype, __VA_ARGS__, NULL)
 
 void lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
@@ -1294,11 +1308,13 @@ void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *
 void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
 #endif
 
+weed_error_t value_from_allvalues(void *retloc, allvalues_t *); 
+
 allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
 allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
 
 #define MAKE_ALLVALUE(stype, val) (_make_allval(NULL, stype, 1, 0, #val, (val)))
-#define MAKE_ALLVALUE_BOUND(stype, variable) (_make_allval(NULL, stype, 1, PARAM_FLAG_BOUND, #variable, (void *)&(variable)))
+#define MAKE_ALLVALUE_BOUND(stype, varptr) (_make_allval(NULL, stype, 1, PARAM_FLAG_BOUND, #varptr, (void *)(varptr)))
 #define MAKE_ALLVALUE_VA(stype, va) (_make_allval_va(NULL, stype, 1, 0, va))
 #define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval(NULL, stype, ne, 0, #vals, (vals)))
 #define MAKE_ALLVALUE_ARRAY_VA(stype, ne, va) (_make_allval_va(NULL, stype, ne, 0, va))
@@ -1308,7 +1324,7 @@ allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int 
 
 #define SET_ALLVALUE(avp, stype, val) (_make_allval(avp, stype, 1, 0, #val, (val)))
 #define SET_ALLVALUE_VA(avp, stype, va) (_make_allval_va(avp, stype, 1, 0, va))
-#define SET_ALLVALUE_BOUND(avp, stype, variable) (_make_allval(avp, stype, 1, PARAM_FLAG_BOUND, #variable, (void *)&(variable)))
+#define SET_ALLVALUE_BOUND(avp, stype, varptr) (_make_allval(avp, stype, 1, PARAM_FLAG_BOUND, #varptr, (void *)(varptr)))
 #define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
 #define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_va(avp, stype, ne, 0, va))
 
@@ -1324,20 +1340,37 @@ lives_funcinst_t *_funcinst_from_allvals(lives_funcdef_t *fdef, lives_funcptr_t 
 
 allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const char *key);
 
+// convert between sigbits, char, st, fmt_str
+//
+
+// sigbits -> char
 const char get_typeletter(uint8_t val);
+
+//char -> sigbits
 uint8_t get_typecode(char c);
+
+// st- >  bchar
 const char get_char_for_st(weed_seed_t);
-uint8_t get_typecode_for_st(weed_seed_t);
+
+// char to st
+weed_seed_t get_seedtype(char c);
+
+// st ->sigbits
+uint8_t get_sigbits_for_st(weed_seed_t);
+
+// st -> fmtstr
 const char *get_fmtstr_for_st(weed_seed_t);
 
-char *funcsig_to_string(funcsig_t);
+// symnae to sbits
+uint8_t symname_to_sigbits(const char *symname);
+
+funcsig_t short_params_to_funcsig(int nvals, const char **symnames);
 char *funcsig_to_symstring(funcsig_t);
+char *funcsig_to_string(funcsig_t);
 char *funcsig_to_param_string(funcsig_t);
 char *funcsig_to_short_param_string(funcsig_t);
 
 char *args_fmt_to_param_string(const char *args_fmt);
-
-weed_seed_t get_seedtype(char c);
 
 int fn_func_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2);
 boolean fn_data_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2, int maxp);
@@ -1345,10 +1378,6 @@ boolean fn_data_match(lives_funcinst_t *finst1, lives_funcinst_t *finst2, int ma
 int get_funcinst_nparams(lives_funcinst_t *);
 
 int get_funcsig_nparms(funcsig_t sig);
-
-funcsig_t short_params_to_funcsig(int nvals, const char **symnames);
-
-uint8_t symname_to_sigbits(const char *symname);
 
 const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
 char *get_argstring_for_func(lives_funcptr_t func);

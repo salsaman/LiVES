@@ -1389,7 +1389,21 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   capable->features_ready |= FEATURE_WEED;
+  
+  // set up capable->known_funcsigs
+  reg_known_funcsigs();
+  
+  lives_conditions_init();
+  
+  lives_condition C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3, ")");
 
+  lives_cond_desc(C);
+  
+  g_print("res is %s\n", CONDRES_NAME(lives_cond_eval(C)));
+
+  abort();
+
+  
   // now we can register specialised plants created from blueprints
   register_blueprints();
 
@@ -1421,9 +1435,6 @@ boolean lives_startup(livespointer data) {
 
   d_print("Testing lives sysalarms...");
   d_print("pause for 1 millisecond...");
-
-  // set up capable->known_funcsigs
-  reg_known_funcsigs();
 
   if (RUNNER_IS(gdb))
     fprintf(stderr, "\tWhen running LiVES via gdb, you may wish to add "

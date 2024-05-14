@@ -245,6 +245,7 @@ lives_exe_SOURCES = \
 	$(pulse_SOURCES) \
 	paramwindow.c paramwindow.h\
 	utils.c utils.h \
+	conditions.c conditions.h\
 	maths.c maths.h \
 	timing.c timing.h \
 	effects-data.c effects-data.h \

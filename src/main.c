@@ -133,7 +133,7 @@ char errmsg[1024] = {'\0'}, errdets[1024] = {'\0'};
 #define __ lives_abort("bad person error");
 // for those times when nothing needs doing in a function
 // WARNING, actuaally calling this may result in "undefined behaviour"
-lives_result_t nofunc(void){__ return LIVES_RESULT_MU;}
+lives_result_t nofunc(void) {__ return LIVES_RESULT_MU;}
 #undef __
 
 /////////////////////////////////

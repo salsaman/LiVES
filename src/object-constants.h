@@ -317,7 +317,7 @@ NIRVA_ENUM
   // derived intentions
 
   // variety of manipulate_stream
-  // an intent which has a data in hook, and data out hooks
+  // with CAP_REALTME
   OBJ_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
 
   // like play, but with the REMOTE capacity (can also be an attachment to PLAY)
@@ -1712,57 +1712,57 @@ NIRVA_ENUM(
 // data - response to an item of data being created, destroyed or updated
 // spontaneous - triggered in response to an event or set of events
 NIRVA_TYPEDEF_ENUM(nirva_hook_patterns,			\
-		   NIRVA_HOOK_PATTERN_DATA,		\
-		   NIRVA_HOOK_PATTERN_REQUEST,		\
+                   NIRVA_HOOK_PATTERN_DATA,		\
+                   NIRVA_HOOK_PATTERN_REQUEST,		\
                    NIRVA_HOOK_PATTERN_SPONTANEOUS,	\
-		   NIRVA_N_HOOK_PATTERNS);
+                   NIRVA_N_HOOK_PATTERNS);
 
 // the pattern combined with NIRVA_HS_DESCRIPTOR defines the hook_type
 // HOOK CALLBACKs are functionals
-  // they have 2 sets of attributes
-  // - variables - these are defined in the HS descriptor and set when the callback is triggered
-  // examples: the old data value and new value when calling the data hook
-  // the data bundle when triggering data preview
-  // the triggering entity must provide these when triggering the hook
-  // all callbacks receive these attributes
-  //
-  //  - constants - these are defined when the callback is added to the stack 
-  //  some of these are set automatically, e.g source_object, target_item
-  // some may be provided by the entity adding the callback
-  // these can differ depending on the functional being triggered
-  // e.g a uid to be provided to the functional
+// they have 2 sets of attributes
+// - variables - these are defined in the HS descriptor and set when the callback is triggered
+// examples: the old data value and new value when calling the data hook
+// the data bundle when triggering data preview
+// the triggering entity must provide these when triggering the hook
+// all callbacks receive these attributes
+//
+//  - constants - these are defined when the callback is added to the stack
+//  some of these are set automatically, e.g source_object, target_item
+// some may be provided by the entity adding the callback
+// these can differ depending on the functional being triggered
+// e.g a uid to be provided to the functional
 
-  // for wrapped native functionals, the params are:
-  // variable values (fixed format), followed by any extra constants
-  // e.g func(tgt_object, tgt_item, old_val, new_val. uid
-  // some HS descriptors do not specify any variable attrs and so the callback
-  // receives only the constant attrs (params)
+// for wrapped native functionals, the params are:
+// variable values (fixed format), followed by any extra constants
+// e.g func(tgt_object, tgt_item, old_val, new_val. uid
+// some HS descriptors do not specify any variable attrs and so the callback
+// receives only the constant attrs (params)
 
-  
+
 // this flag bit indicates that the hook should be triggered just prior to the triggering event (data change,
 // config update, spontaneous event, or request handling)
 
-  // HOOK CB FLAGS -
+// HOOK CB FLAGS -
 
-  //  set when adding a callback
+//  set when adding a callback
 #define NIRVA_HOOK_CB_BLOCKING       		(1ull << 0)
 #define NIRVA_HOOK_CB_PRIORITY			(1ull << 1)
 #define NIRVA_HOOK_CB_ONESHOT			(1ull << 2)
 
-  // dynamic flags
+// dynamic flags
 #define NIRVA_HOOK_CB_IGNORE			(1ull << 8)
 
-  ///////////////////
-  // internal value
+///////////////////
+// internal value
 #define NIRVA_HOOK_CB_PERSISTENT		(1ull << 16)
-  ///////////////////
+///////////////////
 
 // status bits
 #define NIRVA_HOOK_STATUS_RUNNING	       	(1ull << 32) // hook cb running, do not recurse
 #define NIRVA_HOOK_STATUS_ACTIONED   		(1ull << 33)
 #define NIRVA_HOOK_STATUS_REMOVE     		(1ull << 34)
 
-  // hsdescriptor flags
+// hsdescriptor flags
 #define NIRVA_HSDESC_NATIVE		       	(1ull << 0)
 #define NIRVA_HSDESC_ALWAYS_ONESHOT       	(1ull << 1)
 #define NIRVA_HSDESC_ASYNC		       	(1ull << 2)
@@ -1799,18 +1799,18 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // aside from native hooks we have:
                    DATA_CHANGE_HOOK,
 
-		   /* spontaneous hooks
-                   OBJECT_CREATED_HOOK,
-                   INSTANCE_COPIED_HOOK,
-		   CONTRACT_BREACHED_HOOK,
-		   SEGMENT_END_HOOK,
-		   SEGMENT_START_HOOK,
-		   ATTRS_UPDATED_HOOK,
-		   DATA_PREVIEW_HOOK,
-		   DATA_READY_HOOK,	
-		   SYNC_ANNOUNCE_HOOK,
-		   TRACE_HOOK,
-		   // total 14
+                   /* spontaneous hooks
+                               OBJECT_CREATED_HOOK,
+                               INSTANCE_COPIED_HOOK,
+                     CONTRACT_BREACHED_HOOK,
+                     SEGMENT_END_HOOK,
+                     SEGMENT_START_HOOK,
+                     ATTRS_UPDATED_HOOK,
+                     DATA_PREVIEW_HOOK,
+                     DATA_READY_HOOK,
+                     SYNC_ANNOUNCE_HOOK,
+                     TRACE_HOOK,
+                     // total 14
                    */
 
                    // The following are the standard hook points in the system

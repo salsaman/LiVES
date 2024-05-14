@@ -669,16 +669,18 @@ lives_funcinst_t *_lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr
 lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t func,
     const char *fname, int return_type, const char **anames, const char *args_fmt, ...);
 
-#define lives_funcinst_create(func, rtype, af, ...)		\
-  (_lives_funcinst_create(NULL, (lives_funcptr_t)func, #func, (rtype), __VA_OPT__(VARNAMES(__VA_ARGS__),) (af) __VA_OPT__(,) __VA_ARGS__))
+#define lives_funcinst_create_already(func, fname, rtype, af, ...)		\
+  (_lives_funcinst_create(NULL, (lives_funcptr_t)func, fname ? fname : #func, (rtype), __VA_OPT__(VARNAMES(__VA_ARGS__),) (af) __VA_OPT__(,) __VA_ARGS__))
+
+#define lives_funcinst_create(func, fname, rtype, ...) lives_funcinst_create_already(func, fname, rtype __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #define lives_funcinst_create_va(func, rtype, af, va)		\
   (_lives_funcinst_create_va(NULL, (lives_funcptr_t)func, #func, (rtype), NULL, (af), (va)))
 
-#define lives_funcinst_create_for_funcdef(fdef, af, ...)		\
-  (_lives_funcinst_create(fdef, (lives_funcptr_t)fdef->function, fdef->funcname, fdef->return_type, VARNAMES(__VA_ARGS__), (af), __VA_ARGS__))
+#define lives_funcinst_create_for_funcdef(fdef, af, va)		\
+  (_lives_funcinst_create_va(fdef, (lives_funcptr_t)fdef->function, fdef->funcname, fdef->return_type, NULL, (af), va))
 
-#define lives_funcinst_from_allvals(func, nvals, allvals) _lives_funcinst_from_allvals(func, #func, nvals, allvals)
+/* #define lives_funcinst_from_allvals(func, nvals, allvals) _lives_funcinst_from_allvals(func, #func, nvals, allvals) */
 
 lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs);
 
@@ -798,7 +800,7 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 
 #define DEL_SELF_VALUE(name)weed_leaf_delete(lives_proc_thread_get_data(self),name)
 
-#define SELF_HAS_VALUE(name) 
+#define SELF_HAS_VALUE(name)
 
 #define SET_SELF_VALUE(type, name, val)					\
   weed_set_##type##_value(lives_proc_thread_ensure_book(self), name, val)

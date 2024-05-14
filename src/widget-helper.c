@@ -2202,7 +2202,7 @@ void fg_service_call(lives_funcinst_t *finst) {
     return;
   }
 
-  // problem - 
+  // problem -
 
   finstwaiter = self;
   finsttorun = finst;
@@ -3553,7 +3553,7 @@ boolean accel_act(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
   /* g_print("got nookval %d\n", c); */
 
   if (mainw->block_accels) return FALSE;
-  
+
   THREADVAR(accel_group) = group;
   THREADVAR(accel_key) = keyval;
   THREADVAR(accel_mod) = mod;

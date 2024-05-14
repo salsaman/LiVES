@@ -1340,7 +1340,7 @@ void play_file(void) {
   lives_hook_stack_clear(self_hook_stacks(SYNC_ANNOUNCE_HOOK), SYNC_ANNOUNCE_HOOK);
   fg_deferral_remove_persistent();
   clear_player_hooks();
-  
+
   prefs->pb_quality = future_prefs->pb_quality;
   mainw->lockstats = FALSE;
 
@@ -1491,7 +1491,7 @@ void play_file(void) {
   lives_millisleep_while_true(mainw->do_ctx_update);
 
   mainw->block_accels = TRUE;
-  
+
   // return to NORMAL GUi SERVICING
   set_gui_loop_tight(FALSE);
 

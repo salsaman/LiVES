@@ -2069,18 +2069,18 @@ static void run_plan(exec_plan_t *plan) {
               d_print_debug(" + palconv");
             if (op_order[OP_GAMMA] == 2)
               d_print_debug(" + gamma");
-            nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(res_substep, NULL, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 2) {
             d_print_debug(", palconv");
             if (op_order[OP_GAMMA] == 2)
               d_print_debug(" + gamma");
-            nfinst = lives_funcinst_create(pconv_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(pconv_substep, NULL, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_GAMMA] == 2) {
             d_print_debug(", gamma");
-            nfinst = lives_funcinst_create(gamma_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(gamma_substep, NULL, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 2) {
             d_print_debug(", letterbox");
-            nfinst = lives_funcinst_create(lbox_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(lbox_substep, NULL, WEED_SEED_INT, "v", step);
           }
 
           if (nfinst) {
@@ -2095,18 +2095,18 @@ static void run_plan(exec_plan_t *plan) {
               d_print_debug(" + palconv");
             if (op_order[OP_GAMMA] == 3)
               d_print_debug(" + gamma");
-            nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(res_substep, NULL, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 3) {
             if (op_order[OP_GAMMA] == 3) {
               d_print_debug(" + gamma");
-              nfinst = lives_funcinst_create(pconv_substep, WEED_SEED_INT, "v", step);
+              nfinst = lives_funcinst_create(pconv_substep, NULL, WEED_SEED_INT, "v", step);
             }
           } else if (op_order[OP_GAMMA] == 3) {
             d_print_debug(", gamma");
-            nfinst = lives_funcinst_create(gamma_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(gamma_substep, NULL, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 3) {
             d_print_debug(", letterbox");
-            nfinst = lives_funcinst_create(lbox_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(lbox_substep, NULL, WEED_SEED_INT, "v", step);
           }
 
           if (nfinst) {
@@ -2117,7 +2117,7 @@ static void run_plan(exec_plan_t *plan) {
 
           if (op_order[OP_LETTERBOX] == 4) {
             d_print_debug(", letterbox");
-            nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(res_substep, NULL, WEED_SEED_INT, "v", step);
           }
 
           if (nfinst) {
@@ -2779,8 +2779,8 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
     SET_PLAN_STATE(QUEUED);
 
     mainw->plan_runner_proc = lpt
-      = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, WEED_SEED_VOID,
-				 "v", plan);
+                              = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, WEED_SEED_VOID,
+                                  "v", plan);
     lives_proc_thread_add_hook_cb(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
 
     lives_proc_thread_set_cancellable(lpt);

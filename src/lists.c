@@ -450,7 +450,7 @@ LiVESList *strings_to_list(int dummy, ...) {
   va_list va;
   va_start(va, dummy);
   while (1) {
-    char * thing = va_arg(va, char *);
+    char *thing = va_arg(va, char *);
     if (!thing) break;
     list = lives_list_prepend(list, (void *)thing);
   }

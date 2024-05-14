@@ -771,16 +771,16 @@ no_precache:
               mainw->frame_layer = mainw->layers[0];
               frame = pframe;
 
-	      if (is_virtual_frame(mainw->playing_file, pframe)) {
-		//if (delta_a > MIN_JMP_THRESH) {
-		lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
-		if (srcgrp) {
-		  srcgrp->layer = NULL;
-		  swap_srcgrps(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, 0, SRC_PURPOSE_PRECACHE);
-		  srcgrp = get_primary_srcgrp(mainw->playing_file);
-		  lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
-		}
-	      }
+              if (is_virtual_frame(mainw->playing_file, pframe)) {
+                //if (delta_a > MIN_JMP_THRESH) {
+                lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
+                if (srcgrp) {
+                  srcgrp->layer = NULL;
+                  swap_srcgrps(mainw->playing_file, -1, SRC_PURPOSE_PRIMARY, 0, SRC_PURPOSE_PRECACHE);
+                  srcgrp = get_primary_srcgrp(mainw->playing_file);
+                  lives_layer_set_srcgrp(mainw->frame_layer, srcgrp);
+                }
+              }
               lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
             }
           }
@@ -1497,7 +1497,7 @@ frames_t load_frame_image(frames_t frame) {
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
-    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, WEED_SEED_VOID, "v", frame_layer);
+    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, NULL, WEED_SEED_VOID, "v", frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |

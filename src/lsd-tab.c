@@ -32,7 +32,6 @@ const lsd_struct_def_t *get_lsd(lives_struct_type st_type) {
     //LSD_CREATE_P(lsd, lives_clip_data_t);
     lsd = lsd_create_p("lives_clip_data_t", cdata, sizeof(lives_clip_data_t), &cdata->lsd);
     if (lsd) {
-      lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
       lsd_add_special_field((lsd_struct_def_t *)lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
                             LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL);
       lsd_add_special_field((lsd_struct_def_t *)lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
@@ -49,6 +48,52 @@ const lsd_struct_def_t *get_lsd(lives_struct_type st_type) {
     }
     break;
   }
+
+#if 0
+  case LIVES_STRUCT_ALLVALUES_T: {
+    LIVES_CALLOC_TYPE(allvalues_t, allvp, 1);
+    lsd = lsd_create_p("allvalues_t", allvp, sizeof(allvalues_t), &allvp->lsd);
+    if (lsd) {
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "aname", LSD_FIELD_CHARPTR, &allvp->aname,
+                            0, allvp, NULL);
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "ext_typename", LSD_FIELD_CHARPTR, &allvp->ext_typename,
+                            0, allvp, NULL);
+
+      /* if (avp->contingencies) { */
+      /*   for (LiVESList *list = avp->contingencies; list; list = list->next) */
+
+      /* 	lives_funcinst_free((lives_funcinst_t *)list->data); */
+
+      /*   lives_list_free(avp->contingencies); */
+      /* } */
+
+#ifdef NATIVE_RWLOCK_TYPE
+      // init & detroy
+      /* if (avp->rwlock) { */
+      /*   pthread_rwlock_destroy(avp->rwlock); */
+      /*   lives_free(avp->rwlock); */
+      /* } */
+
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
+                            LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY |
+                            LSD_FIELD_FLAG_FREE_ON_DELETE, &allvp->rwlock, 0, allvp, NULL);
+#endif
+
+      // funcinst
+      /* if ()avp->flags & ALLV_FLAG_FREE_VALUE) && avp->funcinst) */
+      /*   lives_funcinst_free(avp->funcinst); */
+
+      /* if ((avp->flags & ALLV_FLAG_FREE_VALUE) && !avp->funcinst) { */
+      /* 	for (int i = 0; i < avp->ne; i++) */
+      /* 	  if (avp->values.V[i]) lives_free(avp->values.V[i]); */
+      /* } */
+      /* if (!(avp->flags & ALLV_FLAG_POINTER) && avp->values.V) lives_free(avp->values.V); */
+
+      lives_free(allvp);
+    }
+    break;
+  }
+#endif
   case LIVES_STRUCT_FILE_DETS_T: {
     lives_file_dets_t *fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
     lsd = lsd_create_p("lives_file_dets_t", fdets, sizeof(lives_file_dets_t), &fdets->lsd);

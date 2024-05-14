@@ -24,9 +24,9 @@ LIVES_GLOBAL_INLINE double check_thrd_latency(double *act_time) {
   double start = lives_get_session_time(), end, mid;
   lives_proc_thread_t lpt =
     lives_proc_thread_create(0, do_nothing, WEED_SEED_DOUBLE,
-			     "i", THE_TIMEY_WIMEY_KIND);
+                             "i", THE_TIMEY_WIMEY_KIND);
   mid = lives_proc_thread_join_double(lpt);
-  end = lives_get_session_time(); 
+  end = lives_get_session_time();
   if (act_time) *act_time = mid - start;
   return end - start;
 }
@@ -112,24 +112,31 @@ lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t catego
 
 #define FSIG_HDR "funcsigs.h"
 
-static LiVESList *aletters_list = NULL;
+static LiVESList *aletters_list = NULL, *rletters_list = NULL;
 
-char *args_fmt_filter(const char *args_fmt, boolean strict) {
+char *args_fmt_filter(const char *args_fmt) {
+  // args fmts when building funcinst can be more liberal than usual
+  // here we adjust anf filter the types of args_fmt to better align them
+  // custom seed types are rewritten as void * ('V').
+  // any ither non "allowed" letters are stripped out.
+  if (!args_fmt) return NULL;
   char *xafmt = NULL;
-  if (!aletters_list) aletters_list = chars_to_list(0, ARGS_FMT_REAL);
+  LiVESList *list;
+  if (!aletters_list) aletters_list = chars_to_list(0, ARGS_FMT_ALLOWED);
+  if (!rletters_list) rletters_list = chars_to_list(0, ARGS_FMT_REPLACE);
   for (const char *c = args_fmt; *c; c++) {
-    if (!strict && *c == ARGS_FMT_VARIADIC) {
-      char *fmt = LSPF("%c", *c);
-      xafmt = lives_strcollate(&xafmt, NULL, (const char *)fmt);
-      lives_free(fmt);
-      continue;
-    }
-    for (LiVESList *list = aletters_list; list; list = list->next) {
+    for (list = rletters_list; list; list = list->next) {
       if (*c == *(const char *)list->data) {
-	char *fmt = LSPF("%c", *c);
-	xafmt = lives_strcollate(&xafmt, NULL, (const char *)fmt);
-	lives_free(fmt);
-	break;
+        xafmt = lives_strcollate(&xafmt, NULL, "V");
+        continue;
+      }
+    }
+    for (list = aletters_list; list; list = list->next) {
+      if (*c == *(const char *)list->data) {
+        char *fmt = LSPF("%c", *c);
+        xafmt = lives_strcollate(&xafmt, NULL, (const char *)fmt);
+        lives_free(fmt);
+        break;
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
@@ -140,9 +147,9 @@ char *args_fmt_filter(const char *args_fmt, boolean strict) {
 boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames) {
   if (!args_fmt) return TRUE;
 
-  char *xargs_fmt = args_fmt_filter(args_fmt, TRUE);
-
+  char *xargs_fmt = args_fmt_filter(args_fmt);
   funcsig_t fsig = funcsig_from_args_fmt(xargs_fmt);
+
   if (!fsig) return TRUE;
 
   for (LiVESList *list = capable->known_funcsigs; list; list = list->next)
@@ -161,11 +168,11 @@ boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char
     for (int i = 0; i < nparms; i++)
       pnmstr = lives_strdup_concat(pnmstr, ", ", "%s", pnames[i] ? pnames[i] : "");
   }
-  
+
   symstr = funcsig_to_symstring(fsig);
   msg = lives_strdup_printf("\n\bUnrecognised args_fmt \"%s\" in call to %s(%s).\n"
-			    "Please add the following line in %s, in the appropriate #define:\n\n"
-			    "\tADD_FUNCSIG(%d,%s)\n\n", args_fmt, funcname, pnmstr, FSIG_HDR, nparms, symstr);
+                            "Please add the following line in %s, in the appropriate #define:\n\n"
+                            "\tADD_FUNCSIG(%d,%s)\n\n", args_fmt, funcname, pnmstr, FSIG_HDR, nparms, symstr);
   g_print("%s", msg);
   lives_free(symstr); lives_free(pnmstr); lives_free(msg);
   lives_abort("Unrecognised args_fmt");
@@ -414,17 +421,17 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   g_print("hook stack pattern is %s\n", hs_pattern_name(hsdesc->pattern));
 
-  if (hsdesc->const_data_srcs) {  
+  if (hsdesc->const_data_srcs) {
     g_print("\nSome parameters are set or supplied when adding callbacks to the stack\n");
     for (int i = 0; hsdesc->const_data_srcs[i]; i++) {
       const char *datasrc;
       weed_seed_t st;
-      // format is "X|Ysrcname", where X is seed_type, Y is origin 
+      // format is "X|Ysrcname", where X is seed_type, Y is origin
       datasrc = hsdesc->const_data_srcs[i];
       if (!datasrc) continue;
       if (datasrc[0] == ARGS_FMT_VARIADIC) {
-	variadic = TRUE;
-	break;
+        variadic = TRUE;
+        break;
       }
       if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
       if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
@@ -433,45 +440,45 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
       switch (datasrc[2]) {
       case '-': {
-	g_print("User supplied value ");
-	break;
+        g_print("User supplied value ");
+        break;
       }
       case '$': {
-	const char *item = (const char *)(datasrc + 3);
-	g_print("local databook value: %s ", item);
-	break;
+        const char *item = (const char *)(datasrc + 3);
+        g_print("local databook value: %s ", item);
+        break;
       }
       case '@': {
-	// data comes from global data book
-	const char *item = (const char *)(datasrc + 3);	
-	g_print("global databook value: %s ", item);
-	break;
+        // data comes from global data book
+        const char *item = (const char *)(datasrc + 3);
+        g_print("global databook value: %s ", item);
+        break;
       }
       default: break;
       }
       g_print(" (%s)\n", weed_seed_to_ctype(st, FALSE));
     }
-    
+
     if (variadic) g_print("Adder may pass addition params when adding the callback\n");
   }
 
-  if (hsdesc->var_data_srcs) { 
+  if (hsdesc->var_data_srcs) {
     g_print("\nSome parameters are set or supplied when the callback is triggered\n");
     for (int i = 0; hsdesc->var_data_srcs[i]; i++) {
       const char *datasrc;
       weed_seed_t st;
       boolean lback = FALSE;
-      // format is "X|Ysrcname", where X is seed_type, Y is origin 
+      // format is "X|Ysrcname", where X is seed_type, Y is origin
       datasrc = hsdesc->var_data_srcs[i];
       if (!datasrc) continue;
       if (datasrc[0] == '*') {
-	varivar = TRUE;
-	break;
+        varivar = TRUE;
+        break;
       }
       if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
       if (datasrc[0] == '>') {
-	datasrc++;
-	lback = TRUE;
+        datasrc++;
+        lback = TRUE;
       }
       if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
       st = get_seedtype(datasrc[0]);
@@ -479,19 +486,19 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
       switch (datasrc[2]) {
       case '-': {
-	g_print("User supplied value ");
-	break;
+        g_print("User supplied value ");
+        break;
       }
       case '$': {
-	const char *item = (const char *)(datasrc + 3);
-	g_print("local databook value: %s ", item);
-	break;
+        const char *item = (const char *)(datasrc + 3);
+        g_print("local databook value: %s ", item);
+        break;
       }
       case '@': {
-	// data comes from global data book
-	const char *item = (const char *)(datasrc + 3);	
-	g_print("global databook value: %s ", item);
-	break;
+        // data comes from global data book
+        const char *item = (const char *)(datasrc + 3);
+        g_print("global databook value: %s ", item);
+        break;
       }
       default: break;
       }
@@ -691,7 +698,7 @@ void print_diagnostics(uint64_t types) {
 }
 
 
-boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean debug_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                        livespointer statep) {
   BREAK_ME("debug_callback");
   return TRUE;
@@ -952,7 +959,7 @@ static void upd_rstats(int n1s, int *pmin, int *pmax, int esrc, uint64_t nx, uin
 // Now the 1s in l1 have p(0.25) so we have B / 4 on avearage
 // TBD.
 
-int benchmark_rng(int ntests, lives_randfunc_t rfunc, double *q) {
+int benchmark_rng(int ntests, lives_randfunc_t rfunc, double * q) {
   uint64_t tot_a = 0, tot_b_add = 0, tot_c = 0, rtot = 0, diff;
   int64_t tot_b_sub = 0;
   uint64_t n0, n1, n2, on0 = 0, par = 0;
@@ -1300,7 +1307,7 @@ static char *explain_missing_cpt(int idx) {
 
 #define ADD_TO_CTEXT(idx) ctext = lives_concat(ctext, explain_missing_cpt(idx));
 
-void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *title = (_("What is missing ?")), *text = lives_strdup("");
   char *ctext = lives_strdup("");
 
@@ -1645,7 +1652,7 @@ void upd_statsplant(const char *key) {
 }
 
 
-void add_to_audit(audit_tag *atag, void *data) {
+void add_to_audit(audit_tag * atag, void *data) {
   char *key = lives_strdup_printf("data_%p", data);
   LIVES_CALLOC_TYPE(audit_tag, xatag, 1);
   xatag->func = lives_strdup(atag->func);
@@ -1717,9 +1724,9 @@ void show_weed_stats(int oper) {
     g_print("statsplant has %u values\n", nl);
     for (int i = 0; nm[i]; i++) {
       if (lives_str_starts_with(nm[i], "data_")) {
-	audit_tag *atag = (audit_tag *)weed_get_voidptr_value(statsplant, nm[i], NULL);
-	g_print("func %s. at %s, line %d\n", atag->func, atag->file, atag->line);
-	lives_free(atag);
+        audit_tag *atag = (audit_tag *)weed_get_voidptr_value(statsplant, nm[i], NULL);
+        g_print("func %s. at %s, line %d\n", atag->func, atag->file, atag->line);
+        lives_free(atag);
       }
       _ext_free(nm[i]);
     }
@@ -3082,7 +3089,7 @@ void show_struct_sizes(void) {
   g_print("weed leaf size is %ld\n", weed_get_leaf_t_size());
 }
 
-void run_diagnostic(LiVESWidget *mi, const char *testname) {
+void run_diagnostic(LiVESWidget * mi, const char *testname) {
   if (!lives_strcmp(testname, "libweed")) run_weed_startup_tests();
   if (!lives_strcmp(testname, "structsizes")) show_struct_sizes();
 }
@@ -3137,6 +3144,31 @@ void test_procthreads(void) {
   pth = lives_proc_thread_create(0, pth_testfunc, -1, "V", testv);
   lives_proc_thread_join_void(pth);
   lives_proc_thread_unref(pth);
+}
+
+
+void lives_cond_test(void) {
+  g_print("testing lives_conditions:\n");
+  lives_condition C;
+  //for (int i = 0; i < 10000; i++) {
+  C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2);
+  lives_cond_desc(C);
+  LIVES_ASSERT(lives_cond_eval(C));
+  lives_cond_free(C);
+  C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3);
+  lives_cond_desc(C);
+  LIVES_ASSERT(!lives_cond_eval(C));
+  lives_cond_free(C);
+  C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2, ")");
+  lives_cond_desc(C);
+  LIVES_ASSERT(!lives_cond_eval(C));
+  lives_cond_free(C);
+  C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3, ")");
+  lives_cond_desc(C);
+  LIVES_ASSERT(lives_cond_eval(C));
+  lives_cond_free(C);
+  //}
+  g_print("OK\n");
 }
 
 

@@ -57,7 +57,7 @@ void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 void show_weed_stats(int oper);
 void upd_statsplant(const char *key);
 
-void add_to_audit(audit_tag *, void *data); 
+void add_to_audit(audit_tag *, void *data);
 void remove_from_audit(void *);
 
 void show_audit(weed_plant_t *);
@@ -90,6 +90,8 @@ void lives_struct_test(void);
 void benchmark(void);
 
 void hash_test(void);
+
+void lives_cond_test(void);
 
 #ifdef WEED_WIDGETS
 void show_widgets_info(void);
@@ -133,6 +135,6 @@ void list_prefs(void);
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
 
 boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames);
-char *args_fmt_filter(const char *args_fmt, boolean strict);
+char *args_fmt_filter(const char *args_fmt);
 
 #endif

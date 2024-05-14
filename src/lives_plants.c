@@ -65,7 +65,7 @@ void register_blueprint(uint64_t pltype, ...) {
     blu = LIVES_CALLOC_SIZEOF(bootstrap_template, 1);
     blu->pltype = pltype;
   }
- 
+
   pltypestr = LSPF("%"PRIu64, pltype);
   va_start(va, pltype);
 
@@ -81,10 +81,10 @@ void register_blueprint(uint64_t pltype, ...) {
       ldesc->flags = flags;
       blu->leaves = lives_list_prepend(blu->leaves, ldesc);
       nleaves++;
-    }
-    else {
+    } else {
       // this is a simple type, so no unique id
-      weed_plant_t *ld_plant = plant_from_blueprint(LIVES_PLANT_LEAF_DEF, WEED_LEAF_NAME, name, LIVES_LEAF_SEED_TYPE, st, WEED_LEAF_FLAGS, flags, NULL);
+      weed_plant_t *ld_plant = plant_from_blueprint(LIVES_PLANT_LEAF_DEF, WEED_LEAF_NAME, name, LIVES_LEAF_SEED_TYPE, st,
+                               WEED_LEAF_FLAGS, flags, NULL);
       ld_array = (weed_plant_t **)lives_recalloc(ld_array, nleaves + 1, nleaves, sizeof(weed_plant_t *));
       ld_array[nleaves++] = ld_plant;
     }
@@ -93,7 +93,7 @@ void register_blueprint(uint64_t pltype, ...) {
 
   if (have_blueprint_plant && have_leaf_def_plant) {
     // uppercase macro - adds std leaves
-    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX, pltype, LIVES_LEAF_LEAF_DEFS, ld_array, nleaves); 
+    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX, pltype, LIVES_LEAF_LEAF_DEFS, ld_array, nleaves);
     lives_index_set_value(allblu, pltypestr, WEED_SEED_PLANTPTR, blup);
     weed_leaf_set_autofree(allblu, pltypestr, TRUE);
     lives_free(pltypestr);
@@ -104,8 +104,8 @@ void register_blueprint(uint64_t pltype, ...) {
 
   if (!allblu) {
     // first template we make is index, so we make one now, using the template version
-    allblu = plant_from_template(blu, WEED_LEAF_UNIQUE_ID, gen_unique_id(), LIVES_LEAF_INDEX_TYPE, idx_type_blueprints, 
-				 LIVES_LEAF_PREFIX, IDX_PREFIX, LIVES_LEAF_ITEM_TYPE, WEED_SEED_PLANTPTR, NULL);
+    allblu = plant_from_template(blu, WEED_LEAF_UNIQUE_ID, gen_unique_id(), LIVES_LEAF_INDEX_TYPE, idx_type_blueprints,
+                                 LIVES_LEAF_PREFIX, IDX_PREFIX, LIVES_LEAF_ITEM_TYPE, WEED_SEED_PLANTPTR, NULL);
   }
 
   // this is leaf_def or blueprint from templates
@@ -124,7 +124,7 @@ void register_blueprint(uint64_t pltype, ...) {
   else if (pltype == LIVES_PLANT_BLUEPRINT) have_blueprint_plant = TRUE;
   //otherwise, is index
 }
-  
+
 
 void register_blueprints(void) {REGISTER_ALL_BLUEPRINTS;}
 
@@ -134,7 +134,7 @@ static weed_plant_t *plant_from_template_va(bootstrap_template *templ, va_list v
   while (1) {
     weed_seed_t st;
     weed_size_t ne = 1;
-    uint64_t flags;  
+    uint64_t flags;
     char *name = va_arg(va, char *);
     if (!name) break;
     bootstrap_leafdesc *ldef;
@@ -148,8 +148,7 @@ static weed_plant_t *plant_from_template_va(bootstrap_template *templ, va_list v
       // no match found, but we can add extra leaves if we follow name with seed_type, num_elems
       st = va_arg(va, int);
       ne = va_arg(va, weed_size_t);
-    }
-    else {
+    } else {
       // got a match, we use defined seed_type and flags
       // if def st == 0, then it follows name
       st = ldef->type;
@@ -176,7 +175,7 @@ static weed_plant_t *plant_from_template(bootstrap_template *templ, ...) {
 // make a plant from its blueprintw
 weed_plant_t *plant_from_blueprint(int pltype, ...) {
   va_list va;
-  // find the blueprint in allblu  
+  // find the blueprint in allblu
   weed_plant_t *blu, *opl;
   char *pltypestr = LSPF("%"PRIu64, pltype);
   if (lives_index_get_value(&blu, allblu, pltypestr) != WEED_SUCCESS) {
@@ -193,7 +192,7 @@ weed_plant_t *plant_from_blueprint(int pltype, ...) {
     va_end(va);
     return opl;
   }
-  
+
   // now for each value, we will make a leaf in pl_out, reading va_value
   // if st is 0, we read a seed_type, if flag ! scalar we read ne
 
@@ -208,7 +207,7 @@ weed_plant_t *plant_from_blueprint(int pltype, ...) {
     char *name = va_arg(va, char *);
     if (!name) break;
     // search for "name" in leaf_defs
-    for (i = 0; i < ndefs; i++) { 
+    for (i = 0; i < ndefs; i++) {
       const char *defname = weed_get_const_string_value(defs[i], WEED_LEAF_NAME, NULL);
       if (!lives_strcmp(name, defname)) break;
     }
@@ -216,8 +215,7 @@ weed_plant_t *plant_from_blueprint(int pltype, ...) {
       // no match found, but we can add extra leaves if we follow name with seed_type, num_elems
       st = va_arg(va, int);
       ne = va_arg(va, weed_size_t);
-    }
-    else {
+    } else {
       // got a match, we use defined seed_type and flags
       // if def st == 0, then it follows name
       st = weed_get_int_value(defs[i], LIVES_LEAF_SEED_TYPE, NULL);
@@ -262,7 +260,7 @@ lives_result_t lives_index_set_value(lives_index_t *idx, const char *key, weed_s
   return LIVES_RESULT_SUCCESS;
 }
 
-weed_error_t lives_index_set_autofree(lives_index_t *idx, const char *key, boolean set) { 
+weed_error_t lives_index_set_autofree(lives_index_t *idx, const char *key, boolean set) {
   char *name = name_for_index(idx, key);
   weed_error_t err = weed_leaf_set_autofree(idx, name, set);
   lives_free(name);
@@ -305,7 +303,7 @@ lives_result_t lives_databook_set_datatype(lives_databook_t *book, const char *n
 }
 
 
-  lives_result_t lives_databook_bind_value(lives_databook_t *book, const char *name, weed_seed_t itype, void *varptr) {
+lives_result_t lives_databook_bind_value(lives_databook_t *book, const char *name, weed_seed_t itype, void *varptr) {
   lives_result_t res;
   allvalues_t *allvp = get_databook_item(book, name);
   SET_ALLVALUE_BOUND(allvp, itype, varptr);
@@ -314,7 +312,7 @@ lives_result_t lives_databook_set_datatype(lives_databook_t *book, const char *n
 }
 
 
- lives_result_t lives_databook_set_value(lives_databook_t *book, const char *name, weed_seed_t itype, ...) {
+lives_result_t lives_databook_set_value(lives_databook_t *book, const char *name, weed_seed_t itype, ...) {
   lives_result_t res;
   allvalues_t *allvp = get_databook_item(book, name);
   va_list va;
@@ -323,25 +321,25 @@ lives_result_t lives_databook_set_datatype(lives_databook_t *book, const char *n
   res = lives_index_set_value(book, name, LIVES_SEED_ALLVALUES, allvp);
   va_end(va);
   return res;
- }
+}
 
 
- lives_result_t lives_databook_set_array(lives_databook_t *book, const char *name, weed_seed_t itype, int nvals, void *vals) {
-   lives_result_t res;
-   allvalues_t *allvp = get_databook_item(book, name);
-   SET_ALLVALUE_ARRAY(allvp, itype, nvals, vals);
-   res = lives_index_set_value(book, name, LIVES_SEED_ALLVALUES, allvp);
-   return res;
- }
+lives_result_t lives_databook_set_array(lives_databook_t *book, const char *name, weed_seed_t itype, int nvals, void *vals) {
+  lives_result_t res;
+  allvalues_t *allvp = get_databook_item(book, name);
+  SET_ALLVALUE_ARRAY(allvp, itype, nvals, vals);
+  res = lives_index_set_value(book, name, LIVES_SEED_ALLVALUES, allvp);
+  return res;
+}
 
 
- lives_result_t lives_databook_get_value(void *retloc, lives_databook_t *book, const char *name) {
+lives_result_t lives_databook_get_value(void *retloc, lives_databook_t *book, const char *name) {
   allvalues_t *allvp = get_databook_item(book, name);
   return value_from_allvalues(retloc, allvp);
 }
 
 
- allvalues_t *get_local_book_item(const char *itemnm) {
+allvalues_t *get_local_book_item(const char *itemnm) {
   allvalues_t *allvp;
   GET_PROC_THREAD_SELF(self);
   lives_databook_t *book = lives_proc_thread_get_book(self);
@@ -350,7 +348,7 @@ lives_result_t lives_databook_set_datatype(lives_databook_t *book, const char *n
 }
 
 
- allvalues_t *get_global_book_item(const char *itemnm) {
+allvalues_t *get_global_book_item(const char *itemnm) {
   allvalues_t *allvp;
   lives_databook_t *book = mainw->global_databook;
   lives_index_get_value(&allvp, book, itemnm);

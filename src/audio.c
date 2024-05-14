@@ -298,7 +298,8 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
 
   if (!abuf->buffer16 || nchans > abuf->out_achans) {
     if (!abuf->buffer16) abuf->buffer16 = (int16_t **)lives_calloc(1, sizeof(int16_t *));
-    abuf->buffer16[0] = (int16_t *)lives_recalloc(abuf->buffer16[0], ABUF_ARENA_SIZE * nchans, ABUF_ARENA_SIZE * abuf->out_achans, 2);
+    abuf->buffer16[0] = (int16_t *)lives_recalloc(abuf->buffer16[0], ABUF_ARENA_SIZE * nchans, ABUF_ARENA_SIZE * abuf->out_achans,
+                        2);
     abuf->out_achans = nchans;
   }
 
@@ -898,7 +899,7 @@ float sample_move_d16_float(float *dst, int16_t *src, uint64_t nsamples, uint64_
       oil_scaleconv_f32_u16(&val, (uint16_t *)srcp, 1, &y, &xa);
       val -= vol;
 #else
-      valss = (uint16_t)*srcp - SAMPLE_MAX_16BITI;
+      valss = (uint16_t) * srcp - SAMPLE_MAX_16BITI;
       val = (float)(valss) * (valss > 0 ? svolp : svoln);
 #endif
     }
@@ -965,7 +966,7 @@ float sample_move_d16_float_arena(float *dst, int16_t *src, size_t offset, uint6
       oil_scaleconv_f32_u16(&val, (uint16_t *)srcp, 1, &y, &xa);
       val -= vol;
 #else
-      valss = (uint16_t)*srcp - SAMPLE_MAX_16BITI;
+      valss = (uint16_t) * srcp - SAMPLE_MAX_16BITI;
       val = (float)(valss) / (valss > 0 ? svolp : svoln);
 #endif
     }
@@ -1483,7 +1484,7 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
   size_t offs = abuf->samples_filled * chans;
 
   samples_out = sample_move_float_int(abuf->buffer16[0] + offs, float_buffer, nsamps, 1., chans, 16,
-                                     0, 0, 0, 1.0);
+                                      0, 0, 0, 1.0);
 
   return (size_t)samples_out / chans;
 }
@@ -2100,7 +2101,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // output to file
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         samples_out = sample_move_float_int((void *)finish_buff, chunk_float_buffer, blocksize, 1., out_achans,
-                                           out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
+                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
         lives_write_buffered(out_fd, finish_buff, samples_out * out_asamps, TRUE);
         threaded_dialog_spin(0.);
         tot_samples += samples_out;
@@ -2120,7 +2121,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         else
           /// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
           samples_out = sample_move_float_int((void *)finish_buff, float_buffer, xsamples, 1., out_achans,
-                                             out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
+                                              out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
 
         lives_write_buffered(out_fd, finish_buff, samples_out * out_asamps, TRUE);
 #ifdef DEBUG_ARENDER
@@ -2812,8 +2813,8 @@ float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
         } else {
           if (fltbuf[i])
             //maxvol_heard =
-	    sample_move_d16_float(fltbuf[i], adata + i,
-				  nsamples, nchans, FALSE, FALSE, 1.0);
+            sample_move_d16_float(fltbuf[i], adata + i,
+                                  nsamples, nchans, FALSE, FALSE, 1.0);
         }
       }
     }
@@ -2825,14 +2826,14 @@ float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
 float **send_audio_to_fx(lives_obj_t *aplayer, float **fltbuf, lives_af_t af_type) {
   // af_type can be AF_TYPE_NONA
   // this should be eithet the only callback in the audio player's data_preview stack
-  // or if there is a mixer callback 
+  // or if there is a mixer callback
   // AF_TYPE_A
   // analysers - should be added as a DATA_READY_HOOK
   //boolean alock_mixer = FALSE;
   ticks_t tc = mainw->currticks;
- 
-  //boolean in_float = lives_aplayer_get_float(aplayer); 
-  int nchans = lives_aplayer_get_achans(aplayer); 
+
+  //boolean in_float = lives_aplayer_get_float(aplayer);
+  int nchans = lives_aplayer_get_achans(aplayer);
   int arate = lives_aplayer_get_arate(aplayer);
   size_t nsamples = lives_aplayer_get_data_len(aplayer);
 
@@ -2869,7 +2870,7 @@ float **send_audio_to_rte(lives_obj_t *aplayer, float **fltbuf) {
 // data ready hook callbacks
 
 void send_audio_to_analysers(lives_obj_t *aplayer, float **fltbuf) {
- send_audio_to_fx(aplayer, fltbuf, AF_TYPE_A);
+  send_audio_to_fx(aplayer, fltbuf, AF_TYPE_A);
 }
 
 
@@ -2889,7 +2890,7 @@ void send_audio_to_afbuffer(lives_obj_t *aplayer, float **fltbuf) {
   // or if we want loopback to player
   // append the audio to the float arena
   // - these things are running at a different cycle rate, so we must buffer
-  size_t nsamples = lives_aplayer_get_data_len(aplayer);  
+  size_t nsamples = lives_aplayer_get_data_len(aplayer);
   int nchans = lives_aplayer_get_achans(aplayer);
   for (int i = 0; i < nchans; i++)
     append_to_audio_bufferf(fltbuf[i], nsamples, (i == nchans - 1) ? -i - 1 : i + 1);
@@ -2910,8 +2911,8 @@ float **rt_mix_audio(lives_obj_t *aplayer, float **fltbuf) {
   //
   //
   boolean alock_mixer = FALSE;
-  if (alock_mixer) { 
-    size_t nsamples = lives_aplayer_get_data_len(aplayer);  
+  if (alock_mixer) {
+    size_t nsamples = lives_aplayer_get_data_len(aplayer);
     if (nsamples && !pthread_mutex_trylock(&mainw->alock_mutex)) {
       float **xfltbuf;
       float xshrink_factor = 1.;
@@ -2920,15 +2921,15 @@ float **rt_mix_audio(lives_obj_t *aplayer, float **fltbuf) {
       int arate = lives_aplayer_get_arate(aplayer);
       int nchans = lives_aplayer_get_achans(aplayer);
       off_t offs = mainw->alock_abuf->seek / (mainw->alock_abuf->in_achans
-					      * (mainw->alock_abuf->in_asamps >> 3));
+                                              * (mainw->alock_abuf->in_asamps >> 3));
       xshrink_factor = (float)mainw->alock_abuf->arate / (float)arate / mainw->audio_stretch;
       xfltbuf = lives_calloc(nchans, sizeof(float *));
       if (offs + nsamples > mainw->alock_abuf->samp_space) {
-	offs = mainw->alock_abuf->seek = 0;
+        offs = mainw->alock_abuf->seek = 0;
       }
       for (int i = 0; i < nchans; i++) {
-	if (i > mainw->alock_abuf->in_achans) break;
-	xfltbuf[i] = &mainw->alock_abuf->bufferf[i][offs];
+        if (i > mainw->alock_abuf->in_achans) break;
+        xfltbuf[i] = &mainw->alock_abuf->bufferf[i][offs];
       }
 
       xin_samplesd = fabs((double)xshrink_factor * (double)nsamples);
@@ -3010,7 +3011,7 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
       float **in_buffer = (float **)lives_aplayer_get_data(aplayer);
       if (!out_float) {
         samples_out = sample_move_float_int(holding_buff, in_buffer, samples_out, out_scale, in_achans,
-                                           out_sampsize * 8, out_unsigned, rev_endian, FALSE, 1.);
+                                            out_sampsize * 8, out_unsigned, rev_endian, FALSE, 1.);
         rev_endian = FALSE;
         in_unsigned = FALSE;
         in_sampsize = 2;
@@ -4528,8 +4529,8 @@ boolean apply_rte_audio(int64_t nsamples) {
       }
       lives_memset(fltbuf[i], 0, nsamples * sizeof(float));
       if (nsamples > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nsamples, cfile->achans, \
-                                               (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
-                                               lives_vol_from_linear(cfile->vol));
+                                                (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
+                                                lives_vol_from_linear(cfile->vol));
     }
   } else {
     // read from plugin. This should already be float.
@@ -5027,7 +5028,7 @@ int64_t nullaudio_update_seek_posn(void) {
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
-  
+
 }
 
 
@@ -5063,7 +5064,7 @@ void nullaudio_play_loop(void) {
 
   nullaudio_update_seek_posn();
 }
-  
+
 #endif
 
 //////////// objects / intents //////

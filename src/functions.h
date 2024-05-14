@@ -6,6 +6,11 @@
 #ifndef _FUNCTIONS_H
 #define _FUNCTIONS_H
 
+#ifndef GENERIC_CALL
+#define NEED_FUNC_WRAPPERS
+#include "funcsigs.h"
+#endif
+
 #include "funcsigs.h"
 
 ///// low level operations //////
@@ -297,70 +302,6 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
 
 //////////
 
-// conditions (Work in progress)
-
-//typedef char **lives_condition;
-typedef allvalues_t* lives_condition;
-
-typedef struct {va_list va;} va_surprise;
-
-#define COND_PFX "COND_"
-#define COND_PFXLEN 5
-    
-#define _COND_POPEN  		COND_PFX "POPEN"
-#define _COND_PCLOSE  		COND_PFX "PCLOSE"
-#define _COND_LIST_BEGIN  	COND_PFX "LIST_BEGIN"
-#define _COND_LIST_END  	COND_PFX "LIST_END"
-
-#define COND(TOKEN) COND_PFX #TOKEN
-
-//#define COND_TESTFUNC_CONSTVAL(func, args_fmt) find_or_make_funcdef(#func, func, WEED_SEED_BOOLEAN, args_fmt)
-
-void lives_conditions_init(void);
-
-#define Xregister_cond_token(token, fmt, p0, p1, ...)			\
-  _register_cond_token(token, fmt, p0, p1, #p1 __VA_OPT__(,) __VA_ARGS__)
-
-#define register_cond_token(token, fmt, ...)			\
-  Xregister_cond_token(token, fmt, __VA_ARGS__, nofunc, NULL); 
-typedef struct {
-  const char *token; // token text
-  char fmt; // internal fmt
-  const char *desc; // descriptive text
-  const char *funcname;
-  lives_funcinst_t *funcinst;
-} cond_trans;
-
-// initial state (after popen)
-#define COND_SYNTAX_0 "C", "V", "U", _COND_POPEN, _COND_PCLOSE, NULL
-
-// state after C or V or PCLOSE OR  RETURN FROM 'O'
-#define COND_SYNTAX_1 "O", _COND_PCLOSE, NULL
-
-// INITIALstate FOR PARTIAL
-#define COND_SYNTAX_2 "C", "V", "U", _COND_POPEN, NULL
-
-typedef boolean lives_cond_result;
-
-#define LIVES_COND_PASS TRUE
-#define LIVES_COND_FAIL FALSE
-
-#define CONDRES_NAME(res) (res) == LIVES_COND_PASS ? "LIVES_COND_PASS (TRUE)" : "LIVES_COND_FAIL (FALSE)"
-
-lives_condition _lives_cond_create(const char *cond_start, ...);
-
-#define lives_cond_create(...) _lives_cond_create(_COND_POPEN __VA_OPT__(,) __VA_ARGS__, _COND_PCLOSE)
-
-lives_cond_result lives_cond_eval(lives_condition);
-
-lives_condition lives_cond_copy(lives_condition);
-
-void lives_cond_free(lives_condition);
-
-void lives_cond_desc(lives_condition);
-
-/////////////////////////////////////////
-
 typedef union {
   lives_proc_thread_t lpt;
   pthread_t		thread;
@@ -514,7 +455,7 @@ void *lives_cb_receipt_new(void);
 
 void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 
-  // hsdescriptor flags
+// hsdescriptor flags
 
 //< caller will block when adding the hook and only return when the hook callback has returned
 // if the cb function is barred by another (due to uniqueness constraints),
@@ -917,7 +858,7 @@ typedef struct {
   // same as const, but value is set at trigger time
   // optionally, one value can start with a '>' to indicate the function return should
   // be mapped back to and update this value. For this reason, any input vars or extra vars passed in at trigger time MUST
-  // be passed as BIND_VALUE(typecode, var) e.g BIND_VALUE("V", data) rather than just 'data' 
+  // be passed as BIND_VALUE(typecode, var) e.g BIND_VALUE("V", data) rather than just 'data'
   const char **var_data_srcs;
 } hook_stack_descriptor_t;
 
@@ -1020,7 +961,7 @@ typedef struct _hstack_t {
 				   {.htype = RESETTING_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
 				      .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT), \
 				      .const_data_srcs = (const char *[]){"*"}})
-  
+
 #define HS_DETAILS_THREAD_EXIT_HOOK ((hook_stack_descriptor_t)		\
 				     {.htype = THREAD_EXIT_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
 					.op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE), \
@@ -1254,7 +1195,7 @@ lives_funcdef_t *lives_funcdef_copy(lives_funcdef_t *);
 #define create_funcdef_here(func, rtype, args_fmt) create_funcdef(#func, (lives_funcptr_t)func, (rtype) , (args_fmt), \
 								  _FILE_REF_, _LINE_REF_, FDEF_FLAG_INSIDE)
 
-#define MAKE_FUNCDEF(func, rt, args_fmt) create_funcdef(#func, func, WEED_SEED_##rt, (args_fmt), NULL, 0, 0);
+#define lives_funcdef_create(funcname, func, rt, args_fmt) create_funcdef(funcname, func, rt, (args_fmt), NULL, 0, 0);
 
 void lives_funcdef_free(lives_funcdef_t *);
 
@@ -1308,7 +1249,7 @@ void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *
 void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
 #endif
 
-weed_error_t value_from_allvalues(void *retloc, allvalues_t *); 
+weed_error_t value_from_allvalues(void *retloc, allvalues_t *);
 
 allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
 allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
@@ -1328,15 +1269,19 @@ allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int 
 #define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
 #define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_va(avp, stype, ne, 0, va))
 
+// extern types
+#define make_allvalue_extern(allvp, xtype, type, obj)	_DW0	\
+  (allvp->values.V = (void **)&obj;					\
+   xflags = ALLV_FLAG_POINTER | ALLV_FLAG_EXTERN;				\
+   allvp->stype = stype ? stype : WEED_SEED_UNKNOWN;		\
+   allvp->size = sizeof(obj);					\
+   allvp->ext_typename = (xtype ? lives_strdup(#xtype) : NULL);)
+
+#define make_allvalue_extern_va(allvp, xtype, va) _DW0		\
+  (make_allvalue_extern(allvp, xtype, va_arg(va, xtype);)
+
 void allvalues_free(allvalues_t *);
 allvalues_t *allvalues_copy(allvalues_t *);
-
-lives_funcinst_t *_funcinst_from_allvals(lives_funcdef_t *fdef, lives_funcptr_t func,
-    const char *funcname, weed_seed_t ret_type,
-    int nvals, allvalues_t **pvals);
-
-#define finst_from_allvals(func, rtype, nvals, pvals) _funcinst_from_allvals(NULL, func, #func, rtype, nvals, pvals)
-#define finst_from_fdef_allvals(fdef, nvals, pvals) _funcinst_from_allvals(fdef, NULL, NULL, 0, nvals, pvals)
 
 allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const char *key);
 

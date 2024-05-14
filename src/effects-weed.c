@@ -3438,7 +3438,7 @@ boolean has_audio_filters(lives_af_t af_type) {
   // clients read from the arena asynchronously (normally during the video fx chain) and
   // maintain their own read levels in the arena buffer
   // these are served by the arena write callback
-  
+
   weed_plant_t *filter;
   int idx;
 

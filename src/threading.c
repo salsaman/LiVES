@@ -217,7 +217,7 @@ LIVES_LOCAL_INLINE lives_funcinst_t *lives_proc_thread_pop_active_funcinst(void)
   lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
   lives_funcinst_free(finst);
   finst = NULL;
-  
+
   lives_sync_list_pop(&sync_list);
   if (!sync_list) {
     lives_proc_thread_set_active_finstlist(self, NULL);
@@ -304,7 +304,7 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
     int rc = 0;
     struct timespec ts;
     pthread_mutex_t *pause_mutex = pause_mutex = &(THREADVAR(pause_mutex));
-    pthread_cond_t *pcond = &(THREADVAR(pcond));  
+    pthread_cond_t *pcond = &(THREADVAR(pcond));
 
     clock_gettime(CLOCK_REALTIME, &ts);
 
@@ -496,11 +496,12 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt) {
 }
 
 
-static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
-						      const char **anames, const char *args_fmt, va_list xargs) {
+static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname,
+    int return_type,
+    const char **anames, const char *args_fmt, va_list xargs) {
   if (func) validate_args_fmt(args_fmt, fname, anames);
   if (func && !fdef) {
-    char *xargs_fmt = args_fmt_filter(args_fmt, FALSE);
+    char *xargs_fmt = args_fmt_filter(args_fmt);
     fdef = create_funcdef(fname, func, return_type, xargs_fmt, NULL, 0, 0);
     if (fname) add_quick_fn(func, fname);
     if (xargs_fmt) lives_free(xargs_fmt);
@@ -521,7 +522,7 @@ static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, liv
 
 
 lives_funcinst_t *_lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
-					    const char **anames, const char *args_fmt, va_list va) {
+    const char **anames, const char *args_fmt, va_list va) {
   lives_funcinst_t *finst;
   if (args_fmt && *args_fmt)
     finst = lives_funcinst_create_valist(fdef, func, fname, return_type, anames, args_fmt, va);
@@ -531,7 +532,7 @@ lives_funcinst_t *_lives_funcinst_create_va(lives_funcdef_t *fdef, lives_funcptr
 
 
 lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname, int return_type,
-					 const char **anames, const char *args_fmt, ...) {
+    const char **anames, const char *args_fmt, ...) {
   lives_funcinst_t *ret;
   va_list va;
   va_start(va, args_fmt);
@@ -543,7 +544,7 @@ lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t 
 
 lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs) {
   lives_proc_thread_t lpt = lives_plant_new(LIVES_PLANT_PROC_THREAD);
-  add_to_audit(THREADVAR(audit_tag), (void *)lpt); 
+  add_to_audit(THREADVAR(audit_tag), (void *)lpt);
   lives_proc_thread_push_active_funcinst(lpt, finst);
   lives_proc_thread_set_attrs(lpt, attrs);
   if (lpt) add_garnish(lpt);
@@ -946,10 +947,10 @@ if (lpt) {
       // clear list of added callback receipts
       flush_cb_added_list(lpt, TRUE);
       g_print("unref of %p\n", lpt);
-      
+
       if (finst) {
-	g_print("unref will free %p\n", finst);
-	lives_funcinst_free(finst);
+        g_print("unref will free %p\n", finst);
+        lives_funcinst_free(finst);
       }
       // this will expire callback receipts for other threads, unless flagged as persistent
       lives_hook_stacks_clear_all(lpt_hooks, N_HOOK_POINTS);
@@ -1051,20 +1052,19 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
     if (hook_hints & HOOK_OPT_FG_LIGHT) {
       lives_funcinst_queue(finst, LIVES_THRDATTR_FG_THREAD);
       lives_funcinst_free(finst);
-    }
-    else {
+    } else {
       if (add_to_deferral_stack(finst, hook_hints)) {
-	if (hook_hints & HOOK_OPT_PRIORITY) {
-	  prepend_all_to_fg_deferral_stack();
-	  fg_service_wake();
-	} else {
-	  append_all_to_fg_deferral_stack();
-	}
+        if (hook_hints & HOOK_OPT_PRIORITY) {
+          prepend_all_to_fg_deferral_stack();
+          fg_service_wake();
+        } else {
+          append_all_to_fg_deferral_stack();
+        }
       }
       if (hook_hints & HOOK_CB_BLOCKING) {
-	// when finst is done, resume will be sent
-	lives_proc_thread_pause();
-	flush_cb_added_list(self, FALSE);
+        // when finst is done, resume will be sent
+        lives_proc_thread_pause();
+        flush_cb_added_list(self, FALSE);
       }
     }
   }
@@ -1531,25 +1531,25 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
       pthread_mutex_t *pause_mutex = &tdata->vars.var_pause_mutex;
       if (!have_lock) pthread_mutex_lock(pause_mutex);
 
-      if (!ensure) {	
-	if (!lives_proc_thread_is_paused(lpt)
-	    && !lives_proc_thread_sync_waiting(lpt)) {
-	  if (!have_lock) pthread_mutex_unlock(pause_mutex);
-	  lives_proc_thread_unref(lpt);
-	  return FALSE;
-	}
+      if (!ensure) {
+        if (!lives_proc_thread_is_paused(lpt)
+            && !lives_proc_thread_sync_waiting(lpt)) {
+          if (!have_lock) pthread_mutex_unlock(pause_mutex);
+          lives_proc_thread_unref(lpt);
+          return FALSE;
+        }
       }
 
       lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
 
       if (lives_proc_thread_is_paused(lpt)) {
-	pthread_cond_t *pcond = &tdata->vars.var_pcond;
-	if (ensure) {
-	  bval = FALSE;
-	  lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, WEED_SEED_VOID, toggle_var_cb, (void *)&bval);
-	}
-	//tdata->vars.var_sync_ready = TRUE;
-	pthread_cond_signal(pcond);
+        pthread_cond_t *pcond = &tdata->vars.var_pcond;
+        if (ensure) {
+          bval = FALSE;
+          lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, WEED_SEED_VOID, toggle_var_cb, (void *)&bval);
+        }
+        //tdata->vars.var_sync_ready = TRUE;
+        pthread_cond_signal(pcond);
       }
 
       if (!have_lock) pthread_mutex_unlock(pause_mutex);
@@ -1620,19 +1620,19 @@ boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock) {
       pthread_cond_t *pcond = &(THREADVAR(pcond));
       lives_hook_stack_t **hook_stacks = self_hook_stacks(PAUSED_HOOK);
       lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
- 
+
       if (!have_lock) pthread_mutex_lock(pause_mutex);
       if (!lives_proc_thread_get_resume_requested(self)
-	  && !lives_proc_thread_get_cancel_requested(self)) {
-	lives_hook_trigger(hook_stacks, PAUSED_HOOK);
+          && !lives_proc_thread_get_cancel_requested(self)) {
+        lives_hook_trigger(hook_stacks, PAUSED_HOOK);
 
-	lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
-	while (!lives_proc_thread_get_resume_requested(self)
-	       && !lives_proc_thread_should_cancel(self)) {
-	  pthread_cond_wait(pcond, pause_mutex);
-	}
-	THREADVAR(sync_ready) = FALSE;
-	//lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
+        lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
+        while (!lives_proc_thread_get_resume_requested(self)
+               && !lives_proc_thread_should_cancel(self)) {
+          pthread_cond_wait(pcond, pause_mutex);
+        }
+        THREADVAR(sync_ready) = FALSE;
+        //lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
       }
       if (!have_lock) pthread_mutex_unlock(pause_mutex);
 
@@ -3713,8 +3713,7 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
   if (ntasks >= npoolthreads) {
     pthread_mutex_unlock(&twork_mutex);
     check_pool_threads(TRUE);
-  }
-  else { 
+  } else {
     pthread_mutex_unlock(&twork_mutex);
     if (!(attrs & LIVES_THRDATTR_FAST_QUEUE)) {
       pthread_mutex_lock(&tcond_mutex);

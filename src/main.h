@@ -119,15 +119,6 @@ weed_leaf_get_flags_f _weed_leaf_get_flags;
 weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
 
-// custom seed_types
-#define LIVES_SEED_CONST_CHARPTR 1400
-#define LIVES_SEED_BLOB_DATA 1401
-
-// NOTE ALSO (funcsigs.h)
-/* #define LIVES_SEED_VARIADIC 32 */
-/* #define LIVES_SEED_VALIST 64 */
-/* #define LIVES_SEED_ALLVALUES_T 512 */
-
 // unchangeable even for host
 #define LIVES_FLAG_CONST_VALUE	(1 << 16)
 
@@ -514,6 +505,7 @@ typedef struct _param_t lives_param_t;
 extern uint64_t test_opts;
 #endif
 
+#include "conditions.h"
 #include "functions.h"
 #include "alarms.h"
 #include "intents.h"

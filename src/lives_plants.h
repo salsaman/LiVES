@@ -117,11 +117,11 @@ void register_blueprints(void);
     LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAG_CONST
 
 typedef enum {
-	      idx_type_anon = -1,
-	      idx_type_data_book = 0,
-	      idx_type_prefs,
-	      idx_type_blueprints,
-	      idx_type_max,
+  idx_type_anon = -1,
+  idx_type_data_book = 0,
+  idx_type_prefs,
+  idx_type_blueprints,
+  idx_type_max,
 } index_type;
 
 #define LIVES_LEAF_INDEX_TYPE "_index_type"

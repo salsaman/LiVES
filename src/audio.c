@@ -2769,8 +2769,8 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   dets->fd = lives_open_buffered_writer(audio_file, DEF_FILE_PERMS, TRUE);
   if (dets->fd == -1) return NULL;
 
-  lpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
-        WEED_SEED_BOOLEAN, "vv", (void *)aplayer, (void *)dets);
+  lpt = lives_proc_thread_add_hook_cb(aplayer, DATA_READY_HOOK, 0, write_aud_data_cb,
+                                      "V", (void *)dets);
   lives_proc_thread_set_cancellable(lpt);
   return lpt;
 }

@@ -100,9 +100,7 @@ allvalues_t *_make_allval_va(allvalues_t *avp,
     } else {
       weed_plant_t *tmp = lives_plant_new(LIVES_PLANT_TMP);
       weed_leaf_from_varg(tmp, WEED_LEAF_VALUE, stype, ne, va);
-      g_print("allvp from leaf typ %d  %s\n", stype, weed_leaf_stringify(tmp, WEED_LEAF_VALUE));
       avp = allvalues_from_leaf(avp, tmp, WEED_LEAF_VALUE);
-      g_print("%p\n", stype == 66 ? avp->values.P[0] : avp->values.V[0]);
       weed_plant_free(tmp);
     }
     xflags &= ~ALLV_FLAG_POINTER;
@@ -217,15 +215,15 @@ static void init_hook_stacks(void) {
       switch (i) {
       case FATAL_HOOK:
         hs_desc[i] = HS_DETAILS(FATAL);
-	hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, FATAL));
+        hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, FATAL));
         break;
       case RESETTING_HOOK:
         hs_desc[i] = HS_DETAILS(RESETTING);
-	hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, RESETTING));
+        hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, RESETTING));
         break;
       case THREAD_EXIT_HOOK:
         hs_desc[i] = HS_DETAILS(THREAD_EXIT);
-	hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, THREAD_EXIT));
+        hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, THREAD_EXIT));
         break;
       default: break;
       }
@@ -237,53 +235,69 @@ static void init_hook_stacks(void) {
         switch (i) {
         case COMPLETED_HOOK:
           hs_desc[i] = HS_DETAILS(COMPLETED);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, COMPLETED));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, COMPLETED));
           break;
         case DATA_PREVIEW_HOOK:
           hs_desc[i] = HS_DETAILS(DATA_PREVIEW);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DATA_PREVIEW));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DATA_PREVIEW));
           break;
         case DATA_READY_HOOK:
           hs_desc[i] = HS_DETAILS(DATA_READY);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DATA_READY));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DATA_READY));
           break;
         case LIVES_GUI_HOOK:
           hs_desc[i] = HS_DETAILS(LIVES_GUI);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, GUI));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, GUI));
+          break;
+        case ATTRS_UPDATED_HOOK:
+          hs_desc[i] = HS_DETAILS(ATTRS_UPDATED);
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, ATTRS_UPDATED));
           break;
         case SYNC_ANNOUNCE_HOOK:
           hs_desc[i] = HS_DETAILS(SYNC_ANNOUNCE);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, SYNC_ANNOUNCE));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, SYNC_ANNOUNCE));
+          break;
+        case SEGMENT_END_HOOK:
+          hs_desc[i] = HS_DETAILS(SEGMENT_END);
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, SEGMENT_END));
           break;
         case FINISHED_HOOK:
           hs_desc[i] = HS_DETAILS(FINISHED);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, FINISHED));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, FINISHED));
           break;
         case ERROR_HOOK:
           hs_desc[i] = HS_DETAILS(ERROR);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, ERROR));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, ERROR));
           break;
         case PAUSED_HOOK:
           hs_desc[i] = HS_DETAILS(PAUSED);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, PAUSED));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, PAUSED));
           break;
         case RESUMING_HOOK:
           hs_desc[i] = HS_DETAILS(RESUMING);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, RESUMING));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, RESUMING));
+          break;
+        case BUSY_HOOK:
+          hs_desc[i] = HS_DETAILS(BUSY);
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, BUSY));
+          break;
+        case UNBUSY_HOOK:
+          hs_desc[i] = HS_DETAILS(UNBUSY);
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, UNBUSY));
           break;
         case CANCELLED_HOOK:
           hs_desc[i] = HS_DETAILS(CANCELLED);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, CANCELLED));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, CANCELLED));
           break;
         case DESTRUCTION_HOOK:
           hs_desc[i] = HS_DETAILS(DESTRUCTION);
-	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DESTRUCTION));
+          hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DESTRUCTION));
           break;
         default: break;
         }
       }
     }
-    g_print("Registered details for hs type %d, pattern = %d, flags = %lu\n", i, hs_desc[i].pattern, hs_desc[i].op_flags);
+    //g_print("Registered details for hs type %d, pattern = %d, flags = %lu\n", i, hs_desc[i].pattern, hs_desc[i].op_flags);
   }
   hsn_inited = TRUE;
 }
@@ -1055,55 +1069,6 @@ char *args_fmt_from_funcsig(funcsig_t sig) {
 }
 
 
-char *args_fmt_to_param_string(const char *args_fmt) {
-  if (args_fmt && *args_fmt) {
-    char *fmtstring = lives_strdup("");
-    size_t arglen = lives_strlen(args_fmt);
-    for (int i = 0; i < arglen; i++) {
-      uint8_t ch = (uint8_t)args_fmt[i];
-      if (!ch) continue;
-      if (i == arglen - 1 && ch == '*')
-        fmtstring = lives_strdup_concat(fmtstring, ", ", "%s", "...");
-      else
-        fmtstring = lives_strdup_concat(fmtstring, ", ", "%s",
-                                        weed_seed_to_ctype(get_seedtype(ch), FALSE));
-    }
-    return fmtstring;
-  }
-  return lives_strdup("void");
-}
-
-
-char *funcsig_to_param_string(funcsig_t sig) {
-  if (sig) {
-    char *fmtstring = lives_strdup("");
-    for (int i = 60; i >= 0; i -= 4) {
-      uint8_t ch = (sig >> i) & 0X0F;
-      if (!ch) continue;
-      fmtstring = lives_strdup_concat(fmtstring, ", ", "%s",
-                                      weed_seed_to_ctype(get_seedtype(ch), FALSE));
-    }
-    return fmtstring;
-  }
-  return lives_strdup("void");
-}
-
-
-char *funcsig_to_short_param_string(funcsig_t sig) {
-  if (sig) {
-    char *fmtstring = lives_strdup("");
-    for (int i = 60; i >= 0; i -= 4) {
-      uint8_t ch = (sig >> i) & 0X0F;
-      if (!ch) continue;
-      fmtstring = lives_strdup_concat(fmtstring, ", ", "%s",
-                                      weed_seed_to_short_text(get_seedtype(ch)));
-    }
-    return fmtstring;
-  }
-  return lives_strdup("void");
-}
-
-
 uint8_t symname_to_sigbits(const char *symname) {
   for (int j = 0; crossrefs[j].typeletter; j++) {
     if (!lives_strcmp(crossrefs[j].symname, symname)) {
@@ -1114,7 +1079,6 @@ uint8_t symname_to_sigbits(const char *symname) {
 }
 
 
-
 funcsig_t short_params_to_funcsig(int nvals, const char **symnames) {
   funcsig_t fsig = 0;
   for (int i = 0; i < nvals; i++) {
@@ -1122,20 +1086,6 @@ funcsig_t short_params_to_funcsig(int nvals, const char **symnames) {
     fsig |= symname_to_sigbits(symnames[i]);
   }
   return fsig;
-}
-
-
-char *funcsig_to_symstring(funcsig_t sig) {
-  // turn funcsig into symstring (same format as listed in funcsigs.h)
-  char *fmtstring = lives_strdup("");
-  if (sig) {
-    for (int i = 60; i >= 0; i -= 4) {
-      uint8_t ch = (sig >> i) & 0X0F;
-      if (!ch) continue;
-      fmtstring = lives_strdup_concat(fmtstring, ",", "%s", get_symbolname(ch));
-    }
-  }
-  return fmtstring;
 }
 
 
@@ -1648,14 +1598,7 @@ LIVES_LOCAL_INLINE void lives_funcinst_add_receipt(lives_funcinst_t *finst, void
 
 uint64_t cbflags_for_hs_op_flags(uint64_t hs_op_flags) {
   uint64_t cbflags = 0;
-
-  if (hs_op_flags & HOOKSTACK_PERSISTENT)
-    cbflags |= HOOK_CB_PERSISTENT;
-  if (hs_op_flags & HOOKSTACK_ALWAYS_ONESHOT)
-    cbflags |= HOOK_OPT_ONESHOT;
-  if (hs_op_flags & HOOKSTACK_GUI_THREAD)
-    cbflags |= HOOK_CB_FG_THREAD;
-
+  APPLY_BIT_TRANSFORMS(HS_OP_FLAGS, CBFLAGS, hs_op_flags, cbflags)
   return cbflags;
 }
 
@@ -1689,7 +1632,46 @@ static void finst_disposition_pop(lives_funcinst_t *finst) {
 }
 
 
-void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode) {
+boolean set_param_symbolic(const char *datasrc, weed_seed_t st, int pcount, lives_funcinst_t *finst) {
+  char *pkey = NULL;
+  boolean ret = TRUE;
+
+  if (!*datasrc || !datasrc[1]) goto fail;
+
+  const char *item = (const char *)(datasrc + 1);
+  pkey = make_std_pname(pcount);
+
+  switch (*datasrc) {
+  case '-': {
+    break;
+  }
+  case '$': {
+    // data comes from local data book
+    if (GET_BOOK_DATATYPE(lives_local_databook(), item) != st) goto fail;
+    leaf_from_allvalues(finst->params, pkey, get_local_book_item(item));
+    break;
+  }
+  case '@': {
+    // data comes from global data book
+    if (GET_BOOK_DATATYPE(mainw->global_databook, item) != st) goto fail;
+    leaf_from_allvalues(finst->params, pkey, get_global_book_item(item));
+    break;
+  }
+  default: break;
+  }
+
+  goto success;
+
+fail: ret = FALSE;
+success:
+  if (pkey) lives_free(pkey);
+  return ret;
+
+}
+
+
+void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode,
+                        ...) {
   if (!finst) return NULL;
 
   lives_funcinst_t *ret_finst = NULL;
@@ -1725,7 +1707,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
     } else pthread_rwlock_unlock(&finst->dispolock);
   }
 
-  if (!finst || !hstacks || type < 0 || type >= N_HOOK_POINTS) {
+  if (!finst || !hstacks || hstype < 0 || hstype >= N_HOOK_POINTS) {
     if (receipt) lives_cb_receipt_set_reply(receipt, LIVES_REPLY_INVALID);
     if (finst) finst->flags |= FINST_FLAG_REJECTED;
     if (temp_module) finst_disposition_pop(finst);
@@ -1734,7 +1716,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
 
   if (!no_add) {
     CL_DATA(finst, hstacks) = hstacks;
-    CL_DATA(finst, hstype) = type;
+    CL_DATA(finst, hstype) = hstype;
   }
 
   if (!hstacks) {
@@ -1744,7 +1726,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
     return receipt;
   }
 
-  hstack = hstacks[type];
+  hstack = hstacks[hstype];
 
   if (!hstack) {
     if (receipt) lives_funcinst_send_replies(finst, LIVES_REPLY_INVALID);
@@ -1765,7 +1747,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
 
   if (receipt) lives_funcinst_add_receipt(finst, receipt);
 
-  hs_op_flags = get_hs_op_flags(type);
+  hs_op_flags = get_hs_op_flags(hstype);
 
   if (hstack->owner_act_src_type == ACTION_SOURCE_LPT && hstack->owner.lpt == self)
     is_self_stack = TRUE;
@@ -1789,7 +1771,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
   if (is_append) xflags &= ~(HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD);
 
 #ifdef HAVE_COND_EVAL
-  const hook_stack_descriptor_t *hsdesc = get_hs_desc(type);
+  const hook_stack_descriptor_t *hsdesc = get_hs_desc(hstype);
   if ((hstack->hsdesc->accept_cond && !lives_cond_eval(hsdesc->accept_cond))
       || (hstack->reject_cond && lives_cond_eval(hstack->reject_cond))) {
     if (receipt) {
@@ -1916,13 +1898,85 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
     xrcpt->status |= RCPT_PERSISTENT;
   }
 
+
+  if (addmode == ADDMODE_NORMAL) {
+    if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT)
+      SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_TARGET_OBJECT, hstacks[hstype]->owner.lpt);
+
+    va_list va;
+    va_start(va, addmode);
+    va_surprise *magic = va_arg(va, va_surprise *);
+    va_end(va);
+    if (magic) {
+      const hook_stack_descriptor_t *hsdesc = get_hs_desc(hstype);
+      lives_condition C = NULL;
+      int pcount = 0;
+      char *tmp;
+      boolean has_ffuncs = FALSE;
+
+      if (cbflags & HOOK_CB_HAS_FREEFUNCS) has_ffuncs = TRUE;
+
+      // add predefined const data here
+      for (LiVESList *l = hsdesc->const_data_srcs; l; l = l->next) {
+        weed_seed_t st;
+        const char *datasrc = (const char *)l->data;
+        // format is "X|Ysrcname", where X is seed_type, Y is origin
+        if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
+        if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
+        st = get_seedtype(datasrc[0]);
+        if (st == WEED_SEED_INVALID) continue;
+        if (!set_param_symbolic((const char *)(datasrc + 2), st, pcount, finst)) {
+          if (receipt) lives_funcinst_send_replies(finst, LIVES_REPLY_INVALID);
+          if (finst) finst->flags |= FINST_FLAG_MISSING_CONST | FINST_FLAG_REJECTED;
+          g_print("Error adding %s to hook stack %d in lpt %p\n"
+                  "%s not defined !\n", get_func_call(finst), hstype,
+                  hstacks[hstype]->owner.lpt, desc_bookval(datasrc[0], datasrc + 2));
+          if (temp_module) finst_disposition_pop(finst);
+          return receipt;
+        }
+        pcount++;
+      }
+
+      if (cbflags & HOOK_CB_CONDITIONAL) C = va_arg(magic->va, lives_condition);
+
+      const char *args_fmt = va_arg(magic->va, const char *);
+
+      if (args_fmt) {
+        for (int i = 0; args_fmt[i]; i++) {
+          weed_plant_params_from_valist(finst->params, args_fmt + i, make_std_pname, &pcount, 1, magic->va);
+          //va_copy(vc, va);
+          /* st =; */
+          /* SET_SELF_VALUE_VA(st, item, vc); */
+          //va_end(vc);
+          if (has_ffuncs) {
+            lives_funcinst_t *free_finst = va_arg(magic->va, lives_funcinst_t *);
+            if (free_finst) {
+              char *fpkey = lives_strdup_printf("p%d_free", pcount);
+              lives_funcinst_set_disposition(free_finst, FALSE, DISPOSITION_CONTINGENCY);
+              CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_READY;
+              weed_set_voidptr_value(finst->params, fpkey, free_finst);
+              lives_free(fpkey);
+            }
+          }
+        }
+      }
+      validate_args_fmt((tmp = get_args_fmt(finst->params)), finst->funcdef->funcname, finst->paramnames);
+      lives_free(tmp);
+      if (C) CL_DATA(finst, trigger_cond) = C;
+    }
+  }
   lives_funcinst_send_replies(finst, LIVES_REPLY_YES);
 
   if (is_append) {
     if (!ret_finst) hstack->stack = lives_list_append((LiVESList *)hstack->stack, finst);
-  } else hstacks[type]->stack = lives_list_prepend((LiVESList *)hstack->stack, finst);
+  } else hstacks[hstype]->stack = lives_list_prepend((LiVESList *)hstack->stack, finst);
 
   if (self) CL_DATA(finst, orig_adder) = self;
+
+  if (addmode == ADDMODE_NORMAL) {
+    if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT)
+      DEL_BOOK_VALUE(lives_local_databook(), LDB_TARGET_OBJECT);
+  }
 
   if (!have_lock) PTMUH;
 
@@ -1934,19 +1988,15 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int type, lives_funcinst_t
 }
 
 
-void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int type,
-                                 lives_funcinst_t *finst, uint64_t cbflags) {
+static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t **hstacks, int hstype,
+    lives_funcinst_t *finst, uint64_t cbflags, va_surprise * wand) {
   // funcinst may be blocked from adding for a variety of reasons
   // if superceded by another funcinst, we return the receipt, if not replaced, we return NULL
   // and in both cases, FINST_FLAG_REJECTED is set
 
   GET_PROC_THREAD_SELF(self);
-  void *receipt;
-  int reply;
-
-  receipt = lives_hook_cb_add(hstacks, type, finst, cbflags, ADDMODE_NORMAL);
-
-  reply = lives_cb_receipt_get_req_reply(receipt);
+  void *receipt = lives_hook_cb_add(hstacks, hstype, finst, cbflags, ADDMODE_NORMAL, wand);
+  int reply = lives_cb_receipt_get_req_reply(receipt);
 
   if (reply == LIVES_REPLY_YES) {
     // reply can be YES even if func inst was rejected
@@ -1967,105 +2017,35 @@ void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int type,
 }
 
 
-boolean set_param_symbolic(const char *datasrc, weed_seed_t st, int pcount, lives_funcinst_t *finst) {
-  char *pkey = NULL;
-  boolean ret = TRUE;
-
-  if (!*datasrc || !datasrc[1]) goto fail;
-
-  const char *item = (const char *)(datasrc + 1);
-  pkey = make_std_pname(pcount);
-
-  switch (*datasrc) {
-  case '-': {
-    break;
-				}
-  case '$': {
-    // data comes from local data book
-    if (GET_BOOK_DATATYPE(lives_local_databook(), item) != st) goto fail;
-    leaf_from_allvalues(finst->params, pkey, get_local_book_item(item));
-    break;
-  }
-  case '@': {
-    // data comes from global data book
-    if (GET_BOOK_DATATYPE(mainw->global_databook, item) != st) goto fail;
-    leaf_from_allvalues(finst->params, pkey, get_global_book_item(item));
-    break;
-  }
-  default: break;
-  }
-
-    goto success;
-
-  fail: ret = FALSE;
-  success:
-    if (pkey) lives_free(pkey);
-    return ret;
-    
+void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int hstype,
+                                 lives_funcinst_t *finst, uint64_t cbflags) {
+  return lives_hook_cb_add_funcinst_va(hstacks, hstype, finst, cbflags, NULL);
 }
 
 
 // returns receipt. or NULL if add condition failed, or it was toggled out
+// calls hook_cb_add_funci
 void *_lives_hook_cb_add_full(lives_hook_stack_t **hstacks, int hstype, uint64_t cbflags, lives_funcptr_t func,
-                              const char *fname, int return_type, const char **anames, const char *args_fmt, ...) {
+                              const char *fname, int return_type, const char **anames, ...) {
   // create funcinst, no params
-  va_list va, vc;
-  lives_funcinst_t *finst = _lives_funcinst_create(NULL, func, fname, return_type, NULL, NULL, NULL);
-  const hook_stack_descriptor_t *hsdesc = get_hs_desc(hstype);
-  int pcount = 0;
-  char *tmp;
   void *rcpt = NULL;
-  boolean has_ffuncs = FALSE;
-  GET_PROC_THREAD_SELF(self);
-
-  if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT)
-    SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_TARGET_OBJECT, hstacks[hstype]->owner.lpt);
-
-  if (cbflags & HOOK_CB_HAS_FREEFUNCS) has_ffuncs = TRUE;
-
-  // add predefined const data here
-  for (LiVESList *l = hsdesc->const_data_srcs; l; l = l->next) {
-    weed_seed_t st;
-    const char *datasrc = (const char *)l->data;
-    // format is "X|Ysrcname", where X is seed_type, Y is origin
-    if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
-    if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
-    st = get_seedtype(datasrc[0]);
-    if (st == WEED_SEED_INVALID) continue;
-    if (!set_param_symbolic((const char *)(datasrc + 2), st, pcount, finst)) goto fin;
+  lives_funcinst_t *finst = _lives_funcinst_create(NULL, func, fname, return_type, NULL, NULL, NULL);
+  va_surprise va_magic;
+  va_surprise *va_wand = NULL;
+  boolean has_cond = FALSE, has_af = FALSE;
+  va_start(va_magic.va, anames);
+  if (cbflags & HOOK_CB_CONDITIONAL) has_cond = TRUE;
+  else {
+    va_list vc;
+    va_copy(vc, va_magic.va);
+    if (va_arg(vc, const char *)) has_af = TRUE;
+    va_end(vc);
   }
 
-  if (args_fmt) {
-    va_start(va, args_fmt);
-    for (int i = 0; args_fmt[i]; i++) {
-      pcount++;
-      va_copy(vc, va);
-      weed_plant_params_from_valist(finst->params, args_fmt, make_std_pname, &pcount, 1, va);      
-      /* st =; */
-      /* SET_SELF_VALUE_VA(st, item, vc); */
-      va_end(vc);
-      if (has_ffuncs) {
-	lives_funcinst_t *free_finst = va_arg(va, lives_funcinst_t *);
-	if (free_finst) {
-	  char *fpkey = lives_strdup_printf("p%d_free", pcount);
-	  lives_funcinst_set_disposition(free_finst, FALSE, DISPOSITION_CONTINGENCY);
-	  CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_READY;
-	  weed_set_voidptr_value(finst->params, fpkey, free_finst);
-	  lives_free(fpkey);
-	}
-      }
-      pcount++;
-    }
-  }
+  if (has_af || has_cond) va_wand = &va_magic;
+  rcpt = lives_hook_cb_add_funcinst_va(hstacks, hstype, finst, cbflags, va_wand);
 
-  validate_args_fmt((tmp = get_args_fmt(finst->params)), finst->funcdef->funcname, finst->paramnames);
-  lives_free(tmp);
-
-  rcpt = lives_hook_cb_add_funcinst(hstacks, hstype, finst, cbflags);
-
-fin:
-  if (args_fmt) va_end(va);
-  if (hsdesc->const_data_srcs) DEL_BOOK_VALUE(lives_local_databook(), LDB_TARGET_OBJECT);
+  if (va_wand) va_end(va_magic.va);
   return rcpt;
 }
 
@@ -2274,7 +2254,7 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
       }
 
       if (!(cbflags & HOOK_STATUS_ACTIONED)) continue;
-      
+
       /* lives_cond_create(COND_BEGIN. COND_EQUALS, COND_INT32_VAR(finst->funcdef->return_type), */
       /* 			COND_INT32_CONST(WEED_SEED_BOOLEAN), COND_END); */
 
@@ -2335,6 +2315,15 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
         }
       }
 
+      if (CL_DATA(finst, trigger_cond)) {
+        if (lives_cond_eval(CL_DATA(finst, trigger_cond))
+            != LIVES_COND_PASS) {
+          cbflags &= ~HOOK_STATUS_ACTIONED;
+          CL_DATA(finst, cb_flags) = cbflags;
+          continue;
+        }
+      }
+
       cbflags |= HOOK_STATUS_RUNNING;
       cbflags &= ~HOOK_STATUS_ACTIONED;
       CL_DATA(finst, cb_flags) = cbflags;
@@ -2381,13 +2370,6 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
         CL_DATA(finst, triggerer.lpt) = ACTION_SOURCE_NONE;
       }
 
-
-      if (type == LIVES_GUI_HOOK) {
-	BREAK_ME("guih");
-	g_print("trug %p\n", finst);
-	if (cbflags & HOOK_OPT_ONESHOT) g_print("onsh\n");
-      }
-
       rcpts = (LiVESList *)CL_DATA(finst, receipts);
       if (rcpts) reply = lives_cb_receipt_get_req_reply(rcpts->data);
 
@@ -2419,7 +2401,6 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
           cbflags &= ~HOOK_STATUS_ACTIONED;
           CL_DATA(finst, cb_flags) = cbflags;
         }
-        g_print("done single\n");
         break;
       }
     }

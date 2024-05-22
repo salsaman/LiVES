@@ -168,10 +168,9 @@ lives_proc_thread_t start_playback_async(int type) {
   lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_stacks = mainw->global_hook_stacks;
   lpt_hooks[SYNC_ANNOUNCE_HOOK]->req_target_type = LIVES_GUI_HOOK;
-
   if (type == 6 && THREADVAR(accel_group)) {
     lives_proc_thread_add_hook_cb_full(self, ACCEL_END_HOOK, HOOK_OPT_ONESHOT,
-                                       lives_proc_thread_dispatch, WEED_SEED_VOID, "p", lpt);
+                                       lives_proc_thread_dispatch, WEED_SEED_VOID, "P", lpt);
   } else lives_proc_thread_dispatch(lpt);
   return lpt;
 }

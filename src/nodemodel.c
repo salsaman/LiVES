@@ -2409,13 +2409,13 @@ static void run_plan(exec_plan_t *plan) {
               lpt = step->proc_thread;
               lives_proc_thread_join_int(lpt);
 
-	      GET_LPT_VALUE(lpt, &gstart, "gconv_start");
+              GET_LPT_VALUE(lpt, &gstart, "gconv_start");
 
-	      if (gstart) {
+              if (gstart) {
                 size_t frmsize = lives_frame_calc_bytesize(step->fin_width, step->fin_height,
                                  step->fin_pal, FALSE, NULL, NULL);
                 double gend;
-		GET_LPT_VALUE(lpt, &gend, "gconv_end");
+                GET_LPT_VALUE(lpt, &gend, "gconv_end");
                 glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
               }
 
@@ -2783,7 +2783,7 @@ lives_proc_thread_t execute_plan(exec_plan_t *plan, boolean async) {
     mainw->plan_runner_proc = lpt
                               = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, run_plan, WEED_SEED_VOID,
                                   "v", plan);
-    lives_proc_thread_add_hook_cb(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, (void *)plan);
+    lives_proc_thread_add_hook_cb(lpt, CANCELLED_HOOK, 0, runner_cancelled_cb, "V", (void *)plan);
 
     lives_proc_thread_set_cancellable(lpt);
     lives_proc_thread_set_pauseable(lpt, TRUE);

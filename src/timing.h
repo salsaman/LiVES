@@ -6,6 +6,8 @@
 #ifndef _TIMING_H
 #define _TIMING_H
 
+extern glob_timedata_t *glob_timing;
+
 char *format_tstr(double xtime, int minlim);
 
 #define THE_TIMEY_WIMEY_KIND 1

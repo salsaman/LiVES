@@ -211,14 +211,14 @@ FN_DECL int weed_gui_get_flags(weed_gui_t *gui);
 FN_DECL int weed_param_has_value(weed_param_t *param);
 
 FN_DECL int weed_param_get_value_int(weed_param_t *param);
-FN_DECL int weed_param_get_value_boolean(weed_param_t *param);
+FN_DECL weed_boolean_t weed_param_get_value_boolean(weed_param_t *param);
 FN_DECL double weed_param_get_value_double(weed_param_t *param);
 FN_DECL int64_t weed_param_get_value_int64(weed_param_t *param);
 FN_DECL char *weed_param_get_value_string(weed_param_t *param);
 
 #ifdef __WEED_UTILS_H__
 FN_DECL int *weed_param_get_array_int(weed_param_t *param, int *nvalues);
-FN_DECL int *weed_param_get_array_boolean(weed_param_t *param, int *nvalues);
+FN_DECL weed_boolean_t *weed_param_get_array_boolean(weed_param_t *param, int *nvalues);
 FN_DECL double *weed_param_get_array_double(weed_param_t *param, int *nvalues);
 FN_DECL int64_t *weed_param_get_array_int64(weed_param_t *param, int *nvalues);
 FN_DECL char **weed_param_get_array_string(weed_param_t *param, int *mvalues);

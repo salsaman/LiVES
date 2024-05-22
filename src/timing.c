@@ -72,6 +72,7 @@ LIVES_GLOBAL_INLINE double reset_timer_info(void) {
   return timenow;
 }
 
+
 LIVES_GLOBAL_INLINE double show_timer_info(void) {
   double timesecs = lives_get_session_time(), tottime = timesecs - THREADVAR(timerinfo);
   char *tstr = lives_format_timing_string(tottime);
@@ -80,6 +81,7 @@ LIVES_GLOBAL_INLINE double show_timer_info(void) {
   THREADVAR(timerinfo) = timesecs;
   return timesecs;
 }
+
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   return lives_get_current_ticks() - origticks;

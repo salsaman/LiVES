@@ -548,7 +548,7 @@ DEF_FN int weed_is_threading(weed_plant_t *inst) {
 #ifdef __WEED_UTILS_H__
 DEF_FN int *weed_param_get_array_int(weed_plant_t *param, int *nvalues)
 {return (int *)(weed_get_int_array_counted(param, WEED_LEAF_VALUE, nvalues));}
-DEF_FN int *weed_param_get_array_boolean(weed_plant_t *param, int *nvalues)
+DEF_FN weed_boolean_t *weed_param_get_array_boolean(weed_plant_t *param, int *nvalues)
 {return weed_get_boolean_array_counted(param, WEED_LEAF_VALUE, nvalues);}
 DEF_FN double *weed_param_get_array_double(weed_plant_t *param, int *nvalues)
 {return weed_get_double_array_counted(param, WEED_LEAF_VALUE, nvalues);}
@@ -573,7 +573,7 @@ DEF_FN void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *npl
 DEF_FN int weed_param_has_value(weed_plant_t *param)
 {return _leaf_has_value(param, WEED_LEAF_VALUE) ? WEED_TRUE : WEED_FALSE;}
 DEF_FN int weed_param_get_value_int(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
-DEF_FN int weed_param_get_value_boolean(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
+DEF_FN weed_boolean_t weed_param_get_value_boolean(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
 DEF_FN double weed_param_get_value_double(weed_plant_t *param) {return gg_dbl(param, WEED_LEAF_VALUE);}
 DEF_FN int64_t weed_param_get_value_int64(weed_plant_t *param) {return gg_i64(param, WEED_LEAF_VALUE);}
 DEF_FN char *weed_param_get_value_string(weed_plant_t *param) {

@@ -483,10 +483,7 @@ void lives_thread_set_proc_thread(lives_proc_thread_t lpt);
 void lives_proc_thread_set_pthread(lives_proc_thread_t, pthread_t pthread);
 pthread_t lives_proc_thread_get_pthread(lives_proc_thread_t);
 
-void toggle_var_cb(void *dummy, void *var);
-void inc_counter_cb(void *dummy, void *var);
-void dec_counter_cb(void *dummy, void *var);
-void reset_counter_cb(void *dummy, void *var);
+boolean toggle_var_cb(void *dummy, void *var);
 
 boolean wake_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other);
 boolean pause_request_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other);
@@ -544,7 +541,6 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_DESTRUCT_RWLOCK "destruct_rwlock" ///< ensures destruct is accessed atomically
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
-#define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread
 #define LIVES_LEAF_DATA_BOOK "data_book" // scratch data area for proc_threads
 
 #define LIVES_LEAF_ERRNUM "errnum"
@@ -798,9 +794,7 @@ int lives_proc_thread_count_refs(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 
-#define DEL_SELF_VALUE(name)weed_leaf_delete(lives_proc_thread_get_data(self),name)
-
-#define SELF_HAS_VALUE(name)
+#define DEL_SELF_VALUE(name) DEL_BOOK_VALUE(lives_local_databook(), name)
 
 #define SET_SELF_VALUE(type, name, val)					\
   SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, val)
@@ -839,12 +833,12 @@ weed_plant_t *lives_proc_thread_get_book(lives_proc_thread_t);
 weed_plant_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
 
 // a data book can be shared with another lpt, eg before dispatching it
-// or it can be copied 
+// or it can be copied
 weed_plant_t *lives_proc_thread_share_book(lives_proc_thread_t dst,
     lives_proc_thread_t src);
 
 // making an item indellible is similar to making aa variable static, non-idellible
-// (dellible ?) items are removed when the funcinst is done 
+// (dellible ?) items are removed when the funcinst is done
 
 // commonly used databook items
 #define LDB_SRC_OBJECT "src_object"

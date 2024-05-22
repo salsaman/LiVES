@@ -26,6 +26,8 @@ void cancel_cleanup(void) {
   int afd;
   GET_SELF_VALUE(&cr, "cr");
   GET_SELF_VALUE(&afd, "afd");
+  DEL_SELF_VALUE("cr");
+  DEL_SELF_VALUE("afd");
   if (cr) {
     lives_painter_surface_t *surface = lives_painter_get_target(cr);
     lives_painter_surface_flush(surface);
@@ -149,7 +151,6 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
     // TEST
     //set_interrupt_action(SIG_ACT_IGNORE);
     SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", NULL);
-
     lives_painter_destroy(cr);
     cr = NULL;
   }
@@ -678,8 +679,11 @@ double lives_ce_update_timeline(int frame, double x) {
     if (!prefs->hide_framebar) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
     }
-    clear_tbar_bgs(0, 0, 0, 0, 0);
-    show_playbar_labels(-1);
+    if (get_timeline_lock()) {
+      clear_tbar_bgs(0, 0, 0, 0, 0);
+      show_playbar_labels(-1);
+      unlock_timeline();
+    }
     return -1.;
   }
 
@@ -6919,6 +6923,8 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
       offs_x += xw;
     }
   }
+
+
   lives_painter_destroy(cr);
   lives_widget_queue_draw(dsu_widget);
 }

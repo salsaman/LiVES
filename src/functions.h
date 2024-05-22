@@ -455,7 +455,7 @@ void *lives_cb_receipt_new(void);
 
 void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 
-// hsdescriptor flags
+// flags for adding hook callbacks
 
 //< caller will block when adding the hook and only return when the hook callback has returned
 // if the cb function is barred by another (due to uniqueness constraints),
@@ -494,6 +494,11 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 // only be expired by a proc_thread deliberately removing the receipt (as opposed to being flushed when proc_thread is freed)
 // or by the the callback's remove_condition passing, or when the stack owner is freed
 #define HOOK_CB_PERSISTENT		(1ull << 5)
+
+// if set, then when adding the callback, a lives_condition can be placed as the parameter following
+// the function. This becomes the "trigger_condition". If the condition falis, the callback is skipped over instead
+// of being triggered
+#define HOOK_CB_CONDITIONAL		(1ull << 6)
 
 // can be set to temporarily "block" a callback, in this case LIVES_REPLY_NO will be sent to receipts
 // TODO: deprecate and prepend or remove ("COND_NEVER, COND_AND") to/from trigger_cond
@@ -750,6 +755,9 @@ typedef struct {
 // funcinst was blocked from being added because it passed the 'reject_conditions'
 #define FINST_FLAG_NOPERM	  	(1ull << 34)
 
+// funcinst was blocked from being added because it passed the 'reject_conditions'
+#define FINST_FLAG_MISSING_CONST  	(1ull << 35)
+
 // when adding a hook callback, there are several methods
 // use a registered funcname, in this case the funcdef_t is looked up from funcname, and
 // we create a funcinst using funcdef as a template, and including the function va_args
@@ -862,7 +870,7 @@ typedef struct {
   // optionally, one value can start with a '>' to indicate the function return should
   // be mapped back to and update this value. For this reason, any input vars or extra vars passed in at trigger time MUST
   // be passed as BIND_VALUE(typecode, var) e.g BIND_VALUE("V", data) rather than just 'data'
-  const char ** _var_data_srcs;
+  const char **_var_data_srcs;
   LiVESList *var_data_srcs;
 } hook_stack_descriptor_t;
 
@@ -911,13 +919,11 @@ typedef struct _hstack_t {
 
 #define HOOKSTACK_FLAGS_ADJUST(flags)  _DW0(flags &= THREADVAR(hs_flag_mask);)
 
+/// * these bits set a corresponding bit in cbflags
+
 #define HOOKSTACK_NATIVE	       	(1ull << 0)
 
-// denotes that callbacks in the stack are run once only and removed
-#define HOOKSTACK_ALWAYS_ONESHOT       	(1ull << 1)
-
 // it is invalid to set both async and uniqueness constraints
-// the logic here is that the adder
 
 // hook callbacks should be run asynchronously. May be combined with ADDER_RUNS
 #define HOOKSTACK_ASYNC		       	(1ull << 2)
@@ -932,8 +938,7 @@ typedef struct _hstack_t {
 #define HOOKSTACK_RUN_BEFORE       	(1ull << 5)
 
 // MASKED OUT FOR GUI THREAD
-
-#define HOOKSTACK_GUI_THREAD		(1ull << 8)
+#define HOOKSTACK_GUI_THREAD		(1ull << 8)  // *
 
 // MASKED OUT FOR WORKER THREADS
 
@@ -941,18 +946,34 @@ typedef struct _hstack_t {
 // this only makes sense when combined with always_oneshot
 #define HOOKSTACK_RUN_SINGLE      	(1ull << 16)
 
-// callback receipts are usually expired when they have been removed from the addet;s cb_add_list
-// setting this prevents that, allowing callbacks to persist beyond the lifetime of the addery
-#define HOOKSTACK_PERSISTENT	       	(1ull << 17)
-
 // if callbacks cannot be run immediately (because some other thread holds the mutex lock)
 // return immediately and do not run the callbacks
-#define HOOKSTACK_NOWAIT	       	(1ull << 18)
+#define HOOKSTACK_NOWAIT	       	(1ull << 17)
+
+// callback receipts are usually expired when they have been removed from the addet;s cb_add_list
+// setting this prevents that, allowing callbacks to persist beyond the lifetime of the addery
+#define HOOKSTACK_PERSISTENT	       	(1ull << 18) // *
+
+/////
+
+// denotes that callbacks in the stack are run once only and removed
+#define HOOKSTACK_ALWAYS_ONESHOT       	(1ull << 32) // *
 
 // see HOOK_OPT_ADDER_RUNS
-#define HOOKSTACK_ADDER_RUNS	       	(1ull << 32)
+#define HOOKSTACK_ADDER_RUNS	       	(1ull << 33)
 
-//#define HS_FLAGS_CB_ADDED		(HOOKSTACK_SELF_ONLY)
+///////////////////
+
+// some hsdesc flags can alter cbflags
+#define APPLY_BIT_X_HS_OP_FLAGS_CBFLAGS(hs_op_flags, cbflags)	\
+  if (hs_op_flags & HOOKSTACK_PERSISTENT)			\
+    cbflags |= HOOK_CB_PERSISTENT;				\
+  if (hs_op_flags & HOOKSTACK_ADDER_RUNS)			\
+    cbflags |= HOOK_CB_ADDER_RUNS;				\
+  if (hs_op_flags & HOOKSTACK_ALWAYS_ONESHOT)			\
+    cbflags |= HOOK_OPT_ONESHOT;				\
+  if (hs_op_flags & HOOKSTACK_GUI_THREAD)			\
+    cbflags |= HOOK_CB_FG_THREAD;
 
 #define HS_DETAILS(type) HS_DETAILS_##type##_HOOK
 
@@ -993,10 +1014,15 @@ typedef struct _hstack_t {
 					  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT)})
 #define CONST_HOOKSRCS_SYNC_ANNOUNCE NULL
 
+#define HS_DETAILS_SEGMENT_END_HOOK ((hook_stack_descriptor_t)		\
+				     {.htype = SEGMENT_END_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
+					  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT)})
+#define CONST_HOOKSRCS_SEGMENT_END NULL
+
 #define HS_DETAILS_COMPLETED_HOOK ((hook_stack_descriptor_t)		\
 				   {.htype = COMPLETED_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				      .cascade = {			\
-						  .target_item = LIVES_LEAF_THRD_STATE,	\
+						  .target_item = (LDB_TARGET_OBJECT "/" LIVES_LEAF_THRD_STATE), \
 						  .when = LIVES_POST_HOOK, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 										"COND_UINT64_VAL", THRD_STATE_COMPLETED, ")"), \
@@ -1005,6 +1031,15 @@ typedef struct _hstack_t {
 						  },			\
 				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
 #define CONST_HOOKSRCS_COMPLETED "P|$target_object", NULL
+
+#define HS_DETAILS_ATTRS_UPDATED_HOOK ((hook_stack_descriptor_t)		\
+				       {.htype = ATTRS_UPDATED_HOOK, .pattern = HOOK_PATTERN_DATA, \
+					  .cascade = {			\
+						      .target_item = LDB_TARGET_OBJECT "/" LIVES_LEAF_THRDATTRS, \
+						      .when = LIVES_POST_HOOK \
+						      },		\
+					  .op_flags = 0})
+#define CONST_HOOKSRCS_ATTRS_UPDATED "P|$target_object", NULL
 
 #define HS_DETAILS_FINISHED_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = FINISHED_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -1050,10 +1085,10 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
-						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										"COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
+						 .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+									       "COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
 						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
-										 "COND_UINT64_VAL", THRD_STATE_PAUSED) \
+										"COND_UINT64_VAL", THRD_STATE_PAUSED) \
 						 },			\
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
 #define CONST_HOOKSRCS_PAUSED "P|$target_object", NULL
@@ -1063,20 +1098,42 @@ typedef struct _hstack_t {
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
-						 .pre_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+						 .pre_cond = lives_cond_create("COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 									       "COND_UINT64_VAL", THRD_STATE_PAUSED), \
-						  .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										 "COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
+						 .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
 						 },			\
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
 #define CONST_HOOKSRCS_RESUMING "P|$target_object", NULL
+
+#define HS_DETAILS_BUSY_HOOK ((hook_stack_descriptor_t)		\
+			      {.htype = BUSY_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				 .cascade = {				\
+					     .target_item = LIVES_LEAF_THRD_STATE, \
+					     .when = LIVES_POST_HOOK,	\
+					     .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+									   "COND_UINT64_VAL", THRD_STATE_BUSY, ")"), \
+					     .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+									    "COND_UINT64_VAL", THRD_STATE_BUSY)}})
+#define CONST_HOOKSRCS_BUSY "P|$target_object", NULL
+
+#define HS_DETAILS_UNBUSY_HOOK ((hook_stack_descriptor_t)		\
+				  {.htype = UNBUSY_HOOK, .pattern = HOOK_PATTERN_DATA, \
+				     .cascade = {			\
+						 .target_item = LIVES_LEAF_THRD_STATE, \
+						 .when = LIVES_POST_HOOK, \
+						 .pre_cond = lives_cond_create("COND_SYM_OLD_VALUE", "COND_BIT_SET", \
+									       "COND_UINT64_VAL", THRD_STATE_BUSY), \
+						 .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										"COND_UINT64_VAL", THRD_STATE_BUSY, ")")}})
+#define CONST_HOOKSRCS_UNBUSY "P|$target_object", NULL
 
 #define HS_DETAILS_DESTRUCTION_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = DESTRUCTION_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
 				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
 #define CONST_HOOKSRCS_DESTRUCTION "P|$target_object", NULL
 
-// low level flags used internally when adding callbacks*/
+// low level flags used internally when adding callbacks*
 
 #define _ADDMODE_NORCPT 	(1ull << 0) // do not create a request receipt; if not stacked, create a temporary module
 #define _ADDMODE_HAVE_LOCK 	(1ull << 1) // mutex locked; already has a hookstack module
@@ -1121,20 +1178,32 @@ typedef struct _hstack_t {
 
 void fg_deferral_remove_persistent(void);
 
-// normal funcs, but not called directly
-void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
-                              const char *fname, int return_type, const char **anames, const char *args_fmt, ...);
-#define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, ...) \
-  _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
-
-// func call with variant addmode
-void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode);
-
+/////////////////////////////////////////////////////////////////////////
 //fixed cb type: boolean cb(void *owner, void *data)
 // hstacks == NULL -> self_hook_stacks(hstype)
+/// normal api - can be followed by trigger cond if hook_cb_conditional,, and args_fmt etc
 #define lives_hook_cb_append(hstacks, hstype, cbflags, func, ...)	\
   _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
 			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+
+// same but caller defines rtype and args
+#define lives_hook_cb_append_full(hstacks, hstype, cbflags, func, rtype, ...) \
+  _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, (rtype), \
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+
+////////////////////////////////////////////////////
+
+// normal funcs, but not called directly
+void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
+                              const char *fname, int return_type, const char **anames, ...);
+
+// SAM AS APPEND, BUT WE CAN SET RTYPE AN DNAME
+#define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, ...) \
+  _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+
+// func call with variant addmode INTERNAL
+void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode, ...);
+
 
 // same, but get hstacks for lpt
 #define lives_proc_thread_add_hook_cb(lpt, hstype, cbflags, func, ...)	\
@@ -1142,10 +1211,6 @@ void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *
 			  (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
 			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
-// same but caller defines rtype and args
-#define lives_hook_cb_append_full(hstacks, hstype, cbflags, func, rtype, ...) \
-  _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, (rtype), \
-			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 #define lives_proc_thread_add_hook_cb_full(lpt, hstype, cbflags, func, rtype, ...) \
   _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (hstype), (cbflags), \
@@ -1312,7 +1377,10 @@ uint8_t get_sigbits_for_st(weed_seed_t);
 // st -> fmtstr
 const char *get_fmtstr_for_st(weed_seed_t);
 
-// symnae to sbits
+// sbits -> symname
+const char *get_symbolname(uint8_t val);
+
+// symname to sbits
 uint8_t symname_to_sigbits(const char *symname);
 
 funcsig_t short_params_to_funcsig(int nvals, const char **symnames);

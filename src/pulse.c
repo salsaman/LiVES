@@ -1206,8 +1206,8 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           /*     dets->fd = mainw->aud_rec_fd; */
           /*     dets->rec_samples = -1; */
 
-          /*     rec_rcpt = lives_proc_thread_add_hook_cb_full(NULL, DATA_READY_HOOK, 0, write_aud_data_cb, */
-          /*                WEED_SEED_BOOLEAN, "pv", self, dets); */
+          /*     rec_rcpt = lives_proc_thread_add_hook_cb(NULL, DATA_READY_HOOK, 0, write_aud_data_cb, */
+          /*                "PV", self, dets); */
           /*   } */
 
           /* // end from gen */
@@ -1232,12 +1232,12 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           // if we have > 0 callbacks, ensure we have float audio
 
           // the trigger requires an extra params - src object - this is no longer the lpt bu becomes the object producing the data
-	  // ie. aplayer + src item - data itself.
-	  // 
-	  // the local data book is cloned, cleaned, contextual values are added and made indellible
-	  // and then pushed to the bookshelf
-	  // after the callback returns, the book is cleaned, passed to the next callback
-	  // after all callbacks have run, the prior book is popped from he bookshelf
+          // ie. aplayer + src item - data itself.
+          //
+          // the local data book is cloned, cleaned, contextual values are added and made indellible
+          // and then pushed to the bookshelf
+          // after the callback returns, the book is cleaned, passed to the next callback
+          // after all callbacks have run, the prior book is popped from he bookshelf
           lives_hook_trigger(mystacks, DATA_PREVIEW_HOOK);
         }
       }

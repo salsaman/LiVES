@@ -1876,7 +1876,7 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     } else {
       enable_ss_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
-						HOOK_OPT_PRIORITY, enable_ss_cb, WEED_SEED_VOID);
+                      HOOK_OPT_PRIORITY, enable_ss_cb, WEED_SEED_VOID);
     }
     return TRUE;
   }

@@ -154,7 +154,7 @@ FN_TYPE int weed_plant_has_leaf(weed_plant_t *plant, const char *key) {
 
 FN_TYPE weed_error_t weed_set_int_value(weed_plant_t *plant, const char *key, int32_t value) {_WEED_SET_(INT)}
 FN_TYPE weed_error_t weed_set_double_value(weed_plant_t *plant, const char *key, double value) {_WEED_SET_(DOUBLE)}
-FN_TYPE weed_error_t weed_set_boolean_value(weed_plant_t *plant, const char *key, int32_t value) {_WEED_SET_(BOOLEAN)}
+FN_TYPE weed_error_t weed_set_boolean_value(weed_plant_t *plant, const char *key, weed_boolean_t value) {_WEED_SET_(BOOLEAN)}
 FN_TYPE weed_error_t weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t value) {_WEED_SET_(INT64)}
 FN_TYPE weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) {_WEED_SET_(STRING)}
 FN_TYPE weed_error_t weed_set_funcptr_value(weed_plant_t *plant, const char *key, weed_funcptr_t value) {_WEED_SET_P(FUNCPTR)}
@@ -254,7 +254,7 @@ static pl_error_t _set_con_attr_vargs(pl_attribute  *attr, const char *key,
       err = weed_set_int_value(attr, key, val); break;
     }
     case PL_ATTR_BOOLEAN: {
-      int val = va_arg(args, int);
+      weed_boolean_t val = va_arg(args, int);
       err = weed_set_boolean_value(attr, key, val); break;
     }
     case PL_ATTR_DOUBLE: {
@@ -291,7 +291,7 @@ static pl_error_t _set_con_attr_vargs(pl_attribute  *attr, const char *key,
       err = weed_set_int_array(attr, key, ne, vals); break;
     }
     case PL_ATTR_BOOLEAN: {
-      int *vals = va_arg(args, int *);
+      weed_boolean_t *vals = va_arg(args, weed_boolean_t *);
       err = weed_set_boolean_array(attr, key, ne, vals); break;
     }
     case PL_ATTR_DOUBLE: {

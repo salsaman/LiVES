@@ -30,24 +30,24 @@ static boolean check_st_match(allvalues_t *p0, allvalues_t *p1, int match) {
   case MATCH_ANY: return TRUE;
   case MATCH_NUMERIC:
     if (p0->stype == WEED_SEED_DOUBLE
-	|| p0->stype == WEED_SEED_FLOAT) return TRUE;
+        || p0->stype == WEED_SEED_FLOAT) return TRUE;
   case MATCH_INT:
     if (p0->stype == WEED_SEED_INT
-	|| p0->stype == WEED_SEED_UINT
-	|| p0->stype == WEED_SEED_INT64
-	|| p0->stype == WEED_SEED_UINT64) return TRUE;
+        || p0->stype == WEED_SEED_UINT
+        || p0->stype == WEED_SEED_INT64
+        || p0->stype == WEED_SEED_UINT64) return TRUE;
     break;
   case MATCH_BOOL:
     if (p0->stype == WEED_SEED_BOOLEAN) return TRUE;
     break;
   case MATCH_POINTER:
     if (p0->stype == WEED_SEED_VOIDPTR
-	|| p0->stype == WEED_SEED_FUNCPTR
-	|| p0->stype == WEED_SEED_PLANTPTR) return TRUE;
+        || p0->stype == WEED_SEED_FUNCPTR
+        || p0->stype == WEED_SEED_PLANTPTR) return TRUE;
     break;
   case MATCH_STRING:
     if (p0->stype == WEED_SEED_STRING
-	|| p0->stype == LIVES_SEED_CONST_CHARPTR) return TRUE;
+        || p0->stype == LIVES_SEED_CONST_CHARPTR) return TRUE;
     break;
   default: break;
   }

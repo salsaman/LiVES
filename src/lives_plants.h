@@ -93,7 +93,7 @@ int64_t lives_plant_get_subtype(weed_plant_t *);
 typedef struct {
   const char *name;
   weed_seed_t type;
- // (optional, can defne subtype if item type is plantptr)
+  // (optional, can defne subtype if item type is plantptr)
   uint64_t pl_subtype;
   uint64_t flags;
 } bootstrap_valdef;
@@ -137,7 +137,7 @@ void register_blueprints(void);
 
 // LIVES_PLANT_INDEX
 // if itemtype is plantptr, and keyval is defined, items will be indexed by keyval leaf, stringified
-// if prefixed by #, 
+// if prefixed by #,
 #define LIVES_INDEX_BLUEPRINT						\
   LIVES_STD_LEAVES, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, LIVES_SEED_CONST_CHARPTR, \
     BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE
@@ -177,7 +177,7 @@ boolean lives_index_erase_value(lives_index_t *, const char *key);
 // defined type
 boolean lives_index_contains_item(lives_index_t *, const char *key);
 
-// contained and an has value 
+// contained and an has value
 boolean lives_index_has_value(lives_index_t *, const char *key);
 
 weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean set);

@@ -2488,6 +2488,7 @@ void create_LiVES(void) {
 
   widget_opts.apply_theme = 1;
   mainw->video_draw = lives_drawing_area_new();
+  defer_config(mainw->video_draw);
   widget_opts.apply_theme = woat;
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_EXPOSE_EVENT,

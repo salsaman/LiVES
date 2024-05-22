@@ -127,11 +127,10 @@ static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
 // 'other' here is just to highlight the possible scope of the callbacks,
 // target can also be 'self' if it makes sense to do so
 
-void toggle_var_cb(void *dummy, void *var) {if (var) *(boolean *)var = !(*(boolean *)var);}
-void inc_counter_cb(void *dummy, void *var) {if (var)(*(int *)var)++;}
-void dec_counter_cb(void *dummy, void *var) {if (var)(*(int *)var)--;}
-void reset_counter_cb(void *dummy, void *var) {if (var)*(int *)var = 0;}
-
+boolean toggle_var_cb(void *dummy, void *var) {
+  if (var) *(boolean *)var = !(*(boolean *)var);
+  return TRUE;
+}
 
 boolean wake_other_lpt(lives_proc_thread_t self, lives_proc_thread_t other) {
   // hook callback to resume a paused / waiting proc_thread
@@ -492,7 +491,7 @@ static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, liv
 
   weed_leaf_set(finst->params, _RV_, return_type, 0, NULL);
 
-  if (!mainw->debug_ptr) mainw->debug_ptr = finst->params;
+  //if (!mainw->debug_ptr) mainw->debug_ptr = finst->params;
   return finst;
 }
 
@@ -656,7 +655,7 @@ void lives_funcinst_append_chain(lives_funcinst_t *f1, lives_funcinst_t *f2) {
 
 lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_thread_attr_t attrs,
     lives_funcptr_t func, const char *fname, int return_type, const char **anames,
-					      const char *args_fmt, ...) {
+    const char *args_fmt, ...) {
   lives_proc_thread_t lpt;
   lives_funcinst_t *finst;
   va_list xargs;
@@ -889,7 +888,7 @@ if (lpt) {
       int64_t state;
       pthread_rwlock_t *state_rwlock;
       lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
-      //if (lpt == mainw->debug_ptr) BREAK_ME("lpt free");
+      if (lpt == mainw->debug_ptr) BREAK_ME("lpt free");
 
       pthread_mutex_lock(&twork_mutex);
       if (lives_proc_thread_get_work(lpt)) {
@@ -924,10 +923,10 @@ if (lpt) {
 
       // clear list of added callback receipts
       flush_cb_added_list(lpt, TRUE);
-      g_print("unref of %p\n", lpt);
+      //g_print("unref of %p\n", lpt);
 
       if (finst) {
-        g_print("unref will free %p\n", finst);
+        //g_print("unref will free %p\n", finst);
         lives_funcinst_free(finst);
       }
       // this will expire callback receipts for other threads, unless flagged as persistent
@@ -1056,7 +1055,7 @@ boolean _main_thread_execute(lives_funcptr_t func, const char *fname, int return
                              void *retval, const char **anames, const char *args_fmt, ...) {
   boolean bret;
   va_list xargs;
-  if (!args_fmt || !*args_fmt) return _main_thread_execute(func, fname, return_type, retval, NULL, "", NULL);
+  if (!args_fmt || !*args_fmt) return _main_thread_execute_vargs(func, fname, return_type, retval, NULL, "", NULL);
   va_start(xargs, args_fmt);
   bret = _main_thread_execute_vargs(func, fname, return_type, retval, anames, args_fmt, xargs);
   va_end(xargs);
@@ -1524,10 +1523,8 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
         pthread_cond_t *pcond = &tdata->vars.var_pcond;
         if (ensure) {
           bval = FALSE;
-	  BREAK_ME("togf");
-          lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, WEED_SEED_VOID, toggle_var_cb, "V", (void *)&bval);
+          lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, 0, toggle_var_cb, "V", (void *)&bval);
         }
-        //tdata->vars.var_sync_ready = TRUE;
         pthread_cond_signal(pcond);
       }
 
@@ -1908,6 +1905,7 @@ static boolean timeout_dontcare(void *lpt, void *data) {
 
 static lives_result_t _lives_proc_thread_wait_finished(lives_proc_thread_t lpt, timeout_data * to_data) {
   if (!lpt) return LIVES_RESULT_INVALID;
+  static lives_condition C = NULL;
   void *rcpt1 = NULL, *rcpt2 = NULL, *rcpt3 = NULL;
   boolean is_fg = is_fg_thread();
   lives_result_t res = LIVES_RESULT_SUCCESS;
@@ -1927,13 +1925,13 @@ static lives_result_t _lives_proc_thread_wait_finished(lives_proc_thread_t lpt, 
     // TODO
     /* lives_funcinst_t *fi3 = */
 
+    // something like
+
+    if (!C) C = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", "COND_UINT64_CONST", LIVES_THRDATTR_DONTCARE);
+
     // for now we fake the condiiton and the hook is only called for dontcare
+    //rcpt3 = lives_proc_thread_add_hook_cb(lpt, ATTRS_UPDATED_HOOK, HOOK_CB_CONDITIONAL, timeout_dontcare, C, "V", (void *)to_data);
     rcpt3 = lives_proc_thread_add_hook_cb(lpt, ATTRS_UPDATED_HOOK, 0, timeout_dontcare, "V", (void *)to_data);
-
-    /* char **cond = lives_cond_create(COND_BEGIN. COND_BITS_SET, COND_UINT64_VAR(@new_value), */
-    /* 				    COND_UINT64_CONST(LIVES_THRDATTR_DONTCARE), COND_END); */
-
-    /* lives_callback_add_trigger_condition(fi3 ,3, cond); */
 
     THREADVAR(hook_hints) = 0;;
     if (!lives_proc_thread_is_busy(lpt))
@@ -3420,7 +3418,7 @@ skip_over:
       lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     } else {
       lives_proc_thread_unref(lpt);
-      g_print("Will destroy %p\n", lpt);
+      //g_print("Will destroy %p\n", lpt);
     }
 
     lives_proc_thread_set_thread_data(lpt, NULL);

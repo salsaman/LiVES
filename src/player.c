@@ -58,7 +58,7 @@ void clear_player_hooks(void) {
   if (sah->stack && all_updated) {
     GET_PROC_THREAD_SELF(self);
     all_updated = FALSE;
-    lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+    lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done);
     mainw->gui_much_events = TRUE;
     mainw->do_ctx_update = TRUE;
     lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
@@ -1252,7 +1252,7 @@ frames_t load_frame_image(frames_t frame) {
       if (sah->stack) {
         GET_PROC_THREAD_SELF(self);
         all_updated = FALSE;
-        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done, NULL);
+        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done);
         mainw->gui_much_events = TRUE;
         mainw->do_ctx_update = TRUE;
         lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
@@ -2804,7 +2804,7 @@ close_clip:
       if (sah->stack) {
         GET_PROC_THREAD_SELF(self);
         all_updated = FALSE;
-        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done, NULL);
+        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done);
         lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
       }
       mainw->gui_much_events = TRUE;
@@ -3795,7 +3795,7 @@ skip_load:
           all_updated = FALSE;
           // here we trigger only "light" updates, e.g drawing updates
           lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK,
-                                        HOOK_OPT_FG_LIGHT, updates_done, NULL);
+                                        HOOK_OPT_FG_LIGHT, updates_done);
           mainw->gui_much_events = TRUE;
           BG_THREADVAR(hook_hints) = HOOK_OPT_FG_LIGHT;
           lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);

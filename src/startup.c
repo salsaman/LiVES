@@ -1473,7 +1473,7 @@ boolean lives_startup(livespointer data) {
   what_sup = startupC_sup;
 
   // cant do this until conditions are intied - hook stack descriptors can have conditions
-  
+
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
   // linked to the proc_thread currently being actioned

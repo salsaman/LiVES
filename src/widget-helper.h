@@ -357,7 +357,7 @@ boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *);
 int lives_pixbuf_get_rowstride(const LiVESPixbuf *);
 int lives_pixbuf_get_n_channels(const LiVESPixbuf *);
 uint8_t *lives_pixbuf_get_pixels(const LiVESPixbuf *);
-uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
+const uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
 LiVESPixbuf *lives_pixbuf_copy(LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width, int height,

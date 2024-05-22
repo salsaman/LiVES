@@ -4959,7 +4959,7 @@ void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_PRIORITY,
-                                  _on_stop_activate, user_data);
+                                  _on_stop_activate, "VV", menuitem, user_data);
   else _on_stop_activate(menuitem, user_data);
 }
 
@@ -7452,7 +7452,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC,
-                                  _on_full_screen_activate, user_data);
+                                  _on_full_screen_activate, "VV", menuitem, user_data);
   else _on_full_screen_activate(menuitem, user_data);
 }
 
@@ -7519,7 +7519,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_PRIORITY |
-                                  HOOK_TOGGLE_FUNC, _on_double_size_activate, user_data);
+                                  HOOK_TOGGLE_FUNC, _on_double_size_activate, "VV", menuitem, user_data);
   else _on_double_size_activate(menuitem, user_data);
 }
 
@@ -7704,7 +7704,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_TOGGLE_FUNC
-                                  | HOOK_OPT_PRIORITY, _on_sepwin_activate, user_data);
+                                  | HOOK_OPT_PRIORITY, _on_sepwin_activate, "VV", menuitem, user_data);
   else _on_sepwin_activate(menuitem, user_data);
 }
 
@@ -7776,7 +7776,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook_cb(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_OPT_PRIORITY | HOOK_TOGGLE_FUNC,
-                                  _on_fade_activate, user_data);
+                                  _on_fade_activate, "VV", menuitem, user_data);
   else _on_fade_activate(menuitem, user_data);
 }
 
@@ -9482,14 +9482,17 @@ boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
 
 boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
-  /* if (mainw->no_configs) return TRUE; */
-  /* if (get_timeline_lock()) { */
-  /*   if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable); */
-  /*   mainw->video_drawable = lives_widget_create_painter_surface(widget); */
-  /*   clear_widget_bg(widget, mainw->video_drawable); */
-  /*   update_timer_bars(mainw->drawsrc, 0, 0, 0, 0, 1); */
-  /*   unlock_timeline(); */
-  /* } */
+  if (mainw->no_configs) return TRUE;
+
+  drawtl_cancel();
+
+  if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
+  mainw->video_drawable = lives_widget_create_painter_surface(widget);
+  clear_widget_bg(widget, mainw->video_drawable);
+  if (CURRENT_CLIP_IS_VALID && mainw->configured && !mainw->go_away)
+    update_timer_bars(mainw->drawsrc, 0, 0, 0, 0, 1);
+
+  unlock_timeline();
   return TRUE;
 }
 
@@ -9526,6 +9529,7 @@ boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
       = mainw->laudio_drawable = surf;
   } else mainw->laudio_drawable = NULL;
   unlock_timeline();
+
   if (IS_VALID_CLIP(mainw->drawsrc))
     redraw_timeline(mainw->drawsrc);
   else if (mainw->current_file == -1)
@@ -9547,6 +9551,7 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
   if (!mainw->reconfig) return TRUE;
   //
   drawtl_cancel();
+
   for (int i = 1; i < MAX_FILES; i++) {
     if (IS_VALID_CLIP(i)) {
       if (mainw->files[i]->raudio_drawable)
@@ -9562,6 +9567,7 @@ boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, liv
       = mainw->raudio_drawable = surf;
   } else mainw->raudio_drawable = NULL;
   unlock_timeline();
+
   if (IS_VALID_CLIP(mainw->drawsrc))
     redraw_timeline(mainw->drawsrc);
   else if (mainw->current_file == -1)

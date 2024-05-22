@@ -188,26 +188,78 @@ char *md5_print(void *md5sum) {
 }
 
 
-char *funcinst_paramstr(lives_funcinst_t *finst, funcsig_t sig) {
-  // create a string with the ctypes for a funcinst
-  int pn = 0;
-  char *pstr = NULL, *pname, *fmtstr = lives_strdup("");
-  const char *ctype;
-  uint32_t ne, st;
-
-  for (int i = 60; i >= 0; i -= 4) {
-    uint8_t ch = (sig >> i) & 0X0F;
-    if (!ch) continue;
-    st = get_seedtype(ch);
-    pname = make_std_pname(pn++);
-    ne = weed_leaf_num_elements(finst->params, pname);
-    ctype = weed_seed_to_ctype(st, FALSE);
-    if (ne > 1) pstr = lives_strdup_printf("%s[%d]", ctype, ne);
-    else pstr = lives_strdup_printf("(%s)", ctype);
-    fmtstr = lives_strdup_concat(fmtstr, ", ", "%s", pstr);
-    lives_freep((void **)&pstr); lives_free(pname);
+char *funcsig_to_param_string(funcsig_t sig) {
+  if (sig) {
+    char *fmtstring = lives_strdup("");
+    for (int i = 60; i >= 0; i -= 4) {
+      uint8_t ch = (sig >> i) & 0X0F;
+      if (!ch) continue;
+      fmtstring = lives_strdup_concat(fmtstring, ", ", "%s",
+                                      weed_seed_to_ctype(get_seedtype(ch), FALSE));
+    }
+    return fmtstring;
   }
-  return fmtstr;
+  return lives_strdup("void");
+}
+
+
+char *funcsig_to_symstring(funcsig_t sig) {
+  // turn funcsig into symstring (same format as listed in funcsigs.h)
+  char *fmtstring = lives_strdup("");
+  if (sig) {
+    for (int i = 60; i >= 0; i -= 4) {
+      uint8_t ch = (sig >> i) & 0X0F;
+      if (!ch) continue;
+      fmtstring = lives_strdup_concat(fmtstring, ",", "%s", get_symbolname(ch));
+    }
+  }
+  return fmtstring;
+}
+
+
+char *funcinst_paramstr(lives_funcinst_t *finst) {
+  // create a string with the ctypes for a funcinst
+  if (!finst) return NULL;
+  char *args_fmt = NULL;
+  if (finst->params) {
+    get_args_fmt(finst->params);
+    if (args_fmt && *args_fmt) {
+      int pn = 0;
+      char *pstr = NULL, *pname, *aname, *fmtstr = lives_strdup("");
+      const char *ctype;
+      weed_seed_t st;
+      weed_size_t ne;
+      for (int i = 0; args_fmt[i]; i++) {
+        char ch = args_fmt[i];
+        st = get_seedtype(ch);
+        pname = make_std_pname(pn++);
+        ne = weed_leaf_num_elements(finst->params, pname);
+        ctype = weed_seed_to_ctype(st, FALSE);
+
+        if (finst->paramnames && finst->paramnames[i]) {
+          if (ne > 1)
+            aname = lives_strdup_printf(" %s", finst->paramnames[pn]);
+          else aname = lives_strdup_printf(" %s (%s)", finst->paramnames[pn],
+                                             weed_leaf_stringify(finst->params, pname));
+        } else {
+          if (ne > 1) aname = lives_strdup("");
+          else
+            aname = lives_strdup_printf(" %s",
+                                        weed_leaf_stringify(finst->params, pname));
+        }
+
+        if (ne > 1) pstr = lives_strdup_printf("%s[%d]%s", ctype, ne, aname);
+        else pstr = lives_strdup_printf("(%s)%s", ctype, aname);
+        lives_free(aname);
+        fmtstr = lives_strdup_concat(fmtstr, ", ", "%s", pstr);
+        lives_freep((void **)&pstr); lives_free(pname);
+      }
+
+      return fmtstr;
+    }
+  }
+  if (args_fmt) lives_free(args_fmt);
+  return lives_strdup("(void)");
 }
 
 
@@ -221,53 +273,73 @@ LIVES_GLOBAL_INLINE char *weed_leaf_stringify(weed_plant_t *pl, const char *key)
 }
 
 
+LIVES_GLOBAL_INLINE char *desc_bookval(char tlett, const char *name) {
+  char *ret = LSPF("%s databook value %s (%s)", *name == '$' ? "Local" : "Global", name + 1,
+                   weed_seed_to_ctype(get_seedtype(tlett), FALSE));
+  return ret;
+}
+
+
+char *get_func_call(lives_funcinst_t *finst) {
+  char *fmtstring, *parvals;
+  lives_funcdef_t *fdef = finst->funcdef;
+  weed_seed_t ret_type = fdef->return_type;
+  const char *funcname = fdef->funcname;
+
+  parvals = funcinst_paramstr(finst);
+
+  if (ret_type) {
+    fmtstring = lives_strdup_printf("(%s) %s(%s);",
+                                    weed_seed_to_ctype(ret_type, FALSE), funcname, parvals);
+  } else fmtstring = lives_strdup_printf("(void) %s(%s);", funcname, parvals);
+  lives_free(parvals);
+  return fmtstring;
+}
+
+
 char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
   if (finst) {
-    char *fmtstring, *parvals;
+    char *fmtstring;
     lives_funcdef_t *fdef = finst->funcdef;
-    weed_seed_t ret_type = fdef->return_type;
-    funcsig_t sig = fdef->funcsig;
     const char *funcname = fdef->funcname;
-    weed_seed_t st;
-
-    parvals = funcinst_paramstr(finst, sig);
-
     g_print("function %s with the following prototype\n", funcname);
 
-    if (ret_type) {
-      fmtstring = lives_strdup_printf("(%s) %s(%s);",
-                                      weed_seed_to_ctype(ret_type, FALSE), funcname, parvals);
-    } else fmtstring = lives_strdup_printf("(void) %s(%s);", funcname, parvals);
-    lives_free(parvals);
+    fmtstring = get_func_call(finst);
 
     g_print("%s\n", fmtstring);
 
-    if (finst && finst->paramnames) {
-      char *pstr;
-      int pn = 0;
-      g_print("Function params have the following values\n");
+    char *args_fmt = NULL;
+    if (finst->params) {
+      get_args_fmt(finst->params);
+      if (args_fmt && *args_fmt) {
+        if (finst->paramnames) {
+          char *pstr;
+          int pn = 0;
+          char *pname, *parname;
+          const char *ctype;
+          int ne;
 
-      for (int i = 60; i >= 0; i -= 4) {
-        uint8_t ch = (sig >> i) & 0X0F;
-        char *pname, *parname;
-        const char *ctype;
-        int ne;
-        if (!ch) continue;
-        st = get_seedtype(ch);
-        pname = make_std_pname(pn);
-        ne = weed_leaf_num_elements(finst->params, pname);
-        ctype = weed_seed_to_ctype(st, FALSE);
-        if (finst && finst->paramnames && finst->paramnames[pn])
-          parname = lives_strdup(finst->paramnames[pn]);
-        else parname = lives_strdup_printf("param %d", pn);
-        if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne);
-        else {
-          char *xpstr = weed_leaf_stringify(finst->params, pname);
-          pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr);
-          lives_free(xpstr);
+          g_print("Function params have the following values\n");
+
+          for (int i = 0; args_fmt[i]; i++) {
+            char ch = args_fmt[i];
+            weed_seed_t st = get_seedtype(ch);
+            pname = make_std_pname(pn);
+            ne = weed_leaf_num_elements(finst->params, pname);
+            ctype = weed_seed_to_ctype(st, FALSE);
+            if (finst && finst->paramnames && finst->paramnames[pn])
+              parname = lives_strdup(finst->paramnames[pn]);
+            else parname = lives_strdup_printf("param %d", pn);
+            if (ne > 1) pstr = lives_strdup_printf("(%s)%s[%d]", ctype, parname, ne);
+            else {
+              char *xpstr = weed_leaf_stringify(finst->params, pname);
+              pstr = lives_strdup_printf("\t(%s)%s\t\twith value %s", ctype, finst->paramnames[pn], xpstr);
+              lives_free(xpstr);
+            }
+            g_print("%s\n", pstr);
+            pn++;
+          }
         }
-        g_print("%s\n", pstr);
-        pn++;
       }
     }
     return fmtstring;
@@ -304,6 +376,8 @@ char *cl_flags_desc(uint64_t clflags) {
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PRIORITY");
   if (clflags & HOOK_OPT_ONESHOT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "ONESHOT");
+  if (clflags & HOOK_CB_CONDITIONAL)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "HAS_TRIGGER_CONDITION");
   if (clflags & HOOK_CB_PERSISTENT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PERSISTENT");
   if (clflags & HOOK_CB_IGNORE)

@@ -1314,7 +1314,7 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
     for (j = 1; j < nblocks; j++) {
       if (mainw->critical) return -1;
       u = used[i + j];
-      g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
+      //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
         if (oblock != -1) return -1;
         i += u + j;

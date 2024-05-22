@@ -2071,14 +2071,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget * widge
 
 
 static void _dialog_resp_set(LiVESDialog * dlg, int resp, livespointer data) {
-  GET_PROC_THREAD_SELF(self);
-  SET_SELF_VALUE(WEED_SEED_INT, "dlg_resp", resp);
+  SET_LPT_VALUE(mainw->def_lpt, WEED_SEED_INT, "dlg_resp", resp);
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog * dlg) {
   int i;
-  GET_SELF_VALUE(&i, "dlg_resp");
+  GET_LPT_VALUE(mainw->def_lpt, &i, "dlg_resp");
   return i;
 }
 
@@ -3759,7 +3758,7 @@ WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_pixbuf_get_pixels(const LiVESPixbuf *
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf * pixbuf) {
+WIDGET_HELPER_GLOBAL_INLINE const uint8_t *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf * pixbuf) {
 #ifdef GUI_GTK
   return gdk_pixbuf_read_pixels(pixbuf);
 #endif

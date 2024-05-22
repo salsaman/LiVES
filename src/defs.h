@@ -650,4 +650,6 @@ typedef enum {
 
 #define LIVES_ASSERT(cond, ...) _LIVES_ASSERT(cond __VA_OPT__(,) __VA_ARGS__, NULL)
 
+#define APPLY_BIT_TRANSFORMS(from, to, input, output) APPLY_BIT_X_##from##_##to(input, output)
+
 #endif

@@ -804,7 +804,6 @@ typedef struct {
   double c0, c1, c2;
 } proctime_consts;
 
-
 typedef struct {
   lives_ann_t *ann;
   int ann_gens;
@@ -822,9 +821,6 @@ typedef struct {
   double gbytes_per_sec;
   boolean active;
 } glob_timedata_t;
-
-extern glob_timedata_t *glob_timing;
-
 
 typedef struct _exec_plan exec_plan_t;
 

@@ -107,7 +107,9 @@ void bundle_test(void);
 char *cl_flags_desc(uint64_t clflags);
 char *hs_op_flags_desc(uint64_t opflags);
 
-char *weed_leaf_stringify(weed_plant_t *pl, const char *key);
+char *desc_bookval(char tlett, const char *name);
+
+char *weed_leaf_stringify(weed_plant_t *, const char *key);
 
 void lpt_desc_state(lives_proc_thread_t);
 
@@ -115,11 +117,13 @@ char *weed_plant_to_header(weed_plant_t *, const char *tname);
 
 char *lives_funcdef_explain(const lives_funcdef_t *);
 
-char *lives_funcinst_show_func_call(lives_funcinst_t *finst);
+char *lives_funcinst_show_func_call(lives_funcinst_t *);
 
-char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
+char *lives_proc_thread_show_func_call(lives_proc_thread_t);
 
-char *funcinst_paramstr(lives_funcinst_t *, funcsig_t sig);
+char *get_func_call(lives_funcinst_t *);
+
+char *funcinst_paramstr(lives_funcinst_t *f);
 
 lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type);
 

@@ -445,17 +445,18 @@ boolean idx_list_get_data(LiVESList *idxlist, int idx, void **val_locn) {
 }
 
 
-LiVESList *strings_to_list(int dummy, ...) {
+LiVESList *strings_to_list(const char *thing, ...) {
+  if (!thing) return NULL;
   LiVESList *list = NULL;
   va_list va;
-  va_start(va, dummy);
+  va_start(va, thing);
   while (1) {
-    char *thing = va_arg(va, char *);
-    if (!thing) break;
     list = lives_list_prepend(list, (void *)thing);
+    thing = va_arg(va, const char *);
+    if (!thing) break;
   }
   va_end(va);
-  return lives_list_reverse(list);
+  return list ? lives_list_reverse(list) : NULL;
 }
 
 

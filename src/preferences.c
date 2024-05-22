@@ -4024,7 +4024,8 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
     lives_free(config_dir);
     return;
   }
-  lives_hook_cb_append(mainw->global_hook_stacks, DESTRUCTION_HOOK, 0, _full_reset, (void *)&config_dir);
+  lives_hook_cb_append(mainw->global_hook_stacks, DESTRUCTION_HOOK,
+		       0, _full_reset, "V", (void *)&config_dir);
   lives_exit(0);
 }
 

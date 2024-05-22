@@ -9482,14 +9482,14 @@ boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
 
 boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
-  if (mainw->no_configs) return TRUE;
-  if (get_timeline_lock()) {
-    if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
-    mainw->video_drawable = lives_widget_create_painter_surface(widget);
-    clear_widget_bg(widget, mainw->video_drawable);
-    update_timer_bars(mainw->drawsrc, 0, 0, 0, 0, 1);
-    unlock_timeline();
-  }
+  /* if (mainw->no_configs) return TRUE; */
+  /* if (get_timeline_lock()) { */
+  /*   if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable); */
+  /*   mainw->video_drawable = lives_widget_create_painter_surface(widget); */
+  /*   clear_widget_bg(widget, mainw->video_drawable); */
+  /*   update_timer_bars(mainw->drawsrc, 0, 0, 0, 0, 1); */
+  /*   unlock_timeline(); */
+  /* } */
   return TRUE;
 }
 
@@ -10911,7 +10911,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
           mainw->alock_abuf->fileno = mainw->playing_file;
           lpt = lives_buffered_rdonly_slurp_prep(mainw->alock_abuf->_fd, 0);
           lives_hook_cb_append(lives_proc_thread_get_hook_stacks(lpt), DATA_PREVIEW_HOOK, 0,
-                               resample_to_float, &mainw->alock_abuf);
+                               resample_to_float, "V", &mainw->alock_abuf);
           lives_buffered_rdonly_slurp_ready(lpt);
         }
       }

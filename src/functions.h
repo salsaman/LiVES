@@ -681,6 +681,8 @@ typedef struct {
 // definition of contingencies is still a little vague
 // edtablished so far
 
+typedef lives_funcinst_t lives_contingency;
+
 #define CONTINGENCY_BEHAVIOUR_EXPIRE_ON_EXEC		(1ull << 0)
 #define CONTINGENCY_BEHAVIOUR_NO_FREE_ON_EXPIRED	(1ull << 1)
 
@@ -695,7 +697,7 @@ typedef struct {
   // READY ready for contingency activation
   // RUNNING - currently active
   // IDLE - was executed and finished
-  // EXPIRED - no longer required
+  // EXPIRED - disarmed / no longer required
   // DELETED - parent object has been freed
   // ERROR
 
@@ -853,13 +855,15 @@ typedef struct {
   // if the final array value is "*" - extra const params can passed in args_fmt and va_args
   // - these are appended after fixed const params and fixed var params
   ///   but before extra var params
-  const char **const_data_srcs;
+  const char **_const_data_srcs;
+  LiVESList *const_data_srcs;
 
   // same as const, but value is set at trigger time
   // optionally, one value can start with a '>' to indicate the function return should
   // be mapped back to and update this value. For this reason, any input vars or extra vars passed in at trigger time MUST
   // be passed as BIND_VALUE(typecode, var) e.g BIND_VALUE("V", data) rather than just 'data'
-  const char **var_data_srcs;
+  const char ** _var_data_srcs;
+  LiVESList *var_data_srcs;
 } hook_stack_descriptor_t;
 
 const hook_stack_descriptor_t *get_hs_desc(int hstype);
@@ -952,42 +956,42 @@ typedef struct _hstack_t {
 
 #define HS_DETAILS(type) HS_DETAILS_##type##_HOOK
 
+#define HOOKSRCS(type, hstype) type##_HOOKSRCS_##hstype
+
 #define HS_DETAILS_FATAL_HOOK ((hook_stack_descriptor_t)		\
 			       {.htype = FATAL_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-				  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT), \
-				  .const_data_srcs = (const char *[]){"*"}})
+				  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)})
+#define CONST_HOOKSRCS_FATAL NULL
 
 #define HS_DETAILS_RESETTING_HOOK ((hook_stack_descriptor_t)		\
 				   {.htype = RESETTING_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-				      .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT), \
-				      .const_data_srcs = (const char *[]){"*"}})
+				      .op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE | HOOKSTACK_PERSISTENT)})
+#define CONST_HOOKSRCS_RESETTING NULL
 
 #define HS_DETAILS_THREAD_EXIT_HOOK ((hook_stack_descriptor_t)		\
 				     {.htype = THREAD_EXIT_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-					.op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE), \
-					.const_data_srcs = (const char *[]){"*"}})
+					.op_flags = (HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NATIVE)})
+#define CONST_HOOKSRCS_THREAD_EXIT NULL
 
 #define HS_DETAILS_DATA_PREVIEW_HOOK ((hook_stack_descriptor_t)		\
-				      {.htype = DATA_PREVIEW_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-					 .const_data_srcs = (const char *[]){"P|$target_object", NULL}, \
-					 .var_data_srcs = (const char *[]){">V|-data", NULL}})
+				      {.htype = DATA_PREVIEW_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS})
+#define CONST_HOOKSRCS_DATA_PREVIEW "P|$target_object", NULL
 
 #define HS_DETAILS_DATA_READY_HOOK ((hook_stack_descriptor_t)		\
 				    {.htype = DATA_READY_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-				       .op_flags = (HOOKSTACK_ASYNC | HOOKSTACK_PARALLEL), \
-				       .const_data_srcs = (const char *[]){"P|$target_object", NULL}, \
-				       .var_data_srcs = (const char *[]){"V|-data", NULL}})
+				       .op_flags = (HOOKSTACK_ASYNC | HOOKSTACK_PARALLEL)})
+#define CONST_HOOKSRCS_DATA_READY "P|$target_object", NULL
 
 #define HS_DETAILS_LIVES_GUI_HOOK ((hook_stack_descriptor_t)		\
 				   {.htype = LIVES_GUI_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
 				      .op_flags = (HOOKSTACK_RUN_SINGLE | HOOKSTACK_GUI_THREAD \
-						   | HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NOWAIT), \
-				      .const_data_srcs = (const char *[]){"*"}})
+						   | HOOKSTACK_ALWAYS_ONESHOT | HOOKSTACK_NOWAIT)})
+#define CONST_HOOKSRCS_GUI NULL
 
 #define HS_DETAILS_SYNC_ANNOUNCE_HOOK ((hook_stack_descriptor_t)		\
 				       {.htype = SYNC_ANNOUNCE_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-					  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT), \
-					  .const_data_srcs = (const char *[]){"*"}})
+					  .op_flags = (HOOKSTACK_ALWAYS_ONESHOT)})
+#define CONST_HOOKSRCS_SYNC_ANNOUNCE NULL
 
 #define HS_DETAILS_COMPLETED_HOOK ((hook_stack_descriptor_t)		\
 				   {.htype = COMPLETED_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -995,12 +999,12 @@ typedef struct _hstack_t {
 						  .target_item = LIVES_LEAF_THRD_STATE,	\
 						  .when = LIVES_POST_HOOK, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										"COND_UINT64_CONST", THRD_STATE_COMPLETED, ")"), \
-						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
-										 "COND_UINT64_CONST", THRD_STATE_COMPLETED) \
+										"COND_UINT64_VAL", THRD_STATE_COMPLETED, ")"), \
+						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										 "COND_UINT64_VAL", THRD_STATE_COMPLETED) \
 						  },			\
-				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				      .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_COMPLETED "P|$target_object", NULL
 
 #define HS_DETAILS_FINISHED_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = FINISHED_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -1008,12 +1012,12 @@ typedef struct _hstack_t {
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										"COND_UINT64_CONST", THRD_STATE_FINISHED, ")"), \
-						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
-										 "COND_UINT64_CONST", THRD_STATE_FINISHED) \
+										"COND_UINT64_VAL", THRD_STATE_FINISHED, ")"), \
+						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										 "COND_UINT64_VAL", THRD_STATE_FINISHED) \
 						 },			\
-				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_FINISHED "P|$target_object", NULL
 
 #define HS_DETAILS_CANCELLED_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = CANCELLED_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -1021,12 +1025,12 @@ typedef struct _hstack_t {
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_PRE_HOOK, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										"COND_UINT64_CONST", THRD_STATE_CANCELLED, ")"), \
-						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
-										 "COND_UINT64_CONST", THRD_STATE_CANCELLED) \
+										"COND_UINT64_VAL", THRD_STATE_CANCELLED, ")"), \
+						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										 "COND_UINT64_VAL", THRD_STATE_CANCELLED) \
 						 },			\
-				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_CANCELLED "P|$target_object", NULL
 
 #define HS_DETAILS_ERROR_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = ERROR_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -1034,12 +1038,12 @@ typedef struct _hstack_t {
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_PRE_HOOK, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										"COND_UINT64_CONST", THRD_STATE_ERROR, ")"), \
-						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
-										 "COND_UINT64_CONST", THRD_STATE_ERROR) \
+										"COND_UINT64_VAL", THRD_STATE_ERROR, ")"), \
+						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										 "COND_UINT64_VAL", THRD_STATE_ERROR) \
 						 },			\
-				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_ERROR "P|$target_object", NULL
 
 #define HS_DETAILS_PAUSED_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = PAUSED_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -1047,12 +1051,12 @@ typedef struct _hstack_t {
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										"COND_UINT64_CONST", THRD_STATE_PAUSED, ")"), \
-						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET" \
-										 "COND_UINT64_CONST", THRD_STATE_PAUSED) \
+										"COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
+						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
+										 "COND_UINT64_VAL", THRD_STATE_PAUSED) \
 						 },			\
-				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_PAUSED "P|$target_object", NULL
 
 #define HS_DETAILS_RESUMING_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = RESUMING_HOOK, .pattern = HOOK_PATTERN_DATA, \
@@ -1060,17 +1064,17 @@ typedef struct _hstack_t {
 						 .target_item = LIVES_LEAF_THRD_STATE, \
 						 .when = LIVES_POST_HOOK, \
 						 .pre_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
-									       "COND_UINT64_CONST", THRD_STATE_PAUSED), \
+									       "COND_UINT64_VAL", THRD_STATE_PAUSED), \
 						  .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
-										 "COND_UINT64_CONST", THRD_STATE_PAUSED, ")"), \
+										 "COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
 						 },			\
-				      .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_RESUMING "P|$target_object", NULL
 
 #define HS_DETAILS_DESTRUCTION_HOOK ((hook_stack_descriptor_t)		\
 				  {.htype = DESTRUCTION_HOOK, .pattern = HOOK_PATTERN_SPONTANEOUS, \
-				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT, \
-				     .const_data_srcs = (const char *[]){"P|$target_object", "*"}})
+				     .op_flags = HOOKSTACK_ALWAYS_ONESHOT})
+#define CONST_HOOKSRCS_DESTRUCTION "P|$target_object", NULL
 
 // low level flags used internally when adding callbacks*/
 
@@ -1120,33 +1124,33 @@ void fg_deferral_remove_persistent(void);
 // normal funcs, but not called directly
 void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
                               const char *fname, int return_type, const char **anames, const char *args_fmt, ...);
-#define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, afmt, ...) \
-  _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__), (afmt), __VA_ARGS__)
+#define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, ...) \
+  _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 // func call with variant addmode
 void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode);
 
 //fixed cb type: boolean cb(void *owner, void *data)
 // hstacks == NULL -> self_hook_stacks(hstype)
-#define lives_hook_cb_append(hstacks, hstype, cbflags, func, data,...)	\
+#define lives_hook_cb_append(hstacks, hstype, cbflags, func, ...)	\
   _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-			  VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 // same, but get hstacks for lpt
-#define lives_proc_thread_add_hook_cb(lpt, hstype, cbflags, func, data,...)	\
+#define lives_proc_thread_add_hook_cb(lpt, hstype, cbflags, func, ...)	\
   _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (hstype), (cbflags), \
 			  (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-			  VARNAMES(__VA_ARGS__), "vv", NULL, (void *)(data))
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 // same but caller defines rtype and args
-#define lives_hook_cb_append_full(hstacks, hstype, cbflags, func, rtype, args_fmt, ...) \
+#define lives_hook_cb_append_full(hstacks, hstype, cbflags, func, rtype, ...) \
   _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, (rtype), \
-			  VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
-#define lives_proc_thread_add_hook_cb_full(lpt, hstype, cbflags, func, rtype, args_fmt, ...) \
+#define lives_proc_thread_add_hook_cb_full(lpt, hstype, cbflags, func, rtype, ...) \
   _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (hstype), (cbflags), \
 			  (lives_funcptr_t)(func), #func, (rtype),	\
-			  VARNAMES(__VA_ARGS__), (args_fmt), __VA_ARGS__)
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 // for those times when you already have a funcinst (no paramdata freefuncs allowed though)
 void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int type,
@@ -1178,7 +1182,7 @@ lives_result_t _lives_proc_thread_trigger_hook(int hstype, ...);
 #define lives_proc_thread_trigger_hook(...) _lives_proc_thread_trigger_hook(__VA_ARGS__, NULL)
 
 int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **, ...);
-#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstype, __VA_ARGS__, NULL)
+#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstype __VA_OPT__(,) __VA_ARGS__, NULL)
 
 void lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
@@ -1249,6 +1253,10 @@ void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *
 void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
 #endif
 
+#define leaf_from_allvalues(plant, key, allvp) allvp ? LEAF_FROM_ALLV(plant, key, allvp) : WEED_ERROR_NOSUCH_ELEMENT
+
+allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const char *key);
+
 weed_error_t value_from_allvalues(void *retloc, allvalues_t *);
 
 allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
@@ -1269,6 +1277,9 @@ allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int 
 #define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
 #define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_va(avp, stype, ne, 0, va))
 
+void allvalues_free(allvalues_t *);
+allvalues_t *allvalues_copy(allvalues_t *);
+
 // extern types
 #define make_allvalue_extern(allvp, xtype, type, obj)	_DW0	\
   (allvp->values.V = (void **)&obj;					\
@@ -1279,11 +1290,6 @@ allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int 
 
 #define make_allvalue_extern_va(allvp, xtype, va) _DW0		\
   (make_allvalue_extern(allvp, xtype, va_arg(va, xtype);)
-
-void allvalues_free(allvalues_t *);
-allvalues_t *allvalues_copy(allvalues_t *);
-
-allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const char *key);
 
 // convert between sigbits, char, st, fmt_str
 //

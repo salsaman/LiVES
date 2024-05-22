@@ -1215,7 +1215,7 @@ void lazy_startup_checks(void) {
     //mainw->debug_ptr = lpt;
     if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
       if (!_lives_proc_thread_check_states(lpt, THRD_STATE_COMPLETED)) {
-        lives_proc_thread_add_hook_cb(lpt, COMPLETED_HOOK, 0, wake_other_lpt, self);
+        lives_proc_thread_add_hook_cb(lpt, COMPLETED_HOOK, 0, wake_other_lpt, "V", self);
 
         lives_proc_thread_unfreeze_state(lpt);
         lives_proc_thread_pause();
@@ -1231,7 +1231,6 @@ void lazy_startup_checks(void) {
 alldone:
   mainw->lazy_starter = NULL;
 }
-
 
 
 void reg_funcsig(int nparms, const char **symnames) {
@@ -1473,6 +1472,8 @@ boolean lives_startup(livespointer data) {
 
   what_sup = startupC_sup;
 
+  // cant do this until conditions are intied - hook stack descriptors can have conditions
+  
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
   // linked to the proc_thread currently being actioned

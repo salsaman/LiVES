@@ -4183,8 +4183,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
     weed_leaf_set_flags(plant, key, flags);
     if (autofree) weed_leaf_autofree(plant, key);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-    if (autofree) flags |= LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE;
-    flags |= WEED_FLAG_IMMUTABLE;
+    if (autofree) flags &= LIVES_FLAG_FREE_ON_DELETE;
     weed_leaf_set_flags(plant, key, flags);
   }
   return err;

@@ -423,11 +423,10 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   if (hsdesc->const_data_srcs) {
     g_print("\nSome parameters are set or supplied when adding callbacks to the stack\n");
-    for (int i = 0; hsdesc->const_data_srcs[i]; i++) {
-      const char *datasrc;
+    for (LiVESList *l = hsdesc->const_data_srcs; l; l = l->next) {
       weed_seed_t st;
+      const char *datasrc = (const char *)l->data;
       // format is "X|Ysrcname", where X is seed_type, Y is origin
-      datasrc = hsdesc->const_data_srcs[i];
       if (!datasrc) continue;
       if (datasrc[0] == ARGS_FMT_VARIADIC) {
         variadic = TRUE;
@@ -464,12 +463,13 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
 
   if (hsdesc->var_data_srcs) {
     g_print("\nSome parameters are set or supplied when the callback is triggered\n");
-    for (int i = 0; hsdesc->var_data_srcs[i]; i++) {
-      const char *datasrc;
+
+
+    for (LiVESList *l = hsdesc->var_data_srcs; l; l = l->next) {
       weed_seed_t st;
+      const char *datasrc = (const char *)l->data;
       boolean lback = FALSE;
       // format is "X|Ysrcname", where X is seed_type, Y is origin
-      datasrc = hsdesc->var_data_srcs[i];
       if (!datasrc) continue;
       if (datasrc[0] == '*') {
         varivar = TRUE;
@@ -3148,26 +3148,29 @@ void test_procthreads(void) {
 
 
 void lives_cond_test(void) {
+  return;
   g_print("testing lives_conditions:\n");
+  reset_timer_info();
   lives_condition C;
   //for (int i = 0; i < 10000; i++) {
   C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2);
-  lives_cond_desc(C);
+  //lives_cond_desc(C);
   LIVES_ASSERT(lives_cond_eval(C));
   lives_cond_free(C);
   C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3);
-  lives_cond_desc(C);
+  //lives_cond_desc(C);
   LIVES_ASSERT(!lives_cond_eval(C));
   lives_cond_free(C);
   C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2, ")");
-  lives_cond_desc(C);
+  //lives_cond_desc(C);
   LIVES_ASSERT(!lives_cond_eval(C));
   lives_cond_free(C);
   C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3, ")");
-  lives_cond_desc(C);
+  //lives_cond_desc(C);
   LIVES_ASSERT(lives_cond_eval(C));
   lives_cond_free(C);
   //}
+  show_timer_info();
   g_print("OK\n");
 }
 

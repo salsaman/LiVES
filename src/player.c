@@ -1497,17 +1497,16 @@ frames_t load_frame_image(frames_t frame) {
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
-    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, NULL, WEED_SEED_VOID, "v", frame_layer);
+    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, "weed_layer_unref", WEED_SEED_VOID, "V", frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
                                          HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-                                         lives_layer_draw, WEED_SEED_VOID, "vv", mainw->preview_image, frame_layer, NULL, free_finst);
-
+                                         lives_layer_draw, WEED_SEED_VOID, "VV", mainw->preview_image, NULL, frame_layer, free_finst);
     } else {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_OPT_PRIORITY |
                                          HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-                                         lives_layer_draw, WEED_SEED_VOID, "vv", mainw->play_image, frame_layer, NULL, free_finst);
+                                         lives_layer_draw, WEED_SEED_VOID, "VV", mainw->play_image, NULL, frame_layer, free_finst);
     }
 
     frame_layer = NULL;

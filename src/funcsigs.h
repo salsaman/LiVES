@@ -117,7 +117,6 @@ DEF_STRUCT(allvalues_t,
 									 _array_counted, (plant), (key), &(ne));)
 
 #define LEAF_FROM_ALLV(plant, key, allv)				\
-  _DW0(									\
        weed_leaf_set(plant, key, allv->stype, allv->ne,			\
 		     (allv->stype == WEED_SEED_INT ? (void *)allv->values.i \
 		      : allv->stype == WEED_SEED_UINT ? (void *)allv->values.u \
@@ -130,7 +129,7 @@ DEF_STRUCT(allvalues_t,
 		      : (allv->stype == WEED_SEED_VOIDPTR || WEED_SEED_IS_CUSTOM(allv->stype)) \
 		      ? (void *)allv->values.V				\
 		      : allv->stype == WEED_SEED_FUNCPTR ? (void *)allv->values.F \
-		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)allv->values.P : NULL));)
+		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)allv->values.P : NULL))
 
 // since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
 // however 8 is probably sufficient and looks neater
@@ -217,6 +216,9 @@ DEF_STRUCT(allvalues_t,
 // syntactic marker for variadic functions, must be final in funcsig / args_fmt
 // not passed in func calls
 #define LIVES_SEED_VARIADIC 5192
+
+// sybtactic marker frp blueprints, followed by a subtype, mostly for info purposes
+#define LIVES_SEED_LIVES_PLANT 5193
 
 // va_list with declared args_fmt in params, values are read and spliced in
 // aas replacements

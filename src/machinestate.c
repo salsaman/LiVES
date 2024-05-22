@@ -1876,7 +1876,7 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     } else {
       enable_ss_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
-                      HOOK_OPT_PRIORITY, enable_ss_cb, WEED_SEED_VOID, "", NULL);
+						HOOK_OPT_PRIORITY, enable_ss_cb, WEED_SEED_VOID);
     }
     return TRUE;
   }
@@ -2113,7 +2113,7 @@ boolean hide_desktop_panel(void) {
     ret = hide_x11_window(wid);
     lives_free(wid);
     show_dpanel_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
-						HOOK_OPT_PRIORITY, show_dpanel_cb, WEED_SEED_VOID, "", NULL);
+						HOOK_OPT_PRIORITY, show_dpanel_cb, WEED_SEED_VOID);
   }
 #endif
   return ret;

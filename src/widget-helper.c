@@ -2072,14 +2072,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget * widge
 
 static void _dialog_resp_set(LiVESDialog * dlg, int resp, livespointer data) {
   GET_PROC_THREAD_SELF(self);
-  SET_SELF_VALUE(int, "dlg_resp", resp);
+  SET_SELF_VALUE(WEED_SEED_INT, "dlg_resp", resp);
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog * dlg) {
-  GET_PROC_THREAD_SELF(self);
-  return GET_SELF_VALUE(int, "dlg_resp");
+  int i;
+  GET_SELF_VALUE(&i, "dlg_resp");
+  return i;
 }
+
 
 static boolean lives_dialog_destroyed(LiVESWidget * dialog, void *data) {
   SET_INT_DATA(dialog, DESTROYED_KEY, TRUE);
@@ -3384,7 +3386,6 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
 #ifdef GUI_GTK
   LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
-
   if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else if (LIVES_IS_WIDGET(widget))
     win = lives_widget_get_window(widget);

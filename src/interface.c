@@ -22,9 +22,10 @@ static void qslider_changed(LiVESWidget *slid, livespointer data);
 
 
 void cancel_cleanup(void) {
-  GET_PROC_THREAD_SELF(self);
-  lives_painter_t *cr = GET_SELF_VALUE(voidptr, "cr");
-  int afd = GET_SELF_VALUE(int, "afd");
+  lives_painter_t *cr;
+  int afd;
+  GET_SELF_VALUE(&cr, "cr");
+  GET_SELF_VALUE(&afd, "afd");
   if (cr) {
     lives_painter_surface_t *surface = lives_painter_get_target(cr);
     lives_painter_surface_flush(surface);
@@ -111,7 +112,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
     cr = lives_painter_create_from_surface(mainw->video_drawable);
     xwidth = UTIL_CLAMP(width, allocwidth);
 
-    SET_SELF_VALUE(voidptr, "cr", cr);
+    SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", cr);
 
     // TEST
     //set_interrupt_action(SIG_ACT_CANCEL);
@@ -147,7 +148,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
     }
     // TEST
     //set_interrupt_action(SIG_ACT_IGNORE);
-    SET_SELF_VALUE(voidptr, "cr", NULL);
+    SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", NULL);
 
     lives_painter_destroy(cr);
     cr = NULL;
@@ -200,7 +201,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
             || (self && lives_proc_thread_get_cancel_requested(self))) {
           goto bail;
         }
-        SET_SELF_VALUE(int, "afd", afd + 1);
+        SET_SELF_VALUE(WEED_SEED_INT, "afd", afd + 1);
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
               || (self && lives_proc_thread_get_cancel_requested(self))) {
@@ -217,7 +218,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
           || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
       cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-      SET_SELF_VALUE(voidptr, "cr", cr);
+      SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", cr);
       offset_right = NORMAL_CLAMP(offset_right, sfile->laudio_time * scalex);
       xwidth = UTIL_CLAMP(width, allocwidth);
       if (offset_end > posx + xwidth) offset_end = posx + xwidth;
@@ -283,7 +284,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
       lives_painter_close_path(cr);
       lives_painter_stroke(cr);
       lives_painter_destroy(cr);
-      SET_SELF_VALUE(voidptr, "cr", NULL);
+      SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", NULL);
       cr = NULL;
     }
   }
@@ -326,7 +327,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
               || (self && lives_proc_thread_get_cancel_requested(self))) {
             goto bail;
           }
-          SET_SELF_VALUE(int, "afd", afd + 1);
+          SET_SELF_VALUE(WEED_SEED_INT, "afd", afd + 1);
           lives_buffered_rdonly_slurp(afd, 0);
           if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
               || (self && lives_proc_thread_get_cancel_requested(self))) {
@@ -350,7 +351,7 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
       xwidth = UTIL_CLAMP(width, allocwidth);
 
       cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-      SET_SELF_VALUE(voidptr, "cr", cr);
+      SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", cr);
       if (offset_end > posx + xwidth) offset_end = posx + xwidth;
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
       lpos = -9999;
@@ -416,12 +417,12 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
       lives_painter_close_path(cr);
       lives_painter_stroke(cr);
       lives_painter_destroy(cr);
-      SET_SELF_VALUE(voidptr, "cr", NULL);
+      SET_SELF_VALUE(WEED_SEED_VOIDPTR, "cr", NULL);
       cr = NULL;
     }
 
     if (afd >= 0) lives_close_buffered(afd);
-    SET_SELF_VALUE(int, "afd", 0);
+    SET_SELF_VALUE(WEED_SEED_INT, "afd", 0);
     afd = -1;
   }
 

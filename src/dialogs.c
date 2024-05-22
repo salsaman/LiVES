@@ -3515,7 +3515,8 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
 static void _thdlg_auto_spin(void) {
   GET_PROC_THREAD_SELF(self);
-  uint64_t syncid = GET_SELF_VALUE(uint64, "sync_idx");
+  uint64_t syncid;
+  GET_SELF_VALUE(&syncid, "sync_idx");
   lives_proc_thread_set_cancellable(self);
   lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), syncid, MM_IGNORE);
   THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;
@@ -3545,7 +3546,7 @@ void threaded_dialog_auto_spin(void) {
   syncid = gen_unique_id();
   lpt = mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
                                  _thdlg_auto_spin, WEED_SEED_VOID, "", NULL);
-  SET_LPT_VALUE(lpt, uint64, "sync_idx", syncid);
+  SET_LPT_VALUE(lpt, WEED_SEED_UINT64, "sync_idx", syncid);
 
   lives_proc_thread_dispatch(lpt);
 

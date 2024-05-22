@@ -243,7 +243,7 @@ static char *_lives_strndup_printf_va(const char *fmt, int maxlen, va_list ap) {
   size = vsnprintf(p, size, fmt, aq);
   va_end(aq);
   if (size < 0) return NULL;
-  p  = lives_malloc(++size);
+  p  = lives_calloc(++size, 1);
   if (!p) return NULL;
   if (maxlen > 0 && size > maxlen) size = maxlen;
   size = vsnprintf(p, size, fmt, ap);

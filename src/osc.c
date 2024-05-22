@@ -138,7 +138,7 @@ static void lives_osc_parse_int_argument(const void *vargs, int *arguments) {
 
 static void lives_osc_parse_float_argument(const void *vargs, float *arguments) {
   const char *args = (char *)vargs;
-  arguments[0] = LEFloat_to_BEFloat(*((float *)(args + osc_header_len + offset)));
+  arguments[0 ]= LEFloat_to_BEFloat(*((float *)(args + osc_header_len + offset)));
   offset += 4;
 }
 

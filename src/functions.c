@@ -100,7 +100,9 @@ allvalues_t *_make_allval_va(allvalues_t *avp,
     } else {
       weed_plant_t *tmp = lives_plant_new(LIVES_PLANT_TMP);
       weed_leaf_from_varg(tmp, WEED_LEAF_VALUE, stype, ne, va);
+      g_print("allvp from leaf typ %d  %s\n", stype, weed_leaf_stringify(tmp, WEED_LEAF_VALUE));
       avp = allvalues_from_leaf(avp, tmp, WEED_LEAF_VALUE);
+      g_print("%p\n", stype == 66 ? avp->values.P[0] : avp->values.V[0]);
       weed_plant_free(tmp);
     }
     xflags &= ~ALLV_FLAG_POINTER;
@@ -207,8 +209,6 @@ lives_structdef *parse_structdef(const char *stname, const char *stdefdata, size
 static void init_hook_stacks(void) {
   if (hs_inited && hsn_inited) return;
   for (int i = 0; i < N_HOOK_POINTS; i++) {
-    uint64_t flags = 0;
-    hook_stack_pattern_t pat = HOOK_PATTERN_DATA;
     hook_stack_descriptor_t *xhs = (hook_stack_descriptor_t *)&hs_desc[i];
     boolean got = FALSE;
     xhs->htype = i;
@@ -217,12 +217,15 @@ static void init_hook_stacks(void) {
       switch (i) {
       case FATAL_HOOK:
         hs_desc[i] = HS_DETAILS(FATAL);
+	hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, FATAL));
         break;
       case RESETTING_HOOK:
         hs_desc[i] = HS_DETAILS(RESETTING);
+	hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, RESETTING));
         break;
       case THREAD_EXIT_HOOK:
         hs_desc[i] = HS_DETAILS(THREAD_EXIT);
+	hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, THREAD_EXIT));
         break;
       default: break;
       }
@@ -234,48 +237,53 @@ static void init_hook_stacks(void) {
         switch (i) {
         case COMPLETED_HOOK:
           hs_desc[i] = HS_DETAILS(COMPLETED);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, COMPLETED));
           break;
         case DATA_PREVIEW_HOOK:
           hs_desc[i] = HS_DETAILS(DATA_PREVIEW);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DATA_PREVIEW));
           break;
         case DATA_READY_HOOK:
           hs_desc[i] = HS_DETAILS(DATA_READY);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DATA_READY));
           break;
         case LIVES_GUI_HOOK:
           hs_desc[i] = HS_DETAILS(LIVES_GUI);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, GUI));
           break;
         case SYNC_ANNOUNCE_HOOK:
           hs_desc[i] = HS_DETAILS(SYNC_ANNOUNCE);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, SYNC_ANNOUNCE));
           break;
         case FINISHED_HOOK:
           hs_desc[i] = HS_DETAILS(FINISHED);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, FINISHED));
           break;
         case ERROR_HOOK:
           hs_desc[i] = HS_DETAILS(ERROR);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, ERROR));
           break;
         case PAUSED_HOOK:
           hs_desc[i] = HS_DETAILS(PAUSED);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, PAUSED));
           break;
         case RESUMING_HOOK:
           hs_desc[i] = HS_DETAILS(RESUMING);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, RESUMING));
           break;
         case CANCELLED_HOOK:
           hs_desc[i] = HS_DETAILS(CANCELLED);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, CANCELLED));
           break;
         case DESTRUCTION_HOOK:
           hs_desc[i] = HS_DETAILS(DESTRUCTION);
+	  hs_desc[i].const_data_srcs = strings_to_list(HOOKSRCS(CONST, DESTRUCTION));
           break;
-        /* case CB_ADDED_HOOK: */
-        /*   flags = HS_FLAGS_CB_ADDED; */
-        /*   pat = HOOK_PATTERN_SPONTANEOUS; */
-        /*   break; */
         default: break;
         }
       }
     }
-    xhs->pattern = pat;
-    xhs->op_flags = flags;
-    //g_print("Registered details for hs type %d, pattern = %d, flags = %lu\n", i, pat, flags);
+    g_print("Registered details for hs type %d, pattern = %d, flags = %lu\n", i, hs_desc[i].pattern, hs_desc[i].op_flags);
   }
   hsn_inited = TRUE;
 }
@@ -386,8 +394,6 @@ LIVES_GLOBAL_INLINE weed_seed_t get_seedtype(char c) {
 
 LIVES_GLOBAL_INLINE uint8_t get_typecode(char c) {
   // letter to sigbits
-  if (c == 'v') c = 'V';
-  if (c == 'p') c = 'P';
   for (int i = 0; crossrefs[i].typeletter; i++) {
     if (crossrefs[i].typeletter == c) return crossrefs[i].sigbits;
   }
@@ -1961,125 +1967,105 @@ void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int type,
 }
 
 
+boolean set_param_symbolic(const char *datasrc, weed_seed_t st, int pcount, lives_funcinst_t *finst) {
+  char *pkey = NULL;
+  boolean ret = TRUE;
+
+  if (!*datasrc || !datasrc[1]) goto fail;
+
+  const char *item = (const char *)(datasrc + 1);
+  pkey = make_std_pname(pcount);
+
+  switch (*datasrc) {
+  case '-': {
+    break;
+				}
+  case '$': {
+    // data comes from local data book
+    if (GET_BOOK_DATATYPE(lives_local_databook(), item) != st) goto fail;
+    leaf_from_allvalues(finst->params, pkey, get_local_book_item(item));
+    break;
+  }
+  case '@': {
+    // data comes from global data book
+    if (GET_BOOK_DATATYPE(mainw->global_databook, item) != st) goto fail;
+    leaf_from_allvalues(finst->params, pkey, get_global_book_item(item));
+    break;
+  }
+  default: break;
+  }
+
+    goto success;
+
+  fail: ret = FALSE;
+  success:
+    if (pkey) lives_free(pkey);
+    return ret;
+    
+}
+
+
 // returns receipt. or NULL if add condition failed, or it was toggled out
 void *_lives_hook_cb_add_full(lives_hook_stack_t **hstacks, int hstype, uint64_t cbflags, lives_funcptr_t func,
                               const char *fname, int return_type, const char **anames, const char *args_fmt, ...) {
   // create funcinst, no params
-  va_list va;
+  va_list va, vc;
   lives_funcinst_t *finst = _lives_funcinst_create(NULL, func, fname, return_type, NULL, NULL, NULL);
   const hook_stack_descriptor_t *hsdesc = get_hs_desc(hstype);
-  int nparmsleft = 0, cparams = 0, pcount = 0;
-  char *tmp, *pkey;
-  int args_idx = 0;
+  int pcount = 0;
+  char *tmp;
   void *rcpt = NULL;
-  boolean variadic = FALSE, varivar = FALSE;
+  boolean has_ffuncs = FALSE;
+  GET_PROC_THREAD_SELF(self);
 
-  if (hsdesc->const_data_srcs) {
-    boolean has_ffuncs = FALSE;
+  if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT)
+    SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_TARGET_OBJECT, hstacks[hstype]->owner.lpt);
 
-    if (args_fmt && *args_fmt) {
-      nparmsleft = lives_strlen(args_fmt);
-      if (nparmsleft) va_start(va, args_fmt);
-      if (cbflags & HOOK_CB_HAS_FREEFUNCS) has_ffuncs = TRUE;
-    }
+  if (cbflags & HOOK_CB_HAS_FREEFUNCS) has_ffuncs = TRUE;
 
-    // add predefined const data here
-    for (int i = 0; hsdesc->const_data_srcs[i]; i++) {
-      const char *datasrc;
-      weed_seed_t st;
-      // format is "X|Ysrcname", where X is seed_type, Y is origin
-      datasrc = hsdesc->const_data_srcs[i];
-      if (!datasrc) continue;
-      if (datasrc[0] == '*') {
-        variadic = TRUE;
-        break;
-      }
-      if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
-      if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
-      st = get_seedtype(datasrc[0]);
-      if (st == WEED_SEED_INVALID) continue;
+  // add predefined const data here
+  for (LiVESList *l = hsdesc->const_data_srcs; l; l = l->next) {
+    weed_seed_t st;
+    const char *datasrc = (const char *)l->data;
+    // format is "X|Ysrcname", where X is seed_type, Y is origin
+    if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
+    if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
+    st = get_seedtype(datasrc[0]);
+    if (st == WEED_SEED_INVALID) continue;
+    if (!set_param_symbolic((const char *)(datasrc + 2), st, pcount, finst)) goto fin;
+  }
 
-      switch (datasrc[2]) {
-      case '-': {
-        if (!nparmsleft) goto fin;
-        if (get_seedtype(args_fmt[args_idx++]) != st) goto fin;
-        // data comes from va_list
-        if (has_ffuncs) {
-          lives_funcinst_t *free_finst = va_arg(va, lives_funcinst_t *);
-          if (free_finst) {
-            pkey = lives_strdup_printf("p%d_free", i);
-            lives_funcinst_set_disposition(free_finst, FALSE, DISPOSITION_CONTINGENCY);
-            CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_READY;
-            weed_set_voidptr_value(finst->params, pkey, free_finst);
-            lives_free(pkey);
-          }
-        }
-        nparmsleft--;
-        break;
-      }
-      case '$': {
-        // data comes from local data book
-        GET_PROC_THREAD_SELF(self);
-        lives_databook_t *localbook = lives_proc_thread_get_book(self);
-        const char *item = (const char *)(datasrc + 3);
-        if (GET_BOOK_DATATYPE(localbook, item) != st) goto fin;
-        pkey = make_std_pname(i);
-        weed_leaf_copy(finst->params, pkey, localbook, item);
-        lives_free(pkey);
-        break;
-      }
-      case '@': {
-        // data comes from global data book
-        const char *item = (const char *)(datasrc + 3);
-        if (GET_BOOK_DATATYPE(mainw->global_databook, item) != st) goto fin;
-        pkey = make_std_pname(i);
-        weed_leaf_copy(finst->params, pkey, mainw->global_databook, item);
-        lives_free(pkey);
-        break;
-      }
-      default: break;
+  if (args_fmt) {
+    va_start(va, args_fmt);
+    for (int i = 0; args_fmt[i]; i++) {
+      pcount++;
+      va_copy(vc, va);
+      weed_plant_params_from_valist(finst->params, args_fmt, make_std_pname, &pcount, 1, va);      
+      /* st =; */
+      /* SET_SELF_VALUE_VA(st, item, vc); */
+      va_end(vc);
+      if (has_ffuncs) {
+	lives_funcinst_t *free_finst = va_arg(va, lives_funcinst_t *);
+	if (free_finst) {
+	  char *fpkey = lives_strdup_printf("p%d_free", pcount);
+	  lives_funcinst_set_disposition(free_finst, FALSE, DISPOSITION_CONTINGENCY);
+	  CONTINGENCY_DATA(free_finst, src_status) = SRC_STATUS_READY;
+	  weed_set_voidptr_value(finst->params, fpkey, free_finst);
+	  lives_free(fpkey);
+	}
       }
       pcount++;
     }
   }
 
-  // add args_fmt and leave gap for var_data_src
-  cparams = pcount;
-
-  if (hsdesc->var_data_srcs) {
-    for (int i = 0; hsdesc->var_data_srcs[i]; i++) {
-      const char *datasrc;
-      weed_seed_t st;
-      // format is "X|Ysrcname", where X is seed_type, Y is origin
-      datasrc = hsdesc->var_data_srcs[i];
-      if (!datasrc) continue;
-      if (datasrc[0] == '*') {
-        varivar = TRUE;
-        break;
-      }
-      if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
-      if (datasrc[0] == '>') datasrc++;
-      if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
-      st = get_seedtype(datasrc[0]);
-      if (st == WEED_SEED_INVALID) continue;
-      pcount++;
-    }
-  }
-
-  if (variadic && nparmsleft) {
-    // append after vars
-    weed_plant_params_from_valist(finst->params, args_fmt + cparams, make_std_pname, &pcount, 0, va);
-  }
-
-  if (!varivar) {
-    validate_args_fmt((tmp = get_args_fmt(finst->params)), finst->funcdef->funcname, finst->paramnames);
-    lives_free(tmp);
-  }
+  validate_args_fmt((tmp = get_args_fmt(finst->params)), finst->funcdef->funcname, finst->paramnames);
+  lives_free(tmp);
 
   rcpt = lives_hook_cb_add_funcinst(hstacks, hstype, finst, cbflags);
 
 fin:
-  if (args_fmt && *args_fmt) va_end(va);
+  if (args_fmt) va_end(va);
+  if (hsdesc->const_data_srcs) DEL_BOOK_VALUE(lives_local_databook(), LDB_TARGET_OBJECT);
   return rcpt;
 }
 
@@ -2223,6 +2209,10 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
 
   list = (LiVESList *)hstack->stack;
 
+  // while running the callbacks, set src_object to hstack owner
+  if (hstack->owner_act_src_type == ACTION_SOURCE_LPT)
+    SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, hstack->owner.lpt);
+
   // mark all entries in list at entry as "ACTIONED"
   // since we may parse the list several times, we only check those which are present now
   // this avoids a situation where we would be endlessly traversing the list as new items are added
@@ -2284,7 +2274,7 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
       }
 
       if (!(cbflags & HOOK_STATUS_ACTIONED)) continue;
-
+      
       /* lives_cond_create(COND_BEGIN. COND_EQUALS, COND_INT32_VAR(finst->funcdef->return_type), */
       /* 			COND_INT32_CONST(WEED_SEED_BOOLEAN), COND_END); */
 
@@ -2391,6 +2381,13 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
         CL_DATA(finst, triggerer.lpt) = ACTION_SOURCE_NONE;
       }
 
+
+      if (type == LIVES_GUI_HOOK) {
+	BREAK_ME("guih");
+	g_print("trug %p\n", finst);
+	if (cbflags & HOOK_OPT_ONESHOT) g_print("onsh\n");
+      }
+
       rcpts = (LiVESList *)CL_DATA(finst, receipts);
       if (rcpts) reply = lives_cb_receipt_get_req_reply(rcpts->data);
 
@@ -2422,7 +2419,7 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int t
           cbflags &= ~HOOK_STATUS_ACTIONED;
           CL_DATA(finst, cb_flags) = cbflags;
         }
-        //g_print("done single\n");
+        g_print("done single\n");
         break;
       }
     }
@@ -2455,6 +2452,11 @@ trigdone:
   if (have_recheck_mutex) pthread_mutex_unlock(&recheck_mutex);
 
   cleanup_self_receipts();
+
+  lives_localbook_clean();
+
+  if (hstacks[type]->owner_act_src_type == ACTION_SOURCE_LPT)
+    SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, self);
 
   //if (type == SYNC_WAIT_HOOK) g_print("sync all res: %d\n", retval);
   return retval ? LIVES_RESULT_SUCCESS : LIVES_RESULT_FAIL;
@@ -2545,6 +2547,12 @@ int _lives_hook_trigger_async(int type, lives_proc_thread_t **xlpts, ...) {
     // NOTE: abscence of LIVES_THRDATT_FG_THREAD ensures this is sent to pool threads
     // and not to fg thread
     lpt = lives_funcinst_queue(finst, LIVES_THRDATTR_NO_HOOKS | LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_FAST_QUEUE);
+
+    // while running the callbacks, set src_object to hstack owner
+    // todo hold in queu till set
+    if (hstack->owner_act_src_type == ACTION_SOURCE_LPT)
+      SET_LPT_VALUE(lpt, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, hstack->owner.lpt);
+
     g_print("queued lpt %p\n", lpt);
 
     if (xlpts) lives_dynarray_append(lpts, ncount, lpt);

@@ -252,8 +252,6 @@ typedef struct {
 
   funcsig_t funcsig; //
 
-  //LiVESList *bound_params;
-
   char **paramdesc; // optional param descriprions
 
   // locator

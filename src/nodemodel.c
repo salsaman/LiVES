@@ -1078,7 +1078,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
     int inpalette = weed_layer_get_palette(layer);
 
     double xtime = lives_get_session_time();
-    SET_SELF_VALUE(double, "pconv_start", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "pconv_start", xtime);
 
     lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
 
@@ -1101,7 +1101,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
       }
     }
     xtime = lives_get_session_time();
-    SET_SELF_VALUE(double, "pconv_end", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "pconv_end", xtime);
 
     sub->end = xtime;
 
@@ -1125,7 +1125,7 @@ static lives_filter_error_t gamma_substep(plan_step_t *step) {
     int l_gamma = weed_layer_get_gamma(layer);
 
     double xtime = lives_get_session_time();
-    SET_SELF_VALUE(double, "gconv_start", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "gconv_start", xtime);
     weed_layer_ref(layer);
 
     retval = FILTER_SUCCESS;
@@ -1136,7 +1136,7 @@ static lives_filter_error_t gamma_substep(plan_step_t *step) {
       gamma_convert_layer(tgt_gamma, layer);
 
     xtime = lives_get_session_time();
-    SET_SELF_VALUE(double, "gconv_end", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "gconv_end", xtime);
 
     lives_layer_set_status(layer, LAYER_STATUS_PROCESSED);
     weed_layer_unref(layer);
@@ -1156,7 +1156,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     GET_PROC_THREAD_SELF(self);
     exec_plan_substep_t *sub;
     //double lb_time = 0.;
-    int interp = GET_SELF_VALUE(int, "interp");
+    int interp;
     int oclamping = step->fin_clamping;
     int osampling = step->fin_sampling;
     int osubspace = step->fin_subspace;
@@ -1169,13 +1169,13 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     boolean resized = FALSE;
 
     double xtime = lives_get_session_time();
-
+    GET_SELF_VALUE(&interp, "interp");
     weed_layer_ref(layer);
 
     if (!xwidth) xwidth = width;
     if (!xheight) xheight = height;
 
-    SET_SELF_VALUE(double, "res_start", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "res_start", xtime);
 
     sub = make_substep(OP_RESIZE, xtime, weed_layer_get_width(layer),
                        weed_layer_get_height(layer), weed_layer_get_palette(layer));
@@ -1202,7 +1202,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     }
 
     xtime = lives_get_session_time();
-    SET_SELF_VALUE(double, "res_end", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "res_end", xtime);
 
     sub->end = xtime;
 
@@ -1228,7 +1228,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
     exec_plan_substep_t *sub;
     double lb_time = 0.;
 
-    int interp = GET_SELF_VALUE(int, "interp");
+    int interp;
     int oclamping = step->fin_sampling;
     int opalette = step->fin_pal;
     int xwidth = step->fin_iwidth;
@@ -1238,12 +1238,12 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
     boolean ret;
 
     double xtime = lives_get_session_time();
-
+    GET_SELF_VALUE(&interp, "interp");
     weed_layer_ref(layer);
 
     retval = FILTER_SUCCESS;
 
-    SET_SELF_VALUE(double, "lbox_start", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "lbox_start", xtime);
 
     lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
 
@@ -1266,7 +1266,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
     }
 
     xtime = lives_get_session_time();
-    SET_SELF_VALUE(double, "lbox_end", xtime);
+    SET_SELF_VALUE(WEED_SEED_DOUBLE, "lbox_end", xtime);
 
     xtime -= lb_time;
     sub->end = xtime;
@@ -2128,7 +2128,7 @@ static void run_plan(exec_plan_t *plan) {
 
           d_print_debug("\n");
 
-          SET_LPT_VALUE(lpt, int, "interp", get_interp_value(prefs->pb_quality, TRUE));
+          SET_LPT_VALUE(lpt, WEED_SEED_INT, "interp", get_interp_value(prefs->pb_quality, TRUE));
 
           step->proc_thread = lpt;
           step->state = STEP_STATE_RUNNING;
@@ -2409,11 +2409,13 @@ static void run_plan(exec_plan_t *plan) {
               lpt = step->proc_thread;
               lives_proc_thread_join_int(lpt);
 
-              gstart = lives_proc_thread_get_double_value(lpt, "gconv_start");
-              if (gstart) {
+	      GET_LPT_VALUE(lpt, &gstart, "gconv_start");
+
+	      if (gstart) {
                 size_t frmsize = lives_frame_calc_bytesize(step->fin_width, step->fin_height,
                                  step->fin_pal, FALSE, NULL, NULL);
-                double gend = lives_proc_thread_get_double_value(lpt, "gconv_end");
+                double gend;
+		GET_LPT_VALUE(lpt, &gend, "gconv_end");
                 glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
               }
 

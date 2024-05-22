@@ -803,78 +803,54 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 #define SELF_HAS_VALUE(name)
 
 #define SET_SELF_VALUE(type, name, val)					\
-  weed_set_##type##_value(lives_proc_thread_ensure_book(self), name, val)
+  SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, val)
+#define SET_SELF_VALUE_VA(type, name, va)					\
+  SET_BOOK_VALUE_VA(lives_proc_thread_ensure_book(self), type, name, va)
 #define SET_SELF_ARRAY(type, name, nvals, valsptr)			\
-  weed_set_##type##_array(lives_proc_thread_ensure_book(self), name, nvals, valsptr)
-#define GET_SELF_VALUE(type, name)			\
-  lives_proc_thread_get_##type##_value(self, name)
-#define GET_SELF_ARRAY(type, name, nvals)			\
-  lives_proc_thread_get_##type##_array(self, name, nvals)
+  SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, nvals, valsptr)
+#define GET_SELF_VALUE(val, name)				\
+  GET_BOOK_VALUE(val, lives_local_databook(), name)
+#define GET_SELF_ARRAY(vals, name, nvals)				\
+  GET_BOOK_ARRAY(vals, lives_local_databook(), name, nvals)
 
 #define SET_LPT_VALUE(lpt, type, name, val) do {			\
-    weed_set_##type##_value(lives_proc_thread_ensure_book(lpt), name, val); \
-    lives_proc_thread_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
+    SET_BOOK_VALUE(lives_proc_thread_ensure_book(lpt), type, name, val); \
+    lives_book_item_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
 #define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr) do {		\
-    weed_set_##type##_array(lives_proc_thread_ensure_book(lpt), name, nvals, valsptr); \
-    lives_proc_thread_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
-#define GET_LPT_VALUE(lpt, type, name)			\
-  lives_proc_thread_get_##type##_value(lpt, name)
-#define GET_LPT_ARRAY(lpt, type, name, nvals)			\
-  lives_proc_thread_get_##type##_array(lpt, name, nvals)
-
-#define lives_proc_thread_get_int_value(lpt, name)			\
-  (weed_get_int_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_boolean_value(lpt, name)			\
-  (weed_get_boolean_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_double_value(lpt, name)			\
-  (weed_get_double_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_string_value(lpt, name)			\
-  (weed_get_string_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_int64_value(lpt, name)			\
-  (weed_get_int64_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_uint64_value(lpt, name)			\
-  (weed_get_uint64_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_funcptr_value(lpt, name)			\
-  (weed_get_funcptr_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_voidptr_value(lpt, name)			\
-  (weed_get_voidptr_value(lives_proc_thread_get_book(lpt), name, NULL))
-#define lives_proc_thread_get_plantptr_value(lpt, name)			\
-  (weed_get_plantptr_value(lives_proc_thread_get_book(lpt), name, NULL))
-
-#define lives_proc_thread_get_int_array(lpt, name, nvals)		\
-  (weed_get_int_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_boolean_array(lpt, name, nvals)		\
-  (weed_get_boolean_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_double_array(lpt, name, nvals)		\
-  (weed_get_double_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_string_array(lpt, name, nvals)		\
-  (weed_get_string_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_int64_array(lpt, name, nvals)		\
-  (weed_get_int64_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_uint64_array(lpt, name, nvals)		\
-  (weed_get_int64_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_funcptr_array(lpt, name, nvals)		\
-  (weed_get_funcptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_voidptr_array(lpt, name, nvals)		\
-  (weed_get_voidptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
-#define lives_proc_thread_get_plantptr_array(lpt, name, nvals)		\
-  (weed_get_plantptr_array_counted(lives_proc_thread_get_book(lpt), name, nvals))
+    SET_BOOK_ARRAY(lives_proc_thread_ensure_book(lpt), type, name, nvals, valsptr); \
+    lives_book_item_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
+#define GET_LPT_VALUE(lpt, val, name)				\
+  GET_BOOK_VALUE(val, lives_proc_thread_get_book(lpt), name)
+#define GET_LPT_ARRAY(lpt, vals, name, nvals)				\
+  GET_BOOK_ARRAY(vals, lives_proc_thread_get_book(lpt), name, nvals)
 
 /// data book
 
 // each proc_thread can have a "data_book", known as the Local Data Book.
 // Any type of data can be written here and later recalled
+// "src_object" is always self lpt
 // some of the data is context dependent, eg. when a funcinst is addded as hook callback
-// it gets "target_object", "src_object", "target_item" "src_item".
-// Amongst other features - there is also a Global Data Book. This is not owned by any proc_thread
-// - values can also be "bound" to a variable
+// eg. "target_object", "target_item" "src_item".
+//
+// there is also a shared Global Data Book. This is not owned by any proc_thread
+// - values can also be "bound" to a variable. All vals in the GDB are bound
 weed_error_t lives_proc_thread_set_book(lives_proc_thread_t, weed_plant_t *book);
 weed_plant_t *lives_proc_thread_get_book(lives_proc_thread_t);
 weed_plant_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
+
+// a data book can be shared with another lpt, eg before dispatching it
+// or it can be copied 
 weed_plant_t *lives_proc_thread_share_book(lives_proc_thread_t dst,
     lives_proc_thread_t src);
 
-void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name);
+// making an item indellible is similar to making aa variable static, non-idellible
+// (dellible ?) items are removed when the funcinst is done 
+
+// commonly used databook items
+#define LDB_SRC_OBJECT "src_object"
+#define LDB_SRC_ITEM "src_item"
+#define LDB_TARGET_OBJECT "target_object"
+#define LDB_TARGET_ITEM "target_item"
 
 // lives_proc_thread
 

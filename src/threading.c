@@ -371,13 +371,6 @@ LIVES_GLOBAL_INLINE  uint64_t lives_proc_thread_get_attrs(lives_proc_thread_t lp
 }
 
 
-LIVES_GLOBAL_INLINE void lives_proc_thread_make_indellible(lives_proc_thread_t lpt, const char *name) {
-  weed_plant_t *book = lives_proc_thread_get_book(lpt);
-  if (book && weed_plant_has_leaf(book, name))
-    weed_leaf_set_undeletable(book, name, TRUE);
-}
-
-
 LIVES_GLOBAL_INLINE weed_error_t lives_proc_thread_set_book(lives_proc_thread_t lpt, weed_plant_t *book) {
   if (lpt) return weed_set_plantptr_value(lpt, LIVES_LEAF_DATA_BOOK, book);
   return WEED_ERROR_NOSUCH_PLANT;
@@ -398,28 +391,12 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_proc_thread_ensure_book(lives_proc_threa
   if (lpt) {
     weed_plant_t *book = weed_get_plantptr_value(lpt, LIVES_LEAF_DATA_BOOK, NULL);
     if (!book) {
-      book = lives_plant_new(LIVES_PLANT_DATA_BOOK);
+      book = LIVES_MAKE_DATA_BOOK;
       lives_proc_thread_set_book(lpt, book);
     }
     return book;
   }
   return NULL;
-}
-
-
-LIVES_LOCAL_INLINE void lives_proc_thread_cleanup_book(lives_proc_thread_t lpt) {
-  weed_plant_t *book = lives_proc_thread_get_book(lpt);
-  if (book) {
-    weed_refcount_inc(book);
-    // this works because: with default _weed_plant_free(), any undeletable leaves are retained
-    // and plant is not freed. incrementing refcount adds an undeleteable leaf
-    // (refcount) if that does not already exist.
-    // thus, the plant cannot be freed, but any leaves NOT flagged as undeletable WILL be deleted.
-    // - undeleteable leaves include "type", "uid", the refcounter itself
-    // and ANY data added as "static", thus the effect will be to delete any data not flagged as "static"
-    _weed_plant_free(book);
-    weed_refcount_dec(book);
-  }
 }
 
 
@@ -497,8 +474,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt) {
 
 
 static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, lives_funcptr_t func, const char *fname,
-    int return_type,
-    const char **anames, const char *args_fmt, va_list xargs) {
+    int return_type, const char **anames, const char *args_fmt, va_list xargs) {
   if (func) validate_args_fmt(args_fmt, fname, anames);
   if (func && !fdef) {
     char *xargs_fmt = args_fmt_filter(args_fmt);
@@ -679,8 +655,8 @@ void lives_funcinst_append_chain(lives_funcinst_t *f1, lives_funcinst_t *f2) {
 */
 
 lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_thread_attr_t attrs,
-    lives_funcptr_t func, const char *fname,
-    int return_type, const char **anames, const char *args_fmt, ...) {
+    lives_funcptr_t func, const char *fname, int return_type, const char **anames,
+					      const char *args_fmt, ...) {
   lives_proc_thread_t lpt;
   lives_funcinst_t *finst;
   va_list xargs;
@@ -691,6 +667,8 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
 
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
   if (lpt) {
+    // create local data book for lpt, and set $SRC_OBJECT
+    SET_LPT_VALUE(lpt, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, lpt);
     if (attrs & LIVES_THRDATTR_CREATE_UNQUEUED)
       lives_funcinst_set_attrs(finst, attrs);
     else lives_proc_thread_dispatch(lpt);
@@ -958,7 +936,7 @@ if (lpt) {
       lives_free(lpt_hooks);
 
       databook = lives_proc_thread_get_book(lpt);
-      if (databook) weed_plant_free(databook);
+      if (databook) weed_refcount_dec(databook);
 
       if (tdata) {
         // GET_PROC_THREAD_SELF will now return NULL, until we call lives_thread_switch_self()
@@ -1031,7 +1009,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   // passed to the fg thread
   // or queued for sequential execution (since we need to avoid nesting calls)
 
-  finst = _lives_funcinst_create(NULL, func, fname, return_type, anames, args_fmt, xargs);
+  finst = _lives_funcinst_create_va(NULL, func, fname, return_type, anames, args_fmt, xargs);
 
   if (retloc) SET_RETVAR(finst, retloc);
 
@@ -1078,7 +1056,7 @@ boolean _main_thread_execute(lives_funcptr_t func, const char *fname, int return
                              void *retval, const char **anames, const char *args_fmt, ...) {
   boolean bret;
   va_list xargs;
-  if (!args_fmt || !*args_fmt) return _main_thread_execute_vargs(func, fname, return_type, retval, NULL, "", NULL);
+  if (!args_fmt || !*args_fmt) return _main_thread_execute(func, fname, return_type, retval, NULL, "", NULL);
   va_start(xargs, args_fmt);
   bret = _main_thread_execute_vargs(func, fname, return_type, retval, anames, args_fmt, xargs);
   va_end(xargs);
@@ -1089,7 +1067,7 @@ boolean _main_thread_execute(lives_funcptr_t func, const char *fname, int return
 boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char **anames, const char *args_fmt, ...) {
   boolean bret;
   va_list xargs;
-  if (!args_fmt || !*args_fmt) return _main_thread_execute_vargs(func, fname, WEED_SEED_VOID, NULL, NULL, "", NULL);
+  if (!args_fmt || !*args_fmt) return _main_thread_execute(func, fname, WEED_SEED_VOID, NULL, NULL, "", NULL);
   va_start(xargs, args_fmt);
   bret = _main_thread_execute_vargs(func, fname, WEED_SEED_VOID, NULL, anames, args_fmt, xargs);
   va_end(xargs);
@@ -1546,7 +1524,8 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
         pthread_cond_t *pcond = &tdata->vars.var_pcond;
         if (ensure) {
           bval = FALSE;
-          lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, WEED_SEED_VOID, toggle_var_cb, (void *)&bval);
+	  BREAK_ME("togf");
+          lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, WEED_SEED_VOID, toggle_var_cb, "V", (void *)&bval);
         }
         //tdata->vars.var_sync_ready = TRUE;
         pthread_cond_signal(pcond);
@@ -1937,8 +1916,8 @@ static lives_result_t _lives_proc_thread_wait_finished(lives_proc_thread_t lpt, 
     //to_data is set when called from the guillotinee
     //add callbacks for busy / unbusy
     //and a callback which should trigger in case dontcare is set
-    rcpt1 = lives_proc_thread_add_hook_cb(lpt, BUSY_HOOK, 0, timeout_busy, (void *)to_data);
-    rcpt2 = lives_proc_thread_add_hook_cb(lpt, UNBUSY_HOOK, 0, timeout_unbusy, (void *)to_data);
+    rcpt1 = lives_proc_thread_add_hook_cb(lpt, BUSY_HOOK, 0, timeout_busy, "V", (void *)to_data);
+    rcpt2 = lives_proc_thread_add_hook_cb(lpt, UNBUSY_HOOK, 0, timeout_unbusy, "V", (void *)to_data);
 
     //THREADVAR(hook_hints) |= HOOK_OPT_REMOVE_ON_FALSE;
 
@@ -1949,7 +1928,7 @@ static lives_result_t _lives_proc_thread_wait_finished(lives_proc_thread_t lpt, 
     /* lives_funcinst_t *fi3 = */
 
     // for now we fake the condiiton and the hook is only called for dontcare
-    rcpt3 = lives_proc_thread_add_hook_cb(lpt, ATTRS_UPDATED_HOOK, 0, timeout_dontcare, (void *)to_data);
+    rcpt3 = lives_proc_thread_add_hook_cb(lpt, ATTRS_UPDATED_HOOK, 0, timeout_dontcare, "V", (void *)to_data);
 
     /* char **cond = lives_cond_create(COND_BEGIN. COND_BITS_SET, COND_UINT64_VAR(@new_value), */
     /* 				    COND_UINT64_CONST(LIVES_THRDATTR_DONTCARE), COND_END); */
@@ -2675,7 +2654,7 @@ static lives_result_t _lives_funcinst_execute(void) {
       break;
 
     // remove any non static values from the data book
-    lives_proc_thread_cleanup_book(self);
+    lives_localbook_clean();
 
     cidx = lives_proc_thread_get_chain_idx(self);
 

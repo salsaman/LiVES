@@ -17,16 +17,40 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic);
 
 static LiVESList *cond_trans_list = NULL;
 
-static boolean check_st_match(allvalues_t *p0, allvalues_t *p1, boolean only_num) {
-  if (!p0 || !p1) return TRUE;
-  if (p1->stype != p0->stype) return FALSE;
-  if (!only_num || (p0->stype == WEED_SEED_INT
-                    || p0->stype == WEED_SEED_UINT
-                    || p0->stype == WEED_SEED_INT64
-                    || p0->stype == WEED_SEED_UINT64
-                    || p0->stype == WEED_SEED_DOUBLE
-                    || p0->stype == WEED_SEED_FLOAT
-                    || p0->stype == WEED_SEED_BOOLEAN)) return TRUE;
+#define MATCH_ANY		0
+#define MATCH_NUMERIC		1
+#define MATCH_INT		2
+#define MATCH_BOOL		3
+#define MATCH_POINTER		4
+#define MATCH_STRING		5
+
+static boolean check_st_match(allvalues_t *p0, allvalues_t *p1, int match) {
+  if (p0 && p1 && p1->stype != p0->stype) return FALSE;
+  switch (match) {
+  case MATCH_ANY: return TRUE;
+  case MATCH_NUMERIC:
+    if (p0->stype == WEED_SEED_DOUBLE
+	|| p0->stype == WEED_SEED_FLOAT) return TRUE;
+  case MATCH_INT:
+    if (p0->stype == WEED_SEED_INT
+	|| p0->stype == WEED_SEED_UINT
+	|| p0->stype == WEED_SEED_INT64
+	|| p0->stype == WEED_SEED_UINT64) return TRUE;
+    break;
+  case MATCH_BOOL:
+    if (p0->stype == WEED_SEED_BOOLEAN) return TRUE;
+    break;
+  case MATCH_POINTER:
+    if (p0->stype == WEED_SEED_VOIDPTR
+	|| p0->stype == WEED_SEED_FUNCPTR
+	|| p0->stype == WEED_SEED_PLANTPTR) return TRUE;
+    break;
+  case MATCH_STRING:
+    if (p0->stype == WEED_SEED_STRING
+	|| p0->stype == LIVES_SEED_CONST_CHARPTR) return TRUE;
+    break;
+  default: break;
+  }
   return FALSE;
 }
 
@@ -145,11 +169,13 @@ static allvalues_t *cond_allv_const(LiVESList **va_magic, weed_seed_t st) {
 static allvalues_t *cond_local_const(const char *item) {return get_local_book_item(item);}
 
 // book vals are allvalues so we dont know type till we read them
-static allvalues_t *cond_local_var(LiVESList **va_magic) {
-  va_surprise *magic = (*va_magic)->data;
-  char *item = va_arg(magic->va, char *);
-  check_for_surprises(va_magic);
-  d_print_debug(", %s", item);
+static allvalues_t *cond_local_var(LiVESList **va_magic, const char *item) {
+  if (!item) {
+    va_surprise *magic = (*va_magic)->data;
+    item = va_arg(magic->va, char *);
+    check_for_surprises(va_magic);
+    d_print_debug(", %s", item);
+  }
   lives_funcinst_t *finst = lives_funcinst_create(cond_local_const, NULL, WEED_SEED_VOIDPTR, "s", item);
   return MAKE_ALLVALUE(LIVES_SEED_FUNCINST, finst);
 }
@@ -210,15 +236,29 @@ static allvalues_t *cond_objattr(LiVESList **va_magic) {
 
 // opfuncs
 
+enum {OP_ADD, OP_SUB, OP_MULT,};
+
+#define _COND_BOOL(a) !!(a)
+#define _COND_ARITH(a,b,op)(op==OP_ADD?(a)+(b):op==OP_SUB?(a)-(b):(a)*(b))
+#define _COND_GENERIC(a,b,op) _COND_BOOL(_COND_ARITH(a, b, op))
+
+#define _COND_NOT(a) _COND_GENERIC(1,(a),OP_SUB)
+#define _COND_OR(a,b) _COND_GENERIC((a),(b),OP_ADD)
+#define _COND_AND(a,b) _COND_GENERIC((a),(b),OP_MULT)
+#define _COND_XOR(a,b) _COND_GENERIC((a),(b),OP_SUB)
+
+
 static allvalues_t *cond_equals_const(allvalues_t *p0, allvalues_t *p1) {
   boolean res = FALSE;
+  if (!check_st_match(p0, p1, MATCH_ANY)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   switch (p0->stype) {
-  case WEED_SEED_INT: res = (p0->values.i[0] == p1->values.i[0]); break;
   case WEED_SEED_STRING:
   case LIVES_SEED_CONST_CHARPTR:
     res = !(lives_strcmp(p0->values.s[0], p1->values.s[0]));
     break;
-  case WEED_SEED_UINT:  res = (p0->values.u[0] == p1->values.u[0]); break;
+
+  case WEED_SEED_INT: res = (p0->values.i[0] == p1->values.i[0]); break;
+  case WEED_SEED_UINT: res = (p0->values.u[0] == p1->values.u[0]); break;
   case WEED_SEED_INT64: res = (p0->values.I[0] == p1->values.I[0]); break;
   case WEED_SEED_UINT64: res = (p0->values.U[0] == p1->values.U[0]); break;
   case WEED_SEED_DOUBLE: res = (p0->values.d[0] == p1->values.d[0]); break;
@@ -235,7 +275,6 @@ static allvalues_t *cond_equals_const(allvalues_t *p0, allvalues_t *p1) {
 static allvalues_t *cond_equals(LiVESList **va_magic, allvalues_t *p0) {
   allvalues_t *p1 = cond_create_va(FALSE, va_magic);
   lives_funcinst_t *finst = lives_funcinst_create(cond_equals_const, NULL, WEED_SEED_VOIDPTR, "AA", p0, p1);
-  g_print("XXX %s\n", ((cond_trans *)p0->priv_data)->token);
   allvalues_t *allvp;
   if (is_final(p0) && is_final(p1)) {
     // if we have only const values, we can find the result now
@@ -250,6 +289,7 @@ static allvalues_t *cond_equals(LiVESList **va_magic, allvalues_t *p0) {
 
 static allvalues_t *cond_greater_const(allvalues_t *p0, allvalues_t *p1) {
   boolean res = FALSE;
+  if (!check_st_match(p0, p1, MATCH_NUMERIC)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   switch (p0->stype) {
   case WEED_SEED_INT: res = (p0->values.i[0] > p1->values.i[0]); break;
   case WEED_SEED_UINT: res = (p0->values.u[0] > p1->values.u[0]); break;
@@ -276,8 +316,7 @@ static allvalues_t *cond_greater(LiVESList **va_magic, allvalues_t *p0) {
 
 static allvalues_t *cond_bit_set_const(allvalues_t *p0, allvalues_t *p1) {
   boolean res = FALSE;
-  if (!check_st_match(p0, p1, TRUE)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
-
+  if (!check_st_match(p0, p1, MATCH_INT)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   switch (p0->stype) {
   case WEED_SEED_INT: res = (p0->values.i[0] & p1->values.i[0]); break;
   case WEED_SEED_UINT: res = (p0->values.u[0] & p1->values.u[0]); break;
@@ -299,16 +338,6 @@ static allvalues_t *cond_bit_set(LiVESList **va_magic, allvalues_t *p0) {
   return allvp;
 }
 
-enum {OP_ADD, OP_SUB, OP_MULT,};
-
-#define _COND_BOOL(a) !!(a)
-#define _COND_ARITH(a,b,op)(op==OP_ADD?(a)+(b):op==OP_SUB?(a)-(b):(a)*(b))
-#define _COND_GENERIC(a,b,op) _COND_BOOL(_COND_ARITH(a, b, op))
-
-#define _COND_NOT(a) _COND_GENERIC(1,(a),OP_SUB)
-#define _COND_OR(a,b) _COND_GENERIC((a),(b),OP_ADD)
-#define _COND_AND(a,b) _COND_GENERIC((a),(b),OP_MULT)
-#define _COND_XOR(a,b) _COND_GENERIC((a),(b),OP_SUB)
 
 static boolean get_bool(allvalues_t *allvp) {
   if (allvp) {
@@ -327,6 +356,9 @@ static boolean get_bool(allvalues_t *allvp) {
 }
 
 static allvalues_t *cond_logic_not_const(allvalues_t *p0) {
+  if (!check_st_match(p0, NULL, MATCH_NUMERIC)
+      && !check_st_match(p0, NULL, MATCH_BOOL))
+    return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   return MAKE_ALLVALUE(WEED_SEED_BOOLEAN, _COND_NOT(get_bool(p0)));
 }
 
@@ -361,7 +393,7 @@ static allvalues_t *cond_seed_type(LiVESList **va_magic) {
 
 
 static allvalues_t *cond_logic_and_const(allvalues_t *p0, allvalues_t *p1) {
-  if (!check_st_match(p0, p1, TRUE)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
+  if (!check_st_match(p0, p1, MATCH_ANY)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   return MAKE_ALLVALUE(WEED_SEED_BOOLEAN, _COND_AND(get_bool(p0), get_bool(p1)));
 }
 
@@ -423,7 +455,7 @@ static allvalues_t *cond_logic_test(LiVESList **va_magic, allvalues_t *p0) {
 #endif
 
 static allvalues_t *cond_logic_or_const(allvalues_t *p0, allvalues_t *p1) {
-  if (!check_st_match(p0, p1, TRUE)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
+  if (!check_st_match(p0, p1, MATCH_ANY)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   return MAKE_ALLVALUE(WEED_SEED_BOOLEAN, _COND_OR(get_bool(p0), get_bool(p1)));
 }
 
@@ -453,7 +485,7 @@ static allvalues_t *cond_logic_or(LiVESList **va_magic, allvalues_t *p0) {
 }
 
 static allvalues_t *cond_logic_xor_const(allvalues_t *p0, allvalues_t *p1) {
-  if (!check_st_match(p0, p1, TRUE)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
+  if (!check_st_match(p0, p1, MATCH_ANY)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   return MAKE_ALLVALUE(WEED_SEED_BOOLEAN, _COND_XOR(get_bool(p0), get_bool(p1)));
 }
 
@@ -518,6 +550,7 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
     // allowed tokens + token types. Reading next token may change the state
     int maxp;
     magic = (va_surprise *)((*va_magic)->data);
+    LIVES_ASSERT(magic);
     tok = va_arg(magic->va, char *);
 
     if (!(*va_magic)->next && lives_strcmp(tok, _COND_PCLOSE)) {
@@ -545,9 +578,9 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
       continue;
     }
 
-    if (state == 0) cond_syntax = strings_to_list(0, COND_SYNTAX_0);
-    if (state == 1) cond_syntax = strings_to_list(0, COND_SYNTAX_1);
-    if (state == 2) cond_syntax = strings_to_list(0, COND_SYNTAX_2);
+    if (state == 0) cond_syntax = strings_to_list(COND_SYNTAX_0);
+    if (state == 1) cond_syntax = strings_to_list(COND_SYNTAX_1);
+    if (state == 2) cond_syntax = strings_to_list(COND_SYNTAX_2);
 
     for (synsym = cond_syntax; synsym; synsym = synsym->next) {
       char *syntok = (char *)synsym->data;
@@ -571,10 +604,9 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
         state = 0;
       } else {
         if (tcount) {
-          condition = cond_create_va(TRUE, va_magic);
           condition->priv_data = (void *)ctrans;
+          condition = cond_create_va(TRUE, va_magic);
           state = 1;
-          if (!(*va_magic)->next) d_print_debug("\"%s\"\n", _COND_PCLOSE);
         }
       }
       tcount++;
@@ -588,6 +620,7 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
       /* lives_funcinst_t *finst = lives_funcinst_create(NULL, "parens", WEED_SEED_VOID, "A", condition); */
       /* condition = MAKE_ALLVALUE(LIVES_SEED_FUNCINST, finst); */
       /* condition->priv_data = find_ctrans(_COND_POPEN); */
+      if (!(*va_magic)->next) d_print_debug("\"%s\"\n", _COND_PCLOSE);
       return condition;
     }
 
@@ -840,38 +873,13 @@ static lives_condition _lives_cond_eval(lives_condition condition) {
 }
 
 
-
-#define LIVES_LEAF_THREAD_PARAM "thrd_param"
-static char *make_std_pnamey(int pn) {return lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, pn);}
-
-static allvalues_t *dothethang(allvalues_t *res) {
-  const  char *xxkey = "thrd_param0";
-  while (1) {
-    lives_funcinst_t *finst = res->funcinst;
-    if (!finst) break;
-
-    if (!finst->funcdef) {
-      allvalues_t *nures = (allvalues_t *)weed_get_custom_value(finst->params, xxkey,
-                           LIVES_SEED_ALLVALUES, NULL);
-      res = dothethang(nures);
-    }
-  }
-  //lives_free(pkey);
-  return res;
-}
-
-
 lives_cond_result lives_cond_eval(lives_condition condition) {
   lives_condition xcond = lives_cond_copy(condition);
-
-  allvalues_t *res = _lives_cond_eval(xcond), *nures;;
-  // last toke ahould be pclose so deal
-  //
-  nures = dothethang(res);
-  boolean bres = nures->values.b[0];
+  allvalues_t *res = _lives_cond_eval(xcond);
+  boolean bres = res->values.b[0];
   if (res != xcond) lives_cond_free(res);
   lives_cond_free(xcond);
-  g_print("\nCondition evaluates to: %s\n", CONDRES_NAME(bres));
+  //g_print("\nCondition evaluates to: %s\n", CONDRES_NAME(bres));
   return bres ? LIVES_COND_PASS : LIVES_COND_FAIL;
 }
 
@@ -1096,4 +1104,6 @@ void lives_conditions_init(void) {
   register_cmd_token("BLOCK_START", 	'/',  "{"); // same as popen
   register_cmd_token("BLOCK_END", 	'/',  "}"); // pclose
 #endif
+
+  cond_trans_list = lives_list_reverse(cond_trans_list);
 }

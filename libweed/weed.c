@@ -686,9 +686,16 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 
   if (!plant) return NULL;
 
-  if (!key || !*key) {
-    hash = WEED_MAGIC_HASH;
-    if (hash_ret) *hash_ret = hash;
+  if (!key || !*key) hash = WEED_MAGIC_HASH;
+  else {
+    if (hash_ret) hash = *hash_ret;
+    if (!hash) {
+      hash = weed_hash(key);
+      if (hash_ret) *hash_ret = hash;
+    }
+  }
+
+  if (hash == WEED_MAGIC_HASH) {
     data_lock_readlock(leaf);
     return leaf;
   }
@@ -713,8 +720,6 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     if (!checkmode) reader_count_add(plant);
   }
 
-  if (hash_ret) hash = *hash_ret;
-  if (!hash) hash = weed_hash(key);
   if (!checkmode && !refnode) {
     leaf = ((plant_priv_data_t *)plant->private_data)->quickptr;
     if (!leaf || hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {

@@ -59,7 +59,7 @@ boolean jack_warn(boolean is_trans, boolean is_con) {
       }
     }
     if (com) {
-      fork_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, RESTART_HOOK, HOOK_OPT_ONESHOT, lives_fork_cb, com);
+      fork_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, RESTART_HOOK, HOOK_OPT_ONESHOT, lives_fork_cb, "V", com);
     }
   }
   // TODO - if we have backup config, restore from it
@@ -1422,7 +1422,7 @@ retry_connect:
 
     mainw->crash_possible = 1;
     defer_rcpt = lives_hook_cb_append(NULL, THREAD_EXIT_HOOK, 0,
-                                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                      defer_sigint_cb, "V", LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
@@ -1467,7 +1467,7 @@ retry_connect:
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
     mainw->crash_possible = 2;
     defer_rcpt = lives_hook_cb_append(NULL, THREAD_EXIT_HOOK, 0,
-                                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                      defer_sigint_cb, "V", LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
       set_signal_handlers((lives_sigfunc_t)defer_sigint);
@@ -1823,7 +1823,7 @@ retry_connect:
     mainw->crash_possible = 4;
   }
   defer_rcpt = lives_hook_cb_append(NULL, THREAD_EXIT_HOOK, 0, defer_sigint_cb,
-                                    LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                    "V", LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_server_open()
@@ -1864,7 +1864,7 @@ retry_connect:
   }
 
   defer_rcpt = lives_hook_cb_append(NULL, THREAD_EXIT_HOOK, 0, defer_sigint_cb,
-                                    LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                    "V", LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -1893,7 +1893,7 @@ retry_connect:
     mainw->crash_possible = 6;
   }
   defer_rcpt = lives_hook_cb_append(NULL, THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
-                                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                    defer_sigint_cb, "V", LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_client_open()
@@ -4592,7 +4592,7 @@ retry:
       }
 #endif
       interop_rcpt =
-        lives_hook_cb_append(NULL, COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC, jack_interop_cleanup, jackd);
+        lives_hook_cb_append(NULL, COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC, jack_interop_cleanup, "V", jackd);
       need_clnup = TRUE;
     } else {
       jack_interop_cleanup(NULL, jackd);

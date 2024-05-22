@@ -474,7 +474,8 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   // make sure we close the stream even on abort
   //ldev_free_lpt
-  ldev_free_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK, 0, lives_ldev_free_cb, (void *)&ldev);
+  ldev_free_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
+					0, lives_ldev_free_cb, "V", (void *)&ldev);
 
   if (*device->device) ldev->fname = lives_strdup(device->device);
   else ldev->fname = lives_strdup(device->identifier);

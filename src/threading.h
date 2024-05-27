@@ -465,11 +465,12 @@ int lives_proc_thread_get_stack_depth(lives_proc_thread_t);
 
 boolean lives_proc_thread_is_original(lives_proc_thread_t lpt);
 
-lives_proc_thread_t _lives_funcinst_queue(lives_funcinst_t *finst, uint64_t attrs);
+lives_proc_thread_t lives_funcinst_fg_queue(lives_funcinst_t *finst, uint64_t attrs);
+lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *, uint64_t attrs, lives_databook_t *ctxbook);
 
-#define lives_funcinst_queue(finst, attrs)	\
-  (record_loc(_FUNC_REF_,_FILE_REF_,_LINE_REF_) ?	\
-   _lives_funcinst_queue(finst, attrs) : NULL)
+/* #define lives_funcinst_queue(finst, attrs)	\ */
+/*   (record_loc(_FUNC_REF_,_FILE_REF_,_LINE_REF_) ?	\ */
+/*    _lives_funcinst_queue(finst, attrs) : NULL) */
 
 void lives_funcinst_set_disposition(lives_funcinst_t *, boolean incl_stacked, funcinst_disposition disposition, ...);
 void finst_module_free(void *module, funcinst_module_type mod_type);
@@ -796,6 +797,12 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 
 #define DEL_SELF_VALUE(name) DEL_BOOK_VALUE(lives_local_databook(), name)
 
+// book values by default are readonly, dellible
+// for non self values we make them indellible
+
+// self values stay dellible, readonly
+// we can make them indellible or readwrite, but not both at once
+
 #define SET_SELF_VALUE(type, name, val)					\
   SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, val)
 #define SET_SELF_VALUE_VA(type, name, va)					\
@@ -804,17 +811,19 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
   SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, nvals, valsptr)
 #define GET_SELF_VALUE(val, name)				\
   GET_BOOK_VALUE(val, lives_local_databook(), name)
-#define GET_SELF_ARRAY(vals, name, nvals)				\
+
+// caution - values by ref !
+#define GET_SELF_ARRAY(vals, name, nvals)			\
   GET_BOOK_ARRAY(vals, lives_local_databook(), name, nvals)
 
-#define SET_LPT_VALUE(lpt, type, name, val) do {			\
-    SET_BOOK_VALUE(lives_proc_thread_ensure_book(lpt), type, name, val); \
-    lives_book_item_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
-#define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr) do {		\
-    SET_BOOK_ARRAY(lives_proc_thread_ensure_book(lpt), type, name, nvals, valsptr); \
-    lives_book_item_make_indellible(lives_proc_thread_get_book(lpt), name);} while(0);
+#define SET_LPT_VALUE(lpt, type, name, val)				\
+  SET_BOOK_VALUE(lives_proc_thread_ensure_book(lpt), type, name, val);
+#define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr)			\
+    SET_BOOK_ARRAY(lives_proc_thread_ensure_book(lpt), type, name, nvals, valsptr);
 #define GET_LPT_VALUE(lpt, val, name)				\
   GET_BOOK_VALUE(val, lives_proc_thread_get_book(lpt), name)
+
+// caution - values by ref !
 #define GET_LPT_ARRAY(lpt, vals, name, nvals)				\
   GET_BOOK_ARRAY(vals, lives_proc_thread_get_book(lpt), name, nvals)
 
@@ -828,9 +837,9 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 //
 // there is also a shared Global Data Book. This is not owned by any proc_thread
 // - values can also be "bound" to a variable. All vals in the GDB are bound
-weed_error_t lives_proc_thread_set_book(lives_proc_thread_t, weed_plant_t *book);
-weed_plant_t *lives_proc_thread_get_book(lives_proc_thread_t);
-weed_plant_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
+weed_error_t lives_proc_thread_set_book(lives_proc_thread_t, lives_databook_t *book);
+lives_databook_t *lives_proc_thread_get_book(lives_proc_thread_t);
+lives_databook_t *lives_proc_thread_ensure_book(lives_proc_thread_t);
 
 // a data book can be shared with another lpt, eg before dispatching it
 // or it can be copied

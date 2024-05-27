@@ -160,28 +160,16 @@ void lives_assert_failed(const char *cond, const char *file, int line, ...) {
   const char *fmt;
   char *msg;
   va_list va;
-  if (prefs) {
-    MSGMODE_LOCAL;
-    MSGMODE_SET(DEBUG_LOG);
-  }
+
   va_start(va, line);
   fmt = va_arg(va, const char *);
   if (fmt) msg = LSPF("%s\n", lives_strdup_vprintf(fmt, va));
   else msg = lives_strdup("");
   va_end(va);
-  lives_snprintf(errmsg, 1024, "\n\nFATAL: lives_assert failed in file %s, line %d:\n\n%s\n%s\n",  file, line, cond, msg);
+
+  lives_snprintf(errmsg, 1024, "FATAL: lives_assert failed:\n%s, line %d: "
+                 "LIVES_ASSERT(%s);\n%s\n",  file, line, cond, msg);
   lives_free(msg);
-
-  d_print(errmsg);
-
-  GET_PROC_THREAD_SELF(self);
-  lpt_error_handle(self, LPT_ERR_FATAL);
-
-  if (prefs) MSGMODE_GLOBAL;
-
-  d_print(errmsg);
-
-  BREAK_ME("assertfail");
 
   lives_abort("Assertion failed");
 }
@@ -419,13 +407,19 @@ boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl) {
 
 static int sigsrc = SIG_SRC_KERNEL;
 
+#define print_sep_line _DW0					\
+  (d_print("\n******************************************\n\n");)
+
 //#define QUICK_EXIT
 void catch_sigint(int signum, siginfo_t *si, void *uc) {
   static int printed = 0;
   int only_print = 0;
   int sev = LPT_ERR_CRITICAL;
+  lives_proc_thread_t self = NULL;
 
-  if (mainw->foreign) _exit(signum);
+  if (mainw && mainw->foreign) _exit(signum);
+
+  if (prefs) MSGMODE_SET(DEBUG_LOG);
 
   fflush(stderr);
 
@@ -447,38 +441,39 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
   printed = 1;
 #endif
 
+  if (mainw) self = lives_thread_get_proc_thread();
+
   if (mainw && !mainw->critical) mainw->critical = 1;
 
   if (!pthread_equal(main_thread, pthread_self())) {
     // if we are not the main thread, just exit
-    GET_PROC_THREAD_SELF(self);
     g_print("Signal %d received by thread ", signum);
     lives_thread_data_t *mydata = get_thread_data();
     char *tnum = get_thread_id(mydata->vars.var_uid);
     g_print("%s\n", tnum);
     //if (mydata) {
-    lives_proc_thread_set_signalled(self, signum, NULL);
+    if (self) lives_proc_thread_set_signalled(self, signum, NULL);
     if (!only_print) pthread_detach(pthread_self());
   }
 
   if (!mainw) {
     if (signum == LIVES_SIGSEGV) {
-      fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+      d_print("Segfault at address %p\n", si->si_addr);
     }
     if (!only_print) exit(signum);
   }
 
   //#ifdef QUICK_EXIT
   /* shoatend(); */
-  /* fprintf(stderr, "shoatt end"); */
+  /* d_print("shoatt end"); */
   /* fflush(stderr); */
 
   //#endif
 
   if (sigsrc == SIG_SRC_INTERN)
-    fprintf(stderr, "Signal was caught internally\n");
+    d_print("Signal was caught internally\n");
   if (sigsrc == SIG_SRC_EXTERN)
-    fprintf(stderr, "Signal was caught externally\n");
+    d_print("Signal was caught externally\n");
 
   if (signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE || signum == LIVES_SIGABRT) {
     sev = LPT_ERR_CRITICAL;
@@ -486,59 +481,69 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
     if (!printed) {
       printed = 1;
       if (signum == LIVES_SIGABRT) {
-        fprintf(stderr, "%s", _("\nProgram aborting...\n"));
+        d_print("%s", _("\nProgram aborting...\n"));
       }
 
-      fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
-                        "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
-      fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
-                        "distribution,\nand the LiVES version (%s), plus any following information:\n"), LiVES_VERSION);
+      d_print(_("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
+                "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
+      d_print(_("\n\nWhen reporting crashes, please include details of your operating system, "
+                "distribution,\nand the LiVES version (%s), plus any following information:\n"), LiVES_VERSION);
 
       if (signum == LIVES_SIGSEGV) {
-        fprintf(stderr, "Segmentation fault, ");
+        d_print("Segmentation fault, ");
         if (mainw->critical) {
-          fprintf(stderr, "raised by thread");
+          d_print("raised by thread");
           if (mainw->critical_thread)
-            fprintf(stderr, "%s", get_thread_id(mainw->critical_thread));
-          fprintf(stderr, "\n");
+            d_print("%s", get_thread_id(mainw->critical_thread));
+          d_print("\n");
           if (mainw->critical_errno) {
-            fprintf(stderr, "Error code was %d", mainw->critical_errno);
+            d_print("Error code was %d", mainw->critical_errno);
             if (mainw->critical_errmsg)
-              fprintf(stderr, ", %s", mainw->critical_errmsg);
-            fprintf(stderr, "\n");
+              d_print(", %s", mainw->critical_errmsg);
+            d_print("\n");
           }
-          if (si) fprintf(stderr, "Segfault at address %p\n", si->si_addr);
+          if (si) d_print("Segfault at address %p\n", si->si_addr);
         } else if (signum == LIVES_SIGSEGV) {
-          if (si) fprintf(stderr, "Floating point error at address %p\n", si->si_addr);
+          if (si) d_print("Floating point error at address %p\n", si->si_addr);
         }
       }
 
-      fprintf(stderr, "\n");
+      d_print("\n");
 
       /* if (capable->has_gdb) { */
-      /* 	if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n")); */
-      /* 	else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n")); */
+      /* 	if (mainw->debug) d_print("%s", _("and any information shown below:\n\n")); */
+      /* 	else d_print("%s", _("Please try running LiVES with the -debug option to collect more information.\n\n")); */
       /* } else { */
-      /* 	fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option " */
+      /* 	d_print("%s", _("Please install gdb and then run LiVES with the -debug option " */
       /* 				"to collect more information.\n\n")); */
       /* } */
 
-      GET_PROC_THREAD_SELF(self);
-      lpt_error_handle(self, sev);
+      if (self) lpt_error_handle(self, sev);
     }
 
-    if (*errmsg) fprintf(stderr, "%s", errmsg);
-    if (*errdets) fprintf(stderr, "%s", errdets);
+    print_sep_line;
+
+    if (*errmsg) d_print("%s", errmsg);
+    if (*errdets) d_print("%s", errdets);
+
+    if (self) {
+      d_print("The current thread was running ");
+      //d_print("%s\n",
+
+      lives_proc_thread_show_func_call(self);
+    }
+
+    print_sep_line;
 
     if (signum == LIVES_SIGABRT) {
       if (!only_print) {
-        fprintf(stderr, "%s", _("Program aborted\n\n"));
+        d_print("%s", _("Program aborted\n\n"));
         _exit(signum);
       }
     }
 
     if (sigsrc == SIG_SRC_EXTERN) {
-      fprintf(stderr, "External errors are ignored, continuing\n");
+      d_print("External errors are ignored, continuing\n");
     }
 
     if (only_print) return;
@@ -561,7 +566,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
   }
 
   if (mainw->was_set) {
-    if (mainw->memok) fprintf(stderr, "%s", _("Preserving set.\n"));
+    if (mainw->memok) d_print("%s", _("Preserving set.\n"));
   }
 
   mainw->leave_recovery = mainw->leave_files = TRUE;

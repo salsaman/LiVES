@@ -24,8 +24,8 @@ static void qslider_changed(LiVESWidget *slid, livespointer data);
 void cancel_cleanup(void) {
   lives_painter_t *cr;
   int afd;
-  GET_SELF_VALUE(&cr, "cr");
-  GET_SELF_VALUE(&afd, "afd");
+  GET_SELF_VALUE(cr, "cr");
+  GET_SELF_VALUE(afd, "afd");
   DEL_SELF_VALUE("cr");
   DEL_SELF_VALUE("afd");
   if (cr) {

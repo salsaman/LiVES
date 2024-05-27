@@ -1,3 +1,4 @@
+
 // effects-weed.c
 // LiVES (lives-exe)
 // (c) G. Finch 2005 - 2020 (salsaman+lives@gmail.com)
@@ -4102,6 +4103,7 @@ void  weed_plant_autofree(weed_plant_t *plant) {
     }
   }
 }
+
 
 
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, const char *key, boolean state) {

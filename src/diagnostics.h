@@ -93,6 +93,8 @@ void hash_test(void);
 
 void lives_cond_test(void);
 
+void lives_blueprint_test(void);
+
 #ifdef WEED_WIDGETS
 void show_widgets_info(void);
 #endif

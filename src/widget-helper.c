@@ -2077,7 +2077,7 @@ static void _dialog_resp_set(LiVESDialog * dlg, int resp, livespointer data) {
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog * dlg) {
   int i;
-  GET_LPT_VALUE(mainw->def_lpt, &i, "dlg_resp");
+  GET_LPT_VALUE(mainw->def_lpt, i, "dlg_resp");
   return i;
 }
 

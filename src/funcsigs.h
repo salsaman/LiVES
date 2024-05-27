@@ -79,17 +79,26 @@ DEF_UNION(allval_t,
 
 // values->* is a pointer to type rather than array of type
 #define ALLV_FLAG_POINTER		(1ull << 0)
-#define ALLV_FLAG_RDWRITE		(1ull << 1)
-#define ALLV_FLAG_TYPE_ONLY		(1ull << 2)
-#define ALLV_FLAG_FREE_VALUE		(1ull << 3)
-#define ALLV_FLAG_RWLOCK		(1ull << 4)
-#define ALLV_FLAG_EXTERN		(1ull << 5)
+#define ALLV_FLAG_PROMOTED		(1ull << 1)
+#define ALLV_FLAG_FREE_VALUE		(1ull << 2)
+#define ALLV_FLAG_RWLOCK		(1ull << 3)
+#define ALLV_FLAG_EXTERN		(1ull << 4)
+#define ALLV_FLAG_RDONLY		(1ull << 5)
 
-// error flagbits
+// error flagbits/
 // unrecognised seed_type when setting val
-#define ALLV_ERR_STYPE		(1ull << 32)
-// attempt to bind to array (only scalars can be bound)
-#define ALLV_ERR_NVALS		(1ull << 33)
+#define ALLV_ERR_INVALID_STYPE		(1ull << 32)
+// seed_type mismatch when setting val
+#define ALLV_ERR_WRONG_STYPE		(1ull << 32)
+// attempt to bind array (only scalars can be bound)
+#define ALLV_ERR_BAD_BIND		(1ull << 33)
+// attempt to set non RDONLY value
+#define ALLV_ERR_RDONLY			(1ull << 34)
+// attempt to get bound val byref on non bound val
+#define ALLV_ERR_NOTBOUND     	 	(1ull << 35)
+
+typedef struct _allvalues_t allvalues_t_fwd_decl;
+
 
 DEF_STRUCT(allvalues_t,
            //@TYPEDEF u weed_seed_t
@@ -103,13 +112,52 @@ DEF_STRUCT(allvalues_t,
            weed_size_t ne; // num elements - always 1 if POINTER set
            weed_size_t size;
            uint64_t flags;
+
+           // this is for databooks.
+           // if (databook scope > this, if the holder is not indellible, we pretend the value doesnt exist)
+           // when we set it this is prepended to the list for the new alllvalues
+           // if we check a value and the scope is lower, we ope th list untl we fin an entry <= scope
+           // so call a "func" increment scope all values vanish
+           // we start at scope 1, anything with a scope 0, is visible, and const at any scope
+           // if it only has a type, it can be set once
+           // new vars are created at scope 1, when we return to scope 0, all 1 scope are deleted
+           // we can promote a var by making readonly and setting its scope to 0
+           // if we call a func then we go to scope 2, all 1 vars are invisible,, 0 are still const
+           // we can make a value visible at the next lower scope by setting its scope to -scope
+           // so 1 -> -1 value is visible but readonly at scope 2. these are like function params
+           // we can create readwrite values at scope 2 by setting scope to -2
+           // at scope 2 then, these are like set once const
+
+           // reutnring to scope 1 all -1 scoped vars becoem scope 0, readwrite
+           // all -2 vars become 1 scope and become writable
+           // at scopes > 1 we cannot promote
+
+           // so at scope x -> -(x - 1) visible const, or set once
+           // x -- normal rw values, not transferred to scope 1
+           // -2 values --> visible at scop 3. etc
+
+           // so to set a func param, negate the scope
+           // to set a retn val set type only, negate scope
+           // after return - delete all vals with +- scope 2
+           // negate any vals at scope -1, make them read . write
+           //
+           // we can also set vars at scope 2, thsee will be local vars in a called func.
+           int scope;
+           allvalues_t_fwd_decl *oldval;
+
 #ifdef NATIVE_RWLOCK_TYPE
            NATIVE_RWLOCK_TYPE *rwlock;
 #endif
            allval_t values;
            char *ext_typename;
+
            lives_funcinst_t *funcinst;
+
+           // TODO -make all params in finst->params into allvalues_t
+           // then we will finally have a place to store free funcs
            LiVESList *contingencies;
+
+           // used when compiliong conditions - holds the original ranslation token
            void *priv_data;)
 
 #define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
@@ -252,18 +300,22 @@ DEF_STRUCT(allvalues_t,
       _CASE2_FLOAT(pre, op, pre2, post, post2, post3, post4);		\
     default:if(WEED_SEED_IS_CUSTOM(st))pre V op pre2##custom##post(post2,post3,st,post4);break;})
 
-#define FOR_ALL_SEED_TYPES3(hdr, st, pre, post)	\
-  hdr						\
-  (st == WEED_SEED_INT ? pre i post		\
-    (st == WEED_SEED_BOOLEAN ? pre b post	\
-     :st == WEED_SEED_INT64 ? pre I post	\
-     :st == WEED_SEED_DOUBLE ? pre d post	\
-     :st == WEED_SEED_STRING ? pre s post	\
-     :st == WEED_SEED_FUNCPTR ? pre F post	\
-     :st == WEED_SEED_PLANTPTR ? pre P post	\
-     :pre V post)
-
-#define get_allv_for_st(var, avp, st, idx) FOR_ALL_SEED_TYPES3(var =, st,(avp)->values., [(idx)])
+/* #define FOR_ALL_SEED_TYPES3(varp, st, pre, allvp, post)			\ */
+/*   switch (st) {								\ */
+/*   case WEED_SEED_INT: varp = allvp->values.i; break;		\ */
+/*   case WEED_SEED_UINT: varp = allvp->values.u; break;		\ */
+/*   case WEED_SEED_BOOLEAN: pre ((boolean *)varp) = allvp->values.b post; break;	\ */
+/*   case WEED_SEED_INT64: pre ((int64_t *)varp) = allvp->values.I post; break;		\ */
+/*   case WEED_SEED_UINT64: pre ((uint64_t *)varp) = allvp->values.U post; break;	\ */
+/*   case WEED_SEED_DOUBLE: pre ((double *)varp) = allvp->values.d post; break;		\ */
+/*   case WEED_SEED_FLOAT: pre ((float *)varp) = allvp->values.f post; break;		\ */
+/*   case WEED_SEED_STRING: pre ((char **)varp) = allvp->values.s post; break;		\ */
+/*   case WEED_SEED_VOIDPTR: pre ((void **)varp) = allvp->values.V post; break;		\ */
+/*   case WEED_SEED_FUNCPTR: pre ((weed_funcptr_t *)varp) = allvp->values.F post; break; \ */
+/*   case WEED_SEED_PLANTPTR: pre ((weed_plantptr_t *)varp) = allvp->values.P post; break; \ */
+/*   case LIVES_SEED_CONST_CHARPTR: pre ((const char  **)varp) = allvp->values.C post; break; \ */
+/*   case LIVES_SEED_FUNCINST: pre ((lives_funcinst_t **)varp) = allvp->funcinst; break; \ */
+/*       default: break;} */
 
 #define GEN_SET(thing, wret, funcname, ...) err =			\
     (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*(funcname)->funcint)(__VA_ARGS__)) : \
@@ -401,7 +453,7 @@ extern const lookup_tab crossrefs[];
 #endif
 #if HAVE_WEED_SEED_UINT64
 #define ARGS_FMT_UINT64		'U'
-#define XREFS_TAB_UINT64  	,{ARGS_FMT_UINT64,  WEED_SEED_UINT64, 0x07, "UINT64", "%"PRIu64}
+#define XREFS_TAB_UINT64  	,{ARGS_FMT_UINT64,  WEED_SEED_UINT64, 0x07, "UINT64", "0x%016lx"}
 #else
 #define ARGS_FMT_UINT64		'?'
 #define XREFS_TAB_UINT64
@@ -437,7 +489,7 @@ extern const lookup_tab crossrefs[];
     ,{ARGS_FMT_BOOLEAN,  	WEED_SEED_BOOLEAN, 		FUNCSIG(BOOL),	 	"BOOL", "%d"} \
     ,{ARGS_FMT_STRING,  	WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
     ,{ARGS_FMT_STRING_ALT,  	WEED_SEED_STRING, 		FUNCSIG(STRING), 	"STRING", "\"%s\""} \
-    ,{ARGS_FMT_INT64,  		WEED_SEED_INT64, 	   	FUNCSIG(INT64), 	"INT64", "%"PRIi64} \
+    ,{ARGS_FMT_INT64,  		WEED_SEED_INT64, 	   	FUNCSIG(INT64), 	"INT64", "0x%016lx"} \
     ,{ARGS_FMT_FUNCPTR,  	WEED_SEED_FUNCPTR, 		FUNCSIG(FUNCP), 	"FUNCP", "%p"} \
     ,{ARGS_FMT_VOIDPTR,  	WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \
     ,{ARGS_FMT_VOIDPTR_ALT,  	WEED_SEED_VOIDPTR, 		FUNCSIG(VOIDP), 	"VOIDP", "%p"} \

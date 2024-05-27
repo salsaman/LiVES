@@ -32,8 +32,6 @@
 #define LIVES_PLANT_PROC_THREAD 4
 #define LIVES_PLANT_PREFERENCE 5
 
-//
-
 #define LIVES_PLANT_BLUEPRINT 32
 #define LIVES_PLANT_VALUE_DEF 33
 
@@ -114,6 +112,8 @@ weed_plant_t *plant_from_blueprint(int pltype, ...);
 #define LIVES_LEAF_BLUEPRINT_PTR "_blueprint_ptr"
 #define LIVES_LEAF_VALUE_DEFS "_value_defs"
 
+void dump_blueprint(uint64_t pltype);
+
 // given a "blueprint" for lives_plant_type bltype, we create all its leaves, setting the values from va_args
 #define PLANT_FROM_BLUEPRINT(bltype, ...) plant_from_blueprint(LIVES_PLANT_##bltype, ADD_STD_LEAVES(NULL) __VA_OPT__(,) __VA_ARGS__, NULL)
 
@@ -125,13 +125,20 @@ weed_plant_t *plant_from_blueprint(int pltype, ...);
   LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE, WEED_LEAF_NAME, LIVES_SEED_CONST_CHARPTR, \
     BLU_FLAGS_NONE, LIVES_LEAF_SEED_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, \
     WEED_LEAF_FLAGS, WEED_SEED_UINT64, BLU_FLAGS_NONE
-//, WEED_LEAF_MAX_ELEMS, WEED_SEED_INT, BLU_FLAG_OTIONAL + subtype
 
 // defines LIVES_BLUEPRINT plant which is a blueprint for itself and other lives_plants
 // leaves for target are held in an index keyed by name, so we can immediately find them from the leaf name
 #define LIVES_BLUEPRINT_BLUEPRINT					\
   LIVES_STD_LEAVES, LIVES_LEAF_BLUEPRINT_IDX, WEED_SEED_UINT64, BLU_FLAGS_NONE, \
-    LIVES_LEAF_VALUE_DEFS, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_INDEX, BLU_FLAG_AUTODELETE
+    INCLUDES_SUB(INDEX, LIVES_LEAF_VALUE_DEFS)
+
+#define EXTENDS_PLANT(plant) "@EXTENDS", LIVES_##plant##_BLUEPRINT
+#define INCLUDES_SUB(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_AUTODELETE
+#define INCLUDES_SUB_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY | BLU_FLAG_AUTODELETE
+#define ADD_REF(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, 0
+#define ADD_REF_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY
+
+void _register_blueprint(uint64_t pltype, const char *regstr, ...);
 
 void register_blueprints(void);
 
@@ -203,7 +210,12 @@ weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean 
 // - setting a value "static" makes in undeletable. When we clean the book, we actually call _weed_plant_free(),
 // (the original version). This will delete all items not flagged as undeleteable, and only return WEED_SUCCESS if all leaves were freed.
 
-#define LIVES_MAKE_DATA_BOOK LIVES_MAKE_INDEX(idx_type_data_book, LIVES_SEED_ALLVALUES)
+
+#define LIVES_LEAF_SCOPE "dbook_scope"
+
+#define LIVES_MAKE_DATA_BOOK \
+  PLANT_FROM_BLUEPRINT(DATA_BOOK, LIVES_LEAF_INDEX_TYPE, idx_type_data_book, LIVES_LEAF_PREFIX, IDX_PREFIX, \
+		       LIVES_LEAF_ITEM_TYPE, LIVES_SEED_ALLVALUES, LIVES_LEAF_SCOPE, 0)
 
 typedef weed_plant_t lives_databook_t;
 
@@ -224,15 +236,40 @@ lives_result_t lives_databook_bind_value(lives_databook_t *, const char *name, w
 lives_result_t lives_databook_set_value(lives_databook_t *, const char *name, weed_seed_t itype, ...);
 lives_result_t lives_databook_set_value_va(lives_databook_t *, const char *name, weed_seed_t itype, va_list va);
 lives_result_t lives_databook_set_array(lives_databook_t *, const char *name, weed_seed_t itype, int nvals, void *vals);
+lives_result_t lives_databook_copy_value(void *retloc, lives_databook_t *book, const char *name);
+
 lives_result_t lives_databook_get_value(void *retloc, lives_databook_t *book, const char *name);
+lives_result_t lives_databook_get_array_by_ref(void *array, lives_databook_t *book, const char *name, int *ne);
 
-boolean lives_databook_erase_value(lives_databook_t *, const char *name);
+lives_result_t lives_databook_erase_value(lives_databook_t *, const char *name);
 
-void lives_localbook_make_indellible(const char *name);
+lives_result_t lives_localbook_clean(void);
 
-void lives_book_item_make_indellible(lives_databook_t *, const char *name);
+lives_result_t lives_databook_inject(lives_databook_t *, lives_databook_t *ctx_book);
+lives_result_t lives_databook_emit(lives_databook_t *dbook, weed_plant_t *src_obj);
+lives_result_t lives_databook_end_emmission(lives_databook_t *, weed_plant_t *src_obj);
 
-void lives_localbook_clean(void);
+// if name == NULL this refers to whole book
+lives_result_t lives_databook_set_scope(lives_databook_t *, const char *name, int scope);
+lives_result_t lives_databook_get_scope(lives_databook_t *, const char *name, int *pscope);
+
+lives_result_t lives_databook_descend(lives_databook_t *);
+lives_result_t lives_databook_ascend(lives_databook_t *);
+
+lives_result_t lives_databook_pushdown_value(lives_databook_t *, const char *name, weed_seed_t itype, ...);
+lives_result_t lives_databook_pushdown_array(lives_databook_t *, const char *name, weed_seed_t itype, int nvals, void *vals);
+
+void show_databook_contents(lives_databook_t *);
+
+#define LIVES_INDEX_FOREACH(idx, key, value, ...) _DW0			\
+  (if (idx) {const char *_pfx = lives_index_get_prefix(idx);		\
+    size_t _pfxlen = lives_strlen(_pfx);				\
+    char **_leaves = weed_plant_list_leaves(idx, NULL);			\
+    int _IDX_ = 0;							\
+    for (int _i = 0; _leaves[_i]; _i++) {				\
+      if (!lives_strncmp(_leaves[_i], _pfx, _pfxlen)) {		\
+	key = _leaves[_i] + _pfxlen; lives_index_get_value(&value, idx, key);	\
+	__VA_ARGS__} _ext_free(_leaves[_i]); _IDX_++;} _ext_free(_leaves);})
 
 #define SET_BOOK_DATATYPE(book, name, itype) _DW0(lives_data_book_set_datatype((book), (name), (itype));)
 #define GET_BOOK_DATATYPE(book, name) lives_databook_get_datatype((book), (name))
@@ -240,14 +277,15 @@ void lives_localbook_clean(void);
 #define SET_BOOK_VALUE(book, type, name, val) _DW0(lives_databook_set_value((book), (name), (type), (val));)
 #define SET_BOOK_VALUE_VA(book, type, name, valist) _DW0(lives_databook_set_value_va((book), (name), (type), (valist));)
 #define SET_BOOK_ARRAY(book, type, name, nvals, valsptr) _DW0(lives_databook_set_array((book), (name), (type), (nvals), (valsptr));)
+
 #define BIND_BOOK_VALUE(book, type, name, valptr) _DW0(lives_databook_bind_value((book), (name), (type), (valptr));)
 
-#define GET_BOOK_VALUE(retval, book, name) lives_databook_get_value(retval, (book), (name))
+#define COPY_BOOK_VALUE(retloc, book, name) lives_databook_copy_value(val, book, name)
+
+#define GET_BOOK_VALUE(val, book, name) lives_databook_get_value(&val, book, name)
+#define GET_BOOK_ARRAY(array, book, name, nvalsp) lives_databook_get_array_by_ref(array, book, name, nvalsp)
 
 #define DEL_BOOK_VALUE(book, name) lives_databook_erase_value((book), (name))
-
-// TODO
-#define GET_BOOK_ARRAY(retval, book, name, nvalsp) lives_databook_get_array(retvals, (book), (name), (nvalsp))
 
 // bootstrap operates like this - we have 2 types of things, templates and blueprints, and both can be used to construct lives_plants
 // templates are only used during bootstrap and are fixed data structures. Blueprints are similar but these exist as mutable definitions
@@ -261,19 +299,19 @@ void lives_localbook_clean(void);
 // the leaf descriptro and blueprint, should we so wish. Then with our elements made from bluieprints,
 // we can now create soft blueprints for all other lives_plants including index.
 
-#define REGISTER_BLUEPRINT(bltype) register_blueprint(LIVES_PLANT_##bltype, LIVES_##bltype##_BLUEPRINT, NULL)
+#define REGISTER_BLUEPRINT(bltype) _register_blueprint(LIVES_PLANT_##bltype, NULL, LIVES_##bltype##_BLUEPRINT, NULL)
+
+#define register_blueprint(bltype, ...) _register_blueprint(LIVES_PLANT_##bltype, #__VA_ARGS__, __VA_ARGS__,  NULL)
 
 #define BOOTSTRAP_BLUEPRINTS						\
   REGISTER_BLUEPRINT(INDEX);						\
   REGISTER_BLUEPRINT(VALUE_DEF); 	REGISTER_BLUEPRINT(BLUEPRINT);	\
   REGISTER_BLUEPRINT(BLUEPRINT); 	REGISTER_BLUEPRINT(VALUE_DEF);	\
   REGISTER_BLUEPRINT(VALUE_DEF); 	REGISTER_BLUEPRINT(BLUEPRINT);	\
-  REGISTER_BLUEPRINT(INDEX);		REGISTER_BLUEPRINT(INDEX);	\
-  REGISTER_BLUEPRINT(VALUE_DEF);       	REGISTER_BLUEPRINT(BLUEPRINT); 	\
-  REGISTER_BLUEPRINT(INDEX);		REGISTER_BLUEPRINT(VALUE_DEF);  \
-  REGISTER_BLUEPRINT(BLUEPRINT);
+  REGISTER_BLUEPRINT(INDEX);
 
-#define REGISTER_ALL_BLUEPRINTS BOOTSTRAP_BLUEPRINTS
+/* REGISTER_BLUEPRINT(INDEX);						\ */
+/* REGISTER_BLUEPRINT(VALUE_DEF); 	REGISTER_BLUEPRINT(BLUEPRINT);  */
 
 extern lives_index_t *indices[idx_type_max];
 

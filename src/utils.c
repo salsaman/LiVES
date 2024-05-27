@@ -218,8 +218,12 @@ void _lives_abort(const char *file, int line, const char *func, const char *reas
   // ignore sigint, sigterm, sigsegv, sigfpe
   ign_signal_handlers();
 
+  if (prefs) MSGMODE_SET(DEBUG_LOG);
+
   if (!reason) reason = _("Aborting");
-  fprintf(stderr, "lives_abort called at %s line %d (function %s)\n%s\n\n", file, line, func, reason);
+
+  d_print("\n\nlives_abort called at %s, line %d\n%s\n\n", file, line, reason);
+
   mainw->critical = 2;
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
@@ -227,10 +231,6 @@ void _lives_abort(const char *file, int line, const char *func, const char *reas
     mainw->critical_errmsg = reason;
     if (FEATURE_READY(THREADVARS)) mainw->critical_thread = THREADVAR(uid);
     pthread_detach(pthread_self());
-    /* while (1) { */
-    /*   // sleep for 1 quadrillion nanoseconds */
-    /*   lives_nanosleep(BILLIONS(1000000)); */
-    /* } */
   }
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
@@ -239,7 +239,7 @@ void _lives_abort(const char *file, int line, const char *func, const char *reas
   BREAK_ME(reason);
   if (mainw && mainw->global_hook_stacks && mainw->global_hook_stacks[FATAL_HOOK])
     lives_hook_trigger(mainw->global_hook_stacks, FATAL_HOOK);
-  g_printerr("LIVES FATAL: %s\n", reason);
+  d_print("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
 
   // this will actually call our default signal handler

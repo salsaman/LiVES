@@ -1240,15 +1240,16 @@ void unref_cb_added_list(void);
 void lives_hook_stack_clear(lives_hook_stack_t **, int hstype);
 void lives_hook_stacks_clear_all(lives_hook_stack_t **, int ntypes);
 
+boolean has_hook_cbs(lives_hook_stack_t **, int hstype);
+
 lives_result_t _lives_hook_trigger(lives_hook_stack_t **, int hstype, ...);
-#define lives_hook_trigger(hstack, ...) _lives_hook_trigger(hstack, __VA_ARGS__, NULL)
+#define lives_hook_trigger(hstacks, ...) _lives_hook_trigger(hstacks, __VA_ARGS__, NULL)
 
 lives_result_t _lives_proc_thread_trigger_hook(int hstype, ...);
 #define lives_proc_thread_trigger_hook(...) _lives_proc_thread_trigger_hook(__VA_ARGS__, NULL)
 
-int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **, ...);
-#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstype __VA_OPT__(,) __VA_ARGS__, NULL)
-
+int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, ...);
+#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstype, __VA_ARGS__, NULL)
 void lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
 
@@ -1322,7 +1323,21 @@ void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char
 
 allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const char *key);
 
-weed_error_t value_from_allvalues(void *retloc, allvalues_t *);
+weed_error_t val_copy_from_allvalues(void *retloc, allvalues_t *);
+
+//lives_result_t value_from_allvalues(void *retloc, allvalues_t *avp);
+
+void get_val_from_allvals(void *valp, allvalues_t *);
+#define VAL_FROM_ALLVALS(var, allvp) get_val_from_allvals(&var, allvp)
+
+void get_array_byref_from_allvals(void *valp, allvalues_t *avp, int *ne);
+
+#define ARRAY_BYREF_FROM_ALLVALS(array, allvp, ne) get_array_byref_from_allvals((void *)array, allvp, ne)
+
+#define BOUND_BYREF_FROM_ALLVALS(array, allvp) get_array_byref_from_allvals((void *)array, allvp, NULL)
+
+/* #define set_val_from_allvalues(var, avp) get_allv_val(var, avp) */
+/* #define set_array_from_allvalues(var, avp, ne) get_allv_array(var, avp, ne) */
 
 allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
 allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);

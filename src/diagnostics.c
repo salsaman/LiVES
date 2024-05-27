@@ -305,7 +305,6 @@ char *lives_funcinst_show_func_call(lives_funcinst_t *finst) {
     g_print("function %s with the following prototype\n", funcname);
 
     fmtstring = get_func_call(finst);
-
     g_print("%s\n", fmtstring);
 
     char *args_fmt = NULL;
@@ -669,7 +668,7 @@ void list_leaves(weed_plant_t *plant) {
         int st = weed_leaf_seed_type(plant, keys[n]);
         char *txt = weed_leaf_stringify(plant, keys[n]);
         if (txt) {
-          g_print("\n%s %s has value: %s\n", weed_seed_to_ctype(st, FALSE), keys[n], txt);
+          g_print("%s %s has value: %s\n", weed_seed_to_ctype(st, FALSE), keys[n], txt);
           lives_free(txt);
         }
         _ext_free(keys[n]);
@@ -3218,6 +3217,29 @@ void test_procthreads(void) {
   pth = lives_proc_thread_create(0, pth_testfunc, -1, "V", testv);
   lives_proc_thread_join_void(pth);
   lives_proc_thread_unref(pth);
+}
+
+
+void lives_blueprint_test(void) {
+  g_print("testing lives_conditions:\n");
+  reset_timer_info();
+
+  g_print("Make data_book (type %d) from blueprint:\n",
+          LIVES_PLANT_DATA_BOOK);
+
+  dump_blueprint(LIVES_PLANT_DATA_BOOK);
+
+  g_print("Setting values:\n %s = %d, %s = %s, %s = %d, %s = %d\n", LIVES_LEAF_INDEX_TYPE,
+          idx_type_data_book, LIVES_LEAF_PREFIX, IDX_PREFIX,
+          LIVES_LEAF_ITEM_TYPE, LIVES_SEED_ALLVALUES, LIVES_LEAF_SCOPE, 0);
+
+  lives_databook_t *dbook = LIVES_MAKE_DATA_BOOK;
+
+  /* lives_databook_t *dbook = plant_from_blueprint(LIVES_PLANT_DATA_BOOK, ADD_STD_LEAVES(NULL), LIVES_LEAF_INDEX_TYPE, */
+  /* 						 idx_type_data_book, LIVES_LEAF_PREFIX, IDX_PREFIX, */
+  /* 						 LIVES_LEAF_ITEM_TYPE, LIVES_SEED_ALLVALUES, LIVES_LEAF_SCOPE, 0, NULL); */
+  list_leaves(dbook);
+  weed_plant_free(dbook);
 }
 
 

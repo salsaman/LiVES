@@ -3516,7 +3516,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 static void _thdlg_auto_spin(void) {
   GET_PROC_THREAD_SELF(self);
   uint64_t syncid;
-  GET_SELF_VALUE(&syncid, "sync_idx");
+  GET_SELF_VALUE(syncid, "sync_idx");
   lives_proc_thread_set_cancellable(self);
   lives_proc_thread_sync_with(lives_proc_thread_get_dispatcher(self), syncid, MM_IGNORE);
   THREADVAR(perm_hook_hints) = HOOK_OPT_FG_LIGHT;

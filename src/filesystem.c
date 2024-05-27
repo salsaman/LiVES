@@ -880,7 +880,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   off_t fsize, bufsize = smedbytes, res;
   boolean retval = TRUE;
   uint64_t syncid;
-  GET_SELF_VALUE(&syncid, "sync_idx");
+  GET_SELF_VALUE(syncid, "sync_idx");
 
   if (lives_proc_thread_get_cancel_requested(self)) {
     // if caller gets cancelled, then it will send a cancel_request to this thread
@@ -993,7 +993,7 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
 boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
   if (lpt) {
     lives_file_buffer_t *fbuff;
-    GET_LPT_VALUE(lpt, &fbuff, "filebuff");
+    GET_LPT_VALUE(lpt, fbuff, "filebuff");
     // creating a data "book" for child
     uint64_t syncid = gen_unique_id();
     SET_LPT_VALUE(lpt, WEED_SEED_UINT64, "sync_idx", syncid);

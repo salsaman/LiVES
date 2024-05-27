@@ -2823,38 +2823,49 @@ float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
 }
 
 
-float **send_audio_to_fx(lives_obj_t *aplayer, float **fltbuf, lives_af_t af_type) {
+void send_audio_to_fx(lives_obj_t *aplayer, lives_af_t af_type) {
   // af_type can be AF_TYPE_NONA
   // this should be eithet the only callback in the audio player's data_preview stack
   // or if there is a mixer callback
   // AF_TYPE_A
   // analysers - should be added as a DATA_READY_HOOK
   //boolean alock_mixer = FALSE;
-  ticks_t tc = mainw->currticks;
-
-  //boolean in_float = lives_aplayer_get_float(aplayer);
-  int nchans = lives_aplayer_get_achans(aplayer);
-  int arate = lives_aplayer_get_arate(aplayer);
-  size_t nsamples = lives_aplayer_get_data_len(aplayer);
-
   if (has_audio_filters(af_type)) {
+    lives_databook_t *lbook = lives_local_databook();
+    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+    float **fltbuf = NULL, **adata;
+    ticks_t tc = mainw->currticks;
+    int nchans;
+    int *pnchans = &nchans;
+    int arate;
+    size_t nsamples;
+
+    GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, pnchans);
+    GET_BOOK_VALUE(nsamples, lbook, ATTR_AUDIO_DATA_LENGTH);
+    GET_BOOK_VALUE(arate, lbook, ATTR_AUDIO_RATE);
+
     /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
         to the in channel of the filter and then from the out channel back to the layer.
         IF the filter supports inplace then
         we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
         and feed the result to the player as usual */
-    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-    fltbuf = convert_to_float(aplayer, nsamples);
+
     weed_layer_set_audio_data(layer, fltbuf, arate, nchans, nsamples);
     weed_apply_audio_effects_rt(layer, tc, af_type == AF_TYPE_A, TRUE);
     if (af_type == AF_TYPE_NONA) {
-      lives_free(fltbuf);
       fltbuf = weed_layer_get_audio_data(layer, NULL);
       weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
       weed_layer_unref(layer);
+      adata = (float **)lives_aplayer_get_data(aplayer);
+      for (int i = 0; i < nchans; i++) {
+        if (fltbuf[i] != adata[i]) {
+          lives_free(adata[i]);
+          adata[i] = fltbuf[i];
+        }
+      }
+      lives_aplayer_set_data(aplayer, (void *)adata);
     }
   }
-  return fltbuf;
 }
 
 
@@ -2862,36 +2873,55 @@ float **send_audio_to_fx(lives_obj_t *aplayer, float **fltbuf, lives_af_t af_typ
 
 // data_preview hook cbd
 
-float **send_audio_to_rte(lives_obj_t *aplayer, float **fltbuf) {
-  return send_audio_to_fx(aplayer, fltbuf, AF_TYPE_NONA);
+void send_audio_to_rte(lives_obj_t *aplayer) {
+  LIVES_ASSERT(aplayer);
+  if (has_audio_filters(AF_TYPE_NONA))
+    send_audio_to_fx(aplayer, AF_TYPE_NONA);
 }
 
 
 // data ready hook callbacks
 
-void send_audio_to_analysers(lives_obj_t *aplayer, float **fltbuf) {
-  send_audio_to_fx(aplayer, fltbuf, AF_TYPE_A);
+void send_audio_to_analysers(lives_obj_t *aplayer) {
+  if (has_audio_filters(AF_TYPE_NONA))
+    send_audio_to_fx(aplayer, AF_TYPE_A);
 }
 
 
-void send_audio_to_vpp(lives_obj_t *aplayer, float **fltbuf) {
+void send_audio_to_vpp(lives_obj_t *aplayer) {
   // streaming - we can push float audio to the playback plugin
-  size_t nsamples = lives_aplayer_get_data_len(aplayer);
-  pthread_mutex_lock(&mainw->vpp_stream_mutex);
   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
+    float **fltbuf = NULL;
+    int nchans;
+    lives_databook_t *lbook = lives_local_databook();
+    size_t nsamples = lives_aplayer_get_data_len(aplayer);
+    GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, &nchans);
+    GET_BOOK_VALUE(nsamples, lbook, ATTR_AUDIO_DATA_LENGTH);
+    pthread_mutex_lock(&mainw->vpp_stream_mutex);
     (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamples);
+    pthread_mutex_unlock(&mainw->vpp_stream_mutex);
   }
-  pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 }
 
 
-void send_audio_to_afbuffer(lives_obj_t *aplayer, float **fltbuf) {
+void send_audio_to_afbuffer(lives_obj_t *aplayer) {
   // if we have fx with mixed audio / video, eg audio triggered gens
   // or if we want loopback to player
   // append the audio to the float arena
   // - these things are running at a different cycle rate, so we must buffer
-  size_t nsamples = lives_aplayer_get_data_len(aplayer);
-  int nchans = lives_aplayer_get_achans(aplayer);
+  // this for ghenerators
+
+  // we cannot read values form aplayer because they may have changed since the hoo was triggerd
+  // but just like magic, we have a local databok full of useful information
+
+  size_t nsamples;
+  int nchans, arate;
+  float **fltbuf = NULL;
+  lives_databook_t *lbook = lives_local_databook();
+
+  GET_BOOK_VALUE(arate, lbook, ATTR_AUDIO_RATE);
+  GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, &nchans);
+  GET_BOOK_VALUE(nsamples, lbook, ATTR_AUDIO_DATA_LENGTH);
   for (int i = 0; i < nchans; i++)
     append_to_audio_bufferf(fltbuf[i], nsamples, (i == nchans - 1) ? -i - 1 : i + 1);
 }
@@ -2910,6 +2940,20 @@ float **rt_mix_audio(lives_obj_t *aplayer, float **fltbuf) {
   // we apply auto gain to each audio source then mix them all
   //
   //
+
+  /* lives_databook_t *lbook = lives_local_databook(); */
+
+  /* GET_BOOK_VALUE(arate, lbook, ATTR_AUDIO_RATE); */
+  /* GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, &nchans); */
+  /* GET_BOOK_VALUE(nsamples,lbook, ATTR_AUDIO_DATA_LENGTH); */
+
+  /* lives_databook_get_value(lbook, ATTR_AUDIO_SAMPSIZE); */
+  /* lives_databook_get_value(lbook, ATTR_AUDIO_SIGNED); */
+  /* lives_databook_get_value(lbook, ATTR_AUDIO_ENDIAN); */
+  /* lives_databook_get_value(lbook, ATTR_AUDIO_FLOAT); */
+  /* lives_databook_get_value(lbook, ATTR_AUDIO_INTERLEAVED); */
+  /* size_t nsamples = lives_aplayer_get_data_len(aplayer); */
+
   boolean alock_mixer = FALSE;
   if (alock_mixer) {
     size_t nsamples = lives_aplayer_get_data_len(aplayer);
@@ -2954,6 +2998,7 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   arec_details *dets = (arec_details *)xdets;
   GET_PROC_THREAD_SELF(self);
   lives_clip_t *ofile;
+  lives_databook_t *lbook;
   void *holding_buff = NULL, *out_buff;
   size_t nsamples, samples_out, target_bytes, rbytes;
   ssize_t actual_bytes;
@@ -2965,6 +3010,7 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   boolean in_float, out_float = FALSE;
   boolean in_interleaved = TRUE;
   boolean out_unsigned, in_unsigned;
+  boolean no_free_hb = FALSE;
   boolean rev_endian = FALSE;
 
   if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
@@ -2975,15 +3021,21 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
 
   if (mainw->record_paused) return TRUE;
 
-  nsamples = lives_aplayer_get_data_len(aplayer);
+  lbook = lives_local_databook();
+
+  GET_BOOK_VALUE(nsamples, lbook, ATTR_AUDIO_DATA_LENGTH);
   if (!nsamples) return FALSE;
 
-  in_float = lives_aplayer_get_float(aplayer);
-  in_achans = lives_aplayer_get_achans(aplayer);
-  in_arate = lives_aplayer_get_arate(aplayer);
-  in_sampsize = lives_aplayer_get_sampsize(aplayer) >> 3;
-  in_unsigned = !lives_aplayer_get_signed(aplayer);
-  in_interleaved = lives_aplayer_get_interleaved(aplayer);
+  GET_BOOK_VALUE(in_arate, lbook, ATTR_AUDIO_RATE);
+  GET_BOOK_VALUE(in_float, lbook, ATTR_AUDIO_FLOAT);
+  GET_BOOK_VALUE(in_arate, lbook, ATTR_AUDIO_RATE);
+  GET_BOOK_VALUE(in_achans, lbook, ATTR_AUDIO_CHANNELS);
+  GET_BOOK_VALUE(in_sampsize, lbook, ATTR_AUDIO_SAMPSIZE);
+
+  GET_BOOK_VALUE(in_interleaved, lbook, ATTR_AUDIO_INTERLEAVED);
+
+  GET_BOOK_VALUE(in_unsigned, lbook, ATTR_AUDIO_SIGNED);
+  in_unsigned = !in_unsigned;
 
   ofile = mainw->files[dets->clipno];
 
@@ -2998,9 +3050,10 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   samples_out = (int64_t)((double)nsamples / out_scale + .49999);
 
   if (out_sampsize == 2) {
-    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
-    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
-        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+    int aendian;
+    GET_BOOK_VALUE(aendian, lbook, ATTR_AUDIO_ENDIAN);
+    if ((aendian == LIVES_LITTLE_ENDIAN && capable->hw.byte_order == LIVES_BIG_ENDIAN)
+        || (aendian == LIVES_BIG_ENDIAN && capable->hw.byte_order == LIVES_LITTLE_ENDIAN))
       rev_endian = TRUE;
   }
 
@@ -3008,7 +3061,9 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
     holding_buff = lives_calloc(samples_out, out_achans * out_sampsize);
     if (!holding_buff) return FALSE;
     if (!in_interleaved) {
-      float **in_buffer = (float **)lives_aplayer_get_data(aplayer);
+      float **in_buffer = NULL;
+      int *pnchans = &in_achans;
+      GET_BOOK_ARRAY(in_buffer, lbook, ATTR_AUDIO_DATA, pnchans);
       if (!out_float) {
         samples_out = sample_move_float_int(holding_buff, in_buffer, samples_out, out_scale, in_achans,
                                             out_sampsize * 8, out_unsigned, rev_endian, FALSE, 1.);
@@ -3038,7 +3093,10 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
     if (holding_buff) lives_free(holding_buff);
     return FALSE;
   }
-  if (!holding_buff) holding_buff = lives_aplayer_get_data(aplayer);
+  if (!holding_buff) {
+    GET_BOOK_VALUE(holding_buff, lbook, ATTR_AUDIO_DATA);
+    no_free_hb = TRUE;
+  }
 
   if (!in_unsigned && out_unsigned) swap_sign = SWAP_S_TO_U;
   else if (in_unsigned && !out_unsigned) swap_sign = SWAP_U_TO_S;
@@ -3064,13 +3122,9 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   }
   if (actual_bytes < target_bytes) dets->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
 
-  //if (holding_buff != data)
-  if (holding_buff != lives_aplayer_get_data(aplayer))
-    lives_free(holding_buff);
+  if (!no_free_hb) lives_free(holding_buff);
   lives_free(out_buff);
 
-  if (lives_proc_thread_get_cancel_requested(self)) lives_proc_thread_cancel();
-  //return actual_bytes;
   return TRUE;
 }
 

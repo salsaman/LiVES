@@ -257,32 +257,37 @@ void sample_silence_stream(int nchans, int64_t nsamples);
 boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
                        boolean big_endian);
 
+float **convert_to_float(lives_obj_t *aplayer, size_t nsamples);
+
+size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip,
+                                 float vol, size64_t out_samples) GNU_HOT;
+
+float sample_move_d16_float(float *dst, short *src, size_t nsamples, size_t src_skip, int is_unsigned, boolean rev_endian,
+                            float vol) GNU_HOT;
+
+///
+
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
+                              int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns samples output
+
 void sample_move_float_d16(int16_t *dst, float *src,
                            size64_t nsamples, size_t tbytes, double scale, int nDstChannels,
                            int nSrcChannels, int swap_endian, int swap_sign);
-
-void sample_move_d8_d16(short *dst, uint8_t *src,
-                        size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d16(short *dst, short *src,
                          size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_endian,
                          int swap_sign) GNU_HOT;
 
+void sample_move_d8_d16(short *dst, uint8_t *src,
+                        size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+
 void sample_move_d16_d8(uint8_t *dst, short *src,
                         size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
-float sample_move_d16_float(float *dst, short *src, size_t nsamples, size_t src_skip, int is_unsigned, boolean rev_endian,
-                            float vol) GNU_HOT;
-
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
-                              int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns samples output
+//
 
 int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
-
 int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
-
-size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip,
-                                 float vol, size64_t out_samples) GNU_HOT;
 
 float float_deinterleave(float *dst, float *src, size64_t in_samples, double scale, int in_chans, float vol) GNU_HOT;
 size64_t float_interleave(float *out, float **in, size64_t nsamps, double scale, int nchans, float vol) GNU_HOT;

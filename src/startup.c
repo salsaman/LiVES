@@ -1394,10 +1394,12 @@ boolean lives_startup(livespointer data) {
 
   lives_conditions_init();
 
-  lives_cond_test();
-
   // now we can register specialised plants created from blueprints
   register_blueprints();
+
+  lives_blueprint_test();
+
+  lives_cond_test();
 
   // CAN NOW USE THREADVARS
 

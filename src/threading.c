@@ -667,7 +667,9 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
   if (lpt) {
     // create local data book for lpt, and set $SRC_OBJECT
+    // we can set any cons vals for the local databook at scope 0
     SET_LPT_VALUE(lpt, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, lpt);
+    lives_databook_descend(lives_proc_thread_get_book(lpt));
     if (attrs & LIVES_THRDATTR_CREATE_UNQUEUED)
       lives_funcinst_set_attrs(finst, attrs);
     else lives_proc_thread_dispatch(lpt);
@@ -970,22 +972,50 @@ return FALSE;
 }
 
 
-lives_proc_thread_t _lives_funcinst_queue(lives_funcinst_t *finst, uint64_t attrs) {
+lives_proc_thread_t lives_funcinst_fg_queue(lives_funcinst_t *finst, uint64_t attrs) {
   // if attrs contain FG_THREAD, funcinst is handed directly to fg_thread
   // else we will create a proc_thread wrapper and dispatch it
-  lives_proc_thread_t lpt = NULL;
   GET_PROC_THREAD_SELF(self);
+  lives_proc_thread_t lpt = NULL;
   boolean is_static = !!(finst->flags & FINST_FLAG_STATIC);
+
   if (!is_static) finst->flags |= FINST_FLAG_STATIC;
-  if (attrs & LIVES_THRDATTR_FG_THREAD) {
-    // ignored if finst is in a hook_stack
-    lives_funcinst_set_disposition(finst, FALSE, DISPOSITION_WAITING, self, attrs, NULL);
-    fg_service_call(finst);
-  } else {
-    // for async_trigger
-    lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
-    lives_proc_thread_dispatch(lpt);
+
+  // ignored if finst is in a hook_stack
+  lives_funcinst_set_disposition(finst, FALSE, DISPOSITION_WAITING, self, attrs, NULL);
+
+  fg_service_call(finst);
+
+  if (!is_static) finst->flags &= ~FINST_FLAG_STATIC;
+  return lpt;
+}
+
+
+lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *finst,
+    uint64_t attrs, lives_databook_t *ctxbook) {
+  lives_proc_thread_t lpt = NULL;
+  boolean is_static = !!(finst->flags & FINST_FLAG_STATIC);
+  lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
+
+  // will take the lcoal data book, and what was oreviously the targeobject now becoems the osource object
+  // a process called "emission"
+  // we wi;; then "inject" = copy by reference the values in ctxdatabook into the local data book
+
+  // we will take the items from the ctxbook and "inject" teh in the localbook for lpt
+  // preserving and values already presnt
+  // we will tpelac the loca data bok with
+  lives_hook_stack_t *hstack = CL_DATA(finst, hstacks)[CL_DATA(finst, hstype)];
+  if (hstack->owner_act_src_type == ACTION_SOURCE_LPT) {
+    lives_databook_t *lptbook = lives_proc_thread_get_book(lpt);
+    // set these values and we wnat them to be visible and readonly
+    // databook scope is still 0, so we can set consts now
+    // then descend and they will become readonly
+    lives_databook_pushdown_value(lptbook, LDB_SRC_OBJECT,
+                                  WEED_SEED_PLANTPTR, hstack->owner.lpt);
+    lives_databook_inject(lptbook, ctxbook);
+    lives_databook_descend(lptbook);
   }
+  lives_proc_thread_dispatch(lpt);
   if (!is_static) finst->flags &= ~FINST_FLAG_STATIC;
   return lpt;
 }
@@ -1027,7 +1057,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
     /*   weed_set_int64_value(lpt, LIVES_LEAF_QUEUED_TICKS, lives_get_current_ticks()); */
 
     if (hook_hints & HOOK_OPT_FG_LIGHT) {
-      lives_funcinst_queue(finst, LIVES_THRDATTR_FG_THREAD);
+      lives_funcinst_fg_queue(finst, LIVES_THRDATTR_FG_THREAD);
       lives_funcinst_free(finst);
     } else {
       if (add_to_deferral_stack(finst, hook_hints)) {
@@ -2360,9 +2390,6 @@ void lpt_error_handle(lives_proc_thread_t lpt, int sev) {
       default: return;
       }
     }
-
-    fprintf(stderr, "The current thread was running ");
-    fprintf(stderr, "%s\n", lives_proc_thread_show_func_call(lpt));
   }
 
   if (mainw) {
@@ -2651,9 +2678,6 @@ static lives_result_t _lives_funcinst_execute(void) {
         || lives_proc_thread_was_cancelled(self))
       break;
 
-    // remove any non static values from the data book
-    lives_localbook_clean();
-
     cidx = lives_proc_thread_get_chain_idx(self);
 
     if (!finst->next) break;
@@ -2668,6 +2692,9 @@ static lives_result_t _lives_funcinst_execute(void) {
       finst->depth = depth;
       weed_set_int_value(self, LIVES_LEAF_STACK_DEPTH, 0);
     }
+
+    // remove any non static values from the data book
+    lives_localbook_clean();
 
     sync_list = finst->next;
     lives_proc_thread_set_active_finstlist(self, sync_list);

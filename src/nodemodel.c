@@ -1169,7 +1169,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     boolean resized = FALSE;
 
     double xtime = lives_get_session_time();
-    GET_SELF_VALUE(&interp, "interp");
+    GET_SELF_VALUE(interp, "interp");
     weed_layer_ref(layer);
 
     if (!xwidth) xwidth = width;
@@ -1238,7 +1238,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
     boolean ret;
 
     double xtime = lives_get_session_time();
-    GET_SELF_VALUE(&interp, "interp");
+    GET_SELF_VALUE(interp, "interp");
     weed_layer_ref(layer);
 
     retval = FILTER_SUCCESS;
@@ -2409,13 +2409,13 @@ static void run_plan(exec_plan_t *plan) {
               lpt = step->proc_thread;
               lives_proc_thread_join_int(lpt);
 
-              GET_LPT_VALUE(lpt, &gstart, "gconv_start");
+              GET_LPT_VALUE(lpt, gstart, "gconv_start");
 
               if (gstart) {
                 size_t frmsize = lives_frame_calc_bytesize(step->fin_width, step->fin_height,
                                  step->fin_pal, FALSE, NULL, NULL);
                 double gend;
-                GET_LPT_VALUE(lpt, &gend, "gconv_end");
+                GET_LPT_VALUE(lpt, gend, "gconv_end");
                 glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
               }
 

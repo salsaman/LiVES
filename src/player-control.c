@@ -1130,10 +1130,6 @@ void play_file(void) {
   }
 
   mainw->jack_can_stop = FALSE;
-  if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {
-    sfile->pointer_time = pointer_time;
-    sfile->real_pointer_time = real_pointer_time;
-  }
 
   // tell the audio cache thread to terminate, else we can get in a deadlock where the player is waiting for
   // more data, and we are waiting for the player to finish
@@ -1545,6 +1541,24 @@ void play_file(void) {
     weed_bg_generator_end((weed_instance_t *)get_primary_inst(mainw->files[mainw->blend_file]));
     if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
   }
+
+  char *tmp = lives_strdup("");;
+  if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {
+    sfile->pointer_time = pointer_time;
+    sfile->real_pointer_time = real_pointer_time;
+    frames_t frame = calc_frame_from_time(mainw->current_file, sfile->pointer_time);
+    if (!prefs->hide_framebar && !mainw->is_rendering) {
+      if (CURRENT_CLIP_HAS_VIDEO && sfile->frames != 123456789)
+        tmp = lives_strdup_printf("%9d / %d", frame, sfile->frames);
+      else tmp = lives_strdup_printf("%9d", frame);
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), tmp);
+    }
+  }
+  if (!prefs->hide_framebar && !mainw->is_rendering) {
+    lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), tmp);
+  }
+
+  if (tmp) lives_free(tmp);
 
   mainw->block_accels = FALSE;
 

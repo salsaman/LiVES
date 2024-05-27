@@ -14052,7 +14052,7 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
   case WEED_PALETTE_BGR24:
     pixbuf = lives_pixbuf_new(FALSE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
-    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
+    pixels = lives_pixbuf_get_pixels(pixbuf);
     size = rowstride * (height - 1) + get_last_pixbuf_rowstride_value(width, 3);
     lives_memset(pixels, 0, size);
     break;
@@ -14060,14 +14060,14 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
   case WEED_PALETTE_BGRA32:
     pixbuf = lives_pixbuf_new(TRUE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
-    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
+    pixels = lives_pixbuf_get_pixels(pixbuf);
     size = rowstride * (height - 1) + get_last_pixbuf_rowstride_value(width, 4);
     lives_memset(pixels, 0, size);
     break;
   case WEED_PALETTE_ARGB32:
     pixbuf = lives_pixbuf_new(TRUE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
-    pixels = lives_pixbuf_get_pixels_readonly(pixbuf);
+    pixels = lives_pixbuf_get_pixels(pixbuf);
     size = rowstride * (height - 1) + get_last_pixbuf_rowstride_value(width, 4);
     lives_memset(pixels, 0, size);
     break;

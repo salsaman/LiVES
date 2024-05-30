@@ -2437,18 +2437,18 @@ void switch_to_file(int old_file, int new_file) {
     } else set_main_title(cfile->file_name, 0);
   }
 
-  set_start_end_spins(mainw->current_file);
-
   resize(1);
 
   if (!mainw->go_away) get_play_times();
+
+  set_start_end_spins(mainw->current_file);
 
   // if the file was opening, continue...
   if (cfile->opening) {
     open_file(cfile->file_name);
   } else {
-    showclipimgs();
-    lives_ce_update_timeline(0, cfile->pointer_time);
+    //showclipimgs();
+    //lives_ce_update_timeline(0, cfile->pointer_time);
     mainw->ptrtime = cfile->pointer_time;
     lives_widget_queue_draw(mainw->eventbox2);
   }

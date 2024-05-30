@@ -387,6 +387,9 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 #define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
 #define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))
 
+#define LIVES_MALLOC_COPY(type, nvar, ovar) \
+  type *nvar = lives_malloc(sizeof(type)); lives_memcpy(nvar, ovar, sizeof(type));
+
 void speedy_free(void *ptr);
 void *speedy_calloc(size_t nm, size_t xsize);
 void *speedy_malloc(size_t xsize);

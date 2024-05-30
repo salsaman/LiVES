@@ -264,7 +264,7 @@ lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi
     const char *name, weed_seed_t st);
 
 // when creating the instance, we should set the intial STATE, and declare its attributes
-lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, uint32_t st);
+lives_obj_attr_t *lives_object_declare_attribute(lives_obj_t *obj, const char *name, weed_seed_t st);
 lives_obj_attr_t *lives_object_get_attribute(lives_obj_t *, const char *name);
 lives_obj_attr_t **lives_object_get_attrs(lives_obj_t *);
 

@@ -93,8 +93,8 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
   // therefore it must linearly adjust volume between 0.0 and 1.0 for all audio streams
   double *vol = weed_param_get_array_double(in_params[0],  NULL);
   double *pan = weed_param_get_array_double(in_params[1], NULL);
-  int *swapchans = weed_param_get_array_boolean(in_params[2], NULL);
-  int *swappan = weed_param_get_array_boolean(in_params[3], NULL);
+  boolean *swapchans = weed_param_get_array_boolean(in_params[2], NULL);
+  boolean *swappan = weed_param_get_array_boolean(in_params[3], NULL);
 
   double voll, volr;
   float tmp;

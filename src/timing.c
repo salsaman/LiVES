@@ -105,8 +105,9 @@ LIVES_GLOBAL_INLINE int64_t lives_get_current_time(void) {
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  uret = (tv.tv_sec * ONE_MILLLION + tv.tv_usec)  * 1000;
+  uret = (tv.tv_sec * ONE_MILLION + tv.tv_usec)  * 1000;
 #endif
+  //uret = mainw ? mainw->n_service_calls * 100000 : 0;
   if ((int64_t)uret < 0) ret = (int64_t)((((uint64_t) -1) - uret) + 1);
   else ret = uret;
   if (mainw) mainw->wall_time = ret;

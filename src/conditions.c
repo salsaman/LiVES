@@ -9,7 +9,11 @@
 #include "diagnostics.h"
 #include "functions.h"
 
+static LiVESList *syntax_states[3];
+
 static lives_condition cond_create_va(boolean full, LiVESList **va_magic);
+static void _lives_cond_desc(lives_condition cond, boolean descend);
+static lives_condition _lives_cond_eval(lives_condition condition);
 
 #define is_final(p0) (!(p0) || (p0)->stype != LIVES_SEED_FUNCINST)
 #define is_true(p0) (is_final(p0) && (p0)->values.b[0])
@@ -166,7 +170,7 @@ static allvalues_t *cond_allv_const(LiVESList **va_magic, weed_seed_t st) {
   return allvp;
 }
 
-static allvalues_t *cond_local_const(const char *item) {return get_local_book_item(item);}
+static allvalues_t *cond_local_const(const char *item) {return allvalues_copy(get_local_book_item(item));}
 
 // book vals are allvalues so we dont know type till we read them
 static allvalues_t *cond_local_var(LiVESList **va_magic, const char *item) {
@@ -176,7 +180,8 @@ static allvalues_t *cond_local_var(LiVESList **va_magic, const char *item) {
     check_for_surprises(va_magic);
     d_print_debug(", %s", item);
   }
-  lives_funcinst_t *finst = lives_funcinst_create(cond_local_const, NULL, WEED_SEED_VOIDPTR, "s", item);
+  lives_funcinst_t *finst = lives_funcinst_create(cond_local_const, "cond_local_const",
+                            WEED_SEED_VOIDPTR, "s", item);
   return MAKE_ALLVALUE(LIVES_SEED_FUNCINST, finst);
 }
 
@@ -250,6 +255,7 @@ enum {OP_ADD, OP_SUB, OP_MULT,};
 
 static allvalues_t *cond_equals_const(allvalues_t *p0, allvalues_t *p1) {
   boolean res = FALSE;
+
   if (!check_st_match(p0, p1, MATCH_ANY)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
   switch (p0->stype) {
   case WEED_SEED_STRING:
@@ -365,7 +371,8 @@ static allvalues_t *cond_logic_not_const(allvalues_t *p0) {
 
 static allvalues_t *cond_logic_not(LiVESList **va_magic) {
   allvalues_t *p0 = cond_create_va(FALSE, va_magic);
-  lives_funcinst_t *finst = lives_funcinst_create(cond_logic_not_const, NULL, WEED_SEED_VOIDPTR, "A", p0);
+  lives_funcinst_t *finst = lives_funcinst_create(cond_logic_not_const, "cond_logic_not_const",
+                            WEED_SEED_VOIDPTR, "A", p0);
   allvalues_t *allvp;
   if (is_final(p0)) {
     // if we have only const values, we caan find the result now
@@ -578,22 +585,16 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
       continue;
     }
 
-    if (state == 0) cond_syntax = strings_to_list(COND_SYNTAX_0);
-    if (state == 1) cond_syntax = strings_to_list(COND_SYNTAX_1);
-    if (state == 2) cond_syntax = strings_to_list(COND_SYNTAX_2);
+    cond_syntax = syntax_states[state];
 
     for (synsym = cond_syntax; synsym; synsym = synsym->next) {
       char *syntok = (char *)synsym->data;
       if (!syntok[1]) {
         if (ctrans->fmt == (char)((syntok[0]))) break;
-      } else {
-        if (!lives_strcmp(tok, syntok)) break;
-      }
+      } else if (!lives_strcmp(tok, syntok)) break;
     }
 
     if (!synsym) goto fmt_err;
-    lives_list_free(cond_syntax);
-    cond_syntax = NULL;
 
     if (ctrans->fmt == 'C' || ctrans->fmt == 'V') state = 1;
 
@@ -627,8 +628,7 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
     tcount++;
 
     switch (ctrans->fmt) {
-    case 'C':
-    case 'V':
+    case 'C': case 'V':
       xfinst = lives_funcinst_copy(ctrans->funcinst);
       SET_RETVAR(xfinst, condition);
       // set last param to magic
@@ -638,6 +638,7 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
       if (!maxp) weed_set_int_value(xfinst->params, LIVES_LEAF_MAXPARAM, 1);
       lives_free(pkey);
       do_call(xfinst);
+      //g_print("ret from C: %s %d\n", xfinst->funcdef->funcname, condition->stype);
       lives_funcinst_free(xfinst);
       if (!condition) goto fmt_err;
       condition->priv_data = (void *)ctrans;
@@ -653,7 +654,9 @@ static lives_condition cond_create_va(boolean full, LiVESList **va_magic) {
       lives_free(pkey);
       // p0 for opfuncs
       pkey = make_std_pname(1);
+
       weed_set_custom_value(xfinst->params, pkey, LIVES_SEED_ALLVALUES, condition);
+
       lives_free(pkey);
       maxp = get_funcinst_nparams(xfinst);
       if (maxp < 2) weed_set_int_value(xfinst->params, LIVES_LEAF_MAXPARAM, 2);
@@ -837,7 +840,7 @@ lives_condition lives_cond_copy(lives_condition condition) {
         if (weed_leaf_seed_type(finst->params, pkey) == LIVES_SEED_ALLVALUES) {
           allvalues_t *allvp = (allvalues_t *)weed_get_custom_value(finst->params, pkey, LIVES_SEED_ALLVALUES, NULL);
           if (allvp) {
-            if (allvp->funcinst)
+            if (!is_final(allvp))
               // call recursively
               weed_set_custom_value(finst->params, pkey, LIVES_SEED_ALLVALUES, lives_cond_copy(allvp));
             else weed_set_custom_value(finst->params, pkey, LIVES_SEED_ALLVALUES, allvalues_copy(allvp));
@@ -849,21 +852,46 @@ lives_condition lives_cond_copy(lives_condition condition) {
 
 
 static lives_condition _lives_cond_eval(lives_condition condition) {
-  if (!condition) return NULL;
-  if (is_final(condition)) return condition;
+  if (!condition) {
+    //g_print("null in condtion !\n");
+    return NULL;
+  }
+
+  //_lives_cond_desc(condition, FALSE);
+
+  if (is_final(condition)) {
+    return condition;
+  }
   lives_funcinst *finst = condition->funcinst;
+
+  // if we got a va_surprise, the first va_arg will be an args count
+  // followed by allvalues_t *, these will be copied into the local databook
+  // as "p0", "p1", etc
+
   int maxparms = get_funcinst_nparams(finst);
   for (int i = 0; i < maxparms; i++) {
     char *pkey = make_std_pname(i);
-    allvalues_t *allvp = (allvalues_t *)weed_get_custom_value(finst->params,
-                         pkey, LIVES_SEED_ALLVALUES, NULL);
-    if (allvp->funcinst)
-      weed_set_custom_value(finst->params, pkey, LIVES_SEED_ALLVALUES, _lives_cond_eval(allvp));
+    /* allvalues_t *allvp = (allvalues_t *)weed_get_custom_value(finst->params, */
+    /*                      pkey, LIVES_SEED_ALLVALUES, NULL); */
+    // params here are all values 0 ither holding a final value or a funcinst
+    // if we have a funcinst we eval recursively, which will return an allvalues, which then replaaces
+    // the original
+    allvalues_t *allvp = allvalues_from_leaf(NULL, finst->params, pkey);
+    //if (!is_final(allvp))  {
+
+    if (allvp->stype == LIVES_SEED_ALLVALUES) {
+      allvp = (allvalues_t *)(allvp->values.V[0]);
+    }
+    if (allvp->funcinst) {
+      weed_set_custom_value(finst->params, pkey,
+                            LIVES_SEED_ALLVALUES, _lives_cond_eval(allvp));
+    }
+    /// hmm..we can get allvaules with stype allvalues !!
     lives_free(pkey);
   }
   // after evaluating all funcinst params recursively
   // we execute the funcinst and return the result
-  if (finst->funcdef) {
+  if (finst && finst->funcdef) {
     LIVES_CALLOC_TYPE(allvalues_t, retvpp, 1);
     SET_RETVAR(finst, retvpp);
     do_call(finst);
@@ -873,8 +901,23 @@ static lives_condition _lives_cond_eval(lives_condition condition) {
 }
 
 
-lives_cond_result lives_cond_eval(lives_condition condition) {
+lives_cond_result lives_cond_eval_real(lives_condition condition, const char *args_fmt, ...) {
+  if (args_fmt) {
+    lives_databook_t *lbook = lives_local_databook();
+    va_list va;
+    va_start(va, args_fmt);
+    for (int i = 0; args_fmt[i]; i++) {
+      const char c = args_fmt[i];
+      char *key = LSPF("p%d", i);
+      weed_seed_t st = get_seedtype(c);
+      SET_BOOK_VALUE_VA(lbook, st, key, va);
+      lives_free(key);
+    }
+    va_end(va);
+  }
+
   lives_condition xcond = lives_cond_copy(condition);
+  //  g_print("Evaluating condition 0x%016lu\n", condition->uid);
   allvalues_t *res = _lives_cond_eval(xcond);
   boolean bres = res->values.b[0];
   if (res != xcond) lives_cond_free(res);
@@ -884,7 +927,7 @@ lives_cond_result lives_cond_eval(lives_condition condition) {
 }
 
 
-void lives_cond_desc(lives_condition cond) {
+static void _lives_cond_desc(lives_condition cond, boolean descend) {
   allvalues_t *allvp = (allvalues_t *)cond;
   if (allvp) {
     cond_trans *ctrans = (cond_trans *)allvp->priv_data;
@@ -902,20 +945,40 @@ void lives_cond_desc(lives_condition cond) {
       if ((ctrans) && (ctrans->fmt == 'C' || ctrans->fmt == 'V' || ctrans->fmt == 'U' || ctrans->fmt == '!'))
         g_print("%s, ", ctrans->token);
 
+      /* if (!descend) { */
+      /* 	if (finst->funcdef) g_print("%s\n", finst->funcdef->funcname); */
+      /* 	else g_print("%s\n", "unknown func\n"); */
+      /* } */
+
       for (int i = 0; i  < maxparms; i++) {
         pkey = make_std_pname(i);
         if (weed_leaf_seed_type(finst->params, pkey) == LIVES_SEED_ALLVALUES) {
           allvalues_t *xallvp = (allvalues_t *)weed_get_custom_value(finst->params, pkey, LIVES_SEED_ALLVALUES, NULL);
-          lives_cond_desc(xallvp);
+          if (descend) lives_cond_desc(xallvp);
+          else {
+            /* if (xallvp->funcinst) { */
+            /*   if (xallvp->funcinst->funcdef) g_print("--> %s", xallvp->funcinst->funcdef->funcname); */
+            /*   else g_print("--> ???\n"); */
+            /* } */
+            if (is_final(xallvp)) {
+              /*   weed_plant_t *tmpplant = lives_plant_new(LIVES_PLANT_TMP); */
+              /*   LEAF_FROM_ALLV(tmpplant, WEED_LEAF_VALUE, xallvp); */
+              /*   char *calstr = weed_leaf_stringify(tmpplant, WEED_LEAF_VALUE); */
+              /*   weed_plant_free(tmpplant); */
+              /*   g_print("---> %s", calstr); */
+              /*   lives_free(calstr); */
+            }
+            g_print("\n");
+          }
         } else {
           char *calstr = weed_leaf_stringify(finst->params, pkey);
-          g_print("%s, ", calstr);
+          // g_print("%s, ", calstr);
           lives_free(calstr);
         }
         lives_free(pkey);
-        if (!i) {
+        if (!i && descend) {
           // for type 'O' print func after 1st param
-          if (ctrans  && ctrans->fmt == 'O') g_print("%s, ", ctrans->token);
+          //if (ctrans  && ctrans->fmt == 'O') g_print("%s, ", ctrans->token);
         }
       } //for
     } // finst
@@ -924,12 +987,18 @@ void lives_cond_desc(lives_condition cond) {
       LEAF_FROM_ALLV(tmpplant, WEED_LEAF_VALUE, allvp);
       char *calstr = weed_leaf_stringify(tmpplant, WEED_LEAF_VALUE);
       weed_plant_free(tmpplant);
-      g_print("%s, %s,  ", ctrans->token, calstr);
+      //g_print("%s, %s,  ", ctrans->token, calstr);
       lives_free(calstr);
     }
     d_print("\n");
   }
 }
+
+
+void lives_cond_desc(lives_condition cond) {
+  return _lives_cond_desc(cond, TRUE);
+}
+
 
 void lives_conditions_init(void) {
   // format is: "TOKEN", type
@@ -971,6 +1040,10 @@ void lives_conditions_init(void) {
   // The first eval should return an allvalues_t * with type WEED_SEED_BOOLEAN,
   // which is the return value for the condition
 
+  syntax_states[0] = strings_to_list(COND_SYNTAX_0);
+  syntax_states[1] = strings_to_list(COND_SYNTAX_1);
+  syntax_states[2] = strings_to_list(COND_SYNTAX_2);
+
   // symbols with fmt "!" are directives, and are inserted unchanged
   // eg. "COND(POPEN) -> "COND_POPEN"
   register_cond_token("POPEN", '!', "(");
@@ -990,7 +1063,9 @@ void lives_conditions_init(void) {
   register_cond_token("]", 	'X',	"$", _COND_LIST_END);
 
   register_cond_token("==", 	'X',	"$", COND_PFX "EQUALS");
-  register_cond_token(">", 	'X',	"$", COND_PFX "GREATER_THAN");
+  register_cond_token(">", 	'X',	"$", COND_PFX "GREATER");
+
+  register_cond_token("!", 	'X',	"$", COND_PFX "NOT");
 
   register_cond_token("COND_FALSE", 	'X', 	"$b", COND_PFX "BOOLEAN_VAL", FALSE);
   register_cond_token("COND_TRUE", 	'X', 	"$b", COND_PFX "BOOLEAN_VAL", TRUE);

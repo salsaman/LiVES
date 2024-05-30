@@ -1040,7 +1040,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
 
   finst = _lives_funcinst_create_va(NULL, func, fname, return_type, anames, args_fmt, xargs);
 
-  if (retloc) SET_RETVAR(finst, retloc);
+  if (retloc) SET_RETVARP(finst, retloc);
 
   if (is_fg_thread()) {
     // run direct
@@ -1719,9 +1719,11 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
   // - so after resuming we wait for other thread to reset its sync_idx
 
   //MSGMODE_ON(DEBUG);
+  ____FUNC_ENTRY____(lives_proc_thread_sync_with_timeout, "I", "VUiI");
   GET_PROC_THREAD_SELF(self);
   uint64_t attrs = lives_proc_thread_get_attrs(self);
-  if (attrs & LIVES_THRDATTR_IGNORE_SYNCPTS) return LIVES_RESULT_SUCCESS;
+  if (attrs & LIVES_THRDATTR_IGNORE_SYNCPTS)
+    ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
   if (sync_idx == 0) sync_idx = -1;
   d_print_debug("syncwith: %p says: start sync with %p, sync identifier is %d\n", self, lpt, sync_idx);
   if (lives_proc_thread_ref(lpt) > 1)  {
@@ -1735,7 +1737,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
           d_print_debug("syncwith: %p says: other thread was cancelled\n", self);
         if (lives_proc_thread_had_error(lpt))
           d_print_debug("syncwith: %p says: other thread got an error\n", self);
-        return LIVES_RESULT_FAIL;
+        ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
       }
       pthread_mutex_t *opause_mutex = LPT_THREADVAR_GETp(lpt, pause_mutex),
                        *pause_mutex = &(THREADVAR(pause_mutex));
@@ -1744,7 +1746,6 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         d_print_debug("syncwith: no pause mutex !! %p %p %p\n", lpt, mainw->def_lpt, get_thread_data_for_lpt(lpt));
         BREAK_ME("nopause");
         lives_proc_thread_unref(lpt);
-        return LIVES_RESULT_ERROR;
       }
 
       d_print_debug("syncwith: %p says: got pause mutex of other (%p)\n", self, opause_mutex);
@@ -1828,7 +1829,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         lives_proc_thread_set_sync_idx(0);
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);
-        return LIVES_RESULT_FAIL;
+        ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
       } else {
         d_print_debug("syncwith: waiting\n");
         if (_lives_proc_thread_wait(self, timeout_nsec, TRUE)) {
@@ -1843,7 +1844,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
           lives_proc_thread_set_sync_idx(0);
           pthread_mutex_unlock(pause_mutex);
           lives_proc_thread_unref(lpt);
-          return LIVES_RESULT_FAIL;
+          ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
         }
         d_print_debug("syncwith: resumed\n");
         if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
@@ -1855,7 +1856,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
         pthread_mutex_unlock(pause_mutex);
         lives_proc_thread_unref(lpt);
         //MSGMODE_OFF(DEBUG);
-        return LIVES_RESULT_FAIL;
+        ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
       }
 
 synced:
@@ -1870,7 +1871,7 @@ synced:
       lives_proc_thread_unref(lpt);
       d_print_debug("syncwith: DONE !!\n");
       //MSGMODE_OFF(DEBUG);
-      return LIVES_RESULT_SUCCESS;
+      ____FUNC_EXIT_VAL____(LIVES_RESULT_SUCCESS);
       /* mismatch: */
       /*   lives_proc_thread_error(self, 0, "sync_idx mismatch, wating for %d and found %d\n", sync_idx, osync_idx); */
       /*   lives_proc_thread_unref(lpt); */
@@ -1879,10 +1880,10 @@ synced:
 
     lives_proc_thread_unref(lpt);
     //MSGMODE_OFF(DEBUG);
-    return LIVES_RESULT_SUCCESS;
+    ____FUNC_EXIT_VAL____(LIVES_RESULT_SUCCESS);
   }
   //MSGMODE_OFF(DEBUG);
-  return LIVES_RESULT_FAIL;
+  ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
 }
 
 

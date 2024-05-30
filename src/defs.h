@@ -19,42 +19,50 @@
 //#define DEBUG_WEED
 
 // general purpose macros
-# define EMPTY(...)
-# define DEFER(...) __VA_ARGS__ EMPTY()
-# define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
-# define EXPAND(...) __VA_ARGS__
+#define VA_TO_STRING(func,...) (func(__VA_OPT__(#__VA_ARGS__, __VA_ARGS__,)NULL))
+#define DO_CALL(macro,...) macro(__VA_ARGS__)
+#define DO_IFARGS(macro, macro2,...) CHOOSE(macro,macro2,__VA_OPT__(1,)0__VA_OPT__(,__VA_ARGS__))
+#define CHOOSE(macro,macro2,n,...) CHOOSE_##n(macro,macro2__VA_OPT__(,)__VA_ARGS__)
+#define CHOOSE_1(macro,macro2,...) macro(__VA_ARGS__)
+#define CHOOSE_0(macro,macro2) macro2
+//
+// then: LIVES_DO_nn_times(4,2,do_macro) // expand do_macro for all values from 0 to 42
+// and: LIVES_DO_n_times(7,do_macro2) // expands to do_macro2 for all values from 0 to 7
+// furthermore, CONST_0, CONST_1, etc can themselves be macros, provided there is no recursion, this can go several levels deep
+#define LIVES_DO_n_times(n,m) LIVES_DO_FOR_##n(m)
+#define LIVES_DO_FOR_0(m)m(0)
+#define LIVES_DO_FOR_1(m)m(0) m(1)
+#define LIVES_DO_FOR_2(m)m(0) m(1) m(2)
+#define LIVES_DO_FOR_3(m)LIVES_DO_FOR_2(m) m(3)
+#define LIVES_DO_FOR_4(m)LIVES_DO_FOR_3(m) m(4)
+#define LIVES_DO_FOR_5(m)LIVES_DO_FOR_4(m) m(5)
+#define LIVES_DO_FOR_6(m)LIVES_DO_FOR_5(m) m(6)
+#define LIVES_DO_FOR_7(m)LIVES_DO_FOR_6(m) m(7)
+#define LIVES_DO_FOR_8(m)LIVES_DO_FOR_7(m) m(8)
+#define LIVES_DO_FOR_9(m)LIVES_DO_FOR_8(m) m(9)
 
-// concat a with va_args
-#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
-// ditto
-#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define LIVES_DO_FOR_x0(x,m)m(x##0)
+#define LIVES_DO_FOR_x1(x,m)LIVES_DO_FOR_x0(x,m) m(x##1)
+#define LIVES_DO_FOR_x2(x,m)LIVES_DO_FOR_x1(x,m) m(x##2)
+#define LIVES_DO_FOR_x3(x,m)LIVES_DO_FOR_x2(x,m) m(x##3)
+#define LIVES_DO_FOR_x4(x,m)LIVES_DO_FOR_x3(x,m) m(x##4)
+#define LIVES_DO_FOR_x5(x,m)LIVES_DO_FOR_x4(x,m) m(x##5)
+#define LIVES_DO_FOR_x6(x,m)LIVES_DO_FOR_x5(x,m) m(x##6)
+#define LIVES_DO_FOR_x7(x,m)LIVES_DO_FOR_x6(x,m) m(x##7)
+#define LIVES_DO_FOR_x8(x,m)LIVES_DO_FOR_x7(x,m) m(x##8)
+#define LIVES_DO_FOR_x9(x,m)LIVES_DO_FOR_x8(x,m) m(x##9)
 
-// returns second arg
-#define CHECK_N(x, n, ...) n
-
-// returns second arg or 0
-#define CHECK(...) CHECK_N(__VA_ARGS__, 0,)
-
-// expands to: CHECK(NOT_<args>)
-#define NOT(x) CHECK(PRIMITIVE_CAT(NOT_, x))
-
-// when passed to CHECK() returns 1
-#define NOT_0 ~, 1,
-
-// returns COMPL_b
-#define COMPL(b) PRIMITIVE_CAT(COMPL_, b)
-#define COMPL_0 1
-#define COMPL_1 0
-
-#define BOOL(x) COMPL(NOT(x))
-
-#define IIF(c) PRIMITIVE_CAT(IIF_, c)
-#define IIF_0(t, ...) __VA_ARGS__
-#define IIF_1(t, ...) t
-
-#define IF(c) IIF(BOOL(c))
-
-#define WHEN(c) IF(c)(EXPAND, EMPTY)
+#define LIVES_DO_FOR_x(a,b,m)LIVES_DO_FOR_x##b(a,m)
+#define LIVES_DO_FOR_xx1(b,m)LIVES_DO_n_times(9,m) LIVES_DO_FOR_x(1,9,m)
+#define LIVES_DO_FOR_xx2(b,m)LIVES_DO_FOR_xx1(9,m) LIVES_DO_FOR_x(2,b,m)
+#define LIVES_DO_FOR_xx3(b,m)LIVES_DO_FOR_xx2(9,m) LIVES_DO_FOR_x(3,b,m)
+#define LIVES_DO_FOR_xx4(b,m)LIVES_DO_FOR_xx3(9,m) LIVES_DO_FOR_x(4,b,m)
+#define LIVES_DO_FOR_xx5(b,m)LIVES_DO_FOR_xx4(9,m) LIVES_DO_FOR_x(5,b,m)
+#define LIVES_DO_FOR_xx6(b,m)LIVES_DO_FOR_xx5(9,m) LIVES_DO_FOR_x(6,b,m)
+#define LIVES_DO_FOR_xx7(b,m)LIVES_DO_FOR_xx6(9,m) LIVES_DO_FOR_x(7,b,m)
+#define LIVES_DO_FOR_xx8(b,m)LIVES_DO_FOR_xx7(9,m) LIVES_DO_FOR_x(8,b,m)
+#define LIVES_DO_FOR_xx9(b,m)LIVES_DO_FOR_xx8(9,m) LIVES_DO_FOR_x(9,b,m)
+#define LIVES_DO_nn_times(a,b,m) LIVES_DO_FOR_xx##a(b,m)
 
 //////////////////////
 
@@ -498,8 +506,6 @@ typedef enum {
    : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
    ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
 
-
-
 typedef enum {
   UNDO_NONE = 0,
   UNDO_EFFECT,
@@ -572,6 +578,9 @@ typedef enum {
 #define ENABLE_DVD_GRAB 1
 
 #define BG_LOAD_RFX 1
+
+#define MMODE_PLAYER_TIMINGS		(1 << 0)
+#define MMODE_PLANNER_TIMINGS		(1 << 1)
 
 #ifdef HAVE_MJPEGTOOLS
 #define HAVE_YUV4MPEG		1

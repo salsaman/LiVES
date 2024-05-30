@@ -45,6 +45,13 @@
 #include <weed/weed.h>
 #endif
 
+// general ordering of errors is nosuch plant
+// nosuch leaf
+// immutable / undel
+// wrong seed type
+// nosuch element
+// mem / comcur
+
 #ifdef ENABLE_PROXIES
 #define _get_leaf_proxy(leaf) if (leaf && (leaf->flags & WEED_FLAG_PROXY)) { \
     weed_leaf_t *proxy = (weed_leaf_t *)leaf->data[0]->v.value.voidptr;	\
@@ -967,6 +974,8 @@ static weed_error_t _weed_set_custom_element_size(weed_plant_t *plant, const cha
   _get_leaf_proxy(leaf);
   if (leaf->seed_type < WEED_SEED_FIRST_CUSTOM)
     return_unlock(leaf, WEED_ERROR_WRONG_SEED_TYPE);
+  if (leaf->flags & WEED_FLAG_IMMUTABLE)
+    return_unlock(leaf, WEED_ERROR_IMMUTABLE);
   if (idx > leaf->num_elements) return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
   leaf->data[idx].size = new_size;
   return_unlock(leaf, WEED_SUCCESS);
@@ -978,7 +987,7 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, w
   // strip any reserved bits from flags
   if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
 #ifdef ENABLE_PROXIES
-  if (leaf->flags & WEED_FLAG_PROXY) return_unlock(leaf, WEED_EEROR_IMMUTABLE);
+  if (leaf->flags & WEED_FLAG_PROXY) return_unlock(leaf, WEED_ERROR_IMMUTABLE);
 #endif
   if (leaf != plant) {
     ref_lock_readlock(leaf);

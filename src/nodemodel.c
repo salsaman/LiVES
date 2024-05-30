@@ -1109,8 +1109,7 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
     weed_layer_unref(layer);
   }
 
-  ____FUNC_EXIT_VAL____("i", retval);
-  return retval;
+  ____FUNC_EXIT_VAL____(retval);
 }
 
 
@@ -1141,8 +1140,7 @@ static lives_filter_error_t gamma_substep(plan_step_t *step) {
     lives_layer_set_status(layer, LAYER_STATUS_PROCESSED);
     weed_layer_unref(layer);
   }
-  ____FUNC_EXIT_VAL____("i", retval);
-  return retval;
+  ____FUNC_EXIT_VAL____(retval);
 }
 
 
@@ -1211,8 +1209,7 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     lives_layer_set_status(layer, LAYER_STATUS_PROCESSED);
     weed_layer_unref(layer);
   }
-  ____FUNC_EXIT_VAL____("i", retval);
-  return retval;
+  ____FUNC_EXIT_VAL____(retval);
 }
 
 
@@ -1235,6 +1232,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
     int xheight = step->fin_iheight;
     int width = step->fin_width;
     int height = step->fin_height;
+    int lwidth, lheight;
     boolean ret;
 
     double xtime = lives_get_session_time();
@@ -1247,11 +1245,18 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
 
     lives_layer_set_status(layer, LAYER_STATUS_CONVERTING);
 
-    sub = make_substep(OP_LETTERBOX, xtime, weed_layer_get_width(layer),
-                       weed_layer_get_height(layer), weed_layer_get_palette(layer));
+    lwidth = weed_layer_get_width(layer);
+    lheight = weed_layer_get_height(layer);
+
+    sub = make_substep(OP_LETTERBOX, xtime, lwidth, lheight, weed_layer_get_palette(layer));
     step->substeps = lives_list_append(step->substeps, (void *)sub);
 
-    ret = letterbox_layer(layer, width, height, xwidth, xheight, interp, opalette, oclamping);
+    if (prefs->pb_quality == PB_QUALITY_HIGH)
+      calc_maxspect(width, height, &lwidth, &lheight);
+    else if (prefs->pb_quality == PB_QUALITY_LOW)
+      calc_maxspect(xwidth, xheight, &lwidth, &lheight);
+
+    ret = letterbox_layer(layer, width, height, lwidth, lheight, interp, opalette, oclamping);
 
     if (!ret) {
       retval = FILTER_ERROR_UNABLE_TO_RESIZE;
@@ -1278,8 +1283,7 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
     lives_layer_set_status(layer, LAYER_STATUS_PROCESSED);
     weed_layer_unref(layer);
   }
-  ____FUNC_EXIT_VAL____("i", retval);
-  return retval;
+  ____FUNC_EXIT_VAL____(retval);
 }
 
 
@@ -1668,7 +1672,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  //MSGMODE_ON(DEBUG);
+  MSGMODE_ON(DEBUG);
 
   planrunner_lock();
 
@@ -1709,7 +1713,7 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    //MSGMODE_OFF(DEBUG);
+    MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel();
   }
@@ -2600,12 +2604,13 @@ static void run_plan(exec_plan_t *plan) {
     pthread_mutex_lock(&glob_timing->upd_mutex);
     // update: real_duration, tot_duration and avg_duration
 
-    if (plan->tdata->actual_start)
-      plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->actual_start
-                                   - plan->tdata->paused_time;
-    else
-      plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->real_start
-                                   - plan->tdata->paused_time;
+    if (!plan->tdata->actual_start)
+      plan->tdata->actual_start = lives_get_session_time();
+
+    plan->tdata->real_duration = plan->tdata->real_end - plan->tdata->trigger_time
+                                 - plan->tdata->paused_time;
+    plan->tdata->effective_duration = plan->tdata->real_end - plan->tdata->actual_start
+                                      - plan->tdata->paused_time;
 
     glob_timing->tot_duration += plan->tdata->real_duration;
     glob_timing->last_cyc_duration = plan->tdata->real_duration;
@@ -2617,13 +2622,14 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->active = FALSE;
     pthread_mutex_unlock(&glob_timing->upd_mutex);
 
-    d_print_debug("PLAN DONE, finished cycle in %.4f msec, target was < %.4f (%+.4f), average is %.4f\n"
+    d_print_debug("PLAN DONE, finished cycle in %.4f msec (effective %.4f),"
+                  "target was < %.4f (%+.4f), average is %.4f\n"
                   "sequential time %.4f (%.2f %%), concurrent time = %.4f (%.2f %%)\n"
                   "preload time = %.4f, preload active time = %.4f (%.2f %%)\n"
                   "queued time = %.4f (%.2f %%), start wait = %.4f (%.2f %%), paused for %.4f, "
                   "idle time = %.4f (%.2f %%)\n",
-                  1000. * plan->tdata->real_duration, plan->tdata->tgt_time * 1000.,
-                  1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
+                  1000. * plan->tdata->real_duration, plan->tdata->effective_duration * 1000.,
+                  plan->tdata->tgt_time * 1000., 1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
                   1000. * glob_timing->tot_duration / (double)plan->iteration,
                   plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
                   1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.,
@@ -2665,7 +2671,7 @@ static void run_plan(exec_plan_t *plan) {
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
 
-  //MSGMODE_OFF(DEBUG);
+  MSGMODE_OFF(DEBUG);
 
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel();
   nplans--;
@@ -2677,10 +2683,7 @@ static void run_plan(exec_plan_t *plan) {
 
 
 void plan_cycle_trigger(exec_plan_t *plan) {
-  if (plan->tdata->trigger_time) {
-    if (!plan->tdata->actual_start) plan->tdata->actual_start = lives_get_session_time();
-    return;
-  }
+  if (plan->tdata->trigger_time) return;
 
   plan->tdata->trigger_time = lives_get_session_time();
 
@@ -2903,7 +2906,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
   inst_node_t *p;
   boolean add_step;
   int step_number = 0;
-  int pal;
+  int pal, opal = WEED_PALETTE_NONE;
 
   if (idx >= 0) {
     if (st_type == STEP_TYPE_COPY_IN_LAYER)
@@ -2944,8 +2947,9 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
 
     case STEP_TYPE_CONVERT: {
       weed_filter_t *filter = NULL;
+      full_pal_t pally;
       int *pal_list;
-      int ipal, opal;
+      int ipal, npals;
       boolean inplace = FALSE;
       boolean letterbox = FALSE;
 
@@ -2954,6 +2958,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         // convert to the track_source srcgroup
         lives_clipsrc_group_t *srcgrp;
         lives_clip_t *sfile;
+        boolean rem_alpha = FALSE;
         step = alloc_step(plan, st_type, ndeps, deps);
 
         for (int i = 0; i < step->ndeps; i++)
@@ -2966,9 +2971,48 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
 
         sfile = RETURN_VALID_CLIP(step->target_idx);
 
-        step->fin_width = step->fin_iwidth = sfile->hsize;
-        step->fin_height = step->fin_iheight = sfile->vsize;
-        step->fin_pal = srcgrp->apparent_pal;
+        opal = srcgrp->apparent_pal;
+        in = out->node->inputs[out->iidx];
+        if (in->npals) {
+          ipal = in->pals[in->optimal_pal];
+          pal_list = in->pals;
+          npals = in->npals;
+        } else {
+          ipal = out->node->pals[out->node->optimal_pal];
+          pal_list = out->node->pals;
+          npals = out->node->npals;
+        }
+
+        // if opal has alpha and ipal does not,
+        // then removing alpha from opal
+        // is a no-brainer - if we are going to remove it anyway, we may as well do it now
+        // and if the src palette has no alpha anyway, we avoid adding and removing
+
+        if (weed_palette_has_alpha(opal)) {
+          if (weed_palette_has_alpha(ipal)) {
+            int xipal = remove_alpha(ipal);
+            for (int i = 0; i < npals; i++) {
+              if (pal_list[i] == xipal) {
+                rem_alpha = TRUE;
+                break;
+              }
+            }
+          } else rem_alpha = TRUE;
+        }
+
+        if (rem_alpha) {
+          pally.pal = opal = remove_alpha(opal);
+          if (weed_palette_is_yuv(ipal)) {
+            pally.clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+            pally.sampling = WEED_YUV_SAMPLING_DEFAULT;
+            pally.subspace = WEED_YUV_SUBSPACE_YUV;
+          }
+          srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent_gamma);
+        }
+
+        step->fin_width = step->fin_iwidth = out->width = sfile->hsize;
+        step->fin_height = step->fin_iheight = out->height = sfile->vsize;
+        step->fin_pal = opal;
         step->fin_gamma = srcgrp->apparent_gamma;
 
         deps = (plan_step_t **)lives_calloc(1, sizeof(plan_step_t *));
@@ -2983,12 +3027,31 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
       if (in->npals) {
         ipal = in->pals[in->optimal_pal];
         pal_list = in->pals;
+        npals = in->npals;
       } else {
         ipal = out->node->pals[out->node->optimal_pal];
         pal_list = out->node->pals;
+        npals = out->node->npals;
       }
-      if (out->npals) opal = out->pals[out->optimal_pal];
-      else opal = n->pals[n->optimal_pal];
+
+      if (opal == WEED_PALETTE_NONE) {
+        if (out->npals) opal = out->pals[out->optimal_pal];
+        else opal = n->pals[n->optimal_pal];
+      }
+
+      if (weed_palette_has_alpha(ipal)
+          && !weed_palette_has_alpha(opal)) {
+        int xipal = remove_alpha(ipal);
+        for (int i = 0; i < npals; i++) {
+          if (pal_list[i] == xipal) {
+            ipal = xipal;
+            if (in->npals) in->optimal_pal = i;
+            else out->node->optimal_pal = i;
+
+            break;
+          }
+        }
+      }
 
       if (out->width == in->width && out->height == in->height && ipal == opal
           && n->gamma_type == out->node->gamma_type) {
@@ -3541,8 +3604,14 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
         cpal = weed_channel_get_palette(channel);
 
-        if (out->npals) pal = out->pals[out->optimal_pal];
-        else pal = n->pals[n->optimal_pal];
+        if (n->model_type == NODE_MODELS_GENERATOR) {
+          full_pal_t pally;
+          get_primary_apparent(n->model_idx, &pally, NULL);
+          pal = pally.pal;
+        } else {
+          if (out->npals) pal = out->pals[out->optimal_pal];
+          else pal = n->pals[n->optimal_pal];
+        }
 
         in = out->node->inputs[out->iidx];
 
@@ -3597,7 +3666,7 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
       n->cpal = vpp->palette;
       pal = n->pals[n->optimal_pal];
-
+      __BREAK_ME("ddpdp");
       if (n->cpal != pal && (vpp->capabilities & VPP_CAN_CHANGE_PALETTE)) {
         if ((*vpp->set_palette)(pal)) n->cpal = pal;
 
@@ -3628,7 +3697,7 @@ void align_with_model(lives_nodemodel_t *nodemodel) {
   inst_node_t *n, *retn = NULL;
   boolean *used;
 
-  //MSGMyODE_ON(DEBUG);
+  //MSGMODE_ON(DEBUG);
 
   d_print_debug("%s @ %s\n", "align start", lives_format_timing_string(lives_get_session_time() - ztime));
 
@@ -3822,9 +3891,8 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
   // at sink,we will strech or expand to fit in sink
   // if sink is a pb plugin and can letterbox, we do not add blank bars. If sink can resize
 
-  // PROPOGATE SMALLER SIZES
+  // PROPOGATE ranges
   // if model->phase == 4, we
-
 
   input_node_t *in;
   output_node_t *out;
@@ -3878,26 +3946,16 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
     if (in->flags & NODEFLAG_IO_FIXED_SIZE) {
       // if the input is flagged as FIXED_SIZE, then we use whateve size is currently set
       // the only thing we want to check is, whether letterboxing is enabled,
-      // if so we scale out size to fit in output size, reather than ssterecthgin or shirnking to exactly
+      // if so we scale out size to fit in output size, rather than stretching or shrinking to exactly
       // fixed size
-      /* if (!out->width || !out->height) { */
-      /* 	out->width = in->width; */
-      /* 	out->height = in->height; */
-      /* 	if (out->maxwidth && out->width > out->maxwidth) out->width = out->maxwidth; */
-      /* 	if (out->maxheight && out->height > out->maxheight) out->height = out->maxheight; */
-
-      /* 	if (out->minwidth && out->width < out->minwidth) out->width = out->minwidth; */
-      /* 	if (out->minheight && out->height < out->minheight) out->height = out->minheight; */
-      /* } */
 
       if (letterbox) {
         width = out->width;
         height = out->height;
-        calc_maxspect(in->width, in->height, &width, & height);
-        if (width <= in->width && height <= in->height) {
-          in->inner_width = width;
-          in->inner_height = height;
-        }
+        calc_maxspect(in->width, in->height, &width, &height);
+        in->inner_width = width;
+        in->inner_height = height;
+        BREAK_ME("insz");
       }
       // FIXED_SIZE done
       break;
@@ -3911,8 +3969,8 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         // (generally we only have one input per sink, though for example it could take a picture layer
         // and a subtitle layer)
 
-        // if the plugin the node represents can resize we can jusst ue the size as output from prev node
-        // if not theen w3 have to use the op (display) sizesome plugins can also do letterboxing
+        // if the plugin the node represents can resize we can just use the size as output from prev node
+        // if not then we have to use the op (display) sizesome plugins can also do letterboxing
         // in this ase, if it cannot resize, if the output from pre v node < displayu size, we can
         // sstretch or shrink output size, so 2 edges just touch and letterbox to display size.
         // if the out size is
@@ -4180,17 +4238,6 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
     default: break;
     }
 
-    /* if (!svary) { */
-    /*   for (no = 0; no < nouts; no++) { */
-    /* 	out = n->outputs[no]; */
-    /* 	if (out->flags & NODEFLAGS_IO_SKIP) continue; */
-    /* 	if (out->maxwidth && rmaxw > out->maxwidth) rmaxw = out->maxwidth; */
-    /* 	if (out->maxheight && rmaxh > out->maxheight) rmaxh = out->maxheight; */
-
-    /* 	if (out->minwidth && rmaxw < out->minwidth) rmaxw = out->minwidth; */
-    /* 	if (out->minheight && rmaxh < out->minheight) rmaxh = out->minheight; */
-    /*   } */
-    /* } */
     d_print_debug("size after q adjustemnt: %d X %d\n", width, height);
 
     d_print_debug("2maxw is %f, maxh is %f, xmaxw is %f, xmaxh is %f, rminw ois %d rimnh is %d\n",
@@ -4231,90 +4278,6 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
       }
     }
 
-    /*   if (has_non_lb_layers) { */
-    /*     int xopwidth = opwidth, xopheight = opheight; */
-    /*     d_print_debug("some layers do not letterbox, adjust size  %d X %d to ar %d X %d\n", width, height, opwidth, opheight); */
-    /*     // find min box with ar, opwidth, opheight which contains w, h */
-    /*     calc_minspect(width, height, &opwidth, &opheight); */
-    /*     d_print_debug("some layers do not letterbox, adjusted size to  %d X %d\n", opwidth, opheight); */
-    /*     if (prefs->pb_quality == PB_QUALITY_HIGH) { */
-    /* 	if (opwidth < xopwidth || opheight < xopheight) { */
-    /* 	  opwidth = xopwidth; */
-    /* 	  opheight = xopheight; */
-    /* 	} */
-    /*     } else if (opwidth > xopwidth || opheight > xopheight) */
-    /* 	if (opwidth < xopwidth || opheight < xopheight) { */
-    /* 	  opwidth = xopwidth; */
-    /* 	  opheight = xopheight; */
-    /* 	} */
-    /*   }  else { */
-    /*     width = opwidth; */
-    /*     height = opheight; */
-    /*   } */
-
-    /*   opwidth = (opwidth >> 2) << 2; */
-    /*   opheight = (opheight >> 2) << 2; */
-
-    /*   d_print_debug("Final bounding box size is %d X %d. Some layers may lb inside this\n", opwidth, opheight); */
-
-    /*   for (ni = 0; ni < n->n_inputs; ni++) { */
-    /*     in = n->inputs[ni]; */
-
-    /*     if (in->flags & NODEFLAGS_IO_SKIP) continue; */
-
-    /*     xwidth = in->width; */
-    /*     xheight = in->height; */
-
-    /*     in->inner_width = in->width = opwidth; */
-    /*     in->inner_height = in->height = opheight; */
-
-    /*     if (!xwidth || !xheight) continue; */
-
-    /*     if (letterbox) { */
-    /* 	if (!(in->node->model_type == NODE_MODELS_GENERATOR && prefs->no_lb_gens) */
-    /* 	    && !svary && rmaxw && rmaxh) { */
-    /* 	  if (opwidth * xheight / xwidth > opheight) { */
-    /* 	    in->inner_height = opheight; */
-    /* 	    in->inner_width = opheight * xwidth / xheight; */
-    /* 	  } else { */
-    /* 	    in->inner_width = opwidth; */
-    /* 	    in->inner_height = opwidth * xheight / xwidth; */
-    /* 	  } */
-
-    /* 	  in->inner_width = (in->inner_width >> 2) << 2; */
-    /* 	  in->inner_height = (in->inner_height >> 2) << 2; */
-    /* 	} */
-    /*     } */
-
-    /*     d_print_debug("input chan %d got sizes %d X %d (%d X %d)\n", */
-    /* 		    ni, in->width, in->height, in->inner_width, in->inner_height); */
-    /*     d_print_debug("3maxw is %f, maxh is %f, rminw ois %d rminh is %d\n", */
-    /* 		    rmaxw, rmaxh, opwidth, opheight); */
-    /*   } */
-    /* } */
-
-    /* if (rmaxw > 0 && rmaxh > 0) { */
-    /*   if (!svary) { */
-    /*     for (no = 0; no < nouts; no++) { */
-    /* 	out = n->outputs[no]; */
-
-    /* 	if (out->flags & NODEFLAGS_IO_SKIP) continue; */
-
-    /* 	out->width = opwidth; */
-    /* 	out->height = opheight; */
-
-    /* 	if (n->model_type == NODE_MODELS_GENERATOR */
-    /* 	    || n->model_type == NODE_MODELS_FILTER) { */
-    /* 	  weed_filter_t *filter = (weed_filter_t *)n->model_for; */
-    /* 	  weed_chantmpl_t *chantmpl = get_nth_chantmpl(n, no, NULL, LIVES_OUTPUT); */
-    /* 	  validate_channel_sizes(filter, chantmpl, &out->width, &out->height); */
-    /* 	} */
-
-    /* 	d_print_debug("output chan %d got sizes %d X %d\n", */
-    /* 		      no, out->width, out->height); */
-    /*     } */
-    /*   } */
-    /* } */
     xopwidth = width;
     xopheight = height;
 
@@ -4372,10 +4335,62 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
     d_print_debug("Final bounding box size is %d X %d. Some layers may lb inside this\n", opwidth, opheight);
 
+    // if all inputs letterbox then we set an inner size for each input which is original size maxspected into
+    // xopwidth / xopheigh, and we letterbox twice, first to inner siz eten to outer
+    // if we have some which dont letterbox, they get inner and outer sizes equal
+    // to xpopwidth, xopheight, and we just resize with no letterboxing
+    /// if all layers letterbox, inner size is original size and outer size is op
+    // if we have fixed size inouts this is equivalent to having an invisible no letterbox layer
+    // nb. we actually ignore the inner size and just letterbox to outer size
+    // except in med quality we maxsepct to inner box size, high q we maxspect to outer size
     for (ni = 0; ni < n->n_inputs; ni++) {
       in = n->inputs[ni];
 
       if (in->flags & NODEFLAGS_IO_SKIP) continue;
+
+
+      // if we have a fixed size,, then we cannot change in->width, in->height
+      // but we can adust inner width, height
+      //
+      if (in->flags & NODEFLAG_IO_FIXED_SIZE) {
+        in->inner_width = in->width;
+        in->inner_height = in->height;
+
+        if (letterbox && in->node->model_type == NODE_MODELS_GENERATOR
+            && prefs->no_lb_gens) continue;
+
+        if (letterbox && !svary && rmaxw && rmaxh) {
+          xwidth = xopwidth;
+          xheight = xopheight;
+
+          width = opwidth;
+          height = opheight;
+
+          xopwidth = in->width;
+          xopheight = in->height;
+
+          calc_maxspect(xopwidth, xopheight, &opwidth, &opheight);
+          if (opwidth == xopwidth && opheight == xopheight) {
+            out = in->node->outputs[in->oidx];
+            opwidth = out->width;
+            opheight = out->height;
+            calc_maxspect(xopwidth, xopheight, &opwidth, &opheight);
+          }
+
+          opwidth = (width >> 2) << 2;
+          opheight = (height >> 1) << 1;
+
+          in->inner_width = opwidth;
+          in->inner_height = opheight;
+
+          xopwidth = xwidth;
+          xopheight = xheight;
+
+          opwidth = width;
+          opheight = height;
+        }
+        continue;
+      }
 
       xwidth = in->width;
       xheight = in->height;
@@ -4413,6 +4428,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         out = n->outputs[no];
 
         if (out->flags & NODEFLAGS_IO_SKIP) continue;
+        if (out->flags & NODEFLAG_IO_FIXED_SIZE) continue;
 
         out->width = xopwidth;
         out->height = xopheight;
@@ -5438,6 +5454,7 @@ static cost_delta_t *find_cdelta(LiVESList * cdeltas, int out_pal, int in_pal, i
 
 #define _FLG_GHOST_COSTS	1
 #define _FLG_ORD_DESC		2
+#define _FLG_LBOX		4
 
 #define _FLG_ENA_GAMMA		16
 
@@ -5979,17 +5996,39 @@ LIVES_LOCAL_INLINE cost_tuple_t **best_tuples(inst_node_t *n, double * factors) 
 
 
 static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
-  // - factors only fo oper 0, flags - ghost for oper 3
-  // for each input, we iterate over cost_types. Since for the current node we already have
+  // - factors only fo oper 0, flags - ghost for oper 3 and
+  // op 0, for each input, we iterate over cost_types. Since for the current node we already have
   // best_pal[cost_type], we can thus look up the prev node in pal with min cost,
   // and we set best_pal[cost_type] for each input node, ascedning the branches depth first recursively
 
   // oper can be: 	0 - map lc palettes
-  //			1 - accumulate_slack
-  // 			2 - set_missing_sizes
-  //			3 - consolidate_size_costs
-  //			4 - propogate_small_stizes
-
+  //			1 - accumulate_slack - at each node, we can have several layers converging
+  //						some may be waiting for others to finish converting
+  //						we can accumulate this "slack" time upwards, and this
+  //						this time can later be "spent" to increase qualty with
+  //						no adverse costs
+  // 			2 - set_missing_sizes - we set sizes descending from sourcess, but we may have inputs with no fixed sizes
+  //							here we can ascend from sinks and set any unset ouput sizes from inputs
+  //			3 - consolidate_size_costs - we calculate q costs for downscales and upscales
+  //							when we upscale (ascending) we keep track of the output area
+  //							if we reacch anode which downscaled we an assign a cost proportial to
+  //							MIN(input area, upscale area) / output area
+  //							- rationale if we kept the iput size there would be no qloss
+  //							  if the uspcale size < input size, we would have had to downscale anyway
+  //							  so he qloss is only from any additional downscaling
+  //							  however the downsacale qloss is multiplicative over all inputs and over
+  //							  all nodes we pass through
+  //							  we assume there is no INCREASE in quaiity due to upscaling
+  //							  which is generally he case, as upscaling a flawed image just produces
+  //							  a larger flawed image
+  //			4 - propogate_size_ranges - some inputs and outputs may specify a min / max size range
+  //				here we check to ensure selected sizes fall within the allowed range, considering all
+  //				all inputs and outputs. We also have cases where a node has multiple outputs
+  //				with differing sizes. By default we set all sizes to the first output
+  //				Now we check again - for low quality, we will use the smallest size
+  //				for high we use the largest, for medium we leave it as the first output size
+  //
+  //
   static int depth = 0;
   static boolean flag_nodisplay = FALSE;
   output_node_t *out;
@@ -5999,6 +6038,8 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
   double minslack = 0.;
   boolean svary = FALSE;
   boolean ghost = FALSE;
+  boolean letterbox = FALSE;
+  boolean qlo = FALSE, qhi = FALSE;
   int width = 0, height = 0;
   int ni, no, k, pal;
 
@@ -6009,8 +6050,13 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
   //d_print_debug("trace to src %d %d\n", depth, n->n_inputs);
 
   if (oper == 2 && n->flags & NODESRC_ANY_SIZE) svary = TRUE;
+  if (oper == 4) {
+    if (factors[0] == (double)PB_QUALITY_HIGH) qhi = TRUE;
+    if (factors[0] == (double)PB_QUALITY_LOW) qlo = TRUE;
+  }
 
   if (flags & _FLG_GHOST_COSTS) ghost = TRUE;
+  if (flags & _FLG_LBOX) letterbox = TRUE;
 
   // in case a node has multiple outputs, we can only optimise for one of these (unless the output has its
   // own palette_list)
@@ -6037,22 +6083,27 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
         if (!(out->flags & NODEFLAG_PROCESSED)) return;
       }
     } else if (oper == 4) {
-      return;
+      //return;
       if (!n->n_outputs) goto go_up;
       boolean fixed = FALSE;
       int minwidth = 0, minheight = 0;
+      int maxwidth = 0, maxheight = 0;
       for (no = 0; no < n->n_outputs; no++) {
         out = n->outputs[no];
         if (out->flags & NODEFLAGS_IO_SKIP) continue;
         if (!(out->flags & NODEFLAG_PROCESSED)) {
           if (!fixed) fixed = TRUE;
-          else goto go_up;;
+          else goto go_up;
         }
-        if ((out->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) goto go_up;;
+        if ((out->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) goto go_up;
         in = out->node->inputs[out->iidx];
         if (!minwidth || (in->width < minwidth && in->height < minheight)) {
           minwidth = in->width;
           minheight = in->height;
+        }
+        if (!maxwidth || (in->width > maxwidth && in->height > maxheight)) {
+          maxwidth = in->width;
+          maxheight = in->height;
         }
       }
 
@@ -6060,42 +6111,75 @@ static void ascend_tree(inst_node_t *n, int oper, double * factors, int flags) {
         for (no = 0; no < n->n_outputs; no++) {
           out = n->outputs[no];
           if (out->flags & NODEFLAGS_IO_SKIP) continue;
-          if (out->minwidth && out->minwidth > minwidth) minwidth = out->minwidth;
-          if (out->minheight && out->minheight > minheight) minheight = out->minheight;
-          //if (minwidth >= out->width || minheight >= out->height) goto go_up;;
+          int ominwidth = out->minwidth;
+          int ominheight = out->minheight;
+          if (ominwidth || ominheight) {
+            if (letterbox)
+              calc_minspect(out->width, out->height,
+                            &ominwidth, &ominheight);
+            if (out->minwidth && ominwidth > minwidth) minwidth = ominwidth;
+            if (out->minheight && ominheight > minheight) minheight = ominheight;
+          }
         }
         for (no = 0; no < n->n_outputs; no++) {
           out = n->outputs[no];
           if (out->flags & NODEFLAGS_IO_SKIP) continue;
-          if (out->maxwidth && out->maxwidth < minwidth) goto go_up;;
-          if (out->maxheight && out->maxheight < minheight) goto go_up;;
+          int omaxwidth = out->maxwidth;
+          int omaxheight = out->maxheight;
+          if (omaxwidth || omaxheight) {
+            if (letterbox)
+              calc_maxspect(out->width, out->height,
+                            &omaxwidth, &omaxheight);
+            if (out->maxwidth && omaxwidth < minwidth) goto go_up;
+            if (out->maxheight && omaxheight < minheight) goto go_up;
+          }
         }
         for (ni = 0; ni < n->n_inputs; ni++) {
           in = n->inputs[ni];
           if (in->flags & NODEFLAGS_IO_SKIP) continue;
-          if ((in->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) goto go_up;;
+          if ((in->flags & NODEFLAG_IO_FIXED_SIZE) && !svary) goto go_up;
           if (in->minwidth && in->minwidth > minwidth) minwidth = in->minwidth;
           if (in->minheight && in->minheight > minheight) minheight = in->minheight;
-          if (minwidth >= in->width || minheight >= in->height) goto go_up;;
+          if (minwidth >= in->width || minheight >= in->height) goto go_up;
         }
         for (ni = 0; ni < n->n_inputs; ni++) {
           if (in->flags & NODEFLAGS_IO_SKIP) continue;
-          if (in->maxwidth && in->maxwidth < minwidth) goto go_up;;
-          if (in->maxheight && in->maxheight < minheight) goto go_up;;
+          if (in->maxwidth && in->maxwidth < minwidth) goto go_up;
+          if (in->maxheight && in->maxheight < minheight) goto go_up;
         }
       }
-      for (no = 0; no < n->n_outputs; no++) {
-        out = n->outputs[no];
-        if (out->flags & NODEFLAGS_IO_SKIP) continue;
-        out->width = minwidth;
-        out->height = minheight;
-      }
-      for (ni = 0; ni < n->n_inputs; ni++) {
-        in = n->inputs[ni];
-        if (in->flags & NODEFLAGS_IO_SKIP) continue;
-        in->width = minwidth;
-        in->height = minheight;
-        calc_maxspect(in->width, in->height, &in->inner_width, &in->inner_height);
+      if (minwidth && minheight && maxwidth && maxheight) {
+        for (no = 0; no < n->n_outputs; no++) {
+          out = n->outputs[no];
+          if (out->flags & NODEFLAGS_IO_SKIP) continue;
+          if (qlo || (out->width < minwidth || out->height < minheight)) {
+            if (out->flags & NODEFLAG_IO_FIXED_SIZE) goto go_up;
+            calc_minspect(minwidth, minheight, &out->width, &out->height);
+          }
+          if (qhi || (out->width > maxwidth || out->height > maxheight)) {
+            if (out->flags & NODEFLAG_IO_FIXED_SIZE) goto go_up;
+            calc_maxspect(maxwidth, maxheight, &out->width, &out->height);
+          }
+        }
+
+        for (ni = 0; ni < n->n_inputs; ni++) {
+          in = n->inputs[ni];
+          if (in->flags & NODEFLAGS_IO_SKIP) continue;
+          if (qlo || (in->width < minwidth || in->height < minheight)) {
+            if (in->flags & NODEFLAG_IO_FIXED_SIZE) goto go_up;
+            calc_minspect(minwidth, minheight, &in->width, &in->height);
+          }
+          if (qhi || (in->width > maxwidth || in->height > maxheight)) {
+            if (in->flags & NODEFLAG_IO_FIXED_SIZE) goto go_up;
+            calc_maxspect(maxwidth, maxheight, &in->width, &in->height);
+          }
+          if (letterbox) {
+            out = in->node->outputs[in->oidx];
+            in->inner_width = out->width;
+            in->inner_height = out->height;
+            calc_maxspect(in->width, in->height, &in->inner_width, &in->inner_height);
+          }
+        }
       }
       goto go_up;
     }
@@ -6481,9 +6565,11 @@ static void set_missing_sizes(inst_node_t *n) {
 }
 
 
-static void propogate_small_sizes(inst_node_t *n) {
-  // for low quality, propogate smaller sizes up the tree
-  ascend_tree(n, 4, NULL, 0);
+static void propogate_size_ranges(inst_node_t *n, int qpref, int flags) {
+  // for low quality, propogate size restictions  up the tree
+  // pick max or min depending quality
+  double dqpref = (double)qpref;
+  ascend_tree(n, 4, &dqpref, flags);
 }
 
 
@@ -7444,7 +7530,7 @@ void _get_costs(lives_nodemodel_t *nodemodel, boolean fake_costs) {
 
   // after constructin gthe treemodel by descending, we now proceed in phases
   // we alternate descending and ascending phases, with descending ones passing values from srcs to sink
-  // and asceinding propogating values in the opposit direction
+  // and ascending propogating values in the opposit direction
 
   // phase 0, building the model was descending so next wave is ascending
 
@@ -7689,13 +7775,18 @@ void find_best_routes(lives_nodemodel_t *nodemodel, double * thresh) {
 
   // descend and set sizes with updated vals
   for (list = nodemodel->node_chains; list; list = list->next) {
+    boolean lbox = FALSE;
     nchain = (node_chain_t *)list->data;
     n = nchain->last_node;
     if (!NODE_IS_SINK(n) && n->n_outputs) continue;
     if (n->flags & NODEFLAG_PROCESSED) continue;
+    if ((mainw->multitrack && prefs->letterbox_mt)
+        || (prefs->letterbox && !mainw->multitrack)
+        || (LIVES_IS_RENDERING && prefs->enc_letterbox))
+      lbox = TRUE;
 
     n->flags |= NODEFLAG_PROCESSED;
-    propogate_small_sizes(n);
+    propogate_size_ranges(n, prefs->pb_quality, lbox ? _FLG_LBOX : 0);
   }
 
   reset_model(nodemodel);

@@ -417,19 +417,15 @@ check_stcache:
       if (tries == 1) {
 	if (mainw->pr_fcache) {
 	  mainw->st_fcache = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-	  weed_layer_ref(mainw->pr_fcache);
 	  weed_layer_copy(mainw->st_fcache, mainw->pr_fcache);
 	  copy_md5(mainw->st_fcache, mainw->pr_fcache);
-	  weed_layer_unref(mainw->pr_fcache);
 	}
       }
       if (!mainw->st_fcache) {
 	if (mainw->en_fcache) {
 	  mainw->st_fcache = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-	  weed_layer_ref(mainw->en_fcache);
 	  weed_layer_copy(mainw->st_fcache, mainw->en_fcache);
 	  copy_md5(mainw->st_fcache, mainw->en_fcache);
-	  weed_layer_unref(mainw->en_fcache);
 	}
 	tries = 0;
       }
@@ -1169,7 +1165,9 @@ check_prcache:
 
     case PRV_START:
       if (mainw->st_fcache) weed_layer_unref(mainw->st_fcache);
-      mainw->st_fcache = mainw->pr_fcache;
+      mainw->st_fcache = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+      weed_layer_copy(mainw->st_fcache, mainw->pr_fcache);
+      copy_md5(mainw->st_fcache, mainw->pr_fcache);
       if (cfile->start != mainw->preview_frame) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->preview_frame);
         lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_start));
@@ -1179,7 +1177,9 @@ check_prcache:
 
     case PRV_END:
       if (mainw->en_fcache) weed_layer_unref(mainw->en_fcache);
-      mainw->en_fcache = mainw->pr_fcache;
+      mainw->en_fcache = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+      weed_layer_copy(mainw->en_fcache, mainw->pr_fcache);
+      copy_md5(mainw->en_fcache, mainw->pr_fcache);
       if (cfile->end != mainw->preview_frame) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->preview_frame);
         lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_end));
@@ -2656,8 +2656,7 @@ success:
     lives_layer_set_status(layer, LAYER_STATUS_READY);
   }
 
-  ____FUNC_EXIT_VAL____("b", TRUE);
-  return TRUE;
+  ____FUNC_EXIT_VAL____(TRUE);
 
 fail:
   g_print("FAILED to load frame error was %d\n", errpt);
@@ -2668,8 +2667,7 @@ fail:
 
   create_blank_layer(layer, image_ext, width, height, target_palette);
 
-  ____FUNC_EXIT_VAL____("b", FALSE);
-  return FALSE;
+  ____FUNC_EXIT_VAL____(FALSE);
 }
 
 

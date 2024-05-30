@@ -2130,6 +2130,8 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
 
   //lives_widget_context_update();
 
+  g_print("agpt res[ %d\n", resp);
+
   return resp;
 }
 

@@ -138,6 +138,12 @@ static inline weed_error_t weed_value_get(weed_plant_t *plant, const char *key, 
     ctype retval = defval; weed_error_t err = weed_value_get(plant, key, seed_type, &retval); \
     if (error) *error = err; return retval;}
 
+#define _weed_get_valuec(ctype, typename, defval)		\
+  ctype weed_get_##typename##_value(weed_plant_t *plant, const char *key, weed_seed_t seed_type, \
+				    weed_error_t *error) {		\
+    ctype retval = defval; weed_error_t err = weed_value_get(plant, key, seed_type, &retval); \
+    if (error) *error = err; return retval;}
+
 _weed_get_value(int32_t, int, WEED_SEED_INT, 0);
 _weed_get_value(uint32_t, uint, WEED_SEED_UINT, 0);
 _weed_get_value(weed_boolean_t, boolean, WEED_SEED_BOOLEAN, WEED_FALSE);
@@ -147,6 +153,7 @@ _weed_get_value(uint64_t, uint64, WEED_SEED_UINT64, 0);
 _weed_get_value(weed_voidptr_t, voidptr, WEED_SEED_VOIDPTR, NULL);
 _weed_get_value(weed_funcptr_t, funcptr, WEED_SEED_FUNCPTR, NULL);
 _weed_get_value(weed_plantptr_t, plantptr, WEED_SEED_PLANTPTR, NULL);
+_weed_get_valuec(weed_voidptr_t, custom, NULL);
 
 char *weed_get_string_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
   char *retval = NULL;
@@ -182,13 +189,6 @@ char *weed_get_string_value(weed_plant_t *plant, const char *key, weed_error_t *
   if (error) *error = err;
   if (leaf) _weed_intern_unfreeze(leaf);
 #endif
-  return retval;
-}
-
-weed_voidptr_t weed_get_custom_value(weed_plant_t *plant, const char *key, weed_seed_t seed_type, weed_error_t *error) {
-  weed_voidptr_t retval = NULL;
-  weed_error_t err = weed_value_get(plant, key, seed_type, &retval);
-  if (error) *error = err;
   return retval;
 }
 

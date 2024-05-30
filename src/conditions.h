@@ -16,6 +16,20 @@ typedef struct {va_list va;} va_surprise;
 #define _COND_LIST_BEGIN  	COND_PFX "LIST_BEGIN"
 #define _COND_LIST_END  	COND_PFX "LIST_END"
 
+#define $(a) "COND_LOCAL", #a
+#define $$(a) "COND_GLOBAL", #a
+#define intvar(a) "COND_INT_VAL", a
+#define uintvar(a) "COND_UINT_VAL", a
+#define int64var(a) "COND_INT64_VAL", a
+#define uint64var(a) "COND_UINT64_VAL", a
+#define boolvar(vara) "COND_BOOLEAN_VAL", a
+#define doublevar(a) "COND_DOUBLE_VAL", a
+#define floatvar(a) "COND_FLOAT_VAL", a
+#define stringvar(a) "COND_STRING_VAL", a
+#define voidptrvar(a) "COND_VOIDPTR_VAL", a
+#define funcptrvar(a) "COND_FUNCPTR_VAL", a
+#define plantptrvar(a) "COND_PLANTPTR_VAL", a
+
 #define COND(TOKEN) COND_PFX #TOKEN
 
 void lives_conditions_init(void);
@@ -52,7 +66,10 @@ typedef boolean lives_cond_result;
 
 lives_condition _lives_cond_create(const char *cond_start, ...);
 #define lives_cond_create(...) _lives_cond_create(_COND_POPEN __VA_OPT__(,) __VA_ARGS__, _COND_PCLOSE)
-lives_cond_result lives_cond_eval(lives_condition);
+
+lives_cond_result lives_cond_eval_real(lives_condition condition, const char *args_fmt, ...);
+#define lives_cond_eval(cond, ...) lives_cond_eval_real(cond __VA_OPT__(,)__VA_ARGS__, 0)
+
 lives_condition lives_cond_copy(lives_condition);
 void lives_cond_free(lives_condition);
 void lives_cond_desc(lives_condition);

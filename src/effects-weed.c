@@ -3939,8 +3939,8 @@ weed_error_t weed_set_const_string_value(weed_plant_t *plant, const char *key, c
     return err;
   }
 
-  err = weed_leaf_set_autofree(plant, key, TRUE);
-  if (err == WEED_SUCCESS) err = weed_set_custom_element_size(plant, key, 0, lives_strlen(string));
+  err = weed_set_custom_element_size(plant, key, 0, lives_strlen(string));
+  if (err == WEED_SUCCESS) err = weed_leaf_set_autofree(plant, key, TRUE);
   return err;
 }
 
@@ -3985,10 +3985,12 @@ weed_error_t weed_set_blob_value(weed_plant_t *plant, const char *key, weed_size
     return err;
   }
 
-  // set flags so - autodelete on free, unchangeable
-  err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE
-                               | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
-  if (err == WEED_SUCCESS) err = weed_set_custom_element_size(plant, key, 0, len);
+  err = weed_set_custom_element_size(plant, key, 0, len);
+  if (err == WEED_SUCCESS)
+    // set flags so - autodelete on free, unchangeable
+    err = weed_leaf_set_flagbits(plant, key, LIVES_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE
+                                 | WEED_FLAG_IMMUTABLE | LIVES_FLAGS_RDONLY_HOST);
+
   return err;
 }
 
@@ -4165,7 +4167,7 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
 }
 
 
-weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type,
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, weed_seed_t seed_type,
                                 weed_size_t num_elems, void *values) {
   // change even immutable leaves
   // WEED_FLAG_RDONLY_HOST can also be set if we want to make a leaf self readonly
@@ -4315,6 +4317,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
         if (pl_max_weed_abi < weed_abi_version && pl_max_weed_abi >= 110) {
           weed_set_int_value(xhost_info, WEED_LEAF_WEED_ABI_VERSION, pl_max_weed_abi);
         }
+        weed_set_int_value(xhost_info, WEED_LEAF_WEED_API_VERSION, 203);
       }
       // we don't need to bother with min versions, the lib will check for us
       /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION)) { */
@@ -7565,6 +7568,8 @@ matchvals:
   channel = get_enabled_channel(inst, 0, LIVES_OUTPUT);
   if (!channel) return FILTER_ERROR_MISSING_CHANNEL;
 
+  if (lives_layer_get_clip(layer) == mainw->playing_file) is_bg = FALSE;
+
   if (!is_bg) {
     if (!get_primary_src(mainw->current_file))
       add_primary_inst(mainw->current_file, (void *)filter, (void *)inst, LIVES_SRC_TYPE_GENERATOR);
@@ -7591,10 +7596,31 @@ matchvals:
     if (retval != FILTER_SUCCESS) return FILTER_ERROR_COPYING_FAILED;
   }
 
-  if (prefs->apply_gamma) {
-    int flags = weed_filter_get_flags(filter);
-    if (flags & WEED_FILTER_PREF_LINEAR_GAMMA) weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
-    else weed_channel_set_gamma_type(layer, WEED_GAMMA_SRGB);
+
+  full_pal_t pally;
+  int gamma_type, pal;
+  lives_result_t res;
+
+
+  if (!is_bg)
+    res = get_primary_apparent(mainw->current_file, &pally, &gamma_type);
+  else
+    res = get_primary_apparent(mainw->blend_file, &pally, &gamma_type);
+
+  if (res == LIVES_RESULT_SUCCESS) {
+    pal = pally.pal;
+    g_print("SE pal %d and gam %d\n", pal, gamma_type);
+    weed_channel_set_gamma_type(channel, gamma_type);
+    weed_channel_set_palette(channel, pal);
+  } else {
+    if (prefs->apply_gamma) {
+      int flags = weed_filter_get_flags(filter);
+      if (flags & WEED_FILTER_PREF_LINEAR_GAMMA)
+        weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
+      else {
+        weed_channel_set_gamma_type(channel, weed_channel_get_gamma_type(layer));
+      }
+    }
   }
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {

@@ -1485,11 +1485,9 @@ void zero_spinbuttons(void) {
 
 
 void set_start_end_spins(int clipno) {
-  // consider:
-  //    showclipimgs();
-  //    redraw_timeline(clipno);
   if (CLIP_HAS_VIDEO(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
+    mainw->no_context_update = TRUE;
     lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),
                                 sfile->frames == 0 ? 0. : 1., (double)sfile->frames);
@@ -1501,10 +1499,15 @@ void set_start_end_spins(int clipno) {
                                 sfile->frames == 0 ? 0. : 1., (double)sfile->frames);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), (double)sfile->start);
     lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    mainw->no_context_update = FALSE;
   } else zero_spinbuttons();
   lives_widget_set_can_focus(mainw->spinbutton_start, TRUE);
   lives_widget_set_can_focus(mainw->spinbutton_end, TRUE);
   update_sel_menu();
+  if (clipno == mainw->current_file && CURRENT_CLIP_HAS_VIDEO) {
+    showclipimgs();
+    redraw_timeline(mainw->current_file);
+  }
 }
 
 
@@ -2133,7 +2136,7 @@ LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality, boolean low_
       && !mainw->preview_rendering)
     return LIVES_INTERP_BEST;
   if (low_for_mt && mainw->multitrack) return LIVES_INTERP_FAST;
-  if (quality <= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
+  if (quality >= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;
 }

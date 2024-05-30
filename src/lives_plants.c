@@ -8,7 +8,8 @@
 
 #include "main.h"
 #include "diagnostics.h"
-#include "effects-weed.h"
+
+lives_index_t *indices[idx_type_max];
 
 LIVES_GLOBAL_INLINE int64_t lives_plant_get_subtype(weed_plant_t *plant) {
   if (!IS_LIVES_PLANT(plant)) return 0;
@@ -397,6 +398,8 @@ baderr:
 
 
 void register_blueprints(void) {
+  for (int i = 0; i < idx_type_max; indices[i++] = NULL);
+
   valdtypestr = LSPF("%"PRIu64, LIVES_PLANT_VALUE_DEF);
   bltypestr = LSPF("%"PRIu64, LIVES_PLANT_BLUEPRINT);
   idxtypestr = LSPF("%"PRIu64, LIVES_PLANT_INDEX);
@@ -430,6 +433,7 @@ void register_blueprints(void) {
                      LIVES_PLANT_INDEX, BLU_FLAG_AUTODELETE);
 
   register_blueprint(DATA_BOOK, "@EXTENDS", LIVES_PLANT_INDEX, LIVES_LEAF_SCOPE, WEED_SEED_INT, BLU_FLAG_READWRITE);
+  register_blueprint(LOOKUP, "@EXTENDS", LIVES_PLANT_INDEX);
 }
 
 
@@ -566,6 +570,12 @@ LIVES_GLOBAL_INLINE weed_seed_t lives_index_get_itemtype(lives_index_t *idx) {re
 LIVES_GLOBAL_INLINE char *lives_index_get_itemname(lives_index_t *idx, const char *key) {return idx ? name_for_index(idx, key) : NULL;}
 
 lives_result_t lives_index_set_value(lives_index_t *idx, const char *key, weed_seed_t stype, ...) {
+  /* if (weed_plant_has_leaf(idx, LIVES_LEAF_ADD_SCRIPT)) { */
+  /*   allvalues_t *cond = (allvalues_t *)weed_get_custom_value */
+  /*     (idx, LIVES_LEAF_ADD_SCRIPT, LIVES_SEED_ALLVALUES, NULL): */
+  /*   if (lives_cond_eval(cond, "Psi", idx, key, stype) == LIVES_COND_FAIL) */
+  /*     return LIVES_RESULT_FAIL; */
+  /* } */
   va_list va;
   weed_seed_t st = lives_index_get_itemtype(idx);
   if (stype != st) return LIVES_RESULT_FAIL;
@@ -629,6 +639,41 @@ boolean lives_index_erase_value(lives_index_t *idx, const char *key) {
 
 /* } */
 
+lives_lookup_t *lives_make_lookup(lookup_type ltype) {
+  // we will put th eval in a function
+  /* lives_condition add_cond = lives_cond_create("COND_SEED_TYPE", $(src_item), "==", intval(LIVES_SEED_ALLVALUES), */
+  /* 					       "&&", "!", COND_EVAL(lives_index_get_value, $(p0))); */
+
+  lives_lookup_t *lookup = PLANT_FROM_BLUEPRINT(LOOKUP, LIVES_LEAF_LOOKUP_TYPE, ltype, LIVES_LEAF_PREFIX, LOOKUP_PREFIX,
+                           LIVES_LEAF_ITEM_TYPE, LIVES_SEED_ALLVALUES);
+
+  /* LIVES_LEAF_ADD_SCRIPT, add_script, LIVES_LEAF_DEL_SCRIPT, del_script, */
+  /* 	LIVES_LEAF_UPDATE_SCRIPT, update_script); */
+  return lookup;
+}
+
+
+allvalues_t *add_to_lookup(lookup_type ltype, weed_seed_t st, const char *name, ...) {
+  lives_index_t *idx = indices[ltype];
+  if (!idx) idx = lives_make_lookup(ltype);
+  va_list(va);
+  va_start(va, name);
+  allvalues_t *allvp = MAKE_ALLVALUE_VA(st, va);
+  va_end(va);
+  allvp->flags |= ALLV_FLAG_RDONLY;
+  if (!lives_index_has_value(idx, name)) {
+    lives_result_t res = lives_index_set_value(idx, name, LIVES_SEED_ALLVALUES, allvp);
+    if (res == LIVES_RESULT_SUCCESS) allvp->flags |= ALLV_FLAG_NOFREE;
+  }
+  return allvp;
+}
+
+
+allvalues_t *find_in_lookup(lookup_type ltype, const char *name) {
+  lives_index_t *idx = indices[ltype];
+  if (!idx) return NULL;
+  return get_databook_item(idx, name);
+}
 
 
 // LIVES_PLANT_DATA_BOOK
@@ -684,7 +729,6 @@ LIVES_GLOBAL_INLINE lives_result_t lives_databook_bind_value(lives_databook_t *b
   res = lives_index_set_value(book, name, LIVES_SEED_ALLVALUES, allvp);
   return res;
 }
-
 
 
 lives_result_t lives_databook_set_value_va(lives_databook_t *book, const char *name, weed_seed_t itype, va_list va) {
@@ -825,6 +869,9 @@ lives_result_t lives_databook_get_bound_by_ref(void *var, lives_databook_t *book
 
 LIVES_GLOBAL_INLINE lives_databook_t *lives_local_databook(void) {
   GET_PROC_THREAD_SELF(self);
+  if (!self) {
+    LIVES_WARN("Trying to remember things, but I am not yet self aware");
+  }
   return lives_proc_thread_get_book(self);
 }
 
@@ -832,11 +879,19 @@ LIVES_GLOBAL_INLINE lives_databook_t *lives_local_databook(void) {
 allvalues_t *get_local_book_item(const char *itemnm) {
   allvalues_t *allvp;
   lives_databook_t *book = lives_local_databook();
+  if (!book) {
+    LIVES_WARN("My mind is a blank");
+  }
   lives_index_get_value(&allvp, book, itemnm);
+
   int scope = weed_get_int_value(book, LIVES_LEAF_SCOPE, NULL);
-  if (allvp->scope && allvp->scope != scope && allvp->scope
-      != -scope && allvp->scope != 1 - scope)
+  if (!allvp || (allvp->scope && allvp->scope != scope && allvp->scope
+                 != -scope && allvp->scope != 1 - scope)) {
+    char *msg = LSPF("What is this \"%s\" of which you speak ?", itemnm);
+    LIVES_WARN(msg);
+    lives_free(msg);
     return NULL;
+  }
   return allvp;
 }
 
@@ -960,10 +1015,7 @@ LIVES_GLOBAL_INLINE lives_result_t lives_databook_erase_value(lives_databook_t *
     return LIVES_RESULT_FAIL;
   if (allvp->scope == 1 - scope && !(allvp->flags & ALLV_FLAG_PROMOTED))
     return LIVES_RESULT_NOPERM;
-  if (allvp->oldval) {
-    retain = allvp->oldval;
-    g_print("resc is %d\n", retain->scope);
-  }
+  if (allvp->oldval) retain = allvp->oldval;
   if (is_autofree(book, name)) {
     lives_index_set_autofree(book, name, FALSE);
     allvalues_free(allvp);

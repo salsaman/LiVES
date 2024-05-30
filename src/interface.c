@@ -28,6 +28,7 @@ void cancel_cleanup(void) {
   GET_SELF_VALUE(afd, "afd");
   DEL_SELF_VALUE("cr");
   DEL_SELF_VALUE("afd");
+  show_databook_contents(lives_local_databook());
   if (cr) {
     lives_painter_surface_t *surface = lives_painter_get_target(cr);
     lives_painter_surface_flush(surface);

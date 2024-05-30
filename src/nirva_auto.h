@@ -7,84 +7,25 @@
 
 // PROJECT N.I.R.V.A
 // bootstrap:
-//// The macros and defintions here are just sufficient to bootstrap the system
-// - facilitate the creation bundle defintions for all the defualt types, and enumerate them
-//
-// - provide default versions of "Implementation functions"
-//
-// - define language specific macros for creating generic functions and macros
-//
-// - ensure the bootstrap process has all of the funcitonality required
-//
-// - provide an application function call, nirva_init() which will begin the bootstrap process
-//
-// - provide sufficient supporting framework to reach the point where we can construct the first
-// 		object template - TYPE == STRUCTURAL, reffered to as STRUCTURE_PRIME
-//
-//  - provide minimal infrastructure for dynamically loading the body of the STRUCTURE_PRIME
-//
-//  - once this is done, call the gateway function in STRUCTURE_PRIME
-//
-//  - STRUCTURE_PRIME will now continue the initialisation, if we get to this point,
-//      our task is complete
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#define NIRVA_OPERATION_NONE -1
+#define NIRVA_OPERATION_HEADER_ONLY 1
+#define NIRVA_OPERATION_PLUGIN 2
+#define NIRVA_OPERATION_STANDALONE  3
 
-#ifndef OBJECT_CONSTANTS_H
-#include "object-constants.h"
-#endif
+#define NIRVA_OPERATION NIRVA_OPERATION_NONE
 
-// functionality is split by "generation", correspondiong to bootstrap phases
-// we start in generation 0, when nirva_setup() is called, we go immediately to gen1
-// then when all bundle defintions are created from macros, and validated, we move to gen2
-// when we have created bluprint bundles for each bundle type, we move to gen3
-// in gen3, the bundle defintions are transfered to factory instances of the blueprint
-// object, once these are all available, we move to gen4
+#define NIRVA_DEPLOY(X) NIRVA_DEPLY_##X
 
-static int NIRVA_FUNC_GENERATION = 0;
+#if NIRVA_OPERATION == NIRVA_OPERATION_HEADER_ONLY
 
-#define NIRVA_DEF_ICAPI OBJ_INTENTION_CREATE_BUNDLE
-#define NIRVA_DEF_ICAPC CAP_OBJECT_TYPE(STRUCTURAL)
+#define NIRVA_DEFINES				\
+  NIRVA_DEPLOY(NSCRIPT_PARSER)			\
+    NIRVA_DEPLOY(TEMPLATE_MAKER)		\
+    NIRVA_DEPLOY(BUNDLE_FROM_TEMPLATE)		\
+    NIRVA_DEPLOY(BUNDLE_FROM_BLEPRINT)
 
-/* #define NIRVA_MAKE_INTENTCAP(name,ICAP) NIRVA_GRIND_INTENTCAP(name,NIRVA_ROAST_INTENTCAP(ICAP)) */
-/* #define NIRVA_DEF_INTENTCAP NIRVA_MAKE_INTENTCAP("default",_NIRVA_DEF_ICAP) */
-
-/////////////////////////// bundles //
-
-// priorities for Oracular data sources
-#define NIRVA_PRIORITY_FALLBACK 1
-#define NIRVA_PRIORITY_LOW 10
-#define NIRVA_PRIORITY_DEFAULT 20
-#define NIRVA_PRIORITY_HIGH 50
-#define NIRVA_PRIORITY_TOP 100
-
-#define SEGMENT_END NIRVA_NULL
-
-// DIRECTIVES
-// these are instructions that can be embedded in bundledef
-// in gen1 and gen2 functions thes should simply be copied
-// in gen3, they are converted to automations
-
-#define DIRECTIVE_BEGIN "@BEGIN "
-#define DIRECTIVE_END "@END "
-
-#define DIR_START(dirnm)  			DIRECTIVE_BEGIN #dirnm
-#define DIR_FINISH(dirnm) 			DIRECTIVE_END #dirnm
-
-// thes directives are only added in gen3
-// see notes in documentation
-
-#define DIRECTIVE_ADD_HOOK_AUTO          	DIR_START(add_hook_auto)
-// automation script
-#define DIRECTIVE_ADD_HOOK_AUTO_END  	  	DIR_FINISH(add_hook_auto)
-
-// hook automations are basically self callbacks, but in the form of
-// a script
-
-// AUTOMATIONS - can also be stored in scriptlets just as conditions can be
+#define NIRVA_INIT
 
 // commands may require priv checks to perform, except for some self
 // automations + cascade_hooks
@@ -104,211 +45,6 @@ static int NIRVA_FUNC_GENERATION = 0;
 #define NIRVA_AUTO_CMD_11 "REF_BUNDLE" // ptr to bundle...if target has no refcounter, does nothing
 #define NIRVA_AUTO_CMD_12 "UNREF_BUNDLE" // unrefs, if target has no refcounter or rc is -1, frees
 
-#define HOOK_AUTO_BEGIN(strand_name, hook_number, cond, ...)		\
-  MSTY("%s", DIRECTIVE_ADD_HOOK_AUTOMATION, "%s", #strand_name, "%d", hook_number##_HOOK, cond, __VA_ARGS__)
-
-#define HOOK_AUTO_ADD_HOOK_AUTO(sub, strand_name, hook_number, cond, ...) \
-  MSTY("%s", "ADD_HOOK_AUTO", "%s", sub, "%s", #strand_name, "%d", hook_number##_HOOK, cond, __VA_ARGS__)
-
-#define HOOK_AUTO_SET_STRAND_VALUE(strand_name, val_as_string)		\
-  MS("SET_STRAND_VALUE", #strand_name, val_as_string, DIRECTIVE_ADD_HOOK_AUTO_FINISH)
-
-#define HOOK_AUTO_ADD_STRAND_TO(sub, strand_name, strand_type, val_as_string) \
-  MSTY("%s", "ADD_STRAND_TO", "%s", sub, "%s", #strand_name, "%u", strand_type, "%s", val_as_string, \
-       "%s", DIRECTIVE_ADD_HOOK_AUTO_FINISH)
-
-#define HOOK_AUTO_DELETE_STRAND_FROM(sub, strand_name)			\
-  MSTY("%s", "DELETE_STRAND_FROM", "%s", sub, "%s", #strand_name, DIRECTIVE_ADD_HOOK_AUTO_FINISH)
-
-// the following substitutions may be used in conditions, automations and so on
-// in place of a value
-
-// for pre-data changes, the current value to be updated, removed or deleted
-// for post-data, the value of the strand before updating
-// for attributes, this refers to the attribute "data"
-#define NIRVA_STRAND_REF_OLD_VAL 			"@OLD_VAL"
-
-// for post-data changes, the current value,
-// for pre-data, the new value to be set, appended or added
-// for attributes, this refers to the attribute "data"
-#define NIRVA_STRAND_REF_NEW_VAL 			"@NEW_VAL"
-
-// followed by a strand name, refers to the value held in the strand
-#define NIRVA_STRAND_REF_ANY				"@*"
-
-// strand 2
-
-// gen1 flag bits
-// other than "optional" which is set in strand1
-// there are 3 mutually exclusive values which can be set in strand2
-
-// flag bits, decimal value in strand1
-#define STRAND2_FLAG_ARRAY				1
-
-// gen 2 flag bits
-
-// for the time being only one of these can be set at once
-#define STRAND2_FLAG_READONLY				2
-
-#define STRAND2_FLAG_TEMPLATE				4
-
-#define STRAND2_FLAG_RDONLY_SUB				6
-
-#define STRAND2_FLAG_KEYED				8
-
-//	FLAGS FOR blueprint bundles (some of these correspond to bdef flags, but they
-// are not identical)
-
-// when recreating the bundledef as a blueprint, the following
-// flag bits can be set in the strand_def. Aside from marking a strand_def
-// as a comment, there are just 4 values:
-
-// info bits:
-
-// functional flags
-
-// strand can be created at any time
-#define BLUEPRINT_FLAG_OPTIONAL 		(1ull << 1)
-
-// value MUST be set at creation, then becomes readonly
-// used for uid, bundle_type, name, strand_type
-// (this is different from readonly ATTRIBUTEs, which may be created with or without
-// a default value, and have the "real" readonly value set later)
-// NOTE: if the OPTIONAL bit is also set, this turns it into an INDEX strand_def
-#define BLUEPRINT_FLAG_READONLY 	       	(1ull << 2)
-
-// KEYED_ARRAY - the DATA will hold an array of bundleptr or const bundleptr
-// (limited by STRAND_TYPE and RESTRICTIONS)
-// Unlike normal arrays, items must be appended one by one to the array, and each time a unique string key is supplied
-
-// items can later be read, updated or removed using the key reference
-// the usual array functions (nirva_get_array_bundleptr. nirva_array_get_size,
-// nirva_array_clear. nirva_array_append (single value at a time) and nirva_array_set functions work as per usual
-//
-// in addition, for keyed arrays, one can use nirva_get_value_by_keyy, nirva_update_value_by_key,
-// nirva_remove_value_by_key, and nirva_has_value_for_key
-//
-// if the implementation does not define its own versions of the key_array functions, then the automation will
-// add and maintain an index bundle,
-// the automation will intercept calls and intervene to add / remove  a reference (copy of the data, always as const_bundleptr) in index
-#define BLUEPRINT_FLAG_KEYED_ARRAY 		(1ull << 4)
-
-// declares that when a sub bundle is set / appended in this strand,
-// all strands in the sub bundle must be marked readonly
-#define BLUEPRINT_FLAG_RDONLY_SUB 		(1ull << 5)
-
-// marks a comment in blueprint. Strands should not be created from this
-#define BLUEPRINT_FLAG_COMMENT 			(1ull << 6)
-
-// ispecial value which can be used when describing a strand_name
-#define $CONTAINER "$CONTAINER" // e.g @CONTAINER.STRaND_TYPE
-
-// built in restrictions
-#define _RESTRICT_BUNDLE_TYPE(btype)			\
-  _COND_VAL_EQUALS, VAR_STRAND_VAL, "BLUEPRINT/BUNDLE_TYPE",	\
-    _CONST_UINT64_VAL, btype##_BUNDLE_TYPE
-
-#define RESTRICT_BUNDLE_TYPE(btype) MSTY(_COND_START, _RESTRICT_BUNDLE_TYPE(btype), _COND_END)
-
-#define RESTRICT_TO_OBJECT MSTY(_COND_START, COND_P_OPEN, RESTRICT_BUNDLE_TYPE(OBJECT_TEMPLATE), COND_LOGIC_OR, \
-				_RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE), _COND_P_CLOSE, _COND_END)
-
-#define RESTRICT_OBJECT_TEMPLATE(type) MSTY(_RESTRICT_BUNDLE_TYPE(OBJECT_TEMPLATE), \
-					    COND_LOGIC_AND,		\
-					    _COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE", \
-					    _CONST_UINT64_VAL, OBJECT_TYPE_##type, _COND_END)
-
-#define RESTRICT_OBJECT_INSTANCE(type) MSTY(_RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE), \
-					    COND_LOGIC_AND,		\
-					    _COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE", \
-					    _CONST_UINT64_VAL, OBJECT_TYPE_##type, _COND_END)
-
-#define RESTRICT_INSTANCE_TYPE_SUBTYPE(type, subtype)		\
-  MSTY(_RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE),			\
-       COND_LOGIC_AND,						\
-       _COND_VAL_EQUALS, VAR_STRAND_VAL, "TYPE",	\
-       _CONST_UINT64_VAL OBJECT_TYPE_##type,			\
-       COND_LOGIC_AND,						\
-       _COND_VAL_EQUALS, VAR_STRAND_VAL, "SUBTYPE",	\
-       _CONST_UINT64_VAL, OBJECT_SUBTYPE_##subtype, _COND_END	\
-       )
-NIRVA_ENUM(ANY_RESTRICTION,
-           BLUEPRINT_RESTRICTION,
-           ATTRIBUTE_RESTRICTION,
-           SEGMENT_RESTRICTION,
-           CONDLOGIC_NODE_RESTRICTION,
-           CASCMATRIX_NODE_RESTRICTION,
-           CASCADE_RESTRICTION,
-           OBJECT_RESTRICTION,
-           HOOK_DETAILS_RESTRICTION,
-           OBJECT_INSTANCE_RESTRICTION,
-           ATTR_GROUP_RESTRICTION,
-           CONTRACT_RESTRICTION,
-           SCRIPTLET_RESTRICTION,
-           OBJECT_TEMPLATE_RESTRICTION,
-           STRAND_DEF_RESTRICTION,
-           HOOK_STACK_RESTRICTION,
-           VALUE_RESTRICTION,
-           SELECTOR_RESTRICTION,
-           INDEX_RESTRICTION,
-           ATTR_CONNECTION_RESTRICTION,
-           REFCOUNTER_RESTRICTION,
-           DEF_RESTRICTION,
-           TRAJECTORY_RESTRICTION,
-           VALUE_CHANGE_RESTRICTION,
-           ATTR_DEF_GROUP_RESTRICTION,
-           LOCATOR_RESTRICTION,
-           FUNC_DATA_RESTRICTION,
-           EMISSION_RESTRICTION,
-           ICAP_RESTRICTION,
-           TRANSFORM_RESTRICTION,
-           THREAD_INSTANCE_RESTRICTION,
-           ATTR_DEF_RESTRICTION,
-           CAPS_RESTRICTION,
-           ATTR_MAP_RESTRICTION,
-           HOOK_CB_FUNC_RESTRICTION,
-           FUNCTIONAL_RESTRICTION
-          )
-
-#define NIRVA_RESTRICTION_0 MSTY(_COND_ALWAYS)
-#define NIRVA_RESTRICTION_1  RESTRICT_BUNDLE_TYPE(BLUEPRINT)
-#define NIRVA_RESTRICTION_2  RESTRICT_BUNDLE_TYPE(ATTRIBUTE)
-#define NIRVA_RESTRICTION_3  RESTRICT_BUNDLE_TYPE(SEGMENT)
-#define NIRVA_RESTRICTION_4  RESTRICT_BUNDLE_TYPE(CONDLOGIC_NODE)
-#define NIRVA_RESTRICTION_5  RESTRICT_BUNDLE_TYPE(CASCMATRIX_NODE)
-#define NIRVA_RESTRICTION_6  RESTRICT_BUNDLE_TYPE(CASCADE)
-#define NIRVA_RESTRICTION_7  RESTRICT_TO_OBJECT
-#define NIRVA_RESTRICTION_8  RESTRICT_BUNDLE_TYPE(HOOK_DETAILS)
-#define NIRVA_RESTRICTION_9  RESTRICT_BUNDLE_TYPE(OBJECT_INSTANCE)
-#define NIRVA_RESTRICTION_10 RESTRICT_BUNDLE_TYPE(ATTR_GROUP)
-#define NIRVA_RESTRICTION_11 RESTRICT_BUNDLE_TYPE(CONTRACT)
-#define NIRVA_RESTRICTION_12 RESTRICT_BUNDLE_TYPE(SCRIPTLET)
-#define NIRVA_RESTRICTION_13 RESTRICT_BUNDLE_TYPE(OBJECT_TEMPLATE)
-#define NIRVA_RESTRICTION_14 RESTRICT_BUNDLE_TYPE(STRAND_DEF)
-#define NIRVA_RESTRICTION_15 RESTRICT_BUNDLE_TYPE(HOOK_STACK)
-#define NIRVA_RESTRICTION_16 RESTRICT_BUNDLE_TYPE(VALUE)
-#define NIRVA_RESTRICTION_17 RESTRICT_BUNDLE_TYPE(SELECTOR)
-#define NIRVA_RESTRICTION_18 RESTRICT_BUNDLE_TYPE(INDEX)
-#define NIRVA_RESTRICTION_19 RESTRICT_BUNDLE_TYPE(ATTR_CONNECTION)
-#define NIRVA_RESTRICTION_20 RESTRICT_BUNDLE_TYPE(REFCOUNTER)
-#define NIRVA_RESTRICTION_21 RESTRICT_BUNDLE_TYPE(DEF)
-#define NIRVA_RESTRICTION_22 RESTRICT_BUNDLE_TYPE(TRAJECTORY)
-#define NIRVA_RESTRICTION_23 RESTRICT_BUNDLE_TYPE(VALUE_CHANGE)
-#define NIRVA_RESTRICTION_24 RESTRICT_BUNDLE_TYPE(ATTR_DEF_GROUP)
-#define NIRVA_RESTRICTION_25 RESTRICT_BUNDLE_TYPE(LOCATOR)
-#define NIRVA_RESTRICTION_26 RESTRICT_BUNDLE_TYPE(FUNC_DATA)
-#define NIRVA_RESTRICTION_27 RESTRICT_BUNDLE_TYPE(EMISSION)
-#define NIRVA_RESTRICTION_28 RESTRICT_BUNDLE_TYPE(ICAP)
-#define NIRVA_RESTRICTION_29 RESTRICT_BUNDLE_TYPE(TRANSFORM)
-#define NIRVA_RESTRICTION_30 RESTRICT_OBJECT_INSTANCE(THREAD)
-#define NIRVA_RESTRICTION_31 RESTRICT_BUNDLE_TYPE(ATTR_DEF)
-#define NIRVA_RESTRICTION_32 RESTRICT_BUNDLE_TYPE(CAPS)
-#define NIRVA_RESTRICTION_33 RESTRICT_BUNDLE_TYPE(ATTR_MAP)
-#define NIRVA_RESTRICTION_34 RESTRICT_BUNDLE_TYPE(HOOK_CB_FUNC)
-#define NIRVA_RESTRICTION_35 RESTRICT_BUNDLE_TYPE(FUNCTIONAL)
-
-#define N_REST_TYPES 36
-
 #define GET_STRAND_TYPE(xdomain, xitem) _CALL(_GET_STYPE, STRAND_##xdomain##_##xitem##_TYPE)
 
 #define _GET_TYPE(a, b) _STRAND_TYPE_##a
@@ -322,187 +58,6 @@ NIRVA_ENUM(ANY_RESTRICTION,
 #define GET_RESTRICTION(xdomain, xitem) _CALL(_GET_REST, BUNDLE_##xdomain##_##xitem##_TYPE)
 #define GET_BUNDLE_TYPE(xdomain, xitem) _CALL(_GET_BUNDLE_TYPE, BUNDLE_##xdomain##_##xitem##_TYPE)
 #define GET_BUNDLE_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, BUNDLE_##xdomain##_##xitem##_TYPE)
-//mach1n3
-#define JOIN(a, b) GET_STRD_TYPE(a, b) #b
-#define JOIN2(a, b, c) GET_STRD_TYPE(a, b) #c
-#define JOIN3(a, b, c, d, e) "%s", GET_STRD_TYPE(a, b)#e " ", "%u", c
-
-#define PJOIN3(a, b, c, d) GET_STRD_TYPE(a, b) #d
-#define BJOIN3(a, b, r, n) GET_STRD_TYPE(a, b) #n " ", "%u",  r
-
-#define _ADD_STRAND(domain, item) JOIN(domain, item)
-#define _ADD_STRANDn(domain, item, name) JOIN2(domain, item, name)
-
-#define _ADD_NAMED_BSTRAND(xd, xi, rest, name) BJOIN3(xd, xi, rest, name)
-#define _ADD_NAMED_OPT_BSTRAND(xd, xi, rest, name) "?" BJOIN3(xd, xi, rest, name)
-
-#define _ADD_NAMED_PSTRAND(xd, xi, name) PJOIN3(xd, xi, name)
-#define _ADD_NAMED_OPT_PSTRAND(xd, xi, name) PJOIN3(xd, xi, name)
-
-#define _ADD_KSTRAND(xd, xi, btype, name) JOIN3(xd, xi, btype, domain, item)
-#define _ADD_OPT_STRAND(domain, item) "?" JOIN(domain, item)
-#define _ADD_OPT_ANON_STRAND(domain, item) "?" JOIN2(domain, item,)
-#define _ADD_VARIABLE_STRAND(domain, item) ":" JOIN(domain, item)
-#define _ADD_OPT_STRANDn(domain, item, name) "?" JOIN2(domain, item, name)
-
-#define MS(...)make_strands("", __VA_ARGS__, NULL)
-#define MSTY(...)make_strands(__VA_ARGS__, NULL)
-
-// local ptrs, scalar and array
-#ifdef DESCRIPTIVE_BDEFS
-#define _ADD_STRAND2(domain, item) "DEFAULT: "GET_DEFAULT(domain, item)
-#define _ADD_STRAND2a(domain, item) "FLAGS: ARRAY, DEFAULT: "GET_DEFAULT(domain, item)
-#else
-#define _ADD_STRAND2(domain, item) "0 " GET_DEFAULT(domain, item)
-#define _ADD_STRAND2a(domain, item) "1 " GET_DEFAULT(domain, item)
-#endif
-
-// add readonly strand, default is ignored, value must be set
-#ifdef DESCRIPTIVE_BDEFS
-#define _ADD_STRAND2ro "FLAGS: READONLY"
-#define _ADD_STRAND2ro "FLAGS: READONLY, ARRAY"
-#define _ADD_STRAND2idx "FLAGS: TEMPLATE"
-#define _ADD_STRAND2rob "FLAGS: READONLY_BUNDLE"
-#define _ADD_STRAND2akey "FLAGS: ARRAY, KEYED"
-#else
-#define _ADD_STRAND2ro "2 none"
-#define _ADD_STRAND2roa "3 none"
-#define _ADD_STRAND2idx "4 none"
-#define _ADD_STRAND2rob "6 none"
-#define _ADD_STRAND2akey "9 none"
-#endif
-
-#define INC_CUN(td, ti, r, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", r,	\
-				   "%s", _ADD_STRAND2(td, ti))
-#define INC_CUNO(td, ti, r, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", r, \
-				    "%s", _ADD_STRAND2(td, ti))
-#define INC_CARR(td, ti, r, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", r,	\
-				    "%s", _ADD_STRAND2a(td, ti))
-#define INC_CARRO(td, ti, r, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", r, \
-				     "%s", _ADD_STRAND2a(td, ti))
-#define INC_CARROKEY(td, ti, r, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", r, \
-					"%s", _ADD_STRAND2akey)
-
-#define INC_BUN(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-				      "%s", _ADD_STRAND2(td, ti))
-#define INC_BUNR(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-				       "%s", _ADD_STRAND2rob)
-#define INC_BUNO(td, ti, d, i, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-				       "%s", _ADD_STRAND2(td, ti))
-#define INC_BUNOR(td, ti, d, i) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #i " %u", GET_RESTRICTION(d,i), \
-				     "%s", _ADD_STRAND2rob)
-
-#define INC_BARR(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-				       "%s", _ADD_STRAND2a(td, ti))
-
-#define INC_BARRO(td, ti, d, i, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-					"%s", _ADD_STRAND2a(td, ti))
-
-#define INC_BARRKEY(td, ti, d, i, n) MSTY("%s", GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-					  "%s", _ADD_STRAND2akey)
-#define INC_BARROKEY(td, ti, d, i, n) MSTY("%s", "?" GET_STRD_TYPE(td, ti) #n " %u", GET_RESTRICTION(d,i), \
-					   "%s", _ADD_STRAND2akey)
-
-////////////////////////// BUNDLEDEF "DIRECTIVES" ////////////////////////////////////////
-#define ADD_STRAND(d, i)	       	 	    	MS(_ADD_STRAND(d,i),_ADD_STRAND2(d,i))
-#define ADD_NAMED_STRAND(d, i, n)      	       	    	MS(_ADD_STRANDn(d,i,n),_ADD_STRAND2(d,i))
-#define ADD_ARRAY(d, i) 			    	MS(_ADD_STRAND(d,i),_ADD_STRAND2a(d,i))
-#define ADD_NAMED_ARRAY(d, i, n) 	       	    	MS(_ADD_STRANDn(d,i,n),_ADD_STRAND2a(d,i))
-
-#define ADD_READONLY_STRAND(d, i) 		       	MS(_ADD_STRAND(d,i),_ADD_STRAND2ro)
-
-#define ADD_OPT_STRAND(d, i) 				MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2(d,i))
-#define ADD_OPT_READONLY_STRAND(d, i) 		       	MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2ro)
-#define ADD_OPT_READONLY_ARRAY(d, i) 		       	MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2roa)
-
-#define ADD_TEMPLATE_STRAND(d, i) 	 	      	MS(_ADD_OPT_ANON_STRAND(d,i),_ADD_STRAND2idx)
-
-#define ADD_NAMED_OPT_STRAND(d, i, n)          	    	MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2(d,i))
-#define ADD_NAMED_OPT_READONLY_STRAND(d, i, n) 	    	MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2ro)
-
-#define ADD_OPT_NAMED_STRAND(d, i, n) 			ADD_NAMED_OPT_STRAND(d,i,n)
-#define ADD_OPT_ARRAY(d, i) 				MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2a(d,i))
-#define ADD_NAMED_OPT_ARRAY(d, i, n) 	       		MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2a(d,i))
-#define ADD_OPT_NAMED_ARRAY(d, i, n)			ADD_NAMED_OPT_ARRAY(d,i,n)
-
-//#define ADD_COMMENT(text)				MS("#" text)
-
-// include all strands from bundle directly
-#define EXTEND_BUNDLE(BNAME) 				GET_BDEF(BNAME##_BUNDLE_TYPE)
-#define EXTENDS_BUNDLE(BNAME)				EXTEND_BUNDLE(BNAME)
-
-// ptr to bundle and array of ptrs
-#define INCLUDE_BUNDLES(domain, item)		     	INC_BARR(VALUE, BUNDLEPTR, domain, item, item)
-#define INCLUDES_BUNDLES(domain, item)			INCLUDE_BUNDLES(domain, item)
-#define INCLUDE_NAMED_BUNDLES(domain, item, name)      	INC_BARR(VALUE, BUNDLEPTR, domain, item, name)
-#define INCLUDES_NAMED_BUNDLES(domain, item, name)    	INCLUDE_NAMED_BUNDLES(domain, item, name)
-
-#define INCLUDE_KEYED_BUNDLES(domain, item, name)      	INC_BARRKEY(VALUE, BUNDLEPTR, domain, item, name)
-
-#define INCLUDE_OPT_BUNDLES(domain, item)	     	INC_BARRO(VALUE, BUNDLEPTR, domain, item, item)
-#define INCLUDES_OPT_BUNDLES(domain, item)		INCLUDE_OPT_BUNDLES(domain, item)
-
-#define INCLUDE_OPT_KEYED_BUNDLES(domain, item, name)	INC_BARROKEY(VALUE, BUNDLEPTR, domain, item, name)
-
-#define INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)  	INC_BARRO(VALUE, BUNDLEPTR, domain, item, name)
-#define INCLUDES_OPT_NAMED_BUNDLES(domain, item, name) 	INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)
-#define INCLUDE_NAMED_OPT_BUNDLES(domain, item, name)  	INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)
-#define INCLUDES_NAMED_OPT_BUNDLES(domain, item, name) 	INCLUDE_OPT_NAMED_BUNDLES(domain, item, name)
-
-#define INCLUDE_BUNDLE(domain, item)  		    	INC_BUN(VALUE, BUNDLEPTR, domain, item, item)
-#define INCLUDES_BUNDLE(domain, item)			INCLUDE_BUNDLE(domain, item)
-
-#define INCLUDE_READONLY_BUNDLE(domain, item)  	      	INC_BUNR(VALUE, BUNDLEPTR, domain, item, item)
-
-#define INCLUDE_OPT_BUNDLE(domain, item)  	      	INC_BUNO(VALUE, BUNDLEPTR, domain, item, item)
-#define INCLUDES_OPT_BUNDLE(domain, item)	       	INCLUDE_OPT_BUNDLE(domain, item)
-
-#define INCLUDE_NAMED_READONLY_BUNDLE(domain,item,name) INC_BUNR(VALUE,BUNDLEPTR,domain,item,name)
-
-#define INCLUDE_NAMED_BUNDLE(domain, item, name)      	INC_BUN(VALUE, BUNDLEPTR, domain, item, name)
-#define INCLUDES_NAMED_BUNDLE(domain, item, name)      	INCLUDE_NAMED_BUNDLE(domain, item, name)
-
-#define INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)	\
-  INC_BUNO(VALUE, BUNDLEPTR, domain, item, name)
-#define INCLUDES_OPT_NAMED_BUNDLE(domain, item, name)	\
-  INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)
-#define INCLUDE_NAMED_OPT_BUNDLE(domain, item, name)	\
-    INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)
-#define INCLUDES_NAMED_OPT_BUNDLE(domain, item, name)	\
-    INCLUDE_OPT_NAMED_BUNDLE(domain, item, name)
-
-#define INCLUDE_OPT_READONLY_BUNDLE(domain, item)	\
-    INC_BUNOR(VALUE, BUNDLEPTR, domain, item)
-
-// IMPORTANT !!!
-// INCLUDE_BUNDLE(s) and ADD_CONST_BUNDLEPTRs
-// are different.
-// THE DIFFERENCE BETWEEN INCLUDE_BUNDLE(s) AND ADD_CONST_BUNDLEPTR(s) is that with INCLUDE_BUNDLE,
-// the sub-bundle will be "owned", that is, when the containing bundle is freed, the sub-bundle
-// should also be freed (unreffed).
-// This is done simply by creating a strand in the bundle with type bundleptr (array)
-// creating sub bundles then appending to the array strand
-//
-// With ADD_CONST_BUNDLEPTR, the pointers are void *
-// to external bundles. (referred to as CONST_BUNDELPTR)These MUST NOT be unreffed / freed
-// thus the implementation needs to differentiate these two types.
-//
-// as a cross-check, included bundles MUST set a CONST_BUNDLEPTR
-// to the container when being included. Thus when unreffing a sub bundle one can
-// check the value of "container" to make sure it points to the correct bundle
-
-#define ADD_CONST_BUNDLEPTR(domain, item, rest) INC_CUN(VALUE, CONST_BUNDLEPTR, \
-							rest##_RESTRICTION, item)
-#define ADD_OPT_CONST_BUNDLEPTR(domain, item, rest) INC_CUNO(VALUE, CONST_BUNDLEPTR, \
-							     rest##_RESTRICTION, item)
-// this is an array of pointers to remote bundles...
-#define ADD_CONST_BUNDLEPTRS(domain, item, rest) INC_CARR(VALUE, CONST_BUNDLEPTR, \
-							  rest##_RESTRICTION, item)
-#define ADD_OPT_CONST_BUNDLEPTRS(domain, item, rest) INC_CARRO(VALUE, CONST_BUNDLEPTR, \
-							       rest##_RESTRICTION, item)
-
-#define ADD_OPT_KEYED_BUNDLEPTRS(domain, item, rest) INC_CARROKEY(VALUE, CONST_BUNDLEPTR, \
-								  rest##_RESTRICTION, item)
 
 //// PREDEFINED BUNDLEDEFS //////////////
 
@@ -529,6 +84,69 @@ NIRVA_ENUM(ANY_RESTRICTION,
 // default is NULL, if "container" is also NULL, then this is ignored, the real strand name will be something like "STATIC_BUNDLES"
 // if "container" is self, "container_strand" is ignored
 
+
+
+// BUNDLE TYPES V2.
+// bundes are composed of sub bundles, value bundles are:
+// VALUE - type, - optional name, flags, or pointer to alue def , optional value
+// since each of these is a value sub bundle, the type value also has a sub bundle defning the type of type,
+// which has s sub bundle defining the type of the type of type, etc. So that we dont end up using infinte storage for a
+// single value, type has a type -> int and the type of the type of type is defined as itself
+
+// type --> type of type (int)
+//          \---------------/
+// actually that was artistic license, in fact the tyep o the type of type will rreturn void,
+// in orde to avoid automations getting into infinite loops.
+
+// when creating a bundle, we construct it from value bundles using a blueprint
+// the value bundle itelf has a blueprint so this is used recursively to construct
+// the value bundles which are loaded into the final bundle from its blueprint
+// blueprint bundles also has a blueprint, so if we want to construct a new blueprint
+// we do so using value bundles made from their blue prints, and load them into a new bluprint bundle
+// the blueprint bundle has some variable values, bundle type, and an index where we can put
+// value defs which describe the values to be put into the b undle which the blueprint was created for
+//
+// during bootstrap, we want to get to the stage where we can onstruct blueprints for any bundle type
+// for he fist few iterations we use bundles from fixed templates, once we can create bundles from blueprints
+// we throw away the fixed definitionsa and recreate the base bundles from malleable blueprints
+// we first build the template for index bundle and use this to build an index bundle,
+// as this gives us a place to store the templates and later, blueprints
+// we then create the template for value def, the finally we build the template for blueprint
+// now we can uild andy bundle by createing ab blueprint for it
+// the nirva stub loader contains 3 utility functions - one for creating templates,
+// one for creataing bundles from templates, and one for creating bundles from blueprints
+// these are included in case the nirva structurals are not present or desired, the system can run using nirvascript
+// provided the implfuncs for a specifc host language are defined.
+// thus we also include the default nirvascript token set and a macro which starts the nirvascript interpreter
+// if the nirvascript runtime is availabel - either as s standalone process or as a plugin, then this is activated,
+// the bootloader creates a special "storage bundle" and passes in all the default information so the runtime can perform the bootstrap
+
+////
+
+
+// INDEX - quick lookup by idx value - conditions restrict the types that can be added
+//
+// VALUE_DEF_CONTroller - add scriptlet, del scriptlet, change scriptlet, index of value defs
+// value defs are contained in a holder. values ma have a ref to a value def, value
+// there is a 3 ay relationship - a value may have a ref to a a value def and / or a controller
+// a value def may have a ref to a controller. A controller will have refs to value defs
+// initially a value will have no ref or a ref to a value def. i.e
+//
+// control <-> valdefs <- vals
+//
+// in a blueprint we have an index of controllers -> valdefs
+
+// if an entity wants to alter the controller scriptlets for a value, hen he controller can be duplicated and added to the bundle
+// containing the value then the value can add a ref to the cloned controller so
+//                  --->    valdef <- val
+// alt controller                < -- val
+//
+// all values for the old controller must be migrated as a unit
+// when the value a strand is altered, the
+
+
+#define EXTEND_BUNDLE(BTYPE) "@EXTENDS", _##BTYPE##_BUNDLE
+
 #define _DEF_BUNDLE							\
     ADD_READONLY_STRAND(GENERIC, UID),					\
       ADD_CONST_BUNDLEPTR(INTROSPECTION, BLUEPRINT, BLUEPRINT),		\
@@ -538,41 +156,16 @@ NIRVA_ENUM(ANY_RESTRICTION,
       ADD_OPT_READONLY_STRAND(SPEC, VERSION),				\
       ADD_OPT_STRAND(GENERIC, DESCRIPTION)
 
-
-
-/* INCLUDE_NAMED_OPT_BUNDLES(STANDARD, HOOK_STACK, HOOK_STACKS),	 */
-/* INCLUDE_OPT_BUNDLE(INTROSPECTION, REFCOUNTER),			 */
-/* ADD_OPT_STRAND(DATETIME, CREATION_DATE) */
-
 // BUNDLE_TYPE denotes the enumerated bundle_type which the blueprint is a template for
-// MULTI is a special optional STRAND_DEF, if present, then as many copies of this as desired may be
-// created, provided each has a unique (for the bundle), name
-// Optionally, the strand_def contained in "MULTI" may have a name set to a Prefix, which can be prepended
-// to the start of the NAMEs of all strands created from it.
-// the remining strand_defs for the created bundles are contained in STRAND_DEFs
+
 // AUTOMATIONS can contain various SCRIPTLETs, including hook_automations
 #define _BLUEPRINT_BUNDLE EXTEND_BUNDLE(DEF),  ADD_READONLY_STRAND(BLUEPRINT, BUNDLE_TYPE), \
     INCLUDE_OPT_NAMED_BUNDLE(STANDARD, STRAND_DEF, MULTI),		\
     INCLUDE_KEYED_BUNDLES(STANDARD, STRAND_DEF, STRAND_DEFS),		\
     ADD_OPT_CONST_BUNDLEPTRS(BLUEPRINT, AUTOMATIONS, SCRIPTLET)
-
-// holds a single data value, exposing the strand_type
-// NEXT and PREV can be used to make singly and doubly linked lists
-//
-// the DATA here is a pointer to an implemetation defined data tuple, with name "DATA" and the TYPE being defined
-// by the value held in STRAND_TYPE
-//
-// NATIVE_TYPE and NATIVE_SIZE can optionally be used to record these details
-// allowing implementations to store native data types
 //
 // VALUE is extended by attribute
-#define _VALUE_BUNDLE ADD_OPT_READONLY_STRAND(VALUE, STRAND_TYPE), ADD_OPT_STRAND(VALUE, DATA), \
-    ADD_OPT_READONLY_STRAND(AUTOMATION, RESTRICTIONS),			\
-    ADD_OPT_STRAND(INTROSPECTION, NATIVE_TYPE),	ADD_OPT_STRAND(INTROSPECTION, NATIVE_SIZE), \
-    ADD_NAMED_OPT_STRAND(VALUE, ARRAY_SIZE, MAX_SIZE), INCLUDE_OPT_BUNDLE(VALUE, NEXT), \
-    ADD_OPT_CONST_BUNDLEPTR(VALUE, PREV, VALUE)
 
-// STRAND_DEF is a bundle designed to be included in BLUEPRINT bundles
 
 // RESTRICTIONS is a conditional which defines the conditions to allow data to be accepted, for example
 // restricting to certain values, for bundleptrs, it can define
@@ -1048,6 +641,7 @@ NIRVA_ENUM(ANY_RESTRICTION,
 /*     			SET_STRAND_VALUE, _COND_ALWAYS, CONNECTION, NIRVA_NULL) */
 
 /////
+#endif
 
 #if NIRVA_IMPL_IS(DEFAULT_C)
 
@@ -1057,48 +651,6 @@ NIRVA_ENUM(ANY_RESTRICTION,
 #else
 #define p_debug(...)
 #endif
-
-// incremental macros, we can define a macros like:
-//#define do_macro(a) var[##a##] = CONST_##a;
-//#define do_macro2(num) var == num ? CONST_##a :
-//
-// then: NIRVA_DO_nn_times(4,2,do_macro) // expand do_macro for all values from 0 to 42
-// and: NIRVA_DO_n_times(7,do_macro2) // expands to do_macro2 for all values from 0 to 7
-// furthermore, CONST_0, CONST_1, etc can themselves be macros, provided there is no recursion, this can go several levels deep
-#define NIRVA_DO_n_times(n,m) NIRVA_DO_FOR_##n(m)
-#define NIRVA_DO_FOR_0(m)m(0)
-#define NIRVA_DO_FOR_1(m)m(0) m(1)
-#define NIRVA_DO_FOR_2(m)m(0) m(1) m(2)
-#define NIRVA_DO_FOR_3(m)NIRVA_DO_FOR_2(m) m(3)
-#define NIRVA_DO_FOR_4(m)NIRVA_DO_FOR_3(m) m(4)
-#define NIRVA_DO_FOR_5(m)NIRVA_DO_FOR_4(m) m(5)
-#define NIRVA_DO_FOR_6(m)NIRVA_DO_FOR_5(m) m(6)
-#define NIRVA_DO_FOR_7(m)NIRVA_DO_FOR_6(m) m(7)
-#define NIRVA_DO_FOR_8(m)NIRVA_DO_FOR_7(m) m(8)
-#define NIRVA_DO_FOR_9(m)NIRVA_DO_FOR_8(m) m(9)
-
-#define NIRVA_DO_FOR_x0(x,m)m(x##0)
-#define NIRVA_DO_FOR_x1(x,m)NIRVA_DO_FOR_x0(x,m) m(x##1)
-#define NIRVA_DO_FOR_x2(x,m)NIRVA_DO_FOR_x1(x,m) m(x##2)
-#define NIRVA_DO_FOR_x3(x,m)NIRVA_DO_FOR_x2(x,m) m(x##3)
-#define NIRVA_DO_FOR_x4(x,m)NIRVA_DO_FOR_x3(x,m) m(x##4)
-#define NIRVA_DO_FOR_x5(x,m)NIRVA_DO_FOR_x4(x,m) m(x##5)
-#define NIRVA_DO_FOR_x6(x,m)NIRVA_DO_FOR_x5(x,m) m(x##6)
-#define NIRVA_DO_FOR_x7(x,m)NIRVA_DO_FOR_x6(x,m) m(x##7)
-#define NIRVA_DO_FOR_x8(x,m)NIRVA_DO_FOR_x7(x,m) m(x##8)
-#define NIRVA_DO_FOR_x9(x,m)NIRVA_DO_FOR_x8(x,m) m(x##9)
-
-#define NIRVA_DO_FOR_x(a,b,m)NIRVA_DO_FOR_x##b(a,m)
-#define NIRVA_DO_FOR_xx1(b,m)NIRVA_DO_n_times(9,m) NIRVA_DO_FOR_x(1,9,m)
-#define NIRVA_DO_FOR_xx2(b,m)NIRVA_DO_FOR_xx1(9,m) NIRVA_DO_FOR_x(2,b,m)
-#define NIRVA_DO_FOR_xx3(b,m)NIRVA_DO_FOR_xx2(9,m) NIRVA_DO_FOR_x(3,b,m)
-#define NIRVA_DO_FOR_xx4(b,m)NIRVA_DO_FOR_xx3(9,m) NIRVA_DO_FOR_x(4,b,m)
-#define NIRVA_DO_FOR_xx5(b,m)NIRVA_DO_FOR_xx4(9,m) NIRVA_DO_FOR_x(5,b,m)
-#define NIRVA_DO_FOR_xx6(b,m)NIRVA_DO_FOR_xx5(9,m) NIRVA_DO_FOR_x(6,b,m)
-#define NIRVA_DO_FOR_xx7(b,m)NIRVA_DO_FOR_xx6(9,m) NIRVA_DO_FOR_x(7,b,m)
-#define NIRVA_DO_FOR_xx8(b,m)NIRVA_DO_FOR_xx7(9,m) NIRVA_DO_FOR_x(8,b,m)
-#define NIRVA_DO_FOR_xx9(b,m)NIRVA_DO_FOR_xx8(9,m) NIRVA_DO_FOR_x(9,b,m)
-#define NIRVA_DO_nn_times(a,b,m) NIRVA_DO_FOR_xx##a(b,m)
 
 //
 
@@ -1455,7 +1007,7 @@ NIRVA_ADD_IMPL_FUNC(create_bundle_by_type)
 #define NEED_NIRVA_CREATE_BUNDLE_BY_TYPE
 #endif
 
-#define create_bundle_by_type _nirva_create_bundle_by_type
+//#define create_bundle_by_type _nirva_create_bundle_by_type
 
 #define NIRVA_MAND_FUNC_002 create_bundle_from_bdef,"create and return a bundle given a bundledef" \
     "only needed during bootstrap",NIRVA_BUNDLEPTR,new_bundle, 1, NIRVA_STRING_ARRAY, bdef
@@ -1651,6 +1203,7 @@ NIRVA_ADD_IMPL_FUNC(get_array_bundleptr)
 #define __PARAMS_1__		1,#p0
 #define __PARMS_IN_1_		p0
 #define __PARAMS_0__		0
+
 #define NIRVA_PRFUNC(fname, fdesc, rt, np, ...)			\
   NIRVA_PRFUNC_##np(funcname, funcdesc, rt, np, __VA_ARGS__)
 
@@ -2347,7 +1900,7 @@ NIRVA_EXPORTS(bundle_has_strand)
 // make sure we have at least 1 value set in stname
 #define _NIRVA_CHECK_VALUES(bun, stname)				\
     (bun?NIRVA_BUNDLE_HAS_STRAND(bun,stname)?NIRVA_ARRAY_GET_SIZE(bun,stname)>0?NIRVA_TRUE:NIRVA_FALSE:NIRVA_FALSE:NIRVA_FALSE)
-
+#if 0
 NIRVA_DEF_FUNC(NIRVA_BUNDLEPTR, NIRVA_EXPORTED_get_value_bundleptr, NIRVA_BUNDLEPTR bundle, NIRVA_CONST_STRING stname)
 NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, var)
 NIRVA_DEF_VARS(NIRVA_ARRAY_OF(NIRVA_BUNDLEPTR), vals)
@@ -5185,11 +4738,9 @@ NIRVA_END_RETURN(ret)
 #define REG_ALL CONCAT_DOMAINS(REG_ALL_ITEMS)
 
 #define _NIRVA_MAKE_BUNDLEDEFS BUNLISTx(BDEF_IGN,BDEF_INIT,,) all_def_strands = REG_ALL;
-#define _NIRVA_DEF_REST(n) nirva_restrictions[n] = NIRVA_RESTRICTION_##n;
-#define _NIRVA_MAKE_RESTRICTIONS(a,b) NIRVA_DO_nn_times(a,b,_NIRVA_DEF_REST)
 
 //#define INIT_CORE_ATTRDEF_PACKS ABUNLISTx(BDEF_IGN,ATTR_BDEF_INIT,,) all_attrdef_packs = REG_ALL_ATTRS;
-#define NIRVA_INIT_CORE _NIRVA_MAKE_BUNDLEDEFS _NIRVA_MAKE_RESTRICTIONS(3,5)						\
+#define NIRVA_INIT_CORE _NIRVA_MAKE_BUNDLEDEFS
 //  _NIRVA_DEPLOY_def_nirva_action;
 
 #define NIRVA_CORE_DEFS							\
@@ -5268,6 +4819,8 @@ NIRVA_FILE_STATIC NIRVA_NO_RETURN nirva_null_cb(void *none) {};
 ////////////
 
 #undef create_bundle_by_type
+
+#endif
 
 #ifdef __cplusplus
 }

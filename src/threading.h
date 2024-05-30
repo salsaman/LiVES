@@ -452,7 +452,8 @@ void lives_proc_thread_set_initial_funcinst(lives_proc_thread_t, lives_funcinst_
 
 void lives_funcinst_append_chain(lives_funcinst_t *f1, lives_funcinst_t *f2);
 
-#define SET_RETVAR(finst, retvar) _DW0(finst->retloc =&retvar;finst->flags|=FINST_FLAG_NOFREE_RETLOC;)
+#define SET_RETVAR(finst, retvar) _DW0(finst->retloc=&retvar;finst->flags|=FINST_FLAG_NOFREE_RETLOC;)
+#define SET_RETVARP(finst, pretvar) _DW0(finst->retloc=pretvar;finst->flags|=FINST_FLAG_NOFREE_RETLOC;)
 
 void lives_proc_thread_set_active_finstlist(lives_proc_thread_t, lives_sync_list_t *);
 lives_sync_list_t *lives_proc_thread_get_active_finstlist(lives_proc_thread_t);

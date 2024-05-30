@@ -94,7 +94,7 @@ weed_error_t weed_set_string_value(weed_plant_t *, const char *key, const char *
 weed_error_t weed_set_funcptr_value(weed_plant_t *, const char *key, weed_funcptr_t);
 weed_error_t weed_set_voidptr_value(weed_plant_t *, const char *key, void *);
 weed_error_t weed_set_plantptr_value(weed_plant_t *, const char *key, weed_plant_t *);
-weed_error_t weed_set_custom_value(weed_plant_t *, const char *key, uint32_t seed_type, void *);
+weed_error_t weed_set_custom_value(weed_plant_t *, const char *key, weed_seed_t seed_type, void *);
 
 int32_t weed_get_int_value(weed_plant_t *, const char *key, weed_error_t *);
 uint32_t weed_get_uint_value(weed_plant_t *, const char *key, weed_error_t *);
@@ -106,7 +106,7 @@ char *weed_get_string_value(weed_plant_t *, const char *key, weed_error_t *);
 weed_funcptr_t weed_get_funcptr_value(weed_plant_t *, const char *key, weed_error_t *);
 void *weed_get_voidptr_value(weed_plant_t *, const char *key, weed_error_t *);
 weed_plant_t *weed_get_plantptr_value(weed_plant_t *, const char *key, weed_error_t *);
-void *weed_get_custom_value(weed_plant_t *, const char *key, uint32_t seed_type, weed_error_t *);
+void *weed_get_custom_value(weed_plant_t *, const char *key, weed_seed_t seed_type, weed_error_t *);
 
 weed_error_t weed_set_int_array(weed_plant_t *, const char *key, weed_size_t num_elems, int32_t *);
 weed_error_t weed_set_uint_array(weed_plant_t *, const char *key, weed_size_t num_elems, uint32_t *);
@@ -118,7 +118,7 @@ weed_error_t weed_set_string_array(weed_plant_t *, const char *key, weed_size_t 
 weed_error_t weed_set_funcptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_funcptr_t *);
 weed_error_t weed_set_voidptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, void **);
 weed_error_t weed_set_plantptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_plant_t **);
-weed_error_t weed_set_custom_array(weed_plant_t *, const char *key, uint32_t seed_type, weed_size_t num_elems, void **);
+weed_error_t weed_set_custom_array(weed_plant_t *, const char *key, weed_seed_t seed_type, weed_size_t num_elems, void **);
 
 int32_t *weed_get_int_array(weed_plant_t *, const char *key, weed_error_t *);
 uint32_t *weed_get_uint_array(weed_plant_t *, const char *key, weed_error_t *);
@@ -130,7 +130,7 @@ char **weed_get_string_array(weed_plant_t *, const char *key, weed_error_t *);
 weed_funcptr_t *weed_get_funcptr_array(weed_plant_t *, const char *key, weed_error_t *);
 void **weed_get_voidptr_array(weed_plant_t *, const char *key, weed_error_t *);
 weed_plant_t **weed_get_plantptr_array(weed_plant_t *, const char *key, weed_error_t *);
-void **weed_get_custom_array(weed_plant_t *, const char *key, uint32_t seed_type, weed_error_t *);
+void **weed_get_custom_array(weed_plant_t *, const char *key, weed_seed_t seed_type, weed_error_t *);
 
 int32_t *weed_get_int_array_counted(weed_plant_t *, const char *key, int *count);
 uint32_t *weed_get_uint_array_counted(weed_plant_t *, const char *key, int *count);
@@ -142,7 +142,7 @@ char **weed_get_string_array_counted(weed_plant_t *, const char *key, int *count
 weed_funcptr_t *weed_get_funcptr_array_counted(weed_plant_t *, const char *key, int *count);
 weed_voidptr_t *weed_get_voidptr_array_counted(weed_plant_t *, const char *key, int *count);
 weed_plant_t **weed_get_plantptr_array_counted(weed_plant_t *, const char *key, int *count);
-weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *, const char *key, uint32_t seed_type, int *count);
+weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *, const char *key, weed_seed_t seed_type, int *count);
 
   // check if leaf value can be changed: returns WEED_ERROR_IMMUTABLE, WEED_SUCCESS, or WEED_ERROR_NOSUCH_LEAF
 weed_error_t weed_leaf_is_immutable(weed_plant_t *, const char *key);

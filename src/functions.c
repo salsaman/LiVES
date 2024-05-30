@@ -52,6 +52,7 @@ allvalues_t *allvalues_from_leaf(allvalues_t *avp, weed_plant_t *plant, const ch
   ALLV_FROM_LEAF(avp, plant, key, st, ne);
   avp->stype = st;
   avp->ne = ne;
+  avp->uid = gen_unique_id();
   return avp;
 }
 
@@ -102,8 +103,10 @@ void get_array_byref_from_allvals(void *array, allvalues_t *allvp, int *ne) {
 allvalues_t *_make_allval_va(allvalues_t *avp,
                              weed_seed_t stype, weed_size_t ne, int flags, va_list va) {
   uint64_t xflags = 0;
-  if (!avp) avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
-  else {
+  if (!avp) {
+    avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
+    avp->uid = gen_unique_id();
+  } else {
     if (stype != avp->stype) {
       avp->flags |= ALLV_ERR_WRONG_STYPE;
       return avp;
@@ -167,10 +170,12 @@ allvalues_t *_make_allval(allvalues_t *avp,
                           weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...) {
   if (!avp) {
     avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
+    avp->uid = gen_unique_id();
     if (stype == WEED_SEED_INVALID) {
       avp->flags = ALLV_ERR_INVALID_STYPE;
       return avp;
     }
+    avp->stype = stype;
   } else {
     if (stype == WEED_SEED_INVALID) {
       avp->flags = ALLV_ERR_INVALID_STYPE;
@@ -223,6 +228,7 @@ lives_result_t array_from_allvalues(void *retloc, allvalues_t *avp) {
 LIVES_GLOBAL_INLINE allvalues_t *allvalues_copy(allvalues_t *avp) {
   LIVES_CALLOC_TYPE(allvalues_t, xavp, 1);
   lives_memcpy(xavp, avp, sizeof(allvalues_t));
+  avp->uid = gen_unique_id();
   xavp->funcinst = NULL;
   xavp->aname = lives_strdup(avp->aname);
   xavp->ext_typename = lives_strdup(avp->ext_typename);
@@ -577,27 +583,40 @@ const char *get_funcname(lives_funcptr_t func) {
 
 
 LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
-                                     const char *args_fmt, char *file_ref, int line_ref, uint64_t flags, ...) {
-  add_quick_fn(func, funcname);
+                                     const char *args_fmt, char *file_ref, int line_ref, uint64_t flags) {
+  // try to guess ret_type, if it is eg. "I"
+  weed_seed_t rtype = WEED_SEED_NONE;
+  if (rettype && *rettype) rtype = get_seedtype(*rettype);
+  lives_funcdef_t *fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags);
+  if (mainw->maintmode & MMODE_PLAYER_TIMINGS) {
+    double xtime = lives_get_session_time();
+    g_print("%s entered at %.2f msec\n", funcname, xtime * 1000.);
+  }
+
+  allvalues_t *allvp = add_to_lookup(lookup_type_funcs, WEED_SEED_VOIDPTR, funcname, fdef);
+  THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), allvp);
 }
 
 
-LIVES_GLOBAL_INLINE void _func_exit(char *file_ref, int line_ref) {
-  char *fname = (char *)lives_sync_list_pop(&THREADVAR(func_stack));
-  lives_free(fname);
-}
-
-
-LIVES_GLOBAL_INLINE void _func_exit_val(weed_plant_t *pl, char *file_ref, int line_ref) {
-  char *fname = (char *)lives_sync_list_pop(&THREADVAR(func_stack));
-  lives_free(fname);
-  /* LiVESList *list = THREADVAR(func_stack); */
-  /* g_print("Thread 0x%lx exiting func %s @ line %d, %s\n", THREADVAR(uid), */
-  /*         (char *)list->data, line_ref, file_ref); */
-
-  /* THREADVAR(func_stack) = list->next; */
-  /* if (list->next) list->next = list->next->prev = NULL; */
-  /* lives_list_free_all(&list); */
+LIVES_GLOBAL_INLINE void _func_exit(char *file_ref, int line_ref, size_t valsz, ...) {
+  allvalues_t *allvp = (allvalues_t *)lives_sync_list_pop(&THREADVAR(func_stack));
+  lives_funcdef_t *fdef =  allvp->values.V[0];
+  if (mainw->maintmode & MMODE_PLAYER_TIMINGS) {
+    weed_plant_t *tmppl = lives_plant_new(LIVES_PLANT_TMP);
+    double xtime = lives_get_session_time();
+    g_print("%s exited at %.2f msec\n", fdef->funcname, xtime * 1000.);
+    if (valsz) {
+      va_list va;
+      va_start(va, valsz);
+      weed_leaf_from_va(tmppl, LIVES_LEAF_VALUE, fdef->return_type, va);
+      g_print("return val was %s\n", weed_leaf_stringify(tmppl, WEED_LEAF_VALUE));
+      weed_plant_free(tmppl);
+    }
+  }
+  if (!(allvp->flags & ALLV_FLAG_NOFREE)) {
+    if (fdef) lives_funcdef_free(fdef);
+    allvalues_free(allvp);
+  }
 }
 
 ///////////////////////////

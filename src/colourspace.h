@@ -317,6 +317,8 @@ int get_enum_palette(int weed_palette);
 
 boolean weed_palette_is_valid(int pal);
 
+int weed_adv_palette_from_desc(weed_macropixel_t *);
+
 #define pixel_size(pal) ((int)weed_palette_get_bytes_per_macropixel(pal))
 
 int weed_palette_get_pixels_per_macropixel(int pal);
@@ -360,6 +362,10 @@ double get_luma8(uint8_t r, uint8_t g, uint8_t b);
 double get_luma16(uint16_t r, uint16_t g, uint16_t b);
 
 boolean consider_swapping(int inpal, int outpal);
+
+
+int remove_alpha(int pal);
+int swap_red_blue(int pal);
 
 #define is_usable_palette(p) (((p)==WEED_PALETTE_RGB24||(p)==WEED_PALETTE_RGBA32\
 			       ||(p)==WEED_PALETTE_BGR24||(p)==WEED_PALETTE_BGRA32||(p)==WEED_PALETTE_ARGB32 \

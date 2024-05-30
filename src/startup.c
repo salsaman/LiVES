@@ -1399,8 +1399,6 @@ boolean lives_startup(livespointer data) {
 
   lives_blueprint_test();
 
-  lives_cond_test();
-
   // CAN NOW USE THREADVARS
 
   capable->features_ready |= FEATURE_THREADVARS | FEATURE_CONDITIONALS;
@@ -1413,6 +1411,9 @@ boolean lives_startup(livespointer data) {
     MSGMODE_ON(STDERR);
     MSGMODE_ON(DEBUG);
   }
+
+  // can test conssditions with const values
+  lives_cond_test(1);
 
   //do_startup_diagnostics(test_opts);
 
@@ -1474,6 +1475,9 @@ boolean lives_startup(livespointer data) {
 
   what_sup = startupC_sup;
 
+  mainw->maintmode |= MMODE_PLAYER_TIMINGS;
+  mainw->maintmode |= MMODE_PLANNER_TIMINGS;
+
   // cant do this until conditions are intied - hook stack descriptors can have conditions
 
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
@@ -1500,6 +1504,9 @@ boolean lives_startup(livespointer data) {
   for (int i = 0; i < N_NATIVE_HOOKS; i++) lpt_hooks[i] = thread_hooks[i];
 
   mainw->global_hook_stacks = lpt_hooks;
+
+  // can test conssditions with variable values
+  //lives_cond_test(2);
 
   make_std_icaps();
 

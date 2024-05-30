@@ -154,7 +154,7 @@ void lpt_params_free(lives_proc_thread_t, boolean do_exec);
 
 #define LIVES_LEAF_LONGJMP "_longjmp_env_ptr"
 
-weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, uint32_t type, weed_size_t ne, va_list xargs);
+weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, weed_seed_t type, weed_size_t ne, va_list xargs);
 lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, ...);
 
 boolean call_funcsig(lives_proc_thread_t);
@@ -248,10 +248,8 @@ void dump_fn_notes(void);
 				  THREADVAR(uid), _FILE_REF_, _LINE_REF_)
 
 void _func_entry(lives_funcptr_t, const char *funcname, int category, const char *rettype,
-                 const char *args_fmt, char *file_ref, int line_ref, uint64_t flags, ...);
-void _func_exit(char *file_ref, int line_ref);
-
-void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
+                 const char *args_fmt, char *file_ref, int line_ref, uint64_t flags);
+void _func_exit(char *file_ref, int line_ref, size_t valsz, ...);
 
 #ifndef NO_FUNC_TAGS
 // macro to be placed near start of "major" functions. It will prepend funcname to
@@ -262,21 +260,16 @@ void _func_exit_val(weed_plant_t *, char *file_ref, int line_ref);
   _DW0(_func_entry((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_,_LINE_REF_, \
 		  (flags & ~FDEF_NO_FLAGS) | FDEF_FLAG_INSIDE););
 
-#define ____FUNC_ENTRY____(func, rettype, ...) ___FUNC_ENTRY_FULL___(func, rettype, __VA_ARGS__, \
-								     FDEF_NO_FLAGS, 0)
-
+#define ____FUNC_ENTRY____(func, ...) ___FUNC_ENTRY_FULL___(func __VA_OPT__(,)__VA_ARGS__, 0, 0, 0)
 // macro to be placed near start of "major" functions, counterpart to ___FUNC_ENTRY___
 // It will remove top entry from a thread's 'func_stack', and print out a debug line (optional)
-#define ____FUNC_EXIT____ do {_func_exit(_FILE_REF_, _LINE_REF_);} while(0);
+#define ____FUNC_EXIT____ _DW0(_func_exit(_FILE_REF_, _LINE_REF_, 0); return;)
 
-#define ____FUNC_EXIT_VAL____(rtype, val) do {weed_plant_t *pl = lives_plant_new(123); \
-    weed_leaf_from_va(pl, "val", get_seedtype(rtype[0]), 1, (val));	\
-    _func_exit_val(pl, _FILE_REF_, _LINE_REF_); weed_plant_free(pl);} while(0);
-
+#define ____FUNC_EXIT_VAL____(val) _DW0(_func_exit(_FILE_REF_, _LINE_REF_, sizeof(val), val); return (val);)
 #else
 #define ____FUNC_ENTRY____(func, rettype, args_fmt)
-#define ____FUNC_EXIT____
-#define ____FUNC_EXIT_VAL____(rtype, val)
+#define ____FUNC_EXIT____ return;
+#define ____FUNC_EXIT_VAL____(val) return (val);
 #endif
 
 // calls (void)func(args), and before or after calling it, adds a fn note with a ptr / file / line

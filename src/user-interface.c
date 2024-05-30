@@ -1022,7 +1022,7 @@ void get_gui_framesize(int *hsize, int *vsize) {
   if (hsize) *hsize = (((scr_width - H_RESIZE_ADJUST * 3 - bx) / 3) >> 1) << 1;
   if (vsize) *vsize = ((int)(scr_height - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
                                / sqrt(widget_opts.scaleH) + by + vspace
-                               + (prefs->show_msg_area ? mainw->mbar_res : 0))) >> 1) << 1;
+                               + widget_opts.scaleH * (prefs->show_msg_area ? mainw->mbar_res : 0))) >> 1) << 1;
 }
 
 
@@ -1036,9 +1036,9 @@ boolean check_can_show_msg_area(void) {
                                       GUI_SCREEN_HEIGHT, (int)MIN_MSGAREA_SCRNHEIGHT,
                                       (int)(GUI_SCREEN_HEIGHT - ((CE_TIMELINE_VSPACE * 1.01 + widget_opts.border_width * 2)
                                             / sqrt(widget_opts.scaleH) + vspace + by)),
-                                      CE_TIMELINE_VSPACE, MIN_MSGBAR_HEIGHT);
+                                      CE_TIMELINE_VSPACE / 3, MIN_MSGBAR_HEIGHT);
 
-  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT > (int)MIN_MSGAREA_SCRNHEIGHT) {
+  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT > (int)MIN_MSGAREA_SCRNHEIGHT * .8) {
     capable->can_show_msg_area = TRUE;
     if (future_prefs->show_msg_area) prefs->show_msg_area = TRUE;
     if (prefs->show_dev_opts) g_print("YES\n");

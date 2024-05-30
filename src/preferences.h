@@ -116,11 +116,12 @@ typedef struct {
   char theme[64];  ///< the theme name
 
   short pb_quality;
-#define PB_QUALITY_LOW 1
+#define PB_QUALITY_HIGH 1
 #define PB_QUALITY_MED 2  ///< default
-#define PB_QUALITY_HIGH 3
+#define PB_QUALITY_LOW 3
 
 #define PB_QUALITY_BEST PB_QUALITY_HIGH
+#define PB_QUALITY_FASTEST PB_QUALITY_LOW
 
   boolean pbq_adaptive;
 

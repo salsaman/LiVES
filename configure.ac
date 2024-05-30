@@ -1022,6 +1022,8 @@ fi
 fi
 AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
+BUILD_LOCAL_WEED=false
+
 ALL_WEED_CPTS="true"
 
 PKG_CHECK_MODULES(WEED, libweed >= 4.0.0, HAVE_LIBWEED=true, HAVE_LIBWEED=false)
@@ -1067,8 +1069,6 @@ AC_MSG_ERROR([Libweed not installed and sourcecode not found. Please install mis
 
 echo "Re-checking with local build enabled"
 
-AC_CONFIG_SUBDIRS([libweed])
-
 old_PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
 
 export PKG_CONFIG_PATH="./libweed:${PKG_CONFIG_PATH}"
@@ -1103,9 +1103,19 @@ if test "$HAVE_WEED_EFFECT_PLUGIN" = "false"; then
    AC_MSG_ERROR([weed-effect-plugin >= 4.0.0 still not found. Aborting build])
 fi
 
+BUILD_LOCAL_WEED=true
 export PKG_CONFIG_PATH=$old_PKG_CONFIG_PATH
+echo "Re-checking with local build enabled"
+
+else
+AC_CHECK_FILE(libweed/Makefile.am, [BUILD_LOCAL_WEED=true], [BUILD_LOCAL_WEED=false])
 fi
 
+if test "$BUILD_LOCAL_WEED" = "true"; then
+
+AC_CONFIG_SUBDIRS([libweed])
+
+AM_CONDITIONAL(LOCAL_WEED, $BUILD_LOCAL_WEED)
 
 AC_SUBST(WEED_LIBS)
 AC_SUBST(WEED_CFLAGS)
@@ -1119,6 +1129,8 @@ AC_SUBST(WEED_HOST_UTILS_LIBS)
 AC_SUBST(WEED_EXTRAS_CFLAGS)
 
 AC_SUBST(WEED_EFFECT_PLUGIN_CFLAGS)
+
+fi
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL, false)
 

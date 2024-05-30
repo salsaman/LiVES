@@ -41,23 +41,10 @@ static boolean stdef_is_comment(strand_def_t *);
 static bundledef_t new_bdefs[N_BUNDLE_DEFS];
 lives_obj_t **abundle_bdefs;
 
-NIRVA_CORE_DEFS
-
 static void validate_bdefs(void);
 
 static const bundle_t *blueprints[N_BUNDLE_DEFS];
 static void make_blueprint_for(bundle_type btype);
-
-#define CALL_WRAPPER(func,...) WRAP_FN_##func(__VA_ARGS__);
-
-#define MAKE_WRAP_FN(func, ret, nparams, ...)			\
-  uint64_t WRAP_FN_##func(bundleptr in, bundleptr out, ...) {	\
-    va_list va;							\
-    va_start(va, out);						\
-    FN_BEND(func, in, out, nparams, __VA_ARGS__, va);		\
-    va_end(va);							\
-    return GET_RETVAL(out);}					\
-
 
 // impl funcs
 
@@ -65,14 +52,8 @@ bundle_t *lives_bundle_create(void) {return weed_plant_new(LIVES_PLANT_BUNDLE);}
 
 
 const bundle_t *init_bundles(void) {
-  // will init the system and create all standard bundle definitions
-  //const char *plugname = "/usr/lib/nirva/subsystems/prime";
-  bundle_t *bun;
 
-  // BEGIN STAGE 1 BOOTSTRAP
-  NIRVA_FUNC_GENERATION = 1;
-
-  NIRVA_INIT_CORE;
+  //NIRVA_INIT_CORE;
 
   // for FULL automation this will be done automatically
   // after creating all core bundles we should validate them
@@ -80,7 +61,6 @@ const bundle_t *init_bundles(void) {
 
   // BEGIN STAGE 2 BOOTSTRAP
   // we are now able to create bundles from bundledefs
-  NIRVA_FUNC_GENERATION = 2;
 
   for (int i = 0; i < N_BUNDLE_DEFS; i++) blueprints[i] = NULL;
 
@@ -120,9 +100,6 @@ const bundle_t *init_bundles(void) {
     g_print("bsize == %lu\n", nirvascope_get_bundle_weight(b));
     lives_bundle_free(b);
   }
-
-  // we have reached bootstrap level 3, we can now build bundles from their blueprint bundles
-  NIRVA_FUNC_GENERATION = 3;
 
   // the default intent is to create an object template type structural
   // in the Satisfaction Cascade, there will be default contract, for intent CREATE_BUNDLE, CAPS_SEL bndle type
@@ -194,11 +171,9 @@ const bundle_t *init_bundles(void) {
   /* NIRVA_DEF_ORACLE(ATTR_STRUCT_ATTR_PACK, 10, _COND_ALWAYS, _COND_FIN, get_attr_pack) */
   /* NIRVA_DEF_ORACLE(ATTR_STRUCT_BLUEPRINTS, get_all_blueprints) */
 
-  bun = NIRVA_SATISFY(NIRVA_DEF_ICAPI, NIRVA_DEF_ICAPC);
+  //bun = NIRVA_SATISFY(NIRVA_DEF_ICAPI, NIRVA_DEF_ICAPC);
 
-  NIRVA_FUNC_GENERATION = 4;
-
-  return bun;
+  return NULL;
 }
 
 
@@ -221,9 +196,9 @@ LIVES_GLOBAL_INLINE char *get_short_name(const char *q) {
 // these functions are for stage 1 bootstrap. Once bundledefs are remade as BLUEPRINTS
 // then we move to gen 2
 
-const bundledef_t get_bundledef(bundle_type btype) {
-  return (const bundledef_t)maker_get_bundledef(btype);
-}
+/* const bundledef_t get_bundledef(bundle_type btype) { */
+/*   return (const bundledef_t)maker_get_bundledef(btype); */
+/* } */
 
 
 /* static int skip_directive(bundledef_t bdef, int i) { */
@@ -240,30 +215,30 @@ const bundledef_t get_bundledef(bundle_type btype) {
 /* } */
 
 
-static uint64_t get_vflags(const char *q, off_t *offx, int *ii, bundledef_t bdef) {
-  uint64_t vflags = 0;
-  if (offx)(*offx) = 0;
-  if (*q == STRAND_TYPE_FLAG_OPTIONAL) {
-    vflags |= STRAND_TYPE_FLAG_OPTIONAL;
-    if (offx)(*offx)++;
-  } else if (*q == STRAND_TYPE_FLAG_COMMENT) {
-    vflags = STRAND_TYPE_FLAG_COMMENT;
-    if (offx) *offx = -1;
-    return vflags;
-  }
-  /* else if (*q == STRAND_TYPE_FLAG_DIRECTIVE) { */
-  /*   if (bdef && ii) { */
-  /*     int skippy = skip_directive(bdef, *ii); */
-  /*     //g_print("SKIPPY is %d\n", skippy); */
-  /*     if (ii) *ii += skippy - 1; */
-  /*     if (offx) *offx = -skippy; */
-  /*   } */
-  /*   vflags |= STRAND_TYPE_FLAG_DIRECTIVE; */
-  /*   return vflags; */
-  /* } */
-  if (ii)(*ii)++;
-  return vflags;
-}
+/* static uint64_t get_vflags(const char *q, off_t *offx, int *ii, bundledef_t bdef) { */
+/*   uint64_t vflags = 0; */
+/*   if (offx)(*offx) = 0; */
+/*   if (*q == STRAND_TYPE_FLAG_OPTIONAL) { */
+/*     vflags |= STRAND_TYPE_FLAG_OPTIONAL; */
+/*     if (offx)(*offx)++; */
+/*   } else if (*q == STRAND_TYPE_FLAG_COMMENT) { */
+/*     vflags = STRAND_TYPE_FLAG_COMMENT; */
+/*     if (offx) *offx = -1; */
+/*     return vflags; */
+/*   } */
+/*   /\* else if (*q == STRAND_TYPE_FLAG_DIRECTIVE) { *\/ */
+/*   /\*   if (bdef && ii) { *\/ */
+/*   /\*     int skippy = skip_directive(bdef, *ii); *\/ */
+/*   /\*     //g_print("SKIPPY is %d\n", skippy); *\/ */
+/*   /\*     if (ii) *ii += skippy - 1; *\/ */
+/*   /\*     if (offx) *offx = -skippy; *\/ */
+/*   /\*   } *\/ */
+/*   /\*   vflags |= STRAND_TYPE_FLAG_DIRECTIVE; *\/ */
+/*   /\*   return vflags; *\/ */
+/*   /\* } *\/ */
+/*   if (ii)(*ii)++; */
+/*   return vflags; */
+/* } */
 
 
 uint32_t get_vtype(const char *q, off_t *offx) {
@@ -290,31 +265,31 @@ static int bundledef_get_item_idx(bundledef_t bundledef,
   int tdef = -1, tflags;
   const char *vname;
   char *sname = exact ? (char *)item : get_short_name(item);
-  for (int i = 0; (strand = bundledef[i]); i++) {
-    //g_print("check i %d\n", i);
-    offx = 0;
-    get_vflags(strand, &offx, &i, bundledef);
-    if (offx < 0) continue;
-    get_vtype(strand, &offx);
-    vname = get_vname(strand + offx);
+  /* for (int i = 0; (strand = bundledef[i]); i++) { */
+  /*   //g_print("check i %d\n", i); */
+  /*   offx = 0; */
+  /*   get_vflags(strand, &offx, &i, bundledef); */
+  /*   if (offx < 0) continue; */
+  /*   get_vtype(strand, &offx); */
+  /*   vname = get_vname(strand + offx); */
 
-    tflags = atoi(strand + offx + 1);
-    if (tflags & STRAND2_FLAG_TEMPLATE) tdef = i - 1;
+  /*   tflags = atoi(strand + offx + 1); */
+  /*   /\* if (tflags & BLU_FLAG_TEMPLATE) tdef = i - 1; *\/ */
 
-    if (!exact) {
-      char *sname2 = get_short_name(vname);
-      //g_print("CF %s and %s\n", sname2, sname);
-      if (!lives_strcmp(sname2, sname) || (*sname != '.' && !lives_strcmp(sname2 + 1, sname))) {
-        if (sname != item) lives_free(sname);
-        if (sname2 != vname) lives_free(sname2);
-        return --i;
-      }
-      if (sname2 != vname) lives_free(sname2);
-    } else if (!lives_strcmp(vname, item)) {
-      if (sname != item) lives_free(sname);
-      return --i;
-    }
-  }
+  /*   if (!exact) { */
+  /*     char *sname2 = get_short_name(vname); */
+  /*     //g_print("CF %s and %s\n", sname2, sname); */
+  /*     if (!lives_strcmp(sname2, sname) || (*sname != '.' && !lives_strcmp(sname2 + 1, sname))) { */
+  /*       if (sname != item) lives_free(sname); */
+  /*       if (sname2 != vname) lives_free(sname2); */
+  /*       return --i; */
+  /*     } */
+  /*     if (sname2 != vname) lives_free(sname2); */
+  /*   } else if (!lives_strcmp(vname, item)) { */
+  /*     if (sname != item) lives_free(sname); */
+  /*     return --i; */
+  /*   } */
+  /* } */
   if (sname != item) lives_free(sname);
   if (tdef >= 0) return tdef;
   return -1;
@@ -362,58 +337,58 @@ static boolean set_def_value_gen1(bundle_t *bundle, const char *overrd_name, \
 
   //g_print("SET DEF for: %s|%s|\n", strand, strand2);
 
-  get_vflags(strand, &offx, NULL, NULL);
-  if (offx < 0) {
-#if DEBUG_BUNDLES
-    g_printerr("ERROR: Trying to set default value for comment or directive %s\n", strand);
-#endif
-    return TRUE;
-  }
-  vtype = get_vtype(strand, &offx);
-  if (vtype == STRAND_TYPE_FLAG_DIRECTIVE) vtype = STRAND_TYPE_STRING;
-  if (vtype == STRAND_TYPE_NONE) return FALSE;
+  /*   get_vflags(strand, &offx, NULL, NULL); */
+  /*   if (offx < 0) { */
+  /* #if DEBUG_BUNDLES */
+  /*     g_printerr("ERROR: Trying to set default value for comment or directive %s\n", strand); */
+  /* #endif */
+  /*   return TRUE; */
+  /* } */
+  /* vtype = get_vtype(strand, &offx); */
+  /* if (vtype == STRAND_TYPE_FLAG_DIRECTIVE) vtype = STRAND_TYPE_STRING; */
+  /* if (vtype == STRAND_TYPE_NONE) return FALSE; */
 
-  vname = get_vname(strand + offx);
-  if (overrd_name) sname = overrd_name;
-  else sname = vname;
-  if (lives_strlen_atleast(strand2, 2)) {
-    const char *defval = strand2 + 2;
-    //boolean is_array = get_is_array(strand2);
-    boolean is_array = FALSE; // just set to scalar and 1 value - defaults are mostly just 0 oe NULL
-    switch (vtype) {
-    case (STRAND_TYPE_STRING): case (STRAND_TYPE_VOIDPTR):
-    case (STRAND_TYPE_BUNDLEPTR):
-    case (STRAND_TYPE_CONST_BUNDLEPTR):
-      if (!lives_strcmp(defval, "NULL") || !lives_strcmp(defval, "((void *)0)"))
-        err = set_strand_val(bundle, sname, vtype, 1, is_array, NULL);
-      else if (vtype == STRAND_TYPE_STRING)
-        err = set_strand_val(bundle, sname, vtype, 1, is_array, defval);
-      break;
-    case (STRAND_TYPE_INT):
-    case (STRAND_TYPE_UINT):
-    case (STRAND_TYPE_BOOLEAN):
-      err = set_strand_val(bundle, sname, vtype, 1, is_array, atoi(defval));
-      break;
-    case (STRAND_TYPE_INT64):
-      err = set_strand_val(bundle, sname, vtype, 1, is_array, lives_strtol(defval));
-      break;
-    case (STRAND_TYPE_UINT64):
-      err = set_strand_val(bundle, sname, vtype, 1, is_array, lives_strtoul(defval));
-      break;
-    case (STRAND_TYPE_DOUBLE):
-      err = set_strand_val(bundle, sname, vtype, 1, is_array, lives_strtod(defval));
-      break;
-    default: break;
-    }
-#if DEBUG_BUNDLES
-    if (!err) g_printerr("Setting default for %s [%s] to %s\n", sname, vname, defval);
-#endif
-  } else {
-#if DEBUG_BUNDLES
-    g_printerr("ERROR: Missing default for %s [%s]\n", sname, vname);
-#endif
-    err = TRUE;
-  }
+  /*   vname = get_vname(strand + offx); */
+  /*   if (overrd_name) sname = overrd_name; */
+  /*   else sname = vname; */
+  /*   if (lives_strlen_atleast(strand2, 2)) { */
+  /*     const char *defval = strand2 + 2; */
+  /*     //boolean is_array = get_is_array(strand2); */
+  /*     boolean is_array = FALSE; // just set to scalar and 1 value - defaults are mostly just 0 oe NULL */
+  /*     switch (vtype) { */
+  /*     case (STRAND_TYPE_STRING): case (STRAND_TYPE_VOIDPTR): */
+  /*     case (STRAND_TYPE_BUNDLEPTR): */
+  /*     case (STRAND_TYPE_CONST_BUNDLEPTR): */
+  /*       if (!lives_strcmp(defval, "NULL") || !lives_strcmp(defval, "((void *)0)")) */
+  /*         err = set_strand_val(bundle, sname, vtype, 1, is_array, NULL); */
+  /*       else if (vtype == STRAND_TYPE_STRING) */
+  /*         err = set_strand_val(bundle, sname, vtype, 1, is_array, defval); */
+  /*       break; */
+  /*     case (STRAND_TYPE_INT): */
+  /*     case (STRAND_TYPE_UINT): */
+  /*     case (STRAND_TYPE_BOOLEAN): */
+  /*       err = set_strand_val(bundle, sname, vtype, 1, is_array, atoi(defval)); */
+  /*       break; */
+  /*     case (STRAND_TYPE_INT64): */
+  /*       err = set_strand_val(bundle, sname, vtype, 1, is_array, lives_strtol(defval)); */
+  /*       break; */
+  /*     case (STRAND_TYPE_UINT64): */
+  /*       err = set_strand_val(bundle, sname, vtype, 1, is_array, lives_strtoul(defval)); */
+  /*       break; */
+  /*     case (STRAND_TYPE_DOUBLE): */
+  /*       err = set_strand_val(bundle, sname, vtype, 1, is_array, lives_strtod(defval)); */
+  /*       break; */
+  /*     default: break; */
+  /*     } */
+  /* #if DEBUG_BUNDLES */
+  /*     if (!err) g_printerr("Setting default for %s [%s] to %s\n", sname, vname, defval); */
+  /* #endif */
+  /*   } else { */
+  /* #if DEBUG_BUNDLES */
+  /*     g_printerr("ERROR: Missing default for %s [%s]\n", sname, vname); */
+  /* #endif */
+  /*     err = TRUE; */
+  /*   } */
   return err;
 }
 
@@ -444,15 +419,15 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
 
     g_print("VAL1 %s\n", stranda);
 
-    vflagsa = get_vflags(stranda, &offx, NULL, bdef);
-    if (vflagsa == STRAND_TYPE_FLAG_COMMENT) {
-      nq++;
-      newq = lives_realloc(newq, (nq + 1) * sizeof(char *));
-      newq[nq - 1] = lives_strdup(stranda);
-      newq[nq] = NULL;
-      //g_print("GOT comment: %s\n", stranda);
-      continue;
-    }
+    /* vflagsa = get_vflags(stranda, &offx, NULL, bdef); */
+    /* if (vflagsa == STRAND_TYPE_FLAG_COMMENT) { */
+    /*   nq++; */
+    /*   newq = lives_realloc(newq, (nq + 1) * sizeof(char *)); */
+    /*   newq[nq - 1] = lives_strdup(stranda); */
+    /*   newq[nq] = NULL; */
+    /*   //g_print("GOT comment: %s\n", stranda); */
+    /*   continue; */
+    /* } */
     /* if (vflagsa == STRAND_TYPE_FLAG_DIRECTIVE) { */
     /*   if (dirx) { */
     /* 	if (!lives_strncmp(stranda, DIRECTIVE_END, delen)) { */
@@ -500,18 +475,18 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
     if (!newq) strandb = NULL;
     else {
       //check for duplicates
-      for (j = 0; (strandb = newq[j]); j++) {
-        offx = 0;
-        vflagsb = get_vflags(strandb, &offx, &j, bdef);
-        if (offx < 0) continue;
-        //g_print("PARSExx %s\n", strandb);
-        vtypeb = get_vtype(strandb, &offx);
-        vnameb = get_vname(strandb + offx);
-        //g_print("PARSE2x %s\n", vnameb);
-        snameb = get_short_name(vnameb);
-        //g_print("PARSE3x %s\n", snameb);
-        if (!lives_strcmp(snamea, snameb)) break;
-      }
+      /* for (j = 0; (strandb = newq[j]); j++) { */
+      /*   offx = 0; */
+      /*   vflagsb = get_vflags(strandb, &offx, &j, bdef); */
+      /*   if (offx < 0) continue; */
+      /*   //g_print("PARSExx %s\n", strandb); */
+      /*   vtypeb = get_vtype(strandb, &offx); */
+      /*   vnameb = get_vname(strandb + offx); */
+      /*   //g_print("PARSE2x %s\n", vnameb); */
+      /*   snameb = get_short_name(vnameb); */
+      /*   //g_print("PARSE3x %s\n", snameb); */
+      /*   if (!lives_strcmp(snamea, snameb)) break; */
+      /* } */
     }
     if (!strandb) {
       nq += 2;
@@ -585,7 +560,7 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
 static void validate_bdefs(void) {
   for (int i = 0; i < N_BUNDLE_DEFS; i++) {
     g_print("\nCLEAN UP up bef %d\n", i);
-    new_bdefs[i] = validate_bdef((bundledef_t)GET_BDEF(i));
+    //    new_bdefs[i] = validate_bdef((bundledef_t)GET_BDEF(i));
     if (new_bdefs[i]) g_print("%s", new_bdefs[i][0]);
     g_print("\nCLEAN UP up bef %d\n", i);
   }
@@ -637,15 +612,15 @@ bundle_t *create_gen1_bundle_with_vargs(uint64_t bt, bundledef_t bundledef, va_l
             err = TRUE;
             break;
           }
-          strand = bundledef[idx];
-          vflags = get_vflags(strand, &offx, NULL, bundledef);
-          if (offx < 0) {
-            err_item = iname;
-            err = TRUE;
-            break;
-          }
-          vtype = get_vtype(strand, &offx);
-          set_strand_val(bundle, iname, vtype, 1, 0, vargs, 0);
+          /* strand = bundledef[idx]; */
+          /* vflags = get_vflags(strand, &offx, NULL, bundledef); */
+          /* if (offx < 0) { */
+          /*   err_item = iname; */
+          /*   err = TRUE; */
+          /*   break; */
+          /* } */
+          /* vtype = get_vtype(strand, &offx); */
+          /* set_strand_val(bundle, iname, vtype, 1, 0, vargs, 0); */
         }
         if (err) {
           g_printerr("ERROR adding item '%s' to bundle, invalid item name\n", err_item);
@@ -655,39 +630,39 @@ bundle_t *create_gen1_bundle_with_vargs(uint64_t bt, bundledef_t bundledef, va_l
       }
       if (!err) {
         // add any missing mandos
-        for (int i = 0; (strand = bundledef[i]); i++) {
-          offx = 0;
-          vflags = get_vflags(strand, &offx, &i, bundledef);
-          if (offx < 0) continue;
-          vtype = get_vtype(strand, &offx);
-          //if (vtype == STRAND_TYPE_NONE) continue;
-          vname = get_vname(strand + offx);
-          //g_print("DO WE need defs for %s ?\n", vname);
-          if (!(vflags & STRAND_TYPE_FLAG_OPTIONAL)) {
-            //g_print("%s is mando\n", sname);
-            if (!bundle_has_strand(bundle, vname)) {
-              //g_print("%s is absent\n", sname);
-              //g_print("SETTING to default\n");
-              err = set_def_value_gen1(bundle, NULL, strand, bundledef[i]);
-              if (err) goto endit;
-            }
-          }
-          if (err) break;
+        /* for (int i = 0; (strand = bundledef[i]); i++) { */
+        /*   offx = 0; */
+        /*   vflags = get_vflags(strand, &offx, &i, bundledef); */
+        /*   if (offx < 0) continue; */
+        /*   vtype = get_vtype(strand, &offx); */
+        /*   //if (vtype == STRAND_TYPE_NONE) continue; */
+        /*   vname = get_vname(strand + offx); */
+        /*   //g_print("DO WE need defs for %s ?\n", vname); */
+        /*   if (!(vflags & STRAND_TYPE_FLAG_OPTIONAL)) { */
+        /*     //g_print("%s is mando\n", sname); */
+        /*     if (!bundle_has_strand(bundle, vname)) { */
+        /*       //g_print("%s is absent\n", sname); */
+        /*       //g_print("SETTING to default\n"); */
+        /*       err = set_def_value_gen1(bundle, NULL, strand, bundledef[i]); */
+        /*       if (err) goto endit; */
+        /*     } */
+        /*   } */
+        //          if (err) break;
 	  // *INDENT-OFF*
 	}}}
     // *INDENT-ON*
 endit:
-    if (err) {
-#if DEBUG_BUNDLES
-      g_printerr("\nERROR: adding item to bundle\n");
-#endif
-      lives_bundle_free(bundle);
-      bundle = NULL;
-    } else {
-      // reverse the leaves
-      return weed_plant_copy(bundle);
-    }
-  }
+  /*     if (err) { */
+  /* #if DEBUG_BUNDLES */
+  /*       g_printerr("\nERROR: adding item to bundle\n"); */
+  /* #endif */
+  /*       lives_bundle_free(bundle); */
+  /*       bundle = NULL; */
+  /*     } else { */
+  /*       // reverse the leaves */
+  /*       return weed_plant_copy(bundle); */
+  /*     } */
+  //  }
   return NULL;
 }
 
@@ -726,40 +701,40 @@ static uint32_t stdef_get_strand_type(strand_def_t *stdef, bundle_t *bundle) {
   uint32_t sttype = bundle_get_strand_type(stdef);
   if (sttype == STRAND_TYPE_PROXIED && bundle) {
     char *type_proxy = lives_strand_get_value_string(stdef, "type_proxy");
-    if (type_proxy) sttype = NIRVA_GET_VALUE_UINT(bundle, type_proxy);
+    //    if (type_proxy) sttype = NIRVA_GET_VALUE_UINT(bundle, type_proxy);
   }
   if (sttype == STRAND_TYPE_PROXIED) return STRAND_TYPE_UNDEFINED;
   return sttype;
 }
 
 char *stdef_get_comment(strand_def_t *stdef) {
-  if (stdef_is_comment(stdef)) return lives_strand_get_value_string(stdef, "default");
+  // if (stdef_is_comment(stdef)) return lives_strand_get_value_string(stdef, "default");
   return NULL;
 }
 
-boolean stdef_is_comment(strand_def_t *stdef) {
-  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_COMMENT);
-}
+/* boolean stdef_is_comment(strand_def_t *stdef) { */
+/*   return !!(stdef_get_flags(stdef) & BLU_FLAG_COMMENT); */
+/* } */
 
-scriptlet_t *stdef_get_restrictions(strand_def_t *stdef) {
-  return weed_get_plantptr_value(stdef, "restrictions", NULL);
-}
+/* scriptlet_t *stdef_get_restrictions(strand_def_t *stdef) { */
+/*   return weed_get_plantptr_value(stdef, "restrictions", NULL); */
+/* } */
 
-boolean stdef_is_value(strand_def_t *stdef) {
-  return !(stdef_get_flags(stdef) & BLUEPRINT_FLAG_COMMENT);
-}
+/* boolean stdef_is_value(strand_def_t *stdef) { */
+/*   return !(stdef_get_flags(stdef) & BLU_FLAG_COMMENT); */
+//}
 
 boolean stdef_is_optional(strand_def_t *stdef) {
-  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_OPTIONAL);
+  return !!(stdef_get_flags(stdef) & BLU_FLAG_OPTIONAL);
 }
 
 boolean stdef_is_readonly(strand_def_t *stdef) {
-  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_READONLY);
+  return !!(stdef_get_flags(stdef) & BLU_FLAG_READWRITE);
 }
 
-boolean stdef_get_set_sub_rdonly(strand_def_t *stdef) {
-  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_RDONLY_SUB);
-}
+/* boolean stdef_get_set_sub_rdonly(strand_def_t *stdef) { */
+/*   return !!(stdef_get_flags(stdef) & BLU_FLAG_RDONLY_SUB); */
+//}
 
 boolean stdef_is_array(strand_def_t *stdef) {
   return (lives_strand_get_value_int(stdef, "MAX_SIZE") != 0);
@@ -778,9 +753,10 @@ char *stdef_get_name(strand_def_t *stdef) {
 }
 
 bundle_t *get_strand_def_by_name(bundle_t *blueprint, const char *sname) {
-  bundle_t *stdef = NIRVA_GET_VALUE_BY_KEY(blueprint, "strand_defs", sname);
-  if (!stdef) stdef = NIRVA_GET_VALUE_BUNDLEPTR(blueprint, "multi");
-  return stdef;
+  /* bundle_t *stdef = NIRVA_GET_VALUE_BY_KEY(blueprint, "strand_defs", sname); */
+  /* if (!stdef) stdef = NIRVA_GET_VALUE_BUNDLEPTR(blueprint, "multi"); */
+  /* return stdef; */
+  return NULL;
 }
 
 strand_def_t *get_strand_def(bundle_t *bundle, const char *name) {
@@ -809,7 +785,7 @@ strand_def_t *get_mand_strand_def(blueprint_t *bp, int idx) {
   lives_free(sname);
   for (i = 0; i < ns; i++) {
     stdef = sdefs[i];
-    if (!stdef_is_value(stdef) || stdef_is_optional(stdef)) continue;
+    //    if (!stdef_is_value(stdef) || stdef_is_optional(stdef)) continue;
     if (!(idx--)) break;
   }
   if (sdefs) lives_free(sdefs);
@@ -877,8 +853,8 @@ static bundle_t *create_gen2_bundle_with_vargs(uint64_t btype, blueprint_t *blue
           stname = stdef_get_name(stdef);
           //g_print("DO WE need defs for %s ?\n", stname);
           if (!bundle_has_strand(bundle, stname)) {
-            if ((stflags & BLUEPRINT_FLAG_READONLY)
-                && !(stflags & BLUEPRINT_FLAG_OPTIONAL)) {
+            if ((stflags & BLU_FLAG_READWRITE)
+                && !(stflags & BLU_FLAG_OPTIONAL)) {
               err_item = stname;
               err = TRUE;
               break;
@@ -923,8 +899,8 @@ bundle_t *create_bundle_by_type(bundle_type bt, ...) {
     va_start(vargs, bt);
     if (bp) bun = create_gen2_bundle_with_vargs((uint64_t)bt, (blueprint_t *)bp, vargs);
     else {
-      bundledef_t bdef = get_bundledef(bt);
-      if (bdef) bun = create_gen1_bundle_with_vargs((uint64_t)bt, bdef, vargs);
+      /* bundledef_t bdef = get_bundledef(bt); */
+      /* if (bdef) bun = create_gen1_bundle_with_vargs((uint64_t)bt, bdef, vargs); */
     }
     va_end(vargs);
   }
@@ -1429,8 +1405,8 @@ boolean bundle_has_strand(bundle_t *bundle, const char *iname) {
 
 
 static boolean is_std_item(const char *item) {
-  const char *ename;
-  for (int i = 0; (ename = all_def_strands[i++]); g_print("NOW: %s", ename));
+  /* const char *ename; */
+  /* for (int i = 0; (ename = all_def_strands[i++]); g_print("NOW: %s", ename)); */
   return TRUE;
 }
 
@@ -1507,106 +1483,106 @@ static void make_blueprint_for(bundle_type btype) {
       }
       if (sds) lives_free(sds);
     } else {
-      bdef = (bundledef_t)get_bundledef(btype);
-      for (i = 0; bdef[i]; i++) {
-        off_t offx = 0;
-        bflags = 0;
-        strand = bdef[i];
-        //g_print("STRAND ------------ %s\n", strand);
-        vflags = get_vflags(strand, &offx, NULL, bdef);
-        if (vflags == STRAND_TYPE_FLAG_COMMENT) continue;
-        /* if (vflags == STRAND_TYPE_FLAG_DIRECTIVE) { */
-        /*   // any directives are simply copied verbatime */
-        /*   // when creating bundles in gen1, directives are simply skipped over */
-        /*   // for gen2 directive strands are ignored */
-        /*   // only in gen3 will these be recast as hook automations etc. */
-        /*   // */
-        /*   // here we flag them, set type to directive, and set name to @nnnnn */
-        /*   // where nnnn = 0... unique for blueprint */
-        /*   // the directive itself is stored in default, with implied strand_type STRAND_TYPE_STIRNG */
-        /*   bflags = BLUEPRINT_FLAG_DIRECTIVE; */
-        /*   vtype = STRAND_TYPE_FLAG_DIRECTIVE; */
-        /*   vname = lives_strdup_printf("%c%d", STRAND_TYPE_FLAG_DIRECTIVE); */
-        /*   stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname, */
-        /* 				"flags", bflags, "strand_type", vtype, NULL); */
-        /*   set_def_value_gen1(stdef, shdef, strand, NULL); */
-        //}
-        if (1) {
-          int array_size = 0;
-          //int restrnum = 0;
-          if (vflags == STRAND_TYPE_FLAG_OPTIONAL) bflags |= BLUEPRINT_FLAG_OPTIONAL;
-          vtype = get_vtype(strand, &offx);
-          vname = (char *)get_vname(strand + offx);
-          strand2 = bdef[++i];
-          tflags = atoi(strand2);
-          // for arrays we set array_size to -1, for scalars it is not created
-          if (tflags & STRAND2_FLAG_ARRAY) array_size = -1;
+      /* bdef = (bundledef_t)get_bundledef(btype); */
+      /* for (i = 0; bdef[i]; i++) { */
+      /*   off_t offx = 0; */
+      /*   bflags = 0; */
+      /*   strand = bdef[i]; */
+      /*   /\* //g_print("STRAND ------------ %s\n", strand); *\/ */
+      /*   /\* vflags = get_vflags(strand, &offx, NULL, bdef); *\/ */
+      /*   /\* if (vflags == STRAND_TYPE_FLAG_COMMENT) continue; *\/ */
+      /*   /\* if (vflags == STRAND_TYPE_FLAG_DIRECTIVE) { *\/ */
+      /*   /\*   // any directives are simply copied verbatime *\/ */
+      /*   /\*   // when creating bundles in gen1, directives are simply skipped over *\/ */
+      /*   /\*   // for gen2 directive strands are ignored *\/ */
+      /*   /\*   // only in gen3 will these be recast as hook automations etc. *\/ */
+      /*   /\*   // *\/ */
+      /*   /\*   // here we flag them, set type to directive, and set name to @nnnnn *\/ */
+      /*   /\*   // where nnnn = 0... unique for blueprint *\/ */
+      /*   /\*   // the directive itself is stored in default, with implied strand_type STRAND_TYPE_STIRNG *\/ */
+      /*   /\*   bflags = BLU_FLAG_DIRECTIVE; *\/ */
+      /*   /\*   vtype = STRAND_TYPE_FLAG_DIRECTIVE; *\/ */
+      /*   /\*   vname = lives_strdup_printf("%c%d", STRAND_TYPE_FLAG_DIRECTIVE); *\/ */
+      /*   /\*   stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname, *\/ */
+      /*   /\* 				"flags", bflags, "strand_type", vtype, NULL); *\/ */
+      /*   /\*   set_def_value_gen1(stdef, shdef, strand, NULL); *\/ */
+      /*   //} */
+      /*   if (1) { */
+      /*     int array_size = 0; */
+      /*     //int restrnum = 0; */
+      /*     if (vflags == STRAND_TYPE_FLAG_OPTIONAL) bflags |= BLU_FLAG_OPTIONAL; */
+      /*     vtype = get_vtype(strand, &offx); */
+      /*     vname = (char *)get_vname(strand + offx); */
+      /*     strand2 = bdef[++i]; */
+      /*     tflags = atoi(strand2); */
+      /*     // for arrays we set array_size to -1, for scalars it is not created */
+      /*     if (tflags & BLU_FLAG_ARRAY) array_size = -1; */
 
-          // for readonly, we do not set any default, the value must be specified when the
-          // bundle is created, then cannot be changed
-          // gen3 will add automation for this, for now we just treat it as
-          // mandatory in vargs
-          if (tflags & STRAND2_FLAG_READONLY) bflags |= BLUEPRINT_FLAG_READONLY;
-          if (tflags & STRAND2_FLAG_RDONLY_SUB) bflags |= BLUEPRINT_FLAG_RDONLY_SUB;
-          if (tflags & STRAND2_FLAG_KEYED) bflags |= BLUEPRINT_FLAG_KEYED_ARRAY;
+      /*     // for readonly, we do not set any default, the value must be specified when the */
+      /*     // bundle is created, then cannot be changed */
+      /*     // gen3 will add automation for this, for now we just treat it as */
+      /*     // mandatory in vargs */
+      /*     /\* if (tflags & BLU_FLAG_READWRITE) bflags |= BLU_FLAG_READWRITE; *\/ */
+      /*     /\* if (tflags & BLU_FLAG_RDONLY_SUB) bflags |= BLU_FLAG_RDONLY_SUB; *\/ */
+      /*     /\* if (tflags & BLU_FLAG_KEYED) bflags |= BLU_FLAG_KEYED_ARRAY; *\/ */
 
-          if (tflags & STRAND2_FLAG_TEMPLATE) {
-            bflags |= BLUEPRINT_FLAG_READONLY | BLUEPRINT_FLAG_OPTIONAL;
-            stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "flags", bflags, "strand_type", vtype, !array_size ? NULL :
-                                          "max_size", array_size, NULL);
-            NIRVA_VALUE_SET(bluep, "multi", STRAND_TYPE_BUNDLEPTR, stdef);
-            continue;
+      /*     /\* if (tflags & BLU_FLAG_TEMPLATE) { *\/ */
+      /*     /\*   bflags |= BLU_FLAG_READWRITE | BLU_FLAG_OPTIONAL; *\/ */
+      /*     /\*   stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "flags", bflags, "strand_type", vtype, !array_size ? NULL : *\/ */
+      /*     /\*                                 "max_size", array_size, NULL); *\/ */
+      /*     /\*   NIRVA_VALUE_SET(bluep, "multi", STRAND_TYPE_BUNDLEPTR, stdef); *\/ */
+      /*     /\*   continue; *\/ */
 
-          }
-          stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
-                                        "flags", bflags, "strand_type", vtype, !array_size ? NULL :
-                                        "max_size", array_size, NULL);
+      /*     /\* } *\/ */
+      /*     stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname, */
+      /*                                   "flags", bflags, "strand_type", vtype, !array_size ? NULL : */
+      /*                                   "max_size", array_size, NULL); */
 
-          if (vtype == STRAND_TYPE_PROXIED) {
-            NIRVA_VALUE_SET(stdef, "type_proxy", STRAND_TYPE_STRING, "strand_type");
-            NIRVA_VALUE_SET(stdef, "restrict_proxy", STRAND_TYPE_STRING, "restrictions");
-          }
+      /*     /\* if (vtype == STRAND_TYPE_PROXIED) { *\/ */
+      /*     /\*   NIRVA_VALUE_SET(stdef, "type_proxy", STRAND_TYPE_STRING, "strand_type"); *\/ */
+      /*     /\*   NIRVA_VALUE_SET(stdef, "restrict_proxy", STRAND_TYPE_STRING, "restrictions"); *\/ */
+      /*     /\* } *\/ */
 
-          else if (vtype == STRAND_TYPE_BUNDLEPTR || vtype == STRAND_TYPE_CONST_BUNDLEPTR) {
-            int restrnum = get_restrnum(strand + offx + strlen(vname) + 1);
-            NIRVA_VALUE_SET(stdef, "restrictions", STRAND_TYPE_STRING, nirva_restrictions[restrnum]);
-          }
+      /*     else if (vtype == STRAND_TYPE_BUNDLEPTR || vtype == STRAND_TYPE_CONST_BUNDLEPTR) { */
+      /*       int restrnum = get_restrnum(strand + offx + strlen(vname) + 1); */
+      /*       //NIRVA_VALUE_SET(stdef, "restrictions", STRAND_TYPE_STRING, nirva_restrictions[restrnum]); */
+      /*     } */
 
-          if (vtype != STRAND_TYPE_NONE && vtype != STRAND_TYPE_UNDEFINED && !(bflags & BLUEPRINT_FLAG_READONLY)) {
-            err = set_def_value_gen1(stdef, "default", strand, strand2);
-            if (err) goto endit2;
-          }
-        }
-        st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
-        st_defarr[nstr - 1] = stdef;
-      }
-    }
-
-    if (nstr > 0) {
-      // because strand_defs in blueprint is a keyed_array, we need to add keys for each strand_def "name"
-      if (bluep) {
-        for (i = 0; i < nstr; i++) {
-          char *stname = NIRVA_GET_VALUE_STRING(st_defarr[i], "name");
-          NIRVA_ADD_VALUE_BY_KEY(bluep, "strand_defs", stname, STRAND_TYPE_BUNDLEPTR, st_defarr[i]);
-          lives_free(stname);
-        }
-        lives_free(st_defarr);
-      }
-
-endit2:
-      if (err) {
-#if DEBUG_BUNDLES
-        g_printerr("\nERROR creating blueprint for type %d\n", btype);
-#endif
-        if (bluep) {
-          lives_bundle_free(bluep);
-          bluep = NULL;
-        }
-      }
-      if (blueprints[btype]) lives_bundle_free((bundle_t *)blueprints[btype]);
-      blueprints[btype] = bluep;
+      /*     if (vtype != STRAND_TYPE_NONE && vtype != STRAND_TYPE_UNDEFINED && !(bflags & BLU_FLAG_READWRITE)) { */
+      /*       err = set_def_value_gen1(stdef, "default", strand, strand2); */
+      /*       if (err) goto endit2; */
+      /*     } */
+      /*   } */
+      st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
+      st_defarr[nstr - 1] = stdef;
     }
   }
+
+  if (nstr > 0) {
+    // because strand_defs in blueprint is a keyed_array, we need to add keys for each strand_def "name"
+    if (bluep) {
+      /* for (i = 0; i < nstr; i++) { */
+      /*   char *stname = NIRVA_GET_VALUE_STRING(st_defarr[i], "name"); */
+      /*   NIRVA_ADD_VALUE_BY_KEY(bluep, "strand_defs", stname, STRAND_TYPE_BUNDLEPTR, st_defarr[i]); */
+      /*   lives_free(stname); */
+      /* } */
+      lives_free(st_defarr);
+    }
+
+endit2:
+    if (err) {
+#if DEBUG_BUNDLES
+      g_printerr("\nERROR creating blueprint for type %d\n", btype);
+#endif
+      if (bluep) {
+        lives_bundle_free(bluep);
+        bluep = NULL;
+      }
+    }
+    if (blueprints[btype]) lives_bundle_free((bundle_t *)blueprints[btype]);
+    blueprints[btype] = bluep;
+  }
+  //  }
 }
 
 
@@ -1673,7 +1649,7 @@ char *nirvascope_blueprint_to_header(bundle_t *bundle, const char *tname) {
       char *stname;
       uint32_t st, sttype;
       strand_def_t *stdef = sds[i];
-      if (!stdef_is_value(stdef)) continue;
+      //if (!stdef_is_value(stdef)) continue;
       sttype = stdef_get_strand_type(stdef, NULL);
       stname = stdef_get_name(stdef);
 

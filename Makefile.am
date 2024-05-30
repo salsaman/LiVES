@@ -11,8 +11,11 @@ endif
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
                        stamp-h.in config.log config.cache config.status
+if LOCAL_WEED
+WEED_SUBDIRS = libweed
+endif
 
-SUBDIRS = $(OSC_SUBDIRS) src m4 lives-plugins po resources
+SUBDIRS = $(WEED_SUBDIRS) $(OSC_SUBDIRS) src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
 docdir = "$(prefix)/share/doc"

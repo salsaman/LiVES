@@ -76,7 +76,7 @@ typedef struct {
 
 // space to reserve for the CE timeline
 // IMPORTANT to fine tune this - TODO
-#define CE_TIMELINE_VSPACE ((int)(_GUI_CONST_802 * widget_opts.scaleH * capable->font_size / 10.))
+#define CE_TIMELINE_VSPACE ((int)(_GUI_CONST_802 * sqrt(widget_opts.scaleH) * capable->font_size / 12.))
 
 /// char width of combo entries (default)
 #define COMBOWIDTHCHARS 12
@@ -153,10 +153,10 @@ typedef struct {
 #define SCREEN_43S_LIMIT_HEIGHT DEF_FRAME_VSIZE_169_UNSCALED
 
 #define DEF_FRAME_HSIZE_GUI (((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scaleW) >> 2) << 1)
-#define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scaleH) >> 1) << 1)
+#define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * sqrt(widget_opts.scaleH)) >> 1) << 1)
 
 // min screen height to show the message area
-#define MIN_MSGBAR_HEIGHT (widget_opts.scaleH >= 1. ? ((int)32. * widget_opts.scaleH) : 46)
+#define MIN_MSGBAR_HEIGHT (widget_opts.scaleH >= 1. ? ((int)64. * widget_opts.scaleH) : 46)
 #define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_VSIZE_GUI + CE_TIMELINE_VSPACE - MIN_MSGBAR_HEIGHT)
 #define MIN_MSGBOX_LLINES 2
 
@@ -1798,6 +1798,9 @@ typedef struct {
   boolean debug; ///< debug crashes and asserts
   FILE *debug_log;
   volatile void *debug_ptr;
+
+  // flag defs in defs.h
+  uint64_t maintmode;
 
   char *subt_save_file; ///< name of file to save subtitles to
 

@@ -13,6 +13,8 @@
 #ifndef HAS_LIVES_NODEMODEL_H
 #define HAS_LIVES_NODEMODEL_H
 
+#include "timing.h"
+
 #define LIVES_LEAF_PLAN_CONTROL "plan_control"
 
 #define NODE_PASSTHRU 0
@@ -688,42 +690,6 @@ typedef struct _inst_node {
 #define STEP_TYPE_COPY_IN_LAYER        	4
 #define STEP_TYPE_COPY_OUT_LAYER      	5
 
-typedef struct {
-  // offsets from plan trigger time
-  // since we do not know exact frame load times
-  // we only set est dur for now
-  // real_start / real_end are in session_time
-  ticks_t
-  // steps / template
-  est_start,
-  est_end,
-  deadline;
-  //
-  // some of these are absolute tines (session times)
-  // some are durations (totals)
-  double
-  // step + plan timings
-  real_start, // latest of trigger time, trun_time
-  real_end,
-  est_duration,
-  paused_time,
-  real_duration,
-  // plan timings
-  actual_start, // ?
-  // durations
-  preload_time, // actual_start - real_start (d)
-  active_pl_time, // step time until actual_start
-  tgt_time, // 1. / pb_fps
-  concurrent_time, // total time when > 1 steps were active
-  sequential_time, // sum of all steps if run sequentially
-  exec_time, // dispatch time (a)
-  trun_time, // thread run time (a)
-  queued_time, // trun_time - exec_time
-  trigger_time, // time when plan is triggered - allowed to run (a)
-  start_wait, // time between thread running and trigger (trigger - trun) (d)
-  waiting_time; // after triggering, time when no steps were running (idle time - d)
-} timedata_t;
-
 #define OP_NULL		-1
 
 #define OP_RESIZE	0
@@ -803,24 +769,6 @@ typedef struct {
   int pal;
   double c0, c1, c2;
 } proctime_consts;
-
-typedef struct {
-  lives_ann_t *ann;
-  int ann_gens;
-  pthread_mutex_t ann_mutex;
-  pthread_mutex_t upd_mutex;
-  LiVESList *proc_times;
-  int cpu_nsamples;
-  volatile float const *cpuloadvar;
-  float curr_cpuload;
-  double last_cyc_duration;
-  double tot_duration;
-  double avg_duration;
-  double tgt_duration;
-  double bytes_per_sec;
-  double gbytes_per_sec;
-  boolean active;
-} glob_timedata_t;
 
 typedef struct _exec_plan exec_plan_t;
 

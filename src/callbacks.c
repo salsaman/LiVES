@@ -4438,7 +4438,6 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   set_start_end_spins(mainw->current_file);
-  showclipimgs();
   get_play_times();
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
@@ -4537,7 +4536,6 @@ void on_trim_vid_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 done:
   set_start_end_spins(mainw->current_file);
-  showclipimgs();
   get_play_times();
   sensitize();
 }
@@ -4556,45 +4554,51 @@ void on_select_activate(LiVESWidget * widget, livespointer user_data) {
 
   switch (seltype) {
   case LIVES_SELECT_ALL:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    cfile->start = 1;
+    cfile->end = cfile->frames;
     break;
   case LIVES_SELECT_START_ONLY:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
+    cfile->end = cfile->start;
     break;
   case LIVES_SELECT_END_ONLY:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
+    cfile->start = cfile->end;
     break;
   case LIVES_SELECT_INVERT:
     if (cfile->start == 1) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end + 1);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+      if (cfile->end < cfile->frames) {
+        cfile->start = cfile->end + 1;
+        cfile->end = cfile->frames;
+      }
     } else {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start - 1);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
+      if (cfile->start > 1) {
+        cfile->end = cfile->start - 1;
+        cfile->start = 1;
+      }
     }
     break;
   case LIVES_SELECT_TOEND:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    cfile->end = cfile->frames;
     break;
   case LIVES_SELECT_FROMSTART:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    cfile->start = 1;
     break;
   case LIVES_SELECT_STTOPTR:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),
-                                calc_frame_from_time(mainw->current_file, cfile->pointer_time));
+    cfile->start = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+    if (cfile->start < 1) cfile->start = 1;
+    if (cfile->start > cfile->frames) cfile->start = cfile->frames;
+    if (cfile->start > cfile->end) cfile->end = cfile->start;
     break;
   case LIVES_SELECT_ENTOPTR:
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),
-                                calc_frame_from_time(mainw->current_file, cfile->pointer_time));
+    cfile->end = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+    if (cfile->end < 1) cfile->end = 1;
+    if (cfile->end > cfile->frames) cfile->end = cfile->frames;
+    if (cfile->start > cfile->end) cfile->start = cfile->end;
     break;
   default:
     return;
   }
 
   set_start_end_spins(mainw->current_file);
-  showclipimgs();
-  redraw_timeline(mainw->current_file);
 }
 
 void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
@@ -4637,7 +4641,6 @@ void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
     }
     cfile->end = --i;
     set_start_end_spins(mainw->current_file);
-    showclipimgs();
     return;
   }
   // move start
@@ -4651,7 +4654,6 @@ void sel_skipbl_activate(LiVESWidget * w, livespointer user_data) {
   cfile->end = calc_frame_from_time3(mainw->current_file, back) + 1;
   if (cfile->end > cfile->frames) cfile->end = cfile->frames;
   set_start_end_spins(mainw->current_file);
-  showclipimgs();
   get_play_times();
 }
 
@@ -9602,7 +9604,7 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   RETURN_VAL_IF_RECURSED(TRUE);
 
   mutex = lives_widget_get_mutex(widget);
-  pthread_mutex_lock(mutex);
+  if (pthread_mutex_trylock(mutex)) return TRUE;
 
   if (*psurf) {
     int nrefs = lives_painter_surface_get_reference_count(*psurf);
@@ -10263,9 +10265,12 @@ boolean on_mouse_sel_update(LiVESWidget * widget, LiVESXEventMotion * event, liv
   if (CURRENT_CLIP_IS_VALID && mainw->sel_start > 0) {
     int x, sel_current;
     double tpos;
+    int offs_x;
 
     lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                              LIVES_MAIN_WINDOW_WIDGET, &x, NULL);
+    lives_widget_get_position(mainw->eventbox2, &offs_x, NULL);
+    x -= offs_x;
     tpos = (double)x / (double)(lives_widget_get_allocation_width(mainw->video_draw) - 1) * CLIP_TOTAL_TIME(mainw->current_file);
     if (mainw->sel_move == SEL_MOVE_AUTO)
       sel_current = calc_frame_from_time3(mainw->current_file, tpos);
@@ -10288,6 +10293,13 @@ boolean on_mouse_sel_update(LiVESWidget * widget, LiVESXEventMotion * event, liv
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), sel_current - 1);
     }
   }
+
+  if (!LIVES_IS_PLAYING && mainw->play_window && cfile->is_loaded) {
+    /// load this first in case of caching - it is likely to be larger and higher quality
+    if (mainw->prv_link == PRV_END ||  mainw->prv_link == PRV_START)
+      mainw->preview_frame = 0;
+  }
+
   return FALSE;
 }
 
@@ -10306,7 +10318,7 @@ boolean on_mouse_sel_reset(LiVESWidget * widget, LiVESXEventButton * event, live
 
 
 boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
-  int x;
+  int x, offs_x;
 
   if (!LIVES_IS_INTERACTIVE) return FALSE;
 
@@ -10314,6 +10326,8 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            LIVES_MAIN_WINDOW_WIDGET, &x, NULL);
+  lives_widget_get_position(mainw->eventbox2, &offs_x, NULL);
+  x -= offs_x;
 
   mainw->sel_start = calc_frame_from_time(mainw->current_file,
                                           (double)x / (double)(lives_widget_get_allocation_width(mainw->video_draw) - 1)

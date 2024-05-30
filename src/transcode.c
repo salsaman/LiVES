@@ -259,7 +259,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   if (!internal) {
     if (!transcode_prep()) {
       THREAD_INTENTION = OBJ_INTENTION_NOTHING;
-      return FALSE;
+      ____FUNC_EXIT_VAL____(FALSE);
     } else {
       lives_obj_attr_t *attr1, *attr2;
       attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
@@ -640,9 +640,7 @@ tr_err2:
 
   lives_freep((void **)&sbuff);
 
-  ____FUNC_EXIT____;
-
-  return !error;
+  ____FUNC_EXIT_VAL____(!error);
 }
 
 #endif

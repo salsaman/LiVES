@@ -39,6 +39,7 @@
 
 #define LIVES_PLANT_INDEX 128
 #define LIVES_PLANT_DATA_BOOK 129
+#define LIVES_PLANT_LOOKUP 130
 
 #define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
@@ -68,6 +69,8 @@
 weed_plant_t *lives_plant_new(int64_t subtype);
 weed_plant_t *lives_plant_new_with_serialno(int64_t subtype, int64_t serialno);
 weed_plant_t *lives_plant_new_with_refcount(int64_t subtype);
+
+weed_plant_t *lives_plant_new_empty(void);
 
 int64_t lives_plant_get_subtype(weed_plant_t *);
 
@@ -146,8 +149,11 @@ void register_blueprints(void);
 // if itemtype is plantptr, and keyval is defined, items will be indexed by keyval leaf, stringified
 // if prefixed by #,
 #define LIVES_INDEX_BLUEPRINT						\
-  LIVES_STD_LEAVES, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, LIVES_SEED_CONST_CHARPTR, \
-    BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE
+  LIVES_STD_LEAVES, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, \
+    LIVES_SEED_CONST_CHARPTR, BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, \
+    LIVES_LEAF_ADD_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL, \
+    LIVES_LEAF_DEL_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL, \
+    LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL
 
 typedef enum {
   idx_type_anon = -1,
@@ -155,12 +161,18 @@ typedef enum {
   idx_type_data_book,
   idx_type_prefs,
   idx_type_blueprints,
+  lookup_type_funcs,
   idx_type_max,
 } index_type;
+
+typedef index_type lookup_type;
 
 #define LIVES_LEAF_INDEX_TYPE "_index_type"
 #define LIVES_LEAF_PREFIX "_prefix"
 #define LIVES_LEAF_ITEM_TYPE "_data_type"
+#define LIVES_LEAF_ADD_SCRIPT "_add_script"
+#define LIVES_LEAF_DEL_SCRIPT "_del_script"
+#define LIVES_LEAF_UPDATE_SCRIPT "_update_script"
 
 typedef weed_plant_t lives_index_t;
 
@@ -178,6 +190,8 @@ weed_seed_t lives_index_get_itemtype(lives_index_t *);
 lives_result_t lives_index_set_value(lives_index_t *, const char *key, weed_seed_t stype, ...);
 weed_error_t lives_index_get_value(void *retloc, lives_index_t *, const char *key);
 
+#define is_autofree(plant, key) (plant ? !!(weed_leaf_get_flags(plant, key) & LIVES_FLAG_FREE_ON_DELETE) : FALSE)
+
 // TRUE if existed / erased
 boolean lives_index_erase_value(lives_index_t *, const char *key);
 
@@ -188,6 +202,27 @@ boolean lives_index_contains_item(lives_index_t *, const char *key);
 boolean lives_index_has_value(lives_index_t *, const char *key);
 
 weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean set);
+
+// LIVES PLANT LOOKUP
+// a lookup is an index,unlike local databooks, it is static and has no scope
+// like the global databook
+// index vals are readonly, autofree. We define a free func for the index vals.
+//
+// if we pass an allvalues with name and value, if the name is already used
+// the value is not stored. Otherwise the allvalues is set static (todo - refcount)
+// we can also store bound vars - like for the global databook, make th bound bvalues readonly
+// etc.
+
+#define LIVES_LEAF_LOOKUP_TYPE LIVES_LEAF_INDEX_TYPE
+
+#define LOOKUP_PREFIX "ref_"
+
+
+typedef weed_plant_t lives_lookup_t;
+
+lives_lookup_t *lives_make_lookup(lookup_type ltype);
+allvalues_t *add_to_lookup(lookup_type ltype, weed_seed_t st, const char *name, ...);
+allvalues_t *find_in_lookup(lookup_type ltype, const char *name);
 
 // LIVES_PLANT_DATA_BOOK
 

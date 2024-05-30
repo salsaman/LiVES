@@ -1263,8 +1263,8 @@ char *get_stats_msg(boolean calc_only) {
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
                               load, mainw->effort, EFFORT_RANGE_MAX,
                               prefs->pb_quality,
-                              tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
-                                    : prefs->pb_quality == 2 ? _("Med") : _("High")),
+                              tmp = lives_strdup(prefs->pb_quality == PB_QUALITY_LOW ? _("Low")
+                                    : prefs->pb_quality == PB_QUALITY_MED ? _("Med") : _("High")),
                               tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
                               get_cache_stats(),
                               sfile->hsize, sfile->vsize,
@@ -3243,29 +3243,49 @@ void lives_blueprint_test(void) {
 }
 
 
-void lives_cond_test(void) {
-  return;
-  g_print("testing lives_conditions:\n");
+void lives_cond_test(int step) {
+  g_print("testing lives_conditions, step %d:\n", step);
   reset_timer_info();
-  lives_condition C;
-  //for (int i = 0; i < 10000; i++) {
-  C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2);
-  //lives_cond_desc(C);
-  LIVES_ASSERT(lives_cond_eval(C));
-  lives_cond_free(C);
-  C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3);
-  //lives_cond_desc(C);
-  LIVES_ASSERT(!lives_cond_eval(C));
-  lives_cond_free(C);
-  C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2, ")");
-  //lives_cond_desc(C);
-  LIVES_ASSERT(!lives_cond_eval(C));
-  lives_cond_free(C);
-  C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3, ")");
-  //lives_cond_desc(C);
-  LIVES_ASSERT(lives_cond_eval(C));
-  lives_cond_free(C);
-  //}
+  lives_condition C1, C2, C3, C4;
+
+  if (step == 2) {
+    GET_PROC_THREAD_SELF(self);
+
+    C1 = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_LOCAL", "test");
+    C2 = lives_cond_create($(test2), ">", $(test1));
+    C3 = lives_cond_create($(test0), "==", $(test0));
+    C4 = lives_cond_create($(test1), "==", $(test0));
+
+    SET_SELF_VALUE(WEED_SEED_INT, "test0", 30);
+    SET_SELF_VALUE(WEED_SEED_INT, "test", 2);
+    SET_SELF_VALUE(WEED_SEED_INT, "test1", 21);
+    SET_SELF_VALUE(WEED_SEED_INT, "test2", 28);
+    // constants
+    for (int i = 0; i < 1000; i++) {
+      //lives_cond_desc(C);
+      /* C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2); */
+      /* LIVES_ASSERT(lives_cond_eval(C)); */
+      /* lives_cond_free(C); */
+      /* C = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3); */
+      /* //lives_cond_desc(C); */
+      /* LIVES_ASSERT(!lives_cond_eval(C)); */
+      /* lives_cond_free(C); */
+      /* C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 2, ")"); */
+      /* //lives_cond_desc(C); */
+      /* LIVES_ASSERT(!lives_cond_eval(C)); */
+      /* lives_cond_free(C); */
+      /* C = lives_cond_create("COND_NOT", "(", "COND_INT_VAL", 2, "COND_EQUALS", "COND_INT_VAL", 3, ")"); */
+      /* lives_cond_desc(C); */
+      /* LIVES_ASSERT(lives_cond_eval(C)); */
+      /* lives_cond_free(C); */
+      /* //} else { */
+      //varsy
+      lives_cond_eval(C1);
+      lives_cond_eval(C2);
+      lives_cond_eval(C3);
+      lives_cond_eval(C4);
+    }
+  }
   show_timer_info();
   g_print("OK\n");
 }

@@ -85,9 +85,10 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
 #define IF_AUDIO_JACK(...)if(0);
 #endif
 
-#define SAMPLE_MAX_16BIT_P  32767.4999999f
-#define SAMPLE_MAX_16BIT_N  32768.0f
-#define SAMPLE_MAX_16BITI  32768
+#define SAMPLE_MAX_16BIT_P  32766.4999999f
+#define SAMPLE_MAX_16BIT_N  32767.4999999f
+#define SAMPLE_MAX_16BITI_P  32767
+#define SAMPLE_MAX_16BITI_N  32768
 
 ///sign swapping
 #define SWAP_U_TO_S 1 ///< unsigned to signed

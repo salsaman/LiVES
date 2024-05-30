@@ -60,8 +60,6 @@ typedef enum {
 
 // geneic
 
-#define is_autofree(plant, key) (plant ? !!(weed_leaf_get_flags(plant, key) & LIVES_FLAG_FREE_ON_DELETE) : FALSE)
-
 boolean weed_leaf_autofree(weed_plant_t *, const char *key);
 void  weed_plant_autofree(weed_plant_t *);
 

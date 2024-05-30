@@ -333,9 +333,9 @@ const int *get_palette_list(void) {
   // return palettes in order of preference, ending with WEED_PALETTE_END
   palette_list[0] = WEED_PALETTE_RGBA32;
   palette_list[1] = WEED_PALETTE_BGRA32;
-  palette_list[2] = WEED_PALETTE_RGB24;
-  palette_list[3] = WEED_PALETTE_BGR24;
-  palette_list[4] = WEED_PALETTE_END;
+  //palette_list[2] = WEED_PALETTE_RGB24;
+  // palette_list[3] = WEED_PALETTE_BGR24;
+  palette_list[2] = WEED_PALETTE_END;
   return palette_list;
 }
 
@@ -347,10 +347,10 @@ static int get_size_for_type(int type) {
   case GL_BGRA:
   case GL_SRGB8_ALPHA8:
     return 4;
-  case GL_RGB8:
   case GL_RGB:
+  case GL_RGB8:
   case GL_BGR:
-  case GL_SRGB8:
+  case GL_SRGB:
     return 3;
   default:
     assert(0);
@@ -366,7 +366,7 @@ boolean set_palette(int palette) {
     mypalette = palette;
 
     type = GL_RGBA8;
-    if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB8;
+    if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB;
     typesize = get_size_for_type(type);
     pthread_mutex_unlock(&rthread_mutex);
 
@@ -2081,7 +2081,6 @@ static void send_return_data(void) {
     // texture is upside-down compared to image
     for (int i = 0; i < texHeight; i++) {
       weed_memcpy(dst, src, mwidth);
-
       dst += row;
       src -= texWidth;
     }

@@ -84,21 +84,21 @@ DEF_UNION(allval_t,
 #define ALLV_FLAG_RWLOCK		(1ull << 3)
 #define ALLV_FLAG_EXTERN		(1ull << 4)
 #define ALLV_FLAG_RDONLY		(1ull << 5)
+#define ALLV_FLAG_NOFREE		(1ull << 6)
 
 // error flagbits/
 // unrecognised seed_type when setting val
 #define ALLV_ERR_INVALID_STYPE		(1ull << 32)
 // seed_type mismatch when setting val
-#define ALLV_ERR_WRONG_STYPE		(1ull << 32)
+#define ALLV_ERR_WRONG_STYPE		(1ull << 33)
 // attempt to bind array (only scalars can be bound)
-#define ALLV_ERR_BAD_BIND		(1ull << 33)
+#define ALLV_ERR_BAD_BIND		(1ull << 34)
 // attempt to set non RDONLY value
-#define ALLV_ERR_RDONLY			(1ull << 34)
+#define ALLV_ERR_RDONLY			(1ull << 35)
 // attempt to get bound val byref on non bound val
-#define ALLV_ERR_NOTBOUND     	 	(1ull << 35)
+#define ALLV_ERR_NOTBOUND     	 	(1ull << 36)
 
 typedef struct _allvalues_t allvalues_t_fwd_decl;
-
 
 DEF_STRUCT(allvalues_t,
            //@TYPEDEF u weed_seed_t
@@ -107,6 +107,7 @@ DEF_STRUCT(allvalues_t,
            //@UNION allval_t
            // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
            // or func name fpr fncinst
+           uint64_t uid;
            char *aname;
            weed_seed_t stype;
            weed_size_t ne; // num elements - always 1 if POINTER set
@@ -114,7 +115,7 @@ DEF_STRUCT(allvalues_t,
            uint64_t flags;
 
            // this is for databooks.
-           // if (databook scope > this, if the holder is not indellible, we pretend the value doesnt exist)
+           // if (databook scope > this, we pretend the value doesnt exist)
            // when we set it this is prepended to the list for the new alllvalues
            // if we check a value and the scope is lower, we ope th list untl we fin an entry <= scope
            // so call a "func" increment scope all values vanish
@@ -160,9 +161,13 @@ DEF_STRUCT(allvalues_t,
            // used when compiliong conditions - holds the original ranslation token
            void *priv_data;)
 
-#define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0(st = weed_leaf_seed_type(plant, key); \
-						     FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_, \
-									 _array_counted, (plant), (key), &(ne));)
+#define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0			\
+  (st = weed_leaf_seed_type(plant, key);				\
+  if (st == LIVES_SEED_ALLVALUES) {					\
+    avp = allvalues_copy(weed_get_custom_value(plant, key, st, NULL));}	\
+   if (st == LIVES_SEED_FUNCINST) (avp)->funcinst = weed_get_custom_value(plant, key, st, NULL); \
+   else FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_,		\
+			    _array_counted, (plant), (key), &(ne));)
 
 #define LEAF_FROM_ALLV(plant, key, allv)				\
        weed_leaf_set(plant, key, allv->stype, allv->ne,			\
@@ -177,7 +182,8 @@ DEF_STRUCT(allvalues_t,
 		      : (allv->stype == WEED_SEED_VOIDPTR || WEED_SEED_IS_CUSTOM(allv->stype)) \
 		      ? (void *)allv->values.V				\
 		      : allv->stype == WEED_SEED_FUNCPTR ? (void *)allv->values.F \
-		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)allv->values.P : NULL))
+		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)allv->values.P \
+		      : allv->stype == LIVES_SEED_FUNCINST ? (void *)allv->funcinst : NULL))
 
 // since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
 // however 8 is probably sufficient and looks neater
@@ -292,6 +298,7 @@ DEF_STRUCT(allvalues_t,
     case(WEED_SEED_BOOLEAN):pre b op pre2##boolean##post(post2,post3,post4);break; \
     case(WEED_SEED_DOUBLE):pre d op pre2##double##post(post2,post3,post4);break; \
     case(WEED_SEED_STRING):pre s op pre2##string##post(post2,post3,post4);break; \
+    case(LIVES_SEED_FUNCINST):pre s op pre2##string##post(post2,post3,post4);break; \
     case(WEED_SEED_VOIDPTR):pre V op pre2##voidptr##post(post2,post3,post4);break; \
     case(WEED_SEED_FUNCPTR):pre F op pre2##funcptr##post(post2,post3,post4);break; \
     case(WEED_SEED_PLANTPTR):pre P op pre2##plantptr##post(post2,post3,post4);break; \
@@ -655,6 +662,7 @@ void reg_known_funcsigs(void);
   ADD_FUNCSIG(3,VOIDP,INT,INT)			\
   ADD_FUNCSIG(3,VOIDP,DOUBLE,DOUBLE)		\
   ADD_FUNCSIG(3,PLANTP,VOIDP,INT64)		\
+  ADD_FUNCSIG(3,PLANTP,STRING,INT)		\
   ADD_FUNCSIG(3,PLANTP,INT64,BOOL)		\
   ADD_FUNCSIG(3,INT,INT,BOOL)			\
   ADD_FUNCSIG(3,BOOL,INT,BOOL)			\

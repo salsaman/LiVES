@@ -451,6 +451,7 @@ LiVESList *strings_to_list(const char *thing, ...) {
   va_list va;
   va_start(va, thing);
   while (1) {
+    //g_print("listval is %s\n", thing);
     list = lives_list_prepend(list, (void *)thing);
     thing = va_arg(va, const char *);
     if (!thing) break;

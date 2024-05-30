@@ -33,7 +33,7 @@ weed_includedir = $(includedir)$(PACKAGE)/
 weed_pluginutilsdir = $(weed_includedir)weed-plugin-utils/
 
 
-weed_headers = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h \
+weed_headers = weed.h libweed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h \
 	weed-effects.h weed-compat.h weed-plugin-utils.h weed-host-utils.h
 
 weed_pluginutils_files = weed-plugin-utils.c

@@ -758,19 +758,19 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
         /* copy the data over */
         if (!swap_endian) {
           if (!swap_sign) *(dst++) = *ptr;
-          else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(*ptr + SAMPLE_MAX_16BITI);
-          else *(dst++) = *ptr - SAMPLE_MAX_16BITI;
+          else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(*ptr + SAMPLE_MAX_16BITI_P);
+          else *(dst++) = *ptr - SAMPLE_MAX_16BITI_N;
         } else if (swap_endian == SWAP_X_TO_L) {
           if (!swap_sign) *(dst++) = (((*ptr) & 0x00FF) << 8) + ((*ptr) >> 8);
           else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(((*ptr & 0x00FF) << 8) + (*ptr >> 8)
-                + SAMPLE_MAX_16BITI);
-          else *(dst++) = ((*ptr & 0x00FF) << 8) + (*ptr >> 8) - SAMPLE_MAX_16BITI;
+                + SAMPLE_MAX_16BITI_P);
+          else *(dst++) = ((*ptr & 0x00FF) << 8) + (*ptr >> 8) - SAMPLE_MAX_16BITI_N;
         } else {
           if (!swap_sign) *(dst++) = (((*ptr) & 0x00FF) << 8) + ((*ptr) >> 8);
           else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) =
-              (uint16_t)(((((uint16_t)(*ptr + SAMPLE_MAX_16BITI)) & 0x00FF) << 8) +
-                         (((uint16_t)(*ptr + SAMPLE_MAX_16BITI)) >> 8));
-          else *(dst++) = ((((int16_t)(*ptr - SAMPLE_MAX_16BITI)) & 0x00FF) << 8) + (((int16_t)(*ptr - SAMPLE_MAX_16BITI)) >> 8);
+              (uint16_t)(((((uint16_t)(*ptr + SAMPLE_MAX_16BITI_P)) & 0x00FF) << 8) +
+                         (((uint16_t)(*ptr + SAMPLE_MAX_16BITI_P)) >> 8));
+          else *(dst++) = ((((int16_t)(*ptr - SAMPLE_MAX_16BITI_N)) & 0x00FF) << 8) + (((int16_t)(*ptr - SAMPLE_MAX_16BITI_N)) >> 8);
         }
 
         ccount++;
@@ -899,8 +899,8 @@ float sample_move_d16_float(float *dst, int16_t *src, uint64_t nsamples, uint64_
       oil_scaleconv_f32_u16(&val, (uint16_t *)srcp, 1, &y, &xa);
       val -= vol;
 #else
-      valss = (uint16_t) * srcp - SAMPLE_MAX_16BITI;
-      val = (float)(valss) * (valss > 0 ? svolp : svoln);
+      valss = (float)(*srcp / (1. * 0x8000));
+      val = valss * *srcp >= 0 ? svolp : svoln;
 #endif
     }
 
@@ -959,14 +959,18 @@ float sample_move_d16_float_arena(float *dst, int16_t *src, size_t offset, uint6
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_s16(&val, srcp, 1, &y, val > 0 ? &xp : &xn);
 #else
+
+
+
       val = (float)(*srcp) / (*srcp > 0 ? svolp : svoln);
+
 #endif
     } else {
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_u16(&val, (uint16_t *)srcp, 1, &y, &xa);
       val -= vol;
 #else
-      valss = (uint16_t) * srcp - SAMPLE_MAX_16BITI;
+      valss = (uint16_t) * srcp - SAMPLE_MAX_16BITI_N;
       val = (float)(valss) / (valss > 0 ? svolp : svoln);
 #endif
     }
@@ -1168,7 +1172,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
         else if (valf[i] < -vol) valf[i] = -vol;
         ovolx = volx;
         val[i] = (int16_t)(valf[i] * (valf[i] > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
-        if (usigned) valu[i] = (val[i] + SAMPLE_MAX_16BITI);
+        if (usigned) valu[i] = (val[i] + SAMPLE_MAX_16BITI_P);
       }
 
       if (asamps == 2) {

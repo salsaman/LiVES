@@ -6,8 +6,6 @@
 #ifndef _TIMING_H
 #define _TIMING_H
 
-extern glob_timedata_t *glob_timing;
-
 char *format_tstr(double xtime, int minlim);
 
 #define THE_TIMEY_WIMEY_KIND 1
@@ -69,5 +67,78 @@ void reset_playback_clock(ticks_t origticks);
 ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source);
 
 double do_nothing(int type_of_nothing);
+
+////////////////////////
+
+// exec plan timings
+
+typedef struct {
+  lives_ann_t *ann;
+  int ann_gens;
+  pthread_mutex_t ann_mutex;
+  pthread_mutex_t upd_mutex;
+  LiVESList *proc_times;
+  int cpu_nsamples;
+  volatile float const *cpuloadvar;
+  float curr_cpuload;
+  double last_cyc_duration;
+  double tot_duration;
+  double avg_duration;
+  double tgt_duration;
+  double bytes_per_sec;
+  double gbytes_per_sec;
+  boolean active;
+} glob_timedata_t;
+
+typedef struct {
+  // offsets from plan trigger time
+  // since we do not know exact frame load times
+  // we only set est dur for now
+  // real_start / real_end are in session_time
+  ticks_t
+  // steps / template
+  est_start,
+  est_end,
+  deadline;
+  //
+  // some of these are absolute tines (session times)
+  // some are durations (totals)
+  double
+  // step + plan timings
+  // thime when plan was actioned via func call
+  real_start,
+
+  // cycle finished time
+  real_end,
+
+  // predicted duration
+  est_duration,
+
+  // paused time
+  paused_time,
+
+  // real_end - real_start
+  real_duration,
+
+  // real_end - actual_start
+  effective_duration,
+
+  // time when a frame was played
+  actual_start, // ?
+  // durations
+  preload_time, // actual_start - real_start
+  active_pl_time, // step busy time berween time until actual_start
+  tgt_time, // 1. / pb_fps
+  concurrent_time, // total time when > 1 steps were active
+  sequential_time, // sum of all steps if run sequentially
+  exec_time, // dispatch time (a)
+  trun_time, // thread run time (a)
+  queued_time, // trun_time - exec_time
+  trigger_time, // time when plan is triggered - allowed to run (a)
+  start_wait, // time between thread running and trigger (trigger - trun) (d)
+  waiting_time; // after triggering, time when no steps were running (idle time - d)
+} timedata_t;
+
+extern glob_timedata_t *glob_timing;
 
 #endif

@@ -43,7 +43,8 @@ LIVES_GLOBAL_INLINE int lives_unset_status(int status) {
 static boolean all_updated = TRUE;
 
 static boolean updates_done(lives_proc_thread_t self, void *unused) {
-  g_main_context_iteration(NULL, FALSE);
+  //g_main_context_iteration(NULL, FALSE);
+  mainw->do_ctx_update = TRUE;
   all_updated = TRUE;
   return TRUE;
 }
@@ -945,7 +946,7 @@ frames_t load_frame_image(frames_t frame) {
   int fg_file = mainw->playing_file;
   int errpt = 0;
 
-  LIVES_ASSERT(lives_proc_thread_get_hook_stacks(mainw->player_proc) != NULL);
+  ____FUNC_ENTRY____(load_frame_image, "i", "i");
 
   framecount = NULL;
   fname_next = info_file = NULL;
@@ -979,7 +980,8 @@ frames_t load_frame_image(frames_t frame) {
       }
     }
     if (!mainw->fs && !mainw->faded) get_play_times();
-    return 0;
+
+    ____FUNC_EXIT_VAL____(0);
   }
 
   if (!mainw->foreign) {
@@ -1294,7 +1296,7 @@ frames_t load_frame_image(frames_t frame) {
       // or apply rte.  or when rendering / transcoding. We get our mainw->frame_layer and exit.
       // we are not in playback mode, and we just return mainw->frame_layer
       lives_freep((void **)&framecount);
-      return frame;
+      ____FUNC_EXIT_VAL____(frame);
     }
 
     if (mainw->ext_playback) {
@@ -1335,11 +1337,18 @@ frames_t load_frame_image(frames_t frame) {
         THREADVAR(rowstride_alignment_hint) = -1;
       }
 
+      layer_palette = weed_layer_get_palette(frame_layer);
+
       if (layer_palette != mainw->vpp->palette) {
         // should never happen with PLAN
-        if (frame_layer == mainw->frame_layer) {
+        if (mainw->vpp->capabilities & VPP_CAN_CHANGE_PALETTE)
+          if ((*mainw->vpp->set_palette)(layer_palette))
+            mainw->vpp->palette = layer_palette;
+      }
+
+      if (layer_palette != mainw->vpp->palette) {
+        if (frame_layer == mainw->frame_layer)
           frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-        }
         if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
                                         mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgt_gamma)) {
           if (!player_v2) THREADVAR(rowstride_alignment_hint) = rs_align;
@@ -1520,7 +1529,7 @@ frames_t load_frame_image(frames_t frame) {
     LiVESError *gerror = NULL;
     lives_painter_t *cr = lives_painter_create_from_surface(mainw->play_surface);
 
-    if (!cr) return 0;
+    if (!cr) ____FUNC_EXIT_VAL____(0);
 
     if (mainw->rec_vid_frames == -1) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d", frame)));
@@ -1528,7 +1537,7 @@ frames_t load_frame_image(frames_t frame) {
       if (frame > mainw->rec_vid_frames) {
         mainw->cancelled = CANCEL_KEEP;
         if (CURRENT_CLIP_HAS_VIDEO) cfile->frames = mainw->rec_vid_frames;
-        return 0;
+        ____FUNC_EXIT_VAL____(0);
       }
 
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d / %9d",
@@ -1580,7 +1589,7 @@ frames_t load_frame_image(frames_t frame) {
     if (frame > mainw->rec_vid_frames && mainw->rec_vid_frames > -1)
       mainw->cancelled = CANCEL_KEEP;
     lives_freep((void **)&framecount);
-    return 0;
+    ____FUNC_EXIT_VAL____(0);
   }
 
 lfi_err:
@@ -1640,11 +1649,11 @@ lfi_done:
         }
       }
     }
-    return 0;
+    ____FUNC_EXIT_VAL____(0);
   }
 
   //g_print("out of lfi at %s\n", lives_format_timing_string(lives_get_session_time()));
-  return frame;
+  ____FUNC_EXIT_VAL____(frame);
 }
 
 
@@ -2465,7 +2474,9 @@ close_clip:
         mainw->noswitch = FALSE;
         // must be called even if just called close_current_file()
         // mainw-.current_file will be altered, but NOT mainw->playing_file
-        do_quick_switch(new_clip);
+        BG_THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_OPT_PRIORITY;
+        MAIN_THREAD_EXECUTE_RVOID(do_quick_switch, "i", new_clip);
+        BG_THREADVAR(hook_hints) = 0;
         mainw->noswitch = TRUE;
 
         // must only be changed AFTER do_quick_switch()

@@ -365,6 +365,7 @@ boolean consider_swapping(int inpal, int outpal);
 
 
 int remove_alpha(int pal);
+int add_alpha(int pal);
 int swap_red_blue(int pal);
 
 #define is_usable_palette(p) (((p)==WEED_PALETTE_RGB24||(p)==WEED_PALETTE_RGBA32\

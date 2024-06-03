@@ -123,7 +123,7 @@ boolean check_frame_count(int idx, boolean last_chkd);
 frames_t get_frame_count(int idx, int xsize);
 frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
 
-uint32_t get_signed_endian(boolean is_signed, boolean little_endian); ///< produce bitmapped value
+uint32_t get_signed_endian(int issigned, int aendian);  ///< produce bitmapped value
 
 void find_when_to_stop(void);
 

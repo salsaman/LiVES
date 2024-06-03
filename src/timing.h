@@ -141,4 +141,26 @@ typedef struct {
 
 extern glob_timedata_t *glob_timing;
 
+// function timings
+typedef struct {
+  int *exit_pts;
+  double *avg_time;
+  uint64_t counter;
+} fdef_stats;
+
+#define add_fdef_stats(fdef) _DW0(if (fdef) {		\
+    if (!(fdef->flags & FDEF_FLAG_HAS_TIMEINFO)) {	\
+      LIVES_CALLOC_TYPE(fdef_stats, fdstats, 1);	\
+      fdef->stats = (void *)fdstats;			\
+      fdef->flags |= FDEF_FLAG_HAS_TIMEINFO;}})
+
+void fdef_add_data(lives_funcdef_t *, ...);
+
+#define FDEF_STAT_LAST			0
+#define FDEF_STAT_COUNT			1
+#define FDEF_STAT_ST_TIME		2
+#define FDEF_STAT_EN_TIME		3
+#define FDEF_STAT_EXLINE		4
+#define FDEF_STAT_EXVAL			5
+
 #endif

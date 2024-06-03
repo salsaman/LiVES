@@ -531,3 +531,25 @@ get_time:
   return Itime;
 }
 
+
+void fdef_add_data(lives_funcdef_t *fdef, ...) {
+  double xtime;
+  va_list va;
+  boolean end = FALSE;
+  va_start(va, fdef);
+  do {
+    int what = va_arg(va, int);
+    switch (what) {
+    case FDEF_STAT_LAST: end = TRUE; break;
+    case FDEF_STAT_ST_TIME: xtime = va_arg(va, double); break;
+    case FDEF_STAT_EN_TIME: xtime = va_arg(va, double); break;
+    case FDEF_STAT_COUNT: ((fdef_stats *)fdef->stats)->counter++; break;
+    default: break;
+    }
+  } while (!end);
+  IGN_RET(xtime);
+  va_end(va);
+}
+
+
+

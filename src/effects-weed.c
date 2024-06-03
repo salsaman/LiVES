@@ -4317,7 +4317,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
         if (pl_max_weed_abi < weed_abi_version && pl_max_weed_abi >= 110) {
           weed_set_int_value(xhost_info, WEED_LEAF_WEED_ABI_VERSION, pl_max_weed_abi);
         }
-        weed_set_int_value(xhost_info, WEED_LEAF_WEED_API_VERSION, 203);
+        weed_set_int_value(xhost_info, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
       }
       // we don't need to bother with min versions, the lib will check for us
       /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION)) { */

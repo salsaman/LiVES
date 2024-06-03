@@ -1286,14 +1286,20 @@ static pthread_mutex_t tlthread_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void drawtl_cancel(void) {
   // must call unlock_timline()
-  pthread_mutex_lock(&tlthread_mutex);
+  boolean is_fg = is_fg_thread();
+  while (pthread_mutex_trylock(&tlthread_mutex)) {
+    lives_millisleep;
+    if (is_fg) fg_service_fulfill();
+  }
   lives_proc_thread_t lpt = STEAL_POINTER(drawtl_thread);
   if (lpt) {
+    //pthread_mutex_unlock(&tlthread_mutex);
     lives_proc_thread_request_cancel(lpt, FALSE);
     lives_proc_thread_try_interrupt(lpt, NULL);
     lives_proc_thread_join_void(lpt);
     lives_proc_thread_unref(lpt);
   }
+  //else pthread_mutex_unlock(&tlthread_mutex);
   // exit with tlthread_mutex locked !!
 }
 

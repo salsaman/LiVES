@@ -155,7 +155,6 @@ void lpt_params_free(lives_proc_thread_t, boolean do_exec);
 #define LIVES_LEAF_LONGJMP "_longjmp_env_ptr"
 
 weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, weed_seed_t type, weed_size_t ne, va_list xargs);
-lives_result_t weed_leaf_from_va(weed_plant_t *, const char *key, char fmtchar, ...);
 
 boolean call_funcsig(lives_proc_thread_t);
 lives_result_t do_call(lives_funcinst_t *);
@@ -249,7 +248,7 @@ void dump_fn_notes(void);
 
 void _func_entry(lives_funcptr_t, const char *funcname, int category, const char *rettype,
                  const char *args_fmt, char *file_ref, int line_ref, uint64_t flags);
-void _func_exit(char *file_ref, int line_ref, size_t valsz, ...);
+void _func_exit(char *file_ref, int line_ref, const char *valname, ...);
 
 #ifndef NO_FUNC_TAGS
 // macro to be placed near start of "major" functions. It will prepend funcname to
@@ -258,14 +257,14 @@ void _func_exit(char *file_ref, int line_ref, size_t valsz, ...);
 
 #define ___FUNC_ENTRY_FULL___(func, rettype, args_fmt, flags, ...)	\
   _DW0(_func_entry((lives_funcptr_t)(func),#func,0,rettype,args_fmt,_FILE_REF_,_LINE_REF_, \
-		  (flags & ~FDEF_NO_FLAGS) | FDEF_FLAG_INSIDE););
+		   (flags & ~FDEF_NO_FLAGS) | FDEF_FLAG_INSIDE);)
 
 #define ____FUNC_ENTRY____(func, ...) ___FUNC_ENTRY_FULL___(func __VA_OPT__(,)__VA_ARGS__, 0, 0, 0)
 // macro to be placed near start of "major" functions, counterpart to ___FUNC_ENTRY___
 // It will remove top entry from a thread's 'func_stack', and print out a debug line (optional)
-#define ____FUNC_EXIT____ _DW0(_func_exit(_FILE_REF_, _LINE_REF_, 0); return;)
+#define ____FUNC_EXIT____ _DW0(_func_exit(_FILE_REF_, _LINE_REF_, NULL); return;)
 
-#define ____FUNC_EXIT_VAL____(val) _DW0(_func_exit(_FILE_REF_, _LINE_REF_, sizeof(val), val); return (val);)
+#define ____FUNC_EXIT_VAL____(val) _DW0(_func_exit(_FILE_REF_, _LINE_REF_, #val, val); return (val);)
 #else
 #define ____FUNC_ENTRY____(func, rettype, args_fmt)
 #define ____FUNC_EXIT____ return;
@@ -1274,9 +1273,6 @@ void lives_funcinst_free(lives_funcinst_t *);
 
 void cleanup_self_receipts(void);
 
-funcsig_t funcsig_from_args_fmt(const char *args_fmt);
-char *args_fmt_from_funcsig(funcsig_t funcsig);
-
 void lives_funcinst_send_replies(lives_funcinst_t *finst, int reply);
 
 //
@@ -1387,6 +1383,10 @@ const char *get_fmtstr_for_st(weed_seed_t);
 
 // sbits -> symname
 const char *get_symbolname(uint8_t val);
+
+funcsig_t funcsig_from_args_fmt(const char *args_fmt);
+
+char *args_fmt_from_funcsig(funcsig_t funcsig);
 
 // symname to sbits
 uint8_t symname_to_sigbits(const char *symname);

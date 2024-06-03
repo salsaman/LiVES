@@ -365,6 +365,9 @@ static const int32_t testint = 0x12345678;
 #define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)  // runtime test only !
 #endif
 
+#define LIVES_LITTLE_ENDIAN 		0
+#define LIVES_BIG_ENDIAN 		1
+
 typedef int64_t ticks_t;
 typedef int frames_t; // nb. will change to int64_t at some future point
 typedef int64_t frames64_t; // will become the new standard

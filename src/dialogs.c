@@ -1405,6 +1405,8 @@ boolean get_accels_swapped(void) {return accelerators_swapped;}
 static void cancel_process(void) {
   if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
 
+  mainw->noswitch = FALSE;
+
   if (accelerators_swapped) {
     if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
     if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button,
@@ -1429,7 +1431,6 @@ static void cancel_process(void) {
           && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
         notify_user(mainw->proc_ptr->text);
       }
-      lives_hook_trigger(NULL, COMPLETED_HOOK);
       lives_freep((void **)&mainw->proc_ptr->text);
       lives_widget_destroy(mainw->proc_ptr->processing);
       mainw->proc_ptr->processing = NULL;;
@@ -1819,7 +1820,6 @@ boolean do_progress_dialog(boolean visiblex, boolean cancellable, const char *te
       // do a processing pass
       if (prox_dialog()) {
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-        mainw->noswitch = FALSE;
         cancel_process();
         return FALSE;
       }
@@ -1841,7 +1841,7 @@ boolean do_progress_dialog(boolean visiblex, boolean cancellable, const char *te
       if (!mainw->internal_messaging) {
         lives_nanosleep(1000000);
       }
-    }
+    } else break;
   }
 
 #ifdef DEBUG
@@ -1912,6 +1912,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
   stdstopfuncdata_t sfdata;
   GET_PROC_THREAD_SELF(self);
   uint64_t time = 0, stime = 0;
+  lives_result_t res;
 
   char *label_text;
   char *mytext = lives_strdup(text);
@@ -1933,6 +1934,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
   mainw->error = FALSE;
 
   mainw->proc_ptr = create_processing(mytext);
+  lives_widget_process_updates(mainw->proc_ptr->processing);
 
   lives_freep((void **)&mytext);
 
@@ -2000,7 +2002,8 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
 
   if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
 
-  while (!lives_alarm_triggered() && (std_stopfunc)((void *)&sfdata) != LIVES_RESULT_ERROR) {
+  while (!lives_alarm_triggered() && (res = std_stopfunc((void *)&sfdata)) != LIVES_RESULT_ERROR
+         && res != LIVES_RESULT_CANCELLED) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     lives_widget_process_updates(mainw->proc_ptr->processing);
     // need to recheck after calling process_updates
@@ -2013,7 +2016,9 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
   if (mainw->proc_ptr) {
     if (mainw->proc_ptr->processing) {
       lives_widget_hide(mainw->proc_ptr->processing);
+      lives_widget_process_updates(mainw->proc_ptr->processing);
       lives_widget_destroy(mainw->proc_ptr->processing);
+      g_print("DESTTT %p\n", mainw->proc_ptr->processing);
     }
     lives_freep((void **)&mainw->proc_ptr->text);
     lives_free(mainw->proc_ptr);
@@ -2197,7 +2202,7 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
       else sstring = lives_strdup("");
 
       if (swap_endian) {
-        if (mainw->endian != AFORM_BIG_ENDIAN) estring = (_(", little-endian"));
+        if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) estring = (_(", little-endian"));
         else estring = (_(", big-endian"));
       } else estring = lives_strdup("");
 

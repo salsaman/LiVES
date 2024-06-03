@@ -462,18 +462,6 @@ weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, weed_seed
 }
 
 
-LIVES_GLOBAL_INLINE lives_result_t weed_leaf_from_va(weed_plant_t *plant, const char *key, char fmtchar, ...) {
-  va_list xargs;
-  weed_error_t err;
-  uint32_t st = get_seedtype(fmtchar);
-  va_start(xargs, fmtchar);
-  err = weed_leaf_from_varg(plant, key, st, 1, xargs);
-  va_end(xargs);
-  if (err != WEED_SUCCESS) return LIVES_RESULT_ERROR;
-  return LIVES_RESULT_SUCCESS;
-}
-
-
 LIVES_GLOBAL_INLINE const char get_typeletter(uint8_t val) {
   // sigbits to letter
   val &= 0x0F;
@@ -582,36 +570,68 @@ const char *get_funcname(lives_funcptr_t func) {
 }
 
 
-LIVES_GLOBAL_INLINE void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
-                                     const char *args_fmt, char *file_ref, int line_ref, uint64_t flags) {
+void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
+                 const char *args_fmt, char *file_ref, int line_ref, uint64_t flags) {
   // try to guess ret_type, if it is eg. "I"
   weed_seed_t rtype = WEED_SEED_NONE;
   if (rettype && *rettype) rtype = get_seedtype(*rettype);
-  lives_funcdef_t *fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags);
+  lives_funcdef_t *fdef;
+  allvalues_t *allvp = find_in_lookup(lookup_type_funcs, funcname);
+  if (allvp) fdef = (lives_funcdef_t *)allvp->values.V[0];
+  else {
+    fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags);
+    add_fdef_stats(fdef);
+  }
+  // TODO - handle singleton noe recurse, no rec thread
+  // cond entry
+  // scope end free
+  // static
+  fdef_add_data(fdef, FDEF_STAT_COUNT, FDEF_STAT_LAST);
   if (mainw->maintmode & MMODE_PLAYER_TIMINGS) {
     double xtime = lives_get_session_time();
-    g_print("%s entered at %.2f msec\n", funcname, xtime * 1000.);
+    g_print("%s (%s, line %d) entered at %.2f msec\n", funcname, file_ref, line_ref, xtime * 1000.);
+    GET_PROC_THREAD_SELF(self);
+    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
+    if (!finst) {
+      finst = lives_funcinst_create_for_funcdef(fdef, "", NULL);
+      lives_proc_thread_set_active_funcinst(finst);
+    }
+    finst->st_time = xtime;
   }
 
-  allvalues_t *allvp = add_to_lookup(lookup_type_funcs, WEED_SEED_VOIDPTR, funcname, fdef);
+  if (!allvp) allvp = add_to_lookup(lookup_type_funcs, WEED_SEED_VOIDPTR, funcname, fdef);
   THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), allvp);
 }
 
 
-LIVES_GLOBAL_INLINE void _func_exit(char *file_ref, int line_ref, size_t valsz, ...) {
+void _func_exit(char *file_ref, int line_ref, const char *valname, ...) {
   allvalues_t *allvp = (allvalues_t *)lives_sync_list_pop(&THREADVAR(func_stack));
   lives_funcdef_t *fdef =  allvp->values.V[0];
   if (mainw->maintmode & MMODE_PLAYER_TIMINGS) {
-    weed_plant_t *tmppl = lives_plant_new(LIVES_PLANT_TMP);
     double xtime = lives_get_session_time();
-    g_print("%s exited at %.2f msec\n", fdef->funcname, xtime * 1000.);
-    if (valsz) {
-      va_list va;
-      va_start(va, valsz);
-      weed_leaf_from_va(tmppl, LIVES_LEAF_VALUE, fdef->return_type, va);
-      g_print("return val was %s\n", weed_leaf_stringify(tmppl, WEED_LEAF_VALUE));
-      weed_plant_free(tmppl);
-    }
+    GET_PROC_THREAD_SELF(self);
+    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
+    finst->en_time = xtime;
+    g_print("%s exited (%s, line %d) at %.2f msec, duration %s\n", fdef->funcname, file_ref, line_ref, xtime * 1000.,
+            lives_format_timing_string(xtime - finst->st_time));
+    /* if (fdef->flags & FDEF_FLAG_HAS_TIMEINFO) { */
+    /*   va_list vc; */
+    /*   va_copy(vc, va); */
+    /*   fdef_add_data(fdef, FDEF_STAT_ST_TIME, finst->st_time,  */
+    /* 		    FDEF_STAT_EN_TIME, finst->en_time,  */
+    /* 		    FDEF_STAT_ST_EXLINE, line_ref,  */
+    /* 		    FDEF_STAT_ST_EXVAL, vc,*/
+    /*    	    FDEF_STAT_LAST); */
+    /*   va_end(vc); */
+    /* } */
+  }
+  if (valname) {
+    weed_plant_t *tmppl = lives_plant_new(LIVES_PLANT_TMP);;
+    va_list va;
+    va_start(va, valname);
+    weed_leaf_from_varg(tmppl, WEED_LEAF_VALUE, fdef->return_type, 1, va);
+    va_end(va);
+    weed_plant_free(tmppl);
   }
   if (!(allvp->flags & ALLV_FLAG_NOFREE)) {
     if (fdef) lives_funcdef_free(fdef);

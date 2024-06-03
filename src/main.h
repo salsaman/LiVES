@@ -254,6 +254,8 @@ typedef struct {
 
   char **paramdesc; // optional param descriprions
 
+  void *stats; // optional pointer to statistics module
+
   // locator
   const char *file;
   int line;
@@ -319,6 +321,8 @@ DEF_STRUCT(lives_funcinst,
            /* // value can be read in completed hook for queud funcinst */
            /* // or between hook triggers for stacked funcinst */
            void *retloc;
+
+           double st_time, en_time;
 
            // TODO:
            // data book contains all local values for the funcinst

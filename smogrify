@@ -58,6 +58,10 @@ my $MYNAME = $0;
 
 # default values
 
+our $DEF_ARATE = 48000;
+our $DEF_ACHANS = 2;
+our $DEF_ASAMPS = 16;
+our $DEF_ASIGNED = 1;
 ###################################################################
 # Do not change these except for testing !
 
@@ -102,7 +106,6 @@ if ($^O eq "MSWin32" || $^O eq "msys") {
 my $configfile;
 my ($configfile_damaged, $recconfigfile, $recconfigfile_tried, $recconfigfile_succeeded, $newconfigfile);
 
-my $nulfile;
 
 my ($encoder, $smog_composite_command, $smog_convert_command);
 
@@ -117,7 +120,7 @@ my $is_mpv = 0;
 my $opening_preview = 0;
 my $workdir = "";
 
-my ($pidfile, $curworkdir, $handle, $from_handle, $statusfile, $mute, $undo_cut, $asamps, $signed, $asigned, $xsigned, $endian, $endian, $aendian, $aformat, $af_size, $audiofile, $sfile, $file, $gamma_type, $title, $author, $comment, $type, $stype, $is_remote, $syscom2, $syscom3, $syscomv, $syscoma, $syscomb, $trimcom, $loop, $retval, $hsize, $vsize, $start, $end, $audio_start, $audio_end, $audio_to, $audio_in, $audio_out, $audio_effect, $img_ext, $img_ext2, $ximg_ext, $top, $count, $fps, $xfps, $f_size, $size, $arate, $achans, $xarate, $xachans, $bpp, $xbpp, $name, $osd, $img_fmt, $threadopts, $stframe, $num_frames, $new_frames, $noframedrop, $extra_params, $audcom, $aformnew, $channs, $opentest, $quality, $compression, $frames, $stframes, $bandwidth, $band, $curtmpfile, $sox_version, $nodither, $trashdir, $pat, $com, $smerr, $dir, $plugin_name, $only_first, $output, $areq, $img_prefix, $antialias, $has_rec, $imresact, $img_type, $exec_dir, $script_dir, $dwidth, $dheight, $width, $height, $fsize, $afsize, $frame, $sframe, $nfile, $from_ext, $to_ext, $ext, $out_ext, $val, $leave_headers, $with_audio, $allow_missing, $where, $times, $track, $res, $bestvideo, $xbestaudio);
+my ($pidfile, $curworkdir, $handle, $from_handle, $statusfile, $mute, $undo_cut, $asamps, $signed, $asigned, $xsigned, $aendian, $aformat, $af_size, $audiofile, $sfile, $file, $gamma_type, $title, $author, $comment, $type, $stype, $is_remote, $syscom2, $syscom3, $syscomv, $syscoma, $syscomb, $trimcom, $loop, $retval, $hsize, $vsize, $start, $end, $audio_start, $audio_end, $audio_to, $audio_in, $audio_out, $audio_effect, $img_ext, $img_ext2, $ximg_ext, $top, $count, $fps, $xfps, $f_size, $size, $arate, $achans, $xarate, $xachans, $bpp, $xbpp, $name, $osd, $img_fmt, $threadopts, $stframe, $num_frames, $new_frames, $noframedrop, $extra_params, $audcom, $aformnew, $channs, $opentest, $quality, $compression, $frames, $stframes, $bandwidth, $band, $curtmpfile, $sox_version, $nodither, $trashdir, $pat, $com, $smerr, $dir, $plugin_name, $only_first, $output, $areq, $img_prefix, $antialias, $has_rec, $imresact, $img_type, $exec_dir, $script_dir, $dwidth, $dheight, $width, $height, $fsize, $afsize, $frame, $sframe, $nfile, $from_ext, $to_ext, $ext, $out_ext, $val, $leave_headers, $with_audio, $allow_missing, $where, $times, $track, $res, $bestvideo, $xbestaudio);
 
 my $ALLOW_AUDIO32;
 
@@ -876,8 +879,8 @@ if (1) {
 		if (defined(open IN, "< header2")) {
 		    read IN, $val, 4;
 
-		    # unfortunately...old clips used whatever endian the machine used
-		    $endian = get_endian();
+		    # unfortunately...old clips used whatever aendian the machine used
+		    $aendian = get_endian();
 		    $frames = getint($val);
 		    read IN, $title, 256;
 		    read IN, $author, 256;
@@ -1453,7 +1456,7 @@ if (1) {
 
 	    sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps,
 				 $f_size, $arate, $achans, $asamps, $signed, 
-				 $endian, $af_size, $gamma_type, $title, $author, $comment);
+				 $aendian, $af_size, $gamma_type, $title, $author, $comment);
 
 	    exit 0;
 	}
@@ -1599,8 +1602,6 @@ if (1) {
 
 	if ($command eq "play") {
 	    ## only used for audio playback with "sox"
-	    $endian = get_endian();
-
 	    $fps = $ARGV[2];
 	    if ($fps == 0) {
 		$fps = config_get("default_fps");
@@ -1615,7 +1616,7 @@ if (1) {
 	    }
 
 	    if (!defined $ARGV[6] || $ARGV[6] == 0) {
-		$arate = 44100;
+		$arate = $DEF_ARATE;
 	    } else {
 		$arate = $ARGV[6];
 	    }
@@ -1641,7 +1642,7 @@ if (1) {
 	    }
 
 	    if (!defined $ARGV[10]) {
-		$aendian = $endian;
+		$aendian = get_endian();
 	    } else {
 		$aendian = $ARGV[10];
 	    }
@@ -1681,7 +1682,7 @@ if (1) {
 
 		$xsigned = get_sox_signed($signed);
 
-		if ($aendian == $endian) {
+		if ($aendian == get_endian()) {
 		    $aendian = "";
 		} else {
 		    $aendian = "-x";
@@ -1900,7 +1901,7 @@ if (1) {
 	    if (!$ALLOW_AUDIO32) {
 		if ($asamps == 32) {
 		    # cannot handle this yet, need to resample to s16
-		    if ($endian == 1) {
+		    if ($aendian == 0) {
 			$aformnew = "-format s16le";
 		    }
 		    else {
@@ -2226,7 +2227,7 @@ if (1) {
 		if ($af_size > 0 || $count > 0) {
 		    sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate,
 				  $achans, $asamps,
-				  $signed, $endian, $af_size, $gamma_type, $title, $author, $comment);
+				  $signed, $aendian, $af_size, $gamma_type, $title, $author, $comment);
 		    exit 0;
 		}
 		# should have audio then
@@ -2289,7 +2290,7 @@ if (1) {
 	    $af_size = -s $audio_out;
 	    if (-d $curworkdir) {
 		sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans,
-			      $asamps, $signed, $endian, $af_size, $gamma_type, $title, $author, $comment);
+			      $asamps, $signed, $aendian, $af_size, $gamma_type, $title, $author, $comment);
 	    }
 	    exit 0;
 	}
@@ -2441,8 +2442,7 @@ if (1) {
 
 	    if (defined($ARGV[10])) {
 		$signed = $ARGV[10] & 1;
-		$aendian = $ARGV[10] & 2; # value of 2 means bigendian
-		$aendian = !$aendian; #endian is revesed here (0 means bigend)
+		$aendian = $ARGV[10] & 2;
 	    }
 	    else {
 		$signed = 1;
@@ -2937,10 +2937,10 @@ if (1) {
 	    $img_prefix = get_img_prefix($img_ext);
 
 	    if (!defined($ARGV[3])) {
-		$endian = get_endian();
+		$aendian = get_endian();
 	    }
 	    else {
-		$endian = $ARGV[3];
+		$aendian = $ARGV[3];
 	    }
 	    if (defined $ARGV[4]) {
 		$newwidth = $ARGV[4];
@@ -3453,7 +3453,7 @@ if (1) {
 
 	if ($command eq "append_audio") {
 	    # here we end up with (raw) 'audiodump', which will be renamed to 'audio' in commit_audio
-	    $endian = get_endian();
+	    $aendian = get_endian();
 
 	    $type = $ARGV[2];
 	    $nrate = $ARGV[3];
@@ -3462,31 +3462,36 @@ if (1) {
 	    $nsigned = $ARGV[6];
 	    $nendian = $ARGV[7];
 	    $file = $ARGV[8];
+
 	    $audio_in = "audiodump.wav";
 
 	    smog_chdir($curworkdir);
 
 	    $audiofile = "audio";
 
-	    ## mp3 / ogg try specific openers, if fail, call othera open. which tries with mplayer
-	    ## all create pcm wav @ $audio_in. wav_open just copies
-	    if ($type eq "mp3") {
-		&mp3_open;
-	    }
-	    elsif($type eq "ogg") {
-		&ogg_open;
-	    }
-	    elsif($type eq "wav") {
-		## sets $arate, $achans, $asamps to defaults ifndef, sets asigned, aendian
-		# if ! signed, endian, copies $file to $audio_in
-		## does no actual conv.
-		## sets f_size
-		&wav_open;
+	    if (location("ffmpeg") ne "") {
+		ffmpeg_dec_audio($file, $audio_in, $nrate, $nsamps, $nchans, $nfloat, $nendian, $msigned);
 	    }
 	    else {
-		&othera_open;
+		## mp3 / ogg try specific openers, if fail, call othera open. which tries with mplayer
+		## all create pcm wav @ $audio_in. wav_open just copies
+		if ($type eq "mp3") {
+		    &mp3_open;
+		}
+		elsif($type eq "ogg") {
+		    &ogg_open;
+		}
+		elsif($type eq "wav") {
+		    ## sets $arate, $achans, $asamps to defaults ifndef, sets asigned, aendian
+		    # if ! signed, aendian, copies $file to $audio_in
+		    ## does no actual conv.
+		    ## sets f_size
+		    &wav_open;
+		}
+		else {
+		    &othera_open;
+		}
 	    }
-
 	    if ($panic) {
 		unlink $pidfile;
 		exit 1;
@@ -3501,7 +3506,7 @@ if (1) {
 	    $audio_out = "audio.new";
 
 	    ## TODO: resample in the conversion if possible
-	    &convert_audio_to_raw;  ## audiodump.wav -> audio.new
+	    &convert_audio_to_raw($audio_in, $audio_out);  ## audiodump.wav -> audio.new
 	    if ($panic) {
 		unlink $pidfile;
 		exit 1;
@@ -3512,7 +3517,7 @@ if (1) {
 
 	    # resample $audio_out (if required)
 	    unless ($arate == $nrate && $achans == $nchans && $asamps == $nsamps && $nsigned == $signed &&
-		    $nendian == $endian) {
+		    $nendian == $aendian) {
 		$audio_in = $audio_out;
 		#audio.new
 		$audio_out = $audio_bak;
@@ -3811,7 +3816,7 @@ if (1) {
 
 	if ($command eq "commit_audio") {
 	    # commit the audio file in either audiodump, audiodump.pcm  or audiodump.wav as new audio file
-
+	    my $out_size;
 	    $allow_nonex = 0;
 	    if (defined $ARGV[2]) {
 		$allow_nonex = $ARGV[2];
@@ -3819,15 +3824,17 @@ if (1) {
 
 	    smog_chdir($curworkdir);
 
-	    $audio_out = "audio";
+	    $audio_out = "$curworkdir/audio";
 	    $audio_bak = "audio.bak";
 
 	    my $gotit = 0;
 
-	    $file = $audio_in = "audiodump.wav";
+	    $file = $audio_in = "$curworkdir/audiodump.wav";
 
-	    my $f_size = -s $audio_in;
-	    if ($f_size > 0) {
+	    my $in_size = -s $audio_in;
+	    print STDERR "waiting,sz is $in_size\n";
+
+	    if ($in_size > 0) {
 		# wav format
 		if (-f $audio_out) {
 		    $smres = smog_rename($audio_out, $audio_bak);
@@ -3836,14 +3843,32 @@ if (1) {
 			sig_write_error($audio_bak);
 			exit 1;
 		    }
+
 		}
+
+		$in_size = -s $audio_in;
+		print STDERR "waiting3,sz is $in_size\n";
+###
 		get_file_info($file, 2, 0);
+###
 		if ($panic) {
 		    unlink $pidfile;
 		    exit 1;
 		}
-		&convert_audio_to_raw;
+
+		$in_size = -s $audio_in;
+
+		print STDERR "wil conv $audio_in to raw $audio_out\n";
+		print STDERR "sxzz $audio_in $in_size  sz $audio_out " . -s $audio_out.  "\n";
+
+		&convert_audio_to_raw($audio_in, $audio_out);  ## audiodump.wav -> audio
+
+		$out_size = -s $audio_out;
+
+		print STDERR "after sxzz $audio_in $in_size, and  $audio_out $out_size\n";
+
 		if ($panic) {
+		    print STDERR "panic !\n";
 		    unlink $pidfile;
 		    exit 1;
 		}
@@ -3869,17 +3894,19 @@ if (1) {
 		    smog_rename($audio_in, $audio_out);
 		    # dummy values, the GUI should know these
 		    $arate = $achans = $asamps = 0;
-		    $signed = $endian = 1;
+		    $asigned = $aendian = 1;
 		} else {
 		    unless($allow_nonex) {
 			sig_error("$GUI_NAME audio error.");
 		    }
 		}
 	    }
-	    unlink glob "audiodump.*";
 
-	    $f_size = -s $audio_out;
-	    sig_complete($arate, $achans, $asamps, $signed, $endian, $f_size);
+	    unlink glob "audiodump.*";
+	    $out_size = -s $audio_out;
+
+	    print STDERR "conversion2 done vasl:$arate, $achans, $asamps, $asigned, $aendian, $out_size\n";
+	    sig_complete($arate, $achans, $asamps, $asigned, $aendian, $out_size);
 	    exit 0;
 	}
 
@@ -4504,7 +4531,7 @@ if (1) {
 	    }
 	    $f_size = -s $audiofile;
 	    # the '-x' option will force these
-	    $arate = 44100;
+	    $arate = $DEF_ARATE;
 	    $achans = 2;
 	    $asamps = 16;
 	    $aendian = get_endian();
@@ -4518,37 +4545,64 @@ if (1) {
 
 
 	if ($command eq "audioopen") {
-	    # TODO - allow front end to specify rate/channels, etc.
-	    $file = $ARGV[2];
+	    my $trate = 48000;
+	    my $tbsize = 16;
+	    my $tchans = 2;
+	    my $tfloat = 0;
+	    my $tsigned = 1;
+	    my $tendian = get_endian();
+
+	    our $file = $ARGV[2];
+
+	    if (defined $ARGV[7]) {
+		$trate = $ARGV[3];
+		$tbsize = $ARGV[4];
+		$tchans = $ARGV[5];
+		$tfloat = $ARGV[6];
+		$tendian = $ARGV[7];
+	    }
+	    if (defined $ARGV[8]) {
+		$tsigned = $ARGV[8];
+	    }
 
 	    smog_chdir($curworkdir);
 
 	    $audio_in = "audiodump.wav";
 
-	    $ext = get_ext($file);
-
-	    if ($ext eq ".mp3") {
-		&mp3_open;
-	    }
-	    elsif($ext eq ".ogg") {
-		&ogg_open;
-	    }
-	    elsif($ext eq ".wav") {
-		## sets $arate, $achans, $asamps to defaults ifndef, sets asigned, aendian if ! signed, endian,
-		## copies $file to $audio_in
-		## does no actual conv.
-		## sets f_size
-		&wav_open;
+	    if (location("ffmpeg") ne "") {
+		ffmpeg_dec_audio($file, $audio_in, $trate, $tbsize, $tchans, $tfloat, $tendian, $tsigned);
+		$aendian = $tendian;
+		print STDERR "conversionsssssss done, $tendian, $aendian\n";
 	    }
 	    else {
-		&othera_open;
-	    }
+		$ext = get_ext($file);
 
+		if ($ext eq ".mp3") {
+		    &mp3_open;
+		}
+		elsif($ext eq ".ogg") {
+		    &ogg_open;
+		}
+		elsif($ext eq ".wav") {
+		    ## sets $arate, $achans, $asamps to defaults ifndef, sets asigned, aendian if ! signed, aendian,
+		    ## copies $file to $audio_in
+		    ## does no actual conv.
+		    ## sets f_size
+		    &wav_open;
+		}
+		else {
+		    &othera_open;
+		}
+	    }
 	    if ($panic) {
 		unlink $pidfile;
 		exit 1;
 	    }
+	    $f_size = -s $audio_in;
 
+	    print STDERR "conversionsdsds done, $tendian, $aendian\n";
+
+	    print STDERR "conversion done vasl:$arate, $achans, $asamps, $asigned, $aendian, $f_size\n";
 	    sig_complete($arate, $achans, $asamps, $asigned, $aendian, $f_size);
 	    exit 0;
 	}
@@ -5048,6 +5102,37 @@ sub try_to_recover {
 }
 
 
+sub ffmpeg_dec_audio {
+    my ($file, $out, $trate, $tbsize, $tchans, $tfloat, $tendian, $tsigned) = @_;
+    my $tsignedx = "f";
+    if (!$tfloat) {
+	$tsignedx = "s";
+	if (!$tsigned) {$tsignedx = "u";}
+    }
+    my $tendianx = "le";
+    if ($tendian) {$tendianx = "be";}
+    my $com = "ffmpeg -i $file -y -ar $trate -ac $tchans -acodec pcm_$tsignedx$tbsize$tendianx $curworkdir/$audio_in";
+
+    print STDERR "run cmd $com\n";
+    my $smerr = smog_system($com);
+    print STDERR "smerr is $smerr\n";
+
+    if ($smerr) {
+	sig_system_error($com, $smerr);
+	$panic = 1;
+    }
+    else {
+	$arate = $trate;
+	$achans = $tchans;
+	$asamps = $tbsize;
+	$asigned = $tsigned;
+	$aendian = $tendian;
+	#$isflt = $tfloat;
+    }
+}
+
+
+
 sub get_sox_version {
     #try to get version of sox
 
@@ -5437,7 +5522,7 @@ sub smog_system_direct {
     my $smcomret;
 
     $smcomret = `$smcommand`;
-
+    $DEBUG_SMOGRIFY = 1;
     if ($DEBUG_SMOGRIFY && $? != 0) {
 	print STDERR "smogrify debug: command was $smcommand\n";
 	print STDERR "smogrify debug: result was $smcomret\n";
@@ -5881,7 +5966,7 @@ sub trim_center {
 
 sub get_mpv_info {
     ## we will set the following if possible:
-    # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $endian, $abitrate
+    # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $aendian, $abitrate
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
     my ($file, $VERBOSE) = @_;
@@ -6051,13 +6136,13 @@ sub get_mpv_info {
 	    $audend = substr($samps, -2, 2);
 	    if ($audend eq "le") {
 		# le
-		$endian = 1;
+		$aendian = 0;
 	    }
 	    elsif ($audend eq "be") {
-		$endian = 0;
+		$aendian = 1;
 	    }
 	    if ($VERBOSE > 1) {
-		print STDERR "mpv got asamps $asamps, signed $signed, endian $endian\n";
+		print STDERR "mpv got asamps $asamps, signed $signed, endian $aendian\n";
 		if (!$ALLOW_AUDIO32) {
 		    if ($asamps == 32) {
 			print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
@@ -6184,7 +6269,7 @@ sub get_mpv_info {
 
 sub get_ffprobe_info {
     ## we will set the following if possible:
-    # $count, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $endian, $abitrate
+    # $count, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $aendian, $abitrate
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
 
@@ -6269,10 +6354,10 @@ sub get_ffprobe_info {
 		}
 		$audend = substr($samps, -2, 2);
 		if ($audend eq "le") {
-		    $endian = 1;
+		    $aendian = 0;
 		}
 		elsif ($audend eq "be") {
-		    $endian = 0;
+		    $aendian = 1;
 		}
 		if ($VERBOSE > 1) {
 		    print STDERR "ffprobe got fltp\n";
@@ -6451,7 +6536,7 @@ sub get_ffprobe_info {
 
 sub get_mplayer_info {
     ## we will set the following if possible:
-    # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $endian, $abitrate
+    # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $aendian, $abitrate
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
 
@@ -6572,13 +6657,13 @@ sub get_mplayer_info {
 	    $audend = substr($samps, -2, 2);
 	    if ($audend eq "le") {
 		# le
-		$endian = 1;
+		$aendian = 0;
 	    }
 	    elsif ($audend eq "be") {
-		$endian = 0;
+		$aendian = 1;
 	    }
 	    if ($VERBOSE > 1) {
-		print STDERR "mplayer got asamps $asamps, signed $signed, endian $endian\n";
+		print STDERR "mplayer got asamps $asamps, signed $signed, endian $aendian\n";
 		if (!$ALLOW_AUDIO32) {
 		    if ($asamps == 32) {
 			print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
@@ -6713,7 +6798,7 @@ sub get_file_info {
     # e.g file -ib foo
 
     ## we will set the following if possible:
-    # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $endian, $abitrate
+    # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $aendian, $abitrate
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
 
@@ -6735,6 +6820,10 @@ sub get_file_info {
     elsif ($scantype == 4) {
 	$ptypes = $P_IMAGE;
     }
+
+    ## these should all be global values
+    ## unfortunately in some cases they are also used as local vals
+    ## TODO - use different names and explicitely set local values
     $count = 0;
     $bpp = 24;
     # default if none is found
@@ -6743,14 +6832,14 @@ sub get_file_info {
     $type ="Unknown";
     $hsize = 0;
     $vsize = 0;
-    $signed = -1;
+    $asigned = -1;
     $f_size = 0;
     $arate = $asamps = $achans = 0;
     $frames = 0;
     $asamps = 0;
     $length = 0;
     $id_vid_form = "";
-    $endian="";
+    $aendian="";
     $gamma_type = "";
     $author = "";
     $title = "";
@@ -6758,7 +6847,7 @@ sub get_file_info {
 
     $is_mpv = 0;
 
-    $DEBUG_FILE_ID = 0;
+    $DEBUG_FILE_ID = 1;
     if ($DEBUG_FILE_ID) {
 	print STDERR "IDing $file, scan type $scantype\n";
     }
@@ -6778,6 +6867,7 @@ sub get_file_info {
 	if (!defined($file_exec)) {
 	    $file_exec = location("file");
 	}
+
 	if ($file_exec) {
 	    $guess_type = file_examine($file);
 	    if ($DEBUG_FILE_ID) {
@@ -6921,8 +7011,8 @@ sub get_file_info {
 	}
     }
 
-    if ($endian eq "") {
-	$endian = get_endian(); # assume audio endian matches machine endian
+    if ($aendian eq "") {
+	$aendian = get_endian(); # assume audio endian matches machine endian
     }
 
     # get file size
@@ -6949,73 +7039,46 @@ sub get_file_info {
 
 
 sub convert_audio_to_raw {
-    #convert .wav to raw pcm using sox or mplayer
-    ## NEEDS $arate, $asamps, $achans, $audio_in, $audio_out ($nodither, $signed, $endian)
-    ## for sox needs sox_version
-
-    #TODO: my ($arate, ...) = @_;
-    my $smcom;
-
-    if (location("sox") ne "") {
-	if (!defined($sox_version)) {
-	    $sox_version = get_sox_version();
-	}
-	if (!defined($axsigned)) {
-	    ## call get_sox_signed with guessed format (u for 8, s for 16)
-	    ## returns signed e.g -e signed
-	    $axsigned = get_sox_format($asamps);
-	}
-	if (!$axsamps) {
-	    ## returns eg -b 16
-	    $axsamps = get_sox_samps($asamps);
-	}
-
-	## only needed for resampling I think
-	if ($sox_version < 13000000) {
-	    $nodither = "";
-	}
-	else {
-	    $nodither = "-D";
-	}
-
-	$smcom = "sox $nodither -t .wav  \"$audio_in\" -t .raw -r $arate " .
-	    "-c $achans $axsigned -$axsamps \"$audio_out\" >$nulfile 2>&1";
-	if ($DEBUG_SMOGRIFY) {
-	    print STDERR "COM is $smcom\n";
-	}
-    }
-    else {
-	my $threads = get_nthreads();
-	$mp_com = get_mplayer_location();
-	$format = get_mplayer_format();
-
-	if ($is_mpv) {
-	    if ($format eq "") {
-		# e.g. s8, u16, also no endian handling
-		sig_system_error("mpv cannot fully resample");
-		$panic = 1;
-		return;
+    my ($in, $out) = @_;
+    my $chr;
+    my $offs = 0;
+    if (defined(open IN, "<", $in)) {
+	while (1) {
+	    read IN, $chr, 1;
+	    $offs++;
+	    if ($chr eq 'd') {
+		read IN, $chr, 1;
+		$offs++;
+		if ($chr eq 'a') {
+		    read IN, $chr, 1;
+		    $offs++;
+		    if ($chr eq 't') {
+			read IN, $chr, 1;
+			$offs++;
+			if ($chr eq 'a') {
+			    read IN, $chr, 4;
+			    $offs += 4;
+			    last;
+			}
+		    }
+		}
 	    }
-	    my $threadopts = "--vd-lavc-threads=$threads";
-	    $smcom = "\"$mp_com\" --really-quiet --no-config --vo=null --no-video --ao=pcm --ao-pcm-waveheader=no " .
-		"--ao-pcm-file=\"$audio_out\" $format";
 	}
-	else {
-	    my $threadopts = "-lavdopts o=threads=$threads";
-	    $smcom = "\"$mp_com\" -really-quiet -noconfig all -vo null -vc null -benchmark-novideo -ao pcm:fast:nowaveheader:" .
-		"file=\"$audio_out\" $format <$nulfile";
-	}
+	close IN;
     }
 
-    my $smerr = smog_system($smcom);
-
-    if ($smerr) {
-	sig_system_error($smcom, $smerr);
-	$panic = 1;
-	return;
+    if ($offs) {
+	my $zzsize = -s $in;
+	$zzsize -= $offs;
+	$fdd_in = $in;
+	$fdd_out = $out;
+	fast_dd($zzsize, $offs, 0);
+	return if ($panic);
+	if (-s $out != $zzsize) {
+	    $panic = sig_write_error($out);
+	    return;
+	}
     }
-
-    smog_system_sync();
 }
 
 
@@ -7220,7 +7283,7 @@ sub clip_audio {
 sub resample_audio {
     #WARNING - $asamps and $nasamps are in bits
 
-    $endian = get_endian();
+    my $endian = get_endian();
 
     if (!defined($sox_version)) {
 	$sox_version = get_sox_version();
@@ -8093,12 +8156,12 @@ sub mp3_open {
 
     # prefer mpg321 if it's available
     unless (location("mpg321") eq "") {
-	smog_system("mpg321 -w \"$audio_in\" --rate 44100 --stereo \"$file\" >$nulfile 2>&1");
+	smog_system("mpg321 -w \"$audio_in\" --rate $DEF_ARATE --stereo \"$file\" >$nulfile 2>&1");
 	$f_size = -s $audio_in;
     }
     if ($f_size == 0) {
 	unless (location("mpg123") eq "") {
-	    smog_system("mpg123 -w \"$audio_in\" --rate 44100 --stereo \"$file\" >$nulfile 2>&1");
+	    smog_system("mpg123 -w \"$audio_in\" --rate $DEF_ARATE --stereo \"$file\" >$nulfile 2>&1");
 	    $f_size = -s $audio_in;
 	}
     }
@@ -8111,12 +8174,12 @@ sub mp3_open {
     return if $panic;
 
     $asigned = $signed;
-    $aendian = $endian;
+#    $aendian = $endian;
 
     if ($arate == 0 && $achans == 0 && $asamps == 0) {
 	# TODO - find way to read these
 	# have to assume these for now
-	$arate = 44100;
+	$arate = $DEF_ARATE;
 	$achans = 2;
 	$asamps = 16;
 
@@ -8154,12 +8217,12 @@ sub ogg_open {
     return if $panic;
 
     $asigned = $signed;
-    $aendian = $endian;
+#    $aendian = $endian;
 
     if ($arate == 0 && $achans == 0 && $asamps == 0) {
 	# TODO - find way to read these
 	# have to assume these for now
-	$arate = 44100;
+	$arate = $DEF_ARATE;
 	$achans = 2;
 	$asamps = 16;
 
@@ -8188,12 +8251,12 @@ sub wav_open {
     return if $panic;
 
     $asigned = $signed;
-    $aendian = $endian;
+#    $aendian = $endian;
 
     if ($arate == 0 && $achans == 0 && $asamps == 0) {
 	# TODO - find way to read these
 	# have to assume these for now
-	$arate = 44100;
+	$arate = $DEF_ARATE;
 	$achans = 2;
 	$asamps = 16;
 
@@ -8211,7 +8274,7 @@ sub wav_open {
 
 
 sub othera_open {
-    $arate = 44100;
+    $arate = $DEF_ARATE;
     $achans = 2;
     $asamps = 16;
     $aendian = get_endian();
@@ -8246,13 +8309,13 @@ sub othera_open {
     return if $panic;
 
     $asigned = $signed;
-    $aendian = $endian;
+#    $aendian = $endian;
 
     if ($arate == 0 && $achans == 0 && $asamps == 0) {
 	## should be very rare, get_file_info generally works well now
-	$arate = 44100;
-	$achans = 2;
-	$asamps = 16;
+	$arate = $DEF_ARATE;
+	$achans = $DEF_ACHANS;
+	$asamps = $DEF_ASAMPS;
 
 	$asigned = 1;
 	if ($asamps == 8) {
@@ -8311,7 +8374,7 @@ sub getint {
     my (@val) = unpack("CCCC", $string); #unpack $string to 4 chars in @val array
     my $rval;
 
-    if (!defined($endian) || $endian == 1) {
+    if (!defined($aendian) || $aendian == 0) {
 	#little endian
 	$rval = ((($val[3] * 256 + $val[2]) * 256 + $val[1]) * 256) + $val[0];
     }
@@ -8323,14 +8386,15 @@ sub getint {
 
 
 sub get_endian {
-    # 0 == big-endian
-    # 1 == little-endian
-    return unpack("h*", pack("s", 1)) =~ /^1/;
+    # 0 == little-endian
+    # 1 == big-endian
+    return (!(unpack("h*", pack("s", 1)) =~ /^1/));
 }
 
 
 sub get_mplayer_format {
     #TODO: my ($arate, ...) = @_;
+    my $endian = get_endian();
 
     if (!defined($nrate)) {
 	$nrate = $arate;
@@ -8351,7 +8415,7 @@ sub get_mplayer_format {
 	$nsigned = $asigned;
     }
     if (!defined($nendian)) {
-	$nendian = $aendian;
+	$nendian = $endian;
     }
 
     if ($is_mpv) {
@@ -8375,12 +8439,12 @@ sub get_mplayer_format {
 	return "-format s8";
     }
     if ($nsigned == 0) {
-	if ($nendian == 0) {
+	if ($nendian == 1) {
 	    return "-format u16be";
 	}
 	return "-format u16le";
     }
-    if ($nendian == 0) {
+    if ($nendian == 1) {
 	return "-format s16be";
     }
     return "-format s16le";
@@ -9540,8 +9604,10 @@ sub fast_dd {
 	return;
     }
 
-    binmode FFIN or $panic = sig_read_error($fdd_in);
-    return if $panic;
+    binmode FFIN or
+	$panic = sig_read_error($fdd_in);
+
+	return if $panic;
 
     my $blocksize = my $bs = (stat FFIN)[11];
     my $use_sys = 0;

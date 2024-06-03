@@ -2109,25 +2109,14 @@ void set_sel_label(LiVESWidget * sel_label) {
 }
 
 
-uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
+uint32_t get_signed_endian(int issigned, int aendian) {
   // asigned TRUE == signed, FALSE == unsigned
-
-  if (is_signed) {
-    if (little_endian) {
-      return 0;
-    } else {
-      return AFORM_BIG_ENDIAN;
-    }
-  } else {
-    if (!is_signed) {
-      if (little_endian) {
-        return AFORM_UNSIGNED;
-      } else {
-        return AFORM_UNSIGNED | AFORM_BIG_ENDIAN;
-      }
-    }
-  }
-  return AFORM_UNKNOWN;
+  uint32_t signed_endian = 0;
+  if (issigned == AUDIO_UNSIGNED) signed_endian += AFORM_UNSIGNED;
+  else signed_endian += AFORM_SIGNED;
+  if (aendian == AUDIO_BE) signed_endian += AFORM_BIG_ENDIAN;
+  else signed_endian += AFORM_LITTLE_ENDIAN;
+  return signed_endian;
 }
 
 

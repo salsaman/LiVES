@@ -2422,13 +2422,15 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
     reorder_width = reorder_height = 0;
   }
 
+  mainw->fx4_val = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
   if (rwidth * rheight == 0) com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d", prefs->backend, sfile->handle,
-                                     get_image_ext_for_type(sfile->img_type), !mainw->endian,
+                                     get_image_ext_for_type(sfile->img_type), (capable->hw.byte_order == LIVES_BIG_ENDIAN),
                                      reorder_leave_back, sfile->frames);
   else {
     if (intention != OBJ_INTENTION_ENCODE || !prefs->enc_letterbox) {
       com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d", prefs->backend, sfile->handle,
-                                get_image_ext_for_type(sfile->img_type), !mainw->endian, rwidth, rheight, sfile->frames);
+                                get_image_ext_for_type(sfile->img_type), (capable->hw.byte_order == LIVES_LITTLE_ENDIAN),
+                                rwidth, rheight, sfile->frames);
     } else {
       int iwidth = sfile->hsize, iheight = sfile->vsize;
       calc_maxspect(rwidth, rheight, &iwidth, &iheight);
@@ -2450,8 +2452,8 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
         }
       }
       com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d", prefs->backend, sfile->handle,
-                                get_image_ext_for_type(sfile->img_type), !mainw->endian, rwidth, rheight,
-                                reorder_leave_back, sfile->frames, iwidth, iheight);
+                                get_image_ext_for_type(sfile->img_type), (capable->hw.byte_order == LIVES_BIG_ENDIAN),
+                                rwidth, rheight, reorder_leave_back, sfile->frames, iwidth, iheight);
     }
   }
 

@@ -12,11 +12,19 @@
 typedef uint64_t size64_t;
 typedef int64_t ssize64_t;
 
-#define AFORM_SIGNED 0
-#define AFORM_LITTLE_ENDIAN 0
+#define AUDIO_SIGNED	1
+#define AUDIO_UNSIGNED	(!(AUDIO_SIGNED))
 
-#define AFORM_UNSIGNED 1
-#define AFORM_BIG_ENDIAN (1<<1)
+#define AUDIO_LE	(!(LIVES_BIG_ENDIAN))
+#define AUDIO_BE	(!(AUDIO_LE))
+
+// values when combined as signed_endian
+
+#define AFORM_SIGNED 		(!(AUDIO_SIGNED)) // CARE !
+#define AFORM_LITTLE_ENDIAN 	((AUDIO_LE) << 1)
+
+#define AFORM_UNSIGNED 		(!(AUDIO_UNSIGNED)) // CARE !
+#define AFORM_BIG_ENDIAN 	((AUDIO_BE) << 1)
 
 #define AFORM_UNKNOWN 65536
 
@@ -98,12 +106,16 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
 #define SWAP_X_TO_L 1  ///< other to local
 #define SWAP_L_TO_X 2 ///< local to other
 
-/// defaults for when not specified
-# define DEFAULT_AUDIO_RATE 44100
-# define DEFAULT_AUDIO_CHANS 2
-# define DEFAULT_AUDIO_SAMPS 16
-# define DEFAULT_AUDIO_SIGNED8 (AFORM_UNSIGNED)
-# define DEFAULT_AUDIO_SIGNED16 (!AFORM_UNSIGNED)
+/// defaults for when not specified#
+//# define DEFAULT_AUDIO_RATE 44100
+#define DEFAULT_AUDIO_RATE 48000
+#define DEFAULT_AUDIO_CHANS 2
+#define DEFAULT_AUDIO_SAMPS 16
+#define DEFAULT_AUDIO_SIGNED8 (AUDIO_UNSIGNED)
+#define DEFAULT_AUDIO_SIGNED16 (AUDIO_SIGNED)
+#define DEFAULT_AUDIO_SIGNED DEFAULT_AUDIO_SIGNED16
+#define DEFAULT_AUDIO_ENDIAN (capable->hw.byte_order == LIVES_LITTLE_ENDIAN \
+			       ? AUDIO_LE : AUDIO_BE)
 
 // for afbuffer
 #define ABUF_ARENA_SIZE 768000

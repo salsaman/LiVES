@@ -159,14 +159,6 @@ lives_result_t video_sync_ready(void) {
     mainw->sync_err = xtime;
     return LIVES_RESULT_TIMEDOUT;
   }
-
-  /* mainw->startticks -= lives_get_current_playback_ticks(mainw->origticks, NULL); */
-  /* lives_microsleep_while_false(mainw->audio_seek_ready); */
-  /* mainw->startticks += lives_get_current_playback_ticks(mainw->origticks, NULL); */
-
-  /* mainw->fps_mini_measure = 0; */
-  /* mainw->fps_mini_ticks = lives_get_session_ticks(); */
-  /* mainw->last_startticks = mainw->startticks; */
   return LIVES_RESULT_FAIL;
 }
 
@@ -573,7 +565,7 @@ static lives_result_t prepare_frames(frames_t frame) {
 
     // we achieve this by creating a 'clone' of the original decoder for each subsequent copy of the original
     // -> clone decoder implies that we can skip things like getting frame count, frame size, fps, etc.
-    // since we alraedy know this - thus we can very quickly create a new clone
+    // since we already know this - thus we can very quickly create a new clone
 
     // the algorithm here decides which tracks get the original decoders (created with the clip), and which get clones
     // - maintain a running list (int array) of the previous tracks / clips (mainw->old_active_track_list)
@@ -2665,18 +2657,7 @@ close_clip:
   if (!CURRENT_CLIP_IS_PHYSICAL) time_source = LIVES_TIME_SOURCE_SYSTEM;
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
-  if (mainw->currticks < mainw->startticks) {
-    /* delay_ticks += (mainw->currticks - mainw->startticks); */
-    /* if (delay_ticks > mainw->startticks - mainw->currticks) { */
-    /*   delay_ticks -= mainw->startticks - mainw->currticks; */
-    /*   mainw->startticks = mainw->currticks; */
-    /* } else { */
-    /*   if (delay_ticks > 0) mainw->startticks -= delay_ticks; */
-    /*   delay_ticks = 0; */
-    /* } */
-    //}
-    //if (mainw->currticks < mainw->startticks) {
-  }
+
   //g_print("LOOP\n");
 
   dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
@@ -3684,28 +3665,6 @@ update_effort:
         } else can_precache = FALSE;
 
         if (getahead > 0 || can_precache) {
-          /* if (best_frame == -1 && (triggered || (!spare_cycles && can_precache) */
-          /* 			   || (show_frame && !showed_frame && !fixed_frame))) { */
-          /*   if (dropped > skipped) best_frame = sfile->last_req_frame + dir * (1 + dropped); */
-          /*   else best_frame = sfile->last_req_frame + dir * (1 + skipped); */
-          /*   lagged = (requested_frame - sfile->last_req_frame) * dir; */
-          /*   if (lagged < 0) lagged = 0; */
-          /*   if (lagged) best_frame += dir; */
-
-          /*   if (dir * (best_frame - requested_frame) < MIN_JMP_THRESH) { */
-          /*     best_frame = requested_frame + MIN_JMP_THRESH * dir; */
-          /*     if (dir * (best_frame - sfile->last_req_frame) < 1) best_frame = sfile->last_req_frame + dir; */
-          /*   } */
-          /*   targ_time = ((double)(best_frame - sfile->last_req_frame + 1.) / sfile->pb_fps); */
-          /*   plframes = (frames_t)(targ_time / cycle_avg + 1.); */
-          /*   if (plframes < 1) plframes = 1; */
-          /*   plframes *= skipped; */
-          /*   if ((best_frame - sfile->last_req_frame) * dir < plframes + MIN_JMP_THRESH) */
-          /*     best_frame = sfile->last_req_frame + (plframes + MIN_JMP_THRESH) * dir; */
-          /*   if ((best_frame - sfile->last_req_frame) * dir > plframes + MAX_JMP_THRESH) */
-          /*     best_frame = sfile->last_req_frame + (plframes + MAX_JMP_THRESH) * dir; */
-          /* } */
-
           if (best_frame > 0 &&  best_frame != clamp_frame(mainw->playing_file, best_frame)) {
             g_print("pt aaa2\n");
             best_frame = -1;
@@ -3895,46 +3854,6 @@ boolean begin_playback(void) {
   } else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
 
   process_one();
-
-  //while (1) {
-  /*   while (!mainw->internal_messaging && !lives_file_test(cfile->info_file, LIVES_FILE_TEST_EXISTS)) { */
-  /*     // just pulse the progress bar, or play video */
-  /*     // returns a code if pb stopped */
-  /*     int ret = process_one(); */
-  /*     if (ret) { */
-  /* 	//g_print("pb stopped, reason %d\n", ret); */
-  /* 	lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL); */
-  /* 	return FALSE; */
-  /*     } */
-
-  /*     if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) { */
-  /* 	int64_t dsused = disk_monitor_check_result(prefs->workdir); */
-  /* 	if (dsused >= 0) { */
-  /* 	  capable->ds_used = dsused; */
-  /* 	} */
-  /* 	disk_monitor_start(prefs->workdir); */
-  /* 	mainw->dsu_valid = FALSE; */
-  /*     } */
-
-  /*     if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) { */
-  /* 	// we are generating audio from a plugin and it needs reinit */
-  /* 	// - we do it in this thread so as not to hold up the player thread */
-  /* 	reinit_audio_gen(); */
-  /*     } */
-
-  /*     if (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused) */
-  /* 	lives_usleep(prefs->sleep_time); */
-
-  /*     // normal playback, with realtime audio player */
-  /*     if (mainw->whentostop != STOP_ON_AUD_END) continue; */
-
-  /*     if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) { */
-  /* 	// we are generating audio from a plugin and it needs reinit */
-  /* 	// - we do it in this thread so as not to hold up the player thread */
-  /* 	reinit_audio_gen(); */
-  /*     } */
-  /*   } */
-  /* } */
 
   //finish:
   //play/operation ended

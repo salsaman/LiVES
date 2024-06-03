@@ -1917,11 +1917,14 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
        lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
       && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
     if (rdet && !rdet->is_encoding) {
-      if (mainw->endian != AFORM_BIG_ENDIAN && (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))))
+      if ((capable->hw.byte_order == LIVES_LITTLE_ENDIAN) &&
+          (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))))
         swap_endian = TRUE;
     } else {
-      if (mainw->endian != AFORM_BIG_ENDIAN && (cfile->signed_endian & AFORM_BIG_ENDIAN)) swap_endian = TRUE;
-      //if (mainw->endian==AFORM_BIG_ENDIAN && (cfile->signed_endian&AFORM_BIG_ENDIAN)) swap_endian=TRUE; // needs test
+      if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN
+          && (cfile->signed_endian & AFORM_BIG_ENDIAN)) swap_endian = TRUE;
+      if (capable->hw.byte_order == LIVES_BIG_ENDIAN
+          && !(cfile->signed_endian & AFORM_BIG_ENDIAN)) swap_endian = TRUE;
     }
   }
 

@@ -396,7 +396,8 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     else myval = lives_strdup("false");
     break;
   case CLIP_DETAILS_AENDIAN:
-    myval = lives_strdup_printf("%d", (*(int *)val) / 2);
+    myval = lives_strdup_printf("%d", !!(*(int *)val)
+                                ? AUDIO_BE : AUDIO_LE);
     break;
   case CLIP_DETAILS_ASAMPS:
     myval = lives_strdup_printf("%d", *(int *)val); break;
@@ -485,8 +486,8 @@ boolean save_clip_values(int which) {
 
   set_signal_handlers((lives_sigfunc_t)defer_sigint); // ignore ctrl-c
 
-  asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
-  endian = sfile->signed_endian & AFORM_BIG_ENDIAN;
+  asigned = sfile->signed_endian & AFORM_UNSIGNED ? AUDIO_UNSIGNED : AUDIO_SIGNED;
+  endian = sfile->signed_endian & AFORM_BIG_ENDIAN ? AUDIO_BE : AUDIO_LE;
   clipdir = get_clip_dir(which);
   if (IS_ASCRAP_CLIP(which))
     lives_header_new = lives_build_filename(clipdir, LIVES_ACLIP_HEADER "." LIVES_FILE_EXT_NEW, NULL);
@@ -1357,7 +1358,7 @@ boolean read_headers(int clipno, const char *dir, const char *file_name) {
   int pieces;
   int header_fd;
   int retval2;
-  int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
+  int asigned = AUDIO_SIGNED, aendian = AUDIO_LE;
 
   lives_clip_details_t detail;
 
@@ -1571,10 +1572,11 @@ get_avals:
       }
       if (retvala && retval) {
         detail = CLIP_DETAILS_AENDIAN;
-        retval = get_clip_value(clipno, detail, &aendian, 0);
+        retval = !!get_clip_value(clipno, detail, &aendian, 0);
       }
 
-      sfile->signed_endian = asigned + aendian;
+      sfile->signed_endian = (asigned == AUDIO_UNSIGNED ? AFORM_SIGNED : AFORM_UNSIGNED)
+                             + (aendian == AUDIO_LE ? AFORM_LITTLE_ENDIAN : AFORM_BIG_ENDIAN);
 
       if (retvala && retval) {
         detail = CLIP_DETAILS_ASAMPS;
@@ -1737,7 +1739,7 @@ old_check:
   version_hash = verhash(version);
   if (version_hash < 7001) {
     sfile->arps = sfile->arate;
-    sfile->signed_endian = mainw->endian;
+    sfile->signed_endian = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
   }
 
   com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, sfile->handle,

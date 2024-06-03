@@ -623,6 +623,12 @@ static boolean read_file_details_generic(const char *fname) {
   }
 
   // check details
+
+  // values returned - $handle, $count, $type, $hsize, $vsize, $bpp, $fps,
+  // $f_size, $arate, $achans, $asamps, $signed,
+  // $aendian, $af_size, $gamma_type, $title, $author, $comment);
+
+
   com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, dirname,
                             (tmp = lives_filename_from_utf8(fname, -1, NULL, NULL, NULL)),
                             get_image_ext_for_type(IMG_TYPE_BEST), 0);
@@ -5577,7 +5583,7 @@ static LiVESTextBuffer *cleardisk_analyse(const char *temp_backend, const char *
 
   // 4 refs !!!!
   g_print("lpt has2 %d refs, reading from %s\n", lives_proc_thread_count_refs(lpt), cfile->info_file);
-  lives_proc_thread_request_cancel(lpt, FALSE);
+  //  lives_proc_thread_request_cancel(lpt, FALSE);
   g_print("lpt has3 %d refs\n", lives_proc_thread_count_refs(lpt));
 
   //if (lpt != mainw->debug_ptr) abort();
@@ -5725,6 +5731,7 @@ static void cleardisk_show_results(LiVESTextBuffer * tbuff, int64_t bytes) {
   }
 
   lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_destroy(dialog);
 }
 
 
@@ -5933,7 +5940,7 @@ void _on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // *INDENT-ON*
 
   tbuff = NULL;
-  BREAK_ME("cllnup ready");
+
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
   } else {
@@ -8345,9 +8352,40 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
     }
   }
 
+  if (!lives_ascii_strncasecmp(a_type, LIVES_FILE_EXT_WAV, 3)) israw = 0;
+
+  if (HAS_EXTERNAL_PLAYER) {
+    if (read_file_details(file_name, TRUE, FALSE)) {
+      if (get_token_count(mainw->msg, '|') >= 14) {
+        array = lives_strsplit(mainw->msg, "|", -1);
+        cfile->arate = atoi(array[9]);
+        cfile->achans = atoi(array[10]);
+        if (cfile->achans > 2)
+          cfile->achans = 2; // for now
+        cfile->asampsize = atoi(array[11]);
+        if (cfile->asampsize > 16) cfile->asampsize = 16; // for now
+        cfile->signed_endian = get_signed_endian(atoi(array[12]), atoi(array[13]));
+        lives_strfreev(array);
+        preparse = TRUE;
+      }
+    }
+  }
+
   if (gotit) {
-    com = lives_strdup_printf("%s audioopen \"%s\" \"%s\"", prefs->backend, cfile->handle,
-                              (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
+    int trate = DEFAULT_AUDIO_RATE;
+    int tchans = DEFAULT_AUDIO_CHANS;
+    int tsamps = DEFAULT_AUDIO_SAMPS;
+    int tsigned = DEFAULT_AUDIO_SIGNED;
+    int tfloat = 0;
+    int tendian = DEFAULT_AUDIO_ENDIAN;
+
+    if (preparse) {
+      trate = cfile->arate;
+    }
+
+    com = lives_strdup_printf("%s audioopen \"%s\" \"%s\" %d %d %d %d %d %d", prefs->backend, cfile->handle,
+                              (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
+                              trate, tsamps, tchans, tfloat, tendian, tsigned);
     lives_free(tmp);
   } else {
     lives_free(a_type);
@@ -8361,28 +8399,12 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
     return;
   }
 
-  if (!lives_ascii_strncasecmp(a_type, LIVES_FILE_EXT_WAV, 3)) israw = 0;
-
-  if (HAS_EXTERNAL_PLAYER) {
-    if (read_file_details(file_name, TRUE, FALSE)) {
-      if (get_token_count(mainw->msg, '|') >= 14) {
-        array = lives_strsplit(mainw->msg, "|", -1);
-        cfile->arate = atoi(array[9]);
-        cfile->achans = atoi(array[10]);
-        cfile->asampsize = atoi(array[11]);
-        cfile->signed_endian = get_signed_endian(atoi(array[12]), atoi(array[13]));
-        lives_strfreev(array);
-        preparse = TRUE;
-      }
-    }
-  }
-
   if (!preparse) {
     // TODO !!! - need some way to identify audio without invoking mplayer
     cfile->arate = cfile->arps = DEFAULT_AUDIO_RATE;
     cfile->achans = DEFAULT_AUDIO_CHANS;
     cfile->asampsize = DEFAULT_AUDIO_SAMPS;
-    cfile->signed_endian = mainw->endian;
+    cfile->signed_endian = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
   }
 
   if (cfile->undo_arate > 0) cfile->arps = cfile->undo_arps / cfile->undo_arate * cfile->arate;
@@ -12157,7 +12179,7 @@ void on_recaudclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->fx1_val = DEFAULT_AUDIO_RATE;
   mainw->fx2_val = DEFAULT_AUDIO_CHANS;
   mainw->fx3_val = DEFAULT_AUDIO_SAMPS;
-  mainw->fx4_val = mainw->endian;
+  mainw->fx4_val = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
   mainw->rec_end_time = -1.;
   resaudw = create_resaudw(5, NULL, NULL);
   lives_widget_show(resaudw->dialog);
@@ -12194,7 +12216,7 @@ void on_recaudsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mainw->fx1_val = DEFAULT_AUDIO_RATE;
     mainw->fx2_val = DEFAULT_AUDIO_CHANS;
     mainw->fx3_val = DEFAULT_AUDIO_SAMPS;
-    mainw->fx4_val = mainw->endian;
+    mainw->fx4_val = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
     resaudw = create_resaudw(6, NULL, NULL);
   }
   lives_widget_show_all(resaudw->dialog);
@@ -12496,7 +12518,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
     mainw->fx1_val = DEFAULT_AUDIO_RATE;
     mainw->fx2_val = DEFAULT_AUDIO_CHANS;
     mainw->fx3_val = DEFAULT_AUDIO_SAMPS;
-    mainw->fx4_val = mainw->endian;
+    mainw->fx4_val = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
     resaudw = create_resaudw(2, NULL, NULL);
     if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog)) != LIVES_RESPONSE_OK) return FALSE;
     if (mainw->error) {

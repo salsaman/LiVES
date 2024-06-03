@@ -161,9 +161,6 @@ typedef void (*LiVESWidgetCallback)(GtkWidget *widget, gpointer data);
 typedef gboolean(*LiVESWidgetSourceFunc)(gpointer data);
 typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
-#define LIVES_LITTLE_ENDIAN G_LITTLE_ENDIAN
-#define LIVES_BIG_ENDIAN G_BIG_ENDIAN
-
 #define LIVES_MAXINT G_MAXINT
 #define LIVES_MAXUINT32 G_MAXUINT32
 #define LIVES_MAXINT32 G_MAXINT32

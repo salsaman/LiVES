@@ -7924,7 +7924,7 @@ rec_args *do_rec_desk_dlg(void) {
   mainw->fx1_val = DEFAULT_AUDIO_RATE;
   mainw->fx2_val = DEFAULT_AUDIO_CHANS;
   mainw->fx3_val = DEFAULT_AUDIO_SAMPS;
-  mainw->fx4_val = mainw->endian;
+  mainw->fx4_val = (capable->hw.byte_order == LIVES_BIG_ENDIAN);
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, FALSE, FALSE, widget_opts.packing_height);

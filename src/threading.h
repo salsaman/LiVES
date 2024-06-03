@@ -445,7 +445,7 @@ funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t);
 //lives_funcinst_t * lives_proc_thread_pop_active_funcinst(void);
 
 lives_funcinst_t *lives_proc_thread_get_active_funcinst(lives_proc_thread_t);
-//void lives_proc_thread_set_active_funcinst(lives_proc_thread_t, lives_funcinst_t *);
+void lives_proc_thread_set_active_funcinst(lives_funcinst_t *);
 
 lives_funcinst_t *lives_proc_thread_get_initial_funcinst(lives_proc_thread_t);
 void lives_proc_thread_set_initial_funcinst(lives_proc_thread_t, lives_funcinst_t *);

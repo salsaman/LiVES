@@ -1494,7 +1494,7 @@ boolean lives_startup(livespointer data) {
 
   mainw->top_funcinst = lives_proc_thread_get_initial_funcinst(self);
 
-  // for the main thread, the hook_stacks become maine->global_hook_stacks, but for NATIVE_HOOKS we will point these
+  // for the main thread, the hook_stacks become mainw->global_hook_stacks, but for NATIVE_HOOKS we will point these
   // to the thread hook_stacks instead
 
   lpt_hooks = lives_proc_thread_get_hook_stacks(mainw->def_lpt);
@@ -3052,11 +3052,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
   mainw->opwx = mainw->opwy = -1;
   mainw->toy_type = LIVES_TOY_NONE;
   mainw->framedraw = mainw->framedraw_spinbutton = NULL;
-  if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) {
-    mainw->endian = 0;
-  } else {
-    mainw->endian = AFORM_BIG_ENDIAN;
-  }
 
   for (i = 0; i < FN_KEYS - 1; i++) {
     mainw->clipstore[i][0] = -1;
@@ -4407,7 +4402,7 @@ double pick_custom_colours(double var, double timer) {
   // Depending on how successful or unsuccesful we are, we adjust 'var' for the next time. If we fail to find candidates,
   // the threshold is relaxed, conversely, if we finsh with time to spare, var can be reduced, tightenin the criteria.
   // Thus we have a balance where var is constantly being reduced unless we fail, then it is increased.
-  // At the same time, we abandon unsuccdeful attempts so as to still complete the task even without reaching the thrshold.
+  // At the same time, we abandon unsuccessful attempts so as to still complete the task even without reaching the thrshold.
 
   GET_PROC_THREAD_SELF(self);
   ticks_t xtimerinfo, timeout;

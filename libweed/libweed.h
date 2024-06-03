@@ -46,7 +46,7 @@ extern "C"
 #include <stdbool.h>
 #include <stdio.h>
 
-  /* ABI version * 202 */
+  /* ABI version * 203 */
   // changes in 200 -> 201: weed_leaf_element_size now returns (strlen + 1) for WEED_SEED_STRING values,
   // allowing NULL strings, which return size 0; prior to this, strlen was returned, and NULLS
   // were treated like empty strings.

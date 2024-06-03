@@ -1750,7 +1750,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show(LiVESWidget * widget) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget * widget) {
 #ifdef GUI_GTK
-  gtk_widget_hide(widget);
+  if (is_fg_thread()) gtk_widget_hide(widget);
+  else {
+    BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
+    MAIN_THREAD_EXECUTE_RVOID(gtk_widget_hide, "v", widget);
+    BG_THREADVAR(hook_hints) = 0;
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -2107,6 +2112,9 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
 
   if (ATT_MESSAGE(dialog)) pop_to_front(LIVES_WIDGET(dialog), NULL);
 
+  modalw = NULL;
+  lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
+
   do {
     // TODO - only if focused / visible
     mainw->no_idlefuncs = FALSE;
@@ -2116,7 +2124,8 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
     mainw->no_idlefuncs = no_idlefuncs;
     resp = lives_dialog_get_response(dialog);
     if (resp != LIVES_RESPONSE_INVALID) break;
-    pthread_yield();
+    //pthread_yield();
+    fg_service_fulfill();
     lives_millisleep;
   } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
 
@@ -2128,7 +2137,7 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   _dialog_resp_set(NULL, LIVES_RESPONSE_INVALID, NULL);
   lives_widget_object_unref(dialog);
 
-  //lives_widget_context_update();
+  lives_widget_context_update();
 
   g_print("agpt res[ %d\n", resp);
 
@@ -3401,6 +3410,7 @@ static boolean _lives_widget_process_updates(LiVESWidget * widget) {
     }
   }
 
+  if (widget == mainw->debug_ptr) abort();
   _lives_widget_context_update();
 
   if (!was_modal) {
@@ -13922,9 +13932,7 @@ void funkify_dialog(LiVESWidget * dialog) {
 #ifdef USE_REVEAL
     gtk_revealer_set_reveal_child(GTK_REVEALER(frame), TRUE);
 #endif
-  } else {
-    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width);
-  }
+  } else lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width);
 }
 
 

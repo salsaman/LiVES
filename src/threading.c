@@ -202,7 +202,7 @@ LIVES_LOCAL_INLINE void _lives_proc_thread_set_active_funcinst(lives_proc_thread
 }
 
 
-LIVES_LOCAL_INLINE void lives_proc_thread_set_active_funcinst(lives_funcinst_t *finst) {
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_active_funcinst(lives_funcinst_t *finst) {
   GET_PROC_THREAD_SELF(self);
   LIVES_ASSERT(self);
   _lives_proc_thread_set_active_funcinst(self, finst);
@@ -219,6 +219,7 @@ LIVES_LOCAL_INLINE lives_funcinst_t *lives_proc_thread_pop_active_funcinst(void)
 
   lives_sync_list_pop(&sync_list);
   if (!sync_list) {
+    if (is_fg_thread()) abort();
     lives_proc_thread_set_active_finstlist(self, NULL);
     lives_proc_thread_set_initial_finstlist(self, NULL);
     lives_proc_thread_set_initial_funcinst(self, NULL);

@@ -2163,6 +2163,37 @@ LIVES_GLOBAL_INLINE int remove_alpha(int pal) {
   return more_remove_alpha(pal);
 }
 
+static int more_add_alpha(int pal) {
+  // todo - some palettes have alpha as first chan, so
+  // really we ought to check for that
+  int adidx;
+  if (weed_palette_has_alpha(pal)) return pal;
+  const weed_macropixel_t *mpx = get_advanced_palette(pal);
+  LIVES_MALLOC_COPY(weed_macropixel_t, tmpx, mpx);
+  for (int j = 0; j < WEED_MAXPCHANS; j++) {
+    if (!tmpx->chantype[j]) {
+      tmpx->chantype[j] = WEED_VCHAN_alpha;
+      tmpx->bitsize[j] = tmpx->bitsize[0];
+      adidx = weed_adv_palette_from_desc(tmpx);
+      lives_free(tmpx);
+      if (adidx == -1) return WEED_PALETTE_INVALID;
+      return advp[adidx].ext_ref;
+    }
+  }
+  lives_free(tmpx);
+  return WEED_PALETTE_INVALID;
+}
+
+
+LIVES_GLOBAL_INLINE int add_alpha(int pal) {
+  if (pal == WEED_PALETTE_RGB24) return WEED_PALETTE_RGBA32;
+  //if (pal == WEED_PALETTE_RGB24) return WEED_PALETTE_ARGB32;
+  if (pal == WEED_PALETTE_BGR24) return WEED_PALETTE_BGRA32;
+  if (pal == WEED_PALETTE_YUV444P) return WEED_PALETTE_YUVA4444P;
+  if (pal == WEED_PALETTE_YUV888) return WEED_PALETTE_YUVA8888;
+  return more_add_alpha(pal);
+}
+
 #define xavg_chroma(x, y)((uint8_t)(*(xcavg + ((x) << 8) + (y))))
 
 static uint8_t avg_chromaf_fast(uint8_t x, uint8_t y) {

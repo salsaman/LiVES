@@ -913,8 +913,6 @@ typedef struct {
 
   LiVESList *bad_lmaps;
 
-  short endian;
-
   boolean go_away;
 
   /// states

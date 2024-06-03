@@ -1049,9 +1049,13 @@ LIVES_GLOBAL_INLINE lives_result_t lives_databook_emit(lives_databook_t *dbook, 
        then flag this as PROMOTED, WE CLEAN THE BOOK TWICE, AND HE [RPMTED VAUE SHOULD BE ERASERD.
        hOEVER SINCE WE HAVE AN OLDVAL, this will be resotred with a scope of zero
     */
+
+    res = lives_databook_erase_value(dbook, LDB_SRC_OBJECT);
+
     lives_databook_ascend(dbook);
     res = lives_databook_erase_value(dbook, LDB_SRC_OBJECT);
     lives_databook_descend(dbook);
+
     res = lives_databook_pushdown_value(dbook, LDB_SRC_OBJECT,
                                         WEED_SEED_PLANTPTR, src_obj);
     allvp = get_databook_item(dbook, LDB_SRC_OBJECT);

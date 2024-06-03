@@ -1087,6 +1087,8 @@ static lives_filter_error_t pconv_substep(plan_step_t *step) {
                        weed_layer_get_height(layer), weed_layer_get_palette(layer));
     step->substeps = lives_list_append(step->substeps, (void *)sub);
 
+    d_print_debug("cpu load is %.2f\n", sub->cpuload);
+
     if (inpalette != opalette) {
       if (!convert_layer_palette_full(layer, opalette, oclamping,
                                       osampling, osubspace, tgt_gamma)) {
@@ -1119,6 +1121,7 @@ static lives_filter_error_t gamma_substep(plan_step_t *step) {
   int track = step->track;
   lives_layer_t *layer = step->plan->layers[track];
   if (layer) {
+    exec_plan_substep_t *sub;
     GET_PROC_THREAD_SELF(self);
     int tgt_gamma = step->fin_gamma;
     int l_gamma = weed_layer_get_gamma(layer);
@@ -1126,6 +1129,12 @@ static lives_filter_error_t gamma_substep(plan_step_t *step) {
     double xtime = lives_get_session_time();
     SET_SELF_VALUE(WEED_SEED_DOUBLE, "gconv_start", xtime);
     weed_layer_ref(layer);
+
+    sub = make_substep(OP_GAMMA, xtime, weed_layer_get_width(layer),
+                       weed_layer_get_height(layer), weed_layer_get_palette(layer));
+    step->substeps = lives_list_append(step->substeps, (void *)sub);
+
+    d_print_debug("cpu load is %.2f\n", sub->cpuload);
 
     retval = FILTER_SUCCESS;
 
@@ -1136,6 +1145,10 @@ static lives_filter_error_t gamma_substep(plan_step_t *step) {
 
     xtime = lives_get_session_time();
     SET_SELF_VALUE(WEED_SEED_DOUBLE, "gconv_end", xtime);
+
+    sub->end = xtime;
+
+    if (sub->start > sub->end) sub->end = sub->start;
 
     lives_layer_set_status(layer, LAYER_STATUS_PROCESSED);
     weed_layer_unref(layer);
@@ -1178,6 +1191,8 @@ static lives_filter_error_t res_substep(plan_step_t *step) {
     sub = make_substep(OP_RESIZE, xtime, weed_layer_get_width(layer),
                        weed_layer_get_height(layer), weed_layer_get_palette(layer));
     step->substeps = lives_list_append(step->substeps, (void *)sub);
+
+    d_print_debug("cpu load is %.2f\n", sub->cpuload);
 
     retval = FILTER_SUCCESS;
 
@@ -1250,6 +1265,8 @@ static lives_filter_error_t lbox_substep(plan_step_t *step) {
 
     sub = make_substep(OP_LETTERBOX, xtime, lwidth, lheight, weed_layer_get_palette(layer));
     step->substeps = lives_list_append(step->substeps, (void *)sub);
+
+    d_print_debug("cpu load is %.2f\n", sub->cpuload);
 
     if (prefs->pb_quality == PB_QUALITY_HIGH)
       calc_maxspect(width, height, &lwidth, &lheight);
@@ -1614,6 +1631,15 @@ static double dec_running_steps(plan_step_t *step) {
   step->tdata->real_duration = 1000. * (step->tdata->real_end - step->tdata->real_start
                                         - step->tdata->paused_time);
   plan->tdata->sequential_time += step->tdata->real_duration;
+
+  if (step->tdata->real_duration > 200.)
+    d_print_debug("\n*******************\nSTEP TOOK > 200msec !!!\n"
+                  "******************\n\n");
+  else if (step->tdata->real_duration > 150.)
+    d_print_debug("\n!! STEP TOOK > 150msec !!!\n\n");
+  else if (step->tdata->real_duration > 100.)
+    d_print_debug("STEP TOOK > 100msec !!!\n");
+
   return xtime;
 }
 
@@ -1815,6 +1841,7 @@ static void run_plan(exec_plan_t *plan) {
           break;
         }
         xtime = lives_get_session_time();
+
         step->tdata->paused_time += xtime;
         step->state = STEP_STATE_RUNNING;
       }
@@ -1963,6 +1990,9 @@ static void run_plan(exec_plan_t *plan) {
             step->state = STEP_STATE_ERROR;
             break;
           }
+
+          xtime = inc_running_steps(step);
+
           step->ini_pal = weed_layer_get_palette(layer);
           step->ini_width = weed_layer_get_width(layer);
           step->ini_height = weed_layer_get_height(layer);
@@ -2020,6 +2050,7 @@ static void run_plan(exec_plan_t *plan) {
                 lives_layer_set_status(layer, LAYER_STATUS_LOADED);
               }
             }
+            dec_running_steps(step);
             break;
           }
 
@@ -2142,7 +2173,6 @@ static void run_plan(exec_plan_t *plan) {
           // queue lpt and have it remove proc_thread from layer after
           lives_layer_async_auto(layer, lpt);
 
-          inc_running_steps(step);
           complete = FALSE;
           break;
         }
@@ -2958,7 +2988,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         // convert to the track_source srcgroup
         lives_clipsrc_group_t *srcgrp;
         lives_clip_t *sfile;
-        boolean rem_alpha = FALSE;
+        boolean rem_alpha = TRUE;
         step = alloc_step(plan, st_type, ndeps, deps);
 
         for (int i = 0; i < step->ndeps; i++)
@@ -2983,31 +3013,49 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
           npals = out->node->npals;
         }
 
-        // if opal has alpha and ipal does not,
-        // then removing alpha from opal
-        // is a no-brainer - if we are going to remove it anyway, we may as well do it now
-        // and if the src palette has no alpha anyway, we avoid adding and removing
+        // if opal has alpha and ipal has a non alpha pal,
+        // then removing alpha from opal and ipal
+        // is a no-brainer -we may never need to add alpha, thus the fram sizes can be kept smaller
+        // even mor so if ipal already has no alpha, we would just be adding and removing
+        // in if e do need alph later on, it can be added at that point
 
-        if (weed_palette_has_alpha(opal)) {
-          if (weed_palette_has_alpha(ipal)) {
-            int xipal = remove_alpha(ipal);
-            for (int i = 0; i < npals; i++) {
-              if (pal_list[i] == xipal) {
-                rem_alpha = TRUE;
-                break;
-              }
+        // likewise, if ipal has alpha and opal does not, we should try to add alpha to opal
+        // then we may be able to avoid the second conversion
+
+        if (weed_palette_has_alpha(ipal)) {
+          rem_alpha = FALSE;
+          int xipal = remove_alpha(ipal);
+          for (int i = 0; i < npals; i++) {
+            if (pal_list[i] == xipal) {
+              rem_alpha = TRUE;
+              break;
             }
-          } else rem_alpha = TRUE;
+          }
         }
 
         if (rem_alpha) {
-          pally.pal = opal = remove_alpha(opal);
-          if (weed_palette_is_yuv(ipal)) {
-            pally.clamping = WEED_YUV_CLAMPING_UNCLAMPED;
-            pally.sampling = WEED_YUV_SAMPLING_DEFAULT;
-            pally.subspace = WEED_YUV_SUBSPACE_YUV;
+          if (weed_palette_has_alpha(opal)) {
+            pally.pal = opal = remove_alpha(opal);
+            if (weed_palette_is_yuv(opal)) {
+              pally.clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+              pally.sampling = WEED_YUV_SAMPLING_DEFAULT;
+              pally.subspace = WEED_YUV_SUBSPACE_YUV;
+            }
+            srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent_gamma);
           }
-          srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent_gamma);
+        } else {
+          if (!weed_palette_has_alpha(opal)) {
+            int xopal = add_alpha(opal);
+            if (xopal != WEED_PALETTE_INVALID) {
+              opal = pally.pal = xopal;
+              if (weed_palette_is_yuv(xopal)) {
+                pally.clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+                pally.sampling = WEED_YUV_SAMPLING_DEFAULT;
+                pally.subspace = WEED_YUV_SUBSPACE_YUV;
+              }
+              srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent_gamma);
+            }
+          }
         }
 
         step->fin_width = step->fin_iwidth = out->width = sfile->hsize;

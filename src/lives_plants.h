@@ -204,9 +204,7 @@ boolean lives_index_has_value(lives_index_t *, const char *key);
 weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean set);
 
 // LIVES PLANT LOOKUP
-// a lookup is an index,unlike local databooks, it is static and has no scope
-// like the global databook
-// index vals are readonly, autofree. We define a free func for the index vals.
+// a lookup is an index wuth read only values, index vals are readonly, autofree. We define a free func for the index vals.
 //
 // if we pass an allvalues with name and value, if the name is already used
 // the value is not stored. Otherwise the allvalues is set static (todo - refcount)

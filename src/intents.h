@@ -227,7 +227,7 @@ int lives_object_instance_ref(lives_obj_instance_t *);
 #define LIVES_LEAF_VALUE_TYPE "value_type"
 #define LIVES_LEAF_NAME "name"
 #define LIVES_LEAF_ATTR_GRP "attr_group"
-#define LIVES_LEAF_VALUE "value"
+#define LIVES_LEAF_VALUE WEED_LEAF_VALUE
 #define LIVES_LEAF_NAME "name"
 #define LIVES_LEAF_PARENT "parent"
 #define LIVES_LEAF_OBJ_TYPE "obj_type"

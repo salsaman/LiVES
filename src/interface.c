@@ -92,8 +92,6 @@ boolean update_timer_bars(int clipno, int posx, int posy, int width, int height,
   if (mainw->current_file != clipno || !IS_VALID_CLIP(clipno)
       || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
-  //livess_proc_threead_set_cleanup_func(cancel_cleanup, NULL);
-
   // draw timer bars
   // first them background
   clear_tbar_bgs(posx, posy, width, height, which);

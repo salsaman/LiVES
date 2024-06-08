@@ -383,7 +383,7 @@ get_time:
 
   // generally tsource is set to NONE, - here we check first for soundcard time
   if (is_real_aplayer(prefs->audio_player) && (tsource == LIVES_TIME_SOURCE_NONE ||
-      tsource == LIVES_TIME_SOURCE_SOUNDCARD) && !mainw->xrun_active)) {
+					       tsource == LIVES_TIME_SOURCE_SOUNDCARD) && !mainw->xrun_active) {
     if ((!mainw->is_rendering || (mainw->multitrack && !cfile->opening && !mainw->multitrack->is_rendering)) &&
         (!(mainw->fixed_fpsd > 0. || (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
       // get time from soundcard
@@ -435,99 +435,102 @@ get_time:
       prev_current = current - clock_delta * R;
     }
 
-    if (current < prev_current) {
-      prev_current = current;
-      baseItime = 0;
-      clock_current = 0;
-    }
+  if (current > prev_current) {
+    clock_current = current;
+  }
 
-    if (!baseItime) {
-      baseItime = Itime;
-      base_current = prev_current;
-    }
-    if (!clock_current) {
-      clock_current = current;
-      last_scticks = mainw->clock_ticks;
-    }
+  if (current == prev_current) {
+    
+  }
+  
+  if (current < prev_current) {
+    prev_current = current;
+    baseItime = 0;
+  }
 
-    if (current > prev_current) {
-      ticks_t scdelta = current - prev_current;
-      // audio drivers may do their own interolation
-      // so we get the ratio from them
-      if (AUD_SRC_EXTERNAL) {
-        IF_AREADER_PULSE
+  if (!baseItime) {
+    baseItime = Itime;
+    base_current = prev_current;
+  }
+
+  if (current > prev_current) {
+    ticks_t scdelta = current - prev_current;
+    // audio drivers may do their own interolation
+    // so we get the ratio from them
+    if (AUD_SRC_EXTERNAL) {
+      IF_AREADER_PULSE
         (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
         IF_AREADER_JACK
         (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
-      } else {
-        IF_APLAYER_PULSE
+	} else {
+      IF_APLAYER_PULSE
         (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
         IF_APLAYER_JACK
         (R = lives_jack_get_timing_ratio(mainw->jackd);)
-      }
+	}
 
-      // check the calculated time against the measured time
-      // either slow down or speed up to align
-      scdelta = current - base_current;
-      ticks_t sctime = baseItime + scdelta; // measured time
-      ticks_t systime = Itime + clock_delta * R * X; // calculated time
+    // check the calculated time against the measured time
+    // either slow down or speed up to align
+    scdelta = current - base_current;
+    ticks_t sctime = baseItime + scdelta; // measured time
+    ticks_t systime = Itime + clock_delta * R * X; // calculated time
 
-      // negative drift means measured < calculated
-      drift = systime - sctime;
+    // negative drift means measured < calculated
+    drift = systime - sctime;
 
-      if (drift < 0) {
-        if (X < 1.) X = 1.;
-        else X *= 1. + prefs->pbtimer_resync_factor;
-      } else if (drift > 0) {
-        if (X > 1.) X = 1.;
-        else X /= 1. + prefs->pbtimer_resync_factor;
-      }
+    if (drift < 0) {
+      if (X < 1.) X = 1.;
+      else X *= 1. + prefs->pbtimer_resync_factor;
+    } else if (drift > 0) {
+      if (X > 1.) X = 1.;
+      else X /= 1. + prefs->pbtimer_resync_factor;
     }
-    prev_current = current;
+  }
+  prev_current = current;
   }
 
   if (X > 1.5) X = 1.5;
   if (X < 0.66666666) X = 0.66666666;
 
-    if (R > 1.5) R = 1.5;
-      if (R < 0.66666666) R = 0.66666666;
+  if (R > 1.5) R = 1.5;
+  if (R < 0.66666666) R = 0.66666666;
 
-        tdiff = clock_delta * R * X;
+  tdiff = clock_delta * R * X;
 
-        if (mainw->time_jump) {
-          if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / TICKS_PER_SECOND_DBL;
-          } else  {
-            if (clock_delta) {
-              ticks_t toomuch = 0;//tdiff - (ticks_t)(prefs->pbtimer_maxdiff);
-              if (ncalls > 10000) {
-                tot_deltas += clock_delta;
-                av_delta = tot_deltas / ncalls;
-                timer_load = (double)clock_delta / (double)av_delta;
-              }
-              if (toomuch > 0) {
-                //g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
-                owed_ticks += toomuch;
-                tdiff -= toomuch;
-              } else {
-                ticks_t allowed;
-                if (!owed_ticks) catchup = .1;
-                allowed = tdiff * catchup;
-                if (allowed > owed_ticks) {
-                  allowed = owed_ticks;
-                  catchup = (double)allowed / (double)tdiff;
-                } else catchup *= 1.1;
-                tdiff += allowed;
-                owed_ticks -= allowed;
-              }
-            }
+  if (mainw->time_jump) {
+    if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / TICKS_PER_SECOND_DBL;
+  } else  {
+    if (clock_delta) {
+      ticks_t toomuch = 0;//tdiff - (ticks_t)(prefs->pbtimer_maxdiff);
+      if (ncalls > 10000) {
+	tot_deltas += clock_delta;
+	av_delta = tot_deltas / ncalls;
+	timer_load = (double)clock_delta / (double)av_delta;
+      }
+      if (toomuch > 0) {
+	//g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
+	owed_ticks += toomuch;
+	tdiff -= toomuch;
+      } else {
+	ticks_t allowed;
+	if (!owed_ticks) catchup = .1;
+	allowed = tdiff * catchup;
+	if (allowed > owed_ticks) {
+	  allowed = owed_ticks;
+	  catchup = (double)allowed / (double)tdiff;
+	} else catchup *= 1.1;
+	tdiff += allowed;
+	owed_ticks -= allowed;
+      }
+    }
 
-            Itime += tdiff;
+    Itime += tdiff;
 
-            if (tsource == LIVES_TIME_SOURCE_NONE) tsource = LIVES_TIME_SOURCE_SYSTEM;
+    if (tsource == LIVES_TIME_SOURCE_NONE) tsource = LIVES_TIME_SOURCE_SYSTEM;
 
-            last_tsource = tsource;
-            if (time_source) *time_source = tsource;
-          }
+    last_tsource = tsource;
+    if (time_source) *time_source = tsource;
+  }
   return Itime;
 }
 

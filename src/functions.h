@@ -234,6 +234,9 @@ boolean args_fmt_match(const char *def, const char *inst);
 // get args_fmt from a plant with params
 char *get_args_fmt(weed_plant_t *);
 
+// get args_fmt from a plant with params
+char *get_args_fmt_from_params(weed_plant_t *);
+
 // add a note to to ftrace_store, va_args depend on fn_type
 void *add_fn_note(fn_type_t, ...);
 
@@ -577,7 +580,7 @@ void remove_from_hstack(lives_hook_stack_t *, LiVESList *);
 
 // status bits
 
-#define HOOK_STATUS_BLOCKED			(1ull << 32) // hook function should not be called
+#define HOOK_STATUS_NOTREADY			(1ull << 32) // set while adding
 #define HOOK_STATUS_RUNNING			(1ull << 33) // hook cb running, do not recurse
 
 // when triggering, mark the callbacks already actioned, and on a recheck we skip over them
@@ -1189,7 +1192,7 @@ void fg_deferral_remove_persistent(void);
 void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
                               const char *fname, int return_type, const char **anames, ...);
 
-// SAM AS APPEND, BUT WE CAN SET RTYPE AN DNAME
+// SAM AS APPEND, BUT WE CAN SET RTYPE AND NAME
 #define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, ...) \
   _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
@@ -1234,14 +1237,14 @@ void lives_hook_stacks_clear_all(lives_hook_stack_t **, int ntypes);
 
 boolean has_hook_cbs(lives_hook_stack_t **, int hstype);
 
-lives_result_t _lives_hook_trigger(lives_hook_stack_t **, int hstype, ...);
-#define lives_hook_trigger(hstacks, ...) _lives_hook_trigger(hstacks, __VA_ARGS__, NULL)
+lives_result_t _lives_hook_trigger(lives_hook_stack_t **hstacks, int hstype, const char *args_fmt, ...);
+#define lives_hook_trigger(hstacks, hstype, ...) _lives_hook_trigger(hstacks, hstype __VA_OPT__(,) __VA_ARGS__, NULL)
 
-lives_result_t _lives_proc_thread_trigger_hook(int hstype, ...);
-#define lives_proc_thread_trigger_hook(...) _lives_proc_thread_trigger_hook(__VA_ARGS__, NULL)
+lives_result_t _lives_proc_thread_trigger_hook(int hstype, const char *args_fmt, ...);
+#define lives_proc_thread_trigger_hook(hstype, ...) _lives_proc_thread_trigger_hook(hstype __VA_OPT__(,) __VA_ARGS__, NULL)
 
-int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, ...);
-#define lives_hook_trigger_async(hstype, ...) _lives_hook_trigger_async(hstype, __VA_ARGS__, NULL)
+int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
+#define lives_hook_trigger_async(hstype, xlpts, ...) _lives_hook_trigger_async(hstype, xlpts __VA_OPT__(,) __VA_ARGS__, NULL)
 void lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
 

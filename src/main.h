@@ -101,8 +101,6 @@ weed_leaf_set_f _weed_leaf_set;
 #if WEED_ABI_CHECK_VERSION(203)
 weed_set_custom_element_size_f _weed_set_custom_element_size;
 weed_ext_append_elements_f _weed_ext_append_elements;
-weed_ext_attach_leaf_f _weed_ext_attach_leaf;
-weed_ext_detach_leaf_f _weed_ext_detach_leaf;
 weed_ext_atomic_exchange_f _weed_ext_atomic_exchange;
 #endif
 weed_plant_new_f _weed_plant_new;
@@ -425,16 +423,6 @@ typedef enum {
 #define CHECK_AVAILABLE(item, EXEC)					\
   (IS_UNCHECKED(item) ? (((capable->has_##item = has_executable(EXEC))	\
 			  == PRESENT || IS_LOCAL(item)) ? TRUE : FALSE) : IS_AVAILABLE(item))
-typedef struct {
-  char wm_name[64];
-  uint64_t ver_major;
-  uint64_t ver_minor;
-  uint64_t ver_micro;
-
-  LiVESXWindow *root_window;
-  boolean is_composited;
-
-  char *wm_focus;
 
 #define ANNOY_DISPLAY      	(1ull << 0)
 #define ANNOY_DISK		(1ull << 1)
@@ -465,16 +453,37 @@ typedef struct {
 #define RESTYPE_TIMED		(1ull << 21)
 #define RESTYPE_MONITOR		(1ull << 22)
 
-  char panel[64];
-  uint64_t pan_annoy;
-  uint64_t pan_res;
-  char ssave[64];
-  uint64_t ssave_annoy;
-  uint64_t ssave_res;
-  char other[64];
-  uint64_t oth_annoy;
-  uint64_t oth_res;
+typedef struct {
+  uint64_t problem;
+  uint64_t resolution;
+  const char *disable;
+  const char *enable;
+  allvalues_t *orig_state;
+} annoyance_t;
 
+typedef struct {
+  annoyance_t focus;
+  annoyance_t notify;
+  annoyance_t panel;
+  annoyance_t ssave;
+} wm_annoyances_t;
+
+typedef struct {
+  char wm_name[64];
+  uint64_t ver_major;
+  uint64_t ver_minor;
+  uint64_t ver_micro;
+
+  LiVESXWindow *root_window;
+  boolean is_composited;
+
+  char *wm_focus;
+
+  wm_annoyances_t annoy;
+
+  char panel[64];
+  char notify[64];
+  char ssave[64];
   char color_settings[64];
   char display_settings[64];
   char ssv_settings[64];

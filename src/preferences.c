@@ -5436,10 +5436,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
   }
 
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
-  }
-
   add_fill_to_box(LIVES_BOX(vbox));
 
   pixbuf_playback = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_PLAYBACK, LIVES_ICON_SIZE_CUSTOM, -1);
@@ -5531,10 +5527,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
   }
 
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    lives_widget_set_sensitive(prefsw->raudio, FALSE);
-  }
-
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
@@ -5549,10 +5541,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                    "video track changes once more.\n"
                                    "Related: Playback / Audio follows video clip switches.")));
   lives_free(tmp);
-
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    lives_widget_set_sensitive(prefsw->raudio, FALSE);
-  }
 
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 

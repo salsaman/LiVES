@@ -206,8 +206,6 @@ void weed_functions_init(void) {
 #if WEED_ABI_CHECK_VERSION(203)
   _weed_set_custom_element_size = weed_set_custom_element_size;
   _weed_ext_append_elements = weed_ext_append_elements;
-  _weed_ext_attach_leaf = weed_ext_attach_leaf;
-  _weed_ext_detach_leaf = weed_ext_detach_leaf;
   _weed_ext_atomic_exchange = weed_ext_atomic_exchange;
 #endif
 
@@ -6515,15 +6513,6 @@ boolean weed_init_effect(int hotkey) {
 
   if ((is_gen || (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, TRUE)))
       && has_audio_chans_out(filter, FALSE) && !has_video_chans_out(filter, TRUE)) {
-    if (!is_realtime_aplayer(prefs->audio_player)) {
-      // audio fx only with realtime players
-      char *fxname = weed_filter_idx_get_name(idx, FALSE, FALSE);
-      d_print(_("Effect %s cannot be used with this audio player.\n"), fxname);
-      lives_free(fxname);
-      mainw->error = TRUE;
-      return FALSE;
-    }
-
     if (is_gen) {
       if (mainw->agen_key != 0) {
         // we had an existing audio gen running - stop that one first
@@ -7126,31 +7115,30 @@ boolean weed_deinit_effect(int hotkey) {
 #endif
     } else if (mainw->playing_file > 0) {
       // for internal, continue where we should
-      if (is_realtime_aplayer(prefs->audio_player)) {
-        if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file, TRUE);
-        else {
-          if (mainw->pre_src_audio_file == -1) {
-            // audio doesn't follow clip switches and we were playing this...
-            mainw->cancelled = CANCEL_AUD_END;
-          } else {
+      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file, TRUE);
+      else {
+	if (mainw->pre_src_audio_file == -1) {
+	  // audio doesn't follow clip switches and we were playing this...
+	  mainw->cancelled = CANCEL_AUD_END;
+	} else {
 #ifdef HAVE_PULSE_AUDIO
-            if (prefs->audio_player == AUD_PLAYER_PULSE) {
-              if (mainw->pulsed) mainw->pulsed->playing_file = mainw->pre_src_audio_file;
-              if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-                pulse_get_rec_avals(mainw->pulsed);
-              }
-            }
+	  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+	    if (mainw->pulsed) mainw->pulsed->playing_file = mainw->pre_src_audio_file;
+	    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+	      pulse_get_rec_avals(mainw->pulsed);
+	    }
+	  }
 #endif
 #ifdef ENABLE_JACK
-            if (prefs->audio_player == AUD_PLAYER_JACK) {
-              if (mainw->jackd) mainw->jackd->playing_file = mainw->pre_src_audio_file;
-              if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-                jack_get_rec_avals(mainw->jackd);
-              }
-            }
+	  if (prefs->audio_player == AUD_PLAYER_JACK) {
+	    if (mainw->jackd) mainw->jackd->playing_file = mainw->pre_src_audio_file;
+	    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+	      jack_get_rec_avals(mainw->jackd);
+	    }
+	  }
 #endif
-	    // *INDENT-OFF*
-          }}}}}
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
 
   if (hotkey < FX_KEYS_MAX_VIRTUAL) filter_mutex_lock(hotkey);
@@ -7368,15 +7356,13 @@ void weed_deinit_all(boolean shutdown) {
    Purely audio filters are run directly during the audio cycle or by the audio caching thread.
 */
 int register_audio_client(boolean is_vid) {
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    return -1;
-  }
-
   if (!mainw->afbuffer) {
     lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
     mainw->afbuffer = init_audio_frame_buffers(aplayer);
     mainw->afbuffer->aclients = mainw->afbuffer->vclients = 0;
     mainw->afbuffer->aclients_read = mainw->afbuffer->vclients_read = 0;
+    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
+    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
   }
 
   if (is_vid) mainw->afbuffer->vclients++;
@@ -7393,6 +7379,8 @@ int unregister_audio_client(boolean is_vid) {
   else mainw->afbuffer->aclients--;
   if (mainw->afbuffer->aclients <= 0 && mainw->afbuffer->vclients <= 0) {
     // lock out the audio thread
+    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
+    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
     free_audio_frame_buffer(mainw->afbuffer);
     mainw->afbuffer = NULL;
     return 0;
@@ -7438,10 +7426,6 @@ boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan, boolean is
 
 
 int register_aux_audio_channels(int nchannels) {
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    mainw->afbuffer_aux_clients = 0;
-    return -1;
-  }
   if (nchannels <= 0) return mainw->afbuffer_aux_clients;
   pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
   /* if (mainw->afbuffer_aux_clients == 0) { */

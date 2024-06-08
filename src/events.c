@@ -3350,7 +3350,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       lives_free(eevents);
     }
 
-    if (!mainw->multitrack && is_realtime_aplayer(prefs->audio_player) && WEED_EVENT_IS_AUDIO_FRAME(next_event)) {
+    if (!mainw->multitrack && WEED_EVENT_IS_AUDIO_FRAME(next_event)) {
       // keep track of current seek position, for animating playback pointers
       int *aclips = weed_get_int_array(next_event, WEED_LEAF_AUDIO_CLIPS, NULL);
       double *aseeks = weed_get_double_array(next_event, WEED_LEAF_AUDIO_SEEKS, NULL);

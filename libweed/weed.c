@@ -52,14 +52,6 @@
 // nosuch element
 // mem / comcur
 
-#ifdef ENABLE_PROXIES
-#define _get_leaf_proxy(leaf) if (leaf && (leaf->flags & WEED_FLAG_PROXY)) { \
-    weed_leaf_t *proxy = (weed_leaf_t *)leaf->data[0]->v.value.voidptr;	\
-    if (proxy)data_lock_readlock(proxy);data_lock_unlock(leaf);leaf = proxy;}}
-#else
-#define _get_leaf_proxy(leaf)
-#endif
-
 #ifdef WRITER_PREF_AVAILABLE
 #undef WRITER_PREF_AVAILABLE
 #endif
@@ -86,8 +78,6 @@
 #define GNU_HOT
 #define GNU_PURE
 #endif
-
-#define WEED_FLAG_PROXY		(1 << 2)  // used for extended func weed_ext_attach_leaf
 
 // Define EXPORTED for any platform
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
@@ -365,10 +355,6 @@ static weed_error_t _weed_leaf_get_private_data(weed_plant_t *, const char *key,
 static weed_error_t _weed_ext_append_elements(weed_plant_t *, const char *key, weed_seed_t seed_type,
 					      weed_size_t nvals, void *data) GNU_FLATTEN;
 
-static weed_error_t _weed_ext_attach_leaf(weed_plant_t *src, const char *key, weed_plant_t *dst)
-  GNU_FLATTEN;
-static weed_error_t _weed_ext_detach_leaf(weed_plant_t *, const char *key) GNU_FLATTEN;
-
 static weed_error_t _weed_ext_atomic_exchange(weed_plant_t *, const char *key, weed_seed_t seed_type,
 					      weed_voidptr_t new_value, weed_voidptr_t old_valptr);
 #endif
@@ -561,8 +547,6 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
 #if WEED_ABI_CHECK_VERSION(203)
   // host only extended
   if (extrafuncs) {
-    weed_ext_attach_leaf = _weed_ext_attach_leaf;
-    weed_ext_detach_leaf = _weed_ext_detach_leaf;
     weed_ext_append_elements = _weed_ext_append_elements;
     weed_ext_atomic_exchange = _weed_ext_atomic_exchange;
   }
@@ -924,9 +908,6 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
 							      (char *)key))); leaf = leaf->next) leafprev = leaf;
   if (!leaf || leaf == plant) err = WEED_ERROR_NOSUCH_LEAF;
   else {
-#ifdef ENABLE_PROXIES
-    if (leaf->flags & WEED_FLAG_PROXY) err = _weed_ext_detatch_leaf_inner(leaf);
-#endif
     if (leaf->flags & WEED_FLAG_UNDELETABLE) err = WEED_ERROR_UNDELETABLE;
   }
 
@@ -971,7 +952,6 @@ static weed_error_t _weed_set_custom_element_size(weed_plant_t *plant, const cha
 						  weed_size_t new_size) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
-  _get_leaf_proxy(leaf);
   if (leaf->seed_type < WEED_SEED_FIRST_CUSTOM)
     return_unlock(leaf, WEED_ERROR_WRONG_SEED_TYPE);
   if (leaf->flags & WEED_FLAG_IMMUTABLE)
@@ -986,9 +966,6 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, w
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   // strip any reserved bits from flags
   if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
-#ifdef ENABLE_PROXIES
-  if (leaf->flags & WEED_FLAG_PROXY) return_unlock(leaf, WEED_ERROR_IMMUTABLE);
-#endif
   if (leaf != plant) {
     ref_lock_readlock(leaf);
     data_lock_unlock(leaf);
@@ -1003,8 +980,8 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, w
     }
   }
   //
-  leaf->flags = (leaf->flags & (WEED_FLAGBITS_RESERVED | WEED_FLAG_PROXY))
-    | (flags & ~(WEED_FLAGBITS_RESERVED | WEED_FLAG_PROXY));
+  leaf->flags = ((leaf->flags & WEED_FLAGBITS_RESERVED)
+    | (flags & ~WEED_FLAGBITS_RESERVED));
   return_unlock(leaf, WEED_SUCCESS);
 }
 
@@ -1190,10 +1167,6 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
   // with data lock writelock, we can update the leaf and we are done
 
   if (!isnew) {
-#ifdef ALLOW_PROXIES
-    if (leaf->flags & WEED_FLAG_PROXY)
-      return_unlock(leaf, WEED_ERROR_IMMUTABLE);
-#endif
     if (seed_type != leaf->seed_type)
       return_unlock(leaf, WEED_ERROR_WRONG_SEED_TYPE);
 
@@ -1246,7 +1219,6 @@ static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, weed_si
   weed_error_t err;
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
-  _get_leaf_proxy(leaf);
   if (idx >= leaf->num_elements) return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
   if (!value) return_unlock(leaf, WEED_SUCCESS);
   err = _weed_data_get(leaf->data, leaf->seed_type, idx, value);
@@ -1265,14 +1237,12 @@ EXPORTED weed_error_t __wbg__(size_t c1, weed_hash_t c2, int c3, weed_plant_t *p
 static weed_size_t _weed_leaf_num_elements(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return 0;
-  _get_leaf_proxy(leaf);
   return_unlock(leaf, leaf->num_elements);
 }
 
 static weed_size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, weed_size_t idx) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return 0;
-  _get_leaf_proxy(leaf);
   if (idx > leaf->num_elements) return_unlock(leaf, 0);
   return_unlock(leaf, leaf->data[idx].size);
 }
@@ -1306,40 +1276,11 @@ static weed_error_t _weed_ext_append_elements(weed_plant_t *plant, const char *k
   return err;
 
 }
-
-static weed_error_t _weed_ext_attach_leaf(weed_plant_t *src, const char *key, weed_plant_t *dst) {
-  weed_leaf_t *leaf = weed_find_leaf(src, key, NULL, NULL), *xleaf;
-  weed_error_t err;
-  if (!leaf) return_unlock(leaf, WEED_ERROR_WRONG_SEED_TYPE);
-  if (!(xleaf = weed_find_leaf(dst, key, NULL, NULL))) return WEED_ERROR_NOSUCH_LEAF;
-  err = _weed_leaf_set_or_append(0, src, key, WEED_SEED_PLANTPTR, 1, xleaf->data, NULL, NULL);
-  if (err == WEED_SUCCESS) {
-    leaf->num_elements = xleaf->num_elements;
-    leaf->seed_type = xleaf->seed_type;
-    leaf->flags = WEED_FLAG_PROXY | WEED_FLAG_IMMUTABLE;
-  }
-  return_unlock(xleaf, err);
-}
-
-static void _weed_ext_detach_leaf_inner(weed_leaf_t *leaf) {
-  leaf->data = NULL;
-  leaf->num_elements = 0;
-  leaf->flags = 0;
-}
-
-static weed_error_t _weed_ext_detach_leaf(weed_plant_t *plant, const char *key) {
-  weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
-  if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
-  if (!(leaf->flags & WEED_FLAG_PROXY)) return_unlock(leaf, WEED_ERROR_WRONG_SEED_TYPE);
-  _weed_ext_detach_leaf_inner(leaf);
-  return_unlock(leaf, WEED_SUCCESS);
-}
 #endif
 
 static weed_seed_t _weed_leaf_seed_type(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return WEED_SEED_INVALID;
-  _get_leaf_proxy(leaf);
   return_unlock(leaf, leaf->seed_type);
 }
 
@@ -1398,7 +1339,6 @@ EXPORTED size_t weed_plant_get_byte_size(weed_plant_t *plant) {
 EXPORTED weed_leaf_t *_weed_intern_freeze(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return NULL;
-  _get_leaf_proxy(leaf);
   return leaf;
 }
 

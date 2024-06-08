@@ -861,7 +861,7 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
   uint64_t uid;
   int count = 0;
   if (obj) {
-    //lives_strdup_concat(out, NULL, "\n", obtag);
+    //lives_strdup_concat_sep(out, NULL, "\n", obtag);
     attrs = lives_object_get_attrs(obj);
     if (lives_object_get_type(obj) == OBJECT_TYPE_DICTIONARY
         && lives_object_get_subtype(obj) == DICT_SUBTYPE_WEED_PLANT) {
@@ -878,7 +878,7 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
     what = "attributes";
     uid = THREADVAR(uid);
   }
-  out = lives_strdup_concat(out, NULL, "%s with UID 0X%016lX ", thing, uid);
+  out = lives_strdup_concat_sep(out, NULL, "%s with UID 0X%016lX ", thing, uid);
   if (attrs) {
     tmp = lives_strdup_printf("%s the following %s:", out, what);
     lives_free(out);
@@ -912,7 +912,7 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
         if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = i64val;
       }
 
-      out = lives_strdup_concat(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
+      out = lives_strdup_concat_sep(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
                                 weed_seed_to_ctype(weed_leaf_seed_type(attrs[count],
                                     WEED_LEAF_VALUE), FALSE), obs, valstr);
       if (valstr) lives_free(valstr);
@@ -920,14 +920,14 @@ char *lives_object_dump_attributes(lives_obj_t *obj) {
       if (type) {
         /* char *ptyp = ptype_to_string(type); */
         /* if (ptyp) { */
-        /*   out = lives_strdup_concat(out, NULL, "Plant type identifed as %s\n", prtyp); */
+        /*   out = lives_strdup_concat_sep(out, NULL, "Plant type identifed as %s\n", prtyp); */
         /*   lives_free(ptyp); */
         /* } */
       }
       if (subtype) {
         //char *ptyp = psubtype_to_string(type);
         /* if (ptyp) { */
-        /*   out = lives_strdup_concat(out, NULL, "Plant subtype identifed as %s\n", prtyp); */
+        /*   out = lives_strdup_concat_sep(out, NULL, "Plant subtype identifed as %s\n", prtyp); */
         /*   lives_free(ptyp); */
         /* } */
       }

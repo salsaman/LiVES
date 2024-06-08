@@ -49,6 +49,8 @@ void unlock_timeline(void);
 void redraw_timeline(int clipno);
 void drawtl_cancel(void);
 
+void redraw_timeline_noblock(int clipno);
+
 #define OWIDTH_KEY "ui_owidth"
 #define OXRWIDTH_KEY "ui_oxrwidth"
 #define OHEIGHT_KEY "ui_oheight"

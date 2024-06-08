@@ -390,10 +390,8 @@ void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
 
-#define is_realtime_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NULL))
-#define is_real_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE)
-
-#define APLAYER_REALTIME (is_realtime_aplayer(prefs->audio_player))
+//#define is_realtime_aplayer(ptype) TRUE
+#define is_real_aplayer(ptype) (ptype != AUD_PLAYER_NONE)
 
 void preview_aud_vol(frames_t aframeno);
 
@@ -407,6 +405,8 @@ void apply_rte_audio_end(boolean del);
 boolean apply_rte_audio(int64_t nsamples);
 
 lives_audio_buf_t *init_audio_frame_buffers(lives_obj_instance_t *aplayer);
+
+void update_audio_cbs(lives_obj_instance_t *aplayer);
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);
 void append_to_audio_bufferf(float *src, size64_t nsamples, int channum);

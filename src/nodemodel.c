@@ -2396,7 +2396,7 @@ static void run_plan(exec_plan_t *plan) {
           break;
         }
         case STEP_TYPE_CONVERT: {
-          double gstart;
+          double gstart = 0.;
           layer = plan->layers[step->track];
           if (!layer) {
             dec_running_steps(step);
@@ -2539,7 +2539,7 @@ static void run_plan(exec_plan_t *plan) {
       paused = FALSE;
     }
 
-    pthread_yield();
+    //pthread_yield();
     _lives_microsleep(10);
   } while (!complete || plan->nsteps_running);
 
@@ -4003,7 +4003,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         calc_maxspect(in->width, in->height, &width, &height);
         in->inner_width = width;
         in->inner_height = height;
-        BREAK_ME("insz");
+        //BREAK_ME("insz");
       }
       // FIXED_SIZE done
       break;

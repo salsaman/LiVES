@@ -166,7 +166,7 @@ boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char
 
   if (pnames) {
     for (int i = 0; i < nparms; i++)
-      pnmstr = lives_strdup_concat(pnmstr, ", ", "%s", pnames[i] ? pnames[i] : "");
+      pnmstr = lives_strdup_concat_sep(pnmstr, ", ", "%s", pnames[i] ? pnames[i] : "");
   }
 
   symstr = funcsig_to_symstring(fsig);
@@ -183,7 +183,7 @@ boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char
 char *md5_print(void *md5sum) {
   char *cc = (char *)md5sum;
   char *qq = lives_strdup("0x");
-  for (int i = 0; i < 16; i++) qq = lives_strdup_concat(qq, "", "%02x", cc++);
+  for (int i = 0; i < 16; i++) qq = lives_strdup_concat_sep(qq, "", "%02x", cc++);
   return qq;
 }
 
@@ -194,7 +194,7 @@ char *funcsig_to_param_string(funcsig_t sig) {
     for (int i = 60; i >= 0; i -= 4) {
       uint8_t ch = (sig >> i) & 0X0F;
       if (!ch) continue;
-      fmtstring = lives_strdup_concat(fmtstring, ", ", "%s",
+      fmtstring = lives_strdup_concat_sep(fmtstring, ", ", "%s",
                                       weed_seed_to_ctype(get_seedtype(ch), FALSE));
     }
     return fmtstring;
@@ -210,7 +210,7 @@ char *funcsig_to_symstring(funcsig_t sig) {
     for (int i = 60; i >= 0; i -= 4) {
       uint8_t ch = (sig >> i) & 0X0F;
       if (!ch) continue;
-      fmtstring = lives_strdup_concat(fmtstring, ",", "%s", get_symbolname(ch));
+      fmtstring = lives_strdup_concat_sep(fmtstring, ",", "%s", get_symbolname(ch));
     }
   }
   return fmtstring;
@@ -251,7 +251,7 @@ char *funcinst_paramstr(lives_funcinst_t *finst) {
         if (ne > 1) pstr = lives_strdup_printf("%s[%d]%s", ctype, ne, aname);
         else pstr = lives_strdup_printf("(%s)%s", ctype, aname);
         lives_free(aname);
-        fmtstr = lives_strdup_concat(fmtstr, ", ", "%s", pstr);
+        fmtstr = lives_strdup_concat_sep(fmtstr, ", ", "%s", pstr);
         lives_freep((void **)&pstr); lives_free(pname);
       }
 
@@ -364,49 +364,49 @@ LIVES_GLOBAL_INLINE void lpt_desc_state(lives_proc_thread_t lpt) {
 
 
 #define ADD_FLAG_EXPL(flags, flagbit, desc)				\
-  _DW0(if (flags & flagbit) fstr = lives_strdup_concat(fstr, ", ", "%s", desc);)
+  _DW0(if (flags & flagbit) fstr = lives_strdup_concat_sep(fstr, ", ", "%s", desc);)
 
 
 char *cl_flags_desc(uint64_t clflags) {
   char *fstr = lives_strdup("");
   if (clflags & HOOK_CB_BLOCKING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKING");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "BLOCKING");
   if (clflags & HOOK_OPT_PRIORITY)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "PRIORITY");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "PRIORITY");
   if (clflags & HOOK_OPT_ONESHOT)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "ONESHOT");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "ONESHOT");
   if (clflags & HOOK_CB_CONDITIONAL)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "HAS_TRIGGER_CONDITION");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "HAS_TRIGGER_CONDITION");
   if (clflags & HOOK_CB_PERSISTENT)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "PERSISTENT");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "PERSISTENT");
   if (clflags & HOOK_CB_IGNORE)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "IGNORE (skip)");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "IGNORE (skip)");
   if (clflags & HOOK_CB_FG_THREAD)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_THREAD");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "FG_THREAD");
   if (clflags & HOOK_OPT_FG_LIGHT)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_LIGHT");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "FG_LIGHT");
   if (clflags & HOOK_CB_ADDER_RUNS)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "ADDER_RUNS");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "ADDER_RUNS");
   if (clflags & HOOK_CB_HAS_FREEFUNCS)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "HAS FREE FUNCS");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "HAS FREE FUNCS");
   if (clflags & HOOK_UNIQUE_FUNC)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_FUNC");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "UNIQUE_FUNC");
   if (clflags & HOOK_UNIQUE_DATA)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_DATA");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "UNIQUE_DATA");
   if (clflags & HOOK_INVALIDATE_DATA)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "INVALIDATE_DATA");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "INVALIDATE_DATA");
   if (clflags & HOOK_OPT_MATCH_CHILD)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "MATCH_CHILD");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "MATCH_CHILD");
   if (clflags & HOOK_TOGGLE_FUNC)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "IS TOGGLE FUNC");
-  if (clflags & HOOK_STATUS_BLOCKED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKED");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "IS TOGGLE FUNC");
+  if (clflags & HOOK_STATUS_NOTREADY)
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "NOT READY");
   if (clflags & HOOK_STATUS_RUNNING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "RUNNING");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "RUNNING");
   if (clflags & HOOK_STATUS_ACTIONED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "ACTIONED");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "ACTIONED");
   if (clflags & HOOK_STATUS_REMOVE)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "REMOVE");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "REMOVE");
   return fstr;
 }
 
@@ -2724,8 +2724,7 @@ int run_weed_startup_tests(void) {
   print_diagnostics(DIAG_MEMORY);
 
   if (FEATURE_READY(THREADPOOL)) {
-
-    THREADVAR(timerinfo) = lives_get_current_ticks();
+    reset_timer_info();
     fprintf(stderr, "test random reads, writes and deletes\n");
     plant = _weed_plant_new(123);
 
@@ -3338,3 +3337,13 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
 #pragma GCC diagnostic pop
 
 #endif
+
+
+void lookup_test(void) {
+#define TSTNM "check"
+  void *dum = lives_malloc(100);
+  allvalues_t *allvp = add_to_lookup(test_lookup, WEED_SEED_VOIDPTR, TSTNM, dum);
+  g_print("added %s %p\n", TSTNM, allvp);
+  allvp = find_in_lookup(test_lookup, TSTNM);
+  g_print("got %p\n", allvp);
+}

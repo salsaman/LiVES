@@ -1199,7 +1199,6 @@ void lazy_startup_checks(void) {
   lives_proc_thread_t lpt;
   GET_PROC_THREAD_SELF(self);
   lives_proc_thread_set_pauseable(self, TRUE);
-
   capable->boot_time = get_boottime();
 
   if (prefs->vj_mode) goto alldone;
@@ -1216,7 +1215,6 @@ void lazy_startup_checks(void) {
     if (lives_proc_thread_freeze_state(lpt, FALSE) == LIVES_RESULT_SUCCESS) {
       if (!_lives_proc_thread_check_states(lpt, THRD_STATE_COMPLETED)) {
         lives_proc_thread_add_hook_cb(lpt, COMPLETED_HOOK, 0, wake_other_lpt, "V", self);
-
         lives_proc_thread_unfreeze_state(lpt);
         lives_proc_thread_pause();
       } else lives_proc_thread_unfreeze_state(lpt);
@@ -1226,6 +1224,7 @@ void lazy_startup_checks(void) {
     lives_proc_thread_unref(lpt);
     if (lives_proc_thread_get_pause_requested(self))
       lives_proc_thread_pause();
+    BREAK_ME("CALL");
     main_thread_execute_rvoid(add_rfx_effects2, "i", RFX_STATUS_ANY);
   }
 alldone:
@@ -1475,8 +1474,8 @@ boolean lives_startup(livespointer data) {
 
   what_sup = startupC_sup;
 
-  mainw->maintmode |= MMODE_PLAYER_TIMINGS;
-  mainw->maintmode |= MMODE_PLANNER_TIMINGS;
+  /* mainw->maintmode |= MMODE_PLAYER_TIMINGS; */
+  /* mainw->maintmode |= MMODE_PLANNER_TIMINGS; */
 
   // cant do this until conditions are intied - hook stack descriptors can have conditions
 
@@ -1792,6 +1791,8 @@ boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
+  disable_window_focus();
+
   if (!mainw->lives_shown) {
     mainw->is_ready = TRUE;
     show_lives();
@@ -1904,8 +1905,17 @@ void lives_startup2(void) {
   }
 #endif
 
+  lookup_test();
+  
+ if (!prefs->vj_mode && !prefs->startup_phase)
+    mainw->helper_procthreads[PT_LAZY_RFX] =
+      lives_proc_thread_create(LIVES_THRDATTR_NONE, add_rfx_effects,
+			       WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
+  
   // crash recovery - reload
 
+
+ 
   prefs->skip_ign = FALSE;
   if (!mainw->cliplist)
     if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
@@ -2092,6 +2102,7 @@ void lives_startup2(void) {
   fg_service_wake();
   mainw->do_ctx_update = TRUE;
   mainw->gui_much_events = TRUE;
+  enable_window_focus();
 } // end lives_startup2()
 
 
@@ -3141,8 +3152,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
   mainw->go_away = TRUE;
   mainw->status = LIVES_STATUS_NOTREADY;
 
-  mainw->aud_file_to_kill = -1;
-
   mainw->aud_rec_fd = -1;
 
   mainw->log_fd = -2;
@@ -4118,9 +4127,7 @@ static void do_start_messages(void) {
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
   if (prefs->show_dev_opts)
     prefs->show_desktop_panel = TRUE;
-
-  get_wm_caps();
-
+  
   d_print(_("Window manager reports as \"%s\" (%s)"),
           capable->wm_name ? capable->wm_name : _("UNKNOWN - please patch me !"),
           capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
@@ -4129,6 +4136,10 @@ static void do_start_messages(void) {
     d_print(_(", running on %s"), capable->wm_type);
 
   d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
+
+  tmp = list_annoy_res();
+  d_print(tmp);
+  lives_free(tmp);
 
   get_distro_dets();
 

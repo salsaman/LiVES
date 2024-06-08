@@ -227,15 +227,10 @@ typedef weed_error_t (*weed_ext_append_elements_f)(weed_plant_t *, const char *k
 						   weed_size_t num_new_elems,
 						   weed_voidptr_t new_values);
 
-/* CAUTION - no checking is done to ensure target is still valid */
-typedef weed_error_t (*weed_ext_attach_leaf_f)(weed_plant_t *src, const char *key, weed_plant_t *dst);
-typedef weed_error_t (*weed_ext_detach_leaf_f)(weed_plant_t *, const char *key);
 /* CAUTION - only works with scalar values */
 typedef weed_error_t (*weed_ext_atomic_exchange_f)(weed_plant_t *, const char *key, weed_seed_t seed_type,
 						   weed_voidptr_t new_value, weed_voidptr_t old_valptr);
 /* extended functions */
-__WEED_FN_DEF__ weed_ext_attach_leaf_f  weed_ext_attach_leaf;
-__WEED_FN_DEF__ weed_ext_detach_leaf_f  weed_ext_detach_leaf;
 __WEED_FN_DEF__ weed_ext_append_elements_f weed_ext_append_elements;
 __WEED_FN_DEF__ weed_ext_atomic_exchange_f weed_ext_atomic_exchange;
 /*------------------------------*/

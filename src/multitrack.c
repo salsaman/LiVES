@@ -8975,11 +8975,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     multi->opts.pertrack_audio = FALSE;
   }
 
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    lives_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
-  }
-
   if (!prefs->mt_show_ctx) {
     lives_widget_hide(multi->context_frame);
   }
@@ -9007,10 +9002,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     lives_window_remove_accel_group(LIVES_WINDOW(mainw->play_window), mainw->accel_group);
     lives_window_add_accel_group(LIVES_WINDOW(mainw->play_window), multi->accel_group);
     resize_play_window();
-  }
-
-  if (cfile->achans > 0 && !is_realtime_aplayer(prefs->audio_player)) {
-    do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
 
   mt_zoom(multi, 1.);

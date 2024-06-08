@@ -166,10 +166,12 @@ int weed_layer_get_yuv_sampling(weed_layer_t *);
 int weed_layer_get_yuv_subspace(weed_layer_t *);
 uint8_t *weed_layer_get_pixel_data(weed_layer_t *);
 void **weed_layer_get_pixel_data_planar(weed_layer_t *, int *nplanes);
+
 float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
 int weed_layer_get_audio_rate(weed_layer_t *);
 int weed_layer_get_naudchans(weed_layer_t *);
-int weed_layer_get_audio_length(weed_layer_t *);
+int weed_layer_get_audio_length(weed_layer_t *)
+;
 int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_rowstride(weed_layer_t *); ///< for packed palettes
 int weed_layer_get_width(weed_layer_t *);
@@ -195,6 +197,8 @@ weed_layer_t *weed_layer_set_yuv_sampling(weed_layer_t *, int sampling);
 weed_layer_t *weed_layer_set_yuv_subspace(weed_layer_t *, int subspace);
 weed_layer_t *weed_layer_set_gamma(weed_layer_t *, int gamma_type);
 
+#define LIVES_LEAF_AUDIO_INTERLEAVED "audio_inter"
+
 /// width in macropixels of the layer palette
 weed_layer_t *weed_layer_set_width(weed_layer_t *, int width);
 weed_layer_t *weed_layer_set_height(weed_layer_t *, int height);
@@ -207,7 +211,12 @@ weed_layer_t *weed_layer_set_flags(weed_layer_t *, int flags);
 weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *, int nplanes, void **pixel_data);
 weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
-weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
+weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate,
+					int naudchans, weed_size_t nsamps);
+weed_layer_t *weed_layer_set_audio_signed(weed_layer_t *, boolean asigned);
+weed_layer_t *weed_layer_set_audio_endian(weed_layer_t *, int endian);
+weed_layer_t *weed_layer_set_audio_interleaved(weed_layer_t *, boolean inter);
+weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *, boolean isfloat);
 
 lives_result_t copy_pixel_data(weed_layer_t *dst, weed_layer_t *src);
 

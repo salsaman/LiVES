@@ -2457,16 +2457,7 @@ void switch_to_file(int old_file, int new_file) {
 
   if (mainw->is_ready) {
     if (!mainw->multitrack && !mainw->reconfig) {
-      if (!get_timeline_lock()) {
-        if (mainw->recovering_files) return;
-        boolean is_fg = is_fg_thread();
-        while (!(get_timeline_lock())) {
-          if (is_fg) fg_service_fulfill();
-          lives_microsleep;
-        }
-      }
-      redraw_timeline(mainw->current_file);
-      unlock_timeline();
+      redraw_timeline_noblock(mainw->current_file);
     }
   }
 }
@@ -2756,7 +2747,7 @@ void do_quick_switch(int new_file) {
 
   // switch audio clip
   if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
-    if (APLAYER_REALTIME && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
         && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
       switch_audio_clip(new_file, TRUE);
@@ -2888,6 +2879,9 @@ void switch_clip(int type, int newclip, boolean force) {
     if (cfile && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
     if (!CURRENT_CLIP_IS_VALID || (force && newclip == mainw->current_file)) current_file = -1;
     switch_to_file(current_file, newclip);
+    if (cfile && cfile->is_loaded && force && !mainw->multitrack
+	&& !mainw->preview && !mainw->is_processing) sensitize();
+    
   }
 }
 

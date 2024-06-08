@@ -985,7 +985,6 @@ LIVES_GLOBAL_INLINE lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd,
                                  _lives_buffered_rdonly_slurp, WEED_SEED_VOID, "vI", fbuff, skip);
   SET_LPT_VALUE(lpt, WEED_SEED_VOIDPTR, "filebuff", (void *)fbuff);
   lives_proc_thread_set_cancellable(lpt);
-  g_print("slurp lpt %p\n", lpt);
   return lpt;
 }
 

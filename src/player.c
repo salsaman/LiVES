@@ -127,7 +127,7 @@ lives_result_t video_sync_ready(void) {
 
   if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
-      || !is_realtime_aplayer(prefs->audio_player) || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
+      || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     mainw->avsync_time = 0.;
     return LIVES_RESULT_SUCCESS;
@@ -1156,7 +1156,7 @@ frames_t load_frame_image(frames_t frame) {
 
       /* THREADVAR(hook_hints) = 0; */
     }
-
+    
     /* in render frame, we would have set all frames to either prepared or loaded */
     /* so the plan runner should have started loading them already */
     /* the reamining steps will be run, applying all fx instances until we are left with the single output layer */
@@ -2298,7 +2298,7 @@ player_loop:
   //  - check if any chabges require a rebuild of the nodemodel
   //  - return if playback was stopped for any reason
 
-  pthread_yield();
+  //pthread_yield();
 
   sfile = mainw->files[mainw->playing_file];
 

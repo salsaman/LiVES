@@ -2654,42 +2654,6 @@ void pulse_rec_audio_end(boolean close_fd) {
 
 #endif
 
-
-/* static void *ana_rcpt = NULL; */
-/* static void *ana_rcpt2 = NULL; */
-
-/* void audio_analyser_start(int source) { */
-/*   if (source == AUDIO_SRC_EXT) { */
-/*     if (!ana_rcpt) { */
-/*       lives_obj_instance_t *aplayer = get_aplayer_instance(source); */
-/*       ana_rcpt = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt, */
-/*                  WEED_SEED_BOOLEAN, "v", aplayer); */
-/*     } */
-/*   } else { */
-/*     if (!ana_rcpt2) { */
-/*       lives_obj_instance_t *aplayer = get_aplayer_instance(source); */
-/*       ana_rcpt2 = lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0, analyse_audio_rt, */
-/*                   WEED_SEED_BOOLEAN, "v", aplayer); */
-/*     } */
-/*   } */
-/* } */
-
-
-/* void audio_analyser_end(int source) { */
-/*   if (source == AUDIO_SRC_EXT) { */
-/*     if (ana_rcpt) { */
-/*       lives_hook_cb_remove(ana_rcpt); */
-/*       ana_rcpt = NULL; */
-/*     } */
-/*   } else { */
-/*     if (ana_rcpt2) { */
-/*       lives_hook_cb_remove(ana_rcpt2); */
-/*       ana_rcpt2 = NULL; */
-/*     } */
-/*   } */
-/* } */
-
-
 lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   // if the user activates recording during playback, prepare to start recording audio
   //  in this case we record only if the audio source is external, or an audio generator is running
@@ -2780,8 +2744,7 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
 }
 
 
-float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
-  boolean alock_mixer = FALSE;
+float **convert_to_float(lives_obj_t *aplayer, size_t nsamples, boolean alock_mixer) {
   int nchans = lives_aplayer_get_achans(aplayer);
   int arate = lives_aplayer_get_arate(aplayer);
 
@@ -2797,7 +2760,7 @@ float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
       break;
     } else {
       /// convert to float, and take the opportunity to find the max volume
-      /// (currently this is used to trigger recording start optionally)
+      /// (currently this is used to optionally trigger recording start)
       int16_t *adata = (int16_t *)lives_aplayer_get_data(aplayer);
       fltbuf = (float **)lives_calloc(nchans, sizeof(float *));
       for (int i = 0; i < nchans; i++) {
@@ -2814,6 +2777,9 @@ float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
           sample_move_float_float(fltbuf[i], &mainw->alock_abuf->bufferf[i][offs],
                                   xin_samplesd, xshrink_factor, 1, 1., nsamples);
           if (i == nchans - 1) mainw->alock_abuf->seek += xxin_bytes;
+
+	  lives_close_buffered(mainw->alock_abuf->_fd);
+          mainw->alock_abuf->_fd = -1;
         } else {
           if (fltbuf[i])
             //maxvol_heard =
@@ -2827,72 +2793,17 @@ float **convert_to_float(lives_obj_t *aplayer, size_t nsamples) {
 }
 
 
-void send_audio_to_fx(lives_obj_t *aplayer, lives_af_t af_type) {
-  // af_type can be AF_TYPE_NONA
-  // this should be eithet the only callback in the audio player's data_preview stack
-  // or if there is a mixer callback
-  // AF_TYPE_A
-  // analysers - should be added as a DATA_READY_HOOK
-  //boolean alock_mixer = FALSE;
+void send_audio_to_fx(lives_obj_t *aplayer, lives_af_t af_type, weed_layer_t *layer) {
   if (has_audio_filters(af_type)) {
-    lives_databook_t *lbook = lives_local_databook();
-    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-    float **fltbuf = NULL, **adata;
     ticks_t tc = mainw->currticks;
-    int nchans;
-    int *pnchans = &nchans;
-    int arate;
-    size_t nsamples;
-
-    GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, pnchans);
-    GET_BOOK_VALUE(nsamples, lbook, ATTR_AUDIO_DATA_LENGTH);
-    GET_BOOK_VALUE(arate, lbook, ATTR_AUDIO_RATE);
-
-    /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
-        to the in channel of the filter and then from the out channel back to the layer.
-        IF the filter supports inplace then
-        we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
-        and feed the result to the player as usual */
-
-    weed_layer_set_audio_data(layer, fltbuf, arate, nchans, nsamples);
     weed_apply_audio_effects_rt(layer, tc, af_type == AF_TYPE_A, TRUE);
-    if (af_type == AF_TYPE_NONA) {
-      fltbuf = weed_layer_get_audio_data(layer, NULL);
-      weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-      weed_layer_unref(layer);
-      adata = (float **)lives_aplayer_get_data(aplayer);
-      for (int i = 0; i < nchans; i++) {
-        if (fltbuf[i] != adata[i]) {
-          lives_free(adata[i]);
-          adata[i] = fltbuf[i];
-        }
-      }
-      lives_aplayer_set_data(aplayer, (void *)adata);
-    }
   }
 }
 
 
 /////////////////
 
-// data_preview hook cbd
-
-void send_audio_to_rte(lives_obj_t *aplayer) {
-  LIVES_ASSERT(aplayer);
-  if (has_audio_filters(AF_TYPE_NONA))
-    send_audio_to_fx(aplayer, AF_TYPE_NONA);
-}
-
-
-// data ready hook callbacks
-
-void send_audio_to_analysers(lives_obj_t *aplayer) {
-  if (has_audio_filters(AF_TYPE_NONA))
-    send_audio_to_fx(aplayer, AF_TYPE_A);
-}
-
-
-void send_audio_to_vpp(lives_obj_t *aplayer) {
+void send_audio_to_vpp(lives_obj_t *aplayer, weed_layer_t *layer) {
   // streaming - we can push float audio to the playback plugin
   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
     float **fltbuf = NULL;
@@ -2908,30 +2819,16 @@ void send_audio_to_vpp(lives_obj_t *aplayer) {
 }
 
 
-void send_audio_to_afbuffer(lives_obj_t *aplayer) {
-  // if we have fx with mixed audio / video, eg audio triggered gens
-  // or if we want loopback to player
-  // append the audio to the float arena
-  // - these things are running at a different cycle rate, so we must buffer
-  // this for ghenerators
-
-  // we cannot read values form aplayer because they may have changed since the hoo was triggerd
-  // but just like magic, we have a local databok full of useful information
-
-  size_t nsamples;
-  int nchans, arate;
-  float **fltbuf = NULL;
-  lives_databook_t *lbook = lives_local_databook();
-
-  GET_BOOK_VALUE(arate, lbook, ATTR_AUDIO_RATE);
-  GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, &nchans);
-  GET_BOOK_VALUE(nsamples, lbook, ATTR_AUDIO_DATA_LENGTH);
+void send_audio_to_afbuffer(lives_obj_t *aplayer, weed_layer_t *layer) {
+  int nchans;
+  float **fltbuf = weed_layer_get_audio_data(layer, &nchans);
+  size_t nsamples = weed_layer_get_audio_length(layer);
   for (int i = 0; i < nchans; i++)
     append_to_audio_bufferf(fltbuf[i], nsamples, (i == nchans - 1) ? -i - 1 : i + 1);
 }
 
 
-void send_audio_to_fifo(pulse_driver_t *pdriver) {
+void send_audio_to_fifo(lives_obj_t *aplayer, weed_layer_t *layer) {
   //
 }
 
@@ -2944,19 +2841,6 @@ float **rt_mix_audio(lives_obj_t *aplayer, float **fltbuf) {
   // we apply auto gain to each audio source then mix them all
   //
   //
-
-  /* lives_databook_t *lbook = lives_local_databook(); */
-
-  /* GET_BOOK_VALUE(arate, lbook, ATTR_AUDIO_RATE); */
-  /* GET_BOOK_ARRAY(fltbuf, lbook, ATTR_AUDIO_DATA, &nchans); */
-  /* GET_BOOK_VALUE(nsamples,lbook, ATTR_AUDIO_DATA_LENGTH); */
-
-  /* lives_databook_get_value(lbook, ATTR_AUDIO_SAMPSIZE); */
-  /* lives_databook_get_value(lbook, ATTR_AUDIO_SIGNED); */
-  /* lives_databook_get_value(lbook, ATTR_AUDIO_ENDIAN); */
-  /* lives_databook_get_value(lbook, ATTR_AUDIO_FLOAT); */
-  /* lives_databook_get_value(lbook, ATTR_AUDIO_INTERLEAVED); */
-  /* size_t nsamples = lives_aplayer_get_data_len(aplayer); */
 
   boolean alock_mixer = FALSE;
   if (alock_mixer) {
@@ -3132,6 +3016,52 @@ boolean write_aud_data_cb(lives_obj_instance_t *aplayer, void *xdets) {
   return TRUE;
 }
 
+
+static void *ana_fx_rcpt = NULL;
+static void *apply_fx_rcpt = NULL;
+static void *afbuffer_rcpt = NULL;
+
+void update_audio_cbs(lives_obj_instance_t *aplayer) {
+  if (LIVES_IS_PLAYING && has_audio_filters(AF_TYPE_A)) {
+    if (!ana_fx_rcpt)
+      ana_fx_rcpt =
+	lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK,
+					   0, send_audio_to_fx, WEED_SEED_VOID,
+					   "i", AF_TYPE_A);
+  }
+  else {
+    if (ana_fx_rcpt) {
+      lives_hook_cb_remove(ana_fx_rcpt);
+      ana_fx_rcpt = NULL;
+    }
+  }
+  if (LIVES_IS_PLAYING && has_audio_filters(AF_TYPE_NONA)) {
+    if (!apply_fx_rcpt)
+      apply_fx_rcpt =
+	lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK,
+					   0, send_audio_to_fx, WEED_SEED_VOID,
+					   "i", AF_TYPE_NONA);
+  }
+  else {
+    if (apply_fx_rcpt) {
+      lives_hook_cb_remove(apply_fx_rcpt);
+      apply_fx_rcpt = NULL;
+    }
+  }
+
+  if (LIVES_IS_PLAYING && mainw->afbuffer) {
+    if (!afbuffer_rcpt)
+      afbuffer_rcpt =
+	lives_proc_thread_add_hook_cb_full(aplayer, DATA_READY_HOOK, 0,
+					   send_audio_to_afbuffer, WEED_SEED_VOID, "");
+  }
+  else {
+    if (afbuffer_rcpt) {
+      lives_hook_cb_remove(afbuffer_rcpt);
+      afbuffer_rcpt = NULL;
+    }
+  }
+}
 
 /////////////////////////////////////////////////////////////////
 
@@ -3652,7 +3582,7 @@ LIVES_GLOBAL_INLINE boolean avsync_force(void) {
   lives_clip_t *sfile = RETURN_NORMAL_CLIP(mainw->playing_file);
 
   if (!sfile || !AV_CLIPS_EQUAL || !LIVES_CE_PLAYBACK || AUD_SRC_EXTERNAL
-      || !APLAYER_REALTIME || mainw->foreign) {
+      || mainw->foreign) {
     mainw->video_seek_ready = TRUE;
     video_sync_ready();
     return LIVES_RESULT_INVALID;
@@ -3797,6 +3727,37 @@ static lives_proc_thread_t athread;
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+
+// audio_cacher
+// - run as proc_thread, as soon as it starts in auto pauses
+// and waits for resume request or cancel request
+// the goal is to keep buffers for each layer topped up
+// and also convert / duplicate the buffers to 32bit float
+// at the sample rate / channels of the player
+//
+// each layer has an associated buffered filereader
+// thus we just read sufficient bytes to keep topped up
+//
+// the buffers may also have float versions
+// so there are 2 operations - preload and pull
+// preload - set file uris, seek points, direction, rate, chans, asamps, aendian, asigned
+// buffers will be filled to a preload time, converted to float,
+// pull then just triggers reload
+
+
+void audio_cache(int op, int nlayers, weed_layer_t **layers) {
+  lives_proc_thread_t caud_lpt = NULL;
+  // op can be -1 cancel, 0 pause, 1 prep, 2 pull
+  switch (op) {
+    case 1:s
+      if (!caud_lpt) caud_lpt = lives_proc_rh
+  
+
+
+
+
+
+
 /**
    @brief audio caching worker thread function
 
@@ -3804,9 +3765,6 @@ static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
    read audio from file into cache
    must be done in real time since other threads may be waiting on the cache
-
-   during free playback, this is only used by jack (thus far it has proven too complex to implement for pulse, since it uses
-   variable sized buffers.
 
    This function is also used to cache audio when playing from an event_list. Effects may be applied and the mixer volumes
    adjusted.

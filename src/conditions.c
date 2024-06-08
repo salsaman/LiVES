@@ -27,6 +27,7 @@ static LiVESList *cond_trans_list = NULL;
 #define MATCH_BOOL		3
 #define MATCH_POINTER		4
 #define MATCH_STRING		5
+#define MATCH_PLANTPTR		6
 
 static boolean check_st_match(allvalues_t *p0, allvalues_t *p1, int match) {
   if (p0 && p1 && p1->stype != p0->stype) return FALSE;
@@ -48,6 +49,9 @@ static boolean check_st_match(allvalues_t *p0, allvalues_t *p1, int match) {
     if (p0->stype == WEED_SEED_VOIDPTR
         || p0->stype == WEED_SEED_FUNCPTR
         || p0->stype == WEED_SEED_PLANTPTR) return TRUE;
+    break;
+  case MATCH_PLANTPTR:
+    if (p0->stype == WEED_SEED_PLANTPTR) return TRUE;
     break;
   case MATCH_STRING:
     if (p0->stype == WEED_SEED_STRING
@@ -320,6 +324,7 @@ static allvalues_t *cond_greater(LiVESList **va_magic, allvalues_t *p0) {
   return allvp;
 }
 
+
 static allvalues_t *cond_bit_set_const(allvalues_t *p0, allvalues_t *p1) {
   boolean res = FALSE;
   if (!check_st_match(p0, p1, MATCH_INT)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
@@ -339,6 +344,26 @@ static allvalues_t *cond_bit_set(LiVESList **va_magic, allvalues_t *p0) {
   allvalues_t *allvp;
   if (is_final(p0) && is_final(p1)) {
     allvp = cond_bit_set_const(p0, p1);
+    allvp->funcinst = finst;
+  } else allvp = MAKE_ALLVALUE(LIVES_SEED_FUNCINST, finst);
+  return allvp;
+}
+
+static allvalues_t *cond_has_leaf_const(allvalues_t *p0, allvalues_t *p1) {
+  boolean res = FALSE;
+  if (!check_st_match(p0, NULL, MATCH_PLANTPTR)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
+  if (!check_st_match(p1, NULL, MATCH_STRING)) return MAKE_ALLVALUE(WEED_SEED_INVALID, NULL);
+  res = weed_plant_has_leaf(p0->values.P[0], p1->values.C[0]);
+  return MAKE_ALLVALUE(WEED_SEED_BOOLEAN, res);
+}
+
+static allvalues_t *cond_has_leaf(LiVESList **va_magic, allvalues_t *p0) {
+  allvalues_t *p1 = cond_create_va(FALSE, va_magic);
+  lives_funcinst_t *finst = lives_funcinst_create(cond_has_leaf_const, NULL,
+						  WEED_SEED_VOIDPTR, "AA", p0, p1);
+  allvalues_t *allvp;
+  if (is_final(p0) && is_final(p1)) {
+    allvp = cond_has_leaf_const(p0, p1);
     allvp->funcinst = finst;
   } else allvp = MAKE_ALLVALUE(LIVES_SEED_FUNCINST, finst);
   return allvp;
@@ -1143,6 +1168,7 @@ void lives_conditions_init(void) {
   register_cond_token("EQUALS", 'O',  "#p0 is equal to #p1",  cond_equals);
   register_cond_token("GREATER", 'O',  "#p0 is greater than #p1",  cond_greater);
   register_cond_token("BIT_SET", 'O', "#p0 has bit #p1 set",  cond_bit_set);
+  register_cond_token("HAS_LEAF", 'O', "plant #p0 has leaf #p1",  cond_has_leaf);
 
   // COND_EVAL allows the inclusion of another cond within a cond, so we can extend
   // and combine existing conds

@@ -43,6 +43,10 @@
 
 #define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
+#define LIVES_PLANT_DEF 313
+
+#define LIVES_PLANT_ALLVALUES 400
+
 #define LIVES_PLANT_FUNCPARAMS 512
 
 #define LIVES_PLANT_HASH_STORE 513
@@ -84,8 +88,8 @@ int64_t lives_plant_get_subtype(weed_plant_t *);
 #define BLU_FLAG_OPTIONAL	(1ull << 3)
 #define BLU_FLAG_OPTREM		(1ull << 4)
 
-// not a "real flagbit", just sets maxelems to -1 instead of 0
 #define BLU_FLAG_ARRAY		(1ull << 31)
+#define BLU_FLAG_HAS_SIZE	(1ull << 32)
 
 // add undel host, simlar to  rdonlyhost; applies unless..
 #define BLU_FLAGS_REMOVABLE	(BLU_FLAG_OPTIONAL | BLU_FLAG_OPTREM)
@@ -118,10 +122,10 @@ weed_plant_t *plant_from_blueprint(int pltype, ...);
 void dump_blueprint(uint64_t pltype);
 
 // given a "blueprint" for lives_plant_type bltype, we create all its leaves, setting the values from va_args
-#define PLANT_FROM_BLUEPRINT(bltype, ...) plant_from_blueprint(LIVES_PLANT_##bltype, ADD_STD_LEAVES(NULL) __VA_OPT__(,) __VA_ARGS__, NULL)
+#define PLANT_FROM_BLUEPRINT(bltype, ...) plant_from_blueprint(LIVES_PLANT_##bltype, ADD_DEF_LEAVES(NULL) __VA_OPT__(,) __VA_ARGS__, NULL)
 
-#define LIVES_STD_LEAVES WEED_LEAF_UNIQUE_ID, WEED_SEED_UINT64, BLU_FLAGS_NONE, LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE
-#define ADD_STD_LEAVES(blptr) WEED_LEAF_UNIQUE_ID, gen_unique_id(), LIVES_LEAF_BLUEPRINT_PTR, blptr
+#define LIVES_DEF_BLUEPRINT WEED_LEAF_UNIQUE_ID, WEED_SEED_UINT64, BLU_FLAGS_NONE, LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE
+#define ADD_DEF_LEAVES(blptr) WEED_LEAF_UNIQUE_ID, gen_unique_id(), LIVES_LEAF_BLUEPRINT_PTR, blptr
 
 // defines LIVES_VALUE_DEF plant - a plant which defines a leaf in a plant
 #define LIVES_VALUE_DEF_BLUEPRINT					\
@@ -132,7 +136,7 @@ void dump_blueprint(uint64_t pltype);
 // defines LIVES_BLUEPRINT plant which is a blueprint for itself and other lives_plants
 // leaves for target are held in an index keyed by name, so we can immediately find them from the leaf name
 #define LIVES_BLUEPRINT_BLUEPRINT					\
-  LIVES_STD_LEAVES, LIVES_LEAF_BLUEPRINT_IDX, WEED_SEED_UINT64, BLU_FLAGS_NONE, \
+  LIVES_DEF_BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX, WEED_SEED_UINT64, BLU_FLAGS_NONE,	\
     INCLUDES_SUB(INDEX, LIVES_LEAF_VALUE_DEFS)
 
 #define EXTENDS_PLANT(plant) "@EXTENDS", LIVES_##plant##_BLUEPRINT
@@ -149,14 +153,15 @@ void register_blueprints(void);
 // if itemtype is plantptr, and keyval is defined, items will be indexed by keyval leaf, stringified
 // if prefixed by #,
 #define LIVES_INDEX_BLUEPRINT						\
-  LIVES_STD_LEAVES, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, \
+  LIVES_DEF_BLUEPRINT, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, \
     LIVES_SEED_CONST_CHARPTR, BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, \
-    LIVES_LEAF_ADD_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL, \
+    LIVES_LEAF_ADD_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
     LIVES_LEAF_DEL_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL, \
     LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL
 
 typedef enum {
   idx_type_anon = -1,
+  test_lookup,
   idx_type_values,
   idx_type_data_book,
   idx_type_prefs,
@@ -170,7 +175,7 @@ typedef index_type lookup_type;
 #define LIVES_LEAF_INDEX_TYPE "_index_type"
 #define LIVES_LEAF_PREFIX "_prefix"
 #define LIVES_LEAF_ITEM_TYPE "_data_type"
-#define LIVES_LEAF_ADD_SCRIPT "_add_script"
+#define LIVES_LEAF_ADD_COND "_add_cond"
 #define LIVES_LEAF_DEL_SCRIPT "_del_script"
 #define LIVES_LEAF_UPDATE_SCRIPT "_update_script"
 
@@ -204,7 +209,16 @@ boolean lives_index_has_value(lives_index_t *, const char *key);
 weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean set);
 
 // LIVES PLANT LOOKUP
-// a lookup is an index wuth read only values, index vals are readonly, autofree. We define a free func for the index vals.
+// a lookup is an index with read only values, index vals are readonly,
+// autofree. We define a free func for the index vals.
+
+// we (will) have condiitons for add, update and delete
+// - check type is allvalues
+// - chek unqie nme
+//
+// update - blocked -r eadonly
+
+// delete - auto free
 //
 // if we pass an allvalues with name and value, if the name is already used
 // the value is not stored. Otherwise the allvalues is set static (todo - refcount)
@@ -214,7 +228,6 @@ weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean 
 #define LIVES_LEAF_LOOKUP_TYPE LIVES_LEAF_INDEX_TYPE
 
 #define LOOKUP_PREFIX "ref_"
-
 
 typedef weed_plant_t lives_lookup_t;
 
@@ -251,8 +264,6 @@ allvalues_t *find_in_lookup(lookup_type ltype, const char *name);
 		       LIVES_LEAF_ITEM_TYPE, LIVES_SEED_ALLVALUES, LIVES_LEAF_SCOPE, 0)
 
 typedef weed_plant_t lives_databook_t;
-
-int lives_databook_get_nitems(lives_databook_t *, const char *item);
 
 weed_seed_t lives_databook_get_datatype(lives_databook_t *, const char *item);
 lives_result_t lives_databook_set_datatype(lives_databook_t *, const char *name, weed_seed_t itype);
@@ -343,14 +354,20 @@ void show_databook_contents(lives_databook_t *);
   REGISTER_BLUEPRINT(VALUE_DEF); 	REGISTER_BLUEPRINT(BLUEPRINT);	\
   REGISTER_BLUEPRINT(INDEX);
 
-/* REGISTER_BLUEPRINT(INDEX);						\ */
-/* REGISTER_BLUEPRINT(VALUE_DEF); 	REGISTER_BLUEPRINT(BLUEPRINT);  */
-
 extern lives_index_t *indices[idx_type_max];
 
 //// related, generic leaves
 
 #define LIVES_LEAF_SERIAL_NUMBER "_serial_num"
 #define LIVES_LEAF_SEED_TYPE "_seed_type"
+#define LIVES_LEAF_NUM_ELEMS "_num_elems"
+#define LIVES_LEAF_SIZE "_suzeval"
+#define LIVES_LEAF_OLDVAL "_oldvalue"
+#define LIVES_LEAF_RWLOCK "_rwlock"
+#define LIVES_LEAF_ALLDATA "_alldatatypes"
+#define LIVES_LEAF_EXT_TYPE "_ext_datatype"
+#define LIVES_LEAF_FUNCINST "_funcinst"
+#define LIVES_LEAF_CONTINGENCIES "_contingencies"
+#define LIVES_LEAF_PRIV_DATA "_priv_data"
 
 #endif

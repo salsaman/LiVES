@@ -195,20 +195,19 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_timer_add(interval, func, data) g_timeout_add(interval, func, data)
 #endif
 
-#define lives_markup_escape_text(a, b) g_markup_escape_text(a, b)
-
-#define lives_markup_printf_escaped(...) g_markup_printf_escaped(__VA_ARGS__)
+#define _lives_markup_escape_text(a, b) g_markup_escape_text(a, b)
+#define _lives_markup_printf_escaped(...) g_markup_printf_escaped(__VA_ARGS__)
 
 #define lives_snprintf(a, b, ...) g_snprintf(a, b, __VA_ARGS__)
 
-#define lives_strsplit(a, b, c) g_strsplit(a, b, c)
-#define lives_strfreev(a) g_strfreev(a)
+#define _lives_strsplit(a, b, c) g_strsplit(a, b, c)
+#define _lives_strfreev(a) g_strfreev(a)
 
 #define lives_ascii_strup(a, b) g_ascii_strup(a, b)
 #define lives_ascii_strdown(a, b) g_ascii_strdown(a, b)
 #define lives_ascii_strcasecmp(a, b) g_ascii_strcasecmp(a, b)
 #define lives_ascii_strncasecmp(a, b, c) g_ascii_strncasecmp(a, b, c)
-#define lives_strconcat(a, ...) g_strconcat(a, __VA_ARGS__)
+#define _lives_strconcat(a, ...) g_strconcat(a, __VA_ARGS__)
 #define lives_strstrip(a) g_strstrip(a)
 
 #define lives_strrstr(a, b) g_strrstr(a, b)

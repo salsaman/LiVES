@@ -452,6 +452,11 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt) {
     weed_set_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, destruct_rwlock);
   }
 
+  // create local data book for lpt, and set $SRC_OBJECT
+  // we can set any cons vals for the local databook at scope 0
+  SET_LPT_VALUE(lpt, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, lpt);
+  lives_databook_descend(lives_proc_thread_get_book(lpt));
+  
   hook_stacks = (lives_hook_stack_t **)lives_calloc(N_HOOK_POINTS, sizeof(lives_hook_stack_t *));
 
   for (int i = N_NATIVE_HOOKS; i < N_HOOK_POINTS; i++) {
@@ -520,7 +525,7 @@ lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t 
 
 lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs) {
   lives_proc_thread_t lpt = lives_plant_new(LIVES_PLANT_PROC_THREAD);
-  add_to_audit(THREADVAR(audit_tag), (void *)lpt);
+  //add_to_audit(THREADVAR(audit_tag), (void *)lpt);
   lives_proc_thread_push_active_funcinst(lpt, finst);
   lives_proc_thread_set_attrs(lpt, attrs);
   if (lpt) add_garnish(lpt);
@@ -667,10 +672,6 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
 
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
   if (lpt) {
-    // create local data book for lpt, and set $SRC_OBJECT
-    // we can set any cons vals for the local databook at scope 0
-    SET_LPT_VALUE(lpt, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, lpt);
-    lives_databook_descend(lives_proc_thread_get_book(lpt));
     if (attrs & LIVES_THRDATTR_CREATE_UNQUEUED)
       lives_funcinst_set_attrs(finst, attrs);
     else lives_proc_thread_dispatch(lpt);
@@ -945,7 +946,7 @@ if (lpt) {
         tdata->vars.var_proc_thread = NULL;
       }
 
-      remove_from_audit((void *)lpt);
+      //remove_from_audit((void *)lpt);
 
       ////////
       weed_plant_free(lpt);
@@ -992,19 +993,13 @@ lives_proc_thread_t lives_funcinst_fg_queue(lives_funcinst_t *finst, uint64_t at
 }
 
 
-lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *finst,
-    uint64_t attrs, lives_databook_t *ctxbook) {
+lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *finst, uint64_t attrs) {
   lives_proc_thread_t lpt = NULL;
   boolean is_static = !!(finst->flags & FINST_FLAG_STATIC);
   lpt = lives_proc_thread_create_for_funcinst(finst, attrs);
 
-  // will take the lcoal data book, and what was oreviously the targeobject now becoems the osource object
+  // will take the local data book, and what was previously the target object now becoems the source object
   // a process called "emission"
-  // we wi;; then "inject" = copy by reference the values in ctxdatabook into the local data book
-
-  // we will take the items from the ctxbook and "inject" teh in the localbook for lpt
-  // preserving and values already presnt
-  // we will tpelac the loca data bok with
   lives_hook_stack_t *hstack = CL_DATA(finst, hstacks)[CL_DATA(finst, hstype)];
   if (hstack->owner_act_src_type == ACTION_SOURCE_LPT) {
     lives_databook_t *lptbook = lives_proc_thread_get_book(lpt);
@@ -1013,7 +1008,6 @@ lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *finst,
     // then descend and they will become readonly
     lives_databook_pushdown_value(lptbook, LDB_SRC_OBJECT,
                                   WEED_SEED_PLANTPTR, hstack->owner.lpt);
-    lives_databook_inject(lptbook, ctxbook);
     lives_databook_descend(lptbook);
   }
   lives_proc_thread_dispatch(lpt);
@@ -1560,7 +1554,11 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
       }
 
       if (!have_lock) pthread_mutex_unlock(pause_mutex);
-      if (!bval) lives_microsleep_while_false(bval);
+      boolean is_fg = is_fg_thread();
+      while (!bval) {
+	lives_microsleep;
+	if (is_fg) fg_service_fulfill();
+      }
       lives_proc_thread_unref(lpt);
       return TRUE;
     }
@@ -2882,53 +2880,53 @@ boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
 char *lives_proc_thread_state_desc(uint64_t state) {
   char *fstr = lives_strdup("");
   if (state & THRD_STATE_UNQUEUED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is not queued");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is not queued");
   if (state & THRD_STATE_IDLING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is idling");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is idling");
   if (state & THRD_STATE_QUEUED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is queued");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is queued");
   if (state & THRD_STATE_RUNNING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is running");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is running");
   if (state & THRD_STATE_COMPLETED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "has completed");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "has completed");
   if (state & THRD_STATE_DESTROYING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "will be destroyed");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "will be destroyed");
   if (state & THRD_STATE_FINISHED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "has finished");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "has finished");
   if (state & THRD_STATE_DESTROYED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "was destroyed");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "was destroyed");
   if (state & THRD_STATE_BUSY)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is busy");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is busy");
   if (state & THRD_STATE_WAITING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is waiting on conditions");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is waiting on conditions");
   if (state & THRD_STATE_SYNC_WAITING)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is waiting for sync");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is waiting for sync");
   if (state & THRD_STATE_BLOCKED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is blocked");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is blocked");
   if (state & THRD_STATE_PAUSE_REQUESTED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "pause was requested");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "pause was requested");
   if (state & THRD_STATE_PAUSED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is paused");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is paused");
   if (state & THRD_STATE_RESUME_REQUESTED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "resume was requested");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "resume was requested");
   if (state & THRD_STATE_CANCEL_REQUESTED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "cancel was requested");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "cancel was requested");
   if (state & THRD_STATE_CANCELLED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "was cancelled");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "was cancelled");
   if (state & THRD_STATE_TIMED_OUT)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "has timed out");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "has timed out");
   if (state & THRD_STATE_ERROR)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "error encountered");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "error encountered");
   if (state & THRD_STATE_SIGNALLED)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "was signalled");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "was signalled");
   if (state & THRD_STATE_INVALID)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is INVALID");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is INVALID");
   if (state & THRD_OPT_CAN_INTERRUPT)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "has interrupts enabled");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "has interrupts enabled");
   if (state & THRD_BLOCK_HOOKS)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "hooks blocked");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "hooks blocked");
   if (state & THRD_STATE_EXTERN)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "is external");
+    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is external");
 
   return fstr;
 }
@@ -3040,7 +3038,7 @@ static void lives_thread_data_destroy(void *data) {
   all_tdatas = lives_list_remove_data(all_tdatas, tdata, FALSE);
   pthread_rwlock_unlock(&all_tdata_rwlock);
 
-  if (tdata->vars.var_func_stack) lives_sync_list_free(tdata->vars.var_func_stack, TRUE);
+  //if (tdata->vars.var_func_stack) lives_sync_list_free(tdata->vars.var_func_stack, TRUE);
 
   lives_list_free((LiVESList *)tdata->vars.var_trest_list);
 

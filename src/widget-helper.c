@@ -1260,19 +1260,17 @@ boolean fg_service_fulfill_cb(void *dummy) {
 
       if (!is_active) lives_widget_context_update();
       mainw->do_ctx_update = FALSE;
-      pthread_yield();
       lives_microsleep;
     } else {
       if (finsttorun || mainw->global_hook_stacks[LIVES_GUI_HOOK]->stack)
         continue;
 
       lives_nanosleep(NSLEEP_TIME);
-      pthread_yield();
 
       if (cprio == PRIO_LOW) {
         for (int i = 0; i < sLO_FACTOR; i++) {
           if (cprio != PRIO_LOW) break;
-          pthread_yield();
+          //pthread_yield();
           lives_nanosleep(NSLEEP_TIME);
         }
         // servicing modal windows
@@ -1308,7 +1306,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
           if (!pthread_mutex_trylock(&finst_mutex)) {
             lives_widget_context_iteration(NULL, FALSE);
             pthread_mutex_unlock(&finst_mutex);
-            pthread_yield();
+            //pthread_yield();
             lives_microsleep;
           }
         }
@@ -13687,7 +13685,7 @@ static boolean _lives_widget_context_update(void) {
     _lives_widget_context_iteration(NULL, FALSE);
     if (!lives_widget_context_pending(NULL)) break;
     if (!LIVES_IS_PLAYING && what_sup_now() == sup_ready) {
-      pthread_yield();
+      //ypthread_yield();
       lives_nanosleep(NSLEEP_TIME);
     }
     count++;

@@ -211,9 +211,9 @@ DEF_STRUCT(allvalues_t,
 #endif
 #ifdef WEED_SEED_FLOAT
 #define _CASE_FLOAT(pre, pre2, pre3, post, post2, post3, post4) \
-  case(WEED_SEED_FLOAT):pre(pre2,(float)pre3##double##post(post2,post3,post4));break;
+  case(WEED_SEED_FLOAT):pre(pre2,pre3##float##post(post2,post3,post4));break;
 #define _CASE2_FLOAT(pre, op, pre2, post, post2, post3, post4)	\
-  case(WEED_SEED_FLOAT):pre f op (float *)pre2##double##post(post2,post3,post4);break;
+  case(WEED_SEED_FLOAT):pre f op pre2##float##post(post2,post3,post4);break;
 #else
 #define _CASE_FLOAT(pre, pre2, pre3, post, post2, post3, post4)
 #define _CASE2_FLOAT(pre, op, pre2, post, post2, post3, post4)
@@ -266,6 +266,7 @@ DEF_STRUCT(allvalues_t,
 // seed types which can be wrapped in allvalues_t->values.V
 #define LIVES_SEED_FUNCINST 2050
 #define LIVES_SEED_BLOB_DATA 2051
+#define LIVES_SEED_ALLTYPES 2052
 
 // syntactic marker for variadic functions, must be final in funcsig / args_fmt
 // not passed in func calls
@@ -636,22 +637,23 @@ void reg_known_funcsigs(void);
   ADD_FUNCSIG(2,INT,INT)			\
   ADD_FUNCSIG(2,BOOL,BOOL)			\
   ADD_FUNCSIG(2,INT64,INT64)			\
-  ADD_FUNCSIG(2,STRING,STRING)			\
   ADD_FUNCSIG(2,DOUBLE,DOUBLE)			\
-  ADD_FUNCSIG(2,VOIDP,VOIDP)			\
-  ADD_FUNCSIG(2,PLANTP,PLANTP)			\
   ADD_FUNCSIG(2,FUNCP,FUNCP)			\
   ADD_FUNCSIG(2,INT,VOIDP)			\
+  ADD_FUNCSIG(2,STRING,STRING)			\
   ADD_FUNCSIG(2,STRING,INT)			\
   ADD_FUNCSIG(2,STRING,BOOL)			\
   ADD_FUNCSIG(2,BOOL,INT)			\
+  ADD_FUNCSIG(2,VOIDP,VOIDP)			\
   ADD_FUNCSIG(2,VOIDP,DOUBLE)			\
   ADD_FUNCSIG(2,VOIDP,INT)			\
   ADD_FUNCSIG(2,VOIDP,INT64)			\
   ADD_FUNCSIG(2,VOIDP,BOOL)			\
   ADD_FUNCSIG(2,VOIDP,STRING)			\
+  ADD_FUNCSIG(2,PLANTP,PLANTP)			\
   ADD_FUNCSIG(2,PLANTP,VOIDP)			\
-  ADD_FUNCSIG(2,PLANTP,INT64)
+  ADD_FUNCSIG(2,PLANTP,INT64)			\
+  ADD_FUNCSIG(2,PLANTP,INT)
 
 #define THREE_PARAM_FUNCSIGS			\
   ADD_FUNCSIG(3,VOIDP,VOIDP,VOIDP)		\
@@ -664,6 +666,7 @@ void reg_known_funcsigs(void);
   ADD_FUNCSIG(3,PLANTP,VOIDP,INT64)		\
   ADD_FUNCSIG(3,PLANTP,STRING,INT)		\
   ADD_FUNCSIG(3,PLANTP,INT64,BOOL)		\
+  ADD_FUNCSIG(3,PLANTP,INT,PLANTP)		\
   ADD_FUNCSIG(3,INT,INT,BOOL)			\
   ADD_FUNCSIG(3,BOOL,INT,BOOL)			\
   ADD_FUNCSIG(3,STRING,INT,BOOL)		\

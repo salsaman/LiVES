@@ -247,10 +247,23 @@ static void post_playback(void) {
               && !((mainw->cancelled == CANCEL_NONE
                     || mainw->cancelled == CANCEL_NO_MORE_PREVIEW)))) {
       }
-      if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-          && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE)
-          && capable->wm_caps.pan_res & RESTYPE_ACTION) {
-        show_desktop_panel();
+
+      if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel) {
+	if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
+	    && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
+	    && (capable->wm_caps.annoy.panel.resolution & RES_HIDE)
+	    && (capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION)) {
+	  show_desktop_panel();
+	}
+      }
+      if (capable->wm_caps.annoy.notify.problem) {
+	boolean origval;
+	VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
+	if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
+	    && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND)
+	    && (capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG)) {
+	  disable_desktop_notify();
+        }
       }
       lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
       mainw->ignore_screen_size = FALSE;
@@ -394,8 +407,6 @@ static void post_playback(void) {
 
 static void pre_playback(void) {
   // gui thread only
-  short audio_player = prefs->audio_player;
-
   if (!mainw->preview || !cfile->opening) {
     set_record_menutext(REC_READY);
     desensitize();
@@ -473,13 +484,9 @@ static void pre_playback(void) {
 
   lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
-  lives_widget_set_sensitive(mainw->m_mutebutton, is_realtime_aplayer(audio_player) || mainw->multitrack);
-  lives_widget_set_sensitive(mainw->m_loopbutton, (!cfile->achans || mainw->mute || mainw->multitrack ||
-                             mainw->loop_cont || is_realtime_aplayer(audio_player))
-                             && mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->loop_continue, (!cfile->achans || mainw->mute || mainw->loop_cont ||
-                             is_realtime_aplayer(audio_player))
-                             && mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
+  lives_widget_set_sensitive(mainw->m_loopbutton, mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->loop_continue, mainw->current_file > 0);
 
   if (cfile->frames == 0) {
     if (mainw->preview_box && lives_widget_get_parent(mainw->preview_box)) {
@@ -606,7 +613,6 @@ void play_file(void) {
 
   short audio_player = prefs->audio_player;
 
-  boolean mute;
   boolean needsadone = FALSE;
 
   boolean lazy_start = FALSE;
@@ -635,9 +641,6 @@ void play_file(void) {
 
   current_file = mainw->current_file;
   if (mainw->pre_play_file == -1) mainw->pre_play_file = current_file;
-
-  if (!is_realtime_aplayer(audio_player)) mainw->aud_file_to_kill = mainw->current_file;
-  else mainw->aud_file_to_kill = -1;
 
   mainw->ext_playback = FALSE;
 
@@ -775,10 +778,6 @@ void play_file(void) {
   set_gui_loop_tight(TRUE);
   mainw->gui_much_events = TRUE;
   mainw->do_ctx_update = TRUE;
-
-
-  //arate = sfile->arate;
-  mute = mainw->mute;
 
   sfile->frameno = mainw->play_start;
   sfile->pb_fps = sfile->fps;
@@ -1083,10 +1082,10 @@ void play_file(void) {
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
-
-  /* if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT); */
-  /* else if (AUD_SRC_INTERNAL) audio_analyser_end(AUDIO_SRC_INT); */
-
+ 
+  if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
+  else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
+ 
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
     vid_playback_plugin_exit();
@@ -1341,7 +1340,6 @@ void play_file(void) {
 
   mainw->audio_stretch = 1.;
 
-  if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
   ofl = get_old_frame_layer();
 
   if (mainw->cached_frame) {

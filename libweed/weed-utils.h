@@ -87,6 +87,7 @@ int weed_leaf_exists(weed_plant_t *, const char *key);
 weed_error_t weed_set_int_value(weed_plant_t *, const char *key, int32_t);
 weed_error_t weed_set_uint_value(weed_plant_t *, const char *key, uint32_t);
 weed_error_t weed_set_double_value(weed_plant_t *, const char *key, double);
+weed_error_t weed_set_float_value(weed_plant_t *, const char *key, float);
 weed_error_t weed_set_boolean_value(weed_plant_t *, const char *key, weed_boolean_t);
 weed_error_t weed_set_int64_value(weed_plant_t *, const char *key, int64_t);
 weed_error_t weed_set_uint64_value(weed_plant_t *, const char *key, uint64_t);
@@ -99,6 +100,7 @@ weed_error_t weed_set_custom_value(weed_plant_t *, const char *key, weed_seed_t 
 int32_t weed_get_int_value(weed_plant_t *, const char *key, weed_error_t *);
 uint32_t weed_get_uint_value(weed_plant_t *, const char *key, weed_error_t *);
 double weed_get_double_value(weed_plant_t *, const char *key, weed_error_t *);
+float weed_get_float_value(weed_plant_t *, const char *key, weed_error_t *);
 weed_boolean_t weed_get_boolean_value(weed_plant_t *, const char *key, weed_error_t *);
 int64_t weed_get_int64_value(weed_plant_t *, const char *key, weed_error_t *);
 uint64_t weed_get_uint64_value(weed_plant_t *, const char *key, weed_error_t *);
@@ -111,6 +113,7 @@ void *weed_get_custom_value(weed_plant_t *, const char *key, weed_seed_t seed_ty
 weed_error_t weed_set_int_array(weed_plant_t *, const char *key, weed_size_t num_elems, int32_t *);
 weed_error_t weed_set_uint_array(weed_plant_t *, const char *key, weed_size_t num_elems, uint32_t *);
 weed_error_t weed_set_double_array(weed_plant_t *, const char *key, weed_size_t num_elems, double *);
+weed_error_t weed_set_float_array(weed_plant_t *, const char *key, weed_size_t num_elems, float *);
 weed_error_t weed_set_boolean_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_boolean_t *);
 weed_error_t weed_set_int64_array(weed_plant_t *, const char *key, weed_size_t num_elems, int64_t *);
 weed_error_t weed_set_uint64_array(weed_plant_t *, const char *key, weed_size_t num_elems, uint64_t *);
@@ -123,6 +126,7 @@ weed_error_t weed_set_custom_array(weed_plant_t *, const char *key, weed_seed_t 
 int32_t *weed_get_int_array(weed_plant_t *, const char *key, weed_error_t *);
 uint32_t *weed_get_uint_array(weed_plant_t *, const char *key, weed_error_t *);
 double *weed_get_double_array(weed_plant_t *, const char *key, weed_error_t *);
+float *weed_get_float_array(weed_plant_t *, const char *key, weed_error_t *);
 weed_boolean_t *weed_get_boolean_array(weed_plant_t *, const char *key, weed_error_t *);
 int64_t *weed_get_int64_array(weed_plant_t *, const char *key, weed_error_t *);
 uint64_t *weed_get_uint64_array(weed_plant_t *, const char *key, weed_error_t *);
@@ -135,6 +139,7 @@ void **weed_get_custom_array(weed_plant_t *, const char *key, weed_seed_t seed_t
 int32_t *weed_get_int_array_counted(weed_plant_t *, const char *key, int *count);
 uint32_t *weed_get_uint_array_counted(weed_plant_t *, const char *key, int *count);
 double *weed_get_double_array_counted(weed_plant_t *, const char *key, int *count);
+float *weed_get_float_array_counted(weed_plant_t *, const char *key, int *count);
 weed_boolean_t *weed_get_boolean_array_counted(weed_plant_t *, const char *key, int *count);
 int64_t *weed_get_int64_array_counted(weed_plant_t *, const char *key, int *count);
 uint64_t *weed_get_uint64_array_counted(weed_plant_t *, const char *key, int *count);

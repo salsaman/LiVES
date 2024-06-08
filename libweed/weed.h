@@ -214,7 +214,7 @@ extern "C"
 #define WEED_SEED_uint64_t		WEED_SEED_UINT64
 
 #define HAVE_WEED_SEED_FLOAT		1
-#define WEED_SEED_FLOAT			8 // alias for WEED_SEED_DOUBLE
+#define WEED_SEED_FLOAT			8
 
 #define WEED_SEED_float			WEED_SEED_FLOAT
   /* end annotation types */
@@ -226,7 +226,7 @@ extern "C"
   /* end informational types */
   
 #define WEED_SEED_FIRST_NON_PTR_TYPE	WEED_SEED_INT
-#define WEED_SEED_LAST_NON_PTR_TYPE	WEED_SEED_UINT64
+#define WEED_SEED_LAST_NON_PTR_TYPE	WEED_SEED_FLOAT
 
   /* Pointer types */
 #define WEED_SEED_FUNCPTR		64 // weed_funcptr_t
@@ -265,9 +265,9 @@ extern "C"
   /* flag bits */
 #define WEED_FLAG_UNDELETABLE		(1 << 0)  // leaf value may be altered but it cannot be deleted
 #define WEED_FLAG_IMMUTABLE		(1 << 1)  // leaf value may not be changed, but it may be deleted
+#define WEED_FLAG_DISTINGUISHED		(1 << 2)  // mark leaf as "special", otherwise, no effect
 
-#define WEED_FLAG_FIRST_RESERVED       	(1 << 2)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_12		(1 << 4)  // reserved for future use by Weed
+#define WEED_FLAG_FIRST_RESERVED       	(1 << 3)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_11		(1 << 4)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_10		(1 << 5)  // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_9		(1 << 6)  // reserved for future use by Weed

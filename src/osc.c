@@ -47,7 +47,7 @@ char *osc_make_sync_msg(int *clip_index, frames64_t *frame_idx, double pb_time, 
   if (sfile) pb_fps = sfile->pb_fps;
   tmp = lives_strdup_printf("%.8f|%d|", pb_time, ntracks);
   for (int i = 0; i < ntracks; i++)
-    tmp = lives_strdup_concat(tmp, "|", "%d|%ld", clip_index[i], frame_idx[i]);
+    tmp = lives_strdup_concat_sep(tmp, "|", "%d|%ld", clip_index[i], frame_idx[i]);
   msg = lives_strdup_printf("%s|%.3f", tmp, pb_fps);
   lives_free(tmp);
   return msg;
@@ -2048,9 +2048,6 @@ boolean lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs,
 
 
 boolean lives_osc_cb_get_amute(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    return lives_status_send(get_omc_const("LIVES_FALSE"));
-  }
   if (!mainw->mute) return lives_status_send(get_omc_const("LIVES_FALSE"));
   else return lives_status_send(get_omc_const("LIVES_TRUE"));
 }
@@ -2059,10 +2056,6 @@ boolean lives_osc_cb_get_amute(void *context, int arglen, const void *vargs, OSC
 boolean lives_osc_cb_set_amute(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int mute;
   char *boolstr;
-
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    return lives_osc_notify_failure();
-  }
 
   if (lives_osc_check_arguments(arglen, vargs, "i", FALSE)) {
     lives_osc_check_arguments(arglen, vargs, "i", TRUE);
@@ -2102,16 +2095,7 @@ boolean lives_osc_cb_set_avol(void *context, int arglen, const void *vargs, OSCT
 
 
 boolean lives_osc_cb_get_avol(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  char *tmp;
-
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    tmp = lives_strdup("100.00");
-    lives_status_send(tmp);
-    lives_free(tmp);
-    return TRUE;
-  }
-
-  tmp = lives_strdup_printf("%.2f", future_prefs->volume);
+  char *tmp = lives_strdup_printf("%.2f", future_prefs->volume);
   lives_status_send(tmp);
   lives_free(tmp);
 

@@ -66,30 +66,30 @@ extern "C"
 #  define WARN_UNUSED
 #endif
 
-#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_PLUGIN_INFO ? WEED_TRUE : \
-					  WEED_FALSE)
+#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_PLUGIN_INFO ? 1 : \
+					  0)
 
-#define WEED_PLANT_IS_HOST_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_HOST_INFO ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_HOST_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_HOST_INFO ? 1 : 0)
 
-#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_CLASS ? WEED_TRUE : \
-					   WEED_FALSE)
-#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_INSTANCE ? WEED_TRUE : \
-					      WEED_FALSE)
+#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_CLASS ? 1 : \
+					   0)
+#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_INSTANCE ? 1 : \
+					      0)
 
-#define WEED_PLANT_IS_CHANNEL(plant) (weed_plant_get_type(plant) == WEED_PLANT_CHANNEL ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_CHANNEL(plant) (weed_plant_get_type(plant) == WEED_PLANT_CHANNEL ? 1 : 0)
 
 #define WEED_PLANT_IS_CHANNEL_TEMPLATE(plant) (weed_plant_get_type(plant) == WEED_PLANT_CHANNEL_TEMPLATE ? \
-					       WEED_TRUE : WEED_FALSE)
+					       1 : 0)
 
-#define WEED_PLANT_IS_PARAMETER(plant) (weed_plant_get_type(plant) == WEED_PLANT_PARAMETER ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_PARAMETER(plant) (weed_plant_get_type(plant) == WEED_PLANT_PARAMETER ? 1 : 0)
 
 #define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_plant_get_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? \
-						 WEED_TRUE : WEED_FALSE)
+						 1 : 0)
 
-#define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? 1 : 0)
 
-  // duplicate leaves of src plant to dst. If add == WEED_TRUE, then the original dst leaves will be left or
-  // overwritten, otherwisee all original leaves will be romeved, with the exception od any flagged as UNDELETABEL
+  // duplicate leaves of src plant to dst. If add is non-zero, then the original dst leaves will be left or
+  // overwritten, otherwisee all original leaves will be removed, with the exception of any flagged as UNDELETABLE
   // leaves comon to both plants will be ovewritten in dst, with the exception of any flagged as IMMUTABLE
 weed_error_t weed_plant_duplicate(weed_plant_t *dst, weed_plant_t *src, int add);
 
@@ -112,12 +112,26 @@ weed_error_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t
 weed_error_t weed_plant_set_undeletable(weed_plant_t *, int undeletable);
 int weed_plant_is_undeletable(weed_plant_t *);
 
-// if state == WEED_TRUE, make the leaf value IMMUTABLE, else make it changeable
+// if state is non-zero, make the leaf value IMMUTABLE, else make it changeable
 // may return WEED_SUCCESS or WEED_ERROR_NOSUCH_LEAF
 weed_error_t weed_leaf_set_immutable(weed_plant_t *, const char *key, int state);
 
-//if state == WEED_TRUE, make the leaf UNDELETABLE, else make it deletable
+  // returns 1 if the leaf exists and is immutable, 0 otherwise
+int weed_leaf_is_immutable(weed_plant_t *, const char *key);
+
+//if state is non-zero, make the leaf UNDELETABLE, else make it deletable
+// may return WEED_SUCCESS or WEED_ERROR_NOSUCH_LEAF
 weed_error_t weed_leaf_set_undeletable(weed_plant_t *, const char *key, int state);
+
+// returns 1 if the leaf exists and is undeletable, 0 otherwise
+int weed_leaf_is_undeletable(weed_plant_t *, const char *key);
+
+//if state is non-zero, flag the leaf as distinguished, else unflag it
+// may return WEED_SUCCESS or WEED_ERROR_NOSUCH_LEAF
+weed_error_t weed_leaf_set_distinguished(weed_plant_t *, const char *key, int state);
+
+// returns 1 if the leaf exists and is flagged as distinguished, 0 otherwise
+int weed_leaf_is_distinguished(weed_plant_t *, const char *key);
 
 /* HOST_INFO functions */
 uint32_t weed_host_info_get_flags(weed_plant_t *host_info);
@@ -179,7 +193,7 @@ void *weed_channel_get_pixel_data(weed_channel_t *);
 void **weed_channel_get_pixel_data_planar(weed_channel_t *, int *nplanes);
 weed_gui_t *weed_channel_get_gui(weed_channel_t *, int create_if_not_exists);
 
-// returns WEED_TRUE iff width is a multiple of palette macropixel size
+// returns 1 iff width is a multiple of palette macropixel size
 int weed_check_width_for_palette(int width, int palette);
 
 /// width in macropixels
@@ -205,8 +219,8 @@ weed_error_t weed_channel_set_palette_yuv(weed_channel_t *, int palette, int cla
 				  int sampling, int subspace);
 
 // for the following 2 functions, if width is not a multiple of palette macropixel size
-// WEED_FALSE is returned and no changes are made
-// otherwise the channel width is set to size converted to maropixels, and WEED_TRUE is returned
+// 0 is returned and no changes are made
+// otherwise the channel width is set to size converted to maropixels, and  is returned
 
 int weed_channel_set_pixel_width(weed_channel_t *, int width);
 int weed_channel_set_pixel_size(weed_channel_t *, int width, int height);
@@ -215,9 +229,9 @@ weed_error_t weed_channel_set_pixel_data(weed_channel_t *, void *pixel_data);
 weed_error_t weed_channel_set_pixel_data_planar(weed_channel_t *, void **pixel_data, int nplanes);
 
 // for the following 2 functions, if width is not a multiple of new palette macropixel size
-// WEED_FALSE is returned and no changes are made
+// 0 is returned and no changes are made
 // otherwise the palette is updated, channel width is updated to new palette macropixel size,
-// and WEED_TRUE is returned
+// and 1 is returned
 
 int weed_channel_update_palette(weed_channel_t *, int palette);
 int weed_channel_update_palette_yuv(weed_channel_t *, int palette, int clamping,
@@ -252,7 +266,7 @@ int weed_paramtmpl_value_irrelevant(weed_paramtmpl_t *);
 
 // params
 
-// if temporary is WEED_TRUE, then we return the current state,
+// if temporary is non-zero, then we return the current state,
 // otherwise we return the permanent (structural) state
 int weed_param_is_hidden(weed_param_t *, int temporary);
 weed_gui_t *weed_param_get_gui(weed_param_t *, int create_if_not_exists);
@@ -304,12 +318,12 @@ double weed_palette_get_compression_ratio(int pal);
 
 int weed_palette_get_bits_per_macropixel(int pal);
 
-#define weed_palette_is_alpha(pal) ((((pal >= 1024) && (pal < 2048))) ? WEED_TRUE : WEED_FALSE)
-#define weed_palette_is_rgb(pal) (pal >0 && pal < 512 ? WEED_TRUE : WEED_FALSE)
-#define weed_palette_is_yuv(pal) (pal >= 512 && pal < 1024 ? WEED_TRUE : WEED_FALSE)
+#define weed_palette_is_alpha(pal) ((((pal >= 1024) && (pal < 2048))) ? 1 : 0)
+#define weed_palette_is_rgb(pal) (pal >0 && pal < 512 ? 1 : 0)
+#define weed_palette_is_yuv(pal) (pal >= 512 && pal < 1024 ? 1 : 0)
 
 #define weed_palette_is_float(pal) ((pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || \
-				     pal == WEED_PALETTE_RGBFLOAT) ? WEED_TRUE : WEED_FALSE)
+				     pal == WEED_PALETTE_RGBFLOAT) ? 1 : 0)
 
 /// This is actually the MACRO pixel size in bytes, to get the real pixel size, divide by weed_palette_pixels_per_macropixel()
 #define pixel_size(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) ? 3 : \
@@ -318,7 +332,7 @@ int weed_palette_get_bits_per_macropixel(int pal);
 
 #define weed_palette_has_alpha(pal) ((pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || \
 				      pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || \
-				      pal == WEED_PALETTE_RGBAFLOAT || weed_palette_is_alpha(pal)) ? WEED_TRUE : WEED_FALSE)
+				      pal == WEED_PALETTE_RGBAFLOAT || weed_palette_is_alpha(pal)) ? 1 : 0)
 
 // return ratio of plane[n] width/plane[0] width
 #define weed_palette_get_plane_ratio_horizontal(pal, plane) ((double)(plane == 0 ? 1.0 : (plane == 1 || plane == 2) ? \
@@ -346,7 +360,7 @@ int weed_palette_get_bits_per_macropixel(int pal);
 #define weed_palette_get_pixels_per_macropixel(pal) ((pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 2 : \
 						     (pal == WEED_PALETTE_YUV411) ? 4 : (weed_palette_is_valid(pal) ? 1 : 0))
 
-#define weed_palette_is_valid(pal) (weed_palette_get_nplanes(pal) == 0 ? WEED_FALSE : WEED_TRUE)
+#define weed_palette_is_valid(pal) (weed_palette_get_nplanes(pal) == 0 ? 0 : 1)
 
 #endif
 
@@ -366,10 +380,10 @@ typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void
 /* set a host callback function to be called from within weed_bootstrap() */
 weed_error_t weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 
-/* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
+/* returns 1 if higher and lower versions are compatible, 0 if not */
 int check_weed_abi_compat(int32_t higher, int32_t lower);
 
-/* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
+/* returns 1 if higher and lower versions are compatible, 0 if not */
 int check_filter_api_compat(int32_t higher, int32_t lower);
 
 #ifdef __cplusplus

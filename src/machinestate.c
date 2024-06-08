@@ -36,7 +36,7 @@
 #include "diagnostics.h"
 #include "nodemodel.h"
 
-LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
+LIVES_LOCAL_INLINE char *mini_popen(const char *cmd);
 
 #if IS_X86_64
 
@@ -767,7 +767,7 @@ char *get_fstype_for(const char *volx) {
     char *vol = get_symlink_for(volx);
     char *res, *com = lives_strdup_printf("%s -l --output=fstype,target", EXEC_DF);
     if ((res = mini_popen(com))) {
-      int lcount = get_token_count(res, '\n');
+     int lcount = get_token_count(res, '\n');
       char **array0 = lives_strsplit(res, "\n", lcount);
       for (int l = 0; l < lcount; l++) {
         int pccount = get_token_count(array0[l], ' ');
@@ -779,7 +779,7 @@ char *get_fstype_for(const char *volx) {
       lives_strfreev(array0);
       lives_free(res);
     }
-    lives_free(vol);
+    lives_free(com); lives_free(vol);
   }
   return fstype;
 }
@@ -1347,13 +1347,12 @@ LIVES_LOCAL_INLINE boolean mini_run(char *cmd) {
   return TRUE;
 }
 
-LIVES_LOCAL_INLINE char *mini_popen(char *cmd) {
+LIVES_LOCAL_INLINE char *mini_popen(const char *cmd) {
   if (!cmd) return NULL;
   else {
     char buff[PATH_MAX];
     //char *com = lives_strdup_printf("%s $(%s)", capable->echo_cmd, EXEC_MKTEMP);
     lives_popen(cmd, TRUE, buff);
-    lives_free(cmd);
     lives_chomp(buff, FALSE);
     return lives_strdup(buff);
   }
@@ -1785,15 +1784,27 @@ char *get_wid_for_name(const char *wname) {
 }
 
 
-static lives_proc_thread_t enable_ss_lpt = NULL;
+static void *enable_ss_rcpt = NULL;
 
-static boolean enable_ss_cb(void) {
+static void enable_ss_cb(void) {
   lives_reenable_screensaver();
-  return FALSE;
 }
 
 boolean lives_reenable_screensaver(void) {
   char *com = NULL, *tmp;
+
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(WM_XFCE4_PROP_ENABLE_SCREENSAVER, TRUE);
+    lives_hook_cb_remove(enable_ss_rcpt);
+    mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    return TRUE;
+  }
+
 #ifdef GDK_WINDOWING_X11
   uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
   com = lives_strdup_printf("%s s on 2>%s; %s +dpms 2>%s;",
@@ -1821,7 +1832,7 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
-  lives_hook_cb_remove(enable_ss_lpt);
+  lives_hook_cb_remove(enable_ss_rcpt);
 
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -1840,6 +1851,19 @@ boolean lives_reenable_screensaver(void) {
 boolean lives_disable_screensaver(void) {
   char *com = NULL, *tmp;
 
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(WM_XFCE4_PROP_DISABLE_SCREENSAVER, TRUE);
+    enable_ss_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
+					  HOOK_OPT_PRIORITY, enable_ss_cb);
+    mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    return TRUE;
+  }
+  
 #ifdef GDK_WINDOWING_X11
   uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
 
@@ -1875,8 +1899,8 @@ boolean lives_disable_screensaver(void) {
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
     } else {
-      enable_ss_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
-                      HOOK_OPT_PRIORITY, enable_ss_cb, WEED_SEED_VOID);
+      enable_ss_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
+					    HOOK_OPT_PRIORITY, enable_ss_cb);
     }
     return TRUE;
   }
@@ -1935,6 +1959,7 @@ char *wm_property_get(const char *key, int *type_guess) {
   if (check_for_executable(&capable->has_gsettings, EXEC_GSETTINGS) == PRESENT) {
     com = lives_strdup_printf("%s list-recursively | %s %s", EXEC_GSETTINGS, EXEC_GREP, key);
     res = mini_popen(com);
+    lives_free(com);
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
       if (res) lives_free(res);
@@ -1974,6 +1999,7 @@ boolean wm_property_set(const char *key, const char *val) {
   if (check_for_executable(&capable->has_gsettings, EXEC_GSETTINGS) == PRESENT) {
     com = lives_strdup_printf("%s list-recursively | %s %s", EXEC_GSETTINGS, EXEC_GREP, key);
     res = mini_popen(com);
+    lives_free(com);
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
       if (res) lives_free(res);
@@ -2032,10 +2058,28 @@ boolean get_wm_caps(void) {
   capable->has_wm_caps = TRUE;
   lives_snprintf(capable->wm_caps.wm_name, 64, "%s", wmname);
 
-  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4) || !strcmp(capable->wm_name, WM_XFWM4)) {
+  capable->wm_caps.annoy.focus.problem = ANNOY_DISPLAY | ANNOY_SPONT;
+  capable->wm_caps.annoy.panel.problem = ANNOY_DISPLAY | ANNOY_FS;
+  capable->wm_caps.annoy.notify.problem = ANNOY_DISPLAY | ANNOY_FS;
+  
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    // annoyance resolution
+    capable->wm_caps.annoy.focus.resolution = RES_BLOCK | RESTYPE_CONFIG;
+    capable->wm_caps.annoy.focus.disable = WM_XFCE4_PROP_DISABLE_FOCUS_STEAL;
+    capable->wm_caps.annoy.focus.enable = WM_XFCE4_PROP_ENABLE_FOCUS_STEAL;
+    capable->wm_caps.annoy.focus.orig_state =
+      MAKE_ALLVALUE(WEED_SEED_BOOLEAN, query_window_focus());
+
+    capable->wm_caps.annoy.panel.resolution = RES_HIDE | RESTYPE_ACTION;
+
+    capable->wm_caps.annoy.notify.resolution = RES_SUSPEND | RESTYPE_CONFIG;
+    capable->wm_caps.annoy.notify.disable = WM_XFCE4_PROP_DISABLE_NOTIFY;
+    capable->wm_caps.annoy.notify.enable = WM_XFCE4_PROP_ENABLE_NOTIFY;
+    capable->wm_caps.annoy.notify.orig_state =
+      MAKE_ALLVALUE(WEED_SEED_BOOLEAN, query_desktop_notify());
+
     lives_snprintf(capable->wm_caps.panel, 64, "%s", WM_XFCE4_PANEL);
-    capable->wm_caps.pan_annoy = ANNOY_DISPLAY | ANNOY_FS;
-    capable->wm_caps.pan_res = RES_HIDE | RESTYPE_ACTION;
     lives_snprintf(capable->wm_caps.ssave, 64, "%s", WM_XFCE4_SSAVE);
     lives_snprintf(capable->wm_caps.color_settings, 64, "%s", WM_XFCE4_COLOR);
     lives_snprintf(capable->wm_caps.display_settings, 64, "%s", WM_XFCE4_DISP);
@@ -2064,6 +2108,99 @@ boolean get_wm_caps(void) {
 }
 
 
+static char *desc_annoy(annoyance_t *a) {
+  char *out = NULL;
+  if (a->problem & ANNOY_DISPLAY)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "display");
+  if (a->problem & ANNOY_DISK)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "disk");
+  if (a->problem & ANNOY_PROC)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "proc");
+  if (a->problem & ANNOY_NETWORK)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "network");
+  if (a->problem & ANNOY_SOUNDS)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "audio");
+  if (a->problem & ANNOY_DEV)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "device");
+  //
+  if (a->problem & ANNOY_FS)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "full-screen");
+  if (a->problem & ANNOY_CONT)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "continual");
+  if (a->problem & ANNOY_PERIOD)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "periodic");
+  if (a->problem & ANNOY_SPONT)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "spontaneous");
+  if (a->problem & ANNOY_TIMED)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "timed");
+  if (a->problem & ANNOY_LOCK)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "locking");
+
+  return out;
+}
+
+
+static char *desc_annoy_res(annoyance_t *a) {
+  char *out = NULL;
+  if (a->resolution & RES_HIDE)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "hide the item");
+  if (a->resolution & RES_SUSPEND)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "suspend the item");
+  if (a->resolution & RES_STOP)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "stop the item");
+  if (a->resolution & RES_BLOCK)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "block the item");
+  if (a->resolution & RES_MUTE)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "mute the item");
+
+  if (a->resolution & RESTYPE_ACTION)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "using an action");
+  if (a->resolution & RESTYPE_CONFIG)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "alter config");
+  if (a->resolution & RESTYPE_SIGNAL)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "send signal");
+  if (a->resolution & RESTYPE_CMD)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "run a command");
+  if (a->resolution & RESTYPE_LOCKOUT)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "apply a lockout");
+  if (a->resolution & RESTYPE_TIMED)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "apply a timed solution");
+  if (a->resolution & RESTYPE_MONITOR)
+    out = lives_strdup_concat_sep(out, ", ", "%s", "monitor the source");
+
+  if (a->disable) out = lives_strdup_concat_sep(out, "\n", "Disable the item: %s", a->disable);
+  if (a->enable) out = lives_strdup_concat_sep(out, "\n", "Enable the item: %s", a->enable);
+
+  return out;
+}
+
+
+char *list_annoy_res(void) {
+  char *out = NULL, *tmp, *tmp2;
+  out = lives_strdup_concat(out, "%s", (tmp2 = _("Known window manager annoyances and resolutions\n")));
+  lives_free(tmp2);
+  out = lives_strdup_concat(out, (tmp2 = _("Focus stealing (type: %s)\n")),
+			    (tmp = desc_annoy(&capable->wm_caps.annoy.focus)));
+  lives_free(tmp2); lives_free(tmp);
+  out = lives_strdup_concat(out, (tmp2 = _("Resolved by: %s\n")),
+			    (tmp = desc_annoy_res(&capable->wm_caps.annoy.focus)));
+  lives_free(tmp2); lives_free(tmp);
+  out = lives_strdup_concat(out, (tmp2 = _("Dsektop notifications (type: %s)\n")),
+			    (tmp = desc_annoy(&capable->wm_caps.annoy.notify)));
+  lives_free(tmp2); lives_free(tmp);
+  out = lives_strdup_concat(out, (tmp2 = _("Resolved by: %s\n")),
+			    (tmp = desc_annoy_res(&capable->wm_caps.annoy.notify)));
+  lives_free(tmp2); lives_free(tmp);
+  out = lives_strdup_concat(out, (tmp2 = _("Desktop panel (type: %s)\n")),
+			    (tmp = desc_annoy(&capable->wm_caps.annoy.panel)));
+  lives_free(tmp2); lives_free(tmp);
+  out = lives_strdup_concat(out, (tmp2 = _("Resolved by: %s\n")),
+			    (tmp = desc_annoy_res(&capable->wm_caps.annoy.panel)));
+  lives_free(tmp2); lives_free(tmp);
+  return out;
+}
+  
+
 int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 #ifndef GUI_GTK
   if (nwins) *nwins = -1;
@@ -2083,11 +2220,10 @@ int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 }
 
 
-static lives_proc_thread_t show_dpanel_lpt = NULL;
+static void *show_dpanel_rcpt = NULL;
 
-static boolean show_dpanel_cb(void) {
+static void show_dpanel_cb(void) {
   show_desktop_panel();
-  return FALSE;
 }
 
 
@@ -2098,7 +2234,7 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
-    lives_hook_cb_remove(show_dpanel_lpt);
+    lives_hook_cb_remove(show_dpanel_rcpt);
   }
 #endif
   return ret;
@@ -2112,10 +2248,138 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
-    show_dpanel_lpt = lives_hook_cb_append_full(mainw->global_hook_stacks, FATAL_HOOK,
-						HOOK_OPT_PRIORITY, show_dpanel_cb, WEED_SEED_VOID);
+    show_dpanel_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
+						HOOK_OPT_PRIORITY, show_dpanel_cb);
   }
 #endif
+  return ret;
+}
+
+
+static void *enable_dnotify_rcpt = NULL;
+
+static void enable_dnotify_cb(void) {
+  enable_desktop_notify();
+}
+
+
+boolean enable_desktop_notify(void) {
+  boolean ret = FALSE; 
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(WM_XFCE4_PROP_ENABLE_NOTIFY, TRUE);
+    mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    ret = TRUE;
+    lives_hook_cb_remove(enable_dnotify_rcpt);
+  }
+  return ret;
+}
+
+
+boolean disable_desktop_notify(void) {
+  boolean ret = FALSE;
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(WM_XFCE4_PROP_DISABLE_NOTIFY, TRUE);
+    mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    ret = TRUE;
+    enable_dnotify_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
+						HOOK_OPT_PRIORITY, enable_dnotify_cb);
+  }
+  return ret;
+}
+
+
+boolean query_desktop_notify(void) {
+  // ret TRUE if enabled
+  boolean ret = TRUE;
+  const char *com;
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    com = WM_XFCE4_PROP_QUERY_NOTIFY;
+    char *res = mini_popen(com);
+    if (THREADVAR(com_failed)) {
+      if (res) lives_free(res);
+      THREADVAR(com_failed) = FALSE;
+      return ret;
+    }
+    if (res) {
+      if (!lives_strcmp(res, "false")) ret = FALSE;
+      lives_free(res);
+    }
+  }
+  return ret;
+}
+
+
+static void *enable_wfocus_rcpt = NULL;
+
+static void enable_wfocus_cb(void) {
+  enable_window_focus();
+}
+
+
+boolean enable_window_focus(void) {
+  boolean ret = FALSE; 
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(WM_XFCE4_PROP_ENABLE_FOCUS_STEAL, TRUE);
+    mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    ret = TRUE;
+    lives_hook_cb_remove(enable_wfocus_rcpt);
+  }
+  return ret;
+}
+
+
+boolean disable_window_focus(void) {
+  boolean ret = FALSE;
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(WM_XFCE4_PROP_DISABLE_FOCUS_STEAL, TRUE);
+    mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    ret = TRUE;
+    enable_wfocus_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
+						HOOK_OPT_PRIORITY, enable_wfocus_cb);
+  }
+  return ret;
+}
+
+
+boolean query_window_focus(void) {
+  // ret TRUE if enabled
+  boolean ret = TRUE;
+  const char *com;
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
+      || !strcmp(capable->wm_name, WM_XFWM4)) {
+    com = WM_XFCE4_PROP_QUERY_FOCUS_STEAL;
+    char *res = mini_popen(com);
+    if (THREADVAR(com_failed)) {
+      if (res) lives_free(res);
+      THREADVAR(com_failed) = FALSE;
+      return ret;
+    }
+    if (res) {
+      if (!lives_strcmp(res, "false")) ret = FALSE;
+      lives_free(res);
+    }
+  }
   return ret;
 }
 
@@ -2205,6 +2469,7 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *pref
 			      dirflg, tmp);
     lives_free(tmp);
     res = mini_popen(com);
+    lives_free(com);
     if (THREADVAR(com_failed)) {
       if (res) lives_free(res);
       THREADVAR(com_failed) = FALSE;
@@ -2289,6 +2554,7 @@ boolean get_distro_dets(void) {
 #define LSB_OS_FILE "/etc/lsb-release"
   char *com = lives_strdup_printf("%s %s", capable->cat_cmd, LSB_OS_FILE), *ret;
   if ((ret = mini_popen(com))) {
+    lives_free(com);
     int xlen = get_token_count(ret, '=');
     char **array = lives_strsplit(ret, "=", xlen);
     lives_free(ret);
@@ -2589,21 +2855,27 @@ boolean get_machine_dets(int phase) {
 #endif
 
   capable->hw.cpu_name = mini_popen(com);
+  lives_free(com);
 
   com = lives_strdup("uname -o");
   capable->os_name = mini_popen(com);
+  lives_free(com);
 
   com = lives_strdup("uname -r");
   capable->os_release = mini_popen(com);
+  lives_free(com);
 
   com = lives_strdup("uname -m");
   capable->os_hardware = mini_popen(com);
+  lives_free(com);
 
   com = lives_strdup("uname -n");
   capable->mach_name = mini_popen(com);
+  lives_free(com);
 
   com = lives_strdup("whoami");
   capable->username = mini_popen(com);
+  lives_free(com);
 
   if (!mainw->debug && !strcmp(capable->os_hardware, "x86_64"))
     get_cpuinfo();
@@ -2773,6 +3045,7 @@ double get_disk_load(const char *mp) {
       }
       lticks = clock_ticks;
     }
+    lives_free(com);
   }
   return 0.;
 #endif

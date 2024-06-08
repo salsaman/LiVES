@@ -236,24 +236,6 @@ LIVES_GLOBAL_INLINE int weed_layer_is_video(weed_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
-  if (layer && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_AUDIO) return WEED_TRUE;
-  return WEED_FALSE;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer, float **data,
-    int arate, int naudchans, weed_size_t nsamps) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
-  else weed_set_voidptr_value(layer, WEED_LEAF_AUDIO_DATA, NULL);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
-  return layer;
-}
-
-
 static weed_layer_t *_weed_layer_set_flags(weed_layer_t *layer, int flags) {
   weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
   return layer;
@@ -1228,13 +1210,6 @@ LIVES_GLOBAL_INLINE uint8_t *weed_layer_get_pixel_data(weed_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_layer_t *layer, int *naudchans) {
-  if (naudchans) *naudchans = 0;
-  if (!layer)  return NULL;
-  return (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, naudchans);
-}
-
-
 LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_layer_t *layer, int *nplanes) {
   if (nplanes) *nplanes = 0;
   if (!layer)  return NULL;
@@ -1340,24 +1315,6 @@ LIVES_GLOBAL_INLINE int weed_layer_get_gamma(weed_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_audio_rate(weed_layer_t *layer) {
-  if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_AUDIO_RATE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_layer_t *layer) {
-  if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
-  if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-}
-
-
 int lives_layer_guess_palette(weed_layer_t *layer) {
   // attempt to pre empt the layer palette before it is loaded, using information from the layer_source and the
   // clip and frame data
@@ -1406,4 +1363,99 @@ int lives_layer_guess_palette(weed_layer_t *layer) {
   }
   return WEED_PALETTE_NONE;
 }
+
+
+// audio layers
+
+LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
+  if (layer && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_AUDIO) return WEED_TRUE;
+  return WEED_FALSE;
+}
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer, float **data,
+    int arate, int naudchans, weed_size_t nsamps) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
+  else weed_set_voidptr_value(layer, WEED_LEAF_AUDIO_DATA, NULL);
+  weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
+  weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
+  weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
+  return layer;
+}
+
+
+weed_layer_t *weed_layer_set_audio_signed(weed_layer_t *layer,
+					  boolean asigned) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_boolean_value(layer, WEED_LEAF_AUDIO_SIGNED, asigned);
+  return layer;
+}
+
+
+weed_layer_t *weed_layer_set_audio_endian(weed_layer_t *layer,
+					  int endian) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_int_value(layer, WEED_LEAF_AUDIO_ENDIAN, endian);
+  return layer;
+}
+
+
+weed_layer_t *weed_layer_set_audio_interleaved(weed_layer_t *layer,
+					       boolean inter) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_boolean_value(layer, LIVES_LEAF_AUDIO_INTERLEAVED, inter);
+  return layer;
+}
+
+weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *layer,
+					    boolean isfloat) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_boolean_value(layer, WEED_LEAF_AUDIO_FLOAT, isfloat);
+  return layer;
+}
+
+boolean weed_layer_get_audio_signed(weed_layer_t *layer) {
+ if (!WEED_IS_LAYER(layer)) return 0;
+ return weed_get_boolean_value(layer, WEED_LEAF_AUDIO_SIGNED, NULL);
+}
+
+int weed_layer_get_audio_endian(weed_layer_t *layer) {
+ if (!WEED_IS_LAYER(layer)) return 0;
+ return weed_get_int_value(layer, WEED_LEAF_AUDIO_ENDIAN, NULL);
+}
+
+boolean weed_layer_get_audio_interleaved(weed_layer_t *layer) {
+ if (!WEED_IS_LAYER(layer)) return 0;
+ return weed_get_boolean_value(layer, LIVES_LEAF_AUDIO_INTERLEAVED, NULL);
+}
+
+boolean weed_layer_get_audio_is_float(weed_layer_t *layer) {
+ if (!WEED_IS_LAYER(layer)) return 0;
+ return weed_get_boolean_value(layer, WEED_LEAF_AUDIO_FLOAT, NULL);
+}
+
+LIVES_GLOBAL_INLINE int weed_layer_get_audio_rate(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, WEED_LEAF_AUDIO_RATE, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int64_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_layer_t *layer, int *naudchans) {
+  if (naudchans) *naudchans = 0;
+  if (!layer)  return NULL;
+  return (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, naudchans);
+}
+
 

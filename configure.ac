@@ -31,11 +31,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_MKDIR_P
 
-_LT_SET_OPTION([LT_INIT],[dlopen])
-AC_DIAGNOSE([obsolete],[AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
-put the 'dlopen' option into LT_INIT's first parameter.])
-
-LT_INIT
+LT_INIT(dlopen)
 AM_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_HEADER_STDC

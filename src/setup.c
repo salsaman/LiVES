@@ -1501,14 +1501,7 @@ reloop:
     lives_widget_show(mainw->splash_window);
   }
 
-  if (response == LIVES_RESPONSE_OK) {
-    if (!is_realtime_aplayer(prefs->audio_player)) {
-      lives_widget_hide(mainw->vol_toolitem);
-      if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
-      lives_widget_hide(mainw->recaudio_submenu);
-    }
-    return TRUE;
-  }
+  if (response == LIVES_RESPONSE_OK) return TRUE;
   return FALSE;
 }
 

@@ -4872,7 +4872,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                                             || ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
                                                 && AUD_SRC_REALTIME))) {
         if (mainw->aud_rec_lpt) lives_proc_thread_request_resume(mainw->aud_rec_lpt);
-        else mainw->aud_rec_lpt = start_audio_rec(get_aplayer_instance(AUD_SRC_EXTERNAL));
+        else mainw->aud_rec_lpt = start_audio_rec(get_aplayer_instance(AUDIO_SRC_EXT));
       }
     } else {
       // end record during playback
@@ -4894,8 +4894,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     set_record_menutext(REC_ACTIVE);
     if (prefs->rec_opts & REC_AUDIO_AUTOLOCK) {
       // TODO - use pref_factory_bitmapped
-      if (AUD_SRC_INTERNAL && is_realtime_aplayer(prefs->audio_player)
-          && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+      if (AUD_SRC_INTERNAL && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
         aud_lock_act(NULL, LIVES_INT_TO_POINTER(TRUE));
       }
     }
@@ -7343,10 +7342,22 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
-        if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-            && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-            capable->wm_caps.pan_res & RESTYPE_ACTION) {
-          show_desktop_panel();
+	if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel)
+	  if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
+	      && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
+	      && (capable->wm_caps.annoy.panel.resolution & RES_HIDE) &&
+	      capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION) {
+	    show_desktop_panel();
+	  }
+	}
+	
+	if (capable->wm_caps.annoy.notify.problem) {
+	  boolean origval;
+	  VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
+	  if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
+	      && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND) &&
+	      capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG) {
+	    enable_desktop_notify();
         }
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -9199,47 +9210,62 @@ void update_sel_menu(void) {
     lives_widget_set_sensitive(mainw->select_skipbl, TRUE);
   }
 
-  lives_widget_set_sensitive(mainw->select_new, cfile->insert_start > 0);
-  lives_widget_set_sensitive(mainw->select_last, cfile->undo_start > 0);
+  if (CURRENT_CLIP_IS_VALID) {
+    lives_widget_set_sensitive(mainw->select_new, cfile->insert_start > 0);
+    lives_widget_set_sensitive(mainw->select_last, cfile->undo_start > 0);
 
-  if (cfile->end > cfile->start) {
-    lives_widget_set_sensitive(mainw->select_start_only, TRUE);
-    lives_widget_set_sensitive(mainw->select_end_only, TRUE);
-  } else {
-    lives_widget_set_sensitive(mainw->select_start_only, FALSE);
-    lives_widget_set_sensitive(mainw->select_end_only, FALSE);
-  }
-  if (cfile->start == 1 && cfile->end == cfile->frames) {
-    lives_widget_set_sensitive(mainw->select_invert, FALSE);
-    lives_widget_set_sensitive(mainw->select_all, FALSE);
-    lives_widget_set_sensitive(mainw->sa_button, FALSE);
-    lives_widget_set_sensitive(mainw->trim_video, FALSE);
-  } else {
-    if (cfile->start == 1 || cfile->end == cfile->frames)
-      lives_widget_set_sensitive(mainw->select_invert, TRUE);
-    else
+    if (cfile->end > cfile->start) {
+      lives_widget_set_sensitive(mainw->select_start_only, TRUE);
+      lives_widget_set_sensitive(mainw->select_end_only, TRUE);
+    } else {
+      lives_widget_set_sensitive(mainw->select_start_only, FALSE);
+      lives_widget_set_sensitive(mainw->select_end_only, FALSE);
+    }
+    if (cfile->start == 1 && cfile->end == cfile->frames) {
       lives_widget_set_sensitive(mainw->select_invert, FALSE);
+      lives_widget_set_sensitive(mainw->select_all, FALSE);
+      lives_widget_set_sensitive(mainw->sa_button, FALSE);
+      lives_widget_set_sensitive(mainw->trim_video, FALSE);
+    } else {
+      if (cfile->start == 1 || cfile->end == cfile->frames)
+	lives_widget_set_sensitive(mainw->select_invert, TRUE);
+      else {
+	lives_widget_set_sensitive(mainw->select_invert, FALSE);
+	lives_widget_set_sensitive(mainw->select_all, TRUE);
+	lives_widget_set_sensitive(mainw->sa_button, TRUE);
+	lives_widget_set_sensitive(mainw->trim_video, TRUE);
+      }
+  
+      if (cfile->start == 1) lives_widget_set_sensitive(mainw->select_from_start, FALSE);
+      else lives_widget_set_sensitive(mainw->select_from_start, TRUE);
 
-    lives_widget_set_sensitive(mainw->select_all, TRUE);
-    lives_widget_set_sensitive(mainw->sa_button, TRUE);
-    lives_widget_set_sensitive(mainw->trim_video, TRUE);
+      if (cfile->end < cfile->frames) {
+	lives_widget_set_sensitive(mainw->select_to_end, TRUE);
+      } else {
+	lives_widget_set_sensitive(mainw->select_to_end, FALSE);
+	lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+      }
+      if (cfile->achans > 0) {
+	int audframe = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
+	if (audframe <= cfile->frames && audframe >= cfile->start && audframe != cfile->end)
+	  lives_widget_set_sensitive(mainw->select_to_aend, TRUE);
+	else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+      } else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+    }
   }
-
-  if (cfile->start == 1) lives_widget_set_sensitive(mainw->select_from_start, FALSE);
-  else lives_widget_set_sensitive(mainw->select_from_start, TRUE);
-
-  if (cfile->end < cfile->frames) {
-    lives_widget_set_sensitive(mainw->select_to_end, TRUE);
-  } else {
-    lives_widget_set_sensitive(mainw->select_to_end, FALSE);
-    lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
-  }
-  if (cfile->achans > 0) {
-    int audframe = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
-    if (audframe <= cfile->frames && audframe >= cfile->start && audframe != cfile->end)
-      lives_widget_set_sensitive(mainw->select_to_aend, TRUE);
-    else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
-  } else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+ else {
+   lives_widget_set_sensitive(mainw->select_from_start, FALSE);
+   lives_widget_set_sensitive(mainw->select_to_end, FALSE);
+   lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+   lives_widget_set_sensitive(mainw->select_start_only, FALSE);
+   lives_widget_set_sensitive(mainw->select_end_only, FALSE);
+   lives_widget_set_sensitive(mainw->select_invert, FALSE);
+   lives_widget_set_sensitive(mainw->select_all, FALSE);
+   lives_widget_set_sensitive(mainw->sa_button, FALSE);
+   lives_widget_set_sensitive(mainw->trim_video, FALSE);
+   lives_widget_set_sensitive(mainw->select_new, FALSE);
+   lives_widget_set_sensitive(mainw->select_last, FALSE);
+ }
 }
 
 
@@ -9450,7 +9476,7 @@ void paint_tl_cursors(LiVESWidget * widget, lives_painter_t *cr, livespointer xp
   if (LIVES_IS_PLAYING) {
     if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
     if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
-      if (is_realtime_aplayer(prefs->audio_player) && (!mainw->event_list || !mainw->preview)) {
+      if (!mainw->event_list || !mainw->preview) {
 #ifdef ENABLE_JACK
         if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
           offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
@@ -10900,7 +10926,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   boolean state;
   if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE
        && !LIVES_IS_RECORDING)
-      || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
+      || mainw->multitrack
       || mainw->agen_key != 0 || mainw->agen_needs_reinit || AUD_SRC_EXTERNAL) return TRUE;
 
   if (w) state = lives_toggle_tool_button_get_active(w);
@@ -10939,10 +10965,16 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
     }
   }
 
-  // lock ON
+  // lock ON - audio is locked to the current playing track
+  // - if the file is not too large, we buffer it and convert to float
+  // this is held in mainw->alock_abuf
+  // when the player wants audio, if it is in our buffer then we simply resmaple and copy to
+  // fltbuffer. This can be passed to data_preview + data ready hooks
+  // and converted to s16 for the player, as necessary
   if (state) {
     prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
-    // TODO - in alock mode, buffer and resample all audio
+    // 
+
     if (LIVES_IS_PLAYING & CURRENT_CLIP_HAS_AUDIO) {
       char *filename = lives_get_audio_file_name(mainw->playing_file);
       mainw->alock_abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
@@ -12171,11 +12203,6 @@ void on_rb_audrec_time_toggled(LiVESToggleButton * togglebutton, livespointer us
 
 
 void on_recaudclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    do_nojack_rec_error();
-    return;
-  }
-
   mainw->fx1_val = DEFAULT_AUDIO_RATE;
   mainw->fx2_val = DEFAULT_AUDIO_CHANS;
   mainw->fx3_val = DEFAULT_AUDIO_SAMPS;
@@ -12193,10 +12220,6 @@ void on_recaudsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lmap_error_recsel = 0;
 
   if (!CURRENT_CLIP_IS_VALID) return;
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    do_nojack_rec_error();
-    return;
-  }
 
   if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
     return;

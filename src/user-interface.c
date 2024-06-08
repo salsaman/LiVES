@@ -273,7 +273,7 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->import_proj, TRUE);
   }
 
-  if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
+  if (prefs->audio_player != AUD_PLAYER_NONE) {
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, prefs->audio_src != AUDIO_SRC_INT);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT);
   }
@@ -516,8 +516,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
   lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
   lives_widget_set_sensitive(mainw->ins_silence, FALSE);
-  lives_widget_set_sensitive(mainw->loop_video, is_realtime_aplayer(prefs->audio_player));
-  if (!is_realtime_aplayer(prefs->audio_player)) lives_widget_set_sensitive(mainw->mute_audio, FALSE);
+  lives_widget_set_sensitive(mainw->loop_video, TRUE);
   lives_widget_set_sensitive(mainw->load_audio, FALSE);
   lives_widget_set_sensitive(mainw->load_subs, FALSE);
   lives_widget_set_sensitive(mainw->erase_subs, FALSE);
@@ -1317,11 +1316,35 @@ void redraw_timeline(int clipno) {
   //
 
   mainw->drawsrc = clipno;
-
   drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE,
                   redraw_timeline_inner, WEED_SEED_VOID, "i", clipno);
   pthread_mutex_unlock(&tlthread_mutex);
 }
+
+
+void redraw_timeline_noblock(int clipno) {
+  if (is_fg_thread()) {
+    lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE,
+			     redraw_timeline_noblock, WEED_SEED_VOID, "i", clipno);
+    return;
+  }
+
+  GET_PROC_THREAD_SELF(self);
+  if (!get_timeline_lock()) {
+    if (mainw->recovering_files) return;
+    lives_millisleep_while_false(lives_proc_thread_get_cancel_requested(self)
+				  || get_timeline_lock());
+  }
+  if (lives_proc_thread_get_cancel_requested(self)) {
+    unlock_timeline();
+    lives_proc_thread_cancel();
+  }
+  mainw->drawsrc = clipno;
+  drawtl_thread = self;
+  redraw_timeline_inner(clipno);
+  unlock_timeline();
+}
+
 
 boolean get_timeline_lock(void) {
   lives_proc_thread_t lpt = NULL;

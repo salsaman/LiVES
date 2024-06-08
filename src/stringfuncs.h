@@ -3,13 +3,10 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-// TODO - we should use str_free to free strings produced with
-// the following functions
-// lives_strconcat, strdup, strndup, lives_markup_escape_text, lives_strsplit
+#ifndef _STRINGFUNCS_H
+#define _STRINGFUNCS_H
 
 #define VAL_AND_QUOTED(val) val, (const char *)#val
-
-#define str_free(str) default_free(str)
 
 #define lives_strdup(s) lives_strdup_quick(s)
 
@@ -38,11 +35,11 @@ uint64_t lives_strtoul(const char *);
 int lives_utf8_strcasecmp(const char *, const char *);
 int lives_utf8_strcmp(const char *, const char *);
 
-char *lives_strdup_quick(const char *);
 
-// lives_strconcat(char *, ...);
+char *lives_strdup_concat_sep(char *, const char *sep, const char *fmt, ...);
 
-char *lives_strdup_concat(char *, const char *sep, const char *fmt, ...);
+#define lives_strdup_concat(str, fmt, ...) \
+  lives_strdup_concat_sep(str, NULL, fmt, __VA_ARGS__)
 
 char *lives_concat_sep(char *st, const char *sep, char *x);
 
@@ -87,5 +84,19 @@ char *lives_pad_ellipsize(char *, size_t fixlen, int padlen, LiVESEllipsizeMode 
 
 char *dir_to_pieces(const char *dirnm);
 
+// the following functions use primituves which use glibc malloc / free
+// here we define wrappers which copy and free originals
+char **lives_strsplit(const char *str, const char *delim, int maxtok);
+void lives_strfreev(char **strings);
+
+// lives_strdup  + free()
+char *strdup_free(char *);
+
+#define lives_strconcat(str1, ...) strdup_free(_lives_strconcat((str1), __VA_ARGS__))
+#define lives_markup_escape_text(str, size) strdup_free(_lives_markup_escape_text((str), (size)))
+#define lives_markup_printf_escaped(fmt, ...) strdup_free(_lives_markup_printf_escaped((fmt), __VA_ARGS__))
+
 // experimental
 //size_t lives_strlen128(const char *s);
+
+#endif

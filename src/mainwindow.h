@@ -1030,8 +1030,6 @@ typedef struct {
   char *file_open_params;
   boolean open_deint;
 
-  int aud_file_to_kill; ///< # of audio file to kill on crash
-
   boolean reverse_pb; ///< used in osc.c
 
   /// TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)

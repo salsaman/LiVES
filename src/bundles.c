@@ -1000,7 +1000,7 @@ static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t
 
   xiname = get_short_name(iname);
   if (!vargs) {
-    etext = lives_strdup_concat(etext, "\n", "missing value setting item %s [%s] in bundle.",
+    etext = lives_strdup_concat_sep(etext, "\n", "missing value setting item %s [%s] in bundle.",
                                 xiname, iname);
     err = TRUE;
   } else {
@@ -1111,7 +1111,7 @@ static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t
       }
       break;
       default:
-        etext = lives_strdup_concat(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
+        etext = lives_strdup_concat_sep(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
         err = TRUE;
         break;
       }
@@ -1222,7 +1222,7 @@ static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t
       }
       break;
       default:
-        etext = lives_strdup_concat(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
+        etext = lives_strdup_concat_sep(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
         err = TRUE;
         break;
       }
@@ -1597,13 +1597,13 @@ static char *nirvascope(int i, nscope_hdr_f head_func, nscope_cond_f cond_func, 
     char *sep = NULL, *fmt = "", *res;
     res = text_func(i, j, tdata, &sep, &fmt);
     if (res) {
-      hdr = lives_strdup_concat(hdr, sep, fmt, res);
+      hdr = lives_strdup_concat_sep(hdr, sep, fmt, res);
       lives_free(res);
     }
   }
   if (foot_func) {
     char *line = (*foot_func)(i);
-    hdr = lives_strdup_concat(hdr, NULL, "%s", line);
+    hdr = lives_strdup_concat_sep(hdr, NULL, "%s", line);
   }
   return hdr;
 }

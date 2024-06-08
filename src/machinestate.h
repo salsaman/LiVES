@@ -201,9 +201,20 @@ void rec_desk(void *args);
 boolean lives_disable_screensaver(void);
 boolean lives_reenable_screensaver(void);
 
+boolean disable_desktop_notify(void);
+boolean enable_desktop_notify(void);
+boolean query_desktop_notify(void);
+
+boolean enable_window_focus(void);
+boolean disable_window_focus(void);
+boolean query_window_focus(void);
+
 int get_window_stack_level(LiVESXWindow *, int *nwins);
 
+///////// Xfwm4
+
 #define WM_XFWM4 "Xfwm4"
+#define WM_XFCE4_WM "xfwm4"
 #define WM_XFCE4_PANEL "xfce4-panel"
 #define WM_XFCE4_SSAVE "xfce4-ssave"
 #define WM_XFCE4_COLOR "xfce4-color-settings"
@@ -213,6 +224,28 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 #define WM_XFCE4_TERMINAL "xfce4-terminal"
 #define WM_XFCE4_TASKMGR "xfce4-taskmanager"
 #define WM_XFCE4_SSHOT "xfce4-screenshooter"
+
+#define WM_XFCE4_NOTIFY "xfce4-notifyd"
+#define WM_XFCE4_SCREEN_SAVER "xfce4-screensaver"
+
+#define WM_XFCE4_PROPS_EXEC "xfconf-query"
+#define WM_XFCE4_PROPS_GET(item, prop) WM_XFCE4_PROPS_EXEC " -c " item " -p " #prop
+#define WM_XFCE4_PROPS_SET(item, prop, val) WM_XFCE4_PROPS_EXEC " -c " item " -p " #prop " --set " #val
+
+#define WM_XFCE4_PROP_ENABLE(thing) WM_XFCE4_PROP_ENABLE_##thing
+#define WM_XFCE4_PROP_DISABLE(thing) WM_XFCE4_PROP_DISABLE_##thing
+
+#define WM_XFCE4_PROP_ENABLE_NOTIFY WM_XFCE4_PROPS_SET(WM_XFCE4_NOTIFY, /do-not-disturb, false)
+#define WM_XFCE4_PROP_DISABLE_NOTIFY WM_XFCE4_PROPS_SET(WM_XFCE4_NOTIFY, /do-not-disturb, true)
+#define WM_XFCE4_PROP_QUERY_NOTIFY WM_XFCE4_PROPS_GET(WM_XFCE4_NOTIFY, /do-not-disturb)
+
+#define WM_XFCE4_PROP_ENABLE_FOCUS_STEAL WM_XFCE4_PROPS_SET(WM_XFCE4_WM, /general/focus_new, true)
+#define WM_XFCE4_PROP_DISABLE_FOCUS_STEAL WM_XFCE4_PROPS_SET(WM_XFCE4_WM, /general/focus_new, false)
+#define WM_XFCE4_PROP_QUERY_FOCUS_STEAL WM_XFCE4_PROPS_GET(WM_XFCE4_WM, /general/focus_new)
+
+#define WM_XFCE4_PROP_ENABLE_SCREENSAVER WM_XFCE4_PROPS_SET(WM_XFCE4_SCREEN_SAVER, /saver/fullscreen-inhibit, true)
+#define WM_XFCE4_PROP_DISABLE_SCREENSAVER WM_XFCE4_PROPS_SET(WM_XFCE4_SCREEN_SAVER, /saver/fullscreen-inhibit, false)
+#define WM_XFCE4_PROP_QUERY_SCREENSAVER WM_XFCE4_PROPS_GET(WM_XFCE4_SCREEN_SAVER, /saver/fullscreen-inhibit)
 
 #define WM_KWIN "KWin"
 #define WM_KWIN_PANEL ""
@@ -224,6 +257,10 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 #define WM_KWIN_TERMINAL "Konsole"
 #define WM_KWIN_TASKMGR "systemmonitor"
 #define WM_KWIN_SSHOT ""
+
+#define WM_KWIN_PROPS_EXEC ""
+#define WM_KWIN_PROPS_GET(thing, item) WM_KWIN_PROPS_EXEC
+#define WM_KWIN_PROPS_SET(thing, item, val) WM_KWIN_PROPS_EXEC
 
 #define XDG_CURRENT_DESKTOP "XDG_CURRENT_DESKTOP"
 #define XDG_SESSION_TYPE "XDG_SESSION_TYPE"
@@ -237,6 +274,8 @@ char *wm_property_get(const char *key, int *type_guess);
 
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
+
+char *list_annoy_res(void);
 
 void get_monitors(boolean reset);
 

@@ -91,6 +91,8 @@ void benchmark(void);
 
 void hash_test(void);
 
+void lookup_test(void);
+
 void lives_cond_test(int step);
 
 void lives_blueprint_test(void);

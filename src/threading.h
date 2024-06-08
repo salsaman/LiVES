@@ -466,12 +466,8 @@ int lives_proc_thread_get_stack_depth(lives_proc_thread_t);
 
 boolean lives_proc_thread_is_original(lives_proc_thread_t lpt);
 
-lives_proc_thread_t lives_funcinst_fg_queue(lives_funcinst_t *finst, uint64_t attrs);
-lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *, uint64_t attrs, lives_databook_t *ctxbook);
-
-/* #define lives_funcinst_queue(finst, attrs)	\ */
-/*   (record_loc(_FUNC_REF_,_FILE_REF_,_LINE_REF_) ?	\ */
-/*    _lives_funcinst_queue(finst, attrs) : NULL) */
+lives_proc_thread_t lives_funcinst_fg_queue(lives_funcinst_t *, uint64_t attrs);
+lives_proc_thread_t lives_funcinst_bg_queue(lives_funcinst_t *, uint64_t attrs);
 
 void lives_funcinst_set_disposition(lives_funcinst_t *, boolean incl_stacked, funcinst_disposition disposition, ...);
 void finst_module_free(void *module, funcinst_module_type mod_type);

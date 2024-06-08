@@ -294,7 +294,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       }
     }
 
-    //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
+    if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
     var /= (double)NSLICES;
 
@@ -306,7 +306,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       if (var >= varlim && sdata->buf[i][sdata->bufidx] >= (avlim * av)) {
         // got a beat !
         beat_pulse = beat_hold = WEED_TRUE;
-        if (verbosity > WEED_VERBOSITY_WARN)
+        if (1||verbosity > WEED_VERBOSITY_WARN)
 	 fprintf(stderr, "PULSE !\n");
         break;
       }

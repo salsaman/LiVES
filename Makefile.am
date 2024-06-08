@@ -148,7 +148,8 @@ uninstall-local:
 
 	@echo
 	@echo "		*** WARNING - user specific configuration files have NOT been removed."
-	@echo "		*** To complete uninstallation, you may wish to remove ~/.lives and ~/.lives-dir" 
+	@echo "		*** To complete uninstallation, you may wish to remove directories"
+	@echo "		*** ~/.local/share/lives and ~/.config/lives" 
 
 
 dist-hook:

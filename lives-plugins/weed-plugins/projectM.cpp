@@ -470,6 +470,7 @@ static int render_frame(_sdata *sd) {
 #ifdef NORM_AUDIO
       for (i = 0; i < audlen; i++) {
         if ((myvol = fabsf(sd->audio[sd->audio_offs + i]) > maxvol)) maxvol = myvol;
+	//fprintf(stderr, "%f vo\n", myvol);
         if (maxvol > .8) break;
       }
       if (i == audlen && maxvol > 0.05 && maxvol < 1.) {

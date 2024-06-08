@@ -7,6 +7,33 @@
 
 #include <ctype.h>
 
+LIVES_GLOBAL_INLINE char *strdup_free(char *str) {
+  if (lives_free == free) return str;
+  char *ret = lives_strdup(str);
+  free(str);
+  return ret;
+}
+
+char **lives_strsplit(const char *str, const char *delim, int maxtok) {
+  char **array = _lives_strsplit(str, delim, maxtok);
+  if (!array || lives_free == free) return array;
+  int count = 0, i;
+  while (array[count++]);
+  LIVES_CALLOC_TYPE(char *, new_array, count);
+  for (i = 0; i < count - 1; i++)
+    new_array[i] = strdup_free(array[i]);
+  new_array[i] = NULL;
+  free(array);
+  return new_array;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_strfreev(char **strings) {
+  for (int i = 0; strings[i]; i++) lives_free(strings[i]);
+  lives_free(strings);
+}
+
+
 LIVES_GLOBAL_INLINE char *lives_string_tolower(const char *st) {
   char *lst;
   size_t slen = lives_strlen(st);
@@ -704,7 +731,7 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
 }
 
 
-char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...) {
+char *lives_strdup_concat_sep(char *str, const char *sep, const char *fmt, ...) {
   // appends to a, freeing old ptr and returning new string
   // if sep, str and fmted string are all non NULL / non empty, inserts sep after str
   va_list xargs;

@@ -393,7 +393,7 @@ static void make_accels(void) {
       _lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_s, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                  (sepwin_closure = _lives_cclosure_new(LIVES_GUI_CALLBACK(sepwin_callback), NULL, NULL)));
 
-      if (!CURRENT_CLIP_HAS_AUDIO || mainw->mute || mainw->loop_cont || is_realtime_aplayer(prefs->audio_player)) {
+      if (!CURRENT_CLIP_HAS_AUDIO || mainw->mute || mainw->loop_cont) {
         lives_widget_remove_accelerator(mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (LiVESXModifierType)0);
 
         _lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_l, (LiVESXModifierType)0, (LiVESAccelFlags)0,
@@ -2044,7 +2044,7 @@ void create_LiVES(void) {
   mainw->ext_audio_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton),
                           LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_audio_toggled), mainw->l3_tb);
 
-  if (!is_realtime_aplayer(prefs->audio_player) || prefs->audio_player == AUD_PLAYER_NONE) {
+  if (prefs->audio_player == AUD_PLAYER_NONE) {
     lives_widget_set_sensitive(mainw->lock_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
@@ -3573,7 +3573,7 @@ void set_interactive(boolean interactive) {
       }
     }
 
-    if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
+    if (prefs->audio_player != AUD_PLAYER_NONE) {
       lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
       lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
     }
@@ -4386,12 +4386,23 @@ static void _resize_play_window(void) {
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         mainw->ignore_screen_size = TRUE;
-
-        if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-            && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-            capable->wm_caps.pan_res & RESTYPE_ACTION) {
-          hide_desktop_panel();
-        }
+	if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel) {
+	  if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
+	      && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
+	      && (capable->wm_caps.annoy.panel.resolution & RES_HIDE) &&
+	      capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION) {
+	    hide_desktop_panel();
+	  }
+	}
+	if (capable->wm_caps.annoy.notify.problem) {
+	  boolean origval;
+	  VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
+	  if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
+	      && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND) &&
+	      capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG) {
+	    disable_desktop_notify();
+	  }
+	}
 #if GTK_CHECK_VERSION(3, 18, 0)
         LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
         if (pmonitor == 0) {

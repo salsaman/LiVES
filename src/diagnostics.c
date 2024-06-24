@@ -12,8 +12,82 @@
 #include "startup.h"
 #include "maths.h"
 #include "effects.h"
+#include "rfx-builder.h"
 
 //////////////// info functions
+
+
+/////////// objects /////
+
+// TODO - we can use this to display any type of params
+// to upgrade a param to a displayable attr, we need to add
+// gui, label (optional), param_type
+//
+// the attr is then upgraded to an rfx_param
+//
+//
+//
+/*
+    Example:
+    boolean is_rdonly = TRUE;
+
+    lives_rfx_t *rfx = obj_attrs_to_rfx(obj, is_rdonly);
+
+    if (rfx) {
+	const char *title = "Details";
+	LiVESWidget *dialog;
+	const char *desc = "Test";
+
+	rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup_printf("layout|\"%s\"|", desc));
+	rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p0|")); // source
+	//etc
+
+	dialog = rfx_make_param_dialog(rfx, title, FALSE);
+	lives_dialog_run(LIVES_DIALOG(dialog));
+	lives_widget_destroy(dialog);
+    }
+*/
+
+LIVES_GLOBAL_INLINE lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *obj, boolean readonly) {
+  /*   lives_obj_attr_t **attrs = lives_object_get_attrs(obj); */
+  /*   lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t)); */
+  /*   rfx->status = RFX_STATUS_OBJECT; */
+  /*   rfx->source = (void *)obj; */
+  /*   rfx->source_type = LIVES_RFX_SOURCE_OBJECT; */
+
+  /*   *rfx->delim = '|'; */
+  /*   lives_snprintf(rfx->rfx_version, 64, "%s", RFX_VERSION); */
+
+  /*   // obj attrs and funcinst params are basicaly the same, except - finst params are held in finst->params */
+  /*   // obj attrs are held in an attr grp */
+  /*   // for finst params we have the notion of "ordering", hence the params have names p0. p1 etc */
+  /*   //  attrgrps are simple index plants indexed by name */
+
+  /*   rfx->num_params = 19;//ylives_object_get_num_attributes(obj); */
+  /*   if (attrs) { */
+  /*     rfx->params = lives_calloc(rfx->num_params, sizeof(lives_param_t)); */
+  /*     for (int i = 0; i < rfx->num_params; i++) { */
+  /*       lives_obj_attr_t *attr = attrs[i]; */
+  /*       weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL); */
+  /*       char *name = weed_get_string_value(attr, WEED_LEAF_NAME, NULL); */
+  /*       char *label = weed_get_string_value(attr, WEED_LEAF_LABEL, NULL); */
+  /*       int param_type = weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL); */
+  /*       if (!gui) { */
+  /*         gui = weed_plant_new(WEED_PLANT_GUI); */
+  /*         weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui); */
+  /*       } */
+  /*       rfx->params[i].source = attr; */
+  /*       rfx->params[i].source_type = LIVES_RFX_SOURCE_OBJECT; */
+  /*       build_rfx_param(&rfx->params[i], attr, param_type, label, gui, attr); */
+  /*       if (readonly) rfx->params[i].flags |= PARAM_FLAG_READONLY; */
+  /*       lives_free(label); */
+  /*       lives_free(name); */
+  /*     } */
+  /*     lives_free(attrs); */
+  /*   } */
+  //return rfx;
+  return NULL;
+}
 
 #define PTMLH _DW0(pthread_mutex_lock(hmutex);)
 #define PTMUH _DW0(pthread_mutex_unlock(hmutex);)
@@ -29,6 +103,7 @@ LIVES_GLOBAL_INLINE double check_thrd_latency(double *act_time) {
   end = lives_get_session_time();
   if (act_time) *act_time = mid - start;
   return end - start;
+  return 0;
 }
 
 
@@ -195,7 +270,7 @@ char *funcsig_to_param_string(funcsig_t sig) {
       uint8_t ch = (sig >> i) & 0X0F;
       if (!ch) continue;
       fmtstring = lives_strdup_concat_sep(fmtstring, ", ", "%s",
-                                      weed_seed_to_ctype(get_seedtype(ch), FALSE));
+                                          weed_seed_to_ctype(get_seedtype(ch), FALSE));
     }
     return fmtstring;
   }
@@ -267,7 +342,10 @@ LIVES_GLOBAL_INLINE char *weed_leaf_stringify(weed_plant_t *pl, const char *key)
   char *xpstr = NULL;
   weed_seed_t st = weed_leaf_seed_type(pl, key);
   char *fmtpstr = lives_strdup_printf("%s", get_fmtstr_for_st(st));
-  FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, pl, key, NULL);
+  if (st == WEED_SEED_BOOLEAN) {
+    boolean bval = weed_get_boolean_value(pl, key, NULL);
+    xpstr = LSPF("%s", bval ? _("TRUE") : _("FALSE"));
+  } else FOR_ALL_SEED_TYPES(st, xpstr = lives_strdup_printf, fmtpstr, weed_get_, _value, pl, key, NULL);
   lives_free(fmtpstr);
   return xpstr;
 }
@@ -460,7 +538,7 @@ LIVES_GLOBAL_INLINE const char *hs_pattern_name(hook_stack_pattern_t pattern) {
 lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type) {
   lives_hook_stack_t *hstack;
   uint64_t hsflags, opflags;
-  boolean native = FALSE, variadic = FALSE, varivar = FALSE;
+  boolean native = FALSE, variadic = FALSE;
 
   g_print("\n\n");
 
@@ -534,60 +612,14 @@ lives_result_t lives_describe_hook_stack(lives_hook_stack_t **hstacks, int type)
     if (variadic) g_print("Adder may pass addition params when adding the callback\n");
   }
 
-  if (hsdesc->var_data_srcs) {
-    g_print("\nSome parameters are set or supplied when the callback is triggered\n");
-
-
-    for (LiVESList *l = hsdesc->var_data_srcs; l; l = l->next) {
-      weed_seed_t st;
-      const char *datasrc = (const char *)l->data;
-      boolean lback = FALSE;
-      // format is "X|Ysrcname", where X is seed_type, Y is origin
-      if (!datasrc) continue;
-      if (datasrc[0] == '*') {
-        varivar = TRUE;
-        break;
-      }
-      if (!datasrc[0] || !datasrc[1] || !datasrc[2] || !datasrc[3]) continue;
-      if (datasrc[0] == '>') {
-        datasrc++;
-        lback = TRUE;
-      }
-      if (datasrc[1] != '|' || (datasrc[2] != '-' && datasrc[2] != '$' && datasrc[2] != '@')) continue;
-      st = get_seedtype(datasrc[0]);
-      if (st == WEED_SEED_INVALID) continue;
-
-      switch (datasrc[2]) {
-      case '-': {
-        g_print("User supplied value ");
-        break;
-      }
-      case '$': {
-        const char *item = (const char *)(datasrc + 3);
-        g_print("local databook value: %s ", item);
-        break;
-      }
-      case '@': {
-        // data comes from global data book
-        const char *item = (const char *)(datasrc + 3);
-        g_print("global databook value: %s ", item);
-        break;
-      }
-      default: break;
-      }
-      g_print(" (%s)\n", weed_seed_to_ctype(st, FALSE));
-
-      if (lback) g_print("(Value is looped back from return val\n");
-    }
-    if (varivar) g_print("Triggerer may pass additional params when triggering the callback\n");
-  }
-
-  //g_print("Accept conditions: %s\n", lives_cond_desc(hsdesc->accept_cond));
+  g_print("Accept conditions:\n");
+  lives_cond_desc(hsdesc->accept_cond);
 
   g_print("Hook stack operation flags are:\n");
   opflags = hsdesc->op_flags;
   if (opflags) hs_op_flags_desc(opflags);
   else g_print("None");
+  g_print("\n");
 
   if (hstack->req_target_stacks) {
     g_print("Stack is a staging stack for target:\n");
@@ -3251,9 +3283,9 @@ void lives_cond_test(int step) {
     GET_PROC_THREAD_SELF(self);
 
     C1 = lives_cond_create("COND_INT_VAL", 2, "COND_EQUALS", "COND_LOCAL", "test");
-    C2 = lives_cond_create($(test2), ">", $(test1));
-    C3 = lives_cond_create($(test0), "==", $(test0));
-    C4 = lives_cond_create($(test1), "==", $(test0));
+    C2 = lives_cond_create(_L_(test2), ">", _L_(test1));
+    C3 = lives_cond_create(_L_(test0), "==", _L_(test0));
+    C4 = lives_cond_create(_L_(test1), "==", _L_(test0));
 
     SET_SELF_VALUE(WEED_SEED_INT, "test0", 30);
     SET_SELF_VALUE(WEED_SEED_INT, "test", 2);

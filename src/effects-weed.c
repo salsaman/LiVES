@@ -27,7 +27,6 @@ using namespace cv;
 #include "callbacks.h"
 #include "rte_window.h"
 #include "resample.h"
-#include "audio.h"
 #include "ce_thumbs.h"
 #include "paramwindow.h"
 #include "diagnostics.h"
@@ -175,7 +174,7 @@ void weed_functions_init(void) {
 
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
-  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
+  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_memcpy, _ext_calloc);
 #else
 #ifdef xENABLE_GSLICE
 #if GLIB_CHECK_VERSION(2, 14, 0)
@@ -185,7 +184,7 @@ void weed_functions_init(void) {
   libweed_set_slab_funcs(lives_slice_alloc0, lives_slice_unalloc, NULL, _lives_memcpy);
 #endif
 #else
-  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
+  libweed_set_memory_funcs(default_malloc, default_free, default_memcpy, default_calloc);
 #endif // DISABLE_GSLICE
 
 #endif // USE_RPMALLOC
@@ -3962,6 +3961,33 @@ LIVES_GLOBAL_INLINE const char *weed_get_const_string_value(weed_plant_t *plant,
   return weed_get_custom_value(plant, key, LIVES_SEED_CONST_CHARPTR, err);
 }
 
+LIVES_GLOBAL_INLINE const char **weed_get_const_string_array(weed_plant_t *plant,
+    const char *key, weed_error_t *err) {
+  weed_error_t xerr = WEED_SUCCESS;
+  if (!plant) xerr = WEED_ERROR_NOSUCH_PLANT;
+  else if (!key || !*key) xerr = WEED_ERROR_NOSUCH_LEAF;
+  else if (!(weed_leaf_is_const_string(plant, key)))
+    xerr = WEED_ERROR_WRONG_SEED_TYPE;
+  if (xerr != WEED_SUCCESS) {
+    if (err) *err = xerr;
+    return NULL;
+  }
+  return (const char **)weed_get_custom_array(plant, key, LIVES_SEED_CONST_CHARPTR, err);
+}
+
+
+
+LIVES_GLOBAL_INLINE const char **weed_get_const_string_array_counted(weed_plant_t *plant,
+    const char *key, int *nvals) {
+  weed_error_t xerr = WEED_SUCCESS;
+  if (!plant) xerr = WEED_ERROR_NOSUCH_PLANT;
+  else if (!key || !*key) xerr = WEED_ERROR_NOSUCH_LEAF;
+  else if (!(weed_leaf_is_const_string(plant, key)))
+    xerr = WEED_ERROR_WRONG_SEED_TYPE;
+  if (xerr != WEED_SUCCESS) return NULL;
+  return (const char **)weed_get_custom_array_counted(plant, key, LIVES_SEED_CONST_CHARPTR, nvals);
+}
+
 
 LIVES_GLOBAL_INLINE weed_size_t weed_get_const_string_len(weed_plant_t *plant, const char *key) {
   return weed_leaf_is_const_string(plant, key) ? weed_leaf_element_size(plant, key, 0) : 0;
@@ -4052,12 +4078,20 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
       }
       switch (st) {
       case WEED_SEED_PLANTPTR: {
+        boolean nofree = TRUE;
         weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
-        for (int i = 0; i < nvals; i++) if (pls[i]) weed_plant_free(pls[i]);
+        for (int i = 0; i < nvals; i++) {
+          if (pls[i]) {
+            if (!weed_refcount_dec(pls[i])) weed_plant_free(pls[i]);
+            else nofree = TRUE;
+          }
+        }
         if (pls) lives_free(pls);
-        lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
-        weed_set_plantptr_value(plant, key, NULL);
-        bret = TRUE;
+        if (!nofree) {
+          lives_leaf_set_rdonly(plant, key, FALSE, FALSE);
+          weed_set_plantptr_value(plant, key, NULL);
+          bret = TRUE;
+        }
       }
       break;
       case WEED_SEED_VOIDPTR: {
@@ -4910,7 +4944,7 @@ void weed_load_all(void) {
   /* this is safe povided no other threads are active, and we use same functions when unloading */
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
-  libweed_set_memory_funcs(default_malloc, default_free, default_calloc);
+  libweed_set_memory_funcs(default_malloc, default_free, default_memcpy, default_calloc);
 #endif
 #endif
   for (i = numdirs - 1; i >= 0; i--) {
@@ -4969,11 +5003,11 @@ void weed_load_all(void) {
 
   lives_strfreev(dirs);
 
-  //ncompounds = load_compound_fx();
+  ncompounds = load_compound_fx();
 
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
-  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_calloc);
+  libweed_set_memory_funcs(_ext_malloc, _ext_free, _ext_memcpy,  _ext_calloc);
 #endif
 #endif
 
@@ -7117,25 +7151,25 @@ boolean weed_deinit_effect(int hotkey) {
       // for internal, continue where we should
       if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file, TRUE);
       else {
-	if (mainw->pre_src_audio_file == -1) {
-	  // audio doesn't follow clip switches and we were playing this...
-	  mainw->cancelled = CANCEL_AUD_END;
-	} else {
+        if (mainw->pre_src_audio_file == -1) {
+          // audio doesn't follow clip switches and we were playing this...
+          mainw->cancelled = CANCEL_AUD_END;
+        } else {
 #ifdef HAVE_PULSE_AUDIO
-	  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-	    if (mainw->pulsed) mainw->pulsed->playing_file = mainw->pre_src_audio_file;
-	    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-	      pulse_get_rec_avals(mainw->pulsed);
-	    }
-	  }
+          if (prefs->audio_player == AUD_PLAYER_PULSE) {
+            if (mainw->pulsed) mainw->pulsed->playing_file = mainw->pre_src_audio_file;
+            if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+              pulse_get_rec_avals(mainw->pulsed);
+            }
+          }
 #endif
 #ifdef ENABLE_JACK
-	  if (prefs->audio_player == AUD_PLAYER_JACK) {
-	    if (mainw->jackd) mainw->jackd->playing_file = mainw->pre_src_audio_file;
-	    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-	      jack_get_rec_avals(mainw->jackd);
-	    }
-	  }
+          if (prefs->audio_player == AUD_PLAYER_JACK) {
+            if (mainw->jackd) mainw->jackd->playing_file = mainw->pre_src_audio_file;
+            if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+              jack_get_rec_avals(mainw->jackd);
+            }
+          }
 #endif
 	  // *INDENT-OFF*
 	}}}}
@@ -7356,9 +7390,12 @@ void weed_deinit_all(boolean shutdown) {
    Purely audio filters are run directly during the audio cycle or by the audio caching thread.
 */
 int register_audio_client(boolean is_vid) {
+  return 0;
   if (!mainw->afbuffer) {
     lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+
     mainw->afbuffer = init_audio_frame_buffers(aplayer);
+
     mainw->afbuffer->aclients = mainw->afbuffer->vclients = 0;
     mainw->afbuffer->aclients_read = mainw->afbuffer->vclients_read = 0;
     if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
@@ -7593,7 +7630,7 @@ matchvals:
 
   if (res == LIVES_RESULT_SUCCESS) {
     pal = pally.pal;
-    g_print("SE pal %d and gam %d\n", pal, gamma_type);
+    //g_print("SE pal %d and gam %d\n", pal, gamma_type);
     weed_channel_set_gamma_type(channel, gamma_type);
     weed_channel_set_palette(channel, pal);
   } else {
@@ -11035,8 +11072,11 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_copy(weed_plant_t *src) {
     if (err == WEED_SUCCESS) {
       err = lives_leaf_dup(plant, src, prop);
     }
-    _ext_free(prop);
-  } _ext_free(proplist);
+    if (mainw->is_ready) _ext_free(prop);
+    else lives_free(prop);
+  }
+  if (mainw->is_ready) _ext_free(proplist);
+  else lives_free(proplist);
 
   if (err == WEED_ERROR_MEMORY_ALLOCATION) {
     //if (plant!=NULL) weed_plant_free(plant); // well, we should free the plant, but the plugins don't have this function...

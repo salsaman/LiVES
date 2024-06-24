@@ -77,7 +77,7 @@ typedef struct {
   audio_buffer_t *aPlayPtr; ///< data read from file
   lives_audio_loop_t loop;
 
-  uint8_t *sound_buffer; ///< transformed data
+  uint16_t *sound_buffer; ///< transformed data
 
   pa_cvolume volume;
 

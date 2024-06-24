@@ -19,7 +19,6 @@ mainwindow *mainw;
 #include "effects.h"
 #include "rte_window.h"
 #include "resample.h"
-#include "audio.h"
 #include "paramwindow.h"
 #include "stream.h"
 #include "cvirtual.h"
@@ -1225,6 +1224,7 @@ void lazy_startup_checks(void) {
     if (lives_proc_thread_get_pause_requested(self))
       lives_proc_thread_pause();
     BREAK_ME("CALL");
+    sleep(4);
     main_thread_execute_rvoid(add_rfx_effects2, "i", RFX_STATUS_ANY);
   }
 alldone:
@@ -1286,6 +1286,8 @@ boolean lives_startup(livespointer data) {
   mainw->ignore_screen_size = FALSE;
 
   capable->primary_monitor = 0;
+
+  mainw->debugopts = DEBUG_CONDITIONALS;
 
   // sets prefs->screen_scale, capable->nmonitors, mainw->mgeom, prefs->play_monitor, prefs->gui_monitor
   // capable->can_show_msg_area, mainw->old_screen_height, mainw->old_screen_width
@@ -1412,7 +1414,7 @@ boolean lives_startup(livespointer data) {
   }
 
   // can test conssditions with const values
-  lives_cond_test(1);
+  //lives_cond_test(1);
 
   //do_startup_diagnostics(test_opts);
 
@@ -1477,7 +1479,7 @@ boolean lives_startup(livespointer data) {
   /* mainw->maintmode |= MMODE_PLAYER_TIMINGS; */
   /* mainw->maintmode |= MMODE_PLANNER_TIMINGS; */
 
-  // cant do this until conditions are intied - hook stack descriptors can have conditions
+  // cant do this until conditions are inited - hook stack descriptors can have conditions
 
   // create a proc_thread for the main_thread. Since it is not running any background tasks, create
   // a dummy. This is useful in places where we need a "self" proc-thread - for other threads this is the proc_thread
@@ -1505,7 +1507,7 @@ boolean lives_startup(livespointer data) {
   mainw->global_hook_stacks = lpt_hooks;
 
   // can test conssditions with variable values
-  //lives_cond_test(2);
+  //lives_cond_test(2); abort();
 
   make_std_icaps();
 
@@ -1905,17 +1907,15 @@ void lives_startup2(void) {
   }
 #endif
 
-  lookup_test();
-  
- if (!prefs->vj_mode && !prefs->startup_phase)
+  //lookup_test();
+
+  if (!prefs->vj_mode && !prefs->startup_phase)
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE, add_rfx_effects,
-			       WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
-  
+                               WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
+
   // crash recovery - reload
 
-
- 
   prefs->skip_ign = FALSE;
   if (!mainw->cliplist)
     if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
@@ -4127,7 +4127,7 @@ static void do_start_messages(void) {
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
   if (prefs->show_dev_opts)
     prefs->show_desktop_panel = TRUE;
-  
+
   d_print(_("Window manager reports as \"%s\" (%s)"),
           capable->wm_name ? capable->wm_name : _("UNKNOWN - please patch me !"),
           capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");

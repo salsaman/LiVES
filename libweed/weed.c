@@ -293,7 +293,7 @@ EXPORTED int32_t libweed_get_abi_min_supported(void) GNU_CONST;
 EXPORTED void libweed_print_init_opts(FILE *);
 
 EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
-EXPORTED int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_calloc_f);
+EXPORTED int libweed_set_memory_funcs(weed_malloc_f, weed_free_f, weed_memcpy_f, weed_calloc_f);
 EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_clear_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
 
 #if WEED_ABI_CHECK_VERSION(202)
@@ -391,17 +391,19 @@ static inline weed_size_t weed_strlen(const char *) GNU_PURE;
 #define _weed_calloc calloc
 #endif
 
+#ifndef _weed_mempy
+#define _weed_memcpy memcpy
+#endif
+
 #ifndef _weed_free
 #define _weed_free free
 #endif
 
 static weed_malloc_f weed_malloc = _weed_malloc;
 static weed_calloc_f weed_calloc = _weed_calloc;
+static weed_memcpy_f weed_memcpy = _weed_memcpy;
 static weed_free_f weed_free = _weed_free;
 
-#ifndef weed_memcpy
-#define weed_memcpy memcpy
-#endif
 #ifndef weed_memset
 #define weed_memset memset
 #endif
@@ -440,15 +442,17 @@ static inline void *weed_unmalloc_copy_retnull(size_t sz, void *ptr)
 #define weed_leaf_get_key(leaf) ((!_WEED_PADBYTES_ || !leaf->padding[0]) \
 				 ? leaf->key : (const char *)leaf->padding)
 
-EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free, weed_calloc_f my_calloc) {
+  EXPORTED int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free,
+					weed_memcpy_f my_memcpy, weed_calloc_f my_calloc) {
     weed_malloc = my_malloc;
     if (my_calloc) weed_calloc = my_calloc;
     else my_calloc = _malloc0_product;
     weed_free = my_free;
+    if (my_memcpy) weed_memcpy = my_memcpy;
     weed_malloc_and_copy = _weed_malloc_copy;
     weed_unmalloc_and_copy = _weed_unmalloc_copy;
     return 0;
-  }
+}
 
 EXPORTED int libweed_set_slab_funcs(libweed_slab_alloc_clear_f my_slab_alloc0, libweed_slab_unalloc_f my_slab_unalloc,
 				    libweed_slab_alloc_and_copy_f my_slab_alloc_and_copy) {
@@ -891,7 +895,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   weed_hash_t hash = key && *key ? weed_hash(key) : WEED_MAGIC_HASH;
   weed_error_t err = WEED_SUCCESS;
 
-  if (!plant) return err;
+  if (!plant) return WEED_ERROR_NOSUCH_PLANT;
 
   // A)
   // get structure mutex, this locks out other deleters

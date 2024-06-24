@@ -262,28 +262,28 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       ____FUNC_EXIT_VAL____(FALSE);
     } else {
       lives_obj_attr_t *attr1, *attr2;
-      attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
-      lives_object_set_attribute_value(NULL, ATTR_AUDIO_RATE, cfile->arate);
+      attr1 = lives_obj_instance_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
+      lives_obj_instance_set_attr_val(NULL, ATTR_AUDIO_RATE, cfile->arate);
       //lives_attr_set_readonly(attr1, TRUE);
 
-      attr2 = lives_object_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
+      attr2 = lives_obj_instance_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
       if (mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
-        lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, cfile->achans);
+        lives_obj_instance_set_attr_val(NULL, ATTR_AUDIO_CHANNELS, cfile->achans);
       } else {
-        lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, 0);
+        lives_obj_instance_set_attr_val(NULL, ATTR_AUDIO_CHANNELS, 0);
       }
       //lives_attr_set_readonly(attr2, TRUE);
 
       vpp = mainw->vpp;
 
       if (!(pname = transcode_get_params(pname))) {
-        lives_object_attribute_unref(NULL, attr1);
-        lives_object_attribute_unref(NULL, attr2);
+        lives_attr_unref(attr1);
+        lives_attr_unref(attr2);
         lives_thread_set_intentcap(ICAP(IDLE));
         goto tr_err2;
       }
-      lives_object_attribute_unref(NULL, attr1);
-      lives_object_attribute_unref(NULL, attr2);
+      lives_attr_unref(attr1);
+      lives_attr_unref(attr2);
     }
   } else {
     vpp = mainw->vpp;

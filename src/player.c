@@ -1156,11 +1156,11 @@ frames_t load_frame_image(frames_t frame) {
 
       /* THREADVAR(hook_hints) = 0; */
     }
-    
+
     /* in render frame, we would have set all frames to either prepared or loaded */
     /* so the plan runner should have started loading them already */
     /* the reamining steps will be run, applying all fx instances until we are left with the single output layer */
-    lives_millisleep_while_false(!mainw->plan_cycle || mainw->plan_cycle->state == PLAN_STATE_COMPLETE
+    lives_microsleep_while_false(!mainw->plan_cycle || mainw->plan_cycle->state == PLAN_STATE_COMPLETE
                                  || mainw->plan_cycle->state == PLAN_STATE_CANCELLED
                                  || mainw->plan_cycle->state == PLAN_STATE_ERROR
                                  || mainw->cancelled != CANCEL_NONE);
@@ -1173,6 +1173,12 @@ frames_t load_frame_image(frames_t frame) {
     }
 
     if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
+
+    if (prefs->audio_src == AUDIO_SRC_INT && !mainw->audio_seek_ready) {
+      lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+      mainw->video_seek_ready = TRUE;
+      lives_proc_thread_sync_with(aplayer, SYNCIDX_AVSYNC, MM_IGNORE);
+    }
 
     if (mainw->refresh_model) {
       errpt = 7;
@@ -1233,24 +1239,6 @@ frames_t load_frame_image(frames_t frame) {
         }
       if (mainw->pconx) pconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0, FALSE);
       if (mainw->cconx) cconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
-    }
-
-    lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
-
-    fg_stack_wait();
-    rte_keys_update();
-
-    if (!mainw->refresh_model) {
-      lives_hook_stack_t *sah =
-        self_hook_stacks(SYNC_ANNOUNCE_HOOK)[SYNC_ANNOUNCE_HOOK];
-      if (sah->stack) {
-        GET_PROC_THREAD_SELF(self);
-        all_updated = FALSE;
-        lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done);
-        mainw->gui_much_events = TRUE;
-        mainw->do_ctx_update = TRUE;
-        lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
-      }
     }
 
     if (mainw->refresh_model) {
@@ -1496,9 +1484,12 @@ frames_t load_frame_image(frames_t frame) {
     /* if (!mainw->debug_ptr) */
     /*   mainw->debug_ptr = frame_layer; */
 
+
+    lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
+
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
-    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, "weed_layer_unref", WEED_SEED_VOID, "V", frame_layer);
+    lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, WEED_SEED_VOID, "V", frame_layer);
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
@@ -1601,7 +1592,7 @@ lfi_done:
   // the audio player will signal when it reaches that point by setting audio_seek_ready to TRUE
   // once we set video_seek_ready to TRUE, the audio can continue
   // the timer will be advancing during this, so we discount the time spent waiting for audio_seek_ready
-  if (!mainw->video_seek_ready) video_sync_ready();
+  //if (!mainw->video_seek_ready) video_sync_ready();
 
   if (framecount) {
     if ((!mainw->fs || (prefs->play_monitor != 0 &&
@@ -1642,6 +1633,22 @@ lfi_done:
       }
     }
     ____FUNC_EXIT_VAL____(0);
+  }
+
+  //fg_stack_wait();
+  rte_keys_update();
+
+  if (!mainw->refresh_model) {
+    lives_hook_stack_t *sah =
+      self_hook_stacks(SYNC_ANNOUNCE_HOOK)[SYNC_ANNOUNCE_HOOK];
+    if (sah->stack) {
+      GET_PROC_THREAD_SELF(self);
+      all_updated = FALSE;
+      lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done);
+      mainw->gui_much_events = TRUE;
+      mainw->do_ctx_update = TRUE;
+      lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
+    }
   }
 
   //g_print("out of lfi at %s\n", lives_format_timing_string(lives_get_session_time()));
@@ -3919,7 +3926,9 @@ lives_obj_instance_t *lives_player_inst_create(uint64_t subtype) {
   lives_attribute_set_param_type(inst, ATTR_AUDIO_FLOAT, _("Is float"), WEED_PARAM_SWITCH);
   lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_INTERLEAVED, WEED_SEED_BOOLEAN);
   lives_attribute_set_param_type(inst, ATTR_AUDIO_INTERLEAVED, _("Interleaved"), WEED_PARAM_SWITCH);
-  lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_DATA_LENGTH, WEED_SEED_INT64);
+
+  // length in samples per channel
+  lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_DATA_LENGTH, WEED_SEED_INT);
   lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_DATA, WEED_SEED_VOIDPTR);
   return inst;
 }

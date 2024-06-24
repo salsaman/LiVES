@@ -1,6 +1,6 @@
 // filesystem.c
 // LiVES
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2024 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -490,8 +490,9 @@ ssize_t lives_write(int fd, const void *buf, ssize_t count, boolean allow_fail) 
 }
 
 
-static ssize_t lives_write_cb(lives_file_buffer_t *fbuff) {
-  ssize_t res = lives_write(fbuff->fd, fbuff->ring_buffer, fbuff->rbf_size, TRUE);
+static ssize_t lives_write_cb(lives_file_buffer_t *fbuff, int rbnum, size_t wrsize) {
+  ssize_t res = lives_write(fbuff->fd, rbnum > 0 ? fbuff->ring_buffers[rbnum]
+                            : fbuff->buffer, wrsize, TRUE);
   fbuff->flags &= ~FB_FLAG_BG_OP;
   return res;
 }
@@ -699,17 +700,18 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   ssize_t res = 0;
 
   if (fbuff->buffer) {
-    if (fbuff->flags & FB_FLAG_USE_RINGBUFF) {
-      uint8_t *tmp_ptr = fbuff->ring_buffer;
+    if (fbuff->nringbuffs > 1) {
+      uint8_t *tmp_ptr = fbuff->ring_buffers[1];
       size_t buffsize;
       res = fbuff->bytes;
       lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
 
       fbuff->flags |= FB_FLAG_BG_OP;
-      fbuff->ring_buffer = fbuff->buffer;
+      fbuff->ring_buffers[1] = fbuff->buffer;
       fbuff->rbf_size = fbuff->bytes;
       lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                               lives_write_cb, 0, "V", fbuff);
+                               lives_write_cb, 0, "ViI", fbuff, fbuff->rbf_size);
+
       if (fbuff->bufsztype == BUFF_SIZE_WRITE_CUSTOM)
         buffsize = fbuff->custom_size;
       else buffsize = get_write_buff_size(fbuff->bufsztype);
@@ -1013,17 +1015,42 @@ LIVES_GLOBAL_INLINE void lives_buffered_rdonly_slurp(int fd, off_t skip) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean val) {
+lives_file_buffer_t *check_fbuff(int fd, uint64_t chkflag, const char *fname) {
+  uint64_t flags;
+  char *msg;
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+
   if (!fbuff) {
+    msg = LSPF("%s: no file buffer found", fname);
     // normal non-buffered file
-    LIVES_DEBUG("lives_buffered_rdonly_set_reversed: no file buffer found");
-    return FALSE;
+    LIVES_DEBUG(msg);
+    lives_free(msg);
+    return NULL;
   }
-  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
-    LIVES_ERROR("lives_buffered_rdonly_set_reversed: wrong buffer type");
-    return 0;
+
+  flags = fbuff->flags;
+  if ((chkflag == FB_CHECK_READONLY && !(flags & FB_FLAG_RDONLY))
+      || (chkflag == FB_CHECK_WRITEONLY && (flags & FB_FLAG_RDONLY))) {
+    msg = LSPF("%s: wrong buffer type", fname);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+    return NULL;
   }
+  return fbuff;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_quanta(int fd, size_t quanta) {
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_buffered_rdonly_set_quanta");
+  if (!fbuff) return FALSE;
+  fbuff->quanta = quanta;
+  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean val) {
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_buffered_rdonly_set_reversed");
+  if (!fbuff) return FALSE;
   if (val) fbuff->flags |= FB_FLAG_REVERSE;
   else fbuff->flags &= ~FB_FLAG_REVERSE;
   return TRUE;
@@ -1126,9 +1153,12 @@ ssize_t lives_close_buffered(int fd) {
     lives_free(fbuff->buffer);
   }
 
-  if (fbuff->ring_buffer) {
-    lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
-    lives_free(fbuff->ring_buffer);
+
+  if (fbuff->nringbuffs > 1) {
+    if (fbuff->ring_buffers[1]) {
+      lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+      lives_free(fbuff->ring_buffers[1]);
+    }
   }
 
   lives_free(fbuff);
@@ -1196,9 +1226,12 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
       } else delta = 0;
     }
   }
+
   if (fbuff->buffer && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
+    //g_print("CHKK %ld and %ld\n", bufsize, fbuff->ptr - fbuff->buffer + fbuff->bytes);
     lives_freep((void **)&fbuff->buffer);
   }
+
   if (!fbuff->buffer || !fbuff->ptr) {
     fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 1, 2);
   }
@@ -1413,33 +1446,15 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
 
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
   // seek relative
-  lives_file_buffer_t *fbuff;
-  if (!(fbuff = find_in_file_buffers(fd))) {
-    LIVES_DEBUG("lives_lseek_buffered_rdonly: no file buffer found");
-    return lseek(fd, offset, SEEK_CUR);
-  }
-
-  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
-    LIVES_ERROR("lives_lseek_buffered_rdonly: wrong buffer type");
-    return 0;
-  }
-
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_lseek_buffered_rdonly");
+  if (!fbuff) return 0;
   return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 }
 
 
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
-  lives_file_buffer_t *fbuff;
-
-  if (!(fbuff = find_in_file_buffers(fd))) {
-    LIVES_DEBUG("lives_lseek_buffered_rdonly_absolute: no file buffer found");
-    return lseek(fd, posn, SEEK_SET);
-  }
-
-  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
-    LIVES_ERROR("lives_lseek_buffered_rdonly_absolute: wrong buffer type");
-    return 0;
-  }
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_lseek_buffered_rdonly_absolute");
+  if (!fbuff) return 0;
 
   if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     posn -= fbuff->skip > 0 ? fbuff->skip : 0;
@@ -1463,18 +1478,11 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
 #if 0
 ssize_t lives_buffered_readline(int fd, void *buf, const char sep, size_t maxlen,
                                 boolean binmode) {
-  ssize_t count = 0;
   int i;
+  ssize_t count = 0;
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_buffered_readline");
+  if (!fbuff) return 0;
 
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_read_buffered: no file buffer found");
-    return lives_read(fd, buf, count, allow_less);
-  }
-
-  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
-    LIVES_ERROR("lives_read_buffered: wrong buffer type");
-    return 0;
-  }
   lives_buffered_rdonly_set_reversed(fd, FALSE);
   while (1) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
@@ -1515,8 +1523,7 @@ ssize_t lives_buffered_readline(int fd, void *buf, const char sep, size_t maxlen
 #endif
 
 ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less) {
-  lives_file_buffer_t *fbuff;
-  ssize_t retval = 0, res = 0;
+  ssize_t retval = 0, res = 0, bufsz;
   ssize_t ocount = count;
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
@@ -1524,15 +1531,8 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
 
   if (count <= 0) return retval;
 
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_read_buffered: no file buffer found");
-    return lives_read(fd, buf, count, allow_less);
-  }
-
-  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
-    LIVES_ERROR("lives_read_buffered: wrong buffer type");
-    return 0;
-  }
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_read_buffered");
+  if (!fbuff) return 0;
 
   reversed = (fbuff->flags & FB_FLAG_REVERSE) == FB_FLAG_REVERSE;
   bufsztype = fbuff->bufsztype;
@@ -1569,7 +1569,10 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
 
   fbuff->totops++;
 
+  bufsz = fbuff->ptr - fbuff->buffer + fbuff->bytes;
+
   // read bytes from fbuff
+  // - use up data remaining from last read
   if (fbuff->bytes > 0 || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     ssize_t nbytes;
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
@@ -1577,7 +1580,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         if (ocount > fbuff->offset) ocount = fbuff->offset;
         fbuff->offset -= ocount;
         fbuff->ptr -= ocount;
-        if (fbuff->ptr < fbuff->buffer) abort();
+        LIVES_ASSERT(fbuff->ptr >= fbuff->buffer);
       }
       lives_millisleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
                                   && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
@@ -1589,7 +1592,14 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         if (count <= 0) goto rd_exit;
       }
     } else nbytes = fbuff->bytes;
-    if (nbytes > count) nbytes = count;
+
+    if (nbytes > count) {
+      if (fbuff->quanta) {
+        if (nbytes - count <= fbuff->quanta) count = nbytes;
+        else count += fbuff->quanta - (count % fbuff->quanta);
+      }
+      nbytes = count;
+    }
 
     // use up buffer
 
@@ -1597,17 +1607,17 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       if (mainw->is_exiting) {
         return retval;
       }
-
       if (fbuff->bufsztype != BUFF_SIZE_READ_SLURP) {
-        fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+        fbuff->offset -= (bufsz);
         if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM)
-          fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+          fbuff->bytes = bufsz;
         fbuff->buffer = NULL;
         file_buffer_fill(fbuff, fbuff->bytes);
       }
       fbuff->flags &= ~FB_FLAG_INVALID;
     }
 
+    // copy buffer to ptr,
     lives_memcpy(ptr, fbuff->ptr, nbytes);
 
     retval += nbytes;
@@ -1628,7 +1638,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     } else {
       fbuff->bytes -= nbytes;
       fbuff->ptr += nbytes;
-      if (fbuff->ptr < fbuff->buffer) abort();
+      LIVES_ASSERT(fbuff->ptr >= fbuff->buffer);
     }
 
     fbuff->nseqreads++;
@@ -1640,18 +1650,22 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
 
   /// buffer used up
 
-  if (count <= bigbytes || fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
+  if (fbuff->quanta || count <= bigbytes || fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
     if (fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM) {
       bufsztype = BUFF_SIZE_READ_SMALL;
       if (ocount >= (smbytes >> 2) || count > smbytes) bufsztype = BUFF_SIZE_READ_SMALLMED;
       if (ocount >= (smedbytes >> 2) || count > smedbytes) bufsztype = BUFF_SIZE_READ_MED;
       if (ocount >= (medbytes >> 1) || count > medbytes) bufsztype = BUFF_SIZE_READ_LARGE;
+      // we can upgrade the buffer size
       if (fbuff->bufsztype < bufsztype) fbuff->bufsztype = bufsztype;
     } else bufsztype = BUFF_SIZE_READ_CUSTOM;
     if (fbuff->flags & FB_FLAG_INVALID) {
       if (mainw->is_exiting) {
         return retval;
       }
+
+      bufsz = fbuff->ptr - fbuff->buffer + fbuff->bytes;
+
       fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
       if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
       fbuff->buffer = NULL;
@@ -1674,11 +1688,19 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       }
 
       // buffer is sufficient (or eof hit)
-      if (res > count) res = count;
+      if (res > count) {
+        if (fbuff->quanta) {
+          size_t spare = fbuff->quanta - (ocount % fbuff->quanta);
+          if (spare == fbuff->quanta) spare = 0;
+          if (res - count < spare) count = res;
+          else count += spare;
+        }
+        res = count;
+      }
       lives_memcpy(ptr, fbuff->ptr, res);
       retval += res;
       fbuff->ptr += res;
-      if (fbuff->ptr < fbuff->buffer) abort();
+      LIVES_ASSERT(fbuff->ptr >= fbuff->buffer);
       fbuff->bytes -= res;
       count -= res;
       fbuff->totbytes += res;
@@ -1741,16 +1763,8 @@ ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_l
 
 
 boolean lives_read_buffered_eof(int fd) {
-  lives_file_buffer_t *fbuff;
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_read_buffered_eof: no file buffer found");
-    return TRUE;
-  }
-
-  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
-    LIVES_ERROR("lives_read_buffered_eof: wrong buffer type");
-    return FALSE;
-  }
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_read_buffered_eof");
+  if (!fbuff) return FALSE;
   return ((fbuff->flags & FB_FLAG_EOF) && ((!(fbuff->flags & FB_FLAG_REVERSE) && !fbuff->bytes)
           || ((fbuff->flags & FB_FLAG_REVERSE) && fbuff->ptr == fbuff->buffer)));
 }
@@ -1797,21 +1811,12 @@ static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const cha
 
 
 ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail) {
-  lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
   size_t space_left;
   int bufsztype = BUFF_SIZE_WRITE_SMALL;
   ssize_t buffsize;
-
-  if (!(fbuff = find_in_file_buffers(fd))) {
-    LIVES_DEBUG("lives_write_buffered: no file buffer found");
-    return lives_write(fd, buf, count, allow_fail);
-  }
-
-  if (fbuff->flags & FB_FLAG_RDONLY) {
-    LIVES_ERROR("lives_write_buffered: wrong buffer type");
-    return 0;
-  }
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_WRITEONLY, "lives_write_buffered");
+  if (!fbuff) return 0;
 
   if (count <= 0) return 0;
 
@@ -1874,10 +1879,12 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
       if (fbuff->bufsztype != bufsztype) {
         lives_free(fbuff->buffer);
         fbuff->buffer = NULL;
-        if (fbuff->ring_buffer) {
-          lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
-          lives_free(fbuff->ring_buffer);
-          fbuff->ring_buffer = NULL;
+        if (fbuff->nringbuffs > 1) {
+          if (fbuff->ring_buffers[1]) {
+            lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+            lives_free(fbuff->ring_buffers[1]);
+            fbuff->ring_buffers[1] = NULL;
+          }
         }
       }
     }
@@ -1886,36 +1893,19 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
 }
 
 
-boolean lives_write_buffered_set_ringmode(int fd) {
-  lives_file_buffer_t *fbuff;
-
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_write_buffered_set_ringmode: no file buffer found");
-    return FALSE;
-  }
-
-  if (fbuff->flags & FB_FLAG_RDONLY) {
-    LIVES_ERROR("lives_write_buffered_set_ringmode: wrong buffer type");
-    return FALSE;
-  }
-
-  fbuff->flags |= FB_FLAG_USE_RINGBUFF;
+boolean lives_buffered_set_ringmode(int fd, int nrings) {
+  lives_file_buffer_t *fbuff = check_fbuff(fd, 0, "lives_buffered_set_ringmode");
+  if (!fbuff) return FALSE;
+  fbuff->nringbuffs = nrings;
+  fbuff->ring_buffers = lives_recalloc(fbuff->ring_buffers, nrings, fbuff->nringbuffs ? fbuff->nringbuffs : 1,
+                                       sizeof(uint8_t *));
   return TRUE;
 }
 
 
 ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
-  lives_file_buffer_t *fbuff;
-
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_write_buffered_set_custom_size: no file buffer found");
-    return -1;
-  }
-
-  if (fbuff->flags & FB_FLAG_RDONLY) {
-    LIVES_ERROR("lives_write_buffered_set_custom_size: wrong buffer type");
-    return -1;
-  }
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_WRITEONLY, "lives_write_buffered_set_custom_size");
+  if (!fbuff) return 0;
 
   if (fbuff->bytes > 0) {
     file_buffer_flush(fbuff);
@@ -1929,10 +1919,12 @@ ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
     fbuff->buffer = NULL;
   }
 
-  if (fbuff->ring_buffer) {
-    lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
-    lives_free(fbuff->ring_buffer);
-    fbuff->ring_buffer = NULL;
+  if (fbuff->nringbuffs > 1) {
+    for (int i = 1; i < fbuff->nringbuffs; i++) {
+      lives_sleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+      lives_free(fbuff->ring_buffers[i]);
+      fbuff->ring_buffers[i] = NULL;
+    }
   }
 
   fbuff->bufsztype = BUFF_SIZE_WRITE_CUSTOM;
@@ -1965,15 +1957,10 @@ ssize_t lives_write_le_buffered(int fd, const void *buf, ssize_t count, boolean 
 
 
 off_t lives_lseek_buffered_writer(int fd, off_t offset) {
-  lives_file_buffer_t *fbuff;
-
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_lseek_buffered_writer: no file buffer found");
-    return lseek(fd, offset, SEEK_SET);
-  }
-
-  if (fbuff->flags & FB_FLAG_RDONLY) {
-    LIVES_ERROR("lives_lseek_buffered_writer: wrong buffer type");
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_WRITEONLY, "lives_lseek_buffered_writer");
+  if (!fbuff) {
+    if (!find_in_file_buffers(fd))
+      return lseek(fd, offset, SEEK_SET);
     return 0;
   }
 
@@ -2037,17 +2024,8 @@ uint8_t *lives_buffered_get_data(int fd) {
 
 
 off_t lives_buffered_flush(int fd) {
-  lives_file_buffer_t *fbuff;
-
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_buffered_flush: no file buffer found");
-    return 0;
-  }
-
-  if (fbuff->flags & FB_FLAG_RDONLY) {
-    LIVES_ERROR("lives_buffered_flush: wrong buffer type");
-    return 0;
-  }
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_WRITEONLY, "lives_buffered_flush");
+  if (!fbuff) return 0;
 
   if (fbuff->bytes > 0) {
     ssize_t bytes = fbuff->bytes;
@@ -2376,7 +2354,7 @@ static boolean dirsize_done_cb(lives_proc_thread_t lpt) {
   dircheck_state = 2;
   if (ds_syncwith) {
     pthread_mutex_unlock(&ds_mutex);
-    lives_proc_thread_sync_with(ds_syncwith, 201, MM_IGNORE);
+    lives_proc_thread_sync_with(ds_syncwith, SYNCIDX_DIRSIZE_DONE, MM_IGNORE);
     ds_syncwith = NULL;
   } else pthread_mutex_unlock(&ds_mutex);
   return FALSE;
@@ -2454,7 +2432,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
   ds_syncwith = self;
   if (dircheck_state == 2) {
     if (timeout < 0) timeout = BILLIONS(30); // TODO
-    if (lives_proc_thread_sync_with_timeout(running, 201, MM_IGNORE, timeout)
+    if (lives_proc_thread_sync_with_timeout(running, SYNCIDX_DIRSIZE_DONE, MM_IGNORE, timeout)
         == LIVES_RESULT_FAIL) {
       ds_syncwith = NULL;
       disk_monitor_forget();

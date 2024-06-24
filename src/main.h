@@ -130,12 +130,14 @@ weed_error_t lives_leaf_set_rdonly(weed_plant_t *, const char *key,
 
 #define LIVES_FLAG_FREE_ON_DELETE	(1 << 20)
 weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean state);
+#define weed_leaf_set_autounref(pl, key, state) weed_leaf_set_autofree(pl, key, state)
 
 weed_error_t weed_set_const_string_value(weed_plant_t *, const char *key, const char *);
 const char *weed_get_const_string_value(weed_plant_t *, const char *key, weed_error_t *);
 weed_size_t weed_get_const_string_len(weed_plant_t *, const char *key);
 boolean weed_leaf_is_const_string(weed_plant_t *, const char *key);
-
+const char **weed_get_const_string_array_counted(weed_plant_t *, const char *key, int *nvals);
+const char **weed_get_const_string_array(weed_plant_t *, const char *key, weed_error_t *);
 weed_error_t weed_set_blob_value(weed_plant_t *, const char *key, weed_size_t size, void *);
 void *weed_get_blob_value(weed_plant_t *, const char *key, boolean byref, weed_error_t *);
 weed_size_t weed_get_blob_data_size(weed_plant_t *, const char *key);
@@ -516,38 +518,6 @@ typedef struct _param_t lives_param_t;
 extern uint64_t test_opts;
 #endif
 
-#include "conditions.h"
-#include "functions.h"
-#include "alarms.h"
-#include "intents.h"
-#include "maths.h"
-#include "colourspace.h"
-#include "cliphandler.h"
-#include "plugins.h"
-
-#include "layers.h"
-
-#include "frameloader.h"
-#include "machinestate.h"
-#include "lsd-tab.h"
-
-boolean weed_threadsafe;
-int weed_abi_version;
-
-#ifdef IS_LIBLIVES
-#include "liblives.hpp"
-#include "lbindings.h"
-#endif
-
-#define N_RECENT_FILES 16
-
-/// which stream end should cause playback to finish ?
-typedef enum {
-  NEVER_STOP = 0,
-  STOP_ON_VID_END,
-  STOP_ON_AUD_END
-} lives_whentostop_t;
-
 /// cancel reason
 typedef enum {
   CANCEL_NONE = 0,
@@ -610,6 +580,40 @@ typedef enum {
   CANCEL_KEEP_LOOPING,
 } lives_cancel_t;
 
+#include "conditions.h"
+#include "functions.h"
+#include "alarms.h"
+#include "intents.h"
+#include "maths.h"
+#include "colourspace.h"
+#include "events.h"
+#include "audio.h"
+#include "cliphandler.h"
+#include "plugins.h"
+
+#include "layers.h"
+
+#include "frameloader.h"
+#include "machinestate.h"
+#include "lsd-tab.h"
+
+boolean weed_threadsafe;
+int weed_abi_version;
+
+#ifdef IS_LIBLIVES
+#include "liblives.hpp"
+#include "lbindings.h"
+#endif
+
+#define N_RECENT_FILES 16
+
+/// which stream end should cause playback to finish ?
+typedef enum {
+  NEVER_STOP = 0,
+  STOP_ON_VID_END,
+  STOP_ON_AUD_END
+} lives_whentostop_t;
+
 #define IMG_TYPE_BEST IMG_TYPE_PNG
 
 #include "pangotext.h"
@@ -617,8 +621,6 @@ typedef enum {
 extern const char *NO_COPY_LEAVES[];
 
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
-
-#include "events.h"
 
 /// some shared structures
 

@@ -84,8 +84,6 @@ boolean is_transport_locked(void);
 ////////////////////////////////////////////////////////////////////////////
 // Audio
 
-#include "audio.h"
-
 // mapping of jack_opts pref
 #define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if unable to connect
 

@@ -662,7 +662,7 @@ char *get_palette_name_for_clip(int clipno) {
   if (sfile) {
     lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
     if (srcgrp) {
-      int pal = srcgrp->apparent_pal;
+      int pal = srcgrp->apparent.v->pal;
       return lives_strdup(weed_palette_get_name(pal));
     }
   }
@@ -2117,6 +2117,8 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   lives_clip_t *sfile;
   char *stfile, *clipdir;
 
+  LIVES_ASSERT(handle);
+
   if (new_file == -1) {
     // if new_file == -1, we are going to create a new clip
     new_file = mainw->first_free_file;
@@ -2135,17 +2137,9 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
       return NULL;
     }
 
-    if (!handle) {
-      // if handle is NULL, we create a new clip on disk, switch to it
-      // (unused)
-      if (!get_handle_from_info_file(new_file)) return NULL;
-      sfile = mainw->files[new_file];
-    } else {
-      // else just create the in-memory part and set the handle
-      sfile = mainw->files[new_file] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
-      if (!sfile) return NULL;
-      lives_snprintf(sfile->handle, 256, "%s", handle);
-    }
+    sfile = mainw->files[new_file] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
+    if (!sfile) return NULL;
+    lives_snprintf(sfile->handle, 256, "%s", handle);
   }
 
   pthread_mutexattr_init(&mattr);
@@ -2880,8 +2874,8 @@ void switch_clip(int type, int newclip, boolean force) {
     if (!CURRENT_CLIP_IS_VALID || (force && newclip == mainw->current_file)) current_file = -1;
     switch_to_file(current_file, newclip);
     if (cfile && cfile->is_loaded && force && !mainw->multitrack
-	&& !mainw->preview && !mainw->is_processing) sensitize();
-    
+        && !mainw->preview && !mainw->is_processing) sensitize();
+
   }
 }
 
@@ -2947,11 +2941,17 @@ static lives_clipsrc_group_t *_add_srcgrp(lives_clip_t *sfile, int track, int pu
 
   pthread_mutex_init(&srcgrp->src_mutex, NULL);
   pthread_mutex_init(&srcgrp->refcnt_mutex, NULL);
-  //srcgrp->refcnt = 1;
-  sfile->src_groups = lives_recalloc(sfile->src_groups, ngrps + 1,
-                                     ngrps, sizeof(lives_clipsrc_group_t *));
-  sfile->src_groups[ngrps] = srcgrp;
-  sfile->n_src_groups = ++ngrps;
+
+  if (purpose == SRC_PURPOSE_AUDIO) {
+    srcgrp->apparent.a = LIVES_CALLOC_SIZEOF(audio_appearance, 1);
+    sfile->audio_srcgrp = srcgrp;
+  } else {
+    srcgrp->apparent.v = LIVES_CALLOC_SIZEOF(video_appearance, 1);
+    sfile->src_groups = lives_recalloc(sfile->src_groups, ngrps + 1,
+                                       ngrps, sizeof(lives_clipsrc_group_t *));
+    sfile->src_groups[ngrps] = srcgrp;
+    sfile->n_src_groups = ++ngrps;
+  }
   return srcgrp;
 }
 
@@ -3292,6 +3292,8 @@ static void _srcgrp_free(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp) {
       srcgrp->layer = NULL;
     }
     if (srcgrp->n_srcs) _clip_srcs_free_all(sfile, srcgrp);
+    if (srcgrp->apparent.a) lives_free(srcgrp->apparent.a);
+    if (srcgrp->apparent.v) lives_free(srcgrp->apparent.v);
     lives_free(srcgrp);
   }
 }
@@ -3364,6 +3366,7 @@ LIVES_GLOBAL_INLINE void srcgrps_free_all(int nclip) {
       _srcgrp_free(sfile, srcgrp);
     }
     lives_freep((void **)&sfile->src_groups);
+    if (sfile->audio_srcgrp) lives_free(sfile->audio_srcgrp);
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
 }
@@ -3372,8 +3375,8 @@ LIVES_GLOBAL_INLINE void srcgrps_free_all(int nclip) {
 void srcgrp_set_apparent(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, full_pal_t *pally, int gamma_type) {
   if (sfile) {
     pthread_mutex_lock(&sfile->srcgrp_mutex);
-    srcgrp->apparent_pal = pally->pal;
-    srcgrp->apparent_gamma = gamma_type;
+    srcgrp->apparent.v->pal = pally->pal;
+    srcgrp->apparent.v->gamma = gamma_type;
     pthread_mutex_unlock(&sfile->srcgrp_mutex);
   }
 }
@@ -3382,13 +3385,13 @@ void srcgrp_set_apparent(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, ful
 void set_primary_apparent(int clipno, full_pal_t *pally, int gamma_type) {
   lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
   if (srcgrp) {
-    srcgrp->apparent_pal = pally->pal;
+    srcgrp->apparent.v->pal = pally->pal;
     if (weed_palette_is_yuv(pally->pal)) {
-      srcgrp->apparent_pally.subspace = pally->subspace;
-      srcgrp->apparent_pally.sampling = pally->sampling;
-      srcgrp->apparent_pally.clamping = pally->clamping;
+      srcgrp->apparent.v->pally.subspace = pally->subspace;
+      srcgrp->apparent.v->pally.sampling = pally->sampling;
+      srcgrp->apparent.v->pally.clamping = pally->clamping;
     }
-    srcgrp->apparent_gamma = gamma_type;
+    srcgrp->apparent.v->gamma = gamma_type;
   }
 }
 
@@ -3396,8 +3399,8 @@ void set_primary_apparent(int clipno, full_pal_t *pally, int gamma_type) {
 lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_type) {
   lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(clipno);
   if (srcgrp) {
-    if (pally) lives_memcpy(pally, &srcgrp->apparent_pally, sizeof(full_pal_t));
-    if (gamma_type) *gamma_type = srcgrp->apparent_gamma;
+    if (pally) lives_memcpy(pally, &srcgrp->apparent.v->pally, sizeof(full_pal_t));
+    if (gamma_type) *gamma_type = srcgrp->apparent.v->gamma;
     return LIVES_RESULT_SUCCESS;
   }
   return LIVES_RESULT_FAIL;
@@ -3616,3 +3619,38 @@ lives_clipsrc_group_t *clone_srcgrp(int dclip, int sclip, int track, int purpose
   }
   return NULL;
 }
+
+
+///////////////////////////////////
+
+void set_audio_apparent(int clipno, audio_dtls * adtls) {
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  if (sfile) {
+    lives_clipsrc_group_t *srcgrp = sfile->audio_srcgrp;
+    if (!srcgrp) sfile->audio_srcgrp = srcgrp = _add_srcgrp(sfile, -1, SRC_PURPOSE_AUDIO);
+    lives_memcpy(srcgrp->apparent.a, adtls, sizeof(audio_dtls));
+  }
+}
+
+
+weed_layer_t *config_audio_layer(weed_layer_t *layer, int clipno) {
+  // analogous to how we have clip_src_grps with apparent palette / apparent_gamma for clip video
+  // we can now also have clip audio_srcs and audio_src_groups
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  if (sfile) {
+    lives_clipsrc_group_t *srcgrp = sfile->audio_srcgrp;
+    if (srcgrp) {
+      if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+      lives_layer_set_clip(layer, clipno);
+      weed_layer_set_audio_rate(layer, srcgrp->apparent.a->rate);
+      weed_layer_set_audio_nchans(layer, srcgrp->apparent.a->chans);
+      weed_layer_set_audio_asamps(layer, srcgrp->apparent.a->sampsz);
+      weed_layer_set_audio_signed(layer, srcgrp->apparent.a->asigned);
+      weed_layer_set_audio_endian(layer, srcgrp->apparent.a->endian);
+      weed_layer_set_audio_interleaved(layer, srcgrp->apparent.a->interleaved);
+      weed_layer_set_audio_is_float(layer, srcgrp->apparent.a->isflt);
+    }
+  }
+  return layer;
+}
+

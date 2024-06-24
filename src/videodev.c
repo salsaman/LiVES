@@ -391,7 +391,7 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
     if (ptype == UNICAP_PROPERTY_TYPE_DATA || ptype == UNICAP_PROPERTY_TYPE_FLAGS || ptype == UNICAP_PROPERTY_TYPE_UNKNOWN
         || ptype == UNICAP_PROPERTY_TYPE_MENU || ptype == UNICAP_PROPERTY_TYPE_VALUE_LIST) continue;
     //if (ptype != UNICAP_PROPERTY_TYPE_RANGE) continue;
-    lives_obj_attr_t *attr = lives_object_get_attribute(ldev->object, prop->identifier);
+    lives_obj_attr_t *attr = lives_obj_instance_get_attribute(ldev->object, prop->identifier);
     if (attr) {
       lives_param_t *param;
       double val;
@@ -408,10 +408,10 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
 
       if (param->type == LIVES_PARAM_BOOL || (param->type == LIVES_PARAM_NUM && param->dp == 0)) {
         set_int_param(param->value, (int)val);
-        lives_object_set_attribute_value(ldev->object, prop->identifier, (int)val);
+        lives_obj_instance_set_attr_val(ldev->object, prop->identifier, (int)val);
       } else {
         set_double_param(param->value, val);
-        lives_object_set_attribute_value(ldev->object, prop->identifier, val);
+        lives_obj_instance_set_attr_val(ldev->object, prop->identifier, val);
       }
     }
   }
@@ -560,11 +560,11 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   obj = ldev->object = lives_videodev_inst_create(VIDEO_DEV_UNICAP);
   weed_set_voidptr_value(obj, "priv", (void *)ldev);
 
-  lives_object_set_attribute_value(obj, VDEV_PROP_WIDTH, cfile->hsize);
-  //lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
+  /* lives_obj_instance_set_attr_val(obj, VDEV_PROP_WIDTH, cfile->hsize); */
+  /* //lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE); */
 
-  lives_object_set_attribute_value(obj, VDEV_PROP_HEIGHT, cfile->vsize);
-  //lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
+  /* lives_obj_instance_set_attr_val(obj, VDEV_PROP_HEIGHT, cfile->vsize); */
+  /* //lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE); */
 
   add_clip_src(mainw->current_file, -1, SRC_PURPOSE_PRIMARY, CLASS_UID_VIDEO_DEVICE, (void *)ldev,
                LIVES_SRC_TYPE_DEVICE, ACTOR_UID_WEBCAM, NULL, NULL);
@@ -616,17 +616,17 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
     if (!lives_strcmp(prop->identifier, "frame rate")) {
       cfile->pb_fps = cfile->fps = prop->value;
       cfile->target_framerate = cfile->fps;
-      lives_object_set_attribute_value(obj, VDEV_PROP_FPS, cfile->fps);
+      lives_obj_instance_set_attr_val(obj, VDEV_PROP_FPS, cfile->fps);
       //lives_attribute_set_readonly(obj, VDEV_PROP_FPS, TRUE);
       lives_attribute_set_param_type(obj, VDEV_PROP_FPS, _("FPS"), WEED_PARAM_FLOAT);
     } else {
       boolean valid = TRUE;
       double val;
       if ((flags & UNICAP_FLAGS_ON_OFF) && (mask & UNICAP_FLAGS_ON_OFF)) {
-        attr = lives_object_declare_attribute(obj, prop->identifier, WEED_SEED_BOOLEAN);
+        attr = lives_obj_instance_declare_attribute(obj, prop->identifier, WEED_SEED_BOOLEAN);
         unicap_get_property_value(ldev->handle, prop->identifier, &val);
-        lives_object_set_attribute_value(obj, prop->identifier,
-                                         val == 0. ? WEED_FALSE : WEED_TRUE);
+        lives_obj_instance_set_attr_val(obj, prop->identifier,
+                                        val == 0. ? WEED_FALSE : WEED_TRUE);
         lives_attribute_set_param_type(obj, prop->identifier, prop->identifier, WEED_PARAM_SWITCH);
       } else {
         unicap_property_type_enum_t ptype = prop->type;
@@ -656,8 +656,8 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
             }
           }
           // choices with menu_items and menu_item_count
-          attr = lives_object_declare_attribute(obj, prop->identifier, WEED_SEED_INT);
-          lives_object_set_attribute_value(obj, prop->identifier, 0);
+          attr = lives_obj_instance_declare_attribute(obj, prop->identifier, WEED_SEED_INT);
+          lives_obj_instance_set_attr_val(obj, prop->identifier, 0);
           gui = weed_plant_new(WEED_PLANT_GUI);
           weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
           weed_set_string_array(gui, WEED_LEAF_CHOICES, n_choices, choices);
@@ -665,9 +665,9 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
           break;
         }
         default:
-          attr = lives_object_declare_attribute(obj, prop->identifier, WEED_SEED_DOUBLE);
+          attr = lives_obj_instance_declare_attribute(obj, prop->identifier, WEED_SEED_DOUBLE);
           unicap_get_property_value(ldev->handle, prop->identifier, &val);
-          lives_object_set_attribute_value(obj, prop->identifier, val);
+          lives_obj_instance_set_attr_val(obj, prop->identifier, val);
           if (ptype == UNICAP_PROPERTY_TYPE_RANGE) {
             unicap_property_range_t range = prop->range;
             weed_set_double_value(attr, WEED_LEAF_MIN, range.min);
@@ -693,7 +693,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   //lives_attribute_append_listener(obj, VDEV_PROP_PALETTE, set_palette_desc);
   lives_attribute_set_param_type(obj, VDEV_PROP_PALETTE, _("Colourspace"), WEED_PARAM_INTEGER);
-  lives_object_set_attribute_value(obj, VDEV_PROP_PALETTE, ldev->pally.pal);
+  lives_obj_instance_set_attr_val(obj, VDEV_PROP_PALETTE, ldev->pally.pal);
   // lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
 
   //
@@ -734,7 +734,7 @@ void lives_vdev_free(lives_vdev_t *ldev) {
     lives_uncalloc_mapped(ldev->buffer2.data, ldev->format->buffer_size, TRUE);
     ldev->buffer2.data = NULL;
   }
-  lives_object_instance_destroy(ldev->object);
+  lives_obj_instance_destroy(ldev->object);
   lives_free(ldev);
   if (srclayer) weed_layer_set_pixel_data(srclayer, NULL);
   weed_layer_unref(srclayer);
@@ -900,10 +900,10 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
 static lives_obj_instance_t *lives_videodev_inst_create(uint64_t subtype) {
   lives_obj_instance_t *inst = lives_obj_instance_create(OBJECT_TYPE_MEDIA_SOURCE, subtype);
   weed_set_int_value(inst, "state", OBJECT_STATE_NORMAL);
-  lives_object_declare_attribute(inst, VDEV_PROP_WIDTH, WEED_SEED_INT);
-  lives_object_declare_attribute(inst, VDEV_PROP_HEIGHT, WEED_SEED_INT);
-  lives_object_declare_attribute(inst, VDEV_PROP_PALETTE, WEED_SEED_INT);
-  lives_object_declare_attribute(inst, VDEV_PROP_FPS, WEED_SEED_DOUBLE);
+  lives_obj_instance_declare_attribute(inst, VDEV_PROP_WIDTH, WEED_SEED_INT);
+  lives_obj_instance_declare_attribute(inst, VDEV_PROP_HEIGHT, WEED_SEED_INT);
+  lives_obj_instance_declare_attribute(inst, VDEV_PROP_PALETTE, WEED_SEED_INT);
+  lives_obj_instance_declare_attribute(inst, VDEV_PROP_FPS, WEED_SEED_DOUBLE);
 
   // other attributes defined by the device itself
 

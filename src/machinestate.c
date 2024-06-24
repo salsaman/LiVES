@@ -205,7 +205,7 @@ void lives_get_randbytes(void *ptr, size_t size) {
 }
 
 
-uint64_t gen_unique_id(void) {
+const uint64_t gen_unique_id(void) {
   uint64_t rnum;
   int randres = 1;
 
@@ -767,7 +767,7 @@ char *get_fstype_for(const char *volx) {
     char *vol = get_symlink_for(volx);
     char *res, *com = lives_strdup_printf("%s -l --output=fstype,target", EXEC_DF);
     if ((res = mini_popen(com))) {
-     int lcount = get_token_count(res, '\n');
+      int lcount = get_token_count(res, '\n');
       char **array0 = lives_strsplit(res, "\n", lcount);
       for (int l = 0; l < lcount; l++) {
         int pccount = get_token_count(array0[l], ' ');
@@ -1856,14 +1856,14 @@ boolean lives_disable_screensaver(void) {
     lives_cancel_t cancelled = mainw->cancelled;
     lives_system(WM_XFCE4_PROP_DISABLE_SCREENSAVER, TRUE);
     enable_ss_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
-					  HOOK_OPT_PRIORITY, enable_ss_cb);
+                                          HOOK_OPT_PRIORITY, enable_ss_cb);
     mainw->cancelled = cancelled;
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
     }
     return TRUE;
   }
-  
+
 #ifdef GDK_WINDOWING_X11
   uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
 
@@ -1900,7 +1900,7 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     } else {
       enable_ss_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK,
-					    HOOK_OPT_PRIORITY, enable_ss_cb);
+                                            HOOK_OPT_PRIORITY, enable_ss_cb);
     }
     return TRUE;
   }
@@ -2061,7 +2061,7 @@ boolean get_wm_caps(void) {
   capable->wm_caps.annoy.focus.problem = ANNOY_DISPLAY | ANNOY_SPONT;
   capable->wm_caps.annoy.panel.problem = ANNOY_DISPLAY | ANNOY_FS;
   capable->wm_caps.annoy.notify.problem = ANNOY_DISPLAY | ANNOY_FS;
-  
+
   if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4)
       || !strcmp(capable->wm_name, WM_XFWM4)) {
     // annoyance resolution
@@ -2199,7 +2199,7 @@ char *list_annoy_res(void) {
   lives_free(tmp2); lives_free(tmp);
   return out;
 }
-  
+
 
 int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 #ifndef GUI_GTK

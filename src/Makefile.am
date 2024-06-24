@@ -299,7 +299,7 @@ AM_CFLAGS += -fcommon -fPIE -Wstrict-aliasing=0 -Wall \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(freeBSD_CFLAGS) $(mingw_CFLAGS) \
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) \
-	$(libweed_CFLAGS) \
+	$(libweed_CFLAGS) $(swresample_CFLAGS)\
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@ \
 	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) \
 	$(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS) $(pthread_CFLAGS)

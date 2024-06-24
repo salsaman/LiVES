@@ -15590,7 +15590,6 @@ static painter_data_key px_layer_key, px_swapped_key;
 LIVES_GLOBAL_INLINE void lives_painter_surface_check(lives_painter_surface_t *surf, int chkval) {
   // check if surf about to be destroyed. If it has a linked layer, the layer will free the data
   int refs = lives_painter_surface_get_reference_count(surf);
-  //g_print("REFss is %d\n", refs);
   if (refs == chkval) {
     weed_layer_t *layer = lives_painter_surface_get_user_data(surf, &px_layer_key);
     if (layer) {

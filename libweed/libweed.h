@@ -252,9 +252,10 @@ weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
 
 typedef void *(*libweed_malloc_f)(size_t);
 typedef void (*libweed_free_f)(void *);
+typedef void *(*libweed_memcpy_f)(void *dest, const void *src, size_t);
 typedef void *(*libweed_calloc_f)(size_t, size_t);
 
-int libweed_set_memory_funcs(libweed_malloc_f, libweed_free_f, libweed_calloc_f);
+  int libweed_set_memory_funcs(libweed_malloc_f, libweed_free_f, libweed_memcpy_f, libweed_calloc_f);
 
 typedef void *(*libweed_slab_alloc_clear_f)(size_t);
 typedef void *(*libweed_slab_alloc_and_copy_f)(size_t, void *);

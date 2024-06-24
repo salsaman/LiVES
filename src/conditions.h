@@ -7,7 +7,6 @@
 #define _CONDITIONS_H
 
 typedef allvalues_t *lives_condition;
-typedef struct {va_list va;} va_surprise;
 
 #define COND_PFX "COND_"
 
@@ -16,8 +15,8 @@ typedef struct {va_list va;} va_surprise;
 #define _COND_LIST_BEGIN  	COND_PFX "LIST_BEGIN"
 #define _COND_LIST_END  	COND_PFX "LIST_END"
 
-#define $(a) "COND_LOCAL", #a
-#define $$(a) "COND_GLOBAL", #a
+#define _L_(a) "COND_LOCAL", #a
+#define _G_(a) "COND_GLOBAL", #a
 #define intvar(a) "COND_INT_VAL", a
 #define uintvar(a) "COND_UINT_VAL", a
 #define int64var(a) "COND_INT64_VAL", a
@@ -31,6 +30,10 @@ typedef struct {va_list va;} va_surprise;
 #define plantptrvar(a) "COND_PLANTPTR_VAL", a
 
 #define COND(TOKEN) COND_PFX #TOKEN
+
+#define GET_CONDVAL(var, ctype, vam) _DW0		\
+  (if (!(*vam)->next) var = va_arg(((va_surprise *)(*vam)->data)->va, ctype); \
+  else get_val_from_allvals(&var, (allvalues_t *)(((LiVESList *)((*vam)->data))->data));)
 
 void lives_conditions_init(void);
 

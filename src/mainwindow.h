@@ -18,7 +18,6 @@
 #endif
 
 #include "effects-data.h"
-#include "audio.h"
 #include "clip_load_save.h"
 #include "nodemodel.h"
 
@@ -1796,7 +1795,7 @@ typedef struct {
   volatile void *debug_ptr;
 
   // flag defs in defs.h
-  uint64_t maintmode;
+  uint64_t debugopts;
 
   char *subt_save_file; ///< name of file to save subtitles to
 

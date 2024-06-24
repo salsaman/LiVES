@@ -36,6 +36,13 @@
 #define LIVES_LEAF_LAYER_STATUS "layer_status"
 #define LIVES_LEAF_LST_MUTEX "lst_mutex"
 
+///
+
+#define LIVES_LEAF_AUDIO_SEEK "_aud_seek"
+#define LIVES_LEAF_AUDIO_POS "_aud_pos"
+#define LIVES_LEAF_AUDIO_VEL "_aud_vel"
+#define LIVES_LEAF_AUDIO_SRC "_aud_src"
+
 // layer statuses
 
 #define LAYER_STATUS_NONE		0
@@ -111,7 +118,6 @@ weed_layer_t *weed_layer_copy_slice(weed_layer_t *dlayer, weed_layer_t *slayer,
 weed_layer_t *weed_layer_free(weed_layer_t *);
 lives_result_t weed_pixel_data_share(weed_plant_t *dst, weed_plant_t *src);
 
-
 void weed_layer_copy_single_plane(weed_layer_t *dest, weed_layer_t *src, int plane);
 
 //#define DEBUG_LAYER_REFS
@@ -167,11 +173,6 @@ int weed_layer_get_yuv_subspace(weed_layer_t *);
 uint8_t *weed_layer_get_pixel_data(weed_layer_t *);
 void **weed_layer_get_pixel_data_planar(weed_layer_t *, int *nplanes);
 
-float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
-int weed_layer_get_audio_rate(weed_layer_t *);
-int weed_layer_get_naudchans(weed_layer_t *);
-int weed_layer_get_audio_length(weed_layer_t *)
-;
 int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_rowstride(weed_layer_t *); ///< for packed palettes
 int weed_layer_get_width(weed_layer_t *);
@@ -197,8 +198,6 @@ weed_layer_t *weed_layer_set_yuv_sampling(weed_layer_t *, int sampling);
 weed_layer_t *weed_layer_set_yuv_subspace(weed_layer_t *, int subspace);
 weed_layer_t *weed_layer_set_gamma(weed_layer_t *, int gamma_type);
 
-#define LIVES_LEAF_AUDIO_INTERLEAVED "audio_inter"
-
 /// width in macropixels of the layer palette
 weed_layer_t *weed_layer_set_width(weed_layer_t *, int width);
 weed_layer_t *weed_layer_set_height(weed_layer_t *, int height);
@@ -211,12 +210,6 @@ weed_layer_t *weed_layer_set_flags(weed_layer_t *, int flags);
 weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *, int nplanes, void **pixel_data);
 weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void *pixel_data);
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
-weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate,
-					int naudchans, weed_size_t nsamps);
-weed_layer_t *weed_layer_set_audio_signed(weed_layer_t *, boolean asigned);
-weed_layer_t *weed_layer_set_audio_endian(weed_layer_t *, int endian);
-weed_layer_t *weed_layer_set_audio_interleaved(weed_layer_t *, boolean inter);
-weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *, boolean isfloat);
 
 lives_result_t copy_pixel_data(weed_layer_t *dst, weed_layer_t *src);
 
@@ -228,5 +221,40 @@ boolean lives_layer_has_copylist(lives_layer_t *);
 void lives_layer_async_auto(lives_layer_t *, lives_proc_thread_t);
 
 int lives_layer_guess_palette(weed_layer_t *);
+
+// audio layers
+weed_layer_t *lives_alayer_new_for(int clip, int src_type);
+
+weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate,
+                                        int naudchans, weed_size_t nsamps);
+weed_layer_t *weed_layer_set_audio_rate(weed_layer_t *, int arate);
+weed_layer_t *weed_layer_set_audio_nchans(weed_layer_t *, int naudchans);
+weed_layer_t *weed_layer_set_audio_asamps(weed_layer_t *, int nsamps);
+weed_layer_t *weed_layer_set_audio_signed(weed_layer_t *, boolean asigned);
+weed_layer_t *weed_layer_set_audio_endian(weed_layer_t *, int endian);
+weed_layer_t *weed_layer_set_audio_interleaved(weed_layer_t *, boolean inter);
+weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *, boolean isfloat);
+
+weed_layer_t *weed_layer_set_audio_src(weed_layer_t *, int src_type);
+int weed_layer_get_audio_src(weed_layer_t *);
+
+weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *, double seekto);
+double weed_layer_get_audio_seek(weed_layer_t *);
+
+weed_layer_t *weed_layer_set_audio_pos(weed_layer_t *, int64_t pos);
+int64_t weed_layer_get_audio_pos(weed_layer_t *);
+
+weed_layer_t *weed_layer_set_audio_vel(weed_layer_t *, double vel);
+double weed_layer_get_audio_vel(weed_layer_t *);
+
+float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
+int weed_layer_get_audio_rate(weed_layer_t *);
+int weed_layer_get_audio_asamps(weed_layer_t *);
+int weed_layer_get_naudchans(weed_layer_t *);
+int weed_layer_get_audio_length(weed_layer_t *);
+int weed_layer_get_audio_endian(weed_layer_t *);
+boolean weed_layer_get_audio_signed(weed_layer_t *);
+boolean weed_layer_get_audio_interleaved(weed_layer_t *);
+boolean weed_layer_get_audio_is_float(weed_layer_t *);
 
 #endif

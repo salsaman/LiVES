@@ -1325,7 +1325,7 @@ void redraw_timeline(int clipno) {
 void redraw_timeline_noblock(int clipno) {
   if (is_fg_thread()) {
     lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE,
-			     redraw_timeline_noblock, WEED_SEED_VOID, "i", clipno);
+                             redraw_timeline_noblock, WEED_SEED_VOID, "i", clipno);
     return;
   }
 
@@ -1333,7 +1333,7 @@ void redraw_timeline_noblock(int clipno) {
   if (!get_timeline_lock()) {
     if (mainw->recovering_files) return;
     lives_millisleep_while_false(lives_proc_thread_get_cancel_requested(self)
-				  || get_timeline_lock());
+                                 || get_timeline_lock());
   }
   if (lives_proc_thread_get_cancel_requested(self)) {
     unlock_timeline();

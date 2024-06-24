@@ -1001,7 +1001,7 @@ static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t
   xiname = get_short_name(iname);
   if (!vargs) {
     etext = lives_strdup_concat_sep(etext, "\n", "missing value setting item %s [%s] in bundle.",
-                                xiname, iname);
+                                    xiname, iname);
     err = TRUE;
   } else {
     uint32_t stype = strand_type_to_weed_seed(vtype);

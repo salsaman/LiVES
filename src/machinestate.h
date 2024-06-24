@@ -86,7 +86,7 @@ void fastrand_add(uint64_t entropy);
 double fastrand_dbl(double range);
 uint32_t fastrand_int(uint32_t range);
 
-uint64_t gen_unique_id(void);
+const uint64_t gen_unique_id(void);
 
 char *get_md5sum(const char *filename);
 

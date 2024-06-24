@@ -236,6 +236,7 @@ typedef volatile int lives_sigatomic;
 #define LIVES_RESULT_CANCELLED	-3
 #define LIVES_RESULT_TIMEDOUT	-4
 #define LIVES_RESULT_NOPERM	-5
+#define LIVES_RESULT_BUSY_RETRY	-6
 
 // return value that is never returned (WARNING: returning this may lead to undefined behaviour)
 #define LIVES_RESULT_MU	((lives_result_t) (nan("OM")) / 0.)
@@ -582,8 +583,9 @@ typedef enum {
 
 #define BG_LOAD_RFX 1
 
-#define MMODE_PLAYER_TIMINGS		(1 << 0)
-#define MMODE_PLANNER_TIMINGS		(1 << 1)
+#define DEBUG_FUNC_ENTER_EXIT		(1 << 0)
+#define DEBUG_PLAN_RUNNER		(1 << 1)
+#define DEBUG_CONDITIONALS		(1 << 2)
 
 #ifdef HAVE_MJPEGTOOLS
 #define HAVE_YUV4MPEG		1

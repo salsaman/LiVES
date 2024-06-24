@@ -9,13 +9,11 @@
 // and it would be nice to be able to read/write event lists in other formats than the default
 
 #include "main.h"
-#include "events.h"
 #include "callbacks.h"
 #include "effects.h"
 #include "resample.h"
 #include "paramwindow.h"
 #include "interface.h"
-#include "audio.h"
 #include "startup.h"
 #include "framedraw.h"
 #include "cvirtual.h"

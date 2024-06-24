@@ -22,8 +22,8 @@ static void qslider_changed(LiVESWidget *slid, livespointer data);
 
 
 void cancel_cleanup(void) {
-  lives_painter_t *cr;
-  int afd;
+  lives_painter_t *cr = NULL;
+  int afd = 0;
   GET_SELF_VALUE(cr, "cr");
   GET_SELF_VALUE(afd, "afd");
   DEL_SELF_VALUE("cr");
@@ -6923,7 +6923,6 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
     }
   }
 
-
   lives_painter_destroy(cr);
   lives_widget_queue_draw(dsu_widget);
 }
@@ -8443,7 +8442,6 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
                             0., 0., 0., height - lheight - 4);
     lingo_painter_show_layout(cr2, layout);
     lives_painter_destroy(cr2);
-
   }
   lives_painter_set_source_surface(cr, mainw->msg_surface, 0., 0.);
   lives_painter_paint(cr);

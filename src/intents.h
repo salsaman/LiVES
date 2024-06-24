@@ -285,19 +285,6 @@ weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *);
 weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t st, weed_size_t ne, ...);
 weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, uint32_t st, weed_funcptr_t func);
 
-// set by name
-weed_error_t lives_object_set_attribute_value(lives_obj_t *, const char *name, ...);
-weed_error_t lives_object_set_attribute_default(lives_obj_t *obj, const char *name, ...);
-weed_error_t lives_object_set_attribute_array(lives_obj_t *, const char *name, weed_size_t ne, ...);
-weed_error_t lives_object_set_attribute_def_array(lives_obj_t *obj, const char *name, weed_size_t ne, ...);
-
-// set by attr
-weed_error_t lives_object_set_attr_value(lives_obj_t *, lives_obj_attr_t *, ...);
-weed_error_t lives_object_set_attr_default(lives_obj_t *obj, lives_obj_attr_t *attr, ...);
-weed_error_t lives_object_set_attr_array(lives_obj_t *, lives_obj_attr_t *, weed_size_t ne,  ...);
-weed_error_t lives_object_set_attr_def_array(lives_obj_t *obj, lives_obj_attr_t *attr,
-    weed_size_t ne,  ...);
-
 //// attr groups
 
 /* #define lives_obj_instance_set_attr_group(loi, attrgrp)		\ */
@@ -311,6 +298,9 @@ weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *);
 weed_plant_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *, lives_obj_instance_t *src);
 
 weed_error_t lives_obj_instance_set_attr_val(lives_obj_instance_t *loi, const char *name, ...);
+weed_error_t lives_obj_instance_set_attr_array(lives_obj_instance_t *loi, const char *name, int ne, ...);
+
+weed_error_t lives_attr_unref(lives_obj_attr_t *);
 
 void lives_obj_attribute_make_static(lives_obj_instance_t *loi, const char *name);
 

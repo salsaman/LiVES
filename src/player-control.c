@@ -249,20 +249,20 @@ static void post_playback(void) {
       }
 
       if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel) {
-	if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
-	    && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
-	    && (capable->wm_caps.annoy.panel.resolution & RES_HIDE)
-	    && (capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION)) {
-	  show_desktop_panel();
-	}
+        if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
+            && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
+            && (capable->wm_caps.annoy.panel.resolution & RES_HIDE)
+            && (capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION)) {
+          show_desktop_panel();
+        }
       }
       if (capable->wm_caps.annoy.notify.problem) {
-	boolean origval;
-	VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
-	if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
-	    && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND)
-	    && (capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG)) {
-	  disable_desktop_notify();
+        boolean origval;
+        VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
+        if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
+            && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND)
+            && (capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG)) {
+          disable_desktop_notify();
         }
       }
       lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
@@ -1082,10 +1082,10 @@ void play_file(void) {
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
- 
+
   if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
   else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
- 
+
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
     vid_playback_plugin_exit();

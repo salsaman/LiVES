@@ -162,10 +162,15 @@ void register_blueprints(void);
 typedef enum {
   idx_type_anon = -1,
   test_lookup,
+  // idx used in blueprints
   idx_type_values,
+  // datavook
   idx_type_data_book,
-  idx_type_prefs,
-  idx_type_blueprints,
+  /// preferences - keyed by name
+  lookup_type_prefs,
+  // bluepeint. indexed by pl type
+  lookup_type_blueprints,
+
   lookup_type_funcs,
   idx_type_max,
 } index_type;
@@ -361,7 +366,7 @@ extern lives_index_t *indices[idx_type_max];
 #define LIVES_LEAF_SERIAL_NUMBER "_serial_num"
 #define LIVES_LEAF_SEED_TYPE "_seed_type"
 #define LIVES_LEAF_NUM_ELEMS "_num_elems"
-#define LIVES_LEAF_SIZE "_suzeval"
+#define LIVES_LEAF_SIZE "_sizeval"
 #define LIVES_LEAF_OLDVAL "_oldvalue"
 #define LIVES_LEAF_RWLOCK "_rwlock"
 #define LIVES_LEAF_ALLDATA "_alldatatypes"

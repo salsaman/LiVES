@@ -64,6 +64,15 @@ LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_new_for_frame(int clip, frames_t f
 }
 
 
+LIVES_GLOBAL_INLINE weed_layer_t *lives_alayer_new_for(int clip, int src_type) {
+  // create a layer ready to receive a frame from a clip
+  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+  lives_layer_set_clip(layer, clip);
+  weed_layer_set_audio_src(layer, src_type);
+  return layer;
+}
+
+
 LIVES_GLOBAL_INLINE void lives_layer_set_srcgrp(weed_layer_t *layer, lives_clipsrc_group_t *srcgrp) {
   if (layer) {
     weed_set_voidptr_value(layer, LIVES_LEAF_SRCGRP, srcgrp);
@@ -1384,59 +1393,144 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer,
 }
 
 
-weed_layer_t *weed_layer_set_audio_signed(weed_layer_t *layer,
-					  boolean asigned) {
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_signed(weed_layer_t *layer,
+    boolean asigned) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_boolean_value(layer, WEED_LEAF_AUDIO_SIGNED, asigned);
   return layer;
 }
 
 
-weed_layer_t *weed_layer_set_audio_endian(weed_layer_t *layer,
-					  int endian) {
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_endian(weed_layer_t *layer,
+    int endian) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_AUDIO_ENDIAN, endian);
   return layer;
 }
 
 
-weed_layer_t *weed_layer_set_audio_interleaved(weed_layer_t *layer,
-					       boolean inter) {
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_interleaved(weed_layer_t *layer,
+    boolean inter) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_boolean_value(layer, LIVES_LEAF_AUDIO_INTERLEAVED, inter);
   return layer;
 }
 
-weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *layer,
-					    boolean isfloat) {
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *layer,
+    boolean isfloat) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_boolean_value(layer, WEED_LEAF_AUDIO_FLOAT, isfloat);
   return layer;
 }
 
-boolean weed_layer_get_audio_signed(weed_layer_t *layer) {
- if (!WEED_IS_LAYER(layer)) return 0;
- return weed_get_boolean_value(layer, WEED_LEAF_AUDIO_SIGNED, NULL);
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_rate(weed_layer_t *layer, int arate) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
+  return layer;
 }
+
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_nchans(weed_layer_t *layer, int naudchans) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
+  return layer;
+}
+
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_asamps(weed_layer_t *layer, int nsamps) {
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
+  weed_set_int_value(layer, LIVES_LEAF_AUDIO_SAMPS, nsamps);
+  return layer;
+}
+
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *layer, double seekto) {
+  if (!WEED_IS_LAYER(layer)) return NULL;
+  weed_set_double_value(layer, LIVES_LEAF_AUDIO_SEEK, seekto);
+  return layer;
+}
+
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_pos(weed_layer_t *layer, int64_t pos) {
+  if (!WEED_IS_LAYER(layer)) return NULL;
+  weed_set_int64_value(layer, LIVES_LEAF_AUDIO_POS, pos);
+  return layer;
+}
+
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_vel(weed_layer_t *layer, double vel) {
+  if (!WEED_IS_LAYER(layer)) return NULL;
+  weed_set_double_value(layer, LIVES_LEAF_AUDIO_VEL, vel);
+  return layer;
+}
+
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_src(weed_layer_t *layer, int src) {
+  if (!WEED_IS_LAYER(layer)) return NULL;
+  weed_set_int_value(layer, LIVES_LEAF_AUDIO_SRC, src);
+  return layer;
+}
+
+
+LIVES_GLOBAL_INLINE boolean weed_layer_get_audio_signed(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_boolean_value(layer, WEED_LEAF_AUDIO_SIGNED, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_audio_src(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, LIVES_LEAF_AUDIO_SRC, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE double weed_layer_get_audio_vel(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_double_value(layer, LIVES_LEAF_AUDIO_VEL, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE double weed_layer_get_audio_seek(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, LIVES_LEAF_AUDIO_SEEK, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE int64_t weed_layer_get_audio_pos(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, LIVES_LEAF_AUDIO_POS, NULL);
+}
+
 
 int weed_layer_get_audio_endian(weed_layer_t *layer) {
- if (!WEED_IS_LAYER(layer)) return 0;
- return weed_get_int_value(layer, WEED_LEAF_AUDIO_ENDIAN, NULL);
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, WEED_LEAF_AUDIO_ENDIAN, NULL);
 }
+
 
 boolean weed_layer_get_audio_interleaved(weed_layer_t *layer) {
- if (!WEED_IS_LAYER(layer)) return 0;
- return weed_get_boolean_value(layer, LIVES_LEAF_AUDIO_INTERLEAVED, NULL);
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_boolean_value(layer, LIVES_LEAF_AUDIO_INTERLEAVED, NULL);
 }
 
+
 boolean weed_layer_get_audio_is_float(weed_layer_t *layer) {
- if (!WEED_IS_LAYER(layer)) return 0;
- return weed_get_boolean_value(layer, WEED_LEAF_AUDIO_FLOAT, NULL);
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_boolean_value(layer, WEED_LEAF_AUDIO_FLOAT, NULL);
 }
+
 
 LIVES_GLOBAL_INLINE int weed_layer_get_audio_rate(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
   return weed_get_int_value(layer, WEED_LEAF_AUDIO_RATE, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_audio_asamps(weed_layer_t *layer) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, LIVES_LEAF_AUDIO_SAMPS, NULL);
 }
 
 

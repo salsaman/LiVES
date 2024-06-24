@@ -4540,6 +4540,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   boolean is_startup = FALSE;
   int plugin_idx, tool_posn = RFX_TOOL_MENU_POSN;
 
+  g_print("CALL1\n");
   lives_widget_destroy(mainw->ldg_menuitem);
   mainw->ldg_menuitem = NULL;
 
@@ -4605,6 +4606,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   }
 
   //if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+  g_print("CALL1aaaa\n");
 
   if (status != RFX_STATUS_TEST) {
     // recreate menus for effects, utilities, generators
@@ -4751,6 +4753,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   // *INDENT-ON*
 
   //if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+  g_print("CALL1222\n");
 
   if (is_startup && lives_proc_thread_get_pause_requested(self)) {
     unlock_gmci();

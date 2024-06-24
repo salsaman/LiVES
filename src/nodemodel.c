@@ -752,7 +752,7 @@ static double get_qloss_p(int outpl, int inpl, int *inpals) {
 
 
 double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl, int *inpals) {
-  // find the time cst for converting gamma - calc size * psize
+  // find the time cst for converting outpl to inpl
   // the mpy by const
   // - may be paralellisable
   //
@@ -763,6 +763,9 @@ double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl,
     return get_qloss_p(outpl, inpl, inpals);
   if (cost_type == COST_TYPE_TIME) {
     double tcost = 0.01;
+    if (inpl != outpl) tcost = 0.01;
+    if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl))
+        || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) tcost *= 2.;
     /* if (glob_timing) { */
     /*   volatile float *cpuload; */
     /*   ann_testdata_t realdata; */
@@ -774,8 +777,6 @@ double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl,
     /* realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 100.; */
     /* if (outpl != inpl) { */
     /*   double pval = 1.; */
-    /*   if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl)) */
-    /*       || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) pval = 5; */
     /*   realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval; */
     /*   realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval; */
     /* } */
@@ -1698,7 +1699,8 @@ static void run_plan(exec_plan_t *plan) {
 
   //bbsummary();
 
-  MSGMODE_ON(DEBUG);
+  if (mainw->debugopts & DEBUG_PLAN_RUNNER)
+    MSGMODE_ON(DEBUG);
 
   planrunner_lock();
 
@@ -1739,7 +1741,8 @@ static void run_plan(exec_plan_t *plan) {
   d_print_debug("plan triggered @ %.2f msec\n", plan->tdata->trigger_time * 1000.);
 
   if (lives_proc_thread_get_cancel_requested(self)) {
-    MSGMODE_OFF(DEBUG);
+    if (mainw->debugopts & DEBUG_PLAN_RUNNER)
+      MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT____;
     lives_proc_thread_cancel();
   }
@@ -2025,8 +2028,8 @@ static void run_plan(exec_plan_t *plan) {
             lives_clipsrc_group_t *srcgrp = mainw->track_sources[step->track];
             int clipno = plan->model->clip_index[step->track];
             if (!srcgrp) srcgrp = get_primary_srcgrp(clipno);
-            inpl = srcgrp->apparent_pal;
-            in_gamma_type = srcgrp->apparent_gamma;
+            inpl = srcgrp->apparent.v->pal;
+            in_gamma_type = srcgrp->apparent.v->gamma;
           }
 
           get_op_order(out_width, out_height, in_iwidth, in_iheight, flags, outpl, inpl,
@@ -2104,18 +2107,18 @@ static void run_plan(exec_plan_t *plan) {
               d_print_debug(" + palconv");
             if (op_order[OP_GAMMA] == 2)
               d_print_debug(" + gamma");
-            nfinst = lives_funcinst_create(res_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 2) {
             d_print_debug(", palconv");
             if (op_order[OP_GAMMA] == 2)
               d_print_debug(" + gamma");
-            nfinst = lives_funcinst_create(pconv_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(pconv_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_GAMMA] == 2) {
             d_print_debug(", gamma");
-            nfinst = lives_funcinst_create(gamma_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(gamma_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 2) {
             d_print_debug(", letterbox");
-            nfinst = lives_funcinst_create(lbox_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(lbox_substep, WEED_SEED_INT, "v", step);
           }
 
           if (nfinst) {
@@ -2130,18 +2133,18 @@ static void run_plan(exec_plan_t *plan) {
               d_print_debug(" + palconv");
             if (op_order[OP_GAMMA] == 3)
               d_print_debug(" + gamma");
-            nfinst = lives_funcinst_create(res_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_PCONV] == 3) {
             if (op_order[OP_GAMMA] == 3) {
               d_print_debug(" + gamma");
-              nfinst = lives_funcinst_create(pconv_substep, NULL, WEED_SEED_INT, "v", step);
+              nfinst = lives_funcinst_create(pconv_substep, WEED_SEED_INT, "v", step);
             }
           } else if (op_order[OP_GAMMA] == 3) {
             d_print_debug(", gamma");
-            nfinst = lives_funcinst_create(gamma_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(gamma_substep, WEED_SEED_INT, "v", step);
           } else if (op_order[OP_LETTERBOX] == 3) {
             d_print_debug(", letterbox");
-            nfinst = lives_funcinst_create(lbox_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(lbox_substep, WEED_SEED_INT, "v", step);
           }
 
           if (nfinst) {
@@ -2152,7 +2155,7 @@ static void run_plan(exec_plan_t *plan) {
 
           if (op_order[OP_LETTERBOX] == 4) {
             d_print_debug(", letterbox");
-            nfinst = lives_funcinst_create(res_substep, NULL, WEED_SEED_INT, "v", step);
+            nfinst = lives_funcinst_create(res_substep, WEED_SEED_INT, "v", step);
           }
 
           if (nfinst) {
@@ -2701,7 +2704,8 @@ static void run_plan(exec_plan_t *plan) {
     pthread_mutex_unlock(&glob_timing->upd_mutex);
   }
 
-  MSGMODE_OFF(DEBUG);
+  if (mainw->debugopts & DEBUG_PLAN_RUNNER)
+    MSGMODE_OFF(DEBUG);
 
   if (plan->state == PLAN_STATE_CANCELLED) lives_proc_thread_cancel();
   nplans--;
@@ -3001,7 +3005,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
 
         sfile = RETURN_VALID_CLIP(step->target_idx);
 
-        opal = srcgrp->apparent_pal;
+        opal = srcgrp->apparent.v->pal;
         in = out->node->inputs[out->iidx];
         if (in->npals) {
           ipal = in->pals[in->optimal_pal];
@@ -3041,7 +3045,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
               pally.sampling = WEED_YUV_SAMPLING_DEFAULT;
               pally.subspace = WEED_YUV_SUBSPACE_YUV;
             }
-            srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent_gamma);
+            srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent.v->gamma);
           }
         } else {
           if (!weed_palette_has_alpha(opal)) {
@@ -3053,7 +3057,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
                 pally.sampling = WEED_YUV_SAMPLING_DEFAULT;
                 pally.subspace = WEED_YUV_SUBSPACE_YUV;
               }
-              srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent_gamma);
+              srcgrp_set_apparent(sfile, srcgrp, &pally, srcgrp->apparent.v->gamma);
             }
           }
         }
@@ -3061,7 +3065,7 @@ static plan_step_t *create_step(exec_plan_t *plan, int st_type, inst_node_t *n, 
         step->fin_width = step->fin_iwidth = out->width = sfile->hsize;
         step->fin_height = step->fin_iheight = out->height = sfile->vsize;
         step->fin_pal = opal;
-        step->fin_gamma = srcgrp->apparent_gamma;
+        step->fin_gamma = srcgrp->apparent.v->gamma;
 
         deps = (plan_step_t **)lives_calloc(1, sizeof(plan_step_t *));
         ndeps = 1;
@@ -3516,7 +3520,7 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
       // for clip sources, set the clip_srcs with the correct palettes internally
       // - find the track for the node
       // - finde the srcgrp from mainw->track_sources
-      // - set apparent_palette, apparent_gamma for the srcgrp to match node
+      // - set apparent.v->palette, apparent.v->gamma for the srcgrp to match node
       // --- the value is taken from n->optimal_pal
       int track = n->outputs[0]->track;
       int clip = nodemodel->clip_index[track];
@@ -3775,7 +3779,7 @@ void align_with_model(lives_nodemodel_t *nodemodel) {
       sfile = RETURN_VALID_CLIP(n->model_idx);
       srcgrp = mainw->track_sources[nchain->track];
       if (!srcgrp) {
-        // will need to check for this to mapped later, and we will neeed to set apparent_pal
+        // will need to check for this to mapped later, and we will neeed to set apparent.v->pal
         // layer has no clipsrc, so we need to find all connected inputs and mark as ignore
         for (int no = 0; no < n->n_outputs; no++) {
           output_node_t *out = n->outputs[no];
@@ -4612,8 +4616,8 @@ static lives_result_t prepend_node(lives_nodemodel_t *nodemodel, inst_node_t *n,
       n->pals = allpals;
 
       // quick optimisation - if n is a src, set node gamma to match target gamma
-      // when we align with model, we will set apparent_gamma for the primary src_group
-      // this will avoid the need for a separate gamma conversion following the conversion to apparent_pallete
+      // when we align with model, we will set apparent.v->gamma for the primary src_group
+      // this will avoid the need for a separate gamma conversion following the conversion to apparent.v->pallete
       n->gamma_type = target->gamma_type;
     }
     break;
@@ -5043,7 +5047,7 @@ static inst_node_t *create_node(lives_nodemodel_t *nodemodel, int model_type, vo
   // - some filters prefer linear gamma, so optionally we can convert to / from that
   // - some sources may prefer a different gamma_type from the standard (linear or bt709)
   //   (e.g -future possibility- output to HDTV, or currently when transcoding in bt709)
-  // -> in these cases, the source will define the "apparent_gamma" for the clip_srcgroup
+  // -> in these cases, the source will define the "apparent.v->gamma" for the clip_srcgroup
   // bound to the track. When an ouput node from a source is connected, we can choose to
   // maintain current gamma or to convert it. If the gamma is bt709, and we convert to yuv,
   // this becomes yuv_supspace_bt709, and we should use different conversion constants
@@ -5330,7 +5334,7 @@ static void calc_costs_for_source(lives_nodemodel_t *nodemodel, inst_node_t *n, 
   // whichever is the greater
 
   // for NODE_MODELS_CLIP we have a set of all possible palettes and various clip_srcs
-  // we want to set the "apparent_palette" - for the srcgrp,
+  // we want to set the "apparent.v->palette" - for the srcgrp,
   // all clip_srcs in the srcgrp will first convert to this
   // then to the following palette. This is equivalent to the node palette.
   // we want to find this apparent palette by minimiseing the cost to convert clip_srcs to it combined with the
@@ -5403,7 +5407,7 @@ static void calc_costs_for_source(lives_nodemodel_t *nodemodel, inst_node_t *n, 
   // we will do this for every possible palette
   // then later when finding best palettes we will have the best_in_pal for the input it connects to
   // normally there is no cost for not converting a palette, so we would usually set out_pal == in_pal
-  // however in this case we must take into account the cost to convert to the apparent_palette and
+  // however in this case we must take into account the cost to convert to the apparent.v->palette and
   // total this with the cost to the input palette
 
   sfile = (lives_clip_t *)n->model_for;
@@ -5423,7 +5427,7 @@ static void calc_costs_for_source(lives_nodemodel_t *nodemodel, inst_node_t *n, 
       int cpal = WEED_PALETTE_NONE;
       int owidth = in->width;
       int oheight = in->height;
-      if (srcgrp) cpal = srcgrp->apparent_pal;
+      if (srcgrp) cpal = srcgrp->apparent.v->pal;
       if (!owidth || !oheight) {
         owidth = sfile->hsize;
         oheight = sfile->vsize;
@@ -5613,7 +5617,7 @@ static void _calc_costs_for_input(lives_nodemodel_t *nodemodel, inst_node_t *n, 
         // TODO: misc_costs
 
         if (srccosts) {
-          // if we are pulling from a clip src, we triangluate from clip_srcs to apparent_pal to in_pal
+          // if we are pulling from a clip src, we triangluate from clip_srcs to apparent.v->pal to in_pal
           // and we will join both cost
           if (k == COST_TYPE_QLOSS_P)
             delta_cost += srccosts[k] - delta_cost * srccosts[k];
@@ -6788,7 +6792,7 @@ static inst_node_t *desc_and_do_something(int do_what, inst_node_t *n, inst_node
       plan->steps = lives_list_prepend(plan->steps, (void *)step);
     } else {
       // sources - we have 2 steps - LOAD or APPLY_INST
-      // then a CONVERT to srcgroup->apparent_pal, srcgroup->apparent->gamma, sfile->hsize X sfile->vsize
+      // then a CONVERT to srcgroup->apparent.v->pal, srcgroup->apparent->gamma, sfile->hsize X sfile->vsize
       int track = n->outputs[0]->track;
       step = create_step(plan, STEP_TYPE_LOAD, n, track, NULL, 0);
       plan->steps = lives_list_prepend(plan->steps, (void *)step);
@@ -7093,7 +7097,7 @@ static inst_node_t *create_node_for_layer(lives_nodemodel_t *nodemodel, int xtra
   if (model_type != NODE_MODELS_CLIP) return n;
 
   if (!sfile) {
-    // will need to check for this to mapped later, and we will neeed to set apparent_pal
+    // will need to check for this to mapped later, and we will need to set apparent.v->pal
     // layer has no clipsrc, so we need to find all connected inputs and mark as ignore
     for (int no = 0; no < n->n_outputs; no++) {
       input_node_t *in = n->outputs[no]->node->inputs[n->outputs[no]->iidx];

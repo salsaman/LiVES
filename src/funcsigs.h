@@ -3,6 +3,23 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifdef ADD_FUNCSIG_FUNCS
+
+#ifdef ADD_FUNCSIG
+#undef ADD_FUNCSIG
+#endif
+
+#define ADD_FUNCSIG(n,...) ALLOW_UNUSED static weed_error_t  \
+  MK_FUNC(n, lives_funcinst_t *finst, weed_seed_t ret_type, allfunc_t thefunc, __VA_ARGS__) \
+  {weed_error_t err = WEED_SUCCESS; if (ret_type) XCALL_##n(finst->params, ret_type, &thefunc); \
+    else CALL_VOID_##n(finst->params, &thefunc); return err;}
+
+#define MK_ALL_FUNCS ZERO_PARAM_FUNCSIG ONE_PARAM_FUNCSIGS TWO_PARAM_FUNCSIGS \
+  THREE_PARAM_FUNCSIGS FOUR_PARAM_FUNCSIGS FIVE_PARAM_FUNCSIGS SIX_PARAM_FUNCSIGS \
+  SEVEN_PARAM_FUNCSIGS EIGHT_PARAM_FUNCSIGS
+
+#endif
+
 #if !defined(_FUNCSIGS_H) || defined(NEED_FSIG_CASES)
 #ifndef NEED_FSIG_CASES
 #define _FUNCSIGS_H
@@ -84,7 +101,7 @@ DEF_UNION(allval_t,
 #define ALLV_FLAG_RWLOCK		(1ull << 3)
 #define ALLV_FLAG_EXTERN		(1ull << 4)
 #define ALLV_FLAG_RDONLY		(1ull << 5)
-#define ALLV_FLAG_NOFREE		(1ull << 6)
+#define ALLV_FLAG_AUTOFREE		(1ull << 6)
 
 // error flagbits/
 // unrecognised seed_type when setting val
@@ -156,18 +173,35 @@ DEF_STRUCT(allvalues_t,
 
            // TODO -make all params in finst->params into allvalues_t
            // then we will finally have a place to store free funcs
+
+           // contingencies can define funcinsts to be executed under certain circumstances
+           // common circumstances are - when the data is changed, when a bound variable is updated.
+           // when the allvalues is freed
            LiVESList *contingencies;
 
            // used when compiliong conditions - holds the original ranslation token
            void *priv_data;)
 
+typedef allvalues_t **T_array;
+typedef allvalues_t *T_value;
+
+typedef struct {const char *fmt; va_list va;} va_surprise;
+
+#define VA_TO_T_ARRAY(params, last, args_fmt) _DW0	\
+  (va_surprise boo; va_start(boo.va, last);		\
+   boo.fmt = (const char *)args_fmt;			\
+   params = vasu2allvp_array(&boo); va_end(boo.va);)
+
+
 #define ALLV_FROM_LEAF(avp, plant, key, st, ne) _DW0			\
   (st = weed_leaf_seed_type(plant, key);				\
-  if (st == LIVES_SEED_ALLVALUES) {					\
-    avp = allvalues_copy(weed_get_custom_value(plant, key, st, NULL));}	\
+   if (st == LIVES_SEED_ALLVALUES) {					\
+     avp = allvalues_copy(weed_get_custom_value(plant, key, st, NULL));} \
    if (st == LIVES_SEED_FUNCINST) (avp)->funcinst = weed_get_custom_value(plant, key, st, NULL); \
-   else FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_,		\
-			    _array_counted, (plant), (key), &(ne));)
+   else {if (st == LIVES_SEED_CONST_CHARPTR)				\
+       (avp)->values.C = (const char **)weed_get_custom_array_counted(plant, key, st, &ne); \
+       else FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_,	\
+				_array_counted, (plant), (key), &(ne));})
 
 #define LEAF_FROM_ALLV(plant, key, allv)				\
        weed_leaf_set(plant, key, allv->stype, allv->ne,			\
@@ -179,6 +213,7 @@ DEF_STRUCT(allvalues_t,
 		      : allv->stype == WEED_SEED_DOUBLE ? (void *)allv->values.d \
 		      : allv->stype == WEED_SEED_FLOAT ? (void *)allv->values.f \
 		      : allv->stype == WEED_SEED_STRING ? (void *)allv->values.s \
+		      : allv->stype == LIVES_SEED_CONST_CHARPTR ? (void *)allv->values.C \
 		      : (allv->stype == WEED_SEED_VOIDPTR || WEED_SEED_IS_CUSTOM(allv->stype)) \
 		      ? (void *)allv->values.V				\
 		      : allv->stype == WEED_SEED_FUNCPTR ? (void *)allv->values.F \
@@ -224,11 +259,15 @@ DEF_STRUCT(allvalues_t,
 #define CTYPE_INT64 int64_t
 #define CTYPE_UINT64 uint64_t
 #define CTYPE_DOUBLE double
-#define CTYPE_FLOAT float
 #define CTYPE_STRING char *
+#define CTYPE_FLOAT float
+#define CTYPE_BOOL boolean
 #define CTYPE_VOIDPTR void *
+#define CTYPE_VOIDP void *
 #define CTYPE_FUNCPTR weed_funcptr_t
-#define CTYPE_PLANTPTR weed_plantptr_t
+#define CTYPE_FUNCP weed_funcptr_t
+#define CTYPE_PLANTPTR weed_plant_t *
+#define CTYPE_PLANTP weed_plant_t *
 
 #define CTYPE_int int32_t
 #define CPTRTYPE_int int32_t *
@@ -251,8 +290,8 @@ DEF_STRUCT(allvalues_t,
 #define CPTRTYPE_funcptr weed_funcptr_t *
 #define CTYPE_voidptr void *
 #define CPTRTYPE_voidptr void **
-#define CTYPE_plantptr weed_plantptr_t
-#define CPTRTYPE_plantptr weed_plantptr_t *
+#define CTYPE_plantptr weed_plant_t *
+#define CPTRTYPE_plantptr weed_plant_t **
 
 #define CTYPE(type) CTYPE_##type
 #define CPTRTYPE(type) CPTRTYPE_##type
@@ -262,22 +301,23 @@ DEF_STRUCT(allvalues_t,
 // can be used in internal args_fmt
 #define LIVES_SEED_ALLVALUES 2048
 #define LIVES_SEED_CONST_CHARPTR 2049
+#define LIVES_SEED_VARITYPE 2050
 
 // seed types which can be wrapped in allvalues_t->values.V
-#define LIVES_SEED_FUNCINST 2050
-#define LIVES_SEED_BLOB_DATA 2051
-#define LIVES_SEED_ALLTYPES 2052
+#define LIVES_SEED_FUNCINST 2250
+#define LIVES_SEED_BLOB_DATA 2251
+#define LIVES_SEED_ALLTYPES 2252
 
 // syntactic marker for variadic functions, must be final in funcsig / args_fmt
 // not passed in func calls
 #define LIVES_SEED_VARIADIC 5192
 
 // sybtactic marker frp blueprints, followed by a subtype, mostly for info purposes
-#define LIVES_SEED_LIVES_PLANT 5193
+#define LIVES_SEED_LIVES_PLANT 5200
 
 // va_list with declared args_fmt in params, values are read and spliced in
-// aas replacements
-#define LIVES_SEED_VALIST 5193
+// as replacements
+#define LIVES_SEED_VALIST 5300
 
 #define FOR_ALL_SEED_TYPES(st, pre, pre2, pre3, post, post2, post3, post4) \
   _DW0(switch(st){case(WEED_SEED_INT):pre(pre2,pre3##int##post(post2,post3,post4));break; \
@@ -299,7 +339,8 @@ DEF_STRUCT(allvalues_t,
     case(WEED_SEED_BOOLEAN):pre b op pre2##boolean##post(post2,post3,post4);break; \
     case(WEED_SEED_DOUBLE):pre d op pre2##double##post(post2,post3,post4);break; \
     case(WEED_SEED_STRING):pre s op pre2##string##post(post2,post3,post4);break; \
-    case(LIVES_SEED_FUNCINST):pre s op pre2##string##post(post2,post3,post4);break; \
+    case(LIVES_SEED_CONST_CHARPTR):pre C op pre2##const_string##post(post2,post3,post4);break; \
+    case(LIVES_SEED_FUNCINST):pre V op pre2##voidptr##post(post2,post3,post4);break; \
     case(WEED_SEED_VOIDPTR):pre V op pre2##voidptr##post(post2,post3,post4);break; \
     case(WEED_SEED_FUNCPTR):pre F op pre2##funcptr##post(post2,post3,post4);break; \
     case(WEED_SEED_PLANTPTR):pre P op pre2##plantptr##post(post2,post3,post4);break; \
@@ -359,6 +400,28 @@ DEF_STRUCT(allvalues_t,
 #if FIX_INDENT_IGNORE_THIS
 }
 #endif
+
+#define MKONE(X, n, finst, rt, tf, ...) MKONE_##n(X, finst, rt, tf, __VA_ARGS__)
+#define MKONE_0(X, finst, rt, tf, ...) X##_VOID(finst, rt, tf)
+#define MKONE_1(X, finst, rt, tf, a, ...) X##_##a(finst, rt, tf, CTYPE_##a p0)
+#define MKONE_2(X, finst, rt, tf, a, b, ...) X##_##a##_##b(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1)
+#define MKONE_3(X, finst, rt, tf, a, b, c, ...) X##_##a##_##b##_##c(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1, \
+								  CTYPE_##c p2)
+#define MKONE_4(X, finst, rt, tf, a, b, c, d, ...) X##_##a##_##b##_##c##_##d(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1, \
+									   CTYPE_##c p2, CTYPE_##d p3)
+#define MKONE_5(X, finst, rt, tf, a, b, c, d, e, ...) X##_##a##_##b##_##c##_##d##_##e(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1, \
+										    CTYPE_##c p2, CTYPE_##d p3, CTYPE_##e p4)
+#define MKONE_6(X, finst, rt, tf, a, b, c, d, e, f, ...) X##_##a##_##b##_##c##_##d##_##e##_##f(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1, \
+											     CTYPE_##c p2, CTYPE_##d p3, CTYPE_##e p4, CTYPE_##f p5)
+#define MKONE_7(X, finst, rt, tf, a, b, c, d, e, f, g, ...) X##_##a##_##b##_##c##_##d##_##e##_##f##_##g(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1, \
+												      CTYPE_##c p2, CTYPE_##d p3, CTYPE_##e p4, \
+												      CTYPE_##f p5, CTYPE_##g p6)
+#define MKONE_8(X, finst, rt, tf, a, b, c, d, e, f, g, h, ...) X##_##a##_##b##_##c##_##d##_##e##_##f##_##g##_##h(finst, rt, tf, CTYPE_##a p0, CTYPE_##b p1, \
+													       CTYPE_##c p2, CTYPE_##d p3, CTYPE_##e p4, \
+													       CTYPE_##f p5, CTYPE_##g p6, CTYPE_##h p7)
+
+#define MK_FUNC(n, finst, rt, tf, ...) MKONE(callfunc, n, finst, rt, tf, __VA_ARGS__)
+
 
 #define FUNCSIG_VOID				       			0
 
@@ -440,6 +503,7 @@ DEF_STRUCT(allvalues_t,
 // extended values
 #define ARGS_FMT_GAP		'_'
 #define ARGS_FMT_VARIADIC	'*'
+#define ARGS_FMT_VARITYPE	'!'
 #define ARGS_FMT_UNKNOWN	'?'
 
 typedef struct {
@@ -489,8 +553,8 @@ extern const lookup_tab crossrefs[];
 #define _ARGS_FMT_REPLACE (int)ARGS_FMT_ALLVALUES, (int)ARGS_FMT_CONST_CHARPTR
 #define ARGS_FMT_REPLACE _ARGS_FMT_REPLACE, 0
 
-// args_fmt letter (char), seed_type (uint32), funcsig value (4 bits), short name, prinf fmt
-// LIVES_SEED_* types aew only for convenience and cannot be used in actual function calls (yet)
+// args_fmt letter (char), seed_type (uint32), funcsig value (sigbits, 4 bits), short name, prinf fmt
+// LIVES_SEED_* types are only for convenience and will be converted to void * in actual function calls
 #define XREFS_TAB							\
   {{ARGS_FMT_INT,  		WEED_SEED_INT,       		FUNCSIG(INT), 		"INT", "%d"} \
     ,{ARGS_FMT_DOUBLE,  	WEED_SEED_DOUBLE, 		FUNCSIG(DOUBLE), 	"DOUBLE", "%.4f"} \
@@ -506,16 +570,23 @@ extern const lookup_tab crossrefs[];
     ,{ARGS_FMT_CONST_CHARPTR,  	LIVES_SEED_CONST_CHARPTR,	FUNCSIG(VOIDP),		"VOIDP", "%s"} \
     ,{ARGS_FMT_ALLVALUES,  	LIVES_SEED_ALLVALUES,		FUNCSIG(VOIDP),		"VOIDP", "%p"} \
     ,{ARGS_FMT_VARIADIC,  	LIVES_SEED_VARIADIC,       	FUNCSIG(VARIADIC), 	"VARIADIC", "..."} \
+    ,{ARGS_FMT_VARITYPE,  	LIVES_SEED_VARITYPE,       	FUNCSIG(VOIDP), 	"VARITYPE", "..."} \
     XREFS_TAB_UINT							\
       XREFS_TAB_UINT64							\
       XREFS_TAB_FLOAT							\
       ,{'\0', WEED_SEED_VOID,       	0, 	"", ""}}
 
-/* if we have an _ va_lsy in an args_fmt string, this can be followed by a descriptio of
+/* if we have an _ in an args_fmt string, this can be followed by a descriptio of
    the types held in the va_list, eg. _(iV) indicates a va_list containing an int and a void *
    this can be useful when passing variable types with an args_fmt,, the referenced values can be pulled
    from the valist and set in params */
-
+/*
+  Alternately we can use a "!" (varitype). This acts like a "..." in func calls, but must be preceded by
+  an args_fmt string. The values are read and set in an allvalues_t *array (NULL terminated)
+  This will be passed to the function as a void *param
+  The function can cast this back to typedef T_array, and retrieve the values
+  in variables.
+*/
 #define DEF_VARS(n,thing,...) DEF_VARS##n(thing,__VA_ARGS__)
 
 #define GET_WTYPE_INT int
@@ -635,11 +706,11 @@ void reg_known_funcsigs(void);
 
 #define TWO_PARAM_FUNCSIGS			\
   ADD_FUNCSIG(2,INT,INT)			\
+  ADD_FUNCSIG(2,INT,VOIDP)			\
   ADD_FUNCSIG(2,BOOL,BOOL)			\
   ADD_FUNCSIG(2,INT64,INT64)			\
   ADD_FUNCSIG(2,DOUBLE,DOUBLE)			\
   ADD_FUNCSIG(2,FUNCP,FUNCP)			\
-  ADD_FUNCSIG(2,INT,VOIDP)			\
   ADD_FUNCSIG(2,STRING,STRING)			\
   ADD_FUNCSIG(2,STRING,INT)			\
   ADD_FUNCSIG(2,STRING,BOOL)			\
@@ -658,29 +729,30 @@ void reg_known_funcsigs(void);
 #define THREE_PARAM_FUNCSIGS			\
   ADD_FUNCSIG(3,VOIDP,VOIDP,VOIDP)		\
   ADD_FUNCSIG(3,VOIDP,VOIDP,BOOL)		\
-  ADD_FUNCSIG(3,STRING,VOIDP,VOIDP)		\
   ADD_FUNCSIG(3,VOIDP,DOUBLE,INT)		\
   ADD_FUNCSIG(3,VOIDP,DOUBLE,VOIDP)		\
   ADD_FUNCSIG(3,VOIDP,INT,INT)			\
+  ADD_FUNCSIG(3,VOIDP,INT,INT64)		\
   ADD_FUNCSIG(3,VOIDP,DOUBLE,DOUBLE)		\
   ADD_FUNCSIG(3,PLANTP,VOIDP,INT64)		\
   ADD_FUNCSIG(3,PLANTP,STRING,INT)		\
   ADD_FUNCSIG(3,PLANTP,INT64,BOOL)		\
   ADD_FUNCSIG(3,PLANTP,INT,PLANTP)		\
   ADD_FUNCSIG(3,INT,INT,BOOL)			\
+  ADD_FUNCSIG(3,INT,INT64,VOIDP)		\
   ADD_FUNCSIG(3,BOOL,INT,BOOL)			\
   ADD_FUNCSIG(3,STRING,INT,BOOL)		\
-  ADD_FUNCSIG(3,INT,INT64,VOIDP)
+  ADD_FUNCSIG(3,STRING,VOIDP,VOIDP)
 
 #define FOUR_PARAM_FUNCSIGS			\
   ADD_FUNCSIG(4,STRING,DOUBLE,INT,STRING)	\
+  ADD_FUNCSIG(4,STRING,INT,FUNCP,VOIDP)		\
   ADD_FUNCSIG(4,INT,INT,BOOL,VOIDP)		\
-  ADD_FUNCSIG(4,VOIDP,INT,FUNCP,VOIDP)		\
-  ADD_FUNCSIG(4,STRING,INT,FUNCP,VOIDP)
+  ADD_FUNCSIG(4,VOIDP,INT,FUNCP,VOIDP)
 
 #define FIVE_PARAM_FUNCSIGS			\
-  ADD_FUNCSIG(5,VOIDP,STRING,STRING,INT64,INT)	\
   ADD_FUNCSIG(5,INT,INT,INT,BOOL,VOIDP)		\
+  ADD_FUNCSIG(5,VOIDP,STRING,STRING,INT64,INT)	\
   ADD_FUNCSIG(5,VOIDP,INT,INT,INT,INT)		\
   ADD_FUNCSIG(5,VOIDP,VOIDP,BOOL,BOOL,INT)
 

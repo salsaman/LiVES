@@ -384,10 +384,10 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 
 #define STEAL_POINTER(p) (lives_steal_pointer(SAFE_ADDROF(p)))
 
-#define LIVES_CALLOC_TYPE(type, var, num) type *var = (type *)lives_calloc((num), sizeof(type))
 #define LIVES_CALLOC_SIZEOF(type, num) (type *)lives_calloc((num), sizeof(type))
-
-#define LIVES_MALLOC_COPY(type, nvar, ovar) \
+#define LIVES_CALLOC_TYPE(type, var, num) type *var = num > 0	\
+    ? LIVES_CALLOC_SIZEOF(type, num) : NULL
+#define LIVES_MALLOC_COPY(type, nvar, ovar)				\
   type *nvar = lives_malloc(sizeof(type)); lives_memcpy(nvar, ovar, sizeof(type));
 
 void speedy_free(void *ptr);

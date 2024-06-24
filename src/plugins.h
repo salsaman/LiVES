@@ -735,6 +735,9 @@ int find_rfx_plugin_by_name(const char *name, short status);
 
 void free_rfx_params(lives_param_t *params, int num_params);
 
+void build_rfx_param(lives_param_t *, weed_param_t *wpar, int param_type, const char *name,
+                     weed_plant_t *gui, weed_plant_t *wtmpl);
+
 void rfx_params_free(lives_rfx_t *);
 
 void rfx_free(lives_rfx_t *); // calls rfx_params_free()
@@ -915,11 +918,6 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
 // defined in plugins.c for the whole app
 extern const char *const anames[AUDIO_CODEC_MAX];
-
-lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *, boolean readonly);
-
-#define LIVES_LEAF_RPAR "host_rpar"
-#define LIVES_LEAF_SOURCE "clip_source"
 
 #define LIVES_LEAF_VPP_PROCESSED_PTR "processedp"
 

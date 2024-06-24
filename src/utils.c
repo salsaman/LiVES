@@ -12,7 +12,6 @@
 #endif
 #include "main.h"
 #include "interface.h"
-#include "audio.h"
 #include "resample.h"
 #include "callbacks.h"
 #include "cvirtual.h"
@@ -223,6 +222,8 @@ void _lives_abort(const char *file, int line, const char *func, const char *reas
   if (!reason) reason = _("Aborting");
 
   d_print("\n\nlives_abort called at %s, line %d\n%s\n\n", file, line, reason);
+
+  d_print("%s\n", errmsg);
 
   mainw->critical = 2;
 

@@ -9,6 +9,14 @@
 
 #include "diagnostics.h"
 
+#define ADD_FUNCSIG_FUNCS
+#include "funcsigs.h"
+#undef ADD_FUNCSIG_FUNCS
+
+MK_ALL_FUNCS
+
+#undef MK_ALL_FUNCS
+
 static hook_stack_descriptor_t hs_desc[N_HOOK_POINTS];
 
 static boolean hs_inited = FALSE;
@@ -17,6 +25,46 @@ static boolean hsn_inited = FALSE;
 VARNAME_FUNC
 
 ///////////////////////
+
+Type_Array vasu2allvp_array(va_surprise *boo) {
+  const char *fmt = boo->fmt;
+  int nvals = lives_strlen(fmt);
+  LIVES_CALLOC_TYPE(allvalues_t *, allvp_arr, nvals + 1);
+  for (int i = 0; fmt[i]; i++) {
+    weed_seed_t st = get_seedtype(fmt[i]);
+    allvp_arr[i] = MAKE_ALLVALUE_VA(st, boo->va);
+  }
+  return allvp_arr;
+}
+
+
+Type_List *params2allvp_list(weed_plant_t *params) {
+  Type_List *allvp_list = NULL;
+  allvalues_t *allvp;
+  int i = 0;
+  while (1) {
+    char *pkey = make_std_pname(i++);
+    if (!(weed_plant_has_leaf(params, pkey))) {
+      lives_free(pkey);
+      break;
+    }
+    allvp = allvalues_from_leaf(NULL, params, pkey);
+    allvp_list = lives_list_prepend(allvp_list, (void *)allvp);
+    lives_free(pkey);
+  }
+  return lives_list_reverse(allvp_list);
+}
+
+
+void t_array_free(T_array *t) {
+  if (t && *t) {
+    for (int i = 0; (*t)[i]; i++)
+      allvalues_free((*t)[i]);
+    lives_free(*t);
+    *t = NULL;
+  }
+}
+
 
 lives_structdef *stdef_for(char *stname) {
   // return stdef for struct type stname
@@ -575,73 +623,70 @@ const char *get_funcname(lives_funcptr_t func) {
 void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
                  const char *args_fmt, char *file_ref, int line_ref, uint64_t flags) {
   // try to guess ret_type, if it is eg. "I"
-  weed_seed_t rtype = WEED_SEED_NONE;
-  if (rettype && *rettype) rtype = get_seedtype(*rettype);
-  lives_funcdef_t *fdef;
-  allvalues_t *allvp = find_in_lookup(lookup_type_funcs, funcname);
-  if (allvp) fdef = (lives_funcdef_t *)allvp->values.V[0];
-  else {
-    fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags);
-    add_fdef_stats(fdef);
-  }
-  // TODO - handle singleton noe recurse, no rec thread
-  // cond entry
-  // scope end free
-  // static
-  fdef_add_data(fdef, FDEF_STAT_COUNT, FDEF_STAT_LAST);
-  if (mainw->maintmode & MMODE_PLAYER_TIMINGS) {
-    double xtime = lives_get_session_time();
-    g_print("%s (%s, line %d) entered at %.2f msec\n", funcname, file_ref, line_ref, xtime * 1000.);
-    GET_PROC_THREAD_SELF(self);
-    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
-    if (!finst) {
-      finst = lives_funcinst_create_for_funcdef(fdef, "", NULL);
-      lives_proc_thread_set_active_funcinst(finst);
-    }
-    finst->st_time = xtime;
-  }
+  /* weed_seed_t rtype = WEED_SEED_NONE; */
+  /* if (rettype && *rettype) rtype = get_seedtype(*rettype); */
+  /* lives_funcdef_t *fdef; */
+  /* allvalues_t *allvp = find_in_lookup(lookup_type_funcs, funcname); */
+  /* if (allvp) fdef = (lives_funcdef_t *)allvp->values.V[0]; */
+  /* else { */
+  /*   fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags); */
+  /*   add_fdef_stats(fdef); */
+  /* } */
+  /* // TODO - handle singleton noe recurse, no rec thread */
+  /* // cond entry */
+  /* // scope end free */
+  /* // static */
+  /* fdef_add_data(fdef, FDEF_STAT_COUNT, FDEF_STAT_LAST); */
+  /* if (mainw->debugopts & DEBUG_FUNC_ENTER_EXIT) { */
+  /*   double xtime = lives_get_session_time(); */
+  /*   g_print("%s (%s, line %d) entered at %.2f msec\n", funcname, file_ref, line_ref, xtime * 1000.); */
+  /*   GET_PROC_THREAD_SELF(self); */
+  /*   lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self); */
+  /*   if (!finst) { */
+  /*     finst = lives_funcinst_create_for_funcdef(fdef, "", NULL); */
+  /*     lives_proc_thread_set_active_funcinst(finst); */
+  /*   } */
+  /*   finst->st_time = xtime; */
+  /* } */
 
-  if (!allvp) {
-    allvp = add_to_lookup(lookup_type_funcs, WEED_SEED_VOIDPTR, funcname, fdef);
-  }
-
-  THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), allvp);
+  /* if (!allvp) allvp = add_to_lookup(lookup_type_funcs, WEED_SEED_VOIDPTR, funcname, fdef); */
+  //THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), allvp);
 }
 
 
 void _func_exit(char *file_ref, int line_ref, const char *valname, ...) {
-  allvalues_t *allvp = (allvalues_t *)lives_sync_list_pop(&THREADVAR(func_stack));
-  lives_funcdef_t *fdef =  allvp->values.V[0];
-  if (mainw->maintmode & MMODE_PLAYER_TIMINGS) {
-    double xtime = lives_get_session_time();
-    GET_PROC_THREAD_SELF(self);
-    lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self);
-    finst->en_time = xtime;
-    g_print("%s exited (%s, line %d) at %.2f msec, duration %s\n", fdef->funcname, file_ref, line_ref, xtime * 1000.,
-            lives_format_timing_string(xtime - finst->st_time));
-    /* if (fdef->flags & FDEF_FLAG_HAS_TIMEINFO) { */
-    /*   va_list vc; */
-    /*   va_copy(vc, va); */
-    /*   fdef_add_data(fdef, FDEF_STAT_ST_TIME, finst->st_time,  */
-    /* 		    FDEF_STAT_EN_TIME, finst->en_time,  */
-    /* 		    FDEF_STAT_ST_EXLINE, line_ref,  */
-    /* 		    FDEF_STAT_ST_EXVAL, vc,*/
-    /*    	    FDEF_STAT_LAST); */
-    /*   va_end(vc); */
-    /* } */
-  }
-  if (valname) {
-    weed_plant_t *tmppl = lives_plant_new(LIVES_PLANT_TMP);;
-    va_list va;
-    va_start(va, valname);
-    weed_leaf_from_varg(tmppl, WEED_LEAF_VALUE, fdef->return_type, 1, va);
-    va_end(va);
-    weed_plant_free(tmppl);
-  }
-  if (!(allvp->flags & ALLV_FLAG_NOFREE)) {
-    if (fdef) lives_funcdef_free(fdef);
-    allvalues_free(allvp);
-  }
+  /* allvalues_t *allvp = (allvalues_t *)lives_sync_list_pop(&THREADVAR(func_stack)); */
+  /* lives_funcdef_t *fdef =  allvp->values.V[0]; */
+  /* if (mainw->debugopts & DEBUG_FUNC_ENTER_EXIT) { */
+  /*   double xtime = lives_get_session_time(); */
+  /*   GET_PROC_THREAD_SELF(self); */
+  /*   lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self); */
+  /*   finst->en_time = xtime; */
+  /*   g_print("%s exited (%s, line %d) at %.2f msec, duration %s\n", fdef->funcname, file_ref, line_ref, xtime * 1000., */
+  /*           lives_format_timing_string(xtime - finst->st_time)); */
+  /*   /\* if (fdef->flags & FDEF_FLAG_HAS_TIMEINFO) { *\/ */
+  /*   /\*   va_list vc; *\/ */
+  /*   /\*   va_copy(vc, va); *\/ */
+  /*   /\*   fdef_add_data(fdef, FDEF_STAT_ST_TIME, finst->st_time,  *\/ */
+  /*   /\* 		    FDEF_STAT_EN_TIME, finst->en_time,  *\/ */
+  /*   /\* 		    FDEF_STAT_ST_EXLINE, line_ref,  *\/ */
+  /*   /\* 		    FDEF_STAT_ST_EXVAL, vc,*\/ */
+  /*   /\*    	    FDEF_STAT_LAST); *\/ */
+  /*   /\*   va_end(vc); *\/ */
+  /*   /\* } *\/ */
+  /* } */
+  /* if (valname) { */
+  /*   weed_plant_t *tmppl = lives_plant_new(LIVES_PLANT_TMP);; */
+  /*   va_list va; */
+  /*   va_start(va, valname); */
+  /*   weed_leaf_from_varg(tmppl, WEED_LEAF_VALUE, fdef->return_type, 1, va); */
+  /*   va_end(va); */
+  /*   weed_plant_free(tmppl); */
+  /* } */
+  /* if (!(allvp->flags & ALLV_FLAG_AUTOFREE)) { */
+  /*   if (fdef) lives_funcdef_free(fdef); */
+  /*   allvalues_free(allvp); */
+  /* } */
 }
 
 ///////////////////////////
@@ -798,7 +843,7 @@ char *make_pdef(funcsig_t sig) {
       pnn = pn;
       if (!ch) continue;
       str = lives_strdup_concat_sep(str, " ", "%sp%d",
-                                weed_seed_to_ctype(get_seedtype(ch), TRUE), pn++);
+                                    weed_seed_to_ctype(get_seedtype(ch), TRUE), pn++);
       for (int k = i - 4; k >= 0; k -= 4) {
         uint8_t tch = (sig >> k) & 0X0F;
         if (tch == ch) {
@@ -949,7 +994,7 @@ lives_result_t do_call(lives_funcinst_t *finst) {
   int sjval = 0;
   jmp_buf env;
 
-  uint32_t ret_type = fdef->return_type;
+  weed_seed_t ret_type = fdef->return_type;
 
   // get args fmt here. Values are taken from parameter seed_types in funcinst, which may not always match
   // fdef->funcsig, as that can be variadic '*' at end.
@@ -1046,7 +1091,6 @@ lives_result_t do_call(lives_funcinst_t *finst) {
     }
   } else {
     /* point of return for threads if they cancel / error */
-
   }
 
   if (MODULE_TYPE_IS(finst, LPT)) is_lpt = TRUE;
@@ -1436,7 +1480,7 @@ static boolean unblock_waiter(void *receipt, void *data) {
   // setting state directly will work in every case - if adder is not paused it will
   // prevent it from pausing and it will clear the request
 
-  lives_proc_thread_force_resume(adder);
+  lives_proc_thread_ensure_resume(adder);
 
   lives_hook_cb_remove(receipt);
   return FALSE;
@@ -1800,7 +1844,7 @@ success:
 
 
 void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst_t *finst,
-			uint64_t cbflags, uint64_t addmode, ...) {
+                        uint64_t cbflags, uint64_t addmode, ...) {
   if (!finst) return NULL;
 
   lives_funcinst_t *ret_finst = NULL;
@@ -2062,11 +2106,10 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
                   hstacks[hstype]->owner.lpt, desc_bookval(datasrc[0], datasrc + 2));
           if (temp_module) finst_disposition_pop(finst);
           return receipt;
+        } else {
+          weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM,
+                             weed_get_int_value(finst->params, LIVES_LEAF_MAXPARAM, NULL) + 1);
         }
-	else {
-	  weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM,
-			     weed_get_int_value(finst->params, LIVES_LEAF_MAXPARAM, NULL) + 1);
-	}
         pcount++;
       }
 
@@ -2132,8 +2175,8 @@ static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t **hstacks, int hst
   // block funcinst from being called until we set in cb_added_list
 
   void *receipt = lives_hook_cb_add(hstacks, hstype, finst,
-				    cbflags | HOOK_STATUS_NOTREADY,
-				    ADDMODE_NORMAL, wand);
+                                    cbflags | HOOK_STATUS_NOTREADY,
+                                    ADDMODE_NORMAL, wand);
   int reply = lives_cb_receipt_get_req_reply(receipt);
 
   if (reply == LIVES_REPLY_YES) {
@@ -2149,8 +2192,7 @@ static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t **hstacks, int hst
   if (finst->flags & FINST_FLAG_REJECTED) {
     lives_funcinst_free(finst);
     receipt = NULL;
-  }
-  else {
+  } else {
     cbflags = CL_DATA(finst, cb_flags);
     CL_DATA(finst, cb_flags) = cbflags & ~HOOK_STATUS_NOTREADY;
   }
@@ -2170,7 +2212,7 @@ void *_lives_hook_cb_add_full(lives_hook_stack_t **hstacks, int hstype, uint64_t
                               const char *fname, int return_type, const char **anames, ...) {
   // create funcinst, no params
   void *rcpt = NULL;
-  lives_funcinst_t *finst = _lives_funcinst_create(NULL, func, fname, return_type, NULL, NULL, NULL);
+  lives_funcinst_t *finst = lives_funcinst_create_named(func, fname, return_type, NULL, NULL, NULL);
   va_surprise va_magic;
   va_surprise *va_wand = NULL;
   boolean has_cond = FALSE, has_af = FALSE;
@@ -2385,7 +2427,7 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
       /* 	cbflags &= ~HOOK_STATUS_RUNNING; */
       /* 	CL_DATA(finst, triggerer.lpt) = ACTION_SOURCE_NONE; */
       /* } */
-      
+
       if (cbflags & (HOOK_CB_IGNORE)) {
         lives_funcinst_send_replies(finst, LIVES_REPLY_NO);
         cbflags &= ~HOOK_STATUS_ACTIONED;
@@ -2499,18 +2541,18 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
       }
 
       if (args_fmt && *args_fmt) {
-	va_list vc;
-	np = get_funcinst_nparams(finst);
-	va_copy(vc, va);
-	for (int i = 0; args_fmt[i]; i++) {
-	  weed_seed_t st = get_seedtype(args_fmt[i]);
-	  char *pkey = make_std_pname(np + i);
-	  weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
-	  weed_leaf_set_distinguished(finst->params, pkey, TRUE);
-	  weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
-	  lives_free(pkey);
-	}
-	va_end(vc);
+        va_list vc;
+        np = get_funcinst_nparams(finst);
+        va_copy(vc, va);
+        for (int i = 0; args_fmt[i]; i++) {
+          weed_seed_t st = get_seedtype(args_fmt[i]);
+          char *pkey = make_std_pname(np + i);
+          weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
+          weed_leaf_set_distinguished(finst->params, pkey, TRUE);
+          weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
+          lives_free(pkey);
+        }
+        va_end(vc);
       }
 
       if (hstype != FATAL_HOOK) PTMUH;
@@ -2552,23 +2594,21 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
         if (reply == LIVES_REPLY_YES)
           lives_funcinst_send_replies(finst, LIVES_REPLY_FULFILLED);
         remove_from_hstack(hstack, list);
-      }
-      else {
+      } else {
 
 
-    np = get_funcinst_nparams(finst);
-    while (np--) {
-      char *pkey = make_std_pname(np);
-      if (weed_leaf_is_distinguished(finst->params, pkey)) {
-	weed_leaf_delete(finst->params, pkey);
-	weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np);
-	lives_free(pkey);
-      }
-      else {
-	lives_free(pkey);
-	break;
-      }
-    }
+        np = get_funcinst_nparams(finst);
+        while (np--) {
+          char *pkey = make_std_pname(np);
+          if (weed_leaf_is_distinguished(finst->params, pkey)) {
+            weed_leaf_delete(finst->params, pkey);
+            weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np);
+            lives_free(pkey);
+          } else {
+            lives_free(pkey);
+            break;
+          }
+        }
       }
       if (hs_op_flags & HOOKSTACK_RUN_SINGLE) {
         for (list = listnext; list; list = list->next) {
@@ -2600,7 +2640,7 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
     }
   } while (rerun);
 
- trigdone:
+trigdone:
 
   if (req_stack) pthread_mutex_unlock(&req_stack->mutex);
 
@@ -2643,7 +2683,7 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
   uint64_t hs_op_flags, cbflags;
   int ncount = 0;
   lives_proc_thread_t *lpts = NULL, lpt;
-   va_list va, vc;
+  va_list va, vc;
 
   if (xlpts) *xlpts = NULL;
 
@@ -2708,13 +2748,13 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
       np = get_funcinst_nparams(finst);
       va_copy(vc, va);
       for (int i = 0; args_fmt[i]; i++) {
-	weed_seed_t st = get_seedtype(args_fmt[i]);
-	char *pkey = make_std_pname(np + i);
-	weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
-	weed_leaf_set_distinguished(finst->params, pkey, TRUE);
-	g_print("set p %d D, np is %d\n", np + i, np + i + 1);
-	weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
-	lives_free(pkey);
+        weed_seed_t st = get_seedtype(args_fmt[i]);
+        char *pkey = make_std_pname(np + i);
+        weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
+        weed_leaf_set_distinguished(finst->params, pkey, TRUE);
+        g_print("set p %d D, np is %d\n", np + i, np + i + 1);
+        weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
+        lives_free(pkey);
       }
       va_end(vc);
     }
@@ -2880,22 +2920,21 @@ static void _lives_hook_async_join(int hstype, boolean cancel) {
       remove_from_hstack(hstack, cblist);
       continue;
     }
-    
+
     np = get_funcinst_nparams(finst);
-  
+
     while (np--) {
       char *pkey = make_std_pname(np);
       if (weed_leaf_is_distinguished(finst->params, pkey)) {
-	weed_leaf_delete(finst->params, pkey);
-	weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np);
-	lives_free(pkey);
-      }
-      else {
-	lives_free(pkey);
-	break;
+        weed_leaf_delete(finst->params, pkey);
+        weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np);
+        lives_free(pkey);
+      } else {
+        lives_free(pkey);
+        break;
       }
     }
-    
+
   }
   hstack->flags &= ~HS_FLAG_TRIGGERING;
   PTMUH;
@@ -3200,12 +3239,5 @@ void dump_fn_notes(void) {
     }
     _ext_free(items);
   }
-}
-
-
-LIVES_GLOBAL_INLINE char *get_argstring_for_func(lives_funcptr_t func) {
-  const lives_funcdef_t *fdef = get_template_for_func(func);
-  if (!fdef) return NULL;
-  return funcsig_to_param_string(fdef->funcsig);
 }
 

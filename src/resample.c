@@ -10,8 +10,6 @@
 #include "resample.h"
 #include "callbacks.h"
 #include "effects.h"
-#include "audio.h"
-#include "events.h"
 #include "cvirtual.h"
 
 #define LIVES_LEAF_NEW_TC "new_tc"

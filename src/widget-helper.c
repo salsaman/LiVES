@@ -3318,12 +3318,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_hide_titlebar_when_maximize
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow * window, int width, int height) {
 #ifdef GUI_GTK
   if (mainw->mgeom) {
-    if (!mainw->ignore_screen_size) {
-      if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
-        lives_abort("Widget size too large for display (winr!i) !");
-    } else {
-      if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
-        lives_abort("Widget size too large for display (winri) !");
+    if (window != LIVES_WINDOW(mainw->play_window)) {
+      if (!mainw->ignore_screen_size) {
+        if (width > GUI_SCREEN_WIDTH || height > GUI_SCREEN_HEIGHT)
+          lives_abort("Widget size too large for display (winr!i) !");
+      } else {
+        if (width > GUI_SCREEN_PHYS_WIDTH || height > GUI_SCREEN_PHYS_HEIGHT)
+          lives_abort("Widget size too large for display (winri) !");
+      }
     }
   }
   //if (GTK_WIDGET(window) == mainw->LiVES) BREAK_ME("res win");
@@ -9041,12 +9043,20 @@ void render_standard_button(LiVESButton * sbutt) {
   if (!is_standard_widget(widget)) return;
   else {
     LiVESWidget *da = lives_bin_get_child(LIVES_BIN(sbutt));
+    pthread_mutex_t *mutex = lives_widget_get_mutex(da);
+    pthread_mutex_lock(mutex);
     struct pbs_struct *pbs = GET_VOIDP_DATA(da, PBS_KEY);
     lives_painter_surface_t **pbsurf;
-    if (!pbs) return;
+    if (!pbs) {
+      pthread_mutex_unlock(mutex);
+      return;
+    }
     pbsurf = pbs->surfp;
-    if (!pbsurf || !*pbsurf) return;
-    else {
+    pthread_mutex_unlock(mutex);
+    if (!pbsurf || !*pbsurf) {
+      pthread_mutex_unlock(mutex);
+      return;
+    } else {
       lives_painter_t *cr;
       lives_painter_surface_t *bsurf;
       LingoLayout *layout =
@@ -9281,6 +9291,7 @@ void render_standard_button(LiVESButton * sbutt) {
         }
       }
     }
+    pthread_mutex_unlock(mutex);
   }
 }
 
@@ -9372,7 +9383,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_standard_button_set_label(LiVESButton 
   SET_INT_DATA(sbutt, SBUTT_MARKUP_KEY, widget_opts.use_markup);
   lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(sbutt), SBUTT_TXT_KEY,
                                     txt ? lives_strdup(txt) : NULL);
-  render_standard_button(sbutt);
+  if (!lives_widget_is_visible(LIVES_WIDGET(sbutt))) render_standard_button(sbutt);
   return TRUE;
 }
 
@@ -9856,14 +9867,18 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
   // stores a struct contiangin ppsurf, widget, key
   lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(darea), PBS_KEY, ppsurf);
 
-  if (ppsurf) {
-    if (callback)
+  if (!*ppsurf) {
+    *ppsurf = lives_widget_create_painter_surface(darea);
+    lives_painter_surface_reference(*ppsurf);
+  }
+
+  if (callback) {
 #if GTK_CHECK_VERSION(4, 0, 0)
-      gtk_drawing_area_set_draw_func(darea, callback, (livespointer)ppsurf, NULL);
+    gtk_drawing_area_set_draw_func(darea, callback, (livespointer)ppsurf, NULL);
 #else
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-                                LIVES_GUI_CALLBACK(callback),
-                                (livespointer)ppsurf);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+                              LIVES_GUI_CALLBACK(callback),
+                              (livespointer)ppsurf);
 #endif
   }
   //if (!mainw->configured) defer_config(darea);

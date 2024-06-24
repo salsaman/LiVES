@@ -50,7 +50,6 @@
 #include "effects.h"
 #include "rte_window.h"
 #include "resample.h"
-#include "audio.h"
 #include "paramwindow.h"
 #include "stream.h"
 #include "startup.h"

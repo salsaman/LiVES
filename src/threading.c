@@ -456,7 +456,7 @@ lives_proc_thread_t add_garnish(lives_proc_thread_t lpt) {
   // we can set any cons vals for the local databook at scope 0
   SET_LPT_VALUE(lpt, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, lpt);
   lives_databook_descend(lives_proc_thread_get_book(lpt));
-  
+
   hook_stacks = (lives_hook_stack_t **)lives_calloc(N_HOOK_POINTS, sizeof(lives_hook_stack_t *));
 
   for (int i = N_NATIVE_HOOKS; i < N_HOOK_POINTS; i++) {
@@ -1556,8 +1556,8 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
       if (!have_lock) pthread_mutex_unlock(pause_mutex);
       boolean is_fg = is_fg_thread();
       while (!bval) {
-	lives_microsleep;
-	if (is_fg) fg_service_fulfill();
+        lives_microsleep;
+        if (is_fg) fg_service_fulfill();
       }
       lives_proc_thread_unref(lpt);
       return TRUE;
@@ -1573,7 +1573,7 @@ boolean lives_proc_thread_request_resume(lives_proc_thread_t lpt) {
 }
 
 
-boolean lives_proc_thread_force_resume(lives_proc_thread_t lpt) {
+boolean lives_proc_thread_ensure_resume(lives_proc_thread_t lpt) {
   return _lives_proc_thread_request_resume(lpt, FALSE, TRUE);
 }
 
@@ -3082,6 +3082,8 @@ static void make_pth_key(void) {
 
 static void *_lives_thread_data_create(void *pslot_id) {
   lives_thread_data_t *tdata;
+  pthread_mutexattr_t mattr;
+  pthread_condattr_t condattr;
   int slot_id = LIVES_POINTER_TO_INT(pslot_id);
   pthread_once(&do_once, make_pth_key);
   tdata = pthread_getspecific(tdata_key);
@@ -3141,9 +3143,14 @@ static void *_lives_thread_data_create(void *pslot_id) {
 
     tdata->vars.var_thrd_self = tdata->thrd_self = pthread_self();
 
-    pthread_mutex_init(&tdata->vars.var_pause_mutex, NULL);
+    pthread_mutexattr_init(&mattr);
+    pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+    pthread_mutex_init(&tdata->vars.var_pause_mutex, &mattr);
 
-    pthread_cond_init(&tdata->vars.var_pcond, NULL);
+    pthread_condattr_init(&condattr);
+    pthread_condattr_setpshared(&condattr, PTHREAD_PROCESS_SHARED);
+    pthread_cond_init(&tdata->vars.var_pcond, &condattr);
+
     tdata->vars.var_sync_ready = TRUE;
 
     tdata->vars.var_loveliness = DEF_LOVELINESS;
@@ -3777,9 +3784,10 @@ static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 LIVES_GLOBAL_INLINE boolean check_refcnt_init(lives_refcounter_t *refcount) {
   if (refcount) {
     if (!refcount->mutex_inited) {
-      // there is a reace condition here
+      // there is a race condition here
       // - we do the init, but before get the lock, another thread reaches this point
       // it will init the mutex again
+      // so we use global init_mutex to prevent this
       pthread_mutex_lock(&init_mutex);
       if (!refcount->mutex_inited) {
         pthread_mutex_init(&refcount->mutex, NULL);

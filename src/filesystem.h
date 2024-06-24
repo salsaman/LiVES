@@ -121,8 +121,8 @@ void init_fbuff_sizes(const char *workdir);
 // options
 #define FB_FLAG_RDONLY		(1ull << 0)
 #define FB_FLAG_ALLOW_FAIL	(1ull << 1)
-#define FB_FLAG_REVERSE		(1ull << 2)
-#define FB_FLAG_USE_RINGBUFF   	(1ull << 3)
+#define FB_FLAG_REVERSE		(1ull << 2) // per ringbuff !
+#define FB_FLAG_USE_RINGBUFF   	(1ull << 3) // use nringbuffs
 
 // internal values
 #define FB_FLAG_BG_OP		(1ull << 16)
@@ -136,18 +136,39 @@ void init_fbuff_sizes(const char *workdir);
 #define FB_FLAG_EOF		(1ull << 32)
 #define FB_FLAG_INVALID		(1ull << 33)
 
+// error checking bit
+#define FB_CHECK_READONLY	(1ull << 48)
+#define FB_CHECK_WRITEONLY	(1ull << 49)
+
+#define FB_TEST_RDONLY		(FB_FLAG_RDONLY | FB_CHECK_READONLY) // invalid == FB_CHECK_RDONLY
+#define FB_TEST_WRONLY		(FB_FLAG_RDONLY | FB_CHECK_WRITEONLY) // invalid == FB_FLAG_RDONLY | FB_CHECK_WRONLY
+
 typedef struct {
   int idx;  ///< identifier in list
   int fd; ///< number of underlying file (maybe become -1 if detached)
   volatile ssize_t bytes;  ///< bytes written in buffer / bytes left to read
   uint8_t *ptr;   ///< read / write point in buffer
   uint8_t *buffer;   ///< address of buffer start : (ptr - buffer + bytes) gives the read size
-  uint8_t *ring_buffer;   /// alt for bg flushing
+
+  // buffsize is ptr - buffer + bytes (rdonly)
+  // buffsize is bytes (wronly)
+
+  // TODO - always use ringbuffs, default will be nringbuffs == 0 or 1
+  int nringbuffs;
+  int rd_ringbuff;
+  int wr_nringbuff;
+  uint8_t **ring_buffers;   ///
   size_t rbf_size; ///< ring buffer bytes filled
+  //
+  weed_layer_t *layer; // layer associated with buffer
   volatile off_t offset; ///< offset in bytes of END of block, relative to start of file
   off_t skip; ///< count of bytes skipped at start
+  off_t trunc; ///< trunccation size (soft EOF)
   int bufsztype;
-  size_t custom_size;
+  size_t quanta;
+  //
+  size_t custom_size; // buffsize
+  //
   int nseqreads; ///< count of sequential reads since last buffer fill
   int totops; ///< count of operations peformed on buffer
   int64_t totbytes; ///< total bytes read / written to / from buffer
@@ -177,8 +198,9 @@ uint8_t *lives_buffered_get_data(int fd);
 off_t lives_buffered_offset(int fd);
 size_t lives_buffered_orig_size(int fd);
 boolean lives_read_buffered_eof(int fd);
+boolean lives_buffered_rdonly_set_quanta(int fd, size_t quanta);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
-boolean lives_write_buffered_set_ringmode(int fd);
+boolean lives_buffered_set_ringmode(int fd, int nrings);
 ssize_t lives_write_buffered_set_custom_size(int fd, size_t count);
 ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail);
 ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...);

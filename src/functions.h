@@ -792,6 +792,9 @@ typedef struct {
 #define ADDED_TRIGGER		_TRIGGER_ON_ADD
 #define DELETING_TRIGGER	(_TRIGGER_ON_DEL | _TRIGGER_ON_PRE)
 
+// TODO - for data hooks the hook can be called before or after a value is updated
+// for the hook to be triggered, pre condition must be TRUE before the update and
+// post must be
 typedef struct {
   // name of leaf (attribute) in stack owner
   const char *target_item;
@@ -838,35 +841,22 @@ typedef struct {
   // if NULL, defaults to COND_ALWAYS
   lives_condition accept_cond;
 
-  // this part is a little complex to describe but easier in practice
   // each callback in a hook stack can call any compatible function
   // "compatible" here refers to the format of the parameters and the return value type
   //
   // the paramaters passed are derived thus:
-  // [fixed (mapped data) consts + input consts] + [fixed (mapped data) vars + input vars]
-  // + [extra consts] + [extra vars]
+  // [fixed (mapped data) consts] + etxra params
   //
-  // the first part, [fixed (mapped data) consts + input consts] is declared in const_data_srcs
-  // these are not strictly "const" values, however the values are set (readonly) when the callback is added
+  // the first part, [fixed (mapped data) consts] is declared in const_data_srcs
+  // these are not strictly "const" values, however the values are fixed when the callback is added
   // if const_data_srcs is NULL, there are no const params, otherwise
   // it is a NULL terminated array of strings. Each value can map to an item in the global data book
   // local data book or an input (supplied) value
-  // fmt of each is eg "V|$data" - local book value 'data'
-  // or "V|@data" - global book value 'data'
-  // or "V|-data" input value must be passed in args_fmt + va_args, mapping keeps same order
-  // but mapped and input values can be alternated
-  // if the final array value is "*" - extra const params can passed in args_fmt and va_args
-  // - these are appended after fixed const params and fixed var params
-  ///   but before extra var params
+  //
+  // fmt of each is eg "T|$data" - local book value 'data'
+  // or "T|@data" - global book value 'data'
   const char **_const_data_srcs;
   LiVESList *const_data_srcs;
-
-  // same as const, but value is set at trigger time
-  // optionally, one value can start with a '>' to indicate the function return should
-  // be mapped back to and update this value. For this reason, any input vars or extra vars passed in at trigger time MUST
-  // be passed as BIND_VALUE(typecode, var) e.g BIND_VALUE("V", data) rather than just 'data'
-  const char **_var_data_srcs;
-  LiVESList *var_data_srcs;
 } hook_stack_descriptor_t;
 
 const hook_stack_descriptor_t *get_hs_desc(int hstype);
@@ -1192,9 +1182,9 @@ void fg_deferral_remove_persistent(void);
 void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
                               const char *fname, int return_type, const char **anames, ...);
 
-// SAM AS APPEND, BUT WE CAN SET RTYPE AND NAME
-#define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, ...) \
-  _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+/* // SAM AS APPEND, BUT WE CAN SET RTYPE AND NAME */
+/* #define lives_hook_cb_add_full(hs, type, cbflags, func, fname, rtype, ...) \ */
+/*   _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL) */
 
 // func call with variant addmode INTERNAL
 void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode, ...);
@@ -1310,6 +1300,16 @@ typedef struct {
 void lives_funcdef_include_bound_value(lives_funcdef_t *, int pnum, const char *target);
 void lives_funcinst_include_bound_value(lives_funcisnt_t *, int pnum, const char *target);
 #endif
+
+typedef LiVESList Type_List;
+typedef allvalues_t **Type_Array;
+
+Type_Array vasu2allvp_array(va_surprise *);
+Type_List *params2allvp_list(weed_plant_t *);
+
+void t_array_free(Type_Array *);
+
+#define T_ARRAY_FREE(t) t_array_free(&(t))
 
 #define leaf_from_allvalues(plant, key, allvp) allvp ? LEAF_FROM_ALLV(plant, key, allvp) : WEED_ERROR_NOSUCH_ELEMENT
 

@@ -35,7 +35,21 @@ typedef struct {
   char *bad_aud_file;
 } arec_details;
 
+typedef struct {
+  int rate;
+  int chans;
+  int sampsz;
+  boolean isflt;
+  boolean interleaved;
+  boolean asigned;
+  int endian;
+  size_t dlen;
+  void **data;
+} audio_dtls;
+
 #define LIVES_LEAF_AUDIO_SOURCE "audio_source"
+#define LIVES_LEAF_AUDIO_INTERLEAVED "audio_inter"
+#define LIVES_LEAF_AUDIO_SAMPS "audio_samps"
 
 lives_obj_instance_t *get_aplayer_instance(int source);
 
@@ -55,12 +69,12 @@ int lives_aplayer_get_endian(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_endian(lives_obj_t *aplayer, int aendian);
 boolean lives_aplayer_get_float(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float);
-int64_t lives_aplayer_get_data_len(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int64_t alength);
+int lives_aplayer_get_data_len(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int alength);
 boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter);
-void *lives_aplayer_get_data(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
+void **lives_aplayer_get_data(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
@@ -107,10 +121,10 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void *data);
 #define SWAP_L_TO_X 2 ///< local to other
 
 /// defaults for when not specified#
-//# define DEFAULT_AUDIO_RATE 44100
 #define DEFAULT_AUDIO_RATE 48000
 #define DEFAULT_AUDIO_CHANS 2
 #define DEFAULT_AUDIO_SAMPS 16
+#define DEFAULT_AUDIO_INTERLEAVED TRUE
 #define DEFAULT_AUDIO_SIGNED8 (AUDIO_UNSIGNED)
 #define DEFAULT_AUDIO_SIGNED16 (AUDIO_SIGNED)
 #define DEFAULT_AUDIO_SIGNED DEFAULT_AUDIO_SIGNED16
@@ -270,7 +284,7 @@ void sample_silence_stream(int nchans, int64_t nsamples);
 boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
                        boolean big_endian);
 
-float **convert_to_float(lives_obj_t *aplayer, size_t nsamples);
+float **convert_to_float(lives_obj_t *aplayer, size_t nsamples, boolean alock_mixer);
 
 size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip,
                                  float vol, size64_t out_samples) GNU_HOT;
@@ -394,6 +408,8 @@ void audio_free_fnames(void);
 #define is_real_aplayer(ptype) (ptype != AUD_PLAYER_NONE)
 
 void preview_aud_vol(frames_t aframeno);
+
+lives_result_t audio_cache(int op, ...);
 
 lives_audio_buf_t *audio_cache_init(void);
 void audio_cache_end(void);

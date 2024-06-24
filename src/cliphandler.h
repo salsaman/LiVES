@@ -144,6 +144,11 @@ typedef enum {
 // frame src is internal (e.g test pattern, nullvideo)
 #define LIVES_SRC_TYPE_INTERNAL		256
 
+
+// sources 1024 and up are audio srcs
+#define LIVES_ASRC_TYPE_FILE		1024
+
+
 // layer has no source
 #define SRC_STATUS_NOT_SET		0
 
@@ -173,21 +178,24 @@ typedef enum {
 // source cannot operate correctly, do not use
 #define SRC_STATUS_BROKEN		514
 
-//
+// srcgrp puproposes
 
 #define SRC_PURPOSE_ANY		     	-1
 
-// primary source for the clip, the default
+// primary source_group for the clip, the default
 #define SRC_PURPOSE_PRIMARY		0
 // clone source for multitracks
 #define SRC_PURPOSE_TRACK		1
 //
 #define SRC_PURPOSE_TRACK_OR_PRIMARY	2
 
-// clone source for pre caching frames, can be switched with primary / track
+// clone source_group for pre caching frames, can be switched with primary / track
 #define SRC_PURPOSE_PRECACHE		8
-// source used for creating thumbnail images
+// source) used for creating thumbnail images
 #define SRC_PURPOSE_THUMBNAIL		9
+
+// src_group for clip / track audio
+#define SRC_PURPOSE_AUDIO		64
 
 // for srcs used in nodemodel
 #define SRC_PURPOSE_MODEL		128
@@ -306,8 +314,9 @@ typedef struct {
   uint64_t class_uid;
   uint64_t actor_uid;
 
-  clipsrc_action_func_t action_func; // layer - fill layer pixel_data
+  clipsrc_action_func_t action_func; // layer - fill layer pixel_data / audio_data
   clipsrc_clone_func_t clone_func;  // actor  - create new instance with same URL, actor_UID
+
   //clipsrc_init_func_t create_func;  // (ext_URI) - return instance of actor
 
   //clipsrc_snapshot_func_t snapshot_func; // create a snapshot of state for faster reloading
@@ -335,7 +344,7 @@ typedef struct {
   // if actor is a template, points to the specific inst for the scrgroup
   void *actor_inst;
 
-  // cpal and gaama will be converted first to srcgroup appatent_pal, apparent_gamma
+  // cpal and gaama will be converted first to srcgroup apparent_pal, apparent_gamma
 
   // palette, gamma_type for this clipsrc, will be converted to
   // apparent_pal, apparent_gamma for the srcgrp
@@ -359,6 +368,21 @@ typedef struct {
 
   void *priv; // private data for the source
 } lives_clip_src_t;
+
+typedef audio_dtls audio_appearance;
+
+typedef struct {
+  union {
+    int pal;
+    full_pal_t pally;
+  };
+  int gamma;
+} video_appearance;
+
+typedef struct {
+  video_appearance *v;
+  audio_appearance *a;
+} appearance_t;
 
 // clip_srcs are contained in clipsrc_groups. Clips  can have one or more clipsrc groups
 // the default group is the PRIMARY group, but we can ausiliar groups
@@ -400,12 +424,12 @@ typedef struct {
 
   lives_clip_src_t **srcs;
 
-  union {
-    int apparent_pal;
-    full_pal_t apparent_pally;
-  };
+  // since clips may have multiple clip_srcs each with their own internal palete, we select one palette
+  // to be "representative" of tyhe clip. Just as width and height are "representative" of the frame size
+  // apparent.v->pal is representative of the palette. This means that whatever clip_src is applied for a frame
+  // we convert it to width, height, apparent.v->pal
 
-  int apparent_gamma;
+  appearance_t apparent;
 
   pthread_mutex_t src_mutex;
 
@@ -647,11 +671,7 @@ typedef struct _lives_clip_t {
   lives_clipsrc_group_t **src_groups;
   int n_src_groups;
 
-  // since clips may have multiple clip_srcs each with their own internal palete, we select one palette
-  // to be "representative" of tyhe clip. Just as width and heith are "representative" of the frame size
-  // aooarent pal is representative of the palette. This means that whatever clip_src is applied for a frame
-  // we convert it to width,height, apparent_pal
-  int apparent_pal;
+  lives_clipsrc_group_t *audio_srcgrp;
 
   uint64_t *cache_objects; ///< for future use
 
@@ -843,9 +863,8 @@ lives_clip_src_t *get_clip_src(lives_clipsrc_group_t *, int clip, uint64_t actor
                                fingerprint_t *chksum);
 lives_clip_src_t *find_src_by_class_uid(lives_clipsrc_group_t *srcgrp, uint64_t class_uid);
 
-lives_clipsrc_group_t *get_srcgrp(int nclip, int track, int purpose);
-lives_clipsrc_group_t *get_primary_srcgrp(int nclip);
-
+lives_clipsrc_group_t *get_srcgrp(int nclip, int track, int purpose)
+;
 boolean swap_srcgrps(int nclip, int otrack, int opurpose, int ntrack, int npurpose);
 
 void update_gamma_in_all_srcgrps(int clip, lives_clip_src_t *mysrc);
@@ -855,6 +874,8 @@ void clip_srcs_free_all(int nclip, lives_clipsrc_group_t *);
 void srcgrp_free(int nclip, lives_clipsrc_group_t *);
 void srcgrp_remove(int nclip, int track, int purpose);
 void srcgrps_free_all(int nclip);
+
+lives_clipsrc_group_t *get_primary_srcgrp(int nclip);
 
 void *get_primary_actor(lives_clip_t *);
 void *get_primary_inst(lives_clip_t *);
@@ -874,6 +895,9 @@ void srcgrp_set_apparent(lives_clip_t *, lives_clipsrc_group_t *, full_pal_t *pa
 void set_primary_apparent(int nclip, full_pal_t *pally, int gamma_type);
 
 lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_type);
+
+weed_layer_t *config_audio_layer(weed_layer_t *, int clipno);
+void set_audio_apparent(int clipno, audio_dtls *);
 
 // clip sources
 /* lives_clip_src_t *add_clip_source(int nclip, int track, int purpose, void *source, int src_type); */

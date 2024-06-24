@@ -475,8 +475,7 @@ void finst_module_free(void *module, funcinst_module_type mod_type);
 lives_proc_thread_t lives_thread_get_proc_thread(void);
 void lives_thread_set_proc_thread(lives_proc_thread_t lpt);
 
-#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_proc_thread(); \
-  THREADVAR(func_trace) = _FUNC_REF_;
+#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_proc_thread()
 
 void lives_proc_thread_set_pthread(lives_proc_thread_t, pthread_t pthread);
 pthread_t lives_proc_thread_get_pthread(lives_proc_thread_t);
@@ -666,7 +665,8 @@ lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t 
 #define lives_funcinst_create_already(func, fname, rtype, af, ...)		\
   (_lives_funcinst_create(NULL, (lives_funcptr_t)func, fname ? fname : #func, (rtype), __VA_OPT__(VARNAMES(__VA_ARGS__),) (af) __VA_OPT__(,) __VA_ARGS__))
 
-#define lives_funcinst_create(func, fname, rtype, ...) lives_funcinst_create_already(func, fname, rtype __VA_OPT__(,) __VA_ARGS__, NULL)
+#define lives_funcinst_create(func, rtype, ...) lives_funcinst_create_already(func, #func, rtype __VA_OPT__(,) __VA_ARGS__, NULL)
+#define lives_funcinst_create_named(func, fname, rtype, ...) lives_funcinst_create_already(func, fname, rtype __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #define lives_funcinst_create_va(func, rtype, af, va)		\
   (_lives_funcinst_create_va(NULL, (lives_funcptr_t)func, #func, (rtype), NULL, (af), (va)))
@@ -682,10 +682,10 @@ lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_threa
     const char *fname,
     int return_type, const char **anames, const char *args_fmt, ...);
 
-#define lives_proc_thread_create(attrs, func,rtype, af, ...)		\
+#define lives_proc_thread_create(attrs, func, rtype, af, ...)		\
   (record_loc(_FUNC_REF_,_FILE_REF_,_LINE_REF_) ?			\
    _lives_proc_thread_create(NULL, (attrs), (lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), \
-			     (af), __VA_ARGS__, "", NULL) : NULL)
+			     (af) __VA_OPT__(,) __VA_ARGS__, NULL) : NULL)
 
 #define lives_proc_thread_create_pvoid(attra, func, rrype)				\
   (_lives_proc_thread_create((attrs), (lives_funcptr_t)func, #func, (rtype), NULL, "", NULL))
@@ -792,8 +792,6 @@ int lives_proc_thread_count_refs(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 
-#define DEL_SELF_VALUE(name) DEL_BOOK_VALUE(lives_local_databook(), name)
-
 // book values by default are readonly, dellible
 // for non self values we make them indellible
 
@@ -802,11 +800,15 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 
 #define SET_SELF_VALUE(type, name, val)					\
   SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, val)
-#define SET_SELF_VALUE_VA(type, name, va)					\
+#define SET_SELF_VALUE_VA(type, name, va)				\
   SET_BOOK_VALUE_VA(lives_proc_thread_ensure_book(self), type, name, va)
 #define SET_SELF_ARRAY(type, name, nvals, valsptr)			\
   SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, nvals, valsptr)
-#define GET_SELF_VALUE(val, name)				\
+
+#define DEL_SELF_VALUE(name)		\
+  DEL_BOOK_VALUE(lives_local_databook(), name)
+
+#define GET_SELF_VALUE(val, name)			\
   GET_BOOK_VALUE(val, lives_local_databook(), name)
 
 // caution - values by ref !
@@ -815,8 +817,14 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 
 #define SET_LPT_VALUE(lpt, type, name, val)				\
   SET_BOOK_VALUE(lives_proc_thread_ensure_book(lpt), type, name, val);
+#define SET_LPT_VALUE_VA(lpt, type, name, va)				\
+  SET_BOOK_VALUE_VA(lives_proc_thread_ensure_book(lpt), type, name, va)
 #define SET_LPT_ARRAY(lpt, type, name, nvals, valsptr)			\
-    SET_BOOK_ARRAY(lives_proc_thread_ensure_book(lpt), type, name, nvals, valsptr);
+  SET_BOOK_ARRAY(lives_proc_thread_ensure_book(lpt), type, name, nvals, valsptr);
+
+#define DEL_LPT_VALUE(lpt, name)			\
+  DEL_BOOK_VALUE(lives_proc_thread_get_book(lpt), name)
+
 #define GET_LPT_VALUE(lpt, val, name)				\
   GET_BOOK_VALUE(val, lives_proc_thread_get_book(lpt), name)
 
@@ -990,7 +998,8 @@ boolean lives_proc_thread_request_resume(lives_proc_thread_t);
 // this is used in the case where we know target may pause and we want to wake it or prevent it
 // from pausing, - if not paused, the resume request state is left active
 // if target decides not to pause, it should check and clear this state
-boolean lives_proc_thread_force_resume(lives_proc_thread_t);
+// if target IS paused, the function blocks until the resume request has been responded to
+boolean lives_proc_thread_ensure_resume(lives_proc_thread_t);
 
 boolean lives_proc_thread_get_resume_requested(lives_proc_thread_t);
 boolean lives_proc_thread_resume(lives_proc_thread_t self);
@@ -1002,7 +1011,7 @@ boolean lives_proc_thread_resume(lives_proc_thread_t self);
 lives_result_t lives_proc_thread_cancel_immediate(lives_proc_thread_t lpt, lives_cancel_type_t cancel_type);
 
 // flags the proc_thread so it will be unreffed automatically when it finshes
-// such threads do not need to be joined. Setting this will tigger dontcare_hook fo the proc_thread whose state is
+// such threads do not need to be joined. Setting this will trigger dontcare_hook for the proc_thread whose state is
 // being altered. Threads with this attribute set will never reach finished state, but will go from completed to
 // destroying. The action can be blocked by adding hailmary_other_thread as a callback to the dontcare_hook.
 
@@ -1011,6 +1020,10 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, boolean have_lock);
 
 boolean lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec);
+
+// fixed syncidxes
+#define SYNCIDX_AVSYNC			101
+#define SYNCIDX_DIRSIZE_DONE		201
 
 // ignore idx mismatch
 #define MM_IGNORE		0

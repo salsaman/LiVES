@@ -4511,44 +4511,5 @@ prpw_done:
   return res_string;
 }
 
-/////////// objects /////
-
-LIVES_GLOBAL_INLINE lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *obj, boolean readonly) {
-  lives_obj_attr_t **attrs = lives_object_get_attrs(obj);
-  lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
-  rfx->status = RFX_STATUS_OBJECT;
-  rfx->source = (void *)obj;
-  rfx->source_type = LIVES_RFX_SOURCE_OBJECT;
-
-  *rfx->delim = '|';
-  lives_snprintf(rfx->rfx_version, 64, "%s", RFX_VERSION);
-
-  rfx->num_params = lives_object_get_num_attributes(obj);
-  if (attrs) {
-    rfx->params = lives_calloc(rfx->num_params, sizeof(lives_param_t));
-    for (int i = 0; i < rfx->num_params; i++) {
-      lives_obj_attr_t *attr = attrs[i];
-      weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL);
-      char *name = weed_get_string_value(attr, WEED_LEAF_NAME, NULL);
-      char *label = weed_get_string_value(attr, WEED_LEAF_LABEL, NULL);
-      int param_type = weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL);
-      if (!gui) {
-        gui = weed_plant_new(WEED_PLANT_GUI);
-        weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
-      }
-      rfx->params[i].source = attr;
-      rfx->params[i].source_type = LIVES_RFX_SOURCE_OBJECT;
-      build_rfx_param(&rfx->params[i], attr, param_type, label, gui, attr);
-      weed_set_voidptr_value(gui, LIVES_LEAF_RPAR, (void *)(&rfx->params[i]));
-      //if (readonly || contract_attribute_is_readonly(obj, name))
-      //rfx->params[i].flags |= PARAM_FLAG_READONLY;
-      if (readonly) rfx->params[i].flags |= PARAM_FLAG_READONLY;
-      lives_free(label);
-      lives_free(name);
-    }
-    lives_free(attrs);
-  }
-  return rfx;
-}
 
 

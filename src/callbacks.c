@@ -18,7 +18,6 @@
 #include "effects.h"
 #include "resample.h"
 #include "rte_window.h"
-#include "audio.h"
 #include "cvirtual.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
@@ -7342,22 +7341,22 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
-	if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel)
-	  if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
-	      && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
-	      && (capable->wm_caps.annoy.panel.resolution & RES_HIDE) &&
-	      capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION) {
-	    show_desktop_panel();
-	  }
-	}
-	
-	if (capable->wm_caps.annoy.notify.problem) {
-	  boolean origval;
-	  VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
-	  if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
-	      && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND) &&
-	      capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG) {
-	    enable_desktop_notify();
+        if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel)
+          if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
+              && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
+              && (capable->wm_caps.annoy.panel.resolution & RES_HIDE) &&
+              capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION) {
+            show_desktop_panel();
+          }
+      }
+
+      if (capable->wm_caps.annoy.notify.problem) {
+        boolean origval;
+        VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
+        if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
+            && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND) &&
+            capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG) {
+          enable_desktop_notify();
         }
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -9228,44 +9227,43 @@ void update_sel_menu(void) {
       lives_widget_set_sensitive(mainw->trim_video, FALSE);
     } else {
       if (cfile->start == 1 || cfile->end == cfile->frames)
-	lives_widget_set_sensitive(mainw->select_invert, TRUE);
+        lives_widget_set_sensitive(mainw->select_invert, TRUE);
       else {
-	lives_widget_set_sensitive(mainw->select_invert, FALSE);
-	lives_widget_set_sensitive(mainw->select_all, TRUE);
-	lives_widget_set_sensitive(mainw->sa_button, TRUE);
-	lives_widget_set_sensitive(mainw->trim_video, TRUE);
+        lives_widget_set_sensitive(mainw->select_invert, FALSE);
+        lives_widget_set_sensitive(mainw->select_all, TRUE);
+        lives_widget_set_sensitive(mainw->sa_button, TRUE);
+        lives_widget_set_sensitive(mainw->trim_video, TRUE);
       }
-  
+
       if (cfile->start == 1) lives_widget_set_sensitive(mainw->select_from_start, FALSE);
       else lives_widget_set_sensitive(mainw->select_from_start, TRUE);
 
       if (cfile->end < cfile->frames) {
-	lives_widget_set_sensitive(mainw->select_to_end, TRUE);
+        lives_widget_set_sensitive(mainw->select_to_end, TRUE);
       } else {
-	lives_widget_set_sensitive(mainw->select_to_end, FALSE);
-	lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+        lives_widget_set_sensitive(mainw->select_to_end, FALSE);
+        lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
       }
       if (cfile->achans > 0) {
-	int audframe = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
-	if (audframe <= cfile->frames && audframe >= cfile->start && audframe != cfile->end)
-	  lives_widget_set_sensitive(mainw->select_to_aend, TRUE);
-	else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+        int audframe = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
+        if (audframe <= cfile->frames && audframe >= cfile->start && audframe != cfile->end)
+          lives_widget_set_sensitive(mainw->select_to_aend, TRUE);
+        else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
       } else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
     }
+  } else {
+    lives_widget_set_sensitive(mainw->select_from_start, FALSE);
+    lives_widget_set_sensitive(mainw->select_to_end, FALSE);
+    lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+    lives_widget_set_sensitive(mainw->select_start_only, FALSE);
+    lives_widget_set_sensitive(mainw->select_end_only, FALSE);
+    lives_widget_set_sensitive(mainw->select_invert, FALSE);
+    lives_widget_set_sensitive(mainw->select_all, FALSE);
+    lives_widget_set_sensitive(mainw->sa_button, FALSE);
+    lives_widget_set_sensitive(mainw->trim_video, FALSE);
+    lives_widget_set_sensitive(mainw->select_new, FALSE);
+    lives_widget_set_sensitive(mainw->select_last, FALSE);
   }
- else {
-   lives_widget_set_sensitive(mainw->select_from_start, FALSE);
-   lives_widget_set_sensitive(mainw->select_to_end, FALSE);
-   lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
-   lives_widget_set_sensitive(mainw->select_start_only, FALSE);
-   lives_widget_set_sensitive(mainw->select_end_only, FALSE);
-   lives_widget_set_sensitive(mainw->select_invert, FALSE);
-   lives_widget_set_sensitive(mainw->select_all, FALSE);
-   lives_widget_set_sensitive(mainw->sa_button, FALSE);
-   lives_widget_set_sensitive(mainw->trim_video, FALSE);
-   lives_widget_set_sensitive(mainw->select_new, FALSE);
-   lives_widget_set_sensitive(mainw->select_last, FALSE);
- }
 }
 
 
@@ -10973,7 +10971,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   // and converted to s16 for the player, as necessary
   if (state) {
     prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
-    // 
+    //
 
     if (LIVES_IS_PLAYING & CURRENT_CLIP_HAS_AUDIO) {
       char *filename = lives_get_audio_file_name(mainw->playing_file);

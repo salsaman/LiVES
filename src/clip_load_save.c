@@ -11,7 +11,6 @@
 #include "callbacks.h"
 #include "resample.h"
 #include "effects.h"
-#include "audio.h"
 #include "cliphandler.h"
 #include "htmsocket.h"
 #include "videodev.h"
@@ -1181,7 +1180,7 @@ boolean get_temp_handle(int index) {
   mainw->current_file = index;
 
   if (create) {
-    // for tmep handles, create a marker file in directory, else we will be barred from
+    // for tenp handles, create a marker file in directory, else we will be barred from
     // removing it
     permit_close(mainw->current_file);
     // fill with default values
@@ -2941,7 +2940,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
     }
 
-    g_print("pt a17\n");
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
 

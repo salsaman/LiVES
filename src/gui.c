@@ -3376,6 +3376,7 @@ void create_LiVES(void) {
 
 
 void show_lives(void) {
+  int x, y;
   if (mainw && mainw->lives_shown) return;
 
   mainw->lives_shown = TRUE;
@@ -3390,6 +3391,20 @@ void show_lives(void) {
 
   mainw->ignore_screen_size = TRUE;
   lives_widget_show_all(mainw->top_vbox);
+
+  GdkWindow *xwin = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
+  gdk_window_get_root_origin(xwin, &x, &y);
+
+  // find the monitor from x.y coords
+  //lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &x, &y);
+  for (int i = 0; i < capable->nmonitors; i++) {
+    if (mainw->mgeom[i].x <= x && mainw->mgeom[i].y <= y
+        && mainw->mgeom[i].x + mainw->mgeom[i].phys_width > x
+        && mainw->mgeom[i].y + mainw->mgeom[i].phys_height > y) {
+      widget_opts.monitor = i;
+    }
+  }
+
   lives_widget_set_maximum_size(mainw->top_vbox, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
   mainw->ignore_screen_size = FALSE;
 
@@ -4386,23 +4401,23 @@ static void _resize_play_window(void) {
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         mainw->ignore_screen_size = TRUE;
-	if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel) {
-	  if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
-	      && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
-	      && (capable->wm_caps.annoy.panel.resolution & RES_HIDE) &&
-	      capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION) {
-	    hide_desktop_panel();
-	  }
-	}
-	if (capable->wm_caps.annoy.notify.problem) {
-	  boolean origval;
-	  VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
-	  if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
-	      && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND) &&
-	      capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG) {
-	    disable_desktop_notify();
-	  }
-	}
+        if (capable->wm_caps.annoy.panel.problem && prefs->show_desktop_panel) {
+          if ((capable->wm_caps.annoy.panel.problem & ANNOY_DISPLAY)
+              && (capable->wm_caps.annoy.panel.problem & ANNOY_FS)
+              && (capable->wm_caps.annoy.panel.resolution & RES_HIDE) &&
+              capable->wm_caps.annoy.panel.resolution & RESTYPE_ACTION) {
+            hide_desktop_panel();
+          }
+        }
+        if (capable->wm_caps.annoy.notify.problem) {
+          boolean origval;
+          VAL_FROM_ALLVALS(origval, capable->wm_caps.annoy.notify.orig_state);
+          if (origval && (capable->wm_caps.annoy.notify.problem & ANNOY_FS)
+              && (capable->wm_caps.annoy.notify.resolution & RES_SUSPEND) &&
+              capable->wm_caps.annoy.notify.resolution & RESTYPE_CONFIG) {
+            disable_desktop_notify();
+          }
+        }
 #if GTK_CHECK_VERSION(3, 18, 0)
         LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
         if (pmonitor == 0) {

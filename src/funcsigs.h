@@ -258,10 +258,10 @@ typedef struct {const char *fmt; va_list va;} va_surprise;
 #define CTYPE_UINT uint32_t
 #define CTYPE_INT64 int64_t
 #define CTYPE_UINT64 uint64_t
-#define CTYPE_DOUBLE double
-#define CTYPE_STRING char *
-#define CTYPE_FLOAT float
 #define CTYPE_BOOL boolean
+#define CTYPE_DOUBLE double
+#define CTYPE_FLOAT float
+#define CTYPE_STRING char *
 #define CTYPE_VOIDPTR void *
 #define CTYPE_VOIDP void *
 #define CTYPE_FUNCPTR weed_funcptr_t
@@ -271,25 +271,24 @@ typedef struct {const char *fmt; va_list va;} va_surprise;
 
 #define CTYPE_int int32_t
 #define CPTRTYPE_int int32_t *
-#define CTYPE_double double
-#define CPTRTYPE_double double *
-#define CTYPE_boolean boolean
-#define CPTRTYPE_boolean boolean *
-#define CTYPE_string char *
-#define CPTRTYPE_string char **
-#define CTYPE_int64 int64_t
-#define CPTRTYPE_int64 int64_t *
 #define CTYPE_uint uint32_t
 #define CPTRTYPE_uint uint32_t *
+#define CTYPE_int64 int64_t
+#define CPTRTYPE_int64 int64_t *
 #define CTYPE_uint64 uint64_t
 #define CPTRTYPE_uint64 uint64_t *
+#define CTYPE_boolean boolean
+#define CPTRTYPE_boolean boolean *
+#define CTYPE_double double
+#define CPTRTYPE_double double *
 #define CTYPE_float float
 #define CPTRTYPE_float float *
-
-#define CTYPE_funcptr weed_funcptr_t
-#define CPTRTYPE_funcptr weed_funcptr_t *
+#define CTYPE_string char *
+#define CPTRTYPE_string char **
 #define CTYPE_voidptr void *
 #define CPTRTYPE_voidptr void **
+#define CTYPE_funcptr weed_funcptr_t
+#define CPTRTYPE_funcptr weed_funcptr_t *
 #define CTYPE_plantptr weed_plant_t *
 #define CPTRTYPE_plantptr weed_plant_t **
 
@@ -458,15 +457,15 @@ typedef struct {const char *fmt; va_list va;} va_surprise;
 #define _FUNCSIG(n,...) MAKE_HEX(_FUNCSIG##n(__VA_ARGS__))
 #define FUNCSIG(n) MAKE_HEX(FUNCSIG_##n)
 
-#define DEF_VAR_INT(thing,n) int p##n;
-#define DEF_VAR_BOOL(thing,n) boolean p##n;
-#define DEF_VAR_DOUBLE(thing,n) double p##n;
+#define DEF_VAR_INT(thing,n) int p##n = 0;
+#define DEF_VAR_BOOL(thing,n) boolean p##n = WEED_FALSE;
+#define DEF_VAR_DOUBLE(thing,n) double p##n = 0.;
 #define DEF_VAR_STRING(thing,n) char *p##n = \
     lives_calloc(weed_leaf_element_size((thing),PROC_THREAD_PARAM(n),0)+1,1);
-#define DEF_VAR_INT64(thing,n) int64_t p##n;
-#define DEF_VAR_VOIDP(thing,n) void *p##n;
-#define DEF_VAR_PLANTP(thing,n) weed_plantptr_t p##n;
-#define DEF_VAR_FUNCP(thing,n) weed_funcptr_t p##n;
+#define DEF_VAR_INT64(thing,n) int64_t p##n = 0;
+#define DEF_VAR_VOIDP(thing,n) void *p##n = 0;
+#define DEF_VAR_PLANTP(thing,n) weed_plantptr_t p##n = 0;
+#define DEF_VAR_FUNCP(thing,n) weed_funcptr_t p##n = 0;
 
 #define DEF_VAR(thing,a,b) DEF_VAR_##a(thing,b)
 #define DEF_VARS0(thing,X)
@@ -657,8 +656,8 @@ extern const lookup_tab crossrefs[];
 const char **__VARNAMES(char *a, ...);
 #define VARNAME_FUNC const char** __VARNAMES(char*a,...){char*x;va_list b,c;int n=0; \
     va_start(b,a);va_copy(c,b);do{if(!(x=va_arg(b,char*)))n++;}while(!(x&&*x=='X')); \
-    va_end(b);LIVES_CALLOC_TYPE(const char*,r,n+1);r[0]=strdup(a);		\
-    for(int i=1;i<n;i++)r[i]=(const char *)strdup(va_arg(c,char*));va_end(c);return r;}
+    va_end(b);LIVES_CALLOC_TYPE(const char*,r,n+1);r[0]=a;		\
+    for(int i=1;i<n;i++)r[i]=(const char *)va_arg(c,char*);va_end(c);return r;}
 
 #define ADD_FUNCSIG(n,...) reg_funcsig(n, VARNAMES(__VA_ARGS__));
 

@@ -246,10 +246,11 @@ int weed_channel_get_width_pixels(weed_channel_t *);
 // audio channels
 int weed_channel_get_audio_rate(weed_channel_t *);
 int weed_channel_get_naudchans(weed_channel_t *);
-int weed_channel_get_audio_length(weed_channel_t *); // in sampls
+int weed_channel_get_audio_length(weed_channel_t *); // in samples per chan
 float **weed_channel_get_audio_data(weed_channel_t *, int *naudchans);
 
 weed_channel_t *weed_channel_set_audio_data(weed_channel_t *, float **data, int arate, int naudchans, int nsamps);
+int weed_channel_set_audio_length(weed_channel_t *, int nsamps); // in samples per chan
 
 // paramtmpls
 weed_gui_t *weed_paramtmpl_get_gui(weed_paramtmpl_t *, int create_if_not_exists);

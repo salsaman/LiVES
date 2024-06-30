@@ -1325,6 +1325,8 @@ boolean lives_startup(livespointer data) {
     lives_free(old_libdir);
   }
 
+  g_print("GTO libdir %s\n", prefs->lib_dir);
+
   if (!(*prefs->lib_dir)) {
     lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", LIVES_LIBDIR);
     needs_update = TRUE;
@@ -1393,12 +1395,12 @@ boolean lives_startup(livespointer data) {
   // set up capable->known_funcsigs
   reg_known_funcsigs();
 
-  lives_conditions_init();
-
   // now we can register specialised plants created from blueprints
   register_blueprints();
 
   lives_blueprint_test();
+
+  lives_conditions_init();
 
   // CAN NOW USE THREADVARS
 
@@ -1447,6 +1449,13 @@ boolean lives_startup(livespointer data) {
   d_print("OK\n");
 
   d_print("timer ratio was %4f\n", app_timers[test_timeout].ratio);
+
+  splash_msg("Initialising timing data metrics...", SPLASH_LEVEL_PREP);
+  glob_timing_init();
+  capable->features_ready |= FEATURE_TIMING;
+
+  d_print("Initialiding timing metrics. Will gather information from the following subsystems:\n");
+  show_timing_subsys();
 
   // late tests (has prefs, has threadpool, has random, has gtk)
   //do_startup_diagnostics(test_opts);
@@ -2794,6 +2803,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   what_sup = run_program_sup;
 
   mainw = (mainwindow *)(_lives_calloc(1, sizeof(mainwindow)));
+  mainw->permmgr = NULL;
 
   *(int64_t *)&mainw->initial_time = initial_time;
   mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;

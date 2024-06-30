@@ -19,6 +19,20 @@
 
 //////////////////////////////////
 
+static LiVESList *idle_tasks = NULL;
+
+void do_bg_tasks(void) {
+  /* GET_PROC_THREAD_SELF(self); */
+  /* while (1) { */
+  /*   double pval = get_pressure(); */
+  /*   /// TODI */
+
+
+  /* } */
+}
+
+////////////////////////////////////////////
+
 static const char *si_units_big[] = {"", SI_UNITS_BIG, NULL};
 static const char *si_units_small[] = {SI_UNITS_SMALL, NULL};
 static const char *iec_units_big[] = {"", IEC_UNITS_BIG, NULL};
@@ -1976,17 +1990,12 @@ void show_manual_section(const char *lang, const char *section) {
 }
 
 
-
 void wait_for_bg_audio_sync(int fileno) {
   char *afile = lives_get_audio_file_name(fileno);
-  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-  ticks_t timeout;
-
-  lives_sleep_while_true(sget_file_size(afile) <= 0 && (timeout = lives_alarm_check(alarm_handle)) > 0);
-
-  if (!timeout) BREAK_ME("no audio found");
-  lives_alarm_clear(alarm_handle);
-
+  lives_alarm_set_timeout(BILLIONS(2));
+  lives_millisleep_while_true(sget_file_size(afile) <= 0 && !lives_alarm_triggered());
+  if (lives_alarm_triggered()) BREAK_ME("no audio found");
+  lives_alarm_disarm();
   lives_free(afile);
 }
 

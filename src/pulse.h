@@ -21,7 +21,7 @@
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
 // pb and rec
-#define LIVES_PA_BUFF_MAXLEN 32768
+#define LIVES_PA_BUFF_MAXLEN 16384
 
 // pb only
 #define LIVES_PA_BUFF_TARGET 4096
@@ -85,6 +85,8 @@ typedef struct {
 
   boolean in_use; /**< true if this device is currently in use */
   boolean mute;
+
+  pa_operation *paop;
 
   lives_rfx_t *interface;
 
@@ -154,9 +156,9 @@ off_t pulse_audio_seek_bytes_velocity(pulse_driver_t *, off_t bytes, lives_clip_
 boolean pa_time_reset(pulse_driver_t *, int64_t offset);
 void pulse_tscale_reset(pulse_driver_t *);
 
-ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
+int64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
-double lives_pulse_get_timing_ratio(pulse_driver_t *);
+double lives_pulse_get_timing_ratio(pulse_driver_t *, int64_t current);
 
 double lives_pulse_get_pos(pulse_driver_t *);
 off_t lives_pulse_get_offset(pulse_driver_t *);

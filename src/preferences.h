@@ -575,7 +575,7 @@ typedef struct {
 
   boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
 
-  ticks_t pbtimer_maxdiff;
+  int64_t pbtimer_maxdiff;
   double pbtimer_resync_factor;
 
   boolean force64bit;

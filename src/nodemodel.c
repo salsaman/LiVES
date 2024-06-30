@@ -25,8 +25,8 @@ pthread_mutex_t nplans_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int allpals[] = {_ALL_24BIT_PALETTES, _ALL_32BIT_PALETTES, WEED_PALETTE_END};
 static int n_allpals = 0;
 
-#define ANN_ERR_THRESH 0.05
-#define ANN_GEN_LIMIT 50
+/* #define ANN_ERR_THRESH 0.05 */
+/* #define ANN_GEN_LIMIT 50 */
 
 static double ztime;
 
@@ -40,15 +40,15 @@ static double ztime;
 
 LIVES_GLOBAL_INLINE double get_cycle_avg_time(double *dets) {
   double ret = 0.;
-  if (glob_timing) {
-    pthread_mutex_lock(&glob_timing->upd_mutex);
-    ret = glob_timing->avg_duration;
+  if (glob_timing->plan.enabled) {
+    pthread_mutex_lock(&glob_timing->plan.upd_mutex);
+    ret = glob_timing->plan.avg_duration;
     if (dets) {
       dets[0] = glob_timing->curr_cpuload;
-      dets[1] = glob_timing->last_cyc_duration;
-      dets[2] = glob_timing->tgt_duration;
+      dets[1] = glob_timing->plan.last_cyc_duration;
+      dets[2] = glob_timing->plan.tgt_duration;
     }
-    pthread_mutex_unlock(&glob_timing->upd_mutex);
+    pthread_mutex_unlock(&glob_timing->plan.upd_mutex);
   }
   return ret;
 }
@@ -461,14 +461,14 @@ static double get_resize_cost(int cost_type, int out_width, int out_height, int 
 
   case COST_TYPE_TIME: {
     double tcost = 1.;
-    /* if (glob_timing) { */
-    /*   volatile float *cpuload; */
+    /* if (glob_timing->plan) { */
+    /*   volatile double *cpuload; */
     /*   ann_testdata_t realdata; */
 
     /*   double outsize = (double)lives_frame_calc_bytesize(out_width, out_height, outpl, FALSE, NULL); */
     /*   double insize = (double)lives_frame_calc_bytesize(in_width, in_height, inpl, FALSE, NULL); */
 
-    /*   realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]); */
+    /*   realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->plan.ann->lcount[0]); */
 
     /*   realdata.inputs[TIMING_ANN_OUTSIZE] = outsize / 1000000.; */
     /*   realdata.inputs[TIMING_ANN_INSIZE] = insize / 1000000.; */
@@ -483,9 +483,9 @@ static double get_resize_cost(int cost_type, int out_width, int out_height, int 
     /*     realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval; */
     /*     realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval; */
     /*   } */
-    /*   pthread_mutex_lock(&glob_timing->ann_mutex); */
-    /*   tcost = lives_ann_predict_result(glob_timing->ann, &realdata) / 1000.; */
-    /*   pthread_mutex_unlock(&glob_timing->ann_mutex); */
+    /*   pthread_mutex_lock(&glob_timing->plan.ann_mutex); */
+    /*   tcost = lives_ann_predict_result(glob_timing->plan.ann, &realdata) / 1000.; */
+    /*   pthread_mutex_unlock(&glob_timing->plan.ann_mutex); */
     /*   lives_free(realdata.inputs); */
     /* } */
     return tcost;
@@ -498,9 +498,9 @@ static double get_resize_cost(int cost_type, int out_width, int out_height, int 
 
 static double get_layer_copy_cost(int cost_type, int width, int height, int pal) {
   if (cost_type != COST_TYPE_TIME) return 0.;
-  if (!glob_timing->bytes_per_sec) return 0.;
+  if (!glob_timing->plan.bytes_per_sec) return 0.;
   size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL, NULL);
-  return bytes / glob_timing->bytes_per_sec;
+  return bytes / glob_timing->plan.bytes_per_sec;
 }
 
 
@@ -527,13 +527,13 @@ static double get_gamma_cost(int cost_type, int width, int height, int pal, int 
     return (1. - q);
   }
   if (cost_type == COST_TYPE_TIME) {
-    if (glob_timing->gbytes_per_sec) {
+    if (glob_timing->plan.gbytes_per_sec) {
       size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL, NULL);
-      return bytes / glob_timing->gbytes_per_sec;
+      return bytes / glob_timing->plan.gbytes_per_sec;
     } else {
-      if (glob_timing->bytes_per_sec) {
+      if (glob_timing->plan.bytes_per_sec) {
         size_t bytes = lives_frame_calc_bytesize(width, height, pal, FALSE, NULL, NULL);
-        return bytes / glob_timing->bytes_per_sec;
+        return bytes / glob_timing->plan.bytes_per_sec;
       }
     }
   }
@@ -766,12 +766,12 @@ double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl,
     if (inpl != outpl) tcost = 0.01;
     if ((weed_palette_is_rgb(outpl) && weed_palette_is_yuv(inpl))
         || (weed_palette_is_yuv(outpl) && weed_palette_is_rgb(inpl))) tcost *= 2.;
-    /* if (glob_timing) { */
-    /*   volatile float *cpuload; */
+    /* if (glob_timing->plan) { */
+    /*   volatile double *cpuload; */
     /*   ann_testdata_t realdata; */
     /*   cpuload = get_core_loadvar(0); */
 
-    /* realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]); */
+    /* realdata.inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->plan.ann->lcount[0]); */
 
     /* realdata.inputs[TIMING_ANN_CPULOAD] = ((double) * cpuload) / 50.; */
     /* realdata.inputs[TIMING_ANN_PBQ_BASE + prefs->pb_quality] = 100.; */
@@ -780,9 +780,9 @@ double get_pconv_cost(int cost_type, int width, int height, int outpl, int inpl,
     /*   realdata.inputs[TIMING_ANN_OUT_PAL_BASE + get_enum_palette(outpl)] = pval; */
     /*   realdata.inputs[TIMING_ANN_IN_PAL_BASE + get_enum_palette(inpl)] = pval; */
     /* } */
-    /* pthread_mutex_lock(&glob_timing->ann_mutex); */
-    /* tcost = lives_ann_predict_result(glob_timing->ann, &realdata) / 1000.; */
-    /* pthread_mutex_unlock(&glob_timing->ann_mutex); */
+    /* pthread_mutex_lock(&glob_timing->plan.ann_mutex); */
+    /* tcost = lives_ann_predict_result(glob_timing->plan.ann, &realdata) / 1000.; */
+    /* pthread_mutex_unlock(&glob_timing->plan.ann_mutex); */
     /* lives_free(realdata.inputs); */
     //}
     return tcost;
@@ -836,7 +836,7 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
 
   if (cost_type != COST_TYPE_TIME) return 0.;
 
-  if (lbox && glob_timing->bytes_per_sec) cost += (in_width * in_height) / glob_timing->bytes_per_sec;
+  if (lbox && glob_timing->plan.bytes_per_sec) cost += (in_width * in_height) / glob_timing->plan.bytes_per_sec;
 
   if (op_order[OP_RESIZE] == 1) {
     // 1 - -
@@ -1005,7 +1005,7 @@ static double get_conversion_cost(int cost_type, int out_width, int out_height, 
 
 static exec_plan_substep_t *make_substep(int op_idx, double st_time,
     int out_width, int out_height, int out_pal) {
-  volatile float const *cpuload;
+  volatile double const *cpuload;
   LIVES_CALLOC_TYPE(exec_plan_substep_t, substep, 1);
   substep->op_idx = op_idx;
   substep->width = out_width;
@@ -1014,9 +1014,9 @@ static exec_plan_substep_t *make_substep(int op_idx, double st_time,
   substep->start = st_time;
   substep->pb_quality = prefs->pb_quality;
   cpuload = get_core_loadvar(0);
-  substep->cpuload = (float) * cpuload;
-  glob_timing->cpu_nsamples++;
-  //glob_timing->av_cpuload += substep->cpuload;
+  substep->cpuload = *cpuload;
+  glob_timing->plan.cpu_nsamples++;
+  //glob_timing->plan.av_cpuload += substep->cpuload;
   return substep;
 }
 
@@ -1357,9 +1357,9 @@ static lives_filter_error_t run_apply_inst_step(plan_step_t *step, weed_instance
 
 
 static boolean ann_roll(void) {
-  GET_PROC_THREAD_SELF(self);
-  /* if (glob_timing->ann_data_in) { */
-  /*   for (LiVESList *list = glob_timing->ann_data_in; list; list = listnext) { */
+  //GET_PROC_THREAD_SELF(self);
+  /* if (glob_timing->plan.ann_data_in) { */
+  /*   for (LiVESList *list = glob_timing->plan.ann_data_in; list; list = listnext) { */
   /* 	listnext = lixt->next; */
   /* 	ann_data = (ann_data_t *)list->data; */
   /* 	if (ann_data->status == ANN_DATA_PREDICT) { */
@@ -1376,35 +1376,35 @@ static boolean ann_roll(void) {
   /* } */
   int genstorun = 0;
   double loveliness;
-  while (!lives_proc_thread_should_cancel(self)) {
-    pthread_mutex_lock(&glob_timing->ann_mutex);
-    genstorun = glob_timing->ann->genstorun;
-    pthread_mutex_unlock(&glob_timing->ann_mutex);
-    if (!genstorun) {
-      lives_proc_thread_wait(self, ONE_MILLION);
-    } else {
-      while (genstorun) {
-        uint64_t wait_time;
-        if (lives_proc_thread_get_pause_requested(self)) break;
-        if (lives_proc_thread_should_cancel(self)) break;
-        loveliness = THREADVAR(loveliness);
-        if (!pthread_mutex_trylock(&glob_timing->ann_mutex)) {
-          genstorun--;
-          glob_timing->ann->genstorun--;
-          lives_ann_evolve(glob_timing->ann);
-          pthread_mutex_unlock(&glob_timing->ann_mutex);
-        }
-        wait_time = (DEF_LOVELINESS - loveliness) * 10. * ONE_MILLION;
-        lives_proc_thread_wait(self, wait_time);
-      }
-      genstorun = 0;
-    }
-    if (lives_proc_thread_get_cancel_requested(self)) {
-      lives_proc_thread_cancel();
-    }
-    if (lives_proc_thread_get_pause_requested(self))
-      lives_proc_thread_pause();
-  }
+  /* while (!lives_proc_thread_should_cancel(self)) { */
+  /*   pthread_mutex_lock(&glob_timing->plan.ann_mutex); */
+  /*   genstorun = glob_timing->plan.ann->genstorun; */
+  /*   pthread_mutex_unlock(&glob_timing->plan.ann_mutex); */
+  /*   if (!genstorun) { */
+  /*     lives_proc_thread_wait(self, ONE_MILLION); */
+  /*   } else { */
+  /*     while (genstorun) { */
+  /*       uint64_t wait_time; */
+  /*       if (lives_proc_thread_get_pause_requested(self)) break; */
+  /*       if (lives_proc_thread_should_cancel(self)) break; */
+  /*       loveliness = THREADVAR(loveliness); */
+  /*       if (!pthread_mutex_trylock(&glob_timing->plan.ann_mutex)) { */
+  /*         genstorun--; */
+  /*         glob_timing->plan.ann->genstorun--; */
+  /*         lives_ann_evolve(glob_timing->plan.ann); */
+  /*         pthread_mutex_unlock(&glob_timing->plan.ann_mutex); */
+  /*       } */
+  /*       wait_time = (DEF_LOVELINESS - loveliness) * 10. * ONE_MILLION; */
+  /*       lives_proc_thread_wait(self, wait_time); */
+  /*     } */
+  /*     genstorun = 0; */
+  /*   } */
+  /*   if (lives_proc_thread_get_cancel_requested(self)) { */
+  /*     lives_proc_thread_cancel(); */
+  /*   } */
+  /*   if (lives_proc_thread_get_pause_requested(self)) */
+  /*     lives_proc_thread_pause(); */
+  //}
   return TRUE;
 }
 
@@ -1482,51 +1482,47 @@ static lives_proc_thread_t ann_proc = NULL;
 
 
 void ann_roll_cancel(void) {
-  if (!ann_proc) return;
-  if (lives_proc_thread_ref(ann_proc) > 1) {
-    lives_proc_thread_request_cancel(ann_proc, TRUE);
-    lives_proc_thread_unref(ann_proc);
-    ann_proc = NULL;
-  }
+  /* if (!ann_proc) return; */
+  /* if (lives_proc_thread_ref(ann_proc) > 1) { */
+  /*   lives_proc_thread_request_cancel(ann_proc, TRUE); */
+  /*   lives_proc_thread_unref(ann_proc); */
+  /*   ann_proc = NULL; */
+  /* } */
 }
 
 
 static void ann_roll_launch(void) {
   if (ann_proc) return;
-  ann_proc =  lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED,
-                                       ann_roll, WEED_SEED_BOOLEAN, "", NULL);
-  //lives_proc_thread_auto_nullify(ann_proc, TRUE);
-  lives_proc_thread_set_pauseable(ann_proc, TRUE);
-  lives_proc_thread_set_cancellable(ann_proc);
-  //mainw->debug_ptr = ann_proc;
-  lives_proc_thread_dispatch(ann_proc);
+  /* ann_proc =  lives_proc_thread_create(LIVES_THRDATTR_CREATE_UNQUEUED, */
+  /*                                      ann_roll, WEED_SEED_BOOLEAN, "", NULL); */
+  /* //lives_proc_thread_auto_nullify(ann_proc, TRUE); */
+  /* lives_proc_thread_set_pauseable(ann_proc, TRUE); */
+  /* lives_proc_thread_set_cancellable(ann_proc); */
+  /* //mainw->debug_ptr = ann_proc; */
+  /* lives_proc_thread_dispatch(ann_proc); */
 }
 
 
-static void glob_timing_init(void) {
-  if (glob_timing) return;
-  int lcounts[] = TIMING_ANN_LCOUNTS;
-  glob_timing = LIVES_CALLOC_SIZEOF(glob_timedata_t, 1);
-  glob_timing->ann = lives_ann_create(TIMING_ANN_NLAYERS, lcounts);
-  pthread_mutex_init(&glob_timing->upd_mutex, NULL);
-  pthread_mutex_init(&glob_timing->ann_mutex, NULL);
-  // the predictor is VERY sensitive to inital conditions
-  // but with these values it can usually train itself in under 50 generations
-  lives_ann_init_seed(glob_timing->ann, .001);
-  lives_ann_set_variance(glob_timing->ann, 1.0, 1.0, 0.9999, 2);
-  glob_timing->cpuloadvar = get_core_loadvar(0);
+static void ann_init(void) {
+  /* int lcounts[] = TIMING_ANN_LCOUNTS; */
+  /* ann->ann = lives_ann_create(TIMING_ANN_NLAYERS, lcounts); */
+  /* pthread_mutex_init(&ann->upd_mutex, NULL); */
+  /* pthread_mutex_init(&ann->ann_mutex, NULL); */
+  /* // the predictor is VERY sensitive to inital conditions */
+  /* // but with these values it can usually train itself in under 50 generations */
+  /* lives_ann_init_seed(ann->ann, .001); */
+  /* lives_ann_set_variance(ann->ann, 1.0, 1.0, 0.9999, 2); */
   //ann_roll_launch();
 }
 
 #define ANN_MAX_DPOINTS 200
 
-
 static ann_testdata_t *tst_data_copy(ann_testdata_t *tstdata, int nins) {
-  LIVES_CALLOC_TYPE(ann_testdata_t, trndata, 1);
-  lives_memcpy(trndata, tstdata, sizeof(ann_testdata_t));
-  trndata->inputs = LIVES_CALLOC_SIZEOF(double, nins);
-  lives_memcpy(trndata->inputs, tstdata->inputs, nins * sizdbl);
-  return trndata;
+  /* LIVES_CALLOC_TYPE(ann_testdata_t, trndata, 1); */
+  /* lives_memcpy(trndata, tstdata, sizeof(ann_testdata_t)); */
+  /* trndata->inputs = LIVES_CALLOC_SIZEOF(double, nins); */
+  /* lives_memcpy(trndata->inputs, tstdata->inputs, nins * sizdbl); */
+  return NULL;//trndata;
 }
 
 
@@ -1543,7 +1539,7 @@ static void extract_timedata(exec_plan_t *plan) {
         for (LiVESList *sublist = step->substeps; sublist; sublist = sublist->next) {
           ann_testdata_t *tstdata;
           exec_plan_substep_t *substep = (exec_plan_substep_t *)sublist->data;
-          //float cpuload = substep->cpuload;
+          //double cpuload = substep->cpuload;
 
           switch (substep->op_idx) {
           case OP_PCONV:
@@ -1553,7 +1549,7 @@ static void extract_timedata(exec_plan_t *plan) {
             double insize = (double)lives_frame_calc_bytesize(step->fin_iwidth, step->fin_iheight,
                             step->fin_pal, FALSE, NULL, NULL);
             tstdata  = LIVES_CALLOC_SIZEOF(ann_testdata_t, 1);
-            tstdata->inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->ann->lcount[0]);
+            //tstdata->inputs = LIVES_CALLOC_SIZEOF(double, glob_timing->plan.ann->lcount[0]);
 
             tstdata->inputs[TIMING_ANN_OUTSIZE] = outsize / 1000000.;
             tstdata->inputs[TIMING_ANN_INSIZE] = insize / 1000000.;
@@ -1575,25 +1571,25 @@ static void extract_timedata(exec_plan_t *plan) {
             //if (plan->model->flags & NODEMODEL_NEW) max = ANN_MAX_DPOINTS / (1 + plan->iteration);
             for (int rpt = 0; rpt < max; rpt++) {
               ann_testdata_t *trndata = tstdata;
-              if (rpt < max - 1) trndata = tst_data_copy(tstdata, glob_timing->ann->lcount[0]);
-              glob_timing->ann->tstdata = lives_list_prepend(glob_timing->ann->tstdata,
-                                          (void *)trndata);
-              if (!glob_timing->ann->last_data)
-                glob_timing->ann->last_data = glob_timing->ann->tstdata;
-              if (glob_timing->ann->ndatapoints < ANN_MAX_DPOINTS)
-                glob_timing->ann->ndatapoints++;
-              else {
-                LiVESList *old_last = glob_timing->ann->last_data;
-                glob_timing->ann->last_data = old_last->prev;
-                old_last->prev->next = NULL;
-                old_last->prev = NULL;
-                trndata = (ann_testdata_t *)old_last->data;
-                if (trndata) {
-                  if (trndata->inputs) lives_free(trndata->inputs);
-                  lives_free(trndata);
-                }
-                lives_list_free(old_last);
-              }
+              //              if (rpt < max - 1) trndata = tst_data_copy(tstdata, glob_timing->plan.ann->lcount[0]);
+              /* glob_timing->plan.ann->tstdata = lives_list_prepend(glob_timing->plan.ann->tstdata, */
+              /*                             (void *)trndata); */
+              /* if (!glob_timing->plan.ann->last_data) */
+              /*   glob_timing->plan.ann->last_data = glob_timing->plan.ann->tstdata; */
+              /* if (glob_timing->plan.ann->ndatapoints < ANN_MAX_DPOINTS) */
+              /*   glob_timing->plan.ann->ndatapoints++; */
+              /* else { */
+              /*   LiVESList *old_last = glob_timing->plan.ann->last_data; */
+              /*   glob_timing->plan.ann->last_data = old_last->prev; */
+              /*   old_last->prev->next = NULL; */
+              /*   old_last->prev = NULL; */
+              /*   trndata = (ann_testdata_t *)old_last->data; */
+              /*   if (trndata) { */
+              /*     if (trndata->inputs) lives_free(trndata->inputs); */
+              /*     lives_free(trndata); */
+              /*   } */
+              /*   lives_list_free(old_last); */
+              /* } */
             }
           }
           break;
@@ -1711,7 +1707,7 @@ static void run_plan(exec_plan_t *plan) {
 
   //if (!ann_proc) ann_roll_launch();
   if (plan->iteration == 1) {
-    glob_timing->tot_duration = glob_timing->avg_duration = 0.;
+    glob_timing->plan.tot_duration = glob_timing->plan.avg_duration = 0.;
     if (ann_proc && (plan->model->flags & NODEMODEL_NEW))
       lives_proc_thread_set_loveliness(ann_proc, DEF_LOVELINESS);
   }
@@ -1760,8 +1756,8 @@ static void run_plan(exec_plan_t *plan) {
     glob_timing->cpuloadvar = get_core_loadvar(0);
 
   if (glob_timing->cpuloadvar) {
-    glob_timing->curr_cpuload = (float)(*glob_timing->cpuloadvar);
-    glob_timing->active = TRUE;
+    glob_timing->curr_cpuload = *glob_timing->cpuloadvar;
+    glob_timing->plan.active = TRUE;
   }
   do {
     int step_count = 0;
@@ -1773,8 +1769,8 @@ static void run_plan(exec_plan_t *plan) {
       if (!glob_timing->cpuloadvar)
         glob_timing->cpuloadvar = get_core_loadvar(0);
       if (glob_timing->cpuloadvar) {
-        glob_timing->curr_cpuload = (float)(*glob_timing->cpuloadvar);
-        glob_timing->active = TRUE;
+        glob_timing->curr_cpuload = *glob_timing->cpuloadvar;
+        glob_timing->plan.active = TRUE;
       }
     }
 
@@ -2453,7 +2449,7 @@ static void run_plan(exec_plan_t *plan) {
                                  step->fin_pal, FALSE, NULL, NULL);
                 double gend;
                 GET_LPT_VALUE(lpt, gend, "gconv_end");
-                glob_timing->gbytes_per_sec = frmsize / (gend - gstart);
+                glob_timing->plan.gbytes_per_sec = frmsize / (gend - gstart);
               }
 
               lives_layer_set_proc_thread(layer, NULL);
@@ -2593,28 +2589,28 @@ static void run_plan(exec_plan_t *plan) {
     /* if (plan->iteration < 10) { */
     /*   gtorun = plan->iteration; */
     /* } else { */
-    /*   if (glob_timing->ann_gens < 200) gtorun = 200 - glob_timing->ann_gens; */
+    /*   if (glob_timing->plan.ann_gens < 200) gtorun = 200 - glob_timing->plan.ann_gens; */
     /*   else { */
-    /*     if (!glob_timing->ann->genstorun) { */
-    /*       if (glob_timing->ann->last_res > ANN_ERR_THRESH) */
+    /*     if (!glob_timing->plan.ann->genstorun) { */
+    /*       if (glob_timing->plan.ann->last_res > ANN_ERR_THRESH) */
     /*         gtorun = 5; */
     /*       else  gtorun = 1; */
     /*     } */
     /*   } */
     /* } */
-    /* if (gtorun) glob_timing->ann->genstorun += gtorun; */
+    /* if (gtorun) glob_timing->plan.ann->genstorun += gtorun; */
 
     /* do { */
     /*   // train nnet. With very little data it trains easily */
     /*   // but when we have varied data this is more difficult */
     /*   // and it maybe overtrained */
     /*   nns++; */
-    /*   errval = lives_ann_evolve(glob_timing->ann); */
+    /*   errval = lives_ann_evolve(glob_timing->plan.ann); */
     /*   // want high varaince at first then reduce it */
     /*   if ((mainw->nodemodel->flags & NODEMODEL_TRAINED)) { */
-    /*     if (glob_timing->ann->no_change_count > 1000) { */
-    /*       glob_timing->ann->nvary = 1; */
-    /*       glob_timing->ann->damp = 0.9999; */
+    /*     if (glob_timing->plan.ann->no_change_count > 1000) { */
+    /*       glob_timing->plan.ann->nvary = 1; */
+    /*       glob_timing->plan.ann->damp = 0.9999; */
     /*     } */
     /*   } */
     /*   // when we get a new model, we do not want to train the estimator too much, else it can get overtrained */
@@ -2625,16 +2621,16 @@ static void run_plan(exec_plan_t *plan) {
     /* 	     && nns < ANN_GEN_LIMIT / 5); */
 
     /* if (nns == ANN_GEN_LIMIT) { */
-    /*   lives_ann_set_variance(glob_timing->ann, glob_timing->ann->maxr, glob_timing->ann->maxrb, */
+    /*   lives_ann_set_variance(glob_timing->plan.ann, glob_timing->plan.ann->maxr, glob_timing->plan.ann->maxrb, */
     /* 			     0.9999, 1); */
     /* } */
     /* if (errval <= ANN_ERR_THRESH) */
-    /*   glob_timing->ann->flags |= ANN_TRAINED; */
+    /*   glob_timing->plan.ann->flags |= ANN_TRAINED; */
 
-    errval = sqrt(glob_timing->ann->last_res);
-    d_print_debug("ann error is %f msec after %d generations\n", errval, glob_timing->ann->generations);
+    //uerrval = sqrt(glob_timing->plan.ann->last_res);
+    //d_print_debug("ann error is %f msec after %d generations\n", errval, glob_timing->plan.ann->generations);
 
-    pthread_mutex_lock(&glob_timing->upd_mutex);
+    pthread_mutex_lock(&glob_timing->plan.upd_mutex);
     // update: real_duration, tot_duration and avg_duration
 
     if (!plan->tdata->actual_start)
@@ -2645,15 +2641,15 @@ static void run_plan(exec_plan_t *plan) {
     plan->tdata->effective_duration = plan->tdata->real_end - plan->tdata->actual_start
                                       - plan->tdata->paused_time;
 
-    glob_timing->tot_duration += plan->tdata->real_duration;
-    glob_timing->last_cyc_duration = plan->tdata->real_duration;
+    glob_timing->plan.tot_duration += plan->tdata->real_duration;
+    glob_timing->plan.last_cyc_duration = plan->tdata->real_duration;
 
-    glob_timing->tgt_duration = plan->tdata->tgt_time;
+    glob_timing->plan.tgt_duration = plan->tdata->tgt_time;
 
-    glob_timing->avg_duration = glob_timing->tot_duration / (double)plan->iteration;
+    glob_timing->plan.avg_duration = glob_timing->plan.tot_duration / (double)plan->iteration;
 
-    glob_timing->active = FALSE;
-    pthread_mutex_unlock(&glob_timing->upd_mutex);
+    glob_timing->plan.active = FALSE;
+    pthread_mutex_unlock(&glob_timing->plan.upd_mutex);
 
     d_print_debug("PLAN DONE, finished cycle in %.4f msec (effective %.4f),"
                   "target was < %.4f (%+.4f), average is %.4f\n"
@@ -2663,7 +2659,7 @@ static void run_plan(exec_plan_t *plan) {
                   "idle time = %.4f (%.2f %%)\n",
                   1000. * plan->tdata->real_duration, plan->tdata->effective_duration * 1000.,
                   plan->tdata->tgt_time * 1000., 1000. * (plan->tdata->real_duration - plan->tdata->tgt_time),
-                  1000. * glob_timing->tot_duration / (double)plan->iteration,
+                  1000. * glob_timing->plan.tot_duration / (double)plan->iteration,
                   plan->tdata->sequential_time, plan->tdata->sequential_time / plan->tdata->real_duration / 10.,
                   1000. * plan->tdata->concurrent_time, plan->tdata->concurrent_time / plan->tdata->real_duration * 100.,
                   1000. * plan->tdata->preload_time, 1000. * plan->tdata->active_pl_time,
@@ -2676,8 +2672,8 @@ static void run_plan(exec_plan_t *plan) {
     if (0);
     char *bps = NULL, *gbps = NULL;
 
-    if (glob_timing->bytes_per_sec) bps = lives_format_storage_space_string((uint64_t)glob_timing->bytes_per_sec);
-    if (glob_timing->gbytes_per_sec) gbps = lives_format_storage_space_string((uint64_t)glob_timing->gbytes_per_sec);
+    if (glob_timing->plan.bytes_per_sec) bps = lives_format_storage_space_string((uint64_t)glob_timing->plan.bytes_per_sec);
+    if (glob_timing->plan.gbytes_per_sec) gbps = lives_format_storage_space_string((uint64_t)glob_timing->plan.gbytes_per_sec);
 
     if (bps) d_print_debug(", memcpy speed is measured as %s per second", bps);
     if (gbps) d_print_debug(", gamma convert byterate is measured as %s per second", gbps);
@@ -2687,21 +2683,21 @@ static void run_plan(exec_plan_t *plan) {
 
     /* if (lives_proc_thread_is_paused(ann_proc)) lives_proc_thread_request_resume(ann_proc); */
 
-    /* if (!(glob_timing->ann->flags & ANN_TRAINED)) { */
+    /* if (!(glob_timing->plan.ann->flags & ANN_TRAINED)) { */
     /*   // needs about 200 generations of testing */
-    /*   if (glob_timing->ann_gens > 200 || glob_timing->ann->no_change_count >= 50 */
+    /*   if (glob_timing->plan.ann_gens > 200 || glob_timing->plan.ann->no_change_count >= 50 */
     /*       || errval <= ANN_ERR_THRESH) { */
     /*     if (!lives_proc_thread_is_paused(ann_proc)) lives_proc_thread_request_pause(ann_proc); */
     /* 	  mainw->refresh_model = TRUE; */
-    /*       glob_timing->ann->flags |= ANN_TRAINED; */
+    /*       glob_timing->plan.ann->flags |= ANN_TRAINED; */
     /*       lives_proc_thread_set_loveliness(ann_proc, DEF_LOVELINESS / 2.); */
     /*   } */
     /* } */
     SET_PLAN_STATE(COMPLETE);
   } else {
-    pthread_mutex_lock(&glob_timing->upd_mutex);
-    glob_timing->active = FALSE;
-    pthread_mutex_unlock(&glob_timing->upd_mutex);
+    pthread_mutex_lock(&glob_timing->plan.upd_mutex);
+    glob_timing->plan.active = FALSE;
+    pthread_mutex_unlock(&glob_timing->plan.upd_mutex);
   }
 
   if (mainw->debugopts & DEBUG_PLAN_RUNNER)
@@ -3334,15 +3330,15 @@ exec_plan_t *create_plan_from_model(lives_nodemodel_t *nodemodel) {
   //display_plan(plan);
 
   if (nodemodel->flags & NODEMODEL_NEW) {
-    pthread_mutex_lock(&glob_timing->ann_mutex);
-    glob_timing->ann->flags &= ~ANN_TRAINED;
-    glob_timing->ann_gens = 0;
-    lives_ann_init_seed(glob_timing->ann, .001);
-    lives_ann_set_variance(glob_timing->ann, 1.0, 1.0, 0.9999, 2);
-    glob_timing->ann->nvary = glob_timing->ann->nnodes;
-    glob_timing->ann->last_res = 0.;
-    glob_timing->ann->no_change_count = 0;
-    pthread_mutex_unlock(&glob_timing->ann_mutex);
+    //pthread_mutex_lock(&glob_timing->plan.ann_mutex);
+    /* glob_timing->plan.ann->flags &= ~ANN_TRAINED; */
+    /* glob_timing->plan.ann_gens = 0; */
+    /* lives_ann_init_seed(glob_timing->plan.ann, .001); */
+    /* lives_ann_set_variance(glob_timing->plan.ann, 1.0, 1.0, 0.9999, 2); */
+    /* glob_timing->plan.ann->nvary = glob_timing->plan.ann->nnodes; */
+    /* glob_timing->plan.ann->last_res = 0.; */
+    /* glob_timing->plan.ann->no_change_count = 0; */
+    /* pthread_mutex_unlock(&glob_timing->plan.ann_mutex); */
   }
   return plan;
 }
@@ -7937,7 +7933,6 @@ lives_result_t inst_node_set_flags(inst_node_t *n, uint64_t flags) {
 
 void free_nodemodel(lives_nodemodel_t **pnodemodel) {
   if (!pnodemodel || !*pnodemodel) return;
-  if ((*pnodemodel)->fx_list) lives_list_free((*pnodemodel)->fx_list);
   if ((*pnodemodel)->clip_index) lives_free((*pnodemodel)->clip_index);
   free_all_nodes(*pnodemodel);
   lives_list_free_all(&(*pnodemodel)->node_chains);
@@ -7950,8 +7945,6 @@ static void _build_nodemodel(lives_nodemodel_t **pnodemodel, int ntracks, int *c
   char *tmp;
 
   ____FUNC_ENTRY____(build_nodemodel, "", "viv");
-
-  if (!glob_timing) glob_timing_init();
 
   //MSGMODE_ON(DEBUG);
 
@@ -8094,6 +8087,15 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
   planrunner_lock();
 
   if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
+
+  for (int i = 0; i < 3; i++) {
+    if (mainw->qexec_plans[i]) {
+      if (mainw->qexec_plans[i] == mainw->exec_plan)
+        mainw->exec_plan = NULL;
+      exec_plan_free(STEAL_POINTER(mainw->qexec_plans[i]));
+    }
+  }
+
   if (mainw->exec_plan) exec_plan_free(STEAL_POINTER(mainw->exec_plan));
 
   if (mainw->layers) {
@@ -8120,8 +8122,18 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
     lives_free(mainw->layers);
     mainw->layers = NULL;
   }
+
+  for (int i = 0; i < 3; i++) {
+    if (mainw->qnodemodels[i]) {
+      if (mainw->qnodemodels[i] == *nodemodel) *nodemodel = NULL;
+      free_nodemodel(&mainw->qnodemodels[i]);
+      mainw->qnodemodels[i] = NULL;
+    }
+  }
+
   if (*nodemodel) free_nodemodel(nodemodel);
-  mainw->refresh_model = TRUE;
+
+  mainw->refresh_model = 1;
 
   planrunner_unlock();
 
@@ -8253,23 +8265,106 @@ void rebuild_nodemodel(void) {
   double xtime;
   //g_print("node model needs rebuilding\n");
 
-  cleanup_nodemodel(&mainw->nodemodel);
-
   d_print_debug("prev plan cancelled, good to create new plan\n");
+
+  if (mainw->refresh_model == 2) {
+    if (prefs->pb_quality == future_prefs->pb_quality) {
+      mainw->refresh_model = 0;
+      return;
+    }
+
+    xtime = lives_get_session_time();
+    if (!mainw->qnodemodels[prefs->pb_quality - 1]) {
+      mainw->qnodemodels[prefs->pb_quality - 1] = mainw->nodemodel;
+      mainw->qexec_plans[prefs->pb_quality - 1] = mainw->exec_plan;
+    }
+
+    prefs->pb_quality = future_prefs->pb_quality;
+
+    if (mainw->qnodemodels[prefs->pb_quality - 1]) {
+      if (mainw->plan_runner_proc && !lives_proc_thread_check_finished(mainw->plan_runner_proc))
+        lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+
+      if (mainw->plan_runner_proc) {
+        if (mainw->plan_cycle) {
+          int state = mainw->plan_cycle->state;
+          if (state == PLAN_STATE_WAITING ||
+              state == PLAN_STATE_QUEUED)
+            plan_cycle_trigger(mainw->plan_cycle);
+          lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
+                                      mainw->plan_cycle->state == PLAN_STATE_QUEUED);
+        }
+        lives_proc_thread_t lpt = STEAL_POINTER(mainw->plan_runner_proc);
+        if (lpt) {
+          lives_proc_thread_join_void(lpt);
+          lives_proc_thread_unref(lpt);
+        }
+      }
+
+      plan_cycle_trigger(mainw->plan_cycle);
+      if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
+
+
+      planrunner_lock();
+      mainw->refresh_model = 0;
+      mainw->frame_layer = NULL;
+      reset_old_frame_layer();
+      reset_ext_player_layer(FALSE);
+      mainw->nodemodel = mainw->qnodemodels[prefs->pb_quality - 1];
+      mainw->exec_plan = mainw->qexec_plans[prefs->pb_quality - 1];
+      align_with_model(mainw->nodemodel);
+      //mainw->layers = map_sources_to_tracks(FALSE, FALSE);
+      ///goto ready;
+      planrunner_unlock();
+      return;
+    }
+
+    if (mainw->plan_runner_proc && !lives_proc_thread_check_finished(mainw->plan_runner_proc))
+      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
+
+    if (mainw->plan_runner_proc) {
+      if (mainw->plan_cycle) {
+        int state = mainw->plan_cycle->state;
+        if (state == PLAN_STATE_WAITING ||
+            state == PLAN_STATE_QUEUED)
+          plan_cycle_trigger(mainw->plan_cycle);
+        lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
+                                    mainw->plan_cycle->state == PLAN_STATE_QUEUED);
+      }
+      lives_proc_thread_t lpt = STEAL_POINTER(mainw->plan_runner_proc);
+      if (lpt) {
+        lives_proc_thread_join_void(lpt);
+        lives_proc_thread_unref(lpt);
+      }
+    }
+    planrunner_lock();
+    mainw->frame_layer = NULL;
+    reset_old_frame_layer();
+    reset_ext_player_layer(FALSE);
+
+    if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
+
+  } else {
+    cleanup_nodemodel(&mainw->nodemodel);
+    planrunner_lock();
+  }
   prefs->pb_quality = future_prefs->pb_quality;
 
   d_print_debug("rebuilding model\n");
 
-  planrunner_lock();
-  mainw->refresh_model = FALSE;
+  mainw->refresh_model = 0;
 
   mainw->layers = map_sources_to_tracks(FALSE, FALSE);
 
   xtime = lives_get_session_time();
 
   build_nodemodel(&mainw->nodemodel);
+
   align_with_model(mainw->nodemodel);
+
   mainw->exec_plan = create_plan_from_model(mainw->nodemodel);
+
+ready:
 
   planrunner_unlock();
   run_next_cycle();

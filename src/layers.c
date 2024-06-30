@@ -1381,14 +1381,16 @@ LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
   return WEED_FALSE;
 }
 
+
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer, float **data,
     int arate, int naudchans, weed_size_t nsamps) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
-  else weed_set_voidptr_value(layer, WEED_LEAF_AUDIO_DATA, NULL);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
+  if (data) {
+    weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
+    weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
+    weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
+  } else weed_set_voidptr_value(layer, WEED_LEAF_AUDIO_DATA, NULL);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
   return layer;
 }
 
@@ -1542,7 +1544,7 @@ LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int64_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+  return weed_get_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
 }
 
 
@@ -1552,4 +1554,16 @@ LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_layer_t *layer, int *
   return (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, naudchans);
 }
 
+
+weed_layer_t *config_alayer_dtls(weed_layer_t *layer, audio_dtls *adtls) {
+  if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+  weed_layer_set_audio_rate(layer, adtls->rate);
+  weed_layer_set_audio_nchans(layer, adtls->chans);
+  weed_layer_set_audio_asamps(layer, adtls->sampsz);
+  weed_layer_set_audio_signed(layer, adtls->asigned);
+  weed_layer_set_audio_endian(layer, adtls->endian);
+  weed_layer_set_audio_interleaved(layer, adtls->interleaved);
+  weed_layer_set_audio_is_float(layer, adtls->isflt);
+  return layer;
+}
 

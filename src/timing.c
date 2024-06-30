@@ -17,6 +17,76 @@
 
 glob_timedata_t *glob_timing = NULL;
 
+#define N_CPU_MEAS 64
+#define CPU_MEAS_THRESH 1000000
+
+static cpuloadvals_t *cpu_stats = NULL;
+
+double *get_proc_loads(boolean reset) {
+  // get processor load values, and keep a rolling average
+  static cpuloadvals_t cpuvals;
+  static tab_data_t *cpuloadtab = NULL;
+  static ticks_t ltime = 0;
+  ticks_t ctime;
+
+  if (!cpuloadtab) {
+    cpuvals.loads =
+      (double *)lives_calloc(capable->hw.ncpus, sizeof(double));
+    cpuvals.avgs =
+      (double *)lives_calloc(capable->hw.ncpus, sizeof(double));
+    reset = TRUE;
+  }
+
+  if (reset && cpuloadtab) cpuloadtab = free_tabdata(cpuloadtab);
+  if (!cpuloadtab) cpuloadtab = init_tab_data(capable->hw.ncpus, N_CPU_MEAS);
+
+  ctime = lives_get_session_ticks();
+  if (reset || ctime - ltime > CPU_MEAS_THRESH) {
+    ltime = ctime;
+    if (get_cpu_loads(&cpuvals, capable->hw.ncpus)) {
+      if (!cpu_stats) cpu_stats = &cpuvals;
+      tabdata_update(cpuloadtab, cpuvals.loads);
+      for (int i = capable->hw.ncpus; i--;) cpuvals.avgs[i] = cpuloadtab->avgs[i];
+    }
+  }
+  return cpuvals.avgs;
+}
+
+
+double get_cpu_load(void) {
+  double *cpuvars = get_proc_loads(FALSE);
+  glob_timing->curr_cpuload = cpuvars[0];
+  //double cpuloadval = *glob_timing->cpuloadvar;
+  return glob_timing->curr_cpuload;
+}
+
+
+volatile double const *get_core_loadvar(int corenum) {
+  // return a pointer to the (static) array member containing the requested value
+  // returning a pointer rather than the value allows for more in depth analysis
+  double *vals = get_proc_loads(FALSE);
+  return &vals[corenum];
+}
+
+
+void glob_timing_init(void) {
+  if (glob_timing) return;
+  glob_timing = LIVES_CALLOC_SIZEOF(glob_timedata_t, 1);
+  glob_timing->cpuloadvar = get_core_loadvar(0);
+}
+
+/* if (glob_timing->active) */
+/*   cpuloadval =  */
+/*           pthread_mutex_unlock(&glob_timing->upd_mutex); */
+/* } */
+/* if (!cpuloadval) { */
+/*   cpuload = get_core_loadvar(0); */
+
+void show_timing_subsys(void) {
+
+
+}
+
 // do nothing and see how long it takes to do it
 double do_nothing(int type_of_nothing) {
   double from_whence_you_came = 0.;
@@ -83,21 +153,11 @@ LIVES_GLOBAL_INLINE double show_timer_info(void) {
 }
 
 
-LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
-  return lives_get_current_ticks() - origticks;
-}
-
-
-LIVES_GLOBAL_INLINE int64_t lives_get_relative_time(int64_t origtime) {
-  return lives_get_current_time() - origtime;
-}
-
-
 /// during playback, only player should call this
 LIVES_GLOBAL_INLINE int64_t lives_get_current_time(void) {
   //  return current (wallclock) time in nsec, mapped to range 0 ... INT64_MAX
   uint64_t uret;
-  ticks_t ret;
+  int64_t ret;
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -120,15 +180,25 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 }
 
 
+LIVES_GLOBAL_INLINE int64_t lives_get_relative_time(int64_t origtime) {
+  return lives_get_current_time() - origtime;
+}
+
+
+LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
+  return NSEC_TO_TICKS(lives_get_relative_time(TICKS_TO_NSEC(origticks)));
+}
+
+
 LIVES_GLOBAL_INLINE int64_t lives_get_session_time_nsec(void) {
   // return time since application was (re)started
-  return lives_get_relative_time(mainw->initial_time);
+  return lives_get_relative_time(mainw->initial_time) - mainw->susp_time;
 }
 
 
 LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
   // return time in sec. since application was (re)started
-  return (double)lives_get_relative_time(mainw->initial_time) / ONE_BILLION_DBL;
+  return (double)lives_get_session_time_nsec() / ONE_BILLION_DBL;
 }
 
 
@@ -138,15 +208,6 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks(void) {
 }
 
 ////////// lax versions
-
-LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks_lax(ticks_t origticks) {
-  return lives_get_current_ticks_lax() - origticks;
-}
-
-
-LIVES_GLOBAL_INLINE int64_t lives_get_relative_time_lax(int64_t origtime) {
-  return lives_get_current_time_lax() - origtime;
-}
 
 #define RECHK_COUNT 100
 /// during playback, only player should call this
@@ -159,6 +220,14 @@ LIVES_GLOBAL_INLINE int64_t lives_get_current_time_lax(void) {
   return mainw->wall_time;
 }
 
+LIVES_GLOBAL_INLINE int64_t lives_get_relative_time_lax(int64_t origtime) {
+  return lives_get_current_time_lax() - origtime;
+}
+
+LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks_lax(ticks_t origticks) {
+  return NSEC_TO_TICKS(lives_get_relative_time_lax(TICKS_TO_NSEC(origticks)));
+}
+
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks_lax(void) {
   return NSEC_TO_TICKS(lives_get_current_time_lax());
@@ -167,7 +236,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks_lax(void) {
 
 LIVES_GLOBAL_INLINE int64_t lives_get_session_time_nsec_lax(void) {
   // return time since application was (re)started
-  return lives_get_relative_time_lax(mainw->initial_time);
+  return lives_get_relative_time_lax(mainw->initial_time) - mainw->susp_time;
 }
 
 
@@ -181,8 +250,6 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_session_ticks_lax(void) {
   // return time in seconds since application was (re)started
   return NSEC_TO_TICKS(lives_get_session_time_nsec_lax());
 }
-
-
 
 
 #define SECS_IN_DAY 86400
@@ -229,18 +296,18 @@ LIVES_GLOBAL_INLINE char *get_current_timestamp(void) {
 
 ///////////////// playback clock /////////////////////////////
 
-static ticks_t baseItime, Itime, susp_ticks;
+static int64_t baseItime, Itime, last_itime;
 static double R, X, catchup;
 static int last_tsource;
-static ticks_t lclock_ticks, last_current, prev_current, clock_current, base_current, last_scticks;
-static ticks_t tot_deltas, av_delta, drift, owed_ticks;
+static int64_t lclock_nsec, last_current, prev_current, base_current;
+static int64_t tot_deltas, av_delta, drift, owed_nsec, last_scnsec;
 static uint64_t ncalls;
 static volatile double timer_load;
 
-void reset_playback_clock(ticks_t origticks) {
-  // susp_ticks = total suspended time
-  // clock_ticks == current_ticks - origticks - susp_ticks
-  // lclock_ticks = last clock ticks
+void reset_playback_clock(void) {
+  // susp_time = total suspended time
+  // clock_nsec == current_nsec - orignsec
+  // lclock_nsec = last clock nsec
   // current = sc time
   // prev_current = previous current
   //
@@ -250,20 +317,19 @@ void reset_playback_clock(ticks_t origticks) {
   // current - base_current - sc measured time since pt A
   // baseItime + sc measured time == actual corected time
   //
-  // clock_delta == clock_ticks - lclock_ticks
+  // clock_delta == clock_nsec - lclock_nsec
   // Itime + R * clock_delta == actual uncorrected time
 
   R = X = 1.;
-  lclock_ticks = -1;
+  lclock_nsec = -1;
   last_tsource = LIVES_TIME_SOURCE_NONE;
-  prev_current = last_current = clock_current = base_current = last_scticks = 0;
-  Itime = baseItime = 0;
-  susp_ticks = 0;
+  prev_current = last_current = base_current = last_scnsec = 0;
+  Itime = baseItime = last_itime = 0;
   tot_deltas = av_delta = 0;
   ncalls = 0;
   timer_load = 1.;
   drift = 0;
-  owed_ticks = 0;
+  owed_nsec = 0;
   catchup = 0.1;
 }
 
@@ -317,15 +383,15 @@ void show_pbtimer_stats(void) {
 // we check if last Itime + sc delta > or < then adjust X.
 
 
-// if we have delta time > this, we assume the process was suspended and ignore the interval
-#define DELTA_THRESH TICKS_PER_SECOND
+// if we have delta time (nsec) > this, we assume the process was suspended and ignore the interval
+#define DELTA_THRESH ONE_BILLION
 
-ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source) {
+ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t tsource;
-  ticks_t current = 0, clock_delta = 0, tdiff;
+  int64_t current = 0, clock_delta = 0, clock_nsec, tdiff;
   double thresh_factor = 1.;
   if (RUNNER_IS(valgrind)) thresh_factor = 10.;
 
@@ -335,31 +401,32 @@ ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t 
   mainw->time_jump = 0;
   ncalls++;
 
-get_time:
-  // clock time since playback started
-  //mainw->clock_ticks + mainw->origticks == session_ticks
-  mainw->clock_ticks = lives_get_current_ticks() - origticks - susp_ticks;
+  while (1) {
+    // clock time since playback started
+    //mainw->clock_nsec + mainw->orignsec == session_nsec
+    clock_nsec = lives_get_session_time_nsec();
 
-  if (lclock_ticks < 0) lclock_ticks = mainw->clock_ticks;
+    if (lclock_nsec < 0) lclock_nsec = clock_nsec;
+    clock_delta = clock_nsec - lclock_nsec;
 
-  clock_delta = mainw->clock_ticks - lclock_ticks;
-
-  if (clock_delta > DELTA_THRESH || clock_delta < 0) {
-    g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / TICKS_PER_SECOND_DBL);
-    if (thresh_factor > 1. && clock_delta > 0. && clock_delta < DELTA_THRESH * thresh_factor) {
-      g_print("Ignoring as we are running through valgrind\n");
-    } else {
-      mainw->force_show = TRUE;
-      susp_ticks += clock_delta;
-      if (clock_delta > 0)  mainw->clock_ticks -= clock_delta;
-      lclock_ticks = mainw->clock_ticks;
-      mainw->time_jump = clock_delta;
-      ncalls--;
-      goto get_time;
+    if (clock_delta > DELTA_THRESH || clock_delta < 0) {
+      g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
+      if (thresh_factor > 1. && clock_delta > 0. && clock_delta < DELTA_THRESH * thresh_factor) {
+        g_print("Ignoring as we are running through valgrind\n");
+      } else {
+        mainw->force_show = TRUE;
+        if (clock_delta > 0) mainw->susp_time += clock_delta;
+        clock_nsec -= clock_delta;
+        lclock_nsec = clock_nsec;
+        mainw->time_jump = clock_delta;
+        ncalls--;
+        continue;
+      }
     }
+    break;
   }
 
-  lclock_ticks = mainw->clock_ticks;
+  lclock_nsec = clock_nsec;
 
   if (tsource == LIVES_TIME_SOURCE_EXTERNAL) tsource = LIVES_TIME_SOURCE_NONE;
 
@@ -367,7 +434,7 @@ get_time:
   if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && AUD_SRC_EXTERNAL)
       || tsource == LIVES_TIME_SOURCE_SYSTEM) {
     tsource = LIVES_TIME_SOURCE_SYSTEM;
-    current = mainw->clock_ticks;
+    current = clock_nsec;
   }
 
   //get timecode from jack transport
@@ -376,7 +443,7 @@ get_time:
     if (mainw->jack_can_stop && mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) {
       // calculate the time from jack transport
       tsource = LIVES_TIME_SOURCE_EXTERNAL;
-      current = jack_transport_get_current_ticks(mainw->jackd_trans);
+      current = TICKS_TO_NSEC(jack_transport_get_current_ticks(mainw->jackd_trans));
     }
   }
 #endif
@@ -435,14 +502,6 @@ get_time:
       prev_current = current - clock_delta * R;
     }
 
-    if (current > prev_current) {
-      clock_current = current;
-    }
-
-    if (current == prev_current) {
-
-    }
-
     if (current < prev_current) {
       prev_current = current;
       baseItime = 0;
@@ -454,17 +513,17 @@ get_time:
     }
 
     if (current > prev_current) {
-      ticks_t scdelta = current - prev_current;
+      int64_t scdelta = current - prev_current;
       // audio drivers may do their own interolation
       // so we get the ratio from them
       if (AUD_SRC_EXTERNAL) {
         IF_AREADER_PULSE
-        (R = lives_pulse_get_timing_ratio(mainw->pulsed_read);)
+        (R = lives_pulse_get_timing_ratio(mainw->pulsed_read, clock_nsec);)
         IF_AREADER_JACK
         (R = lives_jack_get_timing_ratio(mainw->jackd_read);)
       } else {
         IF_APLAYER_PULSE
-        (R = lives_pulse_get_timing_ratio(mainw->pulsed);)
+        (R = lives_pulse_get_timing_ratio(mainw->pulsed, clock_nsec);)
         IF_APLAYER_JACK
         (R = lives_jack_get_timing_ratio(mainw->jackd);)
       }
@@ -472,8 +531,8 @@ get_time:
       // check the calculated time against the measured time
       // either slow down or speed up to align
       scdelta = current - base_current;
-      ticks_t sctime = baseItime + scdelta; // measured time
-      ticks_t systime = Itime + clock_delta * R * X; // calculated time
+      int64_t sctime = baseItime + scdelta; // measured time
+      int64_t systime = Itime + clock_delta * R * X; // calculated time
 
       // negative drift means measured < calculated
       drift = systime - sctime;
@@ -498,10 +557,10 @@ get_time:
   tdiff = clock_delta * R * X;
 
   if (mainw->time_jump) {
-    if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / TICKS_PER_SECOND_DBL;
+    if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / ONE_BILLION_DBL;
   } else  {
     if (clock_delta) {
-      ticks_t toomuch = 0;//tdiff - (ticks_t)(prefs->pbtimer_maxdiff);
+      int64_t toomuch = 0;//tdiff - (int64_t)(prefs->pbtimer_maxdiff);
       if (ncalls > 10000) {
         tot_deltas += clock_delta;
         av_delta = tot_deltas / ncalls;
@@ -509,18 +568,18 @@ get_time:
       }
       if (toomuch > 0) {
         //g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
-        owed_ticks += toomuch;
+        owed_nsec += toomuch;
         tdiff -= toomuch;
       } else {
-        ticks_t allowed;
-        if (!owed_ticks) catchup = .1;
+        int64_t allowed;
+        if (!owed_nsec) catchup = .1;
         allowed = tdiff * catchup;
-        if (allowed > owed_ticks) {
-          allowed = owed_ticks;
+        if (allowed > owed_nsec) {
+          allowed = owed_nsec;
           catchup = (double)allowed / (double)tdiff;
         } else catchup *= 1.1;
         tdiff += allowed;
-        owed_ticks -= allowed;
+        owed_nsec -= allowed;
       }
     }
 
@@ -531,7 +590,9 @@ get_time:
     last_tsource = tsource;
     if (time_source) *time_source = tsource;
   }
-  return Itime;
+  if (mainw->mark_time) Itime = last_itime;
+  last_itime = Itime;
+  return NSEC_TO_TICKS(Itime);
 }
 
 
@@ -543,10 +604,10 @@ void fdef_add_data(lives_funcdef_t *fdef, ...) {
   do {
     int what = va_arg(va, int);
     switch (what) {
-    case FDEF_STAT_LAST: end = TRUE; break;
-    case FDEF_STAT_ST_TIME: xtime = va_arg(va, double); break;
-    case FDEF_STAT_EN_TIME: xtime = va_arg(va, double); break;
-    case FDEF_STAT_COUNT: ((fdef_stats *)fdef->stats)->counter++; break;
+    case TIMER_STAT_LAST: end = TRUE; break;
+    case TIMER_STAT_ST_TIME: xtime = va_arg(va, double); break;
+    case TIMER_STAT_EN_TIME: xtime = va_arg(va, double); break;
+    case TIMER_STAT_COUNT: ((fdef_stats *)fdef->stats)->counter++; break;
     default: break;
     }
   } while (!end);

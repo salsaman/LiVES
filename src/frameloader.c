@@ -1202,7 +1202,7 @@ check_prcache:
 
 
 #define SCRAP_CHECK 30
-ticks_t lscrap_check;
+int64_t lscrap_check;
 extern uint64_t free_mb; // MB free to write
 double ascrap_mb;  // MB written to audio file
 
@@ -1293,15 +1293,15 @@ static int64_t _save_to_scrap_file(weed_layer_t **layerptr) {
   weed_layer_unref(layer);
 
   // check free space every 2048 frames or after SCRAP_CHECK seconds (whichever comes first)
-  if (lscrap_check == -1) lscrap_check = mainw->clock_ticks;
+  if (lscrap_check == -1) lscrap_check = mainw->wall_time;
   else {
-    if (mainw->clock_ticks - lscrap_check >= SCRAP_CHECK * TICKS_PER_SECOND
+    if (mainw->wall_time - lscrap_check >= SCRAP_CHECK * ONE_BILLION
         || (scrapfile->frames & 0x800) == 0x800) {
       char *dir = get_clip_dir(mainw->scrap_file);
       free_mb = (double)get_ds_free(dir) / 1000000.;
       if (free_mb == 0) sf_writeable = is_writeable_dir(dir);
       lives_free(dir);
-      lscrap_check = mainw->clock_ticks;
+      lscrap_check = mainw->wall_time;
     }
   }
 

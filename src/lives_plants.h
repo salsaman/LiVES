@@ -162,6 +162,7 @@ void register_blueprints(void);
 typedef enum {
   idx_type_anon = -1,
   test_lookup,
+  lookup_type_anon,
   // idx used in blueprints
   idx_type_values,
   // datavook
@@ -237,8 +238,17 @@ weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean 
 typedef weed_plant_t lives_lookup_t;
 
 lives_lookup_t *lives_make_lookup(lookup_type ltype);
+
 allvalues_t *add_to_lookup(lookup_type ltype, weed_seed_t st, const char *name, ...);
+allvalues_t *add_to_lookup_table(lives_lookup_t *lookup, weed_seed_t st, const char *name, ...);
+
 allvalues_t *find_in_lookup(lookup_type ltype, const char *name);
+#define find_in_lookup_table(lookup, name) get_databook_item(lookup, name)
+
+boolean remove_from_lookup(lookup_type ltype, const char *name);
+boolean remove_from_lookup_table(lives_lookup_t *, const char *name);
+
+//allvalues_t *find_in_lookup_table(lives_lookup_t *, const char *name);
 
 // LIVES_PLANT_DATA_BOOK
 

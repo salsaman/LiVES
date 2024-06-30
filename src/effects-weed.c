@@ -2376,7 +2376,13 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   weed_process_f process_func;
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean did_thread = FALSE;
-  //int64_t timex = lives_get_current_ticks();
+  boolean check_timing = TRUE;
+  double xtime;
+  weed_channel_t *achan = get_enabled_audio_channel(instance, 0, LIVES_INPUT);
+
+  if (achan) weed_set_boolean_value(achan, "_processing", TRUE);
+
+  if (check_timing) xtime = lives_get_session_time();
 
   // see if we can multithread
   if (can_thread(filter)) {
@@ -2397,8 +2403,15 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
       if (ret == WEED_ERROR_NOT_READY) retval = FILTER_ERROR_BUSY;
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
   }
+
+  if (check_timing && retval == FILTER_SUCCESS) {
+    weed_set_double_value(instance, "st_time", xtime);
+    weed_set_double_value(instance, "en_time", lives_get_session_time());
+  }
+
   weed_leaf_delete(instance, WEED_LEAF_RANDOM_SEED);
   //  thrdit = !thrdit;
+  if (achan) weed_set_boolean_value(achan, "_processing", FALSE);
   return retval;
 }
 
@@ -2518,6 +2531,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
         }
       }
       weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
+      //
       weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, nchans, (void **)adata);
       lives_free(adata);
     }
@@ -2661,7 +2675,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
     }
 
     lives_free(in_channels);
-    lives_free(out_channels);
+    if (out_channels) lives_free(out_channels);
     in_channels = out_channels = NULL;
 
     // set init_event to NULL before passing it to the inner function
@@ -3554,7 +3568,7 @@ boolean has_usable_palette(weed_plant_t *filter, weed_plant_t *chantmpl) {
     palette = palettes[i];
     if (palette == WEED_PALETTE_END || is_usable_palette(palette)) break;
   }
-  lives_free(palettes);
+  if (palettes) lives_free(palettes);
   return palette != WEED_PALETTE_END;
 }
 
@@ -5342,8 +5356,10 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
   xfilter = weed_filters[filts[nfilts - 1]];
   if (weed_plant_has_leaf(xfilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
     out_chans = weed_filter_get_out_chantmpls(filter, &count);
-    weed_set_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, count, out_chans);
-    lives_free(out_chans);
+    if (out_chans) {
+      weed_set_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, count, out_chans);
+      lives_free(out_chans);
+    }
   }
 
   return filter;
@@ -7389,75 +7405,41 @@ void weed_deinit_all(boolean shutdown) {
    following cycle. This ensures that no client will miss audio samples, at the cost of some minor latency.
    Purely audio filters are run directly during the audio cycle or by the audio caching thread.
 */
-int register_audio_client(boolean is_vid) {
-  return 0;
+int register_audio_client(void) {
+  int nreaders;
   if (!mainw->afbuffer) {
     lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
-
     mainw->afbuffer = init_audio_frame_buffers(aplayer);
-
-    mainw->afbuffer->aclients = mainw->afbuffer->vclients = 0;
-    mainw->afbuffer->aclients_read = mainw->afbuffer->vclients_read = 0;
     if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
     else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
   }
-
-  if (is_vid) mainw->afbuffer->vclients++;
-  else mainw->afbuffer->aclients++;
-
-  if (is_vid) return mainw->afbuffer->vclients;
-  return mainw->afbuffer->aclients;
+  pthread_mutex_lock(&mainw->afbuffer->nreader_mutex);
+  nreaders = ++mainw->afbuffer->readers;
+  pthread_mutex_unlock(&mainw->afbuffer->nreader_mutex);
+  return nreaders;
 }
 
-int unregister_audio_client(boolean is_vid) {
+int unregister_audio_client(void) {
+  int nreaders;
   if (!mainw->afbuffer) return -1;
-
-  if (is_vid) mainw->afbuffer->vclients--;
-  else mainw->afbuffer->aclients--;
-  if (mainw->afbuffer->aclients <= 0 && mainw->afbuffer->vclients <= 0) {
-    // lock out the audio thread
+  pthread_mutex_lock(&mainw->afbuffer->nreader_mutex);
+  nreaders = --mainw->afbuffer->readers;
+  pthread_mutex_unlock(&mainw->afbuffer->nreader_mutex);
+  if (nreaders <= 0) {
     if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
     else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
     free_audio_frame_buffer(mainw->afbuffer);
     mainw->afbuffer = NULL;
     return 0;
   }
-
-  if (is_vid) return mainw->afbuffer->vclients;
-  return mainw->afbuffer->aclients;
+  return nreaders;
 }
 
 
-boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan, boolean is_vid) {
-  // this is for filter instances with mixed audio / video inputs/outputs
-  // uneffected audio is buffered by the audio thread; here we copy / convert it to a video effect's audio channel
-  // purely audio filters run in the audio thread
-  // now used also to pass loopback audio from reader to writer
-  lives_audio_buf_t *audbuf;
-  if (!achan) return TRUE;
-
-  weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
-  weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
-
-  audbuf = mainw->afbuffer;
-  if (!achan || !audbuf || audbuf->write_pos < 0) return FALSE;
-  if (is_vid) {
-    if (!audbuf->vclients) return FALSE;
-    push_audio_to_channel(filter, achan, audbuf, TRUE);
-    if (++audbuf->vclients_read >= audbuf->vclients) audbuf->vclients_read = 0;
-    if (!audbuf->vclients_read) {
-      audbuf->vclient_readpos = audbuf->vclient_readlevel;
-      audbuf->vclient_readlevel = audbuf->write_pos;
-    }
-  } else {
-    if (!audbuf->aclients) return FALSE;
-    push_audio_to_channel(filter, achan, audbuf, FALSE);
-    if (++audbuf->aclients_read >= audbuf->aclients) audbuf->aclients_read = 0;
-    if (!audbuf->aclients_read) {
-      audbuf->aclient_readpos = audbuf->aclient_readlevel;
-      audbuf->aclient_readlevel = audbuf->write_pos;
-    }
-  }
+boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
+  lives_audio_buf_t *audbuf = mainw->afbuffer;
+  if (!achan || !audbuf || !audbuf->bufferf) return TRUE;
+  pull_audio_for_channel(filter, achan, audbuf);
   return TRUE;
 }
 
@@ -7529,7 +7511,7 @@ boolean fill_audio_channel_aux(weed_plant_t *achan) {
   // push read buffer to channel
   if (achan && audbuf) {
     // convert audio to format requested, and copy it to the audio channel data
-    push_audio_to_channel(NULL, achan, audbuf, FALSE);
+    pull_audio_for_channel(NULL, achan, audbuf);
   }
 
   if (++mainw->afbuffer_aux_clients_read >= mainw->afbuffer_aux_clients) {
@@ -7547,19 +7529,18 @@ boolean fill_audio_channel_aux(weed_plant_t *achan) {
 
 lives_filter_error_t lives_layer_fill_from_generator(weed_layer_t *layer, weed_instance_t *inst, weed_timecode_t tc) {
   weed_filter_t *filter;
-  weed_channel_t *channel, *achan;
+  weed_channel_t *channel, *achan = NULL;
   weed_layer_t *inter;
   lives_clip_t *sfile = NULL;
   char *cwd;
   double tfps;
   boolean is_bg = TRUE, needs_reinit = FALSE, reinited = FALSE;
   lives_filter_error_t retval;
-  int num_in_alpha = 0, clipno, i;
+  int num_in_alpha = 0, clipno, i, alen = 0;
+  int max_arate;
 
   if (!layer) return FILTER_ERROR_MISSING_LAYER;
-  if (!inst) {
-    return FILTER_ERROR_INVALID_INSTANCE;
-  }
+  if (!inst) return FILTER_ERROR_INVALID_INSTANCE;
 
   clipno = lives_layer_get_clip(layer);
   sfile = RETURN_VALID_CLIP(clipno);
@@ -7676,9 +7657,20 @@ matchvals:
     goto matchvals;
   }
 
-  // if we have an optional audio channel, we can push audio to it
-  if ((achan = get_enabled_audio_channel(inst, 0, LIVES_INPUT)) != NULL) {
-    fill_audio_channel(filter, achan, TRUE);
+  if (prefs->push_audio_to_gens) {
+    // client was registered already
+    // if we have an optional audio channel, we can pull audio from the arena buffers
+    if ((achan = get_enabled_audio_channel(inst, 0, LIVES_INPUT)) != NULL) {
+      if (!weed_get_boolean_value(achan, "_processing", NULL)) {
+        weed_set_boolean_value(achan, "_processing", TRUE);
+        if (fill_audio_channel(filter, achan) == LIVES_RESULT_BUSY_RETRY) {
+          weed_channel_set_audio_length(achan, 0);
+          g_print("LEN BUS\n");
+        }
+        alen = weed_channel_get_audio_length(achan);
+        //g_print("pre alen is %d\n", alen);
+      }
+    }
   }
 
   cwd = cd_to_plugin_dir(filter);
@@ -7694,14 +7686,6 @@ procfunc1:
 
   // get the current video data, then we will push an audio packet for the following frame
   retval = run_process_func(inst, tc);
-
-  if (achan) {
-    int nachans;
-    float **abuf = weed_channel_get_audio_data(achan, &nachans);
-    for (i = 0; i < nachans; i++) lives_freep((void **)&abuf[i]);
-    lives_freep((void **)&abuf);
-    weed_channel_set_audio_data(achan, NULL, 0, 0, 0);
-  }
 
   if (retval == WEED_ERROR_REINIT_NEEDED) {
     if (reinited) {
@@ -7729,6 +7713,31 @@ procfunc1:
   weed_pixel_data_share(channel, inter);
   weed_layer_free(inter);
   lives_layer_set_clip(layer, clipno);
+
+  if (alen && achan) {
+    tab_data_t *avers = (tab_data_t *)weed_get_voidptr_value(inst, "tab_data", NULL);
+    double newvals[2];
+    if (!avers) {
+      avers = init_tab_data(2, 50);
+      weed_set_voidptr_value(inst, "tab_data", avers);
+      weed_leaf_autofree(inst, "tab_data");
+    }
+    newvals[0] = weed_get_double_value(inst, "en_time", NULL) - weed_get_double_value(inst, "st_time", NULL);
+    newvals[1] = (double)alen;
+    //g_print("append vaals %f and %f\n", newvals[0], newvals[1]);
+    tabdata_update(avers, newvals);
+    weed_set_double_value(inst, "av_proc_time", avers->avgs[0]);
+    max_arate = avers->avgs[1] / avers->avgs[0];
+    g_print("Proc: %f samps in %f secs = %f samps per sec per achan\n", avers->avgs[1], avers->avgs[0],
+            avers->avgs[1] / avers->avgs[0]);
+
+    if (max_arate < weed_channel_get_audio_rate(achan)) {
+      int nrate = max_arate;
+      find_standard_arate(nrate);
+      if (nrate * avers->avgs[0] < avers->avgs[1])
+        g_print("REcommend downsampling to %d\n", nrate);
+    }
+  }
 
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
   /* 	  weed_channel_get_palette(channel), weed_channel_get_pixel_data(channel)); */
@@ -7860,7 +7869,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (prefs->push_audio_to_gens) {
     if ((achan = get_audio_channel_in(inst, 0)) != NULL) {
       if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
-      register_audio_client(TRUE);
+      register_audio_client();
     }
   }
 
@@ -7983,7 +7992,7 @@ void weed_generator_end(weed_plant_t *inst) {
 
   if (prefs->push_audio_to_gens) {
     if (inst && get_audio_channel_in(inst, 0)) {
-      unregister_audio_client(TRUE);
+      unregister_audio_client();
     }
   }
 

@@ -103,19 +103,19 @@ weed_error_t weed_set_uint64_value(weed_plant_t *plant, const char *key, uint64_
 {return weed_leaf_set(plant, key, WEED_SEED_UINT64, 1, (weed_voidptr_t)&value);}
 
 weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const char *value)
-{return weed_leaf_set(plant, key, WEED_SEED_STRING, 1, value ? (weed_voidptr_t)&value : NULL);}
+{return weed_leaf_set(plant, key, WEED_SEED_STRING, value ? 1 : 0, value ? (weed_voidptr_t)&value : NULL);}
 
 weed_error_t weed_set_funcptr_value(weed_plant_t *plant, const char *key, weed_funcptr_t value)
-{return weed_leaf_set(plant, key, WEED_SEED_FUNCPTR, 1, value ? (weed_voidptr_t)&value : NULL);}
+{return weed_leaf_set(plant, key, WEED_SEED_FUNCPTR, value ? 1 : 0, value ? (weed_voidptr_t)&value : NULL);}
 
 weed_error_t weed_set_voidptr_value(weed_plant_t *plant, const char *key, weed_voidptr_t value)
-{return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, 1, value ? (weed_voidptr_t)&value : NULL);}
+{return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, value ? 1 : 0, value ? (weed_voidptr_t)&value : NULL);}
 
 weed_error_t weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_plant_t *value)
-{return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, 1, value ? (weed_voidptr_t)&value : NULL);}
+{return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, value ? 1 : 0, value ? (weed_voidptr_t)&value : NULL);}
 
 weed_error_t weed_set_custom_value(weed_plant_t *plant, const char *key, weed_seed_t seed_type, weed_voidptr_t value)
-{return weed_leaf_set(plant, key, seed_type, 1, value ? (weed_voidptr_t)&value : NULL);}
+{return weed_leaf_set(plant, key, seed_type, value ? 1 : 0, value ? (weed_voidptr_t)&value : NULL);}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 

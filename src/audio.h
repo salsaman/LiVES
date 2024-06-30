@@ -50,6 +50,7 @@ typedef struct {
 #define LIVES_LEAF_AUDIO_SOURCE "audio_source"
 #define LIVES_LEAF_AUDIO_INTERLEAVED "audio_inter"
 #define LIVES_LEAF_AUDIO_SAMPS "audio_samps"
+#define LIVES_LEAF_OFFSET "offset"
 
 lives_obj_instance_t *get_aplayer_instance(int source);
 
@@ -121,7 +122,7 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 #define SWAP_L_TO_X 2 ///< local to other
 
 /// defaults for when not specified#
-#define DEFAULT_AUDIO_RATE 48000
+#define DEFAULT_AUDIO_RATE 96000
 #define DEFAULT_AUDIO_CHANS 2
 #define DEFAULT_AUDIO_SAMPS 16
 #define DEFAULT_AUDIO_INTERLEAVED TRUE
@@ -130,9 +131,11 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 #define DEFAULT_AUDIO_SIGNED DEFAULT_AUDIO_SIGNED16
 #define DEFAULT_AUDIO_ENDIAN (capable->hw.byte_order == LIVES_LITTLE_ENDIAN \
 			       ? AUDIO_LE : AUDIO_BE)
+// internal fmt is the same, but in 32 bit float (currently)
 
 // for afbuffer
-#define ABUF_ARENA_SIZE 768000
+// per chnnel size in bytes
+#define ABUF_ARENA_SIZE 32 * 1024 * 1024
 
 #define AREC_BUF_SIZE 2 * 1024 * 1024
 
@@ -204,46 +207,48 @@ typedef struct {
   ssize_t bytesize; // file in/out length in bytes [write by server in case of eof]
 
   boolean in_interleaf;
-  boolean out_interleaf;
-
   int in_achans; ///< channels for _filebuffer side
-  int out_achans; ///< channels for buffer* side
   int in_asamps; // set to -val for float
+
+  boolean out_interleaf;
   int out_asamps; // set to -val for float
+  int out_achans; ///< channels for buffer* side
   int swap_sign;
   int swap_endian;
   double shrink_factor;  ///< resampling ratio
 
   // this is for the afbuffer (bufferf is an arena)
-  int vclients, aclients;
-  int vclients_read, aclients_read;
-  size_t vclient_readpos, aclient_readpos;
-  size_t vclient_readlevel, aclient_readlevel;
-  volatile ssize_t write_pos;
+  int readers;
+  pthread_mutex_t nreader_mutex;
 
-  size_t samp_space; ///< buffer space in samples (* by sizeof(type) to get bytesize) [if interleaf, also * by chans]
+  volatile int write_pos;  // data length (wrapped around) in samps per chan
+
+  /* size_t samp_space; ///< buffer space in samples (* by sizeof(type) to get bytesize) [if interleaf, also * by chans] */
+  /* size_t end_zone; // wrap around area */
 
   boolean sequential; ///< hint that we will read sequentially starting from seek
 
-  // in or out buffers
-  uint8_t **buffer8; ///< sample data in 8 bit format (or NULL)
+  /* // in or out buffers */
+  /* uint8_t **buffer8; ///< sample data in 8 bit format (or NULL) */
   union {
     short   **buffer16; ///< sample data in 16 bit format (or NULL)
     uint8_t **buffer16_8; ///< sample data in 8 bit format (or NULL)
   };
-  int32_t **buffer24; ///< sample data in 24 bit format (or NULL)
-  int32_t **buffer32; ///< sample data in 32 bit format (or NULL)
+  /* int32_t **buffer24; ///< sample data in 24 bit format (or NULL) */
+  /* int32_t **buffer32; ///< sample data in 32 bit format (or NULL) */
   float   **bufferf; ///< sample data in float format (or NULL)
 
   // input values
-  boolean s8_signed;
+  /* boolean s8_signed; */
   boolean s16_signed;
-  boolean s24_signed;
-  boolean s32_signed;
+  /* boolean s24_signed; */
+  /* boolean s32_signed; */
 
   // ring buffer
   volatile size_t samples_filled; ///< number of samples filled (readonly client)
   size_t start_sample; ///< used for reading (readonly server)
+  size_t samp_space;
+
 
   // private fields (used by server)
   uint8_t *_filebuffer; ///< raw data to/from file - can be cast to int16_t
@@ -425,10 +430,8 @@ lives_audio_buf_t *init_audio_frame_buffers(lives_obj_instance_t *aplayer);
 void update_audio_cbs(lives_obj_instance_t *aplayer);
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);
-void append_to_audio_bufferf(float *src, size64_t nsamples, int channum);
-void append_to_aux_audio_bufferf(float *src, size64_t nsamples, int channum);
-void append_to_audio_buffer16(void *src, size64_t nsamples, int channum);
-boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf, boolean is_vid);
+
+boolean pull_audio_for_channel(weed_plant_t *filter, weed_layer_t *achan, lives_audio_buf_t *abuf);
 boolean start_audio_stream(void);
 void stop_audio_stream(void);
 void clear_audio_stream(void);

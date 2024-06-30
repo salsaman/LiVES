@@ -2308,10 +2308,10 @@ static void output_silence(size_t offset, jack_nframes_t nframes, jack_driver_t 
       if (!jackd->is_silent) {
         sample_silence_dS(out_buffer[i] + offset, nframes);
       }
-      if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
-        // audio to be sent to video generator plugins
-        append_to_audio_bufferf(out_buffer[i] + offset, nframes, i == nch - 1 ? -i - 1 : i + 1);
-      }
+      /* if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { */
+      /*   // audio to be sent to video generator plugins */
+      /*   append_to_audio_bufferf(out_buffer[i] + offset, nframes, i == nch - 1 ? -i - 1 : i + 1); */
+      /* } */
     }
   }
   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
@@ -2558,7 +2558,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     else vol = lives_vol_from_linear(future_prefs->volume);
 
     weed_channel_set_audio_data(achan, NULL, jackd->sample_out_rate, nch, 0);
-    fill_audio_channel(NULL, achan, FALSE);
+    fill_audio_channel(NULL, achan);
 
     acsize = weed_channel_get_audio_length(achan);
 
@@ -2690,13 +2690,12 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       if (jackd->playing_file < 0) break;
       xseek = atol((char *)msg->data);
       if (msg->command == ASERVER_CMD_FILE_SEEK_ADJUST) {
-        ticks_t delta = lives_get_current_ticks() - msg->tc;
-        xseek += (double)delta / TICKS_PER_SECOND_DBL  *
-                 (double)(afile->adirection * afile->arate * afile->achans * (afile->asampsize >> 3));
+        ticks_t delta = mainw->currticks - msg->tc;
+        xseek += delta / TICKS_PER_SECOND_DBL * (double)(afile->adirection * afile->arate
+                 * afile->achans * (afile->asampsize >> 3));
       }
-
-      xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
       if (xseek < 0) xseek = 0;
+      xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
 
       fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek;
       if (msg->extra) {
@@ -3081,13 +3080,13 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 // error in plugin, put silence
                 output_silence(0, numFramesToWrite, jackd, out_buffer);
               } else {
-                for (i = 0; i < nch; i++) {
-                  // push non-interleaved audio in fbuffer to jack
-                  if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
-                    // we will push the pre-effected audio to any audio reactive generators
-                    append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1);
-                  }
-                }
+                /* for (i = 0; i < nch; i++) { */
+                /*   // push non-interleaved audio in fbuffer to jack */
+                /*   if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { */
+                /*     // we will push the pre-effected audio to any audio reactive generators */
+                /*     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1); */
+                /*   } */
+                /* } */
               }
               //}
               if (!pl_error && has_audio_filters(AF_TYPE_NONA)) {
@@ -3170,10 +3169,10 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
                                             jackd->num_output_channels, afile->signed_endian
                                             & AFORM_UNSIGNED, FALSE, vol);
-                  if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
-                    // we will push the pre-effected audio to any audio reactive generators
-                    append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1);
-                  }
+                  /* if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { */
+                  /*   // we will push the pre-effected audio to any audio reactive generators */
+                  /*   append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1); */
+                  /* } */
                 }
                 pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
@@ -3399,7 +3398,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 static int xrun_callback(void *arg) {
   jack_driver_t *jackd = (jack_driver_t *)arg;
   float delay = jack_get_xrun_delayed_usecs(jackd->client);
-  volatile float const *load = get_core_loadvar(0);
+  volatile double const *load = get_core_loadvar(0);
   if (prefs->show_dev_opts) {
     g_print("\n\nXRUN: %f %f\n", delay, *load);
     //g_print("\n\nXRUN: %f\n", delay);
@@ -3638,10 +3637,10 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
        || ((prefs->audio_opts & AUDIO_OPTS_AUX_RECORD)
            && (mainw->record && !mainw->record_paused)))
       && mainw->audio_frame_buffer_aux) {
-    for (i = 0; i < nch; i++) {
-      in_buffer[nch + i] = (float *)jack_port_get_buffer(jackd->input_port[nch + i], nframes);
-      append_to_aux_audio_bufferf(in_buffer[nch + i], nframes, i);
-    }
+    /* for (i = 0; i < nch; i++) { */
+    /*   in_buffer[nch + i] = (float *)jack_port_get_buffer(jackd->input_port[nch + i], nframes); */
+    /*   append_to_aux_audio_bufferf(in_buffer[nch + i], nframes, i); */
+    /* } */
     mainw->audio_frame_buffer_aux->samples_filled += nframes;
     // TODO - if recording aux, do so
   }
@@ -4325,7 +4324,7 @@ off_t jack_audio_seek_bytes_velocity(jack_driver_t *jackd, off_t bytes, lives_cl
   seek_err = FALSE;
 
   if (0 && LIVES_IS_PLAYING && !mainw->preview) {
-    jack_message2.tc = lives_get_current_ticks();
+    jack_message2.tc = mainw->currticks;
     jack_message2.command = ASERVER_CMD_FILE_SEEK_ADJUST;
   } else jack_message2.command = ASERVER_CMD_FILE_SEEK;
 
@@ -4381,7 +4380,7 @@ void jack_pb_end(void) {
   if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
     unregister_aux_audio_channels(1);
   if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX))
-    unregister_audio_client(FALSE);
+    unregister_audio_client();
 }
 
 
@@ -4439,7 +4438,7 @@ void jack_aud_pb_ready(jack_driver_t *jackd, int fileno) {
     if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
         && !mainw->multitrack && !mainw->preview) jackd->in_use = TRUE; // audio generator is active
 
-    if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) register_audio_client(FALSE);
+    if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) register_audio_client();
     if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY) register_aux_audio_channels(1);
 
     mainw->rec_aclip = jackd->playing_file;

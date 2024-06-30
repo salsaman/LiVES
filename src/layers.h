@@ -223,6 +223,9 @@ void lives_layer_async_auto(lives_layer_t *, lives_proc_thread_t);
 int lives_layer_guess_palette(weed_layer_t *);
 
 // audio layers
+
+weed_layer_t *config_alayer_dtls(weed_layer_t *layer, audio_dtls *adtls);
+
 weed_layer_t *lives_alayer_new_for(int clip, int src_type);
 
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate,

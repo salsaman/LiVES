@@ -710,7 +710,7 @@ typedef struct {
   double start, end, paused, copy_time;
   int width, height;
   int pal, pb_quality;
-  float cpuload;
+  double cpuload;
 } exec_plan_substep_t;
 
 // letterboxing is represented as a resize followed by a memcpy
@@ -769,6 +769,55 @@ typedef struct {
   int pal;
   double c0, c1, c2;
 } proctime_consts;
+
+typedef struct {
+  // offsets from plan trigger time
+  // since we do not know exact frame load times
+  // we only set est dur for now
+  // real_start / real_end are in session_time
+  ticks_t
+  // steps / template
+  est_start,
+  est_end,
+  deadline;
+  //
+  // some of these are absolute tines (session times)
+  // some are durations (totals)
+  double
+  // step + plan timings
+  // thime when plan was actioned via func call
+  real_start,
+
+  // cycle finished time
+  real_end,
+
+  // predicted duration
+  est_duration,
+
+  // paused time
+  paused_time,
+
+  // real_end - real_start
+  real_duration,
+
+  // real_end - actual_start
+  effective_duration,
+
+  // time when a frame was played
+  actual_start, // ?
+  // durations
+  preload_time, // actual_start - real_start
+  active_pl_time, // step busy time berween time until actual_start
+  tgt_time, // 1. / pb_fps
+  concurrent_time, // total time when > 1 steps were active
+  sequential_time, // sum of all steps if run sequentially
+  exec_time, // dispatch time (a)
+  trun_time, // thread run time (a)
+  queued_time, // trun_time - exec_time
+  trigger_time, // time when plan is triggered - allowed to run (a)
+  start_wait, // time between thread running and trigger (trigger - trun) (d)
+  waiting_time; // after triggering, time when no steps were running (idle time - d)
+} timedata_t;
 
 typedef struct _exec_plan exec_plan_t;
 

@@ -739,6 +739,12 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_channel_set_audio_data(weed_plant_t *chann
   return channel;
 }
 
+WEED_GLOBAL_INLINE int weed_channel_set_audio_length(weed_channel_t *channel, int nsamps) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
+  weed_set_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
+  return nsamps;
+}
+
 WEED_GLOBAL_INLINE uint32_t weed_instance_get_flags(weed_plant_t *inst) {
   if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return 0;
   return weed_get_int_value(inst, WEED_LEAF_FLAGS, NULL);

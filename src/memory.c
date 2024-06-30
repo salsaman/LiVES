@@ -192,7 +192,7 @@ LIVES_GLOBAL_INLINE void *lives_steal_pointer(void **pptr)
 
 /* #endif */
 
-void lives_debug_free(void *p) {
+void _lives_debug_free(void *p) {
   if (mainw && p == mainw->debug_ptr) BREAK_ME("debgu free\n");
   _lives_free(p);
 }
@@ -1104,7 +1104,7 @@ boolean init_memfuncs(int stage) {
     lives_malloc = _lives_malloc;
     lives_calloc = _lives_calloc;
     lives_realloc = _lives_realloc;
-    lives_free = _lives_free;
+    lives_free = _lives_debug_free;
     lives_memcpy = lives_memcpy_extra;
     lives_memset = _lives_memset;
     lives_memcmp = _lives_memcmp;

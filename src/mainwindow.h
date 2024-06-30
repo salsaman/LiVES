@@ -751,6 +751,7 @@ typedef struct {
 
 /// helper proc_threads
 #define N_HLP_PROCTHREADS	256
+#define PT_BG_TASKS		1
 #define PT_TRANSREND		2
 #define PT_DLG_SPINNER		3
 #define PT_LAZY_RFX		16
@@ -806,8 +807,6 @@ typedef struct {
 
 
 typedef struct {
-  lives_databook_t *global_databook;
-
   char msg[MAINW_MSG_SIZE];
 
   // clip files
@@ -1099,7 +1098,9 @@ typedef struct {
 
   // node model for current fx chain
   lives_nodemodel_t *nodemodel;
+  lives_nodemodel_t *qnodemodels[3];
   exec_plan_t *exec_plan;
+  exec_plan_t *qexec_plans[3];
   exec_plan_t *plan_cycle;
   boolean refresh_model;
 
@@ -1123,27 +1124,35 @@ typedef struct {
   const int64_t initial_time; ///< set ASAP when app is (re)started
   volatile int64_t wall_time; /// wall clock time, updated whenever lives_get_*_ticks is called
 
-  volatile ticks_t time_jump;
+  volatile int64_t time_jump;
+  volatile int64_t susp_time; /// incremented if time jump is detected
+
+  // TODO - change from ticks to int64_t nsec //////////////////////
 
   volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
   ticks_t last_startticks; ///< effective ticks when last frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
 
-  ticks_t origticks; ///< playback start time
+  //ticks_t origticks; ///< playback start time
 
   ticks_t offsetticks; ///< offset for multitrack playback start
-  volatile ticks_t clock_ticks; ///< unadjusted system time since pb start, measured concurrently with currticks
 
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
-  //ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources
+
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
 
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
+  boolean mark_time; // if set, the playback clock does not advance
+
+  ////////////////////////////////////////////////
+
   int play_sequence; ///< incremented for each playback
 
-  double audio_stretch; ///< for fixed fps modes, the value is used to speed up / slow down audio
+  /// for fixed fps modes, the value is used to speed up / slow down audio
+  /// larger values play slower
+  double audio_stretch;
 
   int size_warn; ///< warn the user that incorrectly sized frames were found (threshold count)
 
@@ -1615,7 +1624,7 @@ typedef struct {
   ulong pw_scroll_func;
   boolean msg_area_configed;
 
-  lives_proc_thread_t aud_rec_lpt;
+  void *aud_rec_rcpt;
 
   lives_thread_data_t *fg_tdata;
   lives_proc_thread_t def_lpt;

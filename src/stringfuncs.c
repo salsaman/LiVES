@@ -704,6 +704,7 @@ LIVES_GLOBAL_INLINE char *lives_strcollate(char **strng, const char *sep, const 
   //
   char *tmp = (strng && *strng) ? *strng : lives_strdup("");
   char *strng2 = lives_strdup_printf("%s%s%s", tmp, (sep && *tmp) ? sep : "", xnew);
+  if (tmp != *strng) lives_free(tmp);
   lives_freep((void **)strng);
   return strng2;
 }

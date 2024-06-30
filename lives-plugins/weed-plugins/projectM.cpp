@@ -1198,6 +1198,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     int achans;
     int adlen = weed_channel_get_audio_length(in_channel);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
+    fprintf(stderr, "got audsize, %d\n", adlen);
     pthread_mutex_lock(&sd->pcm_mutex);
     if (adlen > 0 && adata && adata[0]) {
       if (!sd->audio || ((size_t)adlen > sd->abufsize)) {
@@ -1211,12 +1212,15 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
         }
 	sd->abufsize = adlen;
       }
-      weed_memcpy(sd->audio, adata[0], adlen * sizeof(float));
+      if (adata && adata[0] && adlen > 0) {
+	if (adlen > sd->abufsize) adlen = sd->abufsize;
+	weed_memcpy(sd->audio, adata[0], adlen * sizeof(float));
+      }
     } else adlen = 0;
 
-    if (verbosity >= WEED_VERBOSITY_DEBUG)
-      fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 1] : 0.,
-	      adata[0] ? adata[0][adlen >>1] : 0., adlen);
+    if (1||verbosity >= WEED_VERBOSITY_DEBUG)
+      fprintf(stderr, "copied %f vs %f len %d\n", adlen ? sd->audio[adlen >> 2] : 0.,
+	      adlen && adata[0] ? adata[0][adlen >>2] : 0., adlen);
     sd->audio_frames = adlen;
     sd->audio_offs = 0;
     pthread_mutex_unlock(&sd->pcm_mutex);

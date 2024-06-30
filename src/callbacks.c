@@ -4870,12 +4870,12 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL
                                             || ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
                                                 && AUD_SRC_REALTIME))) {
-        if (mainw->aud_rec_lpt) lives_proc_thread_request_resume(mainw->aud_rec_lpt);
-        else mainw->aud_rec_lpt = start_audio_rec(get_aplayer_instance(AUDIO_SRC_EXT));
+        if (mainw->aud_rec_rcpt) lives_cb_receipt_unblock_cb(mainw->aud_rec_rcpt);
+        else mainw->aud_rec_rcpt = start_audio_rec(get_aplayer_instance(AUDIO_SRC_EXT));
       }
     } else {
       // end record during playback
-      lives_proc_thread_request_pause(mainw->aud_rec_lpt);
+      lives_cb_receipt_block_cb(mainw->aud_rec_rcpt);
       event_list_add_end_events(mainw->event_list, FALSE);
       mainw->record_paused = TRUE; // pause recording of further events
       set_record_menutext(REC_READY);
@@ -9815,7 +9815,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
 
   if (!mainw->iochan) {
     // pause during effects processing or opening
-    xticks = lives_get_relative_ticks(mainw->origticks);
+    xticks = lives_get_session_ticks();
     if (!mainw->effects_paused) {
       mainw->timeout_ticks -= xticks;
       com = lives_strdup_printf("%s pause \"%s\"", prefs->backend_sync, cfile->handle);
@@ -10201,7 +10201,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   if (1 || !mainw->switch_during_pb) {
     sfile->pb_fps = new_fps;
-    mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
+    mainw->currticks = lives_get_current_playback_ticks(NULL);
 
     if (new_fps != sfile->pb_fps && fabs(new_fps) > .001 && !sfile->play_paused) {
       /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,

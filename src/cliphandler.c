@@ -3633,22 +3633,16 @@ void set_audio_apparent(int clipno, audio_dtls * adtls) {
 }
 
 
-weed_layer_t *config_audio_layer(weed_layer_t *layer, int clipno) {
+weed_layer_t *config_alayer_for_clip(weed_layer_t *layer, int clipno) {
   // analogous to how we have clip_src_grps with apparent palette / apparent_gamma for clip video
   // we can now also have clip audio_srcs and audio_src_groups
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
   if (sfile) {
     lives_clipsrc_group_t *srcgrp = sfile->audio_srcgrp;
     if (srcgrp) {
-      if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-      lives_layer_set_clip(layer, clipno);
-      weed_layer_set_audio_rate(layer, srcgrp->apparent.a->rate);
-      weed_layer_set_audio_nchans(layer, srcgrp->apparent.a->chans);
-      weed_layer_set_audio_asamps(layer, srcgrp->apparent.a->sampsz);
-      weed_layer_set_audio_signed(layer, srcgrp->apparent.a->asigned);
-      weed_layer_set_audio_endian(layer, srcgrp->apparent.a->endian);
-      weed_layer_set_audio_interleaved(layer, srcgrp->apparent.a->interleaved);
-      weed_layer_set_audio_is_float(layer, srcgrp->apparent.a->isflt);
+      audio_dtls *adtls = srcgrp->apparent.a;
+      layer = config_alayer_dtls(layer, adtls);
+      if (layer) lives_layer_set_clip(layer, clipno);
     }
   }
   return layer;

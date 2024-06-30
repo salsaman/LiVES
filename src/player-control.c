@@ -319,8 +319,8 @@ static void post_playback(void) {
   reset_old_frame_layer();
 
   if (prefs->show_player_stats && mainw->fps_measure > 0)
-    d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
-            (double)lives_get_relative_ticks(mainw->origticks) / TICKS_PER_SECOND_DBL);
+    d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"),
+            fps_med, mainw->fps_measure, lives_get_session_time());
 
   if (mainw->new_vpp) {
     mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
@@ -562,8 +562,6 @@ static boolean reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
   boolean pa_reset = TRUE;
 
-  mainw->origticks = lives_get_session_ticks();
-
   if (prefs->audio_src == AUDIO_SRC_INT) {
     IF_APLAYER_PULSE
     (if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
@@ -596,7 +594,7 @@ static boolean reset_timebase(void) {
     mainw->jackd->in_use = TRUE;
 #endif
 
-  reset_playback_clock(mainw->origticks);
+  reset_playback_clock();
   return TRUE;
 }
 
@@ -897,16 +895,18 @@ void play_file(void) {
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE);
       has_audio_buffers = TRUE;
     })
-    IF_APLAYER_PULSE
-    (
-      if (mainw->event_list && !mainw->record && audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
-          !(mainw->preview && mainw->is_processing &&
-    !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering))) {
-    // if playing an event list, we switch to audio memory buffer mode
-    if (mainw->multitrack) init_pulse_audio_buffers(sfile->achans, sfile->arate, exact_preview);
-      else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE);
-      has_audio_buffers = TRUE;
-    })
+    /* IF_APLAYER_PULSE */
+    /* ( */
+    /*   if (mainw->event_list && !mainw->record && audio_player == AUD_PLAYER_PULSE && mainw->pulsed && */
+    /*       !(mainw->preview && mainw->is_processing && */
+    /* !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering))) { */
+    /* // if playing an event list, we switch to audio memory buffer mode */
+    /* if (mainw->multitrack) init_pulse_audio_buffers(sfile->achans, sfile->arate, exact_preview); */
+    /*   else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE); */
+    /*   has_audio_buffers = TRUE; */
+    /* } */
+
+    /*  ) */
 
     mainw->abufs_to_fill = 0;
 
@@ -1097,12 +1097,9 @@ void play_file(void) {
   }
 
   // play completed
-  if (prefs->show_player_stats) {
-    if (mainw->fps_measure > 0) {
-      fps_med = (double)mainw->fps_measure
-                / ((double)lives_get_relative_ticks(mainw->origticks)
-                   / TICKS_PER_SECOND_DBL);
-    }
+  if (prefs->show_player_stats && mainw->fps_measure > 0) {
+    fps_med = (double)mainw->fps_measure
+              / lives_get_session_time();
   }
 
   mainw->osc_auto = 0;
@@ -1143,7 +1140,7 @@ void play_file(void) {
       unregister_aux_audio_channels(1);
     if (AUD_SRC_EXTERNAL) {
       if (prefs->audio_opts & AUDIO_OPTS_EXT_FX)
-        unregister_audio_client(FALSE);
+        unregister_audio_client();
     }
 
     if (mainw->jackd_read || mainw->aud_rec_fd != -1)
@@ -1455,11 +1452,11 @@ void play_file(void) {
       audio_free_fnames();
     })
 
-    IF_APLAYER_PULSE
-    (if (has_audio_buffers) {
-    free_pulse_audio_buffers();
-      audio_free_fnames();
-    })
+    /* IF_APLAYER_PULSE */
+    /* (if (has_audio_buffers) { */
+    /* free_pulse_audio_buffers(); */
+    /*   audio_free_fnames(); */
+    /* }) */
   }
 
   if (THREADVAR(bad_aud_file)) {

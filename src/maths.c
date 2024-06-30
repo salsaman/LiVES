@@ -877,38 +877,55 @@ void lives_ann_free(lives_ann_t *ann) {
 /* } */
 
 
+// table data
+// arsize is number of rows in table
+// maxsize is max vals per row
 tab_data_t *init_tab_data(int arsize, int maxsize) {
   LIVES_CALLOC_TYPE(tab_data_t, tabdata, 1);
   if (tabdata) {
     tabdata->arsize = arsize;
     tabdata->maxsize = maxsize;
-    tabdata->res = LIVES_CALLOC_SIZEOF(float *, arsize);
+    tabdata->res = LIVES_CALLOC_SIZEOF(double *, arsize);
     if (!tabdata->res) goto err;
-    tabdata->tots = LIVES_CALLOC_SIZEOF(float, arsize);
+    tabdata->tots = LIVES_CALLOC_SIZEOF(double, arsize);
     if (!tabdata->tots) {
       lives_free(tabdata->res);
       goto err;
     }
-    tabdata->avgs = LIVES_CALLOC_SIZEOF(float, arsize);
+    tabdata->avgs = LIVES_CALLOC_SIZEOF(double, arsize);
     if (!tabdata->avgs) {
       lives_free(tabdata->res);
       lives_free(tabdata->tots);
       goto err;
     }
-
-    else {
-      for (int i = 0; i < arsize; i++) {
-        tabdata->res[i] = LIVES_CALLOC_SIZEOF(float, maxsize);
-        if (!tabdata->res[i]) {
-          while (i--) lives_free(tabdata->res[i]);
-          lives_free(tabdata->res);
-          lives_free(tabdata->tots);
-          lives_free(tabdata->avgs);
-          goto err;
-        }
-      }
+    tabdata->max = LIVES_CALLOC_SIZEOF(double, arsize);
+    if (!tabdata->max) {
+      lives_free(tabdata->res);
+      lives_free(tabdata->tots);
+      lives_free(tabdata->avgs);
+      goto err;
     }
-  }
+    tabdata->min = LIVES_CALLOC_SIZEOF(double, arsize);
+    if (!tabdata->min) {
+      lives_free(tabdata->res);
+      lives_free(tabdata->tots);
+      lives_free(tabdata->avgs);
+      lives_free(tabdata->max);
+      goto err;
+    }
+    for (int i = 0; i < arsize; i++) {
+      tabdata->res[i] = LIVES_CALLOC_SIZEOF(double, maxsize);
+      if (!tabdata->res[i]) {
+        while (i--) lives_free(tabdata->res[i]);
+        lives_free(tabdata->res);
+        lives_free(tabdata->tots);
+        lives_free(tabdata->avgs);
+        lives_free(tabdata->max);
+        lives_free(tabdata->min);
+        goto err;
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
   return tabdata;
 
 err:
@@ -924,13 +941,15 @@ LIVES_GLOBAL_INLINE tab_data_t *free_tabdata(tab_data_t *tabdata) {
     lives_free(tabdata->res);
     lives_free(tabdata->tots);
     lives_free(tabdata->avgs);
+    lives_free(tabdata->min);
+    lives_free(tabdata->max);
     lives_free(tabdata);
   }
   return NULL;
 }
 
 
-void tabdata_get_avgs(tab_data_t *tabdata, float * newvals) {
+void tabdata_update(tab_data_t *tabdata, double * newvals) {
   if (!tabdata) return;
   if (newvals) {
     int nvals = tabdata->nvals;
@@ -939,17 +958,18 @@ void tabdata_get_avgs(tab_data_t *tabdata, float * newvals) {
       for (int i = tabdata->arsize; i--;) {
         tabdata->tots[i] -= tabdata->res[i][0];
         lives_memmove(tabdata->res[i], tabdata->res[i] + 1,
-                      (tabdata->maxsize - 1) * sizeof(float));
+                      (tabdata->maxsize - 1) * sizeof(double));
       }
     } else tabdata->nvals++;
     for (int i = tabdata->arsize; i--;) {
       tabdata->tots[i] += newvals[i];
       tabdata->res[i][nvals] = newvals[i];
-      tabdata->avgs[i] = tabdata->tots[i] / tabdata->nvals;
+      tabdata->avgs[i] = tabdata->tots[i] / (double)nvals;
+      if (newvals[i] > tabdata->max[i]) tabdata->max[i] = newvals[i];
+      if (newvals[i] < tabdata->min[i]) tabdata->min[i] = newvals[i];
     }
   }
 }
-
 
 
 lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent) {

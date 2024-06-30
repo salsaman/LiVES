@@ -2254,7 +2254,6 @@ boolean reload_clip(int clipno, frames_t maxframe) {
 #ifdef VALGRIND_ON
     fake_cdata->debug = TRUE;
 #endif
-
     response = LIVES_RESPONSE_NONE;
 
     if ((cdata = get_decoder_cdata(clipno, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
@@ -2781,7 +2780,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       } while (resp == LIVES_RESPONSE_RETRY);
       if (resp == LIVES_RESPONSE_CANCEL) continue;
-
       /** dont write an entry yet, in case of the unklikely chance we were assigned the same pid as the recovery file,
         otherwise we will end up in am endless loop of reloading the same set and appending it to the recovery file
         in any case, the old file is still there and we will create a fresh recovery file after a successful reload */
@@ -2896,6 +2894,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (use_decoder || maxframe) {
         /// CLIP_TYPE_FILE
         if (!*cfile->file_name) continue;
+
         if (!reload_clip(mainw->current_file, maxframe)) continue;
         add_primary_src(mainw->current_file, NULL, LIVES_SRC_TYPE_IMAGE);
         if (cfile->needs_update || cfile->img_type == IMG_TYPE_UNKNOWN) {

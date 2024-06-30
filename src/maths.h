@@ -239,17 +239,39 @@ enum {
 const lives_obj_instance_t *maths_object_with_subtype(uint64_t subtype);
 lives_object_transform_t *math_transform_for_intent(lives_obj_t *obj, lives_intention intent);
 
+// updated automaticallly
+#define STAT_MEAN_AVG		(1ull << 0)
+#define STAT_TOTAL		(1ull << 1)
+#define STAT_MIN_EVER		(1ull << 2)
+#define STAT_MAX_EVER		(1ull << 3)
+
+/// calculated on demand
+#define STAT_MIN_VAL		(1ull << 16)
+#define STAT_MAX_VAL		(1ull << 17)
+#define STAT_MEDIAN_AVG		(1ull << 18)
+#define STAT_MODE_AVG		(1ull << 19)
+#define STAT_RMS_ERR		(1ull << 20)
+#define STAT_STD_DEV		(1ull << 21)
+
+#define STAT_FLAG_NEW_MAX      	(1ull << 0)
+#define STAT_FLAG_NEW_MIN      	(1ull << 1)
+#define STAT_FLAG_IS_MAX      	(1ull << 2)
+#define STAT_FLAG_IS_MIN      	(1ull << 3)
+#define STAT_FLAG_OUTLIER      	(1ull << 4)
+
 typedef struct {
   int nvals, maxsize;
   int arsize;
-  float *avgs;
-  float *tots;
-  float **res;
+  double *avgs;
+  double *tots;
+  double *min;
+  double *max;
+  double **res;
 } tab_data_t;
 
 //size_t running_average(float *newval, int idx, void **data);
 tab_data_t *init_tab_data(int arsize, int maxsize);
-void tabdata_get_avgs(tab_data_t *, float *newvals);
+void tabdata_update(tab_data_t *, double *newvals);
 tab_data_t *free_tabdata(tab_data_t *);
 
 #endif

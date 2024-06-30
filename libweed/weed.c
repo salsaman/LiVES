@@ -961,6 +961,7 @@ static weed_error_t _weed_set_custom_element_size(weed_plant_t *plant, const cha
   if (leaf->flags & WEED_FLAG_IMMUTABLE)
     return_unlock(leaf, WEED_ERROR_IMMUTABLE);
   if (idx > leaf->num_elements) return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
+
   leaf->data[idx].size = new_size;
   return_unlock(leaf, WEED_SUCCESS);
 }
@@ -1247,7 +1248,7 @@ static weed_size_t _weed_leaf_num_elements(weed_plant_t *plant, const char *key)
 static weed_size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, weed_size_t idx) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL, NULL);
   if (!leaf) return 0;
-  if (idx > leaf->num_elements) return_unlock(leaf, 0);
+  if (idx >= leaf->num_elements) return_unlock(leaf, 0);
   return_unlock(leaf, leaf->data[idx].size);
 }
 

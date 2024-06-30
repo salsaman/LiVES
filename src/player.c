@@ -17,9 +17,9 @@
 
 #define REC_IDEAL
 
-#define EFF_UPD_THRESH ((ticks_t)(.1 * TICKS_PER_SECOND_DBL))
-#define GOOD_EFF_MULT 1
-#define BAD_EFF_MULT 4.
+#define EFF_UPD_THRESH .1 // seconds
+#define GOOD_EFF_MULT 0.5
+#define BAD_EFF_MULT 2.
 
 #define ENABLE_PRECACHE
 
@@ -154,7 +154,7 @@ lives_result_t video_sync_ready(void) {
     return LIVES_RESULT_SUCCESS;
   }
 
-  xtime = (lives_get_session_time() - mainw->avsync_time) / ONE_BILLION_DBL;
+  xtime = (lives_get_session_time() - mainw->avsync_time);
   if (xtime > AV_SYNC_LIMIT) {
     mainw->sync_err = xtime;
     return LIVES_RESULT_TIMEDOUT;
@@ -807,7 +807,7 @@ skip_precache:
       return LIVES_RESULT_ERROR;
     }
     // in case we are opening via non-instant means. We keep trying until the next frame appears.
-    mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
+    mainw->currticks = lives_get_current_playback_ticks(NULL);
   }
 
   img_ext = NULL;
@@ -955,7 +955,7 @@ frames_t load_frame_image(frames_t frame) {
       // add blank frame
       weed_plant_t *event = get_last_event(mainw->event_list);
       weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list,
-                                 lives_get_relative_ticks(mainw->origticks), &event);
+                                 lives_get_session_ticks(), &event);
       if (!mainw->event_list) mainw->event_list = event_list;
       if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting) {
         // we are recording, and the audio clip changed; add audio event
@@ -1176,8 +1176,13 @@ frames_t load_frame_image(frames_t frame) {
 
     if (prefs->audio_src == AUDIO_SRC_INT && !mainw->audio_seek_ready) {
       lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+      pthread_mutex_lock(&mainw->avseek_mutex);
       mainw->video_seek_ready = TRUE;
+      mainw->mark_time = TRUE;
       lives_proc_thread_sync_with(aplayer, SYNCIDX_AVSYNC, MM_IGNORE);
+      pthread_mutex_unlock(&mainw->avseek_mutex);
+      lives_microsleep_while_false(mainw->audio_seek_ready);
+      mainw->mark_time = FALSE;
     }
 
     if (mainw->refresh_model) {
@@ -2204,7 +2209,6 @@ static int process_one(void) {
   /* #if defined HAVE_PULSE_AUDIO || defined ENABLE_JACK */
   /*   static off_t last_aplay_offset = 0; */
   /* #endif */
-  volatile float const *cpuload;
   //static lives_proc_thread_t gui_lpt = NULL;
   //double cpu_pressure;
   static double last_eff_upd_time = 0.;
@@ -2239,7 +2243,7 @@ static int process_one(void) {
   int close_this_clip, new_clip, new_blend_file;
   boolean frame_invalid = FALSE;
   boolean can_realign = FALSE;
-  float cpuloadval = 0.;
+  double cpuloadval;
 
   lives_hook_stack_t *sah =
     lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
@@ -2272,7 +2276,7 @@ static int process_one(void) {
         register_aux_audio_channels(1);
       if (AUD_SRC_EXTERNAL) {
         if (prefs->audio_opts & AUDIO_OPTS_EXT_FX)
-          register_audio_client(FALSE);
+          register_audio_client();
         mainw->jackd->in_use = TRUE;
       }
     }
@@ -2609,9 +2613,9 @@ close_clip:
 
         last_time_source = time_source;
         time_source = LIVES_TIME_SOURCE_NONE;
-        reset_playback_clock(mainw->origticks);
+        reset_playback_clock();
         mainw->last_startticks = mainw->startticks = mainw->currticks
-                                 = lives_get_current_playback_ticks(mainw->origticks, &time_source);
+                                 = lives_get_current_playback_ticks(&time_source);
 
         //g_print("SWITCH %d %d %d\n", sfile->frameno, requested_frame, sfile->last_frameno);
 
@@ -2663,7 +2667,7 @@ close_clip:
   time_source = LIVES_TIME_SOURCE_NONE;
   if (!CURRENT_CLIP_IS_PHYSICAL) time_source = LIVES_TIME_SOURCE_SYSTEM;
 
-  mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, &time_source);
+  mainw->currticks = lives_get_current_playback_ticks(&time_source);
 
   //g_print("LOOP\n");
 
@@ -2687,11 +2691,11 @@ close_clip:
 
   if (init_timers) {
     init_timers = FALSE;
-    mainw->currticks = lives_get_current_playback_ticks(mainw->origticks, NULL);
+    mainw->currticks = lives_get_current_playback_ticks(NULL);
     mainw->last_startticks = mainw->startticks = mainw->currticks;
     mainw->fps_mini_ticks = lives_get_session_ticks();
 
-    last_eff_upd_time = lives_get_session_ticks_lax();
+    last_eff_upd_time = lives_get_session_time_lax();
 
     mainw->last_startticks--;
     mainw->fps_mini_measure = 0;
@@ -3020,7 +3024,7 @@ close_clip:
           //sfile->last_frameno, requested_frame, sfile->last_req_frame);
           if (mainw->fixed_fpsd > 0. || (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)) {
             ticks_t dticks;
-            dticks = (mainw->clock_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL;
+            dticks = (mainw->currticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL;
             if ((mainw->fixed_fpsd > 0. && (dticks >= 1. / mainw->fixed_fpsd)) ||
                 (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
                  dticks >= 1. / mainw->vpp->fixed_fpsd)) {
@@ -3142,7 +3146,7 @@ close_clip:
     }
 
 update_effort:
-    if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
+    if (LIVES_LIKELY((prefs->pbq_adaptive && scratch == SCRATCH_NONE))) {
       // to calulate the "effort" we derive the value
       // MIN(abs(pb_fps), real_fps) / cloxk_ratio * last_play_cycle_duration
       // the MIN part concerns the fact that user can set the framerate very
@@ -3161,43 +3165,66 @@ update_effort:
       // or if > 0.5, bad with value v * 4 (so at 0.5, both values are 2.0)
       // this then fed to the "effort calulator", where it is queued, averaged and
       // a laggind detivative gives the quality level: high, med. low
-      int64_t now = lives_get_session_ticks_lax();
+
+      static tab_data_t *avers = NULL;
+      if (!avers) avers = init_tab_data(2, 50);
+      double now = lives_get_session_time_lax();
       if (now - last_eff_upd_time > EFF_UPD_THRESH) {
         // 0 == cpuload, 1 == last_cyc, 2 = tgt
         double dets[3], avcy;
-        float friction;
+        double friction;
+        double newvals[2];
         last_eff_upd_time = now;
         mainw->inst_fps = get_inst_fps(FALSE);
-        IGN_RET(avcy = get_cycle_avg_time(dets));
-        if (dets[1]) {
-          // current target fps
-          double crat = get_pbtimer_clock_ratio();
-          if (!crat) crat = 1.;
-          double tgt = abs(sfile->pb_fps) / crat;
-          double rtgt = sfile->fps / crat;
+        if (mainw->inst_fps) {
+          //g_print("play aa3332\n");
+          IGN_RET(avcy = get_cycle_avg_time(dets));
+          if (dets[1]) {
+            g_print("play a43433a2\n");
+            // current target fps, adjusted for sc ratio
+            double crat = get_pbtimer_clock_ratio();
+            if (!crat) crat = 1.;
+            double tgt = abs(sfile->pb_fps) / crat;
+            double rtgt = sfile->fps / crat;
 
-          /* g_print("EFF calc: eff = %f, " */
-          /* 	  "av cycle = %f, cpu = %f, last cyc = %f, instfps = %f\n" */
-          /* 	  "inst * dur = %f, dur / avct = %f, timer load = %f\n" */
-          /* 	  "target = %f, actual = %f\n", eff, */
-          /* 	  avcy, dets[0], dets[1], mainw->inst_fps, */
-          /* 	  mainw->inst_fps * dets[1], dets[1] / avcy, tload, */
-          /* 	  MIN(tgt, rtgt), maxfps); */
+            // averages over (default 5 seconds)
+            newvals[0] = mainw->inst_fps;
+            newvals[1] = dets[1];
+            tabdata_update(avers, newvals);
 
-          friction = MIN(tgt, rtgt) * dets[1];
-          if (friction > EFFORT_RANGE_MAX / 32.) friction = EFFORT_RANGE_MAX / 32.;
-          if (friction < 16. / EFFORT_RANGE_MAX) friction = 16. / EFFORT_RANGE_MAX;
+            // multiplying inst_fps by avg cycle time indicates how "busy" the player is
+            // busy = ifps * avcyc
+            //
+            // last cycle time X very inst fps indicates how overwhelmed the player is
+            // we should divide this by the cpu load to account for general malaise
+            // so the final result is a.business * b.stress *c. overwhelmed / malaise
+            double busy = avers->avgs[0] * avers->avgs[1];
+            double stressed = MIN(tgt, rtgt) / avers->avgs[0];
+            double overwhelmed = dets[1] * mainw->inst_fps * dets[0] / 100.;
 
-          if (friction > .5) friction *= BAD_EFF_MULT;
-          else friction = -GOOD_EFF_MULT / friction;
+            friction = busy * stressed * overwhelmed;
 
-          //g_print("eff2 fric %.8f\n", friction);
-          update_effort(friction);
-          if (prefs->pb_quality != future_prefs->pb_quality)
-            mainw->refresh_model = TRUE;
-        }
-      }
-    }
+            g_print("EFF calc: friction = %f, avinst = %f, avcy = %f"
+                    "tgt = %f, lcy = %f, linst %f, load = %f\n"
+                    "avinst * avcy = %f, tht / inst = %f, "
+                    "lcy * linst / load = %f\n", friction, avers->avgs[0], avers->avgs[1],
+                    MIN(tgt, rtgt), dets[1], mainw->inst_fps, dets[0], avers->avgs[0] * avers->avgs[1],
+                    MIN(tgt, rtgt) / avers->avgs[0], dets[1] * mainw->inst_fps * 100. / dets[0]);
+
+            if (friction > EFFORT_RANGE_MAX / 32.) friction = EFFORT_RANGE_MAX / 32.;
+            if (friction < 16. / EFFORT_RANGE_MAX) friction = 16. / EFFORT_RANGE_MAX;
+
+            //g_print("eff1 fric %.8f\n", friction);
+            if (friction > 1.) friction *= BAD_EFF_MULT;
+            else friction = -GOOD_EFF_MULT / friction;
+
+            //g_print("eff2 fric %.8f\n", friction);
+            update_effort(friction);
+            if (prefs->pb_quality != future_prefs->pb_quality && !mainw->refresh_model)
+              mainw->refresh_model = 2;
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
 
     if (show_frame) {
 #ifdef SHOW_CACHE_PREDICTIONS
@@ -3217,21 +3244,12 @@ update_effort:
 #endif
       }
 
-      cpuloadval = 0.;
-
       //g_print("DISK PR is %f\n", mainw->disk_pressure);
 
       if (!mainw->force_show) {
-        if (glob_timing) {
-          pthread_mutex_lock(&glob_timing->upd_mutex);
-          if (glob_timing->active)
-            cpuloadval = glob_timing->curr_cpuload;
-          pthread_mutex_unlock(&glob_timing->upd_mutex);
-        }
-        if (!cpuloadval) {
-          cpuload = get_core_loadvar(0);
-          cpuloadval = (float)(*cpuload);
-        }
+        /* if (glob_timing) { */
+        /*   pthread_mutex_lock(&glob_timing->upd_mutex); */
+        /* } */
       }
 
       // fixed_fram may be set to force playing of a specific frame, for example when we do have a
@@ -3302,6 +3320,8 @@ update_effort:
 
       if (sfile->frames == 1) sfile->frameno = 1;
 
+      cpuloadval = get_cpu_load();
+
 #ifdef DEBUG_FRAME_TIMNING
       lives_printerr("\nPLAY %d %d %d %d %ld %ld %d %d %.4f\n", sfile->frameno, requested_frame, sfile->last_frameno,
                      sfile->last_frameno, mainw->currticks, mainw->startticks,
@@ -3317,6 +3337,7 @@ update_effort:
           || (mainw->pred_frame && is_layer_ready(mainw->frame_layer_preload) == LIVES_RESULT_SUCCESS)
 #endif
          ) {
+
         frames_t frame;
 
         if (dir * (sfile->frameno - sfile->last_frameno) < 1
@@ -3393,14 +3414,14 @@ update_effort:
       showed_frame = TRUE;
     }
 
-    if (mainw->last_display_ticks == 0) mainw->last_display_ticks = mainw->clock_ticks;
+    if (mainw->last_display_ticks == 0) mainw->last_display_ticks = mainw->currticks;
     else {
       if (mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
         mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
       else {
         if (mainw->fixed_fpsd > 0.)
           mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
-        else mainw->last_display_ticks = mainw->clock_ticks;
+        else mainw->last_display_ticks = mainw->currticks;
       }
     }
 
@@ -3817,7 +3838,7 @@ boolean begin_playback(void) {
   mainw->scratch = SCRATCH_NONE;
 
   if (mainw->record_starting) {
-    if (!record_setup(lives_get_current_playback_ticks(mainw->origticks, NULL))) return FALSE;
+    if (!record_setup(lives_get_current_playback_ticks(NULL))) return FALSE;
   }
 
   if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_ready = TRUE;

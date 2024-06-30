@@ -255,7 +255,8 @@ typedef lives_result_t(*lives_condfunc_f)(void *);
 #define LIVES_LINGO_IS_PANGO 1
 #if LIVES_IS_WINDOWS
 #ifdef GDK_WINDOWING_WIN32
-#include <gdk/gdkwin32.h>
+#include <gdk/gdkwin32.h
+>
 #ifndef GDK_IS_WIN32_DISPLAY
 #define GDK_IS_WIN32_DISPLAY(display) (TRUE)
 #endif

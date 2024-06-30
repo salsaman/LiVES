@@ -11,6 +11,8 @@
 
 lives_index_t *indices[idx_type_max];
 
+lives_databook_t *global_databook;
+
 LIVES_GLOBAL_INLINE int64_t lives_plant_get_subtype(weed_plant_t *plant) {
   if (!IS_LIVES_PLANT(plant)) return 0;
   return weed_get_int64_value(plant, LIVES_LEAF_SUBTYPE, NULL);
@@ -643,6 +645,18 @@ boolean lives_index_erase_value(lives_index_t *idx, const char *key) {
 //
 /* } */
 //
+
+boolean remove_from_lookup(lookup_type ltype, const char *name) {
+  lives_index_t *idx = indices[ltype];
+  return lives_index_erase_value(idx, name);
+}
+
+
+boolean remove_from_lookup_table(lives_lookup_t *lookup, const char *name) {
+  return lives_index_erase_value(lookup, name);
+}
+
+
 lives_lookup_t *lives_make_lookup(lookup_type ltype) {
   //  lives_condition add_cond = lives_cond_create("!", "(",  $(target_object), "COND_HAS_LEAF", $(target_item), ")");
   //
@@ -652,6 +666,18 @@ lives_lookup_t *lives_make_lookup(lookup_type ltype) {
   //						LIVES_LEAF_ADD_COND, add_cond);
   return lookup;
 }
+
+
+static void add_to_lookup_inner(lives_index_t *idx, allvalues_t *allvp, weed_seed_t st, const char *name) {
+  allvp->flags |= ALLV_FLAG_RDONLY;
+  if (!lives_index_has_value(idx, name)) {
+    // index will always check if there is an add condition, in the case we
+    // make sure this is a unique value, if the cond fails, we get back LIVES_RESULT_NOPERM
+    lives_result_t res = lives_index_set_value(idx, name, LIVES_SEED_ALLVALUES, allvp);
+    if (res == LIVES_RESULT_SUCCESS) allvp->flags |= ALLV_FLAG_AUTOFREE;
+  }
+}
+
 
 allvalues_t *add_to_lookup(lookup_type ltype, weed_seed_t st, const char *name, ...) {
   // create an allvalues from va_arg, making it readonly
@@ -663,15 +689,20 @@ allvalues_t *add_to_lookup(lookup_type ltype, weed_seed_t st, const char *name, 
   va_start(va, name);
   allvalues_t *allvp = MAKE_ALLVALUE_VA(st, va);
   va_end(va);
-  allvp->flags |= ALLV_FLAG_RDONLY;
-  if (!lives_index_has_value(idx, name)) {
-    // index will always check if there is an add condition, in the case we
-    // make sure this is a unique value, if the cond fails, we get back LIVES_RESULT_NOPERM
-    lives_result_t res = lives_index_set_value(idx, name, LIVES_SEED_ALLVALUES, allvp);
-    if (res == LIVES_RESULT_SUCCESS) allvp->flags |= ALLV_FLAG_AUTOFREE;
-  }
+  add_to_lookup_inner(idx, allvp, st, name);
   return allvp;
 }
+
+
+allvalues_t *add_to_lookup_table(lives_lookup_t *lookup, weed_seed_t st, const char *name, ...) {
+  va_list(va);
+  va_start(va, name);
+  allvalues_t *allvp = MAKE_ALLVALUE_VA(st, va);
+  va_end(va);
+  add_to_lookup_inner(lookup, allvp, st, name);
+  return allvp;
+}
+
 
 allvalues_t *find_in_lookup(lookup_type ltype, const char *name) {
   lives_index_t *idx = indices[ltype];
@@ -899,7 +930,7 @@ allvalues_t *get_local_book_item(const char *itemnm) {
 
 allvalues_t *get_global_book_item(const char *itemnm) {
   allvalues_t *allvp;
-  lives_databook_t *book = mainw->global_databook;
+  lives_databook_t *book = global_databook;
   lives_index_get_value(&allvp, book, itemnm);
   return allvp;
 }

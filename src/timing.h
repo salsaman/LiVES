@@ -63,81 +63,58 @@ double get_pbtimer_drift(void);
 
 void show_pbtimer_stats(void);
 
-void reset_playback_clock(ticks_t origticks);
-ticks_t lives_get_current_playback_ticks(ticks_t origticks, lives_time_source_t *time_source);
+void reset_playback_clock(void);
+ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source);
 
 double do_nothing(int type_of_nothing);
 
 ////////////////////////
 
-// exec plan timings
+void glob_timing_init(void);
+
+/* lives_ann_t *ann; */
+/* int ann_gens; */
+
+/* pthread_mutex_t ann_mutex; */
+/* pthread_mutex_t upd_mutex; */
 
 typedef struct {
-  lives_ann_t *ann;
-  int ann_gens;
-  pthread_mutex_t ann_mutex;
-  pthread_mutex_t upd_mutex;
+  // exec plan timings
+  boolean enabled;
   LiVESList *proc_times;
   int cpu_nsamples;
-  volatile float const *cpuloadvar;
-  float curr_cpuload;
+  pthread_mutex_t upd_mutex;
   double last_cyc_duration;
   double tot_duration;
   double avg_duration;
   double tgt_duration;
+  boolean active;
   double bytes_per_sec;
   double gbytes_per_sec;
-  boolean active;
-} glob_timedata_t;
+} plan_timings;
 
 typedef struct {
-  // offsets from plan trigger time
-  // since we do not know exact frame load times
-  // we only set est dur for now
-  // real_start / real_end are in session_time
-  ticks_t
-  // steps / template
-  est_start,
-  est_end,
-  deadline;
-  //
-  // some of these are absolute tines (session times)
-  // some are durations (totals)
-  double
-  // step + plan timings
-  // thime when plan was actioned via func call
-  real_start,
+  boolean enabled;
+  double inst_arate;
+  double aplayer_pressure;
+  int av_samples;
+  double av_freq;
+  double av_resp_time;
+} aplayer_timings;
 
-  // cycle finished time
-  real_end,
+typedef struct {
+  volatile double const *cpuloadvar;
+  double curr_cpuload;
+  plan_timings plan;
+  aplayer_timings aplayer;
+} glob_timedata_t;
 
-  // predicted duration
-  est_duration,
+#define print_enabled(subsys) _DW0(if (glob_timing && glob_timing->##subsys.active) \
+				     d_print("%s\n", #subsys);)
 
-  // paused time
-  paused_time,
+void show_timing_subsys(void);
 
-  // real_end - real_start
-  real_duration,
-
-  // real_end - actual_start
-  effective_duration,
-
-  // time when a frame was played
-  actual_start, // ?
-  // durations
-  preload_time, // actual_start - real_start
-  active_pl_time, // step busy time berween time until actual_start
-  tgt_time, // 1. / pb_fps
-  concurrent_time, // total time when > 1 steps were active
-  sequential_time, // sum of all steps if run sequentially
-  exec_time, // dispatch time (a)
-  trun_time, // thread run time (a)
-  queued_time, // trun_time - exec_time
-  trigger_time, // time when plan is triggered - allowed to run (a)
-  start_wait, // time between thread running and trigger (trigger - trun) (d)
-  waiting_time; // after triggering, time when no steps were running (idle time - d)
-} timedata_t;
+double get_cpu_load(void);
 
 extern glob_timedata_t *glob_timing;
 
@@ -156,11 +133,31 @@ typedef struct {
 
 void fdef_add_data(lives_funcdef_t *, ...);
 
-#define FDEF_STAT_LAST			0
-#define FDEF_STAT_COUNT			1
-#define FDEF_STAT_ST_TIME		2
-#define FDEF_STAT_EN_TIME		3
-#define FDEF_STAT_EXLINE		4
-#define FDEF_STAT_EXVAL			5
+#define TIMER_STAT_LAST			0
+#define TIMER_STAT_COUNT       		1 // followed by name
+#define TIMER_STAT_ST_TIME		2
+#define TIMER_STAT_EN_TIME		3
+#define TIMER_STAT_EXLINE		4
+#define TIMER_STAT_EXVAL		5 // followed by typeletter
+
+/* typedef struct { */
+/*   int detail; */
+/*   allvalues_t *allvp; */
+/* } timing_entry; */
+
+/* typedef struct { */
+/*   void *target; */
+/*   uint64_t tuid; */
+/*   lookup *entries; */
+/*   lookup *avers; */
+/* } timing_object; */
+
+/* lives_lookup_t *alltimings; */
+
+
+/* void send_timing_data(void *what, uid, ...); */
+/* void *create_timing_pad(void *what, ..); */
+/* void timer_query(void *pad, int qry, void *res); */
+/* void free_timing_data(void *what); */
 
 #endif

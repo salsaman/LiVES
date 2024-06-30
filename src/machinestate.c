@@ -1216,7 +1216,7 @@ void reset_effort(void) {
 }
 
 
-void update_effort(float impulse) {
+void update_effort(double impulse) {
   short pb_quality = prefs->pb_quality;
 
   if (LIVES_IS_RENDERING) {
@@ -1225,16 +1225,20 @@ void update_effort(float impulse) {
     return;
   }
 
-  if (!force) force = init_tab_data(1, EFFORT_RANGE_MAX);
+  if (!force) force = init_tab_data(1, EFFORT_RANGE_MAX >> 2);
 
-  tabdata_get_avgs(force, &impulse);
-  mainw->effort = force->tots[0];
+  tabdata_update(force, &impulse);
+  mainw->effort = (int)force->tots[0];
+
+  //g_print("eff is %d\n", mainw->effort);
 
   if (mainw->effort > EFFORT_RANGE_MAX) mainw->effort = EFFORT_RANGE_MAX;
   if (mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
 
   if (mainw->effort <= 0) struggling--;
   else struggling++;
+
+  //g_print("strf is %d\n", struggling);
 
   if (struggling > EFFORT_LIMIT_MED) struggling = EFFORT_LIMIT_MED;
   if (struggling < -EFFORT_LIMIT_MED) struggling = -EFFORT_LIMIT_MED;
@@ -3028,8 +3032,8 @@ double get_disk_load(const char *mp) {
       }
       lives_free(res);
       lives_strfreev(xarray);
-      if (LIVES_IS_PLAYING) clock_ticks = mainw->clock_ticks;
-      else clock_ticks = lives_get_current_ticks();
+      if (LIVES_IS_PLAYING) clock_ticks = lives_get_session_ticks_lax();
+      else clock_ticks = lives_get_session_ticks();
       if (lticks > 0 && clock_ticks > lticks) {
 	if (inval > linval) {
 	  inret = (double)(inval - linval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
@@ -3063,10 +3067,10 @@ int set_thread_cpuid(pthread_t pth) {
 #ifdef CPU_ZERO
   cpu_set_t cpuset;
   int mincore = 0;
-  float minload = 1000.;
+  double minload = 1000.;
   int ret = 0;
   for (int i = 1; i <= capable->hw.ncpus; i++) {
-    float load = *(get_core_loadvar(i));
+    double load = *(get_core_loadvar(i));
     if (load > 0. && load < minload) {
       minload = load;
       mincore = i;
@@ -3096,7 +3100,7 @@ static LiVESList *cpuloadlist = NULL;
 
 #define CPU_STATS_FILE "/proc/stat"
 
-static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
+boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
   /// gets reported load for all CPUs (%)
   /// and boot time
   // returns FALSE if a value cannot be read
@@ -3106,7 +3110,7 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
   unsigned long long boottime = 0;
   unsigned long long user = 0, nice = 0, system = 0, idle = 0;
   unsigned long long iowait = 0, irq = 0, softirq = 0, steal = 0;
-  float load = 0.;
+  double load = 0.;
   uint64_t idlet, sum, tot;
   int xcpun = 0;
 
@@ -3134,8 +3138,8 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
 
 	if (idx_list_get_data(cpuloadlist, xcpun, (void **)&ovals)) {
 	  if (tot != ovals->tot) {
-	    float totd = (float)(tot - ovals->tot);
-	    float idled = (float)(idlet - ovals->idlet);
+	    double totd = (double)(tot - ovals->tot);
+	    double idled = (double)(idlet - ovals->idlet);
 	    load = (totd - idled) / totd;
 	  }
 	  else load = ovals->ret;
@@ -3168,43 +3172,6 @@ static boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
 
 static cpuloadvals_t *cpu_stats = NULL;
 
-float *get_proc_loads(boolean reset) {
-  // get processor load values, and keep a rolling average
-  static cpuloadvals_t cpuvals;
-  static tab_data_t *cpuloadtab = NULL;
-  static ticks_t ltime = 0;
-  ticks_t ctime;
-
-  if (!cpuloadtab) {
-    cpuvals.loads =
-      (float *)lives_calloc(capable->hw.ncpus, sizeof(float));
-    cpuvals.avgs =
-      (float *)lives_calloc(capable->hw.ncpus, sizeof(float));
-    reset = TRUE;
-  }
-
-  if (reset && cpuloadtab) cpuloadtab = free_tabdata(cpuloadtab);
-  if (!cpuloadtab) cpuloadtab = init_tab_data(capable->hw.ncpus, N_CPU_MEAS);
-
-  ctime = lives_get_session_ticks();
-  if (reset || ctime - ltime > CPU_MEAS_THRESH) {
-    ltime = ctime;
-    if (get_cpu_loads(&cpuvals, capable->hw.ncpus)) {
-      if (!cpu_stats) cpu_stats = &cpuvals;
-      tabdata_get_avgs(cpuloadtab, cpuvals.loads);
-      for (int i = capable->hw.ncpus; i--;) cpuvals.avgs[i] = cpuloadtab->avgs[i];
-    }
-  }
-  return cpuvals.avgs;
-}
-
-
-volatile float const *get_core_loadvar(int corenum) {
-  // return a pointer to the (static) array member containing the requested value
-  // returning a pointer rather than the value allows for more in depth analysis
-  float *vals = get_proc_loads(FALSE);
-  return &vals[corenum];
-}
 
 uint64_t get_boottime(void) {return cpu_stats ? cpu_stats->boottime : 0;}
 
@@ -3214,7 +3181,7 @@ double analyse_cpu_stats(void) {
   // also looking for repeating / cyclic patterns we could take measures to minimise contention
 #if 0
   static lives_obj_instance_t *statsinst = NULL;
-  volatile float *cpuvals = vals[0];
+  volatile double *cpuvals = vals[0];
   weed_param_t *param;
   lives_object_transform_t *tx;
   lives_object_status_t *st;
@@ -3242,7 +3209,7 @@ double analyse_cpu_stats(void) {
   // check if data can be satisifed internally from running_averags
   if (rules_lack_param(tx->prereqs, MATH_PARAM_DATA)) {
     param = weed_param_from_prereqs(tx->prereqs, MATH_PARAM_DATA);
-    //set_float_array_param(&param->value, proc_load_stats, get_tab_size());
+    //set_double_array_param(&param->value, proc_load_stats, get_tab_size());
     weed_set_voidptr_value(param, WEED_LEAF_VALUE, proc_load_stats);
 
     param = weed_param_from_prereqs(tx->prereqs, MATH_PARAM_DATA_SIZE);
@@ -3266,7 +3233,7 @@ double analyse_cpu_stats(void) {
 
   // now just get result
   param = weed_param_from_object(statsinst, MATH_PARAM_RESULT);
-  return (float)weed_param_get_value_double(param);
+  return weed_param_get_value_double(param);
 #endif
   return 0.;
 }

@@ -454,62 +454,92 @@ const hook_stack_descriptor_t *get_hs_desc(int hstype) {
 
 const lookup_tab crossrefs[] = XREFS_TAB;
 
+/* #define _SET_LEAF_FROM_VARG(plant, pkey, type, ctype, cptrtype, ne, args) \ */
+/*   (ne == 1 ? weed_set_##type##_value((plant), (pkey), va_arg((args), ctype)) \ */
+/*    : weed_set_##type##_array((plant), (pkey), (ne), va_arg((args), cptrtype))) */
 
-#define _SET_LEAF_FROM_VARG(plant, pkey, type, ctype, cptrtype, ne, args) \
-  (ne == 1 ? weed_set_##type##_value((plant), (pkey), va_arg((args), ctype)) \
-   : weed_set_##type##_array((plant), (pkey), (ne), va_arg((args), cptrtype)))
+/* #define _SET_CUSTOM_LEAF_FROM_VARG(plant, pkey, type, ne, args)		\ */
+/*   (ne == 1 ? weed_set_custom_value((plant), (pkey), (type), va_arg((args), void *)) \ */
+/*    : weed_set_custom_array((plant), (pkey), (type), (ne), va_arg((args), void **))) */
 
-#define _SET_CUSTOM_LEAF_FROM_VARG(plant, pkey, type, ne, args)		\
-  (ne == 1 ? weed_set_custom_value((plant), (pkey), (type), va_arg((args), void *)) \
-   : weed_set_custom_array((plant), (pkey), (type), (ne), va_arg((args), void **)))
+/* #define SET_LEAF_FROM_VARG(plant, pkey, type, ne, args) _SET_LEAF_FROM_VARG((plant), (pkey), type, \ */
+/* 									    CTYPE(type), CPTRTYPE(type), (ne), (args)) */
+/* #define SET_XLEAF_FROM_VARG(plant, pkey, type, fktype, ne, args) _SET_LEAF_FROM_VARG((plant), (pkey), type, \ */
+/* 										     CTYPE(fktype), CPTRTYPE(type), \ */
+/* 										     (ne), (args)) */
 
-#define SET_LEAF_FROM_VARG(plant, pkey, type, ne, args) _SET_LEAF_FROM_VARG((plant), (pkey), type, \
-									    CTYPE(type), CPTRTYPE(type), (ne), (args))
-#define SET_XLEAF_FROM_VARG(plant, pkey, type, fktype, ne, args) _SET_LEAF_FROM_VARG((plant), (pkey), type, \
-										     CTYPE(fktype), CPTRTYPE(type), \
-										     (ne), (args))
-
-#define SET_CUSTOM_LEAF_FROM_VARG(plant, pkey, type, ne, args) _SET_CUSTOM_LEAF_FROM_VARG((plant), (pkey), type, (ne), (args))
+/* #define SET_CUSTOM_LEAF_FROM_VARG(plant, pkey, type, ne, args) _SET_CUSTOM_LEAF_FROM_VARG((plant), (pkey), type, (ne), (args)) */
 
 weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, weed_seed_t type, weed_size_t ne, va_list xargs) {
-  switch (type) {
-  case WEED_SEED_INT:		return SET_LEAF_FROM_VARG(plant, key, int, ne, xargs);
-  case WEED_SEED_DOUBLE: 	return SET_LEAF_FROM_VARG(plant, key, double, ne, xargs);
-  case WEED_SEED_BOOLEAN: 	return SET_LEAF_FROM_VARG(plant, key, boolean, ne, xargs);
-  case WEED_SEED_STRING:  	return SET_LEAF_FROM_VARG(plant, key, string, ne, xargs);
-  case WEED_SEED_INT64: 	return SET_LEAF_FROM_VARG(plant, key, int64, ne, xargs);
+  if (ne == 1) {
+    switch (type) {
+    case WEED_SEED_INT:		return weed_set_int_value(plant, key, va_arg(xargs, int));
+    case WEED_SEED_DOUBLE: 	return weed_set_double_value(plant, key, va_arg(xargs, double));
+    case WEED_SEED_BOOLEAN: 	return weed_set_boolean_value(plant, key, va_arg(xargs, boolean));
+    case WEED_SEED_STRING:  	return weed_set_string_value(plant, key, va_arg(xargs, char *));
+    case WEED_SEED_INT64: 	return weed_set_int64_value(plant, key, va_arg(xargs, int64_t));
 #ifdef WEED_SEED_FLOAT
-  case WEED_SEED_FLOAT:		return SET_XLEAF_FROM_VARG(plant, key, float, double, ne, xargs);
+    case WEED_SEED_FLOAT:    	return weed_set_float_value(plant, key, (float)va_arg(xargs, double));
 #endif
 #ifdef WEED_SEED_UINT
-  case WEED_SEED_UINT:		return SET_LEAF_FROM_VARG(plant, key, uint, ne, xargs);
+    case WEED_SEED_UINT:	return weed_set_uint_value(plant, key, va_arg(xargs, uint32_t));
 #endif
 #ifdef WEED_SEED_UINT64
-  case WEED_SEED_UINT64: 	return SET_LEAF_FROM_VARG(plant, key, uint64, ne, xargs);
+    case WEED_SEED_UINT64: 	return weed_set_uint64_value(plant, key, va_arg(xargs, uint64_t));
 #endif
-  case WEED_SEED_FUNCPTR: 	return SET_LEAF_FROM_VARG(plant, key, funcptr, ne, xargs);
-  case WEED_SEED_VOIDPTR:	return SET_LEAF_FROM_VARG(plant, key, voidptr, ne, xargs);
-  case WEED_SEED_PLANTPTR: 	return SET_LEAF_FROM_VARG(plant, key, plantptr, ne, xargs);
-  case LIVES_SEED_CONST_CHARPTR: {
-    weed_error_t err;
-    if (ne == 1) {
+    case WEED_SEED_FUNCPTR: 	return weed_set_funcptr_value(plant, key, va_arg(xargs, weed_funcptr_t));
+    case WEED_SEED_VOIDPTR:	return weed_set_voidptr_value(plant, key, va_arg(xargs, void *));
+    case WEED_SEED_PLANTPTR: 	return weed_set_plantptr_value(plant, key, va_arg(xargs, weed_plant_t *));
+    case LIVES_SEED_CONST_CHARPTR: {
+      weed_error_t err;
       const char *cval = va_arg(xargs, const char *);
       err = weed_set_custom_value(plant, key, type, (void *)cval);
-      if (err == WEED_SUCCESS) weed_set_custom_element_size(plant, key, 0, lives_strlen(cval));
+      if (err == WEED_SUCCESS && cval)  weed_set_custom_element_size(plant, key, 0, lives_strlen(cval));
       return err;
     }
-    const char **cvals = va_arg(xargs, const char **);
-    err = weed_set_custom_array(plant, key, type, ne, (void **)cvals);
-    if (err == WEED_SUCCESS)
-      for (int i = 0; i < ne; i++) weed_set_custom_element_size(plant, key, i, lives_strlen(cvals[i]));
+    default:
+      if (WEED_SEED_IS_CUSTOM(type))
+        return weed_set_custom_value(plant, key, type, va_arg(xargs, void *));
+      return WEED_ERROR_WRONG_SEED_TYPE;
+    }
+  }
+
+  switch (type) {
+  case WEED_SEED_INT:		return weed_set_int_array(plant, key, ne, va_arg(xargs, int *));
+  case WEED_SEED_DOUBLE: 	return weed_set_double_array(plant, key, ne, va_arg(xargs, double *));
+  case WEED_SEED_BOOLEAN: 	return weed_set_boolean_array(plant, key, ne, va_arg(xargs, boolean *));
+  case WEED_SEED_STRING:  	return weed_set_string_array(plant, key, ne, va_arg(xargs, char **));
+  case WEED_SEED_INT64: 	return weed_set_int64_array(plant, key, ne, va_arg(xargs, int64_t *));
+#ifdef WEED_SEED_FLOAT
+  case WEED_SEED_FLOAT:    	return weed_set_float_array(plant, key, ne, (float *)va_arg(xargs, double *));
+#endif
+#ifdef WEED_SEED_UINT
+  case WEED_SEED_UINT:	return weed_set_uint_array(plant, key, ne, va_arg(xargs, uint32_t *));
+#endif
+#ifdef WEED_SEED_UINT64
+  case WEED_SEED_UINT64: 	return weed_set_uint64_array(plant, key, ne, va_arg(xargs, uint64_t *));
+#endif
+  case WEED_SEED_FUNCPTR: 	return weed_set_funcptr_array(plant, key, ne, va_arg(xargs, weed_funcptr_t *));
+  case WEED_SEED_VOIDPTR:	return weed_set_voidptr_array(plant, key, ne, va_arg(xargs, void **));
+  case WEED_SEED_PLANTPTR: 	return weed_set_plantptr_array(plant, key, ne, va_arg(xargs, weed_plant_t **));
+  case LIVES_SEED_CONST_CHARPTR: {
+    weed_error_t err;
+    const char **cvalp = va_arg(xargs, const char **);
+    err = weed_set_custom_array(plant, key, type, ne, (void **)cvalp);
+    if (err == WEED_SUCCESS && cvalp)  {
+      for (int i = 0 ; i < ne; i ++)
+        weed_set_custom_element_size(plant, key, i, lives_strlen(cvalp[i]));
+    }
     return err;
   }
   default:
     if (WEED_SEED_IS_CUSTOM(type))
-      return SET_CUSTOM_LEAF_FROM_VARG(plant, key, type, ne, xargs);
+      return weed_set_custom_array(plant, key, type, ne, va_arg(xargs, void **));
     return WEED_ERROR_WRONG_SEED_TYPE;
   }
 }
+
+
 
 
 LIVES_GLOBAL_INLINE const char get_typeletter(uint8_t val) {
@@ -593,100 +623,62 @@ LIVES_GLOBAL_INLINE void dump_fn_stack(LiVESList *fnstack) {
 
 static weed_plant_t *fn_looker = NULL;
 
-void add_quick_fn(lives_funcptr_t func, const char *funcname) {
-  return;
-  char *key;
-  if (sizeof(lives_funcptr_t) != sizeof(void *)) return;
-  key = lives_strdup_printf("function@%p", func);
-  if (!fn_looker) fn_looker = lives_plant_new(LIVES_PLANT_INDEX);
-  weed_set_const_string_value(fn_looker, key, (void *)funcname);
-  lives_free(key);
-  /* #ifdef SHOW_KNOWN_FUNCS */
-  /*   if (fn_looker) */
-  /*     g_print("%s", weed_plant_to_header(fn_looker, 0, 0)); */
-  /* #endif */
+void add_quick_fn(lives_funcptr_t func, lives_funcdef_t *fdef) {
+  /* if (!fn_looker) fn_looker = lives_hash_store_new(); */
+  /* add_to_hash_store_i(fn_looker, (uint64_t)func, fdef); */
 }
 
 
 const char *get_funcname(lives_funcptr_t func) {
   return NULL;
-  //  const char *fname;
-  /* char *key; */
-  /* if (!fn_looker) return NULL; */
-  /* key = lives_strdup_printf("function@%p", func); */
-  /* fname = weed_get_const_string_value(fn_looker, key, NULL); */
-  /* lives_free(key); */
-  /* return fname; */
+  const char *fname;
+  if (!fn_looker) return NULL;
+  lives_funcdef_t *fdef = (lives_funcdef_t *)get_from_hash_store_i(fn_looker, (uint64_t)func);
+  return fdef ? fdef->funcname : NULL;
+}
+
+
+
+void dump_fn_notes(void) {
+  if (fn_looker) {
+    const char *pfx = lives_index_get_prefix(fn_looker);
+    size_t pfxlen = lives_strlen(pfx);
+    char **items = weed_plant_list_leaves(fn_looker, NULL);
+    for (int i = 0; items[i]; i++) {
+      if (lives_str_starts_with(items[i], pfx)) {
+        allvalues_t *allvp = get_databook_item(fn_looker, items[i]);
+        lives_funcdef_t *fdef;
+        get_val_from_allvals(&fdef, allvp);
+        g_print("know abouit %s\n", fdef->funcname);
+      }
+      _ext_free(items[i]);
+    }
+    _ext_free(items);
+  }
 }
 
 
 void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
                  const char *args_fmt, char *file_ref, int line_ref, uint64_t flags) {
   // try to guess ret_type, if it is eg. "I"
-  /* weed_seed_t rtype = WEED_SEED_NONE; */
-  /* if (rettype && *rettype) rtype = get_seedtype(*rettype); */
-  /* lives_funcdef_t *fdef; */
-  /* allvalues_t *allvp = find_in_lookup(lookup_type_funcs, funcname); */
-  /* if (allvp) fdef = (lives_funcdef_t *)allvp->values.V[0]; */
-  /* else { */
-  /*   fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags); */
-  /*   add_fdef_stats(fdef); */
-  /* } */
-  /* // TODO - handle singleton noe recurse, no rec thread */
-  /* // cond entry */
-  /* // scope end free */
-  /* // static */
-  /* fdef_add_data(fdef, FDEF_STAT_COUNT, FDEF_STAT_LAST); */
-  /* if (mainw->debugopts & DEBUG_FUNC_ENTER_EXIT) { */
-  /*   double xtime = lives_get_session_time(); */
-  /*   g_print("%s (%s, line %d) entered at %.2f msec\n", funcname, file_ref, line_ref, xtime * 1000.); */
-  /*   GET_PROC_THREAD_SELF(self); */
-  /*   lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self); */
-  /*   if (!finst) { */
-  /*     finst = lives_funcinst_create_for_funcdef(fdef, "", NULL); */
-  /*     lives_proc_thread_set_active_funcinst(finst); */
-  /*   } */
-  /*   finst->st_time = xtime; */
-  /* } */
 
-  /* if (!allvp) allvp = add_to_lookup(lookup_type_funcs, WEED_SEED_VOIDPTR, funcname, fdef); */
+
+  ///////////// lookup functions //////
+
+  weed_seed_t rtype = WEED_SEED_NONE;
+  if (rettype && *rettype) rtype = get_seedtype(*rettype);
+  lives_funcdef_t *fdef = get_from_hash_store_i(fn_looker, (uint64_t)func);
+
+  if (!fdef) {
+    fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags);
+    add_to_hash_store_i(fn_looker, (uint64_t)func, fdef);
+  }
   //THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), allvp);
 }
 
 
 void _func_exit(char *file_ref, int line_ref, const char *valname, ...) {
-  /* allvalues_t *allvp = (allvalues_t *)lives_sync_list_pop(&THREADVAR(func_stack)); */
-  /* lives_funcdef_t *fdef =  allvp->values.V[0]; */
-  /* if (mainw->debugopts & DEBUG_FUNC_ENTER_EXIT) { */
-  /*   double xtime = lives_get_session_time(); */
-  /*   GET_PROC_THREAD_SELF(self); */
-  /*   lives_funcinst_t *finst = lives_proc_thread_get_active_funcinst(self); */
-  /*   finst->en_time = xtime; */
-  /*   g_print("%s exited (%s, line %d) at %.2f msec, duration %s\n", fdef->funcname, file_ref, line_ref, xtime * 1000., */
-  /*           lives_format_timing_string(xtime - finst->st_time)); */
-  /*   /\* if (fdef->flags & FDEF_FLAG_HAS_TIMEINFO) { *\/ */
-  /*   /\*   va_list vc; *\/ */
-  /*   /\*   va_copy(vc, va); *\/ */
-  /*   /\*   fdef_add_data(fdef, FDEF_STAT_ST_TIME, finst->st_time,  *\/ */
-  /*   /\* 		    FDEF_STAT_EN_TIME, finst->en_time,  *\/ */
-  /*   /\* 		    FDEF_STAT_ST_EXLINE, line_ref,  *\/ */
-  /*   /\* 		    FDEF_STAT_ST_EXVAL, vc,*\/ */
-  /*   /\*    	    FDEF_STAT_LAST); *\/ */
-  /*   /\*   va_end(vc); *\/ */
-  /*   /\* } *\/ */
-  /* } */
-  /* if (valname) { */
-  /*   weed_plant_t *tmppl = lives_plant_new(LIVES_PLANT_TMP);; */
-  /*   va_list va; */
-  /*   va_start(va, valname); */
-  /*   weed_leaf_from_varg(tmppl, WEED_LEAF_VALUE, fdef->return_type, 1, va); */
-  /*   va_end(va); */
-  /*   weed_plant_free(tmppl); */
-  /* } */
-  /* if (!(allvp->flags & ALLV_FLAG_AUTOFREE)) { */
-  /*   if (fdef) lives_funcdef_free(fdef); */
-  /*   allvalues_free(allvp); */
-  /* } */
+  //
 }
 
 ///////////////////////////
@@ -1489,48 +1481,60 @@ static boolean unblock_waiter(void *receipt, void *data) {
 
 // hook cb's and receipts
 
-lives_proc_thread_t lives_cb_receipt_get_adder(void *receipt) {
+LIVES_GLOBAL_INLINE lives_proc_thread_t lives_cb_receipt_get_adder(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   return rcpt ? rcpt->adder : NULL;
 }
 
 
-int lives_cb_receipt_get_req_reply(void *receipt) {
+LIVES_GLOBAL_INLINE int lives_cb_receipt_get_req_reply(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   return rcpt ? rcpt->req_reply : LIVES_REPLY_INVALID;
 }
 
-int lives_cb_receipt_get_nrefs(void *receipt) {
+LIVES_GLOBAL_INLINE int lives_cb_receipt_get_nrefs(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   return rcpt ? rcpt->nrefs : -1;
 }
 
 
-void lives_cb_receipt_ref(void *receipt) {
+LIVES_GLOBAL_INLINE void lives_cb_receipt_ref(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt) rcpt->nrefs++;
 }
 
 
-void lives_cb_receipt_unref(void *receipt) {
+LIVES_GLOBAL_INLINE void lives_cb_receipt_unref(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt) rcpt->nrefs--;
 }
 
 
-boolean lives_cb_receipt_check_expired(void *receipt) {
+LIVES_GLOBAL_INLINE boolean lives_cb_receipt_check_expired(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   return rcpt ? !!(rcpt->status & RCPT_EXPIRED) : FALSE;
 }
 
 
-boolean lives_cb_receipt_is_in_list(void *receipt) {
+LIVES_GLOBAL_INLINE void lives_cb_receipt_block_cb(void *receipt) {
+  hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
+  if (rcpt && rcpt->finst) lives_hook_cb_block(rcpt->finst);
+}
+
+
+LIVES_GLOBAL_INLINE void lives_cb_receipt_unblock_cb(void *receipt) {
+  hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
+  if (rcpt && rcpt->finst) lives_hook_cb_block(rcpt->finst);
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_cb_receipt_is_in_list(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   return rcpt ? !!(rcpt->status & RCPT_IN_LIST) : FALSE;
 }
 
 
-void lives_cb_receipt_set_adder(void *receipt, lives_proc_thread_t adder) {
+LIVES_GLOBAL_INLINE void lives_cb_receipt_set_adder(void *receipt, lives_proc_thread_t adder) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt) {
     rcpt->adder = adder;
@@ -1539,13 +1543,13 @@ void lives_cb_receipt_set_adder(void *receipt, lives_proc_thread_t adder) {
 }
 
 
-void lives_cb_receipt_set_reply(void *receipt, int reply) {
+LIVES_GLOBAL_INLINE void lives_cb_receipt_set_reply(void *receipt, int reply) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt) rcpt->req_reply = reply;
 }
 
 
-void lives_cb_receipt_set_in_list(void *receipt, boolean in_list) {
+LIVES_GLOBAL_INLINE void lives_cb_receipt_set_in_list(void *receipt, boolean in_list) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt) {
     if (in_list) rcpt->status |= RCPT_IN_LIST;
@@ -1553,7 +1557,8 @@ void lives_cb_receipt_set_in_list(void *receipt, boolean in_list) {
   }
 }
 
-void lives_cb_receipt_set_reply_callback(void *receipt, reply_sent_cb_f reply_sent_cb, void *user_data) {
+
+LIVES_GLOBAL_INLINE void lives_cb_receipt_set_reply_callback(void *receipt, reply_sent_cb_f reply_sent_cb, void *user_data) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt) {
     rcpt->reply_cb = reply_sent_cb;
@@ -1562,13 +1567,13 @@ void lives_cb_receipt_set_reply_callback(void *receipt, reply_sent_cb_f reply_se
 }
 
 
-boolean lives_cb_receipt_has_reply_callback(void *receipt) {
+LIVES_GLOBAL_INLINE boolean lives_cb_receipt_has_reply_callback(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   return rcpt ? !!rcpt->reply_cb : FALSE;
 }
 
 
-boolean lives_cb_receipt_call_reply_callback(void *receipt) {
+LIVES_GLOBAL_INLINE boolean lives_cb_receipt_call_reply_callback(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   if (rcpt && rcpt->reply_cb)
     return (*rcpt->reply_cb)(receipt, rcpt->reply_cb_data);
@@ -1593,6 +1598,7 @@ LIVES_GLOBAL_INLINE void *lives_cb_receipt_set_expired(void *receipt) {
   hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
   rcpt->status |= RCPT_EXPIRED;
   rcpt->status &= ~RCPT_PERSISTENT;
+  rcpt->finst = NULL;
   if (lives_cb_receipt_free(rcpt) == LIVES_RESULT_SUCCESS)
     receipt = NULL;
   return receipt;
@@ -1669,6 +1675,10 @@ static void lives_funcinst_move_receipts(lives_funcinst_t *dst, lives_funcinst_t
   // set
   cleanup_funcinst_receipts(src, TRUE);
   rcpts = (LiVESList *)CL_DATA(src, receipts);
+  for (LiVESList *list = rcpts; list; list = list->next) {
+    hook_cb_receipt *rcpt = (hook_cb_receipt *)list->data;
+    rcpt->finst = dst;
+  }
   CL_DATA(dst, receipts) = lives_list_concat((LiVESList *)CL_DATA(dst, receipts), (LiVESList *)rcpts);
   CL_DATA(src, receipts) = NULL;
 }
@@ -1762,8 +1772,12 @@ lives_result_t lives_cb_receipt_remove_from_list(void *receipt) {
 }
 
 
-LIVES_LOCAL_INLINE void lives_funcinst_add_receipt(lives_funcinst_t *finst, void *rcpt) {
-  CL_DATA(finst, receipts) = lives_list_prepend((LiVESList *)CL_DATA(finst, receipts), rcpt);
+LIVES_LOCAL_INLINE void lives_funcinst_add_receipt(lives_funcinst_t *finst, void *receipt) {
+  if (finst && receipt) {
+    hook_cb_receipt *rcpt = (hook_cb_receipt *)receipt;
+    CL_DATA(finst, receipts) = lives_list_prepend((LiVESList *)CL_DATA(finst, receipts), receipt);
+    rcpt->finst = finst;
+  }
 }
 
 
@@ -1826,7 +1840,7 @@ boolean set_param_symbolic(const char *datasrc, weed_seed_t st, int pcount, live
   }
   case '@': {
     // data comes from global data book
-    if (GET_BOOK_DATATYPE(mainw->global_databook, item) != st) goto fail;
+    if (GET_BOOK_DATATYPE(global_databook, item) != st) goto fail;
     leaf_from_allvalues(finst->params, pkey, get_global_book_item(item));
     weed_leaf_set_undeletable(finst->params, pkey, TRUE);
     break;
@@ -2752,7 +2766,7 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
         char *pkey = make_std_pname(np + i);
         weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
         weed_leaf_set_distinguished(finst->params, pkey, TRUE);
-        g_print("set p %d D, np is %d\n", np + i, np + i + 1);
+        //g_print("set p %d D, np is %d\n", np + i, np + i + 1);
         weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
         lives_free(pkey);
       }
@@ -2836,15 +2850,13 @@ lives_result_t lives_hook_cb_unblock(lives_funcinst_t *finst) {
 }
 
 
-static void _lives_hook_async_join(int hstype, boolean cancel) {
+static boolean _lives_hook_async_join(int hstype, boolean cancel) {
   pthread_mutex_t *hmutex;
   LiVESList *cblist, *cblist_next;
-  lives_hook_stack_t *hstack;
   uint64_t hs_op_flags, cbflags;
+  lives_hook_stack_t *hstack = self_hook_stacks(hstype)[hstype];
 
-  hstack = self_hook_stacks(hstype)[hstype];
-
-  if (!(hstack->flags & HS_FLAG_TRIGGERING)) return;
+  if (!(hstack->flags & HS_FLAG_TRIGGERING)) return TRUE;
 
   hmutex = &(hstack->mutex);
   PTMLH;
@@ -2853,7 +2865,7 @@ static void _lives_hook_async_join(int hstype, boolean cancel) {
 
   if (!(hs_op_flags & HOOKSTACK_ASYNC)) {
     PTMUH;
-    return;
+    return TRUE;
   }
 
   for (cblist = (LiVESList *)hstack->stack; cblist; cblist = cblist_next) {
@@ -2879,8 +2891,14 @@ static void _lives_hook_async_join(int hstype, boolean cancel) {
       //g_print("async check %p\n", lpt);
 
       if (finst->disposition == DISPOSITION_WAITING
-          || finst->disposition == DISPOSITION_ACTIVE)
+          || finst->disposition == DISPOSITION_ACTIVE) {
         if (cancel) lives_proc_thread_request_cancel(lpt, FALSE);
+        else {
+          pthread_rwlock_unlock(&finst->dispolock);
+          PTMUH;
+          return FALSE;
+        }
+      }
 
       pthread_rwlock_unlock(&finst->dispolock);
 
@@ -2900,7 +2918,7 @@ static void _lives_hook_async_join(int hstype, boolean cancel) {
           lives_funcinst_send_replies(finst, LIVES_REPLY_ERROR);
           remove = TRUE;
         } else {
-          // pop prior module (CL_DATA)
+          // pop prior disposition - ie. STACKED
           pthread_rwlock_unlock(&finst->dispolock);
           finst_disposition_pop(finst);
         }
@@ -2938,11 +2956,12 @@ static void _lives_hook_async_join(int hstype, boolean cancel) {
   }
   hstack->flags &= ~HS_FLAG_TRIGGERING;
   PTMUH;
+  return TRUE;
 }
 
 
-void lives_hook_async_join(int hstype) {
-  _lives_hook_async_join(hstype, FALSE);
+boolean lives_hook_async_join(int hstype) {
+  return _lives_hook_async_join(hstype, FALSE);
 }
 
 
@@ -3147,97 +3166,6 @@ LIVES_GLOBAL_INLINE void lives_funcinst_free(lives_funcinst_t *finst) {
     pthread_rwlock_destroy(&finst->dispolock);
 
     lives_free(finst);
-  }
-}
-
-
-///////////// lookup functions //////
-
-static lives_hash_store_t *ftrace_store = NULL;
-
-static void _add_fn_note(fn_type_t ftype, lives_funcdef_t *fdef, void *ptr) {
-  static pthread_mutex_t ftrace_mutex = PTHREAD_MUTEX_INITIALIZER;
-  weed_plant_t *note;
-  g_print("add fn note type %d for %p\n", ftype, ptr);
-  g_print("%s\n", lives_funcdef_explain(fdef));
-  g_print("located at line %d in file %s\n", fdef->line, fdef->file);
-  if (ptr) {
-    pthread_mutex_lock(&ftrace_mutex);
-    if (!ftrace_store) ftrace_store = lives_hash_store_new("ftrace");
-    note = (weed_plant_t *)get_from_hash_store_i(ftrace_store, (uintptr_t)ptr);
-    if (note) {
-      // update remove existing entry
-      int count = weed_get_int_value(note, "count", NULL);
-      if (ftype == _FN_ALLOC || ftype == _FN_REF) {
-        if (count >= 0) weed_set_int_value(note, "count", ++count);
-      } else {
-        if (!(--count))
-          ftrace_store = remove_from_hash_store_i(ftrace_store, (uintptr_t)ptr);
-        else
-          weed_set_int_value(note, "count", count);
-      }
-      pthread_mutex_unlock(&ftrace_mutex);
-      return;
-    }
-    // add a new entry
-    note = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
-    weed_set_string_value(note, "func", fdef->funcname);
-    weed_set_string_value(note, "file", fdef->file);
-    weed_set_int_value(note, "line", fdef->line);
-    weed_set_int_value(note, "count", ftype == _FN_ALLOC ? 1 : -1);
-    ftrace_store = add_to_hash_store_i(ftrace_store, (uintptr_t)ptr, (void *)note);
-    pthread_mutex_unlock(&ftrace_mutex);
-  }
-}
-
-
-boolean record_loc(const char *func, const char *file, int line) {
-  audit_tag *xatag = THREADVAR(audit_tag);
-  LIVES_CALLOC_TYPE(audit_tag, atag, 1);
-  atag->func = lives_strdup(func);
-  atag->file = lives_strdup(file);
-  atag->line = line;
-  if (xatag) lives_free(xatag);
-  THREADVAR(audit_tag) = atag;
-  return TRUE;
-}
-
-
-// if io is FN_ALLOC/FN_REF, add a note to ftrace_store or increment the count
-// if io is FN_FREE/FN_UNREF, decrement the count and if zero, remove the note
-void *add_fn_note(fn_type_t ftype, ...) {
-  va_list va;
-  void *ptr = NULL;
-  if (ftype == _FN_ALLOC || ftype == _FN_FREE
-      || ftype == _FN_REF || ftype == _FN_UNREF) {
-    lives_funcdef_t *fdef = NULL;
-    va_start(va, ftype);
-    fdef = va_arg(va, lives_funcdef_t *);
-    ptr = va_arg(va, void *);
-    _add_fn_note(ftype, fdef, ptr);
-    va_end(va);
-    if (fdef) lives_funcdef_free(fdef);
-  }
-  return ptr;
-}
-
-
-void dump_fn_notes(void) {
-  if (ftrace_store) {
-    const char *key;
-    char **items = weed_plant_list_leaves(ftrace_store, NULL);
-    for (int i = 0; items[i]; i++) {
-      if ((key = hash_key_from_leaf_name(items[i]))) {
-        weed_plant_t *note = (weed_plant_t *)get_from_hash_store_i(ftrace_store, lives_strtoul(key));
-        if (!weed_get_int_value(note, "count", NULL)) continue;
-        g_print("0X%016lX from func %s, called from %s, line %d (%d times)\n", lives_strtoul(key),
-                weed_get_string_value(note, "func", NULL),
-                weed_get_string_value(note, "file", NULL), weed_get_int_value(note, "line", NULL),
-                weed_get_int_value(note, "count", NULL));
-      }
-      _ext_free(items[i]);
-    }
-    _ext_free(items);
   }
 }
 

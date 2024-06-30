@@ -159,7 +159,7 @@ uint32_t lives_string_hash(const char *) LIVES_PURE LIVES_HOT;
 uint32_t fast_hash(const char *, size_t strln) LIVES_PURE LIVES_HOT;
 uint64_t fast_hash64(const char *);
 
-void update_effort(float impulse);
+void update_effort(double impulse);
 void reset_effort(void);
 
 void free_fdets_list(LiVESList **);
@@ -288,12 +288,13 @@ int set_thread_cpuid(pthread_t pth);
 
 typedef struct {
   uint64_t boottime;
-  float *loads;
-  float *avgs;
+  double *loads;
+  double *avgs;
 } cpuloadvals_t;
 
-float *get_proc_loads(boolean reset);
-volatile float const *get_core_loadvar(int corenum);
+double *get_proc_loads(boolean reset);
+volatile double const *get_core_loadvar(int corenum);
+boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus);
 
 uint64_t get_boottime(void);
 

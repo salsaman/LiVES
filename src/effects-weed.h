@@ -270,9 +270,9 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbt
 
 void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);
 
-boolean fill_audio_channel(weed_filter_t *filter, weed_plant_t *achan, boolean is_vid);
-int register_audio_client(boolean is_vid);
-int unregister_audio_client(boolean is_vid);
+boolean fill_audio_channel(weed_filter_t *filter, weed_plant_t *achan);
+int register_audio_client(void);
+int unregister_audio_client(void);
 
 int register_aux_audio_channels(int nchannels);
 int unregister_aux_audio_channels(int nchannels);

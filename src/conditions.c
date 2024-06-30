@@ -1120,6 +1120,11 @@ void lives_conditions_init(void) {
   register_cond_token("BIT_SET", 'O', " has bit set",  cond_bit_set);
   register_cond_token("HAS_LEAF", 'O', " has leaf",  cond_has_leaf);
 
+  /* register_cond_token("ADD", 'O', " +",  cond_math_add); */
+  /* register_cond_token("SUB", 'O', " -",  cond_math_sub); */
+  /* register_cond_token("MULT", 'O', " *",  cond_math_mult); */
+  /* register_cond_token("DIV", 'O', " /",  cond_math_div); */
+
   // COND_EVAL allows the inclusion of another cond within a cond, so we can extend
   // and combine existing conds
 
@@ -1146,15 +1151,22 @@ void lives_conditions_init(void) {
   // 'I' is similar to 'U', followed by cond_popen
   // '/' like "!"
 #if 0
-  register_cmd_token("ASSIGN", 'A',  "set #p0 to #p1",  cmd_assign);
+  register_cmd_token("DEF_ASSIGN", 'A',  "set #p0 to #p1",  cmd_assign);
   register_cmd_token("LABEL", 	'L',  "",  "$", cmd_label);
   register_cmd_token("GOTO", 	'L',  "",  "$", cmd_goto);
-  register_cmd_token("IF",	'I',  "IF #P0 THEN #P1 ELSE #P2",  cmd_if);
+  register_cmd_token("RETURN", 	'L',  "",  "I", cmd_return);
+  register_cmd_token("SET_SCOPE",	'L',  "",  "$", cmd_goto);
   //
-  register_cmd_token("ELSE", 	'/',  "CMD_ELSE");// only after bl end
-  register_cmd_token("BLOCK_START", 	'/',  "{"); // same as popen
+  register_cmd_token("ADJUST_SCOPE", 	'L',  "",  "$", cmd_goto);
+  register_cmd_token("CLEAN_DATA", 	'L',  "",  "$", cmd_goto);
+  6 = adj scope
+      7 = clean databook
+          register_cmd_token("BLOCK_START", 	'/',  "{"); // same as popen
   register_cmd_token("BLOCK_END", 	'/',  "}"); // pclose
 #endif
 
   cond_trans_list = lives_list_reverse(cond_trans_list);
 }
+
+/* register_cmd_token("IF",	'I',  "IF #P0 THEN #P1 ELSE #P2",  cmd_if); */
+/* register_cmd_token("ELSE", 	'/',  "CMD_ELSE");// only after bl end */

@@ -205,10 +205,6 @@ typedef enum {
   _FN_UNREF, // fundef, ptr
 } fn_type_t;
 
-
-// creates an audit tag in threadvars with NULL data
-boolean record_loc(const char *func, const char *file, int line);
-
 #define _FUNCREF(fn,f,l)((void *)(create_funcdef(#fn,(lives_funcptr_t)fn,0,0,f,l,0)))
 
 #define ADD_NOTE(ftype,fname,...)					\
@@ -226,7 +222,7 @@ boolean record_loc(const char *func, const char *file, int line);
 #define FN_REF_TARGET(fname,...) (ADD_NOTEI(_FN_REF,fname,__VA_ARGS__))
 #define FN_UNREF_TARGET(fname,...) (ADD_NOTEI(_FN_UNREF,fname,__VA_ARGS__))
 
-void add_quick_fn(lives_funcptr_t func, const char *funcname);
+void add_quick_fn(lives_funcptr_t, lives_funcdef_t *);
 const char *get_funcname(lives_funcptr_t);
 
 boolean args_fmt_match(const char *def, const char *inst);
@@ -412,8 +408,9 @@ typedef struct {
   pthread_mutex_t *status_mutex;
   volatile uint64_t status;
 
-  lives_proc_thread_t adder;
+  lives_funcinst_t *finst;
 
+  lives_proc_thread_t adder;
 
   volatile boolean expired;
   volatile boolean in_list;
@@ -437,6 +434,9 @@ boolean lives_cb_receipt_is_in_list(void *hook_cb_receipt);
 void lives_cb_receipt_add_to_list(void *hook_cb_receipt);
 lives_result_t lives_cb_receipt_remove_from_list(void *hook_cb_receipt);
 #define lives_hook_cb_remove(receipt) lives_cb_receipt_remove_from_list((receipt))
+
+void lives_cb_receipt_block_cb(void *hook_cb_receipt);
+void lives_cb_receipt_unblock_cb(void *hook_cb_receipt);
 
 void lives_cb_receipt_set_adder(void *hook_cb_receipt, lives_proc_thread_t);
 void lives_cb_receipt_set_reply(void *hook_cb_receipt, int reply);
@@ -629,6 +629,7 @@ typedef struct {
 #define module_lpt		1
 #define module_hook_cb		2
 #define module_contingency	3
+#define module_idletask		4
 
 #define MODULE_TYPE_LPT module_lpt
 #define MODULE_DATA_TYPE_LPT proc_thrd_data
@@ -638,6 +639,9 @@ typedef struct {
 
 #define MODULE_TYPE_CONTINGENCY	module_contingency
 #define MODULE_DATA_TYPE_CONTINGENCY contingency_data
+
+#define MODULE_TYPE_IDLETASK	module_idletask
+#define MODULE_DATA_TYPE_IDLETASK idletask_data
 
 #define MODULE_DATA_TYPE(n) MODULE_DATA_TYPE_##n
 #define MODULE_TYPE(n) MODULE_TYPE_##n
@@ -713,25 +717,45 @@ typedef struct {
   uint64_t flags;
 } MODULE_DATA_TYPE_CONTINGENCY;
 
+#define BEAUTY_THRESHOLD
+
+typedef struct {
+  // for DISPOSITION_IDLEFUNC
+  // system pressure
+  // loveliness / system pressure must be above BEAUTY_THRESHOLD
+  // or will not be run
+  double loveliness;
+  // local databook for the funcinst
+  lives_databook_t *dbook;
+  lives_condition run;
+  lives_condition remove;
+  // try to run for less time
+  int64_t usec_slice;
+} MODULE_DATA_TYPE_IDLETASK;
+
+
 /* add more modules if desired */
 
 #define LPT_DATA(finst, field)  (((MODULE_DATA_TYPE_LPT *)(finst->module))->field)
 #define CL_DATA(finst, field)  (((MODULE_DATA_TYPE_HOOK_STACK *)(finst->module))->field)
 #define CONTINGENCY_DATA(finst, field)  (((MODULE_DATA_TYPE_CONTINGENCY *)(finst->module))->field)
+#define IDLETASK_DATA(finst, field)  (((MODULE_DATA_TYPE_IDLETASK *)(finst->module))->field)
 
 // dispositions that have a module type other than any are BASE dispositions
 // if a funcinst gains a base disposition with a new module type
 // the old module is pushed to the modules sync_list and popped instead of freeing the funcinst
 #define module_type_for_disposition(dis)				\
   ((dis) == DISPOSITION_STACKED ? module_hook_cb			\
-   : ((dis) == DISPOSITION_CONTINGENCY ? module_contingency		\
+   : (dis) == DISPOSITION_CONTINGENCY ? module_contingency		\
+   : (dis) == DISPOSITION_IDLETASK ? module_idletask			\
       : ((dis) == DISPOSITION_WAITING || (dis) == DISPOSITION_ACTIVE	\
-	 || (dis) == DISPOSITION_READY) ? module_lpt : module_any))
+	 || (dis) == DISPOSITION_READY) ? module_lpt : module_any)
 
 #define CALLOC_MODULE(j) \
   (j == module_lpt ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_LPT, 1) \
    : j == module_hook_cb ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_HOOK_STACK, 1) \
-   : j == module_contingency ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_CONTINGENCY, 1) : NULL)
+   : j == module_contingency ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_CONTINGENCY, 1) \
+   : j == module_idletask ? (void *)LIVES_CALLOC_SIZEOF(MODULE_DATA_TYPE_IDLETASK, 1) : NULL)
 
 // funcinst is static, do not free it
 #define FINST_FLAG_STATIC	  	(1ull << 0)
@@ -1235,7 +1259,7 @@ lives_result_t _lives_proc_thread_trigger_hook(int hstype, const char *args_fmt,
 
 int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
 #define lives_hook_trigger_async(hstype, xlpts, ...) _lives_hook_trigger_async(hstype, xlpts __VA_OPT__(,) __VA_ARGS__, NULL)
-void lives_hook_async_join(int hstype);
+boolean lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);

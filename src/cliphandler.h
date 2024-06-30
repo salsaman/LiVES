@@ -896,7 +896,8 @@ void set_primary_apparent(int nclip, full_pal_t *pally, int gamma_type);
 
 lives_result_t  get_primary_apparent(int clipno, full_pal_t *pally, int *gamma_type);
 
-weed_layer_t *config_audio_layer(weed_layer_t *, int clipno);
+weed_layer_t *config_alayer_for_clip(weed_layer_t *, int clipno);
+
 void set_audio_apparent(int clipno, audio_dtls *);
 
 // clip sources

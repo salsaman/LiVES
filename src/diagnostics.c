@@ -297,7 +297,7 @@ char *funcinst_paramstr(lives_funcinst_t *finst) {
   if (!finst) return NULL;
   char *args_fmt = NULL;
   if (finst->params) {
-    get_args_fmt(finst->params);
+    args_fmt = get_args_fmt(finst->params);
     if (args_fmt && *args_fmt) {
       int pn = 0;
       char *pstr = NULL, *pname, *aname, *fmtstr = lives_strdup("");
@@ -813,19 +813,21 @@ boolean debug_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_
 static double inst_fps = 0.;
 
 LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
-  static ticks_t last_curr_time = 0;
+  static double last_curr_time = 0;
   static ticks_t last_mini_ticks = 0;
   static frames_t last_mm = 0;
-  ticks_t currtime = mainw->clock_ticks;
+  double currtime = lives_get_session_time();
   boolean refresh = TRUE;
-
   if (mainw->fps_mini_ticks == last_mini_ticks) {
-    double tdelta = (currtime - last_curr_time) / TICKS_PER_SECOND_DBL;
-    if (tdelta > STATS_MSEC / 1000.)
+    double tdelta = (currtime - last_curr_time);
+    g_print("play--- 112221 %f\n", tdelta);
+    if (tdelta > STATS_MSEC / 1000.) {
       mainw->inst_fps = inst_fps = (double)(mainw->fps_mini_measure - last_mm) / tdelta;
-    else refresh = FALSE;
+      g_print("!!!!!!!!!!!!!play--- uuuu112221 %f\n", (double)(mainw->fps_mini_measure - last_mm));
+    } else refresh = FALSE;
   } else last_mini_ticks = mainw->fps_mini_ticks;
   if (refresh) {
+    g_print("play--- 111zzzzn");
     last_mm = mainw->fps_mini_measure;
     last_curr_time = currtime;
   }
@@ -1226,8 +1228,8 @@ char *get_stats_msg(boolean calc_only) {
   static double av_offs = 0.;
   static int last_pfile = -1;
   static int pseq = -1;
-  volatile float const *cpuload;
-  float load;
+  volatile double const *cpuload;
+  double load;
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
   char *tmp, *tmp2, *tmp3;
@@ -1261,7 +1263,7 @@ char *get_stats_msg(boolean calc_only) {
 
   if (calc_only) return NULL;
   cpuload = get_core_loadvar(0);
-  load = (float) * cpuload;
+  load = *cpuload;
 
   if (!prefs->vj_mode) {
     if (have_avsync) {
@@ -1886,25 +1888,20 @@ static void weed_concurrency_test(weed_plant_t *plant) {
 }
 
 
+#define assert_equal(a, b) if ((a) != (b)) {g_print("failed check: %s == %s\n", #a, #b); abort();}
+
 int run_weed_startup_tests(void) {
   lives_proc_thread_t lpts[NCTHRD];
   weed_plant_t *plant;
-  int a, type, ne, st, flags;
-  int *intpr;
-  char *str;
-  int pint[4];//, zint[4];
-  weed_error_t werr;
-  char **keys;
-  void *ptr;;//, *ptr2;
-  void *ptra[4];
-  char *s[4];
-  char *text;
-  int n;
+  char *text, *str, **keys;
+  void *ptr, *ptra[4], *s[4], *vp[4];
+  int n, a, type, ne, st, flags, pint[4], *intpr;
   weed_size_t nleaves;
+  weed_error_t werr;
 
   g_print("Testing libweed functionality:\n\n");
 
-  THREADVAR(timerinfo) = lives_get_current_ticks();
+  reset_timer_info();
 
   // run some tests..
   plant = _weed_plant_new(WEED_PLANT_HOST_INFO);
@@ -1918,29 +1915,21 @@ int run_weed_startup_tests(void) {
   fprintf(stderr, "type is %d, should be %d err was %d\n", type, WEED_PLANT_HOST_INFO, werr);
   werr_expl(werr);
 
-  if (type != WEED_PLANT_HOST_INFO) {
-    abort();
-  }
+  assert_equal(type, WEED_PLANT_HOST_INFO);
 
   ne = _weed_leaf_num_elements(plant, WEED_LEAF_TYPE);
   fprintf(stderr, "ne was %d\n", ne);
 
-  if (ne != 1) {
-    abort();
-  }
+  assert_equal(ne, 1);
 
   st = _weed_leaf_seed_type(plant, "type");
   fprintf(stderr, "seedtype is %d\n", st);
-  if (ne != WEED_SEED_INT) {
-    abort();
-  }
+
+  assert_equal(st, WEED_SEED_INT);
 
   flags = _weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
   fprintf(stderr, "flags is %d\n", flags);
-
-  if (ne != WEED_SEED_INT) {
-    abort();
-  }
+  assert_equal(flags, WEED_FLAG_IMMUTABLE);
 
   list_leaves(plant);
 
@@ -2049,10 +2038,11 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-  fprintf(stderr, "checking get / set values\n");
+  fprintf(stderr, "\n\n==========checking get / set values=========\n");
   fprintf(stderr, "creating new plant\n");
 
   weed_plant_t *plant2 = _weed_plant_new(0);
+
   weed_set_string_value(plant2, "astr", "hello");
 
   weed_set_voidptr_value(plant2, "vptr", &flags);
@@ -2062,8 +2052,40 @@ int run_weed_startup_tests(void) {
           weed_get_voidptr_value(plant2, "vptr", NULL),
           &flags);
 
+  weed_set_voidptr_value(plant2, "nulptr", NULL);
+
+  ptr = weed_get_voidptr_value(plant2, "nulptr", NULL);
+  fprintf(stderr, "read x2 %p, should be NULL\n", ptr);
+  assert_equal(ptr, 0);
+
+  ptr = weed_get_voidptr_array(plant2, "nulptr", NULL);
+  fprintf(stderr, "read x3 %p, should be NULL\n", ptr);
+  assert_equal(ptr, 0);
+
+  weed_set_voidptr_value(plant2, "nulptr", &flags);
+  weed_set_voidptr_value(plant2, "nulptr", NULL);
+  assert_equal(ptr, 0);
+
+  ptr = weed_get_voidptr_value(plant2, "nulptr", NULL);
+  fprintf(stderr, "read x4 %p, should be NULL\n", ptr);
+  assert_equal(ptr, 0);
+
+  ptr = weed_get_voidptr_array(plant2, "nulptr", NULL);
+  fprintf(stderr, "read x5 %p, should be NULL\n", ptr);
+  assert_equal(ptr, 0);
+
+  vp[0] = mainw;
+  vp[1] = prefs;
+
+  werr = weed_set_voidptr_array(plant2, "nulptr", 2, vp);
+  weed_set_voidptr_value(plant2, "nulptr", NULL);
+
+  ptr = weed_get_voidptr_value(plant2, "nulptr", NULL);
+  fprintf(stderr, "read x6 %p, should be NULL\n", ptr);
+  assert_equal(ptr, 0);
+
   weed_set_int_value(plant, "Test", 99);
-  fprintf(stderr, "Set 'Test' = 99\n");
+  fprintf(stderr, "\nSet 'Test' = 99\n");
 
   fprintf(stderr, "\n");
   show_quadstate(plant);
@@ -2753,9 +2775,8 @@ int run_weed_startup_tests(void) {
 
 #define CONCURRENCY_TST
 #ifdef CONCURRENCY_TST
-  print_diagnostics(DIAG_MEMORY);
-
   if (FEATURE_READY(THREADPOOL)) {
+    print_diagnostics(DIAG_MEMORY);
     reset_timer_info();
     fprintf(stderr, "test random reads, writes and deletes\n");
     plant = _weed_plant_new(123);
@@ -2873,8 +2894,8 @@ int run_weed_startup_tests(void) {
     /*   _weed_plant_free(plant); */
   }
   g_print("done\n");
-  show_timer_info();
 
+  g_print("\n\n *********** All libweed tests passed !!! *********\n\n");
 
   //g_print
 
@@ -2897,7 +2918,7 @@ int test_palette_conversions(void) {
     for (val = 0.; val < 256.; val += .1) {
       inval = val * SCALE_FACT;
       outval = round_special(inval);
-      dif = (float)outval - val;
+      dif = outval - val;
       if (dif > 0.) totap += dif;
       else totan += dif;
       fdif = fabs(dif);
@@ -3100,6 +3121,8 @@ void weed_utils_test(void) {
   fprintf(stderr, "dup val read; %p\n", vp2);
   fprintf(stderr, "err was %d\n", err);
   werr_expl(err);
+
+  g_print("\n\n *********** All weed-util tests passed !!! *********\n\n");
 
   weed_plant_free(plant1);  weed_plant_free(plant2);
 }

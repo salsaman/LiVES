@@ -769,7 +769,7 @@ LIVES_GLOBAL_INLINE void *get_from_hash_store_i(lives_hash_store_t *store, uint6
   else {
     char *xkey = MAKE_HASHSTORE_KEY(key);
     void *vret = weed_get_voidptr_value(store, xkey, NULL);
-    lives_free(xkey);
+    if (xkey) lives_free(xkey);
     return vret;
   }
 }
@@ -789,7 +789,7 @@ LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store_i(lives_hash_store_t *
   if (store) {
     char *xkey = MAKE_HASHSTORE_KEY(key);
     weed_set_voidptr_value(store, xkey, data);
-    lives_free(xkey);
+    if (xkey) lives_free(xkey);
   }
   return store;
 }

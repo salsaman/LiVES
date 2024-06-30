@@ -13872,7 +13872,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   if (!gui_loop_tight || is_fg_thread()) _lives_set_cursor_style(cstyle, widget);
   else {
     BG_THREADVAR(hook_hints) |= HOOK_OPT_FG_LIGHT;
-    MAIN_THREAD_EXECUTE_RVOID(_lives_set_cursor_style, "vv", cstyle, widget);
+    MAIN_THREAD_EXECUTE_RVOID(_lives_set_cursor_style, "iv", cstyle, widget);
     BG_THREADVAR(hook_hints) = 0;
   }
 }

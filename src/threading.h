@@ -445,6 +445,8 @@ funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t);
 //lives_funcinst_t * lives_proc_thread_pop_active_funcinst(void);
 
 lives_funcinst_t *lives_proc_thread_get_active_funcinst(lives_proc_thread_t);
+lives_funcinst_t *get_active_funcinst(void);
+
 void lives_proc_thread_set_active_funcinst(lives_funcinst_t *);
 
 lives_funcinst_t *lives_proc_thread_get_initial_funcinst(lives_proc_thread_t);
@@ -676,16 +678,15 @@ lives_funcinst_t *_lives_funcinst_create(lives_funcdef_t *fdef, lives_funcptr_t 
 
 /* #define lives_funcinst_from_allvals(func, nvals, allvals) _lives_funcinst_from_allvals(func, #func, nvals, allvals) */
 
-lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs);
+lives_proc_thread_t lives_proc_thread_create_for_funcinst(lives_funcinst_t *finst, uint64_t attrs, const char **anames);
 
 lives_proc_thread_t _lives_proc_thread_create(timeout_data *to_data, lives_thread_attr_t attrs, lives_funcptr_t func,
     const char *fname,
     int return_type, const char **anames, const char *args_fmt, ...);
 
 #define lives_proc_thread_create(attrs, func, rtype, af, ...)		\
-  (record_loc(_FUNC_REF_,_FILE_REF_,_LINE_REF_) ?			\
    _lives_proc_thread_create(NULL, (attrs), (lives_funcptr_t)func, #func, (rtype), VARNAMES(__VA_ARGS__), \
-			     (af) __VA_OPT__(,) __VA_ARGS__, NULL) : NULL)
+			     (af) __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #define lives_proc_thread_create_pvoid(attra, func, rrype)				\
   (_lives_proc_thread_create((attrs), (lives_funcptr_t)func, #func, (rtype), NULL, "", NULL))

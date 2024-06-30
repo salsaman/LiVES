@@ -994,6 +994,9 @@ NIRVA_TYPEDEF(nirva_function_t, nirva_callback_t)
 
 ///list of functions which the implementation must define////
 
+
+/// CREATE+EMPTY_BUNDLE
+
 // TODO - nirva_create_bundle : create an empty bundle (no strands)
 #define NIRVA_MAND_FUNC_001 create_bundle_by_type,"create and return a bundle given a bundle_type and" \
     " 'item_name','value' pairs",NIRVA_BUNDLEPTR,new_bundle,2, NIRVA_UINT64, \

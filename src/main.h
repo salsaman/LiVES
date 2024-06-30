@@ -217,6 +217,9 @@ typedef enum {
   // ie. a free standing, sunordinate  funcinst, not part of a hook stack or the main active
   // funcinst for a procthread
   DISPOSITION_CONTINGENCY,
+  // idle funcinst can be created and added to the idle queue
+  // to be executed when the app is unbusy
+  DISPOSITION_IDLETASK,
   // either the funcinst has been processed or been discarded / replaced
   // for stacked funcinst, this is not used, instead, the value of
   // req_reply in the callback receipt indicates the outcome
@@ -228,7 +231,6 @@ typedef enum {
 typedef struct _lives_funcinst lives_funcinst_t;
 
 #include "widget-helper.h"
-#include "lists.h"
 
 #define NATIVE_THREAD_TYPE pthread
 #define NATIVE_MUTEX_TYPE pthread_mutex_t
@@ -237,6 +239,8 @@ typedef struct _lives_funcinst lives_funcinst_t;
 #include "funcsigs.h"
 
 #include "lives_plants.h"
+
+#include "lists.h"
 
 typedef struct {
   uint64_t uid;
@@ -298,6 +302,9 @@ typedef struct {
 
 DEF_STRUCT(lives_funcinst,
            uint64_t uid;
+
+           lives_databook_t *dbook;
+
            lives_funcdef_t *funcdef;
 
            pthread_rwlock_t dispolock;
@@ -312,6 +319,9 @@ DEF_STRUCT(lives_funcinst,
            /* // and return_val */
            /* // plus extra_funcsig - if funcdef->funcsig ends with "*" */
            /* // */
+
+           // TODO - just have a mapping from databook values to
+           // func params
            weed_plant_t *params;
 
            const char **paramnames;
@@ -323,20 +333,6 @@ DEF_STRUCT(lives_funcinst,
            void *retloc;
 
            double st_time, en_time;
-
-           // TODO:
-           // data book contains all local values for the funcinst
-           // including param values, real_funcsig, return_value
-           // param_data_free funcs and also combines the module
-           // - a proc_thread will jave a leaf - local_data_source
-           // which by default points to active_funcinst->data_book
-           // then when a condition is evaluated, local_data_source is where we look to find
-           // COND_SYMBOL, symname
-           //
-           // each value is actually a voidptr to an allfunc_t *
-           // when setting a value we can use macro SET_SELF_VALUE
-
-           //weed_plant_t *data_book;
 
            void *next, *prev;
 
@@ -379,6 +375,7 @@ typedef struct {
 #define FEATURE_GUI_HELPER		(1ul << 9)
 #define FEATURE_RNG			(1ul << 10)
 #define FEATURE_THEMING			(1ul << 11)
+#define FEATURE_TIMING			(1ul << 12)
 
 #define FEATURE_READY(what) (capable && (capable->features_ready & FEATURE_##what))
 
@@ -623,6 +620,8 @@ extern const char *NO_COPY_LEAVES[];
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
 
 /// some shared structures
+
+extern lives_databook_t *global_databook;
 
 #define USE_MPV (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv)
 #define HAS_EXTERNAL_PLAYER (capable->has_mplayer || capable->has_mplayer2 || capable->has_mpv)
